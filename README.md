@@ -35,6 +35,8 @@ paste an API key, pick a file or a folder, press **Start**.
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, or OpenRouter for
   open-weights and other models. The app shows only the providers and models that can handle the
   chosen task: Claude, for instance, reads documents but does not accept audio.
+- **Works without an API key.** An offline mode keeps the app useful without an account, a key
+  or an internet connection, and keeps sensitive material on the PC (see below).
 - **Customisable prompts.** Each task ships with a tested default prompt (language, transcription
   conventions, summary length). Users can edit it, save it as a named preset, and reset it.
 - **Results next to the sources.** Outputs are written beside the original files or into a chosen
@@ -42,9 +44,25 @@ paste an API key, pick a file or a folder, press **Start**.
 - **Estimated cost before starting**, based on file length and the provider's published prices.
 - **English, French and German interface.**
 
+## Offline mode
+
+Some tasks can run entirely on the PC, with no key, no cost and no data leaving the computer:
+
+- **Audio transcription with Whisper**, as in Live Translation's offline subtitles: the same
+  whisper.cpp engine, with models downloaded once from Hugging Face and verified before use.
+  Larger models suit recorded interviews, where speed matters less than in live captioning.
+- **OCR with Tesseract**, bundled with the app and its language data (French, English, Arabic,
+  German…). It handles clean printed text reasonably well but is far weaker than cloud models on
+  degraded scans, complex layouts and handwriting.
+
+Offline results are a fallback, not the default for difficult material: the app should say
+clearly which engine produced a result, and record it in `provenance.json` like any other.
+Summaries still need a cloud model.
+
 ## Privacy
 
-Files go directly from the PC to the chosen provider; there is no intermediate server. API keys
+In offline mode, nothing leaves the PC. With a cloud provider, files go directly from the PC to
+that provider; there is no intermediate server. API keys
 stay in Windows Credential Manager. The developer receives no files, keys, results or telemetry.
 
 Sending research material to an AI provider is still a transfer of data to a third party.
@@ -63,6 +81,9 @@ keep the originals.
 - Provider calls in Rust, porting the prompts, model choices and provenance format from
   `zmo-ai-pipelines` and `iwac-ai-pipelines`; no bundled Python.
 - FFmpeg to convert and split long recordings for providers with file-size limits.
+- [whisper-rs](https://crates.io/crates/whisper-rs) (whisper.cpp) for offline transcription,
+  reusing Live Translation's model download and verification code.
+- Tesseract for offline OCR, bundled as a sidecar with its language data.
 - Native builds for x64 and ARM64.
 
 ## Distribution
