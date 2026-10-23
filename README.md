@@ -4,6 +4,8 @@ A Windows desktop app that lets researchers transcribe interviews, read scanned 
 documents, and summarise texts with the AI provider of their choice — without Python, Colab or
 the command line.
 
+**Windows 11 · x64 and ARM64 · English, French and German interface · MIT license**
+
 **Status: concept.** Nothing is built yet. This README describes what the app should do.
 
 ## Why
@@ -61,8 +63,17 @@ keep the originals.
 - Provider calls in Rust, porting the prompts, model choices and provenance format from
   `zmo-ai-pipelines` and `iwac-ai-pipelines`; no bundled Python.
 - FFmpeg to convert and split long recordings for providers with file-size limits.
-- Distribution through GitHub releases and, later, the Microsoft Store.
+- Native builds for x64 and ARM64.
 
-## Author
+## Distribution
+
+The goal is the [Microsoft Store](https://apps.microsoft.com/), as for Live Translation: Store
+packages are signed, install without a security warning and update themselves, which matters for
+colleagues who are not comfortable installing software. This means packaging the app as MSIX
+from the start, keeping keys in Credential Manager, publishing a privacy policy, and declaring
+the app's network access. Unsigned installers will also be attached to GitHub releases.
+
+## Author and license
 
 [Frédérick Madore](https://www.frederickmadore.com/), Leibniz-Zentrum Moderner Orient (ZMO), Berlin.
+[MIT license](LICENSE).
