@@ -3,6 +3,7 @@
 //! engine treats them alike; they need no key, and their models are downloaded from the app.
 
 mod cpu;
+mod download;
 mod models;
 mod whisper;
 

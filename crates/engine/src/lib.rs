@@ -7,6 +7,7 @@
 
 mod compare;
 mod output;
+mod review;
 mod run;
 mod setup;
 
@@ -29,7 +30,7 @@ use tokio::sync::broadcast;
 pub use compare::{
     ComparisonReport, DiffKind, DiffSpan, PageComparison, SetupScore, diff, error_rate,
 };
-pub use run::PieceView;
+pub use review::PieceView;
 pub use setup::{NewJob, SetupRequest};
 
 /// Where the engine gets API keys; the app reads them from Windows Credential Manager.

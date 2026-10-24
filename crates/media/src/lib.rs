@@ -7,6 +7,7 @@
 //! modified.
 
 mod audio;
+mod audio_format;
 mod checks;
 mod ffmpeg;
 mod image_source;
