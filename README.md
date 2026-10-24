@@ -204,7 +204,7 @@ selection is remembered per task.
 | Task | Formats |
 | --- | --- |
 | **Transcription** | `.txt`, `.md`, `.docx` (Word), `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
-| **Text extraction** | `.txt`, `.md`, `.docx`, `.json` (pages, blocks and confidence where available), searchable PDF (text layer over the original scan), ALTO XML and PAGE XML where the engine returns coordinates |
+| **Text extraction** | `.txt`, `.md`, `.docx`, `.json` (pages, blocks and confidence where available), `.csv`; a searchable PDF (invisible text layer over the original scan) only from models that report where text sits on the page, which today means Mistral OCR; ALTO XML and PAGE XML likewise where the engine returns coordinates |
 | **Summaries and keywords** | `.txt`, `.md`, `.docx`, `.json`, `.csv`, or a column added to the original `.xlsx` |
 
 Options include one file per source or one combined file per folder, page or timestamp markers,
@@ -347,12 +347,20 @@ Each stage ends with an architecture review (see [AGENTS.md](AGENTS.md)) before 
   interface with translation files, CI and Dependabot.
 - **Stage 2: mostly done.** All four providers, PDF page cutting, image preparation, input
   checks with splitting of double pages, language choice, exports to `.txt`, `.md`, `.docx`,
-  `.json` and `.csv`, the review view with corrections, and comparison mode with error rates.
-  Still to do: searchable PDF and ALTO/PAGE XML exports, and a run against the live APIs with
-  real keys (the provider tests use documented response shapes, not recorded ones).
-- **Stage 3: started.** Transcription works for recordings a model accepts whole, with
-  speakers, timestamps, `.srt` and `.vtt`. FFmpeg conversion and splitting, video, and the
-  audio player in the review view are next.
+  `.json` and `.csv`, searchable PDFs from Mistral OCR, the review view with corrections, and
+  comparison mode with error rates. Still to do: ALTO/PAGE XML, checks for skewed and blurry
+  pages, and a run against the live APIs with real keys (the provider tests use documented
+  response shapes, not recorded ones).
+- **Stage 3: mostly done.** Recordings and videos are split at pauses and converted by
+  FFmpeg, with checks for quiet, long or silent files and an "even out the volume" fix;
+  speakers, timestamps, `.srt`, `.vtt` and `.csv`; a player in the review view whose lines
+  follow playback. The bundled LGPL FFmpeg build has its workflow but has not been run yet, so
+  development uses an FFmpeg found on `PATH`. Gemini 3.5 Transcribe is not in the catalogue
+  yet.
+- **Stage 4: started.** Offline transcription with Whisper, models downloaded from Settings;
+  summaries and keywords for texts, Word files, PDFs and the results of earlier jobs, with
+  Gemini, OpenAI and Claude. Jobs keep running from the notification area when the window is
+  closed.
 
 Decisions and their reasons are logged in [docs/decisions](docs/decisions/); output formats are
 described in [docs/formats.md](docs/formats.md).

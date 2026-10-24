@@ -13,6 +13,23 @@ names carry the set-up's label: `letter.gemini-3.8-flash.txt`.
 - **`.docx`**: the same structure as Markdown; line breaks inside paragraphs are kept, since
   diplomatic transcriptions rely on them.
 
+## Searchable PDF (`.searchable.pdf`)
+
+The original PDF, unchanged, with an invisible text layer so it can be searched and its text
+copied. Only models that report where text sits on the page can feed it; today that is Mistral
+OCR, whose paragraph boxes are kept with each page. Each paragraph's words are set in invisible
+text (render mode 3) over its box, spread over the lines that fit and stretched to its width,
+in a glyph-less Unicode font, so any script stays searchable. A corrected page is set as one
+block over the page. Only PDF sources get one; it is written as `<name>.searchable.pdf`, never
+replacing the source.
+
+## Summaries
+
+Written as `<name>.summary.txt` (and `.md`, `.docx`, `.json`, `.csv`) beside the source, so a
+summary of `interview.txt` never replaces it. The text formats end with a `Keywords:` line;
+JSON adds a `keywords` array to the part; CSV has one row per file
+(`file, summary, keywords, corrected, reviewed`).
+
 ## Subtitles and spreadsheets
 
 - **`.srt` / `.vtt`**: cues of at most 84 characters and 6 seconds, from timed segments or from
@@ -66,5 +83,5 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `languages`, `detected_languages` | What the user chose, and what the model reported |
 | `options` | Diarization, timestamps, speaker count |
 | `pieces`, `corrected`, `reviewed` | Number of pages or segments, and which were corrected or reviewed |
-| `preprocessing` | Fixes applied to working copies (`split_spreads`, `sample_first_3_pages`) |
+| `preprocessing` | Fixes applied to working copies (`split_spreads`, `even_out_volume`, `sample_first_3_pages`) |
 | `usage`, `cost_usd` | Tokens, audio seconds or pages billed, and the cost from catalogue prices |
