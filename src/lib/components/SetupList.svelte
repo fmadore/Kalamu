@@ -62,7 +62,11 @@
 				<select bind:value={d.model}>
 					{#each modelsFor(catalog, d.provider, task) as mod (mod.id)}
 						<option value={mod.id}
-							>{mod.name}{mod.status === 'preview' ? ` (${m.common.preview})` : ''}</option
+							>{mod.name}{mod.status === 'preview'
+								? ` (${m.common.preview})`
+								: mod.status === 'deprecated'
+									? ` (${m.common.retiring})`
+									: ''}</option
 						>
 					{/each}
 				</select>

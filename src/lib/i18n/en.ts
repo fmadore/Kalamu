@@ -276,7 +276,8 @@ export const en = {
 		cancel: 'Cancel',
 		close: 'Close',
 		loading: 'Loading…',
-		preview: 'preview'
+		preview: 'preview',
+		retiring: 'retiring'
 	},
 	error: {
 		'job.not_found': 'This job no longer exists.',

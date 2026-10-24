@@ -403,10 +403,8 @@ mod tests {
             .model(&ProviderId::new("mistral"), "mistral-ocr-4-1")
             .cloned();
         if let Some(ocr) = ocr {
-            assert_eq!(
-                catalog.estimate(&ocr, Task::TextExtraction, 5, 0.0, 0).usd,
-                None
-            );
+            let usd = catalog.estimate(&ocr, Task::TextExtraction, 5, 0.0, 0).usd;
+            assert!(usd.is_some_and(|u| (u - 0.02).abs() < 1e-9), "{usd:?}");
         }
     }
 }

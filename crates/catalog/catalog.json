@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24",
+  "updated": "2026-10-25",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn.",
   "providers": [
     {
@@ -75,9 +75,43 @@
     },
     {
       "provider": "gemini",
+      "id": "gemini-4-argon",
+      "name": "Gemini 4 Argon",
+      "description": "Google's new flagship (October 2026), for the hardest handwriting, degraded scans and long documents.",
+      "tasks": [
+        "text_extraction",
+        "audio_transcription",
+        "summary"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/flac",
+        "audio/ogg",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "pricing": {
+        "input_per_mtok": 2.0,
+        "output_per_mtok": 10.0,
+        "note": "Introductory price until 2026-11-30, then $4 / $20."
+      },
+      "limits": {
+        "max_request_mb": 18
+      }
+    },
+    {
+      "provider": "gemini",
       "id": "gemini-3.1-pro-preview",
       "name": "Gemini 3.1 Pro",
-      "description": "Google's most capable model, for difficult handwriting and degraded scans.",
+      "description": "The previous Pro model, still in preview; Gemini 4 Argon now does the same at a lower price.",
       "tasks": [
         "text_extraction",
         "audio_transcription",
@@ -136,9 +170,9 @@
     },
     {
       "provider": "openai",
-      "id": "gpt-6-sol",
-      "name": "GPT-6 Sol",
-      "description": "OpenAI's most capable model; reads PDFs and images.",
+      "id": "gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
+      "description": "OpenAI's main model (it supersedes GPT-6 Sol); reads PDFs and images.",
       "tasks": [
         "text_extraction",
         "summary"
@@ -156,6 +190,33 @@
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 10.0
+      },
+      "limits": {
+        "max_request_mb": 32
+      }
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-6-astra",
+      "name": "GPT-6 Astra",
+      "description": "OpenAI's most capable and most expensive model, for the most difficult material.",
+      "tasks": [
+        "text_extraction",
+        "summary"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "pricing": {
+        "input_per_mtok": 10.0,
+        "output_per_mtok": 50.0
       },
       "limits": {
         "max_request_mb": 32
@@ -190,9 +251,9 @@
     },
     {
       "provider": "openai",
-      "id": "gpt-4o-transcribe-diarize",
-      "name": "GPT-4o Transcribe (speakers)",
-      "description": "Speech-to-text with speaker labels and segment timestamps. Takes no prompt.",
+      "id": "gpt-transcribe",
+      "name": "GPT Transcribe",
+      "description": "OpenAI's current speech-to-text: accurate on mixed languages, but plain text without speakers or timestamps. Takes no prompt.",
       "tasks": [
         "audio_transcription"
       ],
@@ -200,12 +261,36 @@
         "audio/mpeg",
         "audio/wav",
         "audio/mp4",
-        "audio/webm",
-        "audio/flac",
-        "audio/ogg"
+        "audio/webm"
       ],
       "languages": "any",
       "status": "stable",
+      "recommended_for": [],
+      "accepts_prompt": false,
+      "pricing": {
+        "per_minute": 0.0045
+      },
+      "limits": {
+        "max_request_mb": 25
+      },
+      "speakers": false
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-4o-transcribe-diarize",
+      "name": "GPT-4o Transcribe (speakers)",
+      "description": "Speech-to-text with speaker labels and segment timestamps. OpenAI shuts it down on 2027-02-26 and has no other model that labels speakers. Takes no prompt.",
+      "tasks": [
+        "audio_transcription"
+      ],
+      "inputs": [
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/webm"
+      ],
+      "languages": "any",
+      "status": "deprecated",
       "recommended_for": [],
       "accepts_prompt": false,
       "pricing": {
@@ -214,6 +299,34 @@
       },
       "limits": {
         "max_request_mb": 25
+      }
+    },
+    {
+      "provider": "anthropic",
+      "id": "claude-fable-5-1",
+      "name": "Claude Fable 5.1",
+      "description": "Anthropic's most capable model, at twice Opus's price; for the hardest manuscripts and long reports.",
+      "tasks": [
+        "text_extraction",
+        "summary"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "pricing": {
+        "input_per_mtok": 10.0,
+        "output_per_mtok": 50.0
+      },
+      "limits": {
+        "max_request_mb": 32,
+        "max_pages": 600
       }
     },
     {
@@ -320,7 +433,10 @@
       "recommended_for": [],
       "accepts_prompt": false,
       "layout": true,
-      "pricing": {},
+      "pricing": {
+        "per_page": 0.004,
+        "note": "$4 per 1,000 pages."
+      },
       "limits": {
         "max_request_mb": 50,
         "max_pages": 1000

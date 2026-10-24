@@ -244,7 +244,7 @@ async fn openai_sends_pdf_pages_as_input_files() {
         .and(path("/responses"))
         .and(header("authorization", "Bearer test-key"))
         .and(body_partial_json(serde_json::json!({
-            "model": "gpt-6-sol",
+            "model": "gpt-6.1-sol",
             "instructions": "Transcribe diplomatically.",
             "input": [{ "role": "user", "content": [
                 { "type": "input_file", "filename": "lettre-p1.pdf" },
@@ -259,7 +259,7 @@ async fn openai_sends_pdf_pages_as_input_files() {
     let out = openai
         .process(
             &ApiKey::new("test-key"),
-            request(Task::TextExtraction, "gpt-6-sol", &input, &langs, &opts),
+            request(Task::TextExtraction, "gpt-6.1-sol", &input, &langs, &opts),
         )
         .await
         .unwrap_or_default();

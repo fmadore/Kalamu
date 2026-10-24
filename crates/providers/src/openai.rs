@@ -1,6 +1,7 @@
-//! OpenAI: the Responses API for text extraction (PDF pages as `input_file`, images as
-//! `input_image` at high detail) and the transcriptions endpoint for audio, with speaker labels
-//! from the diarizing model.
+//! OpenAI: the Responses API for text extraction and summaries (PDF pages as `input_file`,
+//! images as `input_image` at high detail) and the transcriptions endpoint for audio: speaker
+//! labels from the diarizing model (deprecated, shutting down 2027-02-26), plain text with
+//! several language hints from `gpt-transcribe`.
 //!
 //! Neither Python pipeline uses OpenAI for these tasks, so this follows the API reference
 //! rather than ported code.
@@ -166,14 +167,29 @@ impl OpenAi {
             .text(
                 "response_format",
                 if diarize { "diarized_json" } else { "json" },
-            )
-            .text("chunking_strategy", "auto");
-        // One language only; for mixed recordings detection works better.
-        if let LanguageChoice::Explicit(codes) = request.languages
-            && let [only] = codes.as_slice()
-            && only.as_str().len() == 2
-        {
-            form = form.text("language", only.as_str().to_string());
+            );
+        if diarize {
+            // Required for recordings over 30 seconds with speaker labels.
+            form = form.text("chunking_strategy", "auto");
+        }
+        if let LanguageChoice::Explicit(codes) = request.languages {
+            let codes: Vec<&str> = codes
+                .iter()
+                .map(|c| c.as_str())
+                .filter(|c| c.len() == 2)
+                .collect();
+            if diarize {
+                // One language only; for mixed recordings detection works better.
+                if let [only] = codes.as_slice() {
+                    form = form.text("language", (*only).to_string());
+                }
+            } else {
+                // `gpt-transcribe` takes several hints, which helps with code-switching; it
+                // replaces `language`, and the two must not be sent together.
+                for code in codes {
+                    form = form.text("languages[]", code.to_string());
+                }
+            }
         }
         let response = send_json(
             self.client
@@ -210,7 +226,14 @@ impl OpenAi {
                 .unwrap_or("")
                 .to_string(),
             segments,
-            detected_language: None,
+            // `gpt-transcribe` reports the languages it heard.
+            detected_language: response
+                .pointer("/languages/0")
+                .and_then(|l| {
+                    l.as_str()
+                        .or_else(|| l.get("language").and_then(Value::as_str))
+                })
+                .map(scriptorium_core::LanguageCode::new),
             usage: Usage {
                 input_tokens: usage
                     .and_then(|u| u.get("input_tokens"))
