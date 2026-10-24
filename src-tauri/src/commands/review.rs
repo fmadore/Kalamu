@@ -30,9 +30,10 @@ pub async fn piece_audio(
     index: u32,
 ) -> CmdResult<tauri::ipc::Response> {
     let engine = state.engine.clone();
-    let prepared = tokio::task::spawn_blocking(move || engine.piece_audio(job_id, source_id, index))
-        .await
-        .map_err(|e| AppError::new(id::INTERNAL, e))??;
+    let prepared =
+        tokio::task::spawn_blocking(move || engine.piece_audio(job_id, source_id, index))
+            .await
+            .map_err(|e| AppError::new(id::INTERNAL, e))??;
     Ok(tauri::ipc::Response::new(prepared.bytes))
 }
 
