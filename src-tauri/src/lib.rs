@@ -202,6 +202,7 @@ pub fn run() {
             commands::jobs::job_pieces,
             commands::review::source_pieces,
             commands::review::piece_preview,
+            commands::review::piece_audio,
             commands::review::save_correction,
             commands::review::export_source,
             commands::review::compare_source,

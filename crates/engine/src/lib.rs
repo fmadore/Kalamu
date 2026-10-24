@@ -230,6 +230,35 @@ impl Engine {
             .collect()
     }
 
+    /// One piece of a recording, to listen to in the review view: compressed (Opus) when this
+    /// FFmpeg can, so a twenty-minute piece is a few megabytes.
+    pub fn piece_audio(
+        &self,
+        job_id: JobId,
+        source_id: SourceId,
+        index: u32,
+    ) -> Result<scriptorium_core::PreparedInput, EngineError> {
+        let job = self.store.job(job_id)?;
+        let source = job
+            .sources
+            .iter()
+            .find(|s| s.id == source_id)
+            .ok_or(EngineError::Store(StoreError::NotFound))?;
+        let piece = self
+            .store
+            .pieces(job_id)?
+            .into_iter()
+            .find(|p| p.source_id == source_id && p.index == index)
+            .map(|p| p.piece)
+            .ok_or(EngineError::Store(StoreError::NotFound))?;
+        let ffmpeg = self.config.ffmpeg.as_ref();
+        let mut listening = source.clone();
+        // What was sent, minus fixes: the user hears the recording itself.
+        listening.even_out_volume = false;
+        let opened = OpenSource::open(&listening, ffmpeg)?;
+        Ok(opened.prepare(&piece, &["audio/ogg", "audio/wav"], "listen")?)
+    }
+
     /// The bundled FFmpeg, for the app's previews.
     pub fn ffmpeg(&self) -> Option<&Ffmpeg> {
         self.config.ffmpeg.as_ref()

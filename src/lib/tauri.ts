@@ -80,6 +80,8 @@ export const api = {
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>
 		invoke<PagePreview>('piece_preview', { jobId, sourceId, index }),
+	pieceAudio: (jobId: string, sourceId: string, index: number) =>
+		invoke<ArrayBuffer>('piece_audio', { jobId, sourceId, index }),
 	saveCorrection: (correction: Correction) => invoke<string[]>('save_correction', { correction }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>
 		invoke<string[]>('export_source', { jobId, setupId, sourceId }),

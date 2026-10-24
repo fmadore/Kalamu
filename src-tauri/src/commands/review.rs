@@ -20,6 +20,22 @@ pub fn source_pieces(
     Ok(state.engine.source_pieces(job_id, source_id)?)
 }
 
+/// One piece of a recording as Ogg Opus (or WAV) bytes, for the review view's player. Raw
+/// bytes rather than JSON, so a twenty-minute piece is not base64-encoded.
+#[tauri::command]
+pub async fn piece_audio(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+    index: u32,
+) -> CmdResult<tauri::ipc::Response> {
+    let engine = state.engine.clone();
+    let prepared = tokio::task::spawn_blocking(move || engine.piece_audio(job_id, source_id, index))
+        .await
+        .map_err(|e| AppError::new(id::INTERNAL, e))??;
+    Ok(tauri::ipc::Response::new(prepared.bytes))
+}
+
 /// One page of a source as a single-page PDF or an image, for the review view.
 #[tauri::command]
 pub async fn piece_preview(

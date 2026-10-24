@@ -160,7 +160,10 @@ export const en = {
 		notDone: 'Not processed yet.',
 		saved: 'Saved; the result files were updated.',
 		zoomIn: 'Zoom in',
-		zoomOut: 'Zoom out'
+		zoomOut: 'Zoom out',
+		noAudio: 'This piece could not be played.',
+		lines: 'Transcript lines',
+		noTimings: 'This model gave no timings, so lines cannot follow the recording.'
 	},
 	prompts: {
 		title: 'Prompts',

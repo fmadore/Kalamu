@@ -36,6 +36,8 @@ pub struct PieceView {
     pub reviewed: bool,
     pub model_version: Option<String>,
     pub cost_usd: Option<f64>,
+    /// Timed lines of a transcription, relative to the start of the piece.
+    pub segments: Vec<scriptorium_core::Segment>,
 }
 
 /// How a piece ended, for the job's final status.
@@ -463,6 +465,7 @@ impl Engine {
                 reviewed: correction.is_some_and(|c| c.reviewed),
                 model_version: result.as_ref().and_then(|r| r.output.model_version.clone()),
                 cost_usd: result.as_ref().and_then(|r| r.cost_usd),
+                segments: result.map(|r| r.output.segments).unwrap_or_default(),
             });
         }
         out.sort_by_key(|p| (p.index, p.setup_id));

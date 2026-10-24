@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import AudioPane from './AudioPane.svelte';
 	import PageImage from './PageImage.svelte';
 	import type { ComparisonReport } from '#lib/bindings/ComparisonReport.js';
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
@@ -30,6 +31,9 @@
 	const indices = $derived([...new Set(views.map((v) => v.index))].sort((a, b) => a - b));
 	const current = $derived(views.filter((v) => v.index === index));
 	const comparison = $derived((job?.setups.length ?? 0) > 1);
+	const recording = $derived(source?.kind === 'audio' || source?.kind === 'video');
+	/** Timed lines to show next to the player: from the first set-up that has any. */
+	const timed = $derived(current.find((v) => v.segments.length > 0) ?? current[0]);
 
 	function viewFor(setup: Setup): PieceView | undefined {
 		return current.find((v) => v.setup_id === setup.id);
@@ -198,7 +202,7 @@
 		<section class="pane source" aria-label={m.review.source}>
 			<div class="pane-head">
 				<span class="label">{m.review.source}</span>
-				<div>
+				<div hidden={recording}>
 					<button
 						class="btn ghost sm"
 						aria-label={m.review.zoomOut}
@@ -211,7 +215,17 @@
 					>
 				</div>
 			</div>
-			<PageImage {preview} {zoom} />
+			{#if recording}
+				<AudioPane
+					{jobId}
+					{sourceId}
+					{index}
+					offsetMs={timed?.piece.kind === 'segment' ? Number(timed.piece.start_ms) : 0}
+					segments={timed?.segments ?? []}
+				/>
+			{:else}
+				<PageImage {preview} {zoom} />
+			{/if}
 		</section>
 
 		{#each job?.setups ?? [] as setup, col (setup.id)}

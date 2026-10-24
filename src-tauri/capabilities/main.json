@@ -49,6 +49,7 @@
     "allow-job-pieces",
     "allow-source-pieces",
     "allow-piece-preview",
+    "allow-piece-audio",
     "allow-save-correction",
     "allow-export-source",
     "allow-compare-source",
