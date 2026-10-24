@@ -1,0 +1,60 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+default-members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99.1"
+license = "MIT"
+authors = ["Frédérick Madore"]
+repository = "https://github.com/fmadore/Scriptorium"
+
+[workspace.dependencies]
+scriptorium-core = { path = "crates/core" }
+scriptorium-catalog = { path = "crates/catalog" }
+scriptorium-prompts = { path = "crates/prompts" }
+scriptorium-media = { path = "crates/media" }
+scriptorium-providers = { path = "crates/providers" }
+scriptorium-store = { path = "crates/store" }
+scriptorium-export = { path = "crates/export" }
+scriptorium-engine = { path = "crates/engine" }
+
+anyhow = "1.0.104"
+async-trait = "0.1.92"
+base64 = "0.23.1"
+csv = "1.4.0"
+docx-rs = "0.4.22"
+futures = "0.3.34"
+hex = "0.4.3"
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "tiff", "webp", "bmp"] }
+lopdf = "0.46.0"
+reqwest = { version = "0.13.5", default-features = false, features = ["json", "multipart", "native-tls", "system-proxy"] }
+rusqlite = { version = "0.41.0", features = ["bundled"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+# wry pins sha2 0.10; moving ahead would ship two copies in the exe.
+sha2 = "0.10.9"
+similar = "3.2.1"
+tempfile = "3.27.0"
+thiserror = "2.0.21"
+time = { version = "0.3.55", features = ["serde", "formatting", "parsing", "macros"] }
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros", "sync", "time", "fs"] }
+tokio-util = "0.7.20"
+tracing = "0.1.44"
+ts-rs = { version = "12.0.1", features = ["uuid-impl", "serde-json-impl", "no-serde-warnings"] }
+uuid = { version = "1.29.0", features = ["v4", "serde"] }
+wiremock = "0.6.5"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

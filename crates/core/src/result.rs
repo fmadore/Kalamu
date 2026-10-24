@@ -1,0 +1,156 @@
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
+use crate::{JobId, LanguageCode, ProviderId, SetupId, SourceId, Timestamp};
+
+/// Which part of a source a piece covers.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[ts(export)]
+pub enum PieceRef {
+    /// One page of a PDF or image, numbered from 1 as in the original.
+    Page { number: u32 },
+    /// One segment of a recording.
+    Segment {
+        index: u32,
+        #[ts(type = "number")]
+        start_ms: u64,
+        #[ts(type = "number")]
+        end_ms: u64,
+    },
+}
+
+impl PieceRef {
+    /// A stable string for cache keys and database rows.
+    pub fn descriptor(&self) -> String {
+        match self {
+            Self::Page { number } => format!("page:{number}"),
+            Self::Segment {
+                index,
+                start_ms,
+                end_ms,
+            } => format!("segment:{index}:{start_ms}-{end_ms}"),
+        }
+    }
+}
+
+/// A timed stretch of a transcription.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct Segment {
+    #[ts(type = "number")]
+    pub start_ms: u64,
+    #[ts(type = "number")]
+    pub end_ms: u64,
+    pub speaker: Option<String>,
+    pub text: String,
+}
+
+/// What a provider call consumed, for cost tracking.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct Usage {
+    #[ts(type = "number")]
+    pub input_tokens: u64,
+    #[ts(type = "number")]
+    pub output_tokens: u64,
+    /// Seconds of audio billed, for per-minute pricing.
+    pub audio_seconds: f64,
+    /// Pages billed, for per-page pricing.
+    pub pages: u32,
+}
+
+impl Usage {
+    pub fn add(&mut self, other: &Usage) {
+        self.input_tokens += other.input_tokens;
+        self.output_tokens += other.output_tokens;
+        self.audio_seconds += other.audio_seconds;
+        self.pages += other.pages;
+    }
+}
+
+/// The result of processing one piece.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProcessOutput {
+    pub text: String,
+    /// Timed segments for transcriptions; empty for text extraction.
+    #[serde(default)]
+    pub segments: Vec<Segment>,
+    pub detected_language: Option<LanguageCode>,
+    #[serde(default)]
+    pub usage: Usage,
+    /// The exact model version the provider reports, which may differ from the name requested.
+    pub model_version: Option<String>,
+}
+
+/// A cached result, keyed by [`crate::CacheKey`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct StoredResult {
+    pub cache_key: String,
+    pub provider: ProviderId,
+    pub model: String,
+    pub output: ProcessOutput,
+    pub cost_usd: Option<f64>,
+    #[ts(type = "number")]
+    pub duration_ms: u64,
+    pub created_at: Timestamp,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum PieceStatus {
+    Pending,
+    Running,
+    Done,
+    /// Done earlier with the same source and settings; not sent again.
+    Cached,
+    Failed,
+}
+
+impl PieceStatus {
+    pub fn is_finished(self) -> bool {
+        matches!(self, Self::Done | Self::Cached)
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Running => "running",
+            Self::Done => "done",
+            Self::Cached => "cached",
+            Self::Failed => "failed",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        Some(match s {
+            "pending" => Self::Pending,
+            "running" => Self::Running,
+            "done" => Self::Done,
+            "cached" => Self::Cached,
+            "failed" => Self::Failed,
+            _ => return None,
+        })
+    }
+}
+
+/// Progress of one piece of one source under one set-up.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct PieceState {
+    pub job_id: JobId,
+    pub setup_id: SetupId,
+    pub source_id: SourceId,
+    /// Position within the source, from 0.
+    pub index: u32,
+    pub piece: PieceRef,
+    pub status: PieceStatus,
+    pub cache_key: Option<String>,
+    /// A readable reason when the piece failed.
+    pub error: Option<String>,
+    pub attempts: u32,
+    pub updated_at: Timestamp,
+}
