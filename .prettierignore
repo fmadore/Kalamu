@@ -6,3 +6,7 @@ target/
 src/lib/bindings/
 crates/
 package-lock.json
+.claude/
+.impeccable/
+# Prose is wrapped by hand.
+*.md
