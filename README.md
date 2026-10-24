@@ -102,6 +102,30 @@ paying twice.
 - **Exports come from the cache.** Choosing another output format later regenerates the file from
   stored results, without calling the provider again.
 
+## Comparison mode
+
+Which model reads a given archive best is an empirical question, and the answer changes from
+one collection to another. Comparison mode runs the same documents through several set-ups and
+shows the results side by side, so users can choose with evidence rather than guesswork.
+
+- **Pick two or more set-ups**, each a provider, model and prompt: Gemini Flash against Gemini
+  Pro, Mistral against Gemini, or the same model with a diplomatic and a normalized prompt. It
+  works for text extraction first, and for audio transcription later.
+- **Try a sample first.** Comparison can run on a few pages or minutes before committing a whole
+  folder, and the cost estimate shows each set-up separately.
+- **Side-by-side view** per page or segment, next to the source image or audio, with the
+  differences between outputs highlighted, so disagreements on names, numbers and dates stand
+  out.
+- **Scores when a reference exists.** If the user provides or corrects a reference
+  transcription for some pages, the app computes character and word error rates for each
+  set-up; without one, it reports how far the outputs agree with each other.
+- **Keep the best, or all.** Choose a set-up per document or per page for the final export, or
+  export every version with the set-up in the file name. A comparison report (`.csv` and
+  `.html`) records the set-ups, costs, durations and scores.
+- **Built on the cache.** Each set-up is cached separately, so adding a third model to an
+  existing comparison only runs the new one, and the chosen set-up's results are not paid for
+  twice when processing the rest of the folder.
+
 ## Progress
 
 The user should always see what the app is doing, how far it is, and what it costs.
@@ -247,7 +271,8 @@ Each stage ends with an architecture review (see [AGENTS.md](AGENTS.md)) before 
    and update pull requests for Rust, front-end and GitHub Actions dependencies.
 2. **Text extraction (OCR/HTR)** with **Google Gemini, OpenAI, Anthropic Claude and Mistral**:
    PDF and image preparation, the extraction presets, language selection, and exports to
-   `.txt`, `.md`, `.docx` and `.json`, then searchable PDF and ALTO/PAGE XML.
+   `.txt`, `.md`, `.docx` and `.json`, then searchable PDF and ALTO/PAGE XML, and comparison
+   mode.
 3. **Audio transcription** with Gemini, OpenAI and Mistral (Voxtral); Claude does not accept
    audio. FFmpeg conversion and splitting, speakers and timestamps, and `.srt`, `.vtt` and
    `.csv` exports.
