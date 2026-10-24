@@ -65,7 +65,8 @@ const source = {
 	kind: 'pdf' as const,
 	page_count: 3,
 	duration_ms: null,
-	split_spreads: false
+	split_spreads: false,
+	even_out_volume: false
 };
 
 const setupA = {

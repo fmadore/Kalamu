@@ -4,7 +4,7 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { warningText } from '#lib/newJob.js';
+	import { duration, warningText } from '#lib/newJob.js';
 	import { pickFiles, pickFolder } from '#lib/tauri.js';
 
 	let {
@@ -25,6 +25,11 @@
 	function setSplit(index: number, split: boolean) {
 		const source = files[index].source;
 		if (source) source.split_spreads = split;
+	}
+
+	function setEvenOut(index: number, on: boolean) {
+		const source = files[index].source;
+		if (source) source.even_out_volume = on;
 	}
 </script>
 
@@ -60,6 +65,9 @@
 							{#if file.source?.page_count}
 								<span class="chip">{m.newJob.pages(file.source.page_count)}</span>
 							{/if}
+							{#if file.source?.duration_ms}
+								<span class="chip">{duration(Number(file.source.duration_ms), m)}</span>
+							{/if}
 							{#if file.error}
 								<span class="chip danger">{describeError(file.error, m)}</span>
 							{/if}
@@ -79,6 +87,16 @@
 										onchange={(e) => setSplit(i, e.currentTarget.checked)}
 									/>
 									{m.newJob.splitSpreads}
+								</label>
+							{/if}
+							{#if w.kind === 'quiet_recording' && file.source}
+								<label class="inline">
+									<input
+										type="checkbox"
+										checked={file.source.even_out_volume}
+										onchange={(e) => setEvenOut(i, e.currentTarget.checked)}
+									/>
+									{m.newJob.evenOut}
 								</label>
 							{/if}
 						</div>

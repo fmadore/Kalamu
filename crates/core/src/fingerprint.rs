@@ -18,10 +18,11 @@ impl CacheKey {
         piece: &PieceRef,
         setup: &Setup,
         languages: &LanguageChoice,
+        preprocessing: &[String],
     ) -> Self {
         // Only what changes the model's answer goes in: not the set-up's id or label, nor the
         // preset's name.
-        let material = serde_json::json!({
+        let mut material = serde_json::json!({
             "pipeline": PIPELINE_VERSION,
             "task": task.as_str(),
             "source": source_sha256,
@@ -33,6 +34,10 @@ impl CacheKey {
             "options": setup.options,
             "languages": languages,
         });
+        // Added only when there is something, so keys made before fixes existed stay valid.
+        if !preprocessing.is_empty() {
+            material["preprocessing"] = serde_json::json!(preprocessing);
+        }
         Self(sha256_hex(material.to_string().as_bytes()))
     }
 
@@ -78,6 +83,7 @@ mod tests {
             &page,
             &setup("Transcribe."),
             &LanguageChoice::Auto,
+            &[],
         );
         let b = CacheKey::compute(
             Task::TextExtraction,
@@ -85,6 +91,7 @@ mod tests {
             &page,
             &other,
             &LanguageChoice::Auto,
+            &[],
         );
         assert_eq!(a, b);
     }
@@ -98,6 +105,7 @@ mod tests {
             &page,
             &setup("A"),
             &LanguageChoice::Auto,
+            &[],
         );
         let prompt = CacheKey::compute(
             Task::TextExtraction,
@@ -105,6 +113,7 @@ mod tests {
             &page,
             &setup("B"),
             &LanguageChoice::Auto,
+            &[],
         );
         let other_page = CacheKey::compute(
             Task::TextExtraction,
@@ -112,6 +121,7 @@ mod tests {
             &PieceRef::page(2),
             &setup("A"),
             &LanguageChoice::Auto,
+            &[],
         );
         let language = CacheKey::compute(
             Task::TextExtraction,
@@ -119,9 +129,19 @@ mod tests {
             &page,
             &setup("A"),
             &LanguageChoice::Explicit(vec![LanguageCode::new("fr")]),
+            &[],
+        );
+        let evened = CacheKey::compute(
+            Task::TextExtraction,
+            "abc",
+            &page,
+            &setup("A"),
+            &LanguageChoice::Auto,
+            &["even_out_volume".to_string()],
         );
         assert_ne!(base, prompt);
         assert_ne!(base, other_page);
         assert_ne!(base, language);
+        assert_ne!(base, evened, "a fix to the input changes the result");
     }
 }

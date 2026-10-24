@@ -44,7 +44,8 @@ pub async fn piece_preview(
         Some(o) => o,
         None => {
             let s = source.clone();
-            let o = tokio::task::spawn_blocking(move || OpenSource::open(&s))
+            // Previews are of pages only; recordings need no FFmpeg here.
+            let o = tokio::task::spawn_blocking(move || OpenSource::open(&s, None))
                 .await
                 .map_err(|e| AppError::new(id::INTERNAL, e))?
                 .map_err(|e| AppError::new("media.read", e))?;
@@ -53,7 +54,11 @@ pub async fn piece_preview(
             o
         }
     };
-    let pieces = opened.pieces(source.split_spreads, job.settings.sample_pages);
+    let pieces = opened.pieces(
+        source.split_spreads,
+        job.settings.sample_pages,
+        scriptorium_media::DEFAULT_PIECE_MS,
+    );
     let piece = pieces
         .get(index as usize)
         .cloned()

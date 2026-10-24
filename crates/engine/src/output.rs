@@ -8,7 +8,7 @@ use scriptorium_core::fingerprint::sha256_hex;
 use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
 use scriptorium_core::{
     CacheKey, ExportDocument, ExportPart, Job, OutputDestination, PieceRef, Provenance, Segment,
-    SetupId, SourceId, Timestamp, Usage,
+    SetupId, SourceFile, SourceId, Timestamp, Usage,
 };
 
 use crate::{Engine, EngineError};
@@ -143,7 +143,11 @@ impl Engine {
             let segments = if corrected_text.is_some() {
                 Vec::new()
             } else {
-                absolute(&state.piece, &result.output.segments)
+                let previous_end = parts.last().and_then(|p: &ExportPart| match p.piece {
+                    PieceRef::Segment { end_ms, .. } => Some(end_ms),
+                    PieceRef::Page { .. } => None,
+                });
+                absolute(&state.piece, &result.output.segments, previous_end)
             };
             parts.push(ExportPart {
                 piece: state.piece.clone(),
@@ -154,10 +158,7 @@ impl Engine {
             });
         }
 
-        let mut preprocessing = Vec::new();
-        if source.split_spreads {
-            preprocessing.push("split_spreads".to_string());
-        }
+        let mut preprocessing = preprocessing(&source);
         if let Some(n) = job.settings.sample_pages {
             preprocessing.push(format!("sample_first_{n}_pages"));
         }
@@ -208,12 +209,27 @@ impl Engine {
     }
 }
 
+/// Fixes applied to a source's working copies, for provenance and the cache key.
+pub(crate) fn preprocessing(source: &SourceFile) -> Vec<String> {
+    let mut out = Vec::new();
+    if source.split_spreads {
+        out.push("split_spreads".to_string());
+    }
+    if source.even_out_volume {
+        out.push("even_out_volume".to_string());
+    }
+    out
+}
+
 /// Segment times from a provider are relative to the piece; exports want the recording's clock.
-fn absolute(piece: &PieceRef, segments: &[Segment]) -> Vec<Segment> {
+/// Where a piece starts before the previous one ended (a cut with no pause, repeated so the
+/// word on it is heard whole), segments that end inside the repeat were already transcribed.
+fn absolute(piece: &PieceRef, segments: &[Segment], previous_end: Option<u64>) -> Vec<Segment> {
     let offset = match piece {
         PieceRef::Segment { start_ms, .. } => *start_ms,
         PieceRef::Page { .. } => 0,
     };
+    let repeated_until = previous_end.filter(|end| *end > offset);
     segments
         .iter()
         .map(|s| Segment {
@@ -221,6 +237,7 @@ fn absolute(piece: &PieceRef, segments: &[Segment]) -> Vec<Segment> {
             end_ms: s.end_ms + offset,
             ..s.clone()
         })
+        .filter(|s| repeated_until.is_none_or(|end| s.end_ms > end))
         .collect()
 }
 

@@ -159,6 +159,7 @@
 		<p>{m.settings.version(app.info?.version ?? '')}</p>
 		<p class="small">{m.settings.dataFolder}: <span class="mono">{app.info?.data_dir}</span></p>
 		<p class="muted small">{m.settings.privacy}</p>
+		<p class="muted small">{m.settings.credits}</p>
 	</section>
 </div>
 

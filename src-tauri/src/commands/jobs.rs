@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use scriptorium_catalog::CostEstimate;
 use scriptorium_core::{InputKind, Job, JobId, JobSummary, PieceState, Task};
-use scriptorium_engine::{Engine, NewJob};
+use scriptorium_engine::NewJob;
 use tauri::State;
 
 use super::{AppState, EstimateRequest, EstimateRow, InspectedFile};
@@ -46,9 +46,14 @@ pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
 }
 
 #[tauri::command]
-pub async fn inspect_files(paths: Vec<String>) -> CmdResult<Vec<InspectedFile>> {
+pub async fn inspect_files(
+    state: State<'_, AppState>,
+    paths: Vec<String>,
+) -> CmdResult<Vec<InspectedFile>> {
+    let engine = state.engine.clone();
     tokio::task::spawn_blocking(move || {
-        Engine::inspect(&paths)
+        engine
+            .inspect(&paths)
             .into_iter()
             .zip(paths)
             .map(|(result, path)| match result {

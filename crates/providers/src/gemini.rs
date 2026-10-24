@@ -162,6 +162,7 @@ impl Provider for Gemini {
                 "audio/flac",
                 "audio/ogg",
                 "audio/aac",
+                "audio/webm",
             ],
         }
     }

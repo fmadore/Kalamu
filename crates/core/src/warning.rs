@@ -21,6 +21,14 @@ pub enum WarningKind {
         #[ts(type = "number")]
         size_bytes: u64,
     },
+    /// A video or an audio format that needs FFmpeg, which was not found.
+    ToolMissing,
+    /// A video or recording with no sound to transcribe.
+    NoSoundTrack,
+    /// A recording long enough to be split into several pieces.
+    LongRecording { minutes: u32, pieces: u32 },
+    /// Speech so quiet that words may be missed.
+    QuietRecording { mean_db: i32 },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]

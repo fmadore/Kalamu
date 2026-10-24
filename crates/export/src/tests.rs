@@ -23,6 +23,7 @@ fn source(name: &str, kind: InputKind) -> SourceFile {
         page_count: None,
         duration_ms: None,
         split_spreads: false,
+        even_out_volume: false,
     }
 }
 

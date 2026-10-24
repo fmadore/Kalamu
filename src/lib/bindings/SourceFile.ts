@@ -25,4 +25,8 @@ duration_ms: number | null,
 /**
  * Split open double-page spreads into two pages before processing.
  */
-split_spreads: boolean, };
+split_spreads: boolean, 
+/**
+ * Even out a recording's volume before transcription (quiet or uneven speakers).
+ */
+even_out_volume: boolean, };

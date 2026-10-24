@@ -78,6 +78,18 @@ pub fn run() {
             let http = scriptorium_providers::client();
             let keys = Arc::new(CredentialKeys::default());
             let models = scriptorium_offline::ModelManager::new(data.join("whisper-models"));
+            // The bundled FFmpeg sits next to the executable (Tauri's sidecar layout).
+            let app_dir: Vec<std::path::PathBuf> = std::env::current_exe()
+                .ok()
+                .and_then(|exe| exe.parent().map(std::path::Path::to_path_buf))
+                .into_iter()
+                .collect();
+            let ffmpeg = scriptorium_media::Ffmpeg::locate(&app_dir);
+            if ffmpeg.is_none() {
+                tracing::warn!(
+                    "FFmpeg not found: recordings are sent whole and video is unavailable"
+                );
+            }
             let mut providers = scriptorium_providers::registry(http.clone());
             providers.push(Arc::new(scriptorium_offline::Whisper::new(models.clone())));
             let engine = Engine::new(
@@ -89,6 +101,7 @@ pub fn run() {
                 EngineConfig {
                     concurrency: settings.concurrency.clamp(1, 8) as usize,
                     app_version: env!("CARGO_PKG_VERSION").into(),
+                    ffmpeg,
                     ..EngineConfig::default()
                 },
             );

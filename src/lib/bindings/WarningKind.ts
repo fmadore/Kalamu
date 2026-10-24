@@ -3,4 +3,4 @@
 /**
  * Something about an input that is likely to hurt the result. Never blocks a job.
  */
-export type WarningKind = { "kind": "double_page_spread", pages: Array<number>, } | { "kind": "low_resolution", pages: Array<number>, dpi: number, } | { "kind": "has_text_layer", pages_with_text: number, } | { "kind": "unsupported_image", detail: string, } | { "kind": "large_file", size_bytes: number, };
+export type WarningKind = { "kind": "double_page_spread", pages: Array<number>, } | { "kind": "low_resolution", pages: Array<number>, dpi: number, } | { "kind": "has_text_layer", pages_with_text: number, } | { "kind": "unsupported_image", detail: string, } | { "kind": "large_file", size_bytes: number, } | { "kind": "tool_missing" } | { "kind": "no_sound_track" } | { "kind": "long_recording", minutes: number, pieces: number, } | { "kind": "quiet_recording", mean_db: number, };

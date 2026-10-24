@@ -2,10 +2,13 @@
 //!
 //! PDFs are cut into single-page PDFs, never rendered, as in zmo- and iwac-ai-pipelines: every
 //! first-stage provider reads PDF pages directly, at full quality. Images are passed through
-//! when the provider takes their format, and converted otherwise. Originals are only read,
-//! never modified.
+//! when the provider takes their format, and converted otherwise. Recordings and videos are
+//! split at pauses and converted by the bundled FFmpeg. Originals are only read, never
+//! modified.
 
+mod audio;
 mod checks;
+mod ffmpeg;
 mod image_source;
 mod pdf;
 
@@ -17,6 +20,8 @@ use scriptorium_core::{InputKind, InputWarning, PieceRef, PreparedInput, SourceF
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
+pub use audio::{AudioSource, DEFAULT_PIECE_MS, audio_mime, plan};
+pub use ffmpeg::{AudioFormat, Ffmpeg, Probe};
 pub use image_source::ImageSource;
 pub use pdf::PdfSource;
 #[cfg(any(test, feature = "test-support"))]
@@ -38,10 +43,13 @@ pub enum MediaError {
     NoSuchPage(String),
     #[error("{0}")]
     NeedsConversion(String),
+    #[error("FFmpeg failed: {0}")]
+    Tool(String),
 }
 
-/// Hashes a file and works out what it is, without loading it all into memory twice.
-pub fn inspect(path: &Path) -> Result<SourceFile, MediaError> {
+/// Hashes a file and works out what it is, without loading it all into memory twice. FFmpeg,
+/// when there is one, gives the length of recordings and videos.
+pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, MediaError> {
     let read_err = |e: std::io::Error| MediaError::Read {
         path: path.display().to_string(),
         message: e.to_string(),
@@ -52,6 +60,10 @@ pub fn inspect(path: &Path) -> Result<SourceFile, MediaError> {
     let page_count = match kind {
         InputKind::Pdf => Some(PdfSource::open(path)?.page_count()),
         InputKind::Image => ImageSource::open(path).map(|i| i.page_count()).ok(),
+        _ => None,
+    };
+    let duration_ms = match kind {
+        InputKind::Audio | InputKind::Video => audio::probe(path, ffmpeg).map(|p| p.duration_ms),
         _ => None,
     };
     Ok(SourceFile {
@@ -65,8 +77,9 @@ pub fn inspect(path: &Path) -> Result<SourceFile, MediaError> {
         size_bytes,
         kind,
         page_count,
-        duration_ms: None,
+        duration_ms,
         split_spreads: false,
+        even_out_volume: false,
     })
 }
 
@@ -92,65 +105,32 @@ pub fn hash_file(path: &Path) -> Result<String, MediaError> {
 pub enum OpenSource {
     Pdf(Box<PdfSource>),
     Image(ImageSource),
-    /// A recording sent whole, in its own format. Splitting long recordings and converting
-    /// formats a provider does not take need the bundled FFmpeg, which comes later.
+    /// A recording, or the sound track of a video.
     Audio(AudioSource),
 }
 
-pub struct AudioSource {
-    path: std::path::PathBuf,
-    mime: &'static str,
-    duration_ms: u64,
-}
-
-/// The MIME type providers expect for an audio file, from its extension.
-pub fn audio_mime(path: &Path) -> Option<&'static str> {
-    let ext = path.extension()?.to_str()?.to_ascii_lowercase();
-    Some(match ext.as_str() {
-        "mp3" => "audio/mpeg",
-        "wav" => "audio/wav",
-        "m4a" => "audio/mp4",
-        "aac" => "audio/aac",
-        "flac" => "audio/flac",
-        "ogg" | "opus" => "audio/ogg",
-        "webm" => "audio/webm",
-        _ => return None,
-    })
-}
-
 impl OpenSource {
-    pub fn open(source: &SourceFile) -> Result<Self, MediaError> {
+    pub fn open(source: &SourceFile, ffmpeg: Option<&Ffmpeg>) -> Result<Self, MediaError> {
         let path = Path::new(&source.path);
         match source.kind {
             InputKind::Pdf => Ok(Self::Pdf(Box::new(PdfSource::open(path)?))),
             InputKind::Image => Ok(Self::Image(ImageSource::open(path)?)),
-            InputKind::Audio => Ok(Self::Audio(AudioSource {
-                path: path.to_path_buf(),
-                mime: audio_mime(path).ok_or(MediaError::UnsupportedKind)?,
-                duration_ms: source.duration_ms.unwrap_or(0),
-            })),
-            InputKind::Video => Err(MediaError::NeedsConversion(
-                "Video needs its audio extracted, which comes with the bundled FFmpeg. Export the                  sound as MP3 or M4A in the meantime."
-                    .into(),
-            )),
+            InputKind::Audio | InputKind::Video => {
+                Ok(Self::Audio(AudioSource::open(source, ffmpeg)?))
+            }
             InputKind::Text => Err(MediaError::UnsupportedKind),
         }
     }
 
     /// The pieces to process, in reading order: every page, each spread as two pages when the
-    /// user asked for it, and only the first `sample` pages when trying a sample.
-    pub fn pieces(&self, split_spreads: bool, sample: Option<u32>) -> Vec<PieceRef> {
+    /// user asked for it, and only the first `sample` pages when trying a sample; recordings
+    /// in pieces of at most about `piece_ms`, cut at pauses (which decodes the whole file).
+    pub fn pieces(&self, split_spreads: bool, sample: Option<u32>, piece_ms: u64) -> Vec<PieceRef> {
         let mut pieces = Vec::new();
         let pages = match self {
             Self::Pdf(pdf) => pdf.page_count(),
             Self::Image(img) => img.page_count(),
-            Self::Audio(audio) => {
-                return vec![PieceRef::Segment {
-                    index: 0,
-                    start_ms: 0,
-                    end_ms: audio.duration_ms,
-                }];
-            }
+            Self::Audio(audio) => return audio.pieces(piece_ms),
         };
         let last = sample.map_or(pages, |n| n.min(pages));
         for number in 1..=last {
@@ -185,27 +165,7 @@ impl OpenSource {
         file_stem: &str,
     ) -> Result<PreparedInput, MediaError> {
         if let Self::Audio(audio) = self {
-            if !accepted.contains(&audio.mime) {
-                return Err(MediaError::NeedsConversion(format!(
-                    "This model does not accept {} audio; converting it needs the bundled FFmpeg,                      which comes later. Choose another model, or convert the file to MP3.",
-                    audio.mime.trim_start_matches("audio/")
-                )));
-            }
-            let bytes = std::fs::read(&audio.path).map_err(|e| MediaError::Read {
-                path: audio.path.display().to_string(),
-                message: e.to_string(),
-            })?;
-            let ext = audio
-                .path
-                .extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("mp3");
-            return Ok(PreparedInput {
-                piece: piece.clone(),
-                file_name: format!("{file_stem}.{ext}"),
-                mime: audio.mime.to_string(),
-                bytes,
-            });
+            return audio.prepare(piece, accepted, file_stem);
         }
         let PieceRef::Page { number, half } = piece else {
             return Err(MediaError::NoSuchPage(piece.label()));
@@ -246,6 +206,7 @@ impl OpenSource {
         let kinds = match self {
             Self::Pdf(pdf) => checks::pdf_warnings(pdf),
             Self::Image(img) => checks::image_warnings(img),
+            // Recordings are checked with FFmpeg by `recording_warnings`.
             Self::Audio(_) => Vec::new(),
         };
         kinds
@@ -253,6 +214,19 @@ impl OpenSource {
             .map(|kind| InputWarning { source_id, kind })
             .collect()
     }
+}
+
+/// Checks on a recording or video before a job: FFmpeg missing, no sound track, quiet, long.
+pub fn recording_warnings(source: &SourceFile, ffmpeg: Option<&Ffmpeg>) -> Vec<InputWarning> {
+    let path = Path::new(&source.path);
+    let probe = audio::probe(path, ffmpeg);
+    audio::warnings(path, source.kind, probe.as_ref(), ffmpeg)
+        .into_iter()
+        .map(|kind| InputWarning {
+            source_id: source.id,
+            kind,
+        })
+        .collect()
 }
 
 /// Audio returns earlier in `prepare`; this keeps the match exhaustive without a panic.

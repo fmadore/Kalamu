@@ -42,7 +42,7 @@ fn spreads_are_detected_and_split_in_two() -> Result<(), MediaError> {
         WarningKind::DoublePageSpread { pages } if pages == &vec![2]
     )));
 
-    let pieces = open.pieces(true, None);
+    let pieces = open.pieces(true, None, crate::DEFAULT_PIECE_MS);
     assert_eq!(
         pieces,
         vec![
@@ -70,8 +70,14 @@ fn samples_take_only_the_first_pages() -> Result<(), MediaError> {
     let open = OpenSource::Pdf(Box::new(PdfSource::from_bytes(&sample_pdf(
         &[A4; 5], false,
     ))?));
-    assert_eq!(open.pieces(false, Some(2)).len(), 2);
-    assert_eq!(open.pieces(false, Some(50)).len(), 5);
+    assert_eq!(
+        open.pieces(false, Some(2), crate::DEFAULT_PIECE_MS).len(),
+        2
+    );
+    assert_eq!(
+        open.pieces(false, Some(50), crate::DEFAULT_PIECE_MS).len(),
+        5
+    );
     Ok(())
 }
 
@@ -118,7 +124,7 @@ fn files_are_inspected_and_hashed() -> Result<(), MediaError> {
     let path = dir.path().join("issue.pdf");
     std::fs::write(&path, sample_pdf(&[A4, A4], false))
         .map_err(|e| MediaError::Image(e.to_string()))?;
-    let source = inspect(&path)?;
+    let source = inspect(&path, None)?;
     assert_eq!(source.kind, InputKind::Pdf);
     assert_eq!(source.page_count, Some(2));
     assert_eq!(source.sha256.len(), 64);
@@ -164,9 +170,9 @@ fn recordings_go_whole_when_the_model_takes_their_format() -> Result<(), MediaEr
     let dir = tempfile::tempdir().map_err(|e| MediaError::Image(e.to_string()))?;
     let path = dir.path().join("entretien.m4a");
     std::fs::write(&path, b"fake m4a").map_err(|e| MediaError::Image(e.to_string()))?;
-    let source = inspect(&path)?;
-    let open = OpenSource::open(&source)?;
-    let pieces = open.pieces(false, None);
+    let source = inspect(&path, None)?;
+    let open = OpenSource::open(&source, None)?;
+    let pieces = open.pieces(false, None, crate::DEFAULT_PIECE_MS);
     assert_eq!(pieces.len(), 1);
     let input = open.prepare(&pieces[0], &["audio/mpeg", "audio/mp4"], "entretien")?;
     assert_eq!(input.mime, "audio/mp4");

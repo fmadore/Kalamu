@@ -21,6 +21,7 @@ fn job() -> Job {
             page_count: Some(2),
             duration_ms: None,
             split_spreads: false,
+            even_out_volume: false,
         }],
         setups: vec![Setup {
             id: SetupId::new(),

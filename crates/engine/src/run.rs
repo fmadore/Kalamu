@@ -106,7 +106,8 @@ impl Engine {
             }
             let opened = {
                 let source = source.clone();
-                tokio::task::spawn_blocking(move || OpenSource::open(&source))
+                let ffmpeg = self.config.ffmpeg.clone();
+                tokio::task::spawn_blocking(move || OpenSource::open(&source, ffmpeg.as_ref()))
                     .await
                     .map_err(|e| EngineError::Output(e.to_string()))?
             };
@@ -122,7 +123,22 @@ impl Engine {
                     continue;
                 }
             };
-            let pieces = opened.pieces(source.split_spreads, job.settings.sample_pages);
+            // A recording resumed keeps the pieces planned the first time: planning decodes the
+            // whole file, and the cuts must not move under results already stored.
+            let stored = stored_pieces(&existing, &job, source);
+            let pieces = if stored.is_empty() {
+                let (opened, split, sample, length) = (
+                    opened.clone(),
+                    source.split_spreads,
+                    job.settings.sample_pages,
+                    self.piece_length(&job),
+                );
+                tokio::task::spawn_blocking(move || opened.pieces(split, sample, length))
+                    .await
+                    .map_err(|e| EngineError::Output(e.to_string()))?
+            } else {
+                stored
+            };
             self.emit(ProgressEvent::SourcePrepared {
                 job_id,
                 source_id: source.id,
@@ -140,6 +156,7 @@ impl Engine {
                         piece,
                         setup,
                         &job.settings.languages,
+                        &crate::output::preprocessing(source),
                     );
                     let state = match existing.get(&(setup.id, source.id, index)) {
                         Some(s)
@@ -451,6 +468,31 @@ impl Engine {
         out.sort_by_key(|p| (p.index, p.setup_id));
         Ok(out)
     }
+}
+
+/// The pieces already recorded for a recording, in order; empty for documents, whose pages are
+/// cheap to list again, and for a recording not started yet.
+fn stored_pieces(
+    existing: &HashMap<(SetupId, SourceId, u32), PieceState>,
+    job: &Job,
+    source: &SourceFile,
+) -> Vec<PieceRef> {
+    let audio = matches!(
+        source.kind,
+        scriptorium_core::InputKind::Audio | scriptorium_core::InputKind::Video
+    );
+    let Some(first) = job.setups.first() else {
+        return Vec::new();
+    };
+    if !audio {
+        return Vec::new();
+    }
+    let mut mine: Vec<&PieceState> = existing
+        .values()
+        .filter(|p| p.setup_id == first.id && p.source_id == source.id)
+        .collect();
+    mine.sort_by_key(|p| p.index);
+    mine.into_iter().map(|p| p.piece.clone()).collect()
 }
 
 enum StopKind {

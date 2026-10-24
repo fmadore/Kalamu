@@ -224,14 +224,8 @@ impl Provider for OpenAi {
     fn accepted_inputs(&self, task: Task) -> &'static [&'static str] {
         match task {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
-            Task::AudioTranscription => &[
-                "audio/mpeg",
-                "audio/wav",
-                "audio/mp4",
-                "audio/webm",
-                "audio/flac",
-                "audio/ogg",
-            ],
+            // The formats the speech-to-text guide lists (October 2026): not FLAC or Ogg.
+            Task::AudioTranscription => &["audio/mpeg", "audio/wav", "audio/mp4", "audio/webm"],
         }
     }
 

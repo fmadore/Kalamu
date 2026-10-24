@@ -1,0 +1,9 @@
+{
+	"comment": "The FFmpeg build bundled with the app: archives produced by .github/workflows/ffmpeg.yml and published as assets of the GitHub release named in `release`. Fill `sha256` from the run's .zip.sha256 files; fetch-ffmpeg refuses an archive whose hash differs.",
+	"release": "ffmpeg-9.0.2-1",
+	"version": "9.0.2",
+	"archives": {
+		"x86_64-pc-windows-msvc": { "sha256": null },
+		"aarch64-pc-windows-msvc": { "sha256": null }
+	}
+}

@@ -17,11 +17,11 @@ use std::time::Duration;
 
 use scriptorium_catalog::Catalog;
 use scriptorium_core::{
-    ApiKey, Correction, InputWarning, Job, JobId, JobStatus, JobStore, JobSummary, PieceStatus,
-    ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceFile, SourceId, StopSignal,
-    StoreError, Timestamp,
+    ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStatus, JobStore, JobSummary,
+    PieceStatus, ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceFile, SourceId,
+    StopSignal, StoreError, Timestamp,
 };
-use scriptorium_media::{MediaError, OpenSource};
+use scriptorium_media::{Ffmpeg, MediaError, OpenSource};
 use scriptorium_prompts::{PromptError, PromptLibrary};
 use thiserror::Error;
 use tokio::sync::broadcast;
@@ -47,6 +47,8 @@ pub struct EngineConfig {
     pub base_delay: Duration,
     /// Version written into provenance.
     pub app_version: String,
+    /// The bundled FFmpeg, for recordings and videos; `None` when it was not found.
+    pub ffmpeg: Option<Ffmpeg>,
 }
 
 impl Default for EngineConfig {
@@ -56,6 +58,7 @@ impl Default for EngineConfig {
             max_attempts: 4,
             base_delay: Duration::from_secs(5),
             app_version: "0.0.0".into(),
+            ffmpeg: None,
         }
     }
 }
@@ -204,20 +207,44 @@ impl Engine {
         Ok(self.store.delete_job(id)?)
     }
 
-    /// Inspects files for a new job: hash, kind, page count, and the input checks.
+    /// Inspects files for a new job: hash, kind, page count or length, and the input checks.
     pub fn inspect(
+        &self,
         paths: &[impl AsRef<Path>],
     ) -> Vec<Result<(SourceFile, Vec<InputWarning>), EngineError>> {
+        let ffmpeg = self.config.ffmpeg.as_ref();
         paths
             .iter()
             .map(|p| {
-                let source = scriptorium_media::inspect(p.as_ref())?;
-                let warnings = OpenSource::open(&source)
-                    .map(|open| open.warnings(source.id))
-                    .unwrap_or_default();
+                let source = scriptorium_media::inspect(p.as_ref(), ffmpeg)?;
+                let warnings = match source.kind {
+                    InputKind::Audio | InputKind::Video => {
+                        scriptorium_media::recording_warnings(&source, ffmpeg)
+                    }
+                    _ => OpenSource::open(&source, ffmpeg)
+                        .map(|open| open.warnings(source.id))
+                        .unwrap_or_default(),
+                };
                 Ok((source, warnings))
             })
             .collect()
+    }
+
+    /// The bundled FFmpeg, for the app's previews.
+    pub fn ffmpeg(&self) -> Option<&Ffmpeg> {
+        self.config.ffmpeg.as_ref()
+    }
+
+    /// How long a recording's pieces may be for every set-up of a job: twenty minutes, or less
+    /// when a model accepts less (with room for the last piece, which may run a quarter over).
+    pub(crate) fn piece_length(&self, job: &Job) -> u64 {
+        let catalog = self.catalog();
+        job.setups
+            .iter()
+            .filter_map(|s| catalog.model(&s.provider, &s.model))
+            .filter_map(|m| m.limits.max_audio_minutes)
+            .map(|minutes| u64::from(minutes) * 60_000 * 4 / 5)
+            .fold(scriptorium_media::DEFAULT_PIECE_MS, u64::min)
     }
 
     pub fn is_running(&self, id: JobId) -> bool {

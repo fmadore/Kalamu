@@ -295,10 +295,14 @@ ship inside the app, for both x64 and ARM64, with nothing to install separately.
   the final transcript runs continuously.
 - **Reading text inputs** for summaries: Word, PDF text layers, spreadsheets and plain text.
 
-Licences matter for an MIT app sold through the Store. Poppler is GPL; PDFium (via
+Licences matter for an MIT app distributed through the Store. Poppler is GPL; PDFium (via
 [pdfium-render](https://crates.io/crates/pdfium-render)) is BSD/Apache-licensed and is
-preferred unless Poppler proves clearly better. FFmpeg must be an LGPL build, without the
-GPL-only components. Each bundled tool's licence is listed in the app's About page.
+preferred unless Poppler proves clearly better. FFmpeg is our own audio-only build, LGPL v2.1
+or later with no GPL, version-3 or non-free parts, run as separate programs rather than linked;
+its source is published with each release, and the Store listing carries our own licence terms,
+because Microsoft's standard terms forbid the reverse engineering the LGPL must allow. Details,
+and how each licence obligation is met, are in [docs/ffmpeg.md](docs/ffmpeg.md). Each bundled
+tool's licence is listed in the app's About page.
 
 ## Planned technology
 

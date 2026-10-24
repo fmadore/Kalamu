@@ -119,6 +119,7 @@ fn fixture() -> Fixture {
             max_attempts: 3,
             base_delay: Duration::from_millis(5),
             app_version: "test".into(),
+            ffmpeg: None,
         },
     );
     let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
@@ -135,7 +136,7 @@ impl Fixture {
         let path: PathBuf = self.dir.path().join(name);
         let bytes = scriptorium_media::sample_pdf(&vec![(595.0, 842.0); pages], false);
         std::fs::write(&path, bytes).unwrap_or_else(|_| panic!("write pdf"));
-        scriptorium_media::inspect(&path).unwrap_or_else(|_| panic!("inspect"))
+        scriptorium_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"))
     }
 
     fn new_job(&self, sources: Vec<SourceFile>, models: &[&str]) -> Job {

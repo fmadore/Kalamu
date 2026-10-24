@@ -29,6 +29,10 @@ export const en = {
 		noFiles: 'No files yet.',
 		remove: 'Remove',
 		pages: (n: number) => (n === 1 ? '1 page' : `${n} pages`),
+		hoursMinutes: (h: number, min: string) => `${h} h ${min} min`,
+		minutes: (min: number) => `${min} min`,
+		seconds: (s: number) => `${s} s`,
+		evenOut: 'Even out the volume',
 		splitSpreads: 'Split double pages',
 		languageTitle: 'Language',
 		languageAuto: 'Detect automatically',
@@ -75,7 +79,14 @@ export const en = {
 		has_text_layer: (n: number) =>
 			`This PDF already contains text on ${n} of the first pages. Extraction may not be needed, or the existing text can serve to compare.`,
 		unsupported_image: (detail: string) => detail,
-		large_file: 'This file is large; it will be split before sending.'
+		large_file: 'This file is large; it will be split before sending.',
+		tool_missing:
+			'Reading this file needs FFmpeg, which was not found next to the app. Reinstall Scriptorium, or convert the file to MP3.',
+		no_sound_track: 'This file has no sound track, so there is nothing to transcribe.',
+		long_recording: (length: string, pieces: number) =>
+			`Long recording (${length}): it will be sent in ${pieces} pieces, cut at pauses. Speaker labels may differ from one piece to the next.`,
+		quiet_recording: (db: number) =>
+			`Very quiet recording (about ${db} dB): quiet speech may be missed. Evening out the volume usually helps.`
 	},
 	tips: {
 		title: 'Tips for better results',
@@ -214,6 +225,8 @@ export const en = {
 		aboutTitle: 'About',
 		version: (v: string) => `Version ${v}`,
 		dataFolder: 'Data folder',
+		credits:
+			'Scriptorium uses FFmpeg under the LGPL v2.1 (its source is published with each release), Opus (BSD), whisper.cpp (MIT) and the Whisper models (MIT). The full licences are in the licences folder installed with the app.',
 		privacy:
 			'Nothing is sent to the developer: no files, keys, results or telemetry. AI output can contain fluent but wrong text; check a sample against the source.'
 	},

@@ -1,0 +1,152 @@
+name: FFmpeg
+
+# Builds the FFmpeg and ffprobe that ship next to Scriptorium (README, "Bundled conversion
+# tools"; docs/ffmpeg.md). Audio only, LGPL v2.1 or later only, with libopus (BSD): no GPL,
+# version-3 or non-free parts, no video encoders or decoders, no network. Each run uploads,
+# per architecture, the two programs, their licences, the exact configure line and the source
+# tarballs they were built from, which the LGPL requires to be offered with them.
+#
+# Run by hand when FFmpeg or Opus is updated, then pin the archives' SHA-256 in
+# `scripts/ffmpeg.json` so `npm run fetch:ffmpeg` installs exactly these binaries.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FFMPEG_VERSION: "9.0.2"
+  OPUS_VERSION: "1.6.1"
+  LLVM_MINGW: "20261020"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            triple: x86_64-pc-windows-msvc
+          - arch: aarch64
+            triple: aarch64-pc-windows-msvc
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Cross-compiler (llvm-mingw, UCRT)
+        run: |
+          curl -fsSL -o llvm-mingw.tar.xz \
+            "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW}/llvm-mingw-${LLVM_MINGW}-ucrt-ubuntu-22.04-x86_64.tar.xz"
+          mkdir -p "$RUNNER_TEMP/llvm-mingw"
+          tar -xf llvm-mingw.tar.xz -C "$RUNNER_TEMP/llvm-mingw" --strip-components=1
+          echo "$RUNNER_TEMP/llvm-mingw/bin" >> "$GITHUB_PATH"
+          sudo apt-get update && sudo apt-get install -y nasm pkg-config cmake
+
+      - name: Sources
+        run: |
+          mkdir -p sources
+          curl -fsSL -o "sources/ffmpeg-${FFMPEG_VERSION}.tar.xz" \
+            "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz"
+          curl -fsSL -o "sources/opus-${OPUS_VERSION}.tar.gz" \
+            "https://downloads.xiph.org/releases/opus/opus-${OPUS_VERSION}.tar.gz"
+          (cd sources && sha256sum *) | tee SOURCES.sha256
+
+      - name: libopus
+        run: |
+          tar -xf "sources/opus-${OPUS_VERSION}.tar.gz"
+          cmake -S "opus-${OPUS_VERSION}" -B opus-build -G "Unix Makefiles" \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} \
+            -DCMAKE_C_COMPILER=${{ matrix.arch }}-w64-mingw32-clang \
+            -DCMAKE_RC_COMPILER=${{ matrix.arch }}-w64-mingw32-windres \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/prefix" \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DOPUS_BUILD_PROGRAMS=OFF \
+            -DOPUS_BUILD_TESTING=OFF
+          cmake --build opus-build -j"$(nproc)"
+          cmake --install opus-build
+
+      - name: FFmpeg (audio only, LGPL)
+        run: |
+          tar -xf "sources/ffmpeg-${FFMPEG_VERSION}.tar.xz"
+          cd "ffmpeg-${FFMPEG_VERSION}"
+          export PKG_CONFIG_LIBDIR="$RUNNER_TEMP/prefix/lib/pkgconfig"
+          CONFIGURE=(
+            --prefix="$RUNNER_TEMP/out"
+            --target-os=mingw32 --arch=${{ matrix.arch }} --enable-cross-compile
+            --cross-prefix=${{ matrix.arch }}-w64-mingw32- --cc=${{ matrix.arch }}-w64-mingw32-clang
+            --pkg-config=pkg-config --pkg-config-flags=--static
+            --extra-ldflags=-static
+            --disable-everything --disable-autodetect --disable-network
+            --disable-doc --disable-debug --disable-ffplay
+            --enable-static --disable-shared
+            --enable-libopus
+            --enable-protocol=file,pipe
+            --enable-demuxer=aac,aiff,amr,asf,avi,caf,flac,flv,matroska,mov,mp3,mpegts,ogg,w64,wav,wv
+            --enable-parser=aac,aac_latm,ac3,flac,mpegaudio,opus,vorbis
+            --enable-decoder=aac,aac_latm,ac3,eac3,alac,amrnb,amrwb,flac,mp1,mp2,mp3,mp3float,opus,vorbis,wavpack,wmav1,wmav2,wmapro,wmalossless,pcm_alaw,pcm_mulaw,pcm_f32le,pcm_f64le,pcm_s16be,pcm_s16le,pcm_s24le,pcm_s32le,pcm_u8,adpcm_ima_wav,adpcm_ms,gsm_ms
+            --enable-encoder=flac,libopus,pcm_s16le
+            --enable-muxer=flac,null,ogg,pcm_s16le,wav,webm
+            --enable-filter=aformat,anull,aresample,atrim,dynaudnorm,format,null,pan,silencedetect,volumedetect
+          )
+          ./configure "${CONFIGURE[@]}"
+          # The licence this build carries, from FFmpeg's own configuration: anything other
+          # than LGPL 2.1-or-later fails the run.
+          grep -q '#define FFMPEG_LICENSE "LGPL version 2.1 or later"' config.h
+          grep -Eq '#define CONFIG_(GPL|VERSION3|NONFREE) 1' config.h && exit 1
+          make -j"$(nproc)"
+          make install
+          printf '%s\n' "FFmpeg ${FFMPEG_VERSION}, libopus ${OPUS_VERSION}, llvm-mingw ${LLVM_MINGW}" \
+            "Built by .github/workflows/ffmpeg.yml in ${GITHUB_REPOSITORY}, run ${GITHUB_RUN_ID}." \
+            "" "configure ${CONFIGURE[*]}" > "$RUNNER_TEMP/BUILD.txt"
+
+      - name: Package
+        run: |
+          dir="ffmpeg-${FFMPEG_VERSION}-${{ matrix.triple }}"
+          mkdir -p "$dir/licenses"
+          cp "$RUNNER_TEMP/out/bin/ffmpeg.exe" "$RUNNER_TEMP/out/bin/ffprobe.exe" "$dir/"
+          cp "ffmpeg-${FFMPEG_VERSION}/COPYING.LGPLv2.1" "$dir/licenses/FFmpeg-LGPL-2.1.txt"
+          cp "opus-${OPUS_VERSION}/COPYING" "$dir/licenses/Opus-BSD-3-Clause.txt"
+          cp "$RUNNER_TEMP/BUILD.txt" SOURCES.sha256 "$dir/"
+          (cd "$dir" && zip -r "../$dir.zip" .)
+          sha256sum "$dir.zip" | tee "$dir.zip.sha256"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ffmpeg-${{ matrix.triple }}
+          path: |
+            ffmpeg-*.zip
+            ffmpeg-*.zip.sha256
+            sources/*
+
+  # Run each build on its own architecture: it starts, reports the right licence and has the
+  # Opus encoder.
+  check:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            triple: x86_64-pc-windows-msvc
+          - os: windows-11-arm
+            triple: aarch64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: ffmpeg-${{ matrix.triple }}
+      - name: Licence and encoders
+        shell: pwsh
+        run: |
+          Expand-Archive (Get-ChildItem ffmpeg-*.zip).FullName -DestinationPath out
+          $license = & out/ffmpeg.exe -hide_banner -L | Out-String
+          if ($license -notmatch 'Lesser General Public' -or $license -notmatch '2\.1') { throw $license }
+          $encoders = & out/ffmpeg.exe -hide_banner -encoders | Out-String
+          if ($encoders -notmatch 'libopus') { throw 'no Opus encoder' }
+          & out/ffprobe.exe -hide_banner -version

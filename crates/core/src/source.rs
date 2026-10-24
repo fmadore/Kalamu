@@ -56,4 +56,7 @@ pub struct SourceFile {
     /// Split open double-page spreads into two pages before processing.
     #[serde(default)]
     pub split_spreads: bool,
+    /// Even out a recording's volume before transcription (quiet or uneven speakers).
+    #[serde(default)]
+    pub even_out_volume: bool,
 }
