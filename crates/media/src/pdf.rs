@@ -284,8 +284,9 @@ fn half_box([x0, y0, x1, y1]: [f32; 4], rotation: i64, half: PageHalf) -> [f32; 
     }
 }
 
-#[cfg(test)]
-pub(crate) fn sample_pdf(pages: &[(f32, f32)], text: bool) -> Vec<u8> {
+/// A small PDF with the given page sizes, for tests here and in other crates.
+#[cfg(any(test, feature = "test-support"))]
+pub fn sample_pdf(pages: &[(f32, f32)], text: bool) -> Vec<u8> {
     use lopdf::content::{Content, Operation};
     use lopdf::{Stream, dictionary};
 

@@ -19,6 +19,8 @@ use thiserror::Error;
 
 pub use image_source::ImageSource;
 pub use pdf::PdfSource;
+#[cfg(any(test, feature = "test-support"))]
+pub use pdf::sample_pdf;
 
 #[derive(Debug, Error)]
 pub enum MediaError {

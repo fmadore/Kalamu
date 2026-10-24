@@ -6,6 +6,10 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[features]
+# Exposes `sample_pdf` for other crates' tests.
+test-support = []
+
 [dependencies]
 hex.workspace = true
 image.workspace = true

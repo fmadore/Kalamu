@@ -1,0 +1,31 @@
+[package]
+name = "scriptorium-engine"
+description = "Job orchestration for Scriptorium: queue, retries, caching, resume, progress, outputs."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+futures.workspace = true
+scriptorium-catalog.workspace = true
+scriptorium-core.workspace = true
+scriptorium-export.workspace = true
+scriptorium-media.workspace = true
+scriptorium-prompts.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+similar.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+ts-rs.workspace = true
+
+[dev-dependencies]
+async-trait.workspace = true
+scriptorium-media = { workspace = true, features = ["test-support"] }
+scriptorium-store.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true
