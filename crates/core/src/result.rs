@@ -119,7 +119,8 @@ impl Usage {
 #[ts(export)]
 pub struct ProcessOutput {
     pub text: String,
-    /// Timed segments for transcriptions; empty for text extraction.
+    /// Timed segments for transcriptions, with times relative to the start of the piece;
+    /// empty for text extraction.
     #[serde(default)]
     pub segments: Vec<Segment>,
     pub detected_language: Option<LanguageCode>,

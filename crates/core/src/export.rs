@@ -55,6 +55,7 @@ impl Default for ExportOptions {
 pub struct ExportPart {
     pub piece: PieceRef,
     pub text: String,
+    /// Timed segments, with times relative to the start of the recording.
     pub segments: Vec<Segment>,
     pub corrected: bool,
     pub reviewed: bool,

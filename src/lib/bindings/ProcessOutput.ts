@@ -8,7 +8,8 @@ import type { Usage } from "./Usage";
  */
 export type ProcessOutput = { text: string, 
 /**
- * Timed segments for transcriptions; empty for text extraction.
+ * Timed segments for transcriptions, with times relative to the start of the piece;
+ * empty for text extraction.
  */
 segments: Array<Segment>, detected_language: LanguageCode | null, usage: Usage, 
 /**

@@ -1,0 +1,88 @@
+{
+  "parts": [
+    {
+      "corrected": false,
+      "label": "1",
+      "piece": {
+        "kind": "page",
+        "number": 1
+      },
+      "reviewed": true,
+      "segments": [],
+      "text": "Bamako, le 3 mai 1957\n\nMonsieur le Gouverneur,\nj'ai l'honneur de vous "
+    },
+    {
+      "corrected": true,
+      "label": "2",
+      "piece": {
+        "kind": "page",
+        "number": 2
+      },
+      "reviewed": true,
+      "segments": [],
+      "text": "rendre compte de la réunion tenue à la mosquée.\n\n[ILLEGIBLE]"
+    }
+  ],
+  "provenance": {
+    "corrected": [
+      2
+    ],
+    "cost_usd": 0.002,
+    "created_at": 0,
+    "engine": "cloud",
+    "generator": {
+      "name": "Scriptorium",
+      "version": "0.1.0"
+    },
+    "languages": {
+      "mode": "auto"
+    },
+    "model": "gemini-3.8-flash",
+    "options": {
+      "diarize": false,
+      "speakers": null,
+      "temperature": null,
+      "timestamps": false
+    },
+    "pieces": 2,
+    "prompt": {
+      "preset_id": "text_extraction.printed_diplomatic",
+      "preset_name": "Printed document, diplomatic",
+      "sha256": "abababababababababababababababababababababababababababababababab",
+      "text": "Transcribe.",
+      "user_prompt": "Transcribe this page."
+    },
+    "provider": "gemini",
+    "reviewed": [
+      1,
+      2
+    ],
+    "schema_version": 1,
+    "source": {
+      "file_name": "lettre.pdf",
+      "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+      "size_bytes": 1024
+    },
+    "task": "text_extraction",
+    "usage": {
+      "audio_seconds": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "pages": 0
+    }
+  },
+  "schema": "scriptorium-result",
+  "schema_version": 1,
+  "setup": {
+    "label": "gemini-flash",
+    "model": "gemini-3.8-flash",
+    "prompt": "Printed document, diplomatic",
+    "provider": "gemini"
+  },
+  "source": {
+    "file_name": "lettre.pdf",
+    "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+    "size_bytes": 1024
+  },
+  "task": "text_extraction"
+}
