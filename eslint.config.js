@@ -7,7 +7,16 @@ import ts from 'typescript-eslint';
 
 export default defineConfig(
 	{
-		ignores: ['build/', '.svelte-kit/', 'node_modules/', 'src-tauri/', 'crates/', 'target/', 'docs/', '.claude/']
+		ignores: [
+			'build/',
+			'.svelte-kit/',
+			'node_modules/',
+			'src-tauri/',
+			'crates/',
+			'target/',
+			'docs/',
+			'.claude/'
+		]
 	},
 	{
 		files: ['**/*.{js,mjs,ts}'],
@@ -32,7 +41,10 @@ export default defineConfig(
 		plugins: { '@typescript-eslint': ts.plugin },
 		rules: {
 			'@typescript-eslint/no-floating-promises': 'error',
-			'@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
+			'@typescript-eslint/no-misused-promises': [
+				'error',
+				{ checksVoidReturn: { attributes: false } }
+			],
 			'@typescript-eslint/switch-exhaustiveness-check': 'error',
 			'svelte/no-at-html-tags': 'error',
 			'svelte/valid-compile': 'error',
