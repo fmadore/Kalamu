@@ -195,12 +195,37 @@ Transcriptions, extracted text and summaries can contain fluent but wrong text: 
 passages, invented words. Check a sample against the source before relying on the results, and
 keep the originals.
 
+## Bundled conversion tools
+
+Providers accept different inputs: some take a PDF directly, others only images; some take
+video, most only audio, and each has its own size and duration limits. The app prepares each
+file for the chosen model automatically, so users never convert anything themselves. The tools
+ship inside the app, for both x64 and ARM64, with nothing to install separately.
+
+- **PDF to images**, page by page at a resolution suited to the model, for providers that do not
+  accept PDF, for page previews, and for Tesseract. Large PDFs are also split into page ranges
+  for providers with page or size limits. Also used to build searchable PDF exports.
+- **Image preparation**: multi-page TIFFs split into pages, other formats (HEIC from phones,
+  WebP, BMP) converted, oversized scans resized to the provider's limits, and orientation fixed
+  from EXIF data.
+- **Audio and video with FFmpeg**: the audio track extracted from video, files converted to a
+  format the provider accepts, and long recordings split into segments, with a short overlap
+  and cuts placed at silences so no words are lost at the joins. Timestamps are shifted back so
+  the final transcript runs continuously.
+- **Reading text inputs** for summaries: Word, PDF text layers, spreadsheets and plain text.
+
+Licences matter for an MIT app sold through the Store. Poppler is GPL; PDFium (via
+[pdfium-render](https://crates.io/crates/pdfium-render)) is BSD/Apache-licensed and is
+preferred unless Poppler proves clearly better. FFmpeg must be an LGPL build, without the
+GPL-only components. Each bundled tool's licence is listed in the app's About page.
+
 ## Planned technology
 
 - [Tauri 2](https://tauri.app/) with a Rust back end and a web front end, as in Live Translation.
 - Provider calls in Rust, porting the prompts, model choices and provenance format from
   `zmo-ai-pipelines` and `iwac-ai-pipelines`; no bundled Python.
-- FFmpeg to convert and split long recordings for providers with file-size limits.
+- FFmpeg (LGPL build) and PDFium bundled for file conversion and splitting (see
+  [Bundled conversion tools](#bundled-conversion-tools)).
 - SQLite for the local job database and result cache; exporters in Rust for Word, searchable
   PDF, subtitles and XML.
 - [whisper-rs](https://crates.io/crates/whisper-rs) (whisper.cpp) for offline transcription,
