@@ -6,6 +6,7 @@ import type { AppInfo } from './bindings/AppInfo.js';
 import type { Catalog } from './bindings/Catalog.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
+import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PieceStatus } from './bindings/PieceStatus.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
@@ -38,6 +39,7 @@ export const app = $state({
 	info: null as AppInfo | null,
 	catalog: null as Catalog | null,
 	keys: [] as KeyStatus[],
+	offline: null as OfflineStatus | null,
 	settings: null as Settings | null,
 	jobs: [] as JobSummary[],
 	live: {} as Record<string, LiveJob>,
@@ -60,6 +62,16 @@ export async function refreshJobs(): Promise<void> {
 
 export async function refreshKeys(): Promise<void> {
 	app.keys = await api.keyStatus();
+}
+
+export async function refreshOffline(): Promise<void> {
+	app.offline = await api.offlineStatus();
+}
+
+/** Whether a model can run now: always for cloud models, once downloaded for offline ones. */
+export function isInstalled(provider: string, model: string): boolean {
+	if (!app.catalog?.providers.find((p) => p.id === provider)?.local) return true;
+	return app.offline?.models.some((m) => m.id === model && m.installed) ?? false;
 }
 
 export function liveJob(id: string): LiveJob {

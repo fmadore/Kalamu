@@ -9,4 +9,8 @@ key_url: string,
 /**
  * A prefix every key starts with, to catch keys pasted for the wrong provider.
  */
-key_prefix: string | null, };
+key_prefix: string | null, 
+/**
+ * Runs on this PC: needs no key and sends nothing anywhere.
+ */
+local: boolean, };

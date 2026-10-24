@@ -1,3 +1,18 @@
 [env]
 # ts-rs writes the TypeScript bindings shared with the front end here (run `cargo test`).
 TS_RS_EXPORT_DIR = { value = "src/lib/bindings", relative = true }
+
+# Instruction sets for Whisper's ggml CPU backend, as in Live Translation. Distributed binaries
+# must not inherit the build machine's CPU, so GGML_NATIVE stays off and each level is named:
+# AVX2 with FMA and F16C on x64 (clang-cl treats it as Haswell; `crates/offline/src/cpu.rs`
+# checks the whole Haswell set at run time), dot-product and FP16 on ARM64. ggml's CMake reads
+# the x86 switches only on x86 and GGML_CPU_ARM_ARCH only on ARM. Changing a value needs a clean
+# rebuild: the whisper-rs-sys build script does not watch these variables.
+GGML_NATIVE = "OFF"
+GGML_AVX = "ON"
+GGML_AVX2 = "ON"
+GGML_FMA = "ON"
+GGML_F16C = "ON"
+GGML_BMI2 = "ON"
+GGML_SSE42 = "ON"
+GGML_CPU_ARM_ARCH = "armv8.2-a+dotprod+fp16"

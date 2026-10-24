@@ -9,8 +9,8 @@ use std::time::{Duration, Instant};
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use scriptorium_core::{
-    CacheKey, Job, JobId, JobStatus, PieceRef, PieceState, PieceStatus, ProcessOutput,
-    ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId, SourceFile, SourceId,
+    ApiKey, CacheKey, Job, JobId, JobStatus, PieceRef, PieceState, PieceStatus, ProcessOutput,
+    ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId, SourceFile, SourceId, StopSignal,
     StoredResult, Timestamp,
 };
 use scriptorium_media::OpenSource;
@@ -42,6 +42,8 @@ pub struct PieceView {
 enum Outcome {
     Finished,
     Failed,
+    /// Stopped part-way by a pause or cancel; the piece is pending again.
+    Interrupted,
     /// The key or the account is unusable: stop the job.
     Fatal(String),
 }
@@ -64,13 +66,22 @@ impl Engine {
         control: Arc<Mutex<Control>>,
     ) -> Result<JobStatus, EngineError> {
         let job = self.store.job(job_id)?;
-        // Check keys before touching anything, so a missing key is reported at once.
+        // Check keys and offline models before touching anything, so a missing key or an
+        // undownloaded model is reported at once.
         for setup in &job.setups {
-            self.provider(&setup.provider)?;
-            if self.keys.key(&setup.provider).is_none() {
+            let provider = self.provider(&setup.provider)?;
+            if provider.needs_key() && self.keys.key(&setup.provider).is_none() {
                 return Err(EngineError::MissingKey(setup.provider.to_string()));
             }
+            provider
+                .check_ready(&setup.model)
+                .map_err(EngineError::NotReady)?;
         }
+        let stop = control
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .stop
+            .clone();
         self.store.set_job_status(job_id, JobStatus::Running)?;
         let existing: HashMap<(SetupId, SourceId, u32), PieceState> = self
             .store
@@ -86,6 +97,8 @@ impl Engine {
         });
 
         let mut failed = false;
+        // A piece stopped part-way is pending again; the job must not read as finished.
+        let mut interrupted = false;
         let spent = Arc::new(Mutex::new(0.0f64));
         for source in &job.sources {
             if stop_requested(&control).is_some() {
@@ -172,11 +185,16 @@ impl Engine {
                         break;
                     };
                     let engine = self.clone();
-                    let (job, source, opened, spent) =
-                        (job.clone(), source.clone(), opened.clone(), spent.clone());
+                    let (job, source, opened, spent, stop) = (
+                        job.clone(),
+                        source.clone(),
+                        opened.clone(),
+                        spent.clone(),
+                        stop.clone(),
+                    );
                     in_flight.push(tokio::spawn(async move {
                         engine
-                            .process_piece(&job, &source, &setup, state, key, opened, spent)
+                            .process_piece(&job, &source, &setup, state, key, opened, spent, &stop)
                             .await
                     }));
                 }
@@ -185,6 +203,7 @@ impl Engine {
                 };
                 match done {
                     Ok(Ok(Outcome::Finished)) => {}
+                    Ok(Ok(Outcome::Interrupted)) => interrupted = true,
                     Ok(Ok(Outcome::Failed)) | Err(_) => failed = true,
                     Ok(Ok(Outcome::Fatal(message))) => {
                         tracing::warn!(job = %job_id, %message, "stopping job");
@@ -227,6 +246,7 @@ impl Engine {
         Ok(match stop_requested(&control) {
             Some(StopKind::Cancel) => JobStatus::Cancelled,
             Some(StopKind::Pause) => JobStatus::Paused,
+            None if interrupted => JobStatus::Paused,
             None if failed => JobStatus::CompletedWithErrors,
             None => JobStatus::Completed,
         })
@@ -242,6 +262,7 @@ impl Engine {
         key: CacheKey,
         opened: Arc<OpenSource>,
         spent: Arc<Mutex<f64>>,
+        stop: &StopSignal,
     ) -> Result<Outcome, EngineError> {
         let update = |engine: &Engine, state: &PieceState, preview: Option<String>| {
             engine.emit(ProgressEvent::PieceUpdated {
@@ -271,10 +292,13 @@ impl Engine {
         update(self, &state, None);
 
         let provider = self.provider(&setup.provider)?;
-        let api_key = self
-            .keys
-            .key(&setup.provider)
-            .ok_or_else(|| EngineError::MissingKey(setup.provider.to_string()))?;
+        let api_key = if provider.needs_key() {
+            self.keys
+                .key(&setup.provider)
+                .ok_or_else(|| EngineError::MissingKey(setup.provider.to_string()))?
+        } else {
+            ApiKey::new("")
+        };
         let accepted = provider.accepted_inputs(job.task);
         let stem = Path::new(&source.file_name)
             .file_stem()
@@ -310,6 +334,7 @@ impl Engine {
                 input: &input,
                 languages: &job.settings.languages,
                 options: &setup.options,
+                stop,
             };
             match provider.process(&api_key, request).await {
                 Ok(output) => {
@@ -345,6 +370,14 @@ impl Engine {
                         });
                     }
                     return Ok(Outcome::Finished);
+                }
+                Err(ProviderError::Interrupted) => {
+                    state.status = PieceStatus::Pending;
+                    state.error = None;
+                    state.updated_at = Timestamp::now();
+                    self.store.upsert_piece(&state)?;
+                    update(self, &state, None);
+                    return Ok(Outcome::Interrupted);
                 }
                 Err(err) if err.is_fatal_for_job() => {
                     state.status = PieceStatus::Failed;

@@ -18,4 +18,8 @@ recommended_for: Array<Task>,
 /**
  * Dedicated OCR and speech-to-text models take no instructions.
  */
-accepts_prompt: boolean, pricing: Pricing, limits: Limits, };
+accepts_prompt: boolean, 
+/**
+ * Can label who speaks in a transcription. Whisper cannot.
+ */
+speakers: boolean, pricing: Pricing, limits: Limits, };

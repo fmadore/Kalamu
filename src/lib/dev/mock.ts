@@ -179,6 +179,20 @@ export function installMock(): void {
 				return settings;
 			case 'get_catalog':
 				return catalog;
+			case 'offline_status':
+				return {
+					models: catalog.models
+						.filter((mod) => mod.provider === 'whisper')
+						.map((mod, i) => ({
+							id: mod.id,
+							bytes: [574_041_195, 1_081_140_203, 190_085_487, 59_707_625][i] ?? 0,
+							installed: i === 0,
+							downloading: i === 2,
+							downloaded_bytes: i === 2 ? 71_000_000 : 0,
+							in_use: false
+						})),
+					missing_cpu: []
+				};
 			case 'key_status':
 				return catalog.providers.map((p) => ({ provider: p.id, saved: p.id !== 'openai' }));
 			case 'list_presets':

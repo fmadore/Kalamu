@@ -16,7 +16,8 @@ pub fn key_status(state: State<'_, AppState>) -> Vec<KeyStatus> {
         .iter()
         .map(|p| KeyStatus {
             provider: p.id.clone(),
-            saved: state.keys.has(&p.id),
+            // An offline engine needs no key, so it is always usable.
+            saved: p.local || state.keys.has(&p.id),
         })
         .collect()
 }

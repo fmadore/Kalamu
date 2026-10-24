@@ -3,6 +3,7 @@
 
 pub mod jobs;
 pub mod keys;
+pub mod offline;
 pub mod presets;
 pub mod review;
 pub mod settings;
@@ -31,6 +32,8 @@ pub struct Paths {
 
 pub struct AppState {
     pub engine: Arc<Engine>,
+    /// Whisper models, shared with the Whisper provider inside the engine.
+    pub models: scriptorium_offline::ModelManager,
     pub keys: Arc<CredentialKeys>,
     pub settings: Mutex<Settings>,
     pub paths: Paths,

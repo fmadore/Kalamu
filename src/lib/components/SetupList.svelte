@@ -3,8 +3,15 @@
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { acceptsPrompt, type Draft, modelInfo, modelsFor, newDraft } from '#lib/newJob.js';
-	import { app, go, hasKey } from '#lib/state.svelte.js';
+	import {
+		acceptsPrompt,
+		type Draft,
+		labelsSpeakers,
+		modelInfo,
+		modelsFor,
+		newDraft
+	} from '#lib/newJob.js';
+	import { app, go, hasKey, isInstalled } from '#lib/state.svelte.js';
 
 	let {
 		drafts = $bindable(),
@@ -81,7 +88,8 @@
 			{#if task === 'audio_transcription'}
 				<div class="row opts">
 					<label class="inline"
-						><input type="checkbox" bind:checked={d.diarize} /> {m.newJob.diarize}</label
+						><input type="checkbox" bind:checked={d.diarize} disabled={!labelsSpeakers(info)} />
+						{labelsSpeakers(info) ? m.newJob.diarize : m.newJob.noSpeakers}</label
 					>
 					<label class="inline"
 						><input type="checkbox" bind:checked={d.timestamps} /> {m.newJob.timestamps}</label
@@ -95,6 +103,14 @@
 			{/if}
 			{#if info?.description}
 				<p class="muted small desc">{info.description}</p>
+			{/if}
+			{#if d.model && !isInstalled(d.provider, d.model)}
+				<p class="warning small">
+					{m.newJob.notDownloaded}
+					<button class="btn sm" onclick={() => go({ name: 'settings' })}
+						>{m.newJob.openSettings}</button
+					>
+				</p>
 			{/if}
 			{#if d.provider && !hasKey(d.provider)}
 				<p class="warning small">

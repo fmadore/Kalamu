@@ -26,6 +26,13 @@
       "name": "Mistral",
       "key_url": "https://console.mistral.ai/api-keys",
       "key_prefix": null
+    },
+    {
+      "id": "whisper",
+      "name": "Whisper (on this PC)",
+      "key_url": "",
+      "key_prefix": null,
+      "local": true
     }
   ],
   "models": [
@@ -34,203 +41,706 @@
       "id": "gemini-3.8-flash",
       "name": "Gemini 3.8 Flash",
       "description": "Fast and inexpensive; reads print and handwriting well. The default in zmo- and iwac-ai-pipelines.",
-      "tasks": ["text_extraction", "audio_transcription"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp", "audio/mpeg", "audio/wav", "audio/mp4", "audio/flac", "audio/ogg"],
+      "tasks": [
+        "text_extraction",
+        "audio_transcription"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/flac",
+        "audio/ogg"
+      ],
       "languages": "any",
       "status": "stable",
-      "recommended_for": ["text_extraction"],
-      "pricing": { "input_per_mtok": 0.75, "output_per_mtok": 3.75, "note": "Introductory price until 2026-12-31, then $1.50 / $7.50." },
-      "limits": { "max_request_mb": 18 }
+      "recommended_for": [
+        "text_extraction"
+      ],
+      "pricing": {
+        "input_per_mtok": 0.75,
+        "output_per_mtok": 3.75,
+        "note": "Introductory price until 2026-12-31, then $1.50 / $7.50."
+      },
+      "limits": {
+        "max_request_mb": 18
+      }
     },
     {
       "provider": "gemini",
       "id": "gemini-3.1-pro-preview",
       "name": "Gemini 3.1 Pro",
       "description": "Google's most capable model, for difficult handwriting and degraded scans.",
-      "tasks": ["text_extraction", "audio_transcription"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp", "audio/mpeg", "audio/wav", "audio/mp4", "audio/flac", "audio/ogg"],
+      "tasks": [
+        "text_extraction",
+        "audio_transcription"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/flac",
+        "audio/ogg"
+      ],
       "languages": "any",
       "status": "preview",
       "recommended_for": [],
-      "pricing": { "input_per_mtok": 2.0, "output_per_mtok": 12.0, "note": "Up to 200k input tokens; $4 / $18 above." },
-      "limits": { "max_request_mb": 18 }
+      "pricing": {
+        "input_per_mtok": 2.0,
+        "output_per_mtok": 12.0,
+        "note": "Up to 200k input tokens; $4 / $18 above."
+      },
+      "limits": {
+        "max_request_mb": 18
+      }
     },
     {
       "provider": "gemini",
       "id": "gemini-3.5-flash-lite",
       "name": "Gemini 3.5 Flash-Lite",
       "description": "The cheapest Gemini model, for clean printed text in bulk.",
-      "tasks": ["text_extraction"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp"],
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
-      "pricing": { "input_per_mtok": 0.3, "output_per_mtok": 2.5 },
-      "limits": { "max_request_mb": 18 }
+      "pricing": {
+        "input_per_mtok": 0.3,
+        "output_per_mtok": 2.5
+      },
+      "limits": {
+        "max_request_mb": 18
+      }
     },
     {
       "provider": "openai",
       "id": "gpt-6-sol",
       "name": "GPT-6 Sol",
       "description": "OpenAI's most capable model; reads PDFs and images.",
-      "tasks": ["text_extraction"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp"],
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
-      "pricing": { "input_per_mtok": 2.0, "output_per_mtok": 10.0 },
-      "limits": { "max_request_mb": 32 }
+      "pricing": {
+        "input_per_mtok": 2.0,
+        "output_per_mtok": 10.0
+      },
+      "limits": {
+        "max_request_mb": 32
+      }
     },
     {
       "provider": "openai",
       "id": "gpt-6-luna",
       "name": "GPT-6 Luna",
       "description": "Small and inexpensive; for clean printed text.",
-      "tasks": ["text_extraction"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp"],
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
-      "pricing": { "input_per_mtok": 0.1, "output_per_mtok": 0.5 },
-      "limits": { "max_request_mb": 32 }
+      "pricing": {
+        "input_per_mtok": 0.1,
+        "output_per_mtok": 0.5
+      },
+      "limits": {
+        "max_request_mb": 32
+      }
     },
     {
       "provider": "openai",
       "id": "gpt-4o-transcribe-diarize",
       "name": "GPT-4o Transcribe (speakers)",
       "description": "Speech-to-text with speaker labels and segment timestamps. Takes no prompt.",
-      "tasks": ["audio_transcription"],
-      "inputs": ["audio/mpeg", "audio/wav", "audio/mp4", "audio/webm", "audio/flac", "audio/ogg"],
+      "tasks": [
+        "audio_transcription"
+      ],
+      "inputs": [
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/webm",
+        "audio/flac",
+        "audio/ogg"
+      ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
       "accepts_prompt": false,
-      "pricing": { "input_per_mtok": 2.5, "output_per_mtok": 10.0 },
-      "limits": { "max_request_mb": 25 }
+      "pricing": {
+        "input_per_mtok": 2.5,
+        "output_per_mtok": 10.0
+      },
+      "limits": {
+        "max_request_mb": 25
+      }
     },
     {
       "provider": "anthropic",
       "id": "claude-opus-5-5",
       "name": "Claude Opus 5.5",
       "description": "Anthropic's current Opus; strong on difficult layouts and multilingual material. Reads PDFs and images, not audio.",
-      "tasks": ["text_extraction"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp"],
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
-      "pricing": { "input_per_mtok": 4.0, "output_per_mtok": 20.0 },
-      "limits": { "max_request_mb": 32, "max_pages": 600 }
+      "pricing": {
+        "input_per_mtok": 4.0,
+        "output_per_mtok": 20.0
+      },
+      "limits": {
+        "max_request_mb": 32,
+        "max_pages": 600
+      }
     },
     {
       "provider": "anthropic",
       "id": "claude-sonnet-5-5",
       "name": "Claude Sonnet 5.5",
       "description": "Faster and cheaper than Opus; used for Arabic books in iwac-ai-pipelines.",
-      "tasks": ["text_extraction"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp"],
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
-      "pricing": { "input_per_mtok": 2.0, "output_per_mtok": 10.0 },
-      "limits": { "max_request_mb": 32, "max_pages": 600 }
+      "pricing": {
+        "input_per_mtok": 2.0,
+        "output_per_mtok": 10.0
+      },
+      "limits": {
+        "max_request_mb": 32,
+        "max_pages": 600
+      }
     },
     {
       "provider": "anthropic",
       "id": "claude-haiku-5-5",
       "name": "Claude Haiku 5.5",
       "description": "The cheapest Claude model, for clean printed text.",
-      "tasks": ["text_extraction"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp"],
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
-      "pricing": { "input_per_mtok": 0.1, "output_per_mtok": 0.5, "note": "Prompts up to 100k tokens; $0.50 / $2.50 above." },
-      "limits": { "max_request_mb": 32, "max_pages": 600 }
+      "pricing": {
+        "input_per_mtok": 0.1,
+        "output_per_mtok": 0.5,
+        "note": "Prompts up to 100k tokens; $0.50 / $2.50 above."
+      },
+      "limits": {
+        "max_request_mb": 32,
+        "max_pages": 600
+      }
     },
     {
       "provider": "mistral",
       "id": "mistral-ocr-4-1",
       "name": "Mistral OCR 4.1",
       "description": "Dedicated OCR returning Markdown with tables and layout blocks. Takes no prompt.",
-      "tasks": ["text_extraction"],
-      "inputs": ["application/pdf", "image/png", "image/jpeg", "image/webp"],
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
       "accepts_prompt": false,
       "pricing": {},
-      "limits": { "max_request_mb": 50, "max_pages": 1000 }
+      "limits": {
+        "max_request_mb": 50,
+        "max_pages": 1000
+      }
     },
     {
       "provider": "mistral",
       "id": "voxtral-small-transcribe-3-0",
       "name": "Voxtral Small Transcribe 3",
       "description": "Mistral's most accurate speech-to-text (October 2026), 50 languages, speaker labels.",
-      "tasks": ["audio_transcription"],
-      "inputs": ["audio/mpeg", "audio/wav", "audio/mp4", "audio/flac", "audio/ogg", "audio/webm"],
+      "tasks": [
+        "audio_transcription"
+      ],
+      "inputs": [
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/flac",
+        "audio/ogg",
+        "audio/webm"
+      ],
       "languages": "any",
       "status": "preview",
-      "recommended_for": ["audio_transcription"],
+      "recommended_for": [
+        "audio_transcription"
+      ],
       "accepts_prompt": false,
-      "pricing": { "per_minute": 0.004 },
-      "limits": { "max_audio_minutes": 180 }
+      "pricing": {
+        "per_minute": 0.004
+      },
+      "limits": {
+        "max_audio_minutes": 180
+      }
     },
     {
       "provider": "mistral",
       "id": "voxtral-mini-transcribe-3-0",
       "name": "Voxtral Mini Transcribe 3",
       "description": "Cheaper, faster Voxtral for large batches of recordings.",
-      "tasks": ["audio_transcription"],
-      "inputs": ["audio/mpeg", "audio/wav", "audio/mp4", "audio/flac", "audio/ogg", "audio/webm"],
+      "tasks": [
+        "audio_transcription"
+      ],
+      "inputs": [
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/flac",
+        "audio/ogg",
+        "audio/webm"
+      ],
       "languages": "any",
       "status": "preview",
       "recommended_for": [],
       "accepts_prompt": false,
-      "pricing": { "per_minute": 0.0035 },
-      "limits": { "max_audio_minutes": 180 }
+      "pricing": {
+        "per_minute": 0.0035
+      },
+      "limits": {
+        "max_audio_minutes": 180
+      }
+    },
+    {
+      "provider": "whisper",
+      "id": "whisper-large-v3-turbo",
+      "name": "Whisper Large v3 Turbo",
+      "description": "Offline. Close to Large v3 accuracy at several times its speed; the best choice on most PCs. 574 MB download.",
+      "tasks": [
+        "audio_transcription"
+      ],
+      "inputs": [
+        "audio/x-pcm-s16le-16k"
+      ],
+      "languages": [
+        "en",
+        "fr",
+        "ar",
+        "de",
+        "pt",
+        "es",
+        "it",
+        "nl",
+        "ha",
+        "yo",
+        "sw",
+        "so",
+        "am",
+        "ln",
+        "af",
+        "mg",
+        "fa",
+        "tr",
+        "ur",
+        "hi",
+        "ru",
+        "pl",
+        "zh",
+        "ja",
+        "ko",
+        "id",
+        "ms",
+        "he",
+        "el",
+        "la"
+      ],
+      "status": "stable",
+      "recommended_for": [],
+      "accepts_prompt": false,
+      "speakers": false,
+      "pricing": {
+        "per_minute": 0.0,
+        "note": "Runs on this PC: free, and nothing is sent anywhere."
+      },
+      "limits": {}
+    },
+    {
+      "provider": "whisper",
+      "id": "whisper-large-v3",
+      "name": "Whisper Large v3",
+      "description": "Offline. The most accurate Whisper, and the slowest: expect about real time on a laptop. 1.1 GB download.",
+      "tasks": [
+        "audio_transcription"
+      ],
+      "inputs": [
+        "audio/x-pcm-s16le-16k"
+      ],
+      "languages": [
+        "en",
+        "fr",
+        "ar",
+        "de",
+        "pt",
+        "es",
+        "it",
+        "nl",
+        "ha",
+        "yo",
+        "sw",
+        "so",
+        "am",
+        "ln",
+        "af",
+        "mg",
+        "fa",
+        "tr",
+        "ur",
+        "hi",
+        "ru",
+        "pl",
+        "zh",
+        "ja",
+        "ko",
+        "id",
+        "ms",
+        "he",
+        "el",
+        "la"
+      ],
+      "status": "stable",
+      "recommended_for": [],
+      "accepts_prompt": false,
+      "speakers": false,
+      "pricing": {
+        "per_minute": 0.0,
+        "note": "Runs on this PC: free, and nothing is sent anywhere."
+      },
+      "limits": {}
+    },
+    {
+      "provider": "whisper",
+      "id": "whisper-small",
+      "name": "Whisper Small",
+      "description": "Offline. Fast on any PC, for clear recordings in widely spoken languages. 190 MB download.",
+      "tasks": [
+        "audio_transcription"
+      ],
+      "inputs": [
+        "audio/x-pcm-s16le-16k"
+      ],
+      "languages": [
+        "en",
+        "fr",
+        "ar",
+        "de",
+        "pt",
+        "es",
+        "it",
+        "nl",
+        "ha",
+        "yo",
+        "sw",
+        "so",
+        "am",
+        "ln",
+        "af",
+        "mg",
+        "fa",
+        "tr",
+        "ur",
+        "hi",
+        "ru",
+        "pl",
+        "zh",
+        "ja",
+        "ko",
+        "id",
+        "ms",
+        "he",
+        "el",
+        "la"
+      ],
+      "status": "stable",
+      "recommended_for": [],
+      "accepts_prompt": false,
+      "speakers": false,
+      "pricing": {
+        "per_minute": 0.0,
+        "note": "Runs on this PC: free, and nothing is sent anywhere."
+      },
+      "limits": {}
+    },
+    {
+      "provider": "whisper",
+      "id": "whisper-base",
+      "name": "Whisper Base",
+      "description": "Offline. Very fast and rough: a quick look at what a recording contains. 60 MB download.",
+      "tasks": [
+        "audio_transcription"
+      ],
+      "inputs": [
+        "audio/x-pcm-s16le-16k"
+      ],
+      "languages": [
+        "en",
+        "fr",
+        "ar",
+        "de",
+        "pt",
+        "es",
+        "it",
+        "nl",
+        "ha",
+        "yo",
+        "sw",
+        "so",
+        "am",
+        "ln",
+        "af",
+        "mg",
+        "fa",
+        "tr",
+        "ur",
+        "hi",
+        "ru",
+        "pl",
+        "zh",
+        "ja",
+        "ko",
+        "id",
+        "ms",
+        "he",
+        "el",
+        "la"
+      ],
+      "status": "stable",
+      "recommended_for": [],
+      "accepts_prompt": false,
+      "speakers": false,
+      "pricing": {
+        "per_minute": 0.0,
+        "note": "Runs on this PC: free, and nothing is sent anywhere."
+      },
+      "limits": {}
     }
   ],
   "languages": [
-    { "code": "en", "name": "English" },
-    { "code": "fr", "name": "French" },
-    { "code": "ar", "name": "Arabic" },
-    { "code": "de", "name": "German" },
-    { "code": "pt", "name": "Portuguese" },
-    { "code": "es", "name": "Spanish" },
-    { "code": "it", "name": "Italian" },
-    { "code": "nl", "name": "Dutch" },
-    { "code": "ha", "name": "Hausa" },
-    { "code": "yo", "name": "Yoruba" },
-    { "code": "ig", "name": "Igbo" },
-    { "code": "ff", "name": "Fula" },
-    { "code": "wo", "name": "Wolof" },
-    { "code": "bm", "name": "Bambara" },
-    { "code": "dyu", "name": "Dioula" },
-    { "code": "mos", "name": "Mooré" },
-    { "code": "ee", "name": "Ewe" },
-    { "code": "fon", "name": "Fon" },
-    { "code": "tw", "name": "Twi" },
-    { "code": "sw", "name": "Swahili" },
-    { "code": "so", "name": "Somali" },
-    { "code": "am", "name": "Amharic" },
-    { "code": "ln", "name": "Lingala" },
-    { "code": "zu", "name": "Zulu" },
-    { "code": "xh", "name": "Xhosa" },
-    { "code": "af", "name": "Afrikaans" },
-    { "code": "mg", "name": "Malagasy" },
-    { "code": "fa", "name": "Persian" },
-    { "code": "tr", "name": "Turkish" },
-    { "code": "ur", "name": "Urdu" },
-    { "code": "hi", "name": "Hindi" },
-    { "code": "ru", "name": "Russian" },
-    { "code": "pl", "name": "Polish" },
-    { "code": "zh", "name": "Chinese" },
-    { "code": "ja", "name": "Japanese" },
-    { "code": "ko", "name": "Korean" },
-    { "code": "id", "name": "Indonesian" },
-    { "code": "ms", "name": "Malay" },
-    { "code": "he", "name": "Hebrew" },
-    { "code": "el", "name": "Greek" },
-    { "code": "la", "name": "Latin" }
+    {
+      "code": "en",
+      "name": "English"
+    },
+    {
+      "code": "fr",
+      "name": "French"
+    },
+    {
+      "code": "ar",
+      "name": "Arabic"
+    },
+    {
+      "code": "de",
+      "name": "German"
+    },
+    {
+      "code": "pt",
+      "name": "Portuguese"
+    },
+    {
+      "code": "es",
+      "name": "Spanish"
+    },
+    {
+      "code": "it",
+      "name": "Italian"
+    },
+    {
+      "code": "nl",
+      "name": "Dutch"
+    },
+    {
+      "code": "ha",
+      "name": "Hausa"
+    },
+    {
+      "code": "yo",
+      "name": "Yoruba"
+    },
+    {
+      "code": "ig",
+      "name": "Igbo"
+    },
+    {
+      "code": "ff",
+      "name": "Fula"
+    },
+    {
+      "code": "wo",
+      "name": "Wolof"
+    },
+    {
+      "code": "bm",
+      "name": "Bambara"
+    },
+    {
+      "code": "dyu",
+      "name": "Dioula"
+    },
+    {
+      "code": "mos",
+      "name": "Mooré"
+    },
+    {
+      "code": "ee",
+      "name": "Ewe"
+    },
+    {
+      "code": "fon",
+      "name": "Fon"
+    },
+    {
+      "code": "tw",
+      "name": "Twi"
+    },
+    {
+      "code": "sw",
+      "name": "Swahili"
+    },
+    {
+      "code": "so",
+      "name": "Somali"
+    },
+    {
+      "code": "am",
+      "name": "Amharic"
+    },
+    {
+      "code": "ln",
+      "name": "Lingala"
+    },
+    {
+      "code": "zu",
+      "name": "Zulu"
+    },
+    {
+      "code": "xh",
+      "name": "Xhosa"
+    },
+    {
+      "code": "af",
+      "name": "Afrikaans"
+    },
+    {
+      "code": "mg",
+      "name": "Malagasy"
+    },
+    {
+      "code": "fa",
+      "name": "Persian"
+    },
+    {
+      "code": "tr",
+      "name": "Turkish"
+    },
+    {
+      "code": "ur",
+      "name": "Urdu"
+    },
+    {
+      "code": "hi",
+      "name": "Hindi"
+    },
+    {
+      "code": "ru",
+      "name": "Russian"
+    },
+    {
+      "code": "pl",
+      "name": "Polish"
+    },
+    {
+      "code": "zh",
+      "name": "Chinese"
+    },
+    {
+      "code": "ja",
+      "name": "Japanese"
+    },
+    {
+      "code": "ko",
+      "name": "Korean"
+    },
+    {
+      "code": "id",
+      "name": "Indonesian"
+    },
+    {
+      "code": "ms",
+      "name": "Malay"
+    },
+    {
+      "code": "he",
+      "name": "Hebrew"
+    },
+    {
+      "code": "el",
+      "name": "Greek"
+    },
+    {
+      "code": "la",
+      "name": "Latin"
+    }
   ]
 }

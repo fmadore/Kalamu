@@ -27,6 +27,7 @@ scriptorium-catalog.workspace = true
 scriptorium-core.workspace = true
 scriptorium-engine.workspace = true
 scriptorium-media.workspace = true
+scriptorium-offline.workspace = true
 scriptorium-prompts.workspace = true
 scriptorium-providers.workspace = true
 scriptorium-store.workspace = true

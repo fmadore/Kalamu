@@ -47,6 +47,12 @@ impl From<ProviderError> for AppError {
     }
 }
 
+impl From<scriptorium_offline::OfflineError> for AppError {
+    fn from(e: scriptorium_offline::OfflineError) -> Self {
+        Self::new(e.code(), e)
+    }
+}
+
 impl From<scriptorium_prompts::PromptError> for AppError {
     fn from(e: scriptorium_prompts::PromptError) -> Self {
         Self::new("prompt.invalid", e)

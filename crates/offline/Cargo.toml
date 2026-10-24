@@ -1,0 +1,31 @@
+[package]
+name = "scriptorium-offline"
+description = "Offline engines for Scriptorium (Whisper), behind the same provider trait as the cloud."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+hex.workspace = true
+reqwest.workspace = true
+scriptorium-core.workspace = true
+serde.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+ts-rs.workspace = true
+# As in Live Translation: CPU only, no default features (no CUDA, Metal or Vulkan). The second
+# pin fixes the vendored whisper.cpp (1.8.3), which the first does not.
+whisper-rs = { version = "=0.16.0", default-features = false }
+whisper-rs-sys = "=0.15.0"
+
+[dev-dependencies]
+scriptorium-catalog.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

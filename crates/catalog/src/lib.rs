@@ -53,6 +53,9 @@ pub struct ProviderInfo {
     pub key_url: String,
     /// A prefix every key starts with, to catch keys pasted for the wrong provider.
     pub key_prefix: Option<String>,
+    /// Runs on this PC: needs no key and sends nothing anywhere.
+    #[serde(default)]
+    pub local: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -111,6 +114,9 @@ pub struct ModelInfo {
     /// Dedicated OCR and speech-to-text models take no instructions.
     #[serde(default = "yes")]
     pub accepts_prompt: bool,
+    /// Can label who speaks in a transcription. Whisper cannot.
+    #[serde(default = "yes")]
+    pub speakers: bool,
     #[serde(default)]
     pub pricing: Pricing,
     #[serde(default)]

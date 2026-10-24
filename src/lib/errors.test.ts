@@ -8,6 +8,7 @@ function rustIds(): string[] {
 	const sources = [
 		'crates/engine/src/lib.rs',
 		'crates/core/src/provider.rs',
+		'crates/offline/src/lib.rs',
 		'src-tauri/src/errors.rs',
 		...readdirSync('src-tauri/src/commands').map((f) => `src-tauri/src/commands/${f}`)
 	].map((p) => readFileSync(p, 'utf8'));
@@ -15,7 +16,7 @@ function rustIds(): string[] {
 	for (const source of sources) {
 		for (const match of source.matchAll(/"([a-z]+\.[a-z_]+)"/g)) {
 			const id = match[1];
-			if (/^(job|media|prompt|provider|output|keys|settings|catalog|file|app)\./.test(id)) {
+			if (/^(job|media|prompt|provider|output|keys|settings|catalog|file|app|offline)\./.test(id)) {
 				ids.add(id);
 			}
 		}

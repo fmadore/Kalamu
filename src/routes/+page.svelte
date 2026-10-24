@@ -15,6 +15,7 @@
 		go,
 		refreshJobs,
 		refreshKeys,
+		refreshOffline,
 		type View
 	} from '#lib/state.svelte.js';
 
@@ -64,7 +65,7 @@
 				app.info = info;
 				app.catalog = catalog;
 				app.settings = settings;
-				await Promise.all([refreshKeys(), refreshJobs()]);
+				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline()]);
 				// Jobs cut short by the last close: show them first.
 				if (info.interrupted.length > 0) go({ name: 'jobs' });
 				else if (!app.keys.some((k) => k.saved)) go({ name: 'settings' });

@@ -77,9 +77,12 @@ pub fn run() {
             let catalog = Catalog::newest(cached.as_deref());
             let http = scriptorium_providers::client();
             let keys = Arc::new(CredentialKeys::default());
+            let models = scriptorium_offline::ModelManager::new(data.join("whisper-models"));
+            let mut providers = scriptorium_providers::registry(http.clone());
+            providers.push(Arc::new(scriptorium_offline::Whisper::new(models.clone())));
             let engine = Engine::new(
                 Arc::new(store),
-                scriptorium_providers::registry(http.clone()),
+                providers,
                 catalog,
                 prompts,
                 keys.clone(),
@@ -115,6 +118,7 @@ pub fn run() {
             let refresh = settings.refresh_catalog;
             app.manage(AppState {
                 engine,
+                models,
                 keys,
                 settings: Mutex::new(settings),
                 paths,
@@ -161,6 +165,10 @@ pub fn run() {
             commands::keys::set_api_key,
             commands::keys::clear_api_key,
             commands::keys::test_api_key,
+            commands::offline::offline_status,
+            commands::offline::download_model,
+            commands::offline::cancel_model_download,
+            commands::offline::remove_model,
             commands::presets::list_presets,
             commands::presets::save_preset,
             commands::presets::delete_preset,

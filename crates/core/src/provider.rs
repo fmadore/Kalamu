@@ -1,4 +1,6 @@
 use std::fmt;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -27,6 +29,24 @@ impl fmt::Debug for ApiKey {
     }
 }
 
+/// Raw 16-bit little-endian PCM, 16 kHz, one channel: what offline speech engines read.
+pub const PCM_16K_MONO: &str = "audio/x-pcm-s16le-16k";
+
+/// Set by the engine when the user pauses or cancels a job. Cloud calls finish on their own;
+/// long local work (an offline transcription) checks it between windows and stops early.
+#[derive(Debug, Clone, Default)]
+pub struct StopSignal(Arc<AtomicBool>);
+
+impl StopSignal {
+    pub fn stop(&self) {
+        self.0.store(true, Ordering::Relaxed);
+    }
+
+    pub fn is_stopped(&self) -> bool {
+        self.0.load(Ordering::Relaxed)
+    }
+}
+
 /// One piece converted to a form the provider accepts.
 #[derive(Debug, Clone)]
 pub struct PreparedInput {
@@ -50,6 +70,7 @@ pub struct ProcessRequest<'a> {
     pub input: &'a PreparedInput,
     pub languages: &'a LanguageChoice,
     pub options: &'a SetupOptions,
+    pub stop: &'a StopSignal,
 }
 
 /// Why a call failed, sorted by what the engine should do about it.
@@ -75,6 +96,12 @@ pub enum ProviderError {
     Unsupported(String),
     #[error("Unexpected response from the provider: {0}")]
     Other(String),
+    /// An offline engine whose model has not been downloaded.
+    #[error("Not installed: {0}")]
+    NotInstalled(String),
+    /// Stopped part-way because the job was paused or cancelled; the piece is done again later.
+    #[error("Stopped before the end")]
+    Interrupted,
 }
 
 impl ProviderError {
@@ -89,6 +116,8 @@ impl ProviderError {
             Self::InvalidRequest(_) => "provider.invalid_request",
             Self::Unsupported(_) => "provider.unsupported",
             Self::Other(_) => "provider.other",
+            Self::NotInstalled(_) => "provider.not_installed",
+            Self::Interrupted => "provider.interrupted",
         }
     }
 
@@ -99,7 +128,10 @@ impl ProviderError {
 
     /// The failure will not change on retry and affects every piece (stop the job).
     pub fn is_fatal_for_job(&self) -> bool {
-        matches!(self, Self::Auth(_) | Self::QuotaExhausted(_))
+        matches!(
+            self,
+            Self::Auth(_) | Self::QuotaExhausted(_) | Self::NotInstalled(_)
+        )
     }
 }
 
@@ -108,6 +140,18 @@ impl ProviderError {
 #[async_trait]
 pub trait Provider: Send + Sync {
     fn id(&self) -> ProviderId;
+
+    /// Cloud providers need an API key; offline engines do not.
+    fn needs_key(&self) -> bool {
+        true
+    }
+
+    /// Whether `model` can run now: an offline engine checks that its model was downloaded
+    /// and that this processor can run it, before the job starts.
+    fn check_ready(&self, model: &str) -> Result<(), ProviderError> {
+        let _ = model;
+        Ok(())
+    }
 
     /// MIME types this provider accepts for a task, in order of preference. Media preparation
     /// converts each piece into the first one it can produce.

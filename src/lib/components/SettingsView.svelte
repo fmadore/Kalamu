@@ -3,6 +3,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { api, openUrl } from '#lib/tauri.js';
 	import { app, hasKey, refreshKeys, toast } from '#lib/state.svelte.js';
+	import OfflineModels from './OfflineModels.svelte';
 
 	const m = messages();
 
@@ -47,7 +48,7 @@
 	<section class="card block" aria-labelledby="keys-title">
 		<h2 id="keys-title">{m.settings.keysTitle}</h2>
 		<p class="muted small">{m.settings.keysHint}</p>
-		{#each app.catalog?.providers ?? [] as p (p.id)}
+		{#each (app.catalog?.providers ?? []).filter((p) => !p.local) as p (p.id)}
 			<div class="key">
 				<div class="key-name">
 					<strong>{p.name}</strong>
@@ -104,6 +105,8 @@
 			</div>
 		{/each}
 	</section>
+
+	<OfflineModels />
 
 	{#if app.settings}
 		<section class="card block" aria-labelledby="jobs-settings">

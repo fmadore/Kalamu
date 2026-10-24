@@ -15,6 +15,7 @@ import type { Job } from './bindings/Job.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { NewJob } from './bindings/NewJob.js';
+import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
 import type { PieceState } from './bindings/PieceState.js';
 import type { PieceView } from './bindings/PieceView.js';
@@ -53,6 +54,10 @@ export const api = {
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	clearApiKey: (provider: string) => invoke<void>('clear_api_key', { provider }),
 	testApiKey: (provider: string) => invoke<string[]>('test_api_key', { provider }),
+	offlineStatus: () => invoke<OfflineStatus>('offline_status'),
+	downloadModel: (id: string) => invoke<void>('download_model', { id }),
+	cancelModelDownload: () => invoke<void>('cancel_model_download'),
+	removeModel: (id: string) => invoke<void>('remove_model', { id }),
 	listPresets: (task?: Task) => invoke<Preset[]>('list_presets', { task: task ?? null }),
 	savePreset: (preset: Preset) => invoke<Preset>('save_preset', { preset }),
 	deletePreset: (id: string) => invoke<void>('delete_preset', { id }),

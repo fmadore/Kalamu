@@ -19,6 +19,8 @@ allow = [
   "CDLA-Permissive-2.0",
   "0BSD",
   "bzip2-1.0.6",
+  # whisper-rs and whisper-rs-sys (offline transcription): public-domain dedication.
+  "Unlicense",
 ]
 confidence-threshold = 0.9
 

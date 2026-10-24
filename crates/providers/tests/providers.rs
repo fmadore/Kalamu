@@ -5,7 +5,7 @@
 
 use scriptorium_core::{
     ApiKey, LanguageChoice, LanguageCode, PieceRef, PreparedInput, ProcessRequest, Provider,
-    ProviderError, SetupOptions, Task,
+    ProviderError, SetupOptions, StopSignal, Task,
 };
 use scriptorium_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
 use wiremock::matchers::{body_partial_json, header, method, path};
@@ -54,8 +54,12 @@ fn request<'a>(
         input,
         languages,
         options,
+        stop: &STOP,
     }
 }
+
+/// Cloud providers ignore the stop signal; one shared, never-set signal will do.
+static STOP: std::sync::LazyLock<StopSignal> = std::sync::LazyLock::new(StopSignal::default);
 
 #[tokio::test]
 async fn gemini_sends_pages_at_high_resolution_and_reads_the_text() {

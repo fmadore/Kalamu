@@ -25,7 +25,9 @@ pub use ids::{JobId, ProviderId, SetupId, SourceId, Timestamp};
 pub use job::{Job, JobSettings, JobStatus, JobSummary, OutputDestination, OutputSettings};
 pub use language::{LanguageChoice, LanguageCode};
 pub use provenance::Provenance;
-pub use provider::{ApiKey, PreparedInput, ProcessRequest, Provider, ProviderError};
+pub use provider::{
+    ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, StopSignal,
+};
 pub use result::{
     PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, Usage,
 };

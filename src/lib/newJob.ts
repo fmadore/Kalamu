@@ -31,6 +31,11 @@ export function modelInfo(catalog: Catalog, d: Draft): ModelInfo | undefined {
 	return catalog.models.find((m) => m.provider === d.provider && m.id === d.model);
 }
 
+/** Whisper cannot tell speakers apart; a missing flag means the model can. */
+export function labelsSpeakers(model: ModelInfo | undefined): boolean {
+	return model?.speakers !== false;
+}
+
 /** Dedicated OCR and speech models take no prompt; a missing flag means they do. */
 export function acceptsPrompt(model: ModelInfo | undefined): boolean {
 	return model?.accepts_prompt !== false;
@@ -74,7 +79,7 @@ export function toRequest(catalog: Catalog, task: Task, d: Draft): SetupRequest 
 		label: d.label.trim() || null,
 		options: {
 			temperature: null,
-			diarize: task === 'audio_transcription' && d.diarize,
+			diarize: task === 'audio_transcription' && d.diarize && labelsSpeakers(modelInfo(catalog, d)),
 			timestamps: task === 'audio_transcription' && d.timestamps,
 			speakers: null
 		}

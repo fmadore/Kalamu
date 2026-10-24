@@ -20,6 +20,7 @@ scriptorium-providers = { path = "crates/providers" }
 scriptorium-store = { path = "crates/store" }
 scriptorium-export = { path = "crates/export" }
 scriptorium-engine = { path = "crates/engine" }
+scriptorium-offline = { path = "crates/offline" }
 
 anyhow = "1.0.104"
 async-trait = "0.1.92"

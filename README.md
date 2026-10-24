@@ -356,7 +356,11 @@ described in [docs/formats.md](docs/formats.md).
 ## Development
 
 Requirements: Rust through rustup (the version in `rust-toolchain.toml` installs itself),
-Node.js 22 or 24, and the WebView2 runtime that ships with Windows 11.
+Node.js 22 or 24, and the WebView2 runtime that ships with Windows 11. Offline transcription
+compiles whisper.cpp, which also needs LLVM (`clang-cl`), CMake and Ninja (the Visual Studio
+Build Tools include the last two), with these variables set, as in Live Translation's CI:
+`CC=clang-cl`, `CXX=clang-cl`, `CXXFLAGS=-EHsc`, `CMAKE_GENERATOR=Ninja` and
+`LIBCLANG_PATH=C:\Program Files\LLVM\bin`.
 
 ```bash
 npm install

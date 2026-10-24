@@ -18,8 +18,8 @@ use std::time::Duration;
 use scriptorium_catalog::Catalog;
 use scriptorium_core::{
     ApiKey, Correction, InputWarning, Job, JobId, JobStatus, JobStore, JobSummary, PieceStatus,
-    ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceFile, SourceId, StoreError,
-    Timestamp,
+    ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceFile, SourceId, StopSignal,
+    StoreError, Timestamp,
 };
 use scriptorium_media::{MediaError, OpenSource};
 use scriptorium_prompts::{PromptError, PromptLibrary};
@@ -72,6 +72,9 @@ pub enum EngineError {
     UnknownProvider(String),
     #[error("No API key saved for {0}")]
     MissingKey(String),
+    /// An offline model not downloaded, or a processor that cannot run it.
+    #[error("{0}")]
+    NotReady(ProviderError),
     #[error("{0} cannot do this task")]
     UnsupportedModel(String),
     #[error("The job is already running")]
@@ -94,6 +97,7 @@ impl EngineError {
             Self::Prompt(_) => "prompt.invalid",
             Self::UnknownProvider(_) => "provider.unknown",
             Self::MissingKey(_) => "provider.missing_key",
+            Self::NotReady(e) => e.code(),
             Self::UnsupportedModel(_) => "provider.unsupported",
             Self::AlreadyRunning => "job.running",
             Self::EmptyJob => "job.empty",
@@ -102,11 +106,13 @@ impl EngineError {
     }
 }
 
-/// Pause and cancel requests for a running job, checked between pieces.
+/// Pause and cancel requests for a running job, checked between pieces. `stop` reaches the
+/// pieces in flight, so long offline work can stop part-way.
 #[derive(Default)]
 pub(crate) struct Control {
     pub pause: bool,
     pub cancel: bool,
+    pub stop: StopSignal,
 }
 
 pub struct Engine {
@@ -224,13 +230,17 @@ impl Engine {
     /// Stops after the pieces in flight; everything finished is kept and the job can resume.
     pub fn pause(&self, id: JobId) {
         if let Some(control) = self.control(id) {
-            control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
+            let mut control = control.lock().unwrap_or_else(|p| p.into_inner());
+            control.pause = true;
+            control.stop.stop();
         }
     }
 
     pub fn cancel(&self, id: JobId) {
         if let Some(control) = self.control(id) {
-            control.lock().unwrap_or_else(|p| p.into_inner()).cancel = true;
+            let mut control = control.lock().unwrap_or_else(|p| p.into_inner());
+            control.cancel = true;
+            control.stop.stop();
         }
     }
 

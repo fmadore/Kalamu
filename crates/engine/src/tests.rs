@@ -250,6 +250,24 @@ async fn transient_errors_are_retried_and_failures_can_be_retried_later() {
 }
 
 #[tokio::test]
+async fn a_piece_stopped_part_way_is_done_again_on_resume_not_failed() {
+    let f = fixture();
+    f.fake.fail(2, vec![ProviderError::Interrupted]);
+    let job = f.new_job(vec![f.pdf("long.pdf", 3)], &["fake-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::Paused);
+    let pieces = f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Failed), 0);
+    assert_eq!(count(&pieces, PieceStatus::Pending), 1);
+    let before = f.fake.calls();
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(
+        f.fake.calls(),
+        before + 1,
+        "only the stopped piece is sent again"
+    );
+}
+
+#[tokio::test]
 async fn a_rejected_key_pauses_the_job_instead_of_failing_every_page() {
     let f = fixture();
     f.fake
