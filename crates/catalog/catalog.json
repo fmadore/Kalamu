@@ -43,7 +43,8 @@
       "description": "Fast and inexpensive; reads print and handwriting well. The default in zmo- and iwac-ai-pipelines.",
       "tasks": [
         "text_extraction",
-        "audio_transcription"
+        "audio_transcription",
+        "summary"
       ],
       "inputs": [
         "application/pdf",
@@ -54,12 +55,14 @@
         "audio/wav",
         "audio/mp4",
         "audio/flac",
-        "audio/ogg"
+        "audio/ogg",
+        "text/plain"
       ],
       "languages": "any",
       "status": "stable",
       "recommended_for": [
-        "text_extraction"
+        "text_extraction",
+        "summary"
       ],
       "pricing": {
         "input_per_mtok": 0.75,
@@ -77,7 +80,8 @@
       "description": "Google's most capable model, for difficult handwriting and degraded scans.",
       "tasks": [
         "text_extraction",
-        "audio_transcription"
+        "audio_transcription",
+        "summary"
       ],
       "inputs": [
         "application/pdf",
@@ -88,7 +92,8 @@
         "audio/wav",
         "audio/mp4",
         "audio/flac",
-        "audio/ogg"
+        "audio/ogg",
+        "text/plain"
       ],
       "languages": "any",
       "status": "preview",
@@ -108,13 +113,15 @@
       "name": "Gemini 3.5 Flash-Lite",
       "description": "The cheapest Gemini model, for clean printed text in bulk.",
       "tasks": [
-        "text_extraction"
+        "text_extraction",
+        "summary"
       ],
       "inputs": [
         "application/pdf",
         "image/png",
         "image/jpeg",
-        "image/webp"
+        "image/webp",
+        "text/plain"
       ],
       "languages": "any",
       "status": "stable",
@@ -133,13 +140,15 @@
       "name": "GPT-6 Sol",
       "description": "OpenAI's most capable model; reads PDFs and images.",
       "tasks": [
-        "text_extraction"
+        "text_extraction",
+        "summary"
       ],
       "inputs": [
         "application/pdf",
         "image/png",
         "image/jpeg",
-        "image/webp"
+        "image/webp",
+        "text/plain"
       ],
       "languages": "any",
       "status": "stable",
@@ -158,13 +167,15 @@
       "name": "GPT-6 Luna",
       "description": "Small and inexpensive; for clean printed text.",
       "tasks": [
-        "text_extraction"
+        "text_extraction",
+        "summary"
       ],
       "inputs": [
         "application/pdf",
         "image/png",
         "image/jpeg",
-        "image/webp"
+        "image/webp",
+        "text/plain"
       ],
       "languages": "any",
       "status": "stable",
@@ -211,13 +222,15 @@
       "name": "Claude Opus 5.5",
       "description": "Anthropic's current Opus; strong on difficult layouts and multilingual material. Reads PDFs and images, not audio.",
       "tasks": [
-        "text_extraction"
+        "text_extraction",
+        "summary"
       ],
       "inputs": [
         "application/pdf",
         "image/png",
         "image/jpeg",
-        "image/webp"
+        "image/webp",
+        "text/plain"
       ],
       "languages": "any",
       "status": "stable",
@@ -237,13 +250,15 @@
       "name": "Claude Sonnet 5.5",
       "description": "Faster and cheaper than Opus; used for Arabic books in iwac-ai-pipelines.",
       "tasks": [
-        "text_extraction"
+        "text_extraction",
+        "summary"
       ],
       "inputs": [
         "application/pdf",
         "image/png",
         "image/jpeg",
-        "image/webp"
+        "image/webp",
+        "text/plain"
       ],
       "languages": "any",
       "status": "stable",
@@ -263,13 +278,15 @@
       "name": "Claude Haiku 5.5",
       "description": "The cheapest Claude model, for clean printed text.",
       "tasks": [
-        "text_extraction"
+        "text_extraction",
+        "summary"
       ],
       "inputs": [
         "application/pdf",
         "image/png",
         "image/jpeg",
-        "image/webp"
+        "image/webp",
+        "text/plain"
       ],
       "languages": "any",
       "status": "stable",

@@ -353,6 +353,7 @@ impl Provider for Whisper {
                 ..Usage::default()
             },
             model_version: Some(model.file.trim_end_matches(".bin").to_owned()),
+            keywords: Vec::new(),
         })
     }
 

@@ -14,6 +14,7 @@ use scriptorium_core::{
 use serde_json::{Value, json};
 
 use crate::http::{base64, ids, send_json};
+use crate::summary;
 
 const BASE_URL: &str = "https://api.anthropic.com/v1";
 const API_VERSION: &str = "2026-10-21";
@@ -39,8 +40,19 @@ impl Anthropic {
     }
 
     fn body(request: &ProcessRequest<'_>) -> Value {
-        let data = base64(&request.input.bytes);
-        let media = if request.input.mime == "application/pdf" {
+        let input = request.input;
+        let data = base64(&input.bytes);
+        let media = if input.mime == "text/plain" {
+            json!({
+                "type": "document",
+                "source": {
+                    "type": "text",
+                    "media_type": "text/plain",
+                    "data": summary::document_text(input),
+                },
+                "title": input.file_name,
+            })
+        } else if input.mime == "application/pdf" {
             json!({
                 "type": "document",
                 "source": { "type": "base64", "media_type": "application/pdf", "data": data },
@@ -63,6 +75,12 @@ impl Anthropic {
         });
         if FALLBACK_MODELS.contains(&request.model) {
             body["fallbacks"] = json!("default");
+        }
+        if request.task == Task::Summary {
+            body["output_config"]["format"] = json!({
+                "type": "json_schema",
+                "schema": summary::schema(),
+            });
         }
         body
     }
@@ -115,6 +133,7 @@ impl Anthropic {
                 .get("model")
                 .and_then(Value::as_str)
                 .map(str::to_string),
+            keywords: Vec::new(),
         })
     }
 }
@@ -129,6 +148,7 @@ impl Provider for Anthropic {
         match task {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
             Task::AudioTranscription => &[],
+            Task::Summary => &["text/plain", "application/pdf"],
         }
     }
 
@@ -151,7 +171,12 @@ impl Provider for Anthropic {
         if FALLBACK_MODELS.contains(&request.model) {
             http = http.header("anthropic-beta", FALLBACK_BETA);
         }
-        Self::parse(&send_json(http).await?)
+        let output = Self::parse(&send_json(http).await?)?;
+        if request.task == Task::Summary {
+            summary::finish(output)
+        } else {
+            Ok(output)
+        }
     }
 
     async fn list_models(&self, key: &ApiKey) -> Result<Vec<String>, ProviderError> {

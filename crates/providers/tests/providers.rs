@@ -26,6 +26,21 @@ fn page() -> PreparedInput {
     }
 }
 
+fn document() -> PreparedInput {
+    PreparedInput {
+        piece: PieceRef::Whole,
+        mime: "text/plain".into(),
+        bytes: "Réunion à la mosquée de Bamako, 3 mai 1957."
+            .as_bytes()
+            .to_vec(),
+        file_name: "rapport.txt".into(),
+    }
+}
+
+/// What every provider's structured output returns for a summary.
+const SUMMARY_JSON: &str =
+    r#"{"summary":"Réunion de 200 fidèles à Bamako.","keywords":["Bamako","mosquée"]}"#;
+
 fn audio() -> PreparedInput {
     PreparedInput {
         piece: PieceRef::Segment {
@@ -70,11 +85,13 @@ async fn gemini_sends_pages_at_high_resolution_and_reads_the_text() {
         .and(body_partial_json(serde_json::json!({
             "systemInstruction": { "parts": [{ "text": "Transcribe diplomatically." }] },
             "contents": [{ "parts": [
-                { "inlineData": { "mimeType": "application/pdf" },
-                  "mediaResolution": { "level": "MEDIA_RESOLUTION_HIGH" } },
+                { "inlineData": { "mimeType": "application/pdf" } },
                 { "text": "Transcribe this page." }
             ]}],
-            "generationConfig": { "thinkingConfig": { "thinkingLevel": "LOW" } },
+            "generationConfig": {
+                "mediaResolution": "MEDIA_RESOLUTION_HIGH",
+                "thinkingConfig": { "thinkingLevel": "low" }
+            },
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(fixture("gemini_ok.json")))
         .mount(&server)
@@ -363,4 +380,79 @@ async fn bad_keys_are_reported_as_auth_errors() {
     let openai = OpenAi::with_base_url(client(), &server.uri());
     let result = openai.list_models(&ApiKey::new("wrong")).await;
     assert!(matches!(result, Err(ProviderError::Auth(_))));
+}
+
+#[tokio::test]
+async fn summaries_send_the_document_and_a_schema_and_read_back_keywords() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/models/gemini-3.8-flash:generateContent"))
+        .and(body_partial_json(serde_json::json!({
+            "generationConfig": { "responseMimeType": "application/json",
+                "responseJsonSchema": { "required": ["summary", "keywords"] } },
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "candidates": [{ "finishReason": "STOP",
+                "content": { "parts": [{ "text": SUMMARY_JSON }] } }],
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .and(body_partial_json(serde_json::json!({
+            "text": { "format": { "type": "json_schema", "name": "summary", "strict": true } },
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "model": "gpt-6-luna",
+            "output": [{ "type": "message",
+                "content": [{ "type": "output_text", "text": SUMMARY_JSON }] }],
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/messages"))
+        .and(body_partial_json(serde_json::json!({
+            "messages": [{ "content": [
+                { "type": "document", "source": { "type": "text", "media_type": "text/plain" },
+                  "title": "rapport.txt" },
+                { "type": "text" }
+            ]}],
+            "output_config": { "effort": "low", "format": { "type": "json_schema" } },
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "model": "claude-haiku-5-5", "stop_reason": "end_turn",
+            "content": [{ "type": "text", "text": SUMMARY_JSON }],
+        })))
+        .mount(&server)
+        .await;
+
+    let (input, langs, opts) = (document(), LanguageChoice::Auto, SetupOptions::default());
+    let key = ApiKey::new("k");
+    let providers: [(Box<dyn Provider>, &str); 3] = [
+        (
+            Box::new(Gemini::with_base_url(client(), &server.uri())),
+            "gemini-3.8-flash",
+        ),
+        (
+            Box::new(OpenAi::with_base_url(client(), &server.uri())),
+            "gpt-6-luna",
+        ),
+        (
+            Box::new(Anthropic::with_base_url(client(), &server.uri())),
+            "claude-haiku-5-5",
+        ),
+    ];
+    for (provider, model) in providers {
+        assert!(
+            provider
+                .accepted_inputs(Task::Summary)
+                .contains(&"text/plain")
+        );
+        let out = provider
+            .process(&key, request(Task::Summary, model, &input, &langs, &opts))
+            .await
+            .unwrap_or_else(|e| panic!("{model}: {e}"));
+        assert_eq!(out.text, "Réunion de 200 fidèles à Bamako.", "{model}");
+        assert_eq!(out.keywords, ["Bamako", "mosquée"], "{model}");
+    }
 }

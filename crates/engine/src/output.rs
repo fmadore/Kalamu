@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 use scriptorium_core::fingerprint::sha256_hex;
 use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
 use scriptorium_core::{
-    CacheKey, ExportDocument, ExportPart, Job, OutputDestination, PieceRef, Provenance, Segment,
-    SetupId, SourceFile, SourceId, Timestamp, Usage,
+    CacheKey, ExportDocument, ExportPart, Job, JobId, OutputDestination, PieceRef, Provenance,
+    Segment, SetupId, SourceFile, SourceId, Timestamp, Usage,
 };
 
 use crate::{Engine, EngineError};
@@ -21,24 +21,8 @@ impl Engine {
         source_id: SourceId,
     ) -> Result<Vec<String>, EngineError> {
         let document = self.export_document(job, setup_id, source_id)?;
-        let dir = match &job.output.destination {
-            OutputDestination::BesideSources => Path::new(&document.source.path)
-                .parent()
-                .map(Path::to_path_buf)
-                .unwrap_or_default(),
-            OutputDestination::Folder(folder) => PathBuf::from(folder),
-        };
+        let (dir, base) = output_base(job, &document.source, &document.setup.label);
         std::fs::create_dir_all(&dir).map_err(|e| EngineError::Output(e.to_string()))?;
-        let stem = Path::new(&document.source.file_name)
-            .file_stem()
-            .map(|s| s.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "result".into());
-        // In comparison mode each set-up gets its own files.
-        let base = if job.is_comparison() {
-            format!("{stem}.{}", document.setup.label)
-        } else {
-            stem
-        };
 
         let mut written = Vec::new();
         for format in &job.output.formats {
@@ -69,6 +53,28 @@ impl Engine {
         write_atomic(&path, &provenance)?;
         written.push(path.display().to_string());
         Ok(written)
+    }
+
+    /// The plain-text results a finished job wrote, for summarising them in a new job.
+    pub fn text_outputs(&self, job_id: JobId) -> Result<Vec<String>, EngineError> {
+        let job = self.store.job(job_id)?;
+        let mut out = Vec::new();
+        for source in &job.sources {
+            for setup in &job.setups {
+                let (dir, base) = output_base(&job, source, &setup.label);
+                let path = [
+                    dir.join(format!("{base}.txt")),
+                    dir.join(format!("{base}.scriptorium.txt")),
+                    dir.join(format!("{base}.md")),
+                ]
+                .into_iter()
+                .find(|p| p.is_file() && p != Path::new(&source.path));
+                if let Some(path) = path {
+                    out.push(path.display().to_string());
+                }
+            }
+        }
+        Ok(out)
     }
 
     /// The document exporters read: stored results in reading order, corrections applied.
@@ -145,7 +151,7 @@ impl Engine {
             } else {
                 let previous_end = parts.last().and_then(|p: &ExportPart| match p.piece {
                     PieceRef::Segment { end_ms, .. } => Some(end_ms),
-                    PieceRef::Page { .. } => None,
+                    PieceRef::Page { .. } | PieceRef::Whole => None,
                 });
                 absolute(&state.piece, &result.output.segments, previous_end)
             };
@@ -155,6 +161,7 @@ impl Engine {
                 segments,
                 corrected: correction.is_some_and(|c| c.text.is_some()),
                 reviewed: is_reviewed,
+                keywords: result.output.keywords.clone(),
             });
         }
 
@@ -209,6 +216,32 @@ impl Engine {
     }
 }
 
+/// Where a source's results go and the name they share: the source's name, with the set-up's
+/// label in comparison mode, and `.summary` for summaries so they never replace the
+/// transcription or extraction they summarise.
+fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, String) {
+    let dir = match &job.output.destination {
+        OutputDestination::BesideSources => Path::new(&source.path)
+            .parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_default(),
+        OutputDestination::Folder(folder) => PathBuf::from(folder),
+    };
+    let stem = Path::new(&source.file_name)
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "result".into());
+    let mut base = if job.is_comparison() {
+        format!("{stem}.{setup_label}")
+    } else {
+        stem
+    };
+    if job.task == scriptorium_core::Task::Summary {
+        base.push_str(".summary");
+    }
+    (dir, base)
+}
+
 /// Fixes applied to a source's working copies, for provenance and the cache key.
 pub(crate) fn preprocessing(source: &SourceFile) -> Vec<String> {
     let mut out = Vec::new();
@@ -227,7 +260,7 @@ pub(crate) fn preprocessing(source: &SourceFile) -> Vec<String> {
 fn absolute(piece: &PieceRef, segments: &[Segment], previous_end: Option<u64>) -> Vec<Segment> {
     let offset = match piece {
         PieceRef::Segment { start_ms, .. } => *start_ms,
-        PieceRef::Page { .. } => 0,
+        PieceRef::Page { .. } | PieceRef::Whole => 0,
     };
     let repeated_until = previous_end.filter(|end| *end > offset);
     segments

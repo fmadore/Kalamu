@@ -47,6 +47,7 @@
     "allow-list-jobs",
     "allow-get-job",
     "allow-job-pieces",
+    "allow-job-text-outputs",
     "allow-source-pieces",
     "allow-piece-preview",
     "allow-piece-audio",

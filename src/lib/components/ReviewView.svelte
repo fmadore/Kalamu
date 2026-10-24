@@ -49,6 +49,7 @@
 			const half = v.piece.half ? ` (${v.piece.half})` : '';
 			return m.review.page(`${v.piece.number}${half}`);
 		}
+		if (v.piece.kind === 'whole') return m.review.document;
 		const s = Math.floor(v.piece.start_ms / 1000);
 		const clock = [s / 3600, (s / 60) % 60, s % 60]
 			.map((n) => String(Math.floor(n)).padStart(2, '0'))
@@ -296,6 +297,11 @@
 				{:else}
 					<div class="text">{shownText(v)}</div>
 				{/if}
+				{#if v && v.keywords.length > 0}
+					<p class="keywords" aria-label={m.review.keywords}>
+						{#each v.keywords as k (k)}<span class="chip">{k}</span>{/each}
+					</p>
+				{/if}
 				{#if v?.model_version}<p class="muted tiny">
 						{v.model_version}{v.cost_usd ? ` · ${formatUsd(v.cost_usd)}` : ''}
 					</p>{/if}
@@ -385,6 +391,12 @@
 		display: inline-flex;
 		gap: var(--space-1);
 		align-items: center;
+	}
+	.keywords {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1);
+		padding: 0 var(--space-3);
 	}
 	.text {
 		flex: 1;

@@ -43,7 +43,7 @@ pub(crate) fn marker(doc: &ExportDocument, index: usize) -> Option<String> {
     match part.piece {
         scriptorium_core::PieceRef::Page { .. } => Some(format!("Page {}", part.piece.label())),
         // Recordings are cut only to fit provider limits; the cuts mean nothing to a reader.
-        scriptorium_core::PieceRef::Segment { .. } => None,
+        scriptorium_core::PieceRef::Segment { .. } | scriptorium_core::PieceRef::Whole => None,
     }
 }
 
@@ -54,11 +54,24 @@ pub(crate) fn marker(doc: &ExportDocument, index: usize) -> Option<String> {
 /// `ExportPart::segments` are already relative to the start of the recording.
 pub(crate) fn part_text(doc: &ExportDocument, index: usize) -> String {
     let part = &doc.parts[index];
+    let text = body_text(doc, index);
+    // Summaries end with their keywords.
+    if part.keywords.is_empty() {
+        text
+    } else {
+        format!("{text}\n\nKeywords: {}", part.keywords.join("; "))
+    }
+}
+
+fn body_text(doc: &ExportDocument, index: usize) -> String {
+    let part = &doc.parts[index];
     let parsed;
     let segments = if part.segments.is_empty() {
         let offset = match part.piece {
             scriptorium_core::PieceRef::Segment { start_ms, .. } => start_ms,
-            scriptorium_core::PieceRef::Page { .. } => return part.text.trim().to_string(),
+            scriptorium_core::PieceRef::Page { .. } | scriptorium_core::PieceRef::Whole => {
+                return part.text.trim().to_string();
+            }
         };
         parsed = segments_from_text(&part.text, offset);
         if parsed.is_empty() {

@@ -2,7 +2,8 @@ use scriptorium_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task
 
 use crate::timeline::timeline;
 
-/// One row per page (text extraction) or per segment (transcription), for spreadsheets.
+/// One row per page (text extraction), per segment (transcription) or per document (summary),
+/// for spreadsheets.
 pub struct CsvExporter;
 
 impl Exporter for CsvExporter {
@@ -31,6 +32,22 @@ impl Exporter for CsvExporter {
                         .write_record([
                             part.piece.label(),
                             part.text.trim().to_string(),
+                            part.corrected.to_string(),
+                            part.reviewed.to_string(),
+                        ])
+                        .map_err(err)?;
+                }
+            }
+            Task::Summary => {
+                writer
+                    .write_record(["file", "summary", "keywords", "corrected", "reviewed"])
+                    .map_err(err)?;
+                for part in &doc.parts {
+                    writer
+                        .write_record([
+                            doc.source.file_name.clone(),
+                            part.text.trim().to_string(),
+                            part.keywords.join("; "),
                             part.corrected.to_string(),
                             part.reviewed.to_string(),
                         ])

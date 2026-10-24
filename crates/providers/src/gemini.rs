@@ -1,7 +1,12 @@
 //! Google Gemini through the `generateContent` REST endpoint, with the settings tested in
-//! zmo- and iwac-ai-pipelines: high media resolution per part, the lowest thinking level the
-//! models accept, safety filters off (historical documents trip them), and no temperature
-//! (lower values make Gemini 3 loop).
+//! zmo- and iwac-ai-pipelines: high media resolution, a low thinking level, safety filters off
+//! (historical documents trip them), and no temperature (lower values make Gemini 3 loop).
+//! Summaries come back as JSON under a response schema.
+//!
+//! Google now recommends medium resolution for PDFs; high is kept because Scriptorium's
+//! material is dense historical print and handwriting, where iwac-ai-pipelines measured the
+//! difference. Resolution is set for the whole request, the stable form, since each request
+//! carries one piece.
 
 use async_trait::async_trait;
 use reqwest::Client;
@@ -11,6 +16,7 @@ use scriptorium_core::{
 use serde_json::{Value, json};
 
 use crate::http::{base64, send_json};
+use crate::summary;
 
 const BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -42,15 +48,29 @@ impl Gemini {
     }
 
     fn body(request: &ProcessRequest<'_>) -> Value {
-        let mut media = json!({
-            "inlineData": {
-                "mimeType": request.input.mime,
-                "data": base64(&request.input.bytes),
-            }
+        let input = request.input;
+        let media = if input.mime == "text/plain" {
+            json!({ "text": summary::tagged_document(input) })
+        } else {
+            json!({
+                "inlineData": {
+                    "mimeType": input.mime,
+                    "data": base64(&input.bytes),
+                }
+            })
+        };
+        let mut generation = json!({
+            "maxOutputTokens": 65_535,
+            "responseMimeType": "text/plain",
+            "thinkingConfig": { "thinkingLevel": "low" },
         });
         // Media resolution applies to images and documents; ULTRA_HIGH is refused for PDFs.
-        if !request.input.mime.starts_with("audio/") {
-            media["mediaResolution"] = json!({ "level": "MEDIA_RESOLUTION_HIGH" });
+        if input.mime == "application/pdf" || input.mime.starts_with("image/") {
+            generation["mediaResolution"] = json!("MEDIA_RESOLUTION_HIGH");
+        }
+        if request.task == Task::Summary {
+            generation["responseMimeType"] = json!("application/json");
+            generation["responseJsonSchema"] = summary::schema();
         }
         json!({
             "systemInstruction": { "parts": [{ "text": request.prompt }] },
@@ -58,11 +78,7 @@ impl Gemini {
                 "role": "user",
                 "parts": [media, { "text": request.user_prompt }],
             }],
-            "generationConfig": {
-                "maxOutputTokens": 65_535,
-                "responseMimeType": "text/plain",
-                "thinkingConfig": { "thinkingLevel": "LOW" },
-            },
+            "generationConfig": generation,
             "safetySettings": SAFETY_CATEGORIES
                 .iter()
                 .map(|c| json!({ "category": c, "threshold": "BLOCK_NONE" }))
@@ -135,6 +151,7 @@ impl Gemini {
                 .get("modelVersion")
                 .and_then(Value::as_str)
                 .map(str::to_string),
+            keywords: Vec::new(),
         })
     }
 }
@@ -164,6 +181,7 @@ impl Provider for Gemini {
                 "audio/aac",
                 "audio/webm",
             ],
+            Task::Summary => &["text/plain", "application/pdf"],
         }
     }
 
@@ -186,7 +204,12 @@ impl Provider for Gemini {
                 .json(&Self::body(&request)),
         )
         .await?;
-        Self::parse(&response)
+        let output = Self::parse(&response)?;
+        if request.task == Task::Summary {
+            summary::finish(output)
+        } else {
+            Ok(output)
+        }
     }
 
     async fn list_models(&self, key: &ApiKey) -> Result<Vec<String>, ProviderError> {

@@ -102,6 +102,7 @@ fn letter() -> ExportDocument {
                 segments: vec![],
                 corrected: false,
                 reviewed: true,
+                keywords: vec![],
             },
             ExportPart {
                 piece: scriptorium_core::PieceRef::page(2),
@@ -109,6 +110,7 @@ fn letter() -> ExportDocument {
                 segments: vec![],
                 corrected: true,
                 reviewed: true,
+                keywords: vec![],
             },
         ],
     )
@@ -142,6 +144,7 @@ fn interview() -> ExportDocument {
                 ],
                 corrected: false,
                 reviewed: false,
+                keywords: vec![],
             },
             ExportPart {
                 // A prompt-based model that wrote timestamps into its text.
@@ -154,6 +157,7 @@ fn interview() -> ExportDocument {
                 segments: vec![],
                 corrected: false,
                 reviewed: false,
+                keywords: vec![],
             },
         ],
     )

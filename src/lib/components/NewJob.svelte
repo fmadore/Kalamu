@@ -10,9 +10,11 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, languageName, messages } from '#lib/i18n/index.js';
-	import { type Draft, FORMATS, newDraft, suggestName, toRequest } from '#lib/newJob.js';
+	import { type Draft, FORMATS, newDraft, readsKind, suggestName, toRequest } from '#lib/newJob.js';
 	import { api, onDrop, pickFolder } from '#lib/tauri.js';
 	import { app, go, hasKey, liveJob, refreshJobs } from '#lib/state.svelte.js';
+
+	let { opening = {} }: { opening?: { task?: Task; paths?: string[] } } = $props();
 
 	const m = messages();
 
@@ -40,13 +42,11 @@
 		presets = await api.listPresets(task);
 		drafts = [newDraft(catalog, task, presets[0]?.id ?? null, hasKey)];
 		formats = [
-			...(task === 'text_extraction' ? app.settings!.text_formats : app.settings!.audio_formats)
-		];
-		files = files.filter((f) =>
-			task === 'text_extraction'
-				? f.source?.kind === 'pdf' || f.source?.kind === 'image'
-				: f.source?.kind === 'audio' || f.source?.kind === 'video'
-		);
+			...(task === 'audio_transcription' ? app.settings!.audio_formats : app.settings!.text_formats)
+		].filter((f) => FORMATS[task].includes(f));
+		// A summary is written in one language.
+		if (task === 'summary') languages = languages.slice(0, 1);
+		files = files.filter((f) => readsKind(task, f.source?.kind));
 	}
 
 	async function addPaths(paths: string[]) {
@@ -141,7 +141,10 @@
 	}
 
 	onMount(() => {
-		void loadTask(task);
+		// Opened from a finished job's "Summarise" button: its results are the files.
+		void loadTask(opening.task ?? task).then(() =>
+			opening.paths ? addPaths(opening.paths) : undefined
+		);
 		let unlisten: (() => void) | undefined;
 		void onDrop((paths) => void addPaths(paths)).then((u) => (unlisten = u));
 		return () => unlisten?.();
@@ -156,7 +159,7 @@
 	<section aria-labelledby="task-label">
 		<h2 id="task-label" class="label">{m.newJob.taskLabel}</h2>
 		<div class="tasks">
-			{#each ['text_extraction', 'audio_transcription'] as const as t (t)}
+			{#each ['text_extraction', 'audio_transcription', 'summary'] as const as t (t)}
 				<button
 					class="task card"
 					class:selected={task === t}
@@ -173,11 +176,13 @@
 	<FileList bind:files {task} {inspecting} onadd={addPaths} />
 
 	<section class="card block" aria-labelledby="lang-title">
-		<h2 id="lang-title">{m.newJob.languageTitle}</h2>
+		<h2 id="lang-title">
+			{task === 'summary' ? m.newJob.summaryLanguageTitle : m.newJob.languageTitle}
+		</h2>
 		<div class="row">
 			<label class="inline"
 				><input type="radio" bind:group={languageMode} value="auto" />
-				{m.newJob.languageAuto}</label
+				{task === 'summary' ? m.newJob.summaryLanguageAuto : m.newJob.languageAuto}</label
 			>
 			<label class="inline"
 				><input type="radio" bind:group={languageMode} value="explicit" />
@@ -200,7 +205,8 @@
 					aria-label={m.newJob.addLanguage}
 					onchange={(e) => {
 						const v = e.currentTarget.value;
-						if (v && !languages.includes(v)) languages = [...languages, v];
+						if (v && task === 'summary') languages = [v];
+						else if (v && !languages.includes(v)) languages = [...languages, v];
 						e.currentTarget.value = '';
 					}}
 				>
@@ -211,7 +217,9 @@
 				</select>
 			</div>
 		{/if}
-		<p class="muted small">{m.newJob.languageHint}</p>
+		<p class="muted small">
+			{task === 'summary' ? m.newJob.summaryLanguageHint : m.newJob.languageHint}
+		</p>
 	</section>
 
 	<SetupList bind:drafts {task} {presets} />

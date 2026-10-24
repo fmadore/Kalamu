@@ -18,6 +18,8 @@ const SKIPPED: &[&[u8]] = &[b"Parent", b"P", b"Annots", b"B", b"StructParents", 
 pub struct PdfSource {
     doc: Document,
     pages: BTreeMap<u32, ObjectId>,
+    /// The file, when opened from one, for sending the whole document (summaries).
+    path: Option<std::path::PathBuf>,
 }
 
 impl PdfSource {
@@ -26,7 +28,21 @@ impl PdfSource {
             path: path.display().to_string(),
             message: e.to_string(),
         })?;
-        Self::from_bytes(&bytes)
+        let mut pdf = Self::from_bytes(&bytes)?;
+        pdf.path = Some(path.to_path_buf());
+        Ok(pdf)
+    }
+
+    /// The whole file as it is, for providers that read a complete document.
+    pub fn whole(&self) -> Result<Vec<u8>, MediaError> {
+        let path = self
+            .path
+            .as_ref()
+            .ok_or_else(|| MediaError::Pdf("not opened from a file".into()))?;
+        std::fs::read(path).map_err(|e| MediaError::Read {
+            path: path.display().to_string(),
+            message: e.to_string(),
+        })
     }
 
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, MediaError> {
@@ -38,7 +54,11 @@ impl PdfSource {
             return Err(MediaError::Encrypted);
         }
         let pages = doc.get_pages();
-        Ok(Self { doc, pages })
+        Ok(Self {
+            doc,
+            pages,
+            path: None,
+        })
     }
 
     pub fn page_count(&self) -> u32 {

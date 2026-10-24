@@ -20,4 +20,8 @@ corrected_text: string | null, reviewed: boolean, model_version: string | null, 
 /**
  * Timed lines of a transcription, relative to the start of the piece.
  */
-segments: Array<Segment>, };
+segments: Array<Segment>, 
+/**
+ * Keywords of a summary.
+ */
+keywords: Array<string>, };

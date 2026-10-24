@@ -6,6 +6,7 @@ import {
 	acceptsPrompt,
 	modelInfo,
 	newDraft,
+	readsKind,
 	suggestName,
 	toRequest,
 	warningText
@@ -40,6 +41,22 @@ describe('new job form', () => {
 		const flash = newDraft(catalog, 'text_extraction', 'preset', () => true);
 		expect(toRequest(catalog, 'text_extraction', flash).preset_id).toBe('preset');
 		expect(toRequest(catalog, 'text_extraction', flash).options.diarize).toBe(false);
+	});
+
+	it('summarises texts and PDFs with the recommended model', () => {
+		const d = newDraft(catalog, 'summary', 'summary.research', () => true);
+		expect(d.model).toBe('gemini-3.8-flash');
+		expect(readsKind('summary', 'text')).toBe(true);
+		expect(readsKind('summary', 'pdf')).toBe(true);
+		expect(readsKind('summary', 'audio')).toBe(false);
+		// Whisper never offers speaker labels, whatever the box says.
+		const whisper = {
+			...newDraft(catalog, 'audio_transcription', null, () => true),
+			provider: 'whisper',
+			model: 'whisper-large-v3-turbo',
+			diarize: true
+		};
+		expect(toRequest(catalog, 'audio_transcription', whisper).options.diarize).toBe(false);
 	});
 
 	it('words input warnings and names jobs after what was added', () => {

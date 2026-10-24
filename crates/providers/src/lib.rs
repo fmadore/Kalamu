@@ -6,6 +6,7 @@ mod gemini;
 mod http;
 mod mistral;
 mod openai;
+mod summary;
 
 use std::sync::Arc;
 

@@ -42,6 +42,7 @@ pub const COMMANDS: &[&str] = &[
     "list_jobs",
     "get_job",
     "job_pieces",
+    "job_text_outputs",
     "source_pieces",
     "piece_preview",
     "piece_audio",

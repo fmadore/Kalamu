@@ -33,6 +33,8 @@ pub enum PieceRef {
         #[ts(type = "number")]
         end_ms: u64,
     },
+    /// A whole document, read at once: what a summary covers.
+    Whole,
 }
 
 impl PieceRef {
@@ -53,6 +55,7 @@ impl PieceRef {
                 half: Some(PageHalf::Right),
             } => format!("{number} (right)"),
             Self::Segment { start_ms, .. } => clock(*start_ms),
+            Self::Whole => String::new(),
         }
     }
 
@@ -69,6 +72,7 @@ impl PieceRef {
                 start_ms,
                 end_ms,
             } => format!("segment:{index}:{start_ms}-{end_ms}"),
+            Self::Whole => "whole".to_string(),
         }
     }
 }
@@ -128,6 +132,9 @@ pub struct ProcessOutput {
     pub usage: Usage,
     /// The exact model version the provider reports, which may differ from the name requested.
     pub model_version: Option<String>,
+    /// Keywords, for summaries.
+    #[serde(default)]
+    pub keywords: Vec<String>,
 }
 
 /// A cached result, keyed by [`crate::CacheKey`].

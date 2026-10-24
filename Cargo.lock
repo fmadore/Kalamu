@@ -4008,6 +4008,7 @@ dependencies = [
 name = "scriptorium-media"
 version = "0.1.0"
 dependencies = [
+ "docx-rs",
  "hex",
  "image",
  "lopdf",

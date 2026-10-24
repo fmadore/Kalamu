@@ -76,6 +76,7 @@ export const api = {
 	listJobs: () => invoke<JobSummary[]>('list_jobs'),
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
+	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),
 	sourcePieces: (jobId: string, sourceId: string) =>
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>
@@ -103,10 +104,25 @@ export const on = {
 export async function pickFiles(task: Task): Promise<string[]> {
 	if (!isTauri()) return [];
 	const { open } = await import('@tauri-apps/plugin-dialog');
-	const extensions =
-		task === 'text_extraction'
-			? ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif']
-			: ['mp3', 'wav', 'm4a', 'aac', 'flac', 'ogg', 'opus', 'webm', 'mp4', 'mov', 'mkv'];
+	const extensions = {
+		text_extraction: ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'],
+		audio_transcription: [
+			'mp3',
+			'wav',
+			'm4a',
+			'aac',
+			'flac',
+			'ogg',
+			'opus',
+			'wma',
+			'webm',
+			'mp4',
+			'mov',
+			'mkv',
+			'avi'
+		],
+		summary: ['txt', 'md', 'docx', 'csv', 'pdf']
+	}[task];
 	const picked = await open({ multiple: true, filters: [{ name: 'Sources', extensions }] });
 	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
 }

@@ -156,7 +156,8 @@ const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 		reviewed: index === 0 && s === 0,
 		model_version: `${setup.model}-001`,
 		cost_usd: 0.0012,
-		segments: []
+		segments: [],
+		keywords: []
 	}))
 );
 
@@ -213,6 +214,7 @@ const audioPieces: PieceView[] = [0, 1].map((index) => ({
 	reviewed: false,
 	model_version: 'voxtral-small-transcribe-3-0',
 	cost_usd: 0.084,
+	keywords: [],
 	segments: lines.map(([speaker, text], k) => ({
 		start_ms: k * 1_800,
 		end_ms: (k + 1) * 1_800,

@@ -11,6 +11,7 @@ license.workspace = true
 test-support = []
 
 [dependencies]
+docx-rs.workspace = true
 hex.workspace = true
 image.workspace = true
 lopdf.workspace = true

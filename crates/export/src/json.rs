@@ -22,14 +22,19 @@ impl Exporter for JsonExporter {
             .parts
             .iter()
             .map(|p| {
-                json!({
+                let mut part = json!({
                     "piece": p.piece,
                     "label": p.piece.label(),
                     "text": p.text,
                     "segments": p.segments,
                     "corrected": p.corrected,
                     "reviewed": p.reviewed,
-                })
+                });
+                // Only summaries have keywords; other documents keep their version 1 shape.
+                if !p.keywords.is_empty() {
+                    part["keywords"] = json!(p.keywords);
+                }
+                part
             })
             .collect();
         let value = json!({

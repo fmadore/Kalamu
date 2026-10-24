@@ -20,8 +20,21 @@ export interface Draft {
 
 export const FORMATS: Record<Task, ExportFormat[]> = {
 	text_extraction: ['txt', 'markdown', 'docx', 'json', 'csv'],
-	audio_transcription: ['txt', 'markdown', 'docx', 'srt', 'vtt', 'json', 'csv']
+	audio_transcription: ['txt', 'markdown', 'docx', 'srt', 'vtt', 'json', 'csv'],
+	summary: ['txt', 'markdown', 'docx', 'json', 'csv']
 };
+
+/** The kinds of file each task reads. */
+export function readsKind(task: Task, kind: string | undefined): boolean {
+	switch (task) {
+		case 'text_extraction':
+			return kind === 'pdf' || kind === 'image';
+		case 'audio_transcription':
+			return kind === 'audio' || kind === 'video';
+		case 'summary':
+			return kind === 'text' || kind === 'pdf';
+	}
+}
 
 export function modelsFor(catalog: Catalog, provider: string, task: Task): ModelInfo[] {
 	return catalog.models.filter((m) => m.provider === provider && m.tasks.includes(task));

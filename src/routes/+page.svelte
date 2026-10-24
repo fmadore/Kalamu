@@ -114,7 +114,7 @@
 		{:else if !app.catalog || !app.settings}
 			<p class="muted">{m.common.loading}</p>
 		{:else if app.view.name === 'new'}
-			<NewJob />
+			<NewJob opening={app.view} />
 		{:else if app.view.name === 'jobs'}
 			<JobsView jobId={app.view.jobId} />
 		{:else if app.view.name === 'review'}

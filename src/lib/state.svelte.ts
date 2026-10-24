@@ -10,11 +10,12 @@ import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PieceStatus } from './bindings/PieceStatus.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
+import type { Task } from './bindings/Task.js';
 import { messages } from './i18n/index.js';
 import { api, notify } from './tauri.js';
 
 export type View =
-	| { name: 'new' }
+	| { name: 'new'; task?: Task; paths?: string[] }
 	| { name: 'jobs'; jobId?: string }
 	| { name: 'review'; jobId: string; sourceId: string }
 	| { name: 'prompts' }

@@ -17,7 +17,9 @@ export const en = {
 		text_extraction: 'Extract text',
 		text_extractionHint: 'Printed and handwritten documents: PDF, JPEG, PNG, TIFF',
 		audio_transcription: 'Transcribe audio',
-		audio_transcriptionHint: 'Interviews and recordings: MP3, M4A, WAV, FLAC'
+		audio_transcriptionHint: 'Interviews, recordings and videos: MP3, M4A, WAV, MP4',
+		summary: 'Summarise and find keywords',
+		summaryHint: 'Texts, Word files, PDFs, and the results of earlier jobs'
 	},
 	newJob: {
 		title: 'New job',
@@ -37,6 +39,10 @@ export const en = {
 		languageTitle: 'Language',
 		languageAuto: 'Detect automatically',
 		languagePick: 'Choose languages',
+		summaryLanguageTitle: 'Language of the summary',
+		summaryLanguageAuto: 'Same as the document',
+		summaryLanguageHint:
+			'Choose a language to have every summary and its keywords written in it, whatever the language of the document.',
 		languageHint:
 			'Choosing helps with short or noisy material. Pick several for documents or recordings that mix languages.',
 		addLanguage: 'Add a language…',
@@ -110,6 +116,9 @@ export const en = {
 		delete: 'Delete',
 		deleteConfirm: 'Delete this job? Files already written stay on disk.',
 		review: 'Review',
+		summarise: 'Summarise the results',
+		noTextOutputs:
+			'This job wrote no text file to summarise. Add Text (.txt) to its formats and export again.',
 		openFolder: 'Show files',
 		progress: (done: number, total: number) => `${done} of ${total} pieces`,
 		failed: (n: number) => (n === 1 ? '1 failed' : `${n} failed`),
@@ -137,6 +146,8 @@ export const en = {
 		back: 'Back to job',
 		page: (label: string) => `Page ${label}`,
 		segment: (label: string) => `From ${label}`,
+		document: 'Whole document',
+		keywords: 'Keywords',
 		previous: 'Previous',
 		next: 'Next',
 		source: 'Source',

@@ -38,6 +38,8 @@ pub struct PieceView {
     pub cost_usd: Option<f64>,
     /// Timed lines of a transcription, relative to the start of the piece.
     pub segments: Vec<scriptorium_core::Segment>,
+    /// Keywords of a summary.
+    pub keywords: Vec<String>,
 }
 
 /// How a piece ended, for the job's final status.
@@ -128,7 +130,10 @@ impl Engine {
             // A recording resumed keeps the pieces planned the first time: planning decodes the
             // whole file, and the cuts must not move under results already stored.
             let stored = stored_pieces(&existing, &job, source);
-            let pieces = if stored.is_empty() {
+            let pieces = if job.task == scriptorium_core::Task::Summary {
+                // A summary reads the whole document at once.
+                vec![PieceRef::Whole]
+            } else if stored.is_empty() {
                 let (opened, split, sample, length) = (
                     opened.clone(),
                     source.split_spreads,
@@ -465,6 +470,10 @@ impl Engine {
                 reviewed: correction.is_some_and(|c| c.reviewed),
                 model_version: result.as_ref().and_then(|r| r.output.model_version.clone()),
                 cost_usd: result.as_ref().and_then(|r| r.cost_usd),
+                keywords: result
+                    .as_ref()
+                    .map(|r| r.output.keywords.clone())
+                    .unwrap_or_default(),
                 segments: result.map(|r| r.output.segments).unwrap_or_default(),
             });
         }

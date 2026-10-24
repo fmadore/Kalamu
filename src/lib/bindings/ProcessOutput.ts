@@ -15,4 +15,8 @@ segments: Array<Segment>, detected_language: LanguageCode | null, usage: Usage,
 /**
  * The exact model version the provider reports, which may differ from the name requested.
  */
-model_version: string | null, };
+model_version: string | null, 
+/**
+ * Keywords, for summaries.
+ */
+keywords: Array<string>, };

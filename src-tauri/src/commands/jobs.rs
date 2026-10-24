@@ -18,6 +18,7 @@ pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
         match task {
             Task::TextExtraction => matches!(kind, InputKind::Pdf | InputKind::Image),
             Task::AudioTranscription => matches!(kind, InputKind::Audio | InputKind::Video),
+            Task::Summary => matches!(kind, InputKind::Text | InputKind::Pdf),
         }
     }
     fn walk(path: &Path, task: Task, out: &mut Vec<PathBuf>, depth: usize) {
@@ -43,6 +44,12 @@ pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
     }
     out.dedup();
     out.into_iter().map(|p| p.display().to_string()).collect()
+}
+
+/// The text files a finished job wrote, to summarise them in a new job.
+#[tauri::command]
+pub fn job_text_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<String>> {
+    Ok(state.engine.text_outputs(id)?)
 }
 
 #[tauri::command]

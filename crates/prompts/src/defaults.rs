@@ -1,5 +1,8 @@
 //! The tested default prompts, ported verbatim from zmo-ai-pipelines (`printed-*`) and
-//! iwac-ai-pipelines (the others). The per-page requests come from the same scripts.
+//! iwac-ai-pipelines (the transcription and HTR ones). The per-page requests come from the same
+//! scripts. The summary prompts are new, in English, keeping the principles of
+//! iwac-ai-pipelines' bilingual summary prompt (specific, faithful, searchable) without its
+//! collection-specific parts.
 
 use scriptorium_core::Task;
 
@@ -22,6 +25,9 @@ request for academic research and archival preservation. Transcribe ALL handwrit
 exact wording, spacing rules, accents, and WITHOUT summarizing or omitting any zones.";
 
 const RECORDING_REQUEST: &str = "Transcribe this recording, following the instructions given.";
+
+const SUMMARY_REQUEST: &str =
+    "Summarise the document above and give its keywords, following the instructions given.";
 
 pub(crate) const DEFAULTS: &[Default] = &[
     Default {
@@ -96,5 +102,21 @@ visible text maintaining original formatting and structure.",
         description: "A French translation of the recording, with speakers and timestamps.",
         instructions: include_str!("../defaults/interview-translation-french.md"),
         user_prompt: RECORDING_REQUEST,
+    },
+    Default {
+        id: "summary.research",
+        task: Task::Summary,
+        name: "Summary and keywords for research",
+        description: "What this document in particular says, with names, figures and dates, and searchable keywords.",
+        instructions: include_str!("../defaults/summary-research.md"),
+        user_prompt: SUMMARY_REQUEST,
+    },
+    Default {
+        id: "summary.brief",
+        task: Task::Summary,
+        name: "Short summary for a catalogue",
+        description: "Two or three dense sentences that stand out in a list of search results.",
+        instructions: include_str!("../defaults/summary-brief.md"),
+        user_prompt: SUMMARY_REQUEST,
     },
 ];

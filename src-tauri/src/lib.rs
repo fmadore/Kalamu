@@ -200,6 +200,7 @@ pub fn run() {
             commands::jobs::list_jobs,
             commands::jobs::get_job,
             commands::jobs::job_pieces,
+            commands::jobs::job_text_outputs,
             commands::review::source_pieces,
             commands::review::piece_preview,
             commands::review::piece_audio,

@@ -11,6 +11,7 @@ mod checks;
 mod ffmpeg;
 mod image_source;
 mod pdf;
+mod text_source;
 
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -26,6 +27,7 @@ pub use image_source::ImageSource;
 pub use pdf::PdfSource;
 #[cfg(any(test, feature = "test-support"))]
 pub use pdf::sample_pdf;
+pub use text_source::TextSource;
 
 #[derive(Debug, Error)]
 pub enum MediaError {
@@ -107,6 +109,8 @@ pub enum OpenSource {
     Image(ImageSource),
     /// A recording, or the sound track of a video.
     Audio(AudioSource),
+    /// Plain text, Markdown, CSV or Word, for summaries.
+    Text(TextSource),
 }
 
 impl OpenSource {
@@ -118,7 +122,7 @@ impl OpenSource {
             InputKind::Audio | InputKind::Video => {
                 Ok(Self::Audio(AudioSource::open(source, ffmpeg)?))
             }
-            InputKind::Text => Err(MediaError::UnsupportedKind),
+            InputKind::Text => Ok(Self::Text(TextSource::open(path)?)),
         }
     }
 
@@ -131,6 +135,7 @@ impl OpenSource {
             Self::Pdf(pdf) => pdf.page_count(),
             Self::Image(img) => img.page_count(),
             Self::Audio(audio) => return audio.pieces(piece_ms),
+            Self::Text(_) => return vec![PieceRef::Whole],
         };
         let last = sample.map_or(pages, |n| n.min(pages));
         for number in 1..=last {
@@ -138,7 +143,7 @@ impl OpenSource {
                 && match self {
                     Self::Pdf(pdf) => pdf.is_spread(number),
                     Self::Image(img) => img.is_spread(number),
-                    Self::Audio(_) => false,
+                    Self::Audio(_) | Self::Text(_) => false,
                 };
             if spread {
                 for half in [
@@ -167,6 +172,9 @@ impl OpenSource {
         if let Self::Audio(audio) = self {
             return audio.prepare(piece, accepted, file_stem);
         }
+        if *piece == PieceRef::Whole {
+            return self.prepare_whole(accepted, file_stem);
+        }
         let PieceRef::Page { number, half } = piece else {
             return Err(MediaError::NoSuchPage(piece.label()));
         };
@@ -186,7 +194,7 @@ impl OpenSource {
                 ("application/pdf".to_string(), pdf.page_pdf(*number, *half)?)
             }
             Self::Image(img) => img.prepare(*number, *half, accepted)?,
-            Self::Audio(_) => unreachable_audio()?,
+            Self::Audio(_) | Self::Text(_) => unreachable_audio()?,
         };
         let ext = mime
             .rsplit('/')
@@ -207,12 +215,41 @@ impl OpenSource {
             Self::Pdf(pdf) => checks::pdf_warnings(pdf),
             Self::Image(img) => checks::image_warnings(img),
             // Recordings are checked with FFmpeg by `recording_warnings`.
-            Self::Audio(_) => Vec::new(),
+            Self::Audio(_) | Self::Text(_) => Vec::new(),
         };
         kinds
             .into_iter()
             .map(|kind| InputWarning { source_id, kind })
             .collect()
+    }
+}
+
+impl OpenSource {
+    /// The whole document, for a summary: a PDF as it is, other documents as text.
+    fn prepare_whole(
+        &self,
+        accepted: &[&str],
+        file_stem: &str,
+    ) -> Result<PreparedInput, MediaError> {
+        let (mime, bytes, ext) = match self {
+            Self::Pdf(pdf) if accepted.contains(&"application/pdf") => {
+                ("application/pdf", pdf.whole()?, "pdf")
+            }
+            Self::Text(text) if accepted.contains(&"text/plain") => {
+                ("text/plain", text.text()?.into_bytes(), "txt")
+            }
+            _ => {
+                return Err(MediaError::NeedsConversion(
+                    "This model cannot read this kind of document.".into(),
+                ));
+            }
+        };
+        Ok(PreparedInput {
+            piece: PieceRef::Whole,
+            file_name: format!("{file_stem}.{ext}"),
+            mime: mime.to_string(),
+            bytes,
+        })
     }
 }
 

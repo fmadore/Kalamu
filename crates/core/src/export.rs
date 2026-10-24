@@ -59,6 +59,9 @@ pub struct ExportPart {
     pub segments: Vec<Segment>,
     pub corrected: bool,
     pub reviewed: bool,
+    /// Keywords, for summaries.
+    #[serde(default)]
+    pub keywords: Vec<String>,
 }
 
 /// Everything an exporter needs for one source under one set-up.
