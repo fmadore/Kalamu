@@ -189,6 +189,10 @@ impl Engine {
         Ok(self.store.job(id)?)
     }
 
+    pub fn pieces(&self, id: JobId) -> Result<Vec<scriptorium_core::PieceState>, EngineError> {
+        Ok(self.store.pieces(id)?)
+    }
+
     pub fn delete_job(&self, id: JobId) -> Result<(), EngineError> {
         self.cancel(id);
         Ok(self.store.delete_job(id)?)

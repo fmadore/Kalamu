@@ -147,7 +147,7 @@ fn real_pdf_pages_open() -> Result<(), MediaError> {
         "{} pages, {} KB of single-page PDFs in {:?}; warnings: {:?}",
         match &open {
             OpenSource::Pdf(p) => p.page_count(),
-            OpenSource::Image(_) => 0,
+            _ => 0,
         },
         total / 1024,
         started.elapsed(),
@@ -156,5 +156,24 @@ fn real_pdf_pages_open() -> Result<(), MediaError> {
             .map(|w| &w.kind)
             .collect::<Vec<_>>()
     );
+    Ok(())
+}
+
+#[test]
+fn recordings_go_whole_when_the_model_takes_their_format() -> Result<(), MediaError> {
+    let dir = tempfile::tempdir().map_err(|e| MediaError::Image(e.to_string()))?;
+    let path = dir.path().join("entretien.m4a");
+    std::fs::write(&path, b"fake m4a").map_err(|e| MediaError::Image(e.to_string()))?;
+    let source = inspect(&path)?;
+    let open = OpenSource::open(&source)?;
+    let pieces = open.pieces(false, None);
+    assert_eq!(pieces.len(), 1);
+    let input = open.prepare(&pieces[0], &["audio/mpeg", "audio/mp4"], "entretien")?;
+    assert_eq!(input.mime, "audio/mp4");
+    assert_eq!(input.file_name, "entretien.m4a");
+    assert!(matches!(
+        open.prepare(&pieces[0], &["audio/mpeg"], "entretien"),
+        Err(MediaError::NeedsConversion(_))
+    ));
     Ok(())
 }

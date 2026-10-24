@@ -1,0 +1,55 @@
+[package]
+name = "scriptorium"
+description = "Transcribe interviews and read scanned or handwritten documents with the AI provider of your choice"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+# Desktop app, not a library: never goes to crates.io.
+publish = false
+
+[lib]
+# Tauri's entry point lives in the lib; main.rs is a thin shim. Only `rlib`, as in Live
+# Translation: the template's `staticlib` and `cdylib` are for mobile and cost a full LTO link.
+name = "scriptorium_lib"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.4", features = [] }
+
+[dependencies]
+anyhow.workspace = true
+keyring = "4.2.0"
+reqwest.workspace = true
+scriptorium-catalog.workspace = true
+scriptorium-core.workspace = true
+scriptorium-engine.workspace = true
+scriptorium-media.workspace = true
+scriptorium-prompts.workspace = true
+scriptorium-providers.workspace = true
+scriptorium-store.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+base64.workspace = true
+tauri = { version = "2.12.5", features = [] }
+tauri-plugin-dialog = "2.8.3"
+tauri-plugin-notification = "2.7.0"
+tauri-plugin-opener = "2.7.2"
+# A second launch focuses the running window instead of opening a second job queue on the same
+# database. Registered first in the builder, as the plugin requires.
+tauri-plugin-single-instance = "2.5.4"
+tokio.workspace = true
+tracing.workspace = true
+tracing-appender = "0.2.5"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+ts-rs.workspace = true
+
+[features]
+# Standard Tauri production feature: serve the bundled front end over the custom protocol
+# instead of the dev server. Enabled automatically by `tauri build`.
+custom-protocol = ["tauri/custom-protocol"]
+
+[lints]
+workspace = true

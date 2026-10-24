@@ -92,6 +92,30 @@ pub fn hash_file(path: &Path) -> Result<String, MediaError> {
 pub enum OpenSource {
     Pdf(Box<PdfSource>),
     Image(ImageSource),
+    /// A recording sent whole, in its own format. Splitting long recordings and converting
+    /// formats a provider does not take need the bundled FFmpeg, which comes later.
+    Audio(AudioSource),
+}
+
+pub struct AudioSource {
+    path: std::path::PathBuf,
+    mime: &'static str,
+    duration_ms: u64,
+}
+
+/// The MIME type providers expect for an audio file, from its extension.
+pub fn audio_mime(path: &Path) -> Option<&'static str> {
+    let ext = path.extension()?.to_str()?.to_ascii_lowercase();
+    Some(match ext.as_str() {
+        "mp3" => "audio/mpeg",
+        "wav" => "audio/wav",
+        "m4a" => "audio/mp4",
+        "aac" => "audio/aac",
+        "flac" => "audio/flac",
+        "ogg" | "opus" => "audio/ogg",
+        "webm" => "audio/webm",
+        _ => return None,
+    })
 }
 
 impl OpenSource {
@@ -100,7 +124,16 @@ impl OpenSource {
         match source.kind {
             InputKind::Pdf => Ok(Self::Pdf(Box::new(PdfSource::open(path)?))),
             InputKind::Image => Ok(Self::Image(ImageSource::open(path)?)),
-            _ => Err(MediaError::UnsupportedKind),
+            InputKind::Audio => Ok(Self::Audio(AudioSource {
+                path: path.to_path_buf(),
+                mime: audio_mime(path).ok_or(MediaError::UnsupportedKind)?,
+                duration_ms: source.duration_ms.unwrap_or(0),
+            })),
+            InputKind::Video => Err(MediaError::NeedsConversion(
+                "Video needs its audio extracted, which comes with the bundled FFmpeg. Export the                  sound as MP3 or M4A in the meantime."
+                    .into(),
+            )),
+            InputKind::Text => Err(MediaError::UnsupportedKind),
         }
     }
 
@@ -111,6 +144,13 @@ impl OpenSource {
         let pages = match self {
             Self::Pdf(pdf) => pdf.page_count(),
             Self::Image(img) => img.page_count(),
+            Self::Audio(audio) => {
+                return vec![PieceRef::Segment {
+                    index: 0,
+                    start_ms: 0,
+                    end_ms: audio.duration_ms,
+                }];
+            }
         };
         let last = sample.map_or(pages, |n| n.min(pages));
         for number in 1..=last {
@@ -118,6 +158,7 @@ impl OpenSource {
                 && match self {
                     Self::Pdf(pdf) => pdf.is_spread(number),
                     Self::Image(img) => img.is_spread(number),
+                    Self::Audio(_) => false,
                 };
             if spread {
                 for half in [
@@ -143,6 +184,29 @@ impl OpenSource {
         accepted: &[&str],
         file_stem: &str,
     ) -> Result<PreparedInput, MediaError> {
+        if let Self::Audio(audio) = self {
+            if !accepted.contains(&audio.mime) {
+                return Err(MediaError::NeedsConversion(format!(
+                    "This model does not accept {} audio; converting it needs the bundled FFmpeg,                      which comes later. Choose another model, or convert the file to MP3.",
+                    audio.mime.trim_start_matches("audio/")
+                )));
+            }
+            let bytes = std::fs::read(&audio.path).map_err(|e| MediaError::Read {
+                path: audio.path.display().to_string(),
+                message: e.to_string(),
+            })?;
+            let ext = audio
+                .path
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("mp3");
+            return Ok(PreparedInput {
+                piece: piece.clone(),
+                file_name: format!("{file_stem}.{ext}"),
+                mime: audio.mime.to_string(),
+                bytes,
+            });
+        }
         let PieceRef::Page { number, half } = piece else {
             return Err(MediaError::NoSuchPage(piece.label()));
         };
@@ -162,6 +226,7 @@ impl OpenSource {
                 ("application/pdf".to_string(), pdf.page_pdf(*number, *half)?)
             }
             Self::Image(img) => img.prepare(*number, *half, accepted)?,
+            Self::Audio(_) => unreachable_audio()?,
         };
         let ext = mime
             .rsplit('/')
@@ -181,12 +246,18 @@ impl OpenSource {
         let kinds = match self {
             Self::Pdf(pdf) => checks::pdf_warnings(pdf),
             Self::Image(img) => checks::image_warnings(img),
+            Self::Audio(_) => Vec::new(),
         };
         kinds
             .into_iter()
             .map(|kind| InputWarning { source_id, kind })
             .collect()
     }
+}
+
+/// Audio returns earlier in `prepare`; this keeps the match exhaustive without a panic.
+fn unreachable_audio() -> Result<(String, Vec<u8>), MediaError> {
+    Err(MediaError::UnsupportedKind)
 }
 
 #[cfg(test)]

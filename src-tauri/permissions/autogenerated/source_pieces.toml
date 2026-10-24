@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-source-pieces"
+description = "Enables the source_pieces command without any pre-configured scope."
+commands.allow = ["source_pieces"]
+
+[[permission]]
+identifier = "deny-source-pieces"
+description = "Denies the source_pieces command without any pre-configured scope."
+commands.deny = ["source_pieces"]

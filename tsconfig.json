@@ -1,0 +1,14 @@
+{
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"sourceMap": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true,
+		"types": ["$app/types", "node", "vite/client"]
+	},
+	"include": ["src", "vite.config.js"]
+}

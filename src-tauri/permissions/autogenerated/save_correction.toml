@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-correction"
+description = "Enables the save_correction command without any pre-configured scope."
+commands.allow = ["save_correction"]
+
+[[permission]]
+identifier = "deny-save-correction"
+description = "Denies the save_correction command without any pre-configured scope."
+commands.deny = ["save_correction"]
