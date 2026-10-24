@@ -6,7 +6,9 @@ the command line.
 
 **Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT license**
 
-**Status: concept.** Nothing is built yet. This README describes what the app should do.
+**Status: early development.** Text extraction is implemented for the four first providers and
+audio transcription in part, but neither has yet been run against the live APIs. No release
+yet. See [Roadmap](#roadmap) for what is done.
 
 ## Why
 
@@ -114,7 +116,7 @@ and a suggested fix, when something is likely to hurt the result:
 | Problem | Why it matters | Suggested fix |
 | --- | --- | --- |
 | **Two pages on one PDF page or image** (a book or newspaper scanned open, as a double-page spread) | Models may read straight across both pages, mixing lines and columns, and page numbers no longer match the original | Split each spread into two pages, with a preview to adjust the cut before running |
-| **Low resolution** (below about 300 dpi, or a small photo) | Small letters, diacritics and handwriting become guesswork | Rescan; or continue anyway |
+| **Low resolution** (below about 200 dpi, or a small photo) | Small letters, diacritics and handwriting become guesswork | Rescan; or continue anyway |
 | **Rotated or skewed pages** | Lines are read in the wrong order or skipped | Rotate or straighten automatically |
 | **Blurry, dark or low-contrast photos** | Characters are misread | Retake the photo; tips for phone capture |
 | **PDF that already contains text** | Extraction may not be needed, or the existing text can serve for comparison | Use the existing text, or extract anyway |
@@ -333,6 +335,50 @@ Each stage ends with an architecture review (see [AGENTS.md](AGENTS.md)) before 
    timestamps, and `.srt`, `.vtt` and `.csv` exports.
 4. **Later:** French and German interface, OpenRouter, summaries and keywords, offline mode
    with Whisper and Tesseract, and the Microsoft Store release.
+
+### Progress (October 2026)
+
+- **Stage 1: done.** Workspace, job database with caching and resuming, progress view and
+  taskbar progress, model catalogue, prompt library, keys in Credential Manager, English
+  interface with translation files, CI and Dependabot.
+- **Stage 2: mostly done.** All four providers, PDF page cutting, image preparation, input
+  checks with splitting of double pages, language choice, exports to `.txt`, `.md`, `.docx`,
+  `.json` and `.csv`, the review view with corrections, and comparison mode with error rates.
+  Still to do: searchable PDF and ALTO/PAGE XML exports, and a run against the live APIs with
+  real keys (the provider tests use documented response shapes, not recorded ones).
+- **Stage 3: started.** Transcription works for recordings a model accepts whole, with
+  speakers, timestamps, `.srt` and `.vtt`. FFmpeg conversion and splitting, video, and the
+  audio player in the review view are next.
+
+Decisions and their reasons are logged in [docs/decisions](docs/decisions/); output formats are
+described in [docs/formats.md](docs/formats.md).
+
+## Development
+
+Requirements: Rust through rustup (the version in `rust-toolchain.toml` installs itself),
+Node.js 22 or 24, and the WebView2 runtime that ships with Windows 11.
+
+```bash
+npm install
+```
+
+```bash
+npm run tauri dev
+```
+
+Checks run in CI and before every commit:
+
+```bash
+cargo fmt --all && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
+```
+
+```bash
+npm run format:check && npm run check && npm run lint && npm test
+```
+
+`cargo test` also regenerates the TypeScript types in `src/lib/bindings/` from the Rust
+definitions; commit them with the Rust change. To look at the interface in a browser with
+sample data, run `npm run dev` and open `http://localhost:5173/?mock`.
 
 ## Distribution
 
