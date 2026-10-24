@@ -4,7 +4,7 @@ A Windows desktop app that lets researchers transcribe interviews, read scanned 
 documents, and summarise texts with the AI provider of their choice — without Python, Colab or
 the command line.
 
-**Windows 11 · x64 and ARM64 · English, French and German interface · MIT license**
+**Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT license**
 
 **Status: concept.** Nothing is built yet. This README describes what the app should do.
 
@@ -78,7 +78,8 @@ such as a typed report with handwritten notes, needs no separate pass.
 - **Results next to the sources.** Outputs are written beside the original files or into a chosen
   folder, each with a `provenance.json` recording the model, prompt and settings used.
 - **Estimated cost before starting**, based on file length and the provider's published prices.
-- **English, French and German interface.**
+- **English interface first**, with French and German to follow. All interface text lives in
+  translation files from the start, so adding a language needs no code changes.
 
 ## Interruptions and resuming
 
@@ -101,6 +102,39 @@ paying twice.
   rest of the queue continues; failed items can be retried later on their own.
 - **Exports come from the cache.** Choosing another output format later regenerates the file from
   stored results, without calling the provider again.
+
+## Tips and checks for better results
+
+Many disappointing results come from the input, not the model. The app teaches good practice
+in two ways: short tips where they are relevant, and checks on the files before a job starts.
+
+**Checks before starting.** The app inspects each file and warns, with a one-line explanation
+and a suggested fix, when something is likely to hurt the result:
+
+| Problem | Why it matters | Suggested fix |
+| --- | --- | --- |
+| **Two pages on one PDF page or image** (a book or newspaper scanned open, as a double-page spread) | Models may read straight across both pages, mixing lines and columns, and page numbers no longer match the original | Split each spread into two pages, with a preview to adjust the cut before running |
+| **Low resolution** (below about 300 dpi, or a small photo) | Small letters, diacritics and handwriting become guesswork | Rescan; or continue anyway |
+| **Rotated or skewed pages** | Lines are read in the wrong order or skipped | Rotate or straighten automatically |
+| **Blurry, dark or low-contrast photos** | Characters are misread | Retake the photo; tips for phone capture |
+| **PDF that already contains text** | Extraction may not be needed, or the existing text can serve for comparison | Use the existing text, or extract anyway |
+| **Very long or very quiet recordings, music or long silences** | Transcription drifts, invents text over music, or skips quiet speech | Trim, normalise volume, or split |
+| **Language left on Auto-detect for short or mixed recordings** | Detection is unreliable on little speech | Choose the language(s) explicitly |
+
+Checks never block a job: users can dismiss a warning, for one file or for good. Fixes are
+applied to working copies, never to the originals, and recorded in `provenance.json`.
+
+**Tips where they help**, written for non-specialists and translated along with the rest of
+the interface:
+
+- *Scanning and photographing documents*: one page per image or PDF page, not an open
+  double-page spread; flat and fully in frame, even
+  light without shadows or flash glare, 300–400 dpi, colour or greyscale rather than black and
+  white for faded or handwritten material.
+- *Recording interviews*: microphone close to the speakers, a quiet room, one recording per
+  interview, a short spoken introduction with names and date.
+- *Working with the results*: try a sample before a whole folder, compare two models on
+  difficult material, check names, numbers and dates against the source, keep the originals.
 
 ## Review view
 
@@ -287,17 +321,18 @@ Each stage ends with an architecture review (see [AGENTS.md](AGENTS.md)) before 
 
 1. **Foundations.** Workspace and Tauri shell based on Live Translation, domain types, job
    database with caching and resuming, progress view, model catalogue, prompt presets, API keys
-   in Credential Manager, English/French/German interface, CI, and Dependabot security alerts
-   and update pull requests for Rust, front-end and GitHub Actions dependencies.
+   in Credential Manager, English interface with translation files ready for other languages,
+   CI, and Dependabot security alerts and update pull requests for Rust, front-end and GitHub
+   Actions dependencies.
 2. **Text extraction (OCR/HTR)** with **Google Gemini, OpenAI, Anthropic Claude and Mistral**:
-   PDF and image preparation, the extraction presets, language selection, and exports to
-   `.txt`, `.md`, `.docx` and `.json`, the review view, then searchable PDF and ALTO/PAGE XML,
-   and comparison mode.
+   PDF and image preparation, checks and tips for scans, the extraction presets, language
+   selection, exports to `.txt`, `.md`, `.docx` and `.json`, the review view, then searchable
+   PDF and ALTO/PAGE XML, and comparison mode.
 3. **Audio transcription** with Gemini, OpenAI and Mistral (Voxtral); Claude does not accept
-   audio. FFmpeg conversion and splitting, speakers and timestamps, and `.srt`, `.vtt` and
-   `.csv` exports.
-4. **Later:** OpenRouter, summaries and keywords, offline mode with Whisper and Tesseract, and
-   the Microsoft Store release.
+   audio. FFmpeg conversion and splitting, checks and tips for recordings, speakers and
+   timestamps, and `.srt`, `.vtt` and `.csv` exports.
+4. **Later:** French and German interface, OpenRouter, summaries and keywords, offline mode
+   with Whisper and Tesseract, and the Microsoft Store release.
 
 ## Distribution
 

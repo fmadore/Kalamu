@@ -31,7 +31,7 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | `core` | Domain types (job, source file, piece, result, provenance, task, language), the traits below, errors. No I/O. | nothing internal |
 | `catalog` | Model catalogue: loading, refreshing, capability queries (tasks, inputs, languages, limits, prices). | `core` |
 | `prompts` | Default and user presets, variables, import/export. | `core` |
-| `media` | Conversion and splitting: PDFium, images, FFmpeg, reading text inputs. | `core` |
+| `media` | Conversion and splitting: PDFium, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
 | `offline` | Whisper and Tesseract engines, behind the same trait as cloud providers. | `core`, `media` |
 | `store` | SQLite job database and result cache. | `core` |
@@ -52,6 +52,9 @@ Rules that keep this modular:
 - **Adding a provider, model, export format or prompt preset is local.** A new provider is a
   new module plus one registration line; a new model is a catalogue entry; a new format is a new
   exporter. If it needs edits in several crates, the design is wrong: fix the design first.
+- **No hard-coded interface text.** The interface ships in English first, but every visible
+  string, including error messages and tips, goes through translation files from the first
+  screen, so French and German are added without touching code.
 - **The front end only talks to `app` through typed commands and events**, with types generated
   from Rust so both sides cannot drift. No business logic in the front end.
 - **A job runs one or more set-ups** (provider, model, prompt, settings) over the same sources,
