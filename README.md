@@ -60,8 +60,8 @@ such as a typed report with handwritten notes, needs no separate pass.
   [Interruptions and resuming](#interruptions-and-resuming)).
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, or OpenRouter for
   open-weights and other models. The app shows only the providers and models that can handle the
-  chosen task: Claude, for instance, reads documents but does not accept audio. Gemini, OpenAI
-  and Claude come first (see [Roadmap](#roadmap)).
+  chosen task: Claude, for instance, reads documents but does not accept audio. Gemini, OpenAI,
+  Claude and Mistral come first (see [Roadmap](#roadmap)).
 - **Language choice with auto-detect.** Audio transcription and text extraction have a language
   dropdown listing only the languages the chosen model or engine supports, with
   **Auto-detect** as the default. Picking the language explicitly helps with short or noisy
@@ -243,14 +243,16 @@ Each stage ends with an architecture review (see [AGENTS.md](AGENTS.md)) before 
 
 1. **Foundations.** Workspace and Tauri shell based on Live Translation, domain types, job
    database with caching and resuming, progress view, model catalogue, prompt presets, API keys
-   in Credential Manager, English/French/German interface.
-2. **Text extraction (OCR/HTR)** with **Google Gemini, OpenAI and Anthropic Claude**: PDF and
-   image preparation, the extraction presets, language selection, and exports to `.txt`, `.md`,
-   `.docx` and `.json`, then searchable PDF and ALTO/PAGE XML.
-3. **Audio transcription** with Gemini and OpenAI (Claude does not accept audio): FFmpeg
-   conversion and splitting, speakers and timestamps, and `.srt`, `.vtt` and `.csv` exports.
-4. **Later:** OpenRouter and Mistral (including Voxtral for transcription), summaries and
-   keywords, offline mode with Whisper and Tesseract, and the Microsoft Store release.
+   in Credential Manager, English/French/German interface, CI, and Dependabot security alerts
+   and update pull requests for Rust, front-end and GitHub Actions dependencies.
+2. **Text extraction (OCR/HTR)** with **Google Gemini, OpenAI, Anthropic Claude and Mistral**:
+   PDF and image preparation, the extraction presets, language selection, and exports to
+   `.txt`, `.md`, `.docx` and `.json`, then searchable PDF and ALTO/PAGE XML.
+3. **Audio transcription** with Gemini, OpenAI and Mistral (Voxtral); Claude does not accept
+   audio. FFmpeg conversion and splitting, speakers and timestamps, and `.srt`, `.vtt` and
+   `.csv` exports.
+4. **Later:** OpenRouter, summaries and keywords, offline mode with Whisper and Tesseract, and
+   the Microsoft Store release.
 
 ## Distribution
 

@@ -11,6 +11,16 @@ must do; this file says how to build it.
   reinventing it. Note in the decision log where Scriptorium deliberately differs.
 - Check the latest version of every dependency on its registry before adding it.
 
+## Dependencies and security
+
+- Dependabot security alerts are enabled on the GitHub repository. When the first manifests
+  exist, add `.github/dependabot.yml` covering `cargo`, the front end's package manager and
+  `github-actions`, with grouped weekly update pull requests.
+- Treat a security alert as a priority over feature work: update, or record why the
+  vulnerable path is not reachable.
+- Run `cargo audit` (or `cargo deny`, which also checks licences against the README's
+  licence rules) in CI.
+
 ## Architecture
 
 A Cargo workspace (Rust 2024 edition) of small crates with one job each, plus a thin Tauri app.
