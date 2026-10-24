@@ -173,7 +173,7 @@ impl Engine {
         f(&mut guard)
     }
 
-    pub(crate) fn provider(&self, id: &ProviderId) -> Result<Arc<dyn Provider>, EngineError> {
+    pub fn provider(&self, id: &ProviderId) -> Result<Arc<dyn Provider>, EngineError> {
         self.providers
             .iter()
             .find(|p| &p.id() == id)

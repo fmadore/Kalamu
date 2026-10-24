@@ -126,7 +126,7 @@ pub fn run() {
                 let handle = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
                     let state = handle.state::<AppState>();
-                    if let Err(e) = commands::refresh_catalog(state).await {
+                    if let Err(e) = commands::settings::refresh_catalog(state).await {
                         tracing::info!(error = %e, "catalogue not refreshed");
                     }
                 });
@@ -148,41 +148,41 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            commands::app_info,
-            commands::get_settings,
-            commands::save_settings,
-            commands::get_catalog,
-            commands::refresh_catalog,
-            commands::key_status,
-            commands::set_api_key,
-            commands::clear_api_key,
-            commands::test_api_key,
-            commands::list_presets,
-            commands::save_preset,
-            commands::delete_preset,
-            commands::duplicate_preset,
-            commands::export_presets,
-            commands::import_presets,
-            commands::expand_paths,
-            commands::inspect_files,
-            commands::estimate_cost,
-            commands::create_job,
-            commands::start_job,
-            commands::pause_job,
-            commands::cancel_job,
-            commands::retry_failed,
-            commands::delete_job,
-            commands::list_jobs,
-            commands::get_job,
-            commands::job_pieces,
-            commands::source_pieces,
-            commands::piece_preview,
-            commands::save_correction,
-            commands::export_source,
-            commands::compare_source,
-            commands::diff_texts,
-            commands::set_taskbar_progress,
-            commands::quit_app,
+            commands::settings::app_info,
+            commands::settings::get_settings,
+            commands::settings::save_settings,
+            commands::settings::get_catalog,
+            commands::settings::refresh_catalog,
+            commands::keys::key_status,
+            commands::keys::set_api_key,
+            commands::keys::clear_api_key,
+            commands::keys::test_api_key,
+            commands::presets::list_presets,
+            commands::presets::save_preset,
+            commands::presets::delete_preset,
+            commands::presets::duplicate_preset,
+            commands::presets::export_presets,
+            commands::presets::import_presets,
+            commands::jobs::expand_paths,
+            commands::jobs::inspect_files,
+            commands::jobs::estimate_cost,
+            commands::jobs::create_job,
+            commands::jobs::start_job,
+            commands::jobs::pause_job,
+            commands::jobs::cancel_job,
+            commands::jobs::retry_failed,
+            commands::jobs::delete_job,
+            commands::jobs::list_jobs,
+            commands::jobs::get_job,
+            commands::jobs::job_pieces,
+            commands::review::source_pieces,
+            commands::review::piece_preview,
+            commands::review::save_correction,
+            commands::review::export_source,
+            commands::review::compare_source,
+            commands::review::diff_texts,
+            commands::window::set_taskbar_progress,
+            commands::window::quit_app,
         ])
         .run(tauri::generate_context!());
     if let Err(e) = result {
@@ -202,7 +202,8 @@ mod tests {
         let capability = include_str!("../capabilities/main.json");
         for name in COMMANDS {
             assert!(
-                lib.contains(&format!("commands::{name},")),
+                lib.lines().any(|l| l.trim().starts_with("commands::")
+                    && l.trim().ends_with(&format!("::{name},"))),
                 "{name} is not in generate_handler!"
             );
             let permission = format!("\"allow-{}\"", name.replace('_', "-"));

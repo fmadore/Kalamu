@@ -124,6 +124,29 @@ pub(crate) fn status_error(
     }
 }
 
+/// `data[].id`, the list shape Anthropic, OpenAI and Mistral share.
+pub(crate) fn ids(response: &Value) -> Vec<String> {
+    response
+        .get("data")
+        .and_then(Value::as_array)
+        .map(|models| {
+            models
+                .iter()
+                .filter_map(|m| m.get("id").and_then(Value::as_str))
+                .map(str::to_string)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Seconds as a JSON number, in milliseconds.
+pub(crate) fn secs_to_ms(value: Option<&Value>) -> u64 {
+    value
+        .and_then(Value::as_f64)
+        .map(|s| (s * 1000.0).round().max(0.0) as u64)
+        .unwrap_or(0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

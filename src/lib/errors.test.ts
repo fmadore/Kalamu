@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { describeError } from './errors.js';
 import { en } from './i18n/index.js';
@@ -9,7 +9,7 @@ function rustIds(): string[] {
 		'crates/engine/src/lib.rs',
 		'crates/core/src/provider.rs',
 		'src-tauri/src/errors.rs',
-		'src-tauri/src/commands.rs'
+		...readdirSync('src-tauri/src/commands').map((f) => `src-tauri/src/commands/${f}`)
 	].map((p) => readFileSync(p, 'utf8'));
 	const ids = new Set<string>();
 	for (const source of sources) {

@@ -13,7 +13,7 @@ use scriptorium_core::{
 };
 use serde_json::{Value, json};
 
-use crate::http::{base64, send_json};
+use crate::http::{base64, ids, send_json};
 
 const BASE_URL: &str = "https://api.anthropic.com/v1";
 const API_VERSION: &str = "2026-10-21";
@@ -164,19 +164,4 @@ impl Provider for Anthropic {
         .await?;
         Ok(ids(&response))
     }
-}
-
-/// `data[].id`, the list shape Anthropic, OpenAI and Mistral share.
-pub(crate) fn ids(response: &Value) -> Vec<String> {
-    response
-        .get("data")
-        .and_then(Value::as_array)
-        .map(|models| {
-            models
-                .iter()
-                .filter_map(|m| m.get("id").and_then(Value::as_str))
-                .map(str::to_string)
-                .collect()
-        })
-        .unwrap_or_default()
 }

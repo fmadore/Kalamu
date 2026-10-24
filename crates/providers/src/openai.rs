@@ -14,8 +14,7 @@ use scriptorium_core::{
 };
 use serde_json::{Value, json};
 
-use crate::anthropic::ids;
-use crate::http::{data_url, send_json};
+use crate::http::{data_url, ids, secs_to_ms, send_json};
 
 const BASE_URL: &str = "https://api.openai.com/v1";
 
@@ -214,13 +213,6 @@ impl OpenAi {
             model_version: Some(request.model.to_string()),
         })
     }
-}
-
-pub(crate) fn secs_to_ms(value: Option<&Value>) -> u64 {
-    value
-        .and_then(Value::as_f64)
-        .map(|s| (s * 1000.0).round().max(0.0) as u64)
-        .unwrap_or(0)
 }
 
 #[async_trait]
