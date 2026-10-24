@@ -1,0 +1,22 @@
+[package]
+name = "scriptorium-media"
+description = "File inspection, conversion, splitting and input checks for Scriptorium."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+hex.workspace = true
+image.workspace = true
+lopdf.workspace = true
+scriptorium-core.workspace = true
+sha2.workspace = true
+tiff.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

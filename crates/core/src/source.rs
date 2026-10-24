@@ -53,4 +53,7 @@ pub struct SourceFile {
     /// Length of an audio or video file, once known.
     #[ts(type = "number | null")]
     pub duration_ms: Option<u64>,
+    /// Split open double-page spreads into two pages before processing.
+    #[serde(default)]
+    pub split_spreads: bool,
 }

@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn same_inputs_give_same_key_whatever_the_setup_id_or_label() {
-        let page = PieceRef::Page { number: 1 };
+        let page = PieceRef::page(1);
         let mut other = setup("Transcribe.");
         other.label = "b".into();
         let a = CacheKey::compute(
@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn prompt_page_and_language_change_the_key() {
-        let page = PieceRef::Page { number: 1 };
+        let page = PieceRef::page(1);
         let base = CacheKey::compute(
             Task::TextExtraction,
             "abc",
@@ -109,7 +109,7 @@ mod tests {
         let other_page = CacheKey::compute(
             Task::TextExtraction,
             "abc",
-            &PieceRef::Page { number: 2 },
+            &PieceRef::page(2),
             &setup("A"),
             &LanguageChoice::Auto,
         );

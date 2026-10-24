@@ -3,13 +3,28 @@ use ts_rs::TS;
 
 use crate::{JobId, LanguageCode, ProviderId, SetupId, SourceId, Timestamp};
 
+/// One half of an open double-page spread, as seen on screen.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum PageHalf {
+    Left,
+    Right,
+}
+
 /// Which part of a source a piece covers.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
 pub enum PieceRef {
-    /// One page of a PDF or image, numbered from 1 as in the original.
-    Page { number: u32 },
+    /// One page of a PDF or image, numbered from 1 as in the original; `half` when a spread was
+    /// split into two pages.
+    Page {
+        number: u32,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        half: Option<PageHalf>,
+    },
     /// One segment of a recording.
     Segment {
         index: u32,
@@ -21,10 +36,34 @@ pub enum PieceRef {
 }
 
 impl PieceRef {
+    pub fn page(number: u32) -> Self {
+        Self::Page { number, half: None }
+    }
+
+    /// How the piece is labelled in exports: `3`, `3 (left)`, `00:20:00`.
+    pub fn label(&self) -> String {
+        match self {
+            Self::Page { number, half: None } => number.to_string(),
+            Self::Page {
+                number,
+                half: Some(PageHalf::Left),
+            } => format!("{number} (left)"),
+            Self::Page {
+                number,
+                half: Some(PageHalf::Right),
+            } => format!("{number} (right)"),
+            Self::Segment { start_ms, .. } => clock(*start_ms),
+        }
+    }
+
     /// A stable string for cache keys and database rows.
     pub fn descriptor(&self) -> String {
         match self {
-            Self::Page { number } => format!("page:{number}"),
+            Self::Page { number, half: None } => format!("page:{number}"),
+            Self::Page {
+                number,
+                half: Some(half),
+            } => format!("page:{number}:{half:?}").to_lowercase(),
             Self::Segment {
                 index,
                 start_ms,
@@ -32,6 +71,12 @@ impl PieceRef {
             } => format!("segment:{index}:{start_ms}-{end_ms}"),
         }
     }
+}
+
+/// `hh:mm:ss` for a position in a recording.
+pub fn clock(ms: u64) -> String {
+    let s = ms / 1000;
+    format!("{:02}:{:02}:{:02}", s / 3600, s / 60 % 60, s % 60)
 }
 
 /// A timed stretch of a transcription.

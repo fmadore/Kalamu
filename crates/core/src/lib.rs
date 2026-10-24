@@ -26,7 +26,9 @@ pub use job::{Job, JobSettings, JobStatus, JobSummary, OutputDestination, Output
 pub use language::{LanguageChoice, LanguageCode};
 pub use provenance::Provenance;
 pub use provider::{ApiKey, PreparedInput, ProcessRequest, Provider, ProviderError};
-pub use result::{PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, Usage};
+pub use result::{
+    PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, Usage,
+};
 pub use setup::{PromptSnapshot, Setup, SetupOptions};
 pub use source::{InputKind, SourceFile};
 pub use store::{Correction, JobStore, StoreError};

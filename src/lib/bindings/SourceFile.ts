@@ -21,4 +21,8 @@ page_count: number | null,
 /**
  * Length of an audio or video file, once known.
  */
-duration_ms: number | null, };
+duration_ms: number | null, 
+/**
+ * Split open double-page spreads into two pages before processing.
+ */
+split_spreads: boolean, };

@@ -20,6 +20,7 @@ fn job() -> Job {
             kind: InputKind::Pdf,
             page_count: Some(2),
             duration_ms: None,
+            split_spreads: false,
         }],
         setups: vec![Setup {
             id: SetupId::new(),
@@ -47,7 +48,7 @@ fn piece(job: &Job, index: u32, status: PieceStatus) -> PieceState {
         setup_id: job.setups[0].id,
         source_id: job.sources[0].id,
         index,
-        piece: PieceRef::Page { number: index + 1 },
+        piece: PieceRef::page(index + 1),
         status,
         cache_key: Some(format!("key-{index}")),
         error: None,
