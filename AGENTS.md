@@ -57,6 +57,8 @@ Rules that keep this modular:
 - **A job runs one or more set-ups** (provider, model, prompt, settings) over the same sources,
   from the first version of `core` and `store`. A normal job is simply a job with one set-up, so
   comparison mode is not bolted on later. Results are keyed by source piece and set-up.
+- **AI output is immutable.** User corrections and review status are stored as a separate layer
+  on top of it; exporters read the corrected view, provenance records both.
 - **Every piece of work is resumable.** Anything that calls a provider goes through the engine,
   which records it in the store before and after. No side channel that bypasses the cache.
 - **Async with Tokio**; cancellation and pause are explicit, not by dropping tasks mid-write.

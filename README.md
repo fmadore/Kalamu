@@ -102,6 +102,26 @@ paying twice.
 - **Exports come from the cache.** Choosing another output format later regenerates the file from
   stored results, without calling the provider again.
 
+## Review view
+
+Checking AI output against the source is the step that makes results trustworthy, so the app
+makes it easy rather than leaving users to juggle a PDF viewer and a text editor.
+
+- **Source and result side by side**: the PDF page or image on the left, the extracted text on
+  the right, with page navigation, zoom, and both sides scrolling together. Where the model
+  returns coordinates, hovering a line highlights it on the scan.
+- **Audio too**: for transcriptions, a player with the waveform next to the transcript; the
+  current line follows playback, and clicking a line jumps to that moment.
+- **Correct in place.** Edits are saved as the user's corrections, kept separate from the AI
+  output, which is never overwritten. Exports use the corrected text, and `provenance.json`
+  records which pages were reviewed or corrected.
+- **Mark pages as reviewed**, so long jobs can be checked in several sittings and progress shows
+  what has been verified, not only what has been processed.
+- **Corrected pages become references** for the error scores in comparison mode.
+
+The view opens while a job is still running, so the first pages can be checked before the
+rest of the folder is processed.
+
 ## Comparison mode
 
 Which model reads a given archive best is an empirical question, and the answer changes from
@@ -113,8 +133,8 @@ shows the results side by side, so users can choose with evidence rather than gu
   works for text extraction first, and for audio transcription later.
 - **Try a sample first.** Comparison can run on a few pages or minutes before committing a whole
   folder, and the cost estimate shows each set-up separately.
-- **Side-by-side view** per page or segment, next to the source image or audio, with the
-  differences between outputs highlighted, so disagreements on names, numbers and dates stand
+- **Side-by-side view**, the [review view](#review-view) with one column per set-up next to the
+  source image or audio, and the differences between outputs highlighted, so disagreements on names, numbers and dates stand
   out.
 - **Scores when a reference exists.** If the user provides or corrects a reference
   transcription for some pages, the app computes character and word error rates for each
@@ -271,8 +291,8 @@ Each stage ends with an architecture review (see [AGENTS.md](AGENTS.md)) before 
    and update pull requests for Rust, front-end and GitHub Actions dependencies.
 2. **Text extraction (OCR/HTR)** with **Google Gemini, OpenAI, Anthropic Claude and Mistral**:
    PDF and image preparation, the extraction presets, language selection, and exports to
-   `.txt`, `.md`, `.docx` and `.json`, then searchable PDF and ALTO/PAGE XML, and comparison
-   mode.
+   `.txt`, `.md`, `.docx` and `.json`, the review view, then searchable PDF and ALTO/PAGE XML,
+   and comparison mode.
 3. **Audio transcription** with Gemini, OpenAI and Mistral (Voxtral); Claude does not accept
    audio. FFmpeg conversion and splitting, speakers and timestamps, and `.srt`, `.vtt` and
    `.csv` exports.
