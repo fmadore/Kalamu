@@ -142,7 +142,7 @@
 		gap: var(--space-3);
 		align-items: center;
 		padding: var(--space-2) var(--space-3);
-		border-left: 3px solid var(--warn-border);
+		border: 1px solid var(--warn-border);
 		background: var(--warn-wash);
 		border-radius: var(--radius-control);
 		font-size: var(--type-sm);
