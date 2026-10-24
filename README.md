@@ -26,23 +26,109 @@ paste an API key, pick a file or a folder, press **Start**.
 
 | Task | Input | Output |
 | --- | --- | --- |
-| **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`… | Text, Markdown, Word, SRT/WebVTT; optional speakers and timestamps |
-| **Read documents** (OCR/HTR) | PDF, JPEG, PNG, TIFF | Text or Markdown per page; diplomatic or normalized transcription |
+| **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`… | Speakers and timestamps optional; see [Export formats](#export-formats) |
+| **Read documents** (OCR/HTR) | PDF, JPEG, PNG, TIFF | Per page; diplomatic or normalized transcription |
 | **Summarise and extract keywords** | Text, Word, PDF, `.xlsx` | Summary and keywords per file, or a column added to the spreadsheet |
 
 - **One file or a whole folder.** Choose files from the PC or drop a folder; the app processes
-  them one by one, shows progress, and can resume after an interruption.
+  them one by one, shows progress, and picks up where it stopped after an interruption (see
+  [Interruptions and resuming](#interruptions-and-resuming)).
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, or OpenRouter for
   open-weights and other models. The app shows only the providers and models that can handle the
   chosen task: Claude, for instance, reads documents but does not accept audio.
+- **Current models.** The app offers the latest models for each task and is updated as better
+  ones appear (see [Keeping models current](#keeping-models-current)).
 - **Works without an API key.** An offline mode keeps the app useful without an account, a key
   or an internet connection, and keeps sensitive material on the PC (see below).
-- **Customisable prompts.** Each task ships with a tested default prompt (language, transcription
-  conventions, summary length). Users can edit it, save it as a named preset, and reset it.
+- **Prompt library.** Every task ships with tested default prompts that users can adapt and
+  save (see [Custom prompts](#custom-prompts)).
 - **Results next to the sources.** Outputs are written beside the original files or into a chosen
   folder, each with a `provenance.json` recording the model, prompt and settings used.
 - **Estimated cost before starting**, based on file length and the provider's published prices.
 - **English, French and German interface.**
+
+## Interruptions and resuming
+
+A folder of interviews or a 400-page scan can take hours. Closing the app, a crash, a lost
+connection, a sleeping laptop or a provider's rate limit must never mean starting again, or
+paying twice.
+
+- **Work is saved in small pieces.** Long recordings are split into chunks and PDFs into pages.
+  Each finished chunk or page is stored at once in a local job database (SQLite, in the app's
+  data folder), so an interruption loses at most the piece in progress.
+- **Jobs survive closing the app.** On the next launch, the app lists unfinished jobs and offers
+  to resume, review or discard each one. Closing the window during a job asks first, and can keep
+  the job running in the background from the notification area.
+- **Nothing is processed twice.** Results are cached by a fingerprint of the source file plus the
+  model, prompt and settings. Re-running a folder skips files and pages already done with the same
+  settings; changing the prompt or model reprocesses only what it affects. A **Redo** button
+  forces a fresh run of one file or page.
+- **Failures are retried, then reported.** Rate limits and network errors are retried with
+  increasing delays. A file that still fails is marked as failed with a readable reason and the
+  rest of the queue continues; failed items can be retried later on their own.
+- **Exports come from the cache.** Choosing another output format later regenerates the file from
+  stored results, without calling the provider again.
+
+## Progress
+
+The user should always see what the app is doing, how far it is, and what it costs.
+
+- **A queue view** listing every file with its status (waiting, running, done, failed, skipped
+  because cached), and per file a bar for pages or audio chunks.
+- **An overall bar** with files and pages done, elapsed time, estimated time remaining, and the
+  cost so far against the estimate shown before starting.
+- **A live preview** of the text as each page or chunk arrives, next to the page image or an
+  audio player at the matching timestamp, so problems show up early rather than at the end.
+- **Pause and cancel** that take effect after the current piece, keeping everything finished.
+- **Progress on the Windows taskbar icon**, and a notification when a job finishes or needs
+  attention.
+
+## Export formats
+
+Results are stored once and can be exported to several formats at the same time; the default
+selection is remembered per task.
+
+| Task | Formats |
+| --- | --- |
+| **Transcription** | `.txt`, `.md`, `.docx` (Word), `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
+| **OCR/HTR** | `.txt`, `.md`, `.docx`, `.json` (pages, blocks and confidence where available), searchable PDF (text layer over the original scan), ALTO XML and PAGE XML where the engine returns coordinates |
+| **Summaries and keywords** | `.txt`, `.md`, `.docx`, `.json`, `.csv`, or a column added to the original `.xlsx` |
+
+Options include one file per source or one combined file per folder, page or timestamp markers,
+and whether to include speaker labels. JSON follows a documented schema, so results can feed
+other tools such as `iwac-ai-pipelines` or Omeka S imports.
+
+## Custom prompts
+
+- **Defaults per task and model**, ported and tested from `zmo-ai-pipelines` and
+  `iwac-ai-pipelines`: interview transcription, diplomatic or normalized OCR, handwriting,
+  newspapers, summaries of different lengths.
+- **Edit, save and name** a prompt as a preset, duplicate it as a starting point, and reset any
+  default. Presets are stored locally and kept across updates.
+- **Variables** such as `{language}`, `{speakers}` or `{summary_length}` filled from the job's
+  settings, so one prompt works across projects.
+- **Share presets** by exporting and importing them as small JSON files, for example across a
+  research team.
+- **Recorded in provenance.** Each output's `provenance.json` stores the full prompt text used,
+  not only the preset name, so results stay reproducible after a prompt is edited.
+
+## Keeping models current
+
+AI models improve every few months; the app must not stay stuck on the models it shipped with.
+In October 2026, for example, Mistral released
+[Voxtral Transcribe 3](https://www.marktechpost.com/2026/10/20/mistral-voxtral-3-speech-models-voice-agent-sdk/)
+(Small for accuracy, Mini for cheaper batch work, 50 languages), a clear step up for interview
+transcription.
+
+- **A model catalogue as data, not code.** Each provider's models, the tasks they suit, their
+  limits and prices live in a small catalogue file that the app can refresh from this repository
+  without a new release.
+- **Recommended model per task**, reviewed whenever a provider releases something better, and
+  chosen by default; older models remain selectable.
+- **Discovery from the providers' own model lists**, so a new model can be tried before the
+  catalogue lists it, and retired models are flagged before they stop working.
+- **The exact model version is recorded** in `provenance.json`, since the same name can point to
+  a newer model later.
 
 ## Offline mode
 
@@ -81,6 +167,8 @@ keep the originals.
 - Provider calls in Rust, porting the prompts, model choices and provenance format from
   `zmo-ai-pipelines` and `iwac-ai-pipelines`; no bundled Python.
 - FFmpeg to convert and split long recordings for providers with file-size limits.
+- SQLite for the local job database and result cache; exporters in Rust for Word, searchable
+  PDF, subtitles and XML.
 - [whisper-rs](https://crates.io/crates/whisper-rs) (whisper.cpp) for offline transcription,
   reusing Live Translation's model download and verification code.
 - Tesseract for offline OCR, bundled as a sidecar with its language data.
