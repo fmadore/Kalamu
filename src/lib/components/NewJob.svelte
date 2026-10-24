@@ -10,7 +10,15 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, languageName, messages } from '#lib/i18n/index.js';
-	import { type Draft, FORMATS, newDraft, readsKind, suggestName, toRequest } from '#lib/newJob.js';
+	import {
+		type Draft,
+		FORMATS,
+		newDraft,
+		offeredFormats,
+		readsKind,
+		suggestName,
+		toRequest
+	} from '#lib/newJob.js';
 	import { api, onDrop, pickFolder } from '#lib/tauri.js';
 	import { app, go, hasKey, liveJob, refreshJobs } from '#lib/state.svelte.js';
 
@@ -122,7 +130,7 @@
 					sample_pages: sample ? samplePages : null
 				},
 				output: {
-					formats: [...formats],
+					formats: formats.filter((f) => offeredFormats(catalog, task, drafts).includes(f)),
 					destination: $state.snapshot(destination),
 					options: $state.snapshot(app.settings!.export_options)
 				}
@@ -244,7 +252,7 @@
 		<fieldset>
 			<legend class="label">{m.newJob.formats}</legend>
 			<div class="row wrap">
-				{#each FORMATS[task] as f (f)}
+				{#each offeredFormats(catalog, task, drafts) as f (f)}
 					<label class="inline">
 						<input
 							type="checkbox"

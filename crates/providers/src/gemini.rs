@@ -152,6 +152,7 @@ impl Gemini {
                 .and_then(Value::as_str)
                 .map(str::to_string),
             keywords: Vec::new(),
+            regions: Vec::new(),
         })
     }
 }

@@ -4,6 +4,11 @@
       "index": 0,
       "markdown": "# L'Essor\n\n![img-0.jpeg](img-0.jpeg)\n\nBamako, 12 juin 1958.",
       "images": [],
+      "blocks": [
+        { "type": "title", "top_left_x": 170, "top_left_y": 220, "bottom_right_x": 1530, "bottom_right_y": 330, "content": "# L'Essor" },
+        { "type": "image", "top_left_x": 170, "top_left_y": 400, "bottom_right_x": 1530, "bottom_right_y": 1200, "content": "![img-0.jpeg](img-0.jpeg)" },
+        { "type": "text", "top_left_x": 170, "top_left_y": 1300, "bottom_right_x": 1020, "bottom_right_y": 1355, "content": "Bamako, **12 juin** 1958." }
+      ],
       "dimensions": { "dpi": 200, "height": 2200, "width": 1700 }
     }
   ],

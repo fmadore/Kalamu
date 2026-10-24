@@ -15,6 +15,8 @@ pub enum ExportFormat {
     Srt,
     Vtt,
     Csv,
+    /// The original PDF with an invisible text layer, from models that report layout.
+    SearchablePdf,
 }
 
 impl ExportFormat {
@@ -27,6 +29,8 @@ impl ExportFormat {
             Self::Srt => "srt",
             Self::Vtt => "vtt",
             Self::Csv => "csv",
+            // Never `.pdf` alone, which would replace the source.
+            Self::SearchablePdf => "searchable.pdf",
         }
     }
 }
@@ -62,6 +66,9 @@ pub struct ExportPart {
     /// Keywords, for summaries.
     #[serde(default)]
     pub keywords: Vec<String>,
+    /// Text blocks placed on the page, for a searchable PDF.
+    #[serde(default)]
+    pub regions: Vec<crate::TextRegion>,
 }
 
 /// Everything an exporter needs for one source under one set-up.

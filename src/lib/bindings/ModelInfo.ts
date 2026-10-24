@@ -22,4 +22,8 @@ accepts_prompt: boolean,
 /**
  * Can label who speaks in a transcription. Whisper cannot.
  */
-speakers: boolean, pricing: Pricing, limits: Limits, };
+speakers: boolean, 
+/**
+ * Reports where text sits on the page, which a searchable PDF needs.
+ */
+layout: boolean, pricing: Pricing, limits: Limits, };

@@ -251,7 +251,8 @@ export const en = {
 		json: 'JSON',
 		srt: 'Subtitles (.srt)',
 		vtt: 'Subtitles (.vtt)',
-		csv: 'Spreadsheet (.csv)'
+		csv: 'Spreadsheet (.csv)',
+		searchable_pdf: 'Searchable PDF (Mistral OCR)'
 	},
 	close: {
 		title: 'Jobs are still running',

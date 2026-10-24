@@ -8,6 +8,7 @@ mod csv_export;
 mod docx;
 mod json;
 mod markdown;
+mod searchable_pdf;
 mod subtitles;
 mod text;
 mod timeline;
@@ -26,6 +27,7 @@ pub fn all() -> Vec<Box<dyn Exporter>> {
         Box::new(subtitles::SrtExporter),
         Box::new(subtitles::VttExporter),
         Box::new(csv_export::CsvExporter),
+        Box::new(searchable_pdf::SearchablePdfExporter),
     ]
 }
 

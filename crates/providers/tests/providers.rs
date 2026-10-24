@@ -307,6 +307,7 @@ async fn mistral_ocr_returns_markdown_without_image_links() {
         .and(body_partial_json(serde_json::json!({
             "model": "mistral-ocr-4-1",
             "document": { "type": "document_url" },
+            "include_blocks": true,
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(fixture("mistral_ocr.json")))
         .mount(&server)

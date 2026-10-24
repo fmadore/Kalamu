@@ -19,10 +19,19 @@ export interface Draft {
 }
 
 export const FORMATS: Record<Task, ExportFormat[]> = {
-	text_extraction: ['txt', 'markdown', 'docx', 'json', 'csv'],
+	text_extraction: ['txt', 'markdown', 'docx', 'json', 'csv', 'searchable_pdf'],
 	audio_transcription: ['txt', 'markdown', 'docx', 'srt', 'vtt', 'json', 'csv'],
 	summary: ['txt', 'markdown', 'docx', 'json', 'csv']
 };
+
+/**
+ * The formats to offer: a searchable PDF only when a chosen model reports where text sits on
+ * the page (Mistral OCR).
+ */
+export function offeredFormats(catalog: Catalog, task: Task, drafts: Draft[]): ExportFormat[] {
+	const layout = drafts.some((d) => modelInfo(catalog, d)?.layout === true);
+	return FORMATS[task].filter((f) => f !== 'searchable_pdf' || layout);
+}
 
 /** The kinds of file each task reads. */
 export function readsKind(task: Task, kind: string | undefined): boolean {

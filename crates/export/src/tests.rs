@@ -103,6 +103,7 @@ fn letter() -> ExportDocument {
                 corrected: false,
                 reviewed: true,
                 keywords: vec![],
+                regions: vec![],
             },
             ExportPart {
                 piece: scriptorium_core::PieceRef::page(2),
@@ -111,6 +112,7 @@ fn letter() -> ExportDocument {
                 corrected: true,
                 reviewed: true,
                 keywords: vec![],
+                regions: vec![],
             },
         ],
     )
@@ -145,6 +147,7 @@ fn interview() -> ExportDocument {
                 corrected: false,
                 reviewed: false,
                 keywords: vec![],
+                regions: vec![],
             },
             ExportPart {
                 // A prompt-based model that wrote timestamps into its text.
@@ -158,6 +161,7 @@ fn interview() -> ExportDocument {
                 corrected: false,
                 reviewed: false,
                 keywords: vec![],
+                regions: vec![],
             },
         ],
     )
@@ -222,7 +226,7 @@ fn every_format_has_one_exporter() {
     let mut unique = formats.clone();
     unique.dedup();
     assert_eq!(formats.len(), unique.len());
-    assert_eq!(formats.len(), 7);
+    assert_eq!(formats.len(), 8);
 }
 
 #[test]
@@ -234,4 +238,66 @@ fn timestamps_in_text_become_segments() {
     assert_eq!(segs[0].text, "Oui. continued");
     assert_eq!(segs[1].start_ms, 71_000);
     assert_eq!(segs[1].speaker, None);
+}
+
+/// A real PDF in, the same PDF out with Mistral's blocks as invisible, searchable text.
+#[test]
+fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
+    use lopdf::{Document, Object, Stream, dictionary};
+    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    let path = dir.path().join("lettre.pdf");
+    let mut pdf = Document::with_version("1.7");
+    let pages = pdf.new_object_id();
+    let content = pdf.add_object(Stream::new(dictionary! {}, b"0 0 m 10 10 l S".to_vec()));
+    let page = pdf.add_object(dictionary! {
+        "Type" => "Page",
+        "Parent" => pages,
+        "Contents" => content,
+    });
+    pdf.objects.insert(
+        pages,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => vec![page.into()],
+            "Count" => 1,
+            "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+        }),
+    );
+    let catalog = pdf.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages });
+    pdf.trailer.set("Root", catalog);
+    pdf.save(&path).unwrap_or_else(|e| panic!("{e}"));
+
+    let mut src = source("lettre.pdf", InputKind::Pdf);
+    src.path = path.display().to_string();
+    let doc = document(
+        Task::TextExtraction,
+        src,
+        vec![ExportPart {
+            piece: scriptorium_core::PieceRef::page(1),
+            text: "Dakar, le 3 mai 1957".into(),
+            segments: vec![],
+            corrected: false,
+            reviewed: false,
+            keywords: vec![],
+            regions: vec![scriptorium_core::TextRegion {
+                x: 0.1,
+                y: 0.1,
+                width: 0.6,
+                height: 0.04,
+                text: "Dakar, le 3 mai 1957".into(),
+            }],
+        }],
+    );
+    let bytes = exporter(ExportFormat::SearchablePdf)
+        .unwrap_or_else(|| panic!("no exporter"))
+        .export(&doc)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let out = Document::load_mem(&bytes).unwrap_or_else(|e| panic!("{e}"));
+    let text = out.extract_text(&[1]).unwrap_or_default();
+    assert!(text.contains("Dakar"), "extracted: {text:?}");
+
+    // A model without positions gives no searchable PDF rather than an empty layer.
+    let mut plain = doc.clone();
+    plain.parts[0].regions.clear();
+    assert!(exporter(ExportFormat::SearchablePdf).is_some_and(|e| e.export(&plain).is_err()));
 }

@@ -319,6 +319,7 @@
       "status": "stable",
       "recommended_for": [],
       "accepts_prompt": false,
+      "layout": true,
       "pricing": {},
       "limits": {
         "max_request_mb": 50,

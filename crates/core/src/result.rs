@@ -95,6 +95,19 @@ pub struct Segment {
     pub text: String,
 }
 
+/// Where a block of text sits on its page, for a searchable PDF: fractions of the page's width
+/// and height, measured from its top-left corner as displayed. Only models that report layout
+/// (Mistral OCR) give them, at paragraph level.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TextRegion {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub text: String,
+}
+
 /// What a provider call consumed, for cost tracking.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -135,6 +148,9 @@ pub struct ProcessOutput {
     /// Keywords, for summaries.
     #[serde(default)]
     pub keywords: Vec<String>,
+    /// Text blocks and their place on the page, from models that report layout.
+    #[serde(default)]
+    pub regions: Vec<TextRegion>,
 }
 
 /// A cached result, keyed by [`crate::CacheKey`].

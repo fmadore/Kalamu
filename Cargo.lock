@@ -3998,9 +3998,11 @@ version = "0.1.0"
 dependencies = [
  "csv",
  "docx-rs",
+ "lopdf",
  "scriptorium-core",
  "serde",
  "serde_json",
+ "tempfile",
  "uuid",
 ]
 

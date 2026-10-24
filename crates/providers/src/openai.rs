@@ -145,6 +145,7 @@ impl OpenAi {
                 .and_then(Value::as_str)
                 .map(str::to_string),
             keywords: Vec::new(),
+            regions: Vec::new(),
         })
     }
 
@@ -227,6 +228,7 @@ impl OpenAi {
             },
             model_version: Some(request.model.to_string()),
             keywords: Vec::new(),
+            regions: Vec::new(),
         })
     }
 }

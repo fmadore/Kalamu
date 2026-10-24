@@ -155,6 +155,17 @@ impl Engine {
                 });
                 absolute(&state.piece, &result.output.segments, previous_end)
             };
+            // A corrected page keeps its text searchable, as one block over the page.
+            let regions = match (&corrected_text, result.output.regions.is_empty()) {
+                (Some(text), false) => vec![scriptorium_core::TextRegion {
+                    x: 0.05,
+                    y: 0.05,
+                    width: 0.9,
+                    height: 0.9,
+                    text: text.clone(),
+                }],
+                _ => result.output.regions.clone(),
+            };
             parts.push(ExportPart {
                 piece: state.piece.clone(),
                 text: corrected_text.unwrap_or_else(|| result.output.text.clone()),
@@ -162,6 +173,7 @@ impl Engine {
                 corrected: correction.is_some_and(|c| c.text.is_some()),
                 reviewed: is_reviewed,
                 keywords: result.output.keywords.clone(),
+                regions,
             });
         }
 

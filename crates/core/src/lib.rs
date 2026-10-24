@@ -29,7 +29,8 @@ pub use provider::{
     ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, StopSignal,
 };
 pub use result::{
-    PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, Usage,
+    PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, TextRegion,
+    Usage,
 };
 pub use setup::{PromptSnapshot, Setup, SetupOptions};
 pub use source::{InputKind, SourceFile};

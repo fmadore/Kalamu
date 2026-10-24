@@ -119,6 +119,9 @@ pub struct ModelInfo {
     /// Can label who speaks in a transcription. Whisper cannot.
     #[serde(default = "yes")]
     pub speakers: bool,
+    /// Reports where text sits on the page, which a searchable PDF needs.
+    #[serde(default)]
+    pub layout: bool,
     #[serde(default)]
     pub pricing: Pricing,
     #[serde(default)]

@@ -8,7 +8,7 @@ use reqwest::Client;
 use reqwest::multipart::{Form, Part};
 use scriptorium_core::{
     ApiKey, LanguageChoice, LanguageCode, ProcessOutput, ProcessRequest, Provider, ProviderError,
-    ProviderId, Segment, Task, Usage,
+    ProviderId, Segment, Task, TextRegion, Usage,
 };
 use serde_json::{Value, json};
 
@@ -45,6 +45,8 @@ impl Mistral {
             "document": document,
             "include_image_base64": false,
             "table_format": "html",
+            // Paragraph boxes, for searchable PDFs (OCR 4 and later).
+            "include_blocks": true,
         })
     }
 
@@ -59,6 +61,7 @@ impl Mistral {
             .map(strip_image_links)
             .collect::<Vec<_>>()
             .join("\n\n");
+        let regions = pages.first().map(page_regions).unwrap_or_default();
         let processed = response
             .pointer("/usage_info/pages_processed")
             .and_then(Value::as_u64)
@@ -76,6 +79,7 @@ impl Mistral {
                 .and_then(Value::as_str)
                 .map(str::to_string),
             keywords: Vec::new(),
+            regions,
         })
     }
 
@@ -165,11 +169,91 @@ impl Mistral {
                 .and_then(Value::as_str)
                 .map(str::to_string),
             keywords: Vec::new(),
+            regions: Vec::new(),
         })
     }
 }
 
 /// Mistral OCR leaves `![img-0.jpeg](img-0.jpeg)` where pictures were; they point nowhere.
+/// The page's text blocks with their boxes, as fractions of the page. Pictures and signatures
+/// carry no text to search.
+fn page_regions(page: &Value) -> Vec<TextRegion> {
+    let size = |key: &str| {
+        page.pointer(&format!("/dimensions/{key}"))
+            .and_then(Value::as_f64)
+            .filter(|v| *v > 0.0)
+    };
+    let (Some(width), Some(height)) = (size("width"), size("height")) else {
+        return Vec::new();
+    };
+    page.get("blocks")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter(|b| {
+            !matches!(
+                b.get("type").and_then(Value::as_str),
+                Some("image" | "signature")
+            )
+        })
+        .filter_map(|b| {
+            let n = |key: &str| b.get(key).and_then(Value::as_f64);
+            let (x0, y0, x1, y1) = (
+                n("top_left_x")?,
+                n("top_left_y")?,
+                n("bottom_right_x")?,
+                n("bottom_right_y")?,
+            );
+            let text = plain_text(b.get("content").and_then(Value::as_str)?);
+            (!text.is_empty() && x1 > x0 && y1 > y0).then(|| TextRegion {
+                x: (x0 / width) as f32,
+                y: (y0 / height) as f32,
+                width: ((x1 - x0) / width) as f32,
+                height: ((y1 - y0) / height) as f32,
+                text,
+            })
+        })
+        .collect()
+}
+
+/// A block's Markdown or HTML (tables) as the words a reader would search for.
+fn plain_text(content: &str) -> String {
+    let mut out = String::new();
+    let mut in_tag = false;
+    let mut tag = String::new();
+    for c in content.chars() {
+        match c {
+            '<' => {
+                in_tag = true;
+                tag.clear();
+            }
+            '>' if in_tag => {
+                in_tag = false;
+                let name = tag.trim_start_matches('/').to_ascii_lowercase();
+                if name.starts_with("td") || name.starts_with("th") {
+                    out.push(' ');
+                } else if name.starts_with("tr") || name.starts_with("br") || name.starts_with('p')
+                {
+                    out.push('\n');
+                }
+            }
+            _ if in_tag => tag.push(c),
+            '*' | '_' | '`' => {}
+            _ => out.push(c),
+        }
+    }
+    out.lines()
+        .map(|l| {
+            l.trim()
+                .trim_start_matches('#')
+                .trim_start_matches(['-', '>'])
+                .trim()
+        })
+        .filter(|l| !l.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 fn strip_image_links(markdown: &str) -> String {
     let mut out: Vec<&str> = Vec::new();
     for line in markdown.lines() {
