@@ -31,6 +31,7 @@ fn job() -> Job {
                 preset_name: "Printed".into(),
                 template: "Transcribe.".into(),
                 text: "Transcribe.".into(),
+                user_prompt: "Transcribe this page.".into(),
             },
             options: SetupOptions::default(),
         }],

@@ -29,6 +29,7 @@ impl CacheKey {
             "provider": setup.provider.as_str(),
             "model": setup.model,
             "prompt": setup.prompt.text,
+            "user_prompt": setup.prompt.user_prompt,
             "options": setup.options,
             "languages": languages,
         });
@@ -60,6 +61,7 @@ mod tests {
                 preset_name: "Printed".into(),
                 template: prompt.into(),
                 text: prompt.into(),
+                user_prompt: "Transcribe this page.".into(),
             },
             options: SetupOptions::default(),
         }

@@ -43,7 +43,10 @@ pub struct PreparedInput {
 pub struct ProcessRequest<'a> {
     pub task: Task,
     pub model: &'a str,
+    /// Instructions, sent as the system prompt where the provider has one.
     pub prompt: &'a str,
+    /// The per-piece request sent alongside the input.
+    pub user_prompt: &'a str,
     pub input: &'a PreparedInput,
     pub languages: &'a LanguageChoice,
     pub options: &'a SetupOptions,

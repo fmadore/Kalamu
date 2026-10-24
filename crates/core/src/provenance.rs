@@ -66,5 +66,7 @@ pub struct ProvenancePrompt {
     pub preset_name: String,
     /// The full text sent to the model, so results stay reproducible after a preset changes.
     pub text: String,
+    pub user_prompt: String,
+    /// SHA-256 of `text` followed by `user_prompt`.
     pub sha256: String,
 }

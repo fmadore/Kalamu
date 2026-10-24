@@ -4,4 +4,8 @@ export type ProvenancePrompt = { preset_id: string | null, preset_name: string,
 /**
  * The full text sent to the model, so results stay reproducible after a preset changes.
  */
-text: string, sha256: string, };
+text: string, user_prompt: string, 
+/**
+ * SHA-256 of `text` followed by `user_prompt`.
+ */
+sha256: string, };

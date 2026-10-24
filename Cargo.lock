@@ -320,6 +320,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
+name = "scriptorium-catalog"
+version = "0.1.0"
+dependencies = [
+ "scriptorium-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "ts-rs",
+]
+
+[[package]]
 name = "scriptorium-core"
 version = "0.1.0"
 dependencies = [
@@ -328,6 +339,19 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "thiserror",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
+name = "scriptorium-prompts"
+version = "0.1.0"
+dependencies = [
+ "scriptorium-core",
+ "serde",
+ "serde_json",
+ "tempfile",
  "thiserror",
  "ts-rs",
  "uuid",

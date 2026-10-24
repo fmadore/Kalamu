@@ -10,10 +10,14 @@ export type PromptSnapshot = {
  */
 preset_id: string | null, preset_name: string, 
 /**
- * The template as written, with `{variables}`.
+ * The instructions as written, with `{variables}`.
  */
 template: string, 
 /**
- * The text sent to the model, variables filled in.
+ * The instructions sent to the model (system prompt), variables filled in.
  */
-text: string, };
+text: string, 
+/**
+ * The short request sent with each page or segment.
+ */
+user_prompt: string, };

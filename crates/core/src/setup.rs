@@ -11,10 +11,13 @@ pub struct PromptSnapshot {
     /// The preset it came from, if any (`text_extraction.printed`, or a user preset's id).
     pub preset_id: Option<String>,
     pub preset_name: String,
-    /// The template as written, with `{variables}`.
+    /// The instructions as written, with `{variables}`.
     pub template: String,
-    /// The text sent to the model, variables filled in.
+    /// The instructions sent to the model (system prompt), variables filled in.
     pub text: String,
+    /// The short request sent with each page or segment.
+    #[serde(default)]
+    pub user_prompt: String,
 }
 
 /// Provider-independent options for one set-up.
