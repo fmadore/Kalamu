@@ -211,9 +211,21 @@ export const en = {
 	},
 	close: {
 		title: 'Jobs are still running',
-		body: 'Pages already finished are saved. Quit now and the jobs pause; resume them next time from Jobs.',
+		body: 'They can keep running in the background, with Scriptorium in the notification area next to the clock. Or quit now: the jobs pause, finished pages are kept, and you resume them next time from Jobs.',
+		background: 'Keep running in the background',
 		quit: 'Pause and quit',
-		stay: 'Keep working'
+		stay: 'Cancel',
+		hidden:
+			'Scriptorium is still working. Click its icon in the notification area to open it again.'
+	},
+	tray: {
+		open: 'Open Scriptorium',
+		pause: 'Pause all jobs',
+		quit: 'Quit',
+		quitPausing: 'Pause jobs and quit',
+		idle: 'No jobs running',
+		running: (jobs: number, percent: number) =>
+			`${jobs === 1 ? '1 job' : `${jobs} jobs`} running · ${percent}%`
 	},
 	common: {
 		cancel: 'Cancel',

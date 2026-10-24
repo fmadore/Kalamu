@@ -50,6 +50,8 @@
     "allow-compare-source",
     "allow-diff-texts",
     "allow-set-taskbar-progress",
+    "allow-set-tray-state",
+    "allow-hide-window",
     "allow-quit-app"
   ]
 }

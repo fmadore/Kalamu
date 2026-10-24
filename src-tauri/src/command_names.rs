@@ -45,5 +45,7 @@ pub const COMMANDS: &[&str] = &[
     "compare_source",
     "diff_texts",
     "set_taskbar_progress",
+    "set_tray_state",
+    "hide_window",
     "quit_app",
 ];

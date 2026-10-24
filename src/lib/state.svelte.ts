@@ -55,7 +55,7 @@ export function hasKey(provider: string): boolean {
 
 export async function refreshJobs(): Promise<void> {
 	app.jobs = await api.listJobs();
-	updateTaskbar();
+	updateProgressDisplays();
 }
 
 export async function refreshKeys(): Promise<void> {
@@ -115,13 +115,26 @@ export function applyProgress(event: ProgressEvent): void {
 	}
 }
 
-/** Overall progress of running jobs on the taskbar button. */
-function updateTaskbar(): void {
+/** Overall progress of running jobs on the taskbar button and in the tray menu. */
+function updateProgressDisplays(): void {
 	const running = app.jobs.filter((j) => j.status === 'running');
 	const total = running.reduce((n, j) => n + j.pieces_total, 0);
 	const done = running.reduce((n, j) => n + j.pieces_finished, 0);
+	const percent = total > 0 ? Math.round((100 * done) / total) : null;
+	void api.setTaskbarProgress(percent).catch(() => undefined);
+	const m = messages();
+	const status = running.length === 0 ? m.tray.idle : m.tray.running(running.length, percent ?? 0);
 	void api
-		.setTaskbarProgress(total > 0 ? Math.round((100 * done) / total) : null)
+		.setTrayState({
+			running: running.length > 0,
+			labels: {
+				status,
+				tooltip: `${m.app.name}: ${status}`,
+				open: m.tray.open,
+				pause: m.tray.pause,
+				quit: running.length > 0 ? m.tray.quitPausing : m.tray.quit
+			}
+		})
 		.catch(() => undefined);
 }
 

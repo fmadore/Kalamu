@@ -22,6 +22,7 @@ import type { Preset } from './bindings/Preset.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
 import type { Task } from './bindings/Task.js';
+import type { TrayState } from './bindings/TrayState.js';
 
 export const isTauri = (): boolean =>
 	typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -81,6 +82,8 @@ export const api = {
 		invoke<ComparisonReport>('compare_source', { jobId, sourceId }),
 	diffTexts: (left: string, right: string) => invoke<DiffSpan[]>('diff_texts', { left, right }),
 	setTaskbarProgress: (percent: number | null) => invoke<void>('set_taskbar_progress', { percent }),
+	setTrayState: (state: TrayState) => invoke<void>('set_tray_state', { state }),
+	hideWindow: () => invoke<void>('hide_window'),
 	quitApp: () => invoke<void>('quit_app')
 };
 
@@ -152,9 +155,9 @@ export async function onDrop(handler: (paths: string[]) => void): Promise<Unlist
 	});
 }
 
-/** A system notification, when the window is not in front. */
-export async function notify(title: string, body: string): Promise<void> {
-	if (!isTauri() || document.hasFocus()) return;
+/** A system notification, when the window is not in front (or `always`). */
+export async function notify(title: string, body: string, always = false): Promise<void> {
+	if (!isTauri() || (!always && document.hasFocus())) return;
 	const { isPermissionGranted, requestPermission, sendNotification } =
 		await import('@tauri-apps/plugin-notification');
 	let granted = await isPermissionGranted();

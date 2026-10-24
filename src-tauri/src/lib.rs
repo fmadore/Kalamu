@@ -6,6 +6,7 @@ mod commands;
 mod errors;
 mod secrets;
 mod settings;
+mod tray;
 
 use std::sync::{Arc, Mutex};
 
@@ -47,10 +48,8 @@ fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking:
 pub fn run() {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.unminimize();
-                let _ = window.set_focus();
-            }
+            // Also when the window was hidden in the tray.
+            commands::window::show_main_window(app);
         }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -122,6 +121,11 @@ pub fn run() {
                 http,
                 preview: Mutex::new(None),
             });
+            app.manage(tray::TrayMenu::default());
+            // Without a tray the window can still be used; closing it just pauses jobs.
+            if let Err(e) = tray::init(app.handle()) {
+                tracing::warn!(error = %e, "no tray icon");
+            }
             if refresh {
                 let handle = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
@@ -182,6 +186,8 @@ pub fn run() {
             commands::review::compare_source,
             commands::review::diff_texts,
             commands::window::set_taskbar_progress,
+            commands::window::set_tray_state,
+            commands::window::hide_window,
             commands::window::quit_app,
         ])
         .run(tauri::generate_context!());

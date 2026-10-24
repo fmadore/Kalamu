@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { messages } from '#lib/i18n/index.js';
-	import { api } from '#lib/tauri.js';
+	import { api, notify } from '#lib/tauri.js';
 	import { app } from '#lib/state.svelte.js';
 
 	const m = messages();
@@ -9,6 +9,12 @@
 	async function quit() {
 		quitting = true;
 		await api.quitApp();
+	}
+
+	async function background() {
+		app.closeRequested = false;
+		await api.hideWindow();
+		void notify(m.app.name, m.close.hidden, true);
 	}
 </script>
 
@@ -23,7 +29,10 @@
 		<p id="close-body">{m.close.body}</p>
 		<div class="actions">
 			<button class="btn" onclick={() => (app.closeRequested = false)}>{m.close.stay}</button>
-			<button class="btn primary" disabled={quitting} onclick={quit}>{m.close.quit}</button>
+			<button class="btn" disabled={quitting} onclick={quit}>{m.close.quit}</button>
+			<button class="btn primary" disabled={quitting} onclick={background}>
+				{m.close.background}
+			</button>
 		</div>
 	</div>
 </div>
@@ -38,7 +47,7 @@
 		z-index: 50;
 	}
 	.dialog {
-		max-width: 28rem;
+		max-width: 32rem;
 		padding: var(--space-5);
 		display: grid;
 		gap: var(--space-4);
@@ -48,6 +57,7 @@
 	}
 	.actions {
 		display: flex;
+		flex-wrap: wrap;
 		justify-content: flex-end;
 		gap: var(--space-2);
 	}
