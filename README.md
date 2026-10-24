@@ -233,6 +233,9 @@ GPL-only components. Each bundled tool's licence is listed in the app's About pa
 - Tesseract for offline text extraction, bundled as a sidecar with its language data.
 - Native builds for x64 and ARM64.
 
+The crate layout, modularity rules and the architecture reviews planned during development are
+in [AGENTS.md](AGENTS.md).
+
 ## Distribution
 
 The goal is the [Microsoft Store](https://apps.microsoft.com/), as for Live Translation: Store
