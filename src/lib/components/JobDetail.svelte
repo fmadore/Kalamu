@@ -142,7 +142,7 @@
 					{#each job.setups as setup (setup.id)}
 						{@const c = counts(setup.id, source.id)}
 						<div class="setup-progress">
-							{#if job.setups.length > 1}<span class="mono small">{setup.label}</span>{/if}
+							<span class="mono small label-cell">{job.setups.length > 1 ? setup.label : ''}</span>
 							<ProgressBar
 								done={c.done}
 								failed={c.failed}
@@ -240,9 +240,14 @@
 	}
 	.setup-progress {
 		display: grid;
-		grid-template-columns: auto 1fr auto;
+		grid-template-columns: 11rem 1fr 3rem;
 		gap: var(--space-3);
 		align-items: center;
+	}
+	.label-cell {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	.preview {
 		margin: 0;

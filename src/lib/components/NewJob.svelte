@@ -139,7 +139,7 @@
 	}
 
 	function request(d: Draft): SetupRequest {
-		const accepts = modelInfo(d)?.accepts_prompt ?? true;
+		const accepts = modelInfo(d)?.accepts_prompt !== false;
 		return {
 			provider: d.provider,
 			model: d.model,
@@ -410,7 +410,7 @@
 				</label>
 				<label class="field">
 					<span>{m.newJob.prompt}</span>
-					{#if info && !info.accepts_prompt}
+					{#if info?.accepts_prompt === false}
 						<select disabled><option>{m.newJob.noPrompt}</option></select>
 					{:else}
 						<select bind:value={d.presetId}>

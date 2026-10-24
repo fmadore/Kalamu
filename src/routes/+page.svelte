@@ -47,6 +47,14 @@
 	onMount(() => {
 		const unlisten: (() => void)[] = [];
 		void (async () => {
+			// Sample data for looking at the interface in a browser; development builds only.
+			if (
+				import.meta.env.DEV &&
+				location.search.includes('mock') &&
+				!('__TAURI_INTERNALS__' in window)
+			) {
+				(await import('#lib/dev/mock.js')).installMock();
+			}
 			try {
 				const [info, catalog, settings] = await Promise.all([
 					api.appInfo(),

@@ -1,0 +1,61 @@
+version: 2
+updates:
+  # Groups keep the weekly batch to a few pull requests, each of which runs the full CI. Tauri's
+  # JavaScript and Rust halves arrive as separate groups: merge them together, since the CLI
+  # refuses to build with @tauri-apps/api and the tauri crate on different minor versions.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      tauri-npm:
+        patterns:
+          - "@tauri-apps/*"
+      npm-dev-minor-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # TypeScript majors need svelte-check support first; Node types follow the Node in use.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      tauri-cargo:
+        patterns:
+          - "tauri*"
+      cargo-patch:
+        update-types:
+          - patch
+    ignore:
+      # wry pins sha2 0.10; moving ahead ships two copies in the exe.
+      - dependency-name: sha2
+        versions:
+          - ">= 0.11"
+
+  # The pinned toolchain in rust-toolchain.toml. In the same pull request, set `rust-version`
+  # in the root Cargo.toml to the new version.
+  - package-ecosystem: rust-toolchain
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"

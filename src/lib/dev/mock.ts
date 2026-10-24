@@ -1,0 +1,271 @@
+// A pretend back end for looking at the interface in a plain browser during development
+// (`npm run dev`, then open http://localhost:5173/?mock). It answers commands with sample data
+// through Tauri's own IPC mock. Never loaded in the desktop app or in a production build.
+
+import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
+import type { Catalog } from '../bindings/Catalog.js';
+import type { Job } from '../bindings/Job.js';
+import type { JobSummary } from '../bindings/JobSummary.js';
+import type { PieceView } from '../bindings/PieceView.js';
+import type { Preset } from '../bindings/Preset.js';
+import type { Settings } from '../bindings/Settings.js';
+import catalogJson from '../../../crates/catalog/catalog.json';
+
+const catalog = catalogJson as unknown as Catalog;
+
+const settings: Settings = {
+	concurrency: 2,
+	text_formats: ['txt', 'docx', 'json'],
+	audio_formats: ['txt', 'docx', 'srt', 'json'],
+	destination: { kind: 'beside_sources' },
+	export_options: { piece_markers: true, speaker_labels: true, timestamps: true },
+	theme: 'system',
+	refresh_catalog: false
+};
+
+const presets: Preset[] = [
+	{
+		id: 'text_extraction.printed_diplomatic',
+		task: 'text_extraction',
+		name: 'Printed document, diplomatic',
+		description: 'Keeps spelling, line breaks and end-of-line hyphens exactly as on the page.',
+		instructions: '# Diplomatic OCR/HTR\n\nPreserve original spelling…',
+		user_prompt: 'Transcribe this page completely, following the instructions given.',
+		builtin: true,
+		modified: false
+	},
+	{
+		id: 'text_extraction.newspaper',
+		task: 'text_extraction',
+		name: 'Newspaper or magazine (columns)',
+		description: 'Joins column lines into paragraphs.',
+		instructions: '# OCR System Prompt for Newspaper Articles…',
+		user_prompt: 'Please perform complete OCR transcription of this single page.',
+		builtin: true,
+		modified: true
+	},
+	{
+		id: 'audio_transcription.interview',
+		task: 'audio_transcription',
+		name: 'Interview, verbatim with speakers',
+		description: 'Speaker labels and a timestamp at each turn.',
+		instructions: '# Full audio transcription…',
+		user_prompt: 'Transcribe this recording.',
+		builtin: true,
+		modified: false
+	}
+];
+
+const source = {
+	id: '00000000-0000-0000-0000-000000000001',
+	path: 'C:\\Archives\\Bulletin\\bulletin-1957-05.pdf',
+	file_name: 'bulletin-1957-05.pdf',
+	sha256: 'ab'.repeat(32),
+	size_bytes: 4_200_000,
+	kind: 'pdf' as const,
+	page_count: 3,
+	duration_ms: null,
+	split_spreads: false
+};
+
+const setupA = {
+	id: '00000000-0000-0000-0000-00000000000a',
+	label: 'gemini-3.8-flash',
+	provider: 'gemini',
+	model: 'gemini-3.8-flash',
+	prompt: {
+		preset_id: 'text_extraction.newspaper',
+		preset_name: 'Newspaper',
+		template: '',
+		text: '',
+		user_prompt: ''
+	},
+	options: { temperature: null, diarize: false, timestamps: false, speakers: null }
+};
+const setupB = {
+	...setupA,
+	id: '00000000-0000-0000-0000-00000000000b',
+	label: 'claude-opus-5-5',
+	provider: 'anthropic',
+	model: 'claude-opus-5-5'
+};
+
+const job: Job = {
+	id: '00000000-0000-0000-0000-0000000000j1',
+	name: 'Bulletin, May 1957',
+	task: 'text_extraction',
+	created_at: Date.now() - 3_600_000,
+	sources: [source],
+	setups: [setupA, setupB],
+	settings: { languages: { mode: 'explicit', languages: ['fr'] }, sample_pages: null },
+	output: {
+		formats: ['txt', 'docx'],
+		destination: { kind: 'beside_sources' },
+		options: settings.export_options
+	},
+	status: 'completed'
+};
+
+const summaries: JobSummary[] = [
+	{
+		id: job.id,
+		name: job.name,
+		task: 'text_extraction',
+		status: 'completed',
+		created_at: job.created_at,
+		updated_at: Date.now(),
+		source_count: 1,
+		setup_count: 2,
+		pieces_total: 6,
+		pieces_finished: 6,
+		pieces_failed: 0
+	},
+	{
+		id: '00000000-0000-0000-0000-0000000000j2',
+		name: 'Entretiens Ouagadougou',
+		task: 'audio_transcription',
+		status: 'interrupted',
+		created_at: Date.now() - 86_400_000,
+		updated_at: Date.now() - 80_000_000,
+		source_count: 4,
+		setup_count: 1,
+		pieces_total: 4,
+		pieces_finished: 2,
+		pieces_failed: 0
+	}
+];
+
+const texts = [
+	"BULLETIN DE L'AFRIQUE OCCIDENTALE FRANÇAISE\n\nDakar, le 3 mai 1957\n\nLe Gouverneur général a reçu ce matin les délégués de la Mission catholique et de l'Union culturelle musulmane.",
+	"La réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam.",
+	'[BLANK PAGE]'
+];
+const variant = (t: string) => t.replace('3 mai', '5 mai').replace('deux cents', 'trois cents');
+
+const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
+	texts.map((text, index) => ({
+		setup_id: setup.id,
+		source_id: source.id,
+		index,
+		piece: { kind: 'page' as const, number: index + 1 },
+		status: 'done' as const,
+		error: null,
+		ai_text: s === 0 ? text : variant(text),
+		corrected_text: null,
+		reviewed: index === 0 && s === 0,
+		model_version: `${setup.model}-001`,
+		cost_usd: 0.0012
+	}))
+);
+
+/** A one-page PDF with a line of text, for the page preview. */
+const PAGE_PDF = btoa(
+	'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 88>>stream\nBT /F1 18 Tf 72 760 Td (BULLETIN DE L AFRIQUE OCCIDENTALE) Tj 0 -30 Td (Dakar, le 3 mai 1957) Tj ET\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Times-Roman>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF'
+);
+
+export function installMock(): void {
+	mockWindows('main');
+	mockIPC((cmd, args) => {
+		const a = (args ?? {}) as Record<string, unknown>;
+		switch (cmd) {
+			case 'app_info':
+				return {
+					version: '0.1.0',
+					data_dir: 'C:\\Users\\you\\AppData\\Local\\io.github.fmadore.scriptorium',
+					logs_dir: '',
+					interrupted: []
+				};
+			case 'get_settings':
+				return settings;
+			case 'get_catalog':
+				return catalog;
+			case 'key_status':
+				return catalog.providers.map((p) => ({ provider: p.id, saved: p.id !== 'openai' }));
+			case 'list_presets':
+				return a.task ? presets.filter((p) => p.task === a.task) : presets;
+			case 'list_jobs':
+				return summaries;
+			case 'get_job':
+				return job;
+			case 'job_pieces':
+				return pieces.map((p) => ({
+					...p,
+					job_id: job.id,
+					cache_key: 'k',
+					attempts: 1,
+					updated_at: 0
+				}));
+			case 'source_pieces':
+				return pieces;
+			case 'piece_preview':
+				return { mime: 'application/pdf', data: PAGE_PDF };
+			case 'compare_source':
+				return {
+					scores: [
+						{
+							setup_id: setupA.id,
+							label: setupA.label,
+							cer: 0.012,
+							wer: 0.04,
+							scored_pages: 1,
+							cost_usd: 0.0036
+						},
+						{
+							setup_id: setupB.id,
+							label: setupB.label,
+							cer: 0.031,
+							wer: 0.09,
+							scored_pages: 1,
+							cost_usd: 0.012
+						}
+					],
+					pages: []
+				};
+			case 'diff_texts': {
+				const left = String(a.left ?? '');
+				const right = String(a.right ?? '');
+				if (left === right) return [{ kind: 'same', text: right }];
+				return [
+					{ kind: 'same', text: right.slice(0, 40) },
+					{ kind: 'removed', text: '3 mai' },
+					{ kind: 'added', text: '5 mai' },
+					{ kind: 'same', text: right.slice(46) }
+				];
+			}
+			case 'estimate_cost':
+				return (a.request as { setups: { provider: string; model: string }[] }).setups.map((s) => ({
+					provider: s.provider,
+					model: s.model,
+					pages: 120,
+					estimate: { usd: s.provider === 'mistral' ? null : 0.42, note: null }
+				}));
+			case 'expand_paths':
+				return a.paths;
+			case 'inspect_files':
+				return (a.paths as string[]).map((path, i) => ({
+					path,
+					source: {
+						...source,
+						id: `00000000-0000-0000-0000-0000000001${i}0`,
+						path,
+						file_name: path.split('\\').pop()
+					},
+					warnings:
+						i === 0
+							? [
+									{ source_id: source.id, kind: 'double_page_spread', pages: [2, 3] },
+									{ source_id: source.id, kind: 'low_resolution', pages: [1], dpi: 150 }
+								]
+							: [],
+					error: null
+				}));
+			case 'plugin:dialog|open':
+				return [
+					'C:\\Archives\\Bulletin\\bulletin-1957-06.pdf',
+					'C:\\Archives\\Letters\\lettre-gouverneur.jpg'
+				];
+			default:
+				return null;
+		}
+	});
+}
