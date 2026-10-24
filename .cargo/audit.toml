@@ -1,0 +1,9 @@
+# cargo-audit settings, read by the RustSec step in CI.
+
+[advisories]
+# zip 8 (through docx-rs 0.4.22, the latest, which requires zip ^8.6): the three advisories
+# concern ZipArchive::extract and ZipStreamReader::extract writing an archive's entries to
+# disk (symlink targets, Unix permissions, SUID bits). Scriptorium never extracts archives: it
+# writes Word files with ZipWriter and reads .docx entries into memory. Fixed in zip 9; remove
+# these lines when docx-rs moves to it. Recorded in docs/decisions/2026-10-24-offline-and-audio.md.
+ignore = ["RUSTSEC-2026-0367", "RUSTSEC-2026-0368", "RUSTSEC-2026-0369"]
