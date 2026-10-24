@@ -1,0 +1,10 @@
+{
+  "task": "transcribe",
+  "duration": 9.1,
+  "text": "Bonjour. Je vous en prie.",
+  "segments": [
+    { "type": "transcript.text.segment", "id": "seg_0", "start": 0.4, "end": 3.9, "speaker": "A", "text": " Bonjour." },
+    { "type": "transcript.text.segment", "id": "seg_1", "start": 4.2, "end": 9.1, "speaker": "B", "text": " Je vous en prie." }
+  ],
+  "usage": { "type": "tokens", "input_tokens": 150, "output_tokens": 12, "total_tokens": 162 }
+}

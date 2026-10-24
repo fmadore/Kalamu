@@ -1,0 +1,12 @@
+{
+  "pages": [
+    {
+      "index": 0,
+      "markdown": "# L'Essor\n\n![img-0.jpeg](img-0.jpeg)\n\nBamako, 12 juin 1958.",
+      "images": [],
+      "dimensions": { "dpi": 200, "height": 2200, "width": 1700 }
+    }
+  ],
+  "model": "mistral-ocr-4-1",
+  "usage_info": { "pages_processed": 1, "doc_size_bytes": 182044 }
+}

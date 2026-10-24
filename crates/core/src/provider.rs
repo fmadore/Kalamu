@@ -57,6 +57,9 @@ pub struct ProcessRequest<'a> {
 pub enum ProviderError {
     #[error("The API key was rejected: {0}")]
     Auth(String),
+    /// Out of credit or over a daily quota: retrying the next piece will fail too.
+    #[error("The provider account has no credit or quota left: {0}")]
+    QuotaExhausted(String),
     #[error("The provider's rate limit was reached: {message}")]
     RateLimited {
         retry_after: Option<Duration>,
@@ -75,6 +78,20 @@ pub enum ProviderError {
 }
 
 impl ProviderError {
+    /// A stable id the interface translates (`provider.rate_limited`…).
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Auth(_) => "provider.auth",
+            Self::QuotaExhausted(_) => "provider.quota",
+            Self::RateLimited { .. } => "provider.rate_limited",
+            Self::Transient(_) => "provider.transient",
+            Self::Blocked(_) => "provider.blocked",
+            Self::InvalidRequest(_) => "provider.invalid_request",
+            Self::Unsupported(_) => "provider.unsupported",
+            Self::Other(_) => "provider.other",
+        }
+    }
+
     /// Worth trying again after a delay.
     pub fn is_retryable(&self) -> bool {
         matches!(self, Self::RateLimited { .. } | Self::Transient(_))
@@ -82,7 +99,7 @@ impl ProviderError {
 
     /// The failure will not change on retry and affects every piece (stop the job).
     pub fn is_fatal_for_job(&self) -> bool {
-        matches!(self, Self::Auth(_))
+        matches!(self, Self::Auth(_) | Self::QuotaExhausted(_))
     }
 }
 

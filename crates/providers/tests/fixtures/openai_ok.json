@@ -1,0 +1,18 @@
+{
+  "id": "resp_fixture",
+  "object": "response",
+  "status": "completed",
+  "model": "gpt-6-sol",
+  "output": [
+    { "type": "reasoning", "id": "rs_fixture", "summary": [] },
+    {
+      "type": "message",
+      "id": "msg_fixture",
+      "role": "assistant",
+      "content": [
+        { "type": "output_text", "text": "RÉPUBLIQUE DU NIGER\nFraternité – Travail – Progrès", "annotations": [] }
+      ]
+    }
+  ],
+  "usage": { "input_tokens": 1500, "output_tokens": 22, "total_tokens": 1522 }
+}

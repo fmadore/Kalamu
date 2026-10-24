@@ -69,20 +69,6 @@
       "limits": { "max_request_mb": 18 }
     },
     {
-      "provider": "gemini",
-      "id": "gemini-3.5-transcribe",
-      "name": "Gemini 3.5 Transcribe",
-      "description": "Dedicated speech-to-text with word timestamps and speaker labels. Takes no prompt.",
-      "tasks": ["audio_transcription"],
-      "inputs": ["audio/mpeg", "audio/wav", "audio/mp4", "audio/flac", "audio/ogg"],
-      "languages": "any",
-      "status": "preview",
-      "recommended_for": [],
-      "accepts_prompt": false,
-      "pricing": { "per_minute": 0.005, "note": "About $0.003 a minute in and $0.002 out." },
-      "limits": { "max_audio_minutes": 30 }
-    },
-    {
       "provider": "openai",
       "id": "gpt-6-sol",
       "name": "GPT-6 Sol",
