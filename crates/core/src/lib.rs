@@ -14,6 +14,7 @@ pub mod provider;
 pub mod result;
 pub mod setup;
 pub mod source;
+pub mod speakers;
 pub mod store;
 pub mod task;
 pub mod warning;
@@ -36,6 +37,7 @@ pub use result::{
 };
 pub use setup::{PromptSnapshot, Setup, SetupOptions};
 pub use source::{InputKind, SourceFile};
+pub use speakers::SpeakerNames;
 pub use store::{Correction, JobStore, StoreError};
 pub use task::Task;
 pub use warning::{InputWarning, WarningKind};

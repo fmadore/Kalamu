@@ -152,6 +152,30 @@ fn corrections_are_kept_per_piece() -> Result<(), StoreError> {
 }
 
 #[test]
+fn speaker_names_replace_each_other() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    let mut names = SpeakerNames {
+        setup_id: job.setups[0].id,
+        source_id: job.sources[0].id,
+        names: [
+            ("Speaker 1".to_string(), "Imam Traoré".to_string()),
+            ("Speaker 2".to_string(), "Interviewer".to_string()),
+        ]
+        .into_iter()
+        .collect(),
+    };
+    store.put_speaker_names(job.id, &names)?;
+    names.names.remove("Speaker 2");
+    names.names.insert("Speaker 3".into(), "  ".into());
+    store.put_speaker_names(job.id, &names)?;
+    names.names.remove("Speaker 3");
+    assert_eq!(store.speaker_names(job.id)?, vec![names]);
+    Ok(())
+}
+
+#[test]
 fn a_database_file_survives_reopening() -> Result<(), StoreError> {
     let dir = tempfile::tempdir().map_err(corrupt)?;
     let path = dir.path().join("jobs.sqlite");

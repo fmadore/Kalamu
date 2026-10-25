@@ -164,7 +164,9 @@ const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 		model_version: `${setup.model}-001`,
 		cost_usd: 0.0012,
 		segments: [],
-		keywords: []
+		keywords: [],
+		speakers: [],
+		speaker_names: {}
 	}))
 );
 
@@ -204,31 +206,38 @@ const lines = [
 	['Speaker 2', 'Beaucoup de jeunes sont venus de Bobo-Dioulasso et de Koudougou.'],
 	['Speaker 2', "Nous avons ouvert une médersa en 2004, avec l'aide des familles."]
 ];
-const audioPieces: PieceView[] = [0, 1].map((index) => ({
-	setup_id: audioSetup.id,
-	source_id: recording.id,
-	index,
-	piece: {
-		kind: 'segment' as const,
+/** The names given in the preview's review, applied as the engine applies them. */
+let speakerNames: Record<string, string> = {};
+const named = (label: string) => speakerNames[label]?.trim() || label;
+
+const audioPieces = (): PieceView[] =>
+	[0, 1].map((index) => ({
+		setup_id: audioSetup.id,
+		source_id: recording.id,
 		index,
-		start_ms: index * 1_260_000,
-		end_ms: (index + 1) * 1_260_000
-	},
-	status: 'done' as const,
-	error: null,
-	ai_text: lines.map(([who, text]) => `${who}: ${text}`).join('\n'),
-	corrected_text: null,
-	reviewed: false,
-	model_version: 'voxtral-small-transcribe-3-0',
-	cost_usd: 0.084,
-	keywords: [],
-	segments: lines.map(([speaker, text], k) => ({
-		start_ms: k * 1_800,
-		end_ms: (k + 1) * 1_800,
-		speaker,
-		text
-	}))
-}));
+		piece: {
+			kind: 'segment' as const,
+			index,
+			start_ms: index * 1_260_000,
+			end_ms: (index + 1) * 1_260_000
+		},
+		status: 'done' as const,
+		error: null,
+		ai_text: lines.map(([who, text]) => `${named(who)}: ${text}`).join('\n'),
+		corrected_text: null,
+		reviewed: false,
+		model_version: 'voxtral-small-transcribe-3-0',
+		cost_usd: 0.084,
+		keywords: [],
+		segments: lines.map(([speaker, text], k) => ({
+			start_ms: k * 1_800,
+			end_ms: (k + 1) * 1_800,
+			speaker: named(speaker),
+			text
+		})),
+		speakers: ['Speaker 1', 'Speaker 2'],
+		speaker_names: { ...speakerNames }
+	}));
 
 /** Nine seconds of a quiet tone as a WAV file, standing in for a recording. */
 function toneWav(): ArrayBuffer {
@@ -360,7 +369,10 @@ export function installMock(): void {
 					updated_at: 0
 				}));
 			case 'source_pieces':
-				return a.jobId === audioJob.id ? audioPieces : pieces;
+				return a.jobId === audioJob.id ? audioPieces() : pieces;
+			case 'save_speaker_names':
+				speakerNames = { ...(a.names as { names: Record<string, string> }).names };
+				return [];
 			case 'piece_audio':
 				return toneWav();
 			case 'piece_preview':

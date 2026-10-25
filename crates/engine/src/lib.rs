@@ -20,7 +20,7 @@ use scriptorium_catalog::Catalog;
 use scriptorium_core::{
     ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStatus, JobStore, JobSummary,
     PieceStatus, ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceFile, SourceId,
-    StopSignal, StoreError, Timestamp,
+    SpeakerNames, StopSignal, StoreError, Timestamp,
 };
 use scriptorium_media::{Ffmpeg, MediaError, OpenSource};
 use scriptorium_prompts::{PromptError, PromptLibrary};
@@ -355,6 +355,18 @@ impl Engine {
         self.store.put_correction(&correction)?;
         let job = self.store.job(correction.job_id)?;
         self.write_outputs(&job, correction.setup_id, correction.source_id)
+    }
+
+    /// Saves the names given to one set-up's speakers in one recording and rewrites its outputs
+    /// with them.
+    pub fn save_speaker_names(
+        &self,
+        job_id: JobId,
+        names: SpeakerNames,
+    ) -> Result<Vec<String>, EngineError> {
+        self.store.put_speaker_names(job_id, &names)?;
+        let job = self.store.job(job_id)?;
+        self.write_outputs(&job, names.setup_id, names.source_id)
     }
 
     /// The outputs for one source and set-up, written again from stored results.

@@ -10,11 +10,11 @@ import type { SourceId } from "./SourceId";
  */
 export type PieceView = { setup_id: SetupId, source_id: SourceId, index: number, piece: PieceRef, status: PieceStatus, error: string | null, 
 /**
- * What the model returned, never edited.
+ * What the model returned, never edited, with the researcher's speaker names applied.
  */
 ai_text: string | null, 
 /**
- * The user's corrected text, if any.
+ * The user's corrected text, if any, with speaker names applied.
  */
 corrected_text: string | null, reviewed: boolean, model_version: string | null, cost_usd: number | null, 
 /**
@@ -24,4 +24,12 @@ segments: Array<Segment>,
 /**
  * Keywords of a summary.
  */
-keywords: Array<string>, };
+keywords: Array<string>, 
+/**
+ * The model's speaker labels in this piece, when the set-up asked for them.
+ */
+speakers: Array<string>, 
+/**
+ * The names the researcher gave this set-up's speakers in this recording.
+ */
+speaker_names: { [key in string]: string }, };

@@ -52,6 +52,7 @@
     "allow-piece-preview",
     "allow-piece-audio",
     "allow-save-correction",
+    "allow-save-speaker-names",
     "allow-export-source",
     "allow-compare-source",
     "allow-diff-texts",

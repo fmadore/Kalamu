@@ -7,6 +7,7 @@ import type { AppInfo } from './bindings/AppInfo.js';
 import type { Catalog } from './bindings/Catalog.js';
 import type { ComparisonReport } from './bindings/ComparisonReport.js';
 import type { Correction } from './bindings/Correction.js';
+import type { SpeakerNames } from './bindings/SpeakerNames.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { EstimateRow } from './bindings/EstimateRow.js';
@@ -84,6 +85,8 @@ export const api = {
 	pieceAudio: (jobId: string, sourceId: string, index: number) =>
 		invoke<ArrayBuffer>('piece_audio', { jobId, sourceId, index }),
 	saveCorrection: (correction: Correction) => invoke<string[]>('save_correction', { correction }),
+	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
+		invoke<string[]>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>
 		invoke<string[]>('export_source', { jobId, setupId, sourceId }),
 	compareSource: (jobId: string, sourceId: string) =>

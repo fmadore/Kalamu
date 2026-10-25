@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use base64::Engine as _;
-use scriptorium_core::{Correction, JobId, SetupId, SourceId};
+use scriptorium_core::{Correction, JobId, SetupId, SourceId, SpeakerNames};
 use scriptorium_engine::{ComparisonReport, DiffSpan, PieceView};
 use scriptorium_media::OpenSource;
 use tauri::State;
@@ -102,6 +102,16 @@ pub fn save_correction(
     correction: Correction,
 ) -> CmdResult<Vec<String>> {
     Ok(state.engine.save_correction(correction)?)
+}
+
+/// Names the speakers of one set-up's transcription; returns the files written again.
+#[tauri::command]
+pub fn save_speaker_names(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    names: SpeakerNames,
+) -> CmdResult<Vec<String>> {
+    Ok(state.engine.save_speaker_names(job_id, names)?)
 }
 
 #[tauri::command]

@@ -208,6 +208,15 @@ export const en = {
 		corrSiglum: 'corr.',
 		added: 'add.',
 		omitted: 'om.',
+		speakers: 'Speakers',
+		speakersHint:
+			"Give the model's labels real names. They replace the labels here and in every file; the model's own output is kept.",
+		speakerPlaceholder: 'Name',
+		speakerName: (label: string) => `Name for ${label}`,
+		saveNames: 'Save names',
+		namesSaved: 'Names saved; the result files were updated.',
+		speakersPieces:
+			'This recording was sent in several pieces: the same label may be a different person in each piece. Names apply to the whole recording.',
 		yourCorrections: 'Your corrections',
 		correctionsKept: "Kept apart: the model's text is never overwritten"
 	},

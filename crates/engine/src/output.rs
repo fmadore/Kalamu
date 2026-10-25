@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 
 use scriptorium_core::fingerprint::sha256_hex;
 use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
+use scriptorium_core::speakers::{rename_segments, rename_text};
 use scriptorium_core::{
     CacheKey, ExportDocument, ExportPart, Job, JobId, OutputDestination, PieceRef, Provenance,
     Segment, SetupId, SourceFile, SourceId, Timestamp, Usage,
@@ -97,6 +98,14 @@ impl Engine {
             .cloned()
             .ok_or(EngineError::Store(scriptorium_core::StoreError::NotFound))?;
         let corrections = self.store.corrections(job.id)?;
+        // The researcher's names for this recording's speakers, applied to every part.
+        let speaker_names = self
+            .store
+            .speaker_names(job.id)?
+            .into_iter()
+            .find(|n| n.setup_id == setup_id && n.source_id == source_id)
+            .map(|n| n.names)
+            .unwrap_or_default();
         let mut states: Vec<_> = self
             .store
             .pieces(job.id)?
@@ -153,7 +162,8 @@ impl Engine {
                     PieceRef::Segment { end_ms, .. } => Some(end_ms),
                     PieceRef::Page { .. } | PieceRef::Whole => None,
                 });
-                absolute(&state.piece, &result.output.segments, previous_end)
+                let renamed = rename_segments(&result.output.segments, &speaker_names);
+                absolute(&state.piece, &renamed, previous_end)
             };
             // A corrected page keeps its text searchable, as one block over the page.
             let regions = match (&corrected_text, result.output.regions.is_empty()) {
@@ -168,7 +178,10 @@ impl Engine {
             };
             parts.push(ExportPart {
                 piece: state.piece.clone(),
-                text: corrected_text.unwrap_or_else(|| result.output.text.clone()),
+                text: rename_text(
+                    corrected_text.as_deref().unwrap_or(&result.output.text),
+                    &speaker_names,
+                ),
                 segments,
                 corrected: correction.is_some_and(|c| c.text.is_some()),
                 reviewed: is_reviewed,

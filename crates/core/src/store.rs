@@ -3,8 +3,8 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    CacheKey, Job, JobId, JobStatus, JobSummary, PieceState, SetupId, SourceId, StoredResult,
-    Timestamp,
+    CacheKey, Job, JobId, JobStatus, JobSummary, PieceState, SetupId, SourceId, SpeakerNames,
+    StoredResult, Timestamp,
 };
 
 /// A user's edit of one piece, stored on top of the AI output, which is never overwritten.
@@ -50,4 +50,8 @@ pub trait JobStore: Send + Sync {
 
     fn put_correction(&self, correction: &Correction) -> Result<(), StoreError>;
     fn corrections(&self, job: JobId) -> Result<Vec<Correction>, StoreError>;
+
+    /// Replaces the names given to one set-up's speakers in one recording.
+    fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError>;
+    fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError>;
 }

@@ -10,11 +10,12 @@ use std::sync::{Mutex, MutexGuard};
 use rusqlite::{Connection, OptionalExtension, params};
 use scriptorium_core::{
     CacheKey, Correction, Job, JobId, JobStatus, JobStore, JobSummary, PieceRef, PieceState,
-    PieceStatus, ProviderId, SetupId, SourceId, StoreError, StoredResult, Timestamp,
+    PieceStatus, ProviderId, SetupId, SourceId, SpeakerNames, StoreError, StoredResult, Timestamp,
 };
 
 /// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
-const MIGRATIONS: &[&str] = &[r#"
+const MIGRATIONS: &[&str] = &[
+    r#"
 CREATE TABLE jobs (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -56,7 +57,18 @@ CREATE TABLE corrections (
     updated_at INTEGER NOT NULL,
     PRIMARY KEY (job_id, setup_id, source_id, idx)
 );
-"#];
+"#,
+    r#"
+CREATE TABLE speaker_names (
+    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    setup_id TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    label TEXT NOT NULL,
+    name TEXT NOT NULL,
+    PRIMARY KEY (job_id, setup_id, source_id, label)
+);
+"#,
+];
 
 pub struct SqliteStore {
     conn: Mutex<Connection>,
@@ -434,6 +446,70 @@ impl JobStore for SqliteStore {
                 reviewed,
                 updated_at: Timestamp(updated),
             });
+        }
+        Ok(out)
+    }
+
+    fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError> {
+        let mut conn = self.conn();
+        let tx = conn.transaction().map_err(db)?;
+        let key = [
+            job.to_string(),
+            names.setup_id.to_string(),
+            names.source_id.to_string(),
+        ];
+        tx.execute(
+            "DELETE FROM speaker_names WHERE job_id = ?1 AND setup_id = ?2 AND source_id = ?3",
+            params![key[0], key[1], key[2]],
+        )
+        .map_err(db)?;
+        for (label, name) in &names.names {
+            if name.trim().is_empty() {
+                continue;
+            }
+            tx.execute(
+                "INSERT INTO speaker_names (job_id, setup_id, source_id, label, name)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![key[0], key[1], key[2], label, name.trim()],
+            )
+            .map_err(db)?;
+        }
+        tx.commit().map_err(db)
+    }
+
+    fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError> {
+        let conn = self.conn();
+        let mut stmt = conn
+            .prepare(
+                "SELECT setup_id, source_id, label, name FROM speaker_names
+                 WHERE job_id = ?1 ORDER BY setup_id, source_id",
+            )
+            .map_err(db)?;
+        let rows = stmt
+            .query_map([job.to_string()], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                    row.get::<_, String>(3)?,
+                ))
+            })
+            .map_err(db)?;
+        let mut out: Vec<SpeakerNames> = Vec::new();
+        for row in rows {
+            let (setup, source, label, name) = row.map_err(db)?;
+            let setup_id: SetupId = setup.parse().map_err(corrupt)?;
+            let source_id: SourceId = source.parse().map_err(corrupt)?;
+            match out.last_mut() {
+                Some(last) if last.setup_id == setup_id && last.source_id == source_id => {
+                    last.names.insert(label, name);
+                }
+                _ => out.push(SpeakerNames {
+                    setup_id,
+                    source_id,
+                    names: [(label, name)].into_iter().collect(),
+                }),
+            }
         }
         Ok(out)
     }

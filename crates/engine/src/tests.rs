@@ -6,7 +6,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use async_trait::async_trait;
 use scriptorium_core::{
-    ExportFormat, OutputSettings, PreparedInput, ProcessOutput, ProcessRequest, Task, Usage,
+    CacheKey, ExportFormat, OutputSettings, PreparedInput, ProcessOutput, ProcessRequest, Task,
+    Usage,
 };
 use scriptorium_store::SqliteStore;
 
@@ -400,4 +401,49 @@ async fn sample_runs_only_the_first_pages() {
     );
     f.run(job.id).await;
     assert_eq!(f.fake.calls(), 2);
+}
+
+#[tokio::test]
+async fn speaker_names_rename_the_review_and_the_files_but_not_the_output() {
+    let f = fixture();
+    let source = f.pdf("entretien.pdf", 1);
+    // The fake model writes "<model> page 1", so this model's text opens with a speaker label.
+    let job = f.new_job(vec![source.clone()], &["Speaker 1:"]);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    f.engine
+        .save_speaker_names(
+            job.id,
+            SpeakerNames {
+                setup_id: job.setups[0].id,
+                source_id: source.id,
+                names: [("Speaker 1".to_string(), "Imam Traoré".to_string())]
+                    .into_iter()
+                    .collect(),
+            },
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    let txt = std::fs::read_to_string(f.dir.path().join("entretien.txt")).unwrap_or_default();
+    assert!(txt.contains("Imam Traoré: page 1"), "{txt}");
+    let views = f
+        .engine
+        .source_pieces(job.id, source.id)
+        .unwrap_or_default();
+    assert_eq!(views[0].ai_text.as_deref(), Some("Imam Traoré: page 1"));
+    assert_eq!(
+        views[0].speaker_names.get("Speaker 1").map(String::as_str),
+        Some("Imam Traoré")
+    );
+    let key = f
+        .store
+        .pieces(job.id)
+        .unwrap_or_default()
+        .into_iter()
+        .find_map(|p| p.cache_key)
+        .unwrap_or_default();
+    let stored = f.store.cached_result(&CacheKey(key)).ok().flatten();
+    assert_eq!(
+        stored.map(|r| r.output.text).as_deref(),
+        Some("Speaker 1: page 1"),
+        "the model's output keeps its own labels"
+    );
 }

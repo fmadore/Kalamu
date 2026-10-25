@@ -7,6 +7,7 @@
 	import AudioPane from './AudioPane.svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
+	import SpeakerList from './SpeakerList.svelte';
 	import { apparatus, lines, numbered, siglum, type Entry } from '#lib/apparatus.js';
 	import type { ComparisonReport } from '#lib/bindings/ComparisonReport.js';
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
@@ -430,6 +431,19 @@
 							</li>
 						{/each}
 					</ol>
+				{/if}
+
+				{#if !editing && recording}
+					<SpeakerList
+						{jobId}
+						{sourceId}
+						{setups}
+						views={current}
+						manyPieces={indices.length > 1}
+						onsaved={async () => {
+							views = await api.sourcePieces(jobId, sourceId);
+						}}
+					/>
 				{/if}
 
 				{#if !editing}

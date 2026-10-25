@@ -205,6 +205,7 @@ pub fn run() {
             commands::review::piece_preview,
             commands::review::piece_audio,
             commands::review::save_correction,
+            commands::review::save_speaker_names,
             commands::review::export_source,
             commands::review::compare_source,
             commands::review::diff_texts,
