@@ -11,9 +11,12 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, languageName, messages } from '#lib/i18n/index.js';
+	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
 	import {
+		acceptsPrompt,
 		type Draft,
 		FORMATS,
+		modelInfo,
 		newDraft,
 		offeredFormats,
 		readsKind,
@@ -32,6 +35,7 @@
 	let inspecting = $state(false);
 	let languageMode = $state<'auto' | 'explicit'>('auto');
 	let languages = $state<string[]>([]);
+	let lineBreaks = $state<LineBreaks>('running_text');
 	let drafts = $state<Draft[]>([]);
 	let presets = $state<Preset[]>([]);
 	let sample = $state(false);
@@ -128,7 +132,8 @@
 						languageMode === 'explicit' && languages.length > 0
 							? { mode: 'explicit', languages: [...languages] }
 							: { mode: 'auto' },
-					sample_pages: sample ? samplePages : null
+					sample_pages: sample ? samplePages : null,
+					line_breaks: task === 'text_extraction' ? lineBreaks : null
 				},
 				output: {
 					formats: formats.filter((f) => offeredFormats(catalog, task, drafts).includes(f)),
@@ -236,6 +241,26 @@
 	</section>
 
 	<SetupList bind:drafts {task} {presets} />
+
+	{#if task === 'text_extraction'}
+		<section class="card block" aria-labelledby="lines-title">
+			<h2 id="lines-title">{m.newJob.linesTitle}</h2>
+			<div class="choices">
+				{#each ['running_text', 'as_on_page'] as const as mode (mode)}
+					<label class="choice" class:selected={lineBreaks === mode}>
+						<input type="radio" bind:group={lineBreaks} value={mode} />
+						<span>
+							<strong>{m.newJob.lines[mode]}</strong>
+							<span class="muted small">{m.newJob.lines[`${mode}_hint`]}</span>
+						</span>
+					</label>
+				{/each}
+			</div>
+			{#if drafts.some((d) => !acceptsPrompt(modelInfo(catalog, d)))}
+				<p class="muted small">{m.newJob.linesNoPrompt}</p>
+			{/if}
+		</section>
+	{/if}
 
 	<section class="card block" aria-labelledby="out-title">
 		<h2 id="out-title">{m.newJob.outputTitle}</h2>
@@ -401,6 +426,38 @@
 	.path {
 		overflow-wrap: anywhere;
 	}
+	.choices {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-3);
+	}
+	.choice {
+		display: flex;
+		gap: var(--space-3);
+		align-items: start;
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-card);
+		cursor: pointer;
+		transition: border-color 120ms ease-out;
+	}
+	.choice:hover {
+		border-color: var(--line-hover);
+	}
+	.choice.selected {
+		border-color: var(--accent);
+		background: var(--accent-wash);
+	}
+	.choice input {
+		margin-top: 0.3em;
+	}
+	.choice > span {
+		display: grid;
+		gap: var(--space-1);
+	}
+	.choice strong {
+		color: var(--text-bright);
+	}
 	fieldset {
 		border: 0;
 		padding: 0;
@@ -448,7 +505,8 @@
 		padding: 0 var(--space-6);
 	}
 	@media (max-width: 760px) {
-		.tasks {
+		.tasks,
+		.choices {
 			grid-template-columns: 1fr;
 		}
 		.start-inner {

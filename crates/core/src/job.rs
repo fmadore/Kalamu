@@ -13,6 +13,21 @@ pub struct JobSettings {
     pub languages: LanguageChoice,
     /// Process only the first pages of each document, for trying a sample.
     pub sample_pages: Option<u32>,
+    /// How a text extraction lays out lines; `None` leaves it to the prompt.
+    #[serde(default)]
+    pub line_breaks: Option<LineBreaks>,
+}
+
+/// How extracted text keeps the source's lines. The two serve different work: checking against
+/// the scan, or reading and searching.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum LineBreaks {
+    /// One line of text per line in the source, end-of-line hyphens kept.
+    AsOnPage,
+    /// Lines joined into paragraphs and words split across lines rejoined.
+    RunningText,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]

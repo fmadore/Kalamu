@@ -73,6 +73,10 @@ impl Engine {
                     language_names.clone()
                 },
                 speakers: request.options.speakers,
+                line_breaks: new
+                    .settings
+                    .line_breaks
+                    .filter(|_| new.task == Task::TextExtraction),
             };
             let mut prompt = preset.snapshot(&ctx);
             if !accepts_prompt {

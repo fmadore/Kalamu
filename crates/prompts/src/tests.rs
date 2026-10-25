@@ -82,6 +82,7 @@ fn chosen_languages_reach_the_prompt() {
         ]),
         language_names: vec!["French".into(), "Mooré".into()],
         speakers: Some(2),
+        line_breaks: None,
     };
     assert_eq!(
         render("Speakers: {speakers}. Languages: {languages}.", &ctx),
@@ -92,4 +93,21 @@ fn chosen_languages_reach_the_prompt() {
         render("Transcribe.", &RenderContext::default()),
         "Transcribe."
     );
+}
+
+#[test]
+fn the_line_choice_overrides_the_preset() {
+    let kept = RenderContext {
+        line_breaks: Some(LineBreaks::AsOnPage),
+        ..RenderContext::default()
+    };
+    let joined = RenderContext {
+        line_breaks: Some(LineBreaks::RunningText),
+        ..RenderContext::default()
+    };
+    let text = render("Join lines into paragraphs.", &kept);
+    assert!(text.starts_with("Join lines into paragraphs.\n\n## Line breaks"));
+    assert!(text.contains("keep end-of-line hyphens exactly"));
+    assert!(text.ends_with("joining lines or removing hyphens."));
+    assert!(render("Keep line breaks.", &joined).contains("rejoin a word split across two lines"));
 }

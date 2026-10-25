@@ -22,7 +22,9 @@ pub use event::ProgressEvent;
 pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter};
 pub use fingerprint::CacheKey;
 pub use ids::{JobId, ProviderId, SetupId, SourceId, Timestamp};
-pub use job::{Job, JobSettings, JobStatus, JobSummary, OutputDestination, OutputSettings};
+pub use job::{
+    Job, JobSettings, JobStatus, JobSummary, LineBreaks, OutputDestination, OutputSettings,
+};
 pub use language::{LanguageChoice, LanguageCode};
 pub use provenance::Provenance;
 pub use provider::{

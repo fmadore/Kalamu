@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use scriptorium_core::{LanguageChoice, PromptSnapshot, Task};
+use scriptorium_core::{LanguageChoice, LineBreaks, PromptSnapshot, Task};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -42,6 +42,8 @@ pub struct RenderContext {
     /// English names for the chosen languages, in order (`French`, `Mooré`).
     pub language_names: Vec<String>,
     pub speakers: Option<u32>,
+    /// The researcher's choice for a text extraction's lines; it overrides the preset's own.
+    pub line_breaks: Option<LineBreaks>,
 }
 
 #[derive(Debug, Error)]
@@ -230,8 +232,22 @@ impl Preset {
     }
 }
 
+/// Appended when the researcher chose how lines are kept. Stated as overriding the preset, whose
+/// own instructions may say the opposite (the HTR presets join lines; the diplomatic one keeps
+/// them), so one choice works with every preset, the user's own included.
+const AS_ON_PAGE: &str = "\n\n## Line breaks\n\nKeep the lines of the source: start a new line \
+wherever a line ends on the page, keep end-of-line hyphens exactly as they are, and do not join \
+lines or rejoin words split across lines. Separate paragraphs with a blank line. This overrides \
+any instruction above about joining lines or removing hyphens.";
+
+const RUNNING_TEXT: &str = "\n\n## Line breaks\n\nWrite running text: join the lines of each \
+paragraph, rejoin a word split across two lines and drop its line-break hyphen, but keep real \
+compound hyphens (as in arc-en-ciel or peut-être). Separate paragraphs with a blank line. This \
+overrides any instruction above about keeping line breaks or end-of-line hyphens.";
+
 /// Replaces `{languages}` and `{speakers}`. When the user chose languages but the template does
-/// not mention them, a short note is appended so the choice still reaches the model.
+/// not mention them, a short note is appended so the choice still reaches the model; so is the
+/// choice of line breaks.
 pub fn render(template: &str, ctx: &RenderContext) -> String {
     let languages = if ctx.language_names.is_empty() {
         "the language(s) of the source, detected automatically".to_string()
@@ -248,6 +264,11 @@ pub fn render(template: &str, ctx: &RenderContext) -> String {
     let explicit = matches!(ctx.languages, LanguageChoice::Explicit(_));
     if explicit && !ctx.language_names.is_empty() && !template.contains("{languages}") {
         out.push_str(&format!("\n\n## Language\n\nThe source is in {languages}."));
+    }
+    match ctx.line_breaks {
+        Some(LineBreaks::AsOnPage) => out.push_str(AS_ON_PAGE),
+        Some(LineBreaks::RunningText) => out.push_str(RUNNING_TEXT),
+        None => {}
     }
     out
 }

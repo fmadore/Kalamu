@@ -100,7 +100,11 @@ const job: Job = {
 	created_at: Date.now() - 3_600_000,
 	sources: [source],
 	setups: [setupA, setupB],
-	settings: { languages: { mode: 'explicit', languages: ['fr'] }, sample_pages: null },
+	settings: {
+		languages: { mode: 'explicit', languages: ['fr'] },
+		sample_pages: null,
+		line_breaks: 'running_text'
+	},
 	output: {
 		formats: ['txt', 'docx'],
 		destination: { kind: 'beside_sources' },

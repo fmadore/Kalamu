@@ -59,6 +59,16 @@ export const en = {
 		noPrompt: 'This model takes no prompt',
 		label: 'Label',
 		compareAdd: 'Compare with another model',
+		linesTitle: 'Line breaks',
+		lines: {
+			running_text: 'Running text',
+			running_text_hint:
+				'Lines joined into paragraphs and words split across lines rejoined. Best for reading and for searching the text.',
+			as_on_page: 'As on the page',
+			as_on_page_hint:
+				'Every line kept where it ends on the page, end-of-line hyphens included. Easiest to check against the scan, but a word split across two lines is harder to find by search.'
+		},
+		linesNoPrompt: 'Models that take no prompt, such as Mistral OCR, lay out lines their own way.',
 		removeSetup: 'Remove',
 		noKey: (provider: string) => `Add a ${provider} key in Settings to use it.`,
 		noProvider: 'Add an API key in Settings to choose a model.',
