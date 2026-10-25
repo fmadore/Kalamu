@@ -39,7 +39,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Comparison mode** with character error rates against corrected pages.
 - **Pipelines**: a job's settings saved under a name and applied in one click.
 - **Design**: the Graphite and highlighter interface ([DESIGN.md](../DESIGN.md)), responsive
-  from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs.
+  from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs, and an app icon
+  drawn from the same mark.
 
 ## Next
 
@@ -54,7 +55,7 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa
   for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`; grouping
   variant spellings of the same name across a job, confirmed by the researcher.
-- **Design decisions still open**: app icon, name, a collation table in Jobs, the interrupted
+- **Design decisions still open**: name, a collation table in Jobs, the interrupted
   job with Resume in the side menu: [issue #1](https://github.com/fmadore/Scriptorium/issues/1).
 
 ## Later

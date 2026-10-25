@@ -124,9 +124,9 @@
 		<div class="brand">
 			<svg class="mark" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
 				<rect width="22" height="22" rx="5" class="mark-ground" />
-				<rect x="5" y="5.5" width="12" height="1.6" rx="0.8" class="mark-line" />
-				<rect x="4" y="9.2" width="11" height="3.6" rx="1" class="mark-marker" />
-				<rect x="5" y="14.9" width="9" height="1.6" rx="0.8" class="mark-line" />
+				<rect x="5" y="5.2" width="12" height="2" rx="1" class="mark-line" />
+				<rect x="4" y="9" width="11" height="4" rx="1" class="mark-marker" />
+				<rect x="5" y="14.8" width="9" height="2" rx="1" class="mark-line" />
 			</svg>
 			<span class="name">{m.app.name}</span>
 		</div>

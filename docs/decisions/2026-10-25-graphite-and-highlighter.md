@@ -37,5 +37,8 @@ interrupted job, the system sheet) was agreed before any code changed.
 - Every visible string still goes through `en.ts`; strings for the apparatus and the old jobs
   list were removed, new ones added for the shell, the readings and the job page.
 - DESIGN.md and the `.impeccable` sidecar were regenerated from the shipped code.
+- The app icon, still the navy page and quill, is replaced by the sidebar's mark (graphite tile,
+  two lines, a highlighter bar), drawn in `src-tauri/icons/source.svg` and generated at every
+  size with `npx tauri icon`. It closes the icon question left open in the roadmap.
 - The review and analysis review now share more markup (header, lightbox, models list); the
   roadmap's planned extraction of their common frame is easier and still to do.
