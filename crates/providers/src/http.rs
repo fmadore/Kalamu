@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use base64::Engine as _;
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
-use scriptorium_core::ProviderError;
+use scriptorium_core::{ProviderError, Segment};
 use serde_json::Value;
 
 /// One client for all providers: it keeps connections alive and follows the system proxy, which
@@ -147,9 +147,88 @@ pub(crate) fn secs_to_ms(value: Option<&Value>) -> u64 {
         .unwrap_or(0)
 }
 
+/// `Speaker 1` from what a diarizing model calls a speaker: `A` (OpenAI), `speaker_1` (Voxtral)
+/// or a number.
+pub(crate) fn speaker_label(id: &str) -> String {
+    let id = id.trim();
+    let bare = id
+        .get(..8)
+        .filter(|p| p.eq_ignore_ascii_case("speaker_") || p.eq_ignore_ascii_case("speaker "))
+        .map_or(id, |_| id[8..].trim());
+    format!("Speaker {bare}")
+}
+
+/// Longest turn made by [`join_turns`], so subtitle cues cut from it keep close timings.
+const MAX_TURN_MS: u64 = 30_000;
+/// Longest pause inside one turn.
+const MAX_PAUSE_MS: u64 = 2_000;
+
+/// Consecutive segments from the same speaker joined into one turn. Diarizing models return a
+/// segment per clause, which reads as a new line at every comma.
+pub(crate) fn join_turns(segments: Vec<Segment>) -> Vec<Segment> {
+    let mut out: Vec<Segment> = Vec::with_capacity(segments.len());
+    for seg in segments {
+        if let Some(last) = out.last_mut()
+            && seg.speaker.is_some()
+            && last.speaker == seg.speaker
+            && seg.start_ms.saturating_sub(last.end_ms) <= MAX_PAUSE_MS
+            && seg.end_ms.saturating_sub(last.start_ms) <= MAX_TURN_MS
+        {
+            last.text = format!("{} {}", last.text, seg.text).trim().to_string();
+            last.end_ms = last.end_ms.max(seg.end_ms);
+            continue;
+        }
+        out.push(seg);
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn seg(start: u64, end: u64, speaker: &str, text: &str) -> Segment {
+        Segment {
+            start_ms: start,
+            end_ms: end,
+            speaker: Some(speaker.into()),
+            text: text.into(),
+        }
+    }
+
+    #[test]
+    fn speakers_are_named_alike_whatever_the_model_calls_them() {
+        assert_eq!(speaker_label("A"), "Speaker A");
+        assert_eq!(speaker_label("speaker_1"), "Speaker 1");
+        assert_eq!(speaker_label("0"), "Speaker 0");
+        assert_eq!(speaker_label("Speakerine"), "Speaker Speakerine");
+    }
+
+    #[test]
+    fn clauses_from_one_speaker_become_one_turn() {
+        let turns = join_turns(vec![
+            seg(0, 900, "Speaker A", "Bonjour,"),
+            seg(1_000, 2_000, "Speaker A", "merci de me recevoir."),
+            seg(2_200, 4_000, "Speaker B", "Je vous en prie."),
+            // A long pause starts a new turn.
+            seg(7_000, 8_000, "Speaker B", "Alors,"),
+        ]);
+        let texts: Vec<&str> = turns.iter().map(|t| t.text.as_str()).collect();
+        assert_eq!(
+            texts,
+            [
+                "Bonjour, merci de me recevoir.",
+                "Je vous en prie.",
+                "Alors,"
+            ]
+        );
+        assert_eq!((turns[0].start_ms, turns[0].end_ms), (0, 2_000));
+        // Turns stay short enough for subtitles.
+        let long: Vec<Segment> = (0..40)
+            .map(|i| seg(i * 1_000, i * 1_000 + 900, "Speaker A", "mot"))
+            .collect();
+        assert_eq!(join_turns(long).len(), 2);
+    }
 
     #[test]
     fn errors_are_sorted_by_what_to_do_next() {

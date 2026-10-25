@@ -16,7 +16,7 @@ use scriptorium_core::{
 use serde_json::{Value, json};
 
 use crate::analysis;
-use crate::http::{data_url, ids, secs_to_ms, send_json};
+use crate::http::{data_url, ids, join_turns, secs_to_ms, send_json, speaker_label};
 
 const BASE_URL: &str = "https://api.openai.com/v1";
 
@@ -198,26 +198,25 @@ impl OpenAi {
                 .multipart(form),
         )
         .await?;
-        let segments: Vec<Segment> = response
-            .get("segments")
-            .and_then(Value::as_array)
-            .into_iter()
-            .flatten()
-            .map(|s| Segment {
-                start_ms: secs_to_ms(s.get("start")),
-                end_ms: secs_to_ms(s.get("end")),
-                speaker: s
-                    .get("speaker")
-                    .and_then(Value::as_str)
-                    .map(|sp| format!("Speaker {sp}")),
-                text: s
-                    .get("text")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .trim()
-                    .to_string(),
-            })
-            .collect();
+        let segments: Vec<Segment> = join_turns(
+            response
+                .get("segments")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .map(|s| Segment {
+                    start_ms: secs_to_ms(s.get("start")),
+                    end_ms: secs_to_ms(s.get("end")),
+                    speaker: s.get("speaker").and_then(Value::as_str).map(speaker_label),
+                    text: s
+                        .get("text")
+                        .and_then(Value::as_str)
+                        .unwrap_or("")
+                        .trim()
+                        .to_string(),
+                })
+                .collect(),
+        );
         let usage = response.get("usage");
         Ok(ProcessOutput {
             text: response

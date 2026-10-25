@@ -3,8 +3,8 @@
   "text": "Bonjour. Merci.",
   "language": "fr",
   "segments": [
-    { "start": 0.0, "end": 2.1, "text": " Bonjour.", "speaker_id": 0 },
-    { "start": 2.4, "end": 4.0, "text": " Merci.", "speaker_id": 1 }
+    { "start": 0.0, "end": 2.1, "text": " Bonjour.", "speaker_id": "speaker_1" },
+    { "start": 2.4, "end": 4.0, "text": " Merci.", "speaker_id": "speaker_2" }
   ],
   "usage": { "prompt_audio_seconds": 61.5, "prompt_tokens": 4, "total_tokens": 900, "completion_tokens": 10 }
 }

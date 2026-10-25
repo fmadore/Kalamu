@@ -322,6 +322,9 @@ async fn openai_diarized_transcripts_become_segments() {
     assert_eq!(out.segments.len(), 2);
     assert_eq!(out.segments[1].speaker.as_deref(), Some("Speaker B"));
     assert_eq!(out.segments[1].start_ms, 4_200);
+    // The model's clauses are joined into one turn per speaker.
+    assert_eq!(out.segments[1].text, "Je vous en prie, asseyez-vous.");
+    assert_eq!(out.segments[1].end_ms, 11_000);
 }
 
 #[tokio::test]
@@ -385,7 +388,7 @@ async fn voxtral_returns_segments_with_speakers_and_language() {
         .await
         .unwrap_or_default();
     assert_eq!(out.segments.len(), 2);
-    assert_eq!(out.segments[0].speaker.as_deref(), Some("Speaker 0"));
+    assert_eq!(out.segments[0].speaker.as_deref(), Some("Speaker 1"));
     assert_eq!(
         out.detected_language.as_ref().map(LanguageCode::as_str),
         Some("fr")

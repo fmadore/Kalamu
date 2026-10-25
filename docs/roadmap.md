@@ -6,9 +6,11 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (25 October 2026)
 
-Early development. Everything below is implemented and tested against recorded or documented
-provider responses, but **nothing has yet been run against the live APIs with real keys**, and
-there is no release yet.
+Early development; [v0.1.0](https://github.com/fmadore/Scriptorium/releases/tag/v0.1.0) is
+the first test build, for Windows on ARM64, with FFmpeg bundled. Everything below is tested
+against recorded provider responses. Text extraction, transcription and analyses have also run
+against the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`,
+see [development.md](development.md)); Gemini has not yet, for want of credit on the account.
 
 ## Done
 
@@ -43,10 +45,8 @@ there is no release yet.
 - **Refactor the review**: extract the frame shared by the transcription and analysis reviews,
   and split New job into smaller components (see the
   [25 October checkpoint](decisions/2026-10-25-analyses-review-and-pipelines.md)).
-- **Run every provider against the live APIs** with real keys, and fix what the documented
-  response shapes got wrong. Measure costs against the estimates.
-- **Build the bundled LGPL FFmpeg** with its workflow (not run yet; development uses an FFmpeg
-  found on `PATH`).
+- **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
+  against the estimates. Offline Whisper still needs a live run too.
 - **Gemini 3.5 Transcribe** in the catalogue.
 - **Text extraction**: ALTO and PAGE XML where models return coordinates; checks for skewed
   and blurry pages.

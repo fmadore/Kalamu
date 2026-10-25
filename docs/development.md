@@ -42,6 +42,20 @@ definitions; commit them with the Rust change. Exporters are checked against gol
 `crates/export/golden/`; after an intended change, rerun their tests with `UPDATE_GOLDEN=1`
 and review the diff.
 
+## Live checks
+
+Before a release, run every task against the live APIs with the keys saved in Settings. This
+spends a few cents and never runs in CI:
+
+```bash
+cargo run -p scriptorium --example live -- <samples> <out> [job name filter]
+```
+
+`<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`. The runner
+extracts text with every provider, transcribes the interview with speakers, runs three analyses,
+writes each job's outputs to its own folder in `<out>` and prints a line per piece with its
+status and the cost. `LIVE_SKIP=gemini` leaves out a provider without credit.
+
 ## Preview in a browser
 
 `npm run dev` serves the interface with sample data at `http://localhost:5173/?mock`. Query

@@ -12,7 +12,7 @@ use scriptorium_core::{
 };
 use serde_json::{Value, json};
 
-use crate::http::{data_url, ids, secs_to_ms, send_json};
+use crate::http::{data_url, ids, join_turns, secs_to_ms, send_json, speaker_label};
 
 const BASE_URL: &str = "https://api.mistral.ai/v1";
 
@@ -118,30 +118,32 @@ impl Mistral {
                 .multipart(form),
         )
         .await?;
-        let segments = response
-            .get("segments")
-            .and_then(Value::as_array)
-            .into_iter()
-            .flatten()
-            .map(|s| Segment {
-                start_ms: secs_to_ms(s.get("start")),
-                end_ms: secs_to_ms(s.get("end")),
-                speaker: s
-                    .get("speaker_id")
-                    .and_then(|v| {
-                        v.as_str()
-                            .map(str::to_string)
-                            .or_else(|| v.as_u64().map(|n| n.to_string()))
-                    })
-                    .map(|id| format!("Speaker {id}")),
-                text: s
-                    .get("text")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .trim()
-                    .to_string(),
-            })
-            .collect();
+        let segments = join_turns(
+            response
+                .get("segments")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .map(|s| Segment {
+                    start_ms: secs_to_ms(s.get("start")),
+                    end_ms: secs_to_ms(s.get("end")),
+                    speaker: s
+                        .get("speaker_id")
+                        .and_then(|v| {
+                            v.as_str()
+                                .map(str::to_string)
+                                .or_else(|| v.as_u64().map(|n| n.to_string()))
+                        })
+                        .map(|id| speaker_label(&id)),
+                    text: s
+                        .get("text")
+                        .and_then(Value::as_str)
+                        .unwrap_or("")
+                        .trim()
+                        .to_string(),
+                })
+                .collect(),
+        );
         Ok(ProcessOutput {
             text: response
                 .get("text")
@@ -265,7 +267,8 @@ fn strip_image_links(markdown: &str) -> String {
         if t.is_empty() && out.last().is_some_and(|l| l.trim().is_empty()) {
             continue;
         }
-        out.push(line);
+        // Markdown's two-space line breaks mean nothing in a text file.
+        out.push(line.trim_end());
     }
     out.join("\n").trim().to_string()
 }
