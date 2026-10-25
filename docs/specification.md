@@ -152,11 +152,15 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
 
 - **Source and result side by side**: the page image on a dark lightbox on the left, the text on
   the right with line numbers in the margin, page navigation, zoom and a strip of pages showing
-  which are reviewed.
+  which are reviewed. The boundary between them can be dragged, and the job list folded away
+  (Ctrl B), for more room.
 - **Differences in the text.** Where another model, or the model under a correction, reads
-  differently, the words are highlighted. Choosing one (or stepping through them with F) opens
-  the readings under its line, each named by its set-up; any reading, or one the researcher
-  types, can be taken into the text as a correction.
+  differently, the words are highlighted. Pointing at them shows the readings over the text,
+  each named by its set-up; clicking them, or stepping through them with F, keeps them open.
+  The researcher chooses the correct reading, or types one, and it is taken into the text as a
+  correction.
+- **Compare**: another set-up's whole text in a third pane beside the text, its differences
+  highlighted the same way; pointing at one marks it in both texts.
 - **Audio too**: a player next to the transcript; the line being spoken is highlighted, and
   clicking a line jumps to it. When a model labelled speakers, the researcher can give each
   label a name ("Speaker 2" → "Imam Ouédraogo"); names replace the labels in the review and in

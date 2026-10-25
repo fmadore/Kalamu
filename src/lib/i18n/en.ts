@@ -14,7 +14,10 @@ export const en = {
 		finished: 'Finished',
 		noJobs: 'Jobs you start appear here.',
 		newJobShortcut: 'Ctrl N',
-		offlineReady: 'Whisper ready on this PC'
+		offlineReady: 'Whisper ready on this PC',
+		collapse: 'Hide the job list',
+		expand: 'Show the job list',
+		sidebarShortcut: 'Ctrl B'
 	},
 	nav: {
 		newJob: 'New job',
@@ -273,7 +276,15 @@ export const en = {
 		models: 'Models',
 		legendDiffer: 'Models disagree',
 		legendCorrected: 'Your correction',
-		fitWidth: 'Fit width'
+		fitWidth: 'Fit width',
+		compare: 'Compare',
+		compareWith: 'Text compared',
+		closeCompare: 'Close the comparison',
+		resizeSource: 'Resize the source and the text',
+		resizeCompare: 'Resize the text and the compared text',
+		addedHere: 'Another model adds words here',
+		leftOutHere: 'This model leaves out words here',
+		pickReading: 'Choose the correct reading'
 	},
 	prompts: {
 		title: 'Prompts',

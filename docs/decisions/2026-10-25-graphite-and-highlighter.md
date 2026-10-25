@@ -29,6 +29,16 @@ interrupted job, the system sheet) was agreed before any code changed.
 - **The scan sits on a dark lightbox in both themes**, so the page is the brightest thing on
   screen, with a floating zoom control. A strip of pages under the review shows which are
   reviewed. Ctrl Enter marks a page reviewed; F and Shift F step through the differences.
+- **The review's room is the researcher's to divide.** The boundaries between source, text and
+  compared text are dragged (or moved with the arrow keys), and the sidebar folds to a rail
+  (Ctrl B); both are remembered in the webview's local storage, a convenience that the review
+  does without when storage is unavailable, not a setting.
+- **Readings show on pointing, over the text.** The readings card moved from under the line to a
+  popover by the words, shown after 300ms of pointing and pinned by a click or F, so checking a
+  difference no longer pushes the text down. Each reading is one row to click.
+- **Compare puts another set-up's whole text beside the text.** It reads the same word diffs as
+  the highlights (`witnessParts` in `apparatus.ts`), so a difference is one place in both texts.
+  Words a witness adds, which have no lemma, now show as a mark in the text too.
 - **New job numbers its steps with a CSS counter**, so a step a task does not need leaves no
   gap, and keeps the estimate and Start in a sticky summary beside the form (Ctrl Enter starts).
 

@@ -8,9 +8,12 @@
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Columns2 from '@lucide/svelte/icons/columns-2';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Mic from '@lucide/svelte/icons/mic';
+	import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
+	import PanelLeftOpen from '@lucide/svelte/icons/panel-left-open';
 	import Pause from '@lucide/svelte/icons/pause';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Play from '@lucide/svelte/icons/play';
@@ -36,6 +39,9 @@
 		prompts: ScrollText,
 		settings: Settings,
 		close: X,
+		compare: Columns2,
+		'sidebar-close': PanelLeftClose,
+		'sidebar-open': PanelLeftOpen,
 		pause: Pause,
 		play: Play,
 		plus: Plus,

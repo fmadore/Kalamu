@@ -230,7 +230,7 @@ components:
     typography: "{typography.label}"
     rounded: "{rounded.card}"
     padding: "0.75rem"
-    width: "30rem"
+    width: "25rem"
   reading-text:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text-body}"
@@ -338,7 +338,7 @@ A graphite palette of greys and one black, with two marker colours whose rarity 
 
 ## Layout
 
-The app is a fixed shell: a 16rem chrome-grey sidebar at left and a scrolling white main area. The sidebar holds the mark and name, the black New job button with Ctrl N, the jobs list grouped Running, Unfinished and Finished (each group head a caption with a mono count), and at its foot the tools (Prompts, Settings) above a hairline, with an offline-ready line and green dot. A job row shows its name with a task icon, a caption line of status, and a 3px ink progress bar while running. The current row or tool is lifted onto white with the raised shadow.
+The app is a fixed shell: a 16rem chrome-grey sidebar at left and a scrolling white main area. The sidebar holds the mark and name, the black New job button with Ctrl N, the jobs list grouped Running, Unfinished and Finished (each group head a caption with a mono count), and at its foot the tools (Prompts, Settings) above a hairline, with an offline-ready line and green dot. A job row shows its name with a task icon, a caption line of status, and a 3px ink progress bar while running. The current row or tool is lifted onto white with the raised shadow. The sidebar folds (its button beside the name, or Ctrl B) to a 3.25rem **rail** of the same controls as icons, named by their tooltips: the job list leaves, New job and the tools stay; the choice is remembered on the computer.
 
 The **mark** is a graphite tile with 5-unit corners on a 22-unit grid, two white text lines and, between them, a wider highlighter bar: a page with one line marked. The sidebar draws it at 22px and the app icon (taskbar, Start, Store, installer) is the same shapes, from `src-tauri/icons/source.svg`; its lines are 2 units thick so they hold at 16px.
 
@@ -346,7 +346,7 @@ Each screen opens with a **masthead**: at least 3.5rem tall, white, a hairline b
 
 **New job** is a form beside a summary: the form (max 52rem) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
 
-**Review** splits the work area 0.95fr (source) to 1.05fr (text). Each pane has a 2.75rem bar on top. The text pane sets each line in a grid with a 2.25rem number column, numbers printed every fifth line and on every line that differs. A page strip runs along the bottom on surface-quiet: one small tile per page with its state, and a tally with a green progress bar.
+**Review** splits the work area 0.95fr (source) to 1.05fr (text); **Compare** in the masthead adds a third pane with another set-up's whole text (a third each). The boundaries between panes are **splitters**: a 9px invisible grip on the hairline that shows a 3px line on hover (line-hover) and while dragged or focused (bright text); arrow keys move it 2% (Shift 10%), a double click puts it back, and no pane gets narrower than about 16rem. Widths and the open compare pane are remembered on the computer; the analysis review has the same splitter between document and answers. Each pane has a 2.75rem bar on top. The text pane sets each line in a grid with a 2.25rem number column, numbers printed every fifth line and on every line that differs. A page strip runs along the bottom on surface-quiet: one small tile per page with its state, and a tally with a green progress bar.
 
 **Job detail** sets the job's facts as one bordered strip of cells divided by hairlines, then the files as a bordered table with per-set-up progress bars.
 
@@ -354,9 +354,9 @@ Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls a
 
 **Responsive range:**
 - **1100px and narrower**: New job's summary leaves the side and becomes a sticky footer with the figure and Start, lifted by a soft upward shadow.
-- **1000px and narrower**: Review stacks the source above the text (source 16rem to 42vh); Prompts stacks its list above the editor.
-- **820px and narrower**: masthead and sheet padding tighten to 1rem; the readings card loses its indent; the review tally hides.
-- **760px and narrower**: the sidebar sits above the work (at most 38vh); joined choice strips become one column.
+- **1000px and narrower**: Review stacks the source above the text (source 16rem to 42vh), and the compared text below both; the splitters hide. Prompts stacks its list above the editor.
+- **820px and narrower**: masthead and sheet padding tighten to 1rem; the review tally hides.
+- **760px and narrower**: the sidebar sits above the work (at most 38vh), folded to one row; joined choice strips become one column.
 - **1680px and wider**: reading text rises to 1.25rem.
 
 ## Elevation & Depth
@@ -365,8 +365,8 @@ Flat by default, with tonal layering doing most of the work: chrome grey behind,
 
 ### Shadow Vocabulary
 - **Raised** (`box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(17, 18, 20, 0.06)`; dark: the ring alone): the current sidebar job or tool, the active prompt, the audio player, the transcript line now playing.
-- **Pop** (`box-shadow: 0 0 0 1px var(--line), 0 12px 32px -8px rgba(17, 18, 20, 0.18)`): the readings card opened under a line.
-- **Flyout** (`box-shadow: 0 18px 48px -16px rgba(17, 18, 20, 0.35)`): the close dialog and the toast.
+- **Pop** (`box-shadow: 0 0 0 1px var(--line), 0 12px 32px -8px rgba(17, 18, 20, 0.18)`): the language list in New job.
+- **Flyout** (`box-shadow: 0 18px 48px -16px rgba(17, 18, 20, 0.35)`): the readings over the text, the close dialog and the toast.
 - **Page** (`box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.4)`): a scan on the lightbox, with a 2px corner.
 - **Zoom pill** (`box-shadow: 0 0 0 1px var(--stage-line), 0 8px 24px rgba(0, 0, 0, 0.35)`): the controls floating over the stage.
 
@@ -405,7 +405,7 @@ A set-up's letter wherever set-ups are compared: a 1.25rem square of mono upperc
 - **Hover:** border to line-hover. **Focus:** border to bright text with a 3px wash ring, no outline.
 
 ### Navigation
-- **Sidebar:** chrome grey, 16rem, hairline right edge. Rows are 7px-cornered, transparent at rest, wash on hover, lifted onto white when current. The New job button is a full-width ink button; when New job is open it takes a 1.5px ink ring offset by the chrome.
+- **Sidebar:** chrome grey, 16rem (3.25rem folded), hairline right edge. Rows are 7px-cornered, transparent at rest, wash on hover, lifted onto white when current. The New job button is a full-width ink button; when New job is open it takes a 1.5px ink ring offset by the chrome.
 
 ### Masthead
 White, at least 3.5rem, hairline below; a title in title type, an optional muted lede or a back link, actions at right. In Review the title is a breadcrumb: the job name, a faint slash, then the file name in mono, with a pager (previous, a mono select, next) and the actions.
@@ -413,8 +413,9 @@ White, at least 3.5rem, hairline below; a title in title type, an optional muted
 ### Review: the lightbox and the marked text (signature)
 - **Source pane:** a scan on the stage, padded 1.5rem with room below for a centred **zoom pill** (stage raised, 9px corners, ghost controls in on-stage colours, a mono percentage). A recording instead sits on surface-quiet with the player on top.
 - **Text pane:** a bar with the set-up's label in mono, a count of differences beside a yellow swatch, and a switch to show them; the reading text below; a foot with mono metadata and a legend (yellow block for "models differ", blue line for "your correction").
-- **Disagreements:** each differing word is a button set in the highlighter with a 2px bleed. Pointing at it or opening it adds a 1.5px bright ring outside the yellow.
-- **Readings card:** opened inline under its line, indented to the text column, max 30rem, white with the pop shadow and 10px corners. It lists each reading in the reading serif beside who reads it (mono), the one in the text in bold, each with a button to take it as a correction, and a field to type your own.
+- **Disagreements:** each differing word is a button set in the highlighter with a 2px bleed. Pointing at it or opening it adds a 1.5px bright ring outside the yellow. Words another model adds, where the text has none, are a 0.3em highlighter bar between the words.
+- **Readings:** pointing at a disagreement for 300ms shows its readings over the text, under the words (over them when the pane has no room below), max 25rem, white with the flyout shadow and 10px corners, rising 3px into place over 120ms. They stay while the pointer is on the words or on them; a click, F, or focusing inside pins them until Escape, the close button or a click elsewhere. The one in the text comes first, in bold, with an "In the text" chip; each other reading is a whole row to click, its words in the reading serif over who reads them (mono), "Use this reading" at right; a field takes your own.
+- **Compared text:** another set-up's own words on paper, in the reading serif without line numbers, its differences in the same highlighter (a gap mark where it leaves words out). Pointing at a difference in either text rings it in both; clicking one in the compared text pins its readings in the text. A select picks the set-up when there are several.
 - **Corrections:** corrected words lose the yellow and take a 2px hand-blue underline offset 0.25em; hover takes the hand wash.
 - **Page strip:** 2rem tiles with a mono page number; reviewed pages in ok-green with a check; the current page ringed in bright text. A tally beside it with a 4px green bar.
 

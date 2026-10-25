@@ -30,16 +30,18 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   choices, reasons), sent as each provider's structured output and checked on return; four
   ready-made analyses (research summary, short summary, people, places and organisations, tone);
   a field editor in Prompts; CSV with a column per field.
-- **Review.** The source on a dark lightbox beside the text; differences between set-ups and
-  corrections highlighted in the text, each opening its readings, any of which can be taken as
-  a correction; corrections kept apart from the AI output; marking as reviewed, with a strip of
+- **Review.** The source on a dark lightbox beside the text, in panes that can be resized,
+  with another set-up's whole text beside them on demand; differences between set-ups and
+  corrections highlighted in the text, their readings shown on pointing, any of which can be
+  taken as a correction; corrections kept apart from the AI output; marking as reviewed, with a strip of
   pages showing what is left; a player for
   recordings with speakers that can be named; an analysis review that collates answers by
   field and finds names in the document.
 - **Comparison mode** with character error rates against corrected pages.
 - **Pipelines**: a job's settings saved under a name and applied in one click.
 - **Design**: the Graphite and highlighter interface ([DESIGN.md](../DESIGN.md)), responsive
-  from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs, and an app icon
+  from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs and folds to a
+  rail, and an app icon
   drawn from the same mark.
 
 ## Next

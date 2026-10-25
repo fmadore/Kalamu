@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DiffSpan } from './bindings/DiffSpan.js';
-import { apparatus, lines, numbered, siglum, variants } from './apparatus.js';
+import { apparatus, lines, numbered, siglum, variants, witnessParts } from './apparatus.js';
 
 const same = (text: string): DiffSpan => ({ kind: 'same', text });
 const removed = (text: string): DiffSpan => ({ kind: 'removed', text });
@@ -113,5 +113,40 @@ describe('apparatus', () => {
 			{ siglum: 'b', spans: [same('a '), added('b '), same('c')] }
 		]);
 		expect(addition[0]).toMatchObject({ lemma: '', readings: [{ siglum: 'b', text: 'b' }] });
+	});
+
+	it('shows words another witness adds as an empty part where they go', () => {
+		const entries = apparatus('a c', [
+			{ siglum: 'b', spans: [same('a '), added('b '), same('c')] }
+		]);
+		expect(lines('a c', entries)[0].parts).toEqual([
+			{ text: 'a ', entry: null },
+			{ text: '', entry: 1 },
+			{ text: 'c', entry: null }
+		]);
+	});
+
+	it("cuts a witness's own text where it differs, tied to the base's entries", () => {
+		const spans = [
+			same('plus de '),
+			removed('deux'),
+			added('trois'),
+			same(' '),
+			removed('cents'),
+			added('cent'),
+			same(' fidèles '),
+			removed('du')
+		];
+		const text = 'plus de deux cents fidèles du';
+		const entries = apparatus(text, [{ siglum: 'b', spans }]);
+		const parts = witnessParts(text, spans, entries);
+		expect(parts).toEqual([
+			{ text: 'plus de ', entry: null },
+			{ text: 'trois cent', entry: 1 },
+			{ text: ' fidèles ', entry: null },
+			{ text: '', entry: 2 }
+		]);
+		// Read in order, the parts are the witness's text.
+		expect(parts.map((p) => p.text).join('')).toBe('plus de trois cent fidèles ');
 	});
 });

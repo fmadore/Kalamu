@@ -89,6 +89,13 @@ function lineAt(starts: number[], numbers: number[], offset: number): number {
 	return numbers[line] || 1;
 }
 
+/** A place in the base without the space at either end, as entries are keyed. */
+function withoutSpace(base: string, start: number, end: number): [number, number] {
+	while (start < end && /\s/.test(base[start])) start++;
+	while (end > start && /\s/.test(base[end - 1])) end--;
+	return [start, end];
+}
+
 /** Entries for the base text against each witness, merged where they vary at the same place. */
 export function apparatus(
 	base: string,
@@ -100,9 +107,7 @@ export function apparatus(
 	const byPlace = new Map<string, Entry>();
 	for (const witness of witnesses) {
 		for (const v of variants(witness.spans)) {
-			let { start, end } = v;
-			while (start < end && /\s/.test(base[start])) start++;
-			while (end > start && /\s/.test(base[end - 1])) end--;
+			const [start, end] = withoutSpace(base, v.start, v.end);
 			const key = `${start}:${end}`;
 			const entry = byPlace.get(key) ?? {
 				id: 0,
@@ -150,12 +155,16 @@ export function lines(base: string, entries: Entry[]): Line[] {
 		}
 		const points = [...cuts].sort((a, b) => a - b);
 		const parts: Line['parts'] = [];
+		// Words another witness adds have no lemma: they show as an empty part where they go.
+		const additions = (at: number) =>
+			entries.filter((e) => e.start === at && e.end === at).map((e) => ({ text: '', entry: e.id }));
 		for (let k = 0; k + 1 < points.length; k++) {
 			const [a, b] = [points[k], points[k + 1]];
-			if (a === b) continue;
+			parts.push(...additions(a));
 			const entry = entries.find((e) => e.start <= a && e.end >= b && e.end > e.start);
 			parts.push({ text: base.slice(a, b), entry: entry?.id ?? null });
 		}
+		parts.push(...additions(lineEnd));
 		if (parts.length === 0) parts.push({ text: '', entry: null });
 		out.push({ number: numbers[i], parts });
 		offset = lineEnd + 1;
@@ -166,4 +175,48 @@ export function lines(base: string, entries: Entry[]): Line[] {
 /** Whether a line number is printed in the margin: every fifth line and every line with a variant. */
 export function numbered(line: number, entries: Entry[]): boolean {
 	return line > 0 && (line % 5 === 0 || entries.some((e) => e.line === line));
+}
+
+/** A witness's own text, cut where it differs from the base, each difference tied to the entry
+ * it belongs to, so the two texts can be read side by side. Words the witness leaves out are an
+ * empty part. */
+export function witnessParts(base: string, spans: DiffSpan[], entries: Entry[]): Line['parts'] {
+	const out: Line['parts'] = [];
+	let pos = 0;
+	let open: Variant | null = null;
+	const close = () => {
+		if (!open) return;
+		const [start, end] = withoutSpace(base, open.start, open.end);
+		const entry = entries.find((e) => e.start === start && e.end === end)?.id ?? null;
+		const before = /^\s*/.exec(open.text)?.[0] ?? '';
+		const words = open.text.slice(before.length).trimEnd();
+		const after = open.text.slice(before.length + words.length);
+		if (before) out.push({ text: before, entry: null });
+		out.push({ text: words, entry });
+		if (after) out.push({ text: after, entry: null });
+		open = null;
+	};
+	// As in `variants`, a short space between two changed words keeps them one difference.
+	for (const span of spans) {
+		const length = span.text.length;
+		if (span.kind === 'same') {
+			if (open && span.text.trim() === '' && length < 3) {
+				open.end = pos + length;
+				open.text += span.text;
+			} else {
+				close();
+				out.push({ text: span.text, entry: null });
+			}
+			pos += length;
+		} else if (span.kind === 'removed') {
+			open ??= { start: pos, end: pos, text: '' };
+			open.end = pos + length;
+			pos += length;
+		} else {
+			open ??= { start: pos, end: pos, text: '' };
+			open.text += span.text;
+		}
+	}
+	close();
+	return out;
 }

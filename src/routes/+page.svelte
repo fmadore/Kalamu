@@ -73,10 +73,35 @@
 
 	const share = (j: JobSummary) => (100 * j.pieces_finished) / Math.max(j.pieces_total, 1);
 
+	// The job list folds to a rail of icons, leaving the room to the work; remembered on this
+	// computer, and unfolded when storage is unavailable.
+	const SIDEBAR_KEY = 'scriptorium.sidebar.collapsed';
+	function storedCollapsed(): boolean {
+		try {
+			return localStorage.getItem(SIDEBAR_KEY) === '1';
+		} catch {
+			return false;
+		}
+	}
+	let collapsed = $state(storedCollapsed());
+	$effect(() => {
+		const v = collapsed ? '1' : '0';
+		try {
+			localStorage.setItem(SIDEBAR_KEY, v);
+		} catch {
+			// Folding is only a convenience.
+		}
+	});
+
 	function onKey(e: KeyboardEvent) {
-		if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'n') {
+		if (!e.ctrlKey || e.altKey || e.shiftKey) return;
+		const key = e.key.toLowerCase();
+		if (key === 'n') {
 			e.preventDefault();
 			go({ name: 'new' });
+		} else if (key === 'b') {
+			e.preventDefault();
+			collapsed = !collapsed;
 		}
 	}
 
@@ -119,30 +144,45 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div class="shell">
+<div class="shell" class:collapsed>
 	<nav class="side" aria-label={m.shell.jobs}>
 		<div class="brand">
-			<svg class="mark" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-				<rect width="22" height="22" rx="5" class="mark-ground" />
-				<rect x="5" y="5.2" width="12" height="2" rx="1" class="mark-line" />
-				<rect x="4" y="9" width="11" height="4" rx="1" class="mark-marker" />
-				<rect x="5" y="14.8" width="9" height="2" rx="1" class="mark-line" />
-			</svg>
-			<span class="name">{m.app.name}</span>
+			{#if !collapsed}
+				<svg class="mark" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+					<rect width="22" height="22" rx="5" class="mark-ground" />
+					<rect x="5" y="5.2" width="12" height="2" rx="1" class="mark-line" />
+					<rect x="4" y="9" width="11" height="4" rx="1" class="mark-marker" />
+					<rect x="5" y="14.8" width="9" height="2" rx="1" class="mark-line" />
+				</svg>
+				<span class="name">{m.app.name}</span>
+			{/if}
+			<button
+				class="fold"
+				aria-label={collapsed ? m.shell.expand : m.shell.collapse}
+				title="{collapsed ? m.shell.expand : m.shell.collapse} ({m.shell.sidebarShortcut})"
+				aria-expanded={!collapsed}
+				aria-controls="job-list"
+				onclick={() => (collapsed = !collapsed)}
+				><Icon name={collapsed ? 'sidebar-open' : 'sidebar-close'} size={16} /></button
+			>
 		</div>
 
 		<button
 			class="new"
 			class:current={app.view.name === 'new'}
 			aria-current={app.view.name === 'new' ? 'page' : undefined}
+			aria-label={collapsed ? m.nav.newJob : undefined}
+			title={collapsed ? `${m.nav.newJob} (${m.shell.newJobShortcut})` : undefined}
 			onclick={() => go({ name: 'new' })}
 		>
 			<Icon name="plus" size={16} />
-			<span class="grow">{m.nav.newJob}</span>
-			<span class="kbd">{m.shell.newJobShortcut}</span>
+			{#if !collapsed}
+				<span class="grow">{m.nav.newJob}</span>
+				<span class="kbd">{m.shell.newJobShortcut}</span>
+			{/if}
 		</button>
 
-		<div class="jobs">
+		<div class="jobs" id="job-list" hidden={collapsed}>
 			{#each groups as group (group.key)}
 				<section class="group" aria-labelledby="group-{group.key}">
 					<h2 class="group-head" id="group-{group.key}">
@@ -195,17 +235,21 @@
 				class="tool"
 				class:current={app.view.name === 'prompts'}
 				aria-current={app.view.name === 'prompts' ? 'page' : undefined}
+				aria-label={collapsed ? m.nav.prompts : undefined}
+				title={collapsed ? m.nav.prompts : undefined}
 				onclick={() => go({ name: 'prompts' })}
-				><Icon name="prompts" size={16} />{m.nav.prompts}</button
+				><Icon name="prompts" size={16} />{#if !collapsed}{m.nav.prompts}{/if}</button
 			>
 			<button
 				class="tool"
 				class:current={app.view.name === 'settings'}
 				aria-current={app.view.name === 'settings' ? 'page' : undefined}
+				aria-label={collapsed ? m.nav.settings : undefined}
+				title={collapsed ? m.nav.settings : undefined}
 				onclick={() => go({ name: 'settings' })}
-				><Icon name="settings" size={16} />{m.nav.settings}</button
+				><Icon name="settings" size={16} />{#if !collapsed}{m.nav.settings}{/if}</button
 			>
-			{#if offlineReady}
+			{#if offlineReady && !collapsed}
 				<p class="offline"><span class="dot" aria-hidden="true"></span>{m.shell.offlineReady}</p>
 			{/if}
 		</div>
@@ -249,6 +293,9 @@
 		grid-template-columns: 16rem minmax(0, 1fr);
 		height: 100vh;
 	}
+	.shell.collapsed {
+		grid-template-columns: 3.25rem minmax(0, 1fr);
+	}
 	.side {
 		display: flex;
 		flex-direction: column;
@@ -273,6 +320,27 @@
 	}
 	.mark-marker {
 		fill: var(--marker);
+	}
+	/* Folds the list: quiet until pointed at, like the other tools of the frame. */
+	.fold {
+		display: grid;
+		place-items: center;
+		width: var(--control-sm);
+		height: var(--control-sm);
+		margin-left: auto;
+		padding: 0;
+		border: 0;
+		border-radius: var(--radius-control);
+		background: transparent;
+		color: var(--text-muted);
+		cursor: pointer;
+		transition:
+			background-color 120ms ease-out,
+			color 120ms ease-out;
+	}
+	.fold:hover {
+		background: var(--wash);
+		color: var(--text-bright);
 	}
 	.name {
 		font-size: 1rem;
@@ -319,6 +387,9 @@
 		gap: var(--space-4);
 		margin: 0 calc(-1 * var(--space-1));
 		padding: 0 var(--space-1);
+	}
+	.jobs[hidden] {
+		display: none;
 	}
 	.group-head {
 		display: flex;
@@ -409,8 +480,30 @@
 	.tools {
 		display: grid;
 		gap: 2px;
+		margin-top: auto;
 		padding-top: var(--space-3);
 		border-top: 1px solid var(--line);
+	}
+	/* The rail: the same controls as icons, named by their tooltips. */
+	.collapsed .side {
+		padding-inline: var(--space-2);
+		align-items: center;
+	}
+	.collapsed .brand {
+		padding: 0;
+	}
+	.collapsed .fold {
+		margin: 0;
+	}
+	.collapsed .new,
+	.collapsed .tool {
+		width: 2.25rem;
+		padding: 0;
+		justify-content: center;
+	}
+	.collapsed .tools {
+		align-self: stretch;
+		justify-items: center;
 	}
 	.tool {
 		display: flex;
@@ -481,6 +574,19 @@
 			max-height: 38vh;
 			border-right: 0;
 			border-bottom: 1px solid var(--line);
+		}
+		.shell.collapsed {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.collapsed .side {
+			flex-direction: row;
+			padding-block: var(--space-2);
+		}
+		.collapsed .tools {
+			display: flex;
+			margin: 0 0 0 auto;
+			padding: 0;
+			border: 0;
 		}
 	}
 </style>

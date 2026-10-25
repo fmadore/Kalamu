@@ -244,6 +244,13 @@ body {
 	scrollbar-color: var(--line-strong) transparent;
 }
 
+/* While a pane boundary is dragged, the whole window keeps the resize cursor and selects nothing. */
+.resizing,
+.resizing * {
+	cursor: col-resize !important;
+	user-select: none;
+}
+
 ::selection {
 	background: var(--hand-wash);
 	color: var(--text-bright);

@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
+	import Splitter from './Splitter.svelte';
 	import { collate, findTerm, type Witness } from '#lib/analysis.js';
 	import { siglum } from '#lib/apparatus.js';
 	import type { Field } from '#lib/bindings/Field.js';
@@ -126,6 +127,33 @@
 		}
 	}
 
+	// Where the boundary between the document and the answers sits, remembered on this computer.
+	const SPLIT_KEY = 'scriptorium.analysis.split';
+	const SPLIT = 0.5;
+	function storedSplit(): number {
+		try {
+			const v = Number(localStorage.getItem(SPLIT_KEY));
+			if (v > 0 && v < 1) return v;
+		} catch {
+			// No storage: the default split.
+		}
+		return SPLIT;
+	}
+	let split = $state(storedSplit());
+	let workWidth = $state(0);
+	$effect(() => {
+		const v = String(split);
+		try {
+			localStorage.setItem(SPLIT_KEY, v);
+		} catch {
+			// The split is only a convenience.
+		}
+	});
+	function setSplit(at: number) {
+		const min = workWidth > 0 ? Math.min(0.4, 280 / workWidth) : 0.25;
+		split = Math.min(Math.max(at, min), 1 - min);
+	}
+
 	const kindLabel = (f: Field) => m.fields.kinds[f.kind.type];
 	const editedSetup = $derived(setups.find((s) => s.id === editing?.setupId));
 
@@ -171,7 +199,11 @@
 
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 
-	<div class="work">
+	<div
+		class="work"
+		style:--columns="minmax(0, {split}fr) minmax(0, {1 - split}fr)"
+		bind:clientWidth={workWidth}
+	>
 		<section
 			class="pane source"
 			class:stage={source?.kind === 'pdf' || source?.kind === 'image'}
@@ -379,6 +411,12 @@
 					: ''}
 			</div>
 		</section>
+		<Splitter
+			label={m.review.resizeSource}
+			position={split}
+			onset={setSplit}
+			onreset={() => (split = SPLIT)}
+		/>
 	</div>
 </div>
 
@@ -428,10 +466,12 @@
 		padding: var(--space-2) var(--space-5);
 	}
 	.work {
+		--columns: minmax(0, 1fr) minmax(0, 1fr);
 		flex: 1;
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-columns: var(--columns);
 		min-height: 0;
+		position: relative;
 	}
 	.pane {
 		display: grid;
@@ -716,6 +756,9 @@
 		.work {
 			grid-template-columns: 1fr;
 			grid-template-rows: minmax(16rem, 42vh) minmax(0, 1fr);
+		}
+		.work :global(.splitter) {
+			display: none;
 		}
 		.source {
 			border-right: 0;

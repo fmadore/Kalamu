@@ -1,14 +1,16 @@
 <script lang="ts">
 	// The review: the source on its lightbox beside the text. The first set-up's text (with the
 	// researcher's corrections) is the text shown; where the other set-ups, or the model under a
-	// correction, read differently, the words are highlighted, and choosing one opens the readings
-	// beside it, any of which can be taken as a correction.
+	// correction, read differently, the words are highlighted, and pointing at them shows the
+	// readings over the text, any of which can be taken as a correction. Another set-up's whole
+	// text can open in a third pane beside it; the panes' boundaries can be dragged.
 	import { onMount, tick } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
 	import SpeakerList from './SpeakerList.svelte';
-	import { apparatus, lines, numbered, siglum, type Entry } from '#lib/apparatus.js';
+	import Splitter from './Splitter.svelte';
+	import { apparatus, lines, numbered, siglum, witnessParts, type Entry } from '#lib/apparatus.js';
 	import type { ComparisonReport } from '#lib/bindings/ComparisonReport.js';
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
 	import type { Job } from '#lib/bindings/Job.js';
@@ -33,10 +35,48 @@
 	let spans = $state<Record<string, DiffSpan[]>>({});
 	let report = $state<ComparisonReport | null>(null);
 	let error = $state<string | null>(null);
-	/** The difference whose readings are open beside the text. */
+	/** The difference whose readings are open over the text. Pinned once clicked or stepped to, it
+	 * stays until closed; only pointed at, it shows while the pointer is on it or its readings. */
 	let selected = $state<number | null>(null);
+	let pinned = $state(false);
+	/** The difference under the pointer, in either text: highlighted in both. */
+	let hovered = $state<number | null>(null);
 	let ownReading = $state('');
 	let textPane = $state<HTMLElement | null>(null);
+	let comparePane = $state<HTMLElement | null>(null);
+	let popover = $state<HTMLElement | null>(null);
+	let popAt = $state<{ top: number; left: number } | null>(null);
+	let hoverTimer: ReturnType<typeof setTimeout> | undefined;
+	/** The witness shown in the compare pane, by its key. */
+	let compareKey = $state<string | null>(null);
+
+	// The panes' widths, as where each boundary sits across the work area: one boundary beside the
+	// text, two while the compare pane is open. Remembered on this computer with whether the compare
+	// pane is open; the review works the same when storage is unavailable.
+	const LAYOUT_KEY = 'scriptorium.review.layout';
+	const LAYOUT = { two: 0.475, three: [0.33, 0.665] as [number, number], compare: false };
+	function storedLayout(): typeof LAYOUT {
+		try {
+			const s = JSON.parse(localStorage.getItem(LAYOUT_KEY) ?? 'null');
+			if (typeof s?.two === 'number' && Array.isArray(s.three) && s.three.length === 2) {
+				const three: [number, number] = [Number(s.three[0]), Number(s.three[1])];
+				return { two: s.two, three, compare: s.compare === true };
+			}
+		} catch {
+			// Nothing stored, or no storage: the default layout.
+		}
+		return { ...LAYOUT, three: [...LAYOUT.three] };
+	}
+	let layout = $state(storedLayout());
+	let workWidth = $state(0);
+	$effect(() => {
+		const json = JSON.stringify(layout);
+		try {
+			localStorage.setItem(LAYOUT_KEY, json);
+		} catch {
+			// The layout is only a convenience.
+		}
+	});
 
 	const source = $derived(job?.sources.find((s) => s.id === sourceId));
 	const indices = $derived([...new Set(views.map((v) => v.index))].sort((a, b) => a - b));
@@ -96,22 +136,134 @@
 	const isCorrection = (e: Entry) => corrected && e.readings.some((r) => r.siglum === siglum(0));
 	const open = $derived(entries.find((e) => e.id === selected) ?? null);
 
+	const comparing = $derived(layout.compare && witnesses.length > 0);
+	const compared = $derived(
+		witnesses.find((w) => w.key === compareKey) ??
+			witnesses.find((w) => w.key !== 'model') ??
+			witnesses[0]
+	);
+	const compareParts = $derived(
+		compared && spans[compared.key] ? witnessParts(base, spans[compared.key], entries) : null
+	);
+
+	const cuts = $derived(comparing ? layout.three : [layout.two]);
+	const columns = $derived(
+		[...cuts, 1].map((c, i) => `minmax(0, ${c - (cuts[i - 1] ?? 0)}fr)`).join(' ')
+	);
+
+	/** Moves boundary `i` to `at`, leaving every pane about 16rem wide at least. */
+	function setCut(i: number, at: number) {
+		const min = workWidth > 0 ? Math.min(0.3, 260 / workWidth) : 0.2;
+		const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
+		if (!comparing) {
+			layout.two = clamp(at, min, 1 - min);
+			return;
+		}
+		const [a, b] = layout.three;
+		layout.three = i === 0 ? [clamp(at, min, b - min), b] : [a, clamp(at, a + min, 1 - min)];
+	}
+
+	function resetCut(i: number) {
+		if (comparing) setCut(i, LAYOUT.three[i]);
+		else layout.two = LAYOUT.two;
+	}
+
 	/** Who reads what: the first set-up's model output under a correction, or another set-up. */
 	function witnessName(s: string): string {
 		if (s === siglum(0)) return m.review.modelText(setups[0]?.label ?? '');
 		return setups[s.charCodeAt(0) - 97]?.label ?? s;
 	}
 
-	/** Opens a difference, scrolling its words into view. */
-	async function choose(id: number | null) {
+	/** Shows a difference's readings over the text. */
+	function show(id: number, pin: boolean) {
+		clearTimeout(hoverTimer);
+		if (selected !== id) {
+			ownReading = '';
+			popAt = null;
+		}
 		selected = id;
-		ownReading = '';
-		if (id === null) return;
+		pinned = pin;
+	}
+
+	function hide() {
+		clearTimeout(hoverTimer);
+		selected = null;
+		pinned = false;
+		popAt = null;
+	}
+
+	/** Pointing at highlighted words shows their readings after a moment, unless some are pinned. */
+	function pointAt(e: PointerEvent, id: number) {
+		hovered = id;
+		if (e.pointerType !== 'mouse' || pinned) return;
+		clearTimeout(hoverTimer);
+		hoverTimer = setTimeout(() => show(id, false), selected === null ? 300 : 60);
+	}
+
+	/** Leaving the words or their readings closes readings that are not pinned. */
+	function pointAway() {
+		hovered = null;
+		if (pinned) return;
+		clearTimeout(hoverTimer);
+		hoverTimer = setTimeout(() => {
+			if (!pinned) hide();
+		}, 250);
+	}
+
+	/** Scrolls a pane so that an element in it is in view, a third of the way down. */
+	function reveal(pane: HTMLElement | null, el: Element | null | undefined) {
+		if (!pane || !el) return;
+		const box = pane.getBoundingClientRect();
+		const r = el.getBoundingClientRect();
+		if (r.top >= box.top + 24 && r.bottom <= box.bottom - 24) return;
+		const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		pane.scrollTo({
+			top: pane.scrollTop + r.top - box.top - box.height / 3,
+			behavior: still ? 'auto' : 'smooth'
+		});
+	}
+
+	/** Opens a difference and pins it, bringing its words into view in both texts. */
+	async function choose(id: number) {
+		show(id, true);
 		await tick();
 		const lemma = textPane?.querySelector<HTMLElement>(`.lemma[data-entry="${id}"]`);
-		const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-		lemma?.scrollIntoView({ block: 'nearest', behavior: still ? 'auto' : 'smooth' });
+		reveal(textPane, lemma);
+		reveal(comparePane, comparePane?.querySelector(`.w-mark[data-entry="${id}"]`));
 		lemma?.focus({ preventScroll: true });
+	}
+
+	/** Sets the readings under their words, or over them when the pane has no room below. */
+	function place() {
+		const lemma = textPane?.querySelector<HTMLElement>(`.lemma[data-entry="${selected}"]`);
+		if (!textPane || !popover || !lemma) return;
+		const pane = textPane.getBoundingClientRect();
+		const words = Array.from(lemma.getClientRects()).at(-1) ?? lemma.getBoundingClientRect();
+		const { offsetWidth: w, offsetHeight: h } = popover;
+		const roomBelow = pane.bottom - words.bottom > h + 16;
+		const roomAbove = words.top - pane.top > h + 16;
+		popAt = {
+			top:
+				textPane.scrollTop +
+				(roomBelow || !roomAbove ? words.bottom - pane.top + 8 : words.top - pane.top - h - 8),
+			left: Math.max(8, Math.min(words.left - pane.left - 12, textPane.clientWidth - w - 8))
+		};
+	}
+
+	$effect(() => {
+		if (open === null || !popover || !textPane) return;
+		place();
+		const watch = new ResizeObserver(() => place());
+		watch.observe(textPane);
+		watch.observe(popover);
+		return () => watch.disconnect();
+	});
+
+	/** A click anywhere else closes pinned readings. */
+	function onPointerDown(e: PointerEvent) {
+		const target = e.target as HTMLElement;
+		if (!pinned || popover?.contains(target) || target.closest('.lemma, .w-mark')) return;
+		hide();
 	}
 
 	function stepEntry(delta: number) {
@@ -130,7 +282,7 @@
 		const range = base.slice(e.start, e.end);
 		const tail = range.startsWith(e.lemma) ? range.slice(e.lemma.length) : '';
 		const next = base.slice(0, e.start) + text + tail + base.slice(e.end);
-		selected = null;
+		hide();
 		await save(first, next, lead.reviewed);
 	}
 
@@ -209,7 +361,7 @@
 	function goTo(i: number) {
 		index = i;
 		editing = null;
-		selected = null;
+		hide();
 	}
 
 	function step(delta: number) {
@@ -231,7 +383,12 @@
 			e.preventDefault();
 			stepEntry(e.shiftKey ? -1 : 1);
 		}
-		if (e.key === 'Escape' && selected !== null) void choose(null);
+		if (e.key === 'Escape' && selected !== null) {
+			const was = selected;
+			const focusBack = pinned;
+			hide();
+			if (focusBack) textPane?.querySelector<HTMLElement>(`.lemma[data-entry="${was}"]`)?.focus();
+		}
 	}
 
 	const reviewedCount = $derived(
@@ -244,7 +401,7 @@
 	});
 </script>
 
-<svelte:window onkeydown={onKey} />
+<svelte:window onkeydown={onKey} onpointerdown={onPointerDown} />
 
 <div class="review">
 	<header class="masthead">
@@ -286,6 +443,14 @@
 			>
 		</div>
 		<div class="actions">
+			{#if witnesses.length > 0}
+				<button
+					class="btn toggle"
+					aria-pressed={comparing}
+					onclick={() => (layout.compare = !layout.compare)}
+					><Icon name="compare" size={14} />{m.review.compare}</button
+				>
+			{/if}
 			{#if lead && lead.ai_text !== null && setups[0] && !editing}
 				{@const first = setups[0]}
 				<button class="btn" onclick={() => (editing = { setupId: first.id, text: base })}
@@ -314,7 +479,7 @@
 
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 
-	<div class="work">
+	<div class="work" class:comparing style:--columns={columns} bind:clientWidth={workWidth}>
 		<section class="pane source" class:stage={!recording} aria-label={m.review.source}>
 			<div class="bar">
 				<span class="bar-title mono">{m.review.source} · {pieceLabel(lead ?? current[0])}</span>
@@ -352,6 +517,13 @@
 				</div>
 			{/if}
 		</section>
+
+		<Splitter
+			label={m.review.resizeSource}
+			position={cuts[0]}
+			onset={(p) => setCut(0, p)}
+			onreset={() => resetCut(0)}
+		/>
 
 		<section class="pane edition" aria-label={m.review.readingText}>
 			<div class="bar">
@@ -427,67 +599,79 @@
 										>{line.number}</span
 									>{/if}
 								<!-- prettier-ignore -->
-								<span class="t">{#each line.parts as part, k (k)}{#if part.entry !== null}{@const id = part.entry}{@const e = entries.find((x) => x.id === id)}<button class="lemma" data-entry={id} class:marked={showDiff} class:corr={e && isCorrection(e)} class:on={selected === id} aria-expanded={selected === id} onclick={() => choose(selected === id ? null : id)}>{part.text}</button>{:else}{part.text}{/if}{/each}</span>
+								<span class="t">{#each line.parts as part, k (k)}{#if part.entry !== null}{@const id = part.entry}{@const e = entries.find((x) => x.id === id)}<button class="lemma" class:insert={part.text === ''} data-entry={id} class:marked={showDiff} class:corr={e && isCorrection(e)} class:on={selected === id} class:linked={hovered === id} aria-expanded={selected === id} aria-controls={selected === id ? 'readings' : undefined} aria-label={part.text === '' ? m.review.addedHere : undefined} onclick={() => (selected === id && pinned ? hide() : show(id, true))} onpointerenter={(ev) => pointAt(ev, id)} onpointerleave={pointAway}>{part.text}</button>{:else}{part.text}{/if}{/each}</span>
 							</div>
-							{#if open && line.number === open.line}
-								{@const e = open}
-								<div class="readings" role="group" aria-label={m.review.disagree}>
-									<div class="readings-head">
-										<span>{isCorrection(e) ? m.review.corrected_here : m.review.disagree}</span>
-										<span class="mono"
-											>{m.review.differenceOf(
-												entries.findIndex((x) => x.id === e.id) + 1,
-												entries.length
-											)}</span
-										>
-										<button
-											class="btn sm icon ghost"
-											aria-label={m.common.close}
-											onclick={() => choose(null)}><Icon name="close" size={14} /></button
-										>
-									</div>
-									<ul class="options">
-										<li class="option">
-											<span class="option-text in-text">{e.lemma || m.review.omitted}</span>
-											<span class="option-who mono"
-												>{corrected ? m.review.yourCorrections : (setups[0]?.label ?? '')}</span
-											>
-											<span class="chip">{m.review.inUse}</span>
-										</li>
-										{#each e.readings as r (r.siglum)}
-											<li class="option">
-												<span class="option-text">{r.text || m.review.omitted}</span>
-												<span class="option-who mono">{witnessName(r.siglum)}</span>
-												<button class="btn sm" onclick={() => useReading(e, r.text)}
-													>{m.review.useReading}</button
-												>
-											</li>
-										{/each}
-										<li class="option own">
-											<input
-												type="text"
-												bind:value={ownReading}
-												aria-label={m.review.ownReading}
-												placeholder={m.review.ownReadingPlaceholder}
-												onkeydown={(ev) => {
-													if (ev.key === 'Enter' && ownReading.trim()) {
-														ev.preventDefault();
-														void useReading(e, ownReading.trim());
-													}
-												}}
-											/>
-											<button
-												class="btn sm primary"
-												disabled={!ownReading.trim()}
-												onclick={() => useReading(e, ownReading.trim())}>{m.review.apply}</button
-											>
-										</li>
-									</ul>
-									<p class="readings-note">{m.review.readingKept}</p>
-								</div>
-							{/if}
 						{/each}
 					</div>
+					{#if open}
+						{@const e = open}
+						<div
+							bind:this={popover}
+							id="readings"
+							class="readings"
+							class:pinned
+							role="dialog"
+							tabindex="-1"
+							aria-label={m.review.pickReading}
+							style:top="{popAt?.top ?? 0}px"
+							style:left="{popAt?.left ?? 0}px"
+							style:visibility={popAt ? null : 'hidden'}
+							onpointerenter={() => clearTimeout(hoverTimer)}
+							onpointerleave={pointAway}
+							onfocusin={() => (pinned = true)}
+						>
+							<div class="readings-head">
+								<span>{isCorrection(e) ? m.review.corrected_here : m.review.disagree}</span>
+								<span class="mono"
+									>{m.review.differenceOf(
+										entries.findIndex((x) => x.id === e.id) + 1,
+										entries.length
+									)}</span
+								>
+								<button class="btn sm icon ghost" aria-label={m.common.close} onclick={hide}
+									><Icon name="close" size={14} /></button
+								>
+							</div>
+							<ul class="options">
+								<li class="option">
+									<span class="option-text in-text">{e.lemma || m.review.omitted}</span>
+									<span class="option-who mono"
+										>{corrected ? m.review.yourCorrections : (setups[0]?.label ?? '')}</span
+									>
+									<span class="option-end chip">{m.review.inUse}</span>
+								</li>
+								{#each e.readings as r (r.siglum)}
+									<li>
+										<button class="option pick" onclick={() => useReading(e, r.text)}>
+											<span class="option-text">{r.text || m.review.omitted}</span>
+											<span class="option-who mono">{witnessName(r.siglum)}</span>
+											<span class="option-end use">{m.review.useReading}</span>
+										</button>
+									</li>
+								{/each}
+								<li class="own">
+									<input
+										type="text"
+										bind:value={ownReading}
+										aria-label={m.review.ownReading}
+										placeholder={m.review.ownReadingPlaceholder}
+										onkeydown={(ev) => {
+											if (ev.key === 'Enter' && ownReading.trim()) {
+												ev.preventDefault();
+												void useReading(e, ownReading.trim());
+											}
+										}}
+									/>
+									<button
+										class="btn sm primary"
+										disabled={!ownReading.trim()}
+										onclick={() => useReading(e, ownReading.trim())}>{m.review.apply}</button
+									>
+								</li>
+							</ul>
+							<p class="readings-note">{m.review.readingKept}</p>
+						</div>
+					{/if}
 				{/if}
 
 				{#if !editing && recording}
@@ -571,6 +755,50 @@
 				{/if}
 			</div>
 		</section>
+
+		{#if comparing && compared}
+			<Splitter
+				label={m.review.resizeCompare}
+				position={cuts[1]}
+				onset={(p) => setCut(1, p)}
+				onreset={() => resetCut(1)}
+			/>
+			<section class="pane compare" aria-label={m.review.compareWith}>
+				<div class="bar">
+					<span class="witness-head">
+						<i class="siglum">{compared.siglum}</i>
+						{#if witnesses.length > 1}
+							<select
+								class="mono"
+								aria-label={m.review.compareWith}
+								value={compared.key}
+								onchange={(e) => (compareKey = e.currentTarget.value)}
+							>
+								{#each witnesses as w (w.key)}
+									<option value={w.key}>{witnessName(w.siglum)}</option>
+								{/each}
+							</select>
+						{:else}
+							<span class="mono">{witnessName(compared.siglum)}</span>
+						{/if}
+					</span>
+					<button
+						class="btn sm icon ghost close-compare"
+						aria-label={m.review.closeCompare}
+						title={m.review.closeCompare}
+						onclick={() => (layout.compare = false)}><Icon name="close" size={14} /></button
+					>
+				</div>
+				<div class="page" bind:this={comparePane}>
+					{#if compareParts}
+						<!-- prettier-ignore -->
+						<div class="w-text" lang="">{#each compareParts as part, k (k)}{#if part.entry !== null}{@const id = part.entry}<button class="w-mark" class:gap={part.text === ''} class:marked={showDiff} class:on={selected === id} class:linked={hovered === id} data-entry={id} aria-label={part.text === '' ? m.review.leftOutHere : undefined} onclick={() => choose(id)} onpointerenter={() => (hovered = id)} onpointerleave={() => (hovered = null)}>{part.text}</button>{:else}{part.text}{/if}{/each}</div>
+					{:else}
+						<p class="muted">{m.common.loading}</p>
+					{/if}
+				</div>
+			</section>
+		{/if}
 	</div>
 
 	{#if indices.length > 1}
@@ -660,15 +888,22 @@
 		justify-content: flex-end;
 		gap: var(--space-2);
 	}
+	/* A view that is on reads as pressed in, not as an action. */
+	.toggle[aria-pressed='true'] {
+		background: var(--wash);
+		border-color: var(--line-strong);
+	}
 	.error {
 		color: var(--danger-text);
 		padding: var(--space-2) var(--space-5);
 	}
 	.work {
+		--columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
 		flex: 1;
 		display: grid;
-		grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+		grid-template-columns: var(--columns);
 		min-height: 0;
+		position: relative;
 	}
 	.pane {
 		display: grid;
@@ -746,6 +981,7 @@
 	}
 	.zoom-btn.wide {
 		padding: 0 0.625rem;
+		white-space: nowrap;
 	}
 	.zoom-btn:hover {
 		background: rgba(255, 255, 255, 0.08);
@@ -778,12 +1014,15 @@
 	.diffs {
 		margin-left: auto;
 		display: inline-flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
 		align-items: center;
 		gap: var(--space-2);
 		font-size: var(--type-xs);
 		color: var(--text-secondary);
 	}
 	.count {
+		white-space: nowrap;
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-2);
@@ -804,6 +1043,7 @@
 	}
 	/* The text being checked. */
 	.page {
+		position: relative;
 		overflow: auto;
 		min-height: 0;
 		padding: var(--space-5) var(--space-6) var(--space-7) var(--space-4);
@@ -870,30 +1110,64 @@
 		text-underline-offset: 0.25em;
 	}
 	.lemma.on,
-	.lemma:hover {
+	.lemma:hover,
+	.lemma.linked {
 		box-shadow:
 			0 0 0 2px var(--marker),
 			0 0 0 3.5px var(--text-bright);
 	}
 	.lemma.corr.on,
-	.lemma.corr:hover {
+	.lemma.corr:hover,
+	.lemma.corr.linked {
 		box-shadow: none;
 		background: var(--hand-wash);
 	}
-	/* The readings of one difference, opened under its line. */
+	/* Where another model adds words: a mark the width of a narrow letter. */
+	.lemma.insert::before {
+		content: '';
+		display: inline-block;
+		width: 0.3em;
+		height: 1em;
+		margin: 0 0.1em;
+		vertical-align: -0.15em;
+		border-radius: 1px;
+		background: var(--text-faint);
+	}
+	.lemma.insert.marked {
+		box-shadow: none;
+		background: none;
+	}
+	.lemma.insert.marked::before {
+		background: var(--marker);
+		box-shadow: 0 0 0 1px var(--on-marker);
+	}
+	/* The readings of one difference, over the text under its words. */
 	.readings {
-		margin: var(--space-2) 0 var(--space-3) calc(2.25rem + var(--space-3));
-		max-width: 30rem;
+		position: absolute;
+		z-index: 8;
+		width: min(25rem, calc(100% - 16px));
 		padding: var(--space-3);
 		border-radius: var(--radius-card);
 		background: var(--surface-2);
-		box-shadow: var(--shadow-pop);
+		box-shadow: var(--shadow-flyout);
 		font-family: var(--font-ui);
 		font-size: var(--type-sm);
 		line-height: 1.45;
 		color: var(--text-bright);
 		display: grid;
 		gap: var(--space-3);
+		animation: rise 120ms ease-out;
+	}
+	@keyframes rise {
+		from {
+			opacity: 0;
+			transform: translateY(-3px);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.readings {
+			animation: none;
+		}
 	}
 	.readings-head {
 		display: flex;
@@ -911,17 +1185,19 @@
 		padding: 0;
 		border: 1px solid var(--line);
 		border-radius: var(--radius-control);
+		overflow: hidden;
 	}
-	.option {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto auto;
-		align-items: center;
-		gap: var(--space-3);
-		padding: var(--space-2) var(--space-3);
+	.options > li + li {
 		border-top: 1px solid var(--line-soft);
 	}
-	.option:first-child {
-		border-top: 0;
+	/* A reading: its words over who reads them, and what choosing it does. */
+	.option {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		column-gap: var(--space-3);
+		width: 100%;
+		padding: var(--space-2) var(--space-3);
 	}
 	.option-text {
 		font-family: var(--font-text);
@@ -932,15 +1208,49 @@
 		font-weight: 600;
 	}
 	.option-who {
+		grid-column: 1;
 		font-size: var(--type-xs);
 		color: var(--text-muted);
-		max-width: 12rem;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.option.own {
+	.option-end {
+		grid-column: 2;
+		grid-row: 1 / span 2;
+	}
+	.pick {
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+		transition: background-color 120ms ease-out;
+	}
+	.pick:hover,
+	.pick:focus-visible {
+		background: var(--wash);
+	}
+	.pick:focus-visible {
+		outline-offset: -2px;
+	}
+	.use {
+		font-size: var(--type-xs);
+		font-weight: 500;
+		color: var(--text-secondary);
+	}
+	.pick:hover .use,
+	.pick:focus-visible .use {
+		color: var(--text-bright);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+	.own {
+		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
+		gap: var(--space-2);
+		padding: var(--space-2) var(--space-3);
 	}
 	.own input {
 		min-height: var(--control-sm);
@@ -950,6 +1260,76 @@
 	.readings-note {
 		font-size: var(--type-xs);
 		color: var(--text-muted);
+	}
+	/* The compared text: another set-up's own words, its differences marked as in the text. */
+	.compare {
+		grid-template-rows: auto minmax(0, 1fr);
+		border-left: 1px solid var(--line);
+		background: var(--paper);
+	}
+	.compare select {
+		min-height: var(--control-sm);
+		max-width: 16rem;
+		font-size: var(--type-xs);
+	}
+	.close-compare {
+		margin-left: auto;
+	}
+	.compare .page {
+		padding-left: var(--space-5);
+	}
+	.w-text {
+		max-width: 42rem;
+		font-family: var(--font-text);
+		font-size: var(--type-reading);
+		line-height: 1.7;
+		color: var(--text-body);
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+	.w-mark {
+		display: inline;
+		padding: 0;
+		border: 0;
+		border-radius: 2px;
+		background: none;
+		color: inherit;
+		font: inherit;
+		line-height: inherit;
+		text-align: inherit;
+		white-space: pre-wrap;
+		cursor: pointer;
+	}
+	.w-mark.marked {
+		background: var(--marker);
+		color: var(--on-marker);
+		box-shadow: 0 0 0 2px var(--marker);
+	}
+	.w-mark.on,
+	.w-mark:hover,
+	.w-mark.linked {
+		box-shadow:
+			0 0 0 2px var(--marker),
+			0 0 0 3.5px var(--text-bright);
+	}
+	/* Where this model leaves out words of the text. */
+	.w-mark.gap::before {
+		content: '';
+		display: inline-block;
+		width: 0.3em;
+		height: 1em;
+		margin: 0 0.1em;
+		vertical-align: -0.15em;
+		border-radius: 1px;
+		background: var(--text-faint);
+	}
+	.w-mark.gap.marked {
+		background: none;
+		box-shadow: none;
+	}
+	.w-mark.gap.marked::before {
+		background: var(--marker);
+		box-shadow: 0 0 0 1px var(--on-marker);
 	}
 	.models {
 		margin-top: var(--space-6);
@@ -1122,22 +1502,30 @@
 		height: 100%;
 		background: var(--ok);
 	}
+	/* A narrow window: the panes stack, at fixed shares, with no handles between them. */
 	@media (max-width: 1000px) {
 		.work {
 			grid-template-columns: 1fr;
 			grid-template-rows: minmax(16rem, 42vh) minmax(0, 1fr);
 		}
+		.work.comparing {
+			grid-template-rows: minmax(14rem, 34vh) minmax(0, 1fr) minmax(0, 1fr);
+		}
+		.work :global(.splitter) {
+			display: none;
+		}
 		.source {
 			border-right: 0;
 			border-bottom: 1px solid var(--line);
+		}
+		.compare {
+			border-left: 0;
+			border-top: 1px solid var(--line);
 		}
 	}
 	@media (max-width: 820px) {
 		.page {
 			padding: var(--space-4) var(--space-4) var(--space-6) var(--space-2);
-		}
-		.readings {
-			margin-left: 0;
 		}
 		.tally {
 			display: none;

@@ -523,6 +523,12 @@ export function mockView(): View | null {
 
 export function installMock(): void {
 	const params = new URLSearchParams(location.search);
+	// `compare`: open the review with the compared text beside it.
+	if (params.has('compare'))
+		localStorage.setItem(
+			'scriptorium.review.layout',
+			JSON.stringify({ two: 0.475, three: [0.33, 0.665], compare: true })
+		);
 	// `open=deux`: open the readings of the highlighted words with that text.
 	const open = params.get('open');
 	if (open) {
