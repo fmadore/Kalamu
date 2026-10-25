@@ -1,6 +1,7 @@
-/* Design tokens, one name per role, following Live Translation's scheme: a 4px spacing scale in
-   rem, Windows 11 radii, three surfaces, four text levels, and hues with -wash / -chip /
-   -border steps. Scriptorium's identity is ink on paper: the app icon's navy and gold. */
+/* Design tokens, one name per role. The world is the critical edition: a white page, a bookcloth
+   blue shell, black text set in EB Garamond, rubric red for sigla, line numbers and corrections,
+   and Source Sans 3 for every control. Sections are divided by rules, not boxed in cards.
+   Recorded in DESIGN.md. */
 
 :root {
 	color-scheme: light;
@@ -11,8 +12,9 @@
 	--space-4: 1rem;
 	--space-5: 1.5rem;
 	--space-6: 2rem;
+	--space-7: 3rem;
 
-	--radius-control: 4px;
+	--radius-control: 6px;
 	--radius-card: 6px;
 	--radius-overlay: 8px;
 	--radius-pill: 999px;
@@ -21,137 +23,165 @@
 	--control-md: 2.25rem;
 	--control-lg: 2.5rem;
 
-	--surface-0: #f4f1ea;
-	--surface-1: #fbf9f4;
+	/* The page and the panes on it. */
+	--surface-0: #ffffff;
+	--surface-1: #f5f6f8;
 	--surface-2: #ffffff;
-	--paper: #fffdf8;
+	--paper: #ffffff;
+	/* Behind a scan or a player, so the source reads as an object on a table. */
+	--desk: #ececec;
 
-	--line: #e3ddcf;
-	--line-strong: #d3cbb8;
-	--line-hover: #b5ab94;
+	--line: #e2e3e7;
+	--line-strong: #c6c9d1;
+	--line-hover: #9aa0ad;
+	/* The rule that opens a section or an apparatus. */
+	--rule: #111111;
 
-	--accent: #1f3a5f;
-	--accent-soft: #2f5a8f;
+	/* Bookcloth: the shell, primary actions, selection. */
+	--shell: #1d2b4f;
+	--shell-2: #2a3a63;
+	--shell-line: #34446d;
+	--on-shell: #ffffff;
+	--on-shell-muted: rgba(255, 255, 255, 0.78);
+
+	--accent: #1d2b4f;
+	--accent-soft: #2a3a63;
 	--on-accent: #ffffff;
-	--accent-wash: rgba(31, 58, 95, 0.07);
-	--accent-chip: rgba(31, 58, 95, 0.12);
-	--accent-border: rgba(31, 58, 95, 0.35);
+	--accent-wash: rgba(29, 43, 79, 0.06);
+	--accent-chip: rgba(29, 43, 79, 0.1);
+	--accent-border: rgba(29, 43, 79, 0.35);
 
-	--gold: #9a6a12;
-	--gold-wash: rgba(214, 158, 46, 0.12);
+	/* Rubric: sigla, line numbers, the researcher's corrections. */
+	--rubric: #b3261e;
+	/* A highlighted lemma, a selected line. */
+	--tint: #dce3f2;
 
-	--ok: #2e7d4f;
-	--ok-wash: rgba(46, 125, 79, 0.1);
+	--ok: #2e6b47;
+	--ok-wash: rgba(46, 107, 71, 0.1);
 
-	--warn: #9a5b00;
+	--warn: #8a5300;
 	--warn-wash: rgba(214, 140, 30, 0.12);
-	--warn-border: rgba(214, 140, 30, 0.45);
+	--warn-border: rgba(160, 98, 10, 0.45);
 
-	--danger: #b3261e;
-	--danger-wash: rgba(179, 38, 30, 0.08);
-	--danger-border: rgba(179, 38, 30, 0.4);
+	--danger: #a8201a;
+	--danger-wash: rgba(168, 32, 26, 0.07);
+	--danger-border: rgba(168, 32, 26, 0.4);
 
-	--diff-added: rgba(46, 125, 79, 0.18);
-	--diff-removed: rgba(179, 38, 30, 0.16);
+	--diff-added: #dce3f2;
+	--diff-removed: rgba(179, 38, 30, 0.14);
 
-	--text-bright: #14181f;
-	--text-body: #23282f;
-	--text-secondary: #4a515c;
-	--text-muted: #6a7180;
+	--text-bright: #0f1115;
+	--text-body: #1b1e24;
+	--text-secondary: #464b55;
+	--text-muted: #5f636d;
 
-	--modal-scrim: rgba(20, 22, 26, 0.45);
-	--shadow-flyout: 0 18px 48px -16px rgba(20, 24, 31, 0.35);
-	--shadow-card: 0 1px 2px rgba(20, 24, 31, 0.06);
+	--modal-scrim: rgba(15, 20, 35, 0.45);
+	--shadow-flyout: 0 18px 48px -16px rgba(15, 20, 35, 0.35);
 
-	--focus: #2f5a8f;
+	--focus: #2a3a63;
 	--focus-width: 2px;
 	--focus-offset: 2px;
 
-	--font-ui: 'Archivo', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
-	--font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
-	--font-text: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+	--font-ui: 'Source Sans 3 Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+	/* Garamond for Latin, Greek and Cyrillic; Windows' Times New Roman for Arabic script. */
+	--font-text: 'EB Garamond Variable', Garamond, 'Times New Roman', serif;
+	--font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
 	--type-xs: 0.75rem;
 	--type-sm: 0.8125rem;
 	--type-md: 0.9375rem;
 	--type-lg: 1.125rem;
 	--type-xl: 1.5rem;
+	--type-title: 2rem;
+	--type-reading: 1.3125rem;
 }
 
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
 		color-scheme: dark;
-		--surface-0: #101317;
-		--surface-1: #151a20;
-		--surface-2: #1c222a;
-		--paper: #1a1f26;
-		--line: #262d36;
-		--line-strong: #313945;
-		--line-hover: #46505e;
-		--accent: #8fb4e8;
-		--accent-soft: #b3cdf2;
-		--on-accent: #0c1726;
-		--accent-wash: rgba(143, 180, 232, 0.08);
-		--accent-chip: rgba(143, 180, 232, 0.16);
-		--accent-border: rgba(143, 180, 232, 0.4);
-		--gold: #e2b65a;
-		--gold-wash: rgba(226, 182, 90, 0.12);
-		--ok: #6fcf97;
-		--ok-wash: rgba(111, 207, 151, 0.12);
-		--warn: #f2b45c;
-		--warn-wash: rgba(242, 180, 92, 0.12);
-		--warn-border: rgba(242, 180, 92, 0.4);
-		--danger: #ff8a80;
-		--danger-wash: rgba(255, 138, 128, 0.1);
-		--danger-border: rgba(255, 138, 128, 0.4);
-		--diff-added: rgba(111, 207, 151, 0.22);
-		--diff-removed: rgba(255, 138, 128, 0.22);
-		--text-bright: #f2f4f7;
-		--text-body: #e3e6eb;
-		--text-secondary: #b9c0ca;
-		--text-muted: #8e96a3;
-		--modal-scrim: rgba(5, 6, 8, 0.7);
+		--surface-0: #11151f;
+		--surface-1: #161b27;
+		--surface-2: #1b2130;
+		--paper: #161b27;
+		--desk: #0c0f16;
+		--line: #283044;
+		--line-strong: #36405a;
+		--line-hover: #4d5878;
+		--rule: #c9cfdc;
+		--shell: #18264a;
+		--shell-2: #24355f;
+		--shell-line: #2d3e69;
+		--on-shell: #f2f4f8;
+		--on-shell-muted: rgba(242, 244, 248, 0.74);
+		--accent: #afc3ec;
+		--accent-soft: #c9d6f2;
+		--on-accent: #0f182b;
+		--accent-wash: rgba(175, 195, 236, 0.07);
+		--accent-chip: rgba(175, 195, 236, 0.14);
+		--accent-border: rgba(175, 195, 236, 0.4);
+		--rubric: #ec8478;
+		--tint: #2a3963;
+		--ok: #7fcf9f;
+		--ok-wash: rgba(127, 207, 159, 0.12);
+		--warn: #f0b764;
+		--warn-wash: rgba(240, 183, 100, 0.12);
+		--warn-border: rgba(240, 183, 100, 0.4);
+		--danger: #ff958a;
+		--danger-wash: rgba(255, 149, 138, 0.1);
+		--danger-border: rgba(255, 149, 138, 0.4);
+		--diff-added: #2a3963;
+		--diff-removed: rgba(236, 132, 120, 0.22);
+		--text-bright: #f2f4f8;
+		--text-body: #dde1e8;
+		--text-secondary: #b4bbc8;
+		--text-muted: #949cab;
+		--modal-scrim: rgba(3, 5, 10, 0.7);
 		--shadow-flyout: 0 24px 64px -16px rgba(0, 0, 0, 0.7);
-		--shadow-card: none;
-		--focus: #b3cdf2;
+		--focus: #c9d6f2;
 	}
 }
 
 :root[data-theme='dark'] {
 	color-scheme: dark;
-	--surface-0: #101317;
-	--surface-1: #151a20;
-	--surface-2: #1c222a;
-	--paper: #1a1f26;
-	--line: #262d36;
-	--line-strong: #313945;
-	--line-hover: #46505e;
-	--accent: #8fb4e8;
-	--accent-soft: #b3cdf2;
-	--on-accent: #0c1726;
-	--accent-wash: rgba(143, 180, 232, 0.08);
-	--accent-chip: rgba(143, 180, 232, 0.16);
-	--accent-border: rgba(143, 180, 232, 0.4);
-	--gold: #e2b65a;
-	--gold-wash: rgba(226, 182, 90, 0.12);
-	--ok: #6fcf97;
-	--ok-wash: rgba(111, 207, 151, 0.12);
-	--warn: #f2b45c;
-	--warn-wash: rgba(242, 180, 92, 0.12);
-	--warn-border: rgba(242, 180, 92, 0.4);
-	--danger: #ff8a80;
-	--danger-wash: rgba(255, 138, 128, 0.1);
-	--danger-border: rgba(255, 138, 128, 0.4);
-	--diff-added: rgba(111, 207, 151, 0.22);
-	--diff-removed: rgba(255, 138, 128, 0.22);
-	--text-bright: #f2f4f7;
-	--text-body: #e3e6eb;
-	--text-secondary: #b9c0ca;
-	--text-muted: #8e96a3;
-	--modal-scrim: rgba(5, 6, 8, 0.7);
+	--surface-0: #11151f;
+	--surface-1: #161b27;
+	--surface-2: #1b2130;
+	--paper: #161b27;
+	--desk: #0c0f16;
+	--line: #283044;
+	--line-strong: #36405a;
+	--line-hover: #4d5878;
+	--rule: #c9cfdc;
+	--shell: #18264a;
+	--shell-2: #24355f;
+	--shell-line: #2d3e69;
+	--on-shell: #f2f4f8;
+	--on-shell-muted: rgba(242, 244, 248, 0.74);
+	--accent: #afc3ec;
+	--accent-soft: #c9d6f2;
+	--on-accent: #0f182b;
+	--accent-wash: rgba(175, 195, 236, 0.07);
+	--accent-chip: rgba(175, 195, 236, 0.14);
+	--accent-border: rgba(175, 195, 236, 0.4);
+	--rubric: #ec8478;
+	--tint: #2a3963;
+	--ok: #7fcf9f;
+	--ok-wash: rgba(127, 207, 159, 0.12);
+	--warn: #f0b764;
+	--warn-wash: rgba(240, 183, 100, 0.12);
+	--warn-border: rgba(240, 183, 100, 0.4);
+	--danger: #ff958a;
+	--danger-wash: rgba(255, 149, 138, 0.1);
+	--danger-border: rgba(255, 149, 138, 0.4);
+	--diff-added: #2a3963;
+	--diff-removed: rgba(236, 132, 120, 0.22);
+	--text-bright: #f2f4f8;
+	--text-body: #dde1e8;
+	--text-secondary: #b4bbc8;
+	--text-muted: #949cab;
+	--modal-scrim: rgba(3, 5, 10, 0.7);
 	--shadow-flyout: 0 24px 64px -16px rgba(0, 0, 0, 0.7);
-	--shadow-card: none;
-	--focus: #b3cdf2;
+	--focus: #c9d6f2;
 }
 
 *,
@@ -170,6 +200,14 @@ body {
 	font-size: var(--type-md);
 	line-height: 1.45;
 	-webkit-font-smoothing: antialiased;
+	accent-color: var(--accent);
+	caret-color: var(--rubric);
+	scrollbar-color: var(--line-strong) transparent;
+}
+
+::selection {
+	background: var(--tint);
+	color: var(--text-bright);
 }
 
 h1,
@@ -178,19 +216,21 @@ h3 {
 	color: var(--text-bright);
 	margin: 0;
 	line-height: 1.2;
-	font-weight: 600;
+	font-family: var(--font-text);
+	font-weight: 500;
 }
 
 h1 {
-	font-size: var(--type-xl);
+	font-size: var(--type-title);
+	letter-spacing: 0.005em;
 }
 
 h2 {
-	font-size: var(--type-lg);
+	font-size: 1.375rem;
 }
 
 h3 {
-	font-size: var(--type-md);
+	font-size: var(--type-lg);
 }
 
 p {
@@ -199,6 +239,7 @@ p {
 
 a {
 	color: var(--accent-soft);
+	text-underline-offset: 0.18em;
 }
 
 :focus-visible {
@@ -227,8 +268,11 @@ textarea {
 	background: var(--surface-2);
 	color: var(--text-body);
 	cursor: pointer;
-	font-weight: 500;
+	font-weight: 600;
 	white-space: nowrap;
+	transition:
+		background-color 120ms ease-out,
+		border-color 120ms ease-out;
 }
 
 .btn:hover:not(:disabled) {
@@ -280,7 +324,7 @@ textarea {
 .label {
 	font-size: var(--type-sm);
 	color: var(--text-secondary);
-	font-weight: 500;
+	font-weight: 600;
 }
 
 input[type='text'],
@@ -295,6 +339,11 @@ textarea {
 	background: var(--surface-2);
 }
 
+input::placeholder,
+textarea::placeholder {
+	color: var(--text-muted);
+}
+
 textarea {
 	padding: var(--space-3);
 	line-height: 1.55;
@@ -307,11 +356,15 @@ textarea:hover {
 	border-color: var(--line-hover);
 }
 
+/* A section of a page: opened by a rule, as an edition opens its apparatus, never boxed. */
 .card {
-	background: var(--surface-1);
-	border: 1px solid var(--line);
-	border-radius: var(--radius-card);
-	box-shadow: var(--shadow-card);
+	background: transparent;
+	border-top: 1px solid var(--rule);
+}
+
+.card > h2:first-child,
+.card h2:first-of-type {
+	font-size: 1.375rem;
 }
 
 .muted {
@@ -323,31 +376,139 @@ textarea:hover {
 	font-size: 0.92em;
 }
 
+.num {
+	font-variant-numeric: tabular-nums;
+}
+
+/* Small capitals in the text face: running heads, sigla. */
+.smcp {
+	font-family: var(--font-text);
+	font-variant-caps: all-small-caps;
+	letter-spacing: 0.08em;
+}
+
+/* A siglum: the letter that names a witness (a set-up), or "corr." for the researcher. */
+.siglum {
+	font-family: var(--font-text);
+	font-style: normal;
+	font-weight: 600;
+	font-variant-caps: all-small-caps;
+	letter-spacing: 0.04em;
+	color: var(--rubric);
+	font-size: 1.2em;
+	line-height: 1;
+}
+
 .chip {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--space-1);
-	padding: 1px var(--space-2);
-	border-radius: var(--radius-pill);
-	background: var(--accent-chip);
-	color: var(--text-secondary);
+	padding: 0 var(--space-2);
+	border: 1px solid var(--accent-border);
+	border-radius: 4px;
+	color: var(--accent);
 	font-size: var(--type-xs);
-	font-weight: 500;
+	font-weight: 600;
+	line-height: 1.5;
+	white-space: nowrap;
 }
 
 .chip.warn {
-	background: var(--warn-wash);
+	border-color: var(--warn-border);
 	color: var(--warn);
 }
 
 .chip.ok {
-	background: var(--ok-wash);
+	border-color: currentColor;
 	color: var(--ok);
 }
 
 .chip.danger {
-	background: var(--danger-wash);
+	border-color: var(--danger-border);
 	color: var(--danger);
+}
+
+/* The coloured band at the top of every screen: the title and its actions. */
+.masthead {
+	background: var(--shell);
+	color: var(--on-shell);
+	padding: var(--space-5) var(--space-6) var(--space-4);
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--space-4);
+	border-bottom: 1px solid var(--shell-line);
+	flex-wrap: wrap;
+}
+
+.masthead > :first-child {
+	min-width: 0;
+}
+
+.masthead h1 {
+	color: var(--on-shell);
+}
+
+.masthead .lede {
+	color: var(--on-shell-muted);
+	font-size: var(--type-md);
+}
+
+.masthead a,
+.masthead .back {
+	color: var(--on-shell-muted);
+	text-decoration: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	font-size: var(--type-sm);
+}
+
+.masthead a:hover,
+.masthead .back:hover {
+	color: var(--on-shell);
+	text-decoration: underline;
+}
+
+.masthead .btn:not(.primary) {
+	background: transparent;
+	border-color: rgba(255, 255, 255, 0.42);
+	color: var(--on-shell);
+}
+
+.masthead .btn.primary {
+	background: var(--on-shell);
+	border-color: var(--on-shell);
+	color: var(--shell);
+}
+
+.masthead select {
+	border-color: var(--on-shell);
+	background: var(--surface-2);
+	color: var(--text-body);
+}
+
+/* The page below a masthead. */
+.sheet {
+	padding: var(--space-5) var(--space-6) var(--space-7);
+	display: grid;
+	gap: var(--space-6);
+	max-width: 64rem;
+}
+
+/* Narrow windows: a window snapped beside another, or a small laptop at high scaling. */
+@media (max-width: 820px) {
+	h1 {
+		font-size: 1.625rem;
+	}
+	.masthead {
+		padding: var(--space-4) var(--space-4) var(--space-3);
+	}
+	.sheet {
+		padding: var(--space-4) var(--space-4) var(--space-6);
+		gap: var(--space-5);
+	}
 }
 
 .sr-only {

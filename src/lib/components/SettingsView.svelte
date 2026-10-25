@@ -42,9 +42,14 @@
 	}
 </script>
 
-<div class="page">
-	<h1>{m.settings.title}</h1>
+<header class="masthead">
+	<div>
+		<h1>{m.settings.title}</h1>
+		<p class="lede">{m.settings.lede}</p>
+	</div>
+</header>
 
+<div class="sheet settings">
 	<section class="card block" aria-labelledby="keys-title">
 		<h2 id="keys-title">{m.settings.keysTitle}</h2>
 		<p class="muted small">{m.settings.keysHint}</p>
@@ -164,13 +169,11 @@
 </div>
 
 <style>
-	.page {
-		display: grid;
-		gap: var(--space-4);
+	.settings {
 		max-width: 52rem;
 	}
 	.block {
-		padding: var(--space-4) var(--space-5);
+		padding: var(--space-4) 0 0;
 		display: grid;
 		gap: var(--space-3);
 	}
@@ -217,5 +220,14 @@
 		display: inline-flex;
 		gap: var(--space-2);
 		align-items: center;
+	}
+	@media (max-width: 700px) {
+		.key {
+			grid-template-columns: 1fr;
+		}
+		.key-actions,
+		.key p {
+			grid-column: 1;
+		}
 	}
 </style>

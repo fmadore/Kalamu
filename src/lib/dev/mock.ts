@@ -9,6 +9,7 @@ import type { JobSummary } from '../bindings/JobSummary.js';
 import type { PieceView } from '../bindings/PieceView.js';
 import type { Preset } from '../bindings/Preset.js';
 import type { Settings } from '../bindings/Settings.js';
+import type { View } from '../state.svelte.js';
 import catalogJson from '../../../crates/catalog/catalog.json';
 
 const catalog = catalogJson as unknown as Catalog;
@@ -19,7 +20,7 @@ const settings: Settings = {
 	audio_formats: ['txt', 'docx', 'srt', 'json'],
 	destination: { kind: 'beside_sources' },
 	export_options: { piece_markers: true, speaker_labels: true, timestamps: true },
-	theme: 'system',
+	theme: new URLSearchParams(location.search).get('theme') ?? 'system',
 	refresh_catalog: false
 };
 
@@ -254,6 +255,51 @@ const PAGE_PDF = btoa(
 	'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 88>>stream\nBT /F1 18 Tf 72 760 Td (BULLETIN DE L AFRIQUE OCCIDENTALE) Tj 0 -30 Td (Dakar, le 3 mai 1957) Tj ET\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Times-Roman>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF'
 );
 
+/** A word diff like the engine's, so the review's apparatus shows real variants. */
+function wordDiff(left: string, right: string): { kind: string; text: string }[] {
+	const a = left.split(/(\s+)/).filter(Boolean);
+	const b = right.split(/(\s+)/).filter(Boolean);
+	const lcs = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+	for (let i = a.length - 1; i >= 0; i--)
+		for (let j = b.length - 1; j >= 0; j--)
+			lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+	const out: { kind: string; text: string }[] = [];
+	const push = (kind: string, text: string) => {
+		const last = out[out.length - 1];
+		if (last?.kind === kind) last.text += text;
+		else out.push({ kind, text });
+	};
+	let i = 0;
+	let j = 0;
+	while (i < a.length || j < b.length) {
+		if (i < a.length && j < b.length && a[i] === b[j]) push('same', (i++, j++, a[i - 1]));
+		else if (j < b.length && (i >= a.length || lcs[i][j + 1] >= lcs[i + 1][j]))
+			push('added', b[j++]);
+		else push('removed', a[i++]);
+	}
+	return out;
+}
+
+/** The screen to open on, from `?mock&view=…`, for screenshots of each screen. */
+export function mockView(): View | null {
+	switch (new URLSearchParams(location.search).get('view') ?? '') {
+		case 'jobs':
+			return { name: 'jobs', jobId: job.id };
+		case 'review':
+			return { name: 'review', jobId: job.id, sourceId: source.id };
+		case 'review-audio':
+			return { name: 'review', jobId: audioJob.id, sourceId: recording.id };
+		case 'prompts':
+			return { name: 'prompts' };
+		case 'settings':
+			return { name: 'settings' };
+		case 'new':
+			return { name: 'new' };
+		default:
+			return null;
+	}
+}
+
 export function installMock(): void {
 	mockWindows('main');
 	mockIPC((cmd, args) => {
@@ -328,17 +374,8 @@ export function installMock(): void {
 					],
 					pages: []
 				};
-			case 'diff_texts': {
-				const left = String(a.left ?? '');
-				const right = String(a.right ?? '');
-				if (left === right) return [{ kind: 'same', text: right }];
-				return [
-					{ kind: 'same', text: right.slice(0, 40) },
-					{ kind: 'removed', text: '3 mai' },
-					{ kind: 'added', text: '5 mai' },
-					{ kind: 'same', text: right.slice(46) }
-				];
-			}
+			case 'diff_texts':
+				return wordDiff(String(a.left ?? ''), String(a.right ?? ''));
 			case 'estimate_cost':
 				return (a.request as { setups: { provider: string; model: string }[] }).setups.map((s) => ({
 					provider: s.provider,

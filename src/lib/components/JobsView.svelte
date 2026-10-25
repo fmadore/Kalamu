@@ -13,9 +13,15 @@
 	const resumable = $derived(app.jobs.filter((j) => unfinished(j.status)));
 </script>
 
+<header class="masthead">
+	<div>
+		<h1 id="jobs-title">{m.jobs.title}</h1>
+		<p class="lede">{m.jobs.lede(app.jobs.length)}</p>
+	</div>
+</header>
+
 <div class="layout">
 	<section class="list" aria-labelledby="jobs-title">
-		<h1 id="jobs-title">{m.jobs.title}</h1>
 		{#if resumable.length > 0 && app.info?.interrupted.length}
 			<div class="notice">
 				<strong>{m.jobs.resumeTitle}</strong>
@@ -29,7 +35,7 @@
 			{#each app.jobs as job (job.id)}
 				<li>
 					<button
-						class="job card"
+						class="job"
 						class:active={job.id === selected}
 						aria-current={job.id === selected ? 'true' : undefined}
 						onclick={() => go({ name: 'jobs', jobId: job.id })}
@@ -76,8 +82,9 @@
 	.layout {
 		display: grid;
 		grid-template-columns: minmax(18rem, 24rem) 1fr;
-		gap: var(--space-5);
+		gap: var(--space-6);
 		align-items: start;
+		padding: var(--space-5) var(--space-6) var(--space-7);
 	}
 	.list {
 		display: grid;
@@ -87,8 +94,10 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		display: grid;
-		gap: var(--space-2);
+		border-top: 1px solid var(--rule);
+	}
+	li {
+		border-bottom: 1px solid var(--line);
 	}
 	.job {
 		width: 100%;
@@ -97,10 +106,22 @@
 		display: grid;
 		gap: var(--space-2);
 		cursor: pointer;
+		border: 0;
+		background: transparent;
+		color: var(--text-body);
+		transition: background-color 120ms ease-out;
+	}
+	.job:hover {
+		background: var(--accent-wash);
 	}
 	.job.active {
-		border-color: var(--accent-border);
-		box-shadow: inset 0 0 0 1px var(--accent-border);
+		background: var(--tint);
+	}
+	.name {
+		font-family: var(--font-text);
+		font-size: 1.125rem;
+		font-weight: 500;
+		color: var(--text-bright);
 	}
 	.top {
 		display: flex;
@@ -110,6 +131,9 @@
 	}
 	.name {
 		overflow-wrap: anywhere;
+	}
+	.meta {
+		font-variant-numeric: tabular-nums;
 	}
 	.meta {
 		display: flex;
@@ -131,5 +155,19 @@
 	.detail {
 		position: sticky;
 		top: 0;
+	}
+	@media (max-width: 1100px) {
+		.layout {
+			grid-template-columns: 1fr;
+		}
+		.detail {
+			position: static;
+		}
+	}
+	@media (max-width: 820px) {
+		.layout {
+			padding: var(--space-4) var(--space-4) var(--space-6);
+			gap: var(--space-5);
+		}
 	}
 </style>

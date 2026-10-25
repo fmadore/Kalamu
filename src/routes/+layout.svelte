@@ -1,8 +1,7 @@
 <script lang="ts">
-	import '@fontsource/archivo/400.css';
-	import '@fontsource/archivo/500.css';
-	import '@fontsource/archivo/600.css';
-	import '@fontsource/ibm-plex-mono/400.css';
+	import '@fontsource-variable/eb-garamond/wght.css';
+	import '@fontsource-variable/eb-garamond/wght-italic.css';
+	import '@fontsource-variable/source-sans-3/wght.css';
 	import '../app.css';
 
 	let { children } = $props();

@@ -52,10 +52,15 @@
 	});
 </script>
 
+<header class="masthead">
+	<div>
+		<h1 id="prompts-title">{m.prompts.title}</h1>
+		<p class="lede">{m.prompts.hint}</p>
+	</div>
+</header>
+
 <div class="layout">
 	<section class="list" aria-labelledby="prompts-title">
-		<h1 id="prompts-title">{m.prompts.title}</h1>
-		<p class="muted small">{m.prompts.hint}</p>
 		<div class="row">
 			<button
 				class="btn sm"
@@ -167,9 +172,10 @@
 	.layout {
 		display: grid;
 		grid-template-columns: minmax(16rem, 22rem) 1fr;
-		gap: var(--space-5);
+		gap: var(--space-6);
 		align-items: start;
-		height: calc(100vh - 2 * var(--space-5));
+		padding: var(--space-5) var(--space-6);
+		height: calc(100vh - 7.5rem);
 	}
 	.list {
 		display: grid;
@@ -212,13 +218,14 @@
 		background: var(--accent-wash);
 	}
 	.item.active {
-		background: var(--accent-chip);
+		background: var(--tint);
+		color: var(--text-bright);
 	}
 	.editor {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-3);
-		padding: var(--space-4) var(--space-5);
+		padding: var(--space-4) 0 0;
 		height: 100%;
 		min-height: 0;
 	}
@@ -241,5 +248,19 @@
 		display: flex;
 		gap: var(--space-2);
 		align-items: center;
+	}
+	@media (max-width: 1000px) {
+		.layout {
+			grid-template-columns: 1fr;
+			height: auto;
+		}
+		.list {
+			max-height: none;
+		}
+	}
+	@media (max-width: 820px) {
+		.layout {
+			padding: var(--space-4);
+		}
 	}
 </style>

@@ -70,7 +70,7 @@
 		overflow: auto;
 		height: 100%;
 		padding: var(--space-3);
-		background: var(--surface-0);
+		background: transparent;
 	}
 	canvas,
 	img {

@@ -1,7 +1,11 @@
 <script lang="ts">
+	// The review: the source beside the reading text, set as an edition. The first set-up's text
+	// (with the researcher's corrections) is the reading text; where the other set-ups, or the
+	// model under a correction, read differently, the apparatus below the text says so, by line.
 	import { onMount } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
 	import PageImage from './PageImage.svelte';
+	import { apparatus, lines, numbered, type Entry } from '#lib/apparatus.js';
 	import type { ComparisonReport } from '#lib/bindings/ComparisonReport.js';
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
 	import type { Job } from '#lib/bindings/Job.js';
@@ -21,27 +25,72 @@
 	let index = $state(0);
 	let preview = $state<PagePreview | null>(null);
 	let zoom = $state(1);
-	let editing = $state<Record<string, string>>({});
+	let editing = $state<{ setupId: string; text: string } | null>(null);
 	let showDiff = $state(true);
-	let diffs = $state<Record<string, DiffSpan[]>>({});
+	let spans = $state<Record<string, DiffSpan[]>>({});
 	let report = $state<ComparisonReport | null>(null);
 	let error = $state<string | null>(null);
+	let hovered = $state<number | null>(null);
 
 	const source = $derived(job?.sources.find((s) => s.id === sourceId));
 	const indices = $derived([...new Set(views.map((v) => v.index))].sort((a, b) => a - b));
 	const current = $derived(views.filter((v) => v.index === index));
-	const comparison = $derived((job?.setups.length ?? 0) > 1);
+	const setups = $derived(job?.setups ?? []);
 	const recording = $derived(source?.kind === 'audio' || source?.kind === 'video');
-	/** Timed lines to show next to the player: from the first set-up that has any. */
 	const timed = $derived(current.find((v) => v.segments.length > 0) ?? current[0]);
 
-	function viewFor(setup: Setup): PieceView | undefined {
-		return current.find((v) => v.setup_id === setup.id);
+	/** a, b, c…: the letter that names each set-up as a witness. */
+	const siglum = (i: number) => String.fromCharCode(97 + i);
+
+	function viewFor(setup: Setup | undefined): PieceView | undefined {
+		return setup ? current.find((v) => v.setup_id === setup.id) : undefined;
 	}
 
 	function shownText(v: PieceView | undefined): string {
 		return v?.corrected_text ?? v?.ai_text ?? '';
 	}
+
+	const lead = $derived(viewFor(setups[0]));
+	const base = $derived(shownText(lead));
+	const corrected = $derived(lead?.corrected_text != null);
+
+	/** The witnesses compared with the reading text: each other set-up, and the model itself
+	 * when its text was corrected. */
+	const witnesses = $derived.by(() => {
+		const out: { key: string; siglum: string; text: string }[] = [];
+		if (corrected && lead?.ai_text != null) {
+			out.push({ key: 'model', siglum: siglum(0), text: lead.ai_text });
+		}
+		setups.slice(1).forEach((s, i) => {
+			const v = viewFor(s);
+			if (v?.ai_text != null) out.push({ key: s.id, siglum: siglum(i + 1), text: shownText(v) });
+		});
+		return out;
+	});
+
+	$effect(() => {
+		const text = base;
+		const list = witnesses;
+		spans = {};
+		for (const w of list) {
+			api
+				.diffTexts(text, w.text)
+				.then((d) => {
+					if (base === text) spans = { ...spans, [w.key]: d };
+				})
+				.catch(() => undefined);
+		}
+	});
+
+	const entries: Entry[] = $derived(
+		apparatus(
+			base,
+			witnesses.filter((w) => spans[w.key]).map((w) => ({ siglum: w.siglum, spans: spans[w.key] }))
+		)
+	);
+	const reading = $derived(lines(base, entries));
+	/** An entry whose readings include the model's own text marks a correction. */
+	const isCorrection = (e: Entry) => corrected && e.readings.some((r) => r.siglum === siglum(0));
 
 	function pieceLabel(v: PieceView | undefined): string {
 		if (!v) return '';
@@ -61,13 +110,13 @@
 		try {
 			job = await api.getJob(jobId);
 			views = await api.sourcePieces(jobId, sourceId);
-			if (comparison) report = await api.compareSource(jobId, sourceId);
+			if (setups.length > 1) report = await api.compareSource(jobId, sourceId);
 		} catch (e) {
 			error = describeError(e, m);
 		}
 	}
 
-	// Load the page image whenever the page changes.
+	// The page image follows the page.
 	$effect(() => {
 		const i = index;
 		preview = null;
@@ -78,22 +127,6 @@
 					if (index === i) preview = p;
 				})
 				.catch(() => (preview = { mime: 'none', data: '' }));
-		}
-	});
-
-	// Differences between the first set-up and each other one, on the shown texts.
-	$effect(() => {
-		if (!job || !comparison || !showDiff) {
-			diffs = {};
-			return;
-		}
-		const base = shownText(viewFor(job.setups[0]));
-		for (const setup of job.setups.slice(1)) {
-			const other = shownText(viewFor(setup));
-			api
-				.diffTexts(base, other)
-				.then((spans) => (diffs = { ...diffs, [setup.id]: spans }))
-				.catch(() => undefined);
 		}
 	});
 
@@ -109,10 +142,9 @@
 				reviewed,
 				updated_at: 0
 			});
-			const { [setup.id]: _, ...rest } = editing;
-			editing = rest;
+			editing = null;
 			views = await api.sourcePieces(jobId, sourceId);
-			if (comparison) report = await api.compareSource(jobId, sourceId);
+			if (setups.length > 1) report = await api.compareSource(jobId, sourceId);
 			toast(m.review.saved);
 		} catch (e) {
 			error = describeError(e, m);
@@ -122,7 +154,10 @@
 	function step(delta: number) {
 		const at = indices.indexOf(index);
 		const next = indices[at + delta];
-		if (next !== undefined) index = next;
+		if (next !== undefined) {
+			index = next;
+			editing = null;
+		}
 	}
 
 	function onKey(e: KeyboardEvent) {
@@ -132,8 +167,9 @@
 	}
 
 	const reviewedCount = $derived(
-		job ? indices.filter((i) => views.some((v) => v.index === i && v.reviewed)).length : 0
+		indices.filter((i) => views.some((v) => v.index === i && v.reviewed)).length
 	);
+	const editedSetup = $derived(setups.find((s) => s.id === editing?.setupId));
 
 	onMount(() => {
 		void load();
@@ -143,19 +179,26 @@
 <svelte:window onkeydown={onKey} />
 
 <div class="review">
-	<header>
+	<header class="masthead">
 		<div class="title">
-			<button class="btn ghost sm" onclick={() => go({ name: 'jobs', jobId })}
-				>← {m.review.back}</button
-			>
-			<h1>{source?.file_name ?? m.review.title}</h1>
-			<span class="muted small">{m.review.reviewed}: {reviewedCount}/{indices.length}</span>
+			<button class="back" onclick={() => go({ name: 'jobs', jobId })}>← {m.review.back}</button>
+			<h1>
+				{source?.file_name ?? m.review.title}
+				<span class="lede num">{m.review.reviewedOf(reviewedCount, indices.length)}</span>
+			</h1>
 		</div>
-		<div class="nav">
-			<button class="btn sm" disabled={indices.indexOf(index) <= 0} onclick={() => step(-1)}
+		<div class="pager">
+			<button class="btn" disabled={indices.indexOf(index) <= 0} onclick={() => step(-1)}
 				>{m.review.previous}</button
 			>
-			<select aria-label={m.review.title} bind:value={index}>
+			<select
+				aria-label={m.review.title}
+				value={index}
+				onchange={(e) => {
+					index = Number(e.currentTarget.value);
+					editing = null;
+				}}
+			>
 				{#each indices as i (i)}
 					{@const v = views.find((x) => x.index === i)}
 					<option value={i}
@@ -164,275 +207,547 @@
 				{/each}
 			</select>
 			<button
-				class="btn sm"
+				class="btn"
 				disabled={indices.indexOf(index) >= indices.length - 1}
 				onclick={() => step(1)}>{m.review.next}</button
 			>
 		</div>
 	</header>
 
-	{#if error}<p class="chip danger">{error}</p>{/if}
-
-	{#if comparison && report}
-		<div class="scores card">
-			<strong>{m.review.scores}</strong>
-			{#each report.scores as s (s.setup_id)}
-				<span class="score">
-					<span class="mono">{s.label}</span>
-					{#if s.cer !== null}
-						{m.review.cer}
-						{formatPercent(s.cer)} · {m.review.wer}
-						{formatPercent(s.wer ?? 0)} ({m.review.scoredPages(s.scored_pages)})
-					{/if}
-					{#if s.cost_usd !== null}<span class="muted">{formatUsd(s.cost_usd)}</span>{/if}
-				</span>
-			{/each}
-			{#if report.scores.every((s) => s.cer === null)}
-				<span class="muted small">{m.review.noReference}</span>
-			{/if}
-			<label class="inline small"
+	<div class="strip">
+		{#if report}
+			<span class="scores">
+				{m.review.cer}:
+				{#each report.scores as s, i (s.setup_id)}
+					<span class="score">
+						<i class="siglum">{siglum(i)}</i>
+						{s.label}
+						{#if s.cer !== null}<b class="num">{formatPercent(s.cer)}</b>{:else}<span class="muted"
+								>–</span
+							>{/if}
+					</span>
+				{/each}
+				{#if report.scores.some((s) => s.cer !== null)}
+					<span class="muted">({m.review.scoredPages(report.scores[0]?.scored_pages ?? 0)})</span>
+				{:else}
+					<span class="muted">{m.review.noReference}</span>
+				{/if}
+			</span>
+		{:else}
+			<span class="muted">{lead?.model_version ?? setups[0]?.model ?? ''}</span>
+		{/if}
+		{#if witnesses.length > 0}
+			<label class="inline"
 				><input type="checkbox" bind:checked={showDiff} /> {m.review.showDiff}</label
 			>
-		</div>
-	{/if}
+		{/if}
+	</div>
 
-	<div
-		class="panes"
-		style:grid-template-columns="minmax(0, 1.1fr) repeat({job?.setups.length ?? 1}, minmax(0, 1fr))"
-	>
+	{#if error}<p class="error" role="alert">{error}</p>{/if}
+
+	<div class="work">
 		<section class="pane source" aria-label={m.review.source}>
-			<div class="pane-head">
-				<span class="label">{m.review.source}</span>
-				<div hidden={recording}>
-					<button
-						class="btn ghost sm"
-						aria-label={m.review.zoomOut}
-						onclick={() => (zoom = Math.max(0.4, zoom - 0.2))}>−</button
-					>
-					<button
-						class="btn ghost sm"
-						aria-label={m.review.zoomIn}
-						onclick={() => (zoom = Math.min(3, zoom + 0.2))}>+</button
-					>
-				</div>
+			<div class="bar">
+				<span class="bar-title">{m.review.source}</span>
+				{#if !recording}
+					<div class="zoom">
+						<button
+							class="btn sm"
+							aria-label={m.review.zoomOut}
+							onclick={() => (zoom = Math.max(0.4, zoom - 0.2))}>−</button
+						>
+						<span class="num muted">{Math.round(zoom * 100)}%</span>
+						<button
+							class="btn sm"
+							aria-label={m.review.zoomIn}
+							onclick={() => (zoom = Math.min(3, zoom + 0.2))}>+</button
+						>
+					</div>
+				{/if}
 			</div>
-			{#if recording}
-				<AudioPane
-					{jobId}
-					{sourceId}
-					{index}
-					offsetMs={timed?.piece.kind === 'segment' ? Number(timed.piece.start_ms) : 0}
-					segments={timed?.segments ?? []}
-				/>
-			{:else}
-				<PageImage {preview} {zoom} />
-			{/if}
+			<div class="desk">
+				{#if recording}
+					<AudioPane
+						{jobId}
+						{sourceId}
+						{index}
+						offsetMs={timed?.piece.kind === 'segment' ? Number(timed.piece.start_ms) : 0}
+						segments={timed?.segments ?? []}
+					/>
+				{:else}
+					<PageImage {preview} {zoom} />
+				{/if}
+			</div>
 		</section>
 
-		{#each job?.setups ?? [] as setup, col (setup.id)}
-			{@const v = viewFor(setup)}
-			<section class="pane" aria-label={setup.label}>
-				<div class="pane-head">
-					<span>
-						<strong class="mono small">{comparison ? setup.label : m.review.aiText}</strong>
-						{#if v?.corrected_text !== null && v?.corrected_text !== undefined}<span class="chip ok"
-								>{m.review.corrected}</span
-							>{/if}
-						{#if v?.reviewed}<span class="chip ok">{m.review.reviewed}</span>{/if}
-						{#if v?.status === 'failed'}<span class="chip danger">{m.status.failed}</span>{/if}
-					</span>
-					{#if v && v.status !== 'failed' && v.ai_text !== null}
-						<span class="tools">
-							{#if editing[setup.id] === undefined}
-								<button
-									class="btn sm"
-									onclick={() => (editing = { ...editing, [setup.id]: shownText(v) })}
-									>{m.review.edit}</button
-								>
-								<label class="inline small">
-									<input
-										type="checkbox"
-										checked={v.reviewed}
-										onchange={(e) => save(setup, v.corrected_text, e.currentTarget.checked)}
-									/>
-									{m.review.markReviewed}
-								</label>
-							{:else}
-								<button class="btn sm primary" onclick={() => save(setup, editing[setup.id], true)}
-									>{m.review.save}</button
-								>
-								<button
-									class="btn sm ghost"
-									onclick={() => {
-										const { [setup.id]: _, ...rest } = editing;
-										editing = rest;
-									}}>{m.review.discard}</button
-								>
-							{/if}
-						</span>
-					{/if}
-				</div>
-				{#if !v || (v.ai_text === null && v.status !== 'failed')}
-					<p class="muted pad">{m.review.notDone}</p>
-				{:else if v.status === 'failed'}
-					<p class="err pad">{v.error}</p>
-				{:else if editing[setup.id] !== undefined}
-					<textarea
-						class="text"
-						bind:value={editing[setup.id]}
-						aria-label="{m.review.edit} {setup.label}"></textarea>
-					{#if v.corrected_text !== null}
-						<button class="btn sm ghost revert" onclick={() => save(setup, null, v.reviewed)}
-							>{m.review.revert}</button
+		<section class="pane edition" aria-label={m.review.readingText}>
+			<div class="bar">
+				<i class="siglum">{siglum(0)}</i>
+				<span class="bar-title">{setups[0]?.label ?? ''}</span>
+				{#if corrected}<span class="chip corr">{m.review.corrected}</span>{/if}
+				{#if lead?.reviewed}<span class="chip">{m.review.reviewed}</span>{/if}
+				{#if lead && lead.ai_text !== null && setups[0] && !editing}
+					{@const first = setups[0]}
+					<span class="tools">
+						<button
+							class="btn sm primary"
+							onclick={() => (editing = { setupId: first.id, text: base })}>{m.review.edit}</button
 						>
-					{/if}
-				{:else if col > 0 && showDiff && diffs[setup.id]}
+						<label class="inline">
+							<input
+								type="checkbox"
+								checked={lead.reviewed}
+								onchange={(e) => save(first, lead.corrected_text, e.currentTarget.checked)}
+							/>
+							{m.review.markReviewed}
+						</label>
+					</span>
+				{/if}
+			</div>
+
+			<div class="page">
+				<div class="running-head">
+					<span class="smcp">{source?.file_name ?? ''} · {pieceLabel(lead ?? current[0])}</span>
+					{#if !editing}<span class="smcp muted"
+							>{m.review.readingTextOf} <i class="siglum">{siglum(0)}</i></span
+						>{/if}
+				</div>
+
+				{#if editing && editedSetup}
+					{@const target = editedSetup}
+					<p class="editing-of">
+						{m.review.correcting}
+						<i class="siglum">{siglum(setups.indexOf(target))}</i>
+						{target.label}
+					</p>
+					<textarea
+						class="editor"
+						bind:value={editing.text}
+						aria-label="{m.review.edit} {target.label}"></textarea>
+					<div class="edit-actions">
+						<button class="btn primary" onclick={() => editing && save(target, editing.text, true)}
+							>{m.review.save}</button
+						>
+						<button class="btn ghost" onclick={() => (editing = null)}>{m.review.discard}</button>
+						{#if viewFor(target)?.corrected_text != null}
+							<button
+								class="btn ghost"
+								onclick={() => save(target, null, viewFor(target)?.reviewed ?? false)}
+								>{m.review.revert}</button
+							>
+						{/if}
+					</div>
+				{:else if !lead || (lead.ai_text === null && lead.status !== 'failed')}
+					<p class="muted">{m.review.notDone}</p>
+				{:else if lead.status === 'failed'}
+					<p class="error">{lead.error}</p>
+				{:else}
 					<div class="text" lang="">
-						{#each diffs[setup.id] as span, k (k)}
-							{#if span.kind === 'same'}{span.text}{:else if span.kind === 'added'}<ins
-									>{span.text}</ins
-								>{:else}<del>{span.text}</del>{/if}
+						{#each reading as line, li (li)}
+							<div class="line" class:blank={line.number === 0}>
+								{#if numbered(line.number, entries)}<span class="n num" aria-hidden="true"
+										>{line.number}</span
+									>{/if}
+								<!-- prettier-ignore -->
+								<span class="t">{#each line.parts as part, k (k)}{#if part.entry !== null}<span class="lemma" class:marked={showDiff} class:corr={isCorrection(entries.find((x) => x.id === part.entry) ?? entries[0])} class:on={hovered === part.entry}>{part.text}</span>{:else}{part.text}{/if}{/each}</span>
+							</div>
 						{/each}
 					</div>
-				{:else}
-					<div class="text">{shownText(v)}</div>
+					{#if lead.keywords.length > 0}
+						<p class="keywords" aria-label={m.review.keywords}>
+							{#each lead.keywords as k (k)}<span class="chip">{k}</span>{/each}
+						</p>
+					{/if}
 				{/if}
-				{#if v && v.keywords.length > 0}
-					<p class="keywords" aria-label={m.review.keywords}>
-						{#each v.keywords as k (k)}<span class="chip">{k}</span>{/each}
-					</p>
+
+				{#if entries.length > 0 && !editing}
+					<ol class="apparatus" aria-label={m.review.apparatus}>
+						{#each entries as e (e.id)}
+							<li class:on={hovered === e.id}>
+								<button
+									class="entry"
+									onmouseenter={() => (hovered = e.id)}
+									onmouseleave={() => (hovered = null)}
+									onfocus={() => (hovered = e.id)}
+									onblur={() => (hovered = null)}
+								>
+									<span class="ln num">{e.line}</span>
+									<span class:corr={isCorrection(e)}>{e.lemma || m.review.added}</span>
+									{#if isCorrection(e)}<i class="siglum">{m.review.corrSiglum}</i>{/if}
+									<span class="bracket">]</span>
+									{#each e.readings as r, i (r.siglum)}
+										{#if i > 0}<span class="sep">:</span>{/if}
+										{r.text || m.review.omitted}
+										<i class="siglum">{r.siglum}</i>
+									{/each}
+								</button>
+							</li>
+						{/each}
+					</ol>
 				{/if}
-				{#if v?.model_version}<p class="muted tiny">
-						{v.model_version}{v.cost_usd ? ` · ${formatUsd(v.cost_usd)}` : ''}
-					</p>{/if}
-			</section>
-		{/each}
+
+				{#if !editing}
+					<div class="sigla">
+						<h2 class="smcp">{m.review.sigla}</h2>
+						{#each setups as s, i (s.id)}
+							{@const v = viewFor(s)}
+							<div class="witness">
+								<i class="siglum">{siglum(i)}</i>
+								<span class="w-name">{s.label}</span>
+								<span class="w-meta muted num">
+									{#if v?.status === 'failed'}<span class="error">{m.status.failed}</span>
+									{:else}{v?.model_version ?? s.model}{v?.cost_usd
+											? ` · ${formatUsd(v.cost_usd)}`
+											: ''}{/if}
+								</span>
+								{#if i > 0 && v && v.ai_text !== null}
+									<span class="tools">
+										{#if v.corrected_text != null}<span class="chip corr">{m.review.corrected}</span
+											>{/if}
+										<button
+											class="btn sm"
+											onclick={() => (editing = { setupId: s.id, text: shownText(v) })}
+											>{m.review.edit}</button
+										>
+										<label class="inline">
+											<input
+												type="checkbox"
+												checked={v.reviewed}
+												onchange={(e) => save(s, v.corrected_text, e.currentTarget.checked)}
+											/>
+											{m.review.markReviewed}
+										</label>
+									</span>
+								{/if}
+							</div>
+						{/each}
+						{#if corrected}
+							<div class="witness">
+								<i class="siglum">{m.review.corrSiglum}</i>
+								<span class="w-name">{m.review.yourCorrections}</span>
+								<span class="w-meta muted">{m.review.correctionsKept}</span>
+							</div>
+						{/if}
+					</div>
+				{/if}
+			</div>
+		</section>
 	</div>
 </div>
 
 <style>
 	.review {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		min-height: 0;
+	}
+	.title {
 		display: grid;
-		grid-template-rows: auto auto 1fr;
-		gap: var(--space-3);
-		height: calc(100vh - 2 * var(--space-5));
+		justify-items: start;
+		gap: var(--space-1);
+		min-width: 0;
 	}
-	header {
+	h1 {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
+		align-items: baseline;
 		gap: var(--space-4);
-		flex-wrap: wrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
-	.title,
-	.nav {
+	h1 .lede {
+		font-family: var(--font-ui);
+		font-size: var(--type-md);
+	}
+	.pager {
+		display: flex;
+		gap: var(--space-2);
+		align-items: center;
+		flex: none;
+	}
+	.strip {
 		display: flex;
 		align-items: center;
-		gap: var(--space-3);
-	}
-	.title h1 {
-		font-size: var(--type-lg);
-		overflow-wrap: anywhere;
-	}
-	.small {
-		font-size: var(--type-sm);
-	}
-	.tiny {
-		font-size: var(--type-xs);
-		padding: 0 var(--space-3) var(--space-2);
+		justify-content: space-between;
+		gap: var(--space-4);
+		padding: var(--space-3) var(--space-6);
+		border-bottom: 1px solid var(--line);
+		color: var(--text-secondary);
 	}
 	.scores {
 		display: flex;
-		gap: var(--space-4);
-		align-items: center;
 		flex-wrap: wrap;
-		padding: var(--space-2) var(--space-4);
-		font-size: var(--type-sm);
-	}
-	.score {
-		display: inline-flex;
-		gap: var(--space-2);
 		align-items: baseline;
+		gap: var(--space-1) var(--space-4);
 	}
-	.panes {
-		display: grid;
-		gap: var(--space-3);
-		min-height: 0;
-	}
-	.pane {
-		display: flex;
-		flex-direction: column;
-		min-height: 0;
-		border: 1px solid var(--line);
-		border-radius: var(--radius-card);
-		background: var(--surface-1);
-		overflow: hidden;
-	}
-	.pane-head {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: var(--space-2);
-		padding: var(--space-2) var(--space-3);
-		border-bottom: 1px solid var(--line);
-		flex-wrap: wrap;
-	}
-	.pane-head > span {
-		display: inline-flex;
-		gap: var(--space-2);
-		align-items: center;
-	}
-	.tools {
-		display: inline-flex;
-		gap: var(--space-2);
-		align-items: center;
+	.score b {
+		color: var(--text-bright);
 	}
 	.inline {
 		display: inline-flex;
-		gap: var(--space-1);
+		gap: var(--space-2);
 		align-items: center;
+		white-space: nowrap;
+	}
+	.error {
+		color: var(--danger);
+		padding: var(--space-2) var(--space-6);
+	}
+	.work {
+		flex: 1;
+		display: grid;
+		grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+		min-height: 0;
+	}
+	.pane {
+		display: grid;
+		grid-template-rows: auto 1fr;
+		min-height: 0;
+	}
+	.bar {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		min-height: 3.25rem;
+		padding: 0 var(--space-5);
+		border-bottom: 1px solid var(--line);
+		background: var(--surface-0);
+	}
+	.bar-title {
+		font-weight: 600;
+		color: var(--text-bright);
+	}
+	.bar .siglum {
+		font-size: 1.6rem;
+	}
+	.tools {
+		margin-left: auto;
+		display: flex;
+		gap: var(--space-3);
+		align-items: center;
+	}
+	.zoom {
+		margin-left: auto;
+		display: flex;
+		gap: var(--space-2);
+		align-items: center;
+	}
+	.zoom .num {
+		width: 3rem;
+		text-align: center;
+	}
+	.source {
+		border-right: 1px solid var(--line);
+	}
+	.desk {
+		background: var(--desk);
+		overflow: auto;
+		padding: var(--space-5);
+		min-height: 0;
+	}
+	.chip.corr {
+		border-color: var(--rubric);
+		color: var(--rubric);
+	}
+	/* The edition page. */
+	.page {
+		overflow: auto;
+		min-height: 0;
+		padding: var(--space-5) var(--space-6) var(--space-7) 5rem;
+		background: var(--paper);
+	}
+	.running-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: var(--space-4);
+		margin-bottom: var(--space-5);
+		font-size: 1.125rem;
+	}
+	.text {
+		font-family: var(--font-text);
+		font-size: var(--type-reading);
+		line-height: 1.65;
+		color: var(--text-bright);
+		font-variant-numeric: oldstyle-nums;
+		max-width: 44rem;
+	}
+	.line.blank {
+		min-height: 0.6em;
+	}
+	.line {
+		position: relative;
+		min-height: 1.65em;
+	}
+	.t {
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+	.n {
+		position: absolute;
+		left: -3.5rem;
+		width: 2.5rem;
+		text-align: right;
+		font-family: var(--font-text);
+		font-size: 0.875rem;
+		font-weight: 600;
+		font-variant-numeric: lining-nums tabular-nums;
+		color: var(--rubric);
+		line-height: inherit;
+		top: 0.2em;
+	}
+	.lemma {
+		border-radius: 2px;
+		transition: background-color 120ms ease-out;
+	}
+	.lemma.marked {
+		background: var(--tint);
+		box-shadow: 0 0 0 2px var(--tint);
+	}
+	.lemma.corr {
+		color: var(--rubric);
+	}
+	.lemma.on {
+		background: var(--accent-chip);
+		box-shadow: 0 0 0 2px var(--accent-chip);
+		outline: 1px solid var(--accent-border);
 	}
 	.keywords {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-1);
-		padding: 0 var(--space-3);
+		margin-top: var(--space-4);
 	}
-	.text {
-		flex: 1;
-		overflow: auto;
-		padding: var(--space-4);
-		background: var(--paper);
+	.apparatus {
+		list-style: none;
+		margin: var(--space-5) 0 0;
+		padding: var(--space-3) 0 0;
+		border-top: 1px solid var(--rule);
 		font-family: var(--font-text);
-		font-size: 1rem;
-		line-height: 1.65;
-		white-space: pre-wrap;
-		unicode-bidi: plaintext;
+		font-size: 1.0625rem;
+		line-height: 1.6;
+		max-width: 44rem;
+		font-variant-numeric: oldstyle-nums;
+	}
+	.apparatus li {
+		position: relative;
+		border-radius: 3px;
+		padding: 0 var(--space-2);
+		margin: 0 calc(-1 * var(--space-2));
+		cursor: default;
+		transition: background-color 120ms ease-out;
+	}
+	.apparatus li.on {
+		background: var(--accent-wash);
+	}
+	.entry {
+		display: block;
+		width: 100%;
+		padding: 0;
 		border: 0;
-		border-radius: 0;
-		min-height: 0;
+		background: none;
+		color: inherit;
+		font: inherit;
+		text-align: left;
+		cursor: default;
 	}
-	textarea.text {
-		resize: none;
-		outline-offset: -2px;
+	.entry:focus-visible {
+		outline-offset: 2px;
 	}
-	ins {
-		background: var(--diff-added);
-		text-decoration: none;
-		border-radius: 2px;
+	.ln {
+		position: absolute;
+		left: -3rem;
+		width: 2.5rem;
+		text-align: right;
+		font-weight: 600;
+		font-variant-numeric: lining-nums tabular-nums;
 	}
-	del {
-		background: var(--diff-removed);
-		border-radius: 2px;
+	.apparatus .corr {
+		color: var(--rubric);
 	}
-	.pad {
-		padding: var(--space-4);
+	.bracket,
+	.sep {
+		margin: 0 0.3em 0 0.15em;
 	}
-	.err {
-		color: var(--danger);
+	.apparatus .siglum {
+		margin-left: 0.15em;
 	}
-	.revert {
-		align-self: flex-start;
-		margin: var(--space-2) var(--space-3);
+	.sigla {
+		margin-top: var(--space-6);
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--line);
+		max-width: 44rem;
+	}
+	.sigla h2 {
+		font-size: 1.0625rem;
+		color: var(--text-muted);
+		margin-bottom: var(--space-1);
+	}
+	.witness {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		min-height: 2.5rem;
+		position: relative;
+	}
+	.witness .siglum {
+		position: absolute;
+		left: -3rem;
+		width: 2.5rem;
+		text-align: right;
+	}
+	.w-name {
+		font-weight: 600;
+		color: var(--text-bright);
+	}
+	.w-meta {
+		font-size: var(--type-sm);
+	}
+	.editing-of {
+		color: var(--text-secondary);
+		margin-bottom: var(--space-2);
+	}
+	.editor {
+		width: 100%;
+		min-height: 22rem;
+		max-width: 44rem;
+		font-family: var(--font-text);
+		font-size: var(--type-reading);
+		line-height: 1.6;
+	}
+	.edit-actions {
+		display: flex;
+		gap: var(--space-2);
+		margin-top: var(--space-3);
+	}
+	@media (max-width: 960px) {
+		.work {
+			grid-template-columns: 1fr;
+			grid-template-rows: minmax(16rem, 40vh) 1fr;
+		}
+		.source {
+			border-right: 0;
+			border-bottom: 1px solid var(--line);
+		}
+	}
+	@media (max-width: 820px) {
+		.strip {
+			flex-wrap: wrap;
+			padding: var(--space-3) var(--space-4);
+		}
+		.bar {
+			flex-wrap: wrap;
+			padding: var(--space-2) var(--space-4);
+		}
+		.page {
+			padding: var(--space-4) var(--space-4) var(--space-6) 3.5rem;
+		}
+		.desk {
+			padding: var(--space-3);
+		}
+		h1 {
+			white-space: normal;
+		}
 	}
 </style>

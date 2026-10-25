@@ -7,6 +7,10 @@ export const en = {
 		name: 'Scriptorium',
 		tagline: 'Transcription and text extraction'
 	},
+	shell: {
+		running: (name: string) => `Running: ${name}`,
+		unfinished: (n: number) => (n === 1 ? '1 unfinished job' : `${n} unfinished jobs`)
+	},
 	nav: {
 		newJob: 'New job',
 		jobs: 'Jobs',
@@ -23,6 +27,7 @@ export const en = {
 	},
 	newJob: {
 		title: 'New job',
+		lede: 'Choose the files, a model and a prompt. The cost is estimated before anything is sent.',
 		taskLabel: 'What do you want to do?',
 		filesTitle: 'Files',
 		addFiles: 'Add files',
@@ -107,6 +112,8 @@ export const en = {
 	},
 	jobs: {
 		title: 'Jobs',
+		lede: (n: number) =>
+			n === 0 ? 'Nothing yet.' : n === 1 ? 'One job, newest first.' : `${n} jobs, newest first.`,
 		empty: 'No jobs yet. Start one from New job.',
 		resumeTitle: 'Unfinished jobs',
 		resumeHint:
@@ -176,7 +183,18 @@ export const en = {
 		zoomOut: 'Zoom out',
 		noAudio: 'This piece could not be played.',
 		lines: 'Transcript lines',
-		noTimings: 'This model gave no timings, so lines cannot follow the recording.'
+		noTimings: 'This model gave no timings, so lines cannot follow the recording.',
+		reviewedOf: (n: number, total: number) => `Reviewed ${n} of ${total}`,
+		readingText: 'Reading text',
+		readingTextOf: 'reading text',
+		correcting: 'Correcting',
+		apparatus: 'Where the witnesses differ',
+		sigla: 'Sigla',
+		corrSiglum: 'corr.',
+		added: 'add.',
+		omitted: 'om.',
+		yourCorrections: 'Your corrections',
+		correctionsKept: "Kept apart: the model's text is never overwritten"
 	},
 	prompts: {
 		title: 'Prompts',
@@ -201,6 +219,7 @@ export const en = {
 	},
 	settings: {
 		title: 'Settings',
+		lede: 'Keys, offline models, processing and appearance.',
 		keysTitle: 'API keys',
 		keysHint:
 			'Keys are stored in Windows Credential Manager and sent only to their provider. Files go directly from this PC to the provider you choose.',

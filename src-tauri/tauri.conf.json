@@ -21,8 +21,8 @@
         "url": "/",
         "width": 1280,
         "height": 860,
-        "minWidth": 960,
-        "minHeight": 640,
+        "minWidth": 640,
+        "minHeight": 560,
         "resizable": true,
         "center": true,
         "dragDropEnabled": true

@@ -199,7 +199,7 @@
 
 <style>
 	.detail {
-		padding: var(--space-4) var(--space-5);
+		padding: var(--space-4) 0 0;
 		display: grid;
 		gap: var(--space-4);
 	}

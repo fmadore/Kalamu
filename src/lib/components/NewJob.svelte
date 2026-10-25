@@ -159,17 +159,20 @@
 	});
 </script>
 
-<div class="page">
-	<header>
+<header class="masthead">
+	<div>
 		<h1>{m.newJob.title}</h1>
-	</header>
+		<p class="lede">{m.newJob.lede}</p>
+	</div>
+</header>
 
+<div class="sheet">
 	<section aria-labelledby="task-label">
 		<h2 id="task-label" class="label">{m.newJob.taskLabel}</h2>
 		<div class="tasks">
 			{#each ['text_extraction', 'audio_transcription', 'summary'] as const as t (t)}
 				<button
-					class="task card"
+					class="task"
 					class:selected={task === t}
 					aria-pressed={task === t}
 					onclick={() => loadTask(t)}
@@ -324,13 +327,8 @@
 </div>
 
 <style>
-	.page {
-		display: grid;
-		gap: var(--space-4);
-		max-width: 64rem;
-	}
 	.block {
-		padding: var(--space-4) var(--space-5);
+		padding: var(--space-4) 0 0;
 		display: grid;
 		gap: var(--space-3);
 	}
@@ -347,7 +345,7 @@
 	}
 	.tasks {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-3);
 		margin-top: var(--space-2);
 	}
@@ -355,13 +353,30 @@
 		text-align: left;
 		padding: var(--space-4);
 		display: grid;
+		align-content: start;
 		gap: var(--space-1);
 		cursor: pointer;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-card);
+		background: var(--surface-2);
+		color: var(--text-body);
+		transition:
+			border-color 120ms ease-out,
+			background-color 120ms ease-out;
+	}
+	.task strong {
+		font-family: var(--font-text);
+		font-size: 1.25rem;
+		font-weight: 500;
+		color: var(--text-bright);
+	}
+	.task:hover {
+		border-color: var(--line-hover);
 	}
 	.task.selected {
-		border-color: var(--accent-border);
+		border-color: var(--accent);
 		background: var(--accent-wash);
-		box-shadow: inset 0 0 0 1px var(--accent-border);
+		box-shadow: inset 0 0 0 1px var(--accent);
 	}
 	.inline {
 		display: inline-flex;
@@ -396,7 +411,8 @@
 		gap: var(--space-4);
 		position: sticky;
 		bottom: 0;
-		background: var(--surface-1);
+		padding-bottom: var(--space-4);
+		background: var(--surface-0);
 	}
 	.estimate {
 		display: flex;
@@ -412,5 +428,13 @@
 	.big {
 		min-height: var(--control-lg);
 		padding: 0 var(--space-6);
+	}
+	@media (max-width: 760px) {
+		.tasks {
+			grid-template-columns: 1fr;
+		}
+		.start {
+			flex-wrap: wrap;
+		}
 	}
 </style>

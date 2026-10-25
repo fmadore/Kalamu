@@ -134,7 +134,7 @@
 
 <style>
 	.block {
-		padding: var(--space-4) var(--space-5);
+		padding: var(--space-4) 0 0;
 		display: grid;
 		gap: var(--space-3);
 	}
@@ -155,6 +155,11 @@
 		border: 1px solid var(--line);
 		border-radius: var(--radius-control);
 		background: var(--surface-2);
+	}
+	.setup select,
+	.setup input {
+		width: 100%;
+		min-width: 0;
 	}
 	.desc,
 	.setup .warning {
