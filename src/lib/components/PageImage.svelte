@@ -67,15 +67,18 @@
 		display: flex;
 		justify-content: center;
 		align-items: flex-start;
-		overflow: auto;
-		height: 100%;
-		padding: var(--space-3);
+		min-height: 100%;
 		background: transparent;
 	}
+	/* The page lies on the lightbox: a crisp edge and a soft drop beneath. */
 	canvas,
 	img {
 		max-width: none;
-		box-shadow: var(--shadow-flyout);
+		border-radius: 2px;
+		box-shadow: var(--shadow-page);
 		background: white;
+	}
+	p {
+		font-size: var(--type-sm);
 	}
 </style>

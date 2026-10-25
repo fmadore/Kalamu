@@ -36,7 +36,7 @@
 	}
 </script>
 
-<section class="card block" aria-labelledby="setups-title">
+<section class="step block" aria-labelledby="setups-title">
 	<h2 id="setups-title">{m.newJob.setupsTitle}</h2>
 	{#if !app.keys.some((k) => k.saved)}
 		<p class="warning">
@@ -53,7 +53,7 @@
 				{#if drafts.length > 1}
 					<div class="witness">
 						<i class="siglum">{siglum(i)}</i>
-						<span class="witness-name">{d.label || info?.name || d.model}</span>
+						<span class="witness-name mono">{d.label || info?.name || d.model}</span>
 						<button class="btn ghost sm" onclick={() => (drafts = drafts.filter((_, j) => j !== i))}
 							>{m.newJob.removeSetup}</button
 						>
@@ -166,7 +166,6 @@
 
 <style>
 	.block {
-		padding: var(--space-4) 0 0;
 		display: grid;
 		gap: var(--space-3);
 	}
@@ -176,25 +175,25 @@
 		align-items: center;
 	}
 	.small {
-		font-size: var(--type-sm);
+		font-size: var(--type-xs);
 	}
 	.setups {
 		display: grid;
-		gap: var(--space-4);
+		gap: var(--space-3);
 	}
 	.setups.compare {
-		grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
 		align-items: stretch;
 	}
 	.setup {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-		gap: var(--space-3) var(--space-4);
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: var(--space-3);
 		align-items: end;
 		align-content: start;
 		padding: var(--space-4);
 		border: 1px solid var(--line);
-		border-radius: var(--radius-control);
+		border-radius: var(--radius-card);
 		background: var(--surface-2);
 	}
 	/* In a comparison each column stacks its fields, so every set-up reads top to bottom. */
@@ -207,22 +206,21 @@
 		align-items: center;
 		justify-content: center;
 		gap: var(--space-2);
-		min-height: 12rem;
+		min-height: 10rem;
 		padding: var(--space-4);
 		border: 1px dashed var(--line-strong);
-		border-radius: var(--radius-control);
+		border-radius: var(--radius-card);
 		background: transparent;
 		color: var(--text-secondary);
-		font-weight: 600;
+		font-size: var(--type-sm);
+		font-weight: 500;
 		cursor: pointer;
 		transition:
 			border-color 120ms ease-out,
-			background-color 120ms ease-out,
 			color 120ms ease-out;
 	}
 	.add-column:hover {
-		border-color: var(--accent);
-		background: var(--accent-wash);
+		border-color: var(--line-hover);
 		color: var(--text-bright);
 	}
 	.setup select,
@@ -237,11 +235,10 @@
 	}
 	.witness {
 		display: flex;
-		align-items: baseline;
+		align-items: center;
 		gap: var(--space-2);
 		margin: 0;
-		font-weight: 600;
-		font-size: var(--type-lg);
+		font-size: var(--type-sm);
 		color: var(--text-bright);
 	}
 	.witness-name {
@@ -251,28 +248,26 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.witness .btn {
-		align-self: center;
-		font-size: var(--type-sm);
-		color: var(--text-secondary);
-	}
-	.witness .siglum {
-		font-size: 1.5rem;
-	}
 	.add {
-		display: grid;
-		justify-items: start;
-		gap: var(--space-1);
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2) var(--space-3);
+	}
+	.add .btn {
+		border-style: dashed;
+		border-color: var(--line-strong);
 	}
 	.warning {
 		display: flex;
-		gap: var(--space-3);
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-3);
 		align-items: center;
 		padding: var(--space-2) var(--space-3);
-		border: 1px solid var(--warn-border);
-		background: var(--warn-wash);
 		border-radius: var(--radius-control);
-		font-size: var(--type-sm);
+		background: var(--warn-wash);
+		color: var(--warn-text);
+		font-size: var(--type-xs);
 	}
 	.opts {
 		min-height: var(--control-md);
@@ -287,16 +282,17 @@
 		border: 0;
 		background: none;
 		padding: 0;
-		color: var(--accent-soft);
+		color: var(--text-bright);
 		text-decoration: underline;
 		text-underline-offset: 0.18em;
 		cursor: pointer;
-		font-size: var(--type-sm);
+		font-size: var(--type-xs);
 	}
 	.inline {
 		display: inline-flex;
 		gap: var(--space-2);
 		align-items: center;
 		white-space: nowrap;
+		font-size: var(--type-sm);
 	}
 </style>

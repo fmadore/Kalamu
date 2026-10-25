@@ -522,15 +522,14 @@ export function mockView(): View | null {
 
 export function installMock(): void {
 	const params = new URLSearchParams(location.search);
-	if (params.get('focus') === 'apparatus') {
-		setTimeout(() => document.querySelector<HTMLElement>('.apparatus .entry')?.focus(), 2500);
-	}
-	// `hover=deux`: rest the pointer on the lemma with that text, for the reverse highlight.
-	const hover = params.get('hover');
-	if (hover) {
+	// `open=deux`: open the readings of the highlighted words with that text.
+	const open = params.get('open');
+	if (open) {
 		setTimeout(() => {
-			const lemma = [...document.querySelectorAll('.lemma')].find((l) => l.textContent === hover);
-			lemma?.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
+			const lemma = [...document.querySelectorAll<HTMLElement>('.lemma')].find(
+				(l) => l.textContent === open
+			);
+			lemma?.click();
 		}, 2500);
 	}
 	mockWindows('main');

@@ -1,735 +1,1066 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-25T07:39:53+00:00",
+  "generatedAt": "2026-10-25T12:00:00+00:00",
   "title": "Design System: Scriptorium",
   "extensions": {
     "colorMeta": {
-      "page-white": {
+      "chrome-grey": {
         "role": "neutral",
-        "displayName": "Page White",
-        "canonical": "#ffffff",
-        "oklch": "oklch(100.0% 0.000 89.9)",
+        "displayName": "Chrome Grey",
+        "canonical": "#f2f3f5",
+        "oklch": "oklch(96.4% 0.003 264.5)",
         "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ]
-      },
-      "pane-grey": {
-        "role": "neutral",
-        "displayName": "Pane Grey",
-        "canonical": "#f5f6f8",
-        "oklch": "oklch(97.3% 0.003 264.5)",
-        "tonalRamp": [
-          "#0b0b0c",
-          "#242526",
-          "#414243",
-          "#606163",
-          "#818284",
-          "#a4a5a7",
-          "#c8c9cb",
+          "#0a0b0c",
+          "#232425",
+          "#3f4041",
+          "#5d5e5f",
+          "#7c7d7f",
+          "#9d9ea0",
+          "#c3c4c6",
           "#edeef0"
         ]
       },
-      "desk-grey": {
+      "surface": {
         "role": "neutral",
-        "displayName": "Desk Grey",
-        "canonical": "#ececec",
-        "oklch": "oklch(94.3% 0.000 89.9)",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ]
-      },
-      "hairline": {
-        "role": "neutral",
-        "displayName": "Hairline",
-        "canonical": "#e2e3e7",
-        "oklch": "oklch(91.6% 0.006 275.0)",
-        "tonalRamp": [
-          "#0a0b0e",
-          "#242528",
-          "#414245",
-          "#606164",
-          "#818286",
-          "#a4a5a8",
-          "#c8c9cd",
-          "#edeef2"
-        ]
-      },
-      "hairline-strong": {
-        "role": "neutral",
-        "displayName": "Strong Hairline",
-        "canonical": "#c6c9d1",
-        "oklch": "oklch(83.6% 0.012 269.5)",
-        "tonalRamp": [
-          "#0a0b0e",
-          "#232529",
-          "#404247",
-          "#5f6167",
-          "#808289",
-          "#a2a5ac",
-          "#c6c9d1",
-          "#ebeef6"
-        ]
-      },
-      "hairline-hover": {
-        "role": "neutral",
-        "displayName": "Hover Hairline",
-        "canonical": "#9aa0ad",
-        "oklch": "oklch(70.5% 0.020 265.9)",
-        "tonalRamp": [
-          "#090b11",
-          "#22252c",
-          "#3e424b",
-          "#5c616c",
-          "#7d828e",
-          "#9fa5b2",
-          "#c3c9d6",
-          "#e9effa"
-        ]
-      },
-      "section-rule": {
-        "role": "neutral",
-        "displayName": "Section Rule",
-        "canonical": "#111111",
-        "oklch": "oklch(17.8% 0.000 89.9)",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ]
-      },
-      "bookcloth": {
-        "role": "primary",
-        "displayName": "Bookcloth Blue",
-        "canonical": "#1d2b4f",
-        "oklch": "oklch(29.7% 0.068 266.3)",
-        "tonalRamp": [
-          "#020825",
-          "#162345",
-          "#324165",
-          "#516184",
-          "#7382a4",
-          "#96a5c6",
-          "#bbc9e8",
-          "#e2efff"
-        ]
-      },
-      "bookcloth-light": {
-        "role": "primary",
-        "displayName": "Bookcloth Light",
-        "canonical": "#2a3a63",
-        "oklch": "oklch(35.6% 0.074 266.6)",
-        "tonalRamp": [
-          "#020726",
-          "#152247",
-          "#304069",
-          "#4f6089",
-          "#7182a9",
-          "#94a5ca",
-          "#b9c9ed",
-          "#e0eeff"
-        ]
-      },
-      "bookcloth-line": {
-        "role": "primary",
-        "displayName": "Bookcloth Line",
-        "canonical": "#34446d",
-        "oklch": "oklch(39.3% 0.073 266.9)",
-        "tonalRamp": [
-          "#030725",
-          "#162345",
-          "#314068",
-          "#506089",
-          "#7182a9",
-          "#94a5cb",
-          "#b9c9ed",
-          "#e0eeff"
-        ]
-      },
-      "on-bookcloth": {
-        "role": "neutral",
-        "displayName": "On Bookcloth",
+        "displayName": "Surface",
         "canonical": "#ffffff",
         "oklch": "oklch(100.0% 0.000 89.9)",
         "tonalRamp": [
           "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#7d7d7d",
+          "#9e9e9e",
+          "#c4c4c4",
           "#eeeeee"
         ]
       },
-      "rubric": {
-        "role": "secondary",
-        "displayName": "Rubric",
-        "canonical": "#b3261e",
-        "oklch": "oklch(50.1% 0.178 28.7)",
+      "surface-quiet": {
+        "role": "neutral",
+        "displayName": "Surface Quiet",
+        "canonical": "#fafafb",
+        "oklch": "oklch(98.5% 0.001 286.4)",
         "tonalRamp": [
-          "#320000",
-          "#5a0000",
-          "#840000",
-          "#b0231c",
-          "#d45144",
-          "#f77b6b",
-          "#ffa393",
-          "#ffcdbc"
+          "#0b0b0c",
+          "#242425",
+          "#404040",
+          "#5d5d5e",
+          "#7d7d7e",
+          "#9e9e9f",
+          "#c4c4c5",
+          "#eeeeef"
         ]
       },
-      "lemma-tint": {
-        "role": "tertiary",
-        "displayName": "Lemma Tint",
-        "canonical": "#dce3f2",
-        "oklch": "oklch(91.5% 0.022 265.8)",
+      "stage": {
+        "role": "neutral",
+        "displayName": "Lightbox Stage",
+        "canonical": "#1e1f22",
+        "oklch": "oklch(23.9% 0.006 271.2)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232427",
+          "#3e4043",
+          "#5c5d61",
+          "#7c7d81",
+          "#9d9ea2",
+          "#c2c4c8",
+          "#edeef3"
+        ]
+      },
+      "stage-raised": {
+        "role": "neutral",
+        "displayName": "Stage Raised",
+        "canonical": "#2a2b2f",
+        "oklch": "oklch(29.0% 0.007 274.7)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232428",
+          "#3e3f44",
+          "#5c5d62",
+          "#7c7d82",
+          "#9d9ea3",
+          "#c2c4c9",
+          "#edeef4"
+        ]
+      },
+      "stage-line": {
+        "role": "neutral",
+        "displayName": "Stage Line",
+        "canonical": "#34353a",
+        "oklch": "oklch(33.0% 0.009 276.9)",
+        "tonalRamp": [
+          "#0a0b0f",
+          "#232428",
+          "#3e3f45",
+          "#5c5d63",
+          "#7c7d83",
+          "#9d9ea4",
+          "#c2c4ca",
+          "#edeef5"
+        ]
+      },
+      "on-stage": {
+        "role": "neutral",
+        "displayName": "On Stage",
+        "canonical": "#e4e5e9",
+        "oklch": "oklch(92.2% 0.005 275.0)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232427",
+          "#3f4043",
+          "#5d5d61",
+          "#7c7d81",
+          "#9d9ea2",
+          "#c3c4c8",
+          "#edeef2"
+        ]
+      },
+      "on-stage-muted": {
+        "role": "neutral",
+        "displayName": "On Stage Muted",
+        "canonical": "#a9acb4",
+        "oklch": "oklch(74.4% 0.012 269.5)",
         "tonalRamp": [
           "#090b10",
-          "#22252c",
-          "#3e424a",
-          "#5d616b",
-          "#7d828d",
-          "#9fa5b2",
-          "#c3c9d7",
-          "#e8effd"
+          "#22242a",
+          "#3d4046",
+          "#5b5d65",
+          "#7a7d85",
+          "#9b9ea6",
+          "#c1c4cc",
+          "#ebeef7"
         ]
       },
-      "ink-bright": {
+      "line": {
         "role": "neutral",
-        "displayName": "Bright Ink",
-        "canonical": "#0f1115",
-        "oklch": "oklch(17.7% 0.009 264.3)",
+        "displayName": "Line",
+        "canonical": "#e3e4e8",
+        "oklch": "oklch(91.9% 0.006 275.0)",
         "tonalRamp": [
-          "#090b0f",
-          "#232529",
-          "#404247",
-          "#5f6166",
-          "#808288",
-          "#a2a5ab",
-          "#c6c9cf",
-          "#ebeef5"
+          "#0a0b0e",
+          "#232427",
+          "#3f4043",
+          "#5d5d61",
+          "#7c7d81",
+          "#9d9ea2",
+          "#c3c4c8",
+          "#edeef2"
         ]
       },
-      "ink-body": {
+      "line-soft": {
         "role": "neutral",
-        "displayName": "Body Ink",
-        "canonical": "#1b1e24",
-        "oklch": "oklch(23.5% 0.012 264.3)",
+        "displayName": "Line Soft",
+        "canonical": "#eeeff2",
+        "oklch": "oklch(95.2% 0.004 271.4)",
         "tonalRamp": [
-          "#090b10",
-          "#22252b",
-          "#3f4248",
-          "#5e6167",
-          "#7f8288",
-          "#a2a5ab",
-          "#c6c9ce",
+          "#0a0b0d",
+          "#232426",
+          "#3f4042",
+          "#5d5d60",
+          "#7c7d80",
+          "#9d9ea1",
+          "#c3c4c7",
+          "#edeef1"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Line Strong",
+        "canonical": "#d5d7dc",
+        "oklch": "oklch(87.9% 0.007 268.5)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#222428",
+          "#3e4044",
+          "#5c5d62",
+          "#7b7d82",
+          "#9c9ea3",
+          "#c2c4c9",
           "#eceef3"
         ]
       },
-      "ink-secondary": {
+      "line-hover": {
         "role": "neutral",
-        "displayName": "Secondary Ink",
-        "canonical": "#464b55",
-        "oklch": "oklch(41.2% 0.018 264.4)",
+        "displayName": "Line Hover",
+        "canonical": "#a4a8b0",
+        "oklch": "oklch(73.1% 0.012 264.5)",
         "tonalRamp": [
-          "#080b12",
-          "#21252d",
-          "#3d424c",
-          "#5c616b",
-          "#7e828c",
-          "#a0a5af",
-          "#c5c9d2",
+          "#090b10",
+          "#21242a",
+          "#3c4046",
+          "#5a5e65",
+          "#7a7d85",
+          "#9a9ea6",
+          "#c0c4cc",
           "#eaeff7"
         ]
       },
-      "ink-muted": {
-        "role": "neutral",
-        "displayName": "Muted Ink",
-        "canonical": "#5f636d",
-        "oklch": "oklch(50.0% 0.017 268.3)",
+      "graphite-ink": {
+        "role": "primary",
+        "displayName": "Graphite Ink",
+        "canonical": "#111214",
+        "oklch": "oklch(18.2% 0.004 264.5)",
         "tonalRamp": [
-          "#090b11",
-          "#22252c",
-          "#3e424a",
-          "#5d616b",
-          "#7e828c",
-          "#a1a5ae",
-          "#c5c9d2",
-          "#ebeef7"
+          "#0a0b0d",
+          "#232426",
+          "#3e4042",
+          "#5c5e60",
+          "#7c7d80",
+          "#9d9ea1",
+          "#c3c4c7",
+          "#edeef1"
         ]
+      },
+      "graphite-ink-hover": {
+        "role": "primary",
+        "displayName": "Graphite Ink Hover",
+        "canonical": "#2b2d32",
+        "oklch": "oklch(29.7% 0.009 268.4)",
+        "tonalRamp": [
+          "#090b0f",
+          "#222429",
+          "#3d4045",
+          "#5b5d63",
+          "#7b7d83",
+          "#9c9ea4",
+          "#c1c4ca",
+          "#eceef5"
+        ]
+      },
+      "on-ink": {
+        "role": "primary",
+        "displayName": "On Ink",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#7d7d7d",
+          "#9e9e9e",
+          "#c4c4c4",
+          "#eeeeee"
+        ]
+      },
+      "on-ink-muted": {
+        "role": "primary",
+        "displayName": "On Ink Muted",
+        "canonical": "#b9bcc3",
+        "oklch": "oklch(79.5% 0.010 267.3)",
+        "tonalRamp": [
+          "#090b10",
+          "#222429",
+          "#3d4045",
+          "#5b5e64",
+          "#7a7d84",
+          "#9b9ea5",
+          "#c1c4cb",
+          "#ebeef6"
+        ]
+      },
+      "wash": {
+        "role": "neutral",
+        "displayName": "Ink Wash",
+        "canonical": "rgba(17, 18, 20, 0.05)"
+      },
+      "highlighter": {
+        "role": "secondary",
+        "displayName": "Highlighter Yellow",
+        "canonical": "#ffe066",
+        "oklch": "oklch(91.0% 0.144 95.1)",
+        "tonalRamp": [
+          "#1b0400",
+          "#361f00",
+          "#543c00",
+          "#735b00",
+          "#947c05",
+          "#b69d3a",
+          "#dcc363",
+          "#ffee8e"
+        ]
+      },
+      "on-highlighter": {
+        "role": "secondary",
+        "displayName": "On Highlighter",
+        "canonical": "#111214",
+        "oklch": "oklch(18.2% 0.004 264.5)",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#232426",
+          "#3e4042",
+          "#5c5e60",
+          "#7c7d80",
+          "#9d9ea1",
+          "#c3c4c7",
+          "#edeef1"
+        ]
+      },
+      "hand-blue": {
+        "role": "tertiary",
+        "displayName": "Hand Blue",
+        "canonical": "#2456d6",
+        "oklch": "oklch(50.3% 0.204 264.1)",
+        "tonalRamp": [
+          "#01003c",
+          "#051b5d",
+          "#1e3a7e",
+          "#3a5aa1",
+          "#587bc4",
+          "#789de9",
+          "#9dc3ff",
+          "#c6eeff"
+        ]
+      },
+      "hand-wash": {
+        "role": "tertiary",
+        "displayName": "Hand Wash",
+        "canonical": "rgba(36, 86, 214, 0.1)"
       },
       "ok-green": {
-        "role": "status",
-        "displayName": "Ledger Green",
-        "canonical": "#2e6b47",
-        "oklch": "oklch(47.7% 0.087 155.2)",
+        "role": "neutral",
+        "displayName": "Ok Green",
+        "canonical": "#1f7a4d",
+        "oklch": "oklch(51.5% 0.110 156.8)",
         "tonalRamp": [
-          "#001201",
-          "#002f14",
-          "#134e2e",
-          "#33704c",
-          "#5a916d",
-          "#80b391",
-          "#a6d7b6",
-          "#cefcdd"
+          "#001500",
+          "#00320a",
+          "#005026",
+          "#0d6f43",
+          "#3a9162",
+          "#5eb382",
+          "#85daa7",
+          "#afffd1"
         ]
       },
-      "warn-umber": {
-        "role": "status",
-        "displayName": "Umber Warning",
-        "canonical": "#8a5300",
-        "oklch": "oklch(49.4% 0.109 66.9)",
+      "ok-text": {
+        "role": "neutral",
+        "displayName": "Ok Text",
+        "canonical": "#155c39",
+        "oklch": "oklch(42.2% 0.090 156.9)",
         "tonalRamp": [
-          "#200000",
-          "#411700",
-          "#653400",
-          "#8a5300",
-          "#ab7539",
-          "#cd9963",
-          "#f0bf8c",
-          "#ffe5b6"
+          "#001400",
+          "#003010",
+          "#004d2b",
+          "#296d48",
+          "#4b8d67",
+          "#6db088",
+          "#92d6ad",
+          "#bcffd6"
+        ]
+      },
+      "ok-wash": {
+        "role": "neutral",
+        "displayName": "Ok Wash",
+        "canonical": "#e3f2ea",
+        "oklch": "oklch(94.8% 0.019 162.9)",
+        "tonalRamp": [
+          "#040e09",
+          "#1c2721",
+          "#37433d",
+          "#54615a",
+          "#74817a",
+          "#94a29b",
+          "#bac8c0",
+          "#e4f3eb"
+        ]
+      },
+      "warn-amber": {
+        "role": "neutral",
+        "displayName": "Warn Amber",
+        "canonical": "#d97f00",
+        "oklch": "oklch(67.9% 0.155 63.2)",
+        "tonalRamp": [
+          "#280000",
+          "#480a00",
+          "#692c00",
+          "#8b4b00",
+          "#ae6b22",
+          "#d38d48",
+          "#fbb36e",
+          "#ffdd98"
+        ]
+      },
+      "warn-text": {
+        "role": "neutral",
+        "displayName": "Warn Text",
+        "canonical": "#7a4300",
+        "oklch": "oklch(44.1% 0.102 61.2)",
+        "tonalRamp": [
+          "#250000",
+          "#441100",
+          "#652f00",
+          "#864e13",
+          "#a96e38",
+          "#cc8f5a",
+          "#f5b57e",
+          "#ffdfa8"
+        ]
+      },
+      "warn-wash": {
+        "role": "neutral",
+        "displayName": "Warn Wash",
+        "canonical": "#fff6e5",
+        "oklch": "oklch(97.6% 0.024 83.4)",
+        "tonalRamp": [
+          "#100a02",
+          "#2a2316",
+          "#463f31",
+          "#645d4e",
+          "#847c6d",
+          "#a69d8e",
+          "#ccc3b3",
+          "#f6eddd"
         ]
       },
       "danger-red": {
-        "role": "status",
+        "role": "neutral",
         "displayName": "Danger Red",
-        "canonical": "#a8201a",
-        "oklch": "oklch(47.6% 0.172 28.5)",
+        "canonical": "#b42318",
+        "oklch": "oklch(50.0% 0.182 29.5)",
         "tonalRamp": [
-          "#320000",
-          "#5a0000",
-          "#830000",
-          "#ad2821",
-          "#d05548",
-          "#f37d6f",
-          "#ffa697",
-          "#ffcfbf"
+          "#2d0000",
+          "#4f0000",
+          "#721d15",
+          "#953e33",
+          "#ba5f52",
+          "#df8072",
+          "#ffa696",
+          "#ffd0bf"
         ]
       },
-      "dark-page": {
+      "danger-text": {
         "role": "neutral",
-        "displayName": "Night Page",
-        "canonical": "#11151f",
-        "oklch": "oklch(19.7% 0.021 267.5)",
+        "displayName": "Danger Text",
+        "canonical": "#9a1c13",
+        "oklch": "oklch(44.6% 0.163 29.4)",
         "tonalRamp": [
-          "#070b14",
-          "#21252f",
-          "#3d424c",
-          "#5d616c",
-          "#7e828c",
-          "#a1a5ae",
-          "#c5c9d2",
-          "#ebeef7"
+          "#2d0000",
+          "#4f0000",
+          "#721d15",
+          "#953e33",
+          "#ba5f52",
+          "#df8072",
+          "#ffa696",
+          "#ffd0bf"
         ]
       },
-      "dark-paper": {
+      "danger-wash": {
         "role": "neutral",
-        "displayName": "Night Paper",
-        "canonical": "#161b27",
-        "oklch": "oklch(22.3% 0.025 266.9)",
+        "displayName": "Danger Wash",
+        "canonical": "#fdecea",
+        "oklch": "oklch(95.6% 0.019 25.6)",
         "tonalRamp": [
-          "#070b15",
-          "#202531",
-          "#3d424e",
-          "#5c616d",
-          "#7d828e",
-          "#a0a5b0",
-          "#c4c9d4",
-          "#eaeef8"
+          "#120807",
+          "#2d211f",
+          "#493c3b",
+          "#685a58",
+          "#887977",
+          "#aa9a98",
+          "#d0c0be",
+          "#fbeae8"
         ]
       },
-      "dark-desk": {
+      "danger-border": {
         "role": "neutral",
-        "displayName": "Night Desk",
-        "canonical": "#0c0f16",
-        "oklch": "oklch(16.9% 0.016 266.7)",
+        "displayName": "Danger Border",
+        "canonical": "#f2c9c4",
+        "oklch": "oklch(87.0% 0.047 26.2)",
         "tonalRamp": [
-          "#080b12",
-          "#22252c",
-          "#3f4249",
-          "#5e6169",
-          "#7f8289",
-          "#a2a5ac",
-          "#c6c9cf",
-          "#eceef4"
+          "#1b0303",
+          "#381a18",
+          "#563632",
+          "#765350",
+          "#98736f",
+          "#ba948f",
+          "#e1b9b4",
+          "#ffe3de"
         ]
       },
-      "dark-section-rule": {
+      "speaker-1": {
         "role": "neutral",
-        "displayName": "Night Rule",
-        "canonical": "#c9cfdc",
-        "oklch": "oklch(85.4% 0.019 266.0)",
+        "displayName": "Speaker 1",
+        "canonical": "#0f8a7e",
+        "oklch": "oklch(57.1% 0.098 184.0)",
         "tonalRamp": [
-          "#090b10",
-          "#22252b",
-          "#3e424a",
-          "#5d616a",
-          "#7e828c",
-          "#a0a5b1",
-          "#c3c9d6",
-          "#e9effb"
+          "#001510",
+          "#003129",
+          "#004f46",
+          "#006f64",
+          "#1c9084",
+          "#4ab2a5",
+          "#73d9cb",
+          "#9efff6"
         ]
       },
-      "dark-bookcloth": {
-        "role": "primary",
-        "displayName": "Night Bookcloth",
-        "canonical": "#18264a",
-        "oklch": "oklch(27.7% 0.069 266.0)",
+      "speaker-1-wash": {
+        "role": "neutral",
+        "displayName": "Speaker 1 Wash",
+        "canonical": "#dcf3ef",
+        "oklch": "oklch(94.6% 0.025 184.3)",
         "tonalRamp": [
-          "#020725",
-          "#152346",
-          "#324165",
-          "#516184",
-          "#7382a4",
-          "#96a5c6",
-          "#bbc9e8",
-          "#e2efff"
+          "#010e0c",
+          "#162825",
+          "#314441",
+          "#4e625f",
+          "#6e827f",
+          "#8ea4a0",
+          "#b3cac6",
+          "#ddf4f0"
         ]
       },
-      "dark-accent": {
-        "role": "primary",
-        "displayName": "Night Periwinkle",
-        "canonical": "#afc3ec",
-        "oklch": "oklch(81.6% 0.062 264.6)",
+      "speaker-1-text": {
+        "role": "neutral",
+        "displayName": "Speaker 1 Text",
+        "canonical": "#0b5c54",
+        "oklch": "oklch(42.8% 0.072 184.3)",
         "tonalRamp": [
-          "#040a1b",
-          "#1b2539",
-          "#36425b",
-          "#53617e",
-          "#7282a4",
-          "#93a5cb",
-          "#b5c9f2",
-          "#dcefff"
+          "#00130f",
+          "#002e28",
+          "#004c44",
+          "#216b62",
+          "#468b82",
+          "#68ada4",
+          "#8dd4ca",
+          "#b7fff4"
         ]
       },
-      "dark-rubric": {
-        "role": "secondary",
-        "displayName": "Night Rubric",
-        "canonical": "#ec8478",
-        "oklch": "oklch(72.4% 0.130 27.6)",
+      "speaker-2": {
+        "role": "neutral",
+        "displayName": "Speaker 2",
+        "canonical": "#d97f00",
+        "oklch": "oklch(67.9% 0.155 63.2)",
+        "tonalRamp": [
+          "#280000",
+          "#480a00",
+          "#692c00",
+          "#8b4b00",
+          "#ae6b22",
+          "#d38d48",
+          "#fbb36e",
+          "#ffdd98"
+        ]
+      },
+      "speaker-2-wash": {
+        "role": "neutral",
+        "displayName": "Speaker 2 Wash",
+        "canonical": "#ffebcc",
+        "oklch": "oklch(94.8% 0.046 78.8)",
+        "tonalRamp": [
+          "#150800",
+          "#302106",
+          "#4d3d23",
+          "#6c5b40",
+          "#8c7a5e",
+          "#ae9c7f",
+          "#d5c1a3",
+          "#ffeccd"
+        ]
+      },
+      "speaker-2-text": {
+        "role": "neutral",
+        "displayName": "Speaker 2 Text",
+        "canonical": "#7a4300",
+        "oklch": "oklch(44.1% 0.102 61.2)",
         "tonalRamp": [
           "#250000",
-          "#490908",
-          "#6f2721",
-          "#96453c",
-          "#c06359",
-          "#eb8377",
-          "#ffaa9d",
-          "#ffd2c5"
+          "#441100",
+          "#652f00",
+          "#864e13",
+          "#a96e38",
+          "#cc8f5a",
+          "#f5b57e",
+          "#ffdfa8"
         ]
       },
-      "dark-lemma-tint": {
-        "role": "tertiary",
-        "displayName": "Night Lemma Tint",
-        "canonical": "#2a3963",
-        "oklch": "oklch(35.4% 0.076 267.6)",
-        "tonalRamp": [
-          "#030727",
-          "#162248",
-          "#31406a",
-          "#506089",
-          "#7181aa",
-          "#95a4cb",
-          "#bac9ed",
-          "#e0eeff"
-        ]
-      },
-      "dark-ink-body": {
+      "text-bright": {
         "role": "neutral",
-        "displayName": "Night Body Ink",
-        "canonical": "#dde1e8",
-        "oklch": "oklch(90.9% 0.010 261.8)",
+        "displayName": "Text Bright",
+        "canonical": "#111214",
+        "oklch": "oklch(18.2% 0.004 264.5)",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#232426",
+          "#3e4042",
+          "#5c5e60",
+          "#7c7d80",
+          "#9d9ea1",
+          "#c3c4c7",
+          "#edeef1"
+        ]
+      },
+      "text-body": {
+        "role": "neutral",
+        "displayName": "Text Body",
+        "canonical": "#1b1c1f",
+        "oklch": "oklch(22.7% 0.006 271.1)",
         "tonalRamp": [
           "#0a0b0e",
-          "#232528",
-          "#404246",
-          "#5f6166",
-          "#7f8288",
-          "#a2a5ab",
-          "#c6c9d0",
-          "#ebeff6"
+          "#232427",
+          "#3e4043",
+          "#5c5d61",
+          "#7c7d81",
+          "#9d9ea2",
+          "#c2c4c8",
+          "#edeef3"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Text Secondary",
+        "canonical": "#4a4e57",
+        "oklch": "oklch(42.4% 0.016 266.5)",
+        "tonalRamp": [
+          "#080b12",
+          "#20242c",
+          "#3c4048",
+          "#595e67",
+          "#797d87",
+          "#9a9ea9",
+          "#bfc4cf",
+          "#eaeefa"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Text Muted",
+        "canonical": "#5e626b",
+        "oklch": "oklch(49.6% 0.015 266.6)",
+        "tonalRamp": [
+          "#080b12",
+          "#21242c",
+          "#3c4048",
+          "#5a5e66",
+          "#797d87",
+          "#9a9ea8",
+          "#bfc4ce",
+          "#eaeef9"
+        ]
+      },
+      "text-faint": {
+        "role": "neutral",
+        "displayName": "Text Faint",
+        "canonical": "#8f939b",
+        "oklch": "oklch(66.3% 0.013 264.5)",
+        "tonalRamp": [
+          "#090b11",
+          "#21242a",
+          "#3c4047",
+          "#5a5e65",
+          "#797d85",
+          "#9a9ea7",
+          "#c0c4cd",
+          "#eaeff7"
+        ]
+      },
+      "dark-chrome": {
+        "role": "neutral",
+        "displayName": "Dark Chrome",
+        "canonical": "#16171a",
+        "oklch": "oklch(20.5% 0.006 271.1)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232427",
+          "#3e4043",
+          "#5c5d61",
+          "#7c7d81",
+          "#9d9ea2",
+          "#c2c4c8",
+          "#edeef3"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Dark Surface",
+        "canonical": "#1c1d20",
+        "oklch": "oklch(23.1% 0.006 271.2)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232427",
+          "#3e4043",
+          "#5c5d61",
+          "#7c7d81",
+          "#9d9ea2",
+          "#c2c4c8",
+          "#edeef3"
+        ]
+      },
+      "dark-surface-raised": {
+        "role": "neutral",
+        "displayName": "Dark Surface Raised",
+        "canonical": "#24252a",
+        "oklch": "oklch(26.6% 0.009 276.7)",
+        "tonalRamp": [
+          "#0a0b0f",
+          "#232429",
+          "#3e3f45",
+          "#5c5d63",
+          "#7c7d83",
+          "#9d9ea4",
+          "#c2c4ca",
+          "#edeef5"
+        ]
+      },
+      "dark-stage": {
+        "role": "neutral",
+        "displayName": "Dark Stage",
+        "canonical": "#0f1012",
+        "oklch": "oklch(17.3% 0.004 264.5)",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#232426",
+          "#3e4042",
+          "#5c5e60",
+          "#7c7d80",
+          "#9d9ea1",
+          "#c3c4c7",
+          "#edeef1"
+        ]
+      },
+      "dark-line": {
+        "role": "neutral",
+        "displayName": "Dark Line",
+        "canonical": "#2c2d31",
+        "oklch": "oklch(29.8% 0.007 274.7)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232428",
+          "#3e3f44",
+          "#5c5d62",
+          "#7c7d82",
+          "#9d9ea3",
+          "#c2c4c9",
+          "#edeef4"
+        ]
+      },
+      "dark-ink": {
+        "role": "primary",
+        "displayName": "Dark Ink",
+        "canonical": "#ecedef",
+        "oklch": "oklch(94.6% 0.003 264.5)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232425",
+          "#3f4041",
+          "#5d5e5f",
+          "#7c7d7f",
+          "#9d9ea0",
+          "#c3c4c6",
+          "#edeef0"
+        ]
+      },
+      "dark-highlighter": {
+        "role": "secondary",
+        "displayName": "Dark Highlighter",
+        "canonical": "#e8c547",
+        "oklch": "oklch(83.2% 0.145 93.2)",
+        "tonalRamp": [
+          "#1c0300",
+          "#381e00",
+          "#553b00",
+          "#755a00",
+          "#967b03",
+          "#b89c3a",
+          "#dfc263",
+          "#ffed8d"
+        ]
+      },
+      "dark-hand-blue": {
+        "role": "tertiary",
+        "displayName": "Dark Hand Blue",
+        "canonical": "#7fa2ff",
+        "oklch": "oklch(72.6% 0.141 267.2)",
+        "tonalRamp": [
+          "#03003c",
+          "#0b1a5d",
+          "#24397e",
+          "#3f59a1",
+          "#5d79c5",
+          "#7d9be9",
+          "#a2c2ff",
+          "#cbecff"
+        ]
+      },
+      "dark-text-body": {
+        "role": "neutral",
+        "displayName": "Dark Text Body",
+        "canonical": "#dfe1e5",
+        "oklch": "oklch(90.9% 0.006 264.5)",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232427",
+          "#3e4043",
+          "#5c5e61",
+          "#7b7d81",
+          "#9c9ea2",
+          "#c2c4c8",
+          "#eceef2"
+        ]
+      },
+      "dark-text-muted": {
+        "role": "neutral",
+        "displayName": "Dark Text Muted",
+        "canonical": "#9a9ea6",
+        "oklch": "oklch(69.9% 0.013 264.5)",
+        "tonalRamp": [
+          "#090b11",
+          "#21242a",
+          "#3c4047",
+          "#5a5e65",
+          "#797d85",
+          "#9a9ea6",
+          "#c0c4cc",
+          "#eaeff7"
         ]
       }
     },
-    "darkTheme": {
-      "note": "Dark values from src/app.css: applied by prefers-color-scheme unless data-theme='light', or forced by data-theme='dark'.",
-      "surface-0": "#11151f",
-      "surface-1": "#161b27",
-      "surface-2": "#1b2130",
-      "paper": "#161b27",
-      "desk": "#0c0f16",
-      "line": "#283044",
-      "line-strong": "#36405a",
-      "rule": "#c9cfdc",
-      "shell": "#18264a",
-      "shell-2": "#24355f",
-      "accent": "#afc3ec",
-      "accent-soft": "#c9d6f2",
-      "on-accent": "#0f182b",
-      "rubric": "#ec8478",
-      "tint": "#2a3963",
-      "text-bright": "#f2f4f8",
-      "text-body": "#dde1e8",
-      "focus": "#c9d6f2"
-    },
     "typographyMeta": {
-      "wordmark": {
-        "displayName": "Wordmark",
-        "purpose": "Product name in the rail's masthead-high block."
-      },
-      "headline": {
-        "displayName": "Headline",
-        "purpose": "Masthead titles; 1.625rem at 820px and below."
-      },
       "title": {
-        "displayName": "Section Title",
-        "purpose": "Section headings under the section rule."
+        "displayName": "Title",
+        "purpose": "Masthead titles, the app name, step headings."
       },
-      "subtitle": {
-        "displayName": "Subtitle",
-        "purpose": "Third-level headings."
-      },
-      "reading": {
-        "displayName": "Reading Text",
-        "purpose": "Edition text and correction editor; 1.5rem at 1680px and above; max 44rem."
-      },
-      "apparatus": {
-        "displayName": "Apparatus",
-        "purpose": "Apparatus criticus entries."
-      },
-      "running-head": {
-        "displayName": "Running Head",
-        "purpose": "Small-caps running head of the edition page and the sigla key heading."
-      },
-      "siglum": {
-        "displayName": "Siglum",
-        "purpose": "Witness letters and 'corr.', always rubric."
+      "heading": {
+        "displayName": "Heading",
+        "purpose": "Section headings."
       },
       "body": {
-        "displayName": "Interface Body",
-        "purpose": "All interface text and controls."
+        "displayName": "Body",
+        "purpose": "All interface text."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Field labels, small buttons, metadata."
+        "purpose": "Buttons, field labels, list items, inputs."
       },
       "caption": {
         "displayName": "Caption",
-        "purpose": "Chips and counts."
+        "purpose": "Chips, metadata, hints, group heads, the page strip."
       },
-      "prompt-mono": {
-        "displayName": "Prompt Mono",
-        "purpose": "Prompt editor textareas only."
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "The text being checked and the correction editor; 1.25rem at 1680px and wider."
+      },
+      "reading-small": {
+        "displayName": "Reading small",
+        "purpose": "Readings, transcript lines, analysis answers, previews."
+      },
+      "machine": {
+        "displayName": "Machine",
+        "purpose": "File names, models, times, costs, counts, paths, the prompt editor."
+      },
+      "machine-mark": {
+        "displayName": "Machine mark",
+        "purpose": "Shortcuts, step numbers, line numbers, sigla, counts. The smallest size."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "The cost estimate in New job."
       }
     },
     "shadows": [
       {
-        "name": "flyout",
-        "value": "0 18px 48px -16px rgba(15, 20, 35, 0.35)",
-        "dark": "0 24px 64px -16px rgba(0, 0, 0, 0.7)",
-        "purpose": "Sources resting on the desk (scan, player strip), the close dialog, the toast."
+        "name": "raised",
+        "value": "0 0 0 1px var(--line), 0 1px 2px rgba(17, 18, 20, 0.06)",
+        "purpose": "The selected list item lifted onto white; the audio player and the playing line."
       },
       {
-        "name": "lifted-edge",
-        "value": "0 -10px 24px -18px rgba(15, 20, 35, 0.45)",
-        "purpose": "Top edge of New job's sticky window-wide footer."
+        "name": "pop",
+        "value": "0 0 0 1px var(--line), 0 12px 32px -8px rgba(17, 18, 20, 0.18)",
+        "purpose": "The readings card."
+      },
+      {
+        "name": "flyout",
+        "value": "0 18px 48px -16px rgba(17, 18, 20, 0.35)",
+        "purpose": "The close dialog and the toast."
+      },
+      {
+        "name": "page",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.4)",
+        "purpose": "A scan on the lightbox."
+      },
+      {
+        "name": "zoom-pill",
+        "value": "0 0 0 1px var(--stage-line), 0 8px 24px rgba(0, 0, 0, 0.35)",
+        "purpose": "Controls floating over the stage."
+      },
+      {
+        "name": "summary-footer",
+        "value": "0 -10px 24px -18px rgba(17, 18, 20, 0.35)",
+        "purpose": "New job's summary when it becomes a sticky footer."
       }
     ],
     "motion": [
       {
         "name": "state",
         "value": "120ms ease-out",
-        "purpose": "Background and border colour changes on controls, nav, lemma and apparatus highlights."
+        "purpose": "Background, border and shadow changes on hover and selection; removed under reduced motion."
       },
       {
         "name": "progress",
-        "value": "width 400ms ease-out",
-        "purpose": "Running-job bar in the rail foot."
-      },
-      {
-        "name": "reduced-motion",
-        "value": "none",
-        "purpose": "All transitions and animations removed under prefers-reduced-motion."
+        "value": "400ms ease-out",
+        "purpose": "Progress bar width in the sidebar."
       }
     ],
     "breakpoints": [
       {
-        "name": "min-window",
-        "value": "640px"
+        "name": "shell-stack",
+        "value": "760px"
       },
       {
-        "name": "shell-collapse",
-        "value": "820px",
-        "purpose": "Rail becomes a top bar; masthead and sheet tighten."
+        "name": "compact",
+        "value": "820px"
       },
       {
         "name": "review-stack",
-        "value": "960px",
-        "purpose": "Review stacks the source above the edition."
+        "value": "1000px"
       },
       {
-        "name": "reading-bump",
-        "value": "1680px",
-        "purpose": "Reading text 1.3125rem to 1.5rem."
+        "name": "summary-footer",
+        "value": "1100px"
       },
       {
-        "name": "max-window",
-        "value": "2560px"
+        "name": "wide-reading",
+        "value": "1680px"
       }
-    ],
-    "layout": {
-      "rail": "14.5rem",
-      "mastheadHeight": "6.5rem",
-      "sheetMax": "64rem",
-      "readingMeasure": "44rem",
-      "editionMarginIndent": "5rem"
-    }
+    ]
   },
   "components": [
-    {
-      "name": "Button",
-      "kind": "button",
-      "refersTo": "button",
-      "description": "Default action: white ground, strong hairline, sans label.",
-      "html": "<button class=\"ds-btn\">Export…</button>",
-      "css": ".ds-btn{display:inline-flex;align-items:center;gap:var(--space-2);min-height:var(--control-md);padding:0 var(--space-4);border:1px solid var(--line-strong);border-radius:var(--radius-control);background:var(--surface-2);color:var(--text-body);font-family:var(--font-ui);font-weight:600;cursor:pointer;transition:background-color 120ms ease-out,border-color 120ms ease-out}.ds-btn:hover{border-color:var(--line-hover)}.ds-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}"
-    },
     {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The main action on a surface, in bookcloth.",
-      "html": "<button class=\"ds-btn-primary\">Start</button>",
-      "css": ".ds-btn-primary{display:inline-flex;align-items:center;min-height:var(--control-md);padding:0 var(--space-4);border:1px solid var(--accent);border-radius:var(--radius-control);background:var(--accent);color:var(--on-accent);font-family:var(--font-ui);font-weight:600;cursor:pointer;transition:background-color 120ms ease-out,border-color 120ms ease-out}.ds-btn-primary:hover{background:var(--accent-soft);border-color:var(--accent-soft)}.ds-btn-primary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}"
+      "description": "The one primary action of a work area, in graphite ink, with its shortcut.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Start<span class=\"ds-kbd\">Ctrl ↵</span></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--control-md); padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface-2); color: var(--text-bright); font-family: var(--font-ui); font-size: var(--type-sm); font-weight: 500; cursor: pointer; transition: background-color 120ms ease-out, border-color 120ms ease-out; } .ds-btn-primary { background: var(--ink); border-color: var(--ink); color: var(--on-ink); } .ds-btn-primary:hover { background: var(--ink-hover); border-color: var(--ink-hover); } .ds-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-kbd { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--on-ink-muted); }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Every other action: white ground, hairline border.",
+      "html": "<button class=\"ds-btn-default\">Edit</button>",
+      "css": ".ds-btn-default { display: inline-flex; align-items: center; min-height: var(--control-md); padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface-2); color: var(--text-bright); font-family: var(--font-ui); font-size: var(--type-sm); font-weight: 500; cursor: pointer; transition: border-color 120ms ease-out; } .ds-btn-default:hover { border-color: var(--line-hover); } .ds-btn-default:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
     },
     {
       "name": "Ghost Button",
       "kind": "button",
       "refersTo": "button-ghost",
-      "description": "Low-emphasis action; takes the bookcloth wash on hover.",
+      "description": "Pager and secondary actions; the wash on hover.",
       "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
-      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;min-height:var(--control-md);padding:0 var(--space-4);border:1px solid transparent;border-radius:var(--radius-control);background:transparent;color:var(--text-body);font-family:var(--font-ui);font-weight:600;cursor:pointer;transition:background-color 120ms ease-out}.ds-btn-ghost:hover{background:var(--accent-wash)}.ds-btn-ghost:focus-visible{outline:2px solid var(--focus);outline-offset:2px}"
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; min-height: var(--control-md); padding: 0 var(--space-3); border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--text-bright); font-family: var(--font-ui); font-size: var(--type-sm); font-weight: 500; cursor: pointer; } .ds-btn-ghost:hover { background: var(--wash); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
     },
     {
       "name": "Text Field",
       "kind": "input",
       "refersTo": "input",
-      "description": "Labelled field: label above in the sans, white ground, strong hairline.",
-      "html": "<label class=\"ds-field\"><span>Job name</span><input class=\"ds-input\" type=\"text\" value=\"Bulletin 1957\"></label>",
-      "css": ".ds-field{display:grid;gap:var(--space-1);font-family:var(--font-ui);}.ds-field>span{font-size:var(--type-sm);font-weight:600;color:var(--text-secondary)}.ds-input{min-height:var(--control-md);padding:var(--space-1) var(--space-3);border:1px solid var(--line-strong);border-radius:var(--radius-control);background:var(--surface-2);color:var(--text-body);font:inherit}.ds-input:hover{border-color:var(--line-hover)}.ds-input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}"
+      "description": "Inputs and selects: strong hairline, ink border and wash ring on focus.",
+      "html": "<label class=\"ds-field\"><span>Job name</span><input class=\"ds-input\" type=\"text\" placeholder=\"Interviews, Bobo-Dioulasso\" /></label>",
+      "css": ".ds-field { display: grid; gap: var(--space-1); font-family: var(--font-ui); } .ds-field > span { font-size: var(--type-sm); font-weight: 500; color: var(--text-secondary); } .ds-input { min-height: var(--control-md); padding: var(--space-1) var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--surface-2); color: var(--text-bright); font: inherit; font-size: var(--type-sm); transition: border-color 120ms ease-out, box-shadow 120ms ease-out; } .ds-input:hover { border-color: var(--line-hover); } .ds-input:focus-visible { outline: none; border-color: var(--text-bright); box-shadow: 0 0 0 3px var(--wash); }"
     },
     {
-      "name": "Chip",
+      "name": "Status Chips",
       "kind": "chip",
-      "refersTo": "chip",
-      "description": "Outlined status tag, never filled. The corrected variant is rubric.",
-      "html": "<span class=\"ds-chip\">Reviewed</span> <span class=\"ds-chip ds-chip-corr\">Corrected</span>",
-      "css": ".ds-chip{display:inline-flex;align-items:center;padding:0 var(--space-2);border:1px solid var(--accent-border);border-radius:4px;color:var(--accent);font-family:var(--font-ui);font-size:var(--type-xs);font-weight:600;line-height:1.5}.ds-chip-corr{border-color:var(--rubric);color:var(--rubric)}"
+      "refersTo": "chip-ok",
+      "description": "Status as text on a wash with a dot; hand blue only for Corrected.",
+      "html": "<span class=\"ds-chip ds-ok\">Finished</span> <span class=\"ds-chip ds-warn\">Check the scan</span> <span class=\"ds-chip ds-hand\">Corrected</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.5rem; border-radius: var(--radius-tag); font-family: var(--font-ui); font-size: var(--type-xs); font-weight: 500; } .ds-chip::before { content: ''; width: 6px; height: 6px; border-radius: 3px; background: var(--dot); } .ds-ok { background: var(--ok-wash); color: var(--ok-text); --dot: var(--ok); } .ds-warn { background: var(--warn-wash); color: var(--warn-text); --dot: var(--warn); } .ds-hand { background: var(--hand-wash); color: var(--hand); --dot: var(--hand); }"
     },
     {
-      "name": "Section",
-      "kind": "card",
-      "refersTo": "",
-      "description": "A section opened by the black rule, never boxed.",
-      "html": "<section class=\"ds-section\"><h2>Languages</h2><p>French, Arabic</p></section>",
-      "css": ".ds-section{border-top:1px solid var(--rule);padding-top:var(--space-4);display:grid;gap:var(--space-3);background:transparent;font-family:var(--font-ui);color:var(--text-body)}.ds-section h2{margin:0;font-family:var(--font-text);font-weight:500;font-size:1.375rem;color:var(--text-bright)}.ds-section p{margin:0}"
-    },
-    {
-      "name": "Rail Navigation",
+      "name": "Sidebar",
       "kind": "nav",
-      "refersTo": "rail",
-      "description": "Bookcloth rail with a Garamond wordmark as tall as the masthead.",
-      "html": "<nav class=\"ds-rail\"><div class=\"ds-wordmark\">Scriptorium</div><a class=\"ds-nav\" href=\"#\">New job</a><a class=\"ds-nav ds-nav-on\" href=\"#\">Jobs <b>1</b></a><a class=\"ds-nav\" href=\"#\">Prompts</a><a class=\"ds-nav\" href=\"#\">Settings</a></nav>",
-      "css": ".ds-rail{width:14.5rem;background:var(--shell);color:var(--on-shell);display:grid;gap:2px;padding-bottom:var(--space-4);font-family:var(--font-ui);}.ds-wordmark{height:var(--masthead-height);display:flex;align-items:flex-end;padding:0 var(--space-5) var(--space-4);border-bottom:1px solid var(--shell-line);margin-bottom:var(--space-3);font-family:var(--font-text);font-size:1.875rem;font-weight:500;line-height:1}.ds-nav{display:flex;align-items:center;min-height:2.5rem;margin:0 var(--space-3);padding:0 var(--space-3);border-radius:var(--radius-control);color:var(--on-shell-muted);text-decoration:none;font-size:1rem;transition:background-color 120ms ease-out}.ds-nav:hover{background:var(--shell-2);color:var(--on-shell)}.ds-nav:focus-visible{outline:2px solid var(--on-shell);outline-offset:2px}.ds-nav-on{background:var(--shell-2);color:var(--on-shell);font-weight:600}.ds-nav b{margin-left:auto;min-width:1.375rem;border-radius:999px;background:var(--on-shell);color:var(--shell);font-size:var(--type-xs);text-align:center;line-height:1.25rem}"
+      "refersTo": "sidebar",
+      "description": "Chrome grey jobs list with the black New job button; the current row lifted onto white.",
+      "html": "<nav class=\"ds-side\"><button class=\"ds-new\"><span>New job</span><span class=\"ds-k\">Ctrl N</span></button><p class=\"ds-group\">Running <span>1</span></p><button class=\"ds-job ds-current\">Interviews 2019</button><button class=\"ds-job\">Bulletin 1957</button></nav>",
+      "css": ".ds-side { display: grid; gap: 2px; width: 16rem; padding: var(--space-3); background: var(--chrome); font-family: var(--font-ui); } .ds-new { display: flex; justify-content: space-between; align-items: center; min-height: var(--control-md); margin-bottom: var(--space-4); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-control); background: var(--ink); color: var(--on-ink); font: inherit; font-size: var(--type-sm); font-weight: 500; cursor: pointer; } .ds-new:hover { background: var(--ink-hover); } .ds-k { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--on-ink-muted); } .ds-group { display: flex; justify-content: space-between; margin: 0; padding: 0 var(--space-2) var(--space-1); font-size: var(--type-xs); font-weight: 500; color: var(--text-muted); } .ds-group span { font-family: var(--font-mono); font-size: 0.6875rem; } .ds-job { padding: var(--space-2) 0.625rem; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--text-bright); font: inherit; font-size: var(--type-sm); font-weight: 500; text-align: left; cursor: pointer; } .ds-job:hover { background: var(--wash); } .ds-job.ds-current { background: var(--surface-0); box-shadow: var(--shadow-raised); } .ds-job:focus-visible, .ds-new:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
     },
     {
-      "name": "Edition Page with Apparatus",
+      "name": "Marked Reading Text",
       "kind": "custom",
-      "refersTo": "edition-page",
-      "description": "Reading text with rubric marginal line numbers, a tinted lemma, and the apparatus criticus under a black rule; hovering or focusing an entry lights its lemma.",
-      "html": "<article class=\"ds-ed\"><div class=\"ds-rh\"><span>bulletin-1957-05.pdf · page 1</span><span>reading text <i class=\"ds-sig\">a</i></span></div><p class=\"ds-l\"><span class=\"ds-n\">6</span><span>La réunion tenue à la mosquée de Bamako a rassemblé plus de <mark class=\"ds-lem\">deux</mark> cents fidèles.</span></p><ol class=\"ds-app\"><li tabindex=\"0\"><span class=\"ds-ln\">6</span>deux <span>]</span> trois <i class=\"ds-sig\">b</i></li></ol></article>",
-      "css": ".ds-ed{background:var(--paper);padding:var(--space-5) var(--space-6) var(--space-6) 5rem;max-width:44rem;font-family:var(--font-text);color:var(--text-bright)}.ds-rh{display:flex;justify-content:space-between;font-variant-caps:all-small-caps;letter-spacing:.08em;font-size:1.125rem;color:var(--text-muted);margin-bottom:var(--space-5)}.ds-sig{font-style:normal;font-weight:600;font-variant-caps:all-small-caps;color:var(--rubric);font-size:1.2em;line-height:1}.ds-l{display:grid;grid-template-columns:2.5rem 1fr;column-gap:1rem;align-items:baseline;margin:0 0 0 -3.5rem;font-size:var(--type-reading);line-height:1.65;font-variant-numeric:oldstyle-nums}.ds-n{justify-self:end;font-size:.8em;font-weight:600;color:var(--rubric);font-variant-numeric:lining-nums tabular-nums}.ds-lem{background:var(--tint);color:inherit;border-radius:2px;box-shadow:0 0 0 2px var(--tint);transition:background-color 120ms ease-out}.ds-ed:has(.ds-app li:hover,.ds-app li:focus-visible) .ds-lem{background:var(--accent-chip);outline:1px solid var(--accent-border)}.ds-app{list-style:none;margin:var(--space-5) 0 0;padding:var(--space-3) 0 0;border-top:1px solid var(--rule);font-size:1.0625rem;line-height:1.6}.ds-app li{position:relative;border-radius:3px;padding:0 var(--space-2);margin:0 calc(-1*var(--space-2));cursor:pointer;transition:background-color 120ms ease-out}.ds-app li:hover,.ds-app li:focus-visible{background:var(--accent-wash);outline:none}.ds-ln{position:absolute;left:-3rem;width:2.5rem;text-align:right;font-weight:600;font-variant-numeric:lining-nums tabular-nums}"
+      "refersTo": "disagreement",
+      "description": "The text being checked: disagreements in the highlighter, a correction underlined in hand blue.",
+      "html": "<div class=\"ds-text\"><span class=\"ds-n\">5</span><span>Le cercle de <button class=\"ds-lemma\">Ouahigouya</button> compte <button class=\"ds-lemma ds-corr\">trois</button> marabouts.</span></div>",
+      "css": ".ds-text { display: grid; grid-template-columns: 2.25rem 1fr; column-gap: var(--space-3); align-items: baseline; max-width: 42rem; padding: var(--space-4); background: var(--paper); font-family: var(--font-text); font-size: var(--type-reading); line-height: 1.7; color: var(--text-body); } .ds-n { justify-self: end; font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); } .ds-lemma { display: inline; padding: 0; border: 0; border-radius: 2px; background: var(--marker); color: var(--on-marker); box-shadow: 0 0 0 2px var(--marker); font: inherit; cursor: pointer; transition: box-shadow 120ms ease-out, background-color 120ms ease-out; } .ds-lemma:hover, .ds-lemma:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--marker), 0 0 0 3.5px var(--text-bright); } .ds-lemma.ds-corr { background: none; color: inherit; box-shadow: none; text-decoration: underline; text-decoration-color: var(--hand); text-decoration-thickness: 2px; text-underline-offset: 0.25em; } .ds-lemma.ds-corr:hover, .ds-lemma.ds-corr:focus-visible { box-shadow: none; background: var(--hand-wash); }"
+    },
+    {
+      "name": "Lightbox with Zoom Pill",
+      "kind": "custom",
+      "refersTo": "lightbox",
+      "description": "A scan on the dark stage, with its controls floating in a pill.",
+      "html": "<div class=\"ds-stage\"><div class=\"ds-scan\"></div><div class=\"ds-zoom\"><button class=\"ds-zb\" aria-label=\"Zoom out\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3M8 11h6\"/></svg></button><span class=\"ds-zv\">100%</span><button class=\"ds-zb\" aria-label=\"Zoom in\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3M11 8v6M8 11h6\"/></svg></button></div></div>",
+      "css": ".ds-stage { position: relative; display: grid; place-items: start center; height: 16rem; padding: var(--space-5) var(--space-5) 4.5rem; background: var(--stage); } .ds-scan { width: 9rem; height: 12rem; border-radius: 2px; background: white; box-shadow: var(--shadow-page); } .ds-zoom { position: absolute; left: 50%; bottom: var(--space-4); transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: var(--space-1); border-radius: 9px; background: var(--stage-raised); box-shadow: 0 0 0 1px var(--stage-line), 0 8px 24px rgba(0, 0, 0, 0.35); color: var(--on-stage); } .ds-zb { display: grid; place-items: center; min-width: var(--control-sm); height: var(--control-sm); border: 0; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; } .ds-zb:hover { background: rgba(255, 255, 255, 0.08); } .ds-zb:focus-visible { outline: 2px solid var(--on-stage); outline-offset: 2px; } .ds-zv { min-width: 3rem; text-align: center; font-family: var(--font-mono); font-size: var(--type-xs); }"
+    },
+    {
+      "name": "Readings Card",
+      "kind": "card",
+      "refersTo": "readings-card",
+      "description": "Opened under a disagreement: each reading, who reads it, and Use.",
+      "html": "<div class=\"ds-readings\"><p class=\"ds-rh\">Models disagree</p><ul class=\"ds-opts\"><li><span class=\"ds-ot ds-in\">Ouahigouya</span><span class=\"ds-who\">gemini-2.5-pro</span><button class=\"ds-use\">Use</button></li><li><span class=\"ds-ot\">Ouahigouya.</span><span class=\"ds-who\">mistral-ocr</span><button class=\"ds-use\">Use</button></li></ul></div>",
+      "css": ".ds-readings { display: grid; gap: var(--space-3); max-width: 30rem; padding: var(--space-3); border-radius: var(--radius-card); background: var(--surface-2); box-shadow: var(--shadow-pop); font-family: var(--font-ui); font-size: var(--type-sm); color: var(--text-bright); } .ds-rh { margin: 0; font-size: var(--type-xs); color: var(--text-muted); } .ds-opts { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-control); } .ds-opts li { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--line-soft); } .ds-opts li:first-child { border-top: 0; } .ds-ot { font-family: var(--font-text); font-size: var(--type-lg); } .ds-in { font-weight: 600; } .ds-who { font-family: var(--font-mono); font-size: var(--type-xs); color: var(--text-muted); } .ds-use { min-height: var(--control-sm); padding: 0 0.625rem; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface-2); color: var(--text-bright); font: inherit; font-size: var(--type-xs); cursor: pointer; } .ds-use:hover { border-color: var(--line-hover); } .ds-use:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
     }
   ],
   "narrative": {
-    "northStar": "The Critical Edition",
-    "overview": "The AI's text is one witness. Every screen is set like a scholarly edition: a white page carrying the reading text in Garamond, the other models' readings and the researcher's corrections set beneath it as an apparatus criticus, each witness named by a red siglum. The shell around the page is bookcloth: a deep blue rail and masthead, the binding the edition sits in. Controls are quiet, in a humanist sans, so the text keeps the authority. The source (a scan or a recording) rests on a grey desk beside the page, an object on a table rather than a panel in an app.\n\nDensity is that of a working edition, not a dashboard: generous measure for reading text, compact controls, hairline rules for structure. Sections open with a black rule, the way an edition opens its apparatus, and are never boxed. The world refuses two things by name: the AI-product arrangement of glowing cards and chat bubbles, and the parchment costume the name \"Scriptorium\" invites. There is no paper texture, no aged tint, no faux manuscript ornament.\n\nThe same world holds from a 640px window snapped beside another to a 2560px monitor, and in light and dark themes that follow Windows by default.",
+    "northStar": "Graphite & highlighter",
+    "overview": "A researcher checking a transcript works the way they would with a printout: a grey pencil for structure, a yellow highlighter for what needs another look, a blue pen for their own corrections. The interface is that desk kit and nothing more. Grey surfaces and hairlines do the structural work, black is kept for the one action that moves the work forward, yellow says \"look here\" and blue says \"you changed this\". Everything else stays quiet so those three marks can be read at a glance across a page of text.\n\nThe source is the authority, so it gets the best seat: a scan lies on a dark lightbox in both themes, the brightest thing on screen, with its controls floating on the dark in a small pill. The text being checked sits beside it on white, in a reading serif. The interface around both is a plain sans; anything a machine produced (file names, model names, times, costs, counts, shortcuts) is set in a monospace, so the researcher can tell their material, the tool and the machine apart by the face alone. Density is that of a working tool used for hours on a laptop: compact controls, generous reading measure, no decoration.\n\nThe same world holds from a window snapped beside another to a large monitor, and in light and dark themes that follow Windows by default. In dark mode the ink flips to near white, so the primary action stays the highest-contrast object on screen.",
     "keyCharacteristics": [
-      "White page ground, bookcloth blue (#1d2b4f) shell, black text.",
-      "Rubric red reserved for sigla, marginal line numbers and the researcher's corrections.",
-      "Pale blue tint for selection and highlighted lemmata.",
-      "EB Garamond for everything read; Source Sans 3 for everything operated.",
-      "Sections divided by rules, never cards; shadows only on objects lifted off the desk and on overlays.",
-      "Lucide line icons at a 1.5px stroke, always after or beside words."
+      "Graphite neutrals: a grey chrome sidebar (#f2f3f5), white work surface, hairline borders.",
+      "Black (graphite ink) is the only button fill, used once per work area and paired with its shortcut.",
+      "Highlighter yellow marks only where models disagree or where a name is found in the document.",
+      "Hand blue marks only the researcher's own corrections, never AI output.",
+      "Scans sit on a dark lightbox (#1e1f22 light, #0f1012 dark) in both themes.",
+      "Three faces with three jobs: Instrument Sans, Source Serif 4, IBM Plex Mono.",
+      "Lucide line icons at an absolute 1.5px stroke, beside words."
     ],
     "rules": [
       {
-        "name": "The Rubric Rule",
-        "body": "Rubric red marks only sigla, marginal line numbers and the researcher's corrections. If something red is neither a witness's name, a line reference nor a correction, it is wrong.",
+        "name": "The Black Button Rule",
+        "body": "Graphite ink is the only button fill. Each work area has at most one primary button, and it shows its keyboard shortcut (Ctrl N for New job, Ctrl Enter for Start and Mark reviewed). The sidebar's New job button is the shell's standing action and does not count against a screen.",
         "section": "colors"
       },
       {
-        "name": "The Bookcloth Rule",
-        "body": "Blue owns the binding (rail, mastheads) and the actions. It is not a decorative fill for sections on the page.",
+        "name": "The Highlighter Rule",
+        "body": "Yellow means \"look here\": where the models disagree, or where something you pointed at is found. It is never a warning, a brand fill or decoration. Warnings are amber text on a pale amber wash.",
         "section": "colors"
       },
       {
-        "name": "The Desk Rule",
-        "body": "Desk grey sits only behind a source. The edition page and every form sit on white.",
+        "name": "The Hand Rule",
+        "body": "Blue is the researcher's own hand. Corrections are underlined in blue on top of the text; the AI's output underneath is never overwritten or restyled as if it were the researcher's.",
         "section": "colors"
       },
       {
-        "name": "The Two Faces Rule",
-        "body": "Garamond carries reading text, titles, the wordmark, small-caps running heads and sigla. Source Sans 3 carries every control. A button, field, tab or label in Garamond is a defect; a document text in the sans is a defect.",
+        "name": "The Lightbox Rule",
+        "body": "A scan always sits on the stage, dark in both themes, so the page is the brightest thing on screen. Controls over it use the on-stage colours, not the interface's.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three Voices Rule",
+        "body": "Instrument Sans for everything operated, Source Serif 4 only for the text being checked, IBM Plex Mono for anything a machine produced. A control in the serif, or a document in the sans, is a defect.",
         "section": "typography"
       },
       {
-        "name": "The Mono Quarantine Rule",
-        "body": "Monospace appears only in the prompt editor, because prompt text is written like code. Nowhere else.",
-        "section": "typography"
-      },
-      {
-        "name": "The No Shadowed Cards Rule",
-        "body": "Sections never get a shadow, a fill or a box. If a section needs separating, it gets the section rule.",
+        "name": "The Lift Means Selected Rule",
+        "body": "In lists, being lifted onto white with the raised shadow means \"this is the one you are on\". Hover only takes the wash.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "**Do** open every section with the 1px section rule and nothing else around it.",
-      "**Do** keep rubric red (#b3261e / #ec8478) for sigla, marginal line numbers and corrections only.",
-      "**Do** use lemma tint (#dce3f2) for selection, marked lemmata and the playing segment.",
-      "**Do** set anything read (documents, titles, running heads, sigla) in EB Garamond and every control in Source Sans 3.",
-      "**Do** put sources (scans, players) on the desk grey, with the flyout shadow, and keep the edition on white.",
-      "**Do** keep the masthead and the rail's wordmark block at the same 6.5rem so their rules meet.",
-      "**Do** put words before icons; use Lucide icons through `Icon.svelte`.",
-      "**Do** design for 640px to 2560px, with the shell collapsing at 820px, review stacking at 960px and reading text rising at 1680px."
+      "**Do** use graphite ink (#111214, #ecedef in dark) as the only button fill, once per work area, with its shortcut beside the label.",
+      "**Do** keep highlighter yellow (#ffe066 / #e8c547) for disagreements and found terms, always with ink text on it.",
+      "**Do** mark the researcher's corrections in hand blue (#2456d6 / #7fa2ff) as an underline on top of the text.",
+      "**Do** put scans on the stage (#1e1f22 / #0f1012) with the page shadow, and the controls over it in on-stage colours.",
+      "**Do** set file names, models, times, costs, counts and shortcuts in IBM Plex Mono, and only the text being checked in Source Serif 4.",
+      "**Do** separate with greys and hairlines first; reach for a shadow only for the selected item, an overlay or the scan.",
+      "**Do** show status as coloured text on a wash, with a 6px dot.",
+      "**Do** keep icons to Lucide at the absolute 1.5px stroke, beside a word."
     ],
     "donts": [
-      "**Don't** box sections in cards, fill them, or give them shadows.",
-      "**Don't** add parchment, paper texture, aged tints or manuscript ornament.",
-      "**Don't** use glowing cards, gradients or chat-bubble styling.",
-      "**Don't** use red for decoration, emphasis or status; errors use danger red as text, not rubric.",
-      "**Don't** use monospace outside the prompt editor.",
+      "**Don't** fill a button in any colour but ink: no blue, green or red primary buttons.",
+      "**Don't** use yellow for warnings, emphasis or branding; warnings are amber on a pale amber wash.",
+      "**Don't** use hand blue for links, selected states or AI output; it belongs to the researcher's hand (and the text selection it makes).",
+      "**Don't** put a scan on white or on the interface grey.",
+      "**Don't** set controls in the serif or documents in the sans.",
+      "**Don't** box sections in shadowed cards; a section is a hairline and a heading.",
       "**Don't** use glyph characters (arrows, crosses, triangles) as icons.",
-      "**Don't** hard-code visible text; every string comes from the translation files."
+      "**Don't** add uppercase eyebrows or kickers above titles."
     ]
   }
 }

@@ -20,7 +20,7 @@
 
 <div class="scrim" role="presentation">
 	<div
-		class="dialog card"
+		class="dialog"
 		role="alertdialog"
 		aria-labelledby="close-title"
 		aria-describedby="close-body"
@@ -51,7 +51,9 @@
 		padding: var(--space-5);
 		display: grid;
 		gap: var(--space-4);
-		box-shadow: var(--shadow-flyout);
+		box-shadow:
+			0 0 0 1px var(--line),
+			var(--shadow-flyout);
 		background: var(--surface-2);
 		border-radius: var(--radius-overlay);
 	}

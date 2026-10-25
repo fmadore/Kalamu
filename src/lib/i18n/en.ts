@@ -8,10 +8,13 @@ export const en = {
 		tagline: 'Transcription and text extraction'
 	},
 	shell: {
-		collapse: 'Fold the menu',
-		expand: 'Open the menu',
-		running: (name: string) => `Running: ${name}`,
-		unfinished: (n: number) => (n === 1 ? '1 unfinished job' : `${n} unfinished jobs`)
+		jobs: 'Jobs',
+		running: 'Running',
+		unfinished: 'Unfinished',
+		finished: 'Finished',
+		noJobs: 'Jobs you start appear here.',
+		newJobShortcut: 'Ctrl N',
+		offlineReady: 'Whisper ready on this PC'
 	},
 	nav: {
 		newJob: 'New job',
@@ -104,6 +107,7 @@ export const en = {
 		estimateUnknown: 'no published price',
 		estimateNote: 'An estimate from page counts and published prices; actual costs vary.',
 		start: 'Start',
+		startShortcut: 'Ctrl ↵',
 		starting: 'Starting…',
 		name: 'Job name',
 		inspecting: 'Reading files…'
@@ -136,12 +140,7 @@ export const en = {
 	},
 	jobs: {
 		title: 'Jobs',
-		lede: (n: number) =>
-			n === 0 ? 'Nothing yet.' : n === 1 ? 'One job, newest first.' : `${n} jobs, newest first.`,
 		empty: 'No jobs yet. Start one from New job.',
-		resumeTitle: 'Unfinished jobs',
-		resumeHint:
-			'These jobs stopped before they finished, when the app closed or a key stopped working. Resume them to continue where they left off; finished pages are not sent again.',
 		resume: 'Resume',
 		pause: 'Pause',
 		cancel: 'Cancel',
@@ -156,12 +155,18 @@ export const en = {
 		openFolder: 'Show files',
 		progress: (done: number, total: number) => `${done} of ${total} pieces`,
 		failed: (n: number) => (n === 1 ? '1 failed' : `${n} failed`),
-		spent: (usd: string) => `${usd} spent this run`,
 		files: 'Files',
-		comparison: 'Comparison',
 		livePreview: 'Latest result',
 		outputs: 'Written',
-		created: 'Created'
+		created: 'Created',
+		task: 'Task',
+		models: 'Models',
+		pieces: 'Pieces',
+		cost: 'Spent this run',
+		interruptedNotice:
+			'This job stopped before it finished, when the app closed or a key stopped working. Finished pieces are saved: resuming continues where it left off, and nothing is sent or paid twice.',
+		pausedNotice: 'Paused. Resume to continue where it left off.',
+		empty_new: 'Start a job'
 	},
 	status: {
 		pending: 'Waiting',
@@ -207,7 +212,6 @@ export const en = {
 		pieceReviewed: (label: string) => `${label}, reviewed`,
 		zoomIn: 'Zoom in',
 		zoomOut: 'Zoom out',
-		showInText: 'Show in the text',
 		play: 'Play',
 		pausePlayback: 'Pause',
 		position: 'Position in this piece',
@@ -216,12 +220,7 @@ export const en = {
 		noTimings: 'This model gave no timings, so lines cannot follow the recording.',
 		reviewedOf: (n: number, total: number) => `Reviewed ${n} of ${total}`,
 		readingText: 'Reading text',
-		readingTextOf: 'reading text',
 		correcting: 'Correcting',
-		apparatus: 'Where the witnesses differ',
-		sigla: 'Sigla',
-		corrSiglum: 'corr.',
-		added: 'add.',
 		omitted: 'om.',
 		speakers: 'Speakers',
 		speakersHint:
@@ -233,12 +232,30 @@ export const en = {
 		speakersPieces:
 			'This recording was sent in several pieces: the same label may be a different person in each piece. Names apply to the whole recording.',
 		yourCorrections: 'Your corrections',
-		correctionsKept: "Kept apart: the model's text is never overwritten",
-		notReviewed: 'Not reviewed yet',
 		answers: 'Answers',
-		answersOf: 'answers of',
 		noneFound: 'None found',
-		onePerLine: 'One per line.'
+		onePerLine: 'One per line.',
+		reviewedShortcut: 'Ctrl ↵',
+		markNotReviewed: 'Mark as not reviewed',
+		pages: 'Pages',
+		differences: (n: number) => (n === 1 ? '1 difference' : `${n} differences`),
+		noDifferences: 'The models agree',
+		previousDifference: 'Previous difference',
+		nextDifference: 'Next difference',
+		differenceOf: (n: number, total: number) => `${n} of ${total}`,
+		disagree: 'The models read this differently',
+		corrected_here: 'You corrected this',
+		useReading: 'Use this reading',
+		inUse: 'In the text',
+		ownReading: 'Your own reading',
+		ownReadingPlaceholder: 'Type what the source says',
+		apply: 'Apply',
+		readingKept: "The model's text is kept; your choice is stored as a correction.",
+		modelText: (label: string) => `${label}, model output`,
+		models: 'Models',
+		legendDiffer: 'Models disagree',
+		legendCorrected: 'Your correction',
+		fitWidth: 'Fit width'
 	},
 	prompts: {
 		title: 'Prompts',

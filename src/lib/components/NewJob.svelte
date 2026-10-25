@@ -226,6 +226,13 @@
 		}
 	}
 
+	function onKey(e: KeyboardEvent) {
+		if (e.ctrlKey && e.key === 'Enter' && ready && !starting) {
+			e.preventDefault();
+			void start();
+		}
+	}
+
 	onMount(() => {
 		// Opened from a finished job's "Summarise" button: its results are the files.
 		void loadTask(opening.task ?? task).then(() =>
@@ -241,6 +248,8 @@
 	});
 </script>
 
+<svelte:window onkeydown={onKey} />
+
 <header class="masthead">
 	<div>
 		<h1>{m.newJob.title}</h1>
@@ -248,207 +257,219 @@
 	</div>
 </header>
 
-<div class="sheet">
-	{#if pipelines.length > 0}
-		<section class="pipelines" aria-labelledby="pipelines-label">
-			<h2 id="pipelines-label" class="label">{m.newJob.pipelinesTitle}</h2>
-			<ul>
-				{#each pipelines as p (p.id)}
-					<li>
-						<button class="pipeline" onclick={() => applyPipeline(p)}>
-							<strong>{p.name}</strong>
-							<span class="muted">{m.task[p.task]}</span>
-						</button>
-						<button
-							class="x"
-							aria-label={m.newJob.pipelineDelete(p.name)}
-							title={m.newJob.pipelineDelete(p.name)}
-							onclick={() => deletePipeline(p)}><Icon name="close" size={14} /></button
-						>
-					</li>
-				{/each}
-			</ul>
-		</section>
-	{/if}
-
-	<section aria-labelledby="task-label">
-		<h2 id="task-label" class="label">{m.newJob.taskLabel}</h2>
-		<div class="tasks">
-			{#each ['text_extraction', 'audio_transcription', 'analysis'] as const as t (t)}
-				<button
-					class="task"
-					class:selected={task === t}
-					aria-pressed={task === t}
-					onclick={() => loadTask(t)}
-				>
-					<strong>{m.task[t]}</strong>
-					<span class="muted">{m.task[`${t}Hint`]}</span>
-				</button>
-			{/each}
-		</div>
-	</section>
-
-	<FileList bind:files {task} {inspecting} onadd={addPaths} />
-
-	<section class="card block" aria-labelledby="lang-title">
-		<h2 id="lang-title">
-			{task === 'analysis' ? m.newJob.analysisLanguageTitle : m.newJob.languageTitle}
-		</h2>
-		<div class="row">
-			<label class="inline"
-				><input type="radio" bind:group={languageMode} value="auto" />
-				{task === 'analysis' ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
-			>
-			<label class="inline"
-				><input type="radio" bind:group={languageMode} value="explicit" />
-				{m.newJob.languagePick}</label
-			>
-		</div>
-		{#if languageMode === 'explicit'}
-			<div class="row wrap">
-				{#each languages as code (code)}
-					<span class="chip">
-						{languageName(code)}
-						<button
-							class="x"
-							aria-label="{m.newJob.remove} {languageName(code)}"
-							onclick={() => (languages = languages.filter((c) => c !== code))}
-							><Icon name="close" size={12} /></button
-						>
-					</span>
-				{/each}
-				<select
-					aria-label={m.newJob.addLanguage}
-					onchange={(e) => {
-						const v = e.currentTarget.value;
-						if (v && task === 'analysis') languages = [v];
-						else if (v && !languages.includes(v)) languages = [...languages, v];
-						e.currentTarget.value = '';
-					}}
-				>
-					<option value="">{m.newJob.addLanguage}</option>
-					{#each catalog.languages.filter((l) => !languages.includes(l.code)) as l (l.code)}
-						<option value={l.code}>{languageName(l.code, l.name)}</option>
+<div class="layout">
+	<div class="form steps">
+		{#if pipelines.length > 0}
+			<section class="pipelines" aria-labelledby="pipelines-label">
+				<h2 id="pipelines-label" class="label">{m.newJob.pipelinesTitle}</h2>
+				<ul>
+					{#each pipelines as p (p.id)}
+						<li>
+							<button class="pipeline" onclick={() => applyPipeline(p)}>
+								<strong>{p.name}</strong>
+								<span class="muted">{m.task[p.task]}</span>
+							</button>
+							<button
+								class="x"
+								aria-label={m.newJob.pipelineDelete(p.name)}
+								title={m.newJob.pipelineDelete(p.name)}
+								onclick={() => deletePipeline(p)}><Icon name="close" size={14} /></button
+							>
+						</li>
 					{/each}
-				</select>
-			</div>
+				</ul>
+			</section>
 		{/if}
-		<p class="muted small">
-			{task === 'analysis' ? m.newJob.analysisLanguageHint : m.newJob.languageHint}
-		</p>
-	</section>
 
-	<SetupList bind:drafts {task} {presets} />
-
-	{#if task === 'text_extraction'}
-		<section class="card block" aria-labelledby="lines-title">
-			<h2 id="lines-title">{m.newJob.linesTitle}</h2>
-			<div class="choices">
-				{#each ['running_text', 'as_on_page'] as const as mode (mode)}
-					<label class="choice" class:selected={lineBreaks === mode}>
-						<input type="radio" bind:group={lineBreaks} value={mode} />
-						<span>
-							<strong>{m.newJob.lines[mode]}</strong>
-							<span class="muted small">{m.newJob.lines[`${mode}_hint`]}</span>
-						</span>
-					</label>
+		<section class="step" aria-labelledby="task-label">
+			<h2 id="task-label">{m.newJob.taskLabel}</h2>
+			<div class="tasks">
+				{#each ['text_extraction', 'audio_transcription', 'analysis'] as const as t (t)}
+					<button
+						class="task"
+						class:selected={task === t}
+						aria-pressed={task === t}
+						onclick={() => loadTask(t)}
+					>
+						<span class="task-name"><span class="radio" aria-hidden="true"></span>{m.task[t]}</span>
+						<span class="task-hint">{m.task[`${t}Hint`]}</span>
+					</button>
 				{/each}
 			</div>
-			{#if drafts.some((d) => !acceptsPrompt(modelInfo(catalog, d)))}
-				<p class="muted small">{m.newJob.linesNoPrompt}</p>
-			{/if}
 		</section>
-	{/if}
 
-	<section class="card block" aria-labelledby="out-title">
-		<h2 id="out-title">{m.newJob.outputTitle}</h2>
-		{#if task === 'text_extraction'}
-			<label class="inline">
-				<input type="checkbox" bind:checked={sample} />
-				{m.newJob.sampleTitle}:
-				<input
-					type="number"
-					min="1"
-					max="50"
-					bind:value={samplePages}
-					class="num"
-					disabled={!sample}
-				/>
-				<span class="muted">{m.newJob.sample(samplePages)}</span>
-			</label>
-		{/if}
-		<fieldset>
-			<legend class="label">{m.newJob.formats}</legend>
-			<div class="row wrap">
-				{#each offeredFormats(catalog, task, drafts) as f (f)}
-					<label class="inline">
-						<input
-							type="checkbox"
-							checked={formats.includes(f)}
-							onchange={(e) =>
-								(formats = e.currentTarget.checked
-									? [...formats, f]
-									: formats.filter((x) => x !== f))}
-						/>
-						{m.format[f]}
-					</label>
-				{/each}
+		<FileList bind:files {task} {inspecting} onadd={addPaths} />
+
+		<section class="step block" aria-labelledby="lang-title">
+			<h2 id="lang-title">
+				{task === 'analysis' ? m.newJob.analysisLanguageTitle : m.newJob.languageTitle}
+			</h2>
+			<div class="row">
+				<label class="inline"
+					><input type="radio" bind:group={languageMode} value="auto" />
+					{task === 'analysis' ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
+				>
+				<label class="inline"
+					><input type="radio" bind:group={languageMode} value="explicit" />
+					{m.newJob.languagePick}</label
+				>
 			</div>
-		</fieldset>
-		<div class="row wrap">
-			<label class="inline">
-				<input
-					type="radio"
-					checked={destination.kind === 'beside_sources'}
-					onchange={() => (destination = { kind: 'beside_sources' })}
-				/>
-				{m.newJob.besideSources}
-			</label>
-			<label class="inline">
-				<input type="radio" checked={destination.kind === 'folder'} onchange={chooseDestination} />
-				{m.newJob.inFolder}
-			</label>
-			{#if destination.kind === 'folder'}
-				<span class="small path">{destination.path}</span>
-				<button class="btn sm" onclick={chooseDestination}>{m.newJob.chooseFolder}</button>
-			{/if}
-		</div>
-		<label class="field name">
-			<span>{m.newJob.name}</span>
-			<input type="text" bind:value={name} />
-		</label>
-	</section>
-</div>
-
-<!-- Stays at the bottom of the window while the form scrolls under it. -->
-<footer class="start">
-	<div class="start-inner">
-		<div>
-			<span class="label">{m.newJob.estimate}</span>
-			{#if estimates.length > 0}
-				<div class="estimate">
-					{#if totalEstimate !== null}
-						<strong>{formatUsd(totalEstimate)}</strong>
-					{/if}
-					{#each estimates as row (row.provider + row.model)}
-						<span class="muted small">
-							{row.model}: {row.estimate.usd !== null
-								? formatUsd(row.estimate.usd)
-								: m.newJob.estimateUnknown}
+			{#if languageMode === 'explicit'}
+				<div class="row wrap">
+					{#each languages as code (code)}
+						<span class="chip">
+							{languageName(code)}
+							<button
+								class="x"
+								aria-label="{m.newJob.remove} {languageName(code)}"
+								onclick={() => (languages = languages.filter((c) => c !== code))}
+								><Icon name="close" size={12} /></button
+							>
 						</span>
+					{/each}
+					<select
+						aria-label={m.newJob.addLanguage}
+						onchange={(e) => {
+							const v = e.currentTarget.value;
+							if (v && task === 'analysis') languages = [v];
+							else if (v && !languages.includes(v)) languages = [...languages, v];
+							e.currentTarget.value = '';
+						}}
+					>
+						<option value="">{m.newJob.addLanguage}</option>
+						{#each catalog.languages.filter((l) => !languages.includes(l.code)) as l (l.code)}
+							<option value={l.code}>{languageName(l.code, l.name)}</option>
+						{/each}
+					</select>
+				</div>
+			{/if}
+			<p class="hint">
+				{task === 'analysis' ? m.newJob.analysisLanguageHint : m.newJob.languageHint}
+			</p>
+		</section>
+
+		<SetupList bind:drafts {task} {presets} />
+
+		{#if task === 'text_extraction'}
+			<section class="step block" aria-labelledby="lines-title">
+				<h2 id="lines-title">{m.newJob.linesTitle}</h2>
+				<div class="choices">
+					{#each ['running_text', 'as_on_page'] as const as mode (mode)}
+						<label class="choice" class:selected={lineBreaks === mode}>
+							<input type="radio" bind:group={lineBreaks} value={mode} />
+							<span>
+								<strong>{m.newJob.lines[mode]}</strong>
+								<span class="hint">{m.newJob.lines[`${mode}_hint`]}</span>
+							</span>
+						</label>
 					{/each}
 				</div>
-				<p class="muted small">{m.newJob.estimateNote}</p>
-			{:else}
-				<p class="muted">—</p>
+				{#if drafts.some((d) => !acceptsPrompt(modelInfo(catalog, d)))}
+					<p class="hint">{m.newJob.linesNoPrompt}</p>
+				{/if}
+			</section>
+		{/if}
+
+		<section class="step block" aria-labelledby="out-title">
+			<h2 id="out-title">{m.newJob.outputTitle}</h2>
+			{#if task === 'text_extraction'}
+				<label class="inline">
+					<input type="checkbox" bind:checked={sample} />
+					{m.newJob.sampleTitle}:
+					<input
+						type="number"
+						min="1"
+						max="50"
+						bind:value={samplePages}
+						class="num"
+						disabled={!sample}
+					/>
+					<span class="muted">{m.newJob.sample(samplePages)}</span>
+				</label>
+			{/if}
+			<fieldset>
+				<legend class="label">{m.newJob.formats}</legend>
+				<div class="row wrap">
+					{#each offeredFormats(catalog, task, drafts) as f (f)}
+						<label class="inline">
+							<input
+								type="checkbox"
+								checked={formats.includes(f)}
+								onchange={(e) =>
+									(formats = e.currentTarget.checked
+										? [...formats, f]
+										: formats.filter((x) => x !== f))}
+							/>
+							{m.format[f]}
+						</label>
+					{/each}
+				</div>
+			</fieldset>
+			<div class="row wrap">
+				<label class="inline">
+					<input
+						type="radio"
+						checked={destination.kind === 'beside_sources'}
+						onchange={() => (destination = { kind: 'beside_sources' })}
+					/>
+					{m.newJob.besideSources}
+				</label>
+				<label class="inline">
+					<input
+						type="radio"
+						checked={destination.kind === 'folder'}
+						onchange={chooseDestination}
+					/>
+					{m.newJob.inFolder}
+				</label>
+				{#if destination.kind === 'folder'}
+					<span class="path mono">{destination.path}</span>
+					<button class="btn sm" onclick={chooseDestination}>{m.newJob.chooseFolder}</button>
+				{/if}
+			</div>
+			<label class="field name">
+				<span>{m.newJob.name}</span>
+				<input type="text" bind:value={name} />
+			</label>
+		</section>
+	</div>
+
+	<!-- Stays in view while the form scrolls: what it costs, and the one action. -->
+	<aside class="summary" aria-labelledby="estimate-label">
+		<div class="estimate">
+			<span id="estimate-label" class="label">{m.newJob.estimate}</span>
+			<strong class="total mono"
+				>{estimates.length > 0 && totalEstimate !== null ? formatUsd(totalEstimate) : '—'}</strong
+			>
+			{#if estimates.length > 0}
+				<ul class="rows">
+					{#each estimates as row (row.provider + row.model)}
+						<li>
+							<span class="mono">{row.model}</span>
+							<span class="mono"
+								>{row.estimate.usd !== null
+									? formatUsd(row.estimate.usd)
+									: m.newJob.estimateUnknown}</span
+							>
+						</li>
+					{/each}
+				</ul>
+				<p class="hint">{m.newJob.estimateNote}</p>
 			{/if}
 		</div>
-		<div class="start-actions">
-			{#if error}
-				<p class="chip danger">{error}</p>
-			{/if}
+
+		{#if error}
+			<p class="chip danger wrap-chip">{error}</p>
+		{/if}
+
+		<div class="go">
+			<button class="btn primary lg" disabled={!ready || starting} onclick={start}>
+				{starting ? m.newJob.starting : m.newJob.start}<span class="kbd"
+					>{m.newJob.startShortcut}</span
+				>
+			</button>
 			{#if naming === null}
-				<button class="btn ghost" disabled={drafts.length === 0} onclick={() => (naming = '')}
+				<button class="btn" disabled={drafts.length === 0} onclick={() => (naming = '')}
 					>{m.newJob.pipelineSave}</button
 				>
 			{:else}
@@ -467,22 +488,32 @@
 						aria-label={m.newJob.pipelineName}
 						autofocus
 					/>
-					<button class="btn" type="submit" disabled={!naming.trim()}>{m.common.save}</button>
-					<button class="btn ghost" type="button" onclick={() => (naming = null)}
-						>{m.common.cancel}</button
-					>
+					<div class="naming-actions">
+						<button class="btn" type="submit" disabled={!naming.trim()}>{m.common.save}</button>
+						<button class="btn ghost" type="button" onclick={() => (naming = null)}
+							>{m.common.cancel}</button
+						>
+					</div>
 				</form>
 			{/if}
-			<button class="btn primary big" disabled={!ready || starting} onclick={start}>
-				{starting ? m.newJob.starting : m.newJob.start}
-			</button>
 		</div>
-	</div>
-</footer>
+	</aside>
+</div>
 
 <style>
+	.layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 21rem;
+		min-height: calc(100% - 3.5rem);
+	}
+	.form {
+		display: grid;
+		align-content: start;
+		gap: var(--space-6);
+		max-width: 52rem;
+		padding: var(--space-5) var(--space-6) var(--space-7);
+	}
 	.block {
-		padding: var(--space-4) 0 0;
 		display: grid;
 		gap: var(--space-3);
 	}
@@ -494,12 +525,18 @@
 	.row.wrap {
 		flex-wrap: wrap;
 	}
-	.small {
-		font-size: var(--type-sm);
+	.hint {
+		font-size: var(--type-xs);
+		color: var(--text-muted);
+		max-width: 60ch;
+	}
+	.pipelines {
+		display: grid;
+		gap: var(--space-2);
 	}
 	.pipelines ul {
 		list-style: none;
-		margin: var(--space-2) 0 0;
+		margin: 0;
 		padding: 0;
 		display: flex;
 		flex-wrap: wrap;
@@ -508,24 +545,27 @@
 	.pipelines li {
 		display: flex;
 		align-items: stretch;
-		border: 1px solid var(--line-strong);
+		border: 1px solid var(--line);
 		border-radius: var(--radius-control);
+		background: var(--surface-2);
 	}
 	.pipelines li:hover {
-		border-color: var(--accent);
+		border-color: var(--line-hover);
 	}
 	.pipeline {
 		display: grid;
 		text-align: left;
-		gap: 2px;
+		gap: 1px;
 		padding: var(--space-2) var(--space-3);
 		border: 0;
 		background: none;
 		cursor: pointer;
 		color: var(--text-body);
+		font-size: var(--type-sm);
 	}
 	.pipeline strong {
 		color: var(--text-bright);
+		font-weight: 500;
 	}
 	.pipeline .muted {
 		font-size: var(--type-xs);
@@ -535,54 +575,74 @@
 		border-left: 1px solid var(--line);
 		color: var(--text-muted);
 	}
-	.naming {
-		display: flex;
-		gap: var(--space-2);
-		align-items: center;
-	}
-	.naming input {
-		width: 14rem;
-	}
+	/* The three tasks as one joined choice. */
 	.tasks {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-3);
-		margin-top: var(--space-2);
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		margin-top: var(--space-3);
+		border: 1px solid var(--line);
+		border-radius: var(--radius-card);
 	}
 	.task {
-		text-align: left;
-		padding: var(--space-4);
 		display: grid;
 		align-content: start;
 		gap: var(--space-1);
-		cursor: pointer;
-		border: 1px solid var(--line-strong);
-		border-radius: var(--radius-card);
-		background: var(--surface-2);
+		padding: var(--space-3) var(--space-4) var(--space-4);
+		border: 0;
+		border-left: 1px solid var(--line);
+		background: transparent;
 		color: var(--text-body);
-		transition:
-			border-color 120ms ease-out,
-			background-color 120ms ease-out;
+		text-align: left;
+		cursor: pointer;
+		transition: background-color 120ms ease-out;
 	}
-	.task strong {
-		font-family: var(--font-text);
-		font-size: 1.25rem;
+	.task:first-child {
+		border-left: 0;
+		border-radius: var(--radius-card) 0 0 var(--radius-card);
+	}
+	.task:last-child {
+		border-radius: 0 var(--radius-card) var(--radius-card) 0;
+	}
+	.task:hover {
+		background: var(--surface-1);
+	}
+	.task.selected {
+		background: var(--surface-2);
+		box-shadow: inset 0 0 0 1.5px var(--ink);
+	}
+	.task-name {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		font-size: var(--type-md);
 		font-weight: 500;
 		color: var(--text-bright);
 	}
-	.task:hover {
-		border-color: var(--line-hover);
+	.selected .task-name {
+		font-weight: 600;
 	}
-	.task.selected {
-		border-color: var(--accent);
-		background: var(--accent-wash);
-		box-shadow: inset 0 0 0 1px var(--accent);
+	.radio {
+		width: 0.875rem;
+		height: 0.875rem;
+		border-radius: 50%;
+		border: 1.5px solid var(--line-hover);
+		flex: none;
+	}
+	.selected .radio {
+		border: 4px solid var(--ink);
+	}
+	.task-hint {
+		padding-left: 1.375rem;
+		font-size: var(--type-xs);
+		line-height: 1.45;
+		color: var(--text-muted);
 	}
 	.inline {
 		display: inline-flex;
 		gap: var(--space-2);
 		align-items: center;
 		white-space: nowrap;
+		font-size: var(--type-sm);
 	}
 	.x {
 		display: grid;
@@ -595,37 +655,47 @@
 	}
 	.path {
 		overflow-wrap: anywhere;
+		font-size: var(--type-xs);
 	}
 	.choices {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--space-3);
+		border: 1px solid var(--line);
+		border-radius: var(--radius-card);
 	}
 	.choice {
 		display: flex;
 		gap: var(--space-3);
 		align-items: start;
 		padding: var(--space-3) var(--space-4);
-		border: 1px solid var(--line-strong);
-		border-radius: var(--radius-card);
+		border-left: 1px solid var(--line);
 		cursor: pointer;
-		transition: border-color 120ms ease-out;
+		transition: background-color 120ms ease-out;
+	}
+	.choice:first-child {
+		border-left: 0;
+		border-radius: var(--radius-card) 0 0 var(--radius-card);
+	}
+	.choice:last-child {
+		border-radius: 0 var(--radius-card) var(--radius-card) 0;
 	}
 	.choice:hover {
-		border-color: var(--line-hover);
+		background: var(--surface-1);
 	}
 	.choice.selected {
-		border-color: var(--accent);
-		background: var(--accent-wash);
+		background: var(--surface-2);
+		box-shadow: inset 0 0 0 1.5px var(--ink);
 	}
 	.choice input {
-		margin-top: 0.3em;
+		margin-top: 0.25em;
 	}
 	.choice > span {
 		display: grid;
 		gap: var(--space-1);
 	}
 	.choice strong {
+		font-size: var(--type-sm);
+		font-weight: 500;
 		color: var(--text-bright);
 	}
 	fieldset {
@@ -641,52 +711,98 @@
 	.name {
 		max-width: 28rem;
 	}
-	/* The footer spans the window, set off from the sections by a lifted edge rather than their
-	   black rule, so content passing beneath it reads as passing under, not as cut. */
-	.start {
+	.summary {
 		position: sticky;
-		bottom: 0;
-		z-index: 1;
-		background: var(--surface-0);
-		border-top: 1px solid var(--line-strong);
-		box-shadow: 0 -10px 24px -18px rgba(15, 20, 35, 0.45);
-	}
-	.start-inner {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: var(--space-4);
-		/* Matches the sheet's width, so Start sits under the right edge of the form. */
-		max-width: 100rem;
-		padding: var(--space-3) var(--space-6) var(--space-4);
+		top: 0;
+		align-self: start;
+		display: grid;
+		gap: var(--space-5);
+		min-height: calc(100vh - 3.5rem);
+		align-content: start;
+		padding: var(--space-5);
+		border-left: 1px solid var(--line);
+		background: var(--surface-1);
 	}
 	.estimate {
-		display: flex;
-		gap: var(--space-3);
-		align-items: baseline;
-		flex-wrap: wrap;
+		display: grid;
+		gap: var(--space-2);
 	}
-	.start-actions {
-		display: flex;
-		gap: var(--space-3);
-		align-items: center;
+	.total {
+		font-size: 1.875rem;
+		font-weight: 500;
+		letter-spacing: -0.02em;
+		color: var(--text-bright);
 	}
-	.big {
-		min-height: var(--control-lg);
-		padding: 0 var(--space-6);
+	.rows {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid var(--line);
+	}
+	.rows li {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--space-3);
+		padding: var(--space-2) 0;
+		border-bottom: 1px solid var(--line);
+		font-size: var(--type-xs);
+	}
+	.rows li > :first-child {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.wrap-chip {
+		white-space: normal;
+	}
+	.go {
+		display: grid;
+		gap: var(--space-2);
+	}
+	.naming {
+		display: grid;
+		gap: var(--space-2);
+	}
+	.naming-actions {
+		display: flex;
+		gap: var(--space-2);
+	}
+	@media (max-width: 1100px) {
+		.layout {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.summary {
+			position: sticky;
+			bottom: 0;
+			top: auto;
+			min-height: 0;
+			grid-template-columns: minmax(0, 1fr) auto;
+			align-items: center;
+			padding: var(--space-3) var(--space-5);
+			border-left: 0;
+			border-top: 1px solid var(--line);
+			box-shadow: 0 -10px 24px -18px rgba(17, 18, 20, 0.35);
+		}
+		.summary .rows,
+		.summary .hint {
+			display: none;
+		}
+		.total {
+			font-size: var(--type-xl);
+		}
 	}
 	@media (max-width: 760px) {
 		.tasks,
 		.choices {
 			grid-template-columns: 1fr;
 		}
-		.start-inner {
-			flex-wrap: wrap;
+		.task,
+		.choice {
+			border-left: 0;
+			border-top: 1px solid var(--line);
 		}
-	}
-	@media (max-width: 820px) {
-		.start-inner {
-			padding: var(--space-3) var(--space-4);
+		.form {
+			padding: var(--space-4) var(--space-4) var(--space-6);
 		}
 	}
 </style>

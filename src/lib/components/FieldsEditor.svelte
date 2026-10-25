@@ -188,7 +188,7 @@
 		display: grid;
 		gap: var(--space-2);
 		padding-top: var(--space-3);
-		border-top: 1px solid var(--rule);
+		border-top: 1px solid var(--line);
 	}
 	.small {
 		font-size: var(--type-sm);

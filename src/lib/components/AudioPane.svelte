@@ -73,6 +73,9 @@
 	/** The piece's length in seconds; 0 until the player has read it. */
 	const length = $derived(Number.isFinite(duration) ? duration : 0);
 	const done = $derived(length > 0 ? (100 * now) / length : 0);
+	/** Each speaker keeps one of two colours, in the order they first speak. */
+	const voices = $derived([...new Set(segments.flatMap((s) => (s.speaker ? [s.speaker] : [])))]);
+	const voice = (speaker: string) => (voices.indexOf(speaker) % 2) + 1;
 </script>
 
 <div class="audio">
@@ -120,8 +123,8 @@
 				<li>
 					<button class="line" class:now={playing(s)} onclick={() => jump(s)}>
 						<span class="num stamp">{clock(offsetMs + Number(s.start_ms))}</span>
-						{#if s.speaker}<strong class="speaker">{s.speaker}</strong>{/if}
-						<span>{s.text}</span>
+						{#if s.speaker}<span class="speaker v{voice(s.speaker)}">{s.speaker}</span>{/if}
+						<span class="said">{s.text}</span>
 					</button>
 				</li>
 			{/each}
@@ -134,38 +137,41 @@
 <style>
 	.audio {
 		display: grid;
-		grid-template-rows: auto 1fr;
+		grid-template-rows: auto minmax(0, 1fr);
 		gap: var(--space-3);
 		min-height: 0;
+		height: 100%;
 	}
-	/* The player rests on the desk like the scan does: a white strip, not the browser's own. */
+	/* The player: a round ink button, mono times and a thin track filled in ink. */
 	.player {
 		display: flex;
 		align-items: center;
 		gap: var(--space-3);
 		padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
-		background: var(--paper);
-		box-shadow: var(--shadow-flyout);
+		border-radius: var(--radius-card);
+		background: var(--surface-2);
+		box-shadow: var(--shadow-raised);
 	}
 	.play {
 		display: grid;
 		place-items: center;
-		width: var(--control-md);
-		height: var(--control-md);
+		width: 2.5rem;
+		height: 2.5rem;
 		flex: none;
 		border: 0;
 		border-radius: 50%;
-		background: var(--accent);
-		color: var(--on-accent);
+		background: var(--ink);
+		color: var(--on-ink);
 		cursor: pointer;
 		transition: background-color 120ms ease-out;
 	}
 	.play:hover {
-		background: var(--accent-soft);
+		background: var(--ink-hover);
 	}
 	.time {
 		flex: none;
-		font-size: var(--type-sm);
+		font-family: var(--font-mono);
+		font-size: var(--type-xs);
 	}
 	.scrub {
 		flex: 1;
@@ -179,38 +185,34 @@
 	.scrub::-webkit-slider-runnable-track {
 		height: 4px;
 		border-radius: 2px;
-		background: linear-gradient(
-			to right,
-			var(--accent) var(--done, 0%),
-			var(--line-strong) var(--done, 0%)
-		);
+		background: linear-gradient(to right, var(--ink) var(--done, 0%), var(--line) var(--done, 0%));
 	}
 	.scrub::-webkit-slider-thumb {
 		width: 14px;
 		height: 14px;
 		margin-top: -5px;
-		border: 2px solid var(--paper);
+		border: 2px solid var(--surface-2);
 		border-radius: 50%;
-		background: var(--accent);
-		box-shadow: 0 0 0 1px var(--accent);
+		background: var(--ink);
+		box-shadow: 0 0 0 1px var(--ink);
 		appearance: none;
 	}
 	.scrub::-moz-range-track {
 		height: 4px;
 		border-radius: 2px;
-		background: var(--line-strong);
+		background: var(--line);
 	}
 	.scrub::-moz-range-progress {
 		height: 4px;
 		border-radius: 2px;
-		background: var(--accent);
+		background: var(--ink);
 	}
 	.scrub::-moz-range-thumb {
 		width: 10px;
 		height: 10px;
-		border: 2px solid var(--paper);
+		border: 2px solid var(--surface-2);
 		border-radius: 50%;
-		background: var(--accent);
+		background: var(--ink);
 	}
 	.lines {
 		list-style: none;
@@ -218,13 +220,18 @@
 		padding: 0;
 		overflow: auto;
 		min-height: 0;
+		display: grid;
+		align-content: start;
+		gap: 2px;
 	}
+	/* One turn: its time, who speaks, what was said. */
 	.line {
-		display: flex;
+		display: grid;
+		grid-template-columns: 4.75rem auto minmax(0, 1fr);
 		gap: var(--space-3);
 		align-items: baseline;
 		width: 100%;
-		padding: var(--space-1) var(--space-2);
+		padding: var(--space-2) var(--space-3);
 		border: 0;
 		border-radius: var(--radius-control);
 		background: none;
@@ -235,21 +242,45 @@
 		transition: background-color 120ms ease-out;
 	}
 	.line:hover {
-		background: var(--accent-wash);
+		background: var(--wash);
 	}
 	.line.now {
-		background: var(--tint);
+		background: var(--surface-2);
+		box-shadow: var(--shadow-raised);
 	}
 	.stamp {
+		font-family: var(--font-mono);
 		color: var(--text-muted);
-		font-size: var(--type-sm);
-		flex: none;
+		font-size: var(--type-xs);
 	}
 	.now .stamp {
-		color: var(--text-secondary);
+		color: var(--text-bright);
+		font-weight: 500;
 	}
 	.speaker {
-		flex: none;
+		justify-self: start;
+		padding: 1px var(--space-2);
+		border-radius: var(--radius-tag);
+		font-size: var(--type-xs);
+		font-weight: 500;
+		white-space: nowrap;
+	}
+	.speaker.v1 {
+		background: var(--speaker-1-wash);
+		color: var(--speaker-1-text);
+	}
+	.speaker.v2 {
+		background: var(--speaker-2-wash);
+		color: var(--speaker-2-text);
+	}
+	.said {
+		font-family: var(--font-text);
+		font-size: var(--type-lg);
+		line-height: 1.55;
+		color: var(--text-body);
+	}
+	.line:not(:has(.speaker)) {
+		grid-template-columns: 4.75rem minmax(0, 1fr);
 	}
 	.pad {
 		padding: var(--space-3);

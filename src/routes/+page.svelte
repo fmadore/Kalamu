@@ -8,6 +8,8 @@
 	import PromptsView from '#lib/components/PromptsView.svelte';
 	import ReviewView from '#lib/components/ReviewView.svelte';
 	import SettingsView from '#lib/components/SettingsView.svelte';
+	import type { JobStatus } from '#lib/bindings/JobStatus.js';
+	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { api, on } from '#lib/tauri.js';
@@ -25,34 +27,6 @@
 	let loadError = $state<string | null>(null);
 	let startView: View | null = null;
 
-	const nav: { name: 'new' | 'jobs' | 'prompts' | 'settings'; label: string }[] = [
-		{ name: 'new', label: m.nav.newJob },
-		{ name: 'jobs', label: m.nav.jobs },
-		{ name: 'prompts', label: m.nav.prompts },
-		{ name: 'settings', label: m.nav.settings }
-	];
-
-	// The rail can fold down to its icons; the choice is this computer's, kept between sessions.
-	const RAIL_KEY = 'scriptorium.rail';
-	let folded = $state(readFolded());
-
-	function readFolded(): boolean {
-		try {
-			return localStorage.getItem(RAIL_KEY) === 'folded';
-		} catch {
-			return false;
-		}
-	}
-
-	function toggleRail() {
-		folded = !folded;
-		try {
-			localStorage.setItem(RAIL_KEY, folded ? 'folded' : 'open');
-		} catch {
-			// Storage refused: the rail still folds for this session.
-		}
-	}
-
 	function applyTheme(theme: string) {
 		if (theme === 'light' || theme === 'dark') {
 			document.documentElement.setAttribute('data-theme', theme);
@@ -65,10 +39,46 @@
 		if (app.settings) applyTheme(app.settings.theme);
 	});
 
-	const running = $derived(app.jobs.filter((j) => j.status === 'running'));
-	const unfinished = $derived(
-		app.jobs.filter((j) => ['interrupted', 'paused', 'pending'].includes(j.status)).length
+	// The sidebar is the list of jobs, grouped by what they need from the researcher.
+	const UNFINISHED: JobStatus[] = ['interrupted', 'paused', 'pending'];
+	const groups = $derived(
+		[
+			{
+				key: 'running',
+				label: m.shell.running,
+				jobs: app.jobs.filter((j) => j.status === 'running')
+			},
+			{
+				key: 'unfinished',
+				label: m.shell.unfinished,
+				jobs: app.jobs.filter((j) => UNFINISHED.includes(j.status))
+			},
+			{
+				key: 'finished',
+				label: m.shell.finished,
+				jobs: app.jobs.filter((j) => j.status !== 'running' && !UNFINISHED.includes(j.status))
+			}
+		].filter((g) => g.jobs.length > 0)
 	);
+
+	/** The job the main area shows, whether as its detail or in review. */
+	const openJob = $derived(
+		app.view.name === 'review'
+			? app.view.jobId
+			: app.view.name === 'jobs'
+				? (app.view.jobId ?? app.jobs[0]?.id)
+				: undefined
+	);
+	const offlineReady = $derived(app.offline?.models.some((s) => s.installed) ?? false);
+
+	const share = (j: JobSummary) => (100 * j.pieces_finished) / Math.max(j.pieces_total, 1);
+
+	function onKey(e: KeyboardEvent) {
+		if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'n') {
+			e.preventDefault();
+			go({ name: 'new' });
+		}
+	}
 
 	onMount(() => {
 		const unlisten: (() => void)[] = [];
@@ -95,7 +105,7 @@
 				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline()]);
 				// Jobs cut short by the last close: show them first.
 				if (startView) go(startView);
-				else if (info.interrupted.length > 0) go({ name: 'jobs' });
+				else if (info.interrupted.length > 0) go({ name: 'jobs', jobId: info.interrupted[0] });
 				else if (!app.keys.some((k) => k.saved)) go({ name: 'settings' });
 			} catch (e) {
 				loadError = describeError(e, m);
@@ -107,60 +117,98 @@
 	});
 </script>
 
-<div class="shell" class:folded>
-	<nav class="rail" aria-label="Main">
-		<div class="wordmark" aria-label={m.app.name}>
-			<span class="full">{m.app.name}</span><span class="initial" aria-hidden="true"
-				>{m.app.name.charAt(0)}</span
-			>
+<svelte:window onkeydown={onKey} />
+
+<div class="shell">
+	<nav class="side" aria-label={m.shell.jobs}>
+		<div class="brand">
+			<svg class="mark" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+				<rect width="22" height="22" rx="5" class="mark-ground" />
+				<rect x="5" y="5.5" width="12" height="1.6" rx="0.8" class="mark-line" />
+				<rect x="4" y="9.2" width="11" height="3.6" rx="1" class="mark-marker" />
+				<rect x="5" y="14.9" width="9" height="1.6" rx="0.8" class="mark-line" />
+			</svg>
+			<span class="name">{m.app.name}</span>
 		</div>
-		<ul>
-			{#each nav as item (item.name)}
-				<li>
-					<button
-						class="nav-item"
-						class:active={app.view.name === item.name ||
-							(item.name === 'jobs' && app.view.name === 'review')}
-						aria-current={app.view.name === item.name ? 'page' : undefined}
-						aria-label={folded ? item.label : undefined}
-						title={folded ? item.label : undefined}
-						onclick={() => go({ name: item.name } as View)}
-					>
-						<span class="nav-icon"><Icon name={item.name} size={18} /></span>
-						<span class="nav-label">{item.label}</span>
-						{#if item.name === 'jobs' && unfinished > 0}
-							<span class="count" aria-label={m.shell.unfinished(unfinished)}>{unfinished}</span>
-						{/if}
-					</button>
-				</li>
-			{/each}
-		</ul>
-		{#if running.length > 0}
-			<div class="running" role="status">
-				{#each running.slice(0, 2) as job (job.id)}
-					<button class="run" onclick={() => go({ name: 'jobs', jobId: job.id })}>
-						<span class="run-name">{m.shell.running(job.name)}</span>
-						<span class="run-bar" aria-hidden="true"
-							><i style:width="{(100 * job.pieces_finished) / Math.max(job.pieces_total, 1)}%"
-							></i></span
-						>
-						<span class="run-count num"
-							>{m.jobs.progress(job.pieces_finished, job.pieces_total)}</span
-						>
-					</button>
-				{/each}
-			</div>
-		{/if}
+
 		<button
-			class="fold"
-			aria-label={folded ? m.shell.expand : m.shell.collapse}
-			title={folded ? m.shell.expand : m.shell.collapse}
-			aria-expanded={!folded}
-			onclick={toggleRail}
+			class="new"
+			class:current={app.view.name === 'new'}
+			aria-current={app.view.name === 'new' ? 'page' : undefined}
+			onclick={() => go({ name: 'new' })}
 		>
-			<Icon name={folded ? 'expand' : 'collapse'} size={18} />
-			<span class="nav-label">{m.shell.collapse}</span>
+			<Icon name="plus" size={16} />
+			<span class="grow">{m.nav.newJob}</span>
+			<span class="kbd">{m.shell.newJobShortcut}</span>
 		</button>
+
+		<div class="jobs">
+			{#each groups as group (group.key)}
+				<section class="group" aria-labelledby="group-{group.key}">
+					<h2 class="group-head" id="group-{group.key}">
+						<span>{group.label}</span><span class="num">{group.jobs.length}</span>
+					</h2>
+					<ul>
+						{#each group.jobs as job (job.id)}
+							<li>
+								<button
+									class="job"
+									class:current={openJob === job.id}
+									aria-current={openJob === job.id ? 'page' : undefined}
+									onclick={() => go({ name: 'jobs', jobId: job.id })}
+								>
+									<span class="job-name">
+										<Icon name={job.task} size={14} />
+										<span class="ellipsis">{job.name}</span>
+									</span>
+									<span
+										class="job-meta"
+										class:warn={UNFINISHED.includes(job.status)}
+										class:danger={job.status === 'completed_with_errors'}
+									>
+										{#if group.key === 'finished'}
+											{job.status === 'completed' ? m.task[job.task] : m.status[job.status]}
+										{:else}
+											{m.status[job.status]} ·
+											<span class="num"
+												>{m.jobs.progress(job.pieces_finished, job.pieces_total)}</span
+											>
+										{/if}
+									</span>
+									{#if group.key !== 'finished'}
+										<span class="job-bar" aria-hidden="true"
+											><i style:width="{share(job)}%"></i></span
+										>
+									{/if}
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</section>
+			{:else}
+				<p class="no-jobs">{m.shell.noJobs}</p>
+			{/each}
+		</div>
+
+		<div class="tools">
+			<button
+				class="tool"
+				class:current={app.view.name === 'prompts'}
+				aria-current={app.view.name === 'prompts' ? 'page' : undefined}
+				onclick={() => go({ name: 'prompts' })}
+				><Icon name="prompts" size={16} />{m.nav.prompts}</button
+			>
+			<button
+				class="tool"
+				class:current={app.view.name === 'settings'}
+				aria-current={app.view.name === 'settings' ? 'page' : undefined}
+				onclick={() => go({ name: 'settings' })}
+				><Icon name="settings" size={16} />{m.nav.settings}</button
+			>
+			{#if offlineReady}
+				<p class="offline"><span class="dot" aria-hidden="true"></span>{m.shell.offlineReady}</p>
+			{/if}
+		</div>
 	</nav>
 
 	<main>
@@ -198,186 +246,212 @@
 <style>
 	.shell {
 		display: grid;
-		grid-template-columns: 14.5rem 1fr;
+		grid-template-columns: 16rem minmax(0, 1fr);
 		height: 100vh;
 	}
-	.shell.folded {
-		grid-template-columns: 3.75rem 1fr;
-	}
-	.rail {
-		background: var(--shell);
-		color: var(--on-shell);
+	.side {
 		display: flex;
 		flex-direction: column;
-		border-right: 1px solid var(--shell-line);
+		gap: var(--space-4);
 		min-height: 0;
+		padding: var(--space-3) var(--space-3) var(--space-3);
+		background: var(--chrome);
+		border-right: 1px solid var(--line);
 	}
-	/* As tall as a masthead, so its rule continues the header's bottom edge. */
-	.wordmark {
+	.brand {
 		display: flex;
-		align-items: flex-end;
-		white-space: nowrap;
-		overflow: hidden;
-		height: var(--masthead-height);
-		flex: none;
-		font-family: var(--font-text);
-		font-size: 1.875rem;
+		align-items: center;
+		gap: 0.625rem;
+		min-height: 2rem;
+		padding: 0 var(--space-2);
+	}
+	.mark-ground {
+		fill: var(--ink);
+	}
+	.mark-line {
+		fill: var(--on-ink);
+	}
+	.mark-marker {
+		fill: var(--marker);
+	}
+	.name {
+		font-size: 1rem;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+		color: var(--text-bright);
+	}
+	.new {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: var(--control-md);
+		padding: 0 var(--space-3);
+		border: 0;
+		border-radius: var(--radius-control);
+		background: var(--ink);
+		color: var(--on-ink);
+		font-size: var(--type-sm);
 		font-weight: 500;
-		letter-spacing: 0.01em;
-		line-height: 1;
-		padding: 0 var(--space-5) var(--space-4);
-		border-bottom: 1px solid var(--shell-line);
+		cursor: pointer;
+		transition: background-color 120ms ease-out;
+	}
+	.new:hover {
+		background: var(--ink-hover);
+	}
+	.new .kbd {
+		color: var(--on-ink-muted);
+	}
+	.new.current {
+		box-shadow:
+			0 0 0 2px var(--chrome),
+			0 0 0 3.5px var(--ink);
+	}
+	.grow {
+		flex: 1;
+		text-align: left;
+	}
+	.jobs {
+		flex: 1;
+		min-height: 0;
+		overflow: auto;
+		display: grid;
+		align-content: start;
+		gap: var(--space-4);
+		margin: 0 calc(-1 * var(--space-1));
+		padding: 0 var(--space-1);
+	}
+	.group-head {
+		display: flex;
+		justify-content: space-between;
+		padding: 0 var(--space-2) var(--space-1);
+		font-size: var(--type-xs);
+		font-weight: 500;
+		letter-spacing: 0;
+		color: var(--text-muted);
+	}
+	.group-head .num {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
 	}
 	ul {
 		list-style: none;
 		margin: 0;
-		padding: var(--space-4) var(--space-3);
+		padding: 0;
 		display: grid;
 		gap: 2px;
 	}
-	.nav-item {
+	.job {
 		width: 100%;
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		min-height: 2.5rem;
-		padding: 0 var(--space-3);
+		display: grid;
+		gap: 0.3rem;
+		padding: var(--space-2) 0.625rem;
 		border: 0;
 		border-radius: var(--radius-control);
 		background: transparent;
-		color: var(--on-shell-muted);
-		font-size: 1rem;
+		color: var(--text-bright);
 		text-align: left;
 		cursor: pointer;
 		transition: background-color 120ms ease-out;
 	}
-	.nav-item:hover {
-		background: var(--shell-2);
-		color: var(--on-shell);
+	.job:hover {
+		background: var(--wash);
 	}
-	.nav-item.active {
-		background: var(--shell-2);
-		color: var(--on-shell);
-		font-weight: 600;
+	.job.current {
+		background: var(--surface-0);
+		box-shadow: var(--shadow-raised);
 	}
-	.nav-item:focus-visible,
-	.fold:focus-visible {
-		outline-color: var(--on-shell);
-	}
-	/* Words lead in the open rail; icons stand in for them only when it is folded. */
-	.nav-icon,
-	.initial {
-		display: none;
-	}
-	.folded .nav-icon,
-	.folded .initial {
-		display: inline-flex;
-	}
-	.folded .nav-label,
-	.folded .full,
-	.folded .running {
-		display: none;
-	}
-	.folded .wordmark {
-		justify-content: center;
-		padding-left: 0;
-		padding-right: 0;
-	}
-	.folded ul {
-		padding: var(--space-4) var(--space-2);
-	}
-	.folded .nav-item {
-		justify-content: center;
-		padding: 0;
-		position: relative;
-	}
-	.folded .count {
-		position: absolute;
-		top: 2px;
-		right: 2px;
-		min-width: 1.125rem;
-		line-height: 1.125rem;
-	}
-	.fold {
-		margin-top: auto;
+	.job-name {
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
-		min-height: 2.5rem;
-		margin-inline: var(--space-3);
-		margin-bottom: var(--space-3);
-		padding: 0 var(--space-3);
-		border: 0;
-		border-radius: var(--radius-control);
-		background: transparent;
-		color: var(--on-shell-muted);
+		min-width: 0;
 		font-size: var(--type-sm);
-		cursor: pointer;
+		font-weight: 500;
 	}
-	.fold:hover {
-		background: var(--shell-2);
-		color: var(--on-shell);
+	.job-name :global(.icon) {
+		color: var(--text-secondary);
 	}
-	.running + .fold {
-		margin-top: 0;
-	}
-	.folded .fold {
-		justify-content: center;
-		margin-inline: var(--space-2);
-		padding: 0;
-	}
-	.count {
-		margin-left: auto;
-		min-width: 1.375rem;
-		padding: 0 var(--space-1);
-		border-radius: var(--radius-pill);
-		background: var(--on-shell);
-		color: var(--shell);
-		font-size: var(--type-xs);
-		font-weight: 700;
-		text-align: center;
-		line-height: 1.25rem;
-	}
-	.running {
-		margin-top: auto;
-		border-top: 1px solid var(--shell-line);
-		padding: var(--space-3) var(--space-3) var(--space-4);
-		display: grid;
-		gap: var(--space-2);
-	}
-	.run {
-		display: grid;
-		gap: var(--space-1);
-		padding: var(--space-2) var(--space-3);
-		border: 0;
-		border-radius: var(--radius-control);
-		background: transparent;
-		color: var(--on-shell-muted);
-		text-align: left;
-		cursor: pointer;
-		font-size: var(--type-sm);
-	}
-	.run:hover {
-		background: var(--shell-2);
-	}
-	.run-name {
-		color: var(--on-shell);
-		font-weight: 600;
+	.ellipsis {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.run-bar {
-		height: 4px;
+	.job-meta {
+		padding-left: 1.375rem;
+		font-size: var(--type-xs);
+		color: var(--text-muted);
+	}
+	.job-meta.warn {
+		color: var(--warn-text);
+	}
+	.job-meta.danger {
+		color: var(--danger-text);
+	}
+	.job-bar {
+		display: block;
+		height: 3px;
+		margin-left: 1.375rem;
 		border-radius: 2px;
-		background: var(--shell-line);
+		background: var(--line);
 		overflow: hidden;
 	}
-	.run-bar i {
+	.job-bar i {
 		display: block;
 		height: 100%;
-		background: var(--on-shell);
+		background: var(--ink);
 		transition: width 400ms ease-out;
+	}
+	.no-jobs {
+		padding: 0 var(--space-2);
+		font-size: var(--type-sm);
+		color: var(--text-muted);
+	}
+	.tools {
+		display: grid;
+		gap: 2px;
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--line);
+	}
+	.tool {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		min-height: var(--control-md);
+		padding: 0 0.625rem;
+		border: 0;
+		border-radius: var(--radius-control);
+		background: transparent;
+		color: var(--text-body);
+		font-size: var(--type-sm);
+		text-align: left;
+		cursor: pointer;
+		transition: background-color 120ms ease-out;
+	}
+	.tool :global(.icon) {
+		color: var(--text-secondary);
+	}
+	.tool:hover {
+		background: var(--wash);
+	}
+	.tool.current {
+		background: var(--surface-0);
+		box-shadow: var(--shadow-raised);
+		color: var(--text-bright);
+		font-weight: 500;
+	}
+	.offline {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		padding: var(--space-2) 0.625rem 0;
+		font-size: var(--type-xs);
+		color: var(--text-muted);
+	}
+	.dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 3px;
+		background: var(--ok);
 	}
 	main {
 		overflow: auto;
@@ -390,51 +464,23 @@
 		right: var(--space-5);
 		max-width: 28rem;
 		padding: var(--space-3) var(--space-4);
-		background: var(--shell);
-		color: var(--on-shell);
+		background: var(--ink);
+		color: var(--on-ink);
 		border-radius: var(--radius-control);
 		box-shadow: var(--shadow-flyout);
+		font-size: var(--type-sm);
 		z-index: 40;
 	}
-	@media (max-width: 820px) {
+	/* A narrow window: the list sits above the work, short enough to leave it room. */
+	@media (max-width: 760px) {
 		.shell {
-			grid-template-columns: 1fr;
-			grid-template-rows: auto 1fr;
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto minmax(0, 1fr);
 		}
-		.rail {
-			flex-direction: row;
-			align-items: center;
-			flex-wrap: wrap;
+		.side {
+			max-height: 38vh;
 			border-right: 0;
-			border-bottom: 1px solid var(--shell-line);
-		}
-		.wordmark {
-			height: auto;
-			font-size: 1.5rem;
-			padding: var(--space-3) var(--space-4);
-			border-bottom: 0;
-		}
-		ul {
-			display: flex;
-			flex-wrap: wrap;
-			padding: var(--space-2);
-		}
-		.nav-item {
-			min-height: 2.25rem;
-			font-size: var(--type-md);
-		}
-		.running,
-		.fold,
-		.nav-icon,
-		.initial {
-			display: none !important;
-		}
-		.shell.folded {
-			grid-template-columns: 1fr;
-		}
-		.folded .nav-label,
-		.folded .full {
-			display: inline;
+			border-bottom: 1px solid var(--line);
 		}
 	}
 </style>

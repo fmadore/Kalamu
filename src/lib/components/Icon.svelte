@@ -5,16 +5,19 @@
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
+	import Check from '@lucide/svelte/icons/check';
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
-	import FilePlus from '@lucide/svelte/icons/file-plus';
-	import ListChecks from '@lucide/svelte/icons/list-checks';
-	import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
-	import PanelLeftOpen from '@lucide/svelte/icons/panel-left-open';
+	import FileText from '@lucide/svelte/icons/file-text';
+	import FolderOpen from '@lucide/svelte/icons/folder-open';
+	import Mic from '@lucide/svelte/icons/mic';
 	import Pause from '@lucide/svelte/icons/pause';
+	import Pencil from '@lucide/svelte/icons/pencil';
 	import Play from '@lucide/svelte/icons/play';
 	import Plus from '@lucide/svelte/icons/plus';
 	import ScrollText from '@lucide/svelte/icons/scroll-text';
 	import Settings from '@lucide/svelte/icons/settings';
+	import TextSearch from '@lucide/svelte/icons/text-search';
 	import X from '@lucide/svelte/icons/x';
 	import ZoomIn from '@lucide/svelte/icons/zoom-in';
 	import ZoomOut from '@lucide/svelte/icons/zoom-out';
@@ -23,17 +26,20 @@
 		back: ArrowLeft,
 		down: ArrowDown,
 		up: ArrowUp,
+		check: Check,
+		previous: ChevronLeft,
 		chevron: ChevronRight,
-		collapse: PanelLeftClose,
-		expand: PanelLeftOpen,
-		jobs: ListChecks,
-		new: FilePlus,
+		edit: Pencil,
+		folder: FolderOpen,
 		prompts: ScrollText,
 		settings: Settings,
 		close: X,
 		pause: Pause,
 		play: Play,
 		plus: Plus,
+		text_extraction: FileText,
+		audio_transcription: Mic,
+		analysis: TextSearch,
 		'zoom-in': ZoomIn,
 		'zoom-out': ZoomOut
 	};

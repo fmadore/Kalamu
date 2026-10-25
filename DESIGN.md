@@ -1,109 +1,117 @@
 ---
 name: Scriptorium
-description: AI transcription and text extraction for researchers, checked against the source like a critical edition.
+description: AI transcription, text extraction and analysis for researchers, checked against the source.
 colors:
-  page-white: "#ffffff"
-  pane-grey: "#f5f6f8"
-  desk-grey: "#ececec"
-  hairline: "#e2e3e7"
-  hairline-strong: "#c6c9d1"
-  hairline-hover: "#9aa0ad"
-  section-rule: "#111111"
-  bookcloth: "#1d2b4f"
-  bookcloth-light: "#2a3a63"
-  bookcloth-line: "#34446d"
-  on-bookcloth: "#ffffff"
-  rubric: "#b3261e"
-  lemma-tint: "#dce3f2"
-  ink-bright: "#0f1115"
-  ink-body: "#1b1e24"
-  ink-secondary: "#464b55"
-  ink-muted: "#5f636d"
-  ok-green: "#2e6b47"
-  warn-umber: "#8a5300"
-  danger-red: "#a8201a"
-  dark-page: "#11151f"
-  dark-paper: "#161b27"
-  dark-desk: "#0c0f16"
-  dark-section-rule: "#c9cfdc"
-  dark-bookcloth: "#18264a"
-  dark-accent: "#afc3ec"
-  dark-rubric: "#ec8478"
-  dark-lemma-tint: "#2a3963"
-  dark-ink-body: "#dde1e8"
+  chrome-grey: "#f2f3f5"
+  surface: "#ffffff"
+  surface-quiet: "#fafafb"
+  stage: "#1e1f22"
+  stage-raised: "#2a2b2f"
+  stage-line: "#34353a"
+  on-stage: "#e4e5e9"
+  on-stage-muted: "#a9acb4"
+  line: "#e3e4e8"
+  line-soft: "#eeeff2"
+  line-strong: "#d5d7dc"
+  line-hover: "#a4a8b0"
+  graphite-ink: "#111214"
+  graphite-ink-hover: "#2b2d32"
+  on-ink: "#ffffff"
+  on-ink-muted: "#b9bcc3"
+  wash: "rgba(17, 18, 20, 0.05)"
+  highlighter: "#ffe066"
+  on-highlighter: "#111214"
+  hand-blue: "#2456d6"
+  hand-wash: "rgba(36, 86, 214, 0.1)"
+  ok-green: "#1f7a4d"
+  ok-text: "#155c39"
+  ok-wash: "#e3f2ea"
+  warn-amber: "#d97f00"
+  warn-text: "#7a4300"
+  warn-wash: "#fff6e5"
+  danger-red: "#b42318"
+  danger-text: "#9a1c13"
+  danger-wash: "#fdecea"
+  danger-border: "#f2c9c4"
+  speaker-1: "#0f8a7e"
+  speaker-1-wash: "#dcf3ef"
+  speaker-1-text: "#0b5c54"
+  speaker-2: "#d97f00"
+  speaker-2-wash: "#ffebcc"
+  speaker-2-text: "#7a4300"
+  text-bright: "#111214"
+  text-body: "#1b1c1f"
+  text-secondary: "#4a4e57"
+  text-muted: "#5e626b"
+  text-faint: "#8f939b"
+  dark-chrome: "#16171a"
+  dark-surface: "#1c1d20"
+  dark-surface-raised: "#24252a"
+  dark-stage: "#0f1012"
+  dark-line: "#2c2d31"
+  dark-ink: "#ecedef"
+  dark-highlighter: "#e8c547"
+  dark-hand-blue: "#7fa2ff"
+  dark-text-body: "#dfe1e5"
+  dark-text-muted: "#9a9ea6"
 typography:
-  wordmark:
-    fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.875rem"
-    fontWeight: 500
-    lineHeight: 1
-    letterSpacing: "0.01em"
-  headline:
-    fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "2.375rem"
-    fontWeight: 500
-    lineHeight: 1.2
-    letterSpacing: "0.005em"
   title:
-    fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.625rem"
-    fontWeight: 500
-    lineHeight: 1.2
-  subtitle:
-    fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.25rem"
-    fontWeight: 500
-    lineHeight: 1.2
-  reading:
-    fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.3125rem"
-    fontWeight: 400
-    lineHeight: 1.65
-    fontFeature: "onum"
-  apparatus:
-    fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.0625rem"
-    fontWeight: 400
-    lineHeight: 1.6
-    fontFeature: "onum"
-  running-head:
-    fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.125rem"
-    fontWeight: 400
-    letterSpacing: "0.08em"
-    fontFeature: "all-small-caps"
-  siglum:
-    fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.2em"
-    fontWeight: 600
-    lineHeight: 1
-    letterSpacing: "0.04em"
-    fontFeature: "all-small-caps"
-  body:
-    fontFamily: "'Source Sans 3 Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
     fontSize: "1rem"
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.01em"
+  heading:
+    fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
+    fontSize: "0.9375rem"
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.01em"
+  body:
+    fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
+    fontSize: "0.9375rem"
     fontWeight: 400
     lineHeight: 1.45
   label:
-    fontFamily: "'Source Sans 3 Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.9375rem"
-    fontWeight: 600
+    fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 500
     lineHeight: 1.45
   caption:
-    fontFamily: "'Source Sans 3 Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.8125rem"
-    fontWeight: 600
-    lineHeight: 1.5
-  prompt-mono:
-    fontFamily: "ui-monospace, 'Cascadia Mono', Consolas, monospace"
+    fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
+    fontSize: "0.78125rem"
+    fontWeight: 500
+    lineHeight: 1.45
+  reading:
+    fontFamily: "'Source Serif 4 Variable', 'Times New Roman', serif"
+    fontSize: "1.125rem"
+    fontWeight: 400
+    lineHeight: 1.7
+  reading-small:
+    fontFamily: "'Source Serif 4 Variable', 'Times New Roman', serif"
+    fontSize: "1.0625rem"
+    fontWeight: 400
+    lineHeight: 1.6
+  machine:
+    fontFamily: "'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace"
     fontSize: "0.92em"
     fontWeight: 400
-    lineHeight: 1.55
+  machine-mark:
+    fontFamily: "'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace"
+    fontSize: "0.6875rem"
+    fontWeight: 400
+    lineHeight: 1
+  figure:
+    fontFamily: "'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace"
+    fontSize: "1.875rem"
+    fontWeight: 500
+    letterSpacing: "-0.02em"
 rounded:
-  hairline: "2px"
-  tag: "4px"
-  control: "6px"
-  overlay: "8px"
+  highlight: "2px"
+  tag: "5px"
+  control: "7px"
+  card: "10px"
+  overlay: "10px"
   pill: "999px"
 spacing:
   "1": "0.25rem"
@@ -115,282 +123,333 @@ spacing:
   "7": "3rem"
 components:
   button:
-    backgroundColor: "{colors.page-white}"
-    textColor: "{colors.ink-body}"
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-bright}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
-    padding: "0 1rem"
-    height: "2.5rem"
+    padding: "0 0.75rem"
+    height: "2.25rem"
   button-primary:
-    backgroundColor: "{colors.bookcloth}"
-    textColor: "{colors.on-bookcloth}"
+    backgroundColor: "{colors.graphite-ink}"
+    textColor: "{colors.on-ink}"
+    typography: "{typography.label}"
     rounded: "{rounded.control}"
-    padding: "0 1rem"
-    height: "2.5rem"
+    padding: "0 0.75rem"
+    height: "2.25rem"
   button-primary-hover:
-    backgroundColor: "{colors.bookcloth-light}"
-    textColor: "{colors.on-bookcloth}"
+    backgroundColor: "{colors.graphite-ink-hover}"
+    textColor: "{colors.on-ink}"
+  button-primary-lg:
+    backgroundColor: "{colors.graphite-ink}"
+    textColor: "{colors.on-ink}"
+    rounded: "{rounded.control}"
+    padding: "0 1.5rem"
+    height: "2.75rem"
   button-ghost:
     backgroundColor: "transparent"
-    textColor: "{colors.ink-body}"
+    textColor: "{colors.text-bright}"
     rounded: "{rounded.control}"
-    padding: "0 1rem"
-    height: "2.5rem"
+    padding: "0 0.75rem"
+    height: "2.25rem"
+  button-ghost-hover:
+    backgroundColor: "{colors.wash}"
   button-danger:
-    backgroundColor: "{colors.page-white}"
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.danger-red}"
     rounded: "{rounded.control}"
-    padding: "0 1rem"
-    height: "2.5rem"
-  button-sm:
     padding: "0 0.75rem"
-    height: "2.125rem"
-  button-masthead-primary:
-    backgroundColor: "{colors.on-bookcloth}"
-    textColor: "{colors.bookcloth}"
-    rounded: "{rounded.control}"
-    padding: "0 1rem"
-    height: "2.5rem"
+    height: "2.25rem"
+  button-sm:
+    padding: "0 0.625rem"
+    height: "1.875rem"
   input:
-    backgroundColor: "{colors.page-white}"
-    textColor: "{colors.ink-body}"
-    typography: "{typography.body}"
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-bright}"
+    typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0.25rem 0.75rem"
-    height: "2.5rem"
+    height: "2.25rem"
   chip:
-    backgroundColor: "transparent"
-    textColor: "{colors.bookcloth}"
+    backgroundColor: "{colors.chrome-grey}"
+    textColor: "{colors.text-secondary}"
     typography: "{typography.caption}"
     rounded: "{rounded.tag}"
-    padding: "0 0.5rem"
-  chip-corrected:
-    backgroundColor: "transparent"
-    textColor: "{colors.rubric}"
+    padding: "0.125rem 0.5rem"
+  chip-ok:
+    backgroundColor: "{colors.ok-wash}"
+    textColor: "{colors.ok-text}"
     rounded: "{rounded.tag}"
-    padding: "0 0.5rem"
-  masthead:
-    backgroundColor: "{colors.bookcloth}"
-    textColor: "{colors.on-bookcloth}"
-    padding: "1.5rem 2rem 1rem"
-    height: "6.5rem"
-  rail:
-    backgroundColor: "{colors.bookcloth}"
-    textColor: "{colors.on-bookcloth}"
-    width: "14.5rem"
-  nav-item:
-    backgroundColor: "transparent"
-    textColor: "{colors.on-bookcloth}"
-    rounded: "{rounded.control}"
-    padding: "0 0.75rem"
-    height: "2.5rem"
-  nav-item-active:
-    backgroundColor: "{colors.bookcloth-light}"
-    textColor: "{colors.on-bookcloth}"
+  chip-warn:
+    backgroundColor: "{colors.warn-wash}"
+    textColor: "{colors.warn-text}"
+    rounded: "{rounded.tag}"
+  chip-danger:
+    backgroundColor: "{colors.danger-wash}"
+    textColor: "{colors.danger-text}"
+    rounded: "{rounded.tag}"
+  chip-hand:
+    backgroundColor: "{colors.hand-wash}"
+    textColor: "{colors.hand-blue}"
+    rounded: "{rounded.tag}"
   siglum:
-    textColor: "{colors.rubric}"
-    typography: "{typography.siglum}"
-  edition-page:
-    backgroundColor: "{colors.page-white}"
-    textColor: "{colors.ink-bright}"
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-secondary}"
+    typography: "{typography.machine-mark}"
+    size: "1.25rem"
+  sidebar:
+    backgroundColor: "{colors.chrome-grey}"
+    textColor: "{colors.text-body}"
+    width: "16rem"
+  sidebar-item-current:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-bright}"
+    rounded: "{rounded.control}"
+    padding: "0.5rem 0.625rem"
+  masthead:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-bright}"
+    typography: "{typography.title}"
+    padding: "0.5rem 1.5rem"
+    height: "3.5rem"
+  lightbox:
+    backgroundColor: "{colors.stage}"
+    textColor: "{colors.on-stage}"
+    padding: "1.5rem 1.5rem 4.5rem"
+  zoom-pill:
+    backgroundColor: "{colors.stage-raised}"
+    textColor: "{colors.on-stage}"
+    padding: "0.25rem"
+  disagreement:
+    backgroundColor: "{colors.highlighter}"
+    textColor: "{colors.on-highlighter}"
     typography: "{typography.reading}"
-    padding: "1.5rem 2rem 3rem 5rem"
-    width: "44rem"
-  source-desk:
-    backgroundColor: "{colors.desk-grey}"
+    rounded: "{rounded.highlight}"
+  readings-card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-bright}"
+    typography: "{typography.label}"
+    rounded: "{rounded.card}"
+    padding: "0.75rem"
+    width: "30rem"
+  reading-text:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-body}"
+    typography: "{typography.reading}"
+    padding: "1.5rem 2rem 3rem 1rem"
+    width: "42rem"
+  page-strip-piece:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-secondary}"
+    typography: "{typography.caption}"
+    height: "2rem"
+  player:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-bright}"
+    rounded: "{rounded.card}"
+    padding: "0.5rem 1rem 0.5rem 0.5rem"
+  summary-aside:
+    backgroundColor: "{colors.surface-quiet}"
+    textColor: "{colors.text-body}"
     padding: "1.5rem"
+    width: "21rem"
+  toast:
+    backgroundColor: "{colors.graphite-ink}"
+    textColor: "{colors.on-ink}"
+    rounded: "{rounded.control}"
+    padding: "0.75rem 1rem"
 ---
 
 # Design System: Scriptorium
 
 ## Overview
 
-**Creative North Star: "The Critical Edition"**
+**Creative North Star: "Graphite & highlighter"**
 
-The AI's text is one witness. Every screen is set like a scholarly edition: a white page carrying the reading text in Garamond, the other models' readings and the researcher's corrections set beneath it as an apparatus criticus, each witness named by a red siglum. The shell around the page is bookcloth: a deep blue rail and masthead, the binding the edition sits in. Controls are quiet, in a humanist sans, so the text keeps the authority. The source (a scan or a recording) rests on a grey desk beside the page, an object on a table rather than a panel in an app.
+A researcher checking a transcript works the way they would with a printout: a grey pencil for structure, a yellow highlighter for what needs another look, a blue pen for their own corrections. The interface is that desk kit and nothing more. Grey surfaces and hairlines do the structural work, black is kept for the one action that moves the work forward, yellow says "look here" and blue says "you changed this". Everything else stays quiet so those three marks can be read at a glance across a page of text.
 
-Density is that of a working edition, not a dashboard: generous measure for reading text, compact controls, hairline rules for structure. Sections open with a black rule, the way an edition opens its apparatus, and are never boxed. The world refuses two things by name: the AI-product arrangement of glowing cards and chat bubbles, and the parchment costume the name "Scriptorium" invites. There is no paper texture, no aged tint, no faux manuscript ornament.
+The source is the authority, so it gets the best seat: a scan lies on a dark lightbox in both themes, the brightest thing on screen, with its controls floating on the dark in a small pill. The text being checked sits beside it on white, in a reading serif. The interface around both is a plain sans; anything a machine produced (file names, model names, times, costs, counts, shortcuts) is set in a monospace, so the researcher can tell their material, the tool and the machine apart by the face alone. Density is that of a working tool used for hours on a laptop: compact controls, generous reading measure, no decoration.
 
-The same world holds from a 640px window snapped beside another to a 2560px monitor, and in light and dark themes that follow Windows by default.
+The same world holds from a window snapped beside another to a large monitor, and in light and dark themes that follow Windows by default. In dark mode the ink flips to near white, so the primary action stays the highest-contrast object on screen.
 
 **Key Characteristics:**
-- White page ground, bookcloth blue (#1d2b4f) shell, black text.
-- Rubric red reserved for sigla, marginal line numbers and the researcher's corrections.
-- Pale blue tint for selection and highlighted lemmata.
-- EB Garamond for everything read; Source Sans 3 for everything operated.
-- Sections divided by rules, never cards; shadows only on objects lifted off the desk and on overlays.
-- Lucide line icons at a 1.5px stroke, always after or beside words.
+- Graphite neutrals: a grey chrome sidebar (#f2f3f5), white work surface, hairline borders.
+- Black (graphite ink) is the only button fill, used once per work area and paired with its shortcut.
+- Highlighter yellow marks only where models disagree or where a name is found in the document.
+- Hand blue marks only the researcher's own corrections, never AI output.
+- Scans sit on a dark lightbox (#1e1f22 light, #0f1012 dark) in both themes.
+- Three faces with three jobs: Instrument Sans, Source Serif 4, IBM Plex Mono.
+- Lucide line icons at an absolute 1.5px stroke, beside words.
 
 ## Colors
 
-A restrained scholar's palette: white page, black ink, one bookcloth blue, and one rubric red whose rarity carries meaning.
+A graphite palette of greys and one black, with two marker colours whose rarity carries the meaning and a small set of status hues used as text on a wash.
 
 ### Primary
-- **Bookcloth Blue** (#1d2b4f): the rail, every masthead, primary buttons, the play button, chips' text and outline. Owns the shell; on the page it appears only as action. Hover lifts to **Bookcloth Light** (#2a3a63), also the active nav item's ground; **Bookcloth Line** (#34446d) draws the rules inside the shell. In dark mode the shell deepens (dark-bookcloth) and actions on the page turn to a pale periwinkle (dark-accent) so they stay legible.
+- **Graphite Ink** (#111214; dark-ink #ecedef in dark): primary buttons, the sidebar's New job button, the toast, progress fills, the play button and scrubber, the selected task's inset ring, focus outlines and the checked state of native controls. Hover lifts to **Graphite Ink Hover** (#2b2d32). Text on it is **On Ink** (#ffffff), with **On Ink Muted** (#b9bcc3) for the shortcut inside a primary button.
 
 ### Secondary
-- **Rubric** (#b3261e; dark-rubric #ec8478 in dark): sigla, marginal line numbers, the corrected-chip and the researcher's corrected lemmata and readings. Nothing else on the page is red in this hue.
+- **Highlighter** (#ffe066; dark-highlighter #e8c547): words where the set-ups read differently, as a filled mark with a 2px bleed; a name pointed at in an analysed document; the swatch in the difference count and the legend; the marker stroke in the app's mark. Text on it is always **On Highlighter** (#111214), in both themes.
 
 ### Tertiary
-- **Lemma Tint** (#dce3f2; dark-lemma-tint in dark): text selection, lemmata marked as having a variant, a lit line number, the "added" side of a diff, and the audio segment now playing.
+- **Hand Blue** (#2456d6; dark-hand-blue #7fa2ff): the researcher's corrections, as a 2px underline under corrected words, the "Corrected" chip and the legend key. **Hand Wash** (10% blue) is the hover ground of a corrected word and the text selection colour.
 
 ### Neutral
-- **Page White** (#ffffff): the page, the edition paper and button/input grounds. Dark: dark-page and dark-paper.
-- **Pane Grey** (#f5f6f8): the quiet secondary surface.
-- **Desk Grey** (#ececec; dark-desk in dark): only behind a source (scan or player), so it reads as an object on a table.
-- **Section Rule** (#111111; dark-section-rule in dark): the 1px rule that opens a section and the apparatus.
-- **Hairline / Strong / Hover** (#e2e3e7, #c6c9d1, #9aa0ad): pane dividers, control borders, and the border a control takes on hover.
-- **Ink** (bright #0f1115 for headings and reading text, body #1b1e24, secondary #464b55, muted #5f636d).
-- **Status**: ok-green (#2e6b47), warn-umber (#8a5300), danger-red (#a8201a), each used as text plus a translucent wash or border, never as a filled block.
+- **Chrome Grey** (#f2f3f5; dark-chrome #16171a): the sidebar, plain chips. The frame around the work.
+- **Surface** (#ffffff; dark-surface #1c1d20): the main work surface, mastheads, buttons, inputs, the reading text. **Surface Quiet** (#fafafb): side panels (New job's summary), the review page strip, the audio source pane, hover on choice tiles.
+- **Stage** (#1e1f22; dark-stage #0f1012): the lightbox under a scan. **Stage Raised** (#2a2b2f) for the zoom pill, **Stage Line** (#34353a) for its rules, **On Stage** (#e4e5e9) and **On Stage Muted** (#a9acb4) for text on it.
+- **Lines**: line (#e3e4e8) for borders and dividers, line-soft (#eeeff2) between rows of one table, line-strong (#d5d7dc) for input borders, dashed slots and sigla, line-hover (#a4a8b0) for a border under the pointer.
+- **Wash** (5% ink): hover ground for ghost buttons, list rows and transcript lines.
+- **Text**: bright (#111214) for headings and values, body (#1b1c1f), secondary (#4a4e57), muted (#5e626b) for hints and metadata, faint (#8f939b) only for decoration that repeats a value given elsewhere (line numbers, the slash in a breadcrumb).
+- **Status**: ok-green (#1f7a4d), warn-amber (#d97f00), danger-red (#b42318), each with a darker text tone and a pale wash. Used as coloured text on a wash, a 6px dot, or a thin bar; never as a filled button.
+- **Speakers**: speaker 1 teal (#0f8a7e; #5cc8bc in dark) and speaker 2 amber (#d97f00), each as a tag of dark text on a pale wash, told apart by lightness as well as hue. Neither is blue, which belongs to the researcher's hand.
 
 ### Named Rules
-**The Rubric Rule.** Rubric red marks only sigla, marginal line numbers and the researcher's corrections. If something red is neither a witness's name, a line reference nor a correction, it is wrong.
+**The Black Button Rule.** Graphite ink is the only button fill. Each work area has at most one primary button, and it shows its keyboard shortcut (Ctrl N for New job, Ctrl Enter for Start and Mark reviewed). The sidebar's New job button is the shell's standing action and does not count against a screen.
 
-**The Bookcloth Rule.** Blue owns the binding (rail, mastheads) and the actions. It is not a decorative fill for sections on the page.
+**The Highlighter Rule.** Yellow means "look here": where the models disagree, or where something you pointed at is found. It is never a warning, a brand fill or decoration. Warnings are amber text on a pale amber wash.
 
-**The Desk Rule.** Desk grey sits only behind a source. The edition page and every form sit on white.
+**The Hand Rule.** Blue is the researcher's own hand. Corrections are underlined in blue on top of the text; the AI's output underneath is never overwritten or restyled as if it were the researcher's.
+
+**The Lightbox Rule.** A scan always sits on the stage, dark in both themes, so the page is the brightest thing on screen. Controls over it use the on-stage colours, not the interface's.
 
 ## Typography
 
-**Text Font:** EB Garamond Variable (with Garamond, Times New Roman for Arabic script, serif)
-**Interface Font:** Source Sans 3 Variable (with Segoe UI Variable, Segoe UI, system-ui)
-**Mono Font:** ui-monospace, Cascadia Mono, Consolas (prompt text only)
+**Interface Font:** Instrument Sans Variable (with Segoe UI Variable, Segoe UI, system-ui)
+**Text Font:** Source Serif 4 Variable (with Times New Roman, which also covers Arabic script)
+**Machine Font:** IBM Plex Mono (with Cascadia Mono, Consolas)
 
-**Character:** an old-style book face for reading, titling and the edition's apparatus, paired with a humanist sans that stays out of its way for every control. The pairing says "edition first, tool second".
+**Character:** a crisp contemporary grotesque that stays out of the way, a sturdy reading serif with optical sizes for the documents themselves, and a plain mono that labels whatever a machine produced. Three faces, three jobs, never swapped.
 
 ### Hierarchy
-- **Wordmark** (Garamond 500, 1.875rem, line-height 1; 1.5rem at ≤820px): the product name in the rail, bottom-aligned on the masthead line.
-- **Headline** (Garamond 500, 2rem, 1.2; 1.625rem at ≤820px): every masthead title, including the document title in review.
-- **Title** (Garamond 500, 1.375rem): section headings under their rule. **Subtitle** (Garamond 500, 1.125rem) below that; task names in New job are set at 1.25rem in Garamond.
-- **Reading** (Garamond 400, 1.3125rem, 1.65, oldstyle figures, max 44rem): the edition's text and the correction editor. Rises to 1.5rem in windows ≥1680px.
-- **Apparatus** (Garamond 400, 1.0625rem, 1.6, oldstyle figures): apparatus entries, set as number, lemma ] reading, siglum.
-- **Running head** (Garamond all-small-caps, 1.125rem, letter-spacing 0.08em): the edition page's running head (file · page, reading text of A) and the sigla key's heading.
-- **Siglum** (Garamond 600 all-small-caps, 1.2em of its context, letter-spacing 0.04em, rubric): a witness letter, or "corr." for the researcher. Larger (1.6rem) in a pane's bar.
-- **Body** (Source Sans 3 400, 1rem, 1.45): all interface text, buttons (600), navigation (1rem in the rail).
-- **Label** (Source Sans 3 600, 0.9375rem): field labels, small buttons, metadata. **Caption** (600, 0.8125rem): chips and counts.
-- The `html` element takes the body size, so 1rem is 16px and every rem-sized token scales with it. Nothing in the interface is set below 13px: researchers read these screens at arm's length on a laptop.
-- Marginal and apparatus line numbers use lining tabular figures at 0.8em, weight 600, so they align in their column.
+- **Title** (Instrument Sans 600, 1rem, 1.25, -0.01em): masthead titles, the app name, step headings in New job.
+- **Heading** (Instrument Sans 600, 0.9375rem, 1.25): section headings (h2); h3 at 0.875rem.
+- **Body** (Instrument Sans 400, 0.9375rem, 1.45): all interface text. Paragraphs in a sheet keep a 75ch measure.
+- **Label** (Instrument Sans 500, 0.875rem): buttons, field labels, list items, inputs.
+- **Caption** (Instrument Sans 500, 0.78125rem): chips, metadata, hints, sidebar group heads, the page strip.
+- **Reading** (Source Serif 4 400, 1.125rem, 1.7, max 42rem): the text being checked and the correction editor. Rises to 1.25rem in windows 1680px and wider.
+- **Reading small** (Source Serif 4 400, 1.0625rem, 1.55 to 1.65): readings in the readings card, transcript lines, analysis answers, text previews in a job.
+- **Machine** (IBM Plex Mono 400, 0.92em of its context): file names, model and set-up labels, times, costs, counts, page numbers, output paths, the prompt editor.
+- **Machine mark** (IBM Plex Mono, 0.6875rem): keyboard shortcuts, step numbers (01, 02), marginal line numbers, sigla, sidebar counts. The smallest size in the system.
+- **Figure** (IBM Plex Mono 500, 1.875rem, -0.02em): the cost estimate in New job's summary; 1.375rem when the summary becomes a footer.
+- Weights stay at 400, 500 and 600. Tabular figures where numbers line up.
 
 ### Named Rules
-**The Two Faces Rule.** Garamond carries reading text, titles, the wordmark, small-caps running heads and sigla. Source Sans 3 carries every control. A button, field, tab or label in Garamond is a defect; a document text in the sans is a defect.
-
-**The Mono Quarantine Rule.** Monospace appears only in the prompt editor, because prompt text is written like code. Nowhere else.
+**The Three Voices Rule.** Instrument Sans for everything operated, Source Serif 4 only for the text being checked, IBM Plex Mono for anything a machine produced. A control in the serif, or a document in the sans, is a defect.
 
 ## Layout
 
-The app is a fixed shell: a 14.5rem bookcloth rail at left and a scrolling main area. The rail's wordmark block is exactly the masthead height (6.5rem), so the rail's bottom rule and every masthead's bottom rule run as one line across the window. The rail's foot holds the running background job with a thin progress bar.
+The app is a fixed shell: a 16rem chrome-grey sidebar at left and a scrolling white main area. The sidebar holds the mark and name, the black New job button with Ctrl N, the jobs list grouped Running, Unfinished and Finished (each group head a caption with a mono count), and at its foot the tools (Prompts, Settings) above a hairline, with an offline-ready line and green dot. A job row shows its name with a task icon, a caption line of status, and a 3px ink progress bar while running. The current row or tool is lifted onto white with the raised shadow.
 
-Each screen opens with a masthead (bookcloth band, bottom-aligned title and actions, padding 1.5rem 2rem 1rem) followed by a **sheet**: a single column that takes the window's width up to 100rem, padding 1.5rem 2rem 3rem, sections stacked with a 2rem gap. Grids inside it (task tiles, files, compared set-ups) spread across that width; paragraphs keep a 75ch measure so prose never runs the full width. Sections open with their rule and 1rem of space above their content.
+Each screen opens with a **masthead**: at least 3.5rem tall, white, a hairline below, the title (and a back link or breadcrumb) at left and actions at right. Below it a **sheet**: one column up to 64rem, padding 1.5rem 2rem 3rem, sections 2rem apart.
 
-Review is the exception: below the masthead, a scores strip, then two panes split 0.9fr (source on the desk) to 1.1fr (the edition page). The edition page is indented 5rem on the left so line numbers and sigla sit in a true margin, with the text grid pulling each line back 3.5rem to place its number on the first baseline.
+**New job** is a form beside a summary: the form (max 52rem) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
 
-New job ends in a sticky, window-wide footer carrying the estimate and Start; its inner content aligns with the sheet's 100rem width.
+**Review** splits the work area 0.95fr (source) to 1.05fr (text). Each pane has a 2.75rem bar on top. The text pane sets each line in a grid with a 2.25rem number column, numbers printed every fifth line and on every line that differs. A page strip runs along the bottom on surface-quiet: one small tile per page with its state, and a tally with a green progress bar.
 
-New job's model set-ups adapt to their number. One set-up lays its fields in a row with "Compare with another model" and its hint beneath. Two or more stand side by side as columns (min 19rem, `auto-fit`), one per witness, each headed by its siglum, name and Remove, fields stacked; the next column is a dashed slot that adds another model. Columns wrap when the window is too narrow.
+**Job detail** sets the job's facts as one bordered strip of cells divided by hairlines, then the files as a bordered table with per-set-up progress bars.
 
-Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls are 2.125rem (small), 2.5rem (default) and 2.875rem (large) tall.
+Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls are 1.875rem (small), 2.25rem (default) and 2.75rem (large) tall.
 
-**Responsive range:** 640px (the minimum window) to 2560px.
-- **≤820px**: the rail becomes a top bar (wordmark plus wrapped nav, running job hidden), the masthead drops its fixed height, headline shrinks to 1.625rem, sheet and pane padding tighten to 1rem.
-- **≤960px**: review stacks the source above the edition (source capped at 40vh, min 16rem).
-- **≥1680px**: reading text rises from 1.3125rem to 1.5rem.
-- Component-local breakpoints refine single grids (Jobs at 1100px, Prompts at 1000px, New job's task tiles at 760px, Settings at 700px).
+**Responsive range:**
+- **1100px and narrower**: New job's summary leaves the side and becomes a sticky footer with the figure and Start, lifted by a soft upward shadow.
+- **1000px and narrower**: Review stacks the source above the text (source 16rem to 42vh); Prompts stacks its list above the editor.
+- **820px and narrower**: masthead and sheet padding tighten to 1rem; the readings card loses its indent; the review tally hides.
+- **760px and narrower**: the sidebar sits above the work (at most 38vh); joined choice strips become one column.
+- **1680px and wider**: reading text rises to 1.25rem.
 
 ## Elevation & Depth
 
-The page is flat. Structure comes from rules and grounds, not from lifting surfaces. Shadows exist only for things that are physically "on top": a source resting on the desk, an overlay, and the sticky footer that content passes beneath.
+Flat by default, with tonal layering doing most of the work: chrome grey behind, white for the work, a quiet grey for side panels. Shadows appear on three kinds of thing: a selected item lifted onto white, an overlay that floats over content, and a scan lying on the lightbox.
 
 ### Shadow Vocabulary
-- **Flyout** (`box-shadow: 0 18px 48px -16px rgba(15, 20, 35, 0.35)`; dark `0 24px 64px -16px rgba(0, 0, 0, 0.7)`): the scan page and the audio player strip on the desk, the close dialog, the toast.
-- **Lifted edge** (`box-shadow: 0 -10px 24px -18px rgba(15, 20, 35, 0.45)`): the top of New job's sticky footer, with a strong hairline, so content reads as passing under it rather than cut.
+- **Raised** (`box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(17, 18, 20, 0.06)`; dark: the ring alone): the current sidebar job or tool, the active prompt, the audio player, the transcript line now playing.
+- **Pop** (`box-shadow: 0 0 0 1px var(--line), 0 12px 32px -8px rgba(17, 18, 20, 0.18)`): the readings card opened under a line.
+- **Flyout** (`box-shadow: 0 18px 48px -16px rgba(17, 18, 20, 0.35)`): the close dialog and the toast.
+- **Page** (`box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.4)`): a scan on the lightbox, with a 2px corner.
+- **Zoom pill** (`box-shadow: 0 0 0 1px var(--stage-line), 0 8px 24px rgba(0, 0, 0, 0.35)`): the controls floating over the stage.
 
 ### Named Rules
-**The No Shadowed Cards Rule.** Sections never get a shadow, a fill or a box. If a section needs separating, it gets the section rule.
+**The Lift Means Selected Rule.** In lists, being lifted onto white with the raised shadow means "this is the one you are on". Hover only takes the wash.
 
 ## Shapes
 
-Corners are gently rounded on controls (6px for buttons, inputs, nav items, task tiles and audio lines), slightly more on overlays (8px), near-square on chips (4px) and on inline highlights (2px on lemmata and line numbers, 3px on an apparatus entry's wash). Fully round only where the form is round: the play button, the scrubber thumb, the rail's count badge.
+Corners are soft and small: 7px on buttons, inputs and list rows, 10px on cards, tables, joined choice strips, the player and overlays, 5px on chips and speaker tags, 2px on highlights and the scan's edge. Fully round only where the form is round: the play button, the scrubber thumb, radios and status dots (6px).
 
-Lines carry the structure: 1px everywhere, black for the section and apparatus rules, hairline grey for pane dividers and control borders, bookcloth-line inside the shell.
+Lines carry the structure: 1px hairlines everywhere; a dashed strong line for an empty slot that adds something (a drop zone, "add a model" column). Sections in a sheet are not boxed: a hairline above, a heading, no fill.
 
-Icons come from Lucide (`@lucide/svelte`) through `Icon.svelte`, at an absolute 1.5px stroke in the current colour, play and pause filled: back, chevron, close, play, pause, plus, zoom in and out. No hand-drawn icons. They are decorative; the control carries the accessible name.
+Icons come from Lucide through one icon component, at an absolute 1.5px stroke in the current colour, play and pause filled. They are decorative; the control carries the accessible name.
 
 ## Components
 
 ### Buttons
-Plain and firm: a sans label in weight 600, never an icon alone except where the meaning is universal (zoom, close, play).
-- **Shape:** gently rounded (6px), 2.5rem tall, 0 1rem padding; small is 2.125rem tall with 0.75rem padding.
-- **Default:** white ground, strong hairline border, body ink. Hover darkens the border to the hover hairline.
-- **Primary:** bookcloth ground and border, white text; hover lifts to bookcloth light.
-- **Ghost:** transparent; hover takes the bookcloth wash (6% blue).
-- **Danger:** danger-red text with a danger border.
-- **In a masthead:** non-primary buttons turn transparent with a 42% white border; primary inverts to white with bookcloth text.
-- **Disabled:** 50% opacity. **Focus:** 2px bookcloth-light outline offset 2px (white in the rail).
+Quiet and firm: a sans label at weight 500, an icon only where its meaning is universal (zoom, previous, next, close).
+- **Shape:** 7px corners, 2.25rem tall, 0 0.75rem padding; small 1.875rem with 0.625rem padding and caption type; large 2.75rem with 1.5rem padding.
+- **Default:** white ground, line border, bright text; hover darkens the border to line-hover.
+- **Primary:** graphite ink ground and border, white text, a muted mono shortcut inside; hover lifts to ink hover.
+- **Ghost:** transparent; hover takes the wash.
+- **Danger:** danger-red text with a pale red border, never a red fill.
+- **Disabled:** 45% opacity. **Focus:** a 2px ink outline offset 2px (on-stage colour over the lightbox).
 - Transitions: background and border colour, 120ms ease-out; removed under reduced motion.
 
 ### Chips
-- **Style:** transparent ground, 1px outline in 35% bookcloth, bookcloth text, caption type, 4px corners.
-- **Variants:** warn (umber), ok (green, outlined in its own colour), danger (red), corrected (rubric). Chips never fill.
+- **Style:** caption type on a tinted ground, 5px corners, no border.
+- **Variants:** plain (chrome grey), ok, warn, danger and hand, each its text tone on its wash with a 6px dot of the full colour before the label.
 
-### Sections
-- **Corner Style:** none.
-- **Background:** transparent.
-- **Shadow Strategy:** none (see Elevation).
-- **Border:** a single 1px section rule on top.
-- **Internal Padding:** 1rem above content, 0.75rem between rows.
+### Siglum
+A set-up's letter wherever set-ups are compared: a 1.25rem square of mono uppercase in secondary text, line-strong border, 4px corners, white ground.
 
 ### Inputs / Fields
-- **Style:** white ground, strong hairline border, 6px corners, 2.5rem tall, padding 0.25rem 0.75rem (textareas 0.75rem, line-height 1.55). Label above in label type, secondary ink.
-- **Hover:** border to the hover hairline. **Focus:** the global 2px outline.
-- In a masthead, a select keeps its white ground with a white border.
+- **Style:** white ground, line-strong border, 7px corners, 2.25rem tall, padding 0.25rem 0.75rem; textareas 0.75rem padding and 1.55 line height. Label above in secondary text, weight 500.
+- **Hover:** border to line-hover. **Focus:** border to bright text with a 3px wash ring, no outline.
 
 ### Navigation
-- **Rail:** bookcloth, 14.5rem; Garamond wordmark in a block as tall as the masthead; nav items in the sans at 1rem, 2.5rem tall, 78% white at rest, full white on hover with bookcloth-light ground; the active item is bold on bookcloth light. A white pill counts jobs.
-- **Narrow (≤820px):** the rail becomes a top bar; nav items wrap in a row at 2.25rem.
+- **Sidebar:** chrome grey, 16rem, hairline right edge. Rows are 7px-cornered, transparent at rest, wash on hover, lifted onto white when current. The New job button is a full-width ink button; when New job is open it takes a 1.5px ink ring offset by the chrome.
 
 ### Masthead
-The bookcloth band at the top of every screen: back link (muted white, underline on hover) above a Garamond headline, actions at right, all aligned to the bottom edge; 6.5rem tall so its rule meets the rail's.
+White, at least 3.5rem, hairline below; a title in title type, an optional muted lede or a back link, actions at right. In Review the title is a breadcrumb: the job name, a faint slash, then the file name in mono, with a pager (previous, a mono select, next) and the actions.
 
-### Edition Page (signature)
-The source sits on the desk beside a white page. The page carries:
-- a **running head** in small caps (file · page at left, "reading text" with its siglum at right);
-- the **reading text** in Garamond with **marginal line numbers in rubric**, printed every fifth line and on every line with a variant, on the line's first baseline;
-- lemmata with a variant marked in lemma tint; a corrected lemma set in rubric;
-- the **apparatus criticus** below a black rule: line number in the margin, lemma, a bracket, then each reading followed by its siglum, readings separated by colons; corrections carry the "corr." siglum;
-- the **sigla key** below a hairline, each witness's siglum hung in the margin beside its name, metadata and its controls.
-
-**Signature interaction:** hovering or focusing an apparatus entry lights its lemma (bookcloth chip ground with a thin outline) and its line number (tint), and hovering the lemma lights the entry (bookcloth wash); focusing an entry scrolls the lemma into view.
+### Review: the lightbox and the marked text (signature)
+- **Source pane:** a scan on the stage, padded 1.5rem with room below for a centred **zoom pill** (stage raised, 9px corners, ghost controls in on-stage colours, a mono percentage). A recording instead sits on surface-quiet with the player on top.
+- **Text pane:** a bar with the set-up's label in mono, a count of differences beside a yellow swatch, and a switch to show them; the reading text below; a foot with mono metadata and a legend (yellow block for "models differ", blue line for "your correction").
+- **Disagreements:** each differing word is a button set in the highlighter with a 2px bleed. Pointing at it or opening it adds a 1.5px bright ring outside the yellow.
+- **Readings card:** opened inline under its line, indented to the text column, max 30rem, white with the pop shadow and 10px corners. It lists each reading in the reading serif beside who reads it (mono), the one in the text in bold, each with a button to take it as a correction, and a field to type your own.
+- **Corrections:** corrected words lose the yellow and take a 2px hand-blue underline offset 0.25em; hover takes the hand wash.
+- **Page strip:** 2rem tiles with a mono page number; reviewed pages in ok-green with a check; the current page ringed in bright text. A tally beside it with a 4px green bar.
 
 ### Audio Player
-On the desk, the player is an authored white strip with the flyout shadow: a round bookcloth play button, tabular time, a 4px scrubber track filled in bookcloth with a white-ringed thumb. Below, transcript lines as rows with a muted timestamp; hover takes the wash, the segment now playing takes the lemma tint.
+A white strip with 10px corners and the raised shadow: a round 2.5rem ink play button, mono times, a 4px track filled in ink with an ink thumb ringed in white. Below, transcript lines: a mono timestamp, a speaker tag, and what was said in the reading serif. Hover takes the wash; the line now playing is lifted onto white.
 
-### Task Tiles
-New job's three task choices are selectable tiles: strong hairline border, 6px corners, a Garamond task name; selected takes the bookcloth border, an inset 1px bookcloth ring and the wash. They are controls, not sections.
+### New job steps and summary
+Numbered steps with mono numbers in the margin; joined choice strips for task and output; a model set-up as a white bordered card, side-by-side columns (min 17rem) when comparing, with a dashed column that adds another model. The summary aside ends in the large Start button with Ctrl Enter.
+
+### Notices
+A full-width banner or inline notice in warn-text on the warn wash (7px corners inline), stating what happened and what to do. File problems hang under their file in the same treatment, danger-tinted when a file cannot be used.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** open every section with the 1px section rule and nothing else around it.
-- **Do** keep rubric red (#b3261e / #ec8478) for sigla, marginal line numbers and corrections only.
-- **Do** use lemma tint (#dce3f2) for selection, marked lemmata and the playing segment.
-- **Do** set anything read (documents, titles, running heads, sigla) in EB Garamond and every control in Source Sans 3.
-- **Do** put sources (scans, players) on the desk grey, with the flyout shadow, and keep the edition on white.
-- **Do** keep the masthead and the rail's wordmark block at the same 6.5rem so their rules meet.
-- **Do** put words before icons; use Lucide icons through `Icon.svelte`.
-- **Do** design for 640px to 2560px, with the shell collapsing at 820px, review stacking at 960px and reading text rising at 1680px.
+- **Do** use graphite ink (#111214, #ecedef in dark) as the only button fill, once per work area, with its shortcut beside the label.
+- **Do** keep highlighter yellow (#ffe066 / #e8c547) for disagreements and found terms, always with ink text on it.
+- **Do** mark the researcher's corrections in hand blue (#2456d6 / #7fa2ff) as an underline on top of the text.
+- **Do** put scans on the stage (#1e1f22 / #0f1012) with the page shadow, and the controls over it in on-stage colours.
+- **Do** set file names, models, times, costs, counts and shortcuts in IBM Plex Mono, and only the text being checked in Source Serif 4.
+- **Do** separate with greys and hairlines first; reach for a shadow only for the selected item, an overlay or the scan.
+- **Do** show status as coloured text on a wash, with a 6px dot.
+- **Do** keep icons to Lucide at the absolute 1.5px stroke, beside a word.
 
 ### Don't:
-- **Don't** box sections in cards, fill them, or give them shadows.
-- **Don't** add parchment, paper texture, aged tints or manuscript ornament.
-- **Don't** use glowing cards, gradients or chat-bubble styling.
-- **Don't** use red for decoration, emphasis or status; errors use danger red as text, not rubric.
-- **Don't** use monospace outside the prompt editor.
+- **Don't** fill a button in any colour but ink: no blue, green or red primary buttons.
+- **Don't** use yellow for warnings, emphasis or branding; warnings are amber on a pale amber wash.
+- **Don't** use hand blue for links, selected states or AI output; it belongs to the researcher's hand (and the text selection it makes).
+- **Don't** put a scan on white or on the interface grey.
+- **Don't** set controls in the serif or documents in the sans.
+- **Don't** box sections in shadowed cards; a section is a hairline and a heading.
 - **Don't** use glyph characters (arrows, crosses, triangles) as icons.
-- **Don't** hard-code visible text; every string comes from the translation files.
+- **Don't** add uppercase eyebrows or kickers above titles.
 
 ## Open Questions
 
-Left by the finish review for the user, not shipped:
-- A collation table in Jobs, comparing set-ups across pages.
-- An interrupted job with Resume in the rail's foot.
-- A capture of a correction set in rubric with the "corr." sigla row, to confirm that state visually.
+Left for the user, not shipped as rules:
+- The direction brief says yellow also marks "still to review"; the build does not do this (the page strip shows reviewed pages in green and leaves the rest plain). Decide whether unreviewed pages should take the highlighter.
+- Recordings sit on surface-quiet, not on the lightbox. Decide whether the Lightbox Rule covers audio.
+- A few radii sit off the scale (zoom pill 9px, zoom buttons and page tiles 6px, siglum 4px); fold them into the scale or record them.

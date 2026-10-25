@@ -67,7 +67,7 @@
 
 {#if named.length > 0}
 	<section class="speakers" aria-labelledby="speakers-title">
-		<h2 id="speakers-title" class="smcp">{m.review.speakers}</h2>
+		<h2 id="speakers-title">{m.review.speakers}</h2>
 		<p class="muted hint">{m.review.speakersHint}</p>
 		{#each named as { setup, siglum: s, view, labels } (setup.id)}
 			<form
@@ -80,7 +80,7 @@
 				{#if named.length > 1}<i class="siglum">{s}</i>{/if}
 				{#each labels as label (label)}
 					<label class="row">
-						<span class="label-name">{label}</span>
+						<span class="label-name mono">{label}</span>
 						<input
 							type="text"
 							placeholder={m.review.speakerPlaceholder}
@@ -107,39 +107,31 @@
 <style>
 	.speakers {
 		margin-top: var(--space-6);
-		padding-top: var(--space-3);
+		padding-top: var(--space-4);
 		border-top: 1px solid var(--line);
 		max-width: 44rem;
 	}
 	.speakers h2 {
-		font-size: 1.0625rem;
-		color: var(--text-muted);
+		font-size: var(--type-sm);
 		margin-bottom: var(--space-1);
 	}
 	.hint {
-		font-size: var(--type-sm);
+		font-size: var(--type-xs);
 		margin-bottom: var(--space-3);
 	}
 	.witness {
-		position: relative;
 		display: grid;
 		gap: var(--space-2);
 		margin-bottom: var(--space-4);
 	}
-	.witness .siglum {
-		position: absolute;
-		left: -3rem;
-		width: 2.5rem;
-		text-align: right;
-	}
 	.row {
 		display: grid;
-		grid-template-columns: minmax(7rem, 12rem) minmax(0, 18rem);
+		grid-template-columns: minmax(7rem, 10rem) minmax(0, 18rem);
 		gap: var(--space-3);
 		align-items: center;
 	}
 	.label-name {
-		font-weight: 600;
+		font-size: var(--type-xs);
 		color: var(--text-secondary);
 		overflow-wrap: anywhere;
 	}
@@ -147,7 +139,7 @@
 		display: flex;
 	}
 	.error {
-		color: var(--danger);
+		color: var(--danger-text);
 	}
 	@media (max-width: 820px) {
 		.row {

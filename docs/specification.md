@@ -148,13 +148,15 @@ never to the originals, and recorded in `provenance.json`.
 ## Review view
 
 Checking AI output against the source is what makes results trustworthy, so the review is the
-heart of the app. It is set as a critical edition (see [DESIGN.md](../DESIGN.md)).
+heart of the app (see [DESIGN.md](../DESIGN.md)).
 
-- **Source and result side by side**: the page image on the left, the reading text on the right
-  with line numbers in the margin, page navigation and zoom.
-- **An apparatus of differences.** Where another model, or the model under a correction, reads
-  differently, the apparatus below the text gives line, word and reading with the siglum (a, b)
-  of each set-up. Pointing at an entry lights its word and line number, and the reverse.
+- **Source and result side by side**: the page image on a dark lightbox on the left, the text on
+  the right with line numbers in the margin, page navigation, zoom and a strip of pages showing
+  which are reviewed.
+- **Differences in the text.** Where another model, or the model under a correction, reads
+  differently, the words are highlighted. Choosing one (or stepping through them with F) opens
+  the readings under its line, each named by its set-up; any reading, or one the researcher
+  types, can be taken into the text as a correction.
 - **Audio too**: a player next to the transcript; the line being spoken is highlighted, and
   clicking a line jumps to it. When a model labelled speakers, the researcher can give each
   label a name ("Speaker 2" → "Imam Ouédraogo"); names replace the labels in the review and in
@@ -165,8 +167,8 @@ heart of the app. It is set as a critical edition (see [DESIGN.md](../DESIGN.md)
 - **Correct in place.** Corrections are kept apart from the AI output, which is never
   overwritten. Exports use the corrected text or answers, and `provenance.json` records which
   pieces were reviewed or corrected.
-- **Mark as reviewed**, so long jobs can be checked in several sittings and progress shows what
-  has been verified, not only what has been processed.
+- **Mark as reviewed** (Ctrl Enter), so long jobs can be checked in several sittings and
+  progress shows what has been verified, not only what has been processed.
 
 The review opens while a job is still running, so the first pages can be checked before the
 rest of the folder is processed.
@@ -180,7 +182,8 @@ results together.
 - **Try a sample first.** Comparison can run on a few pages before committing a whole folder,
   and the cost estimate shows each set-up separately.
 - **Scores when a reference exists.** Corrected pages serve as references: the app computes
-  character error rates for each set-up; without one, the apparatus shows where they disagree.
+  character error rates for each set-up; without one, the highlighted differences show where
+  they disagree.
 - **Every version is kept**, with the set-up in the file name.
 - **Built on the cache.** Adding a third model to an existing comparison only runs the new one.
 

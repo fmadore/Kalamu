@@ -33,51 +33,52 @@
 	}
 </script>
 
-<section class="card block" aria-labelledby="files-title">
-	<div class="row between">
+<section class="step block" aria-labelledby="files-title">
+	<div class="head">
 		<h2 id="files-title">{m.newJob.filesTitle}</h2>
+		<span class="hint">{m.newJob.dropHint}</span>
 		<div class="row">
-			<button class="btn" onclick={async () => onadd(await pickFiles(task))}
-				>{m.newJob.addFiles}</button
+			<button class="btn sm" onclick={async () => onadd(await pickFiles(task))}
+				><Icon name="plus" size={14} />{m.newJob.addFiles}</button
 			>
 			<button
-				class="btn"
+				class="btn sm"
 				onclick={async () => {
 					const folder = await pickFolder();
 					if (folder) await onadd([folder]);
-				}}>{m.newJob.addFolder}</button
+				}}><Icon name="folder" size={14} />{m.newJob.addFolder}</button
 			>
 		</div>
 	</div>
-	<p class="muted small">{m.newJob.dropHint}</p>
 	{#if inspecting}
-		<p class="muted">{m.newJob.inspecting}</p>
+		<p class="hint">{m.newJob.inspecting}</p>
 	{/if}
 	{#if files.length === 0 && !inspecting}
-		<p class="empty muted">{m.newJob.noFiles}</p>
-	{:else}
+		<p class="empty">{m.newJob.noFiles}</p>
+	{:else if files.length > 0}
 		<ul class="files">
 			{#each files as file, i (file.path)}
-				<li>
-					<div class="row between">
-						<div class="file-name">
-							<strong>{file.path.split(/[\\/]/).pop()}</strong>
-							{#if file.source?.page_count}
-								<span class="chip">{m.newJob.pages(file.source.page_count)}</span>
-							{/if}
-							{#if file.source?.duration_ms}
-								<span class="chip">{duration(Number(file.source.duration_ms), m)}</span>
-							{/if}
-							{#if file.error}
-								<span class="chip danger">{describeError(file.error, m)}</span>
-							{/if}
-						</div>
-						<button class="btn ghost sm" onclick={() => (files = files.filter((_, j) => j !== i))}
-							>{m.newJob.remove}</button
+				{@const fileName = file.path.split(/[\\/]/).pop()}
+				<li class:warned={file.warnings.length > 0} class:failed={!!file.error}>
+					<div class="file">
+						<span class="file-name mono">{fileName}</span>
+						<span class="meta mono">
+							{#if file.source?.page_count}{m.newJob.pages(file.source.page_count)}{/if}
+							{#if file.source?.duration_ms}{duration(Number(file.source.duration_ms), m)}{/if}
+						</span>
+						<button
+							class="btn sm icon ghost"
+							aria-label="{m.newJob.remove} {fileName}"
+							title={m.newJob.remove}
+							onclick={() => (files = files.filter((_, j) => j !== i))}
+							><Icon name="close" size={14} /></button
 						>
 					</div>
+					{#if file.error}
+						<p class="problem danger">{describeError(file.error, m)}</p>
+					{/if}
 					{#each file.warnings as w (w.kind)}
-						<div class="warning">
+						<div class="problem">
 							<span>{warningText(w, m)}</span>
 							{#if w.kind === 'double_page_spread' && file.source}
 								<label class="inline">
@@ -107,7 +108,7 @@
 	{/if}
 	<details class="tips">
 		<summary><Icon name="chevron" size={14} />{m.tips.title}</summary>
-		<ul class="muted">
+		<ul>
 			<li>{task === 'text_extraction' ? m.tips.scanning : m.tips.recording}</li>
 			<li>{m.tips.results}</li>
 		</ul>
@@ -116,66 +117,106 @@
 
 <style>
 	.block {
-		padding: var(--space-4) 0 0;
 		display: grid;
 		gap: var(--space-3);
 	}
+	.head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2) var(--space-3);
+	}
+	.head h2 {
+		flex: 1 1 auto;
+	}
 	.row {
 		display: flex;
-		gap: var(--space-3);
+		gap: var(--space-2);
 		align-items: center;
 	}
-	.between {
-		justify-content: space-between;
+	.hint {
+		font-size: var(--type-xs);
+		color: var(--text-muted);
 	}
-	.small {
-		font-size: var(--type-sm);
-	}
+	/* The files as a table: name, size, remove; a check's fix right under its file. */
 	.files {
 		list-style: none;
 		padding: 0;
 		margin: 0;
-		display: grid;
-		gap: var(--space-2);
+		border: 1px solid var(--line);
+		border-radius: var(--radius-card);
+		overflow: hidden;
 	}
 	.files li {
-		padding: var(--space-2) var(--space-3);
-		border: 1px solid var(--line);
-		border-radius: var(--radius-control);
-		background: var(--surface-2);
 		display: grid;
 		gap: var(--space-2);
+		padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+		border-top: 1px solid var(--line-soft);
+	}
+	.files li:first-child {
+		border-top: 0;
+	}
+	.file {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto auto;
+		gap: var(--space-4);
+		align-items: center;
 	}
 	.file-name {
-		display: flex;
-		gap: var(--space-2);
-		align-items: center;
-		flex-wrap: wrap;
-		min-width: 0;
 		overflow-wrap: anywhere;
+		color: var(--text-bright);
 	}
-	.warning {
+	.file-name::before {
+		content: '';
+		display: inline-block;
+		width: 6px;
+		height: 6px;
+		margin-right: var(--space-3);
+		border-radius: 3px;
+		background: var(--ok);
+		vertical-align: middle;
+	}
+	.warned .file-name::before {
+		background: var(--warn);
+	}
+	.failed .file-name::before {
+		background: var(--danger);
+	}
+	.meta {
+		font-size: var(--type-xs);
+		color: var(--text-secondary);
+	}
+	.problem {
 		display: flex;
-		gap: var(--space-3);
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-4);
 		align-items: center;
 		justify-content: space-between;
+		margin: 0 var(--space-2) var(--space-1) 1.125rem;
 		padding: var(--space-2) var(--space-3);
-		border: 1px solid var(--warn-border);
-		background: var(--warn-wash);
 		border-radius: var(--radius-control);
-		font-size: var(--type-sm);
+		background: var(--warn-wash);
+		color: var(--warn-text);
+		font-size: var(--type-xs);
+	}
+	.problem.danger {
+		background: var(--danger-wash);
+		color: var(--danger-text);
 	}
 	.empty {
-		padding: var(--space-4);
+		padding: var(--space-5);
 		text-align: center;
 		border: 1px dashed var(--line-strong);
 		border-radius: var(--radius-card);
+		color: var(--text-muted);
+		font-size: var(--type-sm);
 	}
 	.inline {
 		display: inline-flex;
 		gap: var(--space-2);
 		align-items: center;
 		white-space: nowrap;
+		font-weight: 500;
 	}
 	.tips summary {
 		display: inline-flex;
@@ -183,17 +224,16 @@
 		gap: var(--space-1);
 		min-height: var(--control-sm);
 		list-style: none;
-		color: var(--accent-soft);
-		font-size: var(--type-sm);
-		font-weight: 600;
+		color: var(--text-secondary);
+		font-size: var(--type-xs);
+		font-weight: 500;
 		cursor: pointer;
 	}
 	.tips summary::-webkit-details-marker {
 		display: none;
 	}
 	.tips summary:hover {
-		text-decoration: underline;
-		text-underline-offset: 0.18em;
+		color: var(--text-bright);
 	}
 	.tips summary :global(.icon) {
 		transition: transform 120ms ease-out;
@@ -206,7 +246,8 @@
 		padding-left: 1.25rem;
 		display: grid;
 		gap: var(--space-1);
-		font-size: var(--type-sm);
+		font-size: var(--type-xs);
+		color: var(--text-muted);
 		max-width: 48rem;
 	}
 </style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	// A determinate bar: finished in the accent, failed in red, the rest the track.
+	// A determinate bar: finished in ink, failed in red, the rest the track.
 	let {
 		done,
 		failed = 0,
@@ -25,13 +25,13 @@
 <style>
 	.bar {
 		display: flex;
-		height: 0.5rem;
-		border-radius: var(--radius-pill);
-		background: var(--accent-chip);
+		height: 6px;
+		border-radius: 3px;
+		background: var(--line);
 		overflow: hidden;
 	}
 	.done {
-		background: var(--accent);
+		background: var(--ink);
 		transition: width 0.3s ease;
 	}
 	.failed {

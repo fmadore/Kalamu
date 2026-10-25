@@ -2,8 +2,8 @@
 
 A Windows desktop app that lets researchers read scanned and handwritten documents, transcribe
 interviews and analyse texts with the AI provider of their choice, or offline, without Python,
-Colab or the command line. Every result is checked against its source in a review set like a
-critical edition.
+Colab or the command line. Every result is checked against its source side by side: where models
+disagree is highlighted, and corrections never overwrite the AI's text.
 
 **Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT licence**
 
@@ -22,7 +22,7 @@ been run against the live provider APIs, and there is no release yet. See the
   the common needs.
 - **Check every result against its source**, side by side, with corrections kept apart from the
   AI output, which is never overwritten.
-- **Compare models** on the same documents, with their differences set out as an apparatus and
+- **Compare models** on the same documents, with their differences highlighted in the text and
   error rates against corrected pages.
 - **Never pay twice**: work is saved piece by piece, interrupted jobs resume, and nothing is
   sent again with the same settings.

@@ -67,8 +67,7 @@ parameters open a given state:
 | `view=review`, `review-audio`, `review-analysis` | Opens the review of a sample extraction, recording or analysis |
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `theme=light` or `dark` | Forces the theme |
-| `focus=apparatus` | Focuses the first apparatus entry in the review |
-| `hover=<word>` | Points at the lemma with that text in the review |
+| `open=<word>` | Opens the readings of the highlighted words with that text in the review |
 
 If the preview shows a stale model catalogue after `crates/catalog/catalog.json` changes,
 restart the dev server.

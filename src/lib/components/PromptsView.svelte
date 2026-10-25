@@ -181,8 +181,8 @@
 		grid-template-columns: minmax(16rem, 22rem) 1fr;
 		gap: var(--space-6);
 		align-items: start;
-		padding: var(--space-5) var(--space-6);
-		height: calc(100vh - 7.5rem);
+		padding: var(--space-5) var(--space-5) 0;
+		height: calc(100vh - 3.5rem);
 	}
 	.list {
 		display: grid;
@@ -219,14 +219,17 @@
 		border: 0;
 		border-radius: var(--radius-control);
 		background: transparent;
+		font-size: var(--type-sm);
 		cursor: pointer;
 	}
 	.item:hover {
-		background: var(--accent-wash);
+		background: var(--wash);
 	}
 	.item.active {
-		background: var(--tint);
+		background: var(--surface-2);
+		box-shadow: var(--shadow-raised);
 		color: var(--text-bright);
+		font-weight: 500;
 	}
 	.editor {
 		display: flex;

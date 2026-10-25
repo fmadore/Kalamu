@@ -9,6 +9,6 @@
 | [Decisions](decisions/) | Dated records of what was decided and why |
 | [FFmpeg](ffmpeg.md) | The bundled LGPL build and how its licence is met |
 | [Store licence terms](store-license-terms.md) | The terms shown on the Microsoft Store listing |
-| [Design](../DESIGN.md) | The Critical Edition design system |
+| [Design](../DESIGN.md) | The Graphite and highlighter design system |
 | [Icon options](design/icon-options.html) | Earlier icon concepts, kept for the record |
 | [AGENTS.md](../AGENTS.md) | Architecture and rules for coding agents |
