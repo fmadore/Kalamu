@@ -219,7 +219,7 @@ The same world holds from a 640px window snapped beside another to a 2560px moni
 - Pale blue tint for selection and highlighted lemmata.
 - EB Garamond for everything read; Source Sans 3 for everything operated.
 - Sections divided by rules, never cards; shadows only on objects lifted off the desk and on overlays.
-- Stroked line icons on a 16-unit grid, always after or beside words.
+- Lucide line icons at a 1.5px stroke, always after or beside words.
 
 ## Colors
 
@@ -310,7 +310,7 @@ Corners are gently rounded on controls (6px for buttons, inputs, nav items, task
 
 Lines carry the structure: 1px everywhere, black for the section and apparatus rules, hairline grey for pane dividers and control borders, bookcloth-line inside the shell.
 
-Icons are stroked SVGs on a 16-unit grid (stroke 1.6, round caps and joins, current colour): back, chevron, close, play, pause, plus, zoom in and out. They are decorative; the control carries the accessible name.
+Icons come from Lucide (`@lucide/svelte`) through `Icon.svelte`, at an absolute 1.5px stroke in the current colour, play and pause filled: back, chevron, close, play, pause, plus, zoom in and out. No hand-drawn icons. They are decorative; the control carries the accessible name.
 
 ## Components
 
@@ -373,7 +373,7 @@ New job's three task choices are selectable tiles: strong hairline border, 6px c
 - **Do** set anything read (documents, titles, running heads, sigla) in EB Garamond and every control in Source Sans 3.
 - **Do** put sources (scans, players) on the desk grey, with the flyout shadow, and keep the edition on white.
 - **Do** keep the masthead and the rail's wordmark block at the same 6.5rem so their rules meet.
-- **Do** put words before icons; use the stroked 16-unit icon set.
+- **Do** put words before icons; use Lucide icons through `Icon.svelte`.
 - **Do** design for 640px to 2560px, with the shell collapsing at 820px, review stacking at 960px and reading text rising at 1680px.
 
 ### Don't:
