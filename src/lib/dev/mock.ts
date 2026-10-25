@@ -23,7 +23,8 @@ const settings: Settings = {
 	destination: { kind: 'beside_sources' },
 	export_options: { piece_markers: true, speaker_labels: true, timestamps: true },
 	theme: new URLSearchParams(location.search).get('theme') ?? 'system',
-	refresh_catalog: false
+	refresh_catalog: false,
+	favourite_languages: ['fr', 'ar']
 };
 
 const presets: Preset[] = [

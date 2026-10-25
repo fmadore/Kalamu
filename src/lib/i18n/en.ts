@@ -54,6 +54,21 @@ export const en = {
 		languageHint:
 			'Choosing helps with short or noisy material. Pick several for documents or recordings that mix languages.',
 		addLanguage: 'Add a language…',
+		findLanguage: 'Type to find a language',
+		favouriteLanguages: 'Favourites',
+		allLanguages: 'All languages',
+		noLanguageFound: 'No language by that name.',
+		addFavourite: (language: string) => `Add ${language} to favourites`,
+		removeFavourite: (language: string) => `Remove ${language} from favourites`,
+		favouritesHint: 'Star the languages you use most to find them first.',
+		languagesNarrowed: (models: string) =>
+			`Only the languages ${models} can transcribe are listed.`,
+		languageUnsupported: (language: string, models: string) =>
+			`${models} cannot use ${language}: remove it or choose another model.`,
+		languageIgnoredAll: (models: string) =>
+			`${models} recognises the language on its own, so there is nothing to choose.`,
+		languageIgnoredSome: (models: string) =>
+			`${models} recognises the language on its own; your choice applies to the other models.`,
 		setupsTitle: 'Model and prompt',
 		setupsHint: 'Add a second model to compare their results side by side.',
 		provider: 'Provider',
@@ -82,7 +97,10 @@ export const en = {
 			as_on_page_hint:
 				'Every line kept where it ends on the page, end-of-line hyphens included. Easiest to check against the scan, but a word split across two lines is harder to find by search.'
 		},
-		linesNoPrompt: 'Models that take no prompt, such as Mistral OCR, lay out lines their own way.',
+		linesNoPromptAll: (models: string) =>
+			`${models} takes no instructions and lays out lines its own way, so there is nothing to choose.`,
+		linesNoPromptSome: (models: string) =>
+			`${models} takes no instructions and lays out lines its own way; this choice applies to the other models.`,
 		removeSetup: 'Remove',
 		noKey: (provider: string) => `Add a ${provider} key in Settings to use it.`,
 		noProvider: 'Add an API key in Settings to choose a model.',

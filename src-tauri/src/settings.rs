@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use scriptorium_core::{ExportFormat, ExportOptions, OutputDestination};
+use scriptorium_core::{ExportFormat, ExportOptions, LanguageCode, OutputDestination};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -21,6 +21,8 @@ pub struct Settings {
     pub theme: String,
     /// Check the repository for a newer model catalogue at startup.
     pub refresh_catalog: bool,
+    /// Languages starred in New job, listed first.
+    pub favourite_languages: Vec<LanguageCode>,
 }
 
 impl Default for Settings {
@@ -38,6 +40,7 @@ impl Default for Settings {
             export_options: ExportOptions::default(),
             theme: "system".into(),
             refresh_catalog: true,
+            favourite_languages: Vec::new(),
         }
     }
 }

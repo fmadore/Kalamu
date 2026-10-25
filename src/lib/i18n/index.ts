@@ -20,6 +20,11 @@ export function setLocale(locale: Locale): void {
 	if (typeof document !== 'undefined') document.documentElement.lang = CATALOGS[locale].locale.tag;
 }
 
+/** Names joined as the interface language joins them: "Whisper Base and Mistral OCR". */
+export function listNames(names: string[]): string {
+	return new Intl.ListFormat(CATALOGS[current].locale.tag, { type: 'conjunction' }).format(names);
+}
+
 /** A language's name in the interface language, from its ISO code (`mos` → "Mossi"). */
 export function languageName(code: string, fallback?: string): string {
 	try {

@@ -64,7 +64,17 @@ export function acceptsPrompt(model: ModelInfo | undefined): boolean {
 }
 
 /**
- * A set-up for a usable model: the recommended one first, then any model with a key, avoiding
+ * The model chosen when the user switches to a provider: its default for the task in the
+ * catalogue (Claude Sonnet, not the costlier Fable listed first), else its first model.
+ */
+export function providerDefault(catalog: Catalog, provider: string, task: Task): string {
+	const models = catalog.models.filter((m) => m.provider === provider && m.tasks.includes(task));
+	return (models.find((m) => m.provider_default_for.includes(task)) ?? models[0])?.id ?? '';
+}
+
+/**
+ * A set-up for a usable model: the recommended one first, then each provider's default, then
+ * any model with a key, avoiding
  * models already in `used` so a second set-up compares against something different.
  */
 export function newDraft(
@@ -79,6 +89,7 @@ export function newDraft(
 	const fresh = usable.filter((m) => !used.includes(`${m.provider}/${m.id}`));
 	const pick =
 		fresh.find((m) => m.recommended_for.includes(task)) ??
+		fresh.find((m) => m.provider_default_for.includes(task)) ??
 		fresh[0] ??
 		usable.find((m) => m.recommended_for.includes(task)) ??
 		usable[0] ??
