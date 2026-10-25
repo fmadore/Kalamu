@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Icon options</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@400;600&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--blue: #1d2b4f;
+				--red: #b3261e;
+				--ink: #111;
+				--grey: #5f636d;
+				--rule: #e2e3e7;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				font:
+					16px/1.5 'Source Sans 3',
+					'Segoe UI',
+					sans-serif;
+				color: var(--ink);
+				background: #fff;
+			}
+			header {
+				background: var(--blue);
+				color: #fff;
+				padding: 32px 40px 20px;
+			}
+			h1 {
+				margin: 0;
+				font:
+					500 34px/1.2 'EB Garamond',
+					Garamond,
+					serif;
+			}
+			header p {
+				margin: 4px 0 0;
+				color: rgba(255, 255, 255, 0.8);
+			}
+			main {
+				padding: 8px 40px 48px;
+				max-width: 1200px;
+			}
+			section {
+				border-top: 1px solid var(--ink);
+				padding: 20px 0 28px;
+				display: grid;
+				grid-template-columns: 280px 1fr;
+				gap: 32px;
+				align-items: start;
+				margin-top: 24px;
+			}
+			h2 {
+				margin: 0 0 6px;
+				font:
+					500 24px/1.2 'EB Garamond',
+					Garamond,
+					serif;
+			}
+			.sig {
+				font-family: 'EB Garamond', serif;
+				font-variant-caps: all-small-caps;
+				color: var(--red);
+				font-weight: 600;
+				font-size: 22px;
+				margin-right: 6px;
+			}
+			.sizes {
+				display: flex;
+				gap: 28px;
+				align-items: flex-end;
+				flex-wrap: wrap;
+			}
+			.sizes figure {
+				margin: 0;
+				display: grid;
+				justify-items: center;
+				gap: 6px;
+				font-size: 13px;
+				color: var(--grey);
+			}
+			.dark {
+				background: #202020;
+				padding: 14px;
+				border-radius: 8px;
+			}
+			.taskbar {
+				display: flex;
+				gap: 10px;
+				align-items: center;
+				background: #f3f3f3;
+				padding: 8px 12px;
+				border-radius: 8px;
+			}
+			.names {
+				border-top: 1px solid var(--ink);
+				margin-top: 32px;
+				padding-top: 16px;
+			}
+			.names dl {
+				display: grid;
+				grid-template-columns: 180px 1fr;
+				gap: 10px 24px;
+				margin: 12px 0 0;
+			}
+			.names dt {
+				font:
+					500 24px/1.2 'EB Garamond',
+					serif;
+			}
+			.names dd {
+				margin: 0;
+				color: #333;
+			}
+			@media (max-width: 760px) {
+				section,
+				.names dl {
+					grid-template-columns: 1fr;
+				}
+				main,
+				header {
+					padding-left: 16px;
+					padding-right: 16px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+			<defs>
+				<!-- a. The apparatus bracket on bookcloth. -->
+				<symbol id="i-bracket" viewBox="0 0 256 256">
+					<rect width="256" height="256" rx="56" fill="#1d2b4f" />
+					<path d="M106 54h40v148h-40v-14h22V68h-22z" fill="#fff" />
+					<rect x="158" y="96" width="44" height="12" rx="6" fill="#b3261e" />
+					<rect x="158" y="124" width="30" height="12" rx="6" fill="#b3261e" opacity=".55" />
+					<rect x="54" y="96" width="36" height="12" rx="6" fill="#fff" opacity=".55" />
+					<rect x="54" y="124" width="36" height="12" rx="6" fill="#fff" opacity=".55" />
+					<rect x="54" y="152" width="24" height="12" rx="6" fill="#fff" opacity=".55" />
+				</symbol>
+				<!-- b. A page with its marginal line number. -->
+				<symbol id="i-margin" viewBox="0 0 256 256">
+					<rect width="256" height="256" rx="56" fill="#1d2b4f" />
+					<path d="M78 40h86l34 34v142H78z" fill="#fff" />
+					<path d="M164 40v34h34" fill="#dce3f2" />
+					<rect x="100" y="98" width="76" height="9" rx="4.5" fill="#1d2b4f" opacity=".35" />
+					<rect x="100" y="120" width="76" height="9" rx="4.5" fill="#1d2b4f" opacity=".35" />
+					<rect x="100" y="142" width="76" height="9" rx="4.5" fill="#dce3f2" />
+					<rect x="100" y="164" width="52" height="9" rx="4.5" fill="#1d2b4f" opacity=".35" />
+					<text
+						x="56"
+						y="152"
+						font-family="EB Garamond, Garamond, serif"
+						font-size="44"
+						font-weight="600"
+						fill="#b3261e"
+						text-anchor="middle"
+					>
+						5
+					</text>
+				</symbol>
+				<!-- c. Two witnesses: the source behind, the reading text in front. -->
+				<symbol id="i-witnesses" viewBox="0 0 256 256">
+					<rect width="256" height="256" rx="56" fill="#1d2b4f" />
+					<rect x="52" y="46" width="104" height="136" rx="6" fill="#dce3f2" opacity=".5" />
+					<rect x="98" y="76" width="106" height="138" rx="6" fill="#fff" />
+					<rect x="116" y="102" width="70" height="9" rx="4.5" fill="#1d2b4f" opacity=".35" />
+					<rect x="116" y="124" width="70" height="9" rx="4.5" fill="#1d2b4f" opacity=".35" />
+					<rect x="112" y="142" width="78" height="17" rx="4" fill="#dce3f2" />
+					<rect x="116" y="146" width="50" height="9" rx="4.5" fill="#b3261e" />
+					<rect x="116" y="170" width="46" height="9" rx="4.5" fill="#1d2b4f" opacity=".35" />
+				</symbol>
+				<!-- d. The initial in small capitals, with a rubric point. -->
+				<symbol id="i-initial" viewBox="0 0 256 256">
+					<rect width="256" height="256" rx="56" fill="#1d2b4f" />
+					<text
+						x="118"
+						y="182"
+						font-family="EB Garamond, Garamond, serif"
+						font-size="176"
+						font-weight="500"
+						fill="#fff"
+						text-anchor="middle"
+					>
+						S
+					</text>
+					<circle cx="190" cy="174" r="15" fill="#b3261e" />
+				</symbol>
+			</defs>
+		</svg>
+
+		<header>
+			<h1>Icon options</h1>
+			<p>
+				Four marks drawn from the Critical Edition world, each at Store, desktop and tray sizes.
+			</p>
+		</header>
+
+		<main>
+			<section>
+				<div>
+					<h2><span class="sig">a</span>The bracket</h2>
+					<p>
+						The apparatus mark, “]”, where one reading meets another: what the app shows on every
+						review. Reads at tray size as a single white stroke.
+					</p>
+				</div>
+				<div class="sizes">
+					<figure>
+						<svg width="160" height="160"><use href="#i-bracket" /></svg>Store tile
+					</figure>
+					<figure>
+						<svg width="64" height="64"><use href="#i-bracket" /></svg>Desktop
+					</figure>
+					<figure class="taskbar">
+						<svg width="24" height="24"><use href="#i-bracket" /></svg
+						><svg width="16" height="16"><use href="#i-bracket" /></svg>
+					</figure>
+					<figure class="dark">
+						<svg width="32" height="32"><use href="#i-bracket" /></svg>
+					</figure>
+				</div>
+			</section>
+
+			<section>
+				<div>
+					<h2><span class="sig">b</span>The margin</h2>
+					<p>
+						A page with a highlighted line and its line number in rubric red: checking a text line
+						by line. Richest at large sizes; the number disappears below 24 px.
+					</p>
+				</div>
+				<div class="sizes">
+					<figure>
+						<svg width="160" height="160"><use href="#i-margin" /></svg>Store tile
+					</figure>
+					<figure>
+						<svg width="64" height="64"><use href="#i-margin" /></svg>Desktop
+					</figure>
+					<figure class="taskbar">
+						<svg width="24" height="24"><use href="#i-margin" /></svg
+						><svg width="16" height="16"><use href="#i-margin" /></svg>
+					</figure>
+					<figure class="dark">
+						<svg width="32" height="32"><use href="#i-margin" /></svg>
+					</figure>
+				</div>
+			</section>
+
+			<section>
+				<div>
+					<h2><span class="sig">c</span>Two witnesses</h2>
+					<p>
+						The source behind, the reading text in front, one word marked where they disagree: the
+						side-by-side review in one picture.
+					</p>
+				</div>
+				<div class="sizes">
+					<figure>
+						<svg width="160" height="160"><use href="#i-witnesses" /></svg>Store tile
+					</figure>
+					<figure>
+						<svg width="64" height="64"><use href="#i-witnesses" /></svg>Desktop
+					</figure>
+					<figure class="taskbar">
+						<svg width="24" height="24"><use href="#i-witnesses" /></svg
+						><svg width="16" height="16"><use href="#i-witnesses" /></svg>
+					</figure>
+					<figure class="dark">
+						<svg width="32" height="32"><use href="#i-witnesses" /></svg>
+					</figure>
+				</div>
+			</section>
+
+			<section>
+				<div>
+					<h2><span class="sig">d</span>The initial</h2>
+					<p>
+						The name's first letter in Garamond with a rubric point: quiet and typographic, and it
+						changes with the name if the name changes.
+					</p>
+				</div>
+				<div class="sizes">
+					<figure>
+						<svg width="160" height="160"><use href="#i-initial" /></svg>Store tile
+					</figure>
+					<figure>
+						<svg width="64" height="64"><use href="#i-initial" /></svg>Desktop
+					</figure>
+					<figure class="taskbar">
+						<svg width="24" height="24"><use href="#i-initial" /></svg
+						><svg width="16" height="16"><use href="#i-initial" /></svg>
+					</figure>
+					<figure class="dark">
+						<svg width="32" height="32"><use href="#i-initial" /></svg>
+					</figure>
+				</div>
+			</section>
+
+			<div class="names">
+				<h2>Names, if Scriptorium should change</h2>
+				<dl>
+					<dt>Collate</dt>
+					<dd>
+						To compare copies of a text against each other and the original: the app's daily work. A
+						verb, easy to say in English, French and German.
+					</dd>
+					<dt>Witness</dt>
+					<dd>
+						An edition's word for each copy of a text. Here every model's reading is a witness
+						checked against the source.
+					</dd>
+					<dt>Recto</dt>
+					<dd>
+						The front of a leaf. Short, archival, unused in this category; says “documents” more
+						than “recordings”.
+					</dd>
+					<dt>Lemma</dt>
+					<dd>
+						The word in the text that a variant comments on. Precise and memorable, but obscure
+						outside textual scholarship.
+					</dd>
+					<dt>Scriptorium</dt>
+					<dd>
+						Kept: the copying room where texts were made and checked. Familiar to historians; like
+						any of these names, it needs a trademark check before the Store listing.
+					</dd>
+				</dl>
+			</div>
+		</main>
+	</body>
+</html>
