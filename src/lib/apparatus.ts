@@ -113,7 +113,19 @@ export function apparatus(
 	}
 	return [...byPlace.values()]
 		.sort((a, b) => a.start - b.start || a.end - b.end)
-		.map((e, i) => ({ ...e, id: i + 1 }));
+		.map((e, i) => ({ ...withoutSharedPunctuation(e), id: i + 1 }));
+}
+
+/** Punctuation the lemma and every reading end with is not part of the variant, as an edition
+ * writes "minaret ] marché", not "minaret. ] marché.". The highlighted range is unchanged. */
+function withoutSharedPunctuation(entry: Entry): Entry {
+	const tail = /[.,;:!?»”)]+$/.exec(entry.lemma)?.[0];
+	if (!tail || !entry.readings.every((r) => r.text.endsWith(tail))) return entry;
+	return {
+		...entry,
+		lemma: entry.lemma.slice(0, -tail.length),
+		readings: entry.readings.map((r) => ({ ...r, text: r.text.slice(0, -tail.length) }))
+	};
 }
 
 /** The reading text as numbered lines, cut at entries so their lemmata can be highlighted. */

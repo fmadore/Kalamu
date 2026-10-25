@@ -11,6 +11,7 @@ import type { Preset } from '../bindings/Preset.js';
 import type { Settings } from '../bindings/Settings.js';
 import type { View } from '../state.svelte.js';
 import catalogJson from '../../../crates/catalog/catalog.json';
+import SAMPLE_SCAN from './sample-scan.jpg?inline';
 
 const catalog = catalogJson as unknown as Catalog;
 
@@ -138,11 +139,12 @@ const summaries: JobSummary[] = [
 ];
 
 const texts = [
-	"BULLETIN DE L'AFRIQUE OCCIDENTALE FRANÇAISE\n\nDakar, le 3 mai 1957\n\nLe Gouverneur général a reçu ce matin les délégués de la Mission catholique et de l'Union culturelle musulmane.",
+	"Réception au Gouvernement général\nDakar, le 3 mai 1957\n\nLe Gouverneur général a reçu ce matin les délégués de la Mission catholique et de l'Union culturelle musulmane. L'entretien, qui s'est prolongé plus d'une heure, a porté sur l'enseignement dans les écoles de brousse et sur l'organisation du prochain pèlerinage.\nLes délégués ont remis au Gouverneur un mémoire signé par les notables de plusieurs cercles, demandant l'ouverture de classes du soir pour les adultes.\n\nUne réunion à Bamako\n\nLa réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam. Après la prière, l'assemblée a désigné une commission chargée de recueillir les cotisations pour la réfection du minaret.\nLe commandant de cercle assistait à la séance. Il a rappelé que les associations doivent déposer leurs statuts auprès de l'administration avant la fin du mois.",
 	"La réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam.",
 	'[BLANK PAGE]'
 ];
-const variant = (t: string) => t.replace('3 mai', '5 mai').replace('deux cents', 'trois cents');
+const variant = (t: string) =>
+	t.replace('3 mai', '5 mai').replace('deux cents', 'trois cents').replace('minaret', 'marché');
 
 const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 	texts.map((text, index) => ({
@@ -250,11 +252,6 @@ function toneWav(): ArrayBuffer {
 	return buffer;
 }
 
-/** A one-page PDF with a line of text, for the page preview. */
-const PAGE_PDF = btoa(
-	'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 88>>stream\nBT /F1 18 Tf 72 760 Td (BULLETIN DE L AFRIQUE OCCIDENTALE) Tj 0 -30 Td (Dakar, le 3 mai 1957) Tj ET\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Times-Roman>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF'
-);
-
 /** A word diff like the engine's, so the review's apparatus shows real variants. */
 function wordDiff(left: string, right: string): { kind: string; text: string }[] {
 	const a = left.split(/(\s+)/).filter(Boolean);
@@ -301,6 +298,9 @@ export function mockView(): View | null {
 }
 
 export function installMock(): void {
+	if (new URLSearchParams(location.search).get('focus') === 'apparatus') {
+		setTimeout(() => document.querySelector<HTMLElement>('.apparatus .entry')?.focus(), 2500);
+	}
 	mockWindows('main');
 	mockIPC((cmd, args) => {
 		const a = (args ?? {}) as Record<string, unknown>;
@@ -351,7 +351,8 @@ export function installMock(): void {
 			case 'piece_audio':
 				return toneWav();
 			case 'piece_preview':
-				return { mime: 'application/pdf', data: PAGE_PDF };
+				// A synthetic scan as an image: shown everywhere, headless browsers included.
+				return { mime: 'image/jpeg', data: SAMPLE_SCAN.split(',')[1] ?? '' };
 			case 'compare_source':
 				return {
 					scores: [

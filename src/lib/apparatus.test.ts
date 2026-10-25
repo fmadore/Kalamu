@@ -91,6 +91,15 @@ describe('apparatus', () => {
 		expect(numbered(0, entries)).toBe(false);
 	});
 
+	it('leaves out punctuation that the lemma and every reading share', () => {
+		const [entry] = apparatus('du minaret.', [
+			{ siglum: 'b', spans: [same('du '), removed('minaret.'), added('marché.')] }
+		]);
+		expect(entry).toMatchObject({ lemma: 'minaret', readings: [{ siglum: 'b', text: 'marché' }] });
+		const [kept] = apparatus('fin.', [{ siglum: 'b', spans: [removed('fin.'), added('fin!')] }]);
+		expect(kept.lemma).toBe('fin.');
+	});
+
 	it('records additions and omissions', () => {
 		const omitted = apparatus('a b c', [
 			{ siglum: 'b', spans: [same('a '), removed('b'), same(' c')] }
