@@ -1,12 +1,14 @@
 # Scriptorium: instructions for coding agents
 
-Read by Claude Code (through `CLAUDE.md`) and Codex. [README.md](README.md) says what the app
-must do; this file says how to build it.
+Read by Claude Code (through `CLAUDE.md`) and Codex. [docs/specification.md](docs/specification.md)
+says what the app must do, [docs/roadmap.md](docs/roadmap.md) what is built; this file says how
+to build it. The [README](README.md) is the short public introduction.
 
 ## Before writing code
 
-- Read the README in full. It is the specification; keep it in sync when a decision changes it.
-- Review the three reference projects it lists (`iwac-ai-pipelines`, `zmo-ai-pipelines`,
+- Read docs/specification.md in full. Keep it, the roadmap and the README in sync when a
+  decision changes them.
+- Review the three reference projects the specification lists (`iwac-ai-pipelines`, `zmo-ai-pipelines`,
   `Live-translation`) for the part being built, and port what they already solve rather than
   reinventing it. Note in the decision log where Scriptorium deliberately differs.
 - Check the latest version of every dependency on its registry before adding it.
@@ -18,8 +20,8 @@ must do; this file says how to build it.
   `github-actions`, with grouped weekly update pull requests.
 - Treat a security alert as a priority over feature work: update, or record why the
   vulnerable path is not reachable.
-- Run `cargo audit` (or `cargo deny`, which also checks licences against the README's
-  licence rules) in CI.
+- Run `cargo audit` (or `cargo deny`, which also checks licences against the licence rules in
+  the specification) in CI.
 
 ## Architecture
 
@@ -91,13 +93,13 @@ Stop feature work and review the whole architecture, not just the current change
 
 At each checkpoint:
 
-1. Re-read the README and this file against the code as it is now.
+1. Re-read the specification, the roadmap and this file against the code as it is now.
 2. Check that dependencies still point inwards and each crate still has one job.
 3. Look for duplication across providers, exporters or media steps that belongs in a shared
    helper, and for abstractions that turned out to be unnecessary.
 4. Check that resuming, caching, progress and provenance still cover every path.
 5. Write down what changed and why as a short entry in `docs/decisions/` (date, context,
-   decision, consequences), update this file and the README if needed, and refactor before
-   continuing.
+   decision, consequences), update this file, the specification, the roadmap and the README if
+   needed, and refactor before continuing.
 
 Summarise the checkpoint findings for the user before resuming feature work.

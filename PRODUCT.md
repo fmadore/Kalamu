@@ -21,7 +21,8 @@ against the sources.
 ## Product Purpose
 
 Scriptorium turns recordings and scanned or handwritten documents into text (transcription,
-OCR and HTR in one "extract text" task) and summarises texts with keywords, using the AI
+OCR and HTR in one "extract text" task) and analyses texts with fields the researcher defines
+(a summary, the people and places named, a tone), using the AI
 provider the researcher chooses (Google Gemini, OpenAI, Anthropic Claude, Mistral) or offline
 Whisper. Success is trustworthy text the researcher has checked against the source, produced
 without losing work or paying twice.
@@ -49,8 +50,11 @@ without losing work or paying twice.
 
 ## Capabilities and Constraints
 
-- Three tasks: extract text (printed and handwritten), transcribe audio or video, summarise and
-  find keywords. Comparison mode runs several models over the same sources.
+- Three tasks: extract text (printed and handwritten), transcribe audio or video, analyse
+  texts. Comparison mode runs several models over the same sources. A job's settings can be
+  saved as a pipeline.
+- Must stay friendly to researchers who are not technical: plain words, ready-made starting
+  points, advanced choices folded away.
 - English interface first; every visible string lives in translation files so French and
   German can follow.
 - Front end talks to the Rust core only through typed commands and events; no business logic
@@ -60,8 +64,9 @@ without losing work or paying twice.
 
 ## Brand Commitments
 
-- An independent project by Frédérick Madore. It is not associated with Live Translation or
-  with ZMO or any institution, and must not borrow their identity.
+- An independent project by Frédérick Madore (University of Bayreuth). It is not associated
+  with Live Translation or with ZMO, and must not borrow their identity; `zmo-ai-pipelines` is
+  only one of its reference code bases.
 - No binding visual identity: the current look, icon and even the name may be replaced.
 
 ## Evidence on Hand

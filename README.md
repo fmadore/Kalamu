@@ -1,378 +1,48 @@
 # Scriptorium
 
-A Windows desktop app that lets researchers transcribe interviews, read scanned or handwritten
-documents, and summarise texts with the AI provider of their choice — without Python, Colab or
-the command line.
-
-**Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT license**
-
-**Status: early development.** Text extraction is implemented for the four first providers and
-audio transcription in part, but neither has yet been run against the live APIs. No release
-yet. See [Roadmap](#roadmap) for what is done.
-
-## Why
-
-More and more colleagues ask how to use AI to transcribe their recordings and documents. The
-existing tools work, but they assume some technical comfort:
-
-- [zmo-ai-pipelines](https://github.com/fmadore/zmo-ai-pipelines) runs in Google Colab: no
-  installation, but files must be uploaded to Colab and the steps followed in order.
-- [iwac-ai-pipelines](https://github.com/fmadore/iwac-ai-pipelines) offers many more tasks and
-  providers, but needs Python, a terminal and an `.env` file.
-
-Scriptorium packages the same workflows as an ordinary Windows app, built like
-[Live Translation](https://github.com/fmadore/Live-translation) with Rust and Tauri. Install it,
-paste an API key, pick a file or a folder, press **Start**.
-
-## Starting point: existing code
-
-Scriptorium does not start from scratch. Before any code is written, three existing projects
-are reviewed and their tested parts carried over:
-
-- **[iwac-ai-pipelines](https://github.com/fmadore/iwac-ai-pipelines)** (Python), the main
-  reference for the AI side: prompts for each task, provider clients and their quirks, model
-  choices, chunking of long audio and PDFs, retry handling, output formats and the
-  `provenance.json` format. These are ported to Rust, not rewritten from memory.
-- **[zmo-ai-pipelines](https://github.com/fmadore/zmo-ai-pipelines)** (Colab notebooks), for the
-  simplified workflows and default settings that already suit non-technical colleagues.
-- **[Live Translation](https://github.com/fmadore/Live-translation)** (Rust, Tauri 2), the
-  template for the app itself: project layout, Tauri setup and front end, API keys in Windows
-  Credential Manager, whisper.cpp integration with model download and verification, the
-  English/French/German interface, x64 and ARM64 builds, and MSIX packaging for the Microsoft
-  Store. Code is reused or shared with it wherever possible.
-
-Where Scriptorium departs from these projects, the reason should be written down.
-
-## What it should do
-
-| Task | Input | Output |
-| --- | --- | --- |
-| **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`… | Speakers and timestamps optional; see [Export formats](#export-formats) |
-| **Extract text** (printed and handwritten) | PDF, JPEG, PNG, TIFF | Per page; diplomatic or normalized transcription |
-| **Summarise and extract keywords** | Text, Word, PDF, `.xlsx` | Summary and keywords per file, or a column added to the spreadsheet |
-
-**OCR and HTR are one task.** Current vision models read print and handwriting with the same
-call, so the app has a single **Extract text** task and the difference lies in the prompt:
-users pick a preset such as *printed document*, *newspaper (columns)*, *handwritten letter*,
-*Arabic or Ajami manuscript*, *diplomatic* or *normalized*, or write their own. Mixed material,
-such as a typed report with handwritten notes, needs no separate pass.
-
-- **One file or a whole folder.** Choose files from the PC or drop a folder; the app processes
-  them one by one, shows progress, and picks up where it stopped after an interruption (see
-  [Interruptions and resuming](#interruptions-and-resuming)).
-- **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, or OpenRouter for
-  open-weights and other models. The app shows only the providers and models that can handle the
-  chosen task: Claude, for instance, reads documents but does not accept audio. Gemini, OpenAI,
-  Claude and Mistral come first (see [Roadmap](#roadmap)).
-- **Language choice with auto-detect.** Audio transcription and text extraction have a language
-  dropdown listing only the languages the chosen model or engine supports, with
-  **Auto-detect** as the default. Picking the language explicitly helps with short or noisy
-  recordings, and Tesseract needs it to load the right language data. Recordings or documents
-  that mix languages (French and Mooré, say) can take several. Summaries have an output-language
-  setting, by default the source's language. The detected language is shown in the results and
-  recorded in `provenance.json`.
-- **Current models.** The app offers the latest models for each task and is updated as better
-  ones appear (see [Keeping models current](#keeping-models-current)).
-- **Works without an API key.** An offline mode keeps the app useful without an account, a key
-  or an internet connection, and keeps sensitive material on the PC (see below).
-- **Prompt library.** Every task ships with tested default prompts that users can adapt and
-  save (see [Custom prompts](#custom-prompts)).
-- **Results next to the sources.** Outputs are written beside the original files or into a chosen
-  folder, each with a `provenance.json` recording the model, prompt and settings used.
-- **Estimated cost before starting**, based on file length and the provider's published prices.
-- **English interface first**, with French and German to follow. All interface text lives in
-  translation files from the start, so adding a language needs no code changes.
-
-## Interruptions and resuming
-
-A folder of interviews or a 400-page scan can take hours. Closing the app, a crash, a lost
-connection, a sleeping laptop or a provider's rate limit must never mean starting again, or
-paying twice.
-
-- **Work is saved in small pieces.** Long recordings are split into chunks and PDFs into pages.
-  Each finished chunk or page is stored at once in a local job database (SQLite, in the app's
-  data folder), so an interruption loses at most the piece in progress.
-- **Jobs survive closing the app.** On the next launch, the app lists unfinished jobs and offers
-  to resume, review or discard each one. Closing the window during a job asks first, and can keep
-  the job running in the background from the notification area.
-- **Nothing is processed twice.** Results are cached by a fingerprint of the source file plus the
-  model, prompt and settings. Re-running a folder skips files and pages already done with the same
-  settings; changing the prompt or model reprocesses only what it affects. A **Redo** button
-  forces a fresh run of one file or page.
-- **Failures are retried, then reported.** Rate limits and network errors are retried with
-  increasing delays. A file that still fails is marked as failed with a readable reason and the
-  rest of the queue continues; failed items can be retried later on their own.
-- **Exports come from the cache.** Choosing another output format later regenerates the file from
-  stored results, without calling the provider again.
-
-## Tips and checks for better results
-
-Many disappointing results come from the input, not the model. The app teaches good practice
-in two ways: short tips where they are relevant, and checks on the files before a job starts.
-
-**Checks before starting.** The app inspects each file and warns, with a one-line explanation
-and a suggested fix, when something is likely to hurt the result:
-
-| Problem | Why it matters | Suggested fix |
-| --- | --- | --- |
-| **Two pages on one PDF page or image** (a book or newspaper scanned open, as a double-page spread) | Models may read straight across both pages, mixing lines and columns, and page numbers no longer match the original | Split each spread into two pages, with a preview to adjust the cut before running |
-| **Low resolution** (below about 200 dpi, or a small photo) | Small letters, diacritics and handwriting become guesswork | Rescan; or continue anyway |
-| **Rotated or skewed pages** | Lines are read in the wrong order or skipped | Rotate or straighten automatically |
-| **Blurry, dark or low-contrast photos** | Characters are misread | Retake the photo; tips for phone capture |
-| **PDF that already contains text** | Extraction may not be needed, or the existing text can serve for comparison | Use the existing text, or extract anyway |
-| **Very long or very quiet recordings, music or long silences** | Transcription drifts, invents text over music, or skips quiet speech | Trim, normalise volume, or split |
-| **Language left on Auto-detect for short or mixed recordings** | Detection is unreliable on little speech | Choose the language(s) explicitly |
-
-Checks never block a job: users can dismiss a warning, for one file or for good. Fixes are
-applied to working copies, never to the originals, and recorded in `provenance.json`.
-
-**Tips where they help**, written for non-specialists and translated along with the rest of
-the interface:
-
-- *Scanning and photographing documents*: one page per image or PDF page, not an open
-  double-page spread; flat and fully in frame, even
-  light without shadows or flash glare, 300–400 dpi, colour or greyscale rather than black and
-  white for faded or handwritten material.
-- *Recording interviews*: microphone close to the speakers, a quiet room, one recording per
-  interview, a short spoken introduction with names and date.
-- *Working with the results*: try a sample before a whole folder, compare two models on
-  difficult material, check names, numbers and dates against the source, keep the originals.
-
-## Review view
-
-Checking AI output against the source is the step that makes results trustworthy, so the app
-makes it easy rather than leaving users to juggle a PDF viewer and a text editor.
-
-- **Source and result side by side**: the PDF page or image on the left, the extracted text on
-  the right, with page navigation, zoom, and both sides scrolling together. Where the model
-  returns coordinates, hovering a line highlights it on the scan.
-- **Audio too**: for transcriptions, a player with the waveform next to the transcript; the
-  current line follows playback, and clicking a line jumps to that moment.
-- **Correct in place.** Edits are saved as the user's corrections, kept separate from the AI
-  output, which is never overwritten. Exports use the corrected text, and `provenance.json`
-  records which pages were reviewed or corrected.
-- **Mark pages as reviewed**, so long jobs can be checked in several sittings and progress shows
-  what has been verified, not only what has been processed.
-- **Corrected pages become references** for the error scores in comparison mode.
-
-The view opens while a job is still running, so the first pages can be checked before the
-rest of the folder is processed.
-
-## Comparison mode
-
-Which model reads a given archive best is an empirical question, and the answer changes from
-one collection to another. Comparison mode runs the same documents through several set-ups and
-shows the results side by side, so users can choose with evidence rather than guesswork.
-
-- **Pick two or more set-ups**, each a provider, model and prompt: Gemini Flash against Gemini
-  Pro, Mistral against Gemini, or the same model with a diplomatic and a normalized prompt. It
-  works for text extraction first, and for audio transcription later.
-- **Try a sample first.** Comparison can run on a few pages or minutes before committing a whole
-  folder, and the cost estimate shows each set-up separately.
-- **Side-by-side view**, the [review view](#review-view) with one column per set-up next to the
-  source image or audio, and the differences between outputs highlighted, so disagreements on names, numbers and dates stand
-  out.
-- **Scores when a reference exists.** If the user provides or corrects a reference
-  transcription for some pages, the app computes character and word error rates for each
-  set-up; without one, it reports how far the outputs agree with each other.
-- **Keep the best, or all.** Choose a set-up per document or per page for the final export, or
-  export every version with the set-up in the file name. A comparison report (`.csv` and
-  `.html`) records the set-ups, costs, durations and scores.
-- **Built on the cache.** Each set-up is cached separately, so adding a third model to an
-  existing comparison only runs the new one, and the chosen set-up's results are not paid for
-  twice when processing the rest of the folder.
-
-## Progress
-
-The user should always see what the app is doing, how far it is, and what it costs.
-
-- **A queue view** listing every file with its status (waiting, running, done, failed, skipped
-  because cached), and per file a bar for pages or audio chunks.
-- **An overall bar** with files and pages done, elapsed time, estimated time remaining, and the
-  cost so far against the estimate shown before starting.
-- **A live preview** of the text as each page or chunk arrives, next to the page image or an
-  audio player at the matching timestamp, so problems show up early rather than at the end.
-- **Pause and cancel** that take effect after the current piece, keeping everything finished.
-- **Progress on the Windows taskbar icon**, and a notification when a job finishes or needs
-  attention.
-
-## Export formats
-
-Results are stored once and can be exported to several formats at the same time; the default
-selection is remembered per task.
-
-| Task | Formats |
-| --- | --- |
-| **Transcription** | `.txt`, `.md`, `.docx` (Word), `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
-| **Text extraction** | `.txt`, `.md`, `.docx`, `.json` (pages, blocks and confidence where available), `.csv`; a searchable PDF (invisible text layer over the original scan) only from models that report where text sits on the page, which today means Mistral OCR; ALTO XML and PAGE XML likewise where the engine returns coordinates |
-| **Summaries and keywords** | `.txt`, `.md`, `.docx`, `.json`, `.csv`, or a column added to the original `.xlsx` |
-
-Options include one file per source or one combined file per folder, page or timestamp markers,
-and whether to include speaker labels. JSON follows a documented schema, so results can feed
-other tools such as `iwac-ai-pipelines` or Omeka S imports.
-
-## Custom prompts
-
-- **Defaults per task and model**, ported and tested from `zmo-ai-pipelines` and
-  `iwac-ai-pipelines`: interview transcription; text extraction for printed documents,
-  newspapers, handwriting and manuscripts, diplomatic or normalized; summaries of different
-  lengths.
-- **Edit, save and name** a prompt as a preset, duplicate it as a starting point, and reset any
-  default. Presets are stored locally and kept across updates.
-- **Variables** such as `{language}`, `{speakers}` or `{summary_length}` filled from the job's
-  settings, so one prompt works across projects.
-- **Share presets** by exporting and importing them as small JSON files, for example across a
-  research team.
-- **Recorded in provenance.** Each output's `provenance.json` stores the full prompt text used,
-  not only the preset name, so results stay reproducible after a prompt is edited.
-
-## Keeping models current
-
-AI models improve every few months; the app must not stay stuck on the models it shipped with.
-In October 2026, for example, Mistral released
-[Voxtral Transcribe 3](https://www.marktechpost.com/2026/10/20/mistral-voxtral-3-speech-models-voice-agent-sdk/)
-(Small for accuracy, Mini for cheaper batch work, 50 languages), a clear step up for interview
-transcription.
-
-- **A model catalogue as data, not code.** Each provider's models, the tasks they suit, their
-  supported languages, limits and prices live in a small catalogue file that the app can refresh from this repository
-  without a new release.
-- **Recommended model per task**, reviewed whenever a provider releases something better, and
-  chosen by default; older models remain selectable.
-- **Discovery from the providers' own model lists**, so a new model can be tried before the
-  catalogue lists it, and retired models are flagged before they stop working.
-- **The exact model version is recorded** in `provenance.json`, since the same name can point to
-  a newer model later.
-
-## Offline mode
-
-Some tasks can run entirely on the PC, with no key, no cost and no data leaving the computer:
-
-- **Audio transcription with Whisper**, as in Live Translation's offline subtitles: the same
-  whisper.cpp engine, with models downloaded once from Hugging Face and verified before use.
-  Larger models suit recorded interviews, where speed matters less than in live captioning.
-- **Text extraction with Tesseract**, bundled with the app and its language data (French,
-  English, Arabic, German…). It handles clean printed text reasonably well but is far weaker
-  than cloud models on degraded scans and complex layouts, and cannot read handwriting: the
-  handwriting presets are only offered with cloud models.
-
-Offline results are a fallback, not the default for difficult material: the app should say
-clearly which engine produced a result, and record it in `provenance.json` like any other.
-Summaries still need a cloud model.
-
-## Privacy
-
-In offline mode, nothing leaves the PC. With a cloud provider, files go directly from the PC to
-that provider; there is no intermediate server. API keys
-stay in Windows Credential Manager. The developer receives no files, keys, results or telemetry.
-
-Sending research material to an AI provider is still a transfer of data to a third party.
-Researchers remain responsible for consent, confidentiality, copyright and any approval their
-institution requires, and should prefer paid API tiers whose terms exclude training on inputs.
-
-## AI output is not ground truth
-
-Transcriptions, extracted text and summaries can contain fluent but wrong text: misheard names, skipped
-passages, invented words. Check a sample against the source before relying on the results, and
-keep the originals.
-
-## Bundled conversion tools
-
-Providers accept different inputs: some take a PDF directly, others only images; some take
-video, most only audio, and each has its own size and duration limits. The app prepares each
-file for the chosen model automatically, so users never convert anything themselves. The tools
-ship inside the app, for both x64 and ARM64, with nothing to install separately.
-
-- **PDF to images**, page by page at a resolution suited to the model, for providers that do not
-  accept PDF, for page previews, and for Tesseract. Large PDFs are also split into page ranges
-  for providers with page or size limits. Also used to build searchable PDF exports.
-- **Image preparation**: multi-page TIFFs split into pages, other formats (HEIC from phones,
-  WebP, BMP) converted, oversized scans resized to the provider's limits, and orientation fixed
-  from EXIF data.
-- **Audio and video with FFmpeg**: the audio track extracted from video, files converted to a
-  format the provider accepts, and long recordings split into segments, with a short overlap
-  and cuts placed at silences so no words are lost at the joins. Timestamps are shifted back so
-  the final transcript runs continuously.
-- **Reading text inputs** for summaries: Word, PDF text layers, spreadsheets and plain text.
-
-Licences matter for an MIT app distributed through the Store. Poppler is GPL; PDFium (via
-[pdfium-render](https://crates.io/crates/pdfium-render)) is BSD/Apache-licensed and is
-preferred unless Poppler proves clearly better. FFmpeg is our own audio-only build, LGPL v2.1
-or later with no GPL, version-3 or non-free parts, run as separate programs rather than linked;
-its source is published with each release, and the Store listing carries our own licence terms,
-because Microsoft's standard terms forbid the reverse engineering the LGPL must allow. Details,
-and how each licence obligation is met, are in [docs/ffmpeg.md](docs/ffmpeg.md). Each bundled
-tool's licence is listed in the app's About page.
-
-## Planned technology
-
-- [Tauri 2](https://tauri.app/) with a Rust back end and a web front end, as in Live Translation.
-- Provider calls in Rust, porting the prompts, model choices and provenance format from
-  `zmo-ai-pipelines` and `iwac-ai-pipelines`; no bundled Python.
-- FFmpeg (LGPL build) and PDFium bundled for file conversion and splitting (see
-  [Bundled conversion tools](#bundled-conversion-tools)).
-- SQLite for the local job database and result cache; exporters in Rust for Word, searchable
-  PDF, subtitles and XML.
-- [whisper-rs](https://crates.io/crates/whisper-rs) (whisper.cpp) for offline transcription,
-  reusing Live Translation's model download and verification code.
-- Tesseract for offline text extraction, bundled as a sidecar with its language data.
-- Native builds for x64 and ARM64.
-
-The crate layout, modularity rules and the architecture reviews planned during development are
-in [AGENTS.md](AGENTS.md).
-
-## Roadmap
-
-Each stage ends with an architecture review (see [AGENTS.md](AGENTS.md)) before the next starts.
-
-1. **Foundations.** Workspace and Tauri shell based on Live Translation, domain types, job
-   database with caching and resuming, progress view, model catalogue, prompt presets, API keys
-   in Credential Manager, English interface with translation files ready for other languages,
-   CI, and Dependabot security alerts and update pull requests for Rust, front-end and GitHub
-   Actions dependencies.
-2. **Text extraction (OCR/HTR)** with **Google Gemini, OpenAI, Anthropic Claude and Mistral**:
-   PDF and image preparation, checks and tips for scans, the extraction presets, language
-   selection, exports to `.txt`, `.md`, `.docx` and `.json`, the review view, then searchable
-   PDF and ALTO/PAGE XML, and comparison mode.
-3. **Audio transcription** with Gemini, OpenAI and Mistral (Voxtral); Claude does not accept
-   audio. FFmpeg conversion and splitting, checks and tips for recordings, speakers and
-   timestamps, and `.srt`, `.vtt` and `.csv` exports.
-4. **Later:** French and German interface, OpenRouter, summaries and keywords, offline mode
-   with Whisper and Tesseract, and the Microsoft Store release.
-
-### Progress (October 2026)
-
-- **Stage 1: done.** Workspace, job database with caching and resuming, progress view and
-  taskbar progress, model catalogue, prompt library, keys in Credential Manager, English
-  interface with translation files, CI and Dependabot.
-- **Stage 2: mostly done.** All four providers, PDF page cutting, image preparation, input
-  checks with splitting of double pages, language choice, exports to `.txt`, `.md`, `.docx`,
-  `.json` and `.csv`, searchable PDFs from Mistral OCR, the review view with corrections, and
-  comparison mode with error rates. Still to do: ALTO/PAGE XML, checks for skewed and blurry
-  pages, and a run against the live APIs with real keys (the provider tests use documented
-  response shapes, not recorded ones).
-- **Stage 3: mostly done.** Recordings and videos are split at pauses and converted by
-  FFmpeg, with checks for quiet, long or silent files and an "even out the volume" fix;
-  speakers, timestamps, `.srt`, `.vtt` and `.csv`; a player in the review view whose lines
-  follow playback. The bundled LGPL FFmpeg build has its workflow but has not been run yet, so
-  development uses an FFmpeg found on `PATH`. Gemini 3.5 Transcribe is not in the catalogue
-  yet.
-- **Stage 4: started.** Offline transcription with Whisper, models downloaded from Settings;
-  summaries and keywords for texts, Word files, PDFs and the results of earlier jobs, with
-  Gemini, OpenAI and Claude. Jobs keep running from the notification area when the window is
-  closed.
-
-Decisions and their reasons are logged in [docs/decisions](docs/decisions/); output formats are
-described in [docs/formats.md](docs/formats.md).
+A Windows desktop app that lets researchers read scanned and handwritten documents, transcribe
+interviews and analyse texts with the AI provider of their choice, or offline, without Python,
+Colab or the command line. Every result is checked against its source in a review set like a
+critical edition.
+
+**Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT licence**
+
+**Status: early development.** The features below are implemented and tested, but have not yet
+been run against the live provider APIs, and there is no release yet. See the
+[roadmap](docs/roadmap.md).
+
+## What it does
+
+- **Extract text** from PDFs and images, printed or handwritten, with Gemini, OpenAI, Claude or
+  Mistral. Lines kept as on the page, or joined into running text.
+- **Transcribe audio and video**, with speakers and timestamps, in the cloud or offline with
+  Whisper. Speakers can be given their real names.
+- **Analyse texts** with fields you define: a summary, the people, places and organisations a
+  document names, its tone with a reason, themes from your own list. Ready-made analyses cover
+  the common needs.
+- **Check every result against its source**, side by side, with corrections kept apart from the
+  AI output, which is never overwritten.
+- **Compare models** on the same documents, with their differences set out as an apparatus and
+  error rates against corrected pages.
+- **Never pay twice**: work is saved piece by piece, interrupted jobs resume, and nothing is
+  sent again with the same settings.
+- **Save a job's settings as a pipeline** and start the next batch in one click.
+- **Export** to text, Markdown, Word, JSON, CSV, subtitles and searchable PDF, each with a
+  `provenance.json` recording the model, prompt and settings.
+
+Files go straight from your PC to the provider you choose, with your own API key, kept in
+Windows Credential Manager. Offline, nothing leaves the PC. AI output can be fluent and wrong:
+check a sample against the source before relying on it.
+
+## Documentation
+
+- [Specification](docs/specification.md): what the app must do, and why.
+- [Roadmap](docs/roadmap.md): what is built and what is next.
+- [Development](docs/development.md): building, checks, the browser preview.
+- [Output formats](docs/formats.md), [decisions](docs/decisions/), [design](DESIGN.md), and
+  [everything else](docs/README.md).
 
 ## Development
-
-Requirements: Rust through rustup (the version in `rust-toolchain.toml` installs itself),
-Node.js 22 or 24, and the WebView2 runtime that ships with Windows 11. Offline transcription
-compiles whisper.cpp, which also needs LLVM (`clang-cl`), CMake and Ninja (the Visual Studio
-Build Tools include the last two), with these variables set, as in Live Translation's CI:
-`CC=clang-cl`, `CXX=clang-cl`, `CXXFLAGS=-EHsc`, `CMAKE_GENERATOR=Ninja` and
-`LIBCLANG_PATH=C:\Program Files\LLVM\bin`.
 
 ```bash
 npm install
@@ -382,29 +52,9 @@ npm install
 npm run tauri dev
 ```
 
-Checks run in CI and before every commit:
+Requirements, checks and the sample-data preview are in [docs/development.md](docs/development.md).
 
-```bash
-cargo fmt --all && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
-```
+## Author and licence
 
-```bash
-npm run format:check && npm run check && npm run lint && npm test
-```
-
-`cargo test` also regenerates the TypeScript types in `src/lib/bindings/` from the Rust
-definitions; commit them with the Rust change. To look at the interface in a browser with
-sample data, run `npm run dev` and open `http://localhost:5173/?mock`.
-
-## Distribution
-
-The goal is the [Microsoft Store](https://apps.microsoft.com/), as for Live Translation: Store
-packages are signed, install without a security warning and update themselves, which matters for
-colleagues who are not comfortable installing software. This means packaging the app as MSIX
-from the start, keeping keys in Credential Manager, publishing a privacy policy, and declaring
-the app's network access. Unsigned installers will also be attached to GitHub releases.
-
-## Author and license
-
-[Frédérick Madore](https://www.frederickmadore.com/). An independent project.
-[MIT license](LICENSE).
+By [Frédérick Madore](https://www.frederickmadore.com/), University of Bayreuth. An independent
+project. [MIT licence](LICENSE).

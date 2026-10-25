@@ -23,12 +23,22 @@ in a glyph-less Unicode font, so any script stays searchable. A corrected page i
 block over the page. Only PDF sources get one; it is written as `<name>.searchable.pdf`, never
 replacing the source.
 
-## Summaries
+## Analyses
 
-Written as `<name>.summary.txt` (and `.md`, `.docx`, `.json`, `.csv`) beside the source, so a
-summary of `interview.txt` never replaces it. The text formats end with a `Keywords:` line;
-JSON adds a `keywords` array to the part; CSV has one row per file
-(`file, summary, keywords, corrected, reviewed`).
+Written as `<name>.analysis.txt` (and `.md`, `.docx`, `.json`, `.csv`) beside the source, so an
+analysis of `interview.txt` never replaces it. The researcher's corrected answers replace the
+model's where there are any.
+
+- **Text formats** set out each field under its name: prose fields as a paragraph after their
+  label, the others on one line (`Places: Bamako; Ségou`), and a field's reason on the next line
+  (`Reason: …`).
+- **JSON** adds to the part a `fields` object with each answer under its field's key (text for
+  prose and single choices, an array for lists and several choices) and, when any field asked
+  for one, a `reasons` object with the reasons by key. `provenance.json` records the fields
+  asked for (`prompt.schema`).
+- **CSV** has one row per document: `file`, then one column per field named as the researcher
+  named it, a `<field> (reason)` column after each field that asks for a reason, then
+  `corrected` and `reviewed`. List items are joined with semicolons.
 
 ## Subtitles and spreadsheets
 
