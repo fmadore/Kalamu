@@ -3,7 +3,11 @@
 	"release": "ffmpeg-9.0.2-1",
 	"version": "9.0.2",
 	"archives": {
-		"x86_64-pc-windows-msvc": { "sha256": null },
-		"aarch64-pc-windows-msvc": { "sha256": null }
+		"x86_64-pc-windows-msvc": {
+			"sha256": "7383ed1ba3ee01b757ce457f12082b466e4bade7f302d55df942f6d0c4515df2"
+		},
+		"aarch64-pc-windows-msvc": {
+			"sha256": "64d77a2979e3e0e4a516986faf791353139fc16c5cabf9435b59c916d1d0729d"
+		}
 	}
 }
