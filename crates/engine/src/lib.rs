@@ -306,6 +306,7 @@ impl Engine {
     }
 
     /// Starts or resumes a job in the background. Progress arrives through [`Engine::subscribe`].
+    /// Call it from within the Tokio runtime, which runs the job.
     pub fn start(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
         let control = Arc::new(Mutex::new(Control::default()));
         {

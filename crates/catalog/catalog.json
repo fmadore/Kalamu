@@ -64,6 +64,11 @@
         "text_extraction",
         "analysis"
       ],
+      "provider_default_for": [
+        "text_extraction",
+        "audio_transcription",
+        "analysis"
+      ],
       "pricing": {
         "input_per_mtok": 0.75,
         "output_per_mtok": 3.75,
@@ -98,6 +103,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "costly": true,
       "pricing": {
         "input_per_mtok": 2.0,
@@ -133,6 +139,7 @@
       "languages": "any",
       "status": "preview",
       "recommended_for": [],
+      "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 12.0,
@@ -161,6 +168,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 0.3,
         "output_per_mtok": 2.5
@@ -188,6 +196,10 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [
+        "text_extraction",
+        "analysis"
+      ],
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 10.0
@@ -215,6 +227,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "costly": true,
       "pricing": {
         "input_per_mtok": 10.0,
@@ -243,6 +256,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 0.1,
         "output_per_mtok": 0.5
@@ -268,6 +282,9 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [
+        "audio_transcription"
+      ],
       "accepts_prompt": false,
       "pricing": {
         "per_minute": 0.0045
@@ -294,6 +311,7 @@
       "languages": "any",
       "status": "deprecated",
       "recommended_for": [],
+      "provider_default_for": [],
       "accepts_prompt": false,
       "pricing": {
         "input_per_mtok": 2.5,
@@ -322,6 +340,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "costly": true,
       "pricing": {
         "input_per_mtok": 10.0,
@@ -351,6 +370,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 4.0,
         "output_per_mtok": 20.0
@@ -379,6 +399,10 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [
+        "text_extraction",
+        "analysis"
+      ],
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 10.0
@@ -407,6 +431,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 0.1,
         "output_per_mtok": 0.5,
@@ -434,7 +459,11 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [
+        "text_extraction"
+      ],
       "accepts_prompt": false,
+      "takes_language": false,
       "layout": true,
       "pricing": {
         "per_page": 0.004,
@@ -466,6 +495,9 @@
       "recommended_for": [
         "audio_transcription"
       ],
+      "provider_default_for": [
+        "audio_transcription"
+      ],
       "accepts_prompt": false,
       "pricing": {
         "per_minute": 0.004
@@ -493,6 +525,7 @@
       "languages": "any",
       "status": "preview",
       "recommended_for": [],
+      "provider_default_for": [],
       "accepts_prompt": false,
       "pricing": {
         "per_minute": 0.0035
@@ -546,6 +579,9 @@
       ],
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [
+        "audio_transcription"
+      ],
       "accepts_prompt": false,
       "speakers": false,
       "pricing": {
@@ -599,6 +635,7 @@
       ],
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "accepts_prompt": false,
       "speakers": false,
       "pricing": {
@@ -652,6 +689,7 @@
       ],
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "accepts_prompt": false,
       "speakers": false,
       "pricing": {
@@ -705,6 +743,7 @@
       ],
       "status": "stable",
       "recommended_for": [],
+      "provider_default_for": [],
       "accepts_prompt": false,
       "speakers": false,
       "pricing": {

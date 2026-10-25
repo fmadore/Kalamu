@@ -130,8 +130,10 @@ pub fn create_job(state: State<'_, AppState>, job: NewJob) -> CmdResult<Job> {
     Ok(state.engine.create_job(job)?)
 }
 
+// `async`, like every command that starts the engine: Tauri runs other commands on the main
+// thread, outside the Tokio runtime the job is spawned on.
 #[tauri::command]
-pub fn start_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
+pub async fn start_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
     Ok(state.engine.start(id)?)
 }
 
@@ -146,7 +148,7 @@ pub fn cancel_job(state: State<'_, AppState>, id: JobId) {
 }
 
 #[tauri::command]
-pub fn retry_failed(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
+pub async fn retry_failed(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
     Ok(state.engine.retry_failed(id)?)
 }
 

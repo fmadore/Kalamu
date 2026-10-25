@@ -113,12 +113,19 @@ pub struct ModelInfo {
     /// Tasks for which this is the app's default choice.
     #[serde(default)]
     pub recommended_for: Vec<Task>,
+    /// Tasks for which this is chosen when the user switches to its provider: the model that
+    /// suits most material, not the provider's first or most expensive.
+    #[serde(default)]
+    pub provider_default_for: Vec<Task>,
     /// Dedicated OCR and speech-to-text models take no instructions.
     #[serde(default = "yes")]
     pub accepts_prompt: bool,
     /// Can label who speaks in a transcription. Whisper cannot.
     #[serde(default = "yes")]
     pub speakers: bool,
+    /// Uses the languages chosen for a job. Mistral OCR reads any language and takes none.
+    #[serde(default = "yes")]
+    pub takes_language: bool,
     /// Reports where text sits on the page, which a searchable PDF needs.
     #[serde(default)]
     pub layout: bool,
@@ -353,8 +360,35 @@ mod tests {
                 "{} is recommended for a task it cannot do",
                 model.id
             );
+            assert!(
+                model
+                    .provider_default_for
+                    .iter()
+                    .all(|t| model.tasks.contains(t)),
+                "{} is a default for a task it cannot do",
+                model.id
+            );
             if let LanguageSupport::Any(word) = &model.languages {
                 assert_eq!(word, "any");
+            }
+        }
+        // Each provider has exactly one default for each task it offers.
+        for provider in &catalog.providers {
+            for task in [
+                Task::TextExtraction,
+                Task::AudioTranscription,
+                Task::Analysis,
+            ] {
+                let models = catalog
+                    .models
+                    .iter()
+                    .filter(|m| m.provider == provider.id && m.tasks.contains(&task));
+                let defaults = models
+                    .clone()
+                    .filter(|m| m.provider_default_for.contains(&task))
+                    .count();
+                let expected = usize::from(models.count() > 0);
+                assert_eq!(defaults, expected, "{} {task:?}", provider.id);
             }
         }
         for task in [

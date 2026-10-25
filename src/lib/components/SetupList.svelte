@@ -12,7 +12,8 @@
 		labelsSpeakers,
 		modelInfo,
 		modelsFor,
-		newDraft
+		newDraft,
+		providerDefault
 	} from '#lib/newJob.js';
 	import { app, go, hasKey, isInstalled } from '#lib/state.svelte.js';
 
@@ -64,7 +65,7 @@
 					<select
 						bind:value={d.provider}
 						onchange={() => {
-							d.model = modelsFor(catalog, d.provider, task)[0]?.id ?? '';
+							d.model = providerDefault(catalog, d.provider, task);
 						}}
 					>
 						{#each providers as p (p.id)}

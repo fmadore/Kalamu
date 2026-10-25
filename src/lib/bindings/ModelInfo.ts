@@ -16,6 +16,11 @@ inputs: Array<string>, languages: LanguageSupport, status: ModelStatus,
  */
 recommended_for: Array<Task>, 
 /**
+ * Tasks for which this is chosen when the user switches to its provider: the model that
+ * suits most material, not the provider's first or most expensive.
+ */
+provider_default_for: Array<Task>, 
+/**
  * Dedicated OCR and speech-to-text models take no instructions.
  */
 accepts_prompt: boolean, 
@@ -23,6 +28,10 @@ accepts_prompt: boolean,
  * Can label who speaks in a transcription. Whisper cannot.
  */
 speakers: boolean, 
+/**
+ * Uses the languages chosen for a job. Mistral OCR reads any language and takes none.
+ */
+takes_language: boolean, 
 /**
  * Reports where text sits on the page, which a searchable PDF needs.
  */

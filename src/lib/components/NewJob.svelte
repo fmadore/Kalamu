@@ -2,15 +2,18 @@
 	import { onMount } from 'svelte';
 	import FileList from './FileList.svelte';
 	import Icon from './Icon.svelte';
+	import LanguagePicker from './LanguagePicker.svelte';
 	import SetupList from './SetupList.svelte';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
+	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
-	import { formatUsd, languageName, messages } from '#lib/i18n/index.js';
+	import { formatUsd, listNames, messages } from '#lib/i18n/index.js';
+	import { languageLabel, modelsWithout, offeredLanguages, takesLanguage } from '#lib/languages.js';
 	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import {
@@ -52,6 +55,21 @@
 	let naming = $state<string | null>(null);
 
 	const catalog = $derived(app.catalog!);
+	const models = $derived(drafts.map((d) => modelInfo(catalog, d)));
+	/** Distinct names of the chosen models matching a test, for the notes under a choice. */
+	const namesOf = (test: (model: ModelInfo | undefined) => boolean) => [
+		...new Set(models.filter(test).map((model) => model?.name ?? ''))
+	];
+	const languageIgnored = $derived(namesOf((model) => !takesLanguage(model)));
+	const narrowedBy = $derived(
+		namesOf((model) => takesLanguage(model) && Array.isArray(model?.languages))
+	);
+	const unsupportedChosen = $derived(
+		languages
+			.map((code) => [code, modelsWithout(code, models)] as const)
+			.filter(([, names]) => names.length > 0)
+	);
+	const noPrompt = $derived(namesOf((model) => !acceptsPrompt(model)));
 	const sources = $derived(files.flatMap((f) => (f.source ? [f.source] : [])));
 
 	async function loadTask(next: Task) {
@@ -126,11 +144,13 @@
 	function jobSettings() {
 		return {
 			languages:
-				languageMode === 'explicit' && languages.length > 0
+				languageMode === 'explicit' &&
+				languages.length > 0 &&
+				languageIgnored.length < models.length
 					? { mode: 'explicit' as const, languages: [...languages] }
 					: { mode: 'auto' as const },
 			sample_pages: sample ? samplePages : null,
-			line_breaks: task === 'text_extraction' ? lineBreaks : null
+			line_breaks: task === 'text_extraction' && noPrompt.length < models.length ? lineBreaks : null
 		};
 	}
 
@@ -300,72 +320,70 @@
 
 		<FileList bind:files {task} {inspecting} onadd={addPaths} />
 
+		<SetupList bind:drafts {task} {presets} />
+
 		<section class="step block" aria-labelledby="lang-title">
 			<h2 id="lang-title">
 				{task === 'analysis' ? m.newJob.analysisLanguageTitle : m.newJob.languageTitle}
 			</h2>
-			<div class="row">
-				<label class="inline"
-					><input type="radio" bind:group={languageMode} value="auto" />
-					{task === 'analysis' ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
-				>
-				<label class="inline"
-					><input type="radio" bind:group={languageMode} value="explicit" />
-					{m.newJob.languagePick}</label
-				>
-			</div>
-			{#if languageMode === 'explicit'}
-				<div class="row wrap">
-					{#each languages as code (code)}
-						<span class="chip">
-							{languageName(code)}
-							<button
-								class="x"
-								aria-label="{m.newJob.remove} {languageName(code)}"
-								onclick={() => (languages = languages.filter((c) => c !== code))}
-								><Icon name="close" size={12} /></button
-							>
-						</span>
-					{/each}
-					<select
-						aria-label={m.newJob.addLanguage}
-						onchange={(e) => {
-							const v = e.currentTarget.value;
-							if (v && task === 'analysis') languages = [v];
-							else if (v && !languages.includes(v)) languages = [...languages, v];
-							e.currentTarget.value = '';
-						}}
+			{#if languageIgnored.length === models.length}
+				<p class="hint">{m.newJob.languageIgnoredAll(listNames(languageIgnored))}</p>
+			{:else}
+				<div class="row">
+					<label class="inline"
+						><input type="radio" bind:group={languageMode} value="auto" />
+						{task === 'analysis' ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
 					>
-						<option value="">{m.newJob.addLanguage}</option>
-						{#each catalog.languages.filter((l) => !languages.includes(l.code)) as l (l.code)}
-							<option value={l.code}>{languageName(l.code, l.name)}</option>
-						{/each}
-					</select>
+					<label class="inline"
+						><input type="radio" bind:group={languageMode} value="explicit" />
+						{m.newJob.languagePick}</label
+					>
 				</div>
+				{#if languageMode === 'explicit'}
+					<LanguagePicker
+						bind:selected={languages}
+						offered={offeredLanguages(catalog, models)}
+						single={task === 'analysis'}
+						unsupported={(code) => modelsWithout(code, models)}
+					/>
+					{#each unsupportedChosen as [code, names] (code)}
+						<p class="hint warn-text">
+							{m.newJob.languageUnsupported(languageLabel(catalog, code), listNames(names))}
+						</p>
+					{/each}
+					{#if narrowedBy.length > 0}
+						<p class="hint">{m.newJob.languagesNarrowed(listNames(narrowedBy))}</p>
+					{/if}
+				{/if}
+				<p class="hint">
+					{task === 'analysis' ? m.newJob.analysisLanguageHint : m.newJob.languageHint}
+				</p>
+				{#if languageIgnored.length > 0}
+					<p class="hint">{m.newJob.languageIgnoredSome(listNames(languageIgnored))}</p>
+				{/if}
 			{/if}
-			<p class="hint">
-				{task === 'analysis' ? m.newJob.analysisLanguageHint : m.newJob.languageHint}
-			</p>
 		</section>
-
-		<SetupList bind:drafts {task} {presets} />
 
 		{#if task === 'text_extraction'}
 			<section class="step block" aria-labelledby="lines-title">
 				<h2 id="lines-title">{m.newJob.linesTitle}</h2>
-				<div class="choices">
-					{#each ['running_text', 'as_on_page'] as const as mode (mode)}
-						<label class="choice" class:selected={lineBreaks === mode}>
-							<input type="radio" bind:group={lineBreaks} value={mode} />
-							<span>
-								<strong>{m.newJob.lines[mode]}</strong>
-								<span class="hint">{m.newJob.lines[`${mode}_hint`]}</span>
-							</span>
-						</label>
-					{/each}
-				</div>
-				{#if drafts.some((d) => !acceptsPrompt(modelInfo(catalog, d)))}
-					<p class="hint">{m.newJob.linesNoPrompt}</p>
+				{#if noPrompt.length === models.length}
+					<p class="hint">{m.newJob.linesNoPromptAll(listNames(noPrompt))}</p>
+				{:else}
+					<div class="choices">
+						{#each ['running_text', 'as_on_page'] as const as mode (mode)}
+							<label class="choice" class:selected={lineBreaks === mode}>
+								<input type="radio" bind:group={lineBreaks} value={mode} />
+								<span>
+									<strong>{m.newJob.lines[mode]}</strong>
+									<span class="hint">{m.newJob.lines[`${mode}_hint`]}</span>
+								</span>
+							</label>
+						{/each}
+					</div>
+					{#if noPrompt.length > 0}
+						<p class="hint">{m.newJob.linesNoPromptSome(listNames(noPrompt))}</p>
+					{/if}
 				{/if}
 			</section>
 		{/if}
@@ -533,6 +551,9 @@
 	.pipelines {
 		display: grid;
 		gap: var(--space-2);
+	}
+	.warn-text {
+		color: var(--warn-text);
 	}
 	.pipelines ul {
 		list-style: none;

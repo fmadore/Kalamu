@@ -6,6 +6,7 @@ import {
 	acceptsPrompt,
 	modelInfo,
 	newDraft,
+	providerDefault,
 	readsKind,
 	suggestName,
 	toRequest,
@@ -20,6 +21,12 @@ describe('new job form', () => {
 		expect(d.model).toBe('gemini-3.8-flash');
 		const claudeOnly = newDraft(catalog, 'text_extraction', 'p', (p) => p === 'anthropic');
 		expect(claudeOnly.provider).toBe('anthropic');
+		// Each provider's everyday model, not its first or costliest.
+		expect(claudeOnly.model).toBe('claude-sonnet-5-5');
+		expect(providerDefault(catalog, 'anthropic', 'analysis')).toBe('claude-sonnet-5-5');
+		expect(providerDefault(catalog, 'mistral', 'audio_transcription')).toBe(
+			'voxtral-small-transcribe-3-0'
+		);
 	});
 
 	it('suggests a different model for a comparison', () => {

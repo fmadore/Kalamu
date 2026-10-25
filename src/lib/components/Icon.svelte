@@ -16,7 +16,9 @@
 	import Play from '@lucide/svelte/icons/play';
 	import Plus from '@lucide/svelte/icons/plus';
 	import ScrollText from '@lucide/svelte/icons/scroll-text';
+	import Search from '@lucide/svelte/icons/search';
 	import Settings from '@lucide/svelte/icons/settings';
+	import Star from '@lucide/svelte/icons/star';
 	import TextSearch from '@lucide/svelte/icons/text-search';
 	import X from '@lucide/svelte/icons/x';
 	import ZoomIn from '@lucide/svelte/icons/zoom-in';
@@ -37,6 +39,8 @@
 		pause: Pause,
 		play: Play,
 		plus: Plus,
+		search: Search,
+		star: Star,
 		text_extraction: FileText,
 		audio_transcription: Mic,
 		analysis: TextSearch,
@@ -46,7 +50,11 @@
 	/** Shapes read as solid marks rather than outlines. */
 	const SOLID = new Set<keyof typeof ICONS>(['play', 'pause']);
 
-	let { name, size = 16 }: { name: keyof typeof ICONS; size?: number } = $props();
+	let {
+		name,
+		size = 16,
+		filled = false
+	}: { name: keyof typeof ICONS; size?: number; filled?: boolean } = $props();
 	const Glyph = $derived(ICONS[name]);
 </script>
 
@@ -54,7 +62,7 @@
 	{size}
 	strokeWidth={1.5}
 	absoluteStrokeWidth
-	fill={SOLID.has(name) ? 'currentColor' : 'none'}
+	fill={filled || SOLID.has(name) ? 'currentColor' : 'none'}
 	aria-hidden="true"
 	class="icon"
 />
