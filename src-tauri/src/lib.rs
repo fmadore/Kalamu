@@ -42,7 +42,40 @@ fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking:
         )
         .with(tracing_subscriber::fmt::layer())
         .try_init();
+    record_panics(dir);
     Some(guard)
+}
+
+/// Writes a panic to `panic.log` before the process ends. A panic in a command aborts the app
+/// (it cannot unwind through WebView2), and the daily log is written from a background thread
+/// that may not get to it.
+fn record_panics(dir: &std::path::Path) {
+    let path = dir.join("panic.log");
+    let previous = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        use std::io::Write;
+        let thread = std::thread::current();
+        let line = format!(
+            "{} panic in thread '{}': {info}
+{}
+",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or_default(),
+            thread.name().unwrap_or("unnamed"),
+            std::backtrace::Backtrace::force_capture(),
+        );
+        if let Ok(mut file) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)
+        {
+            let _ = file.write_all(line.as_bytes());
+        }
+        tracing::error!("{info}");
+        previous(info);
+    }));
 }
 
 pub fn run() {
