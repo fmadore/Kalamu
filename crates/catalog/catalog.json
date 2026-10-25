@@ -98,6 +98,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "costly": true,
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 10.0,
@@ -214,6 +215,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "costly": true,
       "pricing": {
         "input_per_mtok": 10.0,
         "output_per_mtok": 50.0
@@ -320,6 +322,7 @@
       "languages": "any",
       "status": "stable",
       "recommended_for": [],
+      "costly": true,
       "pricing": {
         "input_per_mtok": 10.0,
         "output_per_mtok": 50.0

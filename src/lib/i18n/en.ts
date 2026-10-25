@@ -59,6 +59,8 @@ export const en = {
 		noProvider: 'Add an API key in Settings to choose a model.',
 		diarize: 'Label speakers',
 		noSpeakers: 'This model cannot label speakers',
+		costly:
+			'Very expensive, and most likely more than this task needs: the recommended models read print, handwriting and speech almost as well for a fraction of the cost. Try a sample first.',
 		notDownloaded: 'This offline model has not been downloaded yet.',
 		openSettings: 'Download in Settings',
 		timestamps: 'Timestamps',

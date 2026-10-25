@@ -108,6 +108,9 @@
 			{#if info?.description}
 				<p class="muted small desc">{info.description}</p>
 			{/if}
+			{#if info?.costly}
+				<p class="warning small">{m.newJob.costly}</p>
+			{/if}
 			{#if d.model && !isInstalled(d.provider, d.model)}
 				<p class="warning small">
 					{m.newJob.notDownloaded}
