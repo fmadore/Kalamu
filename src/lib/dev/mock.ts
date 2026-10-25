@@ -3,6 +3,7 @@
 // through Tauri's own IPC mock. Never loaded in the desktop app or in a production build.
 
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
+import type { Pipeline } from '../bindings/Pipeline.js';
 import type { Catalog } from '../bindings/Catalog.js';
 import type { Job } from '../bindings/Job.js';
 import type { JobSummary } from '../bindings/JobSummary.js';
@@ -419,6 +420,32 @@ const analysisPieces: PieceView[] = analysisSetups.map((s, i) => ({
 	speaker_names: {}
 }));
 
+/** Saved pipelines, as New job lists them. */
+let pipelines: Pipeline[] = [
+	{
+		id: 'pipeline-1',
+		name: 'Press, people and places',
+		task: 'analysis',
+		setups: [
+			{
+				provider: 'gemini',
+				model: 'gemini-3.8-flash',
+				preset_id: 'analysis.entities',
+				label: null,
+				options: { temperature: null, diarize: false, timestamps: false, speakers: null }
+			}
+		],
+		settings: {
+			languages: { mode: 'explicit', languages: ['fr'] },
+			sample_pages: null,
+			line_breaks: null
+		},
+		formats: ['csv', 'json'],
+		destination: { kind: 'beside_sources' },
+		updated_at: 0
+	}
+];
+
 /** Nine seconds of a quiet tone as a WAV file, standing in for a recording. */
 function toneWav(): ArrayBuffer {
 	const rate = 8_000;
@@ -545,6 +572,16 @@ export function installMock(): void {
 				);
 				return a.task ? ordered.filter((p) => p.task === a.task) : ordered;
 			}
+			case 'list_pipelines':
+				return pipelines;
+			case 'save_pipeline': {
+				const saved = { ...(a.pipeline as Pipeline), id: `pipeline-${pipelines.length + 1}` };
+				pipelines = [...pipelines.filter((p) => p.name !== saved.name), saved];
+				return saved;
+			}
+			case 'delete_pipeline':
+				pipelines = pipelines.filter((p) => p.id !== a.id);
+				return null;
 			case 'list_jobs':
 				return [
 					...summaries,

@@ -8,6 +8,7 @@ import type { Catalog } from './bindings/Catalog.js';
 import type { ComparisonReport } from './bindings/ComparisonReport.js';
 import type { Correction } from './bindings/Correction.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
+import type { Pipeline } from './bindings/Pipeline.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { EstimateRow } from './bindings/EstimateRow.js';
@@ -60,6 +61,9 @@ export const api = {
 	cancelModelDownload: () => invoke<void>('cancel_model_download'),
 	removeModel: (id: string) => invoke<void>('remove_model', { id }),
 	listPresets: (task?: Task) => invoke<Preset[]>('list_presets', { task: task ?? null }),
+	listPipelines: () => invoke<Pipeline[]>('list_pipelines'),
+	savePipeline: (pipeline: Pipeline) => invoke<Pipeline>('save_pipeline', { pipeline }),
+	deletePipeline: (id: string) => invoke<void>('delete_pipeline', { id }),
 	savePreset: (preset: Preset) => invoke<Preset>('save_preset', { preset }),
 	deletePreset: (id: string) => invoke<void>('delete_preset', { id }),
 	duplicatePreset: (id: string, name: string) => invoke<Preset>('duplicate_preset', { id, name }),

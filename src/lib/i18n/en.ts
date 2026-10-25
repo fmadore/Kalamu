@@ -65,6 +65,14 @@ export const en = {
 		analysis: 'Analysis',
 		finds: 'Fills in',
 		editFields: 'Change the fields in Prompts',
+		pipelinesTitle: 'Start from a pipeline',
+		pipelineSave: 'Save as a pipeline',
+		pipelineName: 'Name of the pipeline',
+		pipelineSaved: (name: string) => `Saved as “${name}”. It appears at the top of New job.`,
+		pipelineApplied: (name: string) => `Settings of “${name}” applied. Add the files.`,
+		pipelineDelete: (name: string) => `Delete the pipeline “${name}”`,
+		pipelineDeleteConfirm: (name: string) =>
+			`Delete the pipeline “${name}”? Jobs already run with it are kept.`,
 		linesTitle: 'Line breaks',
 		lines: {
 			running_text: 'Running text',
@@ -137,6 +145,7 @@ export const en = {
 		resume: 'Resume',
 		pause: 'Pause',
 		cancel: 'Cancel',
+		save: 'Save',
 		retry: 'Retry failed pages',
 		delete: 'Delete',
 		deleteConfirm: 'Delete this job? Files already written stay on disk.',
@@ -374,6 +383,7 @@ export const en = {
 	},
 	common: {
 		cancel: 'Cancel',
+		save: 'Save',
 		close: 'Close',
 		loading: 'Loading…',
 		preview: 'preview',
@@ -392,6 +402,7 @@ export const en = {
 		'prompt.unnamed_field': 'Every field needs a name.',
 		'prompt.duplicate_field': 'Two fields have the same name.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',
+		'prompt.unnamed_pipeline': 'A pipeline needs a name and at least one model.',
 		'provider.unknown': 'Unknown provider.',
 		'provider.missing_key': 'No API key is saved for this provider. Add one in Settings.',
 		'provider.unsupported': 'This model cannot do this task.',

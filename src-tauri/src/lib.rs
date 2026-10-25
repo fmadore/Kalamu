@@ -73,6 +73,7 @@ pub fn run() {
             let settings = Settings::load(&paths.settings);
             let store = SqliteStore::open(&data.join("jobs.sqlite"))?;
             let prompts = PromptLibrary::open(&data.join("presets"))?;
+            let pipelines = scriptorium_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
             let cached = std::fs::read_to_string(&paths.catalog_cache).ok();
             let catalog = Catalog::newest(cached.as_deref());
             let http = scriptorium_providers::client();
@@ -137,6 +138,7 @@ pub fn run() {
                 paths,
                 http,
                 preview: Mutex::new(None),
+                pipelines: Mutex::new(pipelines),
             });
             app.manage(tray::TrayMenu::default());
             // Without a tray the window can still be used; closing it just pauses jobs.
@@ -188,6 +190,9 @@ pub fn run() {
             commands::presets::duplicate_preset,
             commands::presets::export_presets,
             commands::presets::import_presets,
+            commands::pipelines::list_pipelines,
+            commands::pipelines::save_pipeline,
+            commands::pipelines::delete_pipeline,
             commands::jobs::expand_paths,
             commands::jobs::inspect_files,
             commands::jobs::estimate_cost,

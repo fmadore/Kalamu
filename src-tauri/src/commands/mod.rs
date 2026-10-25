@@ -4,6 +4,7 @@
 pub mod jobs;
 pub mod keys;
 pub mod offline;
+pub mod pipelines;
 pub mod presets;
 pub mod review;
 pub mod settings;
@@ -41,6 +42,8 @@ pub struct AppState {
     /// The last source opened for page previews, so flipping pages does not parse a large PDF
     /// again each time.
     pub preview: Mutex<Option<(SourceId, Arc<OpenSource>)>>,
+    /// Saved job settings; the engine does not need them.
+    pub pipelines: Mutex<scriptorium_prompts::PipelineLibrary>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

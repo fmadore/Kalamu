@@ -12,6 +12,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, languageName, messages } from '#lib/i18n/index.js';
 	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
+	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import {
 		acceptsPrompt,
 		type Draft,
@@ -23,8 +24,8 @@
 		suggestName,
 		toRequest
 	} from '#lib/newJob.js';
-	import { api, onDrop, pickFolder } from '#lib/tauri.js';
-	import { app, go, hasKey, liveJob, refreshJobs } from '#lib/state.svelte.js';
+	import { api, ask, onDrop, pickFolder } from '#lib/tauri.js';
+	import { app, go, hasKey, liveJob, refreshJobs, toast } from '#lib/state.svelte.js';
 
 	let { opening = {} }: { opening?: { task?: Task; paths?: string[] } } = $props();
 
@@ -46,6 +47,9 @@
 	let estimates = $state<EstimateRow[]>([]);
 	let error = $state<string | null>(null);
 	let starting = $state(false);
+	let pipelines = $state<Pipeline[]>([]);
+	/** The name being typed for a new pipeline, while saving one. */
+	let naming = $state<string | null>(null);
 
 	const catalog = $derived(app.catalog!);
 	const sources = $derived(files.flatMap((f) => (f.source ? [f.source] : [])));
@@ -118,6 +122,81 @@
 		if (folder) destination = { kind: 'folder', path: folder };
 	}
 
+	/** The settings shared by every set-up, as a job and a pipeline store them. */
+	function jobSettings() {
+		return {
+			languages:
+				languageMode === 'explicit' && languages.length > 0
+					? { mode: 'explicit' as const, languages: [...languages] }
+					: { mode: 'auto' as const },
+			sample_pages: sample ? samplePages : null,
+			line_breaks: task === 'text_extraction' ? lineBreaks : null
+		};
+	}
+
+	/** Fills the form from a saved pipeline; the files stay as they are. */
+	async function applyPipeline(p: Pipeline) {
+		await loadTask(p.task);
+		drafts = p.setups.map((s) => ({
+			provider: s.provider,
+			model: s.model,
+			presetId: s.preset_id,
+			label: s.label ?? '',
+			diarize: s.options.diarize,
+			timestamps: s.options.timestamps
+		}));
+		languageMode = p.settings.languages.mode;
+		languages = p.settings.languages.mode === 'explicit' ? [...p.settings.languages.languages] : [];
+		lineBreaks = p.settings.line_breaks ?? 'running_text';
+		sample = p.settings.sample_pages !== null;
+		samplePages = p.settings.sample_pages ?? samplePages;
+		formats = p.formats.filter((f) => FORMATS[p.task].includes(f));
+		destination = p.destination;
+		toast(m.newJob.pipelineApplied(p.name));
+	}
+
+	async function savePipeline() {
+		const pipelineName = naming?.trim();
+		if (!pipelineName) return;
+		error = null;
+		try {
+			const saved = await api.savePipeline({
+				id: '',
+				name: pipelineName,
+				task,
+				setups: drafts.map((d) => {
+					const r = toRequest(catalog, task, d);
+					return {
+						provider: r.provider,
+						model: r.model,
+						preset_id: r.preset_id,
+						label: r.label,
+						options: r.options
+					};
+				}),
+				settings: jobSettings(),
+				formats: [...formats],
+				destination: $state.snapshot(destination),
+				updated_at: 0
+			});
+			pipelines = await api.listPipelines();
+			naming = null;
+			toast(m.newJob.pipelineSaved(saved.name));
+		} catch (e) {
+			error = describeError(e, m);
+		}
+	}
+
+	async function deletePipeline(p: Pipeline) {
+		if (!(await ask(m.newJob.pipelineDeleteConfirm(p.name)))) return;
+		try {
+			await api.deletePipeline(p.id);
+			pipelines = await api.listPipelines();
+		} catch (e) {
+			error = describeError(e, m);
+		}
+	}
+
 	async function start() {
 		error = null;
 		starting = true;
@@ -127,14 +206,7 @@
 				task,
 				sources: $state.snapshot(sources),
 				setups: drafts.map((d) => toRequest(catalog, task, d)),
-				settings: {
-					languages:
-						languageMode === 'explicit' && languages.length > 0
-							? { mode: 'explicit', languages: [...languages] }
-							: { mode: 'auto' },
-					sample_pages: sample ? samplePages : null,
-					line_breaks: task === 'text_extraction' ? lineBreaks : null
-				},
+				settings: jobSettings(),
 				output: {
 					formats: formats.filter((f) => offeredFormats(catalog, task, drafts).includes(f)),
 					destination: $state.snapshot(destination),
@@ -159,6 +231,10 @@
 		void loadTask(opening.task ?? task).then(() =>
 			opening.paths ? addPaths(opening.paths) : undefined
 		);
+		api
+			.listPipelines()
+			.then((p) => (pipelines = p))
+			.catch(() => undefined);
 		let unlisten: (() => void) | undefined;
 		void onDrop((paths) => void addPaths(paths)).then((u) => (unlisten = u));
 		return () => unlisten?.();
@@ -173,6 +249,28 @@
 </header>
 
 <div class="sheet">
+	{#if pipelines.length > 0}
+		<section class="pipelines" aria-labelledby="pipelines-label">
+			<h2 id="pipelines-label" class="label">{m.newJob.pipelinesTitle}</h2>
+			<ul>
+				{#each pipelines as p (p.id)}
+					<li>
+						<button class="pipeline" onclick={() => applyPipeline(p)}>
+							<strong>{p.name}</strong>
+							<span class="muted">{m.task[p.task]}</span>
+						</button>
+						<button
+							class="x"
+							aria-label={m.newJob.pipelineDelete(p.name)}
+							title={m.newJob.pipelineDelete(p.name)}
+							onclick={() => deletePipeline(p)}><Icon name="close" size={14} /></button
+						>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
 	<section aria-labelledby="task-label">
 		<h2 id="task-label" class="label">{m.newJob.taskLabel}</h2>
 		<div class="tasks">
@@ -349,6 +447,32 @@
 			{#if error}
 				<p class="chip danger">{error}</p>
 			{/if}
+			{#if naming === null}
+				<button class="btn ghost" disabled={drafts.length === 0} onclick={() => (naming = '')}
+					>{m.newJob.pipelineSave}</button
+				>
+			{:else}
+				<form
+					class="naming"
+					onsubmit={(e) => {
+						e.preventDefault();
+						void savePipeline();
+					}}
+				>
+					<!-- svelte-ignore a11y_autofocus -->
+					<input
+						type="text"
+						bind:value={naming}
+						placeholder={m.newJob.pipelineName}
+						aria-label={m.newJob.pipelineName}
+						autofocus
+					/>
+					<button class="btn" type="submit" disabled={!naming.trim()}>{m.common.save}</button>
+					<button class="btn ghost" type="button" onclick={() => (naming = null)}
+						>{m.common.cancel}</button
+					>
+				</form>
+			{/if}
 			<button class="btn primary big" disabled={!ready || starting} onclick={start}>
 				{starting ? m.newJob.starting : m.newJob.start}
 			</button>
@@ -372,6 +496,52 @@
 	}
 	.small {
 		font-size: var(--type-sm);
+	}
+	.pipelines ul {
+		list-style: none;
+		margin: var(--space-2) 0 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+	.pipelines li {
+		display: flex;
+		align-items: stretch;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-control);
+	}
+	.pipelines li:hover {
+		border-color: var(--accent);
+	}
+	.pipeline {
+		display: grid;
+		text-align: left;
+		gap: 2px;
+		padding: var(--space-2) var(--space-3);
+		border: 0;
+		background: none;
+		cursor: pointer;
+		color: var(--text-body);
+	}
+	.pipeline strong {
+		color: var(--text-bright);
+	}
+	.pipeline .muted {
+		font-size: var(--type-xs);
+	}
+	.pipelines .x {
+		padding: 0 var(--space-2);
+		border-left: 1px solid var(--line);
+		color: var(--text-muted);
+	}
+	.naming {
+		display: flex;
+		gap: var(--space-2);
+		align-items: center;
+	}
+	.naming input {
+		width: 14rem;
 	}
 	.tasks {
 		display: grid;

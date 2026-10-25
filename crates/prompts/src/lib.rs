@@ -5,6 +5,9 @@
 //! resetting deletes the override. User presets are one JSON file each in the presets folder.
 
 mod defaults;
+mod pipelines;
+
+pub use pipelines::{Pipeline, PipelineLibrary, PipelineSetup};
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -64,6 +67,8 @@ pub enum PromptError {
     InvalidImport(String),
     #[error(transparent)]
     Schema(#[from] SchemaError),
+    #[error("A pipeline needs a name and at least one model")]
+    IncompletePipeline,
 }
 
 /// The file format used to share presets.
@@ -371,12 +376,12 @@ fn new_user_id() -> String {
     format!("user-{}", uuid::Uuid::new_v4())
 }
 
-fn io(err: impl std::fmt::Display) -> PromptError {
+pub(crate) fn io(err: impl std::fmt::Display) -> PromptError {
     PromptError::Io(err.to_string())
 }
 
-fn write_atomic(path: &Path, preset: &Preset) -> Result<(), PromptError> {
-    let json = serde_json::to_string_pretty(preset).map_err(io)?;
+pub(crate) fn write_atomic(path: &Path, value: &impl Serialize) -> Result<(), PromptError> {
+    let json = serde_json::to_string_pretty(value).map_err(io)?;
     let tmp = path.with_extension("json.pending");
     fs::write(&tmp, json).map_err(io)?;
     fs::rename(&tmp, path).map_err(io)
