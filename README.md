@@ -406,5 +406,5 @@ the app's network access. Unsigned installers will also be attached to GitHub re
 
 ## Author and license
 
-[Frédérick Madore](https://www.frederickmadore.com/), Leibniz-Zentrum Moderner Orient (ZMO), Berlin.
+[Frédérick Madore](https://www.frederickmadore.com/). An independent project.
 [MIT license](LICENSE).
