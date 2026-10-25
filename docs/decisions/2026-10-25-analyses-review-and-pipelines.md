@@ -81,6 +81,15 @@ CC BY-NC licence rules out reusing their code in an MIT app.
   `provenance.json`; corrections and speaker names are layers applied by the engine; an invalid
   answer retries like a transient error.
 
+## Security alert
+
+Dependabot reported glib 0.18 (GHSA-wrw7-89jp-8q8g, RUSTSEC-2024-0429: unsound
+`Iterator` impls on `VariantStrIter`, fixed in 0.20). glib comes only from the GTK stack that
+Tauri, wry, tao, muda and tray-icon use on Linux; Scriptorium ships for Windows, where none of
+it is compiled (`cargo tree -i glib` for both Windows targets is empty), and nothing calls
+`VariantStrIter`. It cannot be updated until Tauri moves off gtk 0.18, so the advisory is
+ignored in `.cargo/audit.toml` with this reason.
+
 ## Consequences
 
 - Output files of analyses end in `.analysis` instead of `.summary`.
