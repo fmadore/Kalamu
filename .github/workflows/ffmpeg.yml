@@ -55,11 +55,13 @@ jobs:
             "https://downloads.xiph.org/releases/opus/opus-${OPUS_VERSION}.tar.gz"
           (cd sources && sha256sum *) | tee SOURCES.sha256
 
-      # Every ARM64 Windows processor has NEON, which libopus already assumes on aarch64; its
-      # runtime NEON detection has no path for Windows built with MinGW, so it is turned off
-      # (the option does nothing on x86_64).
+      # On ARM64, libopus's NEON code does not build for Windows with MinGW (neither its runtime
+      # CPU detection nor its intrinsics), so it is built in plain C there. Encoding mono speech
+      # at 32 kbit/s costs too little for the difference to matter.
       - name: libopus
         run: |
+          extra=()
+          if [ "${{ matrix.arch }}" = aarch64 ]; then extra+=(-DOPUS_DISABLE_INTRINSICS=ON); fi
           tar -xf "sources/opus-${OPUS_VERSION}.tar.gz"
           cmake -S "opus-${OPUS_VERSION}" -B opus-build -G "Unix Makefiles" \
             -DCMAKE_SYSTEM_NAME=Windows \
@@ -71,7 +73,7 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF \
             -DOPUS_BUILD_PROGRAMS=OFF \
             -DOPUS_BUILD_TESTING=OFF \
-            -DOPUS_MAY_HAVE_NEON=OFF
+            "${extra[@]}"
           cmake --build opus-build -j"$(nproc)"
           cmake --install opus-build
 
