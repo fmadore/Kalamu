@@ -2,7 +2,8 @@
   "detector": {
     "ignoreRules": [],
     "ignoreFiles": [
-      ".impeccable/mocks/**"
+      ".impeccable/mocks/**",
+      "docs/design/**"
     ],
     "ignoreValues": []
   }
