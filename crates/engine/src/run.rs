@@ -105,8 +105,8 @@ impl Engine {
             // A recording resumed keeps the pieces planned the first time: planning decodes the
             // whole file, and the cuts must not move under results already stored.
             let stored = stored_pieces(&existing, &job, source);
-            let pieces = if job.task == scriptorium_core::Task::Summary {
-                // A summary reads the whole document at once.
+            let pieces = if job.task == scriptorium_core::Task::Analysis {
+                // An analysis reads the whole document at once.
                 vec![PieceRef::Whole]
             } else if stored.is_empty() {
                 let (opened, split, sample, length) = (
@@ -333,6 +333,7 @@ impl Engine {
                 input: &input,
                 languages: &job.settings.languages,
                 options: &setup.options,
+                analysis: setup.prompt.schema.as_ref(),
                 stop,
             };
             match provider.process(&api_key, request).await {

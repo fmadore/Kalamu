@@ -15,8 +15,8 @@ use scriptorium_core::{
 };
 use serde_json::{Value, json};
 
+use crate::analysis;
 use crate::http::{base64, send_json};
-use crate::summary;
 
 const BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -50,7 +50,7 @@ impl Gemini {
     fn body(request: &ProcessRequest<'_>) -> Value {
         let input = request.input;
         let media = if input.mime == "text/plain" {
-            json!({ "text": summary::tagged_document(input) })
+            json!({ "text": analysis::tagged_document(input) })
         } else {
             json!({
                 "inlineData": {
@@ -68,9 +68,9 @@ impl Gemini {
         if input.mime == "application/pdf" || input.mime.starts_with("image/") {
             generation["mediaResolution"] = json!("MEDIA_RESOLUTION_HIGH");
         }
-        if request.task == Task::Summary {
+        if let Some(fields) = request.analysis {
             generation["responseMimeType"] = json!("application/json");
-            generation["responseJsonSchema"] = summary::schema();
+            generation["responseJsonSchema"] = analysis::schema(fields);
         }
         json!({
             "systemInstruction": { "parts": [{ "text": request.prompt }] },
@@ -151,7 +151,7 @@ impl Gemini {
                 .get("modelVersion")
                 .and_then(Value::as_str)
                 .map(str::to_string),
-            keywords: Vec::new(),
+            fields: Vec::new(),
             regions: Vec::new(),
         })
     }
@@ -182,7 +182,7 @@ impl Provider for Gemini {
                 "audio/aac",
                 "audio/webm",
             ],
-            Task::Summary => &["text/plain", "application/pdf"],
+            Task::Analysis => &["text/plain", "application/pdf"],
         }
     }
 
@@ -206,8 +206,8 @@ impl Provider for Gemini {
         )
         .await?;
         let output = Self::parse(&response)?;
-        if request.task == Task::Summary {
-            summary::finish(output)
+        if request.task == Task::Analysis {
+            analysis::finish(output, analysis::fields(&request)?)
         } else {
             Ok(output)
         }

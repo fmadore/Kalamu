@@ -44,7 +44,7 @@
       "tasks": [
         "text_extraction",
         "audio_transcription",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -62,7 +62,7 @@
       "status": "stable",
       "recommended_for": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "pricing": {
         "input_per_mtok": 0.75,
@@ -81,7 +81,7 @@
       "tasks": [
         "text_extraction",
         "audio_transcription",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -116,7 +116,7 @@
       "tasks": [
         "text_extraction",
         "audio_transcription",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -149,7 +149,7 @@
       "description": "The cheapest Gemini model, for clean printed text in bulk.",
       "tasks": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -176,7 +176,7 @@
       "description": "OpenAI's main model (it supersedes GPT-6 Sol); reads PDFs and images.",
       "tasks": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -203,7 +203,7 @@
       "description": "OpenAI's most capable and most expensive model, for the most difficult material.",
       "tasks": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -231,7 +231,7 @@
       "description": "Small and inexpensive; for clean printed text.",
       "tasks": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -310,7 +310,7 @@
       "description": "Anthropic's most capable model, at twice Opus's price; for the hardest manuscripts and long reports.",
       "tasks": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -339,7 +339,7 @@
       "description": "Anthropic's current Opus; strong on difficult layouts and multilingual material. Reads PDFs and images, not audio.",
       "tasks": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -367,7 +367,7 @@
       "description": "Faster and cheaper than Opus; used for Arabic books in iwac-ai-pipelines.",
       "tasks": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",
@@ -395,7 +395,7 @@
       "description": "The cheapest Claude model, for clean printed text.",
       "tasks": [
         "text_extraction",
-        "summary"
+        "analysis"
       ],
       "inputs": [
         "application/pdf",

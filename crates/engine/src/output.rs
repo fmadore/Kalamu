@@ -146,6 +146,16 @@ impl Engine {
                 c.setup_id == setup_id && c.source_id == source_id && c.index == state.index
             });
             let corrected_text = correction.and_then(|c| c.text.clone());
+            // An analysis's corrected answers replace the model's, and its text is set out from
+            // them again.
+            let corrected_fields = correction.and_then(|c| c.fields.clone());
+            let fields = corrected_fields
+                .clone()
+                .unwrap_or_else(|| result.output.fields.clone());
+            let corrected_text = match (&corrected_fields, &setup.prompt.schema) {
+                (Some(answers), Some(schema)) => Some(schema.render(answers)),
+                _ => corrected_text,
+            };
             let is_reviewed = correction.is_some_and(|c| c.reviewed);
             let number = state.index + 1;
             if corrected_text.is_some() {
@@ -183,9 +193,9 @@ impl Engine {
                     &speaker_names,
                 ),
                 segments,
-                corrected: correction.is_some_and(|c| c.text.is_some()),
+                corrected: corrected_text.is_some(),
                 reviewed: is_reviewed,
-                keywords: result.output.keywords.clone(),
+                fields,
                 regions,
             });
         }
@@ -219,6 +229,7 @@ impl Engine {
                 sha256: sha256_hex(
                     format!("{}\n{}", setup.prompt.text, setup.prompt.user_prompt).as_bytes(),
                 ),
+                schema: setup.prompt.schema.clone(),
             },
             languages: job.settings.languages.clone(),
             detected_languages: detected.into_iter().collect(),
@@ -242,7 +253,7 @@ impl Engine {
 }
 
 /// Where a source's results go and the name they share: the source's name, with the set-up's
-/// label in comparison mode, and `.summary` for summaries so they never replace the
+/// label in comparison mode, and `.analysis` for analyses so they never replace the
 /// transcription or extraction they summarise.
 fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, String) {
     let dir = match &job.output.destination {
@@ -261,8 +272,8 @@ fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, S
     } else {
         stem
     };
-    if job.task == scriptorium_core::Task::Summary {
-        base.push_str(".summary");
+    if job.task == scriptorium_core::Task::Analysis {
+        base.push_str(".analysis");
     }
     (dir, base)
 }

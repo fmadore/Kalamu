@@ -10,8 +10,10 @@ pub enum Task {
     TextExtraction,
     /// Speech to text from audio or video.
     AudioTranscription,
-    /// A summary and keywords for each text, Word file or PDF.
-    Summary,
+    /// The researcher's own questions to each text, Word file or PDF: a summary, the people
+    /// and places it names, its tone. Stored jobs from before the rename read as this.
+    #[serde(alias = "summary")]
+    Analysis,
 }
 
 impl Task {
@@ -19,7 +21,7 @@ impl Task {
         match self {
             Self::TextExtraction => "text_extraction",
             Self::AudioTranscription => "audio_transcription",
-            Self::Summary => "summary",
+            Self::Analysis => "analysis",
         }
     }
 }

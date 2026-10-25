@@ -2,7 +2,9 @@
 	// The interface's icons: Lucide, at one rendered stroke weight whatever the size. Each is
 	// decorative; the control that holds it carries the accessible name. A new icon is one import
 	// and one entry below.
+	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Pause from '@lucide/svelte/icons/pause';
 	import Play from '@lucide/svelte/icons/play';
@@ -13,6 +15,8 @@
 
 	const ICONS = {
 		back: ArrowLeft,
+		down: ArrowDown,
+		up: ArrowUp,
 		chevron: ChevronRight,
 		close: X,
 		pause: Pause,

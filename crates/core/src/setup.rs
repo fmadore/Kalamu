@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{ProviderId, SetupId};
+use crate::{AnalysisSchema, ProviderId, SetupId};
 
 /// The prompt a set-up uses, frozen at job creation so later edits to a preset never change
 /// what a job did.
@@ -18,6 +18,10 @@ pub struct PromptSnapshot {
     /// The short request sent with each page or segment.
     #[serde(default)]
     pub user_prompt: String,
+    /// For an analysis, the fields its answer must have.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub schema: Option<AnalysisSchema>,
 }
 
 /// Provider-independent options for one set-up.

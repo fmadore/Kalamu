@@ -63,9 +63,9 @@ pub struct ExportPart {
     pub segments: Vec<Segment>,
     pub corrected: bool,
     pub reviewed: bool,
-    /// Keywords, for summaries.
+    /// An analysis's answers, corrected where the researcher corrected them.
     #[serde(default)]
-    pub keywords: Vec<String>,
+    pub fields: Vec<crate::FieldAnswer>,
     /// Text blocks placed on the page, for a searchable PDF.
     #[serde(default)]
     pub regions: Vec<crate::TextRegion>,

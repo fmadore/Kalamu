@@ -57,8 +57,8 @@
 		formats = [
 			...(task === 'audio_transcription' ? app.settings!.audio_formats : app.settings!.text_formats)
 		].filter((f) => FORMATS[task].includes(f));
-		// A summary is written in one language.
-		if (task === 'summary') languages = languages.slice(0, 1);
+		// An analysis is written in one language.
+		if (task === 'analysis') languages = languages.slice(0, 1);
 		files = files.filter((f) => readsKind(task, f.source?.kind));
 	}
 
@@ -176,7 +176,7 @@
 	<section aria-labelledby="task-label">
 		<h2 id="task-label" class="label">{m.newJob.taskLabel}</h2>
 		<div class="tasks">
-			{#each ['text_extraction', 'audio_transcription', 'summary'] as const as t (t)}
+			{#each ['text_extraction', 'audio_transcription', 'analysis'] as const as t (t)}
 				<button
 					class="task"
 					class:selected={task === t}
@@ -194,12 +194,12 @@
 
 	<section class="card block" aria-labelledby="lang-title">
 		<h2 id="lang-title">
-			{task === 'summary' ? m.newJob.summaryLanguageTitle : m.newJob.languageTitle}
+			{task === 'analysis' ? m.newJob.analysisLanguageTitle : m.newJob.languageTitle}
 		</h2>
 		<div class="row">
 			<label class="inline"
 				><input type="radio" bind:group={languageMode} value="auto" />
-				{task === 'summary' ? m.newJob.summaryLanguageAuto : m.newJob.languageAuto}</label
+				{task === 'analysis' ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
 			>
 			<label class="inline"
 				><input type="radio" bind:group={languageMode} value="explicit" />
@@ -223,7 +223,7 @@
 					aria-label={m.newJob.addLanguage}
 					onchange={(e) => {
 						const v = e.currentTarget.value;
-						if (v && task === 'summary') languages = [v];
+						if (v && task === 'analysis') languages = [v];
 						else if (v && !languages.includes(v)) languages = [...languages, v];
 						e.currentTarget.value = '';
 					}}
@@ -236,7 +236,7 @@
 			</div>
 		{/if}
 		<p class="muted small">
-			{task === 'summary' ? m.newJob.summaryLanguageHint : m.newJob.languageHint}
+			{task === 'analysis' ? m.newJob.analysisLanguageHint : m.newJob.languageHint}
 		</p>
 	</section>
 

@@ -55,7 +55,16 @@ impl From<scriptorium_offline::OfflineError> for AppError {
 
 impl From<scriptorium_prompts::PromptError> for AppError {
     fn from(e: scriptorium_prompts::PromptError) -> Self {
-        Self::new("prompt.invalid", e)
+        use scriptorium_core::SchemaError;
+        use scriptorium_prompts::PromptError;
+        let id = match &e {
+            PromptError::Schema(SchemaError::Empty) => "prompt.no_fields",
+            PromptError::Schema(SchemaError::Unnamed) => "prompt.unnamed_field",
+            PromptError::Schema(SchemaError::Duplicate(_)) => "prompt.duplicate_field",
+            PromptError::Schema(SchemaError::TooFewValues(_)) => "prompt.few_values",
+            _ => "prompt.invalid",
+        };
+        Self::new(id, e)
     }
 }
 

@@ -3,6 +3,7 @@
 //! This crate performs no I/O: it knows nothing about Tauri, SQLite, HTTP or FFmpeg. Types that
 //! cross into the front end derive [`ts_rs::TS`]; `cargo test` writes their TypeScript bindings.
 
+pub mod analysis;
 pub mod event;
 pub mod export;
 pub mod fingerprint;
@@ -19,6 +20,7 @@ pub mod store;
 pub mod task;
 pub mod warning;
 
+pub use analysis::{AnalysisSchema, Field, FieldAnswer, FieldKind, FieldValue, SchemaError};
 pub use event::ProgressEvent;
 pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter};
 pub use fingerprint::CacheKey;

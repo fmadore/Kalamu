@@ -6,7 +6,9 @@ use std::time::Duration;
 use async_trait::async_trait;
 use thiserror::Error;
 
-use crate::{LanguageChoice, PieceRef, ProcessOutput, ProviderId, SetupOptions, Task};
+use crate::{
+    AnalysisSchema, LanguageChoice, PieceRef, ProcessOutput, ProviderId, SetupOptions, Task,
+};
 
 /// An API key, kept out of `Debug` output and logs.
 #[derive(Clone)]
@@ -70,6 +72,8 @@ pub struct ProcessRequest<'a> {
     pub input: &'a PreparedInput,
     pub languages: &'a LanguageChoice,
     pub options: &'a SetupOptions,
+    /// For an analysis, the fields the answer must have.
+    pub analysis: Option<&'a AnalysisSchema>,
     pub stop: &'a StopSignal,
 }
 
@@ -96,6 +100,9 @@ pub enum ProviderError {
     Unsupported(String),
     #[error("Unexpected response from the provider: {0}")]
     Other(String),
+    /// An analysis answer that breaks its schema; another try usually gives a good one.
+    #[error("The answer did not fit the analysis: {0}")]
+    InvalidAnswer(String),
     /// An offline engine whose model has not been downloaded.
     #[error("Not installed: {0}")]
     NotInstalled(String),
@@ -116,6 +123,7 @@ impl ProviderError {
             Self::InvalidRequest(_) => "provider.invalid_request",
             Self::Unsupported(_) => "provider.unsupported",
             Self::Other(_) => "provider.other",
+            Self::InvalidAnswer(_) => "provider.invalid_answer",
             Self::NotInstalled(_) => "provider.not_installed",
             Self::Interrupted => "provider.interrupted",
         }
@@ -123,7 +131,10 @@ impl ProviderError {
 
     /// Worth trying again after a delay.
     pub fn is_retryable(&self) -> bool {
-        matches!(self, Self::RateLimited { .. } | Self::Transient(_))
+        matches!(
+            self,
+            Self::RateLimited { .. } | Self::Transient(_) | Self::InvalidAnswer(_)
+        )
     }
 
     /// The failure will not change on retry and affects every piece (stop the job).

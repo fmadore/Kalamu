@@ -38,6 +38,10 @@ impl CacheKey {
         if !preprocessing.is_empty() {
             material["preprocessing"] = serde_json::json!(preprocessing);
         }
+        // Only analyses have a schema; other keys are unchanged by its addition.
+        if let Some(schema) = &setup.prompt.schema {
+            material["schema"] = serde_json::json!(schema);
+        }
         Self(sha256_hex(material.to_string().as_bytes()))
     }
 
@@ -67,6 +71,7 @@ mod tests {
                 template: prompt.into(),
                 text: prompt.into(),
                 user_prompt: "Transcribe this page.".into(),
+                schema: None,
             },
             options: SetupOptions::default(),
         }

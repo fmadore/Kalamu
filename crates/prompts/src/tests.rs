@@ -111,3 +111,48 @@ fn the_line_choice_overrides_the_preset() {
     assert!(text.ends_with("joining lines or removing hyphens."));
     assert!(render("Keep line breaks.", &joined).contains("rejoin a word split across two lines"));
 }
+
+#[test]
+fn every_analysis_default_has_valid_fields_described_in_its_prompt() {
+    let library = PromptLibrary::in_memory();
+    let analyses = library.list(Some(Task::Analysis));
+    assert!(analyses.len() >= 4);
+    for preset in analyses {
+        let schema = preset.schema.clone().unwrap_or_default();
+        assert_eq!(schema.validate(), Ok(()), "{}", preset.id);
+        let snapshot = preset.snapshot(&RenderContext::default());
+        assert_eq!(snapshot.schema.as_ref(), Some(&schema));
+        assert!(snapshot.text.contains("## What to find"), "{}", preset.id);
+        for field in &schema.fields {
+            assert!(snapshot.text.contains(&format!("(`{}`", field.key)));
+        }
+        assert!(!snapshot.text.contains("{languages}"));
+    }
+    let tone = library
+        .get("analysis.tone")
+        .map(|p| p.snapshot(&RenderContext::default()));
+    let text = tone.map(|s| s.text).unwrap_or_default();
+    assert!(text.contains("(`tone`, exactly one of: Positive, Neutral, Negative, Mixed)"));
+    assert!(text.contains("in `tone_reason`"));
+}
+
+#[test]
+fn an_analysis_cannot_be_saved_without_fields_and_others_lose_theirs() {
+    let mut library = PromptLibrary::in_memory();
+    let mut analysis = library
+        .get("analysis.entities")
+        .unwrap_or_else(|e| panic!("{e}"));
+    analysis.id = String::new();
+    analysis.schema = None;
+    assert!(matches!(
+        library.save(analysis.clone()),
+        Err(PromptError::Schema(SchemaError::Empty))
+    ));
+    let mut extraction = library
+        .get("text_extraction.newspaper")
+        .unwrap_or_else(|e| panic!("{e}"));
+    extraction.id = String::new();
+    extraction.schema = library.get("analysis.tone").ok().and_then(|p| p.schema);
+    let saved = library.save(extraction).unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(saved.schema, None);
+}

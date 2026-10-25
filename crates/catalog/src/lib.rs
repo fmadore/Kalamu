@@ -28,8 +28,8 @@ const OUTPUT_TOKENS_PER_PAGE: f64 = 900.0;
 const INPUT_TOKENS_PER_AUDIO_MINUTE: f64 = 1_500.0;
 /// About 150 spoken words a minute.
 const OUTPUT_TOKENS_PER_AUDIO_MINUTE: f64 = 250.0;
-/// A summary of a few paragraphs and its keywords, with some thinking.
-const SUMMARY_OUTPUT_TOKENS: f64 = 1_500.0;
+/// An analysis's answer (a summary of a few paragraphs, lists of names), with some thinking.
+const ANALYSIS_OUTPUT_TOKENS: f64 = 1_500.0;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -278,13 +278,13 @@ impl Catalog {
                     None
                 }
             }
-            // A summary reads the whole document once and writes a short answer.
-            Task::Summary => match (p.input_per_mtok, p.output_per_mtok) {
+            // An analysis reads the whole document once and writes a short answer.
+            Task::Analysis => match (p.input_per_mtok, p.output_per_mtok) {
                 (Some(input), Some(output)) => {
                     let pages = f64::from(pages.max(1));
                     let prompt_tokens = prompt_chars as f64 / 4.0;
                     let tokens_in = pages * INPUT_TOKENS_PER_PAGE + prompt_tokens;
-                    Some((tokens_in * input + SUMMARY_OUTPUT_TOKENS * output) / 1_000_000.0)
+                    Some((tokens_in * input + ANALYSIS_OUTPUT_TOKENS * output) / 1_000_000.0)
                 }
                 _ => None,
             },
@@ -360,7 +360,7 @@ mod tests {
         for task in [
             Task::TextExtraction,
             Task::AudioTranscription,
-            Task::Summary,
+            Task::Analysis,
         ] {
             assert!(catalog.recommended(task, &[]).is_some());
         }

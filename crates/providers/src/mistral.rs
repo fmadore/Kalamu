@@ -78,7 +78,7 @@ impl Mistral {
                 .get("model")
                 .and_then(Value::as_str)
                 .map(str::to_string),
-            keywords: Vec::new(),
+            fields: Vec::new(),
             regions,
         })
     }
@@ -168,7 +168,7 @@ impl Mistral {
                 .get("model")
                 .and_then(Value::as_str)
                 .map(str::to_string),
-            keywords: Vec::new(),
+            fields: Vec::new(),
             regions: Vec::new(),
         })
     }
@@ -288,7 +288,7 @@ impl Provider for Mistral {
                 "audio/webm",
             ],
             // Summaries need Mistral's chat models, not wired up yet.
-            Task::Summary => &[],
+            Task::Analysis => &[],
         }
     }
 
@@ -309,7 +309,7 @@ impl Provider for Mistral {
                 Self::parse_ocr(&response)
             }
             Task::AudioTranscription => self.transcribe(key, &request).await,
-            Task::Summary => Err(ProviderError::Unsupported(
+            Task::Analysis => Err(ProviderError::Unsupported(
                 "Summaries with Mistral are not available yet".into(),
             )),
         }

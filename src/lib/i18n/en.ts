@@ -22,8 +22,9 @@ export const en = {
 		text_extractionHint: 'Printed and handwritten documents: PDF, JPEG, PNG, TIFF',
 		audio_transcription: 'Transcribe audio',
 		audio_transcriptionHint: 'Interviews, recordings and videos: MP3, M4A, WAV, MP4',
-		summary: 'Summarise and find keywords',
-		summaryHint: 'Texts, Word files, PDFs, and the results of earlier jobs'
+		analysis: 'Analyse texts',
+		analysisHint:
+			'Summaries, people and places, tone: you choose what to find. Texts, Word files, PDFs and earlier results'
 	},
 	newJob: {
 		title: 'New job',
@@ -44,10 +45,10 @@ export const en = {
 		languageTitle: 'Language',
 		languageAuto: 'Detect automatically',
 		languagePick: 'Choose languages',
-		summaryLanguageTitle: 'Language of the summary',
-		summaryLanguageAuto: 'Same as the document',
-		summaryLanguageHint:
-			'Choose a language to have every summary and its keywords written in it, whatever the language of the document.',
+		analysisLanguageTitle: 'Language of the answers',
+		analysisLanguageAuto: 'Same as the document',
+		analysisLanguageHint:
+			'Choose a language to have summaries, subjects and reasons written in it, whatever the language of the document. Names stay as the document spells them.',
 		languageHint:
 			'Choosing helps with short or noisy material. Pick several for documents or recordings that mix languages.',
 		addLanguage: 'Add a language…',
@@ -59,6 +60,9 @@ export const en = {
 		noPrompt: 'This model takes no prompt',
 		label: 'Label',
 		compareAdd: 'Compare with another model',
+		analysis: 'Analysis',
+		finds: 'Fills in',
+		editFields: 'Change the fields in Prompts',
 		linesTitle: 'Line breaks',
 		lines: {
 			running_text: 'Running text',
@@ -135,9 +139,9 @@ export const en = {
 		delete: 'Delete',
 		deleteConfirm: 'Delete this job? Files already written stay on disk.',
 		review: 'Review',
-		summarise: 'Summarise the results',
+		summarise: 'Analyse the results',
 		noTextOutputs:
-			'This job wrote no text file to summarise. Add Text (.txt) to its formats and export again.',
+			'This job wrote no text file to analyse. Add Text (.txt) to its formats and export again.',
 		openFolder: 'Show files',
 		progress: (done: number, total: number) => `${done} of ${total} pieces`,
 		failed: (n: number) => (n === 1 ? '1 failed' : `${n} failed`),
@@ -230,6 +234,7 @@ export const en = {
 		description: 'Description',
 		instructions: 'Instructions (system prompt)',
 		userPrompt: 'Request sent with each page',
+		userPromptDocument: 'Request sent with each document',
 		save: 'Save',
 		duplicate: 'Duplicate',
 		copyName: (name: string) => `${name} (copy)`,
@@ -239,7 +244,50 @@ export const en = {
 		import: 'Import…',
 		imported: (n: number) => `${n} imported`,
 		saved: 'Saved',
-		unsaved: 'Unsaved changes'
+		unsaved: 'Unsaved changes',
+		analysisHint:
+			'An analysis is a set of fields to fill in for each document. Start from one of these, then duplicate it to make your own.'
+	},
+	fields: {
+		title: 'Fields',
+		hint: 'What to find in each document. Each field becomes a column in the spreadsheet export.',
+		name: 'Name',
+		kind: 'Answer',
+		kinds: {
+			text: 'Text',
+			list: 'List of names or terms',
+			choice: 'One choice',
+			choices: 'Several choices'
+		},
+		max: 'At most',
+		values: 'Choices, separated by commas',
+		valuesPlaceholder: 'Positive, Neutral, Negative',
+		instructions: 'What belongs here',
+		instructionsPlaceholder: 'For example: towns, villages and regions; mosques count as places.',
+		reason: 'Ask for a reason',
+		remove: (label: string) => `Remove ${label || 'this field'}`,
+		up: 'Move up',
+		down: 'Move down',
+		add: 'Add a field',
+		templates: {
+			summary: {
+				label: 'Summary',
+				instructions: 'What this document in particular says: who, what, where, when.'
+			},
+			people: { label: 'People', instructions: 'People named in the document.' },
+			places: { label: 'Places', instructions: 'Places named in the document.' },
+			organisations: {
+				label: 'Organisations',
+				instructions: 'Associations, parties, administrations, companies, religious bodies.'
+			},
+			keywords: {
+				label: 'Keywords',
+				instructions: 'Terms someone would search for, specific rather than general.'
+			},
+			tone: { label: 'Tone', instructions: 'How the document presents its main subject.' },
+			custom: { label: 'Other', instructions: '' }
+		},
+		toneValues: ['Positive', 'Neutral', 'Negative', 'Mixed']
 	},
 	settings: {
 		title: 'Settings',
@@ -333,6 +381,10 @@ export const en = {
 		'media.unsupported': 'This file type is not supported yet.',
 		'media.read': 'The file could not be read.',
 		'prompt.invalid': 'The prompt could not be saved: it needs a name and instructions.',
+		'prompt.no_fields': 'An analysis needs at least one field.',
+		'prompt.unnamed_field': 'Every field needs a name.',
+		'prompt.duplicate_field': 'Two fields have the same name.',
+		'prompt.few_values': 'A choice needs at least two values to choose from.',
 		'provider.unknown': 'Unknown provider.',
 		'provider.missing_key': 'No API key is saved for this provider. Add one in Settings.',
 		'provider.unsupported': 'This model cannot do this task.',
@@ -343,6 +395,8 @@ export const en = {
 		'provider.blocked': 'The provider refused to return text for this page.',
 		'provider.invalid_request': 'The provider rejected the request.',
 		'provider.other': 'The provider sent an unexpected response.',
+		'provider.invalid_answer':
+			"The model's answer did not fit the analysis's fields; it is asked again.",
 		'provider.not_installed':
 			'This offline model has not been downloaded. Download it in Settings.',
 		'provider.interrupted': 'Stopped before the end; it will continue when the job resumes.',

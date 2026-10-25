@@ -1,10 +1,11 @@
 //! The tested default prompts, ported verbatim from zmo-ai-pipelines (`printed-*`) and
 //! iwac-ai-pipelines (the transcription and HTR ones). The per-page requests come from the same
-//! scripts. The summary prompts are new, in English, keeping the principles of
-//! iwac-ai-pipelines' bilingual summary prompt (specific, faithful, searchable) without its
-//! collection-specific parts.
+//! scripts. The analysis prompts are new, in English: the summaries keep the principles of
+//! iwac-ai-pipelines' bilingual summary prompt (specific, faithful, searchable), the entities
+//! its NER rules and the tone its sentiment scales (labels, never numbers, with a reason),
+//! without their collection-specific parts.
 
-use scriptorium_core::Task;
+use scriptorium_core::{AnalysisSchema, Field, FieldKind, Task};
 
 pub(crate) struct Default {
     pub id: &'static str,
@@ -13,6 +14,8 @@ pub(crate) struct Default {
     pub description: &'static str,
     pub instructions: &'static str,
     pub user_prompt: &'static str,
+    /// The fields an analysis preset asks for.
+    pub schema: Option<fn() -> AnalysisSchema>,
 }
 
 /// zmo-ai-pipelines' `USER_PROMPT`.
@@ -26,8 +29,112 @@ exact wording, spacing rules, accents, and WITHOUT summarizing or omitting any z
 
 const RECORDING_REQUEST: &str = "Transcribe this recording, following the instructions given.";
 
-const SUMMARY_REQUEST: &str =
-    "Summarise the document above and give its keywords, following the instructions given.";
+const ANALYSIS_REQUEST: &str =
+    "Read the document above and fill in each field, following the instructions given.";
+
+fn field(label: &str, instructions: &str, kind: FieldKind, reason: bool) -> Field {
+    Field {
+        key: String::new(),
+        label: label.to_string(),
+        instructions: instructions.to_string(),
+        kind,
+        reason,
+    }
+}
+
+fn list(max: u32) -> FieldKind {
+    FieldKind::List { max: Some(max) }
+}
+
+fn choice(values: &[&str]) -> FieldKind {
+    FieldKind::Choice {
+        values: values.iter().map(|v| (*v).to_string()).collect(),
+    }
+}
+
+const KEYWORDS: &str = "Keywords and short key phrases in {languages} that someone would search \
+for: people, organisations, places, events and specific themes. Prefer the specific (\"Hajj \
+1957\") to the general (\"religion\"), and keep proper names as in the source.";
+
+fn summary_research() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Summary",
+                "What this document in particular says, following the instructions above.",
+                FieldKind::Text,
+                false,
+            ),
+            field("Keywords", KEYWORDS, list(12), false),
+        ],
+    }
+}
+
+fn summary_brief() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Summary",
+                "Two or three dense sentences, following the instructions above.",
+                FieldKind::Text,
+                false,
+            ),
+            field("Keywords", KEYWORDS, list(8), false),
+        ],
+    }
+}
+
+fn entities() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field("People", "People named in the document.", list(30), false),
+            field(
+                "Organisations",
+                "Associations, parties, administrations, companies, religious bodies.",
+                list(20),
+                false,
+            ),
+            field("Places", "Places named in the document.", list(20), false),
+            field(
+                "Subjects",
+                "The document's specific subjects.",
+                list(6),
+                false,
+            ),
+        ],
+    }
+}
+
+fn tone() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Main subject",
+                "What the document is mainly about, in a few words, in {languages}.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Tone",
+                "How the document presents its main subject.",
+                choice(&["Positive", "Neutral", "Negative", "Mixed"]),
+                true,
+            ),
+            field(
+                "Register",
+                "How much the document reports facts and how much it gives opinions.",
+                choice(&[
+                    "Factual",
+                    "Mostly factual",
+                    "Mixed",
+                    "Mostly opinion",
+                    "Opinion",
+                ]),
+                true,
+            ),
+        ],
+    }
+}
 
 pub(crate) const DEFAULTS: &[Default] = &[
     Default {
@@ -37,6 +144,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         description: "Keeps spelling, abbreviations, deletions and insertions exactly as on the page.",
         instructions: include_str!("../defaults/printed-diplomatic.md"),
         user_prompt: PAGE_REQUEST,
+        schema: None,
     },
     Default {
         id: "text_extraction.printed_normalized",
@@ -45,6 +153,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         description: "Readable text: wording and spelling kept, spacing tidied.",
         instructions: include_str!("../defaults/printed-normalized.md"),
         user_prompt: PAGE_REQUEST,
+        schema: None,
     },
     Default {
         id: "text_extraction.newspaper",
@@ -54,6 +163,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         instructions: include_str!("../defaults/newspaper.md"),
         user_prompt: "Please perform complete OCR transcription of this single page. Extract all \
 visible text maintaining original formatting and structure.",
+        schema: None,
     },
     Default {
         id: "text_extraction.handwriting_french",
@@ -62,6 +172,7 @@ visible text maintaining original formatting and structure.",
         description: "French handwriting, keeping historical spelling and French typography.",
         instructions: include_str!("../defaults/handwriting-french.md"),
         user_prompt: HANDWRITING_REQUEST,
+        schema: None,
     },
     Default {
         id: "text_extraction.manuscript_arabic_script",
@@ -70,6 +181,7 @@ visible text maintaining original formatting and structure.",
         description: "Arabic-script handwriting, read right to left, without adding diacritics.",
         instructions: include_str!("../defaults/manuscript-arabic-script.md"),
         user_prompt: HANDWRITING_REQUEST,
+        schema: None,
     },
     Default {
         id: "text_extraction.handwriting_multilingual",
@@ -78,6 +190,7 @@ visible text maintaining original formatting and structure.",
         description: "Detects each language and script and keeps each in its reading direction.",
         instructions: include_str!("../defaults/handwriting-multilingual.md"),
         user_prompt: HANDWRITING_REQUEST,
+        schema: None,
     },
     Default {
         id: "audio_transcription.interview",
@@ -86,6 +199,7 @@ visible text maintaining original formatting and structure.",
         description: "Speaker labels and a timestamp at each turn; code-switching kept as spoken.",
         instructions: include_str!("../defaults/interview-transcription.md"),
         user_prompt: RECORDING_REQUEST,
+        schema: None,
     },
     Default {
         id: "audio_transcription.translate_english",
@@ -94,6 +208,7 @@ visible text maintaining original formatting and structure.",
         description: "An English translation of the recording, with speakers and timestamps.",
         instructions: include_str!("../defaults/interview-translation-english.md"),
         user_prompt: RECORDING_REQUEST,
+        schema: None,
     },
     Default {
         id: "audio_transcription.translate_french",
@@ -102,21 +217,42 @@ visible text maintaining original formatting and structure.",
         description: "A French translation of the recording, with speakers and timestamps.",
         instructions: include_str!("../defaults/interview-translation-french.md"),
         user_prompt: RECORDING_REQUEST,
+        schema: None,
     },
     Default {
-        id: "summary.research",
-        task: Task::Summary,
+        id: "analysis.summary_research",
+        task: Task::Analysis,
         name: "Summary and keywords for research",
         description: "What this document in particular says, with names, figures and dates, and searchable keywords.",
         instructions: include_str!("../defaults/summary-research.md"),
-        user_prompt: SUMMARY_REQUEST,
+        user_prompt: ANALYSIS_REQUEST,
+        schema: Some(summary_research),
     },
     Default {
-        id: "summary.brief",
-        task: Task::Summary,
+        id: "analysis.summary_brief",
+        task: Task::Analysis,
         name: "Short summary for a catalogue",
         description: "Two or three dense sentences that stand out in a list of search results.",
         instructions: include_str!("../defaults/summary-brief.md"),
-        user_prompt: SUMMARY_REQUEST,
+        user_prompt: ANALYSIS_REQUEST,
+        schema: Some(summary_brief),
+    },
+    Default {
+        id: "analysis.entities",
+        task: Task::Analysis,
+        name: "People, places and organisations",
+        description: "The people, organisations, places and subjects each document names, spelled as in the text.",
+        instructions: include_str!("../defaults/analysis-entities.md"),
+        user_prompt: ANALYSIS_REQUEST,
+        schema: Some(entities),
+    },
+    Default {
+        id: "analysis.tone",
+        task: Task::Analysis,
+        name: "Tone of the document",
+        description: "Whether each document presents its subject positively or negatively, and how much it gives opinions, with a reason for each.",
+        instructions: include_str!("../defaults/analysis-tone.md"),
+        user_prompt: ANALYSIS_REQUEST,
+        schema: Some(tone),
     },
 ];

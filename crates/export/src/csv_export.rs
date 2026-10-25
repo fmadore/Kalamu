@@ -38,20 +38,36 @@ impl Exporter for CsvExporter {
                         .map_err(err)?;
                 }
             }
-            Task::Summary => {
-                writer
-                    .write_record(["file", "summary", "keywords", "corrected", "reviewed"])
-                    .map_err(err)?;
+            // One row per document, one column per field (and per reason), labelled as the
+            // researcher named them, so the file opens as a table in a spreadsheet.
+            Task::Analysis => {
+                let fields = doc
+                    .setup
+                    .prompt
+                    .schema
+                    .as_ref()
+                    .map(|s| s.fields.as_slice())
+                    .unwrap_or_default();
+                let mut header = vec!["file".to_string()];
+                for field in fields {
+                    header.push(field.label.clone());
+                    if field.reason {
+                        header.push(format!("{} (reason)", field.label));
+                    }
+                }
+                header.extend(["corrected".into(), "reviewed".into()]);
+                writer.write_record(&header).map_err(err)?;
                 for part in &doc.parts {
-                    writer
-                        .write_record([
-                            doc.source.file_name.clone(),
-                            part.text.trim().to_string(),
-                            part.keywords.join("; "),
-                            part.corrected.to_string(),
-                            part.reviewed.to_string(),
-                        ])
-                        .map_err(err)?;
+                    let mut row = vec![doc.source.file_name.clone()];
+                    for field in fields {
+                        let answer = part.fields.iter().find(|a| a.key == field.key);
+                        row.push(answer.map(|a| a.value.joined()).unwrap_or_default());
+                        if field.reason {
+                            row.push(answer.and_then(|a| a.reason.clone()).unwrap_or_default());
+                        }
+                    }
+                    row.extend([part.corrected.to_string(), part.reviewed.to_string()]);
+                    writer.write_record(&row).map_err(err)?;
                 }
             }
             Task::AudioTranscription => {

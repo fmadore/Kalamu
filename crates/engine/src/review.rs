@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 
 use scriptorium_core::speakers::{labels, rename_segments, rename_text};
-use scriptorium_core::{CacheKey, JobId, PieceRef, PieceStatus, SetupId, SourceId};
+use scriptorium_core::{CacheKey, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -29,8 +29,10 @@ pub struct PieceView {
     pub cost_usd: Option<f64>,
     /// Timed lines of a transcription, relative to the start of the piece.
     pub segments: Vec<scriptorium_core::Segment>,
-    /// Keywords of a summary.
-    pub keywords: Vec<String>,
+    /// An analysis's answers from the model, never edited.
+    pub ai_fields: Vec<FieldAnswer>,
+    /// The researcher's corrected answers, if any.
+    pub corrected_fields: Option<Vec<FieldAnswer>>,
     /// The model's speaker labels in this piece, when the set-up asked for them.
     pub speakers: Vec<String>,
     /// The names the researcher gave this set-up's speakers in this recording.
@@ -90,10 +92,11 @@ impl Engine {
                 reviewed: correction.is_some_and(|c| c.reviewed),
                 model_version: result.as_ref().and_then(|r| r.output.model_version.clone()),
                 cost_usd: result.as_ref().and_then(|r| r.cost_usd),
-                keywords: result
+                ai_fields: result
                     .as_ref()
-                    .map(|r| r.output.keywords.clone())
+                    .map(|r| r.output.fields.clone())
                     .unwrap_or_default(),
+                corrected_fields: correction.and_then(|c| c.fields.clone()),
                 segments: result
                     .map(|r| rename_segments(&r.output.segments, &speaker_names))
                     .unwrap_or_default(),

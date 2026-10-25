@@ -4,8 +4,8 @@
 //! with recorded responses when live keys are available for a recording run.
 
 use scriptorium_core::{
-    ApiKey, LanguageChoice, LanguageCode, PieceRef, PreparedInput, ProcessRequest, Provider,
-    ProviderError, SetupOptions, StopSignal, Task,
+    AnalysisSchema, ApiKey, Field, FieldKind, FieldValue, LanguageChoice, LanguageCode, PieceRef,
+    PreparedInput, ProcessRequest, Provider, ProviderError, SetupOptions, StopSignal, Task,
 };
 use scriptorium_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
 use wiremock::matchers::{body_partial_json, header, method, path};
@@ -37,9 +37,33 @@ fn document() -> PreparedInput {
     }
 }
 
-/// What every provider's structured output returns for a summary.
-const SUMMARY_JSON: &str =
+/// What every provider's structured output returns for the analysis below.
+const ANALYSIS_JSON: &str =
     r#"{"summary":"Réunion de 200 fidèles à Bamako.","keywords":["Bamako","mosquée"]}"#;
+
+/// A summary and keywords, as the shipped research preset asks for.
+static FIELDS: std::sync::LazyLock<AnalysisSchema> = std::sync::LazyLock::new(|| {
+    let mut schema = AnalysisSchema {
+        fields: vec![
+            Field {
+                key: String::new(),
+                label: "Summary".into(),
+                instructions: String::new(),
+                kind: FieldKind::Text,
+                reason: false,
+            },
+            Field {
+                key: String::new(),
+                label: "Keywords".into(),
+                instructions: String::new(),
+                kind: FieldKind::List { max: None },
+                reason: false,
+            },
+        ],
+    };
+    schema.assign_keys();
+    schema
+});
 
 fn audio() -> PreparedInput {
     PreparedInput {
@@ -69,6 +93,7 @@ fn request<'a>(
         input,
         languages,
         options,
+        analysis: (task == Task::Analysis).then(|| &*FIELDS),
         stop: &STOP,
     }
 }
@@ -384,7 +409,7 @@ async fn bad_keys_are_reported_as_auth_errors() {
 }
 
 #[tokio::test]
-async fn summaries_send_the_document_and_a_schema_and_read_back_keywords() {
+async fn analyses_send_the_document_and_the_fields_as_a_schema_and_read_them_back() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .and(path("/models/gemini-3.8-flash:generateContent"))
@@ -394,19 +419,19 @@ async fn summaries_send_the_document_and_a_schema_and_read_back_keywords() {
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "candidates": [{ "finishReason": "STOP",
-                "content": { "parts": [{ "text": SUMMARY_JSON }] } }],
+                "content": { "parts": [{ "text": ANALYSIS_JSON }] } }],
         })))
         .mount(&server)
         .await;
     Mock::given(method("POST"))
         .and(path("/responses"))
         .and(body_partial_json(serde_json::json!({
-            "text": { "format": { "type": "json_schema", "name": "summary", "strict": true } },
+            "text": { "format": { "type": "json_schema", "name": "analysis", "strict": true } },
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "model": "gpt-6-luna",
             "output": [{ "type": "message",
-                "content": [{ "type": "output_text", "text": SUMMARY_JSON }] }],
+                "content": [{ "type": "output_text", "text": ANALYSIS_JSON }] }],
         })))
         .mount(&server)
         .await;
@@ -422,7 +447,7 @@ async fn summaries_send_the_document_and_a_schema_and_read_back_keywords() {
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "model": "claude-haiku-5-5", "stop_reason": "end_turn",
-            "content": [{ "type": "text", "text": SUMMARY_JSON }],
+            "content": [{ "type": "text", "text": ANALYSIS_JSON }],
         })))
         .mount(&server)
         .await;
@@ -446,14 +471,25 @@ async fn summaries_send_the_document_and_a_schema_and_read_back_keywords() {
     for (provider, model) in providers {
         assert!(
             provider
-                .accepted_inputs(Task::Summary)
+                .accepted_inputs(Task::Analysis)
                 .contains(&"text/plain")
         );
         let out = provider
-            .process(&key, request(Task::Summary, model, &input, &langs, &opts))
+            .process(&key, request(Task::Analysis, model, &input, &langs, &opts))
             .await
             .unwrap_or_else(|e| panic!("{model}: {e}"));
-        assert_eq!(out.text, "Réunion de 200 fidèles à Bamako.", "{model}");
-        assert_eq!(out.keywords, ["Bamako", "mosquée"], "{model}");
+        assert_eq!(
+            out.text,
+            "Summary
+Réunion de 200 fidèles à Bamako.
+
+Keywords: Bamako; mosquée",
+            "{model}"
+        );
+        assert_eq!(
+            out.fields[1].value,
+            FieldValue::List(vec!["Bamako".into(), "mosquée".into()]),
+            "{model}"
+        );
     }
 }

@@ -17,6 +17,10 @@ pub struct Correction {
     pub index: u32,
     /// The corrected text, or `None` when the piece was only marked as reviewed.
     pub text: Option<String>,
+    /// An analysis's corrected answers, replacing the model's when present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub fields: Option<Vec<crate::FieldAnswer>>,
     pub reviewed: bool,
     pub updated_at: Timestamp,
 }

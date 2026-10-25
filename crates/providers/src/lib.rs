@@ -1,12 +1,12 @@
 //! Cloud providers. Each module implements [`Provider`] for one service; [`registry`] is the one
 //! place that lists them. Adding a provider means adding a module and a line there.
 
+mod analysis;
 mod anthropic;
 mod gemini;
 mod http;
 mod mistral;
 mod openai;
-mod summary;
 
 use std::sync::Arc;
 

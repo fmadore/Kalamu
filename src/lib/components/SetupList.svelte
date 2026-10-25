@@ -81,7 +81,7 @@
 				</select>
 			</label>
 			<label class="field">
-				<span>{m.newJob.prompt}</span>
+				<span>{task === 'analysis' ? m.newJob.analysis : m.newJob.prompt}</span>
 				{#if !acceptsPrompt(info)}
 					<select disabled><option>{m.newJob.noPrompt}</option></select>
 				{:else}
@@ -116,6 +116,18 @@
 			{/if}
 			{#if info?.description}
 				<p class="muted small desc">{info.description}</p>
+			{/if}
+			{#if task === 'analysis'}
+				{@const fields = presets.find((p) => p.id === d.presetId)?.schema?.fields ?? []}
+				{#if fields.length > 0}
+					<p class="small desc finds">
+						<span class="label">{m.newJob.finds}</span>
+						{fields.map((f) => f.label).join(' · ')}
+						<button class="link" onclick={() => go({ name: 'prompts' })}
+							>{m.newJob.editFields}</button
+						>
+					</p>
+				{/if}
 			{/if}
 			{#if info?.costly}
 				<p class="warning small">{m.newJob.costly}</p>
@@ -204,6 +216,22 @@
 	}
 	.opts {
 		min-height: var(--control-md);
+	}
+	.finds {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		align-items: baseline;
+	}
+	.link {
+		border: 0;
+		background: none;
+		padding: 0;
+		color: var(--accent-soft);
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+		cursor: pointer;
+		font-size: var(--type-sm);
 	}
 	.inline {
 		display: inline-flex;

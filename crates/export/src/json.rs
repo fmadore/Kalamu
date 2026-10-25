@@ -30,9 +30,23 @@ impl Exporter for JsonExporter {
                     "corrected": p.corrected,
                     "reviewed": p.reviewed,
                 });
-                // Only summaries have keywords; other documents keep their version 1 shape.
-                if !p.keywords.is_empty() {
-                    part["keywords"] = json!(p.keywords);
+                // Only analyses have fields: their answers by key, and the reasons given. Other
+                // documents keep their version 1 shape.
+                if !p.fields.is_empty() {
+                    let fields: serde_json::Map<_, _> = p
+                        .fields
+                        .iter()
+                        .map(|a| (a.key.clone(), json!(a.value)))
+                        .collect();
+                    part["fields"] = json!(fields);
+                    let reasons: serde_json::Map<_, _> = p
+                        .fields
+                        .iter()
+                        .filter_map(|a| Some((a.key.clone(), json!(a.reason.as_ref()?))))
+                        .collect();
+                    if !reasons.is_empty() {
+                        part["reasons"] = json!(reasons);
+                    }
                 }
                 part
             })

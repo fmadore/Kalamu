@@ -54,15 +54,11 @@ pub(crate) fn marker(doc: &ExportDocument, index: usize) -> Option<String> {
 /// times run from the start of the recording), otherwise the model's text as is.
 ///
 /// `ExportPart::segments` are already relative to the start of the recording.
+///
+/// An analysis's text is its answers already set out as text, with the researcher's
+/// corrections.
 pub(crate) fn part_text(doc: &ExportDocument, index: usize) -> String {
-    let part = &doc.parts[index];
-    let text = body_text(doc, index);
-    // Summaries end with their keywords.
-    if part.keywords.is_empty() {
-        text
-    } else {
-        format!("{text}\n\nKeywords: {}", part.keywords.join("; "))
-    }
+    body_text(doc, index)
 }
 
 fn body_text(doc: &ExportDocument, index: usize) -> String {

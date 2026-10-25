@@ -55,6 +55,69 @@ const presets: Preset[] = [
 		user_prompt: 'Transcribe this recording.',
 		builtin: true,
 		modified: false
+	},
+	{
+		id: 'analysis.entities',
+		task: 'analysis',
+		name: 'People, places and organisations',
+		description: 'The people, organisations, places and subjects each document names.',
+		instructions: '# People, places and organisations\n\nYou index documents for a researcher…',
+		user_prompt: 'Read the document above and fill in each field.',
+		builtin: true,
+		modified: false,
+		schema: {
+			fields: [
+				{
+					key: 'people',
+					label: 'People',
+					instructions: 'People named in the document.',
+					kind: { type: 'list', max: 30 },
+					reason: false
+				},
+				{
+					key: 'places',
+					label: 'Places',
+					instructions: 'Places named in the document.',
+					kind: { type: 'list', max: 20 },
+					reason: false
+				},
+				{
+					key: 'subjects',
+					label: 'Subjects',
+					instructions: "The document's specific subjects.",
+					kind: { type: 'list', max: 6 },
+					reason: false
+				}
+			]
+		}
+	},
+	{
+		id: 'analysis.tone',
+		task: 'analysis',
+		name: 'Tone of the document',
+		description: 'Whether each document presents its subject positively or negatively.',
+		instructions: '# Tone of the document\n\nYou read documents for a researcher…',
+		user_prompt: 'Read the document above and fill in each field.',
+		builtin: true,
+		modified: false,
+		schema: {
+			fields: [
+				{
+					key: 'main_subject',
+					label: 'Main subject',
+					instructions: 'What the document is mainly about, in a few words.',
+					kind: { type: 'text' },
+					reason: false
+				},
+				{
+					key: 'tone',
+					label: 'Tone',
+					instructions: 'How the document presents its main subject.',
+					kind: { type: 'choice', values: ['Positive', 'Neutral', 'Negative', 'Mixed'] },
+					reason: true
+				}
+			]
+		}
 	}
 ];
 
@@ -164,7 +227,8 @@ const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 		model_version: `${setup.model}-001`,
 		cost_usd: 0.0012,
 		segments: [],
-		keywords: [],
+		ai_fields: [],
+		corrected_fields: null,
 		speakers: [],
 		speaker_names: {}
 	}))
@@ -228,7 +292,8 @@ const audioPieces = (): PieceView[] =>
 		reviewed: false,
 		model_version: 'voxtral-small-transcribe-3-0',
 		cost_usd: 0.084,
-		keywords: [],
+		ai_fields: [],
+		corrected_fields: null,
 		segments: lines.map(([speaker, text], k) => ({
 			start_ms: k * 1_800,
 			end_ms: (k + 1) * 1_800,
@@ -300,6 +365,7 @@ export function mockView(): View | null {
 		case 'review-audio':
 			return { name: 'review', jobId: audioJob.id, sourceId: recording.id };
 		case 'prompts':
+		case 'prompts-analysis':
 			return { name: 'prompts' };
 		case 'settings':
 			return { name: 'settings' };
@@ -354,8 +420,14 @@ export function installMock(): void {
 				};
 			case 'key_status':
 				return catalog.providers.map((p) => ({ provider: p.id, saved: p.id !== 'openai' }));
-			case 'list_presets':
-				return a.task ? presets.filter((p) => p.task === a.task) : presets;
+			case 'list_presets': {
+				// `view=prompts-analysis` opens Prompts on an analysis, for screenshots.
+				const first = location.search.includes('prompts-analysis') ? 'analysis' : '';
+				const ordered = [...presets].sort(
+					(x, y) => Number(y.task === first) - Number(x.task === first)
+				);
+				return a.task ? ordered.filter((p) => p.task === a.task) : ordered;
+			}
 			case 'list_jobs':
 				return summaries;
 			case 'get_job':

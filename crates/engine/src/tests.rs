@@ -6,8 +6,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use async_trait::async_trait;
 use scriptorium_core::{
-    CacheKey, ExportFormat, OutputSettings, PreparedInput, ProcessOutput, ProcessRequest, Task,
-    Usage,
+    CacheKey, ExportFormat, FieldAnswer, FieldKind, FieldValue, OutputSettings, PreparedInput,
+    ProcessOutput, ProcessRequest, Task, Usage,
 };
 use scriptorium_store::SqliteStore;
 
@@ -58,6 +58,27 @@ impl Provider for Fake {
         self.calls.fetch_add(1, Ordering::SeqCst);
         let PreparedInput { piece, bytes, .. } = request.input;
         assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
+        // An analysis reads the whole document and answers each field.
+        if let Some(schema) = request.analysis {
+            assert_eq!(piece, &scriptorium_core::PieceRef::Whole);
+            let fields: Vec<FieldAnswer> = schema
+                .fields
+                .iter()
+                .map(|f| FieldAnswer {
+                    key: f.key.clone(),
+                    value: match &f.kind {
+                        FieldKind::List { .. } => FieldValue::List(vec!["Bamako".into()]),
+                        _ => FieldValue::Text(format!("{} answer", request.model)),
+                    },
+                    reason: None,
+                })
+                .collect();
+            return Ok(ProcessOutput {
+                text: schema.render(&fields),
+                fields,
+                ..ProcessOutput::default()
+            });
+        }
         let scriptorium_core::PieceRef::Page { number, .. } = piece else {
             return Err(ProviderError::Other("not a page".into()));
         };
@@ -331,6 +352,7 @@ async fn comparison_jobs_write_one_set_of_files_per_setup_and_score_them() {
             source_id: source.id,
             index: 0,
             text: Some("pro page 1".into()),
+            fields: None,
             reviewed: true,
             updated_at: Timestamp::now(),
         })
@@ -446,4 +468,76 @@ async fn speaker_names_rename_the_review_and_the_files_but_not_the_output() {
         Some("Speaker 1: page 1"),
         "the model's output keeps its own labels"
     );
+}
+
+#[tokio::test]
+async fn an_analysis_reads_each_document_once_and_corrections_replace_its_answers() {
+    let f = fixture();
+    let source = f.pdf("bulletin.pdf", 3);
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Places".into(),
+            task: Task::Analysis,
+            sources: vec![source.clone()],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: Some("analysis.entities".into()),
+                label: None,
+                options: Default::default(),
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt, ExportFormat::Csv],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(
+        job.setups[0].prompt.schema.is_some(),
+        "the fields are frozen into the job"
+    );
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), 1, "one call for the whole document");
+    let txt =
+        std::fs::read_to_string(f.dir.path().join("bulletin.analysis.txt")).unwrap_or_default();
+    assert!(txt.contains("Places: Bamako"), "{txt}");
+
+    let mut answers = f
+        .engine
+        .source_pieces(job.id, source.id)
+        .unwrap_or_default()[0]
+        .ai_fields
+        .clone();
+    let places = answers.iter_mut().find(|a| a.key == "places");
+    if let Some(places) = places {
+        places.value = FieldValue::List(vec!["Bamako".into(), "Ségou".into()]);
+    }
+    f.engine
+        .save_correction(Correction {
+            job_id: job.id,
+            setup_id: job.setups[0].id,
+            source_id: source.id,
+            index: 0,
+            text: None,
+            fields: Some(answers),
+            reviewed: true,
+            updated_at: Timestamp::now(),
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    let csv =
+        std::fs::read_to_string(f.dir.path().join("bulletin.analysis.csv")).unwrap_or_default();
+    assert!(csv.contains("Bamako; Ségou"), "{csv}");
+    let view = &f
+        .engine
+        .source_pieces(job.id, source.id)
+        .unwrap_or_default()[0];
+    assert!(
+        view.ai_fields
+            .iter()
+            .any(|a| a.value == FieldValue::List(vec!["Bamako".into()])),
+        "the model's answers are kept under the correction"
+    );
+    assert!(view.corrected_fields.is_some());
 }

@@ -44,11 +44,11 @@ describe('new job form', () => {
 	});
 
 	it('summarises texts and PDFs with the recommended model', () => {
-		const d = newDraft(catalog, 'summary', 'summary.research', () => true);
+		const d = newDraft(catalog, 'analysis', 'analysis.summary_research', () => true);
 		expect(d.model).toBe('gemini-3.8-flash');
-		expect(readsKind('summary', 'text')).toBe(true);
-		expect(readsKind('summary', 'pdf')).toBe(true);
-		expect(readsKind('summary', 'audio')).toBe(false);
+		expect(readsKind('analysis', 'text')).toBe(true);
+		expect(readsKind('analysis', 'pdf')).toBe(true);
+		expect(readsKind('analysis', 'audio')).toBe(false);
 		// Whisper never offers speaker labels, whatever the box says.
 		const whisper = {
 			...newDraft(catalog, 'audio_transcription', null, () => true),

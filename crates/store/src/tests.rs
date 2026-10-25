@@ -1,6 +1,6 @@
 use scriptorium_core::{
-    InputKind, JobSettings, OutputSettings, ProcessOutput, PromptSnapshot, Setup, SetupOptions,
-    SourceFile, Task,
+    FieldAnswer, FieldValue, InputKind, JobSettings, OutputSettings, ProcessOutput, PromptSnapshot,
+    Setup, SetupOptions, SourceFile, Task,
 };
 
 use super::*;
@@ -34,6 +34,7 @@ fn job() -> Job {
                 template: "Transcribe.".into(),
                 text: "Transcribe.".into(),
                 user_prompt: "Transcribe this page.".into(),
+                schema: None,
             },
             options: SetupOptions::default(),
         }],
@@ -141,11 +142,17 @@ fn corrections_are_kept_per_piece() -> Result<(), StoreError> {
         source_id: job.sources[0].id,
         index: 0,
         text: None,
+        fields: None,
         reviewed: true,
         updated_at: Timestamp::now(),
     };
     store.put_correction(&correction)?;
     correction.text = Some("Corrected".into());
+    correction.fields = Some(vec![FieldAnswer {
+        key: "places".into(),
+        value: FieldValue::List(vec!["Bamako".into()]),
+        reason: None,
+    }]);
     store.put_correction(&correction)?;
     assert_eq!(store.corrections(job.id)?, vec![correction]);
     Ok(())

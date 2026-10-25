@@ -68,6 +68,9 @@ CREATE TABLE speaker_names (
     PRIMARY KEY (job_id, setup_id, source_id, label)
 );
 "#,
+    r#"
+ALTER TABLE corrections ADD COLUMN fields TEXT;
+"#,
 ];
 
 pub struct SqliteStore {
@@ -395,11 +398,11 @@ impl JobStore for SqliteStore {
         self.conn()
             .execute(
                 "INSERT INTO corrections
-                    (job_id, setup_id, source_id, idx, text, reviewed, updated_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                    (job_id, setup_id, source_id, idx, text, reviewed, updated_at, fields)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
                  ON CONFLICT (job_id, setup_id, source_id, idx) DO UPDATE SET
                     text = excluded.text, reviewed = excluded.reviewed,
-                    updated_at = excluded.updated_at",
+                    updated_at = excluded.updated_at, fields = excluded.fields",
                 params![
                     correction.job_id.to_string(),
                     correction.setup_id.to_string(),
@@ -408,6 +411,7 @@ impl JobStore for SqliteStore {
                     correction.text,
                     correction.reviewed,
                     correction.updated_at.0,
+                    correction.fields.as_ref().map(to_json).transpose()?,
                 ],
             )
             .map_err(db)?;
@@ -418,7 +422,7 @@ impl JobStore for SqliteStore {
         let conn = self.conn();
         let mut stmt = conn
             .prepare(
-                "SELECT setup_id, source_id, idx, text, reviewed, updated_at
+                "SELECT setup_id, source_id, idx, text, reviewed, updated_at, fields
                  FROM corrections WHERE job_id = ?1",
             )
             .map_err(db)?;
@@ -431,18 +435,23 @@ impl JobStore for SqliteStore {
                     row.get::<_, Option<String>>(3)?,
                     row.get::<_, bool>(4)?,
                     row.get::<_, i64>(5)?,
+                    row.get::<_, Option<String>>(6)?,
                 ))
             })
             .map_err(db)?;
         let mut out = Vec::new();
         for row in rows {
-            let (setup, source, index, text, reviewed, updated) = row.map_err(db)?;
+            let (setup, source, index, text, reviewed, updated, fields) = row.map_err(db)?;
             out.push(Correction {
                 job_id: job,
                 setup_id: setup.parse().map_err(corrupt)?,
                 source_id: source.parse().map_err(corrupt)?,
                 index,
                 text,
+                fields: fields
+                    .map(|f| serde_json::from_str(&f))
+                    .transpose()
+                    .map_err(corrupt)?,
                 reviewed,
                 updated_at: Timestamp(updated),
             });

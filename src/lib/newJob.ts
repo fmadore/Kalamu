@@ -21,7 +21,7 @@ export interface Draft {
 export const FORMATS: Record<Task, ExportFormat[]> = {
 	text_extraction: ['txt', 'markdown', 'docx', 'json', 'csv', 'searchable_pdf'],
 	audio_transcription: ['txt', 'markdown', 'docx', 'srt', 'vtt', 'json', 'csv'],
-	summary: ['txt', 'markdown', 'docx', 'json', 'csv']
+	analysis: ['txt', 'markdown', 'docx', 'json', 'csv']
 };
 
 /**
@@ -40,7 +40,7 @@ export function readsKind(task: Task, kind: string | undefined): boolean {
 			return kind === 'pdf' || kind === 'image';
 		case 'audio_transcription':
 			return kind === 'audio' || kind === 'video';
-		case 'summary':
+		case 'analysis':
 			return kind === 'text' || kind === 'pdf';
 	}
 }

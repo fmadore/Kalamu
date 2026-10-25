@@ -6,8 +6,9 @@ use std::path::PathBuf;
 
 use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
 use scriptorium_core::{
-    ExportOptions, ExportPart, InputKind, LanguageChoice, PromptSnapshot, Provenance, ProviderId,
-    Segment, Setup, SetupId, SetupOptions, SourceFile, SourceId, Task, Timestamp, Usage,
+    AnalysisSchema, ExportOptions, ExportPart, Field, FieldAnswer, FieldKind, FieldValue,
+    InputKind, LanguageChoice, PromptSnapshot, Provenance, ProviderId, Segment, Setup, SetupId,
+    SetupOptions, SourceFile, SourceId, Task, Timestamp, Usage,
 };
 
 use super::*;
@@ -43,6 +44,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
             template: "Transcribe.".into(),
             text: "Transcribe.".into(),
             user_prompt: "Transcribe this page.".into(),
+            schema: None,
         },
         options: SetupOptions::default(),
     };
@@ -69,6 +71,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
             text: setup.prompt.text.clone(),
             user_prompt: setup.prompt.user_prompt.clone(),
             sha256: "ab".repeat(32),
+            schema: setup.prompt.schema.clone(),
         },
         languages: LanguageChoice::Auto,
         detected_languages: vec![],
@@ -102,7 +105,7 @@ fn letter() -> ExportDocument {
                 segments: vec![],
                 corrected: false,
                 reviewed: true,
-                keywords: vec![],
+                fields: vec![],
                 regions: vec![],
             },
             ExportPart {
@@ -111,7 +114,7 @@ fn letter() -> ExportDocument {
                 segments: vec![],
                 corrected: true,
                 reviewed: true,
-                keywords: vec![],
+                fields: vec![],
                 regions: vec![],
             },
         ],
@@ -146,7 +149,7 @@ fn interview() -> ExportDocument {
                 ],
                 corrected: false,
                 reviewed: false,
-                keywords: vec![],
+                fields: vec![],
                 regions: vec![],
             },
             ExportPart {
@@ -160,11 +163,76 @@ fn interview() -> ExportDocument {
                 segments: vec![],
                 corrected: false,
                 reviewed: false,
-                keywords: vec![],
+                fields: vec![],
                 regions: vec![],
             },
         ],
     )
+}
+
+/// An analysis of one article: a summary, the places it names and its tone with a reason.
+fn analysis() -> ExportDocument {
+    let mut schema = AnalysisSchema {
+        fields: vec![
+            Field {
+                key: String::new(),
+                label: "Summary".into(),
+                instructions: String::new(),
+                kind: FieldKind::Text,
+                reason: false,
+            },
+            Field {
+                key: String::new(),
+                label: "Places".into(),
+                instructions: String::new(),
+                kind: FieldKind::List { max: None },
+                reason: false,
+            },
+            Field {
+                key: String::new(),
+                label: "Tone".into(),
+                instructions: String::new(),
+                kind: FieldKind::Choice {
+                    values: vec!["Positive".into(), "Neutral".into(), "Negative".into()],
+                },
+                reason: true,
+            },
+        ],
+    };
+    schema.assign_keys();
+    let fields = vec![
+        FieldAnswer {
+            key: "summary".into(),
+            value: FieldValue::Text("Réunion de deux cents fidèles à la mosquée de Bamako.".into()),
+            reason: None,
+        },
+        FieldAnswer {
+            key: "places".into(),
+            value: FieldValue::List(vec!["Bamako".into(), "Ségou".into()]),
+            reason: None,
+        },
+        FieldAnswer {
+            key: "tone".into(),
+            value: FieldValue::Text("Neutral".into()),
+            reason: Some("A factual report of the meeting.".into()),
+        },
+    ];
+    let mut doc = document(
+        Task::Analysis,
+        source("bulletin.txt", InputKind::Text),
+        vec![ExportPart {
+            piece: scriptorium_core::PieceRef::Whole,
+            text: schema.render(&fields),
+            segments: vec![],
+            corrected: true,
+            reviewed: true,
+            fields,
+            regions: vec![],
+        }],
+    );
+    doc.setup.prompt.schema = Some(schema.clone());
+    doc.provenance.prompt.schema = Some(schema);
+    doc
 }
 
 fn check(name: &str, actual: &[u8]) {
@@ -201,6 +269,9 @@ fn text_formats_match_golden_files() {
     check("interview.srt", &run(ExportFormat::Srt, &interview()));
     check("interview.vtt", &run(ExportFormat::Vtt, &interview()));
     check("interview.csv", &run(ExportFormat::Csv, &interview()));
+    check("analysis.txt", &run(ExportFormat::Txt, &analysis()));
+    check("analysis.json", &run(ExportFormat::Json, &analysis()));
+    check("analysis.csv", &run(ExportFormat::Csv, &analysis()));
 }
 
 #[test]
@@ -278,7 +349,7 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
             segments: vec![],
             corrected: false,
             reviewed: false,
-            keywords: vec![],
+            fields: vec![],
             regions: vec![scriptorium_core::TextRegion {
                 x: 0.1,
                 y: 0.1,

@@ -15,8 +15,8 @@ use scriptorium_core::{
 };
 use serde_json::{Value, json};
 
+use crate::analysis;
 use crate::http::{data_url, ids, secs_to_ms, send_json};
-use crate::summary;
 
 const BASE_URL: &str = "https://api.openai.com/v1";
 
@@ -40,7 +40,7 @@ impl OpenAi {
     fn extraction_body(request: &ProcessRequest<'_>) -> Value {
         let input = &request.input;
         let media = if input.mime == "text/plain" {
-            json!({ "type": "input_text", "text": summary::tagged_document(input) })
+            json!({ "type": "input_text", "text": analysis::tagged_document(input) })
         } else if input.mime == "application/pdf" {
             json!({
                 "type": "input_file",
@@ -64,12 +64,12 @@ impl OpenAi {
             "max_output_tokens": 32_000,
             "store": false,
         });
-        if request.task == Task::Summary {
+        if let Some(fields) = request.analysis {
             body["text"] = json!({
                 "format": {
                     "type": "json_schema",
-                    "name": "summary",
-                    "schema": summary::schema(),
+                    "name": "analysis",
+                    "schema": analysis::schema(fields),
                     "strict": true,
                 }
             });
@@ -145,7 +145,7 @@ impl OpenAi {
                 .get("model")
                 .and_then(Value::as_str)
                 .map(str::to_string),
-            keywords: Vec::new(),
+            fields: Vec::new(),
             regions: Vec::new(),
         })
     }
@@ -250,7 +250,7 @@ impl OpenAi {
                 pages: 0,
             },
             model_version: Some(request.model.to_string()),
-            keywords: Vec::new(),
+            fields: Vec::new(),
             regions: Vec::new(),
         })
     }
@@ -267,7 +267,7 @@ impl Provider for OpenAi {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
             // The formats the speech-to-text guide lists (October 2026): not FLAC or Ogg.
             Task::AudioTranscription => &["audio/mpeg", "audio/wav", "audio/mp4", "audio/webm"],
-            Task::Summary => &["text/plain", "application/pdf"],
+            Task::Analysis => &["text/plain", "application/pdf"],
         }
     }
 
@@ -277,7 +277,7 @@ impl Provider for OpenAi {
         request: ProcessRequest<'_>,
     ) -> Result<ProcessOutput, ProviderError> {
         match request.task {
-            Task::TextExtraction | Task::Summary => {
+            Task::TextExtraction | Task::Analysis => {
                 let response = send_json(
                     self.client
                         .post(format!("{}/responses", self.base_url))
@@ -286,8 +286,8 @@ impl Provider for OpenAi {
                 )
                 .await?;
                 let output = Self::parse_extraction(&response)?;
-                if request.task == Task::Summary {
-                    summary::finish(output)
+                if request.task == Task::Analysis {
+                    analysis::finish(output, analysis::fields(&request)?)
                 } else {
                     Ok(output)
                 }

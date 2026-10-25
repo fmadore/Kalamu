@@ -14,6 +14,3 @@ results, where it is read beside twenty others and must stand out.
 - Stay strictly faithful to the text: add no fact, date, name or place it does not state, and
   express no uncertainty; leave out what you are unsure of.
 - Plain prose, without markdown.
-
-Keywords: five to eight terms in {languages} that someone would search for, most important
-first, with proper names kept as in the source.

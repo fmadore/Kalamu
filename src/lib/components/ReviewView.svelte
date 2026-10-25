@@ -394,11 +394,6 @@
 							</div>
 						{/each}
 					</div>
-					{#if lead.keywords.length > 0}
-						<p class="keywords" aria-label={m.review.keywords}>
-							{#each lead.keywords as k (k)}<span class="chip">{k}</span>{/each}
-						</p>
-					{/if}
 				{/if}
 
 				{#if entries.length > 0 && !editing}
@@ -688,12 +683,6 @@
 		background: var(--accent-chip);
 		box-shadow: 0 0 0 2px var(--accent-chip);
 		outline: 1px solid var(--accent-border);
-	}
-	.keywords {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-1);
-		margin-top: var(--space-4);
 	}
 	.apparatus {
 		list-style: none;

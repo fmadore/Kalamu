@@ -13,8 +13,8 @@ use scriptorium_core::{
 };
 use serde_json::{Value, json};
 
+use crate::analysis;
 use crate::http::{base64, ids, send_json};
-use crate::summary;
 
 const BASE_URL: &str = "https://api.anthropic.com/v1";
 const API_VERSION: &str = "2026-10-21";
@@ -48,7 +48,7 @@ impl Anthropic {
                 "source": {
                     "type": "text",
                     "media_type": "text/plain",
-                    "data": summary::document_text(input),
+                    "data": analysis::document_text(input),
                 },
                 "title": input.file_name,
             })
@@ -76,10 +76,10 @@ impl Anthropic {
         if FALLBACK_MODELS.contains(&request.model) {
             body["fallbacks"] = json!("default");
         }
-        if request.task == Task::Summary {
+        if let Some(fields) = request.analysis {
             body["output_config"]["format"] = json!({
                 "type": "json_schema",
-                "schema": summary::schema(),
+                "schema": analysis::schema(fields),
             });
         }
         body
@@ -133,7 +133,7 @@ impl Anthropic {
                 .get("model")
                 .and_then(Value::as_str)
                 .map(str::to_string),
-            keywords: Vec::new(),
+            fields: Vec::new(),
             regions: Vec::new(),
         })
     }
@@ -149,7 +149,7 @@ impl Provider for Anthropic {
         match task {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
             Task::AudioTranscription => &[],
-            Task::Summary => &["text/plain", "application/pdf"],
+            Task::Analysis => &["text/plain", "application/pdf"],
         }
     }
 
@@ -173,8 +173,8 @@ impl Provider for Anthropic {
             http = http.header("anthropic-beta", FALLBACK_BETA);
         }
         let output = Self::parse(&send_json(http).await?)?;
-        if request.task == Task::Summary {
-            summary::finish(output)
+        if request.task == Task::Analysis {
+            analysis::finish(output, analysis::fields(&request)?)
         } else {
             Ok(output)
         }

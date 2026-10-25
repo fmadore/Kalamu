@@ -69,4 +69,7 @@ pub struct ProvenancePrompt {
     pub user_prompt: String,
     /// SHA-256 of `text` followed by `user_prompt`.
     pub sha256: String,
+    /// For an analysis, the fields asked for.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schema: Option<crate::AnalysisSchema>,
 }

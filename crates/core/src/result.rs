@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{JobId, LanguageCode, ProviderId, SetupId, SourceId, Timestamp};
+use crate::{FieldAnswer, JobId, LanguageCode, ProviderId, SetupId, SourceId, Timestamp};
 
 /// One half of an open double-page spread, as seen on screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
@@ -33,7 +33,7 @@ pub enum PieceRef {
         #[ts(type = "number")]
         end_ms: u64,
     },
-    /// A whole document, read at once: what a summary covers.
+    /// A whole document, read at once: what an analysis covers.
     Whole,
 }
 
@@ -145,9 +145,9 @@ pub struct ProcessOutput {
     pub usage: Usage,
     /// The exact model version the provider reports, which may differ from the name requested.
     pub model_version: Option<String>,
-    /// Keywords, for summaries.
+    /// An analysis's answers, one per field of its schema; `text` holds them as plain text.
     #[serde(default)]
-    pub keywords: Vec<String>,
+    pub fields: Vec<FieldAnswer>,
     /// Text blocks and their place on the page, from models that report layout.
     #[serde(default)]
     pub regions: Vec<TextRegion>,

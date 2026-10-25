@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import FieldsEditor from './FieldsEditor.svelte';
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
@@ -21,7 +22,8 @@
 			(draft.name !== selected.name ||
 				draft.description !== selected.description ||
 				draft.instructions !== selected.instructions ||
-				draft.user_prompt !== selected.user_prompt)
+				draft.user_prompt !== selected.user_prompt ||
+				JSON.stringify(draft.schema) !== JSON.stringify(selected.schema))
 	);
 
 	async function load(keep?: string) {
@@ -32,7 +34,7 @@
 	function select(id: string | null) {
 		selectedId = id;
 		const p = presets.find((x) => x.id === id);
-		draft = p ? { ...p } : null;
+		draft = p ? structuredClone($state.snapshot(p)) : null;
 	}
 
 	async function run(action: () => Promise<string | undefined | void>) {
@@ -45,7 +47,7 @@
 		}
 	}
 
-	const tasks: Task[] = ['text_extraction', 'audio_transcription'];
+	const tasks: Task[] = ['text_extraction', 'audio_transcription', 'analysis'];
 
 	onMount(() => {
 		void load();
@@ -86,6 +88,7 @@
 		</div>
 		{#each tasks as task (task)}
 			<h2 class="label group">{m.task[task]}</h2>
+			{#if task === 'analysis'}<p class="muted small">{m.prompts.analysisHint}</p>{/if}
 			<ul>
 				{#each presets.filter((p) => p.task === task) as p (p.id)}
 					<li>
@@ -115,14 +118,18 @@
 				<span>{m.prompts.description}</span>
 				<input type="text" bind:value={draft.description} />
 			</label>
-			<label class="field grow">
+			<label class="field" class:grow={!draft.schema}>
 				<span>{m.prompts.instructions}</span>
-				<textarea class="mono" bind:value={draft.instructions}></textarea>
+				<textarea class="mono" class:tall={!!draft.schema} bind:value={draft.instructions}
+				></textarea>
 			</label>
 			<label class="field">
-				<span>{m.prompts.userPrompt}</span>
+				<span>{draft.schema ? m.prompts.userPromptDocument : m.prompts.userPrompt}</span>
 				<textarea class="short mono" bind:value={draft.user_prompt}></textarea>
 			</label>
+			{#if draft.schema}
+				<FieldsEditor bind:schema={draft.schema} />
+			{/if}
 			{#if error}<p class="chip danger">{error}</p>{/if}
 			<div class="actions">
 				<button
@@ -225,9 +232,13 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-3);
-		padding: var(--space-4) 0 0;
+		padding: var(--space-4) 0 var(--space-5);
 		height: 100%;
 		min-height: 0;
+		overflow: auto;
+	}
+	.tall {
+		min-height: 12rem;
 	}
 	.grow {
 		flex: 1;

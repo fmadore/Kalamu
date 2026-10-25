@@ -10,7 +10,9 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use scriptorium_core::{LanguageChoice, LineBreaks, PromptSnapshot, Task};
+use scriptorium_core::{
+    AnalysisSchema, FieldKind, LanguageChoice, LineBreaks, PromptSnapshot, SchemaError, Task,
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -33,6 +35,10 @@ pub struct Preset {
     /// A default the user has edited; resetting restores the shipped text.
     #[serde(default)]
     pub modified: bool,
+    /// For an analysis, the fields to fill in for each document.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub schema: Option<AnalysisSchema>,
 }
 
 /// Values for a preset's variables.
@@ -56,6 +62,8 @@ pub enum PromptError {
     Io(String),
     #[error("This is not a Scriptorium presets file: {0}")]
     InvalidImport(String),
+    #[error(transparent)]
+    Schema(#[from] SchemaError),
 }
 
 /// The file format used to share presets.
@@ -149,6 +157,14 @@ impl PromptLibrary {
         if preset.name.trim().is_empty() || preset.instructions.trim().is_empty() {
             return Err(PromptError::Incomplete);
         }
+        // An analysis is its fields; other presets have none.
+        if preset.task == Task::Analysis {
+            let schema = preset.schema.as_mut().ok_or(SchemaError::Empty)?;
+            schema.assign_keys();
+            schema.validate()?;
+        } else {
+            preset.schema = None;
+        }
         if preset.id.is_empty() {
             preset.id = new_user_id();
         }
@@ -222,12 +238,19 @@ impl PromptLibrary {
 impl Preset {
     /// Fills in variables and freezes the result for a job.
     pub fn snapshot(&self, ctx: &RenderContext) -> PromptSnapshot {
+        // The fields are described in words as well as sent as a schema: the schema fixes the
+        // answer's shape, the words carry what belongs in each field.
+        let instructions = match &self.schema {
+            Some(schema) => format!("{}{}", self.instructions.trim_end(), describe(schema)),
+            None => self.instructions.clone(),
+        };
         PromptSnapshot {
             preset_id: Some(self.id.clone()),
             preset_name: self.name.clone(),
             template: self.instructions.clone(),
-            text: render(&self.instructions, ctx),
+            text: render(&instructions, ctx),
             user_prompt: render(&self.user_prompt, ctx),
+            schema: self.schema.clone(),
         }
     }
 }
@@ -273,6 +296,50 @@ pub fn render(template: &str, ctx: &RenderContext) -> String {
     out
 }
 
+/// An analysis's fields in words, appended to its instructions: each field's name in the answer,
+/// what kind of answer it takes, and what belongs in it.
+pub fn describe(schema: &AnalysisSchema) -> String {
+    let mut out = String::from(
+        "\n\n## What to find\n\nAnswer with exactly these fields, filled from the document:\n",
+    );
+    for (i, field) in schema.fields.iter().enumerate() {
+        let kind = match &field.kind {
+            FieldKind::Text => "text".to_string(),
+            FieldKind::List { max: Some(max) } => {
+                format!("a list of names or terms, at most {max}, most important first")
+            }
+            FieldKind::List { max: None } => {
+                "a list of names or terms, most important first".to_string()
+            }
+            FieldKind::Choice { values } => format!("exactly one of: {}", values.join(", ")),
+            FieldKind::Choices { values } => {
+                format!("any of: {}; none if none applies", values.join(", "))
+            }
+        };
+        out.push_str(&format!(
+            "\n{}. {} (`{}`, {kind})",
+            i + 1,
+            field.label.trim(),
+            field.key
+        ));
+        if !field.instructions.trim().is_empty() {
+            out.push_str(&format!(": {}", field.instructions.trim()));
+        }
+        if field.reason {
+            out.push_str(&format!(
+                " Give the reason for your answer in one sentence in `{}`.",
+                scriptorium_core::analysis::reason_key(&field.key)
+            ));
+        }
+    }
+    out.push_str(
+        "\n\nWrite each name or term in a list as the document spells it, and leave a list \
+         empty when the document has nothing for it. Choose only from the values given, spelled \
+         exactly as listed.",
+    );
+    out
+}
+
 fn builtin(d: &defaults::Default) -> Preset {
     Preset {
         id: d.id.to_string(),
@@ -283,6 +350,11 @@ fn builtin(d: &defaults::Default) -> Preset {
         user_prompt: d.user_prompt.to_string(),
         builtin: true,
         modified: false,
+        schema: d.schema.map(|make| {
+            let mut schema = make();
+            schema.assign_keys();
+            schema
+        }),
     }
 }
 

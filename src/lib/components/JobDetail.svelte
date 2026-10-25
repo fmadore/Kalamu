@@ -72,7 +72,7 @@
 		go({ name: 'jobs' });
 	}
 
-	/** A new summary job over the text this job wrote. */
+	/** A new analysis job over the text this job wrote. */
 	async function summarise() {
 		error = null;
 		try {
@@ -81,7 +81,7 @@
 				error = m.jobs.noTextOutputs;
 				return;
 			}
-			go({ name: 'new', task: 'summary', paths });
+			go({ name: 'new', task: 'analysis', paths });
 		} catch (e) {
 			error = describeError(e, m);
 		}
@@ -125,7 +125,7 @@
 							>{m.jobs.retry}</button
 						>
 					{/if}
-					{#if summary.status === 'completed' && summary.task !== 'summary'}
+					{#if summary.status === 'completed' && summary.task !== 'analysis'}
 						<button class="btn" onclick={summarise}>{m.jobs.summarise}</button>
 					{/if}
 					<button class="btn ghost danger" onclick={remove}>{m.jobs.delete}</button>
