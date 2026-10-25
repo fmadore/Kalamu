@@ -26,4 +26,9 @@ speakers: boolean,
 /**
  * Reports where text sits on the page, which a searchable PDF needs.
  */
-layout: boolean, pricing: Pricing, limits: Limits, };
+layout: boolean, 
+/**
+ * A top-tier model priced far above what transcription and extraction usually need; the
+ * interface says so when it is chosen.
+ */
+costly: boolean, pricing: Pricing, limits: Limits, };

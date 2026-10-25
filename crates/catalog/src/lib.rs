@@ -122,6 +122,10 @@ pub struct ModelInfo {
     /// Reports where text sits on the page, which a searchable PDF needs.
     #[serde(default)]
     pub layout: bool,
+    /// A top-tier model priced far above what transcription and extraction usually need; the
+    /// interface says so when it is chosen.
+    #[serde(default)]
+    pub costly: bool,
     #[serde(default)]
     pub pricing: Pricing,
     #[serde(default)]
