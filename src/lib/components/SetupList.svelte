@@ -44,115 +44,124 @@
 			<button class="btn sm" onclick={() => go({ name: 'settings' })}>{m.nav.settings}</button>
 		</p>
 	{/if}
-	{#each drafts as d, i (i)}
-		{@const info = modelInfo(catalog, d)}
-		<div class="setup">
-			{#if drafts.length > 1}
-				<p class="witness">
-					<i class="siglum">{siglum(i)}</i>
-					{d.label || info?.name || d.model}
-				</p>
-			{/if}
-			<label class="field">
-				<span>{m.newJob.provider}</span>
-				<select
-					bind:value={d.provider}
-					onchange={() => {
-						d.model = modelsFor(catalog, d.provider, task)[0]?.id ?? '';
-					}}
-				>
-					{#each providers as p (p.id)}
-						<option value={p.id} disabled={!hasKey(p.id)}>{p.name}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="field">
-				<span>{m.newJob.model}</span>
-				<select bind:value={d.model}>
-					{#each modelsFor(catalog, d.provider, task) as mod (mod.id)}
-						<option value={mod.id}
-							>{mod.name}{mod.status === 'preview'
-								? ` (${m.common.preview})`
-								: mod.status === 'deprecated'
-									? ` (${m.common.retiring})`
-									: ''}</option
+	<!-- One set-up lays its fields in a row; two or more stand side by side, one column per
+	     witness, so the set-ups read across like the sigla key in the review. -->
+	<div class="setups" class:compare={drafts.length > 1}>
+		{#each drafts as d, i (i)}
+			{@const info = modelInfo(catalog, d)}
+			<div class="setup">
+				{#if drafts.length > 1}
+					<div class="witness">
+						<i class="siglum">{siglum(i)}</i>
+						<span class="witness-name">{d.label || info?.name || d.model}</span>
+						<button class="btn ghost sm" onclick={() => (drafts = drafts.filter((_, j) => j !== i))}
+							>{m.newJob.removeSetup}</button
 						>
-					{/each}
-				</select>
-			</label>
-			<label class="field">
-				<span>{task === 'analysis' ? m.newJob.analysis : m.newJob.prompt}</span>
-				{#if !acceptsPrompt(info)}
-					<select disabled><option>{m.newJob.noPrompt}</option></select>
-				{:else}
-					<select bind:value={d.presetId}>
-						{#each presets as p (p.id)}
-							<option value={p.id}>{p.name}</option>
+					</div>
+				{/if}
+				<label class="field">
+					<span>{m.newJob.provider}</span>
+					<select
+						bind:value={d.provider}
+						onchange={() => {
+							d.model = modelsFor(catalog, d.provider, task)[0]?.id ?? '';
+						}}
+					>
+						{#each providers as p (p.id)}
+							<option value={p.id} disabled={!hasKey(p.id)}>{p.name}</option>
 						{/each}
 					</select>
-				{/if}
-			</label>
-			{#if drafts.length > 1}
-				<label class="field">
-					<span>{m.newJob.label}</span>
-					<input type="text" bind:value={d.label} placeholder={d.model} />
 				</label>
-			{/if}
-			{#if task === 'audio_transcription'}
-				<div class="row opts">
-					<label class="inline"
-						><input type="checkbox" bind:checked={d.diarize} disabled={!labelsSpeakers(info)} />
-						{labelsSpeakers(info) ? m.newJob.diarize : m.newJob.noSpeakers}</label
-					>
-					<label class="inline"
-						><input type="checkbox" bind:checked={d.timestamps} /> {m.newJob.timestamps}</label
-					>
-				</div>
-			{/if}
-			{#if drafts.length > 1}
-				<button class="btn ghost sm" onclick={() => (drafts = drafts.filter((_, j) => j !== i))}
-					>{m.newJob.removeSetup}</button
-				>
-			{/if}
-			{#if info?.description}
-				<p class="muted small desc">{info.description}</p>
-			{/if}
-			{#if task === 'analysis'}
-				{@const fields = presets.find((p) => p.id === d.presetId)?.schema?.fields ?? []}
-				{#if fields.length > 0}
-					<p class="small desc finds">
-						<span class="label">{m.newJob.finds}</span>
-						{fields.map((f) => f.label).join(' · ')}
-						<button class="link" onclick={() => go({ name: 'prompts' })}
-							>{m.newJob.editFields}</button
+				<label class="field">
+					<span>{m.newJob.model}</span>
+					<select bind:value={d.model}>
+						{#each modelsFor(catalog, d.provider, task) as mod (mod.id)}
+							<option value={mod.id}
+								>{mod.name}{mod.status === 'preview'
+									? ` (${m.common.preview})`
+									: mod.status === 'deprecated'
+										? ` (${m.common.retiring})`
+										: ''}</option
+							>
+						{/each}
+					</select>
+				</label>
+				<label class="field">
+					<span>{task === 'analysis' ? m.newJob.analysis : m.newJob.prompt}</span>
+					{#if !acceptsPrompt(info)}
+						<select disabled><option>{m.newJob.noPrompt}</option></select>
+					{:else}
+						<select bind:value={d.presetId}>
+							{#each presets as p (p.id)}
+								<option value={p.id}>{p.name}</option>
+							{/each}
+						</select>
+					{/if}
+				</label>
+				{#if drafts.length > 1}
+					<label class="field">
+						<span>{m.newJob.label}</span>
+						<input type="text" bind:value={d.label} placeholder={d.model} />
+					</label>
+				{/if}
+				{#if task === 'audio_transcription'}
+					<div class="row opts">
+						<label class="inline"
+							><input type="checkbox" bind:checked={d.diarize} disabled={!labelsSpeakers(info)} />
+							{labelsSpeakers(info) ? m.newJob.diarize : m.newJob.noSpeakers}</label
+						>
+						<label class="inline"
+							><input type="checkbox" bind:checked={d.timestamps} /> {m.newJob.timestamps}</label
+						>
+					</div>
+				{/if}
+				{#if info?.description}
+					<p class="muted small desc">{info.description}</p>
+				{/if}
+				{#if task === 'analysis'}
+					{@const fields = presets.find((p) => p.id === d.presetId)?.schema?.fields ?? []}
+					{#if fields.length > 0}
+						<p class="small desc finds">
+							<span class="label">{m.newJob.finds}</span>
+							{fields.map((f) => f.label).join(' · ')}
+							<button class="link" onclick={() => go({ name: 'prompts' })}
+								>{m.newJob.editFields}</button
+							>
+						</p>
+					{/if}
+				{/if}
+				{#if info?.costly}
+					<p class="warning small">{m.newJob.costly}</p>
+				{/if}
+				{#if d.model && !isInstalled(d.provider, d.model)}
+					<p class="warning small">
+						{m.newJob.notDownloaded}
+						<button class="btn sm" onclick={() => go({ name: 'settings' })}
+							>{m.newJob.openSettings}</button
 						>
 					</p>
 				{/if}
-			{/if}
-			{#if info?.costly}
-				<p class="warning small">{m.newJob.costly}</p>
-			{/if}
-			{#if d.model && !isInstalled(d.provider, d.model)}
-				<p class="warning small">
-					{m.newJob.notDownloaded}
-					<button class="btn sm" onclick={() => go({ name: 'settings' })}
-						>{m.newJob.openSettings}</button
-					>
-				</p>
-			{/if}
-			{#if d.provider && !hasKey(d.provider)}
-				<p class="warning small">
-					{m.newJob.noKey(catalog.providers.find((p) => p.id === d.provider)?.name ?? d.provider)}
-				</p>
-			{/if}
-		</div>
-	{/each}
-	<div class="add">
-		<button class="btn" onclick={addSetup}
-			><Icon name="plus" size={14} />{m.newJob.compareAdd}</button
-		>
-		<p class="muted small">{m.newJob.setupsHint}</p>
+				{#if d.provider && !hasKey(d.provider)}
+					<p class="warning small">
+						{m.newJob.noKey(catalog.providers.find((p) => p.id === d.provider)?.name ?? d.provider)}
+					</p>
+				{/if}
+			</div>
+		{/each}
+		{#if drafts.length > 1}
+			<button class="add-column" onclick={addSetup}
+				><Icon name="plus" size={18} />{m.newJob.compareAdd}</button
+			>
+		{/if}
 	</div>
+	{#if drafts.length === 1}
+		<div class="add">
+			<button class="btn" onclick={addSetup}
+				><Icon name="plus" size={16} />{m.newJob.compareAdd}</button
+			>
+			<p class="muted small">{m.newJob.setupsHint}</p>
+		</div>
+	{/if}
 </section>
 
 <style>
@@ -169,15 +178,52 @@
 	.small {
 		font-size: var(--type-sm);
 	}
+	.setups {
+		display: grid;
+		gap: var(--space-4);
+	}
+	.setups.compare {
+		grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+		align-items: stretch;
+	}
 	.setup {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-		gap: var(--space-3);
+		grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+		gap: var(--space-3) var(--space-4);
 		align-items: end;
-		padding: var(--space-3);
+		align-content: start;
+		padding: var(--space-4);
 		border: 1px solid var(--line);
 		border-radius: var(--radius-control);
 		background: var(--surface-2);
+	}
+	/* In a comparison each column stacks its fields, so every set-up reads top to bottom. */
+	.compare .setup {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.add-column {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-2);
+		min-height: 12rem;
+		padding: var(--space-4);
+		border: 1px dashed var(--line-strong);
+		border-radius: var(--radius-control);
+		background: transparent;
+		color: var(--text-secondary);
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			border-color 120ms ease-out,
+			background-color 120ms ease-out,
+			color 120ms ease-out;
+	}
+	.add-column:hover {
+		border-color: var(--accent);
+		background: var(--accent-wash);
+		color: var(--text-bright);
 	}
 	.setup select,
 	.setup input {
@@ -193,8 +239,22 @@
 		display: flex;
 		align-items: baseline;
 		gap: var(--space-2);
+		margin: 0;
 		font-weight: 600;
+		font-size: var(--type-lg);
 		color: var(--text-bright);
+	}
+	.witness-name {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.witness .btn {
+		align-self: center;
+		font-size: var(--type-sm);
+		color: var(--text-secondary);
 	}
 	.witness .siglum {
 		font-size: 1.5rem;

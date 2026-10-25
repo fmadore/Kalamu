@@ -40,18 +40,18 @@ typography:
     letterSpacing: "0.01em"
   headline:
     fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "2rem"
+    fontSize: "2.375rem"
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: "0.005em"
   title:
     fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.375rem"
+    fontSize: "1.625rem"
     fontWeight: 500
     lineHeight: 1.2
   subtitle:
     fontFamily: "'EB Garamond Variable', Garamond, 'Times New Roman', serif"
-    fontSize: "1.125rem"
+    fontSize: "1.25rem"
     fontWeight: 500
     lineHeight: 1.2
   reading:
@@ -81,17 +81,17 @@ typography:
     fontFeature: "all-small-caps"
   body:
     fontFamily: "'Source Sans 3 Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.9375rem"
+    fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.45
   label:
     fontFamily: "'Source Sans 3 Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.8125rem"
+    fontSize: "0.9375rem"
     fontWeight: 600
     lineHeight: 1.45
   caption:
     fontFamily: "'Source Sans 3 Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.75rem"
+    fontSize: "0.8125rem"
     fontWeight: 600
     lineHeight: 1.5
   prompt-mono:
@@ -120,13 +120,13 @@ components:
     typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0 1rem"
-    height: "2.25rem"
+    height: "2.5rem"
   button-primary:
     backgroundColor: "{colors.bookcloth}"
     textColor: "{colors.on-bookcloth}"
     rounded: "{rounded.control}"
     padding: "0 1rem"
-    height: "2.25rem"
+    height: "2.5rem"
   button-primary-hover:
     backgroundColor: "{colors.bookcloth-light}"
     textColor: "{colors.on-bookcloth}"
@@ -135,29 +135,29 @@ components:
     textColor: "{colors.ink-body}"
     rounded: "{rounded.control}"
     padding: "0 1rem"
-    height: "2.25rem"
+    height: "2.5rem"
   button-danger:
     backgroundColor: "{colors.page-white}"
     textColor: "{colors.danger-red}"
     rounded: "{rounded.control}"
     padding: "0 1rem"
-    height: "2.25rem"
+    height: "2.5rem"
   button-sm:
     padding: "0 0.75rem"
-    height: "2rem"
+    height: "2.125rem"
   button-masthead-primary:
     backgroundColor: "{colors.on-bookcloth}"
     textColor: "{colors.bookcloth}"
     rounded: "{rounded.control}"
     padding: "0 1rem"
-    height: "2.25rem"
+    height: "2.5rem"
   input:
     backgroundColor: "{colors.page-white}"
     textColor: "{colors.ink-body}"
     typography: "{typography.body}"
     rounded: "{rounded.control}"
     padding: "0.25rem 0.75rem"
-    height: "2.25rem"
+    height: "2.5rem"
   chip:
     backgroundColor: "transparent"
     textColor: "{colors.bookcloth}"
@@ -266,8 +266,9 @@ A restrained scholar's palette: white page, black ink, one bookcloth blue, and o
 - **Apparatus** (Garamond 400, 1.0625rem, 1.6, oldstyle figures): apparatus entries, set as number, lemma ] reading, siglum.
 - **Running head** (Garamond all-small-caps, 1.125rem, letter-spacing 0.08em): the edition page's running head (file · page, reading text of A) and the sigla key's heading.
 - **Siglum** (Garamond 600 all-small-caps, 1.2em of its context, letter-spacing 0.04em, rubric): a witness letter, or "corr." for the researcher. Larger (1.6rem) in a pane's bar.
-- **Body** (Source Sans 3 400, 0.9375rem, 1.45): all interface text, buttons (600), navigation (1rem in the rail).
-- **Label** (Source Sans 3 600, 0.8125rem): field labels, small buttons, metadata. **Caption** (600, 0.75rem): chips and counts.
+- **Body** (Source Sans 3 400, 1rem, 1.45): all interface text, buttons (600), navigation (1rem in the rail).
+- **Label** (Source Sans 3 600, 0.9375rem): field labels, small buttons, metadata. **Caption** (600, 0.8125rem): chips and counts.
+- The `html` element takes the body size, so 1rem is 16px and every rem-sized token scales with it. Nothing in the interface is set below 13px: researchers read these screens at arm's length on a laptop.
 - Marginal and apparatus line numbers use lining tabular figures at 0.8em, weight 600, so they align in their column.
 
 ### Named Rules
@@ -279,13 +280,15 @@ A restrained scholar's palette: white page, black ink, one bookcloth blue, and o
 
 The app is a fixed shell: a 14.5rem bookcloth rail at left and a scrolling main area. The rail's wordmark block is exactly the masthead height (6.5rem), so the rail's bottom rule and every masthead's bottom rule run as one line across the window. The rail's foot holds the running background job with a thin progress bar.
 
-Each screen opens with a masthead (bookcloth band, bottom-aligned title and actions, padding 1.5rem 2rem 1rem) followed by a **sheet**: a single column, max 64rem, padding 1.5rem 2rem 3rem, sections stacked with a 2rem gap. Sections open with their rule and 1rem of space above their content.
+Each screen opens with a masthead (bookcloth band, bottom-aligned title and actions, padding 1.5rem 2rem 1rem) followed by a **sheet**: a single column that takes the window's width up to 100rem, padding 1.5rem 2rem 3rem, sections stacked with a 2rem gap. Grids inside it (task tiles, files, compared set-ups) spread across that width; paragraphs keep a 75ch measure so prose never runs the full width. Sections open with their rule and 1rem of space above their content.
 
 Review is the exception: below the masthead, a scores strip, then two panes split 0.9fr (source on the desk) to 1.1fr (the edition page). The edition page is indented 5rem on the left so line numbers and sigla sit in a true margin, with the text grid pulling each line back 3.5rem to place its number on the first baseline.
 
-New job ends in a sticky, window-wide footer carrying the estimate and Start; its inner content aligns with the sheet's 64rem measure.
+New job ends in a sticky, window-wide footer carrying the estimate and Start; its inner content aligns with the sheet's 100rem width.
 
-Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls are 2rem (small), 2.25rem (default) and 2.5rem (large) tall.
+New job's model set-ups adapt to their number. One set-up lays its fields in a row with "Compare with another model" and its hint beneath. Two or more stand side by side as columns (min 19rem, `auto-fit`), one per witness, each headed by its siglum, name and Remove, fields stacked; the next column is a dashed slot that adds another model. Columns wrap when the window is too narrow.
+
+Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls are 2.125rem (small), 2.5rem (default) and 2.875rem (large) tall.
 
 **Responsive range:** 640px (the minimum window) to 2560px.
 - **≤820px**: the rail becomes a top bar (wordmark plus wrapped nav, running job hidden), the masthead drops its fixed height, headline shrinks to 1.625rem, sheet and pane padding tighten to 1rem.
@@ -316,7 +319,7 @@ Icons come from Lucide (`@lucide/svelte`) through `Icon.svelte`, at an absolute 
 
 ### Buttons
 Plain and firm: a sans label in weight 600, never an icon alone except where the meaning is universal (zoom, close, play).
-- **Shape:** gently rounded (6px), 2.25rem tall, 0 1rem padding; small is 2rem tall with 0.75rem padding.
+- **Shape:** gently rounded (6px), 2.5rem tall, 0 1rem padding; small is 2.125rem tall with 0.75rem padding.
 - **Default:** white ground, strong hairline border, body ink. Hover darkens the border to the hover hairline.
 - **Primary:** bookcloth ground and border, white text; hover lifts to bookcloth light.
 - **Ghost:** transparent; hover takes the bookcloth wash (6% blue).
@@ -337,7 +340,7 @@ Plain and firm: a sans label in weight 600, never an icon alone except where the
 - **Internal Padding:** 1rem above content, 0.75rem between rows.
 
 ### Inputs / Fields
-- **Style:** white ground, strong hairline border, 6px corners, 2.25rem tall, padding 0.25rem 0.75rem (textareas 0.75rem, line-height 1.55). Label above in label type, secondary ink.
+- **Style:** white ground, strong hairline border, 6px corners, 2.5rem tall, padding 0.25rem 0.75rem (textareas 0.75rem, line-height 1.55). Label above in label type, secondary ink.
 - **Hover:** border to the hover hairline. **Focus:** the global 2px outline.
 - In a masthead, a select keeps its white ground with a white border.
 

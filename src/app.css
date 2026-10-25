@@ -19,9 +19,9 @@
 	--radius-overlay: 8px;
 	--radius-pill: 999px;
 
-	--control-sm: 2rem;
-	--control-md: 2.25rem;
-	--control-lg: 2.5rem;
+	--control-sm: 2.125rem;
+	--control-md: 2.5rem;
+	--control-lg: 2.875rem;
 
 	/* The page and the panes on it. */
 	--surface-0: #ffffff;
@@ -88,12 +88,14 @@
 	/* Only for prompt text, which is written like code. */
 	--font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
-	--type-xs: 0.75rem;
-	--type-sm: 0.8125rem;
-	--type-md: 0.9375rem;
-	--type-lg: 1.125rem;
-	--type-xl: 1.5rem;
-	--type-title: 2rem;
+	/* Sized for reading at arm's length on a laptop, not for packing a dashboard. */
+	--type-xs: 0.8125rem;
+	--type-sm: 0.9375rem;
+	--type-md: 1rem;
+	--type-lg: 1.25rem;
+	--type-xl: 1.625rem;
+	--type-title: 2.375rem;
+	--type-section: 1.625rem;
 	--type-reading: 1.3125rem;
 
 	/* The coloured band's height, shared by every masthead and the rail's wordmark so their
@@ -238,7 +240,7 @@ h1 {
 }
 
 h2 {
-	font-size: 1.375rem;
+	font-size: var(--type-section);
 }
 
 h3 {
@@ -376,7 +378,7 @@ textarea:hover {
 
 .card > h2:first-child,
 .card h2:first-of-type {
-	font-size: 1.375rem;
+	font-size: var(--type-section);
 }
 
 .muted {
@@ -502,12 +504,18 @@ textarea:hover {
 	color: var(--text-body);
 }
 
-/* The page below a masthead. */
+/* The page below a masthead. It takes the window's width up to a wide desk, so grids inside
+   (task tiles, compared set-ups, files) spread out; running prose keeps a reading measure. */
 .sheet {
+	--sheet-max: 100rem;
 	padding: var(--space-5) var(--space-6) var(--space-7);
 	display: grid;
 	gap: var(--space-6);
-	max-width: 64rem;
+	max-width: var(--sheet-max);
+}
+
+.sheet p {
+	max-width: 75ch;
 }
 
 /* Narrow windows: a window snapped beside another, or a small laptop at high scaling. */

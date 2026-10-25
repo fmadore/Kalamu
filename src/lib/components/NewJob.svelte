@@ -656,7 +656,8 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--space-4);
-		max-width: 64rem;
+		/* Matches the sheet's width, so Start sits under the right edge of the form. */
+		max-width: 100rem;
 		padding: var(--space-3) var(--space-6) var(--space-4);
 	}
 	.estimate {
