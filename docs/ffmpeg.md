@@ -75,6 +75,18 @@ Two points matter for the Store:
   package. The programs are started with `CREATE_NO_WINDOW`, so no console window appears, and
   they read only the files the user chose.
 
-Other Store apps ship FFmpeg-based code under the same conditions, and Microsoft's policies
-require only that bundled code be properly licensed (policy 11.2). This is not legal advice;
-check the current Store policies before the first submission.
+Checked against [Microsoft Store Policies 7.20](https://learn.microsoft.com/en-us/windows/apps/publish/store-policies)
+(14 September 2026):
+
+- **10.2.2, dynamic code**: an app must not change its described functionality by code it
+  downloads. FFmpeg ships inside the package and is never downloaded; the Whisper models and the
+  model catalogue that the app downloads are data, not code.
+- **11.2, third-party content**: bundled content must be appropriately licensed, which the
+  table above covers.
+- **10.2.9, installers submitted by link**: only if the app were submitted as an `.exe` or
+  `.msi` URL instead of MSIX, every executable in it, `ffmpeg.exe` and `ffprobe.exe` included,
+  would need a code-signing certificate from a trusted authority. MSIX packages are signed by
+  the Store, so the MSIX route avoids this.
+
+Users never install FFmpeg themselves: it is part of the app on every route (Store, GitHub
+installers). This is not legal advice; check the policies again before each submission.

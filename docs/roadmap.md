@@ -62,4 +62,7 @@ there is no release yet.
 - OpenRouter for open-weights models.
 - Offline text extraction with Tesseract.
 - Linking names to authority records (an id from candidate records, or none, with a reason).
-- Microsoft Store release, with the privacy policy and own licence terms.
+- Microsoft Store release, with the privacy policy and own licence terms. Store policy 11.16
+  (live generative AI content) also asks to disclose the use of generative AI in the listing and
+  in Partner Center, and to give users a way to report inappropriate output to the developer:
+  add a "Report a problem" link to the app before submitting.
