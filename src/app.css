@@ -213,7 +213,7 @@ body {
 	line-height: 1.45;
 	-webkit-font-smoothing: antialiased;
 	accent-color: var(--accent);
-	caret-color: var(--rubric);
+	caret-color: var(--accent);
 	scrollbar-color: var(--line-strong) transparent;
 }
 
