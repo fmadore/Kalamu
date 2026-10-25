@@ -1,5 +1,8 @@
 <script lang="ts">
-	// The model set-ups of a new job: one for a normal job, several to compare.
+	// The model set-ups of a new job: one for a normal job, several to compare, each named by the
+	// siglum it will carry in the review.
+	import Icon from './Icon.svelte';
+	import { siglum } from '#lib/apparatus.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -44,6 +47,12 @@
 	{#each drafts as d, i (i)}
 		{@const info = modelInfo(catalog, d)}
 		<div class="setup">
+			{#if drafts.length > 1}
+				<p class="witness">
+					<i class="siglum">{siglum(i)}</i>
+					{d.label || info?.name || d.model}
+				</p>
+			{/if}
 			<label class="field">
 				<span>{m.newJob.provider}</span>
 				<select
@@ -126,8 +135,10 @@
 			{/if}
 		</div>
 	{/each}
-	<div>
-		<button class="btn" onclick={addSetup}>+ {m.newJob.compareAdd}</button>
+	<div class="add">
+		<button class="btn" onclick={addSetup}
+			><Icon name="plus" size={14} />{m.newJob.compareAdd}</button
+		>
 		<p class="muted small">{m.newJob.setupsHint}</p>
 	</div>
 </section>
@@ -162,8 +173,24 @@
 		min-width: 0;
 	}
 	.desc,
+	.witness,
 	.setup .warning {
 		grid-column: 1 / -1;
+	}
+	.witness {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-2);
+		font-weight: 600;
+		color: var(--text-bright);
+	}
+	.witness .siglum {
+		font-size: 1.5rem;
+	}
+	.add {
+		display: grid;
+		justify-items: start;
+		gap: var(--space-1);
 	}
 	.warning {
 		display: flex;

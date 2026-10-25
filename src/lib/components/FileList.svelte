@@ -1,5 +1,6 @@
 <script lang="ts">
 	// The files of a new job, with each file's input checks and the fixes they offer.
+	import Icon from './Icon.svelte';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
@@ -20,7 +21,6 @@
 	} = $props();
 
 	const m = messages();
-	let showTips = $state(false);
 
 	function setSplit(index: number, split: boolean) {
 		const source = files[index].source;
@@ -105,19 +105,13 @@
 			{/each}
 		</ul>
 	{/if}
-	<button
-		class="btn ghost sm tips-toggle"
-		aria-expanded={showTips}
-		onclick={() => (showTips = !showTips)}
-	>
-		{m.tips.title}
-	</button>
-	{#if showTips}
-		<ul class="tips muted">
+	<details class="tips">
+		<summary><Icon name="chevron" size={14} />{m.tips.title}</summary>
+		<ul class="muted">
 			<li>{task === 'text_extraction' ? m.tips.scanning : m.tips.recording}</li>
 			<li>{m.tips.results}</li>
 		</ul>
-	{/if}
+	</details>
 </section>
 
 <style>
@@ -183,13 +177,36 @@
 		align-items: center;
 		white-space: nowrap;
 	}
-	.tips-toggle {
-		justify-self: start;
+	.tips summary {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		min-height: var(--control-sm);
+		list-style: none;
+		color: var(--accent-soft);
+		font-size: var(--type-sm);
+		font-weight: 600;
+		cursor: pointer;
 	}
-	.tips {
-		margin: 0;
+	.tips summary::-webkit-details-marker {
+		display: none;
+	}
+	.tips summary:hover {
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+	}
+	.tips summary :global(.icon) {
+		transition: transform 120ms ease-out;
+	}
+	.tips[open] summary :global(.icon) {
+		transform: rotate(90deg);
+	}
+	.tips ul {
+		margin: var(--space-1) 0 0;
+		padding-left: 1.25rem;
 		display: grid;
 		gap: var(--space-1);
 		font-size: var(--type-sm);
+		max-width: 48rem;
 	}
 </style>

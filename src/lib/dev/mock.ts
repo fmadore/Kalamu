@@ -298,8 +298,17 @@ export function mockView(): View | null {
 }
 
 export function installMock(): void {
-	if (new URLSearchParams(location.search).get('focus') === 'apparatus') {
+	const params = new URLSearchParams(location.search);
+	if (params.get('focus') === 'apparatus') {
 		setTimeout(() => document.querySelector<HTMLElement>('.apparatus .entry')?.focus(), 2500);
+	}
+	// `hover=deux`: rest the pointer on the lemma with that text, for the reverse highlight.
+	const hover = params.get('hover');
+	if (hover) {
+		setTimeout(() => {
+			const lemma = [...document.querySelectorAll('.lemma')].find((l) => l.textContent === hover);
+			lemma?.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
+		}, 2500);
 	}
 	mockWindows('main');
 	mockIPC((cmd, args) => {

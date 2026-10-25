@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import ProgressBar from './ProgressBar.svelte';
+	import { siglum } from '#lib/apparatus.js';
 	import type { Job } from '#lib/bindings/Job.js';
 	import type { PieceState } from '#lib/bindings/PieceState.js';
 	import { describeError } from '#lib/errors.js';
@@ -96,9 +97,15 @@
 		<header>
 			<div>
 				<h2>{job.name}</h2>
-				<p class="muted small">
-					{m.task[job.task]} · {job.setups.map((s) => s.model).join(' vs ')} ·
-					{m.status[summary.status]}
+				<p class="muted small meta">
+					<span>{m.task[job.task]}</span>
+					{#each job.setups as s, i (s.id)}
+						<span
+							>{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>
+							{/if}{s.model}</span
+						>
+					{/each}
+					<span>{m.status[summary.status]}</span>
 				</p>
 			</div>
 			<div class="actions">
@@ -157,17 +164,20 @@
 							{m.jobs.review}
 						</button>
 					</div>
-					{#each job.setups as setup (setup.id)}
+					{#each job.setups as setup, i (setup.id)}
 						{@const c = counts(setup.id, source.id)}
 						<div class="setup-progress">
-							<span class="mono small label-cell">{job.setups.length > 1 ? setup.label : ''}</span>
+							<span class="small label-cell"
+								>{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>
+									{setup.label}{/if}</span
+							>
 							<ProgressBar
 								done={c.done}
 								failed={c.failed}
 								total={Math.max(c.total, 1)}
 								label="{source.file_name} {setup.label}"
 							/>
-							<span class="muted small">{c.total > 0 ? `${c.done}/${c.total}` : '—'}</span>
+							<span class="muted small num">{c.total > 0 ? `${c.done}/${c.total}` : '—'}</span>
 						</div>
 						{#each c.errors.slice(0, 3) as e (e)}
 							<p class="err small">{e}</p>
@@ -187,7 +197,7 @@
 			<ul class="written">
 				{#each [...new Set(live.written)] as path (path)}
 					<li>
-						<button class="link mono small" onclick={() => revealInFolder(path)}
+						<button class="link small" onclick={() => revealInFolder(path)}
 							>{path.split(/[\\/]/).pop()}</button
 						>
 					</li>
@@ -266,6 +276,21 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		font-weight: 600;
+	}
+	/* Task, set-ups and status, separated by middle dots. */
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		column-gap: var(--space-2);
+	}
+	.meta > span + span::before {
+		content: '·';
+		margin-right: var(--space-2);
+	}
+	.meta .siglum {
+		margin-right: 0.25em;
 	}
 	.preview {
 		margin: 0;

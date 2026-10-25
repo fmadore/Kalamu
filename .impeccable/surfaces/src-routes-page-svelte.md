@@ -34,7 +34,7 @@ numbered lines (every fifth and every line with a variant, in red), the apparatu
 black hairline, and a sigla key carrying each set-up's controls.
 
 FORM: Critical edition with apparatus criticus, first on the ordered list (IMPECCABLE'S
-PICK, chosen by the user), seed: e298d742af434f7d. Signature interaction: hovering or
+PICK, chosen by the user), seed:e298d742af434f7d. Signature interaction: hovering or
 focusing an apparatus entry highlights its lemma in the text and its line number, and the
 reverse.
 

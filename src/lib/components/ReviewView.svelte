@@ -3,9 +3,11 @@
 	// (with the researcher's corrections) is the reading text; where the other set-ups, or the
 	// model under a correction, read differently, the apparatus below the text says so, by line.
 	import { onMount } from 'svelte';
+	import type { Attachment } from 'svelte/attachments';
 	import AudioPane from './AudioPane.svelte';
+	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
-	import { apparatus, lines, numbered, type Entry } from '#lib/apparatus.js';
+	import { apparatus, lines, numbered, siglum, type Entry } from '#lib/apparatus.js';
 	import type { ComparisonReport } from '#lib/bindings/ComparisonReport.js';
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
 	import type { Job } from '#lib/bindings/Job.js';
@@ -38,9 +40,6 @@
 	const setups = $derived(job?.setups ?? []);
 	const recording = $derived(source?.kind === 'audio' || source?.kind === 'video');
 	const timed = $derived(current.find((v) => v.segments.length > 0) ?? current[0]);
-
-	/** a, b, c…: the letter that names each set-up as a witness. */
-	const siglum = (i: number) => String.fromCharCode(97 + i);
 
 	function viewFor(setup: Setup | undefined): PieceView | undefined {
 		return setup ? current.find((v) => v.setup_id === setup.id) : undefined;
@@ -91,6 +90,39 @@
 	const reading = $derived(lines(base, entries));
 	/** An entry whose readings include the model's own text marks a correction. */
 	const isCorrection = (e: Entry) => corrected && e.readings.some((r) => r.siglum === siglum(0));
+	/** The line of the entry under the pointer or the keyboard, whose number lights up with it. */
+	const hoveredLine = $derived(entries.find((e) => e.id === hovered)?.line ?? null);
+
+	/** The way back from the text: pointing at a lemma lights up its entry and line number. */
+	const followLemmata: Attachment<HTMLElement> = (text) => {
+		const over = (e: PointerEvent) => {
+			const lemma = (e.target as Element).closest<HTMLElement>('.lemma');
+			hovered = lemma ? Number(lemma.dataset.entry) : null;
+		};
+		const leave = () => (hovered = null);
+		text.addEventListener('pointerover', over);
+		text.addEventListener('pointerleave', leave);
+		return () => {
+			text.removeEventListener('pointerover', over);
+			text.removeEventListener('pointerleave', leave);
+		};
+	};
+
+	/** Scrolls the edition page so an entry's lemma is in view, and the entry too when both fit. */
+	function reveal(id: number, entry: HTMLElement) {
+		const page = entry.closest<HTMLElement>('.page');
+		const lemma = page?.querySelector<HTMLElement>(`.lemma[data-entry="${id}"]`);
+		if (!page || !lemma) return;
+		const box = page.getBoundingClientRect();
+		const margin = 48;
+		const top = lemma.getBoundingClientRect().top - box.top;
+		const bottom = entry.getBoundingClientRect().bottom - box.top;
+		if (top >= margin && bottom <= box.height - margin) return;
+		const delta =
+			bottom - top + 2 * margin <= box.height ? (top + bottom - box.height) / 2 : top - margin;
+		const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		page.scrollBy({ top: delta, behavior: still ? 'auto' : 'smooth' });
+	}
 
 	function pieceLabel(v: PieceView | undefined): string {
 		if (!v) return '';
@@ -181,7 +213,9 @@
 <div class="review">
 	<header class="masthead">
 		<div class="title">
-			<button class="back" onclick={() => go({ name: 'jobs', jobId })}>← {m.review.back}</button>
+			<button class="back" onclick={() => go({ name: 'jobs', jobId })}
+				><Icon name="back" size={14} />{m.review.back}</button
+			>
 			<h1>
 				{source?.file_name ?? m.review.title}
 				<span class="lede num">{m.review.reviewedOf(reviewedCount, indices.length)}</span>
@@ -202,7 +236,9 @@
 				{#each indices as i (i)}
 					{@const v = views.find((x) => x.index === i)}
 					<option value={i}
-						>{pieceLabel(v)}{views.some((x) => x.index === i && x.reviewed) ? ' ✓' : ''}</option
+						>{views.some((x) => x.index === i && x.reviewed)
+							? m.review.pieceReviewed(pieceLabel(v))
+							: pieceLabel(v)}</option
 					>
 				{/each}
 			</select>
@@ -252,15 +288,17 @@
 				{#if !recording}
 					<div class="zoom">
 						<button
-							class="btn sm"
+							class="btn sm icon"
 							aria-label={m.review.zoomOut}
-							onclick={() => (zoom = Math.max(0.4, zoom - 0.2))}>−</button
+							title={m.review.zoomOut}
+							onclick={() => (zoom = Math.max(0.4, zoom - 0.2))}><Icon name="zoom-out" /></button
 						>
 						<span class="num muted">{Math.round(zoom * 100)}%</span>
 						<button
-							class="btn sm"
+							class="btn sm icon"
 							aria-label={m.review.zoomIn}
-							onclick={() => (zoom = Math.min(3, zoom + 0.2))}>+</button
+							title={m.review.zoomIn}
+							onclick={() => (zoom = Math.min(3, zoom + 0.2))}><Icon name="zoom-in" /></button
 						>
 					</div>
 				{/if}
@@ -342,14 +380,16 @@
 				{:else if lead.status === 'failed'}
 					<p class="error">{lead.error}</p>
 				{:else}
-					<div class="text" lang="">
+					<div class="text" lang="" {@attach followLemmata}>
 						{#each reading as line, li (li)}
 							<div class="line" class:blank={line.number === 0}>
-								{#if numbered(line.number, entries)}<span class="n num" aria-hidden="true"
-										>{line.number}</span
+								{#if numbered(line.number, entries)}<span
+										class="n num"
+										class:on={hoveredLine === line.number}
+										aria-hidden="true">{line.number}</span
 									>{/if}
 								<!-- prettier-ignore -->
-								<span class="t">{#each line.parts as part, k (k)}{#if part.entry !== null}<span class="lemma" class:marked={showDiff} class:corr={isCorrection(entries.find((x) => x.id === part.entry) ?? entries[0])} class:on={hovered === part.entry}>{part.text}</span>{:else}{part.text}{/if}{/each}</span>
+								<span class="t">{#each line.parts as part, k (k)}{#if part.entry !== null}{@const id = part.entry}<span class="lemma" data-entry={id} class:marked={showDiff} class:corr={isCorrection(entries.find((x) => x.id === id) ?? entries[0])} class:on={hovered === id}>{part.text}</span>{:else}{part.text}{/if}{/each}</span>
 							</div>
 						{/each}
 					</div>
@@ -366,10 +406,16 @@
 							<li class:on={hovered === e.id}>
 								<button
 									class="entry"
+									title={m.review.showInText}
 									onmouseenter={() => (hovered = e.id)}
 									onmouseleave={() => (hovered = null)}
-									onfocus={() => (hovered = e.id)}
+									onfocus={(ev) => {
+										hovered = e.id;
+										const el = ev.currentTarget;
+										requestAnimationFrame(() => reveal(e.id, el));
+									}}
 									onblur={() => (hovered = null)}
+									onclick={(ev) => reveal(e.id, ev.currentTarget)}
 								>
 									<span class="ln num">{e.line}</span>
 									<span class:corr={isCorrection(e)}>{e.lemma || m.review.added}</span>
@@ -537,6 +583,15 @@
 		width: 3rem;
 		text-align: center;
 	}
+	.btn.icon {
+		width: var(--control-sm);
+		padding: 0;
+	}
+	.back {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+	}
 	.source {
 		border-right: 1px solid var(--line);
 	}
@@ -573,29 +628,36 @@
 		font-variant-numeric: oldstyle-nums;
 		max-width: 44rem;
 	}
+	/* Each line sits in the margin's grid: its number, when printed, shares the first baseline. */
+	.line {
+		display: grid;
+		grid-template-columns: 2.5rem minmax(0, 1fr);
+		column-gap: 1rem;
+		align-items: baseline;
+		margin-left: -3.5rem;
+		min-height: 1.65em;
+	}
 	.line.blank {
 		min-height: 0.6em;
 	}
-	.line {
-		position: relative;
-		min-height: 1.65em;
-	}
 	.t {
+		grid-column: 2;
 		white-space: pre-wrap;
 		overflow-wrap: anywhere;
 	}
 	.n {
-		position: absolute;
-		left: -3.5rem;
-		width: 2.5rem;
-		text-align: right;
-		font-family: var(--font-text);
-		font-size: 0.875rem;
+		grid-column: 1;
+		justify-self: end;
+		padding: 0 0.2em;
+		border-radius: 2px;
+		font-size: 0.8em;
 		font-weight: 600;
 		font-variant-numeric: lining-nums tabular-nums;
 		color: var(--rubric);
-		line-height: inherit;
-		top: 0.2em;
+		transition: background-color 120ms ease-out;
+	}
+	.n.on {
+		background: var(--tint);
 	}
 	.lemma {
 		border-radius: 2px;
@@ -635,7 +697,6 @@
 		border-radius: 3px;
 		padding: 0 var(--space-2);
 		margin: 0 calc(-1 * var(--space-2));
-		cursor: default;
 		transition: background-color 120ms ease-out;
 	}
 	.apparatus li.on {
@@ -650,7 +711,7 @@
 		color: inherit;
 		font: inherit;
 		text-align: left;
-		cursor: default;
+		cursor: pointer;
 	}
 	.entry:focus-visible {
 		outline-offset: 2px;

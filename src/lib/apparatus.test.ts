@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DiffSpan } from './bindings/DiffSpan.js';
-import { apparatus, lines, numbered, variants } from './apparatus.js';
+import { apparatus, lines, numbered, siglum, variants } from './apparatus.js';
 
 const same = (text: string): DiffSpan => ({ kind: 'same', text });
 const removed = (text: string): DiffSpan => ({ kind: 'removed', text });
@@ -98,6 +98,10 @@ describe('apparatus', () => {
 		expect(entry).toMatchObject({ lemma: 'minaret', readings: [{ siglum: 'b', text: 'marché' }] });
 		const [kept] = apparatus('fin.', [{ siglum: 'b', spans: [removed('fin.'), added('fin!')] }]);
 		expect(kept.lemma).toBe('fin.');
+	});
+
+	it('names set-ups a, b, c', () => {
+		expect([0, 1, 2].map(siglum)).toEqual(['a', 'b', 'c']);
 	});
 
 	it('records additions and omissions', () => {

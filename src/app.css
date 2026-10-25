@@ -85,6 +85,7 @@
 	--font-ui: 'Source Sans 3 Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
 	/* Garamond for Latin, Greek and Cyrillic; Windows' Times New Roman for Arabic script. */
 	--font-text: 'EB Garamond Variable', Garamond, 'Times New Roman', serif;
+	/* Only for prompt text, which is written like code. */
 	--font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
 	--type-xs: 0.75rem;
@@ -94,6 +95,17 @@
 	--type-xl: 1.5rem;
 	--type-title: 2rem;
 	--type-reading: 1.3125rem;
+
+	/* The coloured band's height, shared by every masthead and the rail's wordmark so their
+	   bottom rules run as one line. */
+	--masthead-height: 6.5rem;
+}
+
+/* A wide window gives the reading text the room an edition page would. */
+@media (min-width: 1680px) {
+	:root {
+		--type-reading: 1.5rem;
+	}
 }
 
 @media (prefers-color-scheme: dark) {
@@ -432,6 +444,7 @@ textarea:hover {
 .masthead {
 	background: var(--shell);
 	color: var(--on-shell);
+	min-height: var(--masthead-height);
 	padding: var(--space-5) var(--space-6) var(--space-4);
 	display: flex;
 	align-items: flex-end;
@@ -503,6 +516,7 @@ textarea:hover {
 		font-size: 1.625rem;
 	}
 	.masthead {
+		min-height: 0;
 		padding: var(--space-4) var(--space-4) var(--space-3);
 	}
 	.sheet {

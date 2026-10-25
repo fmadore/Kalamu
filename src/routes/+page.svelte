@@ -164,13 +164,18 @@
 		border-right: 1px solid var(--shell-line);
 		min-height: 0;
 	}
+	/* As tall as a masthead, so its rule continues the header's bottom edge. */
 	.wordmark {
+		display: flex;
+		align-items: flex-end;
+		height: var(--masthead-height);
+		flex: none;
 		font-family: var(--font-text);
 		font-size: 1.875rem;
 		font-weight: 500;
 		letter-spacing: 0.01em;
 		line-height: 1;
-		padding: var(--space-6) var(--space-5) var(--space-4);
+		padding: 0 var(--space-5) var(--space-4);
 		border-bottom: 1px solid var(--shell-line);
 	}
 	ul {
@@ -291,6 +296,7 @@
 			border-bottom: 1px solid var(--shell-line);
 		}
 		.wordmark {
+			height: auto;
 			font-size: 1.5rem;
 			padding: var(--space-3) var(--space-4);
 			border-bottom: 0;

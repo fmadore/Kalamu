@@ -4,6 +4,11 @@
 
 import type { DiffSpan } from './bindings/DiffSpan.js';
 
+/** a, b, c…: the letter that names a job's set-up as a witness, wherever set-ups are listed. */
+export function siglum(index: number): string {
+	return String.fromCharCode(97 + index);
+}
+
 /** A reading of one witness at one place. `text` is empty when the witness omits the lemma. */
 export interface Reading {
 	siglum: string;

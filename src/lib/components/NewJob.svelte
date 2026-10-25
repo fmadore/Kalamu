@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import FileList from './FileList.svelte';
+	import Icon from './Icon.svelte';
 	import SetupList from './SetupList.svelte';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
@@ -208,7 +209,8 @@
 						<button
 							class="x"
 							aria-label="{m.newJob.remove} {languageName(code)}"
-							onclick={() => (languages = languages.filter((c) => c !== code))}>×</button
+							onclick={() => (languages = languages.filter((c) => c !== code))}
+							><Icon name="close" size={12} /></button
 						>
 					</span>
 				{/each}
@@ -284,7 +286,7 @@
 				{m.newJob.inFolder}
 			</label>
 			{#if destination.kind === 'folder'}
-				<span class="mono small">{destination.path}</span>
+				<span class="small path">{destination.path}</span>
 				<button class="btn sm" onclick={chooseDestination}>{m.newJob.chooseFolder}</button>
 			{/if}
 		</div>
@@ -293,8 +295,11 @@
 			<input type="text" bind:value={name} />
 		</label>
 	</section>
+</div>
 
-	<footer class="card block start">
+<!-- Stays at the bottom of the window while the form scrolls under it. -->
+<footer class="start">
+	<div class="start-inner">
 		<div>
 			<span class="label">{m.newJob.estimate}</span>
 			{#if estimates.length > 0}
@@ -323,8 +328,8 @@
 				{starting ? m.newJob.starting : m.newJob.start}
 			</button>
 		</div>
-	</footer>
-</div>
+	</div>
+</footer>
 
 <style>
 	.block {
@@ -385,11 +390,16 @@
 		white-space: nowrap;
 	}
 	.x {
+		display: grid;
+		place-items: center;
 		border: 0;
 		background: none;
 		cursor: pointer;
-		padding: 0 2px;
+		padding: 2px;
 		color: inherit;
+	}
+	.path {
+		overflow-wrap: anywhere;
 	}
 	fieldset {
 		border: 0;
@@ -404,15 +414,23 @@
 	.name {
 		max-width: 28rem;
 	}
+	/* The footer spans the window, set off from the sections by a lifted edge rather than their
+	   black rule, so content passing beneath it reads as passing under, not as cut. */
 	.start {
+		position: sticky;
+		bottom: 0;
+		z-index: 1;
+		background: var(--surface-0);
+		border-top: 1px solid var(--line-strong);
+		box-shadow: 0 -10px 24px -18px rgba(15, 20, 35, 0.45);
+	}
+	.start-inner {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--space-4);
-		position: sticky;
-		bottom: 0;
-		padding-bottom: var(--space-4);
-		background: var(--surface-0);
+		max-width: 64rem;
+		padding: var(--space-3) var(--space-6) var(--space-4);
 	}
 	.estimate {
 		display: flex;
@@ -433,8 +451,13 @@
 		.tasks {
 			grid-template-columns: 1fr;
 		}
-		.start {
+		.start-inner {
 			flex-wrap: wrap;
+		}
+	}
+	@media (max-width: 820px) {
+		.start-inner {
+			padding: var(--space-3) var(--space-4);
 		}
 	}
 </style>

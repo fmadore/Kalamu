@@ -162,7 +162,7 @@
 	<section class="card block" aria-labelledby="about">
 		<h2 id="about">{m.settings.aboutTitle}</h2>
 		<p>{m.settings.version(app.info?.version ?? '')}</p>
-		<p class="small">{m.settings.dataFolder}: <span class="mono">{app.info?.data_dir}</span></p>
+		<p class="small">{m.settings.dataFolder}: <span class="path">{app.info?.data_dir}</span></p>
 		<p class="muted small">{m.settings.privacy}</p>
 		<p class="muted small">{m.settings.credits}</p>
 	</section>
@@ -179,6 +179,9 @@
 	}
 	.small {
 		font-size: var(--type-sm);
+	}
+	.path {
+		overflow-wrap: anywhere;
 	}
 	.key {
 		display: grid;
