@@ -3916,7 +3916,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scriptorium"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -3947,7 +3947,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-catalog"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "scriptorium-core",
  "serde",
@@ -3958,7 +3958,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "hex",
@@ -3972,7 +3972,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-engine"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "futures",
@@ -3994,7 +3994,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-export"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "csv",
  "docx-rs",
@@ -4008,7 +4008,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-media"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "docx-rs",
  "hex",
@@ -4026,7 +4026,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-offline"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "hex",
@@ -4047,7 +4047,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-prompts"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "scriptorium-core",
  "serde",
@@ -4060,7 +4060,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-providers"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "base64 0.23.1",
@@ -4075,7 +4075,7 @@ dependencies = [
 
 [[package]]
 name = "scriptorium-store"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "rusqlite",
  "scriptorium-core",

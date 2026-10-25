@@ -6,8 +6,8 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (25 October 2026)
 
-Early development; [v0.1.0](https://github.com/fmadore/Scriptorium/releases/tag/v0.1.0) is
-the first test build, for Windows on ARM64, with FFmpeg bundled. Everything below is tested
+Early development; [v0.2.0](https://github.com/fmadore/Scriptorium/releases/tag/v0.2.0) is
+the latest test build, for Windows on ARM64, with FFmpeg bundled. Everything below is tested
 against recorded provider responses. Text extraction, transcription and analyses have also run
 against the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`,
 see [development.md](development.md)); Gemini has not yet, for want of credit on the account.

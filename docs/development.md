@@ -68,6 +68,7 @@ parameters open a given state:
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `theme=light` or `dark` | Forces the theme |
 | `open=<word>` | Opens the readings of the highlighted words with that text in the review |
+| `compare` | Opens the review with another set-up's text in the compare pane |
 
 If the preview shows a stale model catalogue after `crates/catalog/catalog.json` changes,
 restart the dev server.

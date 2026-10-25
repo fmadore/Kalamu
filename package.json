@@ -1,6 +1,6 @@
 {
 	"name": "scriptorium",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Transcribe interviews and read scanned or handwritten documents with the AI provider of your choice",
 	"license": "MIT",
 	"author": "Frédérick Madore",
