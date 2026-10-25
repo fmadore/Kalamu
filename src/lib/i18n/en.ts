@@ -8,6 +8,8 @@ export const en = {
 		tagline: 'Transcription and text extraction'
 	},
 	shell: {
+		collapse: 'Fold the menu',
+		expand: 'Open the menu',
 		running: (name: string) => `Running: ${name}`,
 		unfinished: (n: number) => (n === 1 ? '1 unfinished job' : `${n} unfinished jobs`)
 	},
@@ -222,7 +224,12 @@ export const en = {
 		speakersPieces:
 			'This recording was sent in several pieces: the same label may be a different person in each piece. Names apply to the whole recording.',
 		yourCorrections: 'Your corrections',
-		correctionsKept: "Kept apart: the model's text is never overwritten"
+		correctionsKept: "Kept apart: the model's text is never overwritten",
+		notReviewed: 'Not reviewed yet',
+		answers: 'Answers',
+		answersOf: 'answers of',
+		noneFound: 'None found',
+		onePerLine: 'One per line.'
 	},
 	prompts: {
 		title: 'Prompts',

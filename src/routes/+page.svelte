@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import AnalysisReview from '#lib/components/AnalysisReview.svelte';
 	import CloseDialog from '#lib/components/CloseDialog.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import JobsView from '#lib/components/JobsView.svelte';
 	import NewJob from '#lib/components/NewJob.svelte';
 	import PromptsView from '#lib/components/PromptsView.svelte';
@@ -23,12 +25,33 @@
 	let loadError = $state<string | null>(null);
 	let startView: View | null = null;
 
-	const nav: { name: View['name']; label: string }[] = [
+	const nav: { name: 'new' | 'jobs' | 'prompts' | 'settings'; label: string }[] = [
 		{ name: 'new', label: m.nav.newJob },
 		{ name: 'jobs', label: m.nav.jobs },
 		{ name: 'prompts', label: m.nav.prompts },
 		{ name: 'settings', label: m.nav.settings }
 	];
+
+	// The rail can fold down to its icons; the choice is this computer's, kept between sessions.
+	const RAIL_KEY = 'scriptorium.rail';
+	let folded = $state(readFolded());
+
+	function readFolded(): boolean {
+		try {
+			return localStorage.getItem(RAIL_KEY) === 'folded';
+		} catch {
+			return false;
+		}
+	}
+
+	function toggleRail() {
+		folded = !folded;
+		try {
+			localStorage.setItem(RAIL_KEY, folded ? 'folded' : 'open');
+		} catch {
+			// Storage refused: the rail still folds for this session.
+		}
+	}
 
 	function applyTheme(theme: string) {
 		if (theme === 'light' || theme === 'dark') {
@@ -84,9 +107,13 @@
 	});
 </script>
 
-<div class="shell">
+<div class="shell" class:folded>
 	<nav class="rail" aria-label="Main">
-		<div class="wordmark">{m.app.name}</div>
+		<div class="wordmark" aria-label={m.app.name}>
+			<span class="full">{m.app.name}</span><span class="initial" aria-hidden="true"
+				>{m.app.name.charAt(0)}</span
+			>
+		</div>
 		<ul>
 			{#each nav as item (item.name)}
 				<li>
@@ -95,9 +122,12 @@
 						class:active={app.view.name === item.name ||
 							(item.name === 'jobs' && app.view.name === 'review')}
 						aria-current={app.view.name === item.name ? 'page' : undefined}
+						aria-label={folded ? item.label : undefined}
+						title={folded ? item.label : undefined}
 						onclick={() => go({ name: item.name } as View)}
 					>
-						{item.label}
+						<span class="nav-icon"><Icon name={item.name} size={18} /></span>
+						<span class="nav-label">{item.label}</span>
 						{#if item.name === 'jobs' && unfinished > 0}
 							<span class="count" aria-label={m.shell.unfinished(unfinished)}>{unfinished}</span>
 						{/if}
@@ -121,6 +151,16 @@
 				{/each}
 			</div>
 		{/if}
+		<button
+			class="fold"
+			aria-label={folded ? m.shell.expand : m.shell.collapse}
+			title={folded ? m.shell.expand : m.shell.collapse}
+			aria-expanded={!folded}
+			onclick={toggleRail}
+		>
+			<Icon name={folded ? 'expand' : 'collapse'} size={18} />
+			<span class="nav-label">{m.shell.collapse}</span>
+		</button>
 	</nav>
 
 	<main>
@@ -133,7 +173,12 @@
 		{:else if app.view.name === 'jobs'}
 			<JobsView jobId={app.view.jobId} />
 		{:else if app.view.name === 'review'}
-			<ReviewView jobId={app.view.jobId} sourceId={app.view.sourceId} />
+			{@const { jobId, sourceId } = app.view}
+			{#if app.jobs.find((j) => j.id === jobId)?.task === 'analysis'}
+				<AnalysisReview {jobId} {sourceId} />
+			{:else}
+				<ReviewView {jobId} {sourceId} />
+			{/if}
 		{:else if app.view.name === 'prompts'}
 			<PromptsView />
 		{:else if app.view.name === 'settings'}
@@ -156,6 +201,9 @@
 		grid-template-columns: 14.5rem 1fr;
 		height: 100vh;
 	}
+	.shell.folded {
+		grid-template-columns: 3.75rem 1fr;
+	}
 	.rail {
 		background: var(--shell);
 		color: var(--on-shell);
@@ -168,6 +216,8 @@
 	.wordmark {
 		display: flex;
 		align-items: flex-end;
+		white-space: nowrap;
+		overflow: hidden;
 		height: var(--masthead-height);
 		flex: none;
 		font-family: var(--font-text);
@@ -210,8 +260,71 @@
 		color: var(--on-shell);
 		font-weight: 600;
 	}
-	.nav-item:focus-visible {
+	.nav-item:focus-visible,
+	.fold:focus-visible {
 		outline-color: var(--on-shell);
+	}
+	/* Words lead in the open rail; icons stand in for them only when it is folded. */
+	.nav-icon,
+	.initial {
+		display: none;
+	}
+	.folded .nav-icon,
+	.folded .initial {
+		display: inline-flex;
+	}
+	.folded .nav-label,
+	.folded .full,
+	.folded .running {
+		display: none;
+	}
+	.folded .wordmark {
+		justify-content: center;
+		padding-left: 0;
+		padding-right: 0;
+	}
+	.folded ul {
+		padding: var(--space-4) var(--space-2);
+	}
+	.folded .nav-item {
+		justify-content: center;
+		padding: 0;
+		position: relative;
+	}
+	.folded .count {
+		position: absolute;
+		top: 2px;
+		right: 2px;
+		min-width: 1.125rem;
+		line-height: 1.125rem;
+	}
+	.fold {
+		margin-top: auto;
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: 2.5rem;
+		margin-inline: var(--space-3);
+		margin-bottom: var(--space-3);
+		padding: 0 var(--space-3);
+		border: 0;
+		border-radius: var(--radius-control);
+		background: transparent;
+		color: var(--on-shell-muted);
+		font-size: var(--type-sm);
+		cursor: pointer;
+	}
+	.fold:hover {
+		background: var(--shell-2);
+		color: var(--on-shell);
+	}
+	.running + .fold {
+		margin-top: 0;
+	}
+	.folded .fold {
+		justify-content: center;
+		margin-inline: var(--space-2);
+		padding: 0;
 	}
 	.count {
 		margin-left: auto;
@@ -310,8 +423,18 @@
 			min-height: 2.25rem;
 			font-size: var(--type-md);
 		}
-		.running {
-			display: none;
+		.running,
+		.fold,
+		.nav-icon,
+		.initial {
+			display: none !important;
+		}
+		.shell.folded {
+			grid-template-columns: 1fr;
+		}
+		.folded .nav-label,
+		.folded .full {
+			display: inline;
 		}
 	}
 </style>

@@ -6,9 +6,15 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import FilePlus from '@lucide/svelte/icons/file-plus';
+	import ListChecks from '@lucide/svelte/icons/list-checks';
+	import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
+	import PanelLeftOpen from '@lucide/svelte/icons/panel-left-open';
 	import Pause from '@lucide/svelte/icons/pause';
 	import Play from '@lucide/svelte/icons/play';
 	import Plus from '@lucide/svelte/icons/plus';
+	import ScrollText from '@lucide/svelte/icons/scroll-text';
+	import Settings from '@lucide/svelte/icons/settings';
 	import X from '@lucide/svelte/icons/x';
 	import ZoomIn from '@lucide/svelte/icons/zoom-in';
 	import ZoomOut from '@lucide/svelte/icons/zoom-out';
@@ -18,6 +24,12 @@
 		down: ArrowDown,
 		up: ArrowUp,
 		chevron: ChevronRight,
+		collapse: PanelLeftClose,
+		expand: PanelLeftOpen,
+		jobs: ListChecks,
+		new: FilePlus,
+		prompts: ScrollText,
+		settings: Settings,
 		close: X,
 		pause: Pause,
 		play: Play,

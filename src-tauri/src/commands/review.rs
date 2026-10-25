@@ -37,6 +37,28 @@ pub async fn piece_audio(
     Ok(tauri::ipc::Response::new(prepared.bytes))
 }
 
+/// The text of a text source (plain text, Markdown, CSV, Word), for reviewing its analysis.
+#[tauri::command]
+pub async fn source_text(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+) -> CmdResult<String> {
+    let job = state.engine.job(job_id)?;
+    let source = job
+        .sources
+        .into_iter()
+        .find(|s| s.id == source_id)
+        .ok_or_else(|| AppError::new("job.not_found", source_id))?;
+    tokio::task::spawn_blocking(move || match OpenSource::open(&source, None)? {
+        OpenSource::Text(text) => text.text(),
+        _ => Err(scriptorium_media::MediaError::UnsupportedKind),
+    })
+    .await
+    .map_err(|e| AppError::new(id::INTERNAL, e))?
+    .map_err(|e| AppError::new("media.read", e))
+}
+
 /// One page of a source as a single-page PDF or an image, for the review view.
 #[tauri::command]
 pub async fn piece_preview(

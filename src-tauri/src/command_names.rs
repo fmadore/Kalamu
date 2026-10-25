@@ -46,6 +46,7 @@ pub const COMMANDS: &[&str] = &[
     "source_pieces",
     "piece_preview",
     "piece_audio",
+    "source_text",
     "save_correction",
     "save_speaker_names",
     "export_source",

@@ -304,6 +304,121 @@ const audioPieces = (): PieceView[] =>
 		speaker_names: { ...speakerNames }
 	}));
 
+/** An analysis of one article by two models, for the analysis review. */
+const article = {
+	...source,
+	id: '00000000-0000-0000-0000-000000000003',
+	path: 'C:\\Archives\\Bulletin\\bulletin-1957-05.txt',
+	file_name: 'bulletin-1957-05.txt',
+	kind: 'text' as const,
+	page_count: null,
+	duration_ms: null
+};
+
+const analysisSchema = {
+	fields: [
+		{
+			key: 'summary',
+			label: 'Summary',
+			instructions: 'What this document in particular says.',
+			kind: { type: 'text' as const },
+			reason: false
+		},
+		{
+			key: 'people',
+			label: 'People',
+			instructions: 'People named in the document.',
+			kind: { type: 'list' as const, max: 30 },
+			reason: false
+		},
+		{
+			key: 'places',
+			label: 'Places',
+			instructions: 'Places named in the document.',
+			kind: { type: 'list' as const, max: 20 },
+			reason: false
+		},
+		{
+			key: 'tone',
+			label: 'Tone',
+			instructions: 'How the document presents its main subject.',
+			kind: { type: 'choice' as const, values: ['Positive', 'Neutral', 'Negative', 'Mixed'] },
+			reason: true
+		}
+	]
+};
+
+const analysisSetups = [setupA, setupB].map((s, i) => ({
+	...s,
+	id: `00000000-0000-0000-0000-00000000000${i ? 'e' : 'd'}`,
+	prompt: { ...s.prompt, preset_name: 'People, places and tone', schema: analysisSchema }
+}));
+
+const analysisJob: Job = {
+	...job,
+	id: '00000000-0000-0000-0000-0000000000j3',
+	name: 'Bulletin, people and places',
+	task: 'analysis',
+	sources: [article],
+	setups: analysisSetups
+};
+
+const analysisAnswers = [
+	[
+		{
+			key: 'summary',
+			value:
+				"Le Gouverneur général reçoit à Dakar les délégués de la Mission catholique et de l'Union culturelle musulmane sur l'enseignement et le pèlerinage ; à Bamako, deux cents fidèles désignent une commission pour la réfection du minaret."
+		},
+		{ key: 'people', value: ['Gouverneur général', 'imam'] },
+		{
+			key: 'places',
+			value: ['Dakar', 'Bamako']
+		},
+		{
+			key: 'tone',
+			value: 'Neutral',
+			reason: 'The bulletin reports the meetings without judging them.'
+		}
+	],
+	[
+		{
+			key: 'summary',
+			value:
+				'Audience du Gouverneur général avec les délégués catholiques et musulmans à Dakar, et réunion de deux cents fidèles à la mosquée de Bamako.'
+		},
+		{ key: 'people', value: ['Gouverneur général', 'commandant de cercle'] },
+		{
+			key: 'places',
+			value: ['Dakar', 'Bamako', 'mosquée de Bamako']
+		},
+		{
+			key: 'tone',
+			value: 'Positive',
+			reason: 'The meetings are described as cordial and constructive.'
+		}
+	]
+];
+
+const analysisPieces: PieceView[] = analysisSetups.map((s, i) => ({
+	setup_id: s.id,
+	source_id: article.id,
+	index: 0,
+	piece: { kind: 'whole' as const },
+	status: 'done' as const,
+	error: null,
+	ai_text: '',
+	corrected_text: null,
+	reviewed: i === 0,
+	model_version: `${s.model}-001`,
+	cost_usd: 0.004,
+	segments: [],
+	ai_fields: analysisAnswers[i],
+	corrected_fields: null,
+	speakers: [],
+	speaker_names: {}
+}));
+
 /** Nine seconds of a quiet tone as a WAV file, standing in for a recording. */
 function toneWav(): ArrayBuffer {
 	const rate = 8_000;
@@ -364,6 +479,8 @@ export function mockView(): View | null {
 			return { name: 'review', jobId: job.id, sourceId: source.id };
 		case 'review-audio':
 			return { name: 'review', jobId: audioJob.id, sourceId: recording.id };
+		case 'review-analysis':
+			return { name: 'review', jobId: analysisJob.id, sourceId: article.id };
 		case 'prompts':
 		case 'prompts-analysis':
 			return { name: 'prompts' };
@@ -429,9 +546,19 @@ export function installMock(): void {
 				return a.task ? ordered.filter((p) => p.task === a.task) : ordered;
 			}
 			case 'list_jobs':
-				return summaries;
+				return [
+					...summaries,
+					{
+						...summaries[0],
+						id: analysisJob.id,
+						name: analysisJob.name,
+						task: 'analysis',
+						pieces_total: 2,
+						pieces_finished: 2
+					}
+				];
 			case 'get_job':
-				return a.id === audioJob.id ? audioJob : job;
+				return a.id === audioJob.id ? audioJob : a.id === analysisJob.id ? analysisJob : job;
 			case 'job_pieces':
 				return pieces.map((p) => ({
 					...p,
@@ -441,7 +568,10 @@ export function installMock(): void {
 					updated_at: 0
 				}));
 			case 'source_pieces':
+				if (a.jobId === analysisJob.id) return analysisPieces;
 				return a.jobId === audioJob.id ? audioPieces() : pieces;
+			case 'source_text':
+				return texts[0];
 			case 'save_speaker_names':
 				speakerNames = { ...(a.names as { names: Record<string, string> }).names };
 				return [];

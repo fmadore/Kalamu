@@ -84,6 +84,8 @@ export const api = {
 		invoke<PagePreview>('piece_preview', { jobId, sourceId, index }),
 	pieceAudio: (jobId: string, sourceId: string, index: number) =>
 		invoke<ArrayBuffer>('piece_audio', { jobId, sourceId, index }),
+	sourceText: (jobId: string, sourceId: string) =>
+		invoke<string>('source_text', { jobId, sourceId }),
 	saveCorrection: (correction: Correction) => invoke<string[]>('save_correction', { correction }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
 		invoke<string[]>('save_speaker_names', { jobId, names }),
