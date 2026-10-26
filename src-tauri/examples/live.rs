@@ -75,6 +75,7 @@ fn plans() -> Vec<Plan> {
             setup("gemini", "gemini-3.8-flash", Some(preset), plain()),
             setup("openai", "gpt-6-luna", Some(preset), plain()),
             setup("anthropic", "claude-haiku-5-5", Some(preset), plain()),
+            setup("mistral", "mistral-small-2603", Some(preset), plain()),
         ]
     };
     vec![

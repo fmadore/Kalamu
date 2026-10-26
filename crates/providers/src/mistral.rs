@@ -1,7 +1,10 @@
 //! Mistral: the OCR endpoint for text extraction (no prompt; returns Markdown) and Voxtral for
 //! transcription, as in iwac-ai-pipelines (`common/mistral_ocr.py`,
-//! `02b_AI_transcribe_audio_voxtral.py`). Pages go inline as data URLs rather than through the
-//! file upload the Python code uses, since each request carries a single page.
+//! `02b_AI_transcribe_audio_voxtral.py`), and the chat models for analyses ([`chat`]). Pages go
+//! inline as data URLs rather than through the file upload the Python code uses, since each
+//! request carries a single page.
+
+mod chat;
 
 use async_trait::async_trait;
 use reqwest::Client;
@@ -12,6 +15,7 @@ use scriptorium_core::{
 };
 use serde_json::{Value, json};
 
+use crate::analysis;
 use crate::http::{data_url, ids, join_turns, secs_to_ms, send_json, speaker_label};
 
 const BASE_URL: &str = "https://api.mistral.ai/v1";
@@ -290,8 +294,13 @@ impl Provider for Mistral {
                 "audio/ogg",
                 "audio/webm",
             ],
-            // Summaries need Mistral's chat models, not wired up yet.
-            Task::Analysis => &[],
+            Task::Analysis => &[
+                "text/plain",
+                "application/pdf",
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+            ],
         }
     }
 
@@ -312,9 +321,17 @@ impl Provider for Mistral {
                 Self::parse_ocr(&response)
             }
             Task::AudioTranscription => self.transcribe(key, &request).await,
-            Task::Analysis => Err(ProviderError::Unsupported(
-                "Summaries with Mistral are not available yet".into(),
-            )),
+            Task::Analysis => {
+                let fields = analysis::fields(&request)?;
+                let response = send_json(
+                    self.client
+                        .post(format!("{}/chat/completions", self.base_url))
+                        .bearer_auth(key.expose())
+                        .json(&chat::body(&request, fields)),
+                )
+                .await?;
+                analysis::finish(chat::parse(&response)?, fields)
+            }
         }
     }
 

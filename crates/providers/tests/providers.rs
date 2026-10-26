@@ -455,9 +455,30 @@ async fn analyses_send_the_document_and_the_fields_as_a_schema_and_read_them_bac
         .mount(&server)
         .await;
 
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_partial_json(serde_json::json!({
+            "messages": [
+                { "role": "system" },
+                { "role": "user", "content": [{ "type": "text" }, { "type": "text" }] },
+            ],
+            "response_format": { "type": "json_schema",
+                "json_schema": { "name": "analysis", "strict": true,
+                    "schema": { "required": ["summary", "keywords"] } } },
+            "reasoning_effort": "none",
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "model": "mistral-small-2603",
+            "choices": [{ "index": 0, "finish_reason": "stop",
+                "message": { "role": "assistant", "content": ANALYSIS_JSON } }],
+            "usage": { "prompt_tokens": 210, "completion_tokens": 30, "total_tokens": 240 },
+        })))
+        .mount(&server)
+        .await;
+
     let (input, langs, opts) = (document(), LanguageChoice::Auto, SetupOptions::default());
     let key = ApiKey::new("k");
-    let providers: [(Box<dyn Provider>, &str); 3] = [
+    let providers: [(Box<dyn Provider>, &str); 4] = [
         (
             Box::new(Gemini::with_base_url(client(), &server.uri())),
             "gemini-3.8-flash",
@@ -469,6 +490,10 @@ async fn analyses_send_the_document_and_the_fields_as_a_schema_and_read_them_bac
         (
             Box::new(Anthropic::with_base_url(client(), &server.uri())),
             "claude-haiku-5-5",
+        ),
+        (
+            Box::new(Mistral::with_base_url(client(), &server.uri())),
+            "mistral-small-2603",
         ),
     ];
     for (provider, model) in providers {

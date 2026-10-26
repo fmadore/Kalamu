@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (25 October 2026)
+## Status (26 October 2026)
 
 Early development; [v0.2.0](https://github.com/fmadore/Scriptorium/releases/tag/v0.2.0) is
 the latest test build, for Windows on ARM64, with FFmpeg bundled. Everything below is tested
@@ -26,10 +26,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
   Settings. Jobs keep running from the notification area when the window is closed.
-- **Analyses.** Fields defined by the researcher (text, lists of names or terms, one or several
-  choices, reasons), sent as each provider's structured output and checked on return; four
-  ready-made analyses (research summary, short summary, people, places and organisations, tone);
-  a field editor in Prompts; CSV with a column per field.
+- **Analyses.** With Gemini, OpenAI, Claude and Mistral. Fields defined by the researcher
+  (text, lists of names or terms, one or several choices, reasons), sent as each provider's
+  structured output and checked on return; four ready-made analyses (research summary, short
+  summary, people, places and organisations, tone); a field editor in Prompts; CSV with a
+  column per field.
 - **Review.** The source on a dark lightbox beside the text, in panes that can be resized,
   with another set-up's whole text beside them on demand; differences between set-ups and
   corrections highlighted in the text, their readings shown on pointing, any of which can be
@@ -50,7 +51,10 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   and split New job into smaller components (see the
   [25 October checkpoint](decisions/2026-10-25-analyses-review-and-pipelines.md)).
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
-  against the estimates. Offline Whisper still needs a live run too.
+  against the estimates. Offline Whisper still needs a live run too, as do the models added on
+  26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
+  [decision](decisions/2026-10-26-terra-and-mistral-chat.md)); Terra on historical pages
+  before it is considered as OpenAI's default.
 - **Gemini 3.5 Transcribe** in the catalogue.
 - **Text extraction**: ALTO and PAGE XML where models return coordinates; checks for skewed
   and blurry pages.
