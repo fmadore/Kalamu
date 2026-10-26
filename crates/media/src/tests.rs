@@ -100,6 +100,19 @@ fn accepted_images_pass_through_unchanged() -> Result<(), MediaError> {
 }
 
 #[test]
+fn a_photographed_page_is_analysed_as_one_image() -> Result<(), MediaError> {
+    let bytes = png(2400, 3300);
+    let photo = OpenSource::Image(ImageSource::from_bytes(bytes.clone(), "png")?);
+    let whole = photo.prepare(&PieceRef::Whole, &["text/plain", "image/png"], "letter")?;
+    assert_eq!(
+        (whole.mime.as_str(), whole.file_name.as_str()),
+        ("image/png", "letter.png")
+    );
+    assert_eq!(whole.bytes, bytes);
+    Ok(())
+}
+
+#[test]
 fn images_are_converted_split_and_checked() -> Result<(), MediaError> {
     let img = ImageSource::from_bytes(png(3000, 2000), "png")?;
     assert!(img.is_spread(1));

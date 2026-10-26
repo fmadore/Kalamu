@@ -45,7 +45,7 @@ Where Scriptorium departs from these projects, the reason is written down in
 | --- | --- | --- |
 | **Extract text** (printed and handwritten) | PDF, JPEG, PNG, TIFF | Text per page, its lines kept as on the page or joined into running text |
 | **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`… | Transcript with optional speakers and timestamps; speakers can be given names |
-| **Analyse texts** | Text, Word, PDF, and the results of earlier jobs | The researcher's own fields for each document: a summary, the people and places it names, its tone… |
+| **Analyse texts** | Text, Word, PDF, photographed pages, and the results of earlier jobs | The researcher's own fields for each document: a summary, the people and places it names, its tone… |
 
 **OCR and HTR are one task.** Current vision models read print and handwriting with the same
 call, so the app has a single **Extract text** task and the difference lies in the prompt:
@@ -265,7 +265,8 @@ never convert anything themselves. The tools ship inside the app for x64 and ARM
   resized, orientation fixed from EXIF data.
 - **Audio and video with FFmpeg**: the audio track extracted from video, files converted to a
   format the provider accepts, and long recordings split at silences with a short overlap.
-- **Reading text inputs** for analyses: Word, PDF, Markdown, CSV and plain text.
+- **Reading inputs** for analyses: Word, PDF, Markdown, CSV and plain text, and a photographed
+  page as one image (a multi-page TIFF is refused, with a hint to save it as a PDF).
 
 Licences matter for an MIT app in the Store. PDFium is BSD/Apache-licensed. FFmpeg is our own
 audio-only build, LGPL v2.1 or later, run as separate programs rather than linked; its source is

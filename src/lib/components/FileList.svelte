@@ -27,6 +27,13 @@
 		if (source) source.split_spreads = split;
 	}
 
+	/** An analysis reads each document whole, so splitting double pages does not apply to it. */
+	function shownWarnings(file: (typeof files)[number]) {
+		return task === 'analysis'
+			? file.warnings.filter((w) => w.kind !== 'double_page_spread')
+			: file.warnings;
+	}
+
 	function setEvenOut(index: number, on: boolean) {
 		const source = files[index].source;
 		if (source) source.even_out_volume = on;
@@ -59,7 +66,8 @@
 		<ul class="files">
 			{#each files as file, i (file.path)}
 				{@const fileName = file.path.split(/[\\/]/).pop()}
-				<li class:warned={file.warnings.length > 0} class:failed={!!file.error}>
+				{@const warnings = shownWarnings(file)}
+				<li class:warned={warnings.length > 0} class:failed={!!file.error}>
 					<div class="file">
 						<span class="file-name mono">{fileName}</span>
 						<span class="meta mono">
@@ -77,7 +85,7 @@
 					{#if file.error}
 						<p class="problem danger">{describeError(file.error, m)}</p>
 					{/if}
-					{#each file.warnings as w (w.kind)}
+					{#each warnings as w (w.kind)}
 						<div class="problem">
 							<span>{warningText(w, m)}</span>
 							{#if w.kind === 'double_page_spread' && file.source}

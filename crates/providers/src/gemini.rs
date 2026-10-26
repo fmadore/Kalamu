@@ -182,7 +182,15 @@ impl Provider for Gemini {
                 "audio/aac",
                 "audio/webm",
             ],
-            Task::Analysis => &["text/plain", "application/pdf"],
+            Task::Analysis => &[
+                "text/plain",
+                "application/pdf",
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+                "image/heic",
+                "image/heif",
+            ],
         }
     }
 

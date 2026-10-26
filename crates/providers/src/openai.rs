@@ -266,7 +266,13 @@ impl Provider for OpenAi {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
             // The formats the speech-to-text guide lists (October 2026): not FLAC or Ogg.
             Task::AudioTranscription => &["audio/mpeg", "audio/wav", "audio/mp4", "audio/webm"],
-            Task::Analysis => &["text/plain", "application/pdf"],
+            Task::Analysis => &[
+                "text/plain",
+                "application/pdf",
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+            ],
         }
     }
 

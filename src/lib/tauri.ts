@@ -130,7 +130,22 @@ export async function pickFiles(task: Task): Promise<string[]> {
 			'mkv',
 			'avi'
 		],
-		analysis: ['txt', 'md', 'docx', 'csv', 'pdf']
+		analysis: [
+			'txt',
+			'md',
+			'docx',
+			'csv',
+			'pdf',
+			'png',
+			'jpg',
+			'jpeg',
+			'tif',
+			'tiff',
+			'webp',
+			'bmp',
+			'heic',
+			'heif'
+		]
 	}[task];
 	const picked = await open({ multiple: true, filters: [{ name: 'Sources', extensions }] });
 	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];

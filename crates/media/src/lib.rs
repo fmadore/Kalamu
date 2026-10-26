@@ -226,29 +226,45 @@ impl OpenSource {
 }
 
 impl OpenSource {
-    /// The whole document, for a summary: a PDF as it is, other documents as text.
+    /// The whole document, for an analysis: a PDF as it is, a photographed page as an image,
+    /// other documents as text.
     fn prepare_whole(
         &self,
         accepted: &[&str],
         file_stem: &str,
     ) -> Result<PreparedInput, MediaError> {
-        let (mime, bytes, ext) = match self {
+        let (mime, bytes) = match self {
             Self::Pdf(pdf) if accepted.contains(&"application/pdf") => {
-                ("application/pdf", pdf.whole()?, "pdf")
+                ("application/pdf".to_string(), pdf.whole()?)
             }
             Self::Text(text) if accepted.contains(&"text/plain") => {
-                ("text/plain", text.text()?.into_bytes(), "txt")
+                ("text/plain".to_string(), text.text()?.into_bytes())
             }
+            // One image per call: the pages of a multi-page TIFF would be read apart.
+            Self::Image(img) if img.page_count() > 1 => {
+                return Err(MediaError::NeedsConversion(format!(
+                    "This image holds {} pages, and an analysis reads a document as one. Save \
+                     the pages as a single PDF to analyse them together.",
+                    img.page_count()
+                )));
+            }
+            Self::Image(img) => img.prepare(1, None, accepted)?,
             _ => {
                 return Err(MediaError::NeedsConversion(
                     "This model cannot read this kind of document.".into(),
                 ));
             }
         };
+        let ext = mime
+            .rsplit('/')
+            .next()
+            .unwrap_or("bin")
+            .replace("jpeg", "jpg")
+            .replace("plain", "txt");
         Ok(PreparedInput {
             piece: PieceRef::Whole,
             file_name: format!("{file_stem}.{ext}"),
-            mime: mime.to_string(),
+            mime,
             bytes,
         })
     }

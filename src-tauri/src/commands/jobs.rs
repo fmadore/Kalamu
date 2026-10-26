@@ -18,7 +18,7 @@ pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
         match task {
             Task::TextExtraction => matches!(kind, InputKind::Pdf | InputKind::Image),
             Task::AudioTranscription => matches!(kind, InputKind::Audio | InputKind::Video),
-            Task::Analysis => matches!(kind, InputKind::Text | InputKind::Pdf),
+            Task::Analysis => matches!(kind, InputKind::Text | InputKind::Pdf | InputKind::Image),
         }
     }
     fn walk(path: &Path, task: Task, out: &mut Vec<PathBuf>, depth: usize) {
