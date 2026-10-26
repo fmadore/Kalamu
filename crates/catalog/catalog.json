@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25",
+  "updated": "2026-10-26",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn.",
   "providers": [
     {
@@ -203,6 +203,34 @@
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 10.0
+      },
+      "limits": {
+        "max_request_mb": 32
+      }
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-6.1-terra",
+      "name": "GPT-6.1 Terra",
+      "description": "OpenAI's mid-range model (October 2026), at half GPT-6.1 Sol's price; reads PDFs and images. Not yet tried on historical documents.",
+      "tasks": [
+        "text_extraction",
+        "analysis"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 1.0,
+        "output_per_mtok": 5.0
       },
       "limits": {
         "max_request_mb": 32
@@ -532,6 +560,92 @@
       },
       "limits": {
         "max_audio_minutes": 180
+      }
+    },
+    {
+      "provider": "mistral",
+      "id": "mistral-medium-3-5",
+      "name": "Mistral Medium 3.5",
+      "description": "Mistral's main chat model, for analyses of reports, articles and transcripts.",
+      "tasks": [
+        "analysis"
+      ],
+      "inputs": [
+        "text/plain",
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [
+        "analysis"
+      ],
+      "pricing": {
+        "input_per_mtok": 1.5,
+        "output_per_mtok": 7.5
+      },
+      "limits": {
+        "max_request_mb": 50,
+        "max_pages": 1000
+      }
+    },
+    {
+      "provider": "mistral",
+      "id": "mistral-large-4-0",
+      "name": "Mistral Large 4",
+      "description": "Mistral's new flagship (October 2026), still in preview; reads up to a million tokens at once and costs less than Medium 3.5.",
+      "tasks": [
+        "analysis"
+      ],
+      "inputs": [
+        "text/plain",
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
+      "languages": "any",
+      "status": "preview",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 1.36,
+        "output_per_mtok": 4.18
+      },
+      "limits": {
+        "max_request_mb": 50,
+        "max_pages": 1000
+      }
+    },
+    {
+      "provider": "mistral",
+      "id": "mistral-small-2603",
+      "name": "Mistral Small 4",
+      "description": "Fast and inexpensive, for analyses over large collections.",
+      "tasks": [
+        "analysis"
+      ],
+      "inputs": [
+        "text/plain",
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 0.15,
+        "output_per_mtok": 0.6
+      },
+      "limits": {
+        "max_request_mb": 50,
+        "max_pages": 1000
       }
     },
     {
