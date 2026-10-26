@@ -159,7 +159,7 @@ export const en = {
 		results:
 			'Try a sample before a whole folder, compare two models on difficult material, check names, numbers and dates against the source, and keep the originals.',
 		analysisInput:
-			'One document per file, with its text already checked: an analysis is only as good as the text it reads, and a misread name stays misread in every answer.',
+			"Scans and text both work: the model reads a PDF's pages itself. For faded print or handwriting, extracting and correcting the text first means every answer rests on a reading you have checked.",
 		analysisFields:
 			'Describe each field as you would to a research assistant, give choices that do not overlap, and ask for a reason. Try it on a few documents first, and compare two models where the answer is a judgement, such as tone.'
 	},
