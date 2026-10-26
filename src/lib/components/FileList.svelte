@@ -109,8 +109,13 @@
 	<details class="tips">
 		<summary><Icon name="chevron" size={14} />{m.tips.title}</summary>
 		<ul>
-			<li>{task === 'text_extraction' ? m.tips.scanning : m.tips.recording}</li>
-			<li>{m.tips.results}</li>
+			{#if task === 'analysis'}
+				<li>{m.tips.analysisInput}</li>
+				<li>{m.tips.analysisFields}</li>
+			{:else}
+				<li>{task === 'text_extraction' ? m.tips.scanning : m.tips.recording}</li>
+				<li>{m.tips.results}</li>
+			{/if}
 		</ul>
 	</details>
 </section>

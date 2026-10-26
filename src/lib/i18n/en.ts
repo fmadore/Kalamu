@@ -157,7 +157,11 @@ export const en = {
 		recording:
 			'Microphone close to the speakers, a quiet room, one recording per interview, and a short spoken introduction with names and date.',
 		results:
-			'Try a sample before a whole folder, compare two models on difficult material, check names, numbers and dates against the source, and keep the originals.'
+			'Try a sample before a whole folder, compare two models on difficult material, check names, numbers and dates against the source, and keep the originals.',
+		analysisInput:
+			'One document per file, with its text already checked: an analysis is only as good as the text it reads, and a misread name stays misread in every answer.',
+		analysisFields:
+			'Describe each field as you would to a research assistant, give choices that do not overlap, and ask for a reason. Try it on a few documents first, and compare two models where the answer is a judgement, such as tone.'
 	},
 	jobs: {
 		title: 'Jobs',
