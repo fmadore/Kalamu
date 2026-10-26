@@ -293,15 +293,20 @@ async fn a_piece_stopped_part_way_is_done_again_on_resume_not_failed() {
 #[tokio::test]
 async fn a_rejected_key_pauses_the_job_instead_of_failing_every_page() {
     let f = fixture();
-    f.fake
-        .fail(1, vec![ProviderError::Auth("invalid key".into())]);
+    // A rejected key fails every page, so which page fails first does not matter: pages are
+    // prepared on blocking threads and may reach the provider in any order.
+    for page in 1..=6 {
+        f.fake
+            .fail(page, vec![ProviderError::Auth("invalid key".into())]);
+    }
     let job = f.new_job(vec![f.pdf("a.pdf", 6)], &["fake-model"]);
     let status = f.run(job.id).await;
     assert_eq!(status, JobStatus::Paused);
     let pieces = f.store.pieces(job.id).unwrap_or_default();
-    assert!(
-        count(&pieces, PieceStatus::Pending) >= 3,
-        "the rest waits for a new key"
+    assert_eq!(
+        count(&pieces, PieceStatus::Pending),
+        4,
+        "only the pages already in flight are tried; the rest waits for a new key"
     );
 }
 
