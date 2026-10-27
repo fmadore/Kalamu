@@ -1,10 +1,11 @@
-//! Mistral's chat models (Large, Medium, Small) for analyses, through Chat Completions with a
-//! strict JSON schema. Text extraction stays with Mistral OCR, which Mistral's documentation
-//! points to for document parsing. A PDF sent here as `document_url` is read by that OCR before
-//! the model sees it (Mistral's "Document QnA").
+//! Mistral's chat models (Large, Medium, Small) and the Z.ai GLM models Mistral hosts, for
+//! analyses, through Chat Completions with a strict JSON schema. Text extraction stays with
+//! Mistral OCR, which Mistral's documentation points to for document parsing. A PDF sent here as
+//! `document_url` is read by that OCR before the model sees it (Mistral's "Document QnA").
 //!
-//! `reasoning_effort` is `none`, the lowest setting, as the other providers run at their lowest
-//! effort; the answer then comes back as one string rather than thinking and text chunks.
+//! `reasoning_effort` is the lowest setting, as the other providers run at their lowest effort:
+//! `none` for Mistral's own models, whose answer then comes back as one string, and `low` for
+//! GLM, which rejects `none` and may answer in thinking and text chunks.
 
 use scriptorium_core::{AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, Usage};
 use serde_json::{Value, json};
@@ -42,9 +43,18 @@ pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Val
                 "strict": true,
             },
         },
-        "reasoning_effort": "none",
+        "reasoning_effort": lowest_effort(request.model),
         "max_tokens": 16_000,
     })
+}
+
+/// Z.ai's GLM accepts `low`, `high` and `max` only.
+fn lowest_effort(model: &str) -> &'static str {
+    if model.starts_with("zai-glm") {
+        "low"
+    } else {
+        "none"
+    }
 }
 
 pub(super) fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
