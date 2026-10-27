@@ -11,7 +11,8 @@
 use async_trait::async_trait;
 use reqwest::Client;
 use scriptorium_core::{
-    ApiKey, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId, Task, Usage,
+    ApiKey, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting,
+    Task, Usage,
 };
 use serde_json::{Value, json};
 
@@ -22,6 +23,10 @@ const BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 
 /// Pages above this go through the Files API in the Python pipelines; one page rarely does.
 const INLINE_LIMIT: usize = 18 * 1024 * 1024;
+
+const MAX_OUTPUT_TOKENS: u32 = 65_535;
+const THINKING_LEVEL: &str = "low";
+const MEDIA_RESOLUTION: &str = "MEDIA_RESOLUTION_HIGH";
 
 const SAFETY_CATEGORIES: &[&str] = &[
     "HARM_CATEGORY_HARASSMENT",
@@ -60,13 +65,13 @@ impl Gemini {
             })
         };
         let mut generation = json!({
-            "maxOutputTokens": 65_535,
+            "maxOutputTokens": MAX_OUTPUT_TOKENS,
             "responseMimeType": "text/plain",
-            "thinkingConfig": { "thinkingLevel": "low" },
+            "thinkingConfig": { "thinkingLevel": THINKING_LEVEL },
         });
         // Media resolution applies to images and documents; ULTRA_HIGH is refused for PDFs.
         if input.mime == "application/pdf" || input.mime.starts_with("image/") {
-            generation["mediaResolution"] = json!("MEDIA_RESOLUTION_HIGH");
+            generation["mediaResolution"] = json!(MEDIA_RESOLUTION);
         }
         if let Some(fields) = request.analysis {
             generation["responseMimeType"] = json!("application/json");
@@ -192,6 +197,25 @@ impl Provider for Gemini {
                 "image/heif",
             ],
         }
+    }
+
+    fn request_settings(&self, task: Task, _model: &str) -> Vec<RequestSetting> {
+        let mut settings = vec![
+            RequestSetting::new(
+                "generationConfig.thinkingConfig.thinkingLevel",
+                THINKING_LEVEL,
+            ),
+            RequestSetting::new("generationConfig.maxOutputTokens", MAX_OUTPUT_TOKENS),
+            RequestSetting::new("safetySettings.*.threshold", "BLOCK_NONE"),
+        ];
+        // For pages and pictures; a recording or a text file has no resolution to set.
+        if task != Task::AudioTranscription {
+            settings.push(RequestSetting::new(
+                "generationConfig.mediaResolution",
+                MEDIA_RESOLUTION,
+            ));
+        }
+        settings
     }
 
     async fn process(

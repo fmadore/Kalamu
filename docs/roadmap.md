@@ -40,7 +40,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   recordings with speakers that can be named; an analysis review that collates answers by
   field and finds names in the document.
 - **Comparison mode** with character error rates against corrected pages.
-- **Pipelines**: a job's settings saved under a name and applied in one click.
+- **Pipelines**: a job's settings saved under a name and applied in one click; exported as an
+  importable JSON file and a Markdown record for a methods section, and imported.
 - **Design**: the Graphite and highlighter interface ([DESIGN.md](../DESIGN.md)), responsive
   from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs and folds to a
   rail, and an app icon

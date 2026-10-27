@@ -7,11 +7,22 @@
 //! `none` for Mistral's own models, whose answer then comes back as one string, and `low` for
 //! GLM, which rejects `none` and may answer in thinking and text chunks.
 
-use scriptorium_core::{AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, Usage};
+use scriptorium_core::{
+    AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, RequestSetting, Usage,
+};
 use serde_json::{Value, json};
 
 use crate::analysis;
 use crate::http::data_url;
+
+const MAX_TOKENS: u32 = 16_000;
+
+pub(super) fn request_settings(model: &str) -> Vec<RequestSetting> {
+    vec![
+        RequestSetting::new("reasoning_effort", lowest_effort(model)),
+        RequestSetting::new("max_tokens", MAX_TOKENS),
+    ]
+}
 
 pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Value {
     let input = request.input;
@@ -44,7 +55,7 @@ pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Val
             },
         },
         "reasoning_effort": lowest_effort(request.model),
-        "max_tokens": 16_000,
+        "max_tokens": MAX_TOKENS,
     })
 }
 

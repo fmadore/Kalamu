@@ -9,6 +9,7 @@
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Columns2 from '@lucide/svelte/icons/columns-2';
+	import Download from '@lucide/svelte/icons/download';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Mic from '@lucide/svelte/icons/mic';
@@ -40,6 +41,7 @@
 		settings: Settings,
 		close: X,
 		compare: Columns2,
+		download: Download,
 		'sidebar-close': PanelLeftClose,
 		'sidebar-open': PanelLeftOpen,
 		pause: Pause,

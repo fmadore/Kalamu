@@ -31,7 +31,8 @@ pub use job::{
 pub use language::{LanguageChoice, LanguageCode};
 pub use provenance::Provenance;
 pub use provider::{
-    ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, StopSignal,
+    ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, RequestSetting,
+    StopSignal,
 };
 pub use result::{
     PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, TextRegion,

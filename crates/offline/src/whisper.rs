@@ -13,7 +13,7 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use scriptorium_core::{
     ApiKey, LanguageChoice, LanguageCode, PCM_16K_MONO, ProcessOutput, ProcessRequest, Provider,
-    ProviderError, ProviderId, Segment, StopSignal, Task, Usage,
+    ProviderError, ProviderId, RequestSetting, Segment, StopSignal, Task, Usage,
 };
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
 
@@ -26,6 +26,8 @@ const SAMPLE_RATE: usize = 16_000;
 /// Target window length, and how far back from it the cut may move to find a pause.
 const WINDOW: usize = 120 * SAMPLE_RATE;
 const SEARCH_BACK: usize = 20 * SAMPLE_RATE;
+/// whisper.cpp's own command-line default for file transcription.
+const BEAM_SIZE: i32 = 5;
 /// The frame over which loudness is measured when looking for the quietest moment.
 const FRAME: usize = SAMPLE_RATE / 10;
 /// A loaded model is released after this long unused, to give its memory back.
@@ -218,9 +220,8 @@ fn transcribe(
         if stop.is_stopped() {
             return Err(ProviderError::Interrupted);
         }
-        // whisper.cpp's own command-line defaults for file transcription: beam search of 5.
         let mut params = FullParams::new(SamplingStrategy::BeamSearch {
-            beam_size: 5,
+            beam_size: BEAM_SIZE,
             patience: -1.0,
         });
         params.set_language(language);
@@ -293,6 +294,17 @@ impl Provider for Whisper {
             Task::AudioTranscription => &[PCM_16K_MONO],
             _ => &[],
         }
+    }
+
+    fn request_settings(&self, task: Task, _model: &str) -> Vec<RequestSetting> {
+        if task != Task::AudioTranscription {
+            return Vec::new();
+        }
+        vec![
+            RequestSetting::new("beam_size", BEAM_SIZE),
+            RequestSetting::new("no_context", true),
+            RequestSetting::new("window_seconds", WINDOW / SAMPLE_RATE),
+        ]
     }
 
     async fn process(

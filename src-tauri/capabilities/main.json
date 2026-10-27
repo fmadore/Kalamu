@@ -38,6 +38,8 @@
     "allow-list-pipelines",
     "allow-save-pipeline",
     "allow-delete-pipeline",
+    "allow-export-pipeline",
+    "allow-import-pipeline",
     "allow-expand-paths",
     "allow-inspect-files",
     "allow-estimate-cost",

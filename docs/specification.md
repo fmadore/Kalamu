@@ -100,7 +100,11 @@ separate tasks.
 - **Estimated cost before starting**, from file length and the provider's published prices.
 - **Pipelines.** A job's settings (task, models, prompts or analysis, languages, line breaks,
   formats, destination) can be saved under a name and are listed at the top of New job; one
-  click fills the form for the next batch of files.
+  click fills the form for the next batch of files. A pipeline can be exported to cite or share:
+  a JSON file another Scriptorium imports, prompts included, and the same as Markdown for a
+  methods section, with each model, the settings its provider sends (reasoning effort, output
+  limit, media resolution), the full text of every prompt with the hash its results' provenance
+  carries, and the fields of an analysis. The output folder is left out.
 - **Works without an API key.** An offline mode keeps the app useful without an account, a key
   or an internet connection, and keeps sensitive material on the PC.
 - **Interface in English first**, with French and German to follow. All interface text lives

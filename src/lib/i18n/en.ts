@@ -94,6 +94,12 @@ export const en = {
 		pipelineDelete: (name: string) => `Delete the pipeline “${name}”`,
 		pipelineDeleteConfirm: (name: string) =>
 			`Delete the pipeline “${name}”? Jobs already run with it are kept.`,
+		pipelineExport: (name: string) =>
+			`Export “${name}”: models, settings and full prompts, to cite or share`,
+		pipelineExported: (file: string) =>
+			`Saved ${file}.json, to import into Scriptorium, and ${file}.md, for a methods section.`,
+		pipelineImport: 'Import a pipeline',
+		pipelineImported: (name: string) => `Imported “${name}” with its prompts.`,
 		linesTitle: 'Line breaks',
 		lines: {
 			running_text: 'Running text',
@@ -460,6 +466,8 @@ export const en = {
 		'prompt.duplicate_field': 'Two fields have the same name.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',
 		'prompt.unnamed_pipeline': 'A pipeline needs a name and at least one model.',
+		'prompt.invalid_file':
+			'This is not a Scriptorium presets or pipeline file, or it comes from a newer version of Scriptorium.',
 		'provider.unknown': 'Unknown provider.',
 		'provider.missing_key': 'No API key is saved for this provider. Add one in Settings.',
 		'provider.unsupported': 'This model cannot do this task.',

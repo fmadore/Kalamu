@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import FileList from './FileList.svelte';
-	import Icon from './Icon.svelte';
 	import LanguagePicker from './LanguagePicker.svelte';
+	import PipelineList from './PipelineList.svelte';
 	import SetupList from './SetupList.svelte';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
@@ -27,7 +27,7 @@
 		suggestName,
 		toRequest
 	} from '#lib/newJob.js';
-	import { api, ask, onDrop, pickFolder } from '#lib/tauri.js';
+	import { api, onDrop, pickFolder } from '#lib/tauri.js';
 	import { app, go, hasKey, liveJob, refreshJobs, toast } from '#lib/state.svelte.js';
 
 	let { opening = {} }: { opening?: { task?: Task; paths?: string[] } } = $props();
@@ -207,16 +207,6 @@
 		}
 	}
 
-	async function deletePipeline(p: Pipeline) {
-		if (!(await ask(m.newJob.pipelineDeleteConfirm(p.name)))) return;
-		try {
-			await api.deletePipeline(p.id);
-			pipelines = await api.listPipelines();
-		} catch (e) {
-			error = describeError(e, m);
-		}
-	}
-
 	async function start() {
 		error = null;
 		starting = true;
@@ -279,27 +269,7 @@
 
 <div class="layout">
 	<div class="form steps">
-		{#if pipelines.length > 0}
-			<section class="pipelines" aria-labelledby="pipelines-label">
-				<h2 id="pipelines-label" class="label">{m.newJob.pipelinesTitle}</h2>
-				<ul>
-					{#each pipelines as p (p.id)}
-						<li>
-							<button class="pipeline" onclick={() => applyPipeline(p)}>
-								<strong>{p.name}</strong>
-								<span class="muted">{m.task[p.task]}</span>
-							</button>
-							<button
-								class="x"
-								aria-label={m.newJob.pipelineDelete(p.name)}
-								title={m.newJob.pipelineDelete(p.name)}
-								onclick={() => deletePipeline(p)}><Icon name="close" size={14} /></button
-							>
-						</li>
-					{/each}
-				</ul>
-			</section>
-		{/if}
+		<PipelineList bind:pipelines onapply={applyPipeline} onerror={(e) => (error = e)} />
 
 		<section class="step" aria-labelledby="task-label">
 			<h2 id="task-label">{m.newJob.taskLabel}</h2>
@@ -548,53 +518,8 @@
 		color: var(--text-muted);
 		max-width: 60ch;
 	}
-	.pipelines {
-		display: grid;
-		gap: var(--space-2);
-	}
 	.warn-text {
 		color: var(--warn-text);
-	}
-	.pipelines ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
-	}
-	.pipelines li {
-		display: flex;
-		align-items: stretch;
-		border: 1px solid var(--line);
-		border-radius: var(--radius-control);
-		background: var(--surface-2);
-	}
-	.pipelines li:hover {
-		border-color: var(--line-hover);
-	}
-	.pipeline {
-		display: grid;
-		text-align: left;
-		gap: 1px;
-		padding: var(--space-2) var(--space-3);
-		border: 0;
-		background: none;
-		cursor: pointer;
-		color: var(--text-body);
-		font-size: var(--type-sm);
-	}
-	.pipeline strong {
-		color: var(--text-bright);
-		font-weight: 500;
-	}
-	.pipeline .muted {
-		font-size: var(--type-xs);
-	}
-	.pipelines .x {
-		padding: 0 var(--space-2);
-		border-left: 1px solid var(--line);
-		color: var(--text-muted);
 	}
 	/* The three tasks as one joined choice. */
 	.tasks {
@@ -664,15 +589,6 @@
 		align-items: center;
 		white-space: nowrap;
 		font-size: var(--type-sm);
-	}
-	.x {
-		display: grid;
-		place-items: center;
-		border: 0;
-		background: none;
-		cursor: pointer;
-		padding: 2px;
-		color: inherit;
 	}
 	.path {
 		overflow-wrap: anywhere;

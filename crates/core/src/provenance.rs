@@ -73,3 +73,18 @@ pub struct ProvenancePrompt {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub schema: Option<crate::AnalysisSchema>,
 }
+
+impl ProvenancePrompt {
+    pub fn from_snapshot(prompt: &crate::PromptSnapshot) -> Self {
+        Self {
+            preset_id: prompt.preset_id.clone(),
+            preset_name: prompt.preset_name.clone(),
+            text: prompt.text.clone(),
+            user_prompt: prompt.user_prompt.clone(),
+            sha256: crate::fingerprint::sha256_hex(
+                format!("{}\n{}", prompt.text, prompt.user_prompt).as_bytes(),
+            ),
+            schema: prompt.schema.clone(),
+        }
+    }
+}

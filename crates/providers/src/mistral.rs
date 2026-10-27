@@ -11,7 +11,7 @@ use reqwest::Client;
 use reqwest::multipart::{Form, Part};
 use scriptorium_core::{
     ApiKey, LanguageChoice, LanguageCode, ProcessOutput, ProcessRequest, Provider, ProviderError,
-    ProviderId, Segment, Task, TextRegion, Usage,
+    ProviderId, RequestSetting, Segment, Task, TextRegion, Usage,
 };
 use serde_json::{Value, json};
 
@@ -19,6 +19,7 @@ use crate::analysis;
 use crate::http::{data_url, ids, join_turns, secs_to_ms, send_json, speaker_label};
 
 const BASE_URL: &str = "https://api.mistral.ai/v1";
+const OCR_TABLE_FORMAT: &str = "html";
 
 pub struct Mistral {
     client: Client,
@@ -48,7 +49,7 @@ impl Mistral {
             "model": request.model,
             "document": document,
             "include_image_base64": false,
-            "table_format": "html",
+            "table_format": OCR_TABLE_FORMAT,
             // Paragraph boxes, for searchable PDFs (OCR 4 and later).
             "include_blocks": true,
         })
@@ -301,6 +302,18 @@ impl Provider for Mistral {
                 "image/jpeg",
                 "image/webp",
             ],
+        }
+    }
+
+    fn request_settings(&self, task: Task, model: &str) -> Vec<RequestSetting> {
+        match task {
+            Task::TextExtraction => vec![
+                RequestSetting::new("include_image_base64", false),
+                RequestSetting::new("table_format", OCR_TABLE_FORMAT),
+                RequestSetting::new("include_blocks", true),
+            ],
+            Task::Analysis => chat::request_settings(model),
+            Task::AudioTranscription => Vec::new(),
         }
     }
 

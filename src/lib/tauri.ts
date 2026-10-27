@@ -64,6 +64,8 @@ export const api = {
 	listPipelines: () => invoke<Pipeline[]>('list_pipelines'),
 	savePipeline: (pipeline: Pipeline) => invoke<Pipeline>('save_pipeline', { pipeline }),
 	deletePipeline: (id: string) => invoke<void>('delete_pipeline', { id }),
+	exportPipeline: (id: string, path: string) => invoke<void>('export_pipeline', { id, path }),
+	importPipeline: (path: string) => invoke<Pipeline>('import_pipeline', { path }),
 	savePreset: (preset: Preset) => invoke<Preset>('save_preset', { preset }),
 	deletePreset: (id: string) => invoke<void>('delete_preset', { id }),
 	duplicatePreset: (id: string, name: string) => invoke<Preset>('duplicate_preset', { id, name }),
@@ -162,6 +164,13 @@ export async function pickSaveFile(defaultPath: string): Promise<string | null> 
 	if (!isTauri()) return null;
 	const { save } = await import('@tauri-apps/plugin-dialog');
 	return save({ defaultPath, filters: [{ name: 'JSON', extensions: ['json'] }] });
+}
+
+/** Where to write a pipeline's record: the JSON file, with its Markdown twin beside it. */
+export async function pickPipelineExport(name: string): Promise<string | null> {
+	if (!isTauri()) return null;
+	const { save } = await import('@tauri-apps/plugin-dialog');
+	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });
 }
 
 export async function pickPresetFile(): Promise<string | null> {

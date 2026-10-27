@@ -11,7 +11,7 @@ use reqwest::Client;
 use reqwest::multipart::{Form, Part};
 use scriptorium_core::{
     ApiKey, LanguageChoice, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId,
-    Segment, Task, Usage,
+    RequestSetting, Segment, Task, Usage,
 };
 use serde_json::{Value, json};
 
@@ -19,6 +19,7 @@ use crate::analysis;
 use crate::http::{data_url, ids, join_turns, secs_to_ms, send_json, speaker_label};
 
 const BASE_URL: &str = "https://api.openai.com/v1";
+const MAX_OUTPUT_TOKENS: u32 = 32_000;
 
 pub struct OpenAi {
     client: Client,
@@ -61,7 +62,7 @@ impl OpenAi {
                 "role": "user",
                 "content": [media, { "type": "input_text", "text": request.user_prompt }],
             }],
-            "max_output_tokens": 32_000,
+            "max_output_tokens": MAX_OUTPUT_TOKENS,
             "store": false,
         });
         if let Some(fields) = request.analysis {
@@ -273,6 +274,17 @@ impl Provider for OpenAi {
                 "image/jpeg",
                 "image/webp",
             ],
+        }
+    }
+
+    fn request_settings(&self, task: Task, _model: &str) -> Vec<RequestSetting> {
+        match task {
+            // No reasoning effort is sent: each model runs at its own default.
+            Task::TextExtraction | Task::Analysis => vec![
+                RequestSetting::new("max_output_tokens", MAX_OUTPUT_TOKENS),
+                RequestSetting::new("store", false),
+            ],
+            Task::AudioTranscription => Vec::new(),
         }
     }
 
