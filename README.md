@@ -19,7 +19,8 @@ been run against the live provider APIs, and there is no release yet. See the
   Whisper. Speakers can be given their real names.
 - **Analyse texts** with fields you define: a summary, the people, places and organisations a
   document names, its tone with a reason, themes from your own list. Ready-made analyses cover
-  the common needs.
+  the common needs, including the question, argument, methods and findings of a scholarly
+  publication for a literature review.
 - **Check every result against its source**, side by side, with corrections kept apart from the
   AI output, which is never overwritten.
 - **Compare models** on the same documents, with their differences highlighted in the text and

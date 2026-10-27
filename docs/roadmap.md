@@ -28,8 +28,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   Settings. Jobs keep running from the notification area when the window is closed.
 - **Analyses.** With Gemini, OpenAI, Claude and Mistral. Fields defined by the researcher
   (text, lists of names or terms, one or several choices, reasons), sent as each provider's
-  structured output and checked on return; four ready-made analyses (research summary, short
-  summary, people, places and organisations, tone); a field editor in Prompts; CSV with a
+  structured output and checked on return; five ready-made analyses (research summary, short
+  summary, scholarly publication, people, places and organisations, tone); a field editor in Prompts; CSV with a
   column per field.
 - **Review.** The source on a dark lightbox beside the text, in panes that can be resized,
   with another set-up's whole text beside them on demand; differences between set-ups and
