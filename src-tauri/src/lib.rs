@@ -139,7 +139,11 @@ pub fn run() {
                     ..EngineConfig::default()
                 },
             );
-            let interrupted = engine.recover().unwrap_or_default();
+            let mut interrupted = engine.recover().unwrap_or_default();
+            // Jobs whose batches the provider still holds carry on by themselves, below; the
+            // others wait for the researcher to resume them.
+            let waiting = engine.jobs_waiting_for_batches().unwrap_or_default();
+            interrupted.retain(|id| !waiting.contains(id));
             if !interrupted.is_empty() {
                 tracing::info!(count = interrupted.len(), "jobs interrupted at last close");
             }
@@ -158,6 +162,16 @@ pub fn run() {
                             tracing::warn!(n, "progress events dropped");
                         }
                         Err(_) => break,
+                    }
+                }
+            });
+
+            // Collect the answers of batches sent before the app was last closed.
+            let resumed = engine.clone();
+            tauri::async_runtime::spawn(async move {
+                for id in waiting {
+                    if let Err(e) = resumed.start(id) {
+                        tracing::warn!(job = %id, error = %e, "batch job not resumed");
                     }
                 }
             });

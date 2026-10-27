@@ -5,17 +5,26 @@
 //! a safety-classifier refusal is retried server-side on a fallback model (`fallbacks:
 //! "default"`); the response's `model` field names the model that wrote the text, and that is
 //! what provenance records.
+//!
+//! The system prompt carries a cache marker: it is the part every page of a job shares, and on
+//! the current models a prefix of 512 tokens or more is then read back at a tenth of the price
+//! or less. The marker is on the system block, not at the request's top level, where the
+//! automatic breakpoint would fall after the page and write every page to the cache for nothing.
+//!
+//! Economy mode uses Message Batches: the same requests at half price, answered within a day.
+//! A batch refuses `fallbacks`, so batched requests go without it.
 
 use async_trait::async_trait;
-use reqwest::Client;
+use reqwest::{Client, RequestBuilder};
 use scriptorium_core::{
-    ApiKey, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting,
-    Task, Usage,
+    ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
+    ProviderError, ProviderId, RequestSetting, Task, Usage,
 };
 use serde_json::{Value, json};
 
 use crate::analysis;
-use crate::http::{base64, ids, send_json};
+use crate::batch::{self, Answer};
+use crate::http::{base64, ids, send_json, send_text};
 
 const BASE_URL: &str = "https://api.anthropic.com/v1";
 const API_VERSION: &str = "2026-10-21";
@@ -42,7 +51,7 @@ impl Anthropic {
         }
     }
 
-    fn body(request: &ProcessRequest<'_>) -> Value {
+    fn body(request: &ProcessRequest<'_>, batched: bool) -> Value {
         let input = request.input;
         let data = base64(&input.bytes);
         let media = if input.mime == "text/plain" {
@@ -69,14 +78,18 @@ impl Anthropic {
         let mut body = json!({
             "model": request.model,
             "max_tokens": MAX_TOKENS,
-            "system": request.prompt,
+            "system": [{
+                "type": "text",
+                "text": request.prompt,
+                "cache_control": { "type": "ephemeral" },
+            }],
             "messages": [{
                 "role": "user",
                 "content": [media, { "type": "text", "text": request.user_prompt }],
             }],
             "output_config": { "effort": EFFORT },
         });
-        if FALLBACK_MODELS.contains(&request.model) {
+        if !batched && FALLBACK_MODELS.contains(&request.model) {
             body["fallbacks"] = json!("default");
         }
         if let Some(fields) = request.analysis {
@@ -123,13 +136,20 @@ impl Anthropic {
                 .and_then(Value::as_u64)
                 .unwrap_or(0)
         };
+        // `input_tokens` counts only what follows the last cache marker.
+        let (read, written) = (
+            count("cache_read_input_tokens"),
+            count("cache_creation_input_tokens"),
+        );
         Ok(ProcessOutput {
             text,
             segments: Vec::new(),
             detected_language: None,
             usage: Usage {
-                input_tokens: count("input_tokens"),
+                input_tokens: count("input_tokens") + read + written,
                 output_tokens: count("output_tokens"),
+                cached_input_tokens: read,
+                cache_write_tokens: written,
                 ..Usage::default()
             },
             model_version: response
@@ -139,6 +159,44 @@ impl Anthropic {
             fields: Vec::new(),
             regions: Vec::new(),
         })
+    }
+
+    /// A message as the task reads it: an analysis's answer is checked against its fields.
+    fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
+        let output = Self::parse(response)?;
+        match (context.task, context.analysis) {
+            (Task::Analysis, Some(fields)) => analysis::finish(output, fields),
+            (Task::Analysis, None) => Err(ProviderError::InvalidRequest(
+                "an analysis needs fields".into(),
+            )),
+            _ => Ok(output),
+        }
+    }
+
+    fn authorised(&self, request: RequestBuilder, key: &ApiKey) -> RequestBuilder {
+        request
+            .header("x-api-key", key.expose())
+            .header("anthropic-version", API_VERSION)
+    }
+
+    /// One line of a batch's results.
+    fn answer(context: BatchContext<'_>, line: &Value) -> Option<Answer> {
+        let id = line.get("custom_id")?.as_str()?.to_string();
+        let result = line.get("result");
+        let answer = match result.and_then(|r| r.get("type")).and_then(Value::as_str) {
+            Some("succeeded") => match result.and_then(|r| r.get("message")) {
+                Some(message) => Self::read(context, message),
+                None => Err(ProviderError::Other("Claude returned no message".into())),
+            },
+            Some("expired") => Err(ProviderError::Transient(
+                "the batch ended before Claude reached this piece".into(),
+            )),
+            Some("canceled") => Err(ProviderError::Interrupted),
+            _ => Err(batch::item_error(
+                result.and_then(|r| batch::first(r, &["/error/error", "/error"])),
+            )),
+        };
+        Some((id, answer))
     }
 }
 
@@ -169,6 +227,7 @@ impl Provider for Anthropic {
         let mut settings = vec![
             RequestSetting::new("output_config.effort", EFFORT),
             RequestSetting::new("max_tokens", MAX_TOKENS),
+            RequestSetting::new("system.*.cache_control.type", "ephemeral"),
         ];
         if FALLBACK_MODELS.contains(&model) {
             settings.push(RequestSetting::new("fallbacks", "default"));
@@ -187,30 +246,102 @@ impl Provider for Anthropic {
             ));
         }
         let mut http = self
-            .client
-            .post(format!("{}/messages", self.base_url))
-            .header("x-api-key", key.expose())
-            .header("anthropic-version", API_VERSION)
-            .json(&Self::body(&request));
+            .authorised(self.client.post(format!("{}/messages", self.base_url)), key)
+            .json(&Self::body(&request, false));
         if FALLBACK_MODELS.contains(&request.model) {
             http = http.header("anthropic-beta", FALLBACK_BETA);
         }
-        let output = Self::parse(&send_json(http).await?)?;
-        if request.task == Task::Analysis {
-            analysis::finish(output, analysis::fields(&request)?)
-        } else {
-            Ok(output)
-        }
+        let context = BatchContext {
+            task: request.task,
+            model: request.model,
+            analysis: request.analysis,
+        };
+        Self::read(context, &send_json(http).await?)
     }
 
     async fn list_models(&self, key: &ApiKey) -> Result<Vec<String>, ProviderError> {
         let response = send_json(
-            self.client
-                .get(format!("{}/models?limit=1000", self.base_url))
-                .header("x-api-key", key.expose())
-                .header("anthropic-version", API_VERSION),
+            self.authorised(
+                self.client
+                    .get(format!("{}/models?limit=1000", self.base_url)),
+                key,
+            ),
         )
         .await?;
         Ok(ids(&response))
+    }
+
+    fn batches(&self, task: Task, _model: &str) -> bool {
+        task != Task::AudioTranscription
+    }
+
+    /// 256 MB of requests a batch, with pages sent as base64 (a third larger).
+    fn batch_limits(&self) -> BatchLimits {
+        BatchLimits {
+            max_items: 100_000,
+            max_bytes: 150 * 1024 * 1024,
+        }
+    }
+
+    async fn submit_batch(
+        &self,
+        key: &ApiKey,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<String, ProviderError> {
+        let requests: Vec<Value> = requests
+            .iter()
+            .map(|(id, request)| json!({ "custom_id": id, "params": Self::body(request, true) }))
+            .collect();
+        let response = send_json(
+            self.authorised(
+                self.client
+                    .post(format!("{}/messages/batches", self.base_url)),
+                key,
+            )
+            .json(&json!({ "requests": requests })),
+        )
+        .await?;
+        response
+            .get("id")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .ok_or_else(|| ProviderError::Other("Claude gave the batch no id".into()))
+    }
+
+    async fn poll_batch(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+        context: BatchContext<'_>,
+        _ids: &[String],
+    ) -> Result<BatchProgress, ProviderError> {
+        let url = format!("{}/messages/batches/{batch_id}", self.base_url);
+        let status = send_json(self.authorised(self.client.get(&url), key)).await?;
+        let counts = |name: &str| batch::count(status.pointer(&format!("/request_counts/{name}")));
+        if status.get("processing_status").and_then(Value::as_str) != Some("ended") {
+            let finished = counts("succeeded") + counts("errored") + counts("canceled");
+            return Ok(BatchProgress::Working {
+                finished,
+                total: finished + counts("processing") + counts("expired"),
+            });
+        }
+        let results = status
+            .get("results_url")
+            .and_then(Value::as_str)
+            .map_or_else(|| format!("{url}/results"), str::to_string);
+        let body = send_text(self.authorised(self.client.get(results), key)).await?;
+        Ok(BatchProgress::Ended(
+            batch::lines(&body)
+                .iter()
+                .filter_map(|line| Self::answer(context, line))
+                .collect(),
+        ))
+    }
+
+    async fn cancel_batch(&self, key: &ApiKey, batch_id: &str) -> Result<(), ProviderError> {
+        let url = format!("{}/messages/batches/{batch_id}/cancel", self.base_url);
+        send_json(self.authorised(self.client.post(url), key))
+            .await
+            .map(|_| ())
     }
 }

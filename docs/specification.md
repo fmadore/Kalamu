@@ -112,6 +112,12 @@ separate tasks.
   [Keeping models current](#keeping-models-current)). Very expensive models carry a note that
   they are most likely more than the task needs.
 - **Estimated cost before starting**, from file length and the provider's published prices.
+- **Faster or cheaper.** A job runs at once, page by page, or, for large collections, through
+  the provider's batch service at about half the price, with answers within a day. Both costs
+  are shown before starting; offline models and those without a batch service run at once
+  either way. Where providers cache a repeated prompt, the cached part is billed at its lower
+  price and the cost shown is the cost charged
+  ([decision](decisions/2026-10-27-economy-mode-and-prompt-caching.md)).
 - **Pipelines.** A job's settings (task, models, prompts or analysis, languages, line breaks,
   formats, destination) can be saved under a name and are listed at the top of New job; one
   click fills the form for the next batch of files. A pipeline can be exported to cite or share:
@@ -139,6 +145,9 @@ paying twice.
 - **Nothing is processed twice.** Results are cached by a fingerprint of the source file plus
   the model, prompt, analysis fields and settings. Re-running a folder skips what was already
   done with the same settings; changing the prompt or model reprocesses only what it affects.
+- **Batches outlive the app.** In the cheaper mode, a batch is recorded before it is sent;
+  the app can be closed while the provider works, and collects the answers when it opens
+  again, without sending anything twice.
 - **Failures are retried, then reported.** Rate limits, network errors and answers that break
   an analysis's fields are retried with increasing delays. A piece that still fails is marked
   as failed with a readable reason, the rest of the queue continues, and failed pieces can be
@@ -215,7 +224,8 @@ results together.
 The user always sees what the app is doing, how far it is, and what it costs: a list of jobs
 with their status, a bar per file and set-up, a live preview of the text as pieces arrive,
 pause and cancel that keep everything finished, progress on the taskbar icon, and a
-notification when a job finishes or needs attention.
+notification when a job finishes or needs attention. A job waiting for a batch says how many
+pieces the provider holds and when they are due.
 
 ## Export formats
 

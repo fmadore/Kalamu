@@ -5,6 +5,7 @@ import type { PieceRef } from "./PieceRef";
 import type { PieceStatus } from "./PieceStatus";
 import type { SetupId } from "./SetupId";
 import type { SourceId } from "./SourceId";
+import type { Timestamp } from "./Timestamp";
 
 /**
  * What the engine reports while a job runs. Sent to the front end as Tauri events.
@@ -13,4 +14,12 @@ export type ProgressEvent = { "type": "job_started", job_id: JobId, pieces_total
 /**
  * The start of the text, for the live preview.
  */
-preview: string | null, } | { "type": "source_exported", job_id: JobId, setup_id: SetupId, source_id: SourceId, files: Array<string>, } | { "type": "source_failed", job_id: JobId, source_id: SourceId, error: string, } | { "type": "cost_updated", job_id: JobId, spent_usd: number, } | { "type": "job_finished", job_id: JobId, status: JobStatus, };
+preview: string | null, } | { "type": "source_exported", job_id: JobId, setup_id: SetupId, source_id: SourceId, files: Array<string>, } | { "type": "source_failed", job_id: JobId, source_id: SourceId, error: string, } | { "type": "cost_updated", job_id: JobId, spent_usd: number, } | { "type": "batch_waiting", job_id: JobId, setup_id: SetupId, 
+/**
+ * Pieces in the batch, and how many the provider has answered so far.
+ */
+pieces: number, finished: number, submitted_at: Timestamp, 
+/**
+ * The latest the provider promises to answer by.
+ */
+due_by: Timestamp, } | { "type": "job_finished", job_id: JobId, status: JobStatus, };

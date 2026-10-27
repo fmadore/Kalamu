@@ -278,7 +278,11 @@ async fn claude_uses_the_current_api_version_and_skips_thinking_blocks() {
         .and(header("anthropic-beta", "server-side-fallback-2026-07-01"))
         .and(body_partial_json(serde_json::json!({
             "model": "claude-opus-5-5",
-            "system": "Transcribe diplomatically.",
+            "system": [{
+                "type": "text",
+                "text": "Transcribe diplomatically.",
+                "cache_control": { "type": "ephemeral" },
+            }],
             "output_config": { "effort": "low" },
             "fallbacks": "default",
             "messages": [{ "role": "user", "content": [
@@ -307,6 +311,9 @@ async fn claude_uses_the_current_api_version_and_skips_thinking_blocks() {
     assert_eq!(out.text, "بسم الله الرحمن الرحيم");
     assert_eq!(out.model_version.as_deref(), Some("claude-opus-5-5"));
     assert_eq!(out.usage.output_tokens, 31);
+    // Claude counts cached input apart; Scriptorium's total includes it.
+    assert_eq!(out.usage.input_tokens, 2105);
+    assert_eq!(out.usage.cached_input_tokens, 800);
 }
 
 #[tokio::test]

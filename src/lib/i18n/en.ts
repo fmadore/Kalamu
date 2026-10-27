@@ -135,6 +135,16 @@ export const en = {
 		estimate: 'Estimated cost',
 		estimateUnknown: 'no published price',
 		estimateNote: 'An estimate from page counts and published prices; actual costs vary.',
+		paceTitle: 'Speed and price',
+		pace: {
+			fast: 'Faster',
+			fast_hint: 'Each page is sent on its own, and results arrive as they are read.',
+			economy: 'Cheaper',
+			economy_hint:
+				'Every page is sent together to the provider’s batch service, at about half the price. Results can take up to a day; Scriptorium can be closed in the meantime and collects them when it opens again.'
+		},
+		paceNotBatched: (names: string) =>
+			`${names} has no batch service in Scriptorium and still runs page by page, at its usual price.`,
 		start: 'Start',
 		startShortcut: 'Ctrl ↵',
 		starting: 'Starting…',
@@ -224,6 +234,12 @@ export const en = {
 		interruptedNotice:
 			'This job stopped before it finished, when the app closed or a key stopped working. Finished pieces are saved: resuming continues where it left off, and nothing is sent or paid twice.',
 		pausedNotice: 'Paused. Resume to continue where it left off.',
+		waitingNotice: (n: number, due: string) =>
+			`${n === 1 ? '1 piece is' : `${n} pieces are`} with the provider’s batch service, answered by ${due} at the latest. Scriptorium can be closed in the meantime: it collects the answers when it opens again.`,
+		heldNotice: (n: number) =>
+			`${n === 1 ? '1 piece is' : `${n} pieces are`} still with the provider’s batch service. Resume to collect the answers; nothing is sent or paid twice.`,
+		pace: 'Speed',
+		paceName: { fast: 'Faster', economy: 'Cheaper (batch)' },
 		empty_new: 'Start a job'
 	},
 	status: {
@@ -236,6 +252,7 @@ export const en = {
 		cancelled: 'Cancelled',
 		done: 'Done',
 		cached: 'From cache',
+		submitted: 'With the provider',
 		failed: 'Failed'
 	},
 	review: {

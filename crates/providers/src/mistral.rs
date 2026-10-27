@@ -3,15 +3,21 @@
 //! `02b_AI_transcribe_audio_voxtral.py`), and the chat models for analyses ([`chat`]). Pages go
 //! inline as data URLs rather than through the file upload the Python code uses, since each
 //! request carries a single page.
+//!
+//! Economy mode sends OCR and analysis requests as one batch job ([`batch`]), at half price.
+//! Recordings go one by one: Mistral's batch service lists the transcriptions endpoint, but not
+//! how a recording travels inside a batch.
 
+mod batch;
 mod chat;
 
 use async_trait::async_trait;
 use reqwest::Client;
 use reqwest::multipart::{Form, Part};
 use scriptorium_core::{
-    ApiKey, LanguageChoice, LanguageCode, ProcessOutput, ProcessRequest, Provider, ProviderError,
-    ProviderId, RequestSetting, Segment, Task, TextRegion, Usage,
+    ApiKey, BatchContext, BatchLimits, BatchProgress, LanguageChoice, LanguageCode, ProcessOutput,
+    ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, TextRegion,
+    Usage,
 };
 use serde_json::{Value, json};
 
@@ -356,5 +362,46 @@ impl Provider for Mistral {
         )
         .await?;
         Ok(ids(&response))
+    }
+
+    fn batches(&self, task: Task, _model: &str) -> bool {
+        task != Task::AudioTranscription
+    }
+
+    /// Inline batches take fewer than 10,000 requests; Mistral gives no size limit for them, so
+    /// a batch is kept to a size its other limits allow.
+    fn batch_limits(&self) -> BatchLimits {
+        BatchLimits {
+            max_items: 1_000,
+            max_bytes: 50 * 1024 * 1024,
+        }
+    }
+
+    async fn submit_batch(
+        &self,
+        key: &ApiKey,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<String, ProviderError> {
+        self.submit(key, requests).await
+    }
+
+    async fn poll_batch(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+        context: BatchContext<'_>,
+        _ids: &[String],
+    ) -> Result<BatchProgress, ProviderError> {
+        self.poll(key, batch_id, context).await
+    }
+
+    async fn cancel_batch(&self, key: &ApiKey, batch_id: &str) -> Result<(), ProviderError> {
+        send_json(
+            self.client
+                .post(format!("{}/batch/jobs/{batch_id}/cancel", self.base_url))
+                .bearer_auth(key.expose()),
+        )
+        .await
+        .map(|_| ())
     }
 }

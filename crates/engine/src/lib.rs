@@ -5,6 +5,7 @@
 //! the store before and after its call; a result is keyed by everything that shapes the answer,
 //! so re-running a folder, adding a set-up or resuming after a crash only pays for new work.
 
+mod batch;
 mod compare;
 mod output;
 mod record;
@@ -51,6 +52,8 @@ pub struct EngineConfig {
     pub app_version: String,
     /// The bundled FFmpeg, for recordings and videos; `None` when it was not found.
     pub ffmpeg: Option<Ffmpeg>,
+    /// How often a waiting batch is asked about, in economy mode.
+    pub batch_poll: Duration,
 }
 
 impl Default for EngineConfig {
@@ -61,6 +64,7 @@ impl Default for EngineConfig {
             base_delay: Duration::from_secs(5),
             app_version: "0.0.0".into(),
             ffmpeg: None,
+            batch_poll: Duration::from_secs(60),
         }
     }
 }

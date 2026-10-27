@@ -112,6 +112,7 @@ pub struct TextRegion {
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct Usage {
+    /// Every input token, including those read from or written to the provider's prompt cache.
     #[ts(type = "number")]
     pub input_tokens: u64,
     #[ts(type = "number")]
@@ -120,6 +121,18 @@ pub struct Usage {
     pub audio_seconds: f64,
     /// Pages billed, for per-page pricing.
     pub pages: u32,
+    /// The part of `input_tokens` read from the provider's prompt cache, at its lower price.
+    #[serde(default)]
+    #[ts(type = "number")]
+    pub cached_input_tokens: u64,
+    /// The part of `input_tokens` written to the prompt cache, which Claude bills above the
+    /// normal price.
+    #[serde(default)]
+    #[ts(type = "number")]
+    pub cache_write_tokens: u64,
+    /// Sent through the provider's batch service, at its discount.
+    #[serde(default)]
+    pub batch: bool,
 }
 
 impl Usage {
@@ -128,6 +141,9 @@ impl Usage {
         self.output_tokens += other.output_tokens;
         self.audio_seconds += other.audio_seconds;
         self.pages += other.pages;
+        self.cached_input_tokens += other.cached_input_tokens;
+        self.cache_write_tokens += other.cache_write_tokens;
+        self.batch |= other.batch;
     }
 }
 
@@ -173,6 +189,8 @@ pub struct StoredResult {
 pub enum PieceStatus {
     Pending,
     Running,
+    /// Sent in a batch; the provider has not returned it yet.
+    Submitted,
     Done,
     /// Done earlier with the same source and settings; not sent again.
     Cached,
@@ -188,6 +206,7 @@ impl PieceStatus {
         match self {
             Self::Pending => "pending",
             Self::Running => "running",
+            Self::Submitted => "submitted",
             Self::Done => "done",
             Self::Cached => "cached",
             Self::Failed => "failed",
@@ -198,6 +217,7 @@ impl PieceStatus {
         Some(match s {
             "pending" => Self::Pending,
             "running" => Self::Running,
+            "submitted" => Self::Submitted,
             "done" => Self::Done,
             "cached" => Self::Cached,
             "failed" => Self::Failed,

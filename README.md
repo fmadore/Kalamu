@@ -28,6 +28,8 @@ been run against the live provider APIs, and there is no release yet. See the
   error rates against corrected pages.
 - **Never pay twice**: work is saved piece by piece, interrupted jobs resume, and nothing is
   sent again with the same settings.
+- **Pay half for large collections**: send a job to the provider's batch service, answered
+  within a day, and close the app in the meantime.
 - **Save a job's settings as a pipeline** and start the next batch in one click. Export it,
   with its models, settings and full prompts, to cite in a methods section or share with
   colleagues.

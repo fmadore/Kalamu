@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (26 October 2026)
+## Status (27 October 2026)
 
 Early development; [v0.2.0](https://github.com/fmadore/Scriptorium/releases/tag/v0.2.0) is
 the latest test build, for Windows on ARM64, with FFmpeg bundled. Everything below is tested
@@ -44,6 +44,10 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   recordings with speakers that can be named; an analysis review that collates answers by
   field and finds names in the document.
 - **Comparison mode** with character error rates against corrected pages.
+- **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
+  Mistral at half price, answered within a day and collected after the app was closed; cached
+  input billed at its own price; both costs shown before starting
+  ([decision](decisions/2026-10-27-economy-mode-and-prompt-caching.md)).
 - **Pipelines**: a job's settings saved under a name and applied in one click; exported as an
   importable JSON file and a Markdown record for a methods section, and imported.
 - **Design**: the Graphite and highlighter interface ([DESIGN.md](../DESIGN.md)), responsive
@@ -63,6 +67,10 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   before it is considered as OpenAI's default. GLM 5.3 and GLM 5.3 Flash were checked with
   single live calls on 27 October, not yet through a whole job.
 - **Gemini 3.5 Transcribe** in the catalogue.
+- **Economy mode, live**: a small batch with each provider, to check the documented shapes
+  (Gemini's and Mistral's pages disagree on some), what cached input really saves, and
+  Claude's one-hour cache inside batches. Later, Gemini batches through a JSONL file, to lift
+  the 20 MB inline limit, and Voxtral transcription in batches once its format is documented.
 - **YouTube**: a live run on long and multilingual videos; long videos in pieces once Gemini's
   clipping of YouTube links covers the sound track again; the cost before the run from a
   `countTokens` call; check the embedded player in the packaged app, whose `tauri.localhost`

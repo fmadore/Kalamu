@@ -100,6 +100,8 @@ pub(super) fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
         usage: Usage {
             input_tokens: count("prompt_tokens"),
             output_tokens: count("completion_tokens"),
+            // Part of `prompt_tokens`, billed at a tenth.
+            cached_input_tokens: count("prompt_tokens_details/cached_tokens"),
             ..Usage::default()
         },
         model_version: response

@@ -9,6 +9,11 @@ export type CostEstimate = {
  */
 usd: number | null, 
 /**
+ * The same work in economy mode, through the provider's batch service; `None` when the
+ * model has none.
+ */
+economy_usd: number | null, 
+/**
  * Why the estimate is rough, or why there is none.
  */
 note: string | null, };

@@ -3,7 +3,11 @@
 /**
  * What a provider call consumed, for cost tracking.
  */
-export type Usage = { input_tokens: number, output_tokens: number, 
+export type Usage = { 
+/**
+ * Every input token, including those read from or written to the provider's prompt cache.
+ */
+input_tokens: number, output_tokens: number, 
 /**
  * Seconds of audio billed, for per-minute pricing.
  */
@@ -11,4 +15,17 @@ audio_seconds: number,
 /**
  * Pages billed, for per-page pricing.
  */
-pages: number, };
+pages: number, 
+/**
+ * The part of `input_tokens` read from the provider's prompt cache, at its lower price.
+ */
+cached_input_tokens: number, 
+/**
+ * The part of `input_tokens` written to the prompt cache, which Claude bills above the
+ * normal price.
+ */
+cache_write_tokens: number, 
+/**
+ * Sent through the provider's batch service, at its discount.
+ */
+batch: boolean, };

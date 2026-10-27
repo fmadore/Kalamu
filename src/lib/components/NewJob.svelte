@@ -17,6 +17,7 @@
 	import { formatUsd, listNames, messages } from '#lib/i18n/index.js';
 	import { languageLabel, modelsWithout, offeredLanguages, takesLanguage } from '#lib/languages.js';
 	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
+	import type { Pace } from '#lib/bindings/Pace.js';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import {
 		acceptsPrompt,
@@ -49,6 +50,7 @@
 	let languageMode = $state<'auto' | 'explicit'>('auto');
 	let languages = $state<string[]>([]);
 	let lineBreaks = $state<LineBreaks>('running_text');
+	let pace = $state<Pace>('fast');
 	let drafts = $state<Draft[]>([]);
 	let presets = $state<Preset[]>([]);
 	let sample = $state(false);
@@ -146,11 +148,27 @@
 		}, 250);
 	});
 
+	/** Economy mode is offered when one of the chosen models goes through a batch service. */
+	const economyOffered = $derived(
+		mode !== 'youtube' && estimates.some((r) => r.estimate.economy_usd !== null)
+	);
+	const chosenPace = $derived<Pace>(economyOffered ? pace : 'fast');
+	/** A model's cost at a pace; one without a batch service costs the same either way. */
+	const rowCost = (row: EstimateRow, at: Pace) =>
+		at === 'economy' ? (row.estimate.economy_usd ?? row.estimate.usd) : row.estimate.usd;
 	// A video's length, and so its cost, is known only once Gemini has read it.
-	const totalEstimate = $derived(
+	const totalFor = (at: Pace) =>
 		mode !== 'youtube' && estimates.every((r) => r.estimate.usd !== null)
-			? estimates.reduce((sum, r) => sum + (r.estimate.usd ?? 0), 0)
-			: null
+			? estimates.reduce((sum, r) => sum + (rowCost(r, at) ?? 0), 0)
+			: null;
+	const totalEstimate = $derived(totalFor(chosenPace));
+	const notBatched = $derived(
+		estimates
+			.filter((r) => r.estimate.economy_usd === null)
+			.map(
+				(r) =>
+					catalog.models.find((x) => x.provider === r.provider && x.id === r.model)?.name ?? r.model
+			)
 	);
 
 	async function chooseDestination() {
@@ -179,7 +197,9 @@
 					? { mode: 'explicit' as const, languages: [...languages] }
 					: { mode: 'auto' as const },
 			sample_pages: sample ? samplePages : null,
-			line_breaks: task === 'text_extraction' && noPrompt.length < models.length ? lineBreaks : null
+			line_breaks:
+				task === 'text_extraction' && noPrompt.length < models.length ? lineBreaks : null,
+			pace: chosenPace
 		};
 	}
 
@@ -198,6 +218,7 @@
 		languageMode = p.settings.languages.mode;
 		languages = p.settings.languages.mode === 'explicit' ? [...p.settings.languages.languages] : [];
 		lineBreaks = p.settings.line_breaks ?? 'running_text';
+		pace = p.settings.pace ?? 'fast';
 		sample = p.settings.sample_pages !== null;
 		samplePages = p.settings.sample_pages ?? samplePages;
 		formats = p.formats.filter((f) => FORMATS[p.task].includes(f));
@@ -398,6 +419,31 @@
 			</section>
 		{/if}
 
+		{#if economyOffered}
+			<section class="step block" aria-labelledby="pace-title">
+				<h2 id="pace-title">{m.newJob.paceTitle}</h2>
+				<div class="choices">
+					{#each ['fast', 'economy'] as const as option (option)}
+						{@const total = totalFor(option)}
+						<label class="choice" class:selected={pace === option}>
+							<input type="radio" bind:group={pace} value={option} />
+							<span>
+								<strong
+									>{m.newJob.pace[option]}{#if total !== null}<span class="mono price"
+											>{formatUsd(total)}</span
+										>{/if}</strong
+								>
+								<span class="hint">{m.newJob.pace[`${option}_hint`]}</span>
+							</span>
+						</label>
+					{/each}
+				</div>
+				{#if pace === 'economy' && notBatched.length > 0}
+					<p class="hint">{m.newJob.paceNotBatched(listNames(notBatched))}</p>
+				{/if}
+			</section>
+		{/if}
+
 		<section class="step block" aria-labelledby="out-title">
 			<h2 id="out-title">{m.newJob.outputTitle}</h2>
 			{#if task === 'text_extraction'}
@@ -493,8 +539,8 @@
 						<li>
 							<span class="mono">{row.model}</span>
 							<span class="mono"
-								>{row.estimate.usd !== null
-									? formatUsd(row.estimate.usd)
+								>{rowCost(row, chosenPace) !== null
+									? formatUsd(rowCost(row, chosenPace) ?? 0)
 									: m.newJob.estimateUnknown}</span
 							>
 						</li>
@@ -696,6 +742,11 @@
 	}
 	.choice input {
 		margin-top: 0.25em;
+	}
+	.choice .price {
+		margin-left: var(--space-2);
+		font-weight: 400;
+		color: var(--text-muted);
 	}
 	.choice > span {
 		display: grid;
