@@ -7,12 +7,16 @@
 //! material is dense historical print and handwriting, where iwac-ai-pipelines measured the
 //! difference. Resolution is set for the whole request, the stable form, since each request
 //! carries one piece.
+//!
+//! A YouTube video is sent as its link (`fileData.fileUri`), which Google fetches itself, at
+//! low media resolution: the words are in the sound track, and low resolution reads about
+//! 100 tokens a second of video instead of 300. YouTube links are in preview.
 
 use async_trait::async_trait;
 use reqwest::Client;
 use scriptorium_core::{
     ApiKey, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting,
-    Task, Usage,
+    Task, Usage, YOUTUBE_LINK,
 };
 use serde_json::{Value, json};
 
@@ -27,6 +31,7 @@ const INLINE_LIMIT: usize = 18 * 1024 * 1024;
 const MAX_OUTPUT_TOKENS: u32 = 65_535;
 const THINKING_LEVEL: &str = "low";
 const MEDIA_RESOLUTION: &str = "MEDIA_RESOLUTION_HIGH";
+const VIDEO_RESOLUTION: &str = "MEDIA_RESOLUTION_LOW";
 
 const SAFETY_CATEGORIES: &[&str] = &[
     "HARM_CATEGORY_HARASSMENT",
@@ -54,8 +59,11 @@ impl Gemini {
 
     fn body(request: &ProcessRequest<'_>) -> Value {
         let input = request.input;
+        let youtube = input.mime == YOUTUBE_LINK;
         let media = if input.mime == "text/plain" {
             json!({ "text": analysis::tagged_document(input) })
+        } else if youtube {
+            json!({ "fileData": { "fileUri": String::from_utf8_lossy(&input.bytes) } })
         } else {
             json!({
                 "inlineData": {
@@ -72,6 +80,8 @@ impl Gemini {
         // Media resolution applies to images and documents; ULTRA_HIGH is refused for PDFs.
         if input.mime == "application/pdf" || input.mime.starts_with("image/") {
             generation["mediaResolution"] = json!(MEDIA_RESOLUTION);
+        } else if youtube {
+            generation["mediaResolution"] = json!(VIDEO_RESOLUTION);
         }
         if let Some(fields) = request.analysis {
             generation["responseMimeType"] = json!("application/json");
@@ -186,6 +196,7 @@ impl Provider for Gemini {
                 "audio/ogg",
                 "audio/aac",
                 "audio/webm",
+                YOUTUBE_LINK,
             ],
             Task::Analysis => &[
                 "text/plain",
@@ -236,8 +247,16 @@ impl Provider for Gemini {
                 .header("x-goog-api-key", key.expose())
                 .json(&Self::body(&request)),
         )
-        .await?;
+        .await;
+        let youtube = request.input.mime == YOUTUBE_LINK;
+        let response = response.map_err(|e| if youtube { youtube_error(e) } else { e })?;
         let output = Self::parse(&response)?;
+        if youtube && truncated(&response) {
+            return Err(ProviderError::InvalidRequest(
+                "the transcript filled the longest answer Gemini can write before the video                  ended: this video is too long to transcribe in one go"
+                    .into(),
+            ));
+        }
         if request.task == Task::Analysis {
             analysis::finish(output, analysis::fields(&request)?)
         } else {
@@ -263,5 +282,60 @@ impl Provider for Gemini {
                     .collect()
             })
             .unwrap_or_default())
+    }
+}
+
+/// The answer stopped at the output limit. A page keeps what was read, but a video's transcript
+/// would end part-way with nothing to show where.
+fn truncated(response: &Value) -> bool {
+    response
+        .pointer("/candidates/0/finishReason")
+        .and_then(Value::as_str)
+        == Some("MAX_TOKENS")
+}
+
+/// Gemini's refusals of a YouTube link, in words a researcher can act on. A private video comes
+/// back as "permission denied", which must not read as a rejected key and stop the job.
+fn youtube_error(err: ProviderError) -> ProviderError {
+    let message = match &err {
+        ProviderError::Auth(m) | ProviderError::InvalidRequest(m) | ProviderError::Other(m) => m,
+        ProviderError::QuotaExhausted(m) => {
+            let lower = m.to_lowercase();
+            return if lower.contains("youtube") || lower.contains("video") {
+                ProviderError::QuotaExhausted(
+                    "the free tier's daily allowance of YouTube video (8 hours) is used up; try                      again tomorrow or use a key on a paid plan"
+                        .into(),
+                )
+            } else {
+                err
+            };
+        }
+        _ => return err,
+    };
+    let lower = message.to_lowercase();
+    if lower.contains("api key") || lower.contains("api_key") {
+        return err;
+    }
+    if lower.contains("private") || lower.contains("unlisted") || lower.contains("permission") {
+        ProviderError::InvalidRequest(
+            "this video is private or unlisted; Gemini reads public videos only".into(),
+        )
+    } else if lower.contains("not found")
+        || lower.contains("unavailable")
+        || lower.contains("removed")
+        || lower.contains("does not exist")
+    {
+        ProviderError::InvalidRequest(
+            "this video is not available on YouTube; it may have been removed".into(),
+        )
+    } else if lower.contains("token") && (lower.contains("exceed") || lower.contains("maximum")) {
+        ProviderError::InvalidRequest(
+            "this video is too long for the model to read in one request".into(),
+        )
+    } else if let ProviderError::Auth(m) = err {
+        // A 403 that does not mention the key concerns the video, not the account.
+        ProviderError::InvalidRequest(m)
+    } else {
+        err
     }
 }

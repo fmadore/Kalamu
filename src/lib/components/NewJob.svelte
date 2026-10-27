@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import FileList from './FileList.svelte';
+	import Icon from './Icon.svelte';
 	import LanguagePicker from './LanguagePicker.svelte';
+	import LinkList from './LinkList.svelte';
 	import PipelineList from './PipelineList.svelte';
 	import SetupList from './SetupList.svelte';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
@@ -20,11 +22,15 @@
 		acceptsPrompt,
 		type Draft,
 		FORMATS,
+		inputOf,
+		type Mode,
+		MODES,
 		modelInfo,
 		newDraft,
 		offeredFormats,
 		readsKind,
 		suggestName,
+		taskOf,
 		toRequest
 	} from '#lib/newJob.js';
 	import { api, onDrop, pickFolder } from '#lib/tauri.js';
@@ -34,7 +40,10 @@
 
 	const m = messages();
 
-	let task = $state<Task>('text_extraction');
+	let mode = $state<Mode>('text_extraction');
+	const task = $derived(taskOf(mode));
+	/** What every model must read: YouTube links for videos, else anything the task takes. */
+	const input = $derived(inputOf(mode));
 	let files = $state<InspectedFile[]>([]);
 	let inspecting = $state(false);
 	let languageMode = $state<'auto' | 'explicit'>('auto');
@@ -72,20 +81,26 @@
 	const noPrompt = $derived(namesOf((model) => !acceptsPrompt(model)));
 	const sources = $derived(files.flatMap((f) => (f.source ? [f.source] : [])));
 
-	async function loadTask(next: Task) {
-		task = next;
+	async function loadTask(next: Mode) {
+		mode = next;
 		presets = await api.listPresets(task);
-		drafts = [newDraft(catalog, task, presets[0]?.id ?? null, hasKey)];
+		drafts = [newDraft(catalog, task, presets[0]?.id ?? null, hasKey, [], input)];
 		formats = [
 			...(task === 'audio_transcription' ? app.settings!.audio_formats : app.settings!.text_formats)
 		].filter((f) => FORMATS[task].includes(f));
 		// An analysis is written in one language.
 		if (task === 'analysis') languages = languages.slice(0, 1);
-		files = files.filter((f) => readsKind(task, f.source?.kind));
+		// A video has no folder of its own: offer the folder last chosen.
+		const last = app.settings!.last_folder;
+		if (mode === 'youtube' && destination.kind !== 'folder' && last) {
+			destination = { kind: 'folder', path: last };
+		}
+		files = files.filter((f) => readsKind(mode, f.source?.kind));
 	}
 
 	async function addPaths(paths: string[]) {
-		if (paths.length === 0) return;
+		// Videos are added by their link; dropped files belong to the other tasks.
+		if (paths.length === 0 || mode === 'youtube') return;
 		error = null;
 		inspecting = true;
 		try {
@@ -105,6 +120,8 @@
 		sources.length > 0 &&
 			drafts.length > 0 &&
 			drafts.every((d) => d.model && hasKey(d.provider)) &&
+			(input === undefined || models.every((model) => model?.inputs.includes(input))) &&
+			(mode !== 'youtube' || destination.kind === 'folder') &&
 			formats.length > 0
 	);
 
@@ -129,16 +146,28 @@
 		}, 250);
 	});
 
+	// A video's length, and so its cost, is known only once Gemini has read it.
 	const totalEstimate = $derived(
-		estimates.every((r) => r.estimate.usd !== null)
+		mode !== 'youtube' && estimates.every((r) => r.estimate.usd !== null)
 			? estimates.reduce((sum, r) => sum + (r.estimate.usd ?? 0), 0)
 			: null
 	);
 
 	async function chooseDestination() {
 		const folder = await pickFolder();
-		if (folder) destination = { kind: 'folder', path: folder };
+		if (!folder) return;
+		destination = { kind: 'folder', path: folder };
+		// Remembered, so the next job that needs a folder starts with this one.
+		app.settings!.last_folder = folder;
+		api.saveSettings($state.snapshot(app.settings!)).catch(() => undefined);
 	}
+
+	/** Why Start is unavailable, when the form cannot say it where the user is looking. */
+	const blocker = $derived(
+		mode === 'youtube' && sources.length > 0 && destination.kind !== 'folder'
+			? m.newJob.needFolder
+			: null
+	);
 
 	/** The settings shared by every set-up, as a job and a pipeline store them. */
 	function jobSettings() {
@@ -156,7 +185,8 @@
 
 	/** Fills the form from a saved pipeline; the files stay as they are. */
 	async function applyPipeline(p: Pipeline) {
-		await loadTask(p.task);
+		// A transcription pipeline applied to videos keeps the videos.
+		await loadTask(mode === 'youtube' && p.task === 'audio_transcription' ? 'youtube' : p.task);
 		drafts = p.setups.map((s) => ({
 			provider: s.provider,
 			model: s.model,
@@ -245,7 +275,7 @@
 
 	onMount(() => {
 		// Opened from a finished job's "Summarise" button: its results are the files.
-		void loadTask(opening.task ?? task).then(() =>
+		void loadTask(opening.task ?? mode).then(() =>
 			opening.paths ? addPaths(opening.paths) : undefined
 		);
 		api
@@ -274,11 +304,11 @@
 		<section class="step" aria-labelledby="task-label">
 			<h2 id="task-label">{m.newJob.taskLabel}</h2>
 			<div class="tasks">
-				{#each ['text_extraction', 'audio_transcription', 'analysis'] as const as t (t)}
+				{#each MODES as t (t)}
 					<button
 						class="task"
-						class:selected={task === t}
-						aria-pressed={task === t}
+						class:selected={mode === t}
+						aria-pressed={mode === t}
 						onclick={() => loadTask(t)}
 					>
 						<span class="task-name"><span class="radio" aria-hidden="true"></span>{m.task[t]}</span>
@@ -288,9 +318,19 @@
 			</div>
 		</section>
 
-		<FileList bind:files {task} {inspecting} onadd={addPaths} />
+		{#if mode === 'youtube'}
+			<LinkList
+				bind:links={files}
+				onadd={(added) => {
+					if (!name) name = added.find((l) => l.source?.title)?.source?.title ?? '';
+				}}
+				onerror={(e) => (error = e)}
+			/>
+		{:else}
+			<FileList bind:files {task} {inspecting} onadd={addPaths} />
+		{/if}
 
-		<SetupList bind:drafts {task} {presets} />
+		<SetupList bind:drafts {task} {presets} {input} />
 
 		<section class="step block" aria-labelledby="lang-title">
 			<h2 id="lang-title">
@@ -393,28 +433,44 @@
 					{/each}
 				</div>
 			</fieldset>
-			<div class="row wrap">
-				<label class="inline">
-					<input
-						type="radio"
-						checked={destination.kind === 'beside_sources'}
-						onchange={() => (destination = { kind: 'beside_sources' })}
-					/>
-					{m.newJob.besideSources}
-				</label>
-				<label class="inline">
-					<input
-						type="radio"
-						checked={destination.kind === 'folder'}
-						onchange={chooseDestination}
-					/>
-					{m.newJob.inFolder}
-				</label>
-				{#if destination.kind === 'folder'}
-					<span class="path mono">{destination.path}</span>
-					<button class="btn sm" onclick={chooseDestination}>{m.newJob.chooseFolder}</button>
+			{#if mode === 'youtube'}
+				<!-- A video has no folder of its own, so a folder must be chosen. -->
+				<div class="row wrap">
+					<span class="label">{m.newJob.saveIn}</span>
+					{#if destination.kind === 'folder'}
+						<span class="path mono">{destination.path}</span>
+					{/if}
+					<button class="btn sm" onclick={chooseDestination}
+						><Icon name="folder" size={14} />{m.newJob.chooseFolder}</button
+					>
+				</div>
+				{#if destination.kind !== 'folder' && sources.length > 0}
+					<p class="notice">{m.newJob.linkFolder}</p>
 				{/if}
-			</div>
+			{:else}
+				<div class="row wrap">
+					<label class="inline">
+						<input
+							type="radio"
+							checked={destination.kind === 'beside_sources'}
+							onchange={() => (destination = { kind: 'beside_sources' })}
+						/>
+						{m.newJob.besideSources}
+					</label>
+					<label class="inline">
+						<input
+							type="radio"
+							checked={destination.kind === 'folder'}
+							onchange={chooseDestination}
+						/>
+						{m.newJob.inFolder}
+					</label>
+					{#if destination.kind === 'folder'}
+						<span class="path mono">{destination.path}</span>
+						<button class="btn sm" onclick={chooseDestination}>{m.newJob.chooseFolder}</button>
+					{/if}
+				</div>
+			{/if}
 			<label class="field name">
 				<span>{m.newJob.name}</span>
 				<input type="text" bind:value={name} />
@@ -429,7 +485,9 @@
 			<strong class="total mono"
 				>{estimates.length > 0 && totalEstimate !== null ? formatUsd(totalEstimate) : '—'}</strong
 			>
-			{#if estimates.length > 0}
+			{#if mode === 'youtube' && sources.length > 0}
+				<p class="hint">{m.newJob.estimateVideo}</p>
+			{:else if estimates.length > 0}
 				<ul class="rows">
 					{#each estimates as row (row.provider + row.model)}
 						<li>
@@ -447,10 +505,13 @@
 		</div>
 
 		{#if error}
-			<p class="chip danger wrap-chip">{error}</p>
+			<p class="chip danger wrap-chip" role="alert">{error}</p>
 		{/if}
 
 		<div class="go">
+			{#if blocker && !starting}
+				<p class="blocker">{blocker}</p>
+			{/if}
 			<button class="btn primary lg" disabled={!ready || starting} onclick={start}>
 				{starting ? m.newJob.starting : m.newJob.start}<span class="kbd"
 					>{m.newJob.startShortcut}</span
@@ -521,10 +582,10 @@
 	.warn-text {
 		color: var(--warn-text);
 	}
-	/* The three tasks as one joined choice. */
+	/* The tasks as one joined choice, two by two: written sources above, spoken ones below. */
 	.tasks {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		margin-top: var(--space-3);
 		border: 1px solid var(--line);
 		border-radius: var(--radius-card);
@@ -535,19 +596,29 @@
 		gap: var(--space-1);
 		padding: var(--space-3) var(--space-4) var(--space-4);
 		border: 0;
-		border-left: 1px solid var(--line);
 		background: transparent;
 		color: var(--text-body);
 		text-align: left;
 		cursor: pointer;
 		transition: background-color 120ms ease-out;
 	}
-	.task:first-child {
-		border-left: 0;
-		border-radius: var(--radius-card) 0 0 var(--radius-card);
+	.task:nth-child(even) {
+		border-left: 1px solid var(--line);
 	}
-	.task:last-child {
-		border-radius: 0 var(--radius-card) var(--radius-card) 0;
+	.task:nth-child(n + 3) {
+		border-top: 1px solid var(--line);
+	}
+	.task:nth-child(1) {
+		border-radius: var(--radius-card) 0 0 0;
+	}
+	.task:nth-child(2) {
+		border-radius: 0 var(--radius-card) 0 0;
+	}
+	.task:nth-child(3) {
+		border-radius: 0 0 0 var(--radius-card);
+	}
+	.task:nth-child(4) {
+		border-radius: 0 0 var(--radius-card) 0;
 	}
 	.task:hover {
 		background: var(--surface-1);
@@ -696,6 +767,12 @@
 		display: grid;
 		gap: var(--space-2);
 	}
+	/* What still stops Start, said where Start is, in the footer too. */
+	.blocker {
+		margin: 0;
+		font-size: var(--type-xs);
+		color: var(--warn-text);
+	}
 	.naming {
 		display: grid;
 		gap: var(--space-2);
@@ -733,10 +810,18 @@
 		.choices {
 			grid-template-columns: 1fr;
 		}
-		.task,
+		.task:nth-child(n),
 		.choice {
 			border-left: 0;
 			border-top: 1px solid var(--line);
+			border-radius: 0;
+		}
+		.task:first-child {
+			border-top: 0;
+			border-radius: var(--radius-card) var(--radius-card) 0 0;
+		}
+		.task:last-child {
+			border-radius: 0 0 var(--radius-card) var(--radius-card);
 		}
 		.form {
 			padding: var(--space-4) var(--space-4) var(--space-6);

@@ -20,4 +20,8 @@ refresh_catalog: boolean,
 /**
  * Languages starred in New job, listed first.
  */
-favourite_languages: Array<LanguageCode>, };
+favourite_languages: Array<LanguageCode>, 
+/**
+ * The folder last chosen for results, offered first when a job needs one.
+ */
+last_folder: string | null, };

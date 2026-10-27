@@ -73,6 +73,7 @@ export const api = {
 	importPresets: (path: string) => invoke<Preset[]>('import_presets', { path }),
 	expandPaths: (paths: string[], task: Task) => invoke<string[]>('expand_paths', { paths, task }),
 	inspectFiles: (paths: string[]) => invoke<InspectedFile[]>('inspect_files', { paths }),
+	inspectLinks: (links: string[]) => invoke<InspectedFile[]>('inspect_links', { links }),
 	estimateCost: (request: EstimateRequest) => invoke<EstimateRow[]>('estimate_cost', { request }),
 	createJob: (job: NewJob) => invoke<Job>('create_job', { job }),
 	startJob: (id: string) => invoke<void>('start_job', { id }),

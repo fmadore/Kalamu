@@ -90,6 +90,24 @@ fn pdf_needs_a_model_that_reads_pdfs() -> Result<(), MediaError> {
 }
 
 #[test]
+fn a_youtube_video_is_one_piece_sent_as_its_link() -> Result<(), MediaError> {
+    let source = SourceFile::youtube("https://youtu.be/dQw4w9WgXcQ")
+        .ok_or_else(|| MediaError::NeedsConversion("not a YouTube link".into()))?;
+    let open = OpenSource::open(&source, None)?;
+    assert_eq!(
+        open.pieces(false, None, DEFAULT_PIECE_MS),
+        vec![PieceRef::Whole]
+    );
+    assert!(open.warnings(source.id).is_empty());
+    let sent = open.prepare(&PieceRef::Whole, &["audio/mpeg", YOUTUBE_LINK], "video")?;
+    assert_eq!(sent.mime, YOUTUBE_LINK);
+    assert_eq!(sent.bytes, b"https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    let refused = open.prepare(&PieceRef::Whole, &["audio/mpeg"], "video");
+    assert!(matches!(refused, Err(MediaError::NeedsConversion(_))));
+    Ok(())
+}
+
+#[test]
 fn accepted_images_pass_through_unchanged() -> Result<(), MediaError> {
     let bytes = png(2400, 3300);
     let img = ImageSource::from_bytes(bytes.clone(), "png")?;

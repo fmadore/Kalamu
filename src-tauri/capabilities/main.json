@@ -42,6 +42,7 @@
     "allow-import-pipeline",
     "allow-expand-paths",
     "allow-inspect-files",
+    "allow-inspect-links",
     "allow-estimate-cost",
     "allow-create-job",
     "allow-start-job",

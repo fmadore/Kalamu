@@ -3,6 +3,7 @@
 	// spoken is highlighted, and clicking a line jumps to it. Times are shown on the recording's
 	// clock; the player itself plays only this piece.
 	import Icon from './Icon.svelte';
+	import TranscriptLines from './TranscriptLines.svelte';
 	import type { Segment } from '#lib/bindings/Segment.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { api } from '#lib/tauri.js';
@@ -73,9 +74,6 @@
 	/** The piece's length in seconds; 0 until the player has read it. */
 	const length = $derived(Number.isFinite(duration) ? duration : 0);
 	const done = $derived(length > 0 ? (100 * now) / length : 0);
-	/** Each speaker keeps one of two colours, in the order they first speak. */
-	const voices = $derived([...new Set(segments.flatMap((s) => (s.speaker ? [s.speaker] : [])))]);
-	const voice = (speaker: string) => (voices.indexOf(speaker) % 2) + 1;
 </script>
 
 <div class="audio">
@@ -118,17 +116,7 @@
 		<p class="muted pad">{m.common.loading}</p>
 	{/if}
 	{#if segments.length > 0}
-		<ol class="lines" aria-label={m.review.lines}>
-			{#each segments as s, k (k)}
-				<li>
-					<button class="line" class:now={playing(s)} onclick={() => jump(s)}>
-						<span class="num stamp">{clock(offsetMs + Number(s.start_ms))}</span>
-						{#if s.speaker}<span class="speaker v{voice(s.speaker)}">{s.speaker}</span>{/if}
-						<span class="said">{s.text}</span>
-					</button>
-				</li>
-			{/each}
-		</ol>
+		<TranscriptLines {segments} {offsetMs} current={playing} follow={!paused} onpick={jump} />
 	{:else}
 		<p class="muted pad small">{m.review.noTimings}</p>
 	{/if}
@@ -213,74 +201,6 @@
 		border: 2px solid var(--surface-2);
 		border-radius: 50%;
 		background: var(--ink);
-	}
-	.lines {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		overflow: auto;
-		min-height: 0;
-		display: grid;
-		align-content: start;
-		gap: 2px;
-	}
-	/* One turn: its time, who speaks, what was said. */
-	.line {
-		display: grid;
-		grid-template-columns: 4.75rem auto minmax(0, 1fr);
-		gap: var(--space-3);
-		align-items: baseline;
-		width: 100%;
-		padding: var(--space-2) var(--space-3);
-		border: 0;
-		border-radius: var(--radius-control);
-		background: none;
-		color: inherit;
-		font: inherit;
-		text-align: start;
-		cursor: pointer;
-		transition: background-color 120ms ease-out;
-	}
-	.line:hover {
-		background: var(--wash);
-	}
-	.line.now {
-		background: var(--surface-2);
-		box-shadow: var(--shadow-raised);
-	}
-	.stamp {
-		font-family: var(--font-mono);
-		color: var(--text-muted);
-		font-size: var(--type-xs);
-	}
-	.now .stamp {
-		color: var(--text-bright);
-		font-weight: 500;
-	}
-	.speaker {
-		justify-self: start;
-		padding: 1px var(--space-2);
-		border-radius: var(--radius-tag);
-		font-size: var(--type-xs);
-		font-weight: 500;
-		white-space: nowrap;
-	}
-	.speaker.v1 {
-		background: var(--speaker-1-wash);
-		color: var(--speaker-1-text);
-	}
-	.speaker.v2 {
-		background: var(--speaker-2-wash);
-		color: var(--speaker-2-text);
-	}
-	.said {
-		font-family: var(--font-text);
-		font-size: var(--type-lg);
-		line-height: 1.55;
-		color: var(--text-body);
-	}
-	.line:not(:has(.speaker)) {
-		grid-template-columns: 4.75rem minmax(0, 1fr);
 	}
 	.pad {
 		padding: var(--space-3);

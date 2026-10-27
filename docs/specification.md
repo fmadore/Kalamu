@@ -44,7 +44,7 @@ Where Scriptorium departs from these projects, the reason is written down in
 | Task | Input | Output |
 | --- | --- | --- |
 | **Extract text** (printed and handwritten) | PDF, JPEG, PNG, TIFF | Text per page, its lines kept as on the page or joined into running text |
-| **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`… | Transcript with optional speakers and timestamps; speakers can be given names |
+| **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`…, or a public YouTube link | Transcript with optional speakers and timestamps; speakers can be given names |
 | **Analyse texts** | Text, Word, PDF, photographed pages, and the results of earlier jobs | The researcher's own fields for each document: a summary, the people and places it names, its tone… |
 
 **OCR and HTR are one task.** Current vision models read print and handwriting with the same
@@ -52,6 +52,20 @@ call, so the app has a single **Extract text** task and the difference lies in t
 users pick a preset such as *printed document*, *newspaper (columns)*, *handwritten letter* or
 *Arabic or Ajami manuscript*, or write their own. Mixed material, such as a typed report with
 handwritten notes, needs no separate pass.
+
+**YouTube videos are transcribed from their link.** New job offers *Transcribe YouTube* beside
+the three tasks: paste one or more watch, `youtu.be`, Shorts or live links, and the transcript
+comes out as for a recording, in the same formats. Gemini fetches the video itself, so it is
+never downloaded or stored, which also keeps within YouTube's terms; only models whose catalogue
+entry reads YouTube links are offered (Gemini today). Only public videos can be read. A video
+is identified by its id, so the same video under another form of link comes from the cache, and
+`provenance.json` records its address, title and when it was read. Each video is named after its
+title, which the app asks of YouTube when the link is added, and a private or removed video is
+refused then. Results go to a chosen folder, since a video has no folder of its own; the folder
+last chosen is offered. In the review the video sits on the dark stage like a scan, behind a
+poster: YouTube's privacy-enhanced player loads only when the researcher plays, the line being
+spoken is highlighted and kept in view, and clicking a line plays the video from there. Videos
+whose owner forbids embedding, or an offline PC, get a card that opens the video on YouTube.
 
 **Line breaks are a choice of the job**, offered in plain words for every text extraction:
 
@@ -246,7 +260,9 @@ engine produced a result and records it like any other. Analyses need a cloud mo
 ## Privacy
 
 In offline mode, nothing leaves the PC. With a cloud provider, files go directly from the PC to
-that provider; there is no intermediate server. API keys stay in Windows Credential Manager.
+that provider; there is no intermediate server. For a YouTube video only its link is sent, and
+Google reads the video from YouTube; the app also asks YouTube for the video's title when the
+link is added, and loads YouTube's player in the review only when the video is played. API keys stay in Windows Credential Manager.
 The developer receives no files, keys, results or telemetry.
 
 Sending research material to an AI provider is still a transfer of data to a third party.

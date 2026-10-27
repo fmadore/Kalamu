@@ -25,7 +25,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
-  Settings. Jobs keep running from the notification area when the window is closed.
+  Settings. Jobs keep running from the notification area when the window is closed. Public
+  YouTube videos transcribed from their link with Gemini, without downloading them, and reviewed
+  beside the video, played on the dark stage in YouTube's privacy-enhanced player, each video
+  named after its title
+  ([decision](decisions/2026-10-27-youtube-links.md)).
 - **Analyses.** With Gemini, OpenAI, Claude and Mistral, including the Z.ai GLM models Mistral
   hosts. Fields defined by the researcher
   (text, lists of names or terms, one or several choices, reasons), sent as each provider's
@@ -59,6 +63,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   before it is considered as OpenAI's default. GLM 5.3 and GLM 5.3 Flash were checked with
   single live calls on 27 October, not yet through a whole job.
 - **Gemini 3.5 Transcribe** in the catalogue.
+- **YouTube**: a live run on long and multilingual videos; long videos in pieces once Gemini's
+  clipping of YouTube links covers the sound track again; the cost before the run from a
+  `countTokens` call; check the embedded player in the packaged app, whose `tauri.localhost`
+  origin YouTube must accept
+  ([decision](decisions/2026-10-27-youtube-links.md)).
 - **Text extraction**: ALTO and PAGE XML where models return coordinates; checks for skewed
   and blurry pages.
 - **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa

@@ -230,6 +230,7 @@ pub fn run() {
             commands::pipelines::import_pipeline,
             commands::jobs::expand_paths,
             commands::jobs::inspect_files,
+            commands::jobs::inspect_links,
             commands::jobs::estimate_cost,
             commands::jobs::create_job,
             commands::jobs::start_job,

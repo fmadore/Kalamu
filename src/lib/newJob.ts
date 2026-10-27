@@ -7,6 +7,25 @@ import type { ModelInfo } from './bindings/ModelInfo.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { Task } from './bindings/Task.js';
 import type { Messages } from './i18n/index.js';
+import { YOUTUBE_LINK } from './youtube.js';
+
+/**
+ * What New job offers: the three tasks, and YouTube videos, which are transcribed like a
+ * recording but added by their link and read only by models that take YouTube links.
+ */
+export type Mode = Task | 'youtube';
+
+/** In the order New job shows them, two by two: written sources, then spoken ones. */
+export const MODES: Mode[] = ['text_extraction', 'analysis', 'audio_transcription', 'youtube'];
+
+export function taskOf(mode: Mode): Task {
+	return mode === 'youtube' ? 'audio_transcription' : mode;
+}
+
+/** The input every chosen model must read: YouTube links, or anything the task takes. */
+export function inputOf(mode: Mode): string | undefined {
+	return mode === 'youtube' ? YOUTUBE_LINK : undefined;
+}
 
 /** One model set-up as edited in the form. */
 export interface Draft {
@@ -33,20 +52,34 @@ export function offeredFormats(catalog: Catalog, task: Task, drafts: Draft[]): E
 	return FORMATS[task].filter((f) => f !== 'searchable_pdf' || layout);
 }
 
-/** The kinds of file each task reads. */
-export function readsKind(task: Task, kind: string | undefined): boolean {
-	switch (task) {
+/** The kinds of source each mode reads. */
+export function readsKind(mode: Mode, kind: string | undefined): boolean {
+	switch (mode) {
 		case 'text_extraction':
 			return kind === 'pdf' || kind === 'image';
 		case 'audio_transcription':
 			return kind === 'audio' || kind === 'video';
 		case 'analysis':
 			return kind === 'text' || kind === 'pdf';
+		case 'youtube':
+			return kind === 'youtube';
 	}
 }
 
-export function modelsFor(catalog: Catalog, provider: string, task: Task): ModelInfo[] {
-	return catalog.models.filter((m) => m.provider === provider && m.tasks.includes(task));
+/** Models that can do a task and, when `input` is given, read it. */
+export function modelsFor(
+	catalog: Catalog,
+	provider: string,
+	task: Task,
+	input?: string
+): ModelInfo[] {
+	return forTask(catalog, task, input).filter((m) => m.provider === provider);
+}
+
+function forTask(catalog: Catalog, task: Task, input?: string): ModelInfo[] {
+	return catalog.models.filter(
+		(m) => m.tasks.includes(task) && (input === undefined || m.inputs.includes(input))
+	);
 }
 
 export function modelInfo(catalog: Catalog, d: Draft): ModelInfo | undefined {
@@ -67,25 +100,32 @@ export function acceptsPrompt(model: ModelInfo | undefined): boolean {
  * The model chosen when the user switches to a provider: its default for the task in the
  * catalogue (Claude Sonnet, not the costlier Fable listed first), else its first model.
  */
-export function providerDefault(catalog: Catalog, provider: string, task: Task): string {
-	const models = catalog.models.filter((m) => m.provider === provider && m.tasks.includes(task));
+export function providerDefault(
+	catalog: Catalog,
+	provider: string,
+	task: Task,
+	input?: string
+): string {
+	const models = modelsFor(catalog, provider, task, input);
 	return (models.find((m) => m.provider_default_for.includes(task)) ?? models[0])?.id ?? '';
 }
 
 /**
  * A set-up for a usable model: the recommended one first, then each provider's default, then
  * any model with a key, avoiding
- * models already in `used` so a second set-up compares against something different.
+ * models already in `used` so a second set-up compares against something different. With
+ * `input`, only models that read it are considered.
  */
 export function newDraft(
 	catalog: Catalog,
 	task: Task,
 	presetId: string | null,
 	hasKey: (provider: string) => boolean,
-	used: string[] = []
+	used: string[] = [],
+	input?: string
 ): Draft {
-	const forTask = catalog.models.filter((m) => m.tasks.includes(task));
-	const usable = forTask.filter((m) => hasKey(m.provider));
+	const offered = forTask(catalog, task, input);
+	const usable = offered.filter((m) => hasKey(m.provider));
 	const fresh = usable.filter((m) => !used.includes(`${m.provider}/${m.id}`));
 	const pick =
 		fresh.find((m) => m.recommended_for.includes(task)) ??
@@ -93,7 +133,7 @@ export function newDraft(
 		fresh[0] ??
 		usable.find((m) => m.recommended_for.includes(task)) ??
 		usable[0] ??
-		forTask[0];
+		offered[0];
 	return {
 		provider: pick?.provider ?? '',
 		model: pick?.id ?? '',

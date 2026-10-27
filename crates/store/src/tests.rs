@@ -22,6 +22,7 @@ fn job() -> Job {
             duration_ms: None,
             split_spreads: false,
             even_out_volume: false,
+            title: None,
         }],
         setups: vec![Setup {
             id: SetupId::new(),

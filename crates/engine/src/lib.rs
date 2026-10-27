@@ -86,6 +86,12 @@ pub enum EngineError {
     AlreadyRunning,
     #[error("The job needs at least one file and one set-up")]
     EmptyJob,
+    /// The link as pasted; the interface says what is wrong with it.
+    #[error("{0}")]
+    NotYouTube(String),
+    /// A YouTube video has no folder of its own to write beside.
+    #[error("Choose a folder for the results of a YouTube video")]
+    LinkNeedsFolder,
     #[error("Could not write the results: {0}")]
     Output(String),
 }
@@ -106,6 +112,8 @@ impl EngineError {
             Self::UnsupportedModel(_) => "provider.unsupported",
             Self::AlreadyRunning => "job.running",
             Self::EmptyJob => "job.empty",
+            Self::NotYouTube(_) => "source.not_youtube",
+            Self::LinkNeedsFolder => "job.link_needs_folder",
             Self::Output(_) => "output.write",
         }
     }
@@ -228,6 +236,18 @@ impl Engine {
                         .unwrap_or_default(),
                 };
                 Ok((source, warnings))
+            })
+            .collect()
+    }
+
+    /// YouTube links pasted for a new job, each checked and turned into a source. The video is
+    /// not fetched: its length and whether it is public are known when the provider reads it.
+    pub fn inspect_links(&self, links: &[impl AsRef<str>]) -> Vec<Result<SourceFile, EngineError>> {
+        links
+            .iter()
+            .map(|link| {
+                let link = link.as_ref();
+                SourceFile::youtube(link).ok_or_else(|| EngineError::NotYouTube(link.to_string()))
             })
             .collect()
     }
