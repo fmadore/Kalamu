@@ -55,6 +55,10 @@
 	--marker: #ffe066;
 	--on-marker: #111214;
 
+	/* Buy Me a Coffee's own yellow, only behind the support link's cup, in both themes. */
+	--coffee: #ffdd00;
+	--on-coffee: #0d0c22;
+
 	/* The researcher's hand: corrections, kept apart from the model's text. */
 	--hand: #2456d6;
 	--hand-wash: rgba(36, 86, 214, 0.1);

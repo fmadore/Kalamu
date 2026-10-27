@@ -403,6 +403,13 @@ export const en = {
 		privacy:
 			'Nothing is sent to the developer: no files, keys, results or telemetry. AI output can contain fluent but wrong text; check a sample against the source.'
 	},
+	support: {
+		title: 'Support development',
+		/** Says plainly that paying changes nothing in the app. */
+		note: 'If Scriptorium is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
+		link: 'Buy me a coffee',
+		opensInBrowser: ' (opens in your browser)'
+	},
 	format: {
 		txt: 'Text (.txt)',
 		markdown: 'Markdown (.md)',

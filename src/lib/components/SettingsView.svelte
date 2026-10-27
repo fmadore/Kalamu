@@ -4,6 +4,7 @@
 	import { api, openUrl } from '#lib/tauri.js';
 	import { app, hasKey, refreshKeys, toast } from '#lib/state.svelte.js';
 	import OfflineModels from './OfflineModels.svelte';
+	import SupportLink from './SupportLink.svelte';
 
 	const m = messages();
 
@@ -165,6 +166,13 @@
 		<p class="small">{m.settings.dataFolder}: <span class="path">{app.info?.data_dir}</span></p>
 		<p class="muted small">{m.settings.privacy}</p>
 		<p class="muted small">{m.settings.credits}</p>
+	</section>
+
+	<!-- Last, so it is there for anyone who looks and in the way of nobody. -->
+	<section class="card block" aria-labelledby="support">
+		<h2 id="support">{m.support.title}</h2>
+		<p class="muted small">{m.support.note}</p>
+		<SupportLink />
 	</section>
 </div>
 

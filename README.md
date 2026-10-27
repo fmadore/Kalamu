@@ -54,6 +54,15 @@ npm run tauri dev
 
 Requirements, checks and the sample-data preview are in [docs/development.md](docs/development.md).
 
+## Support development
+
+Scriptorium is free, and every feature stays free. If it is useful to you, you can help fund its
+development on [Buy Me a Coffee](https://buymeacoffee.com/fmadore). Supporting is entirely
+optional and does not unlock additional features; AI providers bill their own usage separately.
+The same link is in the app at the end of Settings.
+
+<a href="https://buymeacoffee.com/fmadore"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
+
 ## Author and licence
 
 By [Frédérick Madore](https://www.frederickmadore.com/), University of Bayreuth. An independent
