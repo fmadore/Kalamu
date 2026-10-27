@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-26",
+  "updated": "2026-10-27",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn.",
   "providers": [
     {
@@ -51,11 +51,15 @@
         "image/png",
         "image/jpeg",
         "image/webp",
+        "image/heic",
+        "image/heif",
         "audio/mpeg",
         "audio/wav",
         "audio/mp4",
         "audio/flac",
         "audio/ogg",
+        "audio/aac",
+        "audio/webm",
         "text/plain"
       ],
       "languages": "any",
@@ -93,11 +97,15 @@
         "image/png",
         "image/jpeg",
         "image/webp",
+        "image/heic",
+        "image/heif",
         "audio/mpeg",
         "audio/wav",
         "audio/mp4",
         "audio/flac",
         "audio/ogg",
+        "audio/aac",
+        "audio/webm",
         "text/plain"
       ],
       "languages": "any",
@@ -129,11 +137,15 @@
         "image/png",
         "image/jpeg",
         "image/webp",
+        "image/heic",
+        "image/heif",
         "audio/mpeg",
         "audio/wav",
         "audio/mp4",
         "audio/flac",
         "audio/ogg",
+        "audio/aac",
+        "audio/webm",
         "text/plain"
       ],
       "languages": "any",
@@ -163,6 +175,8 @@
         "image/png",
         "image/jpeg",
         "image/webp",
+        "image/heic",
+        "image/heif",
         "text/plain"
       ],
       "languages": "any",
@@ -642,6 +656,57 @@
       "pricing": {
         "input_per_mtok": 0.15,
         "output_per_mtok": 0.6
+      },
+      "limits": {
+        "max_request_mb": 50,
+        "max_pages": 1000
+      }
+    },
+    {
+      "provider": "mistral",
+      "id": "zai-glm-5-3",
+      "name": "Z.ai GLM 5.3",
+      "description": "Z.ai's open model, run by Mistral on its own servers with the same key. Reads text only: extract the text of scans first.",
+      "tasks": [
+        "analysis"
+      ],
+      "inputs": [
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 1.4,
+        "output_per_mtok": 4.4
+      },
+      "limits": {
+        "max_request_mb": 50
+      }
+    },
+    {
+      "provider": "mistral",
+      "id": "zai-glm-5-3-flash",
+      "name": "Z.ai GLM 5.3 Flash",
+      "description": "Z.ai's fast, inexpensive open model, run by Mistral on its own servers with the same key. Reads text, PDFs and images.",
+      "tasks": [
+        "analysis"
+      ],
+      "inputs": [
+        "text/plain",
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 0.15,
+        "output_per_mtok": 0.5
       },
       "limits": {
         "max_request_mb": 50,

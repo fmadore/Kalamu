@@ -522,6 +522,51 @@ Keywords: Bamako; mosquée",
     }
 }
 
+#[tokio::test]
+async fn glm_through_mistral_runs_at_low_effort_and_reads_the_text_chunk() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_partial_json(serde_json::json!({
+            "model": "zai-glm-5-3",
+            "messages": [
+                { "role": "system" },
+                { "role": "user", "content": [{ "type": "text" }, { "type": "text" }] },
+            ],
+            "response_format": { "type": "json_schema",
+                "json_schema": { "name": "analysis", "strict": true } },
+            // GLM rejects `none`, Mistral's own lowest setting.
+            "reasoning_effort": "low",
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "model": "zai-glm-5-3",
+            "choices": [{ "index": 0, "finish_reason": "stop",
+                "message": { "role": "assistant", "content": [
+                    { "type": "thinking", "closed": true,
+                      "thinking": [{ "type": "text", "text": "A report from Bamako." }] },
+                    { "type": "text", "text": ANALYSIS_JSON },
+                ] } }],
+            "usage": { "prompt_tokens": 210, "completion_tokens": 40, "total_tokens": 250,
+                "completion_tokens_details": { "reasoning_tokens": 10 } },
+        })))
+        .mount(&server)
+        .await;
+
+    let (input, langs, opts) = (document(), LanguageChoice::Auto, SetupOptions::default());
+    let out = Mistral::with_base_url(client(), &server.uri())
+        .process(
+            &ApiKey::new("k"),
+            request(Task::Analysis, "zai-glm-5-3", &input, &langs, &opts),
+        )
+        .await
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        out.fields[1].value,
+        FieldValue::List(vec!["Bamako".into(), "mosquée".into()])
+    );
+    assert_eq!(out.model_version.as_deref(), Some("zai-glm-5-3"));
+}
+
 /// The values at a dotted path, `*` standing for every element of an array.
 fn values_at<'a>(value: &'a serde_json::Value, path: &[&str]) -> Vec<&'a serde_json::Value> {
     match path.split_first() {
@@ -565,7 +610,7 @@ async fn the_settings_a_provider_reports_are_the_ones_it_sends() {
         ),
         (
             Box::new(Mistral::with_base_url(client(), &server.uri())),
-            &["mistral-ocr-4-1", "mistral-small-2603"],
+            &["mistral-ocr-4-1", "mistral-small-2603", "zai-glm-5-3"],
         ),
     ];
     let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());

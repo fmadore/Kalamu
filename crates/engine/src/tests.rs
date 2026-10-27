@@ -46,8 +46,11 @@ impl Provider for Fake {
         ProviderId::new("fake")
     }
 
-    fn accepted_inputs(&self, _task: Task) -> &'static [&'static str] {
-        &["application/pdf"]
+    fn accepted_inputs(&self, task: Task) -> &'static [&'static str] {
+        match task {
+            Task::Analysis => &["application/pdf", "text/plain"],
+            _ => &["application/pdf"],
+        }
     }
 
     async fn process(
@@ -545,6 +548,55 @@ async fn an_analysis_reads_each_document_once_and_corrections_replace_its_answer
         "the model's answers are kept under the correction"
     );
     assert!(view.corrected_fields.is_some());
+}
+
+#[tokio::test]
+async fn a_text_only_model_is_not_sent_the_formats_its_provider_takes() {
+    let f = fixture();
+    let mut catalog = scriptorium_catalog::Catalog::bundled();
+    let mut model = catalog.models[0].clone();
+    model.provider = ProviderId::new("fake");
+    model.id = "fake-text".into();
+    model.inputs = vec!["text/plain".into()];
+    catalog.models.push(model);
+    f.engine.set_catalog(catalog);
+    let source = f.pdf("scan.pdf", 1);
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Text only".into(),
+            task: Task::Analysis,
+            sources: vec![source],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-text".into(),
+                preset_id: Some("analysis.entities".into()),
+                label: None,
+                options: Default::default(),
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    f.run(job.id).await;
+    assert_eq!(
+        f.fake.calls(),
+        0,
+        "the fake provider takes PDFs, the model does not"
+    );
+    let pieces = f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(pieces[0].status, PieceStatus::Failed);
+    assert!(
+        pieces[0]
+            .error
+            .as_deref()
+            .is_some_and(|e| e.contains("reads text only")),
+        "{:?}",
+        pieces[0].error
+    );
 }
 
 #[test]

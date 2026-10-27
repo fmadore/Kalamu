@@ -1,10 +1,11 @@
-//! Mistral's chat models (Large, Medium, Small) for analyses, through Chat Completions with a
-//! strict JSON schema. Text extraction stays with Mistral OCR, which Mistral's documentation
-//! points to for document parsing. A PDF sent here as `document_url` is read by that OCR before
-//! the model sees it (Mistral's "Document QnA").
+//! Mistral's chat models (Large, Medium, Small) and the Z.ai GLM models Mistral hosts, for
+//! analyses, through Chat Completions with a strict JSON schema. Text extraction stays with
+//! Mistral OCR, which Mistral's documentation points to for document parsing. A PDF sent here as
+//! `document_url` is read by that OCR before the model sees it (Mistral's "Document QnA").
 //!
-//! `reasoning_effort` is `none`, the lowest setting, as the other providers run at their lowest
-//! effort; the answer then comes back as one string rather than thinking and text chunks.
+//! `reasoning_effort` is the lowest setting, as the other providers run at their lowest effort:
+//! `none` for Mistral's own models, whose answer then comes back as one string, and `low` for
+//! GLM, which rejects `none` and may answer in thinking and text chunks.
 
 use scriptorium_core::{
     AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, RequestSetting, Usage,
@@ -14,12 +15,11 @@ use serde_json::{Value, json};
 use crate::analysis;
 use crate::http::data_url;
 
-const REASONING_EFFORT: &str = "none";
 const MAX_TOKENS: u32 = 16_000;
 
-pub(super) fn request_settings(_model: &str) -> Vec<RequestSetting> {
+pub(super) fn request_settings(model: &str) -> Vec<RequestSetting> {
     vec![
-        RequestSetting::new("reasoning_effort", REASONING_EFFORT),
+        RequestSetting::new("reasoning_effort", lowest_effort(model)),
         RequestSetting::new("max_tokens", MAX_TOKENS),
     ]
 }
@@ -54,9 +54,18 @@ pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Val
                 "strict": true,
             },
         },
-        "reasoning_effort": REASONING_EFFORT,
+        "reasoning_effort": lowest_effort(request.model),
         "max_tokens": MAX_TOKENS,
     })
+}
+
+/// Z.ai's GLM accepts `low`, `high` and `max` only.
+fn lowest_effort(model: &str) -> &'static str {
+    if model.starts_with("zai-glm") {
+        "low"
+    } else {
+        "none"
+    }
 }
 
 pub(super) fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
