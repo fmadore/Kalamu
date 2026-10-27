@@ -298,14 +298,25 @@ impl Engine {
         } else {
             ApiKey::new("")
         };
-        let accepted = provider.accepted_inputs(job.task);
+        // The provider's formats for the task, narrowed to those the model reads: a text-only
+        // model behind a provider that takes PDFs and images is sent text alone.
+        let accepted: Vec<&'static str> = {
+            let catalog = self.catalog();
+            let model = catalog.model(&setup.provider, &setup.model);
+            provider
+                .accepted_inputs(job.task)
+                .iter()
+                .copied()
+                .filter(|mime| model.is_none_or(|m| m.inputs.iter().any(|i| i == mime)))
+                .collect()
+        };
         let stem = Path::new(&source.file_name)
             .file_stem()
             .map(|s| s.to_string_lossy().into_owned())
             .unwrap_or_else(|| "page".into());
         let prepared = {
             let (opened, piece) = (opened.clone(), state.piece.clone());
-            tokio::task::spawn_blocking(move || opened.prepare(&piece, accepted, &stem))
+            tokio::task::spawn_blocking(move || opened.prepare(&piece, &accepted, &stem))
                 .await
                 .map_err(|e| EngineError::Output(e.to_string()))?
         };

@@ -26,7 +26,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
   Settings. Jobs keep running from the notification area when the window is closed.
-- **Analyses.** With Gemini, OpenAI, Claude and Mistral. Fields defined by the researcher
+- **Analyses.** With Gemini, OpenAI, Claude and Mistral, including the Z.ai GLM models Mistral
+  hosts. Fields defined by the researcher
   (text, lists of names or terms, one or several choices, reasons), sent as each provider's
   structured output and checked on return; four ready-made analyses (research summary, short
   summary, people, places and organisations, tone); a field editor in Prompts; CSV with a
@@ -54,7 +55,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
   [decision](decisions/2026-10-26-terra-and-mistral-chat.md)); Terra on historical pages
-  before it is considered as OpenAI's default.
+  before it is considered as OpenAI's default. GLM 5.3 and GLM 5.3 Flash were checked with
+  single live calls on 27 October, not yet through a whole job.
 - **Gemini 3.5 Transcribe** in the catalogue.
 - **Text extraction**: ALTO and PAGE XML where models return coordinates; checks for skewed
   and blurry pages.

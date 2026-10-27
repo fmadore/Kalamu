@@ -257,7 +257,9 @@ the results, and keep the originals.
 ## Bundled conversion tools
 
 Providers accept different inputs, so the app prepares each file for the chosen model; users
-never convert anything themselves. The tools ship inside the app for x64 and ARM64.
+never convert anything themselves. What a model is sent is what both its provider and its own
+catalogue entry accept: a text-only model behind a provider that takes PDFs and images is sent
+text alone, and a scan has its text extracted first. The tools ship inside the app for x64 and ARM64.
 
 - **PDF to images** with PDFium, page by page, for providers that do not accept PDF, for
   previews and for searchable PDF exports.

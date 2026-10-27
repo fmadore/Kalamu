@@ -240,6 +240,13 @@ impl OpenSource {
             Self::Text(text) if accepted.contains(&"text/plain") => {
                 ("text/plain".to_string(), text.text()?.into_bytes())
             }
+            Self::Pdf(_) | Self::Image(_) if accepted == ["text/plain"] => {
+                return Err(MediaError::NeedsConversion(
+                    "This model reads text only. Extract the text first, then analyse the \
+                     result, or choose a model that reads PDFs and images."
+                        .into(),
+                ));
+            }
             // One image per call: the pages of a multi-page TIFF would be read apart.
             Self::Image(img) if img.page_count() > 1 => {
                 return Err(MediaError::NeedsConversion(format!(
