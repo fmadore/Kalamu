@@ -4,7 +4,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use ts_rs::TS;
 
 use crate::{
     AnalysisSchema, LanguageChoice, PieceRef, ProcessOutput, ProviderId, SetupOptions, Task,
@@ -33,6 +35,25 @@ impl fmt::Debug for ApiKey {
 
 /// Raw 16-bit little-endian PCM, 16 kHz, one channel: what offline speech engines read.
 pub const PCM_16K_MONO: &str = "audio/x-pcm-s16le-16k";
+
+/// A setting a provider sends with every request for a task and model, as a pipeline's record
+/// reports it. `name` is the API parameter's path in the request (`output_config.effort`), so a
+/// provider's tests can check that the request really carries `value`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct RequestSetting {
+    pub name: String,
+    pub value: String,
+}
+
+impl RequestSetting {
+    pub fn new(name: &str, value: impl ToString) -> Self {
+        Self {
+            name: name.to_string(),
+            value: value.to_string(),
+        }
+    }
+}
 
 /// Set by the engine when the user pauses or cancels a job. Cloud calls finish on their own;
 /// long local work (an offline transcription) checks it between windows and stops early.
@@ -167,6 +188,14 @@ pub trait Provider: Send + Sync {
     /// MIME types this provider accepts for a task, in order of preference. Media preparation
     /// converts each piece into the first one it can produce.
     fn accepted_inputs(&self, task: Task) -> &'static [&'static str];
+
+    /// The fixed settings sent with every request for `task` and `model` (reasoning effort,
+    /// output limit, media resolution), for the record of a pipeline. Neither the prompt nor the
+    /// researcher's own options, which the record states apart.
+    fn request_settings(&self, task: Task, model: &str) -> Vec<RequestSetting> {
+        let _ = (task, model);
+        Vec::new()
+    }
 
     async fn process(
         &self,

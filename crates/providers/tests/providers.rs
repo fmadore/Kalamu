@@ -521,3 +521,92 @@ Keywords: Bamako; mosquée",
         );
     }
 }
+
+/// The values at a dotted path, `*` standing for every element of an array.
+fn values_at<'a>(value: &'a serde_json::Value, path: &[&str]) -> Vec<&'a serde_json::Value> {
+    match path.split_first() {
+        None => vec![value],
+        Some((&"*", rest)) => value
+            .as_array()
+            .into_iter()
+            .flatten()
+            .flat_map(|v| values_at(v, rest))
+            .collect(),
+        Some((key, rest)) => value
+            .get(*key)
+            .map(|v| values_at(v, rest))
+            .unwrap_or_default(),
+    }
+}
+
+#[tokio::test]
+async fn the_settings_a_provider_reports_are_the_ones_it_sends() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({})))
+        .mount(&server)
+        .await;
+    let whole = PreparedInput {
+        piece: PieceRef::Whole,
+        ..page()
+    };
+    let cases: [(Box<dyn Provider>, &[&str]); 4] = [
+        (
+            Box::new(Gemini::with_base_url(client(), &server.uri())),
+            &["gemini-3.8-flash"],
+        ),
+        (
+            Box::new(OpenAi::with_base_url(client(), &server.uri())),
+            &["gpt-6-luna"],
+        ),
+        (
+            Box::new(Anthropic::with_base_url(client(), &server.uri())),
+            &["claude-haiku-5-5", "claude-sonnet-5-5"],
+        ),
+        (
+            Box::new(Mistral::with_base_url(client(), &server.uri())),
+            &["mistral-ocr-4-1", "mistral-small-2603"],
+        ),
+    ];
+    let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());
+    for (provider, models) in cases {
+        for model in models {
+            for (task, input) in [
+                (Task::TextExtraction, page()),
+                (Task::Analysis, whole.clone()),
+            ] {
+                let settings = provider.request_settings(task, model);
+                if settings.is_empty() {
+                    continue;
+                }
+                // The answer does not matter: only the request is checked.
+                let _ = provider
+                    .process(
+                        &ApiKey::new("k"),
+                        request(task, model, &input, &langs, &opts),
+                    )
+                    .await;
+                let received = server.received_requests().await.unwrap_or_default();
+                let body: serde_json::Value = received
+                    .last()
+                    .and_then(|r| serde_json::from_slice(&r.body).ok())
+                    .unwrap_or_default();
+                for setting in settings {
+                    let path: Vec<&str> = setting.name.split('.').collect();
+                    let sent = values_at(&body, &path);
+                    assert!(
+                        !sent.is_empty(),
+                        "{model} {task:?}: {} not sent",
+                        setting.name
+                    );
+                    for value in sent {
+                        let text = value
+                            .as_str()
+                            .map_or_else(|| value.to_string(), str::to_string);
+                        assert_eq!(text, setting.value, "{model} {task:?}: {}", setting.name);
+                    }
+                }
+            }
+        }
+    }
+}

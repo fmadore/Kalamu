@@ -33,6 +33,8 @@ pub const COMMANDS: &[&str] = &[
     "list_pipelines",
     "save_pipeline",
     "delete_pipeline",
+    "export_pipeline",
+    "import_pipeline",
     "expand_paths",
     "inspect_files",
     "estimate_cost",

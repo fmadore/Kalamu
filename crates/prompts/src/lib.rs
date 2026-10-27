@@ -6,8 +6,10 @@
 
 mod defaults;
 mod pipelines;
+mod record;
 
 pub use pipelines::{Pipeline, PipelineLibrary, PipelineSetup};
+pub use record::{PipelineFile, SetupRecord};
 
 use std::collections::BTreeMap;
 use std::fs;

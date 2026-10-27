@@ -1,11 +1,12 @@
 //! Building a job from what the user chose: set-ups get their prompt frozen and checked against
 //! the catalogue.
 
+use scriptorium_catalog::Catalog;
 use scriptorium_core::{
-    Job, JobId, JobSettings, JobStatus, LanguageChoice, OutputSettings, ProviderId, Setup, SetupId,
-    SetupOptions, SourceFile, Task, Timestamp,
+    Job, JobId, JobSettings, JobStatus, LanguageChoice, OutputSettings, PromptSnapshot, ProviderId,
+    Setup, SetupId, SetupOptions, SourceFile, Task, Timestamp,
 };
-use scriptorium_prompts::RenderContext;
+use scriptorium_prompts::{Preset, RenderContext};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -44,13 +45,6 @@ impl Engine {
             return Err(EngineError::EmptyJob);
         }
         let catalog = self.catalog();
-        let language_names: Vec<String> = new
-            .settings
-            .languages
-            .codes()
-            .iter()
-            .map(|c| catalog.language_name(c))
-            .collect();
         let mut setups = Vec::new();
         let mut labels: Vec<String> = Vec::new();
         for request in &new.setups {
@@ -58,36 +52,15 @@ impl Engine {
             if provider.accepted_inputs(new.task).is_empty() {
                 return Err(EngineError::UnsupportedModel(request.model.clone()));
             }
-            let accepts_prompt = catalog
-                .model(&request.provider, &request.model)
-                .is_none_or(|m| m.accepts_prompt);
-            let preset = match &request.preset_id {
-                Some(id) => self.with_prompts(|p| p.get(id))?,
-                None => self.with_prompts(|p| p.default_for(new.task)),
-            };
-            let ctx = RenderContext {
-                languages: new.settings.languages.clone(),
-                language_names: if matches!(new.settings.languages, LanguageChoice::Auto) {
-                    Vec::new()
-                } else {
-                    language_names.clone()
-                },
-                speakers: request.options.speakers,
-                line_breaks: new
-                    .settings
-                    .line_breaks
-                    .filter(|_| new.task == Task::TextExtraction),
-            };
-            let mut prompt = preset.snapshot(&ctx);
-            if !accepts_prompt {
-                // Dedicated OCR and speech models take no instructions; recording none keeps
-                // provenance and the cache honest.
-                prompt.text = String::new();
-                prompt.user_prompt = String::new();
-                prompt.template = String::new();
-                prompt.preset_id = None;
-                prompt.preset_name = "None (this model takes no prompt)".into();
-            }
+            let (prompt, _) = self.frozen_prompt(
+                &catalog,
+                new.task,
+                &new.settings,
+                &request.provider,
+                &request.model,
+                request.preset_id.as_deref(),
+                &request.options,
+            )?;
             let mut label = request
                 .label
                 .clone()
@@ -124,6 +97,60 @@ impl Engine {
         };
         self.store.create_job(&job)?;
         Ok(job)
+    }
+
+    /// English names of the chosen languages, as prompts state them; none for auto-detection.
+    pub(crate) fn language_names(catalog: &Catalog, settings: &JobSettings) -> Vec<String> {
+        if matches!(settings.languages, LanguageChoice::Auto) {
+            return Vec::new();
+        }
+        settings
+            .languages
+            .codes()
+            .iter()
+            .map(|c| catalog.language_name(c))
+            .collect()
+    }
+
+    /// The prompt a set-up sends, with the job's languages, line breaks and speakers filled in,
+    /// and the preset it came from. A model that takes no prompt gets an empty one.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn frozen_prompt(
+        &self,
+        catalog: &Catalog,
+        task: Task,
+        settings: &JobSettings,
+        provider: &ProviderId,
+        model: &str,
+        preset_id: Option<&str>,
+        options: &SetupOptions,
+    ) -> Result<(PromptSnapshot, Preset), EngineError> {
+        let accepts_prompt = catalog
+            .model(provider, model)
+            .is_none_or(|m| m.accepts_prompt);
+        let preset = match preset_id {
+            Some(id) => self.with_prompts(|p| p.get(id))?,
+            None => self.with_prompts(|p| p.default_for(task)),
+        };
+        let ctx = RenderContext {
+            languages: settings.languages.clone(),
+            language_names: Self::language_names(catalog, settings),
+            speakers: options.speakers,
+            line_breaks: settings
+                .line_breaks
+                .filter(|_| task == Task::TextExtraction),
+        };
+        let mut prompt = preset.snapshot(&ctx);
+        if !accepts_prompt {
+            // Dedicated OCR and speech models take no instructions; recording none keeps
+            // provenance and the cache honest.
+            prompt.text = String::new();
+            prompt.user_prompt = String::new();
+            prompt.template = String::new();
+            prompt.preset_id = None;
+            prompt.preset_name = "None (this model takes no prompt)".into();
+        }
+        Ok((prompt, preset))
     }
 }
 

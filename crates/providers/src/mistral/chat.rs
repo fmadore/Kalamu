@@ -6,11 +6,23 @@
 //! `reasoning_effort` is `none`, the lowest setting, as the other providers run at their lowest
 //! effort; the answer then comes back as one string rather than thinking and text chunks.
 
-use scriptorium_core::{AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, Usage};
+use scriptorium_core::{
+    AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, RequestSetting, Usage,
+};
 use serde_json::{Value, json};
 
 use crate::analysis;
 use crate::http::data_url;
+
+const REASONING_EFFORT: &str = "none";
+const MAX_TOKENS: u32 = 16_000;
+
+pub(super) fn request_settings(_model: &str) -> Vec<RequestSetting> {
+    vec![
+        RequestSetting::new("reasoning_effort", REASONING_EFFORT),
+        RequestSetting::new("max_tokens", MAX_TOKENS),
+    ]
+}
 
 pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Value {
     let input = request.input;
@@ -42,8 +54,8 @@ pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Val
                 "strict": true,
             },
         },
-        "reasoning_effort": "none",
-        "max_tokens": 16_000,
+        "reasoning_effort": REASONING_EFFORT,
+        "max_tokens": MAX_TOKENS,
     })
 }
 

@@ -9,7 +9,8 @@
 use async_trait::async_trait;
 use reqwest::Client;
 use scriptorium_core::{
-    ApiKey, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId, Task, Usage,
+    ApiKey, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting,
+    Task, Usage,
 };
 use serde_json::{Value, json};
 
@@ -21,6 +22,8 @@ const API_VERSION: &str = "2026-10-21";
 const FALLBACK_BETA: &str = "server-side-fallback-2026-07-01";
 /// Haiku has no server-side fallback.
 const FALLBACK_MODELS: &[&str] = &["claude-opus-5-5", "claude-sonnet-5-5"];
+const MAX_TOKENS: u32 = 16_000;
+const EFFORT: &str = "low";
 
 pub struct Anthropic {
     client: Client,
@@ -65,13 +68,13 @@ impl Anthropic {
         };
         let mut body = json!({
             "model": request.model,
-            "max_tokens": 16_000,
+            "max_tokens": MAX_TOKENS,
             "system": request.prompt,
             "messages": [{
                 "role": "user",
                 "content": [media, { "type": "text", "text": request.user_prompt }],
             }],
-            "output_config": { "effort": "low" },
+            "output_config": { "effort": EFFORT },
         });
         if FALLBACK_MODELS.contains(&request.model) {
             body["fallbacks"] = json!("default");
@@ -157,6 +160,20 @@ impl Provider for Anthropic {
                 "image/webp",
             ],
         }
+    }
+
+    fn request_settings(&self, task: Task, model: &str) -> Vec<RequestSetting> {
+        if task == Task::AudioTranscription {
+            return Vec::new();
+        }
+        let mut settings = vec![
+            RequestSetting::new("output_config.effort", EFFORT),
+            RequestSetting::new("max_tokens", MAX_TOKENS),
+        ];
+        if FALLBACK_MODELS.contains(&model) {
+            settings.push(RequestSetting::new("fallbacks", "default"));
+        }
+        settings
     }
 
     async fn process(

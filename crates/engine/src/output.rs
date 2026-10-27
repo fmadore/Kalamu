@@ -4,7 +4,6 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use scriptorium_core::fingerprint::sha256_hex;
 use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
 use scriptorium_core::speakers::{rename_segments, rename_text};
 use scriptorium_core::{
@@ -221,16 +220,7 @@ impl Engine {
             provider: setup.provider.clone(),
             model: setup.model.clone(),
             model_versions: versions.into_iter().collect(),
-            prompt: ProvenancePrompt {
-                preset_id: setup.prompt.preset_id.clone(),
-                preset_name: setup.prompt.preset_name.clone(),
-                text: setup.prompt.text.clone(),
-                user_prompt: setup.prompt.user_prompt.clone(),
-                sha256: sha256_hex(
-                    format!("{}\n{}", setup.prompt.text, setup.prompt.user_prompt).as_bytes(),
-                ),
-                schema: setup.prompt.schema.clone(),
-            },
+            prompt: ProvenancePrompt::from_snapshot(&setup.prompt),
             languages: job.settings.languages.clone(),
             detected_languages: detected.into_iter().collect(),
             options: setup.options.clone(),

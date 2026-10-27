@@ -226,6 +226,8 @@ pub fn run() {
             commands::pipelines::list_pipelines,
             commands::pipelines::save_pipeline,
             commands::pipelines::delete_pipeline,
+            commands::pipelines::export_pipeline,
+            commands::pipelines::import_pipeline,
             commands::jobs::expand_paths,
             commands::jobs::inspect_files,
             commands::jobs::estimate_cost,

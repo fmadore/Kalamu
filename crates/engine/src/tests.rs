@@ -546,3 +546,56 @@ async fn an_analysis_reads_each_document_once_and_corrections_replace_its_answer
     );
     assert!(view.corrected_fields.is_some());
 }
+
+#[test]
+fn a_pipeline_record_carries_the_prompt_a_job_would_send() {
+    let f = fixture();
+    let pipeline = scriptorium_prompts::Pipeline {
+        id: String::new(),
+        name: "Places".into(),
+        task: Task::Analysis,
+        setups: vec![scriptorium_prompts::PipelineSetup {
+            provider: ProviderId::new("fake"),
+            model: "fake-model".into(),
+            preset_id: Some("analysis.entities".into()),
+            label: None,
+            options: Default::default(),
+        }],
+        settings: Default::default(),
+        formats: vec![ExportFormat::Csv],
+        destination: Default::default(),
+        updated_at: Timestamp(0),
+    };
+    let file = f
+        .engine
+        .pipeline_file(pipeline)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Places".into(),
+            task: Task::Analysis,
+            sources: vec![f.pdf("a.pdf", 1)],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: Some("analysis.entities".into()),
+                label: None,
+                options: Default::default(),
+            }],
+            settings: Default::default(),
+            output: Default::default(),
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    let recorded = file.setups[0]
+        .prompt
+        .clone()
+        .unwrap_or_else(|| panic!("no prompt"));
+    assert_eq!(
+        recorded,
+        scriptorium_core::provenance::ProvenancePrompt::from_snapshot(&job.setups[0].prompt)
+    );
+    assert_eq!(file.presets.len(), 1);
+    assert_eq!(file.presets[0].id, "analysis.entities");
+    assert!(file.to_markdown().contains("## Model and prompt"));
+}

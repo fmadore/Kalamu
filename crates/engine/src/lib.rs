@@ -7,6 +7,7 @@
 
 mod compare;
 mod output;
+mod record;
 mod review;
 mod run;
 mod setup;
