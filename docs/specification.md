@@ -74,8 +74,9 @@ field has a name, a kind of answer and, in the researcher's words, what belongs 
 - *Several choices* from a fixed list: themes from the researcher's own vocabulary.
 
 Any field can ask for a one-sentence reason. Ready-made analyses cover the common needs (a
-research summary with keywords, a short catalogue summary, people, places and organisations,
-the tone of a document), and common fields are one click away when building one. The app turns
+research summary with keywords, a short catalogue summary, a social-science publication's
+question, argument, theory, methods, data, case and findings for a literature review, people,
+places and organisations, the tone of a document), and common fields are one click away when building one. The app turns
 the fields into each provider's structured output, so the answer always has exactly these
 fields, and checks it again before storing it: an answer that breaks the fields is asked for
 again, never stored empty. Named entity recognition and sentiment analysis are analyses, not

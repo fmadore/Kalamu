@@ -3,7 +3,8 @@
 //! scripts. The analysis prompts are new, in English: the summaries keep the principles of
 //! iwac-ai-pipelines' bilingual summary prompt (specific, faithful, searchable), the entities
 //! its NER rules and the tone its sentiment scales (labels, never numbers, with a reason),
-//! without their collection-specific parts.
+//! without their collection-specific parts. The scholarly publication summary has no ancestor
+//! there: its fields follow what a social-science literature review compares.
 
 use scriptorium_core::{AnalysisSchema, Field, FieldKind, Task};
 
@@ -80,6 +81,134 @@ fn summary_brief() -> AnalysisSchema {
                 false,
             ),
             field("Keywords", KEYWORDS, list(8), false),
+        ],
+    }
+}
+
+/// The parts of a social-science publication a literature review compares: question, argument,
+/// theory, method, case and findings, kept apart so each becomes a CSV column.
+fn summary_publication() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Reference",
+                "Authors, year, title, and the journal, book or institution it appeared in, as \
+                 the publication gives them. Leave out what it does not state.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Type",
+                "What kind of publication this is.",
+                choice(&[
+                    "Journal article",
+                    "Book chapter",
+                    "Book",
+                    "Thesis",
+                    "Working paper or report",
+                    "Review",
+                    "Other",
+                ]),
+                false,
+            ),
+            field(
+                "Abstract",
+                "An abstract of 150 to 250 words in your own words: the question, the case, the \
+                 approach, the argument and the main findings.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Research question",
+                "The question or puzzle the publication sets out to answer, in one or two \
+                 sentences.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Argument",
+                "The central argument or thesis, and the debate or received view it speaks to or \
+                 argues against.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Theoretical framework",
+                "The theories and concepts the analysis rests on, and the scholars it explicitly \
+                 builds on or discusses.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Methods",
+                "The methods the publication itself uses, not those it only discusses.",
+                FieldKind::Choices {
+                    values: [
+                        "Ethnography and participant observation",
+                        "Interviews",
+                        "Oral history",
+                        "Archival research",
+                        "Press or media analysis",
+                        "Discourse or content analysis",
+                        "Survey",
+                        "Statistical analysis",
+                        "Comparative case study",
+                        "Literature review or theoretical essay",
+                    ]
+                    .map(String::from)
+                    .to_vec(),
+                },
+                false,
+            ),
+            field(
+                "Data and sources",
+                "What the study rests on: fieldwork (where, when, how long), interviews (how many, \
+                 with whom), archives, press, surveys or corpora, as the publication describes \
+                 them.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Places studied",
+                "Countries, regions, towns or sites the study is about, not every place mentioned.",
+                list(10),
+                false,
+            ),
+            field(
+                "Period studied",
+                "The period the study covers, as precisely as the publication states it (\"1960 \
+                 to 1990\", \"the 2010s\").",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Main findings",
+                "The main findings or claims, each in one sentence, the most important first, as \
+                 plain prose.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Contribution and limits",
+                "What the authors say the publication adds to the field, and the limits they \
+                 acknowledge themselves.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Key concepts",
+                "The analytical concepts the publication uses or proposes, in its own terms.",
+                list(8),
+                false,
+            ),
+            field(
+                "Keywords",
+                "Keywords in {languages} that someone would search for: the topic, groups, \
+                 institutions, places and themes. Prefer the specific (\"Islamic reformism in \
+                 Niger\") to the general (\"religion\").",
+                list(10),
+                false,
+            ),
         ],
     }
 }
@@ -236,6 +365,15 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/summary-brief.md"),
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(summary_brief),
+    },
+    Default {
+        id: "analysis.summary_publication",
+        task: Task::Analysis,
+        name: "Scholarly publication, social sciences",
+        description: "Question, argument, theory, methods, data, case and findings of an article, chapter or book, field by field for a literature review.",
+        instructions: include_str!("../defaults/summary-publication.md"),
+        user_prompt: ANALYSIS_REQUEST,
+        schema: Some(summary_publication),
     },
     Default {
         id: "analysis.entities",
