@@ -4,11 +4,14 @@ import type { Catalog } from './bindings/Catalog.js';
 import { en } from './i18n/index.js';
 import {
 	acceptsPrompt,
+	inputOf,
 	modelInfo,
+	modelsFor,
 	newDraft,
 	providerDefault,
 	readsKind,
 	suggestName,
+	taskOf,
 	toRequest,
 	warningText
 } from './newJob.js';
@@ -76,5 +79,30 @@ describe('new job form', () => {
 			)
 		).toBe('Bulletin');
 		expect(suggestName(['C:\\x\\lettre.jpg'], ['C:\\x\\lettre.jpg'])).toBe('lettre.jpg');
+	});
+
+	it('offers YouTube videos to the models that read their links only', () => {
+		expect(taskOf('youtube')).toBe('audio_transcription');
+		expect(readsKind('youtube', 'youtube')).toBe(true);
+		expect(readsKind('youtube', 'audio')).toBe(false);
+		expect(readsKind('audio_transcription', 'youtube')).toBe(false);
+		const input = inputOf('youtube');
+		const d = newDraft(catalog, 'audio_transcription', null, () => true, [], input);
+		expect(d.provider).toBe('gemini');
+		// No key for Gemini still proposes a Gemini model, never one that cannot read the link.
+		const noGemini = newDraft(
+			catalog,
+			'audio_transcription',
+			null,
+			(p) => p !== 'gemini',
+			[],
+			input
+		);
+		expect(noGemini.provider).toBe('gemini');
+		expect(modelsFor(catalog, 'mistral', 'audio_transcription', input)).toEqual([]);
+		expect(modelsFor(catalog, 'gemini', 'audio_transcription', input).length).toBeGreaterThan(0);
+		expect(providerDefault(catalog, 'gemini', 'audio_transcription', input)).toBe(
+			'gemini-3.8-flash'
+		);
 	});
 });

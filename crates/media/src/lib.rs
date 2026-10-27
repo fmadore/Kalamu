@@ -3,8 +3,8 @@
 //! PDFs are cut into single-page PDFs, never rendered, as in zmo- and iwac-ai-pipelines: every
 //! first-stage provider reads PDF pages directly, at full quality. Images are passed through
 //! when the provider takes their format, and converted otherwise. Recordings and videos are
-//! split at pauses and converted by the bundled FFmpeg. Originals are only read, never
-//! modified.
+//! split at pauses and converted by the bundled FFmpeg. A YouTube video is passed on as its
+//! link, for the provider to fetch. Originals are only read, never modified.
 
 mod audio;
 mod audio_format;
@@ -18,7 +18,9 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-use scriptorium_core::{InputKind, InputWarning, PieceRef, PreparedInput, SourceFile, SourceId};
+use scriptorium_core::{
+    InputKind, InputWarning, PieceRef, PreparedInput, SourceFile, SourceId, YOUTUBE_LINK,
+};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
@@ -83,6 +85,7 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
         duration_ms,
         split_spreads: false,
         even_out_volume: false,
+        title: None,
     })
 }
 
@@ -112,6 +115,8 @@ pub enum OpenSource {
     Audio(AudioSource),
     /// Plain text, Markdown, CSV or Word, for summaries.
     Text(TextSource),
+    /// A YouTube video's address; the provider reads the video itself.
+    YouTube(String),
 }
 
 impl OpenSource {
@@ -124,6 +129,7 @@ impl OpenSource {
                 Ok(Self::Audio(AudioSource::open(source, ffmpeg)?))
             }
             InputKind::Text => Ok(Self::Text(TextSource::open(path)?)),
+            InputKind::YouTube => Ok(Self::YouTube(source.path.clone())),
         }
     }
 
@@ -136,7 +142,9 @@ impl OpenSource {
             Self::Pdf(pdf) => pdf.page_count(),
             Self::Image(img) => img.page_count(),
             Self::Audio(audio) => return audio.pieces(piece_ms),
-            Self::Text(_) => return vec![PieceRef::Whole],
+            // A YouTube link cannot be clipped reliably: Gemini still hears the whole sound
+            // track (see the decision of 27 October 2026), so a video is one piece.
+            Self::Text(_) | Self::YouTube(_) => return vec![PieceRef::Whole],
         };
         let last = sample.map_or(pages, |n| n.min(pages));
         for number in 1..=last {
@@ -144,7 +152,7 @@ impl OpenSource {
                 && match self {
                     Self::Pdf(pdf) => pdf.is_spread(number),
                     Self::Image(img) => img.is_spread(number),
-                    Self::Audio(_) | Self::Text(_) => false,
+                    Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => false,
                 };
             if spread {
                 for half in [
@@ -173,6 +181,9 @@ impl OpenSource {
         if let Self::Audio(audio) = self {
             return audio.prepare(piece, accepted, file_stem);
         }
+        if let Self::YouTube(url) = self {
+            return youtube_link(url, piece, accepted, file_stem);
+        }
         if *piece == PieceRef::Whole {
             return self.prepare_whole(accepted, file_stem);
         }
@@ -195,7 +206,7 @@ impl OpenSource {
                 ("application/pdf".to_string(), pdf.page_pdf(*number, *half)?)
             }
             Self::Image(img) => img.prepare(*number, *half, accepted)?,
-            Self::Audio(_) | Self::Text(_) => unreachable_audio()?,
+            Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => unreachable_audio()?,
         };
         let ext = mime
             .rsplit('/')
@@ -215,8 +226,9 @@ impl OpenSource {
         let kinds = match self {
             Self::Pdf(pdf) => checks::pdf_warnings(pdf),
             Self::Image(img) => checks::image_warnings(img),
-            // Recordings are checked with FFmpeg by `recording_warnings`.
-            Self::Audio(_) | Self::Text(_) => Vec::new(),
+            // Recordings are checked with FFmpeg by `recording_warnings`; a YouTube video is not
+            // seen before the provider reads it.
+            Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => Vec::new(),
         };
         kinds
             .into_iter()
@@ -288,6 +300,26 @@ pub fn recording_warnings(source: &SourceFile, ffmpeg: Option<&Ffmpeg>) -> Vec<I
             kind,
         })
         .collect()
+}
+
+/// A YouTube video as its link, for a model that reads YouTube links.
+fn youtube_link(
+    url: &str,
+    piece: &PieceRef,
+    accepted: &[&str],
+    file_stem: &str,
+) -> Result<PreparedInput, MediaError> {
+    if !accepted.contains(&YOUTUBE_LINK) {
+        return Err(MediaError::NeedsConversion(
+            "This model cannot read YouTube videos. Choose a Gemini model that reads them.".into(),
+        ));
+    }
+    Ok(PreparedInput {
+        piece: piece.clone(),
+        mime: YOUTUBE_LINK.to_string(),
+        bytes: url.as_bytes().to_vec(),
+        file_name: file_stem.to_string(),
+    })
 }
 
 /// Audio returns earlier in `prepare`; this keeps the match exhaustive without a panic.

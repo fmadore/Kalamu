@@ -24,7 +24,8 @@ const settings: Settings = {
 	export_options: { piece_markers: true, speaker_labels: true, timestamps: true },
 	theme: new URLSearchParams(location.search).get('theme') ?? 'system',
 	refresh_catalog: false,
-	favourite_languages: ['fr', 'ar']
+	favourite_languages: ['fr', 'ar'],
+	last_folder: null
 };
 
 const presets: Preset[] = [
@@ -306,6 +307,52 @@ const audioPieces = (): PieceView[] =>
 		speaker_names: { ...speakerNames }
 	}));
 
+/** A YouTube video transcribed by Gemini, its times written into the text as Gemini does. */
+const video = {
+	...recording,
+	id: '00000000-0000-0000-0000-000000000005',
+	path: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+	file_name: 'Conférence sur le jeûne, mosquée de Ouagadougou [dQw4w9WgXcQ]',
+	title: 'Conférence sur le jeûne, mosquée de Ouagadougou',
+	kind: 'youtube' as const,
+	size_bytes: 0,
+	duration_ms: null
+};
+
+const videoSetup = {
+	...audioSetup,
+	id: '00000000-0000-0000-0000-00000000000d',
+	label: 'gemini-3.8-flash',
+	provider: 'gemini',
+	model: 'gemini-3.8-flash'
+};
+
+const videoJob: Job = {
+	...audioJob,
+	id: '00000000-0000-0000-0000-0000000000j4',
+	name: 'Conférence, mosquée de Ouagadougou',
+	sources: [video],
+	setups: [videoSetup],
+	status: 'completed'
+};
+
+const videoPieces = (): PieceView[] => [
+	{
+		...audioPieces()[0],
+		setup_id: videoSetup.id,
+		source_id: video.id,
+		piece: { kind: 'whole' as const },
+		model_version: 'gemini-3.8-flash-001',
+		cost_usd: 0.031,
+		segments: lines.map(([speaker, text], k) => ({
+			start_ms: k * 95_000 + 4_000,
+			end_ms: (k + 1) * 95_000 + 4_000,
+			speaker: named(speaker),
+			text
+		}))
+	}
+];
+
 /** An analysis of one article by two models, for the analysis review. */
 const article = {
 	...source,
@@ -509,6 +556,8 @@ export function mockView(): View | null {
 			return { name: 'review', jobId: audioJob.id, sourceId: recording.id };
 		case 'review-analysis':
 			return { name: 'review', jobId: analysisJob.id, sourceId: article.id };
+		case 'review-youtube':
+			return { name: 'review', jobId: videoJob.id, sourceId: video.id };
 		case 'prompts':
 		case 'prompts-analysis':
 			return { name: 'prompts' };
@@ -601,6 +650,7 @@ export function installMock(): void {
 					}
 				];
 			case 'get_job':
+				if (a.id === videoJob.id) return videoJob;
 				return a.id === audioJob.id ? audioJob : a.id === analysisJob.id ? analysisJob : job;
 			case 'job_pieces':
 				return pieces.map((p) => ({
@@ -612,6 +662,7 @@ export function installMock(): void {
 				}));
 			case 'source_pieces':
 				if (a.jobId === analysisJob.id) return analysisPieces;
+				if (a.jobId === videoJob.id) return videoPieces();
 				return a.jobId === audioJob.id ? audioPieces() : pieces;
 			case 'source_text':
 				return texts[0];
@@ -674,6 +725,25 @@ export function installMock(): void {
 							: [],
 					error: null
 				}));
+			case 'inspect_links':
+				// The engine's check, roughly: an eleven-character id after a YouTube address.
+				return (a.links as string[]).map((link, i) => {
+					const id = /(?:youtu\.be\/|[?&]v=|shorts\/|live\/)([\w-]{11})/.exec(link)?.[1];
+					return {
+						path: link,
+						source: id
+							? {
+									...video,
+									id: `00000000-0000-0000-0000-0000000002${i}0`,
+									path: `https://www.youtube.com/watch?v=${id}`,
+									title: `Prêche du vendredi ${i + 1}`,
+									file_name: `Prêche du vendredi ${i + 1} [${id}]`
+								}
+							: null,
+						warnings: [],
+						error: id ? null : { id: 'source.not_youtube', detail: link }
+					};
+				});
 			case 'plugin:dialog|open':
 				return [
 					'C:\\Archives\\Bulletin\\bulletin-1957-06.pdf',

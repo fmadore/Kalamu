@@ -23,6 +23,8 @@ pub struct Settings {
     pub refresh_catalog: bool,
     /// Languages starred in New job, listed first.
     pub favourite_languages: Vec<LanguageCode>,
+    /// The folder last chosen for results, offered first when a job needs one.
+    pub last_folder: Option<String>,
 }
 
 impl Default for Settings {
@@ -41,6 +43,7 @@ impl Default for Settings {
             theme: "system".into(),
             refresh_catalog: true,
             favourite_languages: Vec::new(),
+            last_folder: None,
         }
     }
 }

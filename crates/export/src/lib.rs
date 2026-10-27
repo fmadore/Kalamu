@@ -15,7 +15,7 @@ mod timeline;
 
 use scriptorium_core::{ExportDocument, ExportFormat, Exporter};
 
-pub use timeline::{cues, segments_from_text, timeline};
+pub use timeline::{cues, segments_from_text, timed_lines, timeline};
 
 /// Every exporter, in the order formats are offered.
 pub fn all() -> Vec<Box<dyn Exporter>> {

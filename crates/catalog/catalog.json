@@ -60,6 +60,7 @@
         "audio/ogg",
         "audio/aac",
         "audio/webm",
+        "video/x-youtube",
         "text/plain"
       ],
       "languages": "any",
@@ -106,6 +107,7 @@
         "audio/ogg",
         "audio/aac",
         "audio/webm",
+        "video/x-youtube",
         "text/plain"
       ],
       "languages": "any",
@@ -146,6 +148,7 @@
         "audio/ogg",
         "audio/aac",
         "audio/webm",
+        "video/x-youtube",
         "text/plain"
       ],
       "languages": "any",

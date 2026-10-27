@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
 use scriptorium_core::speakers::{rename_segments, rename_text};
 use scriptorium_core::{
-    CacheKey, ExportDocument, ExportPart, Job, JobId, OutputDestination, PieceRef, Provenance,
-    Segment, SetupId, SourceFile, SourceId, Timestamp, Usage,
+    CacheKey, ExportDocument, ExportPart, InputKind, Job, JobId, OutputDestination, PieceRef,
+    Provenance, Segment, SetupId, SourceFile, SourceId, Timestamp, Usage,
 };
 
 use crate::{Engine, EngineError};
@@ -118,6 +118,7 @@ impl Engine {
         let mut cost: Option<f64> = None;
         let mut versions = BTreeSet::new();
         let mut detected = BTreeSet::new();
+        let mut first_read: Option<Timestamp> = None;
         let (mut corrected, mut reviewed) = (Vec::new(), Vec::new());
         for state in &states {
             let Some(key) = &state.cache_key else {
@@ -130,6 +131,7 @@ impl Engine {
                 continue;
             };
             usage.add(&result.output.usage);
+            first_read = Some(first_read.map_or(result.created_at, |t| t.min(result.created_at)));
             if let Some(c) = result.cost_usd {
                 cost = Some(cost.unwrap_or(0.0) + c);
             }
@@ -199,6 +201,7 @@ impl Engine {
             });
         }
 
+        let online = source.kind == InputKind::YouTube;
         let mut preprocessing = preprocessing(&source);
         if let Some(n) = job.settings.sample_pages {
             preprocessing.push(format!("sample_first_{n}_pages"));
@@ -215,6 +218,9 @@ impl Engine {
                 file_name: source.file_name.clone(),
                 sha256: source.sha256.clone(),
                 size_bytes: source.size_bytes,
+                url: online.then(|| source.path.clone()),
+                title: source.title.clone(),
+                read_at: first_read.filter(|_| online),
             },
             engine: "cloud".into(),
             provider: setup.provider.clone(),
@@ -253,10 +259,15 @@ fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, S
             .unwrap_or_default(),
         OutputDestination::Folder(folder) => PathBuf::from(folder),
     };
-    let stem = Path::new(&source.file_name)
-        .file_stem()
-        .map(|s| s.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "result".into());
+    // A video's name is its title, whose dots are not an extension.
+    let stem = if source.kind == InputKind::YouTube {
+        source.file_name.clone()
+    } else {
+        Path::new(&source.file_name)
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "result".into())
+    };
     let mut base = if job.is_comparison() {
         format!("{stem}.{setup_label}")
     } else {

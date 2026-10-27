@@ -83,6 +83,99 @@ pub async fn inspect_files(
     .map_err(|e| AppError::new(id::INTERNAL, e))
 }
 
+/// YouTube links pasted for a new job, each checked; `path` is the link as pasted. Each video's
+/// title is asked of YouTube's public oEmbed endpoint, which needs no key and also says when a
+/// video is private or gone. Without a connection the links are kept, untitled.
+#[tauri::command]
+pub async fn inspect_links(
+    state: State<'_, AppState>,
+    links: Vec<String>,
+) -> CmdResult<Vec<InspectedFile>> {
+    let checked = state.engine.inspect_links(&links);
+    let mut lookups = tokio::task::JoinSet::new();
+    for (index, result) in checked.iter().enumerate() {
+        if let Ok(source) = result {
+            let (http, url) = (state.http.clone(), source.path.clone());
+            lookups.spawn(async move { (index, youtube_title(&http, &url).await) });
+        }
+    }
+    let mut found = vec![Ok(None); checked.len()];
+    while let Some(done) = lookups.join_next().await {
+        let (index, title) = done.map_err(|e| AppError::new(id::INTERNAL, e))?;
+        found[index] = title;
+    }
+    Ok(checked
+        .into_iter()
+        .zip(found)
+        .zip(links)
+        .map(|((result, title), link)| {
+            let (source, error) = match (result, title) {
+                (Ok(source), Ok(Some(title))) => (Some(source.with_title(&title)), None),
+                (Ok(source), Ok(None)) => (Some(source), None),
+                (Ok(_), Err(refused)) => (
+                    None,
+                    Some(AppError {
+                        id: refused.into(),
+                        detail: None,
+                    }),
+                ),
+                (Err(e), _) => (None, Some(e.into())),
+            };
+            InspectedFile {
+                path: link,
+                source,
+                warnings: Vec::new(),
+                error,
+            }
+        })
+        .collect())
+}
+
+/// A video's title from YouTube's oEmbed endpoint; `Ok(None)` when YouTube could not be asked.
+async fn youtube_title(http: &reqwest::Client, url: &str) -> Result<Option<String>, &'static str> {
+    let response = http
+        .get(format!(
+            "https://www.youtube.com/oembed?format=json&url={}",
+            encode(url)
+        ))
+        .timeout(std::time::Duration::from_secs(8))
+        .send()
+        .await;
+    let Ok(response) = response else {
+        return Ok(None);
+    };
+    let status = response.status().as_u16();
+    let body = response.text().await.unwrap_or_default();
+    oembed_title(status, &body)
+}
+
+/// Percent-encodes a query value, keeping only URL-safe characters as they are.
+fn encode(value: &str) -> String {
+    value
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                (b as char).to_string()
+            }
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
+}
+
+/// What oEmbed's answer says about a video: its title, or why it cannot be read. Unlisted videos
+/// answer like public ones, so Gemini may still refuse them.
+fn oembed_title(status: u16, body: &str) -> Result<Option<String>, &'static str> {
+    match status {
+        200 => Ok(serde_json::from_str::<serde_json::Value>(body)
+            .ok()
+            .and_then(|v| v.get("title")?.as_str().map(str::to_string))
+            .filter(|t| !t.trim().is_empty())),
+        401 | 403 => Err(id::SOURCE_PRIVATE),
+        400 | 404 => Err(id::SOURCE_MISSING),
+        _ => Ok(None),
+    }
+}
+
 #[tauri::command]
 pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Vec<EstimateRow> {
     let catalog = state.engine.catalog();
@@ -94,6 +187,8 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Ve
             request.sample_pages.map_or(n, |cap| n.min(cap))
         })
         .sum();
+    // A YouTube video's length is known only once the provider has read it.
+    let unknown_length = request.sources.iter().any(|s| s.kind == InputKind::YouTube);
     let minutes: f64 = request
         .sources
         .iter()
@@ -109,6 +204,10 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Ve
                 .and_then(|id| state.engine.with_prompts(|p| p.get(id)).ok())
                 .map_or(2_000, |p| p.instructions.len());
             let estimate = match catalog.model(&setup.provider, &setup.model) {
+                _ if unknown_length => CostEstimate {
+                    usd: None,
+                    note: Some("A YouTube video's length is known once Gemini has read it.".into()),
+                },
                 Some(model) => catalog.estimate(model, request.task, pages, minutes, prompt_chars),
                 None => CostEstimate {
                     usd: None,
@@ -170,4 +269,29 @@ pub fn get_job(state: State<'_, AppState>, id: JobId) -> CmdResult<Job> {
 #[tauri::command]
 pub fn job_pieces(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<PieceState>> {
     Ok(state.engine.pieces(id)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn oembed_gives_the_title_or_says_why_a_video_cannot_be_read() {
+        assert_eq!(
+            oembed_title(
+                200,
+                r#"{"title":"Prêche du vendredi","author_name":"Mosquée"}"#
+            ),
+            Ok(Some("Prêche du vendredi".to_string()))
+        );
+        assert_eq!(oembed_title(401, "Unauthorized"), Err(id::SOURCE_PRIVATE));
+        assert_eq!(oembed_title(404, "Not Found"), Err(id::SOURCE_MISSING));
+        // YouTube busy or changed: the link is kept, untitled.
+        assert_eq!(oembed_title(503, ""), Ok(None));
+        assert_eq!(oembed_title(200, "not json"), Ok(None));
+        assert_eq!(
+            encode("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+            "https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ"
+        );
+    }
 }

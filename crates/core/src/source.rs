@@ -15,6 +15,9 @@ pub enum InputKind {
     Audio,
     Video,
     Text,
+    /// A YouTube video added by its link: no file, read by the provider from its address.
+    #[serde(rename = "youtube")]
+    YouTube,
 }
 
 impl InputKind {
@@ -40,10 +43,11 @@ impl InputKind {
 #[ts(export)]
 pub struct SourceFile {
     pub id: SourceId,
-    /// Absolute path on this PC.
+    /// Absolute path on this PC, or the address of a YouTube video.
     pub path: String,
     pub file_name: String,
-    /// SHA-256 of the file's bytes, lowercase hex. Part of every cache key.
+    /// SHA-256 of the file's bytes, lowercase hex, or of a YouTube video's id. Part of every
+    /// cache key.
     pub sha256: String,
     #[ts(type = "number")]
     pub size_bytes: u64,
@@ -59,4 +63,8 @@ pub struct SourceFile {
     /// Even out a recording's volume before transcription (quiet or uneven speakers).
     #[serde(default)]
     pub even_out_volume: bool,
+    /// A YouTube video's title, as YouTube gives it, when it could be read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub title: Option<String>,
 }

@@ -20,20 +20,25 @@
 	let {
 		drafts = $bindable(),
 		task,
-		presets
-	}: { drafts: Draft[]; task: Task; presets: Preset[] } = $props();
+		presets,
+		input
+	}: {
+		drafts: Draft[];
+		task: Task;
+		presets: Preset[];
+		/** What every model must read, such as YouTube links; any input of the task when absent. */
+		input?: string;
+	} = $props();
 
 	const m = messages();
 	const catalog = $derived(app.catalog!);
 	const providers = $derived(
-		catalog.providers.filter((p) =>
-			catalog.models.some((mod) => mod.provider === p.id && mod.tasks.includes(task))
-		)
+		catalog.providers.filter((p) => modelsFor(catalog, p.id, task, input).length > 0)
 	);
 
 	function addSetup() {
 		const used = drafts.map((d) => `${d.provider}/${d.model}`);
-		drafts = [...drafts, newDraft(catalog, task, presets[0]?.id ?? null, hasKey, used)];
+		drafts = [...drafts, newDraft(catalog, task, presets[0]?.id ?? null, hasKey, used, input)];
 	}
 </script>
 
@@ -65,7 +70,7 @@
 					<select
 						bind:value={d.provider}
 						onchange={() => {
-							d.model = providerDefault(catalog, d.provider, task);
+							d.model = providerDefault(catalog, d.provider, task, input);
 						}}
 					>
 						{#each providers as p (p.id)}
@@ -76,7 +81,7 @@
 				<label class="field">
 					<span>{m.newJob.model}</span>
 					<select bind:value={d.model}>
-						{#each modelsFor(catalog, d.provider, task) as mod (mod.id)}
+						{#each modelsFor(catalog, d.provider, task, input) as mod (mod.id)}
 							<option value={mod.id}
 								>{mod.name}{mod.status === 'preview'
 									? ` (${m.common.preview})`

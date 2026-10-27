@@ -4,7 +4,10 @@
 use std::collections::BTreeMap;
 
 use scriptorium_core::speakers::{labels, rename_segments, rename_text};
-use scriptorium_core::{CacheKey, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId};
+use scriptorium_core::{
+    CacheKey, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task,
+};
+use scriptorium_export::timed_lines;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -97,9 +100,17 @@ impl Engine {
                     .map(|r| r.output.fields.clone())
                     .unwrap_or_default(),
                 corrected_fields: correction.and_then(|c| c.fields.clone()),
-                segments: result
-                    .map(|r| rename_segments(&r.output.segments, &speaker_names))
-                    .unwrap_or_default(),
+                // Models that write `[hh:mm:ss]` into their text (Gemini, the interview
+                // prompts) give their timed lines that way.
+                segments: match result {
+                    Some(r)
+                        if r.output.segments.is_empty() && job.task == Task::AudioTranscription =>
+                    {
+                        timed_lines(&rename_text(&r.output.text, &speaker_names))
+                    }
+                    Some(r) => rename_segments(&r.output.segments, &speaker_names),
+                    None => Vec::new(),
+                },
                 speakers,
                 speaker_names,
             });

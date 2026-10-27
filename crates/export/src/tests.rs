@@ -25,6 +25,7 @@ fn source(name: &str, kind: InputKind) -> SourceFile {
         duration_ms: None,
         split_spreads: false,
         even_out_volume: false,
+        title: None,
     }
 }
 
@@ -60,6 +61,9 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
             file_name: source.file_name.clone(),
             sha256: source.sha256.clone(),
             size_bytes: source.size_bytes,
+            url: None,
+            title: None,
+            read_at: None,
         },
         engine: "cloud".into(),
         provider: setup.provider.clone(),

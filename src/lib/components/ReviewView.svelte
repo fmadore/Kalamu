@@ -6,6 +6,7 @@
 	// text can open in a third pane beside it; the panes' boundaries can be dragged.
 	import { onMount, tick } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
+	import VideoPane from './VideoPane.svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
 	import SpeakerList from './SpeakerList.svelte';
@@ -82,7 +83,9 @@
 	const indices = $derived([...new Set(views.map((v) => v.index))].sort((a, b) => a - b));
 	const current = $derived(views.filter((v) => v.index === index));
 	const setups = $derived(job?.setups ?? []);
-	const recording = $derived(source?.kind === 'audio' || source?.kind === 'video');
+	/** A YouTube video is transcribed like a recording but watched on YouTube. */
+	const online = $derived(source?.kind === 'youtube');
+	const recording = $derived(source?.kind === 'audio' || source?.kind === 'video' || online);
 	const timed = $derived(current.find((v) => v.segments.length > 0) ?? current[0]);
 
 	function viewFor(setup: Setup | undefined): PieceView | undefined {
@@ -292,7 +295,7 @@
 			const half = v.piece.half ? ` (${v.piece.half})` : '';
 			return m.review.page(`${v.piece.number}${half}`);
 		}
-		if (v.piece.kind === 'whole') return m.review.document;
+		if (v.piece.kind === 'whole') return online ? m.review.video : m.review.document;
 		const s = Math.floor(v.piece.start_ms / 1000);
 		const clock = [s / 3600, (s / 60) % 60, s % 60]
 			.map((n) => String(Math.floor(n)).padStart(2, '0'))
@@ -485,7 +488,13 @@
 				<span class="bar-title mono">{m.review.source} · {pieceLabel(lead ?? current[0])}</span>
 			</div>
 			<div class="desk">
-				{#if recording}
+				{#if online && source}
+					<VideoPane
+						url={source.path}
+						title={source.title ?? null}
+						segments={timed?.segments ?? []}
+					/>
+				{:else if recording}
 					<AudioPane
 						{jobId}
 						{sourceId}

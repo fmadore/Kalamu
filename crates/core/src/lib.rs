@@ -19,6 +19,7 @@ pub mod speakers;
 pub mod store;
 pub mod task;
 pub mod warning;
+pub mod youtube;
 
 pub use analysis::{AnalysisSchema, Field, FieldAnswer, FieldKind, FieldValue, SchemaError};
 pub use event::ProgressEvent;
@@ -44,6 +45,7 @@ pub use speakers::SpeakerNames;
 pub use store::{Correction, JobStore, StoreError};
 pub use task::Task;
 pub use warning::{InputWarning, WarningKind};
+pub use youtube::YOUTUBE_LINK;
 
 /// Bumped when a change to preparation or parsing makes cached results stale.
 pub const PIPELINE_VERSION: u32 = 1;

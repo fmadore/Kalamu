@@ -6,6 +6,7 @@
 use scriptorium_core::{
     AnalysisSchema, ApiKey, Field, FieldKind, FieldValue, LanguageChoice, LanguageCode, PieceRef,
     PreparedInput, ProcessRequest, Provider, ProviderError, SetupOptions, StopSignal, Task,
+    YOUTUBE_LINK,
 };
 use scriptorium_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
 use wiremock::matchers::{body_partial_json, header, method, path};
@@ -179,6 +180,92 @@ async fn gemini_rate_limits_and_recitation_are_reported() {
         )
         .await;
     assert!(matches!(recites, Err(ProviderError::Blocked(_))));
+}
+
+fn youtube() -> PreparedInput {
+    PreparedInput {
+        piece: PieceRef::Whole,
+        mime: YOUTUBE_LINK.into(),
+        bytes: b"https://www.youtube.com/watch?v=dQw4w9WgXcQ".to_vec(),
+        file_name: "youtube-dQw4w9WgXcQ".into(),
+    }
+}
+
+#[tokio::test]
+async fn gemini_reads_youtube_videos_from_their_link_at_low_resolution() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/models/gemini-3.8-flash:generateContent"))
+        .and(body_partial_json(serde_json::json!({
+            "contents": [{ "parts": [
+                { "fileData": { "fileUri": "https://www.youtube.com/watch?v=dQw4w9WgXcQ" } },
+                { "text": "Transcribe this page." }
+            ]}],
+            "generationConfig": { "mediaResolution": "MEDIA_RESOLUTION_LOW" },
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(fixture("gemini_ok.json")))
+        .mount(&server)
+        .await;
+    let refusal = |status: u16, message: &str| {
+        ResponseTemplate::new(status).set_body_json(serde_json::json!({
+            "error": { "code": status, "message": message }
+        }))
+    };
+    Mock::given(method("POST"))
+        .and(path("/models/private:generateContent"))
+        .respond_with(refusal(403, "The caller does not have permission"))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/models/removed:generateContent"))
+        .respond_with(refusal(400, "Video not found or unavailable."))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/models/badkey:generateContent"))
+        .respond_with(refusal(
+            400,
+            "API key not valid. Please pass a valid API key.",
+        ))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/models/long:generateContent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "candidates": [{ "finishReason": "MAX_TOKENS",
+                "content": { "parts": [{ "text": "[00:00:01] Bonjour." }] } }]
+        })))
+        .mount(&server)
+        .await;
+    let gemini = Gemini::with_base_url(client(), &server.uri());
+    let (input, langs, opts) = (youtube(), LanguageChoice::Auto, SetupOptions::default());
+    let key = ApiKey::new("k");
+    let run = |model: &'static str| {
+        gemini.process(
+            &key,
+            request(Task::AudioTranscription, model, &input, &langs, &opts),
+        )
+    };
+    let out = run("gemini-3.8-flash").await.unwrap_or_default();
+    assert_eq!(
+        out.text,
+        "Bamako, le 3 mai 1957
+Monsieur le Gouverneur,"
+    );
+    // A private video is the video's problem, not the key's: the job goes on.
+    assert!(matches!(
+        run("private").await,
+        Err(ProviderError::InvalidRequest(m)) if m.contains("private or unlisted")
+    ));
+    assert!(matches!(
+        run("removed").await,
+        Err(ProviderError::InvalidRequest(m)) if m.contains("removed")
+    ));
+    assert!(matches!(run("badkey").await, Err(ProviderError::Auth(_))));
+    assert!(matches!(
+        run("long").await,
+        Err(ProviderError::InvalidRequest(m)) if m.contains("too long")
+    ));
 }
 
 #[tokio::test]

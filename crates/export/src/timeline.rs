@@ -24,16 +24,28 @@ pub fn timeline(doc: &ExportDocument) -> Vec<Segment> {
             out.extend(part.segments.iter().cloned());
         }
     }
-    // Close each segment at the next one's start when the model gave no end.
-    for i in 0..out.len() {
-        if out[i].end_ms <= out[i].start_ms {
-            let next = out.get(i + 1).map(|s| s.start_ms);
-            out[i].end_ms = next
-                .filter(|&n| n > out[i].start_ms)
-                .unwrap_or(out[i].start_ms + 4_000);
+    close_ends(&mut out);
+    out
+}
+
+/// The timed lines of one piece whose model wrote `[hh:mm:ss]` markers into its text, each
+/// ending where the next begins, for the review.
+pub fn timed_lines(text: &str) -> Vec<Segment> {
+    let mut out = segments_from_text(text, 0);
+    close_ends(&mut out);
+    out
+}
+
+/// Closes each segment at the next one's start when the model gave no end.
+fn close_ends(segments: &mut [Segment]) {
+    for i in 0..segments.len() {
+        if segments[i].end_ms <= segments[i].start_ms {
+            let next = segments.get(i + 1).map(|s| s.start_ms);
+            segments[i].end_ms = next
+                .filter(|&n| n > segments[i].start_ms)
+                .unwrap_or(segments[i].start_ms + 4_000);
         }
     }
-    out
 }
 
 /// Reads lines like `[00:01:05] Speaker 2: text`. Lines without a timestamp continue the

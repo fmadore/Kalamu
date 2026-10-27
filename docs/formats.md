@@ -86,7 +86,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `generator` | `{ "name": "Scriptorium", "version": "…" }` |
 | `created_at` | Milliseconds since 1970, UTC |
 | `task`, `engine` | `text_extraction` or `audio_transcription`; `cloud` or `offline` |
-| `source` | File name, SHA-256 and size of the original |
+| `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it |
 | `provider`, `model` | As requested |
 | `model_versions` | The versions the provider reported, when they differ from `model` (including a fallback model) |
 | `prompt` | Preset id and name, the full instructions and per-page request sent, and their SHA-256 |

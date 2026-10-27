@@ -29,7 +29,9 @@ export const en = {
 		text_extraction: 'Extract text',
 		text_extractionHint: 'Printed and handwritten documents: PDF, JPEG, PNG, TIFF',
 		audio_transcription: 'Transcribe audio',
-		audio_transcriptionHint: 'Interviews, recordings and videos: MP3, M4A, WAV, MP4',
+		audio_transcriptionHint: 'Recordings and video files on this PC: MP3, M4A, WAV, MP4',
+		youtube: 'Transcribe YouTube',
+		youtubeHint: 'Public YouTube videos, from their link. Nothing is downloaded',
 		analysis: 'Analyse texts',
 		analysisHint:
 			'Summaries, people and places, tone: you choose what to find. Texts, Word files, PDFs and earlier results'
@@ -137,7 +139,28 @@ export const en = {
 		startShortcut: 'Ctrl ↵',
 		starting: 'Starting…',
 		name: 'Job name',
-		inspecting: 'Reading files…'
+		inspecting: 'Reading files…',
+		linksTitle: 'Videos',
+		linkField: 'YouTube links',
+		linkPlaceholder: 'https://www.youtube.com/watch?v=…',
+		addLinks: 'Add',
+		linksHint:
+			'Paste one link or several, one per line. Watch, youtu.be, Shorts and live links work; playlists and channels do not.',
+		openVideo: 'Open on YouTube',
+		openVideoNamed: (title: string) => `Open ${title} on YouTube`,
+		linksAdded: (added: number, refused: number) =>
+			[
+				added === 1 ? '1 video added' : `${added} videos added`,
+				refused > 0 ? (refused === 1 ? '1 link not added' : `${refused} links not added`) : ''
+			]
+				.filter(Boolean)
+				.join(', '),
+		saveIn: 'Save results in',
+		linkFolder:
+			'A video has no folder of its own, so its transcripts and provenance files need one.',
+		needFolder: 'Choose a folder for the results to start.',
+		estimateVideo:
+			'A video’s length is known only once Gemini has read it, so the cost shows in Jobs as it runs.'
 	},
 	warning: {
 		double_page_spread: (pages: string) =>
@@ -162,6 +185,10 @@ export const en = {
 			'One page per image or PDF page, not an open double-page spread; flat and fully in frame; even light without shadows or flash glare; 300–400 dpi; colour or greyscale rather than black and white for faded or handwritten material.',
 		recording:
 			'Microphone close to the speakers, a quiet room, one recording per interview, and a short spoken introduction with names and date.',
+		youtubePublic:
+			'Only public videos can be read: private and unlisted ones are refused. Scriptorium asks YouTube for each video’s title when you add it; Google then reads the video itself, and nothing is downloaded to this PC.',
+		youtubePreview:
+			'Reading YouTube links is a preview feature of Gemini, and Google may change its limits. A free key reads up to 8 hours of video a day. Each video is transcribed in one go, which suits videos up to about two hours.',
 		results:
 			'Try a sample before a whole folder, compare two models on difficult material, check names, numbers and dates against the source, and keep the originals.',
 		analysisInput:
@@ -217,6 +244,15 @@ export const en = {
 		page: (label: string) => `Page ${label}`,
 		segment: (label: string) => `From ${label}`,
 		document: 'Whole document',
+		video: 'Whole video',
+		openVideo: 'Open on YouTube',
+		videoPlayer: 'The video, in YouTube’s player',
+		videoHint: 'Click a line to play the video from there.',
+		videoHintOpen: 'Click a line to open the video there on YouTube.',
+		playVideo: 'Play the video',
+		playVideoNote: 'Plays from YouTube, in its privacy-enhanced player.',
+		videoBlocked:
+			'This video cannot be played here: its owner may not allow it, or this PC is offline.',
 		keywords: 'Keywords',
 		previous: 'Previous',
 		next: 'Next',
@@ -457,6 +493,13 @@ export const en = {
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',
+		'job.link_needs_folder':
+			'Choose a folder for the results: a YouTube video has no folder of its own to write them next to.',
+		'source.private':
+			'This video is private, so it cannot be read. Only public videos can be transcribed.',
+		'source.not_found': 'YouTube has no video at this link: it may have been removed.',
+		'source.not_youtube':
+			'This is not a link to a YouTube video. Use a watch, youtu.be or Shorts link; playlists and channels cannot be read.',
 		'media.encrypted': 'This PDF is password-protected. Remove the password and add it again.',
 		'media.unsupported': 'This file type is not supported yet.',
 		'media.read': 'The file could not be read.',

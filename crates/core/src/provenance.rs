@@ -57,6 +57,18 @@ pub struct ProvenanceSource {
     pub sha256: String,
     #[ts(type = "number")]
     pub size_bytes: u64,
+    /// A YouTube video's address: what was read, since there is no file to keep.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub url: Option<String>,
+    /// The video's title, as YouTube gave it when the link was added.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub title: Option<String>,
+    /// When the provider first read the video at that address; it may change or be removed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub read_at: Option<Timestamp>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

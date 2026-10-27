@@ -85,6 +85,10 @@ pub mod id {
     pub const CATALOG_DOWNLOAD: &str = "catalog.download";
     pub const FILE: &str = "file.read";
     pub const INTERNAL: &str = "app.internal";
+    /// A YouTube video that is private, so no one outside its owner can read it.
+    pub const SOURCE_PRIVATE: &str = "source.private";
+    /// A YouTube video that was removed, or a link to none.
+    pub const SOURCE_MISSING: &str = "source.not_found";
 }
 
 pub type CmdResult<T> = Result<T, AppError>;

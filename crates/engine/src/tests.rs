@@ -6,8 +6,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use async_trait::async_trait;
 use scriptorium_core::{
-    CacheKey, ExportFormat, FieldAnswer, FieldKind, FieldValue, OutputSettings, PreparedInput,
-    ProcessOutput, ProcessRequest, Task, Usage,
+    CacheKey, ExportFormat, FieldAnswer, FieldKind, FieldValue, OutputDestination, OutputSettings,
+    PreparedInput, ProcessOutput, ProcessRequest, Task, Usage,
 };
 use scriptorium_store::SqliteStore;
 
@@ -49,6 +49,7 @@ impl Provider for Fake {
     fn accepted_inputs(&self, task: Task) -> &'static [&'static str] {
         match task {
             Task::Analysis => &["application/pdf", "text/plain"],
+            Task::AudioTranscription => &[scriptorium_core::YOUTUBE_LINK],
             _ => &["application/pdf"],
         }
     }
@@ -59,7 +60,19 @@ impl Provider for Fake {
         request: ProcessRequest<'_>,
     ) -> Result<ProcessOutput, ProviderError> {
         self.calls.fetch_add(1, Ordering::SeqCst);
-        let PreparedInput { piece, bytes, .. } = request.input;
+        let PreparedInput {
+            piece, bytes, mime, ..
+        } = request.input;
+        // A YouTube video arrives as its link, and is transcribed with times in the text.
+        if mime == scriptorium_core::YOUTUBE_LINK {
+            assert_eq!(bytes, b"https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+            return Ok(ProcessOutput {
+                text: "[00:00:05] Speaker 1: Bonjour.
+[00:01:10] Speaker 2: Merci."
+                    .into(),
+                ..ProcessOutput::default()
+            });
+        }
         assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
         // An analysis reads the whole document and answers each field.
         if let Some(schema) = request.analysis {
@@ -431,6 +444,80 @@ async fn sample_runs_only_the_first_pages() {
     );
     f.run(job.id).await;
     assert_eq!(f.fake.calls(), 2);
+}
+
+#[tokio::test]
+async fn a_youtube_video_is_read_from_its_link_once_and_its_address_recorded() {
+    let f = fixture();
+    let new = |link: &str, destination: OutputDestination| NewJob {
+        name: "Video".into(),
+        task: Task::AudioTranscription,
+        sources: f
+            .engine
+            .inspect_links(&[link])
+            .into_iter()
+            .flatten()
+            .collect(),
+        setups: vec![SetupRequest {
+            provider: ProviderId::new("fake"),
+            model: "fake-model".into(),
+            preset_id: None,
+            label: None,
+            options: Default::default(),
+        }],
+        settings: Default::default(),
+        output: OutputSettings {
+            formats: vec![ExportFormat::Txt, ExportFormat::Srt],
+            destination,
+            ..Default::default()
+        },
+    };
+    assert!(matches!(
+        f.engine.inspect_links(&["https://vimeo.com/1"]).pop(),
+        Some(Err(EngineError::NotYouTube(_)))
+    ));
+    // A video has no folder of its own to write beside.
+    assert!(matches!(
+        f.engine.create_job(new(
+            "https://youtu.be/dQw4w9WgXcQ",
+            OutputDestination::BesideSources
+        )),
+        Err(EngineError::LinkNeedsFolder)
+    ));
+    let folder = OutputDestination::Folder(f.dir.path().display().to_string());
+    let job = f
+        .engine
+        .create_job(new("https://youtu.be/dQw4w9WgXcQ", folder.clone()))
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let srt =
+        std::fs::read_to_string(f.dir.path().join("youtube-dQw4w9WgXcQ.srt")).unwrap_or_default();
+    assert!(srt.contains("00:01:10,000"), "{srt}");
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("youtube-dQw4w9WgXcQ.provenance.json"))
+            .unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(
+        provenance["source"]["url"],
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    );
+    assert!(provenance["source"]["read_at"].is_number());
+    // The review times each line from the text, for the links that open the video there.
+    let views = f
+        .engine
+        .source_pieces(job.id, job.sources[0].id)
+        .unwrap_or_default();
+    let starts: Vec<u64> = views[0].segments.iter().map(|s| s.start_ms).collect();
+    assert_eq!(starts, vec![5_000, 70_000]);
+
+    // The same video under another form of link comes from the cache.
+    let again = f
+        .engine
+        .create_job(new("https://www.youtube.com/shorts/dQw4w9WgXcQ", folder))
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.run(again.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), 1);
 }
 
 #[tokio::test]

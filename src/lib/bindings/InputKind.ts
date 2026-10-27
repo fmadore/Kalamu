@@ -3,4 +3,4 @@
 /**
  * The broad kind of a source file, from its extension.
  */
-export type InputKind = "pdf" | "image" | "audio" | "video" | "text";
+export type InputKind = "pdf" | "image" | "audio" | "video" | "text" | "youtube";

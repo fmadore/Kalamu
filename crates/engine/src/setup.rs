@@ -3,8 +3,9 @@
 
 use scriptorium_catalog::Catalog;
 use scriptorium_core::{
-    Job, JobId, JobSettings, JobStatus, LanguageChoice, OutputSettings, PromptSnapshot, ProviderId,
-    Setup, SetupId, SetupOptions, SourceFile, Task, Timestamp,
+    InputKind, Job, JobId, JobSettings, JobStatus, LanguageChoice, OutputDestination,
+    OutputSettings, PromptSnapshot, ProviderId, Setup, SetupId, SetupOptions, SourceFile, Task,
+    Timestamp,
 };
 use scriptorium_prompts::{Preset, RenderContext};
 use serde::{Deserialize, Serialize};
@@ -43,6 +44,11 @@ impl Engine {
     pub fn create_job(&self, new: NewJob) -> Result<Job, EngineError> {
         if new.sources.is_empty() || new.setups.is_empty() {
             return Err(EngineError::EmptyJob);
+        }
+        if new.output.destination == OutputDestination::BesideSources
+            && new.sources.iter().any(|s| s.kind == InputKind::YouTube)
+        {
+            return Err(EngineError::LinkNeedsFolder);
         }
         let catalog = self.catalog();
         let mut setups = Vec::new();

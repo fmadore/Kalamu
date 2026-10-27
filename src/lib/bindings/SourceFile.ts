@@ -7,11 +7,12 @@ import type { SourceId } from "./SourceId";
  */
 export type SourceFile = { id: SourceId, 
 /**
- * Absolute path on this PC.
+ * Absolute path on this PC, or the address of a YouTube video.
  */
 path: string, file_name: string, 
 /**
- * SHA-256 of the file's bytes, lowercase hex. Part of every cache key.
+ * SHA-256 of the file's bytes, lowercase hex, or of a YouTube video's id. Part of every
+ * cache key.
  */
 sha256: string, size_bytes: number, kind: InputKind, 
 /**
@@ -29,4 +30,8 @@ split_spreads: boolean,
 /**
  * Even out a recording's volume before transcription (quiet or uneven speakers).
  */
-even_out_volume: boolean, };
+even_out_volume: boolean, 
+/**
+ * A YouTube video's title, as YouTube gives it, when it could be read.
+ */
+title?: string, };
