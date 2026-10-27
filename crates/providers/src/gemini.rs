@@ -11,12 +11,19 @@
 //! A YouTube video is sent as its link (`fileData.fileUri`), which Google fetches itself, at
 //! low media resolution: the words are in the sound track, and low resolution reads about
 //! 100 tokens a second of video instead of 300. YouTube links are in preview.
+//!
+//! Prompt caching is implicit: the system instruction comes first, and the response reports
+//! the part of the prompt read from Google's cache. Economy mode sends pages and documents
+//! through batch mode ([`batch`]); recordings and YouTube links, which a batch is not documented
+//! to take, always go one by one.
+
+mod batch;
 
 use async_trait::async_trait;
 use reqwest::Client;
 use scriptorium_core::{
-    ApiKey, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting,
-    Task, Usage, YOUTUBE_LINK,
+    ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
+    ProviderError, ProviderId, RequestSetting, Task, Usage, YOUTUBE_LINK,
 };
 use serde_json::{Value, json};
 
@@ -160,6 +167,8 @@ impl Gemini {
                 input_tokens: count("promptTokenCount"),
                 // Thinking tokens are billed as output.
                 output_tokens: count("candidatesTokenCount") + count("thoughtsTokenCount"),
+                // Part of `promptTokenCount`.
+                cached_input_tokens: count("cachedContentTokenCount"),
                 ..Usage::default()
             },
             model_version: response
@@ -169,6 +178,18 @@ impl Gemini {
             fields: Vec::new(),
             regions: Vec::new(),
         })
+    }
+
+    /// A response as the task reads it: an analysis's answer is checked against its fields.
+    fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
+        let output = Self::parse(response)?;
+        match (context.task, context.analysis) {
+            (Task::Analysis, Some(fields)) => analysis::finish(output, fields),
+            (Task::Analysis, None) => Err(ProviderError::InvalidRequest(
+                "an analysis needs fields".into(),
+            )),
+            _ => Ok(output),
+        }
     }
 }
 
@@ -262,6 +283,46 @@ impl Provider for Gemini {
         } else {
             Ok(output)
         }
+    }
+
+    fn batches(&self, task: Task, _model: &str) -> bool {
+        task != Task::AudioTranscription
+    }
+
+    /// Requests sent inline must total under 20 MB, with pages as base64 (a third larger).
+    fn batch_limits(&self) -> BatchLimits {
+        BatchLimits {
+            max_items: 1_000,
+            max_bytes: 13 * 1024 * 1024,
+        }
+    }
+
+    async fn submit_batch(
+        &self,
+        key: &ApiKey,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<String, ProviderError> {
+        self.submit(key, requests).await
+    }
+
+    async fn poll_batch(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+        context: BatchContext<'_>,
+        ids: &[String],
+    ) -> Result<BatchProgress, ProviderError> {
+        self.poll(key, batch_id, context, ids).await
+    }
+
+    async fn cancel_batch(&self, key: &ApiKey, batch_id: &str) -> Result<(), ProviderError> {
+        send_json(
+            self.client
+                .post(format!("{}/{batch_id}:cancel", self.base_url))
+                .header("x-goog-api-key", key.expose()),
+        )
+        .await
+        .map(|_| ())
     }
 
     async fn list_models(&self, key: &ApiKey) -> Result<Vec<String>, ProviderError> {

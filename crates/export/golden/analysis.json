@@ -102,6 +102,9 @@
     "task": "analysis",
     "usage": {
       "audio_seconds": 0.0,
+      "batch": false,
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 0,
       "input_tokens": 0,
       "output_tokens": 0,
       "pages": 0

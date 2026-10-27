@@ -1,7 +1,9 @@
 //! Running a job: each source is opened once, split into pieces, and every piece × set-up is
-//! either taken from the cache or sent to its provider, a few at a time.
+//! either taken from the cache or sent to its provider, a few at a time. In economy mode, the
+//! pieces of set-ups whose provider has a batch service are gathered into batches instead
+//! ([`crate::batch`]) and collected once every source has been read.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -9,9 +11,9 @@ use std::time::{Duration, Instant};
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use scriptorium_core::{
-    ApiKey, CacheKey, Job, JobId, JobStatus, PieceRef, PieceState, PieceStatus, ProcessOutput,
-    ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId, SourceFile, SourceId, StopSignal,
-    StoredResult, Timestamp,
+    ApiKey, CacheKey, Job, JobId, JobStatus, Pace, PieceRef, PieceState, PieceStatus,
+    ProcessOutput, ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId, SourceFile,
+    SourceId, StopSignal, StoredResult, Timestamp,
 };
 use scriptorium_media::OpenSource;
 
@@ -28,7 +30,7 @@ enum Outcome {
 }
 
 /// The text a model returned, tidied: a blank-page marker becomes an empty page.
-fn clean(mut output: ProcessOutput) -> ProcessOutput {
+pub(crate) fn clean(mut output: ProcessOutput) -> ProcessOutput {
     let trimmed = output.text.trim();
     if trimmed.eq_ignore_ascii_case("[BLANK PAGE]") {
         output.text = String::new();
@@ -62,6 +64,24 @@ impl Engine {
             .stop
             .clone();
         self.store.set_job_status(job_id, JobStatus::Running)?;
+        self.reopen_unsent(job_id)?;
+        // Set-ups sent as batches; the others, and every set-up of a fast job, go one by one.
+        let batched: HashSet<SetupId> = if job.settings.pace == Pace::Economy {
+            let mut batched = HashSet::new();
+            for setup in &job.setups {
+                if self
+                    .provider(&setup.provider)?
+                    .batches(job.task, &setup.model)
+                {
+                    batched.insert(setup.id);
+                }
+            }
+            batched
+        } else {
+            HashSet::new()
+        };
+        let mut gathered = HashMap::new();
+        let mut batch_outcome = crate::batch::BatchOutcome::default();
         let existing: HashMap<(SetupId, SourceId, u32), PieceState> = self
             .store
             .pieces(job_id)?
@@ -147,6 +167,8 @@ impl Engine {
                         {
                             continue;
                         }
+                        // In a batch the provider still holds: collected below.
+                        Some(s) if s.status == PieceStatus::Submitted => continue,
                         Some(s) => PieceState {
                             status: PieceStatus::Pending,
                             cache_key: Some(key.0.clone()),
@@ -169,6 +191,31 @@ impl Engine {
                     self.store.upsert_piece(&state)?;
                     work.push((setup.clone(), state, key));
                 }
+            }
+
+            let (to_batch, work): (Vec<_>, Vec<_>) = work
+                .into_iter()
+                .partition(|(setup, _, _)| batched.contains(&setup.id));
+            for (setup, state, key) in to_batch {
+                if stop_requested(&control).is_some() {
+                    break;
+                }
+                let outcome = self
+                    .gather(
+                        &job,
+                        &source.file_name,
+                        &setup,
+                        state,
+                        &key,
+                        &opened,
+                        &mut gathered,
+                    )
+                    .await?;
+                if let Some(message) = &outcome.fatal {
+                    tracing::warn!(job = %job_id, %message, "stopping job");
+                    control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
+                }
+                batch_outcome.merge(outcome);
             }
 
             let mut in_flight = FuturesUnordered::new();
@@ -215,31 +262,31 @@ impl Engine {
             }
 
             // Write outputs for every set-up whose pieces of this source are all done.
-            let states = self.store.pieces(job_id)?;
-            for setup in &job.setups {
-                let mine: Vec<&PieceState> = states
-                    .iter()
-                    .filter(|p| p.setup_id == setup.id && p.source_id == source.id)
-                    .collect();
-                if !mine.is_empty() && mine.iter().all(|p| p.status.is_finished()) {
-                    match self.write_outputs(&job, setup.id, source.id) {
-                        Ok(files) => self.emit(ProgressEvent::SourceExported {
-                            job_id,
-                            setup_id: setup.id,
-                            source_id: source.id,
-                            files,
-                        }),
-                        Err(e) => {
-                            failed = true;
-                            self.emit(ProgressEvent::SourceFailed {
-                                job_id,
-                                source_id: source.id,
-                                error: e.to_string(),
-                            });
-                        }
-                    }
-                }
+            let setups: Vec<&Setup> = job.setups.iter().collect();
+            failed |= self.export_finished(&job, source.id, &setups)?;
+        }
+
+        // Economy mode: send what is gathered, then wait for every batch of the job, including
+        // those sent before the app was last closed.
+        if !batched.is_empty() {
+            if stop_requested(&control).is_none() {
+                let outcome = self.send_gathered(&job, &mut gathered).await?;
+                batch_outcome.merge(outcome);
             }
+            if batch_outcome.fatal.is_none() {
+                let outcome = self.wait_for_batches(&job, &control, &spent).await?;
+                batch_outcome.merge(outcome);
+            }
+            let setups: Vec<&Setup> = job
+                .setups
+                .iter()
+                .filter(|s| batched.contains(&s.id))
+                .collect();
+            for source in &job.sources {
+                failed |= self.export_finished(&job, source.id, &setups)?;
+            }
+            failed |= batch_outcome.failed;
+            interrupted |= batch_outcome.waiting;
         }
 
         Ok(match stop_requested(&control) {
@@ -249,6 +296,24 @@ impl Engine {
             None if failed => JobStatus::CompletedWithErrors,
             None => JobStatus::Completed,
         })
+    }
+
+    /// The provider's formats for the task, narrowed to those the model reads: a text-only
+    /// model behind a provider that takes PDFs and images is sent text alone.
+    pub(crate) fn accepted(
+        &self,
+        job: &Job,
+        setup: &Setup,
+    ) -> Result<Vec<&'static str>, EngineError> {
+        let provider = self.provider(&setup.provider)?;
+        let catalog = self.catalog();
+        let model = catalog.model(&setup.provider, &setup.model);
+        Ok(provider
+            .accepted_inputs(job.task)
+            .iter()
+            .copied()
+            .filter(|mime| model.is_none_or(|m| m.inputs.iter().any(|i| i == mime)))
+            .collect())
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -298,18 +363,7 @@ impl Engine {
         } else {
             ApiKey::new("")
         };
-        // The provider's formats for the task, narrowed to those the model reads: a text-only
-        // model behind a provider that takes PDFs and images is sent text alone.
-        let accepted: Vec<&'static str> = {
-            let catalog = self.catalog();
-            let model = catalog.model(&setup.provider, &setup.model);
-            provider
-                .accepted_inputs(job.task)
-                .iter()
-                .copied()
-                .filter(|mime| model.is_none_or(|m| m.inputs.iter().any(|i| i == mime)))
-                .collect()
-        };
+        let accepted = self.accepted(job, setup)?;
         let stem = Path::new(&source.file_name)
             .file_stem()
             .map(|s| s.to_string_lossy().into_owned())
@@ -450,12 +504,12 @@ fn stored_pieces(
     mine.into_iter().map(|p| p.piece.clone()).collect()
 }
 
-enum StopKind {
+pub(crate) enum StopKind {
     Pause,
     Cancel,
 }
 
-fn stop_requested(control: &Mutex<Control>) -> Option<StopKind> {
+pub(crate) fn stop_requested(control: &Mutex<Control>) -> Option<StopKind> {
     let c = control.lock().unwrap_or_else(|p| p.into_inner());
     if c.cancel {
         Some(StopKind::Cancel)
@@ -473,6 +527,6 @@ fn backoff(base: Duration, attempt: u32, index: u32) -> Duration {
     base * 2u32.saturating_pow(attempt).min(32) + spread
 }
 
-fn preview(text: &str) -> String {
+pub(crate) fn preview(text: &str) -> String {
     text.chars().take(400).collect()
 }

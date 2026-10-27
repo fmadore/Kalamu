@@ -21,6 +21,10 @@
 	const live = $derived(app.live[jobId]);
 	const running = $derived(summary?.status === 'running');
 	const stopped = $derived(summary?.status === 'interrupted' || summary?.status === 'paused');
+	/** Pieces the provider's batch service holds, in economy mode. */
+	const held = $derived(pieces.filter((p) => p.status === 'submitted').length);
+	/** When the last of the batches is due, as the engine last reported. */
+	const dueBy = $derived(Math.max(0, ...Object.values(live?.batches ?? {}).map((b) => b.dueBy)));
 
 	async function load() {
 		try {
@@ -133,7 +137,11 @@
 		</div>
 	</header>
 
-	{#if stopped}
+	{#if held > 0 && running && dueBy > 0}
+		<p class="banner calm" role="status">{m.jobs.waitingNotice(held, formatDateTime(dueBy))}</p>
+	{:else if held > 0 && !running}
+		<p class="banner" role="status">{m.jobs.heldNotice(held)}</p>
+	{:else if stopped}
 		<p class="banner" role="status">
 			{summary.status === 'paused' ? m.jobs.pausedNotice : m.jobs.interruptedNotice}
 		</p>
@@ -168,6 +176,12 @@
 					{/each}
 				</dd>
 			</div>
+			{#if job.settings.pace === 'economy'}
+				<div>
+					<dt>{m.jobs.pace}</dt>
+					<dd>{m.jobs.paceName.economy}</dd>
+				</div>
+			{/if}
 			{#if live && live.spent > 0}
 				<div>
 					<dt>{m.jobs.cost}</dt>
@@ -253,6 +267,11 @@
 		border-bottom: 1px solid var(--warn-border);
 		color: var(--warn-text);
 		font-size: var(--type-sm);
+	}
+	.banner.calm {
+		background: var(--surface-1);
+		border-bottom-color: var(--line);
+		color: var(--text-body);
 	}
 	.body {
 		display: grid;

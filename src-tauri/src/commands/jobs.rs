@@ -206,11 +206,25 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Ve
             let estimate = match catalog.model(&setup.provider, &setup.model) {
                 _ if unknown_length => CostEstimate {
                     usd: None,
+                    economy_usd: None,
                     note: Some("A YouTube video's length is known once Gemini has read it.".into()),
                 },
-                Some(model) => catalog.estimate(model, request.task, pages, minutes, prompt_chars),
+                Some(model) => {
+                    let mut estimate =
+                        catalog.estimate(model, request.task, pages, minutes, prompt_chars);
+                    // Economy mode only where Scriptorium sends this model's work as a batch.
+                    let batches = state
+                        .engine
+                        .provider(&setup.provider)
+                        .is_ok_and(|p| p.batches(request.task, &setup.model));
+                    if !batches {
+                        estimate.economy_usd = None;
+                    }
+                    estimate
+                }
                 None => CostEstimate {
                     usd: None,
+                    economy_usd: None,
                     note: Some("This model is not in the catalogue.".into()),
                 },
             };
@@ -251,8 +265,14 @@ pub async fn retry_failed(state: State<'_, AppState>, id: JobId) -> CmdResult<()
     Ok(state.engine.retry_failed(id)?)
 }
 
+// `async`: a job waiting for its batches asks the provider to stop them first, so a deleted
+// job is not billed for answers nobody will read.
 #[tauri::command]
-pub fn delete_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
+pub async fn delete_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
+    state.engine.cancel(id);
+    if let Err(e) = state.engine.cancel_batches(id).await {
+        tracing::warn!(job = %id, error = %e, "batches not cancelled");
+    }
     Ok(state.engine.delete_job(id)?)
 }
 

@@ -87,6 +87,29 @@ pub struct Pricing {
     pub per_minute: Option<f64>,
     pub per_page: Option<f64>,
     pub note: Option<String>,
+    /// Input read from the provider's prompt cache; the normal input price when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub cached_input_per_mtok: Option<f64>,
+    /// Input written to the prompt cache, where the provider charges for it (Claude).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub cache_write_per_mtok: Option<f64>,
+    /// The share taken off every price through the provider's batch service (`0.5` for half
+    /// price). Absent when the model has no batch service.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub batch_discount: Option<f64>,
+}
+
+impl Pricing {
+    /// What is left to pay after the batch discount, in economy mode.
+    fn batch_factor(&self, batch: bool) -> f64 {
+        match self.batch_discount {
+            Some(discount) if batch => (1.0 - discount).clamp(0.0, 1.0),
+            _ => 1.0,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
@@ -157,6 +180,10 @@ pub struct LanguageInfo {
 pub struct CostEstimate {
     /// `None` when the model has no published price in the catalogue.
     pub usd: Option<f64>,
+    /// The same work in economy mode, through the provider's batch service; `None` when the
+    /// model has none.
+    #[serde(default)]
+    pub economy_usd: Option<f64>,
     /// Why the estimate is rough, or why there is none.
     pub note: Option<String>,
 }
@@ -309,6 +336,9 @@ impl Catalog {
         };
         CostEstimate {
             usd,
+            economy_usd: usd
+                .filter(|_| p.batch_discount.is_some())
+                .map(|usd| usd * p.batch_factor(true)),
             note: if usd.is_none() {
                 Some("No published price in the catalogue for this model.".into())
             } else {
@@ -317,23 +347,30 @@ impl Catalog {
         }
     }
 
-    /// Cost of a finished call from its reported usage.
+    /// Cost of a finished call from its reported usage: cached input at its own price, and the
+    /// batch discount on everything when the call went through a batch, as providers bill it.
     pub fn actual_cost(&self, model: &ModelInfo, usage: &scriptorium_core::Usage) -> Option<f64> {
         let p = &model.pricing;
+        let factor = p.batch_factor(usage.batch);
         if let Some(per_minute) = p.per_minute
             && usage.audio_seconds > 0.0
         {
-            return Some(usage.audio_seconds / 60.0 * per_minute);
+            return Some(usage.audio_seconds / 60.0 * per_minute * factor);
         }
         if let Some(per_page) = p.per_page
             && usage.pages > 0
         {
-            return Some(f64::from(usage.pages) * per_page);
+            return Some(f64::from(usage.pages) * per_page * factor);
         }
         let (input, output) = (p.input_per_mtok?, p.output_per_mtok?);
-        Some(
-            (usage.input_tokens as f64 * input + usage.output_tokens as f64 * output) / 1_000_000.0,
-        )
+        let cached = usage.cached_input_tokens.min(usage.input_tokens);
+        let written = usage.cache_write_tokens.min(usage.input_tokens - cached);
+        let plain = usage.input_tokens - cached - written;
+        let tokens = plain as f64 * input
+            + cached as f64 * p.cached_input_per_mtok.unwrap_or(input)
+            + written as f64 * p.cache_write_per_mtok.unwrap_or(input)
+            + usage.output_tokens as f64 * output;
+        Some(tokens / 1_000_000.0 * factor)
     }
 }
 
@@ -444,5 +481,48 @@ mod tests {
             let usd = catalog.estimate(&ocr, Task::TextExtraction, 5, 0.0, 0).usd;
             assert!(usd.is_some_and(|u| (u - 0.02).abs() < 1e-9), "{usd:?}");
         }
+    }
+
+    #[test]
+    fn cached_input_and_batches_are_billed_at_their_own_prices() {
+        let catalog = Catalog::bundled();
+        let mut model = catalog.models[0].clone();
+        model.pricing = Pricing {
+            input_per_mtok: Some(2.0),
+            output_per_mtok: Some(10.0),
+            cached_input_per_mtok: Some(0.2),
+            cache_write_per_mtok: Some(2.5),
+            batch_discount: Some(0.5),
+            ..Pricing::default()
+        };
+        let usage = |batch| scriptorium_core::Usage {
+            input_tokens: 1_000_000,
+            cached_input_tokens: 600_000,
+            cache_write_tokens: 100_000,
+            output_tokens: 100_000,
+            batch,
+            ..scriptorium_core::Usage::default()
+        };
+        // 0.3 M plain at $2, 0.6 M cached at $0.2, 0.1 M written at $2.5, 0.1 M out at $10.
+        let fast = catalog.actual_cost(&model, &usage(false));
+        assert!(fast.is_some_and(|c| (c - 1.97).abs() < 1e-9), "{fast:?}");
+        let economy = catalog.actual_cost(&model, &usage(true));
+        assert!(
+            economy.is_some_and(|c| (c - 0.985).abs() < 1e-9),
+            "{economy:?}"
+        );
+
+        let estimate = catalog.estimate(&model, Task::Analysis, 1, 0.0, 0);
+        let (Some(usd), Some(economy)) = (estimate.usd, estimate.economy_usd) else {
+            panic!("{estimate:?}");
+        };
+        assert!((economy - usd / 2.0).abs() < 1e-12);
+        model.pricing.batch_discount = None;
+        assert_eq!(
+            catalog
+                .estimate(&model, Task::Analysis, 1, 0.0, 0)
+                .economy_usd,
+            None
+        );
     }
 }

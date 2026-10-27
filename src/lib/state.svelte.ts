@@ -33,6 +33,8 @@ export interface LiveJob {
 	preview: string | null;
 	written: string[];
 	problems: string[];
+	/** Batches with the provider in economy mode, by set-up: size, answers so far, due time. */
+	batches: Record<string, { pieces: number; finished: number; dueBy: number }>;
 }
 
 export const app = $state({
@@ -77,7 +79,14 @@ export function isInstalled(provider: string, model: string): boolean {
 
 export function liveJob(id: string): LiveJob {
 	if (!app.live[id]) {
-		app.live[id] = { pieces: {}, spent: 0, preview: null, written: [], problems: [] };
+		app.live[id] = {
+			pieces: {},
+			spent: 0,
+			preview: null,
+			written: [],
+			problems: [],
+			batches: {}
+		};
 	}
 	return app.live[id];
 }
@@ -117,6 +126,13 @@ export function applyProgress(event: ProgressEvent): void {
 			break;
 		case 'cost_updated':
 			live.spent = event.spent_usd;
+			break;
+		case 'batch_waiting':
+			live.batches[event.setup_id] = {
+				pieces: event.pieces,
+				finished: event.finished,
+				dueBy: event.due_by
+			};
 			break;
 		case 'job_finished': {
 			void refreshJobs();

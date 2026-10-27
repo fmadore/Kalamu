@@ -3,6 +3,7 @@
 
 mod analysis;
 mod anthropic;
+mod batch;
 mod gemini;
 mod http;
 mod mistral;

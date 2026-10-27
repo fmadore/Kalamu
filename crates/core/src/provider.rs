@@ -9,7 +9,8 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    AnalysisSchema, LanguageChoice, PieceRef, ProcessOutput, ProviderId, SetupOptions, Task,
+    AnalysisSchema, BatchContext, BatchLimits, BatchProgress, LanguageChoice, PieceRef,
+    ProcessOutput, ProviderId, SetupOptions, Task,
 };
 
 /// An API key, kept out of `Debug` output and logs.
@@ -206,4 +207,46 @@ pub trait Provider: Send + Sync {
     /// Model ids the key can use, for discovering models not yet in the catalogue. Also used to
     /// check that a key works.
     async fn list_models(&self, key: &ApiKey) -> Result<Vec<String>, ProviderError>;
+
+    /// Whether `model` can take `task` through the provider's batch service (economy mode).
+    /// Providers without one, and offline engines, keep the default.
+    fn batches(&self, task: Task, model: &str) -> bool {
+        let _ = (task, model);
+        false
+    }
+
+    /// How much one batch may carry; the engine splits larger sets into several batches.
+    fn batch_limits(&self) -> BatchLimits {
+        BatchLimits::default()
+    }
+
+    /// Sends prepared pieces as one batch, each under its id, and returns the provider's batch
+    /// id. Every request shares the task, model and prompt of one set-up.
+    async fn submit_batch(
+        &self,
+        key: &ApiKey,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<String, ProviderError> {
+        let _ = (key, requests);
+        Err(ProviderError::Unsupported("batches".into()))
+    }
+
+    /// Where a batch stands; once it has ended, its answers, read as [`Provider::process`]
+    /// reads one. `ids` are the items' ids in the order they were sent.
+    async fn poll_batch(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+        context: BatchContext<'_>,
+        ids: &[String],
+    ) -> Result<BatchProgress, ProviderError> {
+        let _ = (key, batch_id, context, ids);
+        Err(ProviderError::Unsupported("batches".into()))
+    }
+
+    /// Asks the provider to stop a batch. Answers already written may still be billed.
+    async fn cancel_batch(&self, key: &ApiKey, batch_id: &str) -> Result<(), ProviderError> {
+        let _ = (key, batch_id);
+        Err(ProviderError::Unsupported("batches".into()))
+    }
 }

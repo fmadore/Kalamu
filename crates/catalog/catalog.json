@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated": "2026-10-27",
-  "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn.",
+  "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
     {
       "id": "gemini",
@@ -77,7 +77,9 @@
       "pricing": {
         "input_per_mtok": 0.75,
         "output_per_mtok": 3.75,
-        "note": "Introductory price until 2026-12-31, then $1.50 / $7.50."
+        "note": "Introductory price until 2026-12-31, then $1.50 / $7.50.",
+        "cached_input_per_mtok": 0.075,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 18
@@ -118,7 +120,9 @@
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 10.0,
-        "note": "Introductory price until 2026-11-30, then $4 / $20."
+        "note": "Introductory price until 2026-11-30, then $4 / $20.",
+        "cached_input_per_mtok": 0.1,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 18
@@ -158,7 +162,9 @@
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 12.0,
-        "note": "Up to 200k input tokens; $4 / $18 above."
+        "note": "Up to 200k input tokens; $4 / $18 above.",
+        "cached_input_per_mtok": 0.2,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 18
@@ -188,7 +194,9 @@
       "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 0.3,
-        "output_per_mtok": 2.5
+        "output_per_mtok": 2.5,
+        "cached_input_per_mtok": 0.03,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 18
@@ -219,7 +227,10 @@
       ],
       "pricing": {
         "input_per_mtok": 2.0,
-        "output_per_mtok": 10.0
+        "output_per_mtok": 10.0,
+        "cached_input_per_mtok": 0.1,
+        "cache_write_per_mtok": 2.5,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 32
@@ -247,7 +258,10 @@
       "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 1.0,
-        "output_per_mtok": 5.0
+        "output_per_mtok": 5.0,
+        "cached_input_per_mtok": 0.05,
+        "cache_write_per_mtok": 1.25,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 32
@@ -276,7 +290,10 @@
       "costly": true,
       "pricing": {
         "input_per_mtok": 10.0,
-        "output_per_mtok": 50.0
+        "output_per_mtok": 50.0,
+        "cached_input_per_mtok": 1.0,
+        "cache_write_per_mtok": 12.5,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 32
@@ -304,7 +321,10 @@
       "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 0.1,
-        "output_per_mtok": 0.5
+        "output_per_mtok": 0.5,
+        "cached_input_per_mtok": 0.01,
+        "cache_write_per_mtok": 0.125,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 32
@@ -389,7 +409,10 @@
       "costly": true,
       "pricing": {
         "input_per_mtok": 10.0,
-        "output_per_mtok": 50.0
+        "output_per_mtok": 50.0,
+        "cached_input_per_mtok": 0.25,
+        "cache_write_per_mtok": 12.5,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 32,
@@ -418,7 +441,10 @@
       "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 4.0,
-        "output_per_mtok": 20.0
+        "output_per_mtok": 20.0,
+        "cached_input_per_mtok": 0.2,
+        "cache_write_per_mtok": 5.0,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 32,
@@ -450,7 +476,10 @@
       ],
       "pricing": {
         "input_per_mtok": 2.0,
-        "output_per_mtok": 10.0
+        "output_per_mtok": 10.0,
+        "cached_input_per_mtok": 0.1,
+        "cache_write_per_mtok": 2.5,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 32,
@@ -480,7 +509,10 @@
       "pricing": {
         "input_per_mtok": 0.1,
         "output_per_mtok": 0.5,
-        "note": "Prompts up to 100k tokens; $0.50 / $2.50 above."
+        "note": "Prompts up to 100k tokens; $0.50 / $2.50 above.",
+        "cached_input_per_mtok": 0.01,
+        "cache_write_per_mtok": 0.125,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 32,
@@ -512,7 +544,8 @@
       "layout": true,
       "pricing": {
         "per_page": 0.004,
-        "note": "$4 per 1,000 pages."
+        "note": "$4 per 1,000 pages.",
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 50,
@@ -602,7 +635,9 @@
       ],
       "pricing": {
         "input_per_mtok": 1.5,
-        "output_per_mtok": 7.5
+        "output_per_mtok": 7.5,
+        "cached_input_per_mtok": 0.15,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 50,
@@ -630,7 +665,9 @@
       "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 1.36,
-        "output_per_mtok": 4.18
+        "output_per_mtok": 4.18,
+        "cached_input_per_mtok": 0.136,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 50,
@@ -658,7 +695,9 @@
       "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 0.15,
-        "output_per_mtok": 0.6
+        "output_per_mtok": 0.6,
+        "cached_input_per_mtok": 0.015,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 50,
@@ -682,7 +721,8 @@
       "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 1.4,
-        "output_per_mtok": 4.4
+        "output_per_mtok": 4.4,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 50
@@ -709,7 +749,8 @@
       "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 0.15,
-        "output_per_mtok": 0.5
+        "output_per_mtok": 0.5,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 50,

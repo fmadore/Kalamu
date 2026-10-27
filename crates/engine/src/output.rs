@@ -8,12 +8,50 @@ use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSo
 use scriptorium_core::speakers::{rename_segments, rename_text};
 use scriptorium_core::{
     CacheKey, ExportDocument, ExportPart, InputKind, Job, JobId, OutputDestination, PieceRef,
-    Provenance, Segment, SetupId, SourceFile, SourceId, Timestamp, Usage,
+    PieceState, ProgressEvent, Provenance, Segment, Setup, SetupId, SourceFile, SourceId,
+    Timestamp, Usage,
 };
 
 use crate::{Engine, EngineError};
 
 impl Engine {
+    /// Writes the outputs of each set-up whose pieces of a source are all done; true when one
+    /// could not be written.
+    pub(crate) fn export_finished(
+        &self,
+        job: &Job,
+        source_id: SourceId,
+        setups: &[&Setup],
+    ) -> Result<bool, EngineError> {
+        let states = self.store.pieces(job.id)?;
+        let mut failed = false;
+        for setup in setups {
+            let mine: Vec<&PieceState> = states
+                .iter()
+                .filter(|p| p.setup_id == setup.id && p.source_id == source_id)
+                .collect();
+            if !mine.is_empty() && mine.iter().all(|p| p.status.is_finished()) {
+                match self.write_outputs(job, setup.id, source_id) {
+                    Ok(files) => self.emit(ProgressEvent::SourceExported {
+                        job_id: job.id,
+                        setup_id: setup.id,
+                        source_id,
+                        files,
+                    }),
+                    Err(e) => {
+                        failed = true;
+                        self.emit(ProgressEvent::SourceFailed {
+                            job_id: job.id,
+                            source_id,
+                            error: e.to_string(),
+                        });
+                    }
+                }
+            }
+        }
+        Ok(failed)
+    }
+
     pub(crate) fn write_outputs(
         &self,
         job: &Job,

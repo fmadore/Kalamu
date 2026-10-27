@@ -169,7 +169,8 @@ const job: Job = {
 	settings: {
 		languages: { mode: 'explicit', languages: ['fr'] },
 		sample_pages: null,
-		line_breaks: 'running_text'
+		line_breaks: 'running_text',
+		pace: 'fast'
 	},
 	output: {
 		formats: ['txt', 'docx'],
@@ -486,7 +487,8 @@ let pipelines: Pipeline[] = [
 		settings: {
 			languages: { mode: 'explicit', languages: ['fr'] },
 			sample_pages: null,
-			line_breaks: null
+			line_breaks: null,
+			pace: 'fast'
 		},
 		formats: ['csv', 'json'],
 		destination: { kind: 'beside_sources' },
@@ -703,7 +705,11 @@ export function installMock(): void {
 					provider: s.provider,
 					model: s.model,
 					pages: 120,
-					estimate: { usd: s.provider === 'mistral' ? null : 0.42, note: null }
+					estimate: {
+						usd: s.provider === 'mistral' ? null : 0.42,
+						economy_usd: s.provider === 'mistral' ? null : 0.21,
+						note: null
+					}
 				}));
 			case 'expand_paths':
 				return a.paths;

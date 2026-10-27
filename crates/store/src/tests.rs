@@ -1,6 +1,6 @@
 use scriptorium_core::{
-    FieldAnswer, FieldValue, InputKind, JobSettings, OutputSettings, ProcessOutput, PromptSnapshot,
-    Setup, SetupOptions, SourceFile, Task,
+    BatchItem, BatchPhase, FieldAnswer, FieldValue, InputKind, JobSettings, OutputSettings,
+    ProcessOutput, PromptSnapshot, Setup, SetupOptions, SourceFile, Task,
 };
 
 use super::*;
@@ -180,6 +180,43 @@ fn speaker_names_replace_each_other() -> Result<(), StoreError> {
     store.put_speaker_names(job.id, &names)?;
     names.names.remove("Speaker 3");
     assert_eq!(store.speaker_names(job.id)?, vec![names]);
+    Ok(())
+}
+
+#[test]
+fn batches_are_kept_with_their_job_and_survive_startup() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    store.set_job_status(job.id, JobStatus::Running)?;
+    store.upsert_piece(&piece(&job, 0, PieceStatus::Submitted))?;
+    let mut batch = BatchRecord {
+        id: "b1".into(),
+        job_id: job.id,
+        setup_id: job.setups[0].id,
+        provider: ProviderId::new("gemini"),
+        remote_id: None,
+        phase: BatchPhase::Sending,
+        items: vec![BatchItem {
+            id: "p0".into(),
+            source_id: job.sources[0].id,
+            index: 0,
+        }],
+        submitted_at: Timestamp::now(),
+        updated_at: Timestamp::now(),
+    };
+    store.put_batch(&batch)?;
+    batch.remote_id = Some("batches/123".into());
+    batch.phase = BatchPhase::Waiting;
+    store.put_batch(&batch)?;
+    assert_eq!(store.batches(job.id)?, vec![batch]);
+
+    // A piece waiting at the provider is not lost work: it stays submitted.
+    store.mark_running_as_interrupted()?;
+    assert_eq!(store.pieces(job.id)?[0].status, PieceStatus::Submitted);
+
+    store.delete_job(job.id)?;
+    assert!(store.batches(job.id)?.is_empty());
     Ok(())
 }
 

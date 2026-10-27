@@ -9,8 +9,9 @@ use std::sync::{Mutex, MutexGuard};
 
 use rusqlite::{Connection, OptionalExtension, params};
 use scriptorium_core::{
-    CacheKey, Correction, Job, JobId, JobStatus, JobStore, JobSummary, PieceRef, PieceState,
-    PieceStatus, ProviderId, SetupId, SourceId, SpeakerNames, StoreError, StoredResult, Timestamp,
+    BatchRecord, CacheKey, Correction, Job, JobId, JobStatus, JobStore, JobSummary, PieceRef,
+    PieceState, PieceStatus, ProviderId, SetupId, SourceId, SpeakerNames, StoreError, StoredResult,
+    Timestamp,
 };
 
 /// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
@@ -70,6 +71,16 @@ CREATE TABLE speaker_names (
 "#,
     r#"
 ALTER TABLE corrections ADD COLUMN fields TEXT;
+"#,
+    r#"
+CREATE TABLE batches (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    phase TEXT NOT NULL,
+    submitted_at INTEGER NOT NULL,
+    data TEXT NOT NULL
+);
+CREATE INDEX batches_by_job ON batches(job_id);
 "#,
 ];
 
@@ -521,6 +532,35 @@ impl JobStore for SqliteStore {
             }
         }
         Ok(out)
+    }
+
+    fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError> {
+        self.conn()
+            .execute(
+                "INSERT OR REPLACE INTO batches (id, job_id, phase, submitted_at, data)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![
+                    batch.id,
+                    batch.job_id.to_string(),
+                    batch.phase.as_str(),
+                    batch.submitted_at.0,
+                    to_json(batch)?
+                ],
+            )
+            .map_err(db)?;
+        Ok(())
+    }
+
+    fn batches(&self, job: JobId) -> Result<Vec<BatchRecord>, StoreError> {
+        let conn = self.conn();
+        let mut stmt = conn
+            .prepare("SELECT data FROM batches WHERE job_id = ?1 ORDER BY submitted_at, id")
+            .map_err(db)?;
+        let rows = stmt
+            .query_map([job.to_string()], |row| row.get::<_, String>(0))
+            .map_err(db)?;
+        rows.map(|row| serde_json::from_str(&row.map_err(db)?).map_err(corrupt))
+            .collect()
     }
 }
 

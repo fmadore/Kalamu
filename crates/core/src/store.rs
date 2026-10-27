@@ -3,8 +3,8 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    CacheKey, Job, JobId, JobStatus, JobSummary, PieceState, SetupId, SourceId, SpeakerNames,
-    StoredResult, Timestamp,
+    BatchRecord, CacheKey, Job, JobId, JobStatus, JobSummary, PieceState, SetupId, SourceId,
+    SpeakerNames, StoredResult, Timestamp,
 };
 
 /// A user's edit of one piece, stored on top of the AI output, which is never overwritten.
@@ -58,4 +58,8 @@ pub trait JobStore: Send + Sync {
     /// Replaces the names given to one set-up's speakers in one recording.
     fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError>;
     fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError>;
+
+    /// Inserts or replaces a batch, by its own id.
+    fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;
+    fn batches(&self, job: JobId) -> Result<Vec<BatchRecord>, StoreError>;
 }

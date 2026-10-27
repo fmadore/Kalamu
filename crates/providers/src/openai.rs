@@ -5,13 +5,20 @@
 //!
 //! Neither Python pipeline uses OpenAI for these tasks, so this follows the API reference
 //! rather than ported code.
+//!
+//! Prompt caching is automatic: the instructions and schema come first and are shared by every
+//! page, and the response reports the input tokens read from or written to the cache. Economy
+//! mode sends Responses requests through the Batch API ([`batch`]); the transcriptions endpoint
+//! has no batch service, so recordings always go one by one.
+
+mod batch;
 
 use async_trait::async_trait;
 use reqwest::Client;
 use reqwest::multipart::{Form, Part};
 use scriptorium_core::{
-    ApiKey, LanguageChoice, ProcessOutput, ProcessRequest, Provider, ProviderError, ProviderId,
-    RequestSetting, Segment, Task, Usage,
+    ApiKey, BatchContext, BatchLimits, BatchProgress, LanguageChoice, ProcessOutput,
+    ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, Usage,
 };
 use serde_json::{Value, json};
 
@@ -140,6 +147,8 @@ impl OpenAi {
             usage: Usage {
                 input_tokens: count("input_tokens"),
                 output_tokens: count("output_tokens"),
+                cached_input_tokens: count("input_tokens_details/cached_tokens"),
+                cache_write_tokens: count("input_tokens_details/cache_write_tokens"),
                 ..Usage::default()
             },
             model_version: response
@@ -149,6 +158,18 @@ impl OpenAi {
             fields: Vec::new(),
             regions: Vec::new(),
         })
+    }
+
+    /// A response as the task reads it: an analysis's answer is checked against its fields.
+    fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
+        let output = Self::parse_extraction(response)?;
+        match (context.task, context.analysis) {
+            (Task::Analysis, Some(fields)) => analysis::finish(output, fields),
+            (Task::Analysis, None) => Err(ProviderError::InvalidRequest(
+                "an analysis needs fields".into(),
+            )),
+            _ => Ok(output),
+        }
     }
 
     async fn transcribe(
@@ -247,7 +268,7 @@ impl OpenAi {
                     .and_then(|u| u.get("seconds"))
                     .and_then(Value::as_f64)
                     .unwrap_or(0.0),
-                pages: 0,
+                ..Usage::default()
             },
             model_version: Some(request.model.to_string()),
             fields: Vec::new(),
@@ -302,12 +323,12 @@ impl Provider for OpenAi {
                         .json(&Self::extraction_body(&request)),
                 )
                 .await?;
-                let output = Self::parse_extraction(&response)?;
-                if request.task == Task::Analysis {
-                    analysis::finish(output, analysis::fields(&request)?)
-                } else {
-                    Ok(output)
-                }
+                let context = BatchContext {
+                    task: request.task,
+                    model: request.model,
+                    analysis: request.analysis,
+                };
+                Self::read(context, &response)
             }
             Task::AudioTranscription => self.transcribe(key, &request).await,
         }
@@ -321,5 +342,45 @@ impl Provider for OpenAi {
         )
         .await?;
         Ok(ids(&response))
+    }
+
+    fn batches(&self, task: Task, _model: &str) -> bool {
+        task != Task::AudioTranscription
+    }
+
+    /// 200 MB of JSON Lines a batch, with pages as base64 data URLs (a third larger).
+    fn batch_limits(&self) -> BatchLimits {
+        BatchLimits {
+            max_items: 50_000,
+            max_bytes: 140 * 1024 * 1024,
+        }
+    }
+
+    async fn submit_batch(
+        &self,
+        key: &ApiKey,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<String, ProviderError> {
+        self.submit(key, requests).await
+    }
+
+    async fn poll_batch(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+        context: BatchContext<'_>,
+        _ids: &[String],
+    ) -> Result<BatchProgress, ProviderError> {
+        self.poll(key, batch_id, context).await
+    }
+
+    async fn cancel_batch(&self, key: &ApiKey, batch_id: &str) -> Result<(), ProviderError> {
+        send_json(
+            self.client
+                .post(format!("{}/batches/{batch_id}/cancel", self.base_url))
+                .bearer_auth(key.expose()),
+        )
+        .await
+        .map(|_| ())
     }
 }

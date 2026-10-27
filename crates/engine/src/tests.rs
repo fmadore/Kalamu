@@ -13,6 +13,8 @@ use scriptorium_store::SqliteStore;
 
 use super::*;
 
+mod batch;
+
 /// Answers with the page label; can be told to fail some pages a number of times.
 struct Fake {
     calls: AtomicUsize,
@@ -157,7 +159,7 @@ fn fixture() -> Fixture {
             max_attempts: 3,
             base_delay: Duration::from_millis(5),
             app_version: "test".into(),
-            ffmpeg: None,
+            ..EngineConfig::default()
         },
     );
     let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));

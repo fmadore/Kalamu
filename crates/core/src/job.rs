@@ -16,6 +16,23 @@ pub struct JobSettings {
     /// How a text extraction lays out lines; `None` leaves it to the prompt.
     #[serde(default)]
     pub line_breaks: Option<LineBreaks>,
+    /// Whether cloud calls go one by one or as a cheaper batch.
+    #[serde(default)]
+    pub pace: Pace,
+}
+
+/// How a job's cloud calls are sent. Offline engines and models without a batch service run
+/// at once whatever the choice.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum Pace {
+    /// One call per piece, results as they come.
+    #[default]
+    Fast,
+    /// Every piece sent together to the provider's batch service, at about half the price;
+    /// results can take up to a day.
+    Economy,
 }
 
 /// How extracted text keeps the source's lines. The two serve different work: checking against

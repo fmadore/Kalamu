@@ -30,13 +30,19 @@ pub(crate) fn data_url(mime: &str, bytes: &[u8]) -> String {
 
 /// Sends a request and returns the JSON body of a successful response.
 pub(crate) async fn send_json(request: RequestBuilder) -> Result<Value, ProviderError> {
+    let body = send_text(request).await?;
+    serde_json::from_str(&body).map_err(|e| ProviderError::Other(format!("invalid JSON: {e}")))
+}
+
+/// Sends a request and returns the body of a successful response as text, for the JSON Lines
+/// files batch services answer with.
+pub(crate) async fn send_text(request: RequestBuilder) -> Result<String, ProviderError> {
     let response = request.send().await.map_err(network)?;
     let status = response.status();
     let retry_after = header_retry_after(&response);
     let body = response.text().await.map_err(network)?;
     if status.is_success() {
-        return serde_json::from_str(&body)
-            .map_err(|e| ProviderError::Other(format!("invalid JSON: {e}")));
+        return Ok(body);
     }
     Err(status_error(status, retry_after, &body))
 }
