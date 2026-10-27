@@ -323,4 +323,6 @@ The goal is the [Microsoft Store](https://apps.microsoft.com/): Store packages a
 install without a security warning and update themselves, which matters for colleagues who are
 not comfortable installing software. This means MSIX packaging, keys in Credential Manager, a
 privacy policy, and the app's network access declared. Unsigned installers will also be
-attached to GitHub releases.
+attached to GitHub releases. The submission, the policies it must meet and the listing text are
+in [microsoft-store.md](microsoft-store.md), [store-listing.md](store-listing.md) and
+[privacy.md](privacy.md).

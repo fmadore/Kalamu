@@ -7,9 +7,11 @@ disagree is highlighted, and corrections never overwrite the AI's text.
 
 **Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT licence**
 
-**Status: early development.** The features below are implemented and tested, but have not yet
-been run against the live provider APIs, and there is no release yet. See the
-[roadmap](docs/roadmap.md).
+**Status: early development.** Test builds (unsigned installers, Windows on ARM64) are on the
+[releases page](https://github.com/fmadore/Scriptorium/releases). Text extraction,
+transcription and analyses have run against the live OpenAI, Claude and Mistral APIs; Gemini,
+offline Whisper and the cheaper batch mode still await a live run. A Microsoft Store release is
+in preparation. See the [roadmap](docs/roadmap.md).
 
 ## What it does
 
@@ -47,6 +49,7 @@ check a sample against the source before relying on it.
 - [Development](docs/development.md): building, checks, the browser preview.
 - [Output formats](docs/formats.md), [decisions](docs/decisions/), [design](DESIGN.md), and
   [everything else](docs/README.md).
+- [Privacy policy](docs/privacy.md) and [security policy](SECURITY.md).
 
 ## Development
 

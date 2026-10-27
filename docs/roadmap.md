@@ -71,6 +71,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   (Gemini's and Mistral's pages disagree on some), what cached input really saves, and
   Claude's one-hour cache inside batches. Later, Gemini batches through a JSONL file, to lift
   the 20 MB inline limit, and Voxtral transcription in batches once its format is documented.
+  Delete the JSONL files a batch leaves in the user's OpenAI and Mistral storage once its
+  answers are collected.
 - **YouTube**: a live run on long and multilingual videos; long videos in pieces once Gemini's
   clipping of YouTube links covers the sound track again; the cost before the run from a
   `countTokens` call; check the embedded player in the packaged app, whose `tauri.localhost`
@@ -84,13 +86,34 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Design decisions still open**: name, a collation table in Jobs, the interrupted
   job with Resume in the side menu: [issue #1](https://github.com/fmadore/Scriptorium/issues/1).
 
+## Toward the Store release
+
+The first Microsoft Store submission, version 1.0.0. What the Store checks and how to submit
+are in [microsoft-store.md](microsoft-store.md); the listing text in
+[store-listing.md](store-listing.md) and the [privacy policy](privacy.md) are drafted.
+
+- **Name**: settle it ([issue #1](https://github.com/fmadore/Scriptorium/issues/1)) and reserve
+  it in Partner Center, which fixes the package identity.
+- **Report a problem**: a link in the review and in Settings that opens a GitHub issue form in
+  the browser, so researchers can report inappropriate output (Store policy 11.16).
+- **MSIX packaging**, ported from Live Translation: `@choochmeque/tauri-windows-bundle`, a
+  committed `src-tauri/gen/windows/` with the reserved identity, taskbar icon variants and
+  `resources.pri`, and the FFmpeg sidecars and licences inside the package.
+- **Release workflow**: tag, native x64 and ARM64 builds with FFmpeg and whisper.cpp, installers
+  and one `.msixbundle` attached to a draft release published once complete.
+- **Version 1.0.0** in every manifest: the Store refuses a first segment of 0.
+- **Privacy policy online**: GitHub Pages from `docs/` on `main`, so it is served at
+  `fmadore.github.io/Scriptorium/privacy`.
+- **Third-party notices** generated at build time for every Rust crate and npm package, PDF.js
+  included, and installed with the licences.
+- **Reviewer route**: sample files attached to the release, and a decision on giving the
+  certification team a capped test key for the cloud features.
+- **Live runs and screenshots** from the packaged app, then the acceptance checklist.
+
 ## Later
 
 - French and German interface.
 - OpenRouter for open-weights models.
 - Offline text extraction with Tesseract.
 - Linking names to authority records (an id from candidate records, or none, with a reason).
-- Microsoft Store release, with the privacy policy and own licence terms. Store policy 11.16
-  (live generative AI content) also asks to disclose the use of generative AI in the listing and
-  in Partner Center, and to give users a way to report inappropriate output to the developer:
-  add a "Report a problem" link to the app before submitting.
+- French and German Store listings, with the translated interface.

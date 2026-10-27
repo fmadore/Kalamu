@@ -32,6 +32,9 @@ Scriptorium does not own these components.
 - **Opus**, built into FFmpeg: BSD 3-Clause licence, © Xiph.Org Foundation and contributors.
 - **whisper.cpp** (MIT) and **whisper-rs** (Unlicense), for offline transcription. Whisper
   models are downloaded on request from Hugging Face; they are MIT-licensed by OpenAI.
+- **PDF.js** (Apache License 2.0), © Mozilla Foundation and contributors, for page previews.
+- Other open-source libraries under permissive licences (MIT, Apache 2.0, BSD and similar),
+  listed with their licence texts in the third-party notices installed with the app.
 
 **Reverse engineering.** Nothing in these terms restricts you from modifying Scriptorium or
 the components above for your own use, or from reverse engineering it to debug such
