@@ -21,7 +21,15 @@
 		const pdfjs = await import('pdfjs-dist');
 		const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
 		pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-		const task = pdfjs.getDocument({ data: bytes(data) });
+		// Decoders, colour profiles, character maps and fonts, served by vite.config.js.
+		const at = (folder: string) => new URL(`/pdfjs/${folder}/`, window.location.href).href;
+		const task = pdfjs.getDocument({
+			data: bytes(data),
+			wasmUrl: at('wasm'),
+			cMapUrl: at('cmaps'),
+			standardFontDataUrl: at('standard_fonts'),
+			iccUrl: at('iccs')
+		});
 		const doc = await task.promise;
 		const page = await doc.getPage(1);
 		// Fit the pane's width at zoom 1. Sharp on high-density screens: render at the device
