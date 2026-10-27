@@ -8,6 +8,7 @@
 	import PromptsView from '#lib/components/PromptsView.svelte';
 	import ReviewView from '#lib/components/ReviewView.svelte';
 	import SettingsView from '#lib/components/SettingsView.svelte';
+	import SupportLink from '#lib/components/SupportLink.svelte';
 	import type { JobStatus } from '#lib/bindings/JobStatus.js';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import { describeError } from '#lib/errors.js';
@@ -249,6 +250,7 @@
 				onclick={() => go({ name: 'settings' })}
 				><Icon name="settings" size={16} />{#if !collapsed}{m.nav.settings}{/if}</button
 			>
+			<SupportLink variant="tool" iconOnly={collapsed} />
 			{#if offlineReady && !collapsed}
 				<p class="offline"><span class="dot" aria-hidden="true"></span>{m.shell.offlineReady}</p>
 			{/if}

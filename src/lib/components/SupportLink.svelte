@@ -1,27 +1,40 @@
 <script lang="ts">
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { toast } from '#lib/state.svelte.js';
 	import { openSupportPage, SUPPORT_URL } from '#lib/support.js';
 
 	/** The Buy Me a Coffee link. A real link, so it reads as one to a screen reader and shows
 	 *  its address on hover, but the click goes through the opener, which uses the default
 	 *  browser rather than a WebView2 popup. */
-	const m = messages();
+	let {
+		variant = 'button',
+		iconOnly = false
+	}: {
+		/** A small button in Settings, or an entry of the sidebar's tools under Settings. */
+		variant?: 'button' | 'tool';
+		/** The folded sidebar's rail: the cup alone, named by its tooltip. */
+		iconOnly?: boolean;
+	} = $props();
 
-	let error = $state<string | null>(null);
+	const m = messages();
 
 	async function open(event: MouseEvent) {
 		event.preventDefault();
-		error = null;
 		try {
 			await openSupportPage();
 		} catch (e) {
-			error = describeError(e, m);
+			toast(describeError(e, m));
 		}
 	}
 </script>
 
-<a class="btn sm support" href={SUPPORT_URL} onclick={open}>
+<a
+	class={['support', variant === 'button' ? 'btn sm' : 'tool', iconOnly && 'icon-only']}
+	href={SUPPORT_URL}
+	title={iconOnly ? m.support.link : undefined}
+	onclick={open}
+>
 	<!-- The Buy Me a Coffee cup (Simple Icons, CC0) on the brand's yellow, the way the
 	     service's own buttons draw it. -->
 	<span class="cup" aria-hidden="true">
@@ -31,15 +44,38 @@
 			/></svg
 		>
 	</span>
-	{m.support.link}<span class="sr-only">{m.support.opensInBrowser}</span>
+	{#if iconOnly}<span class="sr-only">{m.support.link}</span>{:else}{m.support.link}{/if}<span
+		class="sr-only">{m.support.opensInBrowser}</span
+	>
 </a>
-{#if error}<p class="failed small" role="alert">{error}</p>{/if}
 
 <style>
 	.support {
 		justify-self: start;
 		gap: var(--space-2);
 		text-decoration: none;
+	}
+	/* Matches the sidebar's Prompts and Settings entries beside it. */
+	.tool {
+		justify-self: stretch;
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		min-height: var(--control-md);
+		padding: 0 0.625rem 0 0.4375rem;
+		border-radius: var(--radius-control);
+		color: var(--text-body);
+		font-size: var(--type-sm);
+		transition: background-color 120ms ease-out;
+	}
+	.tool:hover {
+		background: var(--wash);
+	}
+	.tool.icon-only {
+		justify-self: center;
+		justify-content: center;
+		width: 2.25rem;
+		padding: 0;
 	}
 	.cup {
 		flex: 0 0 auto;
@@ -55,10 +91,6 @@
 	.cup svg {
 		width: 0.75rem;
 		height: 0.75rem;
-	}
-	.failed {
-		color: var(--danger-text);
-		font-size: var(--type-sm);
 	}
 	@media (forced-colors: active) {
 		/* A contrast theme repaints the chip as Canvas; an edge keeps the cup's circle. */
