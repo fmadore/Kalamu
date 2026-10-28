@@ -13,8 +13,8 @@ the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-
 
 **Not submitted. The name Kalamu is reserved; the package identity is still to be copied
 below.** The latest build is the
-[v0.2.0](https://github.com/fmadore/Kalamu/releases/tag/v0.2.0) test release, unsigned
-installers for Windows on ARM64. Before a first submission, the work in
+[v0.3.0](https://github.com/fmadore/Kalamu/releases/tag/v0.3.0) test release, unsigned
+installers for Windows on x64 and ARM64. Before a first submission, the work in
 [What is missing](#what-is-missing) has to be done; the [roadmap](roadmap.md#toward-the-store-release)
 tracks it.
 
@@ -69,10 +69,11 @@ Before the first submission, in rough order; each is also on the roadmap.
    `runFullTrust` but no `microphone`; and the package must carry the FFmpeg sidecars
    (`ffmpeg.exe`, `ffprobe.exe`) and the `licenses/` folder from `tauri.ffmpeg.conf.json`,
    which the bundler's handling of `externalBin` and `resources` has to be checked for.
-3. **A release workflow** that builds both architectures natively (x64 on `windows-latest`,
-   ARM64 on `windows-11-arm`), with FFmpeg and whisper.cpp, and publishes one unsigned
-   multi-architecture `.msixbundle` beside the installers, as Live Translation's
-   `release.yml` does: draft first, published only once every asset is attached.
+3. **The Store bundle in the release workflow.** `.github/workflows/release.yml` already builds
+   both architectures natively (x64 on `windows-latest`, ARM64 on `windows-11-arm`), with
+   FFmpeg and whisper.cpp, into a draft release published once every asset is attached. It
+   still needs Live Translation's `msix` and `bundle` jobs, which add one unsigned
+   multi-architecture `.msixbundle` beside the installers.
 4. **Version 1.0.0.** The Store refuses a package version whose first segment is 0, and every
    later package must be higher than the one already in the Store. `package.json`,
    `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json` and the workspace `Cargo.toml` move

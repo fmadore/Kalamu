@@ -10,7 +10,7 @@ Scriptorium; a newer version moves their jobs, settings and keys over on its fir
 
 **Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT licence**
 
-**Status: early development.** Test builds (unsigned installers, Windows on ARM64) are on the
+**Status: early development.** Test builds (unsigned installers for x64 and ARM64) are on the
 [releases page](https://github.com/fmadore/Kalamu/releases). Text extraction,
 transcription and analyses have run against the live OpenAI, Claude and Mistral APIs; Gemini,
 offline Whisper and the cheaper batch mode still await a live run. A Microsoft Store release is

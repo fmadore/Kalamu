@@ -6,8 +6,8 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (28 October 2026)
 
-Early development; [v0.2.0](https://github.com/fmadore/Kalamu/releases/tag/v0.2.0) is
-the latest test build, for Windows on ARM64, with FFmpeg bundled. Everything below is tested
+Early development; [v0.3.0](https://github.com/fmadore/Kalamu/releases/tag/v0.3.0), the first under the name Kalamu, is
+the latest test build, for Windows on x64 and ARM64, with FFmpeg bundled. Everything below is tested
 against recorded provider responses. Text extraction, transcription and analyses have also run
 against the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`,
 see [development.md](development.md)); Gemini has not yet, for want of credit on the account.
@@ -104,8 +104,10 @@ are in [microsoft-store.md](microsoft-store.md); the listing text in
 - **MSIX packaging**, ported from Live Translation: `@choochmeque/tauri-windows-bundle`, a
   committed `src-tauri/gen/windows/` with the reserved identity, taskbar icon variants and
   `resources.pri`, and the FFmpeg sidecars and licences inside the package.
-- **Release workflow**: tag, native x64 and ARM64 builds with FFmpeg and whisper.cpp, installers
-  and one `.msixbundle` attached to a draft release published once complete.
+- **Release workflow**: installers done. A tag builds the x64 and ARM64 installers natively,
+  with FFmpeg and whisper.cpp, into a draft release published once both are attached
+  (`.github/workflows/release.yml`, [decision](decisions/2026-10-28-release-workflow.md)); the
+  `.msixbundle` is still to add, with the MSIX packaging.
 - **Version 1.0.0** in every manifest: the Store refuses a first segment of 0.
 - **Privacy policy online**: GitHub Pages from `docs/` on `main`, so it is served at
   `fmadore.github.io/Kalamu/privacy`.

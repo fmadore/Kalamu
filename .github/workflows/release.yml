@@ -1,0 +1,254 @@
+name: Release
+
+# Builds the installers natively on x64 and ARM64, each with the bundled FFmpeg and whisper.cpp,
+# and attaches them to a draft GitHub release, which is published only once both are attached.
+# Ported from Live Translation's release.yml (see docs/decisions/2026-10-28-release-workflow.md
+# for where it differs): no MSIX yet, and both architectures get an installer.
+#
+# Release assets: Kalamu_<version>_x64-setup.exe and Kalamu_<version>_arm64-setup.exe
+#
+# Normal flow: bump the version files, add docs/release-<version>.md, merge, then
+# `git tag v0.3.0 && git push origin v0.3.0`. `prepare` checks the tag against the version files
+# and creates the draft; `build` attaches the installers; `publish` makes the release public with
+# docs/release-<version>.md from the tagged commit as its body, as a pre-release while the
+# version starts with 0. Until that last step nothing is public, so a failed job leaves a draft to
+# re-run rather than a spent version. A hyphenated tag (v0.3.0-rc1) is a validation build: the
+# same assets in a draft that stays unpublished until someone promotes it by hand.
+#
+# Rebuild a tag: run this workflow manually (Actions tab -> Run workflow) with an existing tag.
+# A release that is already published keeps its title, body and state; only its assets are
+# replaced.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build installers for (e.g. v0.3.0)"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Cheap checks before Windows build time, then the one release every later job uploads to.
+  # Three files carry the version: package.json, src-tauri/tauri.conf.json (the installer's name
+  # and version) and the workspace Cargo.toml (every crate's). They move together.
+  prepare:
+    name: Version check and draft release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      release_id: ${{ steps.release.outputs.id }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+
+      - name: Check the tag against the version files
+        id: version
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          package=$(jq -r .version package.json)
+          tauri=$(jq -r .version src-tauri/tauri.conf.json)
+          # The first `version =` under [workspace.package], not a dependency's.
+          cargo=$(awk -F'"' '/^\[/ { in_package = /^\[workspace\.package\]/ } in_package && /^version[[:space:]]*=/ { print $2; exit }' Cargo.toml)
+
+          if [ "$package" != "$tauri" ] || [ "$package" != "$cargo" ]; then
+            echo "::error::The version files disagree: package.json says $package, src-tauri/tauri.conf.json $tauri and Cargo.toml ${cargo:-no [workspace.package] version}. Bump all three together."
+            exit 1
+          fi
+
+          case "$TAG" in
+            "v$package" | "v$package"-?*) ;;
+            *)
+              echo "::error::Tag $TAG does not match the version files: expected v$package, or v$package-<suffix> for a validation build."
+              exit 1
+              ;;
+          esac
+
+          # A release created for a tag that does not exist would create the tag on publishing,
+          # on the default branch.
+          if ! git ls-remote --exit-code --tags "https://github.com/$GITHUB_REPOSITORY.git" "refs/tags/$TAG" > /dev/null; then
+            echo "::error::$TAG is not a tag on GitHub."
+            exit 1
+          fi
+
+          echo "version=$package" >> "$GITHUB_OUTPUT"
+
+      # As in Live Translation, the release is found or created here rather than by tauri-action,
+      # which beside a published release would open a second draft, and every job uploads to it.
+      - name: Find or create the draft release
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # GET /releases/tags/{tag} does not return drafts, so list every release instead.
+          listing=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            --jq '.[] | [.tag_name, (.id | tostring), (.draft | tostring)] | @tsv')
+          mapfile -t matches < <(awk -F'\t' -v tag="$TAG" '$1 == tag' <<< "$listing")
+
+          case ${#matches[@]} in
+            0) id='' state=none ;;
+            1)
+              IFS=$'\t' read -r _ id draft <<< "${matches[0]}"
+              if [ "$draft" = true ]; then state=draft; else state=published; fi
+              ;;
+            *)
+              echo "::error::$TAG has ${#matches[@]} releases. Delete the stray draft on the Releases page, then re-run."
+              exit 1
+              ;;
+          esac
+
+          validation=false
+          if [[ "$TAG" == *-* ]]; then validation=true; fi
+          prerelease=$validation
+          if [[ "$VERSION" == 0.* ]]; then prerelease=true; fi
+
+          # `publish` uses this file as the release body, so it must be in the tagged commit.
+          notes="docs/release-$VERSION.md"
+          if [ "$validation" = false ] && [ "$state" != published ] && [ ! -s "$notes" ]; then
+            echo "::error::$notes is missing or empty in $TAG. It becomes the release body, so it has to be in the tagged commit."
+            exit 1
+          fi
+
+          case $state in
+            none)
+              if [ "$validation" = true ]; then title=$TAG; else title="Kalamu $VERSION"; fi
+              id=$(gh api "repos/$GITHUB_REPOSITORY/releases" \
+                -f tag_name="$TAG" -f name="$title" -F draft=true -F prerelease="$prerelease" \
+                --jq .id)
+              echo "Created draft release $id for $TAG."
+              ;;
+            draft) echo "Reusing draft release $id for $TAG." ;;
+            published)
+              echo "::notice::$TAG is already published; its assets are replaced and its title, body and state are left alone."
+              ;;
+          esac
+
+          # Without an id tauri-action would skip its uploads silently.
+          if ! [[ "$id" =~ ^[0-9]+$ ]]; then
+            echo "::error::No release id for $TAG."
+            exit 1
+          fi
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Installer (${{ matrix.arch }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - arch: arm64
+            runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+
+      # As in CI: whisper.cpp builds with clang-cl and Ninja, which ship with the Windows images.
+      - name: Configure native Whisper compiler
+        shell: pwsh
+        run: |
+          "CC=clang-cl" >> $env:GITHUB_ENV
+          "CXX=clang-cl" >> $env:GITHUB_ENV
+          "CXXFLAGS=/EHsc" >> $env:GITHUB_ENV
+          "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+
+      # The toolchain pinned in rust-toolchain.toml. Each runner builds for its own architecture.
+      - run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          # CI's key: the same GGML_* values. Restore only: a cache saved by a tag run is scoped
+          # to that tag, so nothing else could restore it, and it would push CI's caches out.
+          prefix-key: whisper-cpu-${{ runner.arch }}-v1
+          save-if: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The LGPL build from the ffmpeg-* release, checked against scripts/ffmpeg.json.
+      - name: Fetch the bundled FFmpeg
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-ffmpeg.mjs ${{ matrix.target }}
+
+      # With a release id, tauri-action only uploads, replacing assets of the same name.
+      - name: Build and attach the installer
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          args: --target ${{ matrix.target }} --bundles nsis --config src-tauri/tauri.ffmpeg.conf.json
+
+  # The last step: both installers are attached, so the draft can go public with the prepared
+  # body from the tagged commit. A hyphenated tag is never published here, and a release that is
+  # already published is left as it is.
+  publish:
+    name: Publish the release
+    needs: [prepare, build]
+    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+
+      - name: Check the assets and publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          draft=$(gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.prepare.outputs.release_id }}" --jq .draft)
+          if [ "$draft" != true ]; then
+            echo "::notice::$TAG is already published; its title and body are left as they are."
+            exit 0
+          fi
+
+          assets=$(gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.prepare.outputs.release_id }}" --jq '.assets[].name')
+          for arch in x64 arm64; do
+            if ! grep -qx "Kalamu_${VERSION}_${arch}-setup.exe" <<< "$assets"; then
+              echo "::error::Kalamu_${VERSION}_${arch}-setup.exe is not attached; the release stays a draft."
+              exit 1
+            fi
+          done
+
+          latest=true
+          if [[ "$VERSION" == 0.* ]]; then latest=false; fi
+          gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --draft=false --latest="$latest" \
+            --title "Kalamu $VERSION" --notes-file "docs/release-$VERSION.md"
