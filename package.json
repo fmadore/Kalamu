@@ -6,7 +6,7 @@
 	"author": "Frédérick Madore",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/fmadore/Scriptorium.git"
+		"url": "git+https://github.com/fmadore/Kalamu.git"
 	},
 	"private": true,
 	"type": "module",

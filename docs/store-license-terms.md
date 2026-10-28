@@ -17,7 +17,7 @@ Kalamu is free software by Frédérick Madore, released under the MIT licence:
 > the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 > IMPLIED.
 
-Its source code is at https://github.com/fmadore/Scriptorium.
+Its source code is at https://github.com/fmadore/Kalamu.
 
 **Third-party software.** Kalamu includes software by others under their own licences,
 listed in the app (Settings, About) and in the licences folder installed with it. The author of
@@ -27,7 +27,7 @@ Kalamu does not own these components.
   [GNU Lesser General Public License version 2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
   or later. FFmpeg is a trademark of Fabrice Bellard. Its source code, as used in each
   release, can be downloaded from that release's page at
-  https://github.com/fmadore/Scriptorium/releases. It runs as separate programs, which you
+  https://github.com/fmadore/Kalamu/releases. It runs as separate programs, which you
   may replace with your own build.
 - **Opus**, built into FFmpeg: BSD 3-Clause licence, © Xiph.Org Foundation and contributors.
 - **whisper.cpp** (MIT) and **whisper-rs** (Unlicense), for offline transcription. Whisper

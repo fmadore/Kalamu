@@ -15,7 +15,7 @@ pub const BUNDLED: &str = include_str!("../catalog.json");
 
 /// Where the app looks for a newer catalogue.
 pub const UPDATE_URL: &str =
-    "https://raw.githubusercontent.com/fmadore/Scriptorium/main/crates/catalog/catalog.json";
+    "https://raw.githubusercontent.com/fmadore/Kalamu/main/crates/catalog/catalog.json";
 
 /// Catalogue files this build understands.
 const SCHEMA_VERSION: u32 = 1;

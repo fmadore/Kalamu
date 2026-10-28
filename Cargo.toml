@@ -9,7 +9,7 @@ edition = "2024"
 rust-version = "1.99.1"
 license = "MIT"
 authors = ["Frédérick Madore"]
-repository = "https://github.com/fmadore/Scriptorium"
+repository = "https://github.com/fmadore/Kalamu"
 
 [workspace.dependencies]
 kalamu-core = { path = "crates/core" }

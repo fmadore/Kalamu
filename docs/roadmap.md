@@ -6,7 +6,7 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (27 October 2026)
 
-Early development; [v0.2.0](https://github.com/fmadore/Scriptorium/releases/tag/v0.2.0) is
+Early development; [v0.2.0](https://github.com/fmadore/Kalamu/releases/tag/v0.2.0) is
 the latest test build, for Windows on ARM64, with FFmpeg bundled. Everything below is tested
 against recorded provider responses. Text extraction, transcription and analyses have also run
 against the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`,
@@ -84,7 +84,7 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`; grouping
   variant spellings of the same name across a job, confirmed by the researcher.
 - **Design decisions still open**: a collation table in Jobs, the interrupted
-  job with Resume in the side menu: [issue #1](https://github.com/fmadore/Scriptorium/issues/1).
+  job with Resume in the side menu: [issue #1](https://github.com/fmadore/Kalamu/issues/1).
 
 ## Toward the Store release
 
@@ -104,7 +104,7 @@ are in [microsoft-store.md](microsoft-store.md); the listing text in
   and one `.msixbundle` attached to a draft release published once complete.
 - **Version 1.0.0** in every manifest: the Store refuses a first segment of 0.
 - **Privacy policy online**: GitHub Pages from `docs/` on `main`, so it is served at
-  `fmadore.github.io/Scriptorium/privacy`.
+  `fmadore.github.io/Kalamu/privacy`.
 - **Third-party notices** generated at build time for every Rust crate and npm package, PDF.js
   included, and installed with the licences.
 - **Reviewer route**: sample files attached to the release, and a decision on giving the

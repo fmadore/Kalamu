@@ -3,12 +3,12 @@
 ## Supported versions
 
 Kalamu is in early development: only the latest tagged release receives fixes. Installers
-are published per tag on the [releases page](https://github.com/fmadore/Scriptorium/releases).
+are published per tag on the [releases page](https://github.com/fmadore/Kalamu/releases).
 
 ## Reporting a vulnerability
 
 Report privately through
-[GitHub's private vulnerability reporting](https://github.com/fmadore/Scriptorium/security/advisories/new)
+[GitHub's private vulnerability reporting](https://github.com/fmadore/Kalamu/security/advisories/new)
 rather than opening a public issue. Expect an acknowledgement within a week.
 
 Dependabot security alerts are on, and `cargo audit` and `cargo deny` run in CI; a security

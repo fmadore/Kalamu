@@ -136,5 +136,5 @@ release is the one dated for it in the repository.
 
 ## Contact
 
-For privacy questions, open an issue at <https://github.com/fmadore/Scriptorium/issues> or use
+For privacy questions, open an issue at <https://github.com/fmadore/Kalamu/issues> or use
 the support contact shown on the Microsoft Store listing.
