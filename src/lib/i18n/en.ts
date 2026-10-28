@@ -201,6 +201,8 @@ export const en = {
 			'Reading YouTube links is a preview feature of Gemini, and Google may change its limits. A free key reads up to 8 hours of video a day. Each video is transcribed in one go, which suits videos up to about two hours.',
 		results:
 			'Try a sample before a whole folder, compare two models on difficult material, check names, numbers and dates against the source, and keep the originals.',
+		analysisUnit:
+			'One file per document: a PDF of several pages is read as a whole and gets one set of answers. Put each article, letter or report in its own file. Several documents in one file get mixed answers, and one document spread over several files gets several partial ones.',
 		analysisInput:
 			"Scans and text both work: the model reads a PDF's pages itself. For faded print or handwriting, extracting and correcting the text first means every answer rests on a reading you have checked.",
 		analysisFields:
