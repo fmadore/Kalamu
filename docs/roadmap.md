@@ -30,8 +30,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   beside the video, played on the dark stage in YouTube's privacy-enhanced player, each video
   named after its title
   ([decision](decisions/2026-10-27-youtube-links.md)).
-- **Analyses.** With Gemini, OpenAI, Claude and Mistral, including the Z.ai GLM models Mistral
-  hosts. Fields defined by the researcher
+- **Analyses.** With Gemini, OpenAI, Claude and Mistral, including the Z.ai GLM and DeepSeek
+  models Mistral hosts. Fields defined by the researcher
   (text, lists of names or terms, one or several choices, reasons), sent as each provider's
   structured output and checked on return; five ready-made analyses (research summary, short
   summary, scholarly publication, people, places and organisations, tone); a field editor in Prompts; CSV with a
@@ -69,7 +69,9 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
   [decision](decisions/2026-10-26-terra-and-mistral-chat.md)); Terra on historical pages
   before it is considered as OpenAI's default. GLM 5.3 and GLM 5.3 Flash were checked with
-  single live calls on 27 October, not yet through a whole job.
+  single live calls on 27 October, not yet through a whole job; DeepSeek V4.1 Flash, added on
+  28 October, not yet at all: its image and PDF input and batch support are open
+  ([decision](decisions/2026-10-28-deepseek-through-mistral.md)).
 - **Gemini 3.5 Transcribe** in the catalogue.
 - **Economy mode, live**: a small batch with each provider, to check the documented shapes
   (Gemini's and Mistral's pages disagree on some), what cached input really saves, and

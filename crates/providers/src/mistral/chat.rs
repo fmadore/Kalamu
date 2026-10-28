@@ -1,11 +1,12 @@
-//! Mistral's chat models (Large, Medium, Small) and the Z.ai GLM models Mistral hosts, for
-//! analyses, through Chat Completions with a strict JSON schema. Text extraction stays with
+//! Mistral's chat models (Large, Medium, Small) and the Z.ai GLM and DeepSeek models Mistral
+//! hosts, for analyses, through Chat Completions with a strict JSON schema. Text extraction stays with
 //! Mistral OCR, which Mistral's documentation points to for document parsing. A PDF sent here as
 //! `document_url` is read by that OCR before the model sees it (Mistral's "Document QnA").
 //!
 //! `reasoning_effort` is the lowest setting, as the other providers run at their lowest effort:
 //! `none` for Mistral's own models, whose answer then comes back as one string, and `low` for
-//! GLM, which rejects `none` and may answer in thinking and text chunks.
+//! GLM and DeepSeek, which offer only `low`, `high` and `max` and may answer in thinking and text
+//! chunks.
 
 use kalamu_core::{
     AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, RequestSetting, Usage,
@@ -59,9 +60,9 @@ pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Val
     })
 }
 
-/// Z.ai's GLM accepts `low`, `high` and `max` only.
+/// Z.ai's GLM rejects `none`; DeepSeek V4.1's own lowest setting is `low` as well.
 fn lowest_effort(model: &str) -> &'static str {
-    if model.starts_with("zai-glm") {
+    if model.starts_with("zai-glm") || model.starts_with("deepseek") {
         "low"
     } else {
         "none"

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27",
+  "updated": "2026-10-28",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
     {
@@ -750,11 +750,36 @@
       "pricing": {
         "input_per_mtok": 0.15,
         "output_per_mtok": 0.5,
+        "cached_input_per_mtok": 0.03,
         "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 50,
         "max_pages": 1000
+      }
+    },
+    {
+      "provider": "mistral",
+      "id": "deepseek-v4p1-flash-1017",
+      "name": "DeepSeek V4.1 Flash",
+      "description": "DeepSeek's fast, inexpensive open model, run by Mistral on its own servers with the same key; reads up to a million tokens at once. In preview, with tight rate limits. Reads text only for now: extract the text of scans first.",
+      "tasks": [
+        "analysis"
+      ],
+      "inputs": [
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "preview",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 0.3,
+        "output_per_mtok": 1.2,
+        "cached_input_per_mtok": 0.007
+      },
+      "limits": {
+        "max_request_mb": 50
       }
     },
     {
