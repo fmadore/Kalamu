@@ -760,9 +760,9 @@
     },
     {
       "provider": "mistral",
-      "id": "deepseek-v4p1-flash-1017",
+      "id": "deepseek-v4-1-flash-1017",
       "name": "DeepSeek V4.1 Flash",
-      "description": "DeepSeek's fast, inexpensive open model, run by Mistral on its own servers with the same key; reads up to a million tokens at once. In preview, with tight rate limits. Reads text only for now: extract the text of scans first.",
+      "description": "DeepSeek's fast, inexpensive open model, run by Mistral on its own servers with the same key; reads up to a million tokens at once. In preview, with tight rate limits. Reads text only: extract the text of scans first.",
       "tasks": [
         "analysis"
       ],
@@ -776,7 +776,8 @@
       "pricing": {
         "input_per_mtok": 0.3,
         "output_per_mtok": 1.2,
-        "cached_input_per_mtok": 0.007
+        "cached_input_per_mtok": 0.007,
+        "batch_discount": 0.5
       },
       "limits": {
         "max_request_mb": 50

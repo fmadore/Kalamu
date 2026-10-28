@@ -618,7 +618,7 @@ Keywords: Bamako; mosquée",
 
 #[tokio::test]
 async fn hosted_models_through_mistral_run_at_low_effort_and_read_the_text_chunk() {
-    for model in ["zai-glm-5-3", "deepseek-v4p1-flash-1017"] {
+    for model in ["zai-glm-5-3", "deepseek-v4-1-flash-1017"] {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/chat/completions"))
@@ -710,7 +710,7 @@ async fn the_settings_a_provider_reports_are_the_ones_it_sends() {
                 "mistral-ocr-4-1",
                 "mistral-small-2603",
                 "zai-glm-5-3",
-                "deepseek-v4p1-flash-1017",
+                "deepseek-v4-1-flash-1017",
             ],
         ),
     ];
