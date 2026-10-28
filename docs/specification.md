@@ -179,9 +179,9 @@ Checking AI output against the source is what makes results trustworthy, so the 
 heart of the app (see [DESIGN.md](../DESIGN.md)).
 
 - **Source and result side by side**: the page image on a dark lightbox on the left, the text on
-  the right with line numbers in the margin, page navigation, zoom and a strip of pages showing
-  which are reviewed. The boundary between them can be dragged, and the job list folded away
-  (Ctrl B), for more room.
+  the right with line numbers in the margin, page navigation, zoom and a strip of pages,
+  thumbnails for scans and images, showing which are reviewed. The boundary between them can be
+  dragged, and the job list folded away (Ctrl B), for more room.
 - **Differences in the text.** Where another model, or the model under a correction, reads
   differently, the words are highlighted. Pointing at them shows the readings over the text,
   each named by its set-up; clicking them, or stepping through them with F, keeps them open.

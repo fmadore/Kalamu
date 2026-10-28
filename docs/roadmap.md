@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (27 October 2026)
+## Status (28 October 2026)
 
 Early development; [v0.2.0](https://github.com/fmadore/Kalamu/releases/tag/v0.2.0) is
 the latest test build, for Windows on ARM64, with FFmpeg bundled. Everything below is tested
@@ -54,6 +54,10 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs and folds to a
   rail, and an app icon
   drawn from the same mark.
+- **Kalamu**: the app renamed from Scriptorium, with the "two witnesses" icon and warm graphite
+  neutrals; installs of 0.1 and 0.2 have their jobs, settings and keys moved over on the first
+  start; the strip of pages shows thumbnails of scans and images
+  ([decision](decisions/2026-10-28-kalamu.md)).
 
 ## Next
 
