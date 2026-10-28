@@ -19,7 +19,8 @@ use kalamu_engine::{Engine, EngineConfig, KeySource, NewJob, SetupRequest};
 use kalamu_prompts::PromptLibrary;
 use kalamu_store::SqliteStore;
 
-/// The same entries the app writes (`src/secrets.rs`).
+/// The same entries the app writes (`src/secrets.rs`); keys still under the Scriptorium entry
+/// are moved there the first time the app reads them.
 struct CredentialKeys;
 
 impl KeySource for CredentialKeys {

@@ -26,12 +26,18 @@ pub const PROGRESS_EVENT: &str = "progress";
 /// Sent when the window is closed while jobs run, so the interface can ask first.
 pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
 
+/// The app's data folder in `%LOCALAPPDATA%`: Tauri names it after the bundle identifier in
+/// `tauri.conf.json`. Not `Kalamu`, which the per-user installer takes for the program itself.
+const DATA_FOLDER: &str = "io.github.fmadore.kalamu";
 /// The data folder's name before the app was renamed from Scriptorium (0.1 and 0.2).
 const LEGACY_IDENTIFIER: &str = "io.github.fmadore.scriptorium";
 
 /// Moves the jobs, settings, presets and Whisper models of a Scriptorium install to the
 /// renamed data folder, once, before anything is created there. Every stored path is relative
 /// to the folder, so it moves whole. If the move fails the old folder is left untouched.
+///
+/// Runs before Tauri builds the window, since WebView2 creates its data in the new folder as
+/// soon as the window exists.
 fn move_legacy_data(data: &std::path::Path) -> Result<bool, std::io::Error> {
     let Some(legacy) = data.parent().map(|p| p.join(LEGACY_IDENTIFIER)) else {
         return Ok(false);
@@ -95,6 +101,9 @@ fn record_panics(dir: &std::path::Path) {
 }
 
 pub fn run() {
+    let moved = std::env::var_os("LOCALAPPDATA").map_or(Ok(false), |local| {
+        move_legacy_data(&std::path::Path::new(&local).join(DATA_FOLDER))
+    });
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             // Also when the window was hidden in the tray.
@@ -103,10 +112,9 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
-        .setup(|app| {
+        .setup(move |app| {
             let data = app.path().app_local_data_dir()?;
             let logs = app.path().app_log_dir()?;
-            let moved = move_legacy_data(&data);
             std::fs::create_dir_all(&data)?;
             std::fs::create_dir_all(&logs)?;
             if let Some(guard) = init_logging(&logs) {
@@ -304,13 +312,20 @@ pub fn run() {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::command_names::COMMANDS;
-    use super::{LEGACY_IDENTIFIER, move_legacy_data};
+    use super::{DATA_FOLDER, LEGACY_IDENTIFIER, move_legacy_data};
+
+    /// The folder moved into before Tauri starts must be the one Tauri then opens.
+    #[test]
+    fn the_data_folder_is_the_bundle_identifier() {
+        let config = include_str!("../tauri.conf.json");
+        assert!(config.contains(&format!("\"identifier\": \"{DATA_FOLDER}\"")));
+    }
 
     #[test]
     fn a_scriptorium_data_folder_moves_once() {
         let root = tempfile::tempdir().unwrap();
         let legacy = root.path().join(LEGACY_IDENTIFIER);
-        let data = root.path().join("io.github.fmadore.kalamu");
+        let data = root.path().join(DATA_FOLDER);
         std::fs::create_dir_all(legacy.join("presets")).unwrap();
         std::fs::write(legacy.join("jobs.sqlite"), b"jobs").unwrap();
 

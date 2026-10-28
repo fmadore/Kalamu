@@ -457,17 +457,24 @@ export const en = {
 		aboutTitle: 'About',
 		version: (v: string) => `Version ${v}`,
 		dataFolder: 'Data folder',
+		/** `{name}` marks a link; the names it shows are in `creditNames`. */
 		credits:
-			'Kalamu uses FFmpeg under the LGPL v2.1 (its source is published with each release), Opus (BSD), whisper.cpp (MIT) and the Whisper models (MIT). The full licences are in the licences folder installed with the app.',
+			'Kalamu uses {ffmpeg} under the LGPL v2.1 (its {source} is published with each release), {opus} (BSD), {whisper} (MIT) and the {models} (MIT). The full licences are in the licences folder installed with the app.',
+		creditNames: {
+			ffmpeg: 'FFmpeg',
+			source: 'source',
+			opus: 'Opus',
+			whisper: 'whisper.cpp',
+			models: 'Whisper models'
+		},
 		privacy:
 			'Nothing is sent to the developer: no files, keys, results or telemetry. AI output can contain fluent but wrong text; check a sample against the source.'
 	},
 	support: {
 		title: 'Support development',
 		/** Says plainly that paying changes nothing in the app. */
-		note: 'If Kalamu is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
-		link: 'Buy me a coffee',
-		opensInBrowser: ' (opens in your browser)'
+		note: 'Kalamu is an independent project by Frédérick Madore (University of Bayreuth). If it is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
+		link: 'Buy me a coffee'
 	},
 	format: {
 		txt: 'Text (.txt)',
@@ -502,7 +509,8 @@ export const en = {
 		close: 'Close',
 		loading: 'Loading…',
 		preview: 'preview',
-		retiring: 'retiring'
+		retiring: 'retiring',
+		opensInBrowser: ' (opens in your browser)'
 	},
 	error: {
 		'job.not_found': 'This job no longer exists.',
