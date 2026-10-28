@@ -37,6 +37,7 @@
 		chevron: ChevronRight,
 		edit: Pencil,
 		folder: FolderOpen,
+		file: FileText,
 		prompts: ScrollText,
 		settings: Settings,
 		close: X,

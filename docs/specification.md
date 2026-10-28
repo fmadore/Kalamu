@@ -154,6 +154,10 @@ paying twice.
   retried later on their own.
 - **Exports come from the cache.** Choosing another output format later regenerates the file
   from stored results, without calling the provider again.
+- **A job's files stay at hand.** Its page lists the files it wrote that are still on disk,
+  after a restart too. Each opens in its Windows app (JSON in Notepad, which every PC has) or in
+  its folder; only the job's own files can be opened this way. A job can be renamed at any
+  time: its name is only a label, as the files it writes are named after their sources.
 
 ## Tips and checks for better results
 

@@ -227,8 +227,22 @@ async fn a_job_processes_every_page_and_writes_outputs_with_provenance() {
     let f = fixture();
     let source = f.pdf("bulletin.pdf", 3);
     let job = f.new_job(vec![source], &["fake-model"]);
+    assert!(f.engine.outputs(job.id).unwrap_or_default().is_empty());
     assert_eq!(f.run(job.id).await, JobStatus::Completed);
     assert_eq!(f.fake.calls(), 3);
+
+    // The written files are listed from disk, so the list outlives the run.
+    let outputs = f.engine.outputs(job.id).unwrap_or_default();
+    let txt_path = f.dir.path().join("bulletin.txt").display().to_string();
+    let provenance_path = f
+        .dir
+        .path()
+        .join("bulletin.provenance.json")
+        .display()
+        .to_string();
+    assert!(outputs.contains(&txt_path), "{outputs:?}");
+    assert_eq!(outputs.last(), Some(&provenance_path));
+    assert!(outputs.iter().all(|p| std::path::Path::new(p).is_file()));
 
     let txt = std::fs::read_to_string(f.dir.path().join("bulletin.txt")).unwrap_or_default();
     assert!(txt.contains("--- Page 2 ---\n\nfake-model page 2"));
@@ -248,6 +262,12 @@ async fn a_job_processes_every_page_and_writes_outputs_with_provenance() {
         f.store.job(job.id).map(|j| j.status).ok(),
         Some(JobStatus::Completed)
     );
+
+    // A file deleted since leaves the list.
+    std::fs::remove_file(&provenance_path).unwrap_or_else(|e| panic!("{e}"));
+    let outputs = f.engine.outputs(job.id).unwrap_or_default();
+    assert!(outputs.contains(&txt_path));
+    assert!(!outputs.contains(&provenance_path));
 }
 
 #[tokio::test]

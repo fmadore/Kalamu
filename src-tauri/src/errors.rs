@@ -84,6 +84,8 @@ pub mod id {
     pub const SETTINGS: &str = "settings.write";
     pub const CATALOG_DOWNLOAD: &str = "catalog.download";
     pub const FILE: &str = "file.read";
+    /// A result file that could not be opened: moved, deleted, or no app for it.
+    pub const OPEN: &str = "file.open";
     pub const INTERNAL: &str = "app.internal";
     /// A YouTube video that is private, so no one outside its owner can read it.
     pub const SOURCE_PRIVATE: &str = "source.private";

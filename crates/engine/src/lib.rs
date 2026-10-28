@@ -216,6 +216,16 @@ impl Engine {
         Ok(self.store.pieces(id)?)
     }
 
+    /// Renames a job, running or not: the name is only its label, and the files it writes are
+    /// named after their sources. A blank name leaves the old one.
+    pub fn rename_job(&self, id: JobId, name: &str) -> Result<(), EngineError> {
+        let name = name.trim();
+        if name.is_empty() {
+            return Ok(());
+        }
+        Ok(self.store.rename_job(id, name)?)
+    }
+
     pub fn delete_job(&self, id: JobId) -> Result<(), EngineError> {
         self.cancel(id);
         Ok(self.store.delete_job(id)?)
