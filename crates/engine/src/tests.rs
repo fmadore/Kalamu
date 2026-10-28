@@ -146,8 +146,13 @@ struct Fixture {
 }
 
 fn fixture() -> Fixture {
+    fixture_with(None)
+}
+
+fn fixture_with(ffmpeg: Option<kalamu_media::Ffmpeg>) -> Fixture {
     let store = Arc::new(SqliteStore::in_memory().unwrap_or_else(|_| panic!("store")));
     let fake = Fake::new();
+    let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
     let engine = Engine::new(
         store.clone(),
         vec![fake.clone()],
@@ -159,10 +164,11 @@ fn fixture() -> Fixture {
             max_attempts: 3,
             base_delay: Duration::from_millis(5),
             app_version: "test".into(),
+            ffmpeg,
+            listening_cache: dir.path().join("listening"),
             ..EngineConfig::default()
         },
     );
-    let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
     Fixture {
         engine,
         fake,
@@ -759,4 +765,126 @@ fn a_pipeline_record_carries_the_prompt_a_job_would_send() {
     assert_eq!(file.presets.len(), 1);
     assert_eq!(file.presets[0].id, "analysis.entities");
     assert!(file.to_markdown().contains("## Model and prompt"));
+}
+
+/// One second of a 440 Hz tone as 16 kHz mono WAV.
+fn tone_wav() -> Vec<u8> {
+    let samples: Vec<i16> = (0..16_000)
+        .map(|i| ((i as f32 * 440.0 * std::f32::consts::TAU / 16_000.0).sin() * 8_000.0) as i16)
+        .collect();
+    let data = (samples.len() * 2) as u32;
+    let mut wav = b"RIFF".to_vec();
+    wav.extend((36 + data).to_le_bytes());
+    wav.extend(b"WAVEfmt ");
+    wav.extend(16u32.to_le_bytes());
+    wav.extend(1u16.to_le_bytes());
+    wav.extend(1u16.to_le_bytes());
+    wav.extend(16_000u32.to_le_bytes());
+    wav.extend(32_000u32.to_le_bytes());
+    wav.extend(2u16.to_le_bytes());
+    wav.extend(16u16.to_le_bytes());
+    wav.extend(b"data");
+    wav.extend(data.to_le_bytes());
+    wav.extend(samples.iter().flat_map(|s| s.to_le_bytes()));
+    wav
+}
+
+impl Fixture {
+    /// A job over one recording named `name`, with one piece from `start_ms` to `end_ms`.
+    fn recording_piece(&self, name: &str, start_ms: u64, end_ms: u64) -> (Job, SourceFile) {
+        let path = self.dir.path().join(name);
+        std::fs::write(&path, tone_wav()).unwrap_or_else(|_| panic!("write recording"));
+        let source = kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"));
+        let job = self.new_job(vec![source.clone()], &["fake-model"]);
+        self.store
+            .upsert_piece(&kalamu_core::PieceState {
+                job_id: job.id,
+                setup_id: job.setups[0].id,
+                source_id: source.id,
+                index: 1,
+                piece: kalamu_core::PieceRef::Segment {
+                    index: 1,
+                    start_ms,
+                    end_ms,
+                },
+                status: PieceStatus::Done,
+                cache_key: None,
+                error: None,
+                attempts: 1,
+                updated_at: Timestamp(0),
+            })
+            .unwrap_or_else(|_| panic!("piece"));
+        (job, source)
+    }
+}
+
+#[test]
+fn a_recording_the_player_plays_is_heard_from_the_file_itself() {
+    let f = fixture();
+    let (job, source) = f.recording_piece("interview.mp3", 1_200_000, 2_400_000);
+    let audio = f
+        .engine
+        .piece_audio(job.id, source.id, 1, false)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        audio,
+        PieceAudio {
+            path: source.path,
+            start_ms: 1_200_000,
+            end_ms: 2_400_000,
+            original: true,
+        }
+    );
+    assert!(
+        !f.dir.path().join("listening").exists(),
+        "nothing converted"
+    );
+}
+
+#[test]
+fn a_recording_the_player_cannot_play_is_never_offered_as_it_is() {
+    // Without FFmpeg it cannot be converted either, so it says so.
+    let f = fixture();
+    let (job, source) = f.recording_piece("interview.wma", 0, 1_000);
+    let err = f.engine.piece_audio(job.id, source.id, 1, false);
+    assert!(matches!(err, Err(EngineError::Media(_))), "{err:?}");
+}
+
+#[test]
+fn a_converted_piece_is_kept_and_found_again() {
+    let Some(ffmpeg) = kalamu_media::Ffmpeg::locate(&[]) else {
+        eprintln!("skipped: no FFmpeg on PATH");
+        return;
+    };
+    let f = fixture_with(Some(ffmpeg));
+    // As if the player had failed on a WAV it should have played.
+    let (job, source) = f.recording_piece("interview.wav", 250, 750);
+    let first = f
+        .engine
+        .piece_audio(job.id, source.id, 1, true)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(!first.original);
+    assert_eq!(
+        (first.start_ms, first.end_ms),
+        (0, 0),
+        "the copy is the piece"
+    );
+    assert!(
+        first
+            .path
+            .starts_with(&*f.dir.path().join("listening").to_string_lossy())
+    );
+    let bytes = std::fs::read(&first.path).unwrap_or_default();
+    assert!(bytes.starts_with(b"OggS") || bytes.starts_with(b"RIFF"));
+    std::fs::write(&first.path, b"kept").unwrap_or_else(|_| panic!("mark"));
+    let again = f
+        .engine
+        .piece_audio(job.id, source.id, 1, true)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(again, first);
+    assert_eq!(
+        std::fs::read(&again.path).unwrap_or_default(),
+        b"kept",
+        "not converted twice"
+    );
 }

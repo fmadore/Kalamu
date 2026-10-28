@@ -1,9 +1,10 @@
 <script lang="ts">
 	// The recording next to its transcript: the piece under review plays here, the line being
 	// spoken is highlighted, and clicking a line jumps to it. Times are shown on the recording's
-	// clock; the player itself plays only this piece.
+	// clock; the player plays only this piece, from the recording itself when it can.
 	import Icon from './Icon.svelte';
 	import TranscriptLines from './TranscriptLines.svelte';
+	import type { PieceAudio } from '#lib/bindings/PieceAudio.js';
 	import type { Segment } from '#lib/bindings/Segment.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { api } from '#lib/tauri.js';
@@ -23,33 +24,68 @@
 	} = $props();
 
 	const m = messages();
+	let audio = $state<PieceAudio | null>(null);
 	let url = $state<string | null>(null);
 	let failed = $state(false);
 	let player = $state<HTMLAudioElement | null>(null);
-	let now = $state(0);
+	/** Where the player is in the file, in seconds. */
+	let position = $state(0);
 	let duration = $state(0);
 	let paused = $state(true);
+	let request = 0;
 
-	// Load the piece whenever it changes, and release the previous one's memory.
-	$effect(() => {
-		const i = index;
-		let created: string | null = null;
+	// Where the piece starts and ends in the file, in seconds: a span of the recording itself,
+	// or the whole of a converted copy.
+	const start = $derived(audio ? Number(audio.start_ms) / 1000 : 0);
+	const end = $derived(
+		audio && Number(audio.end_ms) > 0
+			? Number(audio.end_ms) / 1000
+			: Number.isFinite(duration)
+				? duration
+				: 0
+	);
+	/** Seconds into the piece. */
+	const now = $derived(Math.max(0, position - start));
+
+	function load(i: number, convert: boolean) {
+		const mine = ++request;
+		audio = null;
 		url = null;
 		failed = false;
+		position = 0;
 		api
-			.pieceAudio(jobId, sourceId, i)
-			.then((bytes) => {
-				if (index !== i) return;
-				const head = new Uint8Array(bytes.slice(0, 4));
-				const ogg = String.fromCharCode(...head) === 'OggS';
-				created = URL.createObjectURL(new Blob([bytes], { type: ogg ? 'audio/ogg' : 'audio/wav' }));
-				url = created;
+			.pieceAudio(jobId, sourceId, i, convert)
+			.then(async (found) => {
+				const src = await api.fileUrl(found.path);
+				if (mine !== request) return;
+				audio = found;
+				url = src;
 			})
-			.catch(() => (failed = true));
-		return () => {
-			if (created) URL.revokeObjectURL(created);
-		};
-	});
+			.catch(() => {
+				if (mine === request) failed = true;
+			});
+	}
+
+	// Load the piece whenever it changes.
+	$effect(() => load(index, false));
+
+	// The player could not read the recording after all: ask for a converted copy instead.
+	function unplayable() {
+		if (audio?.original) load(index, true);
+		else failed = true;
+	}
+
+	function ready() {
+		if (player && start > 0) player.currentTime = start;
+	}
+
+	// The recording plays on past the piece; stop where the piece ends.
+	function tick() {
+		if (player && end > 0 && player.currentTime >= end) {
+			player.pause();
+			player.currentTime = end;
+		}
+	}
 
 	function clock(ms: number): string {
 		const s = Math.floor(ms / 1000);
@@ -60,19 +96,20 @@
 
 	function jump(segment: Segment) {
 		if (!player) return;
-		player.currentTime = Number(segment.start_ms) / 1000;
+		player.currentTime = start + Number(segment.start_ms) / 1000;
 		void player.play();
 	}
 
 	function toggle() {
 		if (!player) return;
-		if (player.paused) void player.play();
-		else player.pause();
+		if (!player.paused) return player.pause();
+		if (end > 0 && player.currentTime >= end) player.currentTime = start;
+		void player.play();
 	}
 
 	const playing = (s: Segment) => now * 1000 >= Number(s.start_ms) && now * 1000 < Number(s.end_ms);
 	/** The piece's length in seconds; 0 until the player has read it. */
-	const length = $derived(Number.isFinite(duration) ? duration : 0);
+	const length = $derived(Math.max(0, end - start));
 	const done = $derived(length > 0 ? (100 * now) / length : 0);
 </script>
 
@@ -82,9 +119,12 @@
 			src={url}
 			preload="metadata"
 			bind:this={player}
-			bind:currentTime={now}
+			bind:currentTime={position}
 			bind:duration
 			bind:paused
+			onloadedmetadata={ready}
+			ontimeupdate={tick}
+			onerror={unplayable}
 		></audio>
 		<div class="player">
 			<button
@@ -105,7 +145,7 @@
 				aria-label={m.review.position}
 				aria-valuetext={clock(offsetMs + now * 1000)}
 				oninput={(e) => {
-					if (player) player.currentTime = Number(e.currentTarget.value);
+					if (player) player.currentTime = start + Number(e.currentTarget.value);
 				}}
 			/>
 			{#if length > 0}<span class="time num muted">{clock(offsetMs + length * 1000)}</span>{/if}

@@ -50,6 +50,19 @@ pub fn audio_mime(path: &Path) -> Option<&'static str> {
     })
 }
 
+/// Whether the review view's player (Chromium, in WebView2) plays this file itself, so a piece
+/// is heard straight from the recording, with nothing converted first. A file that turns out
+/// not to play (an unusual codec in a common container) falls back to a converted copy.
+pub fn plays_as_is(path: &Path) -> bool {
+    let Some(ext) = path.extension().and_then(|e| e.to_str()) else {
+        return false;
+    };
+    matches!(
+        ext.to_ascii_lowercase().as_str(),
+        "mp3" | "m4a" | "aac" | "wav" | "ogg" | "oga" | "opus" | "flac" | "webm" | "mp4"
+    )
+}
+
 /// Pieces of at most `target_ms` (plus a quarter for the last one rather than leaving a
 /// scrap), cut at the longest pause before each mark. Returns `(start_ms, end_ms)` pairs that
 /// cover the whole recording; consecutive pieces touch, or overlap by [`OVERLAP_MS`] where no
@@ -187,6 +200,36 @@ impl AudioSource {
         })
     }
 
+    /// One piece converted to listen to in the review view, for a recording the player cannot
+    /// play itself: Opus (or WAV) at the encoder's fastest setting, as recorded, without the
+    /// volume evened out.
+    pub fn listening_copy(&self, piece: &PieceRef) -> Result<PreparedInput, MediaError> {
+        let PieceRef::Segment {
+            index,
+            start_ms,
+            end_ms,
+        } = piece
+        else {
+            return Err(MediaError::NoSuchPage(piece.label()));
+        };
+        let ffmpeg = self.ffmpeg.as_ref().ok_or_else(|| {
+            MediaError::NeedsConversion(
+                "Playing this recording needs FFmpeg, which was not found next to the app.".into(),
+            )
+        })?;
+        let format = ffmpeg
+            .choose(&["audio/ogg", "audio/wav"])
+            .ok_or_else(|| MediaError::NeedsConversion("No audio format to play".into()))?;
+        let end = if *end_ms == 0 { u64::MAX / 2 } else { *end_ms };
+        let bytes = ffmpeg.extract_to_listen(&self.path, *start_ms, end, format)?;
+        Ok(PreparedInput {
+            piece: piece.clone(),
+            file_name: format!("listen-{:02}.{}", index + 1, format.extension()),
+            mime: format.mime().to_owned(),
+            bytes,
+        })
+    }
+
     pub fn is_video(&self) -> bool {
         self.kind == InputKind::Video
     }
@@ -241,6 +284,26 @@ mod tests {
     use super::*;
 
     const MIN: u64 = 60_000;
+
+    #[test]
+    fn the_player_plays_common_recordings_itself() {
+        for name in [
+            "a.mp3", "b.M4A", "c.wav", "d.ogg", "e.opus", "f.flac", "g.webm", "h.mp4",
+        ] {
+            assert!(plays_as_is(Path::new(name)), "{name}");
+        }
+        for name in [
+            "a.wma",
+            "b.amr",
+            "c.mkv",
+            "d.avi",
+            "e.mov",
+            "f.3gp",
+            "no-extension",
+        ] {
+            assert!(!plays_as_is(Path::new(name)), "{name}");
+        }
+    }
 
     #[test]
     fn short_recordings_are_one_piece() {

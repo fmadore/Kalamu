@@ -24,7 +24,7 @@ use kalamu_core::{
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
-pub use audio::{AudioSource, DEFAULT_PIECE_MS, audio_mime, plan};
+pub use audio::{AudioSource, DEFAULT_PIECE_MS, audio_mime, plan, plays_as_is};
 pub use ffmpeg::{AudioFormat, Ffmpeg, Probe};
 pub use image_source::ImageSource;
 pub use pdf::PdfSource;
@@ -166,6 +166,14 @@ impl OpenSource {
             }
         }
         pieces
+    }
+
+    /// One piece of a recording converted to listen to; see [`AudioSource::listening_copy`].
+    pub fn listening_copy(&self, piece: &PieceRef) -> Result<PreparedInput, MediaError> {
+        match self {
+            Self::Audio(audio) => audio.listening_copy(piece),
+            _ => Err(MediaError::UnsupportedKind),
+        }
     }
 
     /// One piece in the first of `accepted` MIME types this crate can produce.

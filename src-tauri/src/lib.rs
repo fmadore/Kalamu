@@ -168,6 +168,7 @@ pub fn run() {
                     concurrency: settings.concurrency.clamp(1, 8) as usize,
                     app_version: env!("CARGO_PKG_VERSION").into(),
                     ffmpeg,
+                    listening_cache: data.join("listening"),
                     ..EngineConfig::default()
                 },
             );
