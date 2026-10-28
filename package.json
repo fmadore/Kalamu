@@ -1,7 +1,7 @@
 {
 	"name": "kalamu",
 	"version": "0.2.0",
-	"description": "Transcribe interviews and read scanned or handwritten documents with the AI provider of your choice",
+	"description": "Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, or offline",
 	"license": "MIT",
 	"author": "Frédérick Madore",
 	"repository": {
