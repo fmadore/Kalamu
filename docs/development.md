@@ -75,5 +75,30 @@ restart the dev server.
 
 ## Releases
 
-`npm run tauri build` makes the installers. FFmpeg is fetched by `scripts/fetch-ffmpeg.mjs` from
-the build in `.github/workflows/ffmpeg.yml` and bundled with `src-tauri/tauri.ffmpeg.conf.json`.
+Releases are built by `.github/workflows/release.yml`, natively on x64 and ARM64:
+
+1. Move the version in `package.json` (with `npm version <x.y.z> --no-git-tag-version`), the
+   workspace `Cargo.toml` and `src-tauri/tauri.conf.json` together, and let Cargo update
+   `Cargo.lock`.
+2. Write the release notes in `docs/release-<x.y.z>.md`: they become the release's body.
+3. Merge, then tag `main` and push the tag:
+
+```bash
+git tag v0.3.0 && git push origin v0.3.0
+```
+
+The workflow checks the tag against the version files, builds both installers into a draft
+release and publishes it once both are attached, as a pre-release while the version starts with
+0. A hyphenated tag (`v0.3.0-rc1`) builds the same draft and leaves it unpublished. To rebuild a
+tag, run the workflow by hand from the Actions tab.
+
+To build an installer locally, fetch the bundled FFmpeg first; it comes from the build in
+`.github/workflows/ffmpeg.yml`:
+
+```bash
+node scripts/fetch-ffmpeg.mjs
+```
+
+```bash
+npm run tauri build -- --bundles nsis --config src-tauri/tauri.ffmpeg.conf.json
+```
