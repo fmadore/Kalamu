@@ -118,6 +118,7 @@
 		<summary><Icon name="chevron" size={14} />{m.tips.title}</summary>
 		<ul>
 			{#if task === 'analysis'}
+				<li>{m.tips.analysisUnit}</li>
 				<li>{m.tips.analysisInput}</li>
 				<li>{m.tips.analysisFields}</li>
 			{:else}
