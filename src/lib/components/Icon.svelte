@@ -42,6 +42,7 @@
 		cloud: Cloud,
 		edit: Pencil,
 		folder: FolderOpen,
+		file: FileText,
 		laptop: Laptop,
 		link: Link,
 		prompts: ScrollText,

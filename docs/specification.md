@@ -154,6 +154,10 @@ paying twice.
   retried later on their own.
 - **Exports come from the cache.** Choosing another output format later regenerates the file
   from stored results, without calling the provider again.
+- **A job's files stay at hand.** Its page lists the files it wrote that are still on disk,
+  after a restart too. Each opens in its Windows app (JSON in Notepad, which every PC has) or in
+  its folder; only the job's own files can be opened this way. A job can be renamed at any
+  time: its name is only a label, as the files it writes are named after their sources.
 
 ## Tips and checks for better results
 
@@ -169,6 +173,7 @@ with short tips where they are relevant, and checks each file before a job start
 | **PDF that already contains text** | Extraction may not be needed | Use the existing text, or extract anyway |
 | **Very long or very quiet recordings, long silences** | Transcription drifts or skips quiet speech | Even out the volume; recordings are split at pauses |
 | **Auto-detect on short or mixed recordings** | Detection is unreliable on little speech | Choose the language(s) explicitly |
+| **Several documents in one file, or one document over several files** (analyses) | An analysis reads each file whole, however many pages, and gives it one set of answers, so keywords and names mix or split | One file per document; a tip says so, as it cannot be checked |
 
 Checks never block a job: users can dismiss a warning. Fixes are applied to working copies,
 never to the originals, and recorded in `provenance.json`.

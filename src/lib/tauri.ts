@@ -81,10 +81,13 @@ export const api = {
 	cancelJob: (id: string) => invoke<void>('cancel_job', { id }),
 	retryFailed: (id: string) => invoke<void>('retry_failed', { id }),
 	deleteJob: (id: string) => invoke<void>('delete_job', { id }),
+	renameJob: (id: string, name: string) => invoke<void>('rename_job', { id, name }),
 	listJobs: () => invoke<JobSummary[]>('list_jobs'),
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
 	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),
+	jobOutputs: (id: string) => invoke<string[]>('job_outputs', { id }),
+	openOutput: (id: string, path: string) => invoke<void>('open_output', { id, path }),
 	sourcePieces: (jobId: string, sourceId: string) =>
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>

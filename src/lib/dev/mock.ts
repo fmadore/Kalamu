@@ -654,6 +654,19 @@ export function installMock(): void {
 			case 'get_job':
 				if (a.id === videoJob.id) return videoJob;
 				return a.id === audioJob.id ? audioJob : a.id === analysisJob.id ? analysisJob : job;
+			case 'rename_job': {
+				const name = String(a.name).trim();
+				if (!name) return null;
+				for (const j of [job, audioJob, videoJob, analysisJob]) if (j.id === a.id) j.name = name;
+				for (const s of summaries) if (s.id === a.id) s.name = name;
+				return null;
+			}
+			case 'job_outputs': {
+				const stem = source.path.replace(/\.[^.\\]+$/, '');
+				return [`${stem}.txt`, `${stem}.docx`, `${stem}.provenance.json`];
+			}
+			case 'open_output':
+				return null;
 			case 'job_pieces':
 				return pieces.map((p) => ({
 					...p,

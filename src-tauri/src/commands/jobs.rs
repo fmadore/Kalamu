@@ -52,6 +52,35 @@ pub fn job_text_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<
     Ok(state.engine.text_outputs(id)?)
 }
 
+/// Every file a job wrote that is still on disk, for its page's "Written" list.
+#[tauri::command]
+pub fn job_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<String>> {
+    Ok(state.engine.outputs(id)?)
+}
+
+/// Opens a file the job wrote in its Windows app. JSON opens in Notepad, which every PC has,
+/// as Windows often has no app for it. Only the job's own files, so the interface cannot open
+/// anything else on the PC.
+#[tauri::command]
+pub fn open_output(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    id: JobId,
+    path: String,
+) -> CmdResult<()> {
+    use tauri_plugin_opener::OpenerExt;
+    if !state.engine.outputs(id)?.contains(&path) {
+        return Err(AppError::new(id::OPEN, &path));
+    }
+    let with = path
+        .to_ascii_lowercase()
+        .ends_with(".json")
+        .then_some("notepad");
+    app.opener()
+        .open_path(&path, with)
+        .map_err(|e| AppError::new(id::OPEN, e))
+}
+
 #[tauri::command]
 pub async fn inspect_files(
     state: State<'_, AppState>,
@@ -263,6 +292,11 @@ pub fn create_job(state: State<'_, AppState>, job: NewJob) -> CmdResult<Job> {
 #[tauri::command]
 pub async fn start_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> {
     Ok(state.engine.start(id)?)
+}
+
+#[tauri::command]
+pub fn rename_job(state: State<'_, AppState>, id: JobId, name: String) -> CmdResult<()> {
+    Ok(state.engine.rename_job(id, &name)?)
 }
 
 #[tauri::command]

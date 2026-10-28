@@ -244,6 +244,29 @@ impl JobStore for SqliteStore {
         Ok(())
     }
 
+    fn rename_job(&self, id: JobId, name: &str) -> Result<(), StoreError> {
+        // The name is kept twice, as a column and inside the job's data; both change together.
+        let mut conn = self.conn();
+        let tx = conn.transaction().map_err(db)?;
+        let data: Option<String> = tx
+            .query_row(
+                "SELECT data FROM jobs WHERE id = ?1",
+                [id.to_string()],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(db)?;
+        let mut job: Job =
+            serde_json::from_str(&data.ok_or(StoreError::NotFound)?).map_err(corrupt)?;
+        job.name = name.to_string();
+        tx.execute(
+            "UPDATE jobs SET name = ?1, data = ?2 WHERE id = ?3",
+            params![name, to_json(&job)?, id.to_string()],
+        )
+        .map_err(db)?;
+        tx.commit().map_err(db)
+    }
+
     fn delete_job(&self, id: JobId) -> Result<(), StoreError> {
         self.conn()
             .execute("DELETE FROM jobs WHERE id = ?1", [id.to_string()])
