@@ -714,23 +714,34 @@ export function installMock(): void {
 			case 'expand_paths':
 				return a.paths;
 			case 'inspect_files':
-				return (a.paths as string[]).map((path, i) => ({
-					path,
-					source: {
-						...source,
-						id: `00000000-0000-0000-0000-0000000001${i}0`,
+				return (a.paths as string[]).map((path, i) => {
+					const id = `00000000-0000-0000-0000-0000000001${i}0`;
+					const file_name = path.split('\\').pop();
+					// Recordings of 42 and 65 minutes, cut in 20-minute pieces as the engine plans.
+					if (/\.(m4a|mp3|wav)$/.test(path)) {
+						const minutes = i === 0 ? 42 : 65;
+						return {
+							path,
+							source: { ...recording, id, path, file_name, duration_ms: minutes * 60_000 },
+							warnings: [],
+							error: null,
+							pieces: minutes > 25 ? Math.ceil((minutes - 25) / 20) + 1 : 1
+						};
+					}
+					return {
 						path,
-						file_name: path.split('\\').pop()
-					},
-					warnings:
-						i === 0
-							? [
-									{ source_id: source.id, kind: 'double_page_spread', pages: [2, 3] },
-									{ source_id: source.id, kind: 'low_resolution', pages: [1], dpi: 150 }
-								]
-							: [],
-					error: null
-				}));
+						source: { ...source, id, path, file_name, page_count: i === 0 ? 3 : 1 },
+						warnings:
+							i === 0
+								? [
+										{ source_id: source.id, kind: 'double_page_spread', pages: [2, 3] },
+										{ source_id: source.id, kind: 'low_resolution', pages: [1], dpi: 150 }
+									]
+								: [],
+						error: null,
+						pieces: null
+					};
+				});
 			case 'inspect_links':
 				// The engine's check, roughly: an eleven-character id after a YouTube address.
 				return (a.links as string[]).map((link, i) => {
@@ -747,10 +758,17 @@ export function installMock(): void {
 								}
 							: null,
 						warnings: [],
-						error: id ? null : { id: 'source.not_youtube', detail: link }
+						error: id ? null : { id: 'source.not_youtube', detail: link },
+						pieces: null
 					};
 				});
 			case 'plugin:dialog|open':
+				// Recordings when the picker asks for them, documents otherwise.
+				if (JSON.stringify(a).includes('m4a'))
+					return [
+						'C:\\Archives\\Entretiens\\imam-2024-03.m4a',
+						'C:\\Archives\\Entretiens\\marche-2024-04.m4a'
+					];
 				return [
 					'C:\\Archives\\Bulletin\\bulletin-1957-06.pdf',
 					'C:\\Archives\\Letters\\lettre-gouverneur.jpg'

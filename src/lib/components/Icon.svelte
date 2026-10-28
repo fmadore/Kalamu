@@ -8,10 +8,13 @@
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Cloud from '@lucide/svelte/icons/cloud';
 	import Columns2 from '@lucide/svelte/icons/columns-2';
 	import Download from '@lucide/svelte/icons/download';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
+	import Laptop from '@lucide/svelte/icons/laptop';
+	import Link from '@lucide/svelte/icons/link';
 	import Mic from '@lucide/svelte/icons/mic';
 	import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
 	import PanelLeftOpen from '@lucide/svelte/icons/panel-left-open';
@@ -19,6 +22,7 @@
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Play from '@lucide/svelte/icons/play';
 	import Plus from '@lucide/svelte/icons/plus';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import ScrollText from '@lucide/svelte/icons/scroll-text';
 	import Search from '@lucide/svelte/icons/search';
 	import Settings from '@lucide/svelte/icons/settings';
@@ -35,8 +39,11 @@
 		check: Check,
 		previous: ChevronLeft,
 		chevron: ChevronRight,
+		cloud: Cloud,
 		edit: Pencil,
 		folder: FolderOpen,
+		laptop: Laptop,
+		link: Link,
 		prompts: ScrollText,
 		settings: Settings,
 		close: X,
@@ -47,6 +54,7 @@
 		pause: Pause,
 		play: Play,
 		plus: Plus,
+		replay: RotateCcw,
 		search: Search,
 		star: Star,
 		text_extraction: FileText,

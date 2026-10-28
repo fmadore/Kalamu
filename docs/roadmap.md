@@ -53,7 +53,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Design**: the Graphite and highlighter interface ([DESIGN.md](../DESIGN.md)), responsive
   from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs and folds to a
   rail, and an app icon
-  drawn from the same mark.
+  drawn from the same mark. Under the tasks in New job, a diagram of how each task splits
+  and joins the work, drawn with the user's own files.
 - **Kalamu**: the app renamed from Scriptorium, with the "two witnesses" icon and warm graphite
   neutrals; installs of 0.1 and 0.2 have their jobs, settings and keys moved over on the first
   start; the strip of pages shows thumbnails of scans and images

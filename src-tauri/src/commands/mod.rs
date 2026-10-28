@@ -70,6 +70,8 @@ pub struct InspectedFile {
     pub source: Option<SourceFile>,
     pub warnings: Vec<InputWarning>,
     pub error: Option<AppError>,
+    /// How many pieces a recording is sent in at the usual length, for New job's diagram.
+    pub pieces: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

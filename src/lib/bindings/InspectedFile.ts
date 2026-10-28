@@ -3,4 +3,8 @@ import type { AppError } from "./AppError";
 import type { InputWarning } from "./InputWarning";
 import type { SourceFile } from "./SourceFile";
 
-export type InspectedFile = { path: string, source: SourceFile | null, warnings: Array<InputWarning>, error: AppError | null, };
+export type InspectedFile = { path: string, source: SourceFile | null, warnings: Array<InputWarning>, error: AppError | null, 
+/**
+ * How many pieces a recording is sent in at the usual length, for New job's diagram.
+ */
+pieces: number | null, };

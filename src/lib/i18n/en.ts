@@ -206,6 +206,42 @@ export const en = {
 		analysisFields:
 			'Describe each field as you would to a research assistant, give choices that do not overlap, and ask for a reason. Try it on a few documents first, and compare two models where the answer is a judgement, such as tone.'
 	},
+	// The diagram under the tasks in New job: how the work is split and put back together, with
+	// the user's own files once they are added.
+	pipeline: {
+		title: 'How it works',
+		replay: 'Play again',
+		moreFiles: (n: number) => (n === 1 ? 'and 1 more file' : `and ${n} more files`),
+		theModel: 'The model',
+		extractSource: 'A PDF or images',
+		extractSplit: 'Split into pages: one piece per page',
+		extractSpreads: 'Double pages are split in two first',
+		extractRead: (model: string) => `${model} reads each page on its own`,
+		extractJoin: 'Joined into one text per file, page numbers kept',
+		analysisSource: 'A text, Word file or PDF',
+		analysisWhole: 'Read whole, as one piece, however many pages',
+		analysisFill: (model: string) => `${model} fills in your fields`,
+		analysisTable: 'One row of answers per document, ready for a spreadsheet',
+		/** Stand-ins for a prompt's fields, when it has none to show. */
+		exampleFields: ['Summary', 'People', 'Places', 'Tone'],
+		document: (n: number) => `Document ${n}`,
+		audioSource: 'A recording',
+		// The length of a piece is DEFAULT_PIECE_MS in crates/media/src/audio.rs.
+		audioCut: (pieces: number) =>
+			pieces === 1
+				? 'Short enough to send whole: one piece'
+				: `Cut at pauses into ${pieces} pieces of at most 20 min`,
+		audioCutExample: 'Cut at pauses into pieces of at most 20 min',
+		audioRead: (model: string) => `${model} transcribes each piece`,
+		audioJoin: 'Joined into one transcript, with timestamps',
+		audioSpeakers: 'Speaker labels may differ from one piece to the next',
+		youtubeSource: 'A public YouTube link',
+		youtubeSend: 'Only the link leaves this PC: nothing is downloaded',
+		youtubeRead: (model: string) => `${model} watches the whole video in one go`,
+		youtubeJoin: 'A transcript with timestamps',
+		thisPc: 'This PC',
+		google: 'Google'
+	},
 	jobs: {
 		title: 'Jobs',
 		empty: 'No jobs yet. Start one from New job.',

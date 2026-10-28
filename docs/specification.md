@@ -173,6 +173,23 @@ with short tips where they are relevant, and checks each file before a job start
 Checks never block a job: users can dismiss a warning. Fixes are applied to working copies,
 never to the originals, and recorded in `provenance.json`.
 
+Under the tasks, a short diagram shows how the chosen task splits the work and puts it back
+together, so that a researcher knows what is sent and what comes back:
+
+- **Extract text**: a PDF or images split one piece per page (double pages in two first), each
+  page read by the model, joined into one text per file with its page numbers.
+- **Analyse texts**: each document read whole, as one piece; the model fills in the prompt's
+  fields; one row of answers per document, as in the CSV export.
+- **Transcribe audio**: a recording cut at pauses into pieces of at most 20 minutes, each
+  transcribed, joined with timestamps; speaker labels may differ between pieces.
+- **Transcribe YouTube**: only the link leaves the PC; Gemini watches the whole video at once.
+
+Once files are added, it uses them: the first file's name, pages or length, its pieces (counted
+by the engine, as for the long-recording check), the chosen model and the prompt's fields. It
+plays once (about 2.5 s) when a task is chosen and again on request, never loops, and shows its
+last frame at rest and under reduced motion. Its steps are a list of plain sentences, so a
+screen reader reads them in order.
+
 ## Review view
 
 Checking AI output against the source is what makes results trustworthy, so the review is the
