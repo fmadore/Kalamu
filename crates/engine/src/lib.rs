@@ -7,6 +7,7 @@
 
 mod batch;
 mod compare;
+mod listen;
 mod output;
 mod record;
 mod review;
@@ -14,7 +15,7 @@ mod run;
 mod setup;
 
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
 
@@ -32,6 +33,7 @@ use tokio::sync::broadcast;
 pub use compare::{
     ComparisonReport, DiffKind, DiffSpan, PageComparison, SetupScore, diff, error_rate,
 };
+pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use review::PieceView;
 pub use setup::{NewJob, SetupRequest};
 
@@ -54,6 +56,8 @@ pub struct EngineConfig {
     pub ffmpeg: Option<Ffmpeg>,
     /// How often a waiting batch is asked about, in economy mode.
     pub batch_poll: Duration,
+    /// Where pieces converted for listening in the review view are kept.
+    pub listening_cache: PathBuf,
 }
 
 impl Default for EngineConfig {
@@ -65,6 +69,7 @@ impl Default for EngineConfig {
             app_version: "0.0.0".into(),
             ffmpeg: None,
             batch_poll: Duration::from_secs(60),
+            listening_cache: std::env::temp_dir().join("kalamu-listening"),
         }
     }
 }
@@ -98,6 +103,8 @@ pub enum EngineError {
     LinkNeedsFolder,
     #[error("Could not write the results: {0}")]
     Output(String),
+    #[error("Could not keep the piece converted to listen to: {0}")]
+    ListeningCopy(String),
 }
 
 impl EngineError {
@@ -119,6 +126,7 @@ impl EngineError {
             Self::NotYouTube(_) => "source.not_youtube",
             Self::LinkNeedsFolder => "job.link_needs_folder",
             Self::Output(_) => "output.write",
+            Self::ListeningCopy(_) => "media.read",
         }
     }
 }
@@ -254,35 +262,6 @@ impl Engine {
                 SourceFile::youtube(link).ok_or_else(|| EngineError::NotYouTube(link.to_string()))
             })
             .collect()
-    }
-
-    /// One piece of a recording, to listen to in the review view: compressed (Opus) when this
-    /// FFmpeg can, so a twenty-minute piece is a few megabytes.
-    pub fn piece_audio(
-        &self,
-        job_id: JobId,
-        source_id: SourceId,
-        index: u32,
-    ) -> Result<kalamu_core::PreparedInput, EngineError> {
-        let job = self.store.job(job_id)?;
-        let source = job
-            .sources
-            .iter()
-            .find(|s| s.id == source_id)
-            .ok_or(EngineError::Store(StoreError::NotFound))?;
-        let piece = self
-            .store
-            .pieces(job_id)?
-            .into_iter()
-            .find(|p| p.source_id == source_id && p.index == index)
-            .map(|p| p.piece)
-            .ok_or(EngineError::Store(StoreError::NotFound))?;
-        let ffmpeg = self.config.ffmpeg.as_ref();
-        let mut listening = source.clone();
-        // What was sent, minus fixes: the user hears the recording itself.
-        listening.even_out_volume = false;
-        let opened = OpenSource::open(&listening, ffmpeg)?;
-        Ok(opened.prepare(&piece, &["audio/ogg", "audio/wav"], "listen")?)
     }
 
     /// The bundled FFmpeg, for the app's previews.

@@ -591,6 +591,7 @@ export function installMock(): void {
 		}, 2500);
 	}
 	mockWindows('main');
+	let toneUrl: string | undefined;
 	mockIPC((cmd, args) => {
 		const a = (args ?? {}) as Record<string, unknown>;
 		switch (cmd) {
@@ -672,7 +673,9 @@ export function installMock(): void {
 				speakerNames = { ...(a.names as { names: Record<string, string> }).names };
 				return [];
 			case 'piece_audio':
-				return toneWav();
+				// The tone stands in for a whole recording, the piece for a span of it.
+				toneUrl ??= URL.createObjectURL(new Blob([toneWav()], { type: 'audio/wav' }));
+				return { path: toneUrl, start_ms: 2_000, end_ms: 8_000, original: true };
 			case 'piece_preview':
 				// A synthetic scan as an image: shown everywhere, headless browsers included.
 				return { mime: 'image/jpeg', data: SAMPLE_SCAN.split(',')[1] ?? '' };
@@ -759,4 +762,8 @@ export function installMock(): void {
 				return null;
 		}
 	});
+	// `piece_audio` names a blob URL here, not a file, so it is its own address.
+	(
+		window as unknown as { __TAURI_INTERNALS__: { convertFileSrc: (path: string) => string } }
+	).__TAURI_INTERNALS__.convertFileSrc = (path) => path;
 }

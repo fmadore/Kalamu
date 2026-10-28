@@ -57,6 +57,10 @@ new names, on the same computer only:
   languages and the last folder chosen.
 - **Prompts and pipelines** the user saves, and a copy of the model catalogue.
 - **Whisper models**, downloaded only when the user asks (`whisper-models`).
+- **Recording pieces converted for listening** (`listening`): the review's player plays most
+  recordings straight from the original file; for a format it cannot play, the piece is
+  converted on the computer and the copy kept, so it plays at once next time. The folder is
+  kept under 256 MB by removing the copies heard longest ago.
 - **Logs**, for troubleshooting: what the app did and the errors it met, with job identifiers.
   They contain no API keys and no document text.
 

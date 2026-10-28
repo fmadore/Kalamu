@@ -19,6 +19,7 @@ import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
+import type { PieceAudio } from './bindings/PieceAudio.js';
 import type { PieceState } from './bindings/PieceState.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
@@ -89,8 +90,13 @@ export const api = {
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>
 		invoke<PagePreview>('piece_preview', { jobId, sourceId, index }),
-	pieceAudio: (jobId: string, sourceId: string, index: number) =>
-		invoke<ArrayBuffer>('piece_audio', { jobId, sourceId, index }),
+	pieceAudio: (jobId: string, sourceId: string, index: number, convert: boolean) =>
+		invoke<PieceAudio>('piece_audio', { jobId, sourceId, index, convert }),
+	/** A file `pieceAudio` named, as an address the player streams (Tauri's asset protocol). */
+	fileUrl: async (path: string): Promise<string> => {
+		const { convertFileSrc } = await import('@tauri-apps/api/core');
+		return convertFileSrc(path);
+	},
 	sourceText: (jobId: string, sourceId: string) =>
 		invoke<string>('source_text', { jobId, sourceId }),
 	saveCorrection: (correction: Correction) => invoke<string[]>('save_correction', { correction }),

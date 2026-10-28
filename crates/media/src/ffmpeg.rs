@@ -184,6 +184,30 @@ impl Ffmpeg {
         format: AudioFormat,
         even_out: bool,
     ) -> Result<Vec<u8>, MediaError> {
+        self.extract_with(path, start_ms, end_ms, &format.encoder_args(), even_out)
+    }
+
+    /// The span `[start_ms, end_ms)` to listen to in the review view: like [`Self::extract`],
+    /// at the encoder's fastest setting, which for Opus gives the same size in a third of the
+    /// time. Never for what is sent to a provider.
+    pub fn extract_to_listen(
+        &self,
+        path: &Path,
+        start_ms: u64,
+        end_ms: u64,
+        format: AudioFormat,
+    ) -> Result<Vec<u8>, MediaError> {
+        self.extract_with(path, start_ms, end_ms, &format.listening_args(), false)
+    }
+
+    fn extract_with(
+        &self,
+        path: &Path,
+        start_ms: u64,
+        end_ms: u64,
+        encoder_args: &[&str],
+        even_out: bool,
+    ) -> Result<Vec<u8>, MediaError> {
         let path_text = path.to_string_lossy();
         let (start, length) = (seconds(start_ms), seconds(end_ms.saturating_sub(start_ms)));
         // Input seeking (`-ss` before `-i`) is fast and, for audio, exact.
@@ -212,7 +236,7 @@ impl Ffmpeg {
             // the gap and resamples to 192 kHz).
             args.extend(["-af", "dynaudnorm"]);
         }
-        args.extend(format.encoder_args());
+        args.extend(encoder_args);
         args.push("pipe:1");
         let output = self.run(&self.ffmpeg, &args)?;
         if !output.status.success() || output.stdout.is_empty() {
