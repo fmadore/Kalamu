@@ -425,6 +425,8 @@ A white strip with 10px corners and the raised shadow: a round 2.5rem ink play b
 ### New job steps and summary
 Numbered steps with mono numbers in the margin; joined choice strips for task and output; a model set-up as a white bordered card, side-by-side columns (min 17rem) when comparing, with a dashed column that adds another model. The summary aside ends in the large Start button with Ctrl Enter.
 
+Under the task strip, **How it works** sits on surface-quiet with 10px corners: the task's three or four steps in a row, each a small drawing over a caption, joined by Lucide chevrons (two a row, without chevrons, in a narrow form). The drawings use the interface's own marks: white sheets with line-strong hairlines, line-hover strokes for text, the highlighter on names an analysis finds (with ink on it), the speaker colours in a transcript, ink for a progress sweep; file names, page numbers and lengths in mono. It plays once, about 2.5 s, when a task is picked or Play again is pressed; its resting styles are the last frame, so reduced motion shows it whole.
+
 ### Notices
 A full-width banner or inline notice in warn-text on the warn wash (7px corners inline), stating what happened and what to do. File problems hang under their file in the same treatment, danger-tinted when a file cannot be used.
 

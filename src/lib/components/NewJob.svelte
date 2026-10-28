@@ -4,6 +4,7 @@
 	import Icon from './Icon.svelte';
 	import LanguagePicker from './LanguagePicker.svelte';
 	import LinkList from './LinkList.svelte';
+	import PipelineDiagram from './PipelineDiagram.svelte';
 	import PipelineList from './PipelineList.svelte';
 	import SetupList from './SetupList.svelte';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
@@ -82,6 +83,11 @@
 	);
 	const noPrompt = $derived(namesOf((model) => !acceptsPrompt(model)));
 	const sources = $derived(files.flatMap((f) => (f.source ? [f.source] : [])));
+	/** Times a task was picked, so its diagram plays; opening New job shows it at rest. */
+	let picked = $state(0);
+	const chosenFields = $derived(
+		presets.find((p) => p.id === drafts[0]?.presetId)?.schema?.fields.map((f) => f.label) ?? []
+	);
 
 	async function loadTask(next: Mode) {
 		mode = next;
@@ -330,13 +336,23 @@
 						class="task"
 						class:selected={mode === t}
 						aria-pressed={mode === t}
-						onclick={() => loadTask(t)}
+						onclick={() => {
+							picked++;
+							void loadTask(t);
+						}}
 					>
 						<span class="task-name"><span class="radio" aria-hidden="true"></span>{m.task[t]}</span>
 						<span class="task-hint">{m.task[`${t}Hint`]}</span>
 					</button>
 				{/each}
 			</div>
+			<PipelineDiagram
+				{mode}
+				{files}
+				fields={chosenFields}
+				models={namesOf((model) => model !== undefined)}
+				play={picked}
+			/>
 		</section>
 
 		{#if mode === 'youtube'}

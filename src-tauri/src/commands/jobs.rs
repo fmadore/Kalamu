@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use kalamu_catalog::CostEstimate;
-use kalamu_core::{InputKind, Job, JobId, JobSummary, PieceState, Task};
+use kalamu_core::{InputKind, Job, JobId, JobSummary, PieceState, SourceFile, Task};
 use kalamu_engine::NewJob;
 use tauri::State;
 
@@ -95,6 +95,7 @@ pub async fn inspect_files(
             .map(|(result, path)| match result {
                 Ok((source, warnings)) => InspectedFile {
                     path,
+                    pieces: recording_pieces(&source),
                     source: Some(source),
                     warnings,
                     error: None,
@@ -104,12 +105,24 @@ pub async fn inspect_files(
                     source: None,
                     warnings: Vec::new(),
                     error: Some(e.into()),
+                    pieces: None,
                 },
             })
             .collect()
     })
     .await
     .map_err(|e| AppError::new(id::INTERNAL, e))
+}
+
+/// How many pieces a recording is cut into at the usual length. The cuts move to pauses when
+/// the job runs, so this is the count before the pauses are known.
+fn recording_pieces(source: &SourceFile) -> Option<u32> {
+    match source.kind {
+        InputKind::Audio | InputKind::Video => source
+            .duration_ms
+            .map(|ms| kalamu_media::plan(ms, &[], kalamu_media::DEFAULT_PIECE_MS).len() as u32),
+        _ => None,
+    }
 }
 
 /// YouTube links pasted for a new job, each checked; `path` is the link as pasted. Each video's
@@ -155,6 +168,8 @@ pub async fn inspect_links(
                 source,
                 warnings: Vec::new(),
                 error,
+                // Gemini reads a video whole.
+                pieces: None,
             }
         })
         .collect())
