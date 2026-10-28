@@ -20,7 +20,7 @@ against the sources.
 
 ## Product Purpose
 
-Scriptorium turns recordings and scanned or handwritten documents into text (transcription,
+Kalamu turns recordings and scanned or handwritten documents into text (transcription,
 OCR and HTR in one "extract text" task) and analyses texts with fields the researcher defines
 (a summary, the people and places named, a tone), using the AI
 provider the researcher chooses (Google Gemini, OpenAI, Anthropic Claude, Mistral) or offline
@@ -60,14 +60,17 @@ without losing work or paying twice.
 - Front end talks to the Rust core only through typed commands and events; no business logic
   in the interface.
 - Must work in light and dark themes and follow the Windows theme by default.
-- Open decision: the product name. "Scriptorium" is the working name and may change.
+- The name is Kalamu, Swahili for pen (from the Arabic *qalam*), reserved in Partner Center on
+  28 October 2026. It replaced the working name Scriptorium, too close to eScriptorium, the
+  HTR platform used by the same researchers.
 
 ## Brand Commitments
 
 - An independent project by Frédérick Madore (University of Bayreuth). It is not associated
   with Live Translation or with ZMO, and must not borrow their identity; `zmo-ai-pipelines` is
   only one of its reference code bases.
-- No binding visual identity: the current look, icon and even the name may be replaced.
+- The identity is "warm graphite" (DESIGN.md): the app icon is two witnesses, a handwritten
+  sheet behind its transcription with one line under the highlighter.
 
 ## Evidence on Hand
 

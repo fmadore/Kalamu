@@ -128,7 +128,7 @@
 	}
 
 	// Where the boundary between the document and the answers sits, remembered on this computer.
-	const SPLIT_KEY = 'scriptorium.analysis.split';
+	const SPLIT_KEY = 'kalamu.analysis.split';
 	const SPLIT = 0.5;
 	function storedSplit(): number {
 		try {

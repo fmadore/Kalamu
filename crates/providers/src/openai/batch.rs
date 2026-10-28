@@ -2,8 +2,8 @@
 //! one batch at half price within 24 hours. Answers come back in an output file and failures in
 //! an error file, both keyed by `custom_id` and in any order.
 
+use kalamu_core::{ApiKey, BatchContext, BatchProgress, ProcessRequest, ProviderError};
 use reqwest::multipart::{Form, Part};
-use scriptorium_core::{ApiKey, BatchContext, BatchProgress, ProcessRequest, ProviderError};
 use serde_json::{Value, json};
 
 use super::OpenAi;

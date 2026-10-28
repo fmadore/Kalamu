@@ -846,7 +846,7 @@
 			padding: var(--space-3) var(--space-5);
 			border-left: 0;
 			border-top: 1px solid var(--line);
-			box-shadow: 0 -10px 24px -18px rgba(17, 18, 20, 0.35);
+			box-shadow: 0 -10px 24px -18px rgba(23, 22, 18, 0.35);
 		}
 		.summary .rows,
 		.summary .hint {

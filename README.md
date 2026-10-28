@@ -1,9 +1,12 @@
-# Scriptorium
+# Kalamu
 
 A Windows desktop app that lets researchers read scanned and handwritten documents, transcribe
 interviews and analyse texts with the AI provider of their choice, or offline, without Python,
 Colab or the command line. Every result is checked against its source side by side: where models
 disagree is highlighted, and corrections never overwrite the AI's text.
+
+*Kalamu* is Swahili for pen, from the Arabic *qalam*. The test releases up to 0.2 were called
+Scriptorium; a newer version moves their jobs, settings and keys over on its first start.
 
 **Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT licence**
 
@@ -65,7 +68,7 @@ Requirements, checks and the sample-data preview are in [docs/development.md](do
 
 ## Support development
 
-Scriptorium is free, and every feature stays free. If it is useful to you, you can help fund its
+Kalamu is free, and every feature stays free. If it is useful to you, you can help fund its
 development on [Buy Me a Coffee](https://buymeacoffee.com/fmadore). Supporting is entirely
 optional and does not unlock additional features; AI providers bill their own usage separately.
 The same link is in the app, at the foot of the sidebar and at the end of Settings.

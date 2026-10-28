@@ -1,6 +1,6 @@
 [package]
-name = "scriptorium-export"
-description = "Output formats for Scriptorium: one exporter per format."
+name = "kalamu-export"
+description = "Output formats for Kalamu: one exporter per format."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ license.workspace = true
 csv.workspace = true
 docx-rs.workspace = true
 lopdf.workspace = true
-scriptorium-core.workspace = true
+kalamu-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 

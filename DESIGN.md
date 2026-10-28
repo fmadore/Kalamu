@@ -1,26 +1,26 @@
 ---
-name: Scriptorium
+name: Kalamu
 description: AI transcription, text extraction and analysis for researchers, checked against the source.
 colors:
-  chrome-grey: "#f2f3f5"
-  surface: "#ffffff"
-  surface-quiet: "#fafafb"
-  stage: "#1e1f22"
-  stage-raised: "#2a2b2f"
-  stage-line: "#34353a"
-  on-stage: "#e4e5e9"
-  on-stage-muted: "#a9acb4"
-  line: "#e3e4e8"
-  line-soft: "#eeeff2"
-  line-strong: "#d5d7dc"
-  line-hover: "#a4a8b0"
-  graphite-ink: "#111214"
-  graphite-ink-hover: "#2b2d32"
+  chrome-grey: "#efece6"
+  surface: "#fdfcfa"
+  surface-quiet: "#f8f6f2"
+  stage: "#1f1e1c"
+  stage-raised: "#2b2a27"
+  stage-line: "#383632"
+  on-stage: "#e8e6e1"
+  on-stage-muted: "#aeaaa2"
+  line: "#e5e1d9"
+  line-soft: "#eeebe5"
+  line-strong: "#d6d1c7"
+  line-hover: "#a8a297"
+  graphite-ink: "#171612"
+  graphite-ink-hover: "#2e2c27"
   on-ink: "#ffffff"
-  on-ink-muted: "#b9bcc3"
-  wash: "rgba(17, 18, 20, 0.05)"
-  highlighter: "#ffe066"
-  on-highlighter: "#111214"
+  on-ink-muted: "#bdb9b0"
+  wash: "rgba(23, 22, 18, 0.05)"
+  highlighter: "#ffd84d"
+  on-highlighter: "#171612"
   hand-blue: "#2456d6"
   hand-wash: "rgba(36, 86, 214, 0.1)"
   ok-green: "#1f7a4d"
@@ -39,21 +39,21 @@ colors:
   speaker-2: "#d97f00"
   speaker-2-wash: "#ffebcc"
   speaker-2-text: "#7a4300"
-  text-bright: "#111214"
-  text-body: "#1b1c1f"
-  text-secondary: "#4a4e57"
-  text-muted: "#5e626b"
-  text-faint: "#8f939b"
-  dark-chrome: "#16171a"
-  dark-surface: "#1c1d20"
-  dark-surface-raised: "#24252a"
-  dark-stage: "#0f1012"
-  dark-line: "#2c2d31"
-  dark-ink: "#ecedef"
+  text-bright: "#171612"
+  text-body: "#1e1d19"
+  text-secondary: "#4d4a42"
+  text-muted: "#615d54"
+  text-faint: "#938e84"
+  dark-chrome: "#171614"
+  dark-surface: "#1d1c1a"
+  dark-surface-raised: "#272522"
+  dark-stage: "#100f0e"
+  dark-line: "#2f2d29"
+  dark-ink: "#eeece6"
   dark-highlighter: "#e8c547"
   dark-hand-blue: "#7fa2ff"
-  dark-text-body: "#dfe1e5"
-  dark-text-muted: "#9a9ea6"
+  dark-text-body: "#e4e0d8"
+  dark-text-muted: "#a09a8f"
 typography:
   title:
     fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
@@ -259,47 +259,47 @@ components:
     padding: "0.75rem 1rem"
 ---
 
-# Design System: Scriptorium
+# Design System: Kalamu
 
 ## Overview
 
-**Creative North Star: "Graphite & highlighter"**
+**Creative North Star: "Warm graphite & highlighter"**
 
-A researcher checking a transcript works the way they would with a printout: a grey pencil for structure, a yellow highlighter for what needs another look, a blue pen for their own corrections. The interface is that desk kit and nothing more. Grey surfaces and hairlines do the structural work, black is kept for the one action that moves the work forward, yellow says "look here" and blue says "you changed this". Everything else stays quiet so those three marks can be read at a glance across a page of text.
+A researcher checking a transcript works the way they would with a printout: a grey pencil for structure, a yellow highlighter for what needs another look, a blue pen for their own corrections. The interface is that desk kit and nothing more. Paper-warm greys and hairlines do the structural work, black is kept for the one action that moves the work forward, yellow says "look here" and blue says "you changed this". Everything else stays quiet so those three marks can be read at a glance across a page of text. The greys lean warm, toward paper rather than a lab bench, and the highlighter is also the colour of the app's mark, so the one brand colour is the one that means "look here".
 
 The source is the authority, so it gets the best seat: a scan lies on a dark lightbox in both themes, the brightest thing on screen, with its controls floating on the dark in a small pill. The text being checked sits beside it on white, in a reading serif. The interface around both is a plain sans; anything a machine produced (file names, model names, times, costs, counts, shortcuts) is set in a monospace, so the researcher can tell their material, the tool and the machine apart by the face alone. Density is that of a working tool used for hours on a laptop: compact controls, generous reading measure, no decoration.
 
 The same world holds from a window snapped beside another to a large monitor, and in light and dark themes that follow Windows by default. In dark mode the ink flips to near white, so the primary action stays the highest-contrast object on screen.
 
 **Key Characteristics:**
-- Graphite neutrals: a grey chrome sidebar (#f2f3f5), white work surface, hairline borders.
+- Warm graphite neutrals: a paper-grey chrome sidebar (#efece6), a warm white work surface (#fdfcfa), hairline borders.
 - Black (graphite ink) is the only button fill, used once per work area and paired with its shortcut.
 - Highlighter yellow marks only where models disagree or where a name is found in the document.
 - Hand blue marks only the researcher's own corrections, never AI output.
-- Scans sit on a dark lightbox (#1e1f22 light, #0f1012 dark) in both themes.
+- Scans sit on a dark lightbox (#1f1e1c light, #100f0e dark) in both themes.
 - Three faces with three jobs: Instrument Sans, Source Serif 4, IBM Plex Mono.
 - Lucide line icons at an absolute 1.5px stroke, beside words.
 
 ## Colors
 
-A graphite palette of greys and one black, with two marker colours whose rarity carries the meaning and a small set of status hues used as text on a wash.
+A warm graphite palette of paper greys and one ink, with two marker colours whose rarity carries the meaning and a small set of status hues used as text on a wash.
 
 ### Primary
-- **Graphite Ink** (#111214; dark-ink #ecedef in dark): primary buttons, the sidebar's New job button, the toast, progress fills, the play button and scrubber, the selected task's inset ring, focus outlines and the checked state of native controls. Hover lifts to **Graphite Ink Hover** (#2b2d32). Text on it is **On Ink** (#ffffff), with **On Ink Muted** (#b9bcc3) for the shortcut inside a primary button.
+- **Graphite Ink** (#171612; dark-ink #eeece6 in dark): primary buttons, the sidebar's New job button, the toast, progress fills, the play button and scrubber, the selected task's inset ring, focus outlines and the checked state of native controls. Hover lifts to **Graphite Ink Hover** (#2e2c27). Text on it is **On Ink** (#ffffff), with **On Ink Muted** (#bdb9b0) for the shortcut inside a primary button.
 
 ### Secondary
-- **Highlighter** (#ffe066; dark-highlighter #e8c547): words where the set-ups read differently, as a filled mark with a 2px bleed; a name pointed at in an analysed document; the swatch in the difference count and the legend; the marker stroke in the app's mark. Text on it is always **On Highlighter** (#111214), in both themes.
+- **Highlighter** (#ffd84d; dark-highlighter #e8c547): words where the set-ups read differently, as a filled mark with a 2px bleed; a name pointed at in an analysed document; the swatch in the difference count and the legend; the marker stroke in the app's mark. Text on it is always **On Highlighter** (#171612), in both themes.
 
 ### Tertiary
 - **Hand Blue** (#2456d6; dark-hand-blue #7fa2ff): the researcher's corrections, as a 2px underline under corrected words, the "Corrected" chip and the legend key. **Hand Wash** (10% blue) is the hover ground of a corrected word and the text selection colour.
 
 ### Neutral
-- **Chrome Grey** (#f2f3f5; dark-chrome #16171a): the sidebar, plain chips. The frame around the work.
-- **Surface** (#ffffff; dark-surface #1c1d20): the main work surface, mastheads, buttons, inputs, the reading text. **Surface Quiet** (#fafafb): side panels (New job's summary), the review page strip, the audio source pane, hover on choice tiles.
-- **Stage** (#1e1f22; dark-stage #0f1012): the lightbox under a scan. **Stage Raised** (#2a2b2f) for the zoom pill, **Stage Line** (#34353a) for its rules, **On Stage** (#e4e5e9) and **On Stage Muted** (#a9acb4) for text on it.
-- **Lines**: line (#e3e4e8) for borders and dividers, line-soft (#eeeff2) between rows of one table, line-strong (#d5d7dc) for input borders, dashed slots and sigla, line-hover (#a4a8b0) for a border under the pointer.
+- **Chrome Grey** (#efece6; dark-chrome #171614): the sidebar, plain chips. The frame around the work.
+- **Surface** (#fdfcfa; dark-surface #1d1c1a), with **Surface Raised** (#ffffff; #272522) for what is lifted onto it: the main work surface, mastheads, buttons, inputs, the reading text. **Surface Quiet** (#f8f6f2): side panels (New job's summary), the review page strip, the audio source pane, hover on choice tiles.
+- **Stage** (#1f1e1c; dark-stage #100f0e): the lightbox under a scan. **Stage Raised** (#2b2a27) for the zoom pill, **Stage Line** (#383632) for its rules, **On Stage** (#e8e6e1) and **On Stage Muted** (#aeaaa2) for text on it.
+- **Lines**: line (#e5e1d9) for borders and dividers, line-soft (#eeebe5) between rows of one table, line-strong (#d6d1c7) for input borders, dashed slots and sigla, line-hover (#a8a297) for a border under the pointer.
 - **Wash** (5% ink): hover ground for ghost buttons, list rows and transcript lines.
-- **Text**: bright (#111214) for headings and values, body (#1b1c1f), secondary (#4a4e57), muted (#5e626b) for hints and metadata, faint (#8f939b) only for decoration that repeats a value given elsewhere (line numbers, the slash in a breadcrumb).
+- **Text**: bright (#171612) for headings and values, body (#1e1d19), secondary (#4d4a42), muted (#615d54) for hints and metadata, faint (#938e84) only for decoration that repeats a value given elsewhere (line numbers, the slash in a breadcrumb).
 - **Status**: ok-green (#1f7a4d), warn-amber (#d97f00), danger-red (#b42318), each with a darker text tone and a pale wash. Used as coloured text on a wash, a 6px dot, or a thin bar; never as a filled button.
 - **Speakers**: speaker 1 teal (#0f8a7e; #5cc8bc in dark) and speaker 2 amber (#d97f00), each as a tag of dark text on a pale wash, told apart by lightness as well as hue. Neither is blue, which belongs to the researcher's hand.
 
@@ -334,19 +334,19 @@ A graphite palette of greys and one black, with two marker colours whose rarity 
 - Weights stay at 400, 500 and 600. Tabular figures where numbers line up.
 
 ### Named Rules
-**The Three Voices Rule.** Instrument Sans for everything operated, Source Serif 4 only for the text being checked, IBM Plex Mono for anything a machine produced. A control in the serif, or a document in the sans, is a defect.
+**The Three Voices Rule.** Instrument Sans for everything operated, Source Serif 4 only for the text being checked, IBM Plex Mono for anything a machine produced. A control in the serif, or a document in the sans, is a defect. One exception, which is the signature rather than a control: the app's name beside the mark in the sidebar is set in Source Serif 4 600 at 1.1875rem (optical size 48).
 
 ## Layout
 
 The app is a fixed shell: a 16rem chrome-grey sidebar at left and a scrolling white main area. The sidebar holds the mark and name, the black New job button with Ctrl N, the jobs list grouped Running, Unfinished and Finished (each group head a caption with a mono count), and at its foot the tools (Prompts, Settings) above a hairline, with an offline-ready line and green dot. A job row shows its name with a task icon, a caption line of status, and a 3px ink progress bar while running. The current row or tool is lifted onto white with the raised shadow. The sidebar folds (its button beside the name, or Ctrl B) to a 3.25rem **rail** of the same controls as icons, named by their tooltips: the job list leaves, New job and the tools stay; the choice is remembered on the computer.
 
-The **mark** is a graphite tile with 5-unit corners on a 22-unit grid, two white text lines and, between them, a wider highlighter bar: a page with one line marked. The sidebar draws it at 22px and the app icon (taskbar, Start, Store, installer) is the same shapes, from `src-tauri/icons/source.svg`; its lines are 2 units thick so they hold at 16px.
+The **mark** is "two witnesses": on a warm graphite tile (#1e1d1b), a cream handwritten sheet with brown strokes lies behind a white transcribed sheet whose middle line is under the highlighter. It keeps its own colours in both themes, with a faint rim so the tile holds on a dark taskbar. The app icon from 64px up (Start, Store, installer) is a rendered master, `src-tauri/icons/source.png`, generated with OpenAI GPT Image (prompt in the `.json` beside it); at 16 to 48px (taskbar, tray, title bar) and in the sidebar at 22px it is a simplified drawing on a 22-unit grid, `src-tauri/icons/small.svg`, whose strokes hold at 16px. `npx tauri icon src-tauri/icons/source.png` writes the large sizes; the small ones and the ICO's 16 to 48px frames are rendered from `small.svg`.
 
 Each screen opens with a **masthead**: at least 3.5rem tall, white, a hairline below, the title (and a back link or breadcrumb) at left and actions at right. Below it a **sheet**: one column up to 64rem, padding 1.5rem 2rem 3rem, sections 2rem apart.
 
 **New job** is a form beside a summary: the form (max 52rem) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
 
-**Review** splits the work area 0.95fr (source) to 1.05fr (text); **Compare** in the masthead adds a third pane with another set-up's whole text (a third each). The boundaries between panes are **splitters**: a 9px invisible grip on the hairline that shows a 3px line on hover (line-hover) and while dragged or focused (bright text); arrow keys move it 2% (Shift 10%), a double click puts it back, and no pane gets narrower than about 16rem. Widths and the open compare pane are remembered on the computer; the analysis review has the same splitter between document and answers. Each pane has a 2.75rem bar on top. The text pane sets each line in a grid with a 2.25rem number column, numbers printed every fifth line and on every line that differs. A page strip runs along the bottom on surface-quiet: one small tile per page with its state, and a tally with a green progress bar.
+**Review** splits the work area 0.95fr (source) to 1.05fr (text); **Compare** in the masthead adds a third pane with another set-up's whole text (a third each). The boundaries between panes are **splitters**: a 9px invisible grip on the hairline that shows a 3px line on hover (line-hover) and while dragged or focused (bright text); arrow keys move it 2% (Shift 10%), a double click puts it back, and no pane gets narrower than about 16rem. Widths and the open compare pane are remembered on the computer; the analysis review has the same splitter between document and answers. Each pane has a 2.75rem bar on top. The text pane sets each line in a grid with a 2.25rem number column, numbers printed every fifth line and on every line that differs. A page strip runs along the bottom on surface-quiet: for a scan, each page as a small thumbnail with its number under it; for a recording, a numbered tile per piece; and a tally with a green progress bar.
 
 **Job detail** sets the job's facts as one bordered strip of cells divided by hairlines, then the files as a bordered table with per-set-up progress bars.
 
@@ -364,9 +364,9 @@ Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls a
 Flat by default, with tonal layering doing most of the work: chrome grey behind, white for the work, a quiet grey for side panels. Shadows appear on three kinds of thing: a selected item lifted onto white, an overlay that floats over content, and a scan lying on the lightbox.
 
 ### Shadow Vocabulary
-- **Raised** (`box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(17, 18, 20, 0.06)`; dark: the ring alone): the current sidebar job or tool, the active prompt, the audio player, the transcript line now playing.
-- **Pop** (`box-shadow: 0 0 0 1px var(--line), 0 12px 32px -8px rgba(17, 18, 20, 0.18)`): the language list in New job.
-- **Flyout** (`box-shadow: 0 18px 48px -16px rgba(17, 18, 20, 0.35)`): the readings over the text, the close dialog and the toast.
+- **Raised** (`box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(23, 22, 18, 0.06)`; dark: the ring alone): the current sidebar job or tool, the active prompt, the audio player, the transcript line now playing.
+- **Pop** (`box-shadow: 0 0 0 1px var(--line), 0 12px 32px -8px rgba(23, 22, 18, 0.18)`): the language list in New job.
+- **Flyout** (`box-shadow: 0 18px 48px -16px rgba(23, 22, 18, 0.35)`): the readings over the text, the close dialog and the toast.
 - **Page** (`box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.4)`): a scan on the lightbox, with a 2px corner.
 - **Zoom pill** (`box-shadow: 0 0 0 1px var(--stage-line), 0 8px 24px rgba(0, 0, 0, 0.35)`): the controls floating over the stage.
 
@@ -417,7 +417,7 @@ White, at least 3.5rem, hairline below; a title in title type, an optional muted
 - **Readings:** pointing at a disagreement for 300ms shows its readings over the text, under the words (over them when the pane has no room below), max 25rem, white with the flyout shadow and 10px corners, rising 3px into place over 120ms. They stay while the pointer is on the words or on them; a click, F, or focusing inside pins them until Escape, the close button or a click elsewhere. The one in the text comes first, in bold, with an "In the text" chip; each other reading is a whole row to click, its words in the reading serif over who reads them (mono), "Use this reading" at right; a field takes your own.
 - **Compared text:** another set-up's own words on paper, in the reading serif without line numbers, its differences in the same highlighter (a gap mark where it leaves words out). Pointing at a difference in either text rings it in both; clicking one in the compared text pins its readings in the text. A select picks the set-up when there are several.
 - **Corrections:** corrected words lose the yellow and take a 2px hand-blue underline offset 0.25em; hover takes the hand wash.
-- **Page strip:** 2rem tiles with a mono page number; reviewed pages in ok-green with a check; the current page ringed in bright text. A tally beside it with a 4px green bar.
+- **Page strip:** for a scan, each page as a 2.5rem-wide thumbnail (3:4, top of the page, 2px corners, a hairline ring) over its mono number; thumbnails are drawn as they scroll into view, two at a time, and kept for the session. For a recording, 2rem tiles with a mono number. Reviewed pages show a check and ok-green number; the current page is ringed in bright text and lifted onto the raised surface. A tally beside it with a 4px green bar.
 
 ### Audio Player
 A white strip with 10px corners and the raised shadow: a round 2.5rem ink play button, mono times, a 4px track filled in ink with an ink thumb ringed in white. Below, transcript lines: a mono timestamp, a speaker tag, and what was said in the reading serif. Hover takes the wash; the line now playing is lifted onto white.
@@ -431,10 +431,10 @@ A full-width banner or inline notice in warn-text on the warn wash (7px corners 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** use graphite ink (#111214, #ecedef in dark) as the only button fill, once per work area, with its shortcut beside the label.
-- **Do** keep highlighter yellow (#ffe066 / #e8c547) for disagreements and found terms, always with ink text on it.
+- **Do** use graphite ink (#171612, #eeece6 in dark) as the only button fill, once per work area, with its shortcut beside the label.
+- **Do** keep highlighter yellow (#ffd84d / #e8c547) for disagreements and found terms, always with ink text on it.
 - **Do** mark the researcher's corrections in hand blue (#2456d6 / #7fa2ff) as an underline on top of the text.
-- **Do** put scans on the stage (#1e1f22 / #0f1012) with the page shadow, and the controls over it in on-stage colours.
+- **Do** put scans on the stage (#1f1e1c / #100f0e) with the page shadow, and the controls over it in on-stage colours.
 - **Do** set file names, models, times, costs, counts and shortcuts in IBM Plex Mono, and only the text being checked in Source Serif 4.
 - **Do** separate with greys and hairlines first; reach for a shadow only for the selected item, an overlay or the scan.
 - **Do** show status as coloured text on a wash, with a 6px dot.

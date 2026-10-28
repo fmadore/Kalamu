@@ -1,13 +1,13 @@
 //! A pipeline as a file to share or cite: everything that decides its results, from the models
 //! and the settings each provider sends to the full text of every prompt and its fields. The
-//! JSON file can be imported into another Scriptorium; the Markdown version reads as a methods
+//! JSON file can be imported into another Kalamu; the Markdown version reads as a methods
 //! appendix. Both are built by the engine, which knows the catalogue and the providers.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
-use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt};
-use scriptorium_core::{
+use kalamu_core::provenance::{GeneratorInfo, ProvenancePrompt};
+use kalamu_core::{
     FieldKind, LanguageChoice, LineBreaks, OutputDestination, RequestSetting, Task, Timestamp,
 };
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,9 @@ use ts_rs::TS;
 
 use crate::{Pipeline, PipelineLibrary, Preset, PromptError, PromptLibrary};
 
-const FILE_FORMAT: &str = "scriptorium-pipeline";
+const FILE_FORMAT: &str = "kalamu-pipeline";
+/// Files exported before the app was renamed from Scriptorium.
+const LEGACY_FILE_FORMAT: &str = "scriptorium-pipeline";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -60,7 +62,7 @@ impl PipelineFile {
             format: FILE_FORMAT.into(),
             version: 1,
             generator: GeneratorInfo {
-                name: "Scriptorium".into(),
+                name: "Kalamu".into(),
                 version: app_version.into(),
             },
             exported_at: Timestamp::now(),
@@ -82,8 +84,8 @@ impl PipelineFile {
         let _ = writeln!(out, "# {}\n", p.name);
         let _ = writeln!(
             out,
-            "A Scriptorium pipeline, exported on {} from {} {}. The JSON file exported with \
-             it can be imported into Scriptorium to run the same pipeline.\n",
+            "A Kalamu pipeline, exported on {} from {} {}. The JSON file exported with \
+             it can be imported into Kalamu to run the same pipeline.\n",
             date(self.exported_at),
             self.generator.name,
             self.generator.version
@@ -204,7 +206,7 @@ impl PipelineLibrary {
     ) -> Result<Pipeline, PromptError> {
         let file: PipelineFile =
             serde_json::from_str(json).map_err(|e| PromptError::InvalidImport(e.to_string()))?;
-        if file.format != FILE_FORMAT || file.version > 1 {
+        if (file.format != FILE_FORMAT && file.format != LEGACY_FILE_FORMAT) || file.version > 1 {
             return Err(PromptError::InvalidImport(file.format));
         }
         let mut ids = BTreeMap::new();
@@ -297,7 +299,7 @@ fn date(at: Timestamp) -> String {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use scriptorium_core::{ExportFormat, JobSettings, ProviderId, SetupOptions};
+    use kalamu_core::{ExportFormat, JobSettings, ProviderId, SetupOptions};
 
     use super::*;
     use crate::{PipelineSetup, RenderContext};
@@ -390,6 +392,25 @@ mod tests {
         );
 
         assert!(pipelines.import("{}", &mut prompts).is_err());
+    }
+
+    #[test]
+    fn pipelines_exported_by_scriptorium_still_import() {
+        let mut prompts = PromptLibrary::in_memory();
+        let mut pipelines = PipelineLibrary::in_memory();
+        let mut old = file(&prompts, "analysis.tone");
+        old.format = LEGACY_FILE_FORMAT.into();
+        let imported = pipelines
+            .import(&old.to_json().unwrap(), &mut prompts)
+            .unwrap();
+        assert_eq!(imported.name, "Literature review");
+
+        old.format = "another-app".into();
+        assert!(
+            pipelines
+                .import(&old.to_json().unwrap(), &mut prompts)
+                .is_err()
+        );
     }
 
     #[test]

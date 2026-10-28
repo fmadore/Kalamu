@@ -5,7 +5,7 @@
 //! newer one from the repository without a release, and [`Catalog::newest`] keeps whichever is
 //! more recent. This crate does no network or file I/O itself.
 
-use scriptorium_core::{LanguageCode, ProviderId, Task};
+use kalamu_core::{LanguageCode, ProviderId, Task};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -192,7 +192,7 @@ pub struct CostEstimate {
 pub enum CatalogError {
     #[error("The model catalogue could not be read: {0}")]
     Invalid(String),
-    #[error("This model catalogue needs a newer version of Scriptorium")]
+    #[error("This model catalogue needs a newer version of Kalamu")]
     TooNew,
 }
 
@@ -349,7 +349,7 @@ impl Catalog {
 
     /// Cost of a finished call from its reported usage: cached input at its own price, and the
     /// batch discount on everything when the call went through a batch, as providers bill it.
-    pub fn actual_cost(&self, model: &ModelInfo, usage: &scriptorium_core::Usage) -> Option<f64> {
+    pub fn actual_cost(&self, model: &ModelInfo, usage: &kalamu_core::Usage) -> Option<f64> {
         let p = &model.pricing;
         let factor = p.batch_factor(usage.batch);
         if let Some(per_minute) = p.per_minute
@@ -495,13 +495,13 @@ mod tests {
             batch_discount: Some(0.5),
             ..Pricing::default()
         };
-        let usage = |batch| scriptorium_core::Usage {
+        let usage = |batch| kalamu_core::Usage {
             input_tokens: 1_000_000,
             cached_input_tokens: 600_000,
             cache_write_tokens: 100_000,
             output_tokens: 100_000,
             batch,
-            ..scriptorium_core::Usage::default()
+            ..kalamu_core::Usage::default()
         };
         // 0.3 M plain at $2, 0.6 M cached at $0.2, 0.1 M written at $2.5, 0.1 M out at $10.
         let fast = catalog.actual_cost(&model, &usage(false));

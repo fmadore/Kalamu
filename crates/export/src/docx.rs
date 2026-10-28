@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use docx_rs::{BreakType, Docx, Paragraph, Run};
-use scriptorium_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
+use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
 
 /// A Word document: title, a line naming the model, then each page under a small heading.
 /// Line breaks inside paragraphs are kept, since diplomatic transcriptions rely on them.

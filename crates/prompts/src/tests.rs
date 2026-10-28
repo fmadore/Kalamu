@@ -1,4 +1,4 @@
-use scriptorium_core::LanguageCode;
+use kalamu_core::LanguageCode;
 
 use super::*;
 

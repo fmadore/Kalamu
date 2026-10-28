@@ -14,12 +14,12 @@
 mod batch;
 
 use async_trait::async_trait;
-use reqwest::Client;
-use reqwest::multipart::{Form, Part};
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, LanguageChoice, ProcessOutput,
     ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, Usage,
 };
+use reqwest::Client;
+use reqwest::multipart::{Form, Part};
 use serde_json::{Value, json};
 
 use crate::analysis;
@@ -254,7 +254,7 @@ impl OpenAi {
                     l.as_str()
                         .or_else(|| l.get("language").and_then(Value::as_str))
                 })
-                .map(scriptorium_core::LanguageCode::new),
+                .map(kalamu_core::LanguageCode::new),
             usage: Usage {
                 input_tokens: usage
                     .and_then(|u| u.get("input_tokens"))

@@ -1,5 +1,5 @@
 //! YouTube videos, transcribed from their address: the provider fetches the video, and
-//! Scriptorium never downloads or stores it. Only Gemini reads YouTube links today; a model says
+//! Kalamu never downloads or stores it. Only Gemini reads YouTube links today; a model says
 //! so by listing [`YOUTUBE_LINK`] among its catalogue inputs.
 
 use crate::fingerprint::sha256_hex;

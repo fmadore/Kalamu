@@ -2,7 +2,7 @@
 //! a 24-hour limit. Results are read inline (`?inline=true`), or from the output file when the
 //! job has one. The reference types each result only as a map, so the common shapes are read.
 
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, BatchContext, BatchProgress, ProcessOutput, ProcessRequest, ProviderError, Task,
 };
 use serde_json::{Value, json};

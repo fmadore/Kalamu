@@ -1,4 +1,4 @@
-# FFmpeg in Scriptorium
+# FFmpeg in Kalamu
 
 How the app uses FFmpeg, how the bundled build is made, and what keeps it compatible with an
 MIT-licensed app distributed through the Microsoft Store.
@@ -6,7 +6,7 @@ MIT-licensed app distributed through the Microsoft Store.
 ## What it does
 
 FFmpeg and ffprobe run as separate programs, started by the `media` crate
-(`crates/media/src/ffmpeg.rs`). FFmpeg is never linked into Scriptorium.
+(`crates/media/src/ffmpeg.rs`). FFmpeg is never linked into Kalamu.
 
 - **Length and streams** of a recording or video (`ffprobe`), when files are added.
 - **Checks before a job**: no sound track, very long recordings, and very quiet ones (loudness
@@ -25,7 +25,7 @@ FFmpeg and ffprobe run as separate programs, started by the `media` crate
   recorded in `provenance.json` and in the cache key.
 
 Development builds also find an FFmpeg on `PATH`; release builds look only next to the app's
-executable, or in `SCRIPTORIUM_FFMPEG_DIR`. Without FFmpeg, recordings in a format the provider
+executable, or in `KALAMU_FFMPEG_DIR`. Without FFmpeg, recordings in a format the provider
 takes are sent whole, and video is unavailable.
 
 ## The bundled build
@@ -53,7 +53,7 @@ none of this.
 
 From FFmpeg's [licence checklist](https://ffmpeg.org/legal.html):
 
-| Obligation | How Scriptorium meets it |
+| Obligation | How Kalamu meets it |
 | --- | --- |
 | No GPL or non-free parts | Configure flags above; checked by the workflow |
 | Separate, replaceable library code | Separate programs, not linked; names unchanged |

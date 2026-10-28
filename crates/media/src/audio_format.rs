@@ -14,7 +14,7 @@ pub enum AudioFormat {
 impl AudioFormat {
     pub fn mime(self) -> &'static str {
         match self {
-            Self::Pcm16k => scriptorium_core::PCM_16K_MONO,
+            Self::Pcm16k => kalamu_core::PCM_16K_MONO,
             Self::OggOpus => "audio/ogg",
             Self::WebmOpus => "audio/webm",
             Self::Flac => "audio/flac",

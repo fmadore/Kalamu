@@ -10,12 +10,12 @@ use std::time::{Duration, Instant};
 
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, CacheKey, Job, JobId, JobStatus, Pace, PieceRef, PieceState, PieceStatus,
     ProcessOutput, ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId, SourceFile,
     SourceId, StopSignal, StoredResult, Timestamp,
 };
-use scriptorium_media::OpenSource;
+use kalamu_media::OpenSource;
 
 use crate::{Control, Engine, EngineError};
 
@@ -125,7 +125,7 @@ impl Engine {
             // A recording resumed keeps the pieces planned the first time: planning decodes the
             // whole file, and the cuts must not move under results already stored.
             let stored = stored_pieces(&existing, &job, source);
-            let pieces = if job.task == scriptorium_core::Task::Analysis {
+            let pieces = if job.task == kalamu_core::Task::Analysis {
                 // An analysis reads the whole document at once.
                 vec![PieceRef::Whole]
             } else if stored.is_empty() {
@@ -488,7 +488,7 @@ fn stored_pieces(
 ) -> Vec<PieceRef> {
     let audio = matches!(
         source.kind,
-        scriptorium_core::InputKind::Audio | scriptorium_core::InputKind::Video
+        kalamu_core::InputKind::Audio | kalamu_core::InputKind::Video
     );
     let Some(first) = job.setups.first() else {
         return Vec::new();

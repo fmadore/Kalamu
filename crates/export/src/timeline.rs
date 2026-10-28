@@ -1,7 +1,7 @@
 //! Turning transcription parts into one continuous timeline, and the timeline into subtitle
 //! cues.
 
-use scriptorium_core::{ExportDocument, PieceRef, Segment};
+use kalamu_core::{ExportDocument, PieceRef, Segment};
 
 /// Longest subtitle line pair, as in zmo-ai-pipelines' subtitle export.
 const MAX_CUE_CHARS: usize = 84;

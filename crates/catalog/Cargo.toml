@@ -1,5 +1,5 @@
 [package]
-name = "scriptorium-catalog"
+name = "kalamu-catalog"
 description = "The model catalogue: providers, models, capabilities, languages and prices."
 version.workspace = true
 edition.workspace = true
@@ -7,7 +7,7 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
-scriptorium-core.workspace = true
+kalamu-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

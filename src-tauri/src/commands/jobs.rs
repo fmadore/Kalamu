@@ -2,9 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use scriptorium_catalog::CostEstimate;
-use scriptorium_core::{InputKind, Job, JobId, JobSummary, PieceState, Task};
-use scriptorium_engine::NewJob;
+use kalamu_catalog::CostEstimate;
+use kalamu_core::{InputKind, Job, JobId, JobSummary, PieceState, Task};
+use kalamu_engine::NewJob;
 use tauri::State;
 
 use super::{AppState, EstimateRequest, EstimateRow, InspectedFile};
@@ -212,7 +212,7 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Ve
                 Some(model) => {
                     let mut estimate =
                         catalog.estimate(model, request.task, pages, minutes, prompt_chars);
-                    // Economy mode only where Scriptorium sends this model's work as a batch.
+                    // Economy mode only where Kalamu sends this model's work as a batch.
                     let batches = state
                         .engine
                         .provider(&setup.provider)

@@ -1,6 +1,6 @@
 # Partner Center listing text
 
-Paste-ready text for Scriptorium's Microsoft Store listing, written for the **first
+Paste-ready text for Kalamu's Microsoft Store listing, written for the **first
 submission**, version 1.0.0, not yet built. The submission steps are in
 [microsoft-store.md](microsoft-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
@@ -26,9 +26,9 @@ that the features listed still match the app.
 ### Description — full text
 
 ```text
-Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Scriptorium works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key, so their usage charges apply and are billed by them; the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, free, after a one-time model download.
+Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key, so their usage charges apply and are billed by them; the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, free, after a one-time model download.
 
-Extract text from PDFs and images, printed or handwritten: newspapers, reports, letters, registers and manuscripts. Keep the lines as on the page, to check against the scan, or join them into running text for reading and searching. Before a job starts, Scriptorium checks the files and suggests fixes: double pages to split, scans whose resolution is too low, recordings that are too quiet.
+Extract text from PDFs and images, printed or handwritten: newspapers, reports, letters, registers and manuscripts. Keep the lines as on the page, to check against the scan, or join them into running text for reading and searching. Before a job starts, Kalamu checks the files and suggests fixes: double pages to split, scans whose resolution is too low, recordings that are too quiet.
 
 Transcribe recordings and videos with speakers and timestamps, and give the speakers their real names. Long recordings are cut at pauses and sent piece by piece. Offline, Whisper transcribes on your PC with no account, key or internet connection, and nothing leaves the computer; speaker labels need a cloud model. With Gemini, public YouTube videos are transcribed from their link, without downloading them.
 
@@ -36,7 +36,7 @@ Analyse texts with fields you define, as you would brief a research assistant: a
 
 Check every result beside its source: the page next to its text, or the recording next to its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Compare two or more models on the same documents: their differences are highlighted in the text, with error rates against the pages you have corrected.
 
-Large jobs are safe and affordable. Work is saved piece by piece: a job interrupted by closing the app, a crash or a lost connection resumes where it stopped, and nothing is sent or paid for twice. Long jobs keep running from the notification area while the window is closed. For large collections, choose the cheaper mode: the provider's batch service answers within a day at about half the price, and Scriptorium collects the results when it next opens.
+Large jobs are safe and affordable. Work is saved piece by piece: a job interrupted by closing the app, a crash or a lost connection resumes where it stopped, and nothing is sent or paid for twice. Long jobs keep running from the notification area while the window is closed. For large collections, choose the cheaper mode: the provider's batch service answers within a day at about half the price, and Kalamu collects the results when it next opens.
 
 Export to text, Markdown, Word, JSON, CSV, subtitles (SRT and WebVTT) and, with Mistral OCR, searchable PDF. Each output comes with a provenance.json file recording the model, prompt and settings, so your methods can be described and repeated. Save a job's settings as a pipeline to start the next batch in one click, and export it with its full prompts to cite in a methods section or share with colleagues.
 
@@ -44,7 +44,7 @@ Your files go straight from your PC to the provider you choose; offline, nothing
 
 Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 and ARM64 packages. The interface is in English; documents and recordings can be in any language the chosen model reads. Free and open source under the MIT licence.
 
-Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Scriptorium is an independent project, not affiliated with or endorsed by any of them.
+Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
 ### What's new in this version — 1.0.0
@@ -114,9 +114,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Scriptorium. Version: 1.0.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Scriptorium extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.0.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: [link to scriptorium-samples.zip on the GitHub release page], containing a short public-domain recording (interview.mp3), a scanned page (letter.pdf) and a text (article.txt).
+Sample files for testing: [link to kalamu-samples.zip on the GitHub release page], containing a short public-domain recording (interview.mp3), a scanned page (letter.pdf) and a text (article.txt).
 
 Offline route, with no account or key:
 1. Open Settings, find Offline transcription and download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
@@ -126,7 +126,7 @@ Offline route, with no account or key:
 
 Cloud features: text extraction (letter.pdf), analyses (article.txt) and cloud transcription need the user's own key, entered in Settings and kept in Windows Credential Manager. [Either: A test Gemini API key with a small spending cap is provided for certification: <key>. Paste it in Settings under Google Gemini, then run New job > Extract text on letter.pdf, and New job > Analyse texts on article.txt with the Summary and keywords for research analysis. Or: No test key is provided; these features need a key from the provider, as the listing says.] An estimated cost is shown before each job starts. The cheaper mode sends a job to the provider's batch service, which may take up to a day to answer; it is optional and off by default.
 
-YouTube: in Transcribe YouTube, the user pastes a link to a public video; Google's Gemini API reads the video from YouTube itself. Scriptorium does not download, store or convert YouTube videos. The app asks YouTube's public oEmbed endpoint for the video title, and the review plays the video in YouTube's privacy-enhanced embedded player, loaded only when the user plays it.
+YouTube: in Transcribe YouTube, the user pastes a link to a public video; Google's Gemini API reads the video from YouTube itself. Kalamu does not download, store or convert YouTube videos. The app asks YouTube's public oEmbed endpoint for the video title, and the review plays the video in YouTube's privacy-enhanced embedded player, loaded only when the user plays it.
 
 Generative AI (Store Policy 11.16): every result is text generated by the AI model the user chooses. The listing says so, results are always shown beside their source for checking, and Report a problem in the review and in Settings opens a GitHub issue form in the default browser to report inappropriate output to the developer.
 
@@ -134,6 +134,14 @@ Voluntary support link (Store Policy 10.8.2): Buy me a coffee, at the foot of th
 
 The full-trust desktop process reads the files the user selects, converts audio with bundled FFmpeg executables (LGPL; source published with each release, licence terms in the listing), runs Whisper on the CPU, stores API keys in Windows Credential Manager and writes results where the user chooses. It connects only to the provider the user selects, to Hugging Face for model downloads the user requests, to GitHub for the public model catalogue and to YouTube as described above. There is no developer server, telemetry, driver, service or auto-start task.
 ```
+
+## Hero image
+
+[store/hero-1920x1080.png](store/hero-1920x1080.png), 1920 × 1080, for the listing's 16:9
+hero art: newspapers, a letter and a cassette recorder whose lines settle into a clean page of
+text. It is an illustration generated with OpenAI GPT Image (`gpt-image-2.5-flare`); its prompt
+and settings are in the `.json` beside it. It shows no real document, script or person, and
+carries no text, so the Store's title and buttons can sit over its right side.
 
 ## Screenshots
 

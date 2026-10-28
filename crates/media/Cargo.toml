@@ -1,6 +1,6 @@
 [package]
-name = "scriptorium-media"
-description = "File inspection, conversion, splitting and input checks for Scriptorium."
+name = "kalamu-media"
+description = "File inspection, conversion, splitting and input checks for Kalamu."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -15,7 +15,7 @@ docx-rs.workspace = true
 hex.workspace = true
 image.workspace = true
 lopdf.workspace = true
-scriptorium-core.workspace = true
+kalamu-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true

@@ -5,6 +5,16 @@
       ".impeccable/mocks/**",
       "docs/design/**"
     ],
-    "ignoreValues": []
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "src/lib/components/PageThumb.svelte"
+        ],
+        "createdAt": "2026-10-28T07:59:19.405Z",
+        "reason": "Claude: src is bound with {src} to a drawn thumbnail data URL, rendered only when set; alt is empty on purpose because the strip button carries the page's accessible name"
+      }
+    ]
   }
 }

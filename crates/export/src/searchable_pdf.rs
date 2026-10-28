@@ -11,15 +11,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
-use lopdf::{Dictionary, Document, Object, ObjectId, Stream, dictionary};
-use scriptorium_core::{
+use kalamu_core::{
     ExportDocument, ExportError, ExportFormat, Exporter, InputKind, PageHalf, PieceRef, Task,
     TextRegion,
 };
+use lopdf::{Dictionary, Document, Object, ObjectId, Stream, dictionary};
 
 pub struct SearchablePdfExporter;
 
-const FONT: &[u8] = b"ScriptoriumText";
+const FONT: &[u8] = b"KalamuText";
 /// The fixed advance of every code, in thousandths of the font size.
 const ADVANCE: f32 = 0.5;
 const INHERITED: &[&[u8]] = &[b"Resources", b"MediaBox", b"CropBox", b"Rotate"];

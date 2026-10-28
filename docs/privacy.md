@@ -1,11 +1,11 @@
-# Privacy Policy — Scriptorium
+# Privacy Policy — Kalamu
 
-**Effective date:** 27 October 2026 (documents the version in development; to be dated again
+**Effective date:** 28 October 2026 (documents the version in development; to be dated again
 for the first Store release)
 
 ## What this app is
 
-Scriptorium is a Windows desktop application for researchers. It extracts text from scanned or
+Kalamu is a Windows desktop application for researchers. It extracts text from scanned or
 handwritten documents, transcribes recordings and videos, and analyses texts, in one of two
 ways the user chooses for each job:
 
@@ -17,7 +17,7 @@ The developer operates no server for the app and receives nothing from it.
 
 ## Files the user chooses
 
-Scriptorium reads only the files and folders the user adds to a job, and the YouTube links the
+Kalamu reads only the files and folders the user adds to a job, and the YouTube links the
 user pastes.
 
 **With a cloud provider**, each page, recording segment or text is sent directly from the
@@ -25,12 +25,12 @@ user's computer to that provider, with the instructions for the task (the prompt
 analysis, the fields to answer), and processed under the user's account and the provider's
 terms. Before sending, the app may convert a piece into a form the provider accepts, for
 example cutting a PDF into pages or a recording into segments; the original files are never
-changed. With a YouTube link, Gemini fetches the public video from YouTube itself; Scriptorium
+changed. With a YouTube link, Gemini fetches the public video from YouTube itself; Kalamu
 does not download the video.
 
 **In the cheaper mode** (economy), pieces are sent to the provider's batch service instead of
 one by one. The provider keeps the batch, its input and its answers for a time set by its own
-rules (from about a day to several weeks), in the user's account, and Scriptorium collects the
+rules (from about a day to several weeks), in the user's account, and Kalamu collects the
 answers when it next opens.
 
 **Offline**, with Whisper, recordings are converted and transcribed on the computer and never
@@ -41,8 +41,11 @@ Choose a provider whose terms suit the material, or work offline.
 
 ## What the app keeps on the computer
 
-In the app's local data folder (`%LOCALAPPDATA%\io.github.fmadore.scriptorium` for the
-installer, the package's own folder for the Store app):
+In the app's local data folder (`%LOCALAPPDATA%\io.github.fmadore.kalamu` for the
+installer, the package's own folder for the Store app). The test releases up to 0.2, named
+Scriptorium, kept it in `%LOCALAPPDATA%\io.github.fmadore.scriptorium`; the first start of
+Kalamu moves that folder, and the keys stored under that name in Credential Manager, to the
+new names, on the same computer only:
 
 - **The job database** (`jobs.sqlite`): each job's name, the paths and fingerprints of its
   files, its settings and progress, the text and answers returned for each piece, the user's
@@ -87,13 +90,13 @@ proxy is set in Windows, connections go through it.
 
 ## Running in the background
 
-Scriptorium does not start with Windows. When the user closes the window during a job, the app
+Kalamu does not start with Windows. When the user closes the window during a job, the app
 asks whether to keep the job running; if so, it stays in the notification area until the job
 ends or the user quits. Jobs waiting for a provider's batch resume when the app is next opened.
 
 ## Support link
 
-Scriptorium shows an optional *Buy me a coffee* link to the developer's page on Buy Me a Coffee
+Kalamu shows an optional *Buy me a coffee* link to the developer's page on Buy Me a Coffee
 (`https://buymeacoffee.com/fmadore`). The app passes that fixed address to the default browser
 and nothing else: it sends no information about the user or the device and contacts no payment
 service itself. Anything entered on that page is between the user and Buy Me a Coffee, under the

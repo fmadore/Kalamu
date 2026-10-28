@@ -1,4 +1,4 @@
-# Scriptorium licence terms
+# Kalamu licence terms
 
 For the Microsoft Store listing (Partner Center, Store listings, "Additional license terms"),
 where they replace Microsoft's Standard Application License Terms, and for the GitHub
@@ -6,7 +6,7 @@ releases.
 
 ---
 
-Scriptorium is free software by Frédérick Madore, released under the MIT licence:
+Kalamu is free software by Frédérick Madore, released under the MIT licence:
 
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 > and associated documentation files (the "Software"), to deal in the Software without
@@ -19,9 +19,9 @@ Scriptorium is free software by Frédérick Madore, released under the MIT licen
 
 Its source code is at https://github.com/fmadore/Scriptorium.
 
-**Third-party software.** Scriptorium includes software by others under their own licences,
+**Third-party software.** Kalamu includes software by others under their own licences,
 listed in the app (Settings, About) and in the licences folder installed with it. The author of
-Scriptorium does not own these components.
+Kalamu does not own these components.
 
 - **FFmpeg.** This software uses code of [FFmpeg](https://ffmpeg.org/), licensed under the
   [GNU Lesser General Public License version 2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
@@ -36,10 +36,10 @@ Scriptorium does not own these components.
 - Other open-source libraries under permissive licences (MIT, Apache 2.0, BSD and similar),
   listed with their licence texts in the third-party notices installed with the app.
 
-**Reverse engineering.** Nothing in these terms restricts you from modifying Scriptorium or
+**Reverse engineering.** Nothing in these terms restricts you from modifying Kalamu or
 the components above for your own use, or from reverse engineering it to debug such
 modifications.
 
 **Online services.** When you choose a cloud provider (Google, OpenAI, Anthropic or Mistral),
 your files are sent directly from your computer to that provider under your own account and its
-terms. Scriptorium sends nothing to its author.
+terms. Kalamu sends nothing to its author.

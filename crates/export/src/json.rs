@@ -1,11 +1,11 @@
-use scriptorium_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
+use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
 use serde_json::json;
 
 /// Everything, machine-readable: source, set-up, each part with its corrections and segments,
 /// and the provenance record. The schema is documented in `docs/formats.md`.
 pub struct JsonExporter;
 
-pub const SCHEMA: &str = "scriptorium-result";
+pub const SCHEMA: &str = "kalamu-result";
 pub const SCHEMA_VERSION: u32 = 1;
 
 impl Exporter for JsonExporter {

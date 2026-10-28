@@ -1,4 +1,4 @@
-use scriptorium_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
+use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
 
 use crate::timeline::timeline;
 
@@ -77,8 +77,8 @@ impl Exporter for CsvExporter {
                 for seg in timeline(doc) {
                     writer
                         .write_record([
-                            scriptorium_core::result::clock(seg.start_ms),
-                            scriptorium_core::result::clock(seg.end_ms),
+                            kalamu_core::result::clock(seg.start_ms),
+                            kalamu_core::result::clock(seg.end_ms),
                             seg.speaker.unwrap_or_default(),
                             seg.text,
                         ])

@@ -9,6 +9,7 @@
 	import VideoPane from './VideoPane.svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
+	import PageThumb from './PageThumb.svelte';
 	import SpeakerList from './SpeakerList.svelte';
 	import Splitter from './Splitter.svelte';
 	import { apparatus, lines, numbered, siglum, witnessParts, type Entry } from '#lib/apparatus.js';
@@ -54,7 +55,7 @@
 	// The panes' widths, as where each boundary sits across the work area: one boundary beside the
 	// text, two while the compare pane is open. Remembered on this computer with whether the compare
 	// pane is open; the review works the same when storage is unavailable.
-	const LAYOUT_KEY = 'scriptorium.review.layout';
+	const LAYOUT_KEY = 'kalamu.review.layout';
 	const LAYOUT = { two: 0.475, three: [0.33, 0.665] as [number, number], compare: false };
 	function storedLayout(): typeof LAYOUT {
 		try {
@@ -80,6 +81,8 @@
 	});
 
 	const source = $derived(job?.sources.find((s) => s.id === sourceId));
+	/** Scans and images: the strip of pages shows each page small. */
+	const paged = $derived(source?.kind === 'pdf' || source?.kind === 'image');
 	const indices = $derived([...new Set(views.map((v) => v.index))].sort((a, b) => a - b));
 	const current = $derived(views.filter((v) => v.index === index));
 	const setups = $derived(job?.setups ?? []);
@@ -818,6 +821,7 @@
 					<li>
 						<button
 							class="piece"
+							class:paged
 							class:current={i === index}
 							class:done
 							aria-current={i === index ? 'page' : undefined}
@@ -826,8 +830,11 @@
 								: pieceLabel(views.find((v) => v.index === i))}
 							onclick={() => goTo(i)}
 						>
-							{#if done}<Icon name="check" size={12} />{/if}<span class="mono"
-								>{pieceNumber(i)}</span
+							{#if paged}<PageThumb {jobId} {sourceId} index={i} />{/if}
+							<span class="number"
+								>{#if done}<Icon name="check" size={12} />{/if}<span class="mono"
+									>{pieceNumber(i)}</span
+								></span
 							>
 						</button>
 					</li>
@@ -1489,6 +1496,29 @@
 		border-color: var(--text-bright);
 		box-shadow: inset 0 0 0 1px var(--text-bright);
 		color: var(--text-bright);
+	}
+	.number {
+		display: inline-flex;
+		align-items: center;
+		gap: 3px;
+	}
+	/* A scan's pages: the page small, its number below; the ring marks the one open. */
+	.piece.paged {
+		flex-direction: column;
+		gap: 3px;
+		height: auto;
+		min-width: 0;
+		padding: 4px 6px 2px;
+		border-color: transparent;
+		background: transparent;
+	}
+	.piece.paged:hover {
+		border-color: var(--line-hover);
+	}
+	.piece.paged.current {
+		border-color: var(--text-bright);
+		box-shadow: inset 0 0 0 1px var(--text-bright);
+		background: var(--surface-2);
 	}
 	.tally {
 		flex: none;

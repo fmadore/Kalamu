@@ -1,4 +1,4 @@
-//! Domain types and the traits that connect Scriptorium's crates.
+//! Domain types and the traits that connect Kalamu's crates.
 //!
 //! This crate performs no I/O: it knows nothing about Tauri, SQLite, HTTP or FFmpeg. Types that
 //! cross into the front end derive [`ts_rs::TS`]; `cargo test` writes their TypeScript bindings.

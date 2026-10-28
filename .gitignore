@@ -20,3 +20,6 @@ Thumbs.db
 
 # The bundled FFmpeg, fetched by `npm run fetch:ffmpeg` (pinned in scripts/ffmpeg.json).
 /src-tauri/binaries/
+
+# Drafts from the 2026-10-28 brand exploration (generated images and prompts), kept locally.
+docs/design/exploration/

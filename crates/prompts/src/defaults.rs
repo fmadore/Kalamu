@@ -6,7 +6,7 @@
 //! without their collection-specific parts. The scholarly publication summary has no ancestor
 //! there: its fields follow what a social-science literature review compares.
 
-use scriptorium_core::{AnalysisSchema, Field, FieldKind, Task};
+use kalamu_core::{AnalysisSchema, Field, FieldKind, Task};
 
 pub(crate) struct Default {
     pub id: &'static str,

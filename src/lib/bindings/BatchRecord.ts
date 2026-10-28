@@ -11,7 +11,7 @@ import type { Timestamp } from "./Timestamp";
  */
 export type BatchRecord = { 
 /**
- * Scriptorium's own id, given before sending.
+ * Kalamu's own id, given before sending.
  */
 id: string, job_id: JobId, setup_id: SetupId, provider: ProviderId, 
 /**

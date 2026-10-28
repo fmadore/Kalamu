@@ -1,6 +1,6 @@
 //! Pipelines: a job's settings saved under a name.
 
-use scriptorium_prompts::Pipeline;
+use kalamu_prompts::Pipeline;
 use tauri::State;
 
 use super::AppState;
@@ -33,7 +33,7 @@ pub fn delete_pipeline(state: State<'_, AppState>, id: String) -> CmdResult<()> 
         .delete(&id)?)
 }
 
-/// Writes the pipeline's record twice, side by side: the JSON file another Scriptorium imports
+/// Writes the pipeline's record twice, side by side: the JSON file another Kalamu imports
 /// at `path`, and the same with a `.md` extension as Markdown for a methods section.
 #[tauri::command]
 pub fn export_pipeline(state: State<'_, AppState>, id: String, path: String) -> CmdResult<()> {
@@ -44,7 +44,7 @@ pub fn export_pipeline(state: State<'_, AppState>, id: String, path: String) -> 
         .list()
         .into_iter()
         .find(|p| p.id == id)
-        .ok_or(scriptorium_prompts::PromptError::NotFound(id))?;
+        .ok_or(kalamu_prompts::PromptError::NotFound(id))?;
     let file = state.engine.pipeline_file(pipeline)?;
     let path = std::path::Path::new(&path);
     let write = |path: std::path::PathBuf, text: String| {

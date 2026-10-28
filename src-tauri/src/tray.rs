@@ -134,8 +134,8 @@ impl TrayMenu {
 /// Build the icon and its menu. Called once from `setup`. The English labels are placeholders
 /// until the interface pushes its translated ones, a moment after launch.
 pub fn init(app: &AppHandle) -> tauri::Result<()> {
-    let status = MenuItem::with_id(app, "tray-status", "Scriptorium", false, None::<&str>)?;
-    let open = MenuItem::with_id(app, ID_OPEN, "Open Scriptorium", true, None::<&str>)?;
+    let status = MenuItem::with_id(app, "tray-status", "Kalamu", false, None::<&str>)?;
+    let open = MenuItem::with_id(app, ID_OPEN, "Open Kalamu", true, None::<&str>)?;
     // Starts disabled: nothing runs a moment after launch.
     let pause = MenuItem::with_id(app, ID_PAUSE, "Pause all jobs", false, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
@@ -158,7 +158,7 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
         .menu(&menu)
         // Left click opens the window, as Windows users expect; the menu is on right click.
         .show_menu_on_left_click(false)
-        .tooltip("Scriptorium")
+        .tooltip("Kalamu")
         .on_menu_event(|app, event| on_menu_event(app, event.id().as_ref()))
         .on_tray_icon_event(|tray, event| {
             // Single and double click both open: showing a window twice costs nothing.
@@ -246,8 +246,8 @@ mod tests {
             running,
             labels: TrayLabels {
                 status: status.into(),
-                tooltip: format!("Scriptorium: {status}"),
-                open: "Open Scriptorium".into(),
+                tooltip: format!("Kalamu: {status}"),
+                open: "Open Kalamu".into(),
                 pause: "Pause all jobs".into(),
                 quit: "Quit".into(),
             },

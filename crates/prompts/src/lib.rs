@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use scriptorium_core::{
+use kalamu_core::{
     AnalysisSchema, FieldKind, LanguageChoice, LineBreaks, PromptSnapshot, SchemaError, Task,
 };
 use serde::{Deserialize, Serialize};
@@ -65,7 +65,7 @@ pub enum PromptError {
     Incomplete,
     #[error("Could not read or save presets: {0}")]
     Io(String),
-    #[error("This is not a Scriptorium presets file: {0}")]
+    #[error("This is not a Kalamu presets file: {0}")]
     InvalidImport(String),
     #[error(transparent)]
     Schema(#[from] SchemaError),
@@ -81,7 +81,9 @@ struct PresetFile {
     presets: Vec<Preset>,
 }
 
-const FILE_FORMAT: &str = "scriptorium-prompts";
+const FILE_FORMAT: &str = "kalamu-prompts";
+/// Files shared before the app was renamed from Scriptorium.
+const LEGACY_FILE_FORMAT: &str = "scriptorium-prompts";
 
 pub struct PromptLibrary {
     dir: Option<PathBuf>,
@@ -229,7 +231,7 @@ impl PromptLibrary {
     pub fn import(&mut self, json: &str) -> Result<Vec<Preset>, PromptError> {
         let file: PresetFile =
             serde_json::from_str(json).map_err(|e| PromptError::InvalidImport(e.to_string()))?;
-        if file.format != FILE_FORMAT {
+        if file.format != FILE_FORMAT && file.format != LEGACY_FILE_FORMAT {
             return Err(PromptError::InvalidImport(file.format));
         }
         file.presets
@@ -335,7 +337,7 @@ pub fn describe(schema: &AnalysisSchema) -> String {
         if field.reason {
             out.push_str(&format!(
                 " Give the reason for your answer in one sentence in `{}`.",
-                scriptorium_core::analysis::reason_key(&field.key)
+                kalamu_core::analysis::reason_key(&field.key)
             ));
         }
     }

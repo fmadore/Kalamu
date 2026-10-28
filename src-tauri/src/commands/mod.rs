@@ -13,10 +13,10 @@ pub mod window;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use scriptorium_catalog::CostEstimate;
-use scriptorium_core::{InputWarning, JobId, ProviderId, SourceFile, SourceId, Task};
-use scriptorium_engine::{Engine, SetupRequest};
-use scriptorium_media::OpenSource;
+use kalamu_catalog::CostEstimate;
+use kalamu_core::{InputWarning, JobId, ProviderId, SourceFile, SourceId, Task};
+use kalamu_engine::{Engine, SetupRequest};
+use kalamu_media::OpenSource;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -34,7 +34,7 @@ pub struct Paths {
 pub struct AppState {
     pub engine: Arc<Engine>,
     /// Whisper models, shared with the Whisper provider inside the engine.
-    pub models: scriptorium_offline::ModelManager,
+    pub models: kalamu_offline::ModelManager,
     pub keys: Arc<CredentialKeys>,
     pub settings: Mutex<Settings>,
     pub paths: Paths,
@@ -43,7 +43,7 @@ pub struct AppState {
     /// again each time.
     pub preview: Mutex<Option<(SourceId, Arc<OpenSource>)>>,
     /// Saved job settings; the engine does not need them.
-    pub pipelines: Mutex<scriptorium_prompts::PipelineLibrary>,
+    pub pipelines: Mutex<kalamu_prompts::PipelineLibrary>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

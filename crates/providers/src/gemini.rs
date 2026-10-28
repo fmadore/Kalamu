@@ -3,7 +3,7 @@
 //! (historical documents trip them), and no temperature (lower values make Gemini 3 loop).
 //! Summaries come back as JSON under a response schema.
 //!
-//! Google now recommends medium resolution for PDFs; high is kept because Scriptorium's
+//! Google now recommends medium resolution for PDFs; high is kept because Kalamu's
 //! material is dense historical print and handwriting, where iwac-ai-pipelines measured the
 //! difference. Resolution is set for the whole request, the stable form, since each request
 //! carries one piece.
@@ -20,11 +20,11 @@
 mod batch;
 
 use async_trait::async_trait;
-use reqwest::Client;
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
     ProviderError, ProviderId, RequestSetting, Task, Usage, YOUTUBE_LINK,
 };
+use reqwest::Client;
 use serde_json::{Value, json};
 
 use crate::analysis;

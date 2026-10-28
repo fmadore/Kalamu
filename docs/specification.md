@@ -1,6 +1,6 @@
 # Specification
 
-What Scriptorium must do, and why. The [README](../README.md) is the short introduction; the
+What Kalamu must do, and why. The [README](../README.md) is the short introduction; the
 [roadmap](roadmap.md) says what is built. Keep this file in step with decisions as they are made
 ([decisions](decisions/)).
 
@@ -14,14 +14,14 @@ existing tools work, but they assume some technical comfort:
 - [iwac-ai-pipelines](https://github.com/fmadore/iwac-ai-pipelines) offers many more tasks and
   providers, but needs Python, a terminal and an `.env` file.
 
-Scriptorium packages the same workflows as an ordinary Windows app, built with Rust and Tauri.
+Kalamu packages the same workflows as an ordinary Windows app, built with Rust and Tauri.
 Install it, paste an API key, pick a file or a folder, press **Start**. Its users are
 researchers, historians first, who are not technical: every screen must stay plain and
 friendly, with the advanced choices folded away.
 
 ## Starting point: existing code
 
-Scriptorium does not start from scratch. Three existing projects are reviewed for each part
+Kalamu does not start from scratch. Three existing projects are reviewed for each part
 and their tested pieces carried over:
 
 - **[iwac-ai-pipelines](https://github.com/fmadore/iwac-ai-pipelines)** (Python), the main
@@ -33,10 +33,10 @@ and their tested pieces carried over:
   simplified workflows and default settings that already suit non-technical colleagues.
 - **[Live Translation](https://github.com/fmadore/Live-translation)** (Rust, Tauri 2), for the
   app's plumbing: Tauri setup, API keys in Windows Credential Manager, whisper.cpp with model
-  download and verification, x64 and ARM64 builds, and MSIX packaging. Scriptorium shares code
+  download and verification, x64 and ARM64 builds, and MSIX packaging. Kalamu shares code
   with it, not its look or identity.
 
-Where Scriptorium departs from these projects, the reason is written down in
+Where Kalamu departs from these projects, the reason is written down in
 [decisions](decisions/).
 
 ## Tasks
@@ -121,7 +121,7 @@ separate tasks.
 - **Pipelines.** A job's settings (task, models, prompts or analysis, languages, line breaks,
   formats, destination) can be saved under a name and are listed at the top of New job; one
   click fills the form for the next batch of files. A pipeline can be exported to cite or share:
-  a JSON file another Scriptorium imports, prompts included, and the same as Markdown for a
+  a JSON file another Kalamu imports, prompts included, and the same as Markdown for a
   methods section, with each model, the settings its provider sends (reasoning effort, output
   limit, media resolution), the full text of every prompt with the hash its results' provenance
   carries, and the fields of an analysis. The output folder is left out.

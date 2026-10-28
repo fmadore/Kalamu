@@ -3,12 +3,12 @@
 [advisories]
 # zip 8 (through docx-rs 0.4.22, the latest, which requires zip ^8.6): the three advisories
 # concern ZipArchive::extract and ZipStreamReader::extract writing an archive's entries to
-# disk (symlink targets, Unix permissions, SUID bits). Scriptorium never extracts archives: it
+# disk (symlink targets, Unix permissions, SUID bits). Kalamu never extracts archives: it
 # writes Word files with ZipWriter and reads .docx entries into memory. Fixed in zip 9; remove
 # these lines when docx-rs moves to it. Recorded in docs/decisions/2026-10-24-offline-and-audio.md.
 #
 # glib 0.18 (RUSTSEC-2024-0429, GHSA-wrw7-89jp-8q8g, an unsound VariantStrIter): only the GTK
-# stack Tauri, wry, tao, muda and tray-icon use on Linux needs it. Scriptorium ships for Windows
+# stack Tauri, wry, tao, muda and tray-icon use on Linux needs it. Kalamu ships for Windows
 # only, where none of it is compiled (`cargo tree -i glib --target x86_64-pc-windows-msvc` is
 # empty), and nothing calls VariantStrIter. Fixed in glib 0.20; remove this line when Tauri
 # moves to it. Recorded in docs/decisions/2026-10-25-analyses-review-and-pipelines.md.

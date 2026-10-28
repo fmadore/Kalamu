@@ -10,10 +10,10 @@ mod tray;
 
 use std::sync::{Arc, Mutex};
 
-use scriptorium_catalog::Catalog;
-use scriptorium_engine::{Engine, EngineConfig};
-use scriptorium_prompts::PromptLibrary;
-use scriptorium_store::SqliteStore;
+use kalamu_catalog::Catalog;
+use kalamu_engine::{Engine, EngineConfig};
+use kalamu_prompts::PromptLibrary;
+use kalamu_store::SqliteStore;
 use tauri::{Emitter, Manager};
 use tracing_subscriber::prelude::*;
 
@@ -21,17 +21,33 @@ use crate::commands::{AppState, Paths};
 use crate::secrets::CredentialKeys;
 use crate::settings::Settings;
 
-/// Name of the event carrying [`scriptorium_core::ProgressEvent`]s.
+/// Name of the event carrying [`kalamu_core::ProgressEvent`]s.
 pub const PROGRESS_EVENT: &str = "progress";
 /// Sent when the window is closed while jobs run, so the interface can ask first.
 pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
 
+/// The data folder's name before the app was renamed from Scriptorium (0.1 and 0.2).
+const LEGACY_IDENTIFIER: &str = "io.github.fmadore.scriptorium";
+
+/// Moves the jobs, settings, presets and Whisper models of a Scriptorium install to the
+/// renamed data folder, once, before anything is created there. Every stored path is relative
+/// to the folder, so it moves whole. If the move fails the old folder is left untouched.
+fn move_legacy_data(data: &std::path::Path) -> Result<bool, std::io::Error> {
+    let Some(legacy) = data.parent().map(|p| p.join(LEGACY_IDENTIFIER)) else {
+        return Ok(false);
+    };
+    if data.exists() || !legacy.is_dir() {
+        return Ok(false);
+    }
+    std::fs::rename(&legacy, data)?;
+    Ok(true)
+}
+
 fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking::WorkerGuard> {
-    let filter = tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-        "scriptorium=info,scriptorium_lib=info,scriptorium_engine=info,warn".into()
-    });
+    let filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| "kalamu=info,kalamu_lib=info,kalamu_engine=info,warn".into());
     // Release builds have no console, and long batch jobs need a record: log to a daily file.
-    let appender = tracing_appender::rolling::daily(dir, "scriptorium.log");
+    let appender = tracing_appender::rolling::daily(dir, "kalamu.log");
     let (file, guard) = tracing_appender::non_blocking(appender);
     let _ = tracing_subscriber::registry()
         .with(filter)
@@ -90,11 +106,19 @@ pub fn run() {
         .setup(|app| {
             let data = app.path().app_local_data_dir()?;
             let logs = app.path().app_log_dir()?;
+            let moved = move_legacy_data(&data);
             std::fs::create_dir_all(&data)?;
             std::fs::create_dir_all(&logs)?;
             if let Some(guard) = init_logging(&logs) {
                 // Kept for the life of the process so buffered log lines are flushed.
                 app.manage(Mutex::new(Some(guard)));
+            }
+            match moved {
+                Ok(true) => {
+                    tracing::info!("moved the Scriptorium data folder to {}", data.display())
+                }
+                Ok(false) => {}
+                Err(e) => tracing::warn!(error = %e, "could not move the Scriptorium data folder"),
             }
 
             let paths = Paths {
@@ -106,26 +130,26 @@ pub fn run() {
             let settings = Settings::load(&paths.settings);
             let store = SqliteStore::open(&data.join("jobs.sqlite"))?;
             let prompts = PromptLibrary::open(&data.join("presets"))?;
-            let pipelines = scriptorium_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
+            let pipelines = kalamu_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
             let cached = std::fs::read_to_string(&paths.catalog_cache).ok();
             let catalog = Catalog::newest(cached.as_deref());
-            let http = scriptorium_providers::client();
+            let http = kalamu_providers::client();
             let keys = Arc::new(CredentialKeys::default());
-            let models = scriptorium_offline::ModelManager::new(data.join("whisper-models"));
+            let models = kalamu_offline::ModelManager::new(data.join("whisper-models"));
             // The bundled FFmpeg sits next to the executable (Tauri's sidecar layout).
             let app_dir: Vec<std::path::PathBuf> = std::env::current_exe()
                 .ok()
                 .and_then(|exe| exe.parent().map(std::path::Path::to_path_buf))
                 .into_iter()
                 .collect();
-            let ffmpeg = scriptorium_media::Ffmpeg::locate(&app_dir);
+            let ffmpeg = kalamu_media::Ffmpeg::locate(&app_dir);
             if ffmpeg.is_none() {
                 tracing::warn!(
                     "FFmpeg not found: recordings are sent whole and video is unavailable"
                 );
             }
-            let mut providers = scriptorium_providers::registry(http.clone());
-            providers.push(Arc::new(scriptorium_offline::Whisper::new(models.clone())));
+            let mut providers = kalamu_providers::registry(http.clone());
+            providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
             let engine = Engine::new(
                 Arc::new(store),
                 providers,
@@ -277,8 +301,29 @@ pub fn run() {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::command_names::COMMANDS;
+    use super::{LEGACY_IDENTIFIER, move_legacy_data};
+
+    #[test]
+    fn a_scriptorium_data_folder_moves_once() {
+        let root = tempfile::tempdir().unwrap();
+        let legacy = root.path().join(LEGACY_IDENTIFIER);
+        let data = root.path().join("io.github.fmadore.kalamu");
+        std::fs::create_dir_all(legacy.join("presets")).unwrap();
+        std::fs::write(legacy.join("jobs.sqlite"), b"jobs").unwrap();
+
+        assert!(move_legacy_data(&data).unwrap());
+        assert_eq!(std::fs::read(data.join("jobs.sqlite")).unwrap(), b"jobs");
+        assert!(data.join("presets").is_dir());
+        assert!(!legacy.exists());
+
+        // A later Scriptorium folder never replaces the Kalamu one.
+        std::fs::create_dir_all(&legacy).unwrap();
+        assert!(!move_legacy_data(&data).unwrap());
+        assert!(legacy.exists());
+    }
 
     /// The handler, the command list and the capability must agree: a command missing from
     /// any of them is a rejected call at run time.

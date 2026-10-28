@@ -6,8 +6,8 @@
 //! output rather than asked for in prose. The answer is then checked against the fields again
 //! (`AnalysisSchema::read_answer`): structured output fixes the shape, not every rule.
 
-use scriptorium_core::analysis::reason_key;
-use scriptorium_core::{
+use kalamu_core::analysis::reason_key;
+use kalamu_core::{
     AnalysisSchema, FieldKind, PreparedInput, ProcessOutput, ProcessRequest, ProviderError,
 };
 use serde_json::{Map, Value, json};
@@ -110,7 +110,7 @@ pub(crate) fn finish(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use scriptorium_core::{Field, FieldValue};
+    use kalamu_core::{Field, FieldValue};
 
     use super::*;
 

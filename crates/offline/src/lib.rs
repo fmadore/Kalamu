@@ -1,5 +1,5 @@
 //! Offline engines: Whisper for transcription, and later Tesseract for text extraction. They
-//! implement the same [`scriptorium_core::Provider`] trait as the cloud providers, so the
+//! implement the same [`kalamu_core::Provider`] trait as the cloud providers, so the
 //! engine treats them alike; they need no key, and their models are downloaded from the app.
 
 mod cpu;
@@ -7,7 +7,7 @@ mod download;
 mod models;
 mod whisper;
 
-use scriptorium_core::ProviderError;
+use kalamu_core::ProviderError;
 use thiserror::Error;
 
 pub use cpu::missing_features;

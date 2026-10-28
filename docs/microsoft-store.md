@@ -1,17 +1,18 @@
 # Microsoft Store submission
 
-Where Scriptorium stands on the way to its first Microsoft Store release, what the Store will
+Where Kalamu stands on the way to its first Microsoft Store release, what the Store will
 check, and how to submit. The paste-ready listing text is in [store-listing.md](store-listing.md),
 the privacy policy to publish in [privacy.md](privacy.md), and the licence terms that replace
 Microsoft's standard ones in [store-license-terms.md](store-license-terms.md).
 
 This follows what [Live Translation](https://github.com/fmadore/Live-translation) learned on
 the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-walkthrough.md`,
-`store-updates.md` and `packaging-msix.md`); where Scriptorium differs, the reason is given here.
+`store-updates.md` and `packaging-msix.md`); where Kalamu differs, the reason is given here.
 
-## Status (27 October 2026)
+## Status (28 October 2026)
 
-**Not submitted. No Store identity reserved yet.** The latest build is the
+**Not submitted. The name Kalamu is reserved; the package identity is still to be copied
+below.** The latest build is the
 [v0.2.0](https://github.com/fmadore/Scriptorium/releases/tag/v0.2.0) test release, unsigned
 installers for Windows on ARM64. Before a first submission, the work in
 [What is missing](#what-is-missing) has to be done; the [roadmap](roadmap.md#toward-the-store-release)
@@ -19,7 +20,7 @@ tracks it.
 
 ## Product and certification approach
 
-Scriptorium reads scanned and handwritten documents, transcribes recordings and analyses texts
+Kalamu reads scanned and handwritten documents, transcribes recordings and analyses texts
 with the AI provider the researcher chooses, under the researcher's own API key, or offline with
 Whisper. Three things shape the submission:
 
@@ -44,29 +45,27 @@ this repository's notes, and Microsoft renumbers them from time to time.
 
 ## Policies that apply
 
-| Policy | What it asks | How Scriptorium meets it |
+| Policy | What it asks | How Kalamu meets it |
 | --- | --- | --- |
 | 10.1 Distinct function, accurate representation | The listing describes what the app does, its dependencies and costs; advertised features work | The description opens with the need for a provider key and its charges; the certification notes give a working route |
 | 10.5 Personal information | A privacy policy when the app sends personal information | Documents and recordings go to the provider the user chooses: [privacy.md](privacy.md), published at a stable URL |
 | 10.8.2 Payments outside Microsoft commerce | A voluntary donation through a secure third-party provider is allowed, and must be declared in Partner Center | The Buy Me a Coffee link unlocks nothing; tick the Product declaration and explain the link in the certification notes |
 | 11.2 and 10.1 Trademarks | Other companies' names only descriptively, no logos, no implied endorsement | Providers, YouTube and Word are named to say what the app works with; a trademark line ends the description |
 | 11.16 Live generative AI content | Disclose generative AI in the listing and in Partner Center; a way to report inappropriate output | The description and the Generative AI property say so; the Report a problem link is still to add |
-| Licence terms | Microsoft's Standard Application License Terms forbid reverse engineering, which the LGPL (FFmpeg) must allow | Scriptorium's own [licence terms](store-license-terms.md) in "Additional license terms" |
+| Licence terms | Microsoft's Standard Application License Terms forbid reverse engineering, which the LGPL (FFmpeg) must allow | Kalamu's own [licence terms](store-license-terms.md) in "Additional license terms" |
 
 ## What is missing
 
 Before the first submission, in rough order; each is also on the roadmap.
 
-1. **A name.** "Scriptorium" is the working name ([issue #1](https://github.com/fmadore/Scriptorium/issues/1)).
-   Reserve the final name in Partner Center (**Apps and games** → **New product** → **MSIX or
-   PWA app**) before packaging: the reservation fixes the package identity, and a name already
-   used in the Store is refused there.
+1. **A name.** Done: Kalamu is reserved ([decision](decisions/2026-10-28-kalamu.md)). Copy its
+   package identity into [Store identity](#store-identity) before packaging.
 2. **MSIX packaging.** Port Live Translation's set-up: Tauri has no MSIX target, so it uses the
    `@choochmeque/tauri-windows-bundle` devDependency with a committed
    `src-tauri/gen/windows/` (`bundle.config.json`, `AppxManifest.xml.template` with the reserved
    identity written out as literals, `Assets/` with the logo sizes and taskbar variants,
    `resources.pri` enabled), `bundle:msix:{x64,arm64}` npm scripts, and a `.gitignore` exception
-   for `gen/windows/`. Scriptorium differs in two ways: it needs `internetClient` and
+   for `gen/windows/`. Kalamu differs in two ways: it needs `internetClient` and
    `runFullTrust` but no `microphone`; and the package must carry the FFmpeg sidecars
    (`ffmpeg.exe`, `ffprobe.exe`) and the `licenses/` folder from `tauri.ffmpeg.conf.json`,
    which the bundler's handling of `externalBin` and `resources` has to be checked for.
@@ -93,7 +92,7 @@ Before the first submission, in rough order; each is also on the roadmap.
    YouTube player under the packaged origin (see the [roadmap](roadmap.md#next)).
 9. **Screenshots** from the packaged app (see [store-listing.md](store-listing.md#screenshots)).
 10. **A sample bundle for reviewers**: a short public-domain recording, a scanned page and a
-    text file, attached to the release (`scriptorium-samples.zip`), so the certification notes
+    text file, attached to the release (`kalamu-samples.zip`), so the certification notes
     can point to files that work.
 
 ## Reviewer access to cloud features
@@ -112,7 +111,7 @@ Either way, never put a key in the listing, the screenshots or this repository.
 
 ## Store identity
 
-To be filled in once the name is reserved (Partner Center → product → **Product management** →
+Kalamu is reserved; to be copied from Partner Center → product → **Product management** →
 **Product identity**). The manifest template must carry these values exactly, or ingestion
 fails.
 

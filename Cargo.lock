@@ -2436,6 +2436,177 @@ dependencies = [
 ]
 
 [[package]]
+name = "kalamu"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "base64 0.23.1",
+ "kalamu-catalog",
+ "kalamu-core",
+ "kalamu-engine",
+ "kalamu-media",
+ "kalamu-offline",
+ "kalamu-prompts",
+ "kalamu-providers",
+ "kalamu-store",
+ "keyring",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-notification",
+ "tauri-plugin-opener",
+ "tauri-plugin-single-instance",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "ts-rs",
+]
+
+[[package]]
+name = "kalamu-catalog"
+version = "0.2.0"
+dependencies = [
+ "kalamu-core",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "ts-rs",
+]
+
+[[package]]
+name = "kalamu-core"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "thiserror 2.0.21",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
+name = "kalamu-engine"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "kalamu-catalog",
+ "kalamu-core",
+ "kalamu-export",
+ "kalamu-media",
+ "kalamu-prompts",
+ "kalamu-store",
+ "serde",
+ "serde_json",
+ "similar",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "ts-rs",
+]
+
+[[package]]
+name = "kalamu-export"
+version = "0.2.0"
+dependencies = [
+ "csv",
+ "docx-rs",
+ "kalamu-core",
+ "lopdf",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "uuid",
+]
+
+[[package]]
+name = "kalamu-media"
+version = "0.2.0"
+dependencies = [
+ "docx-rs",
+ "hex",
+ "image",
+ "kalamu-core",
+ "lopdf",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tiff",
+ "tracing",
+]
+
+[[package]]
+name = "kalamu-offline"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "hex",
+ "kalamu-catalog",
+ "kalamu-core",
+ "reqwest",
+ "serde",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "ts-rs",
+ "whisper-rs",
+ "whisper-rs-sys",
+]
+
+[[package]]
+name = "kalamu-prompts"
+version = "0.2.0"
+dependencies = [
+ "kalamu-core",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
+name = "kalamu-providers"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "base64 0.23.1",
+ "kalamu-core",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "wiremock",
+]
+
+[[package]]
+name = "kalamu-store"
+version = "0.2.0"
+dependencies = [
+ "kalamu-core",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "keyboard-types"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3913,176 +4084,6 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
-
-[[package]]
-name = "scriptorium"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "base64 0.23.1",
- "keyring",
- "reqwest",
- "scriptorium-catalog",
- "scriptorium-core",
- "scriptorium-engine",
- "scriptorium-media",
- "scriptorium-offline",
- "scriptorium-prompts",
- "scriptorium-providers",
- "scriptorium-store",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-notification",
- "tauri-plugin-opener",
- "tauri-plugin-single-instance",
- "tokio",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "ts-rs",
-]
-
-[[package]]
-name = "scriptorium-catalog"
-version = "0.2.0"
-dependencies = [
- "scriptorium-core",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "ts-rs",
-]
-
-[[package]]
-name = "scriptorium-core"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "hex",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "thiserror 2.0.21",
- "ts-rs",
- "uuid",
-]
-
-[[package]]
-name = "scriptorium-engine"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "futures",
- "scriptorium-catalog",
- "scriptorium-core",
- "scriptorium-export",
- "scriptorium-media",
- "scriptorium-prompts",
- "scriptorium-store",
- "serde",
- "serde_json",
- "similar",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
- "ts-rs",
-]
-
-[[package]]
-name = "scriptorium-export"
-version = "0.2.0"
-dependencies = [
- "csv",
- "docx-rs",
- "lopdf",
- "scriptorium-core",
- "serde",
- "serde_json",
- "tempfile",
- "uuid",
-]
-
-[[package]]
-name = "scriptorium-media"
-version = "0.2.0"
-dependencies = [
- "docx-rs",
- "hex",
- "image",
- "lopdf",
- "scriptorium-core",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.21",
- "tiff",
- "tracing",
-]
-
-[[package]]
-name = "scriptorium-offline"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "hex",
- "reqwest",
- "scriptorium-catalog",
- "scriptorium-core",
- "serde",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "tokio-util",
- "tracing",
- "ts-rs",
- "whisper-rs",
- "whisper-rs-sys",
-]
-
-[[package]]
-name = "scriptorium-prompts"
-version = "0.2.0"
-dependencies = [
- "scriptorium-core",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.21",
- "ts-rs",
- "uuid",
-]
-
-[[package]]
-name = "scriptorium-providers"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "base64 0.23.1",
- "reqwest",
- "scriptorium-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "wiremock",
-]
-
-[[package]]
-name = "scriptorium-store"
-version = "0.2.0"
-dependencies = [
- "rusqlite",
- "scriptorium-core",
- "serde",
- "serde_json",
- "tempfile",
-]
 
 [[package]]
 name = "secret-service"

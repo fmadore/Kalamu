@@ -8,13 +8,16 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use scriptorium_core::{ApiKey, ProviderId};
-use scriptorium_engine::KeySource;
+use kalamu_core::{ApiKey, ProviderId};
+use kalamu_engine::KeySource;
 
 use crate::errors::{AppError, id};
 
-/// The bundle identifier, fixed from the first release so entries never need migrating.
-const SERVICE: &str = "io.github.fmadore.scriptorium";
+/// The bundle identifier.
+const SERVICE: &str = "io.github.fmadore.kalamu";
+/// The identifier before the app was renamed from Scriptorium (0.1 and 0.2). A key still
+/// stored under it is moved to `SERVICE` the first time it is read.
+const LEGACY_SERVICE: &str = "io.github.fmadore.scriptorium";
 
 fn account(provider: &ProviderId) -> String {
     format!("{}-api-key", provider.as_str())
@@ -48,15 +51,33 @@ pub struct CredentialKeys {
 
 impl CredentialKeys {
     fn entry(provider: &ProviderId) -> Result<keyring::Entry, AppError> {
-        keyring::Entry::new(SERVICE, &account(provider)).map_err(|e| AppError::new(id::KEYCHAIN, e))
+        Self::entry_in(SERVICE, provider)
+    }
+
+    fn entry_in(service: &str, provider: &ProviderId) -> Result<keyring::Entry, AppError> {
+        keyring::Entry::new(service, &account(provider)).map_err(|e| AppError::new(id::KEYCHAIN, e))
+    }
+
+    fn stored(service: &str, provider: &ProviderId) -> Option<String> {
+        Self::entry_in(service, provider)
+            .ok()?
+            .get_password()
+            .ok()
+            .filter(|key| !key.trim().is_empty())
     }
 
     fn read(provider: &ProviderId) -> Option<String> {
-        if let Ok(key) = Self::entry(provider).and_then(|e| {
-            e.get_password()
-                .map_err(|err| AppError::new(id::KEYCHAIN, err))
-        }) && !key.trim().is_empty()
-        {
+        if let Some(key) = Self::stored(SERVICE, provider) {
+            return Some(key);
+        }
+        if let Some(key) = Self::stored(LEGACY_SERVICE, provider) {
+            // Moved, not copied, so the key lives in one place; left where it was if the
+            // new entry cannot be written.
+            if Self::entry(provider).is_ok_and(|e| e.set_password(&key).is_ok())
+                && let Ok(old) = Self::entry_in(LEGACY_SERVICE, provider)
+            {
+                let _ = old.delete_credential();
+            }
             return Some(key);
         }
         if cfg!(debug_assertions) {
@@ -81,9 +102,12 @@ impl CredentialKeys {
     }
 
     pub fn clear(&self, provider: &ProviderId) -> Result<(), AppError> {
-        match Self::entry(provider)?.delete_credential() {
-            Ok(()) | Err(keyring::Error::NoEntry) => {}
-            Err(e) => return Err(AppError::new(id::KEYCHAIN, e)),
+        // The legacy entry too, so a key not yet moved does not come back.
+        for service in [SERVICE, LEGACY_SERVICE] {
+            match Self::entry_in(service, provider)?.delete_credential() {
+                Ok(()) | Err(keyring::Error::NoEntry) => {}
+                Err(e) => return Err(AppError::new(id::KEYCHAIN, e)),
+            }
         }
         self.lock().insert(provider.clone(), None);
         Ok(())

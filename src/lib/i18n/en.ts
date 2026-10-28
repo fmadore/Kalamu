@@ -4,7 +4,7 @@
 export const en = {
 	locale: { name: 'English', tag: 'en' },
 	app: {
-		name: 'Scriptorium',
+		name: 'Kalamu',
 		tagline: 'Transcription and text extraction'
 	},
 	shell: {
@@ -99,7 +99,7 @@ export const en = {
 		pipelineExport: (name: string) =>
 			`Export “${name}”: models, settings and full prompts, to cite or share`,
 		pipelineExported: (file: string) =>
-			`Saved ${file}.json, to import into Scriptorium, and ${file}.md, for a methods section.`,
+			`Saved ${file}.json, to import into Kalamu, and ${file}.md, for a methods section.`,
 		pipelineImport: 'Import a pipeline',
 		pipelineImported: (name: string) => `Imported “${name}” with its prompts.`,
 		linesTitle: 'Line breaks',
@@ -141,10 +141,10 @@ export const en = {
 			fast_hint: 'Each page is sent on its own, and results arrive as they are read.',
 			economy: 'Cheaper',
 			economy_hint:
-				'Every page is sent together to the provider’s batch service, at about half the price. Results can take up to a day; Scriptorium can be closed in the meantime and collects them when it opens again.'
+				'Every page is sent together to the provider’s batch service, at about half the price. Results can take up to a day; Kalamu can be closed in the meantime and collects them when it opens again.'
 		},
 		paceNotBatched: (names: string) =>
-			`${names} has no batch service in Scriptorium and still runs page by page, at its usual price.`,
+			`${names} has no batch service in Kalamu and still runs page by page, at its usual price.`,
 		start: 'Start',
 		startShortcut: 'Ctrl ↵',
 		starting: 'Starting…',
@@ -182,7 +182,7 @@ export const en = {
 		unsupported_image: (detail: string) => detail,
 		large_file: 'This file is large; it will be split before sending.',
 		tool_missing:
-			'Reading this file needs FFmpeg, which was not found next to the app. Reinstall Scriptorium, or convert the file to MP3.',
+			'Reading this file needs FFmpeg, which was not found next to the app. Reinstall Kalamu, or convert the file to MP3.',
 		no_sound_track: 'This file has no sound track, so there is nothing to transcribe.',
 		long_recording: (length: string, pieces: number) =>
 			`Long recording (${length}): it will be sent in ${pieces} pieces, cut at pauses. Speaker labels may differ from one piece to the next.`,
@@ -196,7 +196,7 @@ export const en = {
 		recording:
 			'Microphone close to the speakers, a quiet room, one recording per interview, and a short spoken introduction with names and date.',
 		youtubePublic:
-			'Only public videos can be read: private and unlisted ones are refused. Scriptorium asks YouTube for each video’s title when you add it; Google then reads the video itself, and nothing is downloaded to this PC.',
+			'Only public videos can be read: private and unlisted ones are refused. Kalamu asks YouTube for each video’s title when you add it; Google then reads the video itself, and nothing is downloaded to this PC.',
 		youtubePreview:
 			'Reading YouTube links is a preview feature of Gemini, and Google may change its limits. A free key reads up to 8 hours of video a day. Each video is transcribed in one go, which suits videos up to about two hours.',
 		results:
@@ -235,7 +235,7 @@ export const en = {
 			'This job stopped before it finished, when the app closed or a key stopped working. Finished pieces are saved: resuming continues where it left off, and nothing is sent or paid twice.',
 		pausedNotice: 'Paused. Resume to continue where it left off.',
 		waitingNotice: (n: number, due: string) =>
-			`${n === 1 ? '1 piece is' : `${n} pieces are`} with the provider’s batch service, answered by ${due} at the latest. Scriptorium can be closed in the meantime: it collects the answers when it opens again.`,
+			`${n === 1 ? '1 piece is' : `${n} pieces are`} with the provider’s batch service, answered by ${due} at the latest. Kalamu can be closed in the meantime: it collects the answers when it opens again.`,
 		heldNotice: (n: number) =>
 			`${n === 1 ? '1 piece is' : `${n} pieces are`} still with the provider’s batch service. Resume to collect the answers; nothing is sent or paid twice.`,
 		pace: 'Speed',
@@ -458,14 +458,14 @@ export const en = {
 		version: (v: string) => `Version ${v}`,
 		dataFolder: 'Data folder',
 		credits:
-			'Scriptorium uses FFmpeg under the LGPL v2.1 (its source is published with each release), Opus (BSD), whisper.cpp (MIT) and the Whisper models (MIT). The full licences are in the licences folder installed with the app.',
+			'Kalamu uses FFmpeg under the LGPL v2.1 (its source is published with each release), Opus (BSD), whisper.cpp (MIT) and the Whisper models (MIT). The full licences are in the licences folder installed with the app.',
 		privacy:
 			'Nothing is sent to the developer: no files, keys, results or telemetry. AI output can contain fluent but wrong text; check a sample against the source.'
 	},
 	support: {
 		title: 'Support development',
 		/** Says plainly that paying changes nothing in the app. */
-		note: 'If Scriptorium is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
+		note: 'If Kalamu is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
 		link: 'Buy me a coffee',
 		opensInBrowser: ' (opens in your browser)'
 	},
@@ -481,15 +481,14 @@ export const en = {
 	},
 	close: {
 		title: 'Jobs are still running',
-		body: 'They can keep running in the background, with Scriptorium in the notification area next to the clock. Or quit now: the jobs pause, finished pages are kept, and you resume them next time from Jobs.',
+		body: 'They can keep running in the background, with Kalamu in the notification area next to the clock. Or quit now: the jobs pause, finished pages are kept, and you resume them next time from Jobs.',
 		background: 'Keep running in the background',
 		quit: 'Pause and quit',
 		stay: 'Cancel',
-		hidden:
-			'Scriptorium is still working. Click its icon in the notification area to open it again.'
+		hidden: 'Kalamu is still working. Click its icon in the notification area to open it again.'
 	},
 	tray: {
-		open: 'Open Scriptorium',
+		open: 'Open Kalamu',
 		pause: 'Pause all jobs',
 		quit: 'Quit',
 		quitPausing: 'Pause jobs and quit',
@@ -527,7 +526,7 @@ export const en = {
 		'prompt.few_values': 'A choice needs at least two values to choose from.',
 		'prompt.unnamed_pipeline': 'A pipeline needs a name and at least one model.',
 		'prompt.invalid_file':
-			'This is not a Scriptorium presets or pipeline file, or it comes from a newer version of Scriptorium.',
+			'This is not a Kalamu presets or pipeline file, or it comes from a newer version of Kalamu.',
 		'provider.unknown': 'Unknown provider.',
 		'provider.missing_key': 'No API key is saved for this provider. Add one in Settings.',
 		'provider.unsupported': 'This model cannot do this task.',
@@ -543,7 +542,7 @@ export const en = {
 		'provider.not_installed':
 			'This offline model has not been downloaded. Download it in Settings.',
 		'provider.interrupted': 'Stopped before the end; it will continue when the job resumes.',
-		'offline.unknown_model': 'This offline model is not known to this version of Scriptorium.',
+		'offline.unknown_model': 'This offline model is not known to this version of Kalamu.',
 		'offline.busy': 'Another model is downloading; wait for it to finish.',
 		'offline.in_use': 'A running job uses this model; pause it first.',
 		'offline.cancelled': 'Download cancelled.',

@@ -30,7 +30,7 @@
     "created_at": 0,
     "engine": "cloud",
     "generator": {
-      "name": "Scriptorium",
+      "name": "Kalamu",
       "version": "0.1.0"
     },
     "languages": {
@@ -110,7 +110,7 @@
       "pages": 0
     }
   },
-  "schema": "scriptorium-result",
+  "schema": "kalamu-result",
   "schema_version": 1,
   "setup": {
     "label": "gemini-flash",

@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use scriptorium_core::{
+use kalamu_core::{
     ExportFormat, JobSettings, OutputDestination, ProviderId, SetupOptions, Task, Timestamp,
 };
 use serde::{Deserialize, Serialize};

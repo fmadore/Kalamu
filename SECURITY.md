@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Scriptorium is in early development: only the latest tagged release receives fixes. Installers
+Kalamu is in early development: only the latest tagged release receives fixes. Installers
 are published per tag on the [releases page](https://github.com/fmadore/Scriptorium/releases).
 
 ## Reporting a vulnerability

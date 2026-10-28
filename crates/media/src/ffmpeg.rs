@@ -43,10 +43,10 @@ fn exe(name: &str) -> String {
 }
 
 impl Ffmpeg {
-    /// Looks in `SCRIPTORIUM_FFMPEG_DIR`, then in `dirs` (the app's own folder), then, in
+    /// Looks in `KALAMU_FFMPEG_DIR`, then in `dirs` (the app's own folder), then, in
     /// development builds only, on `PATH`.
     pub fn locate(dirs: &[PathBuf]) -> Option<Self> {
-        let mut candidates: Vec<PathBuf> = std::env::var_os("SCRIPTORIUM_FFMPEG_DIR")
+        let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_FFMPEG_DIR")
             .map(PathBuf::from)
             .into_iter()
             .chain(dirs.iter().cloned())
@@ -391,7 +391,7 @@ mod tests {
         assert_eq!(with_opus.choose(&gemini), Some(AudioFormat::OggOpus));
         assert_eq!(without.choose(&gemini), Some(AudioFormat::Flac));
         assert_eq!(
-            without.choose(&[scriptorium_core::PCM_16K_MONO]),
+            without.choose(&[kalamu_core::PCM_16K_MONO]),
             Some(AudioFormat::Pcm16k)
         );
         assert_eq!(with_opus.choose(&["audio/mpeg"]), None);

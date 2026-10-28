@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
+use kalamu_core::PageHalf;
 use lopdf::{Dictionary, Document, Object, ObjectId};
-use scriptorium_core::PageHalf;
 
 use crate::MediaError;
 

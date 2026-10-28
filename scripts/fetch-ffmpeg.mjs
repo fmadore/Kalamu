@@ -34,7 +34,7 @@ const bytes = await download(name);
 const actual = createHash('sha256').update(bytes).digest('hex');
 if (actual !== expected) throw new Error(`${name}: SHA-256 ${actual}, expected ${expected}`);
 
-const work = mkdtempSync(join(tmpdir(), 'scriptorium-ffmpeg-'));
+const work = mkdtempSync(join(tmpdir(), 'kalamu-ffmpeg-'));
 writeFileSync(join(work, name), bytes);
 // bsdtar, shipped with Windows 10 and later, reads zip archives. Named by its full path: from Git
 // Bash, `tar` is GNU tar, which reads `C:` as a remote host.

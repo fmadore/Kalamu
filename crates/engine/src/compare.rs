@@ -2,7 +2,7 @@
 //! corrected a page. Error rates follow zmo-ai-pipelines' `zmo_evaluate.py`: edit distance over
 //! characters (CER) and over words (WER), divided by the reference length.
 
-use scriptorium_core::{JobId, SetupId, SourceId};
+use kalamu_core::{JobId, SetupId, SourceId};
 use serde::{Deserialize, Serialize};
 use similar::{ChangeTag, TextDiff};
 use ts_rs::TS;

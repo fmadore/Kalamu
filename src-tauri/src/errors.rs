@@ -2,8 +2,8 @@
 //! with a stable id, the interface words it from its translation files. The detail is the
 //! untranslated technical text (a provider's message, a path), shown after the sentence.
 
-use scriptorium_core::ProviderError;
-use scriptorium_engine::EngineError;
+use kalamu_core::ProviderError;
+use kalamu_engine::EngineError;
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -47,16 +47,16 @@ impl From<ProviderError> for AppError {
     }
 }
 
-impl From<scriptorium_offline::OfflineError> for AppError {
-    fn from(e: scriptorium_offline::OfflineError) -> Self {
+impl From<kalamu_offline::OfflineError> for AppError {
+    fn from(e: kalamu_offline::OfflineError) -> Self {
         Self::new(e.code(), e)
     }
 }
 
-impl From<scriptorium_prompts::PromptError> for AppError {
-    fn from(e: scriptorium_prompts::PromptError) -> Self {
-        use scriptorium_core::SchemaError;
-        use scriptorium_prompts::PromptError;
+impl From<kalamu_prompts::PromptError> for AppError {
+    fn from(e: kalamu_prompts::PromptError) -> Self {
+        use kalamu_core::SchemaError;
+        use kalamu_prompts::PromptError;
         let id = match &e {
             PromptError::Schema(SchemaError::Empty) => "prompt.no_fields",
             PromptError::Schema(SchemaError::Unnamed) => "prompt.unnamed_field",
@@ -70,8 +70,8 @@ impl From<scriptorium_prompts::PromptError> for AppError {
     }
 }
 
-impl From<scriptorium_catalog::CatalogError> for AppError {
-    fn from(e: scriptorium_catalog::CatalogError) -> Self {
+impl From<kalamu_catalog::CatalogError> for AppError {
+    fn from(e: kalamu_catalog::CatalogError) -> Self {
         Self::new("catalog.invalid", e)
     }
 }

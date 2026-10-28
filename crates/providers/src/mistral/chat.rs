@@ -7,7 +7,7 @@
 //! `none` for Mistral's own models, whose answer then comes back as one string, and `low` for
 //! GLM, which rejects `none` and may answer in thinking and text chunks.
 
-use scriptorium_core::{
+use kalamu_core::{
     AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, RequestSetting, Usage,
 };
 use serde_json::{Value, json};

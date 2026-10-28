@@ -11,12 +11,12 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, BATCH_WINDOW_MS, BatchContext, BatchItem, BatchPhase, BatchProgress, BatchRecord,
     CacheKey, Job, JobId, PieceState, PieceStatus, PreparedInput, ProcessOutput, ProcessRequest,
     ProgressEvent, ProviderError, Setup, SetupId, SourceId, StopSignal, StoredResult, Timestamp,
 };
-use scriptorium_media::OpenSource;
+use kalamu_media::OpenSource;
 
 use crate::{Control, Engine, EngineError};
 
@@ -291,7 +291,7 @@ impl Engine {
                     .setups
                     .iter()
                     .find(|s| s.id == batch.setup_id)
-                    .ok_or(EngineError::Store(scriptorium_core::StoreError::NotFound))?;
+                    .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
                 let provider = self.provider(&setup.provider)?;
                 let api_key = self.api_key(setup)?;
                 let context = BatchContext {
@@ -341,7 +341,7 @@ impl Engine {
             .setups
             .iter()
             .find(|s| s.id == batch.setup_id)
-            .ok_or(EngineError::Store(scriptorium_core::StoreError::NotFound))?;
+            .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
         let mut answers: HashMap<String, Result<ProcessOutput, ProviderError>> =
             answers.into_iter().collect();
         let mut pieces: HashMap<(SourceId, u32), PieceState> = self

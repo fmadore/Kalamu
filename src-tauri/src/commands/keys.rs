@@ -1,7 +1,7 @@
 //! API keys: saved in Credential Manager, never sent to the interface.
 
-use scriptorium_core::ProviderId;
-use scriptorium_engine::KeySource;
+use kalamu_core::ProviderId;
+use kalamu_engine::KeySource;
 use tauri::State;
 
 use super::{AppState, KeyStatus};

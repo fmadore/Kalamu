@@ -83,7 +83,7 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa
   for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`; grouping
   variant spellings of the same name across a job, confirmed by the researcher.
-- **Design decisions still open**: name, a collation table in Jobs, the interrupted
+- **Design decisions still open**: a collation table in Jobs, the interrupted
   job with Resume in the side menu: [issue #1](https://github.com/fmadore/Scriptorium/issues/1).
 
 ## Toward the Store release
@@ -92,8 +92,9 @@ The first Microsoft Store submission, version 1.0.0. What the Store checks and h
 are in [microsoft-store.md](microsoft-store.md); the listing text in
 [store-listing.md](store-listing.md) and the [privacy policy](privacy.md) are drafted.
 
-- **Name**: settle it ([issue #1](https://github.com/fmadore/Scriptorium/issues/1)) and reserve
-  it in Partner Center, which fixes the package identity.
+- **Name**: done. Kalamu, reserved in Partner Center on 28 October 2026
+  ([decision](decisions/2026-10-28-kalamu.md)); copy the package identity into
+  [microsoft-store.md](microsoft-store.md#store-identity).
 - **Report a problem**: a link in the review and in Settings that opens a GitHub issue form in
   the browser, so researchers can report inappropriate output (Store policy 11.16).
 - **MSIX packaging**, ported from Live Translation: `@choochmeque/tauri-windows-bundle`, a

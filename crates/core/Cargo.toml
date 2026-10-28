@@ -1,6 +1,6 @@
 [package]
-name = "scriptorium-core"
-description = "Domain types and boundary traits for Scriptorium. No I/O."
+name = "kalamu-core"
+description = "Domain types and boundary traits for Kalamu. No I/O."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
