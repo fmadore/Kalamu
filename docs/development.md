@@ -1,6 +1,6 @@
 # Development
 
-How to build, check and preview Scriptorium. The architecture, crate responsibilities and
+How to build, check and preview Kalamu. The architecture, crate responsibilities and
 coding rules are in [AGENTS.md](../AGENTS.md).
 
 ## Requirements
@@ -48,7 +48,7 @@ Before a release, run every task against the live APIs with the keys saved in Se
 spends a few cents and never runs in CI:
 
 ```bash
-cargo run -p scriptorium --example live -- <samples> <out> [job name filter]
+cargo run -p kalamu --example live -- <samples> <out> [job name filter]
 ```
 
 `<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`. The runner

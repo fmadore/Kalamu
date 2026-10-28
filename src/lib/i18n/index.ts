@@ -20,6 +20,17 @@ export function setLocale(locale: Locale): void {
 	if (typeof document !== 'undefined') document.documentElement.lang = CATALOGS[locale].locale.tag;
 }
 
+/**
+ * A message with `{name}` placeholders, cut into its plain text and the names, so a component
+ * can set each name as a link or a mark: "uses {ffmpeg} under" → text, `ffmpeg`, text.
+ */
+export function placeholders(message: string): ({ text: string } | { name: string })[] {
+	return message
+		.split(/\{(\w+)\}/)
+		.map((part, i) => (i % 2 === 1 ? { name: part } : { text: part }))
+		.filter((part) => !('text' in part) || part.text !== '');
+}
+
 /** Names joined as the interface language joins them: "Whisper Base and Mistral OCR". */
 export function listNames(names: string[]): string {
 	return new Intl.ListFormat(CATALOGS[current].locale.tag, { type: 'conjunction' }).format(names);

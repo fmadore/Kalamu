@@ -1,4 +1,4 @@
-# Scriptorium: instructions for coding agents
+# Kalamu: instructions for coding agents
 
 Read by Claude Code (through `CLAUDE.md`) and Codex. [docs/specification.md](docs/specification.md)
 says what the app must do, [docs/roadmap.md](docs/roadmap.md) what is built; this file says how
@@ -8,9 +8,12 @@ to build it. The [README](README.md) is the short public introduction.
 
 - Read docs/specification.md in full. Keep it, the roadmap and the README in sync when a
   decision changes them.
+- A change to what the app sends, to whom, or what it keeps also updates
+  [docs/privacy.md](docs/privacy.md), the published privacy policy, with a new effective date;
+  a change to what it advertises updates [docs/store-listing.md](docs/store-listing.md).
 - Review the three reference projects the specification lists (`iwac-ai-pipelines`, `zmo-ai-pipelines`,
   `Live-translation`) for the part being built, and port what they already solve rather than
-  reinventing it. Note in the decision log where Scriptorium deliberately differs.
+  reinventing it. Note in the decision log where Kalamu deliberately differs.
 - Check the latest version of every dependency on its registry before adding it.
 
 ## Dependencies and security

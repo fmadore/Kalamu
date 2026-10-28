@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="-0.95 -0.95 23.9 23.9">
-  <!-- The Scriptorium mark: a page of text with one line under the highlighter. Drawn on a
-       22-unit grid; source.png is rendered from these same numbers and the app icons from it
-       with `npx tauri icon src-tauri/icons/source.png`. The sidebar uses the same shapes. -->
-  <rect width="22" height="22" rx="5" fill="#111214"/>
-  <rect x="5" y="5.2" width="12" height="2" rx="1" fill="#ffffff"/>
-  <rect x="4" y="9" width="11" height="4" rx="1" fill="#ffe066"/>
-  <rect x="5" y="14.8" width="9" height="2" rx="1" fill="#ffffff"/>
-</svg>

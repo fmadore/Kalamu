@@ -1,6 +1,6 @@
 name: FFmpeg
 
-# Builds the FFmpeg and ffprobe that ship next to Scriptorium (README, "Bundled conversion
+# Builds the FFmpeg and ffprobe that ship next to Kalamu (README, "Bundled conversion
 # tools"; docs/ffmpeg.md). Audio only, LGPL v2.1 or later only, with libopus (BSD): no GPL,
 # version-3 or non-free parts, no video encoders or decoders, no network. Each run uploads,
 # per architecture, the two programs, their licences, the exact configure line and the source

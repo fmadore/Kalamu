@@ -1,6 +1,6 @@
 //! The window: taskbar progress, the notification-area icon, hiding and closing.
 
-use scriptorium_core::JobId;
+use kalamu_core::JobId;
 use tauri::{AppHandle, Manager, State};
 
 use super::AppState;

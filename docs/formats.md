@@ -47,11 +47,11 @@ model's where there are any.
 - **`.csv`**: one row per page (`page, text, corrected, reviewed`) or per segment
   (`start, end, speaker, text`), UTF-8 with a byte-order mark so Excel reads accents correctly.
 
-## JSON (`scriptorium-result`, version 1)
+## JSON (`kalamu-result`, version 1)
 
 ```json
 {
-  "schema": "scriptorium-result",
+  "schema": "kalamu-result",
   "schema_version": 1,
   "task": "text_extraction",
   "source": { "file_name": "lettre.pdf", "sha256": "…", "size_bytes": 1024 },
@@ -83,7 +83,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 
 | Field | Meaning |
 | --- | --- |
-| `generator` | `{ "name": "Scriptorium", "version": "…" }` |
+| `generator` | `{ "name": "Kalamu", "version": "…" }` |
 | `created_at` | Milliseconds since 1970, UTC |
 | `task`, `engine` | `text_extraction` or `audio_transcription`; `cloud` or `offline` |
 | `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it |

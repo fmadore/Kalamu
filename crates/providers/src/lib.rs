@@ -11,7 +11,7 @@ mod openai;
 
 use std::sync::Arc;
 
-use scriptorium_core::{Provider, ProviderId};
+use kalamu_core::{Provider, ProviderId};
 
 pub use anthropic::Anthropic;
 pub use gemini::Gemini;

@@ -2,7 +2,7 @@
 //! (Windows Credential Manager), to check every task end to end before a release. Never run in
 //! CI: it spends money and needs keys.
 //!
-//!   cargo run -p scriptorium --example live -- <samples> <out> [job name filter]
+//!   cargo run -p kalamu --example live -- <samples> <out> [job name filter]
 //!
 //! `<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`; each job
 //! writes its outputs to its own folder in `<out>` and the run ends with a table of pieces.
@@ -10,22 +10,23 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use scriptorium_catalog::Catalog;
-use scriptorium_core::{
+use kalamu_catalog::Catalog;
+use kalamu_core::{
     ApiKey, ExportFormat, JobSettings, JobStatus, LineBreaks, OutputDestination, OutputSettings,
     PieceStatus, ProgressEvent, ProviderId, SetupOptions, Task,
 };
-use scriptorium_engine::{Engine, EngineConfig, KeySource, NewJob, SetupRequest};
-use scriptorium_prompts::PromptLibrary;
-use scriptorium_store::SqliteStore;
+use kalamu_engine::{Engine, EngineConfig, KeySource, NewJob, SetupRequest};
+use kalamu_prompts::PromptLibrary;
+use kalamu_store::SqliteStore;
 
-/// The same entries the app writes (`src/secrets.rs`).
+/// The same entries the app writes (`src/secrets.rs`); keys still under the Scriptorium entry
+/// are moved there the first time the app reads them.
 struct CredentialKeys;
 
 impl KeySource for CredentialKeys {
     fn key(&self, provider: &ProviderId) -> Option<ApiKey> {
         keyring::Entry::new(
-            "io.github.fmadore.scriptorium",
+            "io.github.fmadore.kalamu",
             &format!("{}-api-key", provider.as_str()),
         )
         .and_then(|e| e.get_password())
@@ -189,19 +190,19 @@ fn engine(out: &Path) -> anyhow::Result<Arc<Engine>> {
     std::fs::create_dir_all(&data)?;
     let store = SqliteStore::open(&data.join("jobs.sqlite"))?;
     let prompts = PromptLibrary::open(&data.join("presets"))?;
-    // The installed app's FFmpeg, or SCRIPTORIUM_FFMPEG_DIR.
+    // The installed app's FFmpeg, or KALAMU_FFMPEG_DIR.
     let installed = std::env::var_os("LOCALAPPDATA")
-        .map(|d| PathBuf::from(d).join("Scriptorium"))
+        .map(|d| PathBuf::from(d).join("Kalamu"))
         .into_iter()
         .collect::<Vec<_>>();
-    let ffmpeg = scriptorium_media::Ffmpeg::locate(&installed);
+    let ffmpeg = kalamu_media::Ffmpeg::locate(&installed);
     println!(
         "FFmpeg: {}",
         if ffmpeg.is_some() { "found" } else { "missing" }
     );
     Ok(Engine::new(
         Arc::new(store),
-        scriptorium_providers::registry(scriptorium_providers::client()),
+        kalamu_providers::registry(kalamu_providers::client()),
         Catalog::newest(None),
         prompts,
         Arc::new(CredentialKeys),

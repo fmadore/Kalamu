@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use scriptorium_core::{ExportFormat, ExportOptions, LanguageCode, OutputDestination};
+use kalamu_core::{ExportFormat, ExportOptions, LanguageCode, OutputDestination};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 

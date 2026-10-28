@@ -1,13 +1,13 @@
 //! Building a job from what the user chose: set-ups get their prompt frozen and checked against
 //! the catalogue.
 
-use scriptorium_catalog::Catalog;
-use scriptorium_core::{
+use kalamu_catalog::Catalog;
+use kalamu_core::{
     InputKind, Job, JobId, JobSettings, JobStatus, LanguageChoice, OutputDestination,
     OutputSettings, PromptSnapshot, ProviderId, Setup, SetupId, SetupOptions, SourceFile, Task,
     Timestamp,
 };
-use scriptorium_prompts::{Preset, RenderContext};
+use kalamu_prompts::{Preset, RenderContext};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 

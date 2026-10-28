@@ -1,4 +1,4 @@
-use scriptorium_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
+use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
 
 /// Plain text, with `--- Page N ---` lines between pages as in zmo-ai-pipelines.
 pub struct TextExporter;

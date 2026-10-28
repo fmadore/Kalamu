@@ -13,7 +13,7 @@ mod subtitles;
 mod text;
 mod timeline;
 
-use scriptorium_core::{ExportDocument, ExportFormat, Exporter};
+use kalamu_core::{ExportDocument, ExportFormat, Exporter};
 
 pub use timeline::{cues, segments_from_text, timed_lines, timeline};
 
@@ -43,9 +43,9 @@ pub(crate) fn marker(doc: &ExportDocument, index: usize) -> Option<String> {
     }
     let part = &doc.parts[index];
     match part.piece {
-        scriptorium_core::PieceRef::Page { .. } => Some(format!("Page {}", part.piece.label())),
+        kalamu_core::PieceRef::Page { .. } => Some(format!("Page {}", part.piece.label())),
         // Recordings are cut only to fit provider limits; the cuts mean nothing to a reader.
-        scriptorium_core::PieceRef::Segment { .. } | scriptorium_core::PieceRef::Whole => None,
+        kalamu_core::PieceRef::Segment { .. } | kalamu_core::PieceRef::Whole => None,
     }
 }
 
@@ -66,8 +66,8 @@ fn body_text(doc: &ExportDocument, index: usize) -> String {
     let parsed;
     let segments = if part.segments.is_empty() {
         let offset = match part.piece {
-            scriptorium_core::PieceRef::Segment { start_ms, .. } => start_ms,
-            scriptorium_core::PieceRef::Page { .. } | scriptorium_core::PieceRef::Whole => {
+            kalamu_core::PieceRef::Segment { start_ms, .. } => start_ms,
+            kalamu_core::PieceRef::Page { .. } | kalamu_core::PieceRef::Whole => {
                 return part.text.trim().to_string();
             }
         };
@@ -84,10 +84,7 @@ fn body_text(doc: &ExportDocument, index: usize) -> String {
         .map(|s| {
             let mut line = String::new();
             if doc.options.timestamps {
-                line.push_str(&format!(
-                    "[{}] ",
-                    scriptorium_core::result::clock(s.start_ms)
-                ));
+                line.push_str(&format!("[{}] ", kalamu_core::result::clock(s.start_ms)));
             }
             if doc.options.speaker_labels
                 && let Some(speaker) = &s.speaker

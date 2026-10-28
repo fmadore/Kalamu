@@ -1,7 +1,7 @@
 //! Prompt presets.
 
-use scriptorium_core::Task;
-use scriptorium_prompts::Preset;
+use kalamu_core::Task;
+use kalamu_prompts::Preset;
 use tauri::State;
 
 use super::AppState;

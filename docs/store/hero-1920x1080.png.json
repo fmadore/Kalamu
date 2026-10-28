@@ -1,0 +1,24 @@
+{
+	"file": "store-hero-1.png",
+	"generator": "OpenAI Image API",
+	"model": "gpt-image-2.5-flare",
+	"prompt": "Wide editorial illustration for an app store banner, 16:9. A researcher's desk seen from above at a slight angle: on the left, an old printed newspaper page whose columns are suggested by soft grey lines and whose single picture block is an abstract blurred grey rectangle, a handwritten letter whose ink lines are loose, flowing, abstract strokes that do not form any real script or letters, a small cassette recorder and a modern laptop; from the papers and the recorder, thin ribbons of light in ink blue, white and highlighter yellow flow to the right and settle into neat, clean lines of text on a fresh white sheet, one line marked in highlighter yellow. Flat editorial illustration with subtle paper grain, limited palette of warm cream, deep ink blue, graphite and a single touch of highlighter yellow. The right 40% of the image is calm and uncluttered (soft cream) apart from the white sheet, so a title can be set there later. No people, no faces, no hands, no buildings or skylines, no legible text or lettering in any script, no logos, no watermark. Clearly an illustration, not a photograph.",
+	"size": "2560x1440",
+	"quality": "high",
+	"background": "opaque",
+	"output_format": "png",
+	"created": "2026-10-28T07:50:28.000Z",
+	"usage": {
+		"input_tokens": 480,
+		"input_tokens_details": {
+			"image_tokens": 0,
+			"text_tokens": 480
+		},
+		"output_tokens": 3685,
+		"output_tokens_details": {
+			"image_tokens": 3685,
+			"text_tokens": 0
+		},
+		"total_tokens": 4165
+	}
+}

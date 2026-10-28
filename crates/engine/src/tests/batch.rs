@@ -3,7 +3,7 @@
 
 use std::sync::atomic::AtomicBool;
 
-use scriptorium_core::{BatchContext, BatchLimits, BatchPhase, BatchProgress, JobSettings, Pace};
+use kalamu_core::{BatchContext, BatchLimits, BatchPhase, BatchProgress, JobSettings, Pace};
 
 use super::*;
 
@@ -82,7 +82,7 @@ impl Provider for Batchy {
         let items = requests
             .iter()
             .map(|(id, r)| match r.input.piece {
-                scriptorium_core::PieceRef::Page { number, .. } => (id.clone(), number),
+                kalamu_core::PieceRef::Page { number, .. } => (id.clone(), number),
                 _ => (id.clone(), 0),
             })
             .collect();
@@ -149,7 +149,7 @@ fn engine(store: Arc<SqliteStore>, batchy: Arc<Batchy>) -> Arc<Engine> {
     Engine::new(
         store,
         vec![batchy],
-        scriptorium_catalog::Catalog::bundled(),
+        kalamu_catalog::Catalog::bundled(),
         PromptLibrary::in_memory(),
         Arc::new(Keys),
         EngineConfig {

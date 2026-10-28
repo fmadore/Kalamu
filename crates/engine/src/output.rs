@@ -4,9 +4,9 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
-use scriptorium_core::speakers::{rename_segments, rename_text};
-use scriptorium_core::{
+use kalamu_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
+use kalamu_core::speakers::{rename_segments, rename_text};
+use kalamu_core::{
     CacheKey, ExportDocument, ExportPart, InputKind, Job, JobId, OutputDestination, PieceRef,
     PieceState, ProgressEvent, Provenance, Segment, Setup, SetupId, SourceFile, SourceId,
     Timestamp, Usage,
@@ -64,7 +64,7 @@ impl Engine {
 
         let mut written = Vec::new();
         for format in &job.output.formats {
-            let Some(exporter) = scriptorium_export::exporter(*format) else {
+            let Some(exporter) = kalamu_export::exporter(*format) else {
                 continue;
             };
             if !exporter.supports(job.task) {
@@ -80,7 +80,7 @@ impl Engine {
             let mut path = dir.join(format!("{base}.{}", format.extension()));
             // Never overwrite the source itself (a .txt or .csv input exported to the same name).
             if path == Path::new(&document.source.path) {
-                path = dir.join(format!("{base}.scriptorium.{}", format.extension()));
+                path = dir.join(format!("{base}.kalamu.{}", format.extension()));
             }
             write_atomic(&path, &bytes)?;
             written.push(path.display().to_string());
@@ -102,6 +102,8 @@ impl Engine {
                 let (dir, base) = output_base(&job, source, &setup.label);
                 let path = [
                     dir.join(format!("{base}.txt")),
+                    dir.join(format!("{base}.kalamu.txt")),
+                    // Written before the app was renamed from Scriptorium.
                     dir.join(format!("{base}.scriptorium.txt")),
                     dir.join(format!("{base}.md")),
                 ]
@@ -127,13 +129,13 @@ impl Engine {
             .iter()
             .find(|s| s.id == setup_id)
             .cloned()
-            .ok_or(EngineError::Store(scriptorium_core::StoreError::NotFound))?;
+            .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
         let source = job
             .sources
             .iter()
             .find(|s| s.id == source_id)
             .cloned()
-            .ok_or(EngineError::Store(scriptorium_core::StoreError::NotFound))?;
+            .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
         let corrections = self.store.corrections(job.id)?;
         // The researcher's names for this recording's speakers, applied to every part.
         let speaker_names = self
@@ -216,7 +218,7 @@ impl Engine {
             };
             // A corrected page keeps its text searchable, as one block over the page.
             let regions = match (&corrected_text, result.output.regions.is_empty()) {
-                (Some(text), false) => vec![scriptorium_core::TextRegion {
+                (Some(text), false) => vec![kalamu_core::TextRegion {
                     x: 0.05,
                     y: 0.05,
                     width: 0.9,
@@ -247,7 +249,7 @@ impl Engine {
         let provenance = Provenance {
             schema_version: 1,
             generator: GeneratorInfo {
-                name: "Scriptorium".into(),
+                name: "Kalamu".into(),
                 version: self.config.app_version.clone(),
             },
             created_at: Timestamp::now(),
@@ -311,7 +313,7 @@ fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, S
     } else {
         stem
     };
-    if job.task == scriptorium_core::Task::Analysis {
+    if job.task == kalamu_core::Task::Analysis {
         base.push_str(".analysis");
     }
     (dir, base)

@@ -3,7 +3,7 @@
 //! long-running operation; Google's guide and reference place its state and answers at
 //! different paths, so both are read.
 
-use scriptorium_core::{ApiKey, BatchContext, BatchProgress, ProcessRequest, ProviderError};
+use kalamu_core::{ApiKey, BatchContext, BatchProgress, ProcessRequest, ProviderError};
 use serde_json::{Value, json};
 
 use super::Gemini;
@@ -33,7 +33,7 @@ impl Gemini {
                 .header("x-goog-api-key", key.expose())
                 .json(&json!({
                     "batch": {
-                        "display_name": "scriptorium",
+                        "display_name": "kalamu",
                         "input_config": { "requests": { "requests": inline } },
                     }
                 })),
@@ -135,7 +135,7 @@ fn answer(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use scriptorium_core::Task;
+    use kalamu_core::Task;
 
     use super::*;
 

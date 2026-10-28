@@ -2,7 +2,7 @@ use std::io::Cursor;
 use std::path::Path;
 
 use image::{DynamicImage, GenericImageView, ImageDecoder, ImageFormat, ImageReader};
-use scriptorium_core::PageHalf;
+use kalamu_core::PageHalf;
 
 use crate::MediaError;
 

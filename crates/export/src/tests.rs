@@ -4,8 +4,8 @@
 
 use std::path::PathBuf;
 
-use scriptorium_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
-use scriptorium_core::{
+use kalamu_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
+use kalamu_core::{
     AnalysisSchema, ExportOptions, ExportPart, Field, FieldAnswer, FieldKind, FieldValue,
     InputKind, LanguageChoice, PromptSnapshot, Provenance, ProviderId, Segment, Setup, SetupId,
     SetupOptions, SourceFile, SourceId, Task, Timestamp, Usage,
@@ -52,7 +52,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
     let provenance = Provenance {
         schema_version: 1,
         generator: GeneratorInfo {
-            name: "Scriptorium".into(),
+            name: "Kalamu".into(),
             version: "0.1.0".into(),
         },
         created_at: Timestamp(0),
@@ -103,7 +103,7 @@ fn letter() -> ExportDocument {
         source("lettre.pdf", InputKind::Pdf),
         vec![
             ExportPart {
-                piece: scriptorium_core::PieceRef::page(1),
+                piece: kalamu_core::PieceRef::page(1),
                 text: "Bamako, le 3 mai 1957\n\nMonsieur le Gouverneur,\nj'ai l'honneur de vous "
                     .into(),
                 segments: vec![],
@@ -113,7 +113,7 @@ fn letter() -> ExportDocument {
                 regions: vec![],
             },
             ExportPart {
-                piece: scriptorium_core::PieceRef::page(2),
+                piece: kalamu_core::PieceRef::page(2),
                 text: "rendre compte de la réunion tenue à la mosquée.\n\n[ILLEGIBLE]".into(),
                 segments: vec![],
                 corrected: true,
@@ -131,7 +131,7 @@ fn interview() -> ExportDocument {
         source("entretien.m4a", InputKind::Audio),
         vec![
             ExportPart {
-                piece: scriptorium_core::PieceRef::Segment {
+                piece: kalamu_core::PieceRef::Segment {
                     index: 0,
                     start_ms: 0,
                     end_ms: 1_200_000,
@@ -158,7 +158,7 @@ fn interview() -> ExportDocument {
             },
             ExportPart {
                 // A prompt-based model that wrote timestamps into its text.
-                piece: scriptorium_core::PieceRef::Segment {
+                piece: kalamu_core::PieceRef::Segment {
                     index: 1,
                     start_ms: 1_200_000,
                     end_ms: 2_400_000,
@@ -225,7 +225,7 @@ fn analysis() -> ExportDocument {
         Task::Analysis,
         source("bulletin.txt", InputKind::Text),
         vec![ExportPart {
-            piece: scriptorium_core::PieceRef::Whole,
+            piece: kalamu_core::PieceRef::Whole,
             text: schema.render(&fields),
             segments: vec![],
             corrected: true,
@@ -348,13 +348,13 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
         Task::TextExtraction,
         src,
         vec![ExportPart {
-            piece: scriptorium_core::PieceRef::page(1),
+            piece: kalamu_core::PieceRef::page(1),
             text: "Dakar, le 3 mai 1957".into(),
             segments: vec![],
             corrected: false,
             reviewed: false,
             fields: vec![],
-            regions: vec![scriptorium_core::TextRegion {
+            regions: vec![kalamu_core::TextRegion {
                 x: 0.1,
                 y: 0.1,
                 width: 0.6,

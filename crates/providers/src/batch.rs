@@ -2,7 +2,7 @@
 //! ids they were sent with, counts given as numbers or strings, and a reason for each failed
 //! item that the researcher can read.
 
-use scriptorium_core::{ProcessOutput, ProviderError};
+use kalamu_core::{ProcessOutput, ProviderError};
 use serde_json::Value;
 
 /// One answer of a batch, under the item id it was sent with.

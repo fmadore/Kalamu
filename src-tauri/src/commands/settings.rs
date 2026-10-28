@@ -1,6 +1,6 @@
 //! App information, settings and the model catalogue.
 
-use scriptorium_catalog::Catalog;
+use kalamu_catalog::Catalog;
 use tauri::State;
 
 use super::{AppInfo, AppState, INTERRUPTED};
@@ -41,7 +41,7 @@ pub fn get_catalog(state: State<'_, AppState>) -> Catalog {
 pub async fn refresh_catalog(state: State<'_, AppState>) -> CmdResult<Catalog> {
     let response = state
         .http
-        .get(scriptorium_catalog::UPDATE_URL)
+        .get(kalamu_catalog::UPDATE_URL)
         .send()
         .await
         .map_err(|e| AppError::new(id::CATALOG_DOWNLOAD, e))?;

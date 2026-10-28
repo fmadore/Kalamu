@@ -4,8 +4,8 @@
 use std::time::Duration;
 
 use base64::Engine as _;
+use kalamu_core::{ProviderError, Segment};
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
-use scriptorium_core::{ProviderError, Segment};
 use serde_json::Value;
 
 /// One client for all providers: it keeps connections alive and follows the system proxy, which
@@ -15,7 +15,7 @@ pub fn client() -> Client {
         .connect_timeout(Duration::from_secs(15))
         // Long handwritten pages and recordings can take minutes on the slower models.
         .timeout(Duration::from_secs(600))
-        .user_agent(concat!("Scriptorium/", env!("CARGO_PKG_VERSION")))
+        .user_agent(concat!("Kalamu/", env!("CARGO_PKG_VERSION")))
         .build()
         .unwrap_or_default()
 }

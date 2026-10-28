@@ -1,4 +1,4 @@
-use scriptorium_core::{
+use kalamu_core::{
     BatchItem, BatchPhase, FieldAnswer, FieldValue, InputKind, JobSettings, OutputSettings,
     ProcessOutput, PromptSnapshot, Setup, SetupOptions, SourceFile, Task,
 };

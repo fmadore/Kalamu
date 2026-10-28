@@ -7,12 +7,12 @@
 use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
 
-use rusqlite::{Connection, OptionalExtension, params};
-use scriptorium_core::{
+use kalamu_core::{
     BatchRecord, CacheKey, Correction, Job, JobId, JobStatus, JobStore, JobSummary, PieceRef,
     PieceState, PieceStatus, ProviderId, SetupId, SourceId, SpeakerNames, StoreError, StoredResult,
     Timestamp,
 };
+use rusqlite::{Connection, OptionalExtension, params};
 
 /// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
 const MIGRATIONS: &[&str] = &[

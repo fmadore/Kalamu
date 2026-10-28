@@ -1,13 +1,13 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-10-25T12:00:00+00:00",
-  "title": "Design System: Scriptorium",
+  "title": "Design System: Kalamu",
   "extensions": {
     "colorMeta": {
       "chrome-grey": {
         "role": "neutral",
         "displayName": "Chrome Grey",
-        "canonical": "#f2f3f5",
+        "canonical": "#efece6",
         "oklch": "oklch(96.4% 0.003 264.5)",
         "tonalRamp": [
           "#0a0b0c",
@@ -39,7 +39,7 @@
       "surface-quiet": {
         "role": "neutral",
         "displayName": "Surface Quiet",
-        "canonical": "#fafafb",
+        "canonical": "#f8f6f2",
         "oklch": "oklch(98.5% 0.001 286.4)",
         "tonalRamp": [
           "#0b0b0c",
@@ -55,7 +55,7 @@
       "stage": {
         "role": "neutral",
         "displayName": "Lightbox Stage",
-        "canonical": "#1e1f22",
+        "canonical": "#1f1e1c",
         "oklch": "oklch(23.9% 0.006 271.2)",
         "tonalRamp": [
           "#0a0b0e",
@@ -71,7 +71,7 @@
       "stage-raised": {
         "role": "neutral",
         "displayName": "Stage Raised",
-        "canonical": "#2a2b2f",
+        "canonical": "#2b2a27",
         "oklch": "oklch(29.0% 0.007 274.7)",
         "tonalRamp": [
           "#0a0b0e",
@@ -87,7 +87,7 @@
       "stage-line": {
         "role": "neutral",
         "displayName": "Stage Line",
-        "canonical": "#34353a",
+        "canonical": "#383632",
         "oklch": "oklch(33.0% 0.009 276.9)",
         "tonalRamp": [
           "#0a0b0f",
@@ -103,7 +103,7 @@
       "on-stage": {
         "role": "neutral",
         "displayName": "On Stage",
-        "canonical": "#e4e5e9",
+        "canonical": "#e8e6e1",
         "oklch": "oklch(92.2% 0.005 275.0)",
         "tonalRamp": [
           "#0a0b0e",
@@ -119,7 +119,7 @@
       "on-stage-muted": {
         "role": "neutral",
         "displayName": "On Stage Muted",
-        "canonical": "#a9acb4",
+        "canonical": "#aeaaa2",
         "oklch": "oklch(74.4% 0.012 269.5)",
         "tonalRamp": [
           "#090b10",
@@ -135,7 +135,7 @@
       "line": {
         "role": "neutral",
         "displayName": "Line",
-        "canonical": "#e3e4e8",
+        "canonical": "#e5e1d9",
         "oklch": "oklch(91.9% 0.006 275.0)",
         "tonalRamp": [
           "#0a0b0e",
@@ -151,7 +151,7 @@
       "line-soft": {
         "role": "neutral",
         "displayName": "Line Soft",
-        "canonical": "#eeeff2",
+        "canonical": "#eeebe5",
         "oklch": "oklch(95.2% 0.004 271.4)",
         "tonalRamp": [
           "#0a0b0d",
@@ -167,7 +167,7 @@
       "line-strong": {
         "role": "neutral",
         "displayName": "Line Strong",
-        "canonical": "#d5d7dc",
+        "canonical": "#d6d1c7",
         "oklch": "oklch(87.9% 0.007 268.5)",
         "tonalRamp": [
           "#0a0b0e",
@@ -183,7 +183,7 @@
       "line-hover": {
         "role": "neutral",
         "displayName": "Line Hover",
-        "canonical": "#a4a8b0",
+        "canonical": "#a8a297",
         "oklch": "oklch(73.1% 0.012 264.5)",
         "tonalRamp": [
           "#090b10",
@@ -191,7 +191,7 @@
           "#3c4046",
           "#5a5e65",
           "#7a7d85",
-          "#9a9ea6",
+          "#a09a8f",
           "#c0c4cc",
           "#eaeff7"
         ]
@@ -199,7 +199,7 @@
       "graphite-ink": {
         "role": "primary",
         "displayName": "Graphite Ink",
-        "canonical": "#111214",
+        "canonical": "#171612",
         "oklch": "oklch(18.2% 0.004 264.5)",
         "tonalRamp": [
           "#0a0b0d",
@@ -215,7 +215,7 @@
       "graphite-ink-hover": {
         "role": "primary",
         "displayName": "Graphite Ink Hover",
-        "canonical": "#2b2d32",
+        "canonical": "#2e2c27",
         "oklch": "oklch(29.7% 0.009 268.4)",
         "tonalRamp": [
           "#090b0f",
@@ -247,7 +247,7 @@
       "on-ink-muted": {
         "role": "primary",
         "displayName": "On Ink Muted",
-        "canonical": "#b9bcc3",
+        "canonical": "#bdb9b0",
         "oklch": "oklch(79.5% 0.010 267.3)",
         "tonalRamp": [
           "#090b10",
@@ -263,12 +263,12 @@
       "wash": {
         "role": "neutral",
         "displayName": "Ink Wash",
-        "canonical": "rgba(17, 18, 20, 0.05)"
+        "canonical": "rgba(23, 22, 18, 0.05)"
       },
       "highlighter": {
         "role": "secondary",
         "displayName": "Highlighter Yellow",
-        "canonical": "#ffe066",
+        "canonical": "#ffd84d",
         "oklch": "oklch(91.0% 0.144 95.1)",
         "tonalRamp": [
           "#1b0400",
@@ -284,7 +284,7 @@
       "on-highlighter": {
         "role": "secondary",
         "displayName": "On Highlighter",
-        "canonical": "#111214",
+        "canonical": "#171612",
         "oklch": "oklch(18.2% 0.004 264.5)",
         "tonalRamp": [
           "#0a0b0d",
@@ -577,7 +577,7 @@
       "text-bright": {
         "role": "neutral",
         "displayName": "Text Bright",
-        "canonical": "#111214",
+        "canonical": "#171612",
         "oklch": "oklch(18.2% 0.004 264.5)",
         "tonalRamp": [
           "#0a0b0d",
@@ -593,7 +593,7 @@
       "text-body": {
         "role": "neutral",
         "displayName": "Text Body",
-        "canonical": "#1b1c1f",
+        "canonical": "#1e1d19",
         "oklch": "oklch(22.7% 0.006 271.1)",
         "tonalRamp": [
           "#0a0b0e",
@@ -609,7 +609,7 @@
       "text-secondary": {
         "role": "neutral",
         "displayName": "Text Secondary",
-        "canonical": "#4a4e57",
+        "canonical": "#4d4a42",
         "oklch": "oklch(42.4% 0.016 266.5)",
         "tonalRamp": [
           "#080b12",
@@ -625,7 +625,7 @@
       "text-muted": {
         "role": "neutral",
         "displayName": "Text Muted",
-        "canonical": "#5e626b",
+        "canonical": "#615d54",
         "oklch": "oklch(49.6% 0.015 266.6)",
         "tonalRamp": [
           "#080b12",
@@ -641,7 +641,7 @@
       "text-faint": {
         "role": "neutral",
         "displayName": "Text Faint",
-        "canonical": "#8f939b",
+        "canonical": "#938e84",
         "oklch": "oklch(66.3% 0.013 264.5)",
         "tonalRamp": [
           "#090b11",
@@ -657,7 +657,7 @@
       "dark-chrome": {
         "role": "neutral",
         "displayName": "Dark Chrome",
-        "canonical": "#16171a",
+        "canonical": "#171614",
         "oklch": "oklch(20.5% 0.006 271.1)",
         "tonalRamp": [
           "#0a0b0e",
@@ -673,7 +673,7 @@
       "dark-surface": {
         "role": "neutral",
         "displayName": "Dark Surface",
-        "canonical": "#1c1d20",
+        "canonical": "#1d1c1a",
         "oklch": "oklch(23.1% 0.006 271.2)",
         "tonalRamp": [
           "#0a0b0e",
@@ -689,7 +689,7 @@
       "dark-surface-raised": {
         "role": "neutral",
         "displayName": "Dark Surface Raised",
-        "canonical": "#24252a",
+        "canonical": "#272522",
         "oklch": "oklch(26.6% 0.009 276.7)",
         "tonalRamp": [
           "#0a0b0f",
@@ -705,7 +705,7 @@
       "dark-stage": {
         "role": "neutral",
         "displayName": "Dark Stage",
-        "canonical": "#0f1012",
+        "canonical": "#100f0e",
         "oklch": "oklch(17.3% 0.004 264.5)",
         "tonalRamp": [
           "#0a0b0d",
@@ -721,7 +721,7 @@
       "dark-line": {
         "role": "neutral",
         "displayName": "Dark Line",
-        "canonical": "#2c2d31",
+        "canonical": "#2f2d29",
         "oklch": "oklch(29.8% 0.007 274.7)",
         "tonalRamp": [
           "#0a0b0e",
@@ -737,7 +737,7 @@
       "dark-ink": {
         "role": "primary",
         "displayName": "Dark Ink",
-        "canonical": "#ecedef",
+        "canonical": "#eeece6",
         "oklch": "oklch(94.6% 0.003 264.5)",
         "tonalRamp": [
           "#0a0b0c",
@@ -785,7 +785,7 @@
       "dark-text-body": {
         "role": "neutral",
         "displayName": "Dark Text Body",
-        "canonical": "#dfe1e5",
+        "canonical": "#e4e0d8",
         "oklch": "oklch(90.9% 0.006 264.5)",
         "tonalRamp": [
           "#0a0b0e",
@@ -801,7 +801,7 @@
       "dark-text-muted": {
         "role": "neutral",
         "displayName": "Dark Text Muted",
-        "canonical": "#9a9ea6",
+        "canonical": "#a09a8f",
         "oklch": "oklch(69.9% 0.013 264.5)",
         "tonalRamp": [
           "#090b11",
@@ -809,7 +809,7 @@
           "#3c4047",
           "#5a5e65",
           "#797d85",
-          "#9a9ea6",
+          "#a09a8f",
           "#c0c4cc",
           "#eaeff7"
         ]
@@ -860,17 +860,17 @@
     "shadows": [
       {
         "name": "raised",
-        "value": "0 0 0 1px var(--line), 0 1px 2px rgba(17, 18, 20, 0.06)",
+        "value": "0 0 0 1px var(--line), 0 1px 2px rgba(23, 22, 18, 0.06)",
         "purpose": "The selected list item lifted onto white; the audio player and the playing line."
       },
       {
         "name": "pop",
-        "value": "0 0 0 1px var(--line), 0 12px 32px -8px rgba(17, 18, 20, 0.18)",
+        "value": "0 0 0 1px var(--line), 0 12px 32px -8px rgba(23, 22, 18, 0.18)",
         "purpose": "The readings card."
       },
       {
         "name": "flyout",
-        "value": "0 18px 48px -16px rgba(17, 18, 20, 0.35)",
+        "value": "0 18px 48px -16px rgba(23, 22, 18, 0.35)",
         "purpose": "The close dialog and the toast."
       },
       {
@@ -885,7 +885,7 @@
       },
       {
         "name": "summary-footer",
-        "value": "0 -10px 24px -18px rgba(17, 18, 20, 0.35)",
+        "value": "0 -10px 24px -18px rgba(23, 22, 18, 0.35)",
         "purpose": "New job's summary when it becomes a sticky footer."
       }
     ],
@@ -1002,11 +1002,11 @@
     "northStar": "Graphite & highlighter",
     "overview": "A researcher checking a transcript works the way they would with a printout: a grey pencil for structure, a yellow highlighter for what needs another look, a blue pen for their own corrections. The interface is that desk kit and nothing more. Grey surfaces and hairlines do the structural work, black is kept for the one action that moves the work forward, yellow says \"look here\" and blue says \"you changed this\". Everything else stays quiet so those three marks can be read at a glance across a page of text.\n\nThe source is the authority, so it gets the best seat: a scan lies on a dark lightbox in both themes, the brightest thing on screen, with its controls floating on the dark in a small pill. The text being checked sits beside it on white, in a reading serif. The interface around both is a plain sans; anything a machine produced (file names, model names, times, costs, counts, shortcuts) is set in a monospace, so the researcher can tell their material, the tool and the machine apart by the face alone. Density is that of a working tool used for hours on a laptop: compact controls, generous reading measure, no decoration.\n\nThe same world holds from a window snapped beside another to a large monitor, and in light and dark themes that follow Windows by default. In dark mode the ink flips to near white, so the primary action stays the highest-contrast object on screen.",
     "keyCharacteristics": [
-      "Graphite neutrals: a grey chrome sidebar (#f2f3f5), white work surface, hairline borders.",
+      "Graphite neutrals: a grey chrome sidebar (#efece6), white work surface, hairline borders.",
       "Black (graphite ink) is the only button fill, used once per work area and paired with its shortcut.",
       "Highlighter yellow marks only where models disagree or where a name is found in the document.",
       "Hand blue marks only the researcher's own corrections, never AI output.",
-      "Scans sit on a dark lightbox (#1e1f22 light, #0f1012 dark) in both themes.",
+      "Scans sit on a dark lightbox (#1f1e1c light, #100f0e dark) in both themes.",
       "Three faces with three jobs: Instrument Sans, Source Serif 4, IBM Plex Mono.",
       "Lucide line icons at an absolute 1.5px stroke, beside words."
     ],
@@ -1043,10 +1043,10 @@
       }
     ],
     "dos": [
-      "**Do** use graphite ink (#111214, #ecedef in dark) as the only button fill, once per work area, with its shortcut beside the label.",
-      "**Do** keep highlighter yellow (#ffe066 / #e8c547) for disagreements and found terms, always with ink text on it.",
+      "**Do** use graphite ink (#171612, #eeece6 in dark) as the only button fill, once per work area, with its shortcut beside the label.",
+      "**Do** keep highlighter yellow (#ffd84d / #e8c547) for disagreements and found terms, always with ink text on it.",
       "**Do** mark the researcher's corrections in hand blue (#2456d6 / #7fa2ff) as an underline on top of the text.",
-      "**Do** put scans on the stage (#1e1f22 / #0f1012) with the page shadow, and the controls over it in on-stage colours.",
+      "**Do** put scans on the stage (#1f1e1c / #100f0e) with the page shadow, and the controls over it in on-stage colours.",
       "**Do** set file names, models, times, costs, counts and shortcuts in IBM Plex Mono, and only the text being checked in Source Serif 4.",
       "**Do** separate with greys and hairlines first; reach for a shadow only for the selected item, an overlay or the scan.",
       "**Do** show status as coloured text on a wash, with a 6px dot.",

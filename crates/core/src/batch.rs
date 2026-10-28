@@ -65,7 +65,7 @@ impl BatchPhase {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct BatchRecord {
-    /// Scriptorium's own id, given before sending.
+    /// Kalamu's own id, given before sending.
     pub id: String,
     pub job_id: JobId,
     pub setup_id: SetupId,

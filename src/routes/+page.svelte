@@ -76,7 +76,7 @@
 
 	// The job list folds to a rail of icons, leaving the room to the work; remembered on this
 	// computer, and unfolded when storage is unavailable.
-	const SIDEBAR_KEY = 'scriptorium.sidebar.collapsed';
+	const SIDEBAR_KEY = 'kalamu.sidebar.collapsed';
 	function storedCollapsed(): boolean {
 		try {
 			return localStorage.getItem(SIDEBAR_KEY) === '1';
@@ -149,11 +149,22 @@
 	<nav class="side" aria-label={m.shell.jobs}>
 		<div class="brand">
 			{#if !collapsed}
+				<!-- The app icon's small drawing (src-tauri/icons/small.svg): a handwritten sheet
+				     behind its transcription, one line under the highlighter. -->
 				<svg class="mark" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
 					<rect width="22" height="22" rx="5" class="mark-ground" />
-					<rect x="5" y="5.2" width="12" height="2" rx="1" class="mark-line" />
-					<rect x="4" y="9" width="11" height="4" rx="1" class="mark-marker" />
-					<rect x="5" y="14.8" width="9" height="2" rx="1" class="mark-line" />
+					<rect x="0.4" y="0.4" width="21.2" height="21.2" rx="4.6" class="mark-rim" />
+					<g transform="rotate(-9 8.5 11)">
+						<rect x="3.6" y="4.4" width="9.6" height="13" rx="1" class="mark-hand" />
+						<rect x="5" y="7" width="5" height="1.3" rx="0.65" class="mark-ink" />
+						<rect x="5" y="10" width="6" height="1.3" rx="0.65" class="mark-ink" />
+					</g>
+					<g transform="rotate(6 13.5 11.5)">
+						<rect x="8.8" y="4.6" width="9.6" height="13" rx="1" class="mark-sheet" />
+						<rect x="10.4" y="7" width="6.4" height="1.4" rx="0.7" class="mark-line" />
+						<rect x="10" y="10" width="7.2" height="2.4" rx="0.8" class="mark-marker" />
+						<rect x="10.4" y="14" width="5" height="1.4" rx="0.7" class="mark-line" />
+					</g>
 				</svg>
 				<span class="name">{m.app.name}</span>
 			{/if}
@@ -314,14 +325,29 @@
 		min-height: 2rem;
 		padding: 0 var(--space-2);
 	}
+	/* The app icon's own colours, the same in both themes: it is the icon, not interface. */
 	.mark-ground {
-		fill: var(--ink);
+		fill: #1e1d1b;
+	}
+	.mark-rim {
+		fill: none;
+		stroke: #4d4a43;
+		stroke-width: 0.8;
+	}
+	.mark-hand {
+		fill: #efe1c3;
+	}
+	.mark-ink {
+		fill: #8a5a3b;
+	}
+	.mark-sheet {
+		fill: #ffffff;
 	}
 	.mark-line {
-		fill: var(--on-ink);
+		fill: #9a9ea6;
 	}
 	.mark-marker {
-		fill: var(--marker);
+		fill: #ffd84d;
 	}
 	/* Folds the list: quiet until pointed at, like the other tools of the frame. */
 	.fold {
@@ -344,10 +370,14 @@
 		background: var(--wash);
 		color: var(--text-bright);
 	}
+	/* The name is the one place the reading serif signs the interface, at display size. */
 	.name {
-		font-size: 1rem;
+		font-family: var(--font-text);
+		font-size: 1.1875rem;
 		font-weight: 600;
-		letter-spacing: -0.01em;
+		font-variation-settings: 'opsz' 48;
+		letter-spacing: -0.015em;
+		line-height: 1;
 		color: var(--text-bright);
 	}
 	.new {

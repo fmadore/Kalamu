@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use image::{DynamicImage, ImageFormat, RgbImage};
-use scriptorium_core::{PageHalf, WarningKind};
+use kalamu_core::{PageHalf, WarningKind};
 
 use super::*;
 use crate::pdf::sample_pdf;
@@ -163,12 +163,12 @@ fn files_are_inspected_and_hashed() -> Result<(), MediaError> {
     Ok(())
 }
 
-/// Cuts every page of a real PDF and checks each one opens: `SCRIPTORIUM_SAMPLE_PDF=path cargo
-/// test -p scriptorium-media real_pdf -- --ignored --nocapture`.
+/// Cuts every page of a real PDF and checks each one opens: `KALAMU_SAMPLE_PDF=path cargo
+/// test -p kalamu-media real_pdf -- --ignored --nocapture`.
 #[test]
 #[ignore = "needs a PDF on disk"]
 fn real_pdf_pages_open() -> Result<(), MediaError> {
-    let Ok(path) = std::env::var("SCRIPTORIUM_SAMPLE_PDF") else {
+    let Ok(path) = std::env::var("KALAMU_SAMPLE_PDF") else {
         return Ok(());
     };
     let started = std::time::Instant::now();

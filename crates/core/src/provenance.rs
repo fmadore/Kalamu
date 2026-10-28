@@ -7,7 +7,7 @@ use crate::{LanguageChoice, LanguageCode, ProviderId, SetupOptions, Task, Timest
 /// produced and to reproduce it.
 ///
 /// Modelled on zmo-ai-pipelines' `provenance.json` (schema 2): source hash, full prompt text and
-/// its hash, per-run usage. Scriptorium starts its own numbering at 1.
+/// its hash, per-run usage. Kalamu starts its own numbering at 1.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct Provenance {

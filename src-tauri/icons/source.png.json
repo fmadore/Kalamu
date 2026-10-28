@@ -1,0 +1,24 @@
+{
+  "file": "icon-witnesses-2.png",
+  "generator": "OpenAI Image API",
+  "model": "gpt-image-2.5-flare",
+  "prompt": "App icon for a Windows 11 desktop application used by historians to turn scanned documents, handwritten manuscripts and interview recordings into text, then check that text against the source. Square 1:1 canvas with a fully transparent background. The icon is a rounded-square tile, exactly centred, filling 88% of the canvas with even margins on all four sides, corner radius about 22% of its width. Front-facing, crisp, in the modern Windows 11 Fluent icon style: simple bold shapes, soft subtle gradients, gentle depth, no outlines, readable at 32 pixels. No text, no letters, no watermark, nothing outside the tile.\nConcept: two witnesses compared. Two overlapping sheets of paper, slightly fanned, centred on the tile: the back sheet, tilted a few degrees to the left, is warm cream paper carrying loose handwritten scribble lines in brown ink; the front sheet, tilted slightly to the right, is clean white paper carrying neat straight grey text lines. One word-sized bar on the front sheet is marked in highlighter yellow (#ffe066), aligned with a matching yellow-marked scribble on the back sheet. Tile colour: deep warm graphite (#1e1d1b) with a very soft lighter centre, so the paper glows like a page on a lightbox.",
+  "size": "1024x1024",
+  "quality": "high",
+  "background": "transparent",
+  "output_format": "png",
+  "created": "2026-10-28T07:50:29.000Z",
+  "usage": {
+    "input_tokens": 540,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 540
+    },
+    "output_tokens": 3512,
+    "output_tokens_details": {
+      "image_tokens": 3512,
+      "text_tokens": 0
+    },
+    "total_tokens": 4052
+  }
+}

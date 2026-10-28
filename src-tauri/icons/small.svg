@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 22 22">
+  <!-- The Kalamu mark at small sizes (16 to 32 px and the sidebar): the "two witnesses" of
+       source.png reduced to what holds at 16 px. A handwritten sheet (cream, brown strokes)
+       behind a transcribed one (white, grey lines) with one line under the highlighter, on a
+       warm graphite tile. Drawn on a 22-unit grid; the sidebar uses the same shapes. -->
+  <rect width="22" height="22" rx="5" fill="#1e1d1b"/>
+  <!-- A faint rim, so the tile holds on a dark taskbar. -->
+  <rect x="0.4" y="0.4" width="21.2" height="21.2" rx="4.6" fill="none" stroke="#4d4a43" stroke-width="0.8"/>
+  <g transform="rotate(-9 8.5 11)">
+    <rect x="3.6" y="4.4" width="9.6" height="13" rx="1" fill="#efe1c3"/>
+    <rect x="5" y="7" width="5" height="1.3" rx="0.65" fill="#8a5a3b"/>
+    <rect x="5" y="10" width="6" height="1.3" rx="0.65" fill="#8a5a3b"/>
+  </g>
+  <g transform="rotate(6 13.5 11.5)">
+    <rect x="8.8" y="4.6" width="9.6" height="13" rx="1" fill="#ffffff"/>
+    <rect x="10.4" y="7" width="6.4" height="1.4" rx="0.7" fill="#9a9ea6"/>
+    <rect x="10" y="10" width="7.2" height="2.4" rx="0.8" fill="#ffd84d"/>
+    <rect x="10.4" y="14" width="5" height="1.4" rx="0.7" fill="#9a9ea6"/>
+  </g>
+</svg>

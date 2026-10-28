@@ -1,6 +1,6 @@
 //! Input checks: cheap tests on page sizes and metadata that predict a poor result.
 
-use scriptorium_core::WarningKind;
+use kalamu_core::WarningKind;
 
 use crate::{ImageSource, PdfSource};
 

@@ -1,6 +1,6 @@
 //! Offline transcription: the Whisper models, downloaded from the app as in Live Translation.
 
-use scriptorium_offline::ModelStatus;
+use kalamu_offline::ModelStatus;
 use serde::Serialize;
 use tauri::State;
 use ts_rs::TS;
@@ -20,7 +20,7 @@ pub struct OfflineStatus {
 pub fn offline_status(state: State<'_, AppState>) -> OfflineStatus {
     OfflineStatus {
         models: state.models.list(),
-        missing_cpu: scriptorium_offline::missing_features().to_vec(),
+        missing_cpu: kalamu_offline::missing_features().to_vec(),
     }
 }
 

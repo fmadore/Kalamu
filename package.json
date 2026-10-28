@@ -1,12 +1,12 @@
 {
-	"name": "scriptorium",
+	"name": "kalamu",
 	"version": "0.2.0",
 	"description": "Transcribe interviews and read scanned or handwritten documents with the AI provider of your choice",
 	"license": "MIT",
 	"author": "Frédérick Madore",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/fmadore/Scriptorium.git"
+		"url": "git+https://github.com/fmadore/Kalamu.git"
 	},
 	"private": true,
 	"type": "module",

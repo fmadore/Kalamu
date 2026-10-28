@@ -15,11 +15,11 @@
 //! A batch refuses `fallbacks`, so batched requests go without it.
 
 use async_trait::async_trait;
-use reqwest::{Client, RequestBuilder};
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
     ProviderError, ProviderId, RequestSetting, Task, Usage,
 };
+use reqwest::{Client, RequestBuilder};
 use serde_json::{Value, json};
 
 use crate::analysis;

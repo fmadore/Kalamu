@@ -12,13 +12,13 @@ mod batch;
 mod chat;
 
 use async_trait::async_trait;
-use reqwest::Client;
-use reqwest::multipart::{Form, Part};
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, LanguageChoice, LanguageCode, ProcessOutput,
     ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, TextRegion,
     Usage,
 };
+use reqwest::Client;
+use reqwest::multipart::{Form, Part};
 use serde_json::{Value, json};
 
 use crate::analysis;

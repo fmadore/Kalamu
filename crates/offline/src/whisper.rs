@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex, Weak};
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, LanguageChoice, LanguageCode, PCM_16K_MONO, ProcessOutput, ProcessRequest, Provider,
     ProviderError, ProviderId, RequestSetting, Segment, StopSignal, Task, Usage,
 };
@@ -425,7 +425,7 @@ mod tests {
     /// The catalogue offers the languages Whisper knows, and every model the code can fetch.
     #[test]
     fn the_catalogue_matches_what_whisper_can_do() {
-        let catalog = scriptorium_catalog::Catalog::bundled();
+        let catalog = kalamu_catalog::Catalog::bundled();
         let offered: Vec<_> = catalog
             .models
             .iter()
@@ -439,7 +439,7 @@ mod tests {
                 model.id
             );
             assert_eq!(model.inputs, [PCM_16K_MONO]);
-            let scriptorium_catalog::LanguageSupport::List(codes) = &model.languages else {
+            let kalamu_catalog::LanguageSupport::List(codes) = &model.languages else {
                 panic!("{} must list its languages", model.id);
             };
             for code in codes {
@@ -465,7 +465,7 @@ mod tests {
 
     /// A real transcription with a downloaded model; run with
     /// `WHISPER_SMOKE_MODEL=<path to ggml-*.bin> WHISPER_SMOKE_AUDIO=<16 kHz mono s16le file>
-    /// cargo test -p scriptorium-offline smoke -- --ignored --nocapture`.
+    /// cargo test -p kalamu-offline smoke -- --ignored --nocapture`.
     #[test]
     #[ignore = "needs a model file and a recording"]
     fn smoke() {

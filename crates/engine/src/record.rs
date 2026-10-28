@@ -1,8 +1,8 @@
 //! A saved pipeline as a file to share or cite: its prompts frozen as a job would freeze them,
 //! the catalogue's names for its models, and the settings each provider sends.
 
-use scriptorium_core::provenance::ProvenancePrompt;
-use scriptorium_prompts::{Pipeline, PipelineFile, Preset, SetupRecord};
+use kalamu_core::provenance::ProvenancePrompt;
+use kalamu_prompts::{Pipeline, PipelineFile, Preset, SetupRecord};
 
 use crate::{Engine, EngineError};
 

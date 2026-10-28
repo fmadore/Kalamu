@@ -1,6 +1,6 @@
 [package]
-name = "scriptorium-engine"
-description = "Job orchestration for Scriptorium: queue, retries, caching, resume, progress, outputs."
+name = "kalamu-engine"
+description = "Job orchestration for Kalamu: queue, retries, caching, resume, progress, outputs."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,11 +8,11 @@ license.workspace = true
 
 [dependencies]
 futures.workspace = true
-scriptorium-catalog.workspace = true
-scriptorium-core.workspace = true
-scriptorium-export.workspace = true
-scriptorium-media.workspace = true
-scriptorium-prompts.workspace = true
+kalamu-catalog.workspace = true
+kalamu-core.workspace = true
+kalamu-export.workspace = true
+kalamu-media.workspace = true
+kalamu-prompts.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 similar.workspace = true
@@ -23,8 +23,8 @@ ts-rs.workspace = true
 
 [dev-dependencies]
 async-trait.workspace = true
-scriptorium-media = { workspace = true, features = ["test-support"] }
-scriptorium-store.workspace = true
+kalamu-media = { workspace = true, features = ["test-support"] }
+kalamu-store.workspace = true
 tempfile.workspace = true
 
 [lints]

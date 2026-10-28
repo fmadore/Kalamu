@@ -577,7 +577,7 @@ export function installMock(): void {
 	// `compare`: open the review with the compared text beside it.
 	if (params.has('compare'))
 		localStorage.setItem(
-			'scriptorium.review.layout',
+			'kalamu.review.layout',
 			JSON.stringify({ two: 0.475, three: [0.33, 0.665], compare: true })
 		);
 	// `open=deux`: open the readings of the highlighted words with that text.
@@ -597,7 +597,7 @@ export function installMock(): void {
 			case 'app_info':
 				return {
 					version: '0.1.0',
-					data_dir: 'C:\\Users\\you\\AppData\\Local\\io.github.fmadore.scriptorium',
+					data_dir: 'C:\\Users\\you\\AppData\\Local\\io.github.fmadore.kalamu',
 					logs_dir: '',
 					interrupted: []
 				};

@@ -2,11 +2,11 @@
 //! and its answers read back under the ids they were sent with, failures included. Response
 //! bodies follow each batch API's documented shape.
 
-use scriptorium_core::{
+use kalamu_core::{
     ApiKey, BatchContext, BatchProgress, LanguageChoice, PieceRef, PreparedInput, ProcessRequest,
     Provider, ProviderError, SetupOptions, StopSignal, Task,
 };
-use scriptorium_providers::{Anthropic, OpenAi, client};
+use kalamu_providers::{Anthropic, OpenAi, client};
 use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 

@@ -9,18 +9,18 @@ edition = "2024"
 rust-version = "1.99.1"
 license = "MIT"
 authors = ["Frédérick Madore"]
-repository = "https://github.com/fmadore/Scriptorium"
+repository = "https://github.com/fmadore/Kalamu"
 
 [workspace.dependencies]
-scriptorium-core = { path = "crates/core" }
-scriptorium-catalog = { path = "crates/catalog" }
-scriptorium-prompts = { path = "crates/prompts" }
-scriptorium-media = { path = "crates/media" }
-scriptorium-providers = { path = "crates/providers" }
-scriptorium-store = { path = "crates/store" }
-scriptorium-export = { path = "crates/export" }
-scriptorium-engine = { path = "crates/engine" }
-scriptorium-offline = { path = "crates/offline" }
+kalamu-core = { path = "crates/core" }
+kalamu-catalog = { path = "crates/catalog" }
+kalamu-prompts = { path = "crates/prompts" }
+kalamu-media = { path = "crates/media" }
+kalamu-providers = { path = "crates/providers" }
+kalamu-store = { path = "crates/store" }
+kalamu-export = { path = "crates/export" }
+kalamu-engine = { path = "crates/engine" }
+kalamu-offline = { path = "crates/offline" }
 
 anyhow = "1.0.104"
 async-trait = "0.1.92"

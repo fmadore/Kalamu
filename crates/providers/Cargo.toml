@@ -1,6 +1,6 @@
 [package]
-name = "scriptorium-providers"
-description = "Cloud provider clients for Scriptorium: one module per provider."
+name = "kalamu-providers"
+description = "Cloud provider clients for Kalamu: one module per provider."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ license.workspace = true
 async-trait.workspace = true
 base64.workspace = true
 reqwest.workspace = true
-scriptorium-core.workspace = true
+kalamu-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true

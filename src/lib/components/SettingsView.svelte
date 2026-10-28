@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { CREDIT_URLS } from '#lib/credits.js';
 	import { describeError } from '#lib/errors.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { messages, placeholders } from '#lib/i18n/index.js';
 	import { api, openUrl } from '#lib/tauri.js';
 	import { app, hasKey, refreshKeys, toast } from '#lib/state.svelte.js';
+	import ExternalLink from './ExternalLink.svelte';
 	import OfflineModels from './OfflineModels.svelte';
 	import SupportLink from './SupportLink.svelte';
 
@@ -165,7 +167,13 @@
 		<p>{m.settings.version(app.info?.version ?? '')}</p>
 		<p class="small">{m.settings.dataFolder}: <span class="path">{app.info?.data_dir}</span></p>
 		<p class="muted small">{m.settings.privacy}</p>
-		<p class="muted small">{m.settings.credits}</p>
+		<p class="muted small">
+			{#each placeholders(m.settings.credits) as part, i (i)}{#if 'name' in part}<ExternalLink
+						href={CREDIT_URLS[part.name] ?? ''}
+						>{m.settings.creditNames[part.name as keyof typeof m.settings.creditNames] ??
+							part.name}</ExternalLink
+					>{:else}{part.text}{/if}{/each}
+		</p>
 	</section>
 
 	<!-- Last, so it is there for anyone who looks and in the way of nobody. -->

@@ -1,8 +1,9 @@
-/* Design tokens, one name per role. Graphite and highlighter: grey surfaces do the work, black
+/* Design tokens, one name per role. Warm graphite: paper-warm greys do the work, graphite ink
    carries the one primary action, the highlighter yellow marks only what needs a look (where the
-   models disagree, what is left to review) and blue marks the researcher's own hand. The source
-   sits on a dark lightbox in both themes. Instrument Sans for the interface, Source Serif 4 for
-   the text being checked, IBM Plex Mono for anything a machine produced. Recorded in DESIGN.md. */
+   models disagree, what is left to review) and is also the colour of the app's mark, and blue
+   marks the researcher's own hand. The source sits on a dark lightbox in both themes. Instrument
+   Sans for the interface, Source Serif 4 for the text being checked (and the app's name),
+   IBM Plex Mono for anything a machine produced. Recorded in DESIGN.md. */
 
 :root {
 	color-scheme: light;
@@ -26,34 +27,34 @@
 	--control-lg: 2.75rem;
 
 	/* The sidebar and secondary bars; the main surface; tables' heads and side panels. */
-	--chrome: #f2f3f5;
-	--surface-0: #ffffff;
-	--surface-1: #fafafb;
+	--chrome: #efece6;
+	--surface-0: #fdfcfa;
+	--surface-1: #f8f6f2;
 	--surface-2: #ffffff;
-	--paper: #ffffff;
+	--paper: #fffefb;
 
 	/* The lightbox under a scan: dark in both themes, so the page is the brightest thing. */
-	--stage: #1e1f22;
-	--stage-raised: #2a2b2f;
-	--stage-line: #34353a;
-	--on-stage: #e4e5e9;
-	--on-stage-muted: #a9acb4;
+	--stage: #1f1e1c;
+	--stage-raised: #2b2a27;
+	--stage-line: #383632;
+	--on-stage: #e8e6e1;
+	--on-stage-muted: #aeaaa2;
 
-	--line: #e3e4e8;
-	--line-soft: #eeeff2;
-	--line-strong: #d5d7dc;
-	--line-hover: #a4a8b0;
+	--line: #e5e1d9;
+	--line-soft: #eeebe5;
+	--line-strong: #d6d1c7;
+	--line-hover: #a8a297;
 
 	/* Ink: primary actions, progress, the selected state. */
-	--ink: #111214;
-	--ink-hover: #2b2d32;
+	--ink: #171612;
+	--ink-hover: #2e2c27;
 	--on-ink: #ffffff;
-	--on-ink-muted: #b9bcc3;
-	--wash: rgba(17, 18, 20, 0.05);
+	--on-ink-muted: #bdb9b0;
+	--wash: rgba(23, 22, 18, 0.05);
 
 	/* The highlighter: disagreements and what is left to check. Text on it is always ink. */
-	--marker: #ffe066;
-	--on-marker: #111214;
+	--marker: #ffd84d;
+	--on-marker: #171612;
 
 	/* Buy Me a Coffee's own yellow, only behind the support link's cup, in both themes. */
 	--coffee: #ffdd00;
@@ -85,20 +86,20 @@
 	--speaker-2-wash: #ffebcc;
 	--speaker-2-text: #7a4300;
 
-	--text-bright: #111214;
-	--text-body: #1b1c1f;
-	--text-secondary: #4a4e57;
-	--text-muted: #5e626b;
+	--text-bright: #171612;
+	--text-body: #1e1d19;
+	--text-secondary: #4d4a42;
+	--text-muted: #615d54;
 	/* Only for decoration that repeats a value spoken elsewhere, such as line numbers. */
-	--text-faint: #8f939b;
+	--text-faint: #938e84;
 
-	--modal-scrim: rgba(17, 18, 20, 0.42);
-	--shadow-raised: 0 0 0 1px var(--line), 0 1px 2px rgba(17, 18, 20, 0.06);
-	--shadow-pop: 0 0 0 1px var(--line), 0 12px 32px -8px rgba(17, 18, 20, 0.18);
-	--shadow-flyout: 0 18px 48px -16px rgba(17, 18, 20, 0.35);
+	--modal-scrim: rgba(23, 22, 18, 0.42);
+	--shadow-raised: 0 0 0 1px var(--line), 0 1px 2px rgba(23, 22, 18, 0.06);
+	--shadow-pop: 0 0 0 1px var(--line), 0 12px 32px -8px rgba(23, 22, 18, 0.18);
+	--shadow-flyout: 0 18px 48px -16px rgba(23, 22, 18, 0.35);
 	--shadow-page: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.4);
 
-	--focus: #111214;
+	--focus: #171612;
 	--focus-width: 2px;
 	--focus-offset: 2px;
 
@@ -126,22 +127,22 @@
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
 		color-scheme: dark;
-		--chrome: #16171a;
-		--surface-0: #1c1d20;
-		--surface-1: #202125;
-		--surface-2: #24252a;
-		--paper: #1c1d20;
-		--stage: #0f1012;
-		--stage-raised: #1f2024;
-		--stage-line: #2a2b30;
-		--line: #2c2d31;
-		--line-soft: #26272b;
-		--line-strong: #3a3b40;
-		--line-hover: #5a5c63;
-		--ink: #ecedef;
+		--chrome: #171614;
+		--surface-0: #1d1c1a;
+		--surface-1: #21201d;
+		--surface-2: #272522;
+		--paper: #1d1c1a;
+		--stage: #100f0e;
+		--stage-raised: #21201d;
+		--stage-line: #2d2b28;
+		--line: #2f2d29;
+		--line-soft: #282623;
+		--line-strong: #3e3b36;
+		--line-hover: #605c55;
+		--ink: #eeece6;
 		--ink-hover: #ffffff;
-		--on-ink: #111214;
-		--on-ink-muted: #4a4e57;
+		--on-ink: #171612;
+		--on-ink-muted: #57534a;
 		--wash: rgba(255, 255, 255, 0.06);
 		--marker: #e8c547;
 		--hand: #7fa2ff;
@@ -163,37 +164,37 @@
 		--speaker-2: #f0a742;
 		--speaker-2-wash: rgba(240, 167, 66, 0.16);
 		--speaker-2-text: #f3c27a;
-		--text-bright: #f2f3f5;
-		--text-body: #dfe1e5;
-		--text-secondary: #b4b7be;
-		--text-muted: #9a9ea6;
-		--text-faint: #6f737b;
+		--text-bright: #f4f2ec;
+		--text-body: #e4e0d8;
+		--text-secondary: #bab5ab;
+		--text-muted: #a09a8f;
+		--text-faint: #767168;
 		--modal-scrim: rgba(0, 0, 0, 0.6);
 		--shadow-raised: 0 0 0 1px var(--line);
 		--shadow-pop: 0 0 0 1px var(--line-strong), 0 16px 40px -8px rgba(0, 0, 0, 0.6);
 		--shadow-flyout: 0 24px 64px -16px rgba(0, 0, 0, 0.7);
-		--focus: #ecedef;
+		--focus: #eeece6;
 	}
 }
 
 :root[data-theme='dark'] {
 	color-scheme: dark;
-	--chrome: #16171a;
-	--surface-0: #1c1d20;
-	--surface-1: #202125;
-	--surface-2: #24252a;
-	--paper: #1c1d20;
-	--stage: #0f1012;
-	--stage-raised: #1f2024;
-	--stage-line: #2a2b30;
-	--line: #2c2d31;
-	--line-soft: #26272b;
-	--line-strong: #3a3b40;
-	--line-hover: #5a5c63;
-	--ink: #ecedef;
+	--chrome: #171614;
+	--surface-0: #1d1c1a;
+	--surface-1: #21201d;
+	--surface-2: #272522;
+	--paper: #1d1c1a;
+	--stage: #100f0e;
+	--stage-raised: #21201d;
+	--stage-line: #2d2b28;
+	--line: #2f2d29;
+	--line-soft: #282623;
+	--line-strong: #3e3b36;
+	--line-hover: #605c55;
+	--ink: #eeece6;
 	--ink-hover: #ffffff;
-	--on-ink: #111214;
-	--on-ink-muted: #4a4e57;
+	--on-ink: #171612;
+	--on-ink-muted: #57534a;
 	--wash: rgba(255, 255, 255, 0.06);
 	--marker: #e8c547;
 	--hand: #7fa2ff;
@@ -215,16 +216,16 @@
 	--speaker-2: #f0a742;
 	--speaker-2-wash: rgba(240, 167, 66, 0.16);
 	--speaker-2-text: #f3c27a;
-	--text-bright: #f2f3f5;
-	--text-body: #dfe1e5;
-	--text-secondary: #b4b7be;
-	--text-muted: #9a9ea6;
-	--text-faint: #6f737b;
+	--text-bright: #f4f2ec;
+	--text-body: #e4e0d8;
+	--text-secondary: #bab5ab;
+	--text-muted: #a09a8f;
+	--text-faint: #767168;
 	--modal-scrim: rgba(0, 0, 0, 0.6);
 	--shadow-raised: 0 0 0 1px var(--line);
 	--shadow-pop: 0 0 0 1px var(--line-strong), 0 16px 40px -8px rgba(0, 0, 0, 0.6);
 	--shadow-flyout: 0 24px 64px -16px rgba(0, 0, 0, 0.7);
-	--focus: #ecedef;
+	--focus: #eeece6;
 }
 
 *,

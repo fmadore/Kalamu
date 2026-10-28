@@ -5,7 +5,7 @@ primary_target: "src/routes/+page.svelte"
 related_targets: ["src/app.css","src/lib/components"]
 ---
 
-# Scriptorium app shell and screens
+# Kalamu app shell and screens
 
 Scope: the whole desktop app (shell, New job, Job detail, Review, Prompts, Settings). Visitor
 mode: Operate. Audience: non-technical researchers checking AI transcriptions against their

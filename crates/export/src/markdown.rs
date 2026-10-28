@@ -1,4 +1,4 @@
-use scriptorium_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
+use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
 
 /// Markdown with a short header naming the source and model, and a heading per page.
 pub struct MarkdownExporter;

@@ -3,12 +3,12 @@
 //! version. Response bodies in `fixtures/` follow each API's documented shape; replace them
 //! with recorded responses when live keys are available for a recording run.
 
-use scriptorium_core::{
+use kalamu_core::{
     AnalysisSchema, ApiKey, Field, FieldKind, FieldValue, LanguageChoice, LanguageCode, PieceRef,
     PreparedInput, ProcessRequest, Provider, ProviderError, SetupOptions, StopSignal, Task,
     YOUTUBE_LINK,
 };
-use scriptorium_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
+use kalamu_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
 use wiremock::matchers::{body_partial_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -311,7 +311,7 @@ async fn claude_uses_the_current_api_version_and_skips_thinking_blocks() {
     assert_eq!(out.text, "بسم الله الرحمن الرحيم");
     assert_eq!(out.model_version.as_deref(), Some("claude-opus-5-5"));
     assert_eq!(out.usage.output_tokens, 31);
-    // Claude counts cached input apart; Scriptorium's total includes it.
+    // Claude counts cached input apart; Kalamu's total includes it.
     assert_eq!(out.usage.input_tokens, 2105);
     assert_eq!(out.usage.cached_input_tokens, 800);
 }

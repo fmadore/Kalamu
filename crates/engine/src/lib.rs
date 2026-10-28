@@ -18,14 +18,14 @@ use std::path::Path;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
 
-use scriptorium_catalog::Catalog;
-use scriptorium_core::{
+use kalamu_catalog::Catalog;
+use kalamu_core::{
     ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStatus, JobStore, JobSummary,
     PieceStatus, ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceFile, SourceId,
     SpeakerNames, StopSignal, StoreError, Timestamp,
 };
-use scriptorium_media::{Ffmpeg, MediaError, OpenSource};
-use scriptorium_prompts::{PromptError, PromptLibrary};
+use kalamu_media::{Ffmpeg, MediaError, OpenSource};
+use kalamu_prompts::{PromptError, PromptLibrary};
 use thiserror::Error;
 use tokio::sync::broadcast;
 
@@ -212,7 +212,7 @@ impl Engine {
         Ok(self.store.job(id)?)
     }
 
-    pub fn pieces(&self, id: JobId) -> Result<Vec<scriptorium_core::PieceState>, EngineError> {
+    pub fn pieces(&self, id: JobId) -> Result<Vec<kalamu_core::PieceState>, EngineError> {
         Ok(self.store.pieces(id)?)
     }
 
@@ -230,10 +230,10 @@ impl Engine {
         paths
             .iter()
             .map(|p| {
-                let source = scriptorium_media::inspect(p.as_ref(), ffmpeg)?;
+                let source = kalamu_media::inspect(p.as_ref(), ffmpeg)?;
                 let warnings = match source.kind {
                     InputKind::Audio | InputKind::Video => {
-                        scriptorium_media::recording_warnings(&source, ffmpeg)
+                        kalamu_media::recording_warnings(&source, ffmpeg)
                     }
                     _ => OpenSource::open(&source, ffmpeg)
                         .map(|open| open.warnings(source.id))
@@ -263,7 +263,7 @@ impl Engine {
         job_id: JobId,
         source_id: SourceId,
         index: u32,
-    ) -> Result<scriptorium_core::PreparedInput, EngineError> {
+    ) -> Result<kalamu_core::PreparedInput, EngineError> {
         let job = self.store.job(job_id)?;
         let source = job
             .sources
@@ -299,7 +299,7 @@ impl Engine {
             .filter_map(|s| catalog.model(&s.provider, &s.model))
             .filter_map(|m| m.limits.max_audio_minutes)
             .map(|minutes| u64::from(minutes) * 60_000 * 4 / 5)
-            .fold(scriptorium_media::DEFAULT_PIECE_MS, u64::min)
+            .fold(kalamu_media::DEFAULT_PIECE_MS, u64::min)
     }
 
     pub fn is_running(&self, id: JobId) -> bool {
@@ -408,7 +408,7 @@ impl Engine {
 }
 
 /// Pieces of a job by status, for summaries.
-pub fn count(pieces: &[scriptorium_core::PieceState], status: PieceStatus) -> usize {
+pub fn count(pieces: &[kalamu_core::PieceState], status: PieceStatus) -> usize {
     pieces.iter().filter(|p| p.status == status).count()
 }
 

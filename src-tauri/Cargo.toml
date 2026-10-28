@@ -1,5 +1,5 @@
 [package]
-name = "scriptorium"
+name = "kalamu"
 description = "Transcribe interviews and read scanned or handwritten documents with the AI provider of your choice"
 version.workspace = true
 edition.workspace = true
@@ -13,7 +13,7 @@ publish = false
 [lib]
 # Tauri's entry point lives in the lib; main.rs is a thin shim. Only `rlib`, as in Live
 # Translation: the template's `staticlib` and `cdylib` are for mobile and cost a full LTO link.
-name = "scriptorium_lib"
+name = "kalamu_lib"
 crate-type = ["rlib"]
 
 [build-dependencies]
@@ -23,14 +23,14 @@ tauri-build = { version = "2.7.4", features = [] }
 anyhow.workspace = true
 keyring = "4.2.0"
 reqwest.workspace = true
-scriptorium-catalog.workspace = true
-scriptorium-core.workspace = true
-scriptorium-engine.workspace = true
-scriptorium-media.workspace = true
-scriptorium-offline.workspace = true
-scriptorium-prompts.workspace = true
-scriptorium-providers.workspace = true
-scriptorium-store.workspace = true
+kalamu-catalog.workspace = true
+kalamu-core.workspace = true
+kalamu-engine.workspace = true
+kalamu-media.workspace = true
+kalamu-offline.workspace = true
+kalamu-prompts.workspace = true
+kalamu-providers.workspace = true
+kalamu-store.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 base64.workspace = true
@@ -55,3 +55,6 @@ custom-protocol = ["tauri/custom-protocol"]
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -45,7 +45,7 @@
 		>
 	</span>
 	{#if iconOnly}<span class="sr-only">{m.support.link}</span>{:else}{m.support.link}{/if}<span
-		class="sr-only">{m.support.opensInBrowser}</span
+		class="sr-only">{m.common.opensInBrowser}</span
 	>
 </a>
 

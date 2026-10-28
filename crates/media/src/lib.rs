@@ -18,7 +18,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-use scriptorium_core::{
+use kalamu_core::{
     InputKind, InputWarning, PieceRef, PreparedInput, SourceFile, SourceId, YOUTUBE_LINK,
 };
 use sha2::{Digest, Sha256};
@@ -155,10 +155,7 @@ impl OpenSource {
                     Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => false,
                 };
             if spread {
-                for half in [
-                    scriptorium_core::PageHalf::Left,
-                    scriptorium_core::PageHalf::Right,
-                ] {
+                for half in [kalamu_core::PageHalf::Left, kalamu_core::PageHalf::Right] {
                     pieces.push(PieceRef::Page {
                         number,
                         half: Some(half),

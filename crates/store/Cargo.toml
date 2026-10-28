@@ -1,6 +1,6 @@
 [package]
-name = "scriptorium-store"
-description = "SQLite job database and result cache for Scriptorium."
+name = "kalamu-store"
+description = "SQLite job database and result cache for Kalamu."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 
 [dependencies]
 rusqlite.workspace = true
-scriptorium-core.workspace = true
+kalamu-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 

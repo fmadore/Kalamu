@@ -5,11 +5,11 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use async_trait::async_trait;
-use scriptorium_core::{
+use kalamu_core::{
     CacheKey, ExportFormat, FieldAnswer, FieldKind, FieldValue, OutputDestination, OutputSettings,
     PreparedInput, ProcessOutput, ProcessRequest, Task, Usage,
 };
-use scriptorium_store::SqliteStore;
+use kalamu_store::SqliteStore;
 
 use super::*;
 
@@ -51,7 +51,7 @@ impl Provider for Fake {
     fn accepted_inputs(&self, task: Task) -> &'static [&'static str] {
         match task {
             Task::Analysis => &["application/pdf", "text/plain"],
-            Task::AudioTranscription => &[scriptorium_core::YOUTUBE_LINK],
+            Task::AudioTranscription => &[kalamu_core::YOUTUBE_LINK],
             _ => &["application/pdf"],
         }
     }
@@ -66,7 +66,7 @@ impl Provider for Fake {
             piece, bytes, mime, ..
         } = request.input;
         // A YouTube video arrives as its link, and is transcribed with times in the text.
-        if mime == scriptorium_core::YOUTUBE_LINK {
+        if mime == kalamu_core::YOUTUBE_LINK {
             assert_eq!(bytes, b"https://www.youtube.com/watch?v=dQw4w9WgXcQ");
             return Ok(ProcessOutput {
                 text: "[00:00:05] Speaker 1: Bonjour.
@@ -78,7 +78,7 @@ impl Provider for Fake {
         assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
         // An analysis reads the whole document and answers each field.
         if let Some(schema) = request.analysis {
-            assert_eq!(piece, &scriptorium_core::PieceRef::Whole);
+            assert_eq!(piece, &kalamu_core::PieceRef::Whole);
             let fields: Vec<FieldAnswer> = schema
                 .fields
                 .iter()
@@ -97,7 +97,7 @@ impl Provider for Fake {
                 ..ProcessOutput::default()
             });
         }
-        let scriptorium_core::PieceRef::Page { number, .. } = piece else {
+        let kalamu_core::PieceRef::Page { number, .. } = piece else {
             return Err(ProviderError::Other("not a page".into()));
         };
         let next_error = {
@@ -151,7 +151,7 @@ fn fixture() -> Fixture {
     let engine = Engine::new(
         store.clone(),
         vec![fake.clone()],
-        scriptorium_catalog::Catalog::bundled(),
+        kalamu_catalog::Catalog::bundled(),
         PromptLibrary::in_memory(),
         Arc::new(Keys),
         EngineConfig {
@@ -174,9 +174,9 @@ fn fixture() -> Fixture {
 impl Fixture {
     fn pdf(&self, name: &str, pages: usize) -> SourceFile {
         let path: PathBuf = self.dir.path().join(name);
-        let bytes = scriptorium_media::sample_pdf(&vec![(595.0, 842.0); pages], false);
+        let bytes = kalamu_media::sample_pdf(&vec![(595.0, 842.0); pages], false);
         std::fs::write(&path, bytes).unwrap_or_else(|_| panic!("write pdf"));
-        scriptorium_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"))
+        kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"))
     }
 
     fn new_job(&self, sources: Vec<SourceFile>, models: &[&str]) -> Job {
@@ -642,7 +642,7 @@ async fn an_analysis_reads_each_document_once_and_corrections_replace_its_answer
 #[tokio::test]
 async fn a_text_only_model_is_not_sent_the_formats_its_provider_takes() {
     let f = fixture();
-    let mut catalog = scriptorium_catalog::Catalog::bundled();
+    let mut catalog = kalamu_catalog::Catalog::bundled();
     let mut model = catalog.models[0].clone();
     model.provider = ProviderId::new("fake");
     model.id = "fake-text".into();
@@ -691,11 +691,11 @@ async fn a_text_only_model_is_not_sent_the_formats_its_provider_takes() {
 #[test]
 fn a_pipeline_record_carries_the_prompt_a_job_would_send() {
     let f = fixture();
-    let pipeline = scriptorium_prompts::Pipeline {
+    let pipeline = kalamu_prompts::Pipeline {
         id: String::new(),
         name: "Places".into(),
         task: Task::Analysis,
-        setups: vec![scriptorium_prompts::PipelineSetup {
+        setups: vec![kalamu_prompts::PipelineSetup {
             provider: ProviderId::new("fake"),
             model: "fake-model".into(),
             preset_id: Some("analysis.entities".into()),
@@ -734,7 +734,7 @@ fn a_pipeline_record_carries_the_prompt_a_job_would_send() {
         .unwrap_or_else(|| panic!("no prompt"));
     assert_eq!(
         recorded,
-        scriptorium_core::provenance::ProvenancePrompt::from_snapshot(&job.setups[0].prompt)
+        kalamu_core::provenance::ProvenancePrompt::from_snapshot(&job.setups[0].prompt)
     );
     assert_eq!(file.presets.len(), 1);
     assert_eq!(file.presets[0].id, "analysis.entities");

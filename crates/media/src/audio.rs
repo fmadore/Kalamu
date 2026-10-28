@@ -8,7 +8,7 @@
 
 use std::path::{Path, PathBuf};
 
-use scriptorium_core::{InputKind, PieceRef, PreparedInput, SourceFile, WarningKind};
+use kalamu_core::{InputKind, PieceRef, PreparedInput, SourceFile, WarningKind};
 
 use crate::MediaError;
 use crate::ffmpeg::{Ffmpeg, Probe};

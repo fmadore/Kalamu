@@ -3,11 +3,9 @@
 
 use std::collections::BTreeMap;
 
-use scriptorium_core::speakers::{labels, rename_segments, rename_text};
-use scriptorium_core::{
-    CacheKey, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task,
-};
-use scriptorium_export::timed_lines;
+use kalamu_core::speakers::{labels, rename_segments, rename_text};
+use kalamu_core::{CacheKey, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task};
+use kalamu_export::timed_lines;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -31,7 +29,7 @@ pub struct PieceView {
     pub model_version: Option<String>,
     pub cost_usd: Option<f64>,
     /// Timed lines of a transcription, relative to the start of the piece.
-    pub segments: Vec<scriptorium_core::Segment>,
+    pub segments: Vec<kalamu_core::Segment>,
     /// An analysis's answers from the model, never edited.
     pub ai_fields: Vec<FieldAnswer>,
     /// The researcher's corrected answers, if any.

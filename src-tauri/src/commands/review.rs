@@ -3,9 +3,9 @@
 use std::sync::Arc;
 
 use base64::Engine as _;
-use scriptorium_core::{Correction, JobId, SetupId, SourceId, SpeakerNames};
-use scriptorium_engine::{ComparisonReport, DiffSpan, PieceView};
-use scriptorium_media::OpenSource;
+use kalamu_core::{Correction, JobId, SetupId, SourceId, SpeakerNames};
+use kalamu_engine::{ComparisonReport, DiffSpan, PieceView};
+use kalamu_media::OpenSource;
 use tauri::State;
 
 use super::{AppState, PagePreview};
@@ -52,7 +52,7 @@ pub async fn source_text(
         .ok_or_else(|| AppError::new("job.not_found", source_id))?;
     tokio::task::spawn_blocking(move || match OpenSource::open(&source, None)? {
         OpenSource::Text(text) => text.text(),
-        _ => Err(scriptorium_media::MediaError::UnsupportedKind),
+        _ => Err(kalamu_media::MediaError::UnsupportedKind),
     })
     .await
     .map_err(|e| AppError::new(id::INTERNAL, e))?
@@ -96,7 +96,7 @@ pub async fn piece_preview(
     let pieces = opened.pieces(
         source.split_spreads,
         job.settings.sample_pages,
-        scriptorium_media::DEFAULT_PIECE_MS,
+        kalamu_media::DEFAULT_PIECE_MS,
     );
     let piece = pieces
         .get(index as usize)
@@ -157,5 +157,5 @@ pub fn compare_source(
 
 #[tauri::command]
 pub fn diff_texts(left: String, right: String) -> Vec<DiffSpan> {
-    scriptorium_engine::diff(&left, &right)
+    kalamu_engine::diff(&left, &right)
 }

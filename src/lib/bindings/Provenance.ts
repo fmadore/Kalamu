@@ -15,7 +15,7 @@ import type { Usage } from "./Usage";
  * produced and to reproduce it.
  *
  * Modelled on zmo-ai-pipelines' `provenance.json` (schema 2): source hash, full prompt text and
- * its hash, per-run usage. Scriptorium starts its own numbering at 1.
+ * its hash, per-run usage. Kalamu starts its own numbering at 1.
  */
 export type Provenance = { 
 /**
