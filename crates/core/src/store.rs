@@ -41,6 +41,8 @@ pub trait JobStore: Send + Sync {
     fn job(&self, id: JobId) -> Result<Job, StoreError>;
     fn list_jobs(&self) -> Result<Vec<JobSummary>, StoreError>;
     fn set_job_status(&self, id: JobId, status: JobStatus) -> Result<(), StoreError>;
+    /// Gives a job a new name; nothing else about it changes.
+    fn rename_job(&self, id: JobId, name: &str) -> Result<(), StoreError>;
     fn delete_job(&self, id: JobId) -> Result<(), StoreError>;
 
     /// Marks every running job as interrupted; called at startup after a crash or close.

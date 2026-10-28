@@ -78,6 +78,28 @@ fn jobs_round_trip_and_are_listed_with_progress() -> Result<(), StoreError> {
 }
 
 #[test]
+fn a_renamed_job_keeps_everything_else() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    store.upsert_piece(&piece(&job, 0, PieceStatus::Done))?;
+    store.rename_job(job.id, "Lettres du gouverneur, 1957")?;
+
+    let renamed = store.job(job.id)?;
+    assert_eq!(renamed.name, "Lettres du gouverneur, 1957");
+    assert_eq!(renamed.sources, job.sources);
+    assert_eq!(renamed.setups, job.setups);
+    let listed = store.list_jobs()?;
+    assert_eq!(listed[0].name, "Lettres du gouverneur, 1957");
+    assert_eq!(listed[0].pieces_finished, 1);
+    assert!(matches!(
+        store.rename_job(JobId::new(), "x"),
+        Err(StoreError::NotFound)
+    ));
+    Ok(())
+}
+
+#[test]
 fn piece_updates_replace_the_previous_state() -> Result<(), StoreError> {
     let store = SqliteStore::in_memory()?;
     let job = job();

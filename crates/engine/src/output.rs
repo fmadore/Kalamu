@@ -100,18 +100,40 @@ impl Engine {
         for source in &job.sources {
             for setup in &job.setups {
                 let (dir, base) = output_base(&job, source, &setup.label);
-                let path = [
-                    dir.join(format!("{base}.txt")),
-                    dir.join(format!("{base}.kalamu.txt")),
-                    // Written before the app was renamed from Scriptorium.
-                    dir.join(format!("{base}.scriptorium.txt")),
-                    dir.join(format!("{base}.md")),
-                ]
-                .into_iter()
-                .find(|p| p.is_file() && p != Path::new(&source.path));
+                let path = ["txt", "md"]
+                    .into_iter()
+                    .find_map(|ext| existing_output(&dir, &base, ext, &source.path));
                 if let Some(path) = path {
                     out.push(path.display().to_string());
                 }
+            }
+        }
+        Ok(out)
+    }
+
+    /// Every file a job has written that is still there: each chosen format, then
+    /// `provenance.json`, for every source and set-up. Read from disk, so the list outlives the
+    /// run that wrote it and leaves out files moved or deleted since.
+    pub fn outputs(&self, job_id: JobId) -> Result<Vec<String>, EngineError> {
+        let job = self.store.job(job_id)?;
+        let extensions: Vec<&str> = job
+            .output
+            .formats
+            .iter()
+            .filter(|f| kalamu_export::exporter(**f).is_some_and(|e| e.supports(job.task)))
+            .map(|f| f.extension())
+            .chain(["provenance.json"])
+            .collect();
+        let mut out = Vec::new();
+        for source in &job.sources {
+            for setup in &job.setups {
+                let (dir, base) = output_base(&job, source, &setup.label);
+                out.extend(
+                    extensions
+                        .iter()
+                        .filter_map(|ext| existing_output(&dir, &base, ext, &source.path))
+                        .map(|p| p.display().to_string()),
+                );
             }
         }
         Ok(out)
@@ -317,6 +339,20 @@ fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, S
         base.push_str(".analysis");
     }
     (dir, base)
+}
+
+/// The result with this extension, if it is on disk: `{base}.{ext}`, or the renamed copy written
+/// when that name was the source itself, never the source.
+fn existing_output(dir: &Path, base: &str, ext: &str, source: &str) -> Option<PathBuf> {
+    [
+        format!("{base}.{ext}"),
+        format!("{base}.kalamu.{ext}"),
+        // Written before the app was renamed from Scriptorium.
+        format!("{base}.scriptorium.{ext}"),
+    ]
+    .into_iter()
+    .map(|name| dir.join(name))
+    .find(|p| p.is_file() && p != Path::new(source))
 }
 
 /// Fixes applied to a source's working copies, for provenance and the cache key.

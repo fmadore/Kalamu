@@ -222,7 +222,10 @@ export const en = {
 		summarise: 'Analyse the results',
 		noTextOutputs:
 			'This job wrote no text file to analyse. Add Text (.txt) to its formats and export again.',
-		openFolder: 'Show files',
+		openFolder: 'Show in folder',
+		openFile: 'Open in its app',
+		rename: 'Rename',
+		nameLabel: 'Job name',
 		progress: (done: number, total: number) => `${done} of ${total} pieces`,
 		failed: (n: number) => (n === 1 ? '1 failed' : `${n} failed`),
 		files: 'Files',
@@ -567,6 +570,7 @@ export const en = {
 		'catalog.download': 'The model list could not be downloaded.',
 		'catalog.invalid': 'The downloaded model list could not be read.',
 		'file.read': 'The file could not be read or written.',
+		'file.open': 'This file could not be opened. It may have been moved or deleted.',
 		'app.internal': 'Something went wrong inside the app.',
 		'app.notDesktop': 'This works only in the desktop app.'
 	}

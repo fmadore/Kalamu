@@ -16,6 +16,10 @@
 	let job = $state<Job | null>(null);
 	let pieces = $state<PieceState[]>([]);
 	let error = $state<string | null>(null);
+	/** The files the job wrote that are still on disk. */
+	let written = $state<string[]>([]);
+	/** The name being typed while the job is renamed. */
+	let draftName = $state<string | null>(null);
 
 	const summary = $derived(app.jobs.find((j) => j.id === jobId));
 	const live = $derived(app.live[jobId]);
@@ -33,6 +37,42 @@
 		} catch (e) {
 			error = describeError(e, m);
 		}
+	}
+
+	// The written files, read again whenever the job reports new ones.
+	$effect(() => {
+		void live?.written.length;
+		void api
+			.jobOutputs(jobId)
+			.then((paths) => (written = paths ?? []))
+			.catch(() => undefined);
+	});
+
+	async function open(path: string) {
+		error = null;
+		try {
+			await api.openOutput(jobId, path);
+		} catch (e) {
+			error = describeError(e, m);
+		}
+	}
+
+	async function rename() {
+		const name = draftName?.trim();
+		draftName = null;
+		if (!name || !job || name === job.name) return;
+		try {
+			await api.renameJob(jobId, name);
+			job.name = name;
+			await refreshJobs();
+		} catch (e) {
+			error = describeError(e, m);
+		}
+	}
+
+	function renameKeys(e: KeyboardEvent) {
+		if (e.key === 'Enter') void rename();
+		else if (e.key === 'Escape') draftName = null;
 	}
 
 	// Reload piece states as progress arrives, at most twice a second.
@@ -101,7 +141,26 @@
 {#if job && summary}
 	<header class="masthead">
 		<div>
-			<h1>{job.name}</h1>
+			{#if draftName !== null}
+				<!-- svelte-ignore a11y_autofocus -->
+				<input
+					class="rename"
+					type="text"
+					aria-label={m.jobs.nameLabel}
+					bind:value={draftName}
+					onkeydown={renameKeys}
+					onblur={rename}
+					autofocus
+				/>
+			{:else}
+				<h1>{job.name}</h1>
+				<button
+					class="btn ghost sm icon"
+					title={m.jobs.rename}
+					aria-label={m.jobs.rename}
+					onclick={() => (draftName = job?.name ?? '')}><Icon name="edit" size={14} /></button
+				>
+			{/if}
 			<span
 				class="chip"
 				class:warn={stopped || summary.status === 'pending'}
@@ -237,14 +296,21 @@
 			</section>
 		{/if}
 
-		{#if live && live.written.length > 0}
+		{#if written.length > 0}
 			<section aria-labelledby="written-head" class="files">
 				<h2 id="written-head">{m.jobs.outputs}</h2>
 				<ul class="written">
-					{#each [...new Set(live.written)] as path (path)}
+					{#each written as path (path)}
+						{@const name = path.split(/[\\/]/).pop()}
 						<li>
-							<button class="link mono" onclick={() => revealInFolder(path)}
-								><Icon name="folder" size={14} />{path.split(/[\\/]/).pop()}</button
+							<button class="link mono" title={m.jobs.openFile} onclick={() => open(path)}
+								><Icon name="file" size={14} />{name}</button
+							>
+							<button
+								class="btn ghost sm icon"
+								title={m.jobs.openFolder}
+								aria-label="{m.jobs.openFolder}: {name}"
+								onclick={() => revealInFolder(path)}><Icon name="folder" size={14} /></button
 							>
 						</li>
 					{/each}
@@ -385,6 +451,17 @@
 		padding: 0;
 		display: grid;
 		gap: var(--space-1);
+	}
+	.written li {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+	/* The job's name being typed, in place of the title and at its size. */
+	.rename {
+		min-width: min(28rem, 100%);
+		font-size: var(--type-xl);
+		font-weight: 600;
 	}
 	.link {
 		display: inline-flex;
