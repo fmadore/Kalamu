@@ -17,6 +17,10 @@ impl Exporter for MarkdownExporter {
             "# {}\n\n*{} · {} · prompt: {}*\n",
             doc.source.file_name, doc.setup.provider, doc.setup.model, doc.setup.prompt.preset_name
         );
+        if doc.task == Task::Contents {
+            out.push_str(&crate::contents::markdown(doc));
+            return Ok(out.into_bytes());
+        }
         for i in 0..doc.parts.len() {
             out.push('\n');
             if let Some(marker) = crate::marker(doc, i) {

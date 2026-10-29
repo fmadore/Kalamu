@@ -34,7 +34,13 @@ export const en = {
 		youtubeHint: 'Public YouTube videos, from their link. Nothing is downloaded',
 		analysis: 'Analyse texts',
 		analysisHint:
-			'Summaries, people and places, tone: you choose what to find. Texts, Word files, PDFs and earlier results'
+			'Summaries, people and places, tone: you choose what to find. Texts, Word files, PDFs and earlier results',
+		contents: 'Detailed table of contents',
+		contentsHint:
+			'Newspaper and magazine issues, archival files, books: one entry per article or item, with its pages',
+		text_correction: 'Correct existing text',
+		text_correctionHint:
+			'Machine-read text from a digital library or a PDF, corrected page by page: TXT, Word, PDF'
 	},
 	newJob: {
 		title: 'New job',
@@ -86,7 +92,13 @@ export const en = {
 		label: 'Label',
 		compareAdd: 'Compare with another model',
 		analysis: 'Analysis',
+		kindOfDocument: 'Kind of document',
 		finds: 'Fills in',
+		entryHas: 'Each entry has',
+		mergeTitle: 'Combine the pages with',
+		mergeHint:
+			'Reading each page is the hard part. Combining the pages into entries is easier, so a smaller, cheaper model, from any provider, usually does it well.',
+		mergeRow: (model: string) => `${model}, combining the pages`,
 		editFields: 'Change the fields in Prompts',
 		pipelinesTitle: 'Start from a pipeline',
 		pipelineSave: 'Save as a pipeline',
@@ -206,7 +218,15 @@ export const en = {
 		analysisInput:
 			"Scans and text both work: the model reads a PDF's pages itself. For faded print or handwriting, extracting and correcting the text first means every answer rests on a reading you have checked.",
 		analysisFields:
-			'Describe each field as you would to a research assistant, give choices that do not overlap, and ask for a reason. Try it on a few documents first, and compare two models where the answer is a judgement, such as tone.'
+			'Describe each field as you would to a research assistant, give choices that do not overlap, and ask for a reason. Try it on a few documents first, and compare two models where the answer is a judgement, such as tone.',
+		contentsUnit:
+			'One file per issue, archival file or volume: it is read page by page, then the pages are combined. Photographs of one file should first be put together into a single PDF.',
+		contentsCheck:
+			'Try the first pages as a sample, then check the page ranges and the articles that run over several pages: the review shows each entry beside its first page.',
+		correctionInput:
+			'Kalamu corrects the text already in the file: a PDF’s own text layer, or a text file from a digital library (Gallica, Europeana, Internet Archive…). A scan without a text layer needs Extract text instead.',
+		correctionCheck:
+			'The review highlights every change against the original text. Check names, numbers and dates, which machine reading gets wrong most often.'
 	},
 	// The diagram under the tasks in New job: how the work is split and put back together, with
 	// the user's own files once they are added.
@@ -242,7 +262,18 @@ export const en = {
 		youtubeRead: (model: string) => `${model} watches the whole video in one go`,
 		youtubeJoin: 'A transcript with timestamps',
 		thisPc: 'This PC',
-		google: 'Google'
+		google: 'Google',
+		contentsSource: 'A long document: an issue, an archival file, a volume',
+		contentsRead: (model: string) => `${model} lists the articles or items on each page`,
+		contentsContinues: 'Notes such as “continued on page 5” are kept',
+		contentsMerge: (model: string) => `${model} combines the pages: one entry per article or item`,
+		contentsTable: 'A detailed table of contents: each entry with its pages and your fields',
+		/** Stand-ins for a table of contents' entries, before there are any. */
+		exampleEntries: ['Editorial', 'Interview', 'Letters to the editor'],
+		correctionSource: 'Text that already exists: a PDF’s text layer or a text file',
+		correctionSplit: 'One piece per page, or per passage of a long text',
+		correctionRead: (model: string) => `${model} corrects the machine-reading errors`,
+		correctionCompare: 'Every change shown against the original text, to keep or undo'
 	},
 	jobs: {
 		title: 'Jobs',
@@ -300,6 +331,7 @@ export const en = {
 		title: 'Review',
 		back: 'Back to job',
 		page: (label: string) => `Page ${label}`,
+		passage: (n: number) => `Passage ${n}`,
 		segment: (label: string) => `From ${label}`,
 		document: 'Whole document',
 		video: 'Whole video',
@@ -388,7 +420,22 @@ export const en = {
 		resizeCompare: 'Resize the text and the compared text',
 		addedHere: 'Another model adds words here',
 		leftOutHere: 'This model leaves out words here',
-		pickReading: 'Choose the correct reading'
+		pickReading: 'Choose the correct reading',
+		original: 'Original text',
+		changedHere: 'The correction changed this',
+		legendChanged: 'Changed from the original',
+		originalSiglum: 'O',
+		contentsTitle: 'Table of contents',
+		entries: (n: number) => (n === 1 ? '1 entry' : `${n} entries`),
+		entryPages: 'Pages',
+		entryTitle: 'Title',
+		addEntry: 'Add an entry',
+		removeEntry: 'Remove this entry',
+		goToPage: (page: string) => `Show page ${page}`,
+		pageReading: 'Read on this page',
+		pageNote: 'Also on this page',
+		notCombined: 'The pages have not been combined yet.',
+		editEntries: 'Correct the entries'
 	},
 	prompts: {
 		title: 'Prompts',
@@ -401,6 +448,7 @@ export const en = {
 		instructions: 'Instructions (system prompt)',
 		userPrompt: 'Request sent with each page',
 		userPromptDocument: 'Request sent with each document',
+		mergeInstructions: 'Instructions for combining the pages',
 		save: 'Save',
 		duplicate: 'Duplicate',
 		copyName: (name: string) => `${name} (copy)`,
@@ -412,7 +460,9 @@ export const en = {
 		saved: 'Saved',
 		unsaved: 'Unsaved changes',
 		analysisHint:
-			'An analysis is a set of fields to fill in for each document. Start from one of these, then duplicate it to make your own.'
+			'An analysis is a set of fields to fill in for each document. Start from one of these, then duplicate it to make your own.',
+		contentsHint:
+			'A table of contents has two steps: instructions for reading each page, and instructions for combining the pages. Every entry has a title and pages; the fields below add what you want for each.'
 	},
 	fields: {
 		title: 'Fields',

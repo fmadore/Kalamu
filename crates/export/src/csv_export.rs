@@ -23,7 +23,7 @@ impl Exporter for CsvExporter {
         // A byte-order mark so Excel opens accented text as UTF-8.
         let mut writer = csv::Writer::from_writer(b"\xEF\xBB\xBF".to_vec());
         match doc.task {
-            Task::TextExtraction => {
+            Task::TextExtraction | Task::TextCorrection => {
                 writer
                     .write_record(["page", "text", "corrected", "reviewed"])
                     .map_err(err)?;
@@ -67,6 +67,26 @@ impl Exporter for CsvExporter {
                         }
                     }
                     row.extend([part.corrected.to_string(), part.reviewed.to_string()]);
+                    writer.write_record(&row).map_err(err)?;
+                }
+            }
+            // One row per entry: title, pages, then the researcher's fields.
+            Task::Contents => {
+                let fields = crate::contents::fields(doc);
+                let mut header = vec!["file".to_string()];
+                header.extend(fields.iter().map(|f| f.label.clone()));
+                header.extend(["corrected".into(), "reviewed".into()]);
+                writer.write_record(&header).map_err(err)?;
+                let part = doc
+                    .parts
+                    .iter()
+                    .find(|p| p.piece == kalamu_core::PieceRef::Whole);
+                let (corrected, reviewed) =
+                    part.map_or((false, false), |p| (p.corrected, p.reviewed));
+                for entry in crate::contents::list(doc) {
+                    let mut row = vec![doc.source.file_name.clone()];
+                    row.extend(fields.iter().map(|f| crate::contents::value(entry, &f.key)));
+                    row.extend([corrected.to_string(), reviewed.to_string()]);
                     writer.write_record(&row).map_err(err)?;
                 }
             }

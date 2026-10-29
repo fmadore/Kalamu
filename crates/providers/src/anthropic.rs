@@ -165,10 +165,12 @@ impl Anthropic {
     fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
         let output = Self::parse(response)?;
         match (context.task, context.analysis) {
-            (Task::Analysis, Some(fields)) => analysis::finish(output, fields),
-            (Task::Analysis, None) => Err(ProviderError::InvalidRequest(
-                "an analysis needs fields".into(),
-            )),
+            (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
+                analysis::finish(output, fields)
+            }
+            (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
+                ProviderError::InvalidRequest("an analysis needs fields".into()),
+            ),
             _ => Ok(output),
         }
     }
@@ -210,7 +212,7 @@ impl Provider for Anthropic {
         match task {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
             Task::AudioTranscription => &[],
-            Task::Analysis => &[
+            Task::Analysis | Task::Contents | Task::TextCorrection => &[
                 "text/plain",
                 "application/pdf",
                 "image/png",

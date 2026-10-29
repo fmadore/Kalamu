@@ -14,6 +14,7 @@
 	import FileText from '@lucide/svelte/icons/file-text';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Laptop from '@lucide/svelte/icons/laptop';
+	import ListTree from '@lucide/svelte/icons/list-tree';
 	import Link from '@lucide/svelte/icons/link';
 	import Mic from '@lucide/svelte/icons/mic';
 	import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
@@ -26,6 +27,7 @@
 	import ScrollText from '@lucide/svelte/icons/scroll-text';
 	import Search from '@lucide/svelte/icons/search';
 	import Settings from '@lucide/svelte/icons/settings';
+	import SpellCheck from '@lucide/svelte/icons/spell-check';
 	import Star from '@lucide/svelte/icons/star';
 	import TextSearch from '@lucide/svelte/icons/text-search';
 	import X from '@lucide/svelte/icons/x';
@@ -61,6 +63,8 @@
 		text_extraction: FileText,
 		audio_transcription: Mic,
 		analysis: TextSearch,
+		contents: ListTree,
+		text_correction: SpellCheck,
 		'zoom-in': ZoomIn,
 		'zoom-out': ZoomOut
 	};

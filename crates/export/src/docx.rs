@@ -34,7 +34,42 @@ impl Exporter for DocxExporter {
                         .color("666666"),
                 ),
             );
-        for i in 0..doc.parts.len() {
+        if doc.task == Task::Contents {
+            let fields = crate::contents::fields(doc);
+            for entry in crate::contents::list(doc) {
+                docx = docx.add_paragraph(
+                    Paragraph::new().add_run(
+                        Run::new()
+                            .add_text(crate::contents::value(entry, kalamu_core::contents::TITLE))
+                            .bold()
+                            .size(24),
+                    ),
+                );
+                let pages = crate::contents::value(entry, kalamu_core::contents::PAGES);
+                let mut lines: Vec<(String, String)> = Vec::new();
+                if !pages.is_empty() {
+                    lines.push(("Pages".into(), pages));
+                }
+                lines.extend(
+                    crate::contents::details(&fields, entry)
+                        .into_iter()
+                        .map(|(l, v)| (l.to_string(), v)),
+                );
+                for (label, value) in lines {
+                    docx = docx.add_paragraph(
+                        Paragraph::new()
+                            .add_run(Run::new().add_text(format!("{label}: ")).bold())
+                            .add_run(Run::new().add_text(value)),
+                    );
+                }
+            }
+        }
+        let parts = if doc.task == Task::Contents {
+            0
+        } else {
+            doc.parts.len()
+        };
+        for i in 0..parts {
             if let Some(marker) = crate::marker(doc, i) {
                 docx = docx.add_paragraph(
                     Paragraph::new().add_run(Run::new().add_text(marker).bold().size(24)),

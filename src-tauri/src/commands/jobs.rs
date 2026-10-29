@@ -19,6 +19,8 @@ pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
             Task::TextExtraction => matches!(kind, InputKind::Pdf | InputKind::Image),
             Task::AudioTranscription => matches!(kind, InputKind::Audio | InputKind::Video),
             Task::Analysis => matches!(kind, InputKind::Text | InputKind::Pdf | InputKind::Image),
+            Task::Contents => matches!(kind, InputKind::Pdf | InputKind::Image),
+            Task::TextCorrection => matches!(kind, InputKind::Text | InputKind::Pdf),
         }
     }
     fn walk(path: &Path, task: Task, out: &mut Vec<PathBuf>, depth: usize) {
@@ -227,7 +229,11 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Ve
         .sources
         .iter()
         .map(|s| {
-            let n = s.page_count.unwrap_or(1) * if s.split_spreads { 2 } else { 1 };
+            let n = match s.kind {
+                // A text to correct, in pages of about 2,500 characters.
+                InputKind::Text => (s.size_bytes / 2_500).max(1) as u32,
+                _ => s.page_count.unwrap_or(1) * if s.split_spreads { 2 } else { 1 },
+            };
             request.sample_pages.map_or(n, |cap| n.min(cap))
         })
         .sum();
@@ -241,12 +247,12 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Ve
     request
         .setups
         .iter()
-        .map(|setup| {
-            let prompt_chars = setup
+        .flat_map(|setup| {
+            let preset = setup
                 .preset_id
                 .as_ref()
-                .and_then(|id| state.engine.with_prompts(|p| p.get(id)).ok())
-                .map_or(2_000, |p| p.instructions.len());
+                .and_then(|id| state.engine.with_prompts(|p| p.get(id)).ok());
+            let prompt_chars = preset.as_ref().map_or(2_000, |p| p.instructions.len());
             let estimate = match catalog.model(&setup.provider, &setup.model) {
                 _ if unknown_length => CostEstimate {
                     usd: None,
@@ -272,12 +278,43 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Ve
                     note: Some("This model is not in the catalogue.".into()),
                 },
             };
-            EstimateRow {
+            let mut rows = vec![EstimateRow {
                 provider: setup.provider.clone(),
                 model: setup.model.clone(),
                 pages,
                 estimate,
+                merge: false,
+            }];
+            // A table of contents' second step, on its own model and never in a batch.
+            if request.task == Task::Contents {
+                let merge = setup
+                    .merge
+                    .clone()
+                    .unwrap_or_else(|| kalamu_core::MergeModel {
+                        provider: setup.provider.clone(),
+                        model: setup.model.clone(),
+                    });
+                let merge_chars = preset
+                    .as_ref()
+                    .and_then(|p| p.merge_instructions.as_ref())
+                    .map_or(2_000, String::len);
+                let estimate = match catalog.model(&merge.provider, &merge.model) {
+                    Some(model) => catalog.estimate_merge(model, pages, merge_chars),
+                    None => CostEstimate {
+                        usd: None,
+                        economy_usd: None,
+                        note: Some("This model is not in the catalogue.".into()),
+                    },
+                };
+                rows.push(EstimateRow {
+                    provider: merge.provider,
+                    model: merge.model,
+                    pages,
+                    estimate,
+                    merge: true,
+                });
             }
+            rows
         })
         .collect()
 }

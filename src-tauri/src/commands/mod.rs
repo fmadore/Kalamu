@@ -81,6 +81,8 @@ pub struct EstimateRow {
     pub model: String,
     pub pages: u32,
     pub estimate: CostEstimate,
+    /// A table of contents' second step, which combines the pages.
+    pub merge: bool,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

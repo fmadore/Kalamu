@@ -48,6 +48,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
             schema: None,
         },
         options: SetupOptions::default(),
+        merge: None,
     };
     let provenance = Provenance {
         schema_version: 1,
@@ -77,6 +78,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
             sha256: "ab".repeat(32),
             schema: setup.prompt.schema.clone(),
         },
+        merge: None,
         languages: LanguageChoice::Auto,
         detected_languages: vec![],
         options: SetupOptions::default(),
@@ -239,6 +241,114 @@ fn analysis() -> ExportDocument {
     doc
 }
 
+/// A magazine issue's table of contents: the combined entries, one corrected by the researcher.
+fn contents() -> ExportDocument {
+    use kalamu_core::contents::{answers, merge_schema};
+    let entry = |title: &str, pages: &str, authors: &[&str], summary: &str| {
+        vec![
+            FieldAnswer {
+                key: "title".into(),
+                value: FieldValue::Text(title.into()),
+                reason: None,
+            },
+            FieldAnswer {
+                key: "pages".into(),
+                value: FieldValue::Text(pages.into()),
+                reason: None,
+            },
+            FieldAnswer {
+                key: "authors".into(),
+                value: FieldValue::List(authors.iter().map(|a| (*a).to_string()).collect()),
+                reason: None,
+            },
+            FieldAnswer {
+                key: "summary".into(),
+                value: FieldValue::Text(summary.into()),
+                reason: None,
+            },
+        ]
+    };
+    let mut fields = AnalysisSchema {
+        fields: vec![
+            Field {
+                key: String::new(),
+                label: "Authors".into(),
+                instructions: String::new(),
+                kind: FieldKind::List { max: None },
+                reason: false,
+            },
+            Field {
+                key: String::new(),
+                label: "Summary".into(),
+                instructions: String::new(),
+                kind: FieldKind::Text,
+                reason: false,
+            },
+        ],
+    };
+    fields.assign_keys();
+    let mut doc = document(
+        Task::Contents,
+        source("an-nasr-12.pdf", InputKind::Pdf),
+        vec![ExportPart {
+            piece: kalamu_core::PieceRef::Whole,
+            text: String::new(),
+            segments: vec![],
+            corrected: true,
+            reviewed: false,
+            fields: answers(vec![
+                entry(
+                    "[Éditorial] Le Hajj, pilier de l'islam",
+                    "1, 3-4",
+                    &["La Rédaction"],
+                    "L'éditorial rappelle les conditions du pèlerinage de 1985.",
+                ),
+                entry(
+                    "Fatwa sur le jeûne",
+                    "5",
+                    &[],
+                    "Réponses de l'imam aux lecteurs.",
+                ),
+            ]),
+            regions: vec![],
+        }],
+    );
+    doc.setup.merge = Some(kalamu_core::MergeStep {
+        provider: ProviderId::new("mistral"),
+        model: "mistral-small-2603".into(),
+        prompt: PromptSnapshot {
+            preset_id: Some("contents.periodical".into()),
+            preset_name: "Newspaper or magazine issue".into(),
+            template: "Combine.".into(),
+            text: "Combine.".into(),
+            user_prompt: "Combine the pages.".into(),
+            schema: Some(merge_schema(&fields)),
+        },
+    });
+    doc
+}
+
+/// A long text file corrected in passages, which carry no markers.
+fn corrected() -> ExportDocument {
+    let part = |number: u32, text: &str| ExportPart {
+        piece: kalamu_core::PieceRef::Passage { number },
+        text: text.into(),
+        segments: vec![],
+        corrected: false,
+        reviewed: false,
+        fields: vec![],
+        regions: vec![],
+    };
+    document(
+        Task::TextCorrection,
+        source("gallica.txt", InputKind::Text),
+        vec![
+            part(1, "Le gouvernement a décidé."),
+            part(2, "La séance est levée."),
+        ],
+    )
+}
+
 fn check(name: &str, actual: &[u8]) {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("golden")
@@ -276,6 +386,12 @@ fn text_formats_match_golden_files() {
     check("analysis.txt", &run(ExportFormat::Txt, &analysis()));
     check("analysis.json", &run(ExportFormat::Json, &analysis()));
     check("analysis.csv", &run(ExportFormat::Csv, &analysis()));
+    check("contents.txt", &run(ExportFormat::Txt, &contents()));
+    check("contents.md", &run(ExportFormat::Markdown, &contents()));
+    check("contents.json", &run(ExportFormat::Json, &contents()));
+    check("contents.csv", &run(ExportFormat::Csv, &contents()));
+    check("corrected.txt", &run(ExportFormat::Txt, &corrected()));
+    check("corrected.csv", &run(ExportFormat::Csv, &corrected()));
 }
 
 #[test]
@@ -285,6 +401,7 @@ fn word_files_are_valid_documents_with_the_text() {
     // The document part is deflated, so check that it unpacks to something holding the text.
     let text = String::from_utf8_lossy(&bytes);
     assert!(text.contains("word/document.xml"));
+    assert!(run(ExportFormat::Docx, &contents()).starts_with(b"PK"));
 }
 
 #[test]

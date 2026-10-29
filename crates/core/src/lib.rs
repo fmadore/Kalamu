@@ -5,6 +5,8 @@
 
 pub mod analysis;
 pub mod batch;
+pub mod contents;
+pub mod correction;
 pub mod event;
 pub mod export;
 pub mod fingerprint;
@@ -43,7 +45,7 @@ pub use result::{
     PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, TextRegion,
     Usage,
 };
-pub use setup::{PromptSnapshot, Setup, SetupOptions};
+pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, Step};
 pub use source::{InputKind, SourceFile};
 pub use speakers::SpeakerNames;
 pub use store::{Correction, JobStore, StoreError};

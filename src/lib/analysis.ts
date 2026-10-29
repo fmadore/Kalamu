@@ -20,7 +20,8 @@ const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLow
 
 function valuesOf(value: FieldValue | undefined): string[] {
 	if (value === undefined) return [];
-	return Array.isArray(value) ? value : value.trim() === '' ? [] : [value];
+	if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+	return value.trim() === '' ? [] : [value];
 }
 
 /**

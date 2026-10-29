@@ -110,6 +110,10 @@
 		if (corrected && lead?.ai_text != null) {
 			out.push({ key: 'model', siglum: siglum(0), text: lead.ai_text });
 		}
+		// A correction is compared with the text it corrected, so every change shows.
+		if (job?.task === 'text_correction' && lead?.source_text != null) {
+			out.push({ key: 'source', siglum: m.review.originalSiglum, text: lead.source_text });
+		}
 		setups.slice(1).forEach((s, i) => {
 			const v = viewFor(s);
 			if (v?.ai_text != null) out.push({ key: s.id, siglum: siglum(i + 1), text: shownText(v) });
@@ -177,6 +181,7 @@
 	/** Who reads what: the first set-up's model output under a correction, or another set-up. */
 	function witnessName(s: string): string {
 		if (s === siglum(0)) return m.review.modelText(setups[0]?.label ?? '');
+		if (s === m.review.originalSiglum) return m.review.original;
 		return setups[s.charCodeAt(0) - 97]?.label ?? s;
 	}
 
@@ -299,6 +304,7 @@
 			return m.review.page(`${v.piece.number}${half}`);
 		}
 		if (v.piece.kind === 'whole') return online ? m.review.video : m.review.document;
+		if (v.piece.kind === 'passage') return m.review.passage(v.piece.number);
 		const s = Math.floor(v.piece.start_ms / 1000);
 		const clock = [s / 3600, (s / 60) % 60, s % 60]
 			.map((n) => String(Math.floor(n)).padStart(2, '0'))
@@ -633,7 +639,13 @@
 							onfocusin={() => (pinned = true)}
 						>
 							<div class="readings-head">
-								<span>{isCorrection(e) ? m.review.corrected_here : m.review.disagree}</span>
+								<span
+									>{isCorrection(e)
+										? m.review.corrected_here
+										: job?.task === 'text_correction'
+											? m.review.changedHere
+											: m.review.disagree}</span
+								>
 								<span class="mono"
 									>{m.review.differenceOf(
 										entries.findIndex((x) => x.id === e.id) + 1,
@@ -760,7 +772,9 @@
 				{#if witnesses.length > 0 || corrected}
 					<span class="legend">
 						{#if witnesses.length > 0}<span
-								><i class="key marker" aria-hidden="true"></i>{m.review.legendDiffer}</span
+								><i class="key marker" aria-hidden="true"></i>{job?.task === 'text_correction'
+									? m.review.legendChanged
+									: m.review.legendDiffer}</span
 							>{/if}
 						<span><i class="key hand" aria-hidden="true"></i>{m.review.legendCorrected}</span>
 					</span>

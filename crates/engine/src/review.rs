@@ -38,6 +38,9 @@ pub struct PieceView {
     pub speakers: Vec<String>,
     /// The names the researcher gave this set-up's speakers in this recording.
     pub speaker_names: BTreeMap<String, String>,
+    /// For a correction, the text as it was before: the PDF page's text layer or the text
+    /// file's page or passage, which the review compares with the correction.
+    pub source_text: Option<String>,
 }
 
 impl Engine {
@@ -50,6 +53,13 @@ impl Engine {
         let job = self.store.job(job_id)?;
         let corrections = self.store.corrections(job_id)?;
         let names = self.store.speaker_names(job_id)?;
+        // A correction's source is read once, for the text each piece had before.
+        let opened = match job.sources.iter().find(|s| s.id == source_id) {
+            Some(source) if job.task == Task::TextCorrection => {
+                kalamu_media::OpenSource::open(source, self.config.ffmpeg.as_ref()).ok()
+            }
+            _ => None,
+        };
         let mut out = Vec::new();
         for state in self.store.pieces(job_id)? {
             if state.source_id != source_id {
@@ -111,6 +121,7 @@ impl Engine {
                 },
                 speakers,
                 speaker_names,
+                source_text: opened.as_ref().and_then(|o| o.text_of(&state.piece).ok()),
             });
         }
         out.sort_by_key(|p| (p.index, p.setup_id));

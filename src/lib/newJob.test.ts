@@ -5,6 +5,8 @@ import { en } from './i18n/index.js';
 import {
 	acceptsPrompt,
 	inputOf,
+	mergeDefault,
+	mergeModelsFor,
 	modelInfo,
 	modelsFor,
 	newDraft,
@@ -104,5 +106,37 @@ describe('new job form', () => {
 		expect(providerDefault(catalog, 'gemini', 'audio_transcription', input)).toBe(
 			'gemini-3.8-flash'
 		);
+	});
+});
+
+describe('tables of contents and corrections', () => {
+	it('reads pages with a vision model and combines them with any text model', () => {
+		const pages = modelsFor(catalog, 'mistral', 'contents').map((m) => m.id);
+		expect(pages).not.toContain('deepseek-v4-1-flash-1017');
+		expect(pages).not.toContain('mistral-ocr-4-1');
+		expect(modelsFor(catalog, 'mistral', 'text_correction').map((m) => m.id)).toContain(
+			'deepseek-v4-1-flash-1017'
+		);
+		expect(mergeModelsFor(catalog, 'mistral').map((m) => m.id)).toContain(
+			'deepseek-v4-1-flash-1017'
+		);
+		const d = newDraft(catalog, 'contents', 'contents.periodical', () => true);
+		expect(d.model).toBe('gemini-3.8-flash');
+		expect(d.mergeProvider).toBe('gemini');
+		expect(mergeModelsFor(catalog, 'gemini').map((m) => m.id)).toContain(d.mergeModel);
+		// Gemini Pro reads the pages, Mistral combines them.
+		const mixed = { ...d, model: 'gemini-3.1-pro-preview', mergeProvider: 'mistral' };
+		mixed.mergeModel = mergeDefault(catalog, 'mistral');
+		const request = toRequest(catalog, 'contents', mixed);
+		expect(request.merge).toEqual({ provider: 'mistral', model: mixed.mergeModel });
+		expect(toRequest(catalog, 'analysis', mixed).merge).toBeUndefined();
+	});
+
+	it('takes the files each task reads', () => {
+		expect(readsKind('contents', 'image')).toBe(true);
+		expect(readsKind('contents', 'text')).toBe(false);
+		expect(readsKind('text_correction', 'text')).toBe(true);
+		expect(readsKind('text_correction', 'image')).toBe(false);
+		expect(taskOf('text_correction')).toBe('text_correction');
 	});
 });

@@ -23,6 +23,7 @@
 				draft.description !== selected.description ||
 				draft.instructions !== selected.instructions ||
 				draft.user_prompt !== selected.user_prompt ||
+				(draft.merge_instructions ?? null) !== (selected.merge_instructions ?? null) ||
 				JSON.stringify(draft.schema) !== JSON.stringify(selected.schema))
 	);
 
@@ -47,7 +48,13 @@
 		}
 	}
 
-	const tasks: Task[] = ['text_extraction', 'audio_transcription', 'analysis'];
+	const tasks: Task[] = [
+		'text_extraction',
+		'text_correction',
+		'audio_transcription',
+		'analysis',
+		'contents'
+	];
 
 	onMount(() => {
 		void load();
@@ -89,6 +96,7 @@
 		{#each tasks as task (task)}
 			<h2 class="label group">{m.task[task]}</h2>
 			{#if task === 'analysis'}<p class="muted small">{m.prompts.analysisHint}</p>{/if}
+			{#if task === 'contents'}<p class="muted small">{m.prompts.contentsHint}</p>{/if}
 			<ul>
 				{#each presets.filter((p) => p.task === task) as p (p.id)}
 					<li>
@@ -124,9 +132,25 @@
 				></textarea>
 			</label>
 			<label class="field">
-				<span>{draft.schema ? m.prompts.userPromptDocument : m.prompts.userPrompt}</span>
+				<span
+					>{draft.schema && draft.task === 'analysis'
+						? m.prompts.userPromptDocument
+						: m.prompts.userPrompt}</span
+				>
 				<textarea class="short mono" bind:value={draft.user_prompt}></textarea>
 			</label>
+			{#if draft.task === 'contents'}
+				<!-- The second step: how the pages' readings are combined into entries. -->
+				<label class="field">
+					<span>{m.prompts.mergeInstructions}</span>
+					<textarea
+						class="mono tall"
+						value={draft.merge_instructions ?? ''}
+						oninput={(e) => {
+							if (draft) draft.merge_instructions = e.currentTarget.value;
+						}}></textarea>
+				</label>
+			{/if}
 			{#if draft.schema}
 				<FieldsEditor bind:schema={draft.schema} />
 			{/if}

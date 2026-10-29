@@ -2,6 +2,7 @@
 import type { GeneratorInfo } from "./GeneratorInfo";
 import type { LanguageChoice } from "./LanguageChoice";
 import type { LanguageCode } from "./LanguageCode";
+import type { ProvenanceMerge } from "./ProvenanceMerge";
 import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProvenanceSource } from "./ProvenanceSource";
 import type { ProviderId } from "./ProviderId";
@@ -29,7 +30,12 @@ engine: string, provider: ProviderId, model: string,
 /**
  * The versions the provider reported, when they differ from `model`.
  */
-model_versions?: Array<string>, prompt: ProvenancePrompt, languages: LanguageChoice, detected_languages?: Array<LanguageCode>, options: SetupOptions, pieces: number, 
+model_versions?: Array<string>, prompt: ProvenancePrompt, 
+/**
+ * For a table of contents, the model and prompt that combined the pages' readings; the
+ * fields above are those that read each page.
+ */
+merge?: ProvenanceMerge, languages: LanguageChoice, detected_languages?: Array<LanguageCode>, options: SetupOptions, pieces: number, 
 /**
  * Pages or segments the user corrected (numbered as in the export).
  */

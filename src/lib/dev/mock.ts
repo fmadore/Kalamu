@@ -13,6 +13,15 @@ import type { Settings } from '../bindings/Settings.js';
 import type { View } from '../state.svelte.js';
 import catalogJson from '../../../crates/catalog/catalog.json';
 import SAMPLE_SCAN from './sample-scan.jpg?inline';
+import {
+	contentsJob,
+	contentsPieces,
+	contentsPresets,
+	contentsSource,
+	correctionJob,
+	correctionPieces,
+	gallica
+} from './mockContents.js';
 
 const catalog = catalogJson as unknown as Catalog;
 
@@ -234,7 +243,8 @@ const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 		ai_fields: [],
 		corrected_fields: null,
 		speakers: [],
-		speaker_names: {}
+		speaker_names: {},
+		source_text: null
 	}))
 );
 
@@ -305,7 +315,8 @@ const audioPieces = (): PieceView[] =>
 			text
 		})),
 		speakers: ['Speaker 1', 'Speaker 2'],
-		speaker_names: { ...speakerNames }
+		speaker_names: { ...speakerNames },
+		source_text: null
 	}));
 
 /** A YouTube video transcribed by Gemini, its times written into the text as Gemini does. */
@@ -466,7 +477,8 @@ const analysisPieces: PieceView[] = analysisSetups.map((s, i) => ({
 	ai_fields: analysisAnswers[i],
 	corrected_fields: null,
 	speakers: [],
-	speaker_names: {}
+	speaker_names: {},
+	source_text: null
 }));
 
 /** Saved pipelines, as New job lists them. */
@@ -560,6 +572,10 @@ export function mockView(): View | null {
 			return { name: 'review', jobId: analysisJob.id, sourceId: article.id };
 		case 'review-youtube':
 			return { name: 'review', jobId: videoJob.id, sourceId: video.id };
+		case 'review-contents':
+			return { name: 'review', jobId: contentsJob.id, sourceId: contentsSource.id };
+		case 'review-correction':
+			return { name: 'review', jobId: correctionJob.id, sourceId: gallica.id };
 		case 'prompts':
 		case 'prompts-analysis':
 			return { name: 'prompts' };
@@ -625,7 +641,7 @@ export function installMock(): void {
 			case 'list_presets': {
 				// `view=prompts-analysis` opens Prompts on an analysis, for screenshots.
 				const first = location.search.includes('prompts-analysis') ? 'analysis' : '';
-				const ordered = [...presets].sort(
+				const ordered = [...presets, ...contentsPresets].sort(
 					(x, y) => Number(y.task === first) - Number(x.task === first)
 				);
 				return a.task ? ordered.filter((p) => p.task === a.task) : ordered;
@@ -650,10 +666,21 @@ export function installMock(): void {
 						task: 'analysis',
 						pieces_total: 2,
 						pieces_finished: 2
-					}
+					},
+					...[contentsJob, correctionJob].map((j, i) => ({
+						...summaries[0],
+						id: j.id,
+						name: j.name,
+						task: j.task,
+						pieces_total: i === 0 ? 4 : 2,
+						pieces_finished: i === 0 ? 4 : 2,
+						setup_count: 1
+					}))
 				];
 			case 'get_job':
 				if (a.id === videoJob.id) return videoJob;
+				if (a.id === contentsJob.id) return contentsJob;
+				if (a.id === correctionJob.id) return correctionJob;
 				return a.id === audioJob.id ? audioJob : a.id === analysisJob.id ? analysisJob : job;
 			case 'rename_job': {
 				const name = String(a.name).trim();
@@ -678,6 +705,8 @@ export function installMock(): void {
 				}));
 			case 'source_pieces':
 				if (a.jobId === analysisJob.id) return analysisPieces;
+				if (a.jobId === contentsJob.id) return contentsPieces;
+				if (a.jobId === correctionJob.id) return correctionPieces;
 				if (a.jobId === videoJob.id) return videoPieces();
 				return a.jobId === audioJob.id ? audioPieces() : pieces;
 			case 'source_text':

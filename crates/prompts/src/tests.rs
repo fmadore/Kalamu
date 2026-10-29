@@ -156,3 +156,79 @@ fn an_analysis_cannot_be_saved_without_fields_and_others_lose_theirs() {
     let saved = library.save(extraction).unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(saved.schema, None);
 }
+
+#[test]
+fn a_table_of_contents_freezes_both_steps_with_the_entry_fields() {
+    let library = PromptLibrary::in_memory();
+    for preset in library.list(Some(Task::Contents)) {
+        assert!(preset.merge_instructions.is_some(), "{}", preset.id);
+        let ctx = RenderContext {
+            languages: LanguageChoice::Explicit(vec![LanguageCode::new("fr")]),
+            language_names: vec!["French".into()],
+            ..RenderContext::default()
+        };
+        let page = preset.snapshot(&ctx);
+        let merge = preset
+            .merge_snapshot(&ctx)
+            .unwrap_or_else(|| panic!("no merge"));
+        let page_schema = page.schema.unwrap_or_else(|| panic!("no page schema"));
+        assert_eq!(page_schema.fields[0].key, kalamu_core::contents::ENTRIES);
+        assert!(page.text.contains("`title`") && page.text.contains("`continues`"));
+        assert!(merge.text.contains("`pages`"));
+        assert!(merge.text.contains("French") && !merge.text.contains("{languages}"));
+        assert_eq!(merge.user_prompt, MERGE_REQUEST);
+        assert_eq!(
+            kalamu_core::contents::entry_fields(&page_schema),
+            preset.schema.clone().map(|s| s.fields).unwrap_or_default()
+        );
+    }
+    assert!(
+        library
+            .get("text_extraction.newspaper")
+            .unwrap_or_else(|e| panic!("{e}"))
+            .merge_snapshot(&RenderContext::default())
+            .is_none()
+    );
+}
+
+#[test]
+fn a_contents_preset_needs_its_fields_and_its_second_step() {
+    let mut library = PromptLibrary::in_memory();
+    let mut own = library
+        .get("contents.archival_file")
+        .unwrap_or_else(|e| panic!("{e}"));
+    own.id = String::new();
+    own.merge_instructions = Some(" ".into());
+    assert!(matches!(
+        library.save(own.clone()),
+        Err(PromptError::Incomplete)
+    ));
+    own.merge_instructions = Some("Combine.".into());
+    if let Some(schema) = own.schema.as_mut() {
+        schema.fields[0].key = "pages".into();
+    }
+    assert!(matches!(
+        library.save(own.clone()),
+        Err(PromptError::Schema(_))
+    ));
+    own.schema = library
+        .get("contents.archival_file")
+        .ok()
+        .and_then(|p| p.schema);
+    assert!(library.save(own).is_ok());
+}
+
+#[test]
+fn a_correction_answers_with_its_text_in_one_field() {
+    let library = PromptLibrary::in_memory();
+    let preset = library.default_for(Task::TextCorrection);
+    assert_eq!(preset.id, "text_correction.general");
+    let snapshot = preset.snapshot(&RenderContext {
+        line_breaks: Some(LineBreaks::AsOnPage),
+        ..RenderContext::default()
+    });
+    assert_eq!(snapshot.schema, Some(kalamu_core::correction::schema()));
+    assert!(snapshot.text.contains("in the field `text`"));
+    assert!(snapshot.text.contains("## Line breaks"));
+    assert!(!snapshot.text.contains("## What to find"));
+}

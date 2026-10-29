@@ -10,13 +10,23 @@ import type { Messages } from './i18n/index.js';
 import { YOUTUBE_LINK } from './youtube.js';
 
 /**
- * What New job offers: the three tasks, and YouTube videos, which are transcribed like a
- * recording but added by their link and read only by models that take YouTube links.
+ * What New job offers: the tasks, and YouTube videos, which are transcribed like a recording
+ * but added by their link and read only by models that take YouTube links.
  */
 export type Mode = Task | 'youtube';
 
-/** In the order New job shows them, two by two: written sources, then spoken ones. */
-export const MODES: Mode[] = ['text_extraction', 'analysis', 'audio_transcription', 'youtube'];
+/**
+ * In the order New job shows them, two by two: reading pages, then working on texts, then
+ * spoken sources.
+ */
+export const MODES: Mode[] = [
+	'text_extraction',
+	'text_correction',
+	'analysis',
+	'contents',
+	'audio_transcription',
+	'youtube'
+];
 
 export function taskOf(mode: Mode): Task {
 	return mode === 'youtube' ? 'audio_transcription' : mode;
@@ -35,13 +45,62 @@ export interface Draft {
 	label: string;
 	diarize: boolean;
 	timestamps: boolean;
+	/** For a table of contents, the model that combines the pages: any provider's. */
+	mergeProvider: string;
+	mergeModel: string;
 }
 
 export const FORMATS: Record<Task, ExportFormat[]> = {
 	text_extraction: ['txt', 'markdown', 'docx', 'json', 'csv', 'searchable_pdf'],
 	audio_transcription: ['txt', 'markdown', 'docx', 'srt', 'vtt', 'json', 'csv'],
-	analysis: ['txt', 'markdown', 'docx', 'json', 'csv']
+	analysis: ['txt', 'markdown', 'docx', 'json', 'csv'],
+	contents: ['markdown', 'docx', 'csv', 'txt', 'json'],
+	text_correction: ['txt', 'markdown', 'docx', 'json', 'csv']
 };
+
+/**
+ * The task providers see: a table of contents and a correction are made of analyses (see
+ * `Task::request_task` in Rust), so the catalogue lists their models as analysis models.
+ */
+export function requestTask(task: Task): Task {
+	return task === 'contents' || task === 'text_correction' ? 'analysis' : task;
+}
+
+/** Whether a model reads what a task sends it: pages for a table of contents, text for a
+ * correction (`Task::reads` in Rust). */
+function readsInput(task: Task, inputs: string[]): boolean {
+	if (task === 'contents') {
+		return inputs.includes('application/pdf') || inputs.some((i) => i.startsWith('image/'));
+	}
+	if (task === 'text_correction') return inputs.includes('text/plain');
+	return true;
+}
+
+export function doesTask(model: ModelInfo, task: Task): boolean {
+	return model.tasks.includes(requestTask(task)) && readsInput(task, model.inputs);
+}
+
+/** Models that can combine a table of contents' pages, for one provider: analysis models that
+ * read text. */
+export function mergeModelsFor(catalog: Catalog, provider: string): ModelInfo[] {
+	return catalog.models.filter(
+		(m) =>
+			m.provider === provider && m.tasks.includes('analysis') && m.inputs.includes('text/plain')
+	);
+}
+
+/** Providers with a model that can combine the pages. */
+export function mergeProviders(catalog: Catalog): string[] {
+	return catalog.providers.map((p) => p.id).filter((id) => mergeModelsFor(catalog, id).length > 0);
+}
+
+/** The model offered to combine the pages when the user switches provider: its smallest
+ * listed, the cheapest per output token. */
+export function mergeDefault(catalog: Catalog, provider: string): string {
+	const models = mergeModelsFor(catalog, provider);
+	const price = (m: ModelInfo) => m.pricing.output_per_mtok ?? Number.POSITIVE_INFINITY;
+	return [...models].sort((a, b) => price(a) - price(b))[0]?.id ?? '';
+}
 
 /**
  * The formats to offer: a searchable PDF only when a chosen model reports where text sits on
@@ -56,7 +115,10 @@ export function offeredFormats(catalog: Catalog, task: Task, drafts: Draft[]): E
 export function readsKind(mode: Mode, kind: string | undefined): boolean {
 	switch (mode) {
 		case 'text_extraction':
+		case 'contents':
 			return kind === 'pdf' || kind === 'image';
+		case 'text_correction':
+			return kind === 'text' || kind === 'pdf';
 		case 'audio_transcription':
 			return kind === 'audio' || kind === 'video';
 		case 'analysis':
@@ -78,7 +140,7 @@ export function modelsFor(
 
 function forTask(catalog: Catalog, task: Task, input?: string): ModelInfo[] {
 	return catalog.models.filter(
-		(m) => m.tasks.includes(task) && (input === undefined || m.inputs.includes(input))
+		(m) => doesTask(m, task) && (input === undefined || m.inputs.includes(input))
 	);
 }
 
@@ -107,7 +169,9 @@ export function providerDefault(
 	input?: string
 ): string {
 	const models = modelsFor(catalog, provider, task, input);
-	return (models.find((m) => m.provider_default_for.includes(task)) ?? models[0])?.id ?? '';
+	return (
+		(models.find((m) => m.provider_default_for.includes(requestTask(task))) ?? models[0])?.id ?? ''
+	);
 }
 
 /**
@@ -127,20 +191,25 @@ export function newDraft(
 	const offered = forTask(catalog, task, input);
 	const usable = offered.filter((m) => hasKey(m.provider));
 	const fresh = usable.filter((m) => !used.includes(`${m.provider}/${m.id}`));
+	const listed = requestTask(task);
 	const pick =
-		fresh.find((m) => m.recommended_for.includes(task)) ??
-		fresh.find((m) => m.provider_default_for.includes(task)) ??
+		fresh.find((m) => m.recommended_for.includes(listed)) ??
+		fresh.find((m) => m.provider_default_for.includes(listed)) ??
 		fresh[0] ??
-		usable.find((m) => m.recommended_for.includes(task)) ??
+		usable.find((m) => m.recommended_for.includes(listed)) ??
 		usable[0] ??
 		offered[0];
+	const provider = pick?.provider ?? '';
 	return {
-		provider: pick?.provider ?? '',
+		provider,
 		model: pick?.id ?? '',
 		presetId,
 		label: '',
 		diarize: true,
-		timestamps: true
+		timestamps: true,
+		// The pages' provider combines them, with its cheapest model: one key is enough.
+		mergeProvider: provider,
+		mergeModel: mergeDefault(catalog, provider)
 	};
 }
 
@@ -155,8 +224,17 @@ export function toRequest(catalog: Catalog, task: Task, d: Draft): SetupRequest 
 			diarize: task === 'audio_transcription' && d.diarize && labelsSpeakers(modelInfo(catalog, d)),
 			timestamps: task === 'audio_transcription' && d.timestamps,
 			speakers: null
-		}
+		},
+		merge:
+			task === 'contents' && d.mergeModel
+				? { provider: d.mergeProvider, model: d.mergeModel }
+				: undefined
 	};
+}
+
+/** The draft's merge model, for the catalogue's name. */
+export function mergeInfo(catalog: Catalog, d: Draft): ModelInfo | undefined {
+	return catalog.models.find((m) => m.provider === d.mergeProvider && m.id === d.mergeModel);
 }
 
 export function warningText(w: InputWarning, m: Messages): string {

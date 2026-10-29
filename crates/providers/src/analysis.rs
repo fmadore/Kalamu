@@ -23,11 +23,16 @@ pub(crate) fn fields<'a>(
 
 /// One property per field, plus `<key>_reason` for fields that ask for a reason. Every property
 /// required and no others, which OpenAI's strict mode demands; no length limits, which Claude's
-/// structured output refuses (a list's maximum is in the prompt and applied on reading).
+/// structured output refuses (a list's maximum is in the prompt and applied on reading). An
+/// entries field is an array of objects built the same way.
 pub(crate) fn schema(fields: &AnalysisSchema) -> Value {
+    object(&fields.fields)
+}
+
+fn object(fields: &[kalamu_core::Field]) -> Value {
     let mut properties = Map::new();
     let mut required = Vec::new();
-    for field in &fields.fields {
+    for field in fields {
         let description = if field.instructions.trim().is_empty() {
             field.label.trim().to_string()
         } else {
@@ -46,6 +51,11 @@ pub(crate) fn schema(fields: &AnalysisSchema) -> Value {
             FieldKind::Choices { values } => json!({
                 "type": "array",
                 "items": { "type": "string", "enum": values },
+                "description": description,
+            }),
+            FieldKind::Entries { fields } => json!({
+                "type": "array",
+                "items": object(fields),
                 "description": description,
             }),
         };
@@ -155,6 +165,18 @@ mod tests {
             "Tone: Towards the subject."
         );
         assert_eq!(schema["additionalProperties"], false);
+    }
+
+    #[test]
+    fn entries_are_arrays_of_strict_objects() {
+        let schema = schema(&kalamu_core::contents::merge_schema(&fields()));
+        let entries = &schema["properties"]["entries"];
+        assert_eq!(entries["type"], "array");
+        assert_eq!(
+            entries["items"]["required"],
+            json!(["title", "pages", "summary", "tone", "tone_reason"])
+        );
+        assert_eq!(entries["items"]["additionalProperties"], false);
     }
 
     #[test]

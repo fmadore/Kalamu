@@ -7,7 +7,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use kalamu_core::{
-    ExportFormat, JobSettings, OutputDestination, ProviderId, SetupOptions, Task, Timestamp,
+    ExportFormat, JobSettings, MergeModel, OutputDestination, ProviderId, SetupOptions, Task,
+    Timestamp,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -44,6 +45,10 @@ pub struct PipelineSetup {
     pub label: Option<String>,
     #[serde(default)]
     pub options: SetupOptions,
+    /// For a table of contents, the model that combines the pages.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub merge: Option<MergeModel>,
 }
 
 pub struct PipelineLibrary {
@@ -145,6 +150,7 @@ mod tests {
                 preset_id: Some("analysis.entities".into()),
                 label: None,
                 options: SetupOptions::default(),
+                merge: None,
             }],
             settings: JobSettings::default(),
             formats: vec![ExportFormat::Csv],

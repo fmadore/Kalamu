@@ -40,11 +40,25 @@ pub struct Preset {
     /// A default the user has edited; resetting restores the shipped text.
     #[serde(default)]
     pub modified: bool,
-    /// For an analysis, the fields to fill in for each document.
+    /// For an analysis, the fields to fill in for each document; for a table of contents, the
+    /// fields of each entry, beside its title and pages.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub schema: Option<AnalysisSchema>,
+    /// For a table of contents, the instructions of the second step, which combines the pages'
+    /// readings into entries. May use `{languages}`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub merge_instructions: Option<String>,
 }
+
+/// The request sent with a table of contents' second step.
+pub const MERGE_REQUEST: &str = "Combine the pages above into one entry per article or item, \
+following the instructions given.";
+
+/// Appended to a correction's instructions: where the corrected text goes in the answer.
+const CORRECTION_ANSWER: &str = "\n\n## Answer\n\nPut the whole corrected text, and nothing \
+else, in the field `text`. When the text needs no correction, return it unchanged.";
 
 /// Values for a preset's variables.
 #[derive(Debug, Clone, Default)]
@@ -166,13 +180,31 @@ impl PromptLibrary {
         if preset.name.trim().is_empty() || preset.instructions.trim().is_empty() {
             return Err(PromptError::Incomplete);
         }
-        // An analysis is its fields; other presets have none.
-        if preset.task == Task::Analysis {
-            let schema = preset.schema.as_mut().ok_or(SchemaError::Empty)?;
-            schema.assign_keys();
-            schema.validate()?;
-        } else {
-            preset.schema = None;
+        // An analysis is its fields, a table of contents its entries' fields and the
+        // instructions that combine its pages; other presets have neither.
+        match preset.task {
+            Task::Analysis => {
+                let schema = preset.schema.as_mut().ok_or(SchemaError::Empty)?;
+                schema.assign_keys();
+                schema.validate()?;
+                preset.merge_instructions = None;
+            }
+            Task::Contents => {
+                let schema = preset.schema.as_mut().ok_or(SchemaError::Empty)?;
+                schema.assign_keys();
+                kalamu_core::contents::validate(schema)?;
+                if preset
+                    .merge_instructions
+                    .as_deref()
+                    .is_none_or(|m| m.trim().is_empty())
+                {
+                    return Err(PromptError::Incomplete);
+                }
+            }
+            Task::TextExtraction | Task::AudioTranscription | Task::TextCorrection => {
+                preset.schema = None;
+                preset.merge_instructions = None;
+            }
         }
         if preset.id.is_empty() {
             preset.id = new_user_id();
@@ -247,11 +279,22 @@ impl PromptLibrary {
 impl Preset {
     /// Fills in variables and freezes the result for a job.
     pub fn snapshot(&self, ctx: &RenderContext) -> PromptSnapshot {
+        // The schema the model answers in: the fields themselves for an analysis, each page's
+        // entries for a table of contents, the corrected text for a correction.
+        let schema = match self.task {
+            Task::Analysis => self.schema.clone(),
+            Task::Contents => self.schema.as_ref().map(kalamu_core::contents::page_schema),
+            Task::TextCorrection => Some(kalamu_core::correction::schema()),
+            Task::TextExtraction | Task::AudioTranscription => None,
+        };
         // The fields are described in words as well as sent as a schema: the schema fixes the
         // answer's shape, the words carry what belongs in each field.
-        let instructions = match &self.schema {
-            Some(schema) => format!("{}{}", self.instructions.trim_end(), describe(schema)),
-            None => self.instructions.clone(),
+        let instructions = match (self.task, &schema) {
+            (Task::TextCorrection, _) => {
+                format!("{}{CORRECTION_ANSWER}", self.instructions.trim_end())
+            }
+            (_, Some(schema)) => format!("{}{}", self.instructions.trim_end(), describe(schema)),
+            (_, None) => self.instructions.clone(),
         };
         PromptSnapshot {
             preset_id: Some(self.id.clone()),
@@ -259,8 +302,33 @@ impl Preset {
             template: self.instructions.clone(),
             text: render(&instructions, ctx),
             user_prompt: render(&self.user_prompt, ctx),
-            schema: self.schema.clone(),
+            schema,
         }
+    }
+
+    /// A table of contents' second step, frozen for a job: the instructions that combine the
+    /// pages, with the entry's fields. `None` for every other task. Lines are not its concern.
+    pub fn merge_snapshot(&self, ctx: &RenderContext) -> Option<PromptSnapshot> {
+        if self.task != Task::Contents {
+            return None;
+        }
+        let template = self.merge_instructions.clone()?;
+        let schema = kalamu_core::contents::merge_schema(self.schema.as_ref()?);
+        let ctx = RenderContext {
+            line_breaks: None,
+            ..ctx.clone()
+        };
+        Some(PromptSnapshot {
+            preset_id: Some(self.id.clone()),
+            preset_name: self.name.clone(),
+            text: render(
+                &format!("{}{}", template.trim_end(), describe(&schema)),
+                &ctx,
+            ),
+            template,
+            user_prompt: MERGE_REQUEST.to_string(),
+            schema: Some(schema),
+        })
     }
 }
 
@@ -311,8 +379,22 @@ pub fn describe(schema: &AnalysisSchema) -> String {
     let mut out = String::from(
         "\n\n## What to find\n\nAnswer with exactly these fields, filled from the document:\n",
     );
-    for (i, field) in schema.fields.iter().enumerate() {
+    describe_fields(&schema.fields, "", &mut out);
+    out.push_str(
+        "\n\nWrite each name or term in a list as the document spells it, and leave a list \
+         empty when the document has nothing for it. Choose only from the values given, spelled \
+         exactly as listed.",
+    );
+    out
+}
+
+/// One numbered line per field; an entries field's own fields indented under it.
+fn describe_fields(fields: &[kalamu_core::Field], indent: &str, out: &mut String) {
+    for (i, field) in fields.iter().enumerate() {
         let kind = match &field.kind {
+            FieldKind::Entries { .. } => {
+                "a list of entries, each with the fields below".to_string()
+            }
             FieldKind::Text => "text".to_string(),
             FieldKind::List { max: Some(max) } => {
                 format!("a list of names or terms, at most {max}, most important first")
@@ -326,7 +408,7 @@ pub fn describe(schema: &AnalysisSchema) -> String {
             }
         };
         out.push_str(&format!(
-            "\n{}. {} (`{}`, {kind})",
+            "\n{indent}{}. {} (`{}`, {kind})",
             i + 1,
             field.label.trim(),
             field.key
@@ -340,13 +422,10 @@ pub fn describe(schema: &AnalysisSchema) -> String {
                 kalamu_core::analysis::reason_key(&field.key)
             ));
         }
+        if let FieldKind::Entries { fields } = &field.kind {
+            describe_fields(fields, &format!("{indent}   "), out);
+        }
     }
-    out.push_str(
-        "\n\nWrite each name or term in a list as the document spells it, and leave a list \
-         empty when the document has nothing for it. Choose only from the values given, spelled \
-         exactly as listed.",
-    );
-    out
 }
 
 fn builtin(d: &defaults::Default) -> Preset {
@@ -364,6 +443,7 @@ fn builtin(d: &defaults::Default) -> Preset {
             schema.assign_keys();
             schema
         }),
+        merge_instructions: d.merge.map(str::to_string),
     }
 }
 

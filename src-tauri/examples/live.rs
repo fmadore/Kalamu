@@ -52,6 +52,7 @@ fn setup(provider: &str, model: &str, preset: Option<&str>, options: SetupOption
         preset_id: preset.map(Into::into),
         label: None,
         options,
+        merge: None,
     }
 }
 

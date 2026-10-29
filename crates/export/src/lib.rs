@@ -4,6 +4,7 @@
 //! Exporters read stored results with the user's corrections applied, so changing format later
 //! never calls a provider again.
 
+mod contents;
 mod csv_export;
 mod docx;
 mod json;
@@ -44,8 +45,11 @@ pub(crate) fn marker(doc: &ExportDocument, index: usize) -> Option<String> {
     let part = &doc.parts[index];
     match part.piece {
         kalamu_core::PieceRef::Page { .. } => Some(format!("Page {}", part.piece.label())),
-        // Recordings are cut only to fit provider limits; the cuts mean nothing to a reader.
-        kalamu_core::PieceRef::Segment { .. } | kalamu_core::PieceRef::Whole => None,
+        // Recordings and long texts are cut only to fit provider limits; the cuts mean nothing
+        // to a reader.
+        kalamu_core::PieceRef::Segment { .. }
+        | kalamu_core::PieceRef::Whole
+        | kalamu_core::PieceRef::Passage { .. } => None,
     }
 }
 
@@ -67,7 +71,9 @@ fn body_text(doc: &ExportDocument, index: usize) -> String {
     let segments = if part.segments.is_empty() {
         let offset = match part.piece {
             kalamu_core::PieceRef::Segment { start_ms, .. } => start_ms,
-            kalamu_core::PieceRef::Page { .. } | kalamu_core::PieceRef::Whole => {
+            kalamu_core::PieceRef::Page { .. }
+            | kalamu_core::PieceRef::Whole
+            | kalamu_core::PieceRef::Passage { .. } => {
                 return part.text.trim().to_string();
             }
         };

@@ -14,4 +14,8 @@ request: Array<RequestSetting>,
  * The prompt as sent, hashed as in each result's provenance. `None` for a model that
  * takes no prompt.
  */
-prompt: ProvenancePrompt | null, };
+prompt: ProvenancePrompt | null, 
+/**
+ * For a table of contents, the second step, which combines the pages.
+ */
+merge?: SetupRecord, };

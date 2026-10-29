@@ -30,6 +30,11 @@ const INPUT_TOKENS_PER_AUDIO_MINUTE: f64 = 1_500.0;
 const OUTPUT_TOKENS_PER_AUDIO_MINUTE: f64 = 250.0;
 /// An analysis's answer (a summary of a few paragraphs, lists of names), with some thinking.
 const ANALYSIS_OUTPUT_TOKENS: f64 = 1_500.0;
+/// A page's entries for a table of contents: a few titles and short summaries.
+const CONTENTS_OUTPUT_TOKENS_PER_PAGE: f64 = 500.0;
+/// What the second step of a table of contents writes per page combined: about the length of
+/// the consolidated summaries.
+const MERGE_OUTPUT_TOKENS_PER_PAGE: f64 = 250.0;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -166,6 +171,21 @@ fn yes() -> bool {
     true
 }
 
+impl ModelInfo {
+    /// Whether the model can do a task: it is listed for the task providers see, and reads the
+    /// task's input.
+    pub fn does(&self, task: Task) -> bool {
+        self.tasks.contains(&task.request_task()) && task.reads(&self.inputs)
+    }
+
+    /// Whether this is the app's default for a task; the analysis default serves the tasks made
+    /// of analyses.
+    pub fn is_recommended_for(&self, task: Task) -> bool {
+        self.recommended_for.contains(&task)
+            || (task.request_task() != task && self.recommended_for.contains(&task.request_task()))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct LanguageInfo {
@@ -242,11 +262,18 @@ impl Catalog {
             .find(|m| &m.provider == provider && m.id == id)
     }
 
-    /// Models that can do a task, in catalogue order (recommended first within a provider).
+    /// Models that can do a task, in catalogue order (recommended first within a provider). A
+    /// table of contents and a correction are made of analyses, so they take the analysis models
+    /// that read their input: pages, or text.
     pub fn models_for(&self, task: Task) -> Vec<&ModelInfo> {
+        self.models.iter().filter(|m| m.does(task)).collect()
+    }
+
+    /// Models that can combine a table of contents' pages: analysis models that read text.
+    pub fn merge_models(&self) -> Vec<&ModelInfo> {
         self.models
             .iter()
-            .filter(|m| m.tasks.contains(&task))
+            .filter(|m| m.tasks.contains(&Task::Analysis) && Task::merges(&m.inputs))
             .collect()
     }
 
@@ -259,7 +286,7 @@ impl Catalog {
             .collect();
         candidates
             .iter()
-            .find(|m| m.recommended_for.contains(&task))
+            .find(|m| m.is_recommended_for(task))
             .or_else(|| candidates.first())
             .copied()
     }
@@ -312,6 +339,28 @@ impl Catalog {
                     None
                 }
             }
+            // Each page read for its entries, the instructions sent with every page.
+            Task::Contents => match (p.input_per_mtok, p.output_per_mtok) {
+                (Some(input), Some(output)) => {
+                    let pages = f64::from(pages.max(1));
+                    let prompt_tokens = prompt_chars as f64 / 4.0;
+                    let tokens_in = pages * (INPUT_TOKENS_PER_PAGE + prompt_tokens);
+                    let tokens_out = pages * CONTENTS_OUTPUT_TOKENS_PER_PAGE;
+                    Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
+                }
+                _ => None,
+            },
+            // Each page's text sent and written back corrected, as JSON.
+            Task::TextCorrection => match (p.input_per_mtok, p.output_per_mtok) {
+                (Some(input), Some(output)) => {
+                    let pages = f64::from(pages.max(1));
+                    let prompt_tokens = prompt_chars as f64 / 4.0;
+                    let tokens_in = pages * (OUTPUT_TOKENS_PER_PAGE + prompt_tokens);
+                    let tokens_out = pages * OUTPUT_TOKENS_PER_PAGE * 1.1;
+                    Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
+                }
+                _ => None,
+            },
             // An analysis reads the whole document once and writes a short answer.
             Task::Analysis => match (p.input_per_mtok, p.output_per_mtok) {
                 (Some(input), Some(output)) => {
@@ -339,6 +388,35 @@ impl Catalog {
             economy_usd: usd
                 .filter(|_| p.batch_discount.is_some())
                 .map(|usd| usd * p.batch_factor(true)),
+            note: if usd.is_none() {
+                Some("No published price in the catalogue for this model.".into())
+            } else {
+                p.note.clone()
+            },
+        }
+    }
+
+    /// A rough cost for a table of contents' second step over `pages` pages: one call reading
+    /// every page's entries and writing the combined ones. It runs at once, never in a batch.
+    pub fn estimate_merge(
+        &self,
+        model: &ModelInfo,
+        pages: u32,
+        prompt_chars: usize,
+    ) -> CostEstimate {
+        let p = &model.pricing;
+        let usd = match (p.input_per_mtok, p.output_per_mtok) {
+            (Some(input), Some(output)) => {
+                let pages = f64::from(pages.max(1));
+                let tokens_in = pages * CONTENTS_OUTPUT_TOKENS_PER_PAGE + prompt_chars as f64 / 4.0;
+                let tokens_out = pages * MERGE_OUTPUT_TOKENS_PER_PAGE;
+                Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
+            }
+            _ => None,
+        };
+        CostEstimate {
+            usd,
+            economy_usd: None,
             note: if usd.is_none() {
                 Some("No published price in the catalogue for this model.".into())
             } else {
@@ -524,5 +602,50 @@ mod tests {
                 .economy_usd,
             None
         );
+    }
+
+    #[test]
+    fn contents_and_corrections_take_the_analysis_models_that_read_their_input() {
+        let catalog = Catalog::bundled();
+        let ids = |task| -> Vec<String> {
+            catalog
+                .models_for(task)
+                .iter()
+                .map(|m| m.id.clone())
+                .collect()
+        };
+        let contents = ids(Task::Contents);
+        assert!(contents.contains(&"gemini-3.8-flash".to_string()));
+        assert!(
+            !contents.iter().any(|m| m.starts_with("deepseek")),
+            "reads text only"
+        );
+        assert!(
+            !contents.iter().any(|m| m.starts_with("mistral-ocr")),
+            "no analysis"
+        );
+        let corrections = ids(Task::TextCorrection);
+        assert!(corrections.iter().any(|m| m.starts_with("deepseek")));
+        assert!(!corrections.iter().any(|m| m.starts_with("voxtral")));
+        assert!(
+            catalog
+                .merge_models()
+                .iter()
+                .any(|m| m.id.starts_with("deepseek"))
+        );
+        assert_eq!(
+            catalog
+                .recommended(Task::Contents, &[])
+                .map(|m| m.id.as_str()),
+            catalog
+                .recommended(Task::Analysis, &[])
+                .map(|m| m.id.as_str())
+        );
+        let flash = catalog
+            .model(&ProviderId::new("gemini"), "gemini-3.8-flash")
+            .cloned()
+            .unwrap_or_else(|| panic!("no flash"));
+        let merge = catalog.estimate_merge(&flash, 40, 0);
+        assert!(merge.usd.is_some() && merge.economy_usd.is_none());
     }
 }

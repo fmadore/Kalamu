@@ -11,7 +11,8 @@
 	let { schema = $bindable() }: { schema: AnalysisSchema } = $props();
 	const m = messages();
 
-	type Kind = FieldKind['type'];
+	/** The kinds a researcher picks from; entries are Kalamu's own, for tables of contents. */
+	type Kind = Exclude<FieldKind['type'], 'entries'>;
 	const kinds: Kind[] = ['text', 'list', 'choice', 'choices'];
 
 	const values = (kind: FieldKind) =>
@@ -20,6 +21,7 @@
 	function kindOf(type: Kind, previous: FieldKind): FieldKind {
 		if (type === 'text') return { type };
 		if (type === 'list') return { type, max: previous.type === 'list' ? previous.max : null };
+		if (type === 'choice') return { type, values: values(previous) };
 		return { type, values: values(previous) };
 	}
 

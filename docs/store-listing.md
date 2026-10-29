@@ -32,6 +32,8 @@ Extract text from PDFs and images, printed or handwritten: newspapers, reports, 
 
 Transcribe recordings and videos with speakers and timestamps, and give the speakers their real names. Long recordings are cut at pauses and sent piece by piece. Offline, Whisper transcribes on your PC with no account, key or internet connection, and nothing leaves the computer; speaker labels need a cloud model. With Gemini, public YouTube videos are transcribed from their link, without downloading them.
 
+Make a detailed table of contents of a long document: a newspaper or magazine issue, an archival file scanned in one piece, a book or report. One model reads each page, another, cheaper one combines the pages into one entry per article or item, with its pages and the fields you choose. Correct the noisy text that digital libraries supply, page by page, with every change shown against the original.
+
 Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations a document names, its tone with a reason, themes from your own list. Ready-made analyses cover common needs, including the question, argument, methods and findings of a scholarly publication for a literature review. Answers come back in the shape you asked for and can be exported as a spreadsheet with a column per field.
 
 Check every result beside its source: the page next to its text, or the recording next to its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Compare two or more models on the same documents: their differences are highlighted in the text, with error rates against the pages you have corrected.
@@ -61,6 +63,8 @@ Transcribe recordings and videos with timestamps, in the cloud with speakers or 
 Offline transcription with Whisper: download a model once, then no account, key or internet
 Transcribe public YouTube videos from their link with Gemini, without downloading them
 Analyse texts with fields you define: summaries, people, places, organisations, tone, themes
+Make detailed tables of contents of newspaper issues, archival files and books
+Correct existing OCR text page by page, every change shown against the original
 Ready-made analyses, including the question, argument, methods and findings of a publication
 Check every result beside its source, page by page or line by line in the recording
 Corrections kept apart from the AI output, which is never overwritten

@@ -40,6 +40,28 @@ model's where there are any.
   named it, a `<field> (reason)` column after each field that asks for a reason, then
   `corrected` and `reviewed`. List items are joined with semicolons.
 
+## Tables of contents
+
+Written as `<name>.contents.md` (and `.docx`, `.csv`, `.txt`, `.json`) beside the source. Only
+the combined entries are written, with the researcher's corrections; what the first step read
+on each page stays in the job, for the review.
+
+- **Markdown and Word**: a heading per entry, then its pages and fields as a list
+  (`- **Pages:** 1, 3-4`).
+- **Text**: the entries numbered, each followed by its pages and fields, indented.
+- **CSV**: one row per entry: `file`, `Title`, `Pages`, one column per field named as the
+  preset names it, then `corrected` and `reviewed`.
+- **JSON**: the part has an `entries` array, each entry an object of its fields' values by key.
+- **`provenance.json`** describes the first step as for any job and the second under `merge`:
+  its `provider`, `model`, `model_versions` and `prompt` (with its fields).
+
+## Corrected text
+
+Written as `<name>.corrected.txt` (and `.md`, `.docx`, `.json`, `.csv`), so a text file is
+never replaced by its correction. Pages keep their `--- Page N ---` markers; passages of a text
+without pages carry none, as the cut means nothing to a reader, and are numbered `§1`, `§2` in
+the CSV.
+
 ## Subtitles and spreadsheets
 
 - **`.srt` / `.vtt`**: cues of at most 84 characters and 6 seconds, from timed segments or from
@@ -85,11 +107,12 @@ Modelled on zmo-ai-pipelines' provenance record:
 | --- | --- |
 | `generator` | `{ "name": "Kalamu", "version": "…" }` |
 | `created_at` | Milliseconds since 1970, UTC |
-| `task`, `engine` | `text_extraction` or `audio_transcription`; `cloud` or `offline` |
+| `task`, `engine` | `text_extraction`, `audio_transcription`, `analysis`, `contents` or `text_correction`; `cloud` or `offline` |
 | `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it |
 | `provider`, `model` | As requested |
 | `model_versions` | The versions the provider reported, when they differ from `model` (including a fallback model) |
 | `prompt` | Preset id and name, the full instructions and per-page request sent, and their SHA-256 |
+| `merge` | For a table of contents, the model and prompt that combined the pages: `provider`, `model`, `model_versions`, `prompt` |
 | `languages`, `detected_languages` | What the user chose, and what the model reported |
 | `options` | Diarization, timestamps, speaker count |
 | `pieces`, `corrected`, `reviewed` | Number of pages or segments, and which were corrected or reviewed |
