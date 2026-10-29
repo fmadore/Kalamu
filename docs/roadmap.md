@@ -80,10 +80,23 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 
 ## Next
 
-- **Refactor the review**: extract the frame shared by the transcription and analysis reviews,
-  and split New job into smaller components (see the
-  [25 October checkpoint](decisions/2026-10-25-analyses-review-and-pipelines.md)).
-- **Search in the review**, built with the refactor: the whole document's text, corrections
+The [29 October checkpoint](decisions/2026-10-29-checkpoint.md) puts three pieces of work
+before any new feature:
+
+- **Results that can be wrong unnoticed**: an answer cut off at the output limit marked as
+  such, warned about and listed in provenance; a source changed on disk since it was added
+  hashed again and refused; a stored answer never replaced by a later one under the same key.
+- **Work lost or paid twice**: quitting waits for calls in flight instead of five seconds;
+  retry delays honour pause and cancel; a job with a waiting batch only collects at launch;
+  the cost shown covers the whole job, failed but billed answers included. Then a document's
+  files written even when one page keeps failing, with the page marked, and sources of the same
+  name kept apart in one destination.
+- **Refactor the review**: one frame for the three reviews (`ReviewFrame`, with the sigla key,
+  correction editor and field inputs shared), the readings popover and marked text out of
+  `ReviewView`; New job, the job page and the sidebar in smaller components; `run.rs` and
+  `batch.rs` split; the rules on which files and models suit a task given to the front end by
+  the engine, which also checks them.
+- **Search in the review**, built on the refactored frame: the whole document's text, corrections
   included, searched across its pages or a recording's lines; the hits listed by page or time,
   a click going there with the words highlighted (and a recording playing from there); in a
   table of contents' review, the entries filtered.
