@@ -52,6 +52,9 @@ pub trait JobStore: Send + Sync {
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError>;
 
     fn cached_result(&self, key: &CacheKey) -> Result<Option<StoredResult>, StoreError>;
+    /// Stores a result unless one is already stored under its key. The first answer is kept,
+    /// never replaced by a later one (two identical set-ups, a batch collected after a fast
+    /// run), so the researcher's corrections stay over the text they corrected.
     fn put_result(&self, result: &StoredResult) -> Result<(), StoreError>;
 
     fn put_correction(&self, correction: &Correction) -> Result<(), StoreError>;

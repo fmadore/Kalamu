@@ -842,3 +842,63 @@ async fn the_settings_recorded_for_a_batch_are_the_ones_it_sends() {
         assert_settings_sent(&body, prefix, &settings, &named, &format!("{model} batch"));
     }
 }
+
+/// An answer that stops at the model's output limit keeps what was read and says so.
+#[tokio::test]
+async fn an_answer_cut_off_at_the_output_limit_is_marked() {
+    let cut_off = [
+        serde_json::json!({
+            "candidates": [{
+                "content": { "parts": [{ "text": "Bamako, le 3" }] },
+                "finishReason": "MAX_TOKENS"
+            }],
+            "usageMetadata": {}
+        }),
+        serde_json::json!({
+            "status": "incomplete",
+            "incomplete_details": { "reason": "max_output_tokens" },
+            "output": [{
+                "type": "message",
+                "content": [{ "type": "output_text", "text": "Bamako, le 3" }]
+            }],
+            "usage": {}
+        }),
+        serde_json::json!({
+            "content": [{ "type": "text", "text": "Bamako, le 3" }],
+            "stop_reason": "max_tokens",
+            "usage": {}
+        }),
+    ];
+    let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());
+    let input = page();
+    for (i, body) in cut_off.into_iter().enumerate() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&server)
+            .await;
+        let (provider, model): (Box<dyn Provider>, &str) = match i {
+            0 => (
+                Box::new(Gemini::with_base_url(client(), &server.uri())),
+                "gemini-3.8-flash",
+            ),
+            1 => (
+                Box::new(OpenAi::with_base_url(client(), &server.uri())),
+                "gpt-6-luna",
+            ),
+            _ => (
+                Box::new(Anthropic::with_base_url(client(), &server.uri())),
+                "claude-haiku-5-5",
+            ),
+        };
+        let output = provider
+            .process(
+                &ApiKey::new("k"),
+                request(Task::TextExtraction, model, &input, &langs, &opts),
+            )
+            .await
+            .unwrap_or_else(|e| panic!("{model}: {e}"));
+        assert_eq!(output.text, "Bamako, le 3", "{model}");
+        assert!(output.truncated, "{model}");
+    }
+}

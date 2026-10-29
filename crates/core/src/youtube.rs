@@ -68,6 +68,7 @@ impl SourceFile {
             file_name: format!("youtube-{id}"),
             sha256: sha256_hex(format!("youtube:{id}").as_bytes()),
             size_bytes: 0,
+            modified_ms: None,
             kind: InputKind::YouTube,
             page_count: None,
             duration_ms: None,

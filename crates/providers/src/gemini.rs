@@ -135,7 +135,7 @@ impl Gemini {
             .unwrap_or_default();
         match finish {
             "STOP" | "FINISH_REASON_UNSPECIFIED" => {}
-            // Keep what was transcribed; the engine marks the page as truncated.
+            // Keep what was read, marked as cut off (`truncated`).
             "MAX_TOKENS" if !text.is_empty() => {}
             "RECITATION" => {
                 return Err(ProviderError::Blocked(
@@ -174,6 +174,7 @@ impl Gemini {
                 .map(str::to_string),
             fields: Vec::new(),
             regions: Vec::new(),
+            truncated: finish == "MAX_TOKENS",
         })
     }
 

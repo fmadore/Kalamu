@@ -96,8 +96,12 @@ pub(super) fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
             .and_then(Value::as_u64)
             .unwrap_or(0)
     };
+    let finish = choice
+        .and_then(|c| c.get("finish_reason"))
+        .and_then(Value::as_str);
     Ok(ProcessOutput {
         text,
+        truncated: finish == Some("length"),
         usage: Usage {
             input_tokens: count("prompt_tokens"),
             output_tokens: count("completion_tokens"),
@@ -143,5 +147,20 @@ mod tests {
                 "message": { "role": "assistant", "content": "" } }],
         }));
         assert!(matches!(empty, Err(ProviderError::Other(m)) if m.contains("length")));
+        let cut = parse(&json!({
+            "choices": [{ "index": 0, "finish_reason": "length",
+                "message": { "role": "assistant", "content": "{\"summary\":\"Bamako, le" } }],
+        }))
+        .unwrap();
+        assert!(cut.truncated, "kept, and marked as cut off");
+        assert!(!out_of(&json!("{}")).truncated);
+    }
+
+    fn out_of(content: &Value) -> ProcessOutput {
+        parse(&json!({
+            "choices": [{ "index": 0, "finish_reason": "stop",
+                "message": { "role": "assistant", "content": content } }],
+        }))
+        .unwrap()
     }
 }

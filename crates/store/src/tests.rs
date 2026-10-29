@@ -17,6 +17,7 @@ fn job() -> Job {
             file_name: "letter.pdf".into(),
             sha256: "abc".into(),
             size_bytes: 10,
+            modified_ms: None,
             kind: InputKind::Pdf,
             page_count: Some(2),
             duration_ms: None,
@@ -156,6 +157,35 @@ fn results_outlive_their_job() -> Result<(), StoreError> {
         Some(result.clone())
     );
     assert_eq!(store.cached_result(&CacheKey("other".into()))?, None);
+    Ok(())
+}
+
+/// A second answer under the same key never replaces the first: corrections made over it stay
+/// over the text they corrected.
+#[test]
+fn the_first_answer_under_a_key_is_kept() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let answer = |text: &str, truncated: bool| StoredResult {
+        cache_key: "k".into(),
+        provider: ProviderId::new("gemini"),
+        model: "gemini-3.8-flash".into(),
+        output: ProcessOutput {
+            text: text.into(),
+            truncated,
+            ..ProcessOutput::default()
+        },
+        request: Vec::new(),
+        cost_usd: None,
+        duration_ms: 10,
+        created_at: Timestamp::now(),
+    };
+    store.put_result(&answer("Bamako, le 3 mai", true))?;
+    store.put_result(&answer("Bamako, le 5 mai", false))?;
+    let kept = store
+        .cached_result(&CacheKey("k".into()))?
+        .ok_or(StoreError::NotFound)?;
+    assert_eq!(kept.output.text, "Bamako, le 3 mai");
+    assert!(kept.output.truncated);
     Ok(())
 }
 

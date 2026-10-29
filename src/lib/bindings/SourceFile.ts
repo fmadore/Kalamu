@@ -14,7 +14,12 @@ path: string, file_name: string,
  * SHA-256 of the file's bytes, lowercase hex, or of a YouTube video's id. Part of every
  * cache key.
  */
-sha256: string, size_bytes: number, kind: InputKind, 
+sha256: string, size_bytes: number, 
+/**
+ * When the file was last modified, in milliseconds since 1970, as it was when hashed: a
+ * run reads the file again only if its size or this changed since.
+ */
+modified_ms?: number, kind: InputKind, 
 /**
  * Pages in a PDF or multi-page TIFF, once known.
  */

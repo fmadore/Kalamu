@@ -91,6 +91,7 @@ impl Mistral {
                 .map(str::to_string),
             fields: Vec::new(),
             regions,
+            truncated: false,
         })
     }
 
@@ -183,6 +184,7 @@ impl Mistral {
                 .map(str::to_string),
             fields: Vec::new(),
             regions: Vec::new(),
+            truncated: false,
         })
     }
 }

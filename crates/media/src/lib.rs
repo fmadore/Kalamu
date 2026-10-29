@@ -17,6 +17,7 @@ mod text_source;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
+use std::time::UNIX_EPOCH;
 
 use kalamu_core::{
     InputKind, InputWarning, PieceRef, PreparedInput, SourceFile, SourceId, YOUTUBE_LINK,
@@ -50,6 +51,10 @@ pub enum MediaError {
     NeedsConversion(String),
     #[error("FFmpeg failed: {0}")]
     Tool(String),
+    #[error(
+        "This file has changed since it was added to the job. Start a new job with it to read it as it is now"
+    )]
+    Changed,
 }
 
 /// Hashes a file and works out what it is, without loading it all into memory twice. FFmpeg,
@@ -60,7 +65,7 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
         message: e.to_string(),
     };
     let kind = InputKind::from_path(path).ok_or(MediaError::UnsupportedKind)?;
-    let size_bytes = std::fs::metadata(path).map_err(read_err)?.len();
+    let metadata = std::fs::metadata(path).map_err(read_err)?;
     let sha256 = hash_file(path)?;
     let page_count = match kind {
         InputKind::Pdf => Some(PdfSource::open(path)?.page_count()),
@@ -79,7 +84,8 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_default(),
         sha256,
-        size_bytes,
+        size_bytes: metadata.len(),
+        modified_ms: modified_ms(&metadata),
         kind,
         page_count,
         duration_ms,
@@ -87,6 +93,38 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
         even_out_volume: false,
         title: None,
     })
+}
+
+/// When a file was last modified, in milliseconds since 1970, where the system says.
+fn modified_ms(metadata: &std::fs::Metadata) -> Option<i64> {
+    let since = metadata.modified().ok()?.duration_since(UNIX_EPOCH).ok()?;
+    i64::try_from(since.as_millis()).ok()
+}
+
+/// Checks that a file still holds what was hashed when it was added. Its size and modification
+/// time settle it when they are known and unchanged; otherwise it is hashed again, so a file
+/// touched but not changed is still read. A changed file is refused: what it holds now would be
+/// cached under the fingerprint of what it held then.
+pub fn check_unchanged(source: &SourceFile) -> Result<(), MediaError> {
+    if source.kind == InputKind::YouTube {
+        return Ok(());
+    }
+    let path = Path::new(&source.path);
+    let metadata = std::fs::metadata(path).map_err(|e| MediaError::Read {
+        path: path.display().to_string(),
+        message: e.to_string(),
+    })?;
+    if metadata.len() != source.size_bytes {
+        return Err(MediaError::Changed);
+    }
+    if source.modified_ms.is_some() && modified_ms(&metadata) == source.modified_ms {
+        return Ok(());
+    }
+    if hash_file(path)? == source.sha256 {
+        Ok(())
+    } else {
+        Err(MediaError::Changed)
+    }
 }
 
 pub fn hash_file(path: &Path) -> Result<String, MediaError> {

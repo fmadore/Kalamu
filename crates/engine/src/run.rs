@@ -125,12 +125,17 @@ impl Engine {
             if stop_requested(&control).is_some() {
                 break;
             }
+            // A file changed since it was added is refused: its pieces would be cached under the
+            // fingerprint of what it held then.
             let opened = {
                 let source = source.clone();
                 let ffmpeg = self.config.ffmpeg.clone();
-                tokio::task::spawn_blocking(move || OpenSource::open(&source, ffmpeg.as_ref()))
-                    .await
-                    .map_err(|e| EngineError::Output(e.to_string()))?
+                tokio::task::spawn_blocking(move || {
+                    kalamu_media::check_unchanged(&source)?;
+                    OpenSource::open(&source, ffmpeg.as_ref())
+                })
+                .await
+                .map_err(|e| EngineError::Output(e.to_string()))?
             };
             let opened = match opened {
                 Ok(o) => Arc::new(o),

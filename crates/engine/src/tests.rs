@@ -21,6 +21,8 @@ struct Fake {
     calls: AtomicUsize,
     /// Page number → errors to return before succeeding.
     failures: Mutex<HashMap<u32, Vec<ProviderError>>>,
+    /// A page whose answer stops at the output limit (0: none).
+    cut_off: std::sync::atomic::AtomicU32,
 }
 
 impl Fake {
@@ -28,6 +30,7 @@ impl Fake {
         Arc::new(Self {
             calls: AtomicUsize::new(0),
             failures: Mutex::new(HashMap::new()),
+            cut_off: std::sync::atomic::AtomicU32::new(0),
         })
     }
 
@@ -122,6 +125,7 @@ impl Provider for Fake {
                 ..Usage::default()
             },
             model_version: Some(format!("{}-001", request.model)),
+            truncated: self.cut_off.load(Ordering::SeqCst) == *number,
             ..ProcessOutput::default()
         })
     }
@@ -501,6 +505,57 @@ async fn a_job_is_scored_against_every_page_reviewed_or_corrected() {
         report.scores[0].scored_pages, 2,
         "the review scores it the same"
     );
+}
+
+#[tokio::test]
+async fn a_source_changed_since_it_was_added_is_not_read() {
+    let f = fixture();
+    let source = f.pdf("lettre.pdf", 2);
+    let job = f.new_job(vec![source.clone()], &["fake-model"]);
+    // Another scan saved under the same name after the job was set up.
+    std::fs::write(
+        &source.path,
+        kalamu_media::sample_pdf(&[(595.0, 842.0); 3], false),
+    )
+    .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
+    assert_eq!(
+        f.fake.calls(),
+        0,
+        "nothing is sent or cached under the old fingerprint"
+    );
+}
+
+#[tokio::test]
+async fn an_answer_cut_off_at_the_output_limit_is_marked_everywhere() {
+    let f = fixture();
+    f.fake.cut_off.store(2, Ordering::SeqCst);
+    let source = f.pdf("registre.pdf", 3);
+    let job = f.new_job(vec![source.clone()], &["fake-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+
+    let summary = f
+        .engine
+        .jobs()
+        .unwrap_or_default()
+        .into_iter()
+        .find(|j| j.id == job.id);
+    assert_eq!(summary.map(|j| j.pieces_truncated), Some(1));
+    let views = f
+        .engine
+        .source_pieces(job.id, source.id)
+        .unwrap_or_default();
+    let cut: Vec<u32> = views
+        .iter()
+        .filter(|v| v.truncated)
+        .map(|v| v.index)
+        .collect();
+    assert_eq!(cut, vec![1], "page 2, kept as read");
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("registre.provenance.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(provenance["truncated"], serde_json::json!([2]));
 }
 
 #[tokio::test]

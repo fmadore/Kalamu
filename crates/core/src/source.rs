@@ -51,6 +51,11 @@ pub struct SourceFile {
     pub sha256: String,
     #[ts(type = "number")]
     pub size_bytes: u64,
+    /// When the file was last modified, in milliseconds since 1970, as it was when hashed: a
+    /// run reads the file again only if its size or this changed since.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "number")]
+    pub modified_ms: Option<i64>,
     pub kind: InputKind,
     /// Pages in a PDF or multi-page TIFF, once known.
     pub page_count: Option<u32>,

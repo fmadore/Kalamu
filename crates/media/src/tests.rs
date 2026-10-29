@@ -236,3 +236,32 @@ fn a_text_model_reads_a_pdf_page_from_its_text_layer() -> Result<(), MediaError>
     assert!(err.to_string().contains("without a text layer"), "{err}");
     Ok(())
 }
+
+#[test]
+fn a_file_changed_since_it_was_added_is_refused() -> Result<(), MediaError> {
+    let dir = tempfile::tempdir().map_err(|e| MediaError::Tool(e.to_string()))?;
+    let path = dir.path().join("lettre.pdf");
+    let write =
+        |bytes: &[u8]| std::fs::write(&path, bytes).map_err(|e| MediaError::Tool(e.to_string()));
+    write(&sample_pdf(&[A4], true))?;
+    let mut source = inspect(&path, None)?;
+    assert!(source.modified_ms.is_some());
+    check_unchanged(&source)?;
+
+    // Touched but not changed: hashed again, and still read.
+    source.modified_ms = Some(0);
+    check_unchanged(&source)?;
+
+    // The same size, other bytes, under a modification time that no longer matches.
+    let mut other = std::fs::read(&path).map_err(|e| MediaError::Tool(e.to_string()))?;
+    if let Some(last) = other.last_mut() {
+        *last ^= 1;
+    }
+    write(&other)?;
+    assert!(matches!(check_unchanged(&source), Err(MediaError::Changed)));
+
+    // Another size is settled without hashing.
+    write(b"%PDF-1.5 shorter")?;
+    assert!(matches!(check_unchanged(&source), Err(MediaError::Changed)));
+    Ok(())
+}

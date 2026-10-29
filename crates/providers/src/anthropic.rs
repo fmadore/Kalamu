@@ -179,6 +179,7 @@ impl Anthropic {
                 .map(str::to_string),
             fields: Vec::new(),
             regions: Vec::new(),
+            truncated: stop == "max_tokens",
         })
     }
 

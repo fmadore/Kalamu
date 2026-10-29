@@ -309,6 +309,9 @@ export const en = {
 		nameLabel: 'Job name',
 		progress: (done: number, total: number) => `${done} of ${total} pieces`,
 		failed: (n: number) => (n === 1 ? '1 failed' : `${n} failed`),
+		truncated: (n: number) => `${n} cut off`,
+		truncatedNote:
+			"The model's answer stopped at its length limit, so the end of these pieces may be missing. The review marks them; check them against the source.",
 		files: 'Files',
 		livePreview: 'Latest result',
 		outputs: 'Written',
@@ -377,6 +380,8 @@ export const en = {
 		noReference:
 			'Correct a page, or mark it as reviewed, to score the models against it. Until then, the view shows where they disagree.',
 		agreement: (pct: string) => `${pct} different`,
+		truncated:
+			"The model's answer stopped at its length limit here, so the end may be missing. Check it against the source, or correct it.",
 		noPreview: 'No preview for this file type.',
 		notDone: 'Not processed yet.',
 		saved: 'Saved; the result files were updated.',
