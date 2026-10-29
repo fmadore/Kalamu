@@ -160,46 +160,14 @@ impl Engine {
         let provider = self.provider(&setup.provider)?;
         let api_key = self.api_key(setup)?;
         let now = Timestamp::now();
-        let mut record = BatchRecord {
-            id: BatchRecord::new_id(),
-            job_id: job.id,
-            setup_id: setup.id,
-            provider: setup.provider.clone(),
-            remote_id: None,
-            phase: BatchPhase::Sending,
-            items: bucket
-                .pieces
-                .iter()
-                .enumerate()
-                .map(|(i, (state, _))| BatchItem {
-                    id: format!("p{i}"),
-                    source_id: state.source_id,
-                    index: state.index,
-                })
-                .collect(),
-            request: provider.request_settings(job.task, &setup.model),
-            submitted_at: now,
-            updated_at: now,
-        };
-        self.store.put_batch(&record)?;
-        let mut states: Vec<PieceState> = Vec::with_capacity(bucket.pieces.len());
-        for (state, _) in &bucket.pieces {
-            let mut state = state.clone();
-            state.status = PieceStatus::Submitted;
-            state.error = None;
-            state.attempts += 1;
-            self.save(&mut state, None)?;
-            states.push(state);
-        }
-
         let stop = StopSignal::default();
-        let requests: Vec<(String, ProcessRequest<'_>)> = record
-            .items
+        let requests: Vec<(String, ProcessRequest<'_>)> = bucket
+            .pieces
             .iter()
-            .zip(&bucket.pieces)
-            .map(|(item, (_, input))| {
+            .enumerate()
+            .map(|(i, (_, input))| {
                 (
-                    item.id.clone(),
+                    format!("p{i}"),
                     ProcessRequest {
                         task: job.task,
                         model: &setup.model,
@@ -214,6 +182,38 @@ impl Engine {
                 )
             })
             .collect();
+        let mut record = BatchRecord {
+            id: BatchRecord::new_id(),
+            job_id: job.id,
+            setup_id: setup.id,
+            provider: setup.provider.clone(),
+            remote_id: None,
+            phase: BatchPhase::Sending,
+            items: bucket
+                .pieces
+                .iter()
+                .zip(&requests)
+                .map(|((state, _), (id, request))| BatchItem {
+                    id: id.clone(),
+                    source_id: state.source_id,
+                    index: state.index,
+                    request: provider.sent_settings(request, true),
+                })
+                .collect(),
+            submitted_at: now,
+            updated_at: now,
+        };
+        self.store.put_batch(&record)?;
+        let mut states: Vec<PieceState> = Vec::with_capacity(bucket.pieces.len());
+        for (state, _) in &bucket.pieces {
+            let mut state = state.clone();
+            state.status = PieceStatus::Submitted;
+            state.error = None;
+            state.attempts += 1;
+            self.save(&mut state, None)?;
+            states.push(state);
+        }
+
         // Only a refusal for the rate is retried: a timed-out request may have created the
         // batch, and sending it again would pay twice.
         let mut sent = provider.submit_batch(&api_key, &requests).await;
@@ -379,7 +379,7 @@ impl Engine {
                         provider: setup.provider.clone(),
                         model: setup.model.clone(),
                         output,
-                        request: batch.request.clone(),
+                        request: item.request.clone(),
                         cost_usd: cost,
                         duration_ms: waited,
                         created_at: Timestamp::now(),

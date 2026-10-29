@@ -2528,7 +2528,6 @@ dependencies = [
  "docx-rs",
  "kalamu-core",
  "lopdf",
- "serde",
  "serde_json",
  "tempfile",
  "uuid",
@@ -2594,10 +2593,8 @@ dependencies = [
  "base64 0.23.1",
  "kalamu-core",
  "reqwest",
- "serde",
  "serde_json",
  "tokio",
- "tracing",
  "wiremock",
 ]
 
