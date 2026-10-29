@@ -345,16 +345,21 @@ async fn closing_the_app_mid_batch_collects_the_answers_on_the_next_launch() {
         relaunched.jobs_waiting_for_batches().unwrap_or_default(),
         vec![job.id]
     );
-    let mut events = relaunched.subscribe();
+    // At launch the waiting batch is only collected: the unsent page waits for the researcher.
+    let events = relaunched.subscribe();
+    relaunched
+        .collect_waiting(job.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Interrupted);
+    assert_eq!(e.batchy.submitted(), 2, "nothing sent at launch");
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Done), 2);
+    assert_eq!(count(&pieces, PieceStatus::Pending), 1);
+
+    // Resumed, the job sends what is left.
+    let events = relaunched.subscribe();
     relaunched.start(job.id).unwrap_or_else(|e| panic!("{e}"));
-    let status = loop {
-        match tokio::time::timeout(Duration::from_secs(10), events.recv()).await {
-            Ok(Ok(ProgressEvent::JobFinished { status, .. })) => break status,
-            Ok(Ok(_)) => {}
-            other => panic!("no JobFinished event: {other:?}"),
-        }
-    };
-    assert_eq!(status, JobStatus::Completed);
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Completed);
     assert_eq!(
         e.batchy.submitted(),
         3,

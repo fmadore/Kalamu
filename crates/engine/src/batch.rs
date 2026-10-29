@@ -13,8 +13,9 @@ use std::time::{Duration, Instant};
 
 use kalamu_core::{
     ApiKey, BATCH_WINDOW_MS, BatchContext, BatchItem, BatchPhase, BatchProgress, BatchRecord,
-    CacheKey, Job, JobId, PieceState, PieceStatus, PreparedInput, ProcessOutput, ProcessRequest,
-    ProgressEvent, ProviderError, Setup, SetupId, SourceId, StopSignal, StoredResult, Timestamp,
+    CacheKey, Job, JobId, JobStatus, PieceState, PieceStatus, PreparedInput, ProcessOutput,
+    ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId, SourceId, StopSignal,
+    StoredResult, Timestamp,
 };
 use kalamu_media::OpenSource;
 
@@ -471,8 +472,46 @@ impl Engine {
         Ok(())
     }
 
-    /// Jobs with batches still at the provider, which the app resumes at startup to collect
-    /// them.
+    /// Waits for a job's batches and collects their answers, then writes the documents they
+    /// complete. Nothing is sent: a batch recorded but never confirmed goes back to the queue
+    /// for the next run, and a table of contents is not combined. The job keeps the status it
+    /// had unless the answers finish it.
+    pub(crate) async fn collect_batches(
+        self: &Arc<Self>,
+        job_id: JobId,
+        control: Arc<Mutex<Control>>,
+    ) -> Result<JobStatus, EngineError> {
+        let job = self.store.job(job_id)?;
+        self.store.set_job_status(job_id, JobStatus::Running)?;
+        self.reopen_unsent(job_id)?;
+        let spent = Mutex::new(self.store.spent(job_id)?);
+        let outcome = self.wait_for_batches(&job, &control, &spent).await?;
+        let setups: Vec<&Setup> = job.setups.iter().collect();
+        let mut failed = outcome.failed;
+        for source in &job.sources {
+            failed |= self.export_finished(&job, source.id, &setups)?;
+        }
+        let pieces = self.store.pieces(job_id)?;
+        let left = pieces
+            .iter()
+            .any(|p| !p.status.is_finished() && p.status != PieceStatus::Failed);
+        Ok(match crate::run::stop_requested(&control) {
+            Some(crate::run::StopKind::Cancel) => JobStatus::Cancelled,
+            Some(crate::run::StopKind::Pause) => JobStatus::Paused,
+            // Work remains: the job waits for the researcher, paused as they left it or
+            // interrupted by the last close.
+            None if left || outcome.waiting => match job.status {
+                JobStatus::Paused => JobStatus::Paused,
+                _ => JobStatus::Interrupted,
+            },
+            None if failed || pieces.iter().any(|p| p.status == PieceStatus::Failed) => {
+                JobStatus::CompletedWithErrors
+            }
+            None => JobStatus::Completed,
+        })
+    }
+
+    /// Jobs with batches still at the provider, which the app collects at startup.
     pub fn jobs_waiting_for_batches(&self) -> Result<Vec<JobId>, EngineError> {
         let mut waiting = Vec::new();
         for job in self.store.list_jobs()? {

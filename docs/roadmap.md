@@ -63,6 +63,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   provenance; a file changed on disk since it was added is refused; the first answer stored
   for a fingerprint is never replaced
   ([decision](decisions/2026-10-29-result-integrity.md)).
+- **Work neither lost nor paid twice**: quitting waits for the pieces already sent, saying how
+  many, with "Quit now"; a pause or cancel ends a wait between retries; at launch a job with a
+  waiting batch is only collected; an engine error lets the calls already started finish; the
+  job's page shows what it cost over all its runs
+  ([decision](decisions/2026-10-29-cost-and-quitting.md)).
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
   Mistral at half price, answered within a day and collected after the app was closed; cached
   input billed at its own price; both costs shown before starting
@@ -86,13 +91,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 ## Next
 
 The [29 October checkpoint](decisions/2026-10-29-checkpoint.md) puts these before any new
-feature (the first, results that could be wrong unnoticed, is done):
+feature (results that could be wrong unnoticed, and work lost or paid twice, are done):
 
-- **Work lost or paid twice**: quitting waits for calls in flight instead of five seconds;
-  retry delays honour pause and cancel; a job with a waiting batch only collects at launch;
-  the cost shown covers the whole job, failed but billed answers included. Then a document's
-  files written even when one page keeps failing, with the page marked, and sources of the same
-  name kept apart in one destination.
+- **Results that do not reach the researcher**: a document's files written even when one page
+  keeps failing, with the page marked; sources of the same name kept apart in one destination;
+  and in the cost shown, answers that were billed but failed their fields.
 - **Refactor the review**: one frame for the three reviews (`ReviewFrame`, with the sigla key,
   correction editor and field inputs shared), the readings popover and marked text out of
   `ReviewView`; New job, the job page and the sidebar in smaller components; `run.rs` and

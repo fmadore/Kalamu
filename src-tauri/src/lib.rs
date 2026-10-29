@@ -172,11 +172,10 @@ pub fn run() {
                     ..EngineConfig::default()
                 },
             );
-            let mut interrupted = engine.recover().unwrap_or_default();
-            // Jobs whose batches the provider still holds carry on by themselves, below; the
-            // others wait for the researcher to resume them.
+            let interrupted = engine.recover().unwrap_or_default();
+            // Batches the provider still holds are collected below; nothing else is sent until
+            // the researcher resumes the job.
             let waiting = engine.jobs_waiting_for_batches().unwrap_or_default();
-            interrupted.retain(|id| !waiting.contains(id));
             if !interrupted.is_empty() {
                 tracing::info!(count = interrupted.len(), "jobs interrupted at last close");
             }
@@ -203,8 +202,8 @@ pub fn run() {
             let resumed = engine.clone();
             tauri::async_runtime::spawn(async move {
                 for id in waiting {
-                    if let Err(e) = resumed.start(id) {
-                        tracing::warn!(job = %id, error = %e, "batch job not resumed");
+                    if let Err(e) = resumed.collect_waiting(id) {
+                        tracing::warn!(job = %id, error = %e, "batches not collected");
                     }
                 }
             });
@@ -219,6 +218,7 @@ pub fn run() {
                 http,
                 preview: Mutex::new(None),
                 pipelines: Mutex::new(pipelines),
+                quitting: std::sync::atomic::AtomicBool::new(false),
             });
             app.manage(tray::TrayMenu::default());
             // Without a tray the window can still be used; closing it just pauses jobs.

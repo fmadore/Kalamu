@@ -52,6 +52,9 @@ pub trait JobStore: Send + Sync {
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError>;
 
     fn cached_result(&self, key: &CacheKey) -> Result<Option<StoredResult>, StoreError>;
+    /// What a job's own calls cost, in US dollars: the results its pieces stored, not those
+    /// reused from the cache.
+    fn spent(&self, job: JobId) -> Result<f64, StoreError>;
     /// Stores a result unless one is already stored under its key. The first answer is kept,
     /// never replaced by a later one (two identical set-ups, a batch collected after a fast
     /// run), so the researcher's corrections stay over the text they corrected.

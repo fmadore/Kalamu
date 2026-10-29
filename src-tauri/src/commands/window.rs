@@ -1,5 +1,8 @@
 //! The window: taskbar progress, the notification-area icon, hiding and closing.
 
+use std::sync::atomic::Ordering;
+use std::time::{Duration, Instant};
+
 use kalamu_core::JobId;
 use tauri::{AppHandle, Manager, State};
 
@@ -82,16 +85,24 @@ pub fn pause_running(state: &AppState) -> Vec<JobId> {
     running
 }
 
-/// Pauses running jobs, waits a moment for pages in flight to land in the cache, and exits.
+/// How long quitting waits for pieces already sent: a call ends within the HTTP client's ten
+/// minutes, so past this something is stuck and waiting longer would not help.
+const QUIT_WAIT: Duration = Duration::from_secs(11 * 60);
+
+/// Pauses running jobs, waits for the pieces already sent to come back and be stored (they are
+/// paid for, and dropping them would send and pay for them again), and exits. Asked again while
+/// it waits, it exits at once.
 pub async fn pause_and_quit(app: AppHandle) {
     {
         let state = app.state::<AppState>();
+        if state.quitting.swap(true, Ordering::SeqCst) {
+            app.exit(0);
+            return;
+        }
         let running = pause_running(&state);
-        for _ in 0..50 {
-            if running.iter().all(|id| !state.engine.is_running(*id)) {
-                break;
-            }
-            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        let deadline = Instant::now() + QUIT_WAIT;
+        while running.iter().any(|id| state.engine.is_running(*id)) && Instant::now() < deadline {
+            tokio::time::sleep(Duration::from_millis(200)).await;
         }
     }
     app.exit(0);

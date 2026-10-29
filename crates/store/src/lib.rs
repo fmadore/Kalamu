@@ -198,7 +198,8 @@ impl JobStore for SqliteStore {
                         COUNT(p.idx),
                         COALESCE(SUM(p.status IN ('done', 'cached')), 0),
                         COALESCE(SUM(p.status = 'failed'), 0),
-                        COALESCE(SUM(p.status IN ('done', 'cached') AND r.truncated), 0)
+                        COALESCE(SUM(p.status IN ('done', 'cached') AND r.truncated), 0),
+                        SUM(CASE WHEN p.status = 'done' THEN r.cost_usd END)
                  FROM jobs j LEFT JOIN pieces p ON p.job_id = j.id
                  LEFT JOIN results r ON r.cache_key = p.cache_key
                  GROUP BY j.id
@@ -215,12 +216,14 @@ impl JobStore for SqliteStore {
                     row.get::<_, u32>(4)?,
                     row.get::<_, u32>(5)?,
                     row.get::<_, u32>(6)?,
+                    row.get::<_, Option<f64>>(7)?,
                 ))
             })
             .map_err(db)?;
         let mut jobs = Vec::new();
         for row in rows {
-            let (data, status, updated_at, total, finished, failed, truncated) = row.map_err(db)?;
+            let (data, status, updated_at, total, finished, failed, truncated, cost) =
+                row.map_err(db)?;
             let job: Job = serde_json::from_str(&data).map_err(corrupt)?;
             jobs.push(JobSummary {
                 id: job.id,
@@ -235,6 +238,7 @@ impl JobStore for SqliteStore {
                 pieces_finished: finished,
                 pieces_failed: failed,
                 pieces_truncated: truncated,
+                cost_usd: cost,
             });
         }
         Ok(jobs)
@@ -422,6 +426,19 @@ impl JobStore for SqliteStore {
             },
         )
         .transpose()
+    }
+
+    fn spent(&self, job: JobId) -> Result<f64, StoreError> {
+        // A piece done by this job paid for its result; a cached one reused another's.
+        self.conn()
+            .query_row(
+                "SELECT COALESCE(SUM(r.cost_usd), 0) FROM pieces p
+                 JOIN results r ON r.cache_key = p.cache_key
+                 WHERE p.job_id = ?1 AND p.status = 'done'",
+                [job.to_string()],
+                |row| row.get(0),
+            )
+            .map_err(db)
     }
 
     fn put_result(&self, result: &StoredResult) -> Result<(), StoreError> {

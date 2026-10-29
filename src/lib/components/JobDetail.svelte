@@ -29,6 +29,8 @@
 	const live = $derived(app.live[jobId]);
 	const running = $derived(summary?.status === 'running');
 	const stopped = $derived(summary?.status === 'interrupted' || summary?.status === 'paused');
+	/** What the job has cost over all its runs: live while it runs, stored otherwise. */
+	const spent = $derived(running && live ? live.spent : (summary?.cost_usd ?? 0));
 	/** Pieces the provider's batch service holds, in economy mode. */
 	const held = $derived(pieces.filter((p) => p.status === 'submitted').length);
 	/** When the last of the batches is due, as the engine last reported. */
@@ -282,10 +284,10 @@
 					<dd>{m.jobs.paceName.economy}</dd>
 				</div>
 			{/if}
-			{#if live && live.spent > 0}
+			{#if spent > 0}
 				<div>
 					<dt>{m.jobs.cost}</dt>
-					<dd class="mono">{formatUsd(live.spent)}</dd>
+					<dd class="mono">{formatUsd(spent)}</dd>
 				</div>
 			{/if}
 			<div>

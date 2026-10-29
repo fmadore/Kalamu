@@ -508,6 +508,45 @@ async fn a_job_is_scored_against_every_page_reviewed_or_corrected() {
 }
 
 #[tokio::test]
+async fn a_pause_during_a_retry_wait_sends_no_further_attempt() {
+    let f = fixture();
+    let source = f.pdf("lettre.pdf", 1);
+    // Refused once, with half a minute to wait before the next, paid, attempt.
+    f.fake.fail(
+        1,
+        vec![ProviderError::RateLimited {
+            retry_after: Some(Duration::from_secs(30)),
+            message: "slow down".into(),
+        }],
+    );
+    let job = f.new_job(vec![source], &["fake-model"]);
+    let mut events = f.engine.subscribe();
+    f.engine.start(job.id).unwrap_or_else(|e| panic!("{e}"));
+    for _ in 0..250 {
+        if f.fake.calls() == 1 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    f.engine.pause(job.id);
+    let status = loop {
+        match tokio::time::timeout(Duration::from_secs(5), events.recv()).await {
+            Ok(Ok(ProgressEvent::JobFinished { status, .. })) => break status,
+            Ok(Ok(_)) => {}
+            other => panic!("the pause did not end the wait: {other:?}"),
+        }
+    };
+    assert_eq!(status, JobStatus::Paused);
+    assert_eq!(f.fake.calls(), 1, "no attempt after the pause");
+    let pieces = f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(
+        pieces[0].status,
+        PieceStatus::Pending,
+        "to be read on resuming"
+    );
+}
+
+#[tokio::test]
 async fn a_source_changed_since_it_was_added_is_not_read() {
     let f = fixture();
     let source = f.pdf("lettre.pdf", 2);

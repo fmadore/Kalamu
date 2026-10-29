@@ -101,6 +101,38 @@ fn a_renamed_job_keeps_everything_else() -> Result<(), StoreError> {
     Ok(())
 }
 
+/// A job has spent what its own pieces cost over all its runs, not what it reused.
+#[test]
+fn a_job_has_spent_what_its_own_pieces_cost() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    assert_eq!(store.spent(job.id)?, 0.0);
+    for (index, status, cost) in [
+        (0, PieceStatus::Done, Some(0.01)),
+        (1, PieceStatus::Cached, Some(0.02)),
+        (2, PieceStatus::Done, Some(0.04)),
+        (3, PieceStatus::Done, None),
+    ] {
+        store.put_result(&StoredResult {
+            cache_key: format!("key-{index}"),
+            provider: ProviderId::new("gemini"),
+            model: "gemini-3.8-flash".into(),
+            output: ProcessOutput::default(),
+            request: Vec::new(),
+            cost_usd: cost,
+            duration_ms: 10,
+            created_at: Timestamp::now(),
+        })?;
+        store.upsert_piece(&piece(&job, index, status))?;
+    }
+    store.upsert_piece(&piece(&job, 4, PieceStatus::Failed))?;
+    assert!((store.spent(job.id)? - 0.05).abs() < 1e-12);
+    let listed = store.list_jobs()?;
+    assert!(listed[0].cost_usd.is_some_and(|c| (c - 0.05).abs() < 1e-12));
+    Ok(())
+}
+
 #[test]
 fn piece_updates_replace_the_previous_state() -> Result<(), StoreError> {
     let store = SqliteStore::in_memory()?;

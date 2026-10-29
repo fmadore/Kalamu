@@ -319,7 +319,7 @@ export const en = {
 		task: 'Task',
 		models: 'Models',
 		pieces: 'Pieces',
-		cost: 'Spent this run',
+		cost: 'Spent',
 		interruptedNotice:
 			'This job stopped before it finished, when the app closed or a key stopped working. Finished pieces are saved: resuming continues where it left off, and nothing is sent or paid twice.',
 		pausedNotice: 'Paused. Resume to continue where it left off.',
@@ -602,6 +602,11 @@ export const en = {
 		background: 'Keep running in the background',
 		quit: 'Pause and quit',
 		stay: 'Cancel',
+		waiting: (n: number) =>
+			n === 1
+				? 'Waiting for 1 piece already sent. It is paid for, so Kalamu stores it before closing; this takes a few minutes at most.'
+				: `Waiting for ${n} pieces already sent. They are paid for, so Kalamu stores them before closing; this takes a few minutes at most.`,
+		quitNow: 'Quit now',
 		hidden: 'Kalamu is still working. Click its icon in the notification area to open it again.'
 	},
 	tray: {

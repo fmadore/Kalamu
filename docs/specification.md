@@ -165,7 +165,10 @@ paying twice.
   folder), so an interruption loses at most the piece in progress.
 - **Jobs survive closing the app.** On the next launch, the app lists unfinished jobs and offers
   to resume them. Closing the window during a job asks first, and can keep the job running in
-  the background from the notification area.
+  the background from the notification area. Quitting pauses the jobs and waits for the pieces
+  already sent, which are paid for, to come back and be stored, saying how many; "Quit now"
+  stops waiting. A pause or cancel also ends a wait between retries, so no further attempt is
+  sent.
 - **Nothing is processed twice.** Results are cached by a fingerprint of the source file plus
   the model, prompt, analysis fields and settings. Re-running a folder skips what was already
   done with the same settings; changing the prompt or model reprocesses only what it affects.
@@ -173,7 +176,8 @@ paying twice.
   old fingerprint, and the first answer stored for a fingerprint is kept, never replaced.
 - **Batches outlive the app.** In the cheaper mode, a batch is recorded before it is sent;
   the app can be closed while the provider works, and collects the answers when it opens
-  again, without sending anything twice.
+  again, without sending anything twice, nor anything new: the rest of the job waits for the
+  researcher to resume it.
 - **Failures are retried, then reported.** Rate limits, network errors and answers that break
   an analysis's fields are retried with increasing delays. A piece that still fails is marked
   as failed with a readable reason, the rest of the queue continues, and failed pieces can be
@@ -293,7 +297,8 @@ results together.
 
 ## Progress
 
-The user always sees what the app is doing, how far it is, and what it costs: a list of jobs
+The user always sees what the app is doing, how far it is, and what it costs (the job's own
+calls over all its runs, not only the current one): a list of jobs
 with their status, a bar per file and set-up, a live preview of the text as pieces arrive,
 pause and cancel that keep everything finished, progress on the taskbar icon, and a
 notification when a job finishes or needs attention. A job waiting for a batch says how many
