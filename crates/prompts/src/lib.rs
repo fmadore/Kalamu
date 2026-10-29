@@ -69,6 +69,9 @@ pub struct RenderContext {
     pub speakers: Option<u32>,
     /// The researcher's choice for a text extraction's lines; it overrides the preset's own.
     pub line_breaks: Option<LineBreaks>,
+    /// The languages are the ones the model writes its answers in (an analysis, a table of
+    /// contents), not the source's.
+    pub answers: bool,
 }
 
 #[derive(Debug, Error)]
@@ -345,14 +348,19 @@ paragraph, rejoin a word split across two lines and drop its line-break hyphen, 
 compound hyphens (as in arc-en-ciel or peut-être). Separate paragraphs with a blank line. This \
 overrides any instruction above about keeping line breaks or end-of-line hyphens.";
 
+/// `{languages}` for answers left in the source's language. Said outright, because a model
+/// reading English instructions drifts into English on some pages and not on others.
+const ANSWER_LANGUAGE_AUTO: &str = "the language the source is written in (the one most of it \
+is in, when it mixes several), even though these instructions are in English";
+
 /// Replaces `{languages}` and `{speakers}`. When the user chose languages but the template does
 /// not mention them, a short note is appended so the choice still reaches the model; so is the
 /// choice of line breaks.
 pub fn render(template: &str, ctx: &RenderContext) -> String {
-    let languages = if ctx.language_names.is_empty() {
-        "the language(s) of the source, detected automatically".to_string()
-    } else {
-        ctx.language_names.join(", ")
+    let languages = match (ctx.language_names.is_empty(), ctx.answers) {
+        (true, true) => ANSWER_LANGUAGE_AUTO.to_string(),
+        (true, false) => "the language(s) of the source, detected automatically".to_string(),
+        (false, _) => ctx.language_names.join(", "),
     };
     let speakers = ctx
         .speakers
@@ -363,7 +371,14 @@ pub fn render(template: &str, ctx: &RenderContext) -> String {
         .replace("{speakers}", &speakers);
     let explicit = matches!(ctx.languages, LanguageChoice::Explicit(_));
     if explicit && !ctx.language_names.is_empty() && !template.contains("{languages}") {
-        out.push_str(&format!("\n\n## Language\n\nThe source is in {languages}."));
+        out.push_str(&if ctx.answers {
+            format!(
+                "\n\n## Language\n\nWrite your answers in {languages}, whatever the language of \
+                 the source; keep names as the source spells them."
+            )
+        } else {
+            format!("\n\n## Language\n\nThe source is in {languages}.")
+        });
     }
     match ctx.line_breaks {
         Some(LineBreaks::AsOnPage) => out.push_str(AS_ON_PAGE),

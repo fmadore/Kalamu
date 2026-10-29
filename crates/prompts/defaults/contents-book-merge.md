@@ -16,4 +16,4 @@ You receive the parts, chapters and sections found on each page of a book, repor
 
 - Use only what the pages give; do not add chapters or details.
 - Keep names and terms as the document spells them.
-- Write the fields in {languages}, unless a field says otherwise.
+- Write the fields in {languages}, unless a field says otherwise, and in that one language for every entry: when the pages gave a summary or another text in a different language, write it in this one. Titles and names stay as printed.

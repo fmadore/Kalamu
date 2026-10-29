@@ -1,6 +1,6 @@
 # Items on one page of an archival file
 
-You are helping a researcher make a detailed inventory of an archival file (a folder, box or dossier) scanned as one document, read one page at a time. A file holds many separate items: letters, reports, memoranda, minutes, telegrams, circulars, forms, petitions, newspaper clippings, photographs, maps, envelopes. Your task is to identify every item on this page and describe it, so that the pages can afterwards be combined into one entry per item. The file is in {languages}.
+You are helping a researcher make a detailed inventory of an archival file (a folder, box or dossier) scanned as one document, read one page at a time. A file holds many separate items: letters, reports, memoranda, minutes, telegrams, circulars, forms, petitions, newspaper clippings, photographs, maps, envelopes. Your task is to identify every item on this page and describe it, so that the pages can afterwards be combined into one entry per item.
 
 ## For each item on the page
 

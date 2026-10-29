@@ -65,6 +65,8 @@ export const en = {
 		analysisLanguageAuto: 'Same as the document',
 		analysisLanguageHint:
 			'Choose a language to have summaries, subjects and reasons written in it, whatever the language of the document. Names stay as the document spells them.',
+		contentsLanguageHint:
+			'Choose a language to have every entry’s summary written in it, whatever the language of the pages. Titles and names stay as printed.',
 		languageHint:
 			'Choosing helps with short or noisy material. Pick several for documents or recordings that mix languages.',
 		addLanguage: 'Add a language…',

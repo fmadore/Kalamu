@@ -1,11 +1,13 @@
 <script lang="ts">
-	// The review of a table of contents: the scan on its lightbox beside the entries. Clicking an
-	// entry shows its first page; the entries on the page shown are marked. Under the entries,
-	// what the first step read on that page, to check an entry against its source. The entries
-	// can be corrected, added and removed; the model's own stay kept apart.
-	import { onMount } from 'svelte';
+	// The review of a table of contents: the scan on its lightbox beside the entries, the strip of
+	// pages below. Clicking an entry shows its first page; turning the page brings its entries
+	// into view, marked. Under the entries, what the first step read on that page, to check an
+	// entry against its source. The entries can be corrected, added and removed; the model's own
+	// stay kept apart.
+	import { onMount, tick } from 'svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
+	import PageStrip from './PageStrip.svelte';
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import type { Job } from '#lib/bindings/Job.js';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
@@ -80,10 +82,48 @@
 		const first = pagesOf(valueText(entry, PAGES))[0];
 		if (first === undefined) return;
 		const index = pageViews.findIndex((v) => v.piece.kind === 'page' && v.piece.number === first);
-		if (index >= 0) page = index;
+		if (index >= 0 && index !== page) {
+			// The entry clicked is already in view: the list stays where it is.
+			keepList = true;
+			page = index;
+		}
 	}
 
 	const onPage = (entry: FieldAnswer[]) => pagesOf(valueText(entry, PAGES)).includes(pageNumber);
+
+	let list = $state<HTMLElement | null>(null);
+	/** Set when the page changes from an entry, which needs no scrolling to. */
+	let keepList = false;
+
+	// A new page brings its first entry to the top of the list.
+	$effect(() => {
+		const here = entries.findIndex(onPage);
+		if (keepList) {
+			keepList = false;
+			return;
+		}
+		if (here < 0 || !list) return;
+		void tick().then(() => {
+			const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+			list?.children[here]?.scrollIntoView({
+				block: 'start',
+				behavior: still ? 'auto' : 'smooth'
+			});
+		});
+	});
+
+	const stripItems = $derived(
+		pageViews.map((v, i) => {
+			const number = v.piece.kind === 'page' ? v.piece.number : i + 1;
+			const half = v.piece.kind === 'page' && v.piece.half ? v.piece.half : null;
+			return {
+				index: v.index,
+				label: m.review.page(half ? `${number} (${half})` : String(number)),
+				number: `${number}${half ? half[0] : ''}`,
+				done: false
+			};
+		})
+	);
 
 	function startEditing() {
 		editing = entries.map((e) => toDraft(fields, e));
@@ -271,7 +311,7 @@
 				{:else if !combined || entries.length === 0}
 					<p class="muted">{m.review.notCombined}</p>
 				{:else}
-					<ol class="entries">
+					<ol class="entries" bind:this={list}>
 						{#each entries as entry, i (i)}
 							<li class:here={onPage(entry)}>
 								<button class="entry" onclick={() => showEntry(entry)}>
@@ -320,6 +360,20 @@
 			</div>
 		</section>
 	</div>
+
+	{#if pageViews.length > 1}
+		<PageStrip
+			{jobId}
+			{sourceId}
+			paged
+			current={shownPage?.index ?? -1}
+			items={stripItems}
+			onselect={(index) => {
+				const i = pageViews.findIndex((v) => v.index === index);
+				if (i >= 0) page = i;
+			}}
+		/>
+	{/if}
 </div>
 
 <style>
@@ -500,6 +554,7 @@
 		padding: var(--space-3) var(--space-3) var(--space-3) var(--space-2);
 		border-bottom: 1px solid var(--line-soft);
 		border-radius: var(--radius-control);
+		scroll-margin-top: var(--space-3);
 	}
 	.entries li::marker {
 		font-family: var(--font-mono);

@@ -66,6 +66,15 @@ export function requestTask(task: Task): Task {
 	return task === 'contents' || task === 'text_correction' ? 'analysis' : task;
 }
 
+/**
+ * Whether the job's language is the language the model answers in, one only, rather than the
+ * source's: an analysis's fields and a table of contents' entries are written by the model, an
+ * extraction, a transcription or a correction keep the source's words.
+ */
+export function answersInLanguage(task: Task): boolean {
+	return task === 'analysis' || task === 'contents';
+}
+
 /** Whether a model reads what a task sends it: pages for a table of contents, text for a
  * correction (`Task::reads` in Rust). */
 function readsInput(task: Task, inputs: string[]): boolean {

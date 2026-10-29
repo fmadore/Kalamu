@@ -582,7 +582,10 @@
 		border-radius: 3px;
 		background: var(--ok);
 	}
+	/* Positioned, so what is placed absolutely inside a screen (the links' screen-reader text)
+	   scrolls with it instead of stretching the window below the shell. */
 	main {
+		position: relative;
 		overflow: auto;
 		min-width: 0;
 		background: var(--surface-0);

@@ -8,7 +8,7 @@ paper, sometimes in OCR output with recognition errors or missing pages.
 
 ## How to read the publication
 
-- Write in {languages}, whatever the language of the publication.
+- Write in {languages}.
 - Report the authors' work, not your view of it: "the author argues", "the study shows". Do not
   judge its quality, and do not add criticism the text does not make.
 - Stay strictly faithful to the text. Add no fact, name, date, place, theory or scholar that it

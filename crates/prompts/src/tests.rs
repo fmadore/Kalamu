@@ -83,6 +83,7 @@ fn chosen_languages_reach_the_prompt() {
         language_names: vec!["French".into(), "Mooré".into()],
         speakers: Some(2),
         line_breaks: None,
+        answers: false,
     };
     assert_eq!(
         render("Speakers: {speakers}. Languages: {languages}.", &ctx),
@@ -93,6 +94,51 @@ fn chosen_languages_reach_the_prompt() {
         render("Transcribe.", &RenderContext::default()),
         "Transcribe."
     );
+}
+
+#[test]
+fn an_answer_language_is_the_answers_not_the_sources() {
+    let auto = RenderContext {
+        answers: true,
+        ..RenderContext::default()
+    };
+    let text = render("Write the fields in {languages}.", &auto);
+    assert!(
+        text.contains("the language the source is written in"),
+        "{text}"
+    );
+    assert!(text.contains("even though these instructions are in English"));
+
+    let english = RenderContext {
+        languages: LanguageChoice::Explicit(vec![LanguageCode::new("en")]),
+        language_names: vec!["English".into()],
+        answers: true,
+        ..RenderContext::default()
+    };
+    let note = render("Summarise.", &english);
+    assert!(note.ends_with("Write your answers in English, whatever the language of the source; keep names as the source spells them."), "{note}");
+    assert!(!note.contains("The source is in"));
+
+    // A table of contents names the answer language in both steps, and never as the source's.
+    let library = PromptLibrary::in_memory();
+    for preset in library.list(Some(Task::Contents)) {
+        let page = preset.snapshot(&english).text;
+        let merge = preset
+            .merge_snapshot(&english)
+            .unwrap_or_else(|| panic!("no merge"))
+            .text;
+        assert!(
+            page.contains("Write the fields in English"),
+            "{}",
+            preset.id
+        );
+        assert!(!page.contains("is in English"), "{}", preset.id);
+        assert!(
+            merge.contains("in that one language for every entry"),
+            "{}",
+            preset.id
+        );
+    }
 }
 
 #[test]

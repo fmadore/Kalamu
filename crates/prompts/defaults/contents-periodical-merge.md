@@ -23,4 +23,4 @@ You receive the articles found on each page of a newspaper or magazine issue, pa
 - A clear continuity of subject on consecutive pages: probably one article, even when the title is not repeated.
 - An explicit note ("continued on page X"): one article.
 - Use only what the pages give; do not add articles or details.
-- Write the fields in {languages}, unless a field says otherwise.
+- Write the fields in {languages}, unless a field says otherwise, and in that one language for every entry: when the pages gave a summary or another text in a different language, write it in this one. Titles and names stay as printed.

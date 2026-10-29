@@ -9,7 +9,7 @@
 	import VideoPane from './VideoPane.svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
-	import PageThumb from './PageThumb.svelte';
+	import PageStrip from './PageStrip.svelte';
 	import SpeakerList from './SpeakerList.svelte';
 	import Splitter from './Splitter.svelte';
 	import { apparatus, lines, numbered, siglum, witnessParts, type Entry } from '#lib/apparatus.js';
@@ -403,9 +403,6 @@
 		}
 	}
 
-	const reviewedCount = $derived(
-		indices.filter((i) => views.some((v) => v.index === i && v.reviewed)).length
-	);
 	const editedSetup = $derived(setups.find((s) => s.id === editing?.setupId));
 
 	onMount(() => {
@@ -828,39 +825,20 @@
 	</div>
 
 	{#if indices.length > 1}
-		<footer class="pages" aria-label={m.review.pages}>
-			<ol class="strip">
-				{#each indices as i (i)}
-					{@const done = views.some((v) => v.index === i && v.reviewed)}
-					<li>
-						<button
-							class="piece"
-							class:paged
-							class:current={i === index}
-							class:done
-							aria-current={i === index ? 'page' : undefined}
-							aria-label={done
-								? m.review.pieceReviewed(pieceLabel(views.find((v) => v.index === i)))
-								: pieceLabel(views.find((v) => v.index === i))}
-							onclick={() => goTo(i)}
-						>
-							{#if paged}<PageThumb {jobId} {sourceId} index={i} />{/if}
-							<span class="number"
-								>{#if done}<Icon name="check" size={12} />{/if}<span class="mono"
-									>{pieceNumber(i)}</span
-								></span
-							>
-						</button>
-					</li>
-				{/each}
-			</ol>
-			<div class="tally">
-				<span>{m.review.reviewedOf(reviewedCount, indices.length)}</span>
-				<span class="tally-bar" aria-hidden="true"
-					><i style:width="{(100 * reviewedCount) / Math.max(indices.length, 1)}%"></i></span
-				>
-			</div>
-		</footer>
+		<PageStrip
+			{jobId}
+			{sourceId}
+			{paged}
+			tally
+			current={index}
+			items={indices.map((i) => ({
+				index: i,
+				label: pieceLabel(views.find((v) => v.index === i)),
+				number: pieceNumber(i),
+				done: views.some((v) => v.index === i && v.reviewed)
+			}))}
+			onselect={goTo}
+		/>
 	{/if}
 </div>
 
@@ -1466,95 +1444,6 @@
 		gap: var(--space-2);
 		margin-top: var(--space-3);
 	}
-	/* The pages of the source, each with its review state. */
-	.pages {
-		display: flex;
-		align-items: center;
-		gap: var(--space-5);
-		padding: var(--space-2) var(--space-4);
-		border-top: 1px solid var(--line);
-		background: var(--surface-1);
-	}
-	.strip {
-		flex: 1;
-		min-width: 0;
-		list-style: none;
-		margin: 0;
-		padding: 2px;
-		display: flex;
-		gap: var(--space-1);
-		overflow-x: auto;
-	}
-	.piece {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 3px;
-		min-width: 2.25rem;
-		height: 2rem;
-		padding: 0 var(--space-2);
-		border: 1px solid var(--line);
-		border-radius: 6px;
-		background: var(--surface-2);
-		color: var(--text-secondary);
-		font-size: var(--type-xs);
-		cursor: pointer;
-	}
-	.piece:hover {
-		border-color: var(--line-hover);
-	}
-	.piece.done {
-		color: var(--ok-text);
-	}
-	.piece.current {
-		border-color: var(--text-bright);
-		box-shadow: inset 0 0 0 1px var(--text-bright);
-		color: var(--text-bright);
-	}
-	.number {
-		display: inline-flex;
-		align-items: center;
-		gap: 3px;
-	}
-	/* A scan's pages: the page small, its number below; the ring marks the one open. */
-	.piece.paged {
-		flex-direction: column;
-		gap: 3px;
-		height: auto;
-		min-width: 0;
-		padding: 4px 6px 2px;
-		border-color: transparent;
-		background: transparent;
-	}
-	.piece.paged:hover {
-		border-color: var(--line-hover);
-	}
-	.piece.paged.current {
-		border-color: var(--text-bright);
-		box-shadow: inset 0 0 0 1px var(--text-bright);
-		background: var(--surface-2);
-	}
-	.tally {
-		flex: none;
-		display: grid;
-		gap: var(--space-1);
-		min-width: 12rem;
-		font-size: var(--type-xs);
-		font-weight: 500;
-		color: var(--text-bright);
-	}
-	.tally-bar {
-		display: block;
-		height: 4px;
-		border-radius: 2px;
-		background: var(--line);
-		overflow: hidden;
-	}
-	.tally-bar i {
-		display: block;
-		height: 100%;
-		background: var(--ok);
-	}
 	/* A narrow window: the panes stack, at fixed shares, with no handles between them. */
 	@media (max-width: 1000px) {
 		.work {
@@ -1579,9 +1468,6 @@
 	@media (max-width: 820px) {
 		.page {
 			padding: var(--space-4) var(--space-4) var(--space-6) var(--space-2);
-		}
-		.tally {
-			display: none;
 		}
 	}
 </style>

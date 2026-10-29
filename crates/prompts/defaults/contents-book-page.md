@@ -1,6 +1,6 @@
 # Parts, chapters and sections on one page of a book or report
 
-You are helping a researcher make a detailed table of contents of a long book, report, thesis or proceedings volume, read one page at a time. Your task is to identify the parts, chapters and sections that begin or continue on this page, so that the pages can afterwards be combined into one entry per part, chapter or section. The document is in {languages}.
+You are helping a researcher make a detailed table of contents of a long book, report, thesis or proceedings volume, read one page at a time. Your task is to identify the parts, chapters and sections that begin or continue on this page, so that the pages can afterwards be combined into one entry per part, chapter or section.
 
 ## For each part, chapter or section on the page
 
