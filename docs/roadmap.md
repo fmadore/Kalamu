@@ -6,8 +6,9 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (29 October 2026)
 
-Early development; [v0.3.0](https://github.com/fmadore/Kalamu/releases/tag/v0.3.0), the first under the name Kalamu, is
-the latest test build, for Windows on x64 and ARM64, with FFmpeg bundled. Everything below is tested
+Early development; [v0.4.0](https://github.com/fmadore/Kalamu/releases/tag/v0.4.0), with
+detailed tables of contents and the correction of existing text, is the latest test build, for
+Windows on x64 and ARM64, with FFmpeg bundled. Everything below is tested
 against recorded provider responses. Text extraction, transcription and analyses have also run
 against the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`,
 see [development.md](development.md)); Gemini has not yet, for want of credit on the account.
