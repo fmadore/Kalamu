@@ -324,6 +324,27 @@ impl Engine {
     /// Starts or resumes a job in the background. Progress arrives through [`Engine::subscribe`].
     /// Call it from within the Tokio runtime, which runs the job.
     pub fn start(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
+        self.launch(id, |engine, control| async move {
+            engine.run(id, control).await
+        })
+    }
+
+    /// Collects the answers of a job's batches that the provider still holds, and writes the
+    /// documents they complete, without sending anything: at launch, a job paused or cut short
+    /// by the last close waits for the researcher for the rest.
+    pub fn collect_waiting(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
+        self.launch(id, |engine, control| async move {
+            engine.collect_batches(id, control).await
+        })
+    }
+
+    /// Runs `work` for a job in the background, as the job's one run at a time, and records
+    /// the status it ends with.
+    fn launch<F, Fut>(self: &Arc<Self>, id: JobId, work: F) -> Result<(), EngineError>
+    where
+        F: FnOnce(Arc<Self>, Arc<Mutex<Control>>) -> Fut,
+        Fut: std::future::Future<Output = Result<JobStatus, EngineError>> + Send + 'static,
+    {
         let control = Arc::new(Mutex::new(Control::default()));
         {
             let mut running = self.running.lock().unwrap_or_else(|p| p.into_inner());
@@ -333,8 +354,9 @@ impl Engine {
             running.insert(id, control.clone());
         }
         let engine = self.clone();
+        let work = work(self.clone(), control);
         tokio::spawn(async move {
-            let status = engine.run(id, control).await;
+            let status = work.await;
             let status = status.unwrap_or_else(|e| {
                 tracing::error!(job = %id, error = %e, "job stopped");
                 JobStatus::Interrupted

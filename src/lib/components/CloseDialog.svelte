@@ -5,9 +5,21 @@
 
 	const m = messages();
 	let quitting = $state(false);
+	/** Pieces sent and not yet back, which quitting waits for: they are paid for. */
+	const inFlight = $derived(
+		Object.values(app.live).reduce(
+			(n, live) => n + Object.values(live.pieces).filter((p) => p.status === 'running').length,
+			0
+		)
+	);
 
 	async function quit() {
 		quitting = true;
+		await api.quitApp();
+	}
+
+	/** Asked again while it waits, the app quits at once. */
+	async function quitNow() {
 		await api.quitApp();
 	}
 
@@ -26,13 +38,17 @@
 		aria-describedby="close-body"
 	>
 		<h2 id="close-title">{m.close.title}</h2>
-		<p id="close-body">{m.close.body}</p>
+		<p id="close-body" aria-live="polite">
+			{quitting && inFlight > 0 ? m.close.waiting(inFlight) : m.close.body}
+		</p>
 		<div class="actions">
-			<button class="btn" onclick={() => (app.closeRequested = false)}>{m.close.stay}</button>
-			<button class="btn" disabled={quitting} onclick={quit}>{m.close.quit}</button>
-			<button class="btn primary" disabled={quitting} onclick={background}>
-				{m.close.background}
-			</button>
+			{#if quitting}
+				<button class="btn" onclick={quitNow}>{m.close.quitNow}</button>
+			{:else}
+				<button class="btn" onclick={() => (app.closeRequested = false)}>{m.close.stay}</button>
+				<button class="btn" onclick={quit}>{m.close.quit}</button>
+				<button class="btn primary" onclick={background}>{m.close.background}</button>
+			{/if}
 		</div>
 	</div>
 </div>

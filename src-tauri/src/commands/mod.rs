@@ -44,6 +44,8 @@ pub struct AppState {
     pub preview: Mutex<Option<(SourceId, Arc<OpenSource>)>>,
     /// Saved job settings; the engine does not need them.
     pub pipelines: Mutex<kalamu_prompts::PipelineLibrary>,
+    /// Set once quitting has begun: asked to quit again, the app stops waiting.
+    pub quitting: std::sync::atomic::AtomicBool,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

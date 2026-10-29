@@ -11,4 +11,9 @@ export type JobSummary = { id: JobId, name: string, task: Task, status: JobStatu
 /**
  * Finished pieces whose answer stopped at the model's output limit.
  */
-pieces_truncated: number, };
+pieces_truncated: number, 
+/**
+ * What the job's own calls cost over all its runs, in US dollars; `None` before any
+ * priced answer.
+ */
+cost_usd: number | null, };

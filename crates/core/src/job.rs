@@ -162,4 +162,8 @@ pub struct JobSummary {
     /// Finished pieces whose answer stopped at the model's output limit.
     #[serde(default)]
     pub pieces_truncated: u32,
+    /// What the job's own calls cost over all its runs, in US dollars; `None` before any
+    /// priced answer.
+    #[serde(default)]
+    pub cost_usd: Option<f64>,
 }

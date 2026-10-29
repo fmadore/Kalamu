@@ -120,7 +120,15 @@ impl Engine {
         let mut failed = false;
         // A piece stopped part-way is pending again; the job must not read as finished.
         let mut interrupted = false;
-        let spent = Arc::new(Mutex::new(0.0f64));
+        // The cost shown is the job's, over all its runs, not only this one's.
+        let earlier = self.store.spent(job_id)?;
+        if earlier > 0.0 {
+            self.emit(ProgressEvent::CostUpdated {
+                job_id,
+                spent_usd: earlier,
+            });
+        }
+        let spent = Arc::new(Mutex::new(earlier));
         for source in &job.sources {
             if stop_requested(&control).is_some() {
                 break;
@@ -290,6 +298,7 @@ impl Engine {
             let mut in_flight = FuturesUnordered::new();
             let mut queue = work.into_iter();
             let mut stopped = false;
+            let mut engine_error: Option<EngineError> = None;
             loop {
                 while !stopped && in_flight.len() < self.config.concurrency.max(1) {
                     if stop_requested(&control).is_some() {
@@ -335,8 +344,18 @@ impl Engine {
                         stopped = true;
                         failed = true;
                     }
-                    Ok(Err(e)) => return Err(e),
+                    // The calls already started finish and are stored before the error is
+                    // reported: returning at once would leave them running unwatched, and an
+                    // immediate resume would send them again.
+                    Ok(Err(e)) => {
+                        stop.stop();
+                        stopped = true;
+                        engine_error.get_or_insert(e);
+                    }
                 }
+            }
+            if let Some(e) = engine_error {
+                return Err(e);
             }
 
             // A table of contents: combine the pages of each set-up that read them all.
@@ -580,7 +599,16 @@ impl Engine {
                     };
                     tracing::info!(piece = state.index, ?delay, error = %err, "retrying");
                     last_error = Some(err);
-                    tokio::time::sleep(delay).await;
+                    // Paused or cancelled meanwhile: no further attempt, which would be paid
+                    // for; the piece waits for the job to resume.
+                    if wait_unless_stopped(delay, stop).await {
+                        state.status = PieceStatus::Pending;
+                        state.error = None;
+                        state.updated_at = Timestamp::now();
+                        self.store.upsert_piece(&state)?;
+                        update(self, &state, None);
+                        return Ok(Outcome::Interrupted);
+                    }
                 }
                 Err(err) => {
                     last_error = Some(err);
@@ -636,6 +664,18 @@ pub(crate) fn stop_requested(control: &Mutex<Control>) -> Option<StopKind> {
     } else {
         None
     }
+}
+
+/// Waits `delay`, ending early if the job is paused or cancelled; true when it was.
+async fn wait_unless_stopped(delay: Duration, stop: &StopSignal) -> bool {
+    let step = Duration::from_millis(100);
+    let mut left = delay;
+    while !left.is_zero() && !stop.is_stopped() {
+        let nap = left.min(step);
+        tokio::time::sleep(nap).await;
+        left -= nap;
+    }
+    stop.is_stopped()
 }
 
 /// `base × 2^attempt`, plus up to two seconds spread by piece so parallel retries do not land
