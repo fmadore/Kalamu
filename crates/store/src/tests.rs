@@ -1,6 +1,6 @@
 use kalamu_core::{
     BatchItem, BatchPhase, FieldAnswer, FieldValue, InputKind, JobSettings, OutputSettings,
-    ProcessOutput, PromptSnapshot, Setup, SetupOptions, SourceFile, Task,
+    ProcessOutput, PromptSnapshot, RequestSetting, Setup, SetupOptions, SourceFile, Task,
 };
 
 use super::*;
@@ -140,6 +140,10 @@ fn results_outlive_their_job() -> Result<(), StoreError> {
             text: "Bamako, le 3 mai 1957".into(),
             ..ProcessOutput::default()
         },
+        request: vec![RequestSetting::new(
+            "generationConfig.thinkingConfig.thinkingLevel",
+            "low",
+        )],
         cost_usd: Some(0.001),
         duration_ms: 1200,
         created_at: Timestamp::now(),
@@ -152,6 +156,30 @@ fn results_outlive_their_job() -> Result<(), StoreError> {
         Some(result.clone())
     );
     assert_eq!(store.cached_result(&CacheKey("other".into()))?, None);
+    Ok(())
+}
+
+/// A result stored before request settings were kept reads back with none, not as corrupt.
+#[test]
+fn older_results_have_no_request_settings() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let output = to_json(&ProcessOutput {
+        text: "Ségou".into(),
+        ..ProcessOutput::default()
+    })?;
+    store
+        .conn()
+        .execute(
+            "INSERT INTO results (cache_key, provider, model, output, duration_ms, created_at)
+             VALUES ('old', 'claude', 'claude-sonnet-5-5', ?1, 10, 0)",
+            [output],
+        )
+        .map_err(db)?;
+    let result = store
+        .cached_result(&CacheKey("old".into()))?
+        .ok_or(StoreError::NotFound)?;
+    assert_eq!(result.output.text, "Ségou");
+    assert!(result.request.is_empty());
     Ok(())
 }
 
@@ -225,6 +253,7 @@ fn batches_are_kept_with_their_job_and_survive_startup() -> Result<(), StoreErro
             source_id: job.sources[0].id,
             index: 0,
         }],
+        request: vec![RequestSetting::new("max_tokens", 32000)],
         submitted_at: Timestamp::now(),
         updated_at: Timestamp::now(),
     };

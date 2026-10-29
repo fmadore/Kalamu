@@ -19,6 +19,8 @@ struct Batchy {
     working_polls: AtomicUsize,
     expire: AtomicBool,
     cancelled: Mutex<Vec<String>>,
+    /// The effort its requests carry, which an update of the app may change mid-batch.
+    effort: Mutex<&'static str>,
 }
 
 impl Batchy {
@@ -45,6 +47,11 @@ impl Provider for Batchy {
 
     fn accepted_inputs(&self, _task: Task) -> &'static [&'static str] {
         &["application/pdf"]
+    }
+
+    fn request_settings(&self, _task: Task, _model: &str) -> Vec<kalamu_core::RequestSetting> {
+        let effort = *self.effort.lock().unwrap_or_else(|p| p.into_inner());
+        vec![kalamu_core::RequestSetting::new("reasoning_effort", effort)]
     }
 
     async fn process(
@@ -296,6 +303,7 @@ async fn a_fast_job_calls_one_by_one_even_where_batches_exist() {
 async fn closing_the_app_mid_batch_collects_the_answers_on_the_next_launch() {
     let e = economy();
     e.batchy.working_polls.store(usize::MAX, Ordering::SeqCst);
+    *e.batchy.effort.lock().unwrap_or_else(|p| p.into_inner()) = "low";
     let job = e.job(3, Pace::Economy);
     let events = e.start_until_waiting(job.id, 2).await;
     // The provider holds the batches while the app is closed: the job is stopped as a pause
@@ -327,8 +335,10 @@ async fn closing_the_app_mid_batch_collects_the_answers_on_the_next_launch() {
         .put_batch(&orphan)
         .unwrap_or_else(|e| panic!("{e}"));
 
-    // The next launch: a new engine on the same database and the same provider account.
+    // The next launch, by an updated app that sends another effort: a new engine on the same
+    // database and the same provider account.
     e.batchy.working_polls.store(0, Ordering::SeqCst);
+    *e.batchy.effort.lock().unwrap_or_else(|p| p.into_inner()) = "high";
     let relaunched = engine(e.f.store.clone(), e.batchy.clone());
     relaunched.recover().unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(
@@ -353,6 +363,27 @@ async fn closing_the_app_mid_batch_collects_the_answers_on_the_next_launch() {
     assert_eq!(e.batchy.pages_sent(), vec![1, 2, 3, 3]);
     let pieces = e.f.store.pieces(job.id).unwrap_or_default();
     assert_eq!(count(&pieces, PieceStatus::Done), 3);
+
+    // Each result keeps the effort it was sent with: pages 1 and 2 before the update, page 3,
+    // sent again, after it.
+    let mut efforts: Vec<(u32, String)> = pieces
+        .iter()
+        .map(|p| {
+            let key = CacheKey(p.cache_key.clone().unwrap_or_default());
+            let result =
+                e.f.store
+                    .cached_result(&key)
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| panic!("no result for piece {}", p.index));
+            (p.index, result.request[0].value.clone())
+        })
+        .collect();
+    efforts.sort();
+    assert_eq!(
+        efforts,
+        vec![(0, "low".into()), (1, "low".into()), (2, "high".into())]
+    );
 }
 
 #[tokio::test]

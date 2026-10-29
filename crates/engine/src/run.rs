@@ -524,6 +524,7 @@ impl Engine {
                         provider: step.provider.clone(),
                         model: step.model.to_string(),
                         output,
+                        request: provider.request_settings(job.task, step.model),
                         cost_usd: cost,
                         duration_ms: started.elapsed().as_millis() as u64,
                         created_at: Timestamp::now(),

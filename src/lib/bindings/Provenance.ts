@@ -6,6 +6,7 @@ import type { ProvenanceMerge } from "./ProvenanceMerge";
 import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProvenanceSource } from "./ProvenanceSource";
 import type { ProviderId } from "./ProviderId";
+import type { RequestSetting } from "./RequestSetting";
 import type { SetupOptions } from "./SetupOptions";
 import type { Task } from "./Task";
 import type { Timestamp } from "./Timestamp";
@@ -30,7 +31,13 @@ engine: string, provider: ProviderId, model: string,
 /**
  * The versions the provider reported, when they differ from `model`.
  */
-model_versions?: Array<string>, prompt: ProvenancePrompt, 
+model_versions?: Array<string>, 
+/**
+ * What the requests carried besides the prompt (reasoning effort, output limit, media
+ * resolution), as recorded with each piece's result. A name listed twice means pieces were
+ * read with different values; results stored before these were kept add nothing.
+ */
+request?: Array<RequestSetting>, prompt: ProvenancePrompt, 
 /**
  * For a table of contents, the model and prompt that combined the pages' readings; the
  * fields above are those that read each page.

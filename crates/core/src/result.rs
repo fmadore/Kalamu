@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{FieldAnswer, JobId, LanguageCode, ProviderId, SetupId, SourceId, Timestamp};
+use crate::{
+    FieldAnswer, JobId, LanguageCode, ProviderId, RequestSetting, SetupId, SourceId, Timestamp,
+};
 
 /// One half of an open double-page spread, as seen on screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
@@ -183,6 +185,11 @@ pub struct StoredResult {
     pub provider: ProviderId,
     pub model: String,
     pub output: ProcessOutput,
+    /// What the request carried besides the prompt (reasoning effort, output limit…), as the
+    /// provider set it when the piece was sent, so a later version that changes it never
+    /// rewrites this result's record. Empty for results stored before it was kept.
+    #[serde(default)]
+    pub request: Vec<RequestSetting>,
     pub cost_usd: Option<f64>,
     #[ts(type = "number")]
     pub duration_ms: u64,
