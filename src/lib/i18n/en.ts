@@ -603,7 +603,8 @@ export const en = {
 		loading: 'Loading…',
 		preview: 'preview',
 		retiring: 'retiring',
-		opensInBrowser: ' (opens in your browser)'
+		opensInBrowser: ' (opens in your browser)',
+		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`
 	},
 	error: {
 		'job.not_found': 'This job no longer exists.',

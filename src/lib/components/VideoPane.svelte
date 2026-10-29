@@ -8,7 +8,7 @@
 	import TranscriptLines from './TranscriptLines.svelte';
 	import type { Segment } from '#lib/bindings/Segment.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { openUrl } from '#lib/tauri.js';
+	import { openLink } from '#lib/state.svelte.js';
 	import { EMBED_ORIGIN, embedUrl, playerCommand, playerNews, videoAt } from '#lib/youtube.js';
 
 	let { url, title, segments }: { url: string; title: string | null; segments: Segment[] } =
@@ -69,7 +69,7 @@
 	function jump(segment: Segment) {
 		const ms = Number(segment.start_ms);
 		if (blocked) {
-			void openUrl(videoAt(url, ms));
+			void openLink(videoAt(url, ms));
 			return;
 		}
 		now = ms / 1000;
@@ -91,7 +91,7 @@
 				{#if blocked}
 					<div class="card">
 						<p>{m.review.videoBlocked}</p>
-						<button class="btn on-stage" onclick={() => openUrl(videoAt(url, now * 1000))}
+						<button class="btn on-stage" onclick={() => openLink(videoAt(url, now * 1000))}
 							>{m.review.openVideo}</button
 						>
 					</div>
@@ -119,7 +119,7 @@
 		<div class="under">
 			<span class="muted small">{blocked ? m.review.videoHintOpen : m.review.videoHint}</span>
 			{#if !blocked}
-				<button class="btn sm ghost" onclick={() => openUrl(videoAt(url, now * 1000))}
+				<button class="btn sm ghost" onclick={() => openLink(videoAt(url, now * 1000))}
 					>{m.review.openVideo}</button
 				>
 			{/if}

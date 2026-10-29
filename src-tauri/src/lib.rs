@@ -316,7 +316,7 @@ pub fn run() {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::command_names::COMMANDS;
-    use super::{DATA_FOLDER, LEGACY_IDENTIFIER, move_legacy_data};
+    use super::{Catalog, DATA_FOLDER, LEGACY_IDENTIFIER, move_legacy_data};
 
     /// The folder moved into before Tauri starts must be the one Tauri then opens.
     #[test]
@@ -371,5 +371,28 @@ mod tests {
             COMMANDS.len(),
             "generate_handler! has unlisted commands"
         );
+    }
+
+    /// The opener opens only the addresses its permission lists, and `opener:allow-open-url`
+    /// alone lists none: every link in the built app did nothing. The app opens only https
+    /// pages (videos, where keys are made, credits, support).
+    #[test]
+    fn web_pages_are_allowed_to_open() {
+        let capability: serde_json::Value =
+            serde_json::from_str(include_str!("../capabilities/main.json")).unwrap();
+        let allowed: Vec<&str> = capability["permissions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|p| p["identifier"] == "opener:allow-open-url")
+            .flat_map(|p| p["allow"].as_array().into_iter().flatten())
+            .filter_map(|entry| entry["url"].as_str())
+            .collect();
+        assert_eq!(allowed, ["https://*"]);
+        // The addresses that come from data rather than code.
+        for provider in Catalog::bundled().providers {
+            let url = &provider.key_url;
+            assert!(url.is_empty() || url.starts_with("https://"), "{url}");
+        }
     }
 }

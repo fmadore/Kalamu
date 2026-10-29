@@ -75,6 +75,32 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Refactor the review**: extract the frame shared by the transcription and analysis reviews,
   and split New job into smaller components (see the
   [25 October checkpoint](decisions/2026-10-25-analyses-review-and-pipelines.md)).
+- **The settings each request carries, in provenance**: `provenance.json` records what the
+  provider sends besides the prompt (reasoning effort, output limit, media resolution), for the
+  step that reads and the step that combines, as a pipeline's record already does. Saved when
+  the job runs, so an update that changes them never rewrites an older result's record; a
+  prerequisite for letting researchers choose the effort.
+- **Error rates after review, for any job**: character and word error rates against the
+  reviewed pages for a job with one set-up too, not only in comparison mode, shown per document
+  and for the job. A page marked as reviewed without corrections counts as a reference (today
+  only corrected pages do, which overstates errors), and the rates are taken over all the
+  characters or words rather than averaged by page. Said in plain words ("about one character
+  in 70 wrong"), with the caveat that the reference is the researcher's correction of the
+  model's own text, so missed errors do not count.
+- **Search in the review**, built with the refactor: the whole document's text, corrections
+  included, searched across its pages or a recording's lines; the hits listed by page or time,
+  a click going there with the words highlighted (and a recording playing from there); in a
+  table of contents' review, the entries filtered.
+- **A home for jobs**: a page listing every job with its task, models, sources, date, status,
+  review progress and cost; search by name, file name and tag; sorting and filters by task,
+  model, pipeline, date and status; tags the researcher gives jobs, a tag's filter serving as
+  a folder. New jobs record the pipeline they were started from. Later, a search through the
+  text of every result.
+- **A glossary** for colleagues new to these tools: a page beside Settings explaining the
+  words the app uses (OCR and HTR, LLM, prompt, pipeline, tokens, reasoning effort, ground
+  truth, character and word error rates, hallucination, provenance, machine-readable), and
+  each export format with what it suits; linked from where those words appear, and written in
+  the translation files like all interface text.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
@@ -93,7 +119,8 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **YouTube**: a live run on long and multilingual videos; long videos in pieces once Gemini's
   clipping of YouTube links covers the sound track again; the cost before the run from a
   `countTokens` call; check the embedded player in the packaged app, whose `tauri.localhost`
-  origin YouTube must accept
+  origin YouTube must accept, and the links that open a video on YouTube, which every build up
+  to 0.4.0 blocked (the opener allowed no address)
   ([decision](decisions/2026-10-27-youtube-links.md)).
 - **Text extraction**: ALTO and PAGE XML where models return coordinates; checks for skewed
   and blurry pages.
