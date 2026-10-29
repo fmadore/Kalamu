@@ -53,7 +53,11 @@ audio and video, then summaries and keywords. Provider documentation was re-read
 - **zip advisories ignored, with reason.** RUSTSEC-2026-0367, -0368 and -0369 affect extracting
   zip archives to disk; docx-rs 0.4.22 (the latest) still needs zip 8, and Scriptorium only
   writes Word files and reads .docx entries into memory. Remove the ignores in
-  `.cargo/audit.toml` when docx-rs moves to zip 9.
+  `.cargo/audit.toml` when docx-rs moves to zip 9. *Added 29 October:* GHSA-m665-v7pm-7grj
+  ("zip cloaking", fixed in zip 9.0.5) is a difference between how `ZipArchive` and
+  `ZipStreamReader` name an entry, harmful when the second extracts an archive to disk;
+  docx-rs uses only `ZipArchive` and `ZipWriter`, and nothing is extracted, so it does not
+  reach Kalamu either. Its RustSec id joins the ignores when it is published.
 
 ## Checkpoint review
 
