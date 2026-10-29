@@ -169,13 +169,17 @@ paying twice.
 - **Nothing is processed twice.** Results are cached by a fingerprint of the source file plus
   the model, prompt, analysis fields and settings. Re-running a folder skips what was already
   done with the same settings; changing the prompt or model reprocesses only what it affects.
+  A file changed on disk since it was added to a job is refused rather than read under its
+  old fingerprint, and the first answer stored for a fingerprint is kept, never replaced.
 - **Batches outlive the app.** In the cheaper mode, a batch is recorded before it is sent;
   the app can be closed while the provider works, and collects the answers when it opens
   again, without sending anything twice.
 - **Failures are retried, then reported.** Rate limits, network errors and answers that break
   an analysis's fields are retried with increasing delays. A piece that still fails is marked
   as failed with a readable reason, the rest of the queue continues, and failed pieces can be
-  retried later on their own.
+  retried later on their own. An answer that stops at the model's length limit is kept but
+  marked as cut off: the job's page counts such pieces, the review warns on each, and
+  `provenance.json` lists them.
 - **Exports come from the cache.** Choosing another output format later regenerates the file
   from stored results, without calling the provider again.
 - **A job's files stay at hand.** Its page lists the files it wrote that are still on disk,

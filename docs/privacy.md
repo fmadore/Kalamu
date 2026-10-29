@@ -52,8 +52,8 @@ Scriptorium, kept it in `%LOCALAPPDATA%\io.github.fmadore.scriptorium`; the firs
 Kalamu moves that folder, and the keys stored under that name in Credential Manager, to the
 new names, on the same computer only:
 
-- **The job database** (`jobs.sqlite`): each job's name, the paths and fingerprints of its
-  files, its settings and progress, the text and answers returned for each piece, the user's
+- **The job database** (`jobs.sqlite`): each job's name, the paths, sizes, modification times
+  and fingerprints of its files, its settings and progress, the text and answers returned for each piece, the user's
   corrections and review marks, and the names given to speakers. Results are kept by a
   fingerprint of the file and settings, so the same work is never paid for twice; deleting a
   job removes the job, its progress and corrections, while the stored results stay until the

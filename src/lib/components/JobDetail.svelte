@@ -244,6 +244,9 @@
 					{#if summary.pieces_failed > 0}<span class="fail"
 							>· {m.jobs.failed(summary.pieces_failed)}</span
 						>{/if}
+					{#if summary.pieces_truncated > 0}<span class="cut" title={m.jobs.truncatedNote}
+							>· {m.jobs.truncated(summary.pieces_truncated)}</span
+						>{/if}
 				</dd>
 			</div>
 			<div class="wide">
@@ -446,6 +449,9 @@
 	.fail,
 	.err {
 		color: var(--danger-text);
+	}
+	.cut {
+		color: var(--warn-text);
 	}
 	.files {
 		display: grid;

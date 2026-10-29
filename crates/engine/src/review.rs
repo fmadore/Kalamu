@@ -41,6 +41,8 @@ pub struct PieceView {
     /// For a correction, the text as it was before: the PDF page's text layer or the text
     /// file's page or passage, which the review compares with the correction.
     pub source_text: Option<String>,
+    /// The model's answer stopped at its output limit: the end of the piece may be missing.
+    pub truncated: bool,
 }
 
 impl Engine {
@@ -87,6 +89,7 @@ impl Engine {
                 Some(r) if diarized => labels(&r.output.text, &r.output.segments),
                 _ => Vec::new(),
             };
+            let truncated = result.as_ref().is_some_and(|r| r.output.truncated);
             out.push(PieceView {
                 setup_id: state.setup_id,
                 source_id,
@@ -122,6 +125,7 @@ impl Engine {
                 speakers,
                 speaker_names,
                 source_text: opened.as_ref().and_then(|o| o.text_of(&state.piece).ok()),
+                truncated,
             });
         }
         out.sort_by_key(|p| (p.index, p.setup_id));

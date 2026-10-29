@@ -175,6 +175,10 @@ pub struct ProcessOutput {
     /// Text blocks and their place on the page, from models that report layout.
     #[serde(default)]
     pub regions: Vec<TextRegion>,
+    /// The answer stopped at the model's output limit: what was read is kept, but the end of
+    /// the piece may be missing.
+    #[serde(default)]
+    pub truncated: bool,
 }
 
 /// A cached result, keyed by [`crate::CacheKey`].

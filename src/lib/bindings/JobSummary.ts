@@ -7,4 +7,8 @@ import type { Timestamp } from "./Timestamp";
 /**
  * A job as listed in the queue and on the resume screen.
  */
-export type JobSummary = { id: JobId, name: string, task: Task, status: JobStatus, created_at: Timestamp, updated_at: Timestamp, source_count: number, setup_count: number, pieces_total: number, pieces_finished: number, pieces_failed: number, };
+export type JobSummary = { id: JobId, name: string, task: Task, status: JobStatus, created_at: Timestamp, updated_at: Timestamp, source_count: number, setup_count: number, pieces_total: number, pieces_finished: number, pieces_failed: number, 
+/**
+ * Finished pieces whose answer stopped at the model's output limit.
+ */
+pieces_truncated: number, };

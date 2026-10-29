@@ -159,4 +159,7 @@ pub struct JobSummary {
     pub pieces_total: u32,
     pub pieces_finished: u32,
     pub pieces_failed: u32,
+    /// Finished pieces whose answer stopped at the model's output limit.
+    #[serde(default)]
+    pub pieces_truncated: u32,
 }

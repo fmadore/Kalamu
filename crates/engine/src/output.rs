@@ -183,7 +183,7 @@ impl Engine {
         let (mut request, mut merge_request) = (Vec::new(), Vec::new());
         let mut detected = BTreeSet::new();
         let mut first_read: Option<Timestamp> = None;
-        let (mut corrected, mut reviewed) = (Vec::new(), Vec::new());
+        let (mut corrected, mut reviewed, mut truncated) = (Vec::new(), Vec::new(), Vec::new());
         for state in &states {
             let Some(key) = &state.cache_key else {
                 continue;
@@ -202,6 +202,9 @@ impl Engine {
             // A table of contents exports its combined entries; its pages count in the usage,
             // the cost and the model versions, as the reading they are.
             let combined = job.task == Task::Contents && state.piece == PieceRef::Whole;
+            if result.output.truncated {
+                truncated.push(state.index + 1);
+            }
             gather(
                 if combined {
                     &mut merge_request
@@ -328,6 +331,7 @@ impl Engine {
             pieces: states.len() as u32,
             corrected,
             reviewed,
+            truncated,
             preprocessing,
             usage,
             cost_usd: cost,

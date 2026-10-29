@@ -48,6 +48,10 @@ pub struct Provenance {
     /// Pages or segments the user marked as reviewed.
     #[serde(default)]
     pub reviewed: Vec<u32>,
+    /// Pages or segments whose answer stopped at the model's output limit, so their end may be
+    /// missing; for a table of contents, the pages read and the combined entries alike.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub truncated: Vec<u32>,
     /// Fixes applied to working copies before processing (`split_spread`, `rotate`…).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub preprocessing: Vec<String>,

@@ -87,6 +87,10 @@
 	const indices = $derived([...new Set(views.map((v) => v.index))].sort((a, b) => a - b));
 	const current = $derived(views.filter((v) => v.index === index));
 	const setups = $derived(job?.setups ?? []);
+	/** The set-ups whose answer for this page stopped at the model's output limit. */
+	const cutOff = $derived(
+		setups.flatMap((s, i) => (current.find((v) => v.setup_id === s.id)?.truncated ? [i] : []))
+	);
 	/** A single model's error rate on this document, once pages are reviewed. */
 	const ownScore = $derived(
 		job && report && setups.length === 1 && report.scores[0]
@@ -614,6 +618,13 @@
 				{:else if lead.status === 'failed'}
 					<p class="error">{lead.error}</p>
 				{:else}
+					{#if cutOff.length > 0}
+						<p class="cut-off" role="note">
+							{#if setups.length > 1}{#each cutOff as i (i)}<i class="siglum">{siglum(i)}</i
+									>{/each}{/if}
+							{m.review.truncated}
+						</p>
+					{/if}
 					<div class="text" lang="">
 						{#each reading as line, li (li)}
 							<div class="line" class:blank={line.number === 0}>
@@ -1433,6 +1444,19 @@
 	.key.hand {
 		height: 2px;
 		background: var(--hand);
+	}
+	/* The model stopped at its length limit: the end of the page may be missing. */
+	.cut-off {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-2);
+		margin: 0 0 var(--space-4);
+		padding: var(--space-2) var(--space-3);
+		border: 1px solid var(--warn-border);
+		border-radius: var(--radius-control);
+		background: var(--warn-wash);
+		color: var(--warn-text);
+		font-size: var(--type-sm);
 	}
 	.editing-of {
 		display: flex;

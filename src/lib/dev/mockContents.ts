@@ -188,7 +188,8 @@ const view = (index: number, piece: PieceView['piece'], fields: FieldAnswer[]): 
 	corrected_fields: null,
 	speakers: [],
 	speaker_names: {},
-	source_text: null
+	source_text: null,
+	truncated: false
 });
 
 export const contentsPieces: PieceView[] = [
@@ -244,5 +245,6 @@ export const correctionPieces: PieceView[] = ocr.map((original, i) => ({
 	setup_id: correctionJob.setups[0].id,
 	source_id: gallica.id,
 	ai_text: corrected[i],
-	source_text: original
+	source_text: original,
+	truncated: false
 }));

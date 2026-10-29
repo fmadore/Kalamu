@@ -85,6 +85,9 @@ CREATE INDEX batches_by_job ON batches(job_id);
     r#"
 ALTER TABLE results ADD COLUMN request TEXT;
 "#,
+    r#"
+ALTER TABLE results ADD COLUMN truncated INTEGER NOT NULL DEFAULT 0;
+"#,
 ];
 
 pub struct SqliteStore {
@@ -194,8 +197,10 @@ impl JobStore for SqliteStore {
                 "SELECT j.data, j.status, j.updated_at,
                         COUNT(p.idx),
                         COALESCE(SUM(p.status IN ('done', 'cached')), 0),
-                        COALESCE(SUM(p.status = 'failed'), 0)
+                        COALESCE(SUM(p.status = 'failed'), 0),
+                        COALESCE(SUM(p.status IN ('done', 'cached') AND r.truncated), 0)
                  FROM jobs j LEFT JOIN pieces p ON p.job_id = j.id
+                 LEFT JOIN results r ON r.cache_key = p.cache_key
                  GROUP BY j.id
                  ORDER BY j.created_at DESC",
             )
@@ -209,12 +214,13 @@ impl JobStore for SqliteStore {
                     row.get::<_, u32>(3)?,
                     row.get::<_, u32>(4)?,
                     row.get::<_, u32>(5)?,
+                    row.get::<_, u32>(6)?,
                 ))
             })
             .map_err(db)?;
         let mut jobs = Vec::new();
         for row in rows {
-            let (data, status, updated_at, total, finished, failed) = row.map_err(db)?;
+            let (data, status, updated_at, total, finished, failed, truncated) = row.map_err(db)?;
             let job: Job = serde_json::from_str(&data).map_err(corrupt)?;
             jobs.push(JobSummary {
                 id: job.id,
@@ -228,6 +234,7 @@ impl JobStore for SqliteStore {
                 pieces_total: total,
                 pieces_finished: finished,
                 pieces_failed: failed,
+                pieces_truncated: truncated,
             });
         }
         Ok(jobs)
@@ -420,10 +427,10 @@ impl JobStore for SqliteStore {
     fn put_result(&self, result: &StoredResult) -> Result<(), StoreError> {
         self.conn()
             .execute(
-                "INSERT OR REPLACE INTO results
+                "INSERT OR IGNORE INTO results
                     (cache_key, provider, model, output, cost_usd, duration_ms, created_at,
-                     request)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                     request, truncated)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
                 params![
                     result.cache_key,
                     result.provider.as_str(),
@@ -433,6 +440,7 @@ impl JobStore for SqliteStore {
                     i64::try_from(result.duration_ms).unwrap_or(i64::MAX),
                     result.created_at.0,
                     to_json(&result.request)?,
+                    result.output.truncated,
                 ],
             )
             .map_err(db)?;

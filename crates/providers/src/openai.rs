@@ -86,11 +86,13 @@ impl OpenAi {
     }
 
     fn parse_extraction(response: &Value) -> Result<ProcessOutput, ProviderError> {
+        let mut truncated = false;
         if response.get("status").and_then(Value::as_str) == Some("incomplete") {
             let reason = response
                 .pointer("/incomplete_details/reason")
                 .and_then(Value::as_str)
                 .unwrap_or("unknown");
+            truncated = reason == "max_output_tokens";
             if reason == "content_filter" {
                 return Err(ProviderError::Blocked(
                     "OpenAI's content filter stopped this page".into(),
@@ -157,6 +159,7 @@ impl OpenAi {
                 .map(str::to_string),
             fields: Vec::new(),
             regions: Vec::new(),
+            truncated,
         })
     }
 
@@ -275,6 +278,7 @@ impl OpenAi {
             model_version: Some(request.model.to_string()),
             fields: Vec::new(),
             regions: Vec::new(),
+            truncated: false,
         })
     }
 }

@@ -25,4 +25,9 @@ fields: Array<FieldAnswer>,
 /**
  * Text blocks and their place on the page, from models that report layout.
  */
-regions: Array<TextRegion>, };
+regions: Array<TextRegion>, 
+/**
+ * The answer stopped at the model's output limit: what was read is kept, but the end of
+ * the piece may be missing.
+ */
+truncated: boolean, };

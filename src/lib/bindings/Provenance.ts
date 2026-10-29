@@ -52,6 +52,11 @@ corrected: Array<number>,
  */
 reviewed: Array<number>, 
 /**
+ * Pages or segments whose answer stopped at the model's output limit, so their end may be
+ * missing; for a table of contents, the pages read and the combined entries alike.
+ */
+truncated?: Array<number>, 
+/**
  * Fixes applied to working copies before processing (`split_spread`, `rotate`…).
  */
 preprocessing?: Array<string>, usage: Usage, cost_usd: number | null, };

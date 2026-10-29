@@ -58,6 +58,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   page corrected or marked as reviewed, summed over all the characters and words, for the job
   and each document on its page and for the document in the review, in plain words
   ([decision](decisions/2026-10-29-error-rates-after-review.md)).
+- **Results that cannot be wrong unnoticed**: an answer cut off at the model's output limit is
+  kept but marked, counted on the job's page, warned about in the review and listed in
+  provenance; a file changed on disk since it was added is refused; the first answer stored
+  for a fingerprint is never replaced
+  ([decision](decisions/2026-10-29-result-integrity.md)).
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
   Mistral at half price, answered within a day and collected after the app was closed; cached
   input billed at its own price; both costs shown before starting
@@ -80,12 +85,9 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 
 ## Next
 
-The [29 October checkpoint](decisions/2026-10-29-checkpoint.md) puts three pieces of work
-before any new feature:
+The [29 October checkpoint](decisions/2026-10-29-checkpoint.md) puts these before any new
+feature (the first, results that could be wrong unnoticed, is done):
 
-- **Results that can be wrong unnoticed**: an answer cut off at the output limit marked as
-  such, warned about and listed in provenance; a source changed on disk since it was added
-  hashed again and refused; a stored answer never replaced by a later one under the same key.
 - **Work lost or paid twice**: quitting waits for calls in flight instead of five seconds;
   retry delays honour pause and cancel; a job with a waiting batch only collects at launch;
   the cost shown covers the whole job, failed but billed answers included. Then a document's

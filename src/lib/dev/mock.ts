@@ -201,7 +201,8 @@ const summaries: JobSummary[] = [
 		setup_count: 2,
 		pieces_total: 6,
 		pieces_finished: 6,
-		pieces_failed: 0
+		pieces_failed: 0,
+		pieces_truncated: 1
 	},
 	{
 		id: '00000000-0000-0000-0000-0000000000j2',
@@ -214,7 +215,8 @@ const summaries: JobSummary[] = [
 		setup_count: 1,
 		pieces_total: 4,
 		pieces_finished: 2,
-		pieces_failed: 0
+		pieces_failed: 0,
+		pieces_truncated: 0
 	}
 ];
 
@@ -244,7 +246,8 @@ const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 		corrected_fields: null,
 		speakers: [],
 		speaker_names: {},
-		source_text: null
+		source_text: null,
+		truncated: s === 0 && index === 2
 	}))
 );
 
@@ -316,7 +319,8 @@ const audioPieces = (): PieceView[] =>
 		})),
 		speakers: ['Speaker 1', 'Speaker 2'],
 		speaker_names: { ...speakerNames },
-		source_text: null
+		source_text: null,
+		truncated: false
 	}));
 
 /** A YouTube video transcribed by Gemini, its times written into the text as Gemini does. */
@@ -478,7 +482,8 @@ const analysisPieces: PieceView[] = analysisSetups.map((s, i) => ({
 	corrected_fields: null,
 	speakers: [],
 	speaker_names: {},
-	source_text: null
+	source_text: null,
+	truncated: false
 }));
 
 /** Saved pipelines, as New job lists them. */
