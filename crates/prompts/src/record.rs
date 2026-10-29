@@ -96,13 +96,20 @@ impl PipelineFile {
         );
         out.push_str("## Task\n\n");
         let _ = writeln!(out, "- Task: {}", task_name(p.task));
+        // An analysis's or a table of contents' language is the one its answers are written in.
+        let answers = matches!(p.task, Task::Analysis | Task::Contents);
         let languages = match &p.settings.languages {
             LanguageChoice::Explicit(_) if !self.language_names.is_empty() => {
                 self.language_names.join(", ")
             }
+            _ if answers => "the document's own".into(),
             _ => "detected automatically".into(),
         };
-        let _ = writeln!(out, "- Languages: {languages}");
+        if answers {
+            let _ = writeln!(out, "- Language of the answers: {languages}");
+        } else {
+            let _ = writeln!(out, "- Languages: {languages}");
+        }
         if matches!(p.task, Task::TextExtraction | Task::TextCorrection) {
             let lines = match p.settings.line_breaks {
                 Some(LineBreaks::AsOnPage) => "kept as on the page",

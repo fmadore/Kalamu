@@ -22,6 +22,7 @@
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import {
 		acceptsPrompt,
+		answersInLanguage,
 		type Draft,
 		FORMATS,
 		inputOf,
@@ -98,6 +99,8 @@
 		task === 'text_extraction' || task === 'text_correction' || task === 'contents'
 	);
 	const linesApply = $derived(task === 'text_extraction' || task === 'text_correction');
+	/** The language chosen is the answers', not the source's. */
+	const answers = $derived(answersInLanguage(task));
 
 	async function loadTask(next: Mode) {
 		mode = next;
@@ -112,8 +115,8 @@
 							? app.settings!.audio_formats
 							: app.settings!.text_formats)
 					].filter((f) => FORMATS[task].includes(f));
-		// An analysis is written in one language.
-		if (task === 'analysis') languages = languages.slice(0, 1);
+		// An analysis or a table of contents is written in one language.
+		if (answersInLanguage(task)) languages = languages.slice(0, 1);
 		// A video has no folder of its own: offer the folder last chosen.
 		const last = app.settings!.last_folder;
 		if (mode === 'youtube' && destination.kind !== 'folder' && last) {
@@ -391,7 +394,7 @@
 
 		<section class="step block" aria-labelledby="lang-title">
 			<h2 id="lang-title">
-				{task === 'analysis' ? m.newJob.analysisLanguageTitle : m.newJob.languageTitle}
+				{answers ? m.newJob.analysisLanguageTitle : m.newJob.languageTitle}
 			</h2>
 			{#if languageIgnored.length === models.length}
 				<p class="hint">{m.newJob.languageIgnoredAll(listNames(languageIgnored))}</p>
@@ -399,7 +402,7 @@
 				<div class="row">
 					<label class="inline"
 						><input type="radio" bind:group={languageMode} value="auto" />
-						{task === 'analysis' ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
+						{answers ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
 					>
 					<label class="inline"
 						><input type="radio" bind:group={languageMode} value="explicit" />
@@ -410,7 +413,7 @@
 					<LanguagePicker
 						bind:selected={languages}
 						offered={offeredLanguages(catalog, models)}
-						single={task === 'analysis'}
+						single={answers}
 						unsupported={(code) => modelsWithout(code, models)}
 					/>
 					{#each unsupportedChosen as [code, names] (code)}
@@ -423,7 +426,11 @@
 					{/if}
 				{/if}
 				<p class="hint">
-					{task === 'analysis' ? m.newJob.analysisLanguageHint : m.newJob.languageHint}
+					{task === 'analysis'
+						? m.newJob.analysisLanguageHint
+						: task === 'contents'
+							? m.newJob.contentsLanguageHint
+							: m.newJob.languageHint}
 				</p>
 				{#if languageIgnored.length > 0}
 					<p class="hint">{m.newJob.languageIgnoredSome(listNames(languageIgnored))}</p>

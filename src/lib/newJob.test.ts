@@ -4,6 +4,7 @@ import type { Catalog } from './bindings/Catalog.js';
 import { en } from './i18n/index.js';
 import {
 	acceptsPrompt,
+	answersInLanguage,
 	inputOf,
 	mergeDefault,
 	mergeModelsFor,
@@ -110,6 +111,13 @@ describe('new job form', () => {
 });
 
 describe('tables of contents and corrections', () => {
+	it('asks for the language of the answers where the model writes them', () => {
+		expect(answersInLanguage('analysis')).toBe(true);
+		expect(answersInLanguage('contents')).toBe(true);
+		expect(answersInLanguage('text_correction')).toBe(false);
+		expect(answersInLanguage('text_extraction')).toBe(false);
+	});
+
 	it('reads pages with a vision model and combines them with any text model', () => {
 		const pages = modelsFor(catalog, 'mistral', 'contents').map((m) => m.id);
 		expect(pages).not.toContain('deepseek-v4-1-flash-1017');

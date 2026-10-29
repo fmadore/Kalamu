@@ -178,6 +178,7 @@ impl Engine {
             line_breaks: settings
                 .line_breaks
                 .filter(|_| matches!(task, Task::TextExtraction | Task::TextCorrection)),
+            answers: matches!(task, Task::Analysis | Task::Contents),
         }
     }
 

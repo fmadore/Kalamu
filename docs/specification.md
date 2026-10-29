@@ -128,8 +128,10 @@ no text layer needs *Extract text* instead.
   audio.
 - **Language choice with auto-detect.** Extraction and transcription list only the languages
   the chosen model supports, with **Auto-detect** as the default; several can be chosen for
-  material that mixes languages (French and Mooré, say). Analyses have an answer language, by
-  default the document's own; names stay as the document spells them.
+  material that mixes languages (French and Mooré, say). Analyses and tables of contents have
+  an answer language instead, by default the document's own and then said outright so that a
+  model reading English instructions does not drift into English; names and titles stay as the
+  document spells them, and a table of contents' entries are combined in one language.
 - **Current models.** The latest models for each task, updated as better ones appear (see
   [Keeping models current](#keeping-models-current)). Very expensive models carry a note that
   they are most likely more than the task needs.
@@ -244,9 +246,10 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   AAC, WAV, Ogg, Opus, FLAC, WebM, MP4); other formats are converted once and the copy kept. When a model labelled speakers, the researcher can give each
   label a name ("Speaker 2" → "Imam Ouédraogo"); names replace the labels in the review and in
   every file, and the model's own output keeps its labels.
-- **Tables of contents**: the scan beside the entries; clicking an entry shows its first page,
-  the entries on the page shown are marked, and what the first step read on that page is shown
-  below. Entries can be corrected, added and removed.
+- **Tables of contents**: the scan beside the entries, with the strip of pages below;
+  clicking an entry shows its first page, turning the page brings its entries into view,
+  marked, and what the first step read on that page is shown below. Entries can be corrected,
+  added and removed.
 - **Corrections of existing text**: the original text is a witness of its own, so every change
   the model made is highlighted and the original reading can be taken back in one click.
 - **Analyses**: the document beside its answers, field by field. In a comparison every value

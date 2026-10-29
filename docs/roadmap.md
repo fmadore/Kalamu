@@ -39,8 +39,10 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   column per field.
 - **Detailed tables of contents** of newspaper and magazine issues, archival files and books:
   each page read by one model, the pages combined by another, of any provider; presets ported
-  from iwac-ai-pipelines' issue index and widened; a review of the entries beside the scan; a
-  diagram in New job ([decision](decisions/2026-10-29-contents-and-correction.md)).
+  from iwac-ai-pipelines' issue index and widened; a review of the entries beside the scan,
+  with the strip of pages and the entries following the page; an answer language, as analyses
+  have; a diagram in New job ([decision](decisions/2026-10-29-contents-and-correction.md),
+  [first test](decisions/2026-10-29-contents-review-and-answer-language.md)).
 - **Correcting existing text**: a PDF's text layer or a text file corrected page by page or in
   passages, with iwac-ai-pipelines' OCR-correction prompt among the presets, and every change
   highlighted against the original in the review.
@@ -97,7 +99,10 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   and blurry pages.
 - **Tables of contents and corrections, live**: a run of each against the live APIs, mixing
   providers (Gemini reading, Mistral combining), and a test of the economy path for a table of
-  contents.
+  contents. The first live run, Claude Sonnet 5.5 on a 12-page issue of *Islam Info*, found
+  articles on two pages only: read the other pages' answers, and try Claude at a higher effort
+  than `low` for reading pages
+  ([decision](decisions/2026-10-29-contents-review-and-answer-language.md)).
 - **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa
   for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`; grouping
   variant spellings of the same name across a job, confirmed by the researcher.

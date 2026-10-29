@@ -20,4 +20,4 @@ You receive the items found on each page of an archival file, page by page, as J
 
 - Use only what the pages give; do not add items or details.
 - Keep names, places, institutions and reference numbers exactly as the pages spell them, with their spelling of the time.
-- Write the fields in {languages}, unless a field says otherwise.
+- Write the fields in {languages}, unless a field says otherwise, and in that one language for every entry: when the pages gave a summary or another text in a different language, write it in this one. Titles and names stay as printed.

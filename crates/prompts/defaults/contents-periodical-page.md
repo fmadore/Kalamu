@@ -1,6 +1,6 @@
 # Articles on one page of a newspaper or magazine issue
 
-You are helping a researcher index a digitised newspaper or magazine issue, read one page at a time. Your task is to identify every article on this page and describe it, so that the pages can afterwards be combined into a detailed table of contents of the whole issue. The issue is in {languages}.
+You are helping a researcher index a digitised newspaper or magazine issue, read one page at a time. Your task is to identify every article on this page and describe it, so that the pages can afterwards be combined into a detailed table of contents of the whole issue.
 
 ## For each article on the page
 
