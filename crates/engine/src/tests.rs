@@ -444,6 +444,66 @@ async fn comparison_jobs_write_one_set_of_files_per_setup_and_score_them() {
 }
 
 #[tokio::test]
+async fn a_job_is_scored_against_every_page_reviewed_or_corrected() {
+    let f = fixture();
+    let (letter, register) = (f.pdf("lettre.pdf", 3), f.pdf("registre.pdf", 1));
+    let job = f.new_job(vec![letter.clone(), register.clone()], &["fake-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let review = |source: &SourceFile, index: u32, text: Option<&str>| {
+        f.engine
+            .save_correction(Correction {
+                job_id: job.id,
+                setup_id: job.setups[0].id,
+                source_id: source.id,
+                index,
+                text: text.map(Into::into),
+                fields: None,
+                reviewed: true,
+                updated_at: Timestamp::now(),
+            })
+            .unwrap_or_else(|e| panic!("{e}"));
+    };
+    let scores = || {
+        f.engine
+            .job_scores(job.id)
+            .unwrap_or_else(|e| panic!("{e}"))
+    };
+    assert_eq!(scores().total[0].cer, None, "nothing reviewed yet");
+    assert!(scores().sources.is_empty());
+
+    // Page 1 checked and found right; page 2 corrected; page 3 left alone.
+    review(&letter, 0, None);
+    review(&letter, 1, Some("fake-model page two"));
+    let s = scores();
+    assert_eq!(s.sources.len(), 1, "only the letter has a reference");
+    let total = &s.total[0];
+    assert_eq!(total.scored_pages, 2);
+    // "2" for "two": three edits, over the 17 and 19 characters of both references, not the
+    // mean of each page's rate.
+    assert!(total.cer.is_some_and(|c| (c - 3.0 / 36.0).abs() < 1e-9));
+    assert!(total.wer.is_some_and(|w| (w - 1.0 / 6.0).abs() < 1e-9));
+
+    // The register's page is reviewed too: the job's rate covers both documents.
+    review(&register, 0, None);
+    let s = scores();
+    assert_eq!(s.sources.len(), 2);
+    assert_eq!(s.total[0].scored_pages, 3);
+    assert!(
+        s.total[0]
+            .cer
+            .is_some_and(|c| (c - 3.0 / 53.0).abs() < 1e-9)
+    );
+    let report = f
+        .engine
+        .compare(job.id, letter.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        report.scores[0].scored_pages, 2,
+        "the review scores it the same"
+    );
+}
+
+#[tokio::test]
 async fn sample_runs_only_the_first_pages() {
     let f = fixture();
     let source = f.pdf("thick.pdf", 10);

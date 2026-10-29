@@ -60,6 +60,7 @@ pub const COMMANDS: &[&str] = &[
     "save_speaker_names",
     "export_source",
     "compare_source",
+    "job_scores",
     "diff_texts",
     "set_taskbar_progress",
     "set_tray_state",

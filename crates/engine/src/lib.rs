@@ -32,7 +32,8 @@ use thiserror::Error;
 use tokio::sync::broadcast;
 
 pub use compare::{
-    ComparisonReport, DiffKind, DiffSpan, PageComparison, SetupScore, diff, error_rate,
+    ComparisonReport, DiffKind, DiffSpan, JobScores, PageComparison, SetupScore, SourceScores,
+    diff, error_rate,
 };
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use review::PieceView;

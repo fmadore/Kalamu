@@ -21,6 +21,7 @@
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatPercent, formatUsd, messages } from '#lib/i18n/index.js';
+	import { describeScore } from '#lib/scores.js';
 	import { api } from '#lib/tauri.js';
 	import { go, toast } from '#lib/state.svelte.js';
 
@@ -86,6 +87,12 @@
 	const indices = $derived([...new Set(views.map((v) => v.index))].sort((a, b) => a - b));
 	const current = $derived(views.filter((v) => v.index === index));
 	const setups = $derived(job?.setups ?? []);
+	/** A single model's error rate on this document, once pages are reviewed. */
+	const ownScore = $derived(
+		job && report && setups.length === 1 && report.scores[0]
+			? describeScore(report.scores[0], job.task, m)
+			: null
+	);
 	/** A YouTube video is transcribed like a recording but watched on YouTube. */
 	const online = $derived(source?.kind === 'youtube');
 	const recording = $derived(source?.kind === 'audio' || source?.kind === 'video' || online);
@@ -323,7 +330,7 @@
 		try {
 			job = await api.getJob(jobId);
 			views = await api.sourcePieces(jobId, sourceId);
-			if (setups.length > 1) report = await api.compareSource(jobId, sourceId);
+			report = await api.compareSource(jobId, sourceId);
 		} catch (e) {
 			error = describeError(e, m);
 		}
@@ -357,7 +364,7 @@
 			});
 			editing = null;
 			views = await api.sourcePieces(jobId, sourceId);
-			if (setups.length > 1) report = await api.compareSource(jobId, sourceId);
+			report = await api.compareSource(jobId, sourceId);
 			toast(m.review.saved);
 		} catch (e) {
 			error = describeError(e, m);
@@ -749,10 +756,12 @@
 
 			<div class="foot">
 				<span class="mono">
-					{#if report}
+					{#if report && setups.length > 1}
 						{m.review.cer}:
 						{#each report.scores as s, i (s.setup_id)}
-							<span class="score"
+							<span
+								class="score"
+								title={s.wer !== null ? `${m.review.wer}: ${formatPercent(s.wer)}` : undefined}
 								>{siglum(i).toUpperCase()}
 								{s.cer !== null ? formatPercent(s.cer) : '–'}</span
 							>
@@ -760,6 +769,8 @@
 						{#if report.scores.some((s) => s.cer !== null)}<span class="hint"
 								>· {m.review.scoredPages(report.scores[0]?.scored_pages ?? 0)}</span
 							>{:else}<span class="hint">· {m.review.noReference}</span>{/if}
+					{:else if ownScore}
+						<span title={m.scores.note}>{ownScore}</span>
 					{:else}
 						{lead?.model_version ?? setups[0]?.model ?? ''}{lead?.cost_usd
 							? ` · ${formatUsd(lead.cost_usd)}`

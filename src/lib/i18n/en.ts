@@ -277,6 +277,18 @@ export const en = {
 		correctionRead: (model: string) => `${model} corrects the machine-reading errors`,
 		correctionCompare: 'Every change shown against the original text, to keep or undo'
 	},
+	scores: {
+		title: 'Errors found in review',
+		rates: (characters: string, words: string) =>
+			`${characters} of characters and ${words} of words wrong`,
+		summary: (rates: string, plain: string, on: string) => `${rates} (${plain}), ${on}`,
+		noErrors: (on: string) => `No errors, ${on}`,
+		oneIn: (n: string) => `about 1 character in ${n}`,
+		many: 'half the characters or more',
+		pages: (n: number) => (n === 1 ? 'on 1 reviewed page' : `on ${n} reviewed pages`),
+		parts: (n: number) => (n === 1 ? 'on 1 reviewed part' : `on ${n} reviewed parts`),
+		note: 'Counted against the pages you corrected or marked as reviewed, so errors you did not catch are not counted.'
+	},
 	jobs: {
 		title: 'Jobs',
 		empty: 'No jobs yet. Start one from New job.',
@@ -361,9 +373,9 @@ export const en = {
 		scores: 'Scores',
 		cer: 'Character error rate',
 		wer: 'Word error rate',
-		scoredPages: (n: number) => (n === 1 ? 'on 1 corrected page' : `on ${n} corrected pages`),
+		scoredPages: (n: number) => (n === 1 ? 'on 1 reviewed page' : `on ${n} reviewed pages`),
 		noReference:
-			'Correct a page to score the models against it. Until then, the view shows where they disagree.',
+			'Correct a page, or mark it as reviewed, to score the models against it. Until then, the view shows where they disagree.',
 		agreement: (pct: string) => `${pct} different`,
 		noPreview: 'No preview for this file type.',
 		notDone: 'Not processed yet.',

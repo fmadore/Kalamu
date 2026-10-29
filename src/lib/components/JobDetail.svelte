@@ -4,9 +4,11 @@
 	import ProgressBar from './ProgressBar.svelte';
 	import { siglum } from '#lib/apparatus.js';
 	import type { Job } from '#lib/bindings/Job.js';
+	import type { JobScores } from '#lib/bindings/JobScores.js';
 	import type { PieceState } from '#lib/bindings/PieceState.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
+	import { describeScore, scoredTask } from '#lib/scores.js';
 	import { api, ask, revealInFolder } from '#lib/tauri.js';
 	import { app, go, liveJob, refreshJobs } from '#lib/state.svelte.js';
 
@@ -20,6 +22,8 @@
 	let written = $state<string[]>([]);
 	/** The name being typed while the job is renamed. */
 	let draftName = $state<string | null>(null);
+	/** Error rates against the pages reviewed so far, for tasks that produce text. */
+	let scores = $state<JobScores | null>(null);
 
 	const summary = $derived(app.jobs.find((j) => j.id === jobId));
 	const live = $derived(app.live[jobId]);
@@ -37,6 +41,25 @@
 		} catch (e) {
 			error = describeError(e, m);
 		}
+		// Scores are an extra: the page stands without them.
+		if (job && scoredTask(job.task)) {
+			scores = await api.jobScores(jobId).catch(() => null);
+		}
+	}
+
+	/** Each set-up's score over the whole job, in a sentence, where pages were reviewed. */
+	const totals = $derived(
+		job && scores
+			? scores.total.map((s) => describeScore(s, job?.task ?? 'text_extraction', m))
+			: []
+	);
+
+	/** One set-up's score on one document, in a sentence. */
+	function documentScore(sourceId: string, setupId: string): string | null {
+		const score = scores?.sources
+			.find((s) => s.source_id === sourceId)
+			?.scores.find((s) => s.setup_id === setupId);
+		return score && job ? describeScore(score, job.task, m) : null;
 	}
 
 	// The written files, read again whenever the job reports new ones.
@@ -235,6 +258,21 @@
 					{/each}
 				</dd>
 			</div>
+			{#if totals.some((t) => t !== null)}
+				<div class="wide">
+					<dt>{m.scores.title}</dt>
+					<dd class="scores">
+						{#each totals as total, i (i)}
+							{#if total}
+								<span
+									>{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>{/if}{total}</span
+								>
+							{/if}
+						{/each}
+						<span class="note">{m.scores.note}</span>
+					</dd>
+				</div>
+			{/if}
 			{#if job.settings.pace === 'economy'}
 				<div>
 					<dt>{m.jobs.pace}</dt>
@@ -276,6 +314,8 @@
 								{#each c.errors.slice(0, 3) as e (e)}
 									<p class="err">{e}</p>
 								{/each}
+								{@const score = documentScore(source.id, setup.id)}
+								{#if score}<p class="doc-score">{score}</p>{/if}
 							{/each}
 						</div>
 						<button
@@ -383,6 +423,25 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-2);
+	}
+	/* Each set-up's error rate as a sentence, then how it was counted. */
+	.scores {
+		display: grid;
+		gap: var(--space-1);
+	}
+	.scores > span {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--space-2);
+	}
+	.scores > .note,
+	.doc-score {
+		font-size: var(--type-xs);
+		font-weight: 400;
+		color: var(--text-muted);
+	}
+	.doc-score {
+		margin: 0;
 	}
 	.fail,
 	.err {

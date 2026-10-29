@@ -560,6 +560,43 @@ function wordDiff(left: string, right: string): { kind: string; text: string }[]
 }
 
 /** The screen to open on, from `?mock&view=…`, for screenshots of each screen. */
+/** Error rates against reviewed pages: the comparison and the interviews have some. */
+function mockScores(jobId: string) {
+	if (jobId === job.id) {
+		return [
+			{
+				setup_id: setupA.id,
+				label: setupA.label,
+				cer: 0.012,
+				wer: 0.04,
+				scored_pages: 1,
+				cost_usd: 0.0036
+			},
+			{
+				setup_id: setupB.id,
+				label: setupB.label,
+				cer: 0.031,
+				wer: 0.09,
+				scored_pages: 1,
+				cost_usd: 0.012
+			}
+		];
+	}
+	if (jobId === audioJob.id) {
+		return [
+			{
+				setup_id: audioSetup.id,
+				label: audioSetup.label,
+				cer: 0.023,
+				wer: 0.081,
+				scored_pages: 2,
+				cost_usd: 0.02
+			}
+		];
+	}
+	return [];
+}
+
 export function mockView(): View | null {
 	switch (new URLSearchParams(location.search).get('view') ?? '') {
 		case 'jobs':
@@ -722,27 +759,15 @@ export function installMock(): void {
 				// A synthetic scan as an image: shown everywhere, headless browsers included.
 				return { mime: 'image/jpeg', data: SAMPLE_SCAN.split(',')[1] ?? '' };
 			case 'compare_source':
+				return { scores: mockScores(String(a.jobId)), pages: [] };
+			case 'job_scores': {
+				const scores = mockScores(String(a.jobId));
+				const scored = a.jobId === job.id ? source : a.jobId === audioJob.id ? recording : null;
 				return {
-					scores: [
-						{
-							setup_id: setupA.id,
-							label: setupA.label,
-							cer: 0.012,
-							wer: 0.04,
-							scored_pages: 1,
-							cost_usd: 0.0036
-						},
-						{
-							setup_id: setupB.id,
-							label: setupB.label,
-							cer: 0.031,
-							wer: 0.09,
-							scored_pages: 1,
-							cost_usd: 0.012
-						}
-					],
-					pages: []
+					total: scores,
+					sources: scored ? [{ source_id: scored.id, scores }] : []
 				};
+			}
 			case 'diff_texts':
 				return wordDiff(String(a.left ?? ''), String(a.right ?? ''));
 			case 'estimate_cost':
