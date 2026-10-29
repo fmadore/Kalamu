@@ -635,6 +635,26 @@ textarea:focus-visible {
 	color: var(--text-bright);
 }
 
+/* The panes of a review, side by side under its masthead: a bar naming what each shows, with
+   its tools, over what scrolls. */
+.pane {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr);
+	grid-auto-rows: auto;
+	min-height: 0;
+	position: relative;
+}
+
+.pane-bar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--space-2) var(--space-3);
+	min-height: 2.75rem;
+	padding: var(--space-1) var(--space-4);
+	border-bottom: 1px solid var(--line-soft);
+}
+
 /* The page below a masthead: one column, with a reading measure for prose. */
 .sheet {
 	padding: var(--space-5) var(--space-6) var(--space-7);

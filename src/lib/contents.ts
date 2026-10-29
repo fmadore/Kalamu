@@ -47,44 +47,6 @@ export function pagesOf(pages: string): number[] {
 	return out;
 }
 
-/** An entry as the editor holds it: one text per field, lists one item per line. */
-export type Draft = Record<string, string | string[]>;
-
-export function toDraft(fields: Field[], entry: FieldAnswer[]): Draft {
-	const draft: Draft = {};
-	for (const f of fields) {
-		const value = entry.find((a) => a.key === f.key)?.value ?? '';
-		const items = Array.isArray(value)
-			? (value as unknown[]).filter((v): v is string => typeof v === 'string')
-			: value
-				? [value]
-				: [];
-		draft[f.key] =
-			f.kind.type === 'list'
-				? items.join('\n')
-				: f.kind.type === 'choices'
-					? items
-					: (items[0] ?? '');
-	}
-	return draft;
-}
-
-export function fromDraft(fields: Field[], draft: Draft): FieldAnswer[] {
-	return fields.map((f) => {
-		const raw = draft[f.key] ?? '';
-		const value =
-			f.kind.type === 'list'
-				? String(raw)
-						.split('\n')
-						.map((l) => l.trim())
-						.filter(Boolean)
-				: f.kind.type === 'choices'
-					? (raw as string[])
-					: String(raw).trim();
-		return { key: f.key, value };
-	});
-}
-
 /** The answers that hold a corrected table of contents. */
 export function asAnswers(entries: FieldAnswer[][]): FieldAnswer[] {
 	return [{ key: ENTRIES, value: entries }];

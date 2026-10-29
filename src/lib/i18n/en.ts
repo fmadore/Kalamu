@@ -348,6 +348,9 @@ export const en = {
 		title: 'Review',
 		back: 'Back to job',
 		page: (label: string) => `Page ${label}`,
+		pageHalf: (n: number, half: 'left' | 'right') =>
+			`Page ${n}, ${half === 'left' ? 'left' : 'right'} half`,
+		pageHalfShort: (n: number, half: 'left' | 'right') => `${n}${half === 'left' ? 'l' : 'r'}`,
 		passage: (n: number) => `Passage ${n}`,
 		segment: (label: string) => `From ${label}`,
 		document: 'Whole document',

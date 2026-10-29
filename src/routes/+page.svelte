@@ -24,6 +24,7 @@
 		refreshOffline,
 		type View
 	} from '#lib/state.svelte.js';
+	import { keep, recall } from '#lib/stored.js';
 
 	const m = messages();
 	let loadError = $state<string | null>(null);
@@ -78,22 +79,8 @@
 	// The job list folds to a rail of icons, leaving the room to the work; remembered on this
 	// computer, and unfolded when storage is unavailable.
 	const SIDEBAR_KEY = 'kalamu.sidebar.collapsed';
-	function storedCollapsed(): boolean {
-		try {
-			return localStorage.getItem(SIDEBAR_KEY) === '1';
-		} catch {
-			return false;
-		}
-	}
-	let collapsed = $state(storedCollapsed());
-	$effect(() => {
-		const v = collapsed ? '1' : '0';
-		try {
-			localStorage.setItem(SIDEBAR_KEY, v);
-		} catch {
-			// Folding is only a convenience.
-		}
-	});
+	let collapsed = $state(recall(SIDEBAR_KEY, (v) => v === 1, false));
+	$effect(() => keep(SIDEBAR_KEY, collapsed ? 1 : 0));
 
 	function onKey(e: KeyboardEvent) {
 		if (!e.ctrlKey || e.altKey || e.shiftKey) return;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Field } from './bindings/Field.js';
-import { asAnswers, entriesOf, fromDraft, pagesOf, toDraft, valueText } from './contents.js';
+import { asAnswers, entriesOf, pagesOf, valueText } from './contents.js';
+import { fromDraft, toDraft } from './fields.js';
 
 const fields: Field[] = [
 	{ key: 'title', label: 'Title', instructions: '', kind: { type: 'text' }, reason: false },

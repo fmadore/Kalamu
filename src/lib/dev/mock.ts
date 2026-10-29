@@ -10,6 +10,7 @@ import type { JobSummary } from '../bindings/JobSummary.js';
 import type { PieceView } from '../bindings/PieceView.js';
 import type { Preset } from '../bindings/Preset.js';
 import type { Settings } from '../bindings/Settings.js';
+import { layout } from '../review.svelte.js';
 import type { View } from '../state.svelte.js';
 import catalogJson from '../../../crates/catalog/catalog.json';
 import SAMPLE_SCAN from './sample-scan.jpg?inline';
@@ -635,16 +636,12 @@ export function mockView(): View | null {
 export function installMock(): void {
 	const params = new URLSearchParams(location.search);
 	// `compare`: open the review with the compared text beside it.
-	if (params.has('compare'))
-		localStorage.setItem(
-			'kalamu.review.layout',
-			JSON.stringify({ two: 0.475, three: [0.33, 0.665], compare: true })
-		);
+	if (params.has('compare') && !layout.compare) layout.toggleCompare();
 	// `open=deux`: open the readings of the highlighted words with that text.
 	const open = params.get('open');
 	if (open) {
 		setTimeout(() => {
-			const lemma = [...document.querySelectorAll<HTMLElement>('.lemma')].find(
+			const lemma = [...document.querySelectorAll<HTMLElement>('.mark')].find(
 				(l) => l.textContent === open
 			);
 			lemma?.click();

@@ -72,6 +72,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   failing, the page marked `[Not read: reason]` and listed in provenance; sources of the same
   name sent to one folder are numbered instead of writing over each other
   ([decision](decisions/2026-10-29-files-despite-failures.md)).
+- **One frame for the reviews**: the text, analysis and table of contents reviews share their
+  masthead, source pane, handles, strip, keys (Ctrl Enter to mark reviewed or save a
+  correction, Page Up and Page Down to turn pages), correction editor and key to the sigla; a
+  text file's correction shows the passage beside it
+  ([decision](decisions/2026-10-29-review-frame.md)).
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
   Mistral at half price, answered within a day and collected after the app was closed; cached
   input billed at its own price; both costs shown before starting
@@ -95,17 +100,15 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 ## Next
 
 The [29 October checkpoint](decisions/2026-10-29-checkpoint.md) puts these before any new
-feature (results that could be wrong unnoticed, work lost or paid twice, and results that did
-not reach the researcher, are done):
+feature (results that could be wrong unnoticed, work lost or paid twice, results that did not
+reach the researcher, and the reviews' frame, are done):
 
 - **The cost of failed answers**: answers billed but failing their fields counted in the cost
   shown, which needs a failed call to carry its usage.
-- **Refactor the review**: one frame for the three reviews (`ReviewFrame`, with the sigla key,
-  correction editor and field inputs shared), the readings popover and marked text out of
-  `ReviewView`; New job, the job page and the sidebar in smaller components; `run.rs` and
-  `batch.rs` split; the rules on which files and models suit a task given to the front end by
-  the engine, which also checks them.
-- **Search in the review**, built on the refactored frame: the whole document's text, corrections
+- **The rest of the refactor**: New job, the job page and the sidebar in smaller components;
+  `run.rs` and `batch.rs` split; the rules on which files and models suit a task given to the
+  front end by the engine, which also checks them.
+- **Search in the review**, built on the reviews' shared frame: the whole document's text, corrections
   included, searched across its pages or a recording's lines; the hits listed by page or time,
   a click going there with the words highlighted (and a recording playing from there); in a
   table of contents' review, the entries filtered.
