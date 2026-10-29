@@ -190,12 +190,21 @@ pub trait Provider: Send + Sync {
     /// converts each piece into the first one it can produce.
     fn accepted_inputs(&self, task: Task) -> &'static [&'static str];
 
-    /// The fixed settings sent with every request for `task` and `model` (reasoning effort,
-    /// output limit, media resolution), for the record of a pipeline. Neither the prompt nor the
-    /// researcher's own options, which the record states apart.
+    /// The fixed settings sent with a request for `task` and `model` (reasoning effort, output
+    /// limit, media resolution) when it reads a page, for the record of a pipeline. Neither the
+    /// prompt nor the researcher's own options, which the record states apart.
     fn request_settings(&self, task: Task, model: &str) -> Vec<RequestSetting> {
         let _ = (task, model);
         Vec::new()
+    }
+
+    /// The settings `request` itself carries, as provenance records them: they may depend on
+    /// what it sends (a text, a page, a video) and on whether it goes through the batch service
+    /// (`batched`). A provider whose settings vary overrides this, deciding them with the same
+    /// code that builds the request, so the record cannot claim what was not sent.
+    fn sent_settings(&self, request: &ProcessRequest<'_>, batched: bool) -> Vec<RequestSetting> {
+        let _ = batched;
+        self.request_settings(request.task, request.model)
     }
 
     async fn process(

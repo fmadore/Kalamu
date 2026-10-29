@@ -15,10 +15,14 @@ first.
 ## Decisions
 
 - **Kept with each result, when it is sent.** `StoredResult::request` holds what the provider
-  stated for that task and model when the piece was processed, in a new nullable `request`
-  column of `results` (the store's fifth migration). A batch records them in its `BatchRecord` when it is sent,
-  and its answers are stored with those, so an update between sending and collecting changes
-  nothing.
+  stated for that request when the piece was processed, in a new nullable `request` column of
+  `results` (the store's fifth migration). A batch records each item's in its `BatchRecord`
+  when it is sent, and its answers are stored with those, so an update between sending and
+  collecting changes nothing. *Corrected at the
+  [29 October checkpoint](2026-10-29-checkpoint.md):* the settings first came from
+  `request_settings(task, model)`, which knows neither the input nor whether the request is
+  batched, and so recorded settings some requests never carried;
+  `Provider::sent_settings(request, batched)` now states what each request carries.
 - **`provenance.json` gathers them from the pieces** it describes: `request` for the step that
   reads, `merge.request` for the step that combines a table of contents. Each name and value
   appears once, in the order first seen; a name listed twice means pieces were read with

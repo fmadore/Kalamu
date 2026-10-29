@@ -11,7 +11,7 @@ mod openai;
 
 use std::sync::Arc;
 
-use kalamu_core::{Provider, ProviderId};
+use kalamu_core::Provider;
 
 pub use anthropic::Anthropic;
 pub use gemini::Gemini;
@@ -27,8 +27,4 @@ pub fn registry(client: reqwest::Client) -> Vec<Arc<dyn Provider>> {
         Arc::new(Anthropic::new(client.clone())),
         Arc::new(Mistral::new(client)),
     ]
-}
-
-pub fn find(providers: &[Arc<dyn Provider>], id: &ProviderId) -> Option<Arc<dyn Provider>> {
-    providers.iter().find(|p| &p.id() == id).cloned()
 }

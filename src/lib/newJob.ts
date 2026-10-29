@@ -131,7 +131,7 @@ export function readsKind(mode: Mode, kind: string | undefined): boolean {
 		case 'audio_transcription':
 			return kind === 'audio' || kind === 'video';
 		case 'analysis':
-			return kind === 'text' || kind === 'pdf';
+			return kind === 'text' || kind === 'pdf' || kind === 'image';
 		case 'youtube':
 			return kind === 'youtube';
 	}

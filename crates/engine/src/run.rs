@@ -512,6 +512,7 @@ impl Engine {
                 analysis: step.prompt.schema.as_ref(),
                 stop,
             };
+            let sent = provider.sent_settings(&request, false);
             match provider.process(&api_key, request).await {
                 Ok(output) => {
                     let output = finish(job.task, output);
@@ -524,7 +525,7 @@ impl Engine {
                         provider: step.provider.clone(),
                         model: step.model.to_string(),
                         output,
-                        request: provider.request_settings(job.task, step.model),
+                        request: sent,
                         cost_usd: cost,
                         duration_ms: started.elapsed().as_millis() as u64,
                         created_at: Timestamp::now(),

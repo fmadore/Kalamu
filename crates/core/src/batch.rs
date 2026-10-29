@@ -19,6 +19,10 @@ pub struct BatchItem {
     pub id: String,
     pub source_id: SourceId,
     pub index: u32,
+    /// The settings its request carried, recorded when it was sent: the app may be updated
+    /// before the answers are collected.
+    #[serde(default)]
+    pub request: Vec<RequestSetting>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -74,10 +78,6 @@ pub struct BatchRecord {
     pub remote_id: Option<String>,
     pub phase: BatchPhase,
     pub items: Vec<BatchItem>,
-    /// The settings its requests carried, recorded when it was sent: the app may be updated
-    /// before the answers are collected.
-    #[serde(default)]
-    pub request: Vec<RequestSetting>,
     pub submitted_at: Timestamp,
     pub updated_at: Timestamp,
 }

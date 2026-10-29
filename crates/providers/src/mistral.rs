@@ -187,7 +187,6 @@ impl Mistral {
     }
 }
 
-/// Mistral OCR leaves `![img-0.jpeg](img-0.jpeg)` where pictures were; they point nowhere.
 /// The page's text blocks with their boxes, as fractions of the page. Pictures and signatures
 /// carry no text to search.
 fn page_regions(page: &Value) -> Vec<TextRegion> {
@@ -267,6 +266,7 @@ fn plain_text(content: &str) -> String {
         .join("\n")
 }
 
+/// Mistral OCR leaves `![img-0.jpeg](img-0.jpeg)` where pictures were; they point nowhere.
 fn strip_image_links(markdown: &str) -> String {
     let mut out: Vec<&str> = Vec::new();
     for line in markdown.lines() {

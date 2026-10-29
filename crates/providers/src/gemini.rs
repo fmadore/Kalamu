@@ -84,11 +84,8 @@ impl Gemini {
             "responseMimeType": "text/plain",
             "thinkingConfig": { "thinkingLevel": THINKING_LEVEL },
         });
-        // Media resolution applies to images and documents; ULTRA_HIGH is refused for PDFs.
-        if input.mime == "application/pdf" || input.mime.starts_with("image/") {
-            generation["mediaResolution"] = json!(MEDIA_RESOLUTION);
-        } else if youtube {
-            generation["mediaResolution"] = json!(VIDEO_RESOLUTION);
+        if let Some(resolution) = media_resolution(&input.mime) {
+            generation["mediaResolution"] = json!(resolution);
         }
         if let Some(fields) = request.analysis {
             generation["responseMimeType"] = json!("application/json");
@@ -234,22 +231,16 @@ impl Provider for Gemini {
     }
 
     fn request_settings(&self, task: Task, _model: &str) -> Vec<RequestSetting> {
-        let mut settings = vec![
-            RequestSetting::new(
-                "generationConfig.thinkingConfig.thinkingLevel",
-                THINKING_LEVEL,
-            ),
-            RequestSetting::new("generationConfig.maxOutputTokens", MAX_OUTPUT_TOKENS),
-            RequestSetting::new("safetySettings.*.threshold", "BLOCK_NONE"),
-        ];
-        // For pages and pictures; a recording or a text file has no resolution to set.
-        if task != Task::AudioTranscription {
-            settings.push(RequestSetting::new(
-                "generationConfig.mediaResolution",
-                MEDIA_RESOLUTION,
-            ));
-        }
-        settings
+        // As for a page, which every task but a transcription or a correction reads.
+        let page = match task {
+            Task::AudioTranscription | Task::TextCorrection => "text/plain",
+            _ => "application/pdf",
+        };
+        settings(page)
+    }
+
+    fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
+        settings(&request.input.mime)
     }
 
     async fn process(
@@ -276,7 +267,7 @@ impl Provider for Gemini {
         let output = Self::parse(&response)?;
         if youtube && truncated(&response) {
             return Err(ProviderError::InvalidRequest(
-                "the transcript filled the longest answer Gemini can write before the video                  ended: this video is too long to transcribe in one go"
+                "the transcript filled the longest answer Gemini can write before the video ended: this video is too long to transcribe in one go"
                     .into(),
             ));
         }
@@ -348,6 +339,37 @@ impl Provider for Gemini {
     }
 }
 
+/// The resolution an input is read at: high for pages and pictures (ULTRA_HIGH is refused for
+/// PDFs), low for a YouTube video, whose words are in its sound; none for a recording or a text.
+fn media_resolution(mime: &str) -> Option<&'static str> {
+    if mime == "application/pdf" || mime.starts_with("image/") {
+        Some(MEDIA_RESOLUTION)
+    } else if mime == YOUTUBE_LINK {
+        Some(VIDEO_RESOLUTION)
+    } else {
+        None
+    }
+}
+
+/// The settings a request for an input of this type carries, decided as `body` decides them.
+fn settings(mime: &str) -> Vec<RequestSetting> {
+    let mut settings = vec![
+        RequestSetting::new(
+            "generationConfig.thinkingConfig.thinkingLevel",
+            THINKING_LEVEL,
+        ),
+        RequestSetting::new("generationConfig.maxOutputTokens", MAX_OUTPUT_TOKENS),
+        RequestSetting::new("safetySettings.*.threshold", "BLOCK_NONE"),
+    ];
+    if let Some(resolution) = media_resolution(mime) {
+        settings.push(RequestSetting::new(
+            "generationConfig.mediaResolution",
+            resolution,
+        ));
+    }
+    settings
+}
+
 /// The answer stopped at the output limit. A page keeps what was read, but a video's transcript
 /// would end part-way with nothing to show where.
 fn truncated(response: &Value) -> bool {
@@ -366,7 +388,7 @@ fn youtube_error(err: ProviderError) -> ProviderError {
             let lower = m.to_lowercase();
             return if lower.contains("youtube") || lower.contains("video") {
                 ProviderError::QuotaExhausted(
-                    "the free tier's daily allowance of YouTube video (8 hours) is used up; try                      again tomorrow or use a key on a paid plan"
+                    "the free tier's daily allowance of YouTube video (8 hours) is used up; try again tomorrow or use a key on a paid plan"
                         .into(),
                 )
             } else {

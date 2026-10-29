@@ -34,6 +34,27 @@ const FALLBACK_MODELS: &[&str] = &["claude-opus-5-5", "claude-sonnet-5-5"];
 const MAX_TOKENS: u32 = 16_000;
 const EFFORT: &str = "low";
 
+/// A batch refuses `fallbacks`, so only a request sent on its own asks for them.
+fn sends_fallbacks(model: &str, batched: bool) -> bool {
+    !batched && FALLBACK_MODELS.contains(&model)
+}
+
+/// The settings a request carries, decided as `body` decides them.
+fn settings(task: Task, model: &str, batched: bool) -> Vec<RequestSetting> {
+    if task == Task::AudioTranscription {
+        return Vec::new();
+    }
+    let mut settings = vec![
+        RequestSetting::new("output_config.effort", EFFORT),
+        RequestSetting::new("max_tokens", MAX_TOKENS),
+        RequestSetting::new("system.*.cache_control.type", "ephemeral"),
+    ];
+    if sends_fallbacks(model, batched) {
+        settings.push(RequestSetting::new("fallbacks", "default"));
+    }
+    settings
+}
+
 pub struct Anthropic {
     client: Client,
     base_url: String,
@@ -89,7 +110,7 @@ impl Anthropic {
             }],
             "output_config": { "effort": EFFORT },
         });
-        if !batched && FALLBACK_MODELS.contains(&request.model) {
+        if sends_fallbacks(request.model, batched) {
             body["fallbacks"] = json!("default");
         }
         if let Some(fields) = request.analysis {
@@ -223,18 +244,11 @@ impl Provider for Anthropic {
     }
 
     fn request_settings(&self, task: Task, model: &str) -> Vec<RequestSetting> {
-        if task == Task::AudioTranscription {
-            return Vec::new();
-        }
-        let mut settings = vec![
-            RequestSetting::new("output_config.effort", EFFORT),
-            RequestSetting::new("max_tokens", MAX_TOKENS),
-            RequestSetting::new("system.*.cache_control.type", "ephemeral"),
-        ];
-        if FALLBACK_MODELS.contains(&model) {
-            settings.push(RequestSetting::new("fallbacks", "default"));
-        }
-        settings
+        settings(task, model, false)
+    }
+
+    fn sent_settings(&self, request: &ProcessRequest<'_>, batched: bool) -> Vec<RequestSetting> {
+        settings(request.task, request.model, batched)
     }
 
     async fn process(

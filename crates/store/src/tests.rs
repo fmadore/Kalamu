@@ -252,8 +252,8 @@ fn batches_are_kept_with_their_job_and_survive_startup() -> Result<(), StoreErro
             id: "p0".into(),
             source_id: job.sources[0].id,
             index: 0,
+            request: vec![RequestSetting::new("max_tokens", 32000)],
         }],
-        request: vec![RequestSetting::new("max_tokens", 32000)],
         submitted_at: Timestamp::now(),
         updated_at: Timestamp::now(),
     };

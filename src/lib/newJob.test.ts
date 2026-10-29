@@ -61,6 +61,8 @@ describe('new job form', () => {
 		expect(d.model).toBe('gemini-3.8-flash');
 		expect(readsKind('analysis', 'text')).toBe(true);
 		expect(readsKind('analysis', 'pdf')).toBe(true);
+		// A photographed page is read as one document, as the engine allows.
+		expect(readsKind('analysis', 'image')).toBe(true);
 		expect(readsKind('analysis', 'audio')).toBe(false);
 		// Whisper never offers speaker labels, whatever the box says.
 		const whisper = {

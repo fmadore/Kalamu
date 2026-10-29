@@ -3,7 +3,6 @@ import type { BatchItem } from "./BatchItem";
 import type { BatchPhase } from "./BatchPhase";
 import type { JobId } from "./JobId";
 import type { ProviderId } from "./ProviderId";
-import type { RequestSetting } from "./RequestSetting";
 import type { SetupId } from "./SetupId";
 import type { Timestamp } from "./Timestamp";
 
@@ -18,9 +17,4 @@ id: string, job_id: JobId, setup_id: SetupId, provider: ProviderId,
 /**
  * The provider's id, once it has accepted the batch.
  */
-remote_id: string | null, phase: BatchPhase, items: Array<BatchItem>, 
-/**
- * The settings its requests carried, recorded when it was sent: the app may be updated
- * before the answers are collected.
- */
-request: Array<RequestSetting>, submitted_at: Timestamp, updated_at: Timestamp, };
+remote_id: string | null, phase: BatchPhase, items: Array<BatchItem>, submitted_at: Timestamp, updated_at: Timestamp, };

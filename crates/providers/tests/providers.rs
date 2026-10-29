@@ -714,45 +714,131 @@ async fn the_settings_a_provider_reports_are_the_ones_it_sends() {
             ],
         ),
     ];
+    let picture = PreparedInput {
+        mime: "image/jpeg".into(),
+        bytes: vec![0xff, 0xd8, 0xff],
+        file_name: "lettre-p1.jpg".into(),
+        ..page()
+    };
     let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());
     for (provider, models) in cases {
         for model in models {
+            // Every setting the record of a pipeline names; those a request leaves out must be
+            // absent from its body, not only those it keeps present.
+            let named: Vec<String> = [Task::TextExtraction, Task::Analysis]
+                .into_iter()
+                .flat_map(|task| provider.request_settings(task, model))
+                .map(|s| s.name)
+                .collect();
             for (task, input) in [
                 (Task::TextExtraction, page()),
+                (Task::TextExtraction, picture.clone()),
                 (Task::Analysis, whole.clone()),
+                (Task::Analysis, document()),
+                (Task::AudioTranscription, youtube()),
             ] {
-                let settings = provider.request_settings(task, model);
-                if settings.is_empty() {
+                if !provider
+                    .accepted_inputs(task)
+                    .contains(&input.mime.as_str())
+                {
                     continue;
                 }
+                let request = request(task, model, &input, &langs, &opts);
+                let settings = provider.sent_settings(&request, false);
+                let before = server.received_requests().await.unwrap_or_default().len();
                 // The answer does not matter: only the request is checked.
-                let _ = provider
-                    .process(
-                        &ApiKey::new("k"),
-                        request(task, model, &input, &langs, &opts),
-                    )
-                    .await;
+                let _ = provider.process(&ApiKey::new("k"), request).await;
                 let received = server.received_requests().await.unwrap_or_default();
+                if received.len() == before {
+                    continue;
+                }
                 let body: serde_json::Value = received
                     .last()
                     .and_then(|r| serde_json::from_slice(&r.body).ok())
                     .unwrap_or_default();
-                for setting in settings {
-                    let path: Vec<&str> = setting.name.split('.').collect();
-                    let sent = values_at(&body, &path);
-                    assert!(
-                        !sent.is_empty(),
-                        "{model} {task:?}: {} not sent",
-                        setting.name
-                    );
-                    for value in sent {
-                        let text = value
-                            .as_str()
-                            .map_or_else(|| value.to_string(), str::to_string);
-                        assert_eq!(text, setting.value, "{model} {task:?}: {}", setting.name);
-                    }
-                }
+                let case = format!("{model} {task:?} {}", input.mime);
+                assert_settings_sent(&body, &[], &settings, &named, &case);
             }
         }
+    }
+}
+
+/// Each setting is at its path in `body` (below `prefix`) with its value, and every other name
+/// in `named` is not there at all.
+fn assert_settings_sent(
+    body: &serde_json::Value,
+    prefix: &[&str],
+    settings: &[kalamu_core::RequestSetting],
+    named: &[String],
+    case: &str,
+) {
+    let at = |name: &str| {
+        let path: Vec<&str> = prefix.iter().copied().chain(name.split('.')).collect();
+        values_at(body, &path)
+    };
+    for setting in settings {
+        let sent = at(&setting.name);
+        assert!(!sent.is_empty(), "{case}: {} not sent", setting.name);
+        for value in sent {
+            let text = value
+                .as_str()
+                .map_or_else(|| value.to_string(), str::to_string);
+            assert_eq!(text, setting.value, "{case}: {}", setting.name);
+        }
+    }
+    for name in named {
+        if !settings.iter().any(|s| &s.name == name) {
+            assert!(at(name).is_empty(), "{case}: {name} sent but not recorded");
+        }
+    }
+}
+
+/// A batch's requests carry what is recorded for each of them, which may differ from a request
+/// sent on its own (Claude's batches refuse `fallbacks`).
+#[tokio::test]
+async fn the_settings_recorded_for_a_batch_are_the_ones_it_sends() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({})))
+        .mount(&server)
+        .await;
+    let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());
+    let input = page();
+    let cases: [(Box<dyn Provider>, &str, &[&str]); 2] = [
+        (
+            Box::new(Anthropic::with_base_url(client(), &server.uri())),
+            "claude-sonnet-5-5",
+            &["requests", "*", "params"],
+        ),
+        (
+            Box::new(Gemini::with_base_url(client(), &server.uri())),
+            "gemini-3.8-flash",
+            &[
+                "batch",
+                "input_config",
+                "requests",
+                "requests",
+                "*",
+                "request",
+            ],
+        ),
+    ];
+    for (provider, model, prefix) in cases {
+        let request = request(Task::TextExtraction, model, &input, &langs, &opts);
+        let settings = provider.sent_settings(&request, true);
+        let named: Vec<String> = provider
+            .request_settings(Task::TextExtraction, model)
+            .into_iter()
+            .map(|s| s.name)
+            .collect();
+        let _ = provider
+            .submit_batch(&ApiKey::new("k"), &[("p0".into(), request)])
+            .await;
+        let received = server.received_requests().await.unwrap_or_default();
+        let body: serde_json::Value = received
+            .last()
+            .and_then(|r| serde_json::from_slice(&r.body).ok())
+            .unwrap_or_default();
+        assert_settings_sent(&body, prefix, &settings, &named, &format!("{model} batch"));
     }
 }
