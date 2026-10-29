@@ -91,6 +91,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         corrected: vec![2],
         reviewed: vec![1, 2],
         truncated: vec![],
+        failed: vec![],
         preprocessing: vec![],
         usage: Usage::default(),
         cost_usd: Some(0.002),
@@ -119,6 +120,7 @@ fn letter() -> ExportDocument {
                 reviewed: true,
                 fields: vec![],
                 regions: vec![],
+                failed: None,
             },
             ExportPart {
                 piece: kalamu_core::PieceRef::page(2),
@@ -128,6 +130,18 @@ fn letter() -> ExportDocument {
                 reviewed: true,
                 fields: vec![],
                 regions: vec![],
+                failed: None,
+            },
+            // Refused every time: the letter is still written, the page marked in its place.
+            ExportPart {
+                piece: kalamu_core::PieceRef::page(3),
+                text: String::new(),
+                segments: vec![],
+                corrected: false,
+                reviewed: false,
+                fields: vec![],
+                regions: vec![],
+                failed: Some("Gemini's copyright filter stopped this page (RECITATION)".into()),
             },
         ],
     )
@@ -163,6 +177,7 @@ fn interview() -> ExportDocument {
                 reviewed: false,
                 fields: vec![],
                 regions: vec![],
+                failed: None,
             },
             ExportPart {
                 // A prompt-based model that wrote timestamps into its text.
@@ -177,6 +192,7 @@ fn interview() -> ExportDocument {
                 reviewed: false,
                 fields: vec![],
                 regions: vec![],
+                failed: None,
             },
         ],
     )
@@ -240,6 +256,7 @@ fn analysis() -> ExportDocument {
             reviewed: true,
             fields,
             regions: vec![],
+            failed: None,
         }],
     );
     doc.setup.prompt.schema = Some(schema.clone());
@@ -317,6 +334,7 @@ fn contents() -> ExportDocument {
                 ),
             ]),
             regions: vec![],
+            failed: None,
         }],
     );
     doc.setup.merge = Some(kalamu_core::MergeStep {
@@ -344,6 +362,7 @@ fn corrected() -> ExportDocument {
         reviewed: false,
         fields: vec![],
         regions: vec![],
+        failed: None,
     };
     document(
         Task::TextCorrection,
@@ -484,6 +503,7 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
                 height: 0.04,
                 text: "Dakar, le 3 mai 1957".into(),
             }],
+            failed: None,
         }],
     );
     let bytes = exporter(ExportFormat::SearchablePdf)

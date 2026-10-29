@@ -8,15 +8,16 @@ use kalamu_core::provenance::{GeneratorInfo, ProvenanceMerge, ProvenancePrompt, 
 use kalamu_core::speakers::{rename_segments, rename_text};
 use kalamu_core::{
     CacheKey, ExportDocument, ExportPart, InputKind, Job, JobId, OutputDestination, PieceRef,
-    PieceState, ProgressEvent, Provenance, RequestSetting, Segment, Setup, SetupId, SourceFile,
-    SourceId, Task, Timestamp, Usage,
+    PieceState, PieceStatus, ProgressEvent, Provenance, RequestSetting, Segment, Setup, SetupId,
+    SourceFile, SourceId, Task, Timestamp, Usage,
 };
 
 use crate::{Engine, EngineError};
 
 impl Engine {
-    /// Writes the outputs of each set-up whose pieces of a source are all done; true when one
-    /// could not be written.
+    /// Writes the outputs of each set-up whose pieces of a source are all settled, done or failed
+    /// after their retries, with at least one done; true when one could not be written. A table
+    /// of contents waits for all of them: without its combined entries it has nothing to write.
     pub(crate) fn export_finished(
         &self,
         job: &Job,
@@ -30,7 +31,11 @@ impl Engine {
                 .iter()
                 .filter(|p| p.setup_id == setup.id && p.source_id == source_id)
                 .collect();
-            if !mine.is_empty() && mine.iter().all(|p| p.status.is_finished()) {
+            let settled = |p: &&PieceState| {
+                p.status.is_finished()
+                    || (p.status == PieceStatus::Failed && job.task != Task::Contents)
+            };
+            if mine.iter().all(settled) && mine.iter().any(|p| p.status.is_finished()) {
                 match self.write_outputs(job, setup.id, source_id) {
                     Ok(files) => self.emit(ProgressEvent::SourceExported {
                         job_id: job.id,
@@ -184,7 +189,24 @@ impl Engine {
         let mut detected = BTreeSet::new();
         let mut first_read: Option<Timestamp> = None;
         let (mut corrected, mut reviewed, mut truncated) = (Vec::new(), Vec::new(), Vec::new());
+        let mut failed = Vec::new();
         for state in &states {
+            // A piece that failed after its retries is marked in its place, so the rest of the
+            // document still reaches the researcher (a table of contents has only its entries).
+            if state.status == PieceStatus::Failed && job.task != Task::Contents {
+                failed.push(state.index + 1);
+                parts.push(ExportPart {
+                    piece: state.piece.clone(),
+                    text: String::new(),
+                    segments: Vec::new(),
+                    corrected: false,
+                    reviewed: false,
+                    fields: Vec::new(),
+                    regions: Vec::new(),
+                    failed: Some(state.error.clone().unwrap_or_default()),
+                });
+                continue;
+            }
             let Some(key) = &state.cache_key else {
                 continue;
             };
@@ -283,6 +305,7 @@ impl Engine {
                 reviewed: is_reviewed,
                 fields,
                 regions,
+                failed: None,
             });
         }
 
@@ -332,6 +355,7 @@ impl Engine {
             corrected,
             reviewed,
             truncated,
+            failed,
             preprocessing,
             usage,
             cost_usd: cost,
@@ -350,7 +374,43 @@ impl Engine {
 /// Where a source's results go and the name they share: the source's name, with the set-up's
 /// label in comparison mode, and `.analysis`, `.contents` or `.corrected` after it so they never
 /// replace the transcription or extraction they read, or the text file corrected.
+///
+/// Two sources that would share a name in one folder (`scan.pdf` and `scan.tif`, or two
+/// `scan.pdf` from different folders sent to one) would write over each other's files: the later
+/// ones in the job are numbered, `scan (2)`, as Windows names copies. Windows ignores case, so
+/// the comparison does too.
 fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, String) {
+    let (dir, mut stem) = place(job, source);
+    let key = |dir: &Path, stem: &str| (dir.to_string_lossy().to_lowercase(), stem.to_lowercase());
+    let mine = key(&dir, &stem);
+    let earlier = job
+        .sources
+        .iter()
+        .take_while(|s| s.id != source.id)
+        .filter(|s| {
+            let (d, s) = place(job, s);
+            key(&d, &s) == mine
+        })
+        .count();
+    if earlier > 0 {
+        stem = format!("{stem} ({})", earlier + 1);
+    }
+    let mut base = if job.is_comparison() {
+        format!("{stem}.{setup_label}")
+    } else {
+        stem
+    };
+    match job.task {
+        Task::Analysis => base.push_str(".analysis"),
+        Task::Contents => base.push_str(".contents"),
+        Task::TextCorrection => base.push_str(".corrected"),
+        Task::TextExtraction | Task::AudioTranscription => {}
+    }
+    (dir, base)
+}
+
+/// The folder a source's results go to, and the name they start from: the source's own.
+fn place(job: &Job, source: &SourceFile) -> (PathBuf, String) {
     let dir = match &job.output.destination {
         OutputDestination::BesideSources => Path::new(&source.path)
             .parent()
@@ -367,18 +427,7 @@ fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, S
             .map(|s| s.to_string_lossy().into_owned())
             .unwrap_or_else(|| "result".into())
     };
-    let mut base = if job.is_comparison() {
-        format!("{stem}.{setup_label}")
-    } else {
-        stem
-    };
-    match job.task {
-        Task::Analysis => base.push_str(".analysis"),
-        Task::Contents => base.push_str(".contents"),
-        Task::TextCorrection => base.push_str(".corrected"),
-        Task::TextExtraction | Task::AudioTranscription => {}
-    }
-    (dir, base)
+    (dir, stem)
 }
 
 /// The result with this extension, if it is on disk: `{base}.{ext}`, or the renamed copy written

@@ -52,6 +52,9 @@ pub struct Provenance {
     /// missing; for a table of contents, the pages read and the combined entries alike.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub truncated: Vec<u32>,
+    /// Pages or segments that could not be read after their retries, marked in the files.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub failed: Vec<u32>,
     /// Fixes applied to working copies before processing (`split_spread`, `rotate`…).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub preprocessing: Vec<String>,

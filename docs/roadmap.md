@@ -68,6 +68,10 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   waiting batch is only collected; an engine error lets the calls already started finish; the
   job's page shows what it cost over all its runs
   ([decision](decisions/2026-10-29-cost-and-quitting.md)).
+- **Results that reach the researcher**: a document's files are written even when a page keeps
+  failing, the page marked `[Not read: reason]` and listed in provenance; sources of the same
+  name sent to one folder are numbered instead of writing over each other
+  ([decision](decisions/2026-10-29-files-despite-failures.md)).
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
   Mistral at half price, answered within a day and collected after the app was closed; cached
   input billed at its own price; both costs shown before starting
@@ -91,11 +95,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 ## Next
 
 The [29 October checkpoint](decisions/2026-10-29-checkpoint.md) puts these before any new
-feature (results that could be wrong unnoticed, and work lost or paid twice, are done):
+feature (results that could be wrong unnoticed, work lost or paid twice, and results that did
+not reach the researcher, are done):
 
-- **Results that do not reach the researcher**: a document's files written even when one page
-  keeps failing, with the page marked; sources of the same name kept apart in one destination;
-  and in the cost shown, answers that were billed but failed their fields.
+- **The cost of failed answers**: answers billed but failing their fields counted in the cost
+  shown, which needs a failed call to carry its usage.
 - **Refactor the review**: one frame for the three reviews (`ReviewFrame`, with the sigla key,
   correction editor and field inputs shared), the readings popover and marked text out of
   `ReviewView`; New job, the job page and the sidebar in smaller components; `run.rs` and

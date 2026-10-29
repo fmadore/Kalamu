@@ -21,6 +21,18 @@
       "reviewed": true,
       "segments": [],
       "text": "rendre compte de la réunion tenue à la mosquée.\n\n[ILLEGIBLE]"
+    },
+    {
+      "corrected": false,
+      "failed": "Gemini's copyright filter stopped this page (RECITATION)",
+      "label": "3",
+      "piece": {
+        "kind": "page",
+        "number": 3
+      },
+      "reviewed": false,
+      "segments": [],
+      "text": ""
     }
   ],
   "provenance": {
@@ -44,7 +56,7 @@
       "temperature": null,
       "timestamps": false
     },
-    "pieces": 2,
+    "pieces": 3,
     "prompt": {
       "preset_id": "text_extraction.printed_diplomatic",
       "preset_name": "Printed document, diplomatic",

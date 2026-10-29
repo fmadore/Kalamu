@@ -27,11 +27,11 @@ impl Exporter for CsvExporter {
                 writer
                     .write_record(["page", "text", "corrected", "reviewed"])
                     .map_err(err)?;
-                for part in &doc.parts {
+                for (i, part) in doc.parts.iter().enumerate() {
                     writer
                         .write_record([
                             part.piece.label(),
-                            part.text.trim().to_string(),
+                            crate::part_text(doc, i),
                             part.corrected.to_string(),
                             part.reviewed.to_string(),
                         ])

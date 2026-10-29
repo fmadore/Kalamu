@@ -183,7 +183,10 @@ paying twice.
   as failed with a readable reason, the rest of the queue continues, and failed pieces can be
   retried later on their own. An answer that stops at the model's length limit is kept but
   marked as cut off: the job's page counts such pieces, the review warns on each, and
-  `provenance.json` lists them.
+  `provenance.json` lists them. A piece that still fails does not keep its document from disk:
+  the files are written with `[Not read: reason]` in its place, `provenance.json` lists it, and
+  retrying it writes them again, whole (a table of contents, which has nothing to write without
+  its combined entries, waits for all its pages).
 - **Exports come from the cache.** Choosing another output format later regenerates the file
   from stored results, without calling the provider again.
 - **A job's files stay at hand.** Its page lists the files it wrote that are still on disk,
