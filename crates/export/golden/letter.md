@@ -14,3 +14,7 @@ j'ai l'honneur de vous
 rendre compte de la réunion tenue à la mosquée.
 
 [ILLEGIBLE]
+
+## Page 3
+
+[Not read: Gemini's copyright filter stopped this page (RECITATION)]

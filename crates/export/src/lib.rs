@@ -65,8 +65,20 @@ pub(crate) fn part_text(doc: &ExportDocument, index: usize) -> String {
     body_text(doc, index)
 }
 
+/// What stands in a document's files for a piece that could not be read.
+pub(crate) fn not_read(reason: &str) -> String {
+    if reason.is_empty() {
+        "[Not read]".into()
+    } else {
+        format!("[Not read: {reason}]")
+    }
+}
+
 fn body_text(doc: &ExportDocument, index: usize) -> String {
     let part = &doc.parts[index];
+    if let Some(reason) = &part.failed {
+        return not_read(reason);
+    }
     let parsed;
     let segments = if part.segments.is_empty() {
         let offset = match part.piece {

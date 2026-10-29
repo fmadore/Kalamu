@@ -2,7 +2,13 @@
 
 Every result is written from the job database, with the user's corrections applied, into the
 formats chosen for the job. Each source also gets a `provenance.json`. In comparison mode, file
-names carry the set-up's label: `letter.gemini-3.8-flash.txt`.
+names carry the set-up's label: `letter.gemini-3.8-flash.txt`. Two sources that would share a
+name in one folder (`scan.pdf` and `scan.tif`, or two `scan.pdf` sent to one folder) keep apart:
+the later ones in the job are numbered, `scan (2).txt`, regardless of case.
+
+A page or segment that could not be read after its retries does not keep the rest from disk: it
+stands as `[Not read: reason]` in the text formats and the CSV, with a `failed` reason in JSON,
+and `provenance.json` lists it under `failed`. Retrying it writes the files again.
 
 ## Text, Markdown and Word
 
@@ -117,6 +123,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `languages`, `detected_languages` | What the user chose, and what the model reported |
 | `options` | Diarization, timestamps, speaker count |
 | `pieces`, `corrected`, `reviewed` | Number of pages or segments, and which were corrected or reviewed |
+| `failed` | Pages or segments that could not be read after their retries, marked in the files. Absent when none was |
 | `truncated` | Pages or segments whose answer stopped at the model's output limit, so their end may be missing; for a table of contents, the pages read and the combined entries alike. Absent when none was |
 | `preprocessing` | Fixes applied to working copies (`split_spreads`, `even_out_volume`, `sample_first_3_pages`) |
 | `usage`, `cost_usd` | Tokens, audio seconds or pages billed, the input read from or written to the provider's prompt cache (`cached_input_tokens`, `cache_write_tokens`, parts of `input_tokens`), whether the calls went through a batch service (`batch`), and the cost from catalogue prices with those discounts |

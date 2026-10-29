@@ -30,6 +30,10 @@ impl Exporter for JsonExporter {
                     "corrected": p.corrected,
                     "reviewed": p.reviewed,
                 });
+                // A piece that could not be read: its place kept, with the reason.
+                if let Some(reason) = &p.failed {
+                    part["failed"] = json!(reason);
+                }
                 // Only analyses have fields: their answers by key, and the reasons given. Other
                 // documents keep their version 1 shape.
                 // A table of contents' entries, each an object of its fields' values.

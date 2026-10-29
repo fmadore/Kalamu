@@ -69,6 +69,10 @@ pub struct ExportPart {
     /// Text blocks placed on the page, for a searchable PDF.
     #[serde(default)]
     pub regions: Vec<crate::TextRegion>,
+    /// Why this piece could not be read, when it failed after its retries: the document is
+    /// still written, the piece marked in its place.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub failed: Option<String>,
 }
 
 /// Everything an exporter needs for one source under one set-up.

@@ -57,6 +57,10 @@ reviewed: Array<number>,
  */
 truncated?: Array<number>, 
 /**
+ * Pages or segments that could not be read after their retries, marked in the files.
+ */
+failed?: Array<number>, 
+/**
  * Fixes applied to working copies before processing (`split_spread`, `rotate`…).
  */
 preprocessing?: Array<string>, usage: Usage, cost_usd: number | null, };

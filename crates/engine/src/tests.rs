@@ -306,9 +306,10 @@ async fn transient_errors_are_retried_and_failures_can_be_retried_later() {
     let pieces = f.store.pieces(job.id).unwrap_or_default();
     assert_eq!(count(&pieces, PieceStatus::Done), 2);
     assert_eq!(count(&pieces, PieceStatus::Failed), 1);
+    let txt = std::fs::read_to_string(f.dir.path().join("letters.txt")).unwrap_or_default();
     assert!(
-        !f.dir.path().join("letters.txt").exists(),
-        "no output until every page is done"
+        txt.contains("[Not read: "),
+        "written, the failed page marked: {txt}"
     );
 
     // Retrying calls only the failed page.
@@ -319,7 +320,8 @@ async fn transient_errors_are_retried_and_failures_can_be_retried_later() {
         .unwrap_or_else(|e| panic!("{e}"));
     while !matches!(events.recv().await, Ok(ProgressEvent::JobFinished { .. })) {}
     assert_eq!(f.fake.calls(), before + 1);
-    assert!(f.dir.path().join("letters.txt").exists());
+    let txt = std::fs::read_to_string(f.dir.path().join("letters.txt")).unwrap_or_default();
+    assert!(!txt.contains("Not read"), "written again, whole: {txt}");
 }
 
 #[tokio::test]
@@ -504,6 +506,95 @@ async fn a_job_is_scored_against_every_page_reviewed_or_corrected() {
     assert_eq!(
         report.scores[0].scored_pages, 2,
         "the review scores it the same"
+    );
+}
+
+#[tokio::test]
+async fn a_page_that_keeps_failing_does_not_keep_the_document_from_disk() {
+    let f = fixture();
+    let source = f.pdf("bulletin.pdf", 3);
+    f.fake
+        .fail(2, vec![ProviderError::Blocked("refused".into())]);
+    let job = f.new_job(vec![source], &["fake-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
+    let read = |name: &str| std::fs::read_to_string(f.dir.path().join(name)).unwrap_or_default();
+    let txt = read("bulletin.txt");
+    assert!(txt.contains("fake-model page 1") && txt.contains("fake-model page 3"));
+    assert!(
+        txt.contains(
+            "--- Page 2 ---
+
+[Not read: "
+        ),
+        "{txt}"
+    );
+    let provenance: serde_json::Value =
+        serde_json::from_str(&read("bulletin.provenance.json")).unwrap_or_default();
+    assert_eq!(provenance["failed"], serde_json::json!([2]));
+
+    // Read on a retry, the page takes its place and the files are written again.
+    f.engine
+        .retry_failed(job.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let mut events = f.engine.subscribe();
+    loop {
+        match tokio::time::timeout(Duration::from_secs(10), events.recv()).await {
+            Ok(Ok(ProgressEvent::JobFinished { status, .. })) => {
+                assert_eq!(status, JobStatus::Completed);
+                break;
+            }
+            Ok(Ok(_)) => {}
+            other => panic!("no JobFinished event: {other:?}"),
+        }
+    }
+    let txt = read("bulletin.txt");
+    assert!(
+        txt.contains("fake-model page 2") && !txt.contains("Not read"),
+        "{txt}"
+    );
+}
+
+#[tokio::test]
+async fn sources_of_the_same_name_keep_their_files_apart() {
+    let f = fixture();
+    let mut sources = Vec::new();
+    for (folder, pages) in [("janvier", 1), ("février", 2)] {
+        let dir = f.dir.path().join(folder);
+        std::fs::create_dir_all(&dir).unwrap_or_else(|e| panic!("{e}"));
+        let path = dir.join("Scan.pdf");
+        let bytes = kalamu_media::sample_pdf(&vec![(595.0, 842.0); pages], false);
+        std::fs::write(&path, bytes).unwrap_or_else(|e| panic!("{e}"));
+        sources.push(kalamu_media::inspect(&path, None).unwrap_or_else(|e| panic!("{e}")));
+    }
+    let out = f.dir.path().join("résultats");
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Scans".into(),
+            task: Task::TextExtraction,
+            sources,
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: None,
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt],
+                destination: OutputDestination::Folder(out.display().to_string()),
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let read = |name: &str| std::fs::read_to_string(out.join(name)).unwrap_or_default();
+    assert!(!read("Scan.txt").contains("Page 2"), "the first, one page");
+    assert!(
+        read("Scan (2).txt").contains("--- Page 2 ---"),
+        "the second, two pages"
     );
 }
 
