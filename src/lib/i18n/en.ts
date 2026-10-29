@@ -457,7 +457,24 @@ export const en = {
 		pageReading: 'Read on this page',
 		pageNote: 'Also on this page',
 		notCombined: 'The pages have not been combined yet.',
-		editEntries: 'Correct the entries'
+		editEntries: 'Correct the entries',
+		search: 'Search',
+		searchShortcut: 'Ctrl F',
+		searchText: 'Search this document',
+		searchEntries: 'Search the entries',
+		found: (n: number) => (n === 1 ? '1 found' : `${n} found`),
+		foundAt: (at: number, n: number) => `${at} of ${n}`,
+		notFound: 'Not found',
+		previousMatch: 'Previous match',
+		nextMatch: 'Next match',
+		listMatches: 'List',
+		listMatchesHint: 'List the matches by page',
+		matches: 'Matches',
+		moreMatches: (shown: number, n: number) => `The first ${shown} of ${n} are listed.`,
+		closeSearch: 'Close the search',
+		entriesFound: (n: number, total: number) =>
+			`${n} of ${total} ${total === 1 ? 'entry' : 'entries'}`,
+		noEntryFound: 'No entry holds these words.'
 	},
 	prompts: {
 		title: 'Prompts',

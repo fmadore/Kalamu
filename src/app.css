@@ -51,6 +51,8 @@
 	--on-ink: #ffffff;
 	--on-ink-muted: #bdb9b0;
 	--wash: rgba(23, 22, 18, 0.05);
+	/* Words found by a search: a grey wash, the one gone to in ink. */
+	--found: rgba(23, 22, 18, 0.16);
 
 	/* The highlighter: disagreements and what is left to check. Text on it is always ink. */
 	--marker: #ffd84d;
@@ -147,6 +149,7 @@
 		--marker: #e8c547;
 		--hand: #7fa2ff;
 		--hand-wash: rgba(127, 162, 255, 0.14);
+		--found: rgba(255, 255, 255, 0.2);
 		--ok: #5fc48f;
 		--ok-text: #7fd6a6;
 		--ok-wash: rgba(95, 196, 143, 0.14);
@@ -199,6 +202,7 @@
 	--marker: #e8c547;
 	--hand: #7fa2ff;
 	--hand-wash: rgba(127, 162, 255, 0.14);
+	--found: rgba(255, 255, 255, 0.2);
 	--ok: #5fc48f;
 	--ok-text: #7fd6a6;
 	--ok-wash: rgba(95, 196, 143, 0.14);
@@ -259,6 +263,16 @@ body {
 ::selection {
 	background: var(--hand-wash);
 	color: var(--text-bright);
+}
+
+/* Words found by a search in the review, marked where they stand. */
+::highlight(found) {
+	background-color: var(--found);
+}
+
+::highlight(found-now) {
+	background-color: var(--ink);
+	color: var(--on-ink);
 }
 
 h1,

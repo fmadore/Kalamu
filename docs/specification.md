@@ -269,6 +269,12 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
 - **Correct in place.** Corrections are kept apart from the AI output, which is never
   overwritten. Exports use the corrected text or answers, and `provenance.json` records which
   pieces were reviewed or corrected.
+- **Search** (Ctrl F) through the whole document as the review shows it, corrections included,
+  ignoring capitals, accents and Arabic vowel marks: every page of a scan or every piece of a
+  recording, the matches counted and listed by page or by the time of their line, Enter going
+  from one to the next, each shown with its words marked (and a recording playing from its
+  line). In a table of contents, the search keeps the entries that hold the words. Nothing is
+  sent: the search runs on what the app already keeps.
 - **Mark as reviewed** (Ctrl Enter), so long jobs can be checked in several sittings and
   progress shows what has been verified, not only what has been processed.
 - **Error rates after review.** Every page or part the researcher corrected, or marked as

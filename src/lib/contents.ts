@@ -4,6 +4,7 @@
 import type { Field } from './bindings/Field.js';
 import type { FieldAnswer } from './bindings/FieldAnswer.js';
 import type { Setup } from './bindings/Setup.js';
+import { find } from './search.js';
 
 export const TITLE = 'title';
 export const PAGES = 'pages';
@@ -50,4 +51,9 @@ export function pagesOf(pages: string): number[] {
 /** The answers that hold a corrected table of contents. */
 export function asAnswers(entries: FieldAnswer[][]): FieldAnswer[] {
 	return [{ key: ENTRIES, value: entries }];
+}
+
+/** Whether one of an entry's fields holds the words searched for. */
+export function holds(entry: FieldAnswer[], query: string): boolean {
+	return entry.some((a) => find(valueText(entry, a.key), query).length > 0);
 }

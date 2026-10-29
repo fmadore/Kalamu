@@ -1,9 +1,10 @@
 <script lang="ts">
 	// A YouTube video next to its transcript, on the dark stage like a scan. Nothing is asked of
 	// YouTube until the researcher plays: a poster stands in, and the first play (or a click on a
-	// line) loads YouTube's privacy-enhanced player there. The player is driven by messages, so
+	// line, or a match of a search) loads YouTube's privacy-enhanced player there. The player is driven by messages, so
 	// no YouTube script runs in the app. A video its owner keeps off other sites, or an offline
 	// PC, gets a card that opens it on YouTube instead, and lines then open it there.
+	import { untrack } from 'svelte';
 	import Icon from './Icon.svelte';
 	import TranscriptLines from './TranscriptLines.svelte';
 	import type { Segment } from '#lib/bindings/Segment.js';
@@ -11,8 +12,18 @@
 	import { openLink } from '#lib/state.svelte.js';
 	import { EMBED_ORIGIN, embedUrl, playerCommand, playerNews, videoAt } from '#lib/youtube.js';
 
-	let { url, title, segments }: { url: string; title: string | null; segments: Segment[] } =
-		$props();
+	let {
+		url,
+		title,
+		segments,
+		seek = null
+	}: {
+		url: string;
+		title: string | null;
+		segments: Segment[];
+		/** Play from this time into the video; a new `id` plays again. */
+		seek?: { ms: number; id: number } | null;
+	} = $props();
 
 	const m = messages();
 	/** Set on the first play: where to start, which loads the player. */
@@ -66,8 +77,7 @@
 		return () => window.removeEventListener('message', onMessage);
 	});
 
-	function jump(segment: Segment) {
-		const ms = Number(segment.start_ms);
+	function playFrom(ms: number) {
 		if (blocked) {
 			void openLink(videoAt(url, ms));
 			return;
@@ -80,6 +90,13 @@
 		send('seekTo', [ms / 1000, true]);
 		send('playVideo');
 	}
+
+	const jump = (segment: Segment) => playFrom(Number(segment.start_ms));
+
+	$effect(() => {
+		const s = seek;
+		if (s) untrack(() => playFrom(s.ms));
+	});
 
 	const current = (s: Segment) => now * 1000 >= Number(s.start_ms) && now * 1000 < Number(s.end_ms);
 </script>
