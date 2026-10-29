@@ -4,8 +4,8 @@
 	// text file set as text, or a player), the text or answers beside it, and a third pane while a
 	// compared text is open, with handles on the boundaries; the strip of pages at the foot. In a
 	// narrow window the panes stack. Ctrl Enter marks the piece reviewed; Page Up and Page Down,
-	// or Alt and the arrows, turn the pages.
-	import type { Snippet } from 'svelte';
+	// or Alt and the arrows, turn the pages; Ctrl F opens the search, under the masthead.
+	import { tick, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 	import SourcePane from './SourcePane.svelte';
 	import Splitter from './Splitter.svelte';
@@ -21,6 +21,8 @@
 		error,
 		pager,
 		actions,
+		search,
+		searching = $bindable(false),
 		reviewed = null,
 		onreviewed,
 		onstep,
@@ -52,6 +54,9 @@
 		pager?: Snippet;
 		/** The masthead's actions, before "mark as reviewed". */
 		actions?: Snippet;
+		/** The search, under the masthead while it is open. */
+		search?: Snippet;
+		searching?: boolean;
 		/** Whether the piece is reviewed; null where it cannot be marked (while correcting). */
 		reviewed?: boolean | null;
 		onreviewed?: () => void;
@@ -93,7 +98,23 @@
 	const comparing = $derived(third !== undefined);
 	const cuts = $derived(layout.cuts(comparing));
 
+	let findRow = $state<HTMLElement | null>(null);
+
+	/** Opens the search, or brings the focus back to it, its words selected. */
+	async function openSearch() {
+		searching = true;
+		await tick();
+		const input = findRow?.querySelector('input');
+		input?.focus();
+		input?.select();
+	}
+
 	function onkeydown(e: KeyboardEvent) {
+		if (e.ctrlKey && e.key.toLowerCase() === 'f' && search) {
+			e.preventDefault();
+			void openSearch();
+			return;
+		}
 		if (e.ctrlKey && e.key === 'Enter') {
 			if (reviewed === null || !onreviewed) return;
 			e.preventDefault();
@@ -127,6 +148,16 @@
 		</div>
 		{#if pager}<div class="pager">{@render pager()}</div>{/if}
 		<div class="actions">
+			{#if search}
+				<button
+					class="btn icon toggle"
+					aria-pressed={searching}
+					aria-label={m.review.search}
+					title="{m.review.search} ({m.review.searchShortcut})"
+					onclick={() => (searching ? (searching = false) : openSearch())}
+					><Icon name="search" size={14} /></button
+				>
+			{/if}
 			{@render actions?.()}
 			{#if reviewed !== null && onreviewed}
 				{#if reviewed}
@@ -149,6 +180,8 @@
 			{/if}
 		</div>
 	</header>
+
+	{#if search && searching}<div bind:this={findRow}>{@render search()}</div>{/if}
 
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 
@@ -241,6 +274,11 @@
 		display: flex;
 		justify-content: flex-end;
 		gap: var(--space-2);
+	}
+	/* A view that is on reads as pressed in, not as an action. */
+	.toggle[aria-pressed='true'] {
+		background: var(--wash);
+		border-color: var(--line-strong);
 	}
 	.error {
 		color: var(--danger-text);

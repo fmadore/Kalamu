@@ -14,6 +14,7 @@
 	import FileText from '@lucide/svelte/icons/file-text';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Laptop from '@lucide/svelte/icons/laptop';
+	import List from '@lucide/svelte/icons/list';
 	import ListTree from '@lucide/svelte/icons/list-tree';
 	import Link from '@lucide/svelte/icons/link';
 	import Mic from '@lucide/svelte/icons/mic';
@@ -47,6 +48,7 @@
 		file: FileText,
 		laptop: Laptop,
 		link: Link,
+		list: List,
 		prompts: ScrollText,
 		settings: Settings,
 		close: X,

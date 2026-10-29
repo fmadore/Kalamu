@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Field } from './bindings/Field.js';
-import { asAnswers, entriesOf, pagesOf, valueText } from './contents.js';
+import { asAnswers, entriesOf, holds, pagesOf, valueText } from './contents.js';
 import { fromDraft, toDraft } from './fields.js';
 
 const fields: Field[] = [
@@ -37,5 +37,19 @@ describe('a table of contents in the review', () => {
 		expect(entriesOf(asAnswers([back]))).toEqual([back]);
 		// No entries read back as an empty list.
 		expect(entriesOf([{ key: 'entries', value: [] }])).toEqual([]);
+	});
+
+	it('finds the entries that hold the words searched for, in any field', () => {
+		const entry = [
+			{ key: 'title', value: '[Éditorial] Le Hajj' },
+			{ key: 'pages', value: '1-2' },
+			{ key: 'authors', value: ['La Rédaction', 'A. Diallo'] }
+		];
+		expect(holds(entry, 'hajj')).toBe(true);
+		expect(holds(entry, 'diallo')).toBe(true);
+		expect(holds(entry, 'redaction')).toBe(true);
+		// Words are not joined across fields.
+		expect(holds(entry, 'hajj 1')).toBe(false);
+		expect(holds(entry, 'zakat')).toBe(false);
 	});
 });

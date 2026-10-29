@@ -1,7 +1,9 @@
 <script lang="ts">
 	// The recording next to its transcript: the piece under review plays here, the line being
 	// spoken is highlighted, and clicking a line jumps to it. Times are shown on the recording's
-	// clock; the player plays only this piece, from the recording itself when it can.
+	// clock; the player plays only this piece, from the recording itself when it can. A search
+	// that goes to a line plays it too, once the piece is loaded.
+	import { untrack } from 'svelte';
 	import Icon from './Icon.svelte';
 	import TranscriptLines from './TranscriptLines.svelte';
 	import type { PieceAudio } from '#lib/bindings/PieceAudio.js';
@@ -14,13 +16,16 @@
 		sourceId,
 		index,
 		offsetMs,
-		segments
+		segments,
+		seek = null
 	}: {
 		jobId: string;
 		sourceId: string;
 		index: number;
 		offsetMs: number;
 		segments: Segment[];
+		/** Play from this time into the piece; a new `id` plays again. */
+		seek?: { ms: number; id: number } | null;
 	} = $props();
 
 	const m = messages();
@@ -75,9 +80,22 @@
 		else failed = true;
 	}
 
+	/** Where to play from once the piece has loaded, in milliseconds into it. */
+	let cued: number | null = null;
+
 	function ready() {
 		if (player && start > 0) player.currentTime = start;
+		if (cued !== null) playFrom(cued);
 	}
+
+	$effect(() => {
+		const s = seek;
+		if (!s) return;
+		untrack(() => {
+			if (player && audio && player.readyState > 0) playFrom(s.ms);
+			else cued = s.ms;
+		});
+	});
 
 	// The recording plays on past the piece; stop where the piece ends.
 	function tick() {
@@ -94,11 +112,14 @@
 			.join(':');
 	}
 
-	function jump(segment: Segment) {
+	function playFrom(ms: number) {
+		cued = null;
 		if (!player) return;
-		player.currentTime = start + Number(segment.start_ms) / 1000;
+		player.currentTime = start + ms / 1000;
 		void player.play();
 	}
+
+	const jump = (segment: Segment) => playFrom(Number(segment.start_ms));
 
 	function toggle() {
 		if (!player) return;

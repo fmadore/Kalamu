@@ -3,27 +3,31 @@
 	// pages below. Clicking an entry shows its first page; turning the page brings its entries
 	// into view, marked. Under the entries, what the first step read on that page, to check an
 	// entry against its source. The entries can be corrected, added and removed; the model's own
-	// stay kept apart.
+	// stay kept apart. A search keeps the entries that hold its words, marked where they stand.
 	import { onMount, tick } from 'svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
 	import PageStrip from './PageStrip.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
+	import SearchBar from './SearchBar.svelte';
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import {
 		asAnswers,
 		entriesOf,
 		entryFields,
+		holds,
 		PAGES,
 		pagesOf,
 		TITLE,
 		valueText
 	} from '#lib/contents.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
+	import { clearFound, markFound } from '#lib/found.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { Review } from '#lib/review.svelte.js';
+	import { searchable } from '#lib/search.js';
 
 	let { jobId, sourceId }: { jobId: string; sourceId: string } = $props();
 	const m = messages();
@@ -42,6 +46,20 @@
 	const pageViews = $derived(mine.filter((v) => v.piece.kind === 'page'));
 	const combined = $derived(mine.find((v) => v.piece.kind === 'whole'));
 	const entries = $derived(entriesOf(combined?.corrected_fields ?? combined?.ai_fields ?? []));
+
+	let searching = $state(false);
+	let query = $state('');
+	$effect(() => {
+		if (!searching) query = '';
+	});
+	const filtering = $derived(searching && searchable(query));
+	/** The entries listed, each with its number in the table: those holding the words searched
+	 * for, or all of them. */
+	const shown = $derived(
+		entries
+			.map((entry, i) => ({ entry, n: i + 1 }))
+			.filter(({ entry }) => !filtering || holds(entry, query))
+	);
 	const shownPage = $derived(pageViews[page]);
 	const pageNumber = $derived(shownPage?.piece.kind === 'page' ? shownPage.piece.number : page + 1);
 	/** What the first step read on the page shown. */
@@ -76,7 +94,7 @@
 
 	// A new page brings its first entry to the top of the list.
 	$effect(() => {
-		const here = entries.findIndex(onPage);
+		const here = shown.findIndex(({ entry }) => onPage(entry));
 		if (keepList) {
 			keepList = false;
 			return;
@@ -89,6 +107,14 @@
 				behavior: still ? 'auto' : 'smooth'
 			});
 		});
+	});
+
+	// The words searched for, marked in the entries listed.
+	$effect(() => {
+		void shown;
+		if (!list || !filtering) return;
+		markFound(list, '.entry-title, .entry-pages, dd', query);
+		return clearFound;
 	});
 
 	function addEntry() {
@@ -117,7 +143,9 @@
 {/snippet}
 
 {#snippet tools()}
-	{m.review.entries(entries.length)}
+	{filtering
+		? m.review.entriesFound(shown.length, entries.length)
+		: m.review.entries(entries.length)}
 {/snippet}
 
 {#snippet panel()}
@@ -163,12 +191,27 @@
 	{/if}
 {/snippet}
 
+{#snippet searchBar()}
+	<SearchBar
+		bind:query
+		placeholder={m.review.searchEntries}
+		summary={!filtering
+			? ''
+			: shown.length === 0
+				? m.review.notFound
+				: m.review.entriesFound(shown.length, entries.length)}
+		onclose={() => (searching = false)}
+	/>
+{/snippet}
+
 <ReviewFrame
 	{jobId}
 	jobName={review.job?.name ?? null}
 	fileName={review.source?.file_name ?? ''}
 	error={review.error}
 	{actions}
+	search={searchBar}
+	bind:searching
 	reviewed={combined && done && !editing ? combined.reviewed : null}
 	onreviewed={() => combined && save(combined.corrected_fields, !combined.reviewed)}
 	onstep={step}
@@ -223,9 +266,10 @@
 	{:else if !combined || entries.length === 0}
 		<p class="muted">{m.review.notCombined}</p>
 	{:else}
+		{#if shown.length === 0}<p class="muted">{m.review.noEntryFound}</p>{/if}
 		<ol class="entries" bind:this={list}>
-			{#each entries as entry, i (i)}
-				<li class:here={onPage(entry)}>
+			{#each shown as { entry, n } (n)}
+				<li value={n} class:here={onPage(entry)}>
 					<button class="entry" onclick={() => showEntry(entry)}>
 						<span class="entry-title">{valueText(entry, TITLE)}</span>
 						<span class="entry-pages mono" title={m.review.goToPage(valueText(entry, PAGES))}

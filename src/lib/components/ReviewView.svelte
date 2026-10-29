@@ -3,7 +3,8 @@
 	// researcher's corrections) is the text shown; where the other set-ups, or the model under a
 	// correction, read differently, the words are highlighted, and pointing at them shows the
 	// readings over the text, any of which can be taken as a correction. Another set-up's whole
-	// text can open in a third pane beside it.
+	// text can open in a third pane beside it. A search finds words across every page of the text
+	// shown, corrections included, and goes to each match (a recording plays from its line).
 	import { onMount, tick } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
@@ -12,6 +13,7 @@
 	import PageStrip from './PageStrip.svelte';
 	import ReadingsPopover from './ReadingsPopover.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
+	import SearchBar, { type ListedMatch } from './SearchBar.svelte';
 	import SiglaKey from './SiglaKey.svelte';
 	import SpeakerList from './SpeakerList.svelte';
 	import VideoPane from './VideoPane.svelte';
@@ -20,9 +22,10 @@
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { formatPercent, formatUsd, messages } from '#lib/i18n/index.js';
-	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
+	import { clock, pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { layout, Review } from '#lib/review.svelte.js';
 	import { describeScore } from '#lib/scores.js';
+	import { context, search, searchable, type Searched } from '#lib/search.js';
 	import { api } from '#lib/tauri.js';
 
 	let { jobId, sourceId }: { jobId: string; sourceId: string } = $props();
@@ -176,7 +179,7 @@
 		pane?.querySelector<HTMLElement>(`[data-entry="${id}"]`) ?? null;
 
 	/** Scrolls a pane so that an element in it is in view, a third of the way down. */
-	function reveal(pane: HTMLElement | null, el: Element | null) {
+	function reveal(pane: HTMLElement | null, el: Element | Range | null) {
 		if (!pane || !el) return;
 		const box = pane.getBoundingClientRect();
 		const r = el.getBoundingClientRect();
@@ -225,6 +228,68 @@
 	}
 
 	const labelOf = (v: PieceView | undefined) => (v ? pieceLabel(v.piece, m, online) : '');
+
+	let searching = $state(false);
+	let query = $state('');
+	/** The match gone to, among all of them; -1 before any. */
+	let hitAt = $state(-1);
+	/** Where a recording should play from, after going to a match. */
+	let seek = $state<{ ms: number; id: number } | null>(null);
+	/** Set when going to a match, until its words are in view. */
+	let revealHit = false;
+
+	// Closing the search forgets the words; new words start from the first match.
+	$effect(() => {
+		if (!searching) query = '';
+	});
+	$effect(() => {
+		void query;
+		hitAt = -1;
+	});
+
+	/** Each piece as it is searched: the first set-up's text as shown, corrections included. */
+	const searched: Searched[] = $derived(
+		indices.map((i) => {
+			const v = views.find((x) => x.index === i && x.setup_id === setups[0]?.id);
+			return {
+				index: i,
+				text: shownText(v),
+				startMs: v?.piece.kind === 'segment' ? Number(v.piece.start_ms) : 0,
+				segments: v?.segments ?? []
+			};
+		})
+	);
+	const hits = $derived(search(searched, query));
+	const listed: ListedMatch[] = $derived(
+		hits.map((h) => {
+			const piece = searched.find((p) => p.index === h.index);
+			return {
+				group: labelOf(views.find((v) => v.index === h.index)),
+				time: recording && h.lineMs !== null ? clock((piece?.startMs ?? 0) + h.lineMs) : null,
+				...context(piece?.text ?? '', h)
+			};
+		})
+	);
+	const summary = $derived(
+		!searchable(query)
+			? ''
+			: hits.length === 0
+				? m.review.notFound
+				: hitAt >= 0
+					? m.review.foundAt(hitAt + 1, hits.length)
+					: m.review.found(hits.length)
+	);
+	/** Which match on the page shown is the one gone to. */
+	const foundHere = $derived(hits[hitAt]?.index === index ? hits[hitAt].nth : -1);
+
+	function goToHit(i: number) {
+		const h = hits[i];
+		if (!h) return;
+		hitAt = i;
+		revealHit = true;
+		if (h.index !== index) goTo(h.index);
+		if (recording && h.lineMs !== null) seek = { ms: h.lineMs, id: (seek?.id ?? 0) + 1 };
+	}
 
 	// The page image follows the page.
 	$effect(() => review.showPage(index));
@@ -321,7 +386,12 @@
 
 {#snippet player()}
 	{#if online && source}
-		<VideoPane url={source.path} title={source.title ?? null} segments={timed?.segments ?? []} />
+		<VideoPane
+			url={source.path}
+			title={source.title ?? null}
+			segments={timed?.segments ?? []}
+			{seek}
+		/>
 	{:else}
 		<AudioPane
 			{jobId}
@@ -329,8 +399,21 @@
 			{index}
 			offsetMs={timed?.piece.kind === 'segment' ? Number(timed.piece.start_ms) : 0}
 			segments={timed?.segments ?? []}
+			{seek}
 		/>
 	{/if}
+{/snippet}
+
+{#snippet searchBar()}
+	<SearchBar
+		bind:query
+		placeholder={m.review.searchText}
+		{summary}
+		matches={listed}
+		current={hitAt}
+		onpick={goToHit}
+		onclose={() => (searching = false)}
+	/>
 {/snippet}
 
 {#snippet tools()}
@@ -470,6 +553,8 @@
 	error={review.error}
 	{pager}
 	{actions}
+	search={searchBar}
+	bind:searching
 	reviewed={lead && lead.ai_text !== null && !editing ? lead.reviewed : null}
 	onreviewed={toggleReviewed}
 	onstep={step}
@@ -531,6 +616,13 @@
 			}}
 			emptyLabel={m.review.addedHere}
 			controls="readings"
+			find={searching ? query : ''}
+			current={foundHere}
+			onfound={(at) => {
+				if (!revealHit) return;
+				revealHit = false;
+				reveal(textPane, at);
+			}}
 			onpick={(id) => (selected === id && pinned ? hide() : show(id, true))}
 			onpoint={pointAt}
 			onaway={pointAway}

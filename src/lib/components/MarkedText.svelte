@@ -2,8 +2,10 @@
 	// A text with the places where the witnesses differ marked. The reading text comes in
 	// numbered lines, a number in the margin every fifth line and on every line that differs; a
 	// compared text runs on as written. Where one text has words the other lacks, a narrow mark
-	// stands for them. A place pointed at is shown linked in both texts.
+	// stands for them. A place pointed at is shown linked in both texts. Words searched for are
+	// marked in the reading text, the match gone to more strongly.
 	import { numbered as numberedLine, type Entry, type Line } from '#lib/apparatus.js';
+	import { clearFound, markFound } from '#lib/found.js';
 
 	let {
 		lines = null,
@@ -15,6 +17,9 @@
 		corrected = () => false,
 		emptyLabel,
 		controls = null,
+		find = '',
+		current = -1,
+		onfound,
 		onpick,
 		onpoint,
 		onaway
@@ -34,10 +39,27 @@
 		emptyLabel: string;
 		/** The id of the readings a place opens, if it opens them. */
 		controls?: string | null;
+		/** Words searched for, marked in the reading text. */
+		find?: string;
+		/** Which of them (from 0) is the match gone to. */
+		current?: number;
+		/** Given where the match gone to stands, each time the marks are drawn. */
+		onfound?: (at: Range) => void;
 		onpick: (entry: number) => void;
 		onpoint: (e: PointerEvent, entry: number) => void;
 		onaway: () => void;
 	} = $props();
+
+	let reading = $state<HTMLElement | null>(null);
+
+	// The marks follow the words, the match gone to and the text as drawn.
+	$effect(() => {
+		void lines;
+		if (!reading || !find) return;
+		const now = markFound(reading, '.t', find, current);
+		if (now) onfound?.(now);
+		return clearFound;
+	});
 </script>
 
 <!-- Inline, with no white space between the parts: the text is set as written. -->
@@ -45,7 +67,7 @@
 {#snippet text(part: Line['parts'][number])}{#if part.entry !== null}{@const id = part.entry}<button class="mark" class:empty={part.text === ''} class:marked class:corr={corrected(id)} class:on={selected === id} class:linked={hovered === id} data-entry={id} aria-expanded={controls ? selected === id : undefined} aria-controls={controls && selected === id ? controls : undefined} aria-label={part.text === '' ? emptyLabel : undefined} onclick={() => onpick(id)} onpointerenter={(e) => onpoint(e, id)} onpointerleave={onaway}>{part.text}</button>{:else}{part.text}{/if}{/snippet}
 
 {#if lines}
-	<div class="text numbered" lang="">
+	<div class="text numbered" lang="" bind:this={reading}>
 		{#each lines as line, li (li)}
 			<div class="line" class:blank={line.number === 0}>
 				{#if numberedLine(line.number, entries)}<span class="n num" aria-hidden="true"
