@@ -12,7 +12,7 @@ import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
 import type { Task } from './bindings/Task.js';
 import { messages } from './i18n/index.js';
-import { api, notify } from './tauri.js';
+import { api, notify, openUrl } from './tauri.js';
 
 export type View =
 	| { name: 'new'; task?: Task; paths?: string[] }
@@ -172,4 +172,13 @@ export function toast(message: string): void {
 	setTimeout(() => {
 		if (app.toast === message) app.toast = null;
 	}, 4000);
+}
+
+/** Open a web page in the default browser, and say so when it cannot be opened. */
+export async function openLink(url: string): Promise<void> {
+	try {
+		await openUrl(url);
+	} catch {
+		toast(messages().common.linkFailed(url));
+	}
 }

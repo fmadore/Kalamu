@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { toast } from '#lib/state.svelte.js';
-	import { openSupportPage, SUPPORT_URL } from '#lib/support.js';
+	import { openLink } from '#lib/state.svelte.js';
+	import { SUPPORT_URL } from '#lib/support.js';
 
 	/** The Buy Me a Coffee link. A real link, so it reads as one to a screen reader and shows
 	 *  its address on hover, but the click goes through the opener, which uses the default
@@ -19,13 +18,9 @@
 
 	const m = messages();
 
-	async function open(event: MouseEvent) {
+	function open(event: MouseEvent) {
 		event.preventDefault();
-		try {
-			await openSupportPage();
-		} catch (e) {
-			toast(describeError(e, m));
-		}
+		void openLink(SUPPORT_URL);
 	}
 </script>
 

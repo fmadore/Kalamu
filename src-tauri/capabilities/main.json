@@ -14,7 +14,10 @@
     "dialog:allow-save",
     "dialog:allow-ask",
     "opener:allow-reveal-item-in-dir",
-    "opener:allow-open-url",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://*" }]
+    },
     "notification:default",
     "allow-app-info",
     "allow-get-settings",

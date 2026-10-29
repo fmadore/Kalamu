@@ -2,8 +2,8 @@
 	import { CREDIT_URLS } from '#lib/credits.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages, placeholders } from '#lib/i18n/index.js';
-	import { api, openUrl } from '#lib/tauri.js';
-	import { app, hasKey, refreshKeys, toast } from '#lib/state.svelte.js';
+	import { api } from '#lib/tauri.js';
+	import { app, hasKey, openLink, refreshKeys, toast } from '#lib/state.svelte.js';
 	import ExternalLink from './ExternalLink.svelte';
 	import OfflineModels from './OfflineModels.svelte';
 	import SupportLink from './SupportLink.svelte';
@@ -101,7 +101,7 @@
 								return m.settings.keyMissing;
 							})}>{m.settings.remove}</button
 					>
-					<button class="btn sm ghost" onclick={() => openUrl(p.key_url)}
+					<button class="btn sm ghost" onclick={() => openLink(p.key_url)}
 						>{m.settings.getKey}</button
 					>
 				</div>

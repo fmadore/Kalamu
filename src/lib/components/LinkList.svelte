@@ -6,7 +6,8 @@
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { api, openUrl } from '#lib/tauri.js';
+	import { openLink } from '#lib/state.svelte.js';
+	import { api } from '#lib/tauri.js';
 	import { splitLinks } from '#lib/youtube.js';
 
 	let {
@@ -97,7 +98,7 @@
 							<button
 								class="btn sm ghost"
 								aria-label={m.newJob.openVideoNamed(name)}
-								onclick={() => link.source && openUrl(link.source.path)}
+								onclick={() => link.source && openLink(link.source.path)}
 								>{m.newJob.openVideo}</button
 							>
 						{:else}
