@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use base64::Engine as _;
 use kalamu_core::{Correction, JobId, SetupId, SourceId, SpeakerNames};
-use kalamu_engine::{ComparisonReport, DiffSpan, PieceAudio, PieceView};
+use kalamu_engine::{ComparisonReport, DiffSpan, JobScores, PieceAudio, PieceView};
 use kalamu_media::OpenSource;
 use tauri::{AppHandle, Manager, State};
 
@@ -160,6 +160,11 @@ pub fn compare_source(
     source_id: SourceId,
 ) -> CmdResult<ComparisonReport> {
     Ok(state.engine.compare(job_id, source_id)?)
+}
+
+#[tauri::command]
+pub fn job_scores(state: State<'_, AppState>, job_id: JobId) -> CmdResult<JobScores> {
+    Ok(state.engine.job_scores(job_id)?)
 }
 
 #[tauri::command]

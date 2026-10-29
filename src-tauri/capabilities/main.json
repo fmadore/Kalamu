@@ -68,6 +68,7 @@
     "allow-save-speaker-names",
     "allow-export-source",
     "allow-compare-source",
+    "allow-job-scores",
     "allow-diff-texts",
     "allow-set-taskbar-progress",
     "allow-set-tray-state",

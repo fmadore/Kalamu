@@ -53,7 +53,11 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   pages showing what is left; a player for
   recordings with speakers that can be named; an analysis review that collates answers by
   field and finds names in the document.
-- **Comparison mode** with character error rates against corrected pages.
+- **Comparison mode**, each set-up scored against the reviewed pages.
+- **Error rates after review, for any job**: character and word error rates against every
+  page corrected or marked as reviewed, summed over all the characters and words, for the job
+  and each document on its page and for the document in the review, in plain words
+  ([decision](decisions/2026-10-29-error-rates-after-review.md)).
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
   Mistral at half price, answered within a day and collected after the app was closed; cached
   input billed at its own price; both costs shown before starting
@@ -79,13 +83,6 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Refactor the review**: extract the frame shared by the transcription and analysis reviews,
   and split New job into smaller components (see the
   [25 October checkpoint](decisions/2026-10-25-analyses-review-and-pipelines.md)).
-- **Error rates after review, for any job**: character and word error rates against the
-  reviewed pages for a job with one set-up too, not only in comparison mode, shown per document
-  and for the job. A page marked as reviewed without corrections counts as a reference (today
-  only corrected pages do, which overstates errors), and the rates are taken over all the
-  characters or words rather than averaged by page. Said in plain words ("about one character
-  in 70 wrong"), with the caveat that the reference is the researcher's correction of the
-  model's own text, so missed errors do not count.
 - **Search in the review**, built with the refactor: the whole document's text, corrections
   included, searched across its pages or a recording's lines; the hits listed by page or time,
   a click going there with the words highlighted (and a recording playing from there); in a

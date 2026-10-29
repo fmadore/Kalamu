@@ -14,6 +14,7 @@ import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { EstimateRow } from './bindings/EstimateRow.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { Job } from './bindings/Job.js';
+import type { JobScores } from './bindings/JobScores.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { NewJob } from './bindings/NewJob.js';
@@ -109,6 +110,7 @@ export const api = {
 		invoke<string[]>('export_source', { jobId, setupId, sourceId }),
 	compareSource: (jobId: string, sourceId: string) =>
 		invoke<ComparisonReport>('compare_source', { jobId, sourceId }),
+	jobScores: (jobId: string) => invoke<JobScores>('job_scores', { jobId }),
 	diffTexts: (left: string, right: string) => invoke<DiffSpan[]>('diff_texts', { left, right }),
 	setTaskbarProgress: (percent: number | null) => invoke<void>('set_taskbar_progress', { percent }),
 	setTrayState: (state: TrayState) => invoke<void>('set_tray_state', { state }),

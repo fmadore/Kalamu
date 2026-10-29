@@ -300,6 +300,7 @@ pub fn run() {
             commands::review::save_speaker_names,
             commands::review::export_source,
             commands::review::compare_source,
+            commands::review::job_scores,
             commands::review::diff_texts,
             commands::window::set_taskbar_progress,
             commands::window::set_tray_state,

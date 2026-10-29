@@ -260,6 +260,14 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   pieces were reviewed or corrected.
 - **Mark as reviewed** (Ctrl Enter), so long jobs can be checked in several sittings and
   progress shows what has been verified, not only what has been processed.
+- **Error rates after review.** Every page or part the researcher corrected, or marked as
+  reviewed without changing it, is a reference: extracted text, transcriptions and corrections
+  are scored against it in character and word error rates, summed over every character and
+  word rather than averaged by page, and runs of white space counted as one space. The job's
+  page gives them for the job and for each document, the review's foot for the document open,
+  in plain words ("1.4% of characters and 5.2% of words wrong (about 1 character in 71), on 12
+  reviewed pages"). They are said to count only the errors the researcher caught: the
+  reference is a correction of the model's own text.
 
 The review opens while a job is still running, so the first pages can be checked before the
 rest of the folder is processed.
@@ -272,8 +280,9 @@ results together.
 
 - **Try a sample first.** Comparison can run on a few pages before committing a whole folder,
   and the cost estimate shows each set-up separately.
-- **Scores when a reference exists.** Corrected pages serve as references: the app computes
-  character error rates for each set-up; without one, the highlighted differences show where
+- **Scores when a reference exists.** A page corrected or reviewed in any set-up is the
+  reference for all of them, a correction before a text reviewed as it stands: each set-up's
+  error rates are given side by side; without one, the highlighted differences show where
   they disagree.
 - **Every version is kept**, with the set-up in the file name.
 - **Built on the cache.** Adding a third model to an existing comparison only runs the new one.
