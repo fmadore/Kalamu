@@ -4,4 +4,4 @@ import type { PageHalf } from "./PageHalf";
 /**
  * Which part of a source a piece covers.
  */
-export type PieceRef = { "kind": "page", number: number, half?: PageHalf, } | { "kind": "segment", index: number, start_ms: number, end_ms: number, } | { "kind": "whole" };
+export type PieceRef = { "kind": "page", number: number, half?: PageHalf, } | { "kind": "segment", index: number, start_ms: number, end_ms: number, } | { "kind": "whole" } | { "kind": "passage", number: number, };

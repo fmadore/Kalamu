@@ -76,7 +76,11 @@
 		const draft: Record<string, string | string[]> = {};
 		for (const f of fields) {
 			const value = answers.find((a) => a.key === f.key)?.value ?? '';
-			const items = Array.isArray(value) ? value : value ? [value] : [];
+			const items = Array.isArray(value)
+				? value.filter((v): v is string => typeof v === 'string')
+				: value
+					? [value]
+					: [];
 			draft[f.key] =
 				f.kind.type === 'list'
 					? items.join('\n')
@@ -154,7 +158,8 @@
 		split = Math.min(Math.max(at, min), 1 - min);
 	}
 
-	const kindLabel = (f: Field) => m.fields.kinds[f.kind.type];
+	const kindLabel = (f: Field) =>
+		f.kind.type === 'entries' ? m.fields.kinds.list : m.fields.kinds[f.kind.type];
 	const editedSetup = $derived(setups.find((s) => s.id === editing?.setupId));
 
 	onMount(() => {

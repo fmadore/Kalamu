@@ -52,4 +52,55 @@ pub struct Setup {
     pub prompt: PromptSnapshot,
     #[serde(default)]
     pub options: SetupOptions,
+    /// For a table of contents, the second step: the model that combines the pages' readings,
+    /// which may be another provider's (a large model reads the pages, a small one combines).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub merge: Option<MergeStep>,
+}
+
+/// A table of contents' second step: one call per document, over the first step's readings.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct MergeStep {
+    pub provider: ProviderId,
+    pub model: String,
+    pub prompt: PromptSnapshot,
+}
+
+/// The model chosen for a table of contents' second step, before its prompt is frozen: in a
+/// new job's request and in a saved pipeline.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct MergeModel {
+    pub provider: ProviderId,
+    pub model: String,
+}
+
+/// One call's provider, model and prompt: a set-up's, or its merge step's.
+#[derive(Debug, Clone, Copy)]
+pub struct Step<'a> {
+    pub provider: &'a ProviderId,
+    pub model: &'a str,
+    pub prompt: &'a PromptSnapshot,
+}
+
+impl Setup {
+    /// The call each page or segment makes.
+    pub fn step(&self) -> Step<'_> {
+        Step {
+            provider: &self.provider,
+            model: &self.model,
+            prompt: &self.prompt,
+        }
+    }
+
+    /// The call that combines a document's pages, for a table of contents.
+    pub fn merge_step(&self) -> Option<Step<'_>> {
+        self.merge.as_ref().map(|m| Step {
+            provider: &m.provider,
+            model: &m.model,
+            prompt: &m.prompt,
+        })
+    }
 }

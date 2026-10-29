@@ -3,4 +3,4 @@
 /**
  * What a job does with its sources.
  */
-export type Task = "text_extraction" | "audio_transcription" | "analysis";
+export type Task = "text_extraction" | "audio_transcription" | "analysis" | "contents" | "text_correction";

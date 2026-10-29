@@ -4,11 +4,11 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use kalamu_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
+use kalamu_core::provenance::{GeneratorInfo, ProvenanceMerge, ProvenancePrompt, ProvenanceSource};
 use kalamu_core::speakers::{rename_segments, rename_text};
 use kalamu_core::{
     CacheKey, ExportDocument, ExportPart, InputKind, Job, JobId, OutputDestination, PieceRef,
-    PieceState, ProgressEvent, Provenance, Segment, Setup, SetupId, SourceFile, SourceId,
+    PieceState, ProgressEvent, Provenance, Segment, Setup, SetupId, SourceFile, SourceId, Task,
     Timestamp, Usage,
 };
 
@@ -179,6 +179,7 @@ impl Engine {
         let mut usage = Usage::default();
         let mut cost: Option<f64> = None;
         let mut versions = BTreeSet::new();
+        let mut merge_versions = BTreeSet::new();
         let mut detected = BTreeSet::new();
         let mut first_read: Option<Timestamp> = None;
         let (mut corrected, mut reviewed) = (Vec::new(), Vec::new());
@@ -197,10 +198,20 @@ impl Engine {
             if let Some(c) = result.cost_usd {
                 cost = Some(cost.unwrap_or(0.0) + c);
             }
-            if let Some(v) = &result.output.model_version
-                && v != &setup.model
-            {
-                versions.insert(v.clone());
+            // A table of contents exports its combined entries; its pages count in the usage,
+            // the cost and the model versions, as the reading they are.
+            let combined = job.task == Task::Contents && state.piece == PieceRef::Whole;
+            if let Some(v) = &result.output.model_version {
+                if combined {
+                    if setup.merge.as_ref().is_none_or(|m| &m.model != v) {
+                        merge_versions.insert(v.clone());
+                    }
+                } else if v != &setup.model {
+                    versions.insert(v.clone());
+                }
+            }
+            if job.task == Task::Contents && !combined {
+                continue;
             }
             if let Some(lang) = &result.output.detected_language {
                 detected.insert(lang.clone());
@@ -233,7 +244,7 @@ impl Engine {
             } else {
                 let previous_end = parts.last().and_then(|p: &ExportPart| match p.piece {
                     PieceRef::Segment { end_ms, .. } => Some(end_ms),
-                    PieceRef::Page { .. } | PieceRef::Whole => None,
+                    PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => None,
                 });
                 let renamed = rename_segments(&result.output.segments, &speaker_names);
                 absolute(&state.piece, &renamed, previous_end)
@@ -289,10 +300,16 @@ impl Engine {
             model: setup.model.clone(),
             model_versions: versions.into_iter().collect(),
             prompt: ProvenancePrompt::from_snapshot(&setup.prompt),
+            merge: setup.merge.as_ref().map(|m| ProvenanceMerge {
+                provider: m.provider.clone(),
+                model: m.model.clone(),
+                model_versions: merge_versions.into_iter().collect(),
+                prompt: ProvenancePrompt::from_snapshot(&m.prompt),
+            }),
             languages: job.settings.languages.clone(),
             detected_languages: detected.into_iter().collect(),
             options: setup.options.clone(),
-            pieces: parts.len() as u32,
+            pieces: states.len() as u32,
             corrected,
             reviewed,
             preprocessing,
@@ -311,8 +328,8 @@ impl Engine {
 }
 
 /// Where a source's results go and the name they share: the source's name, with the set-up's
-/// label in comparison mode, and `.analysis` for analyses so they never replace the
-/// transcription or extraction they summarise.
+/// label in comparison mode, and `.analysis`, `.contents` or `.corrected` after it so they never
+/// replace the transcription or extraction they read, or the text file corrected.
 fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, String) {
     let dir = match &job.output.destination {
         OutputDestination::BesideSources => Path::new(&source.path)
@@ -335,8 +352,11 @@ fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, S
     } else {
         stem
     };
-    if job.task == kalamu_core::Task::Analysis {
-        base.push_str(".analysis");
+    match job.task {
+        Task::Analysis => base.push_str(".analysis"),
+        Task::Contents => base.push_str(".contents"),
+        Task::TextCorrection => base.push_str(".corrected"),
+        Task::TextExtraction | Task::AudioTranscription => {}
     }
     (dir, base)
 }
@@ -373,7 +393,7 @@ pub(crate) fn preprocessing(source: &SourceFile) -> Vec<String> {
 fn absolute(piece: &PieceRef, segments: &[Segment], previous_end: Option<u64>) -> Vec<Segment> {
     let offset = match piece {
         PieceRef::Segment { start_ms, .. } => *start_ms,
-        PieceRef::Page { .. } | PieceRef::Whole => 0,
+        PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => 0,
     };
     let repeated_until = previous_end.filter(|end| *end > offset);
     segments

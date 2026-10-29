@@ -184,10 +184,12 @@ impl Gemini {
     fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
         let output = Self::parse(response)?;
         match (context.task, context.analysis) {
-            (Task::Analysis, Some(fields)) => analysis::finish(output, fields),
-            (Task::Analysis, None) => Err(ProviderError::InvalidRequest(
-                "an analysis needs fields".into(),
-            )),
+            (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
+                analysis::finish(output, fields)
+            }
+            (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
+                ProviderError::InvalidRequest("an analysis needs fields".into()),
+            ),
             _ => Ok(output),
         }
     }
@@ -219,7 +221,7 @@ impl Provider for Gemini {
                 "audio/webm",
                 YOUTUBE_LINK,
             ],
-            Task::Analysis => &[
+            Task::Analysis | Task::Contents | Task::TextCorrection => &[
                 "text/plain",
                 "application/pdf",
                 "image/png",
@@ -278,7 +280,7 @@ impl Provider for Gemini {
                     .into(),
             ));
         }
-        if request.task == Task::Analysis {
+        if request.task.request_task() == Task::Analysis {
             analysis::finish(output, analysis::fields(&request)?)
         } else {
             Ok(output)

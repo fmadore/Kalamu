@@ -2,4 +2,8 @@
 import type { CostEstimate } from "./CostEstimate";
 import type { ProviderId } from "./ProviderId";
 
-export type EstimateRow = { provider: ProviderId, model: string, pages: number, estimate: CostEstimate, };
+export type EstimateRow = { provider: ProviderId, model: string, pages: number, estimate: CostEstimate, 
+/**
+ * A table of contents' second step, which combines the pages.
+ */
+merge: boolean, };

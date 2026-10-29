@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (28 October 2026)
+## Status (29 October 2026)
 
 Early development; [v0.3.0](https://github.com/fmadore/Kalamu/releases/tag/v0.3.0), the first under the name Kalamu, is
 the latest test build, for Windows on x64 and ARM64, with FFmpeg bundled. Everything below is tested
@@ -36,6 +36,13 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   structured output and checked on return; five ready-made analyses (research summary, short
   summary, scholarly publication, people, places and organisations, tone); a field editor in Prompts; CSV with a
   column per field.
+- **Detailed tables of contents** of newspaper and magazine issues, archival files and books:
+  each page read by one model, the pages combined by another, of any provider; presets ported
+  from iwac-ai-pipelines' issue index and widened; a review of the entries beside the scan; a
+  diagram in New job ([decision](decisions/2026-10-29-contents-and-correction.md)).
+- **Correcting existing text**: a PDF's text layer or a text file corrected page by page or in
+  passages, with iwac-ai-pipelines' OCR-correction prompt among the presets, and every change
+  highlighted against the original in the review.
 - **Review.** The source on a dark lightbox beside the text, in panes that can be resized,
   with another set-up's whole text beside them on demand; differences between set-ups and
   corrections highlighted in the text, their readings shown on pointing, any of which can be
@@ -87,6 +94,9 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   ([decision](decisions/2026-10-27-youtube-links.md)).
 - **Text extraction**: ALTO and PAGE XML where models return coordinates; checks for skewed
   and blurry pages.
+- **Tables of contents and corrections, live**: a run of each against the live APIs, mixing
+  providers (Gemini reading, Mistral combining), and a test of the economy path for a table of
+  contents.
 - **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa
   for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`; grouping
   variant spellings of the same name across a job, confirmed by the researcher.
@@ -126,4 +136,8 @@ are in [microsoft-store.md](microsoft-store.md); the listing text in
 - OpenRouter for open-weights models.
 - Offline text extraction with Tesseract.
 - Linking names to authority records (an id from candidate records, or none, with a reason).
+- Tables of contents of text files (a long Word report, a transcript, read in passages), and of
+  a folder of photographs taken as one document; cutting a PDF into one file per entry, to
+  analyse each article.
+- Correcting ALTO XML with its coordinates kept, as iwac-ai-pipelines does.
 - French and German Store listings, with the translated interface.

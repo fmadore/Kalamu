@@ -10,6 +10,10 @@
 		acceptsPrompt,
 		type Draft,
 		labelsSpeakers,
+		mergeDefault,
+		mergeInfo,
+		mergeModelsFor,
+		mergeProviders,
 		modelInfo,
 		modelsFor,
 		newDraft,
@@ -93,7 +97,13 @@
 					</select>
 				</label>
 				<label class="field">
-					<span>{task === 'analysis' ? m.newJob.analysis : m.newJob.prompt}</span>
+					<span
+						>{task === 'analysis'
+							? m.newJob.analysis
+							: task === 'contents'
+								? m.newJob.kindOfDocument
+								: m.newJob.prompt}</span
+					>
 					{#if !acceptsPrompt(info)}
 						<select disabled><option>{m.newJob.noPrompt}</option></select>
 					{:else}
@@ -124,12 +134,55 @@
 				{#if info?.description}
 					<p class="muted small desc">{info.description}</p>
 				{/if}
-				{#if task === 'analysis'}
+				{#if task === 'contents'}
+					<!-- The second step: any provider's model that reads text. -->
+					<div class="merge" role="group" aria-labelledby="merge-{i}">
+						<p class="label merge-title" id="merge-{i}">{m.newJob.mergeTitle}</p>
+						<label class="field">
+							<span>{m.newJob.provider}</span>
+							<select
+								bind:value={d.mergeProvider}
+								onchange={() => {
+									d.mergeModel = mergeDefault(catalog, d.mergeProvider);
+								}}
+							>
+								{#each mergeProviders(catalog) as id (id)}
+									<option value={id} disabled={!hasKey(id)}
+										>{catalog.providers.find((p) => p.id === id)?.name ?? id}</option
+									>
+								{/each}
+							</select>
+						</label>
+						<label class="field">
+							<span>{m.newJob.model}</span>
+							<select bind:value={d.mergeModel}>
+								{#each mergeModelsFor(catalog, d.mergeProvider) as mod (mod.id)}
+									<option value={mod.id}>{mod.name}</option>
+								{/each}
+							</select>
+						</label>
+						<p class="muted small desc">{m.newJob.mergeHint}</p>
+						{#if d.mergeProvider && !hasKey(d.mergeProvider)}
+							<p class="warning small">
+								{m.newJob.noKey(
+									catalog.providers.find((p) => p.id === d.mergeProvider)?.name ?? d.mergeProvider
+								)}
+							</p>
+						{/if}
+						{#if mergeInfo(catalog, d)?.costly}
+							<p class="warning small">{m.newJob.costly}</p>
+						{/if}
+					</div>
+				{/if}
+				{#if task === 'analysis' || task === 'contents'}
 					{@const fields = presets.find((p) => p.id === d.presetId)?.schema?.fields ?? []}
 					{#if fields.length > 0}
 						<p class="small desc finds">
-							<span class="label">{m.newJob.finds}</span>
-							{fields.map((f) => f.label).join(' · ')}
+							<span class="label">{task === 'contents' ? m.newJob.entryHas : m.newJob.finds}</span>
+							{(task === 'contents'
+								? [m.review.entryTitle, m.review.entryPages, ...fields.map((f) => f.label)]
+								: fields.map((f) => f.label)
+							).join(' · ')}
 							<button class="link" onclick={() => go({ name: 'prompts' })}
 								>{m.newJob.editFields}</button
 							>
@@ -293,6 +346,26 @@
 		text-underline-offset: 0.18em;
 		cursor: pointer;
 		font-size: var(--type-xs);
+	}
+	/* The second step, under the first: its own provider and model, side by side. */
+	.merge {
+		grid-column: 1 / -1;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: var(--space-2) var(--space-3);
+		align-items: end;
+		padding: var(--space-3) 0 0;
+		border-top: 1px solid var(--line);
+	}
+	.merge-title,
+	.merge .desc,
+	.merge .warning {
+		grid-column: 1 / -1;
+		margin: 0;
+	}
+	.merge select {
+		width: 100%;
+		min-width: 0;
 	}
 	.inline {
 		display: inline-flex;

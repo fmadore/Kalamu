@@ -168,6 +168,58 @@ impl OpenSource {
         pieces
     }
 
+    /// The pieces a correction sends: every page of a PDF (its text layer, so spreads are not
+    /// split), the pages or passages of a text file; the first `sample` only when trying a
+    /// sample. Images and recordings hold no text to correct.
+    pub fn text_pieces(&self, sample: Option<u32>) -> Result<Vec<PieceRef>, MediaError> {
+        let mut pieces: Vec<PieceRef> = match self {
+            Self::Pdf(pdf) => (1..=pdf.page_count()).map(PieceRef::page).collect(),
+            Self::Text(text) => text.sections()?.into_iter().map(|(p, _)| p).collect(),
+            Self::Image(_) | Self::Audio(_) | Self::YouTube(_) => {
+                return Err(MediaError::NeedsConversion(
+                    "This file holds no text to correct. Extract its text first, then correct \
+                     the result."
+                        .into(),
+                ));
+            }
+        };
+        if let Some(n) = sample {
+            pieces.truncate(n as usize);
+        }
+        Ok(pieces)
+    }
+
+    /// The text a page or passage holds before any model reads it, as a correction sends it.
+    pub fn text_of(&self, piece: &PieceRef) -> Result<String, MediaError> {
+        self.piece_text(piece)
+    }
+
+    /// The text of a page or passage, for a model that reads text only: a PDF page's text
+    /// layer, or a text file's page or passage.
+    fn piece_text(&self, piece: &PieceRef) -> Result<String, MediaError> {
+        let text = match (self, piece) {
+            (Self::Pdf(pdf), PieceRef::Page { number, .. }) => pdf.page_text(*number)?,
+            (Self::Text(text), PieceRef::Page { .. } | PieceRef::Passage { .. }) => {
+                text.section(piece)?
+            }
+            _ => {
+                return Err(MediaError::NeedsConversion(
+                    "This model reads text only, and this file has none. Choose a model that \
+                     reads PDFs and images."
+                        .into(),
+                ));
+            }
+        };
+        if !text.chars().any(char::is_alphanumeric) {
+            return Err(MediaError::NeedsConversion(format!(
+                "Page {} has no text to read: it is a scan without a text layer. Extract its \
+                 text first, or choose a model that reads page images.",
+                piece.label()
+            )));
+        }
+        Ok(text)
+    }
+
     /// One piece of a recording converted to listen to; see [`AudioSource::listening_copy`].
     pub fn listening_copy(&self, piece: &PieceRef) -> Result<PreparedInput, MediaError> {
         match self {
@@ -191,6 +243,24 @@ impl OpenSource {
         }
         if *piece == PieceRef::Whole {
             return self.prepare_whole(accepted, file_stem);
+        }
+        // A model that reads text only (a correction, a text model reading a page) gets the
+        // piece's text.
+        let text_only = accepted == ["text/plain"];
+        if text_only || matches!(piece, PieceRef::Passage { .. }) || matches!(self, Self::Text(_)) {
+            if !accepted.contains(&"text/plain") {
+                return Err(MediaError::NeedsConversion(
+                    "This model cannot read text files.".into(),
+                ));
+            }
+            let text = self.piece_text(piece)?;
+            let label = piece.descriptor().replace(':', "-");
+            return Ok(PreparedInput {
+                piece: piece.clone(),
+                file_name: format!("{file_stem}-{label}.txt"),
+                mime: "text/plain".into(),
+                bytes: text.into_bytes(),
+            });
         }
         let PieceRef::Page { number, half } = piece else {
             return Err(MediaError::NoSuchPage(piece.label()));

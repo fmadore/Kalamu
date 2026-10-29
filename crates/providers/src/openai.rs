@@ -164,10 +164,12 @@ impl OpenAi {
     fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
         let output = Self::parse_extraction(response)?;
         match (context.task, context.analysis) {
-            (Task::Analysis, Some(fields)) => analysis::finish(output, fields),
-            (Task::Analysis, None) => Err(ProviderError::InvalidRequest(
-                "an analysis needs fields".into(),
-            )),
+            (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
+                analysis::finish(output, fields)
+            }
+            (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
+                ProviderError::InvalidRequest("an analysis needs fields".into()),
+            ),
             _ => Ok(output),
         }
     }
@@ -288,7 +290,7 @@ impl Provider for OpenAi {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
             // The formats the speech-to-text guide lists (October 2026): not FLAC or Ogg.
             Task::AudioTranscription => &["audio/mpeg", "audio/wav", "audio/mp4", "audio/webm"],
-            Task::Analysis => &[
+            Task::Analysis | Task::Contents | Task::TextCorrection => &[
                 "text/plain",
                 "application/pdf",
                 "image/png",
@@ -301,7 +303,7 @@ impl Provider for OpenAi {
     fn request_settings(&self, task: Task, _model: &str) -> Vec<RequestSetting> {
         match task {
             // No reasoning effort is sent: each model runs at its own default.
-            Task::TextExtraction | Task::Analysis => vec![
+            Task::TextExtraction | Task::Analysis | Task::Contents | Task::TextCorrection => vec![
                 RequestSetting::new("max_output_tokens", MAX_OUTPUT_TOKENS),
                 RequestSetting::new("store", false),
             ],
@@ -315,7 +317,7 @@ impl Provider for OpenAi {
         request: ProcessRequest<'_>,
     ) -> Result<ProcessOutput, ProviderError> {
         match request.task {
-            Task::TextExtraction | Task::Analysis => {
+            Task::TextExtraction | Task::Analysis | Task::Contents | Task::TextCorrection => {
                 let response = send_json(
                     self.client
                         .post(format!("{}/responses", self.base_url))

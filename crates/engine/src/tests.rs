@@ -14,6 +14,7 @@ use kalamu_store::SqliteStore;
 use super::*;
 
 mod batch;
+mod contents;
 
 /// Answers with the page label; can be told to fail some pages a number of times.
 struct Fake {
@@ -194,6 +195,7 @@ impl Fixture {
                 preset_id: None,
                 label: None,
                 options: Default::default(),
+                merge: None,
             })
             .collect();
         self.engine
@@ -455,6 +457,7 @@ async fn sample_runs_only_the_first_pages() {
             preset_id: Some("text_extraction.newspaper".into()),
             label: None,
             options: Default::default(),
+            merge: None,
         }],
         settings: Default::default(),
         output: OutputSettings {
@@ -492,6 +495,7 @@ async fn a_youtube_video_is_read_from_its_link_once_and_its_address_recorded() {
             preset_id: None,
             label: None,
             options: Default::default(),
+            merge: None,
         }],
         settings: Default::default(),
         output: OutputSettings {
@@ -609,6 +613,7 @@ async fn an_analysis_reads_each_document_once_and_corrections_replace_its_answer
                 preset_id: Some("analysis.entities".into()),
                 label: None,
                 options: Default::default(),
+                merge: None,
             }],
             settings: Default::default(),
             output: OutputSettings {
@@ -688,6 +693,7 @@ async fn a_text_only_model_is_not_sent_the_formats_its_provider_takes() {
                 preset_id: Some("analysis.entities".into()),
                 label: None,
                 options: Default::default(),
+                merge: None,
             }],
             settings: Default::default(),
             output: OutputSettings {
@@ -727,6 +733,7 @@ fn a_pipeline_record_carries_the_prompt_a_job_would_send() {
             preset_id: Some("analysis.entities".into()),
             label: None,
             options: Default::default(),
+            merge: None,
         }],
         settings: Default::default(),
         formats: vec![ExportFormat::Csv],
@@ -749,6 +756,7 @@ fn a_pipeline_record_carries_the_prompt_a_job_would_send() {
                 preset_id: Some("analysis.entities".into()),
                 label: None,
                 options: Default::default(),
+                merge: None,
             }],
             settings: Default::default(),
             output: Default::default(),

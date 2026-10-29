@@ -27,11 +27,18 @@
 		if (source) source.split_spreads = split;
 	}
 
-	/** An analysis reads each document whole, so splitting double pages does not apply to it. */
+	/**
+	 * An analysis reads each document whole, and a correction reads a PDF's text layer, so
+	 * splitting double pages applies to neither; the text layer is what a correction wants.
+	 */
 	function shownWarnings(file: (typeof files)[number]) {
-		return task === 'analysis'
-			? file.warnings.filter((w) => w.kind !== 'double_page_spread')
-			: file.warnings;
+		if (task === 'analysis') return file.warnings.filter((w) => w.kind !== 'double_page_spread');
+		if (task === 'text_correction') {
+			return file.warnings.filter(
+				(w) => w.kind !== 'double_page_spread' && w.kind !== 'has_text_layer'
+			);
+		}
+		return file.warnings;
 	}
 
 	function setEvenOut(index: number, on: boolean) {
@@ -121,6 +128,14 @@
 				<li>{m.tips.analysisUnit}</li>
 				<li>{m.tips.analysisInput}</li>
 				<li>{m.tips.analysisFields}</li>
+			{:else if task === 'contents'}
+				<li>{m.tips.contentsUnit}</li>
+				<li>{m.tips.scanning}</li>
+				<li>{m.tips.contentsCheck}</li>
+			{:else if task === 'text_correction'}
+				<li>{m.tips.correctionInput}</li>
+				<li>{m.tips.correctionCheck}</li>
+				<li>{m.tips.results}</li>
 			{:else}
 				<li>{task === 'text_extraction' ? m.tips.scanning : m.tips.recording}</li>
 				<li>{m.tips.results}</li>

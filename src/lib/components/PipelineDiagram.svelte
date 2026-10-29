@@ -1,6 +1,7 @@
 <script lang="ts">
 	// How a task's work is split and put back together, drawn with the user's own files once
-	// they are added: a PDF's pages, a recording's pieces, the prompt's fields. It plays once when
+	// they are added: a PDF's pages, a recording's pieces, the prompt's fields, the model that
+	// combines a table of contents' pages. It plays once when
 	// a task is chosen and on request; at rest, and under reduced motion, it shows its last frame.
 	// Each step is a list item with its words, so the drawing itself is only decoration.
 	import Icon from './Icon.svelte';
@@ -13,14 +14,17 @@
 		files,
 		fields,
 		models,
+		mergeModels = [],
 		play
 	}: {
 		mode: Mode;
 		files: InspectedFile[];
-		/** The chosen prompt's fields, for an analysis. */
+		/** The chosen prompt's fields, for an analysis or a table of contents' entries. */
 		fields: string[];
 		/** Names of the chosen models. */
 		models: string[];
+		/** Names of the models that combine a table of contents' pages. */
+		mergeModels?: string[];
 		/** Counts the times a task was chosen; each one plays the diagram again. */
 		play: number;
 	} = $props();
@@ -44,7 +48,13 @@
 		| 'transcript'
 		| 'link'
 		| 'send'
-		| 'watch';
+		| 'watch'
+		| 'entries'
+		| 'combine'
+		| 'toc'
+		| 'ocr'
+		| 'correct'
+		| 'compare';
 	/** `detail` names the user's file, in mono; `note` adds what the step does with it. */
 	type Stage = { art: Art; caption: string; detail?: string[]; note?: string };
 
@@ -54,6 +64,7 @@
 	const first = $derived(sources[0]);
 	const more = $derived(sources.length > 1 ? m.pipeline.moreFiles(sources.length - 1) : undefined);
 	const model = $derived(models.length === 1 ? models[0] : m.pipeline.theModel);
+	const merger = $derived(mergeModels.length === 1 ? mergeModels[0] : m.pipeline.theModel);
 	const fieldNames = $derived(fields.length > 0 ? fields : m.pipeline.exampleFields);
 
 	/** A file's name, then its size as the file list shows it. */
@@ -106,6 +117,24 @@
 						note: pieces > 1 ? m.pipeline.audioSpeakers : more
 					}
 				];
+			case 'contents':
+				return [
+					{ art: 'stack', caption: m.pipeline.contentsSource, detail: fileDetail },
+					{
+						art: 'entries',
+						caption: m.pipeline.contentsRead(model),
+						note: m.pipeline.contentsContinues
+					},
+					{ art: 'combine', caption: m.pipeline.contentsMerge(merger) },
+					{ art: 'toc', caption: m.pipeline.contentsTable, note: more }
+				];
+			case 'text_correction':
+				return [
+					{ art: 'ocr', caption: m.pipeline.correctionSource, detail: fileDetail },
+					{ art: 'pages', caption: m.pipeline.correctionSplit },
+					{ art: 'correct', caption: m.pipeline.correctionRead(model) },
+					{ art: 'compare', caption: m.pipeline.correctionCompare, note: more }
+				];
 			case 'youtube':
 				return [
 					{
@@ -147,6 +176,20 @@
 	const video = $derived(
 		first?.path.replace(/^https?:\/\/(www\.)?/, '') ?? 'youtube.com/watch?v=…'
 	);
+	/** A table of contents' rows: stand-in entries, with pages that run over the first pages. */
+	const tocRows = $derived(
+		m.pipeline.exampleEntries.map((title, r) => ({
+			title,
+			pages: [pages > 2 ? '1, 3' : '1', '2', String(Math.max(pages, 3))][r] ?? ''
+		}))
+	);
+	/** Where a page's text was misread, as [line, x, width] on a sheet's lines. */
+	const FLAWS = [
+		[1, 14, 8],
+		[3, 8, 10],
+		[5, 18, 7]
+	];
+
 	/** The table's rows: the user's documents, or stand-ins until there are some. */
 	const rows = $derived(
 		sources.length > 0
@@ -163,7 +206,12 @@
 		>
 	</figcaption>
 	{#key run}
-		<ol class="stages" class:analysis={mode === 'analysis'} style="--n: {stages.length}">
+		<ol
+			class="stages"
+			class:analysis={mode === 'analysis'}
+			class:contents={mode === 'contents'}
+			style="--n: {stages.length}"
+		>
 			{#each stages as stage, i (stage.art)}
 				<li class="stage" style="--i: {i}">
 					{#if i > 0}<span class="connector"><Icon name="chevron" size={14} /></span>{/if}
@@ -220,7 +268,152 @@
 {/snippet}
 
 {#snippet art(kind: Art)}
-	{#if kind === 'stack' || kind === 'whole'}
+	{#if kind === 'entries'}
+		<!-- Each page read for its articles: their titles found, and one continued overleaf. -->
+		{@const xs = row(shownPages + (pages > shownPages ? 1 : 0), 26, 8)}
+		<svg width={W} height="72" viewBox="0 0 {W} 72">
+			{#each xs.slice(0, shownPages) as x, j (j)}
+				<rect class="paper" {x} y="6" width="26" height="40" rx="2" />
+				{#each [0, 1] as k (k)}
+					{@const y = 11 + k * 17}
+					<g class="marker" style="--j: {j * 2 + k}">
+						<rect class="mark" x={x + 4} y={y - 0.5} width={k === 0 ? 16 : 12} height="5" rx="1" />
+						<rect class="on-mark" x={x + 6} {y} width={k === 0 ? 12 : 8} height="2" rx="1" />
+					</g>
+					{#each [0, 1] as l (l)}
+						<rect
+							class="stub grow"
+							style="--j: {j * 2 + k + l * 0.4}"
+							x={x + 4}
+							y={y + 7 + l * 4}
+							width={l === 0 ? 18 : 12}
+							height="2"
+							rx="1"
+						/>
+					{/each}
+				{/each}
+				<text class="num" x={x + 13} y="60">{j + 1}</text>
+			{/each}
+			{#if shownPages > 1}
+				<!-- "Continued on page 2": the first article goes on to the next page. -->
+				<path
+					class="continues grow"
+					style="--j: 2"
+					d="M{xs[0] + 24} 40 C {xs[0] + 32} 46, {xs[1] - 6} 4, {xs[1] + 2} 12"
+				/>
+			{/if}
+			{#if pages > shownPages}
+				<text class="num" x={xs[shownPages] + 13} y="30">+{pages - shownPages}</text>
+			{/if}
+		</svg>
+	{:else if kind === 'combine'}
+		<!-- The pages' readings, joined into one list: each article once, with all its pages. -->
+		<svg width={W} height="72" viewBox="0 0 {W} 72">
+			{#each [0, 1, 2] as p (p)}
+				{@const y = 6 + p * 22}
+				<rect class="paper" x="10" {y} width="16" height="18" rx="2" />
+				<rect class="mark" x="13" y={y + 4} width="10" height="3" rx="1" />
+				<rect class="stub" x="13" y={y + 10} width="8" height="2" rx="1" />
+				<path
+					class="rule grow"
+					style="--j: {p}"
+					d="M28 {y + 9} C 50 {y + 9}, 52 {p < 2 ? 22 : 46}, 70 {p < 2 ? 22 : 46}"
+				/>
+			{/each}
+			<rect class="paper" x="70" y="8" width="58" height="54" rx="2" />
+			{#each [0, 1] as e (e)}
+				{@const y = 18 + e * 24}
+				<g class="grow" style="--j: {3 + e}">
+					<rect class="mark" x="75" y={y - 0.5} width="30" height="5" rx="1" />
+					<rect class="on-mark" x="77" {y} width="26" height="2" rx="1" />
+					<text class="num small" x="118" y={y + 4}>{e === 0 ? '1–2' : '3'}</text>
+					<rect class="stub" x="75" y={y + 9} width="44" height="2" rx="1" />
+				</g>
+			{/each}
+		</svg>
+	{:else if kind === 'toc'}
+		{@const columns = fieldNames.slice(0, 1)}
+		<table class="table toc">
+			<thead>
+				<tr>
+					<th>{m.review.entryTitle}</th>
+					<th>{m.review.entryPages}</th>
+					{#each columns as name, j (j)}<th>{name}</th>{/each}
+				</tr>
+			</thead>
+			<tbody>
+				{#each tocRows as entry, r (r)}
+					<tr class="grow-row" style="--j: {r}">
+						<td>{entry.title}</td>
+						<td class="mono">{entry.pages}</td>
+						{#each columns as _, j (j)}<td><span class="value"></span></td>{/each}
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	{:else if kind === 'ocr' || kind === 'correct'}
+		<!-- A page of machine-read text: its misreadings, then the same lines corrected. -->
+		<svg width={W} height="72" viewBox="0 0 {W} 72">
+			<rect class="paper" x="44" y="4" width="52" height="64" rx="2" />
+			{#each { length: 7 } as _, k (k)}
+				<rect
+					class={kind === 'ocr' ? 'print' : 'stub'}
+					x="50"
+					y={12 + k * 7}
+					width={k % 3 === 2 ? 26 : 40}
+					height="2"
+					rx="1"
+				/>
+			{/each}
+			{#each FLAWS as [line, x, w], j (j)}
+				{#if kind === 'ocr'}
+					<rect class="flaw" x={50 + x} y={12 + line * 7 - 1} width={w} height="4" rx="1" />
+				{:else}
+					<g class="marker" style="--j: {j}">
+						<rect
+							class="mark"
+							x={50 + x - 1}
+							y={12 + line * 7 - 1.5}
+							width={w + 2}
+							height="5"
+							rx="1"
+						/>
+						<rect class="on-mark" x={50 + x} y={12 + line * 7} width={w} height="2" rx="1" />
+					</g>
+				{/if}
+			{/each}
+		</svg>
+	{:else if kind === 'compare'}
+		<!-- The original and the correction side by side, each change marked in both. -->
+		<svg width={W} height="72" viewBox="0 0 {W} 72">
+			{#each [0, 1] as side (side)}
+				{@const x = side === 0 ? 30 : 74}
+				<rect class="paper" {x} y="4" width="36" height="50" rx="2" />
+				{#each { length: 5 } as _, k (k)}
+					<rect
+						class={side === 0 ? 'print' : 'stub'}
+						x={x + 4}
+						y={11 + k * 8}
+						width={k % 3 === 2 ? 18 : 28}
+						height="2"
+						rx="1"
+					/>
+				{/each}
+				{#each [[1, 10], [3, 4]] as [line, dx], j (j)}
+					<rect
+						class="{side === 0 ? 'flaw' : 'mark'} marker"
+						style="--j: {j}"
+						x={x + 4 + dx}
+						y={11 + line * 8 - 1.5}
+						width="10"
+						height="5"
+						rx="1"
+					/>
+				{/each}
+				<text class="num" {x} dx="18" y="66">{side === 0 ? m.review.originalSiglum : 'A'}</text>
+			{/each}
+		</svg>
+	{:else if kind === 'stack' || kind === 'whole'}
 		<svg width={W} height="72" viewBox="0 0 {W} 72">
 			{@render sheet(56, 4, 40, 54, 0)}
 			{@render sheet(50, 8, 40, 54, 0)}
@@ -438,6 +631,13 @@
 	.stages.analysis {
 		grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.3fr);
 	}
+	/* A table of contents ends with its table, which needs room for titles. */
+	.stages.contents {
+		grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+	}
+	.toc td:first-child {
+		color: var(--text-body);
+	}
 	.stage {
 		position: relative;
 		display: grid;
@@ -538,6 +738,21 @@
 	}
 	.play {
 		fill: var(--text-muted);
+	}
+	/* A misreading in machine-read text: a warning mark, which the correction turns into ink. */
+	.flaw {
+		fill: var(--warn-wash);
+		stroke: var(--warn-text);
+		stroke-width: 0.75;
+	}
+	.continues {
+		fill: none;
+		stroke: var(--ink);
+		stroke-width: 1.25;
+		stroke-dasharray: 2 2;
+	}
+	.num.small {
+		font-size: 9px;
 	}
 	.track {
 		fill: var(--line);
@@ -716,8 +931,12 @@
 		transform-origin: left center;
 		animation: grow 260ms ease-out calc(var(--at) + 180ms + var(--j) * 120ms) both;
 	}
-	/* The names found light up while the next step fills in the fields. */
+	/* Marks light up after their step appears; in an analysis, the names found light up while
+	   the next step fills in the fields. */
 	.playing .marker {
+		animation-delay: calc(var(--at) + 200ms + var(--j) * 180ms);
+	}
+	.playing .analysis .marker {
 		animation-delay: calc(650ms + 200ms + var(--j) * 180ms);
 	}
 	.playing .grow-row {
@@ -767,7 +986,8 @@
 	/* A narrow form: two steps a row, read in order, without the arrows. */
 	@container (max-width: 34rem) {
 		.stages,
-		.stages.analysis {
+		.stages.analysis,
+		.stages.contents {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			row-gap: var(--space-4);
 		}

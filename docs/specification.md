@@ -46,6 +46,8 @@ Where Kalamu departs from these projects, the reason is written down in
 | **Extract text** (printed and handwritten) | PDF, JPEG, PNG, TIFF | Text per page, its lines kept as on the page or joined into running text |
 | **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`…, or a public YouTube link | Transcript with optional speakers and timestamps; speakers can be given names |
 | **Analyse texts** | Text, Word, PDF, photographed pages, and the results of earlier jobs | The researcher's own fields for each document: a summary, the people and places it names, its tone… |
+| **Detailed table of contents** | A long PDF or multi-page image: a newspaper or magazine issue, an archival file scanned in one piece, a book or report | One entry per article or item, with its title, its pages and the researcher's fields |
+| **Correct existing text** | A PDF's text layer, or a text or Word file from a digital library | The text corrected page by page or passage by passage, its spelling of the time kept |
 
 **OCR and HTR are one task.** Current vision models read print and handwriting with the same
 call, so the app has a single **Extract text** task and the difference lies in the prompt:
@@ -95,6 +97,26 @@ the fields into each provider's structured output, so the answer always has exac
 fields, and checks it again before storing it: an answer that breaks the fields is asked for
 again, never stored empty. Named entity recognition and sentiment analysis are analyses, not
 separate tasks.
+
+**A detailed table of contents is read in two steps**, as iwac-ai-pipelines indexes magazine
+issues. A model that reads page images lists the articles or items on each page (title, a note
+such as "continued on page 5", the researcher's fields for that part); then a model that reads
+text combines the pages into one entry per article or item, with every page it is on. Reading
+the pages is the hard part and combining them the easy one, so the second step can run on a
+smaller, cheaper model, from any provider: Gemini Pro may read and Mistral combine. New job
+offers the reading provider's cheapest model by default, so one key is enough. Presets cover a
+newspaper or magazine issue, an archival file item by item (kind of document, date, sender,
+addressee, summary, names: an archivist's inventory) and a book, report or thesis; the entry's
+fields are edited in Prompts as an analysis's are, title and pages always included
+([decision](decisions/2026-10-29-contents-and-correction.md)).
+
+**Existing text is corrected, not read again.** Many researchers already have machine-read
+text, often noisy: the text layer of a PDF from a digital library, or a text file downloaded
+beside it. *Correct existing text* sends that text, page by page (or in passages of a few
+pages for a text file without page markers), with a prompt that fixes reading errors only and
+keeps the document's spelling, wording and style; the newspaper preset is iwac-ai-pipelines'
+OCR-correction prompt. The review highlights every change against the original. A scan with
+no text layer needs *Extract text* instead.
 
 ## Choosing and starting a job
 
@@ -173,7 +195,8 @@ with short tips where they are relevant, and checks each file before a job start
 | **PDF that already contains text** | Extraction may not be needed | Use the existing text, or extract anyway |
 | **Very long or very quiet recordings, long silences** | Transcription drifts or skips quiet speech | Even out the volume; recordings are split at pauses |
 | **Auto-detect on short or mixed recordings** | Detection is unreliable on little speech | Choose the language(s) explicitly |
-| **Several documents in one file, or one document over several files** (analyses) | An analysis reads each file whole, however many pages, and gives it one set of answers, so keywords and names mix or split | One file per document; a tip says so, as it cannot be checked |
+| **Several documents in one file, or one document over several files** (analyses) | An analysis reads each file whole, however many pages, and gives it one set of answers, so keywords and names mix or split | One file per document; a tip says so, as it cannot be checked. A file that holds many documents (an issue, an archival file) suits a detailed table of contents |
+| **A scan without a text layer** (correction) | There is no text to correct | Extract text instead; the page is reported with that advice |
 
 Checks never block a job: users can dismiss a warning. Fixes are applied to working copies,
 never to the originals, and recorded in `provenance.json`.
@@ -188,6 +211,11 @@ together, so that a researcher knows what is sent and what comes back:
 - **Transcribe audio**: a recording cut at pauses into pieces of at most 20 minutes, each
   transcribed, joined with timestamps; speaker labels may differ between pieces.
 - **Transcribe YouTube**: only the link leaves the PC; Gemini watches the whole video at once.
+- **Detailed table of contents**: each page read for its articles or items, their titles marked
+  and an article continued overleaf followed; the pages combined by the second model, named;
+  a table of entries with their pages and the prompt's fields.
+- **Correct existing text**: the text there is, its misreadings marked; one piece per page or
+  passage; the model corrects them; every change shown against the original.
 
 Once files are added, it uses them: the first file's name, pages or length, its pieces (counted
 by the engine, as for the long-recording check), the chosen model and the prompt's fields. It
@@ -216,6 +244,11 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   AAC, WAV, Ogg, Opus, FLAC, WebM, MP4); other formats are converted once and the copy kept. When a model labelled speakers, the researcher can give each
   label a name ("Speaker 2" → "Imam Ouédraogo"); names replace the labels in the review and in
   every file, and the model's own output keeps its labels.
+- **Tables of contents**: the scan beside the entries; clicking an entry shows its first page,
+  the entries on the page shown are marked, and what the first step read on that page is shown
+  below. Entries can be corrected, added and removed.
+- **Corrections of existing text**: the original text is a witness of its own, so every change
+  the model made is highlighted and the original reading can be taken back in one click.
 - **Analyses**: the document beside its answers, field by field. In a comparison every value
   carries the sigla of the set-ups that gave it, so agreement reads at a glance; reasons are
   shown below; pointing at a name finds it in the document.
@@ -260,6 +293,8 @@ is remembered per task. Details are in [formats.md](formats.md).
 | **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original) only from models that report where text sits on the page, today Mistral OCR; ALTO and PAGE XML later, likewise |
 | **Transcription** | `.txt`, `.md`, `.docx`, `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
 | **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
+| **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json` |
+| **Correction** | As text extraction, without the searchable PDF |
 
 ## Prompts and analyses
 

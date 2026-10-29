@@ -5,6 +5,11 @@
 //! its NER rules and the tone its sentiment scales (labels, never numbers, with a reason),
 //! without their collection-specific parts. The scholarly publication summary has no ancestor
 //! there: its fields follow what a social-science literature review compares.
+//!
+//! The tables of contents port iwac-ai-pipelines' `AI_summary_issue` prompts (page extraction
+//! and consolidation), in English and without their Islamic-magazine specifics; the archival
+//! file and the book are new, on the same two steps. The newspaper correction is
+//! `AI_ocr_correction`'s prompt verbatim; the general one keeps its rules for any printed text.
 
 use kalamu_core::{AnalysisSchema, Field, FieldKind, Task};
 
@@ -15,9 +20,18 @@ pub(crate) struct Default {
     pub description: &'static str,
     pub instructions: &'static str,
     pub user_prompt: &'static str,
-    /// The fields an analysis preset asks for.
+    /// The fields an analysis preset asks for, or a table of contents' entry fields.
     pub schema: Option<fn() -> AnalysisSchema>,
+    /// A table of contents' second step.
+    pub merge: Option<&'static str>,
 }
+
+/// A table of contents' first step, sent with each page.
+const CONTENTS_REQUEST: &str = "List the articles or items on this page and fill in their fields, following the \
+     instructions given.";
+
+const CORRECTION_REQUEST: &str =
+    "Correct the machine-read text above, following the instructions given.";
 
 /// zmo-ai-pipelines' `USER_PROMPT`.
 const PAGE_REQUEST: &str = "Transcribe this page completely, following the instructions given.";
@@ -265,6 +279,102 @@ fn tone() -> AnalysisSchema {
     }
 }
 
+/// iwac-ai-pipelines' issue index: authors and a summary per article.
+fn contents_periodical() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Authors",
+                "The authors as the article names them (\"By …\", a signature at the end), \
+                 including collective ones (\"The Editors\"); empty when none is named.",
+                FieldKind::List { max: None },
+                false,
+            ),
+            field(
+                "Summary",
+                "What the article says, with its names, figures and dates: two or three \
+                 sentences for one page, four to six for the whole article.",
+                FieldKind::Text,
+                false,
+            ),
+        ],
+    }
+}
+
+/// An item-level description of an archival file, as an archivist's inventory gives it.
+fn contents_archival() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Kind of document",
+                "What the item is, in a few words: letter, report, minutes, telegram, circular, \
+                 petition, form, newspaper clipping, photograph, map, envelope…",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Date",
+                "The item's date as written, then in the form YYYY-MM-DD in parentheses when it \
+                 is complete; empty when the item has none.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "From",
+                "Who wrote, signed or issued it, with their title or office, as written.",
+                FieldKind::List { max: Some(5) },
+                false,
+            ),
+            field(
+                "To",
+                "Who it is addressed or copied to, with their title or office, as written.",
+                FieldKind::List { max: Some(8) },
+                false,
+            ),
+            field(
+                "Summary",
+                "What the item says or records, in two to four sentences, with its names, places, \
+                 figures and dates, and the annotations or stamps on it.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Names",
+                "People, organisations and places the item names, as written.",
+                list(20),
+                false,
+            ),
+        ],
+    }
+}
+
+fn contents_book() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Level",
+                "Whether the entry is a part, a chapter (or a contribution to an edited volume), \
+                 or a section within a chapter.",
+                choice(&["Part", "Chapter", "Section", "Front or back matter"]),
+                false,
+            ),
+            field(
+                "Authors",
+                "Its authors, when the entry names its own (in an edited volume); empty otherwise.",
+                FieldKind::List { max: None },
+                false,
+            ),
+            field(
+                "Summary",
+                "What it argues or describes, with its names, cases, figures and dates: one or \
+                 two sentences for one page, three to five for a whole chapter or section.",
+                FieldKind::Text,
+                false,
+            ),
+        ],
+    }
+}
+
 pub(crate) const DEFAULTS: &[Default] = &[
     Default {
         id: "text_extraction.printed_diplomatic",
@@ -274,6 +384,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         instructions: include_str!("../defaults/printed-diplomatic.md"),
         user_prompt: PAGE_REQUEST,
         schema: None,
+        merge: None,
     },
     Default {
         id: "text_extraction.printed_normalized",
@@ -283,6 +394,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         instructions: include_str!("../defaults/printed-normalized.md"),
         user_prompt: PAGE_REQUEST,
         schema: None,
+        merge: None,
     },
     Default {
         id: "text_extraction.newspaper",
@@ -293,6 +405,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: "Please perform complete OCR transcription of this single page. Extract all \
 visible text maintaining original formatting and structure.",
         schema: None,
+        merge: None,
     },
     Default {
         id: "text_extraction.handwriting_french",
@@ -302,6 +415,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/handwriting-french.md"),
         user_prompt: HANDWRITING_REQUEST,
         schema: None,
+        merge: None,
     },
     Default {
         id: "text_extraction.manuscript_arabic_script",
@@ -311,6 +425,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/manuscript-arabic-script.md"),
         user_prompt: HANDWRITING_REQUEST,
         schema: None,
+        merge: None,
     },
     Default {
         id: "text_extraction.handwriting_multilingual",
@@ -320,6 +435,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/handwriting-multilingual.md"),
         user_prompt: HANDWRITING_REQUEST,
         schema: None,
+        merge: None,
     },
     Default {
         id: "audio_transcription.interview",
@@ -329,6 +445,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/interview-transcription.md"),
         user_prompt: RECORDING_REQUEST,
         schema: None,
+        merge: None,
     },
     Default {
         id: "audio_transcription.translate_english",
@@ -338,6 +455,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/interview-translation-english.md"),
         user_prompt: RECORDING_REQUEST,
         schema: None,
+        merge: None,
     },
     Default {
         id: "audio_transcription.translate_french",
@@ -347,6 +465,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/interview-translation-french.md"),
         user_prompt: RECORDING_REQUEST,
         schema: None,
+        merge: None,
     },
     Default {
         id: "analysis.summary_research",
@@ -356,6 +475,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/summary-research.md"),
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(summary_research),
+        merge: None,
     },
     Default {
         id: "analysis.summary_brief",
@@ -365,6 +485,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/summary-brief.md"),
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(summary_brief),
+        merge: None,
     },
     Default {
         id: "analysis.summary_publication",
@@ -374,6 +495,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/summary-publication.md"),
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(summary_publication),
+        merge: None,
     },
     Default {
         id: "analysis.entities",
@@ -383,6 +505,7 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/analysis-entities.md"),
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(entities),
+        merge: None,
     },
     Default {
         id: "analysis.tone",
@@ -392,5 +515,56 @@ visible text maintaining original formatting and structure.",
         instructions: include_str!("../defaults/analysis-tone.md"),
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(tone),
+        merge: None,
+    },
+    Default {
+        id: "contents.periodical",
+        task: Task::Contents,
+        name: "Newspaper or magazine issue",
+        description: "One entry per article, with its section, authors, pages and a summary.",
+        instructions: include_str!("../defaults/contents-periodical-page.md"),
+        user_prompt: CONTENTS_REQUEST,
+        schema: Some(contents_periodical),
+        merge: Some(include_str!("../defaults/contents-periodical-merge.md")),
+    },
+    Default {
+        id: "contents.archival_file",
+        task: Task::Contents,
+        name: "Archival file, item by item",
+        description: "An inventory of a file scanned in one piece: each letter, report or clipping with its date, sender, addressee and a summary.",
+        instructions: include_str!("../defaults/contents-archival-page.md"),
+        user_prompt: CONTENTS_REQUEST,
+        schema: Some(contents_archival),
+        merge: Some(include_str!("../defaults/contents-archival-merge.md")),
+    },
+    Default {
+        id: "contents.book",
+        task: Task::Contents,
+        name: "Book, report or thesis",
+        description: "Parts, chapters and sections with their pages and a summary of each.",
+        instructions: include_str!("../defaults/contents-book-page.md"),
+        user_prompt: CONTENTS_REQUEST,
+        schema: Some(contents_book),
+        merge: Some(include_str!("../defaults/contents-book-merge.md")),
+    },
+    Default {
+        id: "text_correction.general",
+        task: Task::TextCorrection,
+        name: "Printed document",
+        description: "Corrects machine-reading errors only; spelling, wording and style of the time kept.",
+        instructions: include_str!("../defaults/correction-general.md"),
+        user_prompt: CORRECTION_REQUEST,
+        schema: None,
+        merge: None,
+    },
+    Default {
+        id: "text_correction.newspaper",
+        task: Task::TextCorrection,
+        name: "Newspaper (columns, headlines)",
+        description: "Also restores the reading order of columns and flags unclear names, figures and quotes.",
+        instructions: include_str!("../defaults/correction-newspaper.md"),
+        user_prompt: CORRECTION_REQUEST,
+        schema: None,
+        merge: None,
     },
 ];

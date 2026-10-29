@@ -32,7 +32,21 @@ impl Exporter for JsonExporter {
                 });
                 // Only analyses have fields: their answers by key, and the reasons given. Other
                 // documents keep their version 1 shape.
-                if !p.fields.is_empty() {
+                // A table of contents' entries, each an object of its fields' values.
+                if doc.task == Task::Contents {
+                    let entries: Vec<serde_json::Value> = kalamu_core::contents::entries(&p.fields)
+                        .iter()
+                        .map(|entry| {
+                            json!(
+                                entry
+                                    .iter()
+                                    .map(|a| (a.key.clone(), json!(a.value)))
+                                    .collect::<serde_json::Map<_, _>>()
+                            )
+                        })
+                        .collect();
+                    part["entries"] = json!(entries);
+                } else if !p.fields.is_empty() {
                     let fields: serde_json::Map<_, _> = p
                         .fields
                         .iter()

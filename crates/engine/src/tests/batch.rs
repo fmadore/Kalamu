@@ -188,6 +188,7 @@ impl Economy {
                     preset_id: None,
                     label: None,
                     options: Default::default(),
+                    merge: None,
                 }],
                 settings: JobSettings {
                     pace,

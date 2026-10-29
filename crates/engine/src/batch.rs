@@ -99,7 +99,7 @@ impl Engine {
             self.save(&mut state, Some(crate::run::preview(&cached.output.text)))?;
             return Ok(BatchOutcome::default());
         }
-        let accepted = self.accepted(job, setup)?;
+        let accepted = self.accepted(job, setup.step())?;
         let prepared = {
             let (opened, piece, stem) = (opened.clone(), state.piece.clone(), stem(source_name));
             tokio::task::spawn_blocking(move || opened.prepare(&piece, &accepted, &stem))
@@ -369,7 +369,7 @@ impl Engine {
             });
             match answer {
                 Ok(output) => {
-                    let mut output = crate::run::clean(output);
+                    let mut output = crate::run::finish(job.task, output);
                     output.usage.batch = true;
                     let cost = model.and_then(|m| catalog.actual_cost(m, &output.usage));
                     let preview = crate::run::preview(&output.text);

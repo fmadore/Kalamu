@@ -29,7 +29,7 @@ impl Mistral {
                     .map(|(id, r)| json!({ "custom_id": id, "body": Self::ocr_body(r) }))
                     .collect::<Vec<_>>(),
             ),
-            Task::Analysis => {
+            Task::Analysis | Task::Contents | Task::TextCorrection => {
                 let mut bodies = Vec::new();
                 for (id, request) in requests {
                     let fields = analysis::fields(request)?;
@@ -156,10 +156,12 @@ fn answer(context: BatchContext<'_>, line: &Value) -> Option<Answer> {
 
 fn read(context: BatchContext<'_>, body: &Value) -> Result<ProcessOutput, ProviderError> {
     match (context.task, context.analysis) {
-        (Task::Analysis, Some(fields)) => analysis::finish(chat::parse(body)?, fields),
-        (Task::Analysis, None) => Err(ProviderError::InvalidRequest(
-            "an analysis needs fields".into(),
-        )),
+        (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
+            analysis::finish(chat::parse(body)?, fields)
+        }
+        (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
+            ProviderError::InvalidRequest("an analysis needs fields".into()),
+        ),
         _ => Mistral::parse_ocr(body),
     }
 }

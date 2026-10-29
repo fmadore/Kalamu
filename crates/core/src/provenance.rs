@@ -25,6 +25,11 @@ pub struct Provenance {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub model_versions: Vec<String>,
     pub prompt: ProvenancePrompt,
+    /// For a table of contents, the model and prompt that combined the pages' readings; the
+    /// fields above are those that read each page.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub merge: Option<ProvenanceMerge>,
     pub languages: LanguageChoice,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub detected_languages: Vec<LanguageCode>,
@@ -41,6 +46,17 @@ pub struct Provenance {
     pub preprocessing: Vec<String>,
     pub usage: Usage,
     pub cost_usd: Option<f64>,
+}
+
+/// A table of contents' second step, as provenance records it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceMerge {
+    pub provider: ProviderId,
+    pub model: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub model_versions: Vec<String>,
+    pub prompt: ProvenancePrompt,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

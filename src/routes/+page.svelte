@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import AnalysisReview from '#lib/components/AnalysisReview.svelte';
+	import ContentsReview from '#lib/components/ContentsReview.svelte';
 	import CloseDialog from '#lib/components/CloseDialog.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import JobsView from '#lib/components/JobsView.svelte';
@@ -279,8 +280,11 @@
 			<JobsView jobId={app.view.jobId} />
 		{:else if app.view.name === 'review'}
 			{@const { jobId, sourceId } = app.view}
-			{#if app.jobs.find((j) => j.id === jobId)?.task === 'analysis'}
+			{@const task = app.jobs.find((j) => j.id === jobId)?.task}
+			{#if task === 'analysis'}
 				<AnalysisReview {jobId} {sourceId} />
+			{:else if task === 'contents'}
+				<ContentsReview {jobId} {sourceId} />
 			{:else}
 				<ReviewView {jobId} {sourceId} />
 			{/if}

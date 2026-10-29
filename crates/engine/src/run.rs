@@ -12,15 +12,22 @@ use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use kalamu_core::{
     ApiKey, CacheKey, Job, JobId, JobStatus, Pace, PieceRef, PieceState, PieceStatus,
-    ProcessOutput, ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId, SourceFile,
-    SourceId, StopSignal, StoredResult, Timestamp,
+    PreparedInput, ProcessOutput, ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId,
+    SourceFile, SourceId, Step, StopSignal, StoredResult, Task, Timestamp,
 };
 use kalamu_media::OpenSource;
 
 use crate::{Control, Engine, EngineError};
 
+/// What a call reads: a piece still to cut from its source, or an input already made (a table
+/// of contents' pages, gathered for its second step).
+pub(crate) enum Input {
+    Open(Arc<OpenSource>),
+    Ready(PreparedInput),
+}
+
 /// How a piece ended, for the job's final status.
-enum Outcome {
+pub(crate) enum Outcome {
     Finished,
     Failed,
     /// Stopped part-way by a pause or cancel; the piece is pending again.
@@ -40,6 +47,16 @@ pub(crate) fn clean(mut output: ProcessOutput) -> ProcessOutput {
     output
 }
 
+/// A provider's answer as the task stores it: a correction's one field becomes the page's text.
+pub(crate) fn finish(task: Task, output: ProcessOutput) -> ProcessOutput {
+    let mut output = clean(output);
+    if task == Task::TextCorrection {
+        output.text = kalamu_core::correction::text(&output.fields);
+        output.fields = Vec::new();
+    }
+    output
+}
+
 impl Engine {
     pub(crate) async fn run(
         self: &Arc<Self>,
@@ -49,13 +66,18 @@ impl Engine {
         let job = self.store.job(job_id)?;
         // Check keys and offline models before touching anything, so a missing key or an
         // undownloaded model is reported at once.
-        for setup in &job.setups {
-            let provider = self.provider(&setup.provider)?;
-            if provider.needs_key() && self.keys.key(&setup.provider).is_none() {
-                return Err(EngineError::MissingKey(setup.provider.to_string()));
+        for step in job
+            .setups
+            .iter()
+            .flat_map(|s| [Some(s.step()), s.merge_step()])
+        {
+            let Some(step) = step else { continue };
+            let provider = self.provider(step.provider)?;
+            if provider.needs_key() && self.keys.key(step.provider).is_none() {
+                return Err(EngineError::MissingKey(step.provider.to_string()));
             }
             provider
-                .check_ready(&setup.model)
+                .check_ready(step.model)
                 .map_err(EngineError::NotReady)?;
         }
         let stop = control
@@ -125,9 +147,27 @@ impl Engine {
             // A recording resumed keeps the pieces planned the first time: planning decodes the
             // whole file, and the cuts must not move under results already stored.
             let stored = stored_pieces(&existing, &job, source);
-            let pieces = if job.task == kalamu_core::Task::Analysis {
+            let pieces = if job.task == Task::Analysis {
                 // An analysis reads the whole document at once.
                 vec![PieceRef::Whole]
+            } else if job.task == Task::TextCorrection {
+                // A correction reads the text there is: a PDF's pages, a text file's passages.
+                let (opened, sample) = (opened.clone(), job.settings.sample_pages);
+                let planned = tokio::task::spawn_blocking(move || opened.text_pieces(sample))
+                    .await
+                    .map_err(|e| EngineError::Output(e.to_string()))?;
+                match planned {
+                    Ok(pieces) => pieces,
+                    Err(e) => {
+                        failed = true;
+                        self.emit(ProgressEvent::SourceFailed {
+                            job_id,
+                            source_id: source.id,
+                            error: e.to_string(),
+                        });
+                        continue;
+                    }
+                }
             } else if stored.is_empty() {
                 let (opened, split, sample, length) = (
                     opened.clone(),
@@ -141,6 +181,11 @@ impl Engine {
             } else {
                 stored
             };
+            // A table of contents ends with the step that combines its pages.
+            let mut pieces = pieces;
+            if job.task == Task::Contents && pieces.last() != Some(&PieceRef::Whole) {
+                pieces.push(PieceRef::Whole);
+            }
             self.emit(ProgressEvent::SourcePrepared {
                 job_id,
                 source_id: source.id,
@@ -152,6 +197,25 @@ impl Engine {
             for setup in &job.setups {
                 for (index, piece) in pieces.iter().enumerate() {
                     let index = index as u32;
+                    // The combining step's key depends on the pages' results: it is worked out
+                    // once they are read (`merge_pages`).
+                    if job.task == Task::Contents && *piece == PieceRef::Whole {
+                        if !existing.contains_key(&(setup.id, source.id, index)) {
+                            self.store.upsert_piece(&PieceState {
+                                job_id,
+                                setup_id: setup.id,
+                                source_id: source.id,
+                                index,
+                                piece: piece.clone(),
+                                status: PieceStatus::Pending,
+                                cache_key: None,
+                                error: None,
+                                attempts: 0,
+                                updated_at: Timestamp::now(),
+                            })?;
+                        }
+                        continue;
+                    }
                     let key = CacheKey::compute(
                         job.task,
                         &source.sha256,
@@ -240,7 +304,16 @@ impl Engine {
                     );
                     in_flight.push(tokio::spawn(async move {
                         engine
-                            .process_piece(&job, &source, &setup, state, key, opened, spent, &stop)
+                            .process_piece(
+                                &job,
+                                &source,
+                                setup.step(),
+                                state,
+                                key,
+                                Input::Open(opened),
+                                spent,
+                                &stop,
+                            )
                             .await
                     }));
                 }
@@ -258,6 +331,22 @@ impl Engine {
                         failed = true;
                     }
                     Ok(Err(e)) => return Err(e),
+                }
+            }
+
+            // A table of contents: combine the pages of each set-up that read them all.
+            if job.task == Task::Contents && !stopped {
+                for setup in job.setups.iter().filter(|s| !batched.contains(&s.id)) {
+                    match self.merge_pages(&job, source, setup, &spent, &stop).await? {
+                        Outcome::Finished => {}
+                        Outcome::Interrupted => interrupted = true,
+                        Outcome::Failed => failed = true,
+                        Outcome::Fatal(message) => {
+                            tracing::warn!(job = %job_id, %message, "stopping job");
+                            control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
+                            failed = true;
+                        }
+                    }
                 }
             }
 
@@ -283,6 +372,16 @@ impl Engine {
                 .filter(|s| batched.contains(&s.id))
                 .collect();
             for source in &job.sources {
+                // The pages came back from the batch: combine them, at once.
+                if job.task == Task::Contents && stop_requested(&control).is_none() {
+                    for setup in &setups {
+                        match self.merge_pages(&job, source, setup, &spent, &stop).await? {
+                            Outcome::Finished => {}
+                            Outcome::Interrupted => interrupted = true,
+                            Outcome::Failed | Outcome::Fatal(_) => failed = true,
+                        }
+                    }
+                }
                 failed |= self.export_finished(&job, source.id, &setups)?;
             }
             failed |= batch_outcome.failed;
@@ -299,32 +398,34 @@ impl Engine {
     }
 
     /// The provider's formats for the task, narrowed to those the model reads: a text-only
-    /// model behind a provider that takes PDFs and images is sent text alone.
+    /// model behind a provider that takes PDFs and images is sent text alone. A correction
+    /// sends text whatever the model reads.
     pub(crate) fn accepted(
         &self,
         job: &Job,
-        setup: &Setup,
+        step: Step<'_>,
     ) -> Result<Vec<&'static str>, EngineError> {
-        let provider = self.provider(&setup.provider)?;
+        let provider = self.provider(step.provider)?;
         let catalog = self.catalog();
-        let model = catalog.model(&setup.provider, &setup.model);
+        let model = catalog.model(step.provider, step.model);
         Ok(provider
             .accepted_inputs(job.task)
             .iter()
             .copied()
             .filter(|mime| model.is_none_or(|m| m.inputs.iter().any(|i| i == mime)))
+            .filter(|mime| job.task != Task::TextCorrection || *mime == "text/plain")
             .collect())
     }
 
     #[allow(clippy::too_many_arguments)]
-    async fn process_piece(
+    pub(crate) async fn process_piece(
         &self,
         job: &Job,
         source: &SourceFile,
-        setup: &Setup,
+        step: Step<'_>,
         mut state: PieceState,
         key: CacheKey,
-        opened: Arc<OpenSource>,
+        input: Input,
         spent: Arc<Mutex<f64>>,
         stop: &StopSignal,
     ) -> Result<Outcome, EngineError> {
@@ -355,24 +456,27 @@ impl Engine {
         self.store.upsert_piece(&state)?;
         update(self, &state, None);
 
-        let provider = self.provider(&setup.provider)?;
+        let provider = self.provider(step.provider)?;
         let api_key = if provider.needs_key() {
             self.keys
-                .key(&setup.provider)
-                .ok_or_else(|| EngineError::MissingKey(setup.provider.to_string()))?
+                .key(step.provider)
+                .ok_or_else(|| EngineError::MissingKey(step.provider.to_string()))?
         } else {
             ApiKey::new("")
         };
-        let accepted = self.accepted(job, setup)?;
-        let stem = Path::new(&source.file_name)
-            .file_stem()
-            .map(|s| s.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "page".into());
-        let prepared = {
-            let (opened, piece) = (opened.clone(), state.piece.clone());
-            tokio::task::spawn_blocking(move || opened.prepare(&piece, &accepted, &stem))
-                .await
-                .map_err(|e| EngineError::Output(e.to_string()))?
+        let prepared = match input {
+            Input::Ready(input) => Ok(input),
+            Input::Open(opened) => {
+                let accepted = self.accepted(job, step)?;
+                let stem = Path::new(&source.file_name)
+                    .file_stem()
+                    .map(|s| s.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| "page".into());
+                let piece = state.piece.clone();
+                tokio::task::spawn_blocking(move || opened.prepare(&piece, &accepted, &stem))
+                    .await
+                    .map_err(|e| EngineError::Output(e.to_string()))?
+            }
         };
         let input = match prepared {
             Ok(input) => input,
@@ -386,32 +490,39 @@ impl Engine {
             }
         };
 
+        // The set-up's options (speakers, timestamps), which the combining step shares.
+        let options = job
+            .setups
+            .iter()
+            .find(|s| s.id == state.setup_id)
+            .map(|s| s.options.clone())
+            .unwrap_or_default();
         let started = Instant::now();
         let mut last_error: Option<ProviderError> = None;
         for attempt in 0..self.config.max_attempts {
             state.attempts += 1;
             let request = ProcessRequest {
                 task: job.task,
-                model: &setup.model,
-                prompt: &setup.prompt.text,
-                user_prompt: &setup.prompt.user_prompt,
+                model: step.model,
+                prompt: &step.prompt.text,
+                user_prompt: &step.prompt.user_prompt,
                 input: &input,
                 languages: &job.settings.languages,
-                options: &setup.options,
-                analysis: setup.prompt.schema.as_ref(),
+                options: &options,
+                analysis: step.prompt.schema.as_ref(),
                 stop,
             };
             match provider.process(&api_key, request).await {
                 Ok(output) => {
-                    let output = clean(output);
+                    let output = finish(job.task, output);
                     let catalog = self.catalog();
                     let cost = catalog
-                        .model(&setup.provider, &setup.model)
+                        .model(step.provider, step.model)
                         .and_then(|m| catalog.actual_cost(m, &output.usage));
                     let result = StoredResult {
                         cache_key: key.0.clone(),
-                        provider: setup.provider.clone(),
-                        model: setup.model.clone(),
+                        provider: step.provider.clone(),
+                        model: step.model.to_string(),
                         output,
                         cost_usd: cost,
                         duration_ms: started.elapsed().as_millis() as u64,

@@ -125,8 +125,11 @@ export const on = {
 export async function pickFiles(task: Task): Promise<string[]> {
 	if (!isTauri()) return [];
 	const { open } = await import('@tauri-apps/plugin-dialog');
+	const pages = ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'];
 	const extensions = {
-		text_extraction: ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'],
+		text_extraction: pages,
+		contents: pages,
+		text_correction: ['txt', 'md', 'docx', 'pdf'],
 		audio_transcription: [
 			'mp3',
 			'wav',

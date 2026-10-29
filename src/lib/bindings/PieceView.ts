@@ -37,4 +37,9 @@ speakers: Array<string>,
 /**
  * The names the researcher gave this set-up's speakers in this recording.
  */
-speaker_names: { [key in string]: string }, };
+speaker_names: { [key in string]: string }, 
+/**
+ * For a correction, the text as it was before: the PDF page's text layer or the text
+ * file's page or passage, which the review compares with the correction.
+ */
+source_text: string | null, };

@@ -25,6 +25,7 @@
 		type Draft,
 		FORMATS,
 		inputOf,
+		mergeInfo,
 		type Mode,
 		MODES,
 		modelInfo,
@@ -88,14 +89,29 @@
 	const chosenFields = $derived(
 		presets.find((p) => p.id === drafts[0]?.presetId)?.schema?.fields.map((f) => f.label) ?? []
 	);
+	/** The models that combine a table of contents' pages, for the diagram. */
+	const mergeNames = $derived([
+		...new Set(drafts.map((d) => mergeInfo(catalog, d)?.name ?? d.mergeModel).filter(Boolean))
+	]);
+	/** Tasks that write text out page by page, where lines and samples apply. */
+	const paged = $derived(
+		task === 'text_extraction' || task === 'text_correction' || task === 'contents'
+	);
+	const linesApply = $derived(task === 'text_extraction' || task === 'text_correction');
 
 	async function loadTask(next: Mode) {
 		mode = next;
 		presets = await api.listPresets(task);
 		drafts = [newDraft(catalog, task, presets[0]?.id ?? null, hasKey, [], input)];
-		formats = [
-			...(task === 'audio_transcription' ? app.settings!.audio_formats : app.settings!.text_formats)
-		].filter((f) => FORMATS[task].includes(f));
+		// A table of contents reads best as a document and a spreadsheet.
+		formats =
+			task === 'contents'
+				? ['markdown', 'csv']
+				: [
+						...(task === 'audio_transcription'
+							? app.settings!.audio_formats
+							: app.settings!.text_formats)
+					].filter((f) => FORMATS[task].includes(f));
 		// An analysis is written in one language.
 		if (task === 'analysis') languages = languages.slice(0, 1);
 		// A video has no folder of its own: offer the folder last chosen.
@@ -128,6 +144,7 @@
 		sources.length > 0 &&
 			drafts.length > 0 &&
 			drafts.every((d) => d.model && hasKey(d.provider)) &&
+			(task !== 'contents' || drafts.every((d) => d.mergeModel && hasKey(d.mergeProvider))) &&
 			(input === undefined || models.every((model) => model?.inputs.includes(input))) &&
 			(mode !== 'youtube' || destination.kind === 'folder') &&
 			formats.length > 0
@@ -139,7 +156,7 @@
 			task,
 			sources: $state.snapshot(sources),
 			setups: drafts.filter((d) => d.model).map((d) => toRequest(catalog, task, d)),
-			sample_pages: sample ? samplePages : null
+			sample_pages: sample && paged ? samplePages : null
 		};
 		if (estimateTimer) clearTimeout(estimateTimer);
 		if (req.sources.length === 0 || req.setups.length === 0) {
@@ -202,9 +219,8 @@
 				languageIgnored.length < models.length
 					? { mode: 'explicit' as const, languages: [...languages] }
 					: { mode: 'auto' as const },
-			sample_pages: sample ? samplePages : null,
-			line_breaks:
-				task === 'text_extraction' && noPrompt.length < models.length ? lineBreaks : null,
+			sample_pages: sample && paged ? samplePages : null,
+			line_breaks: linesApply && noPrompt.length < models.length ? lineBreaks : null,
 			pace: chosenPace
 		};
 	}
@@ -219,7 +235,9 @@
 			presetId: s.preset_id,
 			label: s.label ?? '',
 			diarize: s.options.diarize,
-			timestamps: s.options.timestamps
+			timestamps: s.options.timestamps,
+			mergeProvider: s.merge?.provider ?? s.provider,
+			mergeModel: s.merge?.model ?? s.model
 		}));
 		languageMode = p.settings.languages.mode;
 		languages = p.settings.languages.mode === 'explicit' ? [...p.settings.languages.languages] : [];
@@ -248,7 +266,8 @@
 						model: r.model,
 						preset_id: r.preset_id,
 						label: r.label,
-						options: r.options
+						options: r.options,
+						merge: r.merge
 					};
 				}),
 				settings: jobSettings(),
@@ -351,6 +370,7 @@
 				{files}
 				fields={chosenFields}
 				models={namesOf((model) => model !== undefined)}
+				mergeModels={mergeNames}
 				play={picked}
 			/>
 		</section>
@@ -411,7 +431,7 @@
 			{/if}
 		</section>
 
-		{#if task === 'text_extraction'}
+		{#if linesApply}
 			<section class="step block" aria-labelledby="lines-title">
 				<h2 id="lines-title">{m.newJob.linesTitle}</h2>
 				{#if noPrompt.length === models.length}
@@ -462,7 +482,7 @@
 
 		<section class="step block" aria-labelledby="out-title">
 			<h2 id="out-title">{m.newJob.outputTitle}</h2>
-			{#if task === 'text_extraction'}
+			{#if paged}
 				<label class="inline">
 					<input type="checkbox" bind:checked={sample} />
 					{m.newJob.sampleTitle}:
@@ -551,9 +571,9 @@
 				<p class="hint">{m.newJob.estimateVideo}</p>
 			{:else if estimates.length > 0}
 				<ul class="rows">
-					{#each estimates as row (row.provider + row.model)}
+					{#each estimates as row, i (`${i}/${row.provider}/${row.model}/${row.merge}`)}
 						<li>
-							<span class="mono">{row.model}</span>
+							<span class="mono">{row.merge ? m.newJob.mergeRow(row.model) : row.model}</span>
 							<span class="mono"
 								>{rowCost(row, chosenPace) !== null
 									? formatUsd(rowCost(row, chosenPace) ?? 0)
@@ -644,7 +664,8 @@
 	.warn-text {
 		color: var(--warn-text);
 	}
-	/* The tasks as one joined choice, two by two: written sources above, spoken ones below. */
+	/* The tasks as one joined choice, two by two: reading pages, working on texts, spoken
+	   sources. */
 	.tasks {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -676,10 +697,10 @@
 	.task:nth-child(2) {
 		border-radius: 0 var(--radius-card) 0 0;
 	}
-	.task:nth-child(3) {
+	.task:nth-child(5) {
 		border-radius: 0 0 0 var(--radius-card);
 	}
-	.task:nth-child(4) {
+	.task:nth-child(6) {
 		border-radius: 0 0 var(--radius-card) 0;
 	}
 	.task:hover {

@@ -13,6 +13,9 @@ impl Exporter for TextExporter {
     }
 
     fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
+        if doc.task == Task::Contents {
+            return Ok(crate::contents::text(doc).into_bytes());
+        }
         let mut out = String::new();
         for i in 0..doc.parts.len() {
             if let Some(marker) = crate::marker(doc, i) {

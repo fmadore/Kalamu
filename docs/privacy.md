@@ -1,13 +1,14 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 28 October 2026 (documents the version in development; to be dated again
+**Effective date:** 29 October 2026 (documents the version in development; to be dated again
 for the first Store release)
 
 ## What this app is
 
 Kalamu is a Windows desktop application for researchers. It extracts text from scanned or
-handwritten documents, transcribes recordings and videos, and analyses texts, in one of two
-ways the user chooses for each job:
+handwritten documents, corrects existing text, makes detailed tables of contents of long
+documents, transcribes recordings and videos, and analyses texts, in one of two ways the user
+chooses for each job:
 
 - through a cloud AI provider the user selects and configures with their own API key: Google
   Gemini, OpenAI, Anthropic Claude or Mistral; or
@@ -25,8 +26,12 @@ user's computer to that provider, with the instructions for the task (the prompt
 analysis, the fields to answer), and processed under the user's account and the provider's
 terms. Before sending, the app may convert a piece into a form the provider accepts, for
 example cutting a PDF into pages or a recording into segments; the original files are never
-changed. With a YouTube link, Gemini fetches the public video from YouTube itself; Kalamu
-does not download the video.
+changed. To correct existing text, the app sends the text it reads from the file (a PDF's text
+layer, or a text file's pages or passages) rather than the file. For a detailed table of
+contents, each page goes to the provider chosen to read the pages, and the entries read on
+them, as text, to the provider chosen to combine them, which may be another provider. With a
+YouTube link, Gemini fetches the public video from YouTube itself; Kalamu does not download the
+video.
 
 **In the cheaper mode** (economy), pieces are sent to the provider's batch service instead of
 one by one. The provider keeps the batch, its input and its answers for a time set by its own

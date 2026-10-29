@@ -3,9 +3,9 @@
 
 use kalamu_catalog::Catalog;
 use kalamu_core::{
-    InputKind, Job, JobId, JobSettings, JobStatus, LanguageChoice, OutputDestination,
-    OutputSettings, PromptSnapshot, ProviderId, Setup, SetupId, SetupOptions, SourceFile, Task,
-    Timestamp,
+    InputKind, Job, JobId, JobSettings, JobStatus, LanguageChoice, MergeModel, MergeStep,
+    OutputDestination, OutputSettings, PromptSnapshot, ProviderId, Setup, SetupId, SetupOptions,
+    SourceFile, Task, Timestamp,
 };
 use kalamu_prompts::{Preset, RenderContext};
 use serde::{Deserialize, Serialize};
@@ -25,6 +25,11 @@ pub struct SetupRequest {
     pub label: Option<String>,
     #[serde(default)]
     pub options: SetupOptions,
+    /// For a table of contents, the model that combines the pages; the same model as the
+    /// pages' when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub merge: Option<MergeModel>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -58,7 +63,7 @@ impl Engine {
             if provider.accepted_inputs(new.task).is_empty() {
                 return Err(EngineError::UnsupportedModel(request.model.clone()));
             }
-            let (prompt, _) = self.frozen_prompt(
+            let (prompt, preset) = self.frozen_prompt(
                 &catalog,
                 new.task,
                 &new.settings,
@@ -81,6 +86,11 @@ impl Engine {
                 n += 1;
             }
             labels.push(label.clone());
+            let merge = if new.task == Task::Contents {
+                Some(self.merge_step(&catalog, &new.settings, request, preset)?)
+            } else {
+                None
+            };
             setups.push(Setup {
                 id: SetupId::new(),
                 label,
@@ -88,6 +98,7 @@ impl Engine {
                 model: request.model.clone(),
                 prompt,
                 options: request.options.clone(),
+                merge,
             });
         }
         let job = Job {
@@ -138,14 +149,7 @@ impl Engine {
             Some(id) => self.with_prompts(|p| p.get(id))?,
             None => self.with_prompts(|p| p.default_for(task)),
         };
-        let ctx = RenderContext {
-            languages: settings.languages.clone(),
-            language_names: Self::language_names(catalog, settings),
-            speakers: options.speakers,
-            line_breaks: settings
-                .line_breaks
-                .filter(|_| task == Task::TextExtraction),
-        };
+        let ctx = Self::render_context(catalog, task, settings, options);
         let mut prompt = preset.snapshot(&ctx);
         if !accepts_prompt {
             // Dedicated OCR and speech models take no instructions; recording none keeps
@@ -157,6 +161,59 @@ impl Engine {
             prompt.preset_name = "None (this model takes no prompt)".into();
         }
         Ok((prompt, preset))
+    }
+
+    /// The values a preset's variables take for a job; line breaks only where text is written
+    /// out page by page.
+    fn render_context(
+        catalog: &Catalog,
+        task: Task,
+        settings: &JobSettings,
+        options: &SetupOptions,
+    ) -> RenderContext {
+        RenderContext {
+            languages: settings.languages.clone(),
+            language_names: Self::language_names(catalog, settings),
+            speakers: options.speakers,
+            line_breaks: settings
+                .line_breaks
+                .filter(|_| matches!(task, Task::TextExtraction | Task::TextCorrection)),
+        }
+    }
+
+    /// A table of contents' second step: the chosen model, or the pages' own, with the preset's
+    /// instructions for combining the pages, frozen.
+    pub(crate) fn merge_step(
+        &self,
+        catalog: &Catalog,
+        settings: &JobSettings,
+        request: &SetupRequest,
+        preset: Preset,
+    ) -> Result<MergeStep, EngineError> {
+        let chosen = request.merge.clone().unwrap_or_else(|| MergeModel {
+            provider: request.provider.clone(),
+            model: request.model.clone(),
+        });
+        let provider = self.provider(&chosen.provider)?;
+        let reads_text = catalog
+            .model(&chosen.provider, &chosen.model)
+            .is_none_or(|m| Task::merges(&m.inputs));
+        if !provider
+            .accepted_inputs(Task::Contents)
+            .contains(&"text/plain")
+            || !reads_text
+        {
+            return Err(EngineError::UnsupportedModel(chosen.model));
+        }
+        let ctx = Self::render_context(catalog, Task::Contents, settings, &request.options);
+        let prompt = preset
+            .merge_snapshot(&ctx)
+            .ok_or(EngineError::Prompt(kalamu_prompts::PromptError::Incomplete))?;
+        Ok(MergeStep {
+            provider: chosen.provider,
+            model: chosen.model,
+            prompt,
+        })
     }
 }
 

@@ -214,3 +214,25 @@ fn recordings_go_whole_when_the_model_takes_their_format() -> Result<(), MediaEr
     ));
     Ok(())
 }
+
+#[test]
+fn a_text_model_reads_a_pdf_page_from_its_text_layer() -> Result<(), MediaError> {
+    let with_text = OpenSource::Pdf(Box::new(PdfSource::from_bytes(&sample_pdf(
+        &[A4, A4],
+        true,
+    ))?));
+    let page = with_text.prepare(&PieceRef::page(2), &["text/plain"], "bulletin")?;
+    assert_eq!(page.mime, "text/plain");
+    assert!(String::from_utf8_lossy(&page.bytes).contains("Page 2 of the Bulletin"));
+    assert_eq!(with_text.text_pieces(Some(1))?, vec![PieceRef::page(1)]);
+    // A model that reads PDFs still gets the page itself.
+    let pdf = with_text.prepare(&PieceRef::page(1), &["text/plain", "application/pdf"], "b")?;
+    assert_eq!(pdf.mime, "application/pdf");
+
+    let scan = OpenSource::Pdf(Box::new(PdfSource::from_bytes(&sample_pdf(&[A4], false))?));
+    let Err(err) = scan.prepare(&PieceRef::page(1), &["text/plain"], "scan") else {
+        panic!("a scan has no text to send");
+    };
+    assert!(err.to_string().contains("without a text layer"), "{err}");
+    Ok(())
+}

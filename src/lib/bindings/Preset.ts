@@ -20,6 +20,12 @@ builtin: boolean,
  */
 modified: boolean, 
 /**
- * For an analysis, the fields to fill in for each document.
+ * For an analysis, the fields to fill in for each document; for a table of contents, the
+ * fields of each entry, beside its title and pages.
  */
-schema?: AnalysisSchema, };
+schema?: AnalysisSchema, 
+/**
+ * For a table of contents, the instructions of the second step, which combines the pages'
+ * readings into entries. May use `{languages}`.
+ */
+merge_instructions?: string, };

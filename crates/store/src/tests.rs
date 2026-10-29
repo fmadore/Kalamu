@@ -38,6 +38,7 @@ fn job() -> Job {
                 schema: None,
             },
             options: SetupOptions::default(),
+            merge: None,
         }],
         settings: JobSettings::default(),
         output: OutputSettings::default(),

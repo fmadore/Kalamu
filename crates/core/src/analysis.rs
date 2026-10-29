@@ -52,6 +52,10 @@ pub enum FieldKind {
     Choice { values: Vec<String> },
     /// Any of a fixed set: themes from the researcher's own list.
     Choices { values: Vec<String> },
+    /// A list of entries, each with its own fields: the articles of a table of contents, with
+    /// a title, pages and a summary each. Built by Kalamu for a table of contents; the field
+    /// editor does not offer it.
+    Entries { fields: Vec<Field> },
 }
 
 /// A field's answer: prose or one choice as text, names or choices as a list.
@@ -61,16 +65,42 @@ pub enum FieldKind {
 pub enum FieldValue {
     Text(String),
     List(Vec<String>),
+    /// Entries, each its fields' answers. An empty list reads back as `List`, which
+    /// [`FieldValue::entries`] takes as no entries.
+    Entries(Vec<Vec<FieldAnswer>>),
 }
 
 impl FieldValue {
-    /// The value on one line: list items joined with semicolons, as spreadsheets expect.
+    /// The value on one line: list items joined with semicolons, as spreadsheets expect;
+    /// entries by their first field (a title).
     pub fn joined(&self) -> String {
         match self {
             Self::Text(t) => t.clone(),
             Self::List(items) => items.join("; "),
+            Self::Entries(entries) => entries
+                .iter()
+                .filter_map(|e| e.first().map(|a| a.value.joined()))
+                .collect::<Vec<_>>()
+                .join("; "),
         }
     }
+
+    /// The entries of an entries field; none for any other value.
+    pub fn entries(&self) -> &[Vec<FieldAnswer>] {
+        match self {
+            Self::Entries(entries) => entries,
+            _ => &[],
+        }
+    }
+}
+
+/// The text of one answer in a set of answers, by key; empty when it is missing.
+pub fn answer_text(answers: &[FieldAnswer], key: &str) -> String {
+    answers
+        .iter()
+        .find(|a| a.key == key)
+        .map(|a| a.value.joined())
+        .unwrap_or_default()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -128,102 +158,132 @@ impl AnalysisSchema {
 
     /// Checks a schema before it is saved or run.
     pub fn validate(&self) -> Result<(), SchemaError> {
-        if self.fields.is_empty() {
-            return Err(SchemaError::Empty);
-        }
-        let mut seen: Vec<String> = Vec::new();
-        for field in &self.fields {
-            let label = field.label.trim();
-            if label.is_empty() || field.key.is_empty() {
-                return Err(SchemaError::Unnamed);
-            }
-            let folded = label.to_lowercase();
-            if seen.contains(&folded) || seen.contains(&field.key) {
-                return Err(SchemaError::Duplicate(label.to_string()));
-            }
-            seen.push(folded);
-            seen.push(field.key.clone());
-            if let FieldKind::Choice { values } | FieldKind::Choices { values } = &field.kind {
-                let distinct = values
-                    .iter()
-                    .map(|v| v.trim().to_lowercase())
-                    .filter(|v| !v.is_empty())
-                    .collect::<std::collections::BTreeSet<_>>();
-                if distinct.len() < 2 {
-                    return Err(SchemaError::TooFewValues(label.to_string()));
-                }
-            }
-        }
-        Ok(())
+        validate_fields(&self.fields)
     }
 
     /// Reads the model's JSON answer into one answer per field, tidied: text trimmed, list items
     /// trimmed and without repeats (ignoring case), lists cut to their maximum, choices spelled
     /// as in the schema. A missing field or a value outside its choices is an error.
     pub fn read_answer(&self, answer: &Value) -> Result<Vec<FieldAnswer>, String> {
-        let object = answer
-            .as_object()
-            .ok_or_else(|| "the answer is not a JSON object".to_string())?;
-        let mut out = Vec::new();
-        for field in &self.fields {
-            let raw = object
-                .get(&field.key)
-                .ok_or_else(|| format!("the answer has no \"{}\"", field.label))?;
-            let value = match &field.kind {
-                FieldKind::Text => FieldValue::Text(text(raw, field)?.trim().to_string()),
-                FieldKind::Choice { values } => {
-                    FieldValue::Text(choose(text(raw, field)?, values, field)?)
-                }
-                FieldKind::List { max } => {
-                    let mut items = distinct(strings(raw, field)?);
-                    if let Some(max) = max {
-                        items.truncate(*max as usize);
-                    }
-                    FieldValue::List(items)
-                }
-                FieldKind::Choices { values } => FieldValue::List(distinct(
-                    strings(raw, field)?
-                        .into_iter()
-                        .map(|item| choose(&item, values, field))
-                        .collect::<Result<_, _>>()?,
-                )),
-            };
-            let reason = field
-                .reason
-                .then(|| object.get(&reason_key(&field.key)))
-                .flatten()
-                .and_then(Value::as_str)
-                .map(str::trim)
-                .filter(|r| !r.is_empty())
-                .map(str::to_string);
-            out.push(FieldAnswer {
-                key: field.key.clone(),
-                value,
-                reason,
-            });
-        }
-        Ok(out)
+        read_fields(&self.fields, answer)
     }
 
     /// The answers as plain text, for text files and the review: prose fields under their
-    /// label, the others on one line each, reasons below them.
+    /// label, the others on one line each, reasons below them, entries one block each.
     pub fn render(&self, answers: &[FieldAnswer]) -> String {
-        let mut blocks: Vec<String> = Vec::new();
-        for field in &self.fields {
-            let Some(answer) = answers.iter().find(|a| a.key == field.key) else {
-                continue;
-            };
-            let mut block = match (&field.kind, &answer.value) {
-                (FieldKind::Text, value) => format!("{}\n{}", field.label, value.joined()),
-                (_, value) => format!("{}: {}", field.label, value.joined()),
-            };
-            if let Some(reason) = &answer.reason {
-                block.push_str(&format!("\nReason: {reason}"));
+        render_fields(&self.fields, answers)
+    }
+}
+
+fn validate_fields(fields: &[Field]) -> Result<(), SchemaError> {
+    if fields.is_empty() {
+        return Err(SchemaError::Empty);
+    }
+    let mut seen: Vec<String> = Vec::new();
+    for field in fields {
+        let label = field.label.trim();
+        if label.is_empty() || field.key.is_empty() {
+            return Err(SchemaError::Unnamed);
+        }
+        let folded = label.to_lowercase();
+        if seen.contains(&folded) || seen.contains(&field.key) {
+            return Err(SchemaError::Duplicate(label.to_string()));
+        }
+        seen.push(folded);
+        seen.push(field.key.clone());
+        if let FieldKind::Choice { values } | FieldKind::Choices { values } = &field.kind {
+            let distinct = values
+                .iter()
+                .map(|v| v.trim().to_lowercase())
+                .filter(|v| !v.is_empty())
+                .collect::<std::collections::BTreeSet<_>>();
+            if distinct.len() < 2 {
+                return Err(SchemaError::TooFewValues(label.to_string()));
             }
+        }
+        if let FieldKind::Entries { fields } = &field.kind {
+            validate_fields(fields)?;
+        }
+    }
+    Ok(())
+}
+
+fn read_fields(fields: &[Field], answer: &Value) -> Result<Vec<FieldAnswer>, String> {
+    let object = answer
+        .as_object()
+        .ok_or_else(|| "the answer is not a JSON object".to_string())?;
+    let mut out = Vec::new();
+    for field in fields {
+        let raw = object
+            .get(&field.key)
+            .ok_or_else(|| format!("the answer has no \"{}\"", field.label))?;
+        let value = match &field.kind {
+            FieldKind::Text => FieldValue::Text(text(raw, field)?.trim().to_string()),
+            FieldKind::Choice { values } => {
+                FieldValue::Text(choose(text(raw, field)?, values, field)?)
+            }
+            FieldKind::List { max } => {
+                let mut items = distinct(strings(raw, field)?);
+                if let Some(max) = max {
+                    items.truncate(*max as usize);
+                }
+                FieldValue::List(items)
+            }
+            FieldKind::Choices { values } => FieldValue::List(distinct(
+                strings(raw, field)?
+                    .into_iter()
+                    .map(|item| choose(&item, values, field))
+                    .collect::<Result<_, _>>()?,
+            )),
+            FieldKind::Entries { fields } => FieldValue::Entries(
+                raw.as_array()
+                    .ok_or_else(|| format!("\"{}\" is not a list", field.label))?
+                    .iter()
+                    .map(|entry| read_fields(fields, entry))
+                    .collect::<Result<_, _>>()?,
+            ),
+        };
+        let reason = field
+            .reason
+            .then(|| object.get(&reason_key(&field.key)))
+            .flatten()
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|r| !r.is_empty())
+            .map(str::to_string);
+        out.push(FieldAnswer {
+            key: field.key.clone(),
+            value,
+            reason,
+        });
+    }
+    Ok(out)
+}
+
+fn render_fields(fields: &[Field], answers: &[FieldAnswer]) -> String {
+    let mut blocks: Vec<String> = Vec::new();
+    for field in fields {
+        let Some(answer) = answers.iter().find(|a| a.key == field.key) else {
+            continue;
+        };
+        let mut block = match (&field.kind, &answer.value) {
+            (FieldKind::Entries { fields }, value) => value
+                .entries()
+                .iter()
+                .map(|entry| render_fields(fields, entry))
+                .collect::<Vec<_>>()
+                .join("\n\n"),
+            (FieldKind::Text, value) => format!("{}\n{}", field.label, value.joined()),
+            (_, value) => format!("{}: {}", field.label, value.joined()),
+        };
+        if let Some(reason) = &answer.reason {
+            block.push_str(&format!("\nReason: {reason}"));
+        }
+        if !block.is_empty() {
             blocks.push(block);
         }
-        blocks.join("\n\n")
     }
+    blocks.join("\n\n")
 }
 
 fn text<'a>(raw: &'a Value, field: &Field) -> Result<&'a str, String> {

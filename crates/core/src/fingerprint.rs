@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::{LanguageChoice, PIPELINE_VERSION, PieceRef, Setup, Task};
+use crate::{LanguageChoice, PIPELINE_VERSION, PieceRef, Setup, Step, Task};
 
 /// SHA-256 over the source content, the piece, the set-up and the job's languages.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -45,6 +45,29 @@ impl CacheKey {
         Self(sha256_hex(material.to_string().as_bytes()))
     }
 
+    /// The key of a table of contents' second step: the pages' own keys stand for what was read,
+    /// so a page read again, or another merge model or prompt, makes it new.
+    pub fn merge(
+        source_sha256: &str,
+        page_keys: &[String],
+        step: Step<'_>,
+        languages: &LanguageChoice,
+    ) -> Self {
+        let material = serde_json::json!({
+            "pipeline": PIPELINE_VERSION,
+            "task": "contents_merge",
+            "source": source_sha256,
+            "pages": page_keys,
+            "provider": step.provider.as_str(),
+            "model": step.model,
+            "prompt": step.prompt.text,
+            "user_prompt": step.prompt.user_prompt,
+            "schema": step.prompt.schema,
+            "languages": languages,
+        });
+        Self(sha256_hex(material.to_string().as_bytes()))
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -74,6 +97,7 @@ mod tests {
                 schema: None,
             },
             options: SetupOptions::default(),
+            merge: None,
         }
     }
 

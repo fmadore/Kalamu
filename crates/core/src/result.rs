@@ -33,8 +33,12 @@ pub enum PieceRef {
         #[ts(type = "number")]
         end_ms: u64,
     },
-    /// A whole document, read at once: what an analysis covers.
+    /// A whole document, read at once: what an analysis covers, and a table of contents' second
+    /// step.
     Whole,
+    /// One stretch of a text file with no pages, cut at paragraph breaks, numbered from 1:
+    /// what a correction of a long text file is sent in.
+    Passage { number: u32 },
 }
 
 impl PieceRef {
@@ -56,6 +60,7 @@ impl PieceRef {
             } => format!("{number} (right)"),
             Self::Segment { start_ms, .. } => clock(*start_ms),
             Self::Whole => String::new(),
+            Self::Passage { number } => format!("§{number}"),
         }
     }
 
@@ -73,6 +78,7 @@ impl PieceRef {
                 end_ms,
             } => format!("segment:{index}:{start_ms}-{end_ms}"),
             Self::Whole => "whole".to_string(),
+            Self::Passage { number } => format!("passage:{number}"),
         }
     }
 }

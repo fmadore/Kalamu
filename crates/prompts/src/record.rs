@@ -47,6 +47,10 @@ pub struct SetupRecord {
     /// The prompt as sent, hashed as in each result's provenance. `None` for a model that
     /// takes no prompt.
     pub prompt: Option<ProvenancePrompt>,
+    /// For a table of contents, the second step, which combines the pages.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub merge: Option<Box<SetupRecord>>,
 }
 
 impl PipelineFile {
@@ -99,7 +103,7 @@ impl PipelineFile {
             _ => "detected automatically".into(),
         };
         let _ = writeln!(out, "- Languages: {languages}");
-        if p.task == Task::TextExtraction {
+        if matches!(p.task, Task::TextExtraction | Task::TextCorrection) {
             let lines = match p.settings.line_breaks {
                 Some(LineBreaks::AsOnPage) => "kept as on the page",
                 Some(LineBreaks::RunningText) => "joined into running text",
@@ -126,6 +130,9 @@ impl PipelineFile {
             } else {
                 let _ = writeln!(out, "\n## Model and prompt\n");
             }
+            if p.task == Task::Contents {
+                out.push_str("Each page is read for the articles or items on it.\n\n");
+            }
             let _ = writeln!(out, "- Provider: {}", record.provider_name);
             let _ = writeln!(out, "- Model: {} (`{}`)", record.model_name, setup.model);
             if p.task == Task::AudioTranscription {
@@ -136,16 +143,7 @@ impl PipelineFile {
                     let _ = writeln!(out, "- Expected speakers: {n}");
                 }
             }
-            if record.request.is_empty() {
-                out.push_str("- Request settings: the provider's defaults\n");
-            } else {
-                let settings: Vec<String> = record
-                    .request
-                    .iter()
-                    .map(|s| format!("`{}` = `{}`", s.name, s.value))
-                    .collect();
-                let _ = writeln!(out, "- Request settings: {}", settings.join(", "));
-            }
+            request_settings(&mut out, record);
             let Some(prompt) = &record.prompt else {
                 out.push_str("- Prompt: none, this model takes no instructions\n");
                 continue;
@@ -169,29 +167,67 @@ impl PipelineFile {
                 out.push_str("\n### Fields\n\n");
                 out.push_str("| Field | Answer | Instructions | Reason |\n");
                 out.push_str("| --- | --- | --- | --- |\n");
-                for field in &schema.fields {
-                    let answer = match &field.kind {
-                        FieldKind::Text => "text".to_string(),
-                        FieldKind::List { max: Some(max) } => format!("list, at most {max}"),
-                        FieldKind::List { max: None } => "list".to_string(),
-                        FieldKind::Choice { values } => format!("one of: {}", values.join(", ")),
-                        FieldKind::Choices { values } => {
-                            format!("any of: {}", values.join(", "))
-                        }
-                    };
-                    let _ = writeln!(
-                        out,
-                        "| {} (`{}`) | {} | {} | {} |",
-                        cell(&field.label),
-                        field.key,
-                        cell(&answer),
-                        cell(&field.instructions),
-                        if field.reason { "yes" } else { "no" }
-                    );
+                fields_table(&mut out, &schema.fields, "");
+            }
+            if let Some(merge) = &record.merge {
+                out.push_str("\n### Combining the pages\n\n");
+                out.push_str(
+                    "Each document's page readings are then combined into one entry per article \
+                     or item, in one call.\n\n",
+                );
+                let _ = writeln!(out, "- Provider: {}", merge.provider_name);
+                let model = setup.merge.as_ref().map_or("", |m| m.model.as_str());
+                let _ = writeln!(out, "- Model: {} (`{model}`)", merge.model_name);
+                request_settings(&mut out, merge);
+                if let Some(prompt) = &merge.prompt {
+                    let _ = writeln!(out, "- Prompt SHA-256: `{}`", prompt.sha256);
+                    out.push_str("\n#### Instructions\n\n");
+                    fenced(&mut out, &prompt.text);
+                    out.push_str("\n#### Request\n\n");
+                    fenced(&mut out, &prompt.user_prompt);
                 }
             }
         }
         out
+    }
+}
+
+fn request_settings(out: &mut String, record: &SetupRecord) {
+    if record.request.is_empty() {
+        out.push_str("- Request settings: the provider's defaults\n");
+    } else {
+        let settings: Vec<String> = record
+            .request
+            .iter()
+            .map(|s| format!("`{}` = `{}`", s.name, s.value))
+            .collect();
+        let _ = writeln!(out, "- Request settings: {}", settings.join(", "));
+    }
+}
+
+/// One row per field; an entries field's own fields follow it, marked as belonging to it.
+fn fields_table(out: &mut String, fields: &[kalamu_core::Field], parent: &str) {
+    for field in fields {
+        let answer = match &field.kind {
+            FieldKind::Text => "text".to_string(),
+            FieldKind::List { max: Some(max) } => format!("list, at most {max}"),
+            FieldKind::List { max: None } => "list".to_string(),
+            FieldKind::Choice { values } => format!("one of: {}", values.join(", ")),
+            FieldKind::Choices { values } => format!("any of: {}", values.join(", ")),
+            FieldKind::Entries { .. } => "entries, each with the fields below".to_string(),
+        };
+        let _ = writeln!(
+            out,
+            "| {parent}{} (`{}`) | {} | {} | {} |",
+            cell(&field.label),
+            field.key,
+            cell(&answer),
+            cell(&field.instructions),
+            if field.reason { "yes" } else { "no" }
+        );
+        if let FieldKind::Entries { fields } = &field.kind {
+            fields_table(out, fields, &format!("{parent}{} › ", cell(&field.label)));
+        }
     }
 }
 
@@ -216,6 +252,7 @@ impl PipelineLibrary {
                     && local.instructions == preset.instructions
                     && local.user_prompt == preset.user_prompt
                     && local.schema == preset.schema
+                    && local.merge_instructions == preset.merge_instructions
             });
             let id = if same {
                 preset.id.clone()
@@ -262,6 +299,8 @@ fn task_name(task: Task) -> &'static str {
         Task::TextExtraction => "text extraction",
         Task::AudioTranscription => "audio transcription",
         Task::Analysis => "analysis",
+        Task::Contents => "detailed table of contents",
+        Task::TextCorrection => "correction of existing text",
     }
 }
 
@@ -317,6 +356,7 @@ mod tests {
                 preset_id: Some(preset.id.clone()),
                 label: None,
                 options: SetupOptions::default(),
+                merge: None,
             }],
             settings: JobSettings::default(),
             formats: vec![ExportFormat::Csv],
@@ -339,6 +379,7 @@ mod tests {
                     sha256: "abc".into(),
                     schema: snapshot.schema,
                 }),
+                merge: None,
             }],
             vec![preset],
         )

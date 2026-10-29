@@ -180,6 +180,15 @@ impl PdfSource {
         (widest > 0 && width_pt > 0.0).then(|| (widest as f32 / (width_pt / 72.0)) as u32)
     }
 
+    /// The text layer of one page, as the PDF stores it; empty for a scan without one.
+    pub fn page_text(&self, number: u32) -> Result<String, MediaError> {
+        self.page_id(number)?;
+        self.doc
+            .extract_text(&[number])
+            .map(|t| t.trim().to_string())
+            .map_err(|e| MediaError::Pdf(e.to_string()))
+    }
+
     /// Whether the page already carries extractable text.
     pub fn has_text(&self, number: u32) -> bool {
         self.doc
