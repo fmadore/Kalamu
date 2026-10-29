@@ -7,6 +7,13 @@
 # writes Word files with ZipWriter and reads .docx entries into memory. Fixed in zip 9; remove
 # these lines when docx-rs moves to it. Recorded in docs/decisions/2026-10-24-offline-and-audio.md.
 #
+# A fourth, GHSA-m665-v7pm-7grj ("zip cloaking", 28 October 2026, fixed in zip 9.0.5), is a
+# parser differential: ZipArchive names an entry from the central directory, ZipStreamReader
+# from the local header, so an archive approved by one can write another file when the other
+# extracts it to disk. Neither docx-rs nor Kalamu uses ZipStreamReader or extracts anything;
+# the worst a crafted .docx can do is show Kalamu other text than Word shows. It has no RustSec
+# id yet; add it here when it gets one.
+#
 # glib 0.18 (RUSTSEC-2024-0429, GHSA-wrw7-89jp-8q8g, an unsound VariantStrIter): only the GTK
 # stack Tauri, wry, tao, muda and tray-icon use on Linux needs it. Kalamu ships for Windows
 # only, where none of it is compiled (`cargo tree -i glib --target x86_64-pc-windows-msvc` is
