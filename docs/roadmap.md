@@ -60,6 +60,10 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
   ([decision](decisions/2026-10-27-economy-mode-and-prompt-caching.md)).
 - **Pipelines**: a job's settings saved under a name and applied in one click; exported as an
   importable JSON file and a Markdown record for a methods section, and imported.
+- **Provenance of each request**: `provenance.json` records the settings each request carried
+  (reasoning effort, output limit, media resolution), for the step that reads and the step
+  that combines, kept with each result when it was sent; offline results are marked `offline`
+  ([decision](decisions/2026-10-29-provenance-request-settings.md)).
 - **Design**: the Graphite and highlighter interface ([DESIGN.md](../DESIGN.md)), responsive
   from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs and folds to a
   rail, and an app icon
@@ -75,11 +79,6 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Refactor the review**: extract the frame shared by the transcription and analysis reviews,
   and split New job into smaller components (see the
   [25 October checkpoint](decisions/2026-10-25-analyses-review-and-pipelines.md)).
-- **The settings each request carries, in provenance**: `provenance.json` records what the
-  provider sends besides the prompt (reasoning effort, output limit, media resolution), for the
-  step that reads and the step that combines, as a pipeline's record already does. Saved when
-  the job runs, so an update that changes them never rewrites an older result's record; a
-  prerequisite for letting researchers choose the effort.
 - **Error rates after review, for any job**: character and word error rates against the
   reviewed pages for a job with one set-up too, not only in comparison mode, shown per document
   and for the job. A page marked as reviewed without corrections counts as a reference (today

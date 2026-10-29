@@ -73,6 +73,12 @@ impl Provider for Structured {
         &["application/pdf", "text/plain"]
     }
 
+    /// A large model reads at a high effort, the small one combines at the lowest.
+    fn request_settings(&self, _task: Task, model: &str) -> Vec<kalamu_core::RequestSetting> {
+        let effort = if model == "tiny" { "minimal" } else { "high" };
+        vec![kalamu_core::RequestSetting::new("reasoning_effort", effort)]
+    }
+
     async fn process(
         &self,
         _key: &ApiKey,
@@ -316,6 +322,16 @@ async fn a_large_model_reads_the_pages_and_another_providers_model_combines_them
     assert_eq!(provenance["merge"]["provider"], "small");
     assert_eq!(provenance["merge"]["model"], "tiny");
     assert_eq!(provenance["merge"]["model_versions"][0], "tiny-001");
+    assert_eq!(provenance["engine"], "cloud");
+    // Each step's settings, as recorded with its results.
+    assert_eq!(
+        provenance["request"],
+        serde_json::json!([{ "name": "reasoning_effort", "value": "high" }])
+    );
+    assert_eq!(
+        provenance["merge"]["request"],
+        serde_json::json!([{ "name": "reasoning_effort", "value": "minimal" }])
+    );
     assert_eq!(provenance["pieces"], 4);
 
     // The same issue again: nothing is read twice. Another merge model combines the same pages.

@@ -82,6 +82,9 @@ CREATE TABLE batches (
 );
 CREATE INDEX batches_by_job ON batches(job_id);
 "#,
+    r#"
+ALTER TABLE results ADD COLUMN request TEXT;
+"#,
 ];
 
 pub struct SqliteStore {
@@ -376,7 +379,7 @@ impl JobStore for SqliteStore {
         let row = self
             .conn()
             .query_row(
-                "SELECT provider, model, output, cost_usd, duration_ms, created_at
+                "SELECT provider, model, output, cost_usd, duration_ms, created_at, request
                  FROM results WHERE cache_key = ?1",
                 [key.as_str()],
                 |row| {
@@ -387,18 +390,24 @@ impl JobStore for SqliteStore {
                         row.get::<_, Option<f64>>(3)?,
                         row.get::<_, i64>(4)?,
                         row.get::<_, i64>(5)?,
+                        row.get::<_, Option<String>>(6)?,
                     ))
                 },
             )
             .optional()
             .map_err(db)?;
         row.map(
-            |(provider, model, output, cost_usd, duration_ms, created_at)| {
+            |(provider, model, output, cost_usd, duration_ms, created_at, request)| {
                 Ok(StoredResult {
                     cache_key: key.0.clone(),
                     provider: ProviderId(provider),
                     model,
                     output: serde_json::from_str(&output).map_err(corrupt)?,
+                    // Results stored before the column existed have none.
+                    request: match request {
+                        Some(json) => serde_json::from_str(&json).map_err(corrupt)?,
+                        None => Vec::new(),
+                    },
                     cost_usd,
                     duration_ms: u64::try_from(duration_ms).unwrap_or_default(),
                     created_at: Timestamp(created_at),
@@ -412,8 +421,9 @@ impl JobStore for SqliteStore {
         self.conn()
             .execute(
                 "INSERT OR REPLACE INTO results
-                    (cache_key, provider, model, output, cost_usd, duration_ms, created_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                    (cache_key, provider, model, output, cost_usd, duration_ms, created_at,
+                     request)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![
                     result.cache_key,
                     result.provider.as_str(),
@@ -422,6 +432,7 @@ impl JobStore for SqliteStore {
                     result.cost_usd,
                     i64::try_from(result.duration_ms).unwrap_or(i64::MAX),
                     result.created_at.0,
+                    to_json(&result.request)?,
                 ],
             )
             .map_err(db)?;

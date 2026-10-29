@@ -7,8 +7,8 @@ use std::path::PathBuf;
 use kalamu_core::provenance::{GeneratorInfo, ProvenancePrompt, ProvenanceSource};
 use kalamu_core::{
     AnalysisSchema, ExportOptions, ExportPart, Field, FieldAnswer, FieldKind, FieldValue,
-    InputKind, LanguageChoice, PromptSnapshot, Provenance, ProviderId, Segment, Setup, SetupId,
-    SetupOptions, SourceFile, SourceId, Task, Timestamp, Usage,
+    InputKind, LanguageChoice, PromptSnapshot, Provenance, ProviderId, RequestSetting, Segment,
+    Setup, SetupId, SetupOptions, SourceFile, SourceId, Task, Timestamp, Usage,
 };
 
 use super::*;
@@ -70,6 +70,10 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         provider: setup.provider.clone(),
         model: setup.model.clone(),
         model_versions: vec![],
+        request: vec![
+            RequestSetting::new("generationConfig.thinkingConfig.thinkingLevel", "low"),
+            RequestSetting::new("generationConfig.maxOutputTokens", 65535),
+        ],
         prompt: ProvenancePrompt {
             preset_id: setup.prompt.preset_id.clone(),
             preset_name: setup.prompt.preset_name.clone(),

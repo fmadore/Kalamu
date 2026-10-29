@@ -177,6 +177,7 @@ impl Engine {
                     index: state.index,
                 })
                 .collect(),
+            request: provider.request_settings(job.task, &setup.model),
             submitted_at: now,
             updated_at: now,
         };
@@ -378,6 +379,7 @@ impl Engine {
                         provider: setup.provider.clone(),
                         model: setup.model.clone(),
                         output,
+                        request: batch.request.clone(),
                         cost_usd: cost,
                         duration_ms: waited,
                         created_at: Timestamp::now(),

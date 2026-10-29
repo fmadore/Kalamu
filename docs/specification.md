@@ -316,7 +316,9 @@ is remembered per task. Details are in [formats.md](formats.md).
   prices in a catalogue file the app refreshes from this repository without a new release.
 - **A recommended model per task**, reviewed whenever a provider releases something better;
   older models remain selectable and retired ones are flagged.
-- **The exact model version is recorded** in `provenance.json`.
+- **The exact model version is recorded** in `provenance.json`, with the settings each request
+  carried (reasoning effort, output limit, media resolution), kept with each result when it
+  was sent so that an update of the app never rewrites them.
 
 ## Offline mode
 

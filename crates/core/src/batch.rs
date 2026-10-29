@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{AnalysisSchema, JobId, ProcessOutput, ProviderError, ProviderId, SetupId, SourceId};
-use crate::{Task, Timestamp};
+use crate::{RequestSetting, Task, Timestamp};
 
 /// How long providers promise to take, at most; the interface shows the time it ends.
 pub const BATCH_WINDOW_MS: i64 = 24 * 60 * 60 * 1000;
@@ -74,6 +74,10 @@ pub struct BatchRecord {
     pub remote_id: Option<String>,
     pub phase: BatchPhase,
     pub items: Vec<BatchItem>,
+    /// The settings its requests carried, recorded when it was sent: the app may be updated
+    /// before the answers are collected.
+    #[serde(default)]
+    pub request: Vec<RequestSetting>,
     pub submitted_at: Timestamp,
     pub updated_at: Timestamp,
 }

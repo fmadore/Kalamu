@@ -53,7 +53,7 @@ on each page stays in the job, for the review.
   preset names it, then `corrected` and `reviewed`.
 - **JSON**: the part has an `entries` array, each entry an object of its fields' values by key.
 - **`provenance.json`** describes the first step as for any job and the second under `merge`:
-  its `provider`, `model`, `model_versions` and `prompt` (with its fields).
+  its `provider`, `model`, `model_versions`, `request` and `prompt` (with its fields).
 
 ## Corrected text
 
@@ -111,8 +111,9 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it |
 | `provider`, `model` | As requested |
 | `model_versions` | The versions the provider reported, when they differ from `model` (including a fallback model) |
+| `request` | What the requests carried besides the prompt, each as `{ "name", "value" }` named by its path in the request (`output_config.effort`, `generationConfig.maxOutputTokens`, `beam_size`): reasoning effort, output limit, media resolution. Recorded with each piece's result when it was sent, so a later version of Kalamu never rewrites it; a name listed twice means pieces were read with different values. Absent for results stored by 0.4.0 and earlier |
 | `prompt` | Preset id and name, the full instructions and per-page request sent, and their SHA-256 |
-| `merge` | For a table of contents, the model and prompt that combined the pages: `provider`, `model`, `model_versions`, `prompt` |
+| `merge` | For a table of contents, the model and prompt that combined the pages: `provider`, `model`, `model_versions`, `request`, `prompt` |
 | `languages`, `detected_languages` | What the user chose, and what the model reported |
 | `options` | Diarization, timestamps, speaker count |
 | `pieces`, `corrected`, `reviewed` | Number of pages or segments, and which were corrected or reviewed |

@@ -8,8 +8,8 @@ use kalamu_core::provenance::{GeneratorInfo, ProvenanceMerge, ProvenancePrompt, 
 use kalamu_core::speakers::{rename_segments, rename_text};
 use kalamu_core::{
     CacheKey, ExportDocument, ExportPart, InputKind, Job, JobId, OutputDestination, PieceRef,
-    PieceState, ProgressEvent, Provenance, Segment, Setup, SetupId, SourceFile, SourceId, Task,
-    Timestamp, Usage,
+    PieceState, ProgressEvent, Provenance, RequestSetting, Segment, Setup, SetupId, SourceFile,
+    SourceId, Task, Timestamp, Usage,
 };
 
 use crate::{Engine, EngineError};
@@ -180,6 +180,7 @@ impl Engine {
         let mut cost: Option<f64> = None;
         let mut versions = BTreeSet::new();
         let mut merge_versions = BTreeSet::new();
+        let (mut request, mut merge_request) = (Vec::new(), Vec::new());
         let mut detected = BTreeSet::new();
         let mut first_read: Option<Timestamp> = None;
         let (mut corrected, mut reviewed) = (Vec::new(), Vec::new());
@@ -201,6 +202,14 @@ impl Engine {
             // A table of contents exports its combined entries; its pages count in the usage,
             // the cost and the model versions, as the reading they are.
             let combined = job.task == Task::Contents && state.piece == PieceRef::Whole;
+            gather(
+                if combined {
+                    &mut merge_request
+                } else {
+                    &mut request
+                },
+                &result.request,
+            );
             if let Some(v) = &result.output.model_version {
                 if combined {
                     if setup.merge.as_ref().is_none_or(|m| &m.model != v) {
@@ -274,6 +283,11 @@ impl Engine {
             });
         }
 
+        // Offline engines are the providers that need no key.
+        let engine = match self.provider(&setup.provider) {
+            Ok(provider) if !provider.needs_key() => "offline",
+            _ => "cloud",
+        };
         let online = source.kind == InputKind::YouTube;
         let mut preprocessing = preprocessing(&source);
         if let Some(n) = job.settings.sample_pages {
@@ -295,15 +309,17 @@ impl Engine {
                 title: source.title.clone(),
                 read_at: first_read.filter(|_| online),
             },
-            engine: "cloud".into(),
+            engine: engine.into(),
             provider: setup.provider.clone(),
             model: setup.model.clone(),
             model_versions: versions.into_iter().collect(),
+            request,
             prompt: ProvenancePrompt::from_snapshot(&setup.prompt),
             merge: setup.merge.as_ref().map(|m| ProvenanceMerge {
                 provider: m.provider.clone(),
                 model: m.model.clone(),
                 model_versions: merge_versions.into_iter().collect(),
+                request: merge_request,
                 prompt: ProvenancePrompt::from_snapshot(&m.prompt),
             }),
             languages: job.settings.languages.clone(),
@@ -390,6 +406,16 @@ pub(crate) fn preprocessing(source: &SourceFile) -> Vec<String> {
 /// Segment times from a provider are relative to the piece; exports want the recording's clock.
 /// Where a piece starts before the previous one ended (a cut with no pause, repeated so the
 /// word on it is heard whole), segments that end inside the repeat were already transcribed.
+/// Adds a piece's request settings to those gathered, each name and value once, in the order
+/// first seen.
+fn gather(into: &mut Vec<RequestSetting>, settings: &[RequestSetting]) {
+    for setting in settings {
+        if !into.contains(setting) {
+            into.push(setting.clone());
+        }
+    }
+}
+
 fn absolute(piece: &PieceRef, segments: &[Segment], previous_end: Option<u64>) -> Vec<Segment> {
     let offset = match piece {
         PieceRef::Segment { start_ms, .. } => *start_ms,

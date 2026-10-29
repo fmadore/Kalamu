@@ -57,6 +57,16 @@
       "user_prompt": "Transcribe this page."
     },
     "provider": "gemini",
+    "request": [
+      {
+        "name": "generationConfig.thinkingConfig.thinkingLevel",
+        "value": "low"
+      },
+      {
+        "name": "generationConfig.maxOutputTokens",
+        "value": "65535"
+      }
+    ],
     "reviewed": [
       1,
       2

@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{LanguageChoice, LanguageCode, ProviderId, SetupOptions, Task, Timestamp, Usage};
+use crate::{
+    LanguageChoice, LanguageCode, ProviderId, RequestSetting, SetupOptions, Task, Timestamp, Usage,
+};
 
 /// Written as `<source>.provenance.json` next to every output: enough to tell how a result was
 /// produced and to reproduce it.
@@ -24,6 +26,11 @@ pub struct Provenance {
     /// The versions the provider reported, when they differ from `model`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub model_versions: Vec<String>,
+    /// What the requests carried besides the prompt (reasoning effort, output limit, media
+    /// resolution), as recorded with each piece's result. A name listed twice means pieces were
+    /// read with different values; results stored before these were kept add nothing.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub request: Vec<RequestSetting>,
     pub prompt: ProvenancePrompt,
     /// For a table of contents, the model and prompt that combined the pages' readings; the
     /// fields above are those that read each page.
@@ -56,6 +63,8 @@ pub struct ProvenanceMerge {
     pub model: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub model_versions: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub request: Vec<RequestSetting>,
     pub prompt: ProvenancePrompt,
 }
 
