@@ -154,6 +154,14 @@ async fn gemini_rate_limits_and_recitation_are_reported() {
         .mount(&server)
         .await;
     Mock::given(method("POST"))
+        .and(path("/models/withholds:generateContent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "promptFeedback": { "blockReason": "OTHER" },
+            "usageMetadata": { "promptTokenCount": 1290 }
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
         .and(path("/models/recites:generateContent"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "candidates": [{ "finishReason": "RECITATION", "content": { "parts": [] } }]
@@ -180,6 +188,17 @@ async fn gemini_rate_limits_and_recitation_are_reported() {
         )
         .await;
     assert!(matches!(recites, Err(ProviderError::Blocked(_))));
+    // A refusal Gemini gives no reason for says so, and what to do instead.
+    let withheld = gemini
+        .process(
+            &key,
+            request(Task::TextExtraction, "withholds", &input, &langs, &opts),
+        )
+        .await;
+    assert!(matches!(
+        withheld,
+        Err(ProviderError::Blocked(m)) if m.contains("no reason (OTHER)") && m.contains("another model")
+    ));
 }
 
 fn youtube() -> PreparedInput {

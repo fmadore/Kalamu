@@ -110,9 +110,7 @@ impl Gemini {
             .pointer("/promptFeedback/blockReason")
             .and_then(Value::as_str)
         {
-            return Err(ProviderError::Blocked(format!(
-                "the request was blocked ({reason})"
-            )));
+            return Err(ProviderError::Blocked(refusal(reason)));
         }
         let candidate = response
             .pointer("/candidates/0")
@@ -142,11 +140,7 @@ impl Gemini {
                     "Gemini's copyright filter stopped this page (RECITATION)".into(),
                 ));
             }
-            other if text.is_empty() => {
-                return Err(ProviderError::Blocked(format!(
-                    "no text returned ({other})"
-                )));
-            }
+            other if text.is_empty() => return Err(ProviderError::Blocked(refusal(other))),
             _ => {}
         }
         let usage = response.get("usageMetadata");
@@ -338,6 +332,23 @@ impl Provider for Gemini {
             })
             .unwrap_or_default())
     }
+}
+
+/// Why Gemini returned nothing, in words a researcher can act on. The safety filters Kalamu can
+/// turn off are off already; these refusals come from checks no request setting reaches, so the
+/// way on is another model.
+fn refusal(reason: &str) -> String {
+    let what = match reason {
+        "OTHER" => "Gemini gave no reason (OTHER), and no setting changes this".to_string(),
+        "PROHIBITED_CONTENT" | "BLOCKLIST" | "SPII" => {
+            format!("Gemini's terms rule out this content ({reason})")
+        }
+        "SAFETY" | "IMAGE_SAFETY" => {
+            format!("Gemini's own safety check stopped it ({reason})")
+        }
+        other => format!("Gemini returned no text ({other})"),
+    };
+    format!("{what}. Try another model, such as Claude or Mistral")
 }
 
 /// The resolution an input is read at: high for pages and pictures (ULTRA_HIGH is refused for
