@@ -169,8 +169,9 @@ but for these two, which change no result:
   than `low` for reading pages
   ([decision](decisions/2026-10-29-contents-review-and-answer-language.md)).
 - **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa
-  for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`; grouping
-  variant spellings of the same name across a job, confirmed by the researcher.
+  for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`. Project-wide
+  entity/label reconciliation is tracked in [#48](https://github.com/fmadore/Kalamu/issues/48)
+  and the research-workflow sequence below.
 - **Design decisions still open**: a collation table in Jobs, the interrupted
   job with Resume in the side menu: [issue #1](https://github.com/fmadore/Kalamu/issues/1).
 
@@ -196,14 +197,70 @@ Left, in this order:
 - **Live runs and screenshots** from the installed package, a decision on a capped test key for
   the certification team, then the acceptance checklist and the submission.
 
+## Research workflows (planned)
+
+The following improvements extend Kalamu from individual jobs to reusable research workflows.
+They are agreed product directions, not shipped features or release-date commitments. The
+current release checks and reliability work above remain first. Issues hold the detailed scope,
+dependencies and acceptance criteria; this roadmap holds the sequence, without duplicating them.
+
+The two central goals are:
+
+- **A project dictionary**: review all entities and analytical labels across an explicitly
+  selected set of jobs/documents, ask an LLM for proposed merges, then accept, reject or adjust
+  them. Keep original expressions and source evidence, stable IDs, aliases and reversible
+  decisions. Entity identity and thematic-label synonymy have separate rules.
+- **Reusable multi-step pipelines**: save a workflow from extraction through user-defined
+  analyses and export. Each step chooses its model, prompt and upstream inputs, with optional
+  review checkpoints. Existing single-job pipelines remain supported.
+
+Example: extract text → optional text review → extract entities → review dictionary merges →
+run another analysis using the text and accepted dictionary → export. Each run records the
+exact inputs used at every step and resumes without repeating completed unchanged work.
+A pending merge decision is never treated as approval.
+
+### Shared foundation and first workflow
+
+| Order | Improvement | Tracking |
+| --- | --- | --- |
+| 1 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
+| 2 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps | [#49](https://github.com/fmadore/Kalamu/issues/49) |
+| 3 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export | [#48](https://github.com/fmadore/Kalamu/issues/48) |
+| 4 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |
+
+The dictionary inventory and workflow interface can be developed incrementally against the
+shared foundation. A project is an explicit, persistent grouping of sources/results; the
+planned job tags remain useful for navigation but do not substitute for source identity.
+Later edits flag dependent results as out of date while preserving the snapshots behind
+earlier findings. The first increment does not require arbitrary scripts, loops or a general
+graph editor.
+
+### Supporting improvements
+
+| Improvement | First useful increment and dependency | Tracking |
+| --- | --- | --- |
+| Research-question screening | Relevance preset, explanations, filters and researcher selection; verified evidence spans build on #47 | [#51](https://github.com/fmadore/Kalamu/issues/51) |
+| Ordered image documents and paired transcriptions | Import photographs as one document with reviewable order; then pair existing text with scans | [#52](https://github.com/fmadore/Kalamu/issues/52) |
+| Persistent image preparation | Crop, processing rotation and adjustable spread splitting; transformation recipes preserve originals and source coordinates | [#53](https://github.com/fmadore/Kalamu/issues/53) |
+| Context-aware processing | Bounded neighboring pages; then date/place proposals with evidence, literal readings and explicit inference status | [#54](https://github.com/fmadore/Kalamu/issues/54) |
+| Archival metadata and export profiles | Supplied source descriptions and reusable local CSV/JSON mappings, separate from extracted/inferred values | [#55](https://github.com/fmadore/Kalamu/issues/55) |
+
+Scope is local research preparation, review and export. External collection-system integration
+and publishing are excluded from this work. Implementation follows the architecture checkpoints
+in AGENTS.md and updates the specification and user-facing documentation when features ship.
+
 ## Later
 
 - French and German interface.
 - OpenRouter for open-weights models.
-- Offline text extraction with Tesseract.
-- Linking names to authority records (an id from candidate records, or none, with a reason).
-- Tables of contents of text files (a long Word report, a transcript, read in passages), and of
-  a folder of photographs taken as one document; cutting a PDF into one file per entry, to
-  analyse each article.
+- Offline text extraction with Tesseract: [#46](https://github.com/fmadore/Kalamu/issues/46).
+- Linking names to imported local authority records (an id from candidate records, or none,
+  with a reason), building on the project dictionary in #48.
+- Tables of contents of text files (a long Word report, a transcript, read in passages).
+  Ordered photographs and item-level extraction/export are tracked in #52 and #50 above.
+- Post-interview analysis with research profiles and evidence-linked themes/quotations:
+  [#38](https://github.com/fmadore/Kalamu/issues/38), using the shared snapshot foundation.
+- Explore assisted TEI encoding with reusable project profiles:
+  [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature.
 - Correcting ALTO XML with its coordinates kept, as iwac-ai-pipelines does.
 - French and German Store listings, with the translated interface.
