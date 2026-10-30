@@ -1,7 +1,6 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 29 October 2026 (documents the version in development; to be dated again
-for the first Store release)
+**Effective date:** 30 October 2026, for version 1.0.0, the first Microsoft Store release
 
 ## What this app is
 
@@ -112,11 +111,22 @@ service itself. Anything entered on that page is between the user and Buy Me a C
 [Buy Me a Coffee privacy policy](https://buymeacoffee.com/privacy-policy). Supporting is optional
 and unlocks nothing.
 
+## Report a problem
+
+The flag in each review's header and *Report a problem* in Settings open a public GitHub issue
+form (`https://github.com/fmadore/Kalamu/issues/new`) in the default browser, with the app's
+version number filled in. The app passes that address to the browser and nothing else: it sends
+no document, result, key or other information itself. What the user writes in the form, and
+their GitHub account, are published on GitHub under the
+[GitHub privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement);
+the form asks not to paste confidential material.
+
 ## What the developer collects
 
 Nothing. The developer operates no server, relay, account system, telemetry, advertising,
 analytics or crash-reporting service for this app, and receives no files, results, keys, device
-identifiers or usage data from it.
+identifiers or usage data from it. A problem reported through GitHub reaches the developer only
+as the user wrote it there.
 
 ## Third-party processing
 

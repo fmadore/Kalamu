@@ -2443,7 +2443,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -2475,7 +2475,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-catalog"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "kalamu-core",
  "serde",
@@ -2486,7 +2486,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-core"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "hex",
@@ -2500,7 +2500,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-engine"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "futures",
@@ -2522,7 +2522,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-export"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "csv",
  "docx-rs",
@@ -2535,7 +2535,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-media"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "docx-rs",
  "hex",
@@ -2553,7 +2553,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-offline"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "hex",
@@ -2574,7 +2574,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-prompts"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "kalamu-core",
  "serde",
@@ -2587,7 +2587,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-providers"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "base64 0.23.1",
@@ -2600,7 +2600,7 @@ dependencies = [
 
 [[package]]
 name = "kalamu-store"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "kalamu-core",
  "rusqlite",

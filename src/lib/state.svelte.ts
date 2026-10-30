@@ -4,6 +4,7 @@
 
 import type { AppInfo } from './bindings/AppInfo.js';
 import type { Catalog } from './bindings/Catalog.js';
+import type { TaskRules } from './bindings/TaskRules.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
@@ -41,6 +42,8 @@ export const app = $state({
 	view: { name: 'new' } as View,
 	info: null as AppInfo | null,
 	catalog: null as Catalog | null,
+	/** Which sources, models and formats suit each task, from the engine. */
+	rules: [] as TaskRules[],
 	keys: [] as KeyStatus[],
 	offline: null as OfflineStatus | null,
 	settings: null as Settings | null,

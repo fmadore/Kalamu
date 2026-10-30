@@ -10,3 +10,4 @@ package-lock.json
 .impeccable/
 # Prose is wrapped by hand.
 *.md
+src/lib/dev/taskRules.json

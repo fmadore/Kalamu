@@ -1,6 +1,6 @@
 {
 	"name": "kalamu",
-	"version": "0.4.0",
+	"version": "1.0.0",
 	"description": "Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, or offline",
 	"license": "MIT",
 	"author": "Frédérick Madore",
@@ -24,9 +24,12 @@
 		"format:check": "prettier --check .",
 		"test": "vitest run",
 		"tauri": "tauri",
-		"fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs"
+		"fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs",
+		"bundle:msix:x64": "node scripts/bundle-msix.mjs x64",
+		"bundle:msix:arm64": "node scripts/bundle-msix.mjs arm64"
 	},
 	"devDependencies": {
+		"@choochmeque/tauri-windows-bundle": "^0.2.0",
 		"@sveltejs/adapter-static": "^4.0.0",
 		"@sveltejs/kit": "^3.1.0",
 		"@sveltejs/load-config": "^0.2.3",

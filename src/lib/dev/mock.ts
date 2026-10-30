@@ -10,10 +10,12 @@ import type { JobSummary } from '../bindings/JobSummary.js';
 import type { PieceView } from '../bindings/PieceView.js';
 import type { Preset } from '../bindings/Preset.js';
 import type { Settings } from '../bindings/Settings.js';
+import type { TaskRules } from '../bindings/TaskRules.js';
 import { layout } from '../review.svelte.js';
 import type { View } from '../state.svelte.js';
 import catalogJson from '../../../crates/catalog/catalog.json';
 import SAMPLE_SCAN from './sample-scan.jpg?inline';
+import taskRulesJson from './taskRules.json';
 import {
 	contentsJob,
 	contentsPieces,
@@ -25,6 +27,8 @@ import {
 } from './mockContents.js';
 
 const catalog = catalogJson as unknown as Catalog;
+/** The engine's rules for the bundled catalogue, written by `cargo test`. */
+const taskRules = taskRulesJson as TaskRules[];
 
 const settings: Settings = {
 	concurrency: 2,
@@ -663,6 +667,8 @@ export function installMock(): void {
 				return settings;
 			case 'get_catalog':
 				return catalog;
+			case 'task_rules':
+				return taskRules;
 			case 'offline_status':
 				return {
 					models: catalog.models

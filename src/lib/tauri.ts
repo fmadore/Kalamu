@@ -8,6 +8,7 @@ import type { Catalog } from './bindings/Catalog.js';
 import type { ComparisonReport } from './bindings/ComparisonReport.js';
 import type { Correction } from './bindings/Correction.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
+import type { TaskRules } from './bindings/TaskRules.js';
 import type { Pipeline } from './bindings/Pipeline.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
@@ -54,6 +55,7 @@ export const api = {
 	saveSettings: (settings: Settings) => invoke<void>('save_settings', { settings }),
 	getCatalog: () => invoke<Catalog>('get_catalog'),
 	refreshCatalog: () => invoke<Catalog>('refresh_catalog'),
+	taskRules: () => invoke<TaskRules[]>('task_rules'),
 	keyStatus: () => invoke<KeyStatus[]>('key_status'),
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	clearApiKey: (provider: string) => invoke<void>('clear_api_key', { provider }),

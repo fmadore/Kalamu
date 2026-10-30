@@ -4,14 +4,16 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (29 October 2026)
+## Status (30 October 2026)
 
-Early development; [v0.4.0](https://github.com/fmadore/Kalamu/releases/tag/v0.4.0), with
-detailed tables of contents and the correction of existing text, is the latest test build, for
-Windows on x64 and ARM64, with FFmpeg bundled. Everything below is tested
-against recorded provider responses. Text extraction, transcription and analyses have also run
-against the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`,
-see [development.md](development.md)); Gemini has not yet, for want of credit on the account.
+**Version 1.0.0**, the first Microsoft Store release, is ready to build: the app, its package
+and its listing are done, and what is left before submitting needs Partner Center, the
+repository's settings and real keys ([Toward the Store release](#toward-the-store-release)).
+[v0.4.0](https://github.com/fmadore/Kalamu/releases/tag/v0.4.0) is the latest public test
+build, for Windows on x64 and ARM64, with FFmpeg bundled. Everything below is tested against
+recorded provider responses. Text extraction, transcription and analyses have also run against
+the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`, see
+[development.md](development.md)); Gemini has not yet, for want of credit on the account.
 
 ## Done
 
@@ -80,8 +82,23 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 - **Search in the review** (Ctrl F): the document's text as shown, corrections included,
   searched across its pages or a recording's pieces, capitals and accents ignored; the matches
   listed by page or by time, each gone to with its words marked and a recording playing from
-  its line; a table of contents' entries filtered
-  ([decision](decisions/2026-10-29-search-in-the-review.md)).
+  its line; a table of contents' entries filtered; an analysis's fields kept where their answers
+  or reasons hold the words, which are also marked in a text document
+  ([decision](decisions/2026-10-29-search-in-the-review.md),
+  [analyses](decisions/2026-10-30-version-1.md)).
+- **The rest of the checkpoint's refactor**: New job, the job page and the sidebar in smaller
+  components; the engine's job loop split into planning (`plan.rs`), one piece's call
+  (`piece.rs`) and the loop (`run.rs`), sharing the piece-saving and cost code with batches,
+  which are split into sending and collecting; the rules on which files, models and formats
+  suit each task given to New job by the engine (`task_rules`), which checks them again when a
+  job is created ([decision](decisions/2026-10-30-version-1.md)).
+- **Version 1.0.0 for the Microsoft Store**: Report a problem in every review and in Settings
+  (policy 11.16), the MSIX package with FFmpeg inside and the Store bundle built by the release
+  workflow, third-party notices for every crate and package, sample files for the certification
+  team, and the listing for 1.0.0 ([packaging-msix.md](packaging-msix.md),
+  [decision](decisions/2026-10-30-version-1.md)).
+- **Icons centred in their buttons**: the icon component's style no longer reaches buttons
+  named `icon`, which drew their icon at the left whenever its style loaded last.
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
   Mistral at half price, answered within a day and collected after the app was closed; cached
   input billed at its own price; both costs shown before starting
@@ -104,15 +121,13 @@ see [development.md](development.md)); Gemini has not yet, for want of credit on
 
 ## Next
 
-The [29 October checkpoint](decisions/2026-10-29-checkpoint.md) puts these before any new
-feature (results that could be wrong unnoticed, work lost or paid twice, results that did not
-reach the researcher, and the reviews' frame, are done):
+The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refactor are done,
+but for these two, which change no result:
 
 - **The cost of failed answers**: answers billed but failing their fields counted in the cost
   shown, which needs a failed call to carry its usage.
-- **The rest of the refactor**: New job, the job page and the sidebar in smaller components;
-  `run.rs` and `batch.rs` split; the rules on which files and models suit a task given to the
-  front end by the engine, which also checks them.
+- **Smaller provenance gaps** from the same checkpoint: whether Whisper used voice detection,
+  speaker names, a table of contents' usage and cost per step.
 - **A home for jobs**: a page listing every job with its task, models, sources, date, status,
   review progress and cost; search by name, file name and tag; sorting and filters by task,
   model, pipeline, date and status; tags the researcher gives jobs, a tag's filter serving as
@@ -161,29 +176,25 @@ reach the researcher, and the reviews' frame, are done):
 ## Toward the Store release
 
 The first Microsoft Store submission, version 1.0.0. What the Store checks and how to submit
-are in [microsoft-store.md](microsoft-store.md); the listing text in
-[store-listing.md](store-listing.md) and the [privacy policy](privacy.md) are drafted.
+are in [microsoft-store.md](microsoft-store.md), the package in
+[packaging-msix.md](packaging-msix.md), the listing text in [store-listing.md](store-listing.md)
+and the [privacy policy](privacy.md).
 
-- **Name**: done. Kalamu, reserved in Partner Center on 28 October 2026
-  ([decision](decisions/2026-10-28-kalamu.md)); copy the package identity into
-  [microsoft-store.md](microsoft-store.md#store-identity).
-- **Report a problem**: a link in the review and in Settings that opens a GitHub issue form in
-  the browser, so researchers can report inappropriate output (Store policy 11.16).
-- **MSIX packaging**, ported from Live Translation: `@choochmeque/tauri-windows-bundle`, a
-  committed `src-tauri/gen/windows/` with the reserved identity, taskbar icon variants and
-  `resources.pri`, and the FFmpeg sidecars and licences inside the package.
-- **Release workflow**: installers done. A tag builds the x64 and ARM64 installers natively,
-  with FFmpeg and whisper.cpp, into a draft release published once both are attached
-  (`.github/workflows/release.yml`, [decision](decisions/2026-10-28-release-workflow.md)); the
-  `.msixbundle` is still to add, with the MSIX packaging.
-- **Version 1.0.0** in every manifest: the Store refuses a first segment of 0.
+Done: the name (reserved on 28 October 2026), Report a problem, MSIX packaging with FFmpeg and
+the licences inside, the `.msixbundle` and `kalamu-samples.zip` in the release workflow,
+version 1.0.0, third-party notices generated at build time, the sample files, and the listing,
+What's new and certification notes for 1.0.0.
+
+Left, in this order:
+
+- **Package identity**: copy `Package/Identity/Name` from Partner Center into
+  [microsoft-store.md](microsoft-store.md#store-identity) and the manifest template; the MSIX
+  build refuses to run until then.
 - **Privacy policy online**: GitHub Pages from `docs/` on `main`, so it is served at
   `fmadore.github.io/Kalamu/privacy`.
-- **Third-party notices** generated at build time for every Rust crate and npm package, PDF.js
-  included, and installed with the licences.
-- **Reviewer route**: sample files attached to the release, and a decision on giving the
-  certification team a capped test key for the cloud features.
-- **Live runs and screenshots** from the packaged app, then the acceptance checklist.
+- **Tag v1.0.0**, which builds the installers, the packages and the bundle.
+- **Live runs and screenshots** from the installed package, a decision on a capped test key for
+  the certification team, then the acceptance checklist and the submission.
 
 ## Later
 

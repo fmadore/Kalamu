@@ -12,6 +12,7 @@
 	import Columns2 from '@lucide/svelte/icons/columns-2';
 	import Download from '@lucide/svelte/icons/download';
 	import FileText from '@lucide/svelte/icons/file-text';
+	import Flag from '@lucide/svelte/icons/flag';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Laptop from '@lucide/svelte/icons/laptop';
 	import List from '@lucide/svelte/icons/list';
@@ -46,6 +47,7 @@
 		edit: Pencil,
 		folder: FolderOpen,
 		file: FileText,
+		flag: Flag,
 		laptop: Laptop,
 		link: Link,
 		list: List,
@@ -91,7 +93,8 @@
 />
 
 <style>
-	:global(.icon) {
+	/* The glyph only: `.btn.icon` names an icon-only button, which must stay a centring flex box. */
+	:global(svg.icon) {
 		display: block;
 		flex: none;
 	}

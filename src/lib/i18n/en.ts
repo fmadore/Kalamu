@@ -474,7 +474,13 @@ export const en = {
 		closeSearch: 'Close the search',
 		entriesFound: (n: number, total: number) =>
 			`${n} of ${total} ${total === 1 ? 'entry' : 'entries'}`,
-		noEntryFound: 'No entry holds these words.'
+		noEntryFound: 'No entry holds these words.',
+		searchAnswers: 'Search the answers',
+		searchAnswersAndText: 'Search the answers and the document',
+		answersFound: (n: number, total: number) =>
+			`${n} of ${total} ${total === 1 ? 'answer' : 'answers'}`,
+		inDocument: (n: number) => `${n} in the document`,
+		noAnswerFound: 'No answer holds these words.'
 	},
 	prompts: {
 		title: 'Prompts',
@@ -600,6 +606,12 @@ export const en = {
 		privacy:
 			'Nothing is sent to the developer: no files, keys, results or telemetry. AI output can contain fluent but wrong text; check a sample against the source.'
 	},
+	report: {
+		/** Store policy 11.16: a way to report what the models write. */
+		link: 'Report a problem',
+		review: 'Report a problem with this output',
+		note: 'Output that is inappropriate, harmful or invented, or a bug: report it on GitHub. The form opens in your browser; Kalamu sends nothing, so share only what is safe to make public.'
+	},
 	support: {
 		title: 'Support development',
 		/** Says plainly that paying changes nothing in the app. */
@@ -674,6 +686,8 @@ export const en = {
 		'provider.unknown': 'Unknown provider.',
 		'provider.missing_key': 'No API key is saved for this provider. Add one in Settings.',
 		'provider.unsupported': 'This model cannot do this task.',
+		'source.unsupported':
+			'One of the files cannot be read for this task. Remove it, or choose another task.',
 		'provider.auth': 'The provider rejected the API key. Check it in Settings.',
 		'provider.quota': 'The provider account has no credit or quota left.',
 		'provider.rate_limited': 'The provider asked to slow down; the page will be retried.',

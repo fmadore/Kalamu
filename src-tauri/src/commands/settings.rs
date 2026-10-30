@@ -1,6 +1,7 @@
 //! App information, settings and the model catalogue.
 
 use kalamu_catalog::Catalog;
+use kalamu_engine::TaskRules;
 use tauri::State;
 
 use super::{AppInfo, AppState, INTERRUPTED};
@@ -34,6 +35,13 @@ pub fn save_settings(state: State<'_, AppState>, settings: Settings) -> CmdResul
 #[tauri::command]
 pub fn get_catalog(state: State<'_, AppState>) -> Catalog {
     state.engine.catalog()
+}
+
+/// Which sources, models and formats suit each task, against the catalogue in use; fetched
+/// again after the catalogue is refreshed.
+#[tauri::command]
+pub fn task_rules(state: State<'_, AppState>) -> Vec<TaskRules> {
+    state.engine.task_rules()
 }
 
 /// Downloads the catalogue from the repository and keeps it when it is newer than the one in use.

@@ -1,0 +1,53 @@
+name: Report AI output
+description: A result that is inappropriate, harmful or offensive, or that invents what the source does not say.
+title: "[Output] "
+labels: ["ai-output"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting this. Kalamu shows text written by the AI model you chose; reports help warn other researchers and improve the prompts.
+
+        **Do not paste confidential material.** This page is public. Describe the problem, and quote only what is needed and safe to share.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is wrong?
+      options:
+        - Inappropriate, offensive or harmful text
+        - Text the source does not contain (invented, "hallucinated")
+        - The model refused, or answered something else
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: task
+    attributes:
+      label: Task
+      options:
+        - Extract text
+        - Correct existing text
+        - Analyse texts
+        - Detailed table of contents
+        - Transcribe recordings
+        - YouTube video
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Provider and model
+      description: As shown in the review, over the text (for example gemini-3.8-flash).
+      placeholder: gemini-3.8-flash
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What the output said, and what the source says instead, as far as you can share it.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Kalamu version
+      description: Settings › About.

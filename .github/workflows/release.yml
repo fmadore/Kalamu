@@ -1,15 +1,20 @@
 name: Release
 
-# Builds the installers natively on x64 and ARM64, each with the bundled FFmpeg and whisper.cpp,
-# and attaches them to a draft GitHub release, which is published only once both are attached.
-# Ported from Live Translation's release.yml (see docs/decisions/2026-10-28-release-workflow.md
-# for where it differs): no MSIX yet, and both architectures get an installer.
+# Builds the installers and the Microsoft Store packages natively on x64 and ARM64, each with the
+# bundled FFmpeg, whisper.cpp and the third-party notices, and attaches them to a draft GitHub
+# release, which is published only once every asset is attached. Ported from Live Translation's
+# release.yml (see docs/decisions/2026-10-28-release-workflow.md for where it differs): both
+# architectures get an installer as well as a Store package.
 #
-# Release assets: Kalamu_<version>_x64-setup.exe and Kalamu_<version>_arm64-setup.exe
+# Release assets: Kalamu_<version>_<arch>-setup.exe  the installers, unsigned
+#                 Kalamu_<version>_<arch>.msix       to sign and install locally for verification
+#                 Kalamu_<version>.msixbundle        the Store submission (docs/microsoft-store.md)
+#                 kalamu-samples.zip                 samples/, the files the certification notes use
 #
 # Normal flow: bump the version files, add docs/release-<version>.md, merge, then
-# `git tag v0.3.0 && git push origin v0.3.0`. `prepare` checks the tag against the version files
-# and creates the draft; `build` attaches the installers; `publish` makes the release public with
+# `git tag v1.0.0 && git push origin v1.0.0`. `prepare` checks the tag against the version files
+# and creates the draft; `build` attaches the installers, `msix` the packages and `bundle` the
+# Store bundle; `publish` makes the release public with
 # docs/release-<version>.md from the tagged commit as its body, as a pre-release while the
 # version starts with 0. Until that last step nothing is public, so a failed job leaves a draft to
 # re-run rather than a spent version. A hyphenated tag (v0.3.0-rc1) is a validation build: the
@@ -149,6 +154,16 @@ jobs:
           fi
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
+      # The files the Store's certification notes point reviewers to (samples/README.txt).
+      - name: Attach the sample files
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          (cd samples && zip -X -q ../kalamu-samples.zip ./*)
+          gh release upload "$TAG" kalamu-samples.zip --clobber -R "$GITHUB_REPOSITORY"
+
   build:
     name: Installer (${{ matrix.arch }})
     needs: prepare
@@ -203,6 +218,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-ffmpeg.mjs ${{ matrix.target }}
 
+      # Installed in licenses/ beside FFmpeg's: every crate and package built into the app.
+      - name: Write the third-party notices
+        run: node scripts/third-party-notices.mjs ${{ matrix.target }}
+
       # With a release id, tauri-action only uploads, replacing assets of the same name.
       - name: Build and attach the installer
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
@@ -212,12 +231,147 @@ jobs:
           releaseId: ${{ needs.prepare.outputs.release_id }}
           args: --target ${{ matrix.target }} --bundles nsis --config src-tauri/tauri.ffmpeg.conf.json
 
-  # The last step: both installers are attached, so the draft can go public with the prepared
-  # body from the tagged commit. A hyphenated tag is never published here, and a release that is
+  # The Store package for each architecture, built natively as the installers are. The bundler
+  # compiles the app again with `--no-bundle`; scripts/bundle-msix.mjs puts FFmpeg and the
+  # licences inside (docs/packaging-msix.md).
+  msix:
+    name: MSIX package (${{ matrix.arch }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - arch: arm64
+            runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+
+      - name: Configure native Whisper compiler
+        shell: pwsh
+        run: |
+          "CC=clang-cl" >> $env:GITHUB_ENV
+          "CXX=clang-cl" >> $env:GITHUB_ENV
+          "CXXFLAGS=/EHsc" >> $env:GITHUB_ENV
+          "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+
+      - run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: whisper-cpu-${{ runner.arch }}-v1
+          save-if: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch the bundled FFmpeg
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-ffmpeg.mjs ${{ matrix.target }}
+
+      - name: Write the third-party notices
+        run: node scripts/third-party-notices.mjs ${{ matrix.target }}
+
+      - name: Build the MSIX package
+        run: npm run bundle:msix:${{ matrix.arch }}
+
+      # The bundler names its output after the manifest's DisplayName; the release assets follow
+      # the installers' convention.
+      - name: Name the package
+        id: package
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $msix = Get-ChildItem 'target/msix' | Where-Object Extension -eq '.msix' | Select-Object -First 1
+          if (-not $msix) { throw 'tauri-windows-bundle produced no .msix.' }
+          $asset = Join-Path 'target/msix' "Kalamu_${version}_${{ matrix.arch }}.msix"
+          Move-Item -LiteralPath $msix.FullName -Destination $asset -Force
+          "msix=$asset" >> $env:GITHUB_OUTPUT
+
+      # The bare .msix is what a tester signs and installs locally: signing a bundle does not
+      # sign the packages inside it.
+      - name: Attach the MSIX to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh release upload "${{ inputs.tag || github.ref_name }}"
+          "${{ steps.package.outputs.msix }}" --clobber
+
+      - name: Upload the MSIX for bundling
+        uses: actions/upload-artifact@v7
+        with:
+          name: msix-${{ matrix.arch }}
+          path: ${{ steps.package.outputs.msix }}
+          retention-days: 1
+          if-no-files-found: error
+
+  # One multi-architecture .msixbundle carrying both packages: the single file Partner Center
+  # takes, so no architecture ships stale on a later update.
+  bundle:
+    name: Store bundle (x64 + ARM64)
+    needs: msix
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+
+      - name: Download both architectures
+        uses: actions/download-artifact@v8
+        with:
+          pattern: msix-*
+          path: packages
+          merge-multiple: true
+
+      - name: Bundle
+        id: bundle
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $packages = Get-ChildItem 'packages' -Filter *.msix
+          if ($packages.Count -ne 2) {
+            throw "Expected an x64 and an ARM64 .msix, found $($packages.Count): $($packages.Name -join ', ')"
+          }
+          # MakeAppx ships with the Windows SDK on windows-latest; take its highest version.
+          $makeAppx = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\makeappx.exe" |
+            Sort-Object { [version]$_.Directory.Parent.Name } -Descending |
+            Select-Object -First 1
+          if (-not $makeAppx) { throw 'MakeAppx.exe was not found; the Windows SDK is missing.' }
+          $bundle = "Kalamu_${version}.msixbundle"
+          # /bv must be a four-part version, at least as high as the packages inside.
+          & $makeAppx.FullName bundle /d 'packages' /p $bundle /bv "$version.0" /o
+          if ($LASTEXITCODE -ne 0) { throw "MakeAppx failed with exit code $LASTEXITCODE" }
+          "bundle=$bundle" >> $env:GITHUB_OUTPUT
+
+      - name: Attach the bundle to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh release upload "${{ inputs.tag || github.ref_name }}"
+          "${{ steps.bundle.outputs.bundle }}" --clobber
+
+  # The last step: every asset is attached, so the draft can go public with the prepared body
+  # from the tagged commit. A hyphenated tag is never published here, and a release that is
   # already published is left as it is.
   publish:
     name: Publish the release
-    needs: [prepare, build]
+    needs: [prepare, build, bundle]
     if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -241,9 +395,11 @@ jobs:
           fi
 
           assets=$(gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.prepare.outputs.release_id }}" --jq '.assets[].name')
-          for arch in x64 arm64; do
-            if ! grep -qx "Kalamu_${VERSION}_${arch}-setup.exe" <<< "$assets"; then
-              echo "::error::Kalamu_${VERSION}_${arch}-setup.exe is not attached; the release stays a draft."
+          for asset in "Kalamu_${VERSION}_x64-setup.exe" "Kalamu_${VERSION}_arm64-setup.exe" \
+            "Kalamu_${VERSION}_x64.msix" "Kalamu_${VERSION}_arm64.msix" "Kalamu_${VERSION}.msixbundle" \
+            kalamu-samples.zip; do
+            if ! grep -qx "$asset" <<< "$assets"; then
+              echo "::error::$asset is not attached; the release stays a draft."
               exit 1
             fi
           done

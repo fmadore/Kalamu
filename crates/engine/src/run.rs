@@ -1,61 +1,19 @@
-//! Running a job: each source is opened once, split into pieces, and every piece × set-up is
-//! either taken from the cache or sent to its provider, a few at a time. In economy mode, the
-//! pieces of set-ups whose provider has a batch service are gathered into batches instead
-//! ([`crate::batch`]) and collected once every source has been read.
+//! Running a job: each source is opened once and planned ([`crate::plan`]), and every piece ×
+//! set-up is either taken from the cache or sent to its provider ([`crate::piece`]), a few at a
+//! time. In economy mode, the pieces of set-ups whose provider has a batch service are gathered
+//! into batches instead ([`crate::batch`]) and collected once every source has been read.
 
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
 
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use kalamu_core::{
-    ApiKey, CacheKey, Job, JobId, JobStatus, Pace, PieceRef, PieceState, PieceStatus,
-    PreparedInput, ProcessOutput, ProcessRequest, ProgressEvent, ProviderError, Setup, SetupId,
-    SourceFile, SourceId, Step, StopSignal, StoredResult, Task, Timestamp,
-};
+use kalamu_core::{JobId, JobStatus, Pace, ProgressEvent, Setup, SetupId, Task};
 use kalamu_media::OpenSource;
 
+use crate::piece::{Input, Outcome};
+use crate::plan::Existing;
 use crate::{Control, Engine, EngineError};
-
-/// What a call reads: a piece still to cut from its source, or an input already made (a table
-/// of contents' pages, gathered for its second step).
-pub(crate) enum Input {
-    Open(Arc<OpenSource>),
-    Ready(PreparedInput),
-}
-
-/// How a piece ended, for the job's final status.
-pub(crate) enum Outcome {
-    Finished,
-    Failed,
-    /// Stopped part-way by a pause or cancel; the piece is pending again.
-    Interrupted,
-    /// The key or the account is unusable: stop the job.
-    Fatal(String),
-}
-
-/// The text a model returned, tidied: a blank-page marker becomes an empty page.
-pub(crate) fn clean(mut output: ProcessOutput) -> ProcessOutput {
-    let trimmed = output.text.trim();
-    if trimmed.eq_ignore_ascii_case("[BLANK PAGE]") {
-        output.text = String::new();
-    } else if trimmed.len() != output.text.len() {
-        output.text = trimmed.to_string();
-    }
-    output
-}
-
-/// A provider's answer as the task stores it: a correction's one field becomes the page's text.
-pub(crate) fn finish(task: Task, output: ProcessOutput) -> ProcessOutput {
-    let mut output = clean(output);
-    if task == Task::TextCorrection {
-        output.text = kalamu_core::correction::text(&output.fields);
-        output.fields = Vec::new();
-    }
-    output
-}
 
 impl Engine {
     pub(crate) async fn run(
@@ -104,7 +62,7 @@ impl Engine {
         };
         let mut gathered = HashMap::new();
         let mut batch_outcome = crate::batch::BatchOutcome::default();
-        let existing: HashMap<(SetupId, SourceId, u32), PieceState> = self
+        let existing: Existing = self
             .store
             .pieces(job_id)?
             .into_iter()
@@ -157,118 +115,25 @@ impl Engine {
                     continue;
                 }
             };
-            // A recording resumed keeps the pieces planned the first time: planning decodes the
-            // whole file, and the cuts must not move under results already stored.
-            let stored = stored_pieces(&existing, &job, source);
-            let pieces = if job.task == Task::Analysis {
-                // An analysis reads the whole document at once.
-                vec![PieceRef::Whole]
-            } else if job.task == Task::TextCorrection {
-                // A correction reads the text there is: a PDF's pages, a text file's passages.
-                let (opened, sample) = (opened.clone(), job.settings.sample_pages);
-                let planned = tokio::task::spawn_blocking(move || opened.text_pieces(sample))
-                    .await
-                    .map_err(|e| EngineError::Output(e.to_string()))?;
-                match planned {
-                    Ok(pieces) => pieces,
-                    Err(e) => {
-                        failed = true;
-                        self.emit(ProgressEvent::SourceFailed {
-                            job_id,
-                            source_id: source.id,
-                            error: e.to_string(),
-                        });
-                        continue;
-                    }
+            let pieces = match self.plan(&job, source, &opened, &existing).await? {
+                Ok(pieces) => pieces,
+                Err(error) => {
+                    failed = true;
+                    self.emit(ProgressEvent::SourceFailed {
+                        job_id,
+                        source_id: source.id,
+                        error,
+                    });
+                    continue;
                 }
-            } else if stored.is_empty() {
-                let (opened, split, sample, length) = (
-                    opened.clone(),
-                    source.split_spreads,
-                    job.settings.sample_pages,
-                    self.piece_length(&job),
-                );
-                tokio::task::spawn_blocking(move || opened.pieces(split, sample, length))
-                    .await
-                    .map_err(|e| EngineError::Output(e.to_string()))?
-            } else {
-                stored
             };
-            // A table of contents ends with the step that combines its pages.
-            let mut pieces = pieces;
-            if job.task == Task::Contents && pieces.last() != Some(&PieceRef::Whole) {
-                pieces.push(PieceRef::Whole);
-            }
             self.emit(ProgressEvent::SourcePrepared {
                 job_id,
                 source_id: source.id,
                 pieces: pieces.len() as u32,
             });
 
-            // Record every piece first, so totals and the resume screen are right at once.
-            let mut work = Vec::new();
-            for setup in &job.setups {
-                for (index, piece) in pieces.iter().enumerate() {
-                    let index = index as u32;
-                    // The combining step's key depends on the pages' results: it is worked out
-                    // once they are read (`merge_pages`).
-                    if job.task == Task::Contents && *piece == PieceRef::Whole {
-                        if !existing.contains_key(&(setup.id, source.id, index)) {
-                            self.store.upsert_piece(&PieceState {
-                                job_id,
-                                setup_id: setup.id,
-                                source_id: source.id,
-                                index,
-                                piece: piece.clone(),
-                                status: PieceStatus::Pending,
-                                cache_key: None,
-                                error: None,
-                                attempts: 0,
-                                updated_at: Timestamp::now(),
-                            })?;
-                        }
-                        continue;
-                    }
-                    let key = CacheKey::compute(
-                        job.task,
-                        &source.sha256,
-                        piece,
-                        setup,
-                        &job.settings.languages,
-                        &crate::output::preprocessing(source),
-                    );
-                    let state = match existing.get(&(setup.id, source.id, index)) {
-                        Some(s)
-                            if s.status.is_finished()
-                                && s.cache_key.as_deref() == Some(key.as_str()) =>
-                        {
-                            continue;
-                        }
-                        // In a batch the provider still holds: collected below.
-                        Some(s) if s.status == PieceStatus::Submitted => continue,
-                        Some(s) => PieceState {
-                            status: PieceStatus::Pending,
-                            cache_key: Some(key.0.clone()),
-                            piece: piece.clone(),
-                            ..s.clone()
-                        },
-                        None => PieceState {
-                            job_id,
-                            setup_id: setup.id,
-                            source_id: source.id,
-                            index,
-                            piece: piece.clone(),
-                            status: PieceStatus::Pending,
-                            cache_key: Some(key.0.clone()),
-                            error: None,
-                            attempts: 0,
-                            updated_at: Timestamp::now(),
-                        },
-                    };
-                    self.store.upsert_piece(&state)?;
-                    work.push((setup.clone(), state, key));
-                }
-            }
+            let work = self.record_pieces(&job, source, &pieces, &existing)?;
 
             let (to_batch, work): (Vec<_>, Vec<_>) = work
                 .into_iter()
@@ -289,8 +154,7 @@ impl Engine {
                     )
                     .await?;
                 if let Some(message) = &outcome.fatal {
-                    tracing::warn!(job = %job_id, %message, "stopping job");
-                    control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
+                    stop_for(&control, job_id, message);
                 }
                 batch_outcome.merge(outcome);
             }
@@ -339,8 +203,7 @@ impl Engine {
                     Ok(Ok(Outcome::Interrupted)) => interrupted = true,
                     Ok(Ok(Outcome::Failed)) | Err(_) => failed = true,
                     Ok(Ok(Outcome::Fatal(message))) => {
-                        tracing::warn!(job = %job_id, %message, "stopping job");
-                        control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
+                        stop_for(&control, job_id, &message);
                         stopped = true;
                         failed = true;
                     }
@@ -366,8 +229,7 @@ impl Engine {
                         Outcome::Interrupted => interrupted = true,
                         Outcome::Failed => failed = true,
                         Outcome::Fatal(message) => {
-                            tracing::warn!(job = %job_id, %message, "stopping job");
-                            control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
+                            stop_for(&control, job_id, &message);
                             failed = true;
                         }
                     }
@@ -420,234 +282,6 @@ impl Engine {
             None => JobStatus::Completed,
         })
     }
-
-    /// The provider's formats for the task, narrowed to those the model reads: a text-only
-    /// model behind a provider that takes PDFs and images is sent text alone. A correction
-    /// sends text whatever the model reads.
-    pub(crate) fn accepted(
-        &self,
-        job: &Job,
-        step: Step<'_>,
-    ) -> Result<Vec<&'static str>, EngineError> {
-        let provider = self.provider(step.provider)?;
-        let catalog = self.catalog();
-        let model = catalog.model(step.provider, step.model);
-        Ok(provider
-            .accepted_inputs(job.task)
-            .iter()
-            .copied()
-            .filter(|mime| model.is_none_or(|m| m.inputs.iter().any(|i| i == mime)))
-            .filter(|mime| job.task != Task::TextCorrection || *mime == "text/plain")
-            .collect())
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) async fn process_piece(
-        &self,
-        job: &Job,
-        source: &SourceFile,
-        step: Step<'_>,
-        mut state: PieceState,
-        key: CacheKey,
-        input: Input,
-        spent: Arc<Mutex<f64>>,
-        stop: &StopSignal,
-    ) -> Result<Outcome, EngineError> {
-        let update = |engine: &Engine, state: &PieceState, preview: Option<String>| {
-            engine.emit(ProgressEvent::PieceUpdated {
-                job_id: state.job_id,
-                setup_id: state.setup_id,
-                source_id: state.source_id,
-                index: state.index,
-                piece: state.piece.clone(),
-                status: state.status,
-                error: state.error.clone(),
-                preview,
-            });
-        };
-
-        if let Some(cached) = self.store.cached_result(&key)? {
-            state.status = PieceStatus::Cached;
-            state.error = None;
-            state.updated_at = Timestamp::now();
-            self.store.upsert_piece(&state)?;
-            update(self, &state, Some(preview(&cached.output.text)));
-            return Ok(Outcome::Finished);
-        }
-
-        state.status = PieceStatus::Running;
-        state.updated_at = Timestamp::now();
-        self.store.upsert_piece(&state)?;
-        update(self, &state, None);
-
-        let provider = self.provider(step.provider)?;
-        let api_key = if provider.needs_key() {
-            self.keys
-                .key(step.provider)
-                .ok_or_else(|| EngineError::MissingKey(step.provider.to_string()))?
-        } else {
-            ApiKey::new("")
-        };
-        let prepared = match input {
-            Input::Ready(input) => Ok(input),
-            Input::Open(opened) => {
-                let accepted = self.accepted(job, step)?;
-                let stem = Path::new(&source.file_name)
-                    .file_stem()
-                    .map(|s| s.to_string_lossy().into_owned())
-                    .unwrap_or_else(|| "page".into());
-                let piece = state.piece.clone();
-                tokio::task::spawn_blocking(move || opened.prepare(&piece, &accepted, &stem))
-                    .await
-                    .map_err(|e| EngineError::Output(e.to_string()))?
-            }
-        };
-        let input = match prepared {
-            Ok(input) => input,
-            Err(e) => {
-                state.status = PieceStatus::Failed;
-                state.error = Some(e.to_string());
-                state.updated_at = Timestamp::now();
-                self.store.upsert_piece(&state)?;
-                update(self, &state, None);
-                return Ok(Outcome::Failed);
-            }
-        };
-
-        // The set-up's options (speakers, timestamps), which the combining step shares.
-        let options = job
-            .setups
-            .iter()
-            .find(|s| s.id == state.setup_id)
-            .map(|s| s.options.clone())
-            .unwrap_or_default();
-        let started = Instant::now();
-        let mut last_error: Option<ProviderError> = None;
-        for attempt in 0..self.config.max_attempts {
-            state.attempts += 1;
-            let request = ProcessRequest {
-                task: job.task,
-                model: step.model,
-                prompt: &step.prompt.text,
-                user_prompt: &step.prompt.user_prompt,
-                input: &input,
-                languages: &job.settings.languages,
-                options: &options,
-                analysis: step.prompt.schema.as_ref(),
-                stop,
-            };
-            let sent = provider.sent_settings(&request, false);
-            match provider.process(&api_key, request).await {
-                Ok(output) => {
-                    let output = finish(job.task, output);
-                    let catalog = self.catalog();
-                    let cost = catalog
-                        .model(step.provider, step.model)
-                        .and_then(|m| catalog.actual_cost(m, &output.usage));
-                    let result = StoredResult {
-                        cache_key: key.0.clone(),
-                        provider: step.provider.clone(),
-                        model: step.model.to_string(),
-                        output,
-                        request: sent,
-                        cost_usd: cost,
-                        duration_ms: started.elapsed().as_millis() as u64,
-                        created_at: Timestamp::now(),
-                    };
-                    self.store.put_result(&result)?;
-                    state.status = PieceStatus::Done;
-                    state.error = None;
-                    state.updated_at = Timestamp::now();
-                    self.store.upsert_piece(&state)?;
-                    update(self, &state, Some(preview(&result.output.text)));
-                    if let Some(cost) = cost {
-                        let total = {
-                            let mut spent = spent.lock().unwrap_or_else(|p| p.into_inner());
-                            *spent += cost;
-                            *spent
-                        };
-                        self.emit(ProgressEvent::CostUpdated {
-                            job_id: job.id,
-                            spent_usd: total,
-                        });
-                    }
-                    return Ok(Outcome::Finished);
-                }
-                Err(ProviderError::Interrupted) => {
-                    state.status = PieceStatus::Pending;
-                    state.error = None;
-                    state.updated_at = Timestamp::now();
-                    self.store.upsert_piece(&state)?;
-                    update(self, &state, None);
-                    return Ok(Outcome::Interrupted);
-                }
-                Err(err) if err.is_fatal_for_job() => {
-                    state.status = PieceStatus::Failed;
-                    state.error = Some(err.to_string());
-                    state.updated_at = Timestamp::now();
-                    self.store.upsert_piece(&state)?;
-                    update(self, &state, None);
-                    return Ok(Outcome::Fatal(err.to_string()));
-                }
-                Err(err) if crate::is_retryable(&err) && attempt + 1 < self.config.max_attempts => {
-                    let delay = match &err {
-                        ProviderError::RateLimited {
-                            retry_after: Some(d),
-                            ..
-                        } => *d + Duration::from_secs(1),
-                        _ => backoff(self.config.base_delay, attempt, state.index),
-                    };
-                    tracing::info!(piece = state.index, ?delay, error = %err, "retrying");
-                    last_error = Some(err);
-                    // Paused or cancelled meanwhile: no further attempt, which would be paid
-                    // for; the piece waits for the job to resume.
-                    if wait_unless_stopped(delay, stop).await {
-                        state.status = PieceStatus::Pending;
-                        state.error = None;
-                        state.updated_at = Timestamp::now();
-                        self.store.upsert_piece(&state)?;
-                        update(self, &state, None);
-                        return Ok(Outcome::Interrupted);
-                    }
-                }
-                Err(err) => {
-                    last_error = Some(err);
-                    break;
-                }
-            }
-        }
-        state.status = PieceStatus::Failed;
-        state.error = last_error.map(|e| e.to_string());
-        state.updated_at = Timestamp::now();
-        self.store.upsert_piece(&state)?;
-        update(self, &state, None);
-        Ok(Outcome::Failed)
-    }
-}
-
-/// The pieces already recorded for a recording, in order; empty for documents, whose pages are
-/// cheap to list again, and for a recording not started yet.
-fn stored_pieces(
-    existing: &HashMap<(SetupId, SourceId, u32), PieceState>,
-    job: &Job,
-    source: &SourceFile,
-) -> Vec<PieceRef> {
-    let audio = matches!(
-        source.kind,
-        kalamu_core::InputKind::Audio | kalamu_core::InputKind::Video
-    );
-    let Some(first) = job.setups.first() else {
-        return Vec::new();
-    };
-    if !audio {
-        return Vec::new();
-    }
-    let mut mine: Vec<&PieceState> = existing
-        .values()
-        .filter(|p| p.setup_id == first.id && p.source_id == source.id)
-        .collect();
-    mine.sort_by_key(|p| p.index);
-    mine.into_iter().map(|p| p.piece.clone()).collect()
 }
 
 pub(crate) enum StopKind {
@@ -666,25 +300,8 @@ pub(crate) fn stop_requested(control: &Mutex<Control>) -> Option<StopKind> {
     }
 }
 
-/// Waits `delay`, ending early if the job is paused or cancelled; true when it was.
-async fn wait_unless_stopped(delay: Duration, stop: &StopSignal) -> bool {
-    let step = Duration::from_millis(100);
-    let mut left = delay;
-    while !left.is_zero() && !stop.is_stopped() {
-        let nap = left.min(step);
-        tokio::time::sleep(nap).await;
-        left -= nap;
-    }
-    stop.is_stopped()
-}
-
-/// `base × 2^attempt`, plus up to two seconds spread by piece so parallel retries do not land
-/// together.
-fn backoff(base: Duration, attempt: u32, index: u32) -> Duration {
-    let spread = Duration::from_millis(u64::from(index % 8) * 250);
-    base * 2u32.saturating_pow(attempt).min(32) + spread
-}
-
-pub(crate) fn preview(text: &str) -> String {
-    text.chars().take(400).collect()
+/// Pauses the job: its key or account stopped working, and every further call would fail.
+fn stop_for(control: &Mutex<Control>, job_id: JobId, message: &str) {
+    tracing::warn!(job = %job_id, %message, "stopping job");
+    control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
 }

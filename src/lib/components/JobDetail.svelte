@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
-	import ProgressBar from './ProgressBar.svelte';
-	import { siglum } from '#lib/apparatus.js';
+	import JobFacts from './JobFacts.svelte';
+	import JobFiles from './JobFiles.svelte';
+	import JobOutputs from './JobOutputs.svelte';
 	import type { Job } from '#lib/bindings/Job.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
 	import type { PieceState } from '#lib/bindings/PieceState.js';
 	import { describeError } from '#lib/errors.js';
-	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
-	import { describeScore, scoredTask } from '#lib/scores.js';
-	import { api, ask, revealInFolder } from '#lib/tauri.js';
+	import { formatDateTime, messages } from '#lib/i18n/index.js';
+	import { scoredTask } from '#lib/scores.js';
+	import { api, ask } from '#lib/tauri.js';
 	import { app, go, liveJob, refreshJobs } from '#lib/state.svelte.js';
 
 	let { jobId }: { jobId: string } = $props();
@@ -47,21 +48,6 @@
 		if (job && scoredTask(job.task)) {
 			scores = await api.jobScores(jobId).catch(() => null);
 		}
-	}
-
-	/** Each set-up's score over the whole job, in a sentence, where pages were reviewed. */
-	const totals = $derived(
-		job && scores
-			? scores.total.map((s) => describeScore(s, job?.task ?? 'text_extraction', m))
-			: []
-	);
-
-	/** One set-up's score on one document, in a sentence. */
-	function documentScore(sourceId: string, setupId: string): string | null {
-		const score = scores?.sources
-			.find((s) => s.source_id === sourceId)
-			?.scores.find((s) => s.setup_id === setupId);
-		return score && job ? describeScore(score, job.task, m) : null;
 	}
 
 	// The written files, read again whenever the job reports new ones.
@@ -115,16 +101,6 @@
 				.catch(() => undefined);
 		}, 500);
 	});
-
-	function counts(setupId: string, sourceId: string) {
-		const mine = pieces.filter((p) => p.setup_id === setupId && p.source_id === sourceId);
-		return {
-			total: mine.length,
-			done: mine.filter((p) => p.status === 'done' || p.status === 'cached').length,
-			failed: mine.filter((p) => p.status === 'failed').length,
-			errors: [...new Set(mine.flatMap((p) => (p.error ? [p.error] : [])))]
-		};
-	}
 
 	async function act(action: () => Promise<void>) {
 		error = null;
@@ -234,105 +210,9 @@
 	<div class="body">
 		{#if error}<p class="chip danger">{error}</p>{/if}
 
-		<dl class="facts">
-			<div>
-				<dt>{m.jobs.task}</dt>
-				<dd>{m.task[job.task]}</dd>
-			</div>
-			<div>
-				<dt>{m.jobs.pieces}</dt>
-				<dd class="mono">
-					{m.jobs.progress(summary.pieces_finished, summary.pieces_total)}
-					{#if summary.pieces_failed > 0}<span class="fail"
-							>· {m.jobs.failed(summary.pieces_failed)}</span
-						>{/if}
-					{#if summary.pieces_truncated > 0}<span class="cut" title={m.jobs.truncatedNote}
-							>· {m.jobs.truncated(summary.pieces_truncated)}</span
-						>{/if}
-				</dd>
-			</div>
-			<div class="wide">
-				<dt>{m.jobs.models}</dt>
-				<dd class="models">
-					{#each job.setups as s, i (s.id)}
-						<span
-							>{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>{/if}<span class="mono"
-								>{s.model}</span
-							></span
-						>
-					{/each}
-				</dd>
-			</div>
-			{#if totals.some((t) => t !== null)}
-				<div class="wide">
-					<dt>{m.scores.title}</dt>
-					<dd class="scores">
-						{#each totals as total, i (i)}
-							{#if total}
-								<span
-									>{#if job.setups.length > 1}<i class="siglum">{siglum(i)}</i>{/if}{total}</span
-								>
-							{/if}
-						{/each}
-						<span class="note">{m.scores.note}</span>
-					</dd>
-				</div>
-			{/if}
-			{#if job.settings.pace === 'economy'}
-				<div>
-					<dt>{m.jobs.pace}</dt>
-					<dd>{m.jobs.paceName.economy}</dd>
-				</div>
-			{/if}
-			{#if spent > 0}
-				<div>
-					<dt>{m.jobs.cost}</dt>
-					<dd class="mono">{formatUsd(spent)}</dd>
-				</div>
-			{/if}
-			<div>
-				<dt>{m.jobs.created}</dt>
-				<dd>{formatDateTime(summary.created_at)}</dd>
-			</div>
-		</dl>
+		<JobFacts {job} {summary} {spent} {scores} />
 
-		<section aria-labelledby="files-head" class="files">
-			<h2 id="files-head">{m.jobs.files}</h2>
-			<div class="table">
-				{#each job.sources as source (source.id)}
-					<div class="row">
-						<span class="file mono">{source.file_name}</span>
-						<div class="progress">
-							{#each job.setups as setup, i (setup.id)}
-								{@const c = counts(setup.id, source.id)}
-								<div class="setup-progress">
-									{#if job.setups.length > 1}<i class="siglum" title={setup.label}>{siglum(i)}</i
-										>{/if}
-									<ProgressBar
-										done={c.done}
-										failed={c.failed}
-										total={Math.max(c.total, 1)}
-										label="{source.file_name} {setup.label}"
-									/>
-									<span class="count mono">{c.total > 0 ? `${c.done}/${c.total}` : '—'}</span>
-								</div>
-								{#each c.errors.slice(0, 3) as e (e)}
-									<p class="err">{e}</p>
-								{/each}
-								{@const score = documentScore(source.id, setup.id)}
-								{#if score}<p class="doc-score">{score}</p>{/if}
-							{/each}
-						</div>
-						<button
-							class="btn sm"
-							onclick={() => go({ name: 'review', jobId, sourceId: source.id })}
-						>
-							{m.jobs.review}
-						</button>
-					</div>
-				{/each}
-			</div>
-		</section>
+		<JobFiles {jobId} {job} {pieces} {scores} />
 
 		{#if live?.preview}
 			<section aria-labelledby="preview-head" class="files">
@@ -342,25 +222,7 @@
 		{/if}
 
 		{#if written.length > 0}
-			<section aria-labelledby="written-head" class="files">
-				<h2 id="written-head">{m.jobs.outputs}</h2>
-				<ul class="written">
-					{#each written as path (path)}
-						{@const name = path.split(/[\\/]/).pop()}
-						<li>
-							<button class="link mono" title={m.jobs.openFile} onclick={() => open(path)}
-								><Icon name="file" size={14} />{name}</button
-							>
-							<button
-								class="btn ghost sm icon"
-								title={m.jobs.openFolder}
-								aria-label="{m.jobs.openFolder}: {name}"
-								onclick={() => revealInFolder(path)}><Icon name="folder" size={14} /></button
-							>
-						</li>
-					{/each}
-				</ul>
-			</section>
+			<JobOutputs {written} onopen={open} />
 		{/if}
 	</div>
 {/if}
@@ -390,114 +252,9 @@
 		max-width: 72rem;
 		padding: var(--space-5) var(--space-5) var(--space-7);
 	}
-	/* The job's facts as one strip, cells divided by hairlines. */
-	.facts {
-		display: flex;
-		flex-wrap: wrap;
-		margin: 0;
-		border: 1px solid var(--line);
-		border-radius: var(--radius-card);
-	}
-	.facts > div {
-		flex: 1 1 10rem;
-		display: grid;
-		gap: var(--space-1);
-		align-content: start;
-		padding: var(--space-3) var(--space-4);
-		border-left: 1px solid var(--line);
-		margin-left: -1px;
-	}
-	.facts > .wide {
-		flex: 2 1 14rem;
-	}
-	dt {
-		font-size: var(--type-xs);
-		color: var(--text-muted);
-	}
-	dd {
-		margin: 0;
-		color: var(--text-bright);
-		font-weight: 500;
-	}
-	.models {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-1) var(--space-3);
-	}
-	.models > span {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-2);
-	}
-	/* Each set-up's error rate as a sentence, then how it was counted. */
-	.scores {
-		display: grid;
-		gap: var(--space-1);
-	}
-	.scores > span {
-		display: inline-flex;
-		align-items: baseline;
-		gap: var(--space-2);
-	}
-	.scores > .note,
-	.doc-score {
-		font-size: var(--type-xs);
-		font-weight: 400;
-		color: var(--text-muted);
-	}
-	.doc-score {
-		margin: 0;
-	}
-	.fail,
-	.err {
-		color: var(--danger-text);
-	}
-	.cut {
-		color: var(--warn-text);
-	}
 	.files {
 		display: grid;
 		gap: var(--space-3);
-	}
-	.table {
-		border: 1px solid var(--line);
-		border-radius: var(--radius-card);
-		overflow: hidden;
-	}
-	.row {
-		display: grid;
-		grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
-		gap: var(--space-3) var(--space-5);
-		align-items: center;
-		padding: var(--space-3) var(--space-4);
-		border-top: 1px solid var(--line-soft);
-	}
-	.row:first-child {
-		border-top: 0;
-	}
-	.file {
-		overflow-wrap: anywhere;
-		color: var(--text-bright);
-	}
-	.progress {
-		display: grid;
-		gap: var(--space-2);
-	}
-	.setup-progress {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) 3.5rem;
-		gap: var(--space-3);
-		align-items: center;
-	}
-	.setup-progress:not(:has(.siglum)) {
-		grid-template-columns: minmax(0, 1fr) 3.5rem;
-	}
-	.count {
-		color: var(--text-muted);
-		text-align: right;
-	}
-	.err {
-		font-size: var(--type-xs);
 	}
 	.preview {
 		margin: 0;
@@ -512,46 +269,15 @@
 		max-height: 16rem;
 		overflow: auto;
 	}
-	.written {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		gap: var(--space-1);
-	}
-	.written li {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-	}
 	/* The job's name being typed, in place of the title and at its size. */
 	.rename {
 		min-width: min(28rem, 100%);
 		font-size: var(--type-xl);
 		font-weight: 600;
 	}
-	.link {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-2);
-		border: 0;
-		background: none;
-		color: var(--text-bright);
-		cursor: pointer;
-		padding: 0;
-	}
-	.link:hover {
-		text-decoration: underline;
-	}
 	@media (max-width: 820px) {
 		.body {
 			padding: var(--space-4);
-		}
-		.row {
-			grid-template-columns: minmax(0, 1fr);
-		}
-		.row .btn {
-			justify-self: start;
 		}
 	}
 </style>

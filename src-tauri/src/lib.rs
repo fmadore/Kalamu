@@ -256,6 +256,7 @@ pub fn run() {
             commands::settings::save_settings,
             commands::settings::get_catalog,
             commands::settings::refresh_catalog,
+            commands::settings::task_rules,
             commands::keys::key_status,
             commands::keys::set_api_key,
             commands::keys::clear_api_key,

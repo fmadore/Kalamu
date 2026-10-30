@@ -65,6 +65,7 @@ parameters open a given state:
 | --- | --- |
 | `view=new`, `jobs`, `prompts`, `settings` | Opens that screen |
 | `view=review`, `review-audio`, `review-analysis` | Opens the review of a sample extraction, recording or analysis |
+| `view=review-youtube`, `review-contents`, `review-correction` | Opens the review of a YouTube video, a table of contents or a correction |
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `theme=light` or `dark` | Forces the theme |
 | `open=<word>` | Opens the readings of the highlighted words with that text in the review |
@@ -72,6 +73,11 @@ parameters open a given state:
 
 If the preview shows a stale model catalogue after `crates/catalog/catalog.json` changes,
 restart the dev server.
+
+The sample data and `src/lib/newJob.test.ts` take each task's rules (which files, models and
+formats suit it) from `src/lib/dev/taskRules.json`, which `cargo test` writes from the engine's
+`task_rules` for the bundled catalogue, as it writes the TypeScript bindings. Run `cargo test`
+after changing the catalogue or the rules, and commit the file.
 
 ## Releases
 
@@ -84,13 +90,15 @@ Releases are built by `.github/workflows/release.yml`, natively on x64 and ARM64
 3. Merge, then tag `main` and push the tag:
 
 ```bash
-git tag v0.3.0 && git push origin v0.3.0
+git tag v1.0.0 && git push origin v1.0.0
 ```
 
-The workflow checks the tag against the version files, builds both installers into a draft
-release and publishes it once both are attached, as a pre-release while the version starts with
-0. A hyphenated tag (`v0.3.0-rc1`) builds the same draft and leaves it unpublished. To rebuild a
-tag, run the workflow by hand from the Actions tab.
+The workflow checks the tag against the version files and builds, into a draft release, both
+installers, both Store packages and the `.msixbundle` for Partner Center
+([packaging-msix.md](packaging-msix.md)), with `kalamu-samples.zip` from `samples/`; it
+publishes the release once every asset is attached, as a pre-release while the version starts
+with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To
+rebuild a tag, run the workflow by hand from the Actions tab.
 
 To build an installer locally, fetch the bundled FFmpeg first; it comes from the build in
 `.github/workflows/ffmpeg.yml`:
@@ -100,5 +108,14 @@ node scripts/fetch-ffmpeg.mjs
 ```
 
 ```bash
+node scripts/third-party-notices.mjs
+```
+
+```bash
 npm run tauri build -- --bundles nsis --config src-tauri/tauri.ffmpeg.conf.json
 ```
+
+`third-party-notices.mjs` writes `licenses/THIRD-PARTY-NOTICES.txt` beside FFmpeg's licences:
+every Rust crate and npm package built into the app, with its licence texts. The Store package
+is built with `npm run bundle:msix:x64` or `bundle:msix:arm64`; see
+[packaging-msix.md](packaging-msix.md).
