@@ -3,6 +3,7 @@
 
 import type { FieldAnswer } from './bindings/FieldAnswer.js';
 import type { FieldValue } from './bindings/FieldValue.js';
+import { find } from './search.js';
 
 /** One set-up's answers, named by its siglum. */
 export interface Witness {
@@ -45,19 +46,25 @@ export function collate(key: string, witnesses: Witness[]): Reading[] {
 	return out;
 }
 
-/** The parts of a text, with each occurrence of `term` (ignoring case) marked. */
+/** Whether any witness's answer to a field, or its reason, holds the words searched for. */
+export function holdsWords(key: string, witnesses: Witness[], query: string): boolean {
+	return witnesses.some((w) => {
+		const answer = w.answers.find((a) => a.key === key);
+		const texts = [...valuesOf(answer?.value), answer?.reason ?? ''];
+		return texts.some((t) => find(t, query).length > 0);
+	});
+}
+
+/** The parts of a text, with each occurrence of `term` marked, found as the review's search
+ * finds words (ignoring capitals, accents and runs of spaces). */
 export function findTerm(text: string, term: string): { text: string; hit: boolean }[] {
-	const needle = term.trim();
-	if (needle === '') return [{ text, hit: false }];
-	const pattern = new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
 	const out: { text: string; hit: boolean }[] = [];
 	let at = 0;
-	for (const match of text.matchAll(pattern)) {
-		const start = match.index ?? 0;
-		if (start > at) out.push({ text: text.slice(at, start), hit: false });
-		out.push({ text: match[0], hit: true });
-		at = start + match[0].length;
+	for (const match of find(text, term)) {
+		if (match.start > at) out.push({ text: text.slice(at, match.start), hit: false });
+		out.push({ text: text.slice(match.start, match.end), hit: true });
+		at = match.end;
 	}
-	if (at < text.length) out.push({ text: text.slice(at), hit: false });
+	if (at < text.length || out.length === 0) out.push({ text: text.slice(at), hit: false });
 	return out;
 }

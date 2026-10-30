@@ -7,6 +7,7 @@
 	// or Alt and the arrows, turn the pages; Ctrl F opens the search, under the masthead.
 	import { tick, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
+	import ReportLink from './ReportLink.svelte';
 	import SourcePane from './SourcePane.svelte';
 	import Splitter from './Splitter.svelte';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
@@ -32,6 +33,7 @@
 		preview = null,
 		text = null,
 		find = '',
+		found = false,
 		player,
 		witness,
 		label,
@@ -72,6 +74,8 @@
 		text?: string | null;
 		/** Words to find in a text file, marked where they occur. */
 		find?: string;
+		/** Whether those words are a search's rather than a name pointed at. */
+		found?: boolean;
 		player?: Snippet;
 		/** Whose text or answers lead, over them. */
 		witness: { label: string; siglum?: string | null; note?: string | null; corrected: boolean };
@@ -148,6 +152,7 @@
 		</div>
 		{#if pager}<div class="pager">{@render pager()}</div>{/if}
 		<div class="actions">
+			<ReportLink iconOnly />
 			{#if search}
 				<button
 					class="btn icon toggle"
@@ -186,7 +191,7 @@
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 
 	<div class="work" class:comparing style:--columns={columns(cuts)} bind:clientWidth={width}>
-		<SourcePane kind={source} {piece} {paging} {onstep} {preview} {text} {find} {player} />
+		<SourcePane kind={source} {piece} {paging} {onstep} {preview} {text} {find} {found} {player} />
 
 		<Splitter
 			label={m.review.resizeSource}

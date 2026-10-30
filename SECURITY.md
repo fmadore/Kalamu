@@ -37,5 +37,7 @@ service. The developer receives no files, results or keys. See the
 
 The installers on GitHub Releases are **unsigned**, so Windows SmartScreen may warn on first
 launch ("Windows protected your PC": choose **More info**, then **Run anyway**). Download them
-only from the releases page linked above. A Microsoft Store release, signed by Microsoft and
-updated automatically, is in preparation ([docs/microsoft-store.md](docs/microsoft-store.md)).
+only from the releases page linked above. From version 1.0.0 Kalamu is also submitted to the
+Microsoft Store, whose copy is signed by Microsoft and updated automatically
+([docs/microsoft-store.md](docs/microsoft-store.md)). The `.msix` and `.msixbundle` files on a
+release are the unsigned Store submission, for testing; they do not install as they are.

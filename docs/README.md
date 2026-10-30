@@ -30,7 +30,9 @@
 | Document | What it covers |
 | --- | --- |
 | [Microsoft Store](microsoft-store.md) | Status, the policies that apply, what is missing, the acceptance checklist and the Partner Center steps |
-| [Development: releases](development.md#releases) | Version files, release notes and the tag that builds the installers |
+| [MSIX packaging](packaging-msix.md) | The Store package: what is committed, the icons, building and installing it locally, what CI does |
+| [Development: releases](development.md#releases) | Version files, release notes and the tag that builds the installers and packages |
+| [Release notes](release-1.0.0.md) | 1.0.0, the first Store release ([0.4.0](release-0.4.0.md), [0.3.0](release-0.3.0.md)) |
 | [Store listing](store-listing.md) | Paste-ready listing text, certification notes and screenshot captions |
 | [Store licence terms](store-license-terms.md) | The terms shown on the Store listing, replacing Microsoft's standard ones |
 | [Security policy](../SECURITY.md) | Reporting vulnerabilities, credentials, installer signing |

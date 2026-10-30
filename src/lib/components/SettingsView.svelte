@@ -6,6 +6,7 @@
 	import { app, hasKey, openLink, refreshKeys, toast } from '#lib/state.svelte.js';
 	import ExternalLink from './ExternalLink.svelte';
 	import OfflineModels from './OfflineModels.svelte';
+	import ReportLink from './ReportLink.svelte';
 	import SupportLink from './SupportLink.svelte';
 
 	const m = messages();
@@ -38,6 +39,8 @@
 	async function refreshCatalog() {
 		try {
 			app.catalog = await api.refreshCatalog();
+			// A model added or retired changes which models suit each task.
+			app.rules = await api.taskRules();
 			toast(m.settings.catalogUpdated(app.catalog.updated));
 		} catch (e) {
 			toast(describeError(e, m));
@@ -174,6 +177,8 @@
 							part.name}</ExternalLink
 					>{:else}{part.text}{/if}{/each}
 		</p>
+		<p class="muted small">{m.report.note}</p>
+		<div><ReportLink /></div>
 	</section>
 
 	<!-- Last, so it is there for anyone who looks and in the way of nobody. -->

@@ -2,22 +2,27 @@
 	// The review of an analysis: the document beside its answers.
 	// The first set-up's answers lead. In a comparison every value carries the sigla of the
 	// set-ups that gave it, so agreement reads at a glance; pointing at a name finds it in the
-	// document. Corrections are kept apart from the model's answers.
+	// document. Corrections are kept apart from the model's answers. A search keeps the fields
+	// whose answers or reasons hold its words, marked where they stand, and marks them in a text
+	// document too.
 	import { onMount } from 'svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
+	import SearchBar from './SearchBar.svelte';
 	import SiglaKey from './SiglaKey.svelte';
-	import { collate, type Witness } from '#lib/analysis.js';
+	import { collate, holdsWords, type Witness } from '#lib/analysis.js';
 	import { siglum } from '#lib/apparatus.js';
 	import type { Field } from '#lib/bindings/Field.js';
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
+	import { clearFound, markFound } from '#lib/found.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { Review } from '#lib/review.svelte.js';
+	import { find, searchable } from '#lib/search.js';
 
 	let { jobId, sourceId }: { jobId: string; sourceId: string } = $props();
 	const m = messages();
@@ -42,6 +47,30 @@
 		setups.map((s, i) => ({ siglum: siglum(i), answers: answersOf(viewOf(s)) }))
 	);
 	const comparing = $derived(setups.length > 1);
+
+	let searching = $state(false);
+	let query = $state('');
+	$effect(() => {
+		if (!searching) query = '';
+	});
+	const filtering = $derived(searching && searchable(query));
+	/** The fields listed: those whose answers hold the words searched for, or all of them. */
+	const shown = $derived(
+		filtering ? fields.filter((f) => holdsWords(f.key, witnesses, query)) : fields
+	);
+	/** How many times the words are found in a text document. */
+	const inDocument = $derived(
+		filtering && source?.kind === 'text' && review.text ? find(review.text, query).length : 0
+	);
+	let answersPane = $state<HTMLElement | null>(null);
+
+	// The words searched for, marked in the answers listed.
+	$effect(() => {
+		void shown;
+		if (!answersPane || !filtering || editing) return;
+		markFound(answersPane, '.answer p', query);
+		return clearFound;
+	});
 
 	// A PDF or image is shown page by page; a text document as text.
 	$effect(() => review.showPage(page));
@@ -85,6 +114,21 @@
 	{setups[0]?.prompt.preset_name ?? ''}
 {/snippet}
 
+{#snippet searchBar()}
+	<SearchBar
+		bind:query
+		placeholder={source?.kind === 'text' ? m.review.searchAnswersAndText : m.review.searchAnswers}
+		summary={!filtering
+			? ''
+			: shown.length === 0 && inDocument === 0
+				? m.review.notFound
+				: source?.kind === 'text'
+					? `${m.review.answersFound(shown.length, fields.length)} · ${m.review.inDocument(inDocument)}`
+					: m.review.answersFound(shown.length, fields.length)}
+		onclose={() => (searching = false)}
+	/>
+{/snippet}
+
 {#snippet foot()}
 	<span class="mono"
 		>{lead?.model_version ?? setups[0]?.model ?? ''}{lead?.cost_usd
@@ -99,6 +143,9 @@
 	fileName={source?.file_name ?? ''}
 	error={review.error}
 	{actions}
+	search={searchBar}
+	bind:searching
+	bind:textPane={answersPane}
 	reviewed={lead && lead.status !== 'failed' && !editing ? lead.reviewed : null}
 	onreviewed={toggleReviewed}
 	onstep={pages > 1 ? step : undefined}
@@ -107,7 +154,8 @@
 	paging={{ at: page, count: pages }}
 	preview={review.preview}
 	text={review.text}
-	find={hovered ?? ''}
+	find={hovered ?? (filtering ? query : '')}
+	found={hovered === null && filtering}
 	witness={{
 		label: setups[0]?.label ?? '',
 		siglum: comparing ? siglum(0) : null,
@@ -142,7 +190,8 @@
 	{:else if lead.status === 'failed'}
 		<p class="error">{lead.error}</p>
 	{:else}
-		{#each fields as f (f.key)}
+		{#if shown.length === 0}<p class="muted">{m.review.noAnswerFound}</p>{/if}
+		{#each shown as f (f.key)}
 			{@const readings = collate(f.key, witnesses)}
 			<div class="answer">
 				<h2>{f.label}</h2>

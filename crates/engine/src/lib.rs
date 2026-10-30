@@ -10,8 +10,11 @@ mod compare;
 mod contents;
 mod listen;
 mod output;
+mod piece;
+mod plan;
 mod record;
 mod review;
+mod rules;
 mod run;
 mod setup;
 
@@ -37,6 +40,7 @@ pub use compare::{
 };
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use review::PieceView;
+pub use rules::{ModelRef, TaskRules, task_rules};
 pub use setup::{NewJob, SetupRequest};
 
 /// Where the engine gets API keys; the app reads them from Windows Credential Manager.
@@ -93,6 +97,9 @@ pub enum EngineError {
     NotReady(ProviderError),
     #[error("{0} cannot do this task")]
     UnsupportedModel(String),
+    /// A source of a kind the task does not read.
+    #[error("{0} cannot be read for this task")]
+    UnsupportedSource(String),
     #[error("The job is already running")]
     AlreadyRunning,
     #[error("The job needs at least one file and one set-up")]
@@ -123,6 +130,7 @@ impl EngineError {
             Self::MissingKey(_) => "provider.missing_key",
             Self::NotReady(e) => e.code(),
             Self::UnsupportedModel(_) => "provider.unsupported",
+            Self::UnsupportedSource(_) => "source.unsupported",
             Self::AlreadyRunning => "job.running",
             Self::EmptyJob => "job.empty",
             Self::NotYouTube(_) => "source.not_youtube",

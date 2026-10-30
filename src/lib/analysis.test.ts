@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collate, findTerm } from './analysis.js';
+import { collate, findTerm, holdsWords } from './analysis.js';
 
 const a = {
 	siglum: 'a',
@@ -46,5 +46,16 @@ describe('analysis collation', () => {
 			{ text: '(b)', hit: true },
 			{ text: ' c', hit: false }
 		]);
+		// Accents and capitals are forgiven, as in the review's search.
+		expect(findTerm('Ségou, puis SEGOU', 'segou').filter((p) => p.hit)).toHaveLength(2);
+		expect(findTerm('Bamako', '')).toEqual([{ text: 'Bamako', hit: false }]);
+	});
+
+	it('tells the fields whose answers or reasons hold the words searched for', () => {
+		expect(holdsWords('places', [a, b], 'dakar')).toBe(true);
+		expect(holdsWords('places', [a, b], 'segou')).toBe(true);
+		expect(holdsWords('tone', [a, b], 'factual')).toBe(true);
+		expect(holdsWords('tone', [a, b], 'dakar')).toBe(false);
+		expect(holdsWords('missing', [a, b], 'dakar')).toBe(false);
 	});
 });

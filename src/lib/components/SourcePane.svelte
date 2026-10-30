@@ -18,6 +18,7 @@
 		preview = null,
 		text = null,
 		find = '',
+		found = false,
 		player
 	}: {
 		kind: 'scan' | 'text' | 'player';
@@ -29,6 +30,8 @@
 		text?: string | null;
 		/** Words to find in a text file. */
 		find?: string;
+		/** Whether they are a search's, marked grey, rather than a name pointed at, in yellow. */
+		found?: boolean;
 		player?: Snippet;
 	} = $props();
 	const m = messages();
@@ -83,7 +86,7 @@
 			{#if text === null}
 				<p class="muted">{m.common.loading}</p>
 			{:else}
-				{#each findTerm(text, find) as part, k (k)}{#if part.hit}<mark>{part.text}</mark
+				{#each findTerm(text, find) as part, k (k)}{#if part.hit}<mark class:found>{part.text}</mark
 						>{:else}{part.text}{/if}{/each}
 			{/if}
 		</div>
@@ -138,6 +141,12 @@
 		color: var(--on-marker);
 		border-radius: 2px;
 		box-shadow: 0 0 0 2px var(--marker);
+	}
+	/* Yellow is where models disagree or a name pointed at; a search's words are grey. */
+	mark.found {
+		background: var(--found);
+		color: inherit;
+		box-shadow: 0 0 0 2px var(--found);
 	}
 	/* The buttons over the lightbox: turning its pages, zooming. */
 	.paging {

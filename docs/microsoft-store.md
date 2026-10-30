@@ -2,21 +2,22 @@
 
 Where Kalamu stands on the way to its first Microsoft Store release, what the Store will
 check, and how to submit. The paste-ready listing text is in [store-listing.md](store-listing.md),
-the privacy policy to publish in [privacy.md](privacy.md), and the licence terms that replace
-Microsoft's standard ones in [store-license-terms.md](store-license-terms.md).
+the privacy policy to publish in [privacy.md](privacy.md), the licence terms that replace
+Microsoft's standard ones in [store-license-terms.md](store-license-terms.md), and how the
+package is built in [packaging-msix.md](packaging-msix.md).
 
 This follows what [Live Translation](https://github.com/fmadore/Live-translation) learned on
 the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-walkthrough.md`,
 `store-updates.md` and `packaging-msix.md`); where Kalamu differs, the reason is given here.
 
-## Status (28 October 2026)
+## Status (30 October 2026)
 
-**Not submitted. The name Kalamu is reserved; the package identity is still to be copied
-below.** The latest build is the
-[v0.3.0](https://github.com/fmadore/Kalamu/releases/tag/v0.3.0) test release, unsigned
-installers for Windows on x64 and ARM64. Before a first submission, the work in
-[What is missing](#what-is-missing) has to be done; the [roadmap](roadmap.md#toward-the-store-release)
-tracks it.
+**Version 1.0.0 is ready to build; not submitted.** Everything the app and the repository must
+carry is done: version 1.0.0, Report a problem, the MSIX packaging and the Store bundle in the
+release workflow, the third-party notices and the sample files. What is left needs Partner
+Center, the GitHub repository's settings or real keys, and is listed in
+[Before the first submission](#before-the-first-submission). The latest public build is the
+[v0.4.0](https://github.com/fmadore/Kalamu/releases/tag/v0.4.0) test release.
 
 ## Product and certification approach
 
@@ -36,8 +37,8 @@ Whisper. Three things shape the submission:
   [Reviewer access to cloud features](#reviewer-access-to-cloud-features).
 - **The output is AI-generated text.** Store policy 11.16 asks apps that generate content with
   AI to say so in the listing and in Partner Center, and to give users a way to report
-  inappropriate output to the developer. The listing says it; the app still needs its
-  [Report a problem](#what-is-missing) link.
+  inappropriate output to the developer. The listing says it, and Report a problem (a flag in
+  every review's header, a button in Settings › About) opens a GitHub issue form in the browser.
 
 Review the current [Microsoft Store policies](https://learn.microsoft.com/en-us/windows/apps/publish/store-policies)
 when submitting; the numbers below are those cited in Live Translation's submissions and in
@@ -51,50 +52,48 @@ this repository's notes, and Microsoft renumbers them from time to time.
 | 10.5 Personal information | A privacy policy when the app sends personal information | Documents and recordings go to the provider the user chooses: [privacy.md](privacy.md), published at a stable URL |
 | 10.8.2 Payments outside Microsoft commerce | A voluntary donation through a secure third-party provider is allowed, and must be declared in Partner Center | The Buy Me a Coffee link unlocks nothing; tick the Product declaration and explain the link in the certification notes |
 | 11.2 and 10.1 Trademarks | Other companies' names only descriptively, no logos, no implied endorsement | Providers, YouTube and Word are named to say what the app works with; a trademark line ends the description |
-| 11.16 Live generative AI content | Disclose generative AI in the listing and in Partner Center; a way to report inappropriate output | The description and the Generative AI property say so; the Report a problem link is still to add |
+| 11.16 Live generative AI content | Disclose generative AI in the listing and in Partner Center; a way to report inappropriate output | The description and the Generative AI property say so; Report a problem opens the `output.yml` issue form |
 | Licence terms | Microsoft's Standard Application License Terms forbid reverse engineering, which the LGPL (FFmpeg) must allow | Kalamu's own [licence terms](store-license-terms.md) in "Additional license terms" |
 
-## What is missing
+## What is done
 
-Before the first submission, in rough order; each is also on the roadmap.
+- **Name**: Kalamu, reserved in Partner Center on 28 October 2026
+  ([decision](decisions/2026-10-28-kalamu.md)).
+- **MSIX packaging**: `@choochmeque/tauri-windows-bundle` with a committed
+  `src-tauri/gen/windows/`, the taskbar icon variants and `resources.pri`, FFmpeg and its
+  licences inside the package ([packaging-msix.md](packaging-msix.md)). The package asks for
+  `internetClient` and `runFullTrust`, and no microphone.
+- **The Store bundle in the release workflow**: a tag builds the x64 and ARM64 installers, the
+  two `.msix` packages and one `Kalamu_<version>.msixbundle`, and attaches
+  `kalamu-samples.zip`; the release is published only once all of them are there.
+- **Version 1.0.0** in `package.json`, `src-tauri/tauri.conf.json` and the workspace
+  `Cargo.toml`; the package is `1.0.0.0`.
+- **Report a problem** (policy 11.16): `.github/ISSUE_TEMPLATE/output.yml`, opened in the
+  default browser with the version filled in. Nothing is sent by the app.
+- **Third-party notices**: `scripts/third-party-notices.mjs` writes
+  `licenses/THIRD-PARTY-NOTICES.txt` (every Rust crate and npm package built into the app, with
+  its licence texts) in each release build.
+- **Sample files for reviewers**: `samples/` (a recording made with Windows' speech synthesis,
+  a synthetic newspaper page and its text, all CC0), attached as `kalamu-samples.zip`.
 
-1. **A name.** Done: Kalamu is reserved ([decision](decisions/2026-10-28-kalamu.md)). Copy its
-   package identity into [Store identity](#store-identity) before packaging.
-2. **MSIX packaging.** Port Live Translation's set-up: Tauri has no MSIX target, so it uses the
-   `@choochmeque/tauri-windows-bundle` devDependency with a committed
-   `src-tauri/gen/windows/` (`bundle.config.json`, `AppxManifest.xml.template` with the reserved
-   identity written out as literals, `Assets/` with the logo sizes and taskbar variants,
-   `resources.pri` enabled), `bundle:msix:{x64,arm64}` npm scripts, and a `.gitignore` exception
-   for `gen/windows/`. Kalamu differs in two ways: it needs `internetClient` and
-   `runFullTrust` but no `microphone`; and the package must carry the FFmpeg sidecars
-   (`ffmpeg.exe`, `ffprobe.exe`) and the `licenses/` folder from `tauri.ffmpeg.conf.json`,
-   which the bundler's handling of `externalBin` and `resources` has to be checked for.
-3. **The Store bundle in the release workflow.** `.github/workflows/release.yml` already builds
-   both architectures natively (x64 on `windows-latest`, ARM64 on `windows-11-arm`), with
-   FFmpeg and whisper.cpp, into a draft release published once every asset is attached. It
-   still needs Live Translation's `msix` and `bundle` jobs, which add one unsigned
-   multi-architecture `.msixbundle` beside the installers.
-4. **Version 1.0.0.** The Store refuses a package version whose first segment is 0, and every
-   later package must be higher than the one already in the Store. `package.json`,
-   `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json` and the workspace `Cargo.toml` move
-   together; MSIX appends a fourth segment (`1.0.0.0`).
-5. **Report a problem** (policy 11.16): a link in the review view and in Settings that opens a
-   new GitHub issue, or an email to the support address, in the default browser, so a
-   researcher can report inappropriate or harmful output. Nothing is sent by the app itself.
-6. **The privacy policy published.** Turn on GitHub Pages for this repository (Settings →
-   Pages → Deploy from a branch → `main`, `/docs`), so [privacy.md](privacy.md) is served at
-   `https://fmadore.github.io/Kalamu/privacy`, as Live Translation's is. Check the page
-   before submitting.
-7. **Third-party notices.** The About section names FFmpeg, Opus, whisper.cpp and the Whisper
-   models; the bundle also carries other Rust crates and npm packages, PDF.js (Apache 2.0) among
-   them. Generate a complete notices file at build time (`cargo about` for Rust, a licence
-   report for the front end) and install it in `licenses/`.
-8. **Live runs** of every provider through the packaged app, economy mode included, and the
-   YouTube player under the packaged origin (see the [roadmap](roadmap.md#next)).
-9. **Screenshots** from the packaged app (see [store-listing.md](store-listing.md#screenshots)).
-10. **A sample bundle for reviewers**: a short public-domain recording, a scanned page and a
-    text file, attached to the release (`kalamu-samples.zip`), so the certification notes
-    can point to files that work.
+## Before the first submission
+
+In this order; the [roadmap](roadmap.md#toward-the-store-release) tracks them.
+
+1. **Copy the package identity** from Partner Center → Kalamu → **Product management** →
+   **Product identity** into [Store identity](#store-identity) and into
+   `src-tauri/gen/windows/AppxManifest.xml.template`, replacing `PARTNER-CENTER-PACKAGE-NAME`.
+   The MSIX build refuses to run until it is there.
+2. **Publish the privacy policy.** Turn on GitHub Pages for the repository (Settings → Pages →
+   Deploy from a branch → `main`, `/docs`), so [privacy.md](privacy.md) is served at
+   `https://fmadore.github.io/Kalamu/privacy`, and check the page.
+3. **Tag v1.0.0** once this is merged: the release workflow builds and attaches everything.
+4. **Live runs** from the installed package: every provider, economy mode, offline Whisper on
+   `interview.wav`, a table of contents and a correction, and the YouTube player under the
+   packaged origin (see the [roadmap](roadmap.md#next)).
+5. **Screenshots** from the packaged app (see [store-listing.md](store-listing.md#screenshots)).
+6. **Decide on a test key** for the certification team ([below](#reviewer-access-to-cloud-features)).
+7. Run the [acceptance checklist](#acceptance-checklist), then submit.
 
 ## Reviewer access to cloud features
 
@@ -112,15 +111,16 @@ Either way, never put a key in the listing, the screenshots or this repository.
 
 ## Store identity
 
-Kalamu is reserved; to be copied from Partner Center → product → **Product management** →
-**Product identity**). The manifest template must carry these values exactly, or ingestion
-fails.
+Kalamu is reserved; the name is still to be copied from Partner Center → product → **Product
+management** → **Product identity**. The manifest template must carry these values exactly, or
+ingestion fails.
 
 | Manifest element | Value |
 | --- | --- |
-| `Package/Identity/Name` | *(assigned on reservation)* |
+| `Package/Identity/Name` | *(to copy; the template holds `PARTNER-CENTER-PACKAGE-NAME` until then)* |
 | `Package/Identity/Publisher` | `CN=5D0ECC96-3998-452E-B7E9-29BE9B576F86` (the account's, shared with Live Translation) |
 | `Package/Properties/PublisherDisplayName` | `FMadore` |
+| `Package/Properties/DisplayName` | `Kalamu` |
 
 | Store value | Value |
 | --- | --- |
@@ -141,8 +141,8 @@ package identity changes where data is kept and how the window is drawn.
 - [ ] First launch with no key: the app opens on New job and says how to add a key; nothing is
       downloaded or sent until the user asks.
 - [ ] Offline: download Whisper Base in Settings (and cancel a download part-way once),
-      transcribe the sample recording with the network off, review it beside the player,
-      export `.txt`, `.srt` and `.docx`.
+      transcribe `interview.wav` from `kalamu-samples.zip` with the network off, review it
+      beside the player, find "Mopti" with Ctrl F, export `.txt`, `.srt` and `.docx`.
 - [ ] Each provider, with a real key saved in Credential Manager: text extraction of the sample
       page, an analysis of the sample text, a recording where the provider takes audio; costs
       shown before starting and recorded after.
@@ -151,11 +151,13 @@ package identity changes where data is kept and how the window is drawn.
 - [ ] A job interrupted by closing the app resumes without sending anything twice; closing
       during a job asks first, and the job can carry on from the notification area.
 - [ ] Recordings and videos are converted by the bundled FFmpeg; Settings › About and the
-      `licenses` folder list FFmpeg's licence and source.
+      `licenses` folder list FFmpeg's licence and source, and `THIRD-PARTY-NOTICES.txt` is
+      there.
 - [ ] A public YouTube video is transcribed from its link, and the review plays it in the
       privacy-enhanced player under the packaged origin.
 - [ ] Review: corrections are kept apart from the AI text, comparison highlights differences,
-      Report a problem opens the browser.
+      Ctrl F finds words across pages, and the flag (Report a problem) opens the issue form in
+      the browser, as does the button in Settings › About.
 - [ ] The Buy Me a Coffee link opens `https://buymeacoffee.com/fmadore` in the default browser,
       not in a window of the app.
 - [ ] Light, dark and system themes; Windows text size; keyboard use of New job and the review.

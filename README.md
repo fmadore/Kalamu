@@ -10,11 +10,12 @@ Scriptorium; a newer version moves their jobs, settings and keys over on its fir
 
 **Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT licence**
 
-**Status: early development.** Test builds (unsigned installers for x64 and ARM64) are on the
-[releases page](https://github.com/fmadore/Kalamu/releases). Text extraction,
+**Status: version 1.0.0**, the first release for the Microsoft Store, is being prepared for
+submission. Until it is in the Store, installers for x64 and ARM64 (unsigned, so Windows warns)
+are on the [releases page](https://github.com/fmadore/Kalamu/releases). Text extraction,
 transcription and analyses have run against the live OpenAI, Claude and Mistral APIs; Gemini,
-offline Whisper and the cheaper batch mode still await a live run. A Microsoft Store release is
-in preparation. See the [roadmap](docs/roadmap.md).
+offline Whisper and the cheaper batch mode have had fewer live runs, so try a small job first.
+See the [roadmap](docs/roadmap.md) and the [1.0.0 release notes](docs/release-1.0.0.md).
 
 ## What it does
 
@@ -35,7 +36,8 @@ in preparation. See the [roadmap](docs/roadmap.md).
   file, corrected page by page with its spelling of the time kept, every change shown against
   the original.
 - **Check every result against its source**, side by side, with corrections kept apart from the
-  AI output, which is never overwritten.
+  AI output, which is never overwritten. Search a document or a recording across all its pages
+  (Ctrl F), and report inappropriate output from the review.
 - **Compare models** on the same documents, with their differences highlighted in the text and
   error rates against corrected pages.
 - **Never pay twice**: work is saved piece by piece, interrupted jobs resume, and nothing is

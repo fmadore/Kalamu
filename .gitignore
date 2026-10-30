@@ -1,6 +1,10 @@
 /target/
 /src-tauri/target/
-/src-tauri/gen/
+/src-tauri/gen/*
+# The MSIX package's manifest, configuration and logos are written by hand (docs/packaging-msix.md).
+!/src-tauri/gen/windows/
+# Laid in by scripts/bundle-msix.mjs for the length of a Store build.
+/src-tauri/tauri.windows.conf.json
 node_modules/
 /dist/
 /build/

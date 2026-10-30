@@ -17,7 +17,8 @@
 		modelInfo,
 		modelsFor,
 		newDraft,
-		providerDefault
+		providerDefault,
+		rulesFor
 	} from '#lib/newJob.js';
 	import { app, go, hasKey, isInstalled } from '#lib/state.svelte.js';
 
@@ -36,13 +37,15 @@
 
 	const m = messages();
 	const catalog = $derived(app.catalog!);
+	/** The engine's rules for the task: which models do it. */
+	const rule = $derived(rulesFor(app.rules, task));
 	const providers = $derived(
-		catalog.providers.filter((p) => modelsFor(catalog, p.id, task, input).length > 0)
+		catalog.providers.filter((p) => modelsFor(catalog, rule, p.id, input).length > 0)
 	);
 
 	function addSetup() {
 		const used = drafts.map((d) => `${d.provider}/${d.model}`);
-		drafts = [...drafts, newDraft(catalog, task, presets[0]?.id ?? null, hasKey, used, input)];
+		drafts = [...drafts, newDraft(catalog, rule, presets[0]?.id ?? null, hasKey, used, input)];
 	}
 </script>
 
@@ -74,7 +77,7 @@
 					<select
 						bind:value={d.provider}
 						onchange={() => {
-							d.model = providerDefault(catalog, d.provider, task, input);
+							d.model = providerDefault(catalog, rule, d.provider, input);
 						}}
 					>
 						{#each providers as p (p.id)}
@@ -85,7 +88,7 @@
 				<label class="field">
 					<span>{m.newJob.model}</span>
 					<select bind:value={d.model}>
-						{#each modelsFor(catalog, d.provider, task, input) as mod (mod.id)}
+						{#each modelsFor(catalog, rule, d.provider, input) as mod (mod.id)}
 							<option value={mod.id}
 								>{mod.name}{mod.status === 'preview'
 									? ` (${m.common.preview})`
@@ -143,10 +146,10 @@
 							<select
 								bind:value={d.mergeProvider}
 								onchange={() => {
-									d.mergeModel = mergeDefault(catalog, d.mergeProvider);
+									d.mergeModel = mergeDefault(catalog, rule, d.mergeProvider);
 								}}
 							>
-								{#each mergeProviders(catalog) as id (id)}
+								{#each mergeProviders(catalog, rule) as id (id)}
 									<option value={id} disabled={!hasKey(id)}
 										>{catalog.providers.find((p) => p.id === id)?.name ?? id}</option
 									>
@@ -156,7 +159,7 @@
 						<label class="field">
 							<span>{m.newJob.model}</span>
 							<select bind:value={d.mergeModel}>
-								{#each mergeModelsFor(catalog, d.mergeProvider) as mod (mod.id)}
+								{#each mergeModelsFor(catalog, rule, d.mergeProvider) as mod (mod.id)}
 									<option value={mod.id}>{mod.name}</option>
 								{/each}
 							</select>

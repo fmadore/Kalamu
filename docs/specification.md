@@ -273,8 +273,14 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   ignoring capitals, accents and Arabic vowel marks: every page of a scan or every piece of a
   recording, the matches counted and listed by page or by the time of their line, Enter going
   from one to the next, each shown with its words marked (and a recording playing from its
-  line). In a table of contents, the search keeps the entries that hold the words. Nothing is
-  sent: the search runs on what the app already keeps.
+  line). In a table of contents, the search keeps the entries that hold the words; in an
+  analysis, the fields whose answers or reasons hold them, marked where they stand, and in a
+  text document the words are marked and counted in the document too. Nothing is sent: the
+  search runs on what the app already keeps.
+- **Report a problem**: a flag in every review's header, and a button in Settings › About,
+  open a GitHub issue form in the browser to report output that is inappropriate, harmful or
+  invented, or a bug. The app sends nothing itself, and the form warns not to paste
+  confidential material.
 - **Mark as reviewed** (Ctrl Enter), so long jobs can be checked in several sittings and
   progress shows what has been verified, not only what has been processed.
 - **Error rates after review.** Every page or part the researcher corrected, or marked as
@@ -369,6 +375,14 @@ Sending research material to an AI provider is still a transfer of data to a thi
 Researchers remain responsible for consent, confidentiality, copyright and any approval their
 institution requires, and should prefer paid API tiers whose terms exclude training on inputs.
 
+## What each task accepts
+
+Which kinds of file a task reads, which models can do it and which formats it writes are the
+engine's rules, given to the interface so New job offers only what will run, and checked again
+when a job is created: a source the task does not read, or a model that does not do the task or
+cannot read a YouTube link, is refused with a plain message, and formats the task does not
+write (from a pipeline saved for another task) are left out.
+
 ## AI output is not ground truth
 
 Transcriptions, extracted text and analyses can be fluent and wrong: misheard names, skipped
@@ -409,10 +423,12 @@ The crate layout, modularity rules and architecture reviews are in [AGENTS.md](.
 
 ## Distribution
 
-The goal is the [Microsoft Store](https://apps.microsoft.com/): Store packages are signed,
-install without a security warning and update themselves, which matters for colleagues who are
-not comfortable installing software. This means MSIX packaging, keys in Credential Manager, a
-privacy policy, and the app's network access declared. Unsigned installers will also be
-attached to GitHub releases. The submission, the policies it must meet and the listing text are
-in [microsoft-store.md](microsoft-store.md), [store-listing.md](store-listing.md) and
-[privacy.md](privacy.md).
+The [Microsoft Store](https://apps.microsoft.com/), from version 1.0.0: Store packages are
+signed, install without a security warning and update themselves, which matters for colleagues
+who are not comfortable installing software. The MSIX package (x64 and ARM64 in one bundle)
+carries FFmpeg and every licence, declares network access and no microphone, and keeps keys in
+Credential Manager; the privacy policy is published with the listing, and every installation
+lists its third-party components with their licences. Unsigned installers are also attached to
+GitHub releases. The submission, the policies it must meet, the package and the listing text are
+in [microsoft-store.md](microsoft-store.md), [packaging-msix.md](packaging-msix.md),
+[store-listing.md](store-listing.md) and [privacy.md](privacy.md).

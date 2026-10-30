@@ -1,4 +1,6 @@
-// The New job form's logic, kept out of the components so it can be tested on its own.
+// The New job form's logic, kept out of the components so it can be tested on its own. Which
+// sources, models and formats suit a task is the engine's to say (`TaskRules`, from the
+// `task_rules` command); the engine checks them again when the job is created.
 
 import type { Catalog } from './bindings/Catalog.js';
 import type { ExportFormat } from './bindings/ExportFormat.js';
@@ -6,6 +8,7 @@ import type { InputWarning } from './bindings/InputWarning.js';
 import type { ModelInfo } from './bindings/ModelInfo.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { Task } from './bindings/Task.js';
+import type { TaskRules } from './bindings/TaskRules.js';
 import type { Messages } from './i18n/index.js';
 import { YOUTUBE_LINK } from './youtube.js';
 
@@ -50,63 +53,55 @@ export interface Draft {
 	mergeModel: string;
 }
 
-export const FORMATS: Record<Task, ExportFormat[]> = {
-	text_extraction: ['txt', 'markdown', 'docx', 'json', 'csv', 'searchable_pdf'],
-	audio_transcription: ['txt', 'markdown', 'docx', 'srt', 'vtt', 'json', 'csv'],
-	analysis: ['txt', 'markdown', 'docx', 'json', 'csv'],
-	contents: ['markdown', 'docx', 'csv', 'txt', 'json'],
-	text_correction: ['txt', 'markdown', 'docx', 'json', 'csv']
-};
+/** The engine's rules for every task. */
+export type Rules = TaskRules[];
+
+/** The rules for one task; none before the engine has given them. */
+export function rulesFor(rules: Rules, task: Task): TaskRules {
+	return (
+		rules.find((r) => r.task === task) ?? {
+			task,
+			sources: [],
+			formats: [],
+			answers_in_language: false,
+			models: [],
+			merge_models: []
+		}
+	);
+}
 
 /**
- * The task providers see: a table of contents and a correction are made of analyses (see
- * `Task::request_task` in Rust), so the catalogue lists their models as analysis models.
+ * The task the catalogue lists a model's defaults under: a table of contents and a correction
+ * are made of analyses (`Task::request_task` in Rust), so they take the analysis defaults.
  */
 export function requestTask(task: Task): Task {
 	return task === 'contents' || task === 'text_correction' ? 'analysis' : task;
 }
 
-/**
- * Whether the job's language is the language the model answers in, one only, rather than the
- * source's: an analysis's fields and a table of contents' entries are written by the model, an
- * extraction, a transcription or a correction keep the source's words.
- */
-export function answersInLanguage(task: Task): boolean {
-	return task === 'analysis' || task === 'contents';
+const listed = (refs: TaskRules['models'], m: ModelInfo) =>
+	refs.some((r) => r.provider === m.provider && r.model === m.id);
+
+/** Whether a model can do the task. */
+export function doesTask(rule: TaskRules, model: ModelInfo): boolean {
+	return listed(rule.models, model);
 }
 
-/** Whether a model reads what a task sends it: pages for a table of contents, text for a
- * correction (`Task::reads` in Rust). */
-function readsInput(task: Task, inputs: string[]): boolean {
-	if (task === 'contents') {
-		return inputs.includes('application/pdf') || inputs.some((i) => i.startsWith('image/'));
-	}
-	if (task === 'text_correction') return inputs.includes('text/plain');
-	return true;
-}
-
-export function doesTask(model: ModelInfo, task: Task): boolean {
-	return model.tasks.includes(requestTask(task)) && readsInput(task, model.inputs);
-}
-
-/** Models that can combine a table of contents' pages, for one provider: analysis models that
- * read text. */
-export function mergeModelsFor(catalog: Catalog, provider: string): ModelInfo[] {
-	return catalog.models.filter(
-		(m) =>
-			m.provider === provider && m.tasks.includes('analysis') && m.inputs.includes('text/plain')
-	);
+/** Models that can combine a table of contents' pages, for one provider. */
+export function mergeModelsFor(catalog: Catalog, rule: TaskRules, provider: string): ModelInfo[] {
+	return catalog.models.filter((m) => m.provider === provider && listed(rule.merge_models, m));
 }
 
 /** Providers with a model that can combine the pages. */
-export function mergeProviders(catalog: Catalog): string[] {
-	return catalog.providers.map((p) => p.id).filter((id) => mergeModelsFor(catalog, id).length > 0);
+export function mergeProviders(catalog: Catalog, rule: TaskRules): string[] {
+	return catalog.providers
+		.map((p) => p.id)
+		.filter((id) => mergeModelsFor(catalog, rule, id).length > 0);
 }
 
 /** The model offered to combine the pages when the user switches provider: its smallest
  * listed, the cheapest per output token. */
-export function mergeDefault(catalog: Catalog, provider: string): string {
-	const models = mergeModelsFor(catalog, provider);
+export function mergeDefault(catalog: Catalog, rule: TaskRules, provider: string): string {
+	const models = mergeModelsFor(catalog, rule, provider);
 	const price = (m: ModelInfo) => m.pricing.output_per_mtok ?? Number.POSITIVE_INFINITY;
 	return [...models].sort((a, b) => price(a) - price(b))[0]?.id ?? '';
 }
@@ -115,41 +110,31 @@ export function mergeDefault(catalog: Catalog, provider: string): string {
  * The formats to offer: a searchable PDF only when a chosen model reports where text sits on
  * the page (Mistral OCR).
  */
-export function offeredFormats(catalog: Catalog, task: Task, drafts: Draft[]): ExportFormat[] {
+export function offeredFormats(catalog: Catalog, rule: TaskRules, drafts: Draft[]): ExportFormat[] {
 	const layout = drafts.some((d) => modelInfo(catalog, d)?.layout === true);
-	return FORMATS[task].filter((f) => f !== 'searchable_pdf' || layout);
+	return rule.formats.filter((f) => f !== 'searchable_pdf' || layout);
 }
 
-/** The kinds of source each mode reads. */
-export function readsKind(mode: Mode, kind: string | undefined): boolean {
-	switch (mode) {
-		case 'text_extraction':
-		case 'contents':
-			return kind === 'pdf' || kind === 'image';
-		case 'text_correction':
-			return kind === 'text' || kind === 'pdf';
-		case 'audio_transcription':
-			return kind === 'audio' || kind === 'video';
-		case 'analysis':
-			return kind === 'text' || kind === 'pdf' || kind === 'image';
-		case 'youtube':
-			return kind === 'youtube';
-	}
+/** Whether a mode reads a kind of source: YouTube links in the YouTube mode, files only in
+ * the others. */
+export function readsKind(rules: Rules, mode: Mode, kind: string | undefined): boolean {
+	if (mode === 'youtube') return kind === 'youtube';
+	return kind !== 'youtube' && rulesFor(rules, mode).sources.some((k) => k === kind);
 }
 
 /** Models that can do a task and, when `input` is given, read it. */
 export function modelsFor(
 	catalog: Catalog,
+	rule: TaskRules,
 	provider: string,
-	task: Task,
 	input?: string
 ): ModelInfo[] {
-	return forTask(catalog, task, input).filter((m) => m.provider === provider);
+	return forTask(catalog, rule, input).filter((m) => m.provider === provider);
 }
 
-function forTask(catalog: Catalog, task: Task, input?: string): ModelInfo[] {
+function forTask(catalog: Catalog, rule: TaskRules, input?: string): ModelInfo[] {
 	return catalog.models.filter(
-		(m) => doesTask(m, task) && (input === undefined || m.inputs.includes(input))
+		(m) => doesTask(rule, m) && (input === undefined || m.inputs.includes(input))
 	);
 }
 
@@ -173,14 +158,13 @@ export function acceptsPrompt(model: ModelInfo | undefined): boolean {
  */
 export function providerDefault(
 	catalog: Catalog,
+	rule: TaskRules,
 	provider: string,
-	task: Task,
 	input?: string
 ): string {
-	const models = modelsFor(catalog, provider, task, input);
-	return (
-		(models.find((m) => m.provider_default_for.includes(requestTask(task))) ?? models[0])?.id ?? ''
-	);
+	const models = modelsFor(catalog, rule, provider, input);
+	const listedAs = requestTask(rule.task);
+	return (models.find((m) => m.provider_default_for.includes(listedAs)) ?? models[0])?.id ?? '';
 }
 
 /**
@@ -191,21 +175,21 @@ export function providerDefault(
  */
 export function newDraft(
 	catalog: Catalog,
-	task: Task,
+	rule: TaskRules,
 	presetId: string | null,
 	hasKey: (provider: string) => boolean,
 	used: string[] = [],
 	input?: string
 ): Draft {
-	const offered = forTask(catalog, task, input);
+	const offered = forTask(catalog, rule, input);
 	const usable = offered.filter((m) => hasKey(m.provider));
 	const fresh = usable.filter((m) => !used.includes(`${m.provider}/${m.id}`));
-	const listed = requestTask(task);
+	const listedAs = requestTask(rule.task);
 	const pick =
-		fresh.find((m) => m.recommended_for.includes(listed)) ??
-		fresh.find((m) => m.provider_default_for.includes(listed)) ??
+		fresh.find((m) => m.recommended_for.includes(listedAs)) ??
+		fresh.find((m) => m.provider_default_for.includes(listedAs)) ??
 		fresh[0] ??
-		usable.find((m) => m.recommended_for.includes(listed)) ??
+		usable.find((m) => m.recommended_for.includes(listedAs)) ??
 		usable[0] ??
 		offered[0];
 	const provider = pick?.provider ?? '';
@@ -218,7 +202,7 @@ export function newDraft(
 		timestamps: true,
 		// The pages' provider combines them, with its cheapest model: one key is enough.
 		mergeProvider: provider,
-		mergeModel: mergeDefault(catalog, provider)
+		mergeModel: mergeDefault(catalog, rule, provider)
 	};
 }
 

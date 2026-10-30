@@ -13,7 +13,7 @@ use kalamu_core::{
     SourceFile, StopSignal, Timestamp,
 };
 
-use crate::run::{Input, Outcome};
+use crate::piece::{Input, Outcome};
 use crate::{Engine, EngineError};
 
 impl Engine {

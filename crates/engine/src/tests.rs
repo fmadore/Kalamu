@@ -191,6 +191,10 @@ impl Fixture {
     }
 
     fn new_job(&self, sources: Vec<SourceFile>, models: &[&str]) -> Job {
+        self.new_job_for(Task::TextExtraction, sources, models)
+    }
+
+    fn new_job_for(&self, task: Task, sources: Vec<SourceFile>, models: &[&str]) -> Job {
         let setups = models
             .iter()
             .map(|m| SetupRequest {
@@ -205,7 +209,7 @@ impl Fixture {
         self.engine
             .create_job(NewJob {
                 name: "Test".into(),
-                task: Task::TextExtraction,
+                task,
                 sources,
                 setups,
                 settings: Default::default(),
@@ -1048,7 +1052,11 @@ impl Fixture {
         let path = self.dir.path().join(name);
         std::fs::write(&path, tone_wav()).unwrap_or_else(|_| panic!("write recording"));
         let source = kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"));
-        let job = self.new_job(vec![source.clone()], &["fake-model"]);
+        let job = self.new_job_for(
+            Task::AudioTranscription,
+            vec![source.clone()],
+            &["fake-model"],
+        );
         self.store
             .upsert_piece(&kalamu_core::PieceState {
                 job_id: job.id,
@@ -1140,4 +1148,54 @@ fn a_converted_piece_is_kept_and_found_again() {
         b"kept",
         "not converted twice"
     );
+}
+
+#[test]
+fn a_job_is_refused_a_source_its_task_does_not_read() {
+    let f = fixture();
+    let source = f.pdf("issue.pdf", 1);
+    let refused = f.engine.create_job(NewJob {
+        name: "Test".into(),
+        task: Task::AudioTranscription,
+        sources: vec![source],
+        setups: vec![SetupRequest {
+            provider: ProviderId::new("fake"),
+            model: "fake-model".into(),
+            preset_id: None,
+            label: None,
+            options: Default::default(),
+            merge: None,
+        }],
+        settings: Default::default(),
+        output: Default::default(),
+    });
+    assert!(matches!(refused, Err(EngineError::UnsupportedSource(name)) if name == "issue.pdf"));
+}
+
+#[test]
+fn a_job_keeps_only_the_formats_its_task_writes() {
+    let f = fixture();
+    let source = f.pdf("issue.pdf", 1);
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Test".into(),
+            task: Task::TextExtraction,
+            sources: vec![source],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: None,
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt, ExportFormat::Srt],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(job.output.formats, vec![ExportFormat::Txt]);
 }

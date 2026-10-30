@@ -56,6 +56,7 @@ impl Engine {
             return Err(EngineError::LinkNeedsFolder);
         }
         let catalog = self.catalog();
+        Self::check_job(&catalog, &new)?;
         let mut setups = Vec::new();
         let mut labels: Vec<String> = Vec::new();
         for request in &new.setups {
@@ -101,6 +102,9 @@ impl Engine {
                 merge,
             });
         }
+        // Formats the task does not write (from a pipeline of another task) are left out.
+        let mut output = new.output;
+        output.formats.retain(|f| new.task.formats().contains(f));
         let job = Job {
             id: JobId::new(),
             name: new.name,
@@ -109,7 +113,7 @@ impl Engine {
             sources: new.sources,
             setups,
             settings: new.settings,
-            output: new.output,
+            output,
             status: JobStatus::Pending,
         };
         self.store.create_job(&job)?;

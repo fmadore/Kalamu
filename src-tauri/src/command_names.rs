@@ -16,6 +16,7 @@ pub const COMMANDS: &[&str] = &[
     "save_settings",
     "get_catalog",
     "refresh_catalog",
+    "task_rules",
     "key_status",
     "set_api_key",
     "clear_api_key",

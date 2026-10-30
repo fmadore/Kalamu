@@ -24,6 +24,7 @@
     "allow-save-settings",
     "allow-get-catalog",
     "allow-refresh-catalog",
+    "allow-task-rules",
     "allow-key-status",
     "allow-set-api-key",
     "allow-clear-api-key",
