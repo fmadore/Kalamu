@@ -16,6 +16,8 @@ dodington-1755.jpg    A handwritten French report on the rocks where the East In
                       ship Dodington was wrecked off South Africa on 17 July 1755, with a key
                       to the map it accompanied. New job > Extract text: the hand and the
                       spelling of the time are what handwritten text recognition is for.
+                      Choose Claude or Mistral: Gemini refuses this page without giving a
+                      reason (OTHER).
                       Bibliothèque nationale de France (btv1b53168804x), via Wikimedia
                       Commons. Public domain.
 
