@@ -17,7 +17,7 @@ Windows SDK's `MakeAppx`.
 | `src-tauri/gen/windows/bundle.config.json` | Publisher, capabilities (`internetClient`; the bundler adds `runFullTrust`), resource index |
 | `src-tauri/gen/windows/AppxManifest.xml.template` | The manifest, with the reserved identity written out and `{{PLACEHOLDER}}`s the bundler fills per architecture |
 | `src-tauri/gen/windows/Assets/*.png` | Store logo, tiles and the 42 taskbar sizes, rendered by `scripts/msix-assets.py` |
-| `scripts/bundle-msix.mjs` | `npm run bundle:msix:{x64,arm64}`: checks the identity and FFmpeg, then runs the bundler with FFmpeg's configuration |
+| `scripts/bundle-msix.mjs` | `npm run bundle:msix:{x64,arm64}`: checks FFmpeg is fetched, then runs the bundler with FFmpeg's configuration |
 | `scripts/third-party-notices.mjs` | Writes `licenses/THIRD-PARTY-NOTICES.txt`, which every installer and package carries |
 | `.github/workflows/release.yml` → `msix`, `bundle` | Native x64 and ARM64 packages, then one `.msixbundle` for Partner Center |
 
@@ -30,9 +30,8 @@ Things that are not what they look like:
   the manifest template.
 - **`Identity/Name` and both display names are literals.** The bundler would derive them from
   `tauri.conf.json`'s `identifier` and `productName`, which are not what Partner Center
-  assigned. Until the reserved name is copied in, the template carries
-  `PARTNER-CENTER-PACKAGE-NAME` and `scripts/bundle-msix.mjs` refuses to build, so a package
-  the Store would reject at ingestion is never made.
+  assigned: `49346FMadore.Kalamu` and `Kalamu` ([Store identity](microsoft-store.md#store-identity)).
+  Ingestion fails if they differ by a character.
 - **FFmpeg is laid in for the build only.** The bundler reads `tauri.conf.json` and
   `tauri.windows.conf.json` and nothing else; Kalamu keeps FFmpeg in
   `tauri.ffmpeg.conf.json` so that a plain build or `tauri dev` does not need it fetched. The
