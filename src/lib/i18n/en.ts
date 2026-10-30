@@ -392,6 +392,8 @@ export const en = {
 		pieceReviewed: (label: string) => `${label}, reviewed`,
 		zoomIn: 'Zoom in',
 		zoomOut: 'Zoom out',
+		turnLeft: 'Turn the page left',
+		turnRight: 'Turn the page right',
 		play: 'Play',
 		pausePlayback: 'Pause',
 		position: 'Position in this piece',

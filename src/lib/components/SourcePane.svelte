@@ -1,14 +1,16 @@
 <script lang="ts">
 	// The source in a review, beside the text: a page of a scan on its lightbox, dark in both
-	// themes so the page is the brightest thing on screen, with zoom; a text file set as text,
-	// with words looked for marked; or a player for a recording or a video. Where no strip of
-	// pages runs below, buttons over the scan turn its pages.
+	// themes so the page is the brightest thing on screen, with zoom (also Ctrl and the wheel,
+	// Ctrl + and Ctrl −, Ctrl 0 to fit) and a quarter turn either way for a page scanned sideways;
+	// a text file set as text, with words looked for marked; or a player for a recording or a
+	// video. Where no strip of pages runs below, buttons over the scan turn its pages.
 	import type { Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
 	import { findTerm } from '#lib/analysis.js';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { type Rotation, turn } from '#lib/pdf.js';
 
 	let {
 		kind,
@@ -37,7 +39,41 @@
 	const m = messages();
 
 	let zoom = $state(1);
+	/** The reader's quarter turns, for every page of the source. */
+	let rotation = $state<Rotation>(0);
+	let desk = $state<HTMLElement | null>(null);
+
+	function zoomBy(step: number) {
+		zoom = Math.round(Math.min(3, Math.max(0.4, zoom + step)) * 10) / 10;
+	}
+
+	// Ctrl and the wheel zoom the page, not the window. Not passive, to keep the window's own zoom
+	// and scrolling out of it.
+	$effect(() => {
+		if (!desk || kind !== 'scan') return;
+		const onwheel = (e: WheelEvent) => {
+			if (!e.ctrlKey) return;
+			e.preventDefault();
+			zoomBy(e.deltaY < 0 ? 0.1 : -0.1);
+		};
+		desk.addEventListener('wheel', onwheel, { passive: false });
+		return () => desk?.removeEventListener('wheel', onwheel);
+	});
+
+	function onkeydown(e: KeyboardEvent) {
+		if (kind !== 'scan' || !e.ctrlKey || e.altKey) return;
+		const target = e.target;
+		if (target instanceof Element && target.closest('input, textarea, select, [contenteditable]'))
+			return;
+		const step = e.key === '+' || e.key === '=' ? 0.2 : e.key === '-' ? -0.2 : 0;
+		if (step !== 0) zoomBy(step);
+		else if (e.key === '0') zoom = 1;
+		else return;
+		e.preventDefault();
+	}
 </script>
+
+<svelte:window {onkeydown} />
 
 <section class="pane source" class:stage={kind === 'scan'} aria-label={m.review.source}>
 	<div class="pane-bar">
@@ -63,23 +99,38 @@
 		{/if}
 	</div>
 	{#if kind === 'scan'}
-		<div class="desk"><PageImage {preview} {zoom} /></div>
+		<div class="desk" bind:this={desk}><PageImage {preview} {zoom} {rotation} /></div>
 		<div class="zoom">
 			<button
 				class="tool"
 				aria-label={m.review.zoomOut}
-				title={m.review.zoomOut}
-				onclick={() => (zoom = Math.max(0.4, zoom - 0.2))}><Icon name="zoom-out" /></button
+				title="{m.review.zoomOut} (Ctrl −)"
+				onclick={() => zoomBy(-0.2)}><Icon name="zoom-out" /></button
 			>
 			<span class="zoom-value mono">{Math.round(zoom * 100)}%</span>
 			<button
 				class="tool"
 				aria-label={m.review.zoomIn}
-				title={m.review.zoomIn}
-				onclick={() => (zoom = Math.min(3, zoom + 0.2))}><Icon name="zoom-in" /></button
+				title="{m.review.zoomIn} (Ctrl +)"
+				onclick={() => zoomBy(0.2)}><Icon name="zoom-in" /></button
 			>
 			<span class="zoom-rule" aria-hidden="true"></span>
-			<button class="tool wide" onclick={() => (zoom = 1)}>{m.review.fitWidth}</button>
+			<button class="tool wide" title="{m.review.fitWidth} (Ctrl 0)" onclick={() => (zoom = 1)}
+				>{m.review.fitWidth}</button
+			>
+			<span class="zoom-rule" aria-hidden="true"></span>
+			<button
+				class="tool"
+				aria-label={m.review.turnLeft}
+				title={m.review.turnLeft}
+				onclick={() => (rotation = turn(rotation, -1))}><Icon name="turn-left" /></button
+			>
+			<button
+				class="tool"
+				aria-label={m.review.turnRight}
+				title={m.review.turnRight}
+				onclick={() => (rotation = turn(rotation, 1))}><Icon name="turn-right" /></button
+			>
 		</div>
 	{:else if kind === 'text'}
 		<div class="desk document" lang="">
