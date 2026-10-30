@@ -23,7 +23,8 @@ export const en = {
 		newJob: 'New job',
 		jobs: 'Jobs',
 		prompts: 'Prompts',
-		settings: 'Settings'
+		settings: 'Settings',
+		glossary: 'Glossary'
 	},
 	task: {
 		text_extraction: 'Extract text',
@@ -611,6 +612,94 @@ export const en = {
 		link: 'Report a problem',
 		review: 'Report a problem with this output',
 		note: 'Output that is inappropriate, harmful or invented, or a bug: report it on GitHub. The form opens in your browser; Kalamu sends nothing, so share only what is safe to make public.'
+	},
+	glossary: {
+		title: 'Glossary',
+		lede: 'The words Kalamu uses, for colleagues new to these tools, and what each export format suits.',
+		wordsTitle: 'Words',
+		formatsTitle: 'Export formats',
+		filter: 'Find a word',
+		noMatch: 'No word by that name.',
+		seeAlso: 'See also',
+		/** The help link beside a word in the app. */
+		whatIs: (word: string) => `What is meant by “${word}”`,
+		/** In the order the page lists them: what a model is, then how it is used, then how its
+		 * results are checked and recorded. */
+		terms: {
+			ocr: {
+				word: 'OCR and HTR',
+				text: 'Optical character recognition (OCR) turns printed text in an image into text; handwritten text recognition (HTR) does the same for handwriting. Kalamu does both with AI models that read the whole page at once, rather than letter by letter as older OCR engines did. They cope better with columns, faded print and difficult hands, and can also go wrong in new ways (see hallucination).'
+			},
+			llm: {
+				word: 'LLM (large language model)',
+				text: 'A model trained on very large amounts of text to write the most likely continuation of what it is given. Gemini, GPT, Claude and Mistral’s models are LLMs that also read images and sound. What they write is fluent and often right, but never guaranteed: it is a likely text, not a copy.'
+			},
+			whisper: {
+				word: 'Offline transcription (Whisper)',
+				text: 'Whisper is an open speech-recognition model that Kalamu runs on your own computer, after a one-time download in Settings. Nothing is sent anywhere and nothing is billed. It is slower than the cloud models and cannot tell speakers apart.'
+			},
+			apiKey: {
+				word: 'API key',
+				text: 'A code from an AI provider (Google, OpenAI, Anthropic, Mistral) that lets Kalamu send work under your account; the provider bills what is used. Kalamu keeps keys in Windows Credential Manager and sends each only to the provider that issued it.'
+			},
+			prompt: {
+				word: 'Prompt',
+				text: 'The instructions sent to the model with each page, recording or text: what to transcribe, how to lay it out, which language, what to leave out. The presets are prompts written for common kinds of material; you can adapt them in Prompts. Dedicated OCR and speech models, such as Mistral OCR, Voxtral and Whisper, take no prompt.'
+			},
+			setup: {
+				word: 'Set-up and comparison',
+				text: 'A set-up is one provider, model and prompt run over a job’s files. A job with two or more set-ups compares them: in the review each is named by a letter (its siglum), and the places where they read differently are highlighted, as an edition notes the readings of its witnesses.'
+			},
+			pipeline: {
+				word: 'Pipeline',
+				text: 'A job’s settings saved under a name: task, models, prompts, languages, formats and destination, so the next batch starts in one click. Exported, a pipeline carries its full prompts and a Markdown record to cite in a methods section or share with colleagues.'
+			},
+			tokens: {
+				word: 'Tokens',
+				text: 'The units in which models count text and providers bill it. A token is a piece of a word, about four characters of English on average; other languages and scripts often take more. Images and sound are counted in tokens too. The estimated cost before a job, and the cost after it, come from the provider’s price per million tokens read and written.'
+			},
+			reasoning: {
+				word: 'Reasoning effort',
+				text: 'How much some models work through a question before answering. The intermediate steps are billed as tokens written but not shown. More effort can help with hard judgements, such as an analysis or a difficult hand, and costs more and takes longer. Kalamu sets it for each task and records it in the provenance.'
+			},
+			economy: {
+				word: 'Economy mode (batches)',
+				text: 'Sends a job to the provider’s batch service, which answers within a day at about half the price. Kalamu collects the answers when it next opens; the app does not need to stay open meanwhile.'
+			},
+			groundTruth: {
+				word: 'Ground truth',
+				text: 'A text known to be correct, against which a model’s output is measured. In Kalamu, every page you correct, or mark as reviewed without changing it, becomes the ground truth for that page.'
+			},
+			errorRates: {
+				word: 'Character and word error rates (CER, WER)',
+				text: 'The share of characters, or of words, that a model got wrong compared with the ground truth: those added, left out or replaced, divided by the length of the correct text. A character error rate of 2% is about one character wrong in fifty. Kalamu counts them only on the pages you reviewed, so they show the errors you caught, not the ones you missed.'
+			},
+			hallucination: {
+				word: 'Hallucination',
+				text: 'Text a model writes that is not in the source: a plausible word where the page is illegible, a sentence nobody spoke, a name an analysis supplies from elsewhere. Fluent output is no evidence of accuracy. Checking a sample against the source, as the review allows, is the safeguard.'
+			},
+			provenance: {
+				word: 'Provenance',
+				text: 'The record of how a result was made. Beside every output Kalamu writes a provenance.json file with the model and its exact version, the prompt, the settings each request carried, dates, costs, and which pages were corrected or reviewed, so the method can be described and repeated.'
+			},
+			machineReadable: {
+				word: 'Machine-readable',
+				text: 'In a form other software can process without a person reading it. JSON and CSV are machine-readable; a Word document much less so, and a scan not at all. Choose them when results will be counted, searched or imported into a database.'
+			}
+		},
+		formats: {
+			txt: 'Plain text, readable anywhere and the simplest to search or put into other tools. A marker shows where each page starts.',
+			markdown:
+				'Text with light marks for headings and lists, readable as it is and well suited to note-taking tools such as Obsidian.',
+			docx: 'A Word document with a heading for each page, to read, annotate or share with colleagues who work in Word.',
+			json: 'Every page, segment, answer or entry with its details, machine-readable, for scripts and databases.',
+			csv: 'A spreadsheet with one row per page, segment, document or entry (an analysis has a column per field), for Excel, LibreOffice or statistics software.',
+			srt: 'Subtitles with their times, for video players and editing software.',
+			vtt: 'Subtitles for the web (WebVTT), as web video players use them.',
+			searchable_pdf:
+				'The original PDF with an invisible text layer, so it can be searched and its text copied. Only from models that report where text sits on the page, today Mistral OCR.',
+			provenance: 'Always written beside the results: how they were made (see Provenance).'
+		}
 	},
 	support: {
 		title: 'Support development',

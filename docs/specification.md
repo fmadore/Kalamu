@@ -389,6 +389,15 @@ Transcriptions, extracted text and analyses can be fluent and wrong: misheard na
 passages, invented words, a tone misjudged. Check a sample against the source before relying on
 the results, and keep the originals.
 
+## Glossary
+
+Many researchers meet these tools for the first time. A glossary beside Settings explains the
+words the app uses, from OCR and tokens to ground truth, error rates and hallucination, in
+plain language, and what each export format suits. A small help mark beside the headings that
+use a word (pipelines, the model and prompt, speed and price, the estimate, formats, the files
+written, the errors found in review) opens the glossary on it. Like all interface text, it is
+written in the translation files.
+
 ## Bundled conversion tools
 
 Providers accept different inputs, so the app prepares each file for the chosen model; users

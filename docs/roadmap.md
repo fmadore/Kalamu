@@ -97,6 +97,12 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   workflow, third-party notices for every crate and package, sample files for the certification
   team, and the listing for 1.0.0 ([packaging-msix.md](packaging-msix.md),
   [decision](decisions/2026-10-30-version-1.md)).
+- **A glossary** for colleagues new to these tools: a page beside Settings explaining fifteen
+  words the app uses (OCR and HTR, LLM, Whisper, API key, prompt, set-up, pipeline, tokens,
+  reasoning effort, economy mode, ground truth, error rates, hallucination, provenance,
+  machine-readable) and what each export format suits, with a filter, links between the
+  words, and a help mark beside the headings that use them; written in the translation files
+  like all interface text ([decision](decisions/2026-10-30-glossary.md)).
 - **Icons centred in their buttons**: the icon component's style no longer reaches buttons
   named `icon`, which drew their icon at the left whenever its style loaded last.
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
@@ -133,11 +139,6 @@ but for these two, which change no result:
   model, pipeline, date and status; tags the researcher gives jobs, a tag's filter serving as
   a folder. New jobs record the pipeline they were started from. Later, a search through the
   text of every result.
-- **A glossary** for colleagues new to these tools: a page beside Settings explaining the
-  words the app uses (OCR and HTR, LLM, prompt, pipeline, tokens, reasoning effort, ground
-  truth, character and word error rates, hallucination, provenance, machine-readable), and
-  each export format with what it suits; linked from where those words appear, and written in
-  the translation files like all interface text.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the

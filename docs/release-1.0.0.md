@@ -9,6 +9,10 @@ provider of your choice, or offline, and check every result against its source.
   playing from its line. Capitals, accents and line breaks are forgiven. In an analysis, the
   fields whose answers or reasons hold the words are kept, and in a text document the words are
   marked in the document too; in a table of contents, the entries are filtered.
+- **A glossary**, beside Settings, for colleagues new to these tools: OCR and HTR, LLM,
+  tokens, reasoning effort, ground truth, error rates, hallucination, provenance and more, in
+  plain words, and what each export format suits. A small help mark beside the headings that
+  use these words opens it on the right one.
 - **Report a problem.** A flag in every review's header, and a button in Settings › About,
   open a GitHub form to report output that is inappropriate, harmful or invented, or a bug. The
   form opens in your browser; Kalamu sends nothing itself.

@@ -8,6 +8,7 @@
 	import PromptsView from '#lib/components/PromptsView.svelte';
 	import ReviewView from '#lib/components/ReviewView.svelte';
 	import SettingsView from '#lib/components/SettingsView.svelte';
+	import GlossaryView from '#lib/components/GlossaryView.svelte';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -124,6 +125,8 @@
 			<PromptsView />
 		{:else if app.view.name === 'settings'}
 			<SettingsView />
+		{:else if app.view.name === 'glossary'}
+			<GlossaryView opening={app.view} />
 		{/if}
 	</main>
 </div>

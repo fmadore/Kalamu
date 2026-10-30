@@ -1,6 +1,7 @@
 <script lang="ts">
 	// The model set-ups of a new job: one for a normal job, several to compare, each named by the
 	// siglum it will carry in the review.
+	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
 	import { siglum } from '#lib/apparatus.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
@@ -50,7 +51,7 @@
 </script>
 
 <section class="step block" aria-labelledby="setups-title">
-	<h2 id="setups-title">{m.newJob.setupsTitle}</h2>
+	<h2 id="setups-title">{m.newJob.setupsTitle}<TermLink term="prompt" /></h2>
 	{#if !app.keys.some((k) => k.saved)}
 		<p class="warning">
 			{m.newJob.noProvider}

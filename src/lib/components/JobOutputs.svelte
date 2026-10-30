@@ -1,6 +1,7 @@
 <script lang="ts">
 	// The files a job wrote that are still on disk: each opens in its own program, or shows in
 	// its folder.
+	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
 	import { revealInFolder } from '#lib/tauri.js';
@@ -18,7 +19,7 @@
 </script>
 
 <section aria-labelledby="written-head" class="files">
-	<h2 id="written-head">{m.jobs.outputs}</h2>
+	<h2 id="written-head">{m.jobs.outputs}<TermLink term="provenance" /></h2>
 	<ul class="written">
 		{#each written as path (path)}
 			{@const name = path.split(/[\\/]/).pop()}

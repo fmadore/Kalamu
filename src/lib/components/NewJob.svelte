@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import TermLink from './TermLink.svelte';
 	import ChoiceStrip from './ChoiceStrip.svelte';
 	import FileList from './FileList.svelte';
 	import LanguageStep from './LanguageStep.svelte';
@@ -409,7 +410,7 @@
 
 		{#if economyOffered}
 			<section class="step block" aria-labelledby="pace-title">
-				<h2 id="pace-title">{m.newJob.paceTitle}</h2>
+				<h2 id="pace-title">{m.newJob.paceTitle}<TermLink term="economy" /></h2>
 				<ChoiceStrip bind:value={pace} options={paceOptions} />
 				{#if pace === 'economy' && notBatched.length > 0}
 					<p class="hint">{m.newJob.paceNotBatched(listNames(notBatched))}</p>

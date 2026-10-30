@@ -37,7 +37,7 @@ Make a detailed table of contents of a long document: a newspaper or magazine is
 
 Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations a document names, its tone with a reason, themes from your own list. Ready-made analyses cover common needs, including the question, argument, methods and findings of a scholarly publication for a literature review. Answers come back in the shape you asked for and can be exported as a spreadsheet with a column per field.
 
-Check every result beside its source: the page next to its text, or the recording next to its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Search a document or a recording across all its pages, corrections included, and go to each match. Compare two or more models on the same documents: their differences are highlighted in the text, with error rates against the pages you have corrected.
+Check every result beside its source: the page next to its text, or the recording next to its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Search a document or a recording across all its pages, corrections included, and go to each match. A glossary explains the words these tools use, from OCR and tokens to error rates and hallucination, for colleagues new to them. Compare two or more models on the same documents: their differences are highlighted in the text, with error rates against the pages you have corrected.
 
 Large jobs are safe and affordable. Work is saved piece by piece: a job interrupted by closing the app, a crash or a lost connection resumes where it stopped, and nothing is sent or paid for twice. Long jobs keep running from the notification area while the window is closed. For large collections, choose the cheaper mode: the provider's batch service answers within a day at about half the price, and Kalamu collects the results when it next opens.
 
@@ -57,7 +57,7 @@ First release in the Microsoft Store.
 
 Read scanned and handwritten documents, transcribe recordings and analyse texts with Gemini, OpenAI, Claude or Mistral under your own key, or transcribe offline with Whisper; make detailed tables of contents of long documents and correct existing OCR text.
 
-New in this version: search a document or recording across all its pages in the review (Ctrl F), including an analysis's answers; Report a problem in every review and in Settings; one layout and the same keys for every review; answers cut off by a model marked and listed; files changed since they were added refused; a document's files written even when a page keeps failing; and the full list of third-party licences.
+New in this version: search a document or recording across all its pages in the review (Ctrl F), including an analysis's answers; a glossary of the words these tools use; Report a problem in every review and in Settings; one layout and the same keys for every review; answers cut off by a model marked and listed; files changed since they were added refused; a document's files written even when a page keeps failing; and the full list of third-party licences.
 ```
 
 ### Features — one feature per line
