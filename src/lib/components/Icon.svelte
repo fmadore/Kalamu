@@ -28,6 +28,8 @@
 	import Play from '@lucide/svelte/icons/play';
 	import Plus from '@lucide/svelte/icons/plus';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import RotateCcwSquare from '@lucide/svelte/icons/rotate-ccw-square';
+	import RotateCwSquare from '@lucide/svelte/icons/rotate-cw-square';
 	import ScrollText from '@lucide/svelte/icons/scroll-text';
 	import Search from '@lucide/svelte/icons/search';
 	import Settings from '@lucide/svelte/icons/settings';
@@ -67,6 +69,8 @@
 		plus: Plus,
 		replay: RotateCcw,
 		search: Search,
+		'turn-left': RotateCcwSquare,
+		'turn-right': RotateCwSquare,
 		star: Star,
 		text_extraction: FileText,
 		audio_transcription: Mic,
