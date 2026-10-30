@@ -12,6 +12,7 @@ import type { PieceStatus } from './bindings/PieceStatus.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
 import type { Task } from './bindings/Task.js';
+import type { Term } from './glossary.js';
 import { messages } from './i18n/index.js';
 import { api, notify, openUrl } from './tauri.js';
 
@@ -20,7 +21,8 @@ export type View =
 	| { name: 'jobs'; jobId?: string }
 	| { name: 'review'; jobId: string; sourceId: string }
 	| { name: 'prompts' }
-	| { name: 'settings' };
+	| { name: 'settings' }
+	| { name: 'glossary'; term?: Term | 'formats' };
 
 export interface LivePiece {
 	status: PieceStatus;

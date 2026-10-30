@@ -5,9 +5,11 @@
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
+	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import CircleQuestionMark from '@lucide/svelte/icons/circle-question-mark';
 	import Cloud from '@lucide/svelte/icons/cloud';
 	import Columns2 from '@lucide/svelte/icons/columns-2';
 	import Download from '@lucide/svelte/icons/download';
@@ -44,6 +46,8 @@
 		previous: ChevronLeft,
 		chevron: ChevronRight,
 		cloud: Cloud,
+		glossary: BookOpen,
+		help: CircleQuestionMark,
 		edit: Pencil,
 		folder: FolderOpen,
 		file: FileText,

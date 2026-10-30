@@ -630,6 +630,8 @@ export function mockView(): View | null {
 			return { name: 'prompts' };
 		case 'settings':
 			return { name: 'settings' };
+		case 'glossary':
+			return { name: 'glossary' };
 		case 'new':
 			return { name: 'new' };
 		default:

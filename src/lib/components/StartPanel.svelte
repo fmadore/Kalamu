@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TermLink from './TermLink.svelte';
 	// New job's summary, in view while the form scrolls: what the job will cost, at the pace
 	// chosen, model by model; what still stops it; the one action, Start; and saving the form as
 	// a pipeline.
@@ -45,7 +46,7 @@
 
 <aside class="summary" aria-labelledby="estimate-label">
 	<div class="estimate">
-		<span id="estimate-label" class="label">{m.newJob.estimate}</span>
+		<span id="estimate-label" class="label">{m.newJob.estimate}<TermLink term="tokens" /></span>
 		<strong class="total mono"
 			>{estimates.length > 0 && total !== null ? formatUsd(total) : '—'}</strong
 		>

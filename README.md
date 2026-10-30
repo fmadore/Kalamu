@@ -49,6 +49,8 @@ See the [roadmap](docs/roadmap.md) and the [1.0.0 release notes](docs/release-1.
   colleagues.
 - **Export** to text, Markdown, Word, JSON, CSV, subtitles and searchable PDF, each with a
   `provenance.json` recording the model, prompt and settings.
+- **A glossary** explains the words these tools use, from OCR and tokens to error rates and
+  hallucination, for colleagues new to them.
 
 Files go straight from your PC to the provider you choose, with your own API key, kept in
 Windows Credential Manager. Offline, nothing leaves the PC. AI output can be fluent and wrong:

@@ -2,6 +2,7 @@
 	// New job's results step: a sample of the first pages to try first, the formats to write,
 	// where to write them (a folder must be chosen for videos, which have none of their own), and
 	// the job's name.
+	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
@@ -68,7 +69,7 @@
 		</label>
 	{/if}
 	<fieldset>
-		<legend class="label">{m.newJob.formats}</legend>
+		<legend class="label">{m.newJob.formats}<TermLink term="formats" /></legend>
 		<div class="row wrap">
 			{#each offeredFormats(catalog, rulesFor(app.rules, task), drafts) as f (f)}
 				<label class="inline">

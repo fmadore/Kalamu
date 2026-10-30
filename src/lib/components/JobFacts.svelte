@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TermLink from './TermLink.svelte';
 	// A job's facts as one strip, cells divided by hairlines: its task, progress, models, error
 	// rates where pages were reviewed, pace, cost and date.
 	import { siglum } from '#lib/apparatus.js';
@@ -58,7 +59,7 @@
 	</div>
 	{#if totals.some((t) => t !== null)}
 		<div class="wide">
-			<dt>{m.scores.title}</dt>
+			<dt>{m.scores.title}<TermLink term="errorRates" /></dt>
 			<dd class="scores">
 				{#each totals as total, i (i)}
 					{#if total}

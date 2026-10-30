@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Saved pipelines at the top of New job: apply one, export its record, delete it, or import
 	// one shared by a colleague.
+	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import { describeError } from '#lib/errors.js';
@@ -56,7 +57,9 @@
 
 <section class="pipelines" aria-labelledby="pipelines-label">
 	<div class="head">
-		<h2 id="pipelines-label" class="label">{m.newJob.pipelinesTitle}</h2>
+		<h2 id="pipelines-label" class="label">
+			{m.newJob.pipelinesTitle}<TermLink term="pipeline" />
+		</h2>
 		<button class="btn sm ghost" onclick={importPipeline}>{m.newJob.pipelineImport}</button>
 	</div>
 	{#if pipelines.length > 0}

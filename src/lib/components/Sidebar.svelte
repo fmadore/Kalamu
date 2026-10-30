@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The sidebar: the app's name, New job, the list of jobs grouped by what they need from the
-	// researcher, and the tools at its foot (Prompts, Settings, support). It folds to a rail of
+	// researcher, and the tools at its foot (Prompts, Settings, Glossary, support). It folds to a rail of
 	// icons named by their tooltips, leaving the room to the work.
 	import Icon from './Icon.svelte';
 	import SupportLink from './SupportLink.svelte';
@@ -165,6 +165,15 @@
 			title={collapsed ? m.nav.settings : undefined}
 			onclick={() => go({ name: 'settings' })}
 			><Icon name="settings" size={16} />{#if !collapsed}{m.nav.settings}{/if}</button
+		>
+		<button
+			class="tool"
+			class:current={app.view.name === 'glossary'}
+			aria-current={app.view.name === 'glossary' ? 'page' : undefined}
+			aria-label={collapsed ? m.nav.glossary : undefined}
+			title={collapsed ? m.nav.glossary : undefined}
+			onclick={() => go({ name: 'glossary' })}
+			><Icon name="glossary" size={16} />{#if !collapsed}{m.nav.glossary}{/if}</button
 		>
 		<SupportLink variant="tool" iconOnly={collapsed} />
 		{#if offlineReady && !collapsed}
