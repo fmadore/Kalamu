@@ -124,7 +124,7 @@ team; a test key may be given here, never in the listing.
 ```text
 Product: Kalamu. Version: 1.0.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.0.0/kalamu-samples.zip, containing a 20-second spoken recording (interview.wav), a scanned newspaper page (bulletin-page.jpg) and the same page as text (bulletin.txt), all made for Kalamu and free to use, with a README.txt.
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.0.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, find Offline transcription and download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
@@ -132,7 +132,7 @@ Offline route, with no account or key:
 3. The job runs on the CPU and shows its progress on the job's page. When it is done, choose Review: the transcript appears beside a player; click a line to hear it. Edit a word: the correction is kept apart from the original output. Press Ctrl F and type "Mopti" to find the word in the transcript.
 4. Disconnect the network and repeat with another recording to confirm it runs offline. Results are written next to the sample file, as .txt and .docx with a provenance.json.
 
-Cloud features: text extraction (bulletin-page.jpg), analyses (bulletin.txt) and cloud transcription need the user's own key, entered in Settings and kept in Windows Credential Manager. [Either: A test Gemini API key with a small spending cap is provided for certification: <key>. Paste it in Settings under Google Gemini, then run New job > Extract text on bulletin-page.jpg, and New job > Analyse texts on bulletin.txt with People, places and organisations. Or: No test key is provided; these features need a key from the provider, as the listing says.] An estimated cost is shown before each job starts. The cheaper mode sends a job to the provider's batch service, which may take up to a day to answer; it is optional and off by default.
+Cloud features: text extraction (dodington-1755.jpg), correction of existing text (the-monitor-1915.pdf), analyses (bulletin.txt) and cloud transcription need the user's own key, entered in Settings and kept in Windows Credential Manager. [Either: A test Gemini API key with a small spending cap is provided for certification: <key>. Paste it in Settings under Google Gemini, then run New job > Extract text on dodington-1755.jpg, New job > Correct existing text on the-monitor-1915.pdf, and New job > Analyse texts on bulletin.txt with People, places and organisations. Or: No test key is provided; these features need a key from the provider, as the listing says.] An estimated cost is shown before each job starts. The cheaper mode sends a job to the provider's batch service, which may take up to a day to answer; it is optional and off by default.
 
 YouTube: in Transcribe YouTube, the user pastes a link to a public video; Google's Gemini API reads the video from YouTube itself. Kalamu does not download, store or convert YouTube videos. The app asks YouTube's public oEmbed endpoint for the video title, and the review plays the video in YouTube's privacy-enhanced embedded player, loaded only when the user plays it.
 
@@ -167,8 +167,9 @@ set. Wait for toasts to go. Name the jobs as a researcher would ("Le Réveil du 
 throughout, so the set reads as one person's work. Rename the folders first: no `C:\Users\<name>`
 path, no real key, no personal data in a file name.
 
-**Material whose rights allow it.** The sample page and recording in `samples/` (made for
-Kalamu, CC0); public-domain newspapers from the Library of Congress's
+**Material whose rights allow it.** Everything in `samples/`: the recording and the invented
+page (made for Kalamu, CC0), the 1755 manuscript and the 1915 newspaper (public domain, sources
+in its README); more public-domain newspapers from the Library of Congress's
 [Chronicling America](https://chroniclingamerica.loc.gov/) (no known restrictions), or older
 issues whose rights holder agrees; a handwritten letter in the public domain on Wikimedia
 Commons; your own recording, or one made with the speaker's consent for this use. Gallica and
@@ -178,7 +179,7 @@ most archives restrict commercial reuse: a Store listing is safest without them.
 | --- | --- | --- |
 | 1 | **Comparison in the review.** A newspaper column scanned on the left; on the right its text from set-up A, with two or three words highlighted where B reads differently, and one set of readings open over the text. The strip of pages below, a few marked reviewed. | Check every page beside its scan. Where two models read differently, the words are highlighted and you choose the right reading. |
 | 2 | **New job, ready to start.** Extract text chosen, a folder of 30–40 pages added, two set-ups (Gemini and Mistral OCR), the diagram of the task, and the estimate on the right with a cost per model. | Choose your files, a task and a model, and see the estimated cost before anything is sent to the provider. |
-| 3 | **Handwriting.** A handwritten letter beside its transcription, lines kept as on the page, one word corrected (blue). | Read handwritten letters and registers line by line, kept as on the page so each line is easy to check against the original. |
+| 3 | **Handwriting.** `dodington-1755.jpg` beside its transcription, lines kept as on the page, one word corrected (blue). | Read handwritten letters and registers line by line, kept as on the page so each line is easy to check against the original. |
 | 4 | **Transcript.** The player above the transcript, speakers given real names, timestamps, the line being spoken highlighted. | Transcribe interviews with speakers and timestamps, give the speakers their names, and click any line to hear it. |
 | 5 | **Table of contents.** A newspaper issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
 | 6 | **Analysis.** An article beside its answers: summary, people, places and tone with its reason, two set-ups' sigla on the names they disagree on, a name pointed at and found in the text. | Ask your own questions of each text: summaries, people, places and tone, every answer shown beside the document it comes from. |
