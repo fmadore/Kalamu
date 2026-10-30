@@ -134,11 +134,12 @@ but for these two, which change no result:
   shown, which needs a failed call to carry its usage.
 - **Smaller provenance gaps** from the same checkpoint: whether Whisper used voice detection,
   speaker names, a table of contents' usage and cost per step.
-- **A home for jobs**: a page listing every job with its task, models, sources, date, status,
-  review progress and cost; search by name, file name and tag; sorting and filters by task,
-  model, pipeline, date and status; tags the researcher gives jobs, a tag's filter serving as
-  a folder. New jobs record the pipeline they were started from. Later, a search through the
-  text of every result.
+- **Project and document organisation**: persistent project workspaces with collections,
+  documents and their associated results across jobs; tracked in
+  [#57](https://github.com/fmadore/Kalamu/issues/57). A project's Activity view retains the
+  planned job list, progress, costs, search, tags and task/model/pipeline/date/status filters.
+  Collections organise research documents independently of processing runs. Later, search
+  through the text of every result.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
@@ -204,8 +205,12 @@ They are agreed product directions, not shipped features or release-date commitm
 current release checks and reliability work above remain first. Issues hold the detailed scope,
 dependencies and acceptance criteria; this roadmap holds the sequence, without duplicating them.
 
-The two central goals are:
+The three central goals are:
 
+- **Project workspaces**: organise collections and documents, with the original sources and
+  every associated extraction, correction and analysis accessible from each document. A
+  document can belong to several collections without duplicating files or results. Activity
+  keeps job controls available; the document view brings work from different runs together.
 - **A project dictionary**: review all entities and analytical labels across an explicitly
   selected set of jobs/documents, ask an LLM for proposed merges, then accept, reject or adjust
   them. Keep original expressions and source evidence, stable IDs, aliases and reversible
@@ -223,17 +228,21 @@ A pending merge decision is never treated as approval.
 
 | Order | Improvement | Tracking |
 | --- | --- | --- |
-| 1 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
-| 2 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps | [#49](https://github.com/fmadore/Kalamu/issues/49) |
-| 3 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export | [#48](https://github.com/fmadore/Kalamu/issues/48) |
-| 4 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |
+| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs | [#57](https://github.com/fmadore/Kalamu/issues/57) |
+| 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
+| 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps | [#49](https://github.com/fmadore/Kalamu/issues/49) |
+| 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export | [#48](https://github.com/fmadore/Kalamu/issues/48) |
+| 5 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |
 
-The dictionary inventory and workflow interface can be developed incrementally against the
-shared foundation. A project is an explicit, persistent grouping of sources/results; the
-planned job tags remain useful for navigation but do not substitute for source identity.
-Later edits flag dependent results as out of date while preserving the snapshots behind
-earlier findings. The first increment does not require arbitrary scripts, loops or a general
-graph editor.
+The project workspace can ship incrementally before the complete workflow builder. It owns
+project/document identity and collection membership (#57); result snapshots and dependencies
+are owned by #47. Workflows freeze the documents and result revisions selected at launch,
+so later collection edits do not rewrite earlier runs or start extra processing. Dictionary
+review can be project-wide or scoped to a visible collection/selection. Existing standalone
+jobs/results can be attached without rerunning them. Tags remain useful filters alongside
+collections. Later text edits flag dependent findings as out of date while retaining their
+original snapshots. Arbitrary scripts, loops and a general graph editor remain outside the
+first workflow increment.
 
 ### Supporting improvements
 
