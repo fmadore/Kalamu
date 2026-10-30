@@ -184,14 +184,15 @@ and the [privacy policy](privacy.md).
 Done: the name (reserved on 28 October 2026) and the package identity in the manifest
 (`49346FMadore.Kalamu`), Report a problem, MSIX packaging with FFmpeg and
 the licences inside, the `.msixbundle` and `kalamu-samples.zip` in the release workflow,
-version 1.0.0, third-party notices generated at build time, the sample files, and the listing,
-What's new and certification notes for 1.0.0.
+version 1.0.0, third-party notices generated at build time, the sample files (with a 1755
+manuscript and a 1915 newspaper in the public domain), and the listing, What's new and
+certification notes for 1.0.0. The [v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0)
+is built and published, its `.msixbundle` ready to upload.
 
 Left, in this order:
 
 - **Privacy policy online**: GitHub Pages from `docs/` on `main`, so it is served at
   `fmadore.github.io/Kalamu/privacy`.
-- **Tag v1.0.0**, which builds the installers, the packages and the bundle.
 - **Live runs and screenshots** from the installed package, a decision on a capped test key for
   the certification team, then the acceptance checklist and the submission.
 

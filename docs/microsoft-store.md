@@ -12,12 +12,11 @@ the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-
 
 ## Status (30 October 2026)
 
-**Version 1.0.0 is ready to build; not submitted.** Everything the app and the repository must
-carry is done: version 1.0.0, Report a problem, the MSIX packaging and the Store bundle in the
-release workflow, the third-party notices and the sample files. What is left needs Partner
-Center, the GitHub repository's settings or real keys, and is listed in
-[Before the first submission](#before-the-first-submission). The latest public build is the
-[v0.4.0](https://github.com/fmadore/Kalamu/releases/tag/v0.4.0) test release.
+**Version 1.0.0 is built; not yet submitted.** The
+[v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0) carries
+`Kalamu_1.0.0.msixbundle`, the file to upload, with the installers, the two packages and the
+sample files. Pricing, properties and age ratings are being filled in Partner Center. What is
+left is listed in [Before the first submission](#before-the-first-submission).
 
 ## Product and certification approach
 
@@ -73,8 +72,11 @@ this repository's notes, and Microsoft renumbers them from time to time.
 - **Third-party notices**: `scripts/third-party-notices.mjs` writes
   `licenses/THIRD-PARTY-NOTICES.txt` (every Rust crate and npm package built into the app, with
   its licence texts) in each release build.
-- **Sample files for reviewers**: `samples/` (a recording made with Windows' speech synthesis,
-  a synthetic newspaper page and its text, all CC0), attached as `kalamu-samples.zip`.
+- **Sample files for reviewers**: `samples/`, attached as `kalamu-samples.zip`: a recording
+  made with Windows' speech synthesis, an invented newspaper page and its text (all CC0), a
+  handwritten French report of 1755 from the Bibliothèque nationale de France and a 1915 page
+  of *The Monitor* (Omaha) with its OCR text layer from the Library of Congress (both public
+  domain).
 
 ## Before the first submission
 
@@ -83,13 +85,13 @@ In this order; the [roadmap](roadmap.md#toward-the-store-release) tracks them.
 1. **Publish the privacy policy.** Turn on GitHub Pages for the repository (Settings → Pages →
    Deploy from a branch → `main`, `/docs`), so [privacy.md](privacy.md) is served at
    `https://fmadore.github.io/Kalamu/privacy`, and check the page.
-2. **Tag v1.0.0** once this is merged: the release workflow builds and attaches everything.
-3. **Live runs** from the installed package: every provider, economy mode, offline Whisper on
-   `interview.wav`, a table of contents and a correction, and the YouTube player under the
+2. **Live runs** from the installed package: every provider, economy mode, offline Whisper on
+   `interview.wav`, extraction of `dodington-1755.jpg`, a table of contents, a correction of
+   `the-monitor-1915.pdf`, and the YouTube player under the
    packaged origin (see the [roadmap](roadmap.md#next)).
-4. **Screenshots** from the packaged app (see [store-listing.md](store-listing.md#screenshots)).
-5. **Decide on a test key** for the certification team ([below](#reviewer-access-to-cloud-features)).
-6. Run the [acceptance checklist](#acceptance-checklist), then submit.
+3. **Screenshots** from the packaged app (see [store-listing.md](store-listing.md#screenshots)).
+4. **Decide on a test key** for the certification team ([below](#reviewer-access-to-cloud-features)).
+5. Run the [acceptance checklist](#acceptance-checklist), then submit.
 
 ## Reviewer access to cloud features
 
