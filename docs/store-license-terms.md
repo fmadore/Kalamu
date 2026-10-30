@@ -2,7 +2,9 @@
 
 For the Microsoft Store listing (Partner Center, Store listings, "Additional license terms"),
 where they replace Microsoft's Standard Application License Terms, and for the GitHub
-releases.
+releases. Partner Center shows plain text: paste the text between the rules without the
+Markdown marks (no `>`, `**` or link brackets). When the bundled FFmpeg changes, its release
+tag below changes with it (`scripts/ffmpeg.json`).
 
 ---
 
@@ -25,10 +27,10 @@ Kalamu does not own these components.
 
 - **FFmpeg.** This software uses code of [FFmpeg](https://ffmpeg.org/), licensed under the
   [GNU Lesser General Public License version 2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
-  or later. FFmpeg is a trademark of Fabrice Bellard. Its source code, as used in each
-  release, can be downloaded from that release's page at
-  https://github.com/fmadore/Kalamu/releases. It runs as separate programs, which you
-  may replace with your own build.
+  or later. FFmpeg is a trademark of Fabrice Bellard. The exact source code of the build
+  Kalamu ships (FFmpeg 9.0.2 and Opus 1.6.1), with its build configuration, can be downloaded
+  from https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-1. It runs as separate
+  programs, which you may replace with your own build.
 - **Opus**, built into FFmpeg: BSD 3-Clause licence, © Xiph.Org Foundation and contributors.
 - **whisper.cpp** (MIT) and **whisper-rs** (Unlicense), for offline transcription. Whisper
   models are downloaded on request from Hugging Face; they are MIT-licensed by OpenAI.
