@@ -153,19 +153,39 @@ carries no text, so the Store's title and buttons can sit over its right side.
 
 ## Screenshots
 
-From the packaged app, in the dark theme, at the display scaling it is used at. Store rules:
-`.png`, at least 1366 × 768, under 50 MB; ten at most, five to eight recommended. Keep what
-matters in the top two-thirds, where the Store draws no overlay. No logo or marketing line in
-the image: each caption below goes in the screenshot's Description field (under 200 characters),
-which is also what a screen reader announces. Use sample material whose rights allow it, and
-no real API key or personal data.
+From the installed Store package, in the dark theme. Store rules: `.png`, at least 1366 × 768,
+under 50 MB; ten at most, five to eight recommended. The first one or two are what most people
+see, in search results and at the top of the listing, so they carry what sets Kalamu apart:
+checking AI text against its source. Keep what matters in the top two-thirds, where the Store
+draws no overlay. No logo or marketing line in the image: each caption goes in the screenshot's
+Description field (under 200 characters), which is also what a screen reader announces.
 
-| Image | Caption |
-| --- | --- |
-| 1 — New job | Choose files, a model and a prompt, and see the estimated cost before anything is sent. |
-| 2 — Review of a page | Check the text beside the scanned page; corrections are kept apart from the AI output. |
-| 3 — Comparison | Compare models on the same pages, with their differences highlighted in the text. |
-| 4 — Transcript | Review a transcript beside the recording, with speakers named and every line playable. |
-| 5 — Analysis | Answers to your own fields, collated across documents and checked against the text. |
-| 6 — Jobs | Long jobs run in the background, resume after interruptions and never pay twice. |
-| 7 — Offline | Transcribe offline with Whisper: nothing leaves your PC. |
+**How to take them.** Capture the window alone (Win+Shift+S, window mode) at 1920 × 1080 with
+Windows display scaling at 100 %, or at 2560 × 1440 at 125 %, and keep one size for the whole
+set. Wait for toasts to go. Name the jobs as a researcher would ("Le Réveil du Dahomey, 1937",
+"Interviews, Ouagadougou 2024"), and keep the sidebar open on the same short list of jobs
+throughout, so the set reads as one person's work. Rename the folders first: no `C:\Users\<name>`
+path, no real key, no personal data in a file name.
+
+**Material whose rights allow it.** The sample page and recording in `samples/` (made for
+Kalamu, CC0); public-domain newspapers from the Library of Congress's
+[Chronicling America](https://chroniclingamerica.loc.gov/) (no known restrictions), or older
+issues whose rights holder agrees; a handwritten letter in the public domain on Wikimedia
+Commons; your own recording, or one made with the speaker's consent for this use. Gallica and
+most archives restrict commercial reuse: a Store listing is safest without them.
+
+| # | What to show | Caption |
+| --- | --- | --- |
+| 1 | **Comparison in the review.** A newspaper column scanned on the left; on the right its text from set-up A, with two or three words highlighted where B reads differently, and one set of readings open over the text. The strip of pages below, a few marked reviewed. | Check every page beside its scan. Where two models read differently, the words are highlighted and you choose the right reading. |
+| 2 | **New job, ready to start.** Extract text chosen, a folder of 30–40 pages added, two set-ups (Gemini and Mistral OCR), the diagram of the task, and the estimate on the right with a cost per model. | Choose your files, a task and a model, and see the estimated cost before anything is sent to the provider. |
+| 3 | **Handwriting.** A handwritten letter beside its transcription, lines kept as on the page, one word corrected (blue). | Read handwritten letters and registers line by line, kept as on the page so each line is easy to check against the original. |
+| 4 | **Transcript.** The player above the transcript, speakers given real names, timestamps, the line being spoken highlighted. | Transcribe interviews with speakers and timestamps, give the speakers their names, and click any line to hear it. |
+| 5 | **Table of contents.** A newspaper issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
+| 6 | **Analysis.** An article beside its answers: summary, people, places and tone with its reason, two set-ups' sigla on the names they disagree on, a name pointed at and found in the text. | Ask your own questions of each text: summaries, people, places and tone, every answer shown beside the document it comes from. |
+| 7 | **Search.** Ctrl F open over a long document, the list of matches by page, one gone to and marked. | Search a whole document or recording, your corrections included, and go straight to every match. |
+| 8 | **The job's page.** A finished job: cost over all its runs, the errors found in review ("1.4 % of characters…"), the files written, economy mode shown. | Follow what a job costs and how accurate it is. Interrupted jobs resume where they stopped; large ones can run at half price. |
+| 9 | **Offline.** New job with Whisper (on this PC) chosen and the estimate at $0.00, or Settings with Whisper models downloaded. | Transcribe offline with Whisper: free, no account or key, and nothing leaves your PC. |
+| 10 | **Glossary**, optional, in the light theme for contrast. | New to these tools? A glossary explains OCR, tokens, error rates and hallucinations in plain words. |
+
+Leave out an image rather than show a feature that does not run as shown: certification checks
+that the screenshots match the app.

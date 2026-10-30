@@ -9,23 +9,12 @@
 // must not need FFmpeg fetched. Fetch it first: `npm run fetch:ffmpeg -- <target>`.
 
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const arch = process.argv[2];
 if (arch !== 'x64' && arch !== 'arm64') {
 	console.error('Usage: node scripts/bundle-msix.mjs x64|arm64');
-	process.exit(1);
-}
-
-// The manifest's identity is Partner Center's, copied by hand; a package with the stand-in name
-// would be refused at ingestion, after a long build.
-const manifest = readFileSync('src-tauri/gen/windows/AppxManifest.xml.template', 'utf8');
-if (manifest.includes('PARTNER-CENTER-PACKAGE-NAME')) {
-	console.error(
-		'Copy the package name from Partner Center (Product identity → Package/Identity/Name) into ' +
-			'src-tauri/gen/windows/AppxManifest.xml.template first; see docs/microsoft-store.md.'
-	);
 	process.exit(1);
 }
 

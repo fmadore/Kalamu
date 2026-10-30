@@ -13,7 +13,7 @@
        byte for byte. See docs/microsoft-store.md, "Store identity".
        Publisher comes from bundle.config.json; Version from tauri.conf.json. -->
   <Identity
-    Name="PARTNER-CENTER-PACKAGE-NAME"
+    Name="49346FMadore.Kalamu"
     Publisher="{{PUBLISHER}}"
     Version="{{VERSION}}"
     ProcessorArchitecture="{{ARCH}}" />

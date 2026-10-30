@@ -181,16 +181,14 @@ are in [microsoft-store.md](microsoft-store.md), the package in
 [packaging-msix.md](packaging-msix.md), the listing text in [store-listing.md](store-listing.md)
 and the [privacy policy](privacy.md).
 
-Done: the name (reserved on 28 October 2026), Report a problem, MSIX packaging with FFmpeg and
+Done: the name (reserved on 28 October 2026) and the package identity in the manifest
+(`49346FMadore.Kalamu`), Report a problem, MSIX packaging with FFmpeg and
 the licences inside, the `.msixbundle` and `kalamu-samples.zip` in the release workflow,
 version 1.0.0, third-party notices generated at build time, the sample files, and the listing,
 What's new and certification notes for 1.0.0.
 
 Left, in this order:
 
-- **Package identity**: copy `Package/Identity/Name` from Partner Center into
-  [microsoft-store.md](microsoft-store.md#store-identity) and the manifest template; the MSIX
-  build refuses to run until then.
 - **Privacy policy online**: GitHub Pages from `docs/` on `main`, so it is served at
   `fmadore.github.io/Kalamu/privacy`.
 - **Tag v1.0.0**, which builds the installers, the packages and the bundle.

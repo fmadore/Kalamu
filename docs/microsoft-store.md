@@ -80,20 +80,16 @@ this repository's notes, and Microsoft renumbers them from time to time.
 
 In this order; the [roadmap](roadmap.md#toward-the-store-release) tracks them.
 
-1. **Copy the package identity** from Partner Center → Kalamu → **Product management** →
-   **Product identity** into [Store identity](#store-identity) and into
-   `src-tauri/gen/windows/AppxManifest.xml.template`, replacing `PARTNER-CENTER-PACKAGE-NAME`.
-   The MSIX build refuses to run until it is there.
-2. **Publish the privacy policy.** Turn on GitHub Pages for the repository (Settings → Pages →
+1. **Publish the privacy policy.** Turn on GitHub Pages for the repository (Settings → Pages →
    Deploy from a branch → `main`, `/docs`), so [privacy.md](privacy.md) is served at
    `https://fmadore.github.io/Kalamu/privacy`, and check the page.
-3. **Tag v1.0.0** once this is merged: the release workflow builds and attaches everything.
-4. **Live runs** from the installed package: every provider, economy mode, offline Whisper on
+2. **Tag v1.0.0** once this is merged: the release workflow builds and attaches everything.
+3. **Live runs** from the installed package: every provider, economy mode, offline Whisper on
    `interview.wav`, a table of contents and a correction, and the YouTube player under the
    packaged origin (see the [roadmap](roadmap.md#next)).
-5. **Screenshots** from the packaged app (see [store-listing.md](store-listing.md#screenshots)).
-6. **Decide on a test key** for the certification team ([below](#reviewer-access-to-cloud-features)).
-7. Run the [acceptance checklist](#acceptance-checklist), then submit.
+4. **Screenshots** from the packaged app (see [store-listing.md](store-listing.md#screenshots)).
+5. **Decide on a test key** for the certification team ([below](#reviewer-access-to-cloud-features)).
+6. Run the [acceptance checklist](#acceptance-checklist), then submit.
 
 ## Reviewer access to cloud features
 
@@ -111,20 +107,21 @@ Either way, never put a key in the listing, the screenshots or this repository.
 
 ## Store identity
 
-Kalamu is reserved; the name is still to be copied from Partner Center → product → **Product
-management** → **Product identity**. The manifest template must carry these values exactly, or
-ingestion fails.
+Copied from Partner Center → Kalamu → **Product management** → **Product identity** on
+30 October 2026. The manifest template (`src-tauri/gen/windows/AppxManifest.xml.template`)
+carries these values exactly, or ingestion would fail.
 
 | Manifest element | Value |
 | --- | --- |
-| `Package/Identity/Name` | *(to copy; the template holds `PARTNER-CENTER-PACKAGE-NAME` until then)* |
+| `Package/Identity/Name` | `49346FMadore.Kalamu` |
 | `Package/Identity/Publisher` | `CN=5D0ECC96-3998-452E-B7E9-29BE9B576F86` (the account's, shared with Live Translation) |
 | `Package/Properties/PublisherDisplayName` | `FMadore` |
 | `Package/Properties/DisplayName` | `Kalamu` |
 
 | Store value | Value |
 | --- | --- |
-| Package Family Name | *(assigned)* |
+| Package Family Name | `49346FMadore.Kalamu_6yxybgjxsxtpc` |
+| Package SID | `S-1-15-2-1774427201-507950197-2982671070-2070976297-3385481980-742066569-3207075673` |
 | Product ID | *(assigned)* |
 | Store URL | *(assigned)* |
 
