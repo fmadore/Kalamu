@@ -8,6 +8,7 @@
 mod batch;
 mod compare;
 mod contents;
+mod document;
 mod listen;
 mod output;
 mod piece;
