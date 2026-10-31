@@ -176,8 +176,14 @@ done.
   for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`. Project-wide
   entity/label reconciliation is tracked in [#48](https://github.com/fmadore/Kalamu/issues/48)
   and the research-workflow sequence below.
-- **Design decisions still open**: a collation table in Jobs, the interrupted
-  job with Resume in the side menu: [issue #1](https://github.com/fmadore/Kalamu/issues/1).
+- **Design improvements left from [issue #1](https://github.com/fmadore/Kalamu/issues/1)**,
+  closed on 28 October when the name and icon were decided (its closing comment keeps these
+  here): a collation table in Jobs (pieces × set-ups, the sigla as column heads); an
+  interrupted or paused job in the sidebar's foot with **Resume** (the sidebar already groups
+  unfinished jobs, without the button); a page with a correction checked and captured; the
+  error colour checked against the hand blue and the highlighter; and the placeholder dashes
+  and the apparatus's `]` and `:`, still in the markup, either declared typesetting or moved
+  to the translation files.
 
 ## Toward the Store release
 
