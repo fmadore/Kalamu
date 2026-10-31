@@ -57,7 +57,12 @@ audio and video, then summaries and keywords. Provider documentation was re-read
   ("zip cloaking", fixed in zip 9.0.5) is a difference between how `ZipArchive` and
   `ZipStreamReader` name an entry, harmful when the second extracts an archive to disk;
   docx-rs uses only `ZipArchive` and `ZipWriter`, and nothing is extracted, so it does not
-  reach Kalamu either. Its RustSec id joins the ignores when it is published.
+  reach Kalamu either. Its RustSec id joins the ignores when it is published. *Added
+  31 October:* four more, fixed in zip 9 (GHSA-q7v9-x93c-xqv3 and GHSA-hjqx-j4rw-g7xv, on
+  symlinks in `ZipArchive::extract`; GHSA-9hj8-73fh-9963, the `legacy-zip` Shrink decoder;
+  GHSA-8hxf-qr8p-62x4, AES entries under `aes-crypto`). docx-rs builds zip with only
+  `deflate` and nothing extracts, so none reaches Kalamu; their Dependabot alerts are dismissed
+  as vulnerable code not used, and their RustSec ids join the ignores when published.
 
 ## Checkpoint review
 
