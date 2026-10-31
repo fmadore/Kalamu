@@ -200,6 +200,19 @@ fn whisper_error(e: impl std::fmt::Display) -> ProviderError {
     ProviderError::Other(format!("Whisper failed: {e}"))
 }
 
+/// What provenance records of the voice-activity model: whisper.cpp's `vad` switch, and which
+/// model it used.
+fn voice_detection(on: bool) -> Vec<RequestSetting> {
+    let mut settings = vec![RequestSetting::new("vad", on)];
+    if on {
+        settings.push(RequestSetting::new(
+            "vad_model",
+            models::VAD.file.trim_end_matches(".bin"),
+        ));
+    }
+    settings
+}
+
 struct Transcript {
     segments: Vec<Segment>,
     detected: Option<String>,
@@ -305,6 +318,17 @@ impl Provider for Whisper {
             RequestSetting::new("no_context", true),
             RequestSetting::new("window_seconds", WINDOW / SAMPLE_RATE),
         ]
+    }
+
+    /// The fixed settings, and whether whisper.cpp skips the silences with the voice-activity
+    /// model, which it does when that model is downloaded: decided on this PC, so a pipeline's
+    /// record leaves it out and each result's provenance says it.
+    fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
+        let mut settings = self.request_settings(request.task, request.model);
+        if request.task == Task::AudioTranscription {
+            settings.extend(voice_detection(self.inner.models.vad_path().is_some()));
+        }
+        settings
     }
 
     async fn process(
@@ -456,6 +480,54 @@ mod tests {
                 .provider(&ProviderId::new(PROVIDER_ID))
                 .is_some_and(|p| p.local)
         );
+    }
+
+    /// Provenance says whether the silences were skipped, which depends on the voice-activity
+    /// model being downloaded.
+    #[test]
+    fn the_settings_sent_say_whether_voice_detection_was_on() {
+        let dir = tempfile::tempdir().unwrap();
+        let whisper = Whisper::new(ModelManager::new(dir.path().to_path_buf()));
+        let input = kalamu_core::PreparedInput {
+            piece: kalamu_core::PieceRef::Whole,
+            mime: PCM_16K_MONO.into(),
+            bytes: Vec::new(),
+            file_name: "interview.wav".into(),
+        };
+        let (languages, options, stop) = (
+            LanguageChoice::Auto,
+            kalamu_core::SetupOptions::default(),
+            StopSignal::default(),
+        );
+        let sent = |whisper: &Whisper| {
+            whisper.sent_settings(
+                &ProcessRequest {
+                    task: Task::AudioTranscription,
+                    model: "whisper-large-v3-turbo",
+                    prompt: "",
+                    user_prompt: "",
+                    input: &input,
+                    languages: &languages,
+                    options: &options,
+                    analysis: None,
+                    stop: &stop,
+                },
+                false,
+            )
+        };
+        let off = sent(&whisper);
+        assert!(off.contains(&RequestSetting::new("beam_size", BEAM_SIZE)));
+        assert!(off.contains(&RequestSetting::new("vad", false)));
+        assert!(!off.iter().any(|s| s.name == "vad_model"));
+
+        let vad = dir.path().join(models::VAD.file);
+        std::fs::write(&vad, vec![0u8; models::VAD.bytes as usize]).unwrap();
+        let on = sent(&whisper);
+        assert!(on.contains(&RequestSetting::new("vad", true)));
+        assert!(on.contains(&RequestSetting::new("vad_model", "ggml-silero-v5.1.2")));
+        // A pipeline's record, the same on every PC, leaves it out.
+        let fixed = whisper.request_settings(Task::AudioTranscription, "whisper-large-v3-turbo");
+        assert!(!fixed.iter().any(|s| s.name.starts_with("vad")));
     }
 
     #[test]

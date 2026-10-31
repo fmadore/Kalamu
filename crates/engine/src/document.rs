@@ -3,11 +3,13 @@
 
 use std::collections::BTreeSet;
 
-use kalamu_core::provenance::{GeneratorInfo, ProvenanceMerge, ProvenancePrompt, ProvenanceSource};
-use kalamu_core::speakers::{rename_segments, rename_text};
+use kalamu_core::provenance::{
+    GeneratorInfo, ProvenanceMerge, ProvenancePrompt, ProvenanceRefused, ProvenanceSource,
+};
+use kalamu_core::speakers::{rename_segments, rename_text, renamed_labels};
 use kalamu_core::{
-    CacheKey, ExportDocument, ExportPart, InputKind, Job, PieceRef, PieceStatus, Provenance,
-    RequestSetting, Segment, SetupId, SourceId, Task, Timestamp, Usage,
+    CacheKey, ExportDocument, ExportPart, InputKind, Job, PieceRef, PieceState, PieceStatus,
+    Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, Task, Timestamp, Usage,
 };
 
 use crate::output::preprocessing;
@@ -53,6 +55,9 @@ impl Engine {
         let mut parts = Vec::new();
         let mut usage = Usage::default();
         let mut cost: Option<f64> = None;
+        // A table of contents' second step, as a share of both.
+        let mut merge_usage = Usage::default();
+        let mut merge_cost: Option<f64> = None;
         let mut versions = BTreeSet::new();
         let mut merge_versions = BTreeSet::new();
         let (mut request, mut merge_request) = (Vec::new(), Vec::new());
@@ -86,14 +91,16 @@ impl Engine {
             let Some(result) = self.store.cached_result(&CacheKey(key.clone()))? else {
                 continue;
             };
-            usage.add(&result.output.usage);
-            first_read = Some(first_read.map_or(result.created_at, |t| t.min(result.created_at)));
-            if let Some(c) = result.cost_usd {
-                cost = Some(cost.unwrap_or(0.0) + c);
-            }
             // A table of contents exports its combined entries; its pages count in the usage,
             // the cost and the model versions, as the reading they are.
             let combined = job.task == Task::Contents && state.piece == PieceRef::Whole;
+            usage.add(&result.output.usage);
+            add_cost(&mut cost, result.cost_usd);
+            if combined {
+                merge_usage.add(&result.output.usage);
+                add_cost(&mut merge_cost, result.cost_usd);
+            }
+            first_read = Some(first_read.map_or(result.created_at, |t| t.min(result.created_at)));
             if result.output.truncated {
                 truncated.push(state.index + 1);
             }
@@ -185,10 +192,7 @@ impl Engine {
             _ => "cloud",
         };
         let online = source.kind == InputKind::YouTube;
-        let mut preprocessing = preprocessing(&source);
-        if let Some(n) = job.settings.sample_pages {
-            preprocessing.push(format!("sample_first_{n}_pages"));
-        }
+        let preprocessing = done_to(job, &source, &states);
         let provenance = Provenance {
             schema_version: 1,
             generator: GeneratorInfo {
@@ -217,6 +221,8 @@ impl Engine {
                 model_versions: merge_versions.into_iter().collect(),
                 request: merge_request,
                 prompt: ProvenancePrompt::from_snapshot(&m.prompt),
+                usage: merge_usage,
+                cost_usd: merge_cost,
             }),
             languages: job.settings.languages.clone(),
             detected_languages: detected.into_iter().collect(),
@@ -227,8 +233,10 @@ impl Engine {
             truncated,
             failed,
             preprocessing,
+            renamed_speakers: renamed_labels(&speaker_names),
             usage,
             cost_usd: cost,
+            refused: self.refused(job, setup_id, source_id)?,
         };
         Ok(ExportDocument {
             task: job.task,
@@ -238,6 +246,66 @@ impl Engine {
             provenance,
             options: job.output.options.clone(),
         })
+    }
+}
+
+impl Engine {
+    /// The answers billed for this document but refused for breaking its fields.
+    fn refused(
+        &self,
+        job: &Job,
+        setup_id: SetupId,
+        source_id: SourceId,
+    ) -> Result<Option<ProvenanceRefused>, EngineError> {
+        let mut refused: Option<ProvenanceRefused> = None;
+        for charge in self.store.charges(job.id)? {
+            if charge.setup_id != setup_id || charge.source_id != source_id {
+                continue;
+            }
+            let entry = refused.get_or_insert_with(|| ProvenanceRefused {
+                answers: 0,
+                usage: Usage::default(),
+                cost_usd: None,
+            });
+            entry.answers += 1;
+            entry.usage.add(&charge.usage);
+            add_cost(&mut entry.cost_usd, charge.cost_usd);
+        }
+        Ok(refused)
+    }
+}
+
+/// The fixes provenance lists: of those the source's settings ask for (which its cache key
+/// carries all the same), only what was done to it. A spread is split only where one was
+/// found, the volume evened out only in a recording, and a sample taken only of a document cut
+/// into more pages than it keeps.
+fn done_to(job: &Job, source: &SourceFile, states: &[PieceState]) -> Vec<String> {
+    let mut done: Vec<String> = preprocessing(source)
+        .into_iter()
+        .filter(|step| match step.as_str() {
+            "split_spreads" => states
+                .iter()
+                .any(|s| matches!(s.piece, PieceRef::Page { half: Some(_), .. })),
+            "even_out_volume" => matches!(source.kind, InputKind::Audio | InputKind::Video),
+            _ => true,
+        })
+        .collect();
+    let cut = states
+        .iter()
+        .any(|s| matches!(s.piece, PieceRef::Page { .. } | PieceRef::Passage { .. }));
+    if let Some(n) = job.settings.sample_pages
+        && cut
+        && source.page_count.is_none_or(|pages| pages > n)
+    {
+        done.push(format!("sample_first_{n}_pages"));
+    }
+    done
+}
+
+/// Adds a cost to a total that stays unknown until one is known.
+fn add_cost(total: &mut Option<f64>, cost: Option<f64>) {
+    if let Some(c) = cost {
+        *total = Some(total.unwrap_or(0.0) + c);
     }
 }
 

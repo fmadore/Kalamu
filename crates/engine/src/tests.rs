@@ -382,6 +382,73 @@ async fn answers_billed_but_refused_count_in_the_cost() {
             .cost_usd
             .is_some_and(|c| (c - 4.0 * call).abs() < 1e-12)
     );
+
+    // Provenance lists the refused answer apart from the results kept.
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("letters.provenance.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(provenance["refused"]["answers"], 1);
+    assert_eq!(provenance["refused"]["usage"]["input_tokens"], 1000);
+    assert!(
+        provenance["cost_usd"]
+            .as_f64()
+            .is_some_and(|c| (c - 3.0 * call).abs() < 1e-12)
+    );
+}
+
+/// Provenance lists what was done to a source, not every fix its settings allowed: a spread
+/// split where one was found, no sample of a document shorter than it.
+#[tokio::test]
+async fn provenance_lists_only_the_fixes_that_were_made() {
+    let f = fixture();
+    let write = |name: &str, pages: &[(f32, f32)]| {
+        let path = f.dir.path().join(name);
+        std::fs::write(&path, kalamu_media::sample_pdf(pages, false))
+            .unwrap_or_else(|e| panic!("{e}"));
+        let mut source = kalamu_media::inspect(&path, None).unwrap_or_else(|e| panic!("{e}"));
+        source.split_spreads = true;
+        source
+    };
+    let flat = write("flat.pdf", &[(595.0, 842.0); 2]);
+    let open = write("open.pdf", &[(595.0, 842.0), (1190.0, 842.0)]);
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Spreads".into(),
+            task: Task::TextExtraction,
+            sources: vec![flat, open],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: None,
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: kalamu_core::JobSettings {
+                sample_pages: Some(5),
+                ..Default::default()
+            },
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let read = |name: &str| -> serde_json::Value {
+        serde_json::from_slice(&std::fs::read(f.dir.path().join(name)).unwrap_or_default())
+            .unwrap_or_default()
+    };
+    assert!(
+        read("flat.provenance.json").get("preprocessing").is_none(),
+        "no spread to split, no page left out of the sample"
+    );
+    assert_eq!(
+        read("open.provenance.json")["preprocessing"],
+        serde_json::json!(["split_spreads"])
+    );
 }
 
 #[tokio::test]
@@ -878,6 +945,19 @@ async fn speaker_names_rename_the_review_and_the_files_but_not_the_output() {
         .unwrap_or_else(|e| panic!("{e}"));
     let txt = std::fs::read_to_string(f.dir.path().join("entretien.txt")).unwrap_or_default();
     assert!(txt.contains("Imam Traoré: page 1"), "{txt}");
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("entretien.provenance.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(
+        provenance["renamed_speakers"],
+        serde_json::json!(["Speaker 1"]),
+        "provenance says which labels were renamed"
+    );
+    assert!(
+        !provenance.to_string().contains("Traoré"),
+        "but not the names of the people recorded"
+    );
     let views = f
         .engine
         .source_pieces(job.id, source.id)

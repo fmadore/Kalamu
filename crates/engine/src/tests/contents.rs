@@ -322,6 +322,10 @@ async fn a_large_model_reads_the_pages_and_another_providers_model_combines_them
     assert_eq!(provenance["merge"]["provider"], "small");
     assert_eq!(provenance["merge"]["model"], "tiny");
     assert_eq!(provenance["merge"]["model_versions"][0], "tiny-001");
+    // What each step consumed: four calls of 500 tokens in all, one of them combining.
+    assert_eq!(provenance["usage"]["input_tokens"], 2000);
+    assert_eq!(provenance["merge"]["usage"]["input_tokens"], 500);
+    assert_eq!(provenance["merge"]["usage"]["output_tokens"], 50);
     assert_eq!(provenance["engine"], "cloud");
     // Each step's settings, as recorded with its results.
     assert_eq!(

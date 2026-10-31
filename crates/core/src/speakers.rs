@@ -70,6 +70,11 @@ fn effective(names: &BTreeMap<String, String>) -> BTreeMap<&str, &str> {
         .collect()
 }
 
+/// The labels a name really replaces, in order, as provenance lists them.
+pub fn renamed_labels(names: &BTreeMap<String, String>) -> Vec<String> {
+    effective(names).into_keys().map(str::to_string).collect()
+}
+
 /// The text with each renamed label replaced where it opens a line.
 pub fn rename_text(text: &str, names: &BTreeMap<String, String>) -> String {
     let names = effective(names);
