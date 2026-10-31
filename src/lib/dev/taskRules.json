@@ -68,7 +68,8 @@
         "model": "mistral-ocr-4-1"
       }
     ],
-    "merge_models": []
+    "merge_models": [],
+    "yields_text": true
   },
   {
     "task": "text_correction",
@@ -158,7 +159,8 @@
         "model": "deepseek-v4-1-flash-1017"
       }
     ],
-    "merge_models": []
+    "merge_models": [],
+    "yields_text": true
   },
   {
     "task": "analysis",
@@ -249,7 +251,8 @@
         "model": "deepseek-v4-1-flash-1017"
       }
     ],
-    "merge_models": []
+    "merge_models": [],
+    "yields_text": false
   },
   {
     "task": "contents",
@@ -404,7 +407,8 @@
         "provider": "mistral",
         "model": "deepseek-v4-1-flash-1017"
       }
-    ]
+    ],
+    "yields_text": false
   },
   {
     "task": "audio_transcription",
@@ -469,6 +473,7 @@
         "model": "whisper-base"
       }
     ],
-    "merge_models": []
+    "merge_models": [],
+    "yields_text": true
   }
 ]

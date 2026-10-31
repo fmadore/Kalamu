@@ -13,6 +13,7 @@ import type { DocumentDetail } from './bindings/DocumentDetail.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Pipeline } from './bindings/Pipeline.js';
+import type { DerivedState } from './bindings/DerivedState.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { EstimateRow } from './bindings/EstimateRow.js';
@@ -98,6 +99,8 @@ export const api = {
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
 	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),
+	snapshotJob: (id: string, setup: string) => invoke<SourceFile[]>('snapshot_job', { id, setup }),
+	derivedState: (id: string) => invoke<DerivedState[]>('derived_state', { id }),
 	jobOutputs: (id: string) => invoke<string[]>('job_outputs', { id }),
 	openOutput: (id: string, path: string) => invoke<void>('open_output', { id, path }),
 	sourcePieces: (jobId: string, sourceId: string) =>

@@ -65,7 +65,8 @@ export function rulesFor(rules: Rules, task: Task): TaskRules {
 			formats: [],
 			answers_in_language: false,
 			models: [],
-			merge_models: []
+			merge_models: [],
+			yields_text: false
 		}
 	);
 }

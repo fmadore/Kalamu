@@ -47,6 +47,7 @@ impl Fixture {
             split_spreads: false,
             even_out_volume: false,
             title: None,
+            derived_from: None,
         }
     }
 
@@ -307,6 +308,35 @@ fn a_job_started_in_the_project_is_linked_to_its_documents() {
 }
 
 #[test]
+fn an_analysis_of_frozen_text_joins_the_document_it_was_read_from() {
+    let f = fixture();
+    let p = f.projects.create("Letters", "").unwrap();
+    let docs = f
+        .projects
+        .add_documents(p.id, vec![f.file("a.pdf", "a")], None)
+        .unwrap();
+    let source = f.store.documents(p.id).unwrap()[0].source.clone();
+    let extraction = f.job(Task::TextExtraction, vec![source.clone()]);
+    f.projects.link_job(p.id, extraction.id, None).unwrap();
+    // The analysis read a text frozen in the app's data folder, not the scan.
+    let mut frozen = f.file("snapshot.txt", "frozen");
+    frozen.kind = InputKind::Text;
+    frozen.derived_from = Some(kalamu_core::DerivedFrom {
+        snapshot_id: "s1".into(),
+        job_id: extraction.id,
+        setup_id: extraction.setups[0].id,
+        source_id: source.id,
+        original_path: source.path.clone(),
+    });
+    let analysis = f.job(Task::Analysis, vec![frozen]);
+    let linked = f.projects.link_job(p.id, analysis.id, None).unwrap();
+    assert_eq!(linked, docs, "the same document, not a new one");
+    let detail = f.projects.document(p.id, docs[0]).unwrap();
+    let tasks: Vec<Task> = detail.results.iter().map(|r| r.task).collect();
+    assert!(tasks.contains(&Task::Analysis) && tasks.contains(&Task::TextExtraction));
+}
+
+#[test]
 fn a_preferred_result_is_the_researchers_and_survives_a_newer_run() {
     let f = fixture();
     let p = f.projects.create("Letters", "").unwrap();
@@ -445,6 +475,7 @@ fn a_project_and_its_organisation_survive_a_restart() {
         split_spreads: false,
         even_out_volume: false,
         title: None,
+        derived_from: None,
     };
     let (project, collection) = {
         let store = Arc::new(SqliteStore::open(&path).unwrap());

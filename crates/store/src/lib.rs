@@ -101,6 +101,7 @@ CREATE TABLE charges (
 CREATE INDEX charges_by_job ON charges(job_id);
 "#,
     projects::MIGRATION,
+    snapshots::MIGRATION,
 ];
 
 pub struct SqliteStore {
@@ -699,9 +700,18 @@ impl JobStore for SqliteStore {
         rows.map(|row| serde_json::from_str(&row.map_err(db)?).map_err(corrupt))
             .collect()
     }
+
+    fn put_snapshot(&self, snapshot: &kalamu_core::Snapshot) -> Result<(), StoreError> {
+        snapshots::put(self, snapshot)
+    }
+
+    fn snapshot(&self, id: &str) -> Result<kalamu_core::Snapshot, StoreError> {
+        snapshots::get(self, id)
+    }
 }
 
 mod projects;
+mod snapshots;
 
 #[cfg(test)]
 mod tests;

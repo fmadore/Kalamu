@@ -72,12 +72,16 @@
 	{:else if files.length > 0}
 		<ul class="files">
 			{#each files as file, i (file.path)}
-				{@const fileName = file.path.split(/[\\/]/).pop()}
+				<!-- Frozen text is named after the document it was read from, not its stored copy. -->
+				{@const fileName = file.source?.derived_from
+					? file.source.file_name
+					: file.path.split(/[\\/]/).pop()}
 				{@const warnings = shownWarnings(file)}
 				<li class:warned={warnings.length > 0} class:failed={!!file.error}>
 					<div class="file">
 						<span class="file-name mono">{fileName}</span>
 						<span class="meta mono">
+							{#if file.source?.derived_from}{m.newJob.frozenText}{/if}
 							{#if file.source?.page_count}{m.newJob.pages(file.source.page_count)}{/if}
 							{#if file.source?.duration_ms}{duration(Number(file.source.duration_ms), m)}{/if}
 						</span>

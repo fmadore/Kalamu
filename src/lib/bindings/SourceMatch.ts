@@ -12,8 +12,9 @@ export type SourceMatch = { source_id: SourceId, file_name: string, path: string
  */
 linked: DocumentId | null, 
 /**
- * The document it is taken for unless the researcher says otherwise: the same file at the
- * same place (or the very source a document was added with). `None`: a new document.
+ * The document it is taken for unless the researcher says otherwise: the very source a
+ * document was added with, the document of the result its text was frozen from, or the
+ * same file at the same place. `None`: a new document.
  */
 proposed: DocumentId | null, 
 /**

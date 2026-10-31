@@ -73,4 +73,8 @@ pub trait JobStore: Send + Sync {
     /// Inserts or replaces a batch, by its own id.
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;
     fn batches(&self, job: JobId) -> Result<Vec<BatchRecord>, StoreError>;
+
+    /// Keeps a snapshot of corrected text; one already kept under its id is left as it is.
+    fn put_snapshot(&self, snapshot: &crate::Snapshot) -> Result<(), StoreError>;
+    fn snapshot(&self, id: &str) -> Result<crate::Snapshot, StoreError>;
 }

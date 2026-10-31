@@ -27,4 +27,8 @@ models: Array<ModelRef>,
 /**
  * For a table of contents, the models that can combine its pages; empty otherwise.
  */
-merge_models: Array<ModelRef>, };
+merge_models: Array<ModelRef>, 
+/**
+ * Its results are a text a later analysis can read, frozen as corrected.
+ */
+yields_text: boolean, };

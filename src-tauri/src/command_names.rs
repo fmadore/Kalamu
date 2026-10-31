@@ -50,6 +50,8 @@ pub const COMMANDS: &[&str] = &[
     "get_job",
     "job_pieces",
     "job_text_outputs",
+    "snapshot_job",
+    "derived_state",
     "job_outputs",
     "open_output",
     "rename_job",

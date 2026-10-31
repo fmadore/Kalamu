@@ -128,6 +128,32 @@ pub struct ProvenanceSource {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub read_at: Option<Timestamp>,
+    /// For text frozen from an earlier result: which result, and how much of it the researcher
+    /// had checked when it was frozen. `sha256` above is the frozen text's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub derived_from: Option<ProvenanceDerived>,
+}
+
+/// The earlier result a source's text was frozen from.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceDerived {
+    pub snapshot_id: String,
+    pub job_id: crate::JobId,
+    pub setup_id: crate::SetupId,
+    pub source_id: crate::SourceId,
+    pub task: Task,
+    /// The original the earlier result was read from.
+    pub original_path: String,
+    pub frozen_at: Timestamp,
+    /// Pieces in the frozen text, and how many the researcher had reviewed or corrected.
+    pub pieces: u32,
+    pub reviewed: u32,
+    pub corrected: u32,
+    /// Pieces left out, failed or not yet read (numbered from 1).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub missing: Vec<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

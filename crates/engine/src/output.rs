@@ -181,8 +181,14 @@ fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, S
 
 /// The folder a source's results go to, and the name they start from: the source's own.
 fn place(job: &Job, source: &SourceFile) -> (PathBuf, String) {
+    // Text frozen from an earlier result is kept in the app's data folder: its results go
+    // beside the original it was read from.
+    let beside = source
+        .derived_from
+        .as_ref()
+        .map_or(source.path.as_str(), |d| d.original_path.as_str());
     let dir = match &job.output.destination {
-        OutputDestination::BesideSources => Path::new(&source.path)
+        OutputDestination::BesideSources => Path::new(beside)
             .parent()
             .map(Path::to_path_buf)
             .unwrap_or_default(),
@@ -227,7 +233,7 @@ pub(crate) fn preprocessing(source: &SourceFile) -> Vec<String> {
 }
 
 /// Write to a temporary file, then rename, so a crash never leaves half a file.
-fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), EngineError> {
+pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), EngineError> {
     let tmp = path.with_extension(format!(
         "{}.pending",
         path.extension().and_then(|e| e.to_str()).unwrap_or("out")

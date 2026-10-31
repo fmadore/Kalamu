@@ -50,8 +50,15 @@ impl Engine {
         if new.sources.is_empty() || new.setups.is_empty() {
             return Err(EngineError::EmptyJob);
         }
+        // A video, or text frozen from a video's transcript, has no folder to write beside.
+        let online = |s: &SourceFile| {
+            s.kind == InputKind::YouTube
+                || s.derived_from
+                    .as_ref()
+                    .is_some_and(|d| d.original_path.starts_with("http"))
+        };
         if new.output.destination == OutputDestination::BesideSources
-            && new.sources.iter().any(|s| s.kind == InputKind::YouTube)
+            && new.sources.iter().any(online)
         {
             return Err(EngineError::LinkNeedsFolder);
         }

@@ -21,8 +21,9 @@ pub struct SourceMatch {
     pub path: String,
     /// Already tied to this document of the project.
     pub linked: Option<DocumentId>,
-    /// The document it is taken for unless the researcher says otherwise: the same file at the
-    /// same place (or the very source a document was added with). `None`: a new document.
+    /// The document it is taken for unless the researcher says otherwise: the very source a
+    /// document was added with, the document of the result its text was frozen from, or the
+    /// same file at the same place. `None`: a new document.
     pub proposed: Option<DocumentId>,
     /// Other documents with the same content, perhaps another copy of the same item: offered,
     /// never chosen for the researcher.
@@ -37,14 +38,30 @@ pub struct AttachChoice {
     pub document: Option<DocumentId>,
 }
 
-fn proposed<'a>(
-    documents: &'a [Document],
+/// The document a source is: the one added with this very source, the one already tied to the
+/// result it was frozen from, or the same file at the same place.
+fn proposed(
+    documents: &[Document],
+    links: &[DocumentLink],
     source: &kalamu_core::SourceFile,
-) -> Option<&'a Document> {
+) -> Option<DocumentId> {
     documents
         .iter()
         .find(|d| d.source.id == source.id)
-        .or_else(|| documents.iter().find(|d| same_file(&d.source, source)))
+        .map(|d| d.id)
+        .or_else(|| {
+            let from = source.derived_from.as_ref()?;
+            links
+                .iter()
+                .find(|l| l.job_id == from.job_id && l.source_id == from.source_id)
+                .map(|l| l.document_id)
+        })
+        .or_else(|| {
+            documents
+                .iter()
+                .find(|d| same_file(&d.source, source))
+                .map(|d| d.id)
+        })
 }
 
 impl Projects {
@@ -62,7 +79,7 @@ impl Projects {
             .sources
             .iter()
             .map(|source| {
-                let proposed = proposed(&documents, source).map(|d| d.id);
+                let proposed = proposed(&documents, &links, source);
                 SourceMatch {
                     source_id: source.id,
                     file_name: source.file_name.clone(),

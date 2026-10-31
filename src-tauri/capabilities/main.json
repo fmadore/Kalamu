@@ -58,6 +58,8 @@
     "allow-get-job",
     "allow-job-pieces",
     "allow-job-text-outputs",
+    "allow-snapshot-job",
+    "allow-derived-state",
     "allow-job-outputs",
     "allow-open-output",
     "allow-rename-job",

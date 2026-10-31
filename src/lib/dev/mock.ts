@@ -775,6 +775,25 @@ export function installMock(): void {
 			}
 			case 'open_output':
 				return null;
+			// The corrected text of the sample extraction, frozen for an analysis.
+			case 'snapshot_job':
+				return [
+					{
+						...article,
+						id: '00000000-0000-0000-0000-0000000000f9',
+						path: 'C:\\Users\\you\\AppData\\Local\\io.github.fmadore.kalamu\\snapshots\\ab.txt',
+						file_name: 'bulletin-1957-05.txt',
+						derived_from: {
+							snapshot_id: 'snapshot-1',
+							job_id: a.id,
+							setup_id: a.setup,
+							source_id: source.id,
+							original_path: source.path
+						}
+					}
+				];
+			case 'derived_state':
+				return [];
 			case 'job_pieces':
 				return pieces.map((p) => ({
 					...p,

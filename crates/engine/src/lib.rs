@@ -18,6 +18,7 @@ mod review;
 mod rules;
 mod run;
 mod setup;
+mod snapshot;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -43,6 +44,7 @@ pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
 pub use setup::{NewJob, SetupRequest};
+pub use snapshot::{DerivedState, Freshness, yields_text};
 
 /// Where the engine gets API keys; the app reads them from Windows Credential Manager.
 pub trait KeySource: Send + Sync {
@@ -65,6 +67,8 @@ pub struct EngineConfig {
     pub batch_poll: Duration,
     /// Where pieces converted for listening in the review view are kept.
     pub listening_cache: PathBuf,
+    /// Where frozen copies of corrected text are kept for later jobs to read.
+    pub snapshots: PathBuf,
 }
 
 impl Default for EngineConfig {
@@ -77,6 +81,7 @@ impl Default for EngineConfig {
             ffmpeg: None,
             batch_poll: Duration::from_secs(60),
             listening_cache: std::env::temp_dir().join("kalamu-listening"),
+            snapshots: std::env::temp_dir().join("kalamu-snapshots"),
         }
     }
 }
@@ -113,6 +118,12 @@ pub enum EngineError {
     LinkNeedsFolder,
     #[error("Could not write the results: {0}")]
     Output(String),
+    /// A table of contents or an analysis has no text for a later task to read.
+    #[error("This task's results are not a text to analyse")]
+    NotText,
+    /// Nothing has been read yet under this set-up.
+    #[error("Nothing has been read yet")]
+    NothingRead,
     #[error("Could not keep the piece converted to listen to: {0}")]
     ListeningCopy(String),
 }
@@ -137,6 +148,8 @@ impl EngineError {
             Self::NotYouTube(_) => "source.not_youtube",
             Self::LinkNeedsFolder => "job.link_needs_folder",
             Self::Output(_) => "output.write",
+            Self::NotText => "job.not_text",
+            Self::NothingRead => "job.nothing_read",
             Self::ListeningCopy(_) => "media.read",
         }
     }

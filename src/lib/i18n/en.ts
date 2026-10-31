@@ -204,6 +204,7 @@ export const en = {
 		minutes: (min: number) => `${min} min`,
 		seconds: (s: number) => `${s} s`,
 		evenOut: 'Even out the volume',
+		frozenText: 'corrected text, as it is now',
 		splitSpreads: 'Split double pages',
 		languageTitle: 'Language',
 		languageAuto: 'Detect automatically',
@@ -448,6 +449,15 @@ export const en = {
 		deleteConfirm: 'Delete this job? Files already written stay on disk.',
 		review: 'Review',
 		summarise: 'Analyse the results',
+		analyseText: 'Analyse this text',
+		analyseTextHint:
+			'Analyses the text as you corrected it, without reading the files again. A later correction does not change what the analysis read.',
+		analyseSetup: 'Text from',
+		derivedChanged:
+			'The text this analysis read has been corrected since. Its answers stay as they were; analyse the text again to include the corrections.',
+		derivedAgain: 'Analyse the corrected text',
+		derivedGone:
+			'The job this text came from was deleted. The text it read is kept, and its answers stay as they are.',
 		noTextOutputs:
 			'This job wrote no text file to analyse. Add Text (.txt) to its formats and export again.',
 		openFolder: 'Show in folder',
@@ -902,6 +912,9 @@ export const en = {
 		'project.elsewhere': 'This belongs to another project, or no longer exists.',
 		'project.no_name': 'Give it a name.',
 		'job.not_found': 'This job no longer exists.',
+		'job.not_text': 'Only extracted text, transcripts and corrected text can be analysed this way.',
+		'job.nothing_read':
+			'Nothing has been read yet to analyse. Run the job, or wait for its first pages.',
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',

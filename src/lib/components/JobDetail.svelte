@@ -5,10 +5,12 @@
 	import JobFiles from './JobFiles.svelte';
 	import JobOutputs from './JobOutputs.svelte';
 	import type { Job } from '#lib/bindings/Job.js';
+	import type { DerivedState } from '#lib/bindings/DerivedState.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
 	import type { PieceState } from '#lib/bindings/PieceState.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
+	import { rulesFor } from '#lib/newJob.js';
 	import { scoredTask } from '#lib/scores.js';
 	import { api, ask } from '#lib/tauri.js';
 	import { app, go, liveJob, refreshJobs } from '#lib/state.svelte.js';
@@ -25,6 +27,10 @@
 	let draftName = $state<string | null>(null);
 	/** Error rates against the pages reviewed so far, for tasks that produce text. */
 	let scores = $state<JobScores | null>(null);
+	/** For an analysis of frozen text, whether that text was corrected since. */
+	let sourcesFrom = $state<DerivedState[]>([]);
+	/** The set-up whose text "Analyse this text" freezes, in a comparison. */
+	let textSetup = $state('');
 
 	const summary = $derived(app.jobs.find((j) => j.id === jobId));
 	const live = $derived(app.live[jobId]);
@@ -47,6 +53,10 @@
 		// Scores are an extra: the page stands without them.
 		if (job && scoredTask(job.task)) {
 			scores = await api.jobScores(jobId).catch(() => null);
+		}
+		if (job) textSetup = job.setups[0]?.id ?? '';
+		if (job?.sources.some((s) => s.derived_from)) {
+			sourcesFrom = await api.derivedState(jobId).catch(() => []);
 		}
 	}
 
@@ -119,7 +129,18 @@
 		go({ name: 'jobs' });
 	}
 
-	/** A new analysis job over the text this job wrote. */
+	/** A new analysis of the text as corrected, frozen so later corrections do not change it. */
+	async function analyseText(fromJob: string, setup: string) {
+		error = null;
+		try {
+			const sources = await api.snapshotJob(fromJob, setup);
+			go({ name: 'new', task: 'analysis', sources });
+		} catch (e) {
+			error = describeError(e, m);
+		}
+	}
+
+	/** A new analysis job over the text files this job wrote (a table of contents). */
 	async function summarise() {
 		error = null;
 		try {
@@ -185,7 +206,20 @@
 						>{m.jobs.retry}</button
 					>
 				{/if}
-				{#if summary.status === 'completed' && summary.task !== 'analysis'}
+				{#if job && rulesFor(app.rules, job.task).yields_text && summary.pieces_finished > 0}
+					{#if job.setups.length > 1}
+						<select bind:value={textSetup} aria-label={m.jobs.analyseSetup}>
+							{#each job.setups as s (s.id)}
+								<option value={s.id}>{m.jobs.analyseSetup}: {s.label}</option>
+							{/each}
+						</select>
+					{/if}
+					<button
+						class="btn"
+						title={m.jobs.analyseTextHint}
+						onclick={() => analyseText(jobId, textSetup)}>{m.jobs.analyseText}</button
+					>
+				{:else if summary.status === 'completed' && summary.task === 'contents'}
 					<button class="btn" onclick={summarise}>{m.jobs.summarise}</button>
 				{/if}
 				{#if summary.status !== 'completed'}
@@ -196,6 +230,17 @@
 			{/if}
 		</div>
 	</header>
+
+	{#each sourcesFrom.filter((d) => d.freshness !== 'current') as d (d.source_id)}
+		<p class="banner" role="status">
+			{d.freshness === 'changed' ? m.jobs.derivedChanged : m.jobs.derivedGone}
+			{#if d.freshness === 'changed'}
+				<button class="btn sm" onclick={() => analyseText(d.from.job_id, d.from.setup_id)}
+					>{m.jobs.derivedAgain}</button
+				>
+			{/if}
+		</p>
+	{/each}
 
 	{#if held > 0 && running && dueBy > 0}
 		<p class="banner calm" role="status">{m.jobs.waitingNotice(held, formatDateTime(dueBy))}</p>

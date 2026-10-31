@@ -18,6 +18,7 @@
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
+	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, listNames, messages } from '#lib/i18n/index.js';
@@ -51,8 +52,11 @@
 		type FromProject
 	} from '#lib/state.svelte.js';
 
-	let { opening = {} }: { opening?: { task?: Task; paths?: string[]; project?: FromProject } } =
-		$props();
+	let {
+		opening = {}
+	}: {
+		opening?: { task?: Task; paths?: string[]; sources?: SourceFile[]; project?: FromProject };
+	} = $props();
 
 	const m = messages();
 
@@ -345,9 +349,20 @@
 
 	onMount(() => {
 		// Opened from a finished job's "Summarise" button: its results are the files.
-		void loadTask(opening.task ?? mode).then(() =>
-			opening.paths ? addPaths(opening.paths) : undefined
-		);
+		void loadTask(opening.task ?? mode).then(() => {
+			// Text frozen from a job's corrected results: already read, nothing to inspect.
+			if (opening.sources) {
+				files = opening.sources.map((source) => ({
+					path: source.path,
+					source,
+					warnings: [],
+					error: null,
+					pieces: null
+				}));
+				if (!name) name = opening.sources[0]?.file_name.replace(/\.txt$/, '') ?? '';
+			}
+			return opening.paths ? addPaths(opening.paths) : undefined;
+		});
 		api
 			.listPipelines()
 			.then((p) => (pipelines = p))

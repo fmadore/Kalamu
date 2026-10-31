@@ -4,7 +4,8 @@
 use std::collections::BTreeSet;
 
 use kalamu_core::provenance::{
-    GeneratorInfo, ProvenanceMerge, ProvenancePrompt, ProvenanceRefused, ProvenanceSource,
+    GeneratorInfo, ProvenanceDerived, ProvenanceMerge, ProvenancePrompt, ProvenanceRefused,
+    ProvenanceSource,
 };
 use kalamu_core::speakers::{rename_segments, rename_text, renamed_labels};
 use kalamu_core::{
@@ -208,6 +209,19 @@ impl Engine {
                 url: online.then(|| source.path.clone()),
                 title: source.title.clone(),
                 read_at: first_read.filter(|_| online),
+                derived_from: self.snapshot_of(&source).map(|s| ProvenanceDerived {
+                    pieces: s.parts.len() as u32,
+                    reviewed: s.parts.iter().filter(|p| p.reviewed).count() as u32,
+                    corrected: s.parts.iter().filter(|p| p.corrected).count() as u32,
+                    snapshot_id: s.id,
+                    job_id: s.job_id,
+                    setup_id: s.setup_id,
+                    source_id: s.source_id,
+                    task: s.task,
+                    original_path: s.original_path,
+                    frozen_at: s.created_at,
+                    missing: s.missing,
+                }),
             },
             engine: engine.into(),
             provider: setup.provider.clone(),

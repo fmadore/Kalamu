@@ -171,6 +171,7 @@ pub fn run() {
                     app_version: env!("CARGO_PKG_VERSION").into(),
                     ffmpeg,
                     listening_cache: data.join("listening"),
+                    snapshots: data.join("snapshots"),
                     ..EngineConfig::default()
                 },
             );
@@ -293,6 +294,8 @@ pub fn run() {
             commands::jobs::get_job,
             commands::jobs::job_pieces,
             commands::jobs::job_text_outputs,
+            commands::jobs::snapshot_job,
+            commands::jobs::derived_state,
             commands::jobs::job_outputs,
             commands::jobs::open_output,
             commands::jobs::rename_job,

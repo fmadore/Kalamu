@@ -18,6 +18,7 @@ pub mod provenance;
 pub mod provider;
 pub mod result;
 pub mod setup;
+pub mod snapshot;
 pub mod source;
 pub mod speakers;
 pub mod store;
@@ -52,6 +53,7 @@ pub use result::{
     TextRegion, Usage,
 };
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, Step};
+pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
 pub use source::{InputKind, SourceFile};
 pub use speakers::SpeakerNames;
 pub use store::{Correction, JobStore, StoreError};

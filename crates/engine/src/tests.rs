@@ -15,6 +15,7 @@ use super::*;
 
 mod batch;
 mod contents;
+mod snapshot;
 
 /// Answers with the page label; can be told to fail some pages a number of times.
 struct Fake {
@@ -23,6 +24,8 @@ struct Fake {
     failures: Mutex<HashMap<u32, Vec<ProviderError>>>,
     /// A page whose answer stops at the output limit (0: none).
     cut_off: std::sync::atomic::AtomicU32,
+    /// The texts analyses were sent, in order.
+    read: Mutex<Vec<String>>,
 }
 
 impl Fake {
@@ -31,6 +34,7 @@ impl Fake {
             calls: AtomicUsize::new(0),
             failures: Mutex::new(HashMap::new()),
             cut_off: std::sync::atomic::AtomicU32::new(0),
+            read: Mutex::new(Vec::new()),
         })
     }
 
@@ -79,10 +83,17 @@ impl Provider for Fake {
                 ..ProcessOutput::default()
             });
         }
-        assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
-        // An analysis reads the whole document and answers each field.
+        // An analysis reads the whole document, a PDF or a text, and answers each field.
         if let Some(schema) = request.analysis {
             assert_eq!(piece, &kalamu_core::PieceRef::Whole);
+            if mime == "text/plain" {
+                self.read
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .push(String::from_utf8_lossy(bytes).into_owned());
+            } else {
+                assert!(bytes.starts_with(b"%PDF"), "a document arrives as a PDF");
+            }
             let fields: Vec<FieldAnswer> = schema
                 .fields
                 .iter()
@@ -101,6 +112,7 @@ impl Provider for Fake {
                 ..ProcessOutput::default()
             });
         }
+        assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
         let kalamu_core::PieceRef::Page { number, .. } = piece else {
             return Err(ProviderError::Other("not a page".into()));
         };
@@ -171,6 +183,7 @@ fn fixture_with(ffmpeg: Option<kalamu_media::Ffmpeg>) -> Fixture {
             app_version: "test".into(),
             ffmpeg,
             listening_cache: dir.path().join("listening"),
+            snapshots: dir.path().join("snapshots"),
             ..EngineConfig::default()
         },
     );

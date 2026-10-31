@@ -92,6 +92,7 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
         split_spreads: false,
         even_out_volume: false,
         title: None,
+        derived_from: None,
     })
 }
 
