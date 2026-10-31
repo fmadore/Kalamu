@@ -42,8 +42,8 @@ pub use provider::{
     StopSignal,
 };
 pub use result::{
-    PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, TextRegion,
-    Usage,
+    Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,
+    TextRegion, Usage,
 };
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, Step};
 pub use source::{InputKind, SourceFile};

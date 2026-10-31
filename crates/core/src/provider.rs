@@ -10,7 +10,7 @@ use ts_rs::TS;
 
 use crate::{
     AnalysisSchema, BatchContext, BatchLimits, BatchProgress, LanguageChoice, PieceRef,
-    ProcessOutput, ProviderId, SetupOptions, Task,
+    ProcessOutput, ProviderId, SetupOptions, Task, Usage,
 };
 
 /// An API key, kept out of `Debug` output and logs.
@@ -122,9 +122,11 @@ pub enum ProviderError {
     Unsupported(String),
     #[error("Unexpected response from the provider: {0}")]
     Other(String),
-    /// An analysis answer that breaks its schema; another try usually gives a good one.
-    #[error("The answer did not fit the analysis: {0}")]
-    InvalidAnswer(String),
+    /// An analysis answer that breaks its schema; another try usually gives a good one. The
+    /// provider billed it all the same: `usage` is what it consumed, which the engine adds to
+    /// the job's cost.
+    #[error("The answer did not fit the analysis: {reason}")]
+    InvalidAnswer { reason: String, usage: Usage },
     /// An offline engine whose model has not been downloaded.
     #[error("Not installed: {0}")]
     NotInstalled(String),
@@ -145,7 +147,7 @@ impl ProviderError {
             Self::InvalidRequest(_) => "provider.invalid_request",
             Self::Unsupported(_) => "provider.unsupported",
             Self::Other(_) => "provider.other",
-            Self::InvalidAnswer(_) => "provider.invalid_answer",
+            Self::InvalidAnswer { .. } => "provider.invalid_answer",
             Self::NotInstalled(_) => "provider.not_installed",
             Self::Interrupted => "provider.interrupted",
         }
@@ -155,8 +157,17 @@ impl ProviderError {
     pub fn is_retryable(&self) -> bool {
         matches!(
             self,
-            Self::RateLimited { .. } | Self::Transient(_) | Self::InvalidAnswer(_)
+            Self::RateLimited { .. } | Self::Transient(_) | Self::InvalidAnswer { .. }
         )
+    }
+
+    /// What a failed call was billed for: an answer the provider wrote but the engine could
+    /// not keep. Other failures were refused before the model answered.
+    pub fn billed(&self) -> Option<&Usage> {
+        match self {
+            Self::InvalidAnswer { usage, .. } => Some(usage),
+            _ => None,
+        }
     }
 
     /// The failure will not change on retry and affects every piece (stop the job).

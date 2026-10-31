@@ -153,7 +153,12 @@ impl Engine {
                     state.status = PieceStatus::Pending;
                     self.save(&mut state, None)?;
                 }
-                Err(err) => {
+                Err(mut err) => {
+                    // A refused answer was billed at the batch's price.
+                    if let ProviderError::InvalidAnswer { usage, .. } = &mut err {
+                        usage.batch = true;
+                    }
+                    self.charge(&state, &setup.provider, &setup.model, &err, spent)?;
                     outcome.failed = true;
                     state.status = PieceStatus::Failed;
                     state.error = Some(err.to_string());

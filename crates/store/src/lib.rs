@@ -8,9 +8,9 @@ use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
 
 use kalamu_core::{
-    BatchRecord, CacheKey, Correction, Job, JobId, JobStatus, JobStore, JobSummary, PieceRef,
-    PieceState, PieceStatus, ProviderId, SetupId, SourceId, SpeakerNames, StoreError, StoredResult,
-    Timestamp,
+    BatchRecord, CacheKey, Charge, Correction, Job, JobId, JobStatus, JobStore, JobSummary,
+    PieceRef, PieceState, PieceStatus, ProviderId, SetupId, SourceId, SpeakerNames, StoreError,
+    StoredResult, Timestamp,
 };
 use rusqlite::{Connection, OptionalExtension, params};
 
@@ -87,6 +87,18 @@ ALTER TABLE results ADD COLUMN request TEXT;
 "#,
     r#"
 ALTER TABLE results ADD COLUMN truncated INTEGER NOT NULL DEFAULT 0;
+"#,
+    r#"
+CREATE TABLE charges (
+    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    setup_id TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    idx INTEGER NOT NULL,
+    usage TEXT NOT NULL,
+    cost_usd REAL,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX charges_by_job ON charges(job_id);
 "#,
 ];
 
@@ -199,7 +211,8 @@ impl JobStore for SqliteStore {
                         COALESCE(SUM(p.status IN ('done', 'cached')), 0),
                         COALESCE(SUM(p.status = 'failed'), 0),
                         COALESCE(SUM(p.status IN ('done', 'cached') AND r.truncated), 0),
-                        SUM(CASE WHEN p.status = 'done' THEN r.cost_usd END)
+                        SUM(CASE WHEN p.status = 'done' THEN r.cost_usd END),
+                        (SELECT SUM(c.cost_usd) FROM charges c WHERE c.job_id = j.id)
                  FROM jobs j LEFT JOIN pieces p ON p.job_id = j.id
                  LEFT JOIN results r ON r.cache_key = p.cache_key
                  GROUP BY j.id
@@ -217,13 +230,19 @@ impl JobStore for SqliteStore {
                     row.get::<_, u32>(5)?,
                     row.get::<_, u32>(6)?,
                     row.get::<_, Option<f64>>(7)?,
+                    row.get::<_, Option<f64>>(8)?,
                 ))
             })
             .map_err(db)?;
         let mut jobs = Vec::new();
         for row in rows {
-            let (data, status, updated_at, total, finished, failed, truncated, cost) =
+            let (data, status, updated_at, total, finished, failed, truncated, kept, refused) =
                 row.map_err(db)?;
+            // What its results cost, and the answers billed but refused.
+            let cost = match (kept, refused) {
+                (None, None) => None,
+                (kept, refused) => Some(kept.unwrap_or(0.0) + refused.unwrap_or(0.0)),
+            };
             let job: Job = serde_json::from_str(&data).map_err(corrupt)?;
             jobs.push(JobSummary {
                 id: job.id,
@@ -429,16 +448,74 @@ impl JobStore for SqliteStore {
     }
 
     fn spent(&self, job: JobId) -> Result<f64, StoreError> {
-        // A piece done by this job paid for its result; a cached one reused another's.
+        // A piece done by this job paid for its result; a cached one reused another's. Answers
+        // refused after being billed were paid for too.
         self.conn()
             .query_row(
-                "SELECT COALESCE(SUM(r.cost_usd), 0) FROM pieces p
-                 JOIN results r ON r.cache_key = p.cache_key
-                 WHERE p.job_id = ?1 AND p.status = 'done'",
+                "SELECT (SELECT COALESCE(SUM(r.cost_usd), 0) FROM pieces p
+                         JOIN results r ON r.cache_key = p.cache_key
+                         WHERE p.job_id = ?1 AND p.status = 'done')
+                      + (SELECT COALESCE(SUM(cost_usd), 0) FROM charges WHERE job_id = ?1)",
                 [job.to_string()],
                 |row| row.get(0),
             )
             .map_err(db)
+    }
+
+    fn add_charge(&self, charge: &Charge) -> Result<(), StoreError> {
+        self.conn()
+            .execute(
+                "INSERT INTO charges
+                    (job_id, setup_id, source_id, idx, usage, cost_usd, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![
+                    charge.job_id.to_string(),
+                    charge.setup_id.to_string(),
+                    charge.source_id.to_string(),
+                    charge.index,
+                    to_json(&charge.usage)?,
+                    charge.cost_usd,
+                    charge.created_at.0,
+                ],
+            )
+            .map_err(db)?;
+        Ok(())
+    }
+
+    fn charges(&self, job: JobId) -> Result<Vec<Charge>, StoreError> {
+        let conn = self.conn();
+        let mut stmt = conn
+            .prepare(
+                "SELECT setup_id, source_id, idx, usage, cost_usd, created_at
+                 FROM charges WHERE job_id = ?1 ORDER BY rowid",
+            )
+            .map_err(db)?;
+        let rows = stmt
+            .query_map([job.to_string()], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, u32>(2)?,
+                    row.get::<_, String>(3)?,
+                    row.get::<_, Option<f64>>(4)?,
+                    row.get::<_, i64>(5)?,
+                ))
+            })
+            .map_err(db)?;
+        let mut charges = Vec::new();
+        for row in rows {
+            let (setup, source, index, usage, cost_usd, created_at) = row.map_err(db)?;
+            charges.push(Charge {
+                job_id: job,
+                setup_id: setup.parse::<SetupId>().map_err(corrupt)?,
+                source_id: source.parse::<SourceId>().map_err(corrupt)?,
+                index,
+                usage: serde_json::from_str(&usage).map_err(corrupt)?,
+                cost_usd,
+                created_at: Timestamp(created_at),
+            });
+        }
+        Ok(charges)
     }
 
     fn put_result(&self, result: &StoredResult) -> Result<(), StoreError> {

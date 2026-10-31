@@ -328,6 +328,62 @@ async fn transient_errors_are_retried_and_failures_can_be_retried_later() {
     assert!(!txt.contains("Not read"), "written again, whole: {txt}");
 }
 
+/// An answer the provider billed but the engine refused, for breaking its fields, is paid for:
+/// it counts in what the job spent, with the answers kept; a failure the provider did not bill
+/// adds nothing.
+#[tokio::test]
+async fn answers_billed_but_refused_count_in_the_cost() {
+    let f = fixture();
+    // The fake model, priced as Gemini 3.8 Flash: $0.75 and $3.75 per million tokens.
+    let mut catalog = f.engine.catalog();
+    let mut priced = catalog
+        .models
+        .iter()
+        .find(|m| m.id == "gemini-3.8-flash")
+        .cloned()
+        .unwrap_or_else(|| panic!("a priced model"));
+    priced.provider = ProviderId::new("fake");
+    priced.id = "priced-model".into();
+    priced.pricing.batch_discount = None;
+    catalog.models.push(priced);
+    f.engine.set_catalog(catalog);
+    let usage = Usage {
+        input_tokens: 1000,
+        output_tokens: 100,
+        ..Usage::default()
+    };
+    f.fake.fail(
+        2,
+        vec![ProviderError::InvalidAnswer {
+            reason: "not valid JSON".into(),
+            usage,
+        }],
+    );
+    f.fake.fail(3, vec![ProviderError::Transient("503".into())]);
+    let job = f.new_job(vec![f.pdf("letters.pdf", 3)], &["priced-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), 5);
+
+    // Each call read 1,000 tokens and wrote 100: $0.001125. Three kept, one refused.
+    let call = 0.001_125;
+    let charges = f.store.charges(job.id).unwrap_or_default();
+    assert_eq!(charges.len(), 1, "only the billed failure: {charges:?}");
+    assert_eq!(charges[0].index, 1);
+    assert!(
+        charges[0]
+            .cost_usd
+            .is_some_and(|c| (c - call).abs() < 1e-12)
+    );
+    let spent = f.store.spent(job.id).unwrap_or_default();
+    assert!((spent - 4.0 * call).abs() < 1e-12, "{spent}");
+    let listed = f.store.list_jobs().unwrap_or_default();
+    assert!(
+        listed[0]
+            .cost_usd
+            .is_some_and(|c| (c - 4.0 * call).abs() < 1e-12)
+    );
+}
+
 #[tokio::test]
 async fn a_piece_stopped_part_way_is_done_again_on_resume_not_failed() {
     let f = fixture();

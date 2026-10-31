@@ -133,6 +133,66 @@ fn a_job_has_spent_what_its_own_pieces_cost() -> Result<(), StoreError> {
     Ok(())
 }
 
+/// An answer billed but refused for breaking its fields counts in what the job spent, in the
+/// job list too, and goes with the job when it is deleted.
+#[test]
+fn answers_billed_but_refused_count_in_what_a_job_spent() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    assert_eq!(store.list_jobs()?[0].cost_usd, None);
+    let charge = Charge {
+        job_id: job.id,
+        setup_id: job.setups[0].id,
+        source_id: job.sources[0].id,
+        index: 0,
+        usage: kalamu_core::Usage {
+            input_tokens: 900,
+            output_tokens: 40,
+            ..kalamu_core::Usage::default()
+        },
+        cost_usd: Some(0.003),
+        created_at: Timestamp::now(),
+    };
+    store.add_charge(&charge)?;
+    store.add_charge(&Charge {
+        cost_usd: None,
+        ..charge.clone()
+    })?;
+    assert!((store.spent(job.id)? - 0.003).abs() < 1e-12);
+    assert!(
+        store.list_jobs()?[0]
+            .cost_usd
+            .is_some_and(|c| (c - 0.003).abs() < 1e-12)
+    );
+    let charges = store.charges(job.id)?;
+    assert_eq!(charges.len(), 2);
+    assert_eq!(charges[0], charge);
+
+    // Kept results add to it.
+    store.put_result(&StoredResult {
+        cache_key: "key-1".into(),
+        provider: ProviderId::new("gemini"),
+        model: "gemini-3.8-flash".into(),
+        output: ProcessOutput::default(),
+        request: Vec::new(),
+        cost_usd: Some(0.01),
+        duration_ms: 10,
+        created_at: Timestamp::now(),
+    })?;
+    store.upsert_piece(&piece(&job, 1, PieceStatus::Done))?;
+    assert!((store.spent(job.id)? - 0.013).abs() < 1e-12);
+    assert!(
+        store.list_jobs()?[0]
+            .cost_usd
+            .is_some_and(|c| (c - 0.013).abs() < 1e-12)
+    );
+
+    store.delete_job(job.id)?;
+    assert!(store.charges(job.id)?.is_empty());
+    Ok(())
+}
+
 #[test]
 fn piece_updates_replace_the_previous_state() -> Result<(), StoreError> {
     let store = SqliteStore::in_memory()?;
