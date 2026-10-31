@@ -105,6 +105,13 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   like all interface text ([decision](decisions/2026-10-30-glossary.md)).
 - **Icons centred in their buttons**: the icon component's style no longer reaches buttons
   named `icon`, which drew their icon at the left whenever its style loaded last.
+- **Analysing corrected text, first increment**
+  ([#47](https://github.com/fmadore/Kalamu/issues/47)): *Analyse this text* freezes an
+  extraction's, transcription's or correction's corrected text and analyses it without
+  reading the originals again; a later correction marks the analysis out of date without
+  changing what it read; provenance records the result read and how much was reviewed;
+  quotations can be anchored in the frozen text, piece by piece, and checked
+  ([decision](decisions/2026-10-31-reviewed-text-snapshots.md)).
 - **Project workspaces, first increment**
   ([#57](https://github.com/fmadore/Kalamu/issues/57)): projects with flat collections, a
   document held once in several, every result of a document across jobs with its review state
@@ -245,7 +252,7 @@ A pending merge decision is never treated as approval.
 | Order | Improvement | Tracking |
 | --- | --- | --- |
 | 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (first increment done) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
-| 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
+| 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis (first increment done) | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
 | 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps | [#49](https://github.com/fmadore/Kalamu/issues/49) |
 | 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export | [#48](https://github.com/fmadore/Kalamu/issues/48) |
 | 5 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |

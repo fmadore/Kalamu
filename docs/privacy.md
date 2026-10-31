@@ -63,6 +63,10 @@ new names, on the same computer only:
   preferred. A project only refers to files where they lie on the PC: it never copies, moves or
   sends them. Deleting a project, a collection or a document removes how it was organised; the
   files, the jobs and their results stay.
+- **Frozen text** (`snapshots`): when the user chooses *Analyse this text*, a copy of the
+  corrected text the analysis reads, so that later corrections do not change what it read. It
+  is sent only to the provider of that analysis, as the text of any document would be, and
+  kept until the app is uninstalled.
 - **Settings** (`settings.json`): preferences such as formats, destination, theme, favourite
   languages and the last folder chosen.
 - **Prompts and pipelines** the user saves, and a copy of the model catalogue.

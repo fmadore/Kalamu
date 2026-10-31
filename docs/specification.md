@@ -110,6 +110,16 @@ addressee, summary, names: an archivist's inventory) and a book, report or thesi
 fields are edited in Prompts as an analysis's are, title and pages always included
 ([decision](decisions/2026-10-29-contents-and-correction.md)).
 
+**An analysis can read an earlier job's text as corrected.** *Analyse this text* on an
+extraction, a transcription or a correction freezes the text as the researcher left it,
+corrections and speaker names included, and opens an analysis of it: nothing is read again or
+exported and imported. The frozen copy never changes, so a correction made afterwards does not
+alter what the analysis read; the analysis is marked out of date, with a way to analyse the
+corrected text, whose answers are new ones beside the old
+([decision](decisions/2026-10-31-reviewed-text-snapshots.md),
+[#47](https://github.com/fmadore/Kalamu/issues/47)). Pages that could not be read are left
+out and named in `provenance.json`, with how much of the text had been reviewed.
+
 **Existing text is corrected, not read again.** Many researchers already have machine-read
 text, often noisy: the text layer of a PDF from a digital library, or a text file downloaded
 beside it. *Correct existing text* sends that text, page by page (or in passages of a few
