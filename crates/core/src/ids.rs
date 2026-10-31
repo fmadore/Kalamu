@@ -53,6 +53,18 @@ uuid_id!(
     /// A provider, model and prompt combination within a job.
     SetupId
 );
+uuid_id!(
+    /// A research workspace: its documents, collections and the jobs run on them.
+    ProjectId
+);
+uuid_id!(
+    /// A grouping of a project's documents chosen by the researcher.
+    CollectionId
+);
+uuid_id!(
+    /// A research item in a project: its source and every result read from it.
+    DocumentId
+);
 
 /// A provider's stable identifier, as used in the model catalogue (`gemini`, `openai`, …).
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, TS)]

@@ -2573,6 +2573,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "kalamu-projects"
+version = "1.0.0"
+dependencies = [
+ "kalamu-core",
+ "kalamu-store",
+ "serde",
+ "tempfile",
+ "ts-rs",
+]
+
+[[package]]
 name = "kalamu-prompts"
 version = "1.0.0"
 dependencies = [

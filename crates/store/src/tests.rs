@@ -5,6 +5,8 @@ use kalamu_core::{
 
 use super::*;
 
+mod projects;
+
 fn job() -> Job {
     Job {
         id: JobId::new(),

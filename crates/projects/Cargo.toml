@@ -1,0 +1,19 @@
+[package]
+name = "kalamu-projects"
+description = "Project workspaces for Kalamu: documents, collections, and every result read from each."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+kalamu-core.workspace = true
+serde.workspace = true
+ts-rs.workspace = true
+
+[dev-dependencies]
+kalamu-store.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

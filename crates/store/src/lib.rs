@@ -100,6 +100,7 @@ CREATE TABLE charges (
 );
 CREATE INDEX charges_by_job ON charges(job_id);
 "#,
+    projects::MIGRATION,
 ];
 
 pub struct SqliteStore {
@@ -699,6 +700,8 @@ impl JobStore for SqliteStore {
             .collect()
     }
 }
+
+mod projects;
 
 #[cfg(test)]
 mod tests;

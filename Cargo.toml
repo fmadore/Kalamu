@@ -21,6 +21,7 @@ kalamu-store = { path = "crates/store" }
 kalamu-export = { path = "crates/export" }
 kalamu-engine = { path = "crates/engine" }
 kalamu-offline = { path = "crates/offline" }
+kalamu-projects = { path = "crates/projects" }
 
 anyhow = "1.0.104"
 async-trait = "0.1.92"
