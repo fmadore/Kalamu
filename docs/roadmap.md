@@ -105,6 +105,14 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   like all interface text ([decision](decisions/2026-10-30-glossary.md)).
 - **Icons centred in their buttons**: the icon component's style no longer reaches buttons
   named `icon`, which drew their icon at the left whenever its style loaded last.
+- **Project workspaces, first increment**
+  ([#57](https://github.com/fmadore/Kalamu/issues/57)): projects with flat collections, a
+  document held once in several, every result of a document across jobs with its review state
+  and cost, a preferred result per task, files and folders added before they are read, earlier
+  jobs added after their matches are confirmed, New job started from a selection and tied to
+  it, documents with the same content merged, deletions that never reach a job, missing files
+  marked, archiving; a crate of its own, `projects`
+  ([decision](decisions/2026-10-31-project-workspaces.md)).
 - **The last of the 29 October checkpoint**: analysis answers billed but refused for breaking
   their fields, in a single call or a batch, now count in what a job cost, on its page and in
   the job list, and `provenance.json` lists them apart (`refused`); provenance also records
@@ -137,12 +145,11 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
 The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refactor are all
 done.
 
-- **Project and document organisation**: persistent project workspaces with collections,
-  documents and their associated results across jobs; tracked in
-  [#57](https://github.com/fmadore/Kalamu/issues/57). A project's Activity view retains the
-  planned job list, progress, costs, search, tags and task/model/pipeline/date/status filters.
-  Collections organise research documents independently of processing runs. Later, search
-  through the text of every result.
+- **Project workspaces, what is left of
+  [#57](https://github.com/fmadore/Kalamu/issues/57)**: tags as further filters; the
+  Activity view's filters (task, model, pipeline, date, status) and its costs summed; a
+  document's descriptive metadata; workflow runs on a selection, which come with #49; and
+  later, search through the text of every result.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
@@ -237,7 +244,7 @@ A pending merge decision is never treated as approval.
 
 | Order | Improvement | Tracking |
 | --- | --- | --- |
-| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs | [#57](https://github.com/fmadore/Kalamu/issues/57) |
+| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (first increment done) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
 | 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
 | 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps | [#49](https://github.com/fmadore/Kalamu/issues/49) |
 | 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export | [#48](https://github.com/fmadore/Kalamu/issues/48) |

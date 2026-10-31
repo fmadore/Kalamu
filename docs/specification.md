@@ -321,6 +321,36 @@ pause and cancel that keep everything finished, progress on the taskbar icon, an
 notification when a job finishes or needs attention. A job waiting for a batch says how many
 pieces the provider holds and when they are due.
 
+## Projects
+
+A researcher's material outlives any one job: the same letter is extracted, corrected,
+analysed, compared. A **project** keeps it together
+([decision](decisions/2026-10-31-project-workspaces.md), [#57](https://github.com/fmadore/Kalamu/issues/57)).
+
+- **Documents, not files.** A document is a research item: its original, referenced where it
+  lies on the PC (never copied, moved or changed), its title, and every result read from it.
+  The same file at the same place is added once; two files with the same content are pointed
+  out but stay two documents until the researcher merges them, since a copy and a second item
+  can share their bytes.
+- **Collections** group documents as the researcher likes (correspondence, a newspaper's
+  issues, the interviews of one village); a document can be in several, held once. Leaving a
+  collection, or deleting it, keeps the document in the project.
+- **Every result of a document together**, whatever job made it: each set-up of each job that
+  read it, with its progress, how much was reviewed and corrected, what it cost, opening its
+  review. The researcher can mark one per task as **preferred**: never chosen by the app, and
+  a newer run does not take its place.
+- **Adding work.** Files and folders are added before anything is read. A selection opens New
+  job, and the job is tied to those documents when it starts. A job run before is added after
+  its files are matched to documents, shown for the researcher to confirm: the same file is
+  proposed, the same content elsewhere only offered. Its results come as they are; nothing is
+  sent again.
+- **Activity**: the jobs that read the project's documents, with their controls as in Jobs.
+- **Organising never changes work.** Collections, titles, links and preferences call no model.
+  A job keeps the files it was started with, so a later change to a collection does not rewrite
+  a past run or start new work. Deleting a project, a collection or a document removes only how
+  it was organised; deleting a job unties it from its documents, which stay. A file moved since
+  it was added is marked missing, its results kept. A project can be archived and restored.
+
 ## Export formats
 
 Results are stored once and exported to several formats at the same time; the default selection

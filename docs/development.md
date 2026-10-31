@@ -67,6 +67,7 @@ parameters open a given state:
 | `view=review`, `review-audio`, `review-analysis` | Opens the review of a sample extraction, recording or analysis |
 | `view=review-youtube`, `review-contents`, `review-correction` | Opens the review of a YouTube video, a table of contents or a correction |
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
+| `view=projects`, `project`, `document` | Opens the list of projects, a sample project, or one of its documents |
 | `theme=light` or `dark` | Forces the theme |
 | `open=<word>` | Opens the readings of the highlighted words with that text in the review |
 | `compare` | Opens the review with another set-up's text in the compare pane |
