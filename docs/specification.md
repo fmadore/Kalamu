@@ -179,7 +179,9 @@ paying twice.
   again, without sending anything twice, nor anything new: the rest of the job waits for the
   researcher to resume it.
 - **Failures are retried, then reported.** Rate limits, network errors and answers that break
-  an analysis's fields are retried with increasing delays. A piece that still fails is marked
+  an analysis's fields are retried with increasing delays; an answer refused for breaking its
+  fields was billed all the same, so it counts in the job's cost and `provenance.json` lists
+  it apart. A piece that still fails is marked
   as failed with a readable reason, the rest of the queue continues, and failed pieces can be
   retried later on their own. An answer that stops at the model's length limit is kept but
   marked as cut off: the job's page counts such pieces, the review warns on each, and
@@ -313,7 +315,7 @@ results together.
 ## Progress
 
 The user always sees what the app is doing, how far it is, and what it costs (the job's own
-calls over all its runs, not only the current one): a list of jobs
+calls over all its runs, not only the current one, answers billed but refused included): a list of jobs
 with their status, a bar per file and set-up, a live preview of the text as pieces arrive,
 pause and cancel that keep everything finished, progress on the taskbar icon, and a
 notification when a job finishes or needs attention. A job waiting for a batch says how many

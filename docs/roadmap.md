@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (30 October 2026)
+## Status (31 October 2026)
 
 **Version 1.0.0**, the first Microsoft Store release, is ready to build: the app, its package
 and its listing are done, and what is left before submitting needs Partner Center, the
@@ -105,6 +105,13 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   like all interface text ([decision](decisions/2026-10-30-glossary.md)).
 - **Icons centred in their buttons**: the icon component's style no longer reaches buttons
   named `icon`, which drew their icon at the left whenever its style loaded last.
+- **The last of the 29 October checkpoint**: analysis answers billed but refused for breaking
+  their fields, in a single call or a batch, now count in what a job cost, on its page and in
+  the job list, and `provenance.json` lists them apart (`refused`); provenance also records
+  whether Whisper skipped silences with its voice-activity model, which speaker labels were
+  renamed (not the names), a table of contents' second step's usage and cost, and only the
+  fixes that were made to a source
+  ([decision](decisions/2026-10-31-refused-answers-and-provenance.md)).
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
   Mistral at half price, answered within a day and collected after the app was closed; cached
   input billed at its own price; both costs shown before starting
@@ -127,13 +134,9 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
 
 ## Next
 
-The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refactor are done,
-but for these two, which change no result:
+The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refactor are all
+done.
 
-- **The cost of failed answers**: answers billed but failing their fields counted in the cost
-  shown, which needs a failed call to carry its usage.
-- **Smaller provenance gaps** from the same checkpoint: whether Whisper used voice detection,
-  speaker names, a table of contents' usage and cost per step.
 - **Project and document organisation**: persistent project workspaces with collections,
   documents and their associated results across jobs; tracked in
   [#57](https://github.com/fmadore/Kalamu/issues/57). A project's Activity view retains the
