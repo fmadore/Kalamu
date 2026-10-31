@@ -136,7 +136,9 @@ pub fn run() {
                 data: data.clone(),
             };
             let settings = Settings::load(&paths.settings);
-            let store = SqliteStore::open(&data.join("jobs.sqlite"))?;
+            let store = Arc::new(SqliteStore::open(&data.join("jobs.sqlite"))?);
+            // Projects share the job database, so deleting a job unlinks it from its documents.
+            let projects = kalamu_projects::Projects::new(store.clone(), store.clone());
             let prompts = PromptLibrary::open(&data.join("presets"))?;
             let pipelines = kalamu_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
             let cached = std::fs::read_to_string(&paths.catalog_cache).ok();
@@ -159,7 +161,7 @@ pub fn run() {
             let mut providers = kalamu_providers::registry(http.clone());
             providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
             let engine = Engine::new(
-                Arc::new(store),
+                store,
                 providers,
                 catalog,
                 prompts,
@@ -211,6 +213,7 @@ pub fn run() {
             let refresh = settings.refresh_catalog;
             app.manage(AppState {
                 engine,
+                projects,
                 models,
                 keys,
                 settings: Mutex::new(settings),
@@ -303,6 +306,27 @@ pub fn run() {
             commands::review::compare_source,
             commands::review::job_scores,
             commands::review::diff_texts,
+            commands::projects::list_projects,
+            commands::projects::create_project,
+            commands::projects::update_project,
+            commands::projects::archive_project,
+            commands::projects::delete_project,
+            commands::projects::project_view,
+            commands::projects::create_collection,
+            commands::projects::rename_collection,
+            commands::projects::delete_collection,
+            commands::projects::add_documents,
+            commands::projects::rename_document,
+            commands::projects::delete_documents,
+            commands::projects::add_to_collection,
+            commands::projects::remove_from_collection,
+            commands::projects::merge_documents,
+            commands::projects::document_detail,
+            commands::projects::set_preferred,
+            commands::projects::attach_plan,
+            commands::projects::attach_job,
+            commands::projects::link_job,
+            commands::projects::detach_job,
             commands::window::set_taskbar_progress,
             commands::window::set_tray_state,
             commands::window::hide_window,

@@ -70,6 +70,21 @@ impl From<kalamu_prompts::PromptError> for AppError {
     }
 }
 
+impl From<kalamu_core::ProjectError> for AppError {
+    fn from(e: kalamu_core::ProjectError) -> Self {
+        use kalamu_core::{ProjectError, StoreError};
+        let id = match &e {
+            ProjectError::NotFound | ProjectError::Store(StoreError::NotFound) => {
+                "project.not_found"
+            }
+            ProjectError::Elsewhere(_) => "project.elsewhere",
+            ProjectError::NoName => "project.no_name",
+            ProjectError::Store(_) => "job.database",
+        };
+        Self::new(id, e)
+    }
+}
+
 impl From<kalamu_catalog::CatalogError> for AppError {
     fn from(e: kalamu_catalog::CatalogError) -> Self {
         Self::new("catalog.invalid", e)

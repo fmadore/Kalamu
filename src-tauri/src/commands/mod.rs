@@ -6,6 +6,7 @@ pub mod keys;
 pub mod offline;
 pub mod pipelines;
 pub mod presets;
+pub mod projects;
 pub mod review;
 pub mod settings;
 pub mod window;
@@ -33,6 +34,8 @@ pub struct Paths {
 
 pub struct AppState {
     pub engine: Arc<Engine>,
+    /// Project workspaces, over the same database as the engine's jobs.
+    pub projects: kalamu_projects::Projects,
     /// Whisper models, shared with the Whisper provider inside the engine.
     pub models: kalamu_offline::ModelManager,
     pub keys: Arc<CredentialKeys>,

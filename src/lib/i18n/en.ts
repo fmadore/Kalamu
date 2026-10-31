@@ -21,6 +21,7 @@ export const en = {
 	},
 	nav: {
 		newJob: 'New job',
+		projects: 'Projects',
 		jobs: 'Jobs',
 		prompts: 'Prompts',
 		settings: 'Settings',
@@ -42,6 +43,151 @@ export const en = {
 		text_correction: 'Correct existing text',
 		text_correctionHint:
 			'Machine-read text from a digital library or a PDF, corrected page by page: TXT, Word, PDF'
+	},
+	projects: {
+		title: 'Projects',
+		lede: 'Your documents, grouped as you like, with everything read from each.',
+		newProject: 'New project',
+		name: 'Name',
+		description: 'Description',
+		descriptionHint: 'What the project is about, for you and for colleagues.',
+		create: 'Create',
+		cancel: 'Cancel',
+		save: 'Save',
+		empty:
+			'No project yet. A project keeps your documents together, in collections, with every transcription, extraction and analysis made of them.',
+		showArchived: 'Show archived projects',
+		archived: 'Archived',
+		counts: (documents: number, collections: number, jobs: number) =>
+			`${documents === 1 ? '1 document' : `${documents} documents`} · ${
+				collections === 1 ? '1 collection' : `${collections} collections`
+			} · ${jobs === 1 ? '1 job' : `${jobs} jobs`}`,
+		updated: (date: string) => `Changed ${date}`,
+		back: 'Projects',
+		edit: 'Edit',
+		archive: 'Archive',
+		restore: 'Restore',
+		archivedNotice:
+			'This project is archived. Nothing in it has changed; restore it to list it again.',
+		delete: 'Delete project',
+		deleteConfirm: (name: string) =>
+			`Delete the project “${name}”? Its collections and documents are removed from Kalamu. The files on your PC, the jobs and their results stay, and the jobs remain under Jobs.`,
+		allDocuments: 'All documents',
+		collections: 'Collections',
+		newCollection: 'New collection',
+		collectionName: 'Name of the collection',
+		renameCollection: 'Rename',
+		deleteCollection: 'Delete collection',
+		deleteCollectionConfirm: (name: string) =>
+			`Delete the collection “${name}”? Its documents stay in the project.`,
+		activity: 'Activity',
+		activityLede: 'The jobs that read this project’s documents, newest first.',
+		noActivity:
+			'No job has read these documents yet. Select documents and choose “New job with these”.',
+		addFiles: 'Add files',
+		addFolder: 'Add a folder',
+		addedFiles: (n: number) => (n === 1 ? '1 document added' : `${n} documents added`),
+		notReadable: (n: number) =>
+			n === 1
+				? '1 file could not be read and was left out.'
+				: `${n} files could not be read and were left out.`,
+		attachJob: 'Add an existing job',
+		noDocuments:
+			'No documents here yet. Add files, or add a job you ran before: its results come with it, without being paid for again.',
+		search: 'Find a document',
+		noMatch: 'No document matches.',
+		sortBy: 'Sort by',
+		sortTitle: 'Title',
+		sortAdded: 'Date added',
+		sortRun: 'Last read',
+		columnTitle: 'Document',
+		columnKind: 'Kind',
+		columnCollections: 'Collections',
+		columnResults: 'Results',
+		columnDate: 'Added',
+		selectAll: 'Select all documents shown',
+		select: (title: string) => `Select ${title}`,
+		selected: (n: number) => (n === 1 ? '1 selected' : `${n} selected`),
+		clearSelection: 'Clear',
+		addTo: 'Add to collection…',
+		removeFromCollection: 'Remove from this collection',
+		newJobWith: 'New job with these',
+		removeDocuments: 'Remove from project',
+		removeDocumentsConfirm: (n: number) =>
+			`Remove ${n === 1 ? 'this document' : `these ${n} documents`} from the project? The files, the jobs that read them and their results stay.`,
+		missing: 'File missing',
+		missingHint:
+			'The file is no longer where it was added. Its results are kept; put it back to read it again.',
+		sameContent: (n: number) =>
+			n === 1 ? 'Same content as 1 other' : `Same content as ${n} others`,
+		noResults: 'Not read yet',
+		kind: {
+			pdf: 'PDF',
+			image: 'Image',
+			audio: 'Recording',
+			video: 'Video',
+			text: 'Text',
+			youtube: 'YouTube'
+		},
+		taskResults: (task: string, n: number, reviewed: number) =>
+			`${task}: ${n === 1 ? '1 result' : `${n} results`}${reviewed > 0 ? `, ${reviewed} reviewed` : ''}`,
+		preferredMark: 'preferred',
+		fromProject: (name: string) =>
+			`Started from the project “${name}”: the job’s files become its documents, and its results theirs.`,
+		linkFailed: (name: string) =>
+			`The job started, but could not be added to the project “${name}”. Add it from the project with “Add an existing job”.`,
+		attach: {
+			title: 'Add an existing job',
+			lede: 'Its results join the documents they were read from. Nothing is sent again.',
+			job: 'Job',
+			chooseJob: 'Choose a job',
+			file: 'File',
+			document: 'Document',
+			newDocument: 'A new document',
+			skip: 'Leave out',
+			proposed: (title: string) => `${title} (the same file)`,
+			sameContent: (title: string) => `${title} (same content, another file)`,
+			already: (title: string) => `${title} (already added)`,
+			sameContentHint:
+				'Files with the same content may be copies of one item, or two items that happen to match. Choose for each.',
+			confirm: 'Add',
+			attached: (n: number) =>
+				n === 1 ? '1 file added to the project' : `${n} files added to the project`
+		},
+		document: {
+			back: (project: string) => project,
+			source: 'Original',
+			reveal: 'Show in folder',
+			collections: 'Collections',
+			notInCollection: 'In no collection.',
+			rename: 'Rename',
+			title: 'Title',
+			results: 'Results',
+			noResults: 'Nothing has been read from this document yet.',
+			job: 'Job',
+			setup: 'Model',
+			progress: 'Read',
+			reviewed: 'Reviewed',
+			cost: 'Cost',
+			preferred: 'Preferred',
+			prefer: 'Make preferred',
+			unprefer: 'No longer preferred',
+			preferHint: 'The result you rely on for this task. A newer run never replaces it.',
+			open: 'Review',
+			openJob: 'Job page',
+			detach: 'Untie',
+			detachConfirm: 'Untie this result from the document? The job and its results stay.',
+			pieces: (finished: number, total: number, failed: number) =>
+				`${finished} of ${total}${failed > 0 ? `, ${failed} failed` : ''}`,
+			reviewedCount: (reviewed: number, total: number, corrected: number) =>
+				`${reviewed} of ${total}${corrected > 0 ? `, ${corrected} corrected` : ''}`,
+			sameContentTitle: 'Same content',
+			sameContentLede:
+				'These documents hold the same bytes. If they are one item, merge them: their results and collections come together, nothing is read again.',
+			merge: 'Merge into this one',
+			mergeConfirm: (other: string) =>
+				`Merge “${other}” into this document? Its results and collections move here and it is removed.`
+		}
 	},
 	newJob: {
 		title: 'New job',
@@ -752,6 +898,9 @@ export const en = {
 		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`
 	},
 	error: {
+		'project.not_found': 'This project, or what it refers to, no longer exists.',
+		'project.elsewhere': 'This belongs to another project, or no longer exists.',
+		'project.no_name': 'Give it a name.',
 		'job.not_found': 'This job no longer exists.',
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',

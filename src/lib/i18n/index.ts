@@ -65,6 +65,10 @@ export function formatDateTime(ms: number): string {
 	});
 }
 
+export function formatDate(ms: number): string {
+	return new Date(ms).toLocaleDateString(CATALOGS[current].locale.tag, { dateStyle: 'medium' });
+}
+
 export function formatPercent(value: number): string {
 	return new Intl.NumberFormat(CATALOGS[current].locale.tag, {
 		style: 'percent',

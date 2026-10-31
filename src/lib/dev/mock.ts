@@ -16,6 +16,7 @@ import type { View } from '../state.svelte.js';
 import catalogJson from '../../../crates/catalog/catalog.json';
 import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import taskRulesJson from './taskRules.json';
+import { DOCUMENT_ID, PROJECT_ID, projectCommand, seedProjects } from './mockProjects.js';
 import {
 	contentsJob,
 	contentsPieces,
@@ -634,6 +635,12 @@ export function mockView(): View | null {
 			return { name: 'glossary' };
 		case 'new':
 			return { name: 'new' };
+		case 'projects':
+			return { name: 'projects' };
+		case 'project':
+			return { name: 'projects', projectId: PROJECT_ID };
+		case 'document':
+			return { name: 'projects', projectId: PROJECT_ID, documentId: DOCUMENT_ID };
 		default:
 			return null;
 	}
@@ -655,8 +662,32 @@ export function installMock(): void {
 	}
 	mockWindows('main');
 	let toneUrl: string | undefined;
+	seedProjects({
+		job,
+		audioJob,
+		analysisJob,
+		extras: [
+			{
+				...source,
+				id: '00000000-0000-0000-0000-0000000000f1',
+				path: 'C:\\Archives\\Letters\\lettre-gouverneur-1956.jpg',
+				file_name: 'lettre-gouverneur-1956.jpg',
+				kind: 'image',
+				page_count: 1
+			},
+			{
+				...source,
+				id: '00000000-0000-0000-0000-0000000000f2',
+				path: 'C:\\Archives\\Letters\\lettre-1912-pere-eric.pdf',
+				file_name: 'lettre-1912-pere-eric.pdf',
+				page_count: 4
+			}
+		]
+	});
 	mockIPC((cmd, args) => {
 		const a = (args ?? {}) as Record<string, unknown>;
+		const project = projectCommand(cmd, a);
+		if (project !== undefined) return project;
 		switch (cmd) {
 			case 'app_info':
 				return {

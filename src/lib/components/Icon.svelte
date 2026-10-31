@@ -2,6 +2,8 @@
 	// The interface's icons: Lucide, at one rendered stroke weight whatever the size. Each is
 	// decorative; the control that holds it carries the accessible name. A new icon is one import
 	// and one entry below.
+	import Archive from '@lucide/svelte/icons/archive';
+	import ArchiveRestore from '@lucide/svelte/icons/archive-restore';
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
@@ -13,13 +15,17 @@
 	import Cloud from '@lucide/svelte/icons/cloud';
 	import Columns2 from '@lucide/svelte/icons/columns-2';
 	import Download from '@lucide/svelte/icons/download';
+	import FilePlus from '@lucide/svelte/icons/file-plus';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import Flag from '@lucide/svelte/icons/flag';
+	import Folder from '@lucide/svelte/icons/folder';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Laptop from '@lucide/svelte/icons/laptop';
+	import Library from '@lucide/svelte/icons/library';
 	import List from '@lucide/svelte/icons/list';
 	import ListTree from '@lucide/svelte/icons/list-tree';
 	import Link from '@lucide/svelte/icons/link';
+	import Merge from '@lucide/svelte/icons/merge';
 	import Mic from '@lucide/svelte/icons/mic';
 	import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
 	import PanelLeftOpen from '@lucide/svelte/icons/panel-left-open';
@@ -36,11 +42,19 @@
 	import SpellCheck from '@lucide/svelte/icons/spell-check';
 	import Star from '@lucide/svelte/icons/star';
 	import TextSearch from '@lucide/svelte/icons/text-search';
+	import Unlink from '@lucide/svelte/icons/unlink';
 	import X from '@lucide/svelte/icons/x';
 	import ZoomIn from '@lucide/svelte/icons/zoom-in';
 	import ZoomOut from '@lucide/svelte/icons/zoom-out';
 
 	const ICONS = {
+		archive: Archive,
+		restore: ArchiveRestore,
+		project: Library,
+		collection: Folder,
+		'add-file': FilePlus,
+		merge: Merge,
+		unlink: Unlink,
 		back: ArrowLeft,
 		down: ArrowDown,
 		up: ArrowUp,

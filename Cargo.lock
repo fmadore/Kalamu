@@ -2452,6 +2452,7 @@ dependencies = [
  "kalamu-engine",
  "kalamu-media",
  "kalamu-offline",
+ "kalamu-projects",
  "kalamu-prompts",
  "kalamu-providers",
  "kalamu-store",
