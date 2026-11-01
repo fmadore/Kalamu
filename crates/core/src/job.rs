@@ -19,6 +19,14 @@ pub struct JobSettings {
     /// Whether cloud calls go one by one or as a cheaper batch.
     #[serde(default)]
     pub pace: Pace,
+    /// How many pages of a PDF a text extraction sends in one call; one unless chosen.
+    #[serde(default, skip_serializing_if = "is_one")]
+    #[ts(optional)]
+    pub pages_per_call: Option<crate::PagesPerCall>,
+}
+
+fn is_one(pages: &Option<crate::PagesPerCall>) -> bool {
+    matches!(pages, None | Some(crate::PagesPerCall::One))
 }
 
 /// How a job's cloud calls are sent. Offline engines and models without a batch service run

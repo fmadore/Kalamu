@@ -20,7 +20,9 @@ See the [roadmap](docs/roadmap.md) and the [1.0.0 release notes](docs/release-1.
 ## What it does
 
 - **Extract text** from PDFs and images, printed or handwritten, with Gemini, OpenAI, Claude or
-  Mistral. Lines kept as on the page, or joined into running text.
+  Mistral. Lines kept as on the page, or joined into running text; pages read one at a time
+  or several together, still reviewed page by page. Choose how much each model thinks; every
+  answer may use the whole output the model allows.
 - **Transcribe audio and video**, with speakers and timestamps, in the cloud or offline with
   Whisper. Speakers can be given their real names. Public YouTube videos are transcribed from
   their link with Gemini, without downloading them.

@@ -128,6 +128,23 @@ impl PipelineFile {
             };
             let _ = writeln!(out, "- Lines: {lines}");
         }
+        match p.settings.pages_per_call {
+            Some(kalamu_core::PagesPerCall::Several { pages }) => {
+                let _ = writeln!(
+                    out,
+                    "- Pages per call: up to {pages}, as many as the model can write in one \
+                     answer; each page split out at its mark, a page not marked read alone"
+                );
+            }
+            Some(kalamu_core::PagesPerCall::Whole) => {
+                let _ = writeln!(
+                    out,
+                    "- Pages per call: as many as the model can write in one answer; each page \
+                     split out at its mark, a page not marked read alone"
+                );
+            }
+            _ => {}
+        }
         if let Some(n) = p.settings.sample_pages {
             let _ = writeln!(out, "- Sample: the first {n} pages of each document only");
         }

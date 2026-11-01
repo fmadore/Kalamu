@@ -139,6 +139,11 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   offers each model's reasoning levels under *Thinking*, the lowest suggested for OCR, HTR and
   transcription, `low` for analyses; the level is settled when the job is created and recorded
   in provenance ([decision](decisions/2026-11-01-output-limits-and-reasoning.md)).
+- **Several pages per call** for text extraction: one page at a time (the default), several,
+  or the whole document, sized to what the model can write in one answer; the answer split
+  back into pages at the marks the model is asked for, and a page left out or cut short read
+  again alone, so the review and error rates stay page by page; not yet in economy mode
+  ([decision](decisions/2026-11-01-pages-per-call.md)).
 - **The last of the 29 October checkpoint**: analysis answers billed but refused for breaking
   their fields, in a single call or a batch, now count in what a job cost, on its page and in
   the job list, and `provenance.json` lists them apart (`refused`); provenance also records

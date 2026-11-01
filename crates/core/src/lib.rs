@@ -13,6 +13,7 @@ pub mod fingerprint;
 pub mod ids;
 pub mod job;
 pub mod language;
+pub mod pages;
 pub mod project;
 pub mod provenance;
 pub mod provider;
@@ -41,6 +42,7 @@ pub use job::{
     Job, JobSettings, JobStatus, JobSummary, LineBreaks, OutputDestination, OutputSettings, Pace,
 };
 pub use language::{LanguageChoice, LanguageCode};
+pub use pages::PagesPerCall;
 pub use project::{
     Collection, Document, DocumentLink, PreferredResult, Project, ProjectError, ProjectStore,
 };

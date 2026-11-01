@@ -17,6 +17,24 @@ fn png(w: u32, h: u32) -> Vec<u8> {
 }
 
 #[test]
+fn a_range_of_pages_becomes_one_pdf_in_order() -> Result<(), MediaError> {
+    let pdf = PdfSource::from_bytes(&sample_pdf(&[A4, A4, A4, A4], true))?;
+    let range = pdf.pages_pdf(2, 4)?;
+    let reread = PdfSource::from_bytes(&range)?;
+    assert_eq!(reread.page_count(), 3);
+    let doc = lopdf::Document::load_mem(&range).map_err(|e| MediaError::Pdf(e.to_string()))?;
+    for (n, label) in [(1, "Page 2"), (2, "Page 3"), (3, "Page 4")] {
+        assert!(
+            doc.extract_text(&[n]).is_ok_and(|t| t.contains(label)),
+            "page {n} is {label}"
+        );
+    }
+    assert!(pdf.pages_pdf(3, 5).is_err(), "no page 5");
+    assert!(pdf.pages_pdf(3, 2).is_err());
+    Ok(())
+}
+
+#[test]
 fn pdf_pages_become_standalone_single_page_pdfs() -> Result<(), MediaError> {
     let pdf = PdfSource::from_bytes(&sample_pdf(&[A4, A4, A4], true))?;
     assert_eq!(pdf.page_count(), 3);

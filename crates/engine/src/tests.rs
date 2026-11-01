@@ -15,6 +15,7 @@ use super::*;
 
 mod batch;
 mod contents;
+mod pages;
 mod snapshot;
 mod workflow;
 
@@ -29,6 +30,12 @@ struct Fake {
     read: Mutex<Vec<String>>,
     /// What each call asked beyond the prompt.
     tunings: Mutex<Vec<kalamu_core::Tuning>>,
+    /// The page ranges sent together, in order.
+    groups: Mutex<Vec<(u32, u32)>>,
+    /// A page a multi-page answer leaves unmarked (0: none).
+    unmarked: std::sync::atomic::AtomicU32,
+    /// Multi-page answers stop at the output limit.
+    cut_groups: std::sync::atomic::AtomicBool,
 }
 
 impl Fake {
@@ -39,6 +46,9 @@ impl Fake {
             cut_off: std::sync::atomic::AtomicU32::new(0),
             read: Mutex::new(Vec::new()),
             tunings: Mutex::new(Vec::new()),
+            groups: Mutex::new(Vec::new()),
+            unmarked: std::sync::atomic::AtomicU32::new(0),
+            cut_groups: std::sync::atomic::AtomicBool::new(false),
         })
     }
 
@@ -121,6 +131,43 @@ impl Provider for Fake {
             });
         }
         assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
+        // Several pages in one file: one text, each page after its mark.
+        if let Some(range) = request
+            .user_prompt
+            .split("This file holds pages ")
+            .nth(1)
+            .and_then(|rest| rest.split(" of the document").next())
+        {
+            let mut bounds = range.split(" to ").filter_map(|n| n.parse::<u32>().ok());
+            let (Some(first), Some(last)) = (bounds.next(), bounds.next()) else {
+                return Err(ProviderError::Other("no range".into()));
+            };
+            self.groups
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .push((first, last));
+            let unmarked = self.unmarked.load(Ordering::SeqCst);
+            let text: String = (first..=last)
+                .filter(|n| *n != unmarked)
+                .map(|n| {
+                    format!(
+                        "{}\n{} page {n}\n",
+                        kalamu_core::pages::marker(n),
+                        request.model
+                    )
+                })
+                .collect();
+            return Ok(ProcessOutput {
+                text,
+                usage: Usage {
+                    input_tokens: 1000,
+                    output_tokens: 100,
+                    ..Usage::default()
+                },
+                truncated: self.cut_groups.load(Ordering::SeqCst),
+                ..ProcessOutput::default()
+            });
+        }
         let kalamu_core::PieceRef::Page { number, .. } = piece else {
             return Err(ProviderError::Other("not a page".into()));
         };

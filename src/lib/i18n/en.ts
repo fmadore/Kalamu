@@ -455,6 +455,20 @@ export const en = {
 		pipelineImport: 'Import a pipeline',
 		pipelineImported: (name: string) => `Imported “${name}” with its prompts.`,
 		linesTitle: 'Line breaks',
+		together: {
+			title: 'Pages per call',
+			one: 'One page at a time',
+			one_hint: 'Recommended. Each page is read on its own.',
+			several: 'Several pages together',
+			several_hint: 'The model sees an article that runs over the next page. Fewer calls.',
+			whole: 'The whole document',
+			whole_hint: 'As many pages as the model can write in one answer.',
+			pages: 'Pages per call',
+			safety:
+				'Kalamu never sends more pages together than the model can write in one answer, and splits the answer back into pages for the review. A page the model leaves out, or that its answer cuts short, is read again on its own.',
+			economy: 'In the cheaper batch mode, pages are sent one at a time.',
+			noPrompt: (models: string) => `${models} reads pages one at a time.`
+		},
 		lines: {
 			running_text: 'Running text',
 			running_text_hint:
