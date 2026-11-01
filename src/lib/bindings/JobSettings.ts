@@ -2,6 +2,7 @@
 import type { LanguageChoice } from "./LanguageChoice";
 import type { LineBreaks } from "./LineBreaks";
 import type { Pace } from "./Pace";
+import type { PagesPerCall } from "./PagesPerCall";
 
 /**
  * Settings shared by every set-up in a job.
@@ -18,4 +19,8 @@ line_breaks: LineBreaks | null,
 /**
  * Whether cloud calls go one by one or as a cheaper batch.
  */
-pace: Pace, };
+pace: Pace, 
+/**
+ * How many pages of a PDF a text extraction sends in one call; one unless chosen.
+ */
+pages_per_call?: PagesPerCall, };

@@ -123,6 +123,69 @@ pub struct Limits {
     pub max_request_mb: Option<u32>,
     pub max_pages: Option<u32>,
     pub max_audio_minutes: Option<u32>,
+    /// The most the model writes in one answer, as its provider documents it; requests ask
+    /// for all of it. `None` when the provider documents no limit: none is sent, and the
+    /// model writes until it is done or its context is full.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub max_output_tokens: Option<u32>,
+}
+
+/// How much a model may think before it answers, in its provider's own words (`low`, `high`…).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct Reasoning {
+    /// The levels the model accepts, from least to most thinking.
+    pub levels: Vec<String>,
+    /// The provider's default, where it documents one; Kalamu always sends a level.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub default: Option<String>,
+}
+
+/// Every level providers use, from least to most thinking: a level asked of a model that lacks
+/// it becomes the nearest one it has.
+const REASONING_SCALE: &[&str] = &["none", "minimal", "low", "medium", "high", "xhigh", "max"];
+
+fn rank(level: &str) -> usize {
+    REASONING_SCALE
+        .iter()
+        .position(|l| *l == level)
+        .unwrap_or(REASONING_SCALE.len() / 2)
+}
+
+impl Reasoning {
+    /// The level suggested for a task. Reading a page, a recording or a text to correct needs
+    /// little thought, so the lowest; an analysis or a table of contents starts at `low`, or the
+    /// lowest where the model has no `low`. The researcher can raise either.
+    pub fn suggested(&self, task: Task) -> Option<&str> {
+        let lowest = self.levels.first().map(String::as_str);
+        match task {
+            Task::TextExtraction | Task::AudioTranscription | Task::TextCorrection => lowest,
+            Task::Analysis | Task::Contents => self
+                .levels
+                .iter()
+                .find(|l| *l == "low")
+                .map(String::as_str)
+                .or(lowest),
+        }
+    }
+
+    /// The level to send: the one chosen when the model has it, else the nearest it has (the
+    /// lower of two equally near), else the suggestion for the task.
+    pub fn level(&self, task: Task, chosen: Option<&str>) -> Option<String> {
+        let Some(chosen) = chosen else {
+            return self.suggested(task).map(str::to_string);
+        };
+        if self.levels.iter().any(|l| l == chosen) {
+            return Some(chosen.to_string());
+        }
+        let want = rank(chosen);
+        self.levels
+            .iter()
+            .min_by_key(|l| (rank(l).abs_diff(want), rank(l)))
+            .cloned()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -165,6 +228,11 @@ pub struct ModelInfo {
     pub pricing: Pricing,
     #[serde(default)]
     pub limits: Limits,
+    /// The thinking levels it accepts; `None` for a model that does not reason (an OCR or a
+    /// speech-to-text model).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub reasoning: Option<Reasoning>,
 }
 
 fn yes() -> bool {
@@ -176,6 +244,15 @@ impl ModelInfo {
     /// task's input.
     pub fn does(&self, task: Task) -> bool {
         self.tasks.contains(&task.request_task()) && task.reads(&self.inputs)
+    }
+
+    /// What a request for a task sends: the reasoning level (the set-up's choice, or the
+    /// suggestion) and the model's whole output limit.
+    pub fn tuning(&self, task: Task, chosen: Option<&str>) -> kalamu_core::Tuning {
+        kalamu_core::Tuning {
+            reasoning: self.reasoning.as_ref().and_then(|r| r.level(task, chosen)),
+            max_output_tokens: self.limits.max_output_tokens,
+        }
     }
 
     /// Whether this is the app's default for a task; the analysis default serves the tasks made
@@ -647,5 +724,75 @@ mod tests {
             .unwrap_or_else(|| panic!("no flash"));
         let merge = catalog.estimate_merge(&flash, 40, 0);
         assert!(merge.usd.is_some() && merge.economy_usd.is_none());
+    }
+
+    #[test]
+    fn reasoning_suggests_the_lowest_for_reading_and_keeps_to_the_levels_a_model_has() {
+        let catalog = Catalog::bundled();
+        let model = |id: &str| {
+            catalog
+                .models
+                .iter()
+                .find(|m| m.id == id)
+                .unwrap_or_else(|| panic!("{id}"))
+        };
+        for m in &catalog.models {
+            if let Some(r) = &m.reasoning {
+                assert!(!r.levels.is_empty(), "{}", m.id);
+                if let Some(d) = &r.default {
+                    assert!(r.levels.contains(d), "{} default", m.id);
+                }
+                let mut ranks = r.levels.iter().map(|l| rank(l));
+                assert!(
+                    ranks
+                        .clone()
+                        .zip(ranks.by_ref().skip(1))
+                        .all(|(a, b)| a < b),
+                    "{} levels out of order",
+                    m.id
+                );
+            }
+        }
+        let opus = model("claude-opus-5-5");
+        assert_eq!(opus.limits.max_output_tokens, Some(128_000));
+        let level = |m: &ModelInfo, task, chosen| m.tuning(task, chosen).reasoning;
+        // Reading a page: the lowest; an analysis: `low`; a choice the model has: kept.
+        assert_eq!(
+            level(opus, Task::TextExtraction, None).as_deref(),
+            Some("low")
+        );
+        let terra = model("gpt-6.1-terra");
+        assert_eq!(
+            level(terra, Task::TextExtraction, None).as_deref(),
+            Some("none")
+        );
+        assert_eq!(level(terra, Task::Analysis, None).as_deref(), Some("low"));
+        assert_eq!(
+            level(opus, Task::Analysis, Some("xhigh")).as_deref(),
+            Some("xhigh")
+        );
+        // A level the model lacks: the nearest it has, the lower of two equally near.
+        let medium = model("mistral-medium-3-5");
+        assert_eq!(level(medium, Task::Analysis, None).as_deref(), Some("none"));
+        assert_eq!(
+            level(medium, Task::Analysis, Some("xhigh")).as_deref(),
+            Some("high")
+        );
+        let large = model("mistral-large-4-0");
+        assert_eq!(
+            level(large, Task::Analysis, Some("none")).as_deref(),
+            Some("low")
+        );
+        assert_eq!(
+            level(large, Task::Analysis, Some("max")).as_deref(),
+            Some("high")
+        );
+        // OCR and speech-to-text models do not reason.
+        assert_eq!(
+            level(model("mistral-ocr-4-1"), Task::TextExtraction, Some("high")),
+            None
+        );
+        // Where Mistral documents no output limit, none is set.
+        assert_eq!(medium.limits.max_output_tokens, None);
     }
 }

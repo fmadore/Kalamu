@@ -15,6 +15,7 @@ use super::*;
 
 mod batch;
 mod contents;
+mod pages;
 mod snapshot;
 mod workflow;
 
@@ -27,6 +28,14 @@ struct Fake {
     cut_off: std::sync::atomic::AtomicU32,
     /// The texts analyses were sent, in order.
     read: Mutex<Vec<String>>,
+    /// What each call asked beyond the prompt.
+    tunings: Mutex<Vec<kalamu_core::Tuning>>,
+    /// The page ranges sent together, in order.
+    groups: Mutex<Vec<(u32, u32)>>,
+    /// A page a multi-page answer leaves unmarked (0: none).
+    unmarked: std::sync::atomic::AtomicU32,
+    /// Multi-page answers stop at the output limit.
+    cut_groups: std::sync::atomic::AtomicBool,
 }
 
 impl Fake {
@@ -36,6 +45,10 @@ impl Fake {
             failures: Mutex::new(HashMap::new()),
             cut_off: std::sync::atomic::AtomicU32::new(0),
             read: Mutex::new(Vec::new()),
+            tunings: Mutex::new(Vec::new()),
+            groups: Mutex::new(Vec::new()),
+            unmarked: std::sync::atomic::AtomicU32::new(0),
+            cut_groups: std::sync::atomic::AtomicBool::new(false),
         })
     }
 
@@ -71,6 +84,10 @@ impl Provider for Fake {
         request: ProcessRequest<'_>,
     ) -> Result<ProcessOutput, ProviderError> {
         self.calls.fetch_add(1, Ordering::SeqCst);
+        self.tunings
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .push(request.tuning.clone());
         let PreparedInput {
             piece, bytes, mime, ..
         } = request.input;
@@ -114,6 +131,43 @@ impl Provider for Fake {
             });
         }
         assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
+        // Several pages in one file: one text, each page after its mark.
+        if let Some(range) = request
+            .user_prompt
+            .split("This file holds pages ")
+            .nth(1)
+            .and_then(|rest| rest.split(" of the document").next())
+        {
+            let mut bounds = range.split(" to ").filter_map(|n| n.parse::<u32>().ok());
+            let (Some(first), Some(last)) = (bounds.next(), bounds.next()) else {
+                return Err(ProviderError::Other("no range".into()));
+            };
+            self.groups
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .push((first, last));
+            let unmarked = self.unmarked.load(Ordering::SeqCst);
+            let text: String = (first..=last)
+                .filter(|n| *n != unmarked)
+                .map(|n| {
+                    format!(
+                        "{}\n{} page {n}\n",
+                        kalamu_core::pages::marker(n),
+                        request.model
+                    )
+                })
+                .collect();
+            return Ok(ProcessOutput {
+                text,
+                usage: Usage {
+                    input_tokens: 1000,
+                    output_tokens: 100,
+                    ..Usage::default()
+                },
+                truncated: self.cut_groups.load(Ordering::SeqCst),
+                ..ProcessOutput::default()
+            });
+        }
         let kalamu_core::PieceRef::Page { number, .. } = piece else {
             return Err(ProviderError::Other("not a page".into()));
         };
@@ -1348,4 +1402,77 @@ fn a_job_keeps_only_the_formats_its_task_writes() {
         })
         .unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(job.output.formats, vec![ExportFormat::Txt]);
+}
+
+#[tokio::test]
+async fn a_set_up_s_reasoning_level_is_settled_and_sent_with_the_model_s_output_limit() {
+    let f = fixture();
+    // The fake model as the catalogue would list it: two levels, a documented output limit.
+    let mut catalog = kalamu_catalog::Catalog::bundled();
+    let mut fake = catalog
+        .models
+        .iter()
+        .find(|m| m.id == "gemini-3.8-flash")
+        .cloned()
+        .unwrap_or_else(|| panic!("model"));
+    fake.provider = ProviderId::new("fake");
+    fake.id = "fake-model".into();
+    fake.reasoning = Some(kalamu_catalog::Reasoning {
+        levels: vec!["none".into(), "high".into()],
+        default: None,
+    });
+    fake.limits.max_output_tokens = Some(4_096);
+    catalog.models.push(fake);
+    f.engine.set_catalog(catalog);
+
+    let job = f.new_job(vec![f.pdf("lettre.pdf", 1)], &["fake-model"]);
+    assert_eq!(
+        job.setups[0].options.reasoning.as_deref(),
+        Some("none"),
+        "reading a page: the lowest"
+    );
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let sent = f
+        .fake
+        .tunings
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .clone();
+    assert_eq!(
+        sent.last(),
+        Some(&kalamu_core::Tuning {
+            reasoning: Some("none".into()),
+            max_output_tokens: Some(4_096),
+        })
+    );
+
+    // A level the model lacks becomes the nearest it has, and is part of the answer's key.
+    let chosen = f
+        .engine
+        .create_job(NewJob {
+            name: "Higher".into(),
+            task: Task::TextExtraction,
+            sources: job.sources.clone(),
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: None,
+                label: None,
+                options: kalamu_core::SetupOptions {
+                    reasoning: Some("xhigh".into()),
+                    ..Default::default()
+                },
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(chosen.setups[0].options.reasoning.as_deref(), Some("high"));
+    let calls = f.fake.calls();
+    assert_eq!(f.run(chosen.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), calls + 1, "another level is another answer");
 }

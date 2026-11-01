@@ -11,6 +11,7 @@ use futures::stream::FuturesUnordered;
 use kalamu_core::{JobId, JobStatus, Pace, ProgressEvent, Setup, SetupId, Task};
 use kalamu_media::OpenSource;
 
+use crate::group::Unit;
 use crate::piece::{Input, Outcome};
 use crate::plan::Existing;
 use crate::{Control, Engine, EngineError};
@@ -160,7 +161,7 @@ impl Engine {
             }
 
             let mut in_flight = FuturesUnordered::new();
-            let mut queue = work.into_iter();
+            let mut queue = self.units(&job, source, work).into_iter();
             let mut stopped = false;
             let mut engine_error: Option<EngineError> = None;
             loop {
@@ -169,7 +170,7 @@ impl Engine {
                         stopped = true;
                         break;
                     }
-                    let Some((setup, state, key)) = queue.next() else {
+                    let Some(unit) = queue.next() else {
                         break;
                     };
                     let engine = self.clone();
@@ -181,18 +182,29 @@ impl Engine {
                         stop.clone(),
                     );
                     in_flight.push(tokio::spawn(async move {
-                        engine
-                            .process_piece(
-                                &job,
-                                &source,
-                                setup.step(),
-                                state,
-                                key,
-                                Input::Open(opened),
-                                spent,
-                                &stop,
-                            )
-                            .await
+                        match unit {
+                            Unit::One((setup, state, key)) => {
+                                engine
+                                    .process_piece(
+                                        &job,
+                                        &source,
+                                        setup.step(),
+                                        state,
+                                        key,
+                                        Input::Open(opened),
+                                        spent,
+                                        &stop,
+                                    )
+                                    .await
+                            }
+                            Unit::Group(setup, items) => {
+                                engine
+                                    .process_group(
+                                        &job, &source, &setup, items, opened, spent, &stop,
+                                    )
+                                    .await
+                            }
+                        }
                     }));
                 }
                 let Some(done) = in_flight.next().await else {

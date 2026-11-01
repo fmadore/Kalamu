@@ -204,6 +204,69 @@ impl PdfSource {
         }
     }
 
+    /// A standalone PDF holding whole pages `first..=last`, in order, for a model that reads
+    /// several pages in one call.
+    pub fn pages_pdf(&self, first: u32, last: u32) -> Result<Vec<u8>, MediaError> {
+        if first > last {
+            return Err(MediaError::NoSuchPage(format!("{first}-{last}")));
+        }
+        let mut pages = Vec::new();
+        for number in first..=last {
+            let page_id = self.page_id(number)?;
+            let mut page = self.page_dict(number)?;
+            for key in SKIPPED {
+                page.remove(key);
+            }
+            pages.push((page_id, page));
+        }
+        let ids: BTreeSet<ObjectId> = pages.iter().map(|(id, _)| *id).collect();
+        let mut keep = BTreeSet::new();
+        let mut stack: Vec<ObjectId> = Vec::new();
+        for (_, page) in &pages {
+            collect_refs(&Object::Dictionary(page.clone()), &mut stack);
+        }
+        while let Some(id) = stack.pop() {
+            if ids.contains(&id) || !keep.insert(id) {
+                continue;
+            }
+            if let Ok(object) = self.doc.get_object(id) {
+                collect_refs(object, &mut stack);
+            }
+        }
+        let mut out = Document::with_version(self.doc.version.clone());
+        for id in &keep {
+            if let Ok(object) = self.doc.get_object(*id) {
+                out.objects.insert(*id, strip(object.clone()));
+            }
+        }
+        out.max_id = self.doc.max_id;
+        let pages_id = out.new_object_id();
+        let count = pages.len() as i64;
+        let mut kids = Vec::new();
+        for (page_id, mut page) in pages {
+            page.set("Parent", Object::Reference(pages_id));
+            out.objects.insert(page_id, Object::Dictionary(page));
+            kids.push(Object::Reference(page_id));
+        }
+        out.objects.insert(
+            pages_id,
+            Object::Dictionary(Dictionary::from_iter([
+                ("Type", Object::Name(b"Pages".to_vec())),
+                ("Kids", Object::Array(kids)),
+                ("Count", Object::Integer(count)),
+            ])),
+        );
+        let catalog_id = out.add_object(Dictionary::from_iter([
+            ("Type", Object::Name(b"Catalog".to_vec())),
+            ("Pages", Object::Reference(pages_id)),
+        ]));
+        out.trailer.set("Root", Object::Reference(catalog_id));
+        let mut bytes = Vec::new();
+        out.save_to(&mut bytes)
+            .map_err(|e| MediaError::Pdf(e.to_string()))?;
+        Ok(bytes)
+    }
+
     /// A standalone PDF holding one page, or one half of a spread.
     pub fn page_pdf(&self, number: u32, half: Option<PageHalf>) -> Result<Vec<u8>, MediaError> {
         let page_id = self.page_id(number)?;

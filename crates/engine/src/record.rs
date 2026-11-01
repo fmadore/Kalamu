@@ -39,6 +39,7 @@ impl Engine {
                 pipeline.task,
                 &setup.provider,
                 &setup.model,
+                setup.options.reasoning.as_deref(),
                 takes_prompt.then(|| ProvenancePrompt::from_snapshot(&prompt)),
             )?;
             // A table of contents' second step, frozen as the job would freeze it.
@@ -58,6 +59,7 @@ impl Engine {
                     Task::Contents,
                     &merge.provider,
                     &merge.model,
+                    setup.options.reasoning.as_deref(),
                     Some(ProvenancePrompt::from_snapshot(&merge.prompt)),
                 )?));
             }
@@ -82,8 +84,10 @@ impl Engine {
         task: Task,
         provider: &ProviderId,
         model: &str,
+        reasoning: Option<&str>,
         prompt: Option<ProvenancePrompt>,
     ) -> Result<SetupRecord, EngineError> {
+        let tuning = self.tuning(task, provider, model, reasoning);
         Ok(SetupRecord {
             provider_name: catalog
                 .provider(provider)
@@ -91,7 +95,9 @@ impl Engine {
             model_name: catalog
                 .model(provider, model)
                 .map_or_else(|| model.to_string(), |m| m.name.clone()),
-            request: self.provider(provider)?.request_settings(task, model),
+            request: self
+                .provider(provider)?
+                .request_settings(task, model, &tuning),
             prompt,
             merge: None,
         })

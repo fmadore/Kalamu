@@ -48,6 +48,8 @@ export interface Draft {
 	label: string;
 	diarize: boolean;
 	timestamps: boolean;
+	/** How much the model thinks; `null` for the level suggested for the task. */
+	reasoning: string | null;
 	/** For a table of contents, the model that combines the pages: any provider's. */
 	mergeProvider: string;
 	mergeModel: string;
@@ -201,6 +203,7 @@ export function newDraft(
 		label: '',
 		diarize: true,
 		timestamps: true,
+		reasoning: null,
 		// The pages' provider combines them, with its cheapest model: one key is enough.
 		mergeProvider: provider,
 		mergeModel: mergeDefault(catalog, rule, provider)
@@ -217,7 +220,8 @@ export function toRequest(catalog: Catalog, task: Task, d: Draft): SetupRequest 
 			temperature: null,
 			diarize: task === 'audio_transcription' && d.diarize && labelsSpeakers(modelInfo(catalog, d)),
 			timestamps: task === 'audio_transcription' && d.timestamps,
-			speakers: null
+			speakers: null,
+			reasoning: d.reasoning ?? undefined
 		},
 		merge:
 			task === 'contents' && d.mergeModel
@@ -271,4 +275,11 @@ export function suggestName(added: string[], expanded: string[]): string {
 	const last = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() ?? '';
 	if (added.length === 1 && expanded.length > 1) return last(added[0]);
 	return expanded[0] ? last(expanded[0]) : '';
+}
+
+/** The reasoning level the engine suggests for a draft's model and the task; none for a model
+ * that does not reason. */
+export function suggestedReasoning(rule: TaskRules, d: Draft): string | undefined {
+	return rule.models.find((r) => r.provider === d.provider && r.model === d.model)
+		?.suggested_reasoning;
 }

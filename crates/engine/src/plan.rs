@@ -78,6 +78,13 @@ impl Engine {
     ) -> Result<Vec<Work>, EngineError> {
         let mut work = Vec::new();
         for setup in &job.setups {
+            // Pages read several at a time are answered in another context than alone: their
+            // keys say so, and an answer read one way is never reused for the other.
+            let mut fixes = crate::output::preprocessing(source);
+            let together = self.pages_per_call(job, source, setup);
+            if together > 1 {
+                fixes.push(format!("pages_per_call:{together}"));
+            }
             for (index, piece) in pieces.iter().enumerate() {
                 let index = index as u32;
                 // The combining step's key depends on the pages' results: it is worked out
@@ -95,7 +102,7 @@ impl Engine {
                     piece,
                     setup,
                     &job.settings.languages,
-                    &crate::output::preprocessing(source),
+                    &fixes,
                 );
                 let state = match existing.get(&(setup.id, source.id, index)) {
                     Some(s)

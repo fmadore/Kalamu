@@ -13,6 +13,7 @@ pub mod fingerprint;
 pub mod ids;
 pub mod job;
 pub mod language;
+pub mod pages;
 pub mod project;
 pub mod provenance;
 pub mod provider;
@@ -41,13 +42,14 @@ pub use job::{
     Job, JobSettings, JobStatus, JobSummary, LineBreaks, OutputDestination, OutputSettings, Pace,
 };
 pub use language::{LanguageChoice, LanguageCode};
+pub use pages::PagesPerCall;
 pub use project::{
     Collection, Document, DocumentLink, PreferredResult, Project, ProjectError, ProjectStore,
 };
 pub use provenance::Provenance;
 pub use provider::{
     ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, RequestSetting,
-    StopSignal,
+    StopSignal, Tuning,
 };
 pub use result::{
     Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,

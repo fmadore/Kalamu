@@ -19,6 +19,7 @@
 		modelsFor,
 		newDraft,
 		providerDefault,
+		suggestedReasoning,
 		rulesFor
 	} from '#lib/newJob.js';
 	import { app, go, hasKey, isInstalled } from '#lib/state.svelte.js';
@@ -118,6 +119,24 @@
 						</select>
 					{/if}
 				</label>
+				{#if info?.reasoning}
+					{@const suggested = suggestedReasoning(rule, d)}
+					<label class="field">
+						<span>{m.newJob.reasoning.title}<TermLink term="reasoning" /></span>
+						<select
+							value={d.reasoning && info.reasoning.levels.includes(d.reasoning) ? d.reasoning : ''}
+							onchange={(e) => (d.reasoning = e.currentTarget.value || null)}
+						>
+							<option value=""
+								>{m.newJob.reasoning.suggested(m.newJob.reasoning.level(suggested ?? ''))}</option
+							>
+							{#each info.reasoning.levels as level (level)}
+								<option value={level}>{m.newJob.reasoning.level(level)}</option>
+							{/each}
+						</select>
+						<span class="hint">{m.newJob.reasoning.hint}</span>
+					</label>
+				{/if}
 				{#if drafts.length > 1}
 					<label class="field">
 						<span>{m.newJob.label}</span>

@@ -5,7 +5,7 @@
 
 use kalamu_core::{
     AnalysisSchema, ApiKey, Field, FieldKind, FieldValue, LanguageChoice, LanguageCode, PieceRef,
-    PreparedInput, ProcessRequest, Provider, ProviderError, SetupOptions, StopSignal, Task,
+    PreparedInput, ProcessRequest, Provider, ProviderError, SetupOptions, StopSignal, Task, Tuning,
     YOUTUBE_LINK,
 };
 use kalamu_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
@@ -94,10 +94,14 @@ fn request<'a>(
         input,
         languages,
         options,
+        tuning: &TUNING,
         analysis: (task == Task::Analysis).then(|| &*FIELDS),
         stop: &STOP,
     }
 }
+
+/// A model the catalogue lacks: each provider's own settings.
+static TUNING: std::sync::LazyLock<Tuning> = std::sync::LazyLock::new(Tuning::default);
 
 /// Cloud providers ignore the stop signal; one shared, never-set signal will do.
 static STOP: std::sync::LazyLock<StopSignal> = std::sync::LazyLock::new(StopSignal::default);
@@ -746,7 +750,7 @@ async fn the_settings_a_provider_reports_are_the_ones_it_sends() {
             // absent from its body, not only those it keeps present.
             let named: Vec<String> = [Task::TextExtraction, Task::Analysis]
                 .into_iter()
-                .flat_map(|task| provider.request_settings(task, model))
+                .flat_map(|task| provider.request_settings(task, model, &TUNING))
                 .map(|s| s.name)
                 .collect();
             for (task, input) in [
@@ -846,7 +850,7 @@ async fn the_settings_recorded_for_a_batch_are_the_ones_it_sends() {
         let request = request(Task::TextExtraction, model, &input, &langs, &opts);
         let settings = provider.sent_settings(&request, true);
         let named: Vec<String> = provider
-            .request_settings(Task::TextExtraction, model)
+            .request_settings(Task::TextExtraction, model, &TUNING)
             .into_iter()
             .map(|s| s.name)
             .collect();
@@ -920,4 +924,103 @@ async fn an_answer_cut_off_at_the_output_limit_is_marked() {
         assert_eq!(output.text, "Bamako, le 3", "{model}");
         assert!(output.truncated, "{model}");
     }
+}
+
+/// A provider, its model, the task, and where its body holds the level and the output limit.
+type Case = (
+    Box<dyn Provider>,
+    &'static str,
+    Task,
+    &'static [&'static str],
+    &'static [&'static str],
+);
+
+#[tokio::test]
+async fn each_model_is_sent_its_own_reasoning_level_and_output_limit() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({})))
+        .mount(&server)
+        .await;
+    let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());
+    let whole = PreparedInput {
+        piece: PieceRef::Whole,
+        ..page()
+    };
+    let tuned = Tuning {
+        reasoning: Some("high".into()),
+        max_output_tokens: Some(128_000),
+    };
+    let cases: [Case; 4] = [
+        (
+            Box::new(Gemini::with_base_url(client(), &server.uri())),
+            "gemini-3.8-flash",
+            Task::TextExtraction,
+            &["generationConfig", "thinkingConfig", "thinkingLevel"],
+            &["generationConfig", "maxOutputTokens"],
+        ),
+        (
+            Box::new(OpenAi::with_base_url(client(), &server.uri())),
+            "gpt-6.1-terra",
+            Task::TextExtraction,
+            &["reasoning", "effort"],
+            &["max_output_tokens"],
+        ),
+        (
+            Box::new(Anthropic::with_base_url(client(), &server.uri())),
+            "claude-opus-5-5",
+            Task::TextExtraction,
+            &["output_config", "effort"],
+            &["max_tokens"],
+        ),
+        (
+            Box::new(Mistral::with_base_url(client(), &server.uri())),
+            "mistral-large-4-0",
+            Task::Analysis,
+            &["reasoning_effort"],
+            &["max_tokens"],
+        ),
+    ];
+    for (provider, model, task, level_at, limit_at) in cases {
+        let input = if task == Task::Analysis {
+            whole.clone()
+        } else {
+            page()
+        };
+        let mut request = request(task, model, &input, &langs, &opts);
+        request.tuning = &tuned;
+        let _ = provider.process(&ApiKey::new("k"), request).await;
+        let received = server.received_requests().await.unwrap_or_default();
+        let body: serde_json::Value = received
+            .last()
+            .and_then(|r| serde_json::from_slice(&r.body).ok())
+            .unwrap_or_default();
+        assert_eq!(
+            values_at(&body, level_at),
+            [&serde_json::json!("high")],
+            "{model}"
+        );
+        assert_eq!(
+            values_at(&body, limit_at),
+            [&serde_json::json!(128_000)],
+            "{model}"
+        );
+    }
+
+    // Where Mistral documents no output limit, none is sent: the model writes until it is done.
+    let mistral = Mistral::with_base_url(client(), &server.uri());
+    let mut request = request(Task::Analysis, "mistral-medium-3-5", &whole, &langs, &opts);
+    let open = Tuning {
+        reasoning: Some("none".into()),
+        max_output_tokens: None,
+    };
+    request.tuning = &open;
+    let _ = mistral.process(&ApiKey::new("k"), request).await;
+    let received = server.received_requests().await.unwrap_or_default();
+    let body: serde_json::Value = received
+        .last()
+        .and_then(|r| serde_json::from_slice(&r.body).ok())
+        .unwrap_or_default();
+    assert!(body.get("max_tokens").is_none(), "{body}");
+    assert_eq!(body["reasoning_effort"], "none");
 }

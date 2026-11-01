@@ -13,7 +13,7 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use kalamu_core::{
     ApiKey, LanguageChoice, LanguageCode, PCM_16K_MONO, ProcessOutput, ProcessRequest, Provider,
-    ProviderError, ProviderId, RequestSetting, Segment, StopSignal, Task, Usage,
+    ProviderError, ProviderId, RequestSetting, Segment, StopSignal, Task, Tuning, Usage,
 };
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
 
@@ -309,7 +309,7 @@ impl Provider for Whisper {
         }
     }
 
-    fn request_settings(&self, task: Task, _model: &str) -> Vec<RequestSetting> {
+    fn request_settings(&self, task: Task, _model: &str, _tuning: &Tuning) -> Vec<RequestSetting> {
         if task != Task::AudioTranscription {
             return Vec::new();
         }
@@ -324,7 +324,7 @@ impl Provider for Whisper {
     /// model, which it does when that model is downloaded: decided on this PC, so a pipeline's
     /// record leaves it out and each result's provenance says it.
     fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
-        let mut settings = self.request_settings(request.task, request.model);
+        let mut settings = self.request_settings(request.task, request.model, request.tuning);
         if request.task == Task::AudioTranscription {
             settings.extend(voice_detection(self.inner.models.vad_path().is_some()));
         }
@@ -509,6 +509,7 @@ mod tests {
                     input: &input,
                     languages: &languages,
                     options: &options,
+                    tuning: &Tuning::default(),
                     analysis: None,
                     stop: &stop,
                 },
@@ -526,7 +527,11 @@ mod tests {
         assert!(on.contains(&RequestSetting::new("vad", true)));
         assert!(on.contains(&RequestSetting::new("vad_model", "ggml-silero-v5.1.2")));
         // A pipeline's record, the same on every PC, leaves it out.
-        let fixed = whisper.request_settings(Task::AudioTranscription, "whisper-large-v3-turbo");
+        let fixed = whisper.request_settings(
+            Task::AudioTranscription,
+            "whisper-large-v3-turbo",
+            &Tuning::default(),
+        );
         assert!(!fixed.iter().any(|s| s.name.starts_with("vad")));
     }
 

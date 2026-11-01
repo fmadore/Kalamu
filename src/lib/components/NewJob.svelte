@@ -26,6 +26,7 @@
 	import { takesLanguage } from '#lib/languages.js';
 	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
 	import type { Pace } from '#lib/bindings/Pace.js';
+	import type { PagesPerCall } from '#lib/bindings/PagesPerCall.js';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import {
 		acceptsPrompt,
@@ -78,6 +79,9 @@
 	let presets = $state<Preset[]>([]);
 	let sample = $state(false);
 	let samplePages = $state(3);
+	/** How many pages of a PDF go in one call: one, several, or as many as fit. */
+	let together = $state<'one' | 'several' | 'whole'>('one');
+	let togetherPages = $state(4);
 	let formats = $state<ExportFormat[]>([]);
 	let destination = $state<OutputDestination>({ kind: 'beside_sources' });
 	let name = $state('');
@@ -126,6 +130,19 @@
 		task === 'text_extraction' || task === 'text_correction' || task === 'contents'
 	);
 	const linesApply = $derived(task === 'text_extraction' || task === 'text_correction');
+	const togetherOptions = (['one', 'several', 'whole'] as const).map((value) => ({
+		value,
+		label: m.newJob.together[value],
+		hint: m.newJob.together[`${value}_hint`]
+	}));
+	/** What the job sends for it; nothing for one page at a time, as before. */
+	const pagesPerCall = $derived<PagesPerCall | undefined>(
+		task !== 'text_extraction' || together === 'one'
+			? undefined
+			: together === 'whole'
+				? { kind: 'whole' }
+				: { kind: 'several', pages: Math.max(2, Math.round(togetherPages)) }
+	);
 	const lineOptions = (['running_text', 'as_on_page'] as const).map((value) => ({
 		value,
 		label: m.newJob.lines[value],
@@ -258,7 +275,8 @@
 					: { mode: 'auto' as const },
 			sample_pages: sample && paged ? samplePages : null,
 			line_breaks: linesApply && noPrompt.length < models.length ? lineBreaks : null,
-			pace: chosenPace
+			pace: chosenPace,
+			pages_per_call: pagesPerCall
 		};
 	}
 
@@ -328,6 +346,7 @@
 			presetId: s.preset_id,
 			label: s.label ?? '',
 			diarize: s.options.diarize,
+			reasoning: s.options.reasoning ?? null,
 			timestamps: s.options.timestamps,
 			mergeProvider: s.merge?.provider ?? s.provider,
 			mergeModel: s.merge?.model ?? s.model
@@ -336,6 +355,9 @@
 		languages = p.settings.languages.mode === 'explicit' ? [...p.settings.languages.languages] : [];
 		lineBreaks = p.settings.line_breaks ?? 'running_text';
 		pace = p.settings.pace ?? 'fast';
+		const sent = p.settings.pages_per_call;
+		together = !sent || sent.kind === 'one' ? 'one' : sent.kind;
+		if (sent?.kind === 'several') togetherPages = sent.pages;
 		sample = p.settings.sample_pages !== null;
 		samplePages = p.settings.sample_pages ?? samplePages;
 		formats = p.formats.filter((f) => rulesFor(app.rules, p.task).formats.includes(f));
@@ -540,6 +562,28 @@
 			</section>
 		{/if}
 
+		{#if task === 'text_extraction'}
+			<section class="step block" aria-labelledby="together-title">
+				<h2 id="together-title">{m.newJob.together.title}</h2>
+				<ChoiceStrip bind:value={together} options={togetherOptions} />
+				{#if together === 'several'}
+					<label class="field pages">
+						<span>{m.newJob.together.pages}</span>
+						<input type="number" min="2" max="100" bind:value={togetherPages} />
+					</label>
+				{/if}
+				{#if together !== 'one'}
+					<p class="hint">{m.newJob.together.safety}</p>
+					{#if chosenPace === 'economy'}
+						<p class="hint">{m.newJob.together.economy}</p>
+					{/if}
+					{#if noPrompt.length > 0}
+						<p class="hint">{m.newJob.together.noPrompt(listNames(noPrompt))}</p>
+					{/if}
+				{/if}
+			</section>
+		{/if}
+
 		{#if economyOffered}
 			<section class="step block" aria-labelledby="pace-title">
 				<h2 id="pace-title">{m.newJob.paceTitle}<TermLink term="economy" /></h2>
@@ -592,6 +636,10 @@
 </div>
 
 <style>
+	/* A page count, not a sentence: as wide as a few digits. */
+	.field.pages {
+		max-width: 10rem;
+	}
 	.from-project {
 		margin: var(--space-3) var(--space-5) 0;
 	}

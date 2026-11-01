@@ -144,6 +144,16 @@ no text layer needs *Extract text* instead.
   an answer language instead, by default the document's own and then said outright so that a
   model reading English instructions does not drift into English; names and titles stay as the
   document spells them, and a table of contents' entries are combined in one language.
+- **Pages per call.** A text extraction sends a PDF one page at a time, or several pages, or
+  as many as the model can write in one answer, so it sees an article that runs over the next
+  page. Each page is still reviewed, corrected and exported on its own: the model marks where
+  each page begins, and a page it leaves out or cuts short is read again alone
+  ([decision](decisions/2026-11-01-pages-per-call.md)).
+- **How much the model thinks.** For a model that reasons, *Thinking* offers the levels its
+  provider documents, set to a suggestion: the lowest for reading pages and recordings, `low`
+  for analyses. More thinking can help a hard hand or an analysis, and costs more. Every answer
+  may use the whole output the model is documented to give
+  ([decision](decisions/2026-11-01-output-limits-and-reasoning.md)).
 - **Current models.** The latest models for each task, updated as better ones appear (see
   [Keeping models current](#keeping-models-current)). Very expensive models carry a note that
   they are most likely more than the task needs.

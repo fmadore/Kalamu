@@ -414,6 +414,21 @@ export const en = {
 		model: 'Model',
 		prompt: 'Prompt',
 		noPrompt: 'This model takes no prompt',
+		reasoning: {
+			title: 'Thinking',
+			suggested: (level: string) => `${level} (suggested)`,
+			level: (level: string) =>
+				({
+					none: 'None',
+					minimal: 'Minimal',
+					low: 'Low',
+					medium: 'Medium',
+					high: 'High',
+					xhigh: 'Extra high',
+					max: 'Maximum'
+				})[level] ?? level,
+			hint: 'More thinking costs more and takes longer.'
+		},
 		label: 'Label',
 		compareAdd: 'Compare with another model',
 		analysis: 'Analysis',
@@ -440,6 +455,20 @@ export const en = {
 		pipelineImport: 'Import a pipeline',
 		pipelineImported: (name: string) => `Imported “${name}” with its prompts.`,
 		linesTitle: 'Line breaks',
+		together: {
+			title: 'Pages per call',
+			one: 'One page at a time',
+			one_hint: 'Recommended. Each page is read on its own.',
+			several: 'Several pages together',
+			several_hint: 'The model sees an article that runs over the next page. Fewer calls.',
+			whole: 'The whole document',
+			whole_hint: 'As many pages as the model can write in one answer.',
+			pages: 'Pages per call',
+			safety:
+				'Kalamu never sends more pages together than the model can write in one answer, and splits the answer back into pages for the review. A page the model leaves out, or that its answer cuts short, is read again on its own.',
+			economy: 'In the cheaper batch mode, pages are sent one at a time.',
+			noPrompt: (models: string) => `${models} reads pages one at a time.`
+		},
 		lines: {
 			running_text: 'Running text',
 			running_text_hint:
@@ -994,7 +1023,7 @@ export const en = {
 			},
 			reasoning: {
 				word: 'Reasoning effort',
-				text: 'How much some models work through a question before answering. The intermediate steps are billed as tokens written but not shown. More effort can help with hard judgements, such as an analysis or a difficult hand, and costs more and takes longer. Kalamu sets it for each task and records it in the provenance.'
+				text: 'How much some models work through a question before answering. The intermediate steps are billed as tokens written but not shown. More effort can help with hard judgements, such as an analysis or a difficult hand, and costs more and takes longer. Each model offers its own levels; New job suggests the lowest for reading pages and recordings, and you can choose another for each model under Thinking. The level used is recorded in the provenance.'
 			},
 			economy: {
 				word: 'Economy mode (batches)',

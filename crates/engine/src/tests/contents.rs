@@ -74,7 +74,12 @@ impl Provider for Structured {
     }
 
     /// A large model reads at a high effort, the small one combines at the lowest.
-    fn request_settings(&self, _task: Task, model: &str) -> Vec<kalamu_core::RequestSetting> {
+    fn request_settings(
+        &self,
+        _task: Task,
+        model: &str,
+        _tuning: &kalamu_core::Tuning,
+    ) -> Vec<kalamu_core::RequestSetting> {
         let effort = if model == "tiny" { "minimal" } else { "high" };
         vec![kalamu_core::RequestSetting::new("reasoning_effort", effort)]
     }

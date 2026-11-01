@@ -267,6 +267,31 @@ impl OpenSource {
         }
     }
 
+    /// Whole pages `first..=last` of a PDF as one input, for a model that reads several pages
+    /// in one call. Only a PDF read as pages (not split into halves) has them.
+    pub fn prepare_pages(
+        &self,
+        first: u32,
+        last: u32,
+        accepted: &[&str],
+        file_stem: &str,
+    ) -> Result<PreparedInput, MediaError> {
+        let Self::Pdf(pdf) = self else {
+            return Err(MediaError::UnsupportedKind);
+        };
+        if !accepted.contains(&"application/pdf") {
+            return Err(MediaError::NeedsConversion(
+                "This model does not read PDFs of several pages.".into(),
+            ));
+        }
+        Ok(PreparedInput {
+            piece: PieceRef::page(first),
+            file_name: format!("{file_stem}-p{first}-{last}.pdf"),
+            mime: "application/pdf".into(),
+            bytes: pdf.pages_pdf(first, last)?,
+        })
+    }
+
     /// One piece in the first of `accepted` MIME types this crate can produce.
     pub fn prepare(
         &self,

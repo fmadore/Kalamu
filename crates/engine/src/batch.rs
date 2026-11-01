@@ -45,7 +45,7 @@ impl BatchOutcome {
 }
 
 impl Engine {
-    pub(super) fn api_key(&self, setup: &Setup) -> Result<ApiKey, EngineError> {
+    pub(crate) fn api_key(&self, setup: &Setup) -> Result<ApiKey, EngineError> {
         self.keys
             .key(&setup.provider)
             .ok_or_else(|| EngineError::MissingKey(setup.provider.to_string()))

@@ -7,8 +7,8 @@ use std::time::{Duration, Instant};
 
 use kalamu_core::{
     ApiKey, CacheKey, Charge, Job, JobId, PieceState, PieceStatus, PreparedInput, ProcessOutput,
-    ProcessRequest, ProgressEvent, ProviderError, ProviderId, SourceFile, Step, StopSignal,
-    StoredResult, Task, Timestamp,
+    ProcessRequest, ProgressEvent, Provider, ProviderError, ProviderId, RequestSetting,
+    SetupOptions, SourceFile, Step, StopSignal, StoredResult, Task, Timestamp, Tuning,
 };
 use kalamu_media::OpenSource;
 
@@ -19,6 +19,21 @@ use crate::{Engine, EngineError};
 pub(crate) enum Input {
     Open(Arc<OpenSource>),
     Ready(PreparedInput),
+}
+
+/// How a call ended, after its retries.
+pub(crate) enum Called {
+    Answer {
+        output: ProcessOutput,
+        /// What the request carried, for provenance.
+        sent: Vec<RequestSetting>,
+        duration_ms: u64,
+    },
+    /// Stopped by a pause or cancel.
+    Interrupted,
+    /// The key or the account is unusable.
+    Fatal(ProviderError),
+    Failed(Option<ProviderError>),
 }
 
 /// How a piece ended, for the job's final status.
@@ -53,6 +68,26 @@ pub(crate) fn finish(task: Task, output: ProcessOutput) -> ProcessOutput {
 }
 
 impl Engine {
+    /// What a request to `model` asks beyond the prompt: the reasoning level chosen for the
+    /// set-up (the suggestion when none was, the nearest the model has when it lacks it) and
+    /// the model's whole output limit, from the catalogue. A model the catalogue lacks is sent
+    /// the level chosen, and its provider's own limit.
+    pub(crate) fn tuning(
+        &self,
+        task: Task,
+        provider: &ProviderId,
+        model: &str,
+        chosen: Option<&str>,
+    ) -> Tuning {
+        self.catalog()
+            .model(provider, model)
+            .map(|m| m.tuning(task, chosen))
+            .unwrap_or_else(|| Tuning {
+                reasoning: chosen.map(str::to_string),
+                max_output_tokens: None,
+            })
+    }
+
     /// The provider's formats for the task, narrowed to those the model reads: a text-only
     /// model behind a provider that takes PDFs and images is sent text alone. A correction
     /// sends text whatever the model reads.
@@ -134,6 +169,104 @@ impl Engine {
             .find(|s| s.id == state.setup_id)
             .map(|s| s.options.clone())
             .unwrap_or_default();
+        let called = self
+            .call(
+                job,
+                step,
+                &provider,
+                &api_key,
+                &mut state,
+                &input,
+                &step.prompt.user_prompt,
+                &options,
+                &spent,
+                stop,
+            )
+            .await?;
+        match called {
+            Called::Answer {
+                output,
+                sent,
+                duration_ms,
+            } => {
+                let output = finish(job.task, output);
+                let cost = self.store_answer(&key, step, output.clone(), sent, duration_ms)?;
+                state.status = PieceStatus::Done;
+                state.error = None;
+                self.save(&mut state, Some(preview(&output.text)))?;
+                self.add_cost(job.id, &spent, cost);
+                Ok(Outcome::Finished)
+            }
+            Called::Interrupted => {
+                state.status = PieceStatus::Pending;
+                state.error = None;
+                self.save(&mut state, None)?;
+                Ok(Outcome::Interrupted)
+            }
+            Called::Fatal(err) => {
+                state.status = PieceStatus::Failed;
+                state.error = Some(err.to_string());
+                self.save(&mut state, None)?;
+                Ok(Outcome::Fatal(err.to_string()))
+            }
+            Called::Failed(err) => {
+                state.status = PieceStatus::Failed;
+                state.error = err.map(|e| e.to_string());
+                self.save(&mut state, None)?;
+                Ok(Outcome::Failed)
+            }
+        }
+    }
+
+    /// Stores an answer under its key with what it cost, and returns the cost.
+    pub(crate) fn store_answer(
+        &self,
+        key: &CacheKey,
+        step: Step<'_>,
+        output: ProcessOutput,
+        sent: Vec<RequestSetting>,
+        duration_ms: u64,
+    ) -> Result<Option<f64>, EngineError> {
+        let catalog = self.catalog();
+        let cost = catalog
+            .model(step.provider, step.model)
+            .and_then(|m| catalog.actual_cost(m, &output.usage));
+        self.store.put_result(&StoredResult {
+            cache_key: key.0.clone(),
+            provider: step.provider.clone(),
+            model: step.model.to_string(),
+            output,
+            request: sent,
+            cost_usd: cost,
+            duration_ms,
+            created_at: Timestamp::now(),
+        })?;
+        Ok(cost)
+    }
+
+    /// One call with its retries: a rate limit waits as long as asked, a passing failure is
+    /// tried again after a growing delay, a pause or cancel ends the wait. Answers billed but
+    /// refused are charged to `state`'s piece, whose attempts are counted.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) async fn call(
+        &self,
+        job: &Job,
+        step: Step<'_>,
+        provider: &Arc<dyn Provider>,
+        api_key: &ApiKey,
+        state: &mut PieceState,
+        input: &PreparedInput,
+        user_prompt: &str,
+        options: &SetupOptions,
+        spent: &Arc<Mutex<f64>>,
+        stop: &StopSignal,
+    ) -> Result<Called, EngineError> {
+        let tuning = self.tuning(
+            job.task,
+            step.provider,
+            step.model,
+            options.reasoning.as_deref(),
+        );
         let started = Instant::now();
         let mut last_error: Option<ProviderError> = None;
         for attempt in 0..self.config.max_attempts {
@@ -142,54 +275,29 @@ impl Engine {
                 task: job.task,
                 model: step.model,
                 prompt: &step.prompt.text,
-                user_prompt: &step.prompt.user_prompt,
-                input: &input,
+                user_prompt,
+                input,
                 languages: &job.settings.languages,
-                options: &options,
+                options,
+                tuning: &tuning,
                 analysis: step.prompt.schema.as_ref(),
                 stop,
             };
             let sent = provider.sent_settings(&request, false);
-            let answer = provider.process(&api_key, request).await;
+            let answer = provider.process(api_key, request).await;
             if let Err(err) = &answer {
-                self.charge(&state, step.provider, step.model, err, &spent)?;
+                self.charge(state, step.provider, step.model, err, spent)?;
             }
             match answer {
                 Ok(output) => {
-                    let output = finish(job.task, output);
-                    let catalog = self.catalog();
-                    let cost = catalog
-                        .model(step.provider, step.model)
-                        .and_then(|m| catalog.actual_cost(m, &output.usage));
-                    let result = StoredResult {
-                        cache_key: key.0.clone(),
-                        provider: step.provider.clone(),
-                        model: step.model.to_string(),
+                    return Ok(Called::Answer {
                         output,
-                        request: sent,
-                        cost_usd: cost,
+                        sent,
                         duration_ms: started.elapsed().as_millis() as u64,
-                        created_at: Timestamp::now(),
-                    };
-                    self.store.put_result(&result)?;
-                    state.status = PieceStatus::Done;
-                    state.error = None;
-                    self.save(&mut state, Some(preview(&result.output.text)))?;
-                    self.add_cost(job.id, &spent, cost);
-                    return Ok(Outcome::Finished);
+                    });
                 }
-                Err(ProviderError::Interrupted) => {
-                    state.status = PieceStatus::Pending;
-                    state.error = None;
-                    self.save(&mut state, None)?;
-                    return Ok(Outcome::Interrupted);
-                }
-                Err(err) if err.is_fatal_for_job() => {
-                    state.status = PieceStatus::Failed;
-                    state.error = Some(err.to_string());
-                    self.save(&mut state, None)?;
-                    return Ok(Outcome::Fatal(err.to_string()));
-                }
+                Err(ProviderError::Interrupted) => return Ok(Called::Interrupted),
+                Err(err) if err.is_fatal_for_job() => return Ok(Called::Fatal(err)),
                 Err(err) if crate::is_retryable(&err) && attempt + 1 < self.config.max_attempts => {
                     let delay = match &err {
                         ProviderError::RateLimited {
@@ -203,10 +311,7 @@ impl Engine {
                     // Paused or cancelled meanwhile: no further attempt, which would be paid
                     // for; the piece waits for the job to resume.
                     if wait_unless_stopped(delay, stop).await {
-                        state.status = PieceStatus::Pending;
-                        state.error = None;
-                        self.save(&mut state, None)?;
-                        return Ok(Outcome::Interrupted);
+                        return Ok(Called::Interrupted);
                     }
                 }
                 Err(err) => {
@@ -215,10 +320,7 @@ impl Engine {
                 }
             }
         }
-        state.status = PieceStatus::Failed;
-        state.error = last_error.map(|e| e.to_string());
-        self.save(&mut state, None)?;
-        Ok(Outcome::Failed)
+        Ok(Called::Failed(last_error))
     }
 
     /// Stores a piece's new state and reports it.

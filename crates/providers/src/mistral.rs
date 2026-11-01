@@ -15,7 +15,7 @@ use async_trait::async_trait;
 use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, LanguageChoice, LanguageCode, ProcessOutput,
     ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, TextRegion,
-    Usage,
+    Tuning, Usage,
 };
 use reqwest::Client;
 use reqwest::multipart::{Form, Part};
@@ -313,14 +313,16 @@ impl Provider for Mistral {
         }
     }
 
-    fn request_settings(&self, task: Task, model: &str) -> Vec<RequestSetting> {
+    fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
         match task {
             Task::TextExtraction => vec![
                 RequestSetting::new("include_image_base64", false),
                 RequestSetting::new("table_format", OCR_TABLE_FORMAT),
                 RequestSetting::new("include_blocks", true),
             ],
-            Task::Analysis | Task::Contents | Task::TextCorrection => chat::request_settings(model),
+            Task::Analysis | Task::Contents | Task::TextCorrection => {
+                chat::request_settings(model, tuning)
+            }
             Task::AudioTranscription => Vec::new(),
         }
     }

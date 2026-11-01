@@ -19,4 +19,11 @@ timestamps: boolean,
 /**
  * Expected number of speakers, if known.
  */
-speakers: number | null, };
+speakers: number | null, 
+/**
+ * How much the model thinks before it answers, in its provider's words (`low`, `high`).
+ * Chosen in New job, or the suggestion for the task; settled when the job is created, so
+ * the job, its cache keys and provenance hold the level sent. `None` for a model that does
+ * not reason, and in jobs made before levels could be chosen.
+ */
+reasoning?: string, };
