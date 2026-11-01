@@ -3,14 +3,17 @@
 	// from it. Selected documents can be grouped, ungrouped, removed, or sent to New job, whose
 	// job is then tied to them.
 	import Icon from './Icon.svelte';
+	import TagInput from './TagInput.svelte';
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { DocumentRow } from '#lib/bindings/DocumentRow.js';
+	import type { TagView } from '#lib/bindings/TagView.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDate, formatDateTime, messages } from '#lib/i18n/index.js';
 	import {
 		selectionPaths,
 		shownDocuments,
 		sortDocuments,
+		tagsOf,
 		taskFor,
 		type DocumentSort
 	} from '#lib/projects.js';
@@ -22,6 +25,7 @@
 		projectName,
 		rows,
 		collections,
+		tags,
 		collectionId,
 		onchange,
 		onerror
@@ -30,6 +34,7 @@
 		projectName: string;
 		rows: DocumentRow[];
 		collections: CollectionView[];
+		tags: TagView[];
 		collectionId?: string;
 		onchange: () => Promise<void>;
 		onerror: (message: string) => void;
@@ -40,11 +45,16 @@
 	let sort = $state<DocumentSort>('title');
 	let selected = $state<string[]>([]);
 	let target = $state('');
+	let tag = $state('');
+	let untagging = $state('');
 
-	const shown = $derived(sortDocuments(shownDocuments(rows, collectionId, query), sort));
+	// A tag no document carries any longer stops filtering.
+	const filterTag = $derived(tags.some((t) => t.name === tag) ? tag : '');
+	const shown = $derived(sortDocuments(shownDocuments(rows, collectionId, query, filterTag), sort));
 	const chosen = $derived(shown.filter((r) => selected.includes(r.document.id)));
 	const allChosen = $derived(shown.length > 0 && chosen.length === shown.length);
 	const names = $derived(new Map(collections.map((c) => [c.collection.id, c.collection.name])));
+	const chosenTags = $derived(tagsOf(chosen));
 
 	function toggle(id: string) {
 		selected = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
@@ -65,6 +75,18 @@
 		if (!id) return;
 		const ids = chosen.map((r) => r.document.id);
 		await act(() => api.addToCollection(projectId, id, ids));
+	}
+
+	async function addTag(name: string) {
+		const ids = chosen.map((r) => r.document.id);
+		await act(() => api.tagDocuments(projectId, ids, name));
+	}
+
+	async function removeTag(name: string) {
+		untagging = '';
+		if (!name) return;
+		const ids = chosen.map((r) => r.document.id);
+		await act(() => api.untagDocuments(projectId, ids, name));
 	}
 
 	async function removeFromCollection() {
@@ -106,6 +128,14 @@
 				aria-label={m.projects.search}
 			/>
 		</label>
+		{#if tags.length > 0}
+			<select bind:value={tag} aria-label={m.projects.tagFilter}>
+				<option value="">{m.projects.anyTag}</option>
+				{#each tags as t (t.name)}
+					<option value={t.name}>{m.projects.tagCount(t.name, t.documents)}</option>
+				{/each}
+			</select>
+		{/if}
 		<label class="sort">
 			<span>{m.projects.sortBy}</span>
 			<select bind:value={sort}>
@@ -146,6 +176,19 @@
 					<option value="">{m.projects.addTo}</option>
 					{#each collections.filter((c) => c.collection.id !== collectionId) as c (c.collection.id)}
 						<option value={c.collection.id}>{c.collection.name}</option>
+					{/each}
+				</select>
+			{/if}
+			<TagInput known={tags.map((t) => t.name)} onadd={addTag} />
+			{#if chosenTags.length > 0}
+				<select
+					bind:value={untagging}
+					onchange={() => removeTag(untagging)}
+					aria-label={m.projects.removeTag}
+				>
+					<option value="">{m.projects.removeTag}</option>
+					{#each chosenTags as name (name)}
+						<option value={name}>{name}</option>
 					{/each}
 				</select>
 			{/if}
@@ -212,6 +255,15 @@
 							{#each row.collections as id (id)}
 								<span class="chip">{names.get(id)}</span>
 							{/each}
+							{#each doc.tags as name (name)}
+								<button
+									class="chip tag"
+									class:on={name === filterTag}
+									aria-pressed={name === filterTag}
+									onclick={() => (tag = name === filterTag ? '' : name)}
+									><Icon name="tag" size={11} />{name}</button
+								>
+							{/each}
 						</td>
 						<td class="results">
 							{#if row.tasks.length === 0}
@@ -270,6 +322,16 @@
 		gap: var(--space-2);
 		font-size: var(--type-sm);
 		color: var(--text-secondary);
+	}
+	.chip.tag {
+		border: 0;
+		cursor: pointer;
+		gap: 0.25rem;
+	}
+	.chip.tag:hover,
+	.chip.tag.on {
+		background: var(--wash);
+		color: var(--text-bright);
 	}
 	.selection {
 		display: flex;

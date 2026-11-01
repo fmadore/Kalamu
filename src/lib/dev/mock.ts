@@ -210,7 +210,9 @@ const summaries: JobSummary[] = [
 		pieces_finished: 6,
 		pieces_failed: 0,
 		pieces_truncated: 1,
-		cost_usd: 0.0162
+		cost_usd: 0.0162,
+		models: ['gemini-3.8-flash'],
+		workflow: 'Bulletins: text, then people and places'
 	},
 	{
 		id: '00000000-0000-0000-0000-0000000000j2',
@@ -225,7 +227,9 @@ const summaries: JobSummary[] = [
 		pieces_finished: 2,
 		pieces_failed: 0,
 		pieces_truncated: 0,
-		cost_usd: 0.02
+		cost_usd: 0.02,
+		models: ['voxtral-mini-transcribe-2'],
+		workflow: null
 	}
 ];
 

@@ -383,6 +383,10 @@ analysed, compared. A **project** keeps it together
 - **Collections** group documents as the researcher likes (correspondence, a newspaper's
   issues, the interviews of one village); a document can be in several, held once. Leaving a
   collection, or deleting it, keeps the document in the project.
+- **Tags** are the researcher's own labels, further filters beside the collections: a
+  selection or a document is tagged and untagged, the table narrowed by a tag, and the search
+  finds tags too. A tag differing only in capitals from one the project uses takes its
+  spelling, so one label is never split in two; merging two documents keeps the tags of both.
 - **Every result of a document together**, whatever job made it: each set-up of each job that
   read it, with its progress, how much was reviewed and corrected, what it cost, opening its
   review. The researcher can mark one per task as **preferred**: never chosen by the app, and
@@ -392,7 +396,9 @@ analysed, compared. A **project** keeps it together
   its files are matched to documents, shown for the researcher to confirm: the same file is
   proposed, the same content elsewhere only offered. Its results come as they are; nothing is
   sent again.
-- **Activity**: the jobs that read the project's documents, with their controls as in Jobs.
+- **Activity**: the jobs that read the project's documents, with their controls as in Jobs,
+  narrowed by task, state, model, workflow and date started; the jobs shown are costed
+  together, and those without a price yet are counted apart.
 - **Workflows on a selection**: a selection can run a workflow; every step's job is tied to
   the documents it read, and the run keeps the files it started with.
 - **Organising never changes work.** Collections, titles, links and preferences call no model.

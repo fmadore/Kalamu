@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DocumentRow } from './bindings/DocumentRow.js';
 import type { InputKind } from './bindings/InputKind.js';
-import { selectionPaths, shownDocuments, sortDocuments, taskFor } from './projects.js';
+import { selectionPaths, shownDocuments, sortDocuments, tagsOf, taskFor } from './projects.js';
 
 function row(
 	title: string,
@@ -12,6 +12,7 @@ function row(
 		added?: number;
 		run?: number | null;
 		missing?: boolean;
+		tags?: string[];
 	} = {}
 ): DocumentRow {
 	const path = options.path ?? `C:\\Archives\\${title}.pdf`;
@@ -32,7 +33,8 @@ function row(
 				split_spreads: false,
 				even_out_volume: false
 			},
-			created_at: options.added ?? 0
+			created_at: options.added ?? 0,
+			tags: options.tags ?? []
 		},
 		collections: options.collections ?? [],
 		tasks: [],
@@ -78,6 +80,20 @@ describe('the project document table', () => {
 			'Interview',
 			'page 10'
 		]);
+	});
+
+	it('narrows by tag, finds words in tags, and lists the tags of a selection', () => {
+		const tagged = [
+			row('Lettre', { collections: ['letters'], tags: ['Dakar', 'Pèlerinage'] }),
+			row('Bulletin', { tags: ['Dakar'] }),
+			row('Interview')
+		];
+		const titles = (list: DocumentRow[]) => list.map((r) => r.document.title);
+		expect(titles(shownDocuments(tagged, undefined, '', 'Dakar'))).toEqual(['Lettre', 'Bulletin']);
+		expect(titles(shownDocuments(tagged, 'letters', '', 'Dakar'))).toEqual(['Lettre']);
+		expect(titles(shownDocuments(tagged, undefined, 'pelerinage'))).toEqual(['Lettre']);
+		expect(tagsOf(tagged)).toEqual(['Dakar', 'Pèlerinage']);
+		expect(tagsOf([tagged[2]])).toEqual([]);
 	});
 
 	it('opens New job on the right task with the files still on disk', () => {

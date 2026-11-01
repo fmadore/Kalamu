@@ -288,6 +288,7 @@
 					projectName={view.project.name}
 					rows={view.documents}
 					collections={view.collections}
+					tags={view.tags}
 					{collectionId}
 					onchange={load}
 					onerror={(e) => (error = e)}

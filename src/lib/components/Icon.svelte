@@ -41,6 +41,7 @@
 	import Settings from '@lucide/svelte/icons/settings';
 	import SpellCheck from '@lucide/svelte/icons/spell-check';
 	import Star from '@lucide/svelte/icons/star';
+	import Tag from '@lucide/svelte/icons/tag';
 	import TextSearch from '@lucide/svelte/icons/text-search';
 	import Unlink from '@lucide/svelte/icons/unlink';
 	import WorkflowIcon from '@lucide/svelte/icons/workflow';
@@ -87,6 +88,7 @@
 		'turn-left': RotateCcwSquare,
 		'turn-right': RotateCwSquare,
 		star: Star,
+		tag: Tag,
 		text_extraction: FileText,
 		audio_transcription: Mic,
 		analysis: TextSearch,

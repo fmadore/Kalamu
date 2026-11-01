@@ -24,7 +24,7 @@ mod views;
 pub use attach::{AttachChoice, SourceMatch};
 pub use views::{
     CollectionView, DocumentBrief, DocumentDetail, DocumentResult, DocumentRow, ProjectView,
-    TaskBrief,
+    TagView, TaskBrief,
 };
 
 /// A project as the list of projects shows it.

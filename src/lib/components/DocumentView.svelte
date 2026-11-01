@@ -1,9 +1,10 @@
 <script lang="ts">
-	// One document: its original, its collections, and every result read from it across jobs,
+	// One document: its original, its collections and tags, and every result read from it across jobs,
 	// task by task, each opening its review. The researcher can mark the result they rely on as
 	// preferred; a newer run never takes its place.
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
+	import TagInput from './TagInput.svelte';
 	import UseTextMenu from './UseTextMenu.svelte';
 	import type { DocumentDetail } from '#lib/bindings/DocumentDetail.js';
 	import type { DocumentResult } from '#lib/bindings/DocumentResult.js';
@@ -64,6 +65,14 @@
 	function renameKeys(e: KeyboardEvent) {
 		if (e.key === 'Enter') void rename();
 		else if (e.key === 'Escape') draftTitle = null;
+	}
+
+	async function addTag(tag: string) {
+		await act(() => api.tagDocuments(projectId, [documentId], tag));
+	}
+
+	function removeTag(tag: string) {
+		void act(() => api.untagDocuments(projectId, [documentId], tag));
 	}
 
 	function toggleCollection(id: string, member: boolean) {
@@ -168,6 +177,28 @@
 					{/each}
 				</div>
 			{/if}
+		</section>
+
+		<section class="card block" aria-labelledby="tags-title">
+			<h2 id="tags-title">{m.projects.document.tags}</h2>
+			{#if detail.document.tags.length === 0}
+				<p class="muted">{m.projects.document.noTags}</p>
+			{:else}
+				<ul class="tags">
+					{#each detail.document.tags as tag (tag)}
+						<li class="chip">
+							<Icon name="tag" size={11} />{tag}
+							<button
+								class="untag"
+								aria-label={m.projects.removeTagFrom(tag)}
+								title={m.projects.removeTagFrom(tag)}
+								onclick={() => removeTag(tag)}><Icon name="close" size={11} /></button
+							>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			<TagInput known={project.tags.map((t) => t.name)} onadd={addTag} />
 		</section>
 
 		{#if detail.same_content.length > 0}
@@ -300,6 +331,25 @@
 		gap: var(--space-2) var(--space-3);
 		font-size: var(--type-sm);
 		color: var(--text-secondary);
+	}
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin: 0 0 var(--space-3);
+		padding: 0;
+		list-style: none;
+	}
+	.untag {
+		display: inline-flex;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--text-muted);
+		cursor: pointer;
+	}
+	.untag:hover {
+		color: var(--text-bright);
 	}
 	.memberships {
 		display: flex;

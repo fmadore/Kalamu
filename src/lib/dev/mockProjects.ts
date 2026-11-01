@@ -67,7 +67,8 @@ export function seedProjects(sample: MockJobs): void {
 		project_id: PROJECT_ID,
 		title,
 		source,
-		created_at: now - age * day
+		created_at: now - age * day,
+		tags: []
 	});
 	documents = [
 		doc(DOCUMENT_ID, 'Bulletin, May 1957', sample.job.sources[0], 12),
@@ -92,7 +93,19 @@ export function seedProjects(sample: MockJobs): void {
 		[DOCUMENT_ID, sample.analysisJob.id, sample.analysisJob.sources[0].id],
 		[documents[1].id, sample.audioJob.id, sample.audioJob.sources[0].id]
 	];
+	documents[0].tags = ['Dakar', 'Pilgrimage'];
+	documents[1].tags = ['Interviews'];
+	documents[2].tags = ['Dakar'];
 	preferred.add(`${DOCUMENT_ID}/${sample.job.setups[1].id}`);
+}
+
+/** The tags of some documents, counted, as the store counts them. */
+function tagsOf(of: Document[]): { name: string; documents: number }[] {
+	const counts = new Map<string, number>();
+	for (const tag of of.flatMap((d) => d.tags)) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+	return [...counts]
+		.map(([name, n]) => ({ name, documents: n }))
+		.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
 function results(documentId: string): DocumentResult[] {
@@ -156,6 +169,7 @@ function view(id: string): ProjectView {
 				last_run: rs.length > 0 ? Math.max(...rs.map((r) => r.created_at)) : null
 			};
 		}),
+		tags: tagsOf(mine),
 		jobs: [...new Set(links.map(([, j]) => j))]
 	};
 }
@@ -222,7 +236,8 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 					project_id: String(a.project),
 					title: source.file_name.replace(/\.[^.]+$/, ''),
 					source,
-					created_at: Date.now()
+					created_at: Date.now(),
+					tags: []
 				};
 				return document;
 			});
@@ -240,6 +255,26 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 		case 'remove_from_collection':
 			members = members.filter(
 				([c, d]) => !(c === a.collection && (a.ids as string[]).includes(d))
+			);
+			return null;
+		case 'tag_documents': {
+			const typed = String(a.tag).trim().replace(/\s+/g, ' ');
+			if (!typed) throw { id: 'project.no_tag', detail: '' };
+			const spelled =
+				documents.flatMap((d) => d.tags).find((t) => t.toLowerCase() === typed.toLowerCase()) ??
+				typed;
+			documents = documents.map((d) =>
+				(a.ids as string[]).includes(d.id) && !d.tags.includes(spelled)
+					? { ...d, tags: [...d.tags, spelled].sort((x, y) => x.localeCompare(y)) }
+					: d
+			);
+			return null;
+		}
+		case 'untag_documents':
+			documents = documents.map((d) =>
+				(a.ids as string[]).includes(d.id)
+					? { ...d, tags: d.tags.filter((t) => t.toLowerCase() !== String(a.tag).toLowerCase()) }
+					: d
 			);
 			return null;
 		case 'delete_documents':

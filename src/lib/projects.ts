@@ -7,20 +7,21 @@ import { folded } from './search.js';
 
 export type DocumentSort = 'title' | 'added' | 'run';
 
-/** The documents of a collection (all with `undefined`) whose title, file name or folder
- *  holds the words, capitals and accents ignored. */
+/** The documents of a collection (all with `undefined`), carrying a tag (any with `''`),
+ *  whose title, file name, folder or tags hold the words, capitals and accents ignored. */
 export function shownDocuments(
 	rows: DocumentRow[],
 	collectionId: string | undefined,
-	query: string
+	query: string,
+	tag = ''
 ): DocumentRow[] {
 	const words = folded(query).split(/\s+/).filter(Boolean);
 	return rows.filter((row) => {
 		if (collectionId && !row.collections.includes(collectionId)) return false;
+		if (tag && !row.document.tags.includes(tag)) return false;
 		if (words.length === 0) return true;
-		const haystack = folded(
-			`${row.document.title} ${row.document.source.file_name} ${row.document.source.path}`
-		);
+		const { title, source, tags } = row.document;
+		const haystack = folded(`${title} ${source.file_name} ${source.path} ${tags.join(' ')}`);
 		return words.every((w) => haystack.includes(w));
 	});
 }
@@ -56,4 +57,11 @@ export function selectionPaths(rows: DocumentRow[]): string[] {
 	return rows
 		.filter((r) => !r.missing && r.document.source.kind !== 'youtube')
 		.map((r) => r.document.source.path);
+}
+
+/** The tags some documents carry, each once, sorted as a reader sorts. */
+export function tagsOf(rows: DocumentRow[]): string[] {
+	return [...new Set(rows.flatMap((r) => r.document.tags))].sort((a, b) =>
+		a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+	);
 }

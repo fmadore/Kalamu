@@ -244,6 +244,31 @@ export const en = {
 		activityLede: 'The jobs that read this project’s documents, newest first.',
 		noActivity:
 			'No job has read these documents yet. Select documents and choose “New job with these”.',
+		activityFilters: 'Filter the jobs',
+		filterBy: {
+			task: 'Task',
+			status: 'State',
+			model: 'Model',
+			workflow: 'Workflow',
+			period: 'Started'
+		},
+		anyTask: 'Any task',
+		anyStatus: 'Any state',
+		anyModel: 'Any model',
+		anyWorkflow: 'In a workflow or not',
+		period: {
+			any: 'Any time',
+			week: 'Past 7 days',
+			month: 'Past 30 days',
+			year: 'Past year'
+		},
+		clearFilters: 'Show all',
+		noActivityMatch: 'No job matches these filters.',
+		activityShown: (shown: number, total: number) =>
+			shown === total ? (total === 1 ? '1 job' : `${total} jobs`) : `${shown} of ${total} jobs`,
+		activityCost: (cost: string) => `${cost} spent`,
+		activityUnpriced: (n: number) =>
+			`${n === 1 ? '1' : n} without a price (offline or not yet answered)`,
 		addFiles: 'Add files',
 		addFolder: 'Add a folder',
 		addedFiles: (n: number) => (n === 1 ? '1 document added' : `${n} documents added`),
@@ -262,7 +287,17 @@ export const en = {
 		sortRun: 'Last read',
 		columnTitle: 'Document',
 		columnKind: 'Kind',
-		columnCollections: 'Collections',
+		columnCollections: 'Collections and tags',
+		anyTag: 'Any tag',
+		tagFilter: 'Tag',
+		tagCount: (tag: string, n: number) => `${tag} (${n})`,
+		addTag: 'Add a tag',
+		addTagHint: 'A new tag, or one already used',
+		tagButton: 'Tag',
+		removeTag: 'Remove a tag…',
+		removeTagFrom: (tag: string) => `Remove the tag ${tag}`,
+		tagged: (tag: string, n: number) =>
+			`${n === 1 ? '1 document' : `${n} documents`} tagged “${tag}”`,
 		columnResults: 'Results',
 		columnDate: 'Added',
 		selectAll: 'Select all documents shown',
@@ -321,6 +356,8 @@ export const en = {
 			reveal: 'Show in folder',
 			collections: 'Collections',
 			notInCollection: 'In no collection.',
+			tags: 'Tags',
+			noTags: 'No tag yet. Tags are labels of your own, to find documents across collections.',
 			rename: 'Rename',
 			title: 'Title',
 			results: 'Results',
@@ -1116,6 +1153,7 @@ export const en = {
 		'project.not_found': 'This project, or what it refers to, no longer exists.',
 		'project.elsewhere': 'This belongs to another project, or no longer exists.',
 		'project.no_name': 'Give it a name.',
+		'project.no_tag': 'Type the tag to add.',
 		'job.not_found': 'This job no longer exists.',
 		'job.not_text': 'Only extracted text, transcripts and corrected text can be analysed this way.',
 		'job.nothing_read':

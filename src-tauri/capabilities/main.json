@@ -101,6 +101,8 @@
     "allow-delete-documents",
     "allow-add-to-collection",
     "allow-remove-from-collection",
+    "allow-tag-documents",
+    "allow-untag-documents",
     "allow-merge-documents",
     "allow-document-detail",
     "allow-set-preferred",

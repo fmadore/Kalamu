@@ -370,6 +370,8 @@ pub fn run() {
             commands::projects::delete_documents,
             commands::projects::add_to_collection,
             commands::projects::remove_from_collection,
+            commands::projects::tag_documents,
+            commands::projects::untag_documents,
             commands::projects::merge_documents,
             commands::projects::document_detail,
             commands::projects::set_preferred,

@@ -12,4 +12,8 @@ title: string,
 /**
  * The original, referenced where it lies on the PC: a project never moves or copies it.
  */
-source: SourceFile, created_at: Timestamp, };
+source: SourceFile, created_at: Timestamp, 
+/**
+ * The researcher's labels, filters beside the collections; spelled as first given.
+ */
+tags: Array<string>, };

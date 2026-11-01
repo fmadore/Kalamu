@@ -50,6 +50,43 @@ pub struct Document {
     /// The original, referenced where it lies on the PC: a project never moves or copies it.
     pub source: SourceFile,
     pub created_at: Timestamp,
+    /// The researcher's labels, filters beside the collections; spelled as first given.
+    #[serde(default)]
+    pub tags: Vec<String>,
+}
+
+impl Document {
+    /// Adds a tag, unless it holds one that differs only in capitals. Returns whether it changed.
+    pub fn tag(&mut self, tag: &str) -> bool {
+        if self.has_tag(tag) {
+            return false;
+        }
+        self.tags.push(tag.to_string());
+        self.tags.sort_by_key(|t| (t.to_lowercase(), t.clone()));
+        true
+    }
+
+    /// Removes a tag, whatever its capitals. Returns whether it changed.
+    pub fn untag(&mut self, tag: &str) -> bool {
+        let before = self.tags.len();
+        self.tags.retain(|t| !same_tag(t, tag));
+        self.tags.len() != before
+    }
+
+    pub fn has_tag(&self, tag: &str) -> bool {
+        self.tags.iter().any(|t| same_tag(t, tag))
+    }
+}
+
+/// Two tags are one when they differ only in capitals.
+pub fn same_tag(a: &str, b: &str) -> bool {
+    a.to_lowercase() == b.to_lowercase()
+}
+
+/// A tag as typed, its spaces trimmed and runs of spaces made one; `None` when nothing is left.
+pub fn tag_name(typed: &str) -> Option<String> {
+    let tag = typed.split_whitespace().collect::<Vec<_>>().join(" ");
+    (!tag.is_empty()).then_some(tag)
 }
 
 /// A document read by one source of a job: every set-up of that job over that source is a
@@ -83,6 +120,8 @@ pub enum ProjectError {
     Elsewhere(String),
     #[error("A project needs a name")]
     NoName,
+    #[error("A tag needs a name")]
+    NoTag,
     #[error(transparent)]
     Store(#[from] StoreError),
 }

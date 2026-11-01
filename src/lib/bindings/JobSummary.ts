@@ -16,4 +16,13 @@ pieces_truncated: number,
  * What the job's own calls cost over all its runs, in US dollars; `None` before any
  * priced answer.
  */
-cost_usd: number | null, };
+cost_usd: number | null, 
+/**
+ * The models its set-ups called, each once, in set-up order, a table of contents'
+ * combining model after the one that read the pages.
+ */
+models: Array<string>, 
+/**
+ * The workflow it is a step of, by the name the run was started under.
+ */
+workflow: string | null, };

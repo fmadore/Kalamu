@@ -58,8 +58,8 @@ new names, on the same computer only:
   Results are kept by a fingerprint of the file and settings, so the same work is never paid
   for twice; deleting a job removes the job, its progress and corrections, while the stored
   results stay until the app is uninstalled. The same database keeps the user's **projects**:
-  their names and descriptions, their collections, the titles, paths, sizes and fingerprints
-  of their documents, which jobs read each document, and the results the user marked as
+  their names and descriptions, their collections, the titles, tags, paths, sizes and
+  fingerprints of their documents, which jobs read each document, and the results the user marked as
   preferred. A project only refers to files where they lie on the PC: it never copies, moves or
   sends them. Deleting a project, a collection or a document removes how it was organised; the
   files, the jobs and their results stay. It also keeps each **workflow run**: the workflow's

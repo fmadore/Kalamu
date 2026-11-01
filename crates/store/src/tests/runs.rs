@@ -100,3 +100,41 @@ fn run_named(job: &Job, name: &str) -> WorkflowRun {
     run.created_at = Timestamp(Timestamp::now().0 + 1);
     run
 }
+
+#[test]
+fn a_step_job_is_listed_with_its_workflow_and_models() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let mut job = job();
+    let mut second = job.setups[0].clone();
+    second.id = SetupId::new();
+    second.model = "claude-sonnet-5-5".into();
+    job.setups.push(second);
+    job.setups.push(job.setups[0].clone());
+    store.create_job(&job)?;
+    let alone = super::job();
+    store.create_job(&alone)?;
+    let run = run(&job);
+    store.create_run(&run)?;
+    store.set_step_progress(
+        run.id,
+        0,
+        &StepProgress {
+            job_id: Some(job.id),
+            ..StepProgress::default()
+        },
+    )?;
+
+    let listed = store.list_jobs()?;
+    let step = listed
+        .iter()
+        .find(|j| j.id == job.id)
+        .ok_or(StoreError::NotFound)?;
+    assert_eq!(step.workflow.as_deref(), Some("Extract and analyse"));
+    assert_eq!(step.models, vec!["gemini-3.8-flash", "claude-sonnet-5-5"]);
+    let other = listed
+        .iter()
+        .find(|j| j.id == alone.id)
+        .ok_or(StoreError::NotFound)?;
+    assert_eq!(other.workflow, None);
+    Ok(())
+}

@@ -81,6 +81,7 @@ impl From<kalamu_core::ProjectError> for AppError {
             }
             ProjectError::Elsewhere(_) => "project.elsewhere",
             ProjectError::NoName => "project.no_name",
+            ProjectError::NoTag => "project.no_tag",
             ProjectError::Store(_) => "job.database",
         };
         Self::new(id, e)

@@ -1,10 +1,10 @@
-//! Documents in a project: added without copies, grouped, renamed, merged and removed.
+//! Documents in a project: added without copies, grouped, tagged, renamed, merged and removed.
 
 use std::path::Path;
 
 use kalamu_core::{
     CollectionId, Document, DocumentId, DocumentLink, InputKind, JobId, ProjectError, ProjectId,
-    SetupId, SourceFile, Task, Timestamp,
+    SetupId, SourceFile, Task, Timestamp, same_tag, tag_name,
 };
 
 use crate::{Projects, missing, named};
@@ -59,6 +59,7 @@ impl Projects {
                         title: default_title(&source),
                         source,
                         created_at: Timestamp::now(),
+                        tags: Vec::new(),
                     };
                     self.store.put_document(&document)?;
                     let id = document.id;
@@ -146,8 +147,55 @@ impl Projects {
         self.touch(project)
     }
 
+    /// Tags documents. A tag that differs only in capitals from one the project already uses
+    /// takes that spelling, so one label is never split in two.
+    pub fn tag_documents(
+        &self,
+        project: ProjectId,
+        ids: &[DocumentId],
+        tag: &str,
+    ) -> Result<(), ProjectError> {
+        let tag = tag_name(tag).ok_or(ProjectError::NoTag)?;
+        let documents = self.store.documents(project)?;
+        let spelled = documents
+            .iter()
+            .flat_map(|d| &d.tags)
+            .find(|t| same_tag(t, &tag))
+            .cloned()
+            .unwrap_or(tag);
+        let mut chosen = Vec::new();
+        for id in ids {
+            chosen.push(self.document_in(project, *id)?);
+        }
+        for mut document in chosen {
+            if document.tag(&spelled) {
+                self.store.put_document(&document)?;
+            }
+        }
+        self.touch(project)
+    }
+
+    /// Takes a tag off documents, whatever its capitals; they stay where they are.
+    pub fn untag_documents(
+        &self,
+        project: ProjectId,
+        ids: &[DocumentId],
+        tag: &str,
+    ) -> Result<(), ProjectError> {
+        let mut chosen = Vec::new();
+        for id in ids {
+            chosen.push(self.document_in(project, *id)?);
+        }
+        for mut document in chosen {
+            if document.untag(tag) {
+                self.store.put_document(&document)?;
+            }
+        }
+        self.touch(project)
+    }
+
     /// Makes two documents one, when the researcher decides they are the same item: `from`'s
-    /// links and collections move to `into`, which keeps its own title and preferred results
+    /// links, collections and tags move to `into`, which keeps its own title and preferred results
     /// (taking `from`'s where it has none), and `from` is removed. Nothing is read again.
     pub fn merge_documents(
         &self,
@@ -158,8 +206,15 @@ impl Projects {
         if from == into {
             return Ok(());
         }
-        self.document_in(project, from)?;
-        self.document_in(project, into)?;
+        let merged = self.document_in(project, from)?;
+        let mut kept = self.document_in(project, into)?;
+        let mut changed = false;
+        for tag in &merged.tags {
+            changed |= kept.tag(tag);
+        }
+        if changed {
+            self.store.put_document(&kept)?;
+        }
         for link in self.store.links(project)? {
             if link.document_id == from {
                 self.store.put_link(&DocumentLink {

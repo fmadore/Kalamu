@@ -140,6 +140,7 @@ impl Projects {
                         title: default_title(source),
                         source: source.clone(),
                         created_at: now,
+                        tags: Vec::new(),
                     };
                     self.store.put_document(&document)?;
                     if let Some(c) = collection {

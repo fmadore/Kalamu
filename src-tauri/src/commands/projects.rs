@@ -137,6 +137,26 @@ pub fn remove_from_collection(
 }
 
 #[tauri::command]
+pub fn tag_documents(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    ids: Vec<DocumentId>,
+    tag: String,
+) -> CmdResult<()> {
+    Ok(state.projects.tag_documents(project, &ids, &tag)?)
+}
+
+#[tauri::command]
+pub fn untag_documents(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    ids: Vec<DocumentId>,
+    tag: String,
+) -> CmdResult<()> {
+    Ok(state.projects.untag_documents(project, &ids, &tag)?)
+}
+
+#[tauri::command]
 pub fn merge_documents(
     state: State<'_, AppState>,
     project: ProjectId,
