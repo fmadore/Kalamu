@@ -1,6 +1,7 @@
 //! The commands the interface calls, one module per area. Each is a thin wrapper: the work
 //! happens in the engine and the library crates, so the interface holds no business logic.
 
+pub mod dictionary;
 pub mod jobs;
 pub mod keys;
 pub mod offline;
@@ -37,6 +38,8 @@ pub struct AppState {
     pub engine: Arc<Engine>,
     /// Project workspaces, over the same database as the engine's jobs.
     pub projects: kalamu_projects::Projects,
+    /// Each project's dictionary, over the same database.
+    pub dictionary: kalamu_dictionary::Dictionary,
     /// Whisper models, shared with the Whisper provider inside the engine.
     pub models: kalamu_offline::ModelManager,
     pub keys: Arc<CredentialKeys>,

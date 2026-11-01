@@ -1,8 +1,10 @@
 <script lang="ts">
 	// One project: its collections down the side, the documents of the one chosen (or all) in a
-	// table, and its activity, the jobs that read them. Files dropped on the window join it.
+	// table, its dictionary of the names its analyses found, and its activity, the jobs that read
+	// them. Files dropped on the window join it.
 	import { onMount } from 'svelte';
 	import AttachDialog from './AttachDialog.svelte';
+	import DictionaryView from './DictionaryView.svelte';
 	import DocumentTable from './DocumentTable.svelte';
 	import Icon from './Icon.svelte';
 	import ProjectActivity from './ProjectActivity.svelte';
@@ -18,7 +20,7 @@
 
 	let view = $state<ProjectView | null>(null);
 	let error = $state<string | null>(null);
-	let activity = $state(false);
+	let pane = $state<'documents' | 'dictionary' | 'activity'>('documents');
 	let editing = $state(false);
 	let draftName = $state('');
 	let draftDescription = $state('');
@@ -48,7 +50,7 @@
 	}
 
 	function show(id?: string) {
-		activity = false;
+		pane = 'documents';
 		go({ name: 'projects', projectId, collectionId: id });
 	}
 
@@ -189,8 +191,8 @@
 		<nav class="sections" aria-label={m.projects.collections}>
 			<button
 				class="section"
-				class:current={!activity && !collectionId}
-				aria-current={!activity && !collectionId ? 'page' : undefined}
+				class:current={pane === 'documents' && !collectionId}
+				aria-current={pane === 'documents' && !collectionId ? 'page' : undefined}
 				onclick={() => show()}
 			>
 				<Icon name="project" size={14} /><span class="grow">{m.projects.allDocuments}</span>
@@ -201,8 +203,10 @@
 			{#each view.collections as c (c.collection.id)}
 				<button
 					class="section"
-					class:current={!activity && collectionId === c.collection.id}
-					aria-current={!activity && collectionId === c.collection.id ? 'page' : undefined}
+					class:current={pane === 'documents' && collectionId === c.collection.id}
+					aria-current={pane === 'documents' && collectionId === c.collection.id
+						? 'page'
+						: undefined}
 					onclick={() => show(c.collection.id)}
 				>
 					<Icon name="collection" size={14} /><span class="grow ellipsis">{c.collection.name}</span>
@@ -227,10 +231,18 @@
 			{/if}
 
 			<button
+				class="section dictionary"
+				class:current={pane === 'dictionary'}
+				aria-current={pane === 'dictionary' ? 'page' : undefined}
+				onclick={() => (pane = 'dictionary')}
+			>
+				<Icon name="glossary" size={14} /><span class="grow">{m.dictionary.title}</span>
+			</button>
+			<button
 				class="section activity"
-				class:current={activity}
-				aria-current={activity ? 'page' : undefined}
-				onclick={() => (activity = true)}
+				class:current={pane === 'activity'}
+				aria-current={pane === 'activity' ? 'page' : undefined}
+				onclick={() => (pane = 'activity')}
 			>
 				<Icon name="list" size={14} /><span class="grow">{m.projects.activity}</span>
 				<span class="num">{view.jobs.length}</span>
@@ -238,8 +250,14 @@
 		</nav>
 
 		<section class="main">
-			{#if activity}
+			{#if pane === 'activity'}
 				<ProjectActivity jobs={view.jobs} />
+			{:else if pane === 'dictionary'}
+				<DictionaryView
+					{projectId}
+					projectName={view.project.name}
+					collections={view.collections}
+				/>
 			{:else}
 				<div class="toolbar">
 					{#if collection}
@@ -381,7 +399,7 @@
 	.section.add {
 		color: var(--text-muted);
 	}
-	.section.activity {
+	.section.dictionary {
 		margin-top: var(--space-4);
 	}
 	.section .num {
@@ -435,7 +453,7 @@
 		.group-head {
 			display: none;
 		}
-		.section.activity {
+		.section.dictionary {
 			margin-top: 0;
 		}
 	}

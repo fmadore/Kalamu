@@ -22,6 +22,7 @@ kalamu-export = { path = "crates/export" }
 kalamu-engine = { path = "crates/engine" }
 kalamu-offline = { path = "crates/offline" }
 kalamu-projects = { path = "crates/projects" }
+kalamu-dictionary = { path = "crates/dictionary" }
 
 anyhow = "1.0.104"
 async-trait = "0.1.92"
@@ -47,6 +48,7 @@ tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros", "sync", "
 tokio-util = "0.7.20"
 tracing = "0.1.44"
 ts-rs = { version = "12.0.1", features = ["uuid-impl", "serde-json-impl", "no-serde-warnings"] }
+unicode-normalization = "0.1.26"
 uuid = { version = "1.29.0", features = ["v4", "serde"] }
 wiremock = "0.6.5"
 

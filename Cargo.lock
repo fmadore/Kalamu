@@ -2449,6 +2449,7 @@ dependencies = [
  "base64 0.23.1",
  "kalamu-catalog",
  "kalamu-core",
+ "kalamu-dictionary",
  "kalamu-engine",
  "kalamu-media",
  "kalamu-offline",
@@ -2497,6 +2498,20 @@ dependencies = [
  "thiserror 2.0.21",
  "ts-rs",
  "uuid",
+]
+
+[[package]]
+name = "kalamu-dictionary"
+version = "1.0.0"
+dependencies = [
+ "csv",
+ "kalamu-core",
+ "kalamu-store",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "ts-rs",
+ "unicode-normalization",
 ]
 
 [[package]]

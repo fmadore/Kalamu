@@ -7,6 +7,7 @@ pub mod analysis;
 pub mod batch;
 pub mod contents;
 pub mod correction;
+pub mod dictionary;
 pub mod event;
 pub mod export;
 pub mod fingerprint;
@@ -32,11 +33,13 @@ pub use analysis::{AnalysisSchema, Field, FieldAnswer, FieldKind, FieldValue, Sc
 pub use batch::{
     BATCH_WINDOW_MS, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress, BatchRecord,
 };
+pub use dictionary::{DictionaryError, DictionaryStore, Entry, KeptApart};
 pub use event::ProgressEvent;
 pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter};
 pub use fingerprint::CacheKey;
 pub use ids::{
-    CollectionId, DocumentId, JobId, ProjectId, ProviderId, RunId, SetupId, SourceId, Timestamp,
+    CollectionId, DocumentId, EntryId, JobId, ProjectId, ProviderId, RunId, SetupId, SourceId,
+    Timestamp,
 };
 pub use job::{
     Job, JobSettings, JobStatus, JobSummary, LineBreaks, OutputDestination, OutputSettings, Pace,

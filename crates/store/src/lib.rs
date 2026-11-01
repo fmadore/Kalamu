@@ -106,6 +106,7 @@ CREATE INDEX charges_by_job ON charges(job_id);
     r#"
 ALTER TABLE documents ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
 "#,
+    dictionary::MIGRATION,
 ];
 
 pub struct SqliteStore {
@@ -763,6 +764,7 @@ impl JobStore for SqliteStore {
     }
 }
 
+mod dictionary;
 mod projects;
 mod runs;
 mod snapshots;

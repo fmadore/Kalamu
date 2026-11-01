@@ -60,8 +60,9 @@ new names, on the same computer only:
   results stay until the app is uninstalled. The same database keeps the user's **projects**:
   their names and descriptions, their collections, the titles, tags, paths, sizes and
   fingerprints of their documents, which jobs read each document, and the results the user marked as
-  preferred. A project only refers to files where they lie on the PC: it never copies, moves or
-  sends them. Deleting a project, a collection or a document removes how it was organised; the
+  preferred, and its **dictionary**: the entries the user made of the names its analyses
+  listed (labels, the forms they gather, review status) and the pairs kept apart. A project only
+  refers to files where they lie on the PC: it never copies, moves or sends them. Deleting a project, a collection or a document removes how it was organised; the
   files, the jobs and their results stay. It also keeps each **workflow run**: the workflow's
   steps and prompts as they were when it started, the paths, sizes and fingerprints of the
   files it was started on, the job that ran each step, and when the user chose to continue

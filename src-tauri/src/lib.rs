@@ -156,6 +156,8 @@ pub fn run() {
             let store = Arc::new(SqliteStore::open(&data.join("jobs.sqlite"))?);
             // Projects share the job database, so deleting a job unlinks it from its documents.
             let projects = kalamu_projects::Projects::new(store.clone(), store.clone());
+            let dictionary =
+                kalamu_dictionary::Dictionary::new(store.clone(), store.clone(), store.clone());
             let prompts = PromptLibrary::open(&data.join("presets"))?;
             let pipelines = kalamu_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
             let workflows = kalamu_prompts::WorkflowLibrary::open(&data.join("workflows"))?;
@@ -247,6 +249,7 @@ pub fn run() {
             app.manage(AppState {
                 engine,
                 projects,
+                dictionary,
                 models,
                 keys,
                 settings: Mutex::new(settings),
@@ -379,6 +382,15 @@ pub fn run() {
             commands::projects::attach_job,
             commands::projects::link_job,
             commands::projects::detach_job,
+            commands::dictionary::dictionary_view,
+            commands::dictionary::dictionary_evidence,
+            commands::dictionary::dictionary_merge,
+            commands::dictionary::dictionary_split,
+            commands::dictionary::dictionary_relabel,
+            commands::dictionary::dictionary_set_reviewed,
+            commands::dictionary::dictionary_keep_apart,
+            commands::dictionary::dictionary_undo_apart,
+            commands::dictionary::export_dictionary,
             commands::window::set_taskbar_progress,
             commands::window::set_tray_state,
             commands::window::hide_window,

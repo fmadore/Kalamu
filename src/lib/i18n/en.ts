@@ -204,6 +204,72 @@ export const en = {
 			attention: 'some pages were not read; retry them or continue'
 		}
 	},
+	dictionary: {
+		title: 'Dictionary',
+		lede: 'The names and terms your analyses listed, field by field. Gather the spellings of one person, place or term into an entry under the label you prefer. The analyses’ answers stay as the models gave them.',
+		coverage: (read: number, total: number) =>
+			`Gathered from the analyses of ${read} of ${total === 1 ? '1 document' : `${total} documents`}.`,
+		empty:
+			'No analysis of these documents lists names yet. Run an analysis with a list field, such as “People, places and organisations”, on the project’s documents.',
+		field: 'Field',
+		fieldCount: (label: string, rows: number, toReview: number) =>
+			`${label} (${rows}${toReview > 0 ? `, ${toReview} to review` : ''})`,
+		scope: 'Documents',
+		wholeProject: 'The whole project',
+		search: 'Find a name',
+		show: 'Show',
+		filter: {
+			all: 'All',
+			to_review: 'To review',
+			similar: 'Possible variants',
+			reviewed: 'Reviewed',
+			unseen: 'No longer found'
+		},
+		noMatch: 'Nothing matches.',
+		columnLabel: 'Entry',
+		columnDocuments: 'Documents',
+		columnAgreement: 'Listed by',
+		columnStatus: 'Status',
+		agreement: (listed: number, read: number) =>
+			`${listed} of ${read === 1 ? '1 result' : `${read} results`}`,
+		agreementHint:
+			'Of the results that read these documents, how many listed it. Two models listing a name is agreement, not a second mention.',
+		reviewed: 'Reviewed',
+		toReview: 'To review',
+		unseen: 'No longer found',
+		unseenHint:
+			'None of its forms is listed by the analyses any longer: a job was deleted, or its answers corrected. The entry is kept.',
+		similar: 'Possibly the same as',
+		similarHint:
+			'Spelled alike once capitals, accents, punctuation and word order are set aside. Only you decide whether they are one.',
+		selectSimilar: 'Select them together',
+		apart: 'Kept apart from',
+		withdraw: (label: string) => `Withdraw keeping apart from ${label}`,
+		selected: (n: number) => (n === 1 ? '1 selected' : `${n} selected`),
+		clearSelection: 'Clear',
+		selectAll: 'Select all shown',
+		select: (label: string) => `Select ${label}`,
+		merge: 'Merge into one entry',
+		mergeLabel: 'Label of the entry',
+		mergeConfirm: 'Merge',
+		markReviewed: 'Mark reviewed',
+		markToReview: 'Mark to review',
+		keepApart: 'Keep apart',
+		keepApartHint: 'Two different people, places or terms, however alike they look.',
+		details: (label: string) => `Details of ${label}`,
+		forms: 'Forms as written',
+		formDocuments: (n: number) => (n === 1 ? '1 document' : `${n} documents`),
+		takeOut: (form: string) => `Take “${form}” out of this entry`,
+		rename: 'Rename',
+		label: 'Label',
+		save: 'Save',
+		cancel: 'Cancel',
+		evidence: 'Where it was found',
+		noEvidence: 'No result lists it any longer.',
+		openReview: 'Open the review',
+		export: 'Export',
+		exported: 'The dictionary was written as JSON, with every form found as CSV beside it.'
+	},
 	projects: {
 		title: 'Projects',
 		lede: 'Your documents, grouped as you like, with everything read from each.',
@@ -1154,6 +1220,15 @@ export const en = {
 		'project.elsewhere': 'This belongs to another project, or no longer exists.',
 		'project.no_name': 'Give it a name.',
 		'project.no_tag': 'Type the tag to add.',
+		'dictionary.no_entry':
+			'This entry is no longer in the dictionary. It may have been merged or split.',
+		'dictionary.no_label': 'Give the entry a label.',
+		'dictionary.namespaces':
+			'These come from different fields, people and places for example, and stay apart.',
+		'dictionary.kept_apart':
+			'You decided to keep some of these apart. Withdraw that decision first to merge them.',
+		'dictionary.too_few': 'Choose at least two lines.',
+		'dictionary.same_entry': 'These are in one entry. Take one out of it first.',
 		'job.not_found': 'This job no longer exists.',
 		'job.not_text': 'Only extracted text, transcripts and corrected text can be analysed this way.',
 		'job.nothing_read':
