@@ -3,8 +3,8 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    BatchRecord, CacheKey, Job, JobId, JobStatus, JobSummary, PieceState, SetupId, SourceId,
-    SpeakerNames, StoredResult, Timestamp,
+    BatchRecord, CacheKey, Charge, Job, JobId, JobStatus, JobSummary, PieceState, SetupId,
+    SourceId, SpeakerNames, StoredResult, Timestamp,
 };
 
 /// A user's edit of one piece, stored on top of the AI output, which is never overwritten.
@@ -53,8 +53,11 @@ pub trait JobStore: Send + Sync {
 
     fn cached_result(&self, key: &CacheKey) -> Result<Option<StoredResult>, StoreError>;
     /// What a job's own calls cost, in US dollars: the results its pieces stored, not those
-    /// reused from the cache.
+    /// reused from the cache, and the answers billed but refused ([`Charge`]).
     fn spent(&self, job: JobId) -> Result<f64, StoreError>;
+    /// Records a call billed without a result to keep.
+    fn add_charge(&self, charge: &Charge) -> Result<(), StoreError>;
+    fn charges(&self, job: JobId) -> Result<Vec<Charge>, StoreError>;
     /// Stores a result unless one is already stored under its key. The first answer is kept,
     /// never replaced by a later one (two identical set-ups, a batch collected after a fast
     /// run), so the researcher's corrections stay over the text they corrected.
@@ -70,4 +73,8 @@ pub trait JobStore: Send + Sync {
     /// Inserts or replaces a batch, by its own id.
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;
     fn batches(&self, job: JobId) -> Result<Vec<BatchRecord>, StoreError>;
+
+    /// Keeps a snapshot of corrected text; one already kept under its id is left as it is.
+    fn put_snapshot(&self, snapshot: &crate::Snapshot) -> Result<(), StoreError>;
+    fn snapshot(&self, id: &str) -> Result<crate::Snapshot, StoreError>;
 }

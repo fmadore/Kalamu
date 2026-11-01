@@ -6,9 +6,9 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use kalamu_core::{
-    ApiKey, CacheKey, Job, JobId, PieceState, PieceStatus, PreparedInput, ProcessOutput,
-    ProcessRequest, ProgressEvent, ProviderError, SourceFile, Step, StopSignal, StoredResult, Task,
-    Timestamp,
+    ApiKey, CacheKey, Charge, Job, JobId, PieceState, PieceStatus, PreparedInput, ProcessOutput,
+    ProcessRequest, ProgressEvent, ProviderError, ProviderId, SourceFile, Step, StopSignal,
+    StoredResult, Task, Timestamp,
 };
 use kalamu_media::OpenSource;
 
@@ -150,7 +150,11 @@ impl Engine {
                 stop,
             };
             let sent = provider.sent_settings(&request, false);
-            match provider.process(&api_key, request).await {
+            let answer = provider.process(&api_key, request).await;
+            if let Err(err) = &answer {
+                self.charge(&state, step.provider, step.model, err, &spent)?;
+            }
+            match answer {
                 Ok(output) => {
                     let output = finish(job.task, output);
                     let catalog = self.catalog();
@@ -235,6 +239,37 @@ impl Engine {
             error: state.error.clone(),
             preview,
         });
+        Ok(())
+    }
+
+    /// Records what a failed call was billed for (an answer refused for breaking its fields),
+    /// and adds it to what the job has spent, so the cost shown is the cost charged. Failures
+    /// the provider did not bill record nothing.
+    pub(crate) fn charge(
+        &self,
+        state: &PieceState,
+        provider: &ProviderId,
+        model: &str,
+        err: &ProviderError,
+        spent: &Mutex<f64>,
+    ) -> Result<(), EngineError> {
+        let Some(usage) = err.billed() else {
+            return Ok(());
+        };
+        let catalog = self.catalog();
+        let cost = catalog
+            .model(provider, model)
+            .and_then(|m| catalog.actual_cost(m, usage));
+        self.store.add_charge(&Charge {
+            job_id: state.job_id,
+            setup_id: state.setup_id,
+            source_id: state.source_id,
+            index: state.index,
+            usage: usage.clone(),
+            cost_usd: cost,
+            created_at: Timestamp::now(),
+        })?;
+        self.add_cost(state.job_id, spent, cost);
         Ok(())
     }
 

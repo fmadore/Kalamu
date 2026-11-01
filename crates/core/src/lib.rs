@@ -13,10 +13,12 @@ pub mod fingerprint;
 pub mod ids;
 pub mod job;
 pub mod language;
+pub mod project;
 pub mod provenance;
 pub mod provider;
 pub mod result;
 pub mod setup;
+pub mod snapshot;
 pub mod source;
 pub mod speakers;
 pub mod store;
@@ -31,21 +33,27 @@ pub use batch::{
 pub use event::ProgressEvent;
 pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter};
 pub use fingerprint::CacheKey;
-pub use ids::{JobId, ProviderId, SetupId, SourceId, Timestamp};
+pub use ids::{
+    CollectionId, DocumentId, JobId, ProjectId, ProviderId, SetupId, SourceId, Timestamp,
+};
 pub use job::{
     Job, JobSettings, JobStatus, JobSummary, LineBreaks, OutputDestination, OutputSettings, Pace,
 };
 pub use language::{LanguageChoice, LanguageCode};
+pub use project::{
+    Collection, Document, DocumentLink, PreferredResult, Project, ProjectError, ProjectStore,
+};
 pub use provenance::Provenance;
 pub use provider::{
     ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, RequestSetting,
     StopSignal,
 };
 pub use result::{
-    PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult, TextRegion,
-    Usage,
+    Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,
+    TextRegion, Usage,
 };
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, Step};
+pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
 pub use source::{InputKind, SourceFile};
 pub use speakers::SpeakerNames;
 pub use store::{Correction, JobStore, StoreError};

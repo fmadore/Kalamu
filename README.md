@@ -35,6 +35,10 @@ See the [roadmap](docs/roadmap.md) and the [1.0.0 release notes](docs/release-1.
 - **Correct existing text**: the noisy OCR of a PDF's text layer or of a digital library's text
   file, corrected page by page with its spelling of the time kept, every change shown against
   the original.
+- **Organise your material in projects**: documents grouped in collections (one document can
+  be in several), each with every transcription, extraction and analysis made of it, whatever
+  job made it. Add files before reading them, add jobs you ran before without paying again,
+  start a job on a selection, and mark the result you rely on.
 - **Check every result against its source**, side by side, with corrections kept apart from the
   AI output, which is never overwritten. Search a document or a recording across all its pages
   (Ctrl F), and report inappropriate output from the review.

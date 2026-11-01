@@ -200,6 +200,20 @@ pub struct StoredResult {
     pub created_at: Timestamp,
 }
 
+/// A call the provider billed though nothing could be kept from it: an analysis answer that
+/// broke its fields and was asked for again. Recorded so the cost shown is the cost charged.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Charge {
+    pub job_id: JobId,
+    pub setup_id: SetupId,
+    pub source_id: SourceId,
+    /// The piece's position within its source, from 0.
+    pub index: u32,
+    pub usage: Usage,
+    pub cost_usd: Option<f64>,
+    pub created_at: Timestamp,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]

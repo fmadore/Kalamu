@@ -29,6 +29,7 @@ kalamu-engine.workspace = true
 kalamu-media.workspace = true
 kalamu-offline.workspace = true
 kalamu-prompts.workspace = true
+kalamu-projects.workspace = true
 kalamu-providers.workspace = true
 kalamu-store.workspace = true
 serde.workspace = true

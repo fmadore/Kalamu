@@ -17,7 +17,7 @@ function rustIds(): string[] {
 		for (const match of source.matchAll(/"([a-z]+\.[a-z_]+)"/g)) {
 			const id = match[1];
 			if (
-				/^(job|media|prompt|provider|output|keys|settings|catalog|file|app|offline|source)\./.test(
+				/^(job|media|prompt|provider|output|keys|settings|catalog|file|app|offline|source|project)\./.test(
 					id
 				)
 			) {

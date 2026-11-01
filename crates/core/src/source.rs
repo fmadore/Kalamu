@@ -72,4 +72,9 @@ pub struct SourceFile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub title: Option<String>,
+    /// A frozen copy of an earlier result's corrected text, read instead of a file of the
+    /// researcher's: which result, and the original beside which results are written.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub derived_from: Option<crate::DerivedFrom>,
 }

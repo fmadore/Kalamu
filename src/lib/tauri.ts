@@ -6,10 +6,14 @@ import type { AppError } from './bindings/AppError.js';
 import type { AppInfo } from './bindings/AppInfo.js';
 import type { Catalog } from './bindings/Catalog.js';
 import type { ComparisonReport } from './bindings/ComparisonReport.js';
+import type { AttachChoice } from './bindings/AttachChoice.js';
+import type { Collection } from './bindings/Collection.js';
 import type { Correction } from './bindings/Correction.js';
+import type { DocumentDetail } from './bindings/DocumentDetail.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Pipeline } from './bindings/Pipeline.js';
+import type { DerivedState } from './bindings/DerivedState.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { EstimateRow } from './bindings/EstimateRow.js';
@@ -25,6 +29,11 @@ import type { PieceAudio } from './bindings/PieceAudio.js';
 import type { PieceState } from './bindings/PieceState.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
+import type { Project } from './bindings/Project.js';
+import type { ProjectSummary } from './bindings/ProjectSummary.js';
+import type { ProjectView } from './bindings/ProjectView.js';
+import type { SourceFile } from './bindings/SourceFile.js';
+import type { SourceMatch } from './bindings/SourceMatch.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
 import type { Task } from './bindings/Task.js';
@@ -90,6 +99,8 @@ export const api = {
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
 	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),
+	snapshotJob: (id: string, setup: string) => invoke<SourceFile[]>('snapshot_job', { id, setup }),
+	derivedState: (id: string) => invoke<DerivedState[]>('derived_state', { id }),
 	jobOutputs: (id: string) => invoke<string[]>('job_outputs', { id }),
 	openOutput: (id: string, path: string) => invoke<void>('open_output', { id, path }),
 	sourcePieces: (jobId: string, sourceId: string) =>
@@ -114,6 +125,50 @@ export const api = {
 		invoke<ComparisonReport>('compare_source', { jobId, sourceId }),
 	jobScores: (jobId: string) => invoke<JobScores>('job_scores', { jobId }),
 	diffTexts: (left: string, right: string) => invoke<DiffSpan[]>('diff_texts', { left, right }),
+	listProjects: () => invoke<ProjectSummary[]>('list_projects'),
+	createProject: (name: string, description: string) =>
+		invoke<Project>('create_project', { name, description }),
+	updateProject: (id: string, name: string, description: string) =>
+		invoke<Project>('update_project', { id, name, description }),
+	archiveProject: (id: string, archived: boolean) =>
+		invoke<Project>('archive_project', { id, archived }),
+	deleteProject: (id: string) => invoke<void>('delete_project', { id }),
+	projectView: (id: string) => invoke<ProjectView>('project_view', { id }),
+	createCollection: (project: string, name: string) =>
+		invoke<Collection>('create_collection', { project, name }),
+	renameCollection: (project: string, id: string, name: string) =>
+		invoke<void>('rename_collection', { project, id, name }),
+	deleteCollection: (project: string, id: string) =>
+		invoke<void>('delete_collection', { project, id }),
+	addDocuments: (project: string, sources: SourceFile[], collection: string | null) =>
+		invoke<string[]>('add_documents', { project, sources, collection }),
+	renameDocument: (project: string, id: string, title: string) =>
+		invoke<void>('rename_document', { project, id, title }),
+	deleteDocuments: (project: string, ids: string[]) =>
+		invoke<void>('delete_documents', { project, ids }),
+	addToCollection: (project: string, collection: string, ids: string[]) =>
+		invoke<void>('add_to_collection', { project, collection, ids }),
+	removeFromCollection: (project: string, collection: string, ids: string[]) =>
+		invoke<void>('remove_from_collection', { project, collection, ids }),
+	mergeDocuments: (project: string, from: string, into: string) =>
+		invoke<void>('merge_documents', { project, from, into }),
+	documentDetail: (project: string, id: string) =>
+		invoke<DocumentDetail>('document_detail', { project, id }),
+	setPreferred: (
+		project: string,
+		document: string,
+		task: Task,
+		job: string | null,
+		setup: string | null
+	) => invoke<void>('set_preferred', { project, document, task, job, setup }),
+	attachPlan: (project: string, job: string) =>
+		invoke<SourceMatch[]>('attach_plan', { project, job }),
+	attachJob: (project: string, job: string, choices: AttachChoice[], collection: string | null) =>
+		invoke<string[]>('attach_job', { project, job, choices, collection }),
+	linkJob: (project: string, job: string, collection: string | null) =>
+		invoke<string[]>('link_job', { project, job, collection }),
+	detachJob: (project: string, document: string, job: string, source: string) =>
+		invoke<void>('detach_job', { project, document, job, source }),
 	setTaskbarProgress: (percent: number | null) => invoke<void>('set_taskbar_progress', { percent }),
 	setTrayState: (state: TrayState) => invoke<void>('set_tray_state', { state }),
 	hideWindow: () => invoke<void>('hide_window'),
@@ -125,47 +180,59 @@ export const on = {
 	closeRequested: (handler: () => void) => listen<null>('close-requested', handler)
 };
 
+const PAGES = ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'];
+/** The files each task reads, by extension. */
+const EXTENSIONS: Record<Task, string[]> = {
+	text_extraction: PAGES,
+	contents: PAGES,
+	text_correction: ['txt', 'md', 'docx', 'pdf'],
+	audio_transcription: [
+		'mp3',
+		'wav',
+		'm4a',
+		'aac',
+		'flac',
+		'ogg',
+		'opus',
+		'wma',
+		'webm',
+		'mp4',
+		'mov',
+		'mkv',
+		'avi'
+	],
+	analysis: [
+		'txt',
+		'md',
+		'docx',
+		'csv',
+		'pdf',
+		'png',
+		'jpg',
+		'jpeg',
+		'tif',
+		'tiff',
+		'webp',
+		'bmp',
+		'heic',
+		'heif'
+	]
+};
+
 /** File and folder pickers. */
 export async function pickFiles(task: Task): Promise<string[]> {
 	if (!isTauri()) return [];
 	const { open } = await import('@tauri-apps/plugin-dialog');
-	const pages = ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'];
-	const extensions = {
-		text_extraction: pages,
-		contents: pages,
-		text_correction: ['txt', 'md', 'docx', 'pdf'],
-		audio_transcription: [
-			'mp3',
-			'wav',
-			'm4a',
-			'aac',
-			'flac',
-			'ogg',
-			'opus',
-			'wma',
-			'webm',
-			'mp4',
-			'mov',
-			'mkv',
-			'avi'
-		],
-		analysis: [
-			'txt',
-			'md',
-			'docx',
-			'csv',
-			'pdf',
-			'png',
-			'jpg',
-			'jpeg',
-			'tif',
-			'tiff',
-			'webp',
-			'bmp',
-			'heic',
-			'heif'
-		]
-	}[task];
+	const extensions = EXTENSIONS[task];
+	const picked = await open({ multiple: true, filters: [{ name: 'Sources', extensions }] });
+	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
+}
+
+/** Files of any kind Kalamu reads, for a project's documents. */
+export async function pickDocuments(): Promise<string[]> {
+	if (!isTauri()) return [];
+	const { open } = await import('@tauri-apps/plugin-dialog');
+	const extensions = [...new Set(Object.values(EXTENSIONS).flat())];
 	const picked = await open({ multiple: true, filters: [{ name: 'Sources', extensions }] });
 	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
 }

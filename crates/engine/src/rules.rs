@@ -33,6 +33,8 @@ pub struct TaskRules {
     pub models: Vec<ModelRef>,
     /// For a table of contents, the models that can combine its pages; empty otherwise.
     pub merge_models: Vec<ModelRef>,
+    /// Its results are a text a later analysis can read, frozen as corrected.
+    pub yields_text: bool,
 }
 
 fn refs<'a>(models: impl IntoIterator<Item = &'a kalamu_catalog::ModelInfo>) -> Vec<ModelRef> {
@@ -54,6 +56,7 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
             sources: task.source_kinds().to_vec(),
             formats: task.formats().to_vec(),
             answers_in_language: task.answers_in_language(),
+            yields_text: crate::yields_text(task),
             models: refs(catalog.models_for(task)),
             merge_models: if task == Task::Contents {
                 refs(catalog.merge_models())

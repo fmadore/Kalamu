@@ -108,11 +108,14 @@ pub(crate) fn finish(
         .or_else(|| raw.strip_prefix("```"))
         .map_or(raw, |r| r.trim_end_matches("```"))
         .trim();
+    // Refused or not, the answer was written and billed: its usage goes with the error.
+    let rejected = |reason: String| ProviderError::InvalidAnswer {
+        reason,
+        usage: output.usage.clone(),
+    };
     let answer: Value = serde_json::from_str(raw)
-        .map_err(|e| ProviderError::InvalidAnswer(format!("the answer was not valid JSON: {e}")))?;
-    output.fields = fields
-        .read_answer(&answer)
-        .map_err(ProviderError::InvalidAnswer)?;
+        .map_err(|e| rejected(format!("the answer was not valid JSON: {e}")))?;
+    output.fields = fields.read_answer(&answer).map_err(rejected)?;
     output.text = fields.render(&output.fields);
     Ok(output)
 }
@@ -204,16 +207,24 @@ mod tests {
             "Not JSON",
             r#"{"summary":"x","tone":"Mixed","tone_reason":""}"#,
         ] {
+            let usage = kalamu_core::Usage {
+                input_tokens: 1_200,
+                output_tokens: 80,
+                ..kalamu_core::Usage::default()
+            };
             let err = finish(
                 ProcessOutput {
                     text: broken.into(),
+                    usage: usage.clone(),
                     ..ProcessOutput::default()
                 },
                 &fields(),
             )
             .unwrap_err();
-            assert!(matches!(err, ProviderError::InvalidAnswer(_)), "{err}");
+            assert!(matches!(err, ProviderError::InvalidAnswer { .. }), "{err}");
             assert!(err.is_retryable());
+            // The answer was billed though refused: its usage goes with the error.
+            assert_eq!(err.billed(), Some(&usage));
         }
     }
 }

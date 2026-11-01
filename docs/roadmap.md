@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (30 October 2026)
+## Status (31 October 2026)
 
 **Version 1.0.0**, the first Microsoft Store release, is ready to build: the app, its package
 and its listing are done, and what is left before submitting needs Partner Center, the
@@ -105,6 +105,28 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   like all interface text ([decision](decisions/2026-10-30-glossary.md)).
 - **Icons centred in their buttons**: the icon component's style no longer reaches buttons
   named `icon`, which drew their icon at the left whenever its style loaded last.
+- **Analysing corrected text, first increment**
+  ([#47](https://github.com/fmadore/Kalamu/issues/47)): *Analyse this text* freezes an
+  extraction's, transcription's or correction's corrected text and analyses it without
+  reading the originals again; a later correction marks the analysis out of date without
+  changing what it read; provenance records the result read and how much was reviewed;
+  quotations can be anchored in the frozen text, piece by piece, and checked
+  ([decision](decisions/2026-10-31-reviewed-text-snapshots.md)).
+- **Project workspaces, first increment**
+  ([#57](https://github.com/fmadore/Kalamu/issues/57)): projects with flat collections, a
+  document held once in several, every result of a document across jobs with its review state
+  and cost, a preferred result per task, files and folders added before they are read, earlier
+  jobs added after their matches are confirmed, New job started from a selection and tied to
+  it, documents with the same content merged, deletions that never reach a job, missing files
+  marked, archiving; a crate of its own, `projects`
+  ([decision](decisions/2026-10-31-project-workspaces.md)).
+- **The last of the 29 October checkpoint**: analysis answers billed but refused for breaking
+  their fields, in a single call or a batch, now count in what a job cost, on its page and in
+  the job list, and `provenance.json` lists them apart (`refused`); provenance also records
+  whether Whisper skipped silences with its voice-activity model, which speaker labels were
+  renamed (not the names), a table of contents' second step's usage and cost, and only the
+  fixes that were made to a source
+  ([decision](decisions/2026-10-31-refused-answers-and-provenance.md)).
 - **Economy mode and prompt caching**: a job sent as batches to Gemini, OpenAI, Claude or
   Mistral at half price, answered within a day and collected after the app was closed; cached
   input billed at its own price; both costs shown before starting
@@ -127,19 +149,14 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
 
 ## Next
 
-The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refactor are done,
-but for these two, which change no result:
+The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refactor are all
+done.
 
-- **The cost of failed answers**: answers billed but failing their fields counted in the cost
-  shown, which needs a failed call to carry its usage.
-- **Smaller provenance gaps** from the same checkpoint: whether Whisper used voice detection,
-  speaker names, a table of contents' usage and cost per step.
-- **Project and document organisation**: persistent project workspaces with collections,
-  documents and their associated results across jobs; tracked in
-  [#57](https://github.com/fmadore/Kalamu/issues/57). A project's Activity view retains the
-  planned job list, progress, costs, search, tags and task/model/pipeline/date/status filters.
-  Collections organise research documents independently of processing runs. Later, search
-  through the text of every result.
+- **Project workspaces, what is left of
+  [#57](https://github.com/fmadore/Kalamu/issues/57)**: tags as further filters; the
+  Activity view's filters (task, model, pipeline, date, status) and its costs summed; a
+  document's descriptive metadata; workflow runs on a selection, which come with #49; and
+  later, search through the text of every result.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
@@ -173,8 +190,14 @@ but for these two, which change no result:
   for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`. Project-wide
   entity/label reconciliation is tracked in [#48](https://github.com/fmadore/Kalamu/issues/48)
   and the research-workflow sequence below.
-- **Design decisions still open**: a collation table in Jobs, the interrupted
-  job with Resume in the side menu: [issue #1](https://github.com/fmadore/Kalamu/issues/1).
+- **Design improvements left from [issue #1](https://github.com/fmadore/Kalamu/issues/1)**,
+  closed on 28 October when the name and icon were decided (its closing comment keeps these
+  here): a collation table in Jobs (pieces × set-ups, the sigla as column heads); an
+  interrupted or paused job in the sidebar's foot with **Resume** (the sidebar already groups
+  unfinished jobs, without the button); a page with a correction checked and captured; the
+  error colour checked against the hand blue and the highlighter; and the placeholder dashes
+  and the apparatus's `]` and `:`, still in the markup, either declared typesetting or moved
+  to the translation files.
 
 ## Toward the Store release
 
@@ -228,8 +251,8 @@ A pending merge decision is never treated as approval.
 
 | Order | Improvement | Tracking |
 | --- | --- | --- |
-| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs | [#57](https://github.com/fmadore/Kalamu/issues/57) |
-| 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
+| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (first increment done) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
+| 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis (first increment done) | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
 | 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps | [#49](https://github.com/fmadore/Kalamu/issues/49) |
 | 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export | [#48](https://github.com/fmadore/Kalamu/issues/48) |
 | 5 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |

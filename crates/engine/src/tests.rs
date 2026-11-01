@@ -15,6 +15,7 @@ use super::*;
 
 mod batch;
 mod contents;
+mod snapshot;
 
 /// Answers with the page label; can be told to fail some pages a number of times.
 struct Fake {
@@ -23,6 +24,8 @@ struct Fake {
     failures: Mutex<HashMap<u32, Vec<ProviderError>>>,
     /// A page whose answer stops at the output limit (0: none).
     cut_off: std::sync::atomic::AtomicU32,
+    /// The texts analyses were sent, in order.
+    read: Mutex<Vec<String>>,
 }
 
 impl Fake {
@@ -31,6 +34,7 @@ impl Fake {
             calls: AtomicUsize::new(0),
             failures: Mutex::new(HashMap::new()),
             cut_off: std::sync::atomic::AtomicU32::new(0),
+            read: Mutex::new(Vec::new()),
         })
     }
 
@@ -79,10 +83,17 @@ impl Provider for Fake {
                 ..ProcessOutput::default()
             });
         }
-        assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
-        // An analysis reads the whole document and answers each field.
+        // An analysis reads the whole document, a PDF or a text, and answers each field.
         if let Some(schema) = request.analysis {
             assert_eq!(piece, &kalamu_core::PieceRef::Whole);
+            if mime == "text/plain" {
+                self.read
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .push(String::from_utf8_lossy(bytes).into_owned());
+            } else {
+                assert!(bytes.starts_with(b"%PDF"), "a document arrives as a PDF");
+            }
             let fields: Vec<FieldAnswer> = schema
                 .fields
                 .iter()
@@ -101,6 +112,7 @@ impl Provider for Fake {
                 ..ProcessOutput::default()
             });
         }
+        assert!(bytes.starts_with(b"%PDF"), "a page arrives as a PDF");
         let kalamu_core::PieceRef::Page { number, .. } = piece else {
             return Err(ProviderError::Other("not a page".into()));
         };
@@ -171,6 +183,7 @@ fn fixture_with(ffmpeg: Option<kalamu_media::Ffmpeg>) -> Fixture {
             app_version: "test".into(),
             ffmpeg,
             listening_cache: dir.path().join("listening"),
+            snapshots: dir.path().join("snapshots"),
             ..EngineConfig::default()
         },
     );
@@ -326,6 +339,129 @@ async fn transient_errors_are_retried_and_failures_can_be_retried_later() {
     assert_eq!(f.fake.calls(), before + 1);
     let txt = std::fs::read_to_string(f.dir.path().join("letters.txt")).unwrap_or_default();
     assert!(!txt.contains("Not read"), "written again, whole: {txt}");
+}
+
+/// An answer the provider billed but the engine refused, for breaking its fields, is paid for:
+/// it counts in what the job spent, with the answers kept; a failure the provider did not bill
+/// adds nothing.
+#[tokio::test]
+async fn answers_billed_but_refused_count_in_the_cost() {
+    let f = fixture();
+    // The fake model, priced as Gemini 3.8 Flash: $0.75 and $3.75 per million tokens.
+    let mut catalog = f.engine.catalog();
+    let mut priced = catalog
+        .models
+        .iter()
+        .find(|m| m.id == "gemini-3.8-flash")
+        .cloned()
+        .unwrap_or_else(|| panic!("a priced model"));
+    priced.provider = ProviderId::new("fake");
+    priced.id = "priced-model".into();
+    priced.pricing.batch_discount = None;
+    catalog.models.push(priced);
+    f.engine.set_catalog(catalog);
+    let usage = Usage {
+        input_tokens: 1000,
+        output_tokens: 100,
+        ..Usage::default()
+    };
+    f.fake.fail(
+        2,
+        vec![ProviderError::InvalidAnswer {
+            reason: "not valid JSON".into(),
+            usage,
+        }],
+    );
+    f.fake.fail(3, vec![ProviderError::Transient("503".into())]);
+    let job = f.new_job(vec![f.pdf("letters.pdf", 3)], &["priced-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), 5);
+
+    // Each call read 1,000 tokens and wrote 100: $0.001125. Three kept, one refused.
+    let call = 0.001_125;
+    let charges = f.store.charges(job.id).unwrap_or_default();
+    assert_eq!(charges.len(), 1, "only the billed failure: {charges:?}");
+    assert_eq!(charges[0].index, 1);
+    assert!(
+        charges[0]
+            .cost_usd
+            .is_some_and(|c| (c - call).abs() < 1e-12)
+    );
+    let spent = f.store.spent(job.id).unwrap_or_default();
+    assert!((spent - 4.0 * call).abs() < 1e-12, "{spent}");
+    let listed = f.store.list_jobs().unwrap_or_default();
+    assert!(
+        listed[0]
+            .cost_usd
+            .is_some_and(|c| (c - 4.0 * call).abs() < 1e-12)
+    );
+
+    // Provenance lists the refused answer apart from the results kept.
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("letters.provenance.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(provenance["refused"]["answers"], 1);
+    assert_eq!(provenance["refused"]["usage"]["input_tokens"], 1000);
+    assert!(
+        provenance["cost_usd"]
+            .as_f64()
+            .is_some_and(|c| (c - 3.0 * call).abs() < 1e-12)
+    );
+}
+
+/// Provenance lists what was done to a source, not every fix its settings allowed: a spread
+/// split where one was found, no sample of a document shorter than it.
+#[tokio::test]
+async fn provenance_lists_only_the_fixes_that_were_made() {
+    let f = fixture();
+    let write = |name: &str, pages: &[(f32, f32)]| {
+        let path = f.dir.path().join(name);
+        std::fs::write(&path, kalamu_media::sample_pdf(pages, false))
+            .unwrap_or_else(|e| panic!("{e}"));
+        let mut source = kalamu_media::inspect(&path, None).unwrap_or_else(|e| panic!("{e}"));
+        source.split_spreads = true;
+        source
+    };
+    let flat = write("flat.pdf", &[(595.0, 842.0); 2]);
+    let open = write("open.pdf", &[(595.0, 842.0), (1190.0, 842.0)]);
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Spreads".into(),
+            task: Task::TextExtraction,
+            sources: vec![flat, open],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: None,
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: kalamu_core::JobSettings {
+                sample_pages: Some(5),
+                ..Default::default()
+            },
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let read = |name: &str| -> serde_json::Value {
+        serde_json::from_slice(&std::fs::read(f.dir.path().join(name)).unwrap_or_default())
+            .unwrap_or_default()
+    };
+    assert!(
+        read("flat.provenance.json").get("preprocessing").is_none(),
+        "no spread to split, no page left out of the sample"
+    );
+    assert_eq!(
+        read("open.provenance.json")["preprocessing"],
+        serde_json::json!(["split_spreads"])
+    );
 }
 
 #[tokio::test]
@@ -822,6 +958,19 @@ async fn speaker_names_rename_the_review_and_the_files_but_not_the_output() {
         .unwrap_or_else(|e| panic!("{e}"));
     let txt = std::fs::read_to_string(f.dir.path().join("entretien.txt")).unwrap_or_default();
     assert!(txt.contains("Imam Traoré: page 1"), "{txt}");
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("entretien.provenance.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(
+        provenance["renamed_speakers"],
+        serde_json::json!(["Speaker 1"]),
+        "provenance says which labels were renamed"
+    );
+    assert!(
+        !provenance.to_string().contains("Traoré"),
+        "but not the names of the people recorded"
+    );
     let views = f
         .engine
         .source_pieces(job.id, source.id)

@@ -11,13 +11,30 @@ import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PieceStatus } from './bindings/PieceStatus.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
+import type { SourceFile } from './bindings/SourceFile.js';
 import type { Task } from './bindings/Task.js';
 import type { Term } from './glossary.js';
 import { messages } from './i18n/index.js';
 import { api, notify, openUrl } from './tauri.js';
 
+/** A project New job was opened from: the job it starts is tied to the project's documents. */
+export interface FromProject {
+	id: string;
+	name: string;
+	/** The collection shown, which new documents join. */
+	collectionId?: string;
+}
+
 export type View =
-	| { name: 'new'; task?: Task; paths?: string[] }
+	| {
+			name: 'new';
+			task?: Task;
+			paths?: string[];
+			/** Sources already read: text frozen from an earlier job's corrected results. */
+			sources?: SourceFile[];
+			project?: FromProject;
+	  }
+	| { name: 'projects'; projectId?: string; collectionId?: string; documentId?: string }
 	| { name: 'jobs'; jobId?: string }
 	| { name: 'review'; jobId: string; sourceId: string }
 	| { name: 'prompts' }

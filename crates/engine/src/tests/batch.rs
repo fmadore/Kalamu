@@ -21,6 +21,8 @@ struct Batchy {
     cancelled: Mutex<Vec<String>>,
     /// The effort its requests carry, which an update of the app may change mid-batch.
     effort: Mutex<&'static str>,
+    /// A page whose answer breaks its fields, billed all the same (0: none).
+    refused: std::sync::atomic::AtomicU32,
 }
 
 impl Batchy {
@@ -126,15 +128,20 @@ impl Provider for Batchy {
             items
                 .into_iter()
                 .map(|(id, number)| {
+                    let usage = Usage {
+                        input_tokens: 1000,
+                        output_tokens: 100,
+                        ..Usage::default()
+                    };
+                    if self.refused.load(Ordering::SeqCst) == number {
+                        let reason = "not valid JSON".into();
+                        return (id, Err(ProviderError::InvalidAnswer { reason, usage }));
+                    }
                     (
                         id,
                         Ok(ProcessOutput {
                             text: format!("batched page {number}"),
-                            usage: Usage {
-                                input_tokens: 1000,
-                                output_tokens: 100,
-                                ..Usage::default()
-                            },
+                            usage,
                             ..ProcessOutput::default()
                         }),
                     )
@@ -288,6 +295,21 @@ async fn an_economy_job_sends_its_pages_in_batches_and_collects_them() {
     );
     let batches = e.f.store.batches(job.id).unwrap_or_default();
     assert!(batches.iter().all(|b| b.phase == BatchPhase::Collected));
+}
+
+/// A batched answer refused for breaking its fields was billed, at the batch's price: it is
+/// recorded as a charge of the job.
+#[tokio::test]
+async fn a_batched_answer_refused_is_charged_at_the_batch_price() {
+    let e = economy();
+    e.batchy.refused.store(2, Ordering::SeqCst);
+    let job = e.job(3, Pace::Economy);
+    assert_eq!(e.f.run(job.id).await, JobStatus::CompletedWithErrors);
+    let charges = e.f.store.charges(job.id).unwrap_or_default();
+    assert_eq!(charges.len(), 1, "{charges:?}");
+    assert_eq!(charges[0].index, 1);
+    assert_eq!(charges[0].usage.input_tokens, 1000);
+    assert!(charges[0].usage.batch, "billed as a batch");
 }
 
 #[tokio::test]

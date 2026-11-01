@@ -2,8 +2,14 @@
 import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProviderId } from "./ProviderId";
 import type { RequestSetting } from "./RequestSetting";
+import type { Usage } from "./Usage";
 
 /**
  * A table of contents' second step, as provenance records it.
  */
-export type ProvenanceMerge = { provider: ProviderId, model: string, model_versions?: Array<string>, request?: Array<RequestSetting>, prompt: ProvenancePrompt, };
+export type ProvenanceMerge = { provider: ProviderId, model: string, model_versions?: Array<string>, request?: Array<RequestSetting>, prompt: ProvenancePrompt, 
+/**
+ * This step's share of the document's `usage` and `cost_usd`; the rest is the reading of
+ * the pages.
+ */
+usage: Usage, cost_usd: number | null, };

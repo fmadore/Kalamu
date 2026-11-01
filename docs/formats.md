@@ -59,7 +59,8 @@ on each page stays in the job, for the review.
   preset names it, then `corrected` and `reviewed`.
 - **JSON**: the part has an `entries` array, each entry an object of its fields' values by key.
 - **`provenance.json`** describes the first step as for any job and the second under `merge`:
-  its `provider`, `model`, `model_versions`, `request` and `prompt` (with its fields).
+  its `provider`, `model`, `model_versions`, `request` and `prompt` (with its fields), and its
+  share of the `usage` and `cost_usd` of both steps.
 
 ## Corrected text
 
@@ -114,16 +115,18 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `generator` | `{ "name": "Kalamu", "version": "…" }` |
 | `created_at` | Milliseconds since 1970, UTC |
 | `task`, `engine` | `text_extraction`, `audio_transcription`, `analysis`, `contents` or `text_correction`; `cloud` or `offline` |
-| `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it |
+| `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it; for text frozen from an earlier result (*Analyse this text*), the frozen text's name, SHA-256 and size, and `derived_from`: that result's `job_id`, `setup_id`, `source_id` and `task`, the `original_path`, when it was frozen (`frozen_at`), how many pieces it holds and how many were `reviewed` and `corrected`, and the pieces `missing` from it |
 | `provider`, `model` | As requested |
 | `model_versions` | The versions the provider reported, when they differ from `model` (including a fallback model) |
-| `request` | What the requests carried besides the prompt, each as `{ "name", "value" }` named by its path in the request (`output_config.effort`, `generationConfig.maxOutputTokens`, `beam_size`): reasoning effort, output limit, media resolution. Recorded with each piece's result when it was sent, so a later version of Kalamu never rewrites it; a name listed twice means pieces were read with different values. Absent for results stored by 0.4.0 and earlier |
+| `request` | What the requests carried besides the prompt, each as `{ "name", "value" }` named by its path in the request (`output_config.effort`, `generationConfig.maxOutputTokens`, `beam_size`): reasoning effort, output limit, media resolution; for Whisper, `vad` (whether silences were skipped with the voice-activity model, used when it is downloaded) and `vad_model`. Recorded with each piece's result when it was sent, so a later version of Kalamu never rewrites it; a name listed twice means pieces were read with different values. Absent for results stored by 0.4.0 and earlier |
 | `prompt` | Preset id and name, the full instructions and per-page request sent, and their SHA-256 |
-| `merge` | For a table of contents, the model and prompt that combined the pages: `provider`, `model`, `model_versions`, `request`, `prompt` |
+| `merge` | For a table of contents, the model and prompt that combined the pages: `provider`, `model`, `model_versions`, `request`, `prompt`, and that step's `usage` and `cost_usd`, its share of the totals below |
 | `languages`, `detected_languages` | What the user chose, and what the model reported |
 | `options` | Diarization, timestamps, speaker count |
 | `pieces`, `corrected`, `reviewed` | Number of pages or segments, and which were corrected or reviewed |
 | `failed` | Pages or segments that could not be read after their retries, marked in the files. Absent when none was |
 | `truncated` | Pages or segments whose answer stopped at the model's output limit, so their end may be missing; for a table of contents, the pages read and the combined entries alike. Absent when none was |
-| `preprocessing` | Fixes applied to working copies (`split_spreads`, `even_out_volume`, `sample_first_3_pages`) |
-| `usage`, `cost_usd` | Tokens, audio seconds or pages billed, the input read from or written to the provider's prompt cache (`cached_input_tokens`, `cache_write_tokens`, parts of `input_tokens`), whether the calls went through a batch service (`batch`), and the cost from catalogue prices with those discounts |
+| `preprocessing` | Fixes applied to working copies (`split_spreads`, `even_out_volume`, `sample_first_3_pages`): only those made, so `split_spreads` only where a spread was found, and a sample only of a document longer than it |
+| `renamed_speakers` | The model's speaker labels the researcher gave names, which replace them in every file. The names are in the files, not here, so the record can be shared without them. Absent when none was |
+| `usage`, `cost_usd` | Tokens, audio seconds or pages billed, the input read from or written to the provider's prompt cache (`cached_input_tokens`, `cache_write_tokens`, parts of `input_tokens`), whether the calls went through a batch service (`batch`), and the cost from catalogue prices with those discounts, for the results kept |
+| `refused` | Analysis answers the provider billed but that broke the fields and were asked for again: `answers`, their `usage` and `cost_usd`, not included above. Absent when none was |

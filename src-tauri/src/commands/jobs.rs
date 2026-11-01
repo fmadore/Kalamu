@@ -48,6 +48,26 @@ pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
     out.into_iter().map(|p| p.display().to_string()).collect()
 }
 
+/// Freezes the corrected text of a job's sources under one set-up, as sources a new analysis
+/// reads without reading the originals again.
+#[tauri::command]
+pub fn snapshot_job(
+    state: State<'_, AppState>,
+    id: JobId,
+    setup: kalamu_core::SetupId,
+) -> CmdResult<Vec<SourceFile>> {
+    Ok(state.engine.snapshot(id, setup)?)
+}
+
+/// For a job that read frozen text, whether each text has been corrected since.
+#[tauri::command]
+pub fn derived_state(
+    state: State<'_, AppState>,
+    id: JobId,
+) -> CmdResult<Vec<kalamu_engine::DerivedState>> {
+    Ok(state.engine.derived_states(id)?)
+}
+
 /// The text files a finished job wrote, to summarise them in a new job.
 #[tauri::command]
 pub fn job_text_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<String>> {

@@ -58,12 +58,33 @@ pub struct Provenance {
     /// Fixes applied to working copies before processing (`split_spread`, `rotate`…).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub preprocessing: Vec<String>,
+    /// The model's speaker labels (`Speaker 2`) the researcher gave names, which replace them
+    /// in every file. The names themselves are in the files, not here, so that this record can
+    /// be shared as a methods note without the names of the people recorded.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub renamed_speakers: Vec<String>,
+    /// What the results kept cost; for a table of contents, both steps (`merge` gives the
+    /// second's share).
+    pub usage: Usage,
+    pub cost_usd: Option<f64>,
+    /// Answers the provider billed but that were refused for breaking the fields and asked for
+    /// again: not in `usage` or `cost_usd`, which count the results kept.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub refused: Option<ProvenanceRefused>,
+}
+
+/// Answers billed but refused, as provenance records them.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceRefused {
+    pub answers: u32,
     pub usage: Usage,
     pub cost_usd: Option<f64>,
 }
 
 /// A table of contents' second step, as provenance records it.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ProvenanceMerge {
     pub provider: ProviderId,
@@ -73,6 +94,12 @@ pub struct ProvenanceMerge {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub request: Vec<RequestSetting>,
     pub prompt: ProvenancePrompt,
+    /// This step's share of the document's `usage` and `cost_usd`; the rest is the reading of
+    /// the pages.
+    #[serde(default)]
+    pub usage: Usage,
+    #[serde(default)]
+    pub cost_usd: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -101,6 +128,32 @@ pub struct ProvenanceSource {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub read_at: Option<Timestamp>,
+    /// For text frozen from an earlier result: which result, and how much of it the researcher
+    /// had checked when it was frozen. `sha256` above is the frozen text's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub derived_from: Option<ProvenanceDerived>,
+}
+
+/// The earlier result a source's text was frozen from.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceDerived {
+    pub snapshot_id: String,
+    pub job_id: crate::JobId,
+    pub setup_id: crate::SetupId,
+    pub source_id: crate::SourceId,
+    pub task: Task,
+    /// The original the earlier result was read from.
+    pub original_path: String,
+    pub frozen_at: Timestamp,
+    /// Pieces in the frozen text, and how many the researcher had reviewed or corrected.
+    pub pieces: u32,
+    pub reviewed: u32,
+    pub corrected: u32,
+    /// Pieces left out, failed or not yet read (numbered from 1).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub missing: Vec<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

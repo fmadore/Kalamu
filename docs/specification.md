@@ -110,6 +110,16 @@ addressee, summary, names: an archivist's inventory) and a book, report or thesi
 fields are edited in Prompts as an analysis's are, title and pages always included
 ([decision](decisions/2026-10-29-contents-and-correction.md)).
 
+**An analysis can read an earlier job's text as corrected.** *Analyse this text* on an
+extraction, a transcription or a correction freezes the text as the researcher left it,
+corrections and speaker names included, and opens an analysis of it: nothing is read again or
+exported and imported. The frozen copy never changes, so a correction made afterwards does not
+alter what the analysis read; the analysis is marked out of date, with a way to analyse the
+corrected text, whose answers are new ones beside the old
+([decision](decisions/2026-10-31-reviewed-text-snapshots.md),
+[#47](https://github.com/fmadore/Kalamu/issues/47)). Pages that could not be read are left
+out and named in `provenance.json`, with how much of the text had been reviewed.
+
 **Existing text is corrected, not read again.** Many researchers already have machine-read
 text, often noisy: the text layer of a PDF from a digital library, or a text file downloaded
 beside it. *Correct existing text* sends that text, page by page (or in passages of a few
@@ -179,7 +189,9 @@ paying twice.
   again, without sending anything twice, nor anything new: the rest of the job waits for the
   researcher to resume it.
 - **Failures are retried, then reported.** Rate limits, network errors and answers that break
-  an analysis's fields are retried with increasing delays. A piece that still fails is marked
+  an analysis's fields are retried with increasing delays; an answer refused for breaking its
+  fields was billed all the same, so it counts in the job's cost and `provenance.json` lists
+  it apart. A piece that still fails is marked
   as failed with a readable reason, the rest of the queue continues, and failed pieces can be
   retried later on their own. An answer that stops at the model's length limit is kept but
   marked as cut off: the job's page counts such pieces, the review warns on each, and
@@ -313,11 +325,41 @@ results together.
 ## Progress
 
 The user always sees what the app is doing, how far it is, and what it costs (the job's own
-calls over all its runs, not only the current one): a list of jobs
+calls over all its runs, not only the current one, answers billed but refused included): a list of jobs
 with their status, a bar per file and set-up, a live preview of the text as pieces arrive,
 pause and cancel that keep everything finished, progress on the taskbar icon, and a
 notification when a job finishes or needs attention. A job waiting for a batch says how many
 pieces the provider holds and when they are due.
+
+## Projects
+
+A researcher's material outlives any one job: the same letter is extracted, corrected,
+analysed, compared. A **project** keeps it together
+([decision](decisions/2026-10-31-project-workspaces.md), [#57](https://github.com/fmadore/Kalamu/issues/57)).
+
+- **Documents, not files.** A document is a research item: its original, referenced where it
+  lies on the PC (never copied, moved or changed), its title, and every result read from it.
+  The same file at the same place is added once; two files with the same content are pointed
+  out but stay two documents until the researcher merges them, since a copy and a second item
+  can share their bytes.
+- **Collections** group documents as the researcher likes (correspondence, a newspaper's
+  issues, the interviews of one village); a document can be in several, held once. Leaving a
+  collection, or deleting it, keeps the document in the project.
+- **Every result of a document together**, whatever job made it: each set-up of each job that
+  read it, with its progress, how much was reviewed and corrected, what it cost, opening its
+  review. The researcher can mark one per task as **preferred**: never chosen by the app, and
+  a newer run does not take its place.
+- **Adding work.** Files and folders are added before anything is read. A selection opens New
+  job, and the job is tied to those documents when it starts. A job run before is added after
+  its files are matched to documents, shown for the researcher to confirm: the same file is
+  proposed, the same content elsewhere only offered. Its results come as they are; nothing is
+  sent again.
+- **Activity**: the jobs that read the project's documents, with their controls as in Jobs.
+- **Organising never changes work.** Collections, titles, links and preferences call no model.
+  A job keeps the files it was started with, so a later change to a collection does not rewrite
+  a past run or start new work. Deleting a project, a collection or a document removes only how
+  it was organised; deleting a job unties it from its documents, which stay. A file moved since
+  it was added is marked missing, its results kept. A project can be archived and restored.
 
 ## Export formats
 

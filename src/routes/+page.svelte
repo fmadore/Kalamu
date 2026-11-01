@@ -5,6 +5,7 @@
 	import CloseDialog from '#lib/components/CloseDialog.svelte';
 	import JobsView from '#lib/components/JobsView.svelte';
 	import NewJob from '#lib/components/NewJob.svelte';
+	import ProjectsView from '#lib/components/ProjectsView.svelte';
 	import PromptsView from '#lib/components/PromptsView.svelte';
 	import ReviewView from '#lib/components/ReviewView.svelte';
 	import SettingsView from '#lib/components/SettingsView.svelte';
@@ -121,6 +122,12 @@
 			{:else}
 				<ReviewView {jobId} {sourceId} />
 			{/if}
+		{:else if app.view.name === 'projects'}
+			<ProjectsView
+				projectId={app.view.projectId}
+				collectionId={app.view.collectionId}
+				documentId={app.view.documentId}
+			/>
 		{:else if app.view.name === 'prompts'}
 			<PromptsView />
 		{:else if app.view.name === 'settings'}

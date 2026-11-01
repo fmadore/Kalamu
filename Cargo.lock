@@ -2452,6 +2452,7 @@ dependencies = [
  "kalamu-engine",
  "kalamu-media",
  "kalamu-offline",
+ "kalamu-projects",
  "kalamu-prompts",
  "kalamu-providers",
  "kalamu-store",
@@ -2570,6 +2571,17 @@ dependencies = [
  "ts-rs",
  "whisper-rs",
  "whisper-rs-sys",
+]
+
+[[package]]
+name = "kalamu-projects"
+version = "1.0.0"
+dependencies = [
+ "kalamu-core",
+ "kalamu-store",
+ "serde",
+ "tempfile",
+ "ts-rs",
 ]
 
 [[package]]

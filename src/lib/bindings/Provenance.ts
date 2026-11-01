@@ -4,6 +4,7 @@ import type { LanguageChoice } from "./LanguageChoice";
 import type { LanguageCode } from "./LanguageCode";
 import type { ProvenanceMerge } from "./ProvenanceMerge";
 import type { ProvenancePrompt } from "./ProvenancePrompt";
+import type { ProvenanceRefused } from "./ProvenanceRefused";
 import type { ProvenanceSource } from "./ProvenanceSource";
 import type { ProviderId } from "./ProviderId";
 import type { RequestSetting } from "./RequestSetting";
@@ -63,4 +64,20 @@ failed?: Array<number>,
 /**
  * Fixes applied to working copies before processing (`split_spread`, `rotate`…).
  */
-preprocessing?: Array<string>, usage: Usage, cost_usd: number | null, };
+preprocessing?: Array<string>, 
+/**
+ * The model's speaker labels (`Speaker 2`) the researcher gave names, which replace them
+ * in every file. The names themselves are in the files, not here, so that this record can
+ * be shared as a methods note without the names of the people recorded.
+ */
+renamed_speakers?: Array<string>, 
+/**
+ * What the results kept cost; for a table of contents, both steps (`merge` gives the
+ * second's share).
+ */
+usage: Usage, cost_usd: number | null, 
+/**
+ * Answers the provider billed but that were refused for breaking the fields and asked for
+ * again: not in `usage` or `cost_usd`, which count the results kept.
+ */
+refused?: ProvenanceRefused, };

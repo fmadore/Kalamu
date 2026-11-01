@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The sidebar: the app's name, New job, the list of jobs grouped by what they need from the
+	// The sidebar: the app's name, New job, Projects, the list of jobs grouped by what they need from the
 	// researcher, and the tools at its foot (Prompts, Settings, Glossary, support). It folds to a rail of
 	// icons named by their tooltips, leaving the room to the work.
 	import Icon from './Icon.svelte';
@@ -100,6 +100,16 @@
 			<span class="kbd">{m.shell.newJobShortcut}</span>
 		{/if}
 	</button>
+
+	<button
+		class="tool projects"
+		class:current={app.view.name === 'projects'}
+		aria-current={app.view.name === 'projects' ? 'page' : undefined}
+		aria-label={collapsed ? m.nav.projects : undefined}
+		title={collapsed ? m.nav.projects : undefined}
+		onclick={() => go({ name: 'projects' })}
+		><Icon name="project" size={16} />{#if !collapsed}{m.nav.projects}{/if}</button
+	>
 
 	<div class="jobs" id="job-list" hidden={collapsed}>
 		{#each groups as group (group.key)}
