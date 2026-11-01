@@ -159,6 +159,22 @@ no text layer needs *Extract text* instead.
   methods section, with each model, the settings its provider sends (reasoning effort, output
   limit, media resolution), the full text of every prompt with the hash its results' provenance
   carries, and the fields of an analysis. The output folder is left out.
+- **Workflows.** Pipelines run one after another on the same files
+  ([decision](decisions/2026-11-01-workflow-runs.md), [#49](https://github.com/fmadore/Kalamu/issues/49)).
+  Each step is a saved pipeline and reads either the files or the text of an earlier
+  extraction, transcription or correction step, frozen as the researcher corrected it when the
+  step starts; a step that reads one after it, or a table of contents or analysis's answers, is
+  refused. A step can stop for a review: the steps that read it wait until the researcher says
+  to continue. They also wait when some of its pages could not be read, until those are retried
+  or the researcher continues with what was read; nothing else counts as going on. Before starting, Workflows shows what each step sends and to which provider, and
+  what the steps that read the files will cost; a step that reads text costs what that text
+  holds, known once it is read, and a step that runs on this PC followed by one that sends its
+  text to the cloud is pointed out. Each step is an ordinary job, with its progress, files,
+  review and provenance (which names the run, the workflow's version and the go-ahead given).
+  Starting freezes the steps and their prompts, so saving the workflow again (a new version)
+  or editing a prompt never changes a run already started; running again pays only for steps
+  whose model, prompt or text changed. A workflow is exported and imported like a pipeline,
+  and a run can start from a project's selection, its jobs tied to the documents.
 - **Works without an API key.** An offline mode keeps the app useful without an account, a key
   or an internet connection, and keeps sensitive material on the PC.
 - **Interface in English first**, with French and German to follow. All interface text lives
@@ -355,6 +371,8 @@ analysed, compared. A **project** keeps it together
   proposed, the same content elsewhere only offered. Its results come as they are; nothing is
   sent again.
 - **Activity**: the jobs that read the project's documents, with their controls as in Jobs.
+- **Workflows on a selection**: a selection can run a workflow; every step's job is tied to
+  the documents it read, and the run keeps the files it started with.
 - **Organising never changes work.** Collections, titles, links and preferences call no model.
   A job keeps the files it was started with, so a later change to a collection does not rewrite
   a past run or start new work. Deleting a project, a collection or a document removes only how

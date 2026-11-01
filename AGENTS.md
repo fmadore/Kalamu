@@ -35,14 +35,14 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | --- | --- | --- |
 | `core` | Domain types (job, source file, piece, result, provenance, task, language), the traits below, errors. No I/O. | nothing internal |
 | `catalog` | Model catalogue: loading, refreshing, capability queries (tasks, inputs, languages, limits, prices). | `core` |
-| `prompts` | Default and user presets, variables, import/export. | `core` |
+| `prompts` | Default and user presets, variables, import/export; saved pipelines and workflow definitions. | `core` |
 | `media` | Conversion and splitting: PDFium, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
 | `offline` | Whisper and Tesseract engines, behind the same trait as cloud providers. | `core`, `media` |
 | `store` | SQLite job database and result cache, and the project tables beside them. | `core` |
 | `projects` | Project workspaces: documents, collections, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
 | `export` | One module per output format, each implementing the exporter trait. | `core` |
-| `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost. | all of the above through their traits |
+| `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job. | all of the above through their traits |
 | `app` | Tauri shell: commands, events, settings, Credential Manager, packaging. | `engine`, `projects`, and others only to wire them up |
 
 Key traits, defined in `core`:
@@ -50,8 +50,8 @@ Key traits, defined in `core`:
 - **`Provider`**: declares its capabilities (tasks, accepted inputs, languages, limits) and
   processes one prepared piece. The engine never matches on a provider's name.
 - **`Exporter`**: turns stored results into one format. Adding a format touches nothing else.
-- **`JobStore`**: persistence used by the engine, so the engine can be tested with an in-memory
-  store.
+- **`JobStore`**: persistence used by the engine (jobs, results, snapshots, workflow runs), so
+  the engine can be tested with an in-memory store.
 - **`ProjectStore`**: persistence of projects, kept apart from `JobStore` so organising work
   never reaches the code that runs it.
 
@@ -71,7 +71,8 @@ Rules that keep this modular:
 - **AI output is immutable.** User corrections and review status are stored as a separate layer
   on top of it; exporters read the corrected view, provenance records both.
 - **Every piece of work is resumable.** Anything that calls a provider goes through the engine,
-  which records it in the store before and after. No side channel that bypasses the cache.
+  which records it in the store before and after. No side channel that bypasses the cache. A
+  workflow step is a job like any other, and only the engine decides when one starts.
 - **Async with Tokio**; cancellation and pause are explicit, not by dropping tasks mid-write.
 - **Errors**: `thiserror` types in library crates, with messages a researcher can understand at
   the edge; `anyhow` only in `app`. No `unwrap()` or `expect()` outside tests and startup.

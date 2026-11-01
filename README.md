@@ -51,6 +51,9 @@ See the [roadmap](docs/roadmap.md) and the [1.0.0 release notes](docs/release-1.
 - **Save a job's settings as a pipeline** and start the next batch in one click. Export it,
   with its models, settings and full prompts, to cite in a methods section or share with
   colleagues.
+- **Chain pipelines in a workflow**: extract the text, stop to check it, then analyse the text
+  as you corrected it, on a folder or a project's selection. Each step is a job of its own;
+  running it again pays only for the steps that changed.
 - **Export** to text, Markdown, Word, JSON, CSV, subtitles and searchable PDF, each with a
   `provenance.json` recording the model, prompt and settings.
 - **A glossary** explains the words these tools use, from OCR and tokens to error rates and

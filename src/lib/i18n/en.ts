@@ -911,7 +911,7 @@ export const en = {
 			},
 			pipeline: {
 				word: 'Pipeline',
-				text: 'A job’s settings saved under a name: task, models, prompts, languages, formats and destination, so the next batch starts in one click. Exported, a pipeline carries its full prompts and a Markdown record to cite in a methods section or share with colleagues.'
+				text: 'A job’s settings saved under a name: task, models, prompts, languages, formats and destination, so the next batch starts in one click. Exported, a pipeline carries its full prompts and a Markdown record to cite in a methods section or share with colleagues. Several pipelines run one after another form a workflow, each step reading the files or the corrected text of a step before it.'
 			},
 			tokens: {
 				word: 'Tokens',
