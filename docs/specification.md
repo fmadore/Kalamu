@@ -175,6 +175,16 @@ no text layer needs *Extract text* instead.
   or editing a prompt never changes a run already started; running again pays only for steps
   whose model, prompt or text changed. A workflow is exported and imported like a pipeline,
   and a run can start from a project's selection, its jobs tied to the documents.
+- **The simplest workflow needs no building.** The last section of New job, *Then*, offers to
+  analyse the text once it is read (an extraction, a transcription or a correction), by default
+  after the researcher has checked it; nothing is sent for the analysis before they continue.
+  Ready-made examples (letters, interviews, a digital library's text) open in Workflows on the
+  models the researcher has keys for, and an animated drawing of the steps, the researcher's
+  check among them, shows how each workflow runs.
+- **Continuing happens where the researcher already is.** A job that is a workflow's step says
+  so on its page and in its review, with what comes next and, when the next step waits for
+  them, a *Continue* button; such jobs are listed first in the sidebar, under *For you to
+  check*, and the notification says the text is ready to check rather than done.
 - **Works without an API key.** An offline mode keeps the app useful without an account, a key
   or an internet connection, and keeps sensitive material on the PC.
 - **Interface in English first**, with French and German to follow. All interface text lives
@@ -454,8 +464,8 @@ the results, and keep the originals.
 Many researchers meet these tools for the first time. A glossary beside Settings explains the
 words the app uses, from OCR and tokens to ground truth, error rates and hallucination, in
 plain language, and what each export format suits. A small help mark beside the headings that
-use a word (pipelines, the model and prompt, speed and price, the estimate, formats, the files
-written, the errors found in review) opens the glossary on it. Like all interface text, it is
+use a word (pipelines, workflows, the model and prompt, speed and price, the estimate, formats,
+the files written, the errors found in review) opens the glossary on it. Like all interface text, it is
 written in the translation files.
 
 ## Bundled conversion tools

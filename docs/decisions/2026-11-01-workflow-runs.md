@@ -90,6 +90,23 @@ A change across `core`, `store`, `prompts`, `engine` and `app` is an architectur
   the app command, so Workflows asks it once per step; moving the estimate into the engine
   would let a run's cost be computed in one place.
 
+## For colleagues new to it (same day)
+
+Reviewed against the researchers the app is for, the first screens asked for too much: two
+concepts (pipeline, then workflow) and two screens before anything ran, a *Continue* found only
+on the run's own page, and words like "reads the text of step 1". Changed:
+
+- **Then, in New job.** An analysis chosen at the end of New job, by default after a check,
+  starts an unsaved two-step workflow: the same engine path, nothing new to learn. The analysis
+  runs on the reading provider's model when it has one and a key, in the researcher's usual
+  formats; its cost is said to depend on the text.
+- **Continue where they are.** The engine answers which run and step a job is (`job_step`); the
+  job's page and its review show a banner with *Continue*; the sidebar lists waiting jobs
+  first; the notification says what is waited for. The run's page stays for the whole picture.
+- **Examples** built with New job's own choice of model, so each uses a key the researcher
+  has; **an animated drawing** of the steps, as New job draws a task; **a glossary entry** with
+  help marks; **plainer words**, and an input shown as text when there is nothing to choose.
+
 ## Consequences
 
 - Left in #49: several inputs per step (with #48's dictionary), project-level steps, an

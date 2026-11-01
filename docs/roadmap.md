@@ -97,8 +97,8 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   workflow, third-party notices for every crate and package, sample files for the certification
   team, and the listing for 1.0.0 ([packaging-msix.md](packaging-msix.md),
   [decision](decisions/2026-10-30-version-1.md)).
-- **A glossary** for colleagues new to these tools: a page beside Settings explaining fifteen
-  words the app uses (OCR and HTR, LLM, Whisper, API key, prompt, set-up, pipeline, tokens,
+- **A glossary** for colleagues new to these tools: a page beside Settings explaining sixteen
+  words the app uses (OCR and HTR, LLM, Whisper, API key, prompt, set-up, pipeline, workflow, tokens,
   reasoning effort, economy mode, ground truth, error rates, hallucination, provenance,
   machine-readable) and what each export format suits, with a filter, links between the
   words, and a help mark beside the headings that use them; written in the translation files
@@ -127,7 +127,11 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   provenance names the run, the workflow's version and the go-ahead; definitions versioned,
   exported and imported, runs frozen; running again pays only for the steps that changed; a
   run started from a project's selection ties its jobs to the documents
-  ([decision](decisions/2026-11-01-workflow-runs.md)).
+  ([decision](decisions/2026-11-01-workflow-runs.md)). For colleagues new to them: *Then* at
+  the end of New job analyses the text once it is checked, with no workflow to build; a banner
+  on the job's page and in its review offers *Continue*, and the sidebar lists those jobs under
+  *For you to check*; three ready-made examples; an animated drawing of the steps; a glossary
+  entry.
 - **The last of the 29 October checkpoint**: analysis answers billed but refused for breaking
   their fields, in a single call or a batch, now count in what a job cost, on its page and in
   the job list, and `provenance.json` lists them apart (`refused`); provenance also records
@@ -168,7 +172,8 @@ done.
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed
   in the engine, and restarting a run from a step after the definition changed. A live run of
-  a two-step workflow, and one in economy mode across a restart.
+  a two-step workflow, and one in economy mode across a restart. Try *Then* and the examples
+  with one or two colleagues before going further.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
