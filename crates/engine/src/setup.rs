@@ -47,6 +47,22 @@ pub struct NewJob {
 
 impl Engine {
     pub fn create_job(&self, new: NewJob) -> Result<Job, EngineError> {
+        let catalog = self.catalog();
+        Self::check_new(&catalog, &new)?;
+        let setups = self.freeze_setups(&catalog, new.task, &new.settings, &new.setups)?;
+        self.insert_job(
+            new.name,
+            new.task,
+            new.sources,
+            setups,
+            new.settings,
+            new.output,
+        )
+    }
+
+    /// Whether a job can be made of what was chosen: files and set-ups, a folder for what has
+    /// none to write beside, sources the task reads and models that do it.
+    pub(crate) fn check_new(catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
         if new.sources.is_empty() || new.setups.is_empty() {
             return Err(EngineError::EmptyJob);
         }
@@ -62,19 +78,29 @@ impl Engine {
         {
             return Err(EngineError::LinkNeedsFolder);
         }
-        let catalog = self.catalog();
-        Self::check_job(&catalog, &new)?;
+        Self::check_job(catalog, new)
+    }
+
+    /// The set-ups as a job runs them: each prompt rendered with the job's settings and frozen,
+    /// labels made distinct for file names, a table of contents' second step settled.
+    pub(crate) fn freeze_setups(
+        &self,
+        catalog: &Catalog,
+        task: Task,
+        settings: &JobSettings,
+        requests: &[SetupRequest],
+    ) -> Result<Vec<Setup>, EngineError> {
         let mut setups = Vec::new();
         let mut labels: Vec<String> = Vec::new();
-        for request in &new.setups {
+        for request in requests {
             let provider = self.provider(&request.provider)?;
-            if provider.accepted_inputs(new.task).is_empty() {
+            if provider.accepted_inputs(task).is_empty() {
                 return Err(EngineError::UnsupportedModel(request.model.clone()));
             }
             let (prompt, preset) = self.frozen_prompt(
-                &catalog,
-                new.task,
-                &new.settings,
+                catalog,
+                task,
+                settings,
                 &request.provider,
                 &request.model,
                 request.preset_id.as_deref(),
@@ -94,8 +120,8 @@ impl Engine {
                 n += 1;
             }
             labels.push(label.clone());
-            let merge = if new.task == Task::Contents {
-                Some(self.merge_step(&catalog, &new.settings, request, preset)?)
+            let merge = if task == Task::Contents {
+                Some(self.merge_step(catalog, settings, request, preset)?)
             } else {
                 None
             };
@@ -109,17 +135,29 @@ impl Engine {
                 merge,
             });
         }
+        Ok(setups)
+    }
+
+    /// Records a new job with set-ups already frozen.
+    pub(crate) fn insert_job(
+        &self,
+        name: String,
+        task: Task,
+        sources: Vec<SourceFile>,
+        setups: Vec<Setup>,
+        settings: JobSettings,
+        mut output: OutputSettings,
+    ) -> Result<Job, EngineError> {
         // Formats the task does not write (from a pipeline of another task) are left out.
-        let mut output = new.output;
-        output.formats.retain(|f| new.task.formats().contains(f));
+        output.formats.retain(|f| task.formats().contains(f));
         let job = Job {
             id: JobId::new(),
-            name: new.name,
-            task: new.task,
+            name,
+            task,
             created_at: Timestamp::now(),
-            sources: new.sources,
+            sources,
             setups,
-            settings: new.settings,
+            settings,
             output,
             status: JobStatus::Pending,
         };

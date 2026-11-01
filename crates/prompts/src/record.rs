@@ -81,6 +81,16 @@ impl PipelineFile {
         serde_json::to_string_pretty(self).map_err(crate::io)
     }
 
+    /// The record's sections without its title and introduction, from `## Task` on, for a
+    /// workflow's record to place under each step.
+    pub(crate) fn sections(&self) -> String {
+        let markdown = self.to_markdown();
+        match markdown.find("## Task") {
+            Some(at) => markdown[at..].to_string(),
+            None => markdown,
+        }
+    }
+
     /// The record as Markdown, for a methods section or an appendix.
     pub fn to_markdown(&self) -> String {
         let p = &self.pipeline;
@@ -252,37 +262,9 @@ impl PipelineLibrary {
         if (file.format != FILE_FORMAT && file.format != LEGACY_FILE_FORMAT) || file.version > 1 {
             return Err(PromptError::InvalidImport(file.format));
         }
-        let mut ids = BTreeMap::new();
-        for preset in file.presets {
-            let same = prompts.get(&preset.id).is_ok_and(|local| {
-                local.task == preset.task
-                    && local.instructions == preset.instructions
-                    && local.user_prompt == preset.user_prompt
-                    && local.schema == preset.schema
-                    && local.merge_instructions == preset.merge_instructions
-            });
-            let id = if same {
-                preset.id.clone()
-            } else {
-                let mut copy = preset.clone();
-                copy.id = String::new();
-                copy.builtin = false;
-                copy.modified = false;
-                if preset.builtin {
-                    copy.name = format!("{} ({})", preset.name, file.pipeline.name);
-                }
-                prompts.save(copy)?.id
-            };
-            ids.insert(preset.id, id);
-        }
+        let ids = import_presets(file.presets, &file.pipeline.name, prompts)?;
         let mut pipeline = file.pipeline;
-        for setup in &mut pipeline.setups {
-            if let Some(id) = setup.preset_id.as_mut()
-                && let Some(new) = ids.get(id.as_str())
-            {
-                *id = new.clone();
-            }
-        }
+        remap_presets(&mut pipeline, &ids);
         pipeline.id = String::new();
         pipeline.destination = OutputDestination::default();
         // Never replace a pipeline of the same name.
@@ -301,7 +283,55 @@ impl PipelineLibrary {
     }
 }
 
-fn task_name(task: Task) -> &'static str {
+/// Adds a shared file's presets: one identical to a preset already here is used as it is; any
+/// other becomes a new user preset (a default's copy named after `owner`), so an import never
+/// changes the user's own prompts or the defaults. Returns the id each preset has here.
+pub(crate) fn import_presets(
+    presets: Vec<Preset>,
+    owner: &str,
+    prompts: &mut PromptLibrary,
+) -> Result<BTreeMap<String, String>, PromptError> {
+    let mut ids = BTreeMap::new();
+    for preset in presets {
+        if ids.contains_key(&preset.id) {
+            continue;
+        }
+        let same = prompts.get(&preset.id).is_ok_and(|local| {
+            local.task == preset.task
+                && local.instructions == preset.instructions
+                && local.user_prompt == preset.user_prompt
+                && local.schema == preset.schema
+                && local.merge_instructions == preset.merge_instructions
+        });
+        let id = if same {
+            preset.id.clone()
+        } else {
+            let mut copy = preset.clone();
+            copy.id = String::new();
+            copy.builtin = false;
+            copy.modified = false;
+            if preset.builtin {
+                copy.name = format!("{} ({owner})", preset.name);
+            }
+            prompts.save(copy)?.id
+        };
+        ids.insert(preset.id, id);
+    }
+    Ok(ids)
+}
+
+/// Points a pipeline's set-ups at the presets as imported.
+pub(crate) fn remap_presets(pipeline: &mut Pipeline, ids: &BTreeMap<String, String>) {
+    for setup in &mut pipeline.setups {
+        if let Some(id) = setup.preset_id.as_mut()
+            && let Some(new) = ids.get(id.as_str())
+        {
+            *id = new.clone();
+        }
+    }
+}
+
+pub(crate) fn task_name(task: Task) -> &'static str {
     match task {
         Task::TextExtraction => "text extraction",
         Task::AudioTranscription => "audio transcription",
@@ -328,7 +358,7 @@ fn cell(text: &str) -> String {
 }
 
 /// `YYYY-MM-DD` in UTC, from Howard Hinnant's `civil_from_days`.
-fn date(at: Timestamp) -> String {
+pub(crate) fn date(at: Timestamp) -> String {
     let days = at.0.div_euclid(86_400_000);
     let z = days + 719_468;
     let era = z.div_euclid(146_097);

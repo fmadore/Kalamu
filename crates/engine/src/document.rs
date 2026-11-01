@@ -251,6 +251,7 @@ impl Engine {
             usage,
             cost_usd: cost,
             refused: self.refused(job, setup_id, source_id)?,
+            workflow: self.workflow_provenance(job.id)?,
         };
         Ok(ExportDocument {
             task: job.task,

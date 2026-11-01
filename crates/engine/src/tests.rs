@@ -16,6 +16,7 @@ use super::*;
 mod batch;
 mod contents;
 mod snapshot;
+mod workflow;
 
 /// Answers with the page label; can be told to fail some pages a number of times.
 struct Fake {

@@ -10,6 +10,7 @@ pub mod projects;
 pub mod review;
 pub mod settings;
 pub mod window;
+pub mod workflows;
 
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -47,6 +48,8 @@ pub struct AppState {
     pub preview: Mutex<Option<(SourceId, Arc<OpenSource>)>>,
     /// Saved job settings; the engine does not need them.
     pub pipelines: Mutex<kalamu_prompts::PipelineLibrary>,
+    /// Saved workflows; their runs are the engine's.
+    pub workflows: Mutex<kalamu_prompts::WorkflowLibrary>,
     /// Set once quitting has begun: asked to quit again, the app stops waiting.
     pub quitting: std::sync::atomic::AtomicBool,
 }

@@ -6,6 +6,7 @@ import type { ProvenanceMerge } from "./ProvenanceMerge";
 import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProvenanceRefused } from "./ProvenanceRefused";
 import type { ProvenanceSource } from "./ProvenanceSource";
+import type { ProvenanceWorkflow } from "./ProvenanceWorkflow";
 import type { ProviderId } from "./ProviderId";
 import type { RequestSetting } from "./RequestSetting";
 import type { SetupOptions } from "./SetupOptions";
@@ -80,4 +81,8 @@ usage: Usage, cost_usd: number | null,
  * Answers the provider billed but that were refused for breaking the fields and asked for
  * again: not in `usage` or `cost_usd`, which count the results kept.
  */
-refused?: ProvenanceRefused, };
+refused?: ProvenanceRefused, 
+/**
+ * The workflow step this result was read by, when a workflow ran it.
+ */
+workflow?: ProvenanceWorkflow, };

@@ -6,6 +6,7 @@ use kalamu_core::{
 use super::*;
 
 mod projects;
+mod runs;
 
 fn job() -> Job {
     Job {

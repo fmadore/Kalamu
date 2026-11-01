@@ -100,6 +100,23 @@ fn record_panics(dir: &std::path::Path) {
     }));
 }
 
+/// Ties a workflow step's job to the documents of the project its run was started from.
+fn link_step(
+    engine: &Engine,
+    projects: &kalamu_projects::Projects,
+    run: kalamu_core::RunId,
+    job: kalamu_core::JobId,
+) {
+    let Ok(view) = engine.run_view(run) else {
+        return;
+    };
+    if let Some(project) = view.run.project
+        && let Err(e) = projects.link_job(project, job, view.run.collection)
+    {
+        tracing::warn!(run = %run, job = %job, error = %e, "workflow step not tied to its project");
+    }
+}
+
 pub fn run() {
     let moved = std::env::var_os("LOCALAPPDATA").map_or(Ok(false), |local| {
         move_legacy_data(&std::path::Path::new(&local).join(DATA_FOLDER))
@@ -141,6 +158,7 @@ pub fn run() {
             let projects = kalamu_projects::Projects::new(store.clone(), store.clone());
             let prompts = PromptLibrary::open(&data.join("presets"))?;
             let pipelines = kalamu_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
+            let workflows = kalamu_prompts::WorkflowLibrary::open(&data.join("workflows"))?;
             let cached = std::fs::read_to_string(&paths.catalog_cache).ok();
             let catalog = Catalog::newest(cached.as_deref());
             let http = kalamu_providers::client();
@@ -161,7 +179,7 @@ pub fn run() {
             let mut providers = kalamu_providers::registry(http.clone());
             providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
             let engine = Engine::new(
-                store,
+                store.clone(),
                 providers,
                 catalog,
                 prompts,
@@ -183,14 +201,28 @@ pub fn run() {
                 tracing::info!(count = interrupted.len(), "jobs interrupted at last close");
             }
             commands::remember_interrupted(interrupted);
+            // Workflow steps whose input became ready as the app closed: their jobs are made,
+            // and wait for the researcher like any interrupted job.
+            if let Err(e) = engine.resume_runs() {
+                tracing::warn!(error = %e, "workflow runs not resumed");
+            }
 
-            // Progress to the interface.
+            // Progress to the interface. A workflow step started from a project is tied to its
+            // documents as a job started from the project is.
             let mut events = engine.subscribe();
             let handle = app.handle().clone();
+            let linker = kalamu_projects::Projects::new(store.clone(), store.clone());
+            let runs = engine.clone();
             tauri::async_runtime::spawn(async move {
                 loop {
                     match events.recv().await {
                         Ok(event) => {
+                            if let kalamu_core::ProgressEvent::StepStarted {
+                                run_id, job_id, ..
+                            } = &event
+                            {
+                                link_step(&runs, &linker, *run_id, *job_id);
+                            }
                             let _ = handle.emit(PROGRESS_EVENT, &event);
                         }
                         Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
@@ -222,6 +254,7 @@ pub fn run() {
                 http,
                 preview: Mutex::new(None),
                 pipelines: Mutex::new(pipelines),
+                workflows: Mutex::new(workflows),
                 quitting: std::sync::atomic::AtomicBool::new(false),
             });
             app.manage(tray::TrayMenu::default());
@@ -280,6 +313,18 @@ pub fn run() {
             commands::pipelines::delete_pipeline,
             commands::pipelines::export_pipeline,
             commands::pipelines::import_pipeline,
+            commands::workflows::list_workflows,
+            commands::workflows::save_workflow,
+            commands::workflows::duplicate_workflow,
+            commands::workflows::delete_workflow,
+            commands::workflows::export_workflow,
+            commands::workflows::import_workflow,
+            commands::workflows::start_run,
+            commands::workflows::list_runs,
+            commands::workflows::get_run,
+            commands::workflows::approve_step,
+            commands::workflows::cancel_run,
+            commands::workflows::delete_run,
             commands::jobs::expand_paths,
             commands::jobs::inspect_files,
             commands::jobs::inspect_links,

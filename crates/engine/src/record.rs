@@ -4,11 +4,21 @@
 use kalamu_catalog::Catalog;
 use kalamu_core::provenance::ProvenancePrompt;
 use kalamu_core::{ProviderId, Task};
-use kalamu_prompts::{Pipeline, PipelineFile, Preset, SetupRecord};
+use kalamu_prompts::{Pipeline, PipelineFile, Preset, SetupRecord, Workflow, WorkflowFile};
 
 use crate::{Engine, EngineError, SetupRequest};
 
 impl Engine {
+    /// A workflow as a file to share or cite: each step's pipeline record, prompts included.
+    pub fn workflow_file(&self, workflow: Workflow) -> Result<WorkflowFile, EngineError> {
+        let steps = workflow
+            .steps
+            .iter()
+            .map(|s| self.pipeline_file(s.pipeline.clone()))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(WorkflowFile::new(workflow, &self.config.app_version, steps))
+    }
+
     pub fn pipeline_file(&self, pipeline: Pipeline) -> Result<PipelineFile, EngineError> {
         let catalog = self.catalog();
         let mut setups = Vec::new();

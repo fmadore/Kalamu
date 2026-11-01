@@ -44,10 +44,7 @@ pub struct DerivedState {
 
 /// The tasks whose result is a text another task can read.
 pub fn yields_text(task: Task) -> bool {
-    matches!(
-        task,
-        Task::TextExtraction | Task::AudioTranscription | Task::TextCorrection
-    )
+    task.yields_text()
 }
 
 impl Engine {

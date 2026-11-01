@@ -102,6 +102,7 @@ CREATE INDEX charges_by_job ON charges(job_id);
 "#,
     projects::MIGRATION,
     snapshots::MIGRATION,
+    runs::MIGRATION,
 ];
 
 pub struct SqliteStore {
@@ -708,9 +709,43 @@ impl JobStore for SqliteStore {
     fn snapshot(&self, id: &str) -> Result<kalamu_core::Snapshot, StoreError> {
         snapshots::get(self, id)
     }
+
+    fn create_run(&self, run: &kalamu_core::WorkflowRun) -> Result<(), StoreError> {
+        runs::create(self, run)
+    }
+
+    fn run(&self, id: kalamu_core::RunId) -> Result<kalamu_core::WorkflowRun, StoreError> {
+        runs::get(self, id)
+    }
+
+    fn runs(&self) -> Result<Vec<kalamu_core::WorkflowRun>, StoreError> {
+        runs::list(self)
+    }
+
+    fn set_step_progress(
+        &self,
+        run: kalamu_core::RunId,
+        index: u32,
+        progress: &kalamu_core::StepProgress,
+    ) -> Result<(), StoreError> {
+        runs::set_progress(self, run, index, progress)
+    }
+
+    fn cancel_run(&self, id: kalamu_core::RunId) -> Result<(), StoreError> {
+        runs::cancel(self, id)
+    }
+
+    fn delete_run(&self, id: kalamu_core::RunId) -> Result<(), StoreError> {
+        runs::delete(self, id)
+    }
+
+    fn run_of_job(&self, job: JobId) -> Result<Option<(kalamu_core::RunId, u32)>, StoreError> {
+        runs::of_job(self, job)
+    }
 }
 
 mod projects;
+mod runs;
 mod snapshots;
 
 #[cfg(test)]

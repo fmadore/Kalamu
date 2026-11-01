@@ -65,6 +65,10 @@ uuid_id!(
     /// A research item in a project: its source and every result read from it.
     DocumentId
 );
+uuid_id!(
+    /// A workflow started on a set of sources: its steps, each a job.
+    RunId
+);
 
 /// A provider's stable identifier, as used in the model catalogue (`gemini`, `openai`, …).
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, TS)]

@@ -99,6 +99,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         usage: Usage::default(),
         cost_usd: Some(0.002),
         refused: None,
+        workflow: None,
     };
     ExportDocument {
         task,

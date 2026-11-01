@@ -37,6 +37,15 @@ export type View =
 	| { name: 'projects'; projectId?: string; collectionId?: string; documentId?: string }
 	| { name: 'jobs'; jobId?: string }
 	| { name: 'review'; jobId: string; sourceId: string }
+	| {
+			name: 'workflows';
+			/** A saved workflow to edit, or `new` for a blank one. */
+			workflowId?: string;
+			runId?: string;
+			/** Files chosen elsewhere (a project's selection) to run a workflow on. */
+			paths?: string[];
+			project?: FromProject;
+	  }
 	| { name: 'prompts' }
 	| { name: 'settings' }
 	| { name: 'glossary'; term?: Term | 'formats' };
@@ -68,6 +77,8 @@ export const app = $state({
 	settings: null as Settings | null,
 	jobs: [] as JobSummary[],
 	live: {} as Record<string, LiveJob>,
+	/** Raised whenever a workflow run changes, so its views read it again. */
+	runs: 0,
 	closeRequested: false,
 	toast: null as string | null
 });
@@ -125,8 +136,16 @@ function scheduleRefresh(): void {
 }
 
 export function applyProgress(event: ProgressEvent): void {
+	if (event.type === 'run_changed') {
+		app.runs++;
+		return;
+	}
 	const live = liveJob(event.job_id);
 	switch (event.type) {
+		case 'step_started':
+			app.runs++;
+			scheduleRefresh();
+			break;
 		case 'job_started':
 		case 'source_prepared':
 			scheduleRefresh();
@@ -157,6 +176,7 @@ export function applyProgress(event: ProgressEvent): void {
 			};
 			break;
 		case 'job_finished': {
+			app.runs++;
 			void refreshJobs();
 			const m = messages();
 			const job = app.jobs.find((j) => j.id === event.job_id);
