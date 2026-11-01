@@ -4,6 +4,7 @@ import type { Limits } from "./Limits";
 import type { ModelStatus } from "./ModelStatus";
 import type { Pricing } from "./Pricing";
 import type { ProviderId } from "./ProviderId";
+import type { Reasoning } from "./Reasoning";
 import type { Task } from "./Task";
 
 export type ModelInfo = { provider: ProviderId, id: string, name: string, description: string, tasks: Array<Task>, 
@@ -40,4 +41,9 @@ layout: boolean,
  * A top-tier model priced far above what transcription and extraction usually need; the
  * interface says so when it is chosen.
  */
-costly: boolean, pricing: Pricing, limits: Limits, };
+costly: boolean, pricing: Pricing, limits: Limits, 
+/**
+ * The thinking levels it accepts; `None` for a model that does not reason (an OCR or a
+ * speech-to-text model).
+ */
+reasoning?: Reasoning, };

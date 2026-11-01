@@ -144,6 +144,11 @@ no text layer needs *Extract text* instead.
   an answer language instead, by default the document's own and then said outright so that a
   model reading English instructions does not drift into English; names and titles stay as the
   document spells them, and a table of contents' entries are combined in one language.
+- **How much the model thinks.** For a model that reasons, *Thinking* offers the levels its
+  provider documents, set to a suggestion: the lowest for reading pages and recordings, `low`
+  for analyses. More thinking can help a hard hand or an analysis, and costs more. Every answer
+  may use the whole output the model is documented to give
+  ([decision](decisions/2026-11-01-output-limits-and-reasoning.md)).
 - **Current models.** The latest models for each task, updated as better ones appear (see
   [Keeping models current](#keeping-models-current)). Very expensive models carry a note that
   they are most likely more than the task needs.

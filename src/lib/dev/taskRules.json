@@ -17,51 +17,63 @@
     "models": [
       {
         "provider": "gemini",
-        "model": "gemini-3.8-flash"
+        "model": "gemini-3.8-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-4-argon"
+        "model": "gemini-4-argon",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.1-pro-preview"
+        "model": "gemini-3.1-pro-preview",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.5-flash-lite"
+        "model": "gemini-3.5-flash-lite",
+        "suggested_reasoning": "minimal"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol"
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-terra"
+        "model": "gpt-6.1-terra",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra"
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-luna"
+        "model": "gpt-6-luna",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1"
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-opus-5-5"
+        "model": "claude-opus-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-sonnet-5-5"
+        "model": "claude-sonnet-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-haiku-5-5"
+        "model": "claude-haiku-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
@@ -88,75 +100,93 @@
     "models": [
       {
         "provider": "gemini",
-        "model": "gemini-3.8-flash"
+        "model": "gemini-3.8-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-4-argon"
+        "model": "gemini-4-argon",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.1-pro-preview"
+        "model": "gemini-3.1-pro-preview",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.5-flash-lite"
+        "model": "gemini-3.5-flash-lite",
+        "suggested_reasoning": "minimal"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol"
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-terra"
+        "model": "gpt-6.1-terra",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra"
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-luna"
+        "model": "gpt-6-luna",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1"
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-opus-5-5"
+        "model": "claude-opus-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-sonnet-5-5"
+        "model": "claude-sonnet-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-haiku-5-5"
+        "model": "claude-haiku-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "mistral-medium-3-5"
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "mistral",
-        "model": "mistral-large-4-0"
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "mistral-small-2603"
+        "model": "mistral-small-2603",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "mistral",
-        "model": "zai-glm-5-3"
+        "model": "zai-glm-5-3",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "zai-glm-5-3-flash"
+        "model": "zai-glm-5-3-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "deepseek-v4-1-flash-1017"
+        "model": "deepseek-v4-1-flash-1017",
+        "suggested_reasoning": "low"
       }
     ],
     "merge_models": [],
@@ -180,75 +210,93 @@
     "models": [
       {
         "provider": "gemini",
-        "model": "gemini-3.8-flash"
+        "model": "gemini-3.8-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-4-argon"
+        "model": "gemini-4-argon",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.1-pro-preview"
+        "model": "gemini-3.1-pro-preview",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.5-flash-lite"
+        "model": "gemini-3.5-flash-lite",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol"
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-terra"
+        "model": "gpt-6.1-terra",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra"
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-luna"
+        "model": "gpt-6-luna",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1"
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-opus-5-5"
+        "model": "claude-opus-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-sonnet-5-5"
+        "model": "claude-sonnet-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-haiku-5-5"
+        "model": "claude-haiku-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "mistral-medium-3-5"
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "mistral",
-        "model": "mistral-large-4-0"
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "mistral-small-2603"
+        "model": "mistral-small-2603",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "mistral",
-        "model": "zai-glm-5-3"
+        "model": "zai-glm-5-3",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "zai-glm-5-3-flash"
+        "model": "zai-glm-5-3-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "deepseek-v4-1-flash-1017"
+        "model": "deepseek-v4-1-flash-1017",
+        "suggested_reasoning": "low"
       }
     ],
     "merge_models": [],
@@ -271,141 +319,175 @@
     "models": [
       {
         "provider": "gemini",
-        "model": "gemini-3.8-flash"
+        "model": "gemini-3.8-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-4-argon"
+        "model": "gemini-4-argon",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.1-pro-preview"
+        "model": "gemini-3.1-pro-preview",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.5-flash-lite"
+        "model": "gemini-3.5-flash-lite",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol"
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-terra"
+        "model": "gpt-6.1-terra",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra"
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-luna"
+        "model": "gpt-6-luna",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1"
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-opus-5-5"
+        "model": "claude-opus-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-sonnet-5-5"
+        "model": "claude-sonnet-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-haiku-5-5"
+        "model": "claude-haiku-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "mistral-medium-3-5"
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "mistral",
-        "model": "mistral-large-4-0"
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "mistral-small-2603"
+        "model": "mistral-small-2603",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "mistral",
-        "model": "zai-glm-5-3-flash"
+        "model": "zai-glm-5-3-flash",
+        "suggested_reasoning": "low"
       }
     ],
     "merge_models": [
       {
         "provider": "gemini",
-        "model": "gemini-3.8-flash"
+        "model": "gemini-3.8-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-4-argon"
+        "model": "gemini-4-argon",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.1-pro-preview"
+        "model": "gemini-3.1-pro-preview",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.5-flash-lite"
+        "model": "gemini-3.5-flash-lite",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol"
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-terra"
+        "model": "gpt-6.1-terra",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra"
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",
-        "model": "gpt-6-luna"
+        "model": "gpt-6-luna",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1"
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-opus-5-5"
+        "model": "claude-opus-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-sonnet-5-5"
+        "model": "claude-sonnet-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "anthropic",
-        "model": "claude-haiku-5-5"
+        "model": "claude-haiku-5-5",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "mistral-medium-3-5"
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "mistral",
-        "model": "mistral-large-4-0"
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "mistral-small-2603"
+        "model": "mistral-small-2603",
+        "suggested_reasoning": "none"
       },
       {
         "provider": "mistral",
-        "model": "zai-glm-5-3"
+        "model": "zai-glm-5-3",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "zai-glm-5-3-flash"
+        "model": "zai-glm-5-3-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "mistral",
-        "model": "deepseek-v4-1-flash-1017"
+        "model": "deepseek-v4-1-flash-1017",
+        "suggested_reasoning": "low"
       }
     ],
     "yields_text": false
@@ -430,15 +512,18 @@
     "models": [
       {
         "provider": "gemini",
-        "model": "gemini-3.8-flash"
+        "model": "gemini-3.8-flash",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-4-argon"
+        "model": "gemini-4-argon",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "gemini",
-        "model": "gemini-3.1-pro-preview"
+        "model": "gemini-3.1-pro-preview",
+        "suggested_reasoning": "low"
       },
       {
         "provider": "openai",

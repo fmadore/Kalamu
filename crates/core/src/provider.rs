@@ -82,6 +82,18 @@ pub struct PreparedInput {
     pub file_name: String,
 }
 
+/// What a request asks of the model beyond the prompt, per model: how much to think, and how
+/// long its answer may be. The engine fills it from the catalogue and the set-up; a provider
+/// falls back to its own setting where a field is `None` for a model the catalogue lacks.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct Tuning {
+    /// The reasoning level, in the provider's words; `None` for a model that does not reason.
+    pub reasoning: Option<String>,
+    /// The model's output limit; `None` when its provider documents none.
+    pub max_output_tokens: Option<u32>,
+}
+
 /// Everything a provider needs for one call.
 #[derive(Debug)]
 pub struct ProcessRequest<'a> {
@@ -94,6 +106,7 @@ pub struct ProcessRequest<'a> {
     pub input: &'a PreparedInput,
     pub languages: &'a LanguageChoice,
     pub options: &'a SetupOptions,
+    pub tuning: &'a Tuning,
     /// For an analysis, the fields the answer must have.
     pub analysis: Option<&'a AnalysisSchema>,
     pub stop: &'a StopSignal,
@@ -201,11 +214,11 @@ pub trait Provider: Send + Sync {
     /// converts each piece into the first one it can produce.
     fn accepted_inputs(&self, task: Task) -> &'static [&'static str];
 
-    /// The fixed settings sent with a request for `task` and `model` (reasoning effort, output
-    /// limit, media resolution) when it reads a page, for the record of a pipeline. Neither the
-    /// prompt nor the researcher's own options, which the record states apart.
-    fn request_settings(&self, task: Task, model: &str) -> Vec<RequestSetting> {
-        let _ = (task, model);
+    /// The settings sent with a request for `task` and `model` with `tuning` (reasoning effort,
+    /// output limit, media resolution) when it reads a page, for the record of a pipeline.
+    /// Neither the prompt nor the researcher's own options, which the record states apart.
+    fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+        let _ = (task, model, tuning);
         Vec::new()
     }
 
@@ -215,7 +228,7 @@ pub trait Provider: Send + Sync {
     /// code that builds the request, so the record cannot claim what was not sent.
     fn sent_settings(&self, request: &ProcessRequest<'_>, batched: bool) -> Vec<RequestSetting> {
         let _ = batched;
-        self.request_settings(request.task, request.model)
+        self.request_settings(request.task, request.model, request.tuning)
     }
 
     async fn process(

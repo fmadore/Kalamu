@@ -38,6 +38,13 @@ pub struct SetupOptions {
     pub timestamps: bool,
     /// Expected number of speakers, if known.
     pub speakers: Option<u32>,
+    /// How much the model thinks before it answers, in its provider's words (`low`, `high`).
+    /// Chosen in New job, or the suggestion for the task; settled when the job is created, so
+    /// the job, its cache keys and provenance hold the level sent. `None` for a model that does
+    /// not reason, and in jobs made before levels could be chosen.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub reasoning: Option<String>,
 }
 
 /// A provider, model and prompt combination. A normal job has one; comparison mode has several.

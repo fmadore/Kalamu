@@ -47,7 +47,7 @@ pub use project::{
 pub use provenance::Provenance;
 pub use provider::{
     ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, RequestSetting,
-    StopSignal,
+    StopSignal, Tuning,
 };
 pub use result::{
     Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,

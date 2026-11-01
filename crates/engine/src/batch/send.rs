@@ -126,6 +126,12 @@ impl Engine {
         let api_key = self.api_key(setup)?;
         let now = Timestamp::now();
         let stop = StopSignal::default();
+        let tuning = self.tuning(
+            job.task,
+            &setup.provider,
+            &setup.model,
+            setup.options.reasoning.as_deref(),
+        );
         let requests: Vec<(String, ProcessRequest<'_>)> = bucket
             .pieces
             .iter()
@@ -141,6 +147,7 @@ impl Engine {
                         input,
                         languages: &job.settings.languages,
                         options: &setup.options,
+                        tuning: &tuning,
                         analysis: setup.prompt.schema.as_ref(),
                         stop: &stop,
                     },

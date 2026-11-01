@@ -16,6 +16,11 @@ use crate::{Engine, EngineError};
 pub struct ModelRef {
     pub provider: ProviderId,
     pub model: String,
+    /// The reasoning level suggested for the task, for a model that reasons: what New job shows
+    /// as "suggested" and sends when the researcher chooses none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub suggested_reasoning: Option<String>,
 }
 
 /// What a task takes and gives, for the interface.
@@ -37,12 +42,16 @@ pub struct TaskRules {
     pub yields_text: bool,
 }
 
-fn refs<'a>(models: impl IntoIterator<Item = &'a kalamu_catalog::ModelInfo>) -> Vec<ModelRef> {
+fn refs<'a>(
+    task: Task,
+    models: impl IntoIterator<Item = &'a kalamu_catalog::ModelInfo>,
+) -> Vec<ModelRef> {
     models
         .into_iter()
         .map(|m| ModelRef {
             provider: m.provider.clone(),
             model: m.id.clone(),
+            suggested_reasoning: m.tuning(task, None).reasoning,
         })
         .collect()
 }
@@ -57,9 +66,9 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
             formats: task.formats().to_vec(),
             answers_in_language: task.answers_in_language(),
             yields_text: crate::yields_text(task),
-            models: refs(catalog.models_for(task)),
+            models: refs(task, catalog.models_for(task)),
             merge_models: if task == Task::Contents {
-                refs(catalog.merge_models())
+                refs(task, catalog.merge_models())
             } else {
                 Vec::new()
             },

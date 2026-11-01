@@ -4,7 +4,7 @@
 
 use kalamu_core::{
     ApiKey, BatchContext, BatchProgress, LanguageChoice, PieceRef, PreparedInput, ProcessRequest,
-    Provider, ProviderError, SetupOptions, StopSignal, Task,
+    Provider, ProviderError, SetupOptions, StopSignal, Task, Tuning,
 };
 use kalamu_providers::{Anthropic, OpenAi, client};
 use wiremock::matchers::{body_partial_json, method, path};
@@ -27,6 +27,9 @@ fn page(number: u32) -> PreparedInput {
 
 static STOP: std::sync::LazyLock<StopSignal> = std::sync::LazyLock::new(StopSignal::default);
 
+/// A model the catalogue lacks: each provider's own settings.
+static TUNING: std::sync::LazyLock<Tuning> = std::sync::LazyLock::new(Tuning::default);
+
 fn requests<'a>(
     model: &'a str,
     pages: &'a [PreparedInput],
@@ -47,6 +50,7 @@ fn requests<'a>(
                     input,
                     languages,
                     options,
+                    tuning: &TUNING,
                     analysis: None,
                     stop: &STOP,
                 },

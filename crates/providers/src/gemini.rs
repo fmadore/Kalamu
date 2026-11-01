@@ -22,7 +22,7 @@ mod batch;
 use async_trait::async_trait;
 use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
-    ProviderError, ProviderId, RequestSetting, Task, Usage, YOUTUBE_LINK,
+    ProviderError, ProviderId, RequestSetting, Task, Tuning, Usage, YOUTUBE_LINK,
 };
 use reqwest::Client;
 use serde_json::{Value, json};
@@ -35,7 +35,9 @@ const BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 /// Pages above this go through the Files API in the Python pipelines; one page rarely does.
 const INLINE_LIMIT: usize = 18 * 1024 * 1024;
 
-const MAX_OUTPUT_TOKENS: u32 = 65_535;
+/// For a model the catalogue lacks: Gemini's documented output limit, and the lowest thinking
+/// level every current model accepts. A model in the catalogue gets its own.
+const MAX_OUTPUT_TOKENS: u32 = 65_536;
 const THINKING_LEVEL: &str = "low";
 const MEDIA_RESOLUTION: &str = "MEDIA_RESOLUTION_HIGH";
 const VIDEO_RESOLUTION: &str = "MEDIA_RESOLUTION_LOW";
@@ -79,10 +81,11 @@ impl Gemini {
                 }
             })
         };
+        let (level, max) = tuned(request.tuning);
         let mut generation = json!({
-            "maxOutputTokens": MAX_OUTPUT_TOKENS,
+            "maxOutputTokens": max,
             "responseMimeType": "text/plain",
-            "thinkingConfig": { "thinkingLevel": THINKING_LEVEL },
+            "thinkingConfig": { "thinkingLevel": level },
         });
         if let Some(resolution) = media_resolution(&input.mime) {
             generation["mediaResolution"] = json!(resolution);
@@ -225,17 +228,17 @@ impl Provider for Gemini {
         }
     }
 
-    fn request_settings(&self, task: Task, _model: &str) -> Vec<RequestSetting> {
+    fn request_settings(&self, task: Task, _model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
         // As for a page, which every task but a transcription or a correction reads.
         let page = match task {
             Task::AudioTranscription | Task::TextCorrection => "text/plain",
             _ => "application/pdf",
         };
-        settings(page)
+        settings(page, tuning)
     }
 
     fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
-        settings(&request.input.mime)
+        settings(&request.input.mime, request.tuning)
     }
 
     async fn process(
@@ -363,14 +366,21 @@ fn media_resolution(mime: &str) -> Option<&'static str> {
     }
 }
 
+/// The thinking level and output limit sent: the model's, or Gemini's own for one the catalogue
+/// lacks.
+fn tuned(tuning: &Tuning) -> (&str, u32) {
+    (
+        tuning.reasoning.as_deref().unwrap_or(THINKING_LEVEL),
+        tuning.max_output_tokens.unwrap_or(MAX_OUTPUT_TOKENS),
+    )
+}
+
 /// The settings a request for an input of this type carries, decided as `body` decides them.
-fn settings(mime: &str) -> Vec<RequestSetting> {
+fn settings(mime: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+    let (level, max) = tuned(tuning);
     let mut settings = vec![
-        RequestSetting::new(
-            "generationConfig.thinkingConfig.thinkingLevel",
-            THINKING_LEVEL,
-        ),
-        RequestSetting::new("generationConfig.maxOutputTokens", MAX_OUTPUT_TOKENS),
+        RequestSetting::new("generationConfig.thinkingConfig.thinkingLevel", level),
+        RequestSetting::new("generationConfig.maxOutputTokens", max),
         RequestSetting::new("safetySettings.*.threshold", "BLOCK_NONE"),
     ];
     if let Some(resolution) = media_resolution(mime) {

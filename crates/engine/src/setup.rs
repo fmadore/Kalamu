@@ -125,13 +125,19 @@ impl Engine {
             } else {
                 None
             };
+            // The reasoning level is settled now, so the job, its cache keys and provenance
+            // hold the one sent: the choice, the nearest the model has, or the suggestion.
+            let mut options = request.options.clone();
+            if let Some(model) = catalog.model(&request.provider, &request.model) {
+                options.reasoning = model.tuning(task, options.reasoning.as_deref()).reasoning;
+            }
             setups.push(Setup {
                 id: SetupId::new(),
                 label,
                 provider: request.provider.clone(),
                 model: request.model.clone(),
                 prompt,
-                options: request.options.clone(),
+                options,
                 merge,
             });
         }

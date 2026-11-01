@@ -51,7 +51,12 @@ impl Provider for Batchy {
         &["application/pdf"]
     }
 
-    fn request_settings(&self, _task: Task, _model: &str) -> Vec<kalamu_core::RequestSetting> {
+    fn request_settings(
+        &self,
+        _task: Task,
+        _model: &str,
+        _tuning: &kalamu_core::Tuning,
+    ) -> Vec<kalamu_core::RequestSetting> {
         let effort = *self.effort.lock().unwrap_or_else(|p| p.into_inner());
         vec![kalamu_core::RequestSetting::new("reasoning_effort", effort)]
     }

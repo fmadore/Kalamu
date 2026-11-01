@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use kalamu_core::{
     ApiKey, CacheKey, Charge, Job, JobId, PieceState, PieceStatus, PreparedInput, ProcessOutput,
     ProcessRequest, ProgressEvent, ProviderError, ProviderId, SourceFile, Step, StopSignal,
-    StoredResult, Task, Timestamp,
+    StoredResult, Task, Timestamp, Tuning,
 };
 use kalamu_media::OpenSource;
 
@@ -53,6 +53,26 @@ pub(crate) fn finish(task: Task, output: ProcessOutput) -> ProcessOutput {
 }
 
 impl Engine {
+    /// What a request to `model` asks beyond the prompt: the reasoning level chosen for the
+    /// set-up (the suggestion when none was, the nearest the model has when it lacks it) and
+    /// the model's whole output limit, from the catalogue. A model the catalogue lacks is sent
+    /// the level chosen, and its provider's own limit.
+    pub(crate) fn tuning(
+        &self,
+        task: Task,
+        provider: &ProviderId,
+        model: &str,
+        chosen: Option<&str>,
+    ) -> Tuning {
+        self.catalog()
+            .model(provider, model)
+            .map(|m| m.tuning(task, chosen))
+            .unwrap_or_else(|| Tuning {
+                reasoning: chosen.map(str::to_string),
+                max_output_tokens: None,
+            })
+    }
+
     /// The provider's formats for the task, narrowed to those the model reads: a text-only
     /// model behind a provider that takes PDFs and images is sent text alone. A correction
     /// sends text whatever the model reads.
@@ -134,6 +154,12 @@ impl Engine {
             .find(|s| s.id == state.setup_id)
             .map(|s| s.options.clone())
             .unwrap_or_default();
+        let tuning = self.tuning(
+            job.task,
+            step.provider,
+            step.model,
+            options.reasoning.as_deref(),
+        );
         let started = Instant::now();
         let mut last_error: Option<ProviderError> = None;
         for attempt in 0..self.config.max_attempts {
@@ -146,6 +172,7 @@ impl Engine {
                 input: &input,
                 languages: &job.settings.languages,
                 options: &options,
+                tuning: &tuning,
                 analysis: step.prompt.schema.as_ref(),
                 stop,
             };

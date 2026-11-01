@@ -328,6 +328,7 @@
 			presetId: s.preset_id,
 			label: s.label ?? '',
 			diarize: s.options.diarize,
+			reasoning: s.options.reasoning ?? null,
 			timestamps: s.options.timestamps,
 			mergeProvider: s.merge?.provider ?? s.provider,
 			mergeModel: s.merge?.model ?? s.model

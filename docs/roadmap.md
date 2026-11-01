@@ -134,6 +134,11 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   entry. Any finished text goes into a new round from *Use this text in a new job* (analyse it,
   correct it, or run a workflow on it), on the job's page or on a project document's results,
   which send only that document's text.
+- **Each model's own output limit and a thinking level per set-up**: answers may use the whole
+  output each model is documented to give (none is set where Mistral documents none); New job
+  offers each model's reasoning levels under *Thinking*, the lowest suggested for OCR, HTR and
+  transcription, `low` for analyses; the level is settled when the job is created and recorded
+  in provenance ([decision](decisions/2026-11-01-output-limits-and-reasoning.md)).
 - **The last of the 29 October checkpoint**: analysis answers billed but refused for breaking
   their fields, in a single call or a batch, now count in what a job cost, on its page and in
   the job list, and `provenance.json` lists them apart (`refused`); provenance also records

@@ -4,4 +4,9 @@ import type { ProviderId } from "./ProviderId";
 /**
  * A model in the catalogue, by provider and id.
  */
-export type ModelRef = { provider: ProviderId, model: string, };
+export type ModelRef = { provider: ProviderId, model: string, 
+/**
+ * The reasoning level suggested for the task, for a model that reasons: what New job shows
+ * as "suggested" and sends when the researcher chooses none.
+ */
+suggested_reasoning?: string, };

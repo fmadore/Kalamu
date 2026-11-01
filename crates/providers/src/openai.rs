@@ -16,7 +16,8 @@ mod batch;
 use async_trait::async_trait;
 use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, LanguageChoice, ProcessOutput,
-    ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, Usage,
+    ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, Tuning,
+    Usage,
 };
 use reqwest::Client;
 use reqwest::multipart::{Form, Part};
@@ -26,6 +27,8 @@ use crate::analysis;
 use crate::http::{data_url, ids, join_turns, secs_to_ms, send_json, speaker_label};
 
 const BASE_URL: &str = "https://api.openai.com/v1";
+/// For a model the catalogue lacks; one in the catalogue gets its own output limit (128,000 on
+/// the current models).
 const MAX_OUTPUT_TOKENS: u32 = 32_000;
 
 pub struct OpenAi {
@@ -69,9 +72,13 @@ impl OpenAi {
                 "role": "user",
                 "content": [media, { "type": "input_text", "text": request.user_prompt }],
             }],
-            "max_output_tokens": MAX_OUTPUT_TOKENS,
+            "max_output_tokens": request.tuning.max_output_tokens.unwrap_or(MAX_OUTPUT_TOKENS),
             "store": false,
         });
+        // A model the catalogue lacks runs at its own default effort.
+        if let Some(effort) = &request.tuning.reasoning {
+            body["reasoning"] = json!({ "effort": effort });
+        }
         if let Some(fields) = request.analysis {
             body["text"] = json!({
                 "format": {
@@ -304,13 +311,20 @@ impl Provider for OpenAi {
         }
     }
 
-    fn request_settings(&self, task: Task, _model: &str) -> Vec<RequestSetting> {
+    fn request_settings(&self, task: Task, _model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
         match task {
-            // No reasoning effort is sent: each model runs at its own default.
-            Task::TextExtraction | Task::Analysis | Task::Contents | Task::TextCorrection => vec![
-                RequestSetting::new("max_output_tokens", MAX_OUTPUT_TOKENS),
-                RequestSetting::new("store", false),
-            ],
+            Task::TextExtraction | Task::Analysis | Task::Contents | Task::TextCorrection => {
+                let mut settings = Vec::new();
+                if let Some(effort) = &tuning.reasoning {
+                    settings.push(RequestSetting::new("reasoning.effort", effort.as_str()));
+                }
+                settings.push(RequestSetting::new(
+                    "max_output_tokens",
+                    tuning.max_output_tokens.unwrap_or(MAX_OUTPUT_TOKENS),
+                ));
+                settings.push(RequestSetting::new("store", false));
+                settings
+            }
             Task::AudioTranscription => Vec::new(),
         }
     }

@@ -17,7 +17,7 @@
 use async_trait::async_trait;
 use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
-    ProviderError, ProviderId, RequestSetting, Task, Usage,
+    ProviderError, ProviderId, RequestSetting, Task, Tuning, Usage,
 };
 use reqwest::{Client, RequestBuilder};
 use serde_json::{Value, json};
@@ -31,8 +31,18 @@ const API_VERSION: &str = "2026-10-21";
 const FALLBACK_BETA: &str = "server-side-fallback-2026-07-01";
 /// Haiku has no server-side fallback.
 const FALLBACK_MODELS: &[&str] = &["claude-opus-5-5", "claude-sonnet-5-5"];
+/// For a model the catalogue lacks; one in the catalogue gets its own output limit (128,000 on
+/// the current models) and the effort set for the job.
 const MAX_TOKENS: u32 = 16_000;
 const EFFORT: &str = "low";
+
+/// The effort and output limit sent: the model's, or the fallbacks above.
+fn tuned(tuning: &Tuning) -> (&str, u32) {
+    (
+        tuning.reasoning.as_deref().unwrap_or(EFFORT),
+        tuning.max_output_tokens.unwrap_or(MAX_TOKENS),
+    )
+}
 
 /// A batch refuses `fallbacks`, so only a request sent on its own asks for them.
 fn sends_fallbacks(model: &str, batched: bool) -> bool {
@@ -40,13 +50,14 @@ fn sends_fallbacks(model: &str, batched: bool) -> bool {
 }
 
 /// The settings a request carries, decided as `body` decides them.
-fn settings(task: Task, model: &str, batched: bool) -> Vec<RequestSetting> {
+fn settings(task: Task, model: &str, tuning: &Tuning, batched: bool) -> Vec<RequestSetting> {
     if task == Task::AudioTranscription {
         return Vec::new();
     }
+    let (effort, max) = tuned(tuning);
     let mut settings = vec![
-        RequestSetting::new("output_config.effort", EFFORT),
-        RequestSetting::new("max_tokens", MAX_TOKENS),
+        RequestSetting::new("output_config.effort", effort),
+        RequestSetting::new("max_tokens", max),
         RequestSetting::new("system.*.cache_control.type", "ephemeral"),
     ];
     if sends_fallbacks(model, batched) {
@@ -96,9 +107,10 @@ impl Anthropic {
                 "source": { "type": "base64", "media_type": request.input.mime, "data": data },
             })
         };
+        let (effort, max) = tuned(request.tuning);
         let mut body = json!({
             "model": request.model,
-            "max_tokens": MAX_TOKENS,
+            "max_tokens": max,
             "system": [{
                 "type": "text",
                 "text": request.prompt,
@@ -108,7 +120,7 @@ impl Anthropic {
                 "role": "user",
                 "content": [media, { "type": "text", "text": request.user_prompt }],
             }],
-            "output_config": { "effort": EFFORT },
+            "output_config": { "effort": effort },
         });
         if sends_fallbacks(request.model, batched) {
             body["fallbacks"] = json!("default");
@@ -244,12 +256,12 @@ impl Provider for Anthropic {
         }
     }
 
-    fn request_settings(&self, task: Task, model: &str) -> Vec<RequestSetting> {
-        settings(task, model, false)
+    fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+        settings(task, model, tuning, false)
     }
 
     fn sent_settings(&self, request: &ProcessRequest<'_>, batched: bool) -> Vec<RequestSetting> {
-        settings(request.task, request.model, batched)
+        settings(request.task, request.model, request.tuning, batched)
     }
 
     async fn process(

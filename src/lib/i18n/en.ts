@@ -414,6 +414,21 @@ export const en = {
 		model: 'Model',
 		prompt: 'Prompt',
 		noPrompt: 'This model takes no prompt',
+		reasoning: {
+			title: 'Thinking',
+			suggested: (level: string) => `${level} (suggested)`,
+			level: (level: string) =>
+				({
+					none: 'None',
+					minimal: 'Minimal',
+					low: 'Low',
+					medium: 'Medium',
+					high: 'High',
+					xhigh: 'Extra high',
+					max: 'Maximum'
+				})[level] ?? level,
+			hint: 'More thinking costs more and takes longer.'
+		},
 		label: 'Label',
 		compareAdd: 'Compare with another model',
 		analysis: 'Analysis',
@@ -994,7 +1009,7 @@ export const en = {
 			},
 			reasoning: {
 				word: 'Reasoning effort',
-				text: 'How much some models work through a question before answering. The intermediate steps are billed as tokens written but not shown. More effort can help with hard judgements, such as an analysis or a difficult hand, and costs more and takes longer. Kalamu sets it for each task and records it in the provenance.'
+				text: 'How much some models work through a question before answering. The intermediate steps are billed as tokens written but not shown. More effort can help with hard judgements, such as an analysis or a difficult hand, and costs more and takes longer. Each model offers its own levels; New job suggests the lowest for reading pages and recordings, and you can choose another for each model under Thinking. The level used is recorded in the provenance.'
 			},
 			economy: {
 				word: 'Economy mode (batches)',

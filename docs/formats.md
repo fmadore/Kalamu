@@ -122,7 +122,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `prompt` | Preset id and name, the full instructions and per-page request sent, and their SHA-256 |
 | `merge` | For a table of contents, the model and prompt that combined the pages: `provider`, `model`, `model_versions`, `request`, `prompt`, and that step's `usage` and `cost_usd`, its share of the totals below |
 | `languages`, `detected_languages` | What the user chose, and what the model reported |
-| `options` | Diarization, timestamps, speaker count |
+| `options` | Diarization, timestamps, speaker count, and the reasoning level chosen or suggested for the set-up (`reasoning`, absent for a model that does not reason) |
 | `pieces`, `corrected`, `reviewed` | Number of pages or segments, and which were corrected or reviewed |
 | `failed` | Pages or segments that could not be read after their retries, marked in the files. Absent when none was |
 | `truncated` | Pages or segments whose answer stopped at the model's output limit, so their end may be missing; for a table of contents, the pages read and the combined entries alike. Absent when none was |
