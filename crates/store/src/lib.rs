@@ -215,7 +215,10 @@ impl JobStore for SqliteStore {
                         COALESCE(SUM(p.status = 'failed'), 0),
                         COALESCE(SUM(p.status IN ('done', 'cached') AND r.truncated), 0),
                         SUM(CASE WHEN p.status = 'done' THEN r.cost_usd END),
-                        (SELECT SUM(c.cost_usd) FROM charges c WHERE c.job_id = j.id)
+                        (SELECT SUM(c.cost_usd) FROM charges c WHERE c.job_id = j.id),
+                        (SELECT json_extract(w.data, '$.workflow_name')
+                         FROM run_steps s JOIN runs w ON w.id = s.run_id
+                         WHERE s.job_id = j.id LIMIT 1)
                  FROM jobs j LEFT JOIN pieces p ON p.job_id = j.id
                  LEFT JOIN results r ON r.cache_key = p.cache_key
                  GROUP BY j.id
@@ -234,13 +237,24 @@ impl JobStore for SqliteStore {
                     row.get::<_, u32>(6)?,
                     row.get::<_, Option<f64>>(7)?,
                     row.get::<_, Option<f64>>(8)?,
+                    row.get::<_, Option<String>>(9)?,
                 ))
             })
             .map_err(db)?;
         let mut jobs = Vec::new();
         for row in rows {
-            let (data, status, updated_at, total, finished, failed, truncated, kept, refused) =
-                row.map_err(db)?;
+            let (
+                data,
+                status,
+                updated_at,
+                total,
+                finished,
+                failed,
+                truncated,
+                kept,
+                refused,
+                workflow,
+            ) = row.map_err(db)?;
             // What its results cost, and the answers billed but refused.
             let cost = match (kept, refused) {
                 (None, None) => None,
@@ -248,6 +262,8 @@ impl JobStore for SqliteStore {
             };
             let job: Job = serde_json::from_str(&data).map_err(corrupt)?;
             jobs.push(JobSummary {
+                models: job.models(),
+                workflow,
                 id: job.id,
                 name: job.name,
                 task: job.task,

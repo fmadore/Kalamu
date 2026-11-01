@@ -392,7 +392,9 @@ analysed, compared. A **project** keeps it together
   its files are matched to documents, shown for the researcher to confirm: the same file is
   proposed, the same content elsewhere only offered. Its results come as they are; nothing is
   sent again.
-- **Activity**: the jobs that read the project's documents, with their controls as in Jobs.
+- **Activity**: the jobs that read the project's documents, with their controls as in Jobs,
+  narrowed by task, state, model, workflow and date started; the jobs shown are costed
+  together, and those without a price yet are counted apart.
 - **Workflows on a selection**: a selection can run a workflow; every step's job is tied to
   the documents it read, and the run keeps the files it started with.
 - **Organising never changes work.** Collections, titles, links and preferences call no model.

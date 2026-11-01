@@ -244,6 +244,31 @@ export const en = {
 		activityLede: 'The jobs that read this project’s documents, newest first.',
 		noActivity:
 			'No job has read these documents yet. Select documents and choose “New job with these”.',
+		activityFilters: 'Filter the jobs',
+		filterBy: {
+			task: 'Task',
+			status: 'State',
+			model: 'Model',
+			workflow: 'Workflow',
+			period: 'Started'
+		},
+		anyTask: 'Any task',
+		anyStatus: 'Any state',
+		anyModel: 'Any model',
+		anyWorkflow: 'In a workflow or not',
+		period: {
+			any: 'Any time',
+			week: 'Past 7 days',
+			month: 'Past 30 days',
+			year: 'Past year'
+		},
+		clearFilters: 'Show all',
+		noActivityMatch: 'No job matches these filters.',
+		activityShown: (shown: number, total: number) =>
+			shown === total ? (total === 1 ? '1 job' : `${total} jobs`) : `${shown} of ${total} jobs`,
+		activityCost: (cost: string) => `${cost} spent`,
+		activityUnpriced: (n: number) =>
+			`${n === 1 ? '1' : n} without a price (offline or not yet answered)`,
 		addFiles: 'Add files',
 		addFolder: 'Add a folder',
 		addedFiles: (n: number) => (n === 1 ? '1 document added' : `${n} documents added`),

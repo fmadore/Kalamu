@@ -120,6 +120,11 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   it, documents with the same content merged, deletions that never reach a job, missing files
   marked, archiving; a crate of its own, `projects`
   ([decision](decisions/2026-10-31-project-workspaces.md)).
+- **A project's Activity, filtered and costed**: its jobs narrowed by task, state, model,
+  workflow and when they were started, and the jobs shown costed together, with those not yet
+  priced (offline, or not yet answered) counted apart so a sum is never read as whole when it
+  is not. A job does not record a pipeline it was filled from (New job's settings stay
+  editable after one is applied), so the workflow a job is a step of stands in for it.
 - **Workflows, first increment** ([#49](https://github.com/fmadore/Kalamu/issues/49)):
   pipelines run one after another on the same files, each step reading the files or an
   earlier step's corrected text, frozen when it starts; a review stop, or pages not read, holds
@@ -177,8 +182,7 @@ The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refa
 done.
 
 - **Project workspaces, what is left of
-  [#57](https://github.com/fmadore/Kalamu/issues/57)**: tags as further filters; the
-  Activity view's filters (task, model, pipeline, date, status) and its costs summed; a
+  [#57](https://github.com/fmadore/Kalamu/issues/57)**: tags as further filters; a
   document's descriptive metadata; and later, search through the text of every result.
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
@@ -316,7 +320,12 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 
 - French and German interface.
 - OpenRouter for open-weights models.
-- Offline text extraction with Tesseract: [#46](https://github.com/fmadore/Kalamu/issues/46).
+- **Free offline text extraction with Tesseract** for clean printed PDFs and images, without
+  an account, API key or per-page API charges; language data installed through the app, then
+  processing entirely on the PC. The same review, exports, caching and resume as cloud
+  extraction, with the engine and language data recorded in provenance. Handwriting still
+  needs a suitable cloud model. Planned, not available in 1.0.0; no release date set:
+  [issue #46](https://github.com/fmadore/Kalamu/issues/46).
 - Linking names to imported local authority records (an id from candidate records, or none,
   with a reason), building on the project dictionary in #48.
 - Tables of contents of text files (a long Word report, a transcript, read in passages).

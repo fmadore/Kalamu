@@ -174,4 +174,28 @@ pub struct JobSummary {
     /// priced answer.
     #[serde(default)]
     pub cost_usd: Option<f64>,
+    /// The models its set-ups called, each once, in set-up order, a table of contents'
+    /// combining model after the one that read the pages.
+    #[serde(default)]
+    pub models: Vec<String>,
+    /// The workflow it is a step of, by the name the run was started under.
+    #[serde(default)]
+    pub workflow: Option<String>,
+}
+
+impl Job {
+    /// The models its set-ups call, each once, in set-up order.
+    pub fn models(&self) -> Vec<String> {
+        let mut models: Vec<String> = Vec::new();
+        let called = self
+            .setups
+            .iter()
+            .flat_map(|s| std::iter::once(&s.model).chain(s.merge.as_ref().map(|m| &m.model)));
+        for model in called {
+            if !models.contains(model) {
+                models.push(model.clone());
+            }
+        }
+        models
+    }
 }
