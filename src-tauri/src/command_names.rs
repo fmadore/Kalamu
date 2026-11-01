@@ -45,6 +45,8 @@ pub const COMMANDS: &[&str] = &[
     "start_run",
     "list_runs",
     "get_run",
+    "job_step",
+    "job_step",
     "approve_step",
     "cancel_run",
     "delete_run",

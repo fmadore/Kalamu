@@ -7,6 +7,7 @@
 	// or Alt and the arrows, turn the pages; Ctrl F opens the search, under the masthead.
 	import { tick, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
+	import StepBanner from './StepBanner.svelte';
 	import ReportLink from './ReportLink.svelte';
 	import SourcePane from './SourcePane.svelte';
 	import Splitter from './Splitter.svelte';
@@ -185,6 +186,8 @@
 			{/if}
 		</div>
 	</header>
+
+	<StepBanner {jobId} inReview />
 
 	{#if search && searching}<div bind:this={findRow}>{@render search()}</div>{/if}
 

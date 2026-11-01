@@ -111,6 +111,13 @@ export function workflowCommand(cmd: string, a: Record<string, unknown>): unknow
 			return runs;
 		case 'get_run':
 			return runs.find((r) => r.run.id === a.id) ?? null;
+		case 'job_step': {
+			for (const view of runs) {
+				const step = view.steps.findIndex((s) => s.job?.id === a.id);
+				if (step >= 0) return { view, step };
+			}
+			return null;
+		}
 		case 'approve_step': {
 			const view = runs.find((r) => r.run.id === a.id);
 			if (view) {

@@ -4,15 +4,21 @@
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 	import RunStart from './RunStart.svelte';
+	import TermLink from './TermLink.svelte';
+	import WorkflowDiagram from './WorkflowDiagram.svelte';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import type { StepInput } from '#lib/bindings/StepInput.js';
+	import type { Task } from '#lib/bindings/Task.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { describeError } from '#lib/errors.js';
+	import { rulesFor } from '#lib/newJob.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { app, go, toast, type FromProject } from '#lib/state.svelte.js';
+	import { app, go, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
 	import { api, ask, pickPipelineExport } from '#lib/tauri.js';
 	import {
 		blankWorkflow,
+		type Example,
+		exampleWorkflow,
 		inputChoices,
 		isRead,
 		moveStep,
@@ -23,9 +29,10 @@
 
 	let {
 		workflowId,
+		example,
 		paths,
 		project
-	}: { workflowId: string; paths?: string[]; project?: FromProject } = $props();
+	}: { workflowId: string; example?: Example; paths?: string[]; project?: FromProject } = $props();
 
 	const m = messages();
 	const w = m.workflows;
@@ -47,6 +54,26 @@
 			const [all, list] = await Promise.all([api.listWorkflows(), api.listPipelines()]);
 			pipelines = list;
 			const found = all.find((x) => x.id === workflowId);
+			if (!found && example) {
+				// The researcher's usual formats for each task, as New job offers them.
+				const formatsFor = (task: Task) => {
+					const offered = rulesFor(app.rules, task).formats;
+					const usual = (
+						task === 'audio_transcription'
+							? app.settings!.audio_formats
+							: app.settings!.text_formats
+					).filter((f) => offered.includes(f));
+					return usual.length > 0 ? usual : offered.slice(0, 1);
+				};
+				workflow = exampleWorkflow(
+					example,
+					m.workflows.examples[example],
+					catalog,
+					app.rules,
+					hasKey,
+					formatsFor
+				);
+			}
 			if (found) {
 				workflow = found;
 				saved = JSON.stringify(found);
@@ -150,7 +177,16 @@
 	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
 
 	<section aria-labelledby="workflow-steps">
-		<h2 id="workflow-steps">{w.stepsTitle}</h2>
+		<h2 id="workflow-steps">{w.stepsTitle}<TermLink term="workflow" /></h2>
+		{#if workflow.steps.length > 0}
+			<WorkflowDiagram
+				steps={workflow.steps.map((s, i) => ({
+					task: s.pipeline.task,
+					name: s.pipeline.name,
+					review: s.review && isRead(workflow.steps, i)
+				}))}
+			/>
+		{/if}
 		{#if loaded && workflow.steps.length === 0}
 			<p class="muted">{pipelines.length === 0 ? w.noPipelines : w.noSteps}</p>
 		{/if}
@@ -193,20 +229,23 @@
 					<p class="models">
 						{step.pipeline.setups.map((s) => modelName(s.provider, s.model)).join(' · ')}
 					</p>
-					<label class="field">
-						<span>{w.reads}</span>
-						<select
-							value={JSON.stringify(step.input)}
-							disabled={choices.length < 2}
-							onchange={(e) => setInput(i, e.currentTarget.value)}
-						>
-							{#each choices as choice (JSON.stringify(choice))}
-								<option value={JSON.stringify(choice)} selected={sameInput(choice, step.input)}
-									>{inputLabel(choice)}</option
-								>
-							{/each}
-						</select>
-					</label>
+					{#if choices.length < 2}
+						<p class="reads"><span class="label">{w.reads}:</span> {inputLabel(step.input)}</p>
+					{:else}
+						<label class="field">
+							<span>{w.reads}</span>
+							<select
+								value={JSON.stringify(step.input)}
+								onchange={(e) => setInput(i, e.currentTarget.value)}
+							>
+								{#each choices as choice (JSON.stringify(choice))}
+									<option value={JSON.stringify(choice)} selected={sameInput(choice, step.input)}
+										>{inputLabel(choice)}</option
+									>
+								{/each}
+							</select>
+						</label>
+					{/if}
 					{#if isRead(workflow.steps, i)}
 						<label class="check">
 							<input type="checkbox" bind:checked={workflow.steps[i].review} />
@@ -291,6 +330,10 @@
 	.moves {
 		display: flex;
 		gap: var(--space-1);
+	}
+	.reads {
+		margin: 0;
+		font-size: var(--type-sm);
 	}
 	.models {
 		margin: 0;

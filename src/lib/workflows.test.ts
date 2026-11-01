@@ -1,10 +1,16 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import type { Catalog } from './bindings/Catalog.js';
 import type { Pipeline } from './bindings/Pipeline.js';
 import type { Task } from './bindings/Task.js';
 import type { WorkflowStep } from './bindings/WorkflowStep.js';
 import rulesJson from './dev/taskRules.json';
 import type { Rules } from './newJob.js';
+import { en } from './i18n/index.js';
 import {
+	EXAMPLES,
+	type Example,
+	exampleWorkflow,
 	inputChoices,
 	isRead,
 	moveStep,
@@ -74,5 +80,34 @@ describe('workflow steps', () => {
 		expect(inputs(steps)).toEqual(['files', 'files', 1]);
 		expect(inputs(removeStep(steps, 1))).toEqual(['files', 'files']);
 		expect(inputs(removeStep(steps, 0))).toEqual(['files', 0]);
+	});
+});
+
+const catalog = JSON.parse(readFileSync('crates/catalog/catalog.json', 'utf8')) as Catalog;
+const presets = readFileSync('crates/prompts/src/defaults.rs', 'utf8');
+
+describe('example workflows', () => {
+	it('check the text read before the analysis reads it, with presets that exist', () => {
+		for (const kind of Object.keys(EXAMPLES) as Example[]) {
+			const w = exampleWorkflow(
+				kind,
+				en.workflows.examples[kind],
+				catalog,
+				rules,
+				() => true,
+				() => ['txt']
+			);
+			expect(w.name).toBe(en.workflows.examples[kind].name);
+			expect(inputs(w.steps)).toEqual(['files', 0]);
+			expect(w.steps.map((s) => s.review)).toEqual([true, false]);
+			// The second step reads only what the first can give it.
+			expect(textInputs(w.steps, 1, rules)).toEqual([{ kind: 'step', step: 0 }]);
+			for (const s of w.steps) {
+				expect(s.pipeline.setups[0].model).not.toBe('');
+				// A model that takes no prompt (Voxtral's transcription) has none, as in New job.
+				const preset = s.pipeline.setups[0].preset_id;
+				if (preset !== null) expect(presets).toContain(`"${preset}"`);
+			}
+		}
 	});
 });

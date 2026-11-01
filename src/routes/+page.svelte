@@ -22,6 +22,7 @@
 		refreshJobs,
 		refreshKeys,
 		refreshOffline,
+		refreshWaiting,
 		type View
 	} from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
@@ -84,7 +85,7 @@
 				app.catalog = catalog;
 				app.rules = rules;
 				app.settings = settings;
-				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline()]);
+				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline(), refreshWaiting()]);
 				// Jobs cut short by the last close: show them first.
 				if (startView) go(startView);
 				else if (info.interrupted.length > 0) go({ name: 'jobs', jobId: info.interrupted[0] });
@@ -132,6 +133,7 @@
 		{:else if app.view.name === 'workflows'}
 			<WorkflowsView
 				workflowId={app.view.workflowId}
+				example={app.view.example}
 				runId={app.view.runId}
 				paths={app.view.paths}
 				project={app.view.project}

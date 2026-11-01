@@ -1,8 +1,9 @@
 //! Workflows: saved definitions, and the runs started from them. The engine runs each step as
 //! a job; these commands only pass requests through.
 
+use kalamu_core::JobId;
 use kalamu_core::RunId;
-use kalamu_engine::{RunView, StartRun};
+use kalamu_engine::{JobStep, RunView, StartRun};
 use kalamu_prompts::Workflow;
 use tauri::State;
 
@@ -93,6 +94,12 @@ pub fn list_runs(state: State<'_, AppState>) -> CmdResult<Vec<RunView>> {
 #[tauri::command]
 pub fn get_run(state: State<'_, AppState>, id: RunId) -> CmdResult<RunView> {
     Ok(state.engine.run_view(id)?)
+}
+
+/// The run and step a job belongs to, if a workflow started it.
+#[tauri::command]
+pub fn job_step(state: State<'_, AppState>, id: JobId) -> CmdResult<Option<JobStep>> {
+    Ok(state.engine.job_step(id)?)
 }
 
 /// The researcher's go-ahead after a step's review, or despite pieces not read.

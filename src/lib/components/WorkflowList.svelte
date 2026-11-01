@@ -3,13 +3,15 @@
 	// project wait here until a workflow is picked to run on them.
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
+	import TermLink from './TermLink.svelte';
+	import WorkflowDiagram from './WorkflowDiagram.svelte';
 	import type { RunView } from '#lib/bindings/RunView.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { app, go, toast, type FromProject } from '#lib/state.svelte.js';
 	import { api, pickPresetFile } from '#lib/tauri.js';
-	import { tone } from '#lib/workflows.js';
+	import { EXAMPLES, type Example, tone } from '#lib/workflows.js';
 
 	let { paths, project }: { paths?: string[]; project?: FromProject } = $props();
 
@@ -43,6 +45,7 @@
 	}
 
 	const open = (id: string) => go({ name: 'workflows', workflowId: id, paths, project });
+	const examples = Object.keys(EXAMPLES) as Example[];
 
 	onMount(() => void load());
 	// A run moving on (a step started, finished or approved) is read again.
@@ -54,7 +57,7 @@
 
 <header class="masthead">
 	<div>
-		<h1>{w.title}</h1>
+		<h1>{w.title}<TermLink term="workflow" /></h1>
 		<p class="lede">{w.lede}</p>
 	</div>
 	<div class="buttons">
@@ -96,6 +99,34 @@
 				{/each}
 			</ul>
 		{/if}
+	</section>
+
+	<section aria-labelledby="workflow-examples">
+		<h2 id="workflow-examples">{w.examplesTitle}</h2>
+		<p class="muted hint">{w.examplesHint}</p>
+		<ul class="examples">
+			{#each examples as kind (kind)}
+				{@const words = w.examples[kind]}
+				<li class="card example">
+					<h3>{words.name}</h3>
+					<p class="about">{words.about}</p>
+					<WorkflowDiagram
+						compact
+						steps={EXAMPLES[kind].map((s, i) => ({
+							task: s.task,
+							name: words.steps[i],
+							review: i === 0
+						}))}
+					/>
+					<button
+						class="btn sm"
+						onclick={() =>
+							go({ name: 'workflows', workflowId: 'new', example: kind, paths, project })}
+						>{w.useExample}</button
+					>
+				</li>
+			{/each}
+		</ul>
 	</section>
 
 	<section aria-labelledby="workflow-runs">
@@ -167,6 +198,32 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+	.hint {
+		margin: 0;
+		font-size: var(--type-sm);
+	}
+	.examples {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: var(--space-4);
+		max-width: 44rem;
+	}
+	.example {
+		display: grid;
+		gap: var(--space-2);
+		align-content: start;
+		justify-items: start;
+	}
+	.example h3 {
+		font-size: var(--type-sm);
+	}
+	.about {
+		margin: 0;
+		font-size: var(--type-sm);
+		color: var(--text-secondary);
 	}
 	.steps {
 		color: var(--text-secondary);

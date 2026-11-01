@@ -187,6 +187,16 @@ async fn a_review_holds_the_next_step_which_then_reads_the_corrections() {
         .engine
         .job(job_of(&view, 0))
         .unwrap_or_else(|e| panic!("{e}"));
+    // The job's page knows it waits for its review.
+    let step = f
+        .engine
+        .job_step(extraction.id)
+        .unwrap_or_else(|e| panic!("{e}"))
+        .unwrap_or_else(|| panic!("a step"));
+    assert_eq!(
+        (step.step, step.view.steps[0].state),
+        (0, StepState::Review)
+    );
     f.engine
         .save_correction(Correction {
             job_id: extraction.id,

@@ -22,6 +22,12 @@
 	const UNFINISHED: JobStatus[] = ['interrupted', 'paused', 'pending'];
 	const groups = $derived(
 		[
+			// Workflow steps that wait for the researcher come first: nothing moves until they act.
+			{
+				key: 'waiting',
+				label: m.shell.toCheck,
+				jobs: app.jobs.filter((j) => app.waiting[j.id])
+			},
 			{
 				key: 'running',
 				label: m.shell.running,
@@ -35,7 +41,9 @@
 			{
 				key: 'finished',
 				label: m.shell.finished,
-				jobs: app.jobs.filter((j) => j.status !== 'running' && !UNFINISHED.includes(j.status))
+				jobs: app.jobs.filter(
+					(j) => j.status !== 'running' && !UNFINISHED.includes(j.status) && !app.waiting[j.id]
+				)
 			}
 		].filter((g) => g.jobs.length > 0)
 	);
@@ -141,10 +149,12 @@
 								</span>
 								<span
 									class="job-meta"
-									class:warn={UNFINISHED.includes(job.status)}
-									class:danger={job.status === 'completed_with_errors'}
+									class:warn={UNFINISHED.includes(job.status) || group.key === 'waiting'}
+									class:danger={job.status === 'completed_with_errors' && group.key !== 'waiting'}
 								>
-									{#if group.key === 'finished'}
+									{#if group.key === 'waiting'}
+										{m.workflows.stepState[app.waiting[job.id]?.state ?? 'review']}
+									{:else if group.key === 'finished'}
 										{job.status === 'completed' ? m.task[job.task] : m.status[job.status]}
 									{:else}
 										{m.status[job.status]} ·
@@ -152,7 +162,7 @@
 										>
 									{/if}
 								</span>
-								{#if group.key !== 'finished'}
+								{#if group.key !== 'finished' && group.key !== 'waiting'}
 									<span class="job-bar" aria-hidden="true"><i style:width="{share(job)}%"></i></span
 									>
 								{/if}

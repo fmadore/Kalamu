@@ -53,6 +53,8 @@
     "allow-start-run",
     "allow-list-runs",
     "allow-get-run",
+    "allow-job-step",
+    "allow-job-step",
     "allow-approve-step",
     "allow-cancel-run",
     "allow-delete-run",

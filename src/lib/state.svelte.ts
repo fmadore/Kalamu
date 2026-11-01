@@ -12,8 +12,10 @@ import type { PieceStatus } from './bindings/PieceStatus.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
 import type { SourceFile } from './bindings/SourceFile.js';
+import type { StepState } from './bindings/StepState.js';
 import type { Task } from './bindings/Task.js';
 import type { Term } from './glossary.js';
+import type { Example } from './workflows.js';
 import { messages } from './i18n/index.js';
 import { api, notify, openUrl } from './tauri.js';
 
@@ -41,6 +43,8 @@ export type View =
 			name: 'workflows';
 			/** A saved workflow to edit, or `new` for a blank one. */
 			workflowId?: string;
+			/** A ready-made example to start a new one from. */
+			example?: Example;
 			runId?: string;
 			/** Files chosen elsewhere (a project's selection) to run a workflow on. */
 			paths?: string[];
@@ -79,6 +83,8 @@ export const app = $state({
 	live: {} as Record<string, LiveJob>,
 	/** Raised whenever a workflow run changes, so its views read it again. */
 	runs: 0,
+	/** Jobs of workflow steps that wait for the researcher: checked, or pages not read. */
+	waiting: {} as Record<string, { runId: string; step: number; state: StepState }>,
 	closeRequested: false,
 	toast: null as string | null
 });
@@ -94,6 +100,26 @@ export function hasKey(provider: string): boolean {
 export async function refreshJobs(): Promise<void> {
 	app.jobs = await api.listJobs();
 	updateProgressDisplays();
+}
+
+/** Which workflow steps wait for the researcher, for the job list, the job's page and review. */
+export async function refreshWaiting(): Promise<void> {
+	const runs = await api.listRuns().catch(() => []);
+	const waiting: typeof app.waiting = {};
+	for (const { run, steps } of runs) {
+		steps.forEach((s, step) => {
+			if (s.job && (s.state === 'review' || s.state === 'attention')) {
+				waiting[s.job.id] = { runId: run.id, step, state: s.state };
+			}
+		});
+	}
+	app.waiting = waiting;
+}
+
+/** A run changed: the views that show it read it again. */
+function runsChanged(): void {
+	app.runs++;
+	void refreshWaiting();
 }
 
 export async function refreshKeys(): Promise<void> {
@@ -137,13 +163,13 @@ function scheduleRefresh(): void {
 
 export function applyProgress(event: ProgressEvent): void {
 	if (event.type === 'run_changed') {
-		app.runs++;
+		runsChanged();
 		return;
 	}
 	const live = liveJob(event.job_id);
 	switch (event.type) {
 		case 'step_started':
-			app.runs++;
+			runsChanged();
 			scheduleRefresh();
 			break;
 		case 'job_started':
@@ -180,7 +206,14 @@ export function applyProgress(event: ProgressEvent): void {
 			void refreshJobs();
 			const m = messages();
 			const job = app.jobs.find((j) => j.id === event.job_id);
-			void notify(m.app.name, `${job?.name ?? ''}: ${m.status[event.status]}`);
+			// A workflow step that now waits says so: the next step needs the researcher.
+			void refreshWaiting().then(() => {
+				const waits = app.waiting[event.job_id];
+				const said = waits
+					? m.workflows.notify[waits.state === 'review' ? 'review' : 'attention']
+					: m.status[event.status];
+				void notify(m.app.name, `${job?.name ?? ''}: ${said}`);
+			});
 			break;
 		}
 	}

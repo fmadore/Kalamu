@@ -49,6 +49,16 @@ pub struct RunView {
     pub steps: Vec<StepView>,
 }
 
+/// The run a job belongs to and which step it is, so the job's page and review can say what
+/// comes next and offer to continue there.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct JobStep {
+    pub view: RunView,
+    /// Numbered from 0.
+    pub step: u32,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct StepView {
@@ -372,6 +382,17 @@ impl Engine {
 
     pub fn run_view(&self, id: RunId) -> Result<RunView, EngineError> {
         Ok(view(self.store.run(id)?, &self.summaries()?))
+    }
+
+    /// The run and step a job was started by, if a workflow started it.
+    pub fn job_step(&self, job: JobId) -> Result<Option<JobStep>, EngineError> {
+        let Some((run, step)) = self.store.run_of_job(job)? else {
+            return Ok(None);
+        };
+        Ok(Some(JobStep {
+            view: self.run_view(run)?,
+            step,
+        }))
     }
 
     /// Every job by id; one the engine has started is running, though its loop may not yet

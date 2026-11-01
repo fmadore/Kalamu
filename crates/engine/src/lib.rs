@@ -46,7 +46,7 @@ pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
 pub use setup::{NewJob, SetupRequest};
 pub use snapshot::{DerivedState, Freshness, yields_text};
-pub use workflow::{RunView, StartRun, StepView};
+pub use workflow::{JobStep, RunView, StartRun, StepView};
 
 /// Where the engine gets API keys; the app reads them from Windows Credential Manager.
 pub trait KeySource: Send + Sync {

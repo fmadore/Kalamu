@@ -322,6 +322,8 @@ pub fn run() {
             commands::workflows::start_run,
             commands::workflows::list_runs,
             commands::workflows::get_run,
+            commands::workflows::job_step,
+            commands::workflows::job_step,
             commands::workflows::approve_step,
             commands::workflows::cancel_run,
             commands::workflows::delete_run,

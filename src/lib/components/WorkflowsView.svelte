@@ -4,13 +4,21 @@
 	import WorkflowEditor from './WorkflowEditor.svelte';
 	import WorkflowList from './WorkflowList.svelte';
 	import type { FromProject } from '#lib/state.svelte.js';
+	import type { Example } from '#lib/workflows.js';
 
 	let {
 		workflowId,
+		example,
 		runId,
 		paths,
 		project
-	}: { workflowId?: string; runId?: string; paths?: string[]; project?: FromProject } = $props();
+	}: {
+		workflowId?: string;
+		example?: Example;
+		runId?: string;
+		paths?: string[];
+		project?: FromProject;
+	} = $props();
 </script>
 
 {#if runId}
@@ -18,8 +26,8 @@
 		<RunDetail {runId} />
 	{/key}
 {:else if workflowId}
-	{#key workflowId}
-		<WorkflowEditor {workflowId} {paths} {project} />
+	{#key `${workflowId}/${example ?? ''}`}
+		<WorkflowEditor {workflowId} {example} {paths} {project} />
 	{/key}
 {:else}
 	<WorkflowList {paths} {project} />

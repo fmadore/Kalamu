@@ -13,6 +13,7 @@ import type { DocumentDetail } from './bindings/DocumentDetail.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Pipeline } from './bindings/Pipeline.js';
+import type { JobStep } from './bindings/JobStep.js';
 import type { RunView } from './bindings/RunView.js';
 import type { StartRun } from './bindings/StartRun.js';
 import type { Workflow } from './bindings/Workflow.js';
@@ -92,6 +93,7 @@ export const api = {
 	startRun: (start: StartRun) => invoke<RunView>('start_run', { start }),
 	listRuns: () => invoke<RunView[]>('list_runs'),
 	getRun: (id: string) => invoke<RunView>('get_run', { id }),
+	jobStep: (id: string) => invoke<JobStep | null>('job_step', { id }),
 	approveStep: (id: string, step: number) => invoke<void>('approve_step', { id, step }),
 	cancelRun: (id: string) => invoke<void>('cancel_run', { id }),
 	deleteRun: (id: string) => invoke<void>('delete_run', { id }),

@@ -2,13 +2,16 @@
 // removed with what they read kept pointing at the same steps. Whether a workflow can run is
 // the engine's to say (`check_steps`, again when a run starts); this only offers what fits.
 
+import type { Catalog } from './bindings/Catalog.js';
+import type { ExportFormat } from './bindings/ExportFormat.js';
 import type { Pipeline } from './bindings/Pipeline.js';
 import type { RunStatus } from './bindings/RunStatus.js';
 import type { StepInput } from './bindings/StepInput.js';
 import type { StepState } from './bindings/StepState.js';
+import type { Task } from './bindings/Task.js';
 import type { Workflow } from './bindings/Workflow.js';
 import type { WorkflowStep } from './bindings/WorkflowStep.js';
-import { type Rules, rulesFor } from './newJob.js';
+import { newDraft, type Rules, rulesFor, toRequest } from './newJob.js';
 
 export const SOURCES: StepInput = { kind: 'sources' };
 
@@ -112,4 +115,68 @@ export function tone(status: RunStatus | StepState): string {
 		case 'done_with_errors':
 			return '';
 	}
+}
+
+/** Ready-made workflows for colleagues new to them: read, check, then analyse. */
+export type Example = 'letters' | 'interviews' | 'library';
+
+export const EXAMPLES: Record<Example, { task: Task; preset: string }[]> = {
+	letters: [
+		{ task: 'text_extraction', preset: 'text_extraction.printed_diplomatic' },
+		{ task: 'analysis', preset: 'analysis.entities' }
+	],
+	interviews: [
+		{ task: 'audio_transcription', preset: 'audio_transcription.interview' },
+		{ task: 'analysis', preset: 'analysis.summary_research' }
+	],
+	library: [
+		{ task: 'text_correction', preset: 'text_correction.general' },
+		{ task: 'analysis', preset: 'analysis.summary_brief' }
+	]
+};
+
+/**
+ * An example as a workflow to edit and save: each step on the model New job would offer (the
+ * recommended one the researcher has a key for), the first checked before the second reads it.
+ */
+export function exampleWorkflow(
+	kind: Example,
+	words: { name: string; steps: string[] },
+	catalog: Catalog,
+	rules: Rules,
+	hasKey: (provider: string) => boolean,
+	formatsFor: (task: Task) => ExportFormat[]
+): Workflow {
+	const steps = EXAMPLES[kind].map(({ task, preset }, i): WorkflowStep => {
+		const r = toRequest(catalog, task, newDraft(catalog, rulesFor(rules, task), preset, hasKey));
+		const reads = task === 'text_extraction' || task === 'text_correction';
+		return {
+			pipeline: {
+				id: '',
+				name: words.steps[i] ?? preset,
+				task,
+				setups: [
+					{
+						provider: r.provider,
+						model: r.model,
+						preset_id: r.preset_id,
+						label: null,
+						options: r.options
+					}
+				],
+				settings: {
+					languages: { mode: 'auto' },
+					sample_pages: null,
+					line_breaks: reads ? 'running_text' : null,
+					pace: 'fast'
+				},
+				formats: formatsFor(task),
+				destination: { kind: 'beside_sources' },
+				updated_at: 0
+			},
+			input: i === 0 ? SOURCES : { kind: 'step', step: i - 1 },
+			review: i === 0
+		};
+	});
+	return { ...blankWorkflow(), name: words.name, steps };
 }
