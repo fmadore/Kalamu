@@ -10,6 +10,7 @@
 	import ReviewView from '#lib/components/ReviewView.svelte';
 	import SettingsView from '#lib/components/SettingsView.svelte';
 	import GlossaryView from '#lib/components/GlossaryView.svelte';
+	import WorkflowsView from '#lib/components/WorkflowsView.svelte';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -21,6 +22,7 @@
 		refreshJobs,
 		refreshKeys,
 		refreshOffline,
+		refreshWaiting,
 		type View
 	} from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
@@ -83,7 +85,7 @@
 				app.catalog = catalog;
 				app.rules = rules;
 				app.settings = settings;
-				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline()]);
+				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline(), refreshWaiting()]);
 				// Jobs cut short by the last close: show them first.
 				if (startView) go(startView);
 				else if (info.interrupted.length > 0) go({ name: 'jobs', jobId: info.interrupted[0] });
@@ -127,6 +129,15 @@
 				projectId={app.view.projectId}
 				collectionId={app.view.collectionId}
 				documentId={app.view.documentId}
+			/>
+		{:else if app.view.name === 'workflows'}
+			<WorkflowsView
+				workflowId={app.view.workflowId}
+				example={app.view.example}
+				runId={app.view.runId}
+				paths={app.view.paths}
+				sources={app.view.sources}
+				project={app.view.project}
 			/>
 		{:else if app.view.name === 'prompts'}
 			<PromptsView />

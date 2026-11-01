@@ -13,6 +13,10 @@ import type { DocumentDetail } from './bindings/DocumentDetail.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Pipeline } from './bindings/Pipeline.js';
+import type { JobStep } from './bindings/JobStep.js';
+import type { RunView } from './bindings/RunView.js';
+import type { StartRun } from './bindings/StartRun.js';
+import type { Workflow } from './bindings/Workflow.js';
 import type { DerivedState } from './bindings/DerivedState.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
@@ -79,6 +83,20 @@ export const api = {
 	deletePipeline: (id: string) => invoke<void>('delete_pipeline', { id }),
 	exportPipeline: (id: string, path: string) => invoke<void>('export_pipeline', { id, path }),
 	importPipeline: (path: string) => invoke<Pipeline>('import_pipeline', { path }),
+	listWorkflows: () => invoke<Workflow[]>('list_workflows'),
+	saveWorkflow: (workflow: Workflow) => invoke<Workflow>('save_workflow', { workflow }),
+	duplicateWorkflow: (id: string, name: string) =>
+		invoke<Workflow>('duplicate_workflow', { id, name }),
+	deleteWorkflow: (id: string) => invoke<void>('delete_workflow', { id }),
+	exportWorkflow: (id: string, path: string) => invoke<void>('export_workflow', { id, path }),
+	importWorkflow: (path: string) => invoke<Workflow>('import_workflow', { path }),
+	startRun: (start: StartRun) => invoke<RunView>('start_run', { start }),
+	listRuns: () => invoke<RunView[]>('list_runs'),
+	getRun: (id: string) => invoke<RunView>('get_run', { id }),
+	jobStep: (id: string) => invoke<JobStep | null>('job_step', { id }),
+	approveStep: (id: string, step: number) => invoke<void>('approve_step', { id, step }),
+	cancelRun: (id: string) => invoke<void>('cancel_run', { id }),
+	deleteRun: (id: string) => invoke<void>('delete_run', { id }),
 	savePreset: (preset: Preset) => invoke<Preset>('save_preset', { preset }),
 	deletePreset: (id: string) => invoke<void>('delete_preset', { id }),
 	duplicatePreset: (id: string, name: string) => invoke<Preset>('duplicate_preset', { id, name }),
@@ -99,7 +117,9 @@ export const api = {
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
 	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),
-	snapshotJob: (id: string, setup: string) => invoke<SourceFile[]>('snapshot_job', { id, setup }),
+	/** Freezes a job's corrected text under a set-up: every source's, or one source's. */
+	snapshotJob: (id: string, setup: string, source: string | null = null) =>
+		invoke<SourceFile[]>('snapshot_job', { id, setup, source }),
 	derivedState: (id: string) => invoke<DerivedState[]>('derived_state', { id }),
 	jobOutputs: (id: string) => invoke<string[]>('job_outputs', { id }),
 	openOutput: (id: string, path: string) => invoke<void>('open_output', { id, path }),

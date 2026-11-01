@@ -77,4 +77,22 @@ pub trait JobStore: Send + Sync {
     /// Keeps a snapshot of corrected text; one already kept under its id is left as it is.
     fn put_snapshot(&self, snapshot: &crate::Snapshot) -> Result<(), StoreError>;
     fn snapshot(&self, id: &str) -> Result<crate::Snapshot, StoreError>;
+
+    /// Keeps a workflow run as started: its frozen steps, sources and each step's progress.
+    fn create_run(&self, run: &crate::WorkflowRun) -> Result<(), StoreError>;
+    fn run(&self, id: crate::RunId) -> Result<crate::WorkflowRun, StoreError>;
+    /// Every run, newest first.
+    fn runs(&self) -> Result<Vec<crate::WorkflowRun>, StoreError>;
+    /// Replaces what has happened to one step of a run.
+    fn set_step_progress(
+        &self,
+        run: crate::RunId,
+        index: u32,
+        progress: &crate::StepProgress,
+    ) -> Result<(), StoreError>;
+    fn cancel_run(&self, id: crate::RunId) -> Result<(), StoreError>;
+    /// Deletes the run's record; its jobs and their results stay.
+    fn delete_run(&self, id: crate::RunId) -> Result<(), StoreError>;
+    /// The run and step a job belongs to, if it was started by a workflow.
+    fn run_of_job(&self, job: JobId) -> Result<Option<(crate::RunId, u32)>, StoreError>;
 }

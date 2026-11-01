@@ -7,9 +7,13 @@
 mod defaults;
 mod pipelines;
 mod record;
+mod workflow_file;
+mod workflows;
 
 pub use pipelines::{Pipeline, PipelineLibrary, PipelineSetup};
 pub use record::{PipelineFile, SetupRecord};
+pub use workflow_file::WorkflowFile;
+pub use workflows::{Workflow, WorkflowLibrary, WorkflowStep};
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -88,6 +92,10 @@ pub enum PromptError {
     Schema(#[from] SchemaError),
     #[error("A pipeline needs a name and at least one model")]
     IncompletePipeline,
+    #[error("A workflow needs a name and a model for every step")]
+    IncompleteWorkflow,
+    #[error(transparent)]
+    Workflow(#[from] kalamu_core::WorkflowError),
 }
 
 /// The file format used to share presets.

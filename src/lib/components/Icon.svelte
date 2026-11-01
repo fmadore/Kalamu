@@ -43,6 +43,7 @@
 	import Star from '@lucide/svelte/icons/star';
 	import TextSearch from '@lucide/svelte/icons/text-search';
 	import Unlink from '@lucide/svelte/icons/unlink';
+	import WorkflowIcon from '@lucide/svelte/icons/workflow';
 	import X from '@lucide/svelte/icons/x';
 	import ZoomIn from '@lucide/svelte/icons/zoom-in';
 	import ZoomOut from '@lucide/svelte/icons/zoom-out';
@@ -91,6 +92,7 @@
 		analysis: TextSearch,
 		contents: ListTree,
 		text_correction: SpellCheck,
+		workflow: WorkflowIcon,
 		'zoom-in': ZoomIn,
 		'zoom-out': ZoomOut
 	};

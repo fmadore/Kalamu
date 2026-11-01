@@ -12,6 +12,7 @@
 	import SetupList from './SetupList.svelte';
 	import StartPanel from './StartPanel.svelte';
 	import TaskPicker from './TaskPicker.svelte';
+	import ThenStep from './ThenStep.svelte';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
@@ -35,6 +36,7 @@
 		modelInfo,
 		newDraft,
 		offeredFormats,
+		providerDefault,
 		readsKind,
 		rulesFor,
 		suggestName,
@@ -85,8 +87,23 @@
 	let pipelines = $state<Pipeline[]>([]);
 	/** The name being typed for a new pipeline, while saving one. */
 	let naming = $state<string | null>(null);
+	/** An analysis to run on the text once it is read (and checked), or none. */
+	let thenPreset = $state<string | null>(null);
+	let thenCheck = $state(true);
+	let analysisPresets = $state<Preset[]>([]);
 
 	const catalog = $derived(app.catalog!);
+	const analysisRule = $derived(rulesFor(app.rules, 'analysis'));
+	/** Whether an analysis can follow: the task's results are a text. */
+	const thenOffered = $derived(rule.yields_text);
+	/** The model that analyses the text: the reading provider's, when it has one and a key. */
+	const thenDraft = $derived.by(() => {
+		const draft = newDraft(catalog, analysisRule, thenPreset, hasKey);
+		const provider = drafts[0]?.provider;
+		const same =
+			provider && hasKey(provider) ? providerDefault(catalog, analysisRule, provider) : '';
+		return same ? { ...draft, provider: provider!, model: same } : draft;
+	});
 	const models = $derived(drafts.map((d) => modelInfo(catalog, d)));
 	/** Distinct names of the chosen models matching a test, for the notes under a choice. */
 	const namesOf = (test: (model: ModelInfo | undefined) => boolean) => [
@@ -245,6 +262,62 @@
 		};
 	}
 
+	/** The form as a pipeline: everything but the files. Run now, it keeps only the formats the
+	 * chosen models can write, as a job does. */
+	function currentPipeline(pipelineName: string, toRun = false): Pipeline {
+		return {
+			id: '',
+			name: pipelineName,
+			task,
+			setups: drafts.map((d) => {
+				const r = toRequest(catalog, task, d);
+				return {
+					provider: r.provider,
+					model: r.model,
+					preset_id: r.preset_id,
+					label: r.label,
+					options: r.options,
+					merge: r.merge
+				};
+			}),
+			settings: jobSettings(),
+			formats: toRun
+				? formats.filter((f) => offeredFormats(catalog, rule, drafts).includes(f))
+				: [...formats],
+			destination: $state.snapshot(destination),
+			updated_at: 0
+		};
+	}
+
+	/** The analysis that follows, as a pipeline: the researcher's usual formats for it. */
+	function thenPipeline(preset: Preset): Pipeline {
+		const r = toRequest(catalog, 'analysis', thenDraft);
+		const usual = analysisRule.formats.filter((f) => app.settings!.text_formats.includes(f));
+		return {
+			id: '',
+			name: preset.name,
+			task: 'analysis',
+			setups: [
+				{
+					provider: r.provider,
+					model: r.model,
+					preset_id: preset.id,
+					label: null,
+					options: r.options
+				}
+			],
+			settings: {
+				languages: { mode: 'auto' },
+				sample_pages: null,
+				line_breaks: null,
+				pace: chosenPace
+			},
+			formats: usual.length > 0 ? usual : analysisRule.formats.slice(0, 1),
+			destination: $state.snapshot(destination),
+			updated_at: 0
+		};
+	}
+
 	/** Fills the form from a saved pipeline; the files stay as they are. */
 	async function applyPipeline(p: Pipeline) {
 		// A transcription pipeline applied to videos keeps the videos.
@@ -275,26 +348,7 @@
 		if (!pipelineName) return;
 		error = null;
 		try {
-			const saved = await api.savePipeline({
-				id: '',
-				name: pipelineName,
-				task,
-				setups: drafts.map((d) => {
-					const r = toRequest(catalog, task, d);
-					return {
-						provider: r.provider,
-						model: r.model,
-						preset_id: r.preset_id,
-						label: r.label,
-						options: r.options,
-						merge: r.merge
-					};
-				}),
-				settings: jobSettings(),
-				formats: [...formats],
-				destination: $state.snapshot(destination),
-				updated_at: 0
-			});
+			const saved = await api.savePipeline(currentPipeline(pipelineName));
 			pipelines = await api.listPipelines();
 			naming = null;
 			toast(m.newJob.pipelineSaved(saved.name));
@@ -303,10 +357,46 @@
 		}
 	}
 
+	/** Reads the text, then analyses it: a two-step workflow, unsaved, run on these files. */
+	async function startWithAnalysis(preset: Preset) {
+		const jobName = name.trim() || sources[0]?.file_name || m.newJob.title;
+		const view = await api.startRun({
+			workflow: {
+				id: '',
+				name: m.newJob.then.workflowName(m.task[task], preset.name),
+				version: 0,
+				steps: [
+					{
+						pipeline: currentPipeline(m.task[task], true),
+						input: { kind: 'sources' },
+						review: thenCheck
+					},
+					{ pipeline: thenPipeline(preset), input: { kind: 'step', step: 0 }, review: false }
+				],
+				updated_at: 0
+			},
+			name: jobName,
+			sources: $state.snapshot(sources),
+			project: opening.project?.id ?? null,
+			collection: opening.project?.collectionId ?? null
+		});
+		const first = view.steps[0]?.job?.id;
+		if (first) liveJob(first);
+		await refreshJobs();
+		files = [];
+		name = '';
+		go(first ? { name: 'jobs', jobId: first } : { name: 'workflows', runId: view.run.id });
+	}
+
 	async function start() {
 		error = null;
 		starting = true;
 		try {
+			const preset = thenOffered ? analysisPresets.find((p) => p.id === thenPreset) : undefined;
+			if (preset) {
+				await startWithAnalysis(preset);
+				return;
+			}
 			const job = await api.createJob({
 				name: name.trim() || sources[0]?.file_name || m.newJob.title,
 				task,
@@ -366,6 +456,10 @@
 		api
 			.listPipelines()
 			.then((p) => (pipelines = p))
+			.catch(() => undefined);
+		api
+			.listPresets('analysis')
+			.then((p) => (analysisPresets = p))
 			.catch(() => undefined);
 		let unlisten: (() => void) | undefined;
 		void onDrop((paths) => void addPaths(paths)).then((u) => (unlisten = u));
@@ -468,6 +562,16 @@
 			{paged}
 			hasSources={sources.length > 0}
 		/>
+
+		{#if thenOffered}
+			<ThenStep
+				bind:presetId={thenPreset}
+				bind:check={thenCheck}
+				presets={analysisPresets}
+				{task}
+				model={modelInfo(catalog, thenDraft)?.name ?? thenDraft.model}
+			/>
+		{/if}
 	</div>
 
 	<!-- Stays in view while the form scrolls: what it costs, and the one action. -->

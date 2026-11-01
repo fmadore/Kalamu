@@ -110,10 +110,12 @@ addressee, summary, names: an archivist's inventory) and a book, report or thesi
 fields are edited in Prompts as an analysis's are, title and pages always included
 ([decision](decisions/2026-10-29-contents-and-correction.md)).
 
-**An analysis can read an earlier job's text as corrected.** *Analyse this text* on an
-extraction, a transcription or a correction freezes the text as the researcher left it,
-corrections and speaker names included, and opens an analysis of it: nothing is read again or
-exported and imported. The frozen copy never changes, so a correction made afterwards does not
+**A result's text can go into a new round.** *Use this text in a new job* on an extraction, a
+transcription or a correction, on the job's page or among a project document's results, freezes
+the text as the researcher left it, corrections and speaker names included (from a document,
+only that document's), and opens an analysis of it, a correction of it, or Workflows to run a
+saved workflow or an example on it: nothing is read again or exported and imported. Workflows
+that start by reading scans or recordings are shown but cannot be chosen for text. The frozen copy never changes, so a correction made afterwards does not
 alter what the analysis read; the analysis is marked out of date, with a way to analyse the
 corrected text, whose answers are new ones beside the old
 ([decision](decisions/2026-10-31-reviewed-text-snapshots.md),
@@ -159,6 +161,32 @@ no text layer needs *Extract text* instead.
   methods section, with each model, the settings its provider sends (reasoning effort, output
   limit, media resolution), the full text of every prompt with the hash its results' provenance
   carries, and the fields of an analysis. The output folder is left out.
+- **Workflows.** Pipelines run one after another on the same files
+  ([decision](decisions/2026-11-01-workflow-runs.md), [#49](https://github.com/fmadore/Kalamu/issues/49)).
+  Each step is a saved pipeline and reads either the files or the text of an earlier
+  extraction, transcription or correction step, frozen as the researcher corrected it when the
+  step starts; a step that reads one after it, or a table of contents or analysis's answers, is
+  refused. A step can stop for a review: the steps that read it wait until the researcher says
+  to continue. They also wait when some of its pages could not be read, until those are retried
+  or the researcher continues with what was read; nothing else counts as going on. Before starting, Workflows shows what each step sends and to which provider, and
+  what the steps that read the files will cost; a step that reads text costs what that text
+  holds, known once it is read, and a step that runs on this PC followed by one that sends its
+  text to the cloud is pointed out. Each step is an ordinary job, with its progress, files,
+  review and provenance (which names the run, the workflow's version and the go-ahead given).
+  Starting freezes the steps and their prompts, so saving the workflow again (a new version)
+  or editing a prompt never changes a run already started; running again pays only for steps
+  whose model, prompt or text changed. A workflow is exported and imported like a pipeline,
+  and a run can start from a project's selection, its jobs tied to the documents.
+- **The simplest workflow needs no building.** The last section of New job, *Then*, offers to
+  analyse the text once it is read (an extraction, a transcription or a correction), by default
+  after the researcher has checked it; nothing is sent for the analysis before they continue.
+  Ready-made examples (letters, interviews, a digital library's text) open in Workflows on the
+  models the researcher has keys for, and an animated drawing of the steps, the researcher's
+  check among them, shows how each workflow runs.
+- **Continuing happens where the researcher already is.** A job that is a workflow's step says
+  so on its page and in its review, with what comes next and, when the next step waits for
+  them, a *Continue* button; such jobs are listed first in the sidebar, under *For you to
+  check*, and the notification says the text is ready to check rather than done.
 - **Works without an API key.** An offline mode keeps the app useful without an account, a key
   or an internet connection, and keeps sensitive material on the PC.
 - **Interface in English first**, with French and German to follow. All interface text lives
@@ -355,6 +383,8 @@ analysed, compared. A **project** keeps it together
   proposed, the same content elsewhere only offered. Its results come as they are; nothing is
   sent again.
 - **Activity**: the jobs that read the project's documents, with their controls as in Jobs.
+- **Workflows on a selection**: a selection can run a workflow; every step's job is tied to
+  the documents it read, and the run keeps the files it started with.
 - **Organising never changes work.** Collections, titles, links and preferences call no model.
   A job keeps the files it was started with, so a later change to a collection does not rewrite
   a past run or start new work. Deleting a project, a collection or a document removes only how
@@ -436,8 +466,8 @@ the results, and keep the originals.
 Many researchers meet these tools for the first time. A glossary beside Settings explains the
 words the app uses, from OCR and tokens to ground truth, error rates and hallucination, in
 plain language, and what each export format suits. A small help mark beside the headings that
-use a word (pipelines, the model and prompt, speed and price, the estimate, formats, the files
-written, the errors found in review) opens the glossary on it. Like all interface text, it is
+use a word (pipelines, workflows, the model and prompt, speed and price, the estimate, formats,
+the files written, the errors found in review) opens the glossary on it. Like all interface text, it is
 written in the translation files.
 
 ## Bundled conversion tools

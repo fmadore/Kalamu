@@ -63,6 +63,8 @@ impl From<kalamu_prompts::PromptError> for AppError {
             PromptError::Schema(SchemaError::Duplicate(_)) => "prompt.duplicate_field",
             PromptError::Schema(SchemaError::TooFewValues(_)) => "prompt.few_values",
             PromptError::IncompletePipeline => "prompt.unnamed_pipeline",
+            PromptError::IncompleteWorkflow => "workflow.incomplete",
+            PromptError::Workflow(e) => e.code(),
             PromptError::InvalidImport(_) => "prompt.invalid_file",
             _ => "prompt.invalid",
         };

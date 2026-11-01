@@ -1,7 +1,7 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 31 October 2026. Version 1.0.0, the first Microsoft Store release, was
-published under the policy of 30 October 2026, which did not list projects.
+**Effective date:** 1 November 2026. Version 1.0.0, the first Microsoft Store release, was
+published under the policy of 30 October 2026, which did not list projects or workflows.
 
 ## What this app is
 
@@ -62,14 +62,20 @@ new names, on the same computer only:
   of their documents, which jobs read each document, and the results the user marked as
   preferred. A project only refers to files where they lie on the PC: it never copies, moves or
   sends them. Deleting a project, a collection or a document removes how it was organised; the
-  files, the jobs and their results stay.
-- **Frozen text** (`snapshots`): when the user chooses *Analyse this text*, a copy of the
-  corrected text the analysis reads, so that later corrections do not change what it read. It
-  is sent only to the provider of that analysis, as the text of any document would be, and
-  kept until the app is uninstalled.
+  files, the jobs and their results stay. It also keeps each **workflow run**: the workflow's
+  steps and prompts as they were when it started, the paths, sizes and fingerprints of the
+  files it was started on, the job that ran each step, and when the user chose to continue
+  after a step. Forgetting a run removes this record; its jobs and their results stay.
+- **Frozen text** (`snapshots`): when the user chooses *Use this text in a new job*, or a
+  workflow step reads an earlier step's text, a copy of the corrected text it reads, so that
+  later corrections do not change what it read. It is sent only to the provider of the job or
+  step that reads it, as the text of any document would be, and kept until the app is
+  uninstalled.
 - **Settings** (`settings.json`): preferences such as formats, destination, theme, favourite
   languages and the last folder chosen.
-- **Prompts and pipelines** the user saves, and a copy of the model catalogue.
+- **Prompts, pipelines and workflows** the user saves (`presets`, `pipelines`, `workflows`),
+  and a copy of the model catalogue. An exported workflow, like an exported pipeline, holds its
+  steps, models, settings and prompts, never keys, files, folders or results.
 - **Whisper models**, downloaded only when the user asks (`whisper-models`).
 - **Recording pieces converted for listening** (`listening`): the review's player plays most
   recordings straight from the original file; for a format it cannot play, the piece is

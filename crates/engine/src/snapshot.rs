@@ -44,10 +44,7 @@ pub struct DerivedState {
 
 /// The tasks whose result is a text another task can read.
 pub fn yields_text(task: Task) -> bool {
-    matches!(
-        task,
-        Task::TextExtraction | Task::AudioTranscription | Task::TextCorrection
-    )
+    task.yields_text()
 }
 
 impl Engine {
@@ -94,12 +91,29 @@ impl Engine {
         job_id: JobId,
         setup_id: SetupId,
     ) -> Result<Vec<SourceFile>, EngineError> {
+        self.snapshot_sources(job_id, setup_id, None)
+    }
+
+    /// Freezes the corrected text of one source of a job, or of all of them with `None`: a
+    /// project's document sends only its own text on.
+    pub fn snapshot_sources(
+        &self,
+        job_id: JobId,
+        setup_id: SetupId,
+        only: Option<SourceId>,
+    ) -> Result<Vec<SourceFile>, EngineError> {
         let job = self.store.job(job_id)?;
-        if !job.setups.iter().any(|s| s.id == setup_id) {
+        if !job.setups.iter().any(|s| s.id == setup_id)
+            || only.is_some_and(|id| !job.sources.iter().any(|s| s.id == id))
+        {
             return Err(EngineError::Store(kalamu_core::StoreError::NotFound));
         }
         let mut out = Vec::new();
-        for source in &job.sources {
+        for source in job
+            .sources
+            .iter()
+            .filter(|s| only.is_none_or(|id| s.id == id))
+        {
             let (text, parts, missing, task) = self.frozen_text(job_id, setup_id, source.id)?;
             if parts.is_empty() || text.trim().is_empty() {
                 continue;

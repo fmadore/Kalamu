@@ -19,6 +19,7 @@ mod rules;
 mod run;
 mod setup;
 mod snapshot;
+mod workflow;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -45,6 +46,7 @@ pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
 pub use setup::{NewJob, SetupRequest};
 pub use snapshot::{DerivedState, Freshness, yields_text};
+pub use workflow::{JobStep, RunView, StartRun, StepView};
 
 /// Where the engine gets API keys; the app reads them from Windows Credential Manager.
 pub trait KeySource: Send + Sync {
@@ -126,6 +128,14 @@ pub enum EngineError {
     NothingRead,
     #[error("Could not keep the piece converted to listen to: {0}")]
     ListeningCopy(String),
+    #[error(transparent)]
+    Workflow(kalamu_core::WorkflowError),
+    /// A workflow step that cannot run with these files or models.
+    #[error("Step {step}: {source}")]
+    Step { step: u32, source: Box<EngineError> },
+    /// A workflow step approved before its job has finished.
+    #[error("This step has not finished")]
+    StepNotFinished,
 }
 
 impl EngineError {
@@ -151,6 +161,9 @@ impl EngineError {
             Self::NotText => "job.not_text",
             Self::NothingRead => "job.nothing_read",
             Self::ListeningCopy(_) => "media.read",
+            Self::Workflow(e) => e.code(),
+            Self::Step { source, .. } => source.code(),
+            Self::StepNotFinished => "workflow.not_finished",
         }
     }
 }
@@ -173,6 +186,8 @@ pub struct Engine {
     pub(crate) config: EngineConfig,
     pub(crate) events: broadcast::Sender<ProgressEvent>,
     pub(crate) running: Mutex<HashMap<JobId, Arc<Mutex<Control>>>>,
+    /// Held while a workflow run decides which steps to start.
+    pub(crate) workflows: Mutex<()>,
 }
 
 impl Engine {
@@ -194,6 +209,7 @@ impl Engine {
             config,
             events,
             running: Mutex::new(HashMap::new()),
+            workflows: Mutex::new(()),
         })
     }
 
@@ -346,7 +362,7 @@ impl Engine {
     /// Starts or resumes a job in the background. Progress arrives through [`Engine::subscribe`].
     /// Call it from within the Tokio runtime, which runs the job.
     pub fn start(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
-        self.launch(id, |engine, control| async move {
+        self.launch(id, true, |engine, control| async move {
             engine.run(id, control).await
         })
     }
@@ -355,14 +371,20 @@ impl Engine {
     /// documents they complete, without sending anything: at launch, a job paused or cut short
     /// by the last close waits for the researcher for the rest.
     pub fn collect_waiting(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
-        self.launch(id, |engine, control| async move {
+        self.launch(id, false, |engine, control| async move {
             engine.collect_batches(id, control).await
         })
     }
 
     /// Runs `work` for a job in the background, as the job's one run at a time, and records
-    /// the status it ends with.
-    fn launch<F, Fut>(self: &Arc<Self>, id: JobId, work: F) -> Result<(), EngineError>
+    /// the status it ends with. A workflow the job belongs to then goes on, starting its next
+    /// steps when `then_start` (the researcher started this work), or only making their jobs.
+    fn launch<F, Fut>(
+        self: &Arc<Self>,
+        id: JobId,
+        then_start: bool,
+        work: F,
+    ) -> Result<(), EngineError>
     where
         F: FnOnce(Arc<Self>, Arc<Mutex<Control>>) -> Fut,
         Fut: std::future::Future<Output = Result<JobStatus, EngineError>> + Send + 'static,
@@ -390,6 +412,7 @@ impl Engine {
                 .unwrap_or_else(|p| p.into_inner())
                 .remove(&id);
             engine.emit(ProgressEvent::JobFinished { job_id: id, status });
+            engine.job_ended(id, then_start);
         });
         Ok(())
     }

@@ -72,6 +72,35 @@ pub struct Provenance {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub refused: Option<ProvenanceRefused>,
+    /// The workflow step this result was read by, when a workflow ran it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub workflow: Option<ProvenanceWorkflow>,
+}
+
+/// Where a result stands in the workflow run that produced it.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceWorkflow {
+    pub run_id: crate::RunId,
+    pub workflow_id: String,
+    pub name: String,
+    /// The definition's version when the run started.
+    pub version: u32,
+    /// This step, and how many the run has, numbered from 1.
+    pub step: u32,
+    pub steps: u32,
+    pub step_name: String,
+    /// The step whose corrected text this one read (numbered from 1); none when it read the
+    /// run's files. `source.derived_from` names the snapshot.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub reads: Option<u32>,
+    /// The researcher's go-ahead on the step read, when one was given: after a review, or to
+    /// go on although some of its pieces were not read (`partial`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub approval: Option<crate::Approval>,
 }
 
 /// Answers billed but refused, as provenance records them.

@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (31 October 2026)
+## Status (1 November 2026)
 
 **Version 1.0.0**, the first Microsoft Store release, is ready to build: the app, its package
 and its listing are done, and what is left before submitting needs Partner Center, the
@@ -97,8 +97,8 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   workflow, third-party notices for every crate and package, sample files for the certification
   team, and the listing for 1.0.0 ([packaging-msix.md](packaging-msix.md),
   [decision](decisions/2026-10-30-version-1.md)).
-- **A glossary** for colleagues new to these tools: a page beside Settings explaining fifteen
-  words the app uses (OCR and HTR, LLM, Whisper, API key, prompt, set-up, pipeline, tokens,
+- **A glossary** for colleagues new to these tools: a page beside Settings explaining sixteen
+  words the app uses (OCR and HTR, LLM, Whisper, API key, prompt, set-up, pipeline, workflow, tokens,
   reasoning effort, economy mode, ground truth, error rates, hallucination, provenance,
   machine-readable) and what each export format suits, with a filter, links between the
   words, and a help mark beside the headings that use them; written in the translation files
@@ -120,6 +120,20 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   it, documents with the same content merged, deletions that never reach a job, missing files
   marked, archiving; a crate of its own, `projects`
   ([decision](decisions/2026-10-31-project-workspaces.md)).
+- **Workflows, first increment** ([#49](https://github.com/fmadore/Kalamu/issues/49)):
+  pipelines run one after another on the same files, each step reading the files or an
+  earlier step's corrected text, frozen when it starts; a review stop, or pages not read, holds
+  the steps that read it until the researcher continues; each step is an ordinary job, and
+  provenance names the run, the workflow's version and the go-ahead; definitions versioned,
+  exported and imported, runs frozen; running again pays only for the steps that changed; a
+  run started from a project's selection ties its jobs to the documents
+  ([decision](decisions/2026-11-01-workflow-runs.md)). For colleagues new to them: *Then* at
+  the end of New job analyses the text once it is checked, with no workflow to build; a banner
+  on the job's page and in its review offers *Continue*, and the sidebar lists those jobs under
+  *For you to check*; three ready-made examples; an animated drawing of the steps; a glossary
+  entry. Any finished text goes into a new round from *Use this text in a new job* (analyse it,
+  correct it, or run a workflow on it), on the job's page or on a project document's results,
+  which send only that document's text.
 - **The last of the 29 October checkpoint**: analysis answers billed but refused for breaking
   their fields, in a single call or a batch, now count in what a job cost, on its page and in
   the job list, and `provenance.json` lists them apart (`refused`); provenance also records
@@ -155,8 +169,15 @@ done.
 - **Project workspaces, what is left of
   [#57](https://github.com/fmadore/Kalamu/issues/57)**: tags as further filters; the
   Activity view's filters (task, model, pipeline, date, status) and its costs summed; a
-  document's descriptive metadata; workflow runs on a selection, which come with #49; and
-  later, search through the text of every result.
+  document's descriptive metadata; and later, search through the text of every result.
+- **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
+  that read several inputs (the text and an accepted dictionary, with #48), project-level
+  steps, an export step that gathers results across steps, the whole run's estimate computed
+  in the engine, and restarting a run from a step after the definition changed. A live run of
+  a two-step workflow, and one in economy mode across a restart. Try *Then* and the examples
+  with one or two colleagues before going further. Several jobs' or documents' texts sent into
+  one new round together, from a project's selection.
+- **Prompts, house cleaning**: to scope with the maintainer before the next prompt work.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
@@ -253,7 +274,7 @@ A pending merge decision is never treated as approval.
 | --- | --- | --- |
 | 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (first increment done) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
 | 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis (first increment done) | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
-| 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps | [#49](https://github.com/fmadore/Kalamu/issues/49) |
+| 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps (first increment done, with review checkpoints) | [#49](https://github.com/fmadore/Kalamu/issues/49) |
 | 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export | [#48](https://github.com/fmadore/Kalamu/issues/48) |
 | 5 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |
 

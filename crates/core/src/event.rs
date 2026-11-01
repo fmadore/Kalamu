@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{JobId, JobStatus, PieceRef, PieceStatus, SetupId, SourceId, Timestamp};
+use crate::{JobId, JobStatus, PieceRef, PieceStatus, RunId, SetupId, SourceId, Timestamp};
 
 /// What the engine reports while a job runs. Sent to the front end as Tauri events.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -62,11 +62,22 @@ pub enum ProgressEvent {
         job_id: JobId,
         status: JobStatus,
     },
+    /// A workflow's step became a job, now that what it reads is ready.
+    StepStarted {
+        run_id: RunId,
+        step: u32,
+        job_id: JobId,
+    },
+    /// A workflow run changed otherwise: a step approved, cancelled or unable to start.
+    RunChanged {
+        run_id: RunId,
+    },
 }
 
 impl ProgressEvent {
-    pub fn job_id(&self) -> JobId {
-        match self {
+    /// The job the event is about; none for a change to a workflow run as a whole.
+    pub fn job_id(&self) -> Option<JobId> {
+        Some(match self {
             Self::JobStarted { job_id, .. }
             | Self::SourcePrepared { job_id, .. }
             | Self::PieceUpdated { job_id, .. }
@@ -74,7 +85,9 @@ impl ProgressEvent {
             | Self::SourceFailed { job_id, .. }
             | Self::CostUpdated { job_id, .. }
             | Self::BatchWaiting { job_id, .. }
-            | Self::JobFinished { job_id, .. } => *job_id,
-        }
+            | Self::JobFinished { job_id, .. }
+            | Self::StepStarted { job_id, .. } => *job_id,
+            Self::RunChanged { .. } => return None,
+        })
     }
 }

@@ -111,6 +111,15 @@ impl Task {
     pub fn answers_in_language(self) -> bool {
         matches!(self, Self::Analysis | Self::Contents)
     }
+
+    /// Whether the task's result is a text another task can read: an extraction, a
+    /// transcription or a correction, not an analysis's fields or a table of contents' entries.
+    pub fn yields_text(self) -> bool {
+        matches!(
+            self,
+            Self::TextExtraction | Self::AudioTranscription | Self::TextCorrection
+        )
+    }
 }
 
 #[cfg(test)]

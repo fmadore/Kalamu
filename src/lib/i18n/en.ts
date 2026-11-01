@@ -11,6 +11,7 @@ export const en = {
 		jobs: 'Jobs',
 		running: 'Running',
 		unfinished: 'Unfinished',
+		toCheck: 'For you to check',
 		finished: 'Finished',
 		noJobs: 'Jobs you start appear here.',
 		newJobShortcut: 'Ctrl N',
@@ -22,6 +23,7 @@ export const en = {
 	nav: {
 		newJob: 'New job',
 		projects: 'Projects',
+		workflows: 'Workflows',
 		jobs: 'Jobs',
 		prompts: 'Prompts',
 		settings: 'Settings',
@@ -43,6 +45,164 @@ export const en = {
 		text_correction: 'Correct existing text',
 		text_correctionHint:
 			'Machine-read text from a digital library or a PDF, corrected page by page: TXT, Word, PDF'
+	},
+	useText: {
+		button: 'Use this text in a new job',
+		short: 'Use this text',
+		hint: 'Sends the text as you corrected it into a new job, without reading the files again. A later correction does not change what the new job read.',
+		analyse: 'Analyse it',
+		analyseHint: 'People and places, a summary, its tone, or fields of your own.',
+		correct: 'Correct it',
+		correctHint:
+			'A model fixes reading errors, keeping the spelling and wording; every change is shown.',
+		workflow: 'Run a workflow on it',
+		workflowHint: 'Several steps one after another, from your workflows or an example.'
+	},
+	workflows: {
+		title: 'Workflows',
+		lede: 'Pipelines run one after another on the same files: extract the text, check it, then analyse it.',
+		newWorkflow: 'New workflow',
+		import: 'Import a workflow',
+		imported: (name: string) => `Imported “${name}” with its prompts.`,
+		saved: 'Saved workflows',
+		empty: 'No workflow saved yet. Start from an example below, or build one from your pipelines.',
+		steps: (n: number) => (n === 1 ? '1 step' : `${n} steps`),
+		version: (n: number) => `version ${n}`,
+		runs: 'Runs',
+		noRuns: 'Workflows you run appear here, with each step’s job.',
+		started: (when: string) => `Started ${when}`,
+		back: 'All workflows',
+		name: 'Name of the workflow',
+		stepsTitle: 'Steps',
+		noSteps: 'Add a first step from one of your pipelines.',
+		noPipelines:
+			'Steps are made from pipelines. Set up a job in New job and save it as a pipeline first.',
+		addStep: 'Add a step',
+		addStepHint: 'From a pipeline',
+		stepNumber: (n: number) => `Step ${n}`,
+		reads: 'Works on',
+		readsFiles: 'The files or text you run it on',
+		readsStep: (n: number, name: string) =>
+			`The text from step ${n} (${name}), as you corrected it`,
+		review: 'Let me check the results before going on',
+		reviewHint:
+			'Kalamu waits while you check and correct them in the review, then you press Continue.',
+		moveUp: (n: number) => `Move step ${n} up`,
+		moveDown: (n: number) => `Move step ${n} down`,
+		remove: (n: number) => `Remove step ${n}`,
+		save: 'Save',
+		savedAs: (name: string, version: number) => `Saved “${name}”, version ${version}.`,
+		savedNote:
+			'Saving makes a new version. Runs already started keep the steps and prompts they started with.',
+		duplicate: 'Duplicate',
+		copyName: (name: string) => `${name} (copy)`,
+		export: 'Export',
+		exported: (file: string) =>
+			`Written to ${file}, with a Markdown record beside it. No keys, files or folders are included.`,
+		delete: 'Delete',
+		deleteConfirm: (name: string) =>
+			`Delete the workflow “${name}”? Its runs and their jobs are kept.`,
+		run: 'Run on files',
+		runTitle: 'Run this workflow',
+		chooseFiles: 'Choose files',
+		files: (n: number) => (n === 1 ? '1 file' : `${n} files`),
+		runName: 'Name of the run',
+		unsaved: 'Save the workflow before running it.',
+		sends: 'What each step sends',
+		sendsFiles: (provider: string) => `the files, to ${provider}`,
+		sendsText: (n: number, provider: string) => `the text of step ${n}, to ${provider}`,
+		offline: 'stays on this PC',
+		costKnown: (usd: string) => `about ${usd}`,
+		costLater: (n: number) => `known once step ${n} has read the files`,
+		costUnknown: 'cost unknown',
+		cloudAfterOffline:
+			'A step reads on this PC, and a later one sends its text to a cloud provider. Remove that step if the material must stay on this PC.',
+		start: 'Start',
+		fromProject: (name: string) => `Its jobs join the project “${name}”.`,
+		onText: (files: string) =>
+			`Runs on the text already read, as you corrected it: ${files}. Choose a workflow that starts by correcting or analysing.`,
+		notOnText: 'starts from scans or recordings',
+		runOf: (name: string, version: number) => (version > 0 ? `${name}, version ${version}` : name),
+		diagram: {
+			title: 'How the steps follow each other',
+			replay: 'Play again',
+			files: 'Your files',
+			check: 'You check',
+			checkNote: 'then press Continue',
+			written: 'Results saved'
+		},
+		examplesTitle: 'Start from an example',
+		useExample: 'Use this example',
+		examplesHint:
+			'Each example uses the models you have keys for. Open one, adjust it if you like, save it, then run it on your files.',
+		examples: {
+			letters: {
+				name: 'Letters: read, check, then people and places',
+				about: 'Scanned letters or reports, their text checked before names are listed.',
+				steps: ['Read the text', 'People, places and organisations']
+			},
+			interviews: {
+				name: 'Interviews: transcribe, check, then summarise',
+				about: 'Recordings transcribed, the transcript corrected, then summarised for research.',
+				steps: ['Transcribe the interview', 'Research summary']
+			},
+			library: {
+				name: 'Digital library text: correct, then summarise',
+				about: 'Machine-read text from a digital library, corrected, then summarised.',
+				steps: ['Correct the text', 'Short summary']
+			}
+		},
+		stepState: {
+			waiting: 'Waiting',
+			running: 'Running',
+			paused: 'Not started',
+			review: 'Ready for you to check',
+			attention: 'Some pages not read',
+			done: 'Done',
+			done_with_errors: 'Done with errors',
+			cancelled: 'Cancelled',
+			blocked: 'Cannot start',
+			failed: 'Could not start'
+		},
+		runStatus: {
+			running: 'Running',
+			needs_you: 'Waiting for you',
+			finished: 'Finished',
+			stopped: 'Stopped'
+		},
+		waitingFor: (n: number) => `Starts when step ${n} is done.`,
+		reviewNotice:
+			'Review and correct its results, then continue: the next steps read the text as you leave it.',
+		attentionNotice:
+			'Some pieces could not be read. Retry them on the job’s page, or continue with what was read: the pieces left out are named in provenance.',
+		pausedNotice: 'Its job is not running. Open it to start or resume it.',
+		blockedNotice: 'The step it reads was cancelled, deleted or could not start.',
+		failedNotice: (reason: string) => `It could not start: ${reason}`,
+		continue: 'Continue',
+		continueAnyway: 'Continue with what was read',
+		openJob: 'Open the job',
+		openReview: 'Review',
+		approved: (when: string) => `Continued ${when}`,
+		approvedPartial: (when: string) => `Continued ${when} with the pieces read`,
+		cancel: 'Stop the run',
+		cancelConfirm:
+			'Stop this run? Running steps are cancelled and no further step starts. What was read is kept.',
+		forget: 'Remove from this list',
+		forgetConfirm: 'Remove this run from the list? Its jobs and their results are kept.',
+		banner: {
+			step: (n: number, of: number, run: string) => `Step ${n} of ${of} in “${run}”.`,
+			review: (next: string) =>
+				`When you have checked and corrected the text, press Continue: ${next} will then read it as you left it.`,
+			attention: (next: string) =>
+				`Some pages could not be read. Retry them, or continue: ${next} will read the pages that were.`,
+			next: (next: string) => `Then: ${next}, once this job is done.`,
+			nextAfterCheck: (next: string) => `Then: ${next}, once you have checked the text.`,
+			see: 'See the workflow'
+		},
+		notify: {
+			review: 'ready for you to check, then press Continue',
+			attention: 'some pages were not read; retry them or continue'
+		}
 	},
 	projects: {
 		title: 'Projects',
@@ -112,6 +272,7 @@ export const en = {
 		addTo: 'Add to collection…',
 		removeFromCollection: 'Remove from this collection',
 		newJobWith: 'New job with these',
+		workflowWith: 'Run a workflow',
 		removeDocuments: 'Remove from project',
 		removeDocumentsConfirm: (n: number) =>
 			`Remove ${n === 1 ? 'this document' : `these ${n} documents`} from the project? The files, the jobs that read them and their results stay.`,
@@ -190,6 +351,20 @@ export const en = {
 		}
 	},
 	newJob: {
+		then: {
+			title: 'Then (optional)',
+			hint: 'Once the text is read, Kalamu can analyse it for you: the people and places it names, a summary, its tone.',
+			analyse: 'Analyse the text',
+			nothing: 'Nothing more',
+			check: 'Let me check the text first',
+			checkHint:
+				'Recommended. Correct what the model misread; the analysis then reads your corrected text.',
+			whatHappens: (analysis: string, model: string) =>
+				`When the text is read, ${model} analyses it (${analysis}) straight away. Its cost depends on the text, so it is known once the text is read.`,
+			whatHappensChecked: (analysis: string, model: string) =>
+				`When the text is read, check it in the review, then press Continue: ${model} analyses it (${analysis}). Nothing is sent for the analysis before you do. Its cost depends on the text.`,
+			workflowName: (task: string, analysis: string) => `${task}, then ${analysis}`
+		},
 		title: 'New job',
 		lede: 'Choose the files, a model and a prompt. The cost is estimated before anything is sent.',
 		taskLabel: 'What do you want to do?',
@@ -449,9 +624,6 @@ export const en = {
 		deleteConfirm: 'Delete this job? Files already written stay on disk.',
 		review: 'Review',
 		summarise: 'Analyse the results',
-		analyseText: 'Analyse this text',
-		analyseTextHint:
-			'Analyses the text as you corrected it, without reading the files again. A later correction does not change what the analysis read.',
 		analyseSetup: 'Text from',
 		derivedChanged:
 			'The text this analysis read has been corrected since. Its answers stay as they were; analyse the text again to include the corrections.',
@@ -810,7 +982,11 @@ export const en = {
 			},
 			pipeline: {
 				word: 'Pipeline',
-				text: 'A job’s settings saved under a name: task, models, prompts, languages, formats and destination, so the next batch starts in one click. Exported, a pipeline carries its full prompts and a Markdown record to cite in a methods section or share with colleagues.'
+				text: 'A job’s settings saved under a name: task, models, prompts, languages, formats and destination, so the next batch starts in one click. Exported, a pipeline carries its full prompts and a Markdown record to cite in a methods section or share with colleagues. Several pipelines run one after another make a workflow.'
+			},
+			workflow: {
+				word: 'Workflow',
+				text: 'Several jobs run one after another on the same files, each called a step: read the text of the scans, check it, then find the people and places in it. A step works on the files or on the text a step before it produced, as you corrected it. Where you asked to check, Kalamu waits until you press Continue, on the job’s page or in its review, so the next step reads the text you approved. Choose “Then” at the bottom of New job for the simplest one, or build longer ones in Workflows.'
 			},
 			tokens: {
 				word: 'Tokens',
@@ -934,8 +1110,16 @@ export const en = {
 		'prompt.duplicate_field': 'Two fields have the same name.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',
 		'prompt.unnamed_pipeline': 'A pipeline needs a name and at least one model.',
+		'workflow.incomplete': 'A workflow needs a name and at least one step, each with a model.',
+		'workflow.no_steps': 'A workflow needs at least one step.',
+		'workflow.not_earlier': 'A step can only read a step that comes before it.',
+		'workflow.not_text':
+			'A step can only read the text of an extraction, a transcription or a correction.',
+		'workflow.cannot_read_text':
+			'This step’s task does not read text: let it read the files instead.',
+		'workflow.not_finished': 'This step has not finished yet.',
 		'prompt.invalid_file':
-			'This is not a Kalamu presets or pipeline file, or it comes from a newer version of Kalamu.',
+			'This is not a Kalamu presets, pipeline or workflow file, or it comes from a newer version of Kalamu.',
 		'provider.unknown': 'Unknown provider.',
 		'provider.missing_key': 'No API key is saved for this provider. Add one in Settings.',
 		'provider.unsupported': 'This model cannot do this task.',

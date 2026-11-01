@@ -3,6 +3,7 @@ import type { JobId } from "./JobId";
 import type { JobStatus } from "./JobStatus";
 import type { PieceRef } from "./PieceRef";
 import type { PieceStatus } from "./PieceStatus";
+import type { RunId } from "./RunId";
 import type { SetupId } from "./SetupId";
 import type { SourceId } from "./SourceId";
 import type { Timestamp } from "./Timestamp";
@@ -22,4 +23,4 @@ pieces: number, finished: number, submitted_at: Timestamp,
 /**
  * The latest the provider promises to answer by.
  */
-due_by: Timestamp, } | { "type": "job_finished", job_id: JobId, status: JobStatus, };
+due_by: Timestamp, } | { "type": "job_finished", job_id: JobId, status: JobStatus, } | { "type": "step_started", run_id: RunId, step: number, job_id: JobId, } | { "type": "run_changed", run_id: RunId, };
