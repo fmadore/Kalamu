@@ -120,6 +120,9 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   it, documents with the same content merged, deletions that never reach a job, missing files
   marked, archiving; a crate of its own, `projects`
   ([decision](decisions/2026-10-31-project-workspaces.md)).
+- **Tags on a project's documents**: the researcher's own labels beside the collections, added
+  and removed on a selection or a document, narrowing the table and found by its search; one
+  spelling per project whatever the capitals, kept through a merge.
 - **A project's Activity, filtered and costed**: its jobs narrowed by task, state, model,
   workflow and when they were started, and the jobs shown costed together, with those not yet
   priced (offline, or not yet answered) counted apart so a sum is never read as whole when it
@@ -182,8 +185,9 @@ The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refa
 done.
 
 - **Project workspaces, what is left of
-  [#57](https://github.com/fmadore/Kalamu/issues/57)**: tags as further filters; a
-  document's descriptive metadata; and later, search through the text of every result.
+  [#57](https://github.com/fmadore/Kalamu/issues/57)**: a document's descriptive metadata
+  (with [#55](https://github.com/fmadore/Kalamu/issues/55)); renaming a tag across a project;
+  and later, search through the text of every result.
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed

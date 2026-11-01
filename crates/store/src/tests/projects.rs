@@ -33,6 +33,7 @@ fn document(project: &Project, job: &Job) -> Document {
         title: "Letter of 1915".into(),
         source: job.sources[0].clone(),
         created_at: Timestamp(3),
+        tags: vec!["Letters".into()],
     }
 }
 

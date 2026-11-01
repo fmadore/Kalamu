@@ -103,6 +103,9 @@ CREATE INDEX charges_by_job ON charges(job_id);
     projects::MIGRATION,
     snapshots::MIGRATION,
     runs::MIGRATION,
+    r#"
+ALTER TABLE documents ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
+"#,
 ];
 
 pub struct SqliteStore {

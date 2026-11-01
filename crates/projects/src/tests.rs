@@ -14,6 +14,8 @@ use kalamu_store::SqliteStore;
 
 use super::*;
 
+mod tags;
+
 struct Fixture {
     projects: Projects,
     store: Arc<SqliteStore>,

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use kalamu_core::{
     CacheKey, Collection, CollectionId, Correction, Document, DocumentId, DocumentLink, Job, JobId,
     JobStatus, PieceState, PieceStatus, Project, ProjectError, ProjectId, ProviderId, SetupId,
-    SourceId, Task, Timestamp,
+    SourceId, Task, Timestamp, same_tag,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -20,8 +20,33 @@ pub struct ProjectView {
     pub project: Project,
     pub collections: Vec<CollectionView>,
     pub documents: Vec<DocumentRow>,
+    /// The tags its documents carry, sorted as a reader sorts, each with how many carry it.
+    pub tags: Vec<TagView>,
     /// The jobs that read its documents, newest first: the project's activity.
     pub jobs: Vec<JobId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TagView {
+    pub name: String,
+    pub documents: u32,
+}
+
+/// Every tag of the documents, counted, sorted without regard to capitals.
+fn tags_of(documents: &[Document]) -> Vec<TagView> {
+    let mut tags: Vec<TagView> = Vec::new();
+    for tag in documents.iter().flat_map(|d| &d.tags) {
+        match tags.iter_mut().find(|t| same_tag(&t.name, tag)) {
+            Some(view) => view.documents += 1,
+            None => tags.push(TagView {
+                name: tag.clone(),
+                documents: 1,
+            }),
+        }
+    }
+    tags.sort_by_key(|t| (t.name.to_lowercase(), t.name.clone()));
+    tags
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -273,6 +298,7 @@ impl Projects {
                     collection,
                 })
                 .collect(),
+            tags: tags_of(&documents),
             documents: rows,
             jobs: jobs.into_iter().map(|(_, id)| id).collect(),
             project,

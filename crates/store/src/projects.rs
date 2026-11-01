@@ -102,7 +102,7 @@ fn project(
     })
 }
 
-type DocumentRow = (String, String, String, String, i64);
+type DocumentRow = (String, String, String, String, i64, String);
 
 fn document_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<DocumentRow> {
     Ok((
@@ -111,16 +111,18 @@ fn document_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<DocumentRow> {
         row.get(2)?,
         row.get(3)?,
         row.get(4)?,
+        row.get(5)?,
     ))
 }
 
-fn document((did, pid, title, source, created): DocumentRow) -> Result<Document, StoreError> {
+fn document((did, pid, title, source, created, tags): DocumentRow) -> Result<Document, StoreError> {
     Ok(Document {
         id: id(&did)?,
         project_id: id(&pid)?,
         title,
         source: serde_json::from_str(&source).map_err(corrupt)?,
         created_at: Timestamp(created),
+        tags: serde_json::from_str(&tags).map_err(corrupt)?,
     })
 }
 
@@ -235,15 +237,16 @@ impl ProjectStore for SqliteStore {
     fn put_document(&self, document: &Document) -> Result<(), StoreError> {
         self.conn()
             .execute(
-                "INSERT INTO documents (id, project_id, title, source, created_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5)
-                 ON CONFLICT(id) DO UPDATE SET title = ?3, source = ?4",
+                "INSERT INTO documents (id, project_id, title, source, created_at, tags)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+                 ON CONFLICT(id) DO UPDATE SET title = ?3, source = ?4, tags = ?6",
                 params![
                     document.id.to_string(),
                     document.project_id.to_string(),
                     document.title,
                     to_json(&document.source)?,
                     document.created_at.0,
+                    to_json(&document.tags)?,
                 ],
             )
             .map_err(db)?;
@@ -254,7 +257,7 @@ impl ProjectStore for SqliteStore {
         let conn = self.conn();
         let mut stmt = conn
             .prepare(
-                "SELECT id, project_id, title, source, created_at FROM documents
+                "SELECT id, project_id, title, source, created_at, tags FROM documents
                  WHERE project_id = ?1 ORDER BY created_at, rowid",
             )
             .map_err(db)?;
@@ -268,7 +271,7 @@ impl ProjectStore for SqliteStore {
         let row = self
             .conn()
             .query_row(
-                "SELECT id, project_id, title, source, created_at FROM documents WHERE id = ?1",
+                "SELECT id, project_id, title, source, created_at, tags FROM documents WHERE id = ?1",
                 [did.to_string()],
                 document_row,
             )

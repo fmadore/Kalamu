@@ -383,6 +383,10 @@ analysed, compared. A **project** keeps it together
 - **Collections** group documents as the researcher likes (correspondence, a newspaper's
   issues, the interviews of one village); a document can be in several, held once. Leaving a
   collection, or deleting it, keeps the document in the project.
+- **Tags** are the researcher's own labels, further filters beside the collections: a
+  selection or a document is tagged and untagged, the table narrowed by a tag, and the search
+  finds tags too. A tag differing only in capitals from one the project uses takes its
+  spelling, so one label is never split in two; merging two documents keeps the tags of both.
 - **Every result of a document together**, whatever job made it: each set-up of each job that
   read it, with its progress, how much was reviewed and corrected, what it cost, opening its
   review. The researcher can mark one per task as **preferred**: never chosen by the app, and

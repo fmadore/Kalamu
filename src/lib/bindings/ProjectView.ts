@@ -3,8 +3,13 @@ import type { CollectionView } from "./CollectionView";
 import type { DocumentRow } from "./DocumentRow";
 import type { JobId } from "./JobId";
 import type { Project } from "./Project";
+import type { TagView } from "./TagView";
 
 export type ProjectView = { project: Project, collections: Array<CollectionView>, documents: Array<DocumentRow>, 
+/**
+ * The tags its documents carry, sorted as a reader sorts, each with how many carry it.
+ */
+tags: Array<TagView>, 
 /**
  * The jobs that read its documents, newest first: the project's activity.
  */

@@ -93,6 +93,8 @@ pub const COMMANDS: &[&str] = &[
     "delete_documents",
     "add_to_collection",
     "remove_from_collection",
+    "tag_documents",
+    "untag_documents",
     "merge_documents",
     "document_detail",
     "set_preferred",

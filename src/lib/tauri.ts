@@ -170,6 +170,10 @@ export const api = {
 		invoke<void>('add_to_collection', { project, collection, ids }),
 	removeFromCollection: (project: string, collection: string, ids: string[]) =>
 		invoke<void>('remove_from_collection', { project, collection, ids }),
+	tagDocuments: (project: string, ids: string[], tag: string) =>
+		invoke<void>('tag_documents', { project, ids, tag }),
+	untagDocuments: (project: string, ids: string[], tag: string) =>
+		invoke<void>('untag_documents', { project, ids, tag }),
 	mergeDocuments: (project: string, from: string, into: string) =>
 		invoke<void>('merge_documents', { project, from, into }),
 	documentDetail: (project: string, id: string) =>
