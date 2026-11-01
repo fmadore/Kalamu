@@ -17,6 +17,7 @@ import catalogJson from '../../../crates/catalog/catalog.json';
 import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import taskRulesJson from './taskRules.json';
 import { DOCUMENT_ID, PROJECT_ID, projectCommand, seedProjects } from './mockProjects.js';
+import { RUN_ID, seedWorkflows, WORKFLOW_ID, workflowCommand } from './mockWorkflows.js';
 import {
 	contentsJob,
 	contentsPieces,
@@ -497,6 +498,29 @@ const analysisPieces: PieceView[] = analysisSetups.map((s, i) => ({
 /** Saved pipelines, as New job lists them. */
 let pipelines: Pipeline[] = [
 	{
+		id: 'pipeline-0',
+		name: 'Printed bulletins',
+		task: 'text_extraction',
+		setups: [
+			{
+				provider: 'gemini',
+				model: 'gemini-3.8-flash',
+				preset_id: 'text_extraction.printed_diplomatic',
+				label: null,
+				options: { temperature: null, diarize: false, timestamps: false, speakers: null }
+			}
+		],
+		settings: {
+			languages: { mode: 'explicit', languages: ['fr'] },
+			sample_pages: null,
+			line_breaks: 'running_text',
+			pace: 'fast'
+		},
+		formats: ['txt', 'docx'],
+		destination: { kind: 'beside_sources' },
+		updated_at: 0
+	},
+	{
 		id: 'pipeline-1',
 		name: 'Press, people and places',
 		task: 'analysis',
@@ -641,6 +665,12 @@ export function mockView(): View | null {
 			return { name: 'projects', projectId: PROJECT_ID };
 		case 'document':
 			return { name: 'projects', projectId: PROJECT_ID, documentId: DOCUMENT_ID };
+		case 'workflows':
+			return { name: 'workflows' };
+		case 'workflow':
+			return { name: 'workflows', workflowId: WORKFLOW_ID };
+		case 'run':
+			return { name: 'workflows', runId: RUN_ID };
 		default:
 			return null;
 	}
@@ -684,10 +714,13 @@ export function installMock(): void {
 			}
 		]
 	});
+	seedWorkflows(pipelines[0], pipelines[1], summaries[0], source);
 	mockIPC((cmd, args) => {
 		const a = (args ?? {}) as Record<string, unknown>;
 		const project = projectCommand(cmd, a);
 		if (project !== undefined) return project;
+		const workflow = workflowCommand(cmd, a);
+		if (workflow !== undefined) return workflow;
 		switch (cmd) {
 			case 'app_info':
 				return {

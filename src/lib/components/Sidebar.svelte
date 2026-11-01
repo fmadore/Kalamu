@@ -110,6 +110,15 @@
 		onclick={() => go({ name: 'projects' })}
 		><Icon name="project" size={16} />{#if !collapsed}{m.nav.projects}{/if}</button
 	>
+	<button
+		class="tool workflows"
+		class:current={app.view.name === 'workflows'}
+		aria-current={app.view.name === 'workflows' ? 'page' : undefined}
+		aria-label={collapsed ? m.nav.workflows : undefined}
+		title={collapsed ? m.nav.workflows : undefined}
+		onclick={() => go({ name: 'workflows' })}
+		><Icon name="workflow" size={16} />{#if !collapsed}{m.nav.workflows}{/if}</button
+	>
 
 	<div class="jobs" id="job-list" hidden={collapsed}>
 		{#each groups as group (group.key)}

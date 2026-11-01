@@ -126,6 +126,16 @@
 			<button class="btn primary sm" disabled={selectionPaths(chosen).length === 0} onclick={newJob}
 				><Icon name="plus" size={14} />{m.projects.newJobWith}</button
 			>
+			<button
+				class="btn sm"
+				disabled={selectionPaths(chosen).length === 0}
+				onclick={() =>
+					go({
+						name: 'workflows',
+						paths: selectionPaths(chosen),
+						project: { id: projectId, name: projectName, collectionId }
+					})}><Icon name="workflow" size={14} />{m.projects.workflowWith}</button
+			>
 			{#if collections.length > 0}
 				<select
 					class="sm"

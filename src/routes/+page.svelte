@@ -10,6 +10,7 @@
 	import ReviewView from '#lib/components/ReviewView.svelte';
 	import SettingsView from '#lib/components/SettingsView.svelte';
 	import GlossaryView from '#lib/components/GlossaryView.svelte';
+	import WorkflowsView from '#lib/components/WorkflowsView.svelte';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -127,6 +128,13 @@
 				projectId={app.view.projectId}
 				collectionId={app.view.collectionId}
 				documentId={app.view.documentId}
+			/>
+		{:else if app.view.name === 'workflows'}
+			<WorkflowsView
+				workflowId={app.view.workflowId}
+				runId={app.view.runId}
+				paths={app.view.paths}
+				project={app.view.project}
 			/>
 		{:else if app.view.name === 'prompts'}
 			<PromptsView />
