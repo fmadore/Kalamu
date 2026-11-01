@@ -88,6 +88,26 @@ impl From<kalamu_core::ProjectError> for AppError {
     }
 }
 
+impl From<kalamu_core::DictionaryError> for AppError {
+    fn from(e: kalamu_core::DictionaryError) -> Self {
+        use kalamu_core::{DictionaryError, StoreError};
+        let id = match &e {
+            DictionaryError::NotFound | DictionaryError::Store(StoreError::NotFound) => {
+                "project.not_found"
+            }
+            DictionaryError::NoEntry => "dictionary.no_entry",
+            DictionaryError::NoLabel => "dictionary.no_label",
+            DictionaryError::Namespaces => "dictionary.namespaces",
+            DictionaryError::KeptApart => "dictionary.kept_apart",
+            DictionaryError::TooFew => "dictionary.too_few",
+            DictionaryError::SameEntry => "dictionary.same_entry",
+            DictionaryError::Export(_) => id::FILE,
+            DictionaryError::Store(_) => "job.database",
+        };
+        Self::new(id, e)
+    }
+}
+
 impl From<kalamu_catalog::CatalogError> for AppError {
     fn from(e: kalamu_catalog::CatalogError) -> Self {
         Self::new("catalog.invalid", e)

@@ -62,6 +62,10 @@ uuid_id!(
     CollectionId
 );
 uuid_id!(
+    /// An entry of a project's dictionary: one person, place or term under its spellings.
+    EntryId
+);
+uuid_id!(
     /// A research item in a project: its source and every result read from it.
     DocumentId
 );

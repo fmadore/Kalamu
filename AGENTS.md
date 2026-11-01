@@ -39,11 +39,12 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | `media` | Conversion and splitting: PDFium, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
 | `offline` | Whisper and Tesseract engines, behind the same trait as cloud providers. | `core`, `media` |
-| `store` | SQLite job database and result cache, and the project tables beside them. | `core` |
-| `projects` | Project workspaces: documents, collections, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
+| `store` | SQLite job database and result cache, and the project and dictionary tables beside them. | `core` |
+| `projects` | Project workspaces: documents, collections, tags, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
+| `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |
 | `export` | One module per output format, each implementing the exporter trait. | `core` |
 | `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job. | all of the above through their traits |
-| `app` | Tauri shell: commands, events, settings, Credential Manager, packaging. | `engine`, `projects`, and others only to wire them up |
+| `app` | Tauri shell: commands, events, settings, Credential Manager, packaging. | `engine`, `projects`, `dictionary`, and others only to wire them up |
 
 Key traits, defined in `core`:
 
@@ -54,6 +55,8 @@ Key traits, defined in `core`:
   the engine can be tested with an in-memory store.
 - **`ProjectStore`**: persistence of projects, kept apart from `JobStore` so organising work
   never reaches the code that runs it.
+- **`DictionaryStore`**: the researcher's dictionary decisions (entries, pairs kept apart),
+  apart from both.
 
 Rules that keep this modular:
 

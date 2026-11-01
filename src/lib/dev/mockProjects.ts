@@ -11,6 +11,7 @@ import type { Project } from '../bindings/Project.js';
 import type { ProjectSummary } from '../bindings/ProjectSummary.js';
 import type { ProjectView } from '../bindings/ProjectView.js';
 import type { SourceFile } from '../bindings/SourceFile.js';
+import { dictionaryCommand } from './mockDictionary.js';
 
 export const PROJECT_ID = '00000000-0000-0000-0000-0000000000p1';
 export const DOCUMENT_ID = '00000000-0000-0000-0000-0000000000d1';
@@ -319,6 +320,6 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 		case 'merge_documents':
 			return [];
 		default:
-			return undefined;
+			return dictionaryCommand(cmd, a);
 	}
 }

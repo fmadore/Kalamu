@@ -407,6 +407,38 @@ analysed, compared. A **project** keeps it together
   it was organised; deleting a job unties it from its documents, which stay. A file moved since
   it was added is marked missing, its results kept. A project can be archived and restored.
 
+### Project dictionary
+
+The names and terms a project's analyses listed, gathered for the researcher to reconcile
+([#48](https://github.com/fmadore/Kalamu/issues/48)).
+
+- **Read from the results, never written into them.** The dictionary is gathered from the list
+  fields (people, places, keywords) of every analysis tied to the project's documents, through
+  the researcher's corrected answers where there are some. It maps the forms the models wrote,
+  kept as written, to entries; the answers themselves are never changed.
+- **One field, one namespace.** People are never mixed with places, even when spelled alike;
+  fields of the same key in different analyses share one namespace.
+- **Entries are the researcher's.** An entry gathers forms under a preferred label of the
+  researcher's choosing, with a stable id. Forms are merged, taken out again, relabelled,
+  marked reviewed and **kept apart**; each decision is kept, survives a restart and is undone
+  by its opposite. A form no entry holds is its own, not yet reviewed.
+- **Look-alikes are pointed out, never merged.** Forms that read the same once capitals,
+  accents, punctuation and word order are set aside are shown as possibly the same, as
+  iwac-ai-pipelines folds names before matching them; the same spelling is not taken as
+  evidence that two mentions are one person, and pairs kept apart are not offered again.
+- **Documents, not mentions.** A list answer says that a document names someone, not where, so
+  the dictionary counts documents, and how many of the results that read them listed the form:
+  two models listing a name is agreement, not a second mention.
+- **Coverage and stale evidence.** The view says from how many of the documents in scope it was
+  gathered, and marks an entry none of whose forms is listed any longer. It covers the whole
+  project or one collection, and each row opens the results that listed it.
+- **Export** of the entries as JSON (ids, labels, forms as written, review status, pairs kept
+  apart) and of every form found as CSV, beside the entry and label it maps to.
+- **Later**: merges proposed by a model, through the engine, with an estimate first and never
+  applied without the researcher; import; an accepted dictionary as a fingerprinted input to
+  later analyses; and telling apart two people who share a spelling, which needs mentions
+  anchored in the text (#47).
+
 ## Export formats
 
 Results are stored once and exported to several formats at the same time; the default selection

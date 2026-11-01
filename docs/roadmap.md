@@ -120,6 +120,15 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   it, documents with the same content merged, deletions that never reach a job, missing files
   marked, archiving; a crate of its own, `projects`
   ([decision](decisions/2026-10-31-project-workspaces.md)).
+- **Project dictionary, first increment**
+  ([#48](https://github.com/fmadore/Kalamu/issues/48)): the names and terms every analysis
+  listed, field by field, gathered through the corrected answers across the project or a
+  collection; entries made by the researcher, with stable ids, a preferred label and the forms
+  as written, merged, taken apart, relabelled, reviewed and kept apart, all surviving a
+  restart; look-alike spellings pointed out, never merged; documents and agreement between
+  results counted, not mentions; entries whose evidence is gone marked; export as JSON and CSV;
+  a crate of its own, `dictionary`
+  ([decision](decisions/2026-11-01-project-dictionary.md)).
 - **Tags on a project's documents**: the researcher's own labels beside the collections, added
   and removed on a selection or a document, narrowing the table and found by its search; one
   spelling per project whatever the capitals, kept through a merge.
@@ -188,6 +197,13 @@ done.
   [#57](https://github.com/fmadore/Kalamu/issues/57)**: a document's descriptive metadata
   (with [#55](https://github.com/fmadore/Kalamu/issues/55)); renaming a tag across a project;
   and later, search through the text of every result.
+- **Project dictionary, what is left of
+  [#48](https://github.com/fmadore/Kalamu/issues/48)**: merges proposed by a model through
+  the engine (bounded groups with overlap, references to existing ids checked, an estimate
+  first, never applied without the researcher); import with conflicts previewed; an accepted
+  dictionary versioned and given to later analyses as a fingerprinted input (with #49); and
+  telling apart two people who share a spelling, which needs mentions anchored in the text
+  (#47).
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed
@@ -293,7 +309,7 @@ A pending merge decision is never treated as approval.
 | 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (first increment done) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
 | 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis (first increment done) | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
 | 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps (first increment done, with review checkpoints) | [#49](https://github.com/fmadore/Kalamu/issues/49) |
-| 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export | [#48](https://github.com/fmadore/Kalamu/issues/48) |
+| 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export (first increment done: inventory, researcher decisions, export) | [#48](https://github.com/fmadore/Kalamu/issues/48) |
 | 5 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |
 
 The project workspace can ship incrementally before the complete workflow builder. It owns

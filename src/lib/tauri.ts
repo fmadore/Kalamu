@@ -9,7 +9,11 @@ import type { ComparisonReport } from './bindings/ComparisonReport.js';
 import type { AttachChoice } from './bindings/AttachChoice.js';
 import type { Collection } from './bindings/Collection.js';
 import type { Correction } from './bindings/Correction.js';
+import type { DictionaryView } from './bindings/DictionaryView.js';
 import type { DocumentDetail } from './bindings/DocumentDetail.js';
+import type { Entry } from './bindings/Entry.js';
+import type { Evidence } from './bindings/Evidence.js';
+import type { Item } from './bindings/Item.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Pipeline } from './bindings/Pipeline.js';
@@ -174,6 +178,24 @@ export const api = {
 		invoke<void>('tag_documents', { project, ids, tag }),
 	untagDocuments: (project: string, ids: string[], tag: string) =>
 		invoke<void>('untag_documents', { project, ids, tag }),
+	dictionaryView: (project: string, collection: string | null) =>
+		invoke<DictionaryView>('dictionary_view', { project, collection }),
+	dictionaryEvidence: (project: string, namespace: string, forms: string[]) =>
+		invoke<Evidence[]>('dictionary_evidence', { project, namespace, forms }),
+	dictionaryMerge: (project: string, namespace: string, items: Item[], label: string) =>
+		invoke<Entry>('dictionary_merge', { project, namespace, items, label }),
+	dictionarySplit: (project: string, entry: string, forms: string[]) =>
+		invoke<void>('dictionary_split', { project, entry, forms }),
+	dictionaryRelabel: (project: string, entry: string, label: string) =>
+		invoke<Entry>('dictionary_relabel', { project, entry, label }),
+	dictionarySetReviewed: (project: string, namespace: string, items: Item[], reviewed: boolean) =>
+		invoke<void>('dictionary_set_reviewed', { project, namespace, items, reviewed }),
+	dictionaryKeepApart: (project: string, namespace: string, a: Item, b: Item) =>
+		invoke<void>('dictionary_keep_apart', { project, namespace, a, b }),
+	dictionaryUndoApart: (project: string, a: string, b: string) =>
+		invoke<void>('dictionary_undo_apart', { project, a, b }),
+	exportDictionary: (project: string, path: string) =>
+		invoke<void>('export_dictionary', { project, path }),
 	mergeDocuments: (project: string, from: string, into: string) =>
 		invoke<void>('merge_documents', { project, from, into }),
 	documentDetail: (project: string, id: string) =>
@@ -272,6 +294,14 @@ export async function pickSaveFile(defaultPath: string): Promise<string | null> 
 	if (!isTauri()) return null;
 	const { save } = await import('@tauri-apps/plugin-dialog');
 	return save({ defaultPath, filters: [{ name: 'JSON', extensions: ['json'] }] });
+}
+
+/** Where to write a dictionary: the JSON file of its entries, with the CSV of every form
+ *  beside it. */
+export async function pickDictionaryExport(name: string): Promise<string | null> {
+	if (!isTauri()) return null;
+	const { save } = await import('@tauri-apps/plugin-dialog');
+	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });
 }
 
 /** Where to write a pipeline's record: the JSON file, with its Markdown twin beside it. */
