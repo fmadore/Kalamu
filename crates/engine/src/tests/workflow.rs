@@ -392,3 +392,42 @@ async fn a_cancelled_run_starts_no_further_step() {
     assert!(f.engine.job(extraction).is_ok());
     assert!(f.engine.run_views().unwrap_or_default().is_empty());
 }
+
+#[tokio::test]
+async fn a_workflow_runs_on_the_text_of_an_earlier_job() {
+    let f = fixture();
+    let extraction = f.new_job(vec![f.pdf("registre.pdf", 2)], &["fake-model"]);
+    assert_eq!(f.run(extraction.id).await, JobStatus::Completed);
+    let texts = f
+        .engine
+        .snapshot(extraction.id, extraction.setups[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let calls = f.fake.calls();
+
+    // A workflow that reads scans first cannot start on text, and says which step.
+    assert!(matches!(
+        f.engine.start_run(StartRun {
+            workflow: extract_then_analyse(false, "fake-model"),
+            name: String::new(),
+            sources: texts.clone(),
+            project: None,
+            collection: None,
+        }),
+        Err(EngineError::Step { step: 1, .. })
+    ));
+
+    let mut analyse = extract_then_analyse(false, "fake-model");
+    analyse.steps.remove(0);
+    analyse.steps[0].input = StepInput::Sources;
+    let view = f.run_workflow(analyse, texts).await;
+    assert_eq!(view.status, RunStatus::Finished);
+    assert_eq!(f.fake.calls(), calls + 1, "the text is not read again");
+    let analysis = f
+        .engine
+        .job(job_of(&view, 0))
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        analysis.sources[0].derived_from.as_ref().map(|d| d.job_id),
+        Some(extraction.id)
+    );
+}

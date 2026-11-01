@@ -48,6 +48,8 @@ export type View =
 			runId?: string;
 			/** Files chosen elsewhere (a project's selection) to run a workflow on. */
 			paths?: string[];
+			/** Text frozen from earlier jobs' results, to run a workflow on. */
+			sources?: SourceFile[];
 			project?: FromProject;
 	  }
 	| { name: 'prompts' }

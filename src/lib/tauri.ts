@@ -117,7 +117,9 @@ export const api = {
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
 	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),
-	snapshotJob: (id: string, setup: string) => invoke<SourceFile[]>('snapshot_job', { id, setup }),
+	/** Freezes a job's corrected text under a set-up: every source's, or one source's. */
+	snapshotJob: (id: string, setup: string, source: string | null = null) =>
+		invoke<SourceFile[]>('snapshot_job', { id, setup, source }),
 	derivedState: (id: string) => invoke<DerivedState[]>('derived_state', { id }),
 	jobOutputs: (id: string) => invoke<string[]>('job_outputs', { id }),
 	openOutput: (id: string, path: string) => invoke<void>('open_output', { id, path }),

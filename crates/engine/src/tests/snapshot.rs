@@ -171,3 +171,28 @@ async fn only_text_results_can_be_frozen_and_failed_pages_are_listed() {
         serde_json::json!([2])
     );
 }
+
+#[tokio::test]
+async fn one_document_of_a_job_is_frozen_alone() {
+    let f = fixture();
+    let first = f.pdf("lettre-1.pdf", 1);
+    let second = f.pdf("lettre-2.pdf", 2);
+    let extraction = f.new_job(vec![first, second.clone()], &["fake-model"]);
+    assert_eq!(f.run(extraction.id).await, JobStatus::Completed);
+    let setup = extraction.setups[0].id;
+    let one = f
+        .engine
+        .snapshot_sources(extraction.id, setup, Some(second.id))
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(one.len(), 1);
+    assert_eq!(one[0].file_name, "lettre-2.txt");
+    assert_eq!(
+        one[0].derived_from.as_ref().map(|d| d.source_id),
+        Some(second.id)
+    );
+    assert!(matches!(
+        f.engine
+            .snapshot_sources(extraction.id, setup, Some(SourceId::new())),
+        Err(EngineError::Store(kalamu_core::StoreError::NotFound))
+    ));
+}

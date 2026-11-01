@@ -136,6 +136,7 @@
 				example={app.view.example}
 				runId={app.view.runId}
 				paths={app.view.paths}
+				sources={app.view.sources}
 				project={app.view.project}
 			/>
 		{:else if app.view.name === 'prompts'}

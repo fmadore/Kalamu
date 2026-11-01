@@ -46,6 +46,18 @@ export const en = {
 		text_correctionHint:
 			'Machine-read text from a digital library or a PDF, corrected page by page: TXT, Word, PDF'
 	},
+	useText: {
+		button: 'Use this text in a new job',
+		short: 'Use this text',
+		hint: 'Sends the text as you corrected it into a new job, without reading the files again. A later correction does not change what the new job read.',
+		analyse: 'Analyse it',
+		analyseHint: 'People and places, a summary, its tone, or fields of your own.',
+		correct: 'Correct it',
+		correctHint:
+			'A model fixes reading errors, keeping the spelling and wording; every change is shown.',
+		workflow: 'Run a workflow on it',
+		workflowHint: 'Several steps one after another, from your workflows or an example.'
+	},
 	workflows: {
 		title: 'Workflows',
 		lede: 'Pipelines run one after another on the same files: extract the text, check it, then analyse it.',
@@ -69,7 +81,7 @@ export const en = {
 		addStepHint: 'From a pipeline',
 		stepNumber: (n: number) => `Step ${n}`,
 		reads: 'Works on',
-		readsFiles: 'The files you choose',
+		readsFiles: 'The files or text you run it on',
 		readsStep: (n: number, name: string) =>
 			`The text from step ${n} (${name}), as you corrected it`,
 		review: 'Let me check the results before going on',
@@ -107,6 +119,9 @@ export const en = {
 			'A step reads on this PC, and a later one sends its text to a cloud provider. Remove that step if the material must stay on this PC.',
 		start: 'Start',
 		fromProject: (name: string) => `Its jobs join the project “${name}”.`,
+		onText: (files: string) =>
+			`Runs on the text already read, as you corrected it: ${files}. Choose a workflow that starts by correcting or analysing.`,
+		notOnText: 'starts from scans or recordings',
 		runOf: (name: string, version: number) => (version > 0 ? `${name}, version ${version}` : name),
 		diagram: {
 			title: 'How the steps follow each other',
@@ -609,9 +624,6 @@ export const en = {
 		deleteConfirm: 'Delete this job? Files already written stay on disk.',
 		review: 'Review',
 		summarise: 'Analyse the results',
-		analyseText: 'Analyse this text',
-		analyseTextHint:
-			'Analyses the text as you corrected it, without reading the files again. A later correction does not change what the analysis read.',
 		analyseSetup: 'Text from',
 		derivedChanged:
 			'The text this analysis read has been corrected since. Its answers stay as they were; analyse the text again to include the corrections.',

@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
+	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
@@ -14,8 +15,15 @@
 	let {
 		workflow,
 		paths,
+		sources: given,
 		project
-	}: { workflow: Workflow; paths?: string[]; project?: FromProject } = $props();
+	}: {
+		workflow: Workflow;
+		paths?: string[];
+		/** Text frozen from earlier jobs: already read, nothing to inspect. */
+		sources?: SourceFile[];
+		project?: FromProject;
+	} = $props();
 
 	const m = messages();
 	const w = m.workflows;
@@ -48,6 +56,16 @@
 
 	onMount(() => {
 		name = workflow.name;
+		if (given?.length) {
+			files = given.map((source) => ({
+				path: source.path,
+				source,
+				warnings: [],
+				error: null,
+				pieces: null
+			}));
+			name = given[0].file_name.replace(/\.txt$/, '');
+		}
 		void add(paths ?? []);
 	});
 

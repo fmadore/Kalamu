@@ -5,6 +5,7 @@
 	import JobFiles from './JobFiles.svelte';
 	import JobOutputs from './JobOutputs.svelte';
 	import StepBanner from './StepBanner.svelte';
+	import UseTextMenu from './UseTextMenu.svelte';
 	import type { Job } from '#lib/bindings/Job.js';
 	import type { DerivedState } from '#lib/bindings/DerivedState.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
@@ -215,11 +216,7 @@
 							{/each}
 						</select>
 					{/if}
-					<button
-						class="btn"
-						title={m.jobs.analyseTextHint}
-						onclick={() => analyseText(jobId, textSetup)}>{m.jobs.analyseText}</button
-					>
+					<UseTextMenu {jobId} setupId={textSetup} onerror={(e) => (error = e)} />
 				{:else if summary.status === 'completed' && summary.task === 'contents'}
 					<button class="btn" onclick={summarise}>{m.jobs.summarise}</button>
 				{/if}

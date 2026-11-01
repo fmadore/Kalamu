@@ -55,8 +55,9 @@ pub fn snapshot_job(
     state: State<'_, AppState>,
     id: JobId,
     setup: kalamu_core::SetupId,
+    source: Option<kalamu_core::SourceId>,
 ) -> CmdResult<Vec<SourceFile>> {
-    Ok(state.engine.snapshot(id, setup)?)
+    Ok(state.engine.snapshot_sources(id, setup, source)?)
 }
 
 /// For a job that read frozen text, whether each text has been corrected since.

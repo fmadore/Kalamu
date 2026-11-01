@@ -16,6 +16,7 @@ import {
 	moveStep,
 	removeStep,
 	SOURCES,
+	startsOn,
 	stepFrom,
 	textInputs
 } from './workflows.js';
@@ -109,5 +110,24 @@ describe('example workflows', () => {
 				if (preset !== null) expect(presets).toContain(`"${preset}"`);
 			}
 		}
+	});
+});
+
+describe('starting a workflow on text already read', () => {
+	it('suits workflows that start by correcting or analysing, not by reading scans', () => {
+		const words = en.workflows.examples;
+		const make = (kind: Example) =>
+			exampleWorkflow(
+				kind,
+				words[kind],
+				catalog,
+				rules,
+				() => true,
+				() => []
+			);
+		expect(startsOn(make('library'), ['text'], rules)).toBe(true);
+		expect(startsOn(make('letters'), ['text'], rules)).toBe(false);
+		expect(startsOn(make('letters'), ['pdf', 'image'], rules)).toBe(true);
+		expect(startsOn(make('interviews'), ['text'], rules)).toBe(false);
 	});
 });

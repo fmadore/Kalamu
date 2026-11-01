@@ -6,14 +6,19 @@
 	import TermLink from './TermLink.svelte';
 	import WorkflowDiagram from './WorkflowDiagram.svelte';
 	import type { RunView } from '#lib/bindings/RunView.js';
+	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
-	import { app, go, toast, type FromProject } from '#lib/state.svelte.js';
+	import { app, go, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
 	import { api, pickPresetFile } from '#lib/tauri.js';
-	import { EXAMPLES, type Example, tone } from '#lib/workflows.js';
+	import { EXAMPLES, type Example, exampleWorkflow, startsOn, tone } from '#lib/workflows.js';
 
-	let { paths, project }: { paths?: string[]; project?: FromProject } = $props();
+	let {
+		paths,
+		sources,
+		project
+	}: { paths?: string[]; sources?: SourceFile[]; project?: FromProject } = $props();
 
 	const m = messages();
 	const w = m.workflows;
@@ -44,8 +49,15 @@
 		}
 	}
 
-	const open = (id: string) => go({ name: 'workflows', workflowId: id, paths, project });
-	const examples = Object.keys(EXAMPLES) as Example[];
+	const open = (id: string) => go({ name: 'workflows', workflowId: id, paths, sources, project });
+	/** Text already read, sent here from a job or a document: what a workflow starts on. */
+	const kinds = $derived(sources?.length ? [...new Set(sources.map((s) => s.kind))] : null);
+	const fits = (workflow: Workflow) => !kinds || startsOn(workflow, kinds, app.rules);
+	const examples = $derived(
+		(Object.keys(EXAMPLES) as Example[]).filter((kind) =>
+			fits(exampleWorkflow(kind, w.examples[kind], app.catalog!, app.rules, hasKey, () => []))
+		)
+	);
 
 	onMount(() => void load());
 	// A run moving on (a step started, finished or approved) is read again.
@@ -73,6 +85,12 @@
 	{#if project && paths?.length}
 		<p class="chip">{w.files(paths.length)} · {w.fromProject(project.name)}</p>
 	{/if}
+	{#if sources?.length}
+		<p class="notice">
+			{w.onText(sources.map((s) => s.file_name).join(', '))}
+			{#if project}{w.fromProject(project.name)}{/if}
+		</p>
+	{/if}
 
 	<section aria-labelledby="saved-workflows">
 		<h2 id="saved-workflows">{w.saved}</h2>
@@ -83,7 +101,7 @@
 			<ul class="list">
 				{#each workflows as workflow (workflow.id)}
 					<li>
-						<button class="row" onclick={() => open(workflow.id)}>
+						<button class="row" onclick={() => open(workflow.id)} disabled={!fits(workflow)}>
 							<span class="name">
 								<Icon name="workflow" size={16} />
 								<span class="ellipsis">{workflow.name}</span>
@@ -93,6 +111,7 @@
 							</span>
 							<span class="meta num">
 								{w.steps(workflow.steps.length)} · {w.version(workflow.version)}
+								{#if !fits(workflow)}· {w.notOnText}{/if}
 							</span>
 						</button>
 					</li>
@@ -121,7 +140,7 @@
 					<button
 						class="btn sm"
 						onclick={() =>
-							go({ name: 'workflows', workflowId: 'new', example: kind, paths, project })}
+							go({ name: 'workflows', workflowId: 'new', example: kind, paths, sources, project })}
 						>{w.useExample}</button
 					>
 				</li>
@@ -183,8 +202,12 @@
 		text-align: left;
 		cursor: pointer;
 	}
-	.row:hover {
+	.row:hover:not(:disabled) {
 		background: var(--wash);
+	}
+	.row:disabled {
+		cursor: default;
+		opacity: 0.55;
 	}
 	.name {
 		display: flex;

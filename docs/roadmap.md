@@ -131,7 +131,9 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   the end of New job analyses the text once it is checked, with no workflow to build; a banner
   on the job's page and in its review offers *Continue*, and the sidebar lists those jobs under
   *For you to check*; three ready-made examples; an animated drawing of the steps; a glossary
-  entry.
+  entry. Any finished text goes into a new round from *Use this text in a new job* (analyse it,
+  correct it, or run a workflow on it), on the job's page or on a project document's results,
+  which send only that document's text.
 - **The last of the 29 October checkpoint**: analysis answers billed but refused for breaking
   their fields, in a single call or a batch, now count in what a job cost, on its page and in
   the job list, and `provenance.json` lists them apart (`refused`); provenance also records
@@ -173,7 +175,9 @@ done.
   steps, an export step that gathers results across steps, the whole run's estimate computed
   in the engine, and restarting a run from a step after the definition changed. A live run of
   a two-step workflow, and one in economy mode across a restart. Try *Then* and the examples
-  with one or two colleagues before going further.
+  with one or two colleagues before going further. Several jobs' or documents' texts sent into
+  one new round together, from a project's selection.
+- **Prompts, house cleaning**: to scope with the maintainer before the next prompt work.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the

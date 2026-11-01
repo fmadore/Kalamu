@@ -110,10 +110,12 @@ addressee, summary, names: an archivist's inventory) and a book, report or thesi
 fields are edited in Prompts as an analysis's are, title and pages always included
 ([decision](decisions/2026-10-29-contents-and-correction.md)).
 
-**An analysis can read an earlier job's text as corrected.** *Analyse this text* on an
-extraction, a transcription or a correction freezes the text as the researcher left it,
-corrections and speaker names included, and opens an analysis of it: nothing is read again or
-exported and imported. The frozen copy never changes, so a correction made afterwards does not
+**A result's text can go into a new round.** *Use this text in a new job* on an extraction, a
+transcription or a correction, on the job's page or among a project document's results, freezes
+the text as the researcher left it, corrections and speaker names included (from a document,
+only that document's), and opens an analysis of it, a correction of it, or Workflows to run a
+saved workflow or an example on it: nothing is read again or exported and imported. Workflows
+that start by reading scans or recordings are shown but cannot be chosen for text. The frozen copy never changes, so a correction made afterwards does not
 alter what the analysis read; the analysis is marked out of date, with a way to analyse the
 corrected text, whose answers are new ones beside the old
 ([decision](decisions/2026-10-31-reviewed-text-snapshots.md),

@@ -4,12 +4,14 @@
 	// preferred; a newer run never takes its place.
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
+	import UseTextMenu from './UseTextMenu.svelte';
 	import type { DocumentDetail } from '#lib/bindings/DocumentDetail.js';
 	import type { DocumentResult } from '#lib/bindings/DocumentResult.js';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
+	import { rulesFor } from '#lib/newJob.js';
 	import { app, go } from '#lib/state.svelte.js';
 	import { api, ask, revealInFolder } from '#lib/tauri.js';
 
@@ -248,6 +250,16 @@
 											onclick={() => go({ name: 'jobs', jobId: r.job_id })}
 											>{m.projects.document.openJob}</button
 										>
+										{#if rulesFor(app.rules, r.task).yields_text && r.finished > 0}
+											<UseTextMenu
+												small
+												jobId={r.job_id}
+												setupId={r.setup_id}
+												sourceId={r.source_id}
+												project={{ id: projectId, name: project?.project.name ?? '' }}
+												onerror={(e) => (error = e)}
+											/>
+										{/if}
 										<button
 											class="btn ghost sm icon"
 											aria-label={m.projects.document.detach}

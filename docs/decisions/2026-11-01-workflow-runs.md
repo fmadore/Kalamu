@@ -107,6 +107,13 @@ on the run's own page, and words like "reads the text of step 1". Changed:
   has; **an animated drawing** of the steps, as New job draws a task; **a glossary entry** with
   help marks; **plainer words**, and an input shown as text when there is nothing to choose.
 
+- **Any text into a new round.** *Analyse this text* became *Use this text in a new job*, with
+  three choices (analyse, correct, run a workflow), on the job's page and on a project
+  document's results. The engine freezes one source's text alone (`snapshot_sources`), so a
+  document sends only its own. Workflows started on text show the workflows that start by
+  reading scans or recordings as not for it (`startsOn`); the engine refuses them anyway, naming
+  the step.
+
 ## Consequences
 
 - Left in #49: several inputs per step (with #48's dictionary), project-level steps, an

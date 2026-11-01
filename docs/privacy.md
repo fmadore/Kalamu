@@ -66,10 +66,11 @@ new names, on the same computer only:
   steps and prompts as they were when it started, the paths, sizes and fingerprints of the
   files it was started on, the job that ran each step, and when the user chose to continue
   after a step. Forgetting a run removes this record; its jobs and their results stay.
-- **Frozen text** (`snapshots`): when the user chooses *Analyse this text*, or a workflow step
-  reads an earlier step's text, a copy of the corrected text it reads, so that later
-  corrections do not change what it read. It is sent only to the provider of that step or
-  analysis, as the text of any document would be, and kept until the app is uninstalled.
+- **Frozen text** (`snapshots`): when the user chooses *Use this text in a new job*, or a
+  workflow step reads an earlier step's text, a copy of the corrected text it reads, so that
+  later corrections do not change what it read. It is sent only to the provider of the job or
+  step that reads it, as the text of any document would be, and kept until the app is
+  uninstalled.
 - **Settings** (`settings.json`): preferences such as formats, destination, theme, favourite
   languages and the last folder chosen.
 - **Prompts, pipelines and workflows** the user saves (`presets`, `pipelines`, `workflows`),

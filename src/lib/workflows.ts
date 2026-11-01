@@ -4,6 +4,7 @@
 
 import type { Catalog } from './bindings/Catalog.js';
 import type { ExportFormat } from './bindings/ExportFormat.js';
+import type { InputKind } from './bindings/InputKind.js';
 import type { Pipeline } from './bindings/Pipeline.js';
 import type { RunStatus } from './bindings/RunStatus.js';
 import type { StepInput } from './bindings/StepInput.js';
@@ -48,6 +49,19 @@ export function inputChoices(steps: WorkflowStep[], index: number, rules: Rules)
 
 export function sameInput(a: StepInput, b: StepInput): boolean {
 	return a.kind === b.kind && (a.kind === 'sources' || (b.kind === 'step' && a.step === b.step));
+}
+
+/**
+ * Whether a workflow can start on sources of these kinds: every step that works on the files
+ * reads them. Text frozen from an earlier job suits a workflow that starts by correcting or
+ * analysing, not one that starts by reading scans. The engine checks it again at the start.
+ */
+export function startsOn(workflow: Workflow, kinds: InputKind[], rules: Rules): boolean {
+	return workflow.steps.every(
+		(s) =>
+			s.input.kind !== 'sources' ||
+			kinds.every((k) => rulesFor(rules, s.pipeline.task).sources.includes(k))
+	);
 }
 
 /** Whether a later step reads step `index`, so a review after it holds something. */

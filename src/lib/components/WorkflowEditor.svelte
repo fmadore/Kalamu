@@ -7,6 +7,7 @@
 	import TermLink from './TermLink.svelte';
 	import WorkflowDiagram from './WorkflowDiagram.svelte';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
+	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { StepInput } from '#lib/bindings/StepInput.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
@@ -31,8 +32,15 @@
 		workflowId,
 		example,
 		paths,
+		sources,
 		project
-	}: { workflowId: string; example?: Example; paths?: string[]; project?: FromProject } = $props();
+	}: {
+		workflowId: string;
+		example?: Example;
+		paths?: string[];
+		sources?: SourceFile[];
+		project?: FromProject;
+	} = $props();
 
 	const m = messages();
 	const w = m.workflows;
@@ -113,7 +121,7 @@
 			saved = JSON.stringify(result);
 			toast(w.savedAs(result.name, result.version));
 			if (workflowId !== result.id)
-				go({ name: 'workflows', workflowId: result.id, paths, project });
+				go({ name: 'workflows', workflowId: result.id, paths, sources, project });
 		} catch (e) {
 			error = describeError(e, m);
 		}
@@ -152,7 +160,7 @@
 
 <header class="masthead">
 	<div class="title">
-		<button class="btn ghost sm" onclick={() => go({ name: 'workflows', paths, project })}
+		<button class="btn ghost sm" onclick={() => go({ name: 'workflows', paths, sources, project })}
 			><Icon name="back" />{w.back}</button
 		>
 		<label class="field name">
@@ -277,7 +285,7 @@
 		{#if dirty}
 			<p class="notice">{w.unsaved}</p>
 		{:else}
-			<RunStart {workflow} {paths} {project} />
+			<RunStart {workflow} {paths} {sources} {project} />
 		{/if}
 	{/if}
 </div>
