@@ -450,6 +450,8 @@ The names and terms a project's analyses listed, gathered for the researcher to 
   words (certain, likely, possible), which is not a probability. It is listed in Prompts under
   Dictionary, linked from the request, and can be edited and reset like any default; its
   answer's fields are fixed, since the dictionary reads them, and New job never offers it.
+  The job writes no export, since the dictionary reads its answers from the store, and keeps
+  its `provenance.json` in the app's data folder.
 - **Answers checked, nothing applied.** References to no row sent are counted and left out; a
   group of one row, or of rows already one entry, is no proposal; rows the researcher kept
   apart are never offered together, even if the model groups them. Each row is kept by its
@@ -523,7 +525,10 @@ Which kinds of file a task reads, which models can do it and which formats it wr
 engine's rules, given to the interface so New job offers only what will run, and checked again
 when a job is created: a source the task does not read, or a model that does not do the task or
 cannot read a YouTube link, is refused with a plain message, and formats the task does not
-write (from a pipeline saved for another task) are left out.
+write (from a pipeline saved for another task) are left out, as is a searchable PDF when no
+model of the job reports where text sits on the page. Where line breaks, samples and pages per
+call apply, which models are the app's and each provider's choice, and what a job will cost
+at each pace are the engine's to say too; the interface only shows them.
 
 ## AI output is not ground truth
 

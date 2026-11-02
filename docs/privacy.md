@@ -79,6 +79,9 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   later corrections do not change what it read. It is sent only to the provider of the job or
   step that reads it, as the text of any document would be, and kept until the app is
   uninstalled.
+- **Requests for proposed merges** (`dictionary`): the `provenance.json` of each, naming the
+  model, the prompt and what the request cost, in a folder per project. Nothing else is written
+  for them: the answers are kept in the job database.
 - **Settings** (`settings.json`): preferences such as formats, destination, theme, favourite
   languages and the last folder chosen.
 - **Prompts, pipelines and workflows** the user saves (`presets`, `pipelines`, `workflows`),

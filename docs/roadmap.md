@@ -198,8 +198,11 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
 
 ## Next
 
-The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refactor are all
-done.
+The [2 November checkpoint](decisions/2026-11-02-checkpoint.md), after version 1.0.0, is done:
+pages read together settled when a job is created and a call that keeps no page counted,
+workflow steps made once and tied to their project at launch, the proposal job's files apart,
+rules and estimates from Rust, and the duplication it found removed. Next comes the release that
+carries it, then [#50](https://github.com/fmadore/Kalamu/issues/50).
 
 - **Project workspaces, what is left of
   [#57](https://github.com/fmadore/Kalamu/issues/57)**: a document's descriptive metadata
