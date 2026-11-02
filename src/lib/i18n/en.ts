@@ -1131,6 +1131,8 @@ export const en = {
 		seeAlso: 'See also',
 		/** The help link beside a word in the app. */
 		whatIs: (word: string) => `What is meant by “${word}”`,
+		/** At the foot of a word's definition, opened from its help link. */
+		openGlossary: 'Open the glossary',
 		/** By theme: what a model is, then how it is used, then how its results are checked and
 		 * recorded. The page lists them alphabetically by word. */
 		terms: {
