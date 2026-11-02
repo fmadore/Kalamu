@@ -192,6 +192,119 @@
 		});
 	}
 
+	/** Where the researcher is in the text as read, as offsets in `base`: the selection or the
+	 * caret left by a click when it is in view, else the first line in view; with how far below
+	 * the top of the pane that line stands. */
+	function placeInText(): { start: number; end: number; below: number } | null {
+		const pane = textPane;
+		if (!pane) return null;
+		const rows = [...pane.querySelectorAll<HTMLElement>('.text.numbered > .line')];
+		const box = pane.getBoundingClientRect();
+		const starts: number[] = [];
+		let at = 0;
+		for (const l of base.split('\n')) {
+			starts.push(at);
+			at += l.length + 1;
+		}
+		if (rows.length !== starts.length) return null;
+		const rowOf = (node: Node) =>
+			(node instanceof Element ? node : node.parentElement)?.closest<HTMLElement>('.line') ?? null;
+		const offsetAt = (node: Node, offset: number) => {
+			const row = rowOf(node);
+			const i = row ? rows.indexOf(row) : -1;
+			const words = row?.querySelector('.t');
+			if (i < 0 || !words) return null;
+			const before = document.createRange();
+			before.setStart(words, 0);
+			try {
+				before.setEnd(node, offset);
+			} catch {
+				return starts[i];
+			}
+			const length = (starts[i + 1] ?? base.length + 1) - 1 - starts[i];
+			return starts[i] + Math.min(before.toString().length, length);
+		};
+		const inView = (row: HTMLElement | null) => {
+			const r = row?.getBoundingClientRect();
+			return r !== undefined && r.bottom > box.top && r.top < box.bottom;
+		};
+		const chosen = getSelection();
+		const range = chosen && chosen.rangeCount > 0 ? chosen.getRangeAt(0) : null;
+		if (range && pane.contains(range.startContainer) && inView(rowOf(range.startContainer))) {
+			const start = offsetAt(range.startContainer, range.startOffset);
+			const end = offsetAt(range.endContainer, range.endOffset);
+			const row = rowOf(range.startContainer);
+			if (start !== null && row)
+				return {
+					start,
+					end: end !== null && end >= start ? end : start,
+					below: row.getBoundingClientRect().top - box.top
+				};
+		}
+		const first = rows.findIndex((r) => r.getBoundingClientRect().bottom > box.top + 1);
+		if (first <= 0) return null;
+		return {
+			start: starts[first],
+			end: starts[first],
+			below: rows[first].getBoundingClientRect().top - box.top
+		};
+	}
+
+	/** How far below the top of a text box its character `at` stands, measured on a copy of the
+	 * box laid out the same way. */
+	function caretTop(area: HTMLTextAreaElement, at: number): number {
+		const style = getComputedStyle(area);
+		const copy = document.createElement('div');
+		for (const p of [
+			'boxSizing',
+			'width',
+			'padding',
+			'borderWidth',
+			'borderStyle',
+			'fontFamily',
+			'fontSize',
+			'fontWeight',
+			'lineHeight',
+			'letterSpacing',
+			'wordSpacing',
+			'tabSize'
+		] as const)
+			copy.style[p] = style[p];
+		Object.assign(copy.style, {
+			position: 'absolute',
+			visibility: 'hidden',
+			top: '0',
+			left: '-9999px',
+			whiteSpace: 'pre-wrap',
+			overflowWrap: 'break-word'
+		});
+		copy.textContent = area.value.slice(0, at);
+		const mark = document.createElement('span');
+		mark.textContent = '​';
+		copy.append(mark);
+		document.body.append(copy);
+		const top = mark.offsetTop;
+		copy.remove();
+		return top;
+	}
+
+	/** Opens the main text for correction where the researcher is reading, the caret there and
+	 * that line where it stood on screen. */
+	async function correctHere(setupId: string) {
+		const place = placeInText();
+		editing = { setupId, text: base };
+		if (!place) return;
+		await tick();
+		const pane = textPane;
+		const area = pane?.querySelector<HTMLTextAreaElement>('textarea.editor');
+		if (!pane || !area) return;
+		area.focus({ preventScroll: true });
+		area.setSelectionRange(place.start, place.end);
+		const areaTop =
+			area.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop;
+		pane.scrollTop = areaTop + caretTop(area, place.start) - place.below;
+	}
+
 	/** Opens a difference and pins it, bringing its words into view in both texts. */
 	async function choose(id: number) {
 		show(id, true);
@@ -379,7 +492,7 @@
 	{/if}
 	{#if lead && lead.ai_text !== null && setups[0] && !editing}
 		{@const first = setups[0]}
-		<button class="btn" onclick={() => (editing = { setupId: first.id, text: base })}
+		<button class="btn" onclick={() => correctHere(first.id)}
 			><Icon name="edit" size={14} />{m.review.edit}</button
 		>
 	{/if}
@@ -727,9 +840,12 @@
 		color: var(--warn-text);
 		font-size: var(--type-sm);
 	}
+	/* As tall as its text, so the pane scrolls it as it scrolls the text read. */
 	.editor {
 		width: 100%;
 		min-height: 24rem;
+		field-sizing: content;
+		resize: none;
 		max-width: 44rem;
 		font-family: var(--font-text);
 		font-size: var(--type-reading);

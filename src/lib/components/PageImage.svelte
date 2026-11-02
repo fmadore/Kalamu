@@ -65,9 +65,11 @@
 </div>
 
 <style>
+	/* Centred while it fits; zoomed wider than the pane, it starts at the left edge, so the pane
+	   scrolls over all of it (plain centring would push its left side out of reach). */
 	.page-image {
 		display: flex;
-		justify-content: center;
+		justify-content: safe center;
 		align-items: flex-start;
 		min-height: 100%;
 		background: transparent;
