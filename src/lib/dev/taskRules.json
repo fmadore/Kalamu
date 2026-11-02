@@ -701,6 +701,12 @@
         "model": "gemini-3.8-flash",
         "suggested_reasoning": "low",
         "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-transcribe",
+        "recommended": false,
         "provider_default": true
       },
       {

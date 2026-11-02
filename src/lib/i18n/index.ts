@@ -45,7 +45,7 @@ export function languageName(code: string, fallback?: string): string {
 	} catch {
 		// An invalid code: fall through to the catalogue's own name.
 	}
-	return fallback ?? code;
+	return fallback ?? CATALOGS[current].languageNames[code] ?? code;
 }
 
 export function formatUsd(value: number): string {
