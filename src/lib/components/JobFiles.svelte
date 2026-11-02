@@ -1,6 +1,7 @@
 <script lang="ts">
 	// A job's files as a table: each file's progress under every set-up, the errors met, its
 	// error rate where pages were reviewed, and the way into its review.
+	import Missing from './Missing.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import { siglum } from '#lib/apparatus.js';
 	import type { Job } from '#lib/bindings/Job.js';
@@ -61,7 +62,9 @@
 								total={Math.max(c.total, 1)}
 								label="{source.file_name} {setup.label}"
 							/>
-							<span class="count mono">{c.total > 0 ? `${c.done}/${c.total}` : '—'}</span>
+							<span class="count mono"
+								>{#if c.total > 0}{c.done}/{c.total}{:else}<Missing />{/if}</span
+							>
 						</div>
 						{#each c.errors.slice(0, 3) as e (e)}
 							<p class="err">{e}</p>

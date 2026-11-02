@@ -141,7 +141,7 @@
 
 	{#if view}
 		<p class="coverage num">{m.dictionary.coverage(view.documents_read, view.documents)}</p>
-		<div class="filters">
+		<div class="table-filters">
 			{#if view.namespaces.length > 0}
 				<label class="pick">
 					<span>{m.dictionary.field}</span>
@@ -170,7 +170,7 @@
 					</select>
 				</label>
 			{/if}
-			<label class="search">
+			<label class="table-search">
 				<Icon name="search" size={14} />
 				<input
 					type="text"
@@ -200,7 +200,7 @@
 				onchange={load}
 			/>
 			{#if chosen.length > 0}
-				<div class="selection" role="toolbar" aria-label={m.dictionary.selected(chosen.length)}>
+				<div class="selection-bar" role="toolbar" aria-label={m.dictionary.selected(chosen.length)}>
 					<span class="num">{m.dictionary.selected(chosen.length)}</span>
 					<button class="btn ghost sm" onclick={() => (selected = [])}
 						>{m.dictionary.clearSelection}</button
@@ -267,7 +267,7 @@
 			{#if rows.length === 0}
 				<p class="muted">{m.dictionary.noMatch}</p>
 			{:else}
-				<table>
+				<table class="data-table">
 					<thead>
 						<tr>
 							<th class="check">
@@ -395,38 +395,12 @@
 		color: var(--text-secondary);
 		font-size: var(--type-sm);
 	}
-	.filters {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-3);
-		align-items: center;
-	}
 	.pick {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-2);
 		font-size: var(--type-sm);
 		color: var(--text-secondary);
-	}
-	.search {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		flex: 1 1 14rem;
-		max-width: 22rem;
-		color: var(--text-muted);
-	}
-	.search input {
-		flex: 1;
-	}
-	.selection {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-2);
-		padding: var(--space-2) var(--space-3);
-		border-radius: var(--radius-control);
-		background: var(--chrome);
 	}
 	.grow {
 		flex: 1;
@@ -436,30 +410,6 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-2);
-	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--type-sm);
-	}
-	th {
-		text-align: left;
-		font-weight: 500;
-		color: var(--text-muted);
-		font-size: var(--type-xs);
-		padding: var(--space-2);
-		border-bottom: 1px solid var(--line);
-	}
-	td {
-		padding: var(--space-2);
-		border-bottom: 1px solid var(--line-soft);
-		vertical-align: top;
-	}
-	.check {
-		width: 2rem;
-	}
-	tr.chosen {
-		background: var(--wash);
 	}
 	.label {
 		font-weight: 500;

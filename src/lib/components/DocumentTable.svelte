@@ -118,8 +118,8 @@
 {#if rows.length === 0}
 	<p class="muted">{m.projects.noDocuments}</p>
 {:else}
-	<div class="filters">
-		<label class="search">
+	<div class="table-filters">
+		<label class="table-search">
 			<Icon name="search" size={14} />
 			<input
 				type="text"
@@ -147,7 +147,7 @@
 	</div>
 
 	{#if chosen.length > 0}
-		<div class="selection" role="toolbar" aria-label={m.projects.selected(chosen.length)}>
+		<div class="selection-bar" role="toolbar" aria-label={m.projects.selected(chosen.length)}>
 			<span class="num">{m.projects.selected(chosen.length)}</span>
 			<button class="btn ghost sm" onclick={() => (selected = [])}
 				>{m.projects.clearSelection}</button
@@ -206,7 +206,7 @@
 	{#if shown.length === 0}
 		<p class="muted">{m.projects.noMatch}</p>
 	{:else}
-		<table>
+		<table class="data-table">
 			<thead>
 				<tr>
 					<th class="check">
@@ -299,23 +299,6 @@
 {/if}
 
 <style>
-	.filters {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-3);
-		align-items: center;
-	}
-	.search {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		flex: 1 1 16rem;
-		max-width: 24rem;
-		color: var(--text-muted);
-	}
-	.search input {
-		flex: 1;
-	}
 	.sort {
 		display: inline-flex;
 		align-items: center;
@@ -333,46 +316,12 @@
 		background: var(--wash);
 		color: var(--text-bright);
 	}
-	.selection {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-2);
-		padding: var(--space-2) var(--space-3);
-		border-radius: var(--radius-control);
-		background: var(--chrome);
-		font-size: var(--type-sm);
-	}
-	.selection select {
+	.selection-bar select {
 		min-height: var(--control-sm);
 		font-size: var(--type-xs);
 	}
 	.grow {
 		flex: 1;
-	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--type-sm);
-	}
-	th {
-		text-align: left;
-		font-weight: 500;
-		font-size: var(--type-xs);
-		color: var(--text-muted);
-		padding: var(--space-2);
-		border-bottom: 1px solid var(--line);
-	}
-	td {
-		padding: var(--space-2);
-		border-bottom: 1px solid var(--line-soft);
-		vertical-align: top;
-	}
-	tr.chosen td {
-		background: var(--wash);
-	}
-	.check {
-		width: 2rem;
 	}
 	.title {
 		display: flex;

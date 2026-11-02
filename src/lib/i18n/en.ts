@@ -1250,6 +1250,7 @@ export const en = {
 		save: 'Save',
 		close: 'Close',
 		loading: 'Loading…',
+		unknown: 'Not known',
 		preview: 'preview',
 		retiring: 'retiring',
 		opensInBrowser: ' (opens in your browser)',

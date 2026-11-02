@@ -93,7 +93,7 @@
 
 		{#if plan.length > 0}
 			{#if anyShared}<p class="notice">{m.projects.attach.sameContentHint}</p>{/if}
-			<table>
+			<table class="data-table">
 				<thead>
 					<tr><th>{m.projects.attach.file}</th><th>{m.projects.attach.document}</th></tr>
 				</thead>
@@ -159,23 +159,6 @@
 			var(--shadow-flyout);
 		background: var(--surface-2);
 		border-radius: var(--radius-overlay);
-	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--type-sm);
-	}
-	th {
-		text-align: left;
-		font-weight: 500;
-		font-size: var(--type-xs);
-		color: var(--text-muted);
-		padding: var(--space-1) var(--space-2);
-		border-bottom: 1px solid var(--line);
-	}
-	td {
-		padding: var(--space-2);
-		border-bottom: 1px solid var(--line-soft);
 	}
 	td select {
 		width: 100%;
