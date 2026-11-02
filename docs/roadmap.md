@@ -208,7 +208,8 @@ ad hoc; it has not yet been opened on a real Mac
   from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs and folds to a
   rail, and an app icon
   drawn from the same mark. Under the tasks in New job, a diagram of how each task splits
-  and joins the work, drawn with the user's own files.
+  and joins the work, drawn with the user's own files; for text extraction it shows whether
+  the chosen model can also give a searchable PDF.
 - **Kalamu**: the app renamed from Scriptorium, with the "two witnesses" icon and warm graphite
   neutrals; installs of 0.1 and 0.2 have their jobs, settings and keys moved over on the first
   start; the strip of pages shows thumbnails of scans and images

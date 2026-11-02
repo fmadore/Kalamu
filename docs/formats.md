@@ -27,7 +27,9 @@ OCR, whose paragraph boxes are kept with each page. Each paragraph's words are s
 text (render mode 3) over its box, spread over the lines that fit and stretched to its width,
 in a glyph-less Unicode font, so any script stays searchable. A corrected page is set as one
 block over the page. Only PDF sources get one; it is written as `<name>.searchable.pdf`, never
-replacing the source.
+replacing the source. New job says before a job whether it will have one: the format is
+offered, and the task's diagram draws the searchable PDF as a second result, only when a chosen
+model reports where text sits; under any other model, the diagram notes that it gives text only.
 
 ## Analyses
 

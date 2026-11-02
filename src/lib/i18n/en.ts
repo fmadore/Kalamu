@@ -746,6 +746,14 @@ export const en = {
 		extractSpreads: 'Double pages are split in two first',
 		extractRead: (model: string) => `${model} reads each page on its own`,
 		extractJoin: 'Joined into one text per file, page numbers kept',
+		/** Under the reading step, for a model that reports where text sits (Mistral OCR); the
+		 * second names it beside models that do not. */
+		extractPlace: 'And notes where each block of text sits on the page',
+		extractPlaces: (models: string) => `${models} also notes where each block of text sits`,
+		/** Under the reading step, for models that do not (language models). */
+		extractTextOnly: 'Text only, not where it sits on the page: no searchable PDF',
+		extractSearchable: 'Also a searchable PDF: the original, with an invisible text layer',
+		extractPdfOnly: 'For PDF files only, not images',
 		analysisSource: 'A text, Word file or PDF',
 		analysisWhole: 'Read whole, as one piece, however many pages',
 		analysisFill: (model: string) => `${model} fills in your fields`,
