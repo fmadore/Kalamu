@@ -90,6 +90,15 @@ pub trait JobStore: Send + Sync {
         index: u32,
         progress: &crate::StepProgress,
     ) -> Result<(), StoreError>;
+    /// Records a step's job and the step's progress pointing at it together, so that a crash
+    /// between the two never leaves a job its run does not know, made again at the next launch.
+    fn create_step_job(
+        &self,
+        job: &Job,
+        run: crate::RunId,
+        index: u32,
+        progress: &crate::StepProgress,
+    ) -> Result<(), StoreError>;
     fn cancel_run(&self, id: crate::RunId) -> Result<(), StoreError>;
     /// Deletes the run's record; its jobs and their results stay.
     fn delete_run(&self, id: crate::RunId) -> Result<(), StoreError>;

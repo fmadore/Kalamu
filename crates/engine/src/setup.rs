@@ -160,21 +160,9 @@ impl Engine {
         sources: Vec<SourceFile>,
         setups: Vec<Setup>,
         settings: JobSettings,
-        mut output: OutputSettings,
+        output: OutputSettings,
     ) -> Result<Job, EngineError> {
-        // Formats the task does not write (from a pipeline of another task) are left out.
-        output.formats.retain(|f| task.formats().contains(f));
-        let job = Job {
-            id: JobId::new(),
-            name,
-            task,
-            created_at: Timestamp::now(),
-            sources,
-            setups,
-            settings,
-            output,
-            status: JobStatus::Pending,
-        };
+        let job = build_job(name, task, sources, setups, settings, output);
         self.store.create_job(&job)?;
         Ok(job)
     }
@@ -294,4 +282,28 @@ fn sanitize_label(label: &str) -> String {
         })
         .collect();
     cleaned.trim_matches(['-', '.']).chars().take(60).collect()
+}
+
+/// A new job of set-ups already frozen, not yet recorded.
+pub(crate) fn build_job(
+    name: String,
+    task: Task,
+    sources: Vec<SourceFile>,
+    setups: Vec<Setup>,
+    settings: JobSettings,
+    mut output: OutputSettings,
+) -> Job {
+    // Formats the task does not write (from a pipeline of another task) are left out.
+    output.formats.retain(|f| task.formats().contains(f));
+    Job {
+        id: JobId::new(),
+        name,
+        task,
+        created_at: Timestamp::now(),
+        sources,
+        setups,
+        settings,
+        output,
+        status: JobStatus::Pending,
+    }
 }

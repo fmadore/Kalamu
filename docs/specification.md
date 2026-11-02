@@ -185,7 +185,10 @@ no text layer needs *Extract text* instead.
   review and provenance (which names the run, the workflow's version and the go-ahead given).
   Starting freezes the steps and their prompts, so saving the workflow again (a new version)
   or editing a prompt never changes a run already started; running again pays only for steps
-  whose model, prompt or text changed. A workflow is exported and imported like a pipeline,
+  whose model, prompt or text changed. Corrections belong to the job they were made in, so a
+  new run starts from the models' text: a step that read corrected text reads it uncorrected,
+  and is paid for again (*Use this text in a new job* goes on from the corrected text). A
+  step that could not start, for want of any text read, starts once its input is. A workflow is exported and imported like a pipeline,
   and a run can start from a project's selection, its jobs tied to the documents.
 - **The simplest workflow needs no building.** The last section of New job, *Then*, offers to
   analyse the text once it is read (an extraction, a transcription or a correction), by default

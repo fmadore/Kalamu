@@ -173,25 +173,29 @@ fn parse_status(s: &str) -> Result<JobStatus, StoreError> {
     JobStatus::parse(s).ok_or_else(|| corrupt(format!("unknown job status {s}")))
 }
 
+/// Records a new job on `conn`, which may be a transaction's.
+fn insert_job(conn: &Connection, job: &Job) -> Result<(), StoreError> {
+    let now = Timestamp::now().0;
+    conn.execute(
+        "INSERT INTO jobs (id, name, task, status, created_at, updated_at, data)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        params![
+            job.id.to_string(),
+            job.name,
+            job.task.as_str(),
+            job.status.as_str(),
+            job.created_at.0,
+            now,
+            to_json(job)?,
+        ],
+    )
+    .map_err(db)?;
+    Ok(())
+}
+
 impl JobStore for SqliteStore {
     fn create_job(&self, job: &Job) -> Result<(), StoreError> {
-        let now = Timestamp::now().0;
-        self.conn()
-            .execute(
-                "INSERT INTO jobs (id, name, task, status, created_at, updated_at, data)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                params![
-                    job.id.to_string(),
-                    job.name,
-                    job.task.as_str(),
-                    job.status.as_str(),
-                    job.created_at.0,
-                    now,
-                    to_json(job)?,
-                ],
-            )
-            .map_err(db)?;
-        Ok(())
+        insert_job(&self.conn(), job)
     }
 
     fn job(&self, id: JobId) -> Result<Job, StoreError> {
@@ -750,6 +754,20 @@ impl JobStore for SqliteStore {
         progress: &kalamu_core::StepProgress,
     ) -> Result<(), StoreError> {
         runs::set_progress(self, run, index, progress)
+    }
+
+    fn create_step_job(
+        &self,
+        job: &Job,
+        run: kalamu_core::RunId,
+        index: u32,
+        progress: &kalamu_core::StepProgress,
+    ) -> Result<(), StoreError> {
+        let mut conn = self.conn();
+        let tx = conn.transaction().map_err(db)?;
+        insert_job(&tx, job)?;
+        runs::write_known(&tx, run, index, progress)?;
+        tx.commit().map_err(db)
     }
 
     fn cancel_run(&self, id: kalamu_core::RunId) -> Result<(), StoreError> {

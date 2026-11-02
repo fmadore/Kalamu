@@ -215,7 +215,9 @@ done.
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed
-  in the engine, and restarting a run from a step after the definition changed. A live run of
+  in the engine, and restarting a run from a step after the definition changed; a new run
+  that keeps the corrections made in the last one, whose steps after a review are otherwise
+  read again from uncorrected text. A live run of
   a two-step workflow, and one in economy mode across a restart. Try *Then* and the examples
   with one or two colleagues before going further. Several jobs' or documents' texts sent into
   one new round together, from a project's selection.
