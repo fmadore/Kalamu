@@ -3,11 +3,14 @@
 	// researcher, and the tools at its foot (Prompts, Settings, Glossary, support). It folds to a rail of
 	// icons named by their tooltips, leaving the room to the work.
 	import Icon from './Icon.svelte';
+	import JobMenu from './JobMenu.svelte';
 	import SupportLink from './SupportLink.svelte';
 	import type { JobStatus } from '#lib/bindings/JobStatus.js';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { app, go } from '#lib/state.svelte.js';
+	import { describeError } from '#lib/errors.js';
+	import { app, go, refreshJobs, toast } from '#lib/state.svelte.js';
+	import { api } from '#lib/tauri.js';
 
 	let {
 		collapsed = $bindable()
@@ -17,6 +20,44 @@
 	} = $props();
 
 	const m = messages();
+
+	/** The job whose menu is open, and where. */
+	let menu = $state<{ job: JobSummary; x: number; y: number } | null>(null);
+	/** The job being renamed in the list, and the name typed so far. */
+	let renaming = $state<{ id: string; name: string } | null>(null);
+
+	function openMenu(e: MouseEvent, job: JobSummary) {
+		e.preventDefault();
+		// From the keyboard's menu key there is no pointer: open under the job.
+		const at = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		const keyboard = e.button !== 2 && e.clientX === 0 && e.clientY === 0;
+		menu = { job, x: keyboard ? at.left + 12 : e.clientX, y: keyboard ? at.bottom : e.clientY };
+	}
+
+	async function rename() {
+		const r = renaming;
+		renaming = null;
+		const name = r?.name.trim();
+		const job = app.jobs.find((j) => j.id === r?.id);
+		if (!r || !name || !job || name === job.name) return;
+		try {
+			await api.renameJob(r.id, name);
+			await refreshJobs();
+		} catch (e) {
+			toast(describeError(e, m));
+		}
+	}
+
+	function renameKeys(e: KeyboardEvent) {
+		if (e.key === 'Enter') void rename();
+		else if (e.key === 'Escape') renaming = null;
+	}
+
+	/** Puts the caret in the name box as it opens, the name selected. */
+	function chosen(input: HTMLInputElement) {
+		input.focus();
+		input.select();
+	}
 
 	// The list of jobs, grouped by what they need from the researcher.
 	const UNFINISHED: JobStatus[] = ['interrupted', 'paused', 'pending'];
@@ -60,6 +101,17 @@
 
 	const share = (j: JobSummary) => (100 * j.pieces_finished) / Math.max(j.pieces_total, 1);
 </script>
+
+{#if menu}
+	{@const at = menu}
+	<JobMenu
+		job={at.job}
+		x={at.x}
+		y={at.y}
+		onrename={() => (renaming = { id: at.job.id, name: at.job.name })}
+		onclose={() => (menu = null)}
+	/>
+{/if}
 
 <nav class="side" class:collapsed aria-label={m.shell.jobs}>
 	<div class="brand">
@@ -137,36 +189,50 @@
 				<ul>
 					{#each group.jobs as job (job.id)}
 						<li>
-							<button
-								class="job"
-								class:current={openJob === job.id}
-								aria-current={openJob === job.id ? 'page' : undefined}
-								onclick={() => go({ name: 'jobs', jobId: job.id })}
-							>
-								<span class="job-name">
-									<Icon name={job.task} size={14} />
-									<span class="ellipsis">{job.name}</span>
-								</span>
-								<span
-									class="job-meta"
-									class:warn={UNFINISHED.includes(job.status) || group.key === 'waiting'}
-									class:danger={job.status === 'completed_with_errors' && group.key !== 'waiting'}
+							{#if renaming?.id === job.id}
+								<input
+									class="rename"
+									aria-label={m.jobs.nameLabel}
+									bind:value={renaming.name}
+									onkeydown={renameKeys}
+									onblur={rename}
+									{@attach chosen}
+								/>
+							{:else}
+								<button
+									class="job"
+									class:current={openJob === job.id}
+									aria-current={openJob === job.id ? 'page' : undefined}
+									onclick={() => go({ name: 'jobs', jobId: job.id })}
+									oncontextmenu={(e) => openMenu(e, job)}
 								>
-									{#if group.key === 'waiting'}
-										{m.workflows.stepState[app.waiting[job.id]?.state ?? 'review']}
-									{:else if group.key === 'finished'}
-										{job.status === 'completed' ? m.task[job.task] : m.status[job.status]}
-									{:else}
-										{m.status[job.status]} ·
-										<span class="num">{m.jobs.progress(job.pieces_finished, job.pieces_total)}</span
+									<span class="job-name">
+										<Icon name={job.task} size={14} />
+										<span class="ellipsis">{job.name}</span>
+									</span>
+									<span
+										class="job-meta"
+										class:warn={UNFINISHED.includes(job.status) || group.key === 'waiting'}
+										class:danger={job.status === 'completed_with_errors' && group.key !== 'waiting'}
+									>
+										{#if group.key === 'waiting'}
+											{m.workflows.stepState[app.waiting[job.id]?.state ?? 'review']}
+										{:else if group.key === 'finished'}
+											{job.status === 'completed' ? m.task[job.task] : m.status[job.status]}
+										{:else}
+											{m.status[job.status]} ·
+											<span class="num"
+												>{m.jobs.progress(job.pieces_finished, job.pieces_total)}</span
+											>
+										{/if}
+									</span>
+									{#if group.key !== 'finished' && group.key !== 'waiting'}
+										<span class="job-bar" aria-hidden="true"
+											><i style:width="{share(job)}%"></i></span
 										>
 									{/if}
-								</span>
-								{#if group.key !== 'finished' && group.key !== 'waiting'}
-									<span class="job-bar" aria-hidden="true"><i style:width="{share(job)}%"></i></span
-									>
-								{/if}
-							</button>
+								</button>
+							{/if}
 						</li>
 					{/each}
 				</ul>
@@ -358,6 +424,12 @@
 		text-align: left;
 		cursor: pointer;
 		transition: background-color 120ms ease-out;
+	}
+	.rename {
+		width: 100%;
+		min-height: 2.25rem;
+		font-size: var(--type-sm);
+		font-weight: 500;
 	}
 	.job:hover {
 		background: var(--wash);
