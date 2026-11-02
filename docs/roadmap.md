@@ -233,7 +233,10 @@ carries it, then [#50](https://github.com/fmadore/Kalamu/issues/50).
   single live calls on 27 October, not yet through a whole job; DeepSeek V4.1 Flash, added on
   28 October, not yet at all: its `reasoning_effort` and economy mode are taken from Mistral's
   documentation ([decision](decisions/2026-10-28-deepseek-through-mistral.md)).
-- **Gemini 3.5 Transcribe** in the catalogue.
+- **Gemini 3.5 Transcribe, live**: added on 2 November as Gemini's model for recordings, with a
+  request of its own and its 77 languages, from Google's documentation
+  ([decision](decisions/2026-11-02-gemini-transcribe.md)). Run it on a real recording with
+  speakers and timestamps, and check the answer's shape and a minute's cost.
 - **Economy mode, live**: a small batch with each provider, to check the documented shapes
   (Gemini's and Mistral's pages disagree on some), what cached input really saves, and
   Claude's one-hour cache inside batches. Later, Gemini batches through a JSONL file, to lift
