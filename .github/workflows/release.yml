@@ -1,14 +1,17 @@
 name: Release
 
-# Builds the installers and the Microsoft Store packages natively on x64 and ARM64, each with the
-# bundled FFmpeg, whisper.cpp and the third-party notices, and attaches them to a draft GitHub
-# release, which is published only once every asset is attached. Ported from Live Translation's
-# release.yml (see docs/decisions/2026-10-28-release-workflow.md for where it differs): both
-# architectures get an installer as well as a Store package.
+# Builds the Windows installers and Microsoft Store packages natively on x64 and ARM64, and the
+# macOS disk image on Apple Silicon, each with the bundled FFmpeg, whisper.cpp and the
+# third-party notices, and attaches them to a draft GitHub release, which is published only once
+# every asset is attached. Ported from Live Translation's release.yml (see
+# docs/decisions/2026-10-28-release-workflow.md for where it differs, and
+# docs/decisions/2026-11-02-macos.md for macOS): both Windows architectures get an installer as
+# well as a Store package.
 #
-# Release assets: Kalamu_<version>_<arch>-setup.exe  the installers, unsigned
+# Release assets: Kalamu_<version>_<arch>-setup.exe  the Windows installers, unsigned
 #                 Kalamu_<version>_<arch>.msix       to sign and install locally for verification
 #                 Kalamu_<version>.msixbundle        the Store submission (docs/microsoft-store.md)
+#                 Kalamu_<version>_aarch64.dmg       the macOS disk image, signed ad hoc
 #                 kalamu-samples.zip                 samples/, the files the certification notes use
 #
 # Normal flow: bump the version files, add docs/release-<version>.md, merge, then
@@ -231,6 +234,72 @@ jobs:
           releaseId: ${{ needs.prepare.outputs.release_id }}
           args: --target ${{ matrix.target }} --bundles nsis --config src-tauri/tauri.ffmpeg.conf.json
 
+  # The macOS disk image, for Apple Silicon, built natively. Signed ad hoc for now ("-" in
+  # src-tauri/tauri.macos.conf.json, which Tauri merges on macOS): Apple Silicon runs nothing
+  # unsigned, and Gatekeeper asks once, on first opening (README). Notarised signing needs an
+  # Apple Developer ID: then add APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD,
+  # APPLE_SIGNING_IDENTITY, APPLE_ID, APPLE_PASSWORD and APPLE_TEAM_ID to the build step's env.
+  macos:
+    name: Disk image (Apple Silicon)
+    needs: prepare
+    runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      TARGET: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+
+      - run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: whisper-cpu-${{ runner.arch }}-v1
+          save-if: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch the bundled FFmpeg
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-ffmpeg.mjs "$TARGET"
+
+      - name: Write the third-party notices
+        run: node scripts/third-party-notices.mjs "$TARGET"
+
+      - name: Build and attach the disk image
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          args: --target aarch64-apple-darwin --bundles dmg --config src-tauri/tauri.ffmpeg.conf.json
+
+      # What the image holds, as a user gets it: the signed app, FFmpeg inside it, and every
+      # licence. Tauri removes the bare .app once the image is made, so the image is opened.
+      - name: Check the app
+        run: |
+          dmg=$(ls "target/$TARGET/release/bundle/dmg/"Kalamu_*_aarch64.dmg)
+          mnt=$(mktemp -d)
+          hdiutil attach -readonly -nobrowse -mountpoint "$mnt" "$dmg"
+          trap 'hdiutil detach "$mnt" -quiet || true' EXIT
+          app="$mnt/Kalamu.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          codesign -dv "$app" 2>&1 | grep -E 'Signature|Identifier|flags'
+          "$app/Contents/MacOS/ffmpeg" -hide_banner -version | sed -n 1p
+          "$app/Contents/MacOS/ffprobe" -hide_banner -version | sed -n 1p
+          for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt; do
+            test -s "$app/Contents/Resources/licenses/$licence"
+          done
+          ls -l "target/$TARGET/release/bundle/dmg/"
+
   # The Store package for each architecture, built natively as the installers are. The bundler
   # compiles the app again with `--no-bundle`; scripts/bundle-msix.mjs puts FFmpeg and the
   # licences inside (docs/packaging-msix.md).
@@ -371,7 +440,7 @@ jobs:
   # already published is left as it is.
   publish:
     name: Publish the release
-    needs: [prepare, build, bundle]
+    needs: [prepare, build, macos, bundle]
     if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -397,7 +466,7 @@ jobs:
           assets=$(gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.prepare.outputs.release_id }}" --jq '.assets[].name')
           for asset in "Kalamu_${VERSION}_x64-setup.exe" "Kalamu_${VERSION}_arm64-setup.exe" \
             "Kalamu_${VERSION}_x64.msix" "Kalamu_${VERSION}_arm64.msix" "Kalamu_${VERSION}.msixbundle" \
-            kalamu-samples.zip; do
+            "Kalamu_${VERSION}_aarch64.dmg" kalamu-samples.zip; do
             if ! grep -qx "$asset" <<< "$assets"; then
               echo "::error::$asset is not attached; the release stays a draft."
               exit 1

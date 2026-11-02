@@ -4,7 +4,8 @@
 	// text file set as text, or a player), the text or answers beside it, and a third pane while a
 	// compared text is open, with handles on the boundaries; the strip of pages at the foot. In a
 	// narrow window the panes stack. Ctrl Enter marks the piece reviewed; Page Up and Page Down,
-	// or Alt and the arrows, turn the pages; Ctrl F opens the search, under the masthead.
+	// or Alt and the arrows, turn the pages; Ctrl F opens the search, under the masthead. On a Mac
+	// ⌘ takes Ctrl's place, as in every shortcut (`platform.ts`).
 	import { tick, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 	import StepBanner from './StepBanner.svelte';
@@ -13,6 +14,7 @@
 	import Splitter from './Splitter.svelte';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { primary, shortcut } from '#lib/platform.js';
 	import { columns, layout } from '#lib/review.svelte.js';
 	import { go } from '#lib/state.svelte.js';
 
@@ -115,12 +117,12 @@
 	}
 
 	function onkeydown(e: KeyboardEvent) {
-		if (e.ctrlKey && e.key.toLowerCase() === 'f' && search) {
+		if (primary(e) && e.key.toLowerCase() === 'f' && search) {
 			e.preventDefault();
 			void openSearch();
 			return;
 		}
-		if (e.ctrlKey && e.key === 'Enter') {
+		if (primary(e) && e.key === 'Enter') {
 			if (reviewed === null || !onreviewed) return;
 			e.preventDefault();
 			onreviewed();
@@ -159,7 +161,7 @@
 					class="btn icon toggle"
 					aria-pressed={searching}
 					aria-label={m.review.search}
-					title="{m.review.search} ({m.review.searchShortcut})"
+					title="{m.review.search} ({shortcut(m.review.searchShortcut)})"
 					onclick={() => (searching ? (searching = false) : openSearch())}
 					><Icon name="search" size={14} /></button
 				>
@@ -173,13 +175,13 @@
 						title={m.review.markNotReviewed}
 						onclick={onreviewed}
 						><Icon name="check" size={14} />{m.review.reviewed}<span class="kbd"
-							>{m.review.reviewedShortcut}</span
+							>{shortcut(m.review.reviewedShortcut)}</span
 						></button
 					>
 				{:else}
 					<button class="btn primary" aria-pressed="false" onclick={onreviewed}
 						><Icon name="check" size={14} />{m.review.markReviewed}<span class="kbd"
-							>{m.review.reviewedShortcut}</span
+							>{shortcut(m.review.reviewedShortcut)}</span
 						></button
 					>
 				{/if}

@@ -431,7 +431,7 @@
 
 	function onKey(e: KeyboardEvent) {
 		if ((e.target as HTMLElement).closest('input, textarea, select')) return;
-		if (!e.ctrlKey && !e.altKey && e.key.toLowerCase() === 'f' && !editing) {
+		if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'f' && !editing) {
 			e.preventDefault();
 			stepEntry(e.shiftKey ? -1 : 1);
 		}

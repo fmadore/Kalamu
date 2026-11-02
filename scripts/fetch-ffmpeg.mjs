@@ -1,12 +1,14 @@
 // Puts the bundled FFmpeg where `tauri build --config src-tauri/tauri.ffmpeg.conf.json` expects
-// it: src-tauri/binaries/ffmpeg-<target>.exe and ffprobe-<target>.exe, plus their licences.
+// it: src-tauri/binaries/ffmpeg-<target> and ffprobe-<target> (with `.exe` on Windows), plus
+// their licences.
 // Downloads only the archive pinned in scripts/ffmpeg.json and checks its SHA-256 first.
 //
-//   node scripts/fetch-ffmpeg.mjs [target-triple]    (default: this machine's architecture)
+//   node scripts/fetch-ffmpeg.mjs [target-triple]    (default: this machine's system and architecture)
 
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import {
+	chmodSync,
 	copyFileSync,
 	mkdirSync,
 	mkdtempSync,
@@ -18,9 +20,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const pin = JSON.parse(readFileSync('scripts/ffmpeg.json', 'utf8'));
+const arch = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
 const target =
 	process.argv[2] ??
-	(process.arch === 'arm64' ? 'aarch64-pc-windows-msvc' : 'x86_64-pc-windows-msvc');
+	(process.platform === 'darwin' ? `${arch}-apple-darwin` : `${arch}-pc-windows-msvc`);
+const exe = target.includes('windows') ? '.exe' : '';
 const expected = pin.archives[target]?.sha256;
 if (!expected) {
 	console.error(
@@ -45,8 +49,11 @@ const tar =
 execFileSync(tar, ['-xf', join(work, name), '-C', work]);
 
 mkdirSync('src-tauri/binaries/licenses', { recursive: true });
-copyFileSync(join(work, 'ffmpeg.exe'), `src-tauri/binaries/ffmpeg-${target}.exe`);
-copyFileSync(join(work, 'ffprobe.exe'), `src-tauri/binaries/ffprobe-${target}.exe`);
+for (const tool of ['ffmpeg', 'ffprobe']) {
+	const installed = `src-tauri/binaries/${tool}-${target}${exe}`;
+	copyFileSync(join(work, `${tool}${exe}`), installed);
+	chmodSync(installed, 0o755);
+}
 for (const file of readdirSync(join(work, 'licenses'))) {
 	copyFileSync(join(work, 'licenses', file), join('src-tauri/binaries/licenses', file));
 }

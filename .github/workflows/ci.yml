@@ -33,12 +33,31 @@ jobs:
       - name: npm audit (runtime dependencies)
         run: npm audit --omit=dev
 
+  # The interface in WebKit, the engine of macOS's webview, on a Mac: every main screen opens
+  # without an error, shortcuts are written with ⌘, and the player takes the formats the engine
+  # sends it there. Windows runs it in Chromium, which the frontend job's checks cover.
+  webkit:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install webkit
+      - run: npm run test:webkit
+
   rust:
-    # Both architectures the app ships for, natively.
+    # Every system and architecture the app ships for, natively: Windows x64 and ARM64, and
+    # macOS on Apple Silicon.
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, windows-11-arm]
+        os: [windows-latest, windows-11-arm, macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -47,7 +66,9 @@ jobs:
           persist-credentials: false
       # whisper.cpp (crates/offline) builds with clang-cl and Ninja, as in Live Translation:
       # MSVC's compiler lacks ggml's fast paths on ARM64. Both ship with the Windows images.
+      # On macOS the image's Apple clang and CMake need no setting.
       - name: Configure native Whisper compiler
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           "CC=clang-cl" >> $env:GITHUB_ENV

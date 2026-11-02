@@ -249,7 +249,8 @@ impl Engine {
     }
 }
 
-/// Safe in a Windows file name.
+/// Safe in a file name on Windows and macOS, and short in characters (Windows) and in UTF-8
+/// bytes (macOS).
 fn sanitize_label(label: &str) -> String {
     let cleaned: String = label
         .chars()
@@ -261,7 +262,16 @@ fn sanitize_label(label: &str) -> String {
             }
         })
         .collect();
-    cleaned.trim_matches(['-', '.']).chars().take(60).collect()
+    let mut bytes = 0;
+    cleaned
+        .trim_matches(['-', '.'])
+        .chars()
+        .take(60)
+        .take_while(|c| {
+            bytes += c.len_utf8();
+            bytes <= 90
+        })
+        .collect()
 }
 
 /// A new job of set-ups already frozen, not yet recorded.

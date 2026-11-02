@@ -7,8 +7,9 @@ coding rules are in [AGENTS.md](../AGENTS.md).
 
 - Rust through rustup; the version in `rust-toolchain.toml` installs itself.
 - Node.js 22 or 24.
-- The WebView2 runtime, which ships with Windows 11.
-- For offline transcription, which compiles whisper.cpp: LLVM (`clang-cl`), CMake and Ninja
+- On Windows, the WebView2 runtime, which ships with Windows 11. On macOS (Apple Silicon), the
+  Xcode command-line tools (`xcode-select --install`) and CMake; nothing else needs setting.
+- On Windows, for offline transcription, which compiles whisper.cpp: LLVM (`clang-cl`), CMake and Ninja
   (the Visual Studio Build Tools include the last two), with these variables set, as in CI:
   `CC=clang-cl`, `CXX=clang-cl`, `CXXFLAGS=-EHsc`, `CMAKE_GENERATOR=Ninja` and
   `LIBCLANG_PATH=C:\Program Files\LLVM\bin`.
@@ -35,6 +36,15 @@ cargo fmt --all && cargo clippy --workspace --all-targets -- -D warnings && carg
 
 ```bash
 npm run format:check && npm run check && npm run lint && npm test
+```
+
+What differs between Windows and macOS is in `src-tauri/src/platform/` and `src/lib/platform.ts`
+(see [AGENTS.md](../AGENTS.md)). The macOS file is not compiled on Windows, so CI's macOS lane is
+where it is checked. The interface's main screens are also opened in WebKit, the engine of the
+macOS webview, on a Mac in CI; on any machine, after `npx playwright install webkit`:
+
+```bash
+npm run test:webkit
 ```
 
 `cargo test` also regenerates the TypeScript types in `src/lib/bindings/` from the Rust
@@ -83,7 +93,8 @@ after changing the catalogue or the rules, and commit the file.
 
 ## Releases
 
-Releases are built by `.github/workflows/release.yml`, natively on x64 and ARM64:
+Releases are built by `.github/workflows/release.yml`, natively on Windows x64 and ARM64 and on
+macOS (Apple Silicon):
 
 1. Move the version in `package.json` (with `npm version <x.y.z> --no-git-tag-version`), the
    workspace `Cargo.toml` and `src-tauri/tauri.conf.json` together, and let Cargo update
@@ -97,7 +108,9 @@ git tag v1.0.0 && git push origin v1.0.0
 
 The workflow checks the tag against the version files and builds, into a draft release, both
 installers, both Store packages and the `.msixbundle` for Partner Center
-([packaging-msix.md](packaging-msix.md)), with `kalamu-samples.zip` from `samples/`; it
+([packaging-msix.md](packaging-msix.md)), the macOS disk image `Kalamu_<x.y.z>_aarch64.dmg`
+(signed ad hoc, with a check of its signature, FFmpeg and licences), and `kalamu-samples.zip`
+from `samples/`; it
 publishes the release once every asset is attached, as a pre-release while the version starts
 with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To
 rebuild a tag, run the workflow by hand from the Actions tab.
@@ -115,6 +128,13 @@ node scripts/third-party-notices.mjs
 
 ```bash
 npm run tauri build -- --bundles nsis --config src-tauri/tauri.ffmpeg.conf.json
+```
+
+On a Mac the same two scripts fetch and describe the macOS build, and Tauri adds
+`src-tauri/tauri.macos.conf.json` by itself:
+
+```bash
+npm run tauri build -- --bundles dmg --config src-tauri/tauri.ffmpeg.conf.json
 ```
 
 `third-party-notices.mjs` writes `licenses/THIRD-PARTY-NOTICES.txt` beside FFmpeg's licences:

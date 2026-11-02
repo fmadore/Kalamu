@@ -6,6 +6,7 @@
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { primary } from '#lib/platform.js';
 	import { openLink } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 	import { splitLinks } from '#lib/youtube.js';
@@ -71,7 +72,7 @@
 			aria-describedby="links-hint"
 			onkeydown={(e) => {
 				// Enter adds, as in a one-line field; Shift Enter starts another line.
-				if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+				if (e.key === 'Enter' && !e.shiftKey && !primary(e)) {
 					e.preventDefault();
 					e.currentTarget.form?.requestSubmit();
 				}

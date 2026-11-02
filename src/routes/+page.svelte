@@ -14,6 +14,7 @@
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { primary } from '#lib/platform.js';
 	import { api, on } from '#lib/tauri.js';
 	import {
 		app,
@@ -50,7 +51,7 @@
 	$effect(() => keep(SIDEBAR_KEY, collapsed ? 1 : 0));
 
 	function onKey(e: KeyboardEvent) {
-		if (!e.ctrlKey || e.altKey || e.shiftKey) return;
+		if (!primary(e) || e.altKey || e.shiftKey) return;
 		const key = e.key.toLowerCase();
 		if (key === 'n') {
 			e.preventDefault();

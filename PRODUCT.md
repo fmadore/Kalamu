@@ -6,13 +6,14 @@
 
 web
 
-(A Tauri 2 desktop app for Windows, x64 and ARM64; the interface is a SvelteKit web front end in
-WebView2, distributed through the Microsoft Store and as unsigned installers on GitHub.)
+(A Tauri 2 desktop app for Windows, x64 and ARM64, and macOS on Apple Silicon; the interface is
+a SvelteKit web front end in the system's webview (WebView2 on Windows, WebKit on macOS),
+distributed through the Microsoft Store and as unsigned installers and disk images on GitHub.)
 
 ## Users
 
 Researchers who are not technical: historians and social scientists, many uncomfortable
-installing or configuring software, working on their own Windows laptops. Their material is
+installing or configuring software, working on their own Windows laptops or Macs. Their material is
 archival: scanned newspapers and reports, handwritten letters, Arabic and Ajami manuscripts,
 and oral-history interviews, often in French, English, Arabic and West African languages. They
 run long batches (a folder of interviews, a 400-page scan) over hours, then check the results
@@ -32,12 +33,12 @@ without losing work or paying twice.
 - **Checking against the source.** Results are reviewed side by side with the page or the
   recording; corrections are kept apart from the AI output, which is never overwritten, and
   `provenance.json` records model, prompt, settings, and what was reviewed or corrected.
-- **Your files, your provider.** A desktop app: files go straight from the PC to the provider
-  the researcher picks, under their own key, with nothing sent to the author; offline Whisper
-  keeps sensitive recordings on the PC.
+- **Your files, your provider.** A desktop app: files go straight from the computer to the
+  provider the researcher picks, under their own key, with nothing sent to the author; offline
+  Whisper keeps sensitive recordings on the computer.
 - **Never lose or repay work.** Every piece is cached and resumable after a close, a crash or a
   lost connection; costs are estimated before starting; jobs can keep running from the
-  notification area.
+  notification area or the menu bar.
 
 ## Operating Context
 
@@ -59,7 +60,7 @@ without losing work or paying twice.
   German can follow.
 - Front end talks to the Rust core only through typed commands and events; no business logic
   in the interface.
-- Must work in light and dark themes and follow the Windows theme by default.
+- Must work in light and dark themes and follow the system's theme by default.
 - The name is Kalamu, Swahili for pen (from the Arabic *qalam*), reserved in Partner Center on
   28 October 2026. It replaced the working name Scriptorium, too close to eScriptorium, the
   HTR platform used by the same researchers.

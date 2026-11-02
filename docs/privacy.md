@@ -1,12 +1,13 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 2 November 2026. Version 1.0.0, the first Microsoft Store release, was
-published under the policy of 30 October 2026, which did not list projects or workflows; the
-policy of 1 November 2026 did not list the dictionary's proposed merges.
+**Effective date:** 2 November 2026, revised the same day for the macOS version. Version 1.0.0,
+the first Microsoft Store release, was published under the policy of 30 October 2026, which did
+not list projects or workflows; the policy of 1 November 2026 did not list the dictionary's
+proposed merges, and the first of 2 November 2026 did not cover macOS.
 
 ## What this app is
 
-Kalamu is a Windows desktop application for researchers. It extracts text from scanned or
+Kalamu is a desktop application for Windows and macOS, for researchers. It extracts text from scanned or
 handwritten documents, corrects existing text, makes detailed tables of contents of long
 documents, transcribes recordings and videos, and analyses texts, in one of two ways the user
 chooses for each job:
@@ -51,8 +52,10 @@ Choose a provider whose terms suit the material, or work offline.
 
 ## What the app keeps on the computer
 
-In the app's local data folder (`%LOCALAPPDATA%\io.github.fmadore.kalamu` for the
-installer, the package's own folder for the Store app). The test releases up to 0.2, named
+In the app's local data folder: on Windows `%LOCALAPPDATA%\io.github.fmadore.kalamu` for the
+installer, the package's own folder for the Store app; on macOS
+`~/Library/Application Support/io.github.fmadore.kalamu`, with the logs in
+`~/Library/Logs/io.github.fmadore.kalamu`. The Windows test releases up to 0.2, named
 Scriptorium, kept it in `%LOCALAPPDATA%\io.github.fmadore.scriptorium`; the first start of
 Kalamu moves that folder, and the keys stored under that name in Credential Manager, to the
 new names, on the same computer only:
@@ -103,8 +106,9 @@ written.
 
 ## API keys
 
-No key is needed for offline transcription. Provider keys are stored in Windows Credential
-Manager and read only by the app's native core. A key is sent only to the provider that issued
+No key is needed for offline transcription. Provider keys are stored in the system's keychain
+(Windows Credential Manager, or the login Keychain on macOS) and read only by the app's native
+core. A key is sent only to the provider that issued
 it, to authenticate requests. It is never written to the job database, the logs or
 `provenance.json`, and the developer does not receive, copy or store it.
 
@@ -121,13 +125,14 @@ Besides the provider the user chooses, the app connects to:
   (`youtube-nocookie.com`) loads inside the app; until then, opening a review contacts no one.
 
 These services receive ordinary request information, such as the computer's IP address. When a
-proxy is set in Windows, connections go through it.
+proxy is set in the system's network settings, connections go through it.
 
 ## Running in the background
 
-Kalamu does not start with Windows. When the user closes the window during a job, the app
-asks whether to keep the job running; if so, it stays in the notification area until the job
-ends or the user quits. Jobs waiting for a provider's batch resume when the app is next opened.
+Kalamu does not start with the computer. When the user closes the window or quits during a
+job, the app asks whether to keep the job running; if so, it stays in the notification area
+(the menu bar on macOS) until the job ends or the user quits. On macOS, closing the window
+leaves the app open in the Dock, as Mac apps do, until the user quits it. Jobs waiting for a provider's batch resume when the app is next opened.
 
 ## Support link
 

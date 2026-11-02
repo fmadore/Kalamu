@@ -1,6 +1,7 @@
-//! API keys in Windows Credential Manager, one entry per provider, adapted from Live
-//! Translation's `secrets.rs`. Keys are read on the Rust side only, when a request needs them;
-//! they never reach the interface, the job database, logs or provenance.
+//! API keys in the system keychain (Credential Manager on Windows, the Keychain on macOS), one
+//! entry per provider, adapted from Live Translation's `secrets.rs`. Keys are read on the Rust
+//! side only, when a request needs them; they never reach the interface, the job database,
+//! logs or provenance.
 //!
 //! In debug builds a `GEMINI_API_KEY`-style environment variable is accepted as a fallback for
 //! development.
@@ -42,7 +43,7 @@ fn check_format(key: &str) -> Result<(), String> {
     }
 }
 
-/// Keys from Credential Manager, cached in memory so a job does not hit the keychain on every
+/// Keys from the keychain, cached in memory so a job does not hit the keychain on every
 /// page.
 #[derive(Default)]
 pub struct CredentialKeys {

@@ -6,6 +6,7 @@
 	// a pipeline.
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
+	import { shortcut } from '#lib/platform.js';
 
 	let {
 		estimates,
@@ -78,7 +79,7 @@
 		{/if}
 		<button class="btn primary lg" disabled={!ready || starting} onclick={onstart}>
 			{starting ? m.newJob.starting : m.newJob.start}<span class="kbd"
-				>{m.newJob.startShortcut}</span
+				>{shortcut(m.newJob.startShortcut)}</span
 			>
 		</button>
 		{#if naming === null}

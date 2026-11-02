@@ -1,4 +1,5 @@
-//! The notification-area icon, so jobs keep running with the window closed.
+//! The tray icon (in the notification area on Windows, the menu bar on macOS), so jobs keep
+//! running with the window closed.
 //!
 //! Ported from Live Translation's tray. The menu holds no state of its own: the interface
 //! pushes the job status and the translated labels through `set_tray_state`, and they are
@@ -15,6 +16,7 @@ use ts_rs::TS;
 
 use crate::commands::AppState;
 use crate::commands::window::{pause_and_quit, pause_running, show_main_window};
+use crate::platform;
 
 const TRAY_ID: &str = "main";
 const ID_OPEN: &str = "tray-open";
@@ -156,28 +158,30 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
 
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
-        // Left click opens the window, as Windows users expect; the menu is on right click.
-        .show_menu_on_left_click(false)
+        // Where the menu opens is each OS's convention (`platform`).
+        .show_menu_on_left_click(platform::TRAY_MENU_ON_LEFT_CLICK)
         .tooltip("Kalamu")
         .on_menu_event(|app, event| on_menu_event(app, event.id().as_ref()))
         .on_tray_icon_event(|tray, event| {
-            // Single and double click both open: showing a window twice costs nothing.
-            let opens = matches!(
-                event,
-                TrayIconEvent::Click {
-                    button: MouseButton::Left,
-                    button_state: MouseButtonState::Up,
-                    ..
-                } | TrayIconEvent::DoubleClick {
-                    button: MouseButton::Left,
-                    ..
-                }
-            );
+            // Where a click does not open the menu, single and double click both open the
+            // window: showing it twice costs nothing.
+            let opens = !platform::TRAY_MENU_ON_LEFT_CLICK
+                && matches!(
+                    event,
+                    TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } | TrayIconEvent::DoubleClick {
+                        button: MouseButton::Left,
+                        ..
+                    }
+                );
             if opens {
                 show_main_window(tray.app_handle());
             }
         });
-    // The bundle icon, so the tray matches the taskbar.
+    // The bundle icon, so the tray matches the taskbar or the Dock.
     if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }

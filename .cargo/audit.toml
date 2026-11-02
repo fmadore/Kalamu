@@ -25,9 +25,9 @@
 #   compiled (`cargo tree -e features -i zip`).
 #
 # glib 0.18 (RUSTSEC-2024-0429, GHSA-wrw7-89jp-8q8g, an unsound VariantStrIter): only the GTK
-# stack Tauri, wry, tao, muda and tray-icon use on Linux needs it. Kalamu ships for Windows
-# only, where none of it is compiled (`cargo tree -i glib --target x86_64-pc-windows-msvc` is
-# empty), and nothing calls VariantStrIter. Fixed in glib 0.20; remove this line when Tauri
+# stack Tauri, wry, tao, muda and tray-icon use on Linux needs it. Kalamu ships for Windows and
+# macOS, where none of it is compiled (`cargo tree -i glib --target x86_64-pc-windows-msvc`, and
+# with `--target aarch64-apple-darwin`, are empty), and nothing calls VariantStrIter. Fixed in glib 0.20; remove this line when Tauri
 # moves to it. Recorded in docs/decisions/2026-10-25-analyses-review-and-pipelines.md.
 ignore = [
     "RUSTSEC-2026-0367",

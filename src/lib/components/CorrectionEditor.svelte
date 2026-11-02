@@ -1,10 +1,11 @@
 <script lang="ts">
 	// The frame of a correction under way, in every review: whose text or answers are being
 	// corrected, the editor itself (the caller's), and saving, discarding or going back to the
-	// model's output. Ctrl Enter saves, which marks the piece reviewed, as it does outside the
+	// model's output. Ctrl Enter (⌘ Enter on a Mac) saves, which marks the piece reviewed, as it does outside the
 	// editor.
 	import type { Snippet } from 'svelte';
 	import { messages } from '#lib/i18n/index.js';
+	import { primary, shortcut } from '#lib/platform.js';
 
 	let {
 		label,
@@ -27,7 +28,7 @@
 	const m = messages();
 
 	function onkeydown(e: KeyboardEvent) {
-		if (e.ctrlKey && e.key === 'Enter') {
+		if (primary(e) && e.key === 'Enter') {
 			e.preventDefault();
 			e.stopPropagation();
 			onsave();
@@ -45,7 +46,7 @@
 	{@render children()}
 	<div class="actions">
 		<button class="btn primary" onclick={onsave}
-			>{m.review.save}<span class="kbd">{m.review.reviewedShortcut}</span></button
+			>{m.review.save}<span class="kbd">{shortcut(m.review.reviewedShortcut)}</span></button
 		>
 		<button class="btn ghost" onclick={ondiscard}>{m.review.discard}</button>
 		{#if onrevert}
