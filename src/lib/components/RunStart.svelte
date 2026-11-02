@@ -81,17 +81,13 @@
 				if (step.input.kind !== 'sources') return undefined;
 				const p = step.pipeline;
 				try {
-					const rows = await api.estimateCost({
+					const estimate = await api.estimateCost({
 						task: p.task,
 						sources: current,
 						setups: p.setups.map((s) => ({ ...s })),
 						sample_pages: p.settings.sample_pages
 					});
-					const economy = p.settings.pace === 'economy';
-					return rows.reduce<number | null>((sum, r) => {
-						const usd = economy ? (r.estimate.economy_usd ?? r.estimate.usd) : r.estimate.usd;
-						return sum === null || usd === null ? null : sum + usd;
-					}, 0);
+					return p.settings.pace === 'economy' ? estimate.total_economy_usd : estimate.total_usd;
 				} catch {
 					return null;
 				}

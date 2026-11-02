@@ -13,6 +13,7 @@
 	import StartPanel from './StartPanel.svelte';
 	import TaskPicker from './TaskPicker.svelte';
 	import ThenStep from './ThenStep.svelte';
+	import type { Estimate } from '#lib/bindings/Estimate.js';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
@@ -85,7 +86,8 @@
 	let formats = $state<ExportFormat[]>([]);
 	let destination = $state<OutputDestination>({ kind: 'beside_sources' });
 	let name = $state('');
-	let estimates = $state<EstimateRow[]>([]);
+	let estimate = $state<Estimate | null>(null);
+	const estimates = $derived(estimate?.rows ?? []);
 	let error = $state<string | null>(null);
 	let starting = $state(false);
 	let pipelines = $state<Pipeline[]>([]);
@@ -125,11 +127,9 @@
 	const mergeNames = $derived([
 		...new Set(drafts.map((d) => mergeInfo(catalog, d)?.name ?? d.mergeModel).filter(Boolean))
 	]);
-	/** Tasks that write text out page by page, where lines and samples apply. */
-	const paged = $derived(
-		task === 'text_extraction' || task === 'text_correction' || task === 'contents'
-	);
-	const linesApply = $derived(task === 'text_extraction' || task === 'text_correction');
+	/** Where samples and line breaks apply, as the engine says. */
+	const paged = $derived(rule.samples);
+	const linesApply = $derived(rule.line_breaks);
 	const togetherOptions = (['one', 'several', 'whole'] as const).map((value) => ({
 		value,
 		label: m.newJob.together[value],
@@ -137,7 +137,7 @@
 	}));
 	/** What the job sends for it; nothing for one page at a time, as before. */
 	const pagesPerCall = $derived<PagesPerCall | undefined>(
-		task !== 'text_extraction' || together === 'one'
+		!rule.pages_per_call || together === 'one'
 			? undefined
 			: together === 'whole'
 				? { kind: 'whole' }
@@ -210,14 +210,14 @@
 		};
 		if (estimateTimer) clearTimeout(estimateTimer);
 		if (req.sources.length === 0 || req.setups.length === 0) {
-			estimates = [];
+			estimate = null;
 			return;
 		}
 		estimateTimer = setTimeout(() => {
 			api
 				.estimateCost(req)
-				.then((rows) => (estimates = rows))
-				.catch(() => (estimates = []));
+				.then((e) => (estimate = e))
+				.catch(() => (estimate = null));
 		}, 250);
 	});
 
@@ -229,11 +229,10 @@
 	/** A model's cost at a pace; one without a batch service costs the same either way. */
 	const rowCost = (row: EstimateRow, at: Pace) =>
 		at === 'economy' ? (row.estimate.economy_usd ?? row.estimate.usd) : row.estimate.usd;
-	// A video's length, and so its cost, is known only once Gemini has read it.
+	/** The whole job at a pace, as the engine sums it; none while a price or a video's length
+	 * is unknown. */
 	const totalFor = (at: Pace) =>
-		mode !== 'youtube' && estimates.every((r) => r.estimate.usd !== null)
-			? estimates.reduce((sum, r) => sum + (rowCost(r, at) ?? 0), 0)
-			: null;
+		(at === 'economy' ? estimate?.total_economy_usd : estimate?.total_usd) ?? null;
 	const totalEstimate = $derived(totalFor(chosenPace));
 	const notBatched = $derived(
 		estimates
@@ -562,7 +561,7 @@
 			</section>
 		{/if}
 
-		{#if task === 'text_extraction'}
+		{#if rule.pages_per_call}
 			<section class="step block" aria-labelledby="together-title">
 				<h2 id="together-title">{m.newJob.together.title}</h2>
 				<ChoiceStrip bind:value={together} options={togetherOptions} />
@@ -576,6 +575,9 @@
 					<p class="hint">{m.newJob.together.safety}</p>
 					{#if chosenPace === 'economy'}
 						<p class="hint">{m.newJob.together.economy}</p>
+					{/if}
+					{#if sources.some((s) => s.kind !== 'pdf' || s.split_spreads)}
+						<p class="hint">{m.newJob.together.alone}</p>
 					{/if}
 					{#if noPrompt.length > 0}
 						<p class="hint">{m.newJob.together.noPrompt(listNames(noPrompt))}</p>

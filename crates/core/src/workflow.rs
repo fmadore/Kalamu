@@ -194,6 +194,11 @@ impl StepState {
             Self::Review | Self::Attention | Self::Done | Self::DoneWithErrors
         )
     }
+
+    /// A step that waits for the researcher: to check it, to retry or go on, or to start it.
+    pub fn needs_you(self) -> bool {
+        matches!(self, Self::Review | Self::Attention | Self::Paused)
+    }
 }
 
 /// A step's state from its job's status (`None` before it has a job, `Some(None)` for a job
@@ -266,10 +271,7 @@ pub fn run_status(cancelled: bool, states: &[StepState]) -> RunStatus {
     if states.contains(&Running) {
         return RunStatus::Running;
     }
-    if states
-        .iter()
-        .any(|s| matches!(s, Review | Attention | Paused))
-    {
+    if states.iter().any(|s| s.needs_you()) {
         return RunStatus::NeedsYou;
     }
     if states.iter().all(|s| matches!(s, Done | DoneWithErrors)) {

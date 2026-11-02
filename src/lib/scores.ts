@@ -5,12 +5,6 @@ import type { SetupScore } from './bindings/SetupScore.js';
 import type { Task } from './bindings/Task.js';
 import { formatPercent, type Messages } from './i18n/index.js';
 
-/** The tasks whose results are text the review can score; analyses and tables of contents
- *  answer in fields. */
-export function scoredTask(task: Task): boolean {
-	return task === 'text_extraction' || task === 'audio_transcription' || task === 'text_correction';
-}
-
 /**
  * An error rate as "one in how many": `none` when nothing was wrong, `many` at one in two or
  * worse, otherwise a whole number rounded as people say it: to two significant figures (1 in

@@ -395,7 +395,8 @@ mod tests {
     use kalamu_core::{ExportFormat, JobSettings, ProviderId, SetupOptions};
 
     use super::*;
-    use crate::{PipelineSetup, RenderContext};
+    use crate::RenderContext;
+    use kalamu_core::SetupRequest;
 
     fn file(prompts: &PromptLibrary, preset: &str) -> PipelineFile {
         let preset = prompts.get(preset).unwrap();
@@ -404,7 +405,7 @@ mod tests {
             id: "pipeline-1".into(),
             name: "Literature review".into(),
             task: Task::Analysis,
-            setups: vec![PipelineSetup {
+            setups: vec![SetupRequest {
                 provider: ProviderId::new("mistral"),
                 model: "mistral-small-2603".into(),
                 preset_id: Some(preset.id.clone()),

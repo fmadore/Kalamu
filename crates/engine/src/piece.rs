@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use kalamu_core::{
     ApiKey, CacheKey, Charge, Job, JobId, PieceState, PieceStatus, PreparedInput, ProcessOutput,
     ProcessRequest, ProgressEvent, Provider, ProviderError, ProviderId, RequestSetting,
-    SetupOptions, SourceFile, Step, StopSignal, StoredResult, Task, Timestamp, Tuning,
+    SetupOptions, SourceFile, Step, StopSignal, StoredResult, Task, Timestamp, Tuning, Usage,
 };
 use kalamu_media::OpenSource;
 
@@ -358,6 +358,19 @@ impl Engine {
         let Some(usage) = err.billed() else {
             return Ok(());
         };
+        self.bill(state, provider, model, usage, spent)
+    }
+
+    /// Records a call billed though nothing was kept from it, and adds it to what the job has
+    /// spent.
+    pub(crate) fn bill(
+        &self,
+        state: &PieceState,
+        provider: &ProviderId,
+        model: &str,
+        usage: &Usage,
+        spent: &Mutex<f64>,
+    ) -> Result<(), EngineError> {
         let catalog = self.catalog();
         let cost = catalog
             .model(provider, model)

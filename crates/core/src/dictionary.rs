@@ -241,6 +241,24 @@ pub enum DictionaryError {
     Store(#[from] StoreError),
 }
 
+impl DictionaryError {
+    /// A stable id the interface translates.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::NotFound | Self::Store(StoreError::NotFound) => "project.not_found",
+            Self::NoEntry => "dictionary.no_entry",
+            Self::NoLabel => "dictionary.no_label",
+            Self::Namespaces => "dictionary.namespaces",
+            Self::KeptApart => "dictionary.kept_apart",
+            Self::TooFew => "dictionary.too_few",
+            Self::SameEntry => "dictionary.same_entry",
+            Self::NothingToCompare => "dictionary.nothing_to_compare",
+            Self::Export(_) => "file.read",
+            Self::Store(_) => "job.database",
+        }
+    }
+}
+
 /// Persistence of the researcher's dictionary decisions, beside the project's rows.
 pub trait DictionaryStore: Send + Sync {
     fn put_entry(&self, entry: &Entry) -> Result<(), StoreError>;

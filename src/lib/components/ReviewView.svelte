@@ -5,6 +5,7 @@
 	// readings over the text, any of which can be taken as a correction. Another set-up's whole
 	// text can open in a third pane beside it. A search finds words across every page of the text
 	// shown, corrections included, and goes to each match (a recording plays from its line).
+	import Missing from './Missing.svelte';
 	import { onMount, tick } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
@@ -452,7 +453,7 @@
 					class="score"
 					title={s.wer !== null ? `${m.review.wer}: ${formatPercent(s.wer)}` : undefined}
 					>{siglum(i).toUpperCase()}
-					{s.cer !== null ? formatPercent(s.cer) : '–'}</span
+					{#if s.cer !== null}{formatPercent(s.cer)}{:else}<Missing />{/if}</span
 				>
 			{/each}
 			{#if report.scores.some((s) => s.cer !== null)}<span class="hint"

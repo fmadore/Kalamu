@@ -2,6 +2,7 @@
 	// One document: its original, its collections and tags, and every result read from it across jobs,
 	// task by task, each opening its review. The researcher can mark the result they rely on as
 	// preferred; a newer run never takes its place.
+	import Missing from './Missing.svelte';
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 	import TagInput from './TagInput.svelte';
@@ -231,7 +232,7 @@
 			{#each byTask as [task, results] (task)}
 				<div class="task">
 					<h3><Icon name={task} size={14} />{m.task[task]}</h3>
-					<table>
+					<table class="data-table">
 						<thead>
 							<tr>
 								<th>{m.projects.document.job}</th>
@@ -257,7 +258,9 @@
 									<td class="num"
 										>{m.projects.document.reviewedCount(r.reviewed, r.pieces, r.corrected)}</td
 									>
-									<td class="num">{r.cost_usd !== null ? formatUsd(r.cost_usd) : '–'}</td>
+									<td class="num"
+										>{#if r.cost_usd !== null}{formatUsd(r.cost_usd)}{:else}<Missing />{/if}</td
+									>
 									<td>
 										<button
 											class="btn ghost sm"
@@ -396,24 +399,6 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
-	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--type-sm);
-	}
-	th {
-		text-align: left;
-		font-weight: 500;
-		font-size: var(--type-xs);
-		color: var(--text-muted);
-		padding: var(--space-1) var(--space-2);
-		border-bottom: 1px solid var(--line);
-	}
-	td {
-		padding: var(--space-2);
-		border-bottom: 1px solid var(--line-soft);
-		vertical-align: top;
 	}
 	.job {
 		display: block;

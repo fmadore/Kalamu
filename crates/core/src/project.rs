@@ -126,6 +126,19 @@ pub enum ProjectError {
     Store(#[from] StoreError),
 }
 
+impl ProjectError {
+    /// A stable id the interface translates.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::NotFound | Self::Store(StoreError::NotFound) => "project.not_found",
+            Self::Elsewhere(_) => "project.elsewhere",
+            Self::NoName => "project.no_name",
+            Self::NoTag => "project.no_tag",
+            Self::Store(_) => "job.database",
+        }
+    }
+}
+
 /// Persistence of projects, kept apart from the job store the engine uses: organising work
 /// does not run it.
 pub trait ProjectStore: Send + Sync {

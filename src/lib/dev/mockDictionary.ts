@@ -320,7 +320,7 @@ export function dictionaryCommand(cmd: string, a: Record<string, unknown>): unkn
 		}
 		case 'dictionary_propose':
 			asked.add(namespace);
-			return { id: proposalJob, name: `Dictionary: merges in ${labels[namespace]}` };
+			return { id: proposalJob, name: String(a.name) };
 		case 'dictionary_proposals':
 			return proposals();
 		case 'dictionary_dismiss':

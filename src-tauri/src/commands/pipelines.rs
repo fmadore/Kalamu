@@ -41,17 +41,11 @@ pub fn export_pipeline(state: State<'_, AppState>, id: String, path: String) -> 
         .pipelines
         .lock()
         .unwrap_or_else(|p| p.into_inner())
-        .list()
-        .into_iter()
-        .find(|p| p.id == id)
-        .ok_or(kalamu_prompts::PromptError::NotFound(id))?;
+        .get(&id)?;
     let file = state.engine.pipeline_file(pipeline)?;
     let path = std::path::Path::new(&path);
-    let write = |path: std::path::PathBuf, text: String| {
-        std::fs::write(path, text).map_err(|e| AppError::new(id::FILE, e))
-    };
-    write(path.with_extension("json"), file.to_json()?)?;
-    write(path.with_extension("md"), file.to_markdown())
+    super::write_text(path.with_extension("json"), file.to_json()?)?;
+    super::write_text(path.with_extension("md"), file.to_markdown())
 }
 
 /// Adds a shared pipeline and the presets it brings.

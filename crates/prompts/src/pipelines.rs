@@ -2,18 +2,14 @@
 //! click. Everything but the files: the task, each set-up's model and preset, languages, line
 //! breaks, formats and where results go. One JSON file each, like user presets.
 
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use kalamu_core::{
-    ExportFormat, JobSettings, MergeModel, OutputDestination, ProviderId, SetupOptions, Task,
-    Timestamp,
-};
+use kalamu_core::{ExportFormat, JobSettings, OutputDestination, SetupRequest, Task, Timestamp};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{PromptError, io, write_atomic};
+use crate::PromptError;
+use crate::folder::{Folder, Saved};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -23,7 +19,7 @@ pub struct Pipeline {
     pub id: String,
     pub name: String,
     pub task: Task,
-    pub setups: Vec<PipelineSetup>,
+    pub setups: Vec<SetupRequest>,
     #[serde(default)]
     pub settings: JobSettings,
     #[serde(default)]
@@ -34,64 +30,36 @@ pub struct Pipeline {
     pub updated_at: Timestamp,
 }
 
-/// One model and its preset, as New job sets it up.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct PipelineSetup {
-    pub provider: ProviderId,
-    pub model: String,
-    pub preset_id: Option<String>,
-    #[serde(default)]
-    pub label: Option<String>,
-    #[serde(default)]
-    pub options: SetupOptions,
-    /// For a table of contents, the model that combines the pages.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub merge: Option<MergeModel>,
+impl Saved for Pipeline {
+    const PREFIX: &'static str = "pipeline-";
+    fn id(&self) -> &str {
+        &self.id
+    }
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
-pub struct PipelineLibrary {
-    dir: Option<PathBuf>,
-    saved: BTreeMap<String, Pipeline>,
-}
+pub struct PipelineLibrary(Folder<Pipeline>);
 
 impl PipelineLibrary {
     /// Loads saved pipelines from `dir`, creating it if needed; an unreadable file is skipped.
     pub fn open(dir: &Path) -> Result<Self, PromptError> {
-        fs::create_dir_all(dir).map_err(io)?;
-        let mut saved = BTreeMap::new();
-        for entry in fs::read_dir(dir).map_err(io)? {
-            let path = entry.map_err(io)?.path();
-            if path.extension().and_then(|e| e.to_str()) != Some("json") {
-                continue;
-            }
-            if let Ok(pipeline) = fs::read_to_string(&path)
-                .map_err(io)
-                .and_then(|s| serde_json::from_str::<Pipeline>(&s).map_err(io))
-            {
-                saved.insert(pipeline.id.clone(), pipeline);
-            }
-        }
-        Ok(Self {
-            dir: Some(dir.to_path_buf()),
-            saved,
-        })
+        Folder::open(dir).map(Self)
     }
 
     /// Nothing saved; for tests.
     pub fn in_memory() -> Self {
-        Self {
-            dir: None,
-            saved: BTreeMap::new(),
-        }
+        Self(Folder::in_memory())
     }
 
     /// By name, ignoring case.
     pub fn list(&self) -> Vec<Pipeline> {
-        let mut out: Vec<Pipeline> = self.saved.values().cloned().collect();
-        out.sort_by_key(|p| p.name.to_lowercase());
-        out
+        self.0.list()
+    }
+
+    pub fn get(&self, id: &str) -> Result<Pipeline, PromptError> {
+        self.0.get(id)
     }
 
     /// Saves a pipeline under its id, or a new one. Saving under a name already used replaces
@@ -101,42 +69,21 @@ impl PipelineLibrary {
         if pipeline.name.is_empty() || pipeline.setups.is_empty() {
             return Err(PromptError::IncompletePipeline);
         }
-        if pipeline.id.is_empty() {
-            pipeline.id = self
-                .saved
-                .values()
-                .find(|p| p.name.to_lowercase() == pipeline.name.to_lowercase())
-                .map(|p| p.id.clone())
-                .unwrap_or_else(|| format!("pipeline-{}", uuid::Uuid::new_v4()));
-        }
-        if uuid::Uuid::parse_str(pipeline.id.trim_start_matches("pipeline-")).is_err() {
-            return Err(PromptError::NotFound(pipeline.id));
-        }
+        pipeline.id = self.0.id_for(&pipeline)?;
         pipeline.updated_at = Timestamp::now();
-        if let Some(dir) = &self.dir {
-            write_atomic(&dir.join(format!("{}.json", pipeline.id)), &pipeline)?;
-        }
-        self.saved.insert(pipeline.id.clone(), pipeline.clone());
-        Ok(pipeline)
+        self.0.put(pipeline)
     }
 
     pub fn delete(&mut self, id: &str) -> Result<(), PromptError> {
-        if self.saved.remove(id).is_none() {
-            return Err(PromptError::NotFound(id.to_string()));
-        }
-        if let Some(dir) = &self.dir {
-            let path = dir.join(format!("{id}.json"));
-            if path.exists() {
-                fs::remove_file(path).map_err(io)?;
-            }
-        }
-        Ok(())
+        self.0.delete(id)
     }
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use kalamu_core::{ProviderId, SetupOptions};
+
     use super::*;
 
     fn pipeline(name: &str) -> Pipeline {
@@ -144,7 +91,7 @@ mod tests {
             id: String::new(),
             name: name.into(),
             task: Task::Analysis,
-            setups: vec![PipelineSetup {
+            setups: vec![SetupRequest {
                 provider: ProviderId::new("gemini"),
                 model: "gemini-3.8-flash".into(),
                 preset_id: Some("analysis.entities".into()),

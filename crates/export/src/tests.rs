@@ -51,6 +51,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         },
         options: SetupOptions::default(),
         merge: None,
+        pages_cap: None,
     };
     let provenance = Provenance {
         schema_version: 1,

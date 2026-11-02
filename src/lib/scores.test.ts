@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SetupScore } from './bindings/SetupScore.js';
 import { en } from './i18n/index.js';
-import { describeScore, oneIn, scoredTask } from './scores.js';
+import { describeScore, oneIn } from './scores.js';
 
 const score = (cer: number | null, wer: number | null, pages: number): SetupScore => ({
 	setup_id: 'a',
@@ -46,15 +46,5 @@ describe('oneIn', () => {
 		expect(oneIn(0.5)).toBe(2);
 		expect(oneIn(0.6)).toBe('many');
 		expect(oneIn(1.4)).toBe('many');
-	});
-});
-
-describe('scoredTask', () => {
-	it('scores tasks that produce text, not fields', () => {
-		expect(scoredTask('text_extraction')).toBe(true);
-		expect(scoredTask('audio_transcription')).toBe(true);
-		expect(scoredTask('text_correction')).toBe(true);
-		expect(scoredTask('analysis')).toBe(false);
-		expect(scoredTask('contents')).toBe(false);
 	});
 });

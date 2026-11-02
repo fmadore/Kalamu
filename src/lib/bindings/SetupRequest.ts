@@ -4,7 +4,8 @@ import type { ProviderId } from "./ProviderId";
 import type { SetupOptions } from "./SetupOptions";
 
 /**
- * One provider, model and prompt to run, as chosen in the interface.
+ * One provider, model and prompt to run, as chosen in New job or saved in a pipeline, before
+ * its prompt is frozen into a [`Setup`].
  */
 export type SetupRequest = { provider: ProviderId, model: string, 
 /**

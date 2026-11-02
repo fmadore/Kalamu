@@ -103,11 +103,6 @@ function remap(
 	return { ...step, input };
 }
 
-/** States that ask something of the researcher. */
-export function needsYou(state: StepState): boolean {
-	return state === 'review' || state === 'attention' || state === 'paused';
-}
-
 /** The chip class for a run's or a step's status. */
 export function tone(status: RunStatus | StepState): string {
 	switch (status) {
@@ -163,7 +158,7 @@ export function exampleWorkflow(
 ): Workflow {
 	const steps = EXAMPLES[kind].map(({ task, preset }, i): WorkflowStep => {
 		const r = toRequest(catalog, task, newDraft(catalog, rulesFor(rules, task), preset, hasKey));
-		const reads = task === 'text_extraction' || task === 'text_correction';
+		const reads = rulesFor(rules, task).line_breaks;
 		return {
 			pipeline: {
 				id: '',

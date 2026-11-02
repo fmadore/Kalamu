@@ -98,6 +98,7 @@ mod tests {
             },
             options: SetupOptions::default(),
             merge: None,
+            pages_cap: None,
         }
     }
 

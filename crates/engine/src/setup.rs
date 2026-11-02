@@ -4,33 +4,14 @@
 use kalamu_catalog::Catalog;
 use kalamu_core::{
     InputKind, Job, JobId, JobSettings, JobStatus, LanguageChoice, MergeModel, MergeStep,
-    OutputDestination, OutputSettings, PromptSnapshot, ProviderId, Setup, SetupId, SetupOptions,
-    SourceFile, Task, Timestamp,
+    OutputDestination, OutputSettings, PagesPerCall, PromptSnapshot, ProviderId, Setup, SetupId,
+    SetupOptions, SetupRequest, SourceFile, Task, Timestamp,
 };
 use kalamu_prompts::{Preset, RenderContext};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{Engine, EngineError};
-
-/// One provider, model and prompt to run, as chosen in the interface.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct SetupRequest {
-    pub provider: ProviderId,
-    pub model: String,
-    /// A preset id; the task's default when absent.
-    pub preset_id: Option<String>,
-    /// Shown in comparison columns and file names; derived from the model when absent.
-    pub label: Option<String>,
-    #[serde(default)]
-    pub options: SetupOptions,
-    /// For a table of contents, the model that combines the pages; the same model as the
-    /// pages' when absent.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub merge: Option<MergeModel>,
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -46,9 +27,10 @@ pub struct NewJob {
 }
 
 impl Engine {
-    pub fn create_job(&self, new: NewJob) -> Result<Job, EngineError> {
+    pub fn create_job(&self, mut new: NewJob) -> Result<Job, EngineError> {
         let catalog = self.catalog();
         Self::check_new(&catalog, &new)?;
+        crate::rules::writable_formats(&catalog, new.task, &new.setups, &mut new.output.formats);
         let setups = self.freeze_setups(&catalog, new.task, &new.settings, &new.setups)?;
         self.insert_job(
             new.name,
@@ -131,7 +113,7 @@ impl Engine {
             if let Some(model) = catalog.model(&request.provider, &request.model) {
                 options.reasoning = model.tuning(task, options.reasoning.as_deref()).reasoning;
             }
-            setups.push(Setup {
+            let mut setup = Setup {
                 id: SetupId::new(),
                 label,
                 provider: request.provider.clone(),
@@ -139,7 +121,15 @@ impl Engine {
                 prompt,
                 options,
                 merge,
-            });
+                pages_cap: None,
+            };
+            // Settled now, as the reasoning level is, so a catalogue refreshed before the job
+            // resumes never regroups pages already read.
+            let several = !matches!(settings.pages_per_call, None | Some(PagesPerCall::One));
+            if task.groups_pages() && several {
+                setup.pages_cap = Some(crate::group::pages_cap(catalog, &setup));
+            }
+            setups.push(setup);
         }
         Ok(setups)
     }
@@ -152,21 +142,9 @@ impl Engine {
         sources: Vec<SourceFile>,
         setups: Vec<Setup>,
         settings: JobSettings,
-        mut output: OutputSettings,
+        output: OutputSettings,
     ) -> Result<Job, EngineError> {
-        // Formats the task does not write (from a pipeline of another task) are left out.
-        output.formats.retain(|f| task.formats().contains(f));
-        let job = Job {
-            id: JobId::new(),
-            name,
-            task,
-            created_at: Timestamp::now(),
-            sources,
-            setups,
-            settings,
-            output,
-            status: JobStatus::Pending,
-        };
+        let job = build_job(name, task, sources, setups, settings, output);
         self.store.create_job(&job)?;
         Ok(job)
     }
@@ -230,9 +208,7 @@ impl Engine {
             languages: settings.languages.clone(),
             language_names: Self::language_names(catalog, settings),
             speakers: options.speakers,
-            line_breaks: settings
-                .line_breaks
-                .filter(|_| matches!(task, Task::TextExtraction | Task::TextCorrection)),
+            line_breaks: settings.line_breaks.filter(|_| task.has_line_breaks()),
             answers: matches!(task, Task::Analysis | Task::Contents),
         }
     }
@@ -286,4 +262,28 @@ fn sanitize_label(label: &str) -> String {
         })
         .collect();
     cleaned.trim_matches(['-', '.']).chars().take(60).collect()
+}
+
+/// A new job of set-ups already frozen, not yet recorded.
+pub(crate) fn build_job(
+    name: String,
+    task: Task,
+    sources: Vec<SourceFile>,
+    setups: Vec<Setup>,
+    settings: JobSettings,
+    mut output: OutputSettings,
+) -> Job {
+    // Formats the task does not write (from a pipeline of another task) are left out.
+    output.formats.retain(|f| task.formats().contains(f));
+    Job {
+        id: JobId::new(),
+        name,
+        task,
+        created_at: Timestamp::now(),
+        sources,
+        setups,
+        settings,
+        output,
+        status: JobStatus::Pending,
+    }
 }

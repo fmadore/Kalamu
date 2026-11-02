@@ -5,7 +5,8 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { duration, warningText } from '#lib/newJob.js';
+	import { duration, rulesFor, warningText } from '#lib/newJob.js';
+	import { app } from '#lib/state.svelte.js';
 	import { pickFiles, pickFolder } from '#lib/tauri.js';
 
 	let {
@@ -27,18 +28,15 @@
 		if (source) source.split_spreads = split;
 	}
 
-	/**
-	 * An analysis reads each document whole, and a correction reads a PDF's text layer, so
-	 * splitting double pages applies to neither; the text layer is what a correction wants.
-	 */
+	/** The warnings that matter to the task, as the engine says: double pages only where they
+	 * are split, a text layer only where it is not what the task reads. */
 	function shownWarnings(file: (typeof files)[number]) {
-		if (task === 'analysis') return file.warnings.filter((w) => w.kind !== 'double_page_spread');
-		if (task === 'text_correction') {
-			return file.warnings.filter(
-				(w) => w.kind !== 'double_page_spread' && w.kind !== 'has_text_layer'
-			);
-		}
-		return file.warnings;
+		const rule = rulesFor(app.rules, task);
+		return file.warnings.filter(
+			(w) =>
+				(w.kind !== 'double_page_spread' || rule.splits_spreads) &&
+				(w.kind !== 'has_text_layer' || !rule.reads_text_layer)
+		);
 	}
 
 	function setEvenOut(index: number, on: boolean) {

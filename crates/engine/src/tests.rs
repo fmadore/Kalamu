@@ -1180,7 +1180,7 @@ fn a_pipeline_record_carries_the_prompt_a_job_would_send() {
         id: String::new(),
         name: "Places".into(),
         task: Task::Analysis,
-        setups: vec![kalamu_prompts::PipelineSetup {
+        setups: vec![kalamu_core::SetupRequest {
             provider: ProviderId::new("fake"),
             model: "fake-model".into(),
             preset_id: Some("analysis.entities".into()),

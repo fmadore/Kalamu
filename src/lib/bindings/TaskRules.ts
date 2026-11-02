@@ -29,6 +29,27 @@ models: Array<ModelRef>,
  */
 merge_models: Array<ModelRef>, 
 /**
- * Its results are a text a later analysis can read, frozen as corrected.
+ * Its results are a text a later analysis can read, frozen as corrected, and scored
+ * against the researcher's review.
  */
-yields_text: boolean, };
+yields_text: boolean, 
+/**
+ * Lines kept as on the page or joined, as chosen.
+ */
+line_breaks: boolean, 
+/**
+ * A sample of the first pages can be tried.
+ */
+samples: boolean, 
+/**
+ * Several pages of a PDF can go in one call.
+ */
+pages_per_call: boolean, 
+/**
+ * Double pages are worth splitting.
+ */
+splits_spreads: boolean, 
+/**
+ * A PDF's text layer is what it reads, not a sign it need not run.
+ */
+reads_text_layer: boolean, };

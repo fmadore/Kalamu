@@ -17,4 +17,11 @@ label: string, provider: ProviderId, model: string, prompt: PromptSnapshot, opti
  * For a table of contents, the second step: the model that combines the pages' readings,
  * which may be another provider's (a large model reads the pages, a small one combines).
  */
-merge?: MergeStep, };
+merge?: MergeStep, 
+/**
+ * For a text extraction that reads several pages in one call, the most pages this model
+ * can write in one answer: settled when the job is created, so a later catalogue refresh
+ * never regroups its pages nor changes their cache keys. `None` when the job reads one
+ * page at a time, and in jobs made before it was settled.
+ */
+pages_cap?: number, };

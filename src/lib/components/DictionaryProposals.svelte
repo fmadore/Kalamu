@@ -118,7 +118,7 @@
 		}
 		void api
 			.estimateCost({ task: 'analysis', sources, setups: [setup()], sample_pages: null })
-			.then((rows) => {
+			.then(({ rows }) => {
 				const r = rows[0]?.estimate;
 				cost = r ? { usd: r.usd, economy: r.economy_usd } : null;
 				if (r?.economy_usd === null) economy = false;
@@ -131,7 +131,14 @@
 		starting = true;
 		try {
 			const pace: Pace = economy ? 'economy' : 'fast';
-			await api.dictionaryPropose(projectId, scope || null, namespace, setup(), pace);
+			await api.dictionaryPropose(
+				projectId,
+				scope || null,
+				namespace,
+				p.jobName(fieldLabel),
+				setup(),
+				pace
+			);
 			asking = false;
 			plan = null;
 			await refreshJobs();

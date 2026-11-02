@@ -198,8 +198,11 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
 
 ## Next
 
-The [29 October checkpoint](decisions/2026-10-29-checkpoint.md)'s fixes and refactor are all
-done.
+The [2 November checkpoint](decisions/2026-11-02-checkpoint.md), after version 1.0.0, is done:
+pages read together settled when a job is created and a call that keeps no page counted,
+workflow steps made once and tied to their project at launch, the proposal job's files apart,
+rules and estimates from Rust, and the duplication it found removed. Next comes the release that
+carries it, then [#50](https://github.com/fmadore/Kalamu/issues/50).
 
 - **Project workspaces, what is left of
   [#57](https://github.com/fmadore/Kalamu/issues/57)**: a document's descriptive metadata
@@ -215,7 +218,9 @@ done.
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed
-  in the engine, and restarting a run from a step after the definition changed. A live run of
+  in the engine, and restarting a run from a step after the definition changed; a new run
+  that keeps the corrections made in the last one, whose steps after a review are otherwise
+  read again from uncorrected text. A live run of
   a two-step workflow, and one in economy mode across a restart. Try *Then* and the examples
   with one or two colleagues before going further. Several jobs' or documents' texts sent into
   one new round together, from a project's selection.

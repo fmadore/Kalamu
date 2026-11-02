@@ -61,7 +61,7 @@ pub use result::{
     Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,
     TextRegion, Usage,
 };
-pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, Step};
+pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};
 pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
 pub use source::{InputKind, SourceFile};
 pub use speakers::SpeakerNames;

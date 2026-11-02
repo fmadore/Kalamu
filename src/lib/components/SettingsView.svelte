@@ -137,7 +137,7 @@
 
 		<section class="card block" aria-labelledby="catalog-settings">
 			<h2 id="catalog-settings">{m.settings.catalogTitle}</h2>
-			<p>{m.settings.catalogUpdated(app.catalog?.updated ?? '—')}</p>
+			<p>{m.settings.catalogUpdated(app.catalog?.updated ?? m.common.unknown.toLowerCase())}</p>
 			<div class="row">
 				<button class="btn sm" onclick={refreshCatalog}>{m.settings.catalogRefresh}</button>
 				<label class="inline small">

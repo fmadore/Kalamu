@@ -185,7 +185,10 @@ no text layer needs *Extract text* instead.
   review and provenance (which names the run, the workflow's version and the go-ahead given).
   Starting freezes the steps and their prompts, so saving the workflow again (a new version)
   or editing a prompt never changes a run already started; running again pays only for steps
-  whose model, prompt or text changed. A workflow is exported and imported like a pipeline,
+  whose model, prompt or text changed. Corrections belong to the job they were made in, so a
+  new run starts from the models' text: a step that read corrected text reads it uncorrected,
+  and is paid for again (*Use this text in a new job* goes on from the corrected text). A
+  step that could not start, for want of any text read, starts once its input is. A workflow is exported and imported like a pipeline,
   and a run can start from a project's selection, its jobs tied to the documents.
 - **The simplest workflow needs no building.** The last section of New job, *Then*, offers to
   analyse the text once it is read (an extraction, a transcription or a correction), by default
@@ -447,6 +450,8 @@ The names and terms a project's analyses listed, gathered for the researcher to 
   words (certain, likely, possible), which is not a probability. It is listed in Prompts under
   Dictionary, linked from the request, and can be edited and reset like any default; its
   answer's fields are fixed, since the dictionary reads them, and New job never offers it.
+  The job writes no export, since the dictionary reads its answers from the store, and keeps
+  its `provenance.json` in the app's data folder.
 - **Answers checked, nothing applied.** References to no row sent are counted and left out; a
   group of one row, or of rows already one entry, is no proposal; rows the researcher kept
   apart are never offered together, even if the model groups them. Each row is kept by its
@@ -520,7 +525,10 @@ Which kinds of file a task reads, which models can do it and which formats it wr
 engine's rules, given to the interface so New job offers only what will run, and checked again
 when a job is created: a source the task does not read, or a model that does not do the task or
 cannot read a YouTube link, is refused with a plain message, and formats the task does not
-write (from a pipeline saved for another task) are left out.
+write (from a pipeline saved for another task) are left out, as is a searchable PDF when no
+model of the job reports where text sits on the page. Where line breaks, samples and pages per
+call apply, which models are the app's and each provider's choice, and what a job will cost
+at each pace are the engine's to say too; the interface only shows them.
 
 ## AI output is not ground truth
 

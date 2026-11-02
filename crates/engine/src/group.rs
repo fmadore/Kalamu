@@ -17,7 +17,7 @@ use std::sync::{Arc, Mutex};
 
 use kalamu_core::{
     CacheKey, InputKind, Job, Pace, PieceRef, PieceState, PieceStatus, ProcessOutput,
-    RequestSetting, Setup, SourceFile, StopSignal, Task, pages,
+    RequestSetting, Setup, SourceFile, StopSignal, pages,
 };
 use kalamu_media::OpenSource;
 
@@ -44,6 +44,24 @@ pub(crate) enum Unit {
     Group(Setup, Vec<(PieceState, CacheKey)>),
 }
 
+/// The most pages `setup`'s model reads in one call: as many as its answer has room for, within
+/// the provider's own limit on pages; one for a model that takes no instructions or no PDF.
+pub(crate) fn pages_cap(catalog: &kalamu_catalog::Catalog, setup: &Setup) -> u32 {
+    let Some(model) = catalog.model(&setup.provider, &setup.model) else {
+        return 1;
+    };
+    if !model.accepts_prompt || !model.inputs.iter().any(|i| i == "application/pdf") {
+        return 1;
+    }
+    let per_page = match setup.prompt.preset_id.as_deref() {
+        Some(id) if id.contains("newspaper") => NEWSPAPER_PAGE_TOKENS,
+        _ => PAGE_TOKENS,
+    };
+    let output = model.limits.max_output_tokens.unwrap_or(UNKNOWN_OUTPUT);
+    let fits = (output / OUTPUT_SHARE.1 * OUTPUT_SHARE.0 / per_page).max(1);
+    fits.min(model.limits.max_pages.unwrap_or(u32::MAX))
+}
+
 /// The page number of a whole page; none for a half of a spread or another kind of piece.
 fn whole_page(piece: &PieceRef) -> Option<u32> {
     match piece {
@@ -55,38 +73,25 @@ fn whole_page(piece: &PieceRef) -> Option<u32> {
 impl Engine {
     /// How many pages of `source` the set-up reads in one call: what the job asks for, capped
     /// by what the model can write in one answer. One for anything but a PDF read for its
-    /// text, at once, by a model that takes instructions and reads PDFs.
+    /// text, at once, by a model that takes instructions and reads PDFs. A sample reads its
+    /// pages as the whole run would, so the run that follows finds them in the cache.
     pub(crate) fn pages_per_call(&self, job: &Job, source: &SourceFile, setup: &Setup) -> u32 {
         let Some(asked) = job.settings.pages_per_call else {
             return 1;
         };
-        if job.task != Task::TextExtraction
+        if !job.task.groups_pages()
             || job.settings.pace == Pace::Economy
             || source.kind != InputKind::Pdf
             || source.split_spreads
         {
             return 1;
         }
-        let catalog = self.catalog();
-        let Some(model) = catalog.model(&setup.provider, &setup.model) else {
-            return 1;
-        };
-        if !model.accepts_prompt || !model.inputs.iter().any(|i| i == "application/pdf") {
-            return 1;
-        }
+        // Settled when the job was created; worked out again only for a job made before.
+        let cap = setup
+            .pages_cap
+            .unwrap_or_else(|| pages_cap(&self.catalog(), setup));
         let pages = source.page_count.unwrap_or(1);
-        let pages = job
-            .settings
-            .sample_pages
-            .map_or(pages, |cap| pages.min(cap));
-        let per_page = match &setup.prompt.preset_id {
-            Some(id) if id.contains("newspaper") => NEWSPAPER_PAGE_TOKENS,
-            _ => PAGE_TOKENS,
-        };
-        let output = model.limits.max_output_tokens.unwrap_or(UNKNOWN_OUTPUT);
-        let fits = (output / OUTPUT_SHARE.1 * OUTPUT_SHARE.0 / per_page).max(1);
-        let most = model.limits.max_pages.unwrap_or(u32::MAX);
-        asked.asked(pages).min(fits).min(most).min(pages).max(1)
+        asked.asked(pages).min(cap).min(pages).max(1)
     }
 
     /// The work of a source as it is sent: consecutive whole pages of a set-up that reads
@@ -269,6 +274,11 @@ impl Engine {
                     self.save(&mut state, Some(preview(&part.text)))?;
                     self.add_cost(job.id, &spent, cost);
                     outcomes.push(Outcome::Finished);
+                }
+                // No page could be kept (the marks out of order, or the answer cut off after
+                // its first page): the call was billed all the same.
+                if let Some(usage) = &usage {
+                    self.bill(&lead, &setup.provider, &setup.model, usage, &spent)?;
                 }
                 if !missing.is_empty() {
                     tracing::info!(

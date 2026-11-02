@@ -3,7 +3,7 @@
 //! launch nothing is sent without the researcher; definitions that cannot run refused.
 
 use kalamu_core::{Correction, RunId, RunStatus, StepInput, StepState, WorkflowError};
-use kalamu_prompts::{Pipeline, PipelineSetup, Workflow, WorkflowStep};
+use kalamu_prompts::{Pipeline, Workflow, WorkflowStep};
 
 use super::*;
 
@@ -12,7 +12,7 @@ fn pipeline(name: &str, task: Task, model: &str, preset: Option<&str>) -> Pipeli
         id: String::new(),
         name: name.into(),
         task,
-        setups: vec![PipelineSetup {
+        setups: vec![SetupRequest {
             provider: ProviderId::new("fake"),
             model: model.into(),
             preset_id: preset.map(Into::into),
@@ -252,6 +252,64 @@ async fn pages_not_read_hold_the_next_step_until_the_researcher_goes_on() {
         serde_json::json!([2]),
         "the page not read is named"
     );
+}
+
+#[tokio::test]
+async fn a_step_that_could_not_start_starts_once_its_input_is_read() {
+    let f = fixture();
+    let scan = f.pdf("registre.pdf", 1);
+    f.fake
+        .fail(1, vec![ProviderError::Blocked("refused".into())]);
+    let view = f
+        .run_workflow(extract_then_analyse(false, "fake-model"), vec![scan])
+        .await;
+    // Going on with no page read: the next step has no text, and says so.
+    f.engine
+        .approve_step(view.run.id, 0)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let view = f
+        .engine
+        .run_view(view.run.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(view.steps[1].job.is_none());
+    assert!(view.run.steps[1].progress.error.is_some());
+
+    // The page read on a retry: the step starts after all.
+    let events = f.engine.subscribe();
+    f.engine
+        .retry_failed(job_of(&view, 0))
+        .unwrap_or_else(|e| panic!("{e}"));
+    let view = f.settle(view.run.id, events).await;
+    assert_eq!(view.status, RunStatus::Finished, "{view:?}");
+    assert!(view.run.steps[1].progress.error.is_none());
+}
+
+#[tokio::test]
+async fn a_step_job_is_recorded_with_its_step_or_not_at_all() {
+    let f = fixture();
+    let scan = f.pdf("registre.pdf", 1);
+    let view = f
+        .run_workflow(extract_then_analyse(true, "fake-model"), vec![scan.clone()])
+        .await;
+    let job = crate::setup::build_job(
+        "Orphan".into(),
+        Task::Analysis,
+        vec![scan],
+        Vec::new(),
+        Default::default(),
+        Default::default(),
+    );
+    let progress = kalamu_core::StepProgress {
+        job_id: Some(job.id),
+        ..Default::default()
+    };
+    // A step the run does not have: neither the job nor the progress is kept.
+    assert!(
+        f.store
+            .create_step_job(&job, view.run.id, 9, &progress)
+            .is_err()
+    );
+    assert!(f.store.job(job.id).is_err());
 }
 
 #[tokio::test]

@@ -15,15 +15,15 @@ use std::sync::Arc;
 use kalamu_core::provenance::ProvenanceWorkflow;
 use kalamu_core::workflow::{check_steps, may_read, run_status, step_state};
 use kalamu_core::{
-    Approval, CollectionId, DerivedFrom, InputKind, JobId, JobStatus, JobSummary, ProgressEvent,
-    ProjectId, RunId, RunStatus, RunStep, SetupId, SourceFile, SourceId, StepInput, StepProgress,
-    StepState, StoreError, Timestamp, WorkflowRun,
+    Approval, CollectionId, DerivedFrom, InputKind, Job, JobId, JobStatus, JobSummary,
+    ProgressEvent, ProjectId, RunId, RunStatus, RunStep, SetupId, SourceFile, SourceId, StepInput,
+    StepProgress, StepState, StoreError, Timestamp, WorkflowRun,
 };
-use kalamu_prompts::{PipelineSetup, Workflow};
+use kalamu_prompts::Workflow;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{Engine, EngineError, NewJob, SetupRequest};
+use crate::{Engine, EngineError, NewJob};
 
 /// A workflow to start on a selection of files.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -63,18 +63,9 @@ pub struct JobStep {
 #[ts(export)]
 pub struct StepView {
     pub state: StepState,
+    /// It waits for the researcher, as the run's status counts it.
+    pub needs_you: bool,
     pub job: Option<JobSummary>,
-}
-
-pub(crate) fn request(setup: &PipelineSetup) -> SetupRequest {
-    SetupRequest {
-        provider: setup.provider.clone(),
-        model: setup.model.clone(),
-        preset_id: setup.preset_id.clone(),
-        label: setup.label.clone(),
-        options: setup.options.clone(),
-        merge: setup.merge.clone(),
-    }
 }
 
 /// A stand-in for the text a later step will read from `source`, to check the step before the
@@ -130,7 +121,7 @@ impl Engine {
         let mut steps = Vec::new();
         for (i, step) in workflow.steps.iter().enumerate() {
             let p = &step.pipeline;
-            let setups: Vec<SetupRequest> = p.setups.iter().map(request).collect();
+            let setups = p.setups.clone();
             let new = NewJob {
                 name: p.name.clone(),
                 task: p.task,
@@ -147,6 +138,13 @@ impl Engine {
                 },
             };
             Self::check_new(&catalog, &new).map_err(|e| in_step(i, e))?;
+            let mut new = new;
+            crate::rules::writable_formats(
+                &catalog,
+                new.task,
+                &new.setups,
+                &mut new.output.formats,
+            );
             let setups = self
                 .freeze_setups(&catalog, new.task, &new.settings, &new.setups)
                 .map_err(|e| in_step(i, e))?;
@@ -195,7 +193,8 @@ impl Engine {
         }
         let mut changed = false;
         for (i, step) in run.steps.iter().enumerate() {
-            if step.progress.job_id.is_some() || step.progress.error.is_some() {
+            // A step that could not start is tried again: its input may have been read since.
+            if step.progress.job_id.is_some() {
                 continue;
             }
             let sources = match step.input {
@@ -220,33 +219,32 @@ impl Engine {
                     match self.snapshot(job.id, setup.id) {
                         Ok(sources) => sources,
                         Err(e) => {
-                            self.step_failed(&run, i, &e)?;
-                            changed = true;
+                            changed |= self.step_failed(&run, i, &e)?;
                             continue;
                         }
                     }
                 }
             };
-            match self.step_job(&run, step, sources) {
-                Ok(job_id) => {
-                    let progress = StepProgress {
-                        job_id: Some(job_id),
-                        ..step.progress.clone()
-                    };
-                    self.store.set_step_progress(run.id, i as u32, &progress)?;
-                    self.emit(ProgressEvent::StepStarted {
-                        run_id: run.id,
-                        step: i as u32,
-                        job_id,
-                    });
-                    if start && let Err(e) = self.start(job_id) {
-                        tracing::warn!(run = %run.id, step = i, error = %e, "step not started");
-                    }
-                }
-                Err(e) => {
-                    self.step_failed(&run, i, &e)?;
-                    changed = true;
-                }
+            let job = self.step_job(&run, step, sources);
+            let progress = StepProgress {
+                job_id: Some(job.id),
+                error: None,
+                ..step.progress.clone()
+            };
+            if let Err(e) = self
+                .store
+                .create_step_job(&job, run.id, i as u32, &progress)
+            {
+                changed |= self.step_failed(&run, i, &e.into())?;
+                continue;
+            }
+            self.emit(ProgressEvent::StepStarted {
+                run_id: run.id,
+                step: i as u32,
+                job_id: job.id,
+            });
+            if start && let Err(e) = self.start(job.id) {
+                tracing::warn!(run = %run.id, step = i, error = %e, "step not started");
             }
         }
         if changed {
@@ -255,13 +253,9 @@ impl Engine {
         Ok(())
     }
 
-    /// The job that runs a step, with its set-ups as frozen when the run started.
-    fn step_job(
-        &self,
-        run: &WorkflowRun,
-        step: &RunStep,
-        sources: Vec<SourceFile>,
-    ) -> Result<JobId, EngineError> {
+    /// The job that runs a step, with its set-ups as frozen when the run started; recorded with
+    /// the step's progress.
+    fn step_job(&self, run: &WorkflowRun, step: &RunStep, sources: Vec<SourceFile>) -> Job {
         let setups = step
             .setups
             .iter()
@@ -271,31 +265,36 @@ impl Engine {
                 s
             })
             .collect();
-        let job = self.insert_job(
+        crate::setup::build_job(
             format!("{} · {}", run.name, step.name),
             step.task,
             sources,
             setups,
             step.settings.clone(),
             step.output.clone(),
-        )?;
-        Ok(job.id)
+        )
     }
 
+    /// Records why a step could not start; whether that is news, to say the run changed.
     fn step_failed(
         &self,
         run: &WorkflowRun,
         index: usize,
         error: &EngineError,
-    ) -> Result<(), EngineError> {
+    ) -> Result<bool, EngineError> {
+        let code = error.code().to_string();
+        let progress = &run.steps[index].progress;
+        if progress.error.as_deref() == Some(code.as_str()) {
+            return Ok(false);
+        }
         tracing::warn!(run = %run.id, step = index, error = %error, "step could not start");
         let progress = StepProgress {
-            error: Some(error.code().to_string()),
-            ..run.steps[index].progress.clone()
+            error: Some(code),
+            ..progress.clone()
         };
-        Ok(self
-            .store
-            .set_step_progress(run.id, index as u32, &progress)?)
+        self.store
+            .set_step_progress(run.id, index as u32, &progress)?;
+        Ok(true)
     }
 
     /// Lets the steps that read a finished step go on: after its review, or with the pieces
@@ -331,8 +330,13 @@ impl Engine {
     /// Stops a run: its running steps are cancelled, and no further step starts. What was read
     /// is kept.
     pub fn cancel_run(&self, id: RunId) -> Result<(), EngineError> {
-        let run = self.store.run(id)?;
-        self.store.cancel_run(id)?;
+        // Taken as an advance takes it: a step being started is started before the run is read
+        // here, and cancelled with the others; none starts after.
+        let run = {
+            let _turn = self.workflows.lock().unwrap_or_else(|p| p.into_inner());
+            self.store.cancel_run(id)?;
+            self.store.run(id)?
+        };
         for step in &run.steps {
             if let Some(job) = step.progress.job_id {
                 self.cancel(job);
@@ -462,6 +466,7 @@ fn view(run: WorkflowRun, jobs: &HashMap<JobId, JobSummary>) -> RunView {
         states.push(state);
         steps.push(StepView {
             state,
+            needs_you: state.needs_you(),
             job: job.flatten(),
         });
     }

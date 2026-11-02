@@ -17,8 +17,9 @@
 # Four more, published 29 October 2026 and all fixed in zip 9, have no RustSec id yet either;
 # add each here when it gets one. docx-rs builds zip with only its `deflate` feature, so none
 # is reachable:
-# - GHSA-q7v9-x93c-xqv3 (symlink target allocation) and GHSA-hjqx-j4rw-g7xv (symlink targets
-#   checked lexically) are in ZipArchive::extract, which nothing calls;
+# - GHSA-q7v9-x93c-xqv3 (symlink target allocation; RUSTSEC-2026-0429 since 2 November 2026)
+#   and GHSA-hjqx-j4rw-g7xv (symlink targets checked lexically) are in ZipArchive::extract,
+#   which nothing calls;
 # - GHSA-9hj8-73fh-9963 (Shrink decoder, ZIP64 size) needs the `legacy-zip` feature and
 #   GHSA-8hxf-qr8p-62x4 (AES HMAC skipped at early EOF) the `aes-crypto` feature; neither is
 #   compiled (`cargo tree -e features -i zip`).
@@ -32,5 +33,6 @@ ignore = [
     "RUSTSEC-2026-0367",
     "RUSTSEC-2026-0368",
     "RUSTSEC-2026-0369",
+    "RUSTSEC-2026-0429",
     "RUSTSEC-2024-0429",
 ]

@@ -6,7 +6,7 @@ use kalamu_core::Entry;
 use kalamu_core::dictionary::proposal;
 
 use super::*;
-use crate::proposals::windows;
+use crate::requests::windows;
 
 /// The people of three documents, with variants of two names.
 fn people(f: &Fixture) {
@@ -45,6 +45,7 @@ fn answered(f: &Fixture, prepared: &Prepared, groups: &[(&[&str], &str, &str)]) 
         },
         options: SetupOptions::default(),
         merge: None,
+        pages_cap: None,
     };
     let job = Job {
         id: JobId::new(),

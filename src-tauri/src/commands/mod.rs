@@ -16,11 +16,10 @@ pub mod workflows;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use kalamu_catalog::CostEstimate;
-use kalamu_core::{InputWarning, JobId, ProviderId, SourceFile, SourceId, Task};
-use kalamu_engine::{Engine, SetupRequest};
+use kalamu_core::{InputWarning, JobId, ProviderId, SourceFile, SourceId};
+use kalamu_engine::Engine;
 use kalamu_media::OpenSource;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use ts_rs::TS;
 
 use crate::errors::AppError;
@@ -87,34 +86,19 @@ pub struct InspectedFile {
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export)]
-pub struct EstimateRow {
-    pub provider: ProviderId,
-    pub model: String,
-    pub pages: u32,
-    pub estimate: CostEstimate,
-    /// A table of contents' second step, which combines the pages.
-    pub merge: bool,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export)]
 pub struct PagePreview {
     pub mime: String,
     /// Base64 of a single-page PDF or an image, rendered by the review view.
     pub data: String,
 }
 
-#[derive(Debug, Clone, Deserialize, TS)]
-#[ts(export)]
-pub struct EstimateRequest {
-    pub task: Task,
-    pub sources: Vec<SourceFile>,
-    pub setups: Vec<SetupRequest>,
-    pub sample_pages: Option<u32>,
-}
-
 pub(crate) static INTERRUPTED: Mutex<Vec<JobId>> = Mutex::new(Vec::new());
 
 pub fn remember_interrupted(ids: Vec<JobId>) {
     *INTERRUPTED.lock().unwrap_or_else(|p| p.into_inner()) = ids;
+}
+
+/// Writes an exported file (a record, a dictionary) where the researcher chose.
+fn write_text(path: PathBuf, text: String) -> Result<(), AppError> {
+    std::fs::write(path, text).map_err(|e| AppError::new(crate::errors::id::FILE, e))
 }

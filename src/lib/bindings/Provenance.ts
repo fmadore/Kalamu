@@ -78,8 +78,10 @@ renamed_speakers?: Array<string>,
  */
 usage: Usage, cost_usd: number | null, 
 /**
- * Answers the provider billed but that were refused for breaking the fields and asked for
- * again: not in `usage` or `cost_usd`, which count the results kept.
+ * Answers the provider billed but that nothing was kept from: refused for breaking the
+ * fields and asked for again, or several pages read together whose page marks could not be
+ * used, each page then read again alone. Not in `usage` or `cost_usd`, which count the
+ * results kept.
  */
 refused?: ProvenanceRefused, 
 /**

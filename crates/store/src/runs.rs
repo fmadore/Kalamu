@@ -80,7 +80,16 @@ pub(crate) fn set_progress(
     index: u32,
     progress: &StepProgress,
 ) -> Result<(), StoreError> {
-    let conn = store.conn();
+    write_known(&store.conn(), run, index, progress)
+}
+
+/// Writes the progress of a step the run has, on `conn`, which may be a transaction's.
+pub(crate) fn write_known(
+    conn: &rusqlite::Connection,
+    run: RunId,
+    index: u32,
+    progress: &StepProgress,
+) -> Result<(), StoreError> {
     let known: Option<i64> = conn
         .query_row(
             "SELECT 1 FROM run_steps WHERE run_id = ?1 AND idx = ?2",
@@ -92,7 +101,7 @@ pub(crate) fn set_progress(
     if known.is_none() {
         return Err(StoreError::NotFound);
     }
-    write_progress(&conn, run, index, progress)
+    write_progress(conn, run, index, progress)
 }
 
 pub(crate) fn get(store: &SqliteStore, id: RunId) -> Result<WorkflowRun, StoreError> {

@@ -47,6 +47,27 @@ pub struct SetupOptions {
     pub reasoning: Option<String>,
 }
 
+/// One provider, model and prompt to run, as chosen in New job or saved in a pipeline, before
+/// its prompt is frozen into a [`Setup`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct SetupRequest {
+    pub provider: ProviderId,
+    pub model: String,
+    /// A preset id; the task's default when absent.
+    pub preset_id: Option<String>,
+    /// Shown in comparison columns and file names; derived from the model when absent.
+    #[serde(default)]
+    pub label: Option<String>,
+    #[serde(default)]
+    pub options: SetupOptions,
+    /// For a table of contents, the model that combines the pages; the same model as the
+    /// pages' when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub merge: Option<MergeModel>,
+}
+
 /// A provider, model and prompt combination. A normal job has one; comparison mode has several.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -64,6 +85,13 @@ pub struct Setup {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub merge: Option<MergeStep>,
+    /// For a text extraction that reads several pages in one call, the most pages this model
+    /// can write in one answer: settled when the job is created, so a later catalogue refresh
+    /// never regroups its pages nor changes their cache keys. `None` when the job reads one
+    /// page at a time, and in jobs made before it was settled.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub pages_cap: Option<u32>,
 }
 
 /// A table of contents' second step: one call per document, over the first step's readings.

@@ -9,6 +9,7 @@ mod batch;
 mod compare;
 mod contents;
 mod document;
+mod estimate;
 mod group;
 mod listen;
 mod output;
@@ -42,11 +43,13 @@ pub use compare::{
     ComparisonReport, DiffKind, DiffSpan, JobScores, PageComparison, SetupScore, SourceScores,
     diff, error_rate,
 };
+pub use estimate::{Estimate, EstimateRequest, EstimateRow};
+pub use kalamu_core::SetupRequest;
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
-pub use setup::{NewJob, SetupRequest};
-pub use snapshot::{DerivedState, Freshness, yields_text};
+pub use setup::NewJob;
+pub use snapshot::{DerivedState, Freshness};
 pub use workflow::{JobStep, RunView, StartRun, StepView};
 
 /// Where the engine gets API keys; the app reads them from Windows Credential Manager.
@@ -148,7 +151,7 @@ impl EngineError {
             Self::Media(MediaError::Encrypted) => "media.encrypted",
             Self::Media(MediaError::UnsupportedKind) => "media.unsupported",
             Self::Media(_) => "media.read",
-            Self::Prompt(_) => "prompt.invalid",
+            Self::Prompt(e) => e.code(),
             Self::UnknownProvider(_) => "provider.unknown",
             Self::MissingKey(_) => "provider.missing_key",
             Self::NotReady(e) => e.code(),
@@ -322,6 +325,17 @@ impl Engine {
 
     /// How long a recording's pieces may be for every set-up of a job: twenty minutes, or less
     /// when a model accepts less (with room for the last piece, which may run a quarter over).
+    /// How many pieces a recording is cut into at the usual length, for New job's diagram. The
+    /// cuts move to pauses when the job runs, so this is the count before they are known.
+    pub fn recording_pieces(source: &SourceFile) -> Option<u32> {
+        match source.kind {
+            InputKind::Audio | InputKind::Video => source
+                .duration_ms
+                .map(|ms| kalamu_media::plan(ms, &[], kalamu_media::DEFAULT_PIECE_MS).len() as u32),
+            _ => None,
+        }
+    }
+
     pub(crate) fn piece_length(&self, job: &Job) -> u64 {
         let catalog = self.catalog();
         job.setups

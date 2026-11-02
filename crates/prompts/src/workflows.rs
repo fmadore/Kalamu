@@ -5,16 +5,15 @@
 //! Each step is a pipeline, so a saved pipeline becomes a step as it is, and a pipeline on its
 //! own is a one-step workflow.
 
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use kalamu_core::workflow::check_steps;
 use kalamu_core::{OutputDestination, StepInput, Task, Timestamp};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{Pipeline, PromptError, io, write_atomic};
+use crate::folder::{Folder, Saved};
+use crate::{Pipeline, PromptError};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -78,54 +77,36 @@ impl Workflow {
     }
 }
 
-pub struct WorkflowLibrary {
-    dir: Option<PathBuf>,
-    saved: BTreeMap<String, Workflow>,
+impl Saved for Workflow {
+    const PREFIX: &'static str = "workflow-";
+    fn id(&self) -> &str {
+        &self.id
+    }
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
+
+pub struct WorkflowLibrary(Folder<Workflow>);
 
 impl WorkflowLibrary {
     /// Loads saved workflows from `dir`, creating it if needed; an unreadable file is skipped.
     pub fn open(dir: &Path) -> Result<Self, PromptError> {
-        fs::create_dir_all(dir).map_err(io)?;
-        let mut saved = BTreeMap::new();
-        for entry in fs::read_dir(dir).map_err(io)? {
-            let path = entry.map_err(io)?.path();
-            if path.extension().and_then(|e| e.to_str()) != Some("json") {
-                continue;
-            }
-            if let Ok(workflow) = fs::read_to_string(&path)
-                .map_err(io)
-                .and_then(|s| serde_json::from_str::<Workflow>(&s).map_err(io))
-            {
-                saved.insert(workflow.id.clone(), workflow);
-            }
-        }
-        Ok(Self {
-            dir: Some(dir.to_path_buf()),
-            saved,
-        })
+        Folder::open(dir).map(Self)
     }
 
     /// Nothing saved; for tests.
     pub fn in_memory() -> Self {
-        Self {
-            dir: None,
-            saved: BTreeMap::new(),
-        }
+        Self(Folder::in_memory())
     }
 
     /// By name, ignoring case.
     pub fn list(&self) -> Vec<Workflow> {
-        let mut out: Vec<Workflow> = self.saved.values().cloned().collect();
-        out.sort_by_key(|w| w.name.to_lowercase());
-        out
+        self.0.list()
     }
 
     pub fn get(&self, id: &str) -> Result<Workflow, PromptError> {
-        self.saved
-            .get(id)
-            .cloned()
-            .ok_or_else(|| PromptError::NotFound(id.to_string()))
+        self.0.get(id)
     }
 
     /// Saves a workflow under its id, or a new one, as its next version. Saving under a name
@@ -133,24 +114,10 @@ impl WorkflowLibrary {
     pub fn save(&mut self, mut workflow: Workflow) -> Result<Workflow, PromptError> {
         workflow.name = workflow.name.trim().to_string();
         workflow.check()?;
-        if workflow.id.is_empty() {
-            workflow.id = self
-                .saved
-                .values()
-                .find(|w| w.name.to_lowercase() == workflow.name.to_lowercase())
-                .map(|w| w.id.clone())
-                .unwrap_or_else(|| format!("workflow-{}", uuid::Uuid::new_v4()));
-        }
-        if uuid::Uuid::parse_str(workflow.id.trim_start_matches("workflow-")).is_err() {
-            return Err(PromptError::NotFound(workflow.id));
-        }
-        workflow.version = self.saved.get(&workflow.id).map_or(0, |w| w.version) + 1;
+        workflow.id = self.0.id_for(&workflow)?;
+        workflow.version = self.0.saved(&workflow.id).map_or(0, |w| w.version) + 1;
         workflow.updated_at = Timestamp::now();
-        if let Some(dir) = &self.dir {
-            write_atomic(&dir.join(format!("{}.json", workflow.id)), &workflow)?;
-        }
-        self.saved.insert(workflow.id.clone(), workflow.clone());
-        Ok(workflow)
+        self.0.put(workflow)
     }
 
     /// A copy under a new name, as its own first version.
@@ -162,34 +129,13 @@ impl WorkflowLibrary {
     }
 
     pub fn delete(&mut self, id: &str) -> Result<(), PromptError> {
-        if self.saved.remove(id).is_none() {
-            return Err(PromptError::NotFound(id.to_string()));
-        }
-        if let Some(dir) = &self.dir {
-            let path = dir.join(format!("{id}.json"));
-            if path.exists() {
-                fs::remove_file(path).map_err(io)?;
-            }
-        }
-        Ok(())
+        self.0.delete(id)
     }
 
     /// `name`, or `name (2)`, `name (3)`… when it is taken: an import or a copy never
     /// replaces a workflow of the same name.
     pub(crate) fn free_name(&self, name: &str) -> String {
-        let taken = |n: &str| {
-            self.saved
-                .values()
-                .any(|w| w.name.to_lowercase() == n.to_lowercase())
-        };
-        let base = name.trim().to_string();
-        let mut out = base.clone();
-        let mut n = 2;
-        while taken(&out) {
-            out = format!("{base} ({n})");
-            n += 1;
-        }
-        out
+        self.0.free_name(name)
     }
 }
 
@@ -207,14 +153,14 @@ pub(crate) mod tests {
     use kalamu_core::{ExportFormat, JobSettings, ProviderId, SetupOptions, WorkflowError};
 
     use super::*;
-    use crate::PipelineSetup;
+    use kalamu_core::SetupRequest;
 
     pub(crate) fn pipeline(name: &str, task: Task) -> Pipeline {
         Pipeline {
             id: String::new(),
             name: name.into(),
             task,
-            setups: vec![PipelineSetup {
+            setups: vec![SetupRequest {
                 provider: ProviderId::new("gemini"),
                 model: "gemini-3.8-flash".into(),
                 preset_id: None,

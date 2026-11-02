@@ -203,12 +203,6 @@ pub fn run() {
                 tracing::info!(count = interrupted.len(), "jobs interrupted at last close");
             }
             commands::remember_interrupted(interrupted);
-            // Workflow steps whose input became ready as the app closed: their jobs are made,
-            // and wait for the researcher like any interrupted job.
-            if let Err(e) = engine.resume_runs() {
-                tracing::warn!(error = %e, "workflow runs not resumed");
-            }
-
             // Progress to the interface. A workflow step started from a project is tied to its
             // documents as a job started from the project is.
             let mut events = engine.subscribe();
@@ -234,6 +228,13 @@ pub fn run() {
                     }
                 }
             });
+
+            // Workflow steps whose input became ready as the app closed: their jobs are made,
+            // and wait for the researcher like any interrupted job. After subscribing, so a
+            // step of a project's run is tied to its documents as any other.
+            if let Err(e) = engine.resume_runs() {
+                tracing::warn!(error = %e, "workflow runs not resumed");
+            }
 
             // Collect the answers of batches sent before the app was last closed.
             let resumed = engine.clone();
