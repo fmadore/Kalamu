@@ -23,6 +23,7 @@
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"test": "vitest run",
+		"test:webkit": "playwright test",
 		"tauri": "tauri",
 		"fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs",
 		"bundle:msix:x64": "node scripts/bundle-msix.mjs x64",
@@ -30,6 +31,7 @@
 	},
 	"devDependencies": {
 		"@choochmeque/tauri-windows-bundle": "^0.2.0",
+		"@playwright/test": "^1.64.1",
 		"@sveltejs/adapter-static": "^4.0.0",
 		"@sveltejs/kit": "^3.1.0",
 		"@sveltejs/load-config": "^0.2.3",

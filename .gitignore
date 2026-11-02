@@ -6,6 +6,9 @@
 # Laid in by scripts/bundle-msix.mjs for the length of a Store build.
 /src-tauri/tauri.windows.conf.json
 node_modules/
+# What `npm run test:webkit` leaves behind.
+/test-results/
+/playwright-report/
 /dist/
 /build/
 .svelte-kit/

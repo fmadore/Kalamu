@@ -31,7 +31,12 @@ export default defineConfig(
 		languageOptions: {
 			parserOptions: {
 				projectService: {
-					allowDefaultProject: ['eslint.config.js', 'scripts/*.mjs'],
+					allowDefaultProject: [
+						'eslint.config.js',
+						'scripts/*.mjs',
+						'playwright.config.ts',
+						'e2e/*.ts'
+					],
 					defaultProject: 'tsconfig.json'
 				},
 				tsconfigRootDir: import.meta.dirname,

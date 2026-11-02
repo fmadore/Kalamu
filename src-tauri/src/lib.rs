@@ -28,11 +28,6 @@ pub const PROGRESS_EVENT: &str = "progress";
 /// Sent when the window is closed while jobs run, so the interface can ask first.
 pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
 
-/// The app's data folder (in `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on
-/// macOS): Tauri names it after the bundle identifier in `tauri.conf.json`. Not `Kalamu`, which
-/// the Windows per-user installer takes for the program itself.
-const DATA_FOLDER: &str = "io.github.fmadore.kalamu";
-
 fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking::WorkerGuard> {
     let filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| "kalamu=info,kalamu_lib=info,kalamu_engine=info,warn".into());
@@ -395,15 +390,8 @@ pub fn run() {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use super::Catalog;
     use super::command_names::COMMANDS;
-    use super::{Catalog, DATA_FOLDER};
-
-    /// The folder moved into before Tauri starts must be the one Tauri then opens.
-    #[test]
-    fn the_data_folder_is_the_bundle_identifier() {
-        let config = include_str!("../tauri.conf.json");
-        assert!(config.contains(&format!("\"identifier\": \"{DATA_FOLDER}\"")));
-    }
 
     /// The handler, the command list and the capability must agree: a command missing from
     /// any of them is a rejected call at run time.

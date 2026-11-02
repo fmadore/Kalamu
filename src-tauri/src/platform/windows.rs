@@ -18,6 +18,9 @@ pub const TRAY_MENU_ON_LEFT_CLICK: bool = false;
 /// What the review view's player (Chromium, in WebView2) plays.
 pub const PLAYBACK: Playback = Playback::CHROMIUM;
 
+/// The app's data folder in `%LOCALAPPDATA%`: Tauri names it after the bundle identifier in
+/// `tauri.conf.json`. Not `Kalamu`, which the per-user installer takes for the program itself.
+const DATA_FOLDER: &str = "io.github.fmadore.kalamu";
 /// The data folder's name before the app was renamed from Scriptorium (0.1 and 0.2).
 const LEGACY_IDENTIFIER: &str = "io.github.fmadore.scriptorium";
 
@@ -28,7 +31,7 @@ const LEGACY_IDENTIFIER: &str = "io.github.fmadore.scriptorium";
 /// soon as the window exists.
 pub fn move_legacy_data() -> std::io::Result<bool> {
     std::env::var_os("LOCALAPPDATA").map_or(Ok(false), |local| {
-        move_legacy_into(&std::path::Path::new(&local).join(crate::DATA_FOLDER))
+        move_legacy_into(&std::path::Path::new(&local).join(DATA_FOLDER))
     })
 }
 
@@ -59,8 +62,14 @@ pub fn show_app(_app: &AppHandle) {}
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use super::{LEGACY_IDENTIFIER, move_legacy_into};
-    use crate::DATA_FOLDER;
+    use super::{DATA_FOLDER, LEGACY_IDENTIFIER, move_legacy_into};
+
+    /// The folder moved into before Tauri starts must be the one Tauri then opens.
+    #[test]
+    fn the_data_folder_is_the_bundle_identifier() {
+        let config = include_str!("../../tauri.conf.json");
+        assert!(config.contains(&format!("\"identifier\": \"{DATA_FOLDER}\"")));
+    }
 
     #[test]
     fn a_scriptorium_data_folder_moves_once() {
