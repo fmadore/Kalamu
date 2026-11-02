@@ -8,6 +8,7 @@
 	import type { JobStatus } from '#lib/bindings/JobStatus.js';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { shortcut } from '#lib/platform.js';
 	import { describeError } from '#lib/errors.js';
 	import { app, go, refreshJobs, toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -138,7 +139,7 @@
 		<button
 			class="fold"
 			aria-label={collapsed ? m.shell.expand : m.shell.collapse}
-			title="{collapsed ? m.shell.expand : m.shell.collapse} ({m.shell.sidebarShortcut})"
+			title="{collapsed ? m.shell.expand : m.shell.collapse} ({shortcut(m.shell.sidebarShortcut)})"
 			aria-expanded={!collapsed}
 			aria-controls="job-list"
 			onclick={() => (collapsed = !collapsed)}
@@ -151,13 +152,13 @@
 		class:current={app.view.name === 'new'}
 		aria-current={app.view.name === 'new' ? 'page' : undefined}
 		aria-label={collapsed ? m.nav.newJob : undefined}
-		title={collapsed ? `${m.nav.newJob} (${m.shell.newJobShortcut})` : undefined}
+		title={collapsed ? `${m.nav.newJob} (${shortcut(m.shell.newJobShortcut)})` : undefined}
 		onclick={() => go({ name: 'new' })}
 	>
 		<Icon name="plus" size={16} />
 		{#if !collapsed}
 			<span class="grow">{m.nav.newJob}</span>
-			<span class="kbd">{m.shell.newJobShortcut}</span>
+			<span class="kbd">{shortcut(m.shell.newJobShortcut)}</span>
 		{/if}
 	</button>
 

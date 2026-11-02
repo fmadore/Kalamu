@@ -98,9 +98,12 @@ impl SourceFile {
     }
 }
 
-/// A title made safe as a Windows file name: no reserved characters, no trailing dots or
-/// spaces, and short enough to leave room for the folder and extension.
+/// A title made safe as a file name on Windows and macOS: no reserved characters, no trailing
+/// dots or spaces, and short enough to leave room for the folder and extension. Windows counts
+/// a name's length in characters, macOS in UTF-8 bytes, where an Arabic or Chinese character
+/// takes two or three, so both are capped.
 fn file_safe(title: &str) -> String {
+    let mut bytes = 0;
     let cleaned: String = title
         .chars()
         .map(|c| match c {
@@ -109,6 +112,10 @@ fn file_safe(title: &str) -> String {
             c => c,
         })
         .take(100)
+        .take_while(|c| {
+            bytes += c.len_utf8();
+            bytes <= 150
+        })
         .collect();
     cleaned.trim_end_matches(['.', ' ']).trim().to_string()
 }
@@ -184,5 +191,18 @@ mod tests {
             "the title does not change the cache key"
         );
         assert_eq!(video.clone().with_title("   ").file_name, video.file_name);
+    }
+
+    /// macOS limits a name to 255 UTF-8 bytes, which 100 Arabic characters, the video id and
+    /// the longest extension would pass.
+    #[test]
+    fn a_long_arabic_title_fits_a_mac_file_name() {
+        let Some(video) = SourceFile::youtube("https://youtu.be/dQw4w9WgXcQ") else {
+            panic!("a YouTube link");
+        };
+        let titled = video.with_title(&"خطبة الجمعة ".repeat(20));
+        let name = format!("{}.analysis.provenance.json", titled.file_name);
+        assert!(name.len() <= 255, "{} bytes", name.len());
+        assert!(titled.file_name.ends_with(" [dQw4w9WgXcQ]"));
     }
 }

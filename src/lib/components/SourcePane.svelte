@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The source in a review, beside the text: a page of a scan on its lightbox, dark in both
-	// themes so the page is the brightest thing on screen, with zoom (also Ctrl and the wheel,
-	// Ctrl + and Ctrl −, Ctrl 0 to fit) and a quarter turn either way for a page scanned sideways;
+	// themes so the page is the brightest thing on screen, with zoom (also Ctrl and the wheel or
+	// a pinch, Ctrl + and Ctrl −, Ctrl 0 to fit; ⌘ on a Mac) and a quarter turn either way for a page scanned sideways;
 	// a text file set as text, with words looked for marked; or a player for a recording or a
 	// video. Where no strip of pages runs below, buttons over the scan turn its pages.
 	import type { Snippet } from 'svelte';
@@ -10,6 +10,7 @@
 	import { findTerm } from '#lib/analysis.js';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { primary, shortcut } from '#lib/platform.js';
 	import { type Rotation, turn } from '#lib/pdf.js';
 
 	let {
@@ -47,7 +48,8 @@
 		zoom = Math.round(Math.min(3, Math.max(0.4, zoom + step)) * 10) / 10;
 	}
 
-	// Ctrl and the wheel zoom the page, not the window. Not passive, to keep the window's own zoom
+	// Ctrl and the wheel zoom the page, not the window; so does a trackpad pinch, which reaches
+	// the page as the wheel with Ctrl on every system. Not passive, to keep the window's own zoom
 	// and scrolling out of it.
 	$effect(() => {
 		if (!desk || kind !== 'scan') return;
@@ -61,7 +63,7 @@
 	});
 
 	function onkeydown(e: KeyboardEvent) {
-		if (kind !== 'scan' || !e.ctrlKey || e.altKey) return;
+		if (kind !== 'scan' || !primary(e) || e.altKey) return;
 		const target = e.target;
 		if (target instanceof Element && target.closest('input, textarea, select, [contenteditable]'))
 			return;
@@ -104,19 +106,21 @@
 			<button
 				class="tool"
 				aria-label={m.review.zoomOut}
-				title="{m.review.zoomOut} (Ctrl −)"
+				title="{m.review.zoomOut} ({shortcut(m.review.zoomOutShortcut)})"
 				onclick={() => zoomBy(-0.2)}><Icon name="zoom-out" /></button
 			>
 			<span class="zoom-value mono">{Math.round(zoom * 100)}%</span>
 			<button
 				class="tool"
 				aria-label={m.review.zoomIn}
-				title="{m.review.zoomIn} (Ctrl +)"
+				title="{m.review.zoomIn} ({shortcut(m.review.zoomInShortcut)})"
 				onclick={() => zoomBy(0.2)}><Icon name="zoom-in" /></button
 			>
 			<span class="zoom-rule" aria-hidden="true"></span>
-			<button class="tool wide" title="{m.review.fitWidth} (Ctrl 0)" onclick={() => (zoom = 1)}
-				>{m.review.fitWidth}</button
+			<button
+				class="tool wide"
+				title="{m.review.fitWidth} ({shortcut(m.review.zoomFitShortcut)})"
+				onclick={() => (zoom = 1)}>{m.review.fitWidth}</button
 			>
 			<span class="zoom-rule" aria-hidden="true"></span>
 			<button

@@ -24,6 +24,7 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, listNames, messages } from '#lib/i18n/index.js';
+	import { primary } from '#lib/platform.js';
 	import { takesLanguage } from '#lib/languages.js';
 	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
 	import type { Pace } from '#lib/bindings/Pace.js';
@@ -452,7 +453,7 @@
 	}
 
 	function onKey(e: KeyboardEvent) {
-		if (e.ctrlKey && e.key === 'Enter' && ready && !starting) {
+		if (primary(e) && e.key === 'Enter' && ready && !starting) {
 			e.preventDefault();
 			void start();
 		}

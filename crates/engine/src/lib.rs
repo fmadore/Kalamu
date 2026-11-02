@@ -34,7 +34,7 @@ use kalamu_core::{
     PieceStatus, ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceFile, SourceId,
     SpeakerNames, StopSignal, StoreError, Timestamp,
 };
-use kalamu_media::{Ffmpeg, MediaError, OpenSource};
+use kalamu_media::{Ffmpeg, MediaError, OpenSource, Playback};
 use kalamu_prompts::{PromptError, PromptLibrary};
 use thiserror::Error;
 use tokio::sync::broadcast;
@@ -52,7 +52,7 @@ pub use setup::NewJob;
 pub use snapshot::{DerivedState, Freshness};
 pub use workflow::{JobStep, RunView, StartRun, StepView};
 
-/// Where the engine gets API keys; the app reads them from Windows Credential Manager.
+/// Where the engine gets API keys; the app reads them from the system keychain.
 pub trait KeySource: Send + Sync {
     fn key(&self, provider: &ProviderId) -> Option<ApiKey>;
 }
@@ -73,6 +73,8 @@ pub struct EngineConfig {
     pub batch_poll: Duration,
     /// Where pieces converted for listening in the review view are kept.
     pub listening_cache: PathBuf,
+    /// What the review view's player plays, given by the app for the webview it runs in.
+    pub playback: Playback,
     /// Where frozen copies of corrected text are kept for later jobs to read.
     pub snapshots: PathBuf,
 }
@@ -87,6 +89,7 @@ impl Default for EngineConfig {
             ffmpeg: None,
             batch_poll: Duration::from_secs(60),
             listening_cache: std::env::temp_dir().join("kalamu-listening"),
+            playback: Playback::default(),
             snapshots: std::env::temp_dir().join("kalamu-snapshots"),
         }
     }

@@ -50,17 +50,48 @@ pub fn audio_mime(path: &Path) -> Option<&'static str> {
     })
 }
 
-/// Whether the review view's player (Chromium, in WebView2) plays this file itself, so a piece
-/// is heard straight from the recording, with nothing converted first. A file that turns out
-/// not to play (an unusual codec in a common container) falls back to a converted copy.
-pub fn plays_as_is(path: &Path) -> bool {
-    let Some(ext) = path.extension().and_then(|e| e.to_str()) else {
-        return false;
+/// What the review view's player plays, which depends on the webview each operating system
+/// gives the app. The app picks one profile and the engine asks it, so nothing here assumes a
+/// browser.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Playback {
+    /// Extensions of the recordings the player plays itself.
+    plays: &'static [&'static str],
+    /// The formats a converted copy may be written in, as MIME types.
+    copy: &'static [&'static str],
+}
+
+impl Playback {
+    /// Chromium, in WebView2 on Windows.
+    pub const CHROMIUM: Self = Self {
+        plays: &[
+            "mp3", "m4a", "aac", "wav", "ogg", "oga", "opus", "flac", "webm", "mp4",
+        ],
+        copy: &["audio/ogg", "audio/wav"],
     };
-    matches!(
-        ext.to_ascii_lowercase().as_str(),
-        "mp3" | "m4a" | "aac" | "wav" | "ogg" | "oga" | "opus" | "flac" | "webm" | "mp4"
-    )
+
+    /// WebKit, on macOS. Ogg and WebM play only in its latest releases, so those recordings
+    /// are converted, to FLAC, which it has long played, or else WAV.
+    pub const WEBKIT: Self = Self {
+        plays: &["mp3", "m4a", "aac", "wav", "flac", "mp4"],
+        copy: &["audio/flac", "audio/wav"],
+    };
+
+    /// Whether the player plays this file itself, so a piece is heard straight from the
+    /// recording, with nothing converted first. A file that turns out not to play (an unusual
+    /// codec in a common container) falls back to a converted copy.
+    pub fn plays(&self, path: &Path) -> bool {
+        path.extension()
+            .and_then(|e| e.to_str())
+            .is_some_and(|ext| self.plays.contains(&ext.to_ascii_lowercase().as_str()))
+    }
+}
+
+impl Default for Playback {
+    /// The player Kalamu first shipped with.
+    fn default() -> Self {
+        Self::CHROMIUM
+    }
 }
 
 /// Pieces of at most `target_ms` (plus a quarter for the last one rather than leaving a
@@ -201,9 +232,13 @@ impl AudioSource {
     }
 
     /// One piece converted to listen to in the review view, for a recording the player cannot
-    /// play itself: Opus (or WAV) at the encoder's fastest setting, as recorded, without the
-    /// volume evened out.
-    pub fn listening_copy(&self, piece: &PieceRef) -> Result<PreparedInput, MediaError> {
+    /// play itself: in the first of the player's formats this FFmpeg writes, at the encoder's
+    /// fastest setting, as recorded, without the volume evened out.
+    pub fn listening_copy(
+        &self,
+        piece: &PieceRef,
+        playback: &Playback,
+    ) -> Result<PreparedInput, MediaError> {
         let PieceRef::Segment {
             index,
             start_ms,
@@ -218,7 +253,7 @@ impl AudioSource {
             )
         })?;
         let format = ffmpeg
-            .choose(&["audio/ogg", "audio/wav"])
+            .choose(playback.copy)
             .ok_or_else(|| MediaError::NeedsConversion("No audio format to play".into()))?;
         let end = if *end_ms == 0 { u64::MAX / 2 } else { *end_ms };
         let bytes = ffmpeg.extract_to_listen(&self.path, *start_ms, end, format)?;
@@ -290,7 +325,7 @@ mod tests {
         for name in [
             "a.mp3", "b.M4A", "c.wav", "d.ogg", "e.opus", "f.flac", "g.webm", "h.mp4",
         ] {
-            assert!(plays_as_is(Path::new(name)), "{name}");
+            assert!(Playback::CHROMIUM.plays(Path::new(name)), "{name}");
         }
         for name in [
             "a.wma",
@@ -301,8 +336,21 @@ mod tests {
             "f.3gp",
             "no-extension",
         ] {
-            assert!(!plays_as_is(Path::new(name)), "{name}");
+            assert!(!Playback::CHROMIUM.plays(Path::new(name)), "{name}");
+            assert!(!Playback::WEBKIT.plays(Path::new(name)), "{name}");
         }
+    }
+
+    #[test]
+    fn webkit_hears_ogg_and_webm_through_a_copy_it_plays() {
+        for name in ["a.mp3", "b.M4A", "c.wav", "d.flac", "e.mp4"] {
+            assert!(Playback::WEBKIT.plays(Path::new(name)), "{name}");
+        }
+        for name in ["a.ogg", "b.opus", "c.oga", "d.webm"] {
+            assert!(!Playback::WEBKIT.plays(Path::new(name)), "{name}");
+        }
+        assert_eq!(Playback::WEBKIT.copy, ["audio/flac", "audio/wav"]);
+        assert!(Playback::WEBKIT.copy.iter().all(|m| !m.contains("ogg")));
     }
 
     #[test]

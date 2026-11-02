@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { messages } from '#lib/i18n/index.js';
+	import { osNames } from '#lib/platform.js';
 	import { api, notify } from '#lib/tauri.js';
 	import { app } from '#lib/state.svelte.js';
 
@@ -26,7 +27,7 @@
 	async function background() {
 		app.closeRequested = false;
 		await api.hideWindow();
-		void notify(m.app.name, m.close.hidden, true);
+		void notify(m.app.name, m.close.hidden(osNames().reopen), true);
 	}
 </script>
 
@@ -39,7 +40,7 @@
 	>
 		<h2 id="close-title">{m.close.title}</h2>
 		<p id="close-body" aria-live="polite">
-			{quitting && inFlight > 0 ? m.close.waiting(inFlight) : m.close.body}
+			{quitting && inFlight > 0 ? m.close.waiting(inFlight) : m.close.body(osNames().tray)}
 		</p>
 		<div class="actions">
 			{#if quitting}

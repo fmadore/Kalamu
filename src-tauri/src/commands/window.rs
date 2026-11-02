@@ -1,4 +1,4 @@
-//! The window: taskbar progress, the notification-area icon, hiding and closing.
+//! The window: progress on the taskbar or Dock icon, the tray icon, hiding and closing.
 
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
@@ -10,7 +10,8 @@ use super::AppState;
 use crate::errors::CmdResult;
 use crate::tray::{TrayMenu, TrayState};
 
-/// Progress on the taskbar button: 0–100, or `None` to clear it.
+/// Progress on the taskbar button (Windows) or the Dock icon (macOS): 0–100, or `None` to
+/// clear it.
 #[tauri::command]
 pub fn set_taskbar_progress(app: AppHandle, percent: Option<u32>) {
     use tauri::window::{ProgressBarState, ProgressBarStatus};
@@ -57,13 +58,23 @@ pub async fn quit_app(app: AppHandle) -> CmdResult<()> {
     Ok(())
 }
 
-/// Brings the window back from the tray, the taskbar or behind other windows.
+/// Brings the window back from the tray, the taskbar, the Dock or behind other windows.
 pub fn show_main_window(app: &AppHandle) {
+    crate::platform::show_app(app);
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
         let _ = window.unminimize();
         let _ = window.set_focus();
     }
+}
+
+/// Whether any job is running, so closing or quitting asks first.
+pub fn jobs_running(state: &AppState) -> bool {
+    state
+        .engine
+        .jobs()
+        .map(|jobs| jobs.iter().any(|j| state.engine.is_running(j.id)))
+        .unwrap_or(false)
 }
 
 /// Pauses every running job and returns them.

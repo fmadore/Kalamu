@@ -14,12 +14,13 @@ export const en = {
 		toCheck: 'For you to check',
 		finished: 'Finished',
 		noJobs: 'Jobs you start appear here.',
-		newJobShortcut: 'Ctrl N',
-		offlineReady: 'Whisper ready on this PC',
+		/** The key after the shortcut modifier (Ctrl, or ⌘ on a Mac: `platform.ts`). */
+		newJobShortcut: 'N',
+		offlineReady: 'Whisper ready on this computer',
 		collapse: 'Hide the job list',
 		expand: 'Show the job list',
-		sidebarShortcut: 'Ctrl B',
-		/** The menu a right click opens on a job in the list. */
+		sidebarShortcut: 'B',
+		/** The menu a right click (Control-click on a Mac) opens on a job in the list. */
 		jobMenu: (name: string) => `Actions for “${name}”`,
 		addToProject: 'Add to a project',
 		noProjects: 'No project yet. Create one under Projects.',
@@ -39,7 +40,7 @@ export const en = {
 		text_extraction: 'Extract text',
 		text_extractionHint: 'Printed and handwritten documents: PDF, JPEG, PNG, TIFF',
 		audio_transcription: 'Transcribe audio',
-		audio_transcriptionHint: 'Recordings and video files on this PC: MP3, M4A, WAV, MP4',
+		audio_transcriptionHint: 'Recordings and video files on this computer: MP3, M4A, WAV, MP4',
 		youtube: 'Transcribe YouTube',
 		youtubeHint: 'Public YouTube videos, from their link. Nothing is downloaded',
 		analysis: 'Analyse texts',
@@ -117,12 +118,12 @@ export const en = {
 		sends: 'What each step sends',
 		sendsFiles: (provider: string) => `the files, to ${provider}`,
 		sendsText: (n: number, provider: string) => `the text of step ${n}, to ${provider}`,
-		offline: 'stays on this PC',
+		offline: 'stays on this computer',
 		costKnown: (usd: string) => `about ${usd}`,
 		costLater: (n: number) => `known once step ${n} has read the files`,
 		costUnknown: 'cost unknown',
 		cloudAfterOffline:
-			'A step reads on this PC, and a later one sends its text to a cloud provider. Remove that step if the material must stay on this PC.',
+			'A step reads on this computer, and a later one sends its text to a cloud provider. Remove that step if the material must stay on this computer.',
 		start: 'Start',
 		fromProject: (name: string) => `Its jobs join the project “${name}”.`,
 		onText: (files: string) =>
@@ -337,7 +338,7 @@ export const en = {
 			'This project is archived. Nothing in it has changed; restore it to list it again.',
 		delete: 'Delete project',
 		deleteConfirm: (name: string) =>
-			`Delete the project “${name}”? Its collections and documents are removed from Kalamu. The files on your PC, the jobs and their results stay, and the jobs remain under Jobs.`,
+			`Delete the project “${name}”? Its collections and documents are removed from Kalamu. The files on your computer, the jobs and their results stay, and the jobs remain under Jobs.`,
 		allDocuments: 'All documents',
 		collections: 'Collections',
 		newCollection: 'New collection',
@@ -656,7 +657,7 @@ export const en = {
 		paceNotBatched: (names: string) =>
 			`${names} has no batch service in Kalamu and still runs page by page, at its usual price.`,
 		start: 'Start',
-		startShortcut: 'Ctrl ↵',
+		startShortcut: '↵',
 		starting: 'Starting…',
 		name: 'Job name',
 		inspecting: 'Reading files…',
@@ -706,7 +707,7 @@ export const en = {
 		recording:
 			'Microphone close to the speakers, a quiet room, one recording per interview, and a short spoken introduction with names and date.',
 		youtubePublic:
-			'Only public videos can be read: private and unlisted ones are refused. Kalamu asks YouTube for each video’s title when you add it; Google then reads the video itself, and nothing is downloaded to this PC.',
+			'Only public videos can be read: private and unlisted ones are refused. Kalamu asks YouTube for each video’s title when you add it; Google then reads the video itself, and nothing is downloaded to this computer.',
 		youtubePreview:
 			'Reading YouTube links is a preview feature of Gemini, and Google may change its limits. A free key reads up to 8 hours of video a day. Each video is transcribed in one go, which suits videos up to about two hours.',
 		results:
@@ -756,10 +757,10 @@ export const en = {
 		audioJoin: 'Joined into one transcript, with timestamps',
 		audioSpeakers: 'Speaker labels may differ from one piece to the next',
 		youtubeSource: 'A public YouTube link',
-		youtubeSend: 'Only the link leaves this PC: nothing is downloaded',
+		youtubeSend: 'Only the link leaves this computer: nothing is downloaded',
 		youtubeRead: (model: string) => `${model} watches the whole video in one go`,
 		youtubeJoin: 'A transcript with timestamps',
-		thisPc: 'This PC',
+		thisPc: 'This computer',
 		google: 'Google',
 		contentsSource: 'A long document: an issue, an archival file, a volume',
 		contentsRead: (model: string) => `${model} lists the articles or items on each page`,
@@ -864,7 +865,7 @@ export const en = {
 		playVideo: 'Play the video',
 		playVideoNote: 'Plays from YouTube, in its privacy-enhanced player.',
 		videoBlocked:
-			'This video cannot be played here: its owner may not allow it, or this PC is offline.',
+			'This video cannot be played here: its owner may not allow it, or this computer is offline.',
 		keywords: 'Keywords',
 		previous: 'Previous',
 		next: 'Next',
@@ -891,6 +892,9 @@ export const en = {
 		notDone: 'Not processed yet.',
 		saved: 'Saved; the result files were updated.',
 		pieceReviewed: (label: string) => `${label}, reviewed`,
+		zoomOutShortcut: '−',
+		zoomInShortcut: '+',
+		zoomFitShortcut: '0',
 		zoomIn: 'Zoom in',
 		zoomOut: 'Zoom out',
 		turnLeft: 'Turn the page left',
@@ -918,7 +922,7 @@ export const en = {
 		answers: 'Answers',
 		noneFound: 'None found',
 		onePerLine: 'One per line.',
-		reviewedShortcut: 'Ctrl ↵',
+		reviewedShortcut: '↵',
 		markNotReviewed: 'Mark as not reviewed',
 		pages: 'Pages',
 		differences: (n: number) => (n === 1 ? '1 difference' : `${n} differences`),
@@ -963,7 +967,7 @@ export const en = {
 		notCombined: 'The pages have not been combined yet.',
 		editEntries: 'Correct the entries',
 		search: 'Search',
-		searchShortcut: 'Ctrl F',
+		searchShortcut: 'F',
 		searchText: 'Search this document',
 		searchEntries: 'Search the entries',
 		found: (n: number) => (n === 1 ? '1 found' : `${n} found`),
@@ -1063,8 +1067,8 @@ export const en = {
 		title: 'Settings',
 		lede: 'Keys, offline models, processing and appearance.',
 		keysTitle: 'API keys',
-		keysHint:
-			'Keys are stored in Windows Credential Manager and sent only to their provider. Files go directly from this PC to the provider you choose.',
+		keysHint: (keychain: string) =>
+			`Keys are stored in ${keychain} and sent only to their provider. Files go directly from this computer to the provider you choose.`,
 		keySaved: 'Saved',
 		keyMissing: 'No key',
 		keyPlaceholder: 'Paste the key',
@@ -1075,7 +1079,7 @@ export const en = {
 		testOk: (n: number) => `Key works: ${n} models available`,
 		offlineTitle: 'Offline transcription',
 		offlineHint:
-			'Whisper runs on this PC: recordings never leave it, no key or account is needed, and it works without internet once a model is downloaded. It is slower than the cloud models and cannot label speakers. Large v3 Turbo suits most PCs.',
+			'Whisper runs on this PC: recordings never leave it, no key or account is needed, and it works without internet once a model is downloaded. It is slower than the cloud models and cannot label speakers. Large v3 Turbo suits most computers.',
 		offlineCpu: (missing: string) =>
 			`This processor lacks ${missing}, which offline transcription needs. Use a cloud model instead.`,
 		modelInstalled: 'Downloaded',
@@ -1096,7 +1100,7 @@ export const en = {
 		catalogAuto: 'Check at startup',
 		appearanceTitle: 'Appearance',
 		theme: 'Theme',
-		themeSystem: 'Same as Windows',
+		themeSystem: 'Same as the system',
 		themeLight: 'Light',
 		themeDark: 'Dark',
 		aboutTitle: 'About',
@@ -1150,7 +1154,7 @@ export const en = {
 			},
 			apiKey: {
 				word: 'API key',
-				text: 'A code from an AI provider (Google, OpenAI, Anthropic, Mistral) that lets Kalamu send work under your account; the provider bills what is used. Kalamu keeps keys in Windows Credential Manager and sends each only to the provider that issued it.'
+				text: 'A code from an AI provider (Google, OpenAI, Anthropic, Mistral) that lets Kalamu send work under your account; the provider bills what is used. Kalamu keeps keys in the system’s keychain (Credential Manager on Windows, the Keychain on a Mac) and sends each only to the provider that issued it.'
 			},
 			prompt: {
 				word: 'Prompt',
@@ -1233,7 +1237,8 @@ export const en = {
 	},
 	close: {
 		title: 'Jobs are still running',
-		body: 'They can keep running in the background, with Kalamu in the notification area next to the clock. Or quit now: the jobs pause, finished pages are kept, and you resume them next time from Jobs.',
+		body: (tray: string) =>
+			`They can keep running in the background, with Kalamu in ${tray}. Or quit now: the jobs pause, finished pages are kept, and you resume them next time from Jobs.`,
 		background: 'Keep running in the background',
 		quit: 'Pause and quit',
 		stay: 'Cancel',
@@ -1242,7 +1247,25 @@ export const en = {
 				? 'Waiting for 1 piece already sent. It is paid for, so Kalamu stores it before closing; this takes a few minutes at most.'
 				: `Waiting for ${n} pieces already sent. They are paid for, so Kalamu stores them before closing; this takes a few minutes at most.`,
 		quitNow: 'Quit now',
-		hidden: 'Kalamu is still working. Click its icon in the notification area to open it again.'
+		hidden: (reopen: string) =>
+			`Kalamu is still working. Click its icon in ${reopen} to open it again.`
+	},
+	/** What each operating system calls the places Kalamu uses; `platform.ts` picks one. */
+	os: {
+		windows: {
+			keychain: 'Windows Credential Manager',
+			tray: 'the notification area next to the clock',
+			reopen: 'the notification area'
+		},
+		macos: {
+			keychain: 'the macOS Keychain',
+			tray: 'the menu bar',
+			reopen: 'the menu bar or the Dock'
+		}
+	},
+	/** Key names in shortcuts; on a Mac the modifier is written ⌘. */
+	keys: {
+		ctrl: 'Ctrl'
 	},
 	tray: {
 		open: 'Open Kalamu',
@@ -1338,7 +1361,7 @@ export const en = {
 		'offline.integrity': 'The downloaded model was damaged and has been discarded. Try again.',
 		'offline.io': 'The model file could not be read or written.',
 		'output.write': 'The result files could not be written.',
-		'keys.keychain': 'Windows Credential Manager refused the request.',
+		'keys.keychain': 'The system’s keychain refused the request.',
 		'keys.format': 'This key contains a character no API key has, so it was not saved.',
 		'settings.write': 'The settings could not be saved.',
 		'catalog.download': 'The model list could not be downloaded.',

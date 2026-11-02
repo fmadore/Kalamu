@@ -1,4 +1,4 @@
-//! API keys: saved in Credential Manager, never sent to the interface.
+//! API keys: saved in the system keychain, never sent to the interface.
 
 use kalamu_core::ProviderId;
 use kalamu_engine::KeySource;

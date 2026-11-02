@@ -193,11 +193,13 @@ impl ModelManager {
 
     /// The voice-activity model's path, when it is installed and whisper.cpp can open it:
     /// whisper.cpp opens it by name with the C runtime, which cannot read non-ASCII paths on
-    /// Windows, so a user folder with an accented name goes without it.
+    /// Windows, so a user folder with an accented name goes without it there. macOS opens
+    /// UTF-8 paths.
     pub fn vad_path(&self) -> Option<String> {
         let path = self.dir.join(VAD.file);
         let path = path.to_str()?;
-        (self.is_installed(&VAD) && path.is_ascii()).then(|| path.to_owned())
+        let readable = !cfg!(windows) || path.is_ascii();
+        (self.is_installed(&VAD) && readable).then(|| path.to_owned())
     }
 }
 

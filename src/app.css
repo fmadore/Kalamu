@@ -106,9 +106,10 @@
 	--focus-offset: 2px;
 
 	--font-ui: 'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
-	/* Source Serif for Latin, Greek and Cyrillic; Windows' Times New Roman for Arabic script. */
-	--font-text: 'Source Serif 4 Variable', 'Times New Roman', serif;
-	--font-mono: 'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace;
+	/* Source Serif for Latin, Greek and Cyrillic; for Arabic script, Times New Roman on Windows
+	   and Geeza Pro on a Mac. */
+	--font-text: 'Source Serif 4 Variable', 'Times New Roman', 'Geeza Pro', serif;
+	--font-mono: 'IBM Plex Mono', 'Cascadia Mono', Consolas, Menlo, monospace;
 
 	/* Sized for reading at arm's length on a laptop, dense enough for a working tool. */
 	--type-xs: 0.78125rem;

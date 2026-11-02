@@ -62,7 +62,7 @@ impl Engine {
         else {
             return Err(MediaError::NoSuchPage(piece.label()).into());
         };
-        if !convert && kalamu_media::plays_as_is(Path::new(&source.path)) {
+        if !convert && self.config.playback.plays(Path::new(&source.path)) {
             return Ok(PieceAudio {
                 path: source.path.clone(),
                 start_ms,
@@ -78,7 +78,7 @@ impl Engine {
             Some(path) => path,
             None => {
                 let opened = OpenSource::open(source, self.config.ffmpeg.as_ref())?;
-                let copy = opened.listening_copy(&piece)?;
+                let copy = opened.listening_copy(&piece, &self.config.playback)?;
                 let ext = Path::new(&copy.file_name)
                     .extension()
                     .and_then(|e| e.to_str())
@@ -103,8 +103,8 @@ pub(crate) struct ListeningCache<'a> {
     cap_bytes: u64,
 }
 
-/// The formats a listening copy is written in.
-const EXTENSIONS: [&str; 2] = ["ogg", "wav"];
+/// The formats a listening copy is written in, for every player (`Playback`).
+const EXTENSIONS: [&str; 3] = ["ogg", "flac", "wav"];
 
 impl<'a> ListeningCache<'a> {
     pub(crate) fn new(dir: &'a Path, cap_bytes: u64) -> Self {

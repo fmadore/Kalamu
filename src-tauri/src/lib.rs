@@ -1,9 +1,11 @@
-//! The Tauri shell: wires the engine to Windows (Credential Manager, the app data folder, the
-//! window and taskbar) and exposes it to the interface through typed commands and events.
+//! The Tauri shell: wires the engine to the operating system (its keychain, the app data
+//! folder, the window, taskbar or Dock) and exposes it to the interface through typed commands
+//! and events. What differs between Windows and macOS is in [`platform`].
 
 mod command_names;
 mod commands;
 mod errors;
+mod platform;
 mod secrets;
 mod settings;
 mod tray;
@@ -26,28 +28,10 @@ pub const PROGRESS_EVENT: &str = "progress";
 /// Sent when the window is closed while jobs run, so the interface can ask first.
 pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
 
-/// The app's data folder in `%LOCALAPPDATA%`: Tauri names it after the bundle identifier in
-/// `tauri.conf.json`. Not `Kalamu`, which the per-user installer takes for the program itself.
+/// The app's data folder (in `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on
+/// macOS): Tauri names it after the bundle identifier in `tauri.conf.json`. Not `Kalamu`, which
+/// the Windows per-user installer takes for the program itself.
 const DATA_FOLDER: &str = "io.github.fmadore.kalamu";
-/// The data folder's name before the app was renamed from Scriptorium (0.1 and 0.2).
-const LEGACY_IDENTIFIER: &str = "io.github.fmadore.scriptorium";
-
-/// Moves the jobs, settings, presets and Whisper models of a Scriptorium install to the
-/// renamed data folder, once, before anything is created there. Every stored path is relative
-/// to the folder, so it moves whole. If the move fails the old folder is left untouched.
-///
-/// Runs before Tauri builds the window, since WebView2 creates its data in the new folder as
-/// soon as the window exists.
-fn move_legacy_data(data: &std::path::Path) -> Result<bool, std::io::Error> {
-    let Some(legacy) = data.parent().map(|p| p.join(LEGACY_IDENTIFIER)) else {
-        return Ok(false);
-    };
-    if data.exists() || !legacy.is_dir() {
-        return Ok(false);
-    }
-    std::fs::rename(&legacy, data)?;
-    Ok(true)
-}
 
 fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking::WorkerGuard> {
     let filter = tracing_subscriber::EnvFilter::try_from_default_env()
@@ -69,7 +53,7 @@ fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking:
 }
 
 /// Writes a panic to `panic.log` before the process ends. A panic in a command aborts the app
-/// (it cannot unwind through WebView2), and the daily log is written from a background thread
+/// (it cannot unwind through the webview), and the daily log is written from a background thread
 /// that may not get to it.
 fn record_panics(dir: &std::path::Path) {
     let path = dir.join("panic.log");
@@ -118,9 +102,7 @@ fn link_step(
 }
 
 pub fn run() {
-    let moved = std::env::var_os("LOCALAPPDATA").map_or(Ok(false), |local| {
-        move_legacy_data(&std::path::Path::new(&local).join(DATA_FOLDER))
-    });
+    let moved = platform::move_legacy_data();
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             // Also when the window was hidden in the tray.
@@ -130,6 +112,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .setup(move |app| {
+            platform::init(app)?;
             let data = app.path().app_local_data_dir()?;
             let logs = app.path().app_log_dir()?;
             std::fs::create_dir_all(&data)?;
@@ -191,6 +174,7 @@ pub fn run() {
                     app_version: env!("CARGO_PKG_VERSION").into(),
                     ffmpeg,
                     listening_cache: data.join("listening"),
+                    playback: platform::PLAYBACK,
                     snapshots: data.join("snapshots"),
                     ..EngineConfig::default()
                 },
@@ -279,15 +263,14 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let state = window.state::<AppState>();
-                let busy = state
-                    .engine
-                    .jobs()
-                    .map(|jobs| jobs.iter().any(|j| state.engine.is_running(j.id)))
-                    .unwrap_or(false);
-                if busy {
+                // While jobs run the interface asks first; otherwise the window closes, or on
+                // macOS hides with the app left in the Dock.
+                if commands::window::jobs_running(&window.state::<AppState>()) {
                     api.prevent_close();
                     let _ = window.emit(CLOSE_REQUESTED_EVENT, ());
+                } else if platform::CLOSE_HIDES_WINDOW {
+                    api.prevent_close();
+                    let _ = window.hide();
                 }
             }
         })
@@ -402,7 +385,8 @@ pub fn run() {
             commands::window::hide_window,
             commands::window::quit_app,
         ])
-        .run(tauri::generate_context!());
+        .build(tauri::generate_context!())
+        .map(|app| app.run(platform::on_run_event));
     if let Err(e) = result {
         tracing::error!(error = %e, "the app could not start");
     }
@@ -412,32 +396,13 @@ pub fn run() {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::command_names::COMMANDS;
-    use super::{Catalog, DATA_FOLDER, LEGACY_IDENTIFIER, move_legacy_data};
+    use super::{Catalog, DATA_FOLDER};
 
     /// The folder moved into before Tauri starts must be the one Tauri then opens.
     #[test]
     fn the_data_folder_is_the_bundle_identifier() {
         let config = include_str!("../tauri.conf.json");
         assert!(config.contains(&format!("\"identifier\": \"{DATA_FOLDER}\"")));
-    }
-
-    #[test]
-    fn a_scriptorium_data_folder_moves_once() {
-        let root = tempfile::tempdir().unwrap();
-        let legacy = root.path().join(LEGACY_IDENTIFIER);
-        let data = root.path().join(DATA_FOLDER);
-        std::fs::create_dir_all(legacy.join("presets")).unwrap();
-        std::fs::write(legacy.join("jobs.sqlite"), b"jobs").unwrap();
-
-        assert!(move_legacy_data(&data).unwrap());
-        assert_eq!(std::fs::read(data.join("jobs.sqlite")).unwrap(), b"jobs");
-        assert!(data.join("presets").is_dir());
-        assert!(!legacy.exists());
-
-        // A later Scriptorium folder never replaces the Kalamu one.
-        std::fs::create_dir_all(&legacy).unwrap();
-        assert!(!move_legacy_data(&data).unwrap());
-        assert!(legacy.exists());
     }
 
     /// The handler, the command list and the capability must agree: a command missing from

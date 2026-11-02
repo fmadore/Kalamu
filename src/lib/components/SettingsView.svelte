@@ -2,6 +2,7 @@
 	import { CREDIT_URLS } from '#lib/credits.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages, placeholders } from '#lib/i18n/index.js';
+	import { osNames } from '#lib/platform.js';
 	import { api } from '#lib/tauri.js';
 	import { app, hasKey, openLink, refreshKeys, toast } from '#lib/state.svelte.js';
 	import ExternalLink from './ExternalLink.svelte';
@@ -58,7 +59,7 @@
 <div class="sheet settings">
 	<section class="card block" aria-labelledby="keys-title">
 		<h2 id="keys-title">{m.settings.keysTitle}</h2>
-		<p class="muted small">{m.settings.keysHint}</p>
+		<p class="muted small">{m.settings.keysHint(osNames().keychain)}</p>
 		{#each (app.catalog?.providers ?? []).filter((p) => !p.local) as p (p.id)}
 			<div class="key">
 				<div class="key-name">

@@ -14,6 +14,9 @@ use crate::errors::{AppError, CmdResult, id};
 #[tauri::command]
 pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
     fn walk(path: &Path, task: Task, out: &mut Vec<PathBuf>, depth: usize) {
+        if is_apple_double(path) {
+            return;
+        }
         if path.is_dir() {
             if depth > 8 {
                 return;
@@ -36,6 +39,15 @@ pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
     }
     out.dedup();
     out.into_iter().map(|p| p.display().to_string()).collect()
+}
+
+/// The `._name.pdf` beside `name.pdf` that macOS writes on USB drives and network shares to
+/// hold the file's metadata: it has the extension of the file but none of its content, and
+/// the folder reaches Windows PCs too.
+fn is_apple_double(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|n| n.to_str())
+        .is_some_and(|n| n.starts_with("._"))
 }
 
 /// Freezes the corrected text of a job's sources under one set-up, as sources a new analysis
@@ -71,9 +83,9 @@ pub fn job_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<Strin
     Ok(state.engine.outputs(id)?)
 }
 
-/// Opens a file the job wrote in its Windows app. JSON opens in Notepad, which every PC has,
-/// as Windows often has no app for it. Only the job's own files, so the interface cannot open
-/// anything else on the PC.
+/// Opens a file the job wrote in the app the system has for it; JSON opens in the plain text
+/// editor every computer has (`platform`), as there is often no app for it. Only the job's own
+/// files, so the interface cannot open anything else on the computer.
 #[tauri::command]
 pub fn open_output(
     app: tauri::AppHandle,
@@ -88,7 +100,8 @@ pub fn open_output(
     let with = path
         .to_ascii_lowercase()
         .ends_with(".json")
-        .then_some("notepad");
+        .then_some(crate::platform::JSON_APP)
+        .flatten();
     app.opener()
         .open_path(&path, with)
         .map_err(|e| AppError::new(id::OPEN, e))
@@ -307,5 +320,15 @@ mod tests {
             encode("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
             "https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ"
         );
+    }
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn a_folder_expands_without_the_metadata_files_macos_leaves() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("page-01.jpg"), b"jpeg").unwrap();
+        std::fs::write(dir.path().join("._page-01.jpg"), b"metadata").unwrap();
+        let found = expand_paths(vec![dir.path().display().to_string()], Task::TextExtraction);
+        assert_eq!(found.len(), 1);
+        assert!(found[0].ends_with("page-01.jpg") && !found[0].contains("._"));
     }
 }
