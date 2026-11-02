@@ -1,9 +1,11 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 2 November 2026, revised the same day for the macOS version. Version 1.0.0,
-the first Microsoft Store release, was published under the policy of 30 October 2026, which did
+**Effective date:** 2 November 2026, revised the same day for the macOS version and again for
+the data folder's new name, which applies from the version after 1.1.2. Version 1.0.0, the
+first Microsoft Store release, was published under the policy of 30 October 2026, which did
 not list projects or workflows; the policy of 1 November 2026 did not list the dictionary's
-proposed merges, and the first of 2 November 2026 did not cover macOS.
+proposed merges, the first of 2 November 2026 did not cover macOS, and the second named the
+data folder after the app's bundle identifier.
 
 ## What this app is
 
@@ -52,13 +54,15 @@ Choose a provider whose terms suit the material, or work offline.
 
 ## What the app keeps on the computer
 
-In the app's local data folder: on Windows `%LOCALAPPDATA%\io.github.fmadore.kalamu` for the
-installer, the package's own folder for the Store app; on macOS
-`~/Library/Application Support/io.github.fmadore.kalamu`, with the logs in
-`~/Library/Logs/io.github.fmadore.kalamu`. The Windows test releases up to 0.2, named
-Scriptorium, kept it in `%LOCALAPPDATA%\io.github.fmadore.scriptorium`; the first start of
-Kalamu moves that folder, and the keys stored under that name in Credential Manager, to the
-new names, on the same computer only:
+In the app's local data folder, which Settings shows: on Windows `%LOCALAPPDATA%\Kalamu Data`
+for the installer, and the same folder inside the package's own for the Store app
+(`%LOCALAPPDATA%\Packages\49346FMadore.Kalamu_…\LocalCache\Local\Kalamu Data`); on macOS
+`~/Library/Application Support/Kalamu`, with the logs in `~/Library/Logs/Kalamu`. Versions 1.0
+to 1.1.2 named the folder after the app's bundle identifier, `io.github.fmadore.kalamu`, and
+the Windows test releases up to 0.2, named Scriptorium, kept it in
+`%LOCALAPPDATA%\io.github.fmadore.scriptorium`; the first start of a newer version moves that
+folder to the new name, and the keys stored under Scriptorium's name in Credential Manager to
+Kalamu's, on the same computer only:
 
 - **The job database** (`jobs.sqlite`): each job's name, the paths, sizes, modification times
   and fingerprints of its files, its settings and progress, the text and answers returned for each piece, the user's

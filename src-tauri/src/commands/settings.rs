@@ -6,14 +6,19 @@ use tauri::State;
 
 use super::{AppInfo, AppState, INTERRUPTED};
 use crate::errors::{AppError, CmdResult, id};
+use crate::platform;
 use crate::settings::Settings;
 
 #[tauri::command]
 pub fn app_info(state: State<'_, AppState>) -> AppInfo {
     AppInfo {
         version: env!("CARGO_PKG_VERSION").into(),
-        data_dir: state.paths.data.display().to_string(),
-        logs_dir: state.paths.logs.display().to_string(),
+        data_dir: platform::shown_path(&state.paths.data)
+            .display()
+            .to_string(),
+        logs_dir: platform::shown_path(&state.paths.logs)
+            .display()
+            .to_string(),
         interrupted: INTERRUPTED.lock().map(|v| v.clone()).unwrap_or_default(),
     }
 }

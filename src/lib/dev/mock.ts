@@ -408,7 +408,7 @@ export function installMock(): void {
 			case 'app_info':
 				return {
 					version: '0.1.0',
-					data_dir: 'C:\\Users\\you\\AppData\\Local\\io.github.fmadore.kalamu',
+					data_dir: 'C:\\Users\\you\\AppData\\Local\\Kalamu Data',
 					logs_dir: '',
 					interrupted: []
 				};
@@ -500,7 +500,7 @@ export function installMock(): void {
 					{
 						...article,
 						id: '00000000-0000-0000-0000-0000000000f9',
-						path: 'C:\\Users\\you\\AppData\\Local\\io.github.fmadore.kalamu\\snapshots\\ab.txt',
+						path: 'C:\\Users\\you\\AppData\\Local\\Kalamu Data\\snapshots\\ab.txt',
 						file_name: 'bulletin-1957-05.txt',
 						derived_from: {
 							snapshot_id: 'snapshot-1',

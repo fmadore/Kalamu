@@ -2,10 +2,14 @@
 //! as Mac apps do: closing the window leaves it in the Dock, the Dock icon brings the window
 //! back, and Quit asks first while jobs run.
 
+use std::path::{Path, PathBuf};
+
 use kalamu_media::Playback;
 use tauri::menu::{Menu, MenuItem, MenuItemKind};
+use tauri::utils::config::{AppDirectoriesOverride, AppDirectoryOverrides};
 use tauri::{App, AppHandle, Emitter, Manager, RunEvent};
 
+use super::Moved;
 use crate::commands::AppState;
 use crate::commands::window::{jobs_running, show_main_window};
 
@@ -23,9 +27,43 @@ pub const PLAYBACK: Playback = Playback::WEBKIT;
 
 const ID_QUIT: &str = "app-quit";
 
-/// No older data folder to move: Kalamu was never built for macOS under its first name.
-pub fn move_legacy_data() -> std::io::Result<bool> {
-    Ok(false)
+/// The data folder in `~/Library/Application Support` and the logs' in `~/Library/Logs`, named
+/// as Mac apps name theirs.
+const FOLDER: &str = "Kalamu";
+/// Their earlier name, the bundle identifier, which Tauri names them after unless told
+/// otherwise (1.1.2). Kalamu was never built for macOS under its first name.
+const EARLIER_FOLDER: &str = "io.github.fmadore.kalamu";
+
+/// Where Tauri keeps the app's data and its logs, after moving earlier folders there once.
+pub fn data_folder() -> (AppDirectoriesOverride, Moved) {
+    let Some(home) = std::env::var_os("HOME").map(PathBuf::from) else {
+        let dirs = folders(
+            PathBuf::from("$DATA").join(FOLDER),
+            PathBuf::from("$HOME/Library/Logs").join(FOLDER),
+        );
+        return (dirs, Moved::Nothing);
+    };
+    let support = home.join("Library/Application Support");
+    let logs = home.join("Library/Logs");
+    let (data, moved) = super::settle(support.join(FOLDER), &[support.join(EARLIER_FOLDER)]);
+    let (log, _) = super::settle(logs.join(FOLDER), &[logs.join(EARLIER_FOLDER)]);
+    (folders(data, log), moved)
+}
+
+/// The data, settings and logs folders; the cache keeps Tauri's place, which the app never uses.
+fn folders(data: PathBuf, log: PathBuf) -> AppDirectoriesOverride {
+    AppDirectoriesOverride::Directories(AppDirectoryOverrides {
+        config: Some(data.clone()),
+        data: Some(data.clone()),
+        local_data: Some(data),
+        cache: None,
+        log: Some(log),
+    })
+}
+
+/// A folder of the app's as Finder finds it: where the app keeps it.
+pub fn shown_path(path: &Path) -> PathBuf {
+    path.to_path_buf()
 }
 
 /// Tauri's default application menu, which gives the Edit commands (Cmd+C, Cmd+V…) their
