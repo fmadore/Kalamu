@@ -15,14 +15,14 @@ Scriptorium; a newer version moves their jobs, settings and keys over on its fir
 Free, with every feature included. If it is useful to you, you can
 [support its development](#support-development).
 
-**Status: version 1.0.0** is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H),
-signed and updated through the Store. Unsigned installers for x64 and ARM64 (Windows warns on
-first launch) are on the [releases page](https://github.com/fmadore/Kalamu/releases), and from
-the next release a disk image for Macs with Apple Silicon (see [On a Mac](#on-a-mac)). Text
-extraction, transcription and analyses have run against the live OpenAI, Claude and Mistral
-APIs; Gemini, offline Whisper and the cheaper batch mode have had fewer live runs, so try a
-small job first. See the [roadmap](docs/roadmap.md) and the
-[1.0.0 release notes](docs/release-1.0.0.md).
+**Status: version 1.1.2.** Kalamu is in the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), signed and updated through
+the Store. Unsigned installers for x64 and ARM64 (Windows warns on first launch) and, from 1.1.2,
+a disk image for Macs with Apple Silicon (see [On a Mac](#on-a-mac)) are on the
+[releases page](https://github.com/fmadore/Kalamu/releases). Text extraction, transcription and
+analyses have run against the live OpenAI, Claude and Mistral APIs; Gemini, offline Whisper and
+the cheaper batch mode have had fewer live runs, so try a small job first. See the
+[roadmap](docs/roadmap.md) and the [1.1.2 release notes](docs/release-1.1.2.md).
 
 ## What it does
 
