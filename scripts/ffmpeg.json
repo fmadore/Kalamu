@@ -8,6 +8,9 @@
 		},
 		"aarch64-pc-windows-msvc": {
 			"sha256": "64d77a2979e3e0e4a516986faf791353139fc16c5cabf9435b59c916d1d0729d"
+		},
+		"aarch64-apple-darwin": {
+			"sha256": "cd275abf244627416a9f613695234f196ca4f9398a96ca93fb518323909383ac"
 		}
 	}
 }
