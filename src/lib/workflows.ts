@@ -131,7 +131,7 @@ export type Example = 'letters' | 'interviews' | 'library';
 
 export const EXAMPLES: Record<Example, { task: Task; preset: string }[]> = {
 	letters: [
-		{ task: 'text_extraction', preset: 'text_extraction.printed_diplomatic' },
+		{ task: 'text_extraction', preset: 'text_extraction.printed' },
 		{ task: 'analysis', preset: 'analysis.entities' }
 	],
 	interviews: [
@@ -140,7 +140,7 @@ export const EXAMPLES: Record<Example, { task: Task; preset: string }[]> = {
 	],
 	library: [
 		{ task: 'text_correction', preset: 'text_correction.general' },
-		{ task: 'analysis', preset: 'analysis.summary_brief' }
+		{ task: 'analysis', preset: 'analysis.summary_research' }
 	]
 };
 

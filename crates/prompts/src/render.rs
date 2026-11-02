@@ -18,8 +18,8 @@ pub struct RenderContext {
 }
 
 /// Appended when the researcher chose how lines are kept. Stated as overriding the preset, whose
-/// own instructions may say the opposite (the HTR presets join lines; the diplomatic one keeps
-/// them), so one choice works with every preset, the user's own included.
+/// own instructions may say the opposite (the defaults write running text unless told
+/// otherwise), so one choice works with every preset, the user's own included.
 const AS_ON_PAGE: &str = "\n\n## Line breaks\n\nKeep the lines of the source: start a new line \
 wherever a line ends on the page, keep end-of-line hyphens exactly as they are, and do not join \
 lines or rejoin words split across lines. Separate paragraphs with a blank line. This overrides \

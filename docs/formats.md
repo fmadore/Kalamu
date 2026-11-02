@@ -84,7 +84,7 @@ the CSV.
   "schema_version": 1,
   "task": "text_extraction",
   "source": { "file_name": "lettre.pdf", "sha256": "…", "size_bytes": 1024 },
-  "setup": { "label": "gemini-3.8-flash", "provider": "gemini", "model": "gemini-3.8-flash", "prompt": "Printed document, diplomatic" },
+  "setup": { "label": "gemini-3.8-flash", "provider": "gemini", "model": "gemini-3.8-flash", "prompt": "Printed or typed document" },
   "parts": [
     {
       "piece": { "kind": "page", "number": 1 },

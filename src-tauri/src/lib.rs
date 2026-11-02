@@ -97,7 +97,11 @@ fn link_step(
 }
 
 pub fn run() {
-    let moved = platform::move_legacy_data();
+    // The data folder is settled, and an earlier one moved into it, before Tauri builds the
+    // window, whose webview data goes there too.
+    let (folders, moved) = platform::data_folder();
+    let mut context = tauri::generate_context!();
+    context.config_mut().app.app_directories_override = Some(folders);
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             // Also when the window was hidden in the tray.
@@ -117,11 +121,19 @@ pub fn run() {
                 app.manage(Mutex::new(Some(guard)));
             }
             match moved {
-                Ok(true) => {
-                    tracing::info!("moved the Scriptorium data folder to {}", data.display())
+                platform::Moved::Nothing => {}
+                platform::Moved::From(old) => {
+                    tracing::info!(
+                        "moved the data folder {} to {}",
+                        old.display(),
+                        data.display()
+                    )
                 }
-                Ok(false) => {}
-                Err(e) => tracing::warn!(error = %e, "could not move the Scriptorium data folder"),
+                platform::Moved::Failed(old, e) => tracing::warn!(
+                    error = %e,
+                    "could not move the data folder {}, which stays in use",
+                    old.display()
+                ),
             }
 
             let paths = Paths {
@@ -380,7 +392,7 @@ pub fn run() {
             commands::window::hide_window,
             commands::window::quit_app,
         ])
-        .build(tauri::generate_context!())
+        .build(context)
         .map(|app| app.run(platform::on_run_event));
     if let Err(e) = result {
         tracing::error!(error = %e, "the app could not start");

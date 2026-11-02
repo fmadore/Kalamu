@@ -1,8 +1,13 @@
 //! Windows: WebView2 (Chromium) plays the review's recordings, Notepad opens JSON files, and the
 //! window closes as Windows apps do, with the notification-area icon keeping running jobs.
 
+use std::path::{Path, PathBuf};
+
 use kalamu_media::Playback;
+use tauri::utils::config::AppDirectoriesOverride;
 use tauri::{App, AppHandle, RunEvent};
+
+use super::Moved;
 
 /// The app a job's JSON files open in: Windows often has none for them, and every PC has
 /// Notepad.
@@ -18,34 +23,67 @@ pub const TRAY_MENU_ON_LEFT_CLICK: bool = false;
 /// What the review view's player (Chromium, in WebView2) plays.
 pub const PLAYBACK: Playback = Playback::CHROMIUM;
 
-/// The app's data folder in `%LOCALAPPDATA%`: Tauri names it after the bundle identifier in
-/// `tauri.conf.json`. Not `Kalamu`, which the per-user installer takes for the program itself.
-const DATA_FOLDER: &str = "io.github.fmadore.kalamu";
-/// The data folder's name before the app was renamed from Scriptorium (0.1 and 0.2).
-const LEGACY_IDENTIFIER: &str = "io.github.fmadore.scriptorium";
+/// The app's data folder in `%LOCALAPPDATA%`, named for the people who open it. Not `Kalamu`,
+/// which the per-user installer takes for the program itself and its uninstaller removes.
+const DATA_FOLDER: &str = "Kalamu Data";
+/// Its earlier names, newest first: the bundle identifier, which Tauri names it after unless
+/// told otherwise (1.0 to 1.1), and Scriptorium's (0.1 and 0.2).
+const EARLIER_FOLDERS: [&str; 2] = ["io.github.fmadore.kalamu", "io.github.fmadore.scriptorium"];
 
-/// Moves the jobs, settings, presets and Whisper models of a Scriptorium install in
-/// `%LOCALAPPDATA%` to the renamed data folder, once, before anything is created there.
+/// Where Tauri keeps the app's data and WebView2's (the folder itself) and its logs (`logs`
+/// inside it), after moving an earlier data folder there once.
 ///
-/// Runs before Tauri builds the window, since WebView2 creates its data in the new folder as
-/// soon as the window exists.
-pub fn move_legacy_data() -> std::io::Result<bool> {
-    std::env::var_os("LOCALAPPDATA").map_or(Ok(false), |local| {
-        move_legacy_into(&std::path::Path::new(&local).join(DATA_FOLDER))
-    })
+/// Runs before Tauri builds the window, since WebView2 creates its data as soon as the window
+/// exists.
+pub fn data_folder() -> (AppDirectoriesOverride, Moved) {
+    let Some(local) = std::env::var_os("LOCALAPPDATA").map(PathBuf::from) else {
+        let folder = PathBuf::from("$LOCALDATA").join(DATA_FOLDER);
+        return (AppDirectoriesOverride::Root(folder), Moved::Nothing);
+    };
+    let earlier = EARLIER_FOLDERS.map(|name| local.join(name));
+    let (folder, moved) = super::settle(local.join(DATA_FOLDER), &earlier);
+    (AppDirectoriesOverride::Root(folder), moved)
 }
 
-/// Every stored path is relative to the folder, so it moves whole. If the move fails the old
-/// folder is left untouched.
-fn move_legacy_into(data: &std::path::Path) -> std::io::Result<bool> {
-    let Some(legacy) = data.parent().map(|p| p.join(LEGACY_IDENTIFIER)) else {
-        return Ok(false);
-    };
-    if data.exists() || !legacy.is_dir() {
-        return Ok(false);
+/// A folder of the app's as File Explorer finds it. The Store's package keeps what the app
+/// writes to `%LOCALAPPDATA%` in its own folder, `Packages\<family>\LocalCache\Local`, so the
+/// path the app uses is not where the researcher would look; the installer's app is.
+pub fn shown_path(path: &Path) -> PathBuf {
+    let family = std::env::current_exe()
+        .ok()
+        .and_then(|exe| package_family(&exe));
+    let local = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+    match (family, local) {
+        (Some(family), Some(local)) => path.strip_prefix(&local).map_or_else(
+            |_| path.to_path_buf(),
+            |rest| {
+                local
+                    .join("Packages")
+                    .join(family)
+                    .join("LocalCache")
+                    .join("Local")
+                    .join(rest)
+            },
+        ),
+        _ => path.to_path_buf(),
     }
-    std::fs::rename(&legacy, data)?;
-    Ok(true)
+}
+
+/// The Store package the program runs from, if any: it is installed in
+/// `WindowsApps\<name>_<version>_<architecture>_<resource>_<publisher>`, a package of the family
+/// `<name>_<publisher>`.
+fn package_family(exe: &Path) -> Option<String> {
+    exe.ancestors().find_map(|dir| {
+        let parent = dir.parent()?.file_name()?.to_str()?;
+        if !parent.eq_ignore_ascii_case("WindowsApps") {
+            return None;
+        }
+        let parts: Vec<&str> = dir.file_name()?.to_str()?.split('_').collect();
+        match parts.as_slice() {
+            [name, _, _, _, publisher] => Some(format!("{name}_{publisher}")),
+            _ => None,
+        }
+    })
 }
 
 /// Nothing to add: Windows apps have no application menu.
@@ -62,31 +100,28 @@ pub fn show_app(_app: &AppHandle) {}
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use super::{DATA_FOLDER, LEGACY_IDENTIFIER, move_legacy_into};
+    use std::path::Path;
 
-    /// The folder moved into before Tauri starts must be the one Tauri then opens.
+    use super::{EARLIER_FOLDERS, package_family};
+
+    /// The folder the data moves from is the one earlier versions used: Tauri's, named after
+    /// the bundle identifier.
     #[test]
-    fn the_data_folder_is_the_bundle_identifier() {
+    fn the_newest_earlier_folder_is_the_bundle_identifier() {
         let config = include_str!("../../tauri.conf.json");
-        assert!(config.contains(&format!("\"identifier\": \"{DATA_FOLDER}\"")));
+        assert!(config.contains(&format!("\"identifier\": \"{}\"", EARLIER_FOLDERS[0])));
     }
 
     #[test]
-    fn a_scriptorium_data_folder_moves_once() {
-        let root = tempfile::tempdir().unwrap();
-        let legacy = root.path().join(LEGACY_IDENTIFIER);
-        let data = root.path().join(DATA_FOLDER);
-        std::fs::create_dir_all(legacy.join("presets")).unwrap();
-        std::fs::write(legacy.join("jobs.sqlite"), b"jobs").unwrap();
-
-        assert!(move_legacy_into(&data).unwrap());
-        assert_eq!(std::fs::read(data.join("jobs.sqlite")).unwrap(), b"jobs");
-        assert!(data.join("presets").is_dir());
-        assert!(!legacy.exists());
-
-        // A later Scriptorium folder never replaces the Kalamu one.
-        std::fs::create_dir_all(&legacy).unwrap();
-        assert!(!move_legacy_into(&data).unwrap());
-        assert!(legacy.exists());
+    fn a_store_package_is_known_by_where_it_runs() {
+        let store = Path::new(
+            r"C:\Program Files\WindowsApps\49346FMadore.Kalamu_1.1.2.0_arm64__8wekyb3d8bbwe\Kalamu.exe",
+        );
+        assert_eq!(
+            package_family(store).as_deref(),
+            Some("49346FMadore.Kalamu_8wekyb3d8bbwe")
+        );
+        let installer = Path::new(r"C:\Users\you\AppData\Local\Kalamu\Kalamu.exe");
+        assert_eq!(package_family(installer), None);
     }
 }

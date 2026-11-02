@@ -1,15 +1,20 @@
-//! The tested default prompts, ported verbatim from zmo-ai-pipelines (`printed-*`) and
-//! iwac-ai-pipelines (the transcription and HTR ones). The per-page requests come from the same
-//! scripts. The analysis prompts are new, in English: the summaries keep the principles of
-//! iwac-ai-pipelines' bilingual summary prompt (specific, faithful, searchable), the entities
-//! its NER rules and the tone its sentiment scales (labels, never numbers, with a reason),
-//! without their collection-specific parts. The scholarly publication summary has no ancestor
-//! there: its fields follow what a social-science literature review compares.
+//! The default prompts: one per kind of material, never one per language or per small variant
+//! (decision of 2 November 2026). The text extraction ones consolidate zmo-ai-pipelines'
+//! diplomatic and normalized prompts (which differ only in their lines, a choice New job makes
+//! for every preset) and iwac-ai-pipelines' OCR and its French, Arabic and multilingual HTR
+//! prompts, keeping their rules for any language and either reading direction. The interview
+//! prompts come from iwac-ai-pipelines' transcription prompts, one translation kept, its target
+//! language named in one place to be changed. The analysis prompts are new, in English: the
+//! summary keeps the principles of iwac-ai-pipelines' bilingual summary prompt (specific,
+//! faithful, searchable), the entities its NER rules and the tone its sentiment scales (labels,
+//! never numbers, with a reason), without their collection-specific parts. The scholarly
+//! publication summary has no ancestor there: its fields follow what a social-science literature
+//! review compares.
 //!
 //! The tables of contents port iwac-ai-pipelines' `AI_summary_issue` prompts (page extraction
 //! and consolidation), in English and without their Islamic-magazine specifics; the archival
-//! file and the book are new, on the same two steps. The newspaper correction is
-//! `AI_ocr_correction`'s prompt verbatim; the general one keeps its rules for any printed text.
+//! file and the book are new, on the same two steps. The correction keeps `AI_ocr_correction`'s
+//! rules for any printed text, its newspaper ones included.
 
 use kalamu_core::{AnalysisSchema, Field, FieldKind, Task};
 
@@ -36,11 +41,12 @@ const CORRECTION_REQUEST: &str =
 /// zmo-ai-pipelines' `USER_PROMPT`.
 const PAGE_REQUEST: &str = "Transcribe this page completely, following the instructions given.";
 
-/// iwac-ai-pipelines' HTR `build_user_prompt`, without the language, which the instructions
-/// already state.
-const HANDWRITING_REQUEST: &str = "This is a legitimate handwritten text transcription (HTR) \
-request for academic research and archival preservation. Transcribe ALL handwritten text with \
-exact wording, spacing rules, accents, and WITHOUT summarizing or omitting any zones.";
+/// After iwac-ai-pipelines' HTR `build_user_prompt`, which says why the page is read: some
+/// models otherwise decline a manuscript.
+const HANDWRITING_REQUEST: &str = "This is a legitimate request to transcribe a handwritten \
+document for academic research and archival preservation. Transcribe all the writing on this \
+page with its exact wording, spelling and diacritics, without summarising or leaving out any \
+part, following the instructions given.";
 
 const RECORDING_REQUEST: &str = "Transcribe this recording, following the instructions given.";
 
@@ -81,20 +87,6 @@ fn summary_research() -> AnalysisSchema {
                 false,
             ),
             field("Keywords", KEYWORDS, list(12), false),
-        ],
-    }
-}
-
-fn summary_brief() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field(
-                "Summary",
-                "Two or three dense sentences, following the instructions above.",
-                FieldKind::Text,
-                false,
-            ),
-            field("Keywords", KEYWORDS, list(8), false),
         ],
     }
 }
@@ -375,23 +367,52 @@ fn contents_book() -> AnalysisSchema {
     }
 }
 
+/// Defaults no longer shipped, each with the one that replaced it: a pipeline, a workflow or a
+/// shared file that names one runs with its replacement.
+pub(crate) const RETIRED: &[(&str, &str)] = &[
+    (
+        "text_extraction.printed_diplomatic",
+        "text_extraction.printed",
+    ),
+    (
+        "text_extraction.printed_normalized",
+        "text_extraction.printed",
+    ),
+    (
+        "text_extraction.handwriting_french",
+        "text_extraction.handwritten",
+    ),
+    (
+        "text_extraction.manuscript_arabic_script",
+        "text_extraction.handwritten",
+    ),
+    (
+        "text_extraction.handwriting_multilingual",
+        "text_extraction.handwritten",
+    ),
+    (
+        "audio_transcription.translate_french",
+        "audio_transcription.translate_english",
+    ),
+    ("analysis.summary_brief", "analysis.summary_research"),
+    ("text_correction.newspaper", "text_correction.general"),
+];
+
+/// The id a preset goes by now: a retired default's replacement, any other id as it is.
+pub(crate) fn current(id: &str) -> &str {
+    RETIRED
+        .iter()
+        .find(|(old, _)| *old == id)
+        .map_or(id, |(_, new)| new)
+}
+
 pub(crate) const DEFAULTS: &[Default] = &[
     Default {
-        id: "text_extraction.printed_diplomatic",
+        id: "text_extraction.printed",
         task: Task::TextExtraction,
-        name: "Printed document, diplomatic",
-        description: "Keeps spelling, abbreviations, deletions and insertions exactly as on the page.",
-        instructions: include_str!("../defaults/printed-diplomatic.md"),
-        user_prompt: PAGE_REQUEST,
-        schema: None,
-        merge: None,
-    },
-    Default {
-        id: "text_extraction.printed_normalized",
-        task: Task::TextExtraction,
-        name: "Printed document, normalized",
-        description: "Readable text: wording and spelling kept, spacing tidied.",
-        instructions: include_str!("../defaults/printed-normalized.md"),
+        name: "Printed or typed document",
+        description: "Books, reports, typed letters and forms in any language, left to right or right to left; spelling kept as printed.",
+        instructions: include_str!("../defaults/printed.md"),
         user_prompt: PAGE_REQUEST,
         schema: None,
         merge: None,
@@ -399,40 +420,19 @@ pub(crate) const DEFAULTS: &[Default] = &[
     Default {
         id: "text_extraction.newspaper",
         task: Task::TextExtraction,
-        name: "Newspaper or magazine (columns)",
-        description: "Follows the reading order of articles across columns.",
+        name: "Newspaper or magazine",
+        description: "Article by article across the columns, with the words the columns split rejoined.",
         instructions: include_str!("../defaults/newspaper.md"),
-        user_prompt: "Please perform complete OCR transcription of this single page. Extract all \
-visible text maintaining original formatting and structure.",
+        user_prompt: PAGE_REQUEST,
         schema: None,
         merge: None,
     },
     Default {
-        id: "text_extraction.handwriting_french",
+        id: "text_extraction.handwritten",
         task: Task::TextExtraction,
-        name: "Handwritten letter or document (French)",
-        description: "French handwriting, keeping historical spelling and French typography.",
-        instructions: include_str!("../defaults/handwriting-french.md"),
-        user_prompt: HANDWRITING_REQUEST,
-        schema: None,
-        merge: None,
-    },
-    Default {
-        id: "text_extraction.manuscript_arabic_script",
-        task: Task::TextExtraction,
-        name: "Arabic or Ajami manuscript",
-        description: "Arabic-script handwriting, read right to left, without adding diacritics.",
-        instructions: include_str!("../defaults/manuscript-arabic-script.md"),
-        user_prompt: HANDWRITING_REQUEST,
-        schema: None,
-        merge: None,
-    },
-    Default {
-        id: "text_extraction.handwriting_multilingual",
-        task: Task::TextExtraction,
-        name: "Handwriting, several languages or scripts",
-        description: "Detects each language and script and keeps each in its reading direction.",
-        instructions: include_str!("../defaults/handwriting-multilingual.md"),
+        name: "Handwritten document or manuscript",
+        description: "Letters, registers and manuscripts in any script, Latin, Arabic and Ajami included; spelling, diacritics and reading direction as written.",
+        instructions: include_str!("../defaults/handwritten.md"),
         user_prompt: HANDWRITING_REQUEST,
         schema: None,
         merge: None,
@@ -440,8 +440,8 @@ visible text maintaining original formatting and structure.",
     Default {
         id: "audio_transcription.interview",
         task: Task::AudioTranscription,
-        name: "Interview, verbatim with speakers",
-        description: "Speaker labels and a timestamp at each turn; code-switching kept as spoken.",
+        name: "Interview or recording, transcribed",
+        description: "Word for word in the languages spoken, with speaker labels and a timestamp at each turn.",
         instructions: include_str!("../defaults/interview-transcription.md"),
         user_prompt: RECORDING_REQUEST,
         schema: None,
@@ -450,19 +450,9 @@ visible text maintaining original formatting and structure.",
     Default {
         id: "audio_transcription.translate_english",
         task: Task::AudioTranscription,
-        name: "Interview, translated into English",
-        description: "An English translation of the recording, with speakers and timestamps.",
+        name: "Interview or recording, translated into English",
+        description: "Everything said, in English, with speakers and timestamps. For another language, duplicate it and change the target language.",
         instructions: include_str!("../defaults/interview-translation-english.md"),
-        user_prompt: RECORDING_REQUEST,
-        schema: None,
-        merge: None,
-    },
-    Default {
-        id: "audio_transcription.translate_french",
-        task: Task::AudioTranscription,
-        name: "Interview, translated into French",
-        description: "A French translation of the recording, with speakers and timestamps.",
-        instructions: include_str!("../defaults/interview-translation-french.md"),
         user_prompt: RECORDING_REQUEST,
         schema: None,
         merge: None,
@@ -470,21 +460,11 @@ visible text maintaining original formatting and structure.",
     Default {
         id: "analysis.summary_research",
         task: Task::Analysis,
-        name: "Summary and keywords for research",
-        description: "What this document in particular says, with names, figures and dates, and searchable keywords.",
+        name: "Summary and keywords",
+        description: "What each document in particular says, with names, figures and dates, as long as the document needs, and keywords to search by.",
         instructions: include_str!("../defaults/summary-research.md"),
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(summary_research),
-        merge: None,
-    },
-    Default {
-        id: "analysis.summary_brief",
-        task: Task::Analysis,
-        name: "Short summary for a catalogue",
-        description: "Two or three dense sentences that stand out in a list of search results.",
-        instructions: include_str!("../defaults/summary-brief.md"),
-        user_prompt: ANALYSIS_REQUEST,
-        schema: Some(summary_brief),
         merge: None,
     },
     Default {
@@ -550,19 +530,9 @@ visible text maintaining original formatting and structure.",
     Default {
         id: "text_correction.general",
         task: Task::TextCorrection,
-        name: "Printed document",
-        description: "Corrects machine-reading errors only; spelling, wording and style of the time kept.",
+        name: "Printed document or newspaper",
+        description: "Corrects machine-reading errors only, columns put back in order; spelling, wording and style of the time kept.",
         instructions: include_str!("../defaults/correction-general.md"),
-        user_prompt: CORRECTION_REQUEST,
-        schema: None,
-        merge: None,
-    },
-    Default {
-        id: "text_correction.newspaper",
-        task: Task::TextCorrection,
-        name: "Newspaper (columns, headlines)",
-        description: "Also restores the reading order of columns and flags unclear names, figures and quotes.",
-        instructions: include_str!("../defaults/correction-newspaper.md"),
         user_prompt: CORRECTION_REQUEST,
         schema: None,
         merge: None,
