@@ -238,9 +238,7 @@ pub fn export_dictionary(
     path: String,
 ) -> CmdResult<()> {
     let path = std::path::Path::new(&path);
-    let write = |path: std::path::PathBuf, text: String| {
-        std::fs::write(path, text).map_err(|e| AppError::new(id::FILE, e))
-    };
+    let write = super::write_text;
     write(
         path.with_extension("json"),
         state.dictionary.export_json(project)?,

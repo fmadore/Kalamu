@@ -1,6 +1,6 @@
 [package]
 name = "kalamu-prompts"
-description = "Default and user prompt presets for Kalamu."
+description = "The definitions a Kalamu researcher saves and shares: prompt presets, pipelines and workflows."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

@@ -4,7 +4,7 @@
 //! here summed over every scored page rather than averaged page by page.
 
 use kalamu_core::speakers::rename_text;
-use kalamu_core::{CacheKey, Job, JobId, Setup, SetupId, SourceId, Task};
+use kalamu_core::{Correction, Job, JobId, Setup, SetupId, SourceId, Task};
 use serde::{Deserialize, Serialize};
 use similar::{ChangeTag, TextDiff};
 use ts_rs::TS;
@@ -241,15 +241,8 @@ impl Engine {
             if state.source_id != source_id {
                 continue;
             }
-            let result = match &state.cache_key {
-                Some(k) if state.status.is_finished() => {
-                    self.store.cached_result(&CacheKey(k.clone()))?
-                }
-                _ => None,
-            };
-            let correction = corrections.iter().find(|c| {
-                c.setup_id == state.setup_id && c.source_id == source_id && c.index == state.index
-            });
+            let result = self.store.finished_result(&state)?;
+            let correction = Correction::of(&corrections, &state);
             // As the review shows them: with the researcher's names for the speakers.
             let speaker_names = names
                 .iter()

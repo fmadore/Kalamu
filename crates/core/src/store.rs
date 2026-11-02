@@ -25,6 +25,15 @@ pub struct Correction {
     pub updated_at: Timestamp,
 }
 
+impl Correction {
+    /// The correction made to `piece`, among its job's corrections.
+    pub fn of<'a>(corrections: &'a [Correction], piece: &PieceState) -> Option<&'a Correction> {
+        corrections.iter().find(|c| {
+            c.setup_id == piece.setup_id && c.source_id == piece.source_id && c.index == piece.index
+        })
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum StoreError {
     #[error("Job not found")]
@@ -52,6 +61,25 @@ pub trait JobStore: Send + Sync {
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError>;
 
     fn cached_result(&self, key: &CacheKey) -> Result<Option<StoredResult>, StoreError>;
+    /// The answer stored for a finished piece; none for one not finished.
+    fn finished_result(&self, piece: &PieceState) -> Result<Option<StoredResult>, StoreError> {
+        match &piece.cache_key {
+            Some(key) if piece.status.is_finished() => self.cached_result(&CacheKey(key.clone())),
+            _ => Ok(None),
+        }
+    }
+    /// A finished analysis piece's answers as the researcher left them: the corrected ones,
+    /// else the model's.
+    fn answers(
+        &self,
+        piece: &PieceState,
+        corrections: &[Correction],
+    ) -> Result<Option<Vec<crate::FieldAnswer>>, StoreError> {
+        if let Some(fields) = Correction::of(corrections, piece).and_then(|c| c.fields.clone()) {
+            return Ok(Some(fields));
+        }
+        Ok(self.finished_result(piece)?.map(|r| r.output.fields))
+    }
     /// What a job's own calls cost, in US dollars: the results its pieces stored, not those
     /// reused from the cache, and the answers billed but refused ([`Charge`]).
     fn spent(&self, job: JobId) -> Result<f64, StoreError>;

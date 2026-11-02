@@ -1,4 +1,4 @@
-use kalamu_core::LanguageCode;
+use kalamu_core::{LanguageChoice, LanguageCode, LineBreaks};
 
 use super::*;
 

@@ -55,57 +55,19 @@ impl From<kalamu_offline::OfflineError> for AppError {
 
 impl From<kalamu_prompts::PromptError> for AppError {
     fn from(e: kalamu_prompts::PromptError) -> Self {
-        use kalamu_core::SchemaError;
-        use kalamu_prompts::PromptError;
-        let id = match &e {
-            PromptError::Schema(SchemaError::Empty) => "prompt.no_fields",
-            PromptError::Schema(SchemaError::Unnamed) => "prompt.unnamed_field",
-            PromptError::Schema(SchemaError::Duplicate(_)) => "prompt.duplicate_field",
-            PromptError::Schema(SchemaError::TooFewValues(_)) => "prompt.few_values",
-            PromptError::IncompletePipeline => "prompt.unnamed_pipeline",
-            PromptError::IncompleteWorkflow => "workflow.incomplete",
-            PromptError::Workflow(e) => e.code(),
-            PromptError::InvalidImport(_) => "prompt.invalid_file",
-            _ => "prompt.invalid",
-        };
-        Self::new(id, e)
+        Self::new(e.code(), e)
     }
 }
 
 impl From<kalamu_core::ProjectError> for AppError {
     fn from(e: kalamu_core::ProjectError) -> Self {
-        use kalamu_core::{ProjectError, StoreError};
-        let id = match &e {
-            ProjectError::NotFound | ProjectError::Store(StoreError::NotFound) => {
-                "project.not_found"
-            }
-            ProjectError::Elsewhere(_) => "project.elsewhere",
-            ProjectError::NoName => "project.no_name",
-            ProjectError::NoTag => "project.no_tag",
-            ProjectError::Store(_) => "job.database",
-        };
-        Self::new(id, e)
+        Self::new(e.code(), e)
     }
 }
 
 impl From<kalamu_core::DictionaryError> for AppError {
     fn from(e: kalamu_core::DictionaryError) -> Self {
-        use kalamu_core::{DictionaryError, StoreError};
-        let id = match &e {
-            DictionaryError::NotFound | DictionaryError::Store(StoreError::NotFound) => {
-                "project.not_found"
-            }
-            DictionaryError::NoEntry => "dictionary.no_entry",
-            DictionaryError::NoLabel => "dictionary.no_label",
-            DictionaryError::Namespaces => "dictionary.namespaces",
-            DictionaryError::KeptApart => "dictionary.kept_apart",
-            DictionaryError::TooFew => "dictionary.too_few",
-            DictionaryError::SameEntry => "dictionary.same_entry",
-            DictionaryError::NothingToCompare => "dictionary.nothing_to_compare",
-            DictionaryError::Export(_) => id::FILE,
-            DictionaryError::Store(_) => "job.database",
-        };
-        Self::new(id, e)
+        Self::new(e.code(), e)
     }
 }
 

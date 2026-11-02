@@ -4,9 +4,8 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use kalamu_core::{
-    CacheKey, CollectionId, DictionaryError, DocumentId, Entry, EntryId, FieldKind, FieldValue,
-    Job, JobId, KeptApart, ProjectId, SetupId, SourceId, StoreError, Task, Timestamp,
-    dictionary::form_of,
+    CollectionId, DictionaryError, DocumentId, Entry, EntryId, FieldKind, FieldValue, Job, JobId,
+    KeptApart, ProjectId, SetupId, SourceId, StoreError, Task, Timestamp, dictionary::form_of,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -183,23 +182,8 @@ impl Dictionary {
                         && p.source_id == link.source_id
                         && p.status.is_finished()
                 }) {
-                    let corrected = corrections
-                        .iter()
-                        .find(|c| {
-                            c.setup_id == setup.id
-                                && c.source_id == link.source_id
-                                && c.index == piece.index
-                        })
-                        .and_then(|c| c.fields.clone());
-                    let answers = match (corrected, &piece.cache_key) {
-                        (Some(answers), _) => answers,
-                        (None, Some(key)) => {
-                            match self.jobs.cached_result(&CacheKey(key.clone()))? {
-                                Some(result) => result.output.fields,
-                                None => continue,
-                            }
-                        }
-                        (None, None) => continue,
+                    let Some(answers) = self.jobs.answers(piece, &corrections)? else {
+                        continue;
                     };
                     for answer in answers.iter().filter(|a| lists.contains(&a.key.as_str())) {
                         let forms = fields.entry(answer.key.clone()).or_default();

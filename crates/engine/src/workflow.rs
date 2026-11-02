@@ -19,11 +19,11 @@ use kalamu_core::{
     ProgressEvent, ProjectId, RunId, RunStatus, RunStep, SetupId, SourceFile, SourceId, StepInput,
     StepProgress, StepState, StoreError, Timestamp, WorkflowRun,
 };
-use kalamu_prompts::{PipelineSetup, Workflow};
+use kalamu_prompts::Workflow;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{Engine, EngineError, NewJob, SetupRequest};
+use crate::{Engine, EngineError, NewJob};
 
 /// A workflow to start on a selection of files.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -66,17 +66,6 @@ pub struct StepView {
     /// It waits for the researcher, as the run's status counts it.
     pub needs_you: bool,
     pub job: Option<JobSummary>,
-}
-
-pub(crate) fn request(setup: &PipelineSetup) -> SetupRequest {
-    SetupRequest {
-        provider: setup.provider.clone(),
-        model: setup.model.clone(),
-        preset_id: setup.preset_id.clone(),
-        label: setup.label.clone(),
-        options: setup.options.clone(),
-        merge: setup.merge.clone(),
-    }
 }
 
 /// A stand-in for the text a later step will read from `source`, to check the step before the
@@ -132,7 +121,7 @@ impl Engine {
         let mut steps = Vec::new();
         for (i, step) in workflow.steps.iter().enumerate() {
             let p = &step.pipeline;
-            let setups: Vec<SetupRequest> = p.setups.iter().map(request).collect();
+            let setups = p.setups.clone();
             let new = NewJob {
                 name: p.name.clone(),
                 task: p.task,

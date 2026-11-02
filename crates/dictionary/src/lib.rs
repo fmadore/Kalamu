@@ -22,11 +22,11 @@ mod decisions;
 mod export;
 mod inventory;
 mod proposals;
+mod requests;
 
 pub use inventory::{DictionaryRow, DictionaryView, Evidence, FormView, Namespace};
-pub use proposals::{
-    INPUT_TOKENS, Prepared, PreparedGroup, Proposal, ProposalMember, ProposalsView, RequestView,
-};
+pub use proposals::{Proposal, ProposalMember, ProposalsView, RequestView};
+pub use requests::{INPUT_TOKENS, Prepared, PreparedGroup};
 
 /// One line of the dictionary as the researcher picks it: an entry, or a form no entry holds.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

@@ -3,7 +3,7 @@
 //! launch nothing is sent without the researcher; definitions that cannot run refused.
 
 use kalamu_core::{Correction, RunId, RunStatus, StepInput, StepState, WorkflowError};
-use kalamu_prompts::{Pipeline, PipelineSetup, Workflow, WorkflowStep};
+use kalamu_prompts::{Pipeline, Workflow, WorkflowStep};
 
 use super::*;
 
@@ -12,7 +12,7 @@ fn pipeline(name: &str, task: Task, model: &str, preset: Option<&str>) -> Pipeli
         id: String::new(),
         name: name.into(),
         task,
-        setups: vec![PipelineSetup {
+        setups: vec![SetupRequest {
             provider: ProviderId::new("fake"),
             model: model.into(),
             preset_id: preset.map(Into::into),

@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 
 use kalamu_core::speakers::{labels, rename_segments, rename_text};
-use kalamu_core::{CacheKey, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task};
+use kalamu_core::{Correction, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task};
 use kalamu_export::timed_lines;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -67,15 +67,8 @@ impl Engine {
             if state.source_id != source_id {
                 continue;
             }
-            let result = match &state.cache_key {
-                Some(k) if state.status.is_finished() => {
-                    self.store.cached_result(&CacheKey(k.clone()))?
-                }
-                _ => None,
-            };
-            let correction = corrections.iter().find(|c| {
-                c.setup_id == state.setup_id && c.source_id == source_id && c.index == state.index
-            });
+            let result = self.store.finished_result(&state)?;
+            let correction = Correction::of(&corrections, &state);
             let diarized = job
                 .setups
                 .iter()

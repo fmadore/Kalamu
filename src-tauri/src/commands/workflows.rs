@@ -61,11 +61,8 @@ pub fn export_workflow(state: State<'_, AppState>, id: String, path: String) -> 
         .get(&id)?;
     let file = state.engine.workflow_file(workflow)?;
     let path = std::path::Path::new(&path);
-    let write = |path: std::path::PathBuf, text: String| {
-        std::fs::write(path, text).map_err(|e| AppError::new(id::FILE, e))
-    };
-    write(path.with_extension("json"), file.to_json()?)?;
-    write(path.with_extension("md"), file.to_markdown())
+    super::write_text(path.with_extension("json"), file.to_json()?)?;
+    super::write_text(path.with_extension("md"), file.to_markdown())
 }
 
 /// Adds a shared workflow and the presets it brings.

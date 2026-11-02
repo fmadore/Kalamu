@@ -14,102 +14,6 @@ use kalamu_core::{
 };
 use rusqlite::{Connection, OptionalExtension, params};
 
-/// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
-const MIGRATIONS: &[&str] = &[
-    r#"
-CREATE TABLE jobs (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    task TEXT NOT NULL,
-    status TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL,
-    data TEXT NOT NULL
-);
-CREATE TABLE pieces (
-    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-    setup_id TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    idx INTEGER NOT NULL,
-    piece TEXT NOT NULL,
-    status TEXT NOT NULL,
-    cache_key TEXT,
-    error TEXT,
-    attempts INTEGER NOT NULL DEFAULT 0,
-    updated_at INTEGER NOT NULL,
-    PRIMARY KEY (job_id, setup_id, source_id, idx)
-);
-CREATE TABLE results (
-    cache_key TEXT PRIMARY KEY,
-    provider TEXT NOT NULL,
-    model TEXT NOT NULL,
-    output TEXT NOT NULL,
-    cost_usd REAL,
-    duration_ms INTEGER NOT NULL,
-    created_at INTEGER NOT NULL
-);
-CREATE TABLE corrections (
-    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-    setup_id TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    idx INTEGER NOT NULL,
-    text TEXT,
-    reviewed INTEGER NOT NULL DEFAULT 0,
-    updated_at INTEGER NOT NULL,
-    PRIMARY KEY (job_id, setup_id, source_id, idx)
-);
-"#,
-    r#"
-CREATE TABLE speaker_names (
-    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-    setup_id TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    label TEXT NOT NULL,
-    name TEXT NOT NULL,
-    PRIMARY KEY (job_id, setup_id, source_id, label)
-);
-"#,
-    r#"
-ALTER TABLE corrections ADD COLUMN fields TEXT;
-"#,
-    r#"
-CREATE TABLE batches (
-    id TEXT PRIMARY KEY,
-    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-    phase TEXT NOT NULL,
-    submitted_at INTEGER NOT NULL,
-    data TEXT NOT NULL
-);
-CREATE INDEX batches_by_job ON batches(job_id);
-"#,
-    r#"
-ALTER TABLE results ADD COLUMN request TEXT;
-"#,
-    r#"
-ALTER TABLE results ADD COLUMN truncated INTEGER NOT NULL DEFAULT 0;
-"#,
-    r#"
-CREATE TABLE charges (
-    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-    setup_id TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    idx INTEGER NOT NULL,
-    usage TEXT NOT NULL,
-    cost_usd REAL,
-    created_at INTEGER NOT NULL
-);
-CREATE INDEX charges_by_job ON charges(job_id);
-"#,
-    projects::MIGRATION,
-    snapshots::MIGRATION,
-    runs::MIGRATION,
-    r#"
-ALTER TABLE documents ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
-"#,
-    dictionary::MIGRATION,
-    dictionary::PROPOSALS,
-];
-
 pub struct SqliteStore {
     conn: Mutex<Connection>,
 }
@@ -136,7 +40,7 @@ impl SqliteStore {
             .pragma_query_value(None, "user_version", |row| row.get(0))
             .map_err(db)?;
         let applied = usize::try_from(applied).unwrap_or_default();
-        for (i, migration) in MIGRATIONS.iter().enumerate().skip(applied) {
+        for (i, migration) in migrations::MIGRATIONS.iter().enumerate().skip(applied) {
             conn.execute_batch(&format!(
                 "BEGIN; {migration} PRAGMA user_version = {}; COMMIT;",
                 i + 1
@@ -491,59 +395,11 @@ impl JobStore for SqliteStore {
     }
 
     fn add_charge(&self, charge: &Charge) -> Result<(), StoreError> {
-        self.conn()
-            .execute(
-                "INSERT INTO charges
-                    (job_id, setup_id, source_id, idx, usage, cost_usd, created_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                params![
-                    charge.job_id.to_string(),
-                    charge.setup_id.to_string(),
-                    charge.source_id.to_string(),
-                    charge.index,
-                    to_json(&charge.usage)?,
-                    charge.cost_usd,
-                    charge.created_at.0,
-                ],
-            )
-            .map_err(db)?;
-        Ok(())
+        results::add_charge(self, charge)
     }
 
     fn charges(&self, job: JobId) -> Result<Vec<Charge>, StoreError> {
-        let conn = self.conn();
-        let mut stmt = conn
-            .prepare(
-                "SELECT setup_id, source_id, idx, usage, cost_usd, created_at
-                 FROM charges WHERE job_id = ?1 ORDER BY rowid",
-            )
-            .map_err(db)?;
-        let rows = stmt
-            .query_map([job.to_string()], |row| {
-                Ok((
-                    row.get::<_, String>(0)?,
-                    row.get::<_, String>(1)?,
-                    row.get::<_, u32>(2)?,
-                    row.get::<_, String>(3)?,
-                    row.get::<_, Option<f64>>(4)?,
-                    row.get::<_, i64>(5)?,
-                ))
-            })
-            .map_err(db)?;
-        let mut charges = Vec::new();
-        for row in rows {
-            let (setup, source, index, usage, cost_usd, created_at) = row.map_err(db)?;
-            charges.push(Charge {
-                job_id: job,
-                setup_id: setup.parse::<SetupId>().map_err(corrupt)?,
-                source_id: source.parse::<SourceId>().map_err(corrupt)?,
-                index,
-                usage: serde_json::from_str(&usage).map_err(corrupt)?,
-                cost_usd,
-                created_at: Timestamp(created_at),
-            });
-        }
-        Ok(charges)
+        results::charges(self, job)
     }
 
     fn put_result(&self, result: &StoredResult) -> Result<(), StoreError> {
@@ -570,132 +426,19 @@ impl JobStore for SqliteStore {
     }
 
     fn put_correction(&self, correction: &Correction) -> Result<(), StoreError> {
-        self.conn()
-            .execute(
-                "INSERT INTO corrections
-                    (job_id, setup_id, source_id, idx, text, reviewed, updated_at, fields)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-                 ON CONFLICT (job_id, setup_id, source_id, idx) DO UPDATE SET
-                    text = excluded.text, reviewed = excluded.reviewed,
-                    updated_at = excluded.updated_at, fields = excluded.fields",
-                params![
-                    correction.job_id.to_string(),
-                    correction.setup_id.to_string(),
-                    correction.source_id.to_string(),
-                    correction.index,
-                    correction.text,
-                    correction.reviewed,
-                    correction.updated_at.0,
-                    correction.fields.as_ref().map(to_json).transpose()?,
-                ],
-            )
-            .map_err(db)?;
-        Ok(())
+        results::put_correction(self, correction)
     }
 
     fn corrections(&self, job: JobId) -> Result<Vec<Correction>, StoreError> {
-        let conn = self.conn();
-        let mut stmt = conn
-            .prepare(
-                "SELECT setup_id, source_id, idx, text, reviewed, updated_at, fields
-                 FROM corrections WHERE job_id = ?1",
-            )
-            .map_err(db)?;
-        let rows = stmt
-            .query_map([job.to_string()], |row| {
-                Ok((
-                    row.get::<_, String>(0)?,
-                    row.get::<_, String>(1)?,
-                    row.get::<_, u32>(2)?,
-                    row.get::<_, Option<String>>(3)?,
-                    row.get::<_, bool>(4)?,
-                    row.get::<_, i64>(5)?,
-                    row.get::<_, Option<String>>(6)?,
-                ))
-            })
-            .map_err(db)?;
-        let mut out = Vec::new();
-        for row in rows {
-            let (setup, source, index, text, reviewed, updated, fields) = row.map_err(db)?;
-            out.push(Correction {
-                job_id: job,
-                setup_id: setup.parse().map_err(corrupt)?,
-                source_id: source.parse().map_err(corrupt)?,
-                index,
-                text,
-                fields: fields
-                    .map(|f| serde_json::from_str(&f))
-                    .transpose()
-                    .map_err(corrupt)?,
-                reviewed,
-                updated_at: Timestamp(updated),
-            });
-        }
-        Ok(out)
+        results::corrections(self, job)
     }
 
     fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError> {
-        let mut conn = self.conn();
-        let tx = conn.transaction().map_err(db)?;
-        let key = [
-            job.to_string(),
-            names.setup_id.to_string(),
-            names.source_id.to_string(),
-        ];
-        tx.execute(
-            "DELETE FROM speaker_names WHERE job_id = ?1 AND setup_id = ?2 AND source_id = ?3",
-            params![key[0], key[1], key[2]],
-        )
-        .map_err(db)?;
-        for (label, name) in &names.names {
-            if name.trim().is_empty() {
-                continue;
-            }
-            tx.execute(
-                "INSERT INTO speaker_names (job_id, setup_id, source_id, label, name)
-                 VALUES (?1, ?2, ?3, ?4, ?5)",
-                params![key[0], key[1], key[2], label, name.trim()],
-            )
-            .map_err(db)?;
-        }
-        tx.commit().map_err(db)
+        results::put_speaker_names(self, job, names)
     }
 
     fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError> {
-        let conn = self.conn();
-        let mut stmt = conn
-            .prepare(
-                "SELECT setup_id, source_id, label, name FROM speaker_names
-                 WHERE job_id = ?1 ORDER BY setup_id, source_id",
-            )
-            .map_err(db)?;
-        let rows = stmt
-            .query_map([job.to_string()], |row| {
-                Ok((
-                    row.get::<_, String>(0)?,
-                    row.get::<_, String>(1)?,
-                    row.get::<_, String>(2)?,
-                    row.get::<_, String>(3)?,
-                ))
-            })
-            .map_err(db)?;
-        let mut out: Vec<SpeakerNames> = Vec::new();
-        for row in rows {
-            let (setup, source, label, name) = row.map_err(db)?;
-            let setup_id: SetupId = setup.parse().map_err(corrupt)?;
-            let source_id: SourceId = source.parse().map_err(corrupt)?;
-            match out.last_mut() {
-                Some(last) if last.setup_id == setup_id && last.source_id == source_id => {
-                    last.names.insert(label, name);
-                }
-                _ => out.push(SpeakerNames {
-                    setup_id,
-                    source_id,
-                    names: [(label, name)].into_iter().collect(),
-                }),
-            }
-        }
-        Ok(out)
+        results::speaker_names(self, job)
     }
 
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError> {
@@ -784,7 +527,9 @@ impl JobStore for SqliteStore {
 }
 
 mod dictionary;
+mod migrations;
 mod projects;
+mod results;
 mod runs;
 mod snapshots;
 

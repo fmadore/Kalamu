@@ -2,7 +2,7 @@
 import type { ExportFormat } from "./ExportFormat";
 import type { JobSettings } from "./JobSettings";
 import type { OutputDestination } from "./OutputDestination";
-import type { PipelineSetup } from "./PipelineSetup";
+import type { SetupRequest } from "./SetupRequest";
 import type { Task } from "./Task";
 import type { Timestamp } from "./Timestamp";
 
@@ -10,7 +10,7 @@ export type Pipeline = {
 /**
  * Empty for a new pipeline; given when it is first saved.
  */
-id: string, name: string, task: Task, setups: Array<PipelineSetup>, settings: JobSettings, formats: Array<ExportFormat>, destination: OutputDestination, 
+id: string, name: string, task: Task, setups: Array<SetupRequest>, settings: JobSettings, formats: Array<ExportFormat>, destination: OutputDestination, 
 /**
  * When it was last saved; the interface sends 0 and saving sets it.
  */

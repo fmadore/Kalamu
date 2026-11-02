@@ -44,10 +44,11 @@ pub use compare::{
     diff, error_rate,
 };
 pub use estimate::{Estimate, EstimateRequest, EstimateRow};
+pub use kalamu_core::SetupRequest;
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
-pub use setup::{NewJob, SetupRequest};
+pub use setup::NewJob;
 pub use snapshot::{DerivedState, Freshness};
 pub use workflow::{JobStep, RunView, StartRun, StepView};
 
@@ -150,7 +151,7 @@ impl EngineError {
             Self::Media(MediaError::Encrypted) => "media.encrypted",
             Self::Media(MediaError::UnsupportedKind) => "media.unsupported",
             Self::Media(_) => "media.read",
-            Self::Prompt(_) => "prompt.invalid",
+            Self::Prompt(e) => e.code(),
             Self::UnknownProvider(_) => "provider.unknown",
             Self::MissingKey(_) => "provider.missing_key",
             Self::NotReady(e) => e.code(),

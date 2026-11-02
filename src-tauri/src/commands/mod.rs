@@ -97,3 +97,8 @@ pub(crate) static INTERRUPTED: Mutex<Vec<JobId>> = Mutex::new(Vec::new());
 pub fn remember_interrupted(ids: Vec<JobId>) {
     *INTERRUPTED.lock().unwrap_or_else(|p| p.into_inner()) = ids;
 }
+
+/// Writes an exported file (a record, a dictionary) where the researcher chose.
+fn write_text(path: PathBuf, text: String) -> Result<(), AppError> {
+    std::fs::write(path, text).map_err(|e| AppError::new(crate::errors::id::FILE, e))
+}

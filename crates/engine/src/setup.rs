@@ -5,32 +5,13 @@ use kalamu_catalog::Catalog;
 use kalamu_core::{
     InputKind, Job, JobId, JobSettings, JobStatus, LanguageChoice, MergeModel, MergeStep,
     OutputDestination, OutputSettings, PagesPerCall, PromptSnapshot, ProviderId, Setup, SetupId,
-    SetupOptions, SourceFile, Task, Timestamp,
+    SetupOptions, SetupRequest, SourceFile, Task, Timestamp,
 };
 use kalamu_prompts::{Preset, RenderContext};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{Engine, EngineError};
-
-/// One provider, model and prompt to run, as chosen in the interface.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct SetupRequest {
-    pub provider: ProviderId,
-    pub model: String,
-    /// A preset id; the task's default when absent.
-    pub preset_id: Option<String>,
-    /// Shown in comparison columns and file names; derived from the model when absent.
-    pub label: Option<String>,
-    #[serde(default)]
-    pub options: SetupOptions,
-    /// For a table of contents, the model that combines the pages; the same model as the
-    /// pages' when absent.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub merge: Option<MergeModel>,
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
