@@ -46,9 +46,10 @@ pub struct NewJob {
 }
 
 impl Engine {
-    pub fn create_job(&self, new: NewJob) -> Result<Job, EngineError> {
+    pub fn create_job(&self, mut new: NewJob) -> Result<Job, EngineError> {
         let catalog = self.catalog();
         Self::check_new(&catalog, &new)?;
+        crate::rules::writable_formats(&catalog, new.task, &new.setups, &mut new.output.formats);
         let setups = self.freeze_setups(&catalog, new.task, &new.settings, &new.setups)?;
         self.insert_job(
             new.name,
@@ -144,7 +145,7 @@ impl Engine {
             // Settled now, as the reasoning level is, so a catalogue refreshed before the job
             // resumes never regroups pages already read.
             let several = !matches!(settings.pages_per_call, None | Some(PagesPerCall::One));
-            if task == Task::TextExtraction && several {
+            if task.groups_pages() && several {
                 setup.pages_cap = Some(crate::group::pages_cap(catalog, &setup));
             }
             setups.push(setup);
@@ -226,9 +227,7 @@ impl Engine {
             languages: settings.languages.clone(),
             language_names: Self::language_names(catalog, settings),
             speakers: options.speakers,
-            line_breaks: settings
-                .line_breaks
-                .filter(|_| matches!(task, Task::TextExtraction | Task::TextCorrection)),
+            line_breaks: settings.line_breaks.filter(|_| task.has_line_breaks()),
             answers: matches!(task, Task::Analysis | Task::Contents),
         }
     }

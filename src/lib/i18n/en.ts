@@ -604,6 +604,7 @@ export const en = {
 			safety:
 				'Kalamu never sends more pages together than the model can write in one answer, and splits the answer back into pages for the review. A page the model leaves out, or that its answer cuts short, is read again on its own.',
 			economy: 'In the cheaper batch mode, pages are sent one at a time.',
+			alone: 'Images, and PDFs whose double pages are split, are read one page at a time.',
 			noPrompt: (models: string) => `${models} reads pages one at a time.`
 		},
 		lines: {

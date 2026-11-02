@@ -63,6 +63,8 @@ pub struct JobStep {
 #[ts(export)]
 pub struct StepView {
     pub state: StepState,
+    /// It waits for the researcher, as the run's status counts it.
+    pub needs_you: bool,
     pub job: Option<JobSummary>,
 }
 
@@ -147,6 +149,13 @@ impl Engine {
                 },
             };
             Self::check_new(&catalog, &new).map_err(|e| in_step(i, e))?;
+            let mut new = new;
+            crate::rules::writable_formats(
+                &catalog,
+                new.task,
+                &new.setups,
+                &mut new.output.formats,
+            );
             let setups = self
                 .freeze_setups(&catalog, new.task, &new.settings, &new.setups)
                 .map_err(|e| in_step(i, e))?;
@@ -468,6 +477,7 @@ fn view(run: WorkflowRun, jobs: &HashMap<JobId, JobSummary>) -> RunView {
         states.push(state);
         steps.push(StepView {
             state,
+            needs_you: state.needs_you(),
             job: job.flatten(),
         });
     }

@@ -71,8 +71,8 @@ export function seedWorkflows(
 			},
 			status: 'needs_you',
 			steps: [
-				{ state: 'review', job: extraction },
-				{ state: 'waiting', job: null }
+				{ state: 'review', needs_you: true, job: extraction },
+				{ state: 'waiting', needs_you: false, job: null }
 			]
 		}
 	];
@@ -123,8 +123,8 @@ export function workflowCommand(cmd: string, a: Record<string, unknown>): unknow
 			if (view) {
 				const step = a.step as number;
 				view.run.steps[step].progress.approval = { at: Date.now(), partial: false };
-				view.steps[step].state = 'done';
-				view.steps[step + 1] = { state: 'running', job: null };
+				view.steps[step] = { ...view.steps[step], state: 'done', needs_you: false };
+				view.steps[step + 1] = { state: 'running', needs_you: false, job: null };
 				view.status = 'running';
 			}
 			return null;
@@ -162,6 +162,7 @@ export function workflowCommand(cmd: string, a: Record<string, unknown>): unknow
 				status: 'running',
 				steps: start.workflow.steps.map((s, i) => ({
 					state: i === 0 || s.input.kind === 'sources' ? 'running' : 'waiting',
+					needs_you: false,
 					job: null
 				}))
 			};

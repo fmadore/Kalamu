@@ -28,7 +28,7 @@ import type { Workflow } from './bindings/Workflow.js';
 import type { DerivedState } from './bindings/DerivedState.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
-import type { EstimateRow } from './bindings/EstimateRow.js';
+import type { Estimate } from './bindings/Estimate.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { Job } from './bindings/Job.js';
 import type { JobScores } from './bindings/JobScores.js';
@@ -113,7 +113,7 @@ export const api = {
 	expandPaths: (paths: string[], task: Task) => invoke<string[]>('expand_paths', { paths, task }),
 	inspectFiles: (paths: string[]) => invoke<InspectedFile[]>('inspect_files', { paths }),
 	inspectLinks: (links: string[]) => invoke<InspectedFile[]>('inspect_links', { links }),
-	estimateCost: (request: EstimateRequest) => invoke<EstimateRow[]>('estimate_cost', { request }),
+	estimateCost: (request: EstimateRequest) => invoke<Estimate>('estimate_cost', { request }),
 	createJob: (job: NewJob) => invoke<Job>('create_job', { job }),
 	startJob: (id: string) => invoke<void>('start_job', { id }),
 	pauseJob: (id: string) => invoke<void>('pause_job', { id }),

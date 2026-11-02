@@ -17,7 +17,7 @@ use std::sync::{Arc, Mutex};
 
 use kalamu_core::{
     CacheKey, InputKind, Job, Pace, PieceRef, PieceState, PieceStatus, ProcessOutput,
-    RequestSetting, Setup, SourceFile, StopSignal, Task, pages,
+    RequestSetting, Setup, SourceFile, StopSignal, pages,
 };
 use kalamu_media::OpenSource;
 
@@ -79,7 +79,7 @@ impl Engine {
         let Some(asked) = job.settings.pages_per_call else {
             return 1;
         };
-        if job.task != Task::TextExtraction
+        if !job.task.groups_pages()
             || job.settings.pace == Pace::Economy
             || source.kind != InputKind::Pdf
             || source.split_spreads

@@ -13,7 +13,6 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { rulesFor } from '#lib/newJob.js';
-	import { scoredTask } from '#lib/scores.js';
 	import { api, ask } from '#lib/tauri.js';
 	import { app, go, liveJob, refreshJobs } from '#lib/state.svelte.js';
 
@@ -53,7 +52,7 @@
 			error = describeError(e, m);
 		}
 		// Scores are an extra: the page stands without them.
-		if (job && scoredTask(job.task)) {
+		if (job && rulesFor(app.rules, job.task).yields_text) {
 			scores = await api.jobScores(jobId).catch(() => null);
 		}
 		if (job) textSetup = job.setups[0]?.id ?? '';

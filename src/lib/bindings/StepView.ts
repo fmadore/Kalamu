@@ -2,4 +2,8 @@
 import type { JobSummary } from "./JobSummary";
 import type { StepState } from "./StepState";
 
-export type StepView = { state: StepState, job: JobSummary | null, };
+export type StepView = { state: StepState, 
+/**
+ * It waits for the researcher, as the run's status counts it.
+ */
+needs_you: boolean, job: JobSummary | null, };

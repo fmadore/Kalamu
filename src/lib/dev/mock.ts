@@ -886,17 +886,26 @@ export function installMock(): void {
 			}
 			case 'diff_texts':
 				return wordDiff(String(a.left ?? ''), String(a.right ?? ''));
-			case 'estimate_cost':
-				return (a.request as { setups: { provider: string; model: string }[] }).setups.map((s) => ({
-					provider: s.provider,
-					model: s.model,
-					pages: 120,
-					estimate: {
-						usd: s.provider === 'mistral' ? null : 0.42,
-						economy_usd: s.provider === 'mistral' ? null : 0.21,
-						note: null
-					}
-				}));
+			case 'estimate_cost': {
+				const rows = (a.request as { setups: { provider: string; model: string }[] }).setups.map(
+					(s) => ({
+						provider: s.provider,
+						model: s.model,
+						pages: 120,
+						merge: false,
+						estimate: {
+							usd: s.provider === 'mistral' ? null : 0.42,
+							economy_usd: s.provider === 'mistral' ? null : 0.21
+						}
+					})
+				);
+				const total = (economy: boolean) =>
+					rows.reduce<number | null>((sum, r) => {
+						const usd = economy ? (r.estimate.economy_usd ?? r.estimate.usd) : r.estimate.usd;
+						return sum === null || usd === null ? null : sum + usd;
+					}, 0);
+				return { rows, total_usd: total(false), total_economy_usd: total(true) };
+			}
 			case 'expand_paths':
 				return a.paths;
 			case 'inspect_files':

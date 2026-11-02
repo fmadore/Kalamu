@@ -42,11 +42,6 @@ pub struct DerivedState {
     pub freshness: Freshness,
 }
 
-/// The tasks whose result is a text another task can read.
-pub fn yields_text(task: Task) -> bool {
-    task.yields_text()
-}
-
 impl Engine {
     /// The corrected view of a source under a set-up as a snapshot's text, its parts, and the
     /// pieces not read (numbered from 1), failed or still to do.
@@ -57,7 +52,7 @@ impl Engine {
         source_id: SourceId,
     ) -> Result<(String, Vec<kalamu_core::SnapshotPart>, Vec<u32>, Task), EngineError> {
         let job = self.store.job(job_id)?;
-        if !yields_text(job.task) {
+        if !job.task.yields_text() {
             return Err(EngineError::NotText);
         }
         let doc = self.export_document(&job, setup_id, source_id)?;

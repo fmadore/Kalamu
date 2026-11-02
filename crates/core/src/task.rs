@@ -120,6 +120,36 @@ impl Task {
             Self::TextExtraction | Self::AudioTranscription | Self::TextCorrection
         )
     }
+
+    /// Whether its text keeps lines as on the page or joins them, as the researcher chooses.
+    pub fn has_line_breaks(self) -> bool {
+        matches!(self, Self::TextExtraction | Self::TextCorrection)
+    }
+
+    /// Whether it reads page by page, so that a sample of the first pages can be tried.
+    pub fn takes_samples(self) -> bool {
+        matches!(
+            self,
+            Self::TextExtraction | Self::TextCorrection | Self::Contents
+        )
+    }
+
+    /// Whether several pages of a PDF can be read in one call.
+    pub fn groups_pages(self) -> bool {
+        self == Self::TextExtraction
+    }
+
+    /// Whether double pages are worth splitting: not for an analysis, which reads a document
+    /// whole, nor a correction, which reads the text layer.
+    pub fn splits_spreads(self) -> bool {
+        matches!(self, Self::TextExtraction | Self::Contents)
+    }
+
+    /// Whether a PDF's text layer is what it reads, rather than a sign that reading is not
+    /// needed.
+    pub fn reads_text_layer(self) -> bool {
+        self == Self::TextCorrection
+    }
 }
 
 #[cfg(test)]

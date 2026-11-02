@@ -2,27 +2,17 @@
 
 use std::path::{Path, PathBuf};
 
-use kalamu_catalog::CostEstimate;
 use kalamu_core::{InputKind, Job, JobId, JobSummary, PieceState, SourceFile, Task};
-use kalamu_engine::NewJob;
+use kalamu_engine::{Estimate, EstimateRequest, NewJob};
 use tauri::State;
 
-use super::{AppState, EstimateRequest, EstimateRow, InspectedFile};
+use super::{AppState, InspectedFile};
 use crate::errors::{AppError, CmdResult, id};
 
 /// Files and folders dropped or chosen, expanded to the supported files for a task, sorted so
 /// numbered scans keep their order.
 #[tauri::command]
 pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
-    fn wanted(task: Task, kind: InputKind) -> bool {
-        match task {
-            Task::TextExtraction => matches!(kind, InputKind::Pdf | InputKind::Image),
-            Task::AudioTranscription => matches!(kind, InputKind::Audio | InputKind::Video),
-            Task::Analysis => matches!(kind, InputKind::Text | InputKind::Pdf | InputKind::Image),
-            Task::Contents => matches!(kind, InputKind::Pdf | InputKind::Image),
-            Task::TextCorrection => matches!(kind, InputKind::Text | InputKind::Pdf),
-        }
-    }
     fn walk(path: &Path, task: Task, out: &mut Vec<PathBuf>, depth: usize) {
         if path.is_dir() {
             if depth > 8 {
@@ -36,7 +26,7 @@ pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
             for child in children {
                 walk(&child, task, out, depth + 1);
             }
-        } else if InputKind::from_path(path).is_some_and(|k| wanted(task, k)) {
+        } else if InputKind::from_path(path).is_some_and(|k| task.reads_source(k)) {
             out.push(path.to_path_buf());
         }
     }
@@ -118,7 +108,7 @@ pub async fn inspect_files(
             .map(|(result, path)| match result {
                 Ok((source, warnings)) => InspectedFile {
                     path,
-                    pieces: recording_pieces(&source),
+                    pieces: kalamu_engine::Engine::recording_pieces(&source),
                     source: Some(source),
                     warnings,
                     error: None,
@@ -135,17 +125,6 @@ pub async fn inspect_files(
     })
     .await
     .map_err(|e| AppError::new(id::INTERNAL, e))
-}
-
-/// How many pieces a recording is cut into at the usual length. The cuts move to pauses when
-/// the job runs, so this is the count before the pauses are known.
-fn recording_pieces(source: &SourceFile) -> Option<u32> {
-    match source.kind {
-        InputKind::Audio | InputKind::Video => source
-            .duration_ms
-            .map(|ms| kalamu_media::plan(ms, &[], kalamu_media::DEFAULT_PIECE_MS).len() as u32),
-        _ => None,
-    }
 }
 
 /// YouTube links pasted for a new job, each checked; `path` is the link as pasted. Each video's
@@ -244,100 +223,8 @@ fn oembed_title(status: u16, body: &str) -> Result<Option<String>, &'static str>
 }
 
 #[tauri::command]
-pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Vec<EstimateRow> {
-    let catalog = state.engine.catalog();
-    let pages: u32 = request
-        .sources
-        .iter()
-        .map(|s| {
-            let n = match s.kind {
-                // A text to correct, in pages of about 2,500 characters.
-                InputKind::Text => (s.size_bytes / 2_500).max(1) as u32,
-                _ => s.page_count.unwrap_or(1) * if s.split_spreads { 2 } else { 1 },
-            };
-            request.sample_pages.map_or(n, |cap| n.min(cap))
-        })
-        .sum();
-    // A YouTube video's length is known only once the provider has read it.
-    let unknown_length = request.sources.iter().any(|s| s.kind == InputKind::YouTube);
-    let minutes: f64 = request
-        .sources
-        .iter()
-        .map(|s| s.duration_ms.unwrap_or(0) as f64 / 60_000.0)
-        .sum();
-    request
-        .setups
-        .iter()
-        .flat_map(|setup| {
-            let preset = setup
-                .preset_id
-                .as_ref()
-                .and_then(|id| state.engine.with_prompts(|p| p.get(id)).ok());
-            let prompt_chars = preset.as_ref().map_or(2_000, |p| p.instructions.len());
-            let estimate = match catalog.model(&setup.provider, &setup.model) {
-                _ if unknown_length => CostEstimate {
-                    usd: None,
-                    economy_usd: None,
-                    note: Some("A YouTube video's length is known once Gemini has read it.".into()),
-                },
-                Some(model) => {
-                    let mut estimate =
-                        catalog.estimate(model, request.task, pages, minutes, prompt_chars);
-                    // Economy mode only where Kalamu sends this model's work as a batch.
-                    let batches = state
-                        .engine
-                        .provider(&setup.provider)
-                        .is_ok_and(|p| p.batches(request.task, &setup.model));
-                    if !batches {
-                        estimate.economy_usd = None;
-                    }
-                    estimate
-                }
-                None => CostEstimate {
-                    usd: None,
-                    economy_usd: None,
-                    note: Some("This model is not in the catalogue.".into()),
-                },
-            };
-            let mut rows = vec![EstimateRow {
-                provider: setup.provider.clone(),
-                model: setup.model.clone(),
-                pages,
-                estimate,
-                merge: false,
-            }];
-            // A table of contents' second step, on its own model and never in a batch.
-            if request.task == Task::Contents {
-                let merge = setup
-                    .merge
-                    .clone()
-                    .unwrap_or_else(|| kalamu_core::MergeModel {
-                        provider: setup.provider.clone(),
-                        model: setup.model.clone(),
-                    });
-                let merge_chars = preset
-                    .as_ref()
-                    .and_then(|p| p.merge_instructions.as_ref())
-                    .map_or(2_000, String::len);
-                let estimate = match catalog.model(&merge.provider, &merge.model) {
-                    Some(model) => catalog.estimate_merge(model, pages, merge_chars),
-                    None => CostEstimate {
-                        usd: None,
-                        economy_usd: None,
-                        note: Some("This model is not in the catalogue.".into()),
-                    },
-                };
-                rows.push(EstimateRow {
-                    provider: merge.provider,
-                    model: merge.model,
-                    pages,
-                    estimate,
-                    merge: true,
-                });
-            }
-            rows
-        })
-        .collect()
+pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Estimate {
+    state.engine.estimate(&request)
 }
 
 #[tauri::command]

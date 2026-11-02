@@ -68,21 +68,24 @@ export function rulesFor(rules: Rules, task: Task): TaskRules {
 			answers_in_language: false,
 			models: [],
 			merge_models: [],
-			yields_text: false
+			yields_text: false,
+			line_breaks: false,
+			samples: false,
+			pages_per_call: false,
+			splits_spreads: false,
+			reads_text_layer: false
 		}
 	);
 }
 
-/**
- * The task the catalogue lists a model's defaults under: a table of contents and a correction
- * are made of analyses (`Task::request_task` in Rust), so they take the analysis defaults.
- */
-export function requestTask(task: Task): Task {
-	return task === 'contents' || task === 'text_correction' ? 'analysis' : task;
-}
-
-const listed = (refs: TaskRules['models'], m: ModelInfo) =>
-	refs.some((r) => r.provider === m.provider && r.model === m.id);
+/** The engine's entry for a model in a task's rules. */
+const refOf = (refs: TaskRules['models'], m: ModelInfo) =>
+	refs.find((r) => r.provider === m.provider && r.model === m.id);
+const listed = (refs: TaskRules['models'], m: ModelInfo) => refOf(refs, m) !== undefined;
+/** The app's choice for the task, and each provider's, as the engine reads the catalogue. */
+const recommended = (rule: TaskRules, m: ModelInfo) => refOf(rule.models, m)?.recommended === true;
+const providerChoice = (rule: TaskRules, m: ModelInfo) =>
+	refOf(rule.models, m)?.provider_default === true;
 
 /** Whether a model can do the task. */
 export function doesTask(rule: TaskRules, model: ModelInfo): boolean {
@@ -166,8 +169,7 @@ export function providerDefault(
 	input?: string
 ): string {
 	const models = modelsFor(catalog, rule, provider, input);
-	const listedAs = requestTask(rule.task);
-	return (models.find((m) => m.provider_default_for.includes(listedAs)) ?? models[0])?.id ?? '';
+	return (models.find((m) => providerChoice(rule, m)) ?? models[0])?.id ?? '';
 }
 
 /**
@@ -187,12 +189,11 @@ export function newDraft(
 	const offered = forTask(catalog, rule, input);
 	const usable = offered.filter((m) => hasKey(m.provider));
 	const fresh = usable.filter((m) => !used.includes(`${m.provider}/${m.id}`));
-	const listedAs = requestTask(rule.task);
 	const pick =
-		fresh.find((m) => m.recommended_for.includes(listedAs)) ??
-		fresh.find((m) => m.provider_default_for.includes(listedAs)) ??
+		fresh.find((m) => recommended(rule, m)) ??
+		fresh.find((m) => providerChoice(rule, m)) ??
 		fresh[0] ??
-		usable.find((m) => m.recommended_for.includes(listedAs)) ??
+		usable.find((m) => recommended(rule, m)) ??
 		usable[0] ??
 		offered[0];
 	const provider = pick?.provider ?? '';

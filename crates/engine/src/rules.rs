@@ -21,6 +21,10 @@ pub struct ModelRef {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub suggested_reasoning: Option<String>,
+    /// The app's choice for the task, offered first.
+    pub recommended: bool,
+    /// Its provider's choice for the task, offered when the researcher picks that provider.
+    pub provider_default: bool,
 }
 
 /// What a task takes and gives, for the interface.
@@ -38,8 +42,19 @@ pub struct TaskRules {
     pub models: Vec<ModelRef>,
     /// For a table of contents, the models that can combine its pages; empty otherwise.
     pub merge_models: Vec<ModelRef>,
-    /// Its results are a text a later analysis can read, frozen as corrected.
+    /// Its results are a text a later analysis can read, frozen as corrected, and scored
+    /// against the researcher's review.
     pub yields_text: bool,
+    /// Lines kept as on the page or joined, as chosen.
+    pub line_breaks: bool,
+    /// A sample of the first pages can be tried.
+    pub samples: bool,
+    /// Several pages of a PDF can go in one call.
+    pub pages_per_call: bool,
+    /// Double pages are worth splitting.
+    pub splits_spreads: bool,
+    /// A PDF's text layer is what it reads, not a sign it need not run.
+    pub reads_text_layer: bool,
 }
 
 fn refs<'a>(
@@ -52,6 +67,8 @@ fn refs<'a>(
             provider: m.provider.clone(),
             model: m.id.clone(),
             suggested_reasoning: m.tuning(task, None).reasoning,
+            recommended: m.is_recommended_for(task),
+            provider_default: m.is_provider_default_for(task),
         })
         .collect()
 }
@@ -65,7 +82,12 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
             sources: task.source_kinds().to_vec(),
             formats: task.formats().to_vec(),
             answers_in_language: task.answers_in_language(),
-            yields_text: crate::yields_text(task),
+            yields_text: task.yields_text(),
+            line_breaks: task.has_line_breaks(),
+            samples: task.takes_samples(),
+            pages_per_call: task.groups_pages(),
+            splits_spreads: task.splits_spreads(),
+            reads_text_layer: task.reads_text_layer(),
             models: refs(task, catalog.models_for(task)),
             merge_models: if task == Task::Contents {
                 refs(task, catalog.merge_models())
@@ -74,6 +96,22 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
             },
         })
         .collect()
+}
+
+/// The formats a job of these set-ups can write: those of its task, and a searchable PDF only
+/// when a set-up's model reports where text sits on the page.
+pub(crate) fn writable_formats(
+    catalog: &Catalog,
+    task: Task,
+    setups: &[crate::SetupRequest],
+    formats: &mut Vec<ExportFormat>,
+) {
+    let layout = setups.iter().any(|s| {
+        catalog
+            .model(&s.provider, &s.model)
+            .is_some_and(|m| m.layout)
+    });
+    formats.retain(|f| task.formats().contains(f) && (layout || *f != ExportFormat::SearchablePdf));
 }
 
 impl Engine {
@@ -130,6 +168,31 @@ mod tests {
                 .filter(whisper)
                 .all(|r| r.task == Task::AudioTranscription)
         );
+    }
+
+    #[test]
+    fn a_searchable_pdf_is_written_only_by_a_model_that_reports_layout() {
+        let catalog = Catalog::bundled();
+        let setup = |provider: &str, model: &str| crate::SetupRequest {
+            provider: ProviderId::new(provider),
+            model: model.into(),
+            preset_id: None,
+            label: None,
+            options: Default::default(),
+            merge: None,
+        };
+        let asked = vec![ExportFormat::Txt, ExportFormat::SearchablePdf];
+        let mut formats = asked.clone();
+        let gemini = [setup("gemini", "gemini-3.8-flash")];
+        writable_formats(&catalog, Task::TextExtraction, &gemini, &mut formats);
+        assert_eq!(formats, [ExportFormat::Txt]);
+        let mut formats = asked.clone();
+        let both = [
+            setup("gemini", "gemini-3.8-flash"),
+            setup("mistral", "mistral-ocr-4-1"),
+        ];
+        writable_formats(&catalog, Task::TextExtraction, &both, &mut formats);
+        assert_eq!(formats, asked);
     }
 
     /// The bundled catalogue's rules, written for the interface's tests and sample data, as

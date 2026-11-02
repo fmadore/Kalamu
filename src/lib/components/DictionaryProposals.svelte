@@ -118,7 +118,7 @@
 		}
 		void api
 			.estimateCost({ task: 'analysis', sources, setups: [setup()], sample_pages: null })
-			.then((rows) => {
+			.then(({ rows }) => {
 				const r = rows[0]?.estimate;
 				cost = r ? { usd: r.usd, economy: r.economy_usd } : null;
 				if (r?.economy_usd === null) economy = false;

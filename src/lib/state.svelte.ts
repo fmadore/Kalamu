@@ -110,7 +110,7 @@ export async function refreshWaiting(): Promise<void> {
 	const waiting: typeof app.waiting = {};
 	for (const { run, steps } of runs) {
 		steps.forEach((s, step) => {
-			if (s.job && (s.state === 'review' || s.state === 'attention')) {
+			if (s.job && s.needs_you) {
 				waiting[s.job.id] = { runId: run.id, step, state: s.state };
 			}
 		});
