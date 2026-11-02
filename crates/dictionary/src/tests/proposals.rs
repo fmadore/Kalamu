@@ -45,6 +45,7 @@ fn answered(f: &Fixture, prepared: &Prepared, groups: &[(&[&str], &str, &str)]) 
         },
         options: SetupOptions::default(),
         merge: None,
+        pages_cap: None,
     };
     let job = Job {
         id: JobId::new(),

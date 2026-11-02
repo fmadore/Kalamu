@@ -201,7 +201,8 @@ pub struct StoredResult {
 }
 
 /// A call the provider billed though nothing could be kept from it: an analysis answer that
-/// broke its fields and was asked for again. Recorded so the cost shown is the cost charged.
+/// broke its fields and was asked for again, or pages read together whose marks could not be
+/// used. Recorded so the cost shown is the cost charged.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Charge {
     pub job_id: JobId,

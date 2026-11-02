@@ -4,8 +4,8 @@
 use kalamu_catalog::Catalog;
 use kalamu_core::{
     InputKind, Job, JobId, JobSettings, JobStatus, LanguageChoice, MergeModel, MergeStep,
-    OutputDestination, OutputSettings, PromptSnapshot, ProviderId, Setup, SetupId, SetupOptions,
-    SourceFile, Task, Timestamp,
+    OutputDestination, OutputSettings, PagesPerCall, PromptSnapshot, ProviderId, Setup, SetupId,
+    SetupOptions, SourceFile, Task, Timestamp,
 };
 use kalamu_prompts::{Preset, RenderContext};
 use serde::{Deserialize, Serialize};
@@ -131,7 +131,7 @@ impl Engine {
             if let Some(model) = catalog.model(&request.provider, &request.model) {
                 options.reasoning = model.tuning(task, options.reasoning.as_deref()).reasoning;
             }
-            setups.push(Setup {
+            let mut setup = Setup {
                 id: SetupId::new(),
                 label,
                 provider: request.provider.clone(),
@@ -139,7 +139,15 @@ impl Engine {
                 prompt,
                 options,
                 merge,
-            });
+                pages_cap: None,
+            };
+            // Settled now, as the reasoning level is, so a catalogue refreshed before the job
+            // resumes never regroups pages already read.
+            let several = !matches!(settings.pages_per_call, None | Some(PagesPerCall::One));
+            if task == Task::TextExtraction && several {
+                setup.pages_cap = Some(crate::group::pages_cap(catalog, &setup));
+            }
+            setups.push(setup);
         }
         Ok(setups)
     }

@@ -24,6 +24,10 @@ impl Fixture {
     }
 
     fn grouped_job(&self, source: SourceFile, together: PagesPerCall) -> Job {
+        self.sampled_job(source, together, None)
+    }
+
+    fn sampled_job(&self, source: SourceFile, together: PagesPerCall, sample: Option<u32>) -> Job {
         self.engine
             .create_job(NewJob {
                 name: "Registre".into(),
@@ -39,6 +43,7 @@ impl Fixture {
                 }],
                 settings: kalamu_core::JobSettings {
                     pages_per_call: Some(together),
+                    sample_pages: sample,
                     ..Default::default()
                 },
                 output: OutputSettings {
@@ -146,6 +151,54 @@ async fn a_page_left_unmarked_or_cut_off_is_read_again_alone() {
         provenance.get("truncated").is_none(),
         "no page kept is cut: {provenance}"
     );
+}
+
+#[tokio::test]
+async fn a_call_that_gives_no_page_is_still_counted() {
+    let f = fixture();
+    f.listed(65_536);
+    // Page 2 unmarked and page 1 dropped as possibly cut off: nothing is kept from the call.
+    f.fake.unmarked.store(2, Ordering::SeqCst);
+    f.fake.cut_groups.store(true, Ordering::SeqCst);
+    let job = f.grouped_job(f.pdf("registre.pdf", 2), PagesPerCall::Whole);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), 3, "the group, then each page alone");
+    let provenance: serde_json::Value =
+        serde_json::from_str(&f.text("registre.provenance.json")).unwrap_or_default();
+    assert_eq!(provenance["refused"]["answers"], 1, "{provenance}");
+    assert_eq!(provenance["refused"]["usage"]["output_tokens"], 100);
+}
+
+#[tokio::test]
+async fn pages_are_grouped_as_when_the_job_was_made() {
+    let f = fixture();
+    f.listed(10_000);
+    let job = f.grouped_job(f.pdf("registre.pdf", 10), PagesPerCall::Whole);
+    assert_eq!(job.setups[0].pages_cap, Some(4));
+    // The catalogue is refreshed before the job runs, with a larger output limit: the pages
+    // go as they would have, and keep their keys.
+    let mut catalog = f.engine.catalog().clone();
+    for model in catalog.models.iter_mut().filter(|m| m.id == "fake-model") {
+        model.limits.max_output_tokens = Some(65_536);
+    }
+    f.engine.set_catalog(catalog);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(f.groups(), [(1, 4), (5, 8), (9, 10)]);
+}
+
+#[tokio::test]
+async fn a_sample_is_read_as_the_whole_run_reads_it() {
+    let f = fixture();
+    f.listed(10_000);
+    let sample = f.sampled_job(f.pdf("registre.pdf", 10), PagesPerCall::Whole, Some(3));
+    assert_eq!(f.run(sample.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), 1);
+    // The whole run finds the sample's three pages in the cache: page 4, the rest of their
+    // group, goes alone, and the other groups as they always would.
+    let whole = f.grouped_job(f.pdf("registre.pdf", 10), PagesPerCall::Whole);
+    assert_eq!(f.run(whole.id).await, JobStatus::Completed);
+    assert_eq!(f.groups(), [(1, 3), (5, 8), (9, 10)]);
+    assert_eq!(f.fake.calls(), 4);
 }
 
 #[tokio::test]

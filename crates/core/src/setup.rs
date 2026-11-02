@@ -64,6 +64,13 @@ pub struct Setup {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub merge: Option<MergeStep>,
+    /// For a text extraction that reads several pages in one call, the most pages this model
+    /// can write in one answer: settled when the job is created, so a later catalogue refresh
+    /// never regroups its pages nor changes their cache keys. `None` when the job reads one
+    /// page at a time, and in jobs made before it was settled.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub pages_cap: Option<u32>,
 }
 
 /// A table of contents' second step: one call per document, over the first step's readings.

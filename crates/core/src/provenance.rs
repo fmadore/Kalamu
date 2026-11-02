@@ -67,8 +67,10 @@ pub struct Provenance {
     /// second's share).
     pub usage: Usage,
     pub cost_usd: Option<f64>,
-    /// Answers the provider billed but that were refused for breaking the fields and asked for
-    /// again: not in `usage` or `cost_usd`, which count the results kept.
+    /// Answers the provider billed but that nothing was kept from: refused for breaking the
+    /// fields and asked for again, or several pages read together whose page marks could not be
+    /// used, each page then read again alone. Not in `usage` or `cost_usd`, which count the
+    /// results kept.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub refused: Option<ProvenanceRefused>,
@@ -103,7 +105,7 @@ pub struct ProvenanceWorkflow {
     pub approval: Option<crate::Approval>,
 }
 
-/// Answers billed but refused, as provenance records them.
+/// Answers billed but not kept, as provenance records them.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ProvenanceRefused {

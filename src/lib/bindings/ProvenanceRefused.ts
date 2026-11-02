@@ -2,6 +2,6 @@
 import type { Usage } from "./Usage";
 
 /**
- * Answers billed but refused, as provenance records them.
+ * Answers billed but not kept, as provenance records them.
  */
 export type ProvenanceRefused = { answers: number, usage: Usage, cost_usd: number | null, };

@@ -44,6 +44,7 @@ fn job() -> Job {
             },
             options: SetupOptions::default(),
             merge: None,
+            pages_cap: None,
         }],
         settings: JobSettings::default(),
         output: OutputSettings::default(),
