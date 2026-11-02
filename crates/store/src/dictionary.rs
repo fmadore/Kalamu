@@ -1,7 +1,10 @@
 //! [`DictionaryStore`] for the same database: a project's dictionary entries and the pairs the
-//! researcher kept apart. Deleting the project removes them; nothing here reaches a result.
+//! researcher kept apart, the proposal jobs asked of a model and the proposals turned down.
+//! Deleting the project removes them; nothing here reaches a result.
 
-use kalamu_core::{DictionaryStore, Entry, EntryId, KeptApart, ProjectId, StoreError, Timestamp};
+use kalamu_core::{
+    DictionaryStore, Entry, EntryId, KeptApart, ProjectId, ProposalRequest, StoreError, Timestamp,
+};
 use rusqlite::params;
 
 use super::{SqliteStore, corrupt, db, to_json};
@@ -23,6 +26,24 @@ CREATE TABLE dictionary_apart (
     a TEXT NOT NULL REFERENCES dictionary_entries(id) ON DELETE CASCADE,
     b TEXT NOT NULL REFERENCES dictionary_entries(id) ON DELETE CASCADE,
     PRIMARY KEY (a, b)
+);
+"#;
+
+/// Proposal requests and the proposals turned down, added after the first dictionary tables.
+/// A request outlives its job, which is deleted apart; its answers are then simply gone.
+pub(crate) const PROPOSALS: &str = r#"
+CREATE TABLE dictionary_requests (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    created_at INTEGER NOT NULL,
+    data TEXT NOT NULL
+);
+CREATE INDEX dictionary_requests_by_project ON dictionary_requests(project_id);
+CREATE TABLE dictionary_dismissed (
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    namespace TEXT NOT NULL,
+    key TEXT NOT NULL,
+    PRIMARY KEY (project_id, namespace, key)
 );
 "#;
 
@@ -146,5 +167,95 @@ impl DictionaryStore for SqliteStore {
             });
         }
         Ok(pairs)
+    }
+
+    fn put_request(&self, request: &ProposalRequest) -> Result<(), StoreError> {
+        self.conn()
+            .execute(
+                "INSERT INTO dictionary_requests (id, project_id, created_at, data)
+                 VALUES (?1, ?2, ?3, ?4)
+                 ON CONFLICT(id) DO UPDATE SET data = ?4",
+                params![
+                    request.id,
+                    request.project_id.to_string(),
+                    request.created_at.0,
+                    to_json(request)?,
+                ],
+            )
+            .map_err(db)?;
+        Ok(())
+    }
+
+    fn requests(&self, project: ProjectId) -> Result<Vec<ProposalRequest>, StoreError> {
+        let conn = self.conn();
+        let mut stmt = conn
+            .prepare(
+                "SELECT data FROM dictionary_requests WHERE project_id = ?1
+                 ORDER BY created_at, rowid",
+            )
+            .map_err(db)?;
+        let rows = stmt
+            .query_map([project.to_string()], |row| row.get::<_, String>(0))
+            .map_err(db)?;
+        let mut requests = Vec::new();
+        for row in rows {
+            requests.push(serde_json::from_str(&row.map_err(db)?).map_err(corrupt)?);
+        }
+        Ok(requests)
+    }
+
+    fn delete_request(&self, id: &str) -> Result<(), StoreError> {
+        self.conn()
+            .execute("DELETE FROM dictionary_requests WHERE id = ?1", [id])
+            .map_err(db)?;
+        Ok(())
+    }
+
+    fn put_dismissed(
+        &self,
+        project: ProjectId,
+        namespace: &str,
+        key: &str,
+    ) -> Result<(), StoreError> {
+        self.conn()
+            .execute(
+                "INSERT OR IGNORE INTO dictionary_dismissed (project_id, namespace, key)
+                 VALUES (?1, ?2, ?3)",
+                params![project.to_string(), namespace, key],
+            )
+            .map_err(db)?;
+        Ok(())
+    }
+
+    fn remove_dismissed(
+        &self,
+        project: ProjectId,
+        namespace: &str,
+        key: &str,
+    ) -> Result<(), StoreError> {
+        self.conn()
+            .execute(
+                "DELETE FROM dictionary_dismissed
+                 WHERE project_id = ?1 AND namespace = ?2 AND key = ?3",
+                params![project.to_string(), namespace, key],
+            )
+            .map_err(db)?;
+        Ok(())
+    }
+
+    fn dismissed(&self, project: ProjectId) -> Result<Vec<(String, String)>, StoreError> {
+        let conn = self.conn();
+        let mut stmt = conn
+            .prepare(
+                "SELECT namespace, key FROM dictionary_dismissed WHERE project_id = ?1
+                 ORDER BY rowid",
+            )
+            .map_err(db)?;
+        let rows = stmt
+            .query_map([project.to_string()], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })
+            .map_err(db)?;
+        rows.map(|r| r.map_err(db)).collect()
     }
 }

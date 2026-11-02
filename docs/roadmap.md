@@ -4,13 +4,11 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (1 November 2026)
+## Status (2 November 2026)
 
-**Version 1.0.0**, the first Microsoft Store release, is ready to build: the app, its package
-and its listing are done, and what is left before submitting needs Partner Center, the
-repository's settings and real keys ([Toward the Store release](#toward-the-store-release)).
-[v0.4.0](https://github.com/fmadore/Kalamu/releases/tag/v0.4.0) is the latest public test
-build, for Windows on x64 and ARM64, with FFmpeg bundled. Everything below is tested against
+**Version 1.0.0** is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) (2 November 2026), and its unsigned
+installers for x64 and ARM64, with FFmpeg bundled, are on the
+[v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
 the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`, see
 [development.md](development.md)); Gemini has not yet, for want of credit on the account.
@@ -129,6 +127,16 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   results counted, not mentions; entries whose evidence is gone marked; export as JSON and CSV;
   a crate of its own, `dictionary`
   ([decision](decisions/2026-11-01-project-dictionary.md)).
+- **Project dictionary, merges proposed by a model**
+  ([#48](https://github.com/fmadore/Kalamu/issues/48)): a field's rows sent, with their
+  spellings, the documents naming them and the pairs kept apart, as an analysis job of its own
+  under a prompt that can be read and edited in Prompts, with an estimate first and economy
+  mode where the model has one; the whole field in one request up to about 100,000 tokens, larger
+  fields in alphabetical groups of that size sharing a tenth of their rows, the coverage said; the answers
+  checked against the rows sent, references to no row counted and dropped, pairs kept apart
+  never offered; each proposal accepted through the ordinary merge (some rows left out, the
+  label changed), kept apart, or turned down and taken back, across restarts
+  ([decision](decisions/2026-11-02-proposed-merges.md)).
 - **Tags on a project's documents**: the researcher's own labels beside the collections, added
   and removed on a selection or a document, narrowing the table and found by its search; one
   spelling per project whatever the capitals, kept through a merge.
@@ -198,12 +206,12 @@ done.
   (with [#55](https://github.com/fmadore/Kalamu/issues/55)); renaming a tag across a project;
   and later, search through the text of every result.
 - **Project dictionary, what is left of
-  [#48](https://github.com/fmadore/Kalamu/issues/48)**: merges proposed by a model through
-  the engine (bounded groups with overlap, references to existing ids checked, an estimate
-  first, never applied without the researcher); import with conflicts previewed; an accepted
-  dictionary versioned and given to later analyses as a fingerprinted input (with #49); and
-  telling apart two people who share a spelling, which needs mentions anchored in the text
-  (#47).
+  [#48](https://github.com/fmadore/Kalamu/issues/48)**: a live run of proposed merges with
+  each provider, on a field of a few hundred rows; comparing rows far apart in the alphabet
+  (shared words, sound), which the groups leave out; import with conflicts previewed; an
+  accepted dictionary versioned and given to later analyses as a fingerprinted input (with
+  #49); and telling apart two people who share a spelling, which needs mentions anchored in
+  the text (#47).
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed
@@ -266,15 +274,10 @@ Done: the name (reserved on 28 October 2026) and the package identity in the man
 the licences inside, the `.msixbundle` and `kalamu-samples.zip` in the release workflow,
 version 1.0.0, third-party notices generated at build time, the sample files (with a 1755
 manuscript and a 1915 newspaper in the public domain), and the listing, What's new and
-certification notes for 1.0.0. The [v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0)
-is built and published, its `.msixbundle` ready to upload.
-
-Left, in this order:
-
-- **Privacy policy online**: GitHub Pages from `docs/` on `main`, so it is served at
-  `fmadore.github.io/Kalamu/privacy`.
-- **Live runs and screenshots** from the installed package, a decision on a capped test key for
-  the certification team, then the acceptance checklist and the submission.
+certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
+submission. Version 1.0.0 passed certification and is
+[in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
+in [microsoft-store.md](microsoft-store.md).
 
 ## Research workflows (planned)
 
@@ -309,7 +312,7 @@ A pending merge decision is never treated as approval.
 | 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (first increment done) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
 | 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis (first increment done) | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
 | 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps (first increment done, with review checkpoints) | [#49](https://github.com/fmadore/Kalamu/issues/49) |
-| 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export (first increment done: inventory, researcher decisions, export) | [#48](https://github.com/fmadore/Kalamu/issues/48) |
+| 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export (done: inventory, researcher decisions, export, model-proposed merges) | [#48](https://github.com/fmadore/Kalamu/issues/48) |
 | 5 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |
 
 The project workspace can ship incrementally before the complete workflow builder. It owns

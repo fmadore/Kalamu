@@ -6,6 +6,9 @@ import type { DictionaryRow } from '../bindings/DictionaryRow.js';
 import type { DictionaryView } from '../bindings/DictionaryView.js';
 import type { Evidence } from '../bindings/Evidence.js';
 import type { Item } from '../bindings/Item.js';
+import type { Proposal } from '../bindings/Proposal.js';
+import type { ProposalMember } from '../bindings/ProposalMember.js';
+import type { ProposalsView } from '../bindings/ProposalsView.js';
 import { folded } from '../search.js';
 
 interface MockEntry {
@@ -48,6 +51,98 @@ let entries: MockEntry[] = [
 ];
 let apart: [string, string][] = [];
 let next = 2;
+
+/** What a model answered when asked for merges: groups of forms, with its label and reason. */
+const answered: [string, string[], string, string, string][] = [
+	[
+		'people',
+		['Moussa Traoré', 'Traore Moussa'],
+		'Moussa Traoré',
+		'One name in two orders, the accent dropped in one; both letters are from Bamako.',
+		'certain'
+	],
+	[
+		'people',
+		['El Hadj Oumar Tall', 'Oumar Tall'],
+		'El Hadj Oumar Tall',
+		'The same name with and without the title, in documents of the same years.',
+		'likely'
+	],
+	[
+		'places',
+		['Côte d’Ivoire', 'Ivory Coast'],
+		'Côte d’Ivoire',
+		'The French and English names of one country.',
+		'certain'
+	],
+	[
+		'organisations',
+		['Union culturelle musulmane', 'UCM'],
+		'Union culturelle musulmane',
+		'UCM is the usual abbreviation, and the documents that use it name its Bamako office.',
+		'likely'
+	]
+];
+let asked = new Set<string>();
+let dismissed = new Set<string>();
+const request = '00000000-0000-0000-0000-0000000000r1';
+const proposalJob = '00000000-0000-0000-0000-0000000000j9';
+
+function member(namespace: string, form: string): ProposalMember {
+	const entry = holder(namespace, form);
+	return entry
+		? {
+				item: { kind: 'entry', id: entry.id },
+				key: entry.id,
+				label: entry.label,
+				forms: entry.forms
+			}
+		: { item: { kind: 'form', form }, key: `form:${form}`, label: form, forms: [form] };
+}
+
+function proposals(): ProposalsView {
+	const out: Proposal[] = [];
+	for (const [namespace, forms, label, reason, certainty] of answered) {
+		if (!asked.has(namespace)) continue;
+		const members = [
+			...new Map(forms.map((f) => [member(namespace, f).key, member(namespace, f)])).values()
+		];
+		if (members.length < 2) continue;
+		const ids = members.flatMap((mb) => (mb.item.kind === 'entry' ? [mb.item.id] : []));
+		if (apart.some(([a, b]) => ids.includes(a) && ids.includes(b))) continue;
+		const key = members
+			.flatMap((mb) => mb.forms)
+			.sort()
+			.join('\u001f');
+		out.push({
+			key,
+			namespace,
+			request_id: request,
+			job_id: proposalJob,
+			label,
+			reason,
+			certainty,
+			members,
+			dismissed: dismissed.has(key)
+		});
+	}
+	return {
+		requests: [...asked].map((namespace) => ({
+			id: `${request}-${namespace}`,
+			namespace,
+			job_id: proposalJob,
+			job_name: `Dictionary: merges in ${labels[namespace]}`,
+			status: 'completed',
+			created_at: Date.now(),
+			rows: view().rows.filter((r) => r.namespace === namespace).length,
+			groups: 1,
+			answered: 1,
+			proposals: out.filter((x) => x.namespace === namespace && !x.dismissed).length,
+			unknown: 0
+		})),
+		proposals: out
+	};
+}
 
 function holder(namespace: string, form: string): MockEntry | undefined {
 	return entries.find((e) => e.namespace === namespace && e.forms.includes(form));
@@ -200,6 +295,40 @@ export function dictionaryCommand(cmd: string, a: Record<string, unknown>): unkn
 			apart = apart.filter(([p, q]) => !([a.a, a.b].includes(p) && [a.a, a.b].includes(q)));
 			return null;
 		case 'export_dictionary':
+			return null;
+		case 'dictionary_plan': {
+			const rows = view().rows.filter((r) => r.namespace === namespace).length;
+			if (rows < 2) throw { id: 'dictionary.nothing_to_compare' };
+			return {
+				sources: [
+					{
+						id: '00000000-0000-0000-0000-0000000000s9',
+						path: `C:/Kalamu/snapshots/${namespace}.txt`,
+						file_name: `${namespace}.txt`,
+						sha256: namespace,
+						size_bytes: rows * 120,
+						modified_ms: null,
+						kind: 'text',
+						page_count: null,
+						duration_ms: null,
+						split_spreads: false,
+						even_out_volume: false
+					}
+				],
+				rows
+			};
+		}
+		case 'dictionary_propose':
+			asked.add(namespace);
+			return { id: proposalJob, name: `Dictionary: merges in ${labels[namespace]}` };
+		case 'dictionary_proposals':
+			return proposals();
+		case 'dictionary_dismiss':
+			if (a.dismissed) dismissed.add(String(a.key));
+			else dismissed.delete(String(a.key));
+			return null;
+		case 'dictionary_forget_request':
+			asked = new Set([...asked].filter((n) => `${request}-${n}` !== a.request));
 			return null;
 		default:
 			return undefined;

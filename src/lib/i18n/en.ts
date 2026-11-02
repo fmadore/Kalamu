@@ -268,7 +268,40 @@ export const en = {
 		noEvidence: 'No result lists it any longer.',
 		openReview: 'Open the review',
 		export: 'Export',
-		exported: 'The dictionary was written as JSON, with every form found as CSV beside it.'
+		exported: 'The dictionary was written as JSON, with every form found as CSV beside it.',
+		proposals: {
+			title: 'Proposed merges',
+			ask: 'Ask a model to propose merges',
+			plan: (field: string, rows: number, groups: number) =>
+				groups === 1
+					? `All ${rows} rows of ${field} are sent in one request, with their spellings, the titles of up to three documents naming each, and the pairs you kept apart.`
+					: `The ${rows} rows of ${field} are too many for one request: they are sent in ${groups} requests of about 100,000 tokens each, in alphabetical order with accents set aside, each sharing a tenth of its rows with the next. Names far apart in the alphabet are not compared. Each row goes with its spellings, the titles of up to three documents naming it, and the pairs you kept apart.`,
+			prompt: 'See or edit the prompt',
+			sends: (provider: string) =>
+				`Sent to ${provider} with your key, as an analysis job of its own: its cost and answers are in Jobs. Nothing is merged until you accept it.`,
+			noKey: (provider: string) => `Add a key for ${provider} in Settings first.`,
+			economy: 'Economy mode: half price, answered within a day',
+			cost: (usd: string) => `About ${usd}.`,
+			costUnknown: 'The cost could not be estimated.',
+			start: 'Send',
+			request: (status: string, answered: number, groups: number, open: number, date: string) =>
+				`Asked on ${date}: ${status.toLowerCase()}, ${answered} of ${groups === 1 ? '1 group' : `${groups} groups`} answered, ${open === 1 ? '1 proposal' : `${open} proposals`} open.`,
+			unknown: (n: number) =>
+				n === 1 ? '1 reference to no row, left out' : `${n} references to no row, left out`,
+			openJob: 'Open the job',
+			forget: 'Forget',
+			forgetHint: 'Forget this request and its proposals. The job stays among the jobs.',
+			none: 'No proposal left: every one was merged, turned down or kept apart, or the model found none.',
+			certainty: {
+				certain: 'Certain',
+				likely: 'Likely',
+				possible: 'Possible'
+			},
+			certaintyHint: 'How sure the model says it is, in its own words. It is not a probability.',
+			dismiss: 'Turn down',
+			dismissedCount: (n: number) => (n === 1 ? '1 turned down' : `${n} turned down`),
+			takeBack: 'Take back'
+		}
 	},
 	projects: {
 		title: 'Projects',
@@ -970,7 +1003,12 @@ export const en = {
 		analysisHint:
 			'An analysis is a set of fields to fill in for each document. Start from one of these, then duplicate it to make your own.',
 		contentsHint:
-			'A table of contents has two steps: instructions for reading each page, and instructions for combining the pages. Every entry has a title and pages; the fields below add what you want for each.'
+			'A table of contents has two steps: instructions for reading each page, and instructions for combining the pages. Every entry has a title and pages; the fields below add what you want for each.',
+		dictionary: 'Dictionary',
+		dictionaryHint:
+			'Sent when you ask a model to propose merges in a project’s dictionary. Edit the instructions to change what it groups; reset restores the default.',
+		dictionaryFields:
+			'The answer’s fields are fixed (the rows of each group, a label, a reason and a certainty), because the dictionary reads them. The instructions say what to group.'
 	},
 	fields: {
 		title: 'Fields',
@@ -1229,6 +1267,7 @@ export const en = {
 			'You decided to keep some of these apart. Withdraw that decision first to merge them.',
 		'dictionary.too_few': 'Choose at least two lines.',
 		'dictionary.same_entry': 'These are in one entry. Take one out of it first.',
+		'dictionary.nothing_to_compare': 'This field has fewer than two lines to compare.',
 		'job.not_found': 'This job no longer exists.',
 		'job.not_text': 'Only extracted text, transcripts and corrected text can be analysed this way.',
 		'job.nothing_read':

@@ -171,6 +171,38 @@ impl Engine {
         Ok(out)
     }
 
+    /// Texts Kalamu wrote itself (a dictionary's rows, for a model to compare), kept by their
+    /// content beside the snapshots, as sources a job reads. `texts` are file names with their
+    /// text; the same text twice is one file, never rewritten.
+    pub fn text_sources(&self, texts: &[(String, String)]) -> Result<Vec<SourceFile>, EngineError> {
+        std::fs::create_dir_all(&self.config.snapshots)
+            .map_err(|e| EngineError::Output(e.to_string()))?;
+        let mut out = Vec::new();
+        for (file_name, text) in texts {
+            let sha256 = kalamu_core::fingerprint::sha256_hex(text.as_bytes());
+            let path = self.config.snapshots.join(format!("{sha256}.txt"));
+            if !path.is_file() {
+                crate::output::write_atomic(&path, text.as_bytes())?;
+            }
+            out.push(SourceFile {
+                id: SourceId::new(),
+                path: path.display().to_string(),
+                file_name: file_name.clone(),
+                sha256,
+                size_bytes: text.len() as u64,
+                modified_ms: None,
+                kind: InputKind::Text,
+                page_count: None,
+                duration_ms: None,
+                split_spreads: false,
+                even_out_volume: false,
+                title: None,
+                derived_from: None,
+            });
+        }
+        Ok(out)
+    }
+
     /// For each source of a job read from a snapshot, whether the text it was frozen from has
     /// changed since.
     pub fn derived_states(&self, job_id: JobId) -> Result<Vec<DerivedState>, EngineError> {

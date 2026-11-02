@@ -278,3 +278,47 @@ fn a_correction_answers_with_its_text_in_one_field() {
     assert!(snapshot.text.contains("## Line breaks"));
     assert!(!snapshot.text.contains("## What to find"));
 }
+
+#[test]
+fn the_dictionarys_prompt_is_listed_and_edited_but_never_offered_for_documents()
+-> Result<(), PromptError> {
+    let dir = tempfile::tempdir().map_err(io)?;
+    let mut library = PromptLibrary::open(dir.path())?;
+    assert!(
+        library
+            .list(None)
+            .iter()
+            .any(|p| p.id == DICTIONARY_MERGES && p.builtin)
+    );
+    assert!(
+        !library
+            .list(Some(Task::Analysis))
+            .iter()
+            .any(|p| p.id == DICTIONARY_MERGES)
+    );
+    assert_ne!(library.default_for(Task::Analysis).id, DICTIONARY_MERGES);
+
+    // The words change; the fields the dictionary reads do not.
+    let mut preset = library.get(DICTIONARY_MERGES)?;
+    preset.instructions = "Group only exact transliterations.".into();
+    preset.schema = None;
+    library.save(preset)?;
+    let reopened = PromptLibrary::open(dir.path())?;
+    let edited = reopened.get(DICTIONARY_MERGES)?;
+    assert_eq!(edited.instructions, "Group only exact transliterations.");
+    assert!(edited.modified);
+    assert_eq!(
+        edited.schema,
+        Some(kalamu_core::dictionary::proposal::schema())
+    );
+
+    let mut library = reopened;
+    library.delete(DICTIONARY_MERGES)?;
+    assert!(
+        library
+            .get(DICTIONARY_MERGES)?
+            .instructions
+            .contains("Never group rows the researcher kept apart")
+    );
+    Ok(())
+}

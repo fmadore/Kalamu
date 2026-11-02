@@ -21,8 +21,12 @@ use unicode_normalization::char::is_combining_mark;
 mod decisions;
 mod export;
 mod inventory;
+mod proposals;
 
 pub use inventory::{DictionaryRow, DictionaryView, Evidence, FormView, Namespace};
+pub use proposals::{
+    INPUT_TOKENS, Prepared, PreparedGroup, Proposal, ProposalMember, ProposalsView, RequestView,
+};
 
 /// One line of the dictionary as the researcher picks it: an entry, or a form no entry holds.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

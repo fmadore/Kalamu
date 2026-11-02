@@ -196,3 +196,72 @@ async fn one_document_of_a_job_is_frozen_alone() {
         Err(EngineError::Store(kalamu_core::StoreError::NotFound))
     ));
 }
+
+#[tokio::test]
+async fn texts_kalamu_wrote_are_read_as_any_source_under_the_dictionarys_own_prompt() {
+    let f = fixture();
+    let texts = vec![(
+        "people.txt".to_string(),
+        "Field: People\n\nRows:\nR1. Moussa Traoré\nR2. Moussa Traore\n".to_string(),
+    )];
+    let sources = f
+        .engine
+        .text_sources(&texts)
+        .unwrap_or_else(|e| panic!("{e}"));
+    // The same text is the same file, so a request made again hits the cache.
+    let again = f
+        .engine
+        .text_sources(&texts)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        (&sources[0].path, &sources[0].sha256),
+        (&again[0].path, &again[0].sha256)
+    );
+    assert_eq!(
+        (sources[0].kind, sources[0].file_name.as_str()),
+        (InputKind::Text, "people.txt")
+    );
+
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Dictionary: merges in People".into(),
+            task: Task::Analysis,
+            sources,
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: Some(kalamu_prompts::DICTIONARY_MERGES.into()),
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Json],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        job.setups[0].prompt.schema,
+        Some(kalamu_core::dictionary::proposal::schema())
+    );
+    assert!(
+        job.setups[0]
+            .prompt
+            .text
+            .contains("Never group rows the researcher kept apart")
+    );
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let read = f
+        .fake
+        .read
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .clone();
+    assert!(
+        read.iter().any(|t| t.contains("R2. Moussa Traore")),
+        "{read:?}"
+    );
+}

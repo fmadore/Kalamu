@@ -18,6 +18,7 @@ use kalamu_store::SqliteStore;
 use super::*;
 
 mod export;
+mod proposals;
 
 struct Fixture {
     dictionary: Dictionary,

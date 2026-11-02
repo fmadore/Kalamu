@@ -1,8 +1,9 @@
 <script lang="ts">
 	// A project's dictionary: the names its analyses listed, field by field, gathered into
 	// entries by the researcher. Every decision is the researcher's and is kept; spellings that
-	// look alike are only pointed out. Nothing here calls a model or changes a result.
+	// look alike are only pointed out, and a model's proposed merges wait for the researcher.
 	import DictionaryDetails from './DictionaryDetails.svelte';
+	import DictionaryProposals from './DictionaryProposals.svelte';
 	import Icon from './Icon.svelte';
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { DictionaryRow } from '#lib/bindings/DictionaryRow.js';
@@ -191,6 +192,13 @@
 		{#if view.rows.length === 0}
 			<p class="muted">{m.dictionary.empty}</p>
 		{:else}
+			<DictionaryProposals
+				{projectId}
+				{namespace}
+				fieldLabel={view.namespaces.find((n) => n.key === namespace)?.label ?? namespace}
+				{scope}
+				onchange={load}
+			/>
 			{#if chosen.length > 0}
 				<div class="selection" role="toolbar" aria-label={m.dictionary.selected(chosen.length)}>
 					<span class="num">{m.dictionary.selected(chosen.length)}</span>

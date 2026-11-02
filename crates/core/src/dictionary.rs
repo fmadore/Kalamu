@@ -11,7 +11,10 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
-use crate::{EntryId, ProjectId, StoreError, Timestamp};
+use crate::{
+    AnalysisSchema, CollectionId, EntryId, Field, FieldAnswer, FieldKind, FieldValue, JobId,
+    ProjectId, StoreError, Timestamp,
+};
 
 /// A form as an analysis wrote it, its spaces trimmed and runs of spaces made one; capitals and
 /// accents are kept, since they may tell two names apart. `None` when nothing is left.
@@ -62,6 +65,153 @@ impl KeptApart {
     }
 }
 
+/// A request for merges proposed by a model: the analysis job that asks, and the rows each of
+/// its sources holds, so the answers can be read back against them. The job runs as any other,
+/// through the engine; nothing it answers is applied without the researcher.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProposalRequest {
+    pub id: String,
+    pub project_id: ProjectId,
+    pub namespace: String,
+    /// The collection the rows were drawn from; the whole project when absent.
+    pub collection: Option<CollectionId>,
+    pub job_id: JobId,
+    /// One per source of the job, in order.
+    pub groups: Vec<ProposalGroup>,
+    /// Rows of the namespace when it was sent; every one is in at least one group.
+    pub rows: u32,
+    pub created_at: Timestamp,
+}
+
+/// The rows one source of a proposal job sent, numbered from 1 as `R1`, `R2` in its text.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProposalGroup {
+    /// SHA-256 of the text sent: the source it is.
+    pub sha256: String,
+    /// Each row by the forms it held then, so an answer still finds them after the entries
+    /// have been merged or taken apart.
+    pub rows: Vec<Vec<String>>,
+}
+
+impl ProposalRequest {
+    /// A fresh id for a request about to be kept.
+    pub fn new_id() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
+}
+
+/// The analysis a proposal job answers: groups of rows, each one person, place or term.
+pub mod proposal {
+    use super::*;
+
+    /// The field holding the groups.
+    pub const GROUPS: &str = "groups";
+    /// A group's rows, as `R1`, `R7`.
+    pub const ROWS: &str = "rows";
+    pub const LABEL: &str = "label";
+    pub const REASON: &str = "reason";
+    pub const CERTAINTY: &str = "certainty";
+    /// How sure the model says it is, in words: not a calibrated probability.
+    pub const CERTAINTIES: [&str; 3] = ["certain", "likely", "possible"];
+
+    fn field(key: &str, label: &str, instructions: &str, kind: FieldKind) -> Field {
+        Field {
+            key: key.to_string(),
+            label: label.to_string(),
+            instructions: instructions.to_string(),
+            kind,
+            reason: false,
+        }
+    }
+
+    pub fn schema() -> AnalysisSchema {
+        AnalysisSchema {
+            fields: vec![field(
+                GROUPS,
+                "Groups",
+                "Every group of rows that are one person, place, organisation or term; none \
+                 when there is no such group.",
+                FieldKind::Entries {
+                    fields: vec![
+                        field(
+                            ROWS,
+                            "Rows",
+                            "The references of the rows that are one, as given (R1, R7): at \
+                             least two.",
+                            FieldKind::List { max: None },
+                        ),
+                        field(
+                            LABEL,
+                            "Label",
+                            "The preferred label for them: the fullest correct form the rows \
+                             give.",
+                            FieldKind::Text,
+                        ),
+                        field(
+                            REASON,
+                            "Reason",
+                            "One sentence: why they are one, from the forms and the documents.",
+                            FieldKind::Text,
+                        ),
+                        field(
+                            CERTAINTY,
+                            "Certainty",
+                            "How sure you are.",
+                            FieldKind::Choice {
+                                values: CERTAINTIES.iter().map(|c| c.to_string()).collect(),
+                            },
+                        ),
+                    ],
+                },
+            )],
+        }
+    }
+
+    /// One group as the model answered it, before its references are checked.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct Answered {
+        pub rows: Vec<String>,
+        pub label: String,
+        pub reason: String,
+        pub certainty: String,
+    }
+
+    /// The groups in an answer; a missing field reads as no group.
+    pub fn groups(answers: &[FieldAnswer]) -> Vec<Answered> {
+        let Some(groups) = answers.iter().find(|a| a.key == GROUPS) else {
+            return Vec::new();
+        };
+        groups
+            .value
+            .entries()
+            .iter()
+            .map(|entry| Answered {
+                rows: match entry.iter().find(|a| a.key == ROWS).map(|a| &a.value) {
+                    Some(FieldValue::List(rows)) => rows.clone(),
+                    Some(FieldValue::Text(row)) => vec![row.clone()],
+                    _ => Vec::new(),
+                },
+                label: crate::analysis::answer_text(entry, LABEL),
+                reason: crate::analysis::answer_text(entry, REASON),
+                certainty: crate::analysis::answer_text(entry, CERTAINTY),
+            })
+            .collect()
+    }
+
+    /// The row a reference names, numbered from 1 (`R7`, `r7` or `7`); `None` for anything
+    /// else.
+    pub fn row_number(reference: &str) -> Option<usize> {
+        let r = reference.trim();
+        let digits = r
+            .strip_prefix('R')
+            .or_else(|| r.strip_prefix('r'))
+            .unwrap_or(r);
+        digits.parse::<usize>().ok().filter(|n| *n > 0)
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum DictionaryError {
     #[error("Project not found")]
@@ -82,6 +232,9 @@ pub enum DictionaryError {
     /// Keeping apart two forms of one entry.
     #[error("These are in one entry: take one out of it first")]
     SameEntry,
+    /// Fewer than two rows in the field to compare.
+    #[error("This field has fewer than two rows to compare")]
+    NothingToCompare,
     #[error("The dictionary could not be written out: {0}")]
     Export(String),
     #[error(transparent)]
@@ -98,6 +251,25 @@ pub trait DictionaryStore: Send + Sync {
     fn put_apart(&self, project: ProjectId, pair: &KeptApart) -> Result<(), StoreError>;
     fn remove_apart(&self, pair: &KeptApart) -> Result<(), StoreError>;
     fn apart(&self, project: ProjectId) -> Result<Vec<KeptApart>, StoreError>;
+    fn put_request(&self, request: &ProposalRequest) -> Result<(), StoreError>;
+    /// The project's proposal requests, oldest first.
+    fn requests(&self, project: ProjectId) -> Result<Vec<ProposalRequest>, StoreError>;
+    fn delete_request(&self, id: &str) -> Result<(), StoreError>;
+    /// A proposal the researcher turned down, by the forms it would join.
+    fn put_dismissed(
+        &self,
+        project: ProjectId,
+        namespace: &str,
+        key: &str,
+    ) -> Result<(), StoreError>;
+    fn remove_dismissed(
+        &self,
+        project: ProjectId,
+        namespace: &str,
+        key: &str,
+    ) -> Result<(), StoreError>;
+    /// `(namespace, key)` of every proposal turned down.
+    fn dismissed(&self, project: ProjectId) -> Result<Vec<(String, String)>, StoreError>;
 }
 
 #[cfg(test)]
@@ -112,6 +284,16 @@ mod tests {
         );
         assert_eq!(form_of("Père Éric").as_deref(), Some("Père Éric"));
         assert_eq!(form_of(" \n "), None);
+    }
+
+    #[test]
+    fn references_name_rows_from_one() {
+        assert_eq!(proposal::row_number("R7"), Some(7));
+        assert_eq!(proposal::row_number(" r12 "), Some(12));
+        assert_eq!(proposal::row_number("3"), Some(3));
+        assert_eq!(proposal::row_number("R0"), None);
+        assert_eq!(proposal::row_number("Moussa"), None);
+        assert!(proposal::schema().validate().is_ok());
     }
 
     #[test]

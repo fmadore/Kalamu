@@ -434,10 +434,29 @@ The names and terms a project's analyses listed, gathered for the researcher to 
   project or one collection, and each row opens the results that listed it.
 - **Export** of the entries as JSON (ids, labels, forms as written, review status, pairs kept
   apart) and of every form found as CSV, beside the entry and label it maps to.
-- **Later**: merges proposed by a model, through the engine, with an estimate first and never
-  applied without the researcher; import; an accepted dictionary as a fingerprinted input to
-  later analyses; and telling apart two people who share a spelling, which needs mentions
-  anchored in the text (#47).
+- **Merges proposed by a model.** For one field, the researcher chooses a provider and a model
+  and sees the estimate; the rows go as an analysis job of its own, through the engine, so it
+  is cached, resumed, costed and recorded in provenance as any job, in economy mode where the
+  model has one. Each row goes as a reference (`R1`) with its label, its other spellings, the
+  titles of up to three documents naming it, and the pairs kept apart. The whole field goes in
+  one request up to about 100,000 tokens of input (two to three thousand rows), which every
+  model offered for analyses reads. A larger field is cut into requests of that size in
+  alphabetical order (accents and capitals set aside), each sharing a tenth of its rows with the
+  next, and the interface says so before sending: names far apart in the alphabet are then not
+  compared. The prompt asks for groups with a preferred label, a reason and a certainty in
+  words (certain, likely, possible), which is not a probability. It is listed in Prompts under
+  Dictionary, linked from the request, and can be edited and reset like any default; its
+  answer's fields are fixed, since the dictionary reads them, and New job never offers it.
+- **Answers checked, nothing applied.** References to no row sent are counted and left out; a
+  group of one row, or of rows already one entry, is no proposal; rows the researcher kept
+  apart are never offered together, even if the model groups them. Each row is kept by its
+  forms, so a proposal still finds its rows after other merges. The researcher accepts a
+  proposal through the ordinary merge, with some of its rows left out or its label changed,
+  keeps two apart, or turns it down; a proposal turned down stays listed as such, survives a
+  restart and can be taken back. The same proposal from two requests is offered once.
+- **Later**: import; an accepted dictionary as a fingerprinted input to later analyses;
+  comparing names far apart in the alphabet (by sound or by shared words); and telling apart
+  two people who share a spelling, which needs mentions anchored in the text (#47).
 
 ## Export formats
 
