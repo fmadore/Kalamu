@@ -123,15 +123,22 @@
 					{@const suggested = suggestedReasoning(rule, d)}
 					<label class="field">
 						<span>{m.newJob.reasoning.title}<TermLink term="reasoning" /></span>
+						<!-- Each level once; choosing the suggested one leaves the choice to the engine. -->
 						<select
-							value={d.reasoning && info.reasoning.levels.includes(d.reasoning) ? d.reasoning : ''}
-							onchange={(e) => (d.reasoning = e.currentTarget.value || null)}
+							value={d.reasoning && info.reasoning.levels.includes(d.reasoning)
+								? d.reasoning
+								: (suggested ?? info.reasoning.levels[0])}
+							onchange={(e) => {
+								const level = e.currentTarget.value;
+								d.reasoning = level === suggested ? null : level;
+							}}
 						>
-							<option value=""
-								>{m.newJob.reasoning.suggested(m.newJob.reasoning.level(suggested ?? ''))}</option
-							>
 							{#each info.reasoning.levels as level (level)}
-								<option value={level}>{m.newJob.reasoning.level(level)}</option>
+								<option value={level}
+									>{level === suggested
+										? m.newJob.reasoning.suggested(m.newJob.reasoning.level(level))
+										: m.newJob.reasoning.level(level)}</option
+								>
 							{/each}
 						</select>
 						<span class="hint">{m.newJob.reasoning.hint}</span>
