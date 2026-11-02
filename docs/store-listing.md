@@ -1,7 +1,7 @@
 # Partner Center listing text
 
 Paste-ready text for Kalamu's Microsoft Store listing, kept for the **current submission**,
-version 1.1.1, whose `Kalamu_1.1.1.msixbundle` the release workflow builds (the first, 1.0.0,
+version 1.1.2, whose `Kalamu_1.1.2.msixbundle` the release workflow builds (the first, 1.0.0,
 was certified on 2 November 2026). The submission and update steps are in
 [microsoft-store.md](microsoft-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
@@ -52,7 +52,7 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.1.1
+### What's new in this version — 1.1.2
 
 ```text
 Projects: gather documents in collections and tags, each with every result read from it, whatever job made it, and the one you prefer.
@@ -61,7 +61,7 @@ A project dictionary of the people, places and terms your analyses listed: merge
 
 Workflows: run pipelines one after another on the same files, stopping for your review before the next step reads the text. Then, at the end of New job, analyses the text once you have checked it.
 
-Also: send any finished text into a new analysis or correction without reading the originals again; several pages per call for text extraction; a thinking level for models that reason; a menu on each job in the list to rename it, add it to a project or delete it; definitions in a bubble beside each word; corrections opened where you are reading; and fixes to cost counting, workflow steps and zoomed pages.
+Also: send any finished text into a new analysis or correction without reading the originals again; several pages per call for text extraction; a thinking level for models that reason; Gemini 3.5 Transcribe, Google's speech-to-text model, for recordings; a menu on each job in the list to rename it, add it to a project or delete it; definitions in a bubble beside each word; corrections opened where you are reading; and fixes to cost counting, workflow steps and zoomed pages.
 ```
 
 The 1.0.0 text, for the record: first release in the Microsoft Store; search in the review
@@ -130,9 +130,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.1.1.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.1.2.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.1.1/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.1.2/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, find Offline transcription and download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
@@ -161,7 +161,7 @@ carries no text, so the Store's title and buttons can sit over its right side.
 
 ## Screenshots
 
-For version 1.1.1, from the installed Store package, in one theme throughout (the light one, as
+For version 1.1.2, from the installed Store package, in one theme throughout (the light one, as
 the 1.0.0 captures). Store rules: `.png`, at least 1366 × 768,
 under 50 MB; ten at most, five to eight recommended. The first one or two are what most people
 see, in search results and at the top of the listing, so they carry what sets Kalamu apart:
@@ -210,7 +210,7 @@ has the same people under several spellings (*Rev. John Albert Williams*, *J. A.
 Search, the glossary, Prompts and the job's page are left out of the ten: the description and
 features name them. **The 1.0.0 captures** in `docs/store/screenshots/` (`01-new-job`,
 `02-review-comparison`, `03-handwriting`, `04-transcript`, `07-prompts`, `09-job-page`) show the
-1.0.0 sidebar, without *Projects* and *Workflows*: take them all again from 1.1.1, named after
+1.0.0 sidebar, without *Projects* and *Workflows*: take them all again from 1.1.2, named after
 the rows above (`01-comparison.png` … `10-offline.png`), and replace the old files.
 
 Leave out an image rather than show a feature that does not run as shown: certification checks

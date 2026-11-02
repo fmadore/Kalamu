@@ -1083,7 +1083,7 @@ export const en = {
 		testOk: (n: number) => `Key works: ${n} models available`,
 		offlineTitle: 'Offline transcription',
 		offlineHint:
-			'Whisper runs on this PC: recordings never leave it, no key or account is needed, and it works without internet once a model is downloaded. It is slower than the cloud models and cannot label speakers. Large v3 Turbo suits most computers.',
+			'Whisper runs on this computer: recordings never leave it, no key or account is needed, and it works without internet once a model is downloaded. It is slower than the cloud models and cannot label speakers. Large v3 Turbo suits most computers.',
 		offlineCpu: (missing: string) =>
 			`This processor lacks ${missing}, which offline transcription needs. Use a cloud model instead.`,
 		modelInstalled: 'Downloaded',
