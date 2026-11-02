@@ -123,6 +123,8 @@
 		top: 0;
 		align-self: start;
 		display: grid;
+		/* Never wider than its column: a long line inside wraps rather than widening the page. */
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-5);
 		min-height: calc(100vh - 3.5rem);
 		align-content: start;
@@ -154,10 +156,13 @@
 		border-bottom: 1px solid var(--line);
 		font-size: var(--type-xs);
 	}
+	/* A model's name, and what it does, wraps; its cost stays whole beside it. */
 	.rows li > :first-child {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+	.rows li > :last-child {
+		flex: none;
 	}
 	.wrap-chip {
 		white-space: normal;

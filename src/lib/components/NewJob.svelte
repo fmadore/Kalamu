@@ -645,10 +645,20 @@
 	.from-project {
 		margin: var(--space-3) var(--space-5) 0;
 	}
+	/* The cost column is painted the whole height of the form, its line and its ground, so it
+	   reaches the foot of the page however long the form; the panel stays in view over it. */
 	.layout {
+		--panel: 21rem;
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) 21rem;
+		grid-template-columns: minmax(0, 1fr) var(--panel);
 		min-height: calc(100% - 3.5rem);
+		background: linear-gradient(
+			to right,
+			transparent calc(100% - var(--panel)),
+			var(--line) calc(100% - var(--panel)),
+			var(--line) calc(100% - var(--panel) + 1px),
+			var(--surface-1) calc(100% - var(--panel) + 1px)
+		);
 	}
 	.form {
 		display: grid;
@@ -669,6 +679,7 @@
 	@media (max-width: 1100px) {
 		.layout {
 			grid-template-columns: minmax(0, 1fr);
+			background: none;
 		}
 	}
 	@media (max-width: 760px) {
