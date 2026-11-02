@@ -3,6 +3,8 @@
 
 export const en = {
 	locale: { name: 'English', tag: 'en' },
+	/** Languages a model lists that the system has no name for. */
+	languageNames: { kea: 'Kabuverdianu', rup: 'Aromanian' } as Record<string, string>,
 	app: {
 		name: 'Kalamu',
 		tagline: 'Transcription and text extraction'
@@ -557,6 +559,8 @@ export const en = {
 		model: 'Model',
 		prompt: 'Prompt',
 		noPrompt: 'This model takes no prompt',
+		/** Under a model that documents its languages: opens the list. */
+		modelLanguages: (n: number) => `The ${n} languages it supports`,
 		reasoning: {
 			title: 'Thinking',
 			suggested: (level: string) => `${level} (suggested)`,

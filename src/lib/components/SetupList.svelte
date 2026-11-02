@@ -22,6 +22,7 @@
 		suggestedReasoning,
 		rulesFor
 	} from '#lib/newJob.js';
+	import { languageLabel } from '#lib/languages.js';
 	import { app, go, hasKey, isInstalled } from '#lib/state.svelte.js';
 
 	let {
@@ -163,6 +164,16 @@
 				{/if}
 				{#if info?.description}
 					<p class="muted small desc">{info.description}</p>
+				{/if}
+				{#if info && Array.isArray(info.languages)}
+					{@const names = info.languages
+						.map((code) => languageLabel(catalog, code))
+						.sort((a, b) => a.localeCompare(b))}
+					<!-- The languages its maker documents, for a model that lists them. -->
+					<details class="langs">
+						<summary class="small">{m.newJob.modelLanguages(names.length)}</summary>
+						<p class="muted small">{names.join(', ')}</p>
+					</details>
 				{/if}
 				{#if task === 'contents'}
 					<!-- The second step: any provider's model that reads text. -->
@@ -318,9 +329,19 @@
 		min-width: 0;
 	}
 	.desc,
+	.langs,
 	.witness,
 	.setup .warning {
 		grid-column: 1 / -1;
+	}
+	.langs summary {
+		width: fit-content;
+		color: var(--text-secondary);
+		cursor: pointer;
+	}
+	.langs p {
+		margin: var(--space-1) 0 0;
+		max-width: 75ch;
 	}
 	.witness {
 		display: flex;
