@@ -6,7 +6,7 @@
 	// Each step is a list item with its words, so the drawing itself is only decoration.
 	import Icon from './Icon.svelte';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { listNames, messages } from '#lib/i18n/index.js';
 	import { duration, type Mode } from '#lib/newJob.js';
 
 	let {
@@ -15,6 +15,7 @@
 		fields,
 		models,
 		mergeModels = [],
+		searchable = [],
 		play
 	}: {
 		mode: Mode;
@@ -25,6 +26,9 @@
 		models: string[];
 		/** Names of the models that combine a table of contents' pages. */
 		mergeModels?: string[];
+		/** Names of the chosen models that report where text sits, so a searchable PDF can be
+		 * written: none when they return text only. */
+		searchable?: string[];
 		/** Counts the times a task was chosen; each one plays the diagram again. */
 		play: number;
 	} = $props();
@@ -38,7 +42,9 @@
 		| 'stack'
 		| 'pages'
 		| 'read'
+		| 'place'
 		| 'joined'
+		| 'searchable'
 		| 'whole'
 		| 'fields'
 		| 'table'
@@ -55,8 +61,9 @@
 		| 'ocr'
 		| 'correct'
 		| 'compare';
-	/** `detail` names the user's file, in mono; `note` adds what the step does with it. */
-	type Stage = { art: Art; caption: string; detail?: string[]; note?: string };
+	/** `detail` names the user's file, in mono; `note` adds what the step does with it; `also`
+	 * marks a second result beside the one before it rather than a step after it. */
+	type Stage = { art: Art; caption: string; detail?: string[]; note?: string; also?: boolean };
 
 	const sources = $derived(
 		files.flatMap((f) => (f.source ? [{ ...f.source, pieces: f.pieces }] : []))
@@ -66,6 +73,15 @@
 	const model = $derived(models.length === 1 ? models[0] : m.pipeline.theModel);
 	const merger = $derived(mergeModels.length === 1 ? mergeModels[0] : m.pipeline.theModel);
 	const fieldNames = $derived(fields.length > 0 ? fields : m.pipeline.exampleFields);
+	/** Whether a chosen model reports where text sits; the others give text only. */
+	const placed = $derived(searchable.length > 0);
+	/** Under the reading: that it notes where text sits (and which model, when not all do), or
+	 * that it gives text only. */
+	const placeNote = $derived.by(() => {
+		if (placed && searchable.length === models.length) return m.pipeline.extractPlace;
+		if (placed) return m.pipeline.extractPlaces(listNames(searchable));
+		return models.length > 0 ? m.pipeline.extractTextOnly : undefined;
+	});
 
 	/** A file's name, then its size as the file list shows it. */
 	const fileDetail = $derived(
@@ -94,8 +110,22 @@
 						caption: m.pipeline.extractSplit,
 						note: first?.split_spreads ? m.pipeline.extractSpreads : undefined
 					},
-					{ art: 'read', caption: m.pipeline.extractRead(model) },
-					{ art: 'joined', caption: m.pipeline.extractJoin, note: more }
+					{
+						art: placed ? 'place' : 'read',
+						caption: m.pipeline.extractRead(model),
+						note: placeNote
+					},
+					{ art: 'joined', caption: m.pipeline.extractJoin, note: more },
+					...(placed
+						? [
+								{
+									art: 'searchable' as const,
+									caption: m.pipeline.extractSearchable,
+									note: m.pipeline.extractPdfOnly,
+									also: true
+								}
+							]
+						: [])
 				];
 			case 'analysis':
 				return [
@@ -214,7 +244,9 @@
 		>
 			{#each stages as stage, i (stage.art)}
 				<li class="stage" style="--i: {i}">
-					{#if i > 0}<span class="connector"><Icon name="chevron" size={14} /></span>{/if}
+					{#if i > 0}<span class="connector"
+							><Icon name={stage.also ? 'plus' : 'chevron'} size={14} /></span
+						>{/if}
 					<div class="art" aria-hidden="true">
 						{@render art(stage.art)}
 					</div>
@@ -430,12 +462,26 @@
 				{/each}
 			{/if}
 		</svg>
-	{:else if kind === 'pages' || kind === 'read'}
+	{:else if kind === 'pages' || kind === 'read' || kind === 'place'}
 		{@const xs = row(shownPages + (pages > shownPages ? 1 : 0), 22, 8)}
 		<svg width={W} height="72" viewBox="0 0 {W} 72">
 			{#each xs.slice(0, shownPages) as x, j (j)}
 				<g class={kind === 'pages' ? 'fan' : ''} style="--j: {j}; --dx: {W / 2 - 11 - x}px">
 					<rect class="paper" {x} y="10" width="22" height="30" rx="2" />
+					{#if kind === 'place'}
+						<!-- Read with where each block of text sits: a box around it. -->
+						{#each [13, 26] as y, b (b)}
+							<rect
+								class="box marker"
+								style="--j: {j * 2 + b}"
+								x={x + 2}
+								{y}
+								width="18"
+								height="11"
+								rx="1"
+							/>
+						{/each}
+					{/if}
 					{#if kind === 'pages'}
 						{#each [0, 1, 2, 3] as k (k)}
 							<rect
@@ -448,12 +494,13 @@
 							/>
 						{/each}
 					{:else}
+						<!-- Boxed, the lines fall into two blocks with a space between them. -->
 						{#each [0, 1, 2, 3] as k (k)}
 							<rect
 								class="stub grow"
 								style="--j: {j * 2 + k * 0.4}"
 								x={x + 4}
-								y={16 + k * 5}
+								y={kind === 'place' ? 15 + k * 5 + (k > 1 ? 3 : 0) : 16 + k * 5}
 								width={[14, 12, 14, 8][k]}
 								height="2"
 								rx="1"
@@ -478,6 +525,25 @@
 					<rect class="stub" x="58" y={18 + g * 21} width="20" height="2" rx="1" />
 				</g>
 			{/each}
+		</svg>
+	{:else if kind === 'searchable'}
+		<!-- The scan as it was, its blocks of text laid invisibly over it: a word found. -->
+		<svg width={W} height="72" viewBox="0 0 {W} 72">
+			{@render sheet(44, 4, 52, 64, 0)}
+			{#each { length: 6 } as _, k (k)}
+				<rect class="print" x="50" y={12 + k * 7} width={k % 3 === 2 ? 26 : 40} height="2" rx="1" />
+			{/each}
+			{#each [10, 31] as y, b (b)}
+				<rect class="box marker" style="--j: {b}" x="48" {y} width="44" height="19" rx="1" />
+			{/each}
+			<g class="marker" style="--j: 2">
+				<rect class="mark" x="58" y="38.5" width="16" height="5" rx="1" />
+				<rect class="on-mark" x="60" y="40" width="12" height="2" rx="1" />
+			</g>
+			<g class="lens grow" style="--j: 3">
+				<circle cx="92" cy="58" r="6" />
+				<line x1="96.5" y1="62.5" x2="101" y2="67" />
+			</g>
 		</svg>
 	{:else if kind === 'fields'}
 		<!-- One document's answers, under its name: one row of the table to come. -->
@@ -744,6 +810,24 @@
 		fill: var(--warn-wash);
 		stroke: var(--warn-text);
 		stroke-width: 0.75;
+	}
+	/* Where a block of text sits, as a model that reports it gives it; laid over a scan, the
+	   invisible text layer. */
+	.box {
+		fill: none;
+		stroke: var(--ink);
+		stroke-width: 0.75;
+		stroke-dasharray: 2 1.5;
+	}
+	.lens circle {
+		fill: var(--surface-1);
+		stroke: var(--text-secondary);
+		stroke-width: 1.5;
+	}
+	.lens line {
+		stroke: var(--text-secondary);
+		stroke-width: 2;
+		stroke-linecap: round;
 	}
 	.continues {
 		fill: none;

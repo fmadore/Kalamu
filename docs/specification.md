@@ -274,7 +274,13 @@ Under the tasks, a short diagram shows how the chosen task splits the work and p
 together, so that a researcher knows what is sent and what comes back:
 
 - **Extract text**: a PDF or images split one piece per page (double pages in two first), each
-  page read by the model, joined into one text per file with its page numbers.
+  page read by the model, joined into one text per file with its page numbers. When a chosen
+  model reports where text sits on the page (today Mistral OCR), its pages are drawn with their
+  blocks boxed and a second result follows, joined by a plus rather than an arrow: the original
+  PDF with an invisible text layer, for PDF files only. With models that return text only (the
+  language models), a note under the reading says so, and that they give no searchable PDF. The
+  diagram follows the same capability in the catalogue as the formats offered, never the
+  provider's name.
 - **Analyse texts**: each document read whole, as one piece; the model fills in the prompt's
   fields; one row of answers per document, as in the CSV export.
 - **Transcribe audio**: a recording cut at pauses into pieces of at most 20 minutes, each

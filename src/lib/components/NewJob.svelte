@@ -128,6 +128,12 @@
 	const mergeNames = $derived([
 		...new Set(drafts.map((d) => mergeInfo(catalog, d)?.name ?? d.mergeModel).filter(Boolean))
 	]);
+	/** The chosen models that can also write a searchable PDF, for the diagram. */
+	const searchableFrom = $derived(
+		offeredFormats(catalog, rule, drafts).includes('searchable_pdf')
+			? namesOf((model) => model?.layout === true)
+			: []
+	);
 	/** Where samples and line breaks apply, as the engine says. */
 	const paged = $derived(rule.samples);
 	const linesApply = $derived(rule.line_breaks);
@@ -522,6 +528,7 @@
 				fields={chosenFields}
 				models={namesOf((model) => model !== undefined)}
 				mergeModels={mergeNames}
+				searchable={searchableFrom}
 				play={picked}
 			/>
 		</section>
