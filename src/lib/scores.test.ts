@@ -48,4 +48,3 @@ describe('oneIn', () => {
 		expect(oneIn(1.4)).toBe('many');
 	});
 });
-

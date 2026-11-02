@@ -87,9 +87,7 @@
 						setups: p.setups.map((s) => ({ ...s })),
 						sample_pages: p.settings.sample_pages
 					});
-					return p.settings.pace === 'economy'
-						? estimate.total_economy_usd
-						: estimate.total_usd;
+					return p.settings.pace === 'economy' ? estimate.total_economy_usd : estimate.total_usd;
 				} catch {
 					return null;
 				}
