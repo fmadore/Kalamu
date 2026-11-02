@@ -282,14 +282,19 @@ jobs:
           releaseId: ${{ needs.prepare.outputs.release_id }}
           args: --target aarch64-apple-darwin --bundles dmg --config src-tauri/tauri.ffmpeg.conf.json
 
-      # What the image holds: the signed app, FFmpeg inside it, and every licence.
+      # What the image holds, as a user gets it: the signed app, FFmpeg inside it, and every
+      # licence. Tauri removes the bare .app once the image is made, so the image is opened.
       - name: Check the app
         run: |
-          app="target/$TARGET/release/bundle/macos/Kalamu.app"
+          dmg=$(ls "target/$TARGET/release/bundle/dmg/"Kalamu_*_aarch64.dmg)
+          mnt=$(mktemp -d)
+          hdiutil attach -readonly -nobrowse -mountpoint "$mnt" "$dmg"
+          trap 'hdiutil detach "$mnt" -quiet || true' EXIT
+          app="$mnt/Kalamu.app"
           codesign --verify --deep --strict --verbose=2 "$app"
           codesign -dv "$app" 2>&1 | grep -E 'Signature|Identifier|flags'
-          "$app/Contents/MacOS/ffmpeg" -hide_banner -version | head -1
-          "$app/Contents/MacOS/ffprobe" -hide_banner -version | head -1
+          "$app/Contents/MacOS/ffmpeg" -hide_banner -version | sed -n 1p
+          "$app/Contents/MacOS/ffprobe" -hide_banner -version | sed -n 1p
           for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt; do
             test -s "$app/Contents/Resources/licenses/$licence"
           done
