@@ -35,15 +35,94 @@ fn editing_a_default_overrides_it_and_reset_restores_it() -> Result<(), PromptEr
     library.delete("text_extraction.newspaper")?;
     let restored = library.get("text_extraction.newspaper")?;
     assert!(!restored.modified);
-    assert!(restored.instructions.contains("Paragraph Consolidation"));
+    assert!(restored.instructions.contains("## Reading order"));
     Ok(())
+}
+
+#[test]
+fn a_retired_default_gives_the_one_that_replaced_it() -> Result<(), PromptError> {
+    let library = PromptLibrary::in_memory();
+    for (old, new) in defaults::RETIRED {
+        assert!(!defaults::DEFAULTS.iter().any(|d| d.id == *old), "{old}");
+        let replacement = library.get(old)?;
+        assert_eq!(replacement.id, *new);
+        assert!(replacement.builtin && !replacement.modified);
+    }
+    assert!(
+        !library
+            .list(None)
+            .iter()
+            .any(|p| defaults::RETIRED.iter().any(|(old, _)| *old == p.id))
+    );
+    Ok(())
+}
+
+#[test]
+fn an_edited_retired_default_stays_the_researchers_own() -> Result<(), PromptError> {
+    let dir = tempfile::tempdir().map_err(io)?;
+    let mut edited = PromptLibrary::in_memory().get("text_extraction.handwritten")?;
+    edited.id = "text_extraction.handwriting_french".into();
+    edited.name = "Handwritten letter or document (French)".into();
+    edited.instructions = "Lettres du cercle de Kaya.".into();
+    edited.modified = true;
+    write_atomic(
+        &dir.path().join("text_extraction.handwriting_french.json"),
+        &edited,
+    )?;
+
+    let mut library = PromptLibrary::open(dir.path())?;
+    let own = library.get("text_extraction.handwriting_french")?;
+    assert_eq!(own.instructions, "Lettres du cercle de Kaya.");
+    assert!(!own.builtin && !own.modified);
+    let listed = library.list(Some(Task::TextExtraction));
+    assert_eq!(listed.last().map(|p| p.id.as_str()), Some(own.id.as_str()));
+
+    // Saving it again keeps its file; deleting it leaves the replacement.
+    let saved = library.save(own)?;
+    assert_eq!(saved.id, "text_extraction.handwriting_french");
+    assert_eq!(fs::read_dir(dir.path()).map_err(io)?.count(), 1);
+    library.delete(&saved.id)?;
+    assert_eq!(
+        library.get("text_extraction.handwriting_french")?.id,
+        "text_extraction.handwritten"
+    );
+    Ok(())
+}
+
+#[test]
+fn extraction_and_transcription_defaults_keep_the_engines_conventions() {
+    let library = PromptLibrary::in_memory();
+    for preset in library.list(Some(Task::TextExtraction)) {
+        // The engine reads this exact answer as an empty page.
+        assert!(
+            preset.instructions.contains("`[BLANK PAGE]`"),
+            "{}",
+            preset.id
+        );
+        // A choice of lines made in New job replaces the preset's own.
+        assert!(
+            preset.instructions.contains("it replaces this section"),
+            "{}",
+            preset.id
+        );
+    }
+    let two = RenderContext {
+        speakers: Some(2),
+        ..RenderContext::default()
+    };
+    for preset in library.list(Some(Task::AudioTranscription)) {
+        let text = preset.snapshot(&two).text;
+        assert!(text.contains("has 2 speaker(s)"), "{}", preset.id);
+        // Lines the review reads as timed turns and speaker labels.
+        assert!(text.contains("[00:00:01] Speaker 1: "), "{}", preset.id);
+    }
 }
 
 #[test]
 fn user_presets_are_saved_duplicated_and_deleted() -> Result<(), PromptError> {
     let dir = tempfile::tempdir().map_err(io)?;
     let mut library = PromptLibrary::open(dir.path())?;
-    let copy = library.duplicate("text_extraction.printed_diplomatic", "Colonial reports")?;
+    let copy = library.duplicate("text_extraction.printed", "Colonial reports")?;
     assert!(copy.id.starts_with("user-"));
     assert!(!copy.builtin);
     assert_eq!(

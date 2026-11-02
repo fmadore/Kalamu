@@ -907,12 +907,7 @@ async fn sample_runs_only_the_first_pages() {
     };
     new.settings.sample_pages = Some(2);
     let job = f.engine.create_job(new).unwrap_or_else(|e| panic!("{e}"));
-    assert!(
-        job.setups[0]
-            .prompt
-            .text
-            .contains("Paragraph Consolidation")
-    );
+    assert!(job.setups[0].prompt.text.contains("## Reading order"));
     f.run(job.id).await;
     assert_eq!(f.fake.calls(), 2);
 }

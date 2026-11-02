@@ -80,11 +80,13 @@ const dictionaryPreset: Preset = {
 
 const presets: Preset[] = [
 	{
-		id: 'text_extraction.printed_diplomatic',
+		id: 'text_extraction.printed',
 		task: 'text_extraction',
-		name: 'Printed document, diplomatic',
-		description: 'Keeps spelling, line breaks and end-of-line hyphens exactly as on the page.',
-		instructions: '# Diplomatic OCR/HTR\n\nPreserve original spelling…',
+		name: 'Printed or typed document',
+		description:
+			'Books, reports, typed letters and forms in any language, left to right or right to left; spelling kept as printed.',
+		instructions:
+			'# Printed or typed document\n\nYou transcribe printed and typewritten documents…',
 		user_prompt: 'Transcribe this page completely, following the instructions given.',
 		builtin: true,
 		modified: false
@@ -92,19 +94,21 @@ const presets: Preset[] = [
 	{
 		id: 'text_extraction.newspaper',
 		task: 'text_extraction',
-		name: 'Newspaper or magazine (columns)',
-		description: 'Joins column lines into paragraphs.',
-		instructions: '# OCR System Prompt for Newspaper Articles…',
-		user_prompt: 'Please perform complete OCR transcription of this single page.',
+		name: 'Newspaper or magazine',
+		description:
+			'Article by article across the columns, with the words the columns split rejoined.',
+		instructions: '# Newspaper or magazine page…',
+		user_prompt: 'Transcribe this page completely, following the instructions given.',
 		builtin: true,
 		modified: true
 	},
 	{
 		id: 'audio_transcription.interview',
 		task: 'audio_transcription',
-		name: 'Interview, verbatim with speakers',
-		description: 'Speaker labels and a timestamp at each turn.',
-		instructions: '# Full audio transcription…',
+		name: 'Interview or recording, transcribed',
+		description:
+			'Word for word in the languages spoken, with speaker labels and a timestamp at each turn.',
+		instructions: '# Interview or recording, transcribed…',
 		user_prompt: 'Transcribe this recording.',
 		builtin: true,
 		modified: false
@@ -184,7 +188,7 @@ let pipelines: Pipeline[] = [
 			{
 				provider: 'gemini',
 				model: 'gemini-3.8-flash',
-				preset_id: 'text_extraction.printed_diplomatic',
+				preset_id: 'text_extraction.printed',
 				label: null,
 				options: { temperature: null, diarize: false, timestamps: false, speakers: null }
 			}

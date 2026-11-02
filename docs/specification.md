@@ -53,9 +53,12 @@ Where Kalamu departs from these projects, the reason is written down in
 
 **OCR and HTR are one task.** Current vision models read print and handwriting with the same
 call, so the app has a single **Extract text** task and the difference lies in the prompt:
-users pick a preset such as *printed document*, *newspaper (columns)*, *handwritten letter* or
-*Arabic or Ajami manuscript*, or write their own. Mixed material, such as a typed report with
-handwritten notes, needs no separate pass.
+users pick a preset, *printed or typed document*, *newspaper or magazine* or *handwritten
+document or manuscript*, or write their own. There is one preset per kind of material, never
+one per language or script: each reads any language, left to right or right to left (Arabic
+and Ajami included), while the language and the lines are chosen in New job
+([decision](decisions/2026-11-02-fewer-default-prompts.md)). Mixed material, such as a typed
+report with handwritten notes, needs no separate pass.
 
 **YouTube videos are transcribed from their link.** New job offers *Transcribe YouTube* beside
 the three tasks: paste one or more watch, `youtu.be`, Shorts or live links, and the transcript
@@ -92,7 +95,7 @@ field has a name, a kind of answer and, in the researcher's words, what belongs 
 - *Several choices* from a fixed list: themes from the researcher's own vocabulary.
 
 Any field can ask for a one-sentence reason. Ready-made analyses cover the common needs (a
-research summary with keywords, a short catalogue summary, a social-science publication's
+summary with keywords, its first sentence short enough for a catalogue, a social-science publication's
 question, argument, theory, methods, data, case and findings for a literature review, people,
 places and organisations, the tone of a document), and common fields are one click away when building one. The app turns
 the fields into each provider's structured output, so the answer always has exactly these
@@ -128,8 +131,9 @@ out and named in `provenance.json`, with how much of the text had been reviewed.
 text, often noisy: the text layer of a PDF from a digital library, or a text file downloaded
 beside it. *Correct existing text* sends that text, page by page (or in passages of a few
 pages for a text file without page markers), with a prompt that fixes reading errors only and
-keeps the document's spelling, wording and style; the newspaper preset is iwac-ai-pipelines'
-OCR-correction prompt. The review highlights every change against the original. A scan with
+keeps the document's spelling, wording and style; its preset keeps iwac-ai-pipelines'
+OCR-correction rules, those for newspapers included. The review highlights every change against
+the original. A scan with
 no text layer needs *Extract text* instead.
 
 ## Choosing and starting a job

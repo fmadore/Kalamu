@@ -30,6 +30,19 @@ pub struct Pipeline {
     pub updated_at: Timestamp,
 }
 
+impl Pipeline {
+    /// With the default that replaced each retired one it names, so New job shows the prompt the
+    /// pipeline will run with.
+    pub(crate) fn current(mut self) -> Self {
+        for setup in &mut self.setups {
+            if let Some(id) = setup.preset_id.as_mut() {
+                *id = crate::defaults::current(id).to_string();
+            }
+        }
+        self
+    }
+}
+
 impl Saved for Pipeline {
     const PREFIX: &'static str = "pipeline-";
     fn id(&self) -> &str {
@@ -55,11 +68,11 @@ impl PipelineLibrary {
 
     /// By name, ignoring case.
     pub fn list(&self) -> Vec<Pipeline> {
-        self.0.list()
+        self.0.list().into_iter().map(Pipeline::current).collect()
     }
 
     pub fn get(&self, id: &str) -> Result<Pipeline, PromptError> {
-        self.0.get(id)
+        self.0.get(id).map(Pipeline::current)
     }
 
     /// Saves a pipeline under its id, or a new one. Saving under a name already used replaces
@@ -139,5 +152,19 @@ mod tests {
             library.save(forged).is_err(),
             "an id never becomes a path outside the folder"
         );
+    }
+
+    #[test]
+    fn a_pipeline_naming_a_retired_prompt_shows_its_replacement() {
+        let mut library = PipelineLibrary::in_memory();
+        let mut old = pipeline("Short summaries");
+        old.setups[0].preset_id = Some("analysis.summary_brief".into());
+        let saved = library.save(old).unwrap();
+        let listed = &library.list()[0];
+        assert_eq!(
+            listed.setups[0].preset_id.as_deref(),
+            Some("analysis.summary_research")
+        );
+        assert_eq!(&library.get(&saved.id).unwrap(), listed);
     }
 }

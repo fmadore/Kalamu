@@ -133,10 +133,15 @@ impl PromptLibrary {
             if path.extension().and_then(|e| e.to_str()) != Some("json") {
                 continue;
             }
-            if let Ok(preset) = fs::read_to_string(&path)
+            if let Ok(mut preset) = fs::read_to_string(&path)
                 .map_err(io)
                 .and_then(|s| serde_json::from_str::<Preset>(&s).map_err(io))
             {
+                // An edited default the app no longer ships stays, as the researcher's own.
+                if is_retired_id(&preset.id) {
+                    preset.builtin = false;
+                    preset.modified = false;
+                }
                 saved.insert(preset.id.clone(), preset);
             }
         }
@@ -175,7 +180,13 @@ impl PromptLibrary {
         out
     }
 
+    /// A preset by id; a default the app no longer ships gives the one that replaced it, unless
+    /// the researcher keeps an edited copy of it.
     pub fn get(&self, id: &str) -> Result<Preset, PromptError> {
+        if let Some(preset) = self.saved.get(id) {
+            return Ok(preset.clone());
+        }
+        let id = defaults::current(id);
         if let Some(preset) = self.saved.get(id) {
             return Ok(preset.clone());
         }
@@ -236,7 +247,9 @@ impl PromptLibrary {
             preset.id = new_user_id();
         }
         let is_default = is_builtin_id(&preset.id);
-        if !is_default && !is_user_id(&preset.id) {
+        // An edited copy of a retired default keeps its id, and so its file.
+        let kept = is_user_id(&preset.id) || is_retired_id(&preset.id);
+        if !is_default && !kept {
             preset.id = new_user_id();
         }
         preset.builtin = is_default;
@@ -379,6 +392,10 @@ fn builtin(d: &defaults::Default) -> Preset {
 
 fn is_builtin_id(id: &str) -> bool {
     id == DICTIONARY_MERGES || defaults::DEFAULTS.iter().any(|d| d.id == id)
+}
+
+fn is_retired_id(id: &str) -> bool {
+    defaults::current(id) != id
 }
 
 fn is_user_id(id: &str) -> bool {

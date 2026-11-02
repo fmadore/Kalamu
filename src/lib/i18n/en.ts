@@ -153,12 +153,12 @@ export const en = {
 			interviews: {
 				name: 'Interviews: transcribe, check, then summarise',
 				about: 'Recordings transcribed, the transcript corrected, then summarised for research.',
-				steps: ['Transcribe the interview', 'Research summary']
+				steps: ['Transcribe the interview', 'Summary and keywords']
 			},
 			library: {
 				name: 'Digital library text: correct, then summarise',
 				about: 'Machine-read text from a digital library, corrected, then summarised.',
-				steps: ['Correct the text', 'Short summary']
+				steps: ['Correct the text', 'Summary and keywords']
 			}
 		},
 		stepState: {

@@ -75,6 +75,19 @@ impl Workflow {
         }
         check_steps(&self.shape()).map_err(PromptError::Workflow)
     }
+
+    /// With the default that replaced each retired one its steps name.
+    fn current(mut self) -> Self {
+        self.steps = self
+            .steps
+            .into_iter()
+            .map(|step| WorkflowStep {
+                pipeline: step.pipeline.current(),
+                ..step
+            })
+            .collect();
+        self
+    }
 }
 
 impl Saved for Workflow {
@@ -102,11 +115,11 @@ impl WorkflowLibrary {
 
     /// By name, ignoring case.
     pub fn list(&self) -> Vec<Workflow> {
-        self.0.list()
+        self.0.list().into_iter().map(Workflow::current).collect()
     }
 
     pub fn get(&self, id: &str) -> Result<Workflow, PromptError> {
-        self.0.get(id)
+        self.0.get(id).map(Workflow::current)
     }
 
     /// Saves a workflow under its id, or a new one, as its next version. Saving under a name

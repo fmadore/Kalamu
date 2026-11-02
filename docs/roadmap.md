@@ -47,9 +47,14 @@ ad hoc; it has not yet been opened on a real Mac
 - **Analyses.** With Gemini, OpenAI, Claude and Mistral, including the Z.ai GLM and DeepSeek
   models Mistral hosts. Fields defined by the researcher
   (text, lists of names or terms, one or several choices, reasons), sent as each provider's
-  structured output and checked on return; five ready-made analyses (research summary, short
-  summary, scholarly publication, people, places and organisations, tone); a field editor in Prompts; CSV with a
-  column per field.
+  structured output and checked on return; four ready-made analyses (summary and keywords,
+  scholarly publication, people, places and organisations, tone); a field editor in Prompts;
+  CSV with a column per field.
+- **Default prompts, one per kind of material**: printed or typed documents, newspapers and
+  handwriting for text extraction, each for any language and either reading direction;
+  recordings transcribed or translated into English; one correction prompt. Defaults that
+  repeated another for a language or a variant were retired, and anything that names one runs
+  with its replacement ([decision](decisions/2026-11-02-fewer-default-prompts.md)).
 - **Detailed tables of contents** of newspaper and magazine issues, archival files and books:
   each page read by one model, the pages combined by another, of any provider; presets ported
   from iwac-ai-pipelines' issue index and widened; a review of the entries beside the scan,
