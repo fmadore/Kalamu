@@ -133,8 +133,9 @@ jobs:
 
   # macOS on Apple Silicon, built natively with Apple's clang: the same configuration, without
   # the MinGW cross-compiler and fully static linking (macOS links its system library
-  # dynamically), for macOS 13 and later. `--disable-autodetect` keeps out Apple's frameworks
-  # (AudioToolbox, VideoToolbox), so the programs link nothing but the system library.
+  # dynamically), for macOS 13 and later. `--disable-autodetect` keeps out the optional codecs
+  # Apple's frameworks offer (AudioToolbox, VideoToolbox), so the programs link only what every
+  # Mac has: the system library and a few core frameworks libavutil uses.
   build-macos:
     runs-on: macos-latest
     timeout-minutes: 60
@@ -205,7 +206,7 @@ jobs:
             "" "configure ${CONFIGURE[*]}" > "$RUNNER_TEMP/BUILD.txt"
 
       # As the Windows builds are checked: it starts, reports the right licence and has the Opus
-      # encoder; and it links only the system library.
+      # encoder; and it links only what macOS itself provides, nothing from Homebrew or elsewhere.
       - name: Check
         run: |
           bin="$RUNNER_TEMP/out/bin"
@@ -215,8 +216,8 @@ jobs:
           "$bin/ffprobe" -hide_banner -version
           for tool in ffmpeg ffprobe; do
             otool -L "$bin/$tool"
-            if otool -L "$bin/$tool" | tail -n +2 | grep -v '/usr/lib/libSystem\|/usr/lib/libc++\|/usr/lib/libiconv\|/usr/lib/libz'; then
-              echo "::error::$tool links a library outside the system"; exit 1
+            if otool -L "$bin/$tool" | tail -n +2 | grep -Ev '^\s*(/usr/lib/|/System/Library/Frameworks/)'; then
+              echo "::error::$tool links a library macOS does not provide"; exit 1
             fi
           done
 

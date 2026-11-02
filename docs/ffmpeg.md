@@ -40,8 +40,10 @@ Apple's clang for macOS 13 and later:
 - **LGPL v2.1 or later only.** No `--enable-gpl`, `--enable-version3` or `--enable-nonfree`. The
   workflow fails unless FFmpeg's own `config.h` reports "LGPL version 2.1 or later", and a second
   job checks `ffmpeg -L` on each architecture.
-- **On macOS, nothing but the system library.** `--disable-autodetect` keeps out Apple's
-  frameworks, and the build fails if `otool -L` lists a library outside the system. Inside the
+- **On macOS, only what macOS provides.** `--disable-autodetect` keeps out the codecs of
+  Apple's frameworks; the programs link the system library and the core frameworks libavutil
+  uses (CoreFoundation, CoreVideo, CoreMedia), and the build fails if `otool -L` lists anything
+  outside `/usr/lib` and `/System/Library/Frameworks`. Inside the
   app the two programs sit in `Kalamu.app/Contents/MacOS`, beside the executable, and are signed
   with the app.
 - **About 10 MB** per architecture instead of the 120–170 MB of general-purpose builds.
