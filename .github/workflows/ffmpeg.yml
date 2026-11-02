@@ -40,7 +40,7 @@ jobs:
 
       - name: Cross-compiler (llvm-mingw, UCRT)
         run: |
-          curl -fsSL -o llvm-mingw.tar.xz \
+          curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o llvm-mingw.tar.xz \
             "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW}/llvm-mingw-${LLVM_MINGW}-ucrt-ubuntu-22.04-x86_64.tar.xz"
           mkdir -p "$RUNNER_TEMP/llvm-mingw"
           tar -xf llvm-mingw.tar.xz -C "$RUNNER_TEMP/llvm-mingw" --strip-components=1
@@ -50,9 +50,9 @@ jobs:
       - name: Sources
         run: |
           mkdir -p sources
-          curl -fsSL -o "sources/ffmpeg-${FFMPEG_VERSION}.tar.xz" \
+          curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "sources/ffmpeg-${FFMPEG_VERSION}.tar.xz" \
             "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz"
-          curl -fsSL -o "sources/opus-${OPUS_VERSION}.tar.gz" \
+          curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "sources/opus-${OPUS_VERSION}.tar.gz" \
             "https://downloads.xiph.org/releases/opus/opus-${OPUS_VERSION}.tar.gz"
           (cd sources && sha256sum *) | tee SOURCES.sha256
 
@@ -152,9 +152,9 @@ jobs:
       - name: Sources
         run: |
           mkdir -p sources
-          curl -fsSL -o "sources/ffmpeg-${FFMPEG_VERSION}.tar.xz" \
+          curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "sources/ffmpeg-${FFMPEG_VERSION}.tar.xz" \
             "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz"
-          curl -fsSL -o "sources/opus-${OPUS_VERSION}.tar.gz" \
+          curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "sources/opus-${OPUS_VERSION}.tar.gz" \
             "https://downloads.xiph.org/releases/opus/opus-${OPUS_VERSION}.tar.gz"
           (cd sources && shasum -a 256 *) | tee SOURCES.sha256
 
