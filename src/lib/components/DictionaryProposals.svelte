@@ -131,7 +131,14 @@
 		starting = true;
 		try {
 			const pace: Pace = economy ? 'economy' : 'fast';
-			await api.dictionaryPropose(projectId, scope || null, namespace, setup(), pace);
+			await api.dictionaryPropose(
+				projectId,
+				scope || null,
+				namespace,
+				p.jobName(fieldLabel),
+				setup(),
+				pace
+			);
 			asking = false;
 			plan = null;
 			await refreshJobs();

@@ -3,8 +3,8 @@
 //! through the engine; nothing here changes a result, and no proposal is applied unasked.
 
 use kalamu_core::{
-    CollectionId, Entry, EntryId, ExportFormat, Job, JobSettings, OutputDestination,
-    OutputSettings, Pace, ProjectId, SourceFile,
+    CollectionId, Entry, EntryId, Job, JobSettings, OutputDestination, OutputSettings, Pace,
+    ProjectId, SourceFile, Timestamp,
 };
 use kalamu_dictionary::{DictionaryView, Evidence, Item, ProposalsView};
 use kalamu_engine::{NewJob, SetupRequest};
@@ -58,22 +58,32 @@ pub fn dictionary_plan(
     })
 }
 
-/// Asks a model to propose merges among a field's rows: a job of its own, kept with the rows
-/// each of its sources sent, and started at once. Async, like every command that starts the
-/// engine.
+/// Asks a model to propose merges among a field's rows: a job of its own, named in the
+/// interface's language, kept with the rows each of its sources sent, and started at once. It
+/// writes only its provenance, into a folder of its own: the dictionary reads its answers from
+/// the store, and the rows' texts lie in the snapshots folder, which never changes. Async, like
+/// every command that starts the engine.
 #[tauri::command]
 pub async fn dictionary_propose(
     state: State<'_, AppState>,
     project: ProjectId,
     collection: Option<CollectionId>,
     namespace: String,
+    name: String,
     setup: SetupRequest,
     pace: Pace,
 ) -> CmdResult<Job> {
     let (prepared, sources) = prepared(&state, project, collection, &namespace)?;
     let sha256: Vec<String> = sources.iter().map(|s| s.sha256.clone()).collect();
+    let folder = state
+        .paths
+        .data
+        .join("dictionary")
+        .join(project.to_string())
+        .join(Timestamp::now().0.to_string());
+    std::fs::create_dir_all(&folder).map_err(|e| AppError::new(id::INTERNAL, e))?;
     let job = state.engine.create_job(NewJob {
-        name: format!("Dictionary: merges in {}", prepared.label),
+        name,
         task: kalamu_core::Task::Analysis,
         sources,
         setups: vec![SetupRequest {
@@ -85,14 +95,19 @@ pub async fn dictionary_propose(
             ..JobSettings::default()
         },
         output: OutputSettings {
-            formats: vec![ExportFormat::Json],
-            destination: OutputDestination::BesideSources,
+            formats: Vec::new(),
+            destination: OutputDestination::Folder(folder.to_string_lossy().into_owned()),
             ..OutputSettings::default()
         },
     })?;
-    state
+    // A job the dictionary does not know would be paid for and never read.
+    if let Err(e) = state
         .dictionary
-        .record_request(project, collection, &prepared, job.id, &sha256)?;
+        .record_request(project, collection, &prepared, job.id, &sha256)
+    {
+        let _ = state.engine.delete_job(job.id);
+        return Err(e.into());
+    }
     state.engine.start(job.id)?;
     Ok(job)
 }

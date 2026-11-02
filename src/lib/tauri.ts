@@ -206,9 +206,10 @@ export const api = {
 		project: string,
 		collection: string | null,
 		namespace: string,
+		name: string,
 		setup: SetupRequest,
 		pace: Pace
-	) => invoke<Job>('dictionary_propose', { project, collection, namespace, setup, pace }),
+	) => invoke<Job>('dictionary_propose', { project, collection, namespace, name, setup, pace }),
 	dictionaryProposals: (project: string) =>
 		invoke<ProposalsView>('dictionary_proposals', { project }),
 	dictionaryDismiss: (project: string, namespace: string, key: string, dismissed: boolean) =>

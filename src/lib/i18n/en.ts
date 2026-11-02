@@ -284,6 +284,7 @@ export const en = {
 			cost: (usd: string) => `About ${usd}.`,
 			costUnknown: 'The cost could not be estimated.',
 			start: 'Send',
+			jobName: (field: string) => `Dictionary: merges in ${field}`,
 			request: (status: string, answered: number, groups: number, open: number, date: string) =>
 				`Asked on ${date}: ${status.toLowerCase()}, ${answered} of ${groups === 1 ? '1 group' : `${groups} groups`} answered, ${open === 1 ? '1 proposal' : `${open} proposals`} open.`,
 			unknown: (n: number) =>
