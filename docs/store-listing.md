@@ -161,7 +161,8 @@ carries no text, so the Store's title and buttons can sit over its right side.
 
 ## Screenshots
 
-From the installed Store package, in the dark theme. Store rules: `.png`, at least 1366 × 768,
+For version 1.1.0, from the installed Store package, in one theme throughout (the light one, as
+the 1.0.0 captures). Store rules: `.png`, at least 1366 × 768,
 under 50 MB; ten at most, five to eight recommended. The first one or two are what most people
 see, in search results and at the top of the listing, so they carry what sets Kalamu apart:
 checking AI text against its source. Keep what matters in the top two-thirds, where the Store
@@ -183,18 +184,34 @@ issues whose rights holder agrees; a handwritten letter in the public domain on 
 Commons; your own recording, or one made with the speaker's consent for this use. Gallica and
 most archives restrict commercial reuse: a Store listing is safest without them.
 
+**A demo project** for the shots that need one (2, 4 and 5), from public-domain material only:
+a project *The Monitor, Omaha 1915–1916* with collections *Issues 1915*, *Issues 1916*,
+*Correspondence* and *Interviews*; `the-monitor-1915.pdf` and six to ten more issues of *The
+Monitor* from Chronicling America, `dodington-1755.jpg` and `interview.wav`; tags such as
+*suffrage* and *churches* on a few documents. Save the example *Letters: read, check, then people
+and places* as a workflow *Newspapers*, its first step on the newspaper preset, and run it on the
+issues from the project's selection, so the dictionary
+has the same people under several spellings (*Rev. John Albert Williams*, *J. A. Williams*,
+*Father Williams*) for a model to propose merging.
+
 | # | What to show | Caption |
 | --- | --- | --- |
 | 1 | **Comparison in the review.** A newspaper column scanned on the left; on the right its text from set-up A, with two or three words highlighted where B reads differently, and one set of readings open over the text. The strip of pages below, a few marked reviewed. | Check every page beside its scan. Where two models read differently, the words are highlighted and you choose the right reading. |
-| 2 | **New job, ready to start.** Extract text chosen, a folder of 30–40 pages added, two set-ups (Gemini and Mistral OCR), the diagram of the task, and the estimate on the right with a cost per model. | Choose your files, a task and a model, and see the estimated cost before anything is sent to the provider. |
+| 2 | **A project.** *The Monitor* project's documents: collections in the side list, tags on a few rows, the results column showing what each was read with and how much is reviewed, one row selected with the selection bar's actions. | Keep a project's documents together in collections and tags, each with every result read from it, whatever job made it. |
 | 3 | **Handwriting.** `dodington-1755.jpg`, read with Claude or Mistral (Gemini refuses it), beside its transcription, lines kept as on the page, one word corrected (blue). | Read handwritten letters and registers line by line, kept as on the page so each line is easy to check against the original. |
-| 4 | **Transcript.** The player above the transcript, speakers given real names, timestamps, the line being spoken highlighted. | Transcribe interviews with speakers and timestamps, give the speakers their names, and click any line to hear it. |
-| 5 | **Table of contents.** A newspaper issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
-| 6 | **Analysis.** An article beside its answers: summary, people, places and tone with its reason, two set-ups' sigla on the names they disagree on, a name pointed at and found in the text. | Ask your own questions of each text: summaries, people, places and tone, every answer shown beside the document it comes from. |
-| 7 | **Search.** Ctrl F open over a long document, the list of matches by page, one gone to and marked. | Search a whole document or recording, your corrections included, and go straight to every match. |
-| 8 | **The job's page.** A finished job: cost over all its runs, the errors found in review ("1.4 % of characters…"), the files written, economy mode shown. | Follow what a job costs and how accurate it is. Interrupted jobs resume where they stopped; large ones can run at half price. |
-| 9 | **Offline.** New job with Whisper (on this PC) chosen and the estimate at $0.00, or Settings with Whisper models downloaded. | Transcribe offline with Whisper: free, no account or key, and nothing leaves your PC. |
-| 10 | **Glossary**, optional, in the light theme for contrast. | New to these tools? A glossary explains OCR, tokens, error rates and hallucinations in plain words. |
+| 4 | **A workflow run.** The *Newspapers* run with its first step done and stopped for review, the next step waiting, and *Continue* in view; or the workflow's drawing of its steps in Workflows. | Chain steps into a workflow: read the pages, check them, then analyse the corrected text. Nothing goes on until you say so. |
+| 5 | **The dictionary.** The People field: rows with their spellings and the documents naming them, look-alikes pointed out, and a model's proposal open (rows, label, reason, certainty) with Accept and Turn down. | Gather the people and places your analyses found across a project, and merge their spellings under your own label, or let a model propose merges you decide on. |
+| 6 | **Transcript.** The player above the transcript, speakers given real names, timestamps, the line being spoken highlighted. | Transcribe interviews with speakers and timestamps, give the speakers their names, and click any line to hear it. |
+| 7 | **Analysis.** An article beside its answers: summary, people, places and tone with its reason, two set-ups' sigla on the names they disagree on, a name pointed at and found in the text. | Ask your own questions of each text: summaries, people, places and tone, every answer shown beside the document it comes from. |
+| 8 | **New job, ready to start.** Extract text chosen, a folder of issues added, two set-ups (Gemini and Mistral OCR), the diagram of the task, and the estimate on the right with a cost per model. | Choose your files, a task and a model, and see the estimated cost before anything is sent to the provider. |
+| 9 | **Table of contents.** A newspaper issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
+| 10 | **Offline.** New job with Whisper (on this PC) chosen and the estimate at $0.00, or Settings with Whisper models downloaded. | Transcribe offline with Whisper: free, no account or key, and nothing leaves your PC. |
+
+Search, the glossary, Prompts and the job's page are left out of the ten: the description and
+features name them. **The 1.0.0 captures** in `docs/store/screenshots/` (`01-new-job`,
+`02-review-comparison`, `03-handwriting`, `04-transcript`, `07-prompts`, `09-job-page`) show the
+1.0.0 sidebar, without *Projects* and *Workflows*: take them all again from 1.1.0, named after
+the rows above (`01-comparison.png` … `10-offline.png`), and replace the old files.
 
 Leave out an image rather than show a feature that does not run as shown: certification checks
 that the screenshots match the app.
