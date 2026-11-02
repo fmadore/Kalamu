@@ -1,6 +1,6 @@
 # Kalamu
 
-A Windows desktop app that lets researchers read scanned and handwritten documents, transcribe
+A desktop app for Windows and macOS that lets researchers read scanned and handwritten documents, transcribe
 interviews and analyse texts with the AI provider of their choice, or offline, without Python,
 Colab or the command line. Every result is checked against its source side by side: where models
 disagree is highlighted, and corrections never overwrite the AI's text.
@@ -8,7 +8,7 @@ disagree is highlighted, and corrections never overwrite the AI's text.
 *Kalamu* is Swahili for pen, from the Arabic *qalam*. The test releases up to 0.2 were called
 Scriptorium; a newer version moves their jobs, settings and keys over on its first start.
 
-**Windows 11 · x64 and ARM64 · English interface (French and German planned) · MIT licence**
+**Windows 11 (x64 and ARM64) · macOS 13 and later (Apple Silicon) · English interface (French and German planned) · MIT licence**
 
 <a href="https://apps.microsoft.com/detail/9MXT5555BZ1H?referrer=appbadge&mode=direct"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" height="48"></a>&nbsp;&nbsp;<a href="https://buymeacoffee.com/fmadore"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
 
@@ -17,7 +17,8 @@ Free, with every feature included. If it is useful to you, you can
 
 **Status: version 1.0.0** is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H),
 signed and updated through the Store. Unsigned installers for x64 and ARM64 (Windows warns on
-first launch) are on the [releases page](https://github.com/fmadore/Kalamu/releases). Text
+first launch) are on the [releases page](https://github.com/fmadore/Kalamu/releases), and from
+the next release a disk image for Macs with Apple Silicon (see [On a Mac](#on-a-mac)). Text
 extraction, transcription and analyses have run against the live OpenAI, Claude and Mistral
 APIs; Gemini, offline Whisper and the cheaper batch mode have had fewer live runs, so try a
 small job first. See the [roadmap](docs/roadmap.md) and the
@@ -71,9 +72,19 @@ small job first. See the [roadmap](docs/roadmap.md) and the
 - **A glossary** explains the words these tools use, from OCR and tokens to error rates and
   hallucination, for colleagues new to them.
 
-Files go straight from your PC to the provider you choose, with your own API key, kept in
-Windows Credential Manager. Offline, nothing leaves the PC. AI output can be fluent and wrong:
-check a sample against the source before relying on it.
+Files go straight from your computer to the provider you choose, with your own API key, kept in
+Windows Credential Manager or the macOS Keychain. Offline, nothing leaves the computer. AI
+output can be fluent and wrong: check a sample against the source before relying on it.
+
+## On a Mac
+
+Download `Kalamu_<version>_aarch64.dmg` from the
+[releases page](https://github.com/fmadore/Kalamu/releases) (Macs with Apple Silicon, macOS 13
+or later) and drag Kalamu to Applications. The app is not yet signed with an Apple Developer ID,
+so the first time, macOS refuses to open it: open **System Settings → Privacy & Security**,
+choose **Open Anyway** beside Kalamu, and confirm. macOS may also ask once to let Kalamu use the
+key saved in your Keychain. Shortcuts use ⌘ where Windows uses Ctrl; closing the window keeps
+Kalamu in the Dock, and ⌘Q asks first while jobs run.
 
 ## Documentation
 

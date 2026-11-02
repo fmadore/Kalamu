@@ -16,8 +16,8 @@ alert takes priority over feature work.
 
 ## How the app handles credentials
 
-- Provider API keys (Gemini, OpenAI, Anthropic, Mistral) are stored in Windows Credential
-  Manager and read only by the Rust core, into the one request that needs them. They are never
+- Provider API keys (Gemini, OpenAI, Anthropic, Mistral) are stored in the system's keychain
+  (Windows Credential Manager, the macOS Keychain) and read only by the Rust core, into the one request that needs them. They are never
   written to the front end's storage, the settings, the job database, `provenance.json` or the
   logs.
 - The interface runs under a restrictive content security policy (`connect-src 'self'`): every
@@ -41,3 +41,8 @@ only from the releases page linked above. From version 1.0.0 Kalamu is also in t
 [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), whose copy is signed by
 Microsoft and updated automatically ([docs/microsoft-store.md](docs/microsoft-store.md)). The `.msix` and `.msixbundle` files on a
 release are the unsigned Store submission, for testing; they do not install as they are.
+
+The macOS disk image is **signed ad hoc, not with an Apple Developer ID**, and not notarised, so
+macOS refuses to open it the first time: choose **Open Anyway** in System Settings → Privacy &
+Security (README, "On a Mac"). Download it only from the releases page. Signing and
+notarisation are planned ([docs/decisions/2026-11-02-macos.md](docs/decisions/2026-11-02-macos.md)).

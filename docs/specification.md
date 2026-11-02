@@ -14,7 +14,8 @@ existing tools work, but they assume some technical comfort:
 - [iwac-ai-pipelines](https://github.com/fmadore/iwac-ai-pipelines) offers many more tasks and
   providers, but needs Python, a terminal and an `.env` file.
 
-Kalamu packages the same workflows as an ordinary Windows app, built with Rust and Tauri.
+Kalamu packages the same workflows as an ordinary desktop app for Windows and macOS, built with
+Rust and Tauri.
 Install it, paste an API key, pick a file or a folder, press **Start**. Its users are
 researchers, historians first, who are not technical: every screen must stay plain and
 friendly, with the advanced choices folded away.
@@ -34,7 +35,8 @@ and their tested pieces carried over:
 - **[Live Translation](https://github.com/fmadore/Live-translation)** (Rust, Tauri 2), for the
   app's plumbing: Tauri setup, API keys in Windows Credential Manager, whisper.cpp with model
   download and verification, x64 and ARM64 builds, and MSIX packaging. Kalamu shares code
-  with it, not its look or identity.
+  with it, not its look or identity. None of the three runs on macOS: Kalamu's port follows
+  Tauri's own conventions there ([decision](decisions/2026-11-02-macos.md)).
 
 Where Kalamu departs from these projects, the reason is written down in
 [decisions](decisions/).
@@ -216,7 +218,8 @@ paying twice.
   folder), so an interruption loses at most the piece in progress.
 - **Jobs survive closing the app.** On the next launch, the app lists unfinished jobs and offers
   to resume them. Closing the window during a job asks first, and can keep the job running in
-  the background from the notification area. Quitting pauses the jobs and waits for the pieces
+  the background from the notification area (the menu bar on a Mac, where closing the window
+  never quits and ⌘Q asks first too). Quitting pauses the jobs and waits for the pieces
   already sent, which are paid for, to come back and be stored, saying how many; "Quit now"
   stops waiting. A pause or cancel also ends a wait between retries, so no further attempt is
   sent.
@@ -243,8 +246,8 @@ paying twice.
 - **Exports come from the cache.** Choosing another output format later regenerates the file
   from stored results, without calling the provider again.
 - **A job's files stay at hand.** Its page lists the files it wrote that are still on disk,
-  after a restart too. Each opens in its Windows app (JSON in Notepad, which every PC has) or in
-  its folder; only the job's own files can be opened this way. A job can be renamed at any
+  after a restart too. Each opens in the app the system has for it (JSON in Notepad on Windows,
+  TextEdit on a Mac, which every computer has) or in its folder; only the job's own files can be opened this way. A job can be renamed at any
   time: its name is only a label, as the files it writes are named after their sources.
 
 ## Tips and checks for better results
@@ -368,7 +371,7 @@ results together.
 The user always sees what the app is doing, how far it is, and what it costs (the job's own
 calls over all its runs, not only the current one, answers billed but refused included): a list of jobs
 with their status, a bar per file and set-up, a live preview of the text as pieces arrive,
-pause and cancel that keep everything finished, progress on the taskbar icon, and a
+pause and cancel that keep everything finished, progress on the taskbar or Dock icon, and a
 notification when a job finishes or needs attention. A job waiting for a batch says how many
 pieces the provider holds and when they are due.
 
@@ -509,10 +512,12 @@ engine produced a result and records it like any other. Analyses need a cloud mo
 
 ## Privacy
 
-In offline mode, nothing leaves the PC. With a cloud provider, files go directly from the PC to
+In offline mode, nothing leaves the computer. With a cloud provider, files go directly from the
+computer to
 that provider; there is no intermediate server. For a YouTube video only its link is sent, and
 Google reads the video from YouTube; the app also asks YouTube for the video's title when the
-link is added, and loads YouTube's player in the review only when the video is played. API keys stay in Windows Credential Manager.
+link is added, and loads YouTube's player in the review only when the video is played. API keys
+stay in the system's keychain: Credential Manager on Windows, the Keychain on macOS.
 The developer receives no files, keys, results or telemetry.
 
 Sending research material to an AI provider is still a transfer of data to a third party.
@@ -550,7 +555,8 @@ written in the translation files.
 Providers accept different inputs, so the app prepares each file for the chosen model; users
 never convert anything themselves. What a model is sent is what both its provider and its own
 catalogue entry accept: a text-only model behind a provider that takes PDFs and images is sent
-text alone, and a scan has its text extracted first. The tools ship inside the app for x64 and ARM64.
+text alone, and a scan has its text extracted first. The tools ship inside the app for Windows
+(x64 and ARM64) and macOS (Apple Silicon).
 
 - **PDF to images** with PDFium, page by page, for providers that do not accept PDF, for
   previews and for searchable PDF exports.
@@ -573,7 +579,8 @@ Microsoft's standard terms forbid the reverse engineering the LGPL must allow. D
 - Provider calls in Rust; no bundled Python.
 - SQLite for the job database and result cache; exporters in Rust.
 - [whisper-rs](https://crates.io/crates/whisper-rs) (whisper.cpp) for offline transcription.
-- Native builds for x64 and ARM64.
+- Native builds for Windows x64 and ARM64, and macOS on Apple Silicon. What differs between the
+  systems lives in one place per layer ([AGENTS.md](../AGENTS.md)).
 
 The crate layout, modularity rules and architecture reviews are in [AGENTS.md](../AGENTS.md).
 
@@ -588,3 +595,8 @@ lists its third-party components with their licences. Unsigned installers are al
 GitHub releases. The submission, the policies it must meet, the package and the listing text are
 in [microsoft-store.md](microsoft-store.md), [packaging-msix.md](packaging-msix.md),
 [store-listing.md](store-listing.md) and [privacy.md](privacy.md).
+
+On macOS (Apple Silicon, macOS 13 and later), a disk image attached to each GitHub release,
+with FFmpeg and every licence inside. It is signed ad hoc for now, so macOS asks once, on first
+opening, to confirm it; signing and notarisation with an Apple Developer ID come later. Keys are
+kept in the Keychain. There is no Mac App Store version ([decision](decisions/2026-11-02-macos.md)).

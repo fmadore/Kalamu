@@ -31,7 +31,8 @@ takes are sent whole, and video is unavailable.
 ## The bundled build
 
 `.github/workflows/ffmpeg.yml` builds FFmpeg 9.0.2 with libopus 1.6.1 for Windows x64 and
-ARM64, cross-compiled with llvm-mingw:
+ARM64, cross-compiled with llvm-mingw, and for macOS on Apple Silicon, built natively with
+Apple's clang for macOS 13 and later:
 
 - **Audio only.** No video decoders or encoders, no network protocols, no external libraries
   besides libopus. The demuxers read the usual audio files and the audio track of MP4, MOV, MKV,
@@ -39,6 +40,10 @@ ARM64, cross-compiled with llvm-mingw:
 - **LGPL v2.1 or later only.** No `--enable-gpl`, `--enable-version3` or `--enable-nonfree`. The
   workflow fails unless FFmpeg's own `config.h` reports "LGPL version 2.1 or later", and a second
   job checks `ffmpeg -L` on each architecture.
+- **On macOS, nothing but the system library.** `--disable-autodetect` keeps out Apple's
+  frameworks, and the build fails if `otool -L` lists a library outside the system. Inside the
+  app the two programs sit in `Kalamu.app/Contents/MacOS`, beside the executable, and are signed
+  with the app.
 - **About 10 MB** per architecture instead of the 120–170 MB of general-purpose builds.
 
 Each run uploads the two programs with the LGPL text, Opus's BSD licence, the exact configure
@@ -89,4 +94,4 @@ Checked against [Microsoft Store Policies 7.20](https://learn.microsoft.com/en-u
   the Store, so the MSIX route avoids this.
 
 Users never install FFmpeg themselves: it is part of the app on every route (Store, GitHub
-installers). This is not legal advice; check the policies again before each submission.
+installers, the macOS disk image). This is not legal advice; check the policies again before each submission.

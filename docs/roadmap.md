@@ -13,6 +13,10 @@ recorded provider responses. Text extraction, transcription and analyses have al
 the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`, see
 [development.md](development.md)); Gemini has not yet, for want of credit on the account.
 
+**macOS** (Apple Silicon) is built and tested in CI and gets a disk image from the next release
+on, signed ad hoc; it has not yet been opened on a real Mac
+([decision](decisions/2026-11-02-macos.md)).
+
 ## Done
 
 - **Foundations.** Rust workspace and Tauri shell, job database with caching and resuming,
@@ -31,6 +35,12 @@ the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example li
   beside the video, played on the dark stage in YouTube's privacy-enhanced player, each video
   named after its title
   ([decision](decisions/2026-10-27-youtube-links.md)).
+- **macOS.** Apple Silicon, built and tested in CI beside Windows x64 and ARM64: what differs
+  between the systems in one place per layer (`src-tauri/src/platform/`, `src/lib/platform.ts`,
+  `tauri.macos.conf.json`), the review's player given WebKit's formats, ⌘ shortcuts, Mac window,
+  Dock and menu-bar conventions, FFmpeg built for macOS, a `.dmg` in each release, and the
+  interface tested in WebKit on a Mac in CI
+  ([decision](decisions/2026-11-02-macos.md)).
 - **Analyses.** With Gemini, OpenAI, Claude and Mistral, including the Z.ai GLM and DeepSeek
   models Mistral hosts. Fields defined by the researcher
   (text, lists of names or terms, one or several choices, reasons), sent as each provider's
@@ -364,3 +374,6 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
   [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature.
 - Correcting ALTO XML with its coordinates kept, as iwac-ai-pipelines does.
 - French and German Store listings, with the translated interface.
+- macOS: signing and notarisation with an Apple Developer ID, so Gatekeeper does not ask; the
+  application menu's labels through the translation files; a first test on a real Mac (the
+  Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in WKWebView).

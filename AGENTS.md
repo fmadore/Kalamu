@@ -44,7 +44,7 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |
 | `export` | One module per output format, each implementing the exporter trait. | `core` |
 | `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job. | all of the above through their traits |
-| `app` | Tauri shell: commands, events, settings, Credential Manager, packaging. | `engine`, `projects`, `dictionary`, and others only to wire them up |
+| `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging. | `engine`, `projects`, `dictionary`, and others only to wire them up |
 
 Key traits, defined in `core`:
 
@@ -63,6 +63,13 @@ Rules that keep this modular:
 - **Adding a provider, model, export format or prompt preset is local.** A new provider is a
   new module plus one registration line; a new model is a catalogue entry; a new format is a new
   exporter. If it needs edits in several crates, the design is wrong: fix the design first.
+- **What differs between operating systems lives in one place per layer.** In the shell,
+  `src-tauri/src/platform/`, one file per system with the same items; in the interface,
+  `src/lib/platform.ts`; in Tauri's configuration, `tauri.<system>.conf.json`. The crates below
+  `app` never match on the system: they receive what they need as values (the player's formats
+  through `EngineConfig`), and `cfg` stays only where the C runtime or the system's own API
+  differs. Adding a system is one more file per layer. Kalamu ships for Windows (x64, ARM64)
+  and macOS (Apple Silicon); CI builds and tests all three.
 - **No hard-coded interface text.** The interface ships in English first, but every visible
   string, including error messages and tips, goes through translation files from the first
   screen, so French and German are added without touching code.
@@ -79,7 +86,7 @@ Rules that keep this modular:
 - **Async with Tokio**; cancellation and pause are explicit, not by dropping tasks mid-write.
 - **Errors**: `thiserror` types in library crates, with messages a researcher can understand at
   the edge; `anyhow` only in `app`. No `unwrap()` or `expect()` outside tests and startup.
-- **Secrets** never leave Credential Manager except into the request that needs them, and never
+- **Secrets** never leave the system keychain except into the request that needs them, and never
   reach logs, the store or `provenance.json`.
 
 ## Testing
