@@ -153,14 +153,18 @@ pub(crate) fn secs_to_ms(value: Option<&Value>) -> u64 {
         .unwrap_or(0)
 }
 
-/// `Speaker 1` from what a diarizing model calls a speaker: `A` (OpenAI), `speaker_1` (Voxtral)
-/// or a number.
+/// `Speaker 1` from what a diarizing model calls a speaker: `A` (OpenAI), `speaker_1` (Voxtral),
+/// `spk_1` (Gemini) or a number.
 pub(crate) fn speaker_label(id: &str) -> String {
     let id = id.trim();
-    let bare = id
-        .get(..8)
-        .filter(|p| p.eq_ignore_ascii_case("speaker_") || p.eq_ignore_ascii_case("speaker "))
-        .map_or(id, |_| id[8..].trim());
+    let bare = ["speaker_", "speaker ", "spk_"]
+        .iter()
+        .find_map(|prefix| {
+            id.get(..prefix.len())
+                .filter(|p| p.eq_ignore_ascii_case(prefix))
+                .map(|_| id[prefix.len()..].trim())
+        })
+        .unwrap_or(id);
     format!("Speaker {bare}")
 }
 
@@ -206,6 +210,7 @@ mod tests {
     fn speakers_are_named_alike_whatever_the_model_calls_them() {
         assert_eq!(speaker_label("A"), "Speaker A");
         assert_eq!(speaker_label("speaker_1"), "Speaker 1");
+        assert_eq!(speaker_label("spk_2"), "Speaker 2");
         assert_eq!(speaker_label("0"), "Speaker 0");
         assert_eq!(speaker_label("Speakerine"), "Speaker Speakerine");
     }

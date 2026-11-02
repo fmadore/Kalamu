@@ -39,6 +39,15 @@ describe('new job form', () => {
 		expect(providerDefault(catalog, rule('audio_transcription'), 'mistral')).toBe(
 			'voxtral-small-transcribe-3-0'
 		);
+		// Google's speech-to-text model for recordings; it takes no prompt.
+		const transcribe = providerDefault(
+			catalog,
+			rule('audio_transcription'),
+			'gemini',
+			'audio/mpeg'
+		);
+		expect(transcribe).toBe('gemini-3.5-transcribe');
+		expect(acceptsPrompt(catalog.models.find((m) => m.id === transcribe))).toBe(false);
 	});
 
 	it('suggests a different model for a comparison', () => {

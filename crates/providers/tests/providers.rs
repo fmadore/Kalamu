@@ -704,6 +704,80 @@ fn values_at<'a>(value: &'a serde_json::Value, path: &[&str]) -> Vec<&'a serde_j
 }
 
 #[tokio::test]
+async fn gemini_transcribe_sends_no_prompt_and_reads_speakers_and_timings() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/models/gemini-3.5-transcribe:generateContent"))
+        .and(body_partial_json(serde_json::json!({
+            "generationConfig": {
+                "audioTranscriptionConfig": {
+                    "diarization": true,
+                    "wordTimestamp": true,
+                    "languageCodes": ["fr-FR"],
+                }
+            }
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(fixture("gemini_transcribe.json")))
+        .mount(&server)
+        .await;
+    let gemini = Gemini::with_base_url(client(), &server.uri());
+    let langs = LanguageChoice::Explicit(vec![LanguageCode::new("fr")]);
+    let input = audio();
+    let opts = SetupOptions {
+        diarize: true,
+        ..SetupOptions::default()
+    };
+    let out = gemini
+        .process(
+            &ApiKey::new("k"),
+            request(
+                Task::AudioTranscription,
+                "gemini-3.5-transcribe",
+                &input,
+                &langs,
+                &opts,
+            ),
+        )
+        .await
+        .unwrap_or_default();
+    // No prompt, system instruction or thinking reaches a speech-to-text model.
+    let sent: serde_json::Value = server
+        .received_requests()
+        .await
+        .unwrap_or_default()
+        .last()
+        .and_then(|r| serde_json::from_slice(&r.body).ok())
+        .unwrap_or_default();
+    assert!(sent.get("systemInstruction").is_none());
+    assert_eq!(
+        sent.pointer("/contents/0/parts")
+            .and_then(|p| p.as_array())
+            .map(Vec::len),
+        Some(1)
+    );
+    assert!(sent.pointer("/generationConfig/thinkingConfig").is_none());
+
+    assert_eq!(
+        out.text,
+        "Bonjour, merci d'être venu.\nJe vous en prie,\nasseyez-vous."
+    );
+    assert_eq!(out.segments.len(), 2);
+    assert_eq!(out.segments[0].speaker.as_deref(), Some("Speaker 1"));
+    assert_eq!(
+        (out.segments[0].start_ms, out.segments[0].end_ms),
+        (100, 1_800)
+    );
+    // One speaker's utterances are joined into one turn.
+    assert_eq!(out.segments[1].speaker.as_deref(), Some("Speaker 2"));
+    assert_eq!(out.segments[1].text, "Je vous en prie, asseyez-vous.");
+    assert_eq!(
+        (out.segments[1].start_ms, out.segments[1].end_ms),
+        (2_200, 4_250)
+    );
+    assert_eq!(out.usage.input_tokens, 150);
+}
+
+#[tokio::test]
 async fn the_settings_a_provider_reports_are_the_ones_it_sends() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))

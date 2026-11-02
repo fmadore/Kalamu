@@ -16,13 +16,18 @@
 //! the part of the prompt read from Google's cache. Economy mode sends pages and documents
 //! through batch mode ([`batch`]); recordings and YouTube links, which a batch is not documented
 //! to take, always go one by one.
+//!
+//! Google's speech-to-text models (`gemini-3.5-transcribe`) take a request of their own: the
+//! recording and `audioTranscriptionConfig` only, no prompt, system instruction or thinking.
+//! Speakers and word timings come back beside the text, one part per utterance.
 
 mod batch;
+mod transcribe;
 
 use async_trait::async_trait;
 use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
-    ProviderError, ProviderId, RequestSetting, Task, Tuning, Usage, YOUTUBE_LINK,
+    ProviderError, ProviderId, RequestSetting, SetupOptions, Task, Tuning, Usage, YOUTUBE_LINK,
 };
 use reqwest::Client;
 use serde_json::{Value, json};
@@ -228,7 +233,10 @@ impl Provider for Gemini {
         }
     }
 
-    fn request_settings(&self, task: Task, _model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+    fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+        if transcribe::transcriber(model) {
+            return transcribe::settings(&SetupOptions::default());
+        }
         // As for a page, which every task but a transcription or a correction reads.
         let page = match task {
             Task::AudioTranscription | Task::TextCorrection => "text/plain",
@@ -238,6 +246,9 @@ impl Provider for Gemini {
     }
 
     fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
+        if transcribe::transcriber(request.model) {
+            return transcribe::settings(request.options);
+        }
         settings(&request.input.mime, request.tuning)
     }
 
@@ -253,6 +264,22 @@ impl Provider for Gemini {
             )));
         }
         let url = format!("{}/models/{}:generateContent", self.base_url, request.model);
+        if transcribe::transcriber(request.model) {
+            if request.task != Task::AudioTranscription || request.input.mime == YOUTUBE_LINK {
+                return Err(ProviderError::InvalidRequest(format!(
+                    "{} transcribes recordings only",
+                    request.model
+                )));
+            }
+            let response = send_json(
+                self.client
+                    .post(url)
+                    .header("x-goog-api-key", key.expose())
+                    .json(&transcribe::body(&request)),
+            )
+            .await?;
+            return transcribe::parse(&response);
+        }
         let response = send_json(
             self.client
                 .post(url)
