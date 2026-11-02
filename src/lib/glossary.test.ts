@@ -37,7 +37,10 @@ describe('glossary', () => {
 	});
 
 	it('finds terms by their word or definition, forgiving capitals and accents', () => {
-		expect(filterTerms(en, '')).toEqual(TERMS);
+		const all = filterTerms(en, '');
+		expect([...all].sort()).toEqual([...TERMS].sort());
+		const words = all.map((t) => en.glossary.terms[t].word.toLowerCase());
+		expect(words).toEqual([...words].sort((a, b) => a.localeCompare(b)));
 		expect(filterTerms(en, 'whisper')).toContain('whisper');
 		expect(filterTerms(en, 'HTR')).toContain('ocr');
 		expect(filterTerms(en, 'siglum')).toEqual(['setup']);

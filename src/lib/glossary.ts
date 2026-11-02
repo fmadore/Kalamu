@@ -1,5 +1,5 @@
-// The glossary: the words the app uses, in the order the page lists them, the words each points
-// to, and the export formats. The definitions themselves are interface text, in the translation
+// The glossary: the words the app uses, listed alphabetically in the interface language, the
+// words each points to, and the export formats. The definitions themselves are interface text, in the translation
 // files; this module only orders and links them, so it can be tested on its own.
 
 import type { ExportFormat } from './bindings/ExportFormat.js';
@@ -8,7 +8,8 @@ import { find } from './search.js';
 
 export type Term = keyof Messages['glossary']['terms'];
 
-/** What a model is, then how it is used, then how its results are checked and recorded. */
+/** Every word, by theme: what a model is, then how it is used, then how its results are checked
+ * and recorded. The page lists them alphabetically (`filterTerms`). */
 export const TERMS: Term[] = [
 	'ocr',
 	'llm',
@@ -69,11 +70,16 @@ export const FORMATS: (ExportFormat | 'provenance')[] = [
 /** The anchor of a term on the page, which links from elsewhere in the app go to. */
 export const anchor = (term: Term | 'formats') => `glossary-${term}`;
 
-/** The terms whose word or definition holds the words typed, ignoring capitals and accents. */
+/** The terms whose word or definition holds the words typed, ignoring capitals and accents, in
+ * the alphabetical order of their words in the interface language. */
 export function filterTerms(m: Messages, query: string): Term[] {
-	if (query.trim() === '') return TERMS;
-	return TERMS.filter((t) => {
-		const { word, text } = m.glossary.terms[t];
-		return find(word, query).length > 0 || find(text, query).length > 0;
-	});
+	const order = new Intl.Collator(m.locale.tag, { sensitivity: 'base' });
+	const shown =
+		query.trim() === ''
+			? [...TERMS]
+			: TERMS.filter((t) => {
+					const { word, text } = m.glossary.terms[t];
+					return find(word, query).length > 0 || find(text, query).length > 0;
+				});
+	return shown.sort((a, b) => order.compare(m.glossary.terms[a].word, m.glossary.terms[b].word));
 }
