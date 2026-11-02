@@ -73,9 +73,10 @@ this repository's notes, and Microsoft renumbers them from time to time.
   its licence texts) in each release build.
 - **Sample files for reviewers**: `samples/`, attached as `kalamu-samples.zip`: a recording
   made with Windows' speech synthesis, an invented newspaper page and its text (all CC0), a
-  handwritten French report of 1755 from the Bibliothèque nationale de France and a 1915 page
-  of *The Monitor* (Omaha) with its OCR text layer from the Library of Congress (both public
-  domain).
+  handwritten French report of 1755 from the Bibliothèque nationale de France, a 1915 page of
+  *The Monitor* (Omaha) with its OCR text layer from the Library of Congress, and a whole
+  16-page issue of the *Victoria Daily Times* of 22 July 1915, scans only, for a table of
+  contents (all three public domain).
 
 ## Before the first submission
 
