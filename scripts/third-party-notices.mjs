@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path';
 
 const target =
 	process.argv[2] ??
-	(process.arch === 'arm64' ? 'aarch64-pc-windows-msvc' : 'x86_64-pc-windows-msvc');
+	`${process.arch === 'arm64' ? 'aarch64' : 'x86_64'}-${process.platform === 'darwin' ? 'apple-darwin' : 'pc-windows-msvc'}`;
 const LICENCE_FILE = /^(licen[cs]e|copying|notice|unlicense)([-._].*)?$/i;
 /** C and C++ libraries a crate compiles in from a folder of its own, with their own licence. */
 const VENDORED = { 'whisper-rs-sys': ['whisper.cpp'] };
