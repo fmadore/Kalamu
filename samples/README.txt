@@ -1,7 +1,7 @@
 Kalamu sample files
 
-Five small files to try Kalamu with, in particular for the Microsoft Store certification team.
-Two are historical documents in the public domain; three were made for Kalamu and may be used
+Six files to try Kalamu with, in particular for the Microsoft Store certification team. Three
+are historical documents in the public domain; three were made for Kalamu and may be used
 freely (CC0).
 
 Works with no account and no key
@@ -27,6 +27,14 @@ the-monitor-1915.pdf  The Monitor (Omaha, Nebraska), 31 July 1915, page 1: a wee
                       that text; or Extract text, to read the columns again. Library of
                       Congress, Chronicling America. Public domain (published in the United
                       States in 1915).
+
+victoria-daily-times-1915.pdf
+                      The Victoria Daily Times (Victoria, British Columbia), 22 July 1915: a
+                      whole 16-page issue, scans only. New job > Detailed table of contents:
+                      one entry per article or item, with its pages, its authors and a
+                      summary. Its machine-read text layer was removed, so the pages are
+                      read from the scans. Internet Archive (victoriadailytimes19150722), via
+                      Wikimedia Commons. Public domain.
 
 bulletin-page.jpg     An invented newspaper page in French, made for Kalamu. New job >
                       Extract text.
