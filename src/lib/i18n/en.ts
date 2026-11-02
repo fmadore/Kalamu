@@ -18,7 +18,13 @@ export const en = {
 		offlineReady: 'Whisper ready on this PC',
 		collapse: 'Hide the job list',
 		expand: 'Show the job list',
-		sidebarShortcut: 'Ctrl B'
+		sidebarShortcut: 'Ctrl B',
+		/** The menu a right click opens on a job in the list. */
+		jobMenu: (name: string) => `Actions for “${name}”`,
+		addToProject: 'Add to a project',
+		noProjects: 'No project yet. Create one under Projects.',
+		addedTo: (project: string) => `Added to the project “${project}”.`,
+		pauseFirst: 'Pause or cancel the job before deleting it.'
 	},
 	nav: {
 		newJob: 'New job',
@@ -1125,8 +1131,8 @@ export const en = {
 		seeAlso: 'See also',
 		/** The help link beside a word in the app. */
 		whatIs: (word: string) => `What is meant by “${word}”`,
-		/** In the order the page lists them: what a model is, then how it is used, then how its
-		 * results are checked and recorded. */
+		/** By theme: what a model is, then how it is used, then how its results are checked and
+		 * recorded. The page lists them alphabetically by word. */
 		terms: {
 			ocr: {
 				word: 'OCR and HTR',
