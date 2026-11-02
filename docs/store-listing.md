@@ -1,8 +1,8 @@
 # Partner Center listing text
 
-Paste-ready text for Kalamu's Microsoft Store listing, kept for the **current submission**,
-version 1.1.2, whose `Kalamu_1.1.2.msixbundle` the release workflow builds (the first, 1.0.0,
-was certified on 2 November 2026). The submission and update steps are in
+Paste-ready text for Kalamu's Microsoft Store listing, kept for the **version in the Store**,
+1.1.2, published from the `Kalamu_1.1.2.msixbundle` the release workflow builds (the first,
+1.0.0, was certified on 2 November 2026). The submission and update steps are in
 [microsoft-store.md](microsoft-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 

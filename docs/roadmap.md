@@ -9,9 +9,9 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 **Version 1.1.2** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
 [v1.1.2 release](https://github.com/fmadore/Kalamu/releases/tag/v1.1.2)
-([notes](release-1.1.2.md)). Kalamu has been in the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since version 1.0.0
-(2 November 2026). Everything below is tested against
+([notes](release-1.1.2.md)), and it is the version in the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), where Kalamu has been since
+version 1.0.0 (2 November 2026). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
 the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`, see
 [development.md](development.md)); Gemini has not yet, for want of credit on the account.
@@ -298,7 +298,7 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md).
+in [microsoft-store.md](microsoft-store.md); 1.1.2 is the version there now.
 
 ## Research workflows (planned)
 
