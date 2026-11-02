@@ -33,7 +33,9 @@ pub use analysis::{AnalysisSchema, Field, FieldAnswer, FieldKind, FieldValue, Sc
 pub use batch::{
     BATCH_WINDOW_MS, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress, BatchRecord,
 };
-pub use dictionary::{DictionaryError, DictionaryStore, Entry, KeptApart};
+pub use dictionary::{
+    DictionaryError, DictionaryStore, Entry, KeptApart, ProposalGroup, ProposalRequest,
+};
 pub use event::ProgressEvent;
 pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter};
 pub use fingerprint::CacheKey;

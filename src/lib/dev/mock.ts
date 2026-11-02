@@ -44,6 +44,20 @@ const settings: Settings = {
 	last_folder: null
 };
 
+/** The prompt a dictionary sends for proposed merges, as Prompts lists it. */
+const dictionaryPreset: Preset = {
+	id: 'dictionary.merges',
+	task: 'analysis',
+	name: 'Dictionary: proposed merges',
+	description:
+		"Sent when a project's dictionary asks a model to propose merges. Its answer's fields are fixed: the dictionary reads them.",
+	instructions:
+		'You help a researcher clean the dictionary of a research project… Never group rows the researcher kept apart.',
+	user_prompt: 'Propose groups among the rows above, following the instructions given.',
+	builtin: true,
+	modified: false
+};
+
 const presets: Preset[] = [
 	{
 		id: 'text_extraction.printed_diplomatic',
@@ -758,10 +772,13 @@ export function installMock(): void {
 			case 'list_presets': {
 				// `view=prompts-analysis` opens Prompts on an analysis, for screenshots.
 				const first = location.search.includes('prompts-analysis') ? 'analysis' : '';
-				const ordered = [...presets, ...contentsPresets].sort(
+				const ordered = [...presets, ...contentsPresets, dictionaryPreset].sort(
 					(x, y) => Number(y.task === first) - Number(x.task === first)
 				);
-				return a.task ? ordered.filter((p) => p.task === a.task) : ordered;
+				// The dictionary's prompt is listed in Prompts, never offered for documents.
+				return a.task
+					? ordered.filter((p) => p.task === a.task && p !== dictionaryPreset)
+					: ordered;
 			}
 			case 'list_pipelines':
 				return pipelines;

@@ -10,6 +10,10 @@ import type { AttachChoice } from './bindings/AttachChoice.js';
 import type { Collection } from './bindings/Collection.js';
 import type { Correction } from './bindings/Correction.js';
 import type { DictionaryView } from './bindings/DictionaryView.js';
+import type { Pace } from './bindings/Pace.js';
+import type { ProposalPlan } from './bindings/ProposalPlan.js';
+import type { ProposalsView } from './bindings/ProposalsView.js';
+import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { DocumentDetail } from './bindings/DocumentDetail.js';
 import type { Entry } from './bindings/Entry.js';
 import type { Evidence } from './bindings/Evidence.js';
@@ -196,6 +200,21 @@ export const api = {
 		invoke<void>('dictionary_undo_apart', { project, a, b }),
 	exportDictionary: (project: string, path: string) =>
 		invoke<void>('export_dictionary', { project, path }),
+	dictionaryPlan: (project: string, collection: string | null, namespace: string) =>
+		invoke<ProposalPlan>('dictionary_plan', { project, collection, namespace }),
+	dictionaryPropose: (
+		project: string,
+		collection: string | null,
+		namespace: string,
+		setup: SetupRequest,
+		pace: Pace
+	) => invoke<Job>('dictionary_propose', { project, collection, namespace, setup, pace }),
+	dictionaryProposals: (project: string) =>
+		invoke<ProposalsView>('dictionary_proposals', { project }),
+	dictionaryDismiss: (project: string, namespace: string, key: string, dismissed: boolean) =>
+		invoke<void>('dictionary_dismiss', { project, namespace, key, dismissed }),
+	dictionaryForgetRequest: (project: string, request: string) =>
+		invoke<void>('dictionary_forget_request', { project, request }),
 	mergeDocuments: (project: string, from: string, into: string) =>
 		invoke<void>('merge_documents', { project, from, into }),
 	documentDetail: (project: string, id: string) =>

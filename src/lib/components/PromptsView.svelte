@@ -8,7 +8,11 @@
 	import { api, pickPresetFile, pickSaveFile } from '#lib/tauri.js';
 	import { toast } from '#lib/state.svelte.js';
 
+	let { presetId }: { presetId?: string } = $props();
+
 	const m = messages();
+	/** The dictionary's prompt: listed apart, its answer's fields fixed. */
+	const DICTIONARY = 'dictionary.merges';
 
 	let presets = $state<Preset[]>([]);
 	let selectedId = $state<string | null>(null);
@@ -29,7 +33,7 @@
 
 	async function load(keep?: string) {
 		presets = await api.listPresets();
-		select(keep ?? selectedId ?? presets[0]?.id ?? null);
+		select(keep ?? selectedId ?? presetId ?? presets[0]?.id ?? null);
 	}
 
 	function select(id: string | null) {
@@ -98,7 +102,7 @@
 			{#if task === 'analysis'}<p class="muted small">{m.prompts.analysisHint}</p>{/if}
 			{#if task === 'contents'}<p class="muted small">{m.prompts.contentsHint}</p>{/if}
 			<ul>
-				{#each presets.filter((p) => p.task === task) as p (p.id)}
+				{#each presets.filter((p) => p.task === task && p.id !== DICTIONARY) as p (p.id)}
 					<li>
 						<button class="item" class:active={p.id === selectedId} onclick={() => select(p.id)}>
 							<span>{p.name}</span>
@@ -112,6 +116,18 @@
 						</button>
 					</li>
 				{/each}
+			</ul>
+		{/each}
+		{#each presets.filter((p) => p.id === DICTIONARY) as p (p.id)}
+			<h2 class="label group">{m.prompts.dictionary}</h2>
+			<p class="muted small">{m.prompts.dictionaryHint}</p>
+			<ul>
+				<li>
+					<button class="item" class:active={p.id === selectedId} onclick={() => select(p.id)}>
+						<span>{p.name}</span>
+						<span class="chip">{p.modified ? m.prompts.modified : m.prompts.builtin}</span>
+					</button>
+				</li>
 			</ul>
 		{/each}
 	</section>
@@ -151,7 +167,9 @@
 						}}></textarea>
 				</label>
 			{/if}
-			{#if draft.schema}
+			{#if draft.id === DICTIONARY}
+				<p class="muted small">{m.prompts.dictionaryFields}</p>
+			{:else if draft.schema}
 				<FieldsEditor bind:schema={draft.schema} />
 			{/if}
 			{#if error}<p class="chip danger">{error}</p>{/if}
@@ -162,14 +180,16 @@
 					onclick={() => run(async () => (await api.savePreset($state.snapshot(draft)!)).id)}
 					>{m.prompts.save}</button
 				>
-				<button
-					class="btn"
-					onclick={() =>
-						run(
-							async () =>
-								(await api.duplicatePreset(selected.id, m.prompts.copyName(selected.name))).id
-						)}>{m.prompts.duplicate}</button
-				>
+				{#if selected.id !== DICTIONARY}
+					<button
+						class="btn"
+						onclick={() =>
+							run(
+								async () =>
+									(await api.duplicatePreset(selected.id, m.prompts.copyName(selected.name))).id
+							)}>{m.prompts.duplicate}</button
+					>
+				{/if}
 				{#if selected.modified}
 					<button
 						class="btn"

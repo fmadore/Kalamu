@@ -5,11 +5,13 @@
 //! resetting deletes the override. User presets are one JSON file each in the presets folder.
 
 mod defaults;
+mod dictionary;
 mod pipelines;
 mod record;
 mod workflow_file;
 mod workflows;
 
+pub use dictionary::DICTIONARY_MERGES;
 pub use pipelines::{Pipeline, PipelineLibrary, PipelineSetup};
 pub use record::{PipelineFile, SetupRecord};
 pub use workflow_file::WorkflowFile;
@@ -152,6 +154,7 @@ impl PromptLibrary {
     pub fn list(&self, task: Option<Task>) -> Vec<Preset> {
         let mut out: Vec<Preset> = defaults::DEFAULTS
             .iter()
+            .chain(std::iter::once(&dictionary::DICTIONARY))
             .map(|d| self.saved.get(d.id).cloned().unwrap_or_else(|| builtin(d)))
             .collect();
         let mut own: Vec<Preset> = self
@@ -162,7 +165,9 @@ impl PromptLibrary {
             .collect();
         own.sort_by_key(|p| p.name.to_lowercase());
         out.extend(own);
-        out.retain(|p| task.is_none_or(|t| p.task == t));
+        // The dictionary's prompt is listed with every preset, to be read and edited, but never
+        // offered for a task's documents.
+        out.retain(|p| task.is_none_or(|t| p.task == t && p.id != DICTIONARY_MERGES));
         out
     }
 
@@ -172,6 +177,7 @@ impl PromptLibrary {
         }
         defaults::DEFAULTS
             .iter()
+            .chain(std::iter::once(&dictionary::DICTIONARY))
             .find(|d| d.id == id)
             .map(builtin)
             .ok_or_else(|| PromptError::NotFound(id.to_string()))
@@ -190,6 +196,11 @@ impl PromptLibrary {
     pub fn save(&mut self, mut preset: Preset) -> Result<Preset, PromptError> {
         if preset.name.trim().is_empty() || preset.instructions.trim().is_empty() {
             return Err(PromptError::Incomplete);
+        }
+        // The dictionary reads its prompt's answer by these fields: only the words can change.
+        if preset.id == DICTIONARY_MERGES {
+            preset.task = Task::Analysis;
+            preset.schema = Some(kalamu_core::dictionary::proposal::schema());
         }
         // An analysis is its fields, a table of contents its entries' fields and the
         // instructions that combine its pages; other presets have neither.
@@ -471,7 +482,7 @@ fn builtin(d: &defaults::Default) -> Preset {
 }
 
 fn is_builtin_id(id: &str) -> bool {
-    defaults::DEFAULTS.iter().any(|d| d.id == id)
+    id == DICTIONARY_MERGES || defaults::DEFAULTS.iter().any(|d| d.id == id)
 }
 
 fn is_user_id(id: &str) -> bool {

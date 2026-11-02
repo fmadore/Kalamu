@@ -101,6 +101,7 @@ impl From<kalamu_core::DictionaryError> for AppError {
             DictionaryError::KeptApart => "dictionary.kept_apart",
             DictionaryError::TooFew => "dictionary.too_few",
             DictionaryError::SameEntry => "dictionary.same_entry",
+            DictionaryError::NothingToCompare => "dictionary.nothing_to_compare",
             DictionaryError::Export(_) => id::FILE,
             DictionaryError::Store(_) => "job.database",
         };

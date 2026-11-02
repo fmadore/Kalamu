@@ -10,13 +10,12 @@ This follows what [Live Translation](https://github.com/fmadore/Live-translation
 the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-walkthrough.md`,
 `store-updates.md` and `packaging-msix.md`); where Kalamu differs, the reason is given here.
 
-## Status (30 October 2026)
+## Status (2 November 2026)
 
-**Version 1.0.0 is built; not yet submitted.** The
-[v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0) carries
-`Kalamu_1.0.0.msixbundle`, the file to upload, with the installers, the two packages and the
-sample files. Pricing, properties and age ratings are being filled in Partner Center. What is
-left is listed in [Before the first submission](#before-the-first-submission).
+**Version 1.0.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)** (product ID `9MXT5555BZ1H`), passed
+certification and published from the `Kalamu_1.0.0.msixbundle` of the
+[v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0). The steps below stay
+as the record of the first submission and the procedure for updates.
 
 ## Product and certification approach
 

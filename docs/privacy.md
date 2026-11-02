@@ -1,7 +1,8 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 1 November 2026. Version 1.0.0, the first Microsoft Store release, was
-published under the policy of 30 October 2026, which did not list projects or workflows.
+**Effective date:** 2 November 2026. Version 1.0.0, the first Microsoft Store release, was
+published under the policy of 30 October 2026, which did not list projects or workflows; the
+policy of 1 November 2026 did not list the dictionary's proposed merges.
 
 ## What this app is
 
@@ -31,7 +32,11 @@ layer, or a text file's pages or passages) rather than the file. For a detailed 
 contents, each page goes to the provider chosen to read the pages, and the entries read on
 them, as text, to the provider chosen to combine them, which may be another provider. With a
 YouTube link, Gemini fetches the public video from YouTube itself; Kalamu does not download the
-video.
+video. When the user asks a model to **propose merges** in a project's dictionary, the app
+sends that provider the names and terms of the field chosen, as the analyses wrote them, with
+the titles of up to three of the project's documents naming each, and the pairs the user kept
+apart; not the documents themselves. This is sent as a job of its own, with an estimate first,
+only when the user asks.
 
 **In the cheaper mode** (economy), pieces are sent to the provider's batch service instead of
 one by one. The provider keeps the batch, its input and its answers for a time set by its own
@@ -61,7 +66,9 @@ new names, on the same computer only:
   their names and descriptions, their collections, the titles, tags, paths, sizes and
   fingerprints of their documents, which jobs read each document, and the results the user marked as
   preferred, and its **dictionary**: the entries the user made of the names its analyses
-  listed (labels, the forms they gather, review status) and the pairs kept apart. A project only
+  listed (labels, the forms they gather, review status), the pairs kept apart, each request for
+proposed merges (the job that asked and the forms each of its texts held), and the proposals
+turned down. The texts sent for proposals are kept with the frozen text below. A project only
   refers to files where they lie on the PC: it never copies, moves or sends them. Deleting a project, a collection or a document removes how it was organised; the
   files, the jobs and their results stay. It also keeps each **workflow run**: the workflow's
   steps and prompts as they were when it started, the paths, sizes and fingerprints of the

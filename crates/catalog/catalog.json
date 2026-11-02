@@ -40,7 +40,7 @@
       "provider": "gemini",
       "id": "gemini-3.8-flash",
       "name": "Gemini 3.8 Flash",
-      "description": "Fast and inexpensive; reads print and handwriting well. The default in zmo- and iwac-ai-pipelines.",
+      "description": "Fast and inexpensive; reads print and handwriting well.",
       "tasks": [
         "text_extraction",
         "audio_transcription",
@@ -558,7 +558,7 @@
       "provider": "anthropic",
       "id": "claude-sonnet-5-5",
       "name": "Claude Sonnet 5.5",
-      "description": "Faster and cheaper than Opus; used for Arabic books in iwac-ai-pipelines.",
+      "description": "Faster and cheaper than Opus.",
       "tasks": [
         "text_extraction",
         "analysis"

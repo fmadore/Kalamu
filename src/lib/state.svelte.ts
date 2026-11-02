@@ -52,7 +52,7 @@ export type View =
 			sources?: SourceFile[];
 			project?: FromProject;
 	  }
-	| { name: 'prompts' }
+	| { name: 'prompts'; presetId?: string }
 	| { name: 'settings' }
 	| { name: 'glossary'; term?: Term | 'formats' };
 

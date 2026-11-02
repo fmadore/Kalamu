@@ -140,7 +140,7 @@
 				project={app.view.project}
 			/>
 		{:else if app.view.name === 'prompts'}
-			<PromptsView />
+			<PromptsView presetId={app.view.presetId} />
 		{:else if app.view.name === 'settings'}
 			<SettingsView />
 		{:else if app.view.name === 'glossary'}
