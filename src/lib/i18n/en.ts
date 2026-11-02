@@ -58,7 +58,7 @@ export const en = {
 	useText: {
 		button: 'Use this text in a new job',
 		short: 'Use this text',
-		hint: 'Sends the text as you corrected it into a new job, without reading the files again. A later correction does not change what the new job read.',
+		hint: 'Sends the text, as you corrected it, to a new job without reading the files again. Corrections you make afterwards do not reach the new job.',
 		analyse: 'Analyse it',
 		analyseHint: 'People and places, a summary, its tone, or fields of your own.',
 		correct: 'Correct it',
@@ -95,7 +95,7 @@ export const en = {
 			`The text from step ${n} (${name}), as you corrected it`,
 		review: 'Let me check the results before going on',
 		reviewHint:
-			'Kalamu waits while you check and correct them in the review, then you press Continue.',
+			'Kalamu waits while you check and correct them in the review, and goes on when you press Continue.',
 		moveUp: (n: number) => `Move step ${n} up`,
 		moveDown: (n: number) => `Move step ${n} down`,
 		remove: (n: number) => `Remove step ${n}`,
@@ -125,7 +125,7 @@ export const en = {
 		costLater: (n: number) => `known once step ${n} has read the files`,
 		costUnknown: 'cost unknown',
 		cloudAfterOffline:
-			'A step reads on this computer, and a later one sends its text to a cloud provider. Remove that step if the material must stay on this computer.',
+			'A step reads on this computer, and a later one sends its text to a cloud provider. Remove the later step if the material must stay on this computer.',
 		start: 'Start',
 		fromProject: (name: string) => `Its jobs join the project “${name}”.`,
 		onText: (files: string) =>
@@ -183,7 +183,7 @@ export const en = {
 		reviewNotice:
 			'Review and correct its results, then continue: the next steps read the text as you leave it.',
 		attentionNotice:
-			'Some pieces could not be read. Retry them on the job’s page, or continue with what was read: the pieces left out are named in provenance.',
+			'Some pieces could not be read. Retry them on the job’s page, or continue with what was read: the pieces left out are named in the provenance.',
 		pausedNotice: 'Its job is not running. Open it to start or resume it.',
 		blockedNotice: 'The step it reads was cancelled, deleted or could not start.',
 		failedNotice: (reason: string) => `It could not start: ${reason}`,
@@ -242,7 +242,7 @@ export const en = {
 		agreement: (listed: number, read: number) =>
 			`${listed} of ${read === 1 ? '1 result' : `${read} results`}`,
 		agreementHint:
-			'Of the results that read these documents, how many listed it. Two models listing a name is agreement, not a second mention.',
+			'How many of the results that read these documents listed it. Two models listing a name is agreement, not a second mention.',
 		reviewed: 'Reviewed',
 		toReview: 'To review',
 		unseen: 'No longer found',
@@ -253,7 +253,7 @@ export const en = {
 			'Spelled alike once capitals, accents, punctuation and word order are set aside. Only you decide whether they are one.',
 		selectSimilar: 'Select them together',
 		apart: 'Kept apart from',
-		withdraw: (label: string) => `Withdraw keeping apart from ${label}`,
+		withdraw: (label: string) => `No longer keep apart from ${label}`,
 		selected: (n: number) => (n === 1 ? '1 selected' : `${n} selected`),
 		clearSelection: 'Clear',
 		selectAll: 'Select all shown',
@@ -277,7 +277,7 @@ export const en = {
 		noEvidence: 'No result lists it any longer.',
 		openReview: 'Open the review',
 		export: 'Export',
-		exported: 'The dictionary was written as JSON, with every form found as CSV beside it.',
+		exported: 'The dictionary was saved as JSON, with a CSV of every form found beside it.',
 		proposals: {
 			title: 'Proposed merges',
 			ask: 'Ask a model to propose merges',
@@ -289,7 +289,7 @@ export const en = {
 			sends: (provider: string) =>
 				`Sent to ${provider} with your key, as an analysis job of its own: its cost and answers are in Jobs. Nothing is merged until you accept it.`,
 			noKey: (provider: string) => `Add a key for ${provider} in Settings first.`,
-			economy: 'Economy mode: half price, answered within a day',
+			economy: 'Cheaper mode: half price, answered within a day',
 			cost: (usd: string) => `About ${usd}.`,
 			costUnknown: 'The cost could not be estimated.',
 			start: 'Send',
@@ -297,10 +297,12 @@ export const en = {
 			request: (status: string, answered: number, groups: number, open: number, date: string) =>
 				`Asked on ${date}: ${status.toLowerCase()}, ${answered} of ${groups === 1 ? '1 group' : `${groups} groups`} answered, ${open === 1 ? '1 proposal' : `${open} proposals`} open.`,
 			unknown: (n: number) =>
-				n === 1 ? '1 reference to no row, left out' : `${n} references to no row, left out`,
+				n === 1
+					? '1 reference to an unknown row, left out'
+					: `${n} references to unknown rows, left out`,
 			openJob: 'Open the job',
 			forget: 'Forget',
-			forgetHint: 'Forget this request and its proposals. The job stays among the jobs.',
+			forgetHint: 'Forget this request and its proposals. The job stays in Jobs.',
 			none: 'No proposal left: every one was merged, turned down or kept apart, or the model found none.',
 			certainty: {
 				certain: 'Certain',
@@ -340,7 +342,7 @@ export const en = {
 			'This project is archived. Nothing in it has changed; restore it to list it again.',
 		delete: 'Delete project',
 		deleteConfirm: (name: string) =>
-			`Delete the project “${name}”? Its collections and documents are removed from Kalamu. The files on your computer, the jobs and their results stay, and the jobs remain under Jobs.`,
+			`Delete the project “${name}”? Its collections and documents are removed from Kalamu. The files on your computer are kept, and the jobs and their results stay under Jobs.`,
 		allDocuments: 'All documents',
 		collections: 'Collections',
 		newCollection: 'New collection',
@@ -413,7 +415,7 @@ export const en = {
 		select: (title: string) => `Select ${title}`,
 		selected: (n: number) => (n === 1 ? '1 selected' : `${n} selected`),
 		clearSelection: 'Clear',
-		addTo: 'Add to collection…',
+		addTo: 'Add to a collection…',
 		removeFromCollection: 'Remove from this collection',
 		newJobWith: 'New job with these',
 		workflowWith: 'Run a workflow',
@@ -490,7 +492,7 @@ export const en = {
 				`${reviewed} of ${total}${corrected > 0 ? `, ${corrected} corrected` : ''}`,
 			sameContentTitle: 'Same content',
 			sameContentLede:
-				'These documents hold the same bytes. If they are one item, merge them: their results and collections come together, nothing is read again.',
+				'These documents have exactly the same content. If they are one item, merge them: their results and collections come together, and nothing is read again.',
 			merge: 'Merge into this one',
 			mergeConfirm: (other: string) =>
 				`Merge “${other}” into this document? Its results and collections move here and it is removed.`
@@ -608,7 +610,8 @@ export const en = {
 			one: 'One page at a time',
 			one_hint: 'Recommended. Each page is read on its own.',
 			several: 'Several pages together',
-			several_hint: 'The model sees an article that runs over the next page. Fewer calls.',
+			several_hint:
+				'The model sees an article whole when it continues on the next page. Fewer calls.',
 			whole: 'The whole document',
 			whole_hint: 'As many pages as the model can write in one answer.',
 			pages: 'Pages per call',
@@ -656,14 +659,14 @@ export const en = {
 			fast_hint: 'Each page is sent on its own, and results arrive as they are read.',
 			economy: 'Cheaper',
 			economy_hint:
-				'Every page is sent together to the provider’s batch service, at about half the price. Results can take up to a day; Kalamu can be closed in the meantime and collects them when it opens again.'
+				'All pages are sent together to the provider’s batch service, at about half the price. Results can take up to a day; Kalamu can be closed in the meantime and collects them when it opens again.'
 		},
 		paceNotBatched: (names: string) =>
 			`${names} has no batch service in Kalamu and still runs page by page, at its usual price.`,
 		start: 'Start',
 		startShortcut: '↵',
 		starting: 'Starting…',
-		name: 'Job name',
+		name: 'Name of the job',
 		inspecting: 'Reading files…',
 		linksTitle: 'Videos',
 		linkField: 'YouTube links',
@@ -683,7 +686,7 @@ export const en = {
 		saveIn: 'Save results in',
 		linkFolder:
 			'A video has no folder of its own, so its transcripts and provenance files need one.',
-		needFolder: 'Choose a folder for the results to start.',
+		needFolder: 'Choose a folder for the results before starting.',
 		estimateVideo:
 			'A video’s length is known only once Gemini has read it, so the cost shows in Jobs as it runs.'
 	},
@@ -693,12 +696,12 @@ export const en = {
 		low_resolution: (dpi: number, pages: string) =>
 			`Low resolution, about ${dpi} dpi (page ${pages}): small print and handwriting may be misread. Rescan at 300 dpi or more if you can.`,
 		has_text_layer: (n: number) =>
-			`This PDF already contains text on ${n} of the first pages. Extraction may not be needed, or the existing text can serve to compare.`,
+			`This PDF already contains text on ${n} of the first pages. Extraction may not be needed, or the existing text can serve for comparison.`,
 		unsupported_image: (detail: string) => detail,
 		large_file: 'This file is large; it will be split before sending.',
 		tool_missing:
 			'Reading this file needs FFmpeg, which was not found next to the app. Reinstall Kalamu, or convert the file to MP3.',
-		no_sound_track: 'This file has no sound track, so there is nothing to transcribe.',
+		no_sound_track: 'This file has no audio track, so there is nothing to transcribe.',
 		long_recording: (length: string, pieces: number) =>
 			`Long recording (${length}): it will be sent in ${pieces} pieces, cut at pauses. Speaker labels may differ from one piece to the next.`,
 		quiet_recording: (db: number) =>
@@ -719,11 +722,11 @@ export const en = {
 		analysisUnit:
 			'One file per document: a PDF of several pages is read as a whole and gets one set of answers. Put each article, letter or report in its own file. Several documents in one file get mixed answers, and one document spread over several files gets several partial ones.',
 		analysisInput:
-			"Scans and text both work: the model reads a PDF's pages itself. For faded print or handwriting, extracting and correcting the text first means every answer rests on a reading you have checked.",
+			'Scans and text both work: the model reads a PDF’s pages itself. For faded print or handwriting, extracting and correcting the text first means every answer rests on a reading you have checked.',
 		analysisFields:
 			'Describe each field as you would to a research assistant, give choices that do not overlap, and ask for a reason. Try it on a few documents first, and compare two models where the answer is a judgement, such as tone.',
 		contentsUnit:
-			'One file per issue, archival file or volume: it is read page by page, then the pages are combined. Photographs of one file should first be put together into a single PDF.',
+			'One file per issue, archival file or volume: it is read page by page, then the pages are combined. Put photographs of one archival file together into a single PDF first.',
 		contentsCheck:
 			'Try the first pages as a sample, then check the page ranges and the articles that run over several pages: the review shows each entry beside its first page.',
 		correctionInput:
@@ -813,12 +816,12 @@ export const en = {
 		openFolder: 'Show in folder',
 		openFile: 'Open in its app',
 		rename: 'Rename',
-		nameLabel: 'Job name',
+		nameLabel: 'Name of the job',
 		progress: (done: number, total: number) => `${done} of ${total} pieces`,
 		failed: (n: number) => (n === 1 ? '1 failed' : `${n} failed`),
 		truncated: (n: number) => `${n} cut off`,
 		truncatedNote:
-			"The model's answer stopped at its length limit, so the end of these pieces may be missing. The review marks them; check them against the source.",
+			'The model’s answer stopped at its length limit, so the end of these pieces may be missing. The review marks them; check them against the source.',
 		files: 'Files',
 		livePreview: 'Latest result',
 		outputs: 'Written',
@@ -828,12 +831,12 @@ export const en = {
 		pieces: 'Pieces',
 		cost: 'Spent',
 		interruptedNotice:
-			'This job stopped before it finished, when the app closed or a key stopped working. Finished pieces are saved: resuming continues where it left off, and nothing is sent or paid twice.',
+			'This job stopped before it finished, when the app closed or a key stopped working. Finished pieces are saved: resuming continues where it left off, and nothing is sent or paid for twice.',
 		pausedNotice: 'Paused. Resume to continue where it left off.',
 		waitingNotice: (n: number, due: string) =>
 			`${n === 1 ? '1 piece is' : `${n} pieces are`} with the provider’s batch service, answered by ${due} at the latest. Kalamu can be closed in the meantime: it collects the answers when it opens again.`,
 		heldNotice: (n: number) =>
-			`${n === 1 ? '1 piece is' : `${n} pieces are`} still with the provider’s batch service. Resume to collect the answers; nothing is sent or paid twice.`,
+			`${n === 1 ? '1 piece is' : `${n} pieces are`} still with the provider’s batch service. Resume to collect the answers; nothing is sent or paid for twice.`,
 		pace: 'Speed',
 		paceName: { fast: 'Faster', economy: 'Cheaper (batch)' },
 		empty_new: 'Start a job'
@@ -891,9 +894,9 @@ export const en = {
 			'Correct a page, or mark it as reviewed, to score the models against it. Until then, the view shows where they disagree.',
 		agreement: (pct: string) => `${pct} different`,
 		truncated:
-			"The model's answer stopped at its length limit here, so the end may be missing. Check it against the source, or correct it.",
+			'The model’s answer stopped at its length limit here, so the end may be missing. Check it against the source, or correct it.',
 		noPreview: 'No preview for this file type.',
-		notDone: 'Not processed yet.',
+		notDone: 'Not read yet.',
 		saved: 'Saved; the result files were updated.',
 		pieceReviewed: (label: string) => `${label}, reviewed`,
 		zoomOutShortcut: '−',
@@ -915,7 +918,7 @@ export const en = {
 		omitted: 'om.',
 		speakers: 'Speakers',
 		speakersHint:
-			"Give the model's labels real names. They replace the labels here and in every file; the model's own output is kept.",
+			'Give the model’s labels real names. They replace the labels here and in every file; the model’s own output is kept.',
 		speakerPlaceholder: 'Name',
 		speakerName: (label: string) => `Name for ${label}`,
 		saveNames: 'Save names',
@@ -941,7 +944,7 @@ export const en = {
 		ownReading: 'Your own reading',
 		ownReadingPlaceholder: 'Type what the source says',
 		apply: 'Apply',
-		readingKept: "The model's text is kept; your choice is stored as a correction.",
+		readingKept: 'The model’s text is kept; your choice is stored as a correction.',
 		modelText: (label: string) => `${label}, model output`,
 		models: 'Models',
 		legendDiffer: 'Models disagree',
@@ -996,7 +999,7 @@ export const en = {
 	},
 	prompts: {
 		title: 'Prompts',
-		hint: 'Each task ships with tested prompts. Edit one to adapt it; your version replaces it until you reset it. Variables: {languages}, {speakers}.',
+		hint: 'Each task comes with tested prompts. Edit one to adapt it; your version replaces it until you reset it. Variables: {languages}, {speakers}.',
 		builtin: 'Default',
 		modified: 'Edited',
 		own: 'Yours',
@@ -1017,7 +1020,7 @@ export const en = {
 		saved: 'Saved',
 		unsaved: 'Unsaved changes',
 		analysisHint:
-			'An analysis is a set of fields to fill in for each document. Start from one of these, then duplicate it to make your own.',
+			'An analysis is a set of fields to fill in for each document. Duplicate one of these to make your own.',
 		contentsHint:
 			'A table of contents has two steps: instructions for reading each page, and instructions for combining the pages. Every entry has a title and pages; the fields below add what you want for each.',
 		dictionary: 'Dictionary',
@@ -1083,7 +1086,7 @@ export const en = {
 		testOk: (n: number) => `Key works: ${n} models available`,
 		offlineTitle: 'Offline transcription',
 		offlineHint:
-			'Whisper runs on this computer: recordings never leave it, no key or account is needed, and it works without internet once a model is downloaded. It is slower than the cloud models and cannot label speakers. Large v3 Turbo suits most computers.',
+			'Whisper runs on this computer: recordings never leave it, no key or account is needed, and it works without an internet connection once a model is downloaded. It is slower than the cloud models and cannot label speakers. Large v3 Turbo suits most computers.',
 		offlineCpu: (missing: string) =>
 			`This processor lacks ${missing}, which offline transcription needs. Use a cloud model instead.`,
 		modelInstalled: 'Downloaded',
@@ -1097,7 +1100,8 @@ export const en = {
 			bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.round(bytes / 1e6)} MB`,
 		jobsTitle: 'Processing',
 		concurrency: 'Pages sent at the same time',
-		concurrencyHint: 'Applies from the next launch. Lower it if a provider reports rate limits.',
+		concurrencyHint:
+			'Takes effect the next time Kalamu opens. Lower it if a provider asks Kalamu to slow down.',
 		catalogTitle: 'Models',
 		catalogUpdated: (date: string) => `Model list from ${date}`,
 		catalogRefresh: 'Check for an updated model list',
@@ -1121,7 +1125,7 @@ export const en = {
 			models: 'Whisper models'
 		},
 		privacy:
-			'Nothing is sent to the developer: no files, keys, results or telemetry. AI output can contain fluent but wrong text; check a sample against the source.'
+			'Nothing is sent to the developer: no files, keys, results or usage data. AI output can contain fluent but wrong text; check a sample against the source.'
 	},
 	report: {
 		/** Store policy 11.16: a way to report what the models write. */
@@ -1146,7 +1150,7 @@ export const en = {
 		terms: {
 			ocr: {
 				word: 'OCR and HTR',
-				text: 'Optical character recognition (OCR) turns printed text in an image into text; handwritten text recognition (HTR) does the same for handwriting. Kalamu does both with AI models that read the whole page at once, rather than letter by letter as older OCR engines did. They cope better with columns, faded print and difficult hands, and can also go wrong in new ways (see hallucination).'
+				text: 'Optical character recognition (OCR) turns printed text in an image into text you can search and edit; handwritten text recognition (HTR) does the same for handwriting. Kalamu does both with AI models that read the whole page at once, rather than letter by letter as older OCR engines did. They cope better with columns, faded print and difficult hands, but can also go wrong in new ways (see hallucination).'
 			},
 			llm: {
 				word: 'LLM (large language model)',
@@ -1162,7 +1166,7 @@ export const en = {
 			},
 			prompt: {
 				word: 'Prompt',
-				text: 'The instructions sent to the model with each page, recording or text: what to transcribe, how to lay it out, which language, what to leave out. The presets are prompts written for common kinds of material; you can adapt them in Prompts. Dedicated OCR and speech models, such as Mistral OCR, Voxtral and Whisper, take no prompt.'
+				text: 'The instructions sent to the model with each page, recording or text: what to transcribe, how to lay it out, which language, what to leave out. Kalamu comes with prompts written for common kinds of material, which you can adapt in Prompts. Dedicated OCR and speech models, such as Mistral OCR, Voxtral and Whisper, take no prompt.'
 			},
 			setup: {
 				word: 'Set-up and comparison',
@@ -1170,7 +1174,7 @@ export const en = {
 			},
 			pipeline: {
 				word: 'Pipeline',
-				text: 'A job’s settings saved under a name: task, models, prompts, languages, formats and destination, so the next batch starts in one click. Exported, a pipeline carries its full prompts and a Markdown record to cite in a methods section or share with colleagues. Several pipelines run one after another make a workflow.'
+				text: 'A job’s settings saved under a name: task, models, prompts, languages, formats and destination, so the next job starts in one click. Exported, a pipeline carries its full prompts and a Markdown record to cite in a methods section or share with colleagues. Several pipelines run one after another make a workflow.'
 			},
 			workflow: {
 				word: 'Workflow',
@@ -1181,11 +1185,11 @@ export const en = {
 				text: 'The units in which models count text and providers bill it. A token is a piece of a word, about four characters of English on average; other languages and scripts often take more. Images and sound are counted in tokens too. The estimated cost before a job, and the cost after it, come from the provider’s price per million tokens read and written.'
 			},
 			reasoning: {
-				word: 'Reasoning effort',
-				text: 'How much some models work through a question before answering. The intermediate steps are billed as tokens written but not shown. More effort can help with hard judgements, such as an analysis or a difficult hand, and costs more and takes longer. Each model offers its own levels; New job suggests the lowest for reading pages and recordings, and you can choose another for each model under Thinking. The level used is recorded in the provenance.'
+				word: 'Thinking (reasoning effort)',
+				text: 'How much some models work through a question before answering. The intermediate steps are billed as tokens written but not shown. More effort can help with hard judgements, such as an analysis or a difficult hand, but costs more and takes longer. Each model offers its own levels; New job suggests the lowest for reading pages and recordings, and you can choose another for each model under Thinking. The level used is recorded in the provenance.'
 			},
 			economy: {
-				word: 'Economy mode (batches)',
+				word: 'Cheaper mode (batches)',
 				text: 'Sends a job to the provider’s batch service, which answers within a day at about half the price. Kalamu collects the answers when it next opens; the app does not need to stay open meanwhile.'
 			},
 			groundTruth: {
@@ -1219,7 +1223,7 @@ export const en = {
 			srt: 'Subtitles with their times, for video players and editing software.',
 			vtt: 'Subtitles for the web (WebVTT), as web video players use them.',
 			searchable_pdf:
-				'The original PDF with an invisible text layer, so it can be searched and its text copied. Only from models that report where text sits on the page, today Mistral OCR.',
+				'The original PDF with an invisible text layer, so it can be searched and its text copied. Only from models that report where text sits on the page: currently Mistral OCR.',
 			provenance: 'Always written beside the results: how they were made (see Provenance).'
 		}
 	},
@@ -1303,13 +1307,13 @@ export const en = {
 			'These come from different fields, people and places for example, and stay apart.',
 		'dictionary.kept_apart':
 			'You decided to keep some of these apart. Withdraw that decision first to merge them.',
-		'dictionary.too_few': 'Choose at least two lines.',
-		'dictionary.same_entry': 'These are in one entry. Take one out of it first.',
-		'dictionary.nothing_to_compare': 'This field has fewer than two lines to compare.',
+		'dictionary.too_few': 'Choose at least two rows.',
+		'dictionary.same_entry': 'These are already in one entry. Take one out of it first.',
+		'dictionary.nothing_to_compare': 'This field has fewer than two rows to compare.',
 		'job.not_found': 'This job no longer exists.',
 		'job.not_text': 'Only extracted text, transcripts and corrected text can be analysed this way.',
 		'job.nothing_read':
-			'Nothing has been read yet to analyse. Run the job, or wait for its first pages.',
+			'Nothing has been read yet, so there is nothing to analyse. Run the job, or wait for its first pages.',
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',
@@ -1319,8 +1323,9 @@ export const en = {
 			'This video is private, so it cannot be read. Only public videos can be transcribed.',
 		'source.not_found': 'YouTube has no video at this link: it may have been removed.',
 		'source.not_youtube':
-			'This is not a link to a YouTube video. Use a watch, youtu.be or Shorts link; playlists and channels cannot be read.',
-		'media.encrypted': 'This PDF is password-protected. Remove the password and add it again.',
+			'This is not a link to a YouTube video. Use a watch, youtu.be, Shorts or live link; playlists and channels cannot be read.',
+		'media.encrypted':
+			'This PDF is password-protected. Remove the password, then add the file again.',
 		'media.unsupported': 'This file type is not supported yet.',
 		'media.read': 'The file could not be read.',
 		'prompt.invalid': 'The prompt could not be saved: it needs a name and instructions.',
@@ -1338,21 +1343,21 @@ export const en = {
 			'This step’s task does not read text: let it read the files instead.',
 		'workflow.not_finished': 'This step has not finished yet.',
 		'prompt.invalid_file':
-			'This is not a Kalamu presets, pipeline or workflow file, or it comes from a newer version of Kalamu.',
+			'This is not a file of Kalamu prompts, a pipeline or a workflow, or it comes from a newer version of Kalamu.',
 		'provider.unknown': 'Unknown provider.',
 		'provider.missing_key': 'No API key is saved for this provider. Add one in Settings.',
 		'provider.unsupported': 'This model cannot do this task.',
 		'source.unsupported':
 			'One of the files cannot be read for this task. Remove it, or choose another task.',
 		'provider.auth': 'The provider rejected the API key. Check it in Settings.',
-		'provider.quota': 'The provider account has no credit or quota left.',
-		'provider.rate_limited': 'The provider asked to slow down; the page will be retried.',
+		'provider.quota': 'Your account with this provider has no credit or quota left.',
+		'provider.rate_limited': 'The provider asked Kalamu to slow down; the page will be retried.',
 		'provider.transient': 'The provider could not be reached.',
 		'provider.blocked': 'The provider refused to return text for this page.',
 		'provider.invalid_request': 'The provider rejected the request.',
 		'provider.other': 'The provider sent an unexpected response.',
 		'provider.invalid_answer':
-			"The model's answer did not fit the analysis's fields; it is asked again.",
+			'The model’s answer did not match the fields of the analysis; Kalamu asks it again.',
 		'provider.not_installed':
 			'This offline model has not been downloaded. Download it in Settings.',
 		'provider.interrupted': 'Stopped before the end; it will continue when the job resumes.',
@@ -1361,7 +1366,7 @@ export const en = {
 		'offline.in_use': 'A running job uses this model; pause it first.',
 		'offline.cancelled': 'Download cancelled.',
 		'offline.download':
-			'The model could not be downloaded. Check the internet connection and try again.',
+			'The model could not be downloaded. Check your internet connection and try again.',
 		'offline.integrity': 'The downloaded model was damaged and has been discarded. Try again.',
 		'offline.io': 'The model file could not be read or written.',
 		'output.write': 'The result files could not be written.',
