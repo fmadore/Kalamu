@@ -60,6 +60,7 @@ const settings: Settings = {
 	destination: { kind: 'beside_sources' },
 	export_options: EXPORT_OPTIONS,
 	theme: new URLSearchParams(location.search).get('theme') ?? 'system',
+	language: new URLSearchParams(location.search).get('lang') ?? 'system',
 	refresh_catalog: false,
 	favourite_languages: ['fr', 'ar'],
 	last_folder: null
@@ -413,7 +414,8 @@ export function installMock(): void {
 					version: '0.1.0',
 					data_dir: 'C:\\Users\\you\\AppData\\Local\\Kalamu Data',
 					logs_dir: '',
-					interrupted: []
+					interrupted: [],
+					system_languages: [...navigator.languages]
 				};
 			case 'get_settings':
 				return settings;

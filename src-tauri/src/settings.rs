@@ -19,6 +19,9 @@ pub struct Settings {
     pub export_options: ExportOptions,
     /// `system`, `light` or `dark`.
     pub theme: String,
+    /// The interface language: `system` (the first of the system's languages Kalamu has, else
+    /// English), `en` or `fr`.
+    pub language: String,
     /// Check the repository for a newer model catalogue at startup.
     pub refresh_catalog: bool,
     /// Languages starred in New job, listed first.
@@ -41,6 +44,7 @@ impl Default for Settings {
             destination: OutputDestination::BesideSources,
             export_options: ExportOptions::default(),
             theme: "system".into(),
+            language: "system".into(),
             refresh_catalog: true,
             favourite_languages: Vec::new(),
             last_folder: None,

@@ -8,7 +8,7 @@ disagree is highlighted, and corrections never overwrite the AI's text.
 *Kalamu* is Swahili for pen, from the Arabic *qalam*. The test releases up to 0.2 were called
 Scriptorium; a newer version moves their jobs, settings and keys over on its first start.
 
-**Windows 11 (x64 and ARM64) · macOS 13 and later (Apple Silicon) · English interface (French and German planned) · MIT licence**
+**Windows 11 (x64 and ARM64) · macOS 13 and later (Apple Silicon) · English and French interface (German planned) · MIT licence**
 
 <a href="https://apps.microsoft.com/detail/9MXT5555BZ1H?referrer=appbadge&mode=direct"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" height="48"></a>&nbsp;&nbsp;<a href="https://buymeacoffee.com/fmadore"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
 

@@ -35,6 +35,9 @@ kalamu-providers.workspace = true
 kalamu-store.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+# The system's languages, for the interface's default: the webview's own list is unreliable on
+# macOS, where WebKit reports only the languages the app bundle declares.
+sys-locale = "0.3.2"
 base64.workspace = true
 # `tray-icon`: the notification-area icon in `src/tray.rs`, so jobs run with the window closed.
 # `protocol-asset`: the review view's player streams recordings from disk; the scope starts

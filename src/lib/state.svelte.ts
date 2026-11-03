@@ -16,7 +16,7 @@ import type { StepState } from './bindings/StepState.js';
 import type { Task } from './bindings/Task.js';
 import type { Term } from './glossary.js';
 import type { Example } from './workflows.js';
-import { messages } from './i18n/index.js';
+import { messages, resolveLocale, setLocale, type Locale } from './i18n/index.js';
 import { api, notify, openUrl } from './tauri.js';
 
 /** A project New job was opened from: the job it starts is tied to the project's documents. */
@@ -88,11 +88,24 @@ export const app = $state({
 	/** Jobs of workflow steps that wait for the researcher: checked, or pages not read. */
 	waiting: {} as Record<string, { runId: string; step: number; state: StepState }>,
 	closeRequested: false,
-	toast: null as string | null
+	toast: null as string | null,
+	/** The interface language in use; the screens are drawn again when it changes. */
+	locale: 'en' as Locale
 });
 
 export function go(view: View): void {
 	app.view = view;
+}
+
+/** Puts the interface in the language the settings ask for, the tray menu included. */
+export function applyLanguage(): void {
+	const locale = resolveLocale(
+		app.settings?.language ?? 'system',
+		app.info?.system_languages ?? []
+	);
+	setLocale(locale);
+	app.locale = locale;
+	updateProgressDisplays();
 }
 
 export function hasKey(provider: string): boolean {
@@ -214,7 +227,7 @@ export function applyProgress(event: ProgressEvent): void {
 				const said = waits
 					? m.workflows.notify[waits.state === 'review' ? 'review' : 'attention']
 					: m.status[event.status];
-				void notify(m.app.name, `${job?.name ?? ''}: ${said}`);
+				void notify(m.app.name, `${job?.name ?? ''}${m.common.colon} ${said}`);
 			});
 			break;
 		}
@@ -235,7 +248,7 @@ function updateProgressDisplays(): void {
 			running: running.length > 0,
 			labels: {
 				status,
-				tooltip: `${m.app.name}: ${status}`,
+				tooltip: `${m.app.name}${m.common.colon} ${status}`,
 				open: m.tray.open,
 				pause: m.tray.pause,
 				quit: running.length > 0 ? m.tray.quitPausing : m.tray.quit

@@ -35,3 +35,23 @@ export function pieceNumber(piece: PieceRef, place: number, m: Messages): string
 	if (piece.kind !== 'page') return String(place + 1);
 	return piece.half ? m.review.pageHalfShort(piece.number, piece.half) : String(piece.number);
 }
+
+/**
+ * A list of pages as the engine writes it ("1, 3-5, 8 (left)"), with the halves named in the
+ * interface language ("8 (gauche)"), for reading and correcting.
+ */
+export function typedPages(pages: string, m: Messages): string {
+	return pages.replace(
+		/\((left|right)\)/g,
+		(_, half: 'left' | 'right') => `(${m.units.halves[half]})`
+	);
+}
+
+/** A list of pages as typed in the interface language, with the halves as the engine reads them. */
+export function enginePages(pages: string, m: Messages): string {
+	// The words are letters only, so they need no escaping in a pattern.
+	return (['left', 'right'] as const).reduce(
+		(text, half) => text.replace(new RegExp(m.units.halves[half], 'gi'), half),
+		pages
+	);
+}

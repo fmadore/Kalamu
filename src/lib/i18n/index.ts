@@ -1,14 +1,39 @@
-// The interface language. English only for now; a new language is a catalog typed `Messages`
-// added to CATALOGS, nothing else.
+// The interface language. A new language is a catalog typed `Messages` added to LOCALES and
+// CATALOGS, nothing else: Settings lists it, and the system's language picks it.
 
 import { en, type Messages } from './en.js';
+import { fr } from './fr.js';
 
-export const LOCALES = ['en'] as const;
+export const LOCALES = ['en', 'fr'] as const;
 export type Locale = (typeof LOCALES)[number];
 
-const CATALOGS: Record<Locale, Messages> = { en };
+const CATALOGS: Record<Locale, Messages> = { en, fr };
 
 let current: Locale = 'en';
+
+/** The interface language in use. */
+export function locale(): Locale {
+	return current;
+}
+
+/** Each language Kalamu offers, by its own name ("Français"), for the choice in Settings. */
+export function localeNames(): { locale: Locale; name: string }[] {
+	return LOCALES.map((l) => ({ locale: l, name: CATALOGS[l].locale.name }));
+}
+
+/**
+ * The language the setting asks for: `en` or `fr` as chosen, or for `system` the first of the
+ * system's languages (`fr-CA`, `de-DE`…, in order of preference) that Kalamu has, else English.
+ */
+export function resolveLocale(setting: string, system: readonly string[]): Locale {
+	if ((LOCALES as readonly string[]).includes(setting)) return setting as Locale;
+	for (const tag of system) {
+		const base = tag.toLowerCase().split(/[-_]/)[0];
+		const found = LOCALES.find((l) => l === base);
+		if (found) return found;
+	}
+	return 'en';
+}
 
 /** The catalog for the interface language. */
 export function messages(): Messages {
@@ -48,6 +73,17 @@ export function languageName(code: string, fallback?: string): string {
 	return fallback ?? CATALOGS[current].languageNames[code] ?? code;
 }
 
+/**
+ * A default prompt's name and description in the interface language. The defaults are written
+ * in English by the core; the user's own prompts, and defaults they edited, stay as written.
+ */
+export function localisePreset<
+	P extends { id: string; name: string; description: string; builtin: boolean; modified: boolean }
+>(preset: P): P {
+	const text = CATALOGS[current].presets[preset.id];
+	return text && preset.builtin && !preset.modified ? { ...preset, ...text } : preset;
+}
+
 export function formatUsd(value: number): string {
 	const digits = value < 0.1 ? 3 : 2;
 	return new Intl.NumberFormat(CATALOGS[current].locale.tag, {
@@ -69,6 +105,14 @@ export function formatDate(ms: number): string {
 	return new Date(ms).toLocaleDateString(CATALOGS[current].locale.tag, { dateStyle: 'medium' });
 }
 
+/** A calendar day written `2026-11-02` (the model catalogue's date), as the interface language
+ * writes it; anything else as it is. Read as a local day, so no time zone moves it. */
+export function formatDay(iso: string): string {
+	const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+	if (!day) return iso;
+	return formatDate(new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])).getTime());
+}
+
 export function formatPercent(value: number): string {
 	return new Intl.NumberFormat(CATALOGS[current].locale.tag, {
 		style: 'percent',
@@ -76,5 +120,5 @@ export function formatPercent(value: number): string {
 	}).format(value);
 }
 
-export { en };
+export { en, fr };
 export type { Messages };

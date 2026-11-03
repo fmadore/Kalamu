@@ -56,7 +56,7 @@
 	{#if paged}
 		<label class="inline">
 			<input type="checkbox" bind:checked={sample} />
-			{m.newJob.sampleTitle}:
+			{m.newJob.sampleTitle}{m.common.colon}
 			<input
 				type="number"
 				min="1"
