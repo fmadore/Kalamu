@@ -102,7 +102,7 @@ function items(excluded: ResultKey[]): QueueItem[] {
 				index: 0,
 				signals: [
 					{ kind: 'disagrees', with: [other], words: 0, fields: ['People', 'Tone'] },
-					{ kind: 'stale', gone: false },
+					{ kind: 'stale', gone: false, unit: false },
 					{ kind: 'not_reviewed' }
 				]
 			})

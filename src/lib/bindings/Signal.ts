@@ -3,4 +3,4 @@
 /**
  * Why a piece, or a result as a whole, is in the queue.
  */
-export type Signal = { "kind": "failed", error: string | null, } | { "kind": "not_read" } | { "kind": "truncated" } | { "kind": "disagrees", with: Array<string>, words: number, fields: Array<string>, } | { "kind": "stale", gone: boolean, } | { "kind": "not_reviewed" };
+export type Signal = { "kind": "failed", error: string | null, } | { "kind": "not_read" } | { "kind": "truncated" } | { "kind": "disagrees", with: Array<string>, words: number, fields: Array<string>, } | { "kind": "stale", gone: boolean, unit: boolean, } | { "kind": "not_reviewed" };

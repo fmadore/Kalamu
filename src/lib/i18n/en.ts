@@ -417,6 +417,8 @@ export const en = {
 				`Answers differently from ${labels}: ${fields}`,
 			stale: 'Read a text that has been corrected since',
 			gone: 'Read a text whose job has since been deleted',
+			unitChanged: 'Read an item whose pages have changed since',
+			unitGone: 'Read an item that has since been deleted',
 			notReviewed: 'Not reviewed yet'
 		},
 		wholeResult: 'The whole result',

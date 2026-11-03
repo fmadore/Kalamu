@@ -77,7 +77,10 @@ describe('the review queue', () => {
 		expect(
 			reasonText({ kind: 'disagrees', with: ['pro', 'mistral'], words: 0, fields: ['People'] }, en)
 		).toBe('Answers differently from pro and mistral: People');
-		expect(reasonText({ kind: 'stale', gone: true }, en)).toContain('deleted');
+		expect(reasonText({ kind: 'stale', gone: true, unit: false }, en)).toContain('deleted');
+		expect(reasonText({ kind: 'stale', gone: false, unit: true }, en)).toBe(
+			'Read an item whose pages have changed since'
+		);
 	});
 
 	it('names the place and keeps items apart by result and piece', () => {

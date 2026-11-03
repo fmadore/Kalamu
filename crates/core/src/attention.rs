@@ -59,8 +59,10 @@ pub enum Signal {
         fields: Vec<String>,
     },
     /// Read from a text frozen from an earlier result that has been corrected or read further
-    /// since (`gone` when that result's job was deleted): this answer read an earlier version.
-    Stale { gone: bool },
+    /// since (`gone` when that result's job was deleted), or, with `unit`, from a document
+    /// unit's pages since changed (`gone` when the unit was deleted): this answer read an
+    /// earlier version.
+    Stale { gone: bool, unit: bool },
     /// Read, and not yet marked as reviewed by the researcher.
     NotReviewed,
 }

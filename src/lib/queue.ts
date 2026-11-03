@@ -59,6 +59,7 @@ export function reasonText(signal: Signal, m: Messages, wholeResult = false): st
 				? d.disagreesFields(listNames(signal.with), listNames(signal.fields))
 				: d.disagreesWords(listNames(signal.with), signal.words);
 		case 'stale':
+			if (signal.unit) return signal.gone ? d.unitGone : d.unitChanged;
 			return signal.gone ? d.gone : d.stale;
 		case 'not_reviewed':
 			return d.notReviewed;

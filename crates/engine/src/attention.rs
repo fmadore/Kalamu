@@ -32,7 +32,8 @@ pub(crate) struct Loaded {
     /// The stored answers of its finished pieces, by fingerprint.
     pub results: HashMap<String, StoredResult>,
     /// Sources read from a frozen text, and how that text stands.
-    pub freshness: HashMap<SourceId, Freshness>,
+    /// With whether the input was a document unit's pages.
+    pub freshness: HashMap<SourceId, (Freshness, bool)>,
 }
 
 impl Loaded {
@@ -106,7 +107,7 @@ impl Engine {
         let freshness = if job.sources.iter().any(|s| s.derived_from.is_some()) {
             self.derived_states(id)?
                 .into_iter()
-                .map(|d| (d.source_id, d.freshness))
+                .map(|d| (d.source_id, (d.freshness, d.from.unit.is_some())))
                 .collect()
         } else {
             HashMap::new()
@@ -169,9 +170,9 @@ pub(crate) fn assess(loaded: &Loaded, target: &ReviewTarget, queue: &mut ReviewQ
     }
 
     let stale = match loaded.freshness.get(&target.source_id) {
-        Some(Freshness::Changed) => Some(Signal::Stale { gone: false }),
-        Some(Freshness::Gone) => Some(Signal::Stale { gone: true }),
-        Some(Freshness::Current) | None => None,
+        Some(&(Freshness::Changed, unit)) => Some(Signal::Stale { gone: false, unit }),
+        Some(&(Freshness::Gone, unit)) => Some(Signal::Stale { gone: true, unit }),
+        Some((Freshness::Current, _)) | None => None,
     };
     // A result read in one piece carries its changed input itself; one of several pieces says
     // so once, for the whole.

@@ -37,7 +37,8 @@ list and leaves the thresholds out.
   analyses and tables of contents by the list, choice and entry fields whose values differ once
   capitals and spaces are set aside, as the analysis review's sigla match them; prose fields
   are not compared, since two models never word a summary alike), when it is `stale` (it read a
-  frozen text that changed, or whose job was deleted), and while it is `not_reviewed`. A table
+  frozen text that changed, or whose job was deleted, or the pages of a document unit (#50)
+  since given other pages or deleted, as `Engine::derived_states` already says), and while it is `not_reviewed`. A table
   of contents is reviewed as its combined entries, so its pages share that review.
 - **Only the researcher resolves an answer.** Marking a piece reviewed resolves its item, which
   stays listed (as reviewed) for as long as its reasons hold; nothing else does. Agreement
@@ -74,7 +75,8 @@ list and leaves the thresholds out.
 - **Later increments of #85**: items kept aside (deferred) with the researcher's note; a
   reproducible random sample of unflagged pages; a review manifest export with source and
   result identities, reasons and decisions; invalid evidence anchors once analyses quote their
-  text; optional field rules (required values, vocabulary, dates) recorded with their version;
-  and document units from #50 as items of their own once that lands.
+  text; and optional field rules (required values, vocabulary, dates) recorded with their
+  version. Results read from document units (#50) are already in the list as any result,
+  their changed pages included; units not yet read are not listed.
 - The review still leads with a comparison's first set-up; an item about the second opens the
   same review, where its own page is marked reviewed from the sigla key.

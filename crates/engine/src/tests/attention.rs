@@ -207,7 +207,13 @@ async fn an_answer_read_from_a_text_corrected_since_is_stale_even_once_reviewed(
         .unwrap_or_else(|e| panic!("{e}"));
     let q = queue(&f, 1, targets.clone());
     assert_eq!(q.items.len(), 1);
-    assert_eq!(q.items[0].signals, vec![Signal::Stale { gone: false }]);
+    assert_eq!(
+        q.items[0].signals,
+        vec![Signal::Stale {
+            gone: false,
+            unit: false
+        }]
+    );
     assert!(q.items[0].reviewed && q.items[0].open);
     assert_eq!((q.counts.stale, q.counts.unresolved), (1, 1));
 
@@ -215,7 +221,13 @@ async fn an_answer_read_from_a_text_corrected_since_is_stale_even_once_reviewed(
         .delete_job(extraction.id)
         .unwrap_or_else(|e| panic!("{e}"));
     let q = queue(&f, 1, targets);
-    assert_eq!(q.items[0].signals, vec![Signal::Stale { gone: true }]);
+    assert_eq!(
+        q.items[0].signals,
+        vec![Signal::Stale {
+            gone: true,
+            unit: false
+        }]
+    );
 }
 
 #[tokio::test]

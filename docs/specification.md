@@ -438,7 +438,8 @@ analysed, compared. A **project** keeps it together
   Pieces that failed or are not read yet come first, apart from the answers; an answer is
   listed when it was cut off at the model's limit, when another set-up of its job read it
   differently (words in a text; names, choices or entries in an analysis or a table of
-  contents, never prose), when it read a text corrected since, and while it is not reviewed.
+  contents, never prose), when it read a text corrected since (or an item of a table of contents since given other
+  pages), and while it is not reviewed.
   Where the researcher preferred a result, only it is read; elsewhere every result is, listed
   so that some can be set aside, and a document read by several models is still one document.
   Each item names its document, page, set-up and stored answer, and opens the review at its

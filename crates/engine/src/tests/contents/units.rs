@@ -273,6 +273,31 @@ async fn a_units_pages_are_read_on_their_own_and_a_change_marks_the_job() {
         .save_unit(edit(&job, Some(fatwa.id), "Fatwa", "3"))
         .unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(state(&t), crate::Freshness::Changed);
+    // The list of what to check says so, for the item's pages, not for a corrected text.
+    let queue = t
+        .engine
+        .review_queue(&kalamu_core::ReviewScope {
+            documents: 1,
+            targets: vec![kalamu_core::ReviewTarget {
+                document_id: kalamu_core::DocumentId::new(),
+                document: "Fatwa".into(),
+                job_id: later.id,
+                source_id: later.sources[0].id,
+                setup_id: later.setups[0].id,
+                preferred: false,
+            }],
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(
+        queue.items.iter().any(|i| i.piece.is_none()
+            && i.signals
+                == vec![kalamu_core::Signal::Stale {
+                    gone: false,
+                    unit: true
+                }]),
+        "{:?}",
+        queue.items
+    );
     assert!(
         std::path::Path::new(&frozen.path).is_file(),
         "the copy stays"
