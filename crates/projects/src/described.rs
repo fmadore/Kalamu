@@ -14,6 +14,15 @@ use ts_rs::TS;
 
 use crate::Projects;
 
+/// A tag renamed: how many documents changed, and the name they now carry, spaces tidied or
+/// taken from a tag in use, so the interface goes on filtering on it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TagRenamed {
+    pub changed: u32,
+    pub name: String,
+}
+
 /// One part of a document's description as it stands, and where it comes from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -168,13 +177,13 @@ impl Projects {
 
     /// Renames a tag on every document of the project that carries it, whatever its capitals.
     /// A new name that differs only in capitals respells it; one the project already uses, in
-    /// whatever capitals, merges the two. Returns how many documents changed.
+    /// whatever capitals, merges the two.
     pub fn rename_tag(
         &self,
         project: ProjectId,
         from: &str,
         to: &str,
-    ) -> Result<u32, ProjectError> {
+    ) -> Result<TagRenamed, ProjectError> {
         let to = tag_name(to).ok_or(ProjectError::NoTag)?;
         let documents = self.store.documents(project)?;
         let spelled = if same_tag(from, &to) {
@@ -199,7 +208,10 @@ impl Projects {
         if changed > 0 {
             self.touch(project)?;
         }
-        Ok(changed)
+        Ok(TagRenamed {
+            changed,
+            name: spelled,
+        })
     }
 
     pub(crate) fn listed(
@@ -283,7 +295,7 @@ impl Projects {
         collection: Option<CollectionId>,
     ) -> Result<String, ProjectError> {
         let listed = self.listed(project, collection)?;
-        let mut out = csv::Writer::from_writer(Vec::new());
+        let mut out = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
         let mut head = vec![
             "document_id".to_string(),
             "title".into(),

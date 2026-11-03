@@ -221,6 +221,9 @@ pub enum SearchError {
     Stopped,
     #[error(transparent)]
     Store(#[from] StoreError),
+    /// The job database, as opposed to the search's own index, could not be read.
+    #[error("The job database could not be read: {0}")]
+    Jobs(StoreError),
 }
 
 impl SearchError {
@@ -231,6 +234,7 @@ impl SearchError {
             Self::TooShort => "search.too_short",
             Self::Stopped => "search.stopped",
             Self::Store(_) => "search.index",
+            Self::Jobs(_) => "job.database",
         }
     }
 }

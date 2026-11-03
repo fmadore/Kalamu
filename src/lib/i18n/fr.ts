@@ -724,6 +724,7 @@ export const fr: Messages = {
 		},
 		profiles: {
 			title: 'Exporter les descriptions',
+			fileName: (project: string) => `Descriptions ${project}`,
 			lede: 'L’export propre à Kalamu donne chaque élément de chaque description en indiquant d’où il vient. Un profil écrit les colonnes que vous choisissez, dans votre ordre et sous vos intitulés, pour un tableur ou l’import d’un autre outil. Il sert à tous les projets et ne garde aucune valeur de celui-ci.',
 			columns: 'Colonnes',
 			kalamu: 'Tous les éléments, en indiquant d’où ils viennent',
@@ -1559,8 +1560,8 @@ export const fr: Messages = {
 	},
 	report: {
 		link: 'Signaler un problème',
-		review: 'Signaler un problème avec ce résultat',
-		note: 'Un texte inapproprié, nuisible ou inventé, ou un bogue : signalez-le sur GitHub. Le formulaire s’ouvre dans votre navigateur ; Kalamu n’envoie rien, ne partagez donc que ce qui peut être rendu public.'
+		review: 'Signaler un problème',
+		note: 'Un bogue, ou une idée pour améliorer Kalamu : dites-le-nous sur GitHub. Si un modèle écrit un texte choquant ou nuisible, la même page permet de le signaler, comme le Microsoft Store le demande aux applications. Elle s’ouvre dans votre navigateur ; Kalamu n’envoie rien, ne partagez donc que ce qui peut être rendu public.'
 	},
 	glossary: {
 		title: 'Glossaire',
@@ -1696,7 +1697,8 @@ export const fr: Messages = {
 		}
 	},
 	keys: {
-		ctrl: 'Ctrl'
+		ctrl: 'Ctrl',
+		shift: 'Maj'
 	},
 	tray: {
 		open: 'Ouvrir Kalamu',
@@ -1714,6 +1716,8 @@ export const fr: Messages = {
 		loading: 'Chargement…',
 		colon: ' :',
 		semicolon: ' ; ',
+		quoted: (text: string) => `« ${text} »`,
+		sources: 'Sources',
 		unknown: 'Inconnu',
 		preview: 'préversion',
 		retiring: 'bientôt retiré',
@@ -1748,6 +1752,12 @@ export const fr: Messages = {
 		'unit.already_made': 'Les pièces ont déjà été créées à partir de ces entrées.',
 		'unit.no_pages': 'Indiquez d’abord les pages de cette pièce.',
 		'unit.not_pdf': 'Pour l’instant, seules les pièces d’un PDF peuvent être lues séparément.',
+		'unit.not_joinable':
+			'Seules deux pièces différentes de la même table des matières peuvent être réunies.',
+		'unit.other_result':
+			'Cette pièce appartient à une autre table des matières. Ouvrez-la depuis celle-ci.',
+		'unit.bad_split': 'Coupez une pièce entre deux de ses pages.',
+		'unit.none_chosen': 'Choisissez au moins une pièce.',
 		'job.not_found': 'Ce traitement n’existe plus.',
 		'job.not_text':
 			'Seuls le texte extrait, les transcriptions et le texte corrigé peuvent être analysés de cette façon.',

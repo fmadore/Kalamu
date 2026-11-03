@@ -17,12 +17,24 @@ CREATE TABLE units (
 CREATE INDEX units_by_job ON units(job_id);
 "#;
 
+const PUT: &str = "INSERT INTO units (id, job_id, position, data) VALUES (?1, ?2, ?3, ?4)
+     ON CONFLICT(id) DO UPDATE SET position = excluded.position, data = excluded.data";
+
 pub(crate) fn put(store: &SqliteStore, unit: &DocumentUnit) -> Result<(), StoreError> {
-    store
-        .conn()
-        .execute(
-            "INSERT INTO units (id, job_id, position, data) VALUES (?1, ?2, ?3, ?4)
-             ON CONFLICT(id) DO UPDATE SET position = excluded.position, data = excluded.data",
+    replace(store, std::slice::from_ref(unit), &[])
+}
+
+/// Puts and deletes in one transaction.
+pub(crate) fn replace(
+    store: &SqliteStore,
+    put: &[DocumentUnit],
+    delete: &[UnitId],
+) -> Result<(), StoreError> {
+    let mut conn = store.conn();
+    let tx = conn.transaction().map_err(db)?;
+    for unit in put {
+        tx.execute(
+            PUT,
             params![
                 unit.id.to_string(),
                 unit.job_id.to_string(),
@@ -31,7 +43,12 @@ pub(crate) fn put(store: &SqliteStore, unit: &DocumentUnit) -> Result<(), StoreE
             ],
         )
         .map_err(db)?;
-    Ok(())
+    }
+    for id in delete {
+        tx.execute("DELETE FROM units WHERE id = ?1", [id.to_string()])
+            .map_err(db)?;
+    }
+    tx.commit().map_err(db)
 }
 
 pub(crate) fn get(store: &SqliteStore, id: UnitId) -> Result<DocumentUnit, StoreError> {
@@ -63,9 +80,5 @@ pub(crate) fn of_job(store: &SqliteStore, job: JobId) -> Result<Vec<DocumentUnit
 }
 
 pub(crate) fn delete(store: &SqliteStore, id: UnitId) -> Result<(), StoreError> {
-    store
-        .conn()
-        .execute("DELETE FROM units WHERE id = ?1", [id.to_string()])
-        .map_err(db)?;
-    Ok(())
+    replace(store, &[], &[id])
 }

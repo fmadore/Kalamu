@@ -106,7 +106,29 @@ impl OpenAi {
         body
     }
 
+    /// What a response reports consuming.
+    fn usage(response: &Value) -> Usage {
+        let count = |key: &str| {
+            response
+                .pointer(&format!("/usage/{key}"))
+                .and_then(Value::as_u64)
+                .unwrap_or(0)
+        };
+        Usage {
+            input_tokens: count("input_tokens"),
+            output_tokens: count("output_tokens"),
+            cached_input_tokens: count("input_tokens_details/cached_tokens"),
+            cache_write_tokens: count("input_tokens_details/cache_write_tokens"),
+            ..Usage::default()
+        }
+    }
+
     fn parse_extraction(response: &Value) -> Result<ProcessOutput, ProviderError> {
+        // A refusal carries what the response says was consumed, so the job's cost counts it.
+        let blocked = |reason: String| ProviderError::Blocked {
+            reason,
+            usage: Self::usage(response).reported(),
+        };
         let mut truncated = false;
         if response.get("status").and_then(Value::as_str) == Some("incomplete") {
             let reason = response
@@ -115,9 +137,7 @@ impl OpenAi {
                 .unwrap_or("unknown");
             truncated = reason == "max_output_tokens";
             if reason == "content_filter" {
-                return Err(ProviderError::Blocked(
-                    "OpenAI's content filter stopped this page".into(),
-                ));
+                return Err(blocked("OpenAI's content filter stopped this page".into()));
             }
         }
         let mut text = String::new();
@@ -153,27 +173,15 @@ impl OpenAi {
         }
         if text.is_empty() {
             return Err(match refusal {
-                Some(r) => ProviderError::Blocked(r),
+                Some(r) => blocked(r),
                 None => ProviderError::Other("OpenAI returned no text".into()),
             });
         }
-        let count = |key: &str| {
-            response
-                .pointer(&format!("/usage/{key}"))
-                .and_then(Value::as_u64)
-                .unwrap_or(0)
-        };
         Ok(ProcessOutput {
             text,
             segments: Vec::new(),
             detected_language: None,
-            usage: Usage {
-                input_tokens: count("input_tokens"),
-                output_tokens: count("output_tokens"),
-                cached_input_tokens: count("input_tokens_details/cached_tokens"),
-                cache_write_tokens: count("input_tokens_details/cache_write_tokens"),
-                ..Usage::default()
-            },
+            usage: Self::usage(response),
             model_version: response
                 .get("model")
                 .and_then(Value::as_str)

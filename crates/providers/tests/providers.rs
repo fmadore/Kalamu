@@ -168,7 +168,8 @@ async fn gemini_rate_limits_and_recitation_are_reported() {
     Mock::given(method("POST"))
         .and(path("/models/recites:generateContent"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "candidates": [{ "finishReason": "RECITATION", "content": { "parts": [] } }]
+            "candidates": [{ "finishReason": "RECITATION", "content": { "parts": [] } }],
+            "usageMetadata": { "promptTokenCount": 1290, "candidatesTokenCount": 240 }
         })))
         .mount(&server)
         .await;
@@ -191,7 +192,13 @@ async fn gemini_rate_limits_and_recitation_are_reported() {
             request(Task::TextExtraction, "recites", &input, &langs, &opts),
         )
         .await;
-    assert!(matches!(recites, Err(ProviderError::Blocked(_))));
+    // Stopped after it wrote: what the response counted is billed, for the job's cost.
+    let billed = recites.as_ref().err().and_then(ProviderError::billed);
+    assert_eq!(
+        billed.map(|u| (u.input_tokens, u.output_tokens)),
+        Some((1290, 240)),
+        "{recites:?}"
+    );
     // A refusal Gemini gives no reason for says so, and what to do instead.
     let withheld = gemini
         .process(
@@ -199,10 +206,13 @@ async fn gemini_rate_limits_and_recitation_are_reported() {
             request(Task::TextExtraction, "withholds", &input, &langs, &opts),
         )
         .await;
-    assert!(matches!(
-        withheld,
-        Err(ProviderError::Blocked(m)) if m.contains("no reason (OTHER)") && m.contains("another model")
-    ));
+    assert!(
+        matches!(
+            withheld,
+            Err(ProviderError::Blocked { reason: m, usage: None }) if m.contains("no reason (OTHER)") && m.contains("another model")
+        ),
+        "nothing counted, nothing billed"
+    );
 }
 
 fn youtube() -> PreparedInput {
@@ -347,7 +357,8 @@ async fn claude_refusals_and_credit_errors_are_told_apart() {
         .and(body_partial_json(serde_json::json!({ "model": "refuses" })))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "type": "message", "model": "refuses", "content": [],
-            "stop_reason": "refusal", "stop_details": { "type": "refusal", "category": null }
+            "stop_reason": "refusal", "stop_details": { "type": "refusal", "category": null },
+            "usage": { "input_tokens": 1500, "output_tokens": 12 }
         })))
         .mount(&server)
         .await;
@@ -369,7 +380,13 @@ async fn claude_refusals_and_credit_errors_are_told_apart() {
             request(Task::TextExtraction, "refuses", &input, &langs, &opts),
         )
         .await;
-    assert!(matches!(refused, Err(ProviderError::Blocked(_))));
+    assert!(
+        matches!(
+            &refused,
+            Err(ProviderError::Blocked { usage: Some(u), .. }) if u.output_tokens == 12
+        ),
+        "Claude bills a refusal's tokens: {refused:?}"
+    );
     let broke = claude
         .process(
             &key,
@@ -764,6 +781,23 @@ async fn gemini_transcribe_sends_no_prompt_and_reads_speakers_and_timings() {
         Some(1)
     );
     assert!(sent.pointer("/generationConfig/thinkingConfig").is_none());
+    // A pipeline's record states the set-up's options apart, so it claims none of the
+    // settings they decide; the result's provenance gives the ones sent.
+    let tuning = Tuning::default();
+    assert!(
+        gemini
+            .request_settings(Task::AudioTranscription, "gemini-3.5-transcribe", &tuning)
+            .is_empty()
+    );
+    let named = request(
+        Task::AudioTranscription,
+        "gemini-3.5-transcribe",
+        &input,
+        &langs,
+        &opts,
+    );
+    let sent_settings = format!("{:?}", gemini.sent_settings(&named, false));
+    assert!(sent_settings.contains("diarization"), "{sent_settings}");
 
     // Recorded from the live API on 3 November 2026, trimmed to three parts.
     assert_eq!(

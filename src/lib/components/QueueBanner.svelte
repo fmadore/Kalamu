@@ -51,7 +51,7 @@
 		<Icon name="flag" size={16} />
 		<p>
 			<strong class="num">{q.banner.position(trail.at + 1, trail.items.length)}</strong>
-			<span>{item.document}, {placeOf(item, m)}, {item.setup_label}:</span>
+			<span>{item.document}, {placeOf(item, m)}, {item.setup_label}{m.common.colon}</span>
 			{item.signals.map((s) => reasonText(s, m, item.piece === null)).join(m.common.semicolon)}
 		</p>
 		<span class="buttons">

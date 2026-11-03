@@ -5,12 +5,10 @@
 export const SUPPORT_URL = 'https://buymeacoffee.com/fmadore';
 
 /**
- * Reporting a problem (Microsoft Store policy 11.16): the GitHub issue form for AI output, opened
- * in the browser with the app's version filled in. Kalamu sends nothing itself.
+ * Reporting a problem: GitHub's choice of forms, a bug or feedback first, and the form for
+ * harmful output Microsoft Store policy 11.16 asks for, opened in the browser. Kalamu sends
+ * nothing itself.
  */
-export function reportUrl(version: string | undefined): string {
-	const url = new URL('https://github.com/fmadore/Kalamu/issues/new');
-	url.searchParams.set('template', 'output.yml');
-	if (version) url.searchParams.set('version', version);
-	return url.toString();
+export function reportUrl(): string {
+	return 'https://github.com/fmadore/Kalamu/issues/new/choose';
 }

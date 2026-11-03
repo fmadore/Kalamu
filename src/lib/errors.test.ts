@@ -9,6 +9,10 @@ function rustIds(): string[] {
 		'crates/engine/src/lib.rs',
 		'crates/core/src/workflow.rs',
 		'crates/core/src/provider.rs',
+		'crates/core/src/units.rs',
+		'crates/core/src/profile.rs',
+		'crates/core/src/dictionary.rs',
+		'crates/core/src/project.rs',
 		'crates/offline/src/lib.rs',
 		'crates/search/src/lib.rs',
 		'src-tauri/src/errors.rs',
@@ -19,7 +23,7 @@ function rustIds(): string[] {
 		for (const match of source.matchAll(/"([a-z]+\.[a-z_]+)"/g)) {
 			const id = match[1];
 			if (
-				/^(job|media|prompt|provider|output|keys|settings|catalog|file|app|offline|source|project|workflow|search)\./.test(
+				/^(job|media|prompt|provider|output|keys|settings|catalog|file|app|offline|source|project|workflow|search|unit|profile|dictionary)\./.test(
 					id
 				)
 			) {

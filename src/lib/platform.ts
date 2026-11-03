@@ -18,6 +18,11 @@ export function shortcut(key: string, mac = isMac): string {
 	return mac ? `⌘${key}` : `${messages().keys.ctrl} ${key}`;
 }
 
+/** A shortcut with Shift, as each system writes it: "⇧F" on a Mac, "Shift F" ("Maj F") elsewhere. */
+export function shifted(key: string, mac = isMac): string {
+	return mac ? `⇧${key}` : `${messages().keys.shift} ${key}`;
+}
+
 /** What this system calls its keychain and the place the tray icon sits. */
 export function osNames(mac = isMac) {
 	return messages().os[mac ? 'macos' : 'windows'];

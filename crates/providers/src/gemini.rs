@@ -27,7 +27,7 @@ mod transcribe;
 use async_trait::async_trait;
 use kalamu_core::{
     ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
-    ProviderError, ProviderId, RequestSetting, SetupOptions, Task, Tuning, Usage, YOUTUBE_LINK,
+    ProviderError, ProviderId, RequestSetting, Task, Tuning, Usage, YOUTUBE_LINK,
 };
 use reqwest::Client;
 use serde_json::{Value, json};
@@ -113,13 +113,39 @@ impl Gemini {
         })
     }
 
+    /// What a response reports consuming.
+    fn usage(response: &Value) -> Usage {
+        let usage = response.get("usageMetadata");
+        let count = |key: &str| {
+            usage
+                .and_then(|u| u.get(key))
+                .and_then(Value::as_u64)
+                .unwrap_or(0)
+        };
+        Usage {
+            input_tokens: count("promptTokenCount"),
+            // Thinking tokens are billed as output.
+            output_tokens: count("candidatesTokenCount") + count("thoughtsTokenCount"),
+            // Part of `promptTokenCount`.
+            cached_input_tokens: count("cachedContentTokenCount"),
+            ..Usage::default()
+        }
+    }
+
     fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
+        // The request itself refused, before the model wrote: nothing to bill.
         if let Some(reason) = response
             .pointer("/promptFeedback/blockReason")
             .and_then(Value::as_str)
         {
-            return Err(ProviderError::Blocked(refusal(reason)));
+            return Err(ProviderError::blocked(refusal(reason)));
         }
+        // Stopped after the model wrote: the refusal carries what the response counted, so
+        // the job's cost counts it.
+        let blocked = |reason: String| ProviderError::Blocked {
+            reason,
+            usage: Self::usage(response).reported(),
+        };
         let candidate = response
             .pointer("/candidates/0")
             .ok_or_else(|| ProviderError::Other("no candidate in the response".into()))?;
@@ -144,32 +170,18 @@ impl Gemini {
             // Keep what was read, marked as cut off (`truncated`).
             "MAX_TOKENS" if !text.is_empty() => {}
             "RECITATION" => {
-                return Err(ProviderError::Blocked(
+                return Err(blocked(
                     "Gemini's copyright filter stopped this page (RECITATION)".into(),
                 ));
             }
-            other if text.is_empty() => return Err(ProviderError::Blocked(refusal(other))),
+            other if text.is_empty() => return Err(blocked(refusal(other))),
             _ => {}
         }
-        let usage = response.get("usageMetadata");
-        let count = |key: &str| {
-            usage
-                .and_then(|u| u.get(key))
-                .and_then(Value::as_u64)
-                .unwrap_or(0)
-        };
         Ok(ProcessOutput {
             text,
             segments: Vec::new(),
             detected_language: None,
-            usage: Usage {
-                input_tokens: count("promptTokenCount"),
-                // Thinking tokens are billed as output.
-                output_tokens: count("candidatesTokenCount") + count("thoughtsTokenCount"),
-                // Part of `promptTokenCount`.
-                cached_input_tokens: count("cachedContentTokenCount"),
-                ..Usage::default()
-            },
+            usage: Self::usage(response),
             model_version: response
                 .get("modelVersion")
                 .and_then(Value::as_str)
@@ -234,8 +246,10 @@ impl Provider for Gemini {
     }
 
     fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+        // Its speakers and word timings are the set-up's own options, which the record states
+        // apart; it sends nothing else a pipeline could set.
         if transcribe::transcriber(model) {
-            return transcribe::settings(&SetupOptions::default());
+            return Vec::new();
         }
         // As for a page, which every task but a transcription or a correction reads.
         let page = match task {

@@ -224,14 +224,14 @@ pub fn set_source_defaults(
     Ok(project)
 }
 
-/// Renames a tag on every document of the project; returns how many changed.
+/// Renames a tag on every document of the project; returns how many changed and its name now.
 #[tauri::command]
 pub fn rename_tag(
     state: State<'_, AppState>,
     project: ProjectId,
     from: String,
     to: String,
-) -> CmdResult<u32> {
+) -> CmdResult<kalamu_projects::TagRenamed> {
     Ok(state.projects.rename_tag(project, &from, &to)?)
 }
 

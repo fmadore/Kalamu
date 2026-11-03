@@ -169,7 +169,7 @@ impl Projects {
         labels: &Labels,
     ) -> Result<String, ProjectError> {
         let (_, rows) = self.profiled_rows(project, collection, profile, labels)?;
-        let mut out = csv::Writer::from_writer(Vec::new());
+        let mut out = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
         out.write_record(profile.columns.iter().map(|c| c.heading.as_str()))
             .map_err(failed)?;
         for row in rows {

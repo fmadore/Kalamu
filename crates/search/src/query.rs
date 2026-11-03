@@ -2,11 +2,13 @@
 //! holding the words found, and every match placed in the text shown.
 
 use std::cmp::Ordering;
+use std::collections::hash_map::Entry;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use kalamu_core::contents;
 use kalamu_core::{
-    Document, DocumentId, Field, FieldKind, Job, JobId, ProjectId, SetupId, SourceId, Task,
+    Document, DocumentId, Field, FieldKind, Job, JobId, ProjectId, SetupId, SourceId, StoreError,
+    Task,
 };
 
 use crate::fold::folded;
@@ -113,9 +115,16 @@ impl Search {
             if !titles.contains_key(&link.document_id) {
                 continue;
             }
-            let job = jobs
-                .entry(link.job_id)
-                .or_insert_with(|| self.jobs.job(link.job_id).ok());
+            let job = match jobs.entry(link.job_id) {
+                Entry::Occupied(known) => known.into_mut(),
+                // A job deleted since it was tied has nothing to search; any other failure is
+                // the database's, said as such rather than counted as text not read.
+                Entry::Vacant(slot) => slot.insert(match self.jobs.job(link.job_id) {
+                    Ok(job) => Some(job),
+                    Err(StoreError::NotFound) => None,
+                    Err(e) => return Err(SearchError::Jobs(e)),
+                }),
+            };
             let Some(job) = job.as_ref() else { continue };
             if !wanted_task(job.task, request) {
                 continue;
@@ -318,7 +327,8 @@ impl Search {
             if !jobs.contains_key(&link.job_id) {
                 match self.jobs.job(link.job_id) {
                     Ok(job) => jobs.insert(job.id, job),
-                    Err(_) => continue,
+                    Err(StoreError::NotFound) => continue,
+                    Err(e) => return Err(SearchError::Jobs(e)),
                 };
             }
             let Some(job) = jobs.get(&link.job_id) else {

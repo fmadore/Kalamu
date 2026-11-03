@@ -64,9 +64,10 @@ import type { SourceFile } from './bindings/SourceFile.js';
 import type { SourceMatch } from './bindings/SourceMatch.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
+import type { TagRenamed } from './bindings/TagRenamed.js';
 import type { Task } from './bindings/Task.js';
 import type { TrayState } from './bindings/TrayState.js';
-import { localisePreset } from './i18n/index.js';
+import { localisePreset, messages } from './i18n/index.js';
 
 export const isTauri = (): boolean =>
 	typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -215,7 +216,7 @@ export const api = {
 	untagDocuments: (project: string, ids: string[], tag: string) =>
 		invoke<void>('untag_documents', { project, ids, tag }),
 	renameTag: (project: string, from: string, to: string) =>
-		invoke<number>('rename_tag', { project, from, to }),
+		invoke<TagRenamed>('rename_tag', { project, from, to }),
 	describeDocument: (project: string, id: string, description: Draft) =>
 		invoke<void>('describe_document', { project, id, description }),
 	setSourceDefaults: (id: string, defaults: Draft) =>
@@ -357,7 +358,7 @@ export async function pickFiles(task: Task): Promise<string[]> {
 	if (!isTauri()) return [];
 	const { open } = await import('@tauri-apps/plugin-dialog');
 	const extensions = EXTENSIONS[task];
-	const picked = await open({ multiple: true, filters: [{ name: 'Sources', extensions }] });
+	const picked = await open({ multiple: true, filters: [{ name: messages().common.sources, extensions }] });
 	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
 }
 
@@ -366,7 +367,7 @@ export async function pickDocuments(): Promise<string[]> {
 	if (!isTauri()) return [];
 	const { open } = await import('@tauri-apps/plugin-dialog');
 	const extensions = [...new Set(Object.values(EXTENSIONS).flat())];
-	const picked = await open({ multiple: true, filters: [{ name: 'Sources', extensions }] });
+	const picked = await open({ multiple: true, filters: [{ name: messages().common.sources, extensions }] });
 	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
 }
 

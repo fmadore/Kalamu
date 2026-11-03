@@ -134,6 +134,28 @@ impl Anthropic {
         body
     }
 
+    /// What a message reports consuming.
+    fn usage(response: &Value) -> Usage {
+        let count = |key: &str| {
+            response
+                .pointer(&format!("/usage/{key}"))
+                .and_then(Value::as_u64)
+                .unwrap_or(0)
+        };
+        // `input_tokens` counts only what follows the last cache marker.
+        let (read, written) = (
+            count("cache_read_input_tokens"),
+            count("cache_creation_input_tokens"),
+        );
+        Usage {
+            input_tokens: count("input_tokens") + read + written,
+            output_tokens: count("output_tokens"),
+            cached_input_tokens: read,
+            cache_write_tokens: written,
+            ..Usage::default()
+        }
+    }
+
     fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
         let stop = response
             .get("stop_reason")
@@ -144,9 +166,11 @@ impl Anthropic {
                 .pointer("/stop_details/category")
                 .and_then(Value::as_str)
                 .unwrap_or("unspecified");
-            return Err(ProviderError::Blocked(format!(
-                "Claude declined this page (category: {category})"
-            )));
+            // Claude bills a refusal's tokens; the job's cost counts them.
+            return Err(ProviderError::Blocked {
+                reason: format!("Claude declined this page (category: {category})"),
+                usage: Self::usage(response).reported(),
+            });
         }
         let text: String = response
             .get("content")
@@ -163,28 +187,11 @@ impl Anthropic {
         if text.is_empty() && stop != "max_tokens" {
             return Err(ProviderError::Other("Claude returned no text".into()));
         }
-        let count = |key: &str| {
-            response
-                .pointer(&format!("/usage/{key}"))
-                .and_then(Value::as_u64)
-                .unwrap_or(0)
-        };
-        // `input_tokens` counts only what follows the last cache marker.
-        let (read, written) = (
-            count("cache_read_input_tokens"),
-            count("cache_creation_input_tokens"),
-        );
         Ok(ProcessOutput {
             text,
             segments: Vec::new(),
             detected_language: None,
-            usage: Usage {
-                input_tokens: count("input_tokens") + read + written,
-                output_tokens: count("output_tokens"),
-                cached_input_tokens: read,
-                cache_write_tokens: written,
-                ..Usage::default()
-            },
+            usage: Self::usage(response),
             model_version: response
                 .get("model")
                 .and_then(Value::as_str)

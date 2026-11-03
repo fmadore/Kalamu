@@ -369,9 +369,10 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   text document the words are marked and counted in the document too. Nothing is sent: the
   search runs on what the app already keeps.
 - **Report a problem**: a flag in every review's header, and a button in Settings › About,
-  open a GitHub issue form in the browser to report output that is inappropriate, harmful or
-  invented, or a bug. The app sends nothing itself, and the form warns not to paste
-  confidential material.
+  open GitHub's choice of issue forms in the browser: a bug or feedback first, and output that
+  is offensive or harmful, which Microsoft Store policy 11.16 asks apps to let users flag. A
+  misreading is corrected in the review, not reported. The app sends nothing itself, and the
+  forms warn not to paste confidential material.
 - **Mark as reviewed** (Ctrl Enter), so long jobs can be checked in several sittings and
   progress shows what has been verified, not only what has been processed.
 - **Error rates after review.** Every page or part the researcher corrected, or marked as
@@ -462,9 +463,10 @@ analysed, compared. A **project** keeps it together
   either as the model gave it or under the project dictionary's labels: each form an entry
   holds written under its label, in that field's entries only, a form no entry holds as
   written, a label reached twice written once; the answer itself is not changed
-  ([decision](decisions/2026-11-03-profile-dictionary-labels.md)). The result read is the one the researcher preferred for the task or, where none is preferred,
-  the only one; with several and none preferred the cell is left empty, never chosen for the
-  researcher ([decision](decisions/2026-11-03-profile-result-columns.md)).
+  ([decision](decisions/2026-11-03-profile-dictionary-labels.md)). The result read is the one
+  the researcher preferred for the task or, where none is preferred, the only one; with several
+  and none preferred the cell is left empty, never chosen for the researcher
+  ([decision](decisions/2026-11-03-profile-result-columns.md)).
 - **Every result of a document together**, whatever job made it: each set-up of each job that
   read it, with its progress, how much was reviewed and corrected, what it cost, opening its
   review. The researcher can mark one per task as **preferred**: never chosen by the app, and

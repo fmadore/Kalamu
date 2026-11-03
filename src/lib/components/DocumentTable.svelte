@@ -99,10 +99,10 @@
 		renaming = null;
 		if (!from || !to || to === from) return;
 		try {
-			const n = await api.renameTag(projectId, from, to);
-			tag = to;
+			const renamed = await api.renameTag(projectId, from, to);
+			tag = renamed.name;
 			await onchange();
-			toast(m.projects.tagRenamed(n));
+			toast(m.projects.tagRenamed(renamed.changed));
 		} catch (err) {
 			onerror(describeError(err, m));
 		}

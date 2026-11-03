@@ -234,6 +234,13 @@ async fn openai_uploads_a_jsonl_file_and_reads_the_output_and_error_files() {
     assert!(upload.contains(r#""custom_id":"p1""#), "{upload}");
     assert!(upload.contains(r#""url":"/v1/responses""#));
     assert!(upload.contains("name=\"purpose\"") && upload.contains("batch"));
+    // Each line caches its instructions explicitly, as a call made at once does.
+    assert!(
+        upload.contains(r#""prompt_cache_options":{"mode":"explicit"}"#),
+        "{upload}"
+    );
+    assert!(upload.contains(r#""role":"developer""#), "{upload}");
+    assert!(upload.contains(r#""prompt_cache_breakpoint":{"mode":"explicit"}"#));
 
     let ids = ["p0".to_string(), "p1".to_string()];
     let Ok(BatchProgress::Ended(mut answers)) = openai

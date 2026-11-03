@@ -120,7 +120,7 @@
 			><Icon name="project" size={14} />{m.shell.addToProject}</span
 		>
 		{#if projects === null}
-			<span class="note">…</span>
+			<span class="note">{m.common.loading}</span>
 		{:else if projects.length === 0}
 			<span class="note">{m.shell.noProjects}</span>
 		{:else}

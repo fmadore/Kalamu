@@ -151,7 +151,7 @@
 		return ids
 			.map((id) => units.find((v) => v.unit.id === id)?.unit)
 			.filter((unit) => unit !== undefined)
-			.map((unit) => `“${titleOf(unit)}”`)
+			.map((unit) => m.common.quoted(titleOf(unit)))
 			.join(', ');
 	}
 

@@ -127,8 +127,13 @@ pub enum ProviderError {
     },
     #[error("Temporary problem reaching the provider: {0}")]
     Transient(String),
-    #[error("The provider refused to return this text: {0}")]
-    Blocked(String),
+    /// A filter or the model declined. `usage` is what the provider reported consuming before
+    /// it stopped, when it did, which the engine adds to the job's cost.
+    #[error("The provider refused to return this text: {reason}")]
+    Blocked {
+        reason: String,
+        usage: Option<Usage>,
+    },
     #[error("The provider rejected the request: {0}")]
     InvalidRequest(String),
     #[error("Not supported: {0}")]
@@ -156,7 +161,7 @@ impl ProviderError {
             Self::QuotaExhausted(_) => "provider.quota",
             Self::RateLimited { .. } => "provider.rate_limited",
             Self::Transient(_) => "provider.transient",
-            Self::Blocked(_) => "provider.blocked",
+            Self::Blocked { .. } => "provider.blocked",
             Self::InvalidRequest(_) => "provider.invalid_request",
             Self::Unsupported(_) => "provider.unsupported",
             Self::Other(_) => "provider.other",
@@ -175,11 +180,21 @@ impl ProviderError {
     }
 
     /// What a failed call was billed for: an answer the provider wrote but the engine could
-    /// not keep. Other failures were refused before the model answered.
+    /// not keep, or one a filter stopped after the provider counted its tokens. Other failures
+    /// were refused before the model answered.
     pub fn billed(&self) -> Option<&Usage> {
         match self {
             Self::InvalidAnswer { usage, .. } => Some(usage),
+            Self::Blocked { usage, .. } => usage.as_ref(),
             _ => None,
+        }
+    }
+
+    /// A refusal with nothing reported consumed.
+    pub fn blocked(reason: impl Into<String>) -> Self {
+        Self::Blocked {
+            reason: reason.into(),
+            usage: None,
         }
     }
 

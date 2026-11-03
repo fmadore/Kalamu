@@ -172,7 +172,7 @@
 	}
 
 	async function exportNow() {
-		const path = await pickDescriptionsExport(`${name} descriptions`);
+		const path = await pickDescriptionsExport(p.fileName(name));
 		if (!path) return;
 		await act(async () => {
 			await api.exportDescriptions(projectId, collectionId ?? null, chosen || null, path);

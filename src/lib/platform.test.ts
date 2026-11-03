@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { osNames, primary, shortcut } from './platform.js';
+import { osNames, primary, shifted, shortcut } from './platform.js';
 
 describe('platform', () => {
 	it('takes Command on a Mac and Ctrl elsewhere as the shortcut modifier', () => {
@@ -15,6 +15,8 @@ describe('platform', () => {
 		expect(shortcut('N', true)).toBe('⌘N');
 		expect(shortcut('N', false)).toBe('Ctrl N');
 		expect(shortcut('↵', true)).toBe('⌘↵');
+		expect(shifted('F', true)).toBe('⇧F');
+		expect(shifted('F', false)).toBe('Shift F');
 	});
 
 	it('names the keychain and the tray for each system', () => {

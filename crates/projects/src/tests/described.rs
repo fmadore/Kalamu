@@ -114,7 +114,7 @@ fn descriptions_are_written_out_with_where_each_part_came_from() {
         )
         .unwrap();
 
-    let csv = f.projects.export_descriptions_csv(p.id, None).unwrap();
+    let csv = csv_body(f.projects.export_descriptions_csv(p.id, None).unwrap());
     let mut rows = csv.lines();
     assert_eq!(
         rows.next().unwrap(),
@@ -175,7 +175,8 @@ fn a_tag_is_renamed_across_the_project_and_merges_with_one_in_use() {
     assert_eq!(
         f.projects
             .rename_tag(p.id, "PELERINAGE", "Pèlerinage")
-            .unwrap(),
+            .unwrap()
+            .changed,
         2
     );
     let tags = |f: &Fixture| -> Vec<(String, u32)> {
@@ -193,14 +194,25 @@ fn a_tag_is_renamed_across_the_project_and_merges_with_one_in_use() {
     );
     // Onto a tag in use, in other capitals: one tag, the project's spelling.
     f.projects.tag_documents(p.id, &docs[..1], "Hajj").unwrap();
+    let merged = f
+        .projects
+        .rename_tag(p.id, "pèlerinage", "  hajj ")
+        .unwrap();
     assert_eq!(
-        f.projects.rename_tag(p.id, "pèlerinage", "hajj").unwrap(),
-        2
+        (merged.changed, merged.name.as_str()),
+        (2, "Hajj"),
+        "the name the documents now carry, for the table to filter on"
     );
     assert_eq!(tags(&f), [("Hajj".to_string(), 3)]);
     assert_eq!(f.store.document(docs[0]).unwrap().tags, ["Hajj"]);
 
-    assert_eq!(f.projects.rename_tag(p.id, "absent", "Other").unwrap(), 0);
+    assert_eq!(
+        f.projects
+            .rename_tag(p.id, "absent", "Other")
+            .unwrap()
+            .changed,
+        0
+    );
     assert!(matches!(
         f.projects.rename_tag(p.id, "Hajj", "  "),
         Err(ProjectError::NoTag)

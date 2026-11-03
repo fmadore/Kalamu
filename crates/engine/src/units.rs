@@ -8,6 +8,8 @@
 //! the review and provenance need no case of their own, and a unit changed afterwards marks
 //! that job out of date without changing what it read.
 
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::path::{Path, PathBuf};
 
 use kalamu_core::units::{FrozenUnit, file_stem, format_pages, parse_pages, seed, shared_pages};
@@ -20,6 +22,10 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{Engine, EngineError};
+
+/// The sources of a batch of units, each checked unchanged and opened the first time a unit
+/// needs it, so fifty items of one volume hash and parse it once.
+type Opened = HashMap<(JobId, SourceId), (SourceFile, PdfSource)>;
 
 /// A unit as the list shows it: its pages as typed, and the pages it shares with others.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -171,9 +177,7 @@ impl Engine {
         }
         let pages = self.unit_pages(job_id, setup_id, source_id)?;
         let (units, problems) = seed((job_id, setup_id, source_id), &entries, &pages, 0);
-        for unit in &units {
-            self.store.put_unit(unit)?;
-        }
+        self.store.replace_units(&units, &[])?;
         Ok(SeedReport {
             made: units.len() as u32,
             problems,
@@ -187,6 +191,12 @@ impl Engine {
         let mut unit = match edit.id {
             Some(id) => {
                 let mut unit = self.store.unit(id)?;
+                // The pages were checked against the result named, so it must be the unit's.
+                if (unit.job_id, unit.setup_id, unit.source_id)
+                    != (edit.job_id, edit.setup_id, edit.source_id)
+                {
+                    return Err(UnitError::OtherResult.into());
+                }
                 unit.revision += 1;
                 unit.updated_at = Timestamp::now();
                 unit
@@ -220,13 +230,13 @@ impl Engine {
             || (kept.job_id, kept.setup_id, kept.source_id)
                 != (joined.job_id, joined.setup_id, joined.source_id)
         {
-            return Err(EngineError::Store(kalamu_core::StoreError::NotFound));
+            return Err(UnitError::NotJoinable.into());
         }
         kept.pages = kalamu_core::units::join(&kept, &joined);
         kept.revision += 1;
         kept.updated_at = Timestamp::now();
-        self.store.put_unit(&kept)?;
-        self.store.delete_unit(second)?;
+        self.store
+            .replace_units(std::slice::from_ref(&kept), &[second])?;
         Ok(kept)
     }
 
@@ -234,15 +244,18 @@ impl Engine {
     /// The second, with the same title for the researcher to change, follows the first.
     pub fn split_unit(&self, id: UnitId, at: u32) -> Result<[DocumentUnit; 2], EngineError> {
         let mut first = self.store.unit(id)?;
-        let (before, after) = kalamu_core::units::split(&first, at as usize)
-            .ok_or(UnitError::Pages(kalamu_core::PagesError::Empty))?;
-        // The units after it move down one place to make room.
-        for mut later in self.units_of(first.job_id, first.setup_id, first.source_id)? {
-            if later.position > first.position {
+        let (before, after) =
+            kalamu_core::units::split(&first, at as usize).ok_or(UnitError::BadSplit)?;
+        // The units after it move down one place to make room, in the same write.
+        let mut changed: Vec<DocumentUnit> = self
+            .units_of(first.job_id, first.setup_id, first.source_id)?
+            .into_iter()
+            .filter(|u| u.position > first.position)
+            .map(|mut later| {
                 later.position += 1;
-                self.store.put_unit(&later)?;
-            }
-        }
+                later
+            })
+            .collect();
         let mut second = DocumentUnit::new(
             first.job_id,
             first.setup_id,
@@ -255,29 +268,38 @@ impl Engine {
         first.pages = before;
         first.revision += 1;
         first.updated_at = Timestamp::now();
-        self.store.put_unit(&first)?;
-        self.store.put_unit(&second)?;
+        changed.extend([first.clone(), second.clone()]);
+        self.store.replace_units(&changed, &[])?;
         Ok([first, second])
     }
 
     /// A unit's pages cut out of its source, in its order, and the source they come from.
-    fn unit_pdf(&self, unit: &DocumentUnit) -> Result<(Vec<u8>, SourceFile), EngineError> {
-        let job = self.store.job(unit.job_id)?;
-        let source = job
-            .sources
-            .iter()
-            .find(|s| s.id == unit.source_id)
-            .cloned()
-            .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
+    fn unit_pdf(
+        &self,
+        unit: &DocumentUnit,
+        opened: &mut Opened,
+    ) -> Result<(Vec<u8>, SourceFile), EngineError> {
         if unit.pages.is_empty() {
             return Err(UnitError::NoPages(unit.title.clone()).into());
         }
-        if source.kind != InputKind::Pdf {
-            return Err(UnitError::NotPdf(source.file_name.clone()).into());
-        }
-        kalamu_media::check_unchanged(&source)?;
-        let pdf = PdfSource::open(Path::new(&source.path))?;
-        Ok((pdf.chosen_pages_pdf(&unit.page_numbers())?, source))
+        let (source, pdf) = match opened.entry((unit.job_id, unit.source_id)) {
+            Entry::Occupied(known) => known.into_mut(),
+            Entry::Vacant(slot) => {
+                let job = self.store.job(unit.job_id)?;
+                let source = job
+                    .sources
+                    .into_iter()
+                    .find(|s| s.id == unit.source_id)
+                    .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
+                if source.kind != InputKind::Pdf {
+                    return Err(UnitError::NotPdf(source.file_name.clone()).into());
+                }
+                kalamu_media::check_unchanged(&source)?;
+                let pdf = PdfSource::open(Path::new(&source.path))?;
+                slot.insert((source, pdf))
+            }
+        };
+        Ok((pdf.chosen_pages_pdf(&unit.page_numbers())?, source.clone()))
     }
 
     /// Freezes each unit's pages as a PDF for a later job to read, and returns them as
@@ -288,9 +310,10 @@ impl Engine {
             .map(|id| self.store.unit(*id))
             .collect::<Result<Vec<_>, _>>()?;
         units.sort_by_key(|u| (u.job_id, u.position));
+        let mut opened = Opened::new();
         let mut out = Vec::new();
         for unit in units {
-            let (bytes, source) = self.unit_pdf(&unit)?;
+            let (bytes, source) = self.unit_pdf(&unit, &mut opened)?;
             let sha256 = kalamu_core::fingerprint::sha256_hex(&bytes);
             std::fs::create_dir_all(&self.config.snapshots)
                 .map_err(|e| EngineError::Output(e.to_string()))?;
@@ -349,7 +372,7 @@ impl Engine {
             });
         }
         if out.is_empty() {
-            return Err(EngineError::NothingRead);
+            return Err(UnitError::NoneChosen.into());
         }
         Ok(out)
     }
@@ -379,7 +402,7 @@ impl Engine {
             .collect::<Result<Vec<_>, _>>()?;
         units.sort_by_key(|u| (u.job_id, u.position));
         let Some(first) = units.first() else {
-            return Err(EngineError::NothingRead);
+            return Err(UnitError::NoneChosen.into());
         };
         let job = self.store.job(first.job_id)?;
         let setup = job
@@ -394,10 +417,11 @@ impl Engine {
             .map(kalamu_core::contents::entry_fields)
             .unwrap_or_default();
         std::fs::create_dir_all(folder).map_err(|e| EngineError::Output(e.to_string()))?;
+        let mut opened = Opened::new();
         let mut written = Vec::new();
         let mut rows = Vec::new();
         for unit in &units {
-            let (bytes, source) = self.unit_pdf(unit)?;
+            let (bytes, source) = self.unit_pdf(unit, &mut opened)?;
             let name = file_stem(&stem(&source), unit.position, &unit.title);
             let path = free_path(folder, &name, "pdf");
             crate::output::write_atomic(&path, &bytes)?;

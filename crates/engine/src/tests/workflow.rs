@@ -232,8 +232,7 @@ async fn a_review_holds_the_next_step_which_then_reads_the_corrections() {
 async fn pages_not_read_hold_the_next_step_until_the_researcher_goes_on() {
     let f = fixture();
     let scan = f.pdf("registre.pdf", 3);
-    f.fake
-        .fail(2, vec![ProviderError::Blocked("refused".into())]);
+    f.fake.fail(2, vec![ProviderError::blocked("refused")]);
     let view = f
         .run_workflow(extract_then_analyse(false, "fake-model"), vec![scan])
         .await;
@@ -258,8 +257,7 @@ async fn pages_not_read_hold_the_next_step_until_the_researcher_goes_on() {
 async fn a_step_that_could_not_start_starts_once_its_input_is_read() {
     let f = fixture();
     let scan = f.pdf("registre.pdf", 1);
-    f.fake
-        .fail(1, vec![ProviderError::Blocked("refused".into())]);
+    f.fake.fail(1, vec![ProviderError::blocked("refused")]);
     let view = f
         .run_workflow(extract_then_analyse(false, "fake-model"), vec![scan])
         .await;

@@ -59,6 +59,7 @@ impl Engine {
         setup_id: SetupId,
         source_id: SourceId,
     ) -> Result<Vec<String>, EngineError> {
+        let _writing = self.writing.lock().unwrap_or_else(|p| p.into_inner());
         let document = self.export_document(job, setup_id, source_id)?;
         let (dir, base) = output_base(job, &document.source, &document.setup.label);
         std::fs::create_dir_all(&dir).map_err(|e| EngineError::Output(e.to_string()))?;
@@ -99,6 +100,9 @@ impl Engine {
         job_id: JobId,
         source_id: SourceId,
     ) -> Result<Vec<String>, EngineError> {
+        // Read and written under the lock the job's own writes take, so whichever comes last
+        // writes from what is stored then.
+        let _writing = self.writing.lock().unwrap_or_else(|p| p.into_inner());
         if self.is_running(job_id) {
             return Ok(Vec::new());
         }

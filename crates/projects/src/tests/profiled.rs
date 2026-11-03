@@ -93,10 +93,11 @@ fn described_project(f: &Fixture) -> (ProjectId, Vec<DocumentId>, CollectionId) 
 fn a_profile_writes_its_columns_under_its_headings() {
     let f = fixture();
     let (p, _, letters) = described_project(&f);
-    let csv = f
-        .projects
-        .export_profiled_csv(p, None, &omeka(), &Labels::default())
-        .unwrap();
+    let csv = csv_body(
+        f.projects
+            .export_profiled_csv(p, None, &omeka(), &Labels::default())
+            .unwrap(),
+    );
     assert_eq!(
         csv,
         "dcterms:identifier,dcterms:title,Dépôt,Dépôt (origine),dcterms:bibliographicCitation,\
@@ -345,10 +346,11 @@ fn result_columns_read_the_preferred_or_only_result_as_corrected() {
             Some((again.id, again.setups[0].id)),
         )
         .unwrap();
-    let csv = f
-        .projects
-        .export_profiled_csv(p.id, None, &profile, &Labels::default())
-        .unwrap();
+    let csv = csv_body(
+        f.projects
+            .export_profiled_csv(p.id, None, &profile, &Labels::default())
+            .unwrap(),
+    );
     let rows: Vec<&str> = csv.lines().collect();
     assert_eq!(
         rows[0],

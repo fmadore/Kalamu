@@ -29,6 +29,9 @@ fn exports_keep_ids_original_forms_and_review_status() {
     assert_eq!(json["entries"][0]["reviewed"], true);
 
     let csv = f.dictionary.export_csv(f.project).unwrap();
+    let csv = csv
+        .strip_prefix('\u{feff}')
+        .unwrap_or_else(|| panic!("a byte-order mark, for Excel"));
     let lines: Vec<&str> = csv.lines().collect();
     assert_eq!(
         lines[0],

@@ -189,7 +189,64 @@ async fn units_are_joined_and_split() {
         [first.id, second.id, made[2].id],
         "the second part follows the first"
     );
-    assert!(t.engine.split_unit(second.id, 1).is_err(), "one page");
+    assert_eq!(
+        code(t.engine.split_unit(second.id, 1)),
+        "unit.bad_split",
+        "one page"
+    );
+    assert_eq!(
+        code(t.engine.join_units(first.id, first.id)),
+        "unit.not_joinable"
+    );
+    // Another table of contents' item is neither joined nor saved through this one.
+    let other = contents(&t).await;
+    t.engine
+        .seed_units(other.id, other.setups[0].id, other.sources[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let theirs = units(&t, &other);
+    assert_eq!(
+        code(t.engine.join_units(first.id, theirs[0].id)),
+        "unit.not_joinable"
+    );
+    assert_eq!(
+        code(
+            t.engine
+                .save_unit(edit(&other, Some(first.id), "Le Hajj", "1"))
+        ),
+        "unit.other_result"
+    );
+    assert_eq!(units(&t, &job).len(), 3, "nothing was half made");
+    assert_eq!(code(t.engine.unit_sources(&[])), "unit.none_chosen");
+}
+
+/// An item's pages frozen twice are one file, so a second job that reads them finds every page
+/// in the cache: nothing is sent again.
+#[tokio::test]
+async fn the_same_item_frozen_twice_is_one_file_and_read_from_the_cache() {
+    let t = two();
+    let job = contents(&t).await;
+    t.engine
+        .seed_units(job.id, job.setups[0].id, job.sources[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let hajj = units(&t, &job)[0].id;
+    let freeze = || {
+        t.engine
+            .unit_sources(&[hajj])
+            .unwrap_or_else(|e| panic!("{e}"))
+            .remove(0)
+    };
+    let (once, twice) = (freeze(), freeze());
+    assert_eq!(
+        (once.path.as_str(), once.sha256.as_str()),
+        (twice.path.as_str(), twice.sha256.as_str())
+    );
+
+    let first = t.job(Task::Contents, vec![once], "contents.periodical", None);
+    assert_eq!(t.run(first.id).await, JobStatus::Completed);
+    let calls = t.reader.calls();
+    let second = t.job(Task::Contents, vec![twice], "contents.periodical", None);
+    assert_eq!(t.run(second.id).await, JobStatus::Completed);
+    assert_eq!(t.reader.calls(), calls, "every page from the cache");
 }
 
 #[tokio::test]

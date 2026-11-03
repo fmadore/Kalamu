@@ -97,6 +97,17 @@ pub enum UnitError {
     /// Only a PDF's pages are cut out for now; the file's name.
     #[error("{0}")]
     NotPdf(String),
+    /// A unit joined to itself, or to a unit of another reading or document.
+    #[error("only two different items of the same table of contents can be joined")]
+    NotJoinable,
+    /// A unit edited as if it belonged to another reading or document.
+    #[error("this item belongs to another table of contents")]
+    OtherResult,
+    /// A split at a page the unit does not have, or before its first.
+    #[error("an item is split between two of its pages")]
+    BadSplit,
+    #[error("no item chosen")]
+    NoneChosen,
 }
 
 impl UnitError {
@@ -110,6 +121,10 @@ impl UnitError {
             Self::AlreadyMade => "unit.already_made",
             Self::NoPages(_) => "unit.no_pages",
             Self::NotPdf(_) => "unit.not_pdf",
+            Self::NotJoinable => "unit.not_joinable",
+            Self::OtherResult => "unit.other_result",
+            Self::BadSplit => "unit.bad_split",
+            Self::NoneChosen => "unit.none_chosen",
         }
     }
 }

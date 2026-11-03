@@ -144,6 +144,15 @@ pub struct Usage {
 }
 
 impl Usage {
+    /// The usage, unless it counts nothing: what a refusal reported, if anything.
+    pub fn reported(self) -> Option<Self> {
+        let any = self.input_tokens > 0
+            || self.output_tokens > 0
+            || self.audio_seconds > 0.0
+            || self.pages > 0;
+        any.then_some(self)
+    }
+
     pub fn add(&mut self, other: &Usage) {
         self.input_tokens += other.input_tokens;
         self.output_tokens += other.output_tokens;

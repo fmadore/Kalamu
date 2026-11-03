@@ -1,0 +1,140 @@
+{
+  "cases": [
+    {
+      "mode": "phrase",
+      "query": "pè",
+      "searchable": false
+    },
+    {
+      "mode": "all_words",
+      "query": "pè",
+      "searchable": false
+    },
+    {
+      "mode": "near",
+      "query": "pè",
+      "searchable": false
+    },
+    {
+      "mode": "phrase",
+      "query": "Père",
+      "searchable": true
+    },
+    {
+      "mode": "all_words",
+      "query": "Père",
+      "searchable": true
+    },
+    {
+      "mode": "near",
+      "query": "Père",
+      "searchable": true
+    },
+    {
+      "mode": "phrase",
+      "query": "  de  ",
+      "searchable": false
+    },
+    {
+      "mode": "all_words",
+      "query": "  de  ",
+      "searchable": false
+    },
+    {
+      "mode": "near",
+      "query": "  de  ",
+      "searchable": false
+    },
+    {
+      "mode": "phrase",
+      "query": "de la",
+      "searchable": true
+    },
+    {
+      "mode": "all_words",
+      "query": "de la",
+      "searchable": false
+    },
+    {
+      "mode": "near",
+      "query": "de la",
+      "searchable": false
+    },
+    {
+      "mode": "phrase",
+      "query": "le pape",
+      "searchable": true
+    },
+    {
+      "mode": "all_words",
+      "query": "le pape",
+      "searchable": true
+    },
+    {
+      "mode": "near",
+      "query": "le pape",
+      "searchable": true
+    },
+    {
+      "mode": "phrase",
+      "query": "\"de la\"",
+      "searchable": true
+    },
+    {
+      "mode": "all_words",
+      "query": "\"de la\"",
+      "searchable": true
+    },
+    {
+      "mode": "near",
+      "query": "\"de la\"",
+      "searchable": true
+    },
+    {
+      "mode": "phrase",
+      "query": "« un »",
+      "searchable": true
+    },
+    {
+      "mode": "all_words",
+      "query": "« un »",
+      "searchable": false
+    },
+    {
+      "mode": "near",
+      "query": "« un »",
+      "searchable": false
+    },
+    {
+      "mode": "phrase",
+      "query": "ab, cd.",
+      "searchable": true
+    },
+    {
+      "mode": "all_words",
+      "query": "ab, cd.",
+      "searchable": false
+    },
+    {
+      "mode": "near",
+      "query": "ab, cd.",
+      "searchable": false
+    },
+    {
+      "mode": "phrase",
+      "query": "Ḥajj",
+      "searchable": true
+    },
+    {
+      "mode": "all_words",
+      "query": "Ḥajj",
+      "searchable": true
+    },
+    {
+      "mode": "near",
+      "query": "Ḥajj",
+      "searchable": true
+    }
+  ],
+  "min_query": 3
+}
