@@ -21,6 +21,7 @@ mod rules;
 mod run;
 mod setup;
 mod snapshot;
+mod units;
 mod workflow;
 
 use std::collections::HashMap;
@@ -50,6 +51,7 @@ pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
 pub use setup::NewJob;
 pub use snapshot::{DerivedState, Freshness};
+pub use units::{SeedReport, UnitEdit, UnitView, UnitsView};
 pub use workflow::{JobStep, RunView, StartRun, StepView};
 
 /// Where the engine gets API keys; the app reads them from the system keychain.
@@ -143,6 +145,8 @@ pub enum EngineError {
     /// A workflow step approved before its job has finished.
     #[error("This step has not finished")]
     StepNotFinished,
+    #[error(transparent)]
+    Unit(#[from] kalamu_core::UnitError),
 }
 
 impl EngineError {
@@ -171,6 +175,7 @@ impl EngineError {
             Self::Workflow(e) => e.code(),
             Self::Step { source, .. } => source.code(),
             Self::StepNotFinished => "workflow.not_finished",
+            Self::Unit(e) => e.code(),
         }
     }
 }

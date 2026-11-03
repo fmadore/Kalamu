@@ -63,6 +63,11 @@ pub struct DerivedFrom {
     pub source_id: SourceId,
     /// The original, beside which the later results are written.
     pub original_path: String,
+    /// For a document unit's pages (#50), cut out of the original as a PDF of their own: the
+    /// unit as it was then. The set-up and source above are its table of contents'.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub unit: Option<crate::units::FrozenUnit>,
 }
 
 /// A piece's text as it goes into a snapshot.

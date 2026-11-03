@@ -5,6 +5,8 @@ use kalamu_core::{Field, MergeModel, PieceRef};
 
 use super::*;
 
+mod units;
+
 /// Answers whatever schema it is sent: a page's entries (two articles over three pages), the
 /// combined entries (grouped by title), or a corrected text.
 struct Structured {
@@ -209,6 +211,7 @@ fn two() -> Two {
             base_delay: Duration::from_millis(5),
             app_version: "test".into(),
             listening_cache: dir.path().join("listening"),
+            snapshots: dir.path().join("snapshots"),
             ..EngineConfig::default()
         },
     );

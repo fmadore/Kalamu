@@ -115,6 +115,20 @@ addressee, summary, names: an archivist's inventory) and a book, report or thesi
 fields are edited in Prompts as an analysis's are, title and pages always included
 ([decision](decisions/2026-10-29-contents-and-correction.md)).
 
+**A table of contents' entries become items read on their own** ([#50](https://github.com/fmadore/Kalamu/issues/50)).
+Once the entries are checked, *Items* in the review makes one item per entry: its title, its
+pages in reading order and its fields, kept apart from the table of contents, which never
+changes. Items are then the researcher's: renamed, given other pages (`1, 3-5, 8 (left)`, as
+the file numbers its pages), joined to the next (an article and its continuation), split in
+two, added and removed; entries whose pages the document does not have are reported. An item
+is made of whole pages, so two items on one page each take all of it, and the list says so.
+Selected items go to a new job, *Extract the text* or *Analyse*, each as a PDF of its own pages
+cut from the source and frozen like corrected text: the job's results are written beside the
+source under the item's name, `provenance.json` names the item, and an item given other pages
+afterwards marks the job out of date without changing what it read. *Export* writes each
+item's pages as a PDF with a list of the items as CSV and JSON
+([decision](decisions/2026-11-02-document-units.md)). Only a PDF's items can be cut out so far.
+
 **A result's text can go into a new round.** *Use this text in a new job* on an extraction, a
 transcription or a correction, on the job's page or among a project document's results, freezes
 the text as the researcher left it, corrections and speaker names included (from a document,
@@ -326,7 +340,8 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
 - **Tables of contents**: the scan beside the entries, with the strip of pages below;
   clicking an entry shows its first page, turning the page brings its entries into view,
   marked, and what the first step read on that page is shown below. Entries can be corrected,
-  added and removed.
+  added and removed. *Items* shows the items made from them instead, marked when on the page
+  shown, each opening its first page.
 - **Corrections of existing text**: the original text is a witness of its own, so every change
   the model made is highlighted and the original reading can be taken back in one click.
 - **Analyses**: the document beside its answers, field by field. In a comparison every value
@@ -486,7 +501,7 @@ is remembered per task. Details are in [formats.md](formats.md).
 | **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original) only from models that report where text sits on the page, today Mistral OCR; ALTO and PAGE XML later, likewise |
 | **Transcription** | `.txt`, `.md`, `.docx`, `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
 | **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
-| **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json` |
+| **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.csv` and `.json` |
 | **Correction** | As text extraction, without the searchable PDF |
 
 ## Prompts and analyses

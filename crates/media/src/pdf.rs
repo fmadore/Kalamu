@@ -210,12 +210,34 @@ impl PdfSource {
         if first > last {
             return Err(MediaError::NoSuchPage(format!("{first}-{last}")));
         }
+        let pages: Vec<_> = (first..=last).map(|number| (number, None)).collect();
+        self.chosen_pages_pdf(&pages)
+    }
+
+    /// A standalone PDF holding the given pages, or halves of spreads, in the order given: a
+    /// document unit's pages, which need not follow each other (an article continued on page
+    /// 8). The same page may come twice, as its two halves.
+    pub fn chosen_pages_pdf(
+        &self,
+        chosen: &[(u32, Option<PageHalf>)],
+    ) -> Result<Vec<u8>, MediaError> {
+        if chosen.is_empty() {
+            return Err(MediaError::NoSuchPage(String::new()));
+        }
         let mut pages = Vec::new();
-        for number in first..=last {
+        for &(number, half) in chosen {
             let page_id = self.page_id(number)?;
             let mut page = self.page_dict(number)?;
             for key in SKIPPED {
                 page.remove(key);
+            }
+            if let Some(half) = half
+                && let Some(bounds) = self.page_box(&page)
+            {
+                let cut = half_box(bounds, Self::rotation(&page), half);
+                let array = Object::Array(cut.iter().map(|v| Object::Real(*v)).collect());
+                page.set("MediaBox", array.clone());
+                page.set("CropBox", array);
             }
             pages.push((page_id, page));
         }
@@ -243,10 +265,17 @@ impl PdfSource {
         let pages_id = out.new_object_id();
         let count = pages.len() as i64;
         let mut kids = Vec::new();
+        let mut placed = BTreeSet::new();
         for (page_id, mut page) in pages {
             page.set("Parent", Object::Reference(pages_id));
-            out.objects.insert(page_id, Object::Dictionary(page));
-            kids.push(Object::Reference(page_id));
+            // The second half of a spread is a second page object over the same contents.
+            let id = if placed.insert(page_id) {
+                page_id
+            } else {
+                out.new_object_id()
+            };
+            out.objects.insert(id, Object::Dictionary(page));
+            kids.push(Object::Reference(id));
         }
         out.objects.insert(
             pages_id,

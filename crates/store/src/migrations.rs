@@ -1,6 +1,6 @@
 //! The database's schema: one migration per release that changed it, applied in order.
 
-use super::{dictionary, projects, runs, snapshots};
+use super::{dictionary, projects, runs, snapshots, units};
 
 /// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
 pub(crate) const MIGRATIONS: &[&str] = &[
@@ -96,4 +96,5 @@ ALTER TABLE documents ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
 "#,
     dictionary::MIGRATION,
     dictionary::PROPOSALS,
+    units::MIGRATION,
 ];
