@@ -1,7 +1,7 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 3 November 2026, for the search index, which applies from the version
-after 1.2.0. Version 1.0.0, the first Microsoft Store release, was published under the policy
+**Effective date:** 3 November 2026, for the search index, the descriptions of documents'
+sources and export profiles, which apply from the version after 1.2.0. Version 1.0.0, the first Microsoft Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
 the second named the data folder after the app's bundle identifier, the third did not list the
@@ -70,8 +70,9 @@ Kalamu's, on the same computer only:
   Results are kept by a fingerprint of the file and settings, so the same work is never paid
   for twice; deleting a job removes the job, its progress and corrections, while the stored
   results stay until the app is uninstalled. The same database keeps the user's **projects**:
-  their names and descriptions, their collections, the titles, tags, paths, sizes and
-  fingerprints of their documents, which jobs read each document, and the results the user marked as
+  their names and descriptions, the source description their documents share, their
+  collections, the titles, tags, source descriptions (repository, shelfmark, citation and the
+  like, as the user types them), paths, sizes and fingerprints of their documents, which jobs read each document, and the results the user marked as
   preferred, and its **dictionary**: the entries the user made of the names its analyses
   listed (labels, the forms they gather, review status), the pairs kept apart, each request for
 proposed merges (the job that asked and the forms each of its texts held), and the proposals
@@ -106,6 +107,9 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
 - **Prompts, pipelines and workflows** the user saves (`presets`, `pipelines`, `workflows`),
   and a copy of the model catalogue. An exported workflow, like an exported pipeline, holds its
   steps, models, settings and prompts, never keys, files, folders or results.
+- **Export profiles** the user saves (`export-profiles`): the columns of a descriptions export,
+  their headings and any fixed text typed for every row. A shared profile holds its columns,
+  and its fixed texts only when the user asks; never a project's descriptions.
 - **Whisper models**, downloaded only when the user asks (`whisper-models`).
 - **Recording pieces converted for listening** (`listening`): the review's player plays most
   recordings straight from the original file; for a format it cannot play, the piece is

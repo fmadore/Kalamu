@@ -603,6 +603,100 @@ export const en = {
 		tagButton: 'Tag',
 		removeTag: 'Remove a tag…',
 		removeTagFrom: (tag: string) => `Remove the tag ${tag}`,
+		renameTag: 'Rename tag',
+		renameTagTo: (tag: string) => `New name for “${tag}”`,
+		tagRenamed: (n: number) => (n === 1 ? 'Renamed on 1 document.' : `Renamed on ${n} documents.`),
+		describe: {
+			title: 'Source description',
+			lede: 'The original as an archive or library describes it, as you would cite it. You write it, never a model, and no result changes it. A part left empty takes the project’s.',
+			projectTitle: 'Shared by its documents',
+			projectLede:
+				'Parts of the description every document shares, such as the repository or the fonds. A document’s own value takes their place.',
+			fields: {
+				repository: 'Repository',
+				fonds: 'Fonds or collection',
+				series: 'Series',
+				file: 'Box or folder',
+				shelfmark: 'Shelfmark or call number',
+				creator: 'Creator',
+				date: 'Date',
+				url: 'Web address',
+				citation: 'Citation',
+				rights: 'Rights'
+			},
+			fromProject: 'From the project',
+			save: 'Save description',
+			saved: 'Description saved.',
+			export: 'Export descriptions',
+			exported: 'The descriptions were saved as JSON, with a CSV beside it.'
+		},
+		profiles: {
+			title: 'Export descriptions',
+			lede: 'Kalamu’s own export gives every part of each description with where it came from. A profile writes the columns you choose, in your order and under your headings, for a spreadsheet or another tool’s import. It is kept for every project and holds none of this one’s values.',
+			columns: 'Columns',
+			kalamu: 'Every part, with where it came from',
+			newProfile: 'New profile',
+			starters: {
+				every: 'From every column',
+				dublin_core: 'From Dublin Core terms'
+			},
+			import: 'Import a profile…',
+			imported: (name: string) => `Profile “${name}” imported.`,
+			edit: 'Edit',
+			duplicate: 'Duplicate',
+			copyName: (name: string) => `${name} (copy)`,
+			share: 'Share…',
+			shareFixed:
+				'Include the fixed texts? They may belong to this project. Without them the columns stay, their texts left empty.',
+			shared: 'The profile was saved as a file another Kalamu can import.',
+			delete: 'Delete',
+			deleteConfirm: (name: string) =>
+				`Delete the profile “${name}”? Files already exported stay as they are.`,
+			name: 'Name',
+			heading: 'Heading',
+			value: 'Value',
+			fixedText: 'Text in every row',
+			groups: {
+				document: 'The document',
+				parts: 'Its description',
+				from: 'Where each part came from',
+				other: 'Other'
+			},
+			values: {
+				document_id: 'Document id',
+				title: 'Title',
+				file_name: 'File name',
+				path: 'Path',
+				project: 'Project name',
+				collections: 'Collections',
+				tags: 'Tags',
+				fixed: 'A fixed text'
+			},
+			fromPart: (part: string) => `${part}: where it came from`,
+			moveUp: (n: number) => `Move column ${n} up`,
+			moveDown: (n: number) => `Move column ${n} down`,
+			remove: (n: number) => `Remove column ${n}`,
+			addColumn: 'Add a column',
+			separator: 'Between the items of a list',
+			separatorHint: 'In a CSV cell; JSON keeps lists as lists.',
+			missing: 'What an empty cell holds',
+			missingHint: 'Nothing if left blank; JSON writes null.',
+			joinLines: 'Line breaks inside a value made a space',
+			problems: {
+				no_name: 'Give the profile a name.',
+				no_columns: 'Add at least one column.',
+				unnamed: (column: number) => `Column ${column} needs a heading.`,
+				bad_heading: (column: number) => `The heading of column ${column} must fit on one line.`,
+				duplicate: (column: number, first: number) =>
+					`Column ${column} has the same heading as column ${first}; capitals do not tell them apart.`,
+				bad_separator: 'The list separator cannot be empty or hold a line break.'
+			},
+			save: 'Save profile',
+			saved: 'Profile saved.',
+			cancel: 'Cancel',
+			export: 'Export…',
+			close: 'Close'
+		},
 		tagged: (tag: string, n: number) =>
 			`${n === 1 ? '1 document' : `${n} documents`} tagged “${tag}”`,
 		columnResults: 'Results',
@@ -1523,6 +1617,7 @@ export const en = {
 		'project.elsewhere': 'This belongs to another project, or no longer exists.',
 		'project.no_name': 'Give it a name.',
 		'project.no_tag': 'Type the tag to add.',
+		'project.export': 'The export could not be written.',
 		'dictionary.no_entry':
 			'This entry is no longer in the dictionary. It may have been merged or split.',
 		'dictionary.no_label': 'Give the entry a label.',
@@ -1572,6 +1667,12 @@ export const en = {
 		'workflow.cannot_read_text':
 			'This step’s task does not read text: let it read the files instead.',
 		'workflow.not_finished': 'This step has not finished yet.',
+		'profile.no_name': 'An export profile needs a name.',
+		'profile.no_columns': 'An export profile needs at least one column.',
+		'profile.unnamed_column': 'Every column of an export profile needs a heading.',
+		'profile.bad_heading': 'A column’s heading must fit on one line.',
+		'profile.duplicate_heading': 'Two columns have the same heading.',
+		'profile.bad_separator': 'The list separator cannot be empty or hold a line break.',
 		'prompt.invalid_file':
 			'This is not a file of Kalamu prompts, a pipeline or a workflow, or it comes from a newer version of Kalamu.',
 		'provider.unknown': 'Unknown provider.',

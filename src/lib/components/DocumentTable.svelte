@@ -17,7 +17,7 @@
 		taskFor,
 		type DocumentSort
 	} from '#lib/projects.js';
-	import { go } from '#lib/state.svelte.js';
+	import { go, toast } from '#lib/state.svelte.js';
 	import { api, ask } from '#lib/tauri.js';
 
 	let {
@@ -47,6 +47,8 @@
 	let target = $state('');
 	let tag = $state('');
 	let untagging = $state('');
+	/** The new name typed for the tag filtered on, while renaming it. */
+	let renaming = $state<string | null>(null);
 
 	// A tag no document carries any longer stops filtering.
 	const filterTag = $derived(tags.some((t) => t.name === tag) ? tag : '');
@@ -87,6 +89,23 @@
 		if (!name) return;
 		const ids = chosen.map((r) => r.document.id);
 		await act(() => api.untagDocuments(projectId, ids, name));
+	}
+
+	/** Renames the tag filtered on across the project, and keeps filtering on it. */
+	async function renameTag(e: SubmitEvent) {
+		e.preventDefault();
+		const from = filterTag;
+		const to = renaming?.trim() ?? '';
+		renaming = null;
+		if (!from || !to || to === from) return;
+		try {
+			const n = await api.renameTag(projectId, from, to);
+			tag = to;
+			await onchange();
+			toast(m.projects.tagRenamed(n));
+		} catch (err) {
+			onerror(describeError(err, m));
+		}
 	}
 
 	async function removeFromCollection() {
@@ -135,6 +154,24 @@
 					<option value={t.name}>{m.projects.tagCount(t.name, t.documents)}</option>
 				{/each}
 			</select>
+			{#if filterTag && renaming !== null}
+				<form class="rename-tag" onsubmit={renameTag}>
+					<!-- svelte-ignore a11y_autofocus -->
+					<input
+						type="text"
+						bind:value={renaming}
+						aria-label={m.projects.renameTagTo(filterTag)}
+						placeholder={m.projects.renameTagTo(filterTag)}
+						autofocus
+						onkeydown={(e) => e.key === 'Escape' && (renaming = null)}
+					/>
+					<button class="btn sm" disabled={!renaming.trim()}>{m.projects.renameTag}</button>
+				</form>
+			{:else if filterTag}
+				<button class="btn ghost sm" onclick={() => (renaming = filterTag)}
+					><Icon name="edit" size={14} />{m.projects.renameTag}</button
+				>
+			{/if}
 		{/if}
 		<label class="sort">
 			<span>{m.projects.sortBy}</span>
@@ -263,18 +300,20 @@
 						>
 						<td class="muted">{m.projects.kind[doc.source.kind]}</td>
 						<td>
-							{#each row.collections as id (id)}
-								<span class="chip">{names.get(id)}</span>
-							{/each}
-							{#each doc.tags as name (name)}
-								<button
-									class="chip tag"
-									class:on={name === filterTag}
-									aria-pressed={name === filterTag}
-									onclick={() => (tag = name === filterTag ? '' : name)}
-									><Icon name="tag" size={11} />{name}</button
-								>
-							{/each}
+							<div class="chips">
+								{#each row.collections as id (id)}
+									<span class="chip">{names.get(id)}</span>
+								{/each}
+								{#each doc.tags as name (name)}
+									<button
+										class="chip tag"
+										class:on={name === filterTag}
+										aria-pressed={name === filterTag}
+										onclick={() => (tag = name === filterTag ? '' : name)}
+										><Icon name="tag" size={11} />{name}</button
+									>
+								{/each}
+							</div>
 						</td>
 						<td class="results">
 							{#if row.tasks.length === 0}
@@ -310,6 +349,14 @@
 {/if}
 
 <style>
+	.rename-tag {
+		display: inline-flex;
+		gap: var(--space-2);
+		align-items: center;
+	}
+	.rename-tag input {
+		width: 14rem;
+	}
 	.sort {
 		display: inline-flex;
 		align-items: center;
@@ -317,10 +364,19 @@
 		font-size: var(--type-sm);
 		color: var(--text-secondary);
 	}
+	/* Collections and tags in one row that wraps, centred on each other: in the line of text a
+	   chip that starts with an icon sat lower than one without. */
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1);
+	}
 	.chip.tag {
 		border: 0;
 		cursor: pointer;
 		gap: 0.25rem;
+		font-family: inherit;
 	}
 	.chip.tag:hover,
 	.chip.tag.on {

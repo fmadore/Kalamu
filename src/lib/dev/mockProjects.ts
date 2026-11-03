@@ -3,6 +3,7 @@
 // jobs. Development builds only.
 
 import type { Collection } from '../bindings/Collection.js';
+import type { Described } from '../bindings/Described.js';
 import type { Document } from '../bindings/Document.js';
 import type { DocumentDetail } from '../bindings/DocumentDetail.js';
 import type { DocumentResult } from '../bindings/DocumentResult.js';
@@ -11,6 +12,7 @@ import type { Project } from '../bindings/Project.js';
 import type { ProjectSummary } from '../bindings/ProjectSummary.js';
 import type { ProjectView } from '../bindings/ProjectView.js';
 import type { SourceFile } from '../bindings/SourceFile.js';
+import { FIELDS, kept, type Draft } from '../described.js';
 import { dictionaryCommand } from './mockDictionary.js';
 
 export const PROJECT_ID = '00000000-0000-0000-0000-0000000000p1';
@@ -28,6 +30,7 @@ let projects: Project[] = [
 		description:
 			'Bulletins, letters and interviews on Catholic and Muslim associations, 1945–1960.',
 		archived: false,
+		source_defaults: { repository: 'Archives nationales du Sénégal', fonds: 'Fonds AOF' },
 		created_at: now - 30 * day,
 		updated_at: now - day
 	},
@@ -36,6 +39,7 @@ let projects: Project[] = [
 		name: 'Ouagadougou interviews 2024',
 		description: '',
 		archived: true,
+		source_defaults: {},
 		created_at: now - 90 * day,
 		updated_at: now - 60 * day
 	}
@@ -59,6 +63,17 @@ export interface MockJobs {
 
 let jobs: Job[] = [];
 
+/** A document's description as it stands, as `kalamu-projects` gives it. */
+function described(document: Document): Described[] {
+	const defaults = projects.find((p) => p.id === document.project_id)?.source_defaults ?? {};
+	return FIELDS.flatMap((field): Described[] => {
+		const own = document.source_description[field];
+		const shared = defaults[field];
+		if (own) return [{ field, value: own, by: 'document' }];
+		return shared ? [{ field, value: shared, by: 'project' }] : [];
+	});
+}
+
 /** Fills the sample project from the sample jobs, once. */
 export function seedProjects(sample: MockJobs): void {
 	if (documents.length > 0) return;
@@ -69,7 +84,8 @@ export function seedProjects(sample: MockJobs): void {
 		title,
 		source,
 		created_at: now - age * day,
-		tags: []
+		tags: [],
+		source_description: {}
 	});
 	documents = [
 		doc(DOCUMENT_ID, 'Bulletin, May 1957', sample.job.sources[0], 12),
@@ -191,6 +207,7 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 				name: String(a.name).trim(),
 				description: String(a.description ?? '').trim(),
 				archived: false,
+				source_defaults: {},
 				created_at: Date.now(),
 				updated_at: Date.now()
 			};
@@ -238,7 +255,8 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 					title: source.file_name.replace(/\.[^.]+$/, ''),
 					source,
 					created_at: Date.now(),
-					tags: []
+					tags: [],
+					source_description: {}
 				};
 				return document;
 			});
@@ -291,10 +309,36 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 				collections: members.filter(([, d]) => d === document.id).map(([c]) => c),
 				missing: false,
 				same_content: [],
-				results: results(document.id)
+				results: results(document.id),
+				described: described(document)
 			};
 			return detail;
 		}
+		case 'describe_document':
+			documents = documents.map((d) =>
+				d.id === a.id ? { ...d, source_description: kept(a.description as Draft) } : d
+			);
+			return null;
+		case 'set_source_defaults': {
+			projects = projects.map((p) =>
+				p.id === a.id ? { ...p, source_defaults: kept(a.defaults as Draft) } : p
+			);
+			return projects.find((p) => p.id === a.id);
+		}
+		case 'rename_tag': {
+			const from = String(a.from).toLowerCase();
+			const to = String(a.to).trim();
+			let n = 0;
+			documents = documents.map((d) => {
+				if (!d.tags.some((t) => t.toLowerCase() === from)) return d;
+				n += 1;
+				const rest = d.tags.filter((t) => ![from, to.toLowerCase()].includes(t.toLowerCase()));
+				return { ...d, tags: [...rest, to].sort((x, y) => x.localeCompare(y)) };
+			});
+			return n;
+		}
+		case 'export_descriptions':
+			return null;
 		case 'set_preferred':
 			for (const key of [...preferred]) if (key.startsWith(`${a.document}/`)) preferred.delete(key);
 			if (a.setup) preferred.add(`${a.document}/${a.setup}`);

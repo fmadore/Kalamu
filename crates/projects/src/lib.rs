@@ -18,11 +18,14 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 mod attach;
+mod described;
 mod documents;
+mod profiled;
 mod queue;
 mod views;
 
 pub use attach::{AttachChoice, SourceMatch};
+pub use described::{Described, DescribedBy, described};
 pub use queue::{QueuePlan, QueueSelection, ResultChoice, ResultKey};
 pub use views::{
     CollectionView, DocumentBrief, DocumentDetail, DocumentResult, DocumentRow, ProjectView,
@@ -93,6 +96,7 @@ impl Projects {
             name: named(name)?,
             description: description.trim().to_string(),
             archived: false,
+            source_defaults: Default::default(),
             created_at: now,
             updated_at: now,
         };

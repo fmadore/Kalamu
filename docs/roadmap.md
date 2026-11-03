@@ -174,6 +174,20 @@ ad hoc; it has not yet been opened on a real Mac
   short named; the project's text prepared in the background when Search opens, its progress
   shown; an analysis's match opening at its field and a table of contents' at its entry
   ([decision](decisions/2026-11-03-search-words-and-preparation.md)).
+- **Source descriptions**, first increment of
+  [#55](https://github.com/fmadore/Kalamu/issues/55) and what was left of
+  [#57](https://github.com/fmadore/Kalamu/issues/57): each document's description of its source
+  (repository, fonds, series, box, shelfmark, creator, date, web address, citation, rights), the
+  parts a project's documents share, both exported as JSON and CSV with where each value came
+  from; renaming a tag across a project
+  ([decision](decisions/2026-11-03-source-descriptions.md)).
+- **Export profiles**, second increment of
+  [#55](https://github.com/fmadore/Kalamu/issues/55): the descriptions export's columns chosen,
+  ordered and renamed, from the document, its description, where each part came from or a
+  fixed text; lists, empty cells and line breaks written as the profile says; checked as it is
+  edited, saved for every project, duplicated, shared without its fixed texts unless asked, and
+  imported; starting from every column or from Dublin Core terms
+  ([decision](decisions/2026-11-03-export-profiles.md)).
 - **What to check, first increment**
   ([#85](https://github.com/fmadore/Kalamu/issues/85)): one list per project, collection or
   selection of the pages and answers that need the researcher, from stored results only:
@@ -267,9 +281,13 @@ is done and shipped in 1.2.0, with the default prompts and the data folder.
   project's documents; importing an exported list back; a large issue's pages combined in
   bounded groups rather than in one request.
 
-- **Project workspaces, what is left of
-  [#57](https://github.com/fmadore/Kalamu/issues/57)**: a document's descriptive metadata
-  (with [#55](https://github.com/fmadore/Kalamu/issues/55)); renaming a tag across a project.
+- **Archival metadata, what is left of [#55](https://github.com/fmadore/Kalamu/issues/55)**:
+  descriptions carried into each result's exports and `provenance.json`; normalised and
+  inferred values (with #54 and #48) beside the literal ones; results' columns (review status,
+  a preferred result's text or fields) in a profile. Source descriptions, project defaults and
+  their export with origins, renaming a tag across a project, and saved export profiles are
+  done ([decision](decisions/2026-11-03-source-descriptions.md),
+  [profiles](decisions/2026-11-03-export-profiles.md)).
 - **Project search, what is left of [#86](https://github.com/fmadore/Kalamu/issues/86)**:
   alternatives (one word or another); searching two letters, and less folding work for very
   common words; and, evaluated separately, semantic search with explicit local or cloud
@@ -389,7 +407,7 @@ A pending merge decision is never treated as approval.
 
 | Order | Improvement | Tracking |
 | --- | --- | --- |
-| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (first increment done) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
+| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (done, with source descriptions) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
 | 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis (first increment done) | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
 | 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps (first increment done, with review checkpoints) | [#49](https://github.com/fmadore/Kalamu/issues/49) |
 | 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export (done: inventory, researcher decisions, export, model-proposed merges) | [#48](https://github.com/fmadore/Kalamu/issues/48) |

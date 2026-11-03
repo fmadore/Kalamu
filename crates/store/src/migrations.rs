@@ -97,4 +97,5 @@ ALTER TABLE documents ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
     dictionary::MIGRATION,
     dictionary::PROPOSALS,
     units::MIGRATION,
+    projects::DESCRIPTIONS,
 ];

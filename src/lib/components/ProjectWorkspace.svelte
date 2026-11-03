@@ -5,14 +5,17 @@
 	// Files dropped on the window join it.
 	import { onMount } from 'svelte';
 	import AttachDialog from './AttachDialog.svelte';
+	import DescriptionFields from './DescriptionFields.svelte';
 	import DictionaryView from './DictionaryView.svelte';
 	import DocumentTable from './DocumentTable.svelte';
+	import ExportDialog from './ExportDialog.svelte';
 	import Icon from './Icon.svelte';
 	import ProjectActivity from './ProjectActivity.svelte';
 	import ProjectSearch from './ProjectSearch.svelte';
 	import ReviewQueue from './ReviewQueue.svelte';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
+	import { changed, type Draft } from '#lib/described.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { lastSearch } from '#lib/projectSearch.js';
@@ -46,8 +49,10 @@
 	let editing = $state(false);
 	let draftName = $state('');
 	let draftDescription = $state('');
+	let draftDefaults = $state<Draft>({});
 	let naming = $state<null | { id: string | null; name: string }>(null);
 	let attaching = $state(false);
+	let exporting = $state(false);
 	let adding = $state(false);
 
 	// Asked again for the list of what to check (from the table's selection), it opens.
@@ -84,12 +89,18 @@
 	function startEdit() {
 		draftName = project?.name ?? '';
 		draftDescription = project?.description ?? '';
+		draftDefaults = { ...(project?.source_defaults ?? {}) };
 		editing = true;
 	}
 
 	async function saveEdit(e: SubmitEvent) {
 		e.preventDefault();
-		await act(() => api.updateProject(projectId, draftName, draftDescription));
+		const defaults = $state.snapshot(draftDefaults);
+		const defaultsChanged = changed(defaults, project?.source_defaults ?? {});
+		await act(async () => {
+			await api.updateProject(projectId, draftName, draftDescription);
+			if (defaultsChanged) await api.setSourceDefaults(projectId, defaults);
+		});
 		if (!error) editing = false;
 	}
 
@@ -178,6 +189,9 @@
 			<button class="btn ghost sm" onclick={startEdit}
 				><Icon name="edit" size={14} />{m.projects.edit}</button
 			>
+			<button class="btn ghost sm" onclick={() => (exporting = true)}
+				><Icon name="download" size={14} />{m.projects.describe.export}</button
+			>
 			<button
 				class="btn ghost sm"
 				onclick={() => act(() => api.archiveProject(projectId, !project.archived))}
@@ -204,6 +218,11 @@
 			<textarea rows="2" bind:value={draftDescription} placeholder={m.projects.descriptionHint}
 			></textarea>
 		</label>
+		<fieldset class="defaults">
+			<legend>{m.projects.describe.projectTitle}</legend>
+			<p class="muted hint">{m.projects.describe.projectLede}</p>
+			<DescriptionFields bind:value={draftDefaults} />
+		</fieldset>
 		<div class="row">
 			<button type="button" class="btn ghost" onclick={() => (editing = false)}
 				>{m.projects.cancel}</button
@@ -365,6 +384,15 @@
 	</div>
 {/if}
 
+{#if exporting}
+	<ExportDialog
+		{projectId}
+		{collectionId}
+		name={collection?.collection.name ?? project?.name ?? ''}
+		onclose={() => (exporting = false)}
+	/>
+{/if}
+
 {#if attaching && view}
 	<AttachDialog
 		{projectId}
@@ -392,9 +420,26 @@
 	.edit {
 		display: grid;
 		gap: var(--space-3);
-		max-width: 36rem;
+		max-width: 48rem;
 		padding: var(--space-4) var(--space-5);
 		border-bottom: 1px solid var(--line);
+	}
+	.defaults {
+		display: grid;
+		gap: var(--space-2);
+		margin: 0;
+		padding: var(--space-3) 0 0;
+		border: 0;
+		border-top: 1px solid var(--line-soft);
+	}
+	.defaults legend {
+		padding: 0;
+		font-size: var(--type-sm);
+		font-weight: 500;
+		color: var(--text-bright);
+	}
+	.defaults .hint {
+		font-size: var(--type-xs);
 	}
 	.row {
 		display: flex;

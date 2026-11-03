@@ -694,6 +694,102 @@ export const fr: Messages = {
 		tagButton: 'Étiqueter',
 		removeTag: 'Retirer une étiquette…',
 		removeTagFrom: (tag: string) => `Retirer l’étiquette ${tag}`,
+		renameTag: 'Renommer l’étiquette',
+		renameTagTo: (tag: string) => `Nouveau nom pour « ${tag} »`,
+		tagRenamed: (n: number) =>
+			n <= 1 ? `Renommée sur ${n} document.` : `Renommée sur ${n} documents.`,
+		describe: {
+			title: 'Description de la source',
+			lede: 'L’original tel qu’un fonds d’archives ou une bibliothèque le décrit, comme vous le citeriez. C’est vous qui la rédigez, jamais un modèle, et aucun résultat ne la modifie. Un champ laissé vide reprend celui du projet.',
+			projectTitle: 'Commune à ses documents',
+			projectLede:
+				'Les éléments de description que partagent tous les documents, comme le dépôt ou le fonds. La valeur propre à un document les remplace.',
+			fields: {
+				repository: 'Dépôt',
+				fonds: 'Fonds ou collection',
+				series: 'Série',
+				file: 'Carton ou dossier',
+				shelfmark: 'Cote',
+				creator: 'Auteur ou producteur',
+				date: 'Date',
+				url: 'Adresse web',
+				citation: 'Référence à citer',
+				rights: 'Droits'
+			},
+			fromProject: 'Repris du projet',
+			save: 'Enregistrer la description',
+			saved: 'Description enregistrée.',
+			export: 'Exporter les descriptions',
+			exported: 'Les descriptions ont été enregistrées en JSON, avec un CSV à côté.'
+		},
+		profiles: {
+			title: 'Exporter les descriptions',
+			lede: 'L’export propre à Kalamu donne chaque élément de chaque description en indiquant d’où il vient. Un profil écrit les colonnes que vous choisissez, dans votre ordre et sous vos intitulés, pour un tableur ou l’import d’un autre outil. Il sert à tous les projets et ne garde aucune valeur de celui-ci.',
+			columns: 'Colonnes',
+			kalamu: 'Tous les éléments, en indiquant d’où ils viennent',
+			newProfile: 'Nouveau profil',
+			starters: {
+				every: 'À partir de toutes les colonnes',
+				dublin_core: 'À partir des termes Dublin Core'
+			},
+			import: 'Importer un profil…',
+			imported: (name: string) => `Profil « ${name} » importé.`,
+			edit: 'Modifier',
+			duplicate: 'Dupliquer',
+			copyName: (name: string) => `${name} (copie)`,
+			share: 'Partager…',
+			shareFixed:
+				'Inclure les textes fixes ? Ils peuvent être propres à ce projet. Sans eux, les colonnes restent et leurs textes sont laissés vides.',
+			shared: 'Le profil a été enregistré dans un fichier qu’un autre Kalamu peut importer.',
+			delete: 'Supprimer',
+			deleteConfirm: (name: string) =>
+				`Supprimer le profil « ${name} » ? Les fichiers déjà exportés restent tels quels.`,
+			name: 'Nom',
+			heading: 'Intitulé',
+			value: 'Valeur',
+			fixedText: 'Texte de chaque ligne',
+			groups: {
+				document: 'Le document',
+				parts: 'Sa description',
+				from: 'D’où vient chaque élément',
+				other: 'Autre'
+			},
+			values: {
+				document_id: 'Identifiant du document',
+				title: 'Titre',
+				file_name: 'Nom du fichier',
+				path: 'Chemin',
+				project: 'Nom du projet',
+				collections: 'Collections',
+				tags: 'Étiquettes',
+				fixed: 'Un texte fixe'
+			},
+			fromPart: (part: string) => `${part} : d’où il vient`,
+			moveUp: (n: number) => `Monter la colonne ${n}`,
+			moveDown: (n: number) => `Descendre la colonne ${n}`,
+			remove: (n: number) => `Retirer la colonne ${n}`,
+			addColumn: 'Ajouter une colonne',
+			separator: 'Entre les éléments d’une liste',
+			separatorHint: 'Dans une cellule CSV ; le JSON garde les listes telles quelles.',
+			missing: 'Texte d’une cellule vide',
+			missingHint: 'Rien si le champ reste vide ; le JSON écrit null.',
+			joinLines: 'Remplacer les retours à la ligne d’une valeur par une espace',
+			problems: {
+				no_name: 'Donnez un nom au profil.',
+				no_columns: 'Ajoutez au moins une colonne.',
+				unnamed: (column: number) => `La colonne ${column} a besoin d’un intitulé.`,
+				bad_heading: (column: number) =>
+					`L’intitulé de la colonne ${column} doit tenir sur une ligne.`,
+				duplicate: (column: number, first: number) =>
+					`La colonne ${column} a le même intitulé que la colonne ${first} ; les majuscules ne les distinguent pas.`,
+				bad_separator: 'Le séparateur de liste ne peut être vide ni contenir de retour à la ligne.'
+			},
+			save: 'Enregistrer le profil',
+			saved: 'Profil enregistré.',
+			cancel: 'Annuler',
+			export: 'Exporter…',
+			close: 'Fermer'
+		},
 		tagged: (tag: string, n: number) =>
 			`${n === 1 ? '1 document étiqueté' : `${n} documents étiquetés`} « ${tag} »`,
 		columnResults: 'Résultats',
@@ -1243,9 +1339,9 @@ export const fr: Messages = {
 		differenceOf: (n: number, total: number) => `${n} sur ${total}`,
 		disagree: 'Les modèles lisent ce passage différemment',
 		corrected_here: 'Vous avez corrigé ce passage',
-		useReading: 'Retenir cette leçon',
+		useReading: 'Mettre dans le texte',
 		inUse: 'Dans le texte',
-		ownReading: 'Votre propre leçon',
+		ownReading: 'Votre propre lecture',
 		ownReadingPlaceholder: 'Tapez ce que porte la source',
 		apply: 'Appliquer',
 		readingKept: 'Le texte du modèle est conservé ; votre choix est enregistré comme correction.',
@@ -1261,7 +1357,7 @@ export const fr: Messages = {
 		resizeCompare: 'Redimensionner le texte et le texte comparé',
 		addedHere: 'Un autre modèle ajoute des mots ici',
 		leftOutHere: 'Ce modèle omet des mots ici',
-		pickReading: 'Choisir la bonne leçon',
+		pickReading: 'Choisir la bonne version',
 		original: 'Texte d’origine',
 		changedHere: 'La correction a modifié ce passage',
 		legendChanged: 'Modifié par rapport à l’original',
@@ -1479,7 +1575,7 @@ export const fr: Messages = {
 			},
 			setup: {
 				word: 'Combinaison et comparaison',
-				text: 'Une combinaison, c’est un fournisseur, un modèle et un prompt appliqués aux fichiers d’un traitement. Un traitement qui en compte deux ou plus les compare : en relecture, chacune est désignée par une lettre (son sigle), et les passages où elles lisent différemment sont mis en évidence, comme une édition critique note les leçons de ses témoins.'
+				text: 'Une combinaison, c’est un fournisseur, un modèle et un prompt appliqués aux fichiers d’un traitement. Un traitement qui en compte deux ou plus les compare : en relecture, chacune est désignée par une lettre (son sigle), et les passages où elles lisent différemment sont mis en évidence, comme une édition critique note les variantes de ses témoins.'
 			},
 			pipeline: {
 				word: 'Configuration',
@@ -1613,6 +1709,7 @@ export const fr: Messages = {
 		'project.elsewhere': 'Cet élément appartient à un autre projet, ou n’existe plus.',
 		'project.no_name': 'Donnez-lui un nom.',
 		'project.no_tag': 'Tapez l’étiquette à ajouter.',
+		'project.export': 'L’export n’a pas pu être écrit.',
 		'dictionary.no_entry':
 			'Cette entrée ne figure plus dans le dictionnaire. Elle a peut-être été fusionnée ou scindée.',
 		'dictionary.no_label': 'Donnez un libellé à l’entrée.',
@@ -1666,6 +1763,13 @@ export const fr: Messages = {
 		'workflow.cannot_read_text':
 			'La tâche de cette étape ne lit pas de texte : faites-lui plutôt lire les fichiers.',
 		'workflow.not_finished': 'Cette étape n’est pas encore terminée.',
+		'profile.no_name': 'Un profil d’export a besoin d’un nom.',
+		'profile.no_columns': 'Un profil d’export a besoin d’au moins une colonne.',
+		'profile.unnamed_column': 'Chaque colonne d’un profil d’export a besoin d’un intitulé.',
+		'profile.bad_heading': 'L’intitulé d’une colonne doit tenir sur une ligne.',
+		'profile.duplicate_heading': 'Deux colonnes ont le même intitulé.',
+		'profile.bad_separator':
+			'Le séparateur de liste ne peut être vide ni contenir de retour à la ligne.',
 		'prompt.invalid_file':
 			'Ce n’est pas un fichier de prompts, de configuration ou de chaîne de traitement Kalamu, ou il provient d’une version plus récente de Kalamu.',
 		'provider.unknown': 'Fournisseur inconnu.',

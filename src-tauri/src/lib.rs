@@ -176,6 +176,7 @@ pub fn run() {
             let prompts = PromptLibrary::open(&data.join("presets"))?;
             let pipelines = kalamu_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
             let workflows = kalamu_prompts::WorkflowLibrary::open(&data.join("workflows"))?;
+            let profiles = kalamu_prompts::ProfileLibrary::open(&data.join("export-profiles"))?;
             let cached = std::fs::read_to_string(&paths.catalog_cache).ok();
             let catalog = Catalog::newest(cached.as_deref());
             let http = kalamu_providers::client();
@@ -278,6 +279,7 @@ pub fn run() {
                 preview: Mutex::new(None),
                 pipelines: Mutex::new(pipelines),
                 workflows: Mutex::new(workflows),
+                profiles: Mutex::new(profiles),
                 quitting: std::sync::atomic::AtomicBool::new(false),
             });
             app.manage(tray::TrayMenu::default());
@@ -402,6 +404,18 @@ pub fn run() {
             commands::projects::remove_from_collection,
             commands::projects::tag_documents,
             commands::projects::untag_documents,
+            commands::projects::describe_document,
+            commands::projects::set_source_defaults,
+            commands::projects::rename_tag,
+            commands::projects::export_descriptions,
+            commands::profiles::list_export_profiles,
+            commands::profiles::save_export_profile,
+            commands::profiles::duplicate_export_profile,
+            commands::profiles::delete_export_profile,
+            commands::profiles::check_export_profile,
+            commands::profiles::profile_starter,
+            commands::profiles::share_export_profile,
+            commands::profiles::import_export_profile,
             commands::projects::merge_documents,
             commands::projects::document_detail,
             commands::projects::set_preferred,

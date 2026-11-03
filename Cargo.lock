@@ -2594,9 +2594,11 @@ dependencies = [
 name = "kalamu-projects"
 version = "1.2.0"
 dependencies = [
+ "csv",
  "kalamu-core",
  "kalamu-store",
  "serde",
+ "serde_json",
  "tempfile",
  "ts-rs",
 ]

@@ -8,7 +8,9 @@ license.workspace = true
 
 [dependencies]
 kalamu-core.workspace = true
+csv.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 ts-rs.workspace = true
 
 [dev-dependencies]

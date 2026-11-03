@@ -60,6 +60,7 @@ fn fixture_on(store: Arc<SqliteStore>) -> Fixture {
         name: "Missions".into(),
         description: String::new(),
         archived: false,
+        source_defaults: Default::default(),
         created_at: Timestamp(1),
         updated_at: Timestamp(1),
     };
@@ -88,6 +89,7 @@ impl Fixture {
             source: source.clone(),
             created_at: Timestamp::now(),
             tags: Vec::new(),
+            source_description: Default::default(),
         };
         self.store.put_document(&document).unwrap();
         (document.id, source)

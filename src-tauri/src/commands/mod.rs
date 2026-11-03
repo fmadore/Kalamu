@@ -7,6 +7,7 @@ pub mod keys;
 pub mod offline;
 pub mod pipelines;
 pub mod presets;
+pub mod profiles;
 pub mod projects;
 pub mod review;
 pub mod search;
@@ -60,6 +61,8 @@ pub struct AppState {
     pub pipelines: Mutex<kalamu_prompts::PipelineLibrary>,
     /// Saved workflows; their runs are the engine's.
     pub workflows: Mutex<kalamu_prompts::WorkflowLibrary>,
+    /// Saved export profiles for project descriptions.
+    pub profiles: Mutex<kalamu_prompts::ProfileLibrary>,
     /// Set once quitting has begun: asked to quit again, the app stops waiting.
     pub quitting: std::sync::atomic::AtomicBool,
 }

@@ -24,6 +24,10 @@ import type { Item } from './bindings/Item.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Pipeline } from './bindings/Pipeline.js';
+import type { ExportProfile } from './bindings/ExportProfile.js';
+import type { ProfileColumn } from './bindings/ProfileColumn.js';
+import type { ProfileError } from './bindings/ProfileError.js';
+import type { ProfileStarter } from './bindings/ProfileStarter.js';
 import type { JobStep } from './bindings/JobStep.js';
 import type { RunView } from './bindings/RunView.js';
 import type { StartRun } from './bindings/StartRun.js';
@@ -51,6 +55,7 @@ import type { Preset } from './bindings/Preset.js';
 import type { Project } from './bindings/Project.js';
 import type { SearchRequest } from './bindings/SearchRequest.js';
 import type { SearchProgress } from './bindings/SearchProgress.js';
+import type { Draft } from './described.js';
 import type { SearchView } from './bindings/SearchView.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { ProjectView } from './bindings/ProjectView.js';
@@ -208,6 +213,32 @@ export const api = {
 		invoke<void>('tag_documents', { project, ids, tag }),
 	untagDocuments: (project: string, ids: string[], tag: string) =>
 		invoke<void>('untag_documents', { project, ids, tag }),
+	renameTag: (project: string, from: string, to: string) =>
+		invoke<number>('rename_tag', { project, from, to }),
+	describeDocument: (project: string, id: string, description: Draft) =>
+		invoke<void>('describe_document', { project, id, description }),
+	setSourceDefaults: (id: string, defaults: Draft) =>
+		invoke<Project>('set_source_defaults', { id, defaults }),
+	/** Every part with where it came from, or with `profile` the columns of a saved profile. */
+	exportDescriptions: (
+		project: string,
+		collection: string | null,
+		profile: string | null,
+		path: string
+	) => invoke<void>('export_descriptions', { project, collection, profile, path }),
+	listExportProfiles: () => invoke<ExportProfile[]>('list_export_profiles'),
+	saveExportProfile: (profile: ExportProfile) =>
+		invoke<ExportProfile>('save_export_profile', { profile }),
+	duplicateExportProfile: (id: string, name: string) =>
+		invoke<ExportProfile>('duplicate_export_profile', { id, name }),
+	deleteExportProfile: (id: string) => invoke<void>('delete_export_profile', { id }),
+	checkExportProfile: (profile: ExportProfile) =>
+		invoke<ProfileError | null>('check_export_profile', { profile }),
+	profileStarter: (starter: ProfileStarter) =>
+		invoke<ProfileColumn[]>('profile_starter', { starter }),
+	shareExportProfile: (id: string, fixedTexts: boolean, path: string) =>
+		invoke<void>('share_export_profile', { id, fixedTexts, path }),
+	importExportProfile: (path: string) => invoke<ExportProfile>('import_export_profile', { path }),
 	projectSearch: (project: string, request: SearchRequest) =>
 		invoke<SearchView>('project_search', { project, request }),
 	rebuildSearchIndex: () => invoke<void>('rebuild_search_index'),
@@ -352,6 +383,13 @@ export async function pickSaveFile(defaultPath: string): Promise<string | null> 
 /** Where to write a dictionary: the JSON file of its entries, with the CSV of every form
  *  beside it. */
 export async function pickDictionaryExport(name: string): Promise<string | null> {
+	if (!isTauri()) return null;
+	const { save } = await import('@tauri-apps/plugin-dialog');
+	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });
+}
+
+/** Where to write a project's descriptions: the JSON file, with its CSV twin beside it. */
+export async function pickDescriptionsExport(name: string): Promise<string | null> {
 	if (!isTauri()) return null;
 	const { save } = await import('@tauri-apps/plugin-dialog');
 	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });

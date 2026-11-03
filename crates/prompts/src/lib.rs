@@ -8,6 +8,7 @@ mod defaults;
 mod dictionary;
 mod folder;
 mod pipelines;
+mod profiles;
 mod record;
 mod render;
 mod workflow_file;
@@ -15,6 +16,7 @@ mod workflows;
 
 pub use dictionary::DICTIONARY_MERGES;
 pub use pipelines::{Pipeline, PipelineLibrary};
+pub use profiles::{ProfileFile, ProfileLibrary};
 pub use record::{PipelineFile, SetupRecord};
 pub use render::{RenderContext, describe, render};
 pub use workflow_file::WorkflowFile;
@@ -85,6 +87,8 @@ pub enum PromptError {
     IncompleteWorkflow,
     #[error(transparent)]
     Workflow(#[from] kalamu_core::WorkflowError),
+    #[error(transparent)]
+    Profile(#[from] kalamu_core::ProfileError),
 }
 
 impl PromptError {
@@ -98,6 +102,7 @@ impl PromptError {
             Self::IncompletePipeline => "prompt.unnamed_pipeline",
             Self::IncompleteWorkflow => "workflow.incomplete",
             Self::Workflow(e) => e.code(),
+            Self::Profile(e) => e.code(),
             Self::InvalidImport(_) => "prompt.invalid_file",
             _ => "prompt.invalid",
         }

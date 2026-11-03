@@ -15,6 +15,7 @@ import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import taskRulesJson from './taskRules.json';
 import { DOCUMENT_ID, PROJECT_ID, projectCommand, seedProjects } from './mockProjects.js';
 import { NO_RESULT } from './noResult.js';
+import { profileCommand } from './mockProfiles.js';
 import { searchCommand } from './mockSearch.js';
 import { queueCommand } from './mockQueue.js';
 import {
@@ -406,6 +407,8 @@ export function installMock(): void {
 	seedWorkflows(pipelines[0], pipelines[1], summaries[0], source);
 	mockIPC((cmd, args) => {
 		const a = (args ?? {}) as Record<string, unknown>;
+		const profile = profileCommand(cmd, a);
+		if (profile !== undefined) return profile;
 		const project = projectCommand(cmd, a);
 		if (project !== undefined) return project;
 		const workflow = workflowCommand(cmd, a);
