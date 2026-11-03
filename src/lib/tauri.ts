@@ -358,7 +358,10 @@ export async function pickFiles(task: Task): Promise<string[]> {
 	if (!isTauri()) return [];
 	const { open } = await import('@tauri-apps/plugin-dialog');
 	const extensions = EXTENSIONS[task];
-	const picked = await open({ multiple: true, filters: [{ name: messages().common.sources, extensions }] });
+	const picked = await open({
+		multiple: true,
+		filters: [{ name: messages().common.sources, extensions }]
+	});
 	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
 }
 
@@ -367,7 +370,10 @@ export async function pickDocuments(): Promise<string[]> {
 	if (!isTauri()) return [];
 	const { open } = await import('@tauri-apps/plugin-dialog');
 	const extensions = [...new Set(Object.values(EXTENSIONS).flat())];
-	const picked = await open({ multiple: true, filters: [{ name: messages().common.sources, extensions }] });
+	const picked = await open({
+		multiple: true,
+		filters: [{ name: messages().common.sources, extensions }]
+	});
 	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
 }
 
