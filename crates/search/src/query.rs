@@ -14,7 +14,7 @@ use kalamu_core::{
 use crate::fold::{context, find, folded, searchable};
 use crate::passages::searched;
 use crate::{
-    Coverage, DocumentHits, FieldRef, Hit, MAX_LISTED, ResultChoice, ResultHits, ReviewFilter,
+    Coverage, DocumentHits, FieldRef, Hit, MAX_LISTED, ResultHits, ResultPolicy, ReviewFilter,
     Search, SearchError, SearchRequest, SearchView,
 };
 
@@ -212,7 +212,7 @@ impl Search {
         let mut without_preference = HashSet::new();
         for ((document, _), results) in candidates {
             let has_preferred = results.iter().any(|c| c.preferred);
-            if request.results == ResultChoice::Preferred && has_preferred {
+            if request.results == ResultPolicy::Preferred && has_preferred {
                 chosen.extend(results.into_iter().filter(|c| c.preferred));
             } else {
                 if !has_preferred && results.len() > 1 {

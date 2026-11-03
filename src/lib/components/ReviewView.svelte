@@ -6,7 +6,7 @@
 	// text can open in a third pane beside it. A search finds words across every page of the text
 	// shown, corrections included, and goes to each match (a recording plays from its line).
 	import Missing from './Missing.svelte';
-	import { onMount, tick } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import Icon from './Icon.svelte';
@@ -33,13 +33,27 @@
 	let {
 		jobId,
 		sourceId,
-		find: opening
-	}: { jobId: string; sourceId: string; find?: ReviewFind } = $props();
+		find: opening,
+		start
+	}: {
+		jobId: string;
+		sourceId: string;
+		/** A match chosen in a project's search, to go to. */
+		find?: ReviewFind;
+		/** The piece to open on, from 0: the one chosen in the list of what to check. */
+		start?: number;
+	} = $props();
 	const m = messages();
 	// svelte-ignore state_referenced_locally
 	const review = new Review(jobId, sourceId, { scored: true });
 
-	let index = $state(0);
+	// svelte-ignore state_referenced_locally
+	let index = $state(start ?? 0);
+	// Stepping through the list of what to check turns to the next piece of the same source.
+	$effect(() => {
+		const at = start;
+		if (at !== undefined) untrack(() => goTo(at));
+	});
 	let editing = $state<{ setupId: string; text: string } | null>(null);
 	let showDiff = $state(true);
 	let spans = $state<Record<string, DiffSpan[]>>({});

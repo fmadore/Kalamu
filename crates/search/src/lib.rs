@@ -31,7 +31,7 @@ pub const MAX_LISTED: usize = 1000;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
-pub enum ResultChoice {
+pub enum ResultPolicy {
     /// The preferred result of each task where the researcher chose one, every result where
     /// they did not.
     #[default]
@@ -60,7 +60,7 @@ pub struct SearchRequest {
     pub tag: Option<String>,
     pub task: Option<Task>,
     pub review: ReviewFilter,
-    pub results: ResultChoice,
+    pub results: ResultPolicy,
     /// Also search what models wrote about the documents: analyses' answers and reasons, and
     /// tables of contents' entries. Off, only the text read from them is searched.
     pub generated: bool,

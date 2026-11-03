@@ -163,6 +163,15 @@ ad hoc; it has not yet been opened on a real Mac
   review where it stands; what was searched said with every search; a local index (SQLite FTS5,
   trigrams) derived from the results and made again when lost; a crate of its own, `search`
   ([decision](decisions/2026-11-03-project-search.md)).
+- **What to check, first increment**
+  ([#85](https://github.com/fmadore/Kalamu/issues/85)): one list per project, collection or
+  selection of the pages and answers that need the researcher, from stored results only:
+  failures and pages not read apart from answers, answers cut off, set-ups that disagree (words,
+  or list, choice and entry fields), answers read from a text corrected since or from an item given other pages, and pages not
+  reviewed; preferred results where chosen, otherwise every result, each listed to be set
+  aside, documents counted once; each item opens its review at its page with the next and
+  previous items at hand; coverage counted whatever the filters
+  ([decision](decisions/2026-11-03-what-to-check.md)).
 - **Tags on a project's documents**: the researcher's own labels beside the collections, added
   and removed on a selection or a document, narrowing the table and found by its search; one
   spelling per project whatever the capitals, kept through a merge.
@@ -262,6 +271,10 @@ is done and shipped in 1.2.0, with the default prompts and the data folder.
   accepted dictionary versioned and given to later analyses as a fingerprinted input (with
   #49); and telling apart two people who share a spelling, which needs mentions anchored in
   the text (#47).
+- **What to check, what is left of [#85](https://github.com/fmadore/Kalamu/issues/85)**:
+  items kept aside with a note; a reproducible random sample of unflagged pages; a review
+  manifest export (identities, reasons, decisions); invalid evidence anchors; optional field
+  rules with their version.
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed

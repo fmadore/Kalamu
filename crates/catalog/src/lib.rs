@@ -71,6 +71,21 @@ pub enum LanguageSupport {
     List(Vec<LanguageCode>),
 }
 
+/// How many languages a model's API can be told: with more chosen than it takes, it detects the
+/// language instead.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum LanguageHints {
+    /// Every language chosen, for recordings that mix them.
+    #[default]
+    Several,
+    /// A single language (Whisper, OpenAI's diarizing model).
+    One,
+    /// A single language, and none when speakers or timestamps are asked for (Voxtral).
+    OneWithoutTimestamps,
+}
+
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct Pricing {
@@ -204,6 +219,13 @@ pub struct ModelInfo {
     /// Uses the languages chosen for a job. Mistral OCR reads any language and takes none.
     #[serde(default = "yes")]
     pub takes_language: bool,
+    /// How many of the chosen languages its API takes; the provider modules send them so.
+    #[serde(default)]
+    pub language_hints: LanguageHints,
+    /// Its API is told only languages with a two-letter ISO 639-1 code (OpenAI's speech-to-text
+    /// models); it detects the others.
+    #[serde(default)]
+    pub two_letter_codes: bool,
     /// Reports where text sits on the page, which a searchable PDF needs.
     #[serde(default)]
     pub layout: bool,
@@ -377,6 +399,33 @@ impl Catalog {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The flags New job reads must match what the provider modules send: OpenAI's
+    /// transcriptions take two-letter codes, and Whisper, Voxtral and the diarizing model one
+    /// language.
+    #[test]
+    fn transcription_language_hints_match_the_providers() -> Result<(), CatalogError> {
+        let catalog = Catalog::from_json(BUNDLED)?;
+        for model in catalog
+            .models
+            .iter()
+            .filter(|m| m.tasks.contains(&Task::AudioTranscription))
+        {
+            let expected = match (model.provider.as_str(), model.id.as_str()) {
+                ("whisper", _) | ("openai", "gpt-4o-transcribe-diarize") => LanguageHints::One,
+                ("mistral", _) => LanguageHints::OneWithoutTimestamps,
+                _ => LanguageHints::Several,
+            };
+            assert_eq!(model.language_hints, expected, "{}", model.id);
+            assert_eq!(
+                model.two_letter_codes,
+                model.provider.as_str() == "openai",
+                "{}",
+                model.id
+            );
+        }
+        Ok(())
+    }
 
     #[test]
     fn bundled_catalogue_is_valid_and_consistent() -> Result<(), CatalogError> {

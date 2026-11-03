@@ -4,6 +4,7 @@
 //! cross into the front end derive [`ts_rs::TS`]; `cargo test` writes their TypeScript bindings.
 
 pub mod analysis;
+pub mod attention;
 pub mod batch;
 pub mod contents;
 pub mod correction;
@@ -32,6 +33,7 @@ pub mod workflow;
 pub mod youtube;
 
 pub use analysis::{AnalysisSchema, Field, FieldAnswer, FieldKind, FieldValue, SchemaError};
+pub use attention::{QueueCounts, QueueItem, ReviewQueue, ReviewScope, ReviewTarget, Signal};
 pub use batch::{
     BATCH_WINDOW_MS, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress, BatchRecord,
 };

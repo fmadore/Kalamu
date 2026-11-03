@@ -116,20 +116,25 @@
 		{:else if app.view.name === 'jobs'}
 			<JobsView jobId={app.view.jobId} />
 		{:else if app.view.name === 'review'}
-			{@const { jobId, sourceId, find } = app.view}
+			{@const { jobId, sourceId, index, find } = app.view}
 			{@const task = app.jobs.find((j) => j.id === jobId)?.task}
-			{#if task === 'analysis'}
-				<AnalysisReview {jobId} {sourceId} {find} />
-			{:else if task === 'contents'}
-				<ContentsReview {jobId} {sourceId} {find} />
-			{:else}
-				<ReviewView {jobId} {sourceId} {find} />
-			{/if}
+			<!-- Another source is another review, loaded afresh; another page of it is not. -->
+			{#key `${jobId}/${sourceId}`}
+				{#if task === 'analysis'}
+					<AnalysisReview {jobId} {sourceId} {find} />
+				{:else if task === 'contents'}
+					<ContentsReview {jobId} {sourceId} start={index} {find} />
+				{:else}
+					<ReviewView {jobId} {sourceId} start={index} {find} />
+				{/if}
+			{/key}
 		{:else if app.view.name === 'projects'}
 			<ProjectsView
 				projectId={app.view.projectId}
 				collectionId={app.view.collectionId}
 				documentId={app.view.documentId}
+				pane={app.view.pane}
+				selection={app.view.selection}
 			/>
 		{:else if app.view.name === 'workflows'}
 			<WorkflowsView

@@ -9,6 +9,8 @@ import type { JobSummary } from './bindings/JobSummary.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PieceStatus } from './bindings/PieceStatus.js';
+import type { QueueItem } from './bindings/QueueItem.js';
+import type { ResultKey } from './bindings/ResultKey.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
 import type { SourceFile } from './bindings/SourceFile.js';
@@ -16,6 +18,7 @@ import type { StepState } from './bindings/StepState.js';
 import type { Task } from './bindings/Task.js';
 import type { Term } from './glossary.js';
 import type { Example } from './workflows.js';
+import type { QueueFilter } from './queue.js';
 import { messages } from './i18n/index.js';
 import { api, notify, openUrl } from './tauri.js';
 
@@ -47,9 +50,24 @@ export type View =
 			sources?: SourceFile[];
 			project?: FromProject;
 	  }
-	| { name: 'projects'; projectId?: string; collectionId?: string; documentId?: string }
+	| {
+			name: 'projects';
+			projectId?: string;
+			collectionId?: string;
+			documentId?: string;
+			/** Opens the project on its list of what to check, over these documents if given. */
+			pane?: 'queue';
+			selection?: string[];
+	  }
 	| { name: 'jobs'; jobId?: string }
-	| { name: 'review'; jobId: string; sourceId: string; find?: ReviewFind }
+	| {
+			name: 'review';
+			jobId: string;
+			sourceId: string;
+			/** The piece to open on, from 0. */
+			index?: number;
+			find?: ReviewFind;
+	  }
 	| {
 			name: 'workflows';
 			/** A saved workflow to edit, or `new` for a blank one. */
@@ -66,6 +84,19 @@ export type View =
 	| { name: 'prompts'; presetId?: string }
 	| { name: 'settings' }
 	| { name: 'glossary'; term?: Term | 'formats' };
+
+/** The list of what to check a review was opened from: the items shown, the one open, and how
+ * the list was set, so stepping on and going back keep it as it was. */
+export interface QueueTrail {
+	projectId: string;
+	/** A collection's id, `selection`, or empty for the whole project. */
+	scope: string;
+	selection: string[];
+	excluded: ResultKey[];
+	filter: QueueFilter;
+	items: QueueItem[];
+	at: number;
+}
 
 export interface LivePiece {
 	status: PieceStatus;
@@ -98,6 +129,8 @@ export const app = $state({
 	runs: 0,
 	/** Jobs of workflow steps that wait for the researcher: checked, or pages not read. */
 	waiting: {} as Record<string, { runId: string; step: number; state: StepState }>,
+	/** The list of what to check the review was opened from, if it was. */
+	queue: null as QueueTrail | null,
 	closeRequested: false,
 	toast: null as string | null
 });

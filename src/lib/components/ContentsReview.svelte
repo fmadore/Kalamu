@@ -36,8 +36,16 @@
 	let {
 		jobId,
 		sourceId,
-		find: opening
-	}: { jobId: string; sourceId: string; find?: ReviewFind } = $props();
+		find: opening,
+		start
+	}: {
+		jobId: string;
+		sourceId: string;
+		/** A match chosen in a project's search, to go to. */
+		find?: ReviewFind;
+		/** The piece to open on, from 0: a page chosen in the list of what to check. */
+		start?: number;
+	} = $props();
 	const m = messages();
 	// svelte-ignore state_referenced_locally
 	const review = new Review(jobId, sourceId);
@@ -54,6 +62,15 @@
 	const details = $derived(fields.filter((f) => f.key !== TITLE && f.key !== PAGES));
 	const mine = $derived(review.views.filter((v) => v.setup_id === setup?.id));
 	const pageViews = $derived(mine.filter((v) => v.piece.kind === 'page'));
+	/** The piece last opened on, so reading the pieces again leaves the page where it is. */
+	let started: number | undefined;
+	$effect(() => {
+		const at = pageViews.findIndex((v) => v.index === start);
+		if (start !== undefined && at >= 0 && started !== start) {
+			started = start;
+			page = at;
+		}
+	});
 	const combined = $derived(mine.find((v) => v.piece.kind === 'whole'));
 	const entries = $derived(entriesOf(combined?.corrected_fields ?? combined?.ai_fields ?? []));
 

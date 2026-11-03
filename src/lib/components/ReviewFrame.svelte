@@ -8,6 +8,7 @@
 	// ⌘ takes Ctrl's place, as in every shortcut (`platform.ts`).
 	import { tick, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
+	import QueueBanner from './QueueBanner.svelte';
 	import StepBanner from './StepBanner.svelte';
 	import ReportLink from './ReportLink.svelte';
 	import SourcePane from './SourcePane.svelte';
@@ -190,6 +191,7 @@
 	</header>
 
 	<StepBanner {jobId} inReview />
+	<QueueBanner {jobId} />
 
 	{#if search && searching}<div bind:this={findRow}>{@render search()}</div>{/if}
 

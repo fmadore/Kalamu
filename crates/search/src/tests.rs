@@ -94,7 +94,7 @@ fn request(query: &str) -> SearchRequest {
         tag: None,
         task: None,
         review: ReviewFilter::Any,
-        results: ResultChoice::Preferred,
+        results: ResultPolicy::Preferred,
         generated: false,
     }
 }
@@ -453,6 +453,6 @@ fn several_set_ups_stay_results_of_one_document_and_preferences_choose() {
     assert_eq!(result.setup_label, "Mistral");
     assert_eq!(view.coverage.without_preference, 0);
     let mut all = request("mosquee de bobo");
-    all.results = ResultChoice::All;
+    all.results = ResultPolicy::All;
     assert_eq!(f.find(&all).documents[0].results.len(), 2);
 }
