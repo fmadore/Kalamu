@@ -12,12 +12,10 @@ the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-
 
 ## Status (3 November 2026)
 
-**Version 1.1.2 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)** (product ID `9MXT5555BZ1H`),
-published as an update from the `Kalamu_1.1.2.msixbundle` of the
-[v1.1.2 release](https://github.com/fmadore/Kalamu/releases/tag/v1.1.2). Version 1.2.0 was
-submitted on 3 November 2026 from the `Kalamu_1.2.0.msixbundle` of the
-[v1.2.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.2.0) and is awaiting
-certification. The first submission,
+**Version 1.2.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)** (product ID `9MXT5555BZ1H`),
+published on 3 November 2026 as an update from the `Kalamu_1.2.0.msixbundle` of the
+[v1.2.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.2.0). Version 1.3.0 is
+submitted next, from the `Kalamu_1.3.0.msixbundle` of its release. The first submission,
 1.0.0, passed certification on 2 November 2026 from the `Kalamu_1.0.0.msixbundle` of the
 [v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0). The steps below stay
 as the record of the first submission and the procedure for updates.
