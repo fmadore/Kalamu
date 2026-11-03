@@ -110,6 +110,7 @@
     "allow-attach-job",
     "allow-link-job",
     "allow-detach-job",
+    "allow-review-queue",
     "allow-dictionary-view",
     "allow-dictionary-evidence",
     "allow-dictionary-merge",

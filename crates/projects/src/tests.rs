@@ -14,6 +14,7 @@ use kalamu_store::SqliteStore;
 
 use super::*;
 
+mod queue;
 mod tags;
 
 struct Fixture {

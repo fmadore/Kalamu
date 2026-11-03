@@ -373,6 +373,7 @@ pub fn run() {
             commands::projects::attach_job,
             commands::projects::link_job,
             commands::projects::detach_job,
+            commands::projects::review_queue,
             commands::dictionary::dictionary_view,
             commands::dictionary::dictionary_evidence,
             commands::dictionary::dictionary_merge,

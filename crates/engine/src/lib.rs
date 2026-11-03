@@ -5,6 +5,7 @@
 //! the store before and after its call; a result is keyed by everything that shapes the answer,
 //! so re-running a folder, adding a set-up or resuming after a crash only pays for new work.
 
+mod attention;
 mod batch;
 mod compare;
 mod contents;

@@ -19,9 +19,11 @@ use ts_rs::TS;
 
 mod attach;
 mod documents;
+mod queue;
 mod views;
 
 pub use attach::{AttachChoice, SourceMatch};
+pub use queue::{QueuePlan, QueueSelection, ResultChoice, ResultKey};
 pub use views::{
     CollectionView, DocumentBrief, DocumentDetail, DocumentResult, DocumentRow, ProjectView,
     TagView, TaskBrief,

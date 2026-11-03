@@ -13,6 +13,9 @@ import type { DictionaryView } from './bindings/DictionaryView.js';
 import type { Pace } from './bindings/Pace.js';
 import type { ProposalPlan } from './bindings/ProposalPlan.js';
 import type { ProposalsView } from './bindings/ProposalsView.js';
+import type { QueueSelection } from './bindings/QueueSelection.js';
+import type { QueueView } from './bindings/QueueView.js';
+import type { ResultKey } from './bindings/ResultKey.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { DocumentDetail } from './bindings/DocumentDetail.js';
 import type { Entry } from './bindings/Entry.js';
@@ -235,6 +238,8 @@ export const api = {
 		invoke<string[]>('link_job', { project, job, collection }),
 	detachJob: (project: string, document: string, job: string, source: string) =>
 		invoke<void>('detach_job', { project, document, job, source }),
+	reviewQueue: (project: string, selection: QueueSelection, excluded: ResultKey[]) =>
+		invoke<QueueView>('review_queue', { project, selection, excluded }),
 	setTaskbarProgress: (percent: number | null) => invoke<void>('set_taskbar_progress', { percent }),
 	setTrayState: (state: TrayState) => invoke<void>('set_tray_state', { state }),
 	hideWindow: () => invoke<void>('hide_window'),

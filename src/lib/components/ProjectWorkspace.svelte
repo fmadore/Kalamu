@@ -1,13 +1,14 @@
 <script lang="ts">
 	// One project: its collections down the side, the documents of the one chosen (or all) in a
-	// table, its dictionary of the names its analyses found, and its activity, the jobs that read
-	// them. Files dropped on the window join it.
+	// table, what in them needs checking, its dictionary of the names its analyses found, and its
+	// activity, the jobs that read them. Files dropped on the window join it.
 	import { onMount } from 'svelte';
 	import AttachDialog from './AttachDialog.svelte';
 	import DictionaryView from './DictionaryView.svelte';
 	import DocumentTable from './DocumentTable.svelte';
 	import Icon from './Icon.svelte';
 	import ProjectActivity from './ProjectActivity.svelte';
+	import ReviewQueue from './ReviewQueue.svelte';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import { describeError } from '#lib/errors.js';
@@ -15,18 +16,36 @@
 	import { go, toast } from '#lib/state.svelte.js';
 	import { api, ask, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
 
-	let { projectId, collectionId }: { projectId: string; collectionId?: string } = $props();
+	let {
+		projectId,
+		collectionId,
+		opening,
+		selection = []
+	}: {
+		projectId: string;
+		collectionId?: string;
+		/** The pane to open on: the list of what to check. */
+		opening?: 'queue';
+		/** Documents chosen in the table, for the list of what to check. */
+		selection?: string[];
+	} = $props();
 	const m = messages();
 
 	let view = $state<ProjectView | null>(null);
 	let error = $state<string | null>(null);
-	let pane = $state<'documents' | 'dictionary' | 'activity'>('documents');
+	// svelte-ignore state_referenced_locally
+	let pane = $state<'documents' | 'queue' | 'dictionary' | 'activity'>(opening ?? 'documents');
 	let editing = $state(false);
 	let draftName = $state('');
 	let draftDescription = $state('');
 	let naming = $state<null | { id: string | null; name: string }>(null);
 	let attaching = $state(false);
 	let adding = $state(false);
+
+	// Asked again for the list of what to check (from the table's selection), it opens.
+	$effect(() => {
+		if (opening) pane = opening;
+	});
 
 	const project = $derived(view?.project);
 	const collection = $derived(view?.collections.find((c) => c.collection.id === collectionId));
@@ -231,7 +250,15 @@
 			{/if}
 
 			<button
-				class="section dictionary"
+				class="section queue"
+				class:current={pane === 'queue'}
+				aria-current={pane === 'queue' ? 'page' : undefined}
+				onclick={() => (pane = 'queue')}
+			>
+				<Icon name="flag" size={14} /><span class="grow">{m.queue.title}</span>
+			</button>
+			<button
+				class="section"
 				class:current={pane === 'dictionary'}
 				aria-current={pane === 'dictionary' ? 'page' : undefined}
 				onclick={() => (pane = 'dictionary')}
@@ -252,6 +279,10 @@
 		<section class="main">
 			{#if pane === 'activity'}
 				<ProjectActivity jobs={view.jobs} />
+			{:else if pane === 'queue'}
+				{#key selection.join(',')}
+					<ReviewQueue {projectId} collections={view.collections} {selection} />
+				{/key}
 			{:else if pane === 'dictionary'}
 				<DictionaryView
 					{projectId}
@@ -399,7 +430,7 @@
 	.section.add {
 		color: var(--text-muted);
 	}
-	.section.dictionary {
+	.section.queue {
 		margin-top: var(--space-4);
 	}
 	.section .num {
@@ -453,7 +484,7 @@
 		.group-head {
 			display: none;
 		}
-		.section.dictionary {
+		.section.queue {
 			margin-top: 0;
 		}
 	}

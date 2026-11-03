@@ -51,6 +51,9 @@ the cheaper batch mode have had fewer live runs, so try a small job first. See t
 - **Reconcile names in a project's dictionary**: the people, places and terms its analyses
   listed, their spellings gathered into entries under the label you choose, with merges a
   model can propose and that you accept, change or turn down.
+- **See what needs checking across a project**: one list of the pages and answers that failed,
+  were cut off, read differently by two models, read from a text corrected since, or are not
+  yet reviewed, each opening its review at the right page. Nothing is sent to a model.
 - **Check every result against its source**, side by side, with corrections kept apart from the
   AI output, which is never overwritten. Search a document or a recording across all its pages
   (Ctrl F), and report inappropriate output from the review.

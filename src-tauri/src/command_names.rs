@@ -102,6 +102,7 @@ pub const COMMANDS: &[&str] = &[
     "attach_job",
     "link_job",
     "detach_job",
+    "review_queue",
     "dictionary_view",
     "dictionary_evidence",
     "dictionary_merge",
