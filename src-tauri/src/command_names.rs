@@ -113,6 +113,7 @@ pub const COMMANDS: &[&str] = &[
     "delete_export_profile",
     "check_export_profile",
     "profile_starter",
+    "project_answer_fields",
     "share_export_profile",
     "import_export_profile",
     "merge_documents",

@@ -660,8 +660,25 @@ export const en = {
 				document: 'The document',
 				parts: 'Its description',
 				from: 'Where each part came from',
+				result: 'Its result for a task',
 				other: 'Other'
 			},
+			tasks: {
+				text_extraction: 'Text extraction',
+				text_correction: 'Text correction',
+				audio_transcription: 'Transcription',
+				analysis: 'Analysis',
+				contents: 'Table of contents'
+			},
+			resultValues: {
+				status: (task: string) => `${task}: how far reviewed`,
+				model: (task: string) => `${task}: model`,
+				text: (task: string) => `${task}: text, as corrected`
+			},
+			answer: 'Analysis: an answer',
+			answerKey: 'Field',
+			resultHint:
+				'A result’s column reads the document’s preferred result for the task, or its only one. When it has several and none is preferred, the cell is left empty: choose one on the document’s page.',
 			values: {
 				document_id: 'Document id',
 				title: 'Title',
@@ -689,7 +706,9 @@ export const en = {
 				bad_heading: (column: number) => `The heading of column ${column} must fit on one line.`,
 				duplicate: (column: number, first: number) =>
 					`Column ${column} has the same heading as column ${first}; capitals do not tell them apart.`,
-				bad_separator: 'The list separator cannot be empty or hold a line break.'
+				bad_separator: 'The list separator cannot be empty or hold a line break.',
+				bad_value: (column: number) =>
+					`Column ${column} asks for what Kalamu cannot give: a text from a task that writes one, or an answer named by its field.`
 			},
 			save: 'Save profile',
 			saved: 'Profile saved.',
@@ -1673,6 +1692,7 @@ export const en = {
 		'profile.bad_heading': 'A column’s heading must fit on one line.',
 		'profile.duplicate_heading': 'Two columns have the same heading.',
 		'profile.bad_separator': 'The list separator cannot be empty or hold a line break.',
+		'profile.bad_value': 'A column asks for a value Kalamu cannot give.',
 		'prompt.invalid_file':
 			'This is not a file of Kalamu prompts, a pipeline or a workflow, or it comes from a newer version of Kalamu.',
 		'provider.unknown': 'Unknown provider.',

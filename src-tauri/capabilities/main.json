@@ -121,6 +121,7 @@
     "allow-delete-export-profile",
     "allow-check-export-profile",
     "allow-profile-starter",
+    "allow-project-answer-fields",
     "allow-share-export-profile",
     "allow-import-export-profile",
     "allow-merge-documents",

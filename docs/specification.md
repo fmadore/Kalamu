@@ -455,7 +455,13 @@ analysed, compared. A **project** keeps it together
   project, duplicated, shared as a template without its fixed texts unless asked, and imported.
   Starting points: every column, or Dublin Core terms. CSV follows the profile; JSON keeps
   lists as arrays and empty values as `null`. Exporting again never calls a model
-  ([decision](decisions/2026-11-03-export-profiles.md)).
+  ([decision](decisions/2026-11-03-export-profiles.md)). A column can also read the document's
+  result for a task: how far it was reviewed (`reviewed`, `partly_reviewed`, `not_reviewed`),
+  the model that read it, its text as corrected (for a task that writes one), or an analysis's
+  answer to a field, named by its key (the project's fields offered), a list staying a list.
+  The result read is the one the researcher preferred for the task or, where none is preferred,
+  the only one; with several and none preferred the cell is left empty, never chosen for the
+  researcher ([decision](decisions/2026-11-03-profile-result-columns.md)).
 - **Every result of a document together**, whatever job made it: each set-up of each job that
   read it, with its progress, how much was reviewed and corrected, what it cost, opening its
   review. The researcher can mark one per task as **preferred**: never chosen by the app, and

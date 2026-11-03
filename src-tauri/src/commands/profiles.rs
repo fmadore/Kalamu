@@ -56,6 +56,15 @@ pub fn check_export_profile(profile: ExportProfile) -> Option<ProfileError> {
     profile.tidied().check().err()
 }
 
+/// The fields a project's analyses answered, for a column to take an answer from.
+#[tauri::command]
+pub fn project_answer_fields(
+    state: State<'_, AppState>,
+    project: kalamu_core::ProjectId,
+) -> CmdResult<Vec<kalamu_projects::AnswerField>> {
+    Ok(state.projects.answer_fields(project)?)
+}
+
 /// The columns a new profile starts with.
 #[tauri::command]
 pub fn profile_starter(starter: ProfileStarter) -> Vec<ProfileColumn> {

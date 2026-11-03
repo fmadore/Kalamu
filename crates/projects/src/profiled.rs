@@ -1,6 +1,7 @@
 //! A project's descriptions written through an export profile: the columns the researcher chose,
 //! in their order and under their headings, lists, missing values and line breaks as the profile
 //! says. From what is stored only: no model is called, and another profile only writes again.
+//! Columns that read a document's result are filled by [`crate::resulted`].
 
 use kalamu_core::{
     CollectionId, Document, ExportProfile, ProfileValue, ProjectError, ProjectId, Timestamp,
@@ -12,10 +13,30 @@ use crate::Projects;
 use crate::described::{described, failed};
 
 /// What a column holds for one document.
-enum Cell {
+pub(crate) enum Cell {
     Text(String),
     List(Vec<String>),
     Missing,
+}
+
+impl Cell {
+    /// A text, or missing when empty.
+    pub(crate) fn text(s: String) -> Self {
+        if s.is_empty() {
+            Self::Missing
+        } else {
+            Self::Text(s)
+        }
+    }
+
+    /// A list, or missing when empty.
+    pub(crate) fn list(items: Vec<String>) -> Self {
+        if items.is_empty() {
+            Self::Missing
+        } else {
+            Self::List(items)
+        }
+    }
 }
 
 fn cell(
@@ -51,6 +72,11 @@ fn cell(
         ProfileValue::Part { field } => part(*field).map_or(Cell::Missing, |p| text(&p.value)),
         ProfileValue::From { field } => part(*field).map_or(Cell::Missing, |p| text(p.by.as_str())),
         ProfileValue::Fixed { text: fixed } => text(fixed),
+        // Read from the document's result, by `Projects::result_cell`.
+        ProfileValue::Status { .. }
+        | ProfileValue::Model { .. }
+        | ProfileValue::Text { .. }
+        | ProfileValue::Answer { .. } => Cell::Missing,
     }
 }
 
@@ -98,27 +124,34 @@ impl Projects {
         profile: &ExportProfile,
     ) -> Result<(crate::described::Listed, Vec<Vec<Cell>>), ProjectError> {
         let listed = self.listed(project, collection)?;
-        let rows = listed
-            .documents
-            .iter()
-            .map(|(d, names)| {
-                let parts = described(d, &listed.project.source_defaults);
-                profile
-                    .columns
-                    .iter()
-                    .map(|c| {
-                        let cell = cell(&c.value, d, names, &listed.project.name, &parts);
-                        match cell {
-                            Cell::Text(t) if profile.join_lines => Cell::Text(one_line(&t)),
-                            Cell::List(items) if profile.join_lines => {
-                                Cell::List(items.iter().map(|i| one_line(i)).collect())
-                            }
-                            other => other,
-                        }
-                    })
-                    .collect()
-            })
-            .collect();
+        // The job store is read only when a column needs a result.
+        let results = if profile.columns.iter().any(|c| c.value.reads_result()) {
+            let ids: Vec<_> = listed.documents.iter().map(|(d, _)| d.id).collect();
+            Some(self.results_of(project, &ids)?)
+        } else {
+            None
+        };
+        let mut rows = Vec::with_capacity(listed.documents.len());
+        for (d, names) in &listed.documents {
+            let parts = described(d, &listed.project.source_defaults);
+            let mut row = Vec::with_capacity(profile.columns.len());
+            for c in &profile.columns {
+                let read = match &results {
+                    Some(results) => self.result_cell(results, &c.value, d.id)?,
+                    None => None,
+                };
+                let cell =
+                    read.unwrap_or_else(|| cell(&c.value, d, names, &listed.project.name, &parts));
+                row.push(match cell {
+                    Cell::Text(t) if profile.join_lines => Cell::Text(one_line(&t)),
+                    Cell::List(items) if profile.join_lines => {
+                        Cell::List(items.iter().map(|i| one_line(i)).collect())
+                    }
+                    other => other,
+                });
+            }
+            rows.push(row);
+        }
         Ok((listed, rows))
     }
 

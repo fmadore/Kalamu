@@ -1,7 +1,9 @@
 <script lang="ts">
 	// Exports the descriptions of the documents shown: Kalamu's own columns, or those of a saved
 	// export profile, chosen, ordered and renamed here. A profile is kept for every project and
-	// holds none of this one's values; what it may be is checked in Rust as it is edited.
+	// holds none of this one's values; what it may be is checked in Rust as it is edited. A column
+	// can also read the document's result for a task (Rust decides which result).
+	import type { AnswerField } from '#lib/bindings/AnswerField.js';
 	import type { ExportProfile } from '#lib/bindings/ExportProfile.js';
 	import type { ProfileError } from '#lib/bindings/ProfileError.js';
 	import type { ProfileStarter } from '#lib/bindings/ProfileStarter.js';
@@ -14,6 +16,9 @@
 		hasFixedTexts,
 		keyValue,
 		moved,
+		RESULT_TASKS,
+		RESULT_VALUES,
+		TEXT_TASKS,
 		valueKey
 	} from '#lib/profiles.js';
 	import { toast } from '#lib/state.svelte.js';
@@ -38,6 +43,8 @@
 	/** Kalamu's own export: every part, with where it came from. */
 	const KALAMU = '';
 	let profiles = $state<ExportProfile[]>([]);
+	/** The fields this project's analyses answered, offered for an answer's column. */
+	let answerFields = $state<AnswerField[]>([]);
 	let chosen = $state(KALAMU);
 	let draft = $state<ExportProfile | null>(null);
 	let problem = $state<ProfileError | null>(null);
@@ -54,6 +61,12 @@
 		}
 	}
 	void load();
+	$effect(() => {
+		api.projectAnswerFields(projectId).then(
+			(found) => (answerFields = found),
+			() => {}
+		);
+	});
 
 	// Checked as it is edited, so the column at fault is named before saving.
 	$effect(() => {
@@ -75,6 +88,7 @@
 		if (found.kind === 'unnamed') return p.problems.unnamed(found.column);
 		if (found.kind === 'bad_heading') return p.problems.bad_heading(found.column);
 		if (found.kind === 'duplicate') return p.problems.duplicate(found.column, found.first);
+		if (found.kind === 'bad_value') return p.problems.bad_value(found.column);
 		return p.problems[found.kind];
 	}
 	const faulty = $derived(problem && 'column' in problem ? problem.column - 1 : -1);
@@ -267,10 +281,30 @@
 												>
 											{/each}
 										</optgroup>
+										<optgroup label={p.groups.result}>
+											{#each RESULT_TASKS as t (t)}
+												{#each RESULT_VALUES as v (v)}
+													{#if v !== 'text' || TEXT_TASKS.includes(t)}
+														<option value={`${v}:${t}`}>{p.resultValues[v](p.tasks[t])}</option>
+													{/if}
+												{/each}
+											{/each}
+											<option value="answer">{p.answer}</option>
+										</optgroup>
 										<optgroup label={p.groups.other}>
 											<option value="fixed">{p.values.fixed}</option>
 										</optgroup>
 									</select>
+									{#if column.value.kind === 'answer'}
+										<input
+											type="text"
+											class="fixed mono"
+											list="answer-fields"
+											bind:value={column.value.key}
+											placeholder={p.answerKey}
+											aria-label={`${p.answerKey} ${i + 1}`}
+										/>
+									{/if}
 									{#if column.value.kind === 'fixed'}
 										<input
 											type="text"
@@ -307,6 +341,12 @@
 						{/each}
 					</tbody>
 				</table>
+				<datalist id="answer-fields">
+					{#each answerFields as field (field.key)}
+						<option value={field.key}>{field.label}</option>
+					{/each}
+				</datalist>
+				<small class="muted">{p.resultHint}</small>
 				<div>
 					<button
 						class="btn ghost sm"
