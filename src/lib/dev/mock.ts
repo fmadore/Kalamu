@@ -39,6 +39,7 @@ import {
 } from './mockJobs.js';
 
 import { RUN_ID, seedWorkflows, WORKFLOW_ID, workflowCommand } from './mockWorkflows.js';
+import { unitCommand } from './mockUnits.js';
 import {
 	contentsJob,
 	contentsPieces,
@@ -409,6 +410,8 @@ export function installMock(): void {
 		if (workflow !== undefined) return workflow;
 		const queue = queueCommand(cmd, a);
 		if (queue !== undefined) return queue;
+		const unit = unitCommand(cmd, a);
+		if (unit !== undefined) return unit;
 		switch (cmd) {
 			case 'app_info':
 				return {

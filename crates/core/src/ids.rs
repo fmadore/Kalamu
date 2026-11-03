@@ -73,6 +73,10 @@ uuid_id!(
     /// A workflow started on a set of sources: its steps, each a job.
     RunId
 );
+uuid_id!(
+    /// An article, letter or item of a source, found by its table of contents: its pages.
+    UnitId
+);
 
 /// A provider's stable identifier, as used in the model catalogue (`gemini`, `openai`, …).
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, TS)]

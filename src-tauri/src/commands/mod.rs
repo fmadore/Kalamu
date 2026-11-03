@@ -10,6 +10,7 @@ pub mod presets;
 pub mod projects;
 pub mod review;
 pub mod settings;
+pub mod units;
 pub mod window;
 pub mod workflows;
 

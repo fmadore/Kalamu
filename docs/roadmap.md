@@ -4,13 +4,13 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (2 November 2026)
+## Status (3 November 2026)
 
-**Version 1.1.2** is the latest release: unsigned installers for Windows x64 and ARM64 and a
+**Version 1.2.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
-[v1.1.2 release](https://github.com/fmadore/Kalamu/releases/tag/v1.1.2)
-([notes](release-1.1.2.md)), and it is the version in the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), where Kalamu has been since
+[v1.2.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.2.0)
+([notes](release-1.2.0.md)). Version 1.1.2 is the one in the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) until 1.2.0 is submitted, and Kalamu has been there since
 version 1.0.0 (2 November 2026). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
 the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`, see
@@ -219,6 +219,14 @@ ad hoc; it has not yet been opened on a real Mac
   drawn from the same mark. Under the tasks in New job, a diagram of how each task splits
   and joins the work, drawn with the user's own files; for text extraction it shows whether
   the chosen model can also give a searchable PDF.
+- **Items read on their own, first increment**
+  ([#50](https://github.com/fmadore/Kalamu/issues/50)): a table of contents' checked entries
+  made into items once, then corrected, joined, split, added and removed by the researcher,
+  with pages shared between items named; selected items sent to a new extraction or analysis,
+  each as a PDF of its pages frozen in the data folder, results written under the item's name
+  beside the source and the item named in provenance; an item given other pages marks the
+  job out of date; export of their PDFs with a list as CSV and JSON
+  ([decision](decisions/2026-11-02-document-units.md)).
 - **Kalamu**: the app renamed from Scriptorium, with the "two witnesses" icon and warm graphite
   neutrals; installs of 0.1 and 0.2 have their jobs, settings and keys moved over on the first
   start; the strip of pages shows thumbnails of scans and images
@@ -229,8 +237,16 @@ ad hoc; it has not yet been opened on a real Mac
 The [2 November checkpoint](decisions/2026-11-02-checkpoint.md), after version 1.0.0, is done:
 pages read together settled when a job is created and a call that keeps no page counted,
 workflow steps made once and tied to their project at launch, the proposal job's files apart,
-rules and estimates from Rust, and the duplication it found removed. Next comes the release that
-carries it, then [#50](https://github.com/fmadore/Kalamu/issues/50).
+rules and estimates from Rust, and the duplication it found removed; it shipped in 1.1.0.
+[#50](https://github.com/fmadore/Kalamu/issues/50)'s first increment, items read on their own,
+is done and shipped in 1.2.0, with the default prompts and the data folder.
+
+- **Items, what is left of [#50](https://github.com/fmadore/Kalamu/issues/50)**: finer
+  boundaries than the page (a column, a passage of text) for articles that share a page; the
+  numbers printed on the pages beside the file's own; items of a multi-page image; an item's
+  text taken from an extraction of the whole issue rather than read again; items as a
+  project's documents; importing an exported list back; a large issue's pages combined in
+  bounded groups rather than in one request.
 
 - **Project workspaces, what is left of
   [#57](https://github.com/fmadore/Kalamu/issues/57)**: a document's descriptive metadata
@@ -256,7 +272,6 @@ carries it, then [#50](https://github.com/fmadore/Kalamu/issues/50).
   a two-step workflow, and one in economy mode across a restart. Try *Then* and the examples
   with one or two colleagues before going further. Several jobs' or documents' texts sent into
   one new round together, from a project's selection.
-- **Prompts, house cleaning**: to scope with the maintainer before the next prompt work.
 - **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
   against the estimates. Offline Whisper still needs a live run too, as do the models added on
   26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
@@ -353,7 +368,7 @@ A pending merge decision is never treated as approval.
 | 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis (first increment done) | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
 | 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps (first increment done, with review checkpoints) | [#49](https://github.com/fmadore/Kalamu/issues/49) |
 | 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export (done: inventory, researcher decisions, export, model-proposed merges) | [#48](https://github.com/fmadore/Kalamu/issues/48) |
-| 5 | Reviewed document units from contents entries, with item-level extraction, analysis and export | [#50](https://github.com/fmadore/Kalamu/issues/50) |
+| 5 | Reviewed document units from contents entries, with item-level extraction, analysis and export (first increment done: whole-page items from a PDF) | [#50](https://github.com/fmadore/Kalamu/issues/50) |
 
 The project workspace can ship incrementally before the complete workflow builder. It owns
 project/document identity and collection membership (#57); result snapshots and dependencies
