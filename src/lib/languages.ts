@@ -44,6 +44,29 @@ export function modelsWithout(code: string, models: (ModelInfo | undefined)[]): 
 	);
 }
 
+/** The chosen models whose API takes fewer of the chosen languages than were chosen, by name. */
+export function modelsTakingOne(count: number, models: (ModelInfo | undefined)[]): string[] {
+	return names(
+		models.filter(
+			(m) => m && takesLanguage(m) && count > 1 && (m.language_hints ?? 'several') !== 'several'
+		)
+	);
+}
+
+/** The chosen models that use a chosen language only without speakers or timestamps. */
+export function modelsWithoutTimes(models: (ModelInfo | undefined)[]): string[] {
+	return names(models.filter((m) => m?.language_hints === 'one_without_timestamps'));
+}
+
+/** The chosen models that cannot be told a language, for want of a two-letter code. */
+export function modelsNeedingTwoLetters(code: string, models: (ModelInfo | undefined)[]): string[] {
+	return code.length === 2 ? [] : names(models.filter((m) => m?.two_letter_codes));
+}
+
+function names(models: (ModelInfo | undefined)[]): string[] {
+	return [...new Set(models.flatMap((m) => (m ? [m.name] : [])))];
+}
+
 /** Lower case without accents, so "moore" finds "Mooré" and "e" finds "É". */
 export function searchKey(text: string): string {
 	return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();

@@ -599,6 +599,12 @@ export const en = {
 			`Only the languages ${models} can transcribe are listed.`,
 		languageUnsupported: (language: string, models: string) =>
 			`${models} cannot use ${language}: remove it or choose another model.`,
+		languageOneOnly: (models: string) =>
+			`Only one language is passed to ${models}: with several chosen, the language is detected instead.`,
+		languageNotWithTimes: (models: string) =>
+			`The language is passed to ${models} only when it neither labels speakers nor times the lines; with either, the language is detected.`,
+		languageNeedsTwoLetters: (language: string, models: string) =>
+			`${models} can be told only languages with a two-letter code, so ${language} is not passed on: the model detects it.`,
 		languageIgnoredAll: (models: string) =>
 			`${models} recognises the language on its own, so there is nothing to choose.`,
 		languageIgnoredSome: (models: string) =>

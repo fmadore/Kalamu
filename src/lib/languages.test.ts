@@ -2,7 +2,15 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Catalog } from './bindings/Catalog.js';
 import type { LanguageInfo } from './bindings/LanguageInfo.js';
-import { findLanguages, modelsWithout, offeredLanguages, takesLanguage } from './languages.js';
+import {
+	findLanguages,
+	modelsNeedingTwoLetters,
+	modelsTakingOne,
+	modelsWithout,
+	modelsWithoutTimes,
+	offeredLanguages,
+	takesLanguage
+} from './languages.js';
 
 const catalog = JSON.parse(readFileSync('crates/catalog/catalog.json', 'utf8')) as Catalog;
 const model = (id: string) => catalog.models.find((m) => m.id === id);
@@ -22,6 +30,23 @@ describe('languages offered in New job', () => {
 		expect(hausa.length <= 1).toBe(true);
 		expect(takesLanguage(model('mistral-ocr-4-1'))).toBe(false);
 		expect(modelsWithout('xx', [model('mistral-ocr-4-1')])).toEqual([]);
+	});
+
+	it('names the transcription models that take one language, or only two-letter codes', () => {
+		const chosen = [
+			model('gpt-transcribe'),
+			model('voxtral-mini-transcribe-3-0'),
+			model('whisper-base')
+		];
+		expect(modelsTakingOne(1, chosen)).toEqual([]);
+		expect(modelsTakingOne(2, chosen)).toEqual([
+			model('voxtral-mini-transcribe-3-0')?.name,
+			model('whisper-base')?.name
+		]);
+		expect(modelsWithoutTimes(chosen)).toEqual([model('voxtral-mini-transcribe-3-0')?.name]);
+		expect(modelsNeedingTwoLetters('fr', chosen)).toEqual([]);
+		expect(modelsNeedingTwoLetters('mos', chosen)).toEqual([model('gpt-transcribe')?.name]);
+		expect(modelsTakingOne(3, [model('gemini-3.5-transcribe')])).toEqual([]);
 	});
 
 	it('sorts by name and finds a language by name without accents, English name or code', () => {

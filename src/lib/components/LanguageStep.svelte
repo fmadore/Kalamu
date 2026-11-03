@@ -6,7 +6,15 @@
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { listNames, messages } from '#lib/i18n/index.js';
-	import { languageLabel, modelsWithout, offeredLanguages, takesLanguage } from '#lib/languages.js';
+	import {
+		languageLabel,
+		modelsNeedingTwoLetters,
+		modelsTakingOne,
+		modelsWithout,
+		modelsWithoutTimes,
+		offeredLanguages,
+		takesLanguage
+	} from '#lib/languages.js';
 	import { rulesFor } from '#lib/newJob.js';
 	import { app } from '#lib/state.svelte.js';
 
@@ -41,6 +49,14 @@
 			.map((code) => [code, modelsWithout(code, models)] as const)
 			.filter(([, names]) => names.length > 0)
 	);
+	/** What the chosen models' APIs do with the languages chosen, for transcription. */
+	const takingOne = $derived(modelsTakingOne(languages.length, models));
+	const withoutTimes = $derived(modelsWithoutTimes(models));
+	const twoLetters = $derived(
+		languages
+			.map((code) => [code, modelsNeedingTwoLetters(code, models)] as const)
+			.filter(([, names]) => names.length > 0)
+	);
 	/** The language chosen is the answers', not the source's. */
 	const answers = $derived(rulesFor(app.rules, task).answers_in_language);
 </script>
@@ -72,6 +88,17 @@
 			{#each unsupportedChosen as [code, names] (code)}
 				<p class="hint warn-text">
 					{m.newJob.languageUnsupported(languageLabel(catalog, code), listNames(names))}
+				</p>
+			{/each}
+			{#if takingOne.length > 0}
+				<p class="hint">{m.newJob.languageOneOnly(listNames(takingOne))}</p>
+			{/if}
+			{#if withoutTimes.length > 0 && languages.length === 1}
+				<p class="hint">{m.newJob.languageNotWithTimes(listNames(withoutTimes))}</p>
+			{/if}
+			{#each twoLetters as [code, names] (code)}
+				<p class="hint">
+					{m.newJob.languageNeedsTwoLetters(languageLabel(catalog, code), listNames(names))}
 				</p>
 			{/each}
 			{#if narrowedBy.length > 0}
