@@ -48,7 +48,8 @@ small job first. See the
   job made it. Add files before reading them, add jobs you ran before without paying again,
   start a job on a selection, and mark the result you rely on. Describe each source as an
   archive would (repository, fonds, shelfmark, citation), with what a project's documents share
-  given once, and export the descriptions as CSV or JSON.
+  given once, and export the descriptions as CSV or JSON, in Kalamu's columns or in your own,
+  saved for the next project.
 - **Search a whole project**: every passage of its documents that names a person or an
   organisation, or holds several words near each other, in the text as you corrected it, accents
   and Arabic vowel marks ignored, each opening its source where it stands. It runs on your

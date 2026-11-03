@@ -181,6 +181,13 @@ ad hoc; it has not yet been opened on a real Mac
   parts a project's documents share, both exported as JSON and CSV with where each value came
   from; renaming a tag across a project
   ([decision](decisions/2026-11-03-source-descriptions.md)).
+- **Export profiles**, second increment of
+  [#55](https://github.com/fmadore/Kalamu/issues/55): the descriptions export's columns chosen,
+  ordered and renamed, from the document, its description, where each part came from or a
+  fixed text; lists, empty cells and line breaks written as the profile says; checked as it is
+  edited, saved for every project, duplicated, shared without its fixed texts unless asked, and
+  imported; starting from every column or from Dublin Core terms
+  ([decision](decisions/2026-11-03-export-profiles.md)).
 - **What to check, first increment**
   ([#85](https://github.com/fmadore/Kalamu/issues/85)): one list per project, collection or
   selection of the pages and answers that need the researcher, from stored results only:
@@ -275,12 +282,12 @@ is done and shipped in 1.2.0, with the default prompts and the data folder.
   bounded groups rather than in one request.
 
 - **Archival metadata, what is left of [#55](https://github.com/fmadore/Kalamu/issues/55)**:
-  saved export profiles (columns chosen, ordered and renamed, lists and missing values written
-  as asked), duplicated and reused, exported without project values; descriptions carried into
-  each result's exports and `provenance.json`; normalised and inferred values (with #54 and #48)
-  beside the literal ones. Source descriptions, project defaults and their export with origins,
-  and renaming a tag across a project, are done
-  ([decision](decisions/2026-11-03-source-descriptions.md)).
+  descriptions carried into each result's exports and `provenance.json`; normalised and
+  inferred values (with #54 and #48) beside the literal ones; results' columns (review status,
+  a preferred result's text or fields) in a profile. Source descriptions, project defaults and
+  their export with origins, renaming a tag across a project, and saved export profiles are
+  done ([decision](decisions/2026-11-03-source-descriptions.md),
+  [profiles](decisions/2026-11-03-export-profiles.md)).
 - **Project search, what is left of [#86](https://github.com/fmadore/Kalamu/issues/86)**:
   alternatives (one word or another); searching two letters, and less folding work for very
   common words; and, evaluated separately, semantic search with explicit local or cloud

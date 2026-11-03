@@ -58,7 +58,7 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | --- | --- | --- |
 | `core` | Domain types (job, source file, piece, result, provenance, task, language), the traits below, errors. No I/O. | nothing internal |
 | `catalog` | Model catalogue: loading, refreshing, capability queries (tasks, inputs, languages, limits, prices). | `core` |
-| `prompts` | Default and user presets, variables, import/export; saved pipelines and workflow definitions. | `core` |
+| `prompts` | Default and user presets, variables, import/export; saved pipelines, workflow definitions and export profiles. | `core` |
 | `media` | Conversion and splitting: PDFium, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
 | `offline` | Whisper and Tesseract engines, behind the same trait as cloud providers. | `core`, `media` |

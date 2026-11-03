@@ -20,6 +20,7 @@ use ts_rs::TS;
 mod attach;
 mod described;
 mod documents;
+mod profiled;
 mod queue;
 mod views;
 

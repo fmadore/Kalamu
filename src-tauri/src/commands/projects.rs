@@ -193,16 +193,34 @@ pub fn rename_tag(
     Ok(state.projects.rename_tag(project, &from, &to)?)
 }
 
-/// Writes the documents' descriptions where the researcher chose, as `.json` and `.csv`.
+/// Writes the documents' descriptions where the researcher chose, as `.json` and `.csv`:
+/// every part with where it came from, or the columns of a saved export profile.
 #[tauri::command]
 pub fn export_descriptions(
     state: State<'_, AppState>,
     project: ProjectId,
     collection: Option<CollectionId>,
+    profile: Option<String>,
     path: String,
 ) -> CmdResult<()> {
     let path = std::path::Path::new(&path);
     let write = super::write_text;
+    if let Some(id) = profile {
+        let profile = state
+            .profiles
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(&id)?;
+        let projects = &state.projects;
+        write(
+            path.with_extension("json"),
+            projects.export_profiled_json(project, collection, &profile)?,
+        )?;
+        return write(
+            path.with_extension("csv"),
+            projects.export_profiled_csv(project, collection, &profile)?,
+        );
+    }
     write(
         path.with_extension("json"),
         state

@@ -24,6 +24,10 @@ import type { Item } from './bindings/Item.js';
 import type { SpeakerNames } from './bindings/SpeakerNames.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Pipeline } from './bindings/Pipeline.js';
+import type { ExportProfile } from './bindings/ExportProfile.js';
+import type { ProfileColumn } from './bindings/ProfileColumn.js';
+import type { ProfileError } from './bindings/ProfileError.js';
+import type { ProfileStarter } from './bindings/ProfileStarter.js';
 import type { JobStep } from './bindings/JobStep.js';
 import type { RunView } from './bindings/RunView.js';
 import type { StartRun } from './bindings/StartRun.js';
@@ -215,8 +219,26 @@ export const api = {
 		invoke<void>('describe_document', { project, id, description }),
 	setSourceDefaults: (id: string, defaults: Draft) =>
 		invoke<Project>('set_source_defaults', { id, defaults }),
-	exportDescriptions: (project: string, collection: string | null, path: string) =>
-		invoke<void>('export_descriptions', { project, collection, path }),
+	/** Every part with where it came from, or with `profile` the columns of a saved profile. */
+	exportDescriptions: (
+		project: string,
+		collection: string | null,
+		profile: string | null,
+		path: string
+	) => invoke<void>('export_descriptions', { project, collection, profile, path }),
+	listExportProfiles: () => invoke<ExportProfile[]>('list_export_profiles'),
+	saveExportProfile: (profile: ExportProfile) =>
+		invoke<ExportProfile>('save_export_profile', { profile }),
+	duplicateExportProfile: (id: string, name: string) =>
+		invoke<ExportProfile>('duplicate_export_profile', { id, name }),
+	deleteExportProfile: (id: string) => invoke<void>('delete_export_profile', { id }),
+	checkExportProfile: (profile: ExportProfile) =>
+		invoke<ProfileError | null>('check_export_profile', { profile }),
+	profileStarter: (starter: ProfileStarter) =>
+		invoke<ProfileColumn[]>('profile_starter', { starter }),
+	shareExportProfile: (id: string, fixedTexts: boolean, path: string) =>
+		invoke<void>('share_export_profile', { id, fixedTexts, path }),
+	importExportProfile: (path: string) => invoke<ExportProfile>('import_export_profile', { path }),
 	projectSearch: (project: string, request: SearchRequest) =>
 		invoke<SearchView>('project_search', { project, request }),
 	rebuildSearchIndex: () => invoke<void>('rebuild_search_index'),

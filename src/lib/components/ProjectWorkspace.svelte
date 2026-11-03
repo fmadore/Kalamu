@@ -8,6 +8,7 @@
 	import DescriptionFields from './DescriptionFields.svelte';
 	import DictionaryView from './DictionaryView.svelte';
 	import DocumentTable from './DocumentTable.svelte';
+	import ExportDialog from './ExportDialog.svelte';
 	import Icon from './Icon.svelte';
 	import ProjectActivity from './ProjectActivity.svelte';
 	import ProjectSearch from './ProjectSearch.svelte';
@@ -19,14 +20,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { lastSearch } from '#lib/projectSearch.js';
 	import { go, toast } from '#lib/state.svelte.js';
-	import {
-		api,
-		ask,
-		onDrop,
-		pickDescriptionsExport,
-		pickDocuments,
-		pickFolder
-	} from '#lib/tauri.js';
+	import { api, ask, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
 
 	let {
 		projectId,
@@ -58,6 +52,7 @@
 	let draftDefaults = $state<Draft>({});
 	let naming = $state<null | { id: string | null; name: string }>(null);
 	let attaching = $state(false);
+	let exporting = $state(false);
 	let adding = $state(false);
 
 	// Asked again for the list of what to check (from the table's selection), it opens.
@@ -107,20 +102,6 @@
 			if (defaultsChanged) await api.setSourceDefaults(projectId, defaults);
 		});
 		if (!error) editing = false;
-	}
-
-	/** The descriptions of the documents shown (a collection's, or all), as JSON and CSV. */
-	async function exportDescriptions() {
-		const name = collection?.collection.name ?? project?.name ?? '';
-		const path = await pickDescriptionsExport(`${name} descriptions`);
-		if (!path) return;
-		error = null;
-		try {
-			await api.exportDescriptions(projectId, collectionId ?? null, path);
-			toast(m.projects.describe.exported);
-		} catch (e) {
-			error = describeError(e, m);
-		}
 	}
 
 	async function remove() {
@@ -208,7 +189,7 @@
 			<button class="btn ghost sm" onclick={startEdit}
 				><Icon name="edit" size={14} />{m.projects.edit}</button
 			>
-			<button class="btn ghost sm" onclick={exportDescriptions}
+			<button class="btn ghost sm" onclick={() => (exporting = true)}
 				><Icon name="download" size={14} />{m.projects.describe.export}</button
 			>
 			<button
@@ -401,6 +382,15 @@
 			{/if}
 		</section>
 	</div>
+{/if}
+
+{#if exporting}
+	<ExportDialog
+		{projectId}
+		{collectionId}
+		name={collection?.collection.name ?? project?.name ?? ''}
+		onclose={() => (exporting = false)}
+	/>
 {/if}
 
 {#if attaching && view}

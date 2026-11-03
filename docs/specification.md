@@ -440,6 +440,16 @@ analysed, compared. A **project** keeps it together
   each value beside where it came from (`document` or `project`), with the documents' ids,
   titles, files, collections and tags
   ([decision](decisions/2026-11-03-source-descriptions.md), [#55](https://github.com/fmadore/Kalamu/issues/55)).
+- **Export profiles** write the same descriptions in the researcher's own columns, for a
+  spreadsheet or another tool's import: each column a heading and where its value comes from
+  (the document's id, title, file, project, collections or tags, a part of the description,
+  where that part came from, or a fixed text), in the researcher's order, with how lists are
+  joined, what an empty cell holds and whether line breaks become spaces. A profile is checked
+  as it is edited (no heading twice, whatever its capitals; each on one line), saved for every
+  project, duplicated, shared as a template without its fixed texts unless asked, and imported.
+  Starting points: every column, or Dublin Core terms. CSV follows the profile; JSON keeps
+  lists as arrays and empty values as `null`. Exporting again never calls a model
+  ([decision](decisions/2026-11-03-export-profiles.md)).
 - **Every result of a document together**, whatever job made it: each set-up of each job that
   read it, with its progress, how much was reviewed and corrected, what it cost, opening its
   review. The researcher can mark one per task as **preferred**: never chosen by the app, and

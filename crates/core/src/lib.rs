@@ -16,6 +16,7 @@ pub mod ids;
 pub mod job;
 pub mod language;
 pub mod pages;
+pub mod profile;
 pub mod project;
 pub mod provenance;
 pub mod provider;
@@ -52,6 +53,7 @@ pub use job::{
 };
 pub use language::{LanguageChoice, LanguageCode};
 pub use pages::PagesPerCall;
+pub use profile::{ExportProfile, ProfileColumn, ProfileError, ProfileStarter, ProfileValue};
 pub use project::{
     Collection, DescriptionField, Document, DocumentLink, PreferredResult, Project, ProjectError,
     ProjectStore, SourceDescription, cleaned, same_tag, tag_name,

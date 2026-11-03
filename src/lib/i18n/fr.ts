@@ -722,6 +722,74 @@ export const fr: Messages = {
 			export: 'Exporter les descriptions',
 			exported: 'Les descriptions ont été enregistrées en JSON, avec un CSV à côté.'
 		},
+		profiles: {
+			title: 'Exporter les descriptions',
+			lede: 'L’export propre à Kalamu donne chaque élément de chaque description en indiquant d’où il vient. Un profil écrit les colonnes que vous choisissez, dans votre ordre et sous vos intitulés, pour un tableur ou l’import d’un autre outil. Il sert à tous les projets et ne garde aucune valeur de celui-ci.',
+			columns: 'Colonnes',
+			kalamu: 'Tous les éléments, en indiquant d’où ils viennent',
+			newProfile: 'Nouveau profil',
+			starters: {
+				every: 'À partir de toutes les colonnes',
+				dublin_core: 'À partir des termes Dublin Core'
+			},
+			import: 'Importer un profil…',
+			imported: (name: string) => `Profil « ${name} » importé.`,
+			edit: 'Modifier',
+			duplicate: 'Dupliquer',
+			copyName: (name: string) => `${name} (copie)`,
+			share: 'Partager…',
+			shareFixed:
+				'Inclure les textes fixes ? Ils peuvent être propres à ce projet. Sans eux, les colonnes restent et leurs textes sont laissés vides.',
+			shared: 'Le profil a été enregistré dans un fichier qu’un autre Kalamu peut importer.',
+			delete: 'Supprimer',
+			deleteConfirm: (name: string) =>
+				`Supprimer le profil « ${name} » ? Les fichiers déjà exportés restent tels quels.`,
+			name: 'Nom',
+			heading: 'Intitulé',
+			value: 'Valeur',
+			fixedText: 'Texte de chaque ligne',
+			groups: {
+				document: 'Le document',
+				parts: 'Sa description',
+				from: 'D’où vient chaque élément',
+				other: 'Autre'
+			},
+			values: {
+				document_id: 'Identifiant du document',
+				title: 'Titre',
+				file_name: 'Nom du fichier',
+				path: 'Chemin',
+				project: 'Nom du projet',
+				collections: 'Collections',
+				tags: 'Étiquettes',
+				fixed: 'Un texte fixe'
+			},
+			fromPart: (part: string) => `${part} : d’où il vient`,
+			moveUp: (n: number) => `Monter la colonne ${n}`,
+			moveDown: (n: number) => `Descendre la colonne ${n}`,
+			remove: (n: number) => `Retirer la colonne ${n}`,
+			addColumn: 'Ajouter une colonne',
+			separator: 'Entre les éléments d’une liste',
+			separatorHint: 'Dans une cellule CSV ; le JSON garde les listes telles quelles.',
+			missing: 'Texte d’une cellule vide',
+			missingHint: 'Rien si le champ reste vide ; le JSON écrit null.',
+			joinLines: 'Remplacer les retours à la ligne d’une valeur par une espace',
+			problems: {
+				no_name: 'Donnez un nom au profil.',
+				no_columns: 'Ajoutez au moins une colonne.',
+				unnamed: (column: number) => `La colonne ${column} a besoin d’un intitulé.`,
+				bad_heading: (column: number) =>
+					`L’intitulé de la colonne ${column} doit tenir sur une ligne.`,
+				duplicate: (column: number, first: number) =>
+					`La colonne ${column} a le même intitulé que la colonne ${first} ; les majuscules ne les distinguent pas.`,
+				bad_separator: 'Le séparateur de liste ne peut être vide ni contenir de retour à la ligne.'
+			},
+			save: 'Enregistrer le profil',
+			saved: 'Profil enregistré.',
+			cancel: 'Annuler',
+			export: 'Exporter…',
+			close: 'Fermer'
+		},
 		tagged: (tag: string, n: number) =>
 			`${n === 1 ? '1 document étiqueté' : `${n} documents étiquetés`} « ${tag} »`,
 		columnResults: 'Résultats',
@@ -1695,6 +1763,13 @@ export const fr: Messages = {
 		'workflow.cannot_read_text':
 			'La tâche de cette étape ne lit pas de texte : faites-lui plutôt lire les fichiers.',
 		'workflow.not_finished': 'Cette étape n’est pas encore terminée.',
+		'profile.no_name': 'Un profil d’export a besoin d’un nom.',
+		'profile.no_columns': 'Un profil d’export a besoin d’au moins une colonne.',
+		'profile.unnamed_column': 'Chaque colonne d’un profil d’export a besoin d’un intitulé.',
+		'profile.bad_heading': 'L’intitulé d’une colonne doit tenir sur une ligne.',
+		'profile.duplicate_heading': 'Deux colonnes ont le même intitulé.',
+		'profile.bad_separator':
+			'Le séparateur de liste ne peut être vide ni contenir de retour à la ligne.',
 		'prompt.invalid_file':
 			'Ce n’est pas un fichier de prompts, de configuration ou de chaîne de traitement Kalamu, ou il provient d’une version plus récente de Kalamu.',
 		'provider.unknown': 'Fournisseur inconnu.',

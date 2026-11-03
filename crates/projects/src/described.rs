@@ -24,7 +24,7 @@ pub enum DescribedBy {
 }
 
 impl DescribedBy {
-    fn as_str(self) -> &'static str {
+    pub(crate) fn as_str(self) -> &'static str {
         match self {
             Self::Document => "document",
             Self::Project => "project",
@@ -87,14 +87,14 @@ struct DescriptionsOut<'a> {
     documents: Vec<DocumentOut<'a>>,
 }
 
-fn failed(e: impl std::fmt::Display) -> ProjectError {
+pub(crate) fn failed(e: impl std::fmt::Display) -> ProjectError {
     ProjectError::Export(e.to_string())
 }
 
 /// The documents written out and the names of the collections each is in.
-struct Listed {
-    project: Project,
-    documents: Vec<(Document, Vec<String>)>,
+pub(crate) struct Listed {
+    pub(crate) project: Project,
+    pub(crate) documents: Vec<(Document, Vec<String>)>,
 }
 
 impl Projects {
@@ -161,7 +161,7 @@ impl Projects {
         Ok(changed)
     }
 
-    fn listed(
+    pub(crate) fn listed(
         &self,
         project: ProjectId,
         collection: Option<CollectionId>,
