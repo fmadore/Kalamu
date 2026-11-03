@@ -119,7 +119,9 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   They contain no API keys and no document text.
 
 Results are also written as files where the user chooses: next to the original files or in a
-chosen folder, each with a `provenance.json` that records the model, prompt and settings used.
+chosen folder, each with a `provenance.json` that records the model, prompt and settings used
+and, for a source that is a document of a project, the project's name, the document's title
+and the description of its source the user typed.
 
 Uninstalling the Store app removes its local data folder. Exported files stay where they were
 written.

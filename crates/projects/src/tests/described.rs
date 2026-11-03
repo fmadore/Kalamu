@@ -1,7 +1,7 @@
 //! Descriptions of sources: a document's own parts beside its project's, never touched by a
 //! result, written out with where each came from; and tags renamed across a project.
 
-use kalamu_core::{DescriptionField as F, ProjectStore, SourceDescription};
+use kalamu_core::{DescriptionField as F, ProjectStore, SourceDescription, SourceDocuments};
 
 use super::*;
 
@@ -205,4 +205,66 @@ fn a_tag_is_renamed_across_the_project_and_merges_with_one_in_use() {
         f.projects.rename_tag(p.id, "Hajj", "  "),
         Err(ProjectError::NoTag)
     ));
+}
+
+#[test]
+fn a_results_provenance_names_each_document_its_source_is() {
+    let f = fixture();
+    let p = f.projects.create("Archives", "").unwrap();
+    let docs = f
+        .projects
+        .add_documents(p.id, vec![f.file("a.pdf", "a")], None)
+        .unwrap();
+    f.projects
+        .set_source_defaults(p.id, description(&[(F::Repository, "ANS")]))
+        .unwrap();
+    f.projects
+        .describe_document(p.id, docs[0], description(&[(F::Shelfmark, "19G 1")]))
+        .unwrap();
+    f.projects.rename_document(p.id, docs[0], "Lettre").unwrap();
+    let source = f.store.documents(p.id).unwrap()[0].source.clone();
+    let b = f.file("b.pdf", "b");
+    let job = f.job(Task::TextExtraction, vec![source.clone(), b.clone()]);
+    // Not yet tied to the project: nothing to name.
+    assert!(f.projects.documents(job.id, source.id).unwrap().is_empty());
+
+    f.projects.link_job(p.id, job.id, None).unwrap();
+    let named = f.projects.documents(job.id, source.id).unwrap();
+    assert_eq!(named.len(), 1);
+    assert_eq!(named[0].document_id, docs[0]);
+    assert_eq!(named[0].project_name, "Archives");
+    assert_eq!(named[0].title, "Lettre");
+    let parts: Vec<(F, &str, DescribedBy)> = named[0]
+        .description
+        .iter()
+        .map(|(field, part)| (*field, part.value.as_str(), part.from))
+        .collect();
+    assert_eq!(
+        parts,
+        [
+            (F::Repository, "ANS", DescribedBy::Project),
+            (F::Shelfmark, "19G 1", DescribedBy::Document),
+        ]
+    );
+    // The other source became a document of its own, described by the project alone.
+    let other = f.projects.documents(job.id, b.id).unwrap();
+    assert_eq!(other.len(), 1);
+    assert_eq!(other[0].description.len(), 1);
+
+    // The results to write again when a document changes, or when the project's defaults do.
+    assert_eq!(
+        f.projects.sources_of(p.id, Some(&[docs[0]])).unwrap(),
+        [(job.id, source.id)]
+    );
+    assert_eq!(f.projects.sources_of(p.id, None).unwrap().len(), 2);
+
+    // In a second project too, each with its own defaults.
+    let q = f.projects.create("Thèse", "").unwrap();
+    f.projects.link_job(q.id, job.id, None).unwrap();
+    let both = f.projects.documents(job.id, source.id).unwrap();
+    assert_eq!(both.len(), 2);
+    assert!(
+        both.iter()
+            .any(|d| d.project_id == q.id && d.description.is_empty())
+    );
 }

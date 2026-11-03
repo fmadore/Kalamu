@@ -4,8 +4,8 @@
 use std::path::{Path, PathBuf};
 
 use kalamu_core::{
-    InputKind, Job, JobId, OutputDestination, PieceState, PieceStatus, ProgressEvent, Setup,
-    SetupId, SourceFile, SourceId, Task,
+    ExportFormat, InputKind, Job, JobId, OutputDestination, PieceState, PieceStatus, ProgressEvent,
+    Setup, SetupId, SourceFile, SourceId, Task,
 };
 
 use crate::{Engine, EngineError};
@@ -86,11 +86,52 @@ impl Engine {
             write_atomic(&path, &bytes)?;
             written.push(path.display().to_string());
         }
-        let provenance = serde_json::to_vec_pretty(&document.provenance)
-            .map_err(|e| EngineError::Output(e.to_string()))?;
-        let path = dir.join(format!("{base}.provenance.json"));
-        write_atomic(&path, &provenance)?;
-        written.push(path.display().to_string());
+        written.push(write_provenance(&dir, &base, &document)?);
+        Ok(written)
+    }
+
+    /// Writes again a source's `provenance.json`, and the `.json` result that holds it, under
+    /// each set-up that wrote them: after something they record changed outside the job, such
+    /// as the project documents the source is. The other files are left as they are, nothing is
+    /// read again, and a running job is left to write its own.
+    pub fn rewrite_provenance(
+        &self,
+        job_id: JobId,
+        source_id: SourceId,
+    ) -> Result<Vec<String>, EngineError> {
+        if self.is_running(job_id) {
+            return Ok(Vec::new());
+        }
+        let job = self.store.job(job_id)?;
+        let Some(source) = job.sources.iter().find(|s| s.id == source_id) else {
+            return Ok(Vec::new());
+        };
+        let mut written = Vec::new();
+        for setup in &job.setups {
+            let (dir, base) = output_base(&job, source, &setup.label);
+            if existing_output(&dir, &base, "provenance.json", &source.path).is_none() {
+                continue;
+            }
+            let document = self.export_document(&job, setup.id, source_id)?;
+            // Only a `.json` the job wrote: a file of the same name it did not choose is not
+            // its own.
+            let json = job
+                .output
+                .formats
+                .contains(&ExportFormat::Json)
+                .then(|| existing_output(&dir, &base, "json", &source.path))
+                .flatten();
+            if let (Some(path), Some(exporter)) =
+                (json, kalamu_export::exporter(ExportFormat::Json))
+            {
+                let bytes = exporter
+                    .export(&document)
+                    .map_err(|e| EngineError::Output(e.to_string()))?;
+                write_atomic(&path, &bytes)?;
+                written.push(path.display().to_string());
+            }
+            written.push(write_provenance(&dir, &base, &document)?);
+        }
         Ok(written)
     }
 
@@ -139,6 +180,19 @@ impl Engine {
         }
         Ok(out)
     }
+}
+
+/// Writes `{base}.provenance.json`; returns its path.
+fn write_provenance(
+    dir: &Path,
+    base: &str,
+    document: &kalamu_core::ExportDocument,
+) -> Result<String, EngineError> {
+    let provenance = serde_json::to_vec_pretty(&document.provenance)
+        .map_err(|e| EngineError::Output(e.to_string()))?;
+    let path = dir.join(format!("{base}.provenance.json"));
+    write_atomic(&path, &provenance)?;
+    Ok(path.display().to_string())
 }
 
 /// Where a source's results go and the name they share: the source's name, with the set-up's

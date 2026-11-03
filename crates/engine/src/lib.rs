@@ -27,14 +27,14 @@ mod workflow;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use std::time::Duration;
 
 use kalamu_catalog::Catalog;
 use kalamu_core::{
     ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStatus, JobStore, JobSummary,
-    PieceStatus, ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceFile, SourceId,
-    SpeakerNames, StopSignal, StoreError, Timestamp,
+    PieceStatus, ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceDocuments,
+    SourceFile, SourceId, SpeakerNames, StopSignal, StoreError, Timestamp,
 };
 use kalamu_media::{Ffmpeg, MediaError, OpenSource, Playback};
 use kalamu_prompts::{PromptError, PromptLibrary};
@@ -201,6 +201,9 @@ pub struct Engine {
     pub(crate) running: Mutex<HashMap<JobId, Arc<Mutex<Control>>>>,
     /// Held while a workflow run decides which steps to start.
     pub(crate) workflows: Mutex<()>,
+    /// The project documents a source is, named in its results' provenance; none until the app
+    /// gives them.
+    pub(crate) documents: OnceLock<Arc<dyn SourceDocuments>>,
 }
 
 impl Engine {
@@ -223,7 +226,14 @@ impl Engine {
             events,
             running: Mutex::new(HashMap::new()),
             workflows: Mutex::new(()),
+            documents: OnceLock::new(),
         })
+    }
+
+    /// Where the documents a source is are read from, for its results' provenance. Set once,
+    /// at startup; a second call changes nothing.
+    pub fn set_source_documents(&self, documents: Arc<dyn SourceDocuments>) {
+        let _ = self.documents.set(documents);
     }
 
     /// Call once at startup: jobs that were running when the app closed become resumable.

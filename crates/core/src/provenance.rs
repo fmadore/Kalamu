@@ -1,8 +1,11 @@
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{
-    LanguageChoice, LanguageCode, ProviderId, RequestSetting, SetupOptions, Task, Timestamp, Usage,
+    DescribedBy, DescriptionField, DocumentId, JobId, LanguageChoice, LanguageCode, ProjectId,
+    ProviderId, RequestSetting, SetupOptions, SourceId, StoreError, Task, Timestamp, Usage,
 };
 
 /// Written as `<source>.provenance.json` next to every output: enough to tell how a result was
@@ -19,6 +22,10 @@ pub struct Provenance {
     pub created_at: Timestamp,
     pub task: Task,
     pub source: ProvenanceSource,
+    /// The project documents the source is, with what the researcher says of each, as they
+    /// stood when the files were written. Absent for a job tied to no project.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub documents: Vec<ProvenanceDocument>,
     /// `cloud` or `offline`.
     pub engine: String,
     pub provider: ProviderId,
@@ -78,6 +85,38 @@ pub struct Provenance {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub workflow: Option<ProvenanceWorkflow>,
+}
+
+/// A project document a source is, as provenance records it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceDocument {
+    pub project_id: ProjectId,
+    pub project_name: String,
+    pub document_id: DocumentId,
+    pub title: String,
+    /// Each part of its source's description as it stands: the document's own, or else the
+    /// project's. Supplied by the researcher, never by a model.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub description: BTreeMap<DescriptionField, ProvenanceDescribed>,
+}
+
+/// A part of a source's description, and where it came from.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceDescribed {
+    pub value: String,
+    pub from: DescribedBy,
+}
+
+/// The project documents a job's source is, for the files written from its results. Read only:
+/// the engine records them and never organises a project.
+pub trait SourceDocuments: Send + Sync {
+    fn documents(
+        &self,
+        job: JobId,
+        source: SourceId,
+    ) -> Result<Vec<ProvenanceDocument>, StoreError>;
 }
 
 /// Where a result stands in the workflow run that produced it.

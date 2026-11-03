@@ -4,8 +4,8 @@
 use std::collections::BTreeSet;
 
 use kalamu_core::provenance::{
-    GeneratorInfo, ProvenanceDerived, ProvenanceMerge, ProvenancePrompt, ProvenanceRefused,
-    ProvenanceSource,
+    GeneratorInfo, ProvenanceDerived, ProvenanceDocument, ProvenanceMerge, ProvenancePrompt,
+    ProvenanceRefused, ProvenanceSource,
 };
 use kalamu_core::speakers::{rename_segments, rename_text, renamed_labels};
 use kalamu_core::{
@@ -224,6 +224,7 @@ impl Engine {
                     unit: source.derived_from.as_ref().and_then(|d| d.unit.clone()),
                 }),
             },
+            documents: self.source_documents(job, source_id),
             engine: engine.into(),
             provider: setup.provider.clone(),
             model: setup.model.clone(),
@@ -353,4 +354,18 @@ fn absolute(piece: &PieceRef, segments: &[Segment], previous_end: Option<u64>) -
         })
         .filter(|s| repeated_until.is_none_or(|end| s.end_ms > end))
         .collect()
+}
+
+impl Engine {
+    /// The project documents a source is, as they stand. A project that cannot be read leaves
+    /// them out rather than the files unwritten.
+    fn source_documents(&self, job: &Job, source_id: SourceId) -> Vec<ProvenanceDocument> {
+        let Some(documents) = self.documents.get() else {
+            return Vec::new();
+        };
+        documents.documents(job.id, source_id).unwrap_or_else(|e| {
+            tracing::warn!(job = %job.id, error = %e, "documents left out of provenance");
+            Vec::new()
+        })
+    }
 }

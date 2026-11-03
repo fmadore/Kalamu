@@ -55,10 +55,10 @@ pub use language::{LanguageChoice, LanguageCode};
 pub use pages::PagesPerCall;
 pub use profile::{ExportProfile, ProfileColumn, ProfileError, ProfileStarter, ProfileValue};
 pub use project::{
-    Collection, DescriptionField, Document, DocumentLink, PreferredResult, Project, ProjectError,
-    ProjectStore, SourceDescription, cleaned, same_tag, tag_name,
+    Collection, DescribedBy, DescriptionField, Document, DocumentLink, PreferredResult, Project,
+    ProjectError, ProjectStore, SourceDescription, cleaned, same_tag, tag_name,
 };
-pub use provenance::Provenance;
+pub use provenance::{Provenance, SourceDocuments};
 pub use provider::{
     ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, RequestSetting,
     StopSignal, Tuning,

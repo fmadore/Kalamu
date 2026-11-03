@@ -25,7 +25,8 @@ mod queue;
 mod views;
 
 pub use attach::{AttachChoice, SourceMatch};
-pub use described::{Described, DescribedBy, described};
+pub use described::{Described, described};
+pub use kalamu_core::DescribedBy;
 pub use queue::{QueuePlan, QueueSelection, ResultChoice, ResultKey};
 pub use views::{
     CollectionView, DocumentBrief, DocumentDetail, DocumentResult, DocumentRow, ProjectView,

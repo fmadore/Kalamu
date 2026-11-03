@@ -2,6 +2,7 @@
 import type { GeneratorInfo } from "./GeneratorInfo";
 import type { LanguageChoice } from "./LanguageChoice";
 import type { LanguageCode } from "./LanguageCode";
+import type { ProvenanceDocument } from "./ProvenanceDocument";
 import type { ProvenanceMerge } from "./ProvenanceMerge";
 import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProvenanceRefused } from "./ProvenanceRefused";
@@ -26,6 +27,11 @@ export type Provenance = {
  * Bumped when fields change meaning; follows zmo-ai-pipelines' `schema_version`.
  */
 schema_version: number, generator: GeneratorInfo, created_at: Timestamp, task: Task, source: ProvenanceSource, 
+/**
+ * The project documents the source is, with what the researcher says of each, as they
+ * stood when the files were written. Absent for a job tied to no project.
+ */
+documents?: Array<ProvenanceDocument>, 
 /**
  * `cloud` or `offline`.
  */

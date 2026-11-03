@@ -1611,7 +1611,7 @@ export const fr: Messages = {
 			},
 			provenance: {
 				word: 'Provenance',
-				text: 'La trace de la façon dont un résultat a été produit. À côté de chaque résultat, Kalamu écrit un fichier provenance.json avec le modèle et sa version exacte, le prompt, les réglages de chaque requête, les dates, les coûts, et les pages corrigées ou relues, pour que la méthode puisse être décrite et reproduite.'
+				text: 'La trace de la façon dont un résultat a été produit. À côté de chaque résultat, Kalamu écrit un fichier provenance.json avec le modèle et sa version exacte, le prompt, les réglages de chaque requête, les dates, les coûts, les pages corrigées ou relues et, pour un document d’un projet, son titre et la description de sa source, pour que la méthode puisse être décrite et reproduite.'
 			},
 			machineReadable: {
 				word: 'Lisible par machine',

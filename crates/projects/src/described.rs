@@ -3,34 +3,16 @@
 //! outside Kalamu, each value with where it came from. Supplied by the researcher only: no
 //! model reads or writes it, and no result changes it.
 
+use kalamu_core::provenance::{ProvenanceDescribed, ProvenanceDocument};
 use kalamu_core::{
-    CollectionId, DescriptionField, Document, DocumentId, Project, ProjectError, ProjectId,
-    SourceDescription, Timestamp, cleaned, same_tag, tag_name,
+    CollectionId, DescribedBy, DescriptionField, Document, DocumentId, JobId, Project,
+    ProjectError, ProjectId, SourceDescription, SourceDocuments, SourceId, StoreError, Timestamp,
+    cleaned, same_tag, tag_name,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::Projects;
-
-/// Where a part of a document's description comes from.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "snake_case")]
-#[ts(export)]
-pub enum DescribedBy {
-    /// The document's own description.
-    Document,
-    /// The project's, shared by its documents.
-    Project,
-}
-
-impl DescribedBy {
-    pub(crate) fn as_str(self) -> &'static str {
-        match self {
-            Self::Document => "document",
-            Self::Project => "project",
-        }
-    }
-}
 
 /// One part of a document's description as it stands, and where it comes from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -58,6 +40,49 @@ pub fn described(document: &Document, defaults: &SourceDescription) -> Vec<Descr
             })
         })
         .collect()
+}
+
+/// The documents a job's source is, in every project, each with its description as it stands:
+/// what the engine writes into the result's `provenance.json`.
+impl SourceDocuments for Projects {
+    fn documents(
+        &self,
+        job: JobId,
+        source: SourceId,
+    ) -> Result<Vec<ProvenanceDocument>, StoreError> {
+        let mut out = Vec::new();
+        for project in self.store.projects()? {
+            let links = self.store.links(project.id)?;
+            for link in links
+                .iter()
+                .filter(|l| l.job_id == job && l.source_id == source)
+            {
+                let document = match self.store.document(link.document_id) {
+                    Ok(document) => document,
+                    Err(StoreError::NotFound) => continue,
+                    Err(e) => return Err(e),
+                };
+                let description = described(&document, &project.source_defaults)
+                    .into_iter()
+                    .map(|d| {
+                        let part = ProvenanceDescribed {
+                            value: d.value,
+                            from: d.by,
+                        };
+                        (d.field, part)
+                    })
+                    .collect();
+                out.push(ProvenanceDocument {
+                    project_id: project.id,
+                    project_name: project.name.clone(),
+                    document_id: document.id,
+                    title: document.title,
+                    description,
+                });
+            }
+        }
+        Ok(out)
+    }
 }
 
 #[derive(Serialize)]
@@ -98,6 +123,22 @@ pub(crate) struct Listed {
 }
 
 impl Projects {
+    /// The job sources tied to these documents of a project, or to all its documents: the
+    /// results whose provenance names them.
+    pub fn sources_of(
+        &self,
+        project: ProjectId,
+        documents: Option<&[DocumentId]>,
+    ) -> Result<Vec<(JobId, SourceId)>, ProjectError> {
+        Ok(self
+            .store
+            .links(project)?
+            .into_iter()
+            .filter(|l| documents.is_none_or(|ids| ids.contains(&l.document_id)))
+            .map(|l| (l.job_id, l.source_id))
+            .collect())
+    }
+
     /// Sets a document's own description, its parts trimmed and those left empty dropped (they
     /// take the project's).
     pub fn describe_document(
