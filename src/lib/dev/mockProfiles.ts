@@ -53,7 +53,10 @@ function check(profile: ExportProfile): ProfileError | null {
 	const seen: string[] = [];
 	for (const [i, column] of profile.columns.entries()) {
 		const heading = column.heading.trim();
-		if (column.value.kind === 'answer' && !column.value.key.trim()) {
+		if (
+			(column.value.kind === 'answer' || column.value.kind === 'labelled') &&
+			!column.value.key.trim()
+		) {
 			return { kind: 'bad_value', column: i + 1 };
 		}
 		if (!heading) return { kind: 'unnamed', column: i + 1 };

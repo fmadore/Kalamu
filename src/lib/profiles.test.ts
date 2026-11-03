@@ -30,6 +30,11 @@ describe('export profiles', () => {
 			key: 'people'
 		});
 		expect(keyValue('answer')).toEqual({ kind: 'answer', key: '' });
+		// Switching to the dictionary's labels keeps the field.
+		expect(keyValue('labelled', { kind: 'answer', key: 'people' })).toEqual({
+			kind: 'labelled',
+			key: 'people'
+		});
 	});
 
 	it('moves a column within the list', () => {

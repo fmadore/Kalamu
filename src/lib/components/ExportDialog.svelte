@@ -290,12 +290,13 @@
 												{/each}
 											{/each}
 											<option value="answer">{p.answer}</option>
+											<option value="labelled">{p.labelled}</option>
 										</optgroup>
 										<optgroup label={p.groups.other}>
 											<option value="fixed">{p.values.fixed}</option>
 										</optgroup>
 									</select>
-									{#if column.value.kind === 'answer'}
+									{#if column.value.kind === 'answer' || column.value.kind === 'labelled'}
 										<input
 											type="text"
 											class="fixed mono"

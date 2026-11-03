@@ -676,9 +676,10 @@ export const en = {
 				text: (task: string) => `${task}: text, as corrected`
 			},
 			answer: 'Analysis: an answer',
+			labelled: 'Analysis: an answer, under the dictionary’s labels',
 			answerKey: 'Field',
 			resultHint:
-				'A result’s column reads the document’s preferred result for the task, or its only one. When it has several and none is preferred, the cell is left empty: choose one on the document’s page.',
+				'A result’s column reads the document’s preferred result for the task, or its only one. When it has several and none is preferred, the cell is left empty: choose one on the document’s page. Under the dictionary’s labels, each name an entry gathers is written under its label, and a name no entry holds as the model gave it.',
 			values: {
 				document_id: 'Document id',
 				title: 'Title',

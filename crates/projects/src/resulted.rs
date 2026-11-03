@@ -7,7 +7,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 use kalamu_core::speakers::rename_text;
 use kalamu_core::{
-    Correction, DocumentId, DocumentLink, FieldValue, Job, JobId, JobStore, PieceState,
+    Correction, DocumentId, DocumentLink, FieldValue, Job, JobId, JobStore, Labels, PieceState,
     PreferredResult, ProfileValue, ProjectError, ProjectId, SetupId, SourceId, StoreError, Task,
 };
 
@@ -243,12 +243,13 @@ impl Projects {
         results: &Results,
         value: &ProfileValue,
         document: DocumentId,
+        labels: &Labels,
     ) -> Result<Option<Cell>, ProjectError> {
         let task = match value {
             ProfileValue::Status { task }
             | ProfileValue::Model { task }
             | ProfileValue::Text { task } => *task,
-            ProfileValue::Answer { .. } => Task::Analysis,
+            ProfileValue::Answer { .. } | ProfileValue::Labelled { .. } => Task::Analysis,
             _ => return Ok(None),
         };
         let Some(chosen) = results.chosen(document, task) else {
@@ -260,6 +261,10 @@ impl Projects {
             ProfileValue::Model { .. } => Cell::text(chosen.model()),
             ProfileValue::Text { .. } => Cell::text(chosen.text(jobs)?),
             ProfileValue::Answer { key } => answer_cell(chosen.answers(jobs, key)?),
+            ProfileValue::Labelled { key } => match answer_cell(chosen.answers(jobs, key)?) {
+                Cell::List(items) => Cell::list(labels.applied(key, &items)),
+                other => other,
+            },
             _ => Cell::Missing,
         }))
     }

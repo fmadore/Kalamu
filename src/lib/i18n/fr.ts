@@ -768,9 +768,10 @@ export const fr: Messages = {
 				text: (task: string) => `${task} : texte, avec les corrections`
 			},
 			answer: 'Analyse : une réponse',
+			labelled: 'Analyse : une réponse, avec les libellés du dictionnaire',
 			answerKey: 'Champ',
 			resultHint:
-				'Une colonne de résultat lit le résultat préféré du document pour la tâche, ou le seul qu’il a. S’il en a plusieurs et qu’aucun n’est préféré, la cellule reste vide : choisissez-en un sur la page du document.',
+				'Une colonne de résultat lit le résultat préféré du document pour la tâche, ou le seul qu’il a. S’il en a plusieurs et qu’aucun n’est préféré, la cellule reste vide : choisissez-en un sur la page du document. Avec les libellés du dictionnaire, chaque nom rassemblé dans une entrée est écrit sous son libellé, et un nom qu’aucune entrée ne rassemble tel que le modèle l’a donné.',
 			values: {
 				document_id: 'Identifiant du document',
 				title: 'Titre',

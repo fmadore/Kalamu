@@ -59,6 +59,12 @@ pub enum ProfileValue {
     Answer {
         key: String,
     },
+    /// The same answer with each listed form written under the label of the project
+    /// dictionary's entry that holds it; a form no entry holds is kept as the model wrote it,
+    /// and a label reached by two forms is written once.
+    Labelled {
+        key: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -158,8 +164,17 @@ impl ProfileValue {
     pub fn reads_result(&self) -> bool {
         matches!(
             self,
-            Self::Status { .. } | Self::Model { .. } | Self::Text { .. } | Self::Answer { .. }
+            Self::Status { .. }
+                | Self::Model { .. }
+                | Self::Text { .. }
+                | Self::Answer { .. }
+                | Self::Labelled { .. }
         )
+    }
+
+    /// Whether the value is written through the project dictionary's labels.
+    pub fn reads_labels(&self) -> bool {
+        matches!(self, Self::Labelled { .. })
     }
 }
 
@@ -169,7 +184,8 @@ impl ExportProfile {
         self.name = self.name.trim().to_string();
         for column in &mut self.columns {
             column.heading = column.heading.trim().to_string();
-            if let ProfileValue::Answer { key } = &mut column.value {
+            if let ProfileValue::Answer { key } | ProfileValue::Labelled { key } = &mut column.value
+            {
                 *key = key.trim().to_string();
             }
         }
@@ -192,7 +208,7 @@ impl ExportProfile {
             let number = i as u32 + 1;
             let given = match &column.value {
                 ProfileValue::Text { task } => task.yields_text(),
-                ProfileValue::Answer { key } => {
+                ProfileValue::Answer { key } | ProfileValue::Labelled { key } => {
                     !key.is_empty() && !key.chars().any(char::is_control)
                 }
                 _ => true,
@@ -355,12 +371,24 @@ mod tests {
             task: Task::Analysis,
         };
         assert_eq!(analysis.check(), Err(ProfileError::BadValue { column: 1 }));
-        let mut keyless = p;
+        let mut keyless = p.clone();
         keyless.columns[1].value = ProfileValue::Answer { key: "  ".into() };
         assert_eq!(
             keyless.tidied().check(),
             Err(ProfileError::BadValue { column: 2 })
         );
+        let mut labelled = p;
+        labelled.columns[1].value = ProfileValue::Labelled { key: "".into() };
+        assert_eq!(
+            labelled.clone().tidied().check(),
+            Err(ProfileError::BadValue { column: 2 })
+        );
+        labelled.columns[1].value = ProfileValue::Labelled {
+            key: " people ".into(),
+        };
+        let labelled = labelled.tidied();
+        assert_eq!(labelled.check(), Ok(()));
+        assert!(labelled.columns[1].value.reads_labels());
     }
 
     #[test]

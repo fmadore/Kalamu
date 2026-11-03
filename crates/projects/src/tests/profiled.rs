@@ -2,8 +2,8 @@
 //! missing values and line breaks as it says, from what is stored only.
 
 use kalamu_core::{
-    DescriptionField as F, DocumentId, ExportProfile, ProfileColumn, ProfileStarter, ProfileValue,
-    SourceDescription, Timestamp,
+    DescriptionField as F, DocumentId, Entry, EntryId, ExportProfile, Labels, ProfileColumn,
+    ProfileStarter, ProfileValue, SourceDescription, Timestamp,
 };
 
 use super::*;
@@ -93,7 +93,10 @@ fn described_project(f: &Fixture) -> (ProjectId, Vec<DocumentId>, CollectionId) 
 fn a_profile_writes_its_columns_under_its_headings() {
     let f = fixture();
     let (p, _, letters) = described_project(&f);
-    let csv = f.projects.export_profiled_csv(p, None, &omeka()).unwrap();
+    let csv = f
+        .projects
+        .export_profiled_csv(p, None, &omeka(), &Labels::default())
+        .unwrap();
     assert_eq!(
         csv,
         "dcterms:identifier,dcterms:title,Dépôt,Dépôt (origine),dcterms:bibliographicCitation,\
@@ -107,7 +110,7 @@ fn a_profile_writes_its_columns_under_its_headings() {
     one_line.join_lines = true;
     let csv = f
         .projects
-        .export_profiled_csv(p, Some(letters), &one_line)
+        .export_profiled_csv(p, Some(letters), &one_line, &Labels::default())
         .unwrap();
     assert!(csv.contains("\"« Lettre », 1957, f. 2\""), "{csv}");
     assert!(!csv.contains(",b,"), "a collection keeps to its documents");
@@ -117,7 +120,10 @@ fn a_profile_writes_its_columns_under_its_headings() {
 fn a_profiles_json_keeps_its_order_lists_and_missing_values() {
     let f = fixture();
     let (p, _, _) = described_project(&f);
-    let json = f.projects.export_profiled_json(p, None, &omeka()).unwrap();
+    let json = f
+        .projects
+        .export_profiled_json(p, None, &omeka(), &Labels::default())
+        .unwrap();
     let identifier = json.find("\"dcterms:identifier\": \"19G 1\"").unwrap();
     let title = json.find("\"dcterms:title\": \"a\"").unwrap();
     assert!(
@@ -149,7 +155,9 @@ fn every_column_writes_what_the_default_csv_does() {
         ..omeka()
     };
     assert_eq!(
-        f.projects.export_profiled_csv(p, None, &every).unwrap(),
+        f.projects
+            .export_profiled_csv(p, None, &every, &Labels::default())
+            .unwrap(),
         f.projects.export_descriptions_csv(p, None).unwrap()
     );
 }
@@ -272,6 +280,12 @@ fn result_columns_read_the_preferred_or_only_result_as_corrected() {
                 },
             ),
             column(
+                "people_labelled",
+                ProfileValue::Labelled {
+                    key: "people".into(),
+                },
+            ),
+            column(
                 "analysis_status",
                 ProfileValue::Status {
                     task: Task::Analysis,
@@ -283,9 +297,24 @@ fn result_columns_read_the_preferred_or_only_result_as_corrected() {
         ..omeka()
     };
     let calls_before = f.store.pieces(first.id).unwrap();
+    // The researcher's dictionary: Fatou is Fatou Sow; an Amadou among places is not this one.
+    let entry = |namespace: &str, label: &str, form: &str| Entry {
+        id: EntryId::new(),
+        project_id: p.id,
+        namespace: namespace.into(),
+        label: label.into(),
+        forms: vec![form.into()],
+        reviewed: true,
+        created_at: Timestamp(0),
+        updated_at: Timestamp(0),
+    };
+    let labels = Labels::of(&[
+        entry("people", "Fatou Sow", "Fatou"),
+        entry("places", "Amadou (village)", "Amadou"),
+    ]);
     let json: serde_json::Value = serde_json::from_str(
         &f.projects
-            .export_profiled_json(p.id, None, &profile)
+            .export_profiled_json(p.id, None, &profile, &labels)
             .unwrap(),
     )
     .unwrap();
@@ -295,6 +324,11 @@ fn result_columns_read_the_preferred_or_only_result_as_corrected() {
     assert_eq!(a["model"], "gemini-3.8-flash");
     assert_eq!(a["people"], serde_json::json!(["Amadou", "Fatou"]));
     assert_eq!(a["summary"], "Une lettre.");
+    assert_eq!(
+        a["people_labelled"],
+        serde_json::json!(["Amadou", "Fatou Sow"]),
+        "the answer itself is unchanged; only this column writes the labels"
+    );
     // The fixture marks the first of two pieces reviewed.
     assert_eq!(a["analysis_status"], "partly_reviewed");
     // Two readings of b and none preferred: the app does not choose.
@@ -313,17 +347,17 @@ fn result_columns_read_the_preferred_or_only_result_as_corrected() {
         .unwrap();
     let csv = f
         .projects
-        .export_profiled_csv(p.id, None, &profile)
+        .export_profiled_csv(p.id, None, &profile, &Labels::default())
         .unwrap();
     let rows: Vec<&str> = csv.lines().collect();
     assert_eq!(
         rows[0],
-        "title,text,status,model,people,summary,analysis_status"
+        "title,text,status,model,people,summary,people_labelled,analysis_status"
     );
     assert!(
         rows.last()
             .unwrap()
-            .ends_with(",partly_reviewed,gemini-3.8-flash,—,—,—"),
+            .ends_with(",partly_reviewed,gemini-3.8-flash,—,—,—,—"),
         "{csv}"
     );
     // Nothing was read again.

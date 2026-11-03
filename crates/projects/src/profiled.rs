@@ -4,7 +4,7 @@
 //! Columns that read a document's result are filled by [`crate::resulted`].
 
 use kalamu_core::{
-    CollectionId, Document, ExportProfile, ProfileValue, ProjectError, ProjectId, Timestamp,
+    CollectionId, Document, ExportProfile, Labels, ProfileValue, ProjectError, ProjectId, Timestamp,
 };
 use serde::Serialize;
 use serde::ser::SerializeMap;
@@ -76,7 +76,8 @@ fn cell(
         ProfileValue::Status { .. }
         | ProfileValue::Model { .. }
         | ProfileValue::Text { .. }
-        | ProfileValue::Answer { .. } => Cell::Missing,
+        | ProfileValue::Answer { .. }
+        | ProfileValue::Labelled { .. } => Cell::Missing,
     }
 }
 
@@ -122,6 +123,7 @@ impl Projects {
         project: ProjectId,
         collection: Option<CollectionId>,
         profile: &ExportProfile,
+        labels: &Labels,
     ) -> Result<(crate::described::Listed, Vec<Vec<Cell>>), ProjectError> {
         let listed = self.listed(project, collection)?;
         // The job store is read only when a column needs a result.
@@ -137,7 +139,7 @@ impl Projects {
             let mut row = Vec::with_capacity(profile.columns.len());
             for c in &profile.columns {
                 let read = match &results {
-                    Some(results) => self.result_cell(results, &c.value, d.id)?,
+                    Some(results) => self.result_cell(results, &c.value, d.id, labels)?,
                     None => None,
                 };
                 let cell =
@@ -157,14 +159,16 @@ impl Projects {
 
     /// The documents of a project, or of a collection, through a profile, as CSV: its headings,
     /// then one row per document, lists joined with its separator and missing values written as
-    /// it says.
+    /// it says. `labels` are the project dictionary's, for the columns that write through them;
+    /// empty when none does.
     pub fn export_profiled_csv(
         &self,
         project: ProjectId,
         collection: Option<CollectionId>,
         profile: &ExportProfile,
+        labels: &Labels,
     ) -> Result<String, ProjectError> {
-        let (_, rows) = self.profiled_rows(project, collection, profile)?;
+        let (_, rows) = self.profiled_rows(project, collection, profile, labels)?;
         let mut out = csv::Writer::from_writer(Vec::new());
         out.write_record(profile.columns.iter().map(|c| c.heading.as_str()))
             .map_err(failed)?;
@@ -190,8 +194,9 @@ impl Projects {
         project: ProjectId,
         collection: Option<CollectionId>,
         profile: &ExportProfile,
+        labels: &Labels,
     ) -> Result<String, ProjectError> {
-        let (listed, rows) = self.profiled_rows(project, collection, profile)?;
+        let (listed, rows) = self.profiled_rows(project, collection, profile, labels)?;
         let headings: Vec<&str> = profile.columns.iter().map(|c| c.heading.as_str()).collect();
         let out = ProfiledOut {
             format: "kalamu-profiled-descriptions",

@@ -5,4 +5,4 @@ import type { Task } from "./Task";
 /**
  * Where a column takes its value from.
  */
-export type ProfileValue = { "kind": "document_id" } | { "kind": "title" } | { "kind": "file_name" } | { "kind": "path" } | { "kind": "project" } | { "kind": "collections" } | { "kind": "tags" } | { "kind": "part", field: DescriptionField, } | { "kind": "from", field: DescriptionField, } | { "kind": "fixed", text: string, } | { "kind": "status", task: Task, } | { "kind": "model", task: Task, } | { "kind": "text", task: Task, } | { "kind": "answer", key: string, };
+export type ProfileValue = { "kind": "document_id" } | { "kind": "title" } | { "kind": "file_name" } | { "kind": "path" } | { "kind": "project" } | { "kind": "collections" } | { "kind": "tags" } | { "kind": "part", field: DescriptionField, } | { "kind": "from", field: DescriptionField, } | { "kind": "fixed", text: string, } | { "kind": "status", task: Task, } | { "kind": "model", task: Task, } | { "kind": "text", task: Task, } | { "kind": "answer", key: string, } | { "kind": "labelled", key: string, };

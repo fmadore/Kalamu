@@ -458,8 +458,11 @@ analysed, compared. A **project** keeps it together
   ([decision](decisions/2026-11-03-export-profiles.md)). A column can also read the document's
   result for a task: how far it was reviewed (`reviewed`, `partly_reviewed`, `not_reviewed`),
   the model that read it, its text as corrected (for a task that writes one), or an analysis's
-  answer to a field, named by its key (the project's fields offered), a list staying a list.
-  The result read is the one the researcher preferred for the task or, where none is preferred,
+  answer to a field, named by its key (the project's fields offered), a list staying a list,
+  either as the model gave it or under the project dictionary's labels: each form an entry
+  holds written under its label, in that field's entries only, a form no entry holds as
+  written, a label reached twice written once; the answer itself is not changed
+  ([decision](decisions/2026-11-03-profile-dictionary-labels.md)). The result read is the one the researcher preferred for the task or, where none is preferred,
   the only one; with several and none preferred the cell is left empty, never chosen for the
   researcher ([decision](decisions/2026-11-03-profile-result-columns.md)).
 - **Every result of a document together**, whatever job made it: each set-up of each job that

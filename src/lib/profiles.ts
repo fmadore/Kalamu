@@ -37,8 +37,8 @@ export const TEXT_TASKS: Task[] = ['text_extraction', 'text_correction', 'audio_
 export const RESULT_VALUES = ['status', 'model', 'text'] as const;
 
 /**
- * `title`, `part:shelfmark`, `from:shelfmark`, `fixed`, `status:analysis`, `text:text_extraction`
- * or `answer`.
+ * `title`, `part:shelfmark`, `from:shelfmark`, `fixed`, `status:analysis`, `text:text_extraction`,
+ * `answer` or `labelled`.
  */
 export function valueKey(value: ProfileValue): string {
 	if (value.kind === 'part' || value.kind === 'from') return `${value.kind}:${value.field}`;
@@ -46,6 +46,11 @@ export function valueKey(value: ProfileValue): string {
 		return `${value.kind}:${value.task}`;
 	}
 	return value.kind;
+}
+
+/** The field's key of an answer's column, through the dictionary or not. */
+function answerKey(value?: ProfileValue): string {
+	return value?.kind === 'answer' || value?.kind === 'labelled' ? value.key : '';
 }
 
 /** The value a key stands for; a fixed text or an answer keeps the text or key it had. */
@@ -61,7 +66,7 @@ export function keyValue(key: string, previous?: ProfileValue): ProfileValue {
 		return { kind, task: field as Task };
 	}
 	if (kind === 'fixed') return { kind, text: previous?.kind === 'fixed' ? previous.text : '' };
-	if (kind === 'answer') return { kind, key: previous?.kind === 'answer' ? previous.key : '' };
+	if (kind === 'answer' || kind === 'labelled') return { kind, key: answerKey(previous) };
 	if ((DOCUMENT_VALUES as readonly string[]).includes(kind)) return { kind } as ProfileValue;
 	return { kind: 'title' };
 }
