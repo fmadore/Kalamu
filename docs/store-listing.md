@@ -1,8 +1,8 @@
 # Partner Center listing text
 
 Paste-ready text for Kalamu's Microsoft Store listing, kept for the **current submission**,
-version 1.2.0, whose `Kalamu_1.2.0.msixbundle` the release workflow builds (the first, 1.0.0,
-was certified on 2 November 2026; 1.1.2 is the version in the Store until 1.2.0 passes). The submission and update steps are in
+version 1.3.0, whose `Kalamu_1.3.0.msixbundle` the release workflow builds (the first, 1.0.0,
+was certified on 2 November 2026; 1.2.0 is the version in the Store until 1.3.0 passes). The submission and update steps are in
 [microsoft-store.md](microsoft-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 
@@ -17,8 +17,8 @@ some views; the one below fits. Keywords allow up to 7 entries of at most 40 cha
 no more than 21 words across all of them.
 
 **Languages.** English (United States) only for now. The interface is in English and French
-from the release after 1.1.2: add a French listing then, with screenshots in French, and German
-once the interface is translated.
+from 1.3.0: a French listing, with screenshots in French, can be added with its submission, and
+German once the interface is translated.
 
 **Before pasting**, replace the provider model names if the catalogue has changed, and check
 that the features listed still match the app.
@@ -53,7 +53,21 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.2.0
+### What's new in this version — 1.3.0
+
+```text
+In French: choose the interface's language in Settings, or let it follow the system's.
+
+Search a whole project: every passage that holds your words, in the text as you corrected it, each opening its review at that place. The search runs on your PC; nothing is sent.
+
+What to check: one list of the pages and answers that still need you, with the reason for each, from a project, a collection or a selection.
+
+Describe each source as an archive does, and export the descriptions in your own columns (Dublin Core terms included), beside each document's corrected text, review status or analysis answers.
+
+Also: Gemini 3.5 Transcribe names its speakers and shows its cost; OpenAI's prompt caching costs less; CSV files open in Excel with their accents; rename a tag across a project; Report a problem leads with bugs and ideas.
+```
+
+The 1.2.0 text, for the record:
 
 ```text
 Items of a table of contents: turn the entries of a newspaper issue or an archival file into items, correct, join or split them, then extract, analyse or export one article or letter on its own.
@@ -144,9 +158,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.2.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.3.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.2.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.3.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, find Offline transcription and download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.

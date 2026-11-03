@@ -6,13 +6,12 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (3 November 2026)
 
-**Version 1.2.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
+**Version 1.3.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
-[v1.2.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.2.0)
-([notes](release-1.2.0.md)). Version 1.2.0 was submitted to the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) on 3 November 2026, where 1.1.2
-stays until it passes certification; Kalamu has been there since
-version 1.0.0 (2 November 2026). Everything below is tested against
+[v1.3.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.3.0)
+([notes](release-1.3.0.md)). Version 1.2.0 passed certification and is in the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 3 November 2026; 1.3.0 is
+submitted next. Kalamu has been there since version 1.0.0 (2 November 2026). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
 the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
 (`cargo run --example live`, see [development.md](development.md) and the
@@ -396,8 +395,8 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.1.2 is the version there now, and 1.2.0 was
-submitted on 3 November 2026.
+in [microsoft-store.md](microsoft-store.md); 1.2.0 is the version there now, since
+3 November 2026, and 1.3.0 is submitted next.
 
 ## Research workflows (planned)
 

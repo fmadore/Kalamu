@@ -2,7 +2,7 @@
 
 **Effective date:** 3 November 2026, for the search index, the descriptions of documents'
 sources, export profiles and *Report a problem* opening GitHub's choice of forms without the
-app's version, which apply from the version after 1.2.0. Version 1.0.0, the first Microsoft
+app's version, which apply from version 1.3.0. Version 1.0.0, the first Microsoft
 Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
