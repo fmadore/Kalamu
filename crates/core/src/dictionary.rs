@@ -7,6 +7,8 @@
 //! places) are never mixed with another's, and the same spelling is not taken as evidence that
 //! two mentions are one person.
 
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -39,6 +41,44 @@ pub struct Entry {
     pub reviewed: bool,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
+}
+
+/// The labels of a project's entries, by namespace and form, for writing an answer under the
+/// researcher's labels without changing it.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Labels(HashMap<(String, String), String>);
+
+impl Labels {
+    pub fn of(entries: &[Entry]) -> Self {
+        Self(
+            entries
+                .iter()
+                .flat_map(|e| {
+                    e.forms
+                        .iter()
+                        .map(|f| ((e.namespace.clone(), f.clone()), e.label.clone()))
+                })
+                .collect(),
+        )
+    }
+
+    /// The forms of a list answer to a field, each under its entry's label, a form no entry
+    /// holds as written; a label two forms reach is written once, where it first appears.
+    pub fn applied(&self, namespace: &str, written: &[String]) -> Vec<String> {
+        let mut out: Vec<String> = Vec::with_capacity(written.len());
+        for item in written {
+            let Some(form) = form_of(item) else { continue };
+            let label = self
+                .0
+                .get(&(namespace.to_string(), form.clone()))
+                .cloned()
+                .unwrap_or(form);
+            if !out.contains(&label) {
+                out.push(label);
+            }
+        }
+        out
+    }
 }
 
 /// Two entries the researcher says are not the same, however alike: never merged, and later
@@ -293,6 +333,37 @@ pub trait DictionaryStore: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn labels_replace_the_forms_an_entry_holds_in_its_namespace_only() {
+        let entry = |namespace: &str, label: &str, forms: &[&str]| Entry {
+            id: EntryId::new(),
+            project_id: ProjectId::new(),
+            namespace: namespace.into(),
+            label: label.into(),
+            forms: forms.iter().map(|f| f.to_string()).collect(),
+            reviewed: true,
+            created_at: Timestamp(0),
+            updated_at: Timestamp(0),
+        };
+        let labels = Labels::of(&[
+            entry(
+                "people",
+                "Moussa Traoré",
+                &["Moussa Traore", "Traoré Moussa"],
+            ),
+            entry("places", "Bobo-Dioulasso", &["Bobo"]),
+        ]);
+        let written: Vec<String> = ["Traoré  Moussa", "Bobo", "Moussa Traore", "Awa Diallo", " "]
+            .map(String::from)
+            .into();
+        assert_eq!(
+            labels.applied("people", &written),
+            ["Moussa Traoré", "Bobo", "Awa Diallo"],
+            "a place's entry leaves a person's form alone, and one label is written once"
+        );
+        assert_eq!(Labels::default().applied("people", &written).len(), 4);
+    }
 
     #[test]
     fn a_form_keeps_its_capitals_and_accents() {

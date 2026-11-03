@@ -5,6 +5,7 @@
 import type { ExportProfile } from './bindings/ExportProfile.js';
 import type { ProfileColumn } from './bindings/ProfileColumn.js';
 import type { ProfileValue } from './bindings/ProfileValue.js';
+import type { Task } from './bindings/Task.js';
 import { FIELDS } from './described.js';
 
 /** The values taken from the document itself, in the order the dialog offers them. */
@@ -20,20 +21,52 @@ export const DOCUMENT_VALUES = [
 
 export type DocumentValue = (typeof DOCUMENT_VALUES)[number];
 
-/** `title`, `part:shelfmark`, `from:shelfmark` or `fixed`. */
+/** The tasks whose result a column can read, in the order the dialog offers them. */
+export const RESULT_TASKS: Task[] = [
+	'text_extraction',
+	'text_correction',
+	'audio_transcription',
+	'analysis',
+	'contents'
+];
+
+/** The tasks that yield a text, which a column can take. */
+export const TEXT_TASKS: Task[] = ['text_extraction', 'text_correction', 'audio_transcription'];
+
+/** What a column can read of a task's result. */
+export const RESULT_VALUES = ['status', 'model', 'text'] as const;
+
+/**
+ * `title`, `part:shelfmark`, `from:shelfmark`, `fixed`, `status:analysis`, `text:text_extraction`,
+ * `answer` or `labelled`.
+ */
 export function valueKey(value: ProfileValue): string {
-	return value.kind === 'part' || value.kind === 'from'
-		? `${value.kind}:${value.field}`
-		: value.kind;
+	if (value.kind === 'part' || value.kind === 'from') return `${value.kind}:${value.field}`;
+	if (value.kind === 'status' || value.kind === 'model' || value.kind === 'text') {
+		return `${value.kind}:${value.task}`;
+	}
+	return value.kind;
 }
 
-/** The value a key stands for; a fixed text keeps the text it had. */
+/** The field's key of an answer's column, through the dictionary or not. */
+function answerKey(value?: ProfileValue): string {
+	return value?.kind === 'answer' || value?.kind === 'labelled' ? value.key : '';
+}
+
+/** The value a key stands for; a fixed text or an answer keeps the text or key it had. */
 export function keyValue(key: string, previous?: ProfileValue): ProfileValue {
 	const [kind, field] = key.split(':');
 	if ((kind === 'part' || kind === 'from') && FIELDS.includes(field as never)) {
 		return { kind, field: field as (typeof FIELDS)[number] };
 	}
+	if ((kind === 'status' || kind === 'model') && RESULT_TASKS.includes(field as Task)) {
+		return { kind, task: field as Task };
+	}
+	if (kind === 'text' && TEXT_TASKS.includes(field as Task)) {
+		return { kind, task: field as Task };
+	}
 	if (kind === 'fixed') return { kind, text: previous?.kind === 'fixed' ? previous.text : '' };
+	if (kind === 'answer' || kind === 'labelled') return { kind, key: answerKey(previous) };
 	if ((DOCUMENT_VALUES as readonly string[]).includes(kind)) return { kind } as ProfileValue;
 	return { kind: 'title' };
 }

@@ -2,12 +2,16 @@
 //! renamed by the researcher, with how lists, missing values and line breaks are written, saved
 //! to be used again on any project. A profile holds no project's values, only where each column
 //! takes its value from, and texts the researcher fixed for every row.
+//!
+//! A column can also take a value from the document's result for a task: the one the
+//! researcher preferred, or else the only one there is. Read from what is stored, corrections
+//! applied: another profile never calls a model.
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
-use crate::{DescriptionField, Timestamp};
+use crate::{DescriptionField, Task, Timestamp};
 
 /// Where a column takes its value from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -35,6 +39,31 @@ pub enum ProfileValue {
     /// The same text in every row (an item set, a resource template, a licence).
     Fixed {
         text: String,
+    },
+    /// How far the researcher reviewed the document's result for a task: `reviewed`,
+    /// `partly_reviewed` or `not_reviewed`.
+    Status {
+        task: Task,
+    },
+    /// The model that read that result.
+    Model {
+        task: Task,
+    },
+    /// That result's text as corrected, its pages or segments apart by a blank line; only for a
+    /// task that yields text.
+    Text {
+        task: Task,
+    },
+    /// An answer of the document's analysis, by its field's key, as corrected; a list stays a
+    /// list.
+    Answer {
+        key: String,
+    },
+    /// The same answer with each listed form written under the label of the project
+    /// dictionary's entry that holds it; a form no entry holds is kept as the model wrote it,
+    /// and a label reached by two forms is written once.
+    Labelled {
+        key: String,
     },
 }
 
@@ -99,6 +128,9 @@ pub enum ProfileError {
     Duplicate { column: u32, first: u32 },
     #[error("The list separator is empty or holds a line break")]
     BadSeparator,
+    /// A result's text for a task that yields none, or an answer with no field's key.
+    #[error("Column {column} takes a value Kalamu cannot give")]
+    BadValue { column: u32 },
 }
 
 impl ProfileError {
@@ -111,6 +143,7 @@ impl ProfileError {
             Self::BadHeading { .. } => "profile.bad_heading",
             Self::Duplicate { .. } => "profile.duplicate_heading",
             Self::BadSeparator => "profile.bad_separator",
+            Self::BadValue { .. } => "profile.bad_value",
         }
     }
 
@@ -119,25 +152,50 @@ impl ProfileError {
         match self {
             Self::Unnamed { column }
             | Self::BadHeading { column }
-            | Self::Duplicate { column, .. } => Some(*column),
+            | Self::Duplicate { column, .. }
+            | Self::BadValue { column } => Some(*column),
             _ => None,
         }
     }
 }
 
+impl ProfileValue {
+    /// Whether the value comes from the document's result for a task rather than the document.
+    pub fn reads_result(&self) -> bool {
+        matches!(
+            self,
+            Self::Status { .. }
+                | Self::Model { .. }
+                | Self::Text { .. }
+                | Self::Answer { .. }
+                | Self::Labelled { .. }
+        )
+    }
+
+    /// Whether the value is written through the project dictionary's labels.
+    pub fn reads_labels(&self) -> bool {
+        matches!(self, Self::Labelled { .. })
+    }
+}
+
 impl ExportProfile {
-    /// The profile with its name and headings trimmed.
+    /// The profile with its name, headings and answers' keys trimmed.
     pub fn tidied(mut self) -> Self {
         self.name = self.name.trim().to_string();
         for column in &mut self.columns {
             column.heading = column.heading.trim().to_string();
+            if let ProfileValue::Answer { key } | ProfileValue::Labelled { key } = &mut column.value
+            {
+                *key = key.trim().to_string();
+            }
         }
         self
     }
 
     /// Checks a tidied profile: a name, columns, a heading for each that no other column has
     /// (whatever its capitals, which spreadsheets and importers ignore) and that fits on one
-    /// line, and a separator that does too. A value may be taken by two columns.
+    /// line, a value Kalamu can give (a text for a task that yields one, an answer's key), and a
+    /// separator that fits on one line. A value may be taken by two columns.
     pub fn check(&self) -> Result<(), ProfileError> {
         if self.name.is_empty() {
             return Err(ProfileError::NoName);
@@ -148,6 +206,16 @@ impl ExportProfile {
         let mut seen: Vec<String> = Vec::new();
         for (i, column) in self.columns.iter().enumerate() {
             let number = i as u32 + 1;
+            let given = match &column.value {
+                ProfileValue::Text { task } => task.yields_text(),
+                ProfileValue::Answer { key } | ProfileValue::Labelled { key } => {
+                    !key.is_empty() && !key.chars().any(char::is_control)
+                }
+                _ => true,
+            };
+            if !given {
+                return Err(ProfileError::BadValue { column: number });
+            }
             if column.heading.is_empty() {
                 return Err(ProfileError::Unnamed { column: number });
             }
@@ -275,6 +343,52 @@ mod tests {
         let mut separator = profile(&["a"]);
         separator.list_separator = "\n".into();
         assert_eq!(separator.check(), Err(ProfileError::BadSeparator));
+    }
+
+    #[test]
+    fn a_result_column_takes_a_value_kalamu_can_give() {
+        let mut p = profile(&["texte", "personnes", "statut"]);
+        p.columns[0].value = ProfileValue::Text {
+            task: Task::TextExtraction,
+        };
+        p.columns[1].value = ProfileValue::Answer {
+            key: " people ".into(),
+        };
+        p.columns[2].value = ProfileValue::Status {
+            task: Task::Analysis,
+        };
+        let p = p.tidied();
+        assert_eq!(p.check(), Ok(()));
+        assert_eq!(
+            p.columns[1].value,
+            ProfileValue::Answer {
+                key: "people".into()
+            }
+        );
+
+        let mut analysis = p.clone();
+        analysis.columns[0].value = ProfileValue::Text {
+            task: Task::Analysis,
+        };
+        assert_eq!(analysis.check(), Err(ProfileError::BadValue { column: 1 }));
+        let mut keyless = p.clone();
+        keyless.columns[1].value = ProfileValue::Answer { key: "  ".into() };
+        assert_eq!(
+            keyless.tidied().check(),
+            Err(ProfileError::BadValue { column: 2 })
+        );
+        let mut labelled = p;
+        labelled.columns[1].value = ProfileValue::Labelled { key: "".into() };
+        assert_eq!(
+            labelled.clone().tidied().check(),
+            Err(ProfileError::BadValue { column: 2 })
+        );
+        labelled.columns[1].value = ProfileValue::Labelled {
+            key: " people ".into(),
+        };
+        let labelled = labelled.tidied();
+        assert_eq!(labelled.check(), Ok(()));
+        assert!(labelled.columns[1].value.reads_labels());
     }
 
     #[test]

@@ -11,7 +11,8 @@
 use std::sync::Arc;
 
 use kalamu_core::{
-    DictionaryError, DictionaryStore, EntryId, JobStore, ProjectId, ProjectStore, StoreError,
+    DictionaryError, DictionaryStore, EntryId, JobStore, Labels, ProjectId, ProjectStore,
+    StoreError,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -55,6 +56,12 @@ impl Dictionary {
             jobs,
             store,
         }
+    }
+
+    /// The labels of the project's entries, for an export to write answers under them.
+    pub fn labels(&self, project: ProjectId) -> Result<Labels, DictionaryError> {
+        self.check_project(project)?;
+        Ok(Labels::of(&self.store.entries(project)?))
     }
 
     /// The project, or [`DictionaryError::NotFound`].

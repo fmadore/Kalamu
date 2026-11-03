@@ -283,13 +283,16 @@ is done and shipped in 1.2.0, with the default prompts and the data folder.
   bounded groups rather than in one request.
 
 - **Archival metadata, what is left of [#55](https://github.com/fmadore/Kalamu/issues/55)**:
-  normalised and inferred values (with #54 and #48) beside the literal ones; results' columns
-  (review status, a preferred result's text or fields) in a profile. Source descriptions,
-  project defaults and their export with origins, renaming a tag across a project, saved export
-  profiles, and descriptions in each result's `provenance.json` and `.json` export are done
+  normalised and inferred values (with #54 and #48) beside the literal ones; item-level rows
+  (with #50). Source descriptions, project defaults and their export with origins, renaming a
+  tag across a project, saved export profiles, descriptions in each result's `provenance.json`
+  and `.json` export, results' columns in a profile (review status, model, corrected text, an
+  analysis's answers) and an answer written under the dictionary's labels are done
   ([decision](decisions/2026-11-03-source-descriptions.md),
   [profiles](decisions/2026-11-03-export-profiles.md),
-  [provenance](decisions/2026-11-03-descriptions-in-provenance.md)).
+  [provenance](decisions/2026-11-03-descriptions-in-provenance.md),
+  [result columns](decisions/2026-11-03-profile-result-columns.md),
+  [dictionary labels](decisions/2026-11-03-profile-dictionary-labels.md)).
 - **Project search, what is left of [#86](https://github.com/fmadore/Kalamu/issues/86)**:
   alternatives (one word or another); searching two letters, and less folding work for very
   common words; and, evaluated separately, semantic search with explicit local or cloud

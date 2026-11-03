@@ -419,6 +419,7 @@ pub fn run() {
             commands::profiles::delete_export_profile,
             commands::profiles::check_export_profile,
             commands::profiles::profile_starter,
+            commands::profiles::project_answer_fields,
             commands::profiles::share_export_profile,
             commands::profiles::import_export_profile,
             commands::projects::merge_documents,

@@ -10,7 +10,10 @@ describe('export profiles', () => {
 			{ kind: 'title' },
 			{ kind: 'tags' },
 			{ kind: 'part', field: 'shelfmark' },
-			{ kind: 'from', field: 'repository' }
+			{ kind: 'from', field: 'repository' },
+			{ kind: 'status', task: 'analysis' },
+			{ kind: 'model', task: 'contents' },
+			{ kind: 'text', task: 'audio_transcription' }
 		] as const) {
 			expect(keyValue(valueKey(value))).toEqual(value);
 		}
@@ -20,6 +23,18 @@ describe('export profiles', () => {
 		});
 		expect(keyValue('fixed', { kind: 'title' })).toEqual({ kind: 'fixed', text: '' });
 		expect(keyValue('part:nothing')).toEqual({ kind: 'title' });
+		// An analysis writes no text a column can take.
+		expect(keyValue('text:analysis')).toEqual({ kind: 'title' });
+		expect(keyValue('answer', { kind: 'answer', key: 'people' })).toEqual({
+			kind: 'answer',
+			key: 'people'
+		});
+		expect(keyValue('answer')).toEqual({ kind: 'answer', key: '' });
+		// Switching to the dictionary's labels keeps the field.
+		expect(keyValue('labelled', { kind: 'answer', key: 'people' })).toEqual({
+			kind: 'labelled',
+			key: 'people'
+		});
 	});
 
 	it('moves a column within the list', () => {

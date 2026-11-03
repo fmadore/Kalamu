@@ -330,6 +330,14 @@ fn variants_are_merged_relabelled_split_and_kept_apart() {
     assert_eq!(merged.entry, Some(country.id));
     assert_eq!((merged.documents, merged.forms.len()), (3, 3));
     assert!(merged.reviewed);
+    // An export writes the answers under that label, in its field only.
+    let labels = f.dictionary.labels(f.project).unwrap();
+    let written = ["Ivory Coast".to_string(), "Côte d’Ivoire".to_string()];
+    assert_eq!(
+        labels.applied("places", &written),
+        ["Côte d'Ivoire (colony)"]
+    );
+    assert_eq!(labels.applied("people", &written), written);
 
     // Two people who share a look are kept apart, then cannot be merged.
     f.dictionary

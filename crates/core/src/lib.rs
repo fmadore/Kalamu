@@ -39,7 +39,7 @@ pub use batch::{
     BATCH_WINDOW_MS, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress, BatchRecord,
 };
 pub use dictionary::{
-    DictionaryError, DictionaryStore, Entry, KeptApart, ProposalGroup, ProposalRequest,
+    DictionaryError, DictionaryStore, Entry, KeptApart, Labels, ProposalGroup, ProposalRequest,
 };
 pub use event::ProgressEvent;
 pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter};

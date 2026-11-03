@@ -253,14 +253,20 @@ pub fn export_descriptions(
             .lock()
             .unwrap_or_else(|p| p.into_inner())
             .get(&id)?;
+        // The dictionary is read only when a column writes through its labels.
+        let labels = if profile.columns.iter().any(|c| c.value.reads_labels()) {
+            state.dictionary.labels(project)?
+        } else {
+            kalamu_core::Labels::default()
+        };
         let projects = &state.projects;
         write(
             path.with_extension("json"),
-            projects.export_profiled_json(project, collection, &profile)?,
+            projects.export_profiled_json(project, collection, &profile, &labels)?,
         )?;
         return write(
             path.with_extension("csv"),
-            projects.export_profiled_csv(project, collection, &profile)?,
+            projects.export_profiled_csv(project, collection, &profile, &labels)?,
         );
     }
     write(

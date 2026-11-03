@@ -2,6 +2,7 @@
 // graceful failure outside the desktop app (a plain `npm run dev` in a browser). Every type
 // comes from `src/lib/bindings`, generated from the Rust definitions by `cargo test`.
 
+import type { AnswerField } from './bindings/AnswerField.js';
 import type { AppError } from './bindings/AppError.js';
 import type { AppInfo } from './bindings/AppInfo.js';
 import type { Catalog } from './bindings/Catalog.js';
@@ -236,6 +237,8 @@ export const api = {
 		invoke<ProfileError | null>('check_export_profile', { profile }),
 	profileStarter: (starter: ProfileStarter) =>
 		invoke<ProfileColumn[]>('profile_starter', { starter }),
+	projectAnswerFields: (project: string) =>
+		invoke<AnswerField[]>('project_answer_fields', { project }),
 	shareExportProfile: (id: string, fixedTexts: boolean, path: string) =>
 		invoke<void>('share_export_profile', { id, fixedTexts, path }),
 	importExportProfile: (path: string) => invoke<ExportProfile>('import_export_profile', { path }),
