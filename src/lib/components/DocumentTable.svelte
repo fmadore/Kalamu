@@ -166,6 +166,17 @@
 						project: { id: projectId, name: projectName, collectionId }
 					})}><Icon name="workflow" size={14} />{m.projects.workflowWith}</button
 			>
+			<button
+				class="btn sm"
+				onclick={() =>
+					go({
+						name: 'projects',
+						projectId,
+						collectionId,
+						pane: 'queue',
+						selection: chosen.map((r) => r.document.id)
+					})}><Icon name="flag" size={14} />{m.queue.checkSelection}</button
+			>
 			{#if collections.length > 0}
 				<select
 					class="sm"

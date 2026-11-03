@@ -361,6 +361,81 @@ export const en = {
 			takeBack: 'Take back'
 		}
 	},
+	queue: {
+		title: 'To check',
+		lede: 'The pages and answers across these documents that need you, each with its reason. It is read from what Kalamu already keeps: nothing is sent to a model. Only you mark a page as reviewed; models agreeing is not a review.',
+		scope: 'Documents',
+		wholeProject: 'The whole project',
+		selection: (n: number) => (n === 1 ? 'The selected document' : `The ${n} selected documents`),
+		checkSelection: 'What to check',
+		loading: 'Gathering what needs checking…',
+		coverage: {
+			documents: (read: number, total: number) =>
+				`${read} of ${total === 1 ? '1 document' : `${total} documents`} read`,
+			pieces: (processed: number, pieces: number) =>
+				`${processed} of ${pieces === 1 ? '1 page or part' : `${pieces} pages or parts`} read`,
+			unprocessed: (n: number) => `${n} failed or not read yet`,
+			reviewed: (reviewed: number, processed: number) => `${reviewed} of ${processed} reviewed`,
+			flagged: (flagged: number, unresolved: number) =>
+				`${flagged} flagged, ${unresolved} still open`
+		},
+		coverageHint:
+			'Counted over every result read below, whatever is shown. The reviewed pages are the only ones checked; flagged pages are not a sample of the whole.',
+		results: 'Results read',
+		resultsHint:
+			'Where you chose a preferred result for a document, only it is read. Elsewhere every result is read and listed here: set aside those you do not want to check. A document read by several models is still one document.',
+		preferred: (n: number) =>
+			n === 1
+				? '1 document read through its preferred result'
+				: `${n} documents read through their preferred result`,
+		resultChoice: (label: string, job: string, documents: number) =>
+			`${label}, ${job} (${documents === 1 ? '1 document' : `${documents} documents`})`,
+		show: 'Show',
+		reason: {
+			failed: 'Failed',
+			not_read: 'Not read',
+			truncated: 'Cut off',
+			disagrees: 'Models disagree',
+			stale: 'Input changed',
+			not_reviewed: 'Not reviewed'
+		},
+		showResolved: 'Include reviewed',
+		processing: 'Failed or not read',
+		processingHint:
+			'Nothing was read here, so there is nothing to check yet: retry the failed pages on the job’s page, or start the job.',
+		answers: 'Answers to check',
+		none: 'Nothing needs you for the reasons shown.',
+		empty: 'No document here has been read yet. Read some with a new job, then come back.',
+		detail: {
+			failed: (error: string | null) => (error ? `Failed: ${error}` : 'Failed'),
+			notRead: 'Not read yet',
+			neverStarted: 'Not started yet',
+			truncated: 'Stopped at the model’s length limit: the end may be missing',
+			disagreesWords: (labels: string, words: number) =>
+				`Reads differently from ${labels}: ${words === 1 ? '1 word' : `${words} words`}`,
+			disagreesFields: (labels: string, fields: string) =>
+				`Answers differently from ${labels}: ${fields}`,
+			stale: 'Read a text that has been corrected since',
+			gone: 'Read a text whose job has since been deleted',
+			unitChanged: 'Read an item whose pages have changed since',
+			unitGone: 'Read an item that has since been deleted',
+			notReviewed: 'Not reviewed yet'
+		},
+		wholeResult: 'The whole result',
+		preferredBadge: 'Preferred',
+		reviewedBadge: 'Reviewed',
+		revision: (revision: string) => `Answer ${revision}`,
+		revisionHint:
+			'The stored answer, by the start of its fingerprint, and when it was stored. A new answer is reviewed afresh.',
+		open: (document: string, place: string) => `Open ${document}, ${place}, in the review`,
+		more: (n: number) => `Show ${n} more`,
+		banner: {
+			position: (at: number, total: number) => `${at} of ${total} to check`,
+			previous: 'Previous to check',
+			next: 'Next to check',
+			back: 'Back to the list'
+		}
+	},
 	projects: {
 		title: 'Projects',
 		lede: 'Your documents, grouped as you like, with everything read from each.',

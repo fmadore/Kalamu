@@ -15,6 +15,7 @@ import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import taskRulesJson from './taskRules.json';
 import { DOCUMENT_ID, PROJECT_ID, projectCommand, seedProjects } from './mockProjects.js';
 import { NO_RESULT } from './noResult.js';
+import { queueCommand } from './mockQueue.js';
 import {
 	analysisJob,
 	EXPORT_OPTIONS,
@@ -349,6 +350,8 @@ export function mockView(): View | null {
 			return { name: 'projects', projectId: PROJECT_ID };
 		case 'document':
 			return { name: 'projects', projectId: PROJECT_ID, documentId: DOCUMENT_ID };
+		case 'queue':
+			return { name: 'projects', projectId: PROJECT_ID, pane: 'queue' };
 		case 'workflows':
 			return { name: 'workflows' };
 		case 'workflow':
@@ -405,6 +408,8 @@ export function installMock(): void {
 		if (project !== undefined) return project;
 		const workflow = workflowCommand(cmd, a);
 		if (workflow !== undefined) return workflow;
+		const queue = queueCommand(cmd, a);
+		if (queue !== undefined) return queue;
 		const unit = unitCommand(cmd, a);
 		if (unit !== undefined) return unit;
 		switch (cmd) {

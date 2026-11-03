@@ -7,8 +7,16 @@
 	let {
 		projectId,
 		collectionId,
-		documentId
-	}: { projectId?: string; collectionId?: string; documentId?: string } = $props();
+		documentId,
+		pane,
+		selection
+	}: {
+		projectId?: string;
+		collectionId?: string;
+		documentId?: string;
+		pane?: 'queue';
+		selection?: string[];
+	} = $props();
 </script>
 
 {#if !projectId}
@@ -19,6 +27,6 @@
 	{/key}
 {:else}
 	{#key projectId}
-		<ProjectWorkspace {projectId} {collectionId} />
+		<ProjectWorkspace {projectId} {collectionId} opening={pane} {selection} />
 	{/key}
 {/if}

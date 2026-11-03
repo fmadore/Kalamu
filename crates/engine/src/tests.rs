@@ -13,6 +13,7 @@ use kalamu_store::SqliteStore;
 
 use super::*;
 
+mod attention;
 mod batch;
 mod contents;
 mod pages;
