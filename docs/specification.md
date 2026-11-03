@@ -228,8 +228,12 @@ no text layer needs *Extract text* instead.
   check*, and the notification says the text is ready to check rather than done.
 - **Works without an API key.** An offline mode keeps the app useful without an account, a key
   or an internet connection, and keeps sensitive material on the PC.
-- **Interface in English first**, with French and German to follow. All interface text lives
-  in translation files, so adding a language needs no code changes.
+- **Interface in English and French**, with German to follow. All interface text lives in
+  translation files (`src/lib/i18n/`), so adding a language needs no code changes. The
+  language is chosen in Settings; by default it is the first of the system's languages that
+  Kalamu has, else English. Prompts, the models' answers and the files Kalamu writes keep their
+  own language, and the default prompts stay in English, which the models follow best; their
+  names and descriptions are translated.
 
 ## Interruptions and resuming
 

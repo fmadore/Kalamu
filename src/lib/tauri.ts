@@ -59,6 +59,7 @@ import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
 import type { Task } from './bindings/Task.js';
 import type { TrayState } from './bindings/TrayState.js';
+import { localisePreset } from './i18n/index.js';
 
 export const isTauri = (): boolean =>
 	typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -94,7 +95,9 @@ export const api = {
 	downloadModel: (id: string) => invoke<void>('download_model', { id }),
 	cancelModelDownload: () => invoke<void>('cancel_model_download'),
 	removeModel: (id: string) => invoke<void>('remove_model', { id }),
-	listPresets: (task?: Task) => invoke<Preset[]>('list_presets', { task: task ?? null }),
+	// The defaults' names and descriptions in the interface language.
+	listPresets: (task?: Task) =>
+		invoke<Preset[]>('list_presets', { task: task ?? null }).then((p) => p.map(localisePreset)),
 	listPipelines: () => invoke<Pipeline[]>('list_pipelines'),
 	savePipeline: (pipeline: Pipeline) => invoke<Pipeline>('save_pipeline', { pipeline }),
 	deletePipeline: (id: string) => invoke<void>('delete_pipeline', { id }),

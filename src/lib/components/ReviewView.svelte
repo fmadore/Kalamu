@@ -607,11 +607,13 @@
 {#snippet foot()}
 	<span class="mono">
 		{#if report && setups.length > 1}
-			{m.review.cer}:
+			{m.review.cer}{m.common.colon}
 			{#each report.scores as s, i (s.setup_id)}
 				<span
 					class="score"
-					title={s.wer !== null ? `${m.review.wer}: ${formatPercent(s.wer)}` : undefined}
+					title={s.wer !== null
+						? `${m.review.wer}${m.common.colon} ${formatPercent(s.wer)}`
+						: undefined}
 					>{siglum(i).toUpperCase()}
 					{#if s.cer !== null}{formatPercent(s.cer)}{:else}<Missing />{/if}</span
 				>

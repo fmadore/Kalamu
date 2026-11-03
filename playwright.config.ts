@@ -10,7 +10,8 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 1 : 0,
 	reporter: process.env.CI ? [['github'], ['list']] : 'list',
-	use: { baseURL: 'http://localhost:5173' },
+	// English whatever the machine's language: the specs find elements by their English names.
+	use: { baseURL: 'http://localhost:5173', locale: 'en-US' },
 	projects: [{ name: 'webkit', use: { ...devices['Desktop Safari'] } }],
 	webServer: {
 		command: 'npm run dev -- --port 5173 --strictPort',

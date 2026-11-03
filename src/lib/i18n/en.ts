@@ -1,10 +1,16 @@
-// The English interface. Every visible string lives here so French and German can be added as
-// `fr.ts` and `de.ts` typed `: Messages` without touching components, as in Live Translation.
+// The English interface. Every visible string lives here; other languages are `fr.ts` and the
+// like, typed `: Messages` so a missing or extra key fails the type check, as in Live
+// Translation.
 
 export const en = {
 	locale: { name: 'English', tag: 'en' },
 	/** Languages a model lists that the system has no name for. */
 	languageNames: { kea: 'Kabuverdianu', rup: 'Aromanian' } as Record<string, string>,
+	/**
+	 * The default prompts' names and descriptions, by id, where the interface language differs
+	 * from the core's English; empty here, since the core's text is English.
+	 */
+	presets: {} as Record<string, { name: string; description: string }>,
 	app: {
 		name: 'Kalamu',
 		tagline: 'Transcription and text extraction'
@@ -90,6 +96,8 @@ export const en = {
 		title: 'Title',
 		pages: 'Pages',
 		pagesHint: 'In reading order, as this document numbers them: 1, 3-5, 8 (left).',
+		/** How a list of pages names a page's halves: "8 (left)". */
+		halves: { left: 'left', right: 'right' },
 		edit: 'Correct',
 		editItem: (title: string) => `Correct “${title}”`,
 		save: 'Save',
@@ -1262,7 +1270,7 @@ export const en = {
 	},
 	settings: {
 		title: 'Settings',
-		lede: 'Keys, offline models, processing and appearance.',
+		lede: 'Keys, offline models, processing, appearance and language.',
 		keysTitle: 'API keys',
 		keysHint: (keychain: string) =>
 			`Keys are stored in ${keychain} and sent only to their provider. Files go directly from this computer to the provider you choose.`,
@@ -1296,11 +1304,15 @@ export const en = {
 		catalogUpdated: (date: string) => `Model list from ${date}`,
 		catalogRefresh: 'Check for an updated model list',
 		catalogAuto: 'Check at startup',
-		appearanceTitle: 'Appearance',
+		appearanceTitle: 'Appearance and language',
 		theme: 'Theme',
 		themeSystem: 'Same as the system',
 		themeLight: 'Light',
 		themeDark: 'Dark',
+		language: 'Language of the interface',
+		languageSystem: 'Same as the system',
+		languageHint:
+			'Prompts, the models’ answers and the files Kalamu writes keep their own language: choose the language of the answers in New job.',
 		aboutTitle: 'About',
 		version: (v: string) => `Version ${v}`,
 		dataFolder: 'Data folder',
@@ -1479,6 +1491,10 @@ export const en = {
 		save: 'Save',
 		close: 'Close',
 		loading: 'Loading…',
+		/** After a label, before what it labels: French sets a space before it. */
+		colon: ':',
+		/** Between items of a list that hold commas of their own. */
+		semicolon: '; ',
 		unknown: 'Not known',
 		preview: 'preview',
 		retiring: 'retiring',

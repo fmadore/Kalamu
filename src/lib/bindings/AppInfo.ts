@@ -5,4 +5,9 @@ export type AppInfo = { version: string, data_dir: string, logs_dir: string,
 /**
  * Jobs that were running when the app last closed.
  */
-interrupted: Array<JobId>, };
+interrupted: Array<JobId>, 
+/**
+ * The system's languages in order of preference (`fr-FR`, `en-US`…), from which the
+ * interface takes its own when the setting is `system`.
+ */
+system_languages: Array<string>, };

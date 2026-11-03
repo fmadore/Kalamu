@@ -9,7 +9,7 @@
 	import PageImage from './PageImage.svelte';
 	import { findTerm } from '#lib/analysis.js';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { formatPercent, messages } from '#lib/i18n/index.js';
 	import { primary, shortcut } from '#lib/platform.js';
 	import { type Rotation, turn } from '#lib/pdf.js';
 
@@ -109,7 +109,7 @@
 				title="{m.review.zoomOut} ({shortcut(m.review.zoomOutShortcut)})"
 				onclick={() => zoomBy(-0.2)}><Icon name="zoom-out" /></button
 			>
-			<span class="zoom-value mono">{Math.round(zoom * 100)}%</span>
+			<span class="zoom-value mono">{formatPercent(Math.round(zoom * 100) / 100)}</span>
 			<button
 				class="tool"
 				aria-label={m.review.zoomIn}

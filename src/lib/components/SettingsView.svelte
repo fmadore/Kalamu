@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { CREDIT_URLS } from '#lib/credits.js';
 	import { describeError } from '#lib/errors.js';
-	import { messages, placeholders } from '#lib/i18n/index.js';
+	import { formatDay, localeNames, messages, placeholders } from '#lib/i18n/index.js';
 	import { osNames } from '#lib/platform.js';
 	import { api } from '#lib/tauri.js';
-	import { app, hasKey, openLink, refreshKeys, toast } from '#lib/state.svelte.js';
+	import { app, applyLanguage, hasKey, openLink, refreshKeys, toast } from '#lib/state.svelte.js';
 	import ExternalLink from './ExternalLink.svelte';
 	import OfflineModels from './OfflineModels.svelte';
 	import ReportLink from './ReportLink.svelte';
@@ -37,12 +37,18 @@
 		}
 	}
 
+	/** Saved first, then applied: this screen is drawn again in the new language. */
+	async function changeLanguage() {
+		await saveSettings();
+		applyLanguage();
+	}
+
 	async function refreshCatalog() {
 		try {
 			app.catalog = await api.refreshCatalog();
 			// A model added or retired changes which models suit each task.
 			app.rules = await api.taskRules();
-			toast(m.settings.catalogUpdated(app.catalog.updated));
+			toast(m.settings.catalogUpdated(formatDay(app.catalog.updated)));
 		} catch (e) {
 			toast(describeError(e, m));
 		}
@@ -138,7 +144,11 @@
 
 		<section class="card block" aria-labelledby="catalog-settings">
 			<h2 id="catalog-settings">{m.settings.catalogTitle}</h2>
-			<p>{m.settings.catalogUpdated(app.catalog?.updated ?? m.common.unknown.toLowerCase())}</p>
+			<p>
+				{m.settings.catalogUpdated(
+					app.catalog ? formatDay(app.catalog.updated) : m.common.unknown.toLowerCase()
+				)}
+			</p>
 			<div class="row">
 				<button class="btn sm" onclick={refreshCatalog}>{m.settings.catalogRefresh}</button>
 				<label class="inline small">
@@ -163,13 +173,25 @@
 					<option value="dark">{m.settings.themeDark}</option>
 				</select>
 			</label>
+			<label class="field narrow">
+				<span>{m.settings.language}</span>
+				<select bind:value={app.settings.language} onchange={changeLanguage}>
+					<option value="system">{m.settings.languageSystem}</option>
+					{#each localeNames() as { locale, name } (locale)}
+						<option value={locale} lang={locale}>{name}</option>
+					{/each}
+				</select>
+			</label>
+			<p class="muted small">{m.settings.languageHint}</p>
 		</section>
 	{/if}
 
 	<section class="card block" aria-labelledby="about">
 		<h2 id="about">{m.settings.aboutTitle}</h2>
 		<p>{m.settings.version(app.info?.version ?? '')}</p>
-		<p class="small">{m.settings.dataFolder}: <span class="path">{app.info?.data_dir}</span></p>
+		<p class="small">
+			{m.settings.dataFolder}{m.common.colon} <span class="path">{app.info?.data_dir}</span>
+		</p>
 		<p class="muted small">{m.settings.privacy}</p>
 		<p class="muted small">
 			{#each placeholders(m.settings.credits) as part, i (i)}{#if 'name' in part}<ExternalLink

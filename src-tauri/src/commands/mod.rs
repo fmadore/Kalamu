@@ -70,6 +70,9 @@ pub struct AppInfo {
     pub logs_dir: String,
     /// Jobs that were running when the app last closed.
     pub interrupted: Vec<JobId>,
+    /// The system's languages in order of preference (`fr-FR`, `en-US`…), from which the
+    /// interface takes its own when the setting is `system`.
+    pub system_languages: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

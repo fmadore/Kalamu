@@ -30,7 +30,7 @@
 				<button
 					class="btn ghost sm icon"
 					title={m.jobs.openFolder}
-					aria-label="{m.jobs.openFolder}: {name}"
+					aria-label="{m.jobs.openFolder}{m.common.colon} {name}"
 					onclick={() => revealInFolder(path)}><Icon name="folder" size={14} /></button
 				>
 			</li>

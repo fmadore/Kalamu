@@ -214,7 +214,7 @@
 		<p class="error small">{shownPage.error}</p>
 	{/if}
 	{#if typeof noteHere === 'string' && noteHere}
-		<p class="muted small">{m.review.pageNote}: {noteHere}</p>
+		<p class="muted small">{m.review.pageNote}{m.common.colon} {noteHere}</p>
 	{/if}
 	{#if cost > 0}<p class="muted small mono">{formatUsd(cost)}</p>{/if}
 {/snippet}

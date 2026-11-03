@@ -10,7 +10,7 @@
 	import type { UnitsView } from '#lib/bindings/UnitsView.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { pieceLabel } from '#lib/pieces.js';
+	import { enginePages, pieceLabel, typedPages } from '#lib/pieces.js';
 	import { go } from '#lib/state.svelte.js';
 	import { api, pickFolder } from '#lib/tauri.js';
 
@@ -43,9 +43,13 @@
 	const units = $derived(view?.units ?? []);
 	const chosen = $derived(units.filter((v) => selected.includes(v.unit.id)).map((v) => v.unit.id));
 	const titleOf = (unit: DocumentUnit) => unit.title || u.untitled;
-	/** A page as typed in a list of pages: "3", "8 (left)". */
+	/** A page as typed in a list of pages: "3", "8 (left)", in the interface language. */
 	const typedPage = (page: PieceRef) =>
-		page.kind !== 'page' ? '' : page.half ? `${page.number} (${page.half})` : String(page.number);
+		page.kind !== 'page'
+			? ''
+			: page.half
+				? `${page.number} (${m.units.halves[page.half]})`
+				: String(page.number);
 
 	async function load() {
 		try {
@@ -81,7 +85,7 @@
 				u.made(report.made),
 				...report.problems.map((p) =>
 					p.unknown.length > 0
-						? u.unknownPages(p.entry, p.unknown.join(', '))
+						? u.unknownPages(p.entry, typedPages(p.unknown.join(', '), m))
 						: u.unreadPages(p.entry, p.pages)
 				)
 			];
@@ -98,7 +102,7 @@
 				setup_id: setupId,
 				source_id: sourceId,
 				title: draft.title,
-				pages: draft.pages
+				pages: enginePages(draft.pages, m)
 			})
 		);
 		if (saved) editing = null;
@@ -234,7 +238,7 @@
 								onclick={() => unit.pages[0] && onshow(unit.pages[0])}
 							>
 								<span class="item-title">{titleOf(unit)}</span>
-								<span class="item-pages mono">{pages || u.noPages}</span>
+								<span class="item-pages mono">{typedPages(pages, m) || u.noPages}</span>
 							</button>
 						</div>
 						{#each shared as s (pieceLabel(s.page, m))}
@@ -244,7 +248,8 @@
 							<button
 								class="btn ghost sm"
 								aria-label={u.editItem(titleOf(unit))}
-								onclick={() => (editing = { id: unit.id, title: unit.title, pages })}
+								onclick={() =>
+									(editing = { id: unit.id, title: unit.title, pages: typedPages(pages, m) })}
 								><Icon name="edit" size={14} />{u.edit}</button
 							>
 							{#if next}

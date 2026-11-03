@@ -38,6 +38,11 @@ ad hoc; it has not yet been opened on a real Mac
   beside the video, played on the dark stage in YouTube's privacy-enhanced player, each video
   named after its title
   ([decision](decisions/2026-10-27-youtube-links.md)).
+- **French interface.** Every screen, message, tip and the glossary in French, written in the
+  terms of archival practice and the digital humanities; the default prompts' names and
+  descriptions too, the prompts themselves staying in English. Chosen in Settings, by default
+  the system's language when Kalamu has it; dates, numbers and costs written the French way
+  ([decision](decisions/2026-11-03-french-interface.md)).
 - **macOS.** Apple Silicon, built and tested in CI beside Windows x64 and ARM64: what differs
   between the systems in one place per layer (`src-tauri/src/platform/`, `src/lib/platform.ts`,
   `tauri.macos.conf.json`), the review's player given WebKit's formats, ⌘ shortcuts, Mac window,
@@ -408,7 +413,7 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 
 ## Later
 
-- French and German interface.
+- German interface: `de.ts` beside `en.ts` and `fr.ts`.
 - OpenRouter for open-weights models.
 - **Free offline text extraction with Tesseract** for clean printed PDFs and images, without
   an account, API key or per-page API charges; language data installed through the app, then

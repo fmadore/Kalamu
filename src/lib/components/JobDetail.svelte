@@ -211,7 +211,7 @@
 					{#if job.setups.length > 1}
 						<select bind:value={textSetup} aria-label={m.jobs.analyseSetup}>
 							{#each job.setups as s (s.id)}
-								<option value={s.id}>{m.jobs.analyseSetup}: {s.label}</option>
+								<option value={s.id}>{m.jobs.analyseSetup}{m.common.colon} {s.label}</option>
 							{/each}
 						</select>
 					{/if}
