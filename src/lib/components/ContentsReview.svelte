@@ -156,6 +156,18 @@
 		return clearFound;
 	});
 
+	// Opened from a project's search on an entry: that entry brought into view with its first
+	// page, once.
+	let opened = false;
+	$effect(() => {
+		const n = opening?.entry;
+		const at = shown.findIndex((s) => s.n === n);
+		if (opened || !n || !list || at < 0) return;
+		opened = true;
+		showEntry(shown[at].entry);
+		void tick().then(() => list?.children[at]?.scrollIntoView({ block: 'start' }));
+	});
+
 	function addEntry() {
 		const draft = toDraft(fields, []);
 		draft[PAGES] = String(pageNumber);
@@ -326,7 +338,7 @@
 		{#if shown.length === 0}<p class="muted">{m.review.noEntryFound}</p>{/if}
 		<ol class="entries" bind:this={list}>
 			{#each shown as { entry, n } (n)}
-				<li value={n} class:here={onPage(entry)}>
+				<li value={n} class:here={onPage(entry)} class:opened={opening?.entry === n}>
 					<button class="entry" onclick={() => showEntry(entry)}>
 						<span class="entry-title">{valueText(entry, TITLE)}</span>
 						<span class="entry-pages mono" title={m.review.goToPage(valueText(entry, PAGES))}
@@ -381,6 +393,10 @@
 	.entries li.here {
 		background: var(--surface-1);
 		box-shadow: inset 3px 0 0 var(--marker);
+	}
+	/* The entry a project's search opened on. */
+	.entries li.opened {
+		box-shadow: inset 3px 0 0 var(--text-muted);
 	}
 	.entry {
 		display: flex;

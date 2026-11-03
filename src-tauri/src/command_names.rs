@@ -127,6 +127,7 @@ pub const COMMANDS: &[&str] = &[
     "dictionary_forget_request",
     "project_search",
     "rebuild_search_index",
+    "prepare_project_search",
     "set_taskbar_progress",
     "set_tray_state",
     "hide_window",

@@ -164,4 +164,11 @@ fn failed_pieces_count_as_unread_and_tables_of_contents_search_their_entries() {
             ("La zakat au village", "Summary")
         ]
     );
+    // Each match names its entry's place in the table, which the review opens at.
+    let mut sports = generated.clone();
+    sports.query = "football".into();
+    let view = f.find(&sports);
+    let hit = &view.documents[0].results[0].hits[0];
+    assert_eq!(hit.entry_number, Some(2));
+    assert_eq!(hit.entry.as_deref(), Some("Sports"));
 }

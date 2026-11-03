@@ -39,6 +39,10 @@ export interface ReviewFind {
 	index: number;
 	/** Which match it is in that piece's text, from 0. */
 	nth: number;
+	/** For an answer, its field's key. */
+	field?: string | null;
+	/** For a table of contents' entry, its place in the table, from 1. */
+	entry?: number | null;
 }
 
 export type View =

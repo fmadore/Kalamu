@@ -32,6 +32,8 @@ fn never() -> bool {
     false
 }
 
+fn quiet(_: u32, _: u32) {}
+
 fn source(name: &str, kind: InputKind) -> SourceFile {
     SourceFile {
         id: SourceId::new(),
@@ -90,6 +92,8 @@ fn page(text: &str) -> Read {
 fn request(query: &str) -> SearchRequest {
     SearchRequest {
         query: query.into(),
+        mode: MatchMode::Phrase,
+        near: 10,
         collection: None,
         tag: None,
         task: None,
@@ -244,7 +248,9 @@ impl Fixture {
     }
 
     fn find(&self, request: &SearchRequest) -> SearchView {
-        self.search.search(self.project, request, &never).unwrap()
+        self.search
+            .search(self.project, request, &never, &quiet)
+            .unwrap()
     }
 }
 
@@ -413,7 +419,7 @@ fn accents_vowel_marks_and_repeated_phrases_are_each_found() {
     assert_eq!(words, vec!["Père Éric", "PERE ERIC", "père éric"]);
     // Too short a query is refused rather than finding everything.
     assert!(matches!(
-        f.search.search(f.project, &request("é "), &never),
+        f.search.search(f.project, &request("é "), &never, &quiet),
         Err(SearchError::TooShort)
     ));
 }
@@ -455,4 +461,50 @@ fn several_set_ups_stay_results_of_one_document_and_preferences_choose() {
     let mut all = request("mosquee de bobo");
     all.results = ResultPolicy::All;
     assert_eq!(f.find(&all).documents[0].results.len(), 2);
+}
+
+#[test]
+fn every_word_and_words_near_each_other_across_documents() {
+    let f = Fixture::new();
+    let near = f.document("Le Musulman 12", InputKind::Pdf);
+    let apart = f.document("Le Musulman 13", InputKind::Pdf);
+    let one = f.document("Le Musulman 14", InputKind::Pdf);
+    f.extraction(&near, &["L'imam Ouédraogo a prêché à Koupéla."]);
+    f.extraction(
+        &apart,
+        &["L'imam a prêché. Bien plus tard, au marché de la ville, Ouédraogo est venu."],
+    );
+    f.extraction(&one, &["Ouédraogo seul"]);
+
+    let mut every = request("imam de Ouedraogo");
+    every.mode = MatchMode::AllWords;
+    let view = f.find(&every);
+    assert_eq!(view.terms, ["imam", "Ouedraogo"]);
+    assert_eq!(view.ignored, ["de"]);
+    // Both words in the same page: the third document holds one only.
+    let titles: Vec<&str> = view.documents.iter().map(|d| d.title.as_str()).collect();
+    assert_eq!(titles, ["Le Musulman 12", "Le Musulman 13"]);
+    assert_eq!(view.matches, 4);
+    let hit = &view.documents[1].results[0].hits[1];
+    assert_eq!((hit.term.as_str(), hit.nth), ("Ouedraogo", 0));
+
+    let mut close = every.clone();
+    close.mode = MatchMode::Near;
+    close.near = 3;
+    let view = f.find(&close);
+    assert_eq!(listed(&view), ["Le Musulman 12 | 1 | 0 | imam Ouédraogo"]);
+    let hit = &view.documents[0].results[0].hits[0];
+    assert_eq!(hit.term, "imam");
+    assert_eq!(
+        hit.marks,
+        [Mark { start: 0, end: 4 }, Mark { start: 5, end: 14 }]
+    );
+
+    // Only words too short: nothing to look for.
+    let mut short = request("la de");
+    short.mode = MatchMode::AllWords;
+    assert!(matches!(
+        f.search.search(f.project, &short, &never, &quiet),
+        Err(SearchError::TooShort)
+    ));
 }

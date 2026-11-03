@@ -2,10 +2,14 @@
 	// A project's search: every passage of its documents that holds some words, in the text as the
 	// researcher corrected it, grouped by document and by reading, each opening its review where
 	// it stands. What was searched is said beside the matches, so that finding nothing is not read
-	// as absence. The search runs in Rust on a local copy of the results' text.
+	// as absence. The search runs in Rust on a local copy of the results' text, prepared as soon as
+	// the search opens, its progress shown.
+	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
+	import ProgressBar from './ProgressBar.svelte';
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { Hit } from '#lib/bindings/Hit.js';
+	import type { MatchMode } from '#lib/bindings/MatchMode.js';
 	import type { ResultHits } from '#lib/bindings/ResultHits.js';
 	import type { ReviewFilter } from '#lib/bindings/ReviewFilter.js';
 	import type { SearchRequest } from '#lib/bindings/SearchRequest.js';
@@ -18,13 +22,14 @@
 		blankRequest,
 		hitOrigin,
 		hitPlace,
+		hitWords,
 		keepSearch,
 		lastSearch,
 		reviewFind
 	} from '#lib/projectSearch.js';
 	import { searchable } from '#lib/search.js';
 	import { go, toast } from '#lib/state.svelte.js';
-	import { api } from '#lib/tauri.js';
+	import { api, on } from '#lib/tauri.js';
 
 	let {
 		projectId,
@@ -35,6 +40,7 @@
 	const TEXT_TASKS: Task[] = ['text_extraction', 'text_correction', 'audio_transcription'];
 	const GENERATED_TASKS: Task[] = ['analysis', 'contents'];
 	const REVIEW: ReviewFilter[] = ['any', 'reviewed', 'not_reviewed'];
+	const MODES: MatchMode[] = ['phrase', 'all_words', 'near'];
 
 	// svelte-ignore state_referenced_locally
 	const kept = lastSearch(projectId);
@@ -42,8 +48,8 @@
 	let view = $state<SearchView | null>(kept?.view ?? null);
 	let error = $state<string | null>(null);
 	let busy = $state(false);
-	/** The words of the matches shown, which the review is opened with. */
-	let shownQuery = $state(kept?.request.query ?? '');
+	/** How far the project's text is prepared for searching, while it is. */
+	let preparing = $state<{ done: number; total: number } | null>(null);
 
 	const tasks = $derived(request.generated ? [...TEXT_TASKS, ...GENERATED_TASKS] : TEXT_TASKS);
 	const ready = $derived(searchable(request.query));
@@ -55,8 +61,8 @@
 		error = null;
 		try {
 			view = await api.projectSearch(projectId, asked);
-			shownQuery = asked.query;
 			keepSearch(projectId, asked, view);
+			preparing = null;
 		} catch (e) {
 			// A newer search replaced this one; its answer comes on its own.
 			if ((e as { id?: string })?.id === 'search.stopped') return;
@@ -86,9 +92,37 @@
 			name: 'review',
 			jobId: result.job_id,
 			sourceId: result.source_id,
-			find: reviewFind(result, hit, shownQuery)
+			find: reviewFind(result, hit)
 		});
 	}
+
+	// The text prepared before the first search, so that it need not wait; a search begun
+	// meanwhile carries on from where the preparation got to.
+	onMount(() => {
+		let unlisten: (() => void) | undefined;
+		let gone = false;
+		void on
+			.searchProgress((p) => {
+				if (p.project_id !== projectId) return;
+				preparing = p.done < p.total ? { done: p.done, total: p.total } : null;
+			})
+			.then((u) => {
+				if (gone) u();
+				else unlisten = u;
+			});
+		void api
+			.prepareProjectSearch(projectId)
+			.catch(() => {
+				// A search prepares what it needs itself, and says so if it cannot.
+			})
+			.finally(() => {
+				if (!busy) preparing = null;
+			});
+		return () => {
+			gone = true;
+			unlisten?.();
+		};
+	});
 
 	async function rebuild() {
 		error = null;
@@ -130,6 +164,31 @@
 	</form>
 
 	<div class="table-filters">
+		<label class="pick">
+			<span>{m.search.mode}</span>
+			<select bind:value={request.mode} onchange={refilter}>
+				{#each MODES as mode (mode)}
+					<option value={mode}>{m.search.modes[mode]}</option>
+				{/each}
+			</select>
+		</label>
+		{#if request.mode === 'near'}
+			<label class="pick">
+				<span>{m.search.near}</span>
+				<input
+					class="distance num"
+					type="number"
+					min="0"
+					max="100"
+					bind:value={request.near}
+					onchange={() => {
+						request.near = Math.min(Math.max(Math.round(request.near) || 0, 0), 100);
+						refilter();
+					}}
+				/>
+				<span>{m.search.nearWords}</span>
+			</label>
+		{/if}
 		{#if collections.length > 0}
 			<label class="pick">
 				<span>{m.search.scope}</span>
@@ -182,9 +241,17 @@
 		</label>
 	</div>
 
+	{#if request.mode !== 'phrase'}<p class="hint muted">{m.search.quotesHint}</p>{/if}
 	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
 	{#if request.query.trim() && !ready}<p class="muted">{m.search.tooShort}</p>{/if}
-	{#if busy}<p class="muted" role="status">{m.search.searching}</p>{/if}
+	{#if preparing}
+		<div class="preparing" role="status">
+			<p class="muted num">{m.search.preparing(preparing.done, preparing.total)}</p>
+			<ProgressBar done={preparing.done} total={preparing.total} label={m.search.title} />
+		</div>
+	{:else if busy}
+		<p class="muted" role="status">{m.search.searching}</p>
+	{/if}
 
 	{#if view}
 		<div class="summary" aria-live="polite">
@@ -193,6 +260,9 @@
 			</p>
 			{#if view.listed < view.matches}
 				<p class="muted">{m.search.listedOnly(view.listed, view.matches)}</p>
+			{/if}
+			{#if view.ignored.length > 0}
+				<p class="muted">{m.search.ignored(view.ignored.join(', '))}</p>
 			{/if}
 			<ul class="coverage muted num">
 				<li>{m.search.coverage(view.coverage.searched, view.coverage.documents)}</li>
@@ -227,7 +297,7 @@
 							{/if}
 						</p>
 						<ol class="hits">
-							{#each r.hits as h (`${h.index}/${h.nth}`)}
+							{#each r.hits as h (`${h.index}/${h.term}/${h.nth}`)}
 								{@const place = hitPlace(h, m)}
 								{@const origin = hitOrigin(h, m)}
 								<li>
@@ -235,7 +305,8 @@
 										<span class="place num">{place}</span>
 										<span class="snippet">
 											{#if origin}<span class="origin">{origin}</span>{/if}
-											{h.before}<mark>{h.words}</mark>{h.after}
+											{h.before}{#each hitWords(h) as w, i (i)}{#if w.found}<mark>{w.text}</mark
+													>{:else}{w.text}{/if}{/each}{h.after}
 										</span>
 										<span class="state">
 											{#if h.corrected}<span class="chip hand">{m.review.corrected}</span>{/if}
@@ -283,6 +354,18 @@
 		gap: var(--space-2);
 		font-size: var(--type-sm);
 		color: var(--text-secondary);
+	}
+	.distance {
+		width: 4.5rem;
+	}
+	.hint {
+		max-width: 44rem;
+		font-size: var(--type-xs);
+	}
+	.preparing {
+		display: grid;
+		gap: var(--space-1);
+		max-width: 32rem;
 	}
 	.check {
 		display: inline-flex;

@@ -73,7 +73,7 @@ fn a_lost_index_is_made_again_from_the_store() {
         Arc::new(SqliteIndex::open(&path).unwrap()),
     );
     let view = search
-        .search(project, &request("hamallisme"), &never)
+        .search(project, &request("hamallisme"), &never, &quiet)
         .unwrap();
     assert_eq!(view.matches, 1);
 }
@@ -83,8 +83,52 @@ fn a_newer_search_stops_one_still_indexing() {
     let f = Fixture::new();
     let doc = f.document("Lettre", InputKind::Pdf);
     f.extraction(&doc, &["Wahhabisme"]);
-    let stopped = f.search.search(f.project, &request("wahhabisme"), &|| true);
+    let stopped = f
+        .search
+        .search(f.project, &request("wahhabisme"), &|| true, &quiet);
     assert!(matches!(stopped, Err(SearchError::Stopped)));
     // What was indexed before stopping is kept; the next search finishes the rest.
     assert_eq!(f.find(&request("wahhabisme")).matches, 1);
+}
+
+#[test]
+fn preparing_ahead_tells_its_progress_and_leaves_searches_nothing_to_do() {
+    let f = Fixture::new();
+    let first = f.document("Lettre", InputKind::Pdf);
+    let second = f.document("Rapport", InputKind::Pdf);
+    f.extraction(&first, &["Le hamallisme à Nioro", "Une page"]);
+    f.extraction(&second, &["Rien"]);
+
+    let told = std::cell::RefCell::new(Vec::new());
+    let prepared = f
+        .search
+        .prepare(f.project, &never, &|done, total| {
+            told.borrow_mut().push((done, total))
+        })
+        .unwrap();
+    assert_eq!(prepared, 3);
+    // Once before, then after each job's batch, the jobs in no set order.
+    let told = told.into_inner();
+    assert_eq!((told[0], told.last().copied()), ((0, 3), Some((3, 3))));
+    assert_eq!(told.len(), 3);
+    assert_eq!(f.index.size().unwrap().passages, 3);
+
+    // A search then has nothing left to prepare, and says nothing of it.
+    let told = std::cell::RefCell::new(Vec::new());
+    let view = f
+        .search
+        .search(f.project, &request("hamallisme"), &never, &|done, total| {
+            told.borrow_mut().push((done, total))
+        })
+        .unwrap();
+    assert_eq!(view.matches, 1);
+    assert!(told.into_inner().is_empty());
+    // Nor does preparing again.
+    assert_eq!(f.search.prepare(f.project, &never, &quiet).unwrap(), 0);
+    // A newer search stops it, keeping nothing half done.
+    f.search.rebuild().unwrap();
+    assert!(matches!(
+        f.search.prepare(f.project, &|| true, &quiet),
+        Err(SearchError::Stopped)
+    ));
 }

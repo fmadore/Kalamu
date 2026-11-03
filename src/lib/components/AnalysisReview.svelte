@@ -5,7 +5,7 @@
 	// document. Corrections are kept apart from the model's answers. A search keeps the fields
 	// whose answers or reasons hold its words, marked where they stand, and marks them in a text
 	// document too.
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
@@ -75,6 +75,19 @@
 		if (!answersPane || !filtering || editing) return;
 		markFound(answersPane, '.answer p', query);
 		return clearFound;
+	});
+
+	// Opened from a project's search on an answer: that field brought into view, once.
+	let opened = false;
+	$effect(() => {
+		const key = opening?.field;
+		if (opened || !key || !answersPane || !shown.some((f) => f.key === key)) return;
+		opened = true;
+		void tick().then(() =>
+			answersPane
+				?.querySelector(`[data-field="${CSS.escape(key)}"]`)
+				?.scrollIntoView({ block: 'start' })
+		);
 	});
 
 	// A PDF or image is shown page by page; a text document as text.
@@ -203,7 +216,7 @@
 		{#if shown.length === 0}<p class="muted">{m.review.noAnswerFound}</p>{/if}
 		{#each shown as f (f.key)}
 			{@const readings = collate(f.key, witnesses)}
-			<div class="answer">
+			<div class="answer" data-field={f.key} class:opened={opening?.field === f.key}>
 				<h2>{f.label}</h2>
 				{#if readings.length === 0}
 					<p class="muted none">{m.review.noneFound}</p>
@@ -271,6 +284,12 @@
 	}
 	.answer:first-child {
 		border-top: 0;
+	}
+	/* The answer a project's search opened on. */
+	.answer.opened {
+		scroll-margin-top: var(--space-3);
+		box-shadow: inset 3px 0 0 var(--text-muted);
+		padding-left: var(--space-3);
 	}
 	.answer h2 {
 		font-size: var(--type-xs);

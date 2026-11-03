@@ -459,6 +459,19 @@ export const fr: Messages = {
 		placeholder: 'Un nom, une organisation, une expression…',
 		go: 'Chercher',
 		tooShort: 'Tapez au moins trois lettres.',
+		mode: 'Trouver',
+		modes: {
+			phrase: 'L’expression exacte',
+			all_words: 'Tous ces mots',
+			near: 'Ces mots proches les uns des autres'
+		},
+		near: 'Au plus',
+		nearWords: 'mots d’écart',
+		quotesHint:
+			'Chaque mot est cherché dans la même page ou la même réponse. Mettez entre guillemets les mots qui vont ensemble : « mission catholique » Koupéla.',
+		ignored: (words: string) => `Laissés de côté, trop courts pour être cherchés : ${words}.`,
+		preparing: (done: number, total: number) =>
+			`Préparation du texte pour la recherche : ${done} sur ${total <= 1 ? `${total} page ou partie` : `${total} pages ou parties`}…`,
 		scope: 'Documents',
 		wholeProject: 'Tout le projet',
 		tag: 'Étiquette',
@@ -1592,7 +1605,7 @@ export const fr: Messages = {
 		linkFailed: (url: string) => `Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`
 	},
 	error: {
-		'search.too_short': 'Tapez au moins trois lettres.',
+		'search.too_short': 'Tapez un mot d’au moins trois lettres.',
 		'search.stopped': 'La recherche a été remplacée par une plus récente.',
 		'search.index':
 			'La recherche n’a pas pu lire sa copie du texte de vos résultats. Préparez à nouveau le texte depuis la recherche ; vos résultats ne sont pas touchés.',

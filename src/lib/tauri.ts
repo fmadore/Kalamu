@@ -50,6 +50,7 @@ import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
 import type { Project } from './bindings/Project.js';
 import type { SearchRequest } from './bindings/SearchRequest.js';
+import type { SearchProgress } from './bindings/SearchProgress.js';
 import type { SearchView } from './bindings/SearchView.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { ProjectView } from './bindings/ProjectView.js';
@@ -210,6 +211,7 @@ export const api = {
 	projectSearch: (project: string, request: SearchRequest) =>
 		invoke<SearchView>('project_search', { project, request }),
 	rebuildSearchIndex: () => invoke<void>('rebuild_search_index'),
+	prepareProjectSearch: (project: string) => invoke<void>('prepare_project_search', { project }),
 	dictionaryView: (project: string, collection: string | null) =>
 		invoke<DictionaryView>('dictionary_view', { project, collection }),
 	dictionaryEvidence: (project: string, namespace: string, forms: string[]) =>
@@ -273,7 +275,8 @@ export const api = {
 
 export const on = {
 	progress: (handler: (event: ProgressEvent) => void) => listen('progress', handler),
-	closeRequested: (handler: () => void) => listen<null>('close-requested', handler)
+	closeRequested: (handler: () => void) => listen<null>('close-requested', handler),
+	searchProgress: (handler: (event: SearchProgress) => void) => listen('search-progress', handler)
 };
 
 const PAGES = ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'];
