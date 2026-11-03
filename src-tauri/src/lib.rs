@@ -148,6 +148,28 @@ pub fn run() {
             let projects = kalamu_projects::Projects::new(store.clone(), store.clone());
             let dictionary =
                 kalamu_dictionary::Dictionary::new(store.clone(), store.clone(), store.clone());
+            // The search index is a file of its own, made again from the job database when it is
+            // lost or cannot be read; it holds nothing the database does not.
+            let index: Arc<dyn kalamu_core::SearchIndex> =
+                match kalamu_store::SqliteIndex::open(&data.join("search.sqlite")) {
+                    Ok(index) => Arc::new(index),
+                    Err(e) => {
+                        tracing::warn!(error = %e, "search index kept in memory only");
+                        Arc::new(kalamu_store::SqliteIndex::in_memory()?)
+                    }
+                };
+            let search = Arc::new(kalamu_search::Search::new(
+                store.clone(),
+                store.clone(),
+                index,
+            ));
+            // Passages of jobs deleted while the index could not be told.
+            let pruning = search.clone();
+            std::thread::spawn(move || match pruning.prune() {
+                Ok(0) => {}
+                Ok(n) => tracing::info!(jobs = n, "deleted jobs removed from the search index"),
+                Err(e) => tracing::warn!(error = %e, "search index not pruned"),
+            });
             let prompts = PromptLibrary::open(&data.join("presets"))?;
             let pipelines = kalamu_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
             let workflows = kalamu_prompts::WorkflowLibrary::open(&data.join("workflows"))?;
@@ -242,6 +264,8 @@ pub fn run() {
                 engine,
                 projects,
                 dictionary,
+                search,
+                search_generation: Arc::default(),
                 models,
                 keys,
                 settings: Mutex::new(settings),
@@ -387,6 +411,8 @@ pub fn run() {
             commands::dictionary::dictionary_proposals,
             commands::dictionary::dictionary_dismiss,
             commands::dictionary::dictionary_forget_request,
+            commands::search::project_search,
+            commands::search::rebuild_search_index,
             commands::window::set_taskbar_progress,
             commands::window::set_tray_state,
             commands::window::hide_window,

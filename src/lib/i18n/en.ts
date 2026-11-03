@@ -315,6 +315,60 @@ export const en = {
 			takeBack: 'Take back'
 		}
 	},
+	search: {
+		title: 'Search',
+		lede: 'Every passage of the project’s documents that holds your words, in the text as you corrected it, each opening where it stands. Capitals, accents and Arabic vowel marks are ignored. Nothing is sent: the search runs on this computer.',
+		query: 'Words to find',
+		placeholder: 'A name, an organisation, a phrase…',
+		go: 'Search',
+		tooShort: 'Type three letters at least.',
+		scope: 'Documents',
+		wholeProject: 'The whole project',
+		tag: 'Tag',
+		anyTag: 'Any tag',
+		task: 'Results of',
+		anyTask: 'Every task',
+		review: 'Pages',
+		reviewFilter: { any: 'All', reviewed: 'Reviewed', not_reviewed: 'Not yet reviewed' },
+		results: 'Readings',
+		resultChoice: { preferred: 'The preferred one, where chosen', all: 'Every reading' },
+		generated: 'Also search what models wrote about them: analyses and tables of contents',
+		searching:
+			'Searching… The first search of a project prepares its text, which can take a moment.',
+		matches: (matches: number, documents: number) =>
+			`${matches === 1 ? '1 match' : `${matches} matches`} in ${documents === 1 ? '1 document' : `${documents} documents`}`,
+		listedOnly: (listed: number, matches: number) =>
+			`The first ${listed} of ${matches} matches are listed. Narrow the search to see the rest.`,
+		none: 'Not found in the text searched.',
+		coverage: (searched: number, documents: number) =>
+			`Searched the text of ${searched} of ${documents === 1 ? '1 document' : `${documents} documents`}.`,
+		unread: (n: number) =>
+			n === 1
+				? '1 document has nothing read yet of the kinds searched: its content is not searched.'
+				: `${n} documents have nothing read yet of the kinds searched: their content is not searched.`,
+		piecesUnread: (n: number) =>
+			n === 1
+				? '1 page or part of the results searched is still to read, or could not be read.'
+				: `${n} pages or parts of the results searched are still to read, or could not be read.`,
+		withoutPreference: (n: number) =>
+			n === 1
+				? '1 document has several readings and none preferred: every reading was searched.'
+				: `${n} documents have several readings and none preferred: every reading was searched.`,
+		absence:
+			'Finding nothing does not mean the documents never mention it: only the text read and kept is searched, and a model may have misread a name.',
+		preferred: 'Preferred',
+		generatedResult: 'Written by a model',
+		stale: 'Out of date',
+		staleHint: 'The text this analysis read has been corrected since.',
+		reason: 'reason',
+		open: (place: string) => `Open ${place} in the review`,
+		rebuild: 'Prepare the text again',
+		rebuildHint:
+			'The search keeps a copy of your results’ text, prepared for searching, in Kalamu’s data folder. Preparing it again starts from your results and corrections; nothing is lost.',
+		rebuilt: 'The text will be prepared again at the next search.',
+		moved:
+			'The words are no longer where the search found them: the text was corrected since. The search in the review shows where they are now.'
+	},
 	projects: {
 		title: 'Projects',
 		lede: 'Your documents, grouped as you like, with everything read from each.',
@@ -1304,6 +1358,10 @@ export const en = {
 		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`
 	},
 	error: {
+		'search.too_short': 'Type three letters at least.',
+		'search.stopped': 'The search was replaced by a newer one.',
+		'search.index':
+			'The search could not read its copy of your results’ text. Prepare the text again from the search; your results are not affected.',
 		'project.not_found': 'This project, or what it refers to, no longer exists.',
 		'project.elsewhere': 'This belongs to another project, or no longer exists.',
 		'project.no_name': 'Give it a name.',

@@ -280,7 +280,12 @@ pub async fn delete_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> 
     if let Err(e) = state.engine.cancel_batches(id).await {
         tracing::warn!(job = %id, error = %e, "batches not cancelled");
     }
-    Ok(state.engine.delete_job(id)?)
+    state.engine.delete_job(id)?;
+    // Its passages leave the search index with it; one missed is pruned at the next start.
+    if let Err(e) = state.search.forget_job(id) {
+        tracing::warn!(job = %id, error = %e, "passages not removed from the search index");
+    }
+    Ok(())
 }
 
 #[tauri::command]

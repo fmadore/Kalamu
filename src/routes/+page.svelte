@@ -116,14 +116,14 @@
 		{:else if app.view.name === 'jobs'}
 			<JobsView jobId={app.view.jobId} />
 		{:else if app.view.name === 'review'}
-			{@const { jobId, sourceId } = app.view}
+			{@const { jobId, sourceId, find } = app.view}
 			{@const task = app.jobs.find((j) => j.id === jobId)?.task}
 			{#if task === 'analysis'}
-				<AnalysisReview {jobId} {sourceId} />
+				<AnalysisReview {jobId} {sourceId} {find} />
 			{:else if task === 'contents'}
-				<ContentsReview {jobId} {sourceId} />
+				<ContentsReview {jobId} {sourceId} {find} />
 			{:else}
-				<ReviewView {jobId} {sourceId} />
+				<ReviewView {jobId} {sourceId} {find} />
 			{/if}
 		{:else if app.view.name === 'projects'}
 			<ProjectsView

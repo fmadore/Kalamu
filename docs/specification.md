@@ -422,6 +422,7 @@ analysed, compared. A **project** keeps it together
   a past run or start new work. Deleting a project, a collection or a document removes only how
   it was organised; deleting a job unties it from its documents, which stay. A file moved since
   it was added is marked missing, its results kept. A project can be archived and restored.
+- **Search through every document's text**: see [Project search](#project-search).
 
 ### Project dictionary
 
@@ -475,6 +476,35 @@ The names and terms a project's analyses listed, gathered for the researcher to 
 - **Later**: import; an accepted dictionary as a fingerprinted input to later analyses;
   comparing names far apart in the alphabet (by sound or by shared words); and telling apart
   two people who share a spelling, which needs mentions anchored in the text (#47).
+
+### Project search
+
+Every passage of a project's documents that holds some words, found without opening each
+document and opened where it stands
+([decision](decisions/2026-11-03-project-search.md), [#86](https://github.com/fmadore/Kalamu/issues/86)).
+
+- **The text as the researcher corrected it.** Each piece is searched as the review shows it:
+  a correction in place of the model's text, speakers under the names given them. Matching is
+  the review's (capitals, accents and Arabic vowel marks set aside, line breaks as spaces), the
+  words one literal phrase found anywhere in the text, three letters at least.
+- **Read text apart from written text.** Extractions, transcriptions and corrections are
+  searched; analyses' answers and reasons and tables of contents' entries, which models wrote
+  about the documents, only on request, each match naming its field.
+- **Which readings.** By default the preferred result of each task where the researcher chose
+  one, and every result where none is preferred, which the view counts; or every reading. Two
+  readings of a document stay two results of one document.
+- **Filters**: a collection, a tag, a task, pieces reviewed or not yet reviewed.
+- **Each match** shows its document, its page, passage or the time of its line, the words
+  around it, the result it is in (task, model, job), and whether it was corrected, reviewed,
+  preferred, or is an analysis out of date. Clicking it opens the review on that place with the
+  words in its search, a recording playing from its line, another reading in the compare pane.
+  A match moved by a correction since is reported, never replaced silently.
+- **Coverage**: the documents searched out of those in scope, those with nothing read yet, the
+  pages or parts still to read or failed; finding nothing is said not to mean absence.
+- **Local and derived.** Nothing is sent. The text is kept, folded for matching, in an index
+  beside the job database, brought up to date with the results, corrections, preferences and
+  links before each search, and made again from them when it is lost or damaged: it holds
+  nothing they do not.
 
 ## Export formats
 
@@ -587,7 +617,8 @@ Microsoft's standard terms forbid the reverse engineering the LGPL must allow. D
 
 - [Tauri 2](https://tauri.app/) with a Rust back end and a Svelte front end.
 - Provider calls in Rust; no bundled Python.
-- SQLite for the job database and result cache; exporters in Rust.
+- SQLite for the job database and result cache, and its full-text search (FTS5) for project
+  search; exporters in Rust.
 - [whisper-rs](https://crates.io/crates/whisper-rs) (whisper.cpp) for offline transcription.
 - Native builds for Windows x64 and ARM64, and macOS on Apple Silicon. What differs between the
   systems lives in one place per layer ([AGENTS.md](../AGENTS.md)).

@@ -27,9 +27,14 @@
 	import { layout, Review } from '#lib/review.svelte.js';
 	import { describeScore } from '#lib/scores.js';
 	import { context, search, searchable, type Searched } from '#lib/search.js';
+	import { toast, type ReviewFind } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 
-	let { jobId, sourceId }: { jobId: string; sourceId: string } = $props();
+	let {
+		jobId,
+		sourceId,
+		find: opening
+	}: { jobId: string; sourceId: string; find?: ReviewFind } = $props();
 	const m = messages();
 	// svelte-ignore state_referenced_locally
 	const review = new Review(jobId, sourceId, { scored: true });
@@ -404,6 +409,34 @@
 		if (h.index !== index) goTo(h.index);
 		if (recording && h.lineMs !== null) seek = { ms: h.lineMs, id: (seek?.id ?? 0) + 1 };
 	}
+
+	// Opened from a project's search: the words searched, and the match chosen gone to. In
+	// another set-up's text, its page is opened with that text compared beside it.
+	// svelte-ignore state_referenced_locally
+	let pending = $state<ReviewFind | null>(opening ?? null);
+	$effect(() => {
+		const want = pending;
+		if (!want || views.length === 0 || setups.length === 0) return;
+		if (!searching) {
+			searching = true;
+			query = want.query;
+			return;
+		}
+		pending = null;
+		if (want.setupId !== setups[0]?.id) {
+			goTo(want.index);
+			compareKey = want.setupId;
+			if (!layout.compare) layout.toggleCompare();
+			return;
+		}
+		const at = hits.findIndex((h) => h.index === want.index && h.nth === want.nth);
+		if (at >= 0) {
+			goToHit(at);
+		} else {
+			goTo(want.index);
+			toast(m.search.moved);
+		}
+	});
 
 	// The page image follows the page.
 	$effect(() => review.showPage(index));

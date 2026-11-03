@@ -28,8 +28,13 @@
 	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { searchable } from '#lib/search.js';
+	import type { ReviewFind } from '#lib/state.svelte.js';
 
-	let { jobId, sourceId }: { jobId: string; sourceId: string } = $props();
+	let {
+		jobId,
+		sourceId,
+		find: opening
+	}: { jobId: string; sourceId: string; find?: ReviewFind } = $props();
 	const m = messages();
 	// svelte-ignore state_referenced_locally
 	const review = new Review(jobId, sourceId);
@@ -131,6 +136,11 @@
 
 	onMount(() => {
 		void review.load();
+		// Opened from a project's search: its words, searched here too.
+		if (opening) {
+			searching = true;
+			query = opening.query;
+		}
 	});
 </script>
 

@@ -15,6 +15,7 @@ import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import taskRulesJson from './taskRules.json';
 import { DOCUMENT_ID, PROJECT_ID, projectCommand, seedProjects } from './mockProjects.js';
 import { NO_RESULT } from './noResult.js';
+import { searchCommand } from './mockSearch.js';
 import {
 	analysisJob,
 	EXPORT_OPTIONS,
@@ -404,6 +405,8 @@ export function installMock(): void {
 		if (project !== undefined) return project;
 		const workflow = workflowCommand(cmd, a);
 		if (workflow !== undefined) return workflow;
+		const found = searchCommand(cmd, a);
+		if (found !== undefined) return found;
 		switch (cmd) {
 			case 'app_info':
 				return {

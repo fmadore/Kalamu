@@ -42,9 +42,10 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | `store` | SQLite job database and result cache, and the project and dictionary tables beside them. | `core` |
 | `projects` | Project workspaces: documents, collections, tags, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
 | `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |
+| `search` | Project search: the corrected text of every result, kept in a derived local index and searched with the project's filters, each match placed in the text shown. Never calls a model or changes a result. | `core` |
 | `export` | One module per output format, each implementing the exporter trait. | `core` |
 | `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job. | all of the above through their traits |
-| `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging. | `engine`, `projects`, `dictionary`, and others only to wire them up |
+| `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging. | `engine`, `projects`, `dictionary`, `search`, and others only to wire them up |
 
 Key traits, defined in `core`:
 
@@ -57,6 +58,8 @@ Key traits, defined in `core`:
   never reaches the code that runs it.
 - **`DictionaryStore`**: the researcher's dictionary decisions (entries, pairs kept apart),
   apart from both.
+- **`SearchIndex`**: the project search's index, a file of its own derived from the job store
+  and made again from it, so losing it loses nothing.
 
 Rules that keep this modular:
 

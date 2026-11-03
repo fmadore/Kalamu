@@ -1,17 +1,20 @@
 <script lang="ts">
 	// One project: its collections down the side, the documents of the one chosen (or all) in a
-	// table, its dictionary of the names its analyses found, and its activity, the jobs that read
-	// them. Files dropped on the window join it.
+	// table, a search through the text of every document, its dictionary of the names its
+	// analyses found, and its activity, the jobs that read them. Files dropped on the window join
+	// it.
 	import { onMount } from 'svelte';
 	import AttachDialog from './AttachDialog.svelte';
 	import DictionaryView from './DictionaryView.svelte';
 	import DocumentTable from './DocumentTable.svelte';
 	import Icon from './Icon.svelte';
 	import ProjectActivity from './ProjectActivity.svelte';
+	import ProjectSearch from './ProjectSearch.svelte';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { lastSearch } from '#lib/projectSearch.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { api, ask, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
 
@@ -20,7 +23,12 @@
 
 	let view = $state<ProjectView | null>(null);
 	let error = $state<string | null>(null);
-	let pane = $state<'documents' | 'dictionary' | 'activity'>('documents');
+	// Coming back from a review opened by the search shows the search again.
+	// svelte-ignore state_referenced_locally
+	const searched = lastSearch(projectId) !== undefined;
+	let pane = $state<'documents' | 'search' | 'dictionary' | 'activity'>(
+		searched ? 'search' : 'documents'
+	);
 	let editing = $state(false);
 	let draftName = $state('');
 	let draftDescription = $state('');
@@ -231,7 +239,15 @@
 			{/if}
 
 			<button
-				class="section dictionary"
+				class="section search"
+				class:current={pane === 'search'}
+				aria-current={pane === 'search' ? 'page' : undefined}
+				onclick={() => (pane = 'search')}
+			>
+				<Icon name="search" size={14} /><span class="grow">{m.search.title}</span>
+			</button>
+			<button
+				class="section"
 				class:current={pane === 'dictionary'}
 				aria-current={pane === 'dictionary' ? 'page' : undefined}
 				onclick={() => (pane = 'dictionary')}
@@ -252,6 +268,8 @@
 		<section class="main">
 			{#if pane === 'activity'}
 				<ProjectActivity jobs={view.jobs} />
+			{:else if pane === 'search'}
+				<ProjectSearch {projectId} collections={view.collections} tags={view.tags} />
 			{:else if pane === 'dictionary'}
 				<DictionaryView
 					{projectId}
@@ -399,7 +417,7 @@
 	.section.add {
 		color: var(--text-muted);
 	}
-	.section.dictionary {
+	.section.search {
 		margin-top: var(--space-4);
 	}
 	.section .num {
@@ -453,7 +471,7 @@
 		.group-head {
 			display: none;
 		}
-		.section.dictionary {
+		.section.search {
 			margin-top: 0;
 		}
 	}

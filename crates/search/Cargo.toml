@@ -1,0 +1,22 @@
+[package]
+name = "kalamu-search"
+description = "Project full-text search for Kalamu: the corrected text of every result, indexed on this computer."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+kalamu-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+ts-rs.workspace = true
+unicode-normalization.workspace = true
+
+[dev-dependencies]
+kalamu-store.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true
