@@ -1,7 +1,8 @@
 <script lang="ts">
-	// One document: its original, its collections and tags, and every result read from it across jobs,
-	// task by task, each opening its review. The researcher can mark the result they rely on as
+	// One document: its original and how an archive describes it, its collections and tags, and
+	// every result read from it across jobs, task by task, each opening its review. The researcher can mark the result they rely on as
 	// preferred; a newer run never takes its place.
+	import DescriptionFields from './DescriptionFields.svelte';
 	import Missing from './Missing.svelte';
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
@@ -11,10 +12,11 @@
 	import type { DocumentResult } from '#lib/bindings/DocumentResult.js';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { Task } from '#lib/bindings/Task.js';
+	import { changed, type Draft } from '#lib/described.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import { rulesFor } from '#lib/newJob.js';
-	import { app, go } from '#lib/state.svelte.js';
+	import { app, go, toast } from '#lib/state.svelte.js';
 	import { api, ask, revealInFolder } from '#lib/tauri.js';
 
 	let { projectId, documentId }: { projectId: string; documentId: string } = $props();
@@ -24,6 +26,11 @@
 	let project = $state<ProjectView | null>(null);
 	let error = $state<string | null>(null);
 	let draftTitle = $state<string | null>(null);
+	/** The description as the researcher edits it, from what is kept. */
+	let draftDescription = $state<Draft>({});
+	const describing = $derived(
+		!!detail && changed(draftDescription, detail.document.source_description)
+	);
 
 	/** The collection the table showed, to go back to it. */
 	const from = $derived(app.view.name === 'projects' ? app.view.collectionId : undefined);
@@ -41,6 +48,7 @@
 				api.documentDetail(projectId, documentId),
 				api.projectView(projectId)
 			]);
+			draftDescription = { ...detail.document.source_description };
 		} catch (e) {
 			error = describeError(e, m);
 		}
@@ -66,6 +74,13 @@
 	function renameKeys(e: KeyboardEvent) {
 		if (e.key === 'Enter') void rename();
 		else if (e.key === 'Escape') draftTitle = null;
+	}
+
+	async function saveDescription(e: SubmitEvent) {
+		e.preventDefault();
+		const description = $state.snapshot(draftDescription);
+		await act(() => api.describeDocument(projectId, documentId, description));
+		if (!error) toast(m.projects.describe.saved);
 	}
 
 	async function addTag(tag: string) {
@@ -157,6 +172,20 @@
 				{/if}
 			</p>
 			{#if detail.missing}<p class="muted">{m.projects.missingHint}</p>{/if}
+		</section>
+
+		<section class="card block" aria-labelledby="description-title">
+			<h2 id="description-title">{m.projects.describe.title}</h2>
+			<p class="muted lede">{m.projects.describe.lede}</p>
+			<form class="describe" onsubmit={saveDescription}>
+				<DescriptionFields
+					bind:value={draftDescription}
+					inherited={project.project.source_defaults}
+				/>
+				<div class="row">
+					<button class="btn primary sm" disabled={!describing}>{m.projects.describe.save}</button>
+				</div>
+			</form>
 		</section>
 
 		<section class="card block" aria-labelledby="collections-title">
@@ -312,6 +341,18 @@
 {/if}
 
 <style>
+	.lede {
+		max-width: 44rem;
+		font-size: var(--type-sm);
+	}
+	.describe {
+		display: grid;
+		gap: var(--space-3);
+	}
+	.describe .row {
+		display: flex;
+		justify-content: flex-end;
+	}
 	.banner {
 		margin: var(--space-3) var(--space-5) 0;
 	}

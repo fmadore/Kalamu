@@ -51,6 +51,7 @@ import type { Preset } from './bindings/Preset.js';
 import type { Project } from './bindings/Project.js';
 import type { SearchRequest } from './bindings/SearchRequest.js';
 import type { SearchProgress } from './bindings/SearchProgress.js';
+import type { Draft } from './described.js';
 import type { SearchView } from './bindings/SearchView.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { ProjectView } from './bindings/ProjectView.js';
@@ -208,6 +209,14 @@ export const api = {
 		invoke<void>('tag_documents', { project, ids, tag }),
 	untagDocuments: (project: string, ids: string[], tag: string) =>
 		invoke<void>('untag_documents', { project, ids, tag }),
+	renameTag: (project: string, from: string, to: string) =>
+		invoke<number>('rename_tag', { project, from, to }),
+	describeDocument: (project: string, id: string, description: Draft) =>
+		invoke<void>('describe_document', { project, id, description }),
+	setSourceDefaults: (id: string, defaults: Draft) =>
+		invoke<Project>('set_source_defaults', { id, defaults }),
+	exportDescriptions: (project: string, collection: string | null, path: string) =>
+		invoke<void>('export_descriptions', { project, collection, path }),
 	projectSearch: (project: string, request: SearchRequest) =>
 		invoke<SearchView>('project_search', { project, request }),
 	rebuildSearchIndex: () => invoke<void>('rebuild_search_index'),
@@ -352,6 +361,13 @@ export async function pickSaveFile(defaultPath: string): Promise<string | null> 
 /** Where to write a dictionary: the JSON file of its entries, with the CSV of every form
  *  beside it. */
 export async function pickDictionaryExport(name: string): Promise<string | null> {
+	if (!isTauri()) return null;
+	const { save } = await import('@tauri-apps/plugin-dialog');
+	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });
+}
+
+/** Where to write a project's descriptions: the JSON file, with its CSV twin beside it. */
+export async function pickDescriptionsExport(name: string): Promise<string | null> {
 	if (!isTauri()) return null;
 	const { save } = await import('@tauri-apps/plugin-dialog');
 	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });

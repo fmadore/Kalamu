@@ -12,6 +12,7 @@ fn project(name: &str) -> Project {
         name: name.into(),
         description: String::new(),
         archived: false,
+        source_defaults: Default::default(),
         created_at: Timestamp(1),
         updated_at: Timestamp(1),
     }
@@ -34,6 +35,7 @@ fn document(project: &Project, job: &Job) -> Document {
         source: job.sources[0].clone(),
         created_at: Timestamp(3),
         tags: vec!["Letters".into()],
+        source_description: Default::default(),
     }
 }
 

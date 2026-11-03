@@ -428,6 +428,18 @@ analysed, compared. A **project** keeps it together
   selection or a document is tagged and untagged, the table narrowed by a tag, and the search
   finds tags too. A tag differing only in capitals from one the project uses takes its
   spelling, so one label is never split in two; merging two documents keeps the tags of both.
+  A tag is renamed across the project from the table's tag filter; renamed onto one in use, the
+  two become one.
+- **A source's description** is the researcher's, as an archive or library gives it: the
+  repository, the fonds or collection, the series, the box or folder, the shelfmark, the
+  creator, the date as written, a web address, how to cite it and its rights. The project holds
+  the parts its documents share (the repository, the fonds) and each document its own, a part
+  it leaves empty taking the project's; the document's page shows which is which. Written by
+  the researcher only: no model reads or writes it and no result changes it. *Export
+  descriptions* writes the documents shown (the project's or a collection's) as JSON and CSV,
+  each value beside where it came from (`document` or `project`), with the documents' ids,
+  titles, files, collections and tags
+  ([decision](decisions/2026-11-03-source-descriptions.md), [#55](https://github.com/fmadore/Kalamu/issues/55)).
 - **Every result of a document together**, whatever job made it: each set-up of each job that
   read it, with its progress, how much was reviewed and corrected, what it cost, opening its
   review. The researcher can mark one per task as **preferred**: never chosen by the app, and

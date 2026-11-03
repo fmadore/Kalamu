@@ -3,7 +3,7 @@
 
 use kalamu_core::{
     Collection, CollectionId, DocumentId, JobId, Project, ProjectId, ReviewQueue, SetupId,
-    SourceFile, SourceId, Task,
+    SourceDescription, SourceFile, SourceId, Task,
 };
 use kalamu_projects::{
     AttachChoice, DocumentDetail, ProjectSummary, ProjectView, QueueSelection, ResultChoice,
@@ -159,6 +159,62 @@ pub fn untag_documents(
     tag: String,
 ) -> CmdResult<()> {
     Ok(state.projects.untag_documents(project, &ids, &tag)?)
+}
+
+/// Sets a document's own description of its source.
+#[tauri::command]
+pub fn describe_document(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    id: DocumentId,
+    description: SourceDescription,
+) -> CmdResult<()> {
+    Ok(state.projects.describe_document(project, id, description)?)
+}
+
+/// Sets the parts of the description a project's documents share.
+#[tauri::command]
+pub fn set_source_defaults(
+    state: State<'_, AppState>,
+    id: ProjectId,
+    defaults: SourceDescription,
+) -> CmdResult<Project> {
+    Ok(state.projects.set_source_defaults(id, defaults)?)
+}
+
+/// Renames a tag on every document of the project; returns how many changed.
+#[tauri::command]
+pub fn rename_tag(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    from: String,
+    to: String,
+) -> CmdResult<u32> {
+    Ok(state.projects.rename_tag(project, &from, &to)?)
+}
+
+/// Writes the documents' descriptions where the researcher chose, as `.json` and `.csv`.
+#[tauri::command]
+pub fn export_descriptions(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    collection: Option<CollectionId>,
+    path: String,
+) -> CmdResult<()> {
+    let path = std::path::Path::new(&path);
+    let write = super::write_text;
+    write(
+        path.with_extension("json"),
+        state
+            .projects
+            .export_descriptions_json(project, collection)?,
+    )?;
+    write(
+        path.with_extension("csv"),
+        state
+            .projects
+            .export_descriptions_csv(project, collection)?,
+    )
 }
 
 #[tauri::command]

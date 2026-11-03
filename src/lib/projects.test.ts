@@ -34,7 +34,8 @@ function row(
 				even_out_volume: false
 			},
 			created_at: options.added ?? 0,
-			tags: options.tags ?? []
+			tags: options.tags ?? [],
+			source_description: {}
 		},
 		collections: options.collections ?? [],
 		tasks: [],

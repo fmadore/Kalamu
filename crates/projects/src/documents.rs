@@ -60,6 +60,7 @@ impl Projects {
                         source,
                         created_at: Timestamp::now(),
                         tags: Vec::new(),
+                        source_description: Default::default(),
                     };
                     self.store.put_document(&document)?;
                     let id = document.id;

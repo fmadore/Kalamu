@@ -7,6 +7,8 @@
 //! touches the files or the results; a job keeps the sources it was started with, so later
 //! changes to a collection leave past runs as they were.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -26,8 +28,93 @@ pub struct Project {
     /// Put away: kept whole, but out of the list of projects until restored.
     #[serde(default)]
     pub archived: bool,
+    /// What its documents share in their source's description (the repository, the fonds),
+    /// each document's own value taking its place.
+    #[serde(default)]
+    pub source_defaults: SourceDescription,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
+}
+
+/// A part of a source's description, as an archive or a library gives it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum DescriptionField {
+    /// The archive, library or person that holds it.
+    Repository,
+    /// The fonds or collection within it.
+    Fonds,
+    Series,
+    /// The box, folder or file.
+    File,
+    /// The call number, shelfmark or reference code.
+    Shelfmark,
+    /// Who made it: its author, issuer or publisher.
+    Creator,
+    /// Its date as the description gives it, written as the researcher likes.
+    Date,
+    /// Where it can be seen online.
+    Url,
+    /// How to cite it.
+    Citation,
+    /// Its rights statement or licence.
+    Rights,
+}
+
+impl DescriptionField {
+    pub const ALL: [Self; 10] = [
+        Self::Repository,
+        Self::Fonds,
+        Self::Series,
+        Self::File,
+        Self::Shelfmark,
+        Self::Creator,
+        Self::Date,
+        Self::Url,
+        Self::Citation,
+        Self::Rights,
+    ];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Repository => "repository",
+            Self::Fonds => "fonds",
+            Self::Series => "series",
+            Self::File => "file",
+            Self::Shelfmark => "shelfmark",
+            Self::Creator => "creator",
+            Self::Date => "date",
+            Self::Url => "url",
+            Self::Citation => "citation",
+            Self::Rights => "rights",
+        }
+    }
+}
+
+/// What the researcher says of a source, part by part. Supplied, never read or guessed by a
+/// model, and kept apart from every result, which never changes it.
+pub type SourceDescription = BTreeMap<DescriptionField, String>;
+
+/// A description with each value's spaces trimmed (line breaks kept inside), and the parts left
+/// empty dropped.
+pub fn cleaned(description: SourceDescription) -> SourceDescription {
+    description
+        .into_iter()
+        .filter_map(|(field, value)| {
+            let value = value
+                .lines()
+                .map(str::trim_end)
+                .collect::<Vec<_>>()
+                .join(
+                    "
+",
+                )
+                .trim()
+                .to_string();
+            (!value.is_empty()).then_some((field, value))
+        })
+        .collect()
 }
 
 /// A flat grouping of documents; a document can be in several.
@@ -53,6 +140,9 @@ pub struct Document {
     /// The researcher's labels, filters beside the collections; spelled as first given.
     #[serde(default)]
     pub tags: Vec<String>,
+    /// The researcher's description of its source; a part left out takes the project's.
+    #[serde(default)]
+    pub source_description: SourceDescription,
 }
 
 impl Document {
@@ -122,6 +212,8 @@ pub enum ProjectError {
     NoName,
     #[error("A tag needs a name")]
     NoTag,
+    #[error("Could not write the export: {0}")]
+    Export(String),
     #[error(transparent)]
     Store(#[from] StoreError),
 }
@@ -134,6 +226,7 @@ impl ProjectError {
             Self::Elsewhere(_) => "project.elsewhere",
             Self::NoName => "project.no_name",
             Self::NoTag => "project.no_tag",
+            Self::Export(_) => "project.export",
             Self::Store(_) => "job.database",
         }
     }

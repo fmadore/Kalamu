@@ -53,8 +53,8 @@ pub use job::{
 pub use language::{LanguageChoice, LanguageCode};
 pub use pages::PagesPerCall;
 pub use project::{
-    Collection, Document, DocumentLink, PreferredResult, Project, ProjectError, ProjectStore,
-    same_tag, tag_name,
+    Collection, DescriptionField, Document, DocumentLink, PreferredResult, Project, ProjectError,
+    ProjectStore, SourceDescription, cleaned, same_tag, tag_name,
 };
 pub use provenance::Provenance;
 pub use provider::{

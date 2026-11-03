@@ -694,6 +694,34 @@ export const fr: Messages = {
 		tagButton: 'Étiqueter',
 		removeTag: 'Retirer une étiquette…',
 		removeTagFrom: (tag: string) => `Retirer l’étiquette ${tag}`,
+		renameTag: 'Renommer l’étiquette',
+		renameTagTo: (tag: string) => `Nouveau nom pour « ${tag} »`,
+		tagRenamed: (n: number) =>
+			n <= 1 ? `Renommée sur ${n} document.` : `Renommée sur ${n} documents.`,
+		describe: {
+			title: 'Description de la source',
+			lede: 'L’original tel qu’un fonds d’archives ou une bibliothèque le décrit, comme vous le citeriez. C’est vous qui la rédigez, jamais un modèle, et aucun résultat ne la modifie. Un champ laissé vide reprend celui du projet.',
+			projectTitle: 'Commune à ses documents',
+			projectLede:
+				'Les éléments de description que partagent tous les documents, comme le dépôt ou le fonds. La valeur propre à un document les remplace.',
+			fields: {
+				repository: 'Dépôt',
+				fonds: 'Fonds ou collection',
+				series: 'Série',
+				file: 'Carton ou dossier',
+				shelfmark: 'Cote',
+				creator: 'Auteur ou producteur',
+				date: 'Date',
+				url: 'Adresse web',
+				citation: 'Référence à citer',
+				rights: 'Droits'
+			},
+			fromProject: 'Repris du projet',
+			save: 'Enregistrer la description',
+			saved: 'Description enregistrée.',
+			export: 'Exporter les descriptions',
+			exported: 'Les descriptions ont été enregistrées en JSON, avec un CSV à côté.'
+		},
 		tagged: (tag: string, n: number) =>
 			`${n === 1 ? '1 document étiqueté' : `${n} documents étiquetés`} « ${tag} »`,
 		columnResults: 'Résultats',
@@ -1613,6 +1641,7 @@ export const fr: Messages = {
 		'project.elsewhere': 'Cet élément appartient à un autre projet, ou n’existe plus.',
 		'project.no_name': 'Donnez-lui un nom.',
 		'project.no_tag': 'Tapez l’étiquette à ajouter.',
+		'project.export': 'L’export n’a pas pu être écrit.',
 		'dictionary.no_entry':
 			'Cette entrée ne figure plus dans le dictionnaire. Elle a peut-être été fusionnée ou scindée.',
 		'dictionary.no_label': 'Donnez un libellé à l’entrée.',

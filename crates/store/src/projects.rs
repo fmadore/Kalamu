@@ -56,6 +56,13 @@ CREATE TABLE preferred_results (
 );
 "#;
 
+/// The researcher's descriptions of sources: each document's own, and the parts a project's
+/// documents share.
+pub(crate) const DESCRIPTIONS: &str = r#"
+ALTER TABLE projects ADD COLUMN source_defaults TEXT NOT NULL DEFAULT '{}';
+ALTER TABLE documents ADD COLUMN source_description TEXT NOT NULL DEFAULT '{}';
+"#;
+
 fn id<T: std::str::FromStr>(s: &str) -> Result<T, StoreError>
 where
     T::Err: std::fmt::Display,
@@ -76,7 +83,10 @@ fn found(changed: usize) -> Result<(), StoreError> {
     }
 }
 
-type ProjectRow = (String, String, String, bool, i64, i64);
+type ProjectRow = (String, String, String, bool, String, i64, i64);
+
+const PROJECT_COLUMNS: &str =
+    "id, name, description, archived, source_defaults, created_at, updated_at";
 
 fn project_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ProjectRow> {
     Ok((
@@ -86,23 +96,28 @@ fn project_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ProjectRow> {
         row.get(3)?,
         row.get(4)?,
         row.get(5)?,
+        row.get(6)?,
     ))
 }
 
 fn project(
-    (pid, name, description, archived, created, updated): ProjectRow,
+    (pid, name, description, archived, defaults, created, updated): ProjectRow,
 ) -> Result<Project, StoreError> {
     Ok(Project {
         id: id(&pid)?,
         name,
         description,
         archived,
+        source_defaults: serde_json::from_str(&defaults).map_err(corrupt)?,
         created_at: Timestamp(created),
         updated_at: Timestamp(updated),
     })
 }
 
-type DocumentRow = (String, String, String, String, i64, String);
+type DocumentRow = (String, String, String, String, i64, String, String);
+
+const DOCUMENT_COLUMNS: &str =
+    "id, project_id, title, source, created_at, tags, source_description";
 
 fn document_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<DocumentRow> {
     Ok((
@@ -112,10 +127,13 @@ fn document_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<DocumentRow> {
         row.get(3)?,
         row.get(4)?,
         row.get(5)?,
+        row.get(6)?,
     ))
 }
 
-fn document((did, pid, title, source, created, tags): DocumentRow) -> Result<Document, StoreError> {
+fn document(
+    (did, pid, title, source, created, tags, description): DocumentRow,
+) -> Result<Document, StoreError> {
     Ok(Document {
         id: id(&did)?,
         project_id: id(&pid)?,
@@ -123,6 +141,7 @@ fn document((did, pid, title, source, created, tags): DocumentRow) -> Result<Doc
         source: serde_json::from_str(&source).map_err(corrupt)?,
         created_at: Timestamp(created),
         tags: serde_json::from_str(&tags).map_err(corrupt)?,
+        source_description: serde_json::from_str(&description).map_err(corrupt)?,
     })
 }
 
@@ -130,10 +149,11 @@ impl ProjectStore for SqliteStore {
     fn put_project(&self, project: &Project) -> Result<(), StoreError> {
         self.conn()
             .execute(
-                "INSERT INTO projects (id, name, description, archived, created_at, updated_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+                "INSERT INTO projects
+                    (id, name, description, archived, created_at, updated_at, source_defaults)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
                  ON CONFLICT(id) DO UPDATE SET name = ?2, description = ?3, archived = ?4,
-                    updated_at = ?6",
+                    updated_at = ?6, source_defaults = ?7",
                 params![
                     project.id.to_string(),
                     project.name,
@@ -141,6 +161,7 @@ impl ProjectStore for SqliteStore {
                     project.archived,
                     project.created_at.0,
                     project.updated_at.0,
+                    to_json(&project.source_defaults)?,
                 ],
             )
             .map_err(db)?;
@@ -150,10 +171,9 @@ impl ProjectStore for SqliteStore {
     fn projects(&self) -> Result<Vec<Project>, StoreError> {
         let conn = self.conn();
         let mut stmt = conn
-            .prepare(
-                "SELECT id, name, description, archived, created_at, updated_at FROM projects
-                 ORDER BY updated_at DESC",
-            )
+            .prepare(&format!(
+                "SELECT {PROJECT_COLUMNS} FROM projects ORDER BY updated_at DESC"
+            ))
             .map_err(db)?;
         let rows = stmt.query_map([], project_row).map_err(db)?;
         rows.map(|r| project(r.map_err(db)?)).collect()
@@ -163,8 +183,7 @@ impl ProjectStore for SqliteStore {
         let row = self
             .conn()
             .query_row(
-                "SELECT id, name, description, archived, created_at, updated_at FROM projects
-                 WHERE id = ?1",
+                &format!("SELECT {PROJECT_COLUMNS} FROM projects WHERE id = ?1"),
                 [pid.to_string()],
                 project_row,
             )
@@ -237,9 +256,11 @@ impl ProjectStore for SqliteStore {
     fn put_document(&self, document: &Document) -> Result<(), StoreError> {
         self.conn()
             .execute(
-                "INSERT INTO documents (id, project_id, title, source, created_at, tags)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-                 ON CONFLICT(id) DO UPDATE SET title = ?3, source = ?4, tags = ?6",
+                "INSERT INTO documents
+                    (id, project_id, title, source, created_at, tags, source_description)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                 ON CONFLICT(id) DO UPDATE SET title = ?3, source = ?4, tags = ?6,
+                    source_description = ?7",
                 params![
                     document.id.to_string(),
                     document.project_id.to_string(),
@@ -247,6 +268,7 @@ impl ProjectStore for SqliteStore {
                     to_json(&document.source)?,
                     document.created_at.0,
                     to_json(&document.tags)?,
+                    to_json(&document.source_description)?,
                 ],
             )
             .map_err(db)?;
@@ -256,10 +278,10 @@ impl ProjectStore for SqliteStore {
     fn documents(&self, pid: ProjectId) -> Result<Vec<Document>, StoreError> {
         let conn = self.conn();
         let mut stmt = conn
-            .prepare(
-                "SELECT id, project_id, title, source, created_at, tags FROM documents
-                 WHERE project_id = ?1 ORDER BY created_at, rowid",
-            )
+            .prepare(&format!(
+                "SELECT {DOCUMENT_COLUMNS} FROM documents
+                 WHERE project_id = ?1 ORDER BY created_at, rowid"
+            ))
             .map_err(db)?;
         let rows = stmt
             .query_map([pid.to_string()], document_row)
@@ -271,7 +293,7 @@ impl ProjectStore for SqliteStore {
         let row = self
             .conn()
             .query_row(
-                "SELECT id, project_id, title, source, created_at, tags FROM documents WHERE id = ?1",
+                &format!("SELECT {DOCUMENT_COLUMNS} FROM documents WHERE id = ?1"),
                 [did.to_string()],
                 document_row,
             )

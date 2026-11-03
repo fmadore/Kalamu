@@ -11,6 +11,7 @@ use kalamu_core::{
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::described::{Described, described};
 use crate::documents::is_missing;
 use crate::{Projects, missing};
 
@@ -109,6 +110,8 @@ impl DocumentBrief {
 #[ts(export)]
 pub struct DocumentDetail {
     pub document: Document,
+    /// Its source's description as it stands: its own parts, else the project's.
+    pub described: Vec<Described>,
     pub collections: Vec<CollectionId>,
     pub missing: bool,
     pub same_content: Vec<DocumentBrief>,
@@ -336,7 +339,13 @@ impl Projects {
         }
         results.sort_by_key(|r| std::cmp::Reverse(r.created_at));
         let others = self.store.documents(project)?;
+        let defaults = self
+            .store
+            .project(project)
+            .map_err(missing)?
+            .source_defaults;
         Ok(DocumentDetail {
+            described: described(&document, &defaults),
             collections: memberships(&self.store.members(project)?, id),
             missing: is_missing(&document.source),
             same_content: others

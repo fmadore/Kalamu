@@ -603,6 +603,33 @@ export const en = {
 		tagButton: 'Tag',
 		removeTag: 'Remove a tag…',
 		removeTagFrom: (tag: string) => `Remove the tag ${tag}`,
+		renameTag: 'Rename tag',
+		renameTagTo: (tag: string) => `New name for “${tag}”`,
+		tagRenamed: (n: number) => (n === 1 ? 'Renamed on 1 document.' : `Renamed on ${n} documents.`),
+		describe: {
+			title: 'Source description',
+			lede: 'The original as an archive or library describes it, as you would cite it. You write it, never a model, and no result changes it. A part left empty takes the project’s.',
+			projectTitle: 'Shared by its documents',
+			projectLede:
+				'Parts of the description every document shares, such as the repository or the fonds. A document’s own value takes their place.',
+			fields: {
+				repository: 'Repository',
+				fonds: 'Fonds or collection',
+				series: 'Series',
+				file: 'Box or folder',
+				shelfmark: 'Shelfmark or call number',
+				creator: 'Creator',
+				date: 'Date',
+				url: 'Web address',
+				citation: 'Citation',
+				rights: 'Rights'
+			},
+			fromProject: 'From the project',
+			save: 'Save description',
+			saved: 'Description saved.',
+			export: 'Export descriptions',
+			exported: 'The descriptions were saved as JSON, with a CSV beside it.'
+		},
 		tagged: (tag: string, n: number) =>
 			`${n === 1 ? '1 document' : `${n} documents`} tagged “${tag}”`,
 		columnResults: 'Results',
@@ -1523,6 +1550,7 @@ export const en = {
 		'project.elsewhere': 'This belongs to another project, or no longer exists.',
 		'project.no_name': 'Give it a name.',
 		'project.no_tag': 'Type the tag to add.',
+		'project.export': 'The export could not be written.',
 		'dictionary.no_entry':
 			'This entry is no longer in the dictionary. It may have been merged or split.',
 		'dictionary.no_label': 'Give the entry a label.',
