@@ -1243,9 +1243,9 @@ export const fr: Messages = {
 		differenceOf: (n: number, total: number) => `${n} sur ${total}`,
 		disagree: 'Les modèles lisent ce passage différemment',
 		corrected_here: 'Vous avez corrigé ce passage',
-		useReading: 'Retenir cette leçon',
+		useReading: 'Mettre dans le texte',
 		inUse: 'Dans le texte',
-		ownReading: 'Votre propre leçon',
+		ownReading: 'Votre propre lecture',
 		ownReadingPlaceholder: 'Tapez ce que porte la source',
 		apply: 'Appliquer',
 		readingKept: 'Le texte du modèle est conservé ; votre choix est enregistré comme correction.',
@@ -1261,7 +1261,7 @@ export const fr: Messages = {
 		resizeCompare: 'Redimensionner le texte et le texte comparé',
 		addedHere: 'Un autre modèle ajoute des mots ici',
 		leftOutHere: 'Ce modèle omet des mots ici',
-		pickReading: 'Choisir la bonne leçon',
+		pickReading: 'Choisir la bonne version',
 		original: 'Texte d’origine',
 		changedHere: 'La correction a modifié ce passage',
 		legendChanged: 'Modifié par rapport à l’original',
@@ -1479,7 +1479,7 @@ export const fr: Messages = {
 			},
 			setup: {
 				word: 'Combinaison et comparaison',
-				text: 'Une combinaison, c’est un fournisseur, un modèle et un prompt appliqués aux fichiers d’un traitement. Un traitement qui en compte deux ou plus les compare : en relecture, chacune est désignée par une lettre (son sigle), et les passages où elles lisent différemment sont mis en évidence, comme une édition critique note les leçons de ses témoins.'
+				text: 'Une combinaison, c’est un fournisseur, un modèle et un prompt appliqués aux fichiers d’un traitement. Un traitement qui en compte deux ou plus les compare : en relecture, chacune est désignée par une lettre (son sigle), et les passages où elles lisent différemment sont mis en évidence, comme une édition critique note les variantes de ses témoins.'
 			},
 			pipeline: {
 				word: 'Configuration',
