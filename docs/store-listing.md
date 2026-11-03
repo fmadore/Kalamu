@@ -1,8 +1,8 @@
 # Partner Center listing text
 
-Paste-ready text for Kalamu's Microsoft Store listing, kept for the **version in the Store**,
-1.1.2, published from the `Kalamu_1.1.2.msixbundle` the release workflow builds (the first,
-1.0.0, was certified on 2 November 2026). The submission and update steps are in
+Paste-ready text for Kalamu's Microsoft Store listing, kept for the **current submission**,
+version 1.2.0, whose `Kalamu_1.2.0.msixbundle` the release workflow builds (the first, 1.0.0,
+was certified on 2 November 2026; 1.1.2 is the version in the Store until 1.2.0 passes). The submission and update steps are in
 [microsoft-store.md](microsoft-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 
@@ -53,7 +53,19 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.1.2
+### What's new in this version — 1.2.0
+
+```text
+Items of a table of contents: turn the entries of a newspaper issue or an archival file into items, correct, join or split them, then extract, analyse or export one article or letter on its own.
+
+Simpler prompts: one default per kind of material, for printed, newspaper and handwritten pages in any language and reading direction, Arabic and Ajami included. Your saved pipelines and workflows keep working.
+
+Your jobs and settings now live in a folder named Kalamu Data, moved there once on first start; Settings shows where.
+
+Also: New job shows which models also give a searchable PDF; Mistral Large 4 at its current, lower price; clearer wording across the interface.
+```
+
+The 1.1.2 text, for the record:
 
 ```text
 Projects: gather documents in collections and tags, each with every result read from it, whatever job made it, and the one you prefer.
@@ -77,7 +89,7 @@ Transcribe recordings and videos with timestamps, in the cloud with speakers or 
 Offline transcription with Whisper: download a model once, then no account, key or internet
 Transcribe public YouTube videos from their link with Gemini, without downloading them
 Analyse texts with your own fields or ready-made ones: people, places, tone, a publication's argument
-Make detailed tables of contents of newspaper issues, archival files and books
+Make detailed tables of contents of newspaper issues, archival files and books, then read each article on its own
 Correct existing OCR text page by page, every change shown against the original
 Check every result beside its source, page by page or line by line; corrections never overwrite the AI's text
 Search a document or recording across all its pages, corrections included
@@ -131,9 +143,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.1.2.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.2.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.1.2/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.2.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, find Offline transcription and download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
@@ -162,7 +174,7 @@ carries no text, so the Store's title and buttons can sit over its right side.
 
 ## Screenshots
 
-For version 1.1.2, from the installed Store package, in one theme throughout (the light one, as
+For version 1.2.0, from the installed Store package, in one theme throughout (the light one, as
 the 1.0.0 captures). Store rules: `.png`, at least 1366 × 768,
 under 50 MB; ten at most, five to eight recommended. The first one or two are what most people
 see, in search results and at the top of the listing, so they carry what sets Kalamu apart:
@@ -211,7 +223,7 @@ has the same people under several spellings (*Rev. John Albert Williams*, *J. A.
 Search, the glossary, Prompts and the job's page are left out of the ten: the description and
 features name them. **The 1.0.0 captures** in `docs/store/screenshots/` (`01-new-job`,
 `02-review-comparison`, `03-handwriting`, `04-transcript`, `07-prompts`, `09-job-page`) show the
-1.0.0 sidebar, without *Projects* and *Workflows*: take them all again from 1.1.2, named after
+1.0.0 sidebar, without *Projects* and *Workflows*: take them all again from 1.2.0, named after
 the rows above (`01-comparison.png` … `10-offline.png`), and replace the old files.
 
 Leave out an image rather than show a feature that does not run as shown: certification checks

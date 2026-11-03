@@ -525,7 +525,7 @@
       "provider": "openai",
       "id": "gpt-transcribe",
       "name": "GPT Transcribe",
-      "description": "OpenAI's current speech-to-text: accurate on mixed languages, but plain text without speakers or timestamps. Takes no prompt.",
+      "description": "OpenAI's current speech-to-text: accurate on mixed languages, but plain text without speakers or timestamps. Takes no prompt. OpenAI documents the form of its language codes, not a list of languages.",
       "tasks": [
         "audio_transcription"
       ],
@@ -536,6 +536,7 @@
         "audio/webm"
       ],
       "languages": "any",
+      "two_letter_codes": true,
       "status": "stable",
       "recommended_for": [],
       "provider_default_for": [
@@ -565,6 +566,8 @@
         "audio/webm"
       ],
       "languages": "any",
+      "language_hints": "one",
+      "two_letter_codes": true,
       "status": "deprecated",
       "recommended_for": [],
       "provider_default_for": [],
@@ -791,7 +794,7 @@
       "provider": "mistral",
       "id": "voxtral-small-transcribe-3-0",
       "name": "Voxtral Small Transcribe 3",
-      "description": "Mistral's most accurate speech-to-text (October 2026), 50 languages, speaker labels.",
+      "description": "Mistral's most accurate speech-to-text (October 2026), speaker labels. 50 languages; Mistral publishes the number, not the list.",
       "tasks": [
         "audio_transcription"
       ],
@@ -804,6 +807,7 @@
         "audio/webm"
       ],
       "languages": "any",
+      "language_hints": "one_without_timestamps",
       "status": "preview",
       "recommended_for": [
         "audio_transcription"
@@ -836,6 +840,7 @@
         "audio/webm"
       ],
       "languages": "any",
+      "language_hints": "one_without_timestamps",
       "status": "preview",
       "recommended_for": [],
       "provider_default_for": [],
@@ -1102,6 +1107,7 @@
         "el",
         "la"
       ],
+      "language_hints": "one",
       "status": "stable",
       "recommended_for": [],
       "provider_default_for": [
@@ -1158,6 +1164,7 @@
         "el",
         "la"
       ],
+      "language_hints": "one",
       "status": "stable",
       "recommended_for": [],
       "provider_default_for": [],
@@ -1212,6 +1219,7 @@
         "el",
         "la"
       ],
+      "language_hints": "one",
       "status": "stable",
       "recommended_for": [],
       "provider_default_for": [],
@@ -1266,6 +1274,7 @@
         "el",
         "la"
       ],
+      "language_hints": "one",
       "status": "stable",
       "recommended_for": [],
       "provider_default_for": [],

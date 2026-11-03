@@ -2,14 +2,19 @@
 //! none of these calls a model, moves a file or changes a result.
 
 use kalamu_core::{
-    Collection, CollectionId, DocumentId, JobId, Project, ProjectId, SetupId, SourceFile, SourceId,
-    Task,
+    Collection, CollectionId, DocumentId, JobId, Project, ProjectId, ReviewQueue, SetupId,
+    SourceFile, SourceId, Task,
 };
-use kalamu_projects::{AttachChoice, DocumentDetail, ProjectSummary, ProjectView, SourceMatch};
+use kalamu_projects::{
+    AttachChoice, DocumentDetail, ProjectSummary, ProjectView, QueueSelection, ResultChoice,
+    ResultKey, SourceMatch,
+};
+use serde::Serialize;
 use tauri::State;
+use ts_rs::TS;
 
 use super::AppState;
-use crate::errors::CmdResult;
+use crate::errors::{AppError, CmdResult, id};
 
 #[tauri::command]
 pub fn list_projects(state: State<'_, AppState>) -> CmdResult<Vec<ProjectSummary>> {
@@ -230,4 +235,38 @@ pub fn detach_job(
     source: SourceId,
 ) -> CmdResult<()> {
     Ok(state.projects.detach(project, document, job, source)?)
+}
+
+/// The review queue of a project, a collection or a selection, with the results it reads.
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct QueueView {
+    pub queue: ReviewQueue,
+    /// Results that stand for documents without a preferred one, which the researcher can set
+    /// aside.
+    pub choices: Vec<ResultChoice>,
+    /// Documents and tasks read through a preferred result.
+    pub preferred: u32,
+}
+
+/// The pages and answers that need the researcher, read from what is stored: no model is
+/// called. The project chooses the results, the engine says what each needs.
+#[tauri::command]
+pub async fn review_queue(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    selection: QueueSelection,
+    excluded: Vec<ResultKey>,
+) -> CmdResult<QueueView> {
+    let plan = state.projects.queue_plan(project, &selection, &excluded)?;
+    let engine = state.engine.clone();
+    let scope = plan.scope;
+    let queue = tokio::task::spawn_blocking(move || engine.review_queue(&scope))
+        .await
+        .map_err(|e| AppError::new(id::INTERNAL, e))??;
+    Ok(QueueView {
+        queue,
+        choices: plan.choices,
+        preferred: plan.preferred,
+    })
 }

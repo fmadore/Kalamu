@@ -452,6 +452,85 @@ export const fr: Messages = {
 			takeBack: 'Rétablir'
 		}
 	},
+	queue: {
+		title: 'À vérifier',
+		lede: 'Les pages et les réponses de ces documents qui demandent votre attention, chacune avec son motif. La liste est tirée de ce que Kalamu conserve déjà : rien n’est envoyé à un modèle. Vous seul marquez une page comme relue ; l’accord des modèles ne vaut pas relecture.',
+		scope: 'Documents',
+		wholeProject: 'Tout le projet',
+		selection: (n: number) =>
+			n === 1 ? 'Le document sélectionné' : `Les ${n} documents sélectionnés`,
+		checkSelection: 'Ce qu’il faut vérifier',
+		loading: 'Recherche de ce qui est à vérifier…',
+		coverage: {
+			documents: (read: number, total: number) =>
+				`${read} ${read <= 1 ? 'document lu' : 'documents lus'} sur ${total}`,
+			pieces: (processed: number, pieces: number) =>
+				`${processed} ${processed <= 1 ? 'page ou partie lue' : 'pages ou parties lues'} sur ${pieces}`,
+			unprocessed: (n: number) =>
+				n <= 1 ? `${n} en échec ou pas encore lue` : `${n} en échec ou pas encore lues`,
+			reviewed: (reviewed: number, processed: number) =>
+				`${reviewed} ${reviewed <= 1 ? 'relue' : 'relues'} sur ${processed}`,
+			flagged: (flagged: number, unresolved: number) =>
+				`${flagged} ${flagged <= 1 ? 'signalée' : 'signalées'}, ${unresolved} encore en suspens`
+		},
+		coverageHint:
+			'Compté sur tous les résultats lus ci-dessous, quel que soit l’affichage. Seules les pages relues sont vérifiées ; les pages signalées ne sont pas un échantillon de l’ensemble.',
+		results: 'Résultats lus',
+		resultsHint:
+			'Là où vous avez retenu un résultat pour un document, seul celui-ci est lu. Ailleurs, chaque résultat est lu et listé ici : écartez ceux que vous ne voulez pas vérifier. Un document lu par plusieurs modèles reste un seul document.',
+		preferred: (n: number) =>
+			n === 1
+				? '1 document lu à travers son résultat retenu'
+				: `${n} documents lus à travers leur résultat retenu`,
+		resultChoice: (label: string, job: string, documents: number) =>
+			`${label}, ${job} (${documents === 1 ? '1 document' : `${documents} documents`})`,
+		show: 'Afficher',
+		reason: {
+			failed: 'En échec',
+			not_read: 'Non lu',
+			truncated: 'Tronqué',
+			disagrees: 'Les modèles divergent',
+			stale: 'Source modifiée',
+			not_reviewed: 'Non relu'
+		},
+		showResolved: 'Inclure les pages relues',
+		processing: 'En échec ou non lu',
+		processingHint:
+			'Rien n’a été lu ici, il n’y a donc encore rien à vérifier : relancez les pages en échec sur la page du traitement, ou lancez le traitement.',
+		answers: 'Réponses à vérifier',
+		none: 'Rien ne demande votre attention pour les motifs affichés.',
+		empty:
+			'Aucun document ici n’a encore été lu. Lisez-en avec un nouveau traitement, puis revenez.',
+		detail: {
+			failed: (error: string | null) => (error ? `En échec : ${error}` : 'En échec'),
+			notRead: 'Pas encore lu',
+			neverStarted: 'Pas encore lancé',
+			truncated: 'Arrêté à la longueur maximale du modèle : la fin manque peut-être',
+			disagreesWords: (labels: string, words: number) =>
+				`Lit autrement que ${labels} : ${words <= 1 ? `${words} mot` : `${words} mots`}`,
+			disagreesFields: (labels: string, fields: string) =>
+				`Répond autrement que ${labels} : ${fields}`,
+			stale: 'A lu un texte corrigé depuis',
+			gone: 'A lu un texte dont le traitement a été supprimé depuis',
+			unitChanged: 'A lu une pièce dont les pages ont changé depuis',
+			unitGone: 'A lu une pièce supprimée depuis',
+			notReviewed: 'Pas encore relu'
+		},
+		wholeResult: 'Le résultat entier',
+		preferredBadge: 'Retenu',
+		reviewedBadge: 'Relu',
+		revision: (revision: string) => `Réponse ${revision}`,
+		revisionHint:
+			'La réponse enregistrée, désignée par le début de son empreinte, et sa date d’enregistrement. Une nouvelle réponse est à relire de nouveau.',
+		open: (document: string, place: string) => `Ouvrir ${document}, ${place}, en relecture`,
+		more: (n: number) => `Afficher ${n} de plus`,
+		banner: {
+			position: (at: number, total: number) => `${at} sur ${total} à vérifier`,
+			previous: 'Précédent à vérifier',
+			next: 'Suivant à vérifier',
+			back: 'Retour à la liste'
+		}
+	},
 	projects: {
 		title: 'Projets',
 		lede: 'Vos documents, regroupés comme vous l’entendez, avec tout ce qui en a été lu.',
@@ -698,6 +777,12 @@ export const fr: Messages = {
 			`Seules les langues que ${models} sait transcrire sont proposées.`,
 		languageUnsupported: (language: string, models: string) =>
 			`${models} ne prend pas en charge la langue « ${language} » : retirez-la ou choisissez un autre modèle.`,
+		languageOneOnly: (models: string) =>
+			`Une seule langue est transmise à ${models} : si vous en choisissez plusieurs, la langue est détectée.`,
+		languageNotWithTimes: (models: string) =>
+			`La langue n’est transmise à ${models} que s’il n’identifie pas les locuteurs et n’horodate pas les lignes ; dans les deux cas, la langue est détectée.`,
+		languageNeedsTwoLetters: (language: string, models: string) =>
+			`On ne peut indiquer à ${models} que des langues ayant un code à deux lettres : « ${language} » ne lui est donc pas transmise, et le modèle la détecte.`,
 		languageIgnoredAll: (models: string) =>
 			`${models} reconnaît la langue de lui-même : il n’y a rien à choisir.`,
 		languageIgnoredSome: (models: string) =>
@@ -1445,6 +1530,7 @@ export const fr: Messages = {
 		close: 'Fermer',
 		loading: 'Chargement…',
 		colon: ' :',
+		semicolon: ' ; ',
 		unknown: 'Inconnu',
 		preview: 'préversion',
 		retiring: 'bientôt retiré',

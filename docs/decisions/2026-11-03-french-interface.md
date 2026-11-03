@@ -50,7 +50,9 @@ works in French: archivists and researchers on francophone West Africa among the
   data file refreshed from the repository; it would need a field per language.
 - The files Kalamu writes: headings in Word exports, the Markdown record of a pipeline or a
   workflow, `provenance.json`. They are research records shared with others, kept in English.
-- Technical detail after an error's sentence (a provider's own message, a path).
+- Technical detail after an error's sentence (a provider's own message, a path), and the
+  error the engine stores with a page that failed, shown in a job's files, the review and the
+  queue of what to check: it is kept as English text, not as an id the interface could word.
 - The tray menu's labels in the moment between the app starting and the interface loading.
 
 ## Consequences

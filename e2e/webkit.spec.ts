@@ -17,6 +17,7 @@ const VIEWS = [
 	'review-correction',
 	'projects',
 	'document',
+	'queue',
 	'workflow',
 	'run'
 ];

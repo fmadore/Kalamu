@@ -160,7 +160,13 @@ no text layer needs *Extract text* instead.
   audio.
 - **Language choice with auto-detect.** Extraction and transcription list only the languages
   the chosen model supports, with **Auto-detect** as the default; several can be chosen for
-  material that mixes languages (French and Mooré, say). Analyses and tables of contents have
+  material that mixes languages (French and Mooré, say). Where a provider publishes no list
+  (GPT Transcribe, Voxtral), every language is offered and the model's description says so.
+  New job says when a model's API takes fewer than were chosen: Whisper, Voxtral and OpenAI's
+  diarizing model take one, so with several they detect the language; Voxtral takes none when
+  it labels speakers or times the lines; OpenAI's speech-to-text takes only two-letter codes,
+  so Mooré is not passed on. The catalogue records this per model (`language_hints`,
+  `two_letter_codes`). Analyses and tables of contents have
   an answer language instead, by default the document's own and then said outright so that a
   model reading English instructions does not drift into English; names and titles stay as the
   document spells them, and a table of contents' entries are combined in one language.
@@ -436,6 +442,22 @@ analysed, compared. A **project** keeps it together
   together, and those without a price yet are counted apart.
 - **Workflows on a selection**: a selection can run a workflow; every step's job is tied to
   the documents it read, and the run keeps the files it started with.
+- **What to check**: one list, for the project, a collection or a selection, of the pages and
+  answers that need the researcher, each with its reason
+  ([decision](decisions/2026-11-03-what-to-check.md), [#85](https://github.com/fmadore/Kalamu/issues/85)).
+  Pieces that failed or are not read yet come first, apart from the answers; an answer is
+  listed when it was cut off at the model's limit, when another set-up of its job read it
+  differently (words in a text; names, choices or entries in an analysis or a table of
+  contents, never prose), when it read a text corrected since (or an item of a table of contents since given other
+  pages), and while it is not reviewed.
+  Where the researcher preferred a result, only it is read; elsewhere every result is, listed
+  so that some can be set aside, and a document read by several models is still one document.
+  Each item names its document, page, set-up and stored answer, and opens the review at its
+  page, from which the previous and next items are a click away. The list is read from what
+  is stored, so it calls no model. Only the researcher's review resolves an item, which then
+  stays listed as reviewed; agreement between models is never taken for one, and an answer
+  read from a changed text stays open. Counts of documents, pages read, failed, reviewed and
+  flagged are given over everything in scope, whatever the filters show.
 - **Organising never changes work.** Collections, titles, links and preferences call no model.
   A job keeps the files it was started with, so a later change to a collection does not rewrite
   a past run or start new work. Deleting a project, a collection or a document removes only how
