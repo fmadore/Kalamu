@@ -1,7 +1,9 @@
 # Privacy Policy — Kalamu
 
 **Effective date:** 3 November 2026, for the search index, the descriptions of documents'
-sources and export profiles, which apply from the version after 1.2.0. Version 1.0.0, the first Microsoft Store release, was published under the policy
+sources, export profiles and *Report a problem* opening GitHub's choice of forms without the
+app's version, which apply from the version after 1.2.0. Version 1.0.0, the first Microsoft
+Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
 the second named the data folder after the app's bundle identifier, the third did not list the
@@ -167,10 +169,11 @@ and unlocks nothing.
 
 ## Report a problem
 
-The flag in each review's header and *Report a problem* in Settings open a public GitHub issue
-form (`https://github.com/fmadore/Kalamu/issues/new`) in the default browser, with the app's
-version number filled in. The app passes that address to the browser and nothing else: it sends
-no document, result, key or other information itself. What the user writes in the form, and
+The flag in each review's header and *Report a problem* in Settings open GitHub's choice of
+public issue forms (`https://github.com/fmadore/Kalamu/issues/new/choose`) in the default
+browser: a bug, feedback, or output that is offensive or harmful. The app passes that address to
+the browser and nothing else: it sends no document, result, key, version or other information
+itself. What the user writes in the form, and
 their GitHub account, are published on GitHub under the
 [GitHub privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement);
 the form asks not to paste confidential material.

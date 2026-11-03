@@ -23,8 +23,7 @@ pub fn csv(rows: &[Row<'_>], fields: &[Field]) -> Result<Vec<u8>, ExportError> {
         format: "CSV",
         message: e.to_string(),
     };
-    // A byte-order mark so Excel opens accented text as UTF-8.
-    let mut writer = csv::Writer::from_writer(b"\xEF\xBB\xBF".to_vec());
+    let mut writer = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
     let mut header: Vec<String> = ["id", "number", "title", "pages", "file"]
         .map(String::from)
         .to_vec();

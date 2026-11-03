@@ -55,7 +55,7 @@ this repository's notes, and Microsoft renumbers them from time to time.
 | 10.5 Personal information | A privacy policy when the app sends personal information | Documents and recordings go to the provider the user chooses: [privacy.md](privacy.md), published at a stable URL |
 | 10.8.2 Payments outside Microsoft commerce | A voluntary donation through a secure third-party provider is allowed, and must be declared in Partner Center | The Buy Me a Coffee link unlocks nothing; tick the Product declaration and explain the link in the certification notes |
 | 11.2 and 10.1 Trademarks | Other companies' names only descriptively, no logos, no implied endorsement | Providers, YouTube and Word are named to say what the app works with; a trademark line ends the description |
-| 11.16 Live generative AI content | Disclose generative AI in the listing and in Partner Center; a way to report inappropriate output | The description and the Generative AI property say so; Report a problem opens the `output.yml` issue form |
+| 11.16 Live generative AI content | Disclose generative AI in the listing and in Partner Center; a way to report inappropriate output | The description and the Generative AI property say so; Report a problem opens GitHub's issue forms, `output.yml` among them |
 | Licence terms | Microsoft's Standard Application License Terms forbid reverse engineering, which the LGPL (FFmpeg) must allow | Kalamu's own [licence terms](store-license-terms.md) in "Additional license terms" |
 
 ## What is done
@@ -71,8 +71,9 @@ this repository's notes, and Microsoft renumbers them from time to time.
   `kalamu-samples.zip`; the release is published only once all of them are there.
 - **Version 1.0.0** in `package.json`, `src-tauri/tauri.conf.json` and the workspace
   `Cargo.toml`; the package is `1.0.0.0`.
-- **Report a problem** (policy 11.16): `.github/ISSUE_TEMPLATE/output.yml`, opened in the
-  default browser with the version filled in. Nothing is sent by the app.
+- **Report a problem** (policy 11.16): GitHub's issue forms, opened in the default browser:
+  a bug or feedback, and `.github/ISSUE_TEMPLATE/output.yml` for offensive or harmful output.
+  Nothing is sent by the app.
 - **Third-party notices**: `scripts/third-party-notices.mjs` writes
   `licenses/THIRD-PARTY-NOTICES.txt` (every Rust crate and npm package built into the app, with
   its licence texts) in each release build.

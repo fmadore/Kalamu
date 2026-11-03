@@ -326,16 +326,22 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 			return projects.find((p) => p.id === a.id);
 		}
 		case 'rename_tag': {
+			// As `Projects::rename_tag`: spaces tidied, a tag in use keeping its spelling.
 			const from = String(a.from).toLowerCase();
-			const to = String(a.to).trim();
-			let n = 0;
+			const typed = String(a.to).split(/\s+/).filter(Boolean).join(' ');
+			if (!typed) throw { id: 'project.no_tag' };
+			const inUse = documents
+				.flatMap((d) => d.tags)
+				.find((t) => t.toLowerCase() === typed.toLowerCase());
+			const to = typed.toLowerCase() === from ? typed : (inUse ?? typed);
+			let changed = 0;
 			documents = documents.map((d) => {
 				if (!d.tags.some((t) => t.toLowerCase() === from)) return d;
-				n += 1;
+				changed += 1;
 				const rest = d.tags.filter((t) => ![from, to.toLowerCase()].includes(t.toLowerCase()));
 				return { ...d, tags: [...rest, to].sort((x, y) => x.localeCompare(y)) };
 			});
-			return n;
+			return { changed, name: to };
 		}
 		case 'export_descriptions':
 			return null;

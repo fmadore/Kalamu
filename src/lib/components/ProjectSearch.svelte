@@ -25,9 +25,9 @@
 		hitWords,
 		keepSearch,
 		lastSearch,
-		reviewFind
+		reviewFind,
+		searchableQuery
 	} from '#lib/projectSearch.js';
-	import { searchable } from '#lib/search.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { api, on } from '#lib/tauri.js';
 
@@ -52,7 +52,7 @@
 	let preparing = $state<{ done: number; total: number } | null>(null);
 
 	const tasks = $derived(request.generated ? [...TEXT_TASKS, ...GENERATED_TASKS] : TEXT_TASKS);
-	const ready = $derived(searchable(request.query));
+	const ready = $derived(searchableQuery(request.query, request.mode));
 
 	async function run() {
 		if (!ready) return;
@@ -77,7 +77,7 @@
 	$effect(() => {
 		void request.query;
 		clearTimeout(timer);
-		if (searchable(request.query)) timer = setTimeout(() => void run(), 400);
+		if (searchableQuery(request.query, request.mode)) timer = setTimeout(() => void run(), 400);
 		return () => clearTimeout(timer);
 	});
 

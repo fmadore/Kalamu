@@ -489,8 +489,8 @@ async fn transient_errors_are_retried_and_failures_can_be_retried_later() {
 }
 
 /// An answer the provider billed but the engine refused, for breaking its fields, is paid for:
-/// it counts in what the job spent, with the answers kept; a failure the provider did not bill
-/// adds nothing.
+/// it counts in what the job spent, with the answers kept, and so does one a filter stopped
+/// after the provider counted it; a failure the provider did not bill adds nothing.
 #[tokio::test]
 async fn answers_billed_but_refused_count_in_the_cost() {
     let f = fixture();
@@ -516,31 +516,41 @@ async fn answers_billed_but_refused_count_in_the_cost() {
         2,
         vec![ProviderError::InvalidAnswer {
             reason: "not valid JSON".into(),
-            usage,
+            usage: usage.clone(),
         }],
     );
     f.fake.fail(3, vec![ProviderError::Transient("503".into())]);
-    let job = f.new_job(vec![f.pdf("letters.pdf", 3)], &["priced-model"]);
-    assert_eq!(f.run(job.id).await, JobStatus::Completed);
-    assert_eq!(f.fake.calls(), 5);
+    // A filter stopped page 4 after the model wrote; refusals are not tried again.
+    f.fake.fail(
+        4,
+        vec![ProviderError::Blocked {
+            reason: "RECITATION".into(),
+            usage: Some(usage),
+        }],
+    );
+    let job = f.new_job(vec![f.pdf("letters.pdf", 4)], &["priced-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
+    assert_eq!(f.fake.calls(), 6);
 
-    // Each call read 1,000 tokens and wrote 100: $0.001125. Three kept, one refused.
+    // Each call read 1,000 tokens and wrote 100: $0.001125. Three kept, two refused.
     let call = 0.001_125;
     let charges = f.store.charges(job.id).unwrap_or_default();
-    assert_eq!(charges.len(), 1, "only the billed failure: {charges:?}");
-    assert_eq!(charges[0].index, 1);
+    assert_eq!(charges.len(), 2, "only the billed failures: {charges:?}");
+    let mut charged: Vec<u32> = charges.iter().map(|c| c.index).collect();
+    charged.sort_unstable();
+    assert_eq!(charged, [1, 3]);
     assert!(
-        charges[0]
-            .cost_usd
-            .is_some_and(|c| (c - call).abs() < 1e-12)
+        charges
+            .iter()
+            .all(|c| c.cost_usd.is_some_and(|c| (c - call).abs() < 1e-12))
     );
     let spent = f.store.spent(job.id).unwrap_or_default();
-    assert!((spent - 4.0 * call).abs() < 1e-12, "{spent}");
+    assert!((spent - 5.0 * call).abs() < 1e-12, "{spent}");
     let listed = f.store.list_jobs().unwrap_or_default();
     assert!(
         listed[0]
             .cost_usd
-            .is_some_and(|c| (c - 4.0 * call).abs() < 1e-12)
+            .is_some_and(|c| (c - 5.0 * call).abs() < 1e-12)
     );
 
     // Provenance lists the refused answer apart from the results kept.
@@ -548,8 +558,8 @@ async fn answers_billed_but_refused_count_in_the_cost() {
         &std::fs::read(f.dir.path().join("letters.provenance.json")).unwrap_or_default(),
     )
     .unwrap_or_default();
-    assert_eq!(provenance["refused"]["answers"], 1);
-    assert_eq!(provenance["refused"]["usage"]["input_tokens"], 1000);
+    assert_eq!(provenance["refused"]["answers"], 2);
+    assert_eq!(provenance["refused"]["usage"]["input_tokens"], 2000);
     assert!(
         provenance["cost_usd"]
             .as_f64()
@@ -800,8 +810,7 @@ async fn a_job_is_scored_against_every_page_reviewed_or_corrected() {
 async fn a_page_that_keeps_failing_does_not_keep_the_document_from_disk() {
     let f = fixture();
     let source = f.pdf("bulletin.pdf", 3);
-    f.fake
-        .fail(2, vec![ProviderError::Blocked("refused".into())]);
+    f.fake.fail(2, vec![ProviderError::blocked("refused")]);
     let job = f.new_job(vec![source], &["fake-model"]);
     assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
     let read = |name: &str| std::fs::read_to_string(f.dir.path().join(name)).unwrap_or_default();

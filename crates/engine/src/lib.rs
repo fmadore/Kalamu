@@ -201,6 +201,9 @@ pub struct Engine {
     pub(crate) running: Mutex<HashMap<JobId, Arc<Mutex<Control>>>>,
     /// Held while a workflow run decides which steps to start.
     pub(crate) workflows: Mutex<()>,
+    /// Held while a result's files are built and written, so a rewrite of its provenance never
+    /// lands after a fuller write from older state, nor the other way round.
+    pub(crate) writing: Mutex<()>,
     /// The project documents a source is, named in its results' provenance; none until the app
     /// gives them.
     pub(crate) documents: OnceLock<Arc<dyn SourceDocuments>>,
@@ -226,6 +229,7 @@ impl Engine {
             events,
             running: Mutex::new(HashMap::new()),
             workflows: Mutex::new(()),
+            writing: Mutex::new(()),
             documents: OnceLock::new(),
         })
     }

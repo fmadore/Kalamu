@@ -112,6 +112,12 @@ pub trait JobStore: Send + Sync {
     /// A job's units, in their order.
     fn units(&self, job: JobId) -> Result<Vec<crate::DocumentUnit>, StoreError>;
     fn delete_unit(&self, id: crate::UnitId) -> Result<(), StoreError>;
+    /// Puts these units and deletes those at once, so a split or a join is never half made.
+    fn replace_units(
+        &self,
+        put: &[crate::DocumentUnit],
+        delete: &[crate::UnitId],
+    ) -> Result<(), StoreError>;
 
     /// Keeps a workflow run as started: its frozen steps, sources and each step's progress.
     fn create_run(&self, run: &crate::WorkflowRun) -> Result<(), StoreError>;

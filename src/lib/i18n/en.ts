@@ -632,6 +632,8 @@ export const en = {
 		},
 		profiles: {
 			title: 'Export descriptions',
+			/** The file's name the save dialog suggests. */
+			fileName: (project: string) => `${project} descriptions`,
 			lede: 'Kalamu’s own export gives every part of each description with where it came from. A profile writes the columns you choose, in your order and under your headings, for a spreadsheet or another tool’s import. It is kept for every project and holds none of this one’s values.',
 			columns: 'Columns',
 			kalamu: 'Every part, with where it came from',
@@ -1457,10 +1459,10 @@ export const en = {
 			'Nothing is sent to the developer: no files, keys, results or usage data. AI output can contain fluent but wrong text; check a sample against the source.'
 	},
 	report: {
-		/** Store policy 11.16: a way to report what the models write. */
+		/** Bugs and feedback; also the way Store policy 11.16 asks for to flag harmful output. */
 		link: 'Report a problem',
-		review: 'Report a problem with this output',
-		note: 'Output that is inappropriate, harmful or invented, or a bug: report it on GitHub. The form opens in your browser; Kalamu sends nothing, so share only what is safe to make public.'
+		review: 'Report a problem',
+		note: 'A bug, or an idea to make Kalamu better: tell us on GitHub. Should a model write something offensive or harmful, the same page lets you flag it, as the Microsoft Store asks apps to. It opens in your browser; Kalamu sends nothing, so share only what is safe to make public.'
 	},
 	glossary: {
 		title: 'Glossary',
@@ -1602,7 +1604,8 @@ export const en = {
 	},
 	/** Key names in shortcuts; on a Mac the modifier is written ⌘. */
 	keys: {
-		ctrl: 'Ctrl'
+		ctrl: 'Ctrl',
+		shift: 'Shift'
 	},
 	tray: {
 		open: 'Open Kalamu',
@@ -1622,6 +1625,10 @@ export const en = {
 		colon: ':',
 		/** Between items of a list that hold commas of their own. */
 		semicolon: '; ',
+		/** A title quoted in running text. */
+		quoted: (text: string) => `“${text}”`,
+		/** What the file picker calls the files Kalamu reads. */
+		sources: 'Sources',
 		unknown: 'Not known',
 		preview: 'preview',
 		retiring: 'retiring',
@@ -1655,6 +1662,10 @@ export const en = {
 		'unit.already_made': 'The items were already made from these entries.',
 		'unit.no_pages': 'Give this item its pages first.',
 		'unit.not_pdf': 'Only a PDF’s items can be read on their own for now.',
+		'unit.not_joinable': 'Only two different items of the same table of contents can be joined.',
+		'unit.other_result': 'This item belongs to another table of contents. Open it from there.',
+		'unit.bad_split': 'Split an item between two of its pages.',
+		'unit.none_chosen': 'Choose at least one item.',
 		'job.not_found': 'This job no longer exists.',
 		'job.not_text': 'Only extracted text, transcripts and corrected text can be analysed this way.',
 		'job.nothing_read':

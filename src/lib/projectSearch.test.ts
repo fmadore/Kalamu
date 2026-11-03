@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Hit } from './bindings/Hit.js';
+import type { MatchMode } from './bindings/MatchMode.js';
 import type { ResultHits } from './bindings/ResultHits.js';
 import { en } from './i18n/index.js';
 import {
@@ -9,8 +10,10 @@ import {
 	hitWords,
 	keepSearch,
 	lastSearch,
-	reviewFind
+	reviewFind,
+	searchableQuery
 } from './projectSearch.js';
+import rules from './searchRules.json';
 
 function hit(over: Partial<Hit> = {}): Hit {
 	return {
@@ -124,5 +127,15 @@ describe('project search', () => {
 			results: 'preferred',
 			generated: false
 		});
+	});
+});
+
+describe('searchableQuery', () => {
+	it('waits for a word as long as Rust searches for, in every mode', () => {
+		for (const c of rules.cases) {
+			expect(searchableQuery(c.query, c.mode as MatchMode), `${c.mode}: ${c.query}`).toBe(
+				c.searchable
+			);
+		}
 	});
 });

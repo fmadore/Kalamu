@@ -10,4 +10,6 @@ package-lock.json
 .impeccable/
 # Prose is wrapped by hand.
 *.md
+# Written by `cargo test`, as Rust serialises them.
 src/lib/dev/taskRules.json
+src/lib/searchRules.json

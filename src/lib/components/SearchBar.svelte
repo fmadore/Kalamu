@@ -18,6 +18,7 @@
 	// the list, then the search.
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
+	import { shifted } from '#lib/platform.js';
 
 	/** At most this many matches are listed; all are counted and stepped through. */
 	const LISTED = 300;
@@ -97,7 +98,7 @@
 			<button
 				class="btn sm icon"
 				aria-label={m.review.previousMatch}
-				title="{m.review.previousMatch} (Shift ↵)"
+				title="{m.review.previousMatch} ({shifted('↵')})"
 				disabled={count === 0}
 				onclick={() => step(-1)}><Icon name="up" size={14} /></button
 			>

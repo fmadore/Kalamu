@@ -1,12 +1,12 @@
-name: Report AI output
-description: A result that is inappropriate, harmful or offensive, or that invents what the source does not say.
+name: Report harmful output
+description: A model wrote something offensive or harmful. For a misreading, correct it in the review.
 title: "[Output] "
 labels: ["ai-output"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for reporting this. Kalamu shows text written by the AI model you chose; reports help warn other researchers and improve the prompts.
+        Thank you for reporting this. Kalamu shows text written by the AI model you chose, which the model's provider is answerable for; a report lets us warn other researchers and, where a default prompt invites it, change the prompt. A model misreading or inventing is expected from time to time: correct it in the review, no report needed.
 
         **Do not paste confidential material.** This page is public. Describe the problem, and quote only what is needed and safe to share.
   - type: dropdown
@@ -14,9 +14,7 @@ body:
     attributes:
       label: What is wrong?
       options:
-        - Inappropriate, offensive or harmful text
-        - Text the source does not contain (invented, "hallucinated")
-        - The model refused, or answered something else
+        - Offensive or harmful text
         - Other
     validations:
       required: true

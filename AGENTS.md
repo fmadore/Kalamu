@@ -124,6 +124,13 @@ Rules that keep this modular:
 - `cargo fmt`, `cargo clippy -- -D warnings` and `cargo test --workspace` pass before every
   commit, plus the front end's lint and type checks.
 
+## Pull requests
+
+- **Every pull request targets `main`.** One built on another branch waits until that branch
+  is merged, then is rebased onto `main`; or it is retargeted to `main` before it is merged.
+  A pull request merged into a branch that already reached `main` never reaches it: #99's
+  work was lost that way until #101 replayed it.
+
 ## Architecture checkpoints
 
 Stop feature work and review the whole architecture, not just the current change:

@@ -494,6 +494,14 @@ impl JobStore for SqliteStore {
         units::delete(self, id)
     }
 
+    fn replace_units(
+        &self,
+        put: &[kalamu_core::DocumentUnit],
+        delete: &[kalamu_core::UnitId],
+    ) -> Result<(), StoreError> {
+        units::replace(self, put, delete)
+    }
+
     fn create_run(&self, run: &kalamu_core::WorkflowRun) -> Result<(), StoreError> {
         runs::create(self, run)
     }

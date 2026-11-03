@@ -25,6 +25,13 @@ struct Fixture {
     dir: tempfile::TempDir,
 }
 
+/// A CSV export's text after the byte-order mark it must start with.
+fn csv_body(csv: String) -> String {
+    csv.strip_prefix('\u{feff}')
+        .unwrap_or_else(|| panic!("a CSV starts with a byte-order mark, for Excel"))
+        .to_string()
+}
+
 fn fixture() -> Fixture {
     let store = Arc::new(SqliteStore::in_memory().unwrap());
     Fixture {

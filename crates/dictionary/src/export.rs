@@ -66,7 +66,7 @@ impl Dictionary {
     pub fn export_csv(&self, project: ProjectId) -> Result<String, DictionaryError> {
         let gathered = self.gather(project, None)?;
         let entries = self.store.entries(project)?;
-        let mut out = csv::Writer::from_writer(Vec::new());
+        let mut out = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
         out.write_record([
             "document_id",
             "document",

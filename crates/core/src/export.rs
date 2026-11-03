@@ -4,6 +4,9 @@ use ts_rs::TS;
 
 use crate::{PieceRef, Provenance, Segment, Setup, SourceFile, Task};
 
+/// The byte-order mark every CSV file starts with, so Excel opens accented text as UTF-8.
+pub const CSV_BOM: &[u8] = &[0xEF, 0xBB, 0xBF];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]

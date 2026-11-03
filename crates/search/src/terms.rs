@@ -276,6 +276,47 @@ mod tests {
 
     use super::*;
 
+    /// The shortest word searched for, with queries and whether each has a word long enough,
+    /// written for the interface, which waits for one before searching: `cargo test` keeps the
+    /// file current, as it does `taskRules.json`.
+    #[test]
+    fn export_query_rules_for_the_interface() -> Result<(), Box<dyn std::error::Error>> {
+        let queries = [
+            "pè",
+            "Père",
+            "  de  ",
+            "de la",
+            "le pape",
+            "\"de la\"",
+            "« un »",
+            "ab, cd.",
+            "Ḥajj",
+        ];
+        let modes = [MatchMode::Phrase, MatchMode::AllWords, MatchMode::Near];
+        let cases: Vec<serde_json::Value> = queries
+            .iter()
+            .flat_map(|q| {
+                modes.iter().map(move |m| {
+                    serde_json::json!({
+                        "query": q,
+                        "mode": m,
+                        "searchable": !parse(q, *m).terms.is_empty(),
+                    })
+                })
+            })
+            .collect();
+        let rules = serde_json::json!({ "min_query": MIN_QUERY, "cases": cases });
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/lib/searchRules.json");
+        let json = serde_json::to_string_pretty(&rules)?
+            + "
+";
+        if std::fs::read_to_string(&path).ok().as_deref() != Some(json.as_str()) {
+            std::fs::write(&path, json)?;
+        }
+        Ok(())
+    }
+
     fn passage(texts: &[&str]) -> Passage {
         Passage {
             key: PassageKey {

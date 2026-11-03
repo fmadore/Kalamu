@@ -23,6 +23,7 @@
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { formatPercent, formatUsd, messages } from '#lib/i18n/index.js';
+	import { shifted } from '#lib/platform.js';
 	import { clock, pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { layout, Review } from '#lib/review.svelte.js';
 	import { describeScore } from '#lib/scores.js';
@@ -586,7 +587,7 @@
 			<button
 				class="btn sm icon"
 				aria-label={m.review.previousDifference}
-				title="{m.review.previousDifference} (Shift F)"
+				title="{m.review.previousDifference} ({shifted('F')})"
 				onclick={() => stepEntry(-1)}><Icon name="up" size={14} /></button
 			>
 			<button

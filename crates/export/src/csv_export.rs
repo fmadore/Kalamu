@@ -20,8 +20,7 @@ impl Exporter for CsvExporter {
             format: "CSV",
             message: e.to_string(),
         };
-        // A byte-order mark so Excel opens accented text as UTF-8.
-        let mut writer = csv::Writer::from_writer(b"\xEF\xBB\xBF".to_vec());
+        let mut writer = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
         match doc.task {
             Task::TextExtraction | Task::TextCorrection => {
                 writer

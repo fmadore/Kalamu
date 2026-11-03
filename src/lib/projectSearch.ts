@@ -3,12 +3,39 @@
 // Pure, so it is tested without the app.
 
 import type { Hit } from './bindings/Hit.js';
+import type { MatchMode } from './bindings/MatchMode.js';
 import type { ResultHits } from './bindings/ResultHits.js';
 import type { SearchRequest } from './bindings/SearchRequest.js';
 import type { SearchView } from './bindings/SearchView.js';
 import type { Messages } from './i18n/index.js';
 import { clock, pieceLabel } from './pieces.js';
+import { folded } from './search.js';
+import rules from './searchRules.json';
 import type { ReviewFind } from './state.svelte.js';
+
+/** The fewest letters a word searched for has, from Rust (`kalamu_search::MIN_QUERY`). */
+export const MIN_QUERY: number = rules.min_query;
+
+/** Quotes that make several words one term, as Rust reads them. */
+const QUOTES = /["“”«»]/;
+
+/**
+ * Whether a query has a word long enough to search for, as `kalamu_search` parses it: the whole
+ * phrase, or else each word or quoted run, punctuation at its ends set aside. Until it has, the
+ * search waits rather than answering that the words are too short.
+ */
+export function searchableQuery(query: string, mode: MatchMode): boolean {
+	const long = (typed: string) => [...folded(typed)].length >= MIN_QUERY;
+	if (mode === 'phrase') return long(query);
+	return query.split(QUOTES).some((chunk, i) =>
+		i % 2 === 1
+			? long(chunk)
+			: chunk
+					.split(/\s+/)
+					.map((w) => w.replace(/^[!-/:-@[-`{-~]+|[!-/:-@[-`{-~]+$/g, ''))
+					.some(long)
+	);
+}
 
 /** How many words may stand between words looked for near each other, unless changed. */
 export const NEAR = 10;

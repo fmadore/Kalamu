@@ -273,7 +273,10 @@ pages read together settled when a job is created and a call that keeps no page 
 workflow steps made once and tied to their project at launch, the proposal job's files apart,
 rules and estimates from Rust, and the duplication it found removed; it shipped in 1.1.0.
 [#50](https://github.com/fmadore/Kalamu/issues/50)'s first increment, items read on their own,
-is done and shipped in 1.2.0, with the default prompts and the data folder.
+is done and shipped in 1.2.0, with the default prompts and the data folder. The
+[3 November checkpoint](decisions/2026-11-03-checkpoint.md), after 1.2.0, fixed eleven bugs it
+found (spreadsheets' accents, a refusal's tokens left out of the cost, item edits half made,
+among them); the duplication and the large files it found are refactored next.
 
 - **Items, what is left of [#50](https://github.com/fmadore/Kalamu/issues/50)**: finer
   boundaries than the page (a column, a passage of text) for articles that share a page; the

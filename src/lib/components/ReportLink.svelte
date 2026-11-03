@@ -1,14 +1,15 @@
 <script lang="ts">
-	// Report a problem (Microsoft Store policy 11.16): the GitHub issue form for AI output, in the
-	// default browser. A small button in Settings, an icon in a review's masthead.
+	// Report a problem: GitHub's issue forms, a bug or feedback, or harmful output as Microsoft
+	// Store policy 11.16 asks, in the default browser. A small button in Settings, an icon in a
+	// review's masthead.
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
-	import { app, openLink } from '#lib/state.svelte.js';
+	import { openLink } from '#lib/state.svelte.js';
 	import { reportUrl } from '#lib/support.js';
 
 	let { iconOnly = false }: { iconOnly?: boolean } = $props();
 	const m = messages();
-	const href = $derived(reportUrl(app.info?.version));
+	const href = reportUrl();
 
 	function open(event: MouseEvent) {
 		event.preventDefault();

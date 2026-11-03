@@ -8,7 +8,7 @@ use kalamu_engine::{SeedReport, UnitEdit, UnitsView};
 use tauri::State;
 
 use super::AppState;
-use crate::errors::CmdResult;
+use crate::errors::{AppError, CmdResult, id};
 
 #[tauri::command]
 pub fn units_view(
@@ -55,18 +55,29 @@ pub fn split_unit(state: State<'_, AppState>, id: UnitId, at: u32) -> CmdResult<
     Ok(state.engine.split_unit(id, at)?)
 }
 
-/// The units' pages frozen as PDFs, as sources for a new job to read.
+/// The units' pages frozen as PDFs, as sources for a new job to read. Cutting a large volume's
+/// pages takes a while, so it runs off the window's thread.
 #[tauri::command]
-pub fn unit_sources(state: State<'_, AppState>, ids: Vec<UnitId>) -> CmdResult<Vec<SourceFile>> {
-    Ok(state.engine.unit_sources(&ids)?)
+pub async fn unit_sources(
+    state: State<'_, AppState>,
+    ids: Vec<UnitId>,
+) -> CmdResult<Vec<SourceFile>> {
+    let engine = state.engine.clone();
+    tokio::task::spawn_blocking(move || Ok(engine.unit_sources(&ids)?))
+        .await
+        .map_err(|e| AppError::new(id::INTERNAL, e))?
 }
 
-/// Each unit's pages as a PDF in the chosen folder, with the list of them.
+/// Each unit's pages as a PDF in the chosen folder, with the list of them, off the window's
+/// thread.
 #[tauri::command]
-pub fn export_units(
+pub async fn export_units(
     state: State<'_, AppState>,
     ids: Vec<UnitId>,
     folder: String,
 ) -> CmdResult<Vec<String>> {
-    Ok(state.engine.export_units(&ids, Path::new(&folder))?)
+    let engine = state.engine.clone();
+    tokio::task::spawn_blocking(move || Ok(engine.export_units(&ids, Path::new(&folder))?))
+        .await
+        .map_err(|e| AppError::new(id::INTERNAL, e))?
 }
