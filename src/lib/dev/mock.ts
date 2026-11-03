@@ -15,6 +15,7 @@ import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import taskRulesJson from './taskRules.json';
 import { DOCUMENT_ID, PROJECT_ID, projectCommand, seedProjects } from './mockProjects.js';
 import { NO_RESULT } from './noResult.js';
+import { searchCommand } from './mockSearch.js';
 import { queueCommand } from './mockQueue.js';
 import {
 	analysisJob,
@@ -413,6 +414,8 @@ export function installMock(): void {
 		if (queue !== undefined) return queue;
 		const unit = unitCommand(cmd, a);
 		if (unit !== undefined) return unit;
+		const found = searchCommand(cmd, a);
+		if (found !== undefined) return found;
 		switch (cmd) {
 			case 'app_info':
 				return {

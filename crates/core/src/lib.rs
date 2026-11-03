@@ -20,6 +20,7 @@ pub mod project;
 pub mod provenance;
 pub mod provider;
 pub mod result;
+pub mod search;
 pub mod setup;
 pub mod snapshot;
 pub mod source;
@@ -64,6 +65,7 @@ pub use result::{
     Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,
     TextRegion, Usage,
 };
+pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};
 pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
 pub use source::{InputKind, SourceFile};

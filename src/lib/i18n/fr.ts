@@ -452,6 +452,60 @@ export const fr: Messages = {
 			takeBack: 'Rétablir'
 		}
 	},
+	search: {
+		title: 'Recherche',
+		lede: 'Chaque passage des documents du projet qui contient vos mots, dans le texte tel que vous l’avez corrigé, chacun s’ouvrant là où il se trouve. Les majuscules, les accents et les signes vocaliques de l’arabe sont ignorés. Rien n’est envoyé : la recherche se fait sur cet ordinateur.',
+		query: 'Mots à chercher',
+		placeholder: 'Un nom, une organisation, une expression…',
+		go: 'Chercher',
+		tooShort: 'Tapez au moins trois lettres.',
+		scope: 'Documents',
+		wholeProject: 'Tout le projet',
+		tag: 'Étiquette',
+		anyTag: 'Toute étiquette',
+		task: 'Résultats de',
+		anyTask: 'Tous les traitements',
+		review: 'Pages',
+		reviewFilter: { any: 'Toutes', reviewed: 'Relues', not_reviewed: 'Pas encore relues' },
+		results: 'Résultats',
+		resultChoice: { preferred: 'Le résultat retenu, s’il y en a un', all: 'Tous les résultats' },
+		generated: 'Chercher aussi ce que les modèles en ont écrit : analyses et tables des matières',
+		searching:
+			'Recherche en cours… La première recherche d’un projet prépare son texte, ce qui peut prendre un moment.',
+		matches: (matches: number, documents: number) =>
+			`${matches <= 1 ? `${matches} occurrence` : `${matches} occurrences`} dans ${documents <= 1 ? `${documents} document` : `${documents} documents`}`,
+		listedOnly: (listed: number, matches: number) =>
+			`Seules les ${listed} premières occurrences sur ${matches} sont listées. Restreignez la recherche pour voir les autres.`,
+		none: 'Introuvable dans le texte cherché.',
+		coverage: (searched: number, documents: number) =>
+			`Texte cherché dans ${searched} ${searched <= 1 ? 'document' : 'documents'} sur ${documents}.`,
+		unread: (n: number) =>
+			n === 1
+				? 'Rien n’est encore lu dans 1 document pour les types cherchés : son contenu n’est pas cherché.'
+				: `Rien n’est encore lu dans ${n} documents pour les types cherchés : leur contenu n’est pas cherché.`,
+		piecesUnread: (n: number) =>
+			n === 1
+				? '1 page ou partie des résultats cherchés reste à lire, ou n’a pas pu être lue.'
+				: `${n} pages ou parties des résultats cherchés restent à lire, ou n’ont pas pu être lues.`,
+		withoutPreference: (n: number) =>
+			n === 1
+				? '1 document a plusieurs résultats sans résultat retenu : tous ont été cherchés.'
+				: `${n} documents ont plusieurs résultats sans résultat retenu : tous ont été cherchés.`,
+		absence:
+			'Ne rien trouver ne signifie pas que les documents n’en parlent jamais : seul le texte lu et conservé est cherché, et un modèle peut avoir mal lu un nom.',
+		preferred: 'Retenu',
+		generatedResult: 'Écrit par un modèle',
+		stale: 'Périmée',
+		staleHint: 'Le texte lu par cette analyse a été corrigé depuis.',
+		reason: 'justification',
+		open: (place: string) => `Ouvrir ${place} en relecture`,
+		rebuild: 'Préparer à nouveau le texte',
+		rebuildHint:
+			'La recherche conserve une copie du texte de vos résultats, préparée pour la recherche, dans le dossier de données de Kalamu. La préparer à nouveau repart de vos résultats et de vos corrections ; rien n’est perdu.',
+		rebuilt: 'Le texte sera préparé à nouveau à la prochaine recherche.',
+		moved:
+			'Les mots ne sont plus là où la recherche les a trouvés : le texte a été corrigé depuis. La recherche de la relecture montre où ils se trouvent maintenant.'
+	},
 	queue: {
 		title: 'À vérifier',
 		lede: 'Les pages et les réponses de ces documents qui demandent votre attention, chacune avec son motif. La liste est tirée de ce que Kalamu conserve déjà : rien n’est envoyé à un modèle. Vous seul marquez une page comme relue ; l’accord des modèles ne vaut pas relecture.',
@@ -1538,6 +1592,10 @@ export const fr: Messages = {
 		linkFailed: (url: string) => `Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`
 	},
 	error: {
+		'search.too_short': 'Tapez au moins trois lettres.',
+		'search.stopped': 'La recherche a été remplacée par une plus récente.',
+		'search.index':
+			'La recherche n’a pas pu lire sa copie du texte de vos résultats. Préparez à nouveau le texte depuis la recherche ; vos résultats ne sont pas touchés.',
 		'project.not_found': 'Ce projet, ou ce à quoi il renvoie, n’existe plus.',
 		'project.elsewhere': 'Cet élément appartient à un autre projet, ou n’existe plus.',
 		'project.no_name': 'Donnez-lui un nom.',

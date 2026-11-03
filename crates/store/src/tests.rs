@@ -7,6 +7,7 @@ use super::*;
 
 mod projects;
 mod runs;
+mod search;
 
 fn job() -> Job {
     Job {

@@ -30,6 +30,17 @@ export interface FromProject {
 	collectionId?: string;
 }
 
+/** A match chosen in a project's search: the review opens on its piece with the words
+ * searched, and goes to it. */
+export interface ReviewFind {
+	query: string;
+	setupId: string;
+	/** The piece it is in, as the review numbers them. */
+	index: number;
+	/** Which match it is in that piece's text, from 0. */
+	nth: number;
+}
+
 export type View =
 	| {
 			name: 'new';
@@ -55,6 +66,7 @@ export type View =
 			sourceId: string;
 			/** The piece to open on, from 0. */
 			index?: number;
+			find?: ReviewFind;
 	  }
 	| {
 			name: 'workflows';

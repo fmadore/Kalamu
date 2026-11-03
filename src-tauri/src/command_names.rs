@@ -125,6 +125,8 @@ pub const COMMANDS: &[&str] = &[
     "dictionary_proposals",
     "dictionary_dismiss",
     "dictionary_forget_request",
+    "project_search",
+    "rebuild_search_index",
     "set_taskbar_progress",
     "set_tray_state",
     "hide_window",

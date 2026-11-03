@@ -153,3 +153,13 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `usage`, `cost_usd` | Tokens, audio seconds or pages billed, the input read from or written to the provider's prompt cache (`cached_input_tokens`, `cache_write_tokens`, parts of `input_tokens`), whether the calls went through a batch service (`batch`), and the cost from catalogue prices with those discounts, for the results kept |
 | `refused` | Answers the provider billed but nothing was kept from: analysis answers that broke the fields and were asked for again, or several pages read together whose page marks could not be used (each page then read again alone). `answers`, their `usage` and `cost_usd`, not included above. Absent when none was |
 | `workflow` | For a result read by a workflow step: the run (`run_id`), the workflow (`workflow_id`, `name`) and its `version` when the run started, this `step` of `steps` and its `step_name`, the step it `reads` (numbered from 1; absent when it read the files, and `source.derived_from` names the snapshot), and the researcher's `approval` of that step (`at`, and `partial` when they went on although some pieces were not read). Absent for a job run on its own |
+
+## The search index (`search.sqlite`)
+
+Not an output: a file in the app's data folder that project search reads, made only from the
+job database ([decision](decisions/2026-11-03-project-search.md)). Each passage is one piece of
+one result: the text as the review shows it, or an analysis's answers and reasons as separate
+parts, kept as JSON beside the folded text in an FTS5 table (trigram tokenizer, contentless).
+A stamp records what the passage was made from, and `PRAGMA user_version` the layout; a file of
+another version, or one that cannot be read, is emptied and made again. Nothing outside Kalamu
+should rely on its layout.

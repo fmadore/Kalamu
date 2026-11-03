@@ -547,8 +547,11 @@ mod migrations;
 mod projects;
 mod results;
 mod runs;
+mod search;
 mod snapshots;
 mod units;
+
+pub use search::SqliteIndex;
 
 #[cfg(test)]
 mod tests;

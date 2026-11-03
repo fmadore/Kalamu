@@ -31,14 +31,18 @@
 	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { searchable } from '#lib/search.js';
+	import type { ReviewFind } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
 		sourceId,
+		find: opening,
 		start
 	}: {
 		jobId: string;
 		sourceId: string;
+		/** A match chosen in a project's search, to go to. */
+		find?: ReviewFind;
 		/** The piece to open on, from 0: a page chosen in the list of what to check. */
 		start?: number;
 	} = $props();
@@ -166,6 +170,11 @@
 
 	onMount(() => {
 		void review.load();
+		// Opened from a project's search: its words, searched here too.
+		if (opening) {
+			searching = true;
+			query = opening.query;
+		}
 	});
 </script>
 

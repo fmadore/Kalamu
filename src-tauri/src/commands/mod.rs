@@ -9,6 +9,7 @@ pub mod pipelines;
 pub mod presets;
 pub mod projects;
 pub mod review;
+pub mod search;
 pub mod settings;
 pub mod units;
 pub mod window;
@@ -40,6 +41,10 @@ pub struct AppState {
     pub projects: kalamu_projects::Projects,
     /// Each project's dictionary, over the same database.
     pub dictionary: kalamu_dictionary::Dictionary,
+    /// Project search, over the same database and an index of its own.
+    pub search: Arc<kalamu_search::Search>,
+    /// Raised by each search, so that a newer one stops an older one still indexing.
+    pub search_generation: Arc<std::sync::atomic::AtomicU64>,
     /// Whisper models, shared with the Whisper provider inside the engine.
     pub models: kalamu_offline::ModelManager,
     pub keys: Arc<CredentialKeys>,

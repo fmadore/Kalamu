@@ -133,6 +133,8 @@
     "allow-dictionary-proposals",
     "allow-dictionary-dismiss",
     "allow-dictionary-forget-request",
+    "allow-project-search",
+    "allow-rebuild-search-index",
     "allow-set-taskbar-progress",
     "allow-set-tray-state",
     "allow-hide-window",

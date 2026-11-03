@@ -2456,6 +2456,7 @@ dependencies = [
  "kalamu-projects",
  "kalamu-prompts",
  "kalamu-providers",
+ "kalamu-search",
  "kalamu-store",
  "keyring",
  "reqwest",
@@ -2624,6 +2625,20 @@ dependencies = [
  "serde_json",
  "tokio",
  "wiremock",
+]
+
+[[package]]
+name = "kalamu-search"
+version = "1.2.0"
+dependencies = [
+ "kalamu-core",
+ "kalamu-store",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "ts-rs",
+ "unicode-normalization",
 ]
 
 [[package]]

@@ -160,6 +160,14 @@ ad hoc; it has not yet been opened on a real Mac
   never offered; each proposal accepted through the ordinary merge (some rows left out, the
   label changed), kept apart, or turned down and taken back, across restarts
   ([decision](decisions/2026-11-02-proposed-merges.md)).
+- **Project search, first delivery**
+  ([#86](https://github.com/fmadore/Kalamu/issues/86)): every passage of a project's documents
+  that holds some words, in the corrected text, capitals, accents and Arabic vowel marks set
+  aside; analyses and tables of contents only on request, their field named; the preferred
+  readings or every one, by collection, tag, task and review state; each match opening the
+  review where it stands; what was searched said with every search; a local index (SQLite FTS5,
+  trigrams) derived from the results and made again when lost; a crate of its own, `search`
+  ([decision](decisions/2026-11-03-project-search.md)).
 - **What to check, first increment**
   ([#85](https://github.com/fmadore/Kalamu/issues/85)): one list per project, collection or
   selection of the pages and answers that need the researcher, from stored results only:
@@ -255,8 +263,12 @@ is done and shipped in 1.2.0, with the default prompts and the data folder.
 
 - **Project workspaces, what is left of
   [#57](https://github.com/fmadore/Kalamu/issues/57)**: a document's descriptive metadata
-  (with [#55](https://github.com/fmadore/Kalamu/issues/55)); renaming a tag across a project;
-  and later, search through the text of every result.
+  (with [#55](https://github.com/fmadore/Kalamu/issues/55)); renaming a tag across a project.
+- **Project search, what is left of [#86](https://github.com/fmadore/Kalamu/issues/86)**:
+  several words anywhere in a passage and proximity beside the literal phrase; the text
+  prepared in the background before the first search, with its progress; opening a table of
+  contents' match at its entry; and, evaluated separately, semantic search with explicit local
+  or cloud execution and consent.
 - **Project dictionary, what is left of
   [#48](https://github.com/fmadore/Kalamu/issues/48)**: a live run of proposed merges with
   each provider, on a field of a few hundred rows; comparing rows far apart in the alphabet

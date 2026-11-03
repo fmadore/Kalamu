@@ -23,6 +23,7 @@ kalamu-engine = { path = "crates/engine" }
 kalamu-offline = { path = "crates/offline" }
 kalamu-projects = { path = "crates/projects" }
 kalamu-dictionary = { path = "crates/dictionary" }
+kalamu-search = { path = "crates/search" }
 
 anyhow = "1.0.104"
 async-trait = "0.1.92"

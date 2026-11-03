@@ -49,6 +49,8 @@ import type { PieceState } from './bindings/PieceState.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
 import type { Project } from './bindings/Project.js';
+import type { SearchRequest } from './bindings/SearchRequest.js';
+import type { SearchView } from './bindings/SearchView.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { ProjectView } from './bindings/ProjectView.js';
 import type { SourceFile } from './bindings/SourceFile.js';
@@ -205,6 +207,9 @@ export const api = {
 		invoke<void>('tag_documents', { project, ids, tag }),
 	untagDocuments: (project: string, ids: string[], tag: string) =>
 		invoke<void>('untag_documents', { project, ids, tag }),
+	projectSearch: (project: string, request: SearchRequest) =>
+		invoke<SearchView>('project_search', { project, request }),
+	rebuildSearchIndex: () => invoke<void>('rebuild_search_index'),
 	dictionaryView: (project: string, collection: string | null) =>
 		invoke<DictionaryView>('dictionary_view', { project, collection }),
 	dictionaryEvidence: (project: string, namespace: string, forms: string[]) =>

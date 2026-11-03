@@ -1,12 +1,11 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 2 November 2026, revised the same day for the macOS version, for the
-data folder's new name, and for the items of a table of contents, which apply from version
-1.2.0. Version 1.0.0, the first Microsoft Store release, was published under the policy
+**Effective date:** 3 November 2026, for the search index, which applies from the version
+after 1.2.0. Version 1.0.0, the first Microsoft Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
-the second named the data folder after the app's bundle identifier, and the third did not list
-the items' pages.
+the second named the data folder after the app's bundle identifier, the third did not list the
+items' pages, and the fourth, which applies to version 1.2.0, did not list the search index.
 
 ## What this app is
 
@@ -82,6 +81,12 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   steps and prompts as they were when it started, the paths, sizes and fingerprints of the
   files it was started on, the job that ran each step, and when the user chose to continue
   after a step. Forgetting a run removes this record; its jobs and their results stay.
+- **The search index** (`search.sqlite`): a copy of the text of the results a project search
+  has looked through (the corrected text, the speakers' names, and analyses' answers when they
+  were searched), folded for matching, with where each passage stands. It is made from the job
+  database and never sent; deleting a job removes its text from the index, and *Prepare the
+  text again* in a project's search empties it, to be made again at the next search. Searches
+  themselves are not kept.
 - **Frozen text** (`snapshots`): when the user chooses *Use this text in a new job*, or a
   workflow step reads an earlier step's text, a copy of the corrected text it reads, so that
   later corrections do not change what it read. It is sent only to the provider of the job or
