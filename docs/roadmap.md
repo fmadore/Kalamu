@@ -320,15 +320,15 @@ is done and shipped in 1.2.0, with the default prompts and the data folder.
   (GLM 5.3 Flash ran one on 3 November); GPT-6.1 Terra on handwriting and older print before it
   is considered as OpenAI's default. On 3 November **Gemini 3.8 Flash** read two pages,
   transcribed a two-speaker interview and answered three analyses for $0.022; pages and
-  recordings came within a third of the estimate (pages $0.0121 against $0.0092), short
-  analyses at a fifth of it ($0.0013 against $0.0067). **GPT-6.1 Terra** read the two pages
-  ($0.022 against $0.012 estimated, the 1915 front page alone 1,660 tokens of text) and, with
-  **Mistral Medium 3.5, Mistral Large 4.0, GLM 5.3 Flash and DeepSeek V4.1 Flash**, answered the
-  entities analysis through whole jobs; the four Mistral-hosted models in economy mode too
-  (Mistral Medium's batch still running at the time of writing). Mistral Large 4.0 spent
-  3,000 to 4,400 tokens reasoning at `low`, 1.7× its estimate; Mistral Medium 3.5 listed titles
-  ("imam") among the people; DeepSeek's `reasoning_effort` and batches were accepted as
-  documented.
+  recordings came within a third of the estimate (pages $0.0121 against $0.0092), short analyses
+  at a fifth of it ($0.0013 against $0.0067). **GPT-6.1 Terra** read the two pages ($0.022
+  against $0.012 estimated, the 1915 front page alone 1,660 tokens of text) and, with **Mistral
+  Medium 3.5, Mistral Large 4.0, GLM 5.3 Flash and DeepSeek V4.1 Flash**, answered the entities
+  analysis through whole jobs; the four Mistral-hosted models in economy mode too, all but
+  Mistral Medium 3.5, whose one request had not come back after 15 minutes and was cancelled.
+  Mistral Large 4.0 spent 3,000 to 4,400 tokens reasoning at `low`, 1.7× its estimate; Mistral
+  Medium 3.5 listed titles ("imam") among the people; DeepSeek's `reasoning_effort` and batches
+  were accepted as documented.
 - **Gemini 3.5 Transcribe, live**: ran on 3 November on a 52-second interview with two
   speakers: turns, word timings and French as documented, but speakers labelled `spk:0`,
   `spk:1` (now read as Speaker 1 and 2) and usage in tokens, not seconds, so the cost showed
