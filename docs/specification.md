@@ -160,7 +160,13 @@ no text layer needs *Extract text* instead.
   audio.
 - **Language choice with auto-detect.** Extraction and transcription list only the languages
   the chosen model supports, with **Auto-detect** as the default; several can be chosen for
-  material that mixes languages (French and Mooré, say). Analyses and tables of contents have
+  material that mixes languages (French and Mooré, say). Where a provider publishes no list
+  (GPT Transcribe, Voxtral), every language is offered and the model's description says so.
+  New job says when a model's API takes fewer than were chosen: Whisper, Voxtral and OpenAI's
+  diarizing model take one, so with several they detect the language; Voxtral takes none when
+  it labels speakers or times the lines; OpenAI's speech-to-text takes only two-letter codes,
+  so Mooré is not passed on. The catalogue records this per model (`language_hints`,
+  `two_letter_codes`). Analyses and tables of contents have
   an answer language instead, by default the document's own and then said outright so that a
   model reading English instructions does not drift into English; names and titles stay as the
   document spells them, and a table of contents' entries are combined in one language.
