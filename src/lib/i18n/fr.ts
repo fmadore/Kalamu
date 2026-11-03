@@ -752,8 +752,25 @@ export const fr: Messages = {
 				document: 'Le document',
 				parts: 'Sa description',
 				from: 'D’où vient chaque élément',
+				result: 'Son résultat pour une tâche',
 				other: 'Autre'
 			},
+			tasks: {
+				text_extraction: 'Extraction du texte',
+				text_correction: 'Correction du texte',
+				audio_transcription: 'Transcription',
+				analysis: 'Analyse',
+				contents: 'Table des matières'
+			},
+			resultValues: {
+				status: (task: string) => `${task} : où en est la relecture`,
+				model: (task: string) => `${task} : modèle`,
+				text: (task: string) => `${task} : texte, avec les corrections`
+			},
+			answer: 'Analyse : une réponse',
+			answerKey: 'Champ',
+			resultHint:
+				'Une colonne de résultat lit le résultat préféré du document pour la tâche, ou le seul qu’il a. S’il en a plusieurs et qu’aucun n’est préféré, la cellule reste vide : choisissez-en un sur la page du document.',
 			values: {
 				document_id: 'Identifiant du document',
 				title: 'Titre',
@@ -782,7 +799,9 @@ export const fr: Messages = {
 					`L’intitulé de la colonne ${column} doit tenir sur une ligne.`,
 				duplicate: (column: number, first: number) =>
 					`La colonne ${column} a le même intitulé que la colonne ${first} ; les majuscules ne les distinguent pas.`,
-				bad_separator: 'Le séparateur de liste ne peut être vide ni contenir de retour à la ligne.'
+				bad_separator: 'Le séparateur de liste ne peut être vide ni contenir de retour à la ligne.',
+				bad_value: (column: number) =>
+					`La colonne ${column} demande ce que Kalamu ne peut pas donner : le texte d’une tâche qui en écrit un, ou une réponse désignée par son champ.`
 			},
 			save: 'Enregistrer le profil',
 			saved: 'Profil enregistré.',
@@ -1770,6 +1789,7 @@ export const fr: Messages = {
 		'profile.duplicate_heading': 'Deux colonnes ont le même intitulé.',
 		'profile.bad_separator':
 			'Le séparateur de liste ne peut être vide ni contenir de retour à la ligne.',
+		'profile.bad_value': 'Une colonne demande une valeur que Kalamu ne peut pas donner.',
 		'prompt.invalid_file':
 			'Ce n’est pas un fichier de prompts, de configuration ou de chaîne de traitement Kalamu, ou il provient d’une version plus récente de Kalamu.',
 		'provider.unknown': 'Fournisseur inconnu.',

@@ -3,4 +3,4 @@
 /**
  * What keeps a profile from being saved, as the interface shows it beside the column at fault.
  */
-export type ProfileError = { "kind": "no_name" } | { "kind": "no_columns" } | { "kind": "unnamed", column: number, } | { "kind": "bad_heading", column: number, } | { "kind": "duplicate", column: number, first: number, } | { "kind": "bad_separator" };
+export type ProfileError = { "kind": "no_name" } | { "kind": "no_columns" } | { "kind": "unnamed", column: number, } | { "kind": "bad_heading", column: number, } | { "kind": "duplicate", column: number, first: number, } | { "kind": "bad_separator" } | { "kind": "bad_value", column: number, };

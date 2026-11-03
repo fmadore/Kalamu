@@ -53,6 +53,9 @@ function check(profile: ExportProfile): ProfileError | null {
 	const seen: string[] = [];
 	for (const [i, column] of profile.columns.entries()) {
 		const heading = column.heading.trim();
+		if (column.value.kind === 'answer' && !column.value.key.trim()) {
+			return { kind: 'bad_value', column: i + 1 };
+		}
 		if (!heading) return { kind: 'unnamed', column: i + 1 };
 		if (/[\u0000-\u001f\u007f]/.test(heading)) return { kind: 'bad_heading', column: i + 1 };
 		const first = seen.indexOf(heading.toLowerCase());
@@ -96,6 +99,12 @@ export function profileCommand(cmd: string, a: Record<string, unknown>): unknown
 			return check(a.profile as ExportProfile);
 		case 'profile_starter':
 			return structuredClone(a.starter === 'dublin_core' ? DUBLIN_CORE : EVERY);
+		case 'project_answer_fields':
+			return [
+				{ key: 'people', label: 'People' },
+				{ key: 'places', label: 'Places' },
+				{ key: 'summary', label: 'Summary' }
+			];
 		case 'share_export_profile':
 			return null;
 		case 'import_export_profile':
