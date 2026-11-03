@@ -9,8 +9,9 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 **Version 1.2.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
 [v1.2.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.2.0)
-([notes](release-1.2.0.md)). Version 1.1.2 is the one in the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) until 1.2.0 is submitted, and Kalamu has been there since
+([notes](release-1.2.0.md)). Version 1.2.0 was submitted to the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) on 3 November 2026, where 1.1.2
+stays until it passes certification; Kalamu has been there since
 version 1.0.0 (2 November 2026). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
 the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`, see
@@ -366,7 +367,8 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.1.2 is the version there now.
+in [microsoft-store.md](microsoft-store.md); 1.1.2 is the version there now, and 1.2.0 was
+submitted on 3 November 2026.
 
 ## Research workflows (planned)
 
@@ -421,6 +423,7 @@ first workflow increment.
 | Research-question screening | Relevance preset, explanations, filters and researcher selection; verified evidence spans build on #47 | [#51](https://github.com/fmadore/Kalamu/issues/51) |
 | Ordered image documents and paired transcriptions | Import photographs as one document with reviewable order; then pair existing text with scans | [#52](https://github.com/fmadore/Kalamu/issues/52) |
 | Persistent image preparation | Crop, processing rotation and adjustable spread splitting; transformation recipes preserve originals and source coordinates | [#53](https://github.com/fmadore/Kalamu/issues/53) |
+| Source-linked review | Providers' existing regions drawn over the scan, each opening its text, with a page-only fallback; then stable region identities and researcher-drawn regions. Coordinates shared with #53, text anchors from #47 | [#84](https://github.com/fmadore/Kalamu/issues/84) |
 | Context-aware processing | Bounded neighboring pages; then date/place proposals with evidence, literal readings and explicit inference status | [#54](https://github.com/fmadore/Kalamu/issues/54) |
 | Archival metadata and export profiles | Supplied source descriptions and reusable local CSV/JSON mappings, separate from extracted/inferred values | [#55](https://github.com/fmadore/Kalamu/issues/55) |
 
@@ -451,3 +454,7 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 - macOS: signing and notarisation with an Apple Developer ID, so Gatekeeper does not ask; the
   application menu's labels through the translation files; a first test on a real Mac (the
   Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in WKWebView).
+- Linux x86-64: a `.deb` and an AppImage on GitHub releases, built and tested in CI, for a
+  documented range of distributions; a third file in each platform layer (`platform/linux.rs`,
+  `platform.ts`, `tauri.linux.conf.json`) and WebKitGTK as a third webview. Proposed, not yet
+  built: [#87](https://github.com/fmadore/Kalamu/issues/87).
