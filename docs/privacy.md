@@ -1,8 +1,8 @@
 # Privacy Policy — Kalamu
 
 **Effective date:** 2 November 2026, revised the same day for the macOS version, for the
-data folder's new name, and for the items of a table of contents, which apply from the version
-after 1.1.2. Version 1.0.0, the first Microsoft Store release, was published under the policy
+data folder's new name, and for the items of a table of contents, which apply from version
+1.2.0. Version 1.0.0, the first Microsoft Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
 the second named the data folder after the app's bundle identifier, and the third did not list

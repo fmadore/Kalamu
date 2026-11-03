@@ -1,12 +1,12 @@
 # Kalamu
 
-A desktop app for Windows and macOS that lets researchers read scanned and handwritten documents, transcribe
-interviews and analyse texts with the AI provider of their choice, or offline, without Python,
-Colab or the command line. Every result is checked against its source side by side: where models
-disagree is highlighted, and corrections never overwrite the AI's text.
+A desktop app for Windows and macOS that lets researchers read scanned and handwritten
+documents, transcribe interviews and analyse texts with the AI provider of their choice, or
+offline, without Python, Colab or the command line. Every result is checked against its source
+side by side: where models disagree is highlighted, and corrections never overwrite the AI's
+text.
 
-*Kalamu* is Swahili for pen, from the Arabic *qalam*. The test releases up to 0.2 were called
-Scriptorium; a newer version moves their jobs, settings and keys over on its first start.
+*Kalamu* is Swahili for pen, from the Arabic *qalam*.
 
 **Windows 11 (x64 and ARM64) · macOS 13 and later (Apple Silicon) · English interface (French and German planned) · MIT licence**
 
@@ -15,14 +15,12 @@ Scriptorium; a newer version moves their jobs, settings and keys over on its fir
 Free, with every feature included. If it is useful to you, you can
 [support its development](#support-development).
 
-**Status: version 1.1.2.** Kalamu is in the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), signed and updated through
-the Store. Unsigned installers for x64 and ARM64 (Windows warns on first launch) and, from 1.1.2,
-a disk image for Macs with Apple Silicon (see [On a Mac](#on-a-mac)) are on the
-[releases page](https://github.com/fmadore/Kalamu/releases). Text extraction, transcription and
-analyses have run against the live OpenAI, Claude and Mistral APIs; Gemini, offline Whisper and
-the cheaper batch mode have had fewer live runs, so try a small job first. See the
-[roadmap](docs/roadmap.md) and the [1.1.2 release notes](docs/release-1.1.2.md).
+**Status: version 1.2.0**, for Windows and macOS: from the Microsoft Store or the
+[releases page](https://github.com/fmadore/Kalamu/releases), see [Install](#install). Text
+extraction, transcription and analyses have run against the live OpenAI, Claude and Mistral
+APIs; Gemini, offline Whisper and the cheaper batch mode have had fewer live runs, so try a
+small job first. See the
+[roadmap](docs/roadmap.md) and the [1.2.0 release notes](docs/release-1.2.0.md).
 
 ## What it does
 
@@ -54,7 +52,7 @@ the cheaper batch mode have had fewer live runs, so try a small job first. See t
   model can propose and that you accept, change or turn down.
 - **Check every result against its source**, side by side, with corrections kept apart from the
   AI output, which is never overwritten. Search a document or a recording across all its pages
-  (Ctrl F), and report inappropriate output from the review.
+  (Ctrl F, or ⌘F on a Mac), and report inappropriate output from the review.
 - **Compare models** on the same documents, with their differences highlighted in the text and
   error rates against corrected pages.
 - **Never pay twice**: work is saved piece by piece, interrupted jobs resume, and nothing is
@@ -77,15 +75,22 @@ Files go straight from your computer to the provider you choose, with your own A
 Windows Credential Manager or the macOS Keychain. Offline, nothing leaves the computer. AI
 output can be fluent and wrong: check a sample against the source before relying on it.
 
-## On a Mac
+## Install
 
-Download `Kalamu_<version>_aarch64.dmg` from the
-[releases page](https://github.com/fmadore/Kalamu/releases) (Macs with Apple Silicon, macOS 13
-or later) and drag Kalamu to Applications. The app is not yet signed with an Apple Developer ID,
-so the first time, macOS refuses to open it: open **System Settings → Privacy & Security**,
-choose **Open Anyway** beside Kalamu, and confirm. macOS may also ask once to let Kalamu use the
-key saved in your Keychain. Shortcuts use ⌘ where Windows uses Ctrl; closing the window keeps
-Kalamu in the Dock, and ⌘Q asks first while jobs run.
+**Windows 11** (x64 and ARM64): install Kalamu from the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), signed and updated through
+the Store. Or download `Kalamu_<version>_x64-setup.exe` (Intel and AMD PCs) or
+`Kalamu_<version>_arm64-setup.exe` (Snapdragon laptops) from the
+[releases page](https://github.com/fmadore/Kalamu/releases). These installers are not signed,
+so Windows SmartScreen warns on the first launch: choose **More info**, then **Run anyway**.
+
+**macOS 13 and later** (Apple Silicon): download `Kalamu_<version>_aarch64.dmg` from the
+[releases page](https://github.com/fmadore/Kalamu/releases) and drag Kalamu to Applications.
+The app is not yet signed with an Apple Developer ID, so the first time, macOS refuses to open
+it: open **System Settings → Privacy & Security**, choose **Open Anyway** beside Kalamu, and
+confirm. macOS may also ask once to let Kalamu use the key saved in your Keychain. Shortcuts
+use ⌘ where Windows uses Ctrl; closing the window keeps Kalamu in the Dock, and ⌘Q asks first
+while jobs run.
 
 ## Documentation
 
