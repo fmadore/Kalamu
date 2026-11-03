@@ -18,6 +18,7 @@
 	import { api, on } from '#lib/tauri.js';
 	import {
 		app,
+		applyLanguage,
 		applyProgress,
 		go,
 		refreshJobs,
@@ -28,7 +29,8 @@
 	} from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
 
-	const m = messages();
+	// Read again when the language changes; the screens below are drawn anew with it.
+	const m = $derived.by(() => (app.locale, messages()));
 	let loadError = $state<string | null>(null);
 	let startView: View | null = null;
 
@@ -86,6 +88,7 @@
 				app.catalog = catalog;
 				app.rules = rules;
 				app.settings = settings;
+				applyLanguage();
 				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline(), refreshWaiting()]);
 				// Jobs cut short by the last close: show them first.
 				if (startView) go(startView);
@@ -103,61 +106,64 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div class="shell" class:collapsed>
-	<Sidebar bind:collapsed />
+<!-- Every screen takes its text once, when drawn: a change of language draws them again. -->
+{#key app.locale}
+	<div class="shell" class:collapsed>
+		<Sidebar bind:collapsed />
 
-	<main>
-		{#if loadError}
-			<div class="sheet"><p class="chip danger">{loadError}</p></div>
-		{:else if !app.catalog || !app.settings}
-			<div class="sheet"><p class="muted">{m.common.loading}</p></div>
-		{:else if app.view.name === 'new'}
-			<NewJob opening={app.view} />
-		{:else if app.view.name === 'jobs'}
-			<JobsView jobId={app.view.jobId} />
-		{:else if app.view.name === 'review'}
-			{@const { jobId, sourceId, index } = app.view}
-			{@const task = app.jobs.find((j) => j.id === jobId)?.task}
-			<!-- Another source is another review, loaded afresh; another page of it is not. -->
-			{#key `${jobId}/${sourceId}`}
-				{#if task === 'analysis'}
-					<AnalysisReview {jobId} {sourceId} />
-				{:else if task === 'contents'}
-					<ContentsReview {jobId} {sourceId} start={index} />
-				{:else}
-					<ReviewView {jobId} {sourceId} start={index} />
-				{/if}
-			{/key}
-		{:else if app.view.name === 'projects'}
-			<ProjectsView
-				projectId={app.view.projectId}
-				collectionId={app.view.collectionId}
-				documentId={app.view.documentId}
-				pane={app.view.pane}
-				selection={app.view.selection}
-			/>
-		{:else if app.view.name === 'workflows'}
-			<WorkflowsView
-				workflowId={app.view.workflowId}
-				example={app.view.example}
-				runId={app.view.runId}
-				paths={app.view.paths}
-				sources={app.view.sources}
-				project={app.view.project}
-			/>
-		{:else if app.view.name === 'prompts'}
-			<PromptsView presetId={app.view.presetId} />
-		{:else if app.view.name === 'settings'}
-			<SettingsView />
-		{:else if app.view.name === 'glossary'}
-			<GlossaryView opening={app.view} />
-		{/if}
-	</main>
-</div>
+		<main>
+			{#if loadError}
+				<div class="sheet"><p class="chip danger">{loadError}</p></div>
+			{:else if !app.catalog || !app.settings}
+				<div class="sheet"><p class="muted">{m.common.loading}</p></div>
+			{:else if app.view.name === 'new'}
+				<NewJob opening={app.view} />
+			{:else if app.view.name === 'jobs'}
+				<JobsView jobId={app.view.jobId} />
+			{:else if app.view.name === 'review'}
+				{@const { jobId, sourceId, index } = app.view}
+				{@const task = app.jobs.find((j) => j.id === jobId)?.task}
+				<!-- Another source is another review, loaded afresh; another page of it is not. -->
+				{#key `${jobId}/${sourceId}`}
+					{#if task === 'analysis'}
+						<AnalysisReview {jobId} {sourceId} />
+					{:else if task === 'contents'}
+						<ContentsReview {jobId} {sourceId} start={index} />
+					{:else}
+						<ReviewView {jobId} {sourceId} start={index} />
+					{/if}
+				{/key}
+			{:else if app.view.name === 'projects'}
+				<ProjectsView
+					projectId={app.view.projectId}
+					collectionId={app.view.collectionId}
+					documentId={app.view.documentId}
+					pane={app.view.pane}
+					selection={app.view.selection}
+				/>
+			{:else if app.view.name === 'workflows'}
+				<WorkflowsView
+					workflowId={app.view.workflowId}
+					example={app.view.example}
+					runId={app.view.runId}
+					paths={app.view.paths}
+					sources={app.view.sources}
+					project={app.view.project}
+				/>
+			{:else if app.view.name === 'prompts'}
+				<PromptsView presetId={app.view.presetId} />
+			{:else if app.view.name === 'settings'}
+				<SettingsView />
+			{:else if app.view.name === 'glossary'}
+				<GlossaryView opening={app.view} />
+			{/if}
+		</main>
+	</div>
 
-{#if app.closeRequested}
-	<CloseDialog />
-{/if}
+	{#if app.closeRequested}
+		<CloseDialog />
+	{/if}
+{/key}
 
 {#if app.toast}
 	<div class="toast" role="status">{app.toast}</div>

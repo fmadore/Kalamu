@@ -67,7 +67,7 @@
 						<p>{entry.text}</p>
 						{#if SEE_ALSO[t]}
 							<p class="see">
-								{m.glossary.seeAlso}:
+								{m.glossary.seeAlso}{m.common.colon}
 								{#each SEE_ALSO[t] ?? [] as other, i (other)}{#if i > 0}{', '}{/if}<a
 										href="#{anchor(other)}"
 										onclick={(e) => {

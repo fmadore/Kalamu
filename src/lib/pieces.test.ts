@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { en } from './i18n/index.js';
-import { clock, pieceLabel, pieceNumber } from './pieces.js';
+import { en, fr } from './i18n/index.js';
+import { clock, enginePages, pieceLabel, pieceNumber, typedPages } from './pieces.js';
 
 describe('the names of pieces', () => {
 	it('names pages, their halves, passages and whole sources', () => {
@@ -21,5 +21,14 @@ describe('the names of pieces', () => {
 		expect(pieceNumber({ kind: 'page', number: 12 }, 0, en)).toBe('12');
 		expect(pieceNumber({ kind: 'page', number: 12, half: 'right' }, 0, en)).toBe('12r');
 		expect(pieceNumber({ kind: 'passage', number: 7 }, 2, en)).toBe('3');
+	});
+});
+
+describe('the halves in a list of pages', () => {
+	it('names them in the interface language, and back as the engine reads them', () => {
+		expect(typedPages('1, 3-5, 8 (left), 9 (right)', fr)).toBe('1, 3-5, 8 (gauche), 9 (droite)');
+		expect(enginePages('1, 8 (Gauche), 9 droite', fr)).toBe('1, 8 (left), 9 right');
+		expect(typedPages('8 (left)', en)).toBe('8 (left)');
+		expect(enginePages('8 (left)', en)).toBe('8 (left)');
 	});
 });

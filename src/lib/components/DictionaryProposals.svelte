@@ -9,7 +9,7 @@
 	import type { ProposalPlan } from '#lib/bindings/ProposalPlan.js';
 	import type { ProposalsView } from '#lib/bindings/ProposalsView.js';
 	import { describeError } from '#lib/errors.js';
-	import { formatUsd, messages } from '#lib/i18n/index.js';
+	import { formatDate, formatUsd, messages } from '#lib/i18n/index.js';
 	import { modelsFor, providerDefault, rulesFor } from '#lib/newJob.js';
 	import { app, go, hasKey, refreshJobs } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -247,7 +247,7 @@
 					r.answered,
 					r.groups,
 					r.proposals,
-					new Date(r.created_at).toLocaleDateString()
+					formatDate(r.created_at)
 				)}</span
 			>
 			{#if r.unknown > 0}<span class="chip">{p.unknown(r.unknown)}</span>{/if}

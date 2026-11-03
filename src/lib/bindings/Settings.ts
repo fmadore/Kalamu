@@ -14,6 +14,11 @@ concurrency: number, text_formats: Array<ExportFormat>, audio_formats: Array<Exp
  */
 theme: string, 
 /**
+ * The interface language: `system` (the first of the system's languages Kalamu has, else
+ * English), `en` or `fr`.
+ */
+language: string, 
+/**
  * Check the repository for a newer model catalogue at startup.
  */
 refresh_catalog: boolean, 

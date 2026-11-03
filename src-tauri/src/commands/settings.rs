@@ -20,6 +20,9 @@ pub fn app_info(state: State<'_, AppState>) -> AppInfo {
             .display()
             .to_string(),
         interrupted: INTERRUPTED.lock().map(|v| v.clone()).unwrap_or_default(),
+        // Asked of the system rather than the webview: WebKit gives an app only the languages
+        // its bundle declares.
+        system_languages: sys_locale::get_locales().collect(),
     }
 }
 
