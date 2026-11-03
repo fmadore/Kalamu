@@ -1515,7 +1515,7 @@ export const en = {
 			},
 			provenance: {
 				word: 'Provenance',
-				text: 'The record of how a result was made. Beside every output Kalamu writes a provenance.json file with the model and its exact version, the prompt, the settings each request carried, dates, costs, and which pages were corrected or reviewed, so the method can be described and repeated.'
+				text: 'The record of how a result was made. Beside every output Kalamu writes a provenance.json file with the model and its exact version, the prompt, the settings each request carried, dates, costs, which pages were corrected or reviewed and, for a project’s document, its title and the description of its source, so the method can be described and repeated.'
 			},
 			machineReadable: {
 				word: 'Machine-readable',

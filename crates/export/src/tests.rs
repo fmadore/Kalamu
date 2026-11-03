@@ -70,6 +70,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
             read_at: None,
             derived_from: None,
         },
+        documents: vec![],
         engine: "cloud".into(),
         provider: setup.provider.clone(),
         model: setup.model.clone(),

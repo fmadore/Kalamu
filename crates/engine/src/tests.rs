@@ -348,11 +348,102 @@ async fn a_job_processes_every_page_and_writes_outputs_with_provenance() {
         Some(JobStatus::Completed)
     );
 
+    // A job tied to no project names no document.
+    assert!(provenance.get("documents").is_none());
+
     // A file deleted since leaves the list.
     std::fs::remove_file(&provenance_path).unwrap_or_else(|e| panic!("{e}"));
     let outputs = f.engine.outputs(job.id).unwrap_or_default();
     assert!(outputs.contains(&txt_path));
     assert!(!outputs.contains(&provenance_path));
+}
+
+/// One document for every source, its shelfmark as the researcher last typed it.
+struct Described(Mutex<String>);
+
+impl SourceDocuments for Described {
+    fn documents(
+        &self,
+        _job: JobId,
+        _source: SourceId,
+    ) -> Result<Vec<kalamu_core::provenance::ProvenanceDocument>, StoreError> {
+        use kalamu_core::provenance::{ProvenanceDescribed, ProvenanceDocument};
+        let shelfmark = self.0.lock().unwrap_or_else(|p| p.into_inner()).clone();
+        Ok(vec![ProvenanceDocument {
+            project_id: kalamu_core::ProjectId::new(),
+            project_name: "Archives".into(),
+            document_id: kalamu_core::DocumentId::new(),
+            title: "Bulletin".into(),
+            description: [(
+                kalamu_core::DescriptionField::Shelfmark,
+                ProvenanceDescribed {
+                    value: shelfmark,
+                    from: kalamu_core::DescribedBy::Document,
+                },
+            )]
+            .into(),
+        }])
+    }
+}
+
+#[tokio::test]
+async fn provenance_names_the_project_document_as_it_stands_when_written() {
+    let f = fixture();
+    let described = Arc::new(Described(Mutex::new("19G 1".into())));
+    f.engine.set_source_documents(described.clone());
+    let source = f.pdf("bulletin.pdf", 1);
+    let job = f.new_job(vec![source.clone()], &["fake-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+    let read = || -> serde_json::Value {
+        serde_json::from_slice(
+            &std::fs::read(f.dir.path().join("bulletin.provenance.json")).unwrap_or_default(),
+        )
+        .unwrap_or_default()
+    };
+    let document = &read()["documents"][0];
+    assert_eq!(document["project_name"], "Archives");
+    assert_eq!(document["title"], "Bulletin");
+    assert_eq!(document["description"]["shelfmark"]["value"], "19G 1");
+    assert_eq!(document["description"]["shelfmark"]["from"], "document");
+
+    // The description changed since: its provenance and the `.json` that holds it are
+    // written again, saying what it says now; the text is left as it is, and the provider is
+    // not asked again.
+    *described.0.lock().unwrap_or_else(|p| p.into_inner()) = "19G 2".into();
+    let calls = f.fake.calls();
+    let txt = f.dir.path().join("bulletin.txt");
+    std::fs::write(&txt, "kept as the researcher left it").unwrap_or_else(|e| panic!("{e}"));
+    let written = f
+        .engine
+        .rewrite_provenance(job.id, job.sources[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(written.len(), 2, "{written:?}");
+    assert_eq!(
+        read()["documents"][0]["description"]["shelfmark"]["value"],
+        "19G 2"
+    );
+    let json: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("bulletin.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(
+        json["provenance"]["documents"][0]["description"]["shelfmark"]["value"],
+        "19G 2"
+    );
+    assert_eq!(
+        std::fs::read_to_string(&txt).unwrap_or_default(),
+        "kept as the researcher left it"
+    );
+
+    // A source with nothing written yet is left alone.
+    let unread = f.new_job(vec![f.pdf("vide.pdf", 1)], &["fake-model"]);
+    let none = f
+        .engine
+        .rewrite_provenance(unread.id, unread.sources[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(none.is_empty());
+    assert!(!f.dir.path().join("vide.provenance.json").exists());
+    assert_eq!(f.fake.calls(), calls);
 }
 
 #[tokio::test]

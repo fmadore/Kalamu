@@ -212,6 +212,11 @@ pub fn run() {
                     ..EngineConfig::default()
                 },
             );
+            // Each result's provenance names the project documents its source is.
+            engine.set_source_documents(Arc::new(kalamu_projects::Projects::new(
+                store.clone(),
+                store.clone(),
+            )));
             let interrupted = engine.recover().unwrap_or_default();
             // Batches the provider still holds are collected below; nothing else is sent until
             // the researcher resumes the job.

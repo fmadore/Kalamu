@@ -1,5 +1,7 @@
 //! Project workspaces: projects, collections, documents and their ties to jobs. Organising only:
-//! none of these calls a model, moves a file or changes a result.
+//! none of these calls a model, moves a file or changes a result. A change to what a result's
+//! provenance names of its documents (their titles, descriptions, projects, ties) writes that
+//! `provenance.json`, and the `.json` result holding it, again.
 
 use kalamu_core::{
     Collection, CollectionId, DocumentId, JobId, Project, ProjectId, ReviewQueue, SetupId,
@@ -15,6 +17,32 @@ use ts_rs::TS;
 
 use super::AppState;
 use crate::errors::{AppError, CmdResult, id};
+
+/// Writes again, away from the command, the provenance of these job sources' results, so that
+/// it names their documents as they now stand. Only files already written are; a failure is
+/// logged, the change it follows kept.
+fn refresh_provenance(state: &AppState, sources: Vec<(JobId, SourceId)>) {
+    if sources.is_empty() {
+        return;
+    }
+    let engine = state.engine.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        for (job, source) in sources {
+            if let Err(e) = engine.rewrite_provenance(job, source) {
+                tracing::warn!(job = %job, error = %e, "provenance not written again");
+            }
+        }
+    });
+}
+
+/// [`refresh_provenance`] for every source of a job.
+fn refresh_job(state: &AppState, job: JobId) {
+    let sources = match state.engine.job(job) {
+        Ok(job) => job.sources.iter().map(|s| (job.id, s.id)).collect(),
+        Err(_) => return,
+    };
+    refresh_provenance(state, sources);
+}
 
 #[tauri::command]
 pub fn list_projects(state: State<'_, AppState>) -> CmdResult<Vec<ProjectSummary>> {
@@ -37,7 +65,9 @@ pub fn update_project(
     name: String,
     description: String,
 ) -> CmdResult<Project> {
-    Ok(state.projects.update(id, &name, &description)?)
+    let project = state.projects.update(id, &name, &description)?;
+    refresh_provenance(&state, state.projects.sources_of(id, None)?);
+    Ok(project)
 }
 
 #[tauri::command]
@@ -51,7 +81,10 @@ pub fn archive_project(
 
 #[tauri::command]
 pub fn delete_project(state: State<'_, AppState>, id: ProjectId) -> CmdResult<()> {
-    Ok(state.projects.delete(id)?)
+    let sources = state.projects.sources_of(id, None)?;
+    state.projects.delete(id)?;
+    refresh_provenance(&state, sources);
+    Ok(())
 }
 
 #[tauri::command]
@@ -105,7 +138,9 @@ pub fn rename_document(
     id: DocumentId,
     title: String,
 ) -> CmdResult<()> {
-    Ok(state.projects.rename_document(project, id, &title)?)
+    state.projects.rename_document(project, id, &title)?;
+    refresh_provenance(&state, state.projects.sources_of(project, Some(&[id]))?);
+    Ok(())
 }
 
 #[tauri::command]
@@ -114,7 +149,10 @@ pub fn delete_documents(
     project: ProjectId,
     ids: Vec<DocumentId>,
 ) -> CmdResult<()> {
-    Ok(state.projects.delete_documents(project, &ids)?)
+    let sources = state.projects.sources_of(project, Some(&ids))?;
+    state.projects.delete_documents(project, &ids)?;
+    refresh_provenance(&state, sources);
+    Ok(())
 }
 
 #[tauri::command]
@@ -169,7 +207,9 @@ pub fn describe_document(
     id: DocumentId,
     description: SourceDescription,
 ) -> CmdResult<()> {
-    Ok(state.projects.describe_document(project, id, description)?)
+    state.projects.describe_document(project, id, description)?;
+    refresh_provenance(&state, state.projects.sources_of(project, Some(&[id]))?);
+    Ok(())
 }
 
 /// Sets the parts of the description a project's documents share.
@@ -179,7 +219,9 @@ pub fn set_source_defaults(
     id: ProjectId,
     defaults: SourceDescription,
 ) -> CmdResult<Project> {
-    Ok(state.projects.set_source_defaults(id, defaults)?)
+    let project = state.projects.set_source_defaults(id, defaults)?;
+    refresh_provenance(&state, state.projects.sources_of(id, None)?);
+    Ok(project)
 }
 
 /// Renames a tag on every document of the project; returns how many changed.
@@ -242,7 +284,9 @@ pub fn merge_documents(
     from: DocumentId,
     into: DocumentId,
 ) -> CmdResult<()> {
-    Ok(state.projects.merge_documents(project, from, into)?)
+    state.projects.merge_documents(project, from, into)?;
+    refresh_provenance(&state, state.projects.sources_of(project, Some(&[into]))?);
+    Ok(())
 }
 
 #[tauri::command]
@@ -286,7 +330,9 @@ pub fn attach_job(
     choices: Vec<AttachChoice>,
     collection: Option<CollectionId>,
 ) -> CmdResult<Vec<DocumentId>> {
-    Ok(state.projects.attach(project, job, &choices, collection)?)
+    let documents = state.projects.attach(project, job, &choices, collection)?;
+    refresh_job(&state, job);
+    Ok(documents)
 }
 
 /// Ties a job just created from the project to its documents.
@@ -297,7 +343,10 @@ pub fn link_job(
     job: JobId,
     collection: Option<CollectionId>,
 ) -> CmdResult<Vec<DocumentId>> {
-    Ok(state.projects.link_job(project, job, collection)?)
+    let documents = state.projects.link_job(project, job, collection)?;
+    // A job already run, added from its menu; one just created has written nothing yet.
+    refresh_job(&state, job);
+    Ok(documents)
 }
 
 #[tauri::command]
@@ -308,7 +357,9 @@ pub fn detach_job(
     job: JobId,
     source: SourceId,
 ) -> CmdResult<()> {
-    Ok(state.projects.detach(project, document, job, source)?)
+    state.projects.detach(project, document, job, source)?;
+    refresh_provenance(&state, vec![(job, source)]);
+    Ok(())
 }
 
 /// The review queue of a project, a collection or a selection, with the results it reads.

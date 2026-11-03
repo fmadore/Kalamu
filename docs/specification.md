@@ -440,6 +440,12 @@ analysed, compared. A **project** keeps it together
   each value beside where it came from (`document` or `project`), with the documents' ids,
   titles, files, collections and tags
   ([decision](decisions/2026-11-03-source-descriptions.md), [#55](https://github.com/fmadore/Kalamu/issues/55)).
+  Each result's `provenance.json`, and the `.json` export that holds it, names the project
+  documents its source is, with their titles and descriptions as they stand. When a title, a
+  description, the project's defaults or name, or a tie between a job and a document changes,
+  those two files are written again for the results already written, without reading anything
+  again; the text, Word, subtitle and CSV files are left as they are
+  ([decision](decisions/2026-11-03-descriptions-in-provenance.md)).
 - **Export profiles** write the same descriptions in the researcher's own columns, for a
   spreadsheet or another tool's import: each column a heading and where its value comes from
   (the document's id, title, file, project, collections or tags, a part of the description,

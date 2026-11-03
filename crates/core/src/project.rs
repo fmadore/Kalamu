@@ -92,6 +92,26 @@ impl DescriptionField {
     }
 }
 
+/// Where a part of a document's description comes from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum DescribedBy {
+    /// The document's own description.
+    Document,
+    /// The project's, shared by its documents.
+    Project,
+}
+
+impl DescribedBy {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Document => "document",
+            Self::Project => "project",
+        }
+    }
+}
+
 /// What the researcher says of a source, part by part. Supplied, never read or guessed by a
 /// model, and kept apart from every result, which never changes it.
 pub type SourceDescription = BTreeMap<DescriptionField, String>;
