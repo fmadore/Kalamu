@@ -1,11 +1,11 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 3 November 2026, for the search index of the version after 1.1.2. Version
-1.0.0, the first Microsoft Store release, was published under the policy of 30 October 2026,
-which did not list projects or workflows; the policy of 1 November 2026 did not list the
-dictionary's proposed merges, the first of 2 November 2026 did not cover macOS, the second
-named the data folder after the app's bundle identifier, and the third, which gave it its new
-name, did not list the search index.
+**Effective date:** 3 November 2026, for the search index, which applies from the version
+after 1.2.0. Version 1.0.0, the first Microsoft Store release, was published under the policy
+of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
+not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
+the second named the data folder after the app's bundle identifier, the third did not list the
+items' pages, and the fourth, which applies to version 1.2.0, did not list the search index.
 
 ## What this app is
 
@@ -92,6 +92,12 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   later corrections do not change what it read. It is sent only to the provider of the job or
   step that reads it, as the text of any document would be, and kept until the app is
   uninstalled.
+- **Items' pages** (`snapshots`): when the user sends items of a table of contents (an
+  article, a letter) to a new job, a PDF of each item's pages, cut from the user's file, so
+  that a later change to the item does not change what the job read. It is sent only to the
+  provider of that job, as the file itself would be, and kept until the app is uninstalled.
+  The items themselves (their titles, pages and fields) are kept in the job database with the
+  table of contents, and deleted with it.
 - **Requests for proposed merges** (`dictionary`): the `provenance.json` of each, naming the
   model, the prompt and what the request cost, in a folder per project. Nothing else is written
   for them: the answers are kept in the job database.

@@ -64,6 +64,26 @@ on each page stays in the job, for the review.
   its `provider`, `model`, `model_versions`, `request` and `prompt` (with its fields), and its
   share of the `usage` and `cost_usd` of both steps.
 
+### Items
+
+The items made from a table of contents (#50) are exported, when the researcher selects some
+and chooses *Export*, into a folder they choose, never replacing a file already there (a new
+one is numbered, `(2)`):
+
+- **One PDF per item**: its pages cut from the source in the item's order, named after the
+  source, the item's place and its title (`an-nasr-12 03 Fatwa.pdf`).
+- **`<source> units.csv`**: one row per item: `id`, `number`, `title`, `pages` (as typed,
+  `1, 3-5, 8 (left)`), `file`, one column per entry field named as the preset names it, then
+  `original` and `original_sha256`, the file the pages were cut from.
+- **`<source> units.json`**: `{"units": [...]}`, each with its `id` (stable across exports),
+  `number`, `title`, `pages` (each `{"kind": "page", "number": 3}`, with `"half"` for half of a
+  spread, numbered as the file's pages, not as printed), `pages_text`, `file`, `fields` by key,
+  the `entry` it was made from (numbered from 1, or `null`), its `revision` and the `original`'s
+  `file_name` and `sha256`.
+
+A job that read an item's pages writes its results beside the source under the item's name,
+and its `provenance.json` names the item under `source.derived_from.unit`.
+
 ## Corrected text
 
 Written as `<name>.corrected.txt` (and `.md`, `.docx`, `.json`, `.csv`), so a text file is
@@ -117,7 +137,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `generator` | `{ "name": "Kalamu", "version": "…" }` |
 | `created_at` | Milliseconds since 1970, UTC |
 | `task`, `engine` | `text_extraction`, `audio_transcription`, `analysis`, `contents` or `text_correction`; `cloud` or `offline` |
-| `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it; for text frozen from an earlier result (*Use this text in a new job*, or a workflow step reading an earlier one), the frozen text's name, SHA-256 and size, and `derived_from`: that result's `job_id`, `setup_id`, `source_id` and `task`, the `original_path`, when it was frozen (`frozen_at`), how many pieces it holds and how many were `reviewed` and `corrected`, and the pieces `missing` from it |
+| `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it; for text frozen from an earlier result (*Use this text in a new job*, or a workflow step reading an earlier one), the frozen text's name, SHA-256 and size, and `derived_from`: that result's `job_id`, `setup_id`, `source_id` and `task`, the `original_path`, when it was frozen (`frozen_at`), how many pieces it holds and how many were `reviewed` and `corrected`, and the pieces `missing` from it; for an item's pages cut from a table of contents' source, the same with `task` `contents`, its pages as the pieces (`reviewed` counting those marked in the table of contents), and `unit`: the item's `id`, `title`, `revision` and `pages` as the original numbers them |
 | `provider`, `model` | As requested |
 | `model_versions` | The versions the provider reported, when they differ from `model` (including a fallback model) |
 | `request` | What the requests carried besides the prompt, each as `{ "name", "value" }` named by its path in the request (`output_config.effort`, `generationConfig.maxOutputTokens`, `beam_size`): reasoning effort, output limit, media resolution; for Whisper, `vad` (whether silences were skipped with the voice-activity model, used when it is downloaded) and `vad_model`. For pages read several at a time, `pages` names the pages that went in one call (`5-8`). Recorded with each piece's result when it was sent, so a later version of Kalamu never rewrites it; a name listed twice means pieces were read with different values. Absent for results stored by 0.4.0 and earlier |

@@ -478,6 +478,22 @@ impl JobStore for SqliteStore {
         snapshots::get(self, id)
     }
 
+    fn put_unit(&self, unit: &kalamu_core::DocumentUnit) -> Result<(), StoreError> {
+        units::put(self, unit)
+    }
+
+    fn unit(&self, id: kalamu_core::UnitId) -> Result<kalamu_core::DocumentUnit, StoreError> {
+        units::get(self, id)
+    }
+
+    fn units(&self, job: JobId) -> Result<Vec<kalamu_core::DocumentUnit>, StoreError> {
+        units::of_job(self, job)
+    }
+
+    fn delete_unit(&self, id: kalamu_core::UnitId) -> Result<(), StoreError> {
+        units::delete(self, id)
+    }
+
     fn create_run(&self, run: &kalamu_core::WorkflowRun) -> Result<(), StoreError> {
         runs::create(self, run)
     }
@@ -533,6 +549,7 @@ mod results;
 mod runs;
 mod search;
 mod snapshots;
+mod units;
 
 pub use search::SqliteIndex;
 

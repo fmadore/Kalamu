@@ -468,7 +468,8 @@
 	onMount(() => {
 		// Opened from a finished job's "Summarise" button: its results are the files.
 		void loadTask(opening.task ?? mode).then(() => {
-			// Text frozen from a job's corrected results: already read, nothing to inspect.
+			// Text frozen from a job's corrected results, or an item's pages cut out of its
+			// document: already inspected, nothing to do.
 			if (opening.sources) {
 				files = opening.sources.map((source) => ({
 					path: source.path,
@@ -477,7 +478,7 @@
 					error: null,
 					pieces: null
 				}));
-				if (!name) name = opening.sources[0]?.file_name.replace(/\.txt$/, '') ?? '';
+				if (!name) name = opening.sources[0]?.file_name.replace(/\.(txt|pdf)$/, '') ?? '';
 			}
 			return opening.paths ? addPaths(opening.paths) : undefined;
 		});

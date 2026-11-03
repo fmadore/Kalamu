@@ -69,8 +69,8 @@
 		<p class="empty">{m.newJob.noFiles}</p>
 	{:else if files.length > 0}
 		<ul class="files">
-			{#each files as file, i (file.path)}
-				<!-- Frozen text is named after the document it was read from, not its stored copy. -->
+			{#each files as file, i (file.source?.id ?? file.path)}
+				<!-- Frozen text and an item's pages are named after their document, not the stored copy. -->
 				{@const fileName = file.source?.derived_from
 					? file.source.file_name
 					: file.path.split(/[\\/]/).pop()}
@@ -79,7 +79,9 @@
 					<div class="file">
 						<span class="file-name mono">{fileName}</span>
 						<span class="meta mono">
-							{#if file.source?.derived_from}{m.newJob.frozenText}{/if}
+							{#if file.source?.derived_from}{file.source.derived_from.unit
+									? m.newJob.itemPages
+									: m.newJob.frozenText}{/if}
 							{#if file.source?.page_count}{m.newJob.pages(file.source.page_count)}{/if}
 							{#if file.source?.duration_ms}{duration(Number(file.source.duration_ms), m)}{/if}
 						</span>

@@ -26,6 +26,7 @@ pub mod source;
 pub mod speakers;
 pub mod store;
 pub mod task;
+pub mod units;
 pub mod warning;
 pub mod workflow;
 pub mod youtube;
@@ -42,7 +43,7 @@ pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, Expor
 pub use fingerprint::CacheKey;
 pub use ids::{
     CollectionId, DocumentId, EntryId, JobId, ProjectId, ProviderId, RunId, SetupId, SourceId,
-    Timestamp,
+    Timestamp, UnitId,
 };
 pub use job::{
     Job, JobSettings, JobStatus, JobSummary, LineBreaks, OutputDestination, OutputSettings, Pace,
@@ -69,6 +70,7 @@ pub use source::{InputKind, SourceFile};
 pub use speakers::SpeakerNames;
 pub use store::{Correction, JobStore, StoreError};
 pub use task::Task;
+pub use units::{DocumentUnit, FrozenUnit, PagesError, SeedProblem, SharedPage, UnitError};
 pub use warning::{InputWarning, WarningKind};
 pub use workflow::{
     Approval, RunStatus, RunStep, StepInput, StepProgress, StepState, WorkflowError, WorkflowRun,

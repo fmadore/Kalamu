@@ -26,6 +26,10 @@ import type { RunView } from './bindings/RunView.js';
 import type { StartRun } from './bindings/StartRun.js';
 import type { Workflow } from './bindings/Workflow.js';
 import type { DerivedState } from './bindings/DerivedState.js';
+import type { DocumentUnit } from './bindings/DocumentUnit.js';
+import type { SeedReport } from './bindings/SeedReport.js';
+import type { UnitEdit } from './bindings/UnitEdit.js';
+import type { UnitsView } from './bindings/UnitsView.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { Estimate } from './bindings/Estimate.js';
@@ -131,6 +135,19 @@ export const api = {
 	snapshotJob: (id: string, setup: string, source: string | null = null) =>
 		invoke<SourceFile[]>('snapshot_job', { id, setup, source }),
 	derivedState: (id: string) => invoke<DerivedState[]>('derived_state', { id }),
+	/** A table of contents' document units for one source under one set-up (#50). */
+	unitsView: (jobId: string, setupId: string, sourceId: string) =>
+		invoke<UnitsView>('units_view', { jobId, setupId, sourceId }),
+	seedUnits: (jobId: string, setupId: string, sourceId: string) =>
+		invoke<SeedReport>('seed_units', { jobId, setupId, sourceId }),
+	saveUnit: (edit: UnitEdit) => invoke<DocumentUnit>('save_unit', { edit }),
+	deleteUnit: (id: string) => invoke<void>('delete_unit', { id }),
+	joinUnits: (first: string, second: string) =>
+		invoke<DocumentUnit>('join_units', { first, second }),
+	splitUnit: (id: string, at: number) => invoke<DocumentUnit[]>('split_unit', { id, at }),
+	/** The units' pages frozen as PDFs, as sources for a new job. */
+	unitSources: (ids: string[]) => invoke<SourceFile[]>('unit_sources', { ids }),
+	exportUnits: (ids: string[], folder: string) => invoke<string[]>('export_units', { ids, folder }),
 	jobOutputs: (id: string) => invoke<string[]>('job_outputs', { id }),
 	openOutput: (id: string, path: string) => invoke<void>('open_output', { id, path }),
 	sourcePieces: (jobId: string, sourceId: string) =>

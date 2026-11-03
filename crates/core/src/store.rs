@@ -106,6 +106,13 @@ pub trait JobStore: Send + Sync {
     fn put_snapshot(&self, snapshot: &crate::Snapshot) -> Result<(), StoreError>;
     fn snapshot(&self, id: &str) -> Result<crate::Snapshot, StoreError>;
 
+    /// Inserts or replaces a document unit, by its id; deleting its job deletes it.
+    fn put_unit(&self, unit: &crate::DocumentUnit) -> Result<(), StoreError>;
+    fn unit(&self, id: crate::UnitId) -> Result<crate::DocumentUnit, StoreError>;
+    /// A job's units, in their order.
+    fn units(&self, job: JobId) -> Result<Vec<crate::DocumentUnit>, StoreError>;
+    fn delete_unit(&self, id: crate::UnitId) -> Result<(), StoreError>;
+
     /// Keeps a workflow run as started: its frozen steps, sources and each step's progress.
     fn create_run(&self, run: &crate::WorkflowRun) -> Result<(), StoreError>;
     fn run(&self, id: crate::RunId) -> Result<crate::WorkflowRun, StoreError>;

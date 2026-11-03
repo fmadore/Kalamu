@@ -221,6 +221,7 @@ impl Engine {
                     original_path: s.original_path,
                     frozen_at: s.created_at,
                     missing: s.missing,
+                    unit: source.derived_from.as_ref().and_then(|d| d.unit.clone()),
                 }),
             },
             engine: engine.into(),

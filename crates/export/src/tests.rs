@@ -525,3 +525,53 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
     plain.parts[0].regions.clear();
     assert!(exporter(ExportFormat::SearchablePdf).is_some_and(|e| e.export(&plain).is_err()));
 }
+
+#[test]
+fn a_table_of_contents_items_are_listed_as_golden_files() {
+    let ids = (
+        kalamu_core::JobId(uuid_nil()),
+        SetupId(uuid_nil()),
+        SourceId(uuid_nil()),
+    );
+    let mut fatwa = kalamu_core::DocumentUnit::new(ids.0, ids.1, ids.2, 1);
+    fatwa.id = kalamu_core::UnitId(uuid_nil());
+    fatwa.title = "Fatwa sur le jeûne, \"en voyage\"".into();
+    fatwa.pages = vec![
+        kalamu_core::PieceRef::page(3),
+        kalamu_core::PieceRef::Page {
+            number: 8,
+            half: Some(kalamu_core::PageHalf::Left),
+        },
+    ];
+    fatwa.entry = Some(2);
+    fatwa.fields = vec![FieldAnswer {
+        key: "authors".into(),
+        value: FieldValue::List(vec!["La Rédaction".into(), "A. Diallo".into()]),
+        reason: None,
+    }];
+    let fields = vec![
+        Field {
+            key: "authors".into(),
+            label: "Authors".into(),
+            instructions: String::new(),
+            kind: FieldKind::List { max: None },
+            reason: false,
+        },
+        Field {
+            key: "summary".into(),
+            label: "Summary".into(),
+            instructions: String::new(),
+            kind: FieldKind::Text,
+            reason: false,
+        },
+    ];
+    let rows = [units::Row {
+        unit: &fatwa,
+        pages: "3, 8 (left)".into(),
+        file_name: "an-nasr-12 02 Fatwa sur le jeûne, en voyage.pdf".into(),
+        original: "an-nasr-12.pdf".into(),
+        original_sha256: "0f".repeat(32),
+    }];
+    check("units.csv", &units::csv(&rows, &fields).unwrap_or_default());
+    check("units.json", &units::json(&rows).unwrap_or_default());
+}

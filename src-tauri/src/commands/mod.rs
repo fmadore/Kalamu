@@ -11,6 +11,7 @@ pub mod projects;
 pub mod review;
 pub mod search;
 pub mod settings;
+pub mod units;
 pub mod window;
 pub mod workflows;
 
