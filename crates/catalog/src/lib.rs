@@ -575,6 +575,27 @@ mod tests {
         );
     }
 
+    /// Gemini 3.5 Transcribe is estimated by the minute, as Google estimates it, but its answer
+    /// reports tokens, not seconds: the cost comes from them, as the live run of 3 November 2026
+    /// was billed (1,308 tokens read and 177 written for 52 seconds).
+    #[test]
+    fn a_transcriber_billed_by_tokens_is_estimated_by_the_minute() {
+        let catalog = Catalog::bundled();
+        let model = catalog
+            .model(&ProviderId::new("gemini"), "gemini-3.5-transcribe")
+            .cloned()
+            .unwrap_or_else(|| panic!("no transcribe"));
+        let estimate = catalog.estimate(&model, Task::AudioTranscription, 0, 2.0, 0);
+        assert_eq!(estimate.usd, Some(0.01));
+        let usage = kalamu_core::Usage {
+            input_tokens: 1_308,
+            output_tokens: 177,
+            ..kalamu_core::Usage::default()
+        };
+        let cost = catalog.actual_cost(&model, &usage);
+        assert!(cost.is_some_and(|c| (c - 0.00474).abs() < 1e-6), "{cost:?}");
+    }
+
     #[test]
     fn contents_and_corrections_take_the_analysis_models_that_read_their_input() {
         let catalog = Catalog::bundled();

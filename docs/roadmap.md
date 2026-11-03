@@ -14,8 +14,9 @@ disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
 stays until it passes certification; Kalamu has been there since
 version 1.0.0 (2 November 2026). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
-the live OpenAI, Claude and Mistral APIs with real keys (`cargo run --example live`, see
-[development.md](development.md)); Gemini has not yet, for want of credit on the account.
+the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
+(`cargo run --example live`, see [development.md](development.md) and the
+[live runs](decisions/2026-11-03-live-runs.md)).
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
 ad hoc; it has not yet been opened on a real Mac
@@ -314,24 +315,38 @@ is done and shipped in 1.2.0, with the default prompts and the data folder.
   a two-step workflow, and one in economy mode across a restart. Try *Then* and the examples
   with one or two colleagues before going further. Several jobs' or documents' texts sent into
   one new round together, from a project's selection.
-- **Run Gemini against the live API**, as OpenAI, Claude and Mistral were, and measure costs
-  against the estimates. Offline Whisper still needs a live run too, as do the models added on
-  26 October: Mistral's chat models for analyses and GPT-6.1 Terra (see the
-  [decision](decisions/2026-10-26-terra-and-mistral-chat.md)); Terra on historical pages
-  before it is considered as OpenAI's default. GLM 5.3 and GLM 5.3 Flash were checked with
-  single live calls on 27 October, not yet through a whole job; DeepSeek V4.1 Flash, added on
-  28 October, not yet at all: its `reasoning_effort` and economy mode are taken from Mistral's
-  documentation ([decision](decisions/2026-10-28-deepseek-through-mistral.md)).
-- **Gemini 3.5 Transcribe, live**: added on 2 November as Gemini's model for recordings, with a
-  request of its own and its 77 languages, from Google's documentation
-  ([decision](decisions/2026-11-02-gemini-transcribe.md)). Run it on a real recording with
-  speakers and timestamps, and check the answer's shape and a minute's cost.
-- **Economy mode, live**: a small batch with each provider, to check the documented shapes
-  (Gemini's and Mistral's pages disagree on some), what cached input really saves, and
-  Claude's one-hour cache inside batches. Later, Gemini batches through a JSONL file, to lift
-  the 20 MB inline limit, and Voxtral transcription in batches once its format is documented.
-  Delete the JSONL files a batch leaves in the user's OpenAI and Mistral storage once its
-  answers are collected.
+- **Live runs, what is left** (the runs of 3 November are in the
+  [decision](decisions/2026-11-03-live-runs.md)): offline Whisper; GLM 5.3 through a whole job
+  (GLM 5.3 Flash ran one on 3 November); GPT-6.1 Terra on handwriting and older print before it
+  is considered as OpenAI's default. On 3 November **Gemini 3.8 Flash** read two pages,
+  transcribed a two-speaker interview and answered three analyses for $0.022; pages and
+  recordings came within a third of the estimate (pages $0.0121 against $0.0092), short
+  analyses at a fifth of it ($0.0013 against $0.0067). **GPT-6.1 Terra** read the two pages
+  ($0.022 against $0.012 estimated, the 1915 front page alone 1,660 tokens of text) and, with
+  **Mistral Medium 3.5, Mistral Large 4.0, GLM 5.3 Flash and DeepSeek V4.1 Flash**, answered the
+  entities analysis through whole jobs; the four Mistral-hosted models in economy mode too
+  (Mistral Medium's batch still running at the time of writing). Mistral Large 4.0 spent
+  3,000 to 4,400 tokens reasoning at `low`, 1.7× its estimate; Mistral Medium 3.5 listed titles
+  ("imam") among the people; DeepSeek's `reasoning_effort` and batches were accepted as
+  documented.
+- **Gemini 3.5 Transcribe, live**: ran on 3 November on a 52-second interview with two
+  speakers: turns, word timings and French as documented, but speakers labelled `spk:0`,
+  `spk:1` (now read as Speaker 1 and 2) and usage in tokens, not seconds, so the cost showed
+  $0. It is now costed from its tokens: $0.0047 for 52 seconds, about $0.0054 a minute against
+  the $0.005 estimate.
+- **Economy mode, live**: on 3 November a small batch with each provider (two pages, three
+  analyses) went through in the shapes Kalamu sends; Mistral answered in about a minute, Claude
+  in 7, Gemini in 8, at half price (Gemini's two pages $0.0061 against $0.0121). OpenAI accepted
+  and validated its two JSONL files but had answered none after 35 minutes: reading its answers
+  is still to be checked. Claude's five-minute cache is read inside a batch (instructions
+  written once, read by the other requests), so its one-hour cache is not adopted until a batch
+  of a few hundred pages shows a need. Mistral reports cached input in batches without a
+  `prompt_cache_key`. OpenAI's implicit caching wrote each whole page to the cache at 1.25×:
+  requests now cache explicitly, up to the instructions. Later: Gemini batches through a JSONL
+  file, to lift the 20 MB inline limit, and Voxtral transcription in batches once its format is
+  documented. Delete the files a batch leaves in the user's OpenAI and Mistral storage once its
+  answers are collected: Mistral's inline batches leave their requests as a file too (951 KB for
+  two pages).
 - **YouTube**: a live run on long and multilingual videos; long videos in pieces once Gemini's
   clipping of YouTube links covers the sound track again; the cost before the run from a
   `countTokens` call; check the embedded player in the packaged app, whose `tauri.localhost`

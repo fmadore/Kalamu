@@ -2,50 +2,65 @@
   "candidates": [
     {
       "content": {
-        "role": "model",
         "parts": [
           {
-            "text": "Bonjour, merci d'être venu.",
+            "text": "Bonjour, merci de nous recevoir.",
             "audioTranscription": {
-              "speakerLabel": "spk_1",
+              "text": "Bonjour, merci de nous recevoir.",
+              "speakerLabel": "spk:0",
               "words": [
-                { "word": "Bonjour,", "startOffset": "0.100s", "endOffset": "0.600s" },
-                { "word": "merci", "startOffset": "0.700s", "endOffset": "1s" },
-                { "word": "d'être", "startOffset": "1.050s", "endOffset": "1.300s" },
-                { "word": "venu.", "startOffset": "1.350s", "endOffset": "1.800s" }
+                { "word": "Bonjour,", "startOffset": "0.100s", "endOffset": "0.900s" },
+                { "word": "merci", "startOffset": "0.900s", "endOffset": "1.300s" },
+                { "word": "de", "startOffset": "1.300s", "endOffset": "1.400s" },
+                { "word": "nous", "startOffset": "1.400s", "endOffset": "1.600s" },
+                { "word": "recevoir.", "startOffset": "1.600s", "endOffset": "2.400s" }
               ]
             }
           },
           {
-            "text": "Je vous en prie,",
+            "text": "Je suis arrivé en 1972.",
             "audioTranscription": {
-              "speakerLabel": "spk_2",
+              "text": "Je suis arrivé en 1972.",
+              "speakerLabel": "spk:1",
               "words": [
-                { "word": "Je", "startOffset": "2.200s", "endOffset": "2.300s" },
-                { "word": "vous", "startOffset": "2.350s", "endOffset": "2.500s" },
-                { "word": "en", "startOffset": "2.550s", "endOffset": "2.600s" },
-                { "word": "prie,", "startOffset": "2.650s", "endOffset": "3s" }
+                { "word": "Je", "startOffset": "7.700s", "endOffset": "7.900s" },
+                { "word": "suis", "startOffset": "7.900s", "endOffset": "8.200s" },
+                { "word": "arrivé", "startOffset": "8.200s", "endOffset": "8.500s" },
+                { "word": "en", "startOffset": "8.500s", "endOffset": "8.600s" },
+                { "word": "1972.", "startOffset": "8.600s", "endOffset": "10.300s" }
               ]
             }
           },
           {
-            "text": "asseyez-vous.",
+            "text": "Mon père était commerçant.",
             "audioTranscription": {
-              "speakerLabel": "spk_2",
+              "text": "Mon père était commerçant.",
+              "speakerLabel": "spk:1",
               "words": [
-                { "word": "asseyez-vous.", "startOffset": "3.400s", "endOffset": "4.250s" }
+                { "word": "Mon", "startOffset": "10.900s", "endOffset": "11.100s" },
+                { "word": "père", "startOffset": "11.100s", "endOffset": "11.400s" },
+                { "word": "était", "startOffset": "11.400s", "endOffset": "11.600s" },
+                { "word": "commerçant.", "startOffset": "11.600s", "endOffset": "12.100s" }
               ]
             }
           }
-        ]
+        ],
+        "role": "model"
       },
-      "finishReason": "STOP"
+      "finishReason": "STOP",
+      "index": 0
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 150,
-    "candidatesTokenCount": 24,
-    "totalTokenCount": 174
+    "promptTokenCount": 1308,
+    "candidatesTokenCount": 177,
+    "totalTokenCount": 1485,
+    "promptTokensDetails": [
+      { "modality": "TEXT", "tokenCount": 1 },
+      { "modality": "AUDIO", "tokenCount": 1307 }
+    ],
+    "serviceTier": "standard"
   },
-  "modelVersion": "gemini-3.5-transcribe"
+  "modelVersion": "gemini-3.5-transcribe",
+  "responseId": "recorded-2026-11-03"
 }

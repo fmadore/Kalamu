@@ -387,11 +387,19 @@ async fn openai_sends_pdf_pages_as_input_files() {
         .and(header("authorization", "Bearer test-key"))
         .and(body_partial_json(serde_json::json!({
             "model": "gpt-6.1-sol",
-            "instructions": "Transcribe diplomatically.",
-            "input": [{ "role": "user", "content": [
-                { "type": "input_file", "filename": "lettre-p1.pdf" },
-                { "type": "input_text", "text": "Transcribe this page." }
-            ]}],
+            // Cached up to the instructions only, so the page is never written to the cache.
+            "prompt_cache_options": { "mode": "explicit" },
+            "input": [
+                { "role": "developer", "content": [{
+                    "type": "input_text",
+                    "text": "Transcribe diplomatically.",
+                    "prompt_cache_breakpoint": { "mode": "explicit" },
+                }]},
+                { "role": "user", "content": [
+                    { "type": "input_file", "filename": "lettre-p1.pdf" },
+                    { "type": "input_text", "text": "Transcribe this page." }
+                ]},
+            ],
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(fixture("openai_ok.json")))
         .mount(&server)
@@ -757,24 +765,30 @@ async fn gemini_transcribe_sends_no_prompt_and_reads_speakers_and_timings() {
     );
     assert!(sent.pointer("/generationConfig/thinkingConfig").is_none());
 
+    // Recorded from the live API on 3 November 2026, trimmed to three parts.
     assert_eq!(
         out.text,
-        "Bonjour, merci d'être venu.\nJe vous en prie,\nasseyez-vous."
+        "Bonjour, merci de nous recevoir.\nJe suis arrivé en 1972.\nMon père était commerçant."
     );
     assert_eq!(out.segments.len(), 2);
+    // Speakers are labelled from `spk:0`, and read from one.
     assert_eq!(out.segments[0].speaker.as_deref(), Some("Speaker 1"));
     assert_eq!(
         (out.segments[0].start_ms, out.segments[0].end_ms),
-        (100, 1_800)
+        (100, 2_400)
     );
     // One speaker's utterances are joined into one turn.
     assert_eq!(out.segments[1].speaker.as_deref(), Some("Speaker 2"));
-    assert_eq!(out.segments[1].text, "Je vous en prie, asseyez-vous.");
+    assert_eq!(
+        out.segments[1].text,
+        "Je suis arrivé en 1972. Mon père était commerçant."
+    );
     assert_eq!(
         (out.segments[1].start_ms, out.segments[1].end_ms),
-        (2_200, 4_250)
+        (7_700, 12_100)
     );
-    assert_eq!(out.usage.input_tokens, 150);
+    assert_eq!(out.usage.input_tokens, 1_308);
+    assert_eq!(out.usage.output_tokens, 177);
 }
 
 #[tokio::test]

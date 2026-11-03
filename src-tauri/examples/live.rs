@@ -6,16 +6,18 @@
 //!
 //! `<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`; each job
 //! writes its outputs to its own folder in `<out>` and the run ends with a table of pieces.
+//! `LIVE_SKIP=gemini,openai` leaves out providers; `LIVE_PACE=economy` sends every job through
+//! the providers' batch services.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use kalamu_catalog::Catalog;
 use kalamu_core::{
-    ApiKey, ExportFormat, JobSettings, JobStatus, LineBreaks, OutputDestination, OutputSettings,
-    PieceStatus, ProgressEvent, ProviderId, SetupOptions, Task,
+    ApiKey, ExportFormat, JobSettings, JobStatus, JobStore, LineBreaks, OutputDestination,
+    OutputSettings, Pace, PieceStatus, ProgressEvent, ProviderId, SetupOptions, Task,
 };
-use kalamu_engine::{Engine, EngineConfig, KeySource, NewJob, SetupRequest};
+use kalamu_engine::{Engine, EngineConfig, EstimateRequest, KeySource, NewJob, SetupRequest};
 use kalamu_prompts::PromptLibrary;
 use kalamu_store::SqliteStore;
 
@@ -157,6 +159,51 @@ fn plans() -> Vec<Plan> {
             settings: JobSettings::default(),
             formats: vec![ExportFormat::Txt, ExportFormat::Json],
         },
+        // Three texts with the same long instructions, for what the providers' prompt caches
+        // save; best run with LIVE_PACE=economy. It also needs `article2.txt` and `article3.txt`.
+        Plan {
+            name: "analysis-batch",
+            task: Task::Analysis,
+            files: &["article.txt", "article2.txt", "article3.txt"],
+            setups: analysis("analysis.entities"),
+            settings: JobSettings::default(),
+            formats: vec![ExportFormat::Json],
+        },
+        Plan {
+            name: "audio-transcribe",
+            task: Task::AudioTranscription,
+            files: &["interview.wav"],
+            setups: vec![setup("gemini", "gemini-3.5-transcribe", None, interview())],
+            settings: JobSettings::default(),
+            formats: vec![ExportFormat::Txt, ExportFormat::Srt, ExportFormat::Json],
+        },
+        Plan {
+            name: "ocr-terra",
+            task: Task::TextExtraction,
+            files: &["newspaper.jpg", "letter.pdf"],
+            setups: vec![setup("openai", "gpt-6.1-terra", None, plain())],
+            settings: JobSettings::default(),
+            formats: vec![ExportFormat::Txt],
+        },
+        Plan {
+            name: "analysis-more-models",
+            task: Task::Analysis,
+            files: &["article.txt"],
+            setups: ["gpt-6.1-terra", "mistral-medium-3-5", "mistral-large-4-0"]
+                .into_iter()
+                .chain(["zai-glm-5-3-flash", "deepseek-v4-1-flash-1017"])
+                .map(|model| {
+                    let provider = if model.starts_with("gpt") {
+                        "openai"
+                    } else {
+                        "mistral"
+                    };
+                    setup(provider, model, Some("analysis.entities"), plain())
+                })
+                .collect(),
+            settings: JobSettings::default(),
+            formats: vec![ExportFormat::Txt, ExportFormat::Csv, ExportFormat::Json],
+        },
     ]
 }
 
@@ -170,26 +217,29 @@ async fn main() -> anyhow::Result<()> {
     let filter = rest.first().cloned().unwrap_or_default();
     std::fs::create_dir_all(&out)?;
 
-    let engine = engine(&out)?;
+    let (engine, store) = engine(&out)?;
     let mut total = 0.0;
-    // LIVE_SKIP=gemini,openai leaves out providers without credit.
     let skip = std::env::var("LIVE_SKIP").unwrap_or_default();
     let skip: Vec<&str> = skip.split(',').filter(|s| !s.is_empty()).collect();
+    let economy = std::env::var("LIVE_PACE").is_ok_and(|p| p == "economy");
     for mut plan in plans().into_iter().filter(|p| p.name.contains(&filter)) {
         plan.setups.retain(|s| !skip.contains(&s.provider.as_str()));
         if plan.setups.is_empty() {
             continue;
         }
-        total += run(&engine, &samples, &out, plan).await?;
+        if economy {
+            plan.settings.pace = Pace::Economy;
+        }
+        total += run(&engine, &store, &samples, &out, plan).await?;
     }
     println!("\nSpent about ${total:.4} in all.");
     Ok(())
 }
 
-fn engine(out: &Path) -> anyhow::Result<Arc<Engine>> {
+fn engine(out: &Path) -> anyhow::Result<(Arc<Engine>, Arc<SqliteStore>)> {
     let data = out.join("data");
     std::fs::create_dir_all(&data)?;
-    let store = SqliteStore::open(&data.join("jobs.sqlite"))?;
+    let store = Arc::new(SqliteStore::open(&data.join("jobs.sqlite"))?);
     let prompts = PromptLibrary::open(&data.join("presets"))?;
     // The installed app's FFmpeg, or KALAMU_FFMPEG_DIR.
     let installed = std::env::var_os("LOCALAPPDATA")
@@ -201,8 +251,8 @@ fn engine(out: &Path) -> anyhow::Result<Arc<Engine>> {
         "FFmpeg: {}",
         if ffmpeg.is_some() { "found" } else { "missing" }
     );
-    Ok(Engine::new(
-        Arc::new(store),
+    let engine = Engine::new(
+        store.clone(),
         kalamu_providers::registry(kalamu_providers::client()),
         Catalog::newest(None),
         prompts,
@@ -214,12 +264,19 @@ fn engine(out: &Path) -> anyhow::Result<Arc<Engine>> {
             app_version: env!("CARGO_PKG_VERSION").into(),
             ..EngineConfig::default()
         },
-    ))
+    );
+    Ok((engine, store))
 }
 
 /// Runs one job to the end and prints each piece; returns what it cost.
-async fn run(engine: &Arc<Engine>, samples: &Path, out: &Path, plan: Plan) -> anyhow::Result<f64> {
-    println!("\n== {} ==", plan.name);
+async fn run(
+    engine: &Arc<Engine>,
+    store: &SqliteStore,
+    samples: &Path,
+    out: &Path,
+    plan: Plan,
+) -> anyhow::Result<f64> {
+    println!("\n== {} ({:?}) ==", plan.name, plan.settings.pace);
     let paths: Vec<PathBuf> = plan.files.iter().map(|f| samples.join(f)).collect();
     let mut sources = Vec::new();
     for inspected in engine.inspect(&paths) {
@@ -228,6 +285,24 @@ async fn run(engine: &Arc<Engine>, samples: &Path, out: &Path, plan: Plan) -> an
             println!("  warning: {w:?}");
         }
         sources.push(source);
+    }
+    // The estimate New job would show, to set against what the providers billed.
+    let estimate = engine.estimate(&EstimateRequest {
+        task: plan.task,
+        sources: sources.clone(),
+        setups: plan.setups.clone(),
+        sample_pages: plan.settings.sample_pages,
+    });
+    for row in &estimate.rows {
+        println!(
+            "  estimate {:<28} {} pages: ${:.4} (economy {})",
+            row.model,
+            row.pages,
+            row.estimate.usd.unwrap_or(0.0),
+            row.estimate
+                .economy_usd
+                .map_or("-".into(), |u| format!("${u:.4}"))
+        );
     }
     let folder = out.join(plan.name);
     let job = engine.create_job(NewJob {
@@ -260,12 +335,27 @@ async fn run(engine: &Arc<Engine>, samples: &Path, out: &Path, plan: Plan) -> an
     for piece in engine.pieces(job.id)? {
         let setup = job.setups.iter().find(|s| s.id == piece.setup_id);
         let source = job.sources.iter().find(|s| s.id == piece.source_id);
+        // What the provider reported, and the cost the catalogue puts on it.
+        let billed = store.finished_result(&piece)?.map(|r| {
+            let u = &r.output.usage;
+            format!(
+                " in {} (cached {}, written {}) out {} audio {:.0}s pages {} ${:.5}",
+                u.input_tokens,
+                u.cached_input_tokens,
+                u.cache_write_tokens,
+                u.output_tokens,
+                u.audio_seconds,
+                u.pages,
+                r.cost_usd.unwrap_or(0.0)
+            )
+        });
         println!(
-            "  {:<28} {:<16} #{} {:?}{}",
+            "  {:<28} {:<16} #{} {:?}{}{}",
             setup.map_or("?", |s| s.label.as_str()),
             source.map_or("?", |s| s.file_name.as_str()),
             piece.index,
             piece.status,
+            billed.unwrap_or_default(),
             piece
                 .error
                 .filter(|_| piece.status == PieceStatus::Failed)

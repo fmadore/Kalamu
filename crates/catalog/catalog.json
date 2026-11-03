@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-02",
+  "updated": "2026-11-03",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
     {
@@ -197,7 +197,9 @@
       "accepts_prompt": false,
       "pricing": {
         "per_minute": 0.005,
-        "note": "Google's estimate: $0.003 a minute of audio read and $0.002 written ($2 and $12 per million tokens)."
+        "input_per_mtok": 2.0,
+        "output_per_mtok": 12.0,
+        "note": "Google's estimate: $0.003 a minute of audio read and $0.002 written ($2 and $12 per million tokens). Billed by the tokens counted, about $0.0054 a minute in a live run."
       },
       "limits": {
         "max_request_mb": 18,
