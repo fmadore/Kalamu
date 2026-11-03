@@ -147,6 +147,15 @@ fn phrase(folded: &str) -> String {
     format!("\"{}\"", folded.replace('"', "\"\""))
 }
 
+/// Every term as a literal phrase, all of them required.
+fn all_of(terms: &[String]) -> String {
+    terms
+        .iter()
+        .map(|t| phrase(t))
+        .collect::<Vec<_>>()
+        .join(" AND ")
+}
+
 impl SearchIndex for SqliteIndex {
     fn stamps(&self, job: JobId) -> Result<Vec<(PassageKey, String)>, StoreError> {
         let conn = self.conn();
@@ -238,8 +247,8 @@ impl SearchIndex for SqliteIndex {
         tx.commit().map_err(db)
     }
 
-    fn find(&self, folded: &str) -> Result<Vec<Passage>, StoreError> {
-        if folded.chars().count() < 3 {
+    fn find(&self, terms: &[String]) -> Result<Vec<Passage>, StoreError> {
+        if terms.is_empty() || terms.iter().any(|t| t.chars().count() < 3) {
             return Ok(Vec::new());
         }
         let conn = self.conn();
@@ -250,7 +259,7 @@ impl SearchIndex for SqliteIndex {
             )
             .map_err(db)?;
         let rows = stmt
-            .query_map([phrase(folded)], |row| row.get::<_, String>(0))
+            .query_map([all_of(terms)], |row| row.get::<_, String>(0))
             .map_err(db)?;
         let mut out = Vec::new();
         for row in rows {

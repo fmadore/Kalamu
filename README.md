@@ -48,8 +48,9 @@ small job first. See the
   job made it. Add files before reading them, add jobs you ran before without paying again,
   start a job on a selection, and mark the result you rely on.
 - **Search a whole project**: every passage of its documents that names a person or an
-  organisation, in the text as you corrected it, accents and Arabic vowel marks ignored, each
-  opening its source where it stands. It runs on your computer.
+  organisation, or holds several words near each other, in the text as you corrected it, accents
+  and Arabic vowel marks ignored, each opening its source where it stands. It runs on your
+  computer.
 - **Reconcile names in a project's dictionary**: the people, places and terms its analyses
   listed, their spellings gathered into entries under the label you choose, with merges a
   model can propose and that you accept, change or turn down.

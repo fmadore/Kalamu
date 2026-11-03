@@ -1,6 +1,6 @@
 // Project search for the browser preview (`?mock&view=project`, then Search): the sample
 // bulletin's two readings and the sample interview, searched as the search crate searches them,
-// simplified (no index, no analyses). Development builds only.
+// simplified (no index, no analyses, every query a phrase). Development builds only.
 
 import type { DocumentHits } from '../bindings/DocumentHits.js';
 import type { Hit } from '../bindings/Hit.js';
@@ -20,19 +20,25 @@ function hits(views: PieceView[], query: string): Hit[] {
 		const found = find(text, query);
 		const lines = v.segments.flatMap((s) => find(s.text, query).map(() => Number(s.start_ms)));
 		const start = v.piece.kind === 'segment' ? Number(v.piece.start_ms) : 0;
-		return found.map((m, nth) => ({
-			index: v.index,
-			piece: v.piece,
-			nth,
-			field: null,
-			entry: null,
-			reason: false,
-			...context(text, m),
-			at_ms:
-				v.piece.kind === 'segment' && lines.length === found.length ? start + lines[nth] : null,
-			reviewed: v.reviewed,
-			corrected: v.corrected_text !== null
-		}));
+		return found.map((m, nth) => {
+			const shown = context(text, m);
+			return {
+				index: v.index,
+				piece: v.piece,
+				term: query.trim(),
+				nth,
+				field: null,
+				entry: null,
+				entry_number: null,
+				reason: false,
+				...shown,
+				marks: [{ start: 0, end: [...shown.words].length }],
+				at_ms:
+					v.piece.kind === 'segment' && lines.length === found.length ? start + lines[nth] : null,
+				reviewed: v.reviewed,
+				corrected: v.corrected_text !== null
+			};
+		});
 	});
 }
 
@@ -87,6 +93,8 @@ function search(request: SearchRequest): SearchView {
 		documents,
 		matches,
 		listed: matches,
+		terms: [request.query.trim()],
+		ignored: [],
 		coverage: {
 			documents: 6,
 			searched: 2,
@@ -103,6 +111,7 @@ export function searchCommand(cmd: string, a: Record<string, unknown>): unknown 
 		case 'project_search':
 			return search(a.request as SearchRequest);
 		case 'rebuild_search_index':
+		case 'prepare_project_search':
 			return null;
 	}
 	return undefined;

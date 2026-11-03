@@ -96,6 +96,9 @@ beside them.
 - Several words anywhere in a passage, alternatives and proximity, beside the literal phrase.
 - Preparing the text in the background before the first search, with its progress shown.
 - Opening a table of contents' match at its entry, and an analysis's at its field.
+
+All but alternatives were done the same day
+([decision](2026-11-03-search-words-and-preparation.md)).
 - Searching two letters, and limiting the folding work for very common words.
 - Semantic search, only with explicit local or cloud execution, consent to sending text,
   versions, costs and coverage (#86's later part); answers and chat stay out of scope.

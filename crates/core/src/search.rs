@@ -44,6 +44,10 @@ pub struct PassagePart {
     /// For a field of a table of contents' entry, the entry's title.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entry: Option<String>,
+    /// For a field of a table of contents' entry, the entry's place in the table, from 1, as
+    /// the review numbers them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entry_number: Option<u32>,
     /// The model's reason for the answer rather than the answer.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub reason: bool,
@@ -73,8 +77,9 @@ pub trait SearchIndex: Send + Sync {
     /// The jobs that have passages, so that those of deleted jobs can be forgotten.
     fn indexed_jobs(&self) -> Result<Vec<JobId>, StoreError>;
     fn forget_job(&self, job: JobId) -> Result<(), StoreError>;
-    /// Every passage whose folded text holds `folded`, three characters at least.
-    fn find(&self, folded: &str) -> Result<Vec<Passage>, StoreError>;
+    /// Every passage whose folded text holds each of `terms`, every one folded and three
+    /// characters at least.
+    fn find(&self, terms: &[String]) -> Result<Vec<Passage>, StoreError>;
     /// Empties the index, to be made again from the store.
     fn clear(&self) -> Result<(), StoreError>;
     fn size(&self) -> Result<IndexSize, StoreError>;

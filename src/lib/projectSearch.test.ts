@@ -6,6 +6,7 @@ import {
 	blankRequest,
 	hitOrigin,
 	hitPlace,
+	hitWords,
 	keepSearch,
 	lastSearch,
 	reviewFind
@@ -15,13 +16,16 @@ function hit(over: Partial<Hit> = {}): Hit {
 	return {
 		index: 2,
 		piece: { kind: 'page', number: 3 },
+		term: 'mission catholique',
 		nth: 1,
 		field: null,
 		entry: null,
+		entry_number: null,
 		reason: false,
 		before: 'la ',
 		words: 'Mission catholique',
 		after: ' de Koupéla',
+		marks: [{ start: 0, end: 18 }],
 		at_ms: null,
 		reviewed: false,
 		corrected: false,
@@ -65,13 +69,48 @@ describe('project search', () => {
 		).toBe('La zakat › Summary (reason)');
 	});
 
-	it('opens the review on the match chosen, with the words shown', () => {
-		expect(reviewFind(result, hit(), 'mission catholique')).toEqual({
+	it('opens the review on the match chosen, with its words, field and entry', () => {
+		expect(reviewFind(result, hit())).toEqual({
 			query: 'mission catholique',
 			setupId: 's',
 			index: 2,
-			nth: 1
+			nth: 1,
+			field: null,
+			entry: null
 		});
+		const entry = hit({
+			term: 'zakat',
+			nth: 0,
+			field: { key: 'summary', label: 'Summary' },
+			entry: 'La zakat',
+			entry_number: 3
+		});
+		expect(reviewFind(result, entry)).toMatchObject({ query: 'zakat', field: 'summary', entry: 3 });
+	});
+
+	it('marks only the words looked for, not those between them', () => {
+		expect(hitWords(hit())).toEqual([{ text: 'Mission catholique', found: true }]);
+		const near = hit({
+			words: 'imam est venu, et Ouédraogo',
+			marks: [
+				{ start: 0, end: 4 },
+				{ start: 18, end: 27 }
+			]
+		});
+		expect(hitWords(near)).toEqual([
+			{ text: 'imam', found: true },
+			{ text: ' est venu, et ', found: false },
+			{ text: 'Ouédraogo', found: true }
+		]);
+		// Marks that overlap (a word inside a phrase also looked for) are marked once.
+		const overlapping = hit({
+			words: 'Union culturelle',
+			marks: [
+				{ start: 0, end: 16 },
+				{ start: 0, end: 5 }
+			]
+		});
+		expect(hitWords(overlapping)).toEqual([{ text: 'Union culturelle', found: true }]);
 	});
 
 	it('keeps the last search of each project for coming back to it', () => {
@@ -80,6 +119,10 @@ describe('project search', () => {
 		keepSearch('p1', request, null);
 		expect(lastSearch('p1')?.request.query).toBe('zakat');
 		expect(lastSearch('p2')).toBeUndefined();
-		expect(blankRequest()).toMatchObject({ results: 'preferred', generated: false });
+		expect(blankRequest()).toMatchObject({
+			mode: 'phrase',
+			results: 'preferred',
+			generated: false
+		});
 	});
 });

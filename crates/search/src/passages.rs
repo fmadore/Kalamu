@@ -21,7 +21,7 @@ use crate::{Search, SearchError};
 
 /// Raised whenever what a passage holds, or how it is folded, changes: every passage is then
 /// made again at the next search.
-const VERSION: u32 = 1;
+const VERSION: u32 = 2;
 
 /// How many passages are indexed together, between which a newer search can stop this one and
 /// the review can use the store.
@@ -65,20 +65,24 @@ impl Stored {
 
 /// The answers as parts: each field's answer and reason, and each field of a table of
 /// contents' entries under the entry's title.
-fn answer_parts(answers: &[FieldAnswer], entry: Option<&str>, out: &mut Vec<PassagePart>) {
+fn answer_parts(answers: &[FieldAnswer], entry: Option<(&str, u32)>, out: &mut Vec<PassagePart>) {
     for answer in answers {
         let part = |text: String, reason: bool| PassagePart {
             field: Some(answer.key.clone()),
-            entry: entry.map(str::to_string),
+            entry: entry
+                .map(|(title, _)| title)
+                .filter(|t| !t.is_empty())
+                .map(str::to_string),
+            entry_number: entry.map(|(_, n)| n),
             reason,
             text,
             lines: Vec::new(),
         };
         match &answer.value {
             FieldValue::Entries(entries) => {
-                for e in entries {
+                for (i, e) in entries.iter().enumerate() {
                     let title = answer_text(e, TITLE);
-                    answer_parts(e, (!title.is_empty()).then_some(title.as_str()), out);
+                    answer_parts(e, Some((title.as_str(), i as u32 + 1)), out);
                 }
             }
             value => {
@@ -135,6 +139,7 @@ impl Search {
             vec![PassagePart {
                 field: None,
                 entry: None,
+                entry_number: None,
                 reason: false,
                 text: rename_text(corrected.unwrap_or(&result.output.text), &names),
                 lines,
@@ -162,15 +167,10 @@ impl Search {
         }))
     }
 
-    /// Brings the index up to date with one job for the results `wanted` (set-ups over
-    /// sources): passages made again where their stamp changed, and those of pieces no longer
-    /// read removed. Returns the job's pieces.
-    pub(crate) fn refresh(
-        &self,
-        job: &Job,
-        wanted: &HashSet<(SetupId, SourceId)>,
-        stop: &dyn Fn() -> bool,
-    ) -> Result<Vec<PieceState>, SearchError> {
+    /// What bringing the index up to date with one job for the results `wanted` (set-ups over
+    /// sources) needs: passages of pieces no longer read are removed at once, and those whose
+    /// stamp changed are listed, to be made again by [`Search::apply`].
+    fn plan(&self, job: &Job, wanted: &HashSet<(SetupId, SourceId)>) -> Result<Plan, SearchError> {
         let pieces = self.jobs.pieces(job.id)?;
         let stored = Stored {
             corrections: self.jobs.corrections(job.id)?,
@@ -183,7 +183,7 @@ impl Search {
         };
         let indexed: HashMap<PassageKey, String> = self.index.stamps(job.id)?.into_iter().collect();
         let mut current = HashMap::new();
-        for piece in &pieces {
+        for (i, piece) in pieces.iter().enumerate() {
             let key = PassageKey {
                 job_id: piece.job_id,
                 setup_id: piece.setup_id,
@@ -195,7 +195,7 @@ impl Search {
             } else {
                 None
             };
-            current.insert(key, (piece, stamp));
+            current.insert(key, (i, stamp));
         }
 
         // Passages of pieces gone, failed again or no longer searched; those of results not
@@ -209,28 +209,87 @@ impl Search {
             self.index.remove_passages(&gone)?;
         }
 
-        let mut changed: Vec<(&PieceState, String)> = current
+        let mut changed: Vec<(usize, String)> = current
             .iter()
             .filter(|(k, _)| wanted.contains(&(k.setup_id, k.source_id)))
-            .filter_map(|(k, (piece, stamp))| {
+            .filter_map(|(k, (i, stamp))| {
                 let stamp = stamp.as_ref()?;
-                (indexed.get(k) != Some(stamp)).then(|| (*piece, stamp.clone()))
+                (indexed.get(k) != Some(stamp)).then(|| (*i, stamp.clone()))
             })
             .collect();
-        changed.sort_by_key(|(p, _)| (p.setup_id, p.source_id, p.index));
-        for batch in changed.chunks(BATCH) {
+        changed.sort_by_key(|(i, _)| {
+            let p = &pieces[*i];
+            (p.setup_id, p.source_id, p.index)
+        });
+        Ok(Plan {
+            pieces,
+            stored,
+            changed,
+        })
+    }
+
+    /// Makes again the passages a plan lists, in batches, telling `prepared` how many after
+    /// each.
+    fn apply(
+        &self,
+        job: &Job,
+        plan: &Plan,
+        stop: &dyn Fn() -> bool,
+        prepared: &mut dyn FnMut(u32),
+    ) -> Result<(), SearchError> {
+        for batch in plan.changed.chunks(BATCH) {
             if stop() {
                 return Err(SearchError::Stopped);
             }
             let mut passages = Vec::with_capacity(batch.len());
-            for (piece, stamp) in batch {
-                if let Some(passage) = self.passage(job, piece, &stored, stamp.clone())? {
+            for (i, stamp) in batch {
+                let piece = &plan.pieces[*i];
+                if let Some(passage) = self.passage(job, piece, &plan.stored, stamp.clone())? {
                     let text = index_text(&passage);
                     passages.push((passage, text));
                 }
             }
             self.index.put_passages(&passages)?;
+            prepared(batch.len() as u32);
         }
-        Ok(pieces)
+        Ok(())
     }
+
+    /// Brings the index up to date with each job for its results wanted, telling `progress`
+    /// how many pieces of how many have been prepared, after each batch and once before the
+    /// first when there is any. Returns each job's pieces, in the same order.
+    pub(crate) fn refresh(
+        &self,
+        jobs: &[(&Job, &HashSet<(SetupId, SourceId)>)],
+        stop: &dyn Fn() -> bool,
+        progress: &dyn Fn(u32, u32),
+    ) -> Result<Vec<Vec<PieceState>>, SearchError> {
+        let mut plans = Vec::with_capacity(jobs.len());
+        for (job, wanted) in jobs {
+            if stop() {
+                return Err(SearchError::Stopped);
+            }
+            plans.push(self.plan(job, wanted)?);
+        }
+        let total: u32 = plans.iter().map(|p| p.changed.len() as u32).sum();
+        let mut done = 0;
+        if total > 0 {
+            progress(done, total);
+        }
+        for ((job, _), plan) in jobs.iter().zip(&plans) {
+            self.apply(job, plan, stop, &mut |n| {
+                done += n;
+                progress(done, total);
+            })?;
+        }
+        Ok(plans.into_iter().map(|p| p.pieces).collect())
+    }
+}
+
+/// What bringing the index up to date with one job needs.
+struct Plan {
+    pieces: Vec<PieceState>,
+    stored: Stored,
+    /// The pieces whose passage must be made again, by position in `pieces`, with their stamp.
+    changed: Vec<(usize, String)>,
 }

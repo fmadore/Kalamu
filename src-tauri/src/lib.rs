@@ -27,6 +27,9 @@ use crate::settings::Settings;
 pub const PROGRESS_EVENT: &str = "progress";
 /// Sent when the window is closed while jobs run, so the interface can ask first.
 pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
+/// Name of the event carrying [`kalamu_search::SearchProgress`]: how far a project's text is
+/// prepared for searching.
+pub const SEARCH_PROGRESS_EVENT: &str = "search-progress";
 
 fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking::WorkerGuard> {
     let filter = tracing_subscriber::EnvFilter::try_from_default_env()
@@ -266,6 +269,7 @@ pub fn run() {
                 dictionary,
                 search,
                 search_generation: Arc::default(),
+                search_preparation: Arc::default(),
                 models,
                 keys,
                 settings: Mutex::new(settings),
@@ -422,6 +426,7 @@ pub fn run() {
             commands::dictionary::dictionary_forget_request,
             commands::search::project_search,
             commands::search::rebuild_search_index,
+            commands::search::prepare_project_search,
             commands::window::set_taskbar_progress,
             commands::window::set_tray_state,
             commands::window::hide_window,

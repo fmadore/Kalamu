@@ -376,6 +376,19 @@ export const en = {
 		placeholder: 'A name, an organisation, a phrase…',
 		go: 'Search',
 		tooShort: 'Type three letters at least.',
+		mode: 'Find',
+		modes: {
+			phrase: 'The exact phrase',
+			all_words: 'All these words',
+			near: 'These words near each other'
+		},
+		near: 'At most',
+		nearWords: 'words apart',
+		quotesHint:
+			'Each word is looked for in the same page or answer. Put words that belong together between quotes: “mission catholique” Koupéla.',
+		ignored: (words: string) => `Left out, too short to look for: ${words}.`,
+		preparing: (done: number, total: number) =>
+			`Preparing the text for searching: ${done} of ${total === 1 ? '1 page or part' : `${total} pages or parts`}…`,
 		scope: 'Documents',
 		wholeProject: 'The whole project',
 		tag: 'Tag',
@@ -1502,7 +1515,7 @@ export const en = {
 		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`
 	},
 	error: {
-		'search.too_short': 'Type three letters at least.',
+		'search.too_short': 'Type a word of three letters at least.',
 		'search.stopped': 'The search was replaced by a newer one.',
 		'search.index':
 			'The search could not read its copy of your results’ text. Prepare the text again from the search; your results are not affected.',

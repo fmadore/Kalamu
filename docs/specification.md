@@ -522,12 +522,19 @@ The names and terms a project's analyses listed, gathered for the researcher to 
 
 Every passage of a project's documents that holds some words, found without opening each
 document and opened where it stands
-([decision](decisions/2026-11-03-project-search.md), [#86](https://github.com/fmadore/Kalamu/issues/86)).
+([decision](decisions/2026-11-03-project-search.md), [second delivery](decisions/2026-11-03-search-words-and-preparation.md),
+[#86](https://github.com/fmadore/Kalamu/issues/86)).
 
 - **The text as the researcher corrected it.** Each piece is searched as the review shows it:
   a correction in place of the model's text, speakers under the names given them. Matching is
-  the review's (capitals, accents and Arabic vowel marks set aside, line breaks as spaces), the
-  words one literal phrase found anywhere in the text, three letters at least.
+  the review's (capitals, accents and Arabic vowel marks set aside, line breaks as spaces),
+  found anywhere in the text, inside words too.
+- **Three ways to read the words.** The exact phrase, three letters at least (the default);
+  all the words anywhere in the same page, part or answer, each word's places listed; or the
+  words with at most a chosen number of words between the first and the last (10 unless
+  changed), each such stretch one match with only the words looked for marked. In the last
+  two, words between quotes (straight, curly or « ») are one term, and words shorter than three
+  letters are left out and named.
 - **Read text apart from written text.** Extractions, transcriptions and corrections are
   searched; analyses' answers and reasons and tables of contents' entries, which models wrote
   about the documents, only on request, each match naming its field.
@@ -537,15 +544,19 @@ document and opened where it stands
 - **Filters**: a collection, a tag, a task, pieces reviewed or not yet reviewed.
 - **Each match** shows its document, its page, passage or the time of its line, the words
   around it, the result it is in (task, model, job), and whether it was corrected, reviewed,
-  preferred, or is an analysis out of date. Clicking it opens the review on that place with the
-  words in its search, a recording playing from its line, another reading in the compare pane.
-  A match moved by a correction since is reported, never replaced silently.
+  preferred, or is an analysis out of date. Clicking it opens the review on that place with its
+  words in the review's search (for several words, the word found, or the first of those near
+  each other), a recording playing from its line, another reading in the compare pane, an
+  analysis at its field, a table of contents at its entry and that entry's first page. A match
+  moved by a correction since is reported, never replaced silently.
 - **Coverage**: the documents searched out of those in scope, those with nothing read yet, the
   pages or parts still to read or failed; finding nothing is said not to mean absence.
 - **Local and derived.** Nothing is sent. The text is kept, folded for matching, in an index
   beside the job database, brought up to date with the results, corrections, preferences and
   links before each search, and made again from them when it is lost or damaged: it holds
-  nothing they do not.
+  nothing they do not. Opening Search prepares the text of every result tied to the project in
+  the background, its progress shown, so that the first search need not wait; a search begun
+  meanwhile takes over from where it got to.
 
 ## Export formats
 

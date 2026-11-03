@@ -14,4 +14,12 @@ matches: number,
 /**
  * The matches listed, at most [`MAX_LISTED`].
  */
-listed: number, coverage: Coverage, };
+listed: number, 
+/**
+ * What was looked for: the phrase, or each word or quoted phrase.
+ */
+terms: Array<string>, 
+/**
+ * Words too short to look for, left out of the query.
+ */
+ignored: Array<string>, coverage: Coverage, };

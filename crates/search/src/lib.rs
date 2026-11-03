@@ -21,6 +21,7 @@ use ts_rs::TS;
 mod fold;
 mod passages;
 mod query;
+mod terms;
 
 pub use fold::{MIN_QUERY, folded, searchable};
 
@@ -40,6 +41,21 @@ pub enum ResultPolicy {
     All,
 }
 
+/// How the words of a query are found.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum MatchMode {
+    /// The words as one literal phrase.
+    #[default]
+    Phrase,
+    /// Every word, or words between quotes, anywhere in the same piece's text or the same
+    /// answer.
+    AllWords,
+    /// Every word within a few words of the others, in the same page or answer.
+    Near,
+}
+
 /// Which pieces are searched by whether the researcher has reviewed them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
@@ -54,8 +70,12 @@ pub enum ReviewFilter {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct SearchRequest {
-    /// Words found as one literal phrase.
+    /// The words looked for, read as `mode` says.
     pub query: String,
+    pub mode: MatchMode,
+    /// In [`MatchMode::Near`], how many words may stand between the first word found and the
+    /// last.
+    pub near: u32,
     pub collection: Option<CollectionId>,
     pub tag: Option<String>,
     pub task: Option<Task>,
@@ -75,6 +95,10 @@ pub struct SearchView {
     pub matches: u32,
     /// The matches listed, at most [`MAX_LISTED`].
     pub listed: u32,
+    /// What was looked for: the phrase, or each word or quoted phrase.
+    pub terms: Vec<String>,
+    /// Words too short to look for, left out of the query.
+    pub ignored: Vec<String>,
     pub coverage: Coverage,
 }
 
@@ -133,23 +157,50 @@ pub struct Hit {
     /// The piece it is in, from 0, as the review numbers them.
     pub index: u32,
     pub piece: PieceRef,
-    /// Which match it is in its piece's text, from 0, as the review's search counts them.
+    /// The words the review searches for when it opens on this match: the phrase, or the word
+    /// found (for words near each other, the first of them).
+    pub term: String,
+    /// Which match of `term` it is in its piece's text, from 0, as the review's search counts
+    /// them.
     pub nth: u32,
     /// For an answer, its field: key and label.
     pub field: Option<FieldRef>,
     /// For a field of a table of contents' entry, the entry's title.
     pub entry: Option<String>,
+    /// And the entry's place in the table, from 1.
+    pub entry_number: Option<u32>,
     /// Found in the model's reason for the answer.
     pub reason: bool,
     pub before: String,
     pub words: String,
     pub after: String,
+    /// The words looked for within `words`, which for words near each other holds those
+    /// between them too.
+    pub marks: Vec<Mark>,
     /// In a recording, when its line begins, in milliseconds; none where the text was
     /// corrected into other words.
     #[ts(type = "number | null")]
     pub at_ms: Option<u64>,
     pub reviewed: bool,
     pub corrected: bool,
+}
+
+/// Where words looked for stand within a match's words: `[start, end)`, in characters.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct Mark {
+    pub start: u32,
+    pub end: u32,
+}
+
+/// How far the text of a project's results is prepared for searching, sent as it goes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct SearchProgress {
+    pub project_id: ProjectId,
+    /// Pieces prepared so far, of `total` that needed it.
+    pub done: u32,
+    pub total: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -163,7 +214,7 @@ pub struct FieldRef {
 pub enum SearchError {
     #[error("Project not found")]
     NotFound,
-    #[error("Search needs three letters at least")]
+    #[error("Search needs a word of three letters at least")]
     TooShort,
     /// A newer search began before this one ended.
     #[error("Search stopped")]

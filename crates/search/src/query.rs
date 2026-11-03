@@ -3,19 +3,18 @@
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::rc::Rc;
 
 use kalamu_core::contents;
 use kalamu_core::{
-    Document, DocumentId, Field, FieldKind, Job, JobId, Passage, PieceRef, ProjectId, SetupId,
-    SourceId, Task,
+    Document, DocumentId, Field, FieldKind, Job, JobId, ProjectId, SetupId, SourceId, Task,
 };
 
-use crate::fold::{context, find, folded, searchable};
+use crate::fold::folded;
 use crate::passages::searched;
+use crate::terms::{Found, hits, parse};
 use crate::{
-    Coverage, DocumentHits, FieldRef, Hit, MAX_LISTED, ResultHits, ResultPolicy, ReviewFilter,
-    Search, SearchError, SearchRequest, SearchView,
+    Coverage, DocumentHits, MAX_LISTED, ResultHits, ResultPolicy, ReviewFilter, Search,
+    SearchError, SearchRequest, SearchView,
 };
 
 /// A result chosen for the search: a set-up of a job over a document's source.
@@ -65,79 +64,6 @@ type Listed = (ResultHits, Vec<Found>);
 /// The results of each document with matches, by job and set-up.
 type Grouped = BTreeMap<(JobId, SetupId), Listed>;
 
-/// A match before it is listed: the words around it are cut from its text only if it is.
-struct Found {
-    hit: Hit,
-    text: Rc<str>,
-    span: (usize, usize),
-}
-
-impl Found {
-    fn listed(mut self) -> Hit {
-        let (before, words, after) = context(&self.text, self.span);
-        self.hit.before = before;
-        self.hit.words = words;
-        self.hit.after = after;
-        self.hit
-    }
-
-    fn copy(&self) -> Self {
-        Self {
-            hit: self.hit.clone(),
-            text: self.text.clone(),
-            span: self.span,
-        }
-    }
-}
-
-/// The matches in one passage, numbered within its piece as the review numbers them.
-fn hits(passage: &Passage, needle: &[char], labels: &HashMap<String, String>) -> Vec<Found> {
-    let start_ms = match passage.piece {
-        PieceRef::Segment { start_ms, .. } => Some(start_ms),
-        _ => None,
-    };
-    let mut out = Vec::new();
-    let mut nth = 0;
-    for part in &passage.parts {
-        let found = find(&part.text, needle);
-        // A recording's match is tied to its line when the lines hold as many matches as the
-        // text: the n-th match is then in the line holding the n-th match.
-        let lines: Vec<u64> = part
-            .lines
-            .iter()
-            .flat_map(|(at, text)| find(text, needle).into_iter().map(move |_| *at))
-            .collect();
-        let timed = start_ms.is_some() && !lines.is_empty() && lines.len() == found.len();
-        let text: Rc<str> = Rc::from(part.text.as_str());
-        for (i, m) in found.into_iter().enumerate() {
-            let hit = Hit {
-                index: passage.key.index,
-                piece: passage.piece.clone(),
-                nth,
-                field: part.field.as_ref().map(|key| FieldRef {
-                    key: key.clone(),
-                    label: labels.get(key).cloned().unwrap_or_else(|| key.clone()),
-                }),
-                entry: part.entry.clone(),
-                reason: part.reason,
-                before: String::new(),
-                words: String::new(),
-                after: String::new(),
-                at_ms: timed.then(|| start_ms.unwrap_or_default() + lines[i]),
-                reviewed: passage.reviewed,
-                corrected: passage.corrected,
-            };
-            out.push(Found {
-                hit,
-                text: text.clone(),
-                span: m,
-            });
-            nth += 1;
-        }
-    }
-    out
-}
-
 /// Titles as a reader sorts them: capitals and accents set aside.
 fn by_title(a: &str, b: &str) -> Ordering {
     folded(a).cmp(&folded(b)).then_with(|| a.cmp(b))
@@ -146,14 +72,18 @@ fn by_title(a: &str, b: &str) -> Ordering {
 impl Search {
     /// Every place the project's documents hold `request.query`, in the text as the researcher
     /// corrected it. `stop` is asked between steps: true when a newer search has begun.
+    /// `progress` is told how many pieces of how many have had their text prepared, when any
+    /// needed it.
     pub fn search(
         &self,
         project: ProjectId,
         request: &SearchRequest,
         stop: &dyn Fn() -> bool,
+        progress: &dyn Fn(u32, u32),
     ) -> Result<SearchView, SearchError> {
         self.check_project(project)?;
-        if !searchable(&request.query) {
+        let query = parse(&request.query, request.mode);
+        if query.terms.is_empty() {
             return Err(SearchError::TooShort);
         }
         let members = self.projects.members(project)?;
@@ -232,14 +162,13 @@ impl Search {
                 .insert((c.setup_id, c.source_id));
         }
         let mut read: HashSet<(JobId, SetupId, SourceId)> = HashSet::new();
-        for (job_id, results) in &wanted {
-            if stop() {
-                return Err(SearchError::Stopped);
-            }
-            let Some(Some(job)) = jobs.get(job_id) else {
-                continue;
-            };
-            for piece in self.refresh(job, results, stop)? {
+        let to_refresh: Vec<(&Job, &HashSet<(SetupId, SourceId)>)> = wanted
+            .iter()
+            .filter_map(|(id, results)| Some((jobs.get(id)?.as_ref()?, results)))
+            .collect();
+        let refreshed = self.refresh(&to_refresh, stop, progress)?;
+        for ((job, results), pieces) in to_refresh.iter().zip(refreshed) {
+            for piece in pieces {
                 if !results.contains(&(piece.setup_id, piece.source_id))
                     || !searched(job.task, &piece.piece)
                 {
@@ -262,8 +191,6 @@ impl Search {
         coverage.unread = coverage.documents - coverage.searched;
 
         // The passages holding the words, each placed in the results that read it.
-        let needle: Vec<char> = folded(&request.query).chars().collect();
-        let needle_text: String = needle.iter().collect();
         let mut by_result: HashMap<(JobId, SetupId, SourceId), Vec<&Chosen>> = HashMap::new();
         for c in &chosen {
             by_result
@@ -273,7 +200,7 @@ impl Search {
         }
         let mut grouped: HashMap<DocumentId, Grouped> = HashMap::new();
         let mut label_cache: HashMap<(JobId, SetupId), HashMap<String, String>> = HashMap::new();
-        for passage in self.index.find(&needle_text)? {
+        for passage in self.index.find(&query.folded())? {
             let k = passage.key;
             let Some(results) = by_result.get(&(k.job_id, k.setup_id, k.source_id)) else {
                 continue;
@@ -292,7 +219,7 @@ impl Search {
             let labels = label_cache
                 .entry((k.job_id, k.setup_id))
                 .or_insert_with(|| labels(job, k.setup_id));
-            let found = hits(&passage, &needle, labels);
+            let found = hits(&passage, &query, request.mode, request.near, labels);
             if found.is_empty() {
                 continue;
             }
@@ -318,7 +245,7 @@ impl Search {
                         (result, Vec::new())
                     })
                     .1
-                    .extend(found.iter().map(Found::copy));
+                    .extend(found.iter().cloned());
             }
         }
 
@@ -338,7 +265,7 @@ impl Search {
                 results
                     .sort_by_key(|(r, _)| (order(r.task), created(r.job_id), r.job_id, r.setup_id));
                 for (_, found) in &mut results {
-                    found.sort_by_key(|f| (f.hit.index, f.hit.nth));
+                    found.sort_by_key(|f| (f.hit.index, f.order));
                 }
                 (document_id, results)
             })
@@ -368,7 +295,47 @@ impl Search {
             documents: documents_hit,
             matches: matches as u32,
             listed: matches.min(MAX_LISTED) as u32,
+            terms: query.terms.into_iter().map(|t| t.typed).collect(),
+            ignored: query.ignored,
             coverage,
         })
+    }
+
+    /// Prepares the text of every result tied to the project's documents, read or generated,
+    /// so that its searches need not: what a search would otherwise do first, done ahead of
+    /// it. `stop` and `progress` as for [`Search::search`]. Returns how many pieces it
+    /// prepared.
+    pub fn prepare(
+        &self,
+        project: ProjectId,
+        stop: &dyn Fn() -> bool,
+        progress: &dyn Fn(u32, u32),
+    ) -> Result<u32, SearchError> {
+        self.check_project(project)?;
+        let mut wanted: HashMap<JobId, HashSet<(SetupId, SourceId)>> = HashMap::new();
+        let mut jobs: HashMap<JobId, Job> = HashMap::new();
+        for link in self.projects.links(project)? {
+            if !jobs.contains_key(&link.job_id) {
+                match self.jobs.job(link.job_id) {
+                    Ok(job) => jobs.insert(job.id, job),
+                    Err(_) => continue,
+                };
+            }
+            let Some(job) = jobs.get(&link.job_id) else {
+                continue;
+            };
+            let results = wanted.entry(job.id).or_default();
+            results.extend(job.setups.iter().map(|s| (s.id, link.source_id)));
+        }
+        let to_refresh: Vec<(&Job, &HashSet<(SetupId, SourceId)>)> = wanted
+            .iter()
+            .filter_map(|(id, results)| Some((jobs.get(id)?, results)))
+            .collect();
+        let prepared = std::cell::Cell::new(0);
+        self.refresh(&to_refresh, stop, &|done, total| {
+            prepared.set(done);
+            progress(done, total);
+        })?;
+        Ok(prepared.get())
     }
 }

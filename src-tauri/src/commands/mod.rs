@@ -45,6 +45,8 @@ pub struct AppState {
     pub search: Arc<kalamu_search::Search>,
     /// Raised by each search, so that a newer one stops an older one still indexing.
     pub search_generation: Arc<std::sync::atomic::AtomicU64>,
+    /// Raised by each preparation of a project's text, so that a newer one stops an older one.
+    pub search_preparation: Arc<std::sync::atomic::AtomicU64>,
     /// Whisper models, shared with the Whisper provider inside the engine.
     pub models: kalamu_offline::ModelManager,
     pub keys: Arc<CredentialKeys>,
