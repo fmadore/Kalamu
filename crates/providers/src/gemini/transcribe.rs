@@ -163,7 +163,7 @@ pub(super) fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
                 speaker: said
                     .get("speakerLabel")
                     .and_then(Value::as_str)
-                    .map(speaker_label),
+                    .map(speaker),
                 text,
             })
         })
@@ -219,6 +219,16 @@ pub(super) fn settings(options: &SetupOptions) -> Vec<RequestSetting> {
         .collect()
 }
 
+/// A speaker as the transcript names them. The live API labels speakers `spk:0`, `spk:1`…,
+/// counted from nought, where Google's page shows `spk_1`: both read from one, as Gemini's chat
+/// models number them.
+fn speaker(label: &str) -> String {
+    match label.trim().strip_prefix("spk:").map(str::parse::<u32>) {
+        Some(Ok(n)) => format!("Speaker {}", n + 1),
+        _ => speaker_label(label),
+    }
+}
+
 /// Gemini 3.5 Transcribe's code for a language: the first it documents for it, Mandarin for
 /// Chinese.
 fn transcribe_language(code: &str) -> Option<&'static str> {
@@ -250,6 +260,14 @@ mod tests {
         assert_eq!(transcribe_language("kea"), Some("kea-CV"));
         // A language the model does not list gets no hint: it detects the language instead.
         assert_eq!(transcribe_language("yo"), None);
+    }
+
+    #[test]
+    fn speakers_are_numbered_from_one() {
+        assert_eq!(speaker("spk:0"), "Speaker 1");
+        assert_eq!(speaker("spk:1"), "Speaker 2");
+        // The documented form keeps its own number.
+        assert_eq!(speaker("spk_1"), "Speaker 1");
     }
 
     #[test]

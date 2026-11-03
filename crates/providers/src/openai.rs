@@ -6,8 +6,9 @@
 //! Neither Python pipeline uses OpenAI for these tasks, so this follows the API reference
 //! rather than ported code.
 //!
-//! Prompt caching is automatic: the instructions and schema come first and are shared by every
-//! page, and the response reports the input tokens read from or written to the cache. Economy
+//! Prompt caching is explicit: the instructions and schema come first and are shared by every
+//! page, cached up to a breakpoint after the instructions, and the response reports the input
+//! tokens read from or written to the cache. Economy
 //! mode sends Responses requests through the Batch API ([`batch`]); the transcriptions endpoint
 //! has no batch service, so recordings always go one by one.
 
@@ -65,13 +66,26 @@ impl OpenAi {
                 "detail": "high",
             })
         };
+        // The instructions go in a developer message, as top-level `instructions` cannot hold
+        // a cache breakpoint; explicit mode caches up to the breakpoint only, so each page is
+        // not written to the cache at 1.25× the input price, as implicit mode does.
         let mut body = json!({
             "model": request.model,
-            "instructions": request.prompt,
-            "input": [{
-                "role": "user",
-                "content": [media, { "type": "input_text", "text": request.user_prompt }],
-            }],
+            "prompt_cache_options": { "mode": "explicit" },
+            "input": [
+                {
+                    "role": "developer",
+                    "content": [{
+                        "type": "input_text",
+                        "text": request.prompt,
+                        "prompt_cache_breakpoint": { "mode": "explicit" },
+                    }],
+                },
+                {
+                    "role": "user",
+                    "content": [media, { "type": "input_text", "text": request.user_prompt }],
+                },
+            ],
             "max_output_tokens": request.tuning.max_output_tokens.unwrap_or(MAX_OUTPUT_TOKENS),
             "store": false,
         });
@@ -314,7 +328,8 @@ impl Provider for OpenAi {
     fn request_settings(&self, task: Task, _model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
         match task {
             Task::TextExtraction | Task::Analysis | Task::Contents | Task::TextCorrection => {
-                let mut settings = Vec::new();
+                let mut settings =
+                    vec![RequestSetting::new("prompt_cache_options.mode", "explicit")];
                 if let Some(effort) = &tuning.reasoning {
                     settings.push(RequestSetting::new("reasoning.effort", effort.as_str()));
                 }

@@ -61,10 +61,15 @@ spends a few cents and never runs in CI:
 cargo run -p kalamu --example live -- <samples> <out> [job name filter]
 ```
 
-`<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`. The runner
-extracts text with every provider, transcribes the interview with speakers, runs three analyses,
-writes each job's outputs to its own folder in `<out>` and prints a line per piece with its
-status and the cost. `LIVE_SKIP=gemini` leaves out a provider without credit.
+`<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`, and for
+the `analysis-batch` job `article2.txt` and `article3.txt`; the files in `samples/` serve, with
+an interview of two voices for the speakers. The runner extracts text with every provider,
+transcribes the interview with speakers, runs the analyses, writes each job's outputs to its
+own folder in `<out>` and prints each set-up's estimate, then a line per piece with its status,
+the tokens billed (read, cached, written) and the cost. `LIVE_SKIP=gemini` leaves out a
+provider without credit; `LIVE_PACE=economy` sends the jobs as batches, which can take from a
+minute to hours. A batch leaves files in OpenAI's and Mistral's storage: delete them once the
+run ends.
 
 ## Preview in a browser
 
