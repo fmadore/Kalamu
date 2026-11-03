@@ -40,7 +40,8 @@ the cheaper batch mode have had fewer live runs, so try a small job first. See t
 - **Make a detailed table of contents** of a long document: a newspaper or magazine issue, an
   archival file scanned in one piece, a book or report. One model reads each page, another,
   cheaper one (from any provider) combines the pages into one entry per article or item, with
-  its pages, authors, date or summary.
+  its pages, authors, date or summary. Each entry can then become an item of its own, an
+  article or a letter, whose pages are extracted, analysed or exported apart from the rest.
 - **Correct existing text**: the noisy OCR of a PDF's text layer or of a digital library's text
   file, corrected page by page with its spelling of the time kept, every change shown against
   the original.

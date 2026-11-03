@@ -13,6 +13,7 @@ mod searchable_pdf;
 mod subtitles;
 mod text;
 mod timeline;
+pub mod units;
 
 use kalamu_core::{ExportDocument, ExportFormat, Exporter};
 

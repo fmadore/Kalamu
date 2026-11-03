@@ -185,6 +185,11 @@ pub struct ProvenanceDerived {
     /// Pieces left out, failed or not yet read (numbered from 1).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub missing: Vec<u32>,
+    /// For a document unit's pages: the unit as it was read, its pages numbered as in the
+    /// original. `pieces` and `reviewed` then count those pages in the table of contents.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub unit: Option<crate::FrozenUnit>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

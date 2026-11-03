@@ -4,6 +4,7 @@
 	// into view, marked. Under the entries, what the first step read on that page, to check an
 	// entry against its source. The entries can be corrected, added and removed; the model's own
 	// stay kept apart. A search keeps the entries that hold its words, marked where they stand.
+	// Items shows the entries made into document units, read and exported one by one (#50).
 	import { onMount, tick } from 'svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
@@ -11,6 +12,8 @@
 	import PageStrip from './PageStrip.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
 	import SearchBar from './SearchBar.svelte';
+	import UnitsPanel from './UnitsPanel.svelte';
+	import type { PieceRef } from '#lib/bindings/PieceRef.js';
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import {
 		asAnswers,
@@ -38,6 +41,8 @@
 	let page = $state(0);
 	/** The entries being corrected, one draft each. */
 	let editing = $state<Draft[] | null>(null);
+	/** The items made from the entries shown instead of the entries. */
+	let itemsShown = $state(false);
 
 	const setup = $derived(review.setups[0]);
 	const fields = $derived(entryFields(setup));
@@ -84,6 +89,18 @@
 			keepList = true;
 			page = index;
 		}
+	}
+
+	/** Shows a page an item names. */
+	function showPiece(piece: PieceRef) {
+		if (piece.kind !== 'page') return;
+		const index = pageViews.findIndex(
+			(v) =>
+				v.piece.kind === 'page' &&
+				v.piece.number === piece.number &&
+				(!piece.half || v.piece.half === piece.half)
+		);
+		if (index >= 0) page = index;
 	}
 
 	const onPage = (entry: FieldAnswer[]) => pagesOf(valueText(entry, PAGES)).includes(pageNumber);
@@ -136,9 +153,14 @@
 
 {#snippet actions()}
 	{#if done && !editing}
-		<button class="btn" onclick={() => (editing = entries.map((e) => toDraft(fields, e)))}
-			><Icon name="edit" size={14} />{m.review.editEntries}</button
+		<button class="btn toggle" aria-pressed={itemsShown} onclick={() => (itemsShown = !itemsShown)}
+			>{m.units.tab}</button
 		>
+		{#if !itemsShown}
+			<button class="btn" onclick={() => (editing = entries.map((e) => toDraft(fields, e)))}
+				><Icon name="edit" size={14} />{m.review.editEntries}</button
+			>
+		{/if}
 	{/if}
 {/snippet}
 
@@ -261,6 +283,14 @@
 				><Icon name="plus" size={14} />{m.review.addEntry}</button
 			>
 		</CorrectionEditor>
+	{:else if itemsShown && setup}
+		<UnitsPanel
+			{jobId}
+			setupId={setup.id}
+			{sourceId}
+			shown={shownPage?.piece ?? null}
+			onshow={showPiece}
+		/>
 	{:else if combined?.status === 'failed'}
 		<p class="error">{combined.error}</p>
 	{:else if !combined || entries.length === 0}
@@ -296,6 +326,11 @@
 <style>
 	.error {
 		color: var(--danger-text);
+	}
+	/* A view that is on reads as pressed in, not as an action. */
+	.toggle[aria-pressed='true'] {
+		background: var(--wash);
+		border-color: var(--line-strong);
 	}
 	/* The entries as a numbered table of contents, set in the reading face. */
 	.entries {

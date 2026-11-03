@@ -414,3 +414,30 @@ fn a_database_file_survives_reopening() -> Result<(), StoreError> {
     assert_eq!(store.pieces(job.id)?.len(), 1);
     Ok(())
 }
+
+#[test]
+fn units_are_kept_in_order_and_go_with_their_job() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    let ids = (job.id, job.setups[0].id, job.sources[0].id);
+    let mut second = kalamu_core::DocumentUnit::new(ids.0, ids.1, ids.2, 1);
+    second.title = "Lettre".into();
+    second.pages = vec![PieceRef::page(2)];
+    let first = kalamu_core::DocumentUnit::new(ids.0, ids.1, ids.2, 0);
+    store.put_unit(&second)?;
+    store.put_unit(&first)?;
+    assert_eq!(store.units(job.id)?, [first.clone(), second.clone()]);
+
+    second.revision += 1;
+    second.pages.push(PieceRef::page(1));
+    store.put_unit(&second)?;
+    assert_eq!(store.unit(second.id)?, second);
+    store.delete_unit(first.id)?;
+    assert_eq!(store.units(job.id)?, [second.clone()]);
+    assert!(matches!(store.unit(first.id), Err(StoreError::NotFound)));
+
+    store.delete_job(job.id)?;
+    assert!(store.units(job.id)?.is_empty());
+    Ok(())
+}

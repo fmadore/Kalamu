@@ -4,6 +4,29 @@ Read by Claude Code (through `CLAUDE.md`) and Codex. [docs/specification.md](doc
 says what the app must do, [docs/roadmap.md](docs/roadmap.md) what is built; this file says how
 to build it. The [README](README.md) is the short public introduction.
 
+## Windows and macOS, always both
+
+Kalamu is developed for Windows (x64 and ARM64) and macOS (Apple Silicon) alike, and every
+change ships to both. The maintainer works on Windows, so the Mac is the side to remember:
+
+- **Nothing assumes Windows.** Paths go through `Path` and `PathBuf`, never a `\` or `/`
+  written into a path; file names Kalamu makes avoid what either system refuses (`<>:"/\|?*`,
+  control characters, a trailing dot or space).
+- **What differs lives in one place per layer** (see *Architecture*): `src-tauri/src/platform/`,
+  one file per system with the same items; `src/lib/platform.ts`, which components ask
+  instead of testing the system (Ctrl or ⌘, how a shortcut is written, what the system calls
+  its keychain); `tauri.<system>.conf.json`.
+- **Two webviews.** The interface runs in WebView2 on Windows and WebKit on macOS: the review's
+  player gets each one's formats from the app, and `npm run test:webkit` checks the interface
+  in WebKit.
+- **Words for both.** Interface text, documentation and the privacy policy name each system's
+  own places: Credential Manager and the Keychain, File Explorer and Finder, the notification
+  area and the menu bar, each system's data folder.
+- **Done means both.** CI builds and tests Windows x64, Windows ARM64 and macOS, and a change is
+  finished only when all three pass. Code a Windows PC cannot compile (`platform/macos.rs`) is
+  checked by CI before merging, and a pull request says what has not yet been tried on a real
+  Mac.
+
 ## Before writing code
 
 - Read docs/specification.md in full. Keep it, the roadmap and the README in sync when a

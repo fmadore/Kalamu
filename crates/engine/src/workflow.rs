@@ -90,6 +90,7 @@ fn as_text(source: &SourceFile) -> SourceFile {
             setup_id: SetupId::new(),
             source_id: source.id,
             original_path: source.path.clone(),
+            unit: None,
         }),
     }
 }

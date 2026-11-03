@@ -1,0 +1,34 @@
+{
+  "units": [
+    {
+      "entry": 2,
+      "fields": {
+        "authors": [
+          "La Rédaction",
+          "A. Diallo"
+        ]
+      },
+      "file": "an-nasr-12 02 Fatwa sur le jeûne, en voyage.pdf",
+      "id": "00000000-0000-0000-0000-000000000000",
+      "number": 2,
+      "original": {
+        "file_name": "an-nasr-12.pdf",
+        "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f"
+      },
+      "pages": [
+        {
+          "kind": "page",
+          "number": 3
+        },
+        {
+          "half": "left",
+          "kind": "page",
+          "number": 8
+        }
+      ],
+      "pages_text": "3, 8 (left)",
+      "revision": 1,
+      "title": "Fatwa sur le jeûne, \"en voyage\""
+    }
+  ]
+}

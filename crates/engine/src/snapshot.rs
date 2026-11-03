@@ -157,6 +157,7 @@ impl Engine {
                     setup_id,
                     source_id: source.id,
                     original_path: source.path.clone(),
+                    unit: None,
                 }),
             });
         }
@@ -207,6 +208,22 @@ impl Engine {
             let Some(from) = &source.derived_from else {
                 continue;
             };
+            // A unit's pages are out of date when the unit now has other pages; its title only
+            // names the files.
+            if let Some(frozen) = &from.unit {
+                let freshness = match self.store.unit(frozen.id) {
+                    Ok(unit) if unit.pages == frozen.pages => Freshness::Current,
+                    Ok(_) => Freshness::Changed,
+                    Err(kalamu_core::StoreError::NotFound) => Freshness::Gone,
+                    Err(e) => return Err(e.into()),
+                };
+                out.push(DerivedState {
+                    source_id: source.id,
+                    from: from.clone(),
+                    freshness,
+                });
+                continue;
+            }
             let freshness = match self.frozen_text(from.job_id, from.setup_id, from.source_id) {
                 Ok((text, ..)) => {
                     if kalamu_core::fingerprint::sha256_hex(text.as_bytes()) == source.sha256 {

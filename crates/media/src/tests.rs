@@ -35,6 +35,30 @@ fn a_range_of_pages_becomes_one_pdf_in_order() -> Result<(), MediaError> {
 }
 
 #[test]
+fn chosen_pages_keep_their_order_and_halves() -> Result<(), MediaError> {
+    let pdf = PdfSource::from_bytes(&sample_pdf(&[A4, SPREAD, A4, A4], true))?;
+    let chosen = pdf.chosen_pages_pdf(&[
+        (4, None),
+        (2, Some(PageHalf::Right)),
+        (2, Some(PageHalf::Left)),
+    ])?;
+    let reread = PdfSource::from_bytes(&chosen)?;
+    assert_eq!(reread.page_count(), 3);
+    let doc = lopdf::Document::load_mem(&chosen).map_err(|e| MediaError::Pdf(e.to_string()))?;
+    assert!(doc.extract_text(&[1]).is_ok_and(|t| t.contains("Page 4")));
+    for n in [2, 3] {
+        let (w, h) = reread.display_size(n).unwrap_or_default();
+        assert!(
+            (w - 595.0).abs() < 1.0 && (h - 842.0).abs() < 1.0,
+            "page {n} is a half"
+        );
+    }
+    assert!(pdf.chosen_pages_pdf(&[]).is_err());
+    assert!(pdf.chosen_pages_pdf(&[(5, None)]).is_err(), "no page 5");
+    Ok(())
+}
+
+#[test]
 fn pdf_pages_become_standalone_single_page_pdfs() -> Result<(), MediaError> {
     let pdf = PdfSource::from_bytes(&sample_pdf(&[A4, A4, A4], true))?;
     assert_eq!(pdf.page_count(), 3);
