@@ -1,14 +1,13 @@
 # 2026-11-04 · Could Kalamu also ship in the Mac App Store?
 
-**Status:** study, no code changed. The maintainer decides whether to go ahead.
+**Status:** study. The maintainer chose to go ahead: see [the build](2026-11-04-mac-app-store-build.md).
 
 ## Context
 
 The [macOS decision](2026-11-02-macos.md) ruled out the Mac App Store because "its sandbox and
 running FFmpeg as a separate program do not mix", and because Kalamu writes its results next to
 the researcher's files. From 1.4.0 the GitHub disk image is signed with a Developer ID and
-notarised (`docs/decisions/2026-11-04-macos-notarisation.md`, on the branch
-`feat/macos-notarisation`, not yet merged), so the maintainer now has an Apple Developer Program
+notarised ([decision](2026-11-04-macos-notarisation.md)), so the maintainer now has an Apple Developer Program
 membership (team `3HMSG8WB7K`). Given that, the maintainer asks whether the store is possible after all.
 
 This record checks each obstacle against the code as it is on `main` (b756b05), against Tauri's
