@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import FieldsEditor from './FieldsEditor.svelte';
+	import Icon from './Icon.svelte';
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
@@ -20,20 +21,49 @@
 	let error = $state<string | null>(null);
 
 	const selected = $derived(presets.find((p) => p.id === selectedId) ?? null);
+	/** A prompt being written from nothing, not yet saved: it has no id until it is. */
+	const isNew = $derived(draft?.id === '');
 	const dirty = $derived(
-		!!draft &&
-			!!selected &&
-			(draft.name !== selected.name ||
-				draft.description !== selected.description ||
-				draft.instructions !== selected.instructions ||
-				draft.user_prompt !== selected.user_prompt ||
-				(draft.merge_instructions ?? null) !== (selected.merge_instructions ?? null) ||
-				JSON.stringify(draft.schema) !== JSON.stringify(selected.schema))
+		isNew ||
+			(!!draft &&
+				!!selected &&
+				(draft.name !== selected.name ||
+					draft.description !== selected.description ||
+					draft.instructions !== selected.instructions ||
+					draft.user_prompt !== selected.user_prompt ||
+					(draft.merge_instructions ?? null) !== (selected.merge_instructions ?? null) ||
+					JSON.stringify(draft.schema) !== JSON.stringify(selected.schema)))
 	);
 
 	async function load(keep?: string) {
 		presets = await api.listPresets();
 		select(keep ?? selectedId ?? presetId ?? presets[0]?.id ?? null);
+	}
+
+	/** A new prompt for a task: its instructions empty for the researcher's own, the rest (the
+	 * request, and an analysis's or a table of contents' fields) from the task's default prompt,
+	 * which a new one of those tasks cannot be saved without. */
+	function blank(task: Task): Preset {
+		const base = presets.find((p) => p.task === task && p.builtin && p.id !== DICTIONARY);
+		const copy = base ? structuredClone($state.snapshot(base)) : null;
+		return {
+			id: '',
+			task,
+			name: draft?.id === '' ? draft.name : m.prompts.newName,
+			description: '',
+			instructions: draft?.id === '' ? draft.instructions : '',
+			user_prompt: copy?.user_prompt ?? '',
+			builtin: false,
+			modified: false,
+			...(copy?.schema ? { schema: copy.schema } : {}),
+			...(copy?.merge_instructions ? { merge_instructions: copy.merge_instructions } : {})
+		};
+	}
+
+	function create() {
+		error = null;
+		selectedId = null;
+		draft = blank(selected?.task ?? 'text_extraction');
 	}
 
 	function select(id: string | null) {
@@ -75,6 +105,9 @@
 <div class="layout">
 	<section class="list" aria-labelledby="prompts-title">
 		<div class="row">
+			<button class="btn sm primary" onclick={create}
+				><Icon name="plus" size={14} />{m.prompts.newPrompt}</button
+			>
 			<button
 				class="btn sm"
 				onclick={() =>
@@ -132,8 +165,30 @@
 		{/each}
 	</section>
 
-	{#if draft && selected}
+	{#if draft && (selected || isNew)}
 		<section class="editor card" aria-label={draft.name}>
+			{#if draft.id !== DICTIONARY}
+				<!-- The task a prompt belongs to, which New job offers it for: chosen while it is new. -->
+				<div class="field">
+					{#if isNew}
+						<label class="label" for="prompt-task">{m.prompts.task}</label>
+						<select
+							id="prompt-task"
+							value={draft.task}
+							onchange={(e) => (draft = blank(e.currentTarget.value as Task))}
+						>
+							{#each tasks as task (task)}
+								<option value={task}>{m.task[task]}</option>
+							{/each}
+						</select>
+						<p class="muted small">{m.prompts.newHint}</p>
+					{:else}
+						<span>{m.prompts.task}</span>
+						<p class="task-of"><Icon name={draft.task} size={14} />{m.task[draft.task]}</p>
+					{/if}
+					<p class="muted small">{m.prompts.taskHint}</p>
+				</div>
+			{/if}
 			<label class="field">
 				<span>{m.prompts.name}</span>
 				<input type="text" bind:value={draft.name} />
@@ -144,8 +199,11 @@
 			</label>
 			<label class="field" class:grow={!draft.schema}>
 				<span>{m.prompts.instructions}</span>
-				<textarea class="mono" class:tall={!!draft.schema} bind:value={draft.instructions}
-				></textarea>
+				<textarea
+					class="mono"
+					class:tall={!!draft.schema}
+					bind:value={draft.instructions}
+					placeholder={isNew ? m.prompts.instructionsPlaceholder : undefined}></textarea>
 			</label>
 			<label class="field">
 				<span
@@ -180,7 +238,11 @@
 					onclick={() => run(async () => (await api.savePreset($state.snapshot(draft)!)).id)}
 					>{m.prompts.save}</button
 				>
-				{#if selected.id !== DICTIONARY}
+				{#if isNew || !selected}
+					<button class="btn ghost" onclick={() => select(presets[0]?.id ?? null)}
+						>{m.prompts.discard}</button
+					>
+				{:else if selected.id !== DICTIONARY}
 					<button
 						class="btn"
 						onclick={() =>
@@ -190,7 +252,7 @@
 							)}>{m.prompts.duplicate}</button
 					>
 				{/if}
-				{#if selected.modified}
+				{#if selected?.modified}
 					<button
 						class="btn"
 						onclick={() =>
@@ -201,7 +263,7 @@
 					>
 						{m.prompts.reset}
 					</button>
-				{:else if !selected.builtin}
+				{:else if selected && !selected.builtin}
 					<button
 						class="btn danger"
 						onclick={() =>
@@ -213,7 +275,7 @@
 						{m.prompts.delete}
 					</button>
 				{/if}
-				{#if dirty}<span class="muted small">{m.prompts.unsaved}</span>{/if}
+				{#if dirty && !isNew}<span class="muted small">{m.prompts.unsaved}</span>{/if}
 			</div>
 		</section>
 	{/if}
@@ -240,7 +302,18 @@
 	}
 	.row {
 		display: flex;
+		flex-wrap: wrap;
 		gap: var(--space-2);
+	}
+	.task-of {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		color: var(--text-bright);
+		font-weight: 500;
+	}
+	#prompt-task {
+		max-width: 22rem;
 	}
 	.group {
 		margin-top: var(--space-3);

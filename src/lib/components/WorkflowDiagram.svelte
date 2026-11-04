@@ -86,7 +86,6 @@
 		padding: var(--space-2) var(--space-4) var(--space-4);
 		border-radius: var(--radius-card);
 		background: var(--surface-1);
-		max-width: 44rem;
 	}
 	.compact {
 		padding: var(--space-3);
@@ -108,7 +107,10 @@
 		margin: var(--space-2) 0 0;
 		padding: 0;
 		list-style: none;
+		/* Scrolls sideways only when the steps cannot fit; never up and down, which the stages'
+		   entrance would otherwise set off with a scroll bar while they appear. */
 		overflow-x: auto;
+		overflow-y: hidden;
 	}
 	.compact .stages {
 		margin: 0;
@@ -158,7 +160,7 @@
 		font-weight: 500;
 	}
 	.note {
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		line-height: 1.35;
 		color: var(--text-muted);
 	}
@@ -202,7 +204,6 @@
 	@keyframes appear {
 		from {
 			opacity: 0;
-			transform: translateY(3px);
 		}
 	}
 	@keyframes travel {

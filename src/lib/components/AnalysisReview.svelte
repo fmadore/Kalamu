@@ -274,7 +274,6 @@
 	}
 	/* One answer: a sans label over the value in the reading face. */
 	.answer {
-		max-width: 44rem;
 		padding: var(--space-4) 0;
 		border-top: 1px solid var(--line-soft);
 		font-family: var(--font-text);
@@ -321,7 +320,7 @@
 	/* The sigla of the set-ups that found a name, when not all of them did. */
 	.found {
 		font-family: var(--font-mono);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		font-weight: 500;
 		text-transform: uppercase;
 		color: var(--text-muted);

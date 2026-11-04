@@ -30,21 +30,52 @@ pub struct DiffSpan {
     pub text: String,
 }
 
-/// Word-level differences, so names, numbers and dates that disagree stand out.
+/// A quotation mark or apostrophe as a keyboard types it: curly and straight quotes are the same
+/// reading, set by a model or a typist as habit takes them, so they are neither a difference
+/// nor an error. One character for one, so offsets stay the same.
+fn plain_quote(c: char) -> char {
+    match c {
+        '\u{2018}' | '\u{2019}' | '\u{201A}' | '\u{201B}' | '\u{2032}' | '\u{02BC}' => '\'',
+        '\u{201C}' | '\u{201D}' | '\u{201E}' | '\u{201F}' | '\u{2033}' => '"',
+        c => c,
+    }
+}
+
+fn plain_quotes(text: &str) -> String {
+    text.chars().map(plain_quote).collect()
+}
+
+/// Word-level differences, so names, numbers and dates that disagree stand out. Curly and
+/// straight quotes compare as the same. Each side keeps its own characters: a shared stretch is
+/// written as the right text writes it, which is as long as the left's.
 pub fn diff(left: &str, right: &str) -> Vec<DiffSpan> {
-    let diff = TextDiff::from_words(left, right);
+    let (plain_left, plain_right) = (plain_quotes(left), plain_quotes(right));
+    let diff = TextDiff::from_words(&plain_left, &plain_right);
+    let (left, right): (Vec<char>, Vec<char>) = (left.chars().collect(), right.chars().collect());
+    let (mut at_left, mut at_right) = (0, 0);
     let mut spans: Vec<DiffSpan> = Vec::new();
     for change in diff.iter_all_changes() {
-        let kind = match change.tag() {
-            ChangeTag::Equal => DiffKind::Same,
-            ChangeTag::Delete => DiffKind::Removed,
-            ChangeTag::Insert => DiffKind::Added,
+        let length = change.value().chars().count();
+        let (kind, text) = match change.tag() {
+            ChangeTag::Equal => {
+                at_left += length;
+                at_right += length;
+                (DiffKind::Same, &right[at_right - length..at_right])
+            }
+            ChangeTag::Delete => {
+                at_left += length;
+                (DiffKind::Removed, &left[at_left - length..at_left])
+            }
+            ChangeTag::Insert => {
+                at_right += length;
+                (DiffKind::Added, &right[at_right - length..at_right])
+            }
         };
         match spans.last_mut() {
-            Some(last) if last.kind == kind => last.text.push_str(change.value()),
+            Some(last) if last.kind == kind => last.text.extend(text),
             _ => spans.push(DiffSpan {
                 kind,
-                text: change.value().to_string(),
+                text: text.iter().collect(),
             }),
         }
     }
@@ -82,17 +113,18 @@ pub fn error_rate<T: PartialEq>(hypothesis: &[T], reference: &[T]) -> f64 {
 }
 
 /// Characters with runs of white space made one space: a line break the model kept or joined
-/// is not a reading error.
+/// is not a reading error, nor a curly quote for a straight one.
 fn characters(text: &str) -> Vec<char> {
     text.split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
         .chars()
+        .map(plain_quote)
         .collect()
 }
 
-fn words(text: &str) -> Vec<&str> {
-    text.split_whitespace().collect()
+fn words(text: &str) -> Vec<String> {
+    text.split_whitespace().map(plain_quotes).collect()
 }
 
 fn cer(hypothesis: &str, reference: &str) -> f64 {
@@ -467,5 +499,28 @@ mod tests {
             .map(|s| s.text.as_str())
             .collect();
         assert_eq!(joined, "le 5 mai 1957");
+    }
+
+    #[test]
+    fn curly_and_straight_quotes_are_the_same_reading() {
+        let curly = "l\u{2019}imam dit \u{201C}salam\u{201D}";
+        let straight = "l'imam dit \"salam\"";
+        assert_eq!(cer(curly, straight), 0.0);
+        assert_eq!(wer(curly, straight), 0.0);
+        let spans = diff(curly, straight);
+        assert!(spans.iter().all(|s| s.kind == DiffKind::Same), "{spans:?}");
+        // The shared text is the right one's, as long as the left's in every unit the
+        // interface counts.
+        let joined: String = spans.iter().map(|s| s.text.as_str()).collect();
+        assert_eq!(joined, straight);
+        assert_eq!(joined.encode_utf16().count(), curly.encode_utf16().count());
+        // A real difference beside a quote is still one.
+        let spans = diff("l\u{2019}imam Sall", "l'imam Sow");
+        let removed: Vec<&str> = spans
+            .iter()
+            .filter(|s| s.kind == DiffKind::Removed)
+            .map(|s| s.text.as_str())
+            .collect();
+        assert_eq!(removed, ["Sall"]);
     }
 }

@@ -1,7 +1,9 @@
 <script lang="ts">
-	// The sidebar: the app's name, New job, Projects, the list of jobs grouped by what they need from the
-	// researcher, and the tools at its foot (Prompts, Settings, Glossary, support). It folds to a rail of
-	// icons named by their tooltips, leaving the room to the work.
+	// The sidebar: the app's name, New job, Projects with the projects listed under it, the list of
+	// jobs grouped by what they need from the researcher, and the tools at its foot (Prompts,
+	// Settings, Glossary, support). A finished job dragged onto a listed project is added to it,
+	// as its menu's Add to a project does. It folds to a rail of icons named by their tooltips,
+	// leaving the room to the work.
 	import Icon from './Icon.svelte';
 	import JobMenu from './JobMenu.svelte';
 	import SupportLink from './SupportLink.svelte';
@@ -10,7 +12,8 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { shortcut } from '#lib/platform.js';
 	import { describeError } from '#lib/errors.js';
-	import { app, go, refreshJobs, toast } from '#lib/state.svelte.js';
+	import { app, go, refreshJobs, refreshProjects, toast } from '#lib/state.svelte.js';
+	import { keep, recall } from '#lib/stored.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -101,7 +104,83 @@
 	const offlineReady = $derived(app.offline?.models.some((s) => s.installed) ?? false);
 
 	const share = (j: JobSummary) => (100 * j.pieces_finished) / Math.max(j.pieces_total, 1);
+
+	// The projects under Projects, unfolded unless the researcher folded them on this computer;
+	// read again whenever the screen changes, so one created, renamed or deleted shows.
+	const PROJECTS_KEY = 'kalamu.sidebar.projects';
+	let showProjects = $state(recall(PROJECTS_KEY, (v) => v === 1, true));
+	$effect(() => keep(PROJECTS_KEY, showProjects ? 1 : 0));
+	$effect(() => {
+		void app.view;
+		void refreshProjects();
+	});
+	const listed = $derived(app.projects.filter((p) => !p.project.archived));
+	const openProject = $derived(app.view.name === 'projects' ? app.view.projectId : undefined);
+
+	/* Dragging a finished job onto a project. Done with the pointer rather than the browser's own
+	   drag and drop, which the window gives over to files dropped from File Explorer or Finder. */
+	let press: { job: JobSummary; x: number; y: number } | null = null;
+	let dragging = $state<{ job: JobSummary; x: number; y: number } | null>(null);
+	let dropOn = $state<string | null>(null);
+	/** Set when a drag ends, so the click that follows it does not open the job. */
+	let dragged = false;
+
+	function pressJob(e: PointerEvent, job: JobSummary) {
+		if (e.button !== 0 || e.pointerType === 'touch') return;
+		press = { job, x: e.clientX, y: e.clientY };
+	}
+
+	function moveJob(e: PointerEvent) {
+		if (!press) return;
+		if (!dragging) {
+			if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) return;
+			showProjects = true;
+		}
+		dragging = { job: press.job, x: e.clientX, y: e.clientY };
+		const under = document.elementFromPoint(e.clientX, e.clientY);
+		dropOn = under?.closest<HTMLElement>('[data-project]')?.dataset.project ?? null;
+	}
+
+	/** Ends a drag; the click the browser sends after it is swallowed. */
+	function endDrag() {
+		const was = dragging !== null;
+		press = null;
+		dragging = null;
+		dropOn = null;
+		if (!was) return;
+		dragged = true;
+		setTimeout(() => (dragged = false));
+	}
+
+	async function dropJob() {
+		const drag = dragging;
+		const target = app.projects.find((p) => p.project.id === dropOn);
+		endDrag();
+		if (!drag || !target) return;
+		try {
+			await api.linkJob(target.project.id, drag.job.id, null);
+			toast(m.shell.addedTo(target.project.name));
+			await refreshProjects();
+		} catch (e) {
+			toast(describeError(e, m));
+		}
+	}
 </script>
+
+<svelte:window
+	onpointermove={moveJob}
+	onpointerup={() => void dropJob()}
+	onpointercancel={endDrag}
+	onkeydown={(e) => {
+		if (e.key === 'Escape' && dragging) endDrag();
+	}}
+/>
+
+{#if dragging}
+	<div class="drag-ghost" style:left="{dragging.x + 12}px" style:top="{dragging.y + 8}px">
+		<Icon name={dragging.job.task} size={14} /><span class="ellipsis">{dragging.job.name}</span>
+	</div>
+{/if}
 
 {#if menu}
 	{@const at = menu}
@@ -162,15 +241,50 @@
 		{/if}
 	</button>
 
-	<button
-		class="tool projects"
-		class:current={app.view.name === 'projects'}
-		aria-current={app.view.name === 'projects' ? 'page' : undefined}
-		aria-label={collapsed ? m.nav.projects : undefined}
-		title={collapsed ? m.nav.projects : undefined}
-		onclick={() => go({ name: 'projects' })}
-		><Icon name="project" size={16} />{#if !collapsed}{m.nav.projects}{/if}</button
-	>
+	<div class="nav-group" class:dropping={dragging !== null}>
+		<div class="tool-row">
+			<button
+				class="tool projects"
+				class:current={app.view.name === 'projects' && !openProject}
+				aria-current={app.view.name === 'projects' && !openProject ? 'page' : undefined}
+				aria-label={collapsed ? m.nav.projects : undefined}
+				title={collapsed ? m.nav.projects : undefined}
+				onclick={() => go({ name: 'projects' })}
+				><Icon name="project" size={16} />{#if !collapsed}{m.nav.projects}{/if}</button
+			>
+			{#if !collapsed && listed.length > 0}
+				<button
+					class="fold unfold"
+					aria-label={showProjects ? m.shell.hideProjects : m.shell.showProjects}
+					title={showProjects ? m.shell.hideProjects : m.shell.showProjects}
+					aria-expanded={showProjects}
+					aria-controls="project-list"
+					onclick={() => (showProjects = !showProjects)}
+					><span class="turn" class:open={showProjects}><Icon name="chevron" size={14} /></span
+					></button
+				>
+			{/if}
+		</div>
+		{#if !collapsed && showProjects && listed.length > 0}
+			<ul class="projects-list" id="project-list" aria-label={m.nav.projects}>
+				{#each listed as p (p.project.id)}
+					<li>
+						<button
+							class="project"
+							class:current={openProject === p.project.id}
+							class:drop={dropOn === p.project.id}
+							aria-current={openProject === p.project.id ? 'page' : undefined}
+							data-project={p.project.id}
+							onclick={() => go({ name: 'projects', projectId: p.project.id })}
+							><span class="ellipsis">{p.project.name}</span><span class="num">{p.documents}</span
+							></button
+						>
+					</li>
+				{/each}
+			</ul>
+			{#if dragging}<p class="drop-hint">{m.shell.dropOnProject}</p>{/if}
+		{/if}
+	</div>
 	<button
 		class="tool workflows"
 		class:current={app.view.name === 'workflows'}
@@ -203,8 +317,15 @@
 								<button
 									class="job"
 									class:current={openJob === job.id}
+									class:lifted={dragging?.job.id === job.id}
 									aria-current={openJob === job.id ? 'page' : undefined}
-									onclick={() => go({ name: 'jobs', jobId: job.id })}
+									title={group.key === 'finished' && listed.length > 0
+										? m.shell.dragHint
+										: undefined}
+									onpointerdown={group.key === 'finished' ? (e) => pressJob(e, job) : undefined}
+									onclick={() => {
+										if (!dragged) go({ name: 'jobs', jobId: job.id });
+									}}
 									oncontextmenu={(e) => openMenu(e, job)}
 								>
 									<span class="job-name">
@@ -380,6 +501,106 @@
 		flex: 1;
 		text-align: left;
 	}
+	.nav-group {
+		display: grid;
+		gap: 2px;
+		margin-bottom: calc(-1 * var(--space-3));
+	}
+	.tool-row {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+	}
+	.tool-row .tool {
+		flex: 1;
+	}
+	.collapsed .tool-row .tool {
+		flex: none;
+	}
+	.unfold {
+		margin-left: 0;
+	}
+	.turn {
+		display: grid;
+		transition: transform 120ms ease-out;
+	}
+	.turn.open {
+		transform: rotate(90deg);
+	}
+	/* The projects under Projects, indented under its icon; a long list scrolls on its own. */
+	.projects-list {
+		max-height: 13rem;
+		overflow: hidden auto;
+		padding-left: 1.625rem;
+	}
+	.projects-list li,
+	.project .ellipsis {
+		min-width: 0;
+	}
+	.project {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+		min-height: var(--control-sm);
+		padding: 0 0.625rem;
+		border: 0;
+		border-radius: var(--radius-control);
+		background: transparent;
+		color: var(--text-body);
+		font-size: var(--type-sm);
+		text-align: left;
+		cursor: pointer;
+		transition: background-color 120ms ease-out;
+	}
+	.project .num {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--text-muted);
+	}
+	.project:hover {
+		background: var(--wash);
+	}
+	.project.current {
+		background: var(--surface-0);
+		box-shadow: var(--shadow-raised);
+		color: var(--text-bright);
+		font-weight: 500;
+	}
+	/* While a job is dragged, each project shows it can take it; the one under the pointer is
+	   ringed in ink. */
+	.dropping .project {
+		box-shadow: inset 0 0 0 1px var(--line-strong);
+	}
+	.dropping .project.drop {
+		background: var(--surface-0);
+		box-shadow: inset 0 0 0 1.5px var(--ink);
+		color: var(--text-bright);
+	}
+	.drop-hint {
+		padding: var(--space-1) 0.625rem 0 2.25rem;
+		font-size: var(--type-xs);
+		color: var(--text-muted);
+	}
+	.job.lifted {
+		opacity: 0.5;
+	}
+	.drag-ghost {
+		position: fixed;
+		z-index: 60;
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		max-width: 16rem;
+		padding: var(--space-1) var(--space-3);
+		border-radius: var(--radius-control);
+		background: var(--ink);
+		color: var(--on-ink);
+		font-size: var(--type-sm);
+		box-shadow: var(--shadow-flyout);
+		pointer-events: none;
+	}
 	.jobs {
 		flex: 1;
 		min-height: 0;
@@ -404,7 +625,7 @@
 	}
 	.group-head .num {
 		font-family: var(--font-mono);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 	}
 	ul {
 		list-style: none;

@@ -101,7 +101,11 @@ export const fr: Messages = {
 		addToProject: 'Ajouter à un projet',
 		noProjects: 'Aucun projet pour l’instant. Créez-en un dans Projets.',
 		addedTo: (project: string) => `Ajouté au projet « ${project} ».`,
-		pauseFirst: 'Mettez le traitement en pause ou annulez-le avant de le supprimer.'
+		pauseFirst: 'Mettez le traitement en pause ou annulez-le avant de le supprimer.',
+		showProjects: 'Afficher les projets',
+		hideProjects: 'Masquer les projets',
+		dropOnProject: 'Déposez-le sur un projet pour l’y ajouter',
+		dragHint: 'Faites-le glisser sur un projet de la liste pour l’y ajouter'
 	},
 	nav: {
 		newJob: 'Nouveau traitement',
@@ -1324,6 +1328,8 @@ export const fr: Messages = {
 		zoomFitShortcut: '0',
 		zoomIn: 'Agrandir',
 		zoomOut: 'Réduire',
+		zoomHint: (key: string) =>
+			`${key} + molette : zoomer · glisser : déplacer · double-clic : agrandir`,
 		turnLeft: 'Faire pivoter la page vers la gauche',
 		turnRight: 'Faire pivoter la page vers la droite',
 		play: 'Lire',
@@ -1379,6 +1385,7 @@ export const fr: Messages = {
 		addedHere: 'Un autre modèle ajoute des mots ici',
 		leftOutHere: 'Ce modèle omet des mots ici',
 		pickReading: 'Choisir la bonne version',
+		moveReadings: 'Déplacer cette boîte (faites-la glisser ou utilisez les flèches)',
 		original: 'Texte d’origine',
 		changedHere: 'La correction a modifié ce passage',
 		legendChanged: 'Modifié par rapport à l’original',
@@ -1433,6 +1440,16 @@ export const fr: Messages = {
 		save: 'Enregistrer',
 		duplicate: 'Dupliquer',
 		copyName: (name: string) => `${name} (copie)`,
+		newPrompt: 'Nouveau prompt',
+		newName: 'Mon prompt',
+		task: 'Utilisé pour',
+		taskHint:
+			'Un prompt appartient à une tâche : Nouveau traitement le propose quand cette tâche est choisie.',
+		newHint:
+			'Écrivez vos instructions. La requête et, pour une analyse ou une table des matières, ses champs partent du prompt par défaut de cette tâche ; modifiez-les au besoin.',
+		instructionsPlaceholder:
+			'Par exemple : Vous lisez des pages de journaux imprimés d’Afrique occidentale française, de 1940 à 1960. Transcrivez le texte tel qu’il est imprimé, colonne par colonne, en gardant l’orthographe d’origine.',
+		discard: 'Abandonner',
 		reset: 'Rétablir la version par défaut',
 		delete: 'Supprimer',
 		export: 'Exporter…',
@@ -1441,7 +1458,7 @@ export const fr: Messages = {
 		saved: 'Enregistré',
 		unsaved: 'Modifications non enregistrées',
 		analysisHint:
-			'Une analyse est un ensemble de champs à remplir pour chaque document. Dupliquez l’une de celles-ci pour créer la vôtre.',
+			'Une analyse est un ensemble de champs à remplir pour chaque document. Créez un nouveau prompt, ou dupliquez l’une de celles-ci pour partir d’elle.',
 		contentsHint:
 			'Une table des matières se fait en deux étapes : des instructions pour lire chaque page, et des instructions pour regrouper les pages. Chaque entrée a un titre et des pages ; les champs ci-dessous ajoutent ce que vous voulez pour chacune.',
 		dictionary: 'Dictionnaire',
@@ -1573,6 +1590,7 @@ export const fr: Messages = {
 		seeAlso: 'Voir aussi',
 		whatIs: (word: string) => `Ce que l’on entend par « ${word} »`,
 		openGlossary: 'Ouvrir le glossaire',
+		openPrompts: 'Voir et modifier les prompts',
 		terms: {
 			ocr: {
 				word: 'OCR et HTR',
@@ -1592,7 +1610,7 @@ export const fr: Messages = {
 			},
 			prompt: {
 				word: 'Prompt',
-				text: 'Les instructions envoyées au modèle avec chaque page, enregistrement ou texte : quoi transcrire, comment le mettre en forme, dans quelle langue, quoi laisser de côté. Kalamu est livré avec des prompts rédigés pour les types de documents courants, que vous pouvez adapter dans Prompts. Les modèles spécialisés d’OCR et de reconnaissance de la parole, comme Mistral OCR, Voxtral et Whisper, ne prennent pas de prompt.'
+				text: 'Les instructions envoyées au modèle avec chaque page, enregistrement ou texte : quoi transcrire, comment le mettre en forme, dans quelle langue, quoi laisser de côté. Kalamu est livré avec des prompts rédigés pour les types de documents courants. Dans Prompts (menu de gauche), ils sont listés par tâche : lisez ce qui est envoyé, adaptez-les à vos documents, ou écrivez le vôtre avec Nouveau prompt. Nouveau traitement propose ceux de la tâche choisie. Les modèles spécialisés d’OCR et de reconnaissance de la parole, comme Mistral OCR, Voxtral et Whisper, ne prennent pas de prompt.'
 			},
 			setup: {
 				word: 'Combinaison et comparaison',

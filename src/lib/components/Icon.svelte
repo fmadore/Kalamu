@@ -20,6 +20,7 @@
 	import Flag from '@lucide/svelte/icons/flag';
 	import Folder from '@lucide/svelte/icons/folder';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
+	import GripVertical from '@lucide/svelte/icons/grip-vertical';
 	import Laptop from '@lucide/svelte/icons/laptop';
 	import Library from '@lucide/svelte/icons/library';
 	import List from '@lucide/svelte/icons/list';
@@ -70,6 +71,7 @@
 		folder: FolderOpen,
 		file: FileText,
 		flag: Flag,
+		grip: GripVertical,
 		laptop: Laptop,
 		link: Link,
 		list: List,

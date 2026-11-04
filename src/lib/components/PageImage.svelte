@@ -1,7 +1,10 @@
 <script lang="ts">
 	// One page of a source, a single-page PDF rendered with pdf.js or an image, drawn on a canvas
 	// at the pane's width times the zoom, turned by the reader's rotation. The page is opened once
-	// per preview and drawn again when the pane, the zoom or the rotation change.
+	// per preview. A change of zoom is shown at once by stretching the drawing, so zooming follows
+	// the wheel or the pinch frame by frame; the page is drawn again, sharp, once the zoom has
+	// rested a moment. A new page, a turn or a resized pane draw it straight away.
+	import { untrack } from 'svelte';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { type Rotation, SourcePage } from '#lib/pdf.js';
@@ -47,10 +50,51 @@
 		};
 	});
 
-	// Fit the pane's width at zoom 1.
+	/** The page's width on screen: the pane's at zoom 1. */
+	const shown = $derived(Math.max(width - 24, 200) * zoom);
+	/** Whether the canvas holds a drawing of the page now shown, which zooming may stretch. */
+	let drawn = $state(false);
+	/** The width the canvas was last drawn sharp at. */
+	let drawnAt = 0;
+
+	// Stretches the drawing to the zoom at once; read synchronously by the source pane, which
+	// keeps the point under the pointer in place.
+	$effect.pre(() => {
+		if (canvas && drawn) canvas.style.width = `${shown}px`;
+	});
+
+	// A new page, a turn or a resized pane: drawn now.
 	$effect(() => {
 		if (!page || !canvas || width <= 0) return;
-		page.draw(canvas, Math.max(width - 24, 200) * zoom, rotation).catch(() => (failed = true));
+		void rotation;
+		drawn = false;
+		const target = untrack(() => shown);
+		page
+			.draw(canvas, target, rotation)
+			.then((done) => {
+				if (!done) return;
+				drawnAt = target;
+				drawn = true;
+			})
+			.catch(() => (failed = true));
+	});
+
+	// The zoom: drawn sharp again once it has rested.
+	$effect(() => {
+		const target = shown;
+		const current = untrack(() => page);
+		if (!current || !canvas || !drawn || Math.abs(target - drawnAt) < 1) return;
+		const turned = untrack(() => rotation);
+		const timer = setTimeout(() => {
+			if (!canvas) return;
+			current
+				.draw(canvas, target, turned)
+				.then((done) => {
+					if (done) drawnAt = target;
+				})
+				.catch(() => (failed = true));
+		}, 160);
+		return () => clearTimeout(timer);
 	});
 </script>
 
@@ -75,7 +119,9 @@
 		background: transparent;
 	}
 	/* The page lies on the lightbox: a crisp edge and a soft drop beneath. */
+	/* Never shrunk to the pane: stretched by a zoom, it keeps the size the zoom gives it. */
 	canvas {
+		flex: none;
 		max-width: none;
 		border-radius: 2px;
 		box-shadow: var(--shadow-page);

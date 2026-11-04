@@ -1,7 +1,9 @@
 <script lang="ts">
 	// The readings of one place where the texts differ, over the text under its words (over them
 	// when the pane has no room below): the words in the text, what each witness reads instead,
-	// and a box for the researcher's own reading. Taking one stores it as a correction.
+	// and a box for the researcher's own reading. Taking one stores it as a correction. Dragged
+	// by its head, or moved with the arrow keys from its grip, it moves aside to show the
+	// sentence it covered.
 	import Icon from './Icon.svelte';
 	import type { Entry } from '#lib/apparatus.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -43,10 +45,55 @@
 	let own = $state('');
 	let box = $state<HTMLElement | null>(null);
 	let at = $state<{ top: number; left: number } | null>(null);
+	/** Set once the researcher moves the readings aside to see the sentence under them: they
+	 * then stay where they were put. */
+	let moved = $state(false);
+	let drag = $state<{ x: number; y: number; top: number; left: number } | null>(null);
+
+	/** Puts the readings at a place in the pane, kept inside it. */
+	function moveTo(top: number, left: number) {
+		if (!box) return;
+		const { offsetWidth: w, offsetHeight: h } = box;
+		at = {
+			top: Math.max(0, Math.min(top, pane.scrollHeight - h)),
+			left: Math.max(0, Math.min(left, pane.clientWidth - w))
+		};
+		moved = true;
+	}
+
+	function startDrag(e: PointerEvent) {
+		if (e.button !== 0 || !at || (e.target as HTMLElement).closest('button:not(.grip)')) return;
+		e.preventDefault();
+		onpin();
+		drag = { x: e.clientX, y: e.clientY, top: at.top, left: at.left };
+		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+	}
+
+	function onDrag(e: PointerEvent) {
+		if (drag) moveTo(drag.top + e.clientY - drag.y, drag.left + e.clientX - drag.x);
+	}
+
+	function endDrag() {
+		drag = null;
+	}
+
+	/** The arrow keys move the readings from their handle, further with Shift. */
+	function nudge(e: KeyboardEvent) {
+		const step = e.shiftKey ? 64 : 16;
+		const by = {
+			ArrowUp: [-step, 0],
+			ArrowDown: [step, 0],
+			ArrowLeft: [0, -step],
+			ArrowRight: [0, step]
+		}[e.key];
+		if (!by || !at) return;
+		e.preventDefault();
+		moveTo(at.top + by[0], at.left + by[1]);
+	}
 
 	function placeBox() {
 		const words = pane.querySelector<HTMLElement>(`[data-entry="${entry.id}"]`);
-		if (!box || !words) return;
+		if (!box || !words || moved) return;
 		const area = pane.getBoundingClientRect();
 		const last = Array.from(words.getClientRects()).at(-1) ?? words.getBoundingClientRect();
 		const { offsetWidth: w, offsetHeight: h } = box;
@@ -88,7 +135,23 @@
 	onpointerleave={onleave}
 	onfocusin={onpin}
 >
-	<div class="head">
+	<!-- The head is the handle: dragged, it moves the readings aside to show the sentence
+	     under them; its grip does the same from the keyboard. -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="head"
+		class:dragging={drag !== null}
+		onpointerdown={startDrag}
+		onpointermove={onDrag}
+		onpointerup={endDrag}
+		onpointercancel={endDrag}
+	>
+		<button
+			class="grip"
+			aria-label={m.review.moveReadings}
+			title={m.review.moveReadings}
+			onkeydown={nudge}><Icon name="grip" size={14} /></button
+		>
 		<span>{heading}</span>
 		<span class="mono">{m.review.differenceOf(place.n, place.total)}</span>
 		<button class="btn sm icon ghost" aria-label={m.common.close} onclick={onclose}
@@ -162,12 +225,38 @@
 	.head {
 		display: flex;
 		align-items: center;
-		gap: var(--space-3);
+		gap: var(--space-2);
+		margin: calc(-1 * var(--space-1)) 0;
 		font-size: var(--type-xs);
 		color: var(--text-muted);
+		cursor: grab;
+		user-select: none;
+		touch-action: none;
 	}
-	.head > :first-child {
+	.head.dragging {
+		cursor: grabbing;
+	}
+	.head > .grip + span {
 		flex: 1;
+	}
+	.grip {
+		display: grid;
+		place-items: center;
+		width: 1.5rem;
+		height: 1.75rem;
+		margin-left: calc(-1 * var(--space-2));
+		padding: 0;
+		border: 0;
+		border-radius: var(--radius-tag);
+		background: none;
+		color: var(--text-muted);
+		cursor: inherit;
+	}
+	.grip:hover,
+	.grip:focus-visible,
+	.dragging .grip {
+		color: var(--text-bright);
+		background: var(--wash);
 	}
 	.options {
 		list-style: none;

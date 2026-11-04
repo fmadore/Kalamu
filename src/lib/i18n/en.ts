@@ -33,7 +33,12 @@ export const en = {
 		addToProject: 'Add to a project',
 		noProjects: 'No project yet. Create one under Projects.',
 		addedTo: (project: string) => `Added to the project “${project}”.`,
-		pauseFirst: 'Pause or cancel the job before deleting it.'
+		pauseFirst: 'Pause or cancel the job before deleting it.',
+		showProjects: 'Show the projects',
+		hideProjects: 'Hide the projects',
+		/** Said while a finished job is dragged over the list of projects. */
+		dropOnProject: 'Drop on a project to add the job to it',
+		dragHint: 'Drag it onto a project in the list to add it there'
 	},
 	nav: {
 		newJob: 'New job',
@@ -1231,6 +1236,7 @@ export const en = {
 		zoomFitShortcut: '0',
 		zoomIn: 'Zoom in',
 		zoomOut: 'Zoom out',
+		zoomHint: (key: string) => `${key} + wheel: zoom · drag: move · double-click: zoom in`,
 		turnLeft: 'Turn the page left',
 		turnRight: 'Turn the page right',
 		play: 'Play',
@@ -1285,6 +1291,7 @@ export const en = {
 		addedHere: 'Another model adds words here',
 		leftOutHere: 'This model leaves out words here',
 		pickReading: 'Choose the correct reading',
+		moveReadings: 'Move this box (drag it or use the arrow keys)',
 		original: 'Original text',
 		changedHere: 'The correction changed this',
 		legendChanged: 'Changed from the original',
@@ -1339,6 +1346,15 @@ export const en = {
 		save: 'Save',
 		duplicate: 'Duplicate',
 		copyName: (name: string) => `${name} (copy)`,
+		newPrompt: 'New prompt',
+		newName: 'My prompt',
+		task: 'Used for',
+		taskHint: 'A prompt belongs to one task: New job offers it when that task is chosen.',
+		newHint:
+			'Write your instructions. The request, and for an analysis or a table of contents its fields, start from this task’s default prompt; change them as you need.',
+		instructionsPlaceholder:
+			'For example: You read printed newspaper pages from French West Africa, 1940 to 1960. Transcribe the text exactly as printed, column by column, keeping the original spelling.',
+		discard: 'Discard',
 		reset: 'Reset to default',
 		delete: 'Delete',
 		export: 'Export…',
@@ -1347,7 +1363,7 @@ export const en = {
 		saved: 'Saved',
 		unsaved: 'Unsaved changes',
 		analysisHint:
-			'An analysis is a set of fields to fill in for each document. Duplicate one of these to make your own.',
+			'An analysis is a set of fields to fill in for each document. Create a new prompt, or duplicate one of these to start from it.',
 		contentsHint:
 			'A table of contents has two steps: instructions for reading each page, and instructions for combining the pages. Every entry has a title and pages; the fields below add what you want for each.',
 		dictionary: 'Dictionary',
@@ -1476,6 +1492,7 @@ export const en = {
 		whatIs: (word: string) => `What is meant by “${word}”`,
 		/** At the foot of a word's definition, opened from its help link. */
 		openGlossary: 'Open the glossary',
+		openPrompts: 'See and edit the prompts',
 		/** By theme: what a model is, then how it is used, then how its results are checked and
 		 * recorded. The page lists them alphabetically by word. */
 		terms: {
@@ -1497,7 +1514,7 @@ export const en = {
 			},
 			prompt: {
 				word: 'Prompt',
-				text: 'The instructions sent to the model with each page, recording or text: what to transcribe, how to lay it out, which language, what to leave out. Kalamu comes with prompts written for common kinds of material, which you can adapt in Prompts. Dedicated OCR and speech models, such as Mistral OCR, Voxtral and Whisper, take no prompt.'
+				text: 'The instructions sent to the model with each page, recording or text: what to transcribe, how to lay it out, which language, what to leave out. Kalamu comes with prompts written for common kinds of material. Prompts (in the menu on the left) lists them by task: read what is sent, adapt them to your documents, or write your own with New prompt. New job offers those of the task chosen. Dedicated OCR and speech models, such as Mistral OCR, Voxtral and Whisper, take no prompt.'
 			},
 			setup: {
 				word: 'Set-up and comparison',

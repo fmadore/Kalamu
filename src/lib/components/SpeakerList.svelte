@@ -109,7 +109,6 @@
 		margin-top: var(--space-6);
 		padding-top: var(--space-4);
 		border-top: 1px solid var(--line);
-		max-width: 44rem;
 	}
 	.speakers h2 {
 		font-size: var(--type-sm);

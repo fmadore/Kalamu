@@ -4,7 +4,7 @@
 	// Escape or a click elsewhere, and links to the whole glossary. Named for screen readers by the
 	// question it answers.
 	import Icon from './Icon.svelte';
-	import { FORMATS, type Term } from '#lib/glossary.js';
+	import { FORMATS, PLACES, type Term } from '#lib/glossary.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { go } from '#lib/state.svelte.js';
 
@@ -36,6 +36,9 @@
 		bubble?.hidePopover();
 		go({ name: 'glossary', term });
 	}
+
+	/** Where the thing the word names is kept, such as the prompts. */
+	const kept = $derived(term === 'formats' ? undefined : PLACES[term]);
 </script>
 
 <button
@@ -72,7 +75,19 @@
 	{:else}
 		<span class="text">{m.glossary.terms[term].text}</span>
 	{/if}
-	<button type="button" class="more" onclick={openGlossary}>{m.glossary.openGlossary}</button>
+	<span class="links">
+		{#if kept === 'prompts'}
+			<button
+				type="button"
+				class="more"
+				onclick={() => {
+					bubble?.hidePopover();
+					go({ name: 'prompts' });
+				}}>{m.glossary.openPrompts}</button
+			>
+		{/if}
+		<button type="button" class="more" onclick={openGlossary}>{m.glossary.openGlossary}</button>
+	</span>
 </span>
 
 <style>
@@ -152,6 +167,11 @@
 	}
 	.mono {
 		font-family: var(--font-mono);
+	}
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1) var(--space-4);
 	}
 	.more {
 		justify-self: start;

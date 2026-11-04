@@ -179,7 +179,6 @@
 	.run {
 		display: grid;
 		gap: var(--space-3);
-		max-width: 44rem;
 	}
 	.files {
 		display: flex;

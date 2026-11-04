@@ -740,7 +740,7 @@
 	}
 	.note {
 		margin: 0;
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		line-height: 1.4;
 		color: var(--text-muted);
 		text-align: center;
@@ -748,7 +748,7 @@
 	.detail {
 		margin: 0;
 		overflow: hidden;
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		color: var(--text-muted);
 		text-align: center;
 		text-overflow: ellipsis;
@@ -798,7 +798,7 @@
 	}
 	.num {
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		fill: var(--text-muted);
 		text-anchor: middle;
 	}
@@ -836,7 +836,7 @@
 		stroke-dasharray: 2 2;
 	}
 	.num.small {
-		font-size: 9px;
+		font-size: 10px;
 	}
 	.track {
 		fill: var(--line);
@@ -867,7 +867,7 @@
 		overflow: hidden;
 		padding-bottom: 4px;
 		border-bottom: 1px solid var(--line);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		color: var(--text-body);
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -880,7 +880,7 @@
 	}
 	.field dt {
 		overflow: hidden;
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		font-weight: 500;
 		color: var(--text-secondary);
 		text-overflow: ellipsis;
@@ -913,7 +913,7 @@
 		table-layout: fixed;
 		border: 1px solid var(--line-strong);
 		background: var(--surface-2);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		line-height: 1.3;
 	}
 	.table th,
@@ -955,7 +955,7 @@
 		border-radius: var(--radius-tag);
 		background: var(--surface-2);
 		color: var(--text-secondary);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 	}
 	.link span {
 		overflow: hidden;
@@ -973,7 +973,7 @@
 		display: grid;
 		justify-items: center;
 		gap: 2px;
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		color: var(--text-secondary);
 	}
 	.wire {

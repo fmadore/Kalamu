@@ -80,7 +80,7 @@
 	</div>
 </header>
 
-<div class="sheet wide">
+<div class="sheet">
 	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
 	{#if project && paths?.length}
 		<p class="chip">{w.files(paths.length)} · {w.fromProject(project.name)}</p>
@@ -226,10 +226,6 @@
 		margin: 0;
 		font-size: var(--type-sm);
 	}
-	/* The page widens with the window, up to a point, so a large screen shows more side by side. */
-	.wide {
-		max-width: 112rem;
-	}
 	/* As many examples a row as fit, each at least wide enough for its diagram's steps. */
 	.examples {
 		list-style: none;
@@ -237,22 +233,23 @@
 		padding: 0;
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
-		gap: var(--space-4);
+		gap: var(--space-6) var(--space-5);
 	}
+	/* Room under the card's rule before its title. */
 	.example {
 		display: grid;
 		grid-template-rows: auto 1fr auto auto;
 		gap: var(--space-2);
+		padding-top: var(--space-4);
 		align-content: start;
 		justify-items: start;
 		min-width: 0;
 	}
 	.example :global(.workflow-diagram) {
 		justify-self: stretch;
-		max-width: none;
 	}
 	.example h3 {
-		font-size: var(--type-sm);
+		font-size: var(--type-md);
 	}
 	.about {
 		margin: 0;
