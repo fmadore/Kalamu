@@ -7,8 +7,9 @@
 	import type { ProjectSummary } from '#lib/bindings/ProjectSummary.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { app, go, refreshJobs, toast } from '#lib/state.svelte.js';
-	import { api, ask } from '#lib/tauri.js';
+	import { deleteJob } from '#lib/jobActions.svelte.js';
+	import { toast } from '#lib/state.svelte.js';
+	import { api } from '#lib/tauri.js';
 
 	let {
 		job,
@@ -83,12 +84,8 @@
 
 	async function remove() {
 		close();
-		if (!(await ask(m.jobs.deleteConfirm))) return;
 		try {
-			await api.deleteJob(job.id);
-			const shown = app.view.name === 'jobs' || app.view.name === 'review' ? app.view.jobId : null;
-			if (shown === job.id) go({ name: 'jobs' });
-			await refreshJobs();
+			await deleteJob(job.id);
 		} catch (e) {
 			toast(describeError(e, m));
 		}

@@ -4,7 +4,7 @@
 	import Icon from './Icon.svelte';
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { api, pickPresetFile, pickSaveFile } from '#lib/tauri.js';
 	import { toast } from '#lib/state.svelte.js';
@@ -18,7 +18,7 @@
 	let presets = $state<Preset[]>([]);
 	let selectedId = $state<string | null>(null);
 	let draft = $state<Preset | null>(null);
-	let error = $state<string | null>(null);
+	const action = new Action();
 
 	const selected = $derived(presets.find((p) => p.id === selectedId) ?? null);
 	/** A prompt being written from nothing, not yet saved: it has no id until it is. */
@@ -61,7 +61,7 @@
 	}
 
 	function create() {
-		error = null;
+		action.error = null;
 		selectedId = null;
 		draft = blank(selected?.task ?? 'text_extraction');
 	}
@@ -72,15 +72,9 @@
 		draft = p ? structuredClone($state.snapshot(p)) : null;
 	}
 
-	async function run(action: () => Promise<string | undefined | void>) {
-		error = null;
-		try {
-			const keep = await action();
-			await load(keep ?? undefined);
-		} catch (e) {
-			error = describeError(e, m);
-		}
-	}
+	/** Runs a change, then reads the prompts again, the one it names chosen. */
+	const run = (work: () => Promise<string | undefined | void>) =>
+		action.run(work, (keep) => load(keep ?? undefined));
 
 	const tasks: Task[] = [
 		'text_extraction',
@@ -230,7 +224,7 @@
 			{:else if draft.schema}
 				<FieldsEditor bind:schema={draft.schema} />
 			{/if}
-			{#if error}<p class="chip danger">{error}</p>{/if}
+			{#if action.error}<p class="chip danger">{action.error}</p>{/if}
 			<div class="actions">
 				<button
 					class="btn primary"

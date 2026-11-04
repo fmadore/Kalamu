@@ -13,7 +13,7 @@
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { changed, type Draft } from '#lib/described.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import { rulesFor } from '#lib/newJob.js';
 	import { app, go, toast } from '#lib/state.svelte.js';
@@ -24,7 +24,7 @@
 
 	let detail = $state<DocumentDetail | null>(null);
 	let project = $state<ProjectView | null>(null);
-	let error = $state<string | null>(null);
+	const action = new Action({ after: () => load() });
 	let draftTitle = $state<string | null>(null);
 	/** The description as the researcher edits it, from what is kept. */
 	let draftDescription = $state<Draft>({});
@@ -50,17 +50,7 @@
 			]);
 			draftDescription = { ...detail.document.source_description };
 		} catch (e) {
-			error = describeError(e, m);
-		}
-	}
-
-	async function act(action: () => Promise<unknown>) {
-		error = null;
-		try {
-			await action();
-			await load();
-		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -68,7 +58,7 @@
 		const title = draftTitle?.trim();
 		draftTitle = null;
 		if (!title || title === detail?.document.title) return;
-		await act(() => api.renameDocument(projectId, documentId, title));
+		await action.run(() => api.renameDocument(projectId, documentId, title));
 	}
 
 	function renameKeys(e: KeyboardEvent) {
@@ -79,20 +69,20 @@
 	async function saveDescription(e: SubmitEvent) {
 		e.preventDefault();
 		const description = $state.snapshot(draftDescription);
-		await act(() => api.describeDocument(projectId, documentId, description));
-		if (!error) toast(m.projects.describe.saved);
+		await action.run(() => api.describeDocument(projectId, documentId, description));
+		if (!action.error) toast(m.projects.describe.saved);
 	}
 
 	async function addTag(tag: string) {
-		await act(() => api.tagDocuments(projectId, [documentId], tag));
+		await action.run(() => api.tagDocuments(projectId, [documentId], tag));
 	}
 
 	function removeTag(tag: string) {
-		void act(() => api.untagDocuments(projectId, [documentId], tag));
+		void action.run(() => api.untagDocuments(projectId, [documentId], tag));
 	}
 
 	function toggleCollection(id: string, member: boolean) {
-		void act(() =>
+		void action.run(() =>
 			member
 				? api.removeFromCollection(projectId, id, [documentId])
 				: api.addToCollection(projectId, id, [documentId])
@@ -100,7 +90,7 @@
 	}
 
 	function prefer(r: DocumentResult) {
-		void act(() =>
+		void action.run(() =>
 			r.preferred
 				? api.setPreferred(projectId, documentId, r.task, null, null)
 				: api.setPreferred(projectId, documentId, r.task, r.job_id, r.setup_id)
@@ -109,12 +99,12 @@
 
 	async function detach(r: DocumentResult) {
 		if (!(await ask(m.projects.document.detachConfirm))) return;
-		await act(() => api.detachJob(projectId, documentId, r.job_id, r.source_id));
+		await action.run(() => api.detachJob(projectId, documentId, r.job_id, r.source_id));
 	}
 
 	async function merge(id: string, title: string) {
 		if (!(await ask(m.projects.document.mergeConfirm(title)))) return;
-		await act(() => api.mergeDocuments(projectId, id, documentId));
+		await action.run(() => api.mergeDocuments(projectId, id, documentId));
 	}
 
 	onMount(() => void load());
@@ -151,7 +141,7 @@
 	</div>
 </header>
 
-{#if error}<p class="chip danger banner" role="alert">{error}</p>{/if}
+{#if action.error}<p class="chip danger banner" role="alert">{action.error}</p>{/if}
 
 {#if detail && project}
 	{@const doc = detail.document}
@@ -320,7 +310,7 @@
 												setupId={r.setup_id}
 												sourceId={r.source_id}
 												project={{ id: projectId, name: project?.project.name ?? '' }}
-												onerror={(e) => (error = e)}
+												onerror={(e) => (action.error = e)}
 											/>
 										{/if}
 										<button

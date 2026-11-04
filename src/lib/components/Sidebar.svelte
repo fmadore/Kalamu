@@ -13,8 +13,9 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { shortcut } from '#lib/platform.js';
 	import { describeError } from '#lib/errors.js';
+	import { focusName, RowRename } from '#lib/jobActions.svelte.js';
 	import { UNFINISHED, finishedShown, groupOf, type GroupKey } from '#lib/jobList.js';
-	import { app, go, refreshJobs, refreshProjects, toast } from '#lib/state.svelte.js';
+	import { app, go, refreshProjects, toast } from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
 	import { api } from '#lib/tauri.js';
 
@@ -29,8 +30,7 @@
 
 	/** The job whose menu is open, and where. */
 	let menu = $state<{ job: JobSummary; x: number; y: number } | null>(null);
-	/** The job being renamed in the list, and the name typed so far. */
-	let renaming = $state<{ id: string; name: string } | null>(null);
+	const rename = new RowRename();
 
 	function openMenu(e: MouseEvent, job: JobSummary) {
 		e.preventDefault();
@@ -38,31 +38,6 @@
 		const at = (e.currentTarget as HTMLElement).getBoundingClientRect();
 		const keyboard = e.button !== 2 && e.clientX === 0 && e.clientY === 0;
 		menu = { job, x: keyboard ? at.left + 12 : e.clientX, y: keyboard ? at.bottom : e.clientY };
-	}
-
-	async function rename() {
-		const r = renaming;
-		renaming = null;
-		const name = r?.name.trim();
-		const job = app.jobs.find((j) => j.id === r?.id);
-		if (!r || !name || !job || name === job.name) return;
-		try {
-			await api.renameJob(r.id, name);
-			await refreshJobs();
-		} catch (e) {
-			toast(describeError(e, m));
-		}
-	}
-
-	function renameKeys(e: KeyboardEvent) {
-		if (e.key === 'Enter') void rename();
-		else if (e.key === 'Escape') renaming = null;
-	}
-
-	/** Puts the caret in the name box as it opens, the name selected. */
-	function chosen(input: HTMLInputElement) {
-		input.focus();
-		input.select();
 	}
 
 	/** The job the main area shows, whether as its detail or in review. */
@@ -187,7 +162,7 @@
 		job={at.job}
 		x={at.x}
 		y={at.y}
-		onrename={() => (renaming = { id: at.job.id, name: at.job.name })}
+		onrename={() => rename.start(at.job)}
 		onclose={() => (menu = null)}
 	/>
 {/if}
@@ -314,14 +289,14 @@
 				<ul>
 					{#each group.jobs as job (job.id)}
 						<li>
-							{#if renaming?.id === job.id}
+							{#if rename.editing?.id === job.id}
 								<input
 									class="rename"
 									aria-label={m.jobs.nameLabel}
-									bind:value={renaming.name}
-									onkeydown={renameKeys}
-									onblur={rename}
-									{@attach chosen}
+									bind:value={rename.editing.name}
+									onkeydown={rename.keys}
+									onblur={rename.commit}
+									{@attach focusName}
 								/>
 							{:else}
 								<button
