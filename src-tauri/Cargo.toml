@@ -56,13 +56,32 @@ tracing-appender = "0.2.5"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 ts-rs.workspace = true
 
+[target.'cfg(target_os = "macos")'.dependencies]
+# Security-scoped bookmarks for the Mac App Store's sandboxed build (`src/platform/macos.rs`).
+objc2 = "0.6.5"
+objc2-foundation = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "NSArray",
+    "NSData",
+    "NSError",
+    "NSString",
+    "NSURL",
+] }
+
 [features]
 # Standard Tauri production feature: serve the bundled front end over the custom protocol
 # instead of the dev server. Enabled automatically by `tauri build`.
 custom-protocol = ["tauri/custom-protocol"]
 
-[lints]
-workspace = true
+# The workspace's lints, except that unsafe code is denied rather than forbidden: the shell
+# calls the system's own API in one place, the Mac App Store build's security-scoped bookmarks
+# (`src/platform/macos.rs`), where objc2 marks the calls unsafe and `#[allow]` says why.
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
 
 [dev-dependencies]
 tempfile.workspace = true

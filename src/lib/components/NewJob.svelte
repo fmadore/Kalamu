@@ -46,7 +46,7 @@
 		taskOf,
 		toRequest
 	} from '#lib/newJob.js';
-	import { api, onDrop } from '#lib/tauri.js';
+	import { api, askForFolders, besidePlaces, onDrop } from '#lib/tauri.js';
 	import {
 		app,
 		go,
@@ -430,6 +430,9 @@
 		error = null;
 		starting = true;
 		try {
+			// In the Mac App Store's build, the folders beside the sources must be granted first.
+			const beside = destination.kind === 'beside_sources';
+			if (beside && !(await askForFolders(besidePlaces($state.snapshot(sources))))) return;
 			const preset = thenOffered ? analysisPresets.find((p) => p.id === thenPreset) : undefined;
 			if (preset) {
 				await startWithAnalysis(preset);

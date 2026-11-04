@@ -19,7 +19,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { toast } from '#lib/state.svelte.js';
-	import { api, pickDictionaryExport } from '#lib/tauri.js';
+	import { api, askForFolders, pickDictionaryExport } from '#lib/tauri.js';
 
 	let {
 		projectId,
@@ -114,6 +114,8 @@
 		const path = await pickDictionaryExport(`${projectName} dictionary`);
 		if (!path) return;
 		try {
+			// The CSV goes beside the JSON: in the Mac App Store's build, its folder is asked for.
+			if (!(await askForFolders([path]))) return;
 			await api.exportDictionary(projectId, path);
 			toast(m.dictionary.exported);
 		} catch (e) {

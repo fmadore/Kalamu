@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Read by macOS the first time the sandboxed build starts, when it creates the app's
+     container: the data folder and the logs the disk image used are copied to the same places
+     inside it, where src/platform/macos.rs finds them through HOME. -->
+<plist version="1.0">
+<dict>
+	<key>Move</key>
+	<array>
+		<string>${ApplicationSupport}/Kalamu</string>
+		<string>${Library}/Logs/Kalamu</string>
+	</array>
+</dict>
+</plist>

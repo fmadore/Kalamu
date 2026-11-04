@@ -51,6 +51,8 @@ pub const COMMANDS: &[&str] = &[
     "cancel_run",
     "delete_run",
     "expand_paths",
+    "folders_to_ask",
+    "keep_access",
     "inspect_files",
     "inspect_links",
     "estimate_cost",

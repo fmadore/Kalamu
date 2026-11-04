@@ -22,7 +22,14 @@
 		valueKey
 	} from '#lib/profiles.js';
 	import { toast } from '#lib/state.svelte.js';
-	import { api, ask, pickDescriptionsExport, pickPresetFile, pickSaveFile } from '#lib/tauri.js';
+	import {
+		api,
+		ask,
+		askForFolders,
+		pickDescriptionsExport,
+		pickPresetFile,
+		pickSaveFile
+	} from '#lib/tauri.js';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -175,6 +182,8 @@
 		const path = await pickDescriptionsExport(p.fileName(name));
 		if (!path) return;
 		await act(async () => {
+			// The CSV goes beside the JSON: in the Mac App Store's build, its folder is asked for.
+			if (!(await askForFolders([path]))) return;
 			await api.exportDescriptions(projectId, collectionId ?? null, chosen || null, path);
 			toast(m.projects.describe.exported);
 			onclose();

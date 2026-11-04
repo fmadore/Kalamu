@@ -1641,6 +1641,17 @@ export const en = {
 		note: 'Kalamu is a project by {author} (University of Bayreuth). If it is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
 		link: 'Buy me a coffee'
 	},
+	/** The Mac App Store's build, where macOS lets Kalamu write only in folders the researcher
+	 *  has chosen. */
+	access: {
+		/** Before the folder picker opens. `folder` is the folder's name. */
+		ask: (folder: string) =>
+			`To save results next to your files, Kalamu needs your permission for the folder “${folder}”. Choose that folder in the next window.`,
+		choose: 'Choose the folder…',
+		/** Another folder was chosen than the one asked for. */
+		missing: (folder: string) =>
+			`Kalamu may not save in “${folder}”. Choose that folder when asked, or choose one folder for all results under Results.`
+	},
 	format: {
 		txt: 'Text (.txt)',
 		markdown: 'Markdown (.md)',

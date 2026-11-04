@@ -10,4 +10,9 @@ interrupted: Array<JobId>,
  * The system's languages in order of preference (`fr-FR`, `en-US`…), from which the
  * interface takes its own when the setting is `system`.
  */
-system_languages: Array<string>, };
+system_languages: Array<string>, 
+/**
+ * The Mac App Store's build, which runs in the App Sandbox: it asks for a folder before
+ * writing results beside sources, and offers no support link (App Review Guideline 3.1.1).
+ */
+app_store: boolean, };

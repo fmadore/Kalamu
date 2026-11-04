@@ -6,7 +6,7 @@
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { api, ask, pickPipelineExport, pickPresetFile } from '#lib/tauri.js';
+	import { api, ask, askForFolders, pickPipelineExport, pickPresetFile } from '#lib/tauri.js';
 	import { toast } from '#lib/state.svelte.js';
 
 	let {
@@ -33,6 +33,8 @@
 		attempt(async () => {
 			const path = await pickPipelineExport(p.name);
 			if (!path) return;
+			// The Markdown goes beside the JSON: in the Mac App Store's build, its folder is asked for.
+			if (!(await askForFolders([path]))) return;
 			await api.exportPipeline(p.id, path);
 			const file = (path.split(/[\\/]/).pop() ?? path).replace(/\.json$/i, '');
 			toast(m.newJob.pipelineExported(file));

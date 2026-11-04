@@ -2769,6 +2769,8 @@ dependencies = [
  "kalamu-search",
  "kalamu-store",
  "keyring",
+ "objc2",
+ "objc2-foundation",
  "reqwest",
  "serde",
  "serde_json",

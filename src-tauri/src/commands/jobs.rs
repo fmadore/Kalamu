@@ -10,9 +10,34 @@ use super::{AppState, InspectedFile};
 use crate::errors::{AppError, CmdResult, id};
 
 /// Files and folders dropped or chosen, expanded to the supported files for a task, sorted so
-/// numbered scans keep their order.
+/// numbered scans keep their order. Each is kept for later launches where a sandbox requires
+/// it, while the app may still reach it.
 #[tauri::command]
-pub fn expand_paths(paths: Vec<String>, task: Task) -> Vec<String> {
+pub fn expand_paths(state: State<'_, AppState>, paths: Vec<String>, task: Task) -> Vec<String> {
+    state.grants.keep(&paths);
+    expand(paths, task)
+}
+
+/// The folders results would be written to beside these files that the app may not write to
+/// yet: in the Mac App Store's build, a file picked or dropped is granted, not its folder.
+/// Always empty elsewhere.
+#[tauri::command]
+pub fn folders_to_ask(state: State<'_, AppState>, paths: Vec<String>) -> Vec<String> {
+    state
+        .grants
+        .folders_to_ask(&paths)
+        .into_iter()
+        .map(|p| p.display().to_string())
+        .collect()
+}
+
+/// Folders the researcher has just granted, kept for later launches.
+#[tauri::command]
+pub fn keep_access(state: State<'_, AppState>, paths: Vec<String>) {
+    state.grants.keep(&paths);
+}
+
+fn expand(paths: Vec<String>, task: Task) -> Vec<String> {
     fn walk(path: &Path, task: Task, out: &mut Vec<PathBuf>, depth: usize) {
         if is_apple_double(path) {
             return;
@@ -112,6 +137,7 @@ pub async fn inspect_files(
     state: State<'_, AppState>,
     paths: Vec<String>,
 ) -> CmdResult<Vec<InspectedFile>> {
+    state.grants.keep(&paths);
     let engine = state.engine.clone();
     tokio::task::spawn_blocking(move || {
         engine
@@ -242,6 +268,9 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Es
 
 #[tauri::command]
 pub fn create_job(state: State<'_, AppState>, job: NewJob) -> CmdResult<Job> {
+    state
+        .grants
+        .keep(super::settings::destination_folder(&job.output.destination));
     Ok(state.engine.create_job(job)?)
 }
 
@@ -338,7 +367,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(dir.path().join("page-01.jpg"), b"jpeg").unwrap();
         std::fs::write(dir.path().join("._page-01.jpg"), b"metadata").unwrap();
-        let found = expand_paths(vec![dir.path().display().to_string()], Task::TextExtraction);
+        let found = expand(vec![dir.path().display().to_string()], Task::TextExtraction);
         assert_eq!(found.len(), 1);
         assert!(found[0].ends_with("page-01.jpg") && !found[0].contains("._"));
     }

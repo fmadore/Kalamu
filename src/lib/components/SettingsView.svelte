@@ -262,16 +262,19 @@
 				<div><ReportLink /></div>
 			</section>
 
-			<!-- Last, so it is there for anyone who looks and in the way of nobody. -->
-			<section class="card block" aria-labelledby="support">
-				<h2 id="support">{m.support.title}</h2>
-				<p class="muted small">
-					{#each placeholders(m.support.note) as part, i (i)}{#if 'name' in part}<ExternalLink
-								href={AUTHOR_URL}>Frédérick Madore</ExternalLink
-							>{:else}{part.text}{/if}{/each}
-				</p>
-				<SupportLink />
-			</section>
+			<!-- Last, so it is there for anyone who looks and in the way of nobody. Not in the
+			     Mac App Store's build, whose rules allow tips only through Apple's payments. -->
+			{#if !app.info?.app_store}
+				<section class="card block" aria-labelledby="support">
+					<h2 id="support">{m.support.title}</h2>
+					<p class="muted small">
+						{#each placeholders(m.support.note) as part, i (i)}{#if 'name' in part}<ExternalLink
+									href={AUTHOR_URL}>Frédérick Madore</ExternalLink
+								>{:else}{part.text}{/if}{/each}
+					</p>
+					<SupportLink />
+				</section>
+			{/if}
 		{/if}
 	</div>
 </div>

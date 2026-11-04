@@ -27,6 +27,8 @@ Thumbs.db
 
 # The bundled FFmpeg, fetched by `npm run fetch:ffmpeg` (pinned in scripts/ffmpeg.json).
 /src-tauri/binaries/
+# The Mac App Store's provisioning profile, written by .github/workflows/app-store.yml only.
+/src-tauri/appstore/embedded.provisionprofile
 
 # Drafts from the 2026-10-28 brand exploration (generated images and prompts), kept locally.
 docs/design/exploration/
