@@ -1,9 +1,9 @@
 //! The original PDF with an invisible text layer, so it can be searched and its text copied.
 //!
-//! Only models that report where text sits (Mistral OCR, at paragraph level) can feed it; the
-//! README asks for this format from them only. Each text block is set in invisible text
-//! (render mode 3) over its box: the block's words are spread over as many lines as fit its
-//! shape, each line stretched to the box's width. The font is a glyph-less Type0 font, as in
+//! Only models that report where text sits can feed it: Tesseract, line by line, and Mistral
+//! OCR, at paragraph level. Text is set invisibly (render mode 3) over where it was read: each
+//! line over its own box when the engine placed lines, otherwise the block's words spread over
+//! as many lines as fit its shape; each line is stretched to its box's width. The font is a glyph-less Type0 font, as in
 //! Tesseract's PDF output: two-byte codes equal to Unicode code points, a ToUnicode map that
 //! says so, and a fixed advance, so any script stays searchable and line widths are exact. The
 //! source is read from disk; nothing else in it changes.
@@ -49,7 +49,8 @@ impl Exporter for SearchablePdfExporter {
         let pages = regions_by_page(doc);
         if pages.is_empty() {
             return Err(error(
-                "this model reported no text positions; choose Mistral OCR for a searchable PDF",
+                "this model reported no text positions; choose Tesseract or Mistral OCR for a \
+                 searchable PDF",
             ));
         }
         let bytes = std::fs::read(&doc.source.path).map_err(error)?;
@@ -69,7 +70,7 @@ impl Exporter for SearchablePdfExporter {
 }
 
 /// Each page's regions, with halves of split spreads mapped back onto the whole page.
-fn regions_by_page(doc: &ExportDocument) -> BTreeMap<u32, Vec<TextRegion>> {
+pub(crate) fn regions_by_page(doc: &ExportDocument) -> BTreeMap<u32, Vec<TextRegion>> {
     let mut pages: BTreeMap<u32, Vec<TextRegion>> = BTreeMap::new();
     for part in &doc.parts {
         let PieceRef::Page { number, half } = &part.piece else {
@@ -77,21 +78,47 @@ fn regions_by_page(doc: &ExportDocument) -> BTreeMap<u32, Vec<TextRegion>> {
         };
         for region in &part.regions {
             let mut r = region.clone();
-            match half {
-                Some(PageHalf::Left) => {
-                    r.x *= 0.5;
-                    r.width *= 0.5;
+            let start = match half {
+                Some(PageHalf::Left) => Some(0.0),
+                Some(PageHalf::Right) => Some(0.5),
+                None => None,
+            };
+            if let Some(start) = start {
+                let halve = |x: &mut f32, width: &mut f32| {
+                    *x = start + *x * 0.5;
+                    *width *= 0.5;
+                };
+                halve(&mut r.x, &mut r.width);
+                for line in &mut r.lines {
+                    halve(&mut line.x, &mut line.width);
+                    for word in &mut line.words {
+                        halve(&mut word.x, &mut word.width);
+                    }
                 }
-                Some(PageHalf::Right) => {
-                    r.x = 0.5 + r.x * 0.5;
-                    r.width *= 0.5;
-                }
-                None => {}
             }
             pages.entry(*number).or_default().push(r);
         }
     }
     pages
+}
+
+/// A page number with its displayed width and height.
+pub(crate) type PageSize = (u32, (f32, f32));
+
+/// Each page's displayed width and height in points, after `/Rotate`, by page number.
+pub(crate) fn pdf_page_sizes(bytes: &[u8]) -> Result<Vec<PageSize>, ExportError> {
+    let pdf = Document::load_mem(bytes).map_err(error)?;
+    let mut sizes = Vec::new();
+    for (number, id) in pdf.get_pages() {
+        let page = effective_page(&pdf, id)?;
+        let Some(page_box) = page_box(&pdf, &page) else {
+            continue;
+        };
+        let rotate = page.get(b"Rotate").and_then(Object::as_i64).unwrap_or(0);
+        let (_, width, height) = display_space(page_box, rotate);
+        sizes.push((number, (width, height)));
+    }
+    Ok(sizes)
 }
 
 /// The glyph-less Unicode font, added once and shared by every page.
@@ -239,8 +266,22 @@ fn wrap(text: &str, lines: usize) -> Vec<String> {
 /// The content stream that sets `regions` invisibly on a page `width` × `height` (display
 /// space, points).
 fn text_layer(regions: &[TextRegion], width: f32, height: f32) -> String {
+    // A region whose lines were placed is set line by line, each over its own box.
+    let placed: Vec<TextRegion> = regions
+        .iter()
+        .flat_map(|r| {
+            if r.lines.is_empty() {
+                vec![r.clone()]
+            } else {
+                r.lines
+                    .iter()
+                    .map(|l| TextRegion::block(l.x, l.y, l.width, l.height, l.text()))
+                    .collect()
+            }
+        })
+        .collect();
     let mut s = String::from("BT\n3 Tr\n");
-    for r in regions {
+    for r in &placed {
         let (box_w, box_h) = (r.width * width, r.height * height);
         let chars = r.text.chars().count().max(1) as f32;
         if box_w <= 0.0 || box_h <= 0.0 {
@@ -354,13 +395,13 @@ mod tests {
     #[test]
     fn the_layer_is_invisible_text_inside_each_box() {
         let layer = text_layer(
-            &[TextRegion {
-                x: 0.1,
-                y: 0.1,
-                width: 0.8,
-                height: 0.05,
-                text: "Dakar, le 3 mai 1957".into(),
-            }],
+            &[TextRegion::block(
+                0.1,
+                0.1,
+                0.8,
+                0.05,
+                "Dakar, le 3 mai 1957",
+            )],
             600.0,
             800.0,
         );
@@ -368,5 +409,40 @@ mod tests {
         assert!(layer.contains(" Tf\n"));
         assert!(layer.contains("1 0 0 1 60.00 "));
         assert!(layer.ends_with("ET\n"));
+    }
+
+    #[test]
+    fn placed_lines_are_each_set_over_their_own_box() {
+        let word = |x: f32, y: f32, text: &str| kalamu_core::TextWord {
+            x,
+            y,
+            width: 0.1,
+            height: 0.02,
+            text: text.into(),
+            confidence: None,
+        };
+        let line = |x: f32, y: f32, words: Vec<kalamu_core::TextWord>| kalamu_core::TextLine {
+            x,
+            y,
+            width: 0.3,
+            height: 0.02,
+            words,
+        };
+        let region = TextRegion {
+            lines: vec![
+                line(
+                    0.1,
+                    0.1,
+                    vec![word(0.1, 0.1, "Dakar,"), word(0.25, 0.1, "le")],
+                ),
+                line(0.2, 0.5, vec![word(0.2, 0.5, "1957")]),
+            ],
+            ..TextRegion::block(0.1, 0.1, 0.5, 0.42, "Dakar, le\n1957")
+        };
+        let layer = text_layer(&[region], 600.0, 800.0);
+        // One text line per placed line, each starting at its own left edge.
+        assert_eq!(layer.matches(" Tm ").count(), 2);
+        assert!(layer.contains("1 0 0 1 60.00 "));
+        assert!(layer.contains("1 0 0 1 120.00 "));
     }
 }

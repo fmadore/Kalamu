@@ -7,4 +7,8 @@ export type OfflineModel = { id: string, bytes: number, installed: boolean, down
 /**
  * Loaded by a running job, so it cannot be removed now.
  */
-in_use: boolean, };
+in_use: boolean, 
+/**
+ * For language data, the catalogue codes of the languages it reads.
+ */
+languages: Array<string>, };

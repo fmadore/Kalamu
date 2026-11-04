@@ -646,6 +646,13 @@ textarea:focus-visible {
 .step {
 	position: relative;
 	padding-left: 2.75rem;
+	min-width: 0;
+}
+
+/* A step is as wide as its form, never as wide as its widest line: in a narrow window its
+   grids shrink to the space there is and the page never scrolls sideways. */
+.step > * {
+	min-width: 0;
 }
 
 .step::before {
@@ -730,6 +737,8 @@ textarea:focus-visible {
 .sheet {
 	padding: var(--space-5) var(--space-6) var(--space-7);
 	display: grid;
+	/* As wide as the window leaves, whatever the sheet holds. */
+	grid-template-columns: minmax(0, 1fr);
 	gap: var(--space-6);
 }
 
@@ -745,6 +754,19 @@ textarea:focus-visible {
 	.sheet {
 		padding: var(--space-4) var(--space-4) var(--space-6);
 		gap: var(--space-5);
+	}
+	/* A table fits the window rather than push the page sideways: its columns share the width
+	   and their text, chips included, wraps. */
+	.data-table {
+		table-layout: fixed;
+	}
+	.data-table th,
+	.data-table td,
+	.data-table .chip {
+		overflow-wrap: anywhere;
+	}
+	.data-table .chip {
+		white-space: normal;
 	}
 }
 

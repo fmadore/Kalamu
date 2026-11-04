@@ -154,7 +154,8 @@ no text layer needs *Extract text* instead.
 
 - **One file or a whole folder.** Choose files from the PC or drop a folder; the app processes
   them one by one, shows progress, and picks up where it stopped after an interruption.
-- **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper,
+- **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper
+  and Tesseract,
   and later OpenRouter for open-weights models. The app shows only the providers and models
   that can handle the chosen task: Claude, for instance, reads documents but does not accept
   audio.
@@ -303,7 +304,7 @@ together, so that a researcher knows what is sent and what comes back:
 
 - **Extract text**: a PDF or images split one piece per page (double pages in two first), each
   page read by the model, joined into one text per file with its page numbers. When a chosen
-  model reports where text sits on the page (today Mistral OCR), its pages are drawn with their
+  model reports where text sits on the page (Tesseract, Mistral OCR), its pages are drawn with their
   blocks boxed and a second result follows, joined by a plus rather than an arrow: the original
   PDF with an invisible text layer, for PDF files only. With models that return text only (the
   language models), a note under the reading says so, and that they give no searchable PDF. The
@@ -613,7 +614,7 @@ is remembered per task. Details are in [formats.md](formats.md).
 
 | Task | Formats |
 | --- | --- |
-| **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original) only from models that report where text sits on the page, today Mistral OCR; ALTO and PAGE XML later, likewise |
+| **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original, from PDF sources) and ALTO XML (each block, line and word with its place) only from models that report where text sits on the page: Tesseract, word by word, and Mistral OCR, by paragraph (in ALTO its lines and words are then estimated); a corrected page keeps its words' places; PAGE XML later |
 | **Transcription** | `.txt`, `.md`, `.docx`, `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
 | **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
 | **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.csv` and `.json` |
@@ -648,8 +649,18 @@ is remembered per task. Details are in [formats.md](formats.md).
 
 - **Audio transcription with Whisper** (whisper.cpp), with models downloaded once from Hugging
   Face from Settings and verified before use.
-- **Text extraction with Tesseract** (planned), for clean print only; handwriting presets are
-  offered with cloud models only.
+- **Text extraction with Tesseract** (Tesseract 5, built into the app), for clean print: PDFs
+  and images read page by page on the computer, each word with its place on the page, so ALTO
+  and a searchable PDF come from it too. Its language data is downloaded once per language from
+  Settings, from a pinned revision of Tesseract's own `tessdata_best`, and verified before use;
+  languages written in Latin letters that Tesseract has no model for (Hausa, Mooré, Wolof,
+  Bambara…) read with its Latin script model. Tesseract does not detect the language, so New
+  job asks for it. Its speed depends on the computer's processor, from about a second to
+  several seconds a page, and Settings and the model's description say so. Handwriting presets
+  are offered with cloud models only
+  ([decision](decisions/2026-11-04-tesseract.md)).
+- **A small OCR vision model** (PaddleOCR-VL, GLM-OCR or LightOnOCR), for print Tesseract reads
+  badly, is planned: [#105](https://github.com/fmadore/Kalamu/issues/105).
 
 Offline results are a fallback, not the default for difficult material: the app says which
 engine produced a result and records it like any other. Analyses need a cloud model.
@@ -702,8 +713,9 @@ catalogue entry accept: a text-only model behind a provider that takes PDFs and 
 text alone, and a scan has its text extracted first. The tools ship inside the app for Windows
 (x64 and ARM64) and macOS (Apple Silicon).
 
-- **PDF to images** with PDFium, page by page, for providers that do not accept PDF, for
-  previews and for searchable PDF exports.
+- **PDF to images** with [hayro](https://github.com/LaurenzV/hayro), a PDF rasterizer written
+  in Rust, page by page at 300 dpi, for engines that read images only (Tesseract); previews are
+  drawn in the interface with pdf.js.
 - **Image preparation**: multi-page TIFFs split, HEIC, WebP and BMP converted, oversized scans
   resized, orientation fixed from EXIF data.
 - **Audio and video with FFmpeg**: the audio track extracted from video, files converted to a
@@ -711,7 +723,9 @@ text alone, and a scan has its text extracted first. The tools ship inside the a
 - **Reading inputs** for analyses: Word, PDF, Markdown, CSV and plain text, and a photographed
   page as one image (a multi-page TIFF is refused, with a hint to save it as a PDF).
 
-Licences matter for an MIT app in the Store. PDFium is BSD/Apache-licensed. FFmpeg is our own
+Licences matter for an MIT app in the Store. hayro is MIT or Apache 2.0; Tesseract (Apache 2.0)
+and Leptonica (BSD-2-Clause) are compiled into the app, their licences in the third-party
+notices, and Tesseract's language data is Apache 2.0. FFmpeg is our own
 audio-only build, LGPL v2.1 or later, run as separate programs rather than linked; its source is
 published with each release, and the Store listing carries our own licence terms because
 Microsoft's standard terms forbid the reverse engineering the LGPL must allow. Details are in
@@ -724,6 +738,9 @@ Microsoft's standard terms forbid the reverse engineering the LGPL must allow. D
 - SQLite for the job database and result cache, and its full-text search (FTS5) for project
   search; exporters in Rust.
 - [whisper-rs](https://crates.io/crates/whisper-rs) (whisper.cpp) for offline transcription.
+- [Tesseract](https://github.com/tesseract-ocr/tesseract) 5, through
+  [kreuzberg-tesseract](https://crates.io/crates/kreuzberg-tesseract), for offline text
+  extraction, and [hayro](https://crates.io/crates/hayro) to draw PDF pages for it.
 - Native builds for Windows x64 and ARM64, and macOS on Apple Silicon. What differs between the
   systems lives in one place per layer ([AGENTS.md](../AGENTS.md)).
 

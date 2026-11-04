@@ -12,6 +12,7 @@ mod checks;
 mod ffmpeg;
 mod image_source;
 mod pdf;
+mod render;
 mod text_source;
 
 use std::fs::File;
@@ -339,14 +340,17 @@ impl OpenSource {
         };
         let (mime, bytes) = match self {
             Self::Pdf(pdf) => {
-                if !accepted.contains(&"application/pdf") {
+                let page = pdf.page_pdf(*number, *half)?;
+                if accepted.contains(&"application/pdf") {
+                    ("application/pdf".to_string(), page)
+                } else if accepted.contains(&"image/png") {
+                    // An engine that reads images only (Tesseract): the same page, drawn.
+                    ("image/png".to_string(), render::first_page_png(&page)?)
+                } else {
                     return Err(MediaError::NeedsConversion(
-                        "This model needs page images; reading PDFs with it is not available yet. \
-                         Choose a model that accepts PDF pages."
-                            .into(),
+                        "This model reads neither PDF pages nor page images.".into(),
                     ));
                 }
-                ("application/pdf".to_string(), pdf.page_pdf(*number, *half)?)
             }
             Self::Image(img) => img.prepare(*number, *half, accepted)?,
             Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => unreachable_audio()?,

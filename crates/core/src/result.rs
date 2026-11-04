@@ -103,9 +103,10 @@ pub struct Segment {
     pub text: String,
 }
 
-/// Where a block of text sits on its page, for a searchable PDF: fractions of the page's width
-/// and height, measured from its top-left corner as displayed. Only models that report layout
-/// (Mistral OCR) give them, at paragraph level.
+/// Where a block of text sits on its page, for a searchable PDF and ALTO: fractions of the
+/// page's width and height, measured from its top-left corner as displayed. Only models that
+/// report layout give them: Mistral OCR at paragraph level, Tesseract down to each word, in
+/// `lines`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct TextRegion {
@@ -114,6 +115,58 @@ pub struct TextRegion {
     pub width: f32,
     pub height: f32,
     pub text: String,
+    /// The block's lines and their words, when the engine places them; empty when it reports
+    /// the block alone.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<TextLine>>")]
+    pub lines: Vec<TextLine>,
+}
+
+impl TextRegion {
+    /// A block placed as a whole, without lines.
+    pub fn block(x: f32, y: f32, width: f32, height: f32, text: impl Into<String>) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+            text: text.into(),
+            lines: Vec::new(),
+        }
+    }
+}
+
+/// A line of a [`TextRegion`], in the same page fractions.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TextLine {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub words: Vec<TextWord>,
+}
+
+impl TextLine {
+    /// The line's words joined by spaces.
+    pub fn text(&self) -> String {
+        let words: Vec<&str> = self.words.iter().map(|w| w.text.as_str()).collect();
+        words.join(" ")
+    }
+}
+
+/// A word of a [`TextLine`], with the engine's confidence in it where it gives one (0 to 1).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TextWord {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub text: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub confidence: Option<f32>,
 }
 
 /// What a provider call consumed, for cost tracking.

@@ -181,7 +181,14 @@ pub fn run() {
             let catalog = Catalog::newest(cached.as_deref());
             let http = kalamu_providers::client();
             let keys = Arc::new(CredentialKeys::default());
-            let models = kalamu_offline::ModelManager::new(data.join("whisper-models"));
+            let models = kalamu_offline::ModelManager::new(
+                data.join("whisper-models"),
+                &kalamu_offline::WHISPER,
+            );
+            let tessdata = kalamu_offline::ModelManager::new(
+                data.join("tesseract-data"),
+                &kalamu_offline::TESSDATA,
+            );
             // The bundled FFmpeg sits next to the executable (Tauri's sidecar layout).
             let app_dir: Vec<std::path::PathBuf> = std::env::current_exe()
                 .ok()
@@ -196,6 +203,7 @@ pub fn run() {
             }
             let mut providers = kalamu_providers::registry(http.clone());
             providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
+            providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
             let engine = Engine::new(
                 store.clone(),
                 providers,
@@ -277,6 +285,7 @@ pub fn run() {
                 search_generation: Arc::default(),
                 search_preparation: Arc::default(),
                 models,
+                tessdata,
                 keys,
                 settings: Mutex::new(settings),
                 paths,

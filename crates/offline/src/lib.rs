@@ -1,17 +1,22 @@
-//! Offline engines: Whisper for transcription, and later Tesseract for text extraction. They
+//! Offline engines: Whisper for transcription and Tesseract for text extraction. They
 //! implement the same [`kalamu_core::Provider`] trait as the cloud providers, so the
-//! engine treats them alike; they need no key, and their models are downloaded from the app.
+//! engine treats them alike; they need no key, and their models and language data are
+//! downloaded from the app.
 
 mod cpu;
 mod download;
 mod models;
+mod tessdata;
+mod tesseract;
 mod whisper;
 
 use kalamu_core::ProviderError;
 use thiserror::Error;
 
 pub use cpu::missing_features;
-pub use models::{MODELS, ModelFile, ModelManager, ModelStatus, VAD, find};
+pub use models::{MODELS, ModelFile, ModelManager, ModelSet, ModelStatus, VAD, WHISPER, find};
+pub use tessdata::{TESSDATA, for_language as tessdata_for_language};
+pub use tesseract::{MODEL as TESSERACT_MODEL, TESSERACT_ID, Tesseract};
 pub use whisper::{PROVIDER_ID, Whisper};
 
 #[derive(Debug, Error)]

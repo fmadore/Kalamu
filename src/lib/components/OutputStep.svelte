@@ -141,9 +141,9 @@
 	}
 	.inline {
 		display: inline-flex;
+		flex-wrap: wrap;
 		gap: var(--space-2);
 		align-items: center;
-		white-space: nowrap;
 		font-size: var(--type-sm);
 	}
 	.path {

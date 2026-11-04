@@ -20,6 +20,9 @@ pub enum ExportFormat {
     Csv,
     /// The original PDF with an invisible text layer, from models that report layout.
     SearchablePdf,
+    /// ALTO XML: the text with where each block, line and word sits, from models that report
+    /// layout.
+    Alto,
 }
 
 impl ExportFormat {
@@ -34,7 +37,13 @@ impl ExportFormat {
             Self::Csv => "csv",
             // Never `.pdf` alone, which would replace the source.
             Self::SearchablePdf => "searchable.pdf",
+            Self::Alto => "alto.xml",
         }
+    }
+
+    /// Written only from a model that reports where text sits on the page.
+    pub fn needs_layout(self) -> bool {
+        matches!(self, Self::SearchablePdf | Self::Alto)
     }
 }
 

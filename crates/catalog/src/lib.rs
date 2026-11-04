@@ -5,6 +5,8 @@
 //! newer one from the repository without a release, and [`Catalog::newest`] keeps whichever is
 //! more recent. This crate does no network or file I/O itself.
 
+use std::collections::BTreeMap;
+
 use kalamu_core::{LanguageCode, ProviderId, Task};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -50,6 +52,24 @@ pub struct ProviderInfo {
     /// Runs on this PC: needs no key and sends nothing anywhere.
     #[serde(default)]
     pub local: bool,
+    /// The name in other interface languages, by language (`fr`); English is `name`.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    #[ts(optional, as = "Option<BTreeMap<String, Translation>>")]
+    pub translations: BTreeMap<String, Translation>,
+}
+
+/// A provider's or model's words in another interface language; what is missing stays in
+/// English. The catalogue is data refreshed from the repository, so its words cannot live in
+/// the interface's translation files.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct Translation {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -219,6 +239,10 @@ pub struct ModelInfo {
     /// Uses the languages chosen for a job. Mistral OCR reads any language and takes none.
     #[serde(default = "yes")]
     pub takes_language: bool,
+    /// Detects the language when none is chosen. Tesseract does not: New job asks for the
+    /// document's languages instead of offering to detect them.
+    #[serde(default = "yes")]
+    pub detects_language: bool,
     /// How many of the chosen languages its API takes; the provider modules send them so.
     #[serde(default)]
     pub language_hints: LanguageHints,
@@ -226,7 +250,7 @@ pub struct ModelInfo {
     /// models); it detects the others.
     #[serde(default)]
     pub two_letter_codes: bool,
-    /// Reports where text sits on the page, which a searchable PDF needs.
+    /// Reports where text sits on the page, which a searchable PDF and ALTO need.
     #[serde(default)]
     pub layout: bool,
     /// A top-tier model priced far above what transcription and extraction usually need; the
@@ -242,6 +266,10 @@ pub struct ModelInfo {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub reasoning: Option<Reasoning>,
+    /// Its name and description in other interface languages, by language (`fr`).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    #[ts(optional, as = "Option<BTreeMap<String, Translation>>")]
+    pub translations: BTreeMap<String, Translation>,
 }
 
 fn yes() -> bool {
@@ -422,6 +450,28 @@ mod tests {
                 model.provider.as_str() == "openai",
                 "{}",
                 model.id
+            );
+        }
+        Ok(())
+    }
+
+    /// Translations are for the interface's other languages, and say something.
+    #[test]
+    fn translations_are_for_interface_languages() -> Result<(), CatalogError> {
+        let catalog = Catalog::from_json(BUNDLED)?;
+        let all = catalog
+            .providers
+            .iter()
+            .flat_map(|p| &p.translations)
+            .chain(catalog.models.iter().flat_map(|m| &m.translations));
+        for (language, t) in all {
+            assert!(["fr", "de"].contains(&language.as_str()), "{language}");
+            assert!(t.name.is_some() || t.description.is_some());
+            assert!(
+                t.name
+                    .iter()
+                    .chain(&t.description)
+                    .all(|s| !s.trim().is_empty())
             );
         }
         Ok(())

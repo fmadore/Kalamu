@@ -218,10 +218,11 @@ pub trait Provider: Send + Sync {
         true
     }
 
-    /// Whether `model` can run now: an offline engine checks that its model was downloaded
-    /// and that this processor can run it, before the job starts.
-    fn check_ready(&self, model: &str) -> Result<(), ProviderError> {
-        let _ = model;
+    /// Whether `model` can run now on the job's `languages`: an offline engine checks that its
+    /// model and language data were downloaded and that this processor can run it, before the
+    /// job starts.
+    fn check_ready(&self, model: &str, languages: &LanguageChoice) -> Result<(), ProviderError> {
+        let _ = (model, languages);
         Ok(())
     }
 

@@ -53,6 +53,12 @@ export function modelsTakingOne(count: number, models: (ModelInfo | undefined)[]
 	);
 }
 
+/** The chosen models that cannot detect the language (Tesseract), by name: a language must be
+ * chosen for them. */
+export function modelsNotDetecting(models: (ModelInfo | undefined)[]): string[] {
+	return names(models.filter((m) => m && takesLanguage(m) && m.detects_language === false));
+}
+
 /** The chosen models that use a chosen language only without speakers or timestamps. */
 export function modelsWithoutTimes(models: (ModelInfo | undefined)[]): string[] {
 	return names(models.filter((m) => m?.language_hints === 'one_without_timestamps'));

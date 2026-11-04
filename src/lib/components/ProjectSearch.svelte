@@ -331,6 +331,7 @@
 <style>
 	.search-view {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-4);
 		align-content: start;
 		min-width: 0;
@@ -350,10 +351,15 @@
 	}
 	.pick {
 		display: inline-flex;
+		flex-wrap: wrap;
+		max-width: 100%;
 		align-items: center;
 		gap: var(--space-2);
 		font-size: var(--type-sm);
 		color: var(--text-secondary);
+	}
+	.pick select {
+		max-width: 100%;
 	}
 	.distance {
 		width: 4.5rem;

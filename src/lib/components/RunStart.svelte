@@ -2,6 +2,7 @@
 	// Running a saved workflow: the files, what each step sends and to whom, and what the steps
 	// that read the files will cost. A step reading another's text costs what that text holds,
 	// known only once it is read.
+	import { providerNameOf } from '#lib/catalogText.js';
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
@@ -35,7 +36,7 @@
 
 	const sources = $derived(files.flatMap((f) => (f.source ? [f.source] : [])));
 	const catalog = $derived(app.catalog!);
-	const providerName = (id: string) => catalog.providers.find((p) => p.id === id)?.name ?? id;
+	const providerName = (id: string) => providerNameOf(catalog, id);
 	const local = (id: string) => catalog.providers.find((p) => p.id === id)?.local === true;
 	const offline = (i: number) => workflow.steps[i].pipeline.setups.every((s) => local(s.provider));
 	/** A step on this PC whose text a later step sends to a cloud provider. */

@@ -18,6 +18,14 @@ const target =
 const LICENCE_FILE = /^(licen[cs]e|copying|notice|unlicense)([-._].*)?$/i;
 /** C and C++ libraries a crate compiles in from a folder of its own, with their own licence. */
 const VENDORED = { 'whisper-rs-sys': ['whisper.cpp'] };
+/** Libraries a crate's build script downloads and compiles in, whose licences are therefore
+ * kept in this repository. */
+const DOWNLOADED = {
+	'kreuzberg-tesseract': [
+		'crates/offline/licenses/Tesseract-LICENSE.txt',
+		'crates/offline/licenses/Leptonica-license.txt'
+	]
+};
 
 /** The licence files at the top of a package's folder, as text. */
 function licenceTexts(dir) {
@@ -75,7 +83,11 @@ function rustCrates() {
 						...t,
 						file: `${sub}/${t.file}`
 					}))
-				)
+				),
+				...(DOWNLOADED[p.name] ?? []).map((file) => ({
+					file: file.split('/').pop(),
+					text: readFileSync(file, 'utf8').trim()
+				}))
 			]
 		}));
 }

@@ -87,8 +87,11 @@ export type View =
 			project?: FromProject;
 	  }
 	| { name: 'prompts'; presetId?: string }
-	| { name: 'settings' }
+	| { name: 'settings'; tab?: SettingsTab }
 	| { name: 'glossary'; term?: Term | 'formats' };
+
+/** The sections of Settings, each a tab. */
+export type SettingsTab = 'keys' | 'offline' | 'general' | 'about';
 
 /** The list of what to check a review was opened from: the items shown, the one open, and how
  * the list was set, so stepping on and going back keep it as it was. */
@@ -201,10 +204,24 @@ export async function refreshOffline(): Promise<void> {
 	app.offline = await api.offlineStatus();
 }
 
-/** Whether a model can run now: always for cloud models, once downloaded for offline ones. */
+/**
+ * Whether a model can run now: always for cloud models, once downloaded for offline ones. An
+ * offline engine built into the app (Tesseract) has nothing of its own to download; its
+ * language data is checked by `missingLanguageData`.
+ */
 export function isInstalled(provider: string, model: string): boolean {
 	if (!app.catalog?.providers.find((p) => p.id === provider)?.local) return true;
-	return app.offline?.models.some((m) => m.id === model && m.installed) ?? false;
+	const status = app.offline?.models.find((m) => m.id === model);
+	return status ? status.installed : app.offline !== null;
+}
+
+/** The chosen languages whose language data, for an engine that needs it, is not downloaded. */
+export function missingLanguageData(codes: string[]): string[] {
+	const data = app.offline?.language_data ?? [];
+	return codes.filter((code) => {
+		const file = data.find((d) => d.languages.includes(code));
+		return file !== undefined && !file.installed;
+	});
 }
 
 export function liveJob(id: string): LiveJob {

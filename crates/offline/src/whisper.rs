@@ -291,7 +291,7 @@ impl Provider for Whisper {
         false
     }
 
-    fn check_ready(&self, model: &str) -> Result<(), ProviderError> {
+    fn check_ready(&self, model: &str, _languages: &LanguageChoice) -> Result<(), ProviderError> {
         ensure_cpu()?;
         let file = models::find(model)
             .ok_or_else(|| ProviderError::Unsupported(format!("Unknown Whisper model {model}")))?;
@@ -487,7 +487,10 @@ mod tests {
     #[test]
     fn the_settings_sent_say_whether_voice_detection_was_on() {
         let dir = tempfile::tempdir().unwrap();
-        let whisper = Whisper::new(ModelManager::new(dir.path().to_path_buf()));
+        let whisper = Whisper::new(ModelManager::new(
+            dir.path().to_path_buf(),
+            &models::WHISPER,
+        ));
         let input = kalamu_core::PreparedInput {
             piece: kalamu_core::PieceRef::Whole,
             mime: PCM_16K_MONO.into(),

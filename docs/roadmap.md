@@ -27,10 +27,22 @@ ad hoc; it has not yet been opened on a real Mac
   progress and taskbar progress, model catalogue refreshed from the repository, prompt library,
   keys in Credential Manager, English interface with translation files, CI with `cargo audit`
   and `cargo deny`, Dependabot.
-- **Text extraction.** Gemini, OpenAI, Claude and Mistral; PDF page cutting with PDFium, image
+- **Text extraction.** Gemini, OpenAI, Claude and Mistral; PDF pages cut with `lopdf`, image
   preparation, input checks with splitting of double pages, language choice, line breaks kept
   as on the page or joined into running text, exports to `.txt`, `.md`, `.docx`, `.json` and
   `.csv`, searchable PDFs from Mistral OCR.
+- **Offline text extraction with Tesseract**
+  ([#46](https://github.com/fmadore/Kalamu/issues/46),
+  [decision](decisions/2026-11-04-tesseract.md)), not yet released: Tesseract 5 built into the
+  app, language data from `tessdata_best` downloaded per language from Settings (the Latin
+  script model for Hausa, Mooré, Wolof and the other Latin-script languages without a model of
+  their own), PDF pages drawn at 300 dpi with hayro, the languages asked for in New job since
+  Tesseract does not detect them, and its speed, which depends on the processor, said in
+  Settings and in its description. Each word comes back with its place on the page, so it
+  gives a searchable PDF, each line over its own box, and **ALTO XML**, also from Mistral OCR
+  with estimated lines and words. A corrected page keeps its words' places, as
+  iwac-ai-pipelines' ALTO correction does. Built and tested on Windows ARM64; Windows x64 and
+  macOS in CI; a full job with networking off and a real Mac still to try.
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
@@ -359,8 +371,8 @@ among them); the duplication and the large files it found are refactored next.
   origin YouTube must accept, and the links that open a video on YouTube, which every build up
   to 0.4.0 blocked (the opener allowed no address)
   ([decision](decisions/2026-10-27-youtube-links.md)).
-- **Text extraction**: ALTO and PAGE XML where models return coordinates; checks for skewed
-  and blurry pages.
+- **Text extraction**: PAGE XML where models return coordinates (ALTO is done); checks for
+  skewed and blurry pages.
 - **Tables of contents and corrections, live**: a run of each against the live APIs, mixing
   providers (Gemini reading, Mistral combining), and a test of the economy path for a table of
   contents. The first live run, Claude Sonnet 5.5 on a 12-page issue of *Islam Info*, found
@@ -463,12 +475,11 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 
 - German interface: `de.ts` beside `en.ts` and `fr.ts`.
 - OpenRouter for open-weights models.
-- **Free offline text extraction with Tesseract** for clean printed PDFs and images, without
-  an account, API key or per-page API charges; language data installed through the app, then
-  processing entirely on the PC. The same review, exports, caching and resume as cloud
-  extraction, with the engine and language data recorded in provenance. Handwriting still
-  needs a suitable cloud model. Planned, not available in 1.0.0; no release date set:
-  [issue #46](https://github.com/fmadore/Kalamu/issues/46).
+- **Offline text extraction with a small OCR vision model** (PaddleOCR-VL, GLM-OCR or
+  LightOnOCR) for print Tesseract reads badly (old newspapers, mixed layouts, tables), on the
+  computer through llama.cpp or another runtime, after a benchmark on real pages; much slower
+  than Tesseract on the processor, which the app must say:
+  [#105](https://github.com/fmadore/Kalamu/issues/105).
 - Linking names to imported local authority records (an id from candidate records, or none,
   with a reason), building on the project dictionary in #48.
 - Tables of contents of text files (a long Word report, a transcript, read in passages).
@@ -477,7 +488,8 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
   [#38](https://github.com/fmadore/Kalamu/issues/38), using the shared snapshot foundation.
 - Explore assisted TEI encoding with reusable project profiles:
   [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature.
-- Correcting ALTO XML with its coordinates kept, as iwac-ai-pipelines does.
+- Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates
+  kept; Kalamu's own extractions already keep their words' places when corrected.
 - French and German Store listings, with the translated interface.
 - macOS: signing and notarisation with an Apple Developer ID, so Gatekeeper does not ask; the
   application menu's labels through the translation files; a first test on a real Mac (the

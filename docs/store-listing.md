@@ -23,6 +23,23 @@ German once the interface is translated.
 **Before pasting**, replace the provider model names if the catalogue has changed, and check
 that the features listed still match the app.
 
+**For the next submission** (not in 1.3.0, so not in the blocks below yet): offline text
+extraction with Tesseract and ALTO XML export
+([decision](decisions/2026-11-04-tesseract.md)). When the version that ships them is
+submitted, add these, and change "Recordings can also be transcribed offline with Whisper" in
+the description's first paragraph to name both engines:
+
+```text
+Extract text offline with Tesseract, for clean print: free, nothing sent, each word with its place on the page. Download a language once; its speed depends on your PC's processor.
+Export ALTO XML with each block, line and word in its place, corrections included, from Tesseract or Mistral OCR
+Offline text extraction: internet once to download each language for Tesseract (about 3 to 15 MB; 100 MB for languages in Latin letters without their own model), then runs on the CPU
+```
+
+The first two lines are features; the third is a system requirement. Also replace "and, with
+Mistral OCR, searchable PDF" by "searchable PDF and ALTO XML, with Tesseract or Mistral OCR",
+and add Tesseract to the offline route of the certification notes (Settings › Working
+offline › download French, then extract `bulletin-page.jpg` with Tesseract 5).
+
 ## English (United States)
 
 ### Description — full text

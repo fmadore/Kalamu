@@ -2,6 +2,7 @@
 	// Merges proposed by a model for one field of the dictionary. Asking runs an ordinary job
 	// (its cost, progress and answers are in Jobs); the proposals are read back against the rows
 	// sent, and each waits for the researcher: merged as chosen, turned down, or kept apart.
+	import { providerName as providerNameOf } from '#lib/catalogText.js';
 	import Icon from './Icon.svelte';
 	import type { Item } from '#lib/bindings/Item.js';
 	import type { Pace } from '#lib/bindings/Pace.js';
@@ -57,7 +58,10 @@
 		)
 	);
 	const models = $derived(catalog ? modelsFor(catalog, rule, provider, TEXT) : []);
-	const providerName = $derived(providers.find((pr) => pr.id === provider)?.name ?? provider);
+	const providerName = $derived.by(() => {
+		const found = providers.find((pr) => pr.id === provider);
+		return found ? providerNameOf(found) : provider;
+	});
 	const requests = $derived((view?.requests ?? []).filter((r) => r.namespace === namespace));
 	const open = $derived(
 		(view?.proposals ?? []).filter((x) => x.namespace === namespace && !x.dismissed)
@@ -360,17 +364,24 @@
 <style>
 	.proposals {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-2);
 		margin-block: var(--space-3);
 	}
 	.head {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-2);
 	}
 	h3 {
 		margin: 0;
+	}
+	/* A long button label wraps in a narrow window. */
+	.head .btn {
+		white-space: normal;
+		text-align: left;
 	}
 	.ask {
 		display: grid;

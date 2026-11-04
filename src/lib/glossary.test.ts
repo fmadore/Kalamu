@@ -30,7 +30,8 @@ describe('glossary', () => {
 			'csv',
 			'srt',
 			'vtt',
-			'searchable_pdf'
+			'searchable_pdf',
+			'alto'
 		];
 		expect(FORMATS).toEqual([...all, 'provenance']);
 		for (const f of FORMATS) expect(en.glossary.formats[f].length).toBeGreaterThan(20);

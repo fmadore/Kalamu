@@ -161,15 +161,19 @@ impl Engine {
                 let renamed = rename_segments(&result.output.segments, &speaker_names);
                 absolute(&state.piece, &renamed, previous_end)
             };
-            // A corrected page keeps its text searchable, as one block over the page.
+            // A corrected page keeps its words' places where the engine placed each word;
+            // otherwise its text stays searchable as one block over the page.
             let regions = match (&corrected_text, result.output.regions.is_empty()) {
-                (Some(text), false) => vec![kalamu_core::TextRegion {
-                    x: 0.05,
-                    y: 0.05,
-                    width: 0.9,
-                    height: 0.9,
-                    text: text.clone(),
-                }],
+                (Some(text), false) => crate::realign::realign(&result.output.regions, text)
+                    .unwrap_or_else(|| {
+                        vec![kalamu_core::TextRegion::block(
+                            0.05,
+                            0.05,
+                            0.9,
+                            0.9,
+                            text.clone(),
+                        )]
+                    }),
                 _ => result.output.regions.clone(),
             };
             parts.push(ExportPart {

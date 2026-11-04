@@ -50,6 +50,8 @@ pub struct AppState {
     pub search_preparation: Arc<std::sync::atomic::AtomicU64>,
     /// Whisper models, shared with the Whisper provider inside the engine.
     pub models: kalamu_offline::ModelManager,
+    /// Tesseract's language data, shared with the Tesseract provider inside the engine.
+    pub tessdata: kalamu_offline::ModelManager,
     pub keys: Arc<CredentialKeys>,
     pub settings: Mutex<Settings>,
     pub paths: Paths,

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-03",
+  "updated": "2026-11-04",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
     {
@@ -32,7 +32,24 @@
       "name": "Whisper (on this PC)",
       "key_url": "",
       "key_prefix": null,
-      "local": true
+      "local": true,
+      "translations": {
+        "fr": {
+          "name": "Whisper (sur cet ordinateur)"
+        }
+      }
+    },
+    {
+      "id": "tesseract",
+      "name": "Tesseract (on this computer)",
+      "key_url": "",
+      "key_prefix": null,
+      "local": true,
+      "translations": {
+        "fr": {
+          "name": "Tesseract (sur cet ordinateur)"
+        }
+      }
     }
   ],
   "models": [
@@ -1121,7 +1138,12 @@
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Presque aussi précis que Large v3, plusieurs fois plus rapide ; le meilleur choix sur la plupart des ordinateurs. Téléchargement de 574 Mo."
+        }
+      }
     },
     {
       "provider": "whisper",
@@ -1176,7 +1198,12 @@
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Le plus précis des Whisper, et le plus lent : comptez environ la durée de l’enregistrement sur un portable. Téléchargement de 1,1 Go."
+        }
+      }
     },
     {
       "provider": "whisper",
@@ -1231,7 +1258,12 @@
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Rapide sur tout ordinateur, pour des enregistrements clairs dans des langues très parlées. Téléchargement de 190 Mo."
+        }
+      }
     },
     {
       "provider": "whisper",
@@ -1286,7 +1318,86 @@
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Très rapide et approximatif : un premier aperçu de ce que contient un enregistrement. Téléchargement de 60 Mo."
+        }
+      }
+    },
+    {
+      "provider": "tesseract",
+      "id": "tesseract-5",
+      "name": "Tesseract 5",
+      "description": "Offline. For clean printed pages: free, and each word comes back with its place on the page (ALTO, searchable PDF). Not for handwriting, and weak on damaged print, faded newspapers and complex layouts. Speed depends on this computer's processor: from about a second to several seconds a page. Does not detect the language: each language chosen is downloaded once (3 to 15 MB; 100 MB for languages written in Latin letters without a model of their own, such as Hausa, Mooré or Wolof).",
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "image/png",
+        "image/jpeg"
+      ],
+      "languages": [
+        "en",
+        "fr",
+        "ar",
+        "de",
+        "pt",
+        "es",
+        "it",
+        "nl",
+        "yo",
+        "sw",
+        "am",
+        "af",
+        "fa",
+        "tr",
+        "ur",
+        "hi",
+        "ru",
+        "pl",
+        "zh",
+        "ja",
+        "ko",
+        "id",
+        "ms",
+        "he",
+        "el",
+        "la",
+        "ha",
+        "ig",
+        "ff",
+        "wo",
+        "bm",
+        "dyu",
+        "mos",
+        "ee",
+        "fon",
+        "tw",
+        "so",
+        "ln",
+        "zu",
+        "xh",
+        "mg"
+      ],
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [
+        "text_extraction"
+      ],
+      "accepts_prompt": false,
+      "detects_language": false,
+      "layout": true,
+      "pricing": {
+        "per_page": 0.0,
+        "note": "Runs on this computer: free, and nothing is sent anywhere."
+      },
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Pour les pages imprimées nettes : gratuit, et chaque mot revient avec son emplacement sur la page (ALTO, PDF interrogeable). Pas pour l’écriture manuscrite, et faible sur l’imprimé abîmé, les journaux pâlis et les mises en page complexes. Sa vitesse dépend du processeur de cet ordinateur : d’environ une seconde à plusieurs secondes par page. Ne détecte pas la langue : chaque langue choisie se télécharge une fois (3 à 15 Mo ; 100 Mo pour les langues écrites en lettres latines sans modèle propre, comme le haoussa, le mooré ou le wolof)."
+        }
+      }
     }
   ],
   "languages": [

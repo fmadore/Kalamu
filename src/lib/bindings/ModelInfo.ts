@@ -7,6 +7,7 @@ import type { Pricing } from "./Pricing";
 import type { ProviderId } from "./ProviderId";
 import type { Reasoning } from "./Reasoning";
 import type { Task } from "./Task";
+import type { Translation } from "./Translation";
 
 export type ModelInfo = { provider: ProviderId, id: string, name: string, description: string, tasks: Array<Task>, 
 /**
@@ -35,6 +36,11 @@ speakers: boolean,
  */
 takes_language: boolean, 
 /**
+ * Detects the language when none is chosen. Tesseract does not: New job asks for the
+ * document's languages instead of offering to detect them.
+ */
+detects_language: boolean, 
+/**
  * How many of the chosen languages its API takes; the provider modules send them so.
  */
 language_hints: LanguageHints, 
@@ -44,7 +50,7 @@ language_hints: LanguageHints,
  */
 two_letter_codes: boolean, 
 /**
- * Reports where text sits on the page, which a searchable PDF needs.
+ * Reports where text sits on the page, which a searchable PDF and ALTO need.
  */
 layout: boolean, 
 /**
@@ -56,4 +62,8 @@ costly: boolean, pricing: Pricing, limits: Limits,
  * The thinking levels it accepts; `None` for a model that does not reason (an OCR or a
  * speech-to-text model).
  */
-reasoning?: Reasoning, };
+reasoning?: Reasoning, 
+/**
+ * Its name and description in other interface languages, by language (`fr`).
+ */
+translations?: { [key in string]: Translation }, };

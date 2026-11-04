@@ -11,7 +11,7 @@ use sha2::{Digest, Sha256};
 use tokio_util::sync::CancellationToken;
 
 use crate::OfflineError;
-use crate::models::{ModelFile, ModelManager, VAD, find, io, lock};
+use crate::models::{ModelFile, ModelManager, io, lock};
 
 /// No overall deadline: Large is a gigabyte, and a slow or proxied network is still a network.
 /// A connection that stops delivering is what fails, after this long without a byte.
@@ -42,11 +42,17 @@ impl Transfer {
 }
 
 impl ModelManager {
-    /// Downloads a speech model, and the voice-activity model first if it is missing.
+    /// Downloads a model, and first the file every model of its engine needs if it is missing
+    /// (Whisper's voice-activity model).
     pub async fn download(&self, id: &str) -> Result<(), OfflineError> {
-        let model = find(id).ok_or_else(|| OfflineError::UnknownModel(id.to_owned()))?;
-        if !self.is_installed(&VAD) {
-            self.download_from(&VAD, &Transfer::pinned(&VAD)).await?;
+        let model = self
+            .find(id)
+            .ok_or_else(|| OfflineError::UnknownModel(id.to_owned()))?;
+        if let Some(companion) = self.set.companion
+            && !self.is_installed(companion)
+        {
+            self.download_from(companion, &Transfer::pinned(companion))
+                .await?;
         }
         self.download_from(model, &Transfer::pinned(model)).await
     }
@@ -286,15 +292,23 @@ mod tests {
         names
     }
 
-    use crate::models::MODELS;
+    use crate::models::{MODELS, VAD, WHISPER};
+    use crate::tessdata::TESSDATA;
 
     const BASE: &ModelFile = &MODELS[3];
 
     #[test]
     fn production_downloads_are_pinned_https() {
-        for model in MODELS.iter().chain([&VAD]) {
+        for model in MODELS.iter().chain([&VAD]).chain(TESSDATA.files) {
             let transfer = Transfer::pinned(model);
-            assert!(transfer.url.starts_with("https://huggingface.co/"));
+            assert!(
+                transfer.url.starts_with("https://huggingface.co/")
+                    || transfer
+                        .url
+                        .starts_with("https://raw.githubusercontent.com/tesseract-ocr/"),
+                "{}",
+                transfer.url
+            );
             // A full commit hash, never a branch name that moves.
             assert!(
                 transfer.url.split('/').any(|part| part.len() == 40),
@@ -308,7 +322,7 @@ mod tests {
     #[tokio::test]
     async fn a_verified_download_is_installed_under_its_final_name_only() {
         let dir = tempfile::tempdir().unwrap();
-        let manager = ModelManager::new(dir.path().to_owned());
+        let manager = ModelManager::new(dir.path().to_owned(), &WHISPER);
         manager
             .download_from(BASE, &transfer(ok(PAYLOAD, false)))
             .await
@@ -322,7 +336,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mut corrupt = PAYLOAD.to_vec();
         corrupt[0] ^= 1;
-        let error = ModelManager::new(dir.path().to_owned())
+        let error = ModelManager::new(dir.path().to_owned(), &WHISPER)
             .download_from(BASE, &transfer(ok(&corrupt, false)))
             .await
             .unwrap_err();
@@ -333,7 +347,7 @@ mod tests {
     #[tokio::test]
     async fn a_stalled_connection_fails_and_cleans_up() {
         let dir = tempfile::tempdir().unwrap();
-        let error = ModelManager::new(dir.path().to_owned())
+        let error = ModelManager::new(dir.path().to_owned(), &WHISPER)
             .download_from(BASE, &transfer(ok(&PAYLOAD[..5], true)))
             .await
             .unwrap_err();

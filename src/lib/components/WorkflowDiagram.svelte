@@ -82,6 +82,8 @@
 <style>
 	/* A quiet panel, as New job's diagram: each stage a column, read left to right. */
 	.workflow-diagram {
+		/* Its steps fit the width the diagram is given, wherever it sits. */
+		container-type: inline-size;
 		margin: 0;
 		padding: var(--space-2) var(--space-4) var(--space-4);
 		border-radius: var(--radius-card);
@@ -222,6 +224,16 @@
 	@keyframes wait {
 		50% {
 			transform: scale(1.08);
+		}
+	}
+	/* In a narrow diagram (a phone-sized window, or a card beside the sidebar) the steps share
+	   the width there is, their captions wrapping, rather than scroll sideways. */
+	@container (max-width: 34rem) {
+		.stage {
+			min-width: 0;
+		}
+		.caption {
+			overflow-wrap: anywhere;
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
