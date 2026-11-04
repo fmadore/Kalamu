@@ -88,3 +88,29 @@ pub use youtube::YOUTUBE_LINK;
 
 /// Bumped when a change to preparation or parsing makes cached results stale.
 pub const PIPELINE_VERSION: u32 = 1;
+
+#[cfg(test)]
+mod interface_lists {
+    /// The lists the interface would otherwise copy from Rust's enums and rules: the parts of a
+    /// source description in order, the tasks whose results are a text, and the queue's reasons.
+    /// `cargo test` keeps `src/lib/coreLists.json` current, as it does `searchRules.json`; the
+    /// interface imports it, so the two sides cannot drift.
+    #[test]
+    fn export_lists_for_the_interface() -> Result<(), Box<dyn std::error::Error>> {
+        let lists = serde_json::json!({
+            "description_fields": crate::DescriptionField::ALL,
+            "text_tasks": crate::Task::ALL
+                .iter()
+                .filter(|t| t.yields_text())
+                .collect::<Vec<_>>(),
+            "queue_reasons": crate::Signal::KINDS,
+        });
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/lib/coreLists.json");
+        let json = serde_json::to_string_pretty(&lists)? + "\n";
+        if std::fs::read_to_string(&path).ok().as_deref() != Some(json.as_str()) {
+            std::fs::write(&path, json)?;
+        }
+        Ok(())
+    }
+}

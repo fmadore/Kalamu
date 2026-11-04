@@ -68,6 +68,17 @@ pub enum Signal {
 }
 
 impl Signal {
+    /// Every kind of signal, as serialised, in the order the queue lists its reasons: the
+    /// interface reads them from `src/lib/coreLists.json` rather than keeping its own copy.
+    pub const KINDS: [&'static str; 6] = [
+        "failed",
+        "not_read",
+        "truncated",
+        "disagrees",
+        "stale",
+        "not_reviewed",
+    ];
+
     /// A processing problem: nothing was read, so there is no answer to review.
     pub fn is_processing(&self) -> bool {
         matches!(self, Self::Failed { .. } | Self::NotRead)
@@ -148,4 +159,39 @@ pub struct ReviewQueue {
     pub counts: QueueCounts,
     /// In the order of the scope's results, each result's pieces in their order.
     pub items: Vec<QueueItem>,
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_signal_kind_is_listed_once_in_order() {
+        let one_of_each = [
+            Signal::Failed { error: None },
+            Signal::NotRead,
+            Signal::Truncated,
+            Signal::Disagrees {
+                with: Vec::new(),
+                words: 0,
+                fields: Vec::new(),
+            },
+            Signal::Stale {
+                gone: false,
+                unit: false,
+            },
+            Signal::NotReviewed,
+        ];
+        let kinds: Vec<String> = one_of_each
+            .iter()
+            .map(|s| {
+                serde_json::to_value(s).unwrap()["kind"]
+                    .as_str()
+                    .unwrap()
+                    .to_string()
+            })
+            .collect();
+        assert_eq!(kinds, Signal::KINDS);
+    }
 }

@@ -1,0 +1,27 @@
+{
+  "description_fields": [
+    "repository",
+    "fonds",
+    "series",
+    "file",
+    "shelfmark",
+    "creator",
+    "date",
+    "url",
+    "citation",
+    "rights"
+  ],
+  "queue_reasons": [
+    "failed",
+    "not_read",
+    "truncated",
+    "disagrees",
+    "stale",
+    "not_reviewed"
+  ],
+  "text_tasks": [
+    "text_extraction",
+    "text_correction",
+    "audio_transcription"
+  ]
+}

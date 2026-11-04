@@ -201,8 +201,8 @@ pub fn run() {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use kalamu_catalog::Catalog;
     use super::command_names::COMMANDS;
+    use kalamu_catalog::Catalog;
 
     /// The handler, the command list and the capability must agree: a command missing from
     /// any of them is a rejected call at run time.
