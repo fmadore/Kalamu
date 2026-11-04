@@ -320,7 +320,6 @@
 	.step {
 		display: grid;
 		gap: var(--space-2);
-		max-width: 44rem;
 	}
 	.head {
 		display: flex;
@@ -364,7 +363,6 @@
 		gap: var(--space-2);
 		align-items: flex-end;
 		flex-wrap: wrap;
-		max-width: 44rem;
 	}
 	.add .field {
 		flex: 1;

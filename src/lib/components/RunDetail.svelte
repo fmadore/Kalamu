@@ -202,7 +202,7 @@
 	.step {
 		display: grid;
 		gap: var(--space-2);
-		max-width: 44rem;
+		padding-top: var(--space-3);
 	}
 	.head {
 		display: flex;

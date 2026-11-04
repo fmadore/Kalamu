@@ -8,6 +8,7 @@ import type { TaskRules } from './bindings/TaskRules.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
+import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { PieceStatus } from './bindings/PieceStatus.js';
 import type { QueueItem } from './bindings/QueueItem.js';
 import type { ResultKey } from './bindings/ResultKey.js';
@@ -128,6 +129,8 @@ export const app = $state({
 	offline: null as OfflineStatus | null,
 	settings: null as Settings | null,
 	jobs: [] as JobSummary[],
+	/** The projects, for the sidebar's list of them. */
+	projects: [] as ProjectSummary[],
 	live: {} as Record<string, LiveJob>,
 	/** Raised whenever a workflow run changes, so its views read it again. */
 	runs: 0,
@@ -158,6 +161,11 @@ export function applyLanguage(): void {
 
 export function hasKey(provider: string): boolean {
 	return app.keys.some((k) => k.provider === provider && k.saved);
+}
+
+/** The projects as the sidebar lists them; left as they were when they cannot be read. */
+export async function refreshProjects(): Promise<void> {
+	app.projects = await api.listProjects().catch(() => app.projects);
 }
 
 export async function refreshJobs(): Promise<void> {

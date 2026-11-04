@@ -258,7 +258,7 @@
 		min-height: var(--control-sm);
 		list-style: none;
 		color: var(--text-secondary);
-		font-size: var(--type-xs);
+		font-size: var(--type-sm);
 		font-weight: 500;
 		cursor: pointer;
 	}
@@ -279,8 +279,8 @@
 		padding-left: 1.25rem;
 		display: grid;
 		gap: var(--space-1);
-		font-size: var(--type-xs);
+		font-size: var(--type-sm);
 		color: var(--text-muted);
-		max-width: 48rem;
+		max-width: 75ch;
 	}
 </style>

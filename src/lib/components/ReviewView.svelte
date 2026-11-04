@@ -62,6 +62,9 @@
 	 * stays until closed; only pointed at, it shows while the pointer is on it or its readings. */
 	let selected = $state<number | null>(null);
 	let pinned = $state(false);
+	/** The difference last opened by a click or a step, kept once its readings close, so the
+	 * next step goes on from it rather than from the first. */
+	let stepped: number | null = null;
 	/** The difference under the pointer, in either text: highlighted in both. */
 	let hovered = $state<number | null>(null);
 	let textPane = $state<HTMLElement | null>(null);
@@ -169,6 +172,7 @@
 		clearTimeout(hoverTimer);
 		selected = id;
 		pinned = pin;
+		if (pin) stepped = id;
 	}
 
 	function hide() {
@@ -325,25 +329,49 @@
 		pane.scrollTop = areaTop + caretTop(area, place.start) - place.below;
 	}
 
-	/** Opens a difference and pins it, bringing its words into view in both texts. */
-	async function choose(id: number) {
+	/** Opens a difference and pins it, bringing its words into view in both texts, whichever
+	 * text it was chosen in. */
+	async function choose(id: number, from?: HTMLElement | null) {
 		show(id, true);
 		await tick();
 		const words = wordsIn(textPane, id);
-		reveal(textPane, words);
-		reveal(comparePane, wordsIn(comparePane, id));
+		const other = wordsIn(comparePane, id);
+		const clicked = from ? wordsIn(from, id) : null;
+		if (from && clicked) {
+			// Chosen in one text: the other comes level with it, so both read the same place.
+			const height = clicked.getBoundingClientRect().top - from.getBoundingClientRect().top;
+			if (from === textPane) level(comparePane, other, height);
+			else level(textPane, words, height);
+		} else {
+			reveal(textPane, words);
+			reveal(comparePane, other);
+		}
 		words?.focus({ preventScroll: true });
+	}
+
+	/** Scrolls a pane so that an element in it stands `height` below the pane's top, kept in
+	 * view. */
+	function level(pane: HTMLElement | null, el: Element | null, height: number) {
+		if (!pane || !el) return;
+		const box = pane.getBoundingClientRect();
+		const at = Math.max(24, Math.min(height, box.height - 48));
+		const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		pane.scrollTo({
+			top: pane.scrollTop + el.getBoundingClientRect().top - box.top - at,
+			behavior: still ? 'auto' : 'smooth'
+		});
 	}
 
 	/** A click anywhere else closes pinned readings. */
 	function onPointerDown(e: PointerEvent) {
-		if (!pinned || (e.target as HTMLElement).closest('.readings, [data-entry]')) return;
+		if (!pinned || (e.target as HTMLElement).closest('.readings, [data-entry], [data-step]'))
+			return;
 		hide();
 	}
 
 	function stepEntry(delta: number) {
 		if (entries.length === 0) return;
-		const at = entries.findIndex((e) => e.id === selected);
+		const at = entries.findIndex((e) => e.id === (selected ?? stepped));
 		const next = at < 0 ? (delta > 0 ? 0 : entries.length - 1) : at + delta;
 		const target = entries[(next + entries.length) % entries.length];
 		void choose(target.id);
@@ -470,6 +498,7 @@
 		index = i;
 		editing = null;
 		hide();
+		stepped = null;
 	}
 
 	function step(delta: number) {
@@ -588,12 +617,14 @@
 				class="btn sm icon"
 				aria-label={m.review.previousDifference}
 				title="{m.review.previousDifference} ({shifted('F')})"
+				data-step
 				onclick={() => stepEntry(-1)}><Icon name="up" size={14} /></button
 			>
 			<button
 				class="btn sm icon"
 				aria-label={m.review.nextDifference}
 				title="{m.review.nextDifference} (F)"
+				data-step
 				onclick={() => stepEntry(1)}><Icon name="down" size={14} /></button
 			>
 		{:else if Object.keys(spans).length === witnesses.length}
@@ -679,7 +710,7 @@
 			{selected}
 			{hovered}
 			emptyLabel={m.review.leftOutHere}
-			onpick={choose}
+			onpick={(id) => void choose(id, comparePane)}
 			onpoint={(_, id) => (hovered = id)}
 			onaway={() => (hovered = null)}
 		/>
@@ -787,7 +818,7 @@
 				revealHit = false;
 				reveal(textPane, at);
 			}}
-			onpick={(id) => (selected === id && pinned ? hide() : show(id, true))}
+			onpick={(id) => (selected === id && pinned ? hide() : void choose(id, textPane))}
 			onpoint={pointAt}
 			onaway={pointAway}
 		/>
@@ -896,7 +927,6 @@
 		min-height: 24rem;
 		field-sizing: content;
 		resize: none;
-		max-width: 44rem;
 		font-family: var(--font-text);
 		font-size: var(--type-reading);
 		line-height: 1.65;

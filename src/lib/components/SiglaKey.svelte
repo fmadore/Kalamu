@@ -56,7 +56,6 @@
 
 <style>
 	.key {
-		max-width: 44rem;
 		margin-top: var(--space-6);
 		padding-top: var(--space-4);
 		border-top: 1px solid var(--line);

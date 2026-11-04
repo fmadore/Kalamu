@@ -57,39 +57,39 @@ colors:
 typography:
   title:
     fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "1rem"
+    fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.25
     letterSpacing: "-0.01em"
   heading:
     fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.9375rem"
+    fontSize: "1.125rem"
     fontWeight: 600
     lineHeight: 1.25
     letterSpacing: "-0.01em"
   body:
     fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.9375rem"
+    fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.45
   label:
     fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.875rem"
+    fontSize: "0.9375rem"
     fontWeight: 500
     lineHeight: 1.45
   caption:
     fontFamily: "'Instrument Sans Variable', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "0.78125rem"
+    fontSize: "0.875rem"
     fontWeight: 500
     lineHeight: 1.45
   reading:
     fontFamily: "'Source Serif 4 Variable', 'Times New Roman', serif"
-    fontSize: "1.125rem"
+    fontSize: "1.1875rem"
     fontWeight: 400
     lineHeight: 1.7
   reading-small:
     fontFamily: "'Source Serif 4 Variable', 'Times New Roman', serif"
-    fontSize: "1.0625rem"
+    fontSize: "1.125rem"
     fontWeight: 400
     lineHeight: 1.6
   machine:
@@ -98,7 +98,7 @@ typography:
     fontWeight: 400
   machine-mark:
     fontFamily: "'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace"
-    fontSize: "0.6875rem"
+    fontSize: "0.75rem"
     fontWeight: 400
     lineHeight: 1
   figure:
@@ -199,7 +199,7 @@ components:
   sidebar:
     backgroundColor: "{colors.chrome-grey}"
     textColor: "{colors.text-body}"
-    width: "16rem"
+    width: "18rem"
   sidebar-item-current:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text-bright}"
@@ -322,16 +322,16 @@ A warm graphite palette of paper greys and one ink, with two marker colours whos
 **Character:** a crisp contemporary grotesque that stays out of the way, a sturdy reading serif with optical sizes for the documents themselves, and a plain mono that labels whatever a machine produced. Three faces, three jobs, never swapped.
 
 ### Hierarchy
-- **Title** (Instrument Sans 600, 1rem, 1.25, -0.01em): masthead titles, the app name, step headings in New job.
-- **Heading** (Instrument Sans 600, 0.9375rem, 1.25): section headings (h2); h3 at 0.875rem.
-- **Body** (Instrument Sans 400, 0.9375rem, 1.45): all interface text. Paragraphs in a sheet keep a 75ch measure.
-- **Label** (Instrument Sans 500, 0.875rem): buttons, field labels, list items, inputs.
-- **Caption** (Instrument Sans 500, 0.78125rem): chips, metadata, hints, sidebar group heads, the page strip.
-- **Reading** (Source Serif 4 400, 1.125rem, 1.7, max 42rem): the text being checked and the correction editor. Rises to 1.25rem in windows 1680px and wider.
-- **Reading small** (Source Serif 4 400, 1.0625rem, 1.55 to 1.65): readings in the readings card, transcript lines, analysis answers, text previews in a job.
+- **Title** (Instrument Sans 600, 1.25rem, 1.25, -0.01em): masthead titles, the app name, step headings in New job.
+- **Heading** (Instrument Sans 600, 1.125rem, 1.25): section headings (h2); h3 at 1rem.
+- **Body** (Instrument Sans 400, 1rem, 1.45): all interface text. Paragraphs in a sheet keep a 75ch measure.
+- **Label** (Instrument Sans 500, 0.9375rem): buttons, field labels, list items, inputs.
+- **Caption** (Instrument Sans 500, 0.875rem): chips, metadata, hints, sidebar group heads, the page strip.
+- **Reading** (Source Serif 4 400, 1.1875rem, 1.7): the text being checked and the correction editor, as wide as their pane. Rises to 1.3125rem in windows 1680px and wider.
+- **Reading small** (Source Serif 4 400, 1.125rem, 1.55 to 1.65): readings in the readings card, transcript lines, analysis answers, text previews in a job.
 - **Machine** (IBM Plex Mono 400, 0.92em of its context): file names, model and set-up labels, times, costs, counts, page numbers, output paths, the prompt editor.
-- **Machine mark** (IBM Plex Mono, 0.6875rem): keyboard shortcuts, step numbers (01, 02), marginal line numbers, sigla, sidebar counts. The smallest size in the system.
-- **Figure** (IBM Plex Mono 500, 1.875rem, -0.02em): the cost estimate in New job's summary; 1.375rem when the summary becomes a footer.
+- **Machine mark** (IBM Plex Mono, 0.75rem): keyboard shortcuts, step numbers (01, 02), marginal line numbers, sigla, sidebar counts. The smallest size in the system.
+- **Figure** (IBM Plex Mono 500, 1.875rem, -0.02em): the cost estimate in New job’s summary; 1.5rem when the summary becomes a footer.
 - Weights stay at 400, 500 and 600. Tabular figures where numbers line up.
 
 ### Named Rules
@@ -339,13 +339,13 @@ A warm graphite palette of paper greys and one ink, with two marker colours whos
 
 ## Layout
 
-The app is a fixed shell: a 16rem chrome-grey sidebar at left and a scrolling white main area. The sidebar holds the mark and name, the black New job button with Ctrl N, the jobs list grouped Running, Unfinished and Finished (each group head a caption with a mono count), and at its foot the tools (Prompts, Settings) above a hairline, with an offline-ready line and green dot. A job row shows its name with a task icon, a caption line of status, and a 3px ink progress bar while running. The current row or tool is lifted onto white with the raised shadow. The sidebar folds (its button beside the name, or Ctrl B) to a 3.25rem **rail** of the same controls as icons, named by their tooltips: the job list leaves, New job and the tools stay; the choice is remembered on the computer.
+The app is a fixed shell: an 18rem chrome-grey sidebar at left and a scrolling white main area. The sidebar holds the mark and name, the black New job button with Ctrl N, the jobs list grouped Running, Unfinished and Finished (each group head a caption with a mono count), and at its foot the tools (Prompts, Settings) above a hairline, with an offline-ready line and green dot. A job row shows its name with a task icon, a caption line of status, and a 3px ink progress bar while running. The current row or tool is lifted onto white with the raised shadow. Under Projects, the projects are listed, indented, each with a mono count of its documents, folded by a chevron (remembered on the computer). A finished job dragged from the list (with the pointer: the window keeps the browser’s own drag and drop for files) shows as a small ink chip under the pointer; every project takes a hairline ring and the one under the pointer an ink ring, and dropping adds the job to it. The sidebar folds (its button beside the name, or Ctrl B) to a 3.25rem **rail** of the same controls as icons, named by their tooltips: the job list leaves, New job and the tools stay; the choice is remembered on the computer.
 
 The **mark** is "two witnesses": on a warm graphite tile (#1e1d1b), a cream handwritten sheet with brown strokes lies behind a white transcribed sheet whose middle line is under the highlighter. It keeps its own colours in both themes, with a faint rim so the tile holds on a dark taskbar. The app icon from 64px up (Start, Store, installer) is a rendered master, `src-tauri/icons/source.png`, generated with OpenAI GPT Image (prompt in the `.json` beside it); at 16 to 48px (taskbar, tray, title bar) and in the sidebar at 22px it is a simplified drawing on a 22-unit grid, `src-tauri/icons/small.svg`, whose strokes hold at 16px. `npx tauri icon src-tauri/icons/source.png` writes the large sizes; the small ones and the ICO's 16 to 48px frames are rendered from `small.svg`.
 
-Each screen opens with a **masthead**: at least 3.5rem tall, white, a hairline below, the title (and a back link or breadcrumb) at left and actions at right. Below it a **sheet**: one column up to 64rem, padding 1.5rem 2rem 3rem, sections 2rem apart.
+Each screen opens with a **masthead**: at least 3.5rem tall, white, a hairline below, the title (and a back link or breadcrumb) at left and actions at right. Below it a **sheet**: one column as wide as the window, padding 1.5rem 2rem 3rem, sections 2rem apart.
 
-**New job** is a form beside a summary: the form (max 52rem) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
+**New job** is a form beside a summary: the form (as wide as the window leaves it) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
 
 **Review** splits the work area 0.95fr (source) to 1.05fr (text); **Compare** in the masthead adds a third pane with another set-up's whole text (a third each). The boundaries between panes are **splitters**: a 9px invisible grip on the hairline that shows a 3px line on hover (line-hover) and while dragged or focused (bright text); arrow keys move it 2% (Shift 10%), a double click puts it back, and no pane gets narrower than about 16rem. Widths and the open compare pane are remembered on the computer, the same for the three reviews (text, analysis, table of contents), which share one frame. Each pane has a 2.75rem bar on top. The text pane sets each line in a grid with a 2.25rem number column, numbers printed every fifth line and on every line that differs. **Search** (Ctrl F, or the magnifier in the masthead) opens a row under the masthead: the field, the count ("2 of 11"), previous and next, a **List** of the matches in a flyout grouped by page under sticky mono headings, each with the words around it and, in a recording, its time; Escape closes the list, then the search. A page strip runs along the bottom on surface-quiet: for a scan, each page as a small thumbnail with its number under it; for a recording, a numbered tile per piece; and a tally with a green progress bar.
 
@@ -406,16 +406,16 @@ A set-up's letter wherever set-ups are compared: a 1.25rem square of mono upperc
 - **Hover:** border to line-hover. **Focus:** border to bright text with a 3px wash ring, no outline.
 
 ### Navigation
-- **Sidebar:** chrome grey, 16rem (3.25rem folded), hairline right edge. Rows are 7px-cornered, transparent at rest, wash on hover, lifted onto white when current. The New job button is a full-width ink button; when New job is open it takes a 1.5px ink ring offset by the chrome.
+- **Sidebar:** chrome grey, 18rem (3.25rem folded), hairline right edge. Rows are 7px-cornered, transparent at rest, wash on hover, lifted onto white when current. The New job button is a full-width ink button; when New job is open it takes a 1.5px ink ring offset by the chrome.
 
 ### Masthead
 White, at least 3.5rem, hairline below; a title in title type, an optional muted lede or a back link, actions at right. In Review the title is a breadcrumb: the job name, a faint slash, then the file name in mono, with a pager (previous, a mono select, next) and the actions.
 
 ### Review: the lightbox and the marked text (signature)
-- **Source pane:** a scan on the stage, padded 1.5rem with room below for a centred **zoom pill** (stage raised, 9px corners, ghost controls in on-stage colours, a mono percentage). A recording instead sits on surface-quiet with the player on top.
+- **Source pane:** a scan on the stage, padded 1.5rem with room below for a centred **zoom pill** (stage raised, 9px corners, ghost controls in on-stage colours, a mono percentage). Zooming, from 25% to 600%, follows Ctrl and the wheel or a pinch frame by frame (the drawing is stretched at once and drawn sharp again once it rests) and keeps the point under the pointer in place; the buttons, Ctrl + and Ctrl − glide there in 180ms around the middle of the pane. A page larger than its pane is moved by dragging it (grab cursor), gliding on a little when let go; a double click zooms to 250% on the place, or back to the pane's width. Until the reader has zoomed once, a pill above the zoom pill says how, while the pointer is over the page. A recording instead sits on surface-quiet with the player on top.
 - **Text pane:** a bar with the set-up's label in mono, a count of differences beside a yellow swatch, and a switch to show them; the reading text below; a foot with mono metadata and a legend (yellow block for "models differ", blue line for "your correction").
 - **Disagreements:** each differing word is a button set in the highlighter with a 2px bleed. Pointing at it or opening it adds a 1.5px bright ring outside the yellow. Words another model adds, where the text has none, are a 0.3em highlighter bar between the words.
-- **Readings:** pointing at a disagreement for 300ms shows its readings over the text, under the words (over them when the pane has no room below), max 25rem, white with the flyout shadow and 10px corners, rising 3px into place over 120ms. They stay while the pointer is on the words or on them; a click, F, or focusing inside pins them until Escape, the close button or a click elsewhere. The one in the text comes first, in bold, with an "In the text" chip; each other reading is a whole row to click, its words in the reading serif over who reads them (mono), "Use this reading" at right; a field takes your own.
+- **Readings:** pointing at a disagreement for 300ms shows its readings over the text, under the words (over them when the pane has no room below), max 25rem, white with the flyout shadow and 10px corners, rising 3px into place over 120ms. They stay while the pointer is on the words or on them; a click, F, or focusing inside pins them until Escape, the close button or a click elsewhere. Their head is a handle: dragged (or moved with the arrow keys from the grip at its left, Shift for longer steps) they move aside to show the sentence under them, and stay where they were put. Choosing a difference in either text brings it level in the other. The one in the text comes first, in bold, with an "In the text" chip; each other reading is a whole row to click, its words in the reading serif over who reads them (mono), "Use this reading" at right; a field takes your own.
 - **Compared text:** another set-up's own words on paper, in the reading serif without line numbers, its differences in the same highlighter (a gap mark where it leaves words out). Pointing at a difference in either text rings it in both; clicking one in the compared text pins its readings in the text. A select picks the set-up when there are several.
 - **Corrections:** corrected words lose the yellow and take a 2px hand-blue underline offset 0.25em; hover takes the hand wash.
 - **Page strip:** for a scan, each page as a 2.5rem-wide thumbnail (3:4, top of the page, 2px corners, a hairline ring) over its mono number; thumbnails are drawn as they scroll into view, two at a time, and kept for the session. For a recording, 2rem tiles with a mono number. Reviewed pages show a check and ok-green number; the current page is ringed in bright text and lifted onto the raised surface. A tally beside it with a 4px green bar.

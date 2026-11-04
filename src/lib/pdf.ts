@@ -17,6 +17,23 @@ export function turn(rotation: Rotation, by: 1 | -1): Rotation {
 	return ((((rotation + by * 90) % 360) + 360) % 360) as Rotation;
 }
 
+/** The most pixels a drawing may hold, well inside what any webview's canvas allows: zoomed
+ * further, the page is drawn at this size and enlarged, a little softer but never blank. */
+const MAX_PIXELS = 48_000_000;
+const MAX_SIDE = 16_000;
+
+/** The pixel ratio a page `width` CSS pixels wide and `aspect` times as tall is drawn at:
+ * the screen's, unless that would pass the limits above. */
+function drawRatio(width: number, aspect: number): number {
+	const screen = window.devicePixelRatio || 1;
+	const height = width * aspect;
+	return Math.min(
+		screen,
+		Math.sqrt(MAX_PIXELS / Math.max(width * height, 1)),
+		MAX_SIDE / Math.max(width, height, 1)
+	);
+}
+
 /** Copies a finished drawing onto the visible canvas, shown at CSS size. */
 function show(drawing: HTMLCanvasElement, target: HTMLCanvasElement, ratio: number) {
 	target.width = drawing.width;
@@ -71,17 +88,18 @@ export class SourcePage {
 
 	/**
 	 * Draws the page onto `target`, `width` CSS pixels wide once turned by `rotation`. Sharp on
-	 * high-density screens: drawn at the device pixel ratio, shown at CSS size. Resolves false
-	 * when a later drawing took its place.
+	 * high-density screens: drawn at the device pixel ratio, shown at CSS size; zoomed very far,
+	 * at fewer pixels than that (`drawRatio`). Resolves false when a later drawing took its place.
 	 */
 	async draw(target: HTMLCanvasElement, width: number, rotation: Rotation = 0): Promise<boolean> {
 		const ticket = ++this.#latest;
-		const ratio = window.devicePixelRatio || 1;
+		let ratio = window.devicePixelRatio || 1;
 		const drawing = document.createElement('canvas');
 		if (this.page) {
 			// The page's own rotation, from the PDF, plus the reader's.
 			const turned = (this.page.rotate + rotation) % 360;
 			const natural = this.page.getViewport({ scale: 1, rotation: turned });
+			ratio = drawRatio(width, natural.height / natural.width);
 			const viewport = this.page.getViewport({
 				scale: (width / natural.width) * ratio,
 				rotation: turned
@@ -92,6 +110,7 @@ export class SourcePage {
 		} else if (this.image) {
 			const sideways = rotation === 90 || rotation === 270;
 			const [w, h] = [this.image.naturalWidth, this.image.naturalHeight];
+			ratio = drawRatio(width, sideways ? w / h : h / w);
 			const scale = (width / (sideways ? h : w)) * ratio;
 			drawing.width = Math.round((sideways ? h : w) * scale);
 			drawing.height = Math.round((sideways ? w : h) * scale);

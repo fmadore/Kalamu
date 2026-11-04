@@ -53,7 +53,7 @@
 </script>
 
 <section class="step block" aria-labelledby="setups-title">
-	<h2 id="setups-title">{m.newJob.setupsTitle}<TermLink term="prompt" /></h2>
+	<h2 id="setups-title">{m.newJob.setupsTitle}<TermLink term="setup" /></h2>
 	{#if !app.keys.some((k) => k.saved)}
 		<p class="warning">
 			{m.newJob.noProvider}
@@ -108,7 +108,7 @@
 							? m.newJob.analysis
 							: task === 'contents'
 								? m.newJob.kindOfDocument
-								: m.newJob.prompt}</span
+								: m.newJob.prompt}<TermLink term="prompt" /></span
 					>
 					{#if !acceptsPrompt(info)}
 						<select disabled><option>{m.newJob.noPrompt}</option></select>

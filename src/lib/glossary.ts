@@ -29,6 +29,9 @@ export const TERMS: Term[] = [
 	'machineReadable'
 ];
 
+/** The screen where a word's thing is kept, which its bubble links to beside the glossary. */
+export const PLACES: Partial<Record<Term, 'prompts'>> = { prompt: 'prompts' };
+
 /** The words a definition leans on, shown after it as "See also". */
 export const SEE_ALSO: Partial<Record<Term, Term[]>> = {
 	ocr: ['llm', 'hallucination'],

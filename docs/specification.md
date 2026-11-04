@@ -332,16 +332,21 @@ Checking AI output against the source is what makes results trustworthy, so the 
 heart of the app (see [DESIGN.md](../DESIGN.md)).
 
 - **Source and result side by side**: the page image on a dark lightbox on the left, the text on
-  the right with line numbers in the margin, page navigation, zoom and a strip of pages,
+  the right with line numbers in the margin, page navigation, zoom (Ctrl and the wheel or a
+  pinch, about the point under the pointer; a double click on a place) with the page moved by
+  dragging it, and a strip of pages,
   thumbnails for scans and images, showing which are reviewed. The boundary between them can be
   dragged, and the job list folded away (Ctrl B), for more room.
 - **Differences in the text.** Where another model, or the model under a correction, reads
   differently, the words are highlighted. Pointing at them shows the readings over the text,
-  each named by its set-up; clicking them, or stepping through them with F, keeps them open.
+  each named by its set-up; clicking them, or stepping through them with F or the arrows above
+  the text, keeps them open, and the readings can be dragged aside to show the sentence they
+  cover.
   The researcher chooses the correct reading, or types one, and it is taken into the text as a
   correction.
 - **Compare**: another set-up's whole text in a third pane beside the text, its differences
-  highlighted the same way; pointing at one marks it in both texts.
+  highlighted the same way; pointing at one marks it in both texts, and choosing one in either
+  brings it level in the other.
 - **Audio too**: a player next to the transcript; the line being spoken is highlighted, and
   clicking a line jumps to it. A piece plays at once, from the recording itself (MP3, M4A,
   AAC, WAV, Ogg, Opus, FLAC, WebM, MP4); other formats are converted once and the copy kept. When a model labelled speakers, the researcher can give each
@@ -378,7 +383,9 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
 - **Error rates after review.** Every page or part the researcher corrected, or marked as
   reviewed without changing it, is a reference: extracted text, transcriptions and corrections
   are scored against it in character and word error rates, summed over every character and
-  word rather than averaged by page, and runs of white space counted as one space. The job's
+  word rather than averaged by page, runs of white space counted as one space, and a curly
+  quote or apostrophe the same as a straight one (neither an error nor a highlighted
+  difference). The job's
   page gives them for the job and for each document, the review's foot for the document open,
   in plain words ("1.4% of characters and 5.2% of words wrong (about 1 character in 71), on 12
   reviewed pages"). They are said to count only the errors the researcher caught: the
@@ -422,6 +429,8 @@ analysed, compared. A **project** keeps it together
   The same file at the same place is added once; two files with the same content are pointed
   out but stay two documents until the researcher merges them, since a copy and a second item
   can share their bytes.
+- **In the sidebar**, the projects are listed under *Projects*. A finished job dragged onto one
+  is added to it, as its menu's *Add to a project* does.
 - **Collections** group documents as the researcher likes (correspondence, a newspaper's
   issues, the interviews of one village); a document can be in several, held once. Leaving a
   collection, or deleting it, keeps the document in the project.
@@ -615,6 +624,10 @@ is remembered per task. Details are in [formats.md](formats.md).
 - **Defaults per task**, ported and tested from `zmo-ai-pipelines` and `iwac-ai-pipelines`.
 - **Edit, save and name** a prompt or an analysis, duplicate one as a starting point, and reset
   any default. They are stored locally and kept across updates.
+- **Write a new one** with *New prompt*: the researcher chooses the task it belongs to, which
+  New job then offers it for, and writes its instructions; its request, and an analysis's or a
+  table of contents' fields, start from that task's default. New job's help on *Prompt* says
+  where the prompts are kept and links to them.
 - **Variables** `{languages}` and `{speakers}` are filled from the job's settings, so one prompt
   works across projects.
 - **Share** prompts and analyses by exporting and importing them as small JSON files.

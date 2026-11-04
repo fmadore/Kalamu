@@ -394,7 +394,7 @@
 		border-top: 1px solid var(--line);
 	}
 	.document h3 {
-		font-size: 1rem;
+		font-size: var(--type-lg);
 	}
 	.result {
 		display: grid;

@@ -673,7 +673,6 @@
 		display: grid;
 		align-content: start;
 		gap: var(--space-6);
-		max-width: 52rem;
 		padding: var(--space-5) var(--space-6) var(--space-7);
 	}
 	.block {

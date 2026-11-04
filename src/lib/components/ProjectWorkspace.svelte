@@ -19,7 +19,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { lastSearch } from '#lib/projectSearch.js';
-	import { go, toast } from '#lib/state.svelte.js';
+	import { go, refreshProjects, toast } from '#lib/state.svelte.js';
 	import { api, ask, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
 
 	let {
@@ -76,6 +76,8 @@
 		try {
 			await action();
 			await load();
+			// The sidebar lists the projects by name: a renamed or archived one changes there too.
+			void refreshProjects();
 		} catch (e) {
 			error = describeError(e, m);
 		}
@@ -420,7 +422,6 @@
 	.edit {
 		display: grid;
 		gap: var(--space-3);
-		max-width: 48rem;
 		padding: var(--space-4) var(--space-5);
 		border-bottom: 1px solid var(--line);
 	}
@@ -529,7 +530,7 @@
 		gap: var(--space-2);
 	}
 	.toolbar h2 {
-		font-size: 1rem;
+		font-size: var(--type-lg);
 	}
 	@media (max-width: 900px) {
 		.workspace {

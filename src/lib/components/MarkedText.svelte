@@ -85,7 +85,6 @@
 
 <style>
 	.text {
-		max-width: 42rem;
 		font-family: var(--font-text);
 		font-size: var(--type-reading);
 		line-height: 1.7;
@@ -119,7 +118,7 @@
 		grid-column: 1;
 		justify-self: end;
 		font-family: var(--font-mono);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		color: var(--text-faint);
 	}
 	.mark {

@@ -172,7 +172,7 @@
 <style>
 	.shell {
 		display: grid;
-		grid-template-columns: 16rem minmax(0, 1fr);
+		grid-template-columns: 18rem minmax(0, 1fr);
 		height: 100vh;
 	}
 	.shell.collapsed {
