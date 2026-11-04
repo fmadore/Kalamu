@@ -17,6 +17,7 @@ use kalamu_store::{SqliteIndex, SqliteStore};
 
 use super::*;
 
+mod failing;
 mod index;
 mod kinds;
 mod scale;

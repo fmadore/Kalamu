@@ -425,3 +425,90 @@ async fn selected_units_are_exported_with_their_list() {
         .unwrap_or_else(|e| panic!("{e}"));
     assert!(again[0].ends_with("issue 01 Le Hajj (2).pdf"), "{again:?}");
 }
+
+/// An item's job cut short by a crash resumes from the store: the pages already read are not
+/// sent again.
+#[tokio::test]
+async fn an_items_job_interrupted_resumes_without_reading_its_pages_again() {
+    let t = two();
+    let job = contents(&t).await;
+    t.engine
+        .seed_units(job.id, job.setups[0].id, job.sources[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let hajj = units(&t, &job)[0].id;
+    let frozen = t
+        .engine
+        .unit_sources(&[hajj])
+        .unwrap_or_else(|e| panic!("{e}"))
+        .remove(0);
+    let later = t.job(Task::Contents, vec![frozen], "contents.periodical", None);
+    assert_eq!(t.run(later.id).await, JobStatus::Completed);
+
+    // A second run stopped by a crash, its second page in flight.
+    let store = &t.engine.store;
+    let mut piece = store
+        .pieces(later.id)
+        .unwrap_or_default()
+        .into_iter()
+        .find(|p| p.piece == PieceRef::page(2))
+        .unwrap_or_else(|| panic!("the item's second page"));
+    piece.status = PieceStatus::Running;
+    store.upsert_piece(&piece).unwrap_or_else(|e| panic!("{e}"));
+    store
+        .set_job_status(later.id, JobStatus::Running)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(t.engine.recover().unwrap_or_default(), vec![later.id]);
+    let calls = t.reader.calls();
+    assert_eq!(t.run(later.id).await, JobStatus::Completed);
+    assert_eq!(
+        t.reader.calls(),
+        calls,
+        "the item's pages come from the cache"
+    );
+}
+
+/// One half of an open spread can be an item of its own: cut out, frozen and read like any
+/// page.
+#[tokio::test]
+async fn half_a_spread_is_read_as_an_item() {
+    let t = two();
+    let mut spread = t.file(
+        "spread.pdf",
+        &kalamu_media::sample_pdf(&[(595.0, 842.0), (1190.0, 842.0)], false),
+    );
+    spread.split_spreads = true;
+    let job = t.job(
+        Task::Contents,
+        vec![spread],
+        "contents.periodical",
+        Some("tiny"),
+    );
+    assert_eq!(t.run(job.id).await, JobStatus::Completed);
+    let left = t
+        .engine
+        .save_unit(edit(&job, None, "Avis", "2 (left)"))
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        left.pages,
+        [PieceRef::Page {
+            number: 2,
+            half: Some(kalamu_core::PageHalf::Left)
+        }]
+    );
+    let frozen = t
+        .engine
+        .unit_sources(&[left.id])
+        .unwrap_or_else(|e| panic!("{e}"))
+        .remove(0);
+    assert_eq!(frozen.page_count, Some(1), "the half alone");
+    let read = t.job(Task::Contents, vec![frozen], "contents.periodical", None);
+    assert_eq!(t.run(read.id).await, JobStatus::Completed);
+    let pieces = t.engine.store.pieces(read.id).unwrap_or_default();
+    let pages: Vec<&PieceRef> = pieces
+        .iter()
+        .filter(|p| matches!(p.piece, PieceRef::Page { .. }))
+        .map(|p| &p.piece)
+        .collect();
+    assert_eq!(pages, [&PieceRef::page(1)], "one page, the half");
+    assert!(pieces.iter().all(|p| p.status.is_finished()));
+}

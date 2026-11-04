@@ -1573,3 +1573,110 @@ async fn a_set_up_s_reasoning_level_is_settled_and_sent_with_the_model_s_output_
     assert_eq!(f.run(chosen.id).await, JobStatus::Completed);
     assert_eq!(f.fake.calls(), calls + 1, "another level is another answer");
 }
+
+/// Gemini 3.5 Transcribe, as it answered live: priced by the minute in the catalogue, but its
+/// usage counted in tokens, not seconds.
+struct TranscribeFake;
+
+#[async_trait]
+impl Provider for TranscribeFake {
+    fn id(&self) -> ProviderId {
+        ProviderId::new("gemini")
+    }
+
+    fn accepted_inputs(&self, _task: Task) -> &'static [&'static str] {
+        &["audio/wav"]
+    }
+
+    async fn process(
+        &self,
+        _key: &ApiKey,
+        _request: ProcessRequest<'_>,
+    ) -> Result<ProcessOutput, ProviderError> {
+        Ok(ProcessOutput {
+            text: "Speaker 1: Bonjour.".into(),
+            usage: kalamu_core::Usage {
+                input_tokens: 1_307,
+                output_tokens: 177,
+                ..Default::default()
+            },
+            ..ProcessOutput::default()
+        })
+    }
+
+    async fn list_models(&self, _key: &ApiKey) -> Result<Vec<String>, ProviderError> {
+        Ok(Vec::new())
+    }
+}
+
+/// A transcription billed in tokens is costed from them through a whole job, its cost in the
+/// job's total and in provenance, not left at nothing because no seconds were reported.
+#[tokio::test]
+async fn gemini_transcribe_is_costed_from_its_tokens_through_a_whole_job() {
+    let store = Arc::new(SqliteStore::in_memory().unwrap_or_else(|_| panic!("store")));
+    let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
+    let engine = Engine::new(
+        store.clone(),
+        vec![Arc::new(TranscribeFake)],
+        kalamu_catalog::Catalog::bundled(),
+        PromptLibrary::in_memory(),
+        Arc::new(Keys),
+        EngineConfig {
+            app_version: "test".into(),
+            listening_cache: dir.path().join("listening"),
+            snapshots: dir.path().join("snapshots"),
+            ..EngineConfig::default()
+        },
+    );
+    let path = dir.path().join("interview.wav");
+    std::fs::write(&path, tone_wav()).unwrap_or_else(|_| panic!("write recording"));
+    let source = kalamu_media::inspect(&path, None).unwrap_or_else(|e| panic!("{e}"));
+    let job = engine
+        .create_job(NewJob {
+            name: "Interview".into(),
+            task: Task::AudioTranscription,
+            sources: vec![source],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("gemini"),
+                model: "gemini-3.5-transcribe".into(),
+                preset_id: None,
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    let mut events = engine.subscribe();
+    engine.start(job.id).unwrap_or_else(|e| panic!("{e}"));
+    let status = loop {
+        match tokio::time::timeout(Duration::from_secs(10), events.recv()).await {
+            Ok(Ok(ProgressEvent::JobFinished { job_id, status })) if job_id == job.id => {
+                break status;
+            }
+            Ok(Ok(_)) => {}
+            other => panic!("no JobFinished event: {other:?}"),
+        }
+    };
+    assert_eq!(status, JobStatus::Completed);
+    // Google's token prices: $2 a million read, $12 a million written.
+    let expected = (1_307.0 * 2.0 + 177.0 * 12.0) / 1_000_000.0;
+    let spent = store.spent(job.id).unwrap_or_default();
+    assert!(
+        (spent - expected).abs() < 1e-9,
+        "{spent} against {expected}"
+    );
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(dir.path().join("interview.provenance.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    let cost = provenance["cost_usd"]
+        .as_f64()
+        .or_else(|| provenance["usage"]["cost_usd"].as_f64())
+        .unwrap_or_default();
+    assert!((cost - expected).abs() < 1e-9, "{provenance}");
+}
