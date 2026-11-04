@@ -294,14 +294,16 @@ Mac, which is second in *Next* below.
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
-1. **The 3 November checkpoint's refactor, and a checkpoint after 1.4.0.** The
-   [3 November checkpoint](decisions/2026-11-03-checkpoint.md) fixed the bugs it found and left
-   its refactor for later: one helper for the results a document has and one for corrected text,
-   tables written through the `export` crate, the interface's shared wrapper, selection and
-   dialog, Rust's rules sent rather than restated in TypeScript, mocks as wide as their commands,
-   and the large files split. Features shipped since (Tesseract, the Jobs page, notarisation, the
-   Mac App Store build) and those files grew. The refactor comes first, then a checkpoint over
-   1.4.0 and the Mac App Store build, the end of a milestone.
+1. **What the [4 November checkpoint](decisions/2026-11-04-checkpoint.md) left.** The 3
+   November checkpoint's refactor and a checkpoint after 1.4.0 are done: one reading of a
+   project's results, one corrected text and speakers' names index, tables written by the
+   `export` crate, the interface's shared code, Rust's lists and match cases sent to the
+   interface, the large files split, ten bugs fixed (an empty page typed by the researcher
+   missing from ALTO, guessed word boxes presented as measured, a granted folder dropped when out
+   of reach, photos turned by EXIF read unturned, the window frozen while results were written,
+   among them). Left: Whisper's voice detection on accented data folders on Windows; the
+   folders out of reach shown at launch; Tesseract's drawing resolution in provenance and its
+   engines pooled; the duplication still to fold (listed in the decision).
 2. **A first run on a real Mac.** The disk image is signed and notarised and a sandboxed build is
    ready for the Mac App Store, but Kalamu has not yet been opened on a Mac
    ([decision](decisions/2026-11-02-macos.md)). Before TestFlight: the disk image through
