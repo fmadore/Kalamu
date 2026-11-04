@@ -8,7 +8,7 @@ Works with no account and no key
 --------------------------------
 interview.wav         A 20-second spoken passage in English, read by Windows' own speech
                       synthesis. In Settings > Offline, download the Whisper Base model (about 60 MB,
-                      once), then New job > Transcribe audio > Whisper (on this PC) > Start.
+                      once), then New job > Transcribe audio > Whisper (on this computer) > Start.
 bulletin-page.jpg     Also offline: in Settings > Offline, under Text extraction with Tesseract,
                       download French (4 MB, once), then New job > Extract text > Tesseract
                       (on this computer) > French > Start. Formats include ALTO XML.

@@ -137,7 +137,8 @@ Gemini from YouTube; Kalamu downloads and stores none of it.
 3. **Wait for processing**: the build appears under TestFlight within about an hour, or App
    Store Connect emails the reason it was refused.
 4. **TestFlight on a real Mac** (the first time at least): add a Mac colleague as an internal
-   tester and ask them to try what CI cannot:
+   tester, or rent a Mac for a day with [mac-test-day.md](mac-test-day.md), and try what CI
+   cannot:
    - granting a folder from the dialog, and a job resumed after quitting and reopening;
    - FFmpeg converting a recording reached through a granted folder, and the player playing it;
    - the consent dialog before a first cloud job;

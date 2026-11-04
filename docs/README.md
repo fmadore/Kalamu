@@ -34,6 +34,7 @@
 | [Development: releases](development.md#releases) | Version files, release notes and the tag that builds the installers and packages |
 | [Release notes](release-1.4.1.md) | 1.4.1, the first for the Mac App Store, a question before files are first sent to each AI provider, and fixes ([1.4.0](release-1.4.0.md), offline text extraction with Tesseract, ALTO XML, the Jobs page and a notarised Mac app; [1.3.0](release-1.3.0.md), a French interface, project search, what to check, source descriptions and export profiles; [1.2.0](release-1.2.0.md), items of a table of contents read on their own; [1.1.2](release-1.1.2.md), the first with a disk image for macOS; [1.1.1](release-1.1.1.md), [1.1.0](release-1.1.0.md), [1.0.0](release-1.0.0.md), the first Store release; [0.4.0](release-0.4.0.md), [0.3.0](release-0.3.0.md)) |
 | [Mac App Store](mac-app-store.md) | The Apple setup, GitHub secrets, App Store Connect answers and the steps for each version |
+| [A day on a rented Mac](mac-test-day.md) | The checklist for a first run on real Apple hardware, the TestFlight build and the App Store screenshots |
 | [Store listing](store-listing.md) | Paste-ready listing text, certification and review notes and screenshot captions, for both stores |
 | [Store licence terms](store-license-terms.md) | The terms shown on the Store listing, replacing Microsoft's standard ones |
 | [Security policy](../SECURITY.md) | Reporting vulnerabilities, credentials, installer signing |
