@@ -1,22 +1,18 @@
 <script lang="ts">
-	// The sidebar: the app's name, New job, Projects with the projects listed under it, the list of
-	// jobs grouped by what they need from the researcher, and the tools at its foot (Prompts,
-	// Settings, Glossary, support). Finished jobs are the most recent few, then a link to the Jobs
-	// page, which lists them all; what runs, stopped early or waits for the researcher is always
-	// listed in full, and so is the job open in the main area. A finished job dragged onto a listed project is added to it,
+	// The sidebar: the app's name, New job, Projects with the projects listed under it
+	// (SidebarProjects), the list of jobs (SidebarJobs), and the tools at its foot (Prompts,
+	// Settings, Glossary, support). A finished job dragged onto a listed project is added to it,
 	// as its menu's Add to a project does. It folds to a rail of icons named by their tooltips,
 	// leaving the room to the work.
 	import Icon from './Icon.svelte';
-	import JobMenu from './JobMenu.svelte';
+	import SidebarJobs from './SidebarJobs.svelte';
+	import SidebarProjects from './SidebarProjects.svelte';
 	import SupportLink from './SupportLink.svelte';
-	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { JobDrag } from '#lib/jobDrag.svelte.js';
 	import { shortcut } from '#lib/platform.js';
-	import { describeError } from '#lib/errors.js';
-	import { UNFINISHED, finishedShown, groupOf, type GroupKey } from '#lib/jobList.js';
-	import { app, go, refreshJobs, refreshProjects, toast } from '#lib/state.svelte.js';
+	import { app, go, refreshProjects } from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
-	import { api } from '#lib/tauri.js';
 
 	let {
 		collapsed = $bindable()
@@ -27,82 +23,8 @@
 
 	const m = messages();
 
-	/** The job whose menu is open, and where. */
-	let menu = $state<{ job: JobSummary; x: number; y: number } | null>(null);
-	/** The job being renamed in the list, and the name typed so far. */
-	let renaming = $state<{ id: string; name: string } | null>(null);
-
-	function openMenu(e: MouseEvent, job: JobSummary) {
-		e.preventDefault();
-		// From the keyboard's menu key there is no pointer: open under the job.
-		const at = (e.currentTarget as HTMLElement).getBoundingClientRect();
-		const keyboard = e.button !== 2 && e.clientX === 0 && e.clientY === 0;
-		menu = { job, x: keyboard ? at.left + 12 : e.clientX, y: keyboard ? at.bottom : e.clientY };
-	}
-
-	async function rename() {
-		const r = renaming;
-		renaming = null;
-		const name = r?.name.trim();
-		const job = app.jobs.find((j) => j.id === r?.id);
-		if (!r || !name || !job || name === job.name) return;
-		try {
-			await api.renameJob(r.id, name);
-			await refreshJobs();
-		} catch (e) {
-			toast(describeError(e, m));
-		}
-	}
-
-	function renameKeys(e: KeyboardEvent) {
-		if (e.key === 'Enter') void rename();
-		else if (e.key === 'Escape') renaming = null;
-	}
-
-	/** Puts the caret in the name box as it opens, the name selected. */
-	function chosen(input: HTMLInputElement) {
-		input.focus();
-		input.select();
-	}
-
-	/** The job the main area shows, whether as its detail or in review. */
-	const openJob = $derived(
-		app.view.name === 'review'
-			? app.view.jobId
-			: app.view.name === 'jobs'
-				? (app.view.jobId ?? app.jobs[0]?.id)
-				: undefined
-	);
-
-	// The list of jobs, grouped by what they need from the researcher. Workflow steps that wait
-	// for the researcher come first: nothing moves until they act.
-	const labels: Record<GroupKey, string> = {
-		waiting: m.shell.toCheck,
-		running: m.shell.running,
-		unfinished: m.shell.unfinished,
-		finished: m.shell.finished
-	};
-	const groups = $derived.by(() => {
-		const by: Record<GroupKey, JobSummary[]> = {
-			waiting: [],
-			running: [],
-			unfinished: [],
-			finished: []
-		};
-		for (const job of app.jobs) by[groupOf(job, app.waiting)].push(job);
-		return (Object.keys(by) as GroupKey[])
-			.filter((key) => by[key].length > 0)
-			.map((key) => ({
-				key,
-				label: labels[key],
-				count: by[key].length,
-				jobs: key === 'finished' ? finishedShown(by[key], openJob) : by[key]
-			}));
-	});
 	const allJobsOpen = $derived(app.view.name === 'allJobs');
 	const offlineReady = $derived(app.offline?.models.some((s) => s.installed) ?? false);
-
-	const share = (j: JobSummary) => (100 * j.pieces_finished) / Math.max(j.pieces_total, 1);
 
 	// The projects under Projects, unfolded unless the researcher folded them on this computer;
 	// read again whenever the screen changes, so one created, renamed or deleted shows.
@@ -116,80 +38,24 @@
 	const listed = $derived(app.projects.filter((p) => !p.project.archived));
 	const openProject = $derived(app.view.name === 'projects' ? app.view.projectId : undefined);
 
-	/* Dragging a finished job onto a project. Done with the pointer rather than the browser's own
-	   drag and drop, which the window gives over to files dropped from File Explorer or Finder. */
-	let press: { job: JobSummary; x: number; y: number } | null = null;
-	let dragging = $state<{ job: JobSummary; x: number; y: number } | null>(null);
-	let dropOn = $state<string | null>(null);
-	/** Set when a drag ends, so the click that follows it does not open the job. */
-	let dragged = false;
-
-	function pressJob(e: PointerEvent, job: JobSummary) {
-		if (e.button !== 0 || e.pointerType === 'touch') return;
-		press = { job, x: e.clientX, y: e.clientY };
-	}
-
-	function moveJob(e: PointerEvent) {
-		if (!press) return;
-		if (!dragging) {
-			if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) return;
-			showProjects = true;
-		}
-		dragging = { job: press.job, x: e.clientX, y: e.clientY };
-		const under = document.elementFromPoint(e.clientX, e.clientY);
-		dropOn = under?.closest<HTMLElement>('[data-project]')?.dataset.project ?? null;
-	}
-
-	/** Ends a drag; the click the browser sends after it is swallowed. */
-	function endDrag() {
-		const was = dragging !== null;
-		press = null;
-		dragging = null;
-		dropOn = null;
-		if (!was) return;
-		dragged = true;
-		setTimeout(() => (dragged = false));
-	}
-
-	async function dropJob() {
-		const drag = dragging;
-		const target = app.projects.find((p) => p.project.id === dropOn);
-		endDrag();
-		if (!drag || !target) return;
-		try {
-			await api.linkJob(target.project.id, drag.job.id, null);
-			toast(m.shell.addedTo(target.project.name));
-			await refreshProjects();
-		} catch (e) {
-			toast(describeError(e, m));
-		}
-	}
+	/** A finished job carried onto a project: the projects unfold to take it. */
+	const drag = new JobDrag(() => (showProjects = true));
 </script>
 
 <svelte:window
-	onpointermove={moveJob}
-	onpointerup={() => void dropJob()}
-	onpointercancel={endDrag}
+	onpointermove={drag.move}
+	onpointerup={() => void drag.drop()}
+	onpointercancel={drag.end}
 	onkeydown={(e) => {
-		if (e.key === 'Escape' && dragging) endDrag();
+		if (e.key === 'Escape' && drag.dragging) drag.end();
 	}}
 />
 
-{#if dragging}
-	<div class="drag-ghost" style:left="{dragging.x + 12}px" style:top="{dragging.y + 8}px">
-		<Icon name={dragging.job.task} size={14} /><span class="ellipsis">{dragging.job.name}</span>
+{#if drag.dragging}
+	{@const held = drag.dragging}
+	<div class="drag-ghost" style:left="{held.x + 12}px" style:top="{held.y + 8}px">
+		<Icon name={held.job.task} size={14} /><span class="ellipsis">{held.job.name}</span>
 	</div>
-{/if}
-
-{#if menu}
-	{@const at = menu}
-	<JobMenu
-		job={at.job}
-		x={at.x}
-		y={at.y}
-		onrename={() => (renaming = { id: at.job.id, name: at.job.name })}
-		onclose={() => (menu = null)}
-	/>
 {/if}
 
 <nav class="side" class:collapsed aria-label={m.shell.jobs}>
@@ -240,7 +106,7 @@
 		{/if}
 	</button>
 
-	<div class="nav-group" class:dropping={dragging !== null}>
+	<div class="nav-group">
 		<div class="tool-row">
 			<button
 				class="tool projects"
@@ -265,23 +131,7 @@
 			{/if}
 		</div>
 		{#if !collapsed && showProjects && listed.length > 0}
-			<ul class="projects-list" id="project-list" aria-label={m.nav.projects}>
-				{#each listed as p (p.project.id)}
-					<li>
-						<button
-							class="project"
-							class:current={openProject === p.project.id}
-							class:drop={dropOn === p.project.id}
-							aria-current={openProject === p.project.id ? 'page' : undefined}
-							data-project={p.project.id}
-							onclick={() => go({ name: 'projects', projectId: p.project.id })}
-							><span class="ellipsis">{p.project.name}</span><span class="num">{p.documents}</span
-							></button
-						>
-					</li>
-				{/each}
-			</ul>
-			{#if dragging}<p class="drop-hint">{m.shell.dropOnProject}</p>{/if}
+			<SidebarProjects projects={listed} {drag} />
 		{/if}
 	</div>
 	<button
@@ -305,85 +155,7 @@
 		>
 	{/if}
 
-	<div class="jobs" id="job-list" hidden={collapsed}>
-		{#each groups as group (group.key)}
-			<section class="group" aria-labelledby="group-{group.key}">
-				<h2 class="group-head" id="group-{group.key}">
-					<span>{group.label}</span><span class="num">{group.count}</span>
-				</h2>
-				<ul>
-					{#each group.jobs as job (job.id)}
-						<li>
-							{#if renaming?.id === job.id}
-								<input
-									class="rename"
-									aria-label={m.jobs.nameLabel}
-									bind:value={renaming.name}
-									onkeydown={renameKeys}
-									onblur={rename}
-									{@attach chosen}
-								/>
-							{:else}
-								<button
-									class="job"
-									class:current={openJob === job.id}
-									class:lifted={dragging?.job.id === job.id}
-									aria-current={openJob === job.id ? 'page' : undefined}
-									title={group.key === 'finished' && listed.length > 0
-										? m.shell.dragHint
-										: undefined}
-									onpointerdown={group.key === 'finished' ? (e) => pressJob(e, job) : undefined}
-									onclick={() => {
-										if (!dragged) go({ name: 'jobs', jobId: job.id });
-									}}
-									oncontextmenu={(e) => openMenu(e, job)}
-								>
-									<span class="job-name">
-										<Icon name={job.task} size={14} />
-										<span class="ellipsis">{job.name}</span>
-									</span>
-									<span
-										class="job-meta"
-										class:warn={UNFINISHED.includes(job.status) || group.key === 'waiting'}
-										class:danger={job.status === 'completed_with_errors' && group.key !== 'waiting'}
-									>
-										{#if group.key === 'waiting'}
-											{m.workflows.stepState[app.waiting[job.id]?.state ?? 'review']}
-										{:else if group.key === 'finished'}
-											{job.status === 'completed' ? m.task[job.task] : m.status[job.status]}
-										{:else}
-											{m.status[job.status]} ·
-											<span class="num"
-												>{m.jobs.progress(job.pieces_finished, job.pieces_total)}</span
-											>
-										{/if}
-									</span>
-									{#if group.key !== 'finished' && group.key !== 'waiting'}
-										<span class="job-bar" aria-hidden="true"
-											><i style:width="{share(job)}%"></i></span
-										>
-									{/if}
-								</button>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-			</section>
-		{:else}
-			<p class="no-jobs">{m.shell.noJobs}</p>
-		{/each}
-		{#if app.jobs.length > 0}
-			<button
-				class="all-jobs"
-				class:current={allJobsOpen}
-				aria-current={allJobsOpen ? 'page' : undefined}
-				onclick={() => go({ name: 'allJobs' })}
-				><Icon name="list" size={14} /><span class="ellipsis"
-					>{m.allJobs.link(app.jobs.length)}</span
-				></button
-			>
-		{/if}
-	</div>
+	<SidebarJobs {collapsed} {drag} />
 
 	<div class="tools">
 		<button
@@ -550,64 +322,10 @@
 	.turn.open {
 		transform: rotate(90deg);
 	}
-	/* The projects under Projects, indented under its icon; a long list scrolls on its own. */
-	.projects-list {
-		max-height: 13rem;
-		overflow: hidden auto;
-		padding-left: 1.625rem;
-	}
-	.projects-list li,
-	.project .ellipsis {
-		min-width: 0;
-	}
-	.project {
-		width: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-2);
-		min-height: var(--control-sm);
-		padding: 0 0.625rem;
-		border: 0;
-		border-radius: var(--radius-control);
-		background: transparent;
-		color: var(--text-body);
-		font-size: var(--type-sm);
-		text-align: left;
-		cursor: pointer;
-		transition: background-color 120ms ease-out;
-	}
-	.project .num {
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		color: var(--text-muted);
-	}
-	.project:hover {
-		background: var(--wash);
-	}
-	.project.current {
-		background: var(--surface-0);
-		box-shadow: var(--shadow-raised);
-		color: var(--text-bright);
-		font-weight: 500;
-	}
-	/* While a job is dragged, each project shows it can take it; the one under the pointer is
-	   ringed in ink. */
-	.dropping .project {
-		box-shadow: inset 0 0 0 1px var(--line-strong);
-	}
-	.dropping .project.drop {
-		background: var(--surface-0);
-		box-shadow: inset 0 0 0 1.5px var(--ink);
-		color: var(--text-bright);
-	}
-	.drop-hint {
-		padding: var(--space-1) 0.625rem 0 2.25rem;
-		font-size: var(--type-xs);
-		color: var(--text-muted);
-	}
-	.job.lifted {
-		opacity: 0.5;
+	.ellipsis {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	.drag-ghost {
 		position: fixed;
@@ -623,139 +341,6 @@
 		font-size: var(--type-sm);
 		box-shadow: var(--shadow-flyout);
 		pointer-events: none;
-	}
-	.jobs {
-		flex: 1;
-		min-height: 0;
-		overflow: auto;
-		display: grid;
-		align-content: start;
-		gap: var(--space-4);
-		margin: 0 calc(-1 * var(--space-1));
-		padding: 0 var(--space-1);
-	}
-	.jobs[hidden] {
-		display: none;
-	}
-	.group-head {
-		display: flex;
-		justify-content: space-between;
-		padding: 0 var(--space-2) var(--space-1);
-		font-size: var(--type-xs);
-		font-weight: 500;
-		letter-spacing: 0;
-		color: var(--text-muted);
-	}
-	.group-head .num {
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-	}
-	ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		gap: 2px;
-	}
-	.job {
-		width: 100%;
-		display: grid;
-		gap: 0.3rem;
-		padding: var(--space-2) 0.625rem;
-		border: 0;
-		border-radius: var(--radius-control);
-		background: transparent;
-		color: var(--text-bright);
-		text-align: left;
-		cursor: pointer;
-		transition: background-color 120ms ease-out;
-	}
-	.rename {
-		width: 100%;
-		min-height: 2.25rem;
-		font-size: var(--type-sm);
-		font-weight: 500;
-	}
-	.job:hover {
-		background: var(--wash);
-	}
-	.job.current {
-		background: var(--surface-0);
-		box-shadow: var(--shadow-raised);
-	}
-	.job-name {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		min-width: 0;
-		font-size: var(--type-sm);
-		font-weight: 500;
-	}
-	.job-name :global(.icon) {
-		color: var(--text-secondary);
-	}
-	.ellipsis {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.job-meta {
-		padding-left: 1.375rem;
-		font-size: var(--type-xs);
-		color: var(--text-muted);
-	}
-	.job-meta.warn {
-		color: var(--warn-text);
-	}
-	.job-meta.danger {
-		color: var(--danger-text);
-	}
-	.job-bar {
-		display: block;
-		height: 3px;
-		margin-left: 1.375rem;
-		border-radius: 2px;
-		background: var(--line);
-		overflow: hidden;
-	}
-	.job-bar i {
-		display: block;
-		height: 100%;
-		background: var(--ink);
-		transition: width 400ms ease-out;
-	}
-	/* The way to every job, under the most recent: quiet, like a group's heading. */
-	.all-jobs {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		min-width: 0;
-		min-height: var(--control-sm);
-		margin-top: calc(-1 * var(--space-2));
-		padding: 0 0.625rem;
-		border: 0;
-		border-radius: var(--radius-control);
-		background: transparent;
-		color: var(--text-secondary);
-		font-size: var(--type-sm);
-		text-align: left;
-		cursor: pointer;
-		transition: background-color 120ms ease-out;
-	}
-	.all-jobs:hover {
-		background: var(--wash);
-		color: var(--text-bright);
-	}
-	.all-jobs.current {
-		background: var(--surface-0);
-		box-shadow: var(--shadow-raised);
-		color: var(--text-bright);
-		font-weight: 500;
-	}
-	.no-jobs {
-		padding: 0 var(--space-2);
-		font-size: var(--type-sm);
-		color: var(--text-muted);
 	}
 	.tools {
 		display: grid;

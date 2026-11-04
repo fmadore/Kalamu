@@ -28,23 +28,29 @@
 	import { modelsNotDetecting, takesLanguage } from '#lib/languages.js';
 	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
 	import type { Pace } from '#lib/bindings/Pace.js';
-	import type { PagesPerCall } from '#lib/bindings/PagesPerCall.js';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import {
 		acceptsPrompt,
 		type Draft,
+		draftsOf,
+		followingAnalysis,
+		formPipeline,
 		inputOf,
+		jobSettings as settingsOf,
 		mergeInfo,
 		type Mode,
 		modelInfo,
 		newDraft,
 		offeredFormats,
+		pagesPerCallOf,
 		providerDefault,
 		readsKind,
 		rulesFor,
 		suggestName,
 		taskOf,
-		toRequest
+		togetherOf,
+		toRequest,
+		type Together
 	} from '#lib/newJob.js';
 	import { api, askForFolders, besidePlaces, onDrop } from '#lib/tauri.js';
 	import {
@@ -83,7 +89,7 @@
 	let sample = $state(false);
 	let samplePages = $state(3);
 	/** How many pages of a PDF go in one call: one, several, or as many as fit. */
-	let together = $state<'one' | 'several' | 'whole'>('one');
+	let together = $state<Together>('one');
 	let togetherPages = $state(4);
 	let formats = $state<ExportFormat[]>([]);
 	let destination = $state<OutputDestination>({ kind: 'beside_sources' });
@@ -144,13 +150,7 @@
 		hint: m.newJob.together[`${value}_hint`]
 	}));
 	/** What the job sends for it; nothing for one page at a time, as before. */
-	const pagesPerCall = $derived<PagesPerCall | undefined>(
-		!rule.pages_per_call || together === 'one'
-			? undefined
-			: together === 'whole'
-				? { kind: 'whole' }
-				: { kind: 'several', pages: Math.max(2, Math.round(togetherPages)) }
-	);
+	const pagesPerCall = $derived(pagesPerCallOf(rule, together, togetherPages));
 	const lineOptions = (['running_text', 'as_on_page'] as const).map((value) => ({
 		value,
 		label: m.newJob.lines[value],
@@ -282,98 +282,62 @@
 
 	/** The settings shared by every set-up, as a job and a pipeline store them. */
 	function jobSettings() {
-		return {
-			languages:
-				languageMode === 'explicit' &&
-				languages.length > 0 &&
-				languageIgnored.length < models.length
-					? { mode: 'explicit' as const, languages: [...languages] }
-					: { mode: 'auto' as const },
-			sample_pages: sample && paged ? samplePages : null,
-			line_breaks: linesApply && noPrompt.length < models.length ? lineBreaks : null,
+		return settingsOf({
+			languageMode,
+			languages,
+			languagesTaken: languageIgnored.length < models.length,
+			sample,
+			samplePages,
+			paged,
+			lineBreaks,
+			linesTaken: linesApply && noPrompt.length < models.length,
 			pace: chosenPace,
-			pages_per_call: pagesPerCall
-		};
+			pagesPerCall
+		});
 	}
 
 	/** The form as a pipeline: everything but the files. Run now, it keeps only the formats the
 	 * chosen models can write, as a job does. */
 	function currentPipeline(pipelineName: string, toRun = false): Pipeline {
-		return {
-			id: '',
-			name: pipelineName,
-			task,
-			setups: drafts.map((d) => {
-				const r = toRequest(catalog, task, d);
-				return {
-					provider: r.provider,
-					model: r.model,
-					preset_id: r.preset_id,
-					label: r.label,
-					options: r.options,
-					merge: r.merge
-				};
-			}),
-			settings: jobSettings(),
-			formats: toRun
-				? formats.filter((f) => offeredFormats(catalog, rule, drafts).includes(f))
-				: [...formats],
-			destination: $state.snapshot(destination),
-			updated_at: 0
-		};
+		return formPipeline(
+			{
+				name: pipelineName,
+				task,
+				catalog,
+				rule,
+				drafts,
+				settings: jobSettings(),
+				formats,
+				destination: $state.snapshot(destination)
+			},
+			toRun
+		);
 	}
 
 	/** The analysis that follows, as a pipeline: the researcher's usual formats for it. */
 	function thenPipeline(preset: Preset): Pipeline {
-		const r = toRequest(catalog, 'analysis', thenDraft);
-		const usual = analysisRule.formats.filter((f) => app.settings!.text_formats.includes(f));
-		return {
-			id: '',
-			name: preset.name,
-			task: 'analysis',
-			setups: [
-				{
-					provider: r.provider,
-					model: r.model,
-					preset_id: preset.id,
-					label: null,
-					options: r.options
-				}
-			],
-			settings: {
-				languages: { mode: 'auto' },
-				sample_pages: null,
-				line_breaks: null,
-				pace: chosenPace
-			},
-			formats: usual.length > 0 ? usual : analysisRule.formats.slice(0, 1),
-			destination: $state.snapshot(destination),
-			updated_at: 0
-		};
+		return followingAnalysis(
+			preset,
+			toRequest(catalog, 'analysis', thenDraft),
+			analysisRule,
+			app.settings!.text_formats,
+			chosenPace,
+			$state.snapshot(destination)
+		);
 	}
 
 	/** Fills the form from a saved pipeline; the files stay as they are. */
 	async function applyPipeline(p: Pipeline) {
 		// A transcription pipeline applied to videos keeps the videos.
 		await loadTask(mode === 'youtube' && p.task === 'audio_transcription' ? 'youtube' : p.task);
-		drafts = p.setups.map((s) => ({
-			provider: s.provider,
-			model: s.model,
-			presetId: s.preset_id,
-			label: s.label ?? '',
-			diarize: s.options.diarize,
-			reasoning: s.options.reasoning ?? null,
-			timestamps: s.options.timestamps,
-			mergeProvider: s.merge?.provider ?? s.provider,
-			mergeModel: s.merge?.model ?? s.model
-		}));
+		drafts = draftsOf(p);
 		languageMode = p.settings.languages.mode;
 		languages = p.settings.languages.mode === 'explicit' ? [...p.settings.languages.languages] : [];
 		lineBreaks = p.settings.line_breaks ?? 'running_text';
 		pace = p.settings.pace ?? 'fast';
-		const sent = p.settings.pages_per_call;
-		together = !sent || sent.kind === 'one' ? 'one' : sent.kind;
-		if (sent?.kind === 'several') togetherPages = sent.pages;
+		const sent = togetherOf(p.settings.pages_per_call);
+		together = sent.together;
+		if (sent.pages !== undefined) togetherPages = sent.pages;
 		sample = p.settings.sample_pages !== null;
 		samplePages = p.settings.sample_pages ?? samplePages;
 		formats = p.formats.filter((f) => rulesFor(app.rules, p.task).formats.includes(f));

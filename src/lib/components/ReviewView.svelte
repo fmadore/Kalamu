@@ -5,30 +5,34 @@
 	// readings over the text, any of which can be taken as a correction. Another set-up's whole
 	// text can open in a third pane beside it. A search finds words across every page of the text
 	// shown, corrections included, and goes to each match (a recording plays from its line).
-	import Missing from './Missing.svelte';
 	import { onMount, tick, untrack } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
+	import CompareBar from './CompareBar.svelte';
+	import ComparePane from './ComparePane.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import Icon from './Icon.svelte';
 	import MarkedText from './MarkedText.svelte';
 	import PageStrip from './PageStrip.svelte';
 	import ReadingsPopover from './ReadingsPopover.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
-	import SearchBar, { type ListedMatch } from './SearchBar.svelte';
+	import ScoreFoot from './ScoreFoot.svelte';
+	import SearchBar from './SearchBar.svelte';
 	import SiglaKey from './SiglaKey.svelte';
 	import SpeakerList from './SpeakerList.svelte';
 	import VideoPane from './VideoPane.svelte';
-	import { apparatus, lines, siglum, witnessParts, type Entry } from '#lib/apparatus.js';
+	import { apparatus, lines, siglum, type Entry } from '#lib/apparatus.js';
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
-	import { formatPercent, formatUsd, messages } from '#lib/i18n/index.js';
+	import { caretTop, level, placeInText, reveal } from '#lib/caret.js';
+	import { Comparison, shownText, witnessesOf, witnessName } from '#lib/compare.svelte.js';
+	import { messages } from '#lib/i18n/index.js';
 	import { shifted } from '#lib/platform.js';
-	import { clock, pieceLabel, pieceNumber } from '#lib/pieces.js';
+	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { layout, Review } from '#lib/review.svelte.js';
+	import { ReviewSearch } from '#lib/reviewSearch.svelte.js';
 	import { describeScore } from '#lib/scores.js';
-	import { context, search, searchable, type Searched } from '#lib/search.js';
-	import { toast, type ReviewFind } from '#lib/state.svelte.js';
+	import type { ReviewFind } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -70,8 +74,6 @@
 	let textPane = $state<HTMLElement | null>(null);
 	let comparePane = $state<HTMLElement | null>(null);
 	let hoverTimer: ReturnType<typeof setTimeout> | undefined;
-	/** The witness shown in the compare pane, by its key. */
-	let compareKey = $state<string | null>(null);
 
 	const job = $derived(review.job);
 	const source = $derived(review.source);
@@ -99,31 +101,14 @@
 		return setup ? current.find((v) => v.setup_id === setup.id) : undefined;
 	}
 
-	function shownText(v: PieceView | undefined): string {
-		return v?.corrected_text ?? v?.ai_text ?? '';
-	}
-
 	const lead = $derived(viewFor(setups[0]));
 	const base = $derived(shownText(lead));
 	const corrected = $derived(lead?.corrected_text != null);
 
 	/** The witnesses compared with the text shown: each other set-up, and the model itself when
 	 * its text was corrected. */
-	const witnesses = $derived.by(() => {
-		const out: { key: string; siglum: string; text: string }[] = [];
-		if (corrected && lead?.ai_text != null) {
-			out.push({ key: 'model', siglum: siglum(0), text: lead.ai_text });
-		}
-		// A correction is compared with the text it corrected, so every change shows.
-		if (job?.task === 'text_correction' && lead?.source_text != null) {
-			out.push({ key: 'source', siglum: m.review.originalSiglum, text: lead.source_text });
-		}
-		setups.slice(1).forEach((s, i) => {
-			const v = viewFor(s);
-			if (v?.ai_text != null) out.push({ key: s.id, siglum: siglum(i + 1), text: shownText(v) });
-		});
-		return out;
-	});
+	const witnesses = $derived(witnessesOf(setups, viewFor, job?.task, m));
+	const comparison = new Comparison(() => witnesses);
 
 	$effect(() => {
 		const text = base;
@@ -150,22 +135,8 @@
 	const isCorrection = (e: Entry) => corrected && e.readings.some((r) => r.siglum === siglum(0));
 	const open = $derived(entries.find((e) => e.id === selected) ?? null);
 
-	const comparing = $derived(layout.compare && witnesses.length > 0);
-	const compared = $derived(
-		witnesses.find((w) => w.key === compareKey) ??
-			witnesses.find((w) => w.key !== 'model') ??
-			witnesses[0]
-	);
-	const compareParts = $derived(
-		compared && spans[compared.key] ? witnessParts(base, spans[compared.key], entries) : null
-	);
-
 	/** Who reads what: the first set-up's model output under a correction, or another set-up. */
-	function witnessName(s: string): string {
-		if (s === siglum(0)) return m.review.modelText(setups[0]?.label ?? '');
-		if (s === m.review.originalSiglum) return m.review.original;
-		return setups[s.charCodeAt(0) - 97]?.label ?? s;
-	}
+	const nameOf = (s: string) => witnessName(s, setups, m);
 
 	/** Shows a difference's readings over the text. */
 	function show(id: number, pin: boolean) {
@@ -203,119 +174,10 @@
 	const wordsIn = (pane: HTMLElement | null, id: number) =>
 		pane?.querySelector<HTMLElement>(`[data-entry="${id}"]`) ?? null;
 
-	/** Scrolls a pane so that an element in it is in view, a third of the way down. */
-	function reveal(pane: HTMLElement | null, el: Element | Range | null) {
-		if (!pane || !el) return;
-		const box = pane.getBoundingClientRect();
-		const r = el.getBoundingClientRect();
-		if (r.top >= box.top + 24 && r.bottom <= box.bottom - 24) return;
-		const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-		pane.scrollTo({
-			top: pane.scrollTop + r.top - box.top - box.height / 3,
-			behavior: still ? 'auto' : 'smooth'
-		});
-	}
-
-	/** Where the researcher is in the text as read, as offsets in `base`: the selection or the
-	 * caret left by a click when it is in view, else the first line in view; with how far below
-	 * the top of the pane that line stands. */
-	function placeInText(): { start: number; end: number; below: number } | null {
-		const pane = textPane;
-		if (!pane) return null;
-		const rows = [...pane.querySelectorAll<HTMLElement>('.text.numbered > .line')];
-		const box = pane.getBoundingClientRect();
-		const starts: number[] = [];
-		let at = 0;
-		for (const l of base.split('\n')) {
-			starts.push(at);
-			at += l.length + 1;
-		}
-		if (rows.length !== starts.length) return null;
-		const rowOf = (node: Node) =>
-			(node instanceof Element ? node : node.parentElement)?.closest<HTMLElement>('.line') ?? null;
-		const offsetAt = (node: Node, offset: number) => {
-			const row = rowOf(node);
-			const i = row ? rows.indexOf(row) : -1;
-			const words = row?.querySelector('.t');
-			if (i < 0 || !words) return null;
-			const before = document.createRange();
-			before.setStart(words, 0);
-			try {
-				before.setEnd(node, offset);
-			} catch {
-				return starts[i];
-			}
-			const length = (starts[i + 1] ?? base.length + 1) - 1 - starts[i];
-			return starts[i] + Math.min(before.toString().length, length);
-		};
-		const inView = (row: HTMLElement | null) => {
-			const r = row?.getBoundingClientRect();
-			return r !== undefined && r.bottom > box.top && r.top < box.bottom;
-		};
-		const chosen = getSelection();
-		const range = chosen && chosen.rangeCount > 0 ? chosen.getRangeAt(0) : null;
-		if (range && pane.contains(range.startContainer) && inView(rowOf(range.startContainer))) {
-			const start = offsetAt(range.startContainer, range.startOffset);
-			const end = offsetAt(range.endContainer, range.endOffset);
-			const row = rowOf(range.startContainer);
-			if (start !== null && row)
-				return {
-					start,
-					end: end !== null && end >= start ? end : start,
-					below: row.getBoundingClientRect().top - box.top
-				};
-		}
-		const first = rows.findIndex((r) => r.getBoundingClientRect().bottom > box.top + 1);
-		if (first <= 0) return null;
-		return {
-			start: starts[first],
-			end: starts[first],
-			below: rows[first].getBoundingClientRect().top - box.top
-		};
-	}
-
-	/** How far below the top of a text box its character `at` stands, measured on a copy of the
-	 * box laid out the same way. */
-	function caretTop(area: HTMLTextAreaElement, at: number): number {
-		const style = getComputedStyle(area);
-		const copy = document.createElement('div');
-		for (const p of [
-			'boxSizing',
-			'width',
-			'padding',
-			'borderWidth',
-			'borderStyle',
-			'fontFamily',
-			'fontSize',
-			'fontWeight',
-			'lineHeight',
-			'letterSpacing',
-			'wordSpacing',
-			'tabSize'
-		] as const)
-			copy.style[p] = style[p];
-		Object.assign(copy.style, {
-			position: 'absolute',
-			visibility: 'hidden',
-			top: '0',
-			left: '-9999px',
-			whiteSpace: 'pre-wrap',
-			overflowWrap: 'break-word'
-		});
-		copy.textContent = area.value.slice(0, at);
-		const mark = document.createElement('span');
-		mark.textContent = '​';
-		copy.append(mark);
-		document.body.append(copy);
-		const top = mark.offsetTop;
-		copy.remove();
-		return top;
-	}
-
 	/** Opens the main text for correction where the researcher is reading, the caret there and
 	 * that line where it stood on screen. */
 	async function correctHere(setupId: string) {
-		const place = placeInText();
+		const place = placeInText(textPane, base);
 		editing = { setupId, text: base };
 		if (!place) return;
 		await tick();
@@ -349,19 +211,6 @@
 		words?.focus({ preventScroll: true });
 	}
 
-	/** Scrolls a pane so that an element in it stands `height` below the pane's top, kept in
-	 * view. */
-	function level(pane: HTMLElement | null, el: Element | null, height: number) {
-		if (!pane || !el) return;
-		const box = pane.getBoundingClientRect();
-		const at = Math.max(24, Math.min(height, box.height - 48));
-		const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-		pane.scrollTo({
-			top: pane.scrollTop + el.getBoundingClientRect().top - box.top - at,
-			behavior: still ? 'auto' : 'smooth'
-		});
-	}
-
 	/** A click anywhere else closes pinned readings. */
 	function onPointerDown(e: PointerEvent) {
 		if (!pinned || (e.target as HTMLElement).closest('.readings, [data-entry], [data-step]'))
@@ -391,95 +240,20 @@
 
 	const labelOf = (v: PieceView | undefined) => (v ? pieceLabel(v.piece, m, online) : '');
 
-	let searching = $state(false);
-	let query = $state('');
-	/** The match gone to, among all of them; -1 before any. */
-	let hitAt = $state(-1);
-	/** Where a recording should play from, after going to a match. */
-	let seek = $state<{ ms: number; id: number } | null>(null);
-	/** Set when going to a match, until its words are in view. */
-	let revealHit = false;
-
-	// Closing the search forgets the words; new words start from the first match.
-	$effect(() => {
-		if (!searching) query = '';
-	});
-	$effect(() => {
-		void query;
-		hitAt = -1;
-	});
-
-	/** Each piece as it is searched: the first set-up's text as shown, corrections included. */
-	const searched: Searched[] = $derived(
-		indices.map((i) => {
-			const v = views.find((x) => x.index === i && x.setup_id === setups[0]?.id);
-			return {
-				index: i,
-				text: shownText(v),
-				startMs: v?.piece.kind === 'segment' ? Number(v.piece.start_ms) : 0,
-				segments: v?.segments ?? []
-			};
-		})
-	);
-	const hits = $derived(search(searched, query));
-	const listed: ListedMatch[] = $derived(
-		hits.map((h) => {
-			const piece = searched.find((p) => p.index === h.index);
-			return {
-				group: labelOf(views.find((v) => v.index === h.index)),
-				time: recording && h.lineMs !== null ? clock((piece?.startMs ?? 0) + h.lineMs) : null,
-				...context(piece?.text ?? '', h)
-			};
-		})
-	);
-	const summary = $derived(
-		!searchable(query)
-			? ''
-			: hits.length === 0
-				? m.review.notFound
-				: hitAt >= 0
-					? m.review.foundAt(hitAt + 1, hits.length)
-					: m.review.found(hits.length)
-	);
-	/** Which match on the page shown is the one gone to. */
-	const foundHere = $derived(hits[hitAt]?.index === index ? hits[hitAt].nth : -1);
-
-	function goToHit(i: number) {
-		const h = hits[i];
-		if (!h) return;
-		hitAt = i;
-		revealHit = true;
-		if (h.index !== index) goTo(h.index);
-		if (recording && h.lineMs !== null) seek = { ms: h.lineMs, id: (seek?.id ?? 0) + 1 };
-	}
-
-	// Opened from a project's search: the words searched, and the match chosen gone to. In
-	// another set-up's text, its page is opened with that text compared beside it.
 	// svelte-ignore state_referenced_locally
-	let pending = $state<ReviewFind | null>(opening ?? null);
-	$effect(() => {
-		const want = pending;
-		if (!want || views.length === 0 || setups.length === 0) return;
-		if (!searching) {
-			searching = true;
-			query = want.query;
-			return;
-		}
-		pending = null;
-		if (want.setupId !== setups[0]?.id) {
-			goTo(want.index);
-			compareKey = want.setupId;
-			if (!layout.compare) layout.toggleCompare();
-			return;
-		}
-		const at = hits.findIndex((h) => h.index === want.index && h.nth === want.nth);
-		if (at >= 0) {
-			goToHit(at);
-		} else {
-			goTo(want.index);
-			toast(m.search.moved);
-		}
-	});
+	const finder = new ReviewSearch(
+		{
+			views: () => views,
+			lead: () => setups[0]?.id,
+			indices: () => indices,
+			index: () => index,
+			recording: () => recording,
+			labelOf,
+			goTo,
+			compare: (setupId) => comparison.show(setupId)
+		},
+		opening
+	);
 
 	// The page image follows the page.
 	$effect(() => review.showPage(index));
@@ -563,7 +337,7 @@
 
 {#snippet actions()}
 	{#if witnesses.length > 0}
-		<button class="btn toggle" aria-pressed={comparing} onclick={() => layout.toggleCompare()}
+		<button class="btn toggle" aria-pressed={comparison.open} onclick={() => layout.toggleCompare()}
 			><Icon name="compare" size={14} />{m.review.compare}</button
 		>
 	{/if}
@@ -581,7 +355,7 @@
 			url={source.path}
 			title={source.title ?? null}
 			segments={timed?.segments ?? []}
-			{seek}
+			seek={finder.seek}
 		/>
 	{:else}
 		<AudioPane
@@ -590,20 +364,20 @@
 			{index}
 			offsetMs={timed?.piece.kind === 'segment' ? Number(timed.piece.start_ms) : 0}
 			segments={timed?.segments ?? []}
-			{seek}
+			seek={finder.seek}
 		/>
 	{/if}
 {/snippet}
 
 {#snippet searchBar()}
 	<SearchBar
-		bind:query
+		bind:query={finder.query}
 		placeholder={m.review.searchText}
-		{summary}
-		matches={listed}
-		current={hitAt}
-		onpick={goToHit}
-		onclose={() => (searching = false)}
+		summary={finder.summary}
+		matches={finder.listed}
+		current={finder.at}
+		onpick={finder.goToHit}
+		onclose={() => (finder.searching = false)}
 	/>
 {/snippet}
 
@@ -637,86 +411,39 @@
 {/snippet}
 
 {#snippet foot()}
-	<span class="mono">
-		{#if report && setups.length > 1}
-			{m.review.cer}{m.common.colon}
-			{#each report.scores as s, i (s.setup_id)}
-				<span
-					class="score"
-					title={s.wer !== null
-						? `${m.review.wer}${m.common.colon} ${formatPercent(s.wer)}`
-						: undefined}
-					>{siglum(i).toUpperCase()}
-					{#if s.cer !== null}{formatPercent(s.cer)}{:else}<Missing />{/if}</span
-				>
-			{/each}
-			{#if report.scores.some((s) => s.cer !== null)}<span class="hint"
-					>· {m.review.scoredPages(report.scores[0]?.scored_pages ?? 0)}</span
-				>{:else}<span class="hint">· {m.review.noReference}</span>{/if}
-		{:else if ownScore}
-			<span title={m.scores.note}>{ownScore}</span>
-		{:else}
-			{lead?.model_version ?? setups[0]?.model ?? ''}{lead?.cost_usd
-				? ` · ${formatUsd(lead.cost_usd)}`
-				: ''}
-		{/if}
-	</span>
-	{#if witnesses.length > 0 || corrected}
-		<span class="legend">
-			{#if witnesses.length > 0}<span
-					><i class="key marker" aria-hidden="true"></i>{job?.task === 'text_correction'
-						? m.review.legendChanged
-						: m.review.legendDiffer}</span
-				>{/if}
-			<span><i class="key hand" aria-hidden="true"></i>{m.review.legendCorrected}</span>
-		</span>
-	{/if}
+	<ScoreFoot
+		{report}
+		{setups}
+		{ownScore}
+		{lead}
+		compared={witnesses.length > 0}
+		correction={job?.task === 'text_correction'}
+		{corrected}
+	/>
 {/snippet}
 
 {#snippet compareBar()}
-	{#if compared}
-		<span class="compared">
-			<i class="siglum">{compared.siglum}</i>
-			{#if witnesses.length > 1}
-				<select
-					class="mono"
-					aria-label={m.review.compareWith}
-					value={compared.key}
-					onchange={(e) => (compareKey = e.currentTarget.value)}
-				>
-					{#each witnesses as w (w.key)}
-						<option value={w.key}>{witnessName(w.siglum)}</option>
-					{/each}
-				</select>
-			{:else}
-				<span class="mono">{witnessName(compared.siglum)}</span>
-			{/if}
-		</span>
-	{/if}
-	<button
-		class="btn sm icon ghost close-compare"
-		aria-label={m.review.closeCompare}
-		title={m.review.closeCompare}
-		onclick={() => layout.toggleCompare()}><Icon name="close" size={14} /></button
-	>
+	<CompareBar
+		compared={comparison.compared}
+		{witnesses}
+		{nameOf}
+		onchoose={(key) => (comparison.key = key)}
+		onclose={() => layout.toggleCompare()}
+	/>
 {/snippet}
 
 {#snippet compareText()}
-	{#if compareParts}
-		<MarkedText
-			parts={compareParts}
-			{entries}
-			marked={showDiff}
-			{selected}
-			{hovered}
-			emptyLabel={m.review.leftOutHere}
-			onpick={(id) => void choose(id, comparePane)}
-			onpoint={(_, id) => (hovered = id)}
-			onaway={() => (hovered = null)}
-		/>
-	{:else}
-		<p class="muted">{m.common.loading}</p>
-	{/if}
+	<ComparePane
+		compared={comparison.compared}
+		{base}
+		{spans}
+		{entries}
+		marked={showDiff}
+		{selected}
+		{hovered}
+		onpick={(id) => void choose(id, comparePane)}
+		onhover={(id) => (hovered = id)}
+	/>
 {/snippet}
 
 {#snippet strip()}
@@ -749,7 +476,7 @@
 	{pager}
 	{actions}
 	search={searchBar}
-	bind:searching
+	bind:searching={finder.searching}
 	reviewed={lead && lead.ai_text !== null && !editing ? lead.reviewed : null}
 	onreviewed={toggleReviewed}
 	onstep={step}
@@ -767,7 +494,7 @@
 	{tools}
 	{foot}
 	bind:textPane
-	third={comparing && compared ? compareText : undefined}
+	third={comparison.open && comparison.compared ? compareText : undefined}
 	thirdLabel={m.review.compareWith}
 	thirdBar={compareBar}
 	bind:thirdPane={comparePane}
@@ -811,11 +538,11 @@
 			}}
 			emptyLabel={m.review.addedHere}
 			controls="readings"
-			find={searching ? query : ''}
-			current={foundHere}
+			find={finder.searching ? finder.query : ''}
+			current={finder.here}
 			onfound={(at) => {
-				if (!revealHit) return;
-				revealHit = false;
+				if (!finder.revealing) return;
+				finder.revealing = false;
 				reveal(textPane, at);
 			}}
 			onpick={(id) => (selected === id && pinned ? hide() : void choose(id, textPane))}
@@ -836,7 +563,7 @@
 							? m.review.changedHere
 							: m.review.disagree}
 					inUse={corrected ? m.review.yourCorrections : (setups[0]?.label ?? '')}
-					{witnessName}
+					witnessName={nameOf}
 					{pane}
 					onuse={(text) => useReading(e, text)}
 					onclose={hide}
@@ -930,50 +657,5 @@
 		font-family: var(--font-text);
 		font-size: var(--type-reading);
 		line-height: 1.65;
-	}
-	.compared {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-2);
-		font-size: var(--type-xs);
-		color: var(--text-secondary);
-	}
-	.compared select {
-		min-height: var(--control-sm);
-		max-width: 16rem;
-		font-size: var(--type-xs);
-	}
-	.close-compare {
-		margin-left: auto;
-	}
-	.score {
-		margin-left: var(--space-2);
-		color: var(--text-bright);
-	}
-	.hint {
-		font-family: var(--font-ui);
-		margin-left: var(--space-1);
-	}
-	.legend {
-		display: inline-flex;
-		gap: var(--space-4);
-	}
-	.legend > span {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-2);
-	}
-	.key {
-		display: inline-block;
-		width: 0.875rem;
-	}
-	.key.marker {
-		height: 0.625rem;
-		border-radius: 2px;
-		background: var(--marker);
-	}
-	.key.hand {
-		height: 2px;
-		background: var(--hand);
 	}
 </style>

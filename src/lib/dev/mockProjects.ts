@@ -116,6 +116,25 @@ export function seedProjects(sample: MockJobs): void {
 	preferred.add(`${DOCUMENT_ID}/${sample.job.setups[1].id}`);
 }
 
+/**
+ * The sample project's documents a search or a list of what to check covers: every one, those
+ * of a collection, those with a tag (whatever its capitals) or those chosen.
+ */
+export function documentsIn(scope: {
+	collection?: string | null;
+	tag?: string | null;
+	ids?: string[];
+}): Document[] {
+	const tag = scope.tag?.toLowerCase();
+	return documents.filter(
+		(d) =>
+			d.project_id === PROJECT_ID &&
+			(!scope.collection || members.some(([c, id]) => c === scope.collection && id === d.id)) &&
+			(!tag || d.tags.some((t) => t.toLowerCase() === tag)) &&
+			(!scope.ids || scope.ids.includes(d.id))
+	);
+}
+
 /** The tags of some documents, counted, as the store counts them. */
 function tagsOf(of: Document[]): { name: string; documents: number }[] {
 	const counts = new Map<string, number>();

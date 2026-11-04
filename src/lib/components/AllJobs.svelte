@@ -16,6 +16,8 @@
 		type JobSort,
 		type StatusFilter
 	} from '#lib/jobList.js';
+	import { focusName, RowRename } from '#lib/jobActions.svelte.js';
+	import { Selection } from '#lib/selection.svelte.js';
 	import { app, go, refreshJobs, refreshProjects, toast } from '#lib/state.svelte.js';
 	import { api, ask } from '#lib/tauri.js';
 
@@ -25,7 +27,7 @@
 	let task = $state<Task | ''>('');
 	let status = $state<StatusFilter>('');
 	let sort = $state<JobSort>('newest');
-	let selected = $state<string[]>([]);
+	const selection = new Selection();
 	let target = $state('');
 
 	/** The names of each job's files, for the search; read again when jobs come or go. */
@@ -42,7 +44,7 @@
 	const shown = $derived(
 		sortJobs(shownJobs(app.jobs, { query, task, status }, sources, app.waiting), sort)
 	);
-	const chosen = $derived(shown.filter((j) => selected.includes(j.id)));
+	const chosen = $derived(selection.of(shown, (j) => j.id));
 	const allChosen = $derived(shown.length > 0 && chosen.length === shown.length);
 	const anyRunning = $derived(chosen.some((j) => j.status === 'running'));
 	const projects = $derived(app.projects.filter((p) => !p.project.archived));
@@ -54,8 +56,7 @@
 
 	/** The job whose menu is open, and where. */
 	let menu = $state<{ job: JobSummary; x: number; y: number } | null>(null);
-	/** The job being renamed in its row, and the name typed so far. */
-	let renaming = $state<{ id: string; name: string } | null>(null);
+	const rename = new RowRename();
 
 	function openMenu(e: MouseEvent, job: JobSummary) {
 		e.preventDefault();
@@ -66,39 +67,10 @@
 		menu = { job, x: pointer ? e.clientX : at.left, y: pointer ? e.clientY : at.bottom };
 	}
 
-	function toggle(id: string) {
-		selected = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
-	}
-
 	/** A click on a row opens its job, unless it was on one of the row's own controls. */
 	function openRow(e: MouseEvent, job: JobSummary) {
 		if ((e.target as HTMLElement).closest('input, button, select, a')) return;
 		go({ name: 'jobs', jobId: job.id });
-	}
-
-	async function rename() {
-		const r = renaming;
-		renaming = null;
-		const name = r?.name.trim();
-		const job = app.jobs.find((j) => j.id === r?.id);
-		if (!r || !name || !job || name === job.name) return;
-		try {
-			await api.renameJob(r.id, name);
-			await refreshJobs();
-		} catch (e) {
-			toast(describeError(e, m));
-		}
-	}
-
-	function renameKeys(e: KeyboardEvent) {
-		if (e.key === 'Enter') void rename();
-		else if (e.key === 'Escape') renaming = null;
-	}
-
-	/** Puts the caret in the name box as it opens, the name selected. */
-	function focused(input: HTMLInputElement) {
-		input.focus();
-		input.select();
 	}
 
 	async function addTo(projectId: string) {
@@ -109,7 +81,7 @@
 		try {
 			for (const id of ids) await api.linkJob(projectId, id, null);
 			toast(m.allJobs.addedTo(ids.length, project.project.name));
-			selected = [];
+			selection.clear();
 			await refreshProjects();
 		} catch (e) {
 			toast(describeError(e, m));
@@ -125,7 +97,7 @@
 		} catch (e) {
 			toast(describeError(e, m));
 		}
-		selected = [];
+		selection.clear();
 		await refreshJobs();
 	}
 
@@ -138,7 +110,7 @@
 		job={at.job}
 		x={at.x}
 		y={at.y}
-		onrename={() => (renaming = { id: at.job.id, name: at.job.name })}
+		onrename={() => rename.start(at.job)}
 		onclose={() => (menu = null)}
 	/>
 {/if}
@@ -197,7 +169,7 @@
 		{#if chosen.length > 0}
 			<div class="selection-bar" role="toolbar" aria-label={m.allJobs.selected(chosen.length)}>
 				<span class="num">{m.allJobs.selected(chosen.length)}</span>
-				<button class="btn ghost sm" onclick={() => (selected = [])}
+				<button class="btn ghost sm" onclick={() => selection.clear()}
 					>{m.allJobs.clearSelection}</button
 				>
 				<span class="grow"></span>
@@ -234,7 +206,7 @@
 								type="checkbox"
 								checked={allChosen}
 								aria-label={m.allJobs.selectAll}
-								onchange={() => (selected = allChosen ? [] : shown.map((j) => j.id))}
+								onchange={() => selection.toggleAll(shown.map((j) => j.id))}
 							/>
 						</th>
 						<th>{m.allJobs.columnName}</th>
@@ -251,28 +223,28 @@
 						{@const waits = app.waiting[job.id]}
 						<!-- The row opens its job on a click; from the keyboard, its name does. -->
 						<tr
-							class:chosen={selected.includes(job.id)}
+							class:chosen={selection.has(job.id)}
 							onclick={(e) => openRow(e, job)}
 							oncontextmenu={(e) => openMenu(e, job)}
 						>
 							<td class="check">
 								<input
 									type="checkbox"
-									checked={selected.includes(job.id)}
+									checked={selection.has(job.id)}
 									aria-label={m.allJobs.select(job.name)}
-									onchange={() => toggle(job.id)}
+									onchange={() => selection.toggle(job.id)}
 								/>
 							</td>
 							<td class="name">
-								{#if renaming?.id === job.id}
+								{#if rename.editing?.id === job.id}
 									<input
 										class="rename"
 										type="text"
 										aria-label={m.jobs.nameLabel}
-										bind:value={renaming.name}
-										onkeydown={renameKeys}
-										onblur={rename}
-										{@attach focused}
+										bind:value={rename.editing.name}
+										onkeydown={rename.keys}
+										onblur={rename.commit}
+										{@attach focusName}
 									/>
 								{:else}
 									<button class="link" onclick={() => go({ name: 'jobs', jobId: job.id })}

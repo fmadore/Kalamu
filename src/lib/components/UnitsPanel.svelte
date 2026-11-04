@@ -8,9 +8,10 @@
 	import type { DocumentUnit } from '#lib/bindings/DocumentUnit.js';
 	import type { PieceRef } from '#lib/bindings/PieceRef.js';
 	import type { UnitsView } from '#lib/bindings/UnitsView.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { enginePages, pieceLabel, typedPages } from '#lib/pieces.js';
+	import { Selection } from '#lib/selection.svelte.js';
 	import { go } from '#lib/state.svelte.js';
 	import { api, pickFolder } from '#lib/tauri.js';
 
@@ -34,14 +35,13 @@
 	const u = m.units;
 
 	let view = $state<UnitsView | null>(null);
-	let selected = $state<string[]>([]);
+	const selection = new Selection();
 	let editing = $state<{ id: string | null; title: string; pages: string } | null>(null);
 	let notes = $state<string[]>([]);
-	let error = $state<string | null>(null);
-	let busy = $state(false);
+	const action = new Action({ after: () => load() });
 
 	const units = $derived(view?.units ?? []);
-	const chosen = $derived(units.filter((v) => selected.includes(v.unit.id)).map((v) => v.unit.id));
+	const chosen = $derived(selection.of(units, (v) => v.unit.id).map((v) => v.unit.id));
 	const titleOf = (unit: DocumentUnit) => unit.title || u.untitled;
 	/** A page as typed in a list of pages: "3", "8 (left)", in the interface language. */
 	const typedPage = (page: PieceRef) =>
@@ -54,28 +54,16 @@
 	async function load() {
 		try {
 			view = await api.unitsView(jobId, setupId, sourceId);
-			const ids = new Set(view.units.map((v) => v.unit.id));
-			selected = selected.filter((id) => ids.has(id));
+			selection.prune(view.units.map((v) => v.unit.id));
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
 	/** Runs a change, then shows the items as they now are. */
 	async function act(change: () => Promise<unknown>): Promise<boolean> {
-		busy = true;
-		error = null;
 		notes = [];
-		try {
-			await change();
-			await load();
-			return true;
-		} catch (e) {
-			error = describeError(e, m);
-			return false;
-		} finally {
-			busy = false;
-		}
+		return action.run(change);
 	}
 
 	async function make() {
@@ -119,22 +107,12 @@
 		);
 	}
 
-	function toggle(id: string) {
-		selected = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
-	}
-
 	/** The selected items' pages, frozen, in a new job of the task chosen. */
 	async function send(task: 'text_extraction' | 'analysis') {
-		busy = true;
-		error = null;
-		try {
+		await action.run(async () => {
 			const sources = await api.unitSources(chosen);
 			go({ name: 'new', task, sources });
-		} catch (e) {
-			error = describeError(e, m);
-		} finally {
-			busy = false;
-		}
+		}, null);
 	}
 
 	async function exportChosen() {
@@ -161,15 +139,15 @@
 	});
 </script>
 
-<section class="units" aria-busy={busy}>
-	{#if error}<p class="error" role="alert">{error}</p>{/if}
+<section class="units" aria-busy={action.busy}>
+	{#if action.error}<p class="error" role="alert">{action.error}</p>{/if}
 	{#each notes as note (note)}<p class="note">{note}</p>{/each}
 
 	{#if view && units.length === 0}
 		<div class="empty">
 			<p>{u.lede}</p>
 			{#if view.entries > 0}
-				<button class="btn primary" onclick={make} disabled={busy}
+				<button class="btn primary" onclick={make} disabled={action.busy}
 					><Icon name="plus" size={14} />{u.make}</button
 				>
 				<p class="muted small">{u.makeHint}</p>
@@ -185,8 +163,7 @@
 					aria-label={u.selectAll}
 					checked={chosen.length === units.length}
 					indeterminate={chosen.length > 0 && chosen.length < units.length}
-					onchange={() =>
-						(selected = chosen.length === units.length ? [] : units.map((v) => v.unit.id))}
+					onchange={() => selection.toggleAll(units.map((v) => v.unit.id))}
 				/>
 				<span class="muted small"
 					>{chosen.length > 0
@@ -198,20 +175,20 @@
 				<button
 					class="btn sm"
 					title={u.extractHint}
-					disabled={busy || chosen.length === 0 || !view.readable}
+					disabled={action.busy || chosen.length === 0 || !view.readable}
 					onclick={() => send('text_extraction')}
 					><Icon name="text_extraction" size={14} />{u.extract}</button
 				>
 				<button
 					class="btn sm"
 					title={u.analyseHint}
-					disabled={busy || chosen.length === 0 || !view.readable}
+					disabled={action.busy || chosen.length === 0 || !view.readable}
 					onclick={() => send('analysis')}><Icon name="analysis" size={14} />{u.analyse}</button
 				>
 				<button
 					class="btn sm"
 					title={u.exportHint}
-					disabled={busy || chosen.length === 0 || !view.readable}
+					disabled={action.busy || chosen.length === 0 || !view.readable}
 					onclick={exportChosen}>{u.export}</button
 				>
 			</div>
@@ -229,8 +206,8 @@
 							<input
 								type="checkbox"
 								aria-label={u.select(titleOf(unit))}
-								checked={selected.includes(unit.id)}
-								onchange={() => toggle(unit.id)}
+								checked={selection.has(unit.id)}
+								onchange={() => selection.toggle(unit.id)}
 							/>
 							<button
 								class="item"
@@ -256,7 +233,7 @@
 								<button
 									class="btn ghost sm"
 									title={u.joinHint}
-									disabled={busy}
+									disabled={action.busy}
 									onclick={() => act(() => api.joinUnits(unit.id, next.id))}>{u.joinNext}</button
 								>
 							{/if}
@@ -265,7 +242,7 @@
 									class="split"
 									aria-label={u.split}
 									title={u.splitHint}
-									disabled={busy}
+									disabled={action.busy}
 									onchange={(e) => {
 										const at = Number(e.currentTarget.value);
 										e.currentTarget.value = '';
@@ -281,7 +258,7 @@
 							<button
 								class="btn ghost sm danger"
 								aria-label={u.removeItem(titleOf(unit))}
-								disabled={busy}
+								disabled={action.busy}
 								onclick={() => act(() => api.deleteUnit(unit.id))}>{u.remove}</button
 							>
 						</div>
@@ -325,7 +302,7 @@
 				<span class="muted small" id="pages-hint">{u.pagesHint}</span>
 			</label>
 			<div class="actions">
-				<button class="btn primary sm" type="submit" disabled={busy}>{u.save}</button>
+				<button class="btn primary sm" type="submit" disabled={action.busy}>{u.save}</button>
 				<button class="btn ghost sm" type="button" onclick={() => (editing = null)}
 					>{u.cancel}</button
 				>

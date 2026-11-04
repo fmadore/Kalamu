@@ -7,7 +7,7 @@
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { DocumentRow } from '#lib/bindings/DocumentRow.js';
 	import type { TagView } from '#lib/bindings/TagView.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { formatDate, formatDateTime, messages } from '#lib/i18n/index.js';
 	import {
 		selectionPaths,
@@ -17,6 +17,7 @@
 		taskFor,
 		type DocumentSort
 	} from '#lib/projects.js';
+	import { Selection } from '#lib/selection.svelte.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { api, ask } from '#lib/tauri.js';
 
@@ -43,7 +44,15 @@
 
 	let query = $state('');
 	let sort = $state<DocumentSort>('title');
-	let selected = $state<string[]>([]);
+	const selection = new Selection();
+	/** A change to the documents chosen: the choice is cleared and the project read again. */
+	const action = new Action({
+		after: async () => {
+			selection.clear();
+			await onchange();
+		},
+		report: (message) => onerror(message)
+	});
 	let target = $state('');
 	let tag = $state('');
 	let untagging = $state('');
@@ -53,42 +62,28 @@
 	// A tag no document carries any longer stops filtering.
 	const filterTag = $derived(tags.some((t) => t.name === tag) ? tag : '');
 	const shown = $derived(sortDocuments(shownDocuments(rows, collectionId, query, filterTag), sort));
-	const chosen = $derived(shown.filter((r) => selected.includes(r.document.id)));
+	const chosen = $derived(selection.of(shown, (r) => r.document.id));
 	const allChosen = $derived(shown.length > 0 && chosen.length === shown.length);
 	const names = $derived(new Map(collections.map((c) => [c.collection.id, c.collection.name])));
 	const chosenTags = $derived(tagsOf(chosen));
-
-	function toggle(id: string) {
-		selected = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
-	}
-
-	async function act(action: () => Promise<unknown>) {
-		try {
-			await action();
-			selected = [];
-			await onchange();
-		} catch (e) {
-			onerror(describeError(e, m));
-		}
-	}
 
 	async function addTo(id: string) {
 		target = '';
 		if (!id) return;
 		const ids = chosen.map((r) => r.document.id);
-		await act(() => api.addToCollection(projectId, id, ids));
+		await action.run(() => api.addToCollection(projectId, id, ids));
 	}
 
 	async function addTag(name: string) {
 		const ids = chosen.map((r) => r.document.id);
-		await act(() => api.tagDocuments(projectId, ids, name));
+		await action.run(() => api.tagDocuments(projectId, ids, name));
 	}
 
 	async function removeTag(name: string) {
 		untagging = '';
 		if (!name) return;
 		const ids = chosen.map((r) => r.document.id);
-		await act(() => api.untagDocuments(projectId, ids, name));
+		await action.run(() => api.untagDocuments(projectId, ids, name));
 	}
 
 	/** Renames the tag filtered on across the project, and keeps filtering on it. */
@@ -98,26 +93,26 @@
 		const to = renaming?.trim() ?? '';
 		renaming = null;
 		if (!from || !to || to === from) return;
-		try {
-			const renamed = await api.renameTag(projectId, from, to);
-			tag = renamed.name;
-			await onchange();
-			toast(m.projects.tagRenamed(renamed.changed));
-		} catch (err) {
-			onerror(describeError(err, m));
-		}
+		await action.run(
+			() => api.renameTag(projectId, from, to),
+			async (renamed) => {
+				tag = renamed.name;
+				await onchange();
+				toast(m.projects.tagRenamed(renamed.changed));
+			}
+		);
 	}
 
 	async function removeFromCollection() {
 		if (!collectionId) return;
 		const ids = chosen.map((r) => r.document.id);
-		await act(() => api.removeFromCollection(projectId, collectionId, ids));
+		await action.run(() => api.removeFromCollection(projectId, collectionId, ids));
 	}
 
 	async function removeDocuments() {
 		if (!(await ask(m.projects.removeDocumentsConfirm(chosen.length)))) return;
 		const ids = chosen.map((r) => r.document.id);
-		await act(() => api.deleteDocuments(projectId, ids));
+		await action.run(() => api.deleteDocuments(projectId, ids));
 	}
 
 	function newJob() {
@@ -186,7 +181,7 @@
 	{#if chosen.length > 0}
 		<div class="selection-bar" role="toolbar" aria-label={m.projects.selected(chosen.length)}>
 			<span class="num">{m.projects.selected(chosen.length)}</span>
-			<button class="btn ghost sm" onclick={() => (selected = [])}
+			<button class="btn ghost sm" onclick={() => selection.clear()}
 				>{m.projects.clearSelection}</button
 			>
 			<span class="grow"></span>
@@ -262,7 +257,7 @@
 							type="checkbox"
 							checked={allChosen}
 							aria-label={m.projects.selectAll}
-							onchange={() => (selected = allChosen ? [] : shown.map((r) => r.document.id))}
+							onchange={() => selection.toggleAll(shown.map((r) => r.document.id))}
 						/>
 					</th>
 					<th>{m.projects.columnTitle}</th>
@@ -275,13 +270,13 @@
 			<tbody>
 				{#each shown as row (row.document.id)}
 					{@const doc = row.document}
-					<tr class:chosen={selected.includes(doc.id)}>
+					<tr class:chosen={selection.has(doc.id)}>
 						<td class="check">
 							<input
 								type="checkbox"
-								checked={selected.includes(doc.id)}
+								checked={selection.has(doc.id)}
 								aria-label={m.projects.select(doc.title)}
-								onchange={() => toggle(doc.id)}
+								onchange={() => selection.toggle(doc.id)}
 							/>
 						</td>
 						<td
