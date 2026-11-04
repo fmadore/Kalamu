@@ -26,6 +26,7 @@ reqwest.workspace = true
 kalamu-catalog.workspace = true
 kalamu-core.workspace = true
 kalamu-engine.workspace = true
+kalamu-export.workspace = true
 kalamu-media.workspace = true
 kalamu-offline.workspace = true
 kalamu-prompts.workspace = true

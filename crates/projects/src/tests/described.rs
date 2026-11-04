@@ -114,7 +114,7 @@ fn descriptions_are_written_out_with_where_each_part_came_from() {
         )
         .unwrap();
 
-    let csv = csv_body(f.projects.export_descriptions_csv(p.id, None).unwrap());
+    let csv = csv_body(f.projects.descriptions_table(p.id, None).unwrap());
     let mut rows = csv.lines();
     assert_eq!(
         rows.next().unwrap(),
@@ -131,10 +131,11 @@ fn descriptions_are_written_out_with_where_each_part_came_from() {
     assert!(csv.contains(&expected), "{csv}");
 
     // A collection keeps to its documents.
-    let one = f
-        .projects
-        .export_descriptions_csv(p.id, Some(letters.id))
-        .unwrap();
+    let one = csv_body(
+        f.projects
+            .descriptions_table(p.id, Some(letters.id))
+            .unwrap(),
+    );
     assert!(!one.contains("b.pdf"));
 
     let json: serde_json::Value =

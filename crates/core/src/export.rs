@@ -98,6 +98,15 @@ pub struct ExportDocument {
     pub options: ExportOptions,
 }
 
+/// A table for a spreadsheet: its headings, then rows of as many cells. Projects' descriptions,
+/// export profiles and the dictionary make one; the `export` crate writes it as CSV, with the
+/// byte-order mark every spreadsheet file carries.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Table {
+    pub headings: Vec<String>,
+    pub rows: Vec<Vec<String>>,
+}
+
 #[derive(Debug, Error)]
 pub enum ExportError {
     #[error("{0} export is not available for this task")]

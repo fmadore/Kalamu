@@ -7,10 +7,11 @@ use kalamu_core::provenance::{
     GeneratorInfo, ProvenanceDerived, ProvenanceDocument, ProvenanceMerge, ProvenancePrompt,
     ProvenanceRefused, ProvenanceSource,
 };
-use kalamu_core::speakers::{rename_segments, rename_text, renamed_labels};
+use kalamu_core::speakers::{rename_segments, renamed_labels, text_as_left};
 use kalamu_core::{
     CacheKey, ExportDocument, ExportPart, InputKind, Job, PieceRef, PieceState, PieceStatus,
-    Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, Task, Timestamp, Usage,
+    Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, SpeakerIndex, Task,
+    Timestamp, Usage,
 };
 
 use crate::output::preprocessing;
@@ -38,13 +39,8 @@ impl Engine {
             .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
         let corrections = self.store.corrections(job.id)?;
         // The researcher's names for this recording's speakers, applied to every part.
-        let speaker_names = self
-            .store
-            .speaker_names(job.id)?
-            .into_iter()
-            .find(|n| n.setup_id == setup_id && n.source_id == source_id)
-            .map(|n| n.names)
-            .unwrap_or_default();
+        let speakers = SpeakerIndex::new(self.store.speaker_names(job.id)?);
+        let speaker_names = speakers.of(setup_id, source_id);
         let mut states: Vec<_> = self
             .store
             .pieces(job.id)?
@@ -158,7 +154,7 @@ impl Engine {
                     PieceRef::Segment { end_ms, .. } => Some(end_ms),
                     PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => None,
                 });
-                let renamed = rename_segments(&result.output.segments, &speaker_names);
+                let renamed = rename_segments(&result.output.segments, speaker_names);
                 absolute(&state.piece, &renamed, previous_end)
             };
             // A corrected page keeps its words' places where the engine placed each word;
@@ -178,9 +174,10 @@ impl Engine {
             };
             parts.push(ExportPart {
                 piece: state.piece.clone(),
-                text: rename_text(
-                    corrected_text.as_deref().unwrap_or(&result.output.text),
-                    &speaker_names,
+                text: text_as_left(
+                    corrected_text.as_deref(),
+                    &result.output.text,
+                    speaker_names,
                 ),
                 segments,
                 corrected: corrected_text.is_some(),
@@ -253,7 +250,7 @@ impl Engine {
             truncated,
             failed,
             preprocessing,
-            renamed_speakers: renamed_labels(&speaker_names),
+            renamed_speakers: renamed_labels(speaker_names),
             usage,
             cost_usd: cost,
             refused: self.refused(job, setup_id, source_id)?,

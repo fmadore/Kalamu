@@ -2761,6 +2761,7 @@ dependencies = [
  "kalamu-core",
  "kalamu-dictionary",
  "kalamu-engine",
+ "kalamu-export",
  "kalamu-media",
  "kalamu-offline",
  "kalamu-projects",
@@ -2818,8 +2819,8 @@ dependencies = [
 name = "kalamu-dictionary"
 version = "1.4.0"
 dependencies = [
- "csv",
  "kalamu-core",
+ "kalamu-export",
  "kalamu-store",
  "serde",
  "serde_json",
@@ -2910,8 +2911,8 @@ dependencies = [
 name = "kalamu-projects"
 version = "1.4.0"
 dependencies = [
- "csv",
  "kalamu-core",
+ "kalamu-export",
  "kalamu-store",
  "serde",
  "serde_json",

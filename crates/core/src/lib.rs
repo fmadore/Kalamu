@@ -28,6 +28,7 @@ pub mod source;
 pub mod speakers;
 pub mod store;
 pub mod task;
+pub mod tied;
 pub mod units;
 pub mod warning;
 pub mod workflow;
@@ -42,7 +43,9 @@ pub use dictionary::{
     DictionaryError, DictionaryStore, Entry, KeptApart, Labels, ProposalGroup, ProposalRequest,
 };
 pub use event::ProgressEvent;
-pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter};
+pub use export::{
+    ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter, Table,
+};
 pub use fingerprint::CacheKey;
 pub use ids::{
     CollectionId, DocumentId, EntryId, JobId, ProjectId, ProviderId, RunId, SetupId, SourceId,
@@ -72,9 +75,10 @@ pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};
 pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
 pub use source::{InputKind, SourceFile};
-pub use speakers::SpeakerNames;
+pub use speakers::{SpeakerIndex, SpeakerNames};
 pub use store::{Correction, JobStore, StoreError};
 pub use task::Task;
+pub use tied::{TiedResult, TiedResults};
 pub use units::{DocumentUnit, FrozenUnit, PagesError, SeedProblem, SharedPage, UnitError};
 pub use warning::{InputWarning, WarningKind};
 pub use workflow::{

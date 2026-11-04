@@ -3,7 +3,7 @@
 //! A rename is a layer over the model's output, like a correction: the review and every export
 //! apply it, and the stored output keeps the model's own labels.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -91,6 +91,42 @@ pub fn rename_text(text: &str, names: &BTreeMap<String, String>) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+/// The names given to the speakers of every recording of one job, by set-up and source, read
+/// once from the job's [`SpeakerNames`]: what the review, comparison, search, exports and
+/// profiles all look up piece by piece.
+#[derive(Debug, Clone, Default)]
+pub struct SpeakerIndex(HashMap<(SetupId, SourceId), BTreeMap<String, String>>);
+
+/// The names of a recording no one has renamed.
+static NO_NAMES: BTreeMap<String, String> = BTreeMap::new();
+
+impl SpeakerIndex {
+    pub fn new(names: Vec<SpeakerNames>) -> Self {
+        Self(
+            names
+                .into_iter()
+                .map(|n| ((n.setup_id, n.source_id), n.names))
+                .collect(),
+        )
+    }
+
+    /// The names given to one set-up's speakers in one recording; empty when none was given.
+    pub fn of(&self, setup: SetupId, source: SourceId) -> &BTreeMap<String, String> {
+        self.0.get(&(setup, source)).unwrap_or(&NO_NAMES)
+    }
+}
+
+/// A piece's text as the researcher left it: `corrected` (a correction's text, or an
+/// analysis's corrected answers set out again) where there is one, else the model's, with the
+/// speakers' names applied. What the review shows, search indexes and every export writes.
+pub fn text_as_left(
+    corrected: Option<&str>,
+    model: &str,
+    names: &BTreeMap<String, String>,
+) -> String {
+    rename_text(corrected.unwrap_or(model), names)
 }
 
 /// The segments with their speakers renamed.

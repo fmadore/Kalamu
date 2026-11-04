@@ -365,6 +365,29 @@ fn key_for(label: &str) -> Option<String> {
     }
 }
 
+/// Each field's label as the most recent of these analyses asking it gives it, by key, with when
+/// that analysis was made: what the dictionary's namespaces and a profile's columns call a
+/// field. `keep` chooses the fields (the dictionary counts lists only). Analyses made at the
+/// same moment are settled by the order given.
+pub fn latest_labels<'a>(
+    jobs: impl IntoIterator<Item = &'a crate::Job>,
+    keep: impl Fn(&Field) -> bool,
+) -> std::collections::BTreeMap<String, (crate::Timestamp, String)> {
+    let mut labels: std::collections::BTreeMap<String, (crate::Timestamp, String)> =
+        std::collections::BTreeMap::new();
+    for job in jobs.into_iter().filter(|j| j.task == crate::Task::Analysis) {
+        for schema in job.setups.iter().filter_map(|s| s.prompt.schema.as_ref()) {
+            for field in schema.fields.iter().filter(|f| keep(f)) {
+                let known = labels.get(&field.key);
+                if known.is_none_or(|(at, _)| *at <= job.created_at) {
+                    labels.insert(field.key.clone(), (job.created_at, field.label.clone()));
+                }
+            }
+        }
+    }
+    labels
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {

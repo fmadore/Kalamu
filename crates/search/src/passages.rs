@@ -5,15 +5,15 @@
 //! stamps are read without reading any answer, so checking a project costs little, and only
 //! the pieces whose stamp changed are read and indexed again.
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use kalamu_core::analysis::answer_text;
 use kalamu_core::contents::TITLE;
 use kalamu_core::fingerprint::sha256_hex;
-use kalamu_core::speakers::{rename_segments, rename_text};
+use kalamu_core::speakers::{rename_segments, text_as_left};
 use kalamu_core::{
     Correction, FieldAnswer, FieldValue, Job, Passage, PassageKey, PassagePart, PieceRef,
-    PieceState, SetupId, SourceId, Task,
+    PieceState, SetupId, SourceId, SpeakerIndex, Task,
 };
 
 use crate::fold::folded;
@@ -40,7 +40,7 @@ pub(crate) fn searched(task: Task, piece: &PieceRef) -> bool {
 /// What one job holds that its passages are made from.
 struct Stored {
     corrections: Vec<Correction>,
-    names: HashMap<(SetupId, SourceId), BTreeMap<String, String>>,
+    speakers: SpeakerIndex,
 }
 
 impl Stored {
@@ -50,11 +50,11 @@ impl Stored {
             return None;
         }
         let corrected = Correction::of(&self.corrections, piece).map_or(0, |c| c.updated_at.0);
-        let names = match self.names.get(&(piece.setup_id, piece.source_id)) {
-            Some(names) if !names.is_empty() => {
-                sha256_hex(serde_json::to_string(names).unwrap_or_default().as_bytes())
-            }
-            _ => String::new(),
+        let names = self.speakers.of(piece.setup_id, piece.source_id);
+        let names = if names.is_empty() {
+            String::new()
+        } else {
+            sha256_hex(serde_json::to_string(names).unwrap_or_default().as_bytes())
         };
         Some(format!(
             "{VERSION}:{}:{key}:{corrected}:{names}",
@@ -122,16 +122,12 @@ impl Search {
         };
         let correction = Correction::of(&stored.corrections, piece);
         let parts = if job.task.yields_text() {
-            let names = stored
-                .names
-                .get(&(piece.setup_id, piece.source_id))
-                .cloned()
-                .unwrap_or_default();
+            let names = stored.speakers.of(piece.setup_id, piece.source_id);
             let corrected = correction.and_then(|c| c.text.as_deref());
             // A correction replaces the text; the model's timings no longer match it.
             let lines = match corrected {
                 Some(_) => Vec::new(),
-                None => rename_segments(&result.output.segments, &names)
+                None => rename_segments(&result.output.segments, names)
                     .into_iter()
                     .map(|s| (s.start_ms, s.text))
                     .collect(),
@@ -141,7 +137,7 @@ impl Search {
                 entry: None,
                 entry_number: None,
                 reason: false,
-                text: rename_text(corrected.unwrap_or(&result.output.text), &names),
+                text: text_as_left(corrected, &result.output.text, names),
                 lines,
             }]
         } else {
@@ -174,12 +170,7 @@ impl Search {
         let pieces = self.jobs.pieces(job.id)?;
         let stored = Stored {
             corrections: self.jobs.corrections(job.id)?,
-            names: self
-                .jobs
-                .speaker_names(job.id)?
-                .into_iter()
-                .map(|n| ((n.setup_id, n.source_id), n.names))
-                .collect(),
+            speakers: SpeakerIndex::new(self.jobs.speaker_names(job.id)?),
         };
         let indexed: HashMap<PassageKey, String> = self.index.stamps(job.id)?.into_iter().collect();
         let mut current = HashMap::new();

@@ -28,7 +28,7 @@ fn exports_keep_ids_original_forms_and_review_status() {
     assert_eq!(json["entries"][0]["forms"][1], "Traore Moussa");
     assert_eq!(json["entries"][0]["reviewed"], true);
 
-    let csv = f.dictionary.export_csv(f.project).unwrap();
+    let csv = kalamu_export::table_csv(&f.dictionary.forms_table(f.project).unwrap()).unwrap();
     let csv = csv
         .strip_prefix('\u{feff}')
         .unwrap_or_else(|| panic!("a byte-order mark, for Excel"));
