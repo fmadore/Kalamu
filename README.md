@@ -15,12 +15,13 @@ text.
 Free, with every feature included. If it is useful to you, you can
 [support its development](#support-development).
 
-**Status: version 1.4.0**, for Windows and macOS: from the Microsoft Store or the
+**Status: version 1.4.1**, for Windows and macOS: from the Microsoft Store or the
 [releases page](https://github.com/fmadore/Kalamu/releases), see [Install](#install). Text
 extraction, transcription and analyses have run against the live OpenAI, Claude and Mistral
 APIs; Gemini, offline Whisper and the cheaper batch mode have had fewer live runs, so try a
 small job first. See the
-[roadmap](docs/roadmap.md) and the [1.4.0 release notes](docs/release-1.4.0.md).
+[roadmap](docs/roadmap.md) and the [1.4.1 release notes](docs/release-1.4.1.md). The Mac App
+Store version is being prepared ([steps](docs/mac-app-store.md)).
 
 ## What it does
 

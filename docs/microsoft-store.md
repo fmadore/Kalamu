@@ -14,8 +14,10 @@ the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-
 
 **Version 1.3.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)** (product ID `9MXT5555BZ1H`),
 published as an update from the `Kalamu_1.3.0.msixbundle` of the
-[v1.3.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.3.0). Version 1.4.0 is
-submitted next, from the `Kalamu_1.4.0.msixbundle` of its release. The first submission,
+[v1.3.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.3.0). Version 1.4.1
+follows, from the `Kalamu_1.4.1.msixbundle` of its release; if 1.4.0 has not been submitted
+yet, submit 1.4.1 in its place. Its listing text, with the question asked before files are
+first sent to each AI provider, is in [store-listing.md](store-listing.md). The first submission,
 1.0.0, passed certification on 2 November 2026 from the `Kalamu_1.0.0.msixbundle` of the
 [v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0). The steps below stay
 as the record of the first submission and the procedure for updates.

@@ -36,6 +36,8 @@ were, and the window freezing while results were written. For what 1.4.0 changed
   themselves, keep Tab within them and give the focus back when they close.
 - **What to check counts every reason** (failed and not read included) as the engine found them.
 - Retrying a running job's failed pages no longer puts them back behind its back.
+- Whisper is called *Whisper (on this computer)*, as Tesseract is, rather than *on this PC*,
+  which read oddly on a Mac.
 
 ## Download
 

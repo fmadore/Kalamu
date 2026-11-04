@@ -29,7 +29,7 @@
     },
     {
       "id": "whisper",
-      "name": "Whisper (on this PC)",
+      "name": "Whisper (on this computer)",
       "key_url": "",
       "key_prefix": null,
       "local": true,
@@ -1136,7 +1136,7 @@
       "speakers": false,
       "pricing": {
         "per_minute": 0.0,
-        "note": "Runs on this PC: free, and nothing is sent anywhere."
+        "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
       "limits": {},
       "translations": {
@@ -1196,7 +1196,7 @@
       "speakers": false,
       "pricing": {
         "per_minute": 0.0,
-        "note": "Runs on this PC: free, and nothing is sent anywhere."
+        "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
       "limits": {},
       "translations": {
@@ -1256,7 +1256,7 @@
       "speakers": false,
       "pricing": {
         "per_minute": 0.0,
-        "note": "Runs on this PC: free, and nothing is sent anywhere."
+        "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
       "limits": {},
       "translations": {
@@ -1316,7 +1316,7 @@
       "speakers": false,
       "pricing": {
         "per_minute": 0.0,
-        "note": "Runs on this PC: free, and nothing is sent anywhere."
+        "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
       "limits": {},
       "translations": {

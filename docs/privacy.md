@@ -1,8 +1,9 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 4 November 2026, the second policy of that day, for the Mac App Store
-build: the folders the user grants it, kept as bookmarks, and its data folder inside the app's
-own container; and for the file paths the logs may hold. Version 1.0.0, the first Microsoft
+**Effective date:** 4 November 2026, the second policy of that day, which applies from
+version 1.4.1: for the question asked before files are first sent to each cloud provider; for
+the Mac App Store build, the folders the user grants it, kept as bookmarks, and its data folder
+inside the app's own container; and for the file paths the logs may hold. Version 1.0.0, the first Microsoft
 Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
@@ -29,6 +30,13 @@ The developer operates no server for the app and receives nothing from it.
 
 Kalamu reads only the files and folders the user adds to a job, and the YouTube links the
 user pastes.
+
+**Before the first job, workflow run or dictionary proposal sent to a cloud provider**, the app
+asks once, naming the provider, saying what will be sent (the pages, recordings or text, with
+any personal information they hold), that it goes under the user's own account and the
+provider's terms, and where this policy is. Nothing is sent to a provider the user has not
+agreed to; the answer is kept in the settings. Offline engines are never asked about, since
+they send nothing.
 
 **With a cloud provider**, each page, recording segment or text is sent directly from the
 user's computer to that provider, with the instructions for the task (the prompt and, for an
@@ -111,7 +119,7 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   model, the prompt and what the request cost, in a folder per project. Nothing else is written
   for them: the answers are kept in the job database.
 - **Settings** (`settings.json`): preferences such as formats, destination, theme, favourite
-  languages and the last folder chosen.
+  languages, the last folder chosen, and the cloud providers the user agreed to send files to.
 - **Prompts, pipelines and workflows** the user saves (`presets`, `pipelines`, `workflows`),
   and a copy of the model catalogue. An exported workflow, like an exported pipeline, holds its
   steps, models, settings and prompts, never keys, files, folders or results.
@@ -178,7 +186,7 @@ leaves the app open in the Dock, as Mac apps do, until the user quits it. Jobs w
 ## Support link
 
 Kalamu shows an optional *Buy me a coffee* link to the developer's page on Buy Me a Coffee
-(`https://buymeacoffee.com/fmadore`). The app passes that fixed address to the default browser
+(`https://buymeacoffee.com/fmadore`); the Mac App Store app has none. The app passes that fixed address to the default browser
 and nothing else: it sends no information about the user or the device and contacts no payment
 service itself. Anything entered on that page is between the user and Buy Me a Coffee, under the
 [Buy Me a Coffee privacy policy](https://buymeacoffee.com/privacy-policy). Supporting is optional
