@@ -36,37 +36,62 @@ Apple, so start them first.
   own OpenSSH (`ssh`, `scp`) copies files back at the end.
 - [ ] **This checklist open on Windows**, not on the Mac.
 
-## If Claude runs the day
+## If Claude runs the day, on the Mac itself
 
-Claude Code can run most of this list from the Windows PC: commands over SSH, and the screens
-through the VNC viewer's window, which it sees and clicks with computer use. What it does not
-do: book or pay, type a password, sign in to an account, or paste an API key into a field.
+The Claude desktop app runs on the rented Mac and works through the list there: commands in its
+own terminal, and the screens with computer use on the Mac's own display, at full resolution.
+That is faster and surer than driving the Mac from the PC through a VNC window. It starts as a
+fresh session: the checklist and the brief below are all it needs. What it does not do: book or
+pay, type a password, sign in to an account, or paste an API key into a field.
 
-**You do, before and during:**
+**You do, at the start (30 minutes):**
 
-- [ ] Book the Mac, and give Claude its address and user name.
-- [ ] **SSH by key, not password**: in Git Bash on Windows, make a key for this day only.
+- [ ] Book the Mac and connect over VNC as in the next section, typing the VNC password.
+- [ ] **Install the Claude desktop app** on the Mac from
+  [claude.ai/download](https://claude.ai/download) and sign in with your account.
+- [ ] Open the Code tab with a new folder, `~/kalamu-test-day`, as its working folder, and paste
+  the brief below.
+- [ ] **When computer use first asks**, allow it under System Settings → Privacy & Security:
+  *Accessibility* and *Screen Recording* for Claude. macOS asks for the administrator password:
+  type it yourself.
 
-  ```bash
-  ssh-keygen -t ed25519 -f ~/.ssh/kalamu-mac -N ""
-  ```
+**You do, when Claude asks during the day:**
 
-  Add the `.pub` file's line to the Mac, through the provider's console when booking, or in
-  Terminal over VNC into `~/.ssh/authorized_keys`. Then `ssh -i ~/.ssh/kalamu-mac user@address`
-  must log in without asking anything.
-- [ ] Open the VNC viewer, connect, type its password yourself, and leave the window open,
-  visible and unminimised; allow Claude to use the VNC viewer when it asks for computer-use
-  access. Keep the PC awake.
-- [ ] Sign in to TestFlight with the tester's Apple ID, and paste the test key into Kalamu's
-  Settings when Claude reaches those steps.
-- [ ] Answer anything macOS asks for an administrator password.
+- [ ] Sign in to TestFlight (and the App Store) with the tester's Apple ID.
+- [ ] Paste the test key into Kalamu's Settings → API keys.
+- [ ] Any other password macOS asks for.
 
-**Claude does:** the downloads and installs, launching the apps, every check that reads files
-(the data folder, the container, `grants.json`, the logs, results beside the sources), the test
-disk image with `hdiutil`, the steps on screen (jobs, reviews, dialogs, folder pickers, the
-consent dialog, closing and quitting), the screenshots, copying them back with `scp`, and the
-[Results](#results) table with an issue drafted for each failure. Sound and anything the VNC
-picture cannot show stay unchecked, and it says which.
+**You do, at the end** (before giving the Mac back, below): copy `~/kalamu-test-day` to the PC,
+then sign out of Claude (Settings → Log out) as well as the Apple ID, revoke the key and delete
+the server. Keep GitHub off the rented Mac: the repository is public, so nothing there needs a
+login, and the results come back to the PC to be turned into issues.
+
+**Claude does:** the downloads and installs, launching the apps, the steps on screen (jobs,
+reviews, dialogs, folder pickers, the consent dialog, closing and quitting), every check that
+reads files (the data folder, the container, `grants.json`, the logs, results beside the
+sources), the test disk image with `hdiutil`, the screenshots with `screencapture` and their
+checks with `sips`, and the results file. Safari is read-only to computer use, so downloads go
+through the terminal; anything it cannot check (the player's sound) is written down as such.
+
+**The brief to paste:**
+
+```text
+Today is a test day for Kalamu, a desktop app for researchers (https://github.com/fmadore/Kalamu), on this rented Mac with Apple Silicon. Nothing has run on a real Mac before; you are the first.
+
+1. Download the checklist and the release notes into this folder (the repository is public; do not log in to GitHub on this Mac, and do not clone the repository unless git is already installed):
+   https://raw.githubusercontent.com/fmadore/Kalamu/main/docs/mac-test-day.md
+   https://raw.githubusercontent.com/fmadore/Kalamu/main/docs/release-1.4.1.md
+   https://raw.githubusercontent.com/fmadore/Kalamu/main/docs/store-listing.md (the "Screenshots" table: ten scenes and captions)
+2. Work through mac-test-day.md, Part A (the disk image), Part B (the Mac App Store build through TestFlight) and Part C (screenshots), in order. Skip "Before booking", "If Claude runs the day" and "Booking and first connection" except its display and quiet-desktop steps.
+3. Download files with curl in the terminal (Safari is read-only to you). A file fetched with curl is not quarantined, so before opening the disk image mark it as a browser would, to test Gatekeeper's first-open question:
+   xattr -w com.apple.quarantine "0081;$(printf %x $(date +%s));Safari;" Kalamu_1.4.1_aarch64.dmg
+4. Write results.md in this folder as you go: for every step, passed, failed or not checked, and for each failure what you did, what you expected, what happened, with a screenshot of it in problems/. Write it after each step, not at the end.
+   The sample files: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip. Ask me for the link to the screenshot material (issues of The Monitor and a recording).
+5. Save the App Store screenshots in screenshots/, named 01-comparison … 10-offline, checked with sips (1440x900 or 2880x1800, hasAlpha no).
+6. Stop and ask me whenever a step needs a password, an Apple ID sign-in, or the test API key in Kalamu's Settings: I type those, you never do. Ask before anything that would send files to a cloud provider beyond the steps that use the test key, and keep to the estimate shown before each job.
+7. Do not change Kalamu's files, settings outside the app, or anything outside this folder and the app's own data, except what a step asks for (the test folder with accents, the test disk image).
+At the end, summarise what passed, what failed and what you could not check (for instance the player's sound), with the failures first.
+```
 
 ## Booking and first connection (30 minutes)
 
@@ -89,7 +114,8 @@ picture cannot show stay unchecked, and it says which.
 
 The notarised app from the releases page, as a researcher installs it.
 
-- [ ] Download `Kalamu_1.4.1_aarch64.dmg` with Safari, open it and drag Kalamu to Applications.
+- [ ] Download `Kalamu_1.4.1_aarch64.dmg` with Safari (or with `curl`, marked as quarantined as
+  the brief says, when Claude runs it), open it and drag Kalamu to Applications.
 - [ ] Open Kalamu from Applications. macOS asks once whether to open an app downloaded from the
   internet, naming the developer; nothing more (no "damaged" or "unidentified developer").
 - [ ] The window opens; the sidebar, New job and Settings show without error. Settings → About
@@ -181,7 +207,12 @@ light mode, one size throughout.
   same people under several spellings. The workflow uses the test key: check the estimate first.
 - [ ] Name jobs as a researcher would; no `/Users/<name>` path, key or personal data visible.
 - [ ] **Capture the window alone**: ⌘⇧4, then Space, then hold ⌥ and click the window, which
-  leaves out the shadow and its transparency.
+  leaves out the shadow and its transparency. From the terminal (as Claude does), maximise the
+  window and capture the screen silently, which gives the display's exact size:
+
+  ```bash
+  screencapture -x ~/kalamu-test-day/screenshots/01-comparison.png
+  ```
 - [ ] **Check each image** in Terminal: size and no alpha channel.
 
   ```bash
@@ -203,14 +234,16 @@ light mode, one size throughout.
 ## Before giving the Mac back (30 minutes)
 
 - [ ] **Copy everything off**, from Windows (Git Bash or PowerShell), with the SSH address the
-  console gave:
+  console gave (type the password yourself): the results, the problems' screenshots and the App
+  Store screenshots, all in one folder when Claude ran the day.
 
   ```bash
-  scp "user@address:~/Desktop/*.png" .
+  scp -r "user@address:~/kalamu-test-day" .
   ```
 
-  Also any notes and screenshots of problems.
-- [ ] **Sign out**: TestFlight and the App Store (Apple ID), Safari's saved logins.
+  Done by hand, copy `~/Desktop/*.png` and your notes the same way.
+- [ ] **Sign out**: Claude (Settings → Log out), TestFlight and the App Store (Apple ID),
+  Safari's saved logins.
 - [ ] **Keys**: Settings → API keys → remove the test key in Kalamu, then **revoke it** at the
   provider's console.
 - [ ] **Delete the server** in the provider's console: billing runs until it is deleted, not
