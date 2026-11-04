@@ -86,8 +86,8 @@ Checked against [Microsoft Store Policies 7.20](https://learn.microsoft.com/en-u
 (14 September 2026):
 
 - **10.2.2, dynamic code**: an app must not change its described functionality by code it
-  downloads. FFmpeg ships inside the package and is never downloaded; the Whisper models and the
-  model catalogue that the app downloads are data, not code.
+  downloads. FFmpeg ships inside the package and is never downloaded; the Whisper models,
+  Tesseract's language data and the model catalogue that the app downloads are data, not code.
 - **11.2, third-party content**: bundled content must be appropriately licensed, which the
   table above covers.
 - **10.2.9, installers submitted by link**: only if the app were submitted as an `.exe` or

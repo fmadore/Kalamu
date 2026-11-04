@@ -30,8 +30,8 @@ over the lines that fit its box; every line is stretched to its box's width. A c
 keeps its words' places where the engine placed each word (see ALTO below); otherwise it is set
 as one block over the page. Only PDF sources get one; it is written as `<name>.searchable.pdf`,
 never replacing the source. New job says before a job whether it will have one: the format is
-offered, and the task's diagram draws the searchable PDF as a second result, only when a chosen
-model reports where text sits; under any other model, the diagram notes that it gives text only.
+offered, and the task's diagram draws ALTO XML and the searchable PDF as a second result, only when a
+chosen model reports where text sits; under any other model, the diagram notes that it gives text only.
 
 ## ALTO XML (`.alto.xml`)
 
@@ -162,7 +162,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `documents` | The project documents the source is, in each project whose document it is: `project_id`, `project_name`, `document_id`, `title`, and `description`, each part of the source's description as it stood when the file was written (`repository`, `fonds`, `series`, `file`, `shelfmark`, `creator`, `date`, `url`, `citation`, `rights`) as `{ "value", "from" }`, `from` being `document` or `project`; parts with no value are left out. Supplied by the researcher, never by a model. Absent for a job tied to no project |
 | `provider`, `model` | As requested |
 | `model_versions` | The versions the provider reported, when they differ from `model` (including a fallback model) |
-| `request` | What the requests carried besides the prompt, each as `{ "name", "value" }` named by its path in the request (`output_config.effort`, `generationConfig.maxOutputTokens`, `beam_size`): reasoning effort, output limit, media resolution; for Whisper, `vad` (whether silences were skipped with the voice-activity model, used when it is downloaded) and `vad_model`. For pages read several at a time, `pages` names the pages that went in one call (`5-8`). Recorded with each piece's result when it was sent, so a later version of Kalamu never rewrites it; a name listed twice means pieces were read with different values. Absent for results stored by 0.4.0 and earlier |
+| `request` | What the requests carried besides the prompt, each as `{ "name", "value" }` named by its path in the request (`output_config.effort`, `generationConfig.maxOutputTokens`, `beam_size`): reasoning effort, output limit, media resolution; for Whisper, `vad` (whether silences were skipped with the voice-activity model, used when it is downloaded) and `vad_model`; for Tesseract, `engine` (`Tesseract 5.5.2`), `language_data` (`tessdata_best@e12c65a`), `ocr_engine_mode` (`lstm`) and `page_segmentation` (`auto`). For pages read several at a time, `pages` names the pages that went in one call (`5-8`). Recorded with each piece's result when it was sent, so a later version of Kalamu never rewrites it; a name listed twice means pieces were read with different values. Absent for results stored by 0.4.0 and earlier |
 | `prompt` | Preset id and name, the full instructions and per-page request sent, and their SHA-256 |
 | `merge` | For a table of contents, the model and prompt that combined the pages: `provider`, `model`, `model_versions`, `request`, `prompt`, and that step's `usage` and `cost_usd`, its share of the totals below |
 | `languages`, `detected_languages` | What the user chose, and what the model reported |

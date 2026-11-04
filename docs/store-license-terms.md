@@ -34,6 +34,10 @@ Kalamu does not own these components.
 - **Opus**, built into FFmpeg: BSD 3-Clause licence, © Xiph.Org Foundation and contributors.
 - **whisper.cpp** (MIT) and **whisper-rs** (Unlicense), for offline transcription. Whisper
   models are downloaded on request from Hugging Face; they are MIT-licensed by OpenAI.
+- **Tesseract** (Apache License 2.0) and **Leptonica** (BSD 2-Clause), for offline text
+  extraction. Tesseract's language data is downloaded on request from GitHub (Apache License
+  2.0).
+- **hayro** (MIT or Apache License 2.0), which draws PDF pages for offline text extraction.
 - **PDF.js** (Apache License 2.0), © Mozilla Foundation and contributors, for page previews.
 - Other open-source libraries under permissive licences (MIT, Apache 2.0, BSD and similar),
   listed with their licence texts in the third-party notices installed with the app.

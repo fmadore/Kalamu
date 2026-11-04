@@ -40,7 +40,7 @@ now has an Apple Developer Program membership (team `3HMSG8WB7K`).
 
 ## Consequences
 
-- From the release after 1.3.0, macOS opens Kalamu after its usual question about an app
+- From 1.4.0, macOS opens Kalamu after its usual question about an app
   downloaded from the internet, without the detour through System Settings.
 - Keys saved by an ad-hoc build belong, for the Keychain, to a different app: on the first
   signed version macOS asks once more to let Kalamu use them. From then on the signature's

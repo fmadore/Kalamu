@@ -27,8 +27,9 @@ alert takes priority over feature work.
 ## What leaves the machine
 
 Files the user adds to a job go directly to the provider the user chose, under that provider's
-terms; offline Whisper keeps recordings on the PC. User-requested Whisper downloads come from
-Hugging Face and are checked against their size and SHA-256 before use. The app also fetches
+terms; offline Whisper and Tesseract keep recordings and pages on the computer. User-requested
+downloads, Whisper models from Hugging Face and Tesseract's language data from GitHub
+(`tessdata_best` at a pinned commit), are checked against their size and SHA-256 before use. The app also fetches
 the public model catalogue from this repository, and video titles from YouTube's oEmbed
 service. The developer receives no files, results or keys. See the
 [privacy policy](docs/privacy.md).
@@ -42,7 +43,7 @@ only from the releases page linked above. From version 1.0.0 Kalamu is also in t
 Microsoft and updated automatically ([docs/microsoft-store.md](docs/microsoft-store.md)). The `.msix` and `.msixbundle` files on a
 release are the unsigned Store submission, for testing; they do not install as they are.
 
-After version 1.3.0 the macOS disk image is **signed with an Apple Developer ID** (team
+From version 1.4.0 the macOS disk image is **signed with an Apple Developer ID** (team
 3HMSG8WB7K) **and notarised by Apple**, so Gatekeeper checks it before it opens. Versions up to
 1.3.0 were signed ad hoc only. Download it only from the releases page
 ([docs/decisions/2026-11-04-macos-notarisation.md](docs/decisions/2026-11-04-macos-notarisation.md)).

@@ -1,8 +1,8 @@
 # Partner Center listing text
 
 Paste-ready text for Kalamu's Microsoft Store listing, kept for the **current submission**,
-version 1.3.0, whose `Kalamu_1.3.0.msixbundle` the release workflow builds (the first, 1.0.0,
-was certified on 2 November 2026; 1.2.0 is the version in the Store until 1.3.0 passes). The submission and update steps are in
+version 1.4.0, whose `Kalamu_1.4.0.msixbundle` the release workflow builds (the first, 1.0.0,
+was certified on 2 November 2026; 1.3.0 is the version in the Store until 1.4.0 passes). The submission and update steps are in
 [microsoft-store.md](microsoft-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 
@@ -23,29 +23,12 @@ German once the interface is translated.
 **Before pasting**, replace the provider model names if the catalogue has changed, and check
 that the features listed still match the app.
 
-**For the next submission** (not in 1.3.0, so not in the blocks below yet): offline text
-extraction with Tesseract and ALTO XML export
-([decision](decisions/2026-11-04-tesseract.md)). When the version that ships them is
-submitted, add these, and change "Recordings can also be transcribed offline with Whisper" in
-the description's first paragraph to name both engines:
-
-```text
-Extract text offline with Tesseract, for clean print: free, nothing sent, each word with its place on the page. Download a language once; its speed depends on your PC's processor.
-Export ALTO XML with each block, line and word in its place, corrections included, from Tesseract or Mistral OCR
-Offline text extraction: internet once to download each language for Tesseract (about 3 to 15 MB; 100 MB for languages in Latin letters without their own model), then runs on the CPU
-```
-
-The first two lines are features; the third is a system requirement. Also replace "and, with
-Mistral OCR, searchable PDF" by "searchable PDF and ALTO XML, with Tesseract or Mistral OCR",
-and add Tesseract to the offline route of the certification notes (Settings › Working
-offline › download French, then extract `bulletin-page.jpg` with Tesseract 5).
-
 ## English (United States)
 
 ### Description — full text
 
 ```text
-Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key, so their usage charges apply and are billed by them; the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, free, after a one-time model download.
+Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key, so their usage charges apply and are billed by them; the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, and clean print read offline with Tesseract, free, after a one-time download.
 
 Extract text from PDFs and images, printed or handwritten: newspapers, reports, letters, registers and manuscripts. Keep the lines as on the page, to check against the scan, or join them into running text for reading and searching. Before a job starts, Kalamu checks the files and suggests fixes: double pages to split, scans whose resolution is too low, recordings that are too quiet.
 
@@ -59,7 +42,7 @@ Check every result beside its source: the page next to its text, or the recordin
 
 Large jobs are safe and affordable. Work is saved piece by piece: a job interrupted by closing the app, a crash or a lost connection resumes where it stopped, and nothing is sent or paid for twice. Long jobs keep running from the notification area while the window is closed. For large collections, choose the cheaper mode: the provider's batch service answers within a day at about half the price, and Kalamu collects the results when it next opens.
 
-Export to text, Markdown, Word, JSON, CSV, subtitles (SRT and WebVTT) and, with Mistral OCR, searchable PDF. Each output comes with a provenance.json file recording the model, prompt and settings, so your methods can be described and repeated. Save a job's settings as a pipeline to start the next batch in one click, and export it with its full prompts to cite in a methods section or share with colleagues. Chain pipelines into a workflow, extraction then analysis for instance, that stops for your review before the next step reads the text.
+Export to text, Markdown, Word, JSON, CSV, subtitles (SRT and WebVTT), and searchable PDF and ALTO XML, with Tesseract or Mistral OCR. Each output comes with a provenance.json file recording the model, prompt and settings, so your methods can be described and repeated. Save a job's settings as a pipeline to start the next batch in one click, and export it with its full prompts to cite in a methods section or share with colleagues. Chain pipelines into a workflow, extraction then analysis for instance, that stops for your review before the next step reads the text.
 
 Keep a project's material together: documents in collections and tags, each with every result read from it whatever job made it, and the one you prefer marked. Search the text of all its documents at once, corrections included, and open each passage where it stands. A project dictionary gathers the people, places and terms your analyses listed; merge the spellings that are one person under your own label, keep two apart, and let a model propose merges that you accept or turn down.
 
@@ -70,7 +53,21 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.3.0
+### What's new in this version — 1.4.0
+
+```text
+Extract text offline with Tesseract, for clean print: free, nothing sent, each word with its place on the page. Download a language once in Settings.
+
+Export ALTO XML with each block, line and word in its place, corrections included, from Tesseract or Mistral OCR.
+
+All jobs: one page to search, filter and sort every job, and to rename, add to a project or delete several at once.
+
+The whole window for every view, larger type, and a smoother review: zoom the scan about the pointer, both texts move together, and the readings box can be moved aside.
+
+Also: write a new prompt from nothing; projects in the sidebar, with jobs dragged onto them; Settings in tabs.
+```
+
+The 1.3.0 text, for the record:
 
 ```text
 In French: choose the interface's language in Settings, or let it follow the system's.
@@ -117,22 +114,21 @@ changed files refused; files written despite a failing page; the third-party lic
 ```text
 Extract text from scanned and handwritten PDFs and images with Gemini, OpenAI, Claude or Mistral
 Transcribe recordings and videos with timestamps, in the cloud with speakers or offline
-Offline transcription with Whisper: download a model once, then no account, key or internet
+Offline, with no account, key or cost: transcription with Whisper, and text extraction of clean print with Tesseract
 Transcribe public YouTube videos from their link with Gemini, without downloading them
 Analyse texts with your own fields or ready-made ones: people, places, tone, a publication's argument
 Make detailed tables of contents of newspaper issues, archival files and books, then read each article on its own
 Correct existing OCR text page by page, every change shown against the original
 Check every result beside its source, page by page or line by line; corrections never overwrite the AI's text
-Search a document or recording across all its pages, corrections included
+Search a document, a recording or a whole project at once, corrections included, and open each passage in its source
 Projects: collections and tags of documents, each with every result read from it
-Search every document of a project at once and open each passage in its source
 A project dictionary of the names your analyses found, with merges a model proposes and you decide
 Compare models on the same documents, with differences highlighted and error rates
 Estimated cost shown before anything is sent, from page counts and published prices
 Cheaper mode: send a large job to the provider's batch service at about half the price
 Interrupted jobs resume where they stopped, nothing paid twice; long jobs run with the window closed
 Save a job's settings as a pipeline, or chain pipelines into a workflow with review stops
-Export to text, Markdown, Word, JSON, CSV, SRT, WebVTT and searchable PDF, each with a provenance file
+Export to text, Markdown, Word, JSON, CSV, SRT, WebVTT, searchable PDF and ALTO XML, each with a provenance file
 File checks for double pages, low resolution and quiet recordings, with suggested fixes
 API keys kept in Windows Credential Manager; files go straight to the provider you choose
 Light and dark themes; native Windows x64 and ARM64; free and open source
@@ -141,7 +137,7 @@ Light and dark themes; native Windows x64 and ARM64; free and open source
 ### Short description
 
 ```text
-Read scanned and handwritten documents, transcribe interviews and analyse texts with Gemini, OpenAI, Claude or Mistral under your own key, or transcribe offline with Whisper. Check every result beside its source; corrections never overwrite the AI's text.
+Read scanned and handwritten documents, transcribe interviews and analyse texts with Gemini, OpenAI, Claude or Mistral under your own key, or offline with Whisper and Tesseract. Check every result beside its source; corrections never overwrite the AI's text.
 ```
 
 ### Keywords — up to 7
@@ -164,6 +160,7 @@ Enter each line as a separate requirement (under 200 characters):
 Windows 11 with the Microsoft Edge WebView2 Runtime; native x64 and ARM64 packages
 Cloud features: internet and your own Gemini, OpenAI, Anthropic or Mistral account and API key; the provider bills usage
 Offline transcription: internet once to download a Whisper model (about 60 MB to 1.1 GB), then runs on the CPU
+Offline text extraction: internet once to download each language for Tesseract (about 3 to 15 MB; 100 MB for languages in Latin letters without their own model), then runs on the CPU
 ```
 
 Recommended memory: 8 GB; Whisper's larger models need more, and their speed depends on the
@@ -175,15 +172,16 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.3.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or transcribes offline with Whisper. The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.4.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription) and Tesseract (text extraction of print). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.3.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.4.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
-1. Open Settings, find Offline transcription and download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
+1. Open Settings, choose the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
 2. Choose New job, then Transcribe audio. Add interview.wav from the sample files. Under Provider, choose Whisper (on this PC), and under Model, Whisper Base. Choose Start.
 3. The job runs on the CPU and shows its progress on the job's page. When it is done, choose Review: the transcript appears beside a player; click a line to hear it. Edit a word: the correction is kept apart from the original output. Press Ctrl F and type "Mopti" to find the word in the transcript.
 4. Disconnect the network and repeat with another recording to confirm it runs offline. Results are written next to the sample file, as .txt and .docx with a provenance.json.
+5. Offline text extraction: in Settings > Offline, under Text extraction with Tesseract, download French (4 MB, once). Choose New job, then Extract text, add bulletin-page.jpg, choose Tesseract (on this computer) and French, and Start. The review shows the page beside its text; the formats include ALTO XML and a searchable PDF.
 
 Cloud features: text extraction (dodington-1755.jpg), correction of existing text (the-monitor-1915.pdf), analyses (bulletin.txt) and cloud transcription need the user's own key, entered in Settings and kept in Windows Credential Manager. [Either: A test Gemini API key with a small spending cap is provided for certification: <key>. Paste it in Settings under Google Gemini, then run New job > Extract text on bulletin-page.jpg (Gemini refuses dodington-1755.jpg without a reason; Claude and Mistral read it), New job > Correct existing text on the-monitor-1915.pdf, and New job > Analyse texts on bulletin.txt with People, places and organisations. Or: No test key is provided; these features need a key from the provider, as the listing says.] An estimated cost is shown before each job starts. The cheaper mode sends a job to the provider's batch service, which may take up to a day to answer; it is optional and off by default.
 
@@ -191,9 +189,9 @@ YouTube: in Transcribe YouTube, the user pastes a link to a public video; Google
 
 Generative AI (Store Policy 11.16): every result is text generated by the AI model the user chooses. The listing says so, results are always shown beside their source for checking, and Report a problem (the flag in the header of every review, and the button in Settings > About) opens GitHub’s issue forms in the default browser, among them one to report inappropriate output to the developer. The app itself sends nothing.
 
-Voluntary support link (Store Policy 10.8.2): Buy me a coffee, at the foot of the sidebar and in the Support development section at the end of Settings, opens https://buymeacoffee.com/fmadore in the default browser. Buy Me a Coffee, a third-party service, takes any payment on its own site. The app has no in-app purchase, collects no payment information, and a donation unlocks, removes or changes nothing. The Product declaration "This product allows users to make purchases, but does not use the Microsoft Store commerce system" is ticked for this link.
+Voluntary support link (Store Policy 10.8.2): Buy me a coffee, at the foot of the sidebar and in Settings › About, under Support development, opens https://buymeacoffee.com/fmadore in the default browser. Buy Me a Coffee, a third-party service, takes any payment on its own site. The app has no in-app purchase, collects no payment information, and a donation unlocks, removes or changes nothing. The Product declaration "This product allows users to make purchases, but does not use the Microsoft Store commerce system" is ticked for this link.
 
-The full-trust desktop process reads the files the user selects, converts audio with bundled FFmpeg executables (LGPL; source published with each release, licence terms in the listing), runs Whisper on the CPU, stores API keys in Windows Credential Manager and writes results where the user chooses. It connects only to the provider the user selects, to Hugging Face for model downloads the user requests, to GitHub for the public model catalogue and to YouTube as described above. There is no developer server, telemetry, driver, service or auto-start task.
+The full-trust desktop process reads the files the user selects, converts audio with bundled FFmpeg executables (LGPL; source published with each release, licence terms in the listing), runs Whisper and Tesseract on the CPU, stores API keys in Windows Credential Manager and writes results where the user chooses. It connects only to the provider the user selects, to Hugging Face for model downloads the user requests, to GitHub for the public model catalogue and Tesseract's language data the user requests and to YouTube as described above. There is no developer server, telemetry, driver, service or auto-start task.
 ```
 
 ## Hero image
@@ -206,7 +204,8 @@ carries no text, so the Store's title and buttons can sit over its right side.
 
 ## Screenshots
 
-For version 1.2.0, from the installed Store package, in one theme throughout (the light one, as
+Taken for version 1.2.0: take them again from the installed 1.4.0 package, since they do not
+show its wider views, larger type, projects in the sidebar, Jobs link or Settings tabs. From the installed Store package, in one theme throughout (the light one, as
 the 1.0.0 captures). Store rules: `.png`, at least 1366 × 768,
 under 50 MB; ten at most, five to eight recommended. The first one or two are what most people
 see, in search results and at the top of the listing, so they carry what sets Kalamu apart:
@@ -250,13 +249,11 @@ has the same people under several spellings (*Rev. John Albert Williams*, *J. A.
 | 7 | **Analysis.** An article beside its answers: summary, people, places and tone with its reason, two set-ups' sigla on the names they disagree on, a name pointed at and found in the text. | Ask your own questions of each text: summaries, people, places and tone, every answer shown beside the document it comes from. |
 | 8 | **New job, ready to start.** Extract text chosen, a folder of issues added, two set-ups (Gemini and Mistral OCR), the diagram of the task, and the estimate on the right with a cost per model. | Choose your files, a task and a model, and see the estimated cost before anything is sent to the provider. |
 | 9 | **Table of contents.** A newspaper issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
-| 10 | **Offline.** New job with Whisper (on this PC) chosen and the estimate at $0.00, or Settings with Whisper models downloaded. | Transcribe offline with Whisper: free, no account or key, and nothing leaves your PC. |
+| 10 | **Offline.** Settings › Offline with a Whisper model and French for Tesseract downloaded, or New job with Tesseract (on this computer) chosen and the estimate at $0.00. | Transcribe recordings with Whisper and read printed pages with Tesseract, offline: free, no account or key, and nothing leaves your PC. |
 
-Search, the glossary, Prompts and the job's page are left out of the ten: the description and
-features name them. **The 1.0.0 captures** in `docs/store/screenshots/` (`01-new-job`,
-`02-review-comparison`, `03-handwriting`, `04-transcript`, `07-prompts`, `09-job-page`) show the
-1.0.0 sidebar, without *Projects* and *Workflows*: take them all again from 1.2.0, named after
-the rows above (`01-comparison.png` … `10-offline.png`), and replace the old files.
+Search, the glossary, Prompts, the job's page and the Jobs page are left out of the ten: the
+description and features name them. The captures are not kept in the repository; name them
+after the rows above (`01-comparison.png` … `10-offline.png`).
 
 Leave out an image rather than show a feature that does not run as shown: certification checks
 that the screenshots match the app.

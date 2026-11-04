@@ -8,7 +8,8 @@ web
 
 (A Tauri 2 desktop app for Windows, x64 and ARM64, and macOS on Apple Silicon; the interface is
 a SvelteKit web front end in the system's webview (WebView2 on Windows, WebKit on macOS),
-distributed through the Microsoft Store and as unsigned installers and disk images on GitHub.)
+distributed through the Microsoft Store, and on GitHub as unsigned Windows installers and a
+signed, notarised macOS disk image.)
 
 ## Users
 
@@ -24,8 +25,8 @@ against the sources.
 Kalamu turns recordings and scanned or handwritten documents into text (transcription,
 OCR and HTR in one "extract text" task) and analyses texts with fields the researcher defines
 (a summary, the people and places named, a tone), using the AI
-provider the researcher chooses (Google Gemini, OpenAI, Anthropic Claude, Mistral) or offline
-Whisper. Success is trustworthy text the researcher has checked against the source, produced
+provider the researcher chooses (Google Gemini, OpenAI, Anthropic Claude, Mistral) or offline:
+Whisper for recordings and Tesseract for printed pages. Success is trustworthy text the researcher has checked against the source, produced
 without losing work or paying twice.
 
 ## Positioning
@@ -35,7 +36,7 @@ without losing work or paying twice.
   `provenance.json` records model, prompt, settings, and what was reviewed or corrected.
 - **Your files, your provider.** A desktop app: files go straight from the computer to the
   provider the researcher picks, under their own key, with nothing sent to the author; offline
-  Whisper keeps sensitive recordings on the computer.
+  Whisper and Tesseract keep sensitive recordings and scans on the computer.
 - **Never lose or repay work.** Every piece is cached and resumable after a close, a crash or a
   lost connection; costs are estimated before starting; jobs can keep running from the
   notification area or the menu bar.
@@ -47,7 +48,7 @@ without losing work or paying twice.
   page by page, with comparison of two or more models on difficult material.
 - Inputs: PDF, JPEG, PNG, TIFF, audio (MP3, M4A, WAV, …), video, plain text, Word.
 - Outputs written beside the sources: `.txt`, `.md`, `.docx`, `.json`, `.srt`, `.vtt`, `.csv`,
-  searchable PDF (Mistral OCR), each with `provenance.json`.
+  searchable PDF and ALTO XML (Tesseract or Mistral OCR), each with `provenance.json`.
 
 ## Capabilities and Constraints
 
@@ -56,8 +57,8 @@ without losing work or paying twice.
   saved as a pipeline.
 - Must stay friendly to researchers who are not technical: plain words, ready-made starting
   points, advanced choices folded away.
-- English interface first; every visible string lives in translation files so French and
-  German can follow.
+- Interface in English and French; every visible string lives in translation files, so German
+  can follow without code changes.
 - Front end talks to the Rust core only through typed commands and events; no business logic
   in the interface.
 - Must work in light and dark themes and follow the system's theme by default.

@@ -63,7 +63,7 @@ tile comes out black.
 
 Prerequisites: Rust through rustup, Node 22.13+ or 24 and `npm ci`, the Windows SDK (for
 `MakeAppx` and `SignTool`, found through the registry), and LLVM, CMake and Ninja for
-whisper.cpp ([development.md](development.md)). Then, for this PC's architecture:
+whisper.cpp and Tesseract ([development.md](development.md)). Then, for this PC's architecture:
 
 ```powershell
 npm run fetch:ffmpeg
