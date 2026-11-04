@@ -79,6 +79,10 @@ pub fn import_workflow(state: State<'_, AppState>, path: String) -> CmdResult<Wo
 /// runs on the Tokio runtime its jobs are spawned on.
 #[tauri::command]
 pub async fn start_run(state: State<'_, AppState>, start: StartRun) -> CmdResult<RunView> {
+    super::require_consent(
+        &state,
+        start.workflow.steps.iter().flat_map(|s| &s.pipeline.setups),
+    )?;
     let folders = start
         .workflow
         .steps

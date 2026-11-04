@@ -277,6 +277,7 @@ pub fn estimate_cost(state: State<'_, AppState>, request: EstimateRequest) -> Es
 
 #[tauri::command]
 pub fn create_job(state: State<'_, AppState>, job: NewJob) -> CmdResult<Job> {
+    super::require_consent(&state, &job.setups)?;
     state
         .grants
         .keep(super::settings::destination_folder(&job.output.destination));

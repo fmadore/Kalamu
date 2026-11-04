@@ -67,7 +67,8 @@ const settings: Settings = {
 	language: new URLSearchParams(location.search).get('lang') ?? 'system',
 	refresh_catalog: false,
 	favourite_languages: ['fr', 'ar'],
-	last_folder: null
+	last_folder: null,
+	ai_consent: []
 };
 
 /** The prompt a dictionary sends for proposed merges, as Prompts lists it. */
@@ -624,6 +625,11 @@ export function installMock(): void {
 			}
 			case 'expand_paths':
 				return a.paths;
+			// Every provider counts as agreed to, so the screens and their tests run unasked.
+			case 'providers_to_consent':
+				return [];
+			case 'consent_providers':
+				return null;
 			case 'folders_to_ask':
 				return [];
 			case 'keep_access':

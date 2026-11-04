@@ -1736,6 +1736,12 @@ export const fr: Messages = {
 		note: 'Kalamu est un projet de {author} (Université de Bayreuth). S’il vous est utile, vous pouvez contribuer à financer son développement. Ce soutien est entièrement facultatif et ne débloque aucune fonction supplémentaire.',
 		link: 'Offrez-moi un café'
 	},
+	consent: {
+		title: 'Envoyer vos fichiers à un fournisseur d’IA ?',
+		ask: (providers: string, policy: string) =>
+			`Kalamu va envoyer le contenu de vos fichiers à ${providers} : les pages, les enregistrements ou le texte, avec les noms et toute autre donnée personnelle qu’ils contiennent. Chaque fournisseur les lit avec ses modèles d’IA, sous votre propre compte et votre clé d’API, et les conserve selon ses propres conditions. Le développeur de Kalamu ne reçoit rien.\n\nCette question n’est posée qu’une fois par fournisseur. Politique de confidentialité de Kalamu : ${policy}`,
+		send: 'Envoyer'
+	},
 	access: {
 		ask: (folder: string) =>
 			`Pour enregistrer les résultats à côté de vos fichiers, Kalamu a besoin de votre autorisation pour le dossier « ${folder} ». Choisissez ce dossier dans la fenêtre suivante.`,
@@ -1891,6 +1897,8 @@ export const fr: Messages = {
 		'provider.unknown': 'Fournisseur inconnu.',
 		'provider.missing_key':
 			'Aucune clé d’API n’est enregistrée pour ce fournisseur. Ajoutez-en une dans Paramètres.',
+		'provider.consent':
+			'Kalamu n’a pas l’autorisation d’envoyer vos fichiers à ce fournisseur. Recommencez et choisissez Envoyer quand la question est posée.',
 		'provider.unsupported': 'Ce modèle ne sait pas effectuer cette tâche.',
 		'source.unsupported':
 			'L’un des fichiers ne peut pas être lu pour cette tâche. Retirez-le, ou choisissez une autre tâche.',

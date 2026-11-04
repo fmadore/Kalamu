@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use kalamu_core::{ExportFormat, ExportOptions, LanguageCode, OutputDestination};
+use kalamu_core::{ExportFormat, ExportOptions, LanguageCode, OutputDestination, ProviderId};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -28,6 +28,10 @@ pub struct Settings {
     pub favourite_languages: Vec<LanguageCode>,
     /// The folder last chosen for results, offered first when a job needs one.
     pub last_folder: Option<String>,
+    /// The cloud providers the researcher agreed to send their files to, asked once each before
+    /// the first job, run or proposal sent to it (App Review Guideline 5.1.2(i), and plain
+    /// courtesy on Windows too). Only ever added to.
+    pub ai_consent: Vec<ProviderId>,
 }
 
 impl Default for Settings {
@@ -48,6 +52,7 @@ impl Default for Settings {
             refresh_catalog: true,
             favourite_languages: Vec::new(),
             last_folder: None,
+            ai_consent: Vec::new(),
         }
     }
 }

@@ -73,6 +73,7 @@ pub async fn dictionary_propose(
     setup: SetupRequest,
     pace: Pace,
 ) -> CmdResult<Job> {
+    super::require_consent(&state, [&setup])?;
     let (prepared, sources) = prepared(&state, project, collection, &namespace)?;
     let sha256: Vec<String> = sources.iter().map(|s| s.sha256.clone()).collect();
     let folder = state

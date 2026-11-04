@@ -68,7 +68,11 @@ import type { Settings } from './bindings/Settings.js';
 import type { TagRenamed } from './bindings/TagRenamed.js';
 import type { Task } from './bindings/Task.js';
 import type { TrayState } from './bindings/TrayState.js';
-import { localisePreset, messages } from './i18n/index.js';
+import { providerNameOf } from './catalogText.js';
+import { listNames, localisePreset, messages } from './i18n/index.js';
+
+/** The published privacy policy, named wherever the app asks before sending files. */
+export const PRIVACY_URL = 'https://fmadore.github.io/Kalamu/privacy';
 
 export const isTauri = (): boolean =>
 	typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -132,6 +136,9 @@ export const api = {
 	exportPresets: (ids: string[], path: string) => invoke<void>('export_presets', { ids, path }),
 	importPresets: (path: string) => invoke<Preset[]>('import_presets', { path }),
 	expandPaths: (paths: string[], task: Task) => invoke<string[]>('expand_paths', { paths, task }),
+	providersToConsent: (providers: string[]) =>
+		invoke<string[]>('providers_to_consent', { providers }),
+	consentProviders: (providers: string[]) => invoke<void>('consent_providers', { providers }),
 	foldersToAsk: (paths: string[]) => invoke<string[]>('folders_to_ask', { paths }),
 	keepAccess: (paths: string[]) => invoke<void>('keep_access', { paths }),
 	inspectFiles: (paths: string[]) => invoke<InspectedFile[]>('inspect_files', { paths }),
@@ -455,6 +462,41 @@ export async function askForFolders(paths: string[]): Promise<boolean> {
 	if (missing.length > 0) {
 		throw new Error(m.access.missing(nameOf(missing[0])));
 	}
+	return true;
+}
+
+/** The providers a job's set-ups send to, the step that combines included. */
+export function providersOf(setups: SetupRequest[]): string[] {
+	return [...new Set(setups.flatMap((s) => [s.provider, ...(s.merge ? [s.merge.provider] : [])]))];
+}
+
+/**
+ * Asks, once for each cloud provider, before the first job, run or proposal sends the
+ * researcher's files to it (App Review Guideline 5.1.2(i), and plain courtesy on Windows too):
+ * which provider, what is sent, and where the privacy policy is. Offline engines are never asked
+ * about. False when the researcher declines; Rust refuses the work until they agree.
+ */
+export async function askConsent(providers: string[], catalog: Catalog | null): Promise<boolean> {
+	if (providers.length === 0) return true;
+	const needed = await api.providersToConsent(providers);
+	if (needed.length === 0) return true;
+	const m = messages();
+	const names = listNames(needed.map((id) => (catalog ? providerNameOf(catalog, id) : id)));
+	const message = m.consent.ask(names, PRIVACY_URL);
+	let go: boolean;
+	if (isTauri()) {
+		const { ask } = await import('@tauri-apps/plugin-dialog');
+		go = await ask(message, {
+			title: m.consent.title,
+			kind: 'warning',
+			okLabel: m.consent.send,
+			cancelLabel: m.common.cancel
+		});
+	} else {
+		go = window.confirm(message);
+	}
+	if (!go) return false;
+	await api.consentProviders(needed);
 	return true;
 }
 

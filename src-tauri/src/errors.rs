@@ -98,6 +98,8 @@ pub mod id {
     pub const SOURCE_PRIVATE: &str = "source.private";
     /// A YouTube video that was removed, or a link to none.
     pub const SOURCE_MISSING: &str = "source.not_found";
+    /// Work sent to a cloud provider the researcher has not agreed to send their files to.
+    pub const CONSENT: &str = "provider.consent";
 }
 
 pub type CmdResult<T> = Result<T, AppError>;

@@ -3,6 +3,7 @@ import type { ExportFormat } from "./ExportFormat";
 import type { ExportOptions } from "./ExportOptions";
 import type { LanguageCode } from "./LanguageCode";
 import type { OutputDestination } from "./OutputDestination";
+import type { ProviderId } from "./ProviderId";
 
 export type Settings = { 
 /**
@@ -29,4 +30,10 @@ favourite_languages: Array<LanguageCode>,
 /**
  * The folder last chosen for results, offered first when a job needs one.
  */
-last_folder: string | null, };
+last_folder: string | null, 
+/**
+ * The cloud providers the researcher agreed to send their files to, asked once each before
+ * the first job, run or proposal sent to it (App Review Guideline 5.1.2(i), and plain
+ * courtesy on Windows too). Only ever added to.
+ */
+ai_consent: Array<ProviderId>, };

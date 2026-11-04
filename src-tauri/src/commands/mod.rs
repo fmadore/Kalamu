@@ -119,6 +119,45 @@ pub fn remember_interrupted(ids: Vec<JobId>) {
     *INTERRUPTED.lock().unwrap_or_else(|p| p.into_inner()) = ids;
 }
 
+/// The cloud providers among `providers` the researcher has not agreed to send their files to,
+/// each once, in order. A provider that needs no key is an offline engine: nothing is sent.
+fn unconsented(
+    state: &AppState,
+    providers: impl IntoIterator<Item = ProviderId>,
+) -> Vec<ProviderId> {
+    let agreed = state
+        .settings
+        .lock()
+        .map(|s| s.ai_consent.clone())
+        .unwrap_or_default();
+    let mut out: Vec<ProviderId> = Vec::new();
+    for provider in providers {
+        let cloud = state
+            .engine
+            .provider(&provider)
+            .map_or(true, |p| p.needs_key());
+        if cloud && !agreed.contains(&provider) && !out.contains(&provider) {
+            out.push(provider);
+        }
+    }
+    out
+}
+
+/// Refuses work that would send files to a provider the researcher has not agreed to: the
+/// interface asks first (`askConsent`), and this keeps any other path from skipping it.
+fn require_consent<'a>(
+    state: &AppState,
+    setups: impl IntoIterator<Item = &'a kalamu_core::SetupRequest>,
+) -> Result<(), AppError> {
+    let providers = setups.into_iter().flat_map(|s| {
+        std::iter::once(s.provider.clone()).chain(s.merge.as_ref().map(|m| m.provider.clone()))
+    });
+    match unconsented(state, providers).first() {
+        Some(provider) => Err(AppError::new(crate::errors::id::CONSENT, provider)),
+        None => Ok(()),
+    }
+}
+
 /// Runs work that reads or writes files off the window's thread, where a synchronous command
 /// would run it and freeze the window: writing a result waits for a running job to finish
 /// writing its own.

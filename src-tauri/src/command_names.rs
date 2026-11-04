@@ -14,6 +14,8 @@ pub const COMMANDS: &[&str] = &[
     "app_info",
     "get_settings",
     "save_settings",
+    "providers_to_consent",
+    "consent_providers",
     "get_catalog",
     "refresh_catalog",
     "task_rules",

@@ -1,6 +1,7 @@
 //! App information, settings and the model catalogue.
 
 use kalamu_catalog::Catalog;
+use kalamu_core::ProviderId;
 use kalamu_engine::TaskRules;
 use tauri::State;
 
@@ -34,6 +35,16 @@ pub fn get_settings(state: State<'_, AppState>) -> Settings {
 
 #[tauri::command]
 pub fn save_settings(state: State<'_, AppState>, settings: Settings) -> CmdResult<()> {
+    let mut settings = settings;
+    // Agreeing to a provider is never undone by saving a copy of the settings read before it.
+    {
+        let kept = state.settings.lock().unwrap_or_else(|p| p.into_inner());
+        for provider in &kept.ai_consent {
+            if !settings.ai_consent.contains(provider) {
+                settings.ai_consent.push(provider.clone());
+            }
+        }
+    }
     // The results folder, just picked, is needed again at later launches.
     let folders = [
         settings.last_folder.as_deref(),
@@ -92,4 +103,33 @@ pub(crate) fn destination_folder(destination: &kalamu_core::OutputDestination) -
         kalamu_core::OutputDestination::Folder(folder) => Some(folder),
         kalamu_core::OutputDestination::BesideSources => None,
     }
+}
+
+/// The cloud providers among these the researcher has not yet agreed to send their files to.
+/// Offline engines are never asked about: nothing leaves the computer.
+#[tauri::command]
+pub fn providers_to_consent(
+    state: State<'_, AppState>,
+    providers: Vec<ProviderId>,
+) -> Vec<ProviderId> {
+    super::unconsented(&state, providers)
+}
+
+/// Records that the researcher agreed to send their files to these providers.
+#[tauri::command]
+pub fn consent_providers(state: State<'_, AppState>, providers: Vec<ProviderId>) -> CmdResult<()> {
+    let mut settings = state.settings.lock().unwrap_or_else(|p| p.into_inner());
+    let mut changed = false;
+    for provider in providers {
+        if !settings.ai_consent.contains(&provider) {
+            settings.ai_consent.push(provider);
+            changed = true;
+        }
+    }
+    if changed {
+        settings
+            .save(&state.paths.settings)
+            .map_err(|e| AppError::new(id::SETTINGS, e))?;
+    }
+    Ok(())
 }
