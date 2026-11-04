@@ -12,6 +12,7 @@ use kalamu_core::{
 use kalamu_store::SqliteStore;
 
 use super::*;
+use kalamu_core::{JobStatus, StoreError};
 
 mod attention;
 mod batch;

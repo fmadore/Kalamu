@@ -9,7 +9,9 @@ mod attention;
 mod batch;
 mod compare;
 mod contents;
+mod control;
 mod document;
+mod error;
 mod estimate;
 mod group;
 mod listen;
@@ -33,19 +35,20 @@ use std::time::Duration;
 
 use kalamu_catalog::Catalog;
 use kalamu_core::{
-    ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStatus, JobStore, JobSummary,
-    PieceStatus, ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceDocuments,
-    SourceFile, SourceId, SpeakerNames, StopSignal, StoreError, Timestamp,
+    ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStore, JobSummary, PieceStatus,
+    ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceDocuments, SourceFile,
+    SourceId, SpeakerNames, Timestamp,
 };
-use kalamu_media::{Ffmpeg, MediaError, OpenSource, Playback};
-use kalamu_prompts::{PromptError, PromptLibrary};
-use thiserror::Error;
+use kalamu_media::{Ffmpeg, OpenSource, Playback};
+use kalamu_prompts::PromptLibrary;
 use tokio::sync::broadcast;
 
 pub use compare::{
     ComparisonReport, DiffKind, DiffSpan, JobScores, PageComparison, SetupScore, SourceScores,
     diff, error_rate,
 };
+pub(crate) use control::Control;
+pub use error::EngineError;
 pub use estimate::{Estimate, EstimateRequest, EstimateRow};
 pub use kalamu_core::SetupRequest;
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
@@ -97,98 +100,6 @@ impl Default for EngineConfig {
             snapshots: std::env::temp_dir().join("kalamu-snapshots"),
         }
     }
-}
-
-#[derive(Debug, Error)]
-pub enum EngineError {
-    #[error(transparent)]
-    Store(#[from] StoreError),
-    #[error(transparent)]
-    Media(#[from] MediaError),
-    #[error(transparent)]
-    Prompt(#[from] PromptError),
-    #[error("Unknown provider: {0}")]
-    UnknownProvider(String),
-    #[error("No API key saved for {0}")]
-    MissingKey(String),
-    /// An offline model not downloaded, or a processor that cannot run it.
-    #[error("{0}")]
-    NotReady(ProviderError),
-    #[error("{0} cannot do this task")]
-    UnsupportedModel(String),
-    /// A source of a kind the task does not read.
-    #[error("{0} cannot be read for this task")]
-    UnsupportedSource(String),
-    #[error("The job is already running")]
-    AlreadyRunning,
-    #[error("The job needs at least one file and one set-up")]
-    EmptyJob,
-    /// The link as pasted; the interface says what is wrong with it.
-    #[error("{0}")]
-    NotYouTube(String),
-    /// A YouTube video has no folder of its own to write beside.
-    #[error("Choose a folder for the results of a YouTube video")]
-    LinkNeedsFolder,
-    #[error("Could not write the results: {0}")]
-    Output(String),
-    /// A table of contents or an analysis has no text for a later task to read.
-    #[error("This task's results are not a text to analyse")]
-    NotText,
-    /// Nothing has been read yet under this set-up.
-    #[error("Nothing has been read yet")]
-    NothingRead,
-    #[error("Could not keep the piece converted to listen to: {0}")]
-    ListeningCopy(String),
-    #[error(transparent)]
-    Workflow(kalamu_core::WorkflowError),
-    /// A workflow step that cannot run with these files or models.
-    #[error("Step {step}: {source}")]
-    Step { step: u32, source: Box<EngineError> },
-    /// A workflow step approved before its job has finished.
-    #[error("This step has not finished")]
-    StepNotFinished,
-    #[error(transparent)]
-    Unit(#[from] kalamu_core::UnitError),
-}
-
-impl EngineError {
-    /// A stable id the interface translates.
-    pub fn code(&self) -> &'static str {
-        match self {
-            Self::Store(StoreError::NotFound) => "job.not_found",
-            Self::Store(_) => "job.database",
-            Self::Media(MediaError::Encrypted) => "media.encrypted",
-            Self::Media(MediaError::UnsupportedKind) => "media.unsupported",
-            Self::Media(_) => "media.read",
-            Self::Prompt(e) => e.code(),
-            Self::UnknownProvider(_) => "provider.unknown",
-            Self::MissingKey(_) => "provider.missing_key",
-            Self::NotReady(e) => e.code(),
-            Self::UnsupportedModel(_) => "provider.unsupported",
-            Self::UnsupportedSource(_) => "source.unsupported",
-            Self::AlreadyRunning => "job.running",
-            Self::EmptyJob => "job.empty",
-            Self::NotYouTube(_) => "source.not_youtube",
-            Self::LinkNeedsFolder => "job.link_needs_folder",
-            Self::Output(_) => "output.write",
-            Self::NotText => "job.not_text",
-            Self::NothingRead => "job.nothing_read",
-            Self::ListeningCopy(_) => "media.read",
-            Self::Workflow(e) => e.code(),
-            Self::Step { source, .. } => source.code(),
-            Self::StepNotFinished => "workflow.not_finished",
-            Self::Unit(e) => e.code(),
-        }
-    }
-}
-
-/// Pause and cancel requests for a running job, checked between pieces. `stop` reaches the
-/// pieces in flight, so long offline work can stop part-way.
-#[derive(Default)]
-pub(crate) struct Control {
-    pub pause: bool,
-    pub cancel: bool,
-    pub stop: StopSignal,
 }
 
 pub struct Engine {
@@ -373,106 +284,6 @@ impl Engine {
             .filter_map(|m| m.limits.max_audio_minutes)
             .map(|minutes| u64::from(minutes) * 60_000 * 4 / 5)
             .fold(kalamu_media::DEFAULT_PIECE_MS, u64::min)
-    }
-
-    pub fn is_running(&self, id: JobId) -> bool {
-        self.running
-            .lock()
-            .map(|r| r.contains_key(&id))
-            .unwrap_or(false)
-    }
-
-    /// Stops after the pieces in flight; everything finished is kept and the job can resume.
-    pub fn pause(&self, id: JobId) {
-        if let Some(control) = self.control(id) {
-            let mut control = control.lock().unwrap_or_else(|p| p.into_inner());
-            control.pause = true;
-            control.stop.stop();
-        }
-    }
-
-    pub fn cancel(&self, id: JobId) {
-        if let Some(control) = self.control(id) {
-            let mut control = control.lock().unwrap_or_else(|p| p.into_inner());
-            control.cancel = true;
-            control.stop.stop();
-        }
-    }
-
-    fn control(&self, id: JobId) -> Option<Arc<Mutex<Control>>> {
-        self.running.lock().ok()?.get(&id).cloned()
-    }
-
-    /// Starts or resumes a job in the background. Progress arrives through [`Engine::subscribe`].
-    /// Call it from within the Tokio runtime, which runs the job.
-    pub fn start(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
-        self.launch(id, true, |engine, control| async move {
-            engine.run(id, control).await
-        })
-    }
-
-    /// Collects the answers of a job's batches that the provider still holds, and writes the
-    /// documents they complete, without sending anything: at launch, a job paused or cut short
-    /// by the last close waits for the researcher for the rest.
-    pub fn collect_waiting(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
-        self.launch(id, false, |engine, control| async move {
-            engine.collect_batches(id, control).await
-        })
-    }
-
-    /// Runs `work` for a job in the background, as the job's one run at a time, and records
-    /// the status it ends with. A workflow the job belongs to then goes on, starting its next
-    /// steps when `then_start` (the researcher started this work), or only making their jobs.
-    fn launch<F, Fut>(
-        self: &Arc<Self>,
-        id: JobId,
-        then_start: bool,
-        work: F,
-    ) -> Result<(), EngineError>
-    where
-        F: FnOnce(Arc<Self>, Arc<Mutex<Control>>) -> Fut,
-        Fut: std::future::Future<Output = Result<JobStatus, EngineError>> + Send + 'static,
-    {
-        let control = Arc::new(Mutex::new(Control::default()));
-        {
-            let mut running = self.running.lock().unwrap_or_else(|p| p.into_inner());
-            if running.contains_key(&id) {
-                return Err(EngineError::AlreadyRunning);
-            }
-            running.insert(id, control.clone());
-        }
-        let engine = self.clone();
-        let work = work(self.clone(), control);
-        tokio::spawn(async move {
-            let status = work.await;
-            let status = status.unwrap_or_else(|e| {
-                tracing::error!(job = %id, error = %e, "job stopped");
-                JobStatus::Interrupted
-            });
-            let _ = engine.store.set_job_status(id, status);
-            engine
-                .running
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .remove(&id);
-            engine.emit(ProgressEvent::JobFinished { job_id: id, status });
-            engine.job_ended(id, then_start);
-        });
-        Ok(())
-    }
-
-    /// Puts failed pieces back in the queue and starts the job.
-    pub fn retry_failed(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
-        for mut piece in self.store.pieces(id)? {
-            if piece.status == PieceStatus::Failed {
-                piece.status = PieceStatus::Pending;
-                piece.error = None;
-                piece.attempts = 0;
-                piece.updated_at = Timestamp::now();
-                self.store.upsert_piece(&piece)?;
-            }
-        }
-        self.start(id)
     }
 
     /// Saves the user's correction or review mark for one piece and rewrites that source's
