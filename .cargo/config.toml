@@ -16,3 +16,9 @@ GGML_F16C = "ON"
 GGML_BMI2 = "ON"
 GGML_SSE42 = "ON"
 GGML_CPU_ARM_ARCH = "armv8.2-a+dotprod+fp16"
+
+# Tesseract (crates/offline) is built from source by kreuzberg-tesseract, which keeps its build
+# here rather than in its default `C:\tess`. On Windows ARM64, CMake is given the processor name
+# Tesseract's CMakeLists recognises; see the file for why.
+TESSERACT_RS_CACHE_DIR = { value = "target/tesseract", relative = true }
+CMAKE_TOOLCHAIN_FILE_aarch64_pc_windows_msvc = { value = "crates/offline/cmake/windows-arm64.cmake", relative = true }

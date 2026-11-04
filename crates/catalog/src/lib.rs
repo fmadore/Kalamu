@@ -219,6 +219,10 @@ pub struct ModelInfo {
     /// Uses the languages chosen for a job. Mistral OCR reads any language and takes none.
     #[serde(default = "yes")]
     pub takes_language: bool,
+    /// Detects the language when none is chosen. Tesseract does not: New job asks for the
+    /// document's languages instead of offering to detect them.
+    #[serde(default = "yes")]
+    pub detects_language: bool,
     /// How many of the chosen languages its API takes; the provider modules send them so.
     #[serde(default)]
     pub language_hints: LanguageHints,
@@ -226,7 +230,7 @@ pub struct ModelInfo {
     /// models); it detects the others.
     #[serde(default)]
     pub two_letter_codes: bool,
-    /// Reports where text sits on the page, which a searchable PDF needs.
+    /// Reports where text sits on the page, which a searchable PDF and ALTO need.
     #[serde(default)]
     pub layout: bool,
     /// A top-tier model priced far above what transcription and extraction usually need; the

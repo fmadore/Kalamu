@@ -25,7 +25,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, listNames, messages } from '#lib/i18n/index.js';
 	import { primary } from '#lib/platform.js';
-	import { takesLanguage } from '#lib/languages.js';
+	import { modelsNotDetecting, takesLanguage } from '#lib/languages.js';
 	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
 	import type { Pace } from '#lib/bindings/Pace.js';
 	import type { PagesPerCall } from '#lib/bindings/PagesPerCall.js';
@@ -52,6 +52,7 @@
 		go,
 		hasKey,
 		liveJob,
+		missingLanguageData,
 		refreshJobs,
 		toast,
 		type FromProject
@@ -197,8 +198,17 @@
 		}
 	}
 
+	/** A model that cannot detect the language needs the languages chosen and downloaded. */
+	const languagesReady = $derived(
+		modelsNotDetecting(models).length === 0 ||
+			(languageMode === 'explicit' &&
+				languages.length > 0 &&
+				missingLanguageData(languages).length === 0)
+	);
+
 	const ready = $derived(
 		sources.length > 0 &&
+			languagesReady &&
 			drafts.length > 0 &&
 			drafts.every((d) => d.model && hasKey(d.provider)) &&
 			(task !== 'contents' || drafts.every((d) => d.mergeModel && hasKey(d.mergeProvider))) &&

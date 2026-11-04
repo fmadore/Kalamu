@@ -962,7 +962,7 @@ export const fr: Messages = {
 		favouritesHint:
 			'Marquez d’une étoile les langues que vous utilisez le plus pour les trouver en premier.',
 		languagesNarrowed: (models: string) =>
-			`Seules les langues que ${models} sait transcrire sont proposées.`,
+			`Seules les langues que ${models} prend en charge sont proposées.`,
 		languageUnsupported: (language: string, models: string) =>
 			`${models} ne prend pas en charge la langue « ${language} » : retirez-la ou choisissez un autre modèle.`,
 		languageOneOnly: (models: string) =>
@@ -971,6 +971,10 @@ export const fr: Messages = {
 			`La langue n’est transmise à ${models} que s’il n’identifie pas les locuteurs et n’horodate pas les lignes ; dans les deux cas, la langue est détectée.`,
 		languageNeedsTwoLetters: (language: string, models: string) =>
 			`On ne peut indiquer à ${models} que des langues ayant un code à deux lettres : « ${language} » ne lui est donc pas transmise, et le modèle la détecte.`,
+		languageNotDetected: (models: string) =>
+			`${models} ne détecte pas la langue : choisissez les langues des documents.`,
+		languageDataMissing: (languages: string) =>
+			`Données de langue pas encore sur cet ordinateur : ${languages}. Téléchargez-les une fois dans Paramètres, puis lancez le traitement.`,
 		languageIgnoredAll: (models: string) =>
 			`${models} reconnaît la langue de lui-même : il n’y a rien à choisir.`,
 		languageIgnoredSome: (models: string) =>
@@ -1516,6 +1520,13 @@ export const fr: Messages = {
 	settings: {
 		title: 'Paramètres',
 		lede: 'Clés, modèles hors ligne, traitement, apparence et langue.',
+		tabsLabel: 'Sections des paramètres',
+		tabs: {
+			keys: 'Clés d’API',
+			offline: 'Hors ligne',
+			general: 'Général',
+			about: 'À propos'
+		},
 		keysTitle: 'Clés d’API',
 		keysHint: (keychain: string) =>
 			`Les clés sont conservées dans ${keychain} et envoyées seulement à leur fournisseur. Les fichiers vont directement de cet ordinateur au fournisseur que vous choisissez.`,
@@ -1527,7 +1538,13 @@ export const fr: Messages = {
 		remove: 'Retirer',
 		getKey: 'Obtenir une clé',
 		testOk: (n: number) => `La clé fonctionne : ${n} modèles disponibles`,
-		offlineTitle: 'Transcription hors ligne',
+		offlineTitle: 'Travailler hors ligne',
+		whisperTitle: 'Transcription avec Whisper',
+		tesseractTitle: 'Extraction de texte avec Tesseract',
+		tesseractHint: (version: string) =>
+			`Tesseract ${version} lit les pages imprimées sur cet ordinateur : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et il fonctionne sans connexion internet une fois une langue téléchargée. Il est fait pour l’imprimé net ; l’écriture manuscrite, les pages pâlies ou abîmées et les mises en page complexes se lisent mieux avec un modèle en ligne. Sa vitesse dépend du processeur de cet ordinateur : d’environ une seconde à plusieurs secondes par page. Il ne détecte pas la langue : téléchargez chaque langue que vous lisez, puis choisissez-la dans Nouveau traitement.`,
+		latinScript: (languages: string) =>
+			`Langues écrites en lettres latines sans modèle propre : ${languages}`,
 		offlineHint:
 			'Whisper s’exécute sur cet ordinateur : les enregistrements ne le quittent jamais, aucune clé ni aucun compte n’est nécessaire, et il fonctionne sans connexion internet une fois un modèle téléchargé. Il est plus lent que les modèles en ligne et ne sait pas identifier les locuteurs. Large v3 Turbo convient à la plupart des ordinateurs.',
 		offlineCpu: (missing: string) =>
@@ -1564,13 +1581,16 @@ export const fr: Messages = {
 		version: (v: string) => `Version ${v}`,
 		dataFolder: 'Dossier des données',
 		credits:
-			'Kalamu utilise {ffmpeg} sous licence LGPL v2.1 (son {source} est publié avec chaque version), {opus} (BSD), {whisper} (MIT) et les {models} (MIT). Les licences complètes se trouvent dans le dossier des licences installé avec l’application.',
+			'Kalamu utilise {ffmpeg} sous licence LGPL v2.1 (son {source} est publié avec chaque version), {opus} (BSD), {whisper} (MIT), les {models} (MIT), {tesseract} et ses données de langue (Apache 2.0), {leptonica} (BSD) et {hayro} (MIT). Les licences complètes se trouvent dans le dossier des licences installé avec l’application.',
 		creditNames: {
 			ffmpeg: 'FFmpeg',
 			source: 'code source',
 			opus: 'Opus',
 			whisper: 'whisper.cpp',
-			models: 'modèles Whisper'
+			models: 'modèles Whisper',
+			tesseract: 'Tesseract',
+			leptonica: 'Leptonica',
+			hayro: 'hayro'
 		},
 		privacy:
 			'Rien n’est envoyé au développeur : ni fichiers, ni clés, ni résultats, ni données d’utilisation. Un texte produit par l’IA peut être fluide mais faux ; vérifiez un échantillon sur la source.'
@@ -1578,7 +1598,7 @@ export const fr: Messages = {
 	report: {
 		link: 'Signaler un problème',
 		review: 'Signaler un problème',
-		note: 'Un bogue, ou une idée pour améliorer Kalamu : dites-le-nous sur GitHub. Si un modèle écrit un texte choquant ou nuisible, la même page permet de le signaler, comme le Microsoft Store le demande aux applications. Elle s’ouvre dans votre navigateur ; Kalamu n’envoie rien, ne partagez donc que ce qui peut être rendu public.'
+		note: 'Un bogue, une idée, ou un texte choquant écrit par un modèle : dites-le-nous sur GitHub. La page s’ouvre dans votre navigateur ; Kalamu n’envoie rien, ne partagez donc que ce qui peut être rendu public.'
 	},
 	glossary: {
 		title: 'Glossaire',
@@ -1667,14 +1687,15 @@ export const fr: Messages = {
 			srt: 'Des sous-titres avec leur minutage, pour les lecteurs vidéo et les logiciels de montage.',
 			vtt: 'Des sous-titres pour le web (WebVTT), tels que les utilisent les lecteurs vidéo en ligne.',
 			searchable_pdf:
-				'Le PDF d’origine avec une couche texte invisible, pour pouvoir y chercher et en copier le texte. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : pour l’instant, Mistral OCR.',
+				'Le PDF d’origine avec une couche texte invisible, pour pouvoir y chercher et en copier le texte. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : pour l’instant, Tesseract et Mistral OCR.',
+			alto: 'Le texte de chaque page avec l’emplacement de chaque bloc, ligne et mot, au format ALTO que lisent les bibliothèques numériques, eScriptorium et Transkribus. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : Tesseract place chaque mot ; Mistral OCR place les paragraphes, dont les lignes et les mots sont alors estimés. Les corrections gardent l’emplacement de leurs mots.',
 			provenance:
 				'Toujours écrit à côté des résultats : comment ils ont été produits (voir Provenance).'
 		}
 	},
 	support: {
 		title: 'Soutenir le développement',
-		note: 'Kalamu est un projet indépendant de Frédérick Madore (Université de Bayreuth). S’il vous est utile, vous pouvez contribuer à financer son développement. Ce soutien est entièrement facultatif et ne débloque aucune fonction supplémentaire.',
+		note: 'Kalamu est un projet de {author} (Université de Bayreuth). S’il vous est utile, vous pouvez contribuer à financer son développement. Ce soutien est entièrement facultatif et ne débloque aucune fonction supplémentaire.',
 		link: 'Offrez-moi un café'
 	},
 	format: {
@@ -1685,7 +1706,8 @@ export const fr: Messages = {
 		srt: 'Sous-titres (.srt)',
 		vtt: 'Sous-titres (.vtt)',
 		csv: 'Tableur (.csv)',
-		searchable_pdf: 'PDF interrogeable (Mistral OCR)'
+		searchable_pdf: 'PDF interrogeable',
+		alto: 'ALTO XML (position des mots)'
 	},
 	close: {
 		title: 'Des traitements sont en cours',
@@ -1838,7 +1860,7 @@ export const fr: Messages = {
 		'provider.invalid_answer':
 			'La réponse du modèle ne correspondait pas aux champs de l’analyse ; Kalamu lui repose la question.',
 		'provider.not_installed':
-			'Ce modèle hors ligne n’a pas été téléchargé. Téléchargez-le dans Paramètres.',
+			'Ce modèle hors ligne ou ses données de langue n’ont pas encore été téléchargés. Téléchargez-les dans Paramètres.',
 		'provider.interrupted': 'Arrêté avant la fin ; il reprendra quand le traitement reprendra.',
 		'offline.unknown_model': 'Ce modèle hors ligne est inconnu de cette version de Kalamu.',
 		'offline.busy': 'Un autre modèle est en cours de téléchargement ; attendez qu’il se termine.',

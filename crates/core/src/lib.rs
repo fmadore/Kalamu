@@ -65,7 +65,7 @@ pub use provider::{
 };
 pub use result::{
     Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,
-    TextRegion, Usage,
+    TextLine, TextRegion, TextWord, Usage,
 };
 pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};

@@ -36,7 +36,7 @@ impl Engine {
                 return Err(EngineError::MissingKey(step.provider.to_string()));
             }
             provider
-                .check_ready(step.model)
+                .check_ready(step.model, &job.settings.languages)
                 .map_err(EngineError::NotReady)?;
         }
         let stop = control

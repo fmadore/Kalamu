@@ -7,15 +7,18 @@
 //! `<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`; each job
 //! writes its outputs to its own folder in `<out>` and the run ends with a table of pieces.
 //! `LIVE_SKIP=gemini,openai` leaves out providers; `LIVE_PACE=economy` sends every job through
-//! the providers' batch services.
+//! the providers' batch services. `LIVE_TESSDATA=<folder>` adds the offline job, read with
+//! Tesseract from the `fra` and `eng` language data in that folder; it needs no key, costs
+//! nothing and can run with the network off.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use kalamu_catalog::Catalog;
 use kalamu_core::{
-    ApiKey, ExportFormat, JobSettings, JobStatus, JobStore, LineBreaks, OutputDestination,
-    OutputSettings, Pace, PieceStatus, ProgressEvent, ProviderId, SetupOptions, Task,
+    ApiKey, ExportFormat, JobSettings, JobStatus, JobStore, LanguageChoice, LanguageCode,
+    LineBreaks, OutputDestination, OutputSettings, Pace, PieceStatus, ProgressEvent, ProviderId,
+    SetupOptions, Task,
 };
 use kalamu_engine::{Engine, EngineConfig, EstimateRequest, KeySource, NewJob, SetupRequest};
 use kalamu_prompts::PromptLibrary;
@@ -83,6 +86,27 @@ fn plans() -> Vec<Plan> {
         ]
     };
     vec![
+        // Offline: the first pages of a multi-page PDF and an image, French and English.
+        Plan {
+            name: "offline-ocr",
+            task: Task::TextExtraction,
+            files: &["newspaper.jpg", "letter.pdf"],
+            setups: vec![setup("tesseract", "tesseract-5", None, plain())],
+            settings: JobSettings {
+                languages: LanguageChoice::Explicit(vec![
+                    LanguageCode::new("fr"),
+                    LanguageCode::new("en"),
+                ]),
+                sample_pages: Some(3),
+                ..JobSettings::default()
+            },
+            formats: vec![
+                ExportFormat::Txt,
+                ExportFormat::Json,
+                ExportFormat::SearchablePdf,
+                ExportFormat::Alto,
+            ],
+        },
         Plan {
             name: "ocr-as-on-page",
             task: Task::TextExtraction,
@@ -222,8 +246,11 @@ async fn main() -> anyhow::Result<()> {
     let skip = std::env::var("LIVE_SKIP").unwrap_or_default();
     let skip: Vec<&str> = skip.split(',').filter(|s| !s.is_empty()).collect();
     let economy = std::env::var("LIVE_PACE").is_ok_and(|p| p == "economy");
+    let tessdata = std::env::var_os("LIVE_TESSDATA").is_some();
     for mut plan in plans().into_iter().filter(|p| p.name.contains(&filter)) {
-        plan.setups.retain(|s| !skip.contains(&s.provider.as_str()));
+        plan.setups.retain(|s| {
+            !skip.contains(&s.provider.as_str()) && (tessdata || s.provider.as_str() != "tesseract")
+        });
         if plan.setups.is_empty() {
             continue;
         }
@@ -251,9 +278,15 @@ fn engine(out: &Path) -> anyhow::Result<(Arc<Engine>, Arc<SqliteStore>)> {
         "FFmpeg: {}",
         if ffmpeg.is_some() { "found" } else { "missing" }
     );
+    let mut providers = kalamu_providers::registry(kalamu_providers::client());
+    if let Some(dir) = std::env::var_os("LIVE_TESSDATA") {
+        providers.push(Arc::new(kalamu_offline::Tesseract::new(
+            kalamu_offline::ModelManager::new(dir.into(), &kalamu_offline::TESSDATA),
+        )));
+    }
     let engine = Engine::new(
         store.clone(),
-        kalamu_providers::registry(kalamu_providers::client()),
+        providers,
         Catalog::newest(None),
         prompts,
         Arc::new(CredentialKeys),

@@ -112,13 +112,17 @@ export function mergeDefault(catalog: Catalog, rule: TaskRules, provider: string
 	return [...models].sort((a, b) => price(a) - price(b))[0]?.id ?? '';
 }
 
+/** Formats written only from a model that reports where text sits on the page, as the
+ * engine's `ExportFormat::needs_layout` says. */
+const LAYOUT_FORMATS: ExportFormat[] = ['searchable_pdf', 'alto'];
+
 /**
- * The formats to offer: a searchable PDF only when a chosen model reports where text sits on
- * the page (Mistral OCR).
+ * The formats to offer: a searchable PDF and ALTO only when a chosen model reports where text
+ * sits on the page (Tesseract, Mistral OCR).
  */
 export function offeredFormats(catalog: Catalog, rule: TaskRules, drafts: Draft[]): ExportFormat[] {
 	const layout = drafts.some((d) => modelInfo(catalog, d)?.layout === true);
-	return rule.formats.filter((f) => f !== 'searchable_pdf' || layout);
+	return rule.formats.filter((f) => !LAYOUT_FORMATS.includes(f) || layout);
 }
 
 /** Whether a mode reads a kind of source: YouTube links in the YouTube mode, files only in

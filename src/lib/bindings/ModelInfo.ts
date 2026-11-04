@@ -35,6 +35,11 @@ speakers: boolean,
  */
 takes_language: boolean, 
 /**
+ * Detects the language when none is chosen. Tesseract does not: New job asks for the
+ * document's languages instead of offering to detect them.
+ */
+detects_language: boolean, 
+/**
  * How many of the chosen languages its API takes; the provider modules send them so.
  */
 language_hints: LanguageHints, 
@@ -44,7 +49,7 @@ language_hints: LanguageHints,
  */
 two_letter_codes: boolean, 
 /**
- * Reports where text sits on the page, which a searchable PDF needs.
+ * Reports where text sits on the page, which a searchable PDF and ALTO need.
  */
 layout: boolean, 
 /**

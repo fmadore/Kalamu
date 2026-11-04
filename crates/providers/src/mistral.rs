@@ -219,12 +219,14 @@ fn page_regions(page: &Value) -> Vec<TextRegion> {
                 n("bottom_right_y")?,
             );
             let text = plain_text(b.get("content").and_then(Value::as_str)?);
-            (!text.is_empty() && x1 > x0 && y1 > y0).then(|| TextRegion {
-                x: (x0 / width) as f32,
-                y: (y0 / height) as f32,
-                width: ((x1 - x0) / width) as f32,
-                height: ((y1 - y0) / height) as f32,
-                text,
+            (!text.is_empty() && x1 > x0 && y1 > y0).then(|| {
+                TextRegion::block(
+                    (x0 / width) as f32,
+                    (y0 / height) as f32,
+                    ((x1 - x0) / width) as f32,
+                    ((y1 - y0) / height) as f32,
+                    text,
+                )
             })
         })
         .collect()

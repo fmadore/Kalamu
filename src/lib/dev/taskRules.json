@@ -11,7 +11,8 @@
       "docx",
       "json",
       "csv",
-      "searchable_pdf"
+      "searchable_pdf",
+      "alto"
     ],
     "answers_in_language": false,
     "models": [
@@ -102,6 +103,12 @@
       {
         "provider": "mistral",
         "model": "mistral-ocr-4-1",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "tesseract",
+        "model": "tesseract-5",
         "recommended": false,
         "provider_default": true
       }

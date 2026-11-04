@@ -4,6 +4,7 @@
 //! Exporters read stored results with the user's corrections applied, so changing format later
 //! never calls a provider again.
 
+mod alto;
 mod contents;
 mod csv_export;
 mod docx;
@@ -30,6 +31,7 @@ pub fn all() -> Vec<Box<dyn Exporter>> {
         Box::new(subtitles::VttExporter),
         Box::new(csv_export::CsvExporter),
         Box::new(searchable_pdf::SearchablePdfExporter),
+        Box::new(alto::AltoExporter),
     ]
 }
 

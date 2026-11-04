@@ -7,5 +7,11 @@ export const CREDIT_URLS: Record<string, string> = {
 	source: 'https://github.com/fmadore/Kalamu/releases',
 	opus: 'https://opus-codec.org/',
 	whisper: 'https://github.com/ggml-org/whisper.cpp',
-	models: 'https://github.com/openai/whisper'
+	models: 'https://github.com/openai/whisper',
+	tesseract: 'https://github.com/tesseract-ocr/tesseract',
+	leptonica: 'https://github.com/DanBloomberg/leptonica',
+	hayro: 'https://github.com/LaurenzV/hayro'
 };
+
+/** The author's page, linked from Settings → About. */
+export const AUTHOR_URL = 'https://www.frederickmadore.com/';

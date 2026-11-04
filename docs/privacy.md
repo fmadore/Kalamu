@@ -1,13 +1,13 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 3 November 2026, for the search index, the descriptions of documents'
-sources, export profiles and *Report a problem* opening GitHub's choice of forms without the
-app's version, which apply from version 1.3.0. Version 1.0.0, the first Microsoft
+**Effective date:** 4 November 2026, for offline text extraction with Tesseract and its
+language data, downloaded from GitHub. Version 1.0.0, the first Microsoft
 Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
 the second named the data folder after the app's bundle identifier, the third did not list the
-items' pages, and the fourth, which applies to version 1.2.0, did not list the search index.
+items' pages, the fourth, which applies to version 1.2.0, did not list the search index, and
+that of 3 November 2026, which applies to version 1.3.0, did not list Tesseract.
 
 ## What this app is
 
@@ -18,7 +18,8 @@ chooses for each job:
 
 - through a cloud AI provider the user selects and configures with their own API key: Google
   Gemini, OpenAI, Anthropic Claude or Mistral; or
-- offline, with Whisper running on the user's computer, for transcription.
+- offline, on the user's computer: Whisper for transcription, and Tesseract for text
+  extraction from printed pages.
 
 The developer operates no server for the app and receives nothing from it.
 
@@ -49,6 +50,7 @@ rules (from about a day to several weeks), in the user's account, and Kalamu col
 answers when it next opens.
 
 **Offline**, with Whisper, recordings are converted and transcribed on the computer and never
+uploaded; with Tesseract, PDF pages and images are drawn and read on the computer and never
 uploaded.
 
 Files and results may contain personal information about the people named or heard in them.
@@ -113,6 +115,8 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   their headings and any fixed text typed for every row. A shared profile holds its columns,
   and its fixed texts only when the user asks; never a project's descriptions.
 - **Whisper models**, downloaded only when the user asks (`whisper-models`).
+- **Tesseract language data**, one file per language, downloaded only when the user asks
+  (`tesseract-data`).
 - **Recording pieces converted for listening** (`listening`): the review's player plays most
   recordings straight from the original file; for a format it cannot play, the piece is
   converted on the computer and the copy kept, so it plays at once next time. The folder is
@@ -130,7 +134,7 @@ written.
 
 ## API keys
 
-No key is needed for offline transcription. Provider keys are stored in the system's keychain
+No key is needed for offline transcription or text extraction. Provider keys are stored in the system's keychain
 (Windows Credential Manager, or the login Keychain on macOS) and read only by the app's native
 core. A key is sent only to the provider that issued
 it, to authenticate requests. It is never written to the job database, the logs or
@@ -144,6 +148,9 @@ Besides the provider the user chooses, the app connects to:
   models and prices. It downloads a public file and sends nothing about the user.
 - **Hugging Face** (`huggingface.co`), only when the user downloads a Whisper model. The
   download is checked against its size and SHA-256 before use.
+- **GitHub** (`raw.githubusercontent.com`), only when the user downloads Tesseract's data for a
+  language, from the Tesseract project's own repository at a fixed version. The download is
+  checked against its size and SHA-256 before use, and nothing about the user is sent.
 - **YouTube**, when a link is added: the app asks YouTube's public oEmbed service for the
   video's title. When the user plays a video in the review, YouTube's privacy-enhanced player
   (`youtube-nocookie.com`) loads inside the app; until then, opening a review contacts no one.
@@ -197,7 +204,10 @@ Content sent to a provider is processed under the user's relationship with that 
 
 Providers' rules on keeping inputs, and on using them for training, differ between free and
 paid plans; check them before sending sensitive material. Model downloads are covered by the
-[Hugging Face privacy policy](https://huggingface.co/privacy), and YouTube by the
+[Hugging Face privacy policy](https://huggingface.co/privacy), the catalogue and Tesseract's
+language data by the
+[GitHub privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement),
+and YouTube by the
 [Google Privacy Policy](https://policies.google.com/privacy).
 
 ## Children

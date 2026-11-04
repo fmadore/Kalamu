@@ -450,7 +450,7 @@ fn every_format_has_one_exporter() {
     let mut unique = formats.clone();
     unique.dedup();
     assert_eq!(formats.len(), unique.len());
-    assert_eq!(formats.len(), 8);
+    assert_eq!(formats.len(), 9);
 }
 
 #[test]
@@ -464,12 +464,9 @@ fn timestamps_in_text_become_segments() {
     assert_eq!(segs[1].speaker, None);
 }
 
-/// A real PDF in, the same PDF out with Mistral's blocks as invisible, searchable text.
-#[test]
-fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
+/// A one-page A4 PDF at `path`.
+fn a4_pdf(path: &std::path::Path) {
     use lopdf::{Document, Object, Stream, dictionary};
-    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
-    let path = dir.path().join("lettre.pdf");
     let mut pdf = Document::with_version("1.7");
     let pages = pdf.new_object_id();
     let content = pdf.add_object(Stream::new(dictionary! {}, b"0 0 m 10 10 l S".to_vec()));
@@ -489,7 +486,16 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
     );
     let catalog = pdf.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages });
     pdf.trailer.set("Root", catalog);
-    pdf.save(&path).unwrap_or_else(|e| panic!("{e}"));
+    pdf.save(path).unwrap_or_else(|e| panic!("{e}"));
+}
+
+/// A real PDF in, the same PDF out with Mistral's blocks as invisible, searchable text.
+#[test]
+fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
+    use lopdf::Document;
+    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    let path = dir.path().join("lettre.pdf");
+    a4_pdf(&path);
 
     let mut src = source("lettre.pdf", InputKind::Pdf);
     src.path = path.display().to_string();
@@ -503,13 +509,13 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
             corrected: false,
             reviewed: false,
             fields: vec![],
-            regions: vec![kalamu_core::TextRegion {
-                x: 0.1,
-                y: 0.1,
-                width: 0.6,
-                height: 0.04,
-                text: "Dakar, le 3 mai 1957".into(),
-            }],
+            regions: vec![kalamu_core::TextRegion::block(
+                0.1,
+                0.1,
+                0.6,
+                0.04,
+                "Dakar, le 3 mai 1957",
+            )],
             failed: None,
         }],
     );
@@ -525,6 +531,83 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
     let mut plain = doc.clone();
     plain.parts[0].regions.clear();
     assert!(exporter(ExportFormat::SearchablePdf).is_some_and(|e| e.export(&plain).is_err()));
+}
+
+/// A word as Tesseract places it, its confidence given or not.
+fn word(x: f32, y: f32, width: f32, text: &str, confidence: Option<f32>) -> kalamu_core::TextWord {
+    kalamu_core::TextWord {
+        x,
+        y,
+        width,
+        height: 0.02,
+        text: text.into(),
+        confidence,
+    }
+}
+
+/// ALTO from a PDF: Tesseract's words where it put them (a corrected word without its
+/// confidence), and a block placed whole whose lines and words are estimated.
+#[test]
+fn alto_places_each_word_and_estimates_blocks_placed_whole() {
+    use kalamu_core::{TextLine, TextRegion};
+    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    let path = dir.path().join("lettre.pdf");
+    a4_pdf(&path);
+    let mut src = source("lettre.pdf", InputKind::Pdf);
+    src.path = path.display().to_string();
+    let placed = TextRegion {
+        lines: vec![TextLine {
+            x: 0.1,
+            y: 0.1,
+            width: 0.4,
+            height: 0.02,
+            words: vec![
+                word(0.1, 0.1, 0.12, "Dakar,", Some(0.96)),
+                word(0.24, 0.1, 0.04, "le", Some(0.91)),
+                word(0.3, 0.1, 0.02, "3", Some(0.88)),
+                word(0.34, 0.1, 0.06, "mai", None),
+            ],
+        }],
+        ..TextRegion::block(0.1, 0.1, 0.4, 0.02, "Dakar, le 3 mai")
+    };
+    let whole = TextRegion::block(
+        0.1,
+        0.2,
+        0.8,
+        0.04,
+        "Le Gouverneur & les délégués\n<réunis>",
+    );
+    let doc = document(
+        Task::TextExtraction,
+        src,
+        vec![ExportPart {
+            piece: kalamu_core::PieceRef::page(1),
+            text: "Dakar, le 3 mai\n\nLe Gouverneur & les délégués\n<réunis>".into(),
+            segments: vec![],
+            corrected: true,
+            reviewed: false,
+            fields: vec![],
+            regions: vec![placed.clone(), whole],
+            failed: None,
+        }],
+    );
+    check("letter.alto.xml", &run(ExportFormat::Alto, &doc));
+
+    // The right half of a spread is put back on the right of the whole page.
+    let mut spread = doc.clone();
+    spread.parts[0].piece = kalamu_core::PieceRef::Page {
+        number: 1,
+        half: Some(kalamu_core::PageHalf::Right),
+    };
+    spread.parts[0].regions = vec![placed];
+    let xml = String::from_utf8(run(ExportFormat::Alto, &spread)).unwrap_or_default();
+    // 0.5 + 0.1 / 2 of 2479 pixels.
+    assert!(xml.contains("CONTENT=\"Dakar,\" HPOS=\"1363\""), "{xml}");
+
+    // Without positions there is no ALTO.
+    let mut plain = doc;
+    plain.parts[0].regions.clear();
+    assert!(exporter(ExportFormat::Alto).is_some_and(|e| e.export(&plain).is_err()));
 }
 
 #[test]

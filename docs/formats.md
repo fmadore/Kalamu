@@ -22,14 +22,35 @@ and `provenance.json` lists it under `failed`. Retrying it writes the files agai
 ## Searchable PDF (`.searchable.pdf`)
 
 The original PDF, unchanged, with an invisible text layer so it can be searched and its text
-copied. Only models that report where text sits on the page can feed it; today that is Mistral
-OCR, whose paragraph boxes are kept with each page. Each paragraph's words are set in invisible
-text (render mode 3) over its box, spread over the lines that fit and stretched to its width,
-in a glyph-less Unicode font, so any script stays searchable. A corrected page is set as one
-block over the page. Only PDF sources get one; it is written as `<name>.searchable.pdf`, never
-replacing the source. New job says before a job whether it will have one: the format is
+copied. Only models that report where text sits on the page can feed it: Tesseract, which
+places every line and word, and Mistral OCR, whose paragraph boxes are kept with each page.
+Text is set invisibly (render mode 3) in a glyph-less Unicode font, so any script stays
+searchable: each of Tesseract's lines over its own box, and each of Mistral's paragraphs spread
+over the lines that fit its box; every line is stretched to its box's width. A corrected page
+keeps its words' places where the engine placed each word (see ALTO below); otherwise it is set
+as one block over the page. Only PDF sources get one; it is written as `<name>.searchable.pdf`,
+never replacing the source. New job says before a job whether it will have one: the format is
 offered, and the task's diagram draws the searchable PDF as a second result, only when a chosen
 model reports where text sits; under any other model, the diagram notes that it gives text only.
+
+## ALTO XML (`.alto.xml`)
+
+[ALTO](https://www.loc.gov/standards/alto/) version 4, as digital libraries, eScriptorium and
+Transkribus read it: one file per document, a `Page` per page, then `TextBlock`, `TextLine` and
+`String` for each word, with `SP` between words. Positions are in pixels (`MeasurementUnit`
+`pixel`): those of the image for an image source, those of the page drawn at 300 dpi for a PDF
+(as Tesseract reads it), the page's own `WIDTH` and `HEIGHT` given. A word carries the engine's
+confidence (`WC`, 0 to 1) where it gave one. `Description` names the source file, the date,
+Kalamu's version and, in `processingStepSettings`, the provider and model, and says when
+positions are estimated. A page split into halves is put back together on the whole page.
+
+Offered only from models that report where text sits. Tesseract places every word. Mistral
+OCR places paragraphs only: their lines share the paragraph's height and their words each
+line's width by their length, which the file says are estimated. A corrected page keeps its
+words' places, as iwac-ai-pipelines' ALTO correction does: the researcher's text is matched to
+the words the engine read, a word kept or changed staying in its box, words added sharing the
+box before them, words removed leaving theirs; the engine's confidence is kept only for words
+left as it read them.
 
 ## Analyses
 

@@ -57,7 +57,9 @@
 	{#if !app.keys.some((k) => k.saved)}
 		<p class="warning">
 			{m.newJob.noProvider}
-			<button class="btn sm" onclick={() => go({ name: 'settings' })}>{m.nav.settings}</button>
+			<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'keys' })}
+				>{m.nav.settings}</button
+			>
 		</p>
 	{/if}
 	<!-- One set-up lays its fields in a row; two or more stand side by side, one column per
@@ -236,7 +238,7 @@
 				{#if d.model && !isInstalled(d.provider, d.model)}
 					<p class="warning small">
 						{m.newJob.notDownloaded}
-						<button class="btn sm" onclick={() => go({ name: 'settings' })}
+						<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'offline' })}
 							>{m.newJob.openSettings}</button
 						>
 					</p>

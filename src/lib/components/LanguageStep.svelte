@@ -1,7 +1,8 @@
 <script lang="ts">
 	// New job's language step: detected, or chosen from the languages the models read (one, for
 	// an analysis or a table of contents, which answer in it), with notes on the models that
-	// ignore or do not read a language.
+	// ignore or do not read a language. A model that cannot detect the language (Tesseract)
+	// needs it chosen, and its language data downloaded.
 	import LanguagePicker from './LanguagePicker.svelte';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { Task } from '#lib/bindings/Task.js';
@@ -9,6 +10,7 @@
 	import {
 		languageLabel,
 		modelsNeedingTwoLetters,
+		modelsNotDetecting,
 		modelsTakingOne,
 		modelsWithout,
 		modelsWithoutTimes,
@@ -16,7 +18,7 @@
 		takesLanguage
 	} from '#lib/languages.js';
 	import { rulesFor } from '#lib/newJob.js';
-	import { app } from '#lib/state.svelte.js';
+	import { app, go, missingLanguageData } from '#lib/state.svelte.js';
 
 	let {
 		mode = $bindable(),
@@ -59,6 +61,12 @@
 	);
 	/** The language chosen is the answers', not the source's. */
 	const answers = $derived(rulesFor(app.rules, task).answers_in_language);
+	/** Models that cannot detect the language: it must be chosen, and its data downloaded. */
+	const notDetecting = $derived(modelsNotDetecting(models));
+	const missingData = $derived(notDetecting.length > 0 ? missingLanguageData(languages) : []);
+	$effect(() => {
+		if (notDetecting.length > 0 && mode === 'auto') mode = 'explicit';
+	});
 </script>
 
 <section class="step block" aria-labelledby="lang-title">
@@ -70,7 +78,7 @@
 	{:else}
 		<div class="row">
 			<label class="inline"
-				><input type="radio" bind:group={mode} value="auto" />
+				><input type="radio" bind:group={mode} value="auto" disabled={notDetecting.length > 0} />
 				{answers ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
 			>
 			<label class="inline"
@@ -78,6 +86,9 @@
 				{m.newJob.languagePick}</label
 			>
 		</div>
+		{#if notDetecting.length > 0}
+			<p class="hint">{m.newJob.languageNotDetected(listNames(notDetecting))}</p>
+		{/if}
 		{#if mode === 'explicit'}
 			<LanguagePicker
 				bind:selected={languages}
@@ -85,6 +96,16 @@
 				single={answers}
 				unsupported={(code) => modelsWithout(code, models)}
 			/>
+			{#if missingData.length > 0}
+				<p class="hint warn-text">
+					{m.newJob.languageDataMissing(
+						listNames(missingData.map((code) => languageLabel(catalog, code)))
+					)}
+					<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'offline' })}
+						>{m.newJob.openSettings}</button
+					>
+				</p>
+			{/if}
 			{#each unsupportedChosen as [code, names] (code)}
 				<p class="hint warn-text">
 					{m.newJob.languageUnsupported(languageLabel(catalog, code), listNames(names))}

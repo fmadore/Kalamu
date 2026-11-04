@@ -25,9 +25,11 @@ small job first. See the
 ## What it does
 
 - **Extract text** from PDFs and images, printed or handwritten, with Gemini, OpenAI, Claude or
-  Mistral. Lines kept as on the page, or joined into running text; pages read one at a time
-  or several together, still reviewed page by page. Choose how much each model thinks; every
-  answer may use the whole output the model allows.
+  Mistral, or offline with Tesseract for clean print: free, nothing sent, each word with its
+  place on the page; its speed depends on your computer's processor. Lines kept as on the
+  page, or joined into running text; pages read one at a time or several together, still
+  reviewed page by page. Choose how much each model thinks; every answer may use the whole
+  output the model allows.
 - **Transcribe audio and video**, with speakers and timestamps, in the cloud or offline with
   Whisper. Speakers can be given their real names. Public YouTube videos are transcribed from
   their link with Gemini, without downloading them.
@@ -77,8 +79,9 @@ small job first. See the
   read and you have checked it. For longer chains, **workflows** run your pipelines one after
   another, from ready-made examples or your own, on a folder or a project's selection; each
   step is a job of its own, and running again pays only for the steps that changed.
-- **Export** to text, Markdown, Word, JSON, CSV, subtitles and searchable PDF, each with a
-  `provenance.json` recording the model, prompt and settings.
+- **Export** to text, Markdown, Word, JSON, CSV, subtitles, searchable PDF and ALTO XML (each
+  word with its place on the page, corrections included), each with a `provenance.json`
+  recording the model, prompt and settings.
 - **A glossary** explains the words these tools use, from OCR and tokens to error rates and
   hallucination, for colleagues new to them.
 

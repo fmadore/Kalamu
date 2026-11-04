@@ -1,6 +1,6 @@
 [package]
 name = "kalamu-offline"
-description = "Offline engines for Kalamu (Whisper), behind the same provider trait as the cloud."
+description = "Offline engines for Kalamu (Whisper, Tesseract), behind the same provider trait as the cloud."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,6 +9,7 @@ license.workspace = true
 [dependencies]
 async-trait.workspace = true
 hex.workspace = true
+image.workspace = true
 reqwest.workspace = true
 kalamu-core.workspace = true
 serde.workspace = true
@@ -22,6 +23,10 @@ ts-rs.workspace = true
 # pin fixes the vendored whisper.cpp (1.8.3), which the first does not.
 whisper-rs = { version = "=0.16.0", default-features = false }
 whisper-rs-sys = "=0.15.0"
+# Tesseract 5.5.2 and Leptonica 1.87, built from source by its build script and linked in
+# (Apache 2.0 and BSD-2-Clause). Its build script takes any `zip` from 7 up; Cargo.lock keeps it
+# on 8, as the crate was released with (9 changed an API the script uses).
+kreuzberg-tesseract = { version = "=4.10.4", default-features = false, features = ["static-linking"] }
 
 [dev-dependencies]
 kalamu-catalog.workspace = true

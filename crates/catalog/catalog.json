@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-03",
+  "updated": "2026-11-04",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
     {
@@ -30,6 +30,13 @@
     {
       "id": "whisper",
       "name": "Whisper (on this PC)",
+      "key_url": "",
+      "key_prefix": null,
+      "local": true
+    },
+    {
+      "id": "tesseract",
+      "name": "Tesseract (on this computer)",
       "key_url": "",
       "key_prefix": null,
       "local": true
@@ -1285,6 +1292,75 @@
       "pricing": {
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
+      },
+      "limits": {}
+    },
+    {
+      "provider": "tesseract",
+      "id": "tesseract-5",
+      "name": "Tesseract 5",
+      "description": "Offline. For clean printed pages: free, and each word comes back with its place on the page (ALTO, searchable PDF). Not for handwriting, and weak on damaged print, faded newspapers and complex layouts. Speed depends on this computer's processor: from about a second to several seconds a page. Does not detect the language: each language chosen is downloaded once (3 to 15 MB; 100 MB for languages written in Latin letters without a model of their own, such as Hausa, Mooré or Wolof).",
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "image/png",
+        "image/jpeg"
+      ],
+      "languages": [
+        "en",
+        "fr",
+        "ar",
+        "de",
+        "pt",
+        "es",
+        "it",
+        "nl",
+        "yo",
+        "sw",
+        "am",
+        "af",
+        "fa",
+        "tr",
+        "ur",
+        "hi",
+        "ru",
+        "pl",
+        "zh",
+        "ja",
+        "ko",
+        "id",
+        "ms",
+        "he",
+        "el",
+        "la",
+        "ha",
+        "ig",
+        "ff",
+        "wo",
+        "bm",
+        "dyu",
+        "mos",
+        "ee",
+        "fon",
+        "tw",
+        "so",
+        "ln",
+        "zu",
+        "xh",
+        "mg"
+      ],
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [
+        "text_extraction"
+      ],
+      "accepts_prompt": false,
+      "detects_language": false,
+      "layout": true,
+      "pricing": {
+        "per_page": 0.0,
+        "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
       "limits": {}
     }

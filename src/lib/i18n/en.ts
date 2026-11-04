@@ -866,8 +866,7 @@ export const en = {
 		addFavourite: (language: string) => `Add ${language} to favourites`,
 		removeFavourite: (language: string) => `Remove ${language} from favourites`,
 		favouritesHint: 'Star the languages you use most to find them first.',
-		languagesNarrowed: (models: string) =>
-			`Only the languages ${models} can transcribe are listed.`,
+		languagesNarrowed: (models: string) => `Only the languages ${models} can read are listed.`,
 		languageUnsupported: (language: string, models: string) =>
 			`${models} cannot use ${language}: remove it or choose another model.`,
 		languageOneOnly: (models: string) =>
@@ -876,6 +875,10 @@ export const en = {
 			`The language is passed to ${models} only when it neither labels speakers nor times the lines; with either, the language is detected.`,
 		languageNeedsTwoLetters: (language: string, models: string) =>
 			`${models} can be told only languages with a two-letter code, so ${language} is not passed on: the model detects it.`,
+		languageNotDetected: (models: string) =>
+			`${models} does not detect the language: choose the languages of the documents.`,
+		languageDataMissing: (languages: string) =>
+			`Language data not yet on this computer: ${languages}. Download it once in Settings, then start.`,
 		languageIgnoredAll: (models: string) =>
 			`${models} recognises the language on its own, so there is nothing to choose.`,
 		languageIgnoredSome: (models: string) =>
@@ -1416,6 +1419,13 @@ export const en = {
 	settings: {
 		title: 'Settings',
 		lede: 'Keys, offline models, processing, appearance and language.',
+		tabsLabel: 'Settings sections',
+		tabs: {
+			keys: 'API keys',
+			offline: 'Offline',
+			general: 'General',
+			about: 'About'
+		},
 		keysTitle: 'API keys',
 		keysHint: (keychain: string) =>
 			`Keys are stored in ${keychain} and sent only to their provider. Files go directly from this computer to the provider you choose.`,
@@ -1427,7 +1437,13 @@ export const en = {
 		remove: 'Remove',
 		getKey: 'Get a key',
 		testOk: (n: number) => `Key works: ${n} models available`,
-		offlineTitle: 'Offline transcription',
+		offlineTitle: 'Working offline',
+		whisperTitle: 'Transcription with Whisper',
+		tesseractTitle: 'Text extraction with Tesseract',
+		tesseractHint: (version: string) =>
+			`Tesseract ${version} reads printed pages on this computer: nothing is sent, no key or account is needed, and it works without an internet connection once a language is downloaded. It is meant for clean print; handwriting, faded or damaged pages and complex layouts read better with a cloud model. Its speed depends on this computer’s processor: from about a second to several seconds a page. It does not detect the language: download each language you read, then choose it in New job.`,
+		latinScript: (languages: string) =>
+			`Languages written in Latin letters without a model of their own: ${languages}`,
 		offlineHint:
 			'Whisper runs on this computer: recordings never leave it, no key or account is needed, and it works without an internet connection once a model is downloaded. It is slower than the cloud models and cannot label speakers. Large v3 Turbo suits most computers.',
 		offlineCpu: (missing: string) =>
@@ -1463,22 +1479,26 @@ export const en = {
 		dataFolder: 'Data folder',
 		/** `{name}` marks a link; the names it shows are in `creditNames`. */
 		credits:
-			'Kalamu uses {ffmpeg} under the LGPL v2.1 (its {source} is published with each release), {opus} (BSD), {whisper} (MIT) and the {models} (MIT). The full licences are in the licences folder installed with the app.',
+			'Kalamu uses {ffmpeg} under the LGPL v2.1 (its {source} is published with each release), {opus} (BSD), {whisper} (MIT), the {models} (MIT), {tesseract} and its language data (Apache 2.0), {leptonica} (BSD) and {hayro} (MIT). The full licences are in the licences folder installed with the app.',
 		creditNames: {
 			ffmpeg: 'FFmpeg',
 			source: 'source',
 			opus: 'Opus',
 			whisper: 'whisper.cpp',
-			models: 'Whisper models'
+			models: 'Whisper models',
+			tesseract: 'Tesseract',
+			leptonica: 'Leptonica',
+			hayro: 'hayro'
 		},
 		privacy:
 			'Nothing is sent to the developer: no files, keys, results or usage data. AI output can contain fluent but wrong text; check a sample against the source.'
 	},
 	report: {
-		/** Bugs and feedback; also the way Store policy 11.16 asks for to flag harmful output. */
+		/** Bugs and feedback; also the way Store policy 11.16 asks for to flag harmful output,
+		 * which the note names so a reviewer finds it. */
 		link: 'Report a problem',
 		review: 'Report a problem',
-		note: 'A bug, or an idea to make Kalamu better: tell us on GitHub. Should a model write something offensive or harmful, the same page lets you flag it, as the Microsoft Store asks apps to. It opens in your browser; Kalamu sends nothing, so share only what is safe to make public.'
+		note: 'A bug, an idea, or offensive output from a model: tell us on GitHub. It opens in your browser; Kalamu sends nothing, so share only what is safe to make public.'
 	},
 	glossary: {
 		title: 'Glossary',
@@ -1571,14 +1591,16 @@ export const en = {
 			srt: 'Subtitles with their times, for video players and editing software.',
 			vtt: 'Subtitles for the web (WebVTT), as web video players use them.',
 			searchable_pdf:
-				'The original PDF with an invisible text layer, so it can be searched and its text copied. Only from models that report where text sits on the page: currently Mistral OCR.',
+				'The original PDF with an invisible text layer, so it can be searched and its text copied. Only from models that report where text sits on the page: currently Tesseract and Mistral OCR.',
+			alto: 'Each page’s text with where every block, line and word sits, in the ALTO standard that digital libraries, eScriptorium and Transkribus read. Only from models that report where text sits on the page: Tesseract places each word; Mistral OCR places paragraphs, whose lines and words are then estimated. Corrections keep their words’ places.',
 			provenance: 'Always written beside the results: how they were made (see Provenance).'
 		}
 	},
 	support: {
 		title: 'Support development',
 		/** Says plainly that paying changes nothing in the app. */
-		note: 'Kalamu is an independent project by Frédérick Madore (University of Bayreuth). If it is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
+		/** `{author}` is a link to the author's page. */
+		note: 'Kalamu is a project by {author} (University of Bayreuth). If it is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
 		link: 'Buy me a coffee'
 	},
 	format: {
@@ -1589,7 +1611,8 @@ export const en = {
 		srt: 'Subtitles (.srt)',
 		vtt: 'Subtitles (.vtt)',
 		csv: 'Spreadsheet (.csv)',
-		searchable_pdf: 'Searchable PDF (Mistral OCR)'
+		searchable_pdf: 'Searchable PDF',
+		alto: 'ALTO XML (word positions)'
 	},
 	close: {
 		title: 'Jobs are still running',
@@ -1739,7 +1762,7 @@ export const en = {
 		'provider.invalid_answer':
 			'The model’s answer did not match the fields of the analysis; Kalamu asks it again.',
 		'provider.not_installed':
-			'This offline model has not been downloaded. Download it in Settings.',
+			'This offline model, or the language data it needs, has not been downloaded. Download it in Settings.',
 		'provider.interrupted': 'Stopped before the end; it will continue when the job resumes.',
 		'offline.unknown_model': 'This offline model is not known to this version of Kalamu.',
 		'offline.busy': 'Another model is downloading; wait for it to finish.',

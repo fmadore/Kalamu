@@ -16,6 +16,7 @@ mod listen;
 mod output;
 mod piece;
 mod plan;
+mod realign;
 mod record;
 mod review;
 mod rules;

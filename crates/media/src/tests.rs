@@ -124,10 +124,32 @@ fn samples_take_only_the_first_pages() -> Result<(), MediaError> {
 }
 
 #[test]
-fn pdf_needs_a_model_that_reads_pdfs() -> Result<(), MediaError> {
-    let open = OpenSource::Pdf(Box::new(PdfSource::from_bytes(&sample_pdf(&[A4], false))?));
-    let result = open.prepare(&PieceRef::page(1), &["image/png"], "x");
-    assert!(matches!(result, Err(MediaError::NeedsConversion(_))));
+fn a_pdf_page_is_drawn_for_a_model_that_reads_images_only() -> Result<(), MediaError> {
+    let open = OpenSource::Pdf(Box::new(PdfSource::from_bytes(&sample_pdf(
+        &[A4, (1190.0, 842.0)],
+        true,
+    ))?));
+    let page = open.prepare(&PieceRef::page(1), &["image/png"], "x")?;
+    assert_eq!(page.mime, "image/png");
+    assert_eq!(page.file_name, "x-p1.png");
+    let image =
+        image::load_from_memory(&page.bytes).map_err(|e| MediaError::Image(e.to_string()))?;
+    // A4 at 300 dpi, the width cut to a whole pixel.
+    assert_eq!((image.width(), image.height()), (2479, 3508));
+    // The left half of a spread is drawn as the half the other models read.
+    let half = open.prepare(
+        &PieceRef::Page {
+            number: 2,
+            half: Some(kalamu_core::PageHalf::Left),
+        },
+        &["image/png"],
+        "x",
+    )?;
+    let image =
+        image::load_from_memory(&half.bytes).map_err(|e| MediaError::Image(e.to_string()))?;
+    assert_eq!((image.width(), image.height()), (2479, 3508));
+    let refused = open.prepare(&PieceRef::page(1), &["audio/mpeg"], "x");
+    assert!(matches!(refused, Err(MediaError::NeedsConversion(_))));
     Ok(())
 }
 

@@ -444,8 +444,25 @@ export function installMock(): void {
 							installed: i === 0,
 							downloading: i === 2,
 							downloaded_bytes: i === 2 ? 71_000_000 : 0,
-							in_use: false
+							in_use: false,
+							languages: []
 						})),
+					// French and English downloaded, the Latin script model not yet.
+					language_data: [
+						['tesseract-fra', ['fr'], 3_972_885, true],
+						['tesseract-eng', ['en'], 15_400_601, true],
+						['tesseract-ara', ['ar'], 12_603_724, false],
+						['tesseract-latin', ['ha', 'mos', 'wo', 'bm', 'dyu'], 101_402_885, false]
+					].map(([id, languages, bytes, installed]) => ({
+						id: id as string,
+						bytes: bytes as number,
+						installed: installed as boolean,
+						downloading: false,
+						downloaded_bytes: 0,
+						in_use: false,
+						languages: languages as string[]
+					})),
+					tesseract_version: '5.5.2',
 					missing_cpu: []
 				};
 			case 'key_status':

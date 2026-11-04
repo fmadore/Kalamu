@@ -98,8 +98,8 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
         .collect()
 }
 
-/// The formats a job of these set-ups can write: those of its task, and a searchable PDF only
-/// when a set-up's model reports where text sits on the page.
+/// The formats a job of these set-ups can write: those of its task, and a searchable PDF and
+/// ALTO only when a set-up's model reports where text sits on the page.
 pub(crate) fn writable_formats(
     catalog: &Catalog,
     task: Task,
@@ -111,7 +111,7 @@ pub(crate) fn writable_formats(
             .model(&s.provider, &s.model)
             .is_some_and(|m| m.layout)
     });
-    formats.retain(|f| task.formats().contains(f) && (layout || *f != ExportFormat::SearchablePdf));
+    formats.retain(|f| task.formats().contains(f) && (layout || !f.needs_layout()));
 }
 
 impl Engine {
