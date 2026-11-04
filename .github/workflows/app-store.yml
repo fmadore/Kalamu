@@ -147,6 +147,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_APP_ID: ${{ vars.APPLE_APP_ID }}
         run: |
           missing=()
           for name in APPLE_DISTRIBUTION_CERTIFICATE APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD \
@@ -156,6 +157,12 @@ jobs:
           done
           if [ ${#missing[@]} -gt 0 ]; then
             echo "::error::Missing repository secrets for the Mac App Store: ${missing[*]}."
+            exit 1
+          fi
+          # The app's Apple ID in App Store Connect (App Information), which --upload-package
+          # needs: not a secret, so a repository variable.
+          if [ -z "$APPLE_APP_ID" ]; then
+            echo "::error::Missing the repository variable APPLE_APP_ID (the app's Apple ID in App Store Connect)."
             exit 1
           fi
 
@@ -229,18 +236,35 @@ jobs:
           xcrun productbuild --sign "$APPLE_INSTALLER_IDENTITY" \
             --component "$app" /Applications "$RUNNER_TEMP/Kalamu.pkg"
 
+      # `--upload-app` is deprecated; `--upload-package` names the app and the build. altool from
+      # Xcode 26 can exit 0 on a failed upload, so its output is read for errors as well.
       - name: Validate and upload the package
         env:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_APP_ID: ${{ vars.APPLE_APP_ID }}
+          BUILD_NUMBER: ${{ github.run_number }}
         run: |
+          set -o pipefail
           mkdir -p "$HOME/.appstoreconnect/private_keys"
           printf '%s\n' "$APPLE_API_KEY" > "$HOME/.appstoreconnect/private_keys/AuthKey_$APPLE_API_KEY_ID.p8"
+          version=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          # Its success lines read "No errors validating" and "No errors uploading".
+          failed() {
+            if grep -Ei 'error|failed' "$1" | grep -viq 'no errors'; then
+              echo "::error::altool reported a failure; see its output above."
+              exit 1
+            fi
+          }
           xcrun altool --validate-app --type macos --file "$RUNNER_TEMP/Kalamu.pkg" \
-            --apiKey "$APPLE_API_KEY_ID" --apiIssuer "$APPLE_API_ISSUER"
-          xcrun altool --upload-app --type macos --file "$RUNNER_TEMP/Kalamu.pkg" \
-            --apiKey "$APPLE_API_KEY_ID" --apiIssuer "$APPLE_API_ISSUER"
+            --apiKey "$APPLE_API_KEY_ID" --apiIssuer "$APPLE_API_ISSUER" 2>&1 | tee "$RUNNER_TEMP/validate.log"
+          failed "$RUNNER_TEMP/validate.log"
+          xcrun altool --upload-package "$RUNNER_TEMP/Kalamu.pkg" --type macos \
+            --apple-id "$APPLE_APP_ID" --bundle-id io.github.fmadore.kalamu \
+            --bundle-short-version-string "$version" --bundle-version "$BUILD_NUMBER" \
+            --apiKey "$APPLE_API_KEY_ID" --apiIssuer "$APPLE_API_ISSUER" 2>&1 | tee "$RUNNER_TEMP/upload.log"
+          failed "$RUNNER_TEMP/upload.log"
 
       - name: Remove the keychain and the key
         if: always()
