@@ -775,6 +775,7 @@ in [microsoft-store.md](microsoft-store.md), [packaging-msix.md](packaging-msix.
 [store-listing.md](store-listing.md) and [privacy.md](privacy.md).
 
 On macOS (Apple Silicon, macOS 13 and later), a disk image attached to each GitHub release,
-with FFmpeg and every licence inside. It is signed ad hoc for now, so macOS asks once, on first
-opening, to confirm it; signing and notarisation with an Apple Developer ID come later. Keys are
+with FFmpeg and every licence inside. It is signed with an Apple Developer ID and notarised, so
+Gatekeeper opens it without a detour through System Settings
+([decision](decisions/2026-11-04-macos-notarisation.md)). Keys are
 kept in the Keychain. There is no Mac App Store version ([decision](decisions/2026-11-02-macos.md)).

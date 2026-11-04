@@ -18,8 +18,9 @@ the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in 
 [live runs](decisions/2026-11-03-live-runs.md)).
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
-ad hoc; it has not yet been opened on a real Mac
-([decision](decisions/2026-11-02-macos.md)).
+with an Apple Developer ID and notarised after 1.3.0
+([decision](decisions/2026-11-04-macos-notarisation.md)); it has not yet been opened on a real
+Mac ([decision](decisions/2026-11-02-macos.md)).
 
 ## Done
 
@@ -493,8 +494,7 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 - Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates
   kept; Kalamu's own extractions already keep their words' places when corrected.
 - French and German Store listings, with the translated interface.
-- macOS: signing and notarisation with an Apple Developer ID, so Gatekeeper does not ask; the
-  application menu's labels through the translation files; a first test on a real Mac (the
+- macOS: the application menu's labels through the translation files; a first test on a real Mac (the
   Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in WKWebView).
 - Linux x86-64: a `.deb` and an AppImage on GitHub releases, built and tested in CI, for a
   documented range of distributions; a third file in each platform layer (`platform/linux.rs`,

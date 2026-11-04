@@ -42,7 +42,7 @@ only from the releases page linked above. From version 1.0.0 Kalamu is also in t
 Microsoft and updated automatically ([docs/microsoft-store.md](docs/microsoft-store.md)). The `.msix` and `.msixbundle` files on a
 release are the unsigned Store submission, for testing; they do not install as they are.
 
-The macOS disk image is **signed ad hoc, not with an Apple Developer ID**, and not notarised, so
-macOS refuses to open it the first time: choose **Open Anyway** in System Settings → Privacy &
-Security (README, "On a Mac"). Download it only from the releases page. Signing and
-notarisation are planned ([docs/decisions/2026-11-02-macos.md](docs/decisions/2026-11-02-macos.md)).
+After version 1.3.0 the macOS disk image is **signed with an Apple Developer ID** (team
+3HMSG8WB7K) **and notarised by Apple**, so Gatekeeper checks it before it opens. Versions up to
+1.3.0 were signed ad hoc only. Download it only from the releases page
+([docs/decisions/2026-11-04-macos-notarisation.md](docs/decisions/2026-11-04-macos-notarisation.md)).

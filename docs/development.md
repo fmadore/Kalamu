@@ -114,7 +114,9 @@ git tag v1.0.0 && git push origin v1.0.0
 The workflow checks the tag against the version files and builds, into a draft release, both
 installers, both Store packages and the `.msixbundle` for Partner Center
 ([packaging-msix.md](packaging-msix.md)), the macOS disk image `Kalamu_<x.y.z>_aarch64.dmg`
-(signed ad hoc, with a check of its signature, FFmpeg and licences), and `kalamu-samples.zip`
+(signed with the Developer ID and notarised, with a check of its signatures, its stapled
+ticket, Gatekeeper's verdict, FFmpeg and licences: [the decision](decisions/2026-11-04-macos-notarisation.md)
+lists the six `APPLE_*` repository secrets it needs), and `kalamu-samples.zip`
 from `samples/`; it
 publishes the release once every asset is attached, as a pre-release while the version starts
 with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To

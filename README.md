@@ -100,9 +100,10 @@ so Windows SmartScreen warns on the first launch: choose **More info**, then **R
 
 **macOS 13 and later** (Apple Silicon): download `Kalamu_<version>_aarch64.dmg` from the
 [releases page](https://github.com/fmadore/Kalamu/releases) and drag Kalamu to Applications.
-The app is not yet signed with an Apple Developer ID, so the first time, macOS refuses to open
-it: open **System Settings → Privacy & Security**, choose **Open Anyway** beside Kalamu, and
-confirm. macOS may also ask once to let Kalamu use the key saved in your Keychain. Shortcuts
+The app is signed with an Apple Developer ID and notarised by Apple, so macOS opens it after
+the usual question about an app downloaded from the internet. If you used version 1.3.0 or
+earlier, which was not signed this way, macOS asks once more to let Kalamu use the keys saved in
+your Keychain: choose **Always Allow**. Shortcuts
 use ⌘ where Windows uses Ctrl; closing the window keeps Kalamu in the Dock, and ⌘Q asks first
 while jobs run.
 
