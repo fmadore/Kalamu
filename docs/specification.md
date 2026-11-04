@@ -693,6 +693,15 @@ link is added, and loads YouTube's player in the review only when the video is p
 stay in the system's keychain: Credential Manager on Windows, the Keychain on macOS.
 The developer receives no files, keys, results or telemetry.
 
+Before the first job, workflow run or dictionary proposal sent to a cloud provider, the app asks
+once for that provider: it names it, says what is sent (the pages, recordings or text, with any
+personal information they hold), that it goes under the researcher's own account and the
+provider's terms, and links the privacy policy. Nothing is sent until the researcher agrees,
+which the settings keep; the shell refuses work for a provider not agreed to, so no path skips
+the question. Offline engines are never asked about. Apple's Guideline 5.1.2(i) asks for this in
+the Mac App Store; it applies on Windows too
+([decision](decisions/2026-11-04-ai-consent.md)).
+
 Sending research material to an AI provider is still a transfer of data to a third party.
 Researchers remain responsible for consent, confidentiality, copyright and any approval their
 institution requires, and should prefer paid API tiers whose terms exclude training on inputs.
@@ -784,4 +793,6 @@ kept in the Keychain. A Mac App Store build of the same code is being prepared: 
 App Sandbox, keeps the folders and files the researcher grants as security-scoped bookmarks,
 asks for a source's folder before writing results beside it, and has no support link
 ([feasibility](decisions/2026-11-04-mac-app-store-feasibility.md),
-[build](decisions/2026-11-04-mac-app-store-build.md)).
+[build](decisions/2026-11-04-mac-app-store-build.md)). Its first submission is version 1.4.1;
+the setup at Apple, the answers in App Store Connect and the steps are in
+[mac-app-store.md](mac-app-store.md).

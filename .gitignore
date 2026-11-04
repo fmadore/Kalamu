@@ -32,3 +32,6 @@ Thumbs.db
 
 # Drafts from the 2026-10-28 brand exploration (generated images and prompts), kept locally.
 docs/design/exploration/
+
+# Store screenshot material, downloaded and zipped for the Mac test day (docs/mac-test-day.md).
+screenshot-material/

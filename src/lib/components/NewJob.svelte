@@ -52,7 +52,7 @@
 		toRequest,
 		type Together
 	} from '#lib/newJob.js';
-	import { api, askForFolders, besidePlaces, onDrop } from '#lib/tauri.js';
+	import { api, askConsent, askForFolders, besidePlaces, onDrop, providersOf } from '#lib/tauri.js';
 	import {
 		app,
 		go,
@@ -394,10 +394,16 @@
 		error = null;
 		starting = true;
 		try {
+			const preset = thenOffered ? analysisPresets.find((p) => p.id === thenPreset) : undefined;
+			// Asked once for each cloud provider the job, or its analysis after, sends files to.
+			const setups = [
+				...drafts.map((d) => toRequest(catalog, task, d)),
+				...(preset ? thenPipeline(preset).setups : [])
+			];
+			if (!(await askConsent(providersOf(setups), catalog))) return;
 			// In the Mac App Store's build, the folders beside the sources must be granted first.
 			const beside = destination.kind === 'beside_sources';
 			if (beside && !(await askForFolders(besidePlaces($state.snapshot(sources))))) return;
-			const preset = thenOffered ? analysisPresets.find((p) => p.id === thenPreset) : undefined;
 			if (preset) {
 				await startWithAnalysis(preset);
 				return;

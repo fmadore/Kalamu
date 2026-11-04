@@ -6,11 +6,12 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (4 November 2026)
 
-**Version 1.4.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
+**Version 1.4.1** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 signed, notarised disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
-[v1.4.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.4.0)
-([notes](release-1.4.0.md)). Version 1.3.0 is in the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H); 1.4.0 is submitted next. Kalamu has been there since version 1.0.0 (2 November 2026). Everything below is tested against
+[v1.4.1 release](https://github.com/fmadore/Kalamu/releases/tag/v1.4.1)
+([notes](release-1.4.1.md)). It is submitted next to the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), and is the first version
+prepared for the Mac App Store ([steps](mac-app-store.md)). Kalamu has been there since version 1.0.0 (2 November 2026). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
 the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
 (`cargo run --example live`, see [development.md](development.md) and the
@@ -427,12 +428,15 @@ Done: grants kept as security-scoped bookmarks and opened again at launch, the f
 before results are written beside sources or beside an export, the support link hidden in the
 store build, FFmpeg and ffprobe signed to inherit the sandbox, the data folder copied into the
 container, and a *Mac App Store* workflow that starts the sandboxed app in CI and, on demand,
-signs and uploads the package.
+signs and uploads the package (with `altool --upload-package`). For the first submission,
+version 1.4.1: a question before files are first sent to each cloud provider (Guideline
+5.1.2(i), on Windows too), the listing, review notes, age rating and App Privacy answers, the
+privacy policy's lines on the store build, and the steps in [mac-app-store.md](mac-app-store.md).
 
-Next: the App ID, the distribution certificates, the profile and the app in App Store Connect,
-with their secrets; a first TestFlight build, after the first run on a real Mac (*Next*); the listing, review notes and
-privacy answers; the privacy policy's line on kept grants; a way to grant again the folders of
-jobs made by the disk image.
+Next, by the maintainer: the App ID, the two distribution certificates, the profile, the API key
+and the app in App Store Connect, with their secrets and `APPLE_APP_ID`; screenshots taken on a
+Mac; a first TestFlight build opened on a real Mac (*Next*, item 2); then the submission. After
+it: a way to grant again the folders of jobs made by the disk image, and a French listing.
 
 ## Research workflows (planned)
 

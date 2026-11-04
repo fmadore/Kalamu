@@ -56,6 +56,8 @@ pub fn run() {
             commands::settings::app_info,
             commands::settings::get_settings,
             commands::settings::save_settings,
+            commands::settings::providers_to_consent,
+            commands::settings::consent_providers,
             commands::settings::get_catalog,
             commands::settings::refresh_catalog,
             commands::settings::task_rules,

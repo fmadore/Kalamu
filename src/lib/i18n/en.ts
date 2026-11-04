@@ -1641,6 +1641,15 @@ export const en = {
 		note: 'Kalamu is a project by {author} (University of Bayreuth). If it is useful to you, you can help fund its development. Supporting is entirely optional and does not unlock additional features.',
 		link: 'Buy me a coffee'
 	},
+	/** Asked once for each cloud provider, before the first job, workflow run or dictionary
+	 *  proposal sends the researcher's files to it. */
+	consent: {
+		title: 'Send your files to an AI provider?',
+		/** `providers` is a list of provider names; `policy` the privacy policy's address. */
+		ask: (providers: string, policy: string) =>
+			`Kalamu is about to send the content of your files to ${providers}: the pages, recordings or text, with the names and any other personal information they hold. Each provider reads them with its AI models under your own account and API key, and keeps them as its own terms say. Kalamu’s developer receives nothing.\n\nYou are asked once for each provider. Kalamu’s privacy policy: ${policy}`,
+		send: 'Send'
+	},
 	/** The Mac App Store's build, where macOS lets Kalamu write only in folders the researcher
 	 *  has chosen. */
 	access: {
@@ -1798,6 +1807,8 @@ export const en = {
 			'This is not a file of Kalamu prompts, a pipeline or a workflow, or it comes from a newer version of Kalamu.',
 		'provider.unknown': 'Unknown provider.',
 		'provider.missing_key': 'No API key is saved for this provider. Add one in Settings.',
+		'provider.consent':
+			'Kalamu has not been allowed to send your files to this provider. Start again and choose Send when asked.',
 		'provider.unsupported': 'This model cannot do this task.',
 		'source.unsupported':
 			'One of the files cannot be read for this task. Remove it, or choose another task.',
