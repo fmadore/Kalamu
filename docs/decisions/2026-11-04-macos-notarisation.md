@@ -45,7 +45,9 @@ now has an Apple Developer Program membership (team `3HMSG8WB7K`).
 - Keys saved by an ad-hoc build belong, for the Keychain, to a different app: on the first
   signed version macOS asks once more to let Kalamu use them. From then on the signature's
   requirement names the team, so updates no longer ask.
-- A release's macOS job now takes longer, by the minutes Apple's notary service needs.
+- A release's macOS job now takes longer, by the time Apple's notary service needs: usually
+  minutes, but the first test submission was still queued after 80 minutes, so the job's limit
+  is 240 minutes rather than 90.
 - The README, security policy, specification, roadmap and development notes describe the signed
   image. The privacy policy is unchanged: notarisation sends Apple the app at build time, not
   anything of a user's, and Gatekeeper's own online check is macOS's, not Kalamu's.

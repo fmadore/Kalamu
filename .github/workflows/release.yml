@@ -252,7 +252,9 @@ jobs:
     name: Disk image (Apple Silicon)
     needs: prepare
     runs-on: macos-latest
-    timeout-minutes: 90
+    # Notarisation usually answers in minutes, but Apple's queue can hold a submission for
+    # hours (a new team's first ones especially): the first test run was cancelled at 90.
+    timeout-minutes: 240
     env:
       TARGET: aarch64-apple-darwin
     steps:
