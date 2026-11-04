@@ -5,6 +5,7 @@
 mod command_names;
 mod commands;
 mod errors;
+mod grants;
 mod platform;
 mod secrets;
 mod settings;
@@ -146,6 +147,13 @@ pub fn run() {
                 data: data.clone(),
             };
             let settings = Settings::load(&paths.settings);
+            // Folders and files granted at earlier launches, opened again before the engine
+            // resumes any job or workflow run that reads or writes there.
+            let grants = grants::Grants::open(data.join("grants.json"), platform::access());
+            let open = grants.restore();
+            if open > 0 {
+                tracing::info!(count = open, "granted folders and files opened again");
+            }
             let store = Arc::new(SqliteStore::open(&data.join("jobs.sqlite"))?);
             // Projects share the job database, so deleting a job unlinks it from its documents.
             let projects = kalamu_projects::Projects::new(store.clone(), store.clone());
@@ -287,6 +295,7 @@ pub fn run() {
                 models,
                 tessdata,
                 keys,
+                grants,
                 settings: Mutex::new(settings),
                 paths,
                 http,
@@ -366,6 +375,8 @@ pub fn run() {
             commands::workflows::cancel_run,
             commands::workflows::delete_run,
             commands::jobs::expand_paths,
+            commands::jobs::folders_to_ask,
+            commands::jobs::keep_access,
             commands::jobs::inspect_files,
             commands::jobs::inspect_links,
             commands::jobs::estimate_cost,

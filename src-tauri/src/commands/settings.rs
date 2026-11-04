@@ -23,6 +23,7 @@ pub fn app_info(state: State<'_, AppState>) -> AppInfo {
         // Asked of the system rather than the webview: WebKit gives an app only the languages
         // its bundle declares.
         system_languages: sys_locale::get_locales().collect(),
+        app_store: platform::access().sandboxed,
     }
 }
 
@@ -33,6 +34,12 @@ pub fn get_settings(state: State<'_, AppState>) -> Settings {
 
 #[tauri::command]
 pub fn save_settings(state: State<'_, AppState>, settings: Settings) -> CmdResult<()> {
+    // The results folder, just picked, is needed again at later launches.
+    let folders = [
+        settings.last_folder.as_deref(),
+        destination_folder(&settings.destination),
+    ];
+    state.grants.keep(folders.into_iter().flatten());
     settings
         .save(&state.paths.settings)
         .map_err(|e| AppError::new(id::SETTINGS, e))?;
@@ -77,4 +84,12 @@ pub async fn refresh_catalog(state: State<'_, AppState>) -> CmdResult<Catalog> {
         return Ok(newest);
     }
     Ok(current)
+}
+
+/// The folder a destination names, if it names one.
+pub(crate) fn destination_folder(destination: &kalamu_core::OutputDestination) -> Option<&str> {
+    match destination {
+        kalamu_core::OutputDestination::Folder(folder) => Some(folder),
+        kalamu_core::OutputDestination::BesideSources => None,
+    }
 }

@@ -413,7 +413,9 @@
 			onclick={() => go({ name: 'glossary' })}
 			><Icon name="glossary" size={16} />{#if !collapsed}{m.nav.glossary}{/if}</button
 		>
-		<SupportLink variant="tool" iconOnly={collapsed} />
+		{#if !app.info?.app_store}
+			<SupportLink variant="tool" iconOnly={collapsed} />
+		{/if}
 		{#if offlineReady && !collapsed}
 			<p class="offline"><span class="dot" aria-hidden="true"></span>{m.shell.offlineReady}</p>
 		{/if}

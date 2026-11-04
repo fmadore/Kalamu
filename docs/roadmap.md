@@ -423,6 +423,23 @@ submission. Version 1.0.0 passed certification and is
 in [microsoft-store.md](microsoft-store.md); 1.3.0 is the version there now, and 1.4.0
 is submitted next.
 
+## Toward the Mac App Store
+
+The same app, sandboxed, beside the notarised disk image
+([feasibility](decisions/2026-11-04-mac-app-store-feasibility.md),
+[build](decisions/2026-11-04-mac-app-store-build.md)).
+
+Done: grants kept as security-scoped bookmarks and opened again at launch, the folder asked for
+before results are written beside sources or beside an export, the support link hidden in the
+store build, FFmpeg and ffprobe signed to inherit the sandbox, the data folder copied into the
+container, and a *Mac App Store* workflow that starts the sandboxed app in CI and, on demand,
+signs and uploads the package.
+
+Next: the App ID, the distribution certificates, the profile and the app in App Store Connect,
+with their secrets; a first TestFlight build opened on a real Mac; the listing, review notes and
+privacy answers; the privacy policy's line on kept grants; a way to grant again the folders of
+jobs made by the disk image.
+
 ## Research workflows (planned)
 
 The following improvements extend Kalamu from individual jobs to reusable research workflows.

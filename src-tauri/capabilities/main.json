@@ -59,6 +59,8 @@
     "allow-cancel-run",
     "allow-delete-run",
     "allow-expand-paths",
+    "allow-folders-to-ask",
+    "allow-keep-access",
     "allow-inspect-files",
     "allow-inspect-links",
     "allow-estimate-cost",

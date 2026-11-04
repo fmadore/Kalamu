@@ -1,0 +1,249 @@
+name: Mac App Store
+
+# The Mac App Store build (docs/decisions/2026-11-04-mac-app-store-feasibility.md): the same app
+# as the notarised disk image, run in the App Sandbox, signed for the store and sent to App Store
+# Connect, where it reaches TestFlight and then App Review.
+#
+# - `sandbox` runs on pull requests that touch the sandbox's files, and on demand. It builds the
+#   app with the store's configuration, signs it ad hoc with the sandbox's entitlements (a runner
+#   has no provisioning profile), starts it, and checks that the data folder is in the container,
+#   that the disk image's data was copied there, and that FFmpeg runs inside the sandbox.
+# - `upload` runs only on demand, with `upload` ticked, on the tag or branch chosen: it signs
+#   the app and the installer package with the Apple Distribution and Mac Installer
+#   Distribution certificates, embeds the provisioning profile, and uploads the package.
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Sign the build for the store and upload it to App Store Connect
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - .github/workflows/app-store.yml
+      - scripts/sign-app-store.sh
+      - src-tauri/appstore/**
+      - src-tauri/Info.plist
+      - src-tauri/tauri.appstore.conf.json
+      - src-tauri/src/grants.rs
+      - src-tauri/src/platform/macos.rs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-store-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TARGET: aarch64-apple-darwin
+
+jobs:
+  sandbox:
+    name: Sandboxed build starts (Apple Silicon)
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - run: rustup toolchain install
+
+      # As in release.yml: Tesseract's downloaded sources must stay out of the cached target.
+      - name: Keep Tesseract's build outside the cached target folder
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: whisper-cpu-${{ runner.arch }}-v2
+          save-if: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch the bundled FFmpeg
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-ffmpeg.mjs "$TARGET"
+
+      - name: Write the third-party notices
+        run: node scripts/third-party-notices.mjs "$TARGET"
+
+      - name: Build the app with the store's configuration
+        run: >-
+          npx tauri build --target "$TARGET" --bundles app --no-sign
+          --config src-tauri/tauri.ffmpeg.conf.json
+          --config src-tauri/tauri.appstore.conf.json
+
+      - name: Sign it ad hoc with the sandbox's entitlements
+        run: |
+          app="target/$TARGET/release/bundle/macos/Kalamu.app"
+          scripts/sign-app-store.sh "$app" - src-tauri/appstore/Sandbox.plist
+          codesign -d --entitlements - --xml "$app/Contents/MacOS/ffmpeg" 2>/dev/null \
+            | grep -q 'com.apple.security.inherit' \
+            || { echo "::error::FFmpeg is not signed to inherit the app's sandbox."; exit 1; }
+          test -f "$app/Contents/Resources/container-migration.plist" \
+            || { echo "::error::The container migration manifest is missing."; exit 1; }
+
+      # What the disk image would have left: its data folder, to be copied into the container
+      # the first time the sandboxed app starts.
+      - name: Leave a disk image's data folder behind
+        run: |
+          mkdir -p "$HOME/Library/Application Support/Kalamu"
+          echo "from the disk image" > "$HOME/Library/Application Support/Kalamu/migrated.txt"
+
+      - name: Start the sandboxed app and check its container
+        run: |
+          app="$PWD/target/$TARGET/release/bundle/macos/Kalamu.app"
+          container="$HOME/Library/Containers/io.github.fmadore.kalamu/Data"
+          data="$container/Library/Application Support/Kalamu"
+          logs="$container/Library/Logs/Kalamu"
+          open "$app"
+          for _ in $(seq 1 60); do
+            [ -f "$data/jobs.sqlite" ] && break
+            sleep 2
+          done
+          # Leave the app time to look for FFmpeg and write its first log lines.
+          sleep 10
+          echo "== container"; ls -la "$data" || true
+          echo "== logs"; cat "$logs"/kalamu.log* 2>/dev/null || true
+          osascript -e 'quit app "Kalamu"' || pkill -x Kalamu || true
+
+          test -f "$data/jobs.sqlite" \
+            || { echo "::error::The sandboxed app did not create its database in the container."; exit 1; }
+          grep -q "from the disk image" "$data/migrated.txt" \
+            || { echo "::error::The disk image's data folder was not copied into the container."; exit 1; }
+          ls "$logs"/kalamu.log* >/dev/null 2>&1             || { echo "::error::The sandboxed app wrote no log in the container."; exit 1; }
+          if grep -q "FFmpeg not found" "$logs"/kalamu.log*; then
+            echo "::error::FFmpeg did not run inside the sandbox."
+            exit 1
+          fi
+
+  upload:
+    name: Sign and upload to App Store Connect
+    if: github.event_name == 'workflow_dispatch' && inputs.upload
+    needs: sandbox
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check the store's secrets
+        env:
+          APPLE_DISTRIBUTION_CERTIFICATE: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE }}
+          APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          APPLE_DISTRIBUTION_IDENTITY: ${{ secrets.APPLE_DISTRIBUTION_IDENTITY }}
+          APPLE_INSTALLER_CERTIFICATE: ${{ secrets.APPLE_INSTALLER_CERTIFICATE }}
+          APPLE_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_INSTALLER_CERTIFICATE_PASSWORD }}
+          APPLE_INSTALLER_IDENTITY: ${{ secrets.APPLE_INSTALLER_IDENTITY }}
+          APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          missing=()
+          for name in APPLE_DISTRIBUTION_CERTIFICATE APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD \
+            APPLE_DISTRIBUTION_IDENTITY APPLE_INSTALLER_CERTIFICATE APPLE_INSTALLER_CERTIFICATE_PASSWORD \
+            APPLE_INSTALLER_IDENTITY APPLE_PROVISIONING_PROFILE APPLE_API_KEY_ID APPLE_API_ISSUER APPLE_API_KEY; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing repository secrets for the Mac App Store: ${missing[*]}."
+            exit 1
+          fi
+
+      - run: rustup toolchain install
+
+      - name: Keep Tesseract's build outside the cached target folder
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: whisper-cpu-${{ runner.arch }}-v2
+          save-if: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch the bundled FFmpeg
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-ffmpeg.mjs "$TARGET"
+
+      - name: Write the third-party notices
+        run: node scripts/third-party-notices.mjs "$TARGET"
+
+      - name: Import the certificates into a temporary keychain
+        env:
+          APPLE_DISTRIBUTION_CERTIFICATE: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE }}
+          APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          APPLE_INSTALLER_CERTIFICATE: ${{ secrets.APPLE_INSTALLER_CERTIFICATE }}
+          APPLE_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_INSTALLER_CERTIFICATE_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/store.keychain-db"
+          password=$(openssl rand -base64 24)
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          echo "$APPLE_DISTRIBUTION_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
+          echo "$APPLE_INSTALLER_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/installer.p12"
+          security import "$RUNNER_TEMP/distribution.p12" -k "$keychain" \
+            -P "$APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security import "$RUNNER_TEMP/installer.p12" -k "$keychain" \
+            -P "$APPLE_INSTALLER_CERTIFICATE_PASSWORD" -T /usr/bin/productbuild
+          rm "$RUNNER_TEMP/distribution.p12" "$RUNNER_TEMP/installer.p12"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+
+      - name: Write the provisioning profile
+        env:
+          APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+        run: echo "$APPLE_PROVISIONING_PROFILE" | base64 --decode > src-tauri/appstore/embedded.provisionprofile
+
+      # CFBundleVersion must rise with every upload, rejected ones included: this workflow's run
+      # number always does.
+      - name: Build the app with the store's configuration and profile
+        run: >-
+          npx tauri build --target "$TARGET" --bundles app --no-sign
+          --config src-tauri/tauri.ffmpeg.conf.json
+          --config src-tauri/tauri.appstore.conf.json
+          --config '{"bundle":{"macOS":{"bundleVersion":"${{ github.run_number }}","files":{"embedded.provisionprofile":"./appstore/embedded.provisionprofile"}}}}'
+
+      - name: Sign the app and the installer package
+        env:
+          APPLE_DISTRIBUTION_IDENTITY: ${{ secrets.APPLE_DISTRIBUTION_IDENTITY }}
+          APPLE_INSTALLER_IDENTITY: ${{ secrets.APPLE_INSTALLER_IDENTITY }}
+        run: |
+          app="target/$TARGET/release/bundle/macos/Kalamu.app"
+          scripts/sign-app-store.sh "$app" "$APPLE_DISTRIBUTION_IDENTITY" src-tauri/appstore/Entitlements.plist
+          xcrun productbuild --sign "$APPLE_INSTALLER_IDENTITY" \
+            --component "$app" /Applications "$RUNNER_TEMP/Kalamu.pkg"
+
+      - name: Validate and upload the package
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          printf '%s\n' "$APPLE_API_KEY" > "$HOME/.appstoreconnect/private_keys/AuthKey_$APPLE_API_KEY_ID.p8"
+          xcrun altool --validate-app --type macos --file "$RUNNER_TEMP/Kalamu.pkg" \
+            --apiKey "$APPLE_API_KEY_ID" --apiIssuer "$APPLE_API_ISSUER"
+          xcrun altool --upload-app --type macos --file "$RUNNER_TEMP/Kalamu.pkg" \
+            --apiKey "$APPLE_API_KEY_ID" --apiIssuer "$APPLE_API_ISSUER"
+
+      - name: Remove the keychain and the key
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/store.keychain-db" || true
+          rm -rf "$HOME/.appstoreconnect" src-tauri/appstore/embedded.provisionprofile

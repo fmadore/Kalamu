@@ -53,6 +53,8 @@ pub struct AppState {
     /// Tesseract's language data, shared with the Tesseract provider inside the engine.
     pub tessdata: kalamu_offline::ModelManager,
     pub keys: Arc<CredentialKeys>,
+    /// Folders and files the researcher handed the app, kept where a sandbox requires it.
+    pub grants: crate::grants::Grants,
     pub settings: Mutex<Settings>,
     pub paths: Paths,
     pub http: reqwest::Client,
@@ -80,6 +82,9 @@ pub struct AppInfo {
     /// The system's languages in order of preference (`fr-FR`, `en-US`…), from which the
     /// interface takes its own when the setting is `system`.
     pub system_languages: Vec<String>,
+    /// The Mac App Store's build, which runs in the App Sandbox: it asks for a folder before
+    /// writing results beside sources, and offers no support link (App Review Guideline 3.1.1).
+    pub app_store: bool,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

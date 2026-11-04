@@ -1736,6 +1736,13 @@ export const fr: Messages = {
 		note: 'Kalamu est un projet de {author} (Université de Bayreuth). S’il vous est utile, vous pouvez contribuer à financer son développement. Ce soutien est entièrement facultatif et ne débloque aucune fonction supplémentaire.',
 		link: 'Offrez-moi un café'
 	},
+	access: {
+		ask: (folder: string) =>
+			`Pour enregistrer les résultats à côté de vos fichiers, Kalamu a besoin de votre autorisation pour le dossier « ${folder} ». Choisissez ce dossier dans la fenêtre suivante.`,
+		choose: 'Choisir le dossier…',
+		missing: (folder: string) =>
+			`Kalamu ne peut pas enregistrer dans « ${folder} ». Choisissez ce dossier quand il vous est demandé, ou choisissez un seul dossier pour tous les résultats sous Résultats.`
+	},
 	format: {
 		txt: 'Texte (.txt)',
 		markdown: 'Markdown (.md)',

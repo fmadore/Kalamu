@@ -1,10 +1,15 @@
 //! macOS: WebKit plays the review's recordings, TextEdit opens JSON files, and the app behaves
 //! as Mac apps do: closing the window leaves it in the Dock, the Dock icon brings the window
-//! back, and Quit asks first while jobs run.
+//! back, and Quit asks first while jobs run. In the Mac App Store's build, the App Sandbox's
+//! grants are kept as security-scoped bookmarks.
 
 use std::path::{Path, PathBuf};
 
 use kalamu_media::Playback;
+use objc2::runtime::Bool;
+use objc2_foundation::{
+    NSData, NSString, NSURL, NSURLBookmarkCreationOptions, NSURLBookmarkResolutionOptions,
+};
 use tauri::menu::{Menu, MenuItem, MenuItemKind};
 use tauri::utils::config::{AppDirectoriesOverride, AppDirectoryOverrides};
 use tauri::{App, AppHandle, Emitter, Manager, RunEvent};
@@ -12,6 +17,7 @@ use tauri::{App, AppHandle, Emitter, Manager, RunEvent};
 use super::Moved;
 use crate::commands::AppState;
 use crate::commands::window::{jobs_running, show_main_window};
+use crate::grants::Access;
 
 /// The app a job's JSON files open in; every Mac has TextEdit.
 pub const JSON_APP: Option<&str> = Some("TextEdit");
@@ -117,4 +123,53 @@ fn request_quit(app: &AppHandle) {
 /// Brings the app back after Cmd+H hid it.
 pub fn show_app(app: &AppHandle) {
     let _ = app.show();
+}
+
+/// The App Sandbox's grants, kept as security-scoped bookmarks. Only the Mac App Store's build
+/// is sandboxed: macOS then sets `APP_SANDBOX_CONTAINER_ID` for the app.
+pub fn access() -> Access {
+    Access {
+        sandboxed: std::env::var_os("APP_SANDBOX_CONTAINER_ID").is_some(),
+        bookmark,
+        open: open_bookmark,
+    }
+}
+
+/// A security-scoped bookmark of a path the app can reach now.
+fn bookmark(path: &Path) -> Option<Vec<u8>> {
+    let url = NSURL::fileURLWithPath(&NSString::from_str(path.to_str()?));
+    url.bookmarkDataWithOptions_includingResourceValuesForKeys_relativeToURL_error(
+        NSURLBookmarkCreationOptions::WithSecurityScope,
+        None,
+        None,
+    )
+    .ok()
+    .map(|data| data.to_vec())
+}
+
+/// Where a bookmark leads now, with access opened for the rest of the session, and whether
+/// the system asks for it to be made again. Access is never closed: the app may need any kept
+/// path until it quits, when the system closes it.
+// The crate denies unsafe code; these two Foundation calls are the exception, since objc2
+// marks every call taking a raw pointer, or not yet audited, as unsafe.
+#[allow(unsafe_code)]
+fn open_bookmark(data: &[u8]) -> Option<(PathBuf, bool)> {
+    let data = NSData::with_bytes(data);
+    let mut stale = Bool::NO;
+    // SAFETY: `stale` is a live local for the whole call, as the pointer must be.
+    let url = unsafe {
+        NSURL::URLByResolvingBookmarkData_options_relativeToURL_bookmarkDataIsStale_error(
+            &data,
+            NSURLBookmarkResolutionOptions::WithSecurityScope,
+            None,
+            &mut stale,
+        )
+    }
+    .ok()?;
+    // SAFETY: a plain method call on the URL resolved above, with no arguments.
+    if !unsafe { url.startAccessingSecurityScopedResource() } {
+        return None;
+    }
+    let path = PathBuf::from(url.path()?.to_string());
+    Some((path, stale.as_bool()))
 }

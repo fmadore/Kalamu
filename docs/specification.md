@@ -780,4 +780,8 @@ On macOS (Apple Silicon, macOS 13 and later), a disk image attached to each GitH
 with FFmpeg and every licence inside. From 1.4.0 it is signed with an Apple Developer ID and notarised, so
 Gatekeeper opens it without a detour through System Settings
 ([decision](decisions/2026-11-04-macos-notarisation.md)). Keys are
-kept in the Keychain. There is no Mac App Store version ([decision](decisions/2026-11-02-macos.md)).
+kept in the Keychain. A Mac App Store build of the same code is being prepared: it runs in the
+App Sandbox, keeps the folders and files the researcher grants as security-scoped bookmarks,
+asks for a source's folder before writing results beside it, and has no support link
+([feasibility](decisions/2026-11-04-mac-app-store-feasibility.md),
+[build](decisions/2026-11-04-mac-app-store-build.md)).

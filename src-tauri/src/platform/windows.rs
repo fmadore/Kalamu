@@ -8,6 +8,7 @@ use tauri::utils::config::AppDirectoriesOverride;
 use tauri::{App, AppHandle, RunEvent};
 
 use super::Moved;
+use crate::grants::Access;
 
 /// The app a job's JSON files open in: Windows often has none for them, and every PC has
 /// Notepad.
@@ -96,6 +97,16 @@ pub fn on_run_event(_app: &AppHandle, _event: RunEvent) {}
 
 /// Nothing beyond the window itself to bring back.
 pub fn show_app(_app: &AppHandle) {}
+
+/// No sandbox: every path stays reachable, so nothing is kept. The Microsoft Store's package
+/// is a full-trust app, which may read and write wherever the researcher can.
+pub fn access() -> Access {
+    Access {
+        sandboxed: false,
+        bookmark: |_| None,
+        open: |_| None,
+    }
+}
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]

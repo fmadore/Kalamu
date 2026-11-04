@@ -132,6 +132,8 @@ export const api = {
 	exportPresets: (ids: string[], path: string) => invoke<void>('export_presets', { ids, path }),
 	importPresets: (path: string) => invoke<Preset[]>('import_presets', { path }),
 	expandPaths: (paths: string[], task: Task) => invoke<string[]>('expand_paths', { paths, task }),
+	foldersToAsk: (paths: string[]) => invoke<string[]>('folders_to_ask', { paths }),
+	keepAccess: (paths: string[]) => invoke<void>('keep_access', { paths }),
 	inspectFiles: (paths: string[]) => invoke<InspectedFile[]>('inspect_files', { paths }),
 	inspectLinks: (links: string[]) => invoke<InspectedFile[]>('inspect_links', { links }),
 	estimateCost: (request: EstimateRequest) => invoke<Estimate>('estimate_cost', { request }),
@@ -420,6 +422,40 @@ export async function pickPresetFile(): Promise<string | null> {
 	const { open } = await import('@tauri-apps/plugin-dialog');
 	const picked = await open({ multiple: false, filters: [{ name: 'JSON', extensions: ['json'] }] });
 	return typeof picked === 'string' ? picked : null;
+}
+
+/** Where results go beside these sources: each file's folder, or, for text frozen from an
+ *  earlier result, its original's. YouTube videos have none. */
+export function besidePlaces(sources: SourceFile[]): string[] {
+	return sources
+		.filter((s) => s.kind !== 'youtube')
+		.map((s) => s.derived_from?.original_path ?? s.path);
+}
+
+/** In the Mac App Store's build, asks the researcher for each folder results will be written to
+ *  beside these files, since macOS grants a picked file but not its folder. False when they
+ *  decline; throws when another folder was chosen. Elsewhere there is nothing to ask. */
+export async function askForFolders(paths: string[]): Promise<boolean> {
+	if (!isTauri() || paths.length === 0) return true;
+	const m = messages();
+	const { ask, open } = await import('@tauri-apps/plugin-dialog');
+	const nameOf = (folder: string) => folder.split(/[\\/]/).pop() || folder;
+	for (const folder of await api.foldersToAsk(paths)) {
+		const go = await ask(m.access.ask(nameOf(folder)), {
+			kind: 'info',
+			okLabel: m.access.choose,
+			cancelLabel: m.common.cancel
+		});
+		if (!go) return false;
+		const picked = await open({ directory: true, multiple: false, defaultPath: folder });
+		if (typeof picked !== 'string') return false;
+		await api.keepAccess([picked]);
+	}
+	const missing = await api.foldersToAsk(paths);
+	if (missing.length > 0) {
+		throw new Error(m.access.missing(nameOf(missing[0])));
+	}
+	return true;
 }
 
 /** A yes/no question in a native dialog. */

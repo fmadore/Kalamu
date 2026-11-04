@@ -432,7 +432,8 @@ export function installMock(): void {
 					data_dir: 'C:\\Users\\you\\AppData\\Local\\Kalamu Data',
 					logs_dir: '',
 					interrupted: [],
-					system_languages: [...navigator.languages]
+					system_languages: [...navigator.languages],
+					app_store: false
 				};
 			case 'get_settings':
 				return settings;
@@ -623,6 +624,10 @@ export function installMock(): void {
 			}
 			case 'expand_paths':
 				return a.paths;
+			case 'folders_to_ask':
+				return [];
+			case 'keep_access':
+				return null;
 			case 'inspect_files':
 				return (a.paths as string[]).map((path, i) => {
 					const id = `00000000-0000-0000-0000-0000000001${i}0`;

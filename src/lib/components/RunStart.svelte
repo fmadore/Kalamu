@@ -11,7 +11,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, type FromProject } from '#lib/state.svelte.js';
-	import { api, pickDocuments } from '#lib/tauri.js';
+	import { api, askForFolders, besidePlaces, pickDocuments } from '#lib/tauri.js';
 
 	let {
 		workflow,
@@ -114,6 +114,9 @@
 		error = null;
 		starting = true;
 		try {
+			// In the Mac App Store's build, the folders beside the sources must be granted first.
+			const beside = workflow.steps.some((s) => s.pipeline.destination.kind === 'beside_sources');
+			if (beside && !(await askForFolders(besidePlaces($state.snapshot(sources))))) return;
 			const view = await api.startRun({
 				workflow: $state.snapshot(workflow),
 				name,
