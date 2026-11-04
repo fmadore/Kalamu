@@ -681,6 +681,8 @@
 	}
 	.form {
 		display: grid;
+		/* As wide as the window leaves, whatever the steps hold. */
+		grid-template-columns: minmax(0, 1fr);
 		align-content: start;
 		gap: var(--space-6);
 		padding: var(--space-5) var(--space-6) var(--space-7);

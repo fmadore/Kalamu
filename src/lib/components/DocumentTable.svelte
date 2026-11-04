@@ -436,5 +436,13 @@
 		td:nth-child(6) {
 			display: none;
 		}
+		/* The table fits the window: results wrap, each count kept with its mark, and long
+		   names break. */
+		.results {
+			white-space: normal;
+		}
+		td {
+			overflow-wrap: anywhere;
+		}
 	}
 </style>

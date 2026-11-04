@@ -518,6 +518,7 @@
 	}
 	.main {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		align-content: start;
 		gap: var(--space-4);
 		padding: var(--space-4) var(--space-5) var(--space-7);
@@ -537,10 +538,10 @@
 			grid-template-columns: minmax(0, 1fr);
 			grid-template-rows: auto 1fr;
 		}
+		/* The sections wrap onto a second line rather than scroll sideways. */
 		.sections {
-			grid-auto-flow: column;
-			grid-auto-columns: max-content;
-			overflow-x: auto;
+			display: flex;
+			flex-wrap: wrap;
 			border-right: 0;
 			border-bottom: 1px solid var(--line);
 			padding: var(--space-2) var(--space-4);

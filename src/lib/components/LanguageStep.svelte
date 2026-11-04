@@ -146,7 +146,8 @@
 	}
 	.row {
 		display: flex;
-		gap: var(--space-3);
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-3);
 		align-items: center;
 	}
 	.hint {

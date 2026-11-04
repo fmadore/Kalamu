@@ -277,11 +277,12 @@
 </div>
 
 <style>
+	/* Wrapping rather than scrolling in a narrow window. */
 	.tabs {
 		display: flex;
-		gap: var(--space-1);
+		flex-wrap: wrap;
+		gap: 0 var(--space-1);
 		border-bottom: 1px solid var(--line);
-		overflow-x: auto;
 	}
 	.tab {
 		padding: var(--space-2) var(--space-3);
@@ -309,10 +310,12 @@
 	}
 	.panel {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 	}
 	.block {
 		padding: var(--space-4) 0 0;
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-3);
 	}
 	.small {
@@ -354,8 +357,14 @@
 	}
 	.row {
 		display: flex;
-		gap: var(--space-3);
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-3);
 		align-items: center;
+	}
+	/* A long button label wraps in a narrow window. */
+	.row .btn {
+		white-space: normal;
+		text-align: left;
 	}
 	.inline {
 		display: inline-flex;

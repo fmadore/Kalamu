@@ -375,10 +375,12 @@
 <style>
 	.dictionary {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-3);
 	}
 	.head {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-3);

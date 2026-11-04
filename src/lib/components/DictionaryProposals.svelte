@@ -364,17 +364,24 @@
 <style>
 	.proposals {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-2);
 		margin-block: var(--space-3);
 	}
 	.head {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-2);
 	}
 	h3 {
 		margin: 0;
+	}
+	/* A long button label wraps in a narrow window. */
+	.head .btn {
+		white-space: normal;
+		text-align: left;
 	}
 	.ask {
 		display: grid;

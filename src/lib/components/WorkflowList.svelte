@@ -238,6 +238,7 @@
 	/* Room under the card's rule before its title. */
 	.example {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: auto 1fr auto auto;
 		gap: var(--space-2);
 		padding-top: var(--space-4);
