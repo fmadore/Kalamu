@@ -3,11 +3,11 @@
 //! not set aside. A document read by several set-ups stays one document; its alternatives are
 //! listed, so the researcher sees what the queue reads and can narrow it.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use kalamu_core::{
     CollectionId, DocumentId, JobId, ProjectError, ProjectId, ReviewScope, ReviewTarget, SetupId,
-    Task,
+    Task, TiedResults,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -92,102 +92,76 @@ impl Projects {
                 all.into_iter().filter(|d| ids.contains(&d.id)).collect()
             }
         };
-        let links = self.store.links(project)?;
-        let preferred = self.store.preferred(project)?;
+        let in_scope: HashSet<DocumentId> = documents.iter().map(|d| d.id).collect();
+        let tied = TiedResults::read(
+            &self.store.links(project)?,
+            &self.store.preferred(project)?,
+            |d| in_scope.contains(&d),
+            |id| self.jobs.job(id),
+        )?;
         let excluded: HashSet<ResultKey> = excluded.iter().copied().collect();
-
-        let mut jobs = HashMap::new();
-        for link in &links {
-            if jobs.contains_key(&link.job_id) {
-                continue;
-            }
-            match self.jobs.job(link.job_id) {
-                Ok(job) => {
-                    jobs.insert(job.id, job);
-                }
-                Err(kalamu_core::StoreError::NotFound) => {}
-                Err(e) => return Err(e.into()),
-            }
-        }
 
         let mut targets = Vec::new();
         let mut choices: Vec<ResultChoice> = Vec::new();
         let mut through_preferred: HashSet<(DocumentId, Task)> = HashSet::new();
         for document in &documents {
-            let mine: Vec<_> = links
-                .iter()
-                .filter(|l| l.document_id == document.id)
-                .filter_map(|l| jobs.get(&l.job_id).map(|job| (l, job)))
-                .collect();
-            let mut tasks: Vec<Task> = mine.iter().map(|(_, job)| job.task).collect();
-            tasks.sort_by_key(|t| Task::ALL.iter().position(|x| x == t));
-            tasks.dedup();
-            for task in tasks {
+            for task in tied.tasks(document.id) {
                 // The preferred result, while its job and set-up still exist.
-                let chosen = preferred
-                    .iter()
-                    .find(|p| p.document_id == document.id && p.task == task)
-                    .and_then(|p| {
-                        mine.iter()
-                            .find(|(l, job)| {
-                                l.job_id == p.job_id
-                                    && job.setups.iter().any(|s| s.id == p.setup_id)
-                            })
-                            .map(|(l, _)| (l.source_id, p.job_id, p.setup_id))
-                    });
-                if let Some((source_id, job_id, setup_id)) = chosen {
+                if let Some(chosen) = tied.preferred(document.id, task) {
                     through_preferred.insert((document.id, task));
                     targets.push(ReviewTarget {
                         document_id: document.id,
                         document: document.title.clone(),
-                        job_id,
-                        source_id,
-                        setup_id,
+                        job_id: chosen.job_id,
+                        source_id: chosen.source_id,
+                        setup_id: chosen.setup_id,
                         preferred: true,
                     });
                     continue;
                 }
-                let mut alternatives: Vec<_> =
-                    mine.iter().filter(|(_, j)| j.task == task).collect();
+                let mut alternatives: Vec<_> = tied
+                    .of(document.id, task)
+                    .filter_map(|r| Some((r, tied.job(r.job_id)?)))
+                    .collect();
                 alternatives.sort_by_key(|(_, job)| std::cmp::Reverse(job.created_at));
-                for (link, job) in alternatives {
-                    for setup in &job.setups {
-                        let key = ResultKey {
+                for (result, job) in alternatives {
+                    let Some(setup) = job.setups.iter().find(|s| s.id == result.setup_id) else {
+                        continue;
+                    };
+                    let key = ResultKey {
+                        job_id: job.id,
+                        setup_id: setup.id,
+                    };
+                    let included = !excluded.contains(&key);
+                    match choices.iter_mut().find(|c| c.key == key) {
+                        Some(choice) => choice.documents += 1,
+                        None => choices.push(ResultChoice {
+                            key,
+                            job_name: job.name.clone(),
+                            task: job.task,
+                            setup_label: setup.label.clone(),
+                            model: setup.model.clone(),
+                            documents: 1,
+                            included,
+                        }),
+                    }
+                    if included {
+                        targets.push(ReviewTarget {
+                            document_id: document.id,
+                            document: document.title.clone(),
                             job_id: job.id,
+                            source_id: result.source_id,
                             setup_id: setup.id,
-                        };
-                        let included = !excluded.contains(&key);
-                        match choices.iter_mut().find(|c| c.key == key) {
-                            Some(choice) => choice.documents += 1,
-                            None => choices.push(ResultChoice {
-                                key,
-                                job_name: job.name.clone(),
-                                task: job.task,
-                                setup_label: setup.label.clone(),
-                                model: setup.model.clone(),
-                                documents: 1,
-                                included,
-                            }),
-                        }
-                        if included {
-                            targets.push(ReviewTarget {
-                                document_id: document.id,
-                                document: document.title.clone(),
-                                job_id: job.id,
-                                source_id: link.source_id,
-                                setup_id: setup.id,
-                                preferred: false,
-                            });
-                        }
+                            preferred: false,
+                        });
                     }
                 }
             }
         }
         choices.sort_by_key(|c| {
-            let created = jobs.get(&c.key.job_id).map(|j| j.created_at);
-            let order = jobs
-                .get(&c.key.job_id)
-                .and_then(|j| j.setups.iter().position(|s| s.id == c.key.setup_id));
+            let job = tied.job(c.key.job_id);
+            let created = job.map(|j| j.created_at);
+            let order = job.and_then(|j| j.setups.iter().position(|s| s.id == c.key.setup_id));
             (std::cmp::Reverse(created), order)
         });
         Ok(QueuePlan {

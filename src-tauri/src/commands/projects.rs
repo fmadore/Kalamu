@@ -266,7 +266,7 @@ pub fn export_descriptions(
         )?;
         return write(
             path.with_extension("csv"),
-            projects.export_profiled_csv(project, collection, &profile, &labels)?,
+            table_csv(&projects.profiled_table(project, collection, &profile, &labels)?)?,
         );
     }
     write(
@@ -277,10 +277,13 @@ pub fn export_descriptions(
     )?;
     write(
         path.with_extension("csv"),
-        state
-            .projects
-            .export_descriptions_csv(project, collection)?,
+        table_csv(&state.projects.descriptions_table(project, collection)?)?,
     )
+}
+
+/// A project's table as CSV, a failure said as the project export's.
+fn table_csv(table: &kalamu_core::Table) -> Result<String, kalamu_core::ProjectError> {
+    kalamu_export::table_csv(table).map_err(|e| kalamu_core::ProjectError::Export(e.to_string()))
 }
 
 #[tauri::command]

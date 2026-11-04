@@ -79,13 +79,7 @@ impl Engine {
                 c.unresolved += u32::from(item.open);
             }
             for signal in &item.signals {
-                match signal {
-                    Signal::Truncated => c.truncated += 1,
-                    Signal::Disagrees { .. } => c.disagrees += 1,
-                    Signal::Stale { .. } => c.stale += 1,
-                    Signal::NotReviewed => c.not_reviewed += 1,
-                    Signal::Failed { .. } | Signal::NotRead => {}
-                }
+                c.reasons.add(signal);
             }
         }
         Ok(queue)

@@ -119,6 +119,17 @@ pub fn remember_interrupted(ids: Vec<JobId>) {
     *INTERRUPTED.lock().unwrap_or_else(|p| p.into_inner()) = ids;
 }
 
+/// Runs work that reads or writes files off the window's thread, where a synchronous command
+/// would run it and freeze the window: writing a result waits for a running job to finish
+/// writing its own.
+async fn off_thread<T: Send + 'static>(
+    work: impl FnOnce() -> Result<T, AppError> + Send + 'static,
+) -> Result<T, AppError> {
+    tokio::task::spawn_blocking(work)
+        .await
+        .map_err(|e| AppError::new(crate::errors::id::INTERNAL, e))?
+}
+
 /// Writes an exported file (a record, a dictionary) where the researcher chose.
 fn write_text(path: PathBuf, text: String) -> Result<(), AppError> {
     std::fs::write(path, text).map_err(|e| AppError::new(crate::errors::id::FILE, e))

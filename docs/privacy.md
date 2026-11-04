@@ -1,13 +1,15 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 4 November 2026, for offline text extraction with Tesseract and its
-language data, downloaded from GitHub, which apply from version 1.4.0. Version 1.0.0, the first Microsoft
+**Effective date:** 4 November 2026, the second policy of that day, for the Mac App Store
+build: the folders the user grants it, kept as bookmarks, and its data folder inside the app's
+own container; and for the file paths the logs may hold. Version 1.0.0, the first Microsoft
 Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
 the second named the data folder after the app's bundle identifier, the third did not list the
 items' pages, the fourth, which applies to version 1.2.0, did not list the search index, and
-that of 3 November 2026, which applies to version 1.3.0, did not list Tesseract.
+that of 3 November 2026, which applies to version 1.3.0, did not list Tesseract, and the first
+of 4 November 2026, which applies to version 1.4.0, did not cover the Mac App Store build.
 
 ## What this app is
 
@@ -61,7 +63,9 @@ Choose a provider whose terms suit the material, or work offline.
 In the app's local data folder, which Settings shows: on Windows `%LOCALAPPDATA%\Kalamu Data`
 for the installer, and the same folder inside the package's own for the Store app
 (`%LOCALAPPDATA%\Packages\49346FMadore.Kalamu_…\LocalCache\Local\Kalamu Data`); on macOS
-`~/Library/Application Support/Kalamu`, with the logs in `~/Library/Logs/Kalamu`. Versions 1.0
+`~/Library/Application Support/Kalamu`, with the logs in `~/Library/Logs/Kalamu`, and for the
+Mac App Store app the same folders inside its container
+(`~/Library/Containers/io.github.fmadore.kalamu/Data/Library/…`). Versions 1.0
 to 1.1.2 named the folder after the app's bundle identifier, `io.github.fmadore.kalamu`, and
 the Windows test releases up to 0.2, named Scriptorium, kept it in
 `%LOCALAPPDATA%\io.github.fmadore.scriptorium`; the first start of a newer version moves that
@@ -121,16 +125,22 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   recordings straight from the original file; for a format it cannot play, the piece is
   converted on the computer and the copy kept, so it plays at once next time. The folder is
   kept under 256 MB by removing the copies heard longest ago.
-- **Logs**, for troubleshooting: what the app did and the errors it met, with job identifiers.
-  They contain no API keys and no document text.
+- **Folders and files the user granted** to the Mac App Store app (`grants.json`): each path
+  with the bookmark macOS gives for it, so the app can reach the folder again at the next launch
+  without asking. A folder out of reach at launch (a disk not connected) is kept for the next.
+  The other builds keep nothing of the kind.
+- **Logs**, for troubleshooting: what the app did and the errors it met, with job identifiers
+  and the paths of the files and folders concerned. They contain no API keys and no document
+  text.
 
 Results are also written as files where the user chooses: next to the original files or in a
 chosen folder, each with a `provenance.json` that records the model, prompt and settings used
 and, for a source that is a document of a project, the project's name, the document's title
 and the description of its source the user typed.
 
-Uninstalling the Store app removes its local data folder. Exported files stay where they were
-written.
+Uninstalling the Microsoft Store app removes its local data folder. On macOS, moving the app
+to the Bin leaves its data folder, and the Mac App Store app's container, until the user
+deletes them. Exported files stay where they were written.
 
 ## API keys
 

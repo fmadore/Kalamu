@@ -17,6 +17,10 @@ pub struct ImageSource {
     sizes: Vec<(u32, u32)>,
     /// Whether EXIF orientation turns the image a quarter turn.
     quarter_turn: bool,
+    /// Whether EXIF orientation changes the image at all (a turn, half a turn, a mirror):
+    /// such a file is sent upright, decoded and turned, since not every reader honours it
+    /// (Tesseract does not).
+    oriented: bool,
 }
 
 impl ImageSource {
@@ -45,11 +49,11 @@ impl ImageSource {
             _ => "application/octet-stream",
         }
         .to_string();
-        let (sizes, quarter_turn) = if mime == "image/tiff" {
-            (tiff_sizes(&bytes)?, false)
+        let (sizes, quarter_turn, oriented) = if mime == "image/tiff" {
+            (tiff_sizes(&bytes)?, false, false)
         } else if mime.starts_with("image/hei") {
             // No decoder for HEIC here; providers that accept it get the file as it is.
-            (vec![(0, 0)], false)
+            (vec![(0, 0)], false, false)
         } else {
             let mut decoder = ImageReader::new(Cursor::new(&bytes))
                 .with_guessed_format()
@@ -57,17 +61,21 @@ impl ImageSource {
                 .into_decoder()
                 .map_err(|e| MediaError::Image(e.to_string()))?;
             let size = decoder.dimensions();
-            let turn = decoder.orientation().is_ok_and(|o| {
+            let orientation = decoder.orientation().ok();
+            let turn = orientation.is_some_and(|o| {
                 use image::metadata::Orientation::*;
                 matches!(o, Rotate90 | Rotate270 | Rotate90FlipH | Rotate270FlipH)
             });
-            (vec![size], turn)
+            let oriented =
+                orientation.is_some_and(|o| o != image::metadata::Orientation::NoTransforms);
+            (vec![size], turn, oriented)
         };
         Ok(Self {
             bytes,
             mime,
             sizes,
             quarter_turn,
+            oriented,
         })
     }
 
@@ -108,7 +116,7 @@ impl ImageSource {
         if single_page
             && half.is_none()
             && !oversized
-            && !self.quarter_turn
+            && !self.oriented
             && accepted.contains(&self.mime.as_str())
         {
             return Ok((self.mime.clone(), self.bytes.clone()));

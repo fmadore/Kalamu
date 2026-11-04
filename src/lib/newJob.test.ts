@@ -4,20 +4,27 @@ import type { Catalog } from './bindings/Catalog.js';
 import type { Task } from './bindings/Task.js';
 import rulesJson from './dev/taskRules.json';
 import { en } from './i18n/index.js';
+import type { Preset } from './bindings/Preset.js';
 import {
 	acceptsPrompt,
+	draftsOf,
+	followingAnalysis,
+	formPipeline,
 	inputOf,
+	jobSettings,
 	mergeDefault,
 	mergeModelsFor,
 	modelInfo,
 	modelsFor,
 	newDraft,
+	pagesPerCallOf,
 	providerDefault,
 	readsKind,
 	type Rules,
 	rulesFor,
 	suggestName,
 	taskOf,
+	togetherOf,
 	toRequest,
 	warningText
 } from './newJob.js';
@@ -167,5 +174,96 @@ describe('tables of contents and corrections', () => {
 		expect(readsKind(rules, 'text_correction', 'text')).toBe(true);
 		expect(readsKind(rules, 'text_correction', 'image')).toBe(false);
 		expect(taskOf('text_correction')).toBe('text_correction');
+	});
+});
+
+describe('the New job form as a pipeline', () => {
+	const settings = {
+		languageMode: 'explicit' as const,
+		languages: ['fr', 'mos'],
+		languagesTaken: true,
+		sample: true,
+		samplePages: 3,
+		paged: true,
+		lineBreaks: 'as_on_page' as const,
+		linesTaken: true,
+		pace: 'economy' as const,
+		pagesPerCall: undefined
+	};
+
+	it('sends pages together only where the task can and when asked', () => {
+		const extraction = rule('text_extraction');
+		expect(pagesPerCallOf(extraction, 'one', 4)).toBeUndefined();
+		expect(pagesPerCallOf(extraction, 'several', 1.4)).toEqual({ kind: 'several', pages: 2 });
+		expect(pagesPerCallOf(extraction, 'whole', 4)).toEqual({ kind: 'whole' });
+		expect(pagesPerCallOf(rule('analysis'), 'whole', 4)).toBeUndefined();
+		expect(togetherOf(undefined)).toEqual({ together: 'one' });
+		expect(togetherOf({ kind: 'several', pages: 6 })).toEqual({ together: 'several', pages: 6 });
+		expect(togetherOf({ kind: 'whole' })).toEqual({ together: 'whole' });
+	});
+
+	it('keeps the settings that apply, and leaves out those no model takes', () => {
+		expect(jobSettings(settings)).toEqual({
+			languages: { mode: 'explicit', languages: ['fr', 'mos'] },
+			sample_pages: 3,
+			line_breaks: 'as_on_page',
+			pace: 'economy',
+			pages_per_call: undefined
+		});
+		expect(
+			jobSettings({ ...settings, languagesTaken: false, paged: false, linesTaken: false })
+		).toMatchObject({ languages: { mode: 'auto' }, sample_pages: null, line_breaks: null });
+	});
+
+	it('saves the form as a pipeline, and runs only the formats its models can write', () => {
+		const d = newDraft(catalog, rule('text_extraction'), 'p', () => true);
+		const form = {
+			name: 'Bulletins',
+			task: 'text_extraction' as const,
+			catalog,
+			rule: rule('text_extraction'),
+			drafts: [d],
+			settings: jobSettings(settings),
+			formats: ['txt', 'alto'] as const satisfies string[],
+			destination: { kind: 'beside_sources' as const }
+		};
+		const saved = formPipeline({ ...form, formats: [...form.formats] });
+		expect(saved).toMatchObject({ id: '', name: 'Bulletins', formats: ['txt', 'alto'] });
+		expect(saved.setups).toEqual([toRequest(catalog, 'text_extraction', d)]);
+		// Applied again, the pipeline gives the same models and prompt.
+		expect(draftsOf(saved)).toMatchObject([
+			{
+				provider: d.provider,
+				model: d.model,
+				presetId: 'p',
+				label: '',
+				mergeProvider: d.provider,
+				mergeModel: d.model
+			}
+		]);
+		const run = formPipeline({ ...form, formats: [...form.formats] }, true);
+		const offered = run.formats;
+		expect(offered).toContain('txt');
+		expect(offered.every((f) => ['txt', 'alto'].includes(f))).toBe(true);
+	});
+
+	it('follows a reading with an analysis in the researcher’s usual formats', () => {
+		const d = newDraft(catalog, rule('analysis'), null, () => true);
+		const preset = { id: 'analysis.people', name: 'People' } as Preset;
+		const then = followingAnalysis(
+			preset,
+			toRequest(catalog, 'analysis', d),
+			rule('analysis'),
+			['markdown', 'txt'],
+			'fast',
+			{ kind: 'beside_sources' }
+		);
+		expect(then).toMatchObject({ name: 'People', task: 'analysis' });
+		expect(then.setups[0]).toMatchObject({ preset_id: 'analysis.people', label: null });
+		expect(then.formats.every((f) => ['markdown', 'txt'].includes(f))).toBe(true);
+		const none = followingAnalysis(preset, then.setups[0], rule('analysis'), [], 'fast', {
+			kind: 'beside_sources'
+		});
+		expect(none.formats).toEqual(rule('analysis').formats.slice(0, 1));
 	});
 });

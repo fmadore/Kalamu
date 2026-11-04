@@ -54,7 +54,7 @@ impl Engine {
     ) -> Result<Vec<PieceView>, EngineError> {
         let job = self.store.job(job_id)?;
         let corrections = self.store.corrections(job_id)?;
-        let names = self.store.speaker_names(job_id)?;
+        let speakers = self.store.speakers(job_id)?;
         // A correction's source is read once, for the text each piece had before.
         let opened = match job.sources.iter().find(|s| s.id == source_id) {
             Some(source) if job.task == Task::TextCorrection => {
@@ -73,11 +73,7 @@ impl Engine {
                 .setups
                 .iter()
                 .any(|s| s.id == state.setup_id && s.options.diarize);
-            let speaker_names = names
-                .iter()
-                .find(|n| n.setup_id == state.setup_id && n.source_id == source_id)
-                .map(|n| n.names.clone())
-                .unwrap_or_default();
+            let speaker_names = speakers.of(state.setup_id, source_id).clone();
             let speakers = match &result {
                 Some(r) if diarized => labels(&r.output.text, &r.output.segments),
                 _ => Vec::new(),

@@ -12,12 +12,14 @@ mod json;
 mod markdown;
 mod searchable_pdf;
 mod subtitles;
+mod table;
 mod text;
 mod timeline;
 pub mod units;
 
 use kalamu_core::{ExportDocument, ExportFormat, Exporter};
 
+pub use table::table_csv;
 pub use timeline::{cues, segments_from_text, timed_lines, timeline};
 
 /// Every exporter, in the order formats are offered.

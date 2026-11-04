@@ -10,10 +10,11 @@
 	import type { DerivedState } from '#lib/bindings/DerivedState.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
 	import type { PieceState } from '#lib/bindings/PieceState.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
+	import { deleteJob, renameJob } from '#lib/jobActions.svelte.js';
 	import { rulesFor } from '#lib/newJob.js';
-	import { api, ask } from '#lib/tauri.js';
+	import { api } from '#lib/tauri.js';
 	import { app, go, liveJob, refreshJobs } from '#lib/state.svelte.js';
 
 	let { jobId }: { jobId: string } = $props();
@@ -21,7 +22,7 @@
 
 	let job = $state<Job | null>(null);
 	let pieces = $state<PieceState[]>([]);
-	let error = $state<string | null>(null);
+	const action = new Action({ after: () => refreshJobs() });
 	/** The files the job wrote that are still on disk. */
 	let written = $state<string[]>([]);
 	/** The name being typed while the job is renamed. */
@@ -49,7 +50,7 @@
 			job = await api.getJob(jobId);
 			pieces = await api.jobPieces(jobId);
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 		// Scores are an extra: the page stands without them.
 		if (job && rulesFor(app.rules, job.task).yields_text) {
@@ -71,25 +72,20 @@
 	});
 
 	async function open(path: string) {
-		error = null;
+		action.error = null;
 		try {
 			await api.openOutput(jobId, path);
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
 	async function rename() {
-		const name = draftName?.trim();
+		const typed = draftName ?? '';
 		draftName = null;
-		if (!name || !job || name === job.name) return;
-		try {
-			await api.renameJob(jobId, name);
-			job.name = name;
-			await refreshJobs();
-		} catch (e) {
-			error = describeError(e, m);
-		}
+		await action.run(async () => {
+			if ((await renameJob(jobId, typed)) && job) job.name = typed.trim();
+		}, null);
 	}
 
 	function renameKeys(e: KeyboardEvent) {
@@ -113,46 +109,41 @@
 		}, 500);
 	});
 
-	async function act(action: () => Promise<void>) {
-		error = null;
-		try {
+	/** Pauses, cancels, retries or starts the job, its progress followed live. */
+	function act(work: () => Promise<void>) {
+		return action.run(async () => {
 			liveJob(jobId);
-			await action();
-			await refreshJobs();
-		} catch (e) {
-			error = describeError(e, m);
-		}
+			await work();
+		});
 	}
 
 	async function remove() {
-		if (!(await ask(m.jobs.deleteConfirm))) return;
-		await act(() => api.deleteJob(jobId));
-		go({ name: 'jobs' });
+		await action.run(() => deleteJob(jobId), null);
 	}
 
 	/** A new analysis of the text as corrected, frozen so later corrections do not change it. */
 	async function analyseText(fromJob: string, setup: string) {
-		error = null;
+		action.error = null;
 		try {
 			const sources = await api.snapshotJob(fromJob, setup);
 			go({ name: 'new', task: 'analysis', sources });
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
 	/** A new analysis job over the text files this job wrote (a table of contents). */
 	async function summarise() {
-		error = null;
+		action.error = null;
 		try {
 			const paths = await api.jobTextOutputs(jobId);
 			if (paths.length === 0) {
-				error = m.jobs.noTextOutputs;
+				action.error = m.jobs.noTextOutputs;
 				return;
 			}
 			go({ name: 'new', task: 'analysis', paths });
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -215,7 +206,7 @@
 							{/each}
 						</select>
 					{/if}
-					<UseTextMenu {jobId} setupId={textSetup} onerror={(e) => (error = e)} />
+					<UseTextMenu {jobId} setupId={textSetup} onerror={(e) => (action.error = e)} />
 				{:else if summary.status === 'completed' && summary.task === 'contents'}
 					<button class="btn" onclick={summarise}>{m.jobs.summarise}</button>
 				{/if}
@@ -252,7 +243,7 @@
 	{/if}
 
 	<div class="body">
-		{#if error}<p class="chip danger">{error}</p>{/if}
+		{#if action.error}<p class="chip danger">{action.error}</p>{/if}
 
 		<JobFacts {job} {summary} {spent} {scores} />
 

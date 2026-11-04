@@ -5,7 +5,14 @@
 import type { Catalog } from './bindings/Catalog.js';
 import type { ExportFormat } from './bindings/ExportFormat.js';
 import type { InputWarning } from './bindings/InputWarning.js';
+import type { JobSettings } from './bindings/JobSettings.js';
+import type { LineBreaks } from './bindings/LineBreaks.js';
 import type { ModelInfo } from './bindings/ModelInfo.js';
+import type { OutputDestination } from './bindings/OutputDestination.js';
+import type { Pace } from './bindings/Pace.js';
+import type { PagesPerCall } from './bindings/PagesPerCall.js';
+import type { Pipeline } from './bindings/Pipeline.js';
+import type { Preset } from './bindings/Preset.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { Task } from './bindings/Task.js';
 import type { TaskRules } from './bindings/TaskRules.js';
@@ -287,4 +294,149 @@ export function suggestName(added: string[], expanded: string[]): string {
 export function suggestedReasoning(rule: TaskRules, d: Draft): string | undefined {
 	return rule.models.find((r) => r.provider === d.provider && r.model === d.model)
 		?.suggested_reasoning;
+}
+
+/** How many pages of a PDF go in one call, as the form offers it. */
+export type Together = 'one' | 'several' | 'whole';
+
+/** What the job sends for how pages go together: nothing for one page at a time, as before,
+ * nor for a task that sends pages one by one. */
+export function pagesPerCallOf(
+	rule: TaskRules,
+	together: Together,
+	pages: number
+): PagesPerCall | undefined {
+	if (!rule.pages_per_call || together === 'one') return undefined;
+	return together === 'whole'
+		? { kind: 'whole' }
+		: { kind: 'several', pages: Math.max(2, Math.round(pages)) };
+}
+
+/** The form's choice back from what a pipeline sends; `pages` only when several. */
+export function togetherOf(sent: PagesPerCall | undefined): { together: Together; pages?: number } {
+	if (!sent || sent.kind === 'one') return { together: 'one' };
+	return sent.kind === 'several'
+		? { together: 'several', pages: sent.pages }
+		: { together: 'whole' };
+}
+
+/** The choices of the form that every set-up shares. */
+export interface SettingsForm {
+	languageMode: 'auto' | 'explicit';
+	languages: string[];
+	/** Whether some chosen model takes the languages: if none does, they are not sent. */
+	languagesTaken: boolean;
+	sample: boolean;
+	samplePages: number;
+	/** Whether the task reads page by page, so a sample of pages applies. */
+	paged: boolean;
+	lineBreaks: LineBreaks;
+	/** Whether line breaks apply to the task and some chosen model takes them. */
+	linesTaken: boolean;
+	pace: Pace;
+	pagesPerCall: PagesPerCall | undefined;
+}
+
+/** The settings shared by every set-up, as a job and a pipeline store them. */
+export function jobSettings(f: SettingsForm): JobSettings {
+	return {
+		languages:
+			f.languageMode === 'explicit' && f.languages.length > 0 && f.languagesTaken
+				? { mode: 'explicit', languages: [...f.languages] }
+				: { mode: 'auto' },
+		sample_pages: f.sample && f.paged ? f.samplePages : null,
+		line_breaks: f.linesTaken ? f.lineBreaks : null,
+		pace: f.pace,
+		pages_per_call: f.pagesPerCall
+	};
+}
+
+/** The form as a pipeline: everything but the files. */
+export interface PipelineForm {
+	name: string;
+	task: Task;
+	catalog: Catalog;
+	rule: TaskRules;
+	drafts: Draft[];
+	settings: JobSettings;
+	formats: ExportFormat[];
+	destination: OutputDestination;
+}
+
+/** The form as a pipeline. Run now (`toRun`), it keeps only the formats the chosen models can
+ * write, as a job does. */
+export function formPipeline(f: PipelineForm, toRun = false): Pipeline {
+	return {
+		id: '',
+		name: f.name,
+		task: f.task,
+		setups: f.drafts.map((d) => {
+			const r = toRequest(f.catalog, f.task, d);
+			return {
+				provider: r.provider,
+				model: r.model,
+				preset_id: r.preset_id,
+				label: r.label,
+				options: r.options,
+				merge: r.merge
+			};
+		}),
+		settings: f.settings,
+		formats: toRun
+			? f.formats.filter((x) => offeredFormats(f.catalog, f.rule, f.drafts).includes(x))
+			: [...f.formats],
+		destination: f.destination,
+		updated_at: 0
+	};
+}
+
+/** The analysis that follows a reading, as a pipeline: the prompt chosen, the model `setup`
+ * gives, and the researcher's usual formats for text that analysis can write. */
+export function followingAnalysis(
+	preset: Preset,
+	setup: SetupRequest,
+	rule: TaskRules,
+	textFormats: ExportFormat[],
+	pace: Pace,
+	destination: OutputDestination
+): Pipeline {
+	const usual = rule.formats.filter((f) => textFormats.includes(f));
+	return {
+		id: '',
+		name: preset.name,
+		task: 'analysis',
+		setups: [
+			{
+				provider: setup.provider,
+				model: setup.model,
+				preset_id: preset.id,
+				label: null,
+				options: setup.options
+			}
+		],
+		settings: {
+			languages: { mode: 'auto' },
+			sample_pages: null,
+			line_breaks: null,
+			pace
+		},
+		formats: usual.length > 0 ? usual : rule.formats.slice(0, 1),
+		destination,
+		updated_at: 0
+	};
+}
+
+/** A saved pipeline's set-ups as the form edits them. */
+export function draftsOf(p: Pipeline): Draft[] {
+	return p.setups.map((s) => ({
+		provider: s.provider,
+		model: s.model,
+		presetId: s.preset_id,
+		label: s.label ?? '',
+		diarize: s.options.diarize,
+		reasoning: s.options.reasoning ?? null,
+		timestamps: s.options.timestamps,
+		mergeProvider: s.merge?.provider ?? s.provider,
+		mergeModel: s.merge?.model ?? s.model
+	}));
 }

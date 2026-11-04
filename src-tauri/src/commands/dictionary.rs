@@ -243,8 +243,7 @@ pub fn export_dictionary(
         path.with_extension("json"),
         state.dictionary.export_json(project)?,
     )?;
-    write(
-        path.with_extension("csv"),
-        state.dictionary.export_csv(project)?,
-    )
+    let csv = kalamu_export::table_csv(&state.dictionary.forms_table(project)?)
+        .map_err(|e| kalamu_core::DictionaryError::Export(e.to_string()))?;
+    write(path.with_extension("csv"), csv)
 }

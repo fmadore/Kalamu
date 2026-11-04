@@ -28,13 +28,16 @@ pub mod source;
 pub mod speakers;
 pub mod store;
 pub mod task;
+pub mod tied;
 pub mod units;
 pub mod warning;
 pub mod workflow;
 pub mod youtube;
 
 pub use analysis::{AnalysisSchema, Field, FieldAnswer, FieldKind, FieldValue, SchemaError};
-pub use attention::{QueueCounts, QueueItem, ReviewQueue, ReviewScope, ReviewTarget, Signal};
+pub use attention::{
+    QueueCounts, QueueItem, ReasonCounts, ReviewQueue, ReviewScope, ReviewTarget, Signal,
+};
 pub use batch::{
     BATCH_WINDOW_MS, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress, BatchRecord,
 };
@@ -42,7 +45,9 @@ pub use dictionary::{
     DictionaryError, DictionaryStore, Entry, KeptApart, Labels, ProposalGroup, ProposalRequest,
 };
 pub use event::ProgressEvent;
-pub use export::{ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter};
+pub use export::{
+    ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter, Table,
+};
 pub use fingerprint::CacheKey;
 pub use ids::{
     CollectionId, DocumentId, EntryId, JobId, ProjectId, ProviderId, RunId, SetupId, SourceId,
@@ -72,9 +77,10 @@ pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};
 pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
 pub use source::{InputKind, SourceFile};
-pub use speakers::SpeakerNames;
+pub use speakers::{SpeakerIndex, SpeakerNames};
 pub use store::{Correction, JobStore, StoreError};
 pub use task::Task;
+pub use tied::{TiedResult, TiedResults};
 pub use units::{DocumentUnit, FrozenUnit, PagesError, SeedProblem, SharedPage, UnitError};
 pub use warning::{InputWarning, WarningKind};
 pub use workflow::{
@@ -84,3 +90,29 @@ pub use youtube::YOUTUBE_LINK;
 
 /// Bumped when a change to preparation or parsing makes cached results stale.
 pub const PIPELINE_VERSION: u32 = 1;
+
+#[cfg(test)]
+mod interface_lists {
+    /// The lists the interface would otherwise copy from Rust's enums and rules: the parts of a
+    /// source description in order, the tasks whose results are a text, and the queue's reasons.
+    /// `cargo test` keeps `src/lib/coreLists.json` current, as it does `searchRules.json`; the
+    /// interface imports it, so the two sides cannot drift.
+    #[test]
+    fn export_lists_for_the_interface() -> Result<(), Box<dyn std::error::Error>> {
+        let lists = serde_json::json!({
+            "description_fields": crate::DescriptionField::ALL,
+            "text_tasks": crate::Task::ALL
+                .iter()
+                .filter(|t| t.yields_text())
+                .collect::<Vec<_>>(),
+            "queue_reasons": crate::Signal::KINDS,
+        });
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/lib/coreLists.json");
+        let json = serde_json::to_string_pretty(&lists)? + "\n";
+        if std::fs::read_to_string(&path).ok().as_deref() != Some(json.as_str()) {
+            std::fs::write(&path, json)?;
+        }
+        Ok(())
+    }
+}

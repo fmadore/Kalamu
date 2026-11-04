@@ -6,6 +6,7 @@
 	import Icon from './Icon.svelte';
 	import type { RunView } from '#lib/bindings/RunView.js';
 	import type { StepView } from '#lib/bindings/StepView.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs } from '#lib/state.svelte.js';
@@ -17,14 +18,13 @@
 	const m = messages();
 	const w = m.workflows;
 	let view = $state<RunView | null>(null);
-	let error = $state<string | null>(null);
-	let busy = $state(false);
+	const action = new Action({ after: () => Promise.all([load(), refreshJobs()]) });
 
 	async function load() {
 		try {
 			view = await api.getRun(runId);
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -34,23 +34,10 @@
 		void load();
 	});
 
-	async function act(work: () => Promise<void>) {
-		error = null;
-		busy = true;
-		try {
-			await work();
-			await Promise.all([load(), refreshJobs()]);
-		} catch (e) {
-			error = describeError(e, m);
-		} finally {
-			busy = false;
-		}
-	}
-
-	const approve = (step: number) => act(() => api.approveStep(runId, step));
+	const approve = (step: number) => action.run(() => api.approveStep(runId, step));
 
 	async function cancel() {
-		if (await ask(w.cancelConfirm)) await act(() => api.cancelRun(runId));
+		if (await ask(w.cancelConfirm)) await action.run(() => api.cancelRun(runId));
 	}
 
 	async function forget() {
@@ -59,7 +46,7 @@
 			await api.deleteRun(runId);
 			go({ name: 'workflows' });
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -105,14 +92,14 @@
 		</div>
 		<div class="buttons">
 			{#if status === 'running' || status === 'needs_you'}
-				<button class="btn ghost danger" onclick={cancel} disabled={busy}>{w.cancel}</button>
+				<button class="btn ghost danger" onclick={cancel} disabled={action.busy}>{w.cancel}</button>
 			{/if}
 			<button class="btn ghost" onclick={forget}>{w.forget}</button>
 		</div>
 	</header>
 
 	<div class="sheet">
-		{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
+		{#if action.error}<p class="chip danger" role="alert">{action.error}</p>{/if}
 		<ol class="steps">
 			{#each steps as step, i (i)}
 				{@const frozen = run.steps[i]}
@@ -156,11 +143,11 @@
 							>
 						{/if}
 						{#if step.state === 'review'}
-							<button class="btn sm primary" onclick={() => approve(i)} disabled={busy}
+							<button class="btn sm primary" onclick={() => approve(i)} disabled={action.busy}
 								><Icon name="check" />{w.continue}</button
 							>
 						{:else if step.state === 'attention'}
-							<button class="btn sm primary" onclick={() => approve(i)} disabled={busy}
+							<button class="btn sm primary" onclick={() => approve(i)} disabled={action.busy}
 								>{w.continueAnyway}</button
 							>
 						{/if}
@@ -169,8 +156,8 @@
 			{/each}
 		</ol>
 	</div>
-{:else if error}
-	<div class="sheet"><p class="chip danger" role="alert">{error}</p></div>
+{:else if action.error}
+	<div class="sheet"><p class="chip danger" role="alert">{action.error}</p></div>
 {:else}
 	<div class="sheet"><p class="muted">{m.common.loading}</p></div>
 {/if}

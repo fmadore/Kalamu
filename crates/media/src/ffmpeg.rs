@@ -35,11 +35,7 @@ fn quiet(command: &mut Command) -> &mut Command {
 }
 
 fn exe(name: &str) -> String {
-    if cfg!(windows) {
-        format!("{name}.exe")
-    } else {
-        name.to_owned()
-    }
+    format!("{name}{}", std::env::consts::EXE_SUFFIX)
 }
 
 impl Ffmpeg {

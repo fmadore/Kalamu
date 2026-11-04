@@ -3,9 +3,11 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use kalamu_core::analysis::latest_labels;
 use kalamu_core::{
-    CollectionId, DictionaryError, DocumentId, Entry, EntryId, FieldKind, FieldValue, Job, JobId,
-    KeptApart, ProjectId, SetupId, SourceId, StoreError, Task, Timestamp, dictionary::form_of,
+    CollectionId, Correction, DictionaryError, DocumentId, Entry, EntryId, Field, FieldKind,
+    FieldValue, JobId, KeptApart, PieceState, ProjectId, SetupId, SourceId, Task, TiedResults,
+    Timestamp, dictionary::form_of,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -126,84 +128,71 @@ impl Dictionary {
             .collect();
         let titles: HashMap<DocumentId, String> =
             documents.iter().map(|d| (d.id, d.title.clone())).collect();
-        let mut jobs: HashMap<JobId, Option<Job>> = HashMap::new();
+        let tied = TiedResults::read(
+            &self.projects.links(project)?,
+            &[],
+            |d| titles.contains_key(&d),
+            |id| self.jobs.job(id),
+        )?;
+        let is_list = |f: &Field| matches!(f.kind, FieldKind::List { .. });
         let mut gathered = Gathered {
-            namespaces: BTreeMap::new(),
+            namespaces: latest_labels(tied.jobs(), is_list),
             readings: Vec::new(),
             documents: documents.len() as u32,
             titles: HashMap::new(),
         };
-        for link in self.projects.links(project)? {
-            if !titles.contains_key(&link.document_id) {
+        // Each analysis's pieces and corrections, read once however many documents it read.
+        let mut read: HashMap<JobId, (Vec<PieceState>, Vec<Correction>)> = HashMap::new();
+        for result in tied.all().iter().filter(|r| r.task == Task::Analysis) {
+            let Some(job) = tied.job(result.job_id) else {
+                continue;
+            };
+            let Some(setup) = job.setups.iter().find(|s| s.id == result.setup_id) else {
+                continue;
+            };
+            let Some(schema) = &setup.prompt.schema else {
+                continue;
+            };
+            let lists: Vec<&str> = schema
+                .fields
+                .iter()
+                .filter(|f| is_list(f))
+                .map(|f| f.key.as_str())
+                .collect();
+            if lists.is_empty() {
                 continue;
             }
-            let job = match jobs.entry(link.job_id) {
-                std::collections::hash_map::Entry::Occupied(seen) => seen.into_mut(),
+            let (pieces, corrections) = match read.entry(job.id) {
+                std::collections::hash_map::Entry::Occupied(known) => known.into_mut(),
                 std::collections::hash_map::Entry::Vacant(slot) => {
-                    slot.insert(match self.jobs.job(link.job_id) {
-                        Ok(job) => Some(job),
-                        Err(StoreError::NotFound) => None,
-                        Err(e) => return Err(e.into()),
-                    })
+                    slot.insert((self.jobs.pieces(job.id)?, self.jobs.corrections(job.id)?))
                 }
             };
-            let Some(job) = job.as_ref() else {
-                continue;
-            };
-            if job.task != Task::Analysis {
-                continue;
-            }
-            let pieces = self.jobs.pieces(job.id)?;
-            let corrections = self.jobs.corrections(job.id)?;
-            for setup in &job.setups {
-                let Some(schema) = &setup.prompt.schema else {
+            let mut fields: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+            for piece in pieces.iter().filter(|p| {
+                p.setup_id == setup.id && p.source_id == result.source_id && p.status.is_finished()
+            }) {
+                let Some(answers) = self.jobs.answers(piece, corrections)? else {
                     continue;
                 };
-                let lists: Vec<&str> = schema
-                    .fields
-                    .iter()
-                    .filter(|f| matches!(f.kind, FieldKind::List { .. }))
-                    .map(|f| {
-                        let known = gathered.namespaces.get(&f.key);
-                        if known.is_none_or(|(at, _)| *at <= job.created_at) {
-                            gathered
-                                .namespaces
-                                .insert(f.key.clone(), (job.created_at, f.label.clone()));
-                        }
-                        f.key.as_str()
-                    })
-                    .collect();
-                if lists.is_empty() {
-                    continue;
-                }
-                let mut fields: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-                for piece in pieces.iter().filter(|p| {
-                    p.setup_id == setup.id
-                        && p.source_id == link.source_id
-                        && p.status.is_finished()
-                }) {
-                    let Some(answers) = self.jobs.answers(piece, &corrections)? else {
-                        continue;
-                    };
-                    for answer in answers.iter().filter(|a| lists.contains(&a.key.as_str())) {
-                        let forms = fields.entry(answer.key.clone()).or_default();
-                        if let FieldValue::List(items) = &answer.value {
-                            forms.extend(items.iter().filter_map(|i| form_of(i)));
-                        }
+                for answer in answers.iter().filter(|a| lists.contains(&a.key.as_str())) {
+                    let forms = fields.entry(answer.key.clone()).or_default();
+                    if let FieldValue::List(items) = &answer.value {
+                        forms.extend(items.iter().filter_map(|i| form_of(i)));
                     }
                 }
-                if !fields.is_empty() {
-                    gathered.readings.push(Reading {
-                        document: link.document_id,
-                        job_id: job.id,
-                        job_name: job.name.clone(),
-                        source_id: link.source_id,
-                        setup_id: setup.id,
-                        setup_label: setup.label.clone(),
-                        created_at: job.created_at,
-                        fields,
-                    });
-                }
+            }
+            if !fields.is_empty() {
+                gathered.readings.push(Reading {
+                    document: result.document_id,
+                    job_id: job.id,
+                    job_name: job.name.clone(),
+                    source_id: result.source_id,
+                    setup_id: setup.id,
+                    setup_label: setup.label.clone(),
+                    created_at: job.created_at,
+                    fields,
+                });
             }
         }
         gathered.titles = titles;

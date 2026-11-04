@@ -16,8 +16,9 @@
 		shownRows,
 		type RowFilter
 	} from '#lib/dictionary.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { Selection } from '#lib/selection.svelte.js';
 	import { toast } from '#lib/state.svelte.js';
 	import { api, askForFolders, pickDictionaryExport } from '#lib/tauri.js';
 
@@ -30,12 +31,20 @@
 	const filters: RowFilter[] = ['all', 'to_review', 'similar', 'reviewed', 'unseen'];
 
 	let view = $state<DictionaryView | null>(null);
-	let error = $state<string | null>(null);
+	/** After a change, the selection and the merge typed are dropped and the rows read again. */
+	const action = new Action({
+		after: async () => {
+			selection.clear();
+			merging = null;
+			await load();
+			if (open) await showEvidence(open);
+		}
+	});
 	let scope = $state('');
 	let field = $state('');
 	let query = $state('');
 	let filter = $state<RowFilter>('all');
-	let selected = $state<string[]>([]);
+	const selection = new Selection();
 	let merging = $state<string | null>(null);
 	let open = $state<string | null>(null);
 	let evidence = $state<Evidence[]>([]);
@@ -45,32 +54,15 @@
 	);
 	const rows = $derived(view ? shownRows(view.rows, namespace, query, filter) : []);
 	const byKey = $derived(new Map((view?.rows ?? []).map((r) => [r.key, r])));
-	const chosen = $derived(rows.filter((r) => selected.includes(r.key)));
+	const chosen = $derived(selection.of(rows, (r) => r.key));
 	const allChosen = $derived(rows.length > 0 && chosen.length === rows.length);
 
 	async function load() {
 		try {
 			view = await api.dictionaryView(projectId, scope || null);
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
-	}
-
-	async function act(action: () => Promise<unknown>) {
-		error = null;
-		try {
-			await action();
-			selected = [];
-			merging = null;
-			await load();
-			if (open) await showEvidence(open);
-		} catch (e) {
-			error = describeError(e, m);
-		}
-	}
-
-	function toggle(key: string) {
-		selected = selected.includes(key) ? selected.filter((k) => k !== key) : [...selected, key];
 	}
 
 	function labelOf(key: string): string {
@@ -99,7 +91,7 @@
 		try {
 			await showEvidence(row.key);
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -107,7 +99,7 @@
 		event.preventDefault();
 		if (merging === null) return;
 		const label = merging;
-		void act(() => api.dictionaryMerge(projectId, namespace, chosen.map(itemOf), label));
+		void action.run(() => api.dictionaryMerge(projectId, namespace, chosen.map(itemOf), label));
 	}
 
 	async function exportAll() {
@@ -119,7 +111,7 @@
 			await api.exportDictionary(projectId, path);
 			toast(m.dictionary.exported);
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -139,7 +131,7 @@
 		{/if}
 	</div>
 	<p class="muted lede">{m.dictionary.lede}</p>
-	{#if error}<p class="chip danger banner" role="alert">{error}</p>{/if}
+	{#if action.error}<p class="chip danger banner" role="alert">{action.error}</p>{/if}
 
 	{#if view}
 		<p class="coverage num">{m.dictionary.coverage(view.documents_read, view.documents)}</p>
@@ -151,7 +143,7 @@
 						value={namespace}
 						onchange={(e) => {
 							field = e.currentTarget.value;
-							selected = [];
+							selection.clear();
 							open = null;
 						}}
 					>
@@ -204,7 +196,7 @@
 			{#if chosen.length > 0}
 				<div class="selection-bar" role="toolbar" aria-label={m.dictionary.selected(chosen.length)}>
 					<span class="num">{m.dictionary.selected(chosen.length)}</span>
-					<button class="btn ghost sm" onclick={() => (selected = [])}
+					<button class="btn ghost sm" onclick={() => selection.clear()}
 						>{m.dictionary.clearSelection}</button
 					>
 					<span class="grow"></span>
@@ -239,7 +231,7 @@
 							disabled={chosen.length !== 2}
 							title={m.dictionary.keepApartHint}
 							onclick={() =>
-								act(() =>
+								action.run(() =>
 									api.dictionaryKeepApart(
 										projectId,
 										namespace,
@@ -251,14 +243,14 @@
 						<button
 							class="btn sm"
 							onclick={() =>
-								act(() =>
+								action.run(() =>
 									api.dictionarySetReviewed(projectId, namespace, chosen.map(itemOf), true)
 								)}><Icon name="check" size={14} />{m.dictionary.markReviewed}</button
 						>
 						<button
 							class="btn ghost sm"
 							onclick={() =>
-								act(() =>
+								action.run(() =>
 									api.dictionarySetReviewed(projectId, namespace, chosen.map(itemOf), false)
 								)}>{m.dictionary.markToReview}</button
 						>
@@ -277,7 +269,7 @@
 									type="checkbox"
 									checked={allChosen}
 									aria-label={m.dictionary.selectAll}
-									onchange={() => (selected = allChosen ? [] : rows.map((r) => r.key))}
+									onchange={() => selection.toggleAll(rows.map((r) => r.key))}
 								/>
 							</th>
 							<th>{m.dictionary.columnLabel}</th>
@@ -288,13 +280,13 @@
 					</thead>
 					<tbody>
 						{#each rows as row (row.key)}
-							<tr class:chosen={selected.includes(row.key)}>
+							<tr class:chosen={selection.has(row.key)}>
 								<td class="check">
 									<input
 										type="checkbox"
-										checked={selected.includes(row.key)}
+										checked={selection.has(row.key)}
 										aria-label={m.dictionary.select(row.label)}
-										onchange={() => toggle(row.key)}
+										onchange={() => selection.toggle(row.key)}
 									/>
 								</td>
 								<td>
@@ -315,10 +307,7 @@
 										<p class="hint" title={m.dictionary.similarHint}>
 											{m.dictionary.similar}
 											{row.similar.map(labelOf).join(', ')} ·
-											<button
-												class="link"
-												onclick={() =>
-													(selected = [...new Set([...selected, row.key, ...row.similar])])}
+											<button class="link" onclick={() => selection.add([row.key, ...row.similar])}
 												>{m.dictionary.selectSimilar}</button
 											>
 										</p>
@@ -334,8 +323,9 @@
 														title={m.dictionary.withdraw(labelOf(other))}
 														onclick={() =>
 															row.entry &&
-															act(() => api.dictionaryUndoApart(projectId, row.entry ?? '', other))}
-														><Icon name="close" size={11} /></button
+															action.run(() =>
+																api.dictionaryUndoApart(projectId, row.entry ?? '', other)
+															)}><Icon name="close" size={11} /></button
 													></span
 												>
 											{/each}
@@ -362,7 +352,12 @@
 								<tr class="details">
 									<td></td>
 									<td colspan="4">
-										<DictionaryDetails {projectId} {row} {evidence} {act} />
+										<DictionaryDetails
+											{projectId}
+											{row}
+											{evidence}
+											act={(work) => action.run(work)}
+										/>
 									</td>
 								</tr>
 							{/if}

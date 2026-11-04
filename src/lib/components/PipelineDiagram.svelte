@@ -6,8 +6,29 @@
 	// Each step is a list item with its words, so the drawing itself is only decoration.
 	import Icon from './Icon.svelte';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
-	import { listNames, messages } from '#lib/i18n/index.js';
-	import { duration, type Mode } from '#lib/newJob.js';
+	import { messages } from '#lib/i18n/index.js';
+	import type { Mode } from '#lib/newJob.js';
+	import {
+		BAR_STEP,
+		BARS,
+		barsOf,
+		CUT_GAP,
+		cutsOf,
+		diagramSources,
+		fieldNamesOf,
+		FLAWS,
+		pageCount,
+		pieceCount,
+		pieceOf,
+		row,
+		stagesFor,
+		tableRows,
+		tocRows,
+		videoOf,
+		W,
+		waveLeft,
+		type Art
+	} from '#lib/pipeline.js';
 
 	let {
 		mode,
@@ -38,194 +59,22 @@
 	let replays = $state(0);
 	const run = $derived(play + replays);
 
-	type Art =
-		| 'stack'
-		| 'pages'
-		| 'read'
-		| 'place'
-		| 'joined'
-		| 'searchable'
-		| 'whole'
-		| 'fields'
-		| 'table'
-		| 'wave'
-		| 'cut'
-		| 'transcribe'
-		| 'transcript'
-		| 'link'
-		| 'send'
-		| 'watch'
-		| 'entries'
-		| 'combine'
-		| 'toc'
-		| 'ocr'
-		| 'correct'
-		| 'compare';
-	/** `detail` names the user's file, in mono; `note` adds what the step does with it; `also`
-	 * marks a second result beside the one before it rather than a step after it. */
-	type Stage = { art: Art; caption: string; detail?: string[]; note?: string; also?: boolean };
-
-	const sources = $derived(
-		files.flatMap((f) => (f.source ? [{ ...f.source, pieces: f.pieces }] : []))
-	);
+	const sources = $derived(diagramSources(files));
 	const first = $derived(sources[0]);
-	const more = $derived(sources.length > 1 ? m.pipeline.moreFiles(sources.length - 1) : undefined);
-	const model = $derived(models.length === 1 ? models[0] : m.pipeline.theModel);
-	const merger = $derived(mergeModels.length === 1 ? mergeModels[0] : m.pipeline.theModel);
-	const fieldNames = $derived(fields.length > 0 ? fields : m.pipeline.exampleFields);
-	/** Whether a chosen model reports where text sits; the others give text only. */
-	const placed = $derived(searchable.length > 0);
-	/** Under the reading: that it notes where text sits (and which model, when not all do), or
-	 * that it gives text only. */
-	const placeNote = $derived.by(() => {
-		if (placed && searchable.length === models.length) return m.pipeline.extractPlace;
-		if (placed) return m.pipeline.extractPlaces(listNames(searchable));
-		return models.length > 0 ? m.pipeline.extractTextOnly : undefined;
-	});
+	const fieldNames = $derived(fieldNamesOf(fields, m));
+	const stages = $derived(stagesFor({ mode, files, fields, models, mergeModels, searchable }, m));
 
-	/** A file's name, then its size as the file list shows it. */
-	const fileDetail = $derived(
-		first
-			? [
-					first.file_name,
-					first.page_count ? m.newJob.pages(first.page_count) : '',
-					first.duration_ms ? duration(Number(first.duration_ms), m) : ''
-				].filter(Boolean)
-			: undefined
-	);
-
-	/** Pages of the first file as pieces: a spread split in two counts twice; an image is one. */
-	const pages = $derived(first ? (first.page_count ?? 1) * (first.split_spreads ? 2 : 1) : 3);
-	const pieces = $derived(first?.pieces ?? 3);
+	const pages = $derived(pageCount(first));
+	const pieces = $derived(pieceCount(first));
 	const shownPages = $derived(Math.min(pages, 3));
 	const shownPieces = $derived(Math.min(pieces, 5));
 
-	const stages = $derived.by((): Stage[] => {
-		switch (mode) {
-			case 'text_extraction':
-				return [
-					{ art: 'stack', caption: m.pipeline.extractSource, detail: fileDetail },
-					{
-						art: 'pages',
-						caption: m.pipeline.extractSplit,
-						note: first?.split_spreads ? m.pipeline.extractSpreads : undefined
-					},
-					{
-						art: placed ? 'place' : 'read',
-						caption: m.pipeline.extractRead(model),
-						note: placeNote
-					},
-					{ art: 'joined', caption: m.pipeline.extractJoin, note: more },
-					...(placed
-						? [
-								{
-									art: 'searchable' as const,
-									caption: m.pipeline.extractSearchable,
-									note: m.pipeline.extractPdfOnly,
-									also: true
-								}
-							]
-						: [])
-				];
-			case 'analysis':
-				return [
-					{ art: 'whole', caption: m.pipeline.analysisWhole, detail: fileDetail },
-					{ art: 'fields', caption: m.pipeline.analysisFill(model) },
-					{ art: 'table', caption: m.pipeline.analysisTable }
-				];
-			case 'audio_transcription':
-				return [
-					{ art: 'wave', caption: m.pipeline.audioSource, detail: fileDetail },
-					{
-						art: 'cut',
-						caption: first?.pieces ? m.pipeline.audioCut(pieces) : m.pipeline.audioCutExample
-					},
-					{ art: 'transcribe', caption: m.pipeline.audioRead(model) },
-					{
-						art: 'transcript',
-						caption: m.pipeline.audioJoin,
-						note: pieces > 1 ? m.pipeline.audioSpeakers : more
-					}
-				];
-			case 'contents':
-				return [
-					{ art: 'stack', caption: m.pipeline.contentsSource, detail: fileDetail },
-					{
-						art: 'entries',
-						caption: m.pipeline.contentsRead(model),
-						note: m.pipeline.contentsContinues
-					},
-					{ art: 'combine', caption: m.pipeline.contentsMerge(merger) },
-					{ art: 'toc', caption: m.pipeline.contentsTable, note: more }
-				];
-			case 'text_correction':
-				return [
-					{ art: 'ocr', caption: m.pipeline.correctionSource, detail: fileDetail },
-					{ art: 'pages', caption: m.pipeline.correctionSplit },
-					{ art: 'correct', caption: m.pipeline.correctionRead(model) },
-					{ art: 'compare', caption: m.pipeline.correctionCompare, note: more }
-				];
-			case 'youtube':
-				return [
-					{
-						art: 'link',
-						caption: m.pipeline.youtubeSource,
-						detail: first?.title ? [first.title] : undefined
-					},
-					{ art: 'send', caption: m.pipeline.youtubeSend },
-					{ art: 'watch', caption: m.pipeline.youtubeRead(model) },
-					{ art: 'transcript', caption: m.pipeline.youtubeJoin, note: more }
-				];
-		}
-	});
-
-	// Drawing helpers, on a 140 × 72 grid.
-	const W = 140;
-	/** Left edges of `n` boxes `w` wide, `gap` apart, centred. */
-	const row = (n: number, w: number, gap: number) =>
-		Array.from({ length: n }, (_, i) => (W - (n * w + (n - 1) * gap)) / 2 + i * (w + gap));
-
-	/** A waveform of 32 bars, quiet where the recording is cut. */
-	const BARS = 32;
-	const cuts = $derived(
-		Array.from({ length: shownPieces - 1 }, (_, i) => Math.round(((i + 1) * BARS) / shownPieces))
-	);
-	const bars = $derived(
-		Array.from({ length: BARS }, (_, k) =>
-			cuts.some((c) => k === c || k === c - 1)
-				? 2
-				: 4 + Math.round(24 * Math.abs(Math.sin(k * 1.7) * Math.cos(k * 0.45)))
-		)
-	);
-	/** Which piece each bar falls in. */
-	const pieceOf = (k: number) => cuts.filter((c) => k >= c).length;
-	const BAR_STEP = 3.5;
-	const CUT_GAP = 6;
-	const waveLeft = $derived((W - (BARS * BAR_STEP + (shownPieces - 1) * CUT_GAP)) / 2);
-
-	const video = $derived(
-		first?.path.replace(/^https?:\/\/(www\.)?/, '') ?? 'youtube.com/watch?v=…'
-	);
-	/** A table of contents' rows: stand-in entries, with pages that run over the first pages. */
-	const tocRows = $derived(
-		m.pipeline.exampleEntries.map((title, r) => ({
-			title,
-			pages: [pages > 2 ? '1, 3' : '1', '2', String(Math.max(pages, 3))][r] ?? ''
-		}))
-	);
-	/** Where a page's text was misread, as [line, x, width] on a sheet's lines. */
-	const FLAWS = [
-		[1, 14, 8],
-		[3, 8, 10],
-		[5, 18, 7]
-	];
-
-	/** The table's rows: the user's documents, or stand-ins until there are some. */
-	const rows = $derived(
-		sources.length > 0
-			? sources.slice(0, sources.length > 3 ? 2 : 3).map((s) => s.file_name)
-			: [1, 2, 3].map((n) => m.pipeline.document(n))
-	);
+	const cuts = $derived(cutsOf(shownPieces));
+	const bars = $derived(barsOf(cuts));
+	const left = $derived(waveLeft(shownPieces));
+	const video = $derived(videoOf(first));
+	const toc = $derived(tocRows(pages, m));
+	const rows = $derived(tableRows(sources, m));
 </script>
 
 <figure class="diagram" class:playing={run > 0}>
@@ -374,7 +223,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each tocRows as entry, r (r)}
+				{#each toc as entry, r (r)}
 					<tr class="grow-row" style="--j: {r}">
 						<td>{entry.title}</td>
 						<td class="mono">{entry.pages}</td>
@@ -605,10 +454,10 @@
 				{@const shift = kind === 'cut' ? p * CUT_GAP : whole}
 				<g class={kind === 'cut' ? 'part' : ''} style="--dx: {whole - shift}px">
 					{#each bars as h, k (k)}
-						{#if pieceOf(k) === p}
+						{#if pieceOf(cuts, k) === p}
 							<rect
 								class="bar"
-								x={waveLeft + k * BAR_STEP + shift}
+								x={left + k * BAR_STEP + shift}
 								y={30 - h / 2}
 								width="2"
 								height={h}
@@ -619,7 +468,7 @@
 					{#if kind === 'cut'}
 						{@const from = cuts[p - 1] ?? 0}
 						{@const to = cuts[p] ?? BARS}
-						<text class="num" x={waveLeft + ((from + to) / 2) * BAR_STEP + p * CUT_GAP} y="62"
+						<text class="num" x={left + ((from + to) / 2) * BAR_STEP + p * CUT_GAP} y="62"
 							>{p === shownPieces - 1 ? pieces : p + 1}</text
 						>
 					{/if}

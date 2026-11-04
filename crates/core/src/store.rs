@@ -82,6 +82,25 @@ pub trait JobStore: Send + Sync {
         }
         Ok(self.finished_result(piece)?.map(|r| r.output.fields))
     }
+    /// A finished piece's text as the researcher left it: the corrected text, else the
+    /// model's, with the speakers' names applied ([`crate::speakers::text_as_left`]). The
+    /// model's answer is not read when a correction replaces it; none for a piece not finished
+    /// and not corrected.
+    fn text(
+        &self,
+        piece: &PieceState,
+        corrections: &[Correction],
+        speakers: &crate::SpeakerIndex,
+    ) -> Result<Option<String>, StoreError> {
+        let names = speakers.of(piece.setup_id, piece.source_id);
+        let corrected = Correction::of(corrections, piece).and_then(|c| c.text.as_deref());
+        if let Some(text) = corrected {
+            return Ok(Some(crate::speakers::rename_text(text, names)));
+        }
+        Ok(self
+            .finished_result(piece)?
+            .map(|r| crate::speakers::rename_text(&r.output.text, names)))
+    }
     /// What a job's own calls cost, in US dollars: the results its pieces stored, not those
     /// reused from the cache, and the answers billed but refused ([`Charge`]).
     fn spent(&self, job: JobId) -> Result<f64, StoreError>;
@@ -99,6 +118,10 @@ pub trait JobStore: Send + Sync {
     /// Replaces the names given to one set-up's speakers in one recording.
     fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError>;
     fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError>;
+    /// The names given to every recording's speakers in a job, ready to look up piece by piece.
+    fn speakers(&self, job: JobId) -> Result<crate::SpeakerIndex, StoreError> {
+        Ok(crate::SpeakerIndex::new(self.speaker_names(job)?))
+    }
 
     /// Inserts or replaces a batch, by its own id.
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;

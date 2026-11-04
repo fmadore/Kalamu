@@ -16,7 +16,7 @@
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import { changed, type Draft } from '#lib/described.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { lastSearch } from '#lib/projectSearch.js';
 	import { go, refreshProjects, toast } from '#lib/state.svelte.js';
@@ -38,7 +38,13 @@
 	const m = messages();
 
 	let view = $state<ProjectView | null>(null);
-	let error = $state<string | null>(null);
+	const action = new Action({
+		after: async () => {
+			await load();
+			// The sidebar lists the projects by name: a renamed or archived one changes there too.
+			void refreshProjects();
+		}
+	});
 	// Coming back from a review opened by the search shows the search again.
 	// svelte-ignore state_referenced_locally
 	const searched = lastSearch(projectId) !== undefined;
@@ -67,19 +73,7 @@
 		try {
 			view = await api.projectView(projectId);
 		} catch (e) {
-			error = describeError(e, m);
-		}
-	}
-
-	async function act(action: () => Promise<unknown>) {
-		error = null;
-		try {
-			await action();
-			await load();
-			// The sidebar lists the projects by name: a renamed or archived one changes there too.
-			void refreshProjects();
-		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -99,11 +93,11 @@
 		e.preventDefault();
 		const defaults = $state.snapshot(draftDefaults);
 		const defaultsChanged = changed(defaults, project?.source_defaults ?? {});
-		await act(async () => {
+		await action.run(async () => {
 			await api.updateProject(projectId, draftName, draftDescription);
 			if (defaultsChanged) await api.setSourceDefaults(projectId, defaults);
 		});
-		if (!error) editing = false;
+		if (!action.error) editing = false;
 	}
 
 	async function remove() {
@@ -112,7 +106,7 @@
 			await api.deleteProject(projectId);
 			go({ name: 'projects' });
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -122,10 +116,10 @@
 		const { id, name } = naming;
 		naming = null;
 		if (id) {
-			await act(() => api.renameCollection(projectId, id, name));
+			await action.run(() => api.renameCollection(projectId, id, name));
 		} else {
 			let created: string | undefined;
-			await act(async () => (created = (await api.createCollection(projectId, name)).id));
+			await action.run(async () => (created = (await api.createCollection(projectId, name)).id));
 			if (created) show(created);
 		}
 	}
@@ -133,7 +127,7 @@
 	async function removeCollection() {
 		if (!collection) return;
 		if (!(await ask(m.projects.deleteCollectionConfirm(collection.collection.name)))) return;
-		await act(() => api.deleteCollection(projectId, collection.collection.id));
+		await action.run(() => api.deleteCollection(projectId, collection.collection.id));
 		show();
 	}
 
@@ -141,7 +135,7 @@
 	async function addPaths(paths: string[]) {
 		if (paths.length === 0) return;
 		adding = true;
-		error = null;
+		action.error = null;
 		try {
 			const inspected = await api.inspectFiles(paths);
 			const sources = inspected.map((f) => f.source).filter((s): s is SourceFile => !!s);
@@ -150,10 +144,10 @@
 				await api.addDocuments(projectId, sources, collectionId ?? null);
 				toast(m.projects.addedFiles(sources.length));
 			}
-			if (unread > 0) error = m.projects.notReadable(unread);
+			if (unread > 0) action.error = m.projects.notReadable(unread);
 			await load();
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		} finally {
 			adding = false;
 		}
@@ -196,7 +190,7 @@
 			>
 			<button
 				class="btn ghost sm"
-				onclick={() => act(() => api.archiveProject(projectId, !project.archived))}
+				onclick={() => action.run(() => api.archiveProject(projectId, !project.archived))}
 				><Icon name={project.archived ? 'restore' : 'archive'} size={14} />{project.archived
 					? m.projects.restore
 					: m.projects.archive}</button
@@ -206,7 +200,7 @@
 	{/if}
 </header>
 
-{#if error}<p class="chip danger banner" role="alert">{error}</p>{/if}
+{#if action.error}<p class="chip danger banner" role="alert">{action.error}</p>{/if}
 {#if project?.archived}<p class="notice banner">{m.projects.archivedNotice}</p>{/if}
 
 {#if editing}
@@ -379,7 +373,7 @@
 					tags={view.tags}
 					{collectionId}
 					onchange={load}
-					onerror={(e) => (error = e)}
+					onerror={(e) => (action.error = e)}
 				/>
 			{/if}
 		</section>

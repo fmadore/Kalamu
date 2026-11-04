@@ -160,6 +160,40 @@ mod tests {
             .collect()
     }
 
+    /// Worked cases of what a query matches, written for the interface, whose review search
+    /// (`src/lib/search.ts`) must find the same words in the same order: project search opens
+    /// the review at the n-th match of a piece, and both sides count it. `cargo test` keeps the
+    /// file current, as it does `searchRules.json`; the interface's tests read it.
+    #[test]
+    fn export_match_cases_for_the_interface() -> Result<(), Box<dyn std::error::Error>> {
+        let cases = [
+            ("La Réfection du minaret. REFECTION faite.", "refection"),
+            ("Le père, le Père et le PÈRE.", "pere"),
+            ("ٱلْحَمْدُ لِلَّهِ، الحمد لله", "الحمد"),
+            ("Ḥajj, hajj et Hajj", "hajj"),
+            ("cercle  de\nDakar, cercle de Dakar", "cercle de dakar"),
+            ("aaaaa", "aaa"),
+            ("cœur, Cœur, coeur", "cœur"),
+            ("Straße et STRASSE", "straße"),
+            ("Côte d’Ivoire, Côte d'Ivoire", "cote d"),
+            ("e\u{301}cole et école", "ecole"),
+            ("Saint-Louis du Sénégal", "senegal"),
+        ];
+        let cases: Vec<serde_json::Value> = cases
+            .iter()
+            .map(|(text, query)| {
+                serde_json::json!({ "text": text, "query": query, "found": found(text, query) })
+            })
+            .collect();
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/lib/matchCases.json");
+        let json = serde_json::to_string_pretty(&cases)? + "\n";
+        if std::fs::read_to_string(&path).ok().as_deref() != Some(json.as_str()) {
+            std::fs::write(&path, json)?;
+        }
+        Ok(())
+    }
+
     #[test]
     fn capitals_and_accents_are_set_aside_but_the_text_is_kept() {
         assert_eq!(

@@ -7,7 +7,7 @@ use kalamu_core::provenance::{
     GeneratorInfo, ProvenanceDerived, ProvenanceDocument, ProvenanceMerge, ProvenancePrompt,
     ProvenanceRefused, ProvenanceSource,
 };
-use kalamu_core::speakers::{rename_segments, rename_text, renamed_labels};
+use kalamu_core::speakers::{rename_segments, renamed_labels, text_as_left};
 use kalamu_core::{
     CacheKey, ExportDocument, ExportPart, InputKind, Job, PieceRef, PieceState, PieceStatus,
     Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, Task, Timestamp, Usage,
@@ -38,13 +38,8 @@ impl Engine {
             .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
         let corrections = self.store.corrections(job.id)?;
         // The researcher's names for this recording's speakers, applied to every part.
-        let speaker_names = self
-            .store
-            .speaker_names(job.id)?
-            .into_iter()
-            .find(|n| n.setup_id == setup_id && n.source_id == source_id)
-            .map(|n| n.names)
-            .unwrap_or_default();
+        let speakers = self.store.speakers(job.id)?;
+        let speaker_names = speakers.of(setup_id, source_id);
         let mut states: Vec<_> = self
             .store
             .pieces(job.id)?
@@ -128,9 +123,7 @@ impl Engine {
             if let Some(lang) = &result.output.detected_language {
                 detected.insert(lang.clone());
             }
-            let correction = corrections.iter().find(|c| {
-                c.setup_id == setup_id && c.source_id == source_id && c.index == state.index
-            });
+            let correction = kalamu_core::Correction::of(&corrections, state);
             let corrected_text = correction.and_then(|c| c.text.clone());
             // An analysis's corrected answers replace the model's, and its text is set out from
             // them again.
@@ -158,29 +151,37 @@ impl Engine {
                     PieceRef::Segment { end_ms, .. } => Some(end_ms),
                     PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => None,
                 });
-                let renamed = rename_segments(&result.output.segments, &speaker_names);
+                let renamed = rename_segments(&result.output.segments, speaker_names);
                 absolute(&state.piece, &renamed, previous_end)
             };
             // A corrected page keeps its words' places where the engine placed each word;
-            // otherwise its text stays searchable as one block over the page.
+            // otherwise its text stays searchable as one block over the page, also when the
+            // engine read nothing there and the researcher typed the page.
+            let whole_page = |text: &String| {
+                vec![kalamu_core::TextRegion::block(
+                    0.05,
+                    0.05,
+                    0.9,
+                    0.9,
+                    text.clone(),
+                )]
+            };
             let regions = match (&corrected_text, result.output.regions.is_empty()) {
                 (Some(text), false) => crate::realign::realign(&result.output.regions, text)
-                    .unwrap_or_else(|| {
-                        vec![kalamu_core::TextRegion::block(
-                            0.05,
-                            0.05,
-                            0.9,
-                            0.9,
-                            text.clone(),
-                        )]
-                    }),
+                    .unwrap_or_else(|| whole_page(text)),
+                (Some(text), true)
+                    if !text.trim().is_empty() && matches!(state.piece, PieceRef::Page { .. }) =>
+                {
+                    whole_page(text)
+                }
                 _ => result.output.regions.clone(),
             };
             parts.push(ExportPart {
                 piece: state.piece.clone(),
-                text: rename_text(
-                    corrected_text.as_deref().unwrap_or(&result.output.text),
-                    &speaker_names,
+                text: text_as_left(
+                    corrected_text.as_deref(),
+                    &result.output.text,
+                    speaker_names,
                 ),
                 segments,
                 corrected: corrected_text.is_some(),
@@ -253,7 +254,7 @@ impl Engine {
             truncated,
             failed,
             preprocessing,
-            renamed_speakers: renamed_labels(&speaker_names),
+            renamed_speakers: renamed_labels(speaker_names),
             usage,
             cost_usd: cost,
             refused: self.refused(job, setup_id, source_id)?,

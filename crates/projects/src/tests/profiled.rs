@@ -95,7 +95,7 @@ fn a_profile_writes_its_columns_under_its_headings() {
     let (p, _, letters) = described_project(&f);
     let csv = csv_body(
         f.projects
-            .export_profiled_csv(p, None, &omeka(), &Labels::default())
+            .profiled_table(p, None, &omeka(), &Labels::default())
             .unwrap(),
     );
     assert_eq!(
@@ -109,10 +109,11 @@ fn a_profile_writes_its_columns_under_its_headings() {
     // Line breaks made spaces, for tools that read a row per line.
     let mut one_line = omeka();
     one_line.join_lines = true;
-    let csv = f
-        .projects
-        .export_profiled_csv(p, Some(letters), &one_line, &Labels::default())
-        .unwrap();
+    let csv = csv_body(
+        f.projects
+            .profiled_table(p, Some(letters), &one_line, &Labels::default())
+            .unwrap(),
+    );
     assert!(csv.contains("\"« Lettre », 1957, f. 2\""), "{csv}");
     assert!(!csv.contains(",b,"), "a collection keeps to its documents");
 }
@@ -157,9 +158,9 @@ fn every_column_writes_what_the_default_csv_does() {
     };
     assert_eq!(
         f.projects
-            .export_profiled_csv(p, None, &every, &Labels::default())
+            .profiled_table(p, None, &every, &Labels::default())
             .unwrap(),
-        f.projects.export_descriptions_csv(p, None).unwrap()
+        f.projects.descriptions_table(p, None).unwrap()
     );
 }
 
@@ -348,7 +349,7 @@ fn result_columns_read_the_preferred_or_only_result_as_corrected() {
         .unwrap();
     let csv = csv_body(
         f.projects
-            .export_profiled_csv(p.id, None, &profile, &Labels::default())
+            .profiled_table(p.id, None, &profile, &Labels::default())
             .unwrap(),
     );
     let rows: Vec<&str> = csv.lines().collect();

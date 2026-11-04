@@ -6,6 +6,7 @@ import type { ExportProfile } from './bindings/ExportProfile.js';
 import type { ProfileColumn } from './bindings/ProfileColumn.js';
 import type { ProfileValue } from './bindings/ProfileValue.js';
 import type { Task } from './bindings/Task.js';
+import lists from './coreLists.json';
 import { FIELDS } from './described.js';
 
 /** The values taken from the document itself, in the order the dialog offers them. */
@@ -30,8 +31,9 @@ export const RESULT_TASKS: Task[] = [
 	'contents'
 ];
 
-/** The tasks that yield a text, which a column can take. */
-export const TEXT_TASKS: Task[] = ['text_extraction', 'text_correction', 'audio_transcription'];
+/** The tasks that yield a text, which a column can take: `Task::yields_text`, written by
+ * `cargo test`. */
+export const TEXT_TASKS = lists.text_tasks as Task[];
 
 /** What a column can read of a task's result. */
 export const RESULT_VALUES = ['status', 'model', 'text'] as const;

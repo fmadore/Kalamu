@@ -3,20 +3,15 @@
 
 import type { QueueItem } from './bindings/QueueItem.js';
 import type { Signal } from './bindings/Signal.js';
+import lists from './coreLists.json';
 import type { Messages } from './i18n/index.js';
 import { listNames } from './i18n/index.js';
 import { pieceLabel } from './pieces.js';
 
 export type Reason = Signal['kind'];
 
-export const REASONS: Reason[] = [
-	'failed',
-	'not_read',
-	'truncated',
-	'disagrees',
-	'stale',
-	'not_reviewed'
-];
+/** Every reason, in the order Rust lists them (`Signal::KINDS`, written by `cargo test`). */
+export const REASONS = lists.queue_reasons as Reason[];
 
 /** The reasons shown, and whether items already reviewed stay in view. */
 export interface QueueFilter {
@@ -35,13 +30,6 @@ export function shownItems(items: QueueItem[], filter: QueueFilter): QueueItem[]
 	return items.filter(
 		(i) => (filter.resolved || i.open) && i.signals.some((s) => filter.reasons.includes(s.kind))
 	);
-}
-
-/** How many items carry each reason, whatever is shown. */
-export function reasonCounts(items: QueueItem[]): Record<Reason, number> {
-	const counts = Object.fromEntries(REASONS.map((r) => [r, 0])) as Record<Reason, number>;
-	for (const item of items) for (const s of item.signals) counts[s.kind]++;
-	return counts;
 }
 
 /** One reason in plain words, with what was found. */

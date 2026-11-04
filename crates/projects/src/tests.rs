@@ -26,7 +26,9 @@ struct Fixture {
 }
 
 /// A CSV export's text after the byte-order mark it must start with.
-fn csv_body(csv: String) -> String {
+/// A table as the app writes it, without the byte-order mark it must start with.
+fn csv_body(table: kalamu_core::Table) -> String {
+    let csv = kalamu_export::table_csv(&table).unwrap();
     csv.strip_prefix('\u{feff}')
         .unwrap_or_else(|| panic!("a CSV starts with a byte-order mark, for Excel"))
         .to_string()

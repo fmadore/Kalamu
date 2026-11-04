@@ -1,12 +1,17 @@
 // The sample project's list of what to check, for the browser preview (`?mock&view=queue`): the
 // bulletin read by two models that disagree, one page cut off, the interview with a failed
-// segment, and the analysis read before its text was corrected. Development builds only.
+// segment, and the analysis read before its text was corrected. Only the documents the queue
+// covers are listed and counted: the project's, a collection's or those chosen, as
+// `Projects::queue_plan` chooses them. Development builds only.
 
+import type { QueueCounts } from '../bindings/QueueCounts.js';
 import type { QueueItem } from '../bindings/QueueItem.js';
+import type { QueueSelection } from '../bindings/QueueSelection.js';
 import type { QueueView } from '../bindings/QueueView.js';
+import type { ReasonCounts } from '../bindings/ReasonCounts.js';
 import type { ResultKey } from '../bindings/ResultKey.js';
 import { analysisJob, audioJob, job } from './mockJobs.js';
-import { DOCUMENT_ID } from './mockProjects.js';
+import { DOCUMENT_ID, documentsIn } from './mockProjects.js';
 
 const INTERVIEW = '00000000-0000-0000-0000-0000000000d2';
 const now = Date.now();
@@ -114,38 +119,95 @@ function items(excluded: ResultKey[]): QueueItem[] {
 export function queueCommand(cmd: string, a: Record<string, unknown>): QueueView | undefined {
 	switch (cmd) {
 		case 'review_queue':
-			return queueView((a.excluded as ResultKey[] | undefined) ?? []);
+			return queueView(
+				(a.selection as QueueSelection | undefined) ?? { kind: 'project' },
+				(a.excluded as ResultKey[] | undefined) ?? []
+			);
 		default:
 			return undefined;
 	}
 }
 
-function queueView(excluded: ResultKey[]): QueueView {
-	const list = items(excluded);
+/** What a document adds to the counts: its results kept, their pieces, and the reasons its
+ * items carry. */
+type Tally = Omit<
+	QueueCounts,
+	'documents' | 'documents_read' | 'flagged' | 'unresolved' | 'reasons'
+>;
+
+function tally(documentId: string, analyses: number): Tally | null {
+	if (documentId === DOCUMENT_ID) {
+		return {
+			results: 1 + analyses,
+			pieces: 3 + analyses,
+			processed: 3 + analyses,
+			failed: 0,
+			not_read: 0,
+			reviewed: 1
+		};
+	}
+	if (documentId === INTERVIEW) {
+		return {
+			results: 1,
+			pieces: 3,
+			processed: 2,
+			failed: 1,
+			not_read: 0,
+			reviewed: 0
+		};
+	}
+	return null;
+}
+
+function reasonsOf(list: QueueItem[]): ReasonCounts {
+	const counts: ReasonCounts = {
+		failed: 0,
+		not_read: 0,
+		truncated: 0,
+		disagrees: 0,
+		stale: 0,
+		not_reviewed: 0
+	};
+	for (const item of list) for (const s of item.signals) counts[s.kind]++;
+	return counts;
+}
+
+function queueView(selection: QueueSelection, excluded: ResultKey[]): QueueView {
+	const documents = documentsIn(
+		selection.kind === 'collection'
+			? { collection: selection.id }
+			: selection.kind === 'documents'
+				? { ids: selection.ids }
+				: {}
+	).map((d) => d.id);
+	const list = items(excluded).filter((i) => documents.includes(i.document_id));
 	const analyses = analysisJob.setups.filter(
 		(s) => !excluded.some((k) => k.setup_id === s.id)
 	).length;
+	const tallies = documents.flatMap((d) => tally(d, analyses) ?? []);
+	const sum = (key: keyof Tally) => tallies.reduce((n, t) => n + t[key], 0);
+	const bulletin = documents.includes(DOCUMENT_ID);
 	return {
 		queue: {
 			counts: {
-				documents: 4,
-				documents_read: 2,
-				results: 2 + analyses,
-				pieces: 6 + analyses,
-				processed: 5 + analyses,
-				failed: 1,
-				not_read: 0,
-				reviewed: 1,
+				documents: documents.length,
+				documents_read: tallies.length,
+				results: sum('results'),
+				pieces: sum('pieces'),
+				processed: sum('processed'),
+				failed: sum('failed'),
+				not_read: sum('not_read'),
+				reviewed: sum('reviewed'),
 				flagged: list.length,
 				unresolved: list.filter((i) => i.open).length,
-				truncated: 1,
-				disagrees: 3 + analyses,
-				stale: analyses,
-				not_reviewed: 2 + analyses
+				// As Rust counts them: every item's reasons.
+				reasons: reasonsOf(list)
 			},
 			items: list
 		},
-		choices: analysisJob.setups.map((s) => ({
+		// The analysis's readings stand for the bulletin, which has no preferred one; its text is
+		// read through the preferred reading.
+		choices: (bulletin ? analysisJob.setups : []).map((s) => ({
 			key: { job_id: analysisJob.id, setup_id: s.id },
 			job_name: analysisJob.name,
 			task: analysisJob.task,
@@ -154,6 +216,6 @@ function queueView(excluded: ResultKey[]): QueueView {
 			documents: 1,
 			included: !excluded.some((k) => k.setup_id === s.id)
 		})),
-		preferred: 2
+		preferred: bulletin ? 1 : 0
 	};
 }

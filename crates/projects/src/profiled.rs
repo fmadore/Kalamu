@@ -4,7 +4,8 @@
 //! Columns that read a document's result are filled by [`crate::resulted`].
 
 use kalamu_core::{
-    CollectionId, Document, ExportProfile, Labels, ProfileValue, ProjectError, ProjectId, Timestamp,
+    CollectionId, Document, ExportProfile, Labels, ProfileValue, ProjectError, ProjectId, Table,
+    Timestamp,
 };
 use serde::Serialize;
 use serde::ser::SerializeMap;
@@ -157,34 +158,34 @@ impl Projects {
         Ok((listed, rows))
     }
 
-    /// The documents of a project, or of a collection, through a profile, as CSV: its headings,
-    /// then one row per document, lists joined with its separator and missing values written as
-    /// it says. `labels` are the project dictionary's, for the columns that write through them;
-    /// empty when none does.
-    pub fn export_profiled_csv(
+    /// The documents of a project, or of a collection, through a profile, as a table for a
+    /// spreadsheet: its headings, then one row per document, lists joined with its separator
+    /// and missing values written as it says. `labels` are the project dictionary's, for the
+    /// columns that write through them; empty when none does. The `export` crate writes it as
+    /// CSV.
+    pub fn profiled_table(
         &self,
         project: ProjectId,
         collection: Option<CollectionId>,
         profile: &ExportProfile,
         labels: &Labels,
-    ) -> Result<String, ProjectError> {
+    ) -> Result<Table, ProjectError> {
         let (_, rows) = self.profiled_rows(project, collection, profile, labels)?;
-        let mut out = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
-        out.write_record(profile.columns.iter().map(|c| c.heading.as_str()))
-            .map_err(failed)?;
-        for row in rows {
-            let row: Vec<String> = row
+        Ok(Table {
+            headings: profile.columns.iter().map(|c| c.heading.clone()).collect(),
+            rows: rows
                 .into_iter()
-                .map(|cell| match cell {
-                    Cell::Text(t) => t,
-                    Cell::List(items) => items.join(&profile.list_separator),
-                    Cell::Missing => profile.missing.clone(),
+                .map(|row| {
+                    row.into_iter()
+                        .map(|cell| match cell {
+                            Cell::Text(t) => t,
+                            Cell::List(items) => items.join(&profile.list_separator),
+                            Cell::Missing => profile.missing.clone(),
+                        })
+                        .collect()
                 })
-                .collect();
-            out.write_record(&row).map_err(failed)?;
-        }
-        let bytes = out.into_inner().map_err(failed)?;
-        String::from_utf8(bytes).map_err(failed)
+                .collect(),
+        })
     }
 
     /// The same as JSON: each row an object under the profile's headings, in its order, lists

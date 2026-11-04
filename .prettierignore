@@ -13,3 +13,5 @@ package-lock.json
 # Written by `cargo test`, as Rust serialises them.
 src/lib/dev/taskRules.json
 src/lib/searchRules.json
+src/lib/coreLists.json
+src/lib/matchCases.json

@@ -56,7 +56,7 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 
 | Crate | Responsibility | May depend on |
 | --- | --- | --- |
-| `core` | Domain types (job, source file, piece, result, provenance, task, language), the traits below, errors. No I/O. | nothing internal |
+| `core` | Domain types (job, source file, piece, result, provenance, task, language), the traits below, errors, and the shared readings of stored results (a document's results, corrected text, speakers' names). No I/O. | nothing internal |
 | `catalog` | Model catalogue: loading, refreshing, capability queries (tasks, inputs, languages, limits, prices). | `core` |
 | `prompts` | Default and user presets, variables, import/export; saved pipelines, workflow definitions and export profiles. | `core` |
 | `media` | Conversion and splitting: PDF pages cut with lopdf and drawn with hayro, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
@@ -66,7 +66,7 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | `projects` | Project workspaces: documents, collections, tags, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
 | `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |
 | `search` | Project search: the corrected text of every result, kept in a derived local index and searched with the project's filters, each match placed in the text shown. Never calls a model or changes a result. | `core` |
-| `export` | One module per output format, each implementing the exporter trait. | `core` |
+| `export` | One module per output format, each implementing the exporter trait; and the one CSV writer for the tables other crates make (`table_csv`). | `core` |
 | `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job. | all of the above through their traits |
 | `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging. | `engine`, `projects`, `dictionary`, `search`, and others only to wire them up |
 

@@ -18,6 +18,7 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { TEXT_TASKS } from '#lib/profiles.js';
 	import {
 		blankRequest,
 		hitOrigin,
@@ -37,7 +38,6 @@
 		tags
 	}: { projectId: string; collections: CollectionView[]; tags: TagView[] } = $props();
 	const m = messages();
-	const TEXT_TASKS: Task[] = ['text_extraction', 'text_correction', 'audio_transcription'];
 	const GENERATED_TASKS: Task[] = ['analysis', 'contents'];
 	const REVIEW: ReviewFilter[] = ['any', 'reviewed', 'not_reviewed'];
 	const MODES: MatchMode[] = ['phrase', 'all_words', 'near'];

@@ -8,7 +8,7 @@ import {
 	grouped,
 	itemKey,
 	placeOf,
-	reasonCounts,
+	REASONS,
 	reasonText,
 	shownItems
 } from './queue.js';
@@ -55,11 +55,15 @@ describe('the review queue', () => {
 		expect(shownItems(all, { reasons: ['not_reviewed'], resolved: false })).toEqual([cut, plain]);
 	});
 
-	it('counts each reason whatever is shown', () => {
-		const counts = reasonCounts(all);
-		expect(counts.not_reviewed).toBe(2);
-		expect(counts.failed).toBe(1);
-		expect(counts.stale).toBe(0);
+	it('lists every reason Rust has, each with words', () => {
+		expect(REASONS).toEqual([
+			'failed',
+			'not_read',
+			'truncated',
+			'disagrees',
+			'stale',
+			'not_reviewed'
+		]);
 	});
 
 	it('keeps processing problems apart from answers', () => {

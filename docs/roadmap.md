@@ -19,7 +19,7 @@ the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
 with an Apple Developer ID and notarised from 1.4.0
 ([decision](decisions/2026-11-04-macos-notarisation.md)); it has not yet been opened on a real
-Mac ([decision](decisions/2026-11-02-macos.md)).
+Mac, which is second in *Next* below.
 
 ## Done
 
@@ -42,7 +42,7 @@ Mac ([decision](decisions/2026-11-02-macos.md)).
   gives a searchable PDF, each line over its own box, and **ALTO XML**, also from Mistral OCR
   with estimated lines and words. A corrected page keeps its words' places, as
   iwac-ai-pipelines' ALTO correction does. Built and tested on Windows ARM64; Windows x64 and
-  macOS in CI; a full job with networking off and a real Mac still to try.
+  macOS in CI; a full job with networking off is among the live runs still to do.
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
@@ -292,40 +292,52 @@ Mac ([decision](decisions/2026-11-02-macos.md)).
 
 ## Next
 
-The [2 November checkpoint](decisions/2026-11-02-checkpoint.md), after version 1.0.0, is done:
-pages read together settled when a job is created and a call that keeps no page counted,
-workflow steps made once and tied to their project at launch, the proposal job's files apart,
-rules and estimates from Rust, and the duplication it found removed; it shipped in 1.1.0.
-[#50](https://github.com/fmadore/Kalamu/issues/50)'s first increment, items read on their own,
-is done and shipped in 1.2.0, with the default prompts and the data folder. The
-[3 November checkpoint](decisions/2026-11-03-checkpoint.md), after 1.2.0, fixed eleven bugs it
-found (spreadsheets' accents, a refusal's tokens left out of the cost, item edits half made,
-among them); the duplication and the large files it found are refactored next.
+In this order. Work that keeps what has shipped sound comes before new features.
 
+1. **What the [4 November checkpoint](decisions/2026-11-04-checkpoint.md) left.** The 3
+   November checkpoint's refactor and a checkpoint after 1.4.0 are done: one reading of a
+   project's results, one corrected text and speakers' names index, tables written by the
+   `export` crate, the interface's shared code, Rust's lists and match cases sent to the
+   interface, the large files split, ten bugs fixed (an empty page typed by the researcher
+   missing from ALTO, guessed word boxes presented as measured, a granted folder dropped when out
+   of reach, photos turned by EXIF read unturned, the window frozen while results were written,
+   among them). Left: Whisper's voice detection on accented data folders on Windows; the
+   folders out of reach shown at launch; Tesseract's drawing resolution in provenance and its
+   engines pooled; the duplication still to fold (listed in the decision).
+2. **A first run on a real Mac.** The disk image is signed and notarised and a sandboxed build is
+   ready for the Mac App Store, but Kalamu has not yet been opened on a Mac
+   ([decision](decisions/2026-11-02-macos.md)). Before TestFlight: the disk image through
+   Gatekeeper, the Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in
+   WKWebView, a Whisper and a Tesseract job, and the interface in WebKit at the sizes CI does not
+   try.
+3. **Economy mode's loose ends**, a shipped feature: reading OpenAI's batch answers in a live run
+   (on 3 November it had answered none after 35 minutes); deleting the files a batch leaves in
+   the user's OpenAI and Mistral storage once its answers are collected (Mistral's inline batches
+   leave their requests as a file too, 951 KB for two pages); then Gemini batches through a JSONL
+   file, to lift the 20 MB inline limit, several pages per call in economy mode, and Voxtral
+   transcription in batches once its format is documented
+   ([live runs](decisions/2026-11-03-live-runs.md)).
+4. **Source-linked review, first step
+   ([#84](https://github.com/fmadore/Kalamu/issues/84))**: Tesseract's words and Mistral OCR's
+   estimated lines drawn over the scan, each opening its text, with the page as a fallback where
+   a provider returns none. Kalamu already keeps these boxes for ALTO and the searchable PDF.
+5. **What is left of the research workflows**, below.
+
+### What is left of the research workflows
+
+- **Analysing corrected text, what is left of
+  [#47](https://github.com/fmadore/Kalamu/issues/47)**: frozen structured results (an
+  analysis's corrected answers, a table of contents' entries), a snapshot of only the reviewed
+  pieces, and a retention policy for snapshot files
+  ([decision](decisions/2026-10-31-reviewed-text-snapshots.md)).
 - **Items, what is left of [#50](https://github.com/fmadore/Kalamu/issues/50)**: finer
   boundaries than the page (a column, a passage of text) for articles that share a page; the
-  numbers printed on the pages beside the file's own; items of a multi-page image; an item's
-  text taken from an extraction of the whole issue rather than read again; items as a
-  project's documents; importing an exported list back; a large issue's pages combined in
-  bounded groups rather than in one request.
-
-- **Archival metadata, what is left of [#55](https://github.com/fmadore/Kalamu/issues/55)**:
-  normalised and inferred values (with #54 and #48) beside the literal ones; item-level rows
-  (with #50). Source descriptions, project defaults and their export with origins, renaming a
-  tag across a project, saved export profiles, descriptions in each result's `provenance.json`
-  and `.json` export, results' columns in a profile (review status, model, corrected text, an
-  analysis's answers) and an answer written under the dictionary's labels are done
-  ([decision](decisions/2026-11-03-source-descriptions.md),
-  [profiles](decisions/2026-11-03-export-profiles.md),
-  [provenance](decisions/2026-11-03-descriptions-in-provenance.md),
-  [result columns](decisions/2026-11-03-profile-result-columns.md),
-  [dictionary labels](decisions/2026-11-03-profile-dictionary-labels.md)).
-- **Project search, what is left of [#86](https://github.com/fmadore/Kalamu/issues/86)**:
-  alternatives (one word or another); searching two letters, and less folding work for very
-  common words; and, evaluated separately, semantic search with explicit local or cloud
-  execution and consent. All the words of a query, words near each other, the text prepared
-  ahead with its progress, and matches opening at their entry or field are done
-  ([decision](decisions/2026-11-03-search-words-and-preparation.md)).
+  numbers printed on the pages beside the file's own; an item's text taken from an extraction of
+  the whole issue rather than read again; items as a project's documents and as rows of the
+  descriptions export (from [#55](https://github.com/fmadore/Kalamu/issues/55)); importing an
+  exported list back; a large issue's pages combined in bounded groups rather than in one
+  request. Items of a multi-page image wait for ordered image documents
+  ([#52](https://github.com/fmadore/Kalamu/issues/52)).
 - **Project dictionary, what is left of
   [#48](https://github.com/fmadore/Kalamu/issues/48)**: a live run of proposed merges with
   each provider, on a field of a few hundred rows; comparing rows far apart in the alphabet
@@ -342,60 +354,42 @@ among them); the duplication and the large files it found are refactored next.
   steps, an export step that gathers results across steps, the whole run's estimate computed
   in the engine, and restarting a run from a step after the definition changed; a new run
   that keeps the corrections made in the last one, whose steps after a review are otherwise
-  read again from uncorrected text. A live run of
-  a two-step workflow, and one in economy mode across a restart. Try *Then* and the examples
-  with one or two colleagues before going further. Several jobs' or documents' texts sent into
-  one new round together, from a project's selection.
-- **Live runs, what is left** (the runs of 3 November are in the
-  [decision](decisions/2026-11-03-live-runs.md)): offline Whisper; GLM 5.3 through a whole job
-  (GLM 5.3 Flash ran one on 3 November); GPT-6.1 Terra on handwriting and older print before it
-  is considered as OpenAI's default. On 3 November **Gemini 3.8 Flash** read two pages,
-  transcribed a two-speaker interview and answered three analyses for $0.022; pages and
-  recordings came within a third of the estimate (pages $0.0121 against $0.0092), short analyses
-  at a fifth of it ($0.0013 against $0.0067). **GPT-6.1 Terra** read the two pages ($0.022
-  against $0.012 estimated, the 1915 front page alone 1,660 tokens of text) and, with **Mistral
-  Medium 3.5, Mistral Large 4.0, GLM 5.3 Flash and DeepSeek V4.1 Flash**, answered the entities
-  analysis through whole jobs; the four Mistral-hosted models in economy mode too, all but
-  Mistral Medium 3.5, whose one request had not come back after 15 minutes and was cancelled.
-  Mistral Large 4.0 spent 3,000 to 4,400 tokens reasoning at `low`, 1.7× its estimate; Mistral
-  Medium 3.5 listed titles ("imam") among the people; DeepSeek's `reasoning_effort` and batches
-  were accepted as documented.
-- **Gemini 3.5 Transcribe, live**: ran on 3 November on a 52-second interview with two
-  speakers: turns, word timings and French as documented, but speakers labelled `spk:0`,
-  `spk:1` (now read as Speaker 1 and 2) and usage in tokens, not seconds, so the cost showed
-  $0. It is now costed from its tokens: $0.0047 for 52 seconds, about $0.0054 a minute against
-  the $0.005 estimate.
-- **Economy mode, live**: on 3 November a small batch with each provider (two pages, three
-  analyses) went through in the shapes Kalamu sends; Mistral answered in about a minute, Claude
-  in 7, Gemini in 8, at half price (Gemini's two pages $0.0061 against $0.0121). OpenAI accepted
-  and validated its two JSONL files but had answered none after 35 minutes: reading its answers
-  is still to be checked. Claude's five-minute cache is read inside a batch (instructions
-  written once, read by the other requests), so its one-hour cache is not adopted until a batch
-  of a few hundred pages shows a need. Mistral reports cached input in batches without a
-  `prompt_cache_key`. OpenAI's implicit caching wrote each whole page to the cache at 1.25×:
-  requests now cache explicitly, up to the instructions. Later: Gemini batches through a JSONL
-  file, to lift the 20 MB inline limit, and Voxtral transcription in batches once its format is
-  documented. Delete the files a batch leaves in the user's OpenAI and Mistral storage once its
-  answers are collected: Mistral's inline batches leave their requests as a file too (951 KB for
-  two pages).
+  read again from uncorrected text; several jobs' or documents' texts sent into one new round
+  together, from a project's selection. A live run of a two-step workflow, and one in economy
+  mode across a restart. Try *Then* and the examples with one or two colleagues before going
+  further.
+- **Project search, the rest** (its first and second deliveries closed
+  [#86](https://github.com/fmadore/Kalamu/issues/86)): alternatives (one word or another);
+  searching two letters, and less folding work for very common words
+  ([decision](decisions/2026-11-03-search-words-and-preparation.md)).
+- **Archival metadata**: [#55](https://github.com/fmadore/Kalamu/issues/55) is closed;
+  normalised and inferred values beside the literal ones moved to
+  [#54](https://github.com/fmadore/Kalamu/issues/54), item-level rows to #50.
+
+### Live runs still to do
+
+The runs of 3 November, their costs against the estimates and what they changed are in the
+[decision](decisions/2026-11-03-live-runs.md). Still to run: offline Whisper, and a full
+Tesseract job with networking off; GLM 5.3 through a whole job (GLM 5.3 Flash ran one); GPT-6.1
+Terra on handwriting and older print before it is considered as OpenAI's default; a table of
+contents and a correction mixing providers (Gemini reading, Mistral combining), and a table of
+contents in economy mode, after the first run found articles on two pages only of a 12-page
+issue with Claude Sonnet 5.5 at `low` (read the other pages' answers, and try a higher effort;
+[decision](decisions/2026-10-29-contents-review-and-answer-language.md)); Claude's one-hour
+cache only if a batch of a few hundred pages shows a need.
+
+### Also open
+
 - **YouTube**: a live run on long and multilingual videos; long videos in pieces once Gemini's
   clipping of YouTube links covers the sound track again; the cost before the run from a
-  `countTokens` call; check the embedded player in the packaged app, whose `tauri.localhost`
-  origin YouTube must accept, and the links that open a video on YouTube, which every build up
-  to 0.4.0 blocked (the opener allowed no address)
+  `countTokens` call; the embedded player in the packaged app, whose `tauri.localhost` origin
+  YouTube must accept, and the links that open a video on YouTube
   ([decision](decisions/2026-10-27-youtube-links.md)).
 - **Text extraction**: PAGE XML where models return coordinates (ALTO is done); checks for
-  skewed and blurry pages.
-- **Tables of contents and corrections, live**: a run of each against the live APIs, mixing
-  providers (Gemini reading, Mistral combining), and a test of the economy path for a table of
-  contents. The first live run, Claude Sonnet 5.5 on a 12-page issue of *Islam Info*, found
-  articles on two pages only: read the other pages' answers, and try Claude at a higher effort
-  than `low` for reading pages
-  ([decision](decisions/2026-10-29-contents-review-and-answer-language.md)).
+  skewed and blurry pages, with persistent image preparation
+  ([#53](https://github.com/fmadore/Kalamu/issues/53)).
 - **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa
-  for choices, overlap for lists), shown on the job's page; a column added to an `.xlsx`. Project-wide
-  entity/label reconciliation is tracked in [#48](https://github.com/fmadore/Kalamu/issues/48)
-  and the research-workflow sequence below.
+  for choices, overlap for lists), shown on the job's page; a column added to an `.xlsx`.
 - **Design improvements left from [issue #1](https://github.com/fmadore/Kalamu/issues/1)**,
   closed on 28 October when the name and icon were decided (its closing comment keeps these
   here): a collation table on the job's page (pieces × set-ups, the sigla as column heads); an
@@ -436,7 +430,7 @@ container, and a *Mac App Store* workflow that starts the sandboxed app in CI an
 signs and uploads the package.
 
 Next: the App ID, the distribution certificates, the profile and the app in App Store Connect,
-with their secrets; a first TestFlight build opened on a real Mac; the listing, review notes and
+with their secrets; a first TestFlight build, after the first run on a real Mac (*Next*); the listing, review notes and
 privacy answers; the privacy policy's line on kept grants; a way to grant again the folders of
 jobs made by the disk image.
 
@@ -470,7 +464,7 @@ A pending merge decision is never treated as approval.
 
 | Order | Improvement | Tracking |
 | --- | --- | --- |
-| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (done, with source descriptions) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
+| 1 | Project workspaces, collections and stable document identity; group originals and results across jobs (done, with source descriptions; closed) | [#57](https://github.com/fmadore/Kalamu/issues/57) |
 | 2 | Frozen reviewed-result snapshots, stable source anchors and linked downstream jobs; shared with post-interview analysis (first increment done) | [#47](https://github.com/fmadore/Kalamu/issues/47), existing [#38](https://github.com/fmadore/Kalamu/issues/38) |
 | 3 | Reusable workflow definitions and runs; begin with extraction → analysis → export, then add review checkpoints and project-level steps (first increment done, with review checkpoints) | [#49](https://github.com/fmadore/Kalamu/issues/49) |
 | 4 | Project-wide entity/label inventory, model-proposed merges, researcher decisions and local dictionary import/export (done: inventory, researcher decisions, export, model-proposed merges) | [#48](https://github.com/fmadore/Kalamu/issues/48) |
@@ -494,8 +488,8 @@ first workflow increment.
 | Ordered image documents and paired transcriptions | Import photographs as one document with reviewable order; then pair existing text with scans | [#52](https://github.com/fmadore/Kalamu/issues/52) |
 | Persistent image preparation | Crop, processing rotation and adjustable spread splitting; transformation recipes preserve originals and source coordinates | [#53](https://github.com/fmadore/Kalamu/issues/53) |
 | Source-linked review | Providers' existing regions drawn over the scan, each opening its text, with a page-only fallback; then stable region identities and researcher-drawn regions. Coordinates shared with #53, text anchors from #47 | [#84](https://github.com/fmadore/Kalamu/issues/84) |
-| Context-aware processing | Bounded neighboring pages; then date/place proposals with evidence, literal readings and explicit inference status | [#54](https://github.com/fmadore/Kalamu/issues/54) |
-| Archival metadata and export profiles | Supplied source descriptions and reusable local CSV/JSON mappings, separate from extracted/inferred values | [#55](https://github.com/fmadore/Kalamu/issues/55) |
+| Context-aware processing | Bounded neighboring pages; then date/place proposals with evidence, literal readings and explicit inference status, shown in export profiles beside the literal value | [#54](https://github.com/fmadore/Kalamu/issues/54) |
+| Archival metadata and export profiles | Supplied source descriptions and reusable local CSV/JSON mappings (done; closed). Normalised and inferred values moved to #54, item-level rows to #50 | [#55](https://github.com/fmadore/Kalamu/issues/55) |
 
 Scope is local research preparation, review and export. External collection-system integration
 and publishing are excluded from this work. Implementation follows the architecture checkpoints
@@ -521,8 +515,12 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 - Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates
   kept; Kalamu's own extractions already keep their words' places when corrected.
 - French and German Store listings, with the translated interface.
-- macOS: the application menu's labels through the translation files; a first test on a real Mac (the
-  Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in WKWebView).
+- macOS: the application menu's labels through the translation files.
+- Projects: nested collections and saved searches, which
+  [#57](https://github.com/fmadore/Kalamu/issues/57) left to follow its first delivery.
+- Semantic search beside the project's word search, evaluated separately: only with explicit
+  local or cloud execution, consent to sending text, versions, costs and coverage; answers and
+  chat stay out of scope ([#86](https://github.com/fmadore/Kalamu/issues/86)).
 - Linux x86-64: a `.deb` and an AppImage on GitHub releases, built and tested in CI, for a
   documented range of distributions; a third file in each platform layer (`platform/linux.rs`,
   `platform.ts`, `tauri.linux.conf.json`) and WebKitGTK as a third webview. Proposed, not yet

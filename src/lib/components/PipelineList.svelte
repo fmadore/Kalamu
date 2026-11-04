@@ -4,7 +4,7 @@
 	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { api, ask, askForFolders, pickPipelineExport, pickPresetFile } from '#lib/tauri.js';
 	import { toast } from '#lib/state.svelte.js';
@@ -21,13 +21,8 @@
 
 	const m = $derived(messages());
 
-	async function attempt(work: () => Promise<void>) {
-		try {
-			await work();
-		} catch (e) {
-			onerror(describeError(e, m));
-		}
-	}
+	const action = new Action({ report: (message) => onerror(message) });
+	const attempt = (work: () => Promise<void>) => action.run(work);
 
 	const exportPipeline = (p: Pipeline) =>
 		attempt(async () => {

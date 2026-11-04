@@ -298,7 +298,7 @@ impl Engine {
                 }
                 Err(ProviderError::Interrupted) => return Ok(Called::Interrupted),
                 Err(err) if err.is_fatal_for_job() => return Ok(Called::Fatal(err)),
-                Err(err) if crate::is_retryable(&err) && attempt + 1 < self.config.max_attempts => {
+                Err(err) if err.is_retryable() && attempt + 1 < self.config.max_attempts => {
                     let delay = match &err {
                         ProviderError::RateLimited {
                             retry_after: Some(d),

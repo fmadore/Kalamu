@@ -2,13 +2,12 @@
 //! holding the words found, and every match placed in the text shown.
 
 use std::cmp::Ordering;
-use std::collections::hash_map::Entry;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use kalamu_core::contents;
 use kalamu_core::{
-    Document, DocumentId, Field, FieldKind, Job, JobId, ProjectId, SetupId, SourceId, StoreError,
-    Task,
+    Document, DocumentId, Field, FieldKind, Job, JobId, ProjectId, SetupId, SourceId, Task,
+    TiedResult, TiedResults,
 };
 
 use crate::fold::folded;
@@ -18,15 +17,6 @@ use crate::{
     Coverage, DocumentHits, MAX_LISTED, ResultHits, ResultPolicy, ReviewFilter, Search,
     SearchError, SearchRequest, SearchView,
 };
-
-/// A result chosen for the search: a set-up of a job over a document's source.
-struct Chosen {
-    document: DocumentId,
-    job_id: JobId,
-    setup_id: SetupId,
-    source_id: SourceId,
-    preferred: bool,
-}
 
 /// Whether a task's results are searched.
 fn wanted_task(task: Task, request: &SearchRequest) -> bool {
@@ -102,54 +92,28 @@ impl Search {
             .collect();
         let titles: HashMap<DocumentId, &str> =
             documents.iter().map(|d| (d.id, d.title.as_str())).collect();
-        let preferred = self.projects.preferred(project)?;
         let mut coverage = Coverage {
             documents: documents.len() as u32,
             ..Coverage::default()
         };
 
-        // The results of each document, by task, and the preferred one where it is chosen.
-        let mut jobs: HashMap<JobId, Option<Job>> = HashMap::new();
-        let mut candidates: BTreeMap<(DocumentId, &'static str), Vec<Chosen>> = BTreeMap::new();
-        for link in self.projects.links(project)? {
-            if !titles.contains_key(&link.document_id) {
-                continue;
-            }
-            let job = match jobs.entry(link.job_id) {
-                Entry::Occupied(known) => known.into_mut(),
-                // A job deleted since it was tied has nothing to search; any other failure is
-                // the database's, said as such rather than counted as text not read.
-                Entry::Vacant(slot) => slot.insert(match self.jobs.job(link.job_id) {
-                    Ok(job) => Some(job),
-                    Err(StoreError::NotFound) => None,
-                    Err(e) => return Err(SearchError::Jobs(e)),
-                }),
-            };
-            let Some(job) = job.as_ref() else { continue };
-            if !wanted_task(job.task, request) {
-                continue;
-            }
-            for setup in &job.setups {
-                candidates
-                    .entry((link.document_id, job.task.as_str()))
-                    .or_default()
-                    .push(Chosen {
-                        document: link.document_id,
-                        job_id: job.id,
-                        setup_id: setup.id,
-                        source_id: link.source_id,
-                        preferred: preferred.iter().any(|p| {
-                            p.document_id == link.document_id
-                                && p.task == job.task
-                                && p.job_id == job.id
-                                && p.setup_id == setup.id
-                        }),
-                    });
-            }
-        }
-        let mut chosen = Vec::new();
+        // The results of each document, by task, and the preferred one where it is chosen. A
+        // job deleted since it was tied has nothing to search; any other failure is the
+        // database's, said as such rather than counted as text not read.
+        let tied = TiedResults::read(
+            &self.projects.links(project)?,
+            &self.projects.preferred(project)?,
+            |d| titles.contains_key(&d),
+            |id| self.jobs.job(id),
+        )
+        .map_err(SearchError::Jobs)?;
+        let mut chosen: Vec<&TiedResult> = Vec::new();
         let mut without_preference = HashSet::new();
-        for ((document, _), results) in candidates {
+        for ((document, _), results) in tied.by_document_and_task() {
+            let results: Vec<&TiedResult> = results
+                .into_iter()
+                .filter(|r| wanted_task(r.task, request))
+                .collect();
             let has_preferred = results.iter().any(|c| c.preferred);
             if request.results == ResultPolicy::Preferred && has_preferred {
                 chosen.extend(results.into_iter().filter(|c| c.preferred));
@@ -173,7 +137,7 @@ impl Search {
         let mut read: HashSet<(JobId, SetupId, SourceId)> = HashSet::new();
         let to_refresh: Vec<(&Job, &HashSet<(SetupId, SourceId)>)> = wanted
             .iter()
-            .filter_map(|(id, results)| Some((jobs.get(id)?.as_ref()?, results)))
+            .filter_map(|(id, results)| Some((tied.job(*id)?, results)))
             .collect();
         let refreshed = self.refresh(&to_refresh, stop, progress)?;
         for ((job, results), pieces) in to_refresh.iter().zip(refreshed) {
@@ -194,13 +158,13 @@ impl Search {
         let searched_documents: HashSet<DocumentId> = chosen
             .iter()
             .filter(|c| read.contains(&(c.job_id, c.setup_id, c.source_id)))
-            .map(|c| c.document)
+            .map(|c| c.document_id)
             .collect();
         coverage.searched = searched_documents.len() as u32;
         coverage.unread = coverage.documents - coverage.searched;
 
         // The passages holding the words, each placed in the results that read it.
-        let mut by_result: HashMap<(JobId, SetupId, SourceId), Vec<&Chosen>> = HashMap::new();
+        let mut by_result: HashMap<(JobId, SetupId, SourceId), Vec<&TiedResult>> = HashMap::new();
         for c in &chosen {
             by_result
                 .entry((c.job_id, c.setup_id, c.source_id))
@@ -219,7 +183,7 @@ impl Search {
                 ReviewFilter::Reviewed => passage.reviewed,
                 ReviewFilter::NotReviewed => !passage.reviewed,
             };
-            let Some(Some(job)) = jobs.get(&k.job_id) else {
+            let Some(job) = tied.job(k.job_id) else {
                 continue;
             };
             if !reviewed_ok {
@@ -235,7 +199,7 @@ impl Search {
             for c in results {
                 let setup = job.setups.iter().find(|s| s.id == k.setup_id);
                 grouped
-                    .entry(c.document)
+                    .entry(c.document_id)
                     .or_default()
                     .entry((k.job_id, k.setup_id))
                     .or_insert_with(|| {
@@ -261,11 +225,7 @@ impl Search {
         // In title order, each document's results by task and when their job was made, each
         // result's matches in reading order; the first matches listed, all counted.
         let order = |task: Task| Task::ALL.iter().position(|t| *t == task);
-        let created = |id: JobId| {
-            jobs.get(&id)
-                .and_then(Option::as_ref)
-                .map(|j| j.created_at.0)
-        };
+        let created = |id: JobId| tied.job(id).map(|j| j.created_at.0);
         let title = |id: &DocumentId| titles.get(id).copied().unwrap_or("");
         let mut documents: Vec<(DocumentId, Vec<Listed>)> = grouped
             .into_iter()
@@ -321,25 +281,23 @@ impl Search {
         progress: &dyn Fn(u32, u32),
     ) -> Result<u32, SearchError> {
         self.check_project(project)?;
+        let tied = TiedResults::read(
+            &self.projects.links(project)?,
+            &[],
+            |_| true,
+            |id| self.jobs.job(id),
+        )
+        .map_err(SearchError::Jobs)?;
         let mut wanted: HashMap<JobId, HashSet<(SetupId, SourceId)>> = HashMap::new();
-        let mut jobs: HashMap<JobId, Job> = HashMap::new();
-        for link in self.projects.links(project)? {
-            if !jobs.contains_key(&link.job_id) {
-                match self.jobs.job(link.job_id) {
-                    Ok(job) => jobs.insert(job.id, job),
-                    Err(StoreError::NotFound) => continue,
-                    Err(e) => return Err(SearchError::Jobs(e)),
-                };
-            }
-            let Some(job) = jobs.get(&link.job_id) else {
-                continue;
-            };
-            let results = wanted.entry(job.id).or_default();
-            results.extend(job.setups.iter().map(|s| (s.id, link.source_id)));
+        for r in tied.all() {
+            wanted
+                .entry(r.job_id)
+                .or_default()
+                .insert((r.setup_id, r.source_id));
         }
         let to_refresh: Vec<(&Job, &HashSet<(SetupId, SourceId)>)> = wanted
             .iter()
-            .filter_map(|(id, results)| Some((jobs.get(id)?, results)))
+            .filter_map(|(id, results)| Some((tied.job(*id)?, results)))
             .collect();
         let prepared = std::cell::Cell::new(0);
         self.refresh(&to_refresh, stop, &|done, total| {

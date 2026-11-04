@@ -1,0 +1,88 @@
+[
+  {
+    "found": [
+      "Réfection",
+      "REFECTION"
+    ],
+    "query": "refection",
+    "text": "La Réfection du minaret. REFECTION faite."
+  },
+  {
+    "found": [
+      "père",
+      "Père",
+      "PÈRE"
+    ],
+    "query": "pere",
+    "text": "Le père, le Père et le PÈRE."
+  },
+  {
+    "found": [
+      "الحمد"
+    ],
+    "query": "الحمد",
+    "text": "ٱلْحَمْدُ لِلَّهِ، الحمد لله"
+  },
+  {
+    "found": [
+      "Ḥajj",
+      "hajj",
+      "Hajj"
+    ],
+    "query": "hajj",
+    "text": "Ḥajj, hajj et Hajj"
+  },
+  {
+    "found": [
+      "cercle  de\nDakar",
+      "cercle de Dakar"
+    ],
+    "query": "cercle de dakar",
+    "text": "cercle  de\nDakar, cercle de Dakar"
+  },
+  {
+    "found": [
+      "aaa"
+    ],
+    "query": "aaa",
+    "text": "aaaaa"
+  },
+  {
+    "found": [
+      "cœur",
+      "Cœur"
+    ],
+    "query": "cœur",
+    "text": "cœur, Cœur, coeur"
+  },
+  {
+    "found": [
+      "Straße"
+    ],
+    "query": "straße",
+    "text": "Straße et STRASSE"
+  },
+  {
+    "found": [
+      "Côte d",
+      "Côte d"
+    ],
+    "query": "cote d",
+    "text": "Côte d’Ivoire, Côte d'Ivoire"
+  },
+  {
+    "found": [
+      "école",
+      "école"
+    ],
+    "query": "ecole",
+    "text": "école et école"
+  },
+  {
+    "found": [
+      "Sénégal"
+    ],
+    "query": "senegal",
+    "text": "Saint-Louis du Sénégal"
+  }
+]

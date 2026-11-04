@@ -11,8 +11,14 @@
 use kalamu_core::{TextLine, TextRegion, TextWord};
 use similar::{Algorithm, DiffOp, capture_diff_slices};
 
+/// The most corrected words one engine word's box may take. More means the researcher added
+/// text the engine never placed (a skipped column, a rewritten passage): its words would be
+/// slivers of one box, presented as measured, so the page is placed as a block instead.
+const MOST_PER_BOX: usize = 3;
+
 /// The regions with `corrected` laid onto their words, or `None` when the engine placed blocks
-/// only (Mistral OCR) or read no words, for the caller to place the text over the whole page.
+/// only (Mistral OCR), read no words, or the correction adds more than the engine's boxes can
+/// honestly hold, for the caller to place the text over the whole page, marked as estimated.
 pub(crate) fn realign(regions: &[TextRegion], corrected: &str) -> Option<Vec<TextRegion>> {
     if regions.iter().any(|r| r.lines.is_empty()) {
         return None;
@@ -73,6 +79,9 @@ pub(crate) fn realign(regions: &[TextRegion], corrected: &str) -> Option<Vec<Tex
     if !before_first.is_empty() {
         before_first.append(&mut held[0]);
         held[0] = before_first;
+    }
+    if held.iter().any(|h| h.len() > MOST_PER_BOX) {
+        return None;
     }
 
     let mut held = held.into_iter();
@@ -270,6 +279,18 @@ mod tests {
         let out = realign(&regions, "بسم الله").unwrap();
         let w = words(&out);
         assert!(w[0].1 > w[1].1, "the first word sits to the right");
+    }
+
+    #[test]
+    fn text_the_engine_never_placed_is_left_to_the_caller() {
+        // A column the engine skipped, typed in by the researcher: its words would all be
+        // squeezed into the box of the word before them.
+        let regions = page(&[&[(0.1, "Le"), (0.3, "cercle"), (0.5, "de"), (0.7, "Dakar.")]]);
+        let added = "Le cercle de Dakar. Le commandant de cercle a réuni les notables du quartier.";
+        assert!(realign(&regions, added).is_none());
+        // A page rewritten in other words, five for each the engine read.
+        let regions = page(&[&[(0.1, "xxxx")]]);
+        assert!(realign(&regions, "une phrase toute neuve ici").is_none());
     }
 
     #[test]

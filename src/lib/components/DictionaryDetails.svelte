@@ -17,7 +17,7 @@
 		projectId: string;
 		row: DictionaryRow;
 		evidence: Evidence[];
-		act: (action: () => Promise<unknown>) => Promise<void>;
+		act: (action: () => Promise<unknown>) => Promise<unknown>;
 	} = $props();
 	const m = messages();
 

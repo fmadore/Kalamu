@@ -2,7 +2,7 @@
 //! their forms as written, review status and the pairs kept apart; and every form a result
 //! listed in CSV, as written beside the entry and label it maps to.
 
-use kalamu_core::{DictionaryError, ProjectId, Timestamp};
+use kalamu_core::{DictionaryError, ProjectId, Table, Timestamp};
 use serde::Serialize;
 
 use crate::Dictionary;
@@ -62,12 +62,12 @@ impl Dictionary {
     }
 
     /// Every form each result listed, one row per document, result and form: the original as
-    /// written beside its entry's id and label (empty when no entry holds it).
-    pub fn export_csv(&self, project: ProjectId) -> Result<String, DictionaryError> {
+    /// written beside its entry's id and label (empty when no entry holds it). A table for a
+    /// spreadsheet, which the `export` crate writes as CSV.
+    pub fn forms_table(&self, project: ProjectId) -> Result<Table, DictionaryError> {
         let gathered = self.gather(project, None)?;
         let entries = self.store.entries(project)?;
-        let mut out = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
-        out.write_record([
+        let headings = [
             "document_id",
             "document",
             "job",
@@ -77,8 +77,10 @@ impl Dictionary {
             "entry_id",
             "label",
             "reviewed",
-        ])
-        .map_err(failed)?;
+        ]
+        .map(str::to_string)
+        .to_vec();
+        let mut rows = Vec::new();
         for reading in &gathered.readings {
             let title = gathered
                 .titles
@@ -87,26 +89,25 @@ impl Dictionary {
             for (field, forms) in &reading.fields {
                 for form in forms {
                     let entry = holder(&entries, field, form);
-                    out.write_record([
-                        reading.document.to_string().as_str(),
-                        title,
-                        reading.job_name.as_str(),
-                        reading.setup_label.as_str(),
-                        field.as_str(),
-                        form.as_str(),
-                        entry.map(|e| e.id.to_string()).unwrap_or_default().as_str(),
-                        entry.map_or("", |e| e.label.as_str()),
+                    rows.push(vec![
+                        reading.document.to_string(),
+                        title.to_string(),
+                        reading.job_name.clone(),
+                        reading.setup_label.clone(),
+                        field.clone(),
+                        form.clone(),
+                        entry.map(|e| e.id.to_string()).unwrap_or_default(),
+                        entry.map_or(String::new(), |e| e.label.clone()),
                         if entry.is_some_and(|e| e.reviewed) {
                             "yes"
                         } else {
                             "no"
-                        },
-                    ])
-                    .map_err(failed)?;
+                        }
+                        .to_string(),
+                    ]);
                 }
             }
         }
-        let bytes = out.into_inner().map_err(failed)?;
-        String::from_utf8(bytes).map_err(failed)
+        Ok(Table { headings, rows })
     }
 }

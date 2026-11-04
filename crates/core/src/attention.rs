@@ -68,6 +68,17 @@ pub enum Signal {
 }
 
 impl Signal {
+    /// Every kind of signal, as serialised, in the order the queue lists its reasons: the
+    /// interface reads them from `src/lib/coreLists.json` rather than keeping its own copy.
+    pub const KINDS: [&'static str; 6] = [
+        "failed",
+        "not_read",
+        "truncated",
+        "disagrees",
+        "stale",
+        "not_reviewed",
+    ];
+
     /// A processing problem: nothing was read, so there is no answer to review.
     pub fn is_processing(&self) -> bool {
         matches!(self, Self::Failed { .. } | Self::NotRead)
@@ -135,11 +146,35 @@ pub struct QueueCounts {
     /// Items flagged for a reason beyond not being reviewed, and those of them still open.
     pub flagged: u32,
     pub unresolved: u32,
-    /// Items carrying each reason.
+    /// Items carrying each reason, whatever the interface shows.
+    pub reasons: ReasonCounts,
+}
+
+/// How many items carry each reason, by the reason's kind as [`Signal`] serialises it: counted
+/// here so the interface does not count them again.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ReasonCounts {
+    pub failed: u32,
+    pub not_read: u32,
     pub truncated: u32,
     pub disagrees: u32,
     pub stale: u32,
     pub not_reviewed: u32,
+}
+
+impl ReasonCounts {
+    pub fn add(&mut self, signal: &Signal) {
+        let count = match signal {
+            Signal::Failed { .. } => &mut self.failed,
+            Signal::NotRead => &mut self.not_read,
+            Signal::Truncated => &mut self.truncated,
+            Signal::Disagrees { .. } => &mut self.disagrees,
+            Signal::Stale { .. } => &mut self.stale,
+            Signal::NotReviewed => &mut self.not_reviewed,
+        };
+        *count += 1;
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
@@ -148,4 +183,39 @@ pub struct ReviewQueue {
     pub counts: QueueCounts,
     /// In the order of the scope's results, each result's pieces in their order.
     pub items: Vec<QueueItem>,
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_signal_kind_is_listed_once_in_order() {
+        let one_of_each = [
+            Signal::Failed { error: None },
+            Signal::NotRead,
+            Signal::Truncated,
+            Signal::Disagrees {
+                with: Vec::new(),
+                words: 0,
+                fields: Vec::new(),
+            },
+            Signal::Stale {
+                gone: false,
+                unit: false,
+            },
+            Signal::NotReviewed,
+        ];
+        let kinds: Vec<String> = one_of_each
+            .iter()
+            .map(|s| {
+                serde_json::to_value(s).unwrap()["kind"]
+                    .as_str()
+                    .unwrap()
+                    .to_string()
+            })
+            .collect();
+        assert_eq!(kinds, Signal::KINDS);
+    }
 }

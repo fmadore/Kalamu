@@ -6,8 +6,8 @@
 use kalamu_core::provenance::{ProvenanceDescribed, ProvenanceDocument};
 use kalamu_core::{
     CollectionId, DescribedBy, DescriptionField, Document, DocumentId, JobId, Project,
-    ProjectError, ProjectId, SourceDescription, SourceDocuments, SourceId, StoreError, Timestamp,
-    cleaned, same_tag, tag_name,
+    ProjectError, ProjectId, SourceDescription, SourceDocuments, SourceId, StoreError, Table,
+    Timestamp, cleaned, same_tag, tag_name,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -287,15 +287,15 @@ impl Projects {
         serde_json::to_string_pretty(&out).map_err(failed)
     }
 
-    /// The same as CSV: one row per document, each part of the description in a column with
-    /// another beside it saying where it came from; lists joined with `; `.
-    pub fn export_descriptions_csv(
+    /// The same as a table for a spreadsheet: one row per document, each part of the
+    /// description in a column with another beside it saying where it came from; lists joined
+    /// with `; `. The `export` crate writes it as CSV.
+    pub fn descriptions_table(
         &self,
         project: ProjectId,
         collection: Option<CollectionId>,
-    ) -> Result<String, ProjectError> {
+    ) -> Result<Table, ProjectError> {
         let listed = self.listed(project, collection)?;
-        let mut out = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
         let mut head = vec![
             "document_id".to_string(),
             "title".into(),
@@ -309,7 +309,7 @@ impl Projects {
             head.push(field.as_str().into());
             head.push(format!("{}_from", field.as_str()));
         }
-        out.write_record(&head).map_err(failed)?;
+        let mut rows = Vec::with_capacity(listed.documents.len());
         for (d, names) in &listed.documents {
             let parts = described(d, &listed.project.source_defaults);
             let mut row = vec![
@@ -329,9 +329,11 @@ impl Projects {
                     None => row.extend([String::new(), String::new()]),
                 }
             }
-            out.write_record(&row).map_err(failed)?;
+            rows.push(row);
         }
-        let bytes = out.into_inner().map_err(failed)?;
-        String::from_utf8(bytes).map_err(failed)
+        Ok(Table {
+            headings: head,
+            rows,
+        })
     }
 }

@@ -9,7 +9,7 @@
 	import type { Proposal } from '#lib/bindings/Proposal.js';
 	import type { ProposalPlan } from '#lib/bindings/ProposalPlan.js';
 	import type { ProposalsView } from '#lib/bindings/ProposalsView.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { formatDate, formatUsd, messages } from '#lib/i18n/index.js';
 	import { modelsFor, providerDefault, rulesFor } from '#lib/newJob.js';
 	import { app, go, hasKey, refreshJobs } from '#lib/state.svelte.js';
@@ -37,7 +37,7 @@
 	const TEXT = 'text/plain';
 
 	let view = $state<ProposalsView | null>(null);
-	let error = $state<string | null>(null);
+	const action = new Action({ after: () => load() });
 	let asking = $state(false);
 	let plan = $state<ProposalPlan | null>(null);
 	let provider = $state('');
@@ -74,23 +74,18 @@
 		try {
 			view = await api.dictionaryProposals(projectId);
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
-	async function act(action: () => Promise<unknown>, changed = false) {
-		error = null;
-		try {
-			await action();
-			if (changed) await onchange();
-			await load();
-		} catch (e) {
-			error = describeError(e, m);
-		}
+	/** After a merge or a pair kept apart, the dictionary's rows are read again too. */
+	async function changed() {
+		await onchange();
+		await load();
 	}
 
 	async function ask() {
-		error = null;
+		action.error = null;
 		try {
 			plan = await api.dictionaryPlan(projectId, scope || null, namespace);
 			if (!catalog) return;
@@ -99,7 +94,7 @@
 			model = providerDefault(catalog, rule, provider, TEXT);
 			asking = true;
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -131,7 +126,7 @@
 	});
 
 	async function start() {
-		error = null;
+		action.error = null;
 		starting = true;
 		try {
 			const pace: Pace = economy ? 'economy' : 'fast';
@@ -148,7 +143,7 @@
 			await refreshJobs();
 			await load();
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		} finally {
 			starting = false;
 		}
@@ -167,7 +162,7 @@
 	function merge(event: SubmitEvent, x: Proposal) {
 		event.preventDefault();
 		const label = (labels[x.key] ?? x.label).trim();
-		void act(() => api.dictionaryMerge(projectId, namespace, chosen(x), label), true);
+		void action.run(() => api.dictionaryMerge(projectId, namespace, chosen(x), label), changed);
 	}
 
 	$effect(() => {
@@ -184,7 +179,7 @@
 			<button class="btn sm" onclick={ask}><Icon name="merge" size={14} />{p.ask}</button>
 		{/if}
 	</div>
-	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
+	{#if action.error}<p class="chip danger" role="alert">{action.error}</p>{/if}
 
 	{#if asking && plan}
 		<div class="ask card">
@@ -261,7 +256,8 @@
 			<button
 				class="btn ghost sm"
 				title={p.forgetHint}
-				onclick={() => act(() => api.dictionaryForgetRequest(projectId, r.id))}>{p.forget}</button
+				onclick={() => action.run(() => api.dictionaryForgetRequest(projectId, r.id))}
+				>{p.forget}</button
 			>
 		</p>
 	{/each}
@@ -313,7 +309,8 @@
 						<button
 							class="btn sm"
 							type="button"
-							onclick={() => act(() => api.dictionaryDismiss(projectId, namespace, x.key, true))}
+							onclick={() =>
+								action.run(() => api.dictionaryDismiss(projectId, namespace, x.key, true))}
 							>{p.dismiss}</button
 						>
 						{#if x.members.length === 2}
@@ -322,7 +319,7 @@
 								type="button"
 								title={m.dictionary.keepApartHint}
 								onclick={() =>
-									act(
+									action.run(
 										() =>
 											api.dictionaryKeepApart(
 												projectId,
@@ -330,7 +327,7 @@
 												x.members[0].item,
 												x.members[1].item
 											),
-										true
+										changed
 									)}>{m.dictionary.keepApart}</button
 							>
 						{/if}
@@ -351,7 +348,8 @@
 						<span>{x.members.map((mb) => mb.label).join(' · ')}</span>
 						<button
 							class="btn ghost sm"
-							onclick={() => act(() => api.dictionaryDismiss(projectId, namespace, x.key, false))}
+							onclick={() =>
+								action.run(() => api.dictionaryDismiss(projectId, namespace, x.key, false))}
 							>{p.takeBack}</button
 						>
 					</li>
