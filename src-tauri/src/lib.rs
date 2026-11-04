@@ -376,6 +376,7 @@ pub fn run() {
             commands::jobs::retry_failed,
             commands::jobs::delete_job,
             commands::jobs::list_jobs,
+            commands::jobs::job_sources,
             commands::jobs::get_job,
             commands::jobs::job_pieces,
             commands::jobs::job_text_outputs,

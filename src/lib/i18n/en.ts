@@ -1176,6 +1176,40 @@ export const en = {
 		paceName: { fast: 'Faster', economy: 'Cheaper (batch)' },
 		empty_new: 'Start a job'
 	},
+	/** The Jobs page: every job in a table, found, filtered and sorted. */
+	allJobs: {
+		title: 'All jobs',
+		count: (n: number) => (n === 1 ? '1 job' : `${n} jobs`),
+		/** The sidebar's link under its most recent finished jobs. */
+		link: (n: number) => `All jobs (${n})`,
+		search: 'Search names and files',
+		anyTask: 'All tasks',
+		anyStatus: 'All statuses',
+		sortBy: 'Sort by',
+		sortNewest: 'Newest first',
+		sortOldest: 'Oldest first',
+		sortName: 'Name',
+		columnName: 'Name',
+		columnTask: 'Task',
+		columnStatus: 'Status',
+		columnPieces: 'Pieces',
+		columnCost: 'Spent',
+		columnDate: 'Created',
+		files: (n: number) => (n === 1 ? '1 file' : `${n} files`),
+		noMatch: 'No job matches these filters.',
+		selectAll: 'Select all jobs shown',
+		select: (name: string) => `Select “${name}”`,
+		selected: (n: number) => (n === 1 ? '1 selected' : `${n} selected`),
+		clearSelection: 'Clear',
+		actions: 'Actions',
+		addTo: 'Add to a project…',
+		addedTo: (n: number, project: string) =>
+			`${n === 1 ? '1 job' : `${n} jobs`} added to the project “${project}”.`,
+		delete: 'Delete',
+		deleteConfirm: (n: number) =>
+			`Delete ${n === 1 ? 'this job' : `these ${n} jobs`}? Files already written stay on disk.`,
+		runningKept: 'Running jobs cannot be deleted: pause or cancel them first.'
+	},
 	status: {
 		pending: 'Waiting',
 		running: 'Running',

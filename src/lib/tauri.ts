@@ -45,6 +45,7 @@ import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { Job } from './bindings/Job.js';
 import type { JobScores } from './bindings/JobScores.js';
 import type { JobSummary } from './bindings/JobSummary.js';
+import type { JobSources } from './bindings/JobSources.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
@@ -142,6 +143,8 @@ export const api = {
 	deleteJob: (id: string) => invoke<void>('delete_job', { id }),
 	renameJob: (id: string, name: string) => invoke<void>('rename_job', { id, name }),
 	listJobs: () => invoke<JobSummary[]>('list_jobs'),
+	/** The names of every job's sources, for finding a job by a file it read. */
+	jobSources: () => invoke<JobSources[]>('job_sources'),
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
 	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),

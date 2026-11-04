@@ -284,6 +284,11 @@ impl Engine {
         Ok(self.store.list_jobs()?)
     }
 
+    /// The names of every job's sources, for finding a job by a file it read.
+    pub fn job_sources(&self) -> Result<Vec<kalamu_core::JobSources>, EngineError> {
+        Ok(self.store.job_sources()?)
+    }
+
     pub fn job(&self, id: JobId) -> Result<Job, EngineError> {
         Ok(self.store.job(id)?)
     }

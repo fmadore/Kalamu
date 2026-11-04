@@ -260,7 +260,9 @@ ad hoc; it has not yet been opened on a real Mac
   ([decision](decisions/2026-10-29-provenance-request-settings.md)).
 - **Design**: the Graphite and highlighter interface ([DESIGN.md](../DESIGN.md)), responsive
   from 640 to 2560 pixels, light and dark, with a sidebar that lists the jobs and folds to a
-  rail, and an app icon
+  rail (its finished jobs the 8 most recent, then a link to the Jobs page, a table of every job
+  with a search on names and files, filters by task and status, sorting, and the job menu's
+  actions on one row or several), and an app icon
   drawn from the same mark. Under the tasks in New job, a diagram of how each task splits
   and joins the work, drawn with the user's own files; for text extraction it shows whether
   the chosen model can also give a searchable PDF.

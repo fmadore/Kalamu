@@ -1270,6 +1270,39 @@ export const fr: Messages = {
 		paceName: { fast: 'Plus rapide', economy: 'Moins cher (par lots)' },
 		empty_new: 'Lancer un traitement'
 	},
+	allJobs: {
+		title: 'Tous les traitements',
+		count: (n: number) => (n <= 1 ? `${n} traitement` : `${n} traitements`),
+		link: (n: number) => `Tous les traitements (${n})`,
+		search: 'Chercher dans les noms et les fichiers',
+		anyTask: 'Toutes les tâches',
+		anyStatus: 'Tous les états',
+		sortBy: 'Trier par',
+		sortNewest: 'Les plus récents',
+		sortOldest: 'Les plus anciens',
+		sortName: 'Nom',
+		columnName: 'Nom',
+		columnTask: 'Tâche',
+		columnStatus: 'État',
+		columnPieces: 'Segments',
+		columnCost: 'Dépensé',
+		columnDate: 'Créé le',
+		files: (n: number) => (n <= 1 ? `${n} fichier` : `${n} fichiers`),
+		noMatch: 'Aucun traitement ne correspond à ces filtres.',
+		selectAll: 'Sélectionner tous les traitements affichés',
+		select: (name: string) => `Sélectionner « ${name} »`,
+		selected: (n: number) => (n <= 1 ? `${n} sélectionné` : `${n} sélectionnés`),
+		clearSelection: 'Désélectionner',
+		actions: 'Actions',
+		addTo: 'Ajouter à un projet…',
+		addedTo: (n: number, project: string) =>
+			`${n <= 1 ? `${n} traitement ajouté` : `${n} traitements ajoutés`} au projet « ${project} ».`,
+		delete: 'Supprimer',
+		deleteConfirm: (n: number) =>
+			`Supprimer ${n <= 1 ? 'ce traitement' : `ces ${n} traitements`} ? Les fichiers déjà écrits restent sur le disque.`,
+		runningKept:
+			'Un traitement en cours ne peut pas être supprimé : mettez-le en pause ou annulez-le d’abord.'
+	},
 	status: {
 		pending: 'En attente',
 		running: 'En cours',

@@ -49,7 +49,8 @@ pub use ids::{
     Timestamp, UnitId,
 };
 pub use job::{
-    Job, JobSettings, JobStatus, JobSummary, LineBreaks, OutputDestination, OutputSettings, Pace,
+    Job, JobSettings, JobSources, JobStatus, JobSummary, LineBreaks, OutputDestination,
+    OutputSettings, Pace,
 };
 pub use language::{LanguageChoice, LanguageCode};
 pub use pages::PagesPerCall;

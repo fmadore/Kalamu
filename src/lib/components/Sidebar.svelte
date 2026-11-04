@@ -1,17 +1,19 @@
 <script lang="ts">
 	// The sidebar: the app's name, New job, Projects with the projects listed under it, the list of
 	// jobs grouped by what they need from the researcher, and the tools at its foot (Prompts,
-	// Settings, Glossary, support). A finished job dragged onto a listed project is added to it,
+	// Settings, Glossary, support). Finished jobs are the most recent few, then a link to the Jobs
+	// page, which lists them all; what runs, stopped early or waits for the researcher is always
+	// listed in full, and so is the job open in the main area. A finished job dragged onto a listed project is added to it,
 	// as its menu's Add to a project does. It folds to a rail of icons named by their tooltips,
 	// leaving the room to the work.
 	import Icon from './Icon.svelte';
 	import JobMenu from './JobMenu.svelte';
 	import SupportLink from './SupportLink.svelte';
-	import type { JobStatus } from '#lib/bindings/JobStatus.js';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { shortcut } from '#lib/platform.js';
 	import { describeError } from '#lib/errors.js';
+	import { UNFINISHED, finishedShown, groupOf, type GroupKey } from '#lib/jobList.js';
 	import { app, go, refreshJobs, refreshProjects, toast } from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
 	import { api } from '#lib/tauri.js';
@@ -63,36 +65,6 @@
 		input.select();
 	}
 
-	// The list of jobs, grouped by what they need from the researcher.
-	const UNFINISHED: JobStatus[] = ['interrupted', 'paused', 'pending'];
-	const groups = $derived(
-		[
-			// Workflow steps that wait for the researcher come first: nothing moves until they act.
-			{
-				key: 'waiting',
-				label: m.shell.toCheck,
-				jobs: app.jobs.filter((j) => app.waiting[j.id])
-			},
-			{
-				key: 'running',
-				label: m.shell.running,
-				jobs: app.jobs.filter((j) => j.status === 'running')
-			},
-			{
-				key: 'unfinished',
-				label: m.shell.unfinished,
-				jobs: app.jobs.filter((j) => UNFINISHED.includes(j.status))
-			},
-			{
-				key: 'finished',
-				label: m.shell.finished,
-				jobs: app.jobs.filter(
-					(j) => j.status !== 'running' && !UNFINISHED.includes(j.status) && !app.waiting[j.id]
-				)
-			}
-		].filter((g) => g.jobs.length > 0)
-	);
-
 	/** The job the main area shows, whether as its detail or in review. */
 	const openJob = $derived(
 		app.view.name === 'review'
@@ -101,6 +73,33 @@
 				? (app.view.jobId ?? app.jobs[0]?.id)
 				: undefined
 	);
+
+	// The list of jobs, grouped by what they need from the researcher. Workflow steps that wait
+	// for the researcher come first: nothing moves until they act.
+	const labels: Record<GroupKey, string> = {
+		waiting: m.shell.toCheck,
+		running: m.shell.running,
+		unfinished: m.shell.unfinished,
+		finished: m.shell.finished
+	};
+	const groups = $derived.by(() => {
+		const by: Record<GroupKey, JobSummary[]> = {
+			waiting: [],
+			running: [],
+			unfinished: [],
+			finished: []
+		};
+		for (const job of app.jobs) by[groupOf(job, app.waiting)].push(job);
+		return (Object.keys(by) as GroupKey[])
+			.filter((key) => by[key].length > 0)
+			.map((key) => ({
+				key,
+				label: labels[key],
+				count: by[key].length,
+				jobs: key === 'finished' ? finishedShown(by[key], openJob) : by[key]
+			}));
+	});
+	const allJobsOpen = $derived(app.view.name === 'allJobs');
 	const offlineReady = $derived(app.offline?.models.some((s) => s.installed) ?? false);
 
 	const share = (j: JobSummary) => (100 * j.pieces_finished) / Math.max(j.pieces_total, 1);
@@ -294,12 +293,23 @@
 		onclick={() => go({ name: 'workflows' })}
 		><Icon name="workflow" size={16} />{#if !collapsed}{m.nav.workflows}{/if}</button
 	>
+	{#if collapsed}
+		<!-- The rail hides the job list; the Jobs page stays one click away. -->
+		<button
+			class="tool"
+			class:current={allJobsOpen}
+			aria-current={allJobsOpen ? 'page' : undefined}
+			aria-label={m.allJobs.title}
+			title={m.allJobs.title}
+			onclick={() => go({ name: 'allJobs' })}><Icon name="list" size={16} /></button
+		>
+	{/if}
 
 	<div class="jobs" id="job-list" hidden={collapsed}>
 		{#each groups as group (group.key)}
 			<section class="group" aria-labelledby="group-{group.key}">
 				<h2 class="group-head" id="group-{group.key}">
-					<span>{group.label}</span><span class="num">{group.jobs.length}</span>
+					<span>{group.label}</span><span class="num">{group.count}</span>
 				</h2>
 				<ul>
 					{#each group.jobs as job (job.id)}
@@ -362,6 +372,17 @@
 		{:else}
 			<p class="no-jobs">{m.shell.noJobs}</p>
 		{/each}
+		{#if app.jobs.length > 0}
+			<button
+				class="all-jobs"
+				class:current={allJobsOpen}
+				aria-current={allJobsOpen ? 'page' : undefined}
+				onclick={() => go({ name: 'allJobs' })}
+				><Icon name="list" size={14} /><span class="ellipsis"
+					>{m.allJobs.link(app.jobs.length)}</span
+				></button
+			>
+		{/if}
 	</div>
 
 	<div class="tools">
@@ -700,6 +721,34 @@
 		height: 100%;
 		background: var(--ink);
 		transition: width 400ms ease-out;
+	}
+	/* The way to every job, under the most recent: quiet, like a group's heading. */
+	.all-jobs {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-width: 0;
+		min-height: var(--control-sm);
+		margin-top: calc(-1 * var(--space-2));
+		padding: 0 0.625rem;
+		border: 0;
+		border-radius: var(--radius-control);
+		background: transparent;
+		color: var(--text-secondary);
+		font-size: var(--type-sm);
+		text-align: left;
+		cursor: pointer;
+		transition: background-color 120ms ease-out;
+	}
+	.all-jobs:hover {
+		background: var(--wash);
+		color: var(--text-bright);
+	}
+	.all-jobs.current {
+		background: var(--surface-0);
+		box-shadow: var(--shadow-raised);
+		color: var(--text-bright);
+		font-weight: 500;
 	}
 	.no-jobs {
 		padding: 0 var(--space-2);

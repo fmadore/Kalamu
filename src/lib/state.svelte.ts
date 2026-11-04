@@ -65,6 +65,8 @@ export type View =
 			selection?: string[];
 	  }
 	| { name: 'jobs'; jobId?: string }
+	/** Every job in a table, found, filtered and sorted. */
+	| { name: 'allJobs' }
 	| {
 			name: 'review';
 			jobId: string;

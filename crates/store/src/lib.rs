@@ -8,9 +8,9 @@ use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
 
 use kalamu_core::{
-    BatchRecord, CacheKey, Charge, Correction, Job, JobId, JobStatus, JobStore, JobSummary,
-    PieceRef, PieceState, PieceStatus, ProviderId, SetupId, SourceId, SpeakerNames, StoreError,
-    StoredResult, Timestamp,
+    BatchRecord, CacheKey, Charge, Correction, Job, JobId, JobSources, JobStatus, JobStore,
+    JobSummary, PieceRef, PieceState, PieceStatus, ProviderId, SetupId, SourceId, SpeakerNames,
+    StoreError, StoredResult, Timestamp,
 };
 use rusqlite::{Connection, OptionalExtension, params};
 
@@ -193,6 +193,41 @@ impl JobStore for SqliteStore {
             });
         }
         Ok(jobs)
+    }
+
+    fn job_sources(&self) -> Result<Vec<JobSources>, StoreError> {
+        let conn = self.conn();
+        let mut stmt = conn
+            .prepare(
+                "SELECT j.id, json_extract(s.value, '$.file_name'), json_extract(s.value, '$.title')
+                 FROM jobs j, json_each(j.data, '$.sources') s
+                 ORDER BY j.created_at DESC, j.id, s.key",
+            )
+            .map_err(db)?;
+        let rows = stmt
+            .query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, Option<String>>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                ))
+            })
+            .map_err(db)?;
+        let mut out: Vec<JobSources> = Vec::new();
+        for row in rows {
+            let (id, file_name, title) = row.map_err(db)?;
+            let job_id: JobId = id.parse().map_err(corrupt)?;
+            if out.last().is_none_or(|j| j.job_id != job_id) {
+                out.push(JobSources {
+                    job_id,
+                    names: Vec::new(),
+                });
+            }
+            if let Some(job) = out.last_mut() {
+                job.names.extend(file_name.into_iter().chain(title));
+            }
+        }
+        Ok(out)
     }
 
     fn set_job_status(&self, id: JobId, status: JobStatus) -> Result<(), StoreError> {
