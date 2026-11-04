@@ -158,18 +158,25 @@ impl Engine {
                 absolute(&state.piece, &renamed, previous_end)
             };
             // A corrected page keeps its words' places where the engine placed each word;
-            // otherwise its text stays searchable as one block over the page.
+            // otherwise its text stays searchable as one block over the page, also when the
+            // engine read nothing there and the researcher typed the page.
+            let whole_page = |text: &String| {
+                vec![kalamu_core::TextRegion::block(
+                    0.05,
+                    0.05,
+                    0.9,
+                    0.9,
+                    text.clone(),
+                )]
+            };
             let regions = match (&corrected_text, result.output.regions.is_empty()) {
                 (Some(text), false) => crate::realign::realign(&result.output.regions, text)
-                    .unwrap_or_else(|| {
-                        vec![kalamu_core::TextRegion::block(
-                            0.05,
-                            0.05,
-                            0.9,
-                            0.9,
-                            text.clone(),
-                        )]
-                    }),
+                    .unwrap_or_else(|| whole_page(text)),
+                (Some(text), true)
+                    if !text.trim().is_empty() && matches!(state.piece, PieceRef::Page { .. }) =>
+                {
+                    whole_page(text)
+                }
                 _ => result.output.regions.clone(),
             };
             parts.push(ExportPart {

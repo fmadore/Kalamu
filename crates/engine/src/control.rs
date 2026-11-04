@@ -8,7 +8,8 @@ use kalamu_core::{JobId, JobStatus, PieceStatus, ProgressEvent, StopSignal, Time
 use crate::{Engine, EngineError};
 
 /// Pause and cancel requests for a running job, checked between pieces. `stop` reaches the
-/// pieces in flight, so long offline work can stop part-way.
+/// pieces in flight, which an engine checks where it can (Whisper between windows of sound,
+/// Tesseract before each page); a call it cannot interrupt finishes and is kept.
 #[derive(Default)]
 pub(crate) struct Control {
     pub pause: bool,
@@ -105,6 +106,10 @@ impl Engine {
 
     /// Puts failed pieces back in the queue and starts the job.
     pub fn retry_failed(self: &Arc<Self>, id: JobId) -> Result<(), EngineError> {
+        // Checked first: a running job's failed pieces are not put back behind its back.
+        if self.is_running(id) {
+            return Err(EngineError::AlreadyRunning);
+        }
         for mut piece in self.store.pieces(id)? {
             if piece.status == PieceStatus::Failed {
                 piece.status = PieceStatus::Pending;

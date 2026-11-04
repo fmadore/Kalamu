@@ -456,6 +456,19 @@ mod tests {
     use super::*;
     use kalamu_core::LanguageCode;
 
+    /// Results are cached under [`MODEL`], which holds neither the engine's version nor the
+    /// language data's revision: a pinned `kreuzberg-tesseract` bumped by Dependabot, or a new
+    /// `tessdata_best` commit, would otherwise reuse pages read by the old one. When this fails,
+    /// decide whether the new one reads differently; if it may, give the model a new id (here
+    /// and in the catalogue) so earlier results stay theirs, then update the values below.
+    #[test]
+    fn a_new_engine_or_language_data_is_a_decision_about_the_model_id() {
+        assert_eq!(
+            (MODEL, DATA_REVISION, Tesseract::version().as_str()),
+            ("tesseract-5", "tessdata_best@e12c65a", "5.5.2")
+        );
+    }
+
     /// Two paragraphs, the first of two lines, as Tesseract writes them; a non-word row with
     /// confidence -1 and an empty word are left out.
     const TSV: &str = "1\t1\t0\t0\t0\t0\t0\t0\t1000\t2000\t-1\t\n\

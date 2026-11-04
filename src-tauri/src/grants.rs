@@ -54,10 +54,11 @@ impl Grants {
         }
     }
 
-    /// Opens every kept path again, as the app starts. A bookmark that no longer leads anywhere
-    /// (the folder was deleted, or the disk is not connected) is dropped; one the system calls
-    /// stale, or whose item moved, is made again from where it is now. Returns how many paths
-    /// are open.
+    /// Opens every kept path again, as the app starts. A bookmark that leads nowhere today is
+    /// kept as it is, unopened: the disk may only be unplugged or the share not connected, and
+    /// dropping it would leave the next launch unable to reach the folder with nothing asking
+    /// for it again. One the system calls stale, or whose item moved, is made again from where
+    /// it is now. Returns how many paths are open.
     pub fn restore(&self) -> usize {
         if !self.access.sandboxed {
             return 0;
@@ -65,6 +66,7 @@ impl Grants {
         let mut kept = self.lock();
         let before = kept.clone();
         let mut restored = BTreeMap::new();
+        let mut open = 0;
         for (path, encoded) in before.iter() {
             let Some((now, stale)) = STANDARD
                 .decode(encoded)
@@ -72,6 +74,7 @@ impl Grants {
                 .and_then(|data| (self.access.open)(&data))
             else {
                 tracing::info!(path = %path.display(), "a folder granted earlier is out of reach");
+                restored.insert(path.clone(), encoded.clone());
                 continue;
             };
             let encoded = if stale || now != *path {
@@ -80,8 +83,8 @@ impl Grants {
                 encoded.clone()
             };
             restored.insert(now, encoded);
+            open += 1;
         }
-        let open = restored.len();
         if restored != before {
             *kept = restored;
             self.save(&kept);
@@ -244,18 +247,20 @@ mod tests {
         grants(&dir, SANDBOX).keep(["/archive", "/gone/old", "/moved/box", "/stale/x.pdf"]);
 
         let g = grants(&dir, SANDBOX);
-        assert_eq!(g.restore(), 3);
+        assert_eq!(g.restore(), 3, "the folder out of reach is not opened");
         let kept: Vec<PathBuf> = g.lock().keys().cloned().collect();
         assert_eq!(
             kept,
             [
                 PathBuf::from("/archive"),
                 PathBuf::from("/elsewhere/box"),
+                // An unplugged disk: kept for the launch when it is back.
+                PathBuf::from("/gone/old"),
                 PathBuf::from("/stale/x.pdf")
             ]
         );
         // What was restored is saved, so the next launch starts from it.
         let again = grants(&dir, SANDBOX);
-        assert_eq!(again.lock().len(), 3);
+        assert_eq!(again.lock().len(), 4);
     }
 }
