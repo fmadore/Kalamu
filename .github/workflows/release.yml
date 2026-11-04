@@ -201,11 +201,18 @@ jobs:
       # The toolchain pinned in rust-toolchain.toml. Each runner builds for its own architecture.
       - run: rustup toolchain install
 
+      # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of
+      # its own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
+      # `target/` with that folder emptied, and the build then finds no sources to build: keep
+      # it out of the cache, in the runner's temporary folder.
+      - name: Keep Tesseract's build outside the cached target folder
+        shell: bash
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           # CI's key: the same GGML_* values. Restore only: a cache saved by a tag run is scoped
           # to that tag, so nothing else could restore it, and it would push CI's caches out.
-          prefix-key: whisper-cpu-${{ runner.arch }}-v1
+          prefix-key: whisper-cpu-${{ runner.arch }}-v2
           save-if: false
 
       - uses: actions/setup-node@v7
@@ -254,9 +261,16 @@ jobs:
 
       - run: rustup toolchain install
 
+      # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of
+      # its own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
+      # `target/` with that folder emptied, and the build then finds no sources to build: keep
+      # it out of the cache, in the runner's temporary folder.
+      - name: Keep Tesseract's build outside the cached target folder
+        shell: bash
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          prefix-key: whisper-cpu-${{ runner.arch }}-v1
+          prefix-key: whisper-cpu-${{ runner.arch }}-v2
           save-if: false
 
       - uses: actions/setup-node@v7
@@ -335,9 +349,16 @@ jobs:
 
       - run: rustup toolchain install
 
+      # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of
+      # its own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
+      # `target/` with that folder emptied, and the build then finds no sources to build: keep
+      # it out of the cache, in the runner's temporary folder.
+      - name: Keep Tesseract's build outside the cached target folder
+        shell: bash
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          prefix-key: whisper-cpu-${{ runner.arch }}-v1
+          prefix-key: whisper-cpu-${{ runner.arch }}-v2
           save-if: false
 
       - uses: actions/setup-node@v7

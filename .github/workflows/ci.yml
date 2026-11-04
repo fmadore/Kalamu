@@ -76,6 +76,13 @@ jobs:
           "CXXFLAGS=/EHsc" >> $env:GITHUB_ENV
           "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
           "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+      # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of
+      # its own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
+      # `target/` with that folder emptied, and the build then finds no sources to build: keep
+      # it out of the cache, in the runner's temporary folder.
+      - name: Keep Tesseract's build outside the cached target folder
+        shell: bash
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
       # The toolchain pinned in rust-toolchain.toml.
       - run: rustup toolchain install
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
