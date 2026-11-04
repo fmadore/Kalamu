@@ -93,3 +93,13 @@ describe('searching a source', () => {
 		expect(hits.map((h) => h.lineMs)).toEqual([null, null]);
 	});
 });
+
+// Project search opens the review at the n-th match of a piece, and both sides count it: Rust's
+// search writes these worked cases (`cargo test`), and the review must find the same words.
+import cases from './matchCases.json';
+
+describe('the review finds what project search finds', () => {
+	it.each(cases)('$query in "$text"', ({ text, query, found }) => {
+		expect(words(text, query)).toEqual(found);
+	});
+});

@@ -35,7 +35,9 @@ pub mod workflow;
 pub mod youtube;
 
 pub use analysis::{AnalysisSchema, Field, FieldAnswer, FieldKind, FieldValue, SchemaError};
-pub use attention::{QueueCounts, QueueItem, ReviewQueue, ReviewScope, ReviewTarget, Signal};
+pub use attention::{
+    QueueCounts, QueueItem, ReasonCounts, ReviewQueue, ReviewScope, ReviewTarget, Signal,
+};
 pub use batch::{
     BATCH_WINDOW_MS, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress, BatchRecord,
 };

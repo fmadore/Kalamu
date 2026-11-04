@@ -146,11 +146,35 @@ pub struct QueueCounts {
     /// Items flagged for a reason beyond not being reviewed, and those of them still open.
     pub flagged: u32,
     pub unresolved: u32,
-    /// Items carrying each reason.
+    /// Items carrying each reason, whatever the interface shows.
+    pub reasons: ReasonCounts,
+}
+
+/// How many items carry each reason, by the reason's kind as [`Signal`] serialises it: counted
+/// here so the interface does not count them again.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ReasonCounts {
+    pub failed: u32,
+    pub not_read: u32,
     pub truncated: u32,
     pub disagrees: u32,
     pub stale: u32,
     pub not_reviewed: u32,
+}
+
+impl ReasonCounts {
+    pub fn add(&mut self, signal: &Signal) {
+        let count = match signal {
+            Signal::Failed { .. } => &mut self.failed,
+            Signal::NotRead => &mut self.not_read,
+            Signal::Truncated => &mut self.truncated,
+            Signal::Disagrees { .. } => &mut self.disagrees,
+            Signal::Stale { .. } => &mut self.stale,
+            Signal::NotReviewed => &mut self.not_reviewed,
+        };
+        *count += 1;
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]

@@ -8,6 +8,7 @@ import type { QueueCounts } from '../bindings/QueueCounts.js';
 import type { QueueItem } from '../bindings/QueueItem.js';
 import type { QueueSelection } from '../bindings/QueueSelection.js';
 import type { QueueView } from '../bindings/QueueView.js';
+import type { ReasonCounts } from '../bindings/ReasonCounts.js';
 import type { ResultKey } from '../bindings/ResultKey.js';
 import { analysisJob, audioJob, job } from './mockJobs.js';
 import { DOCUMENT_ID, documentsIn } from './mockProjects.js';
@@ -129,7 +130,10 @@ export function queueCommand(cmd: string, a: Record<string, unknown>): QueueView
 
 /** What a document adds to the counts: its results kept, their pieces, and the reasons its
  * items carry. */
-type Tally = Omit<QueueCounts, 'documents' | 'documents_read' | 'flagged' | 'unresolved'>;
+type Tally = Omit<
+	QueueCounts,
+	'documents' | 'documents_read' | 'flagged' | 'unresolved' | 'reasons'
+>;
 
 function tally(documentId: string, analyses: number): Tally | null {
 	if (documentId === DOCUMENT_ID) {
@@ -139,11 +143,7 @@ function tally(documentId: string, analyses: number): Tally | null {
 			processed: 3 + analyses,
 			failed: 0,
 			not_read: 0,
-			reviewed: 1,
-			truncated: 1,
-			disagrees: 3 + analyses,
-			stale: analyses,
-			not_reviewed: 2 + analyses
+			reviewed: 1
 		};
 	}
 	if (documentId === INTERVIEW) {
@@ -153,14 +153,23 @@ function tally(documentId: string, analyses: number): Tally | null {
 			processed: 2,
 			failed: 1,
 			not_read: 0,
-			reviewed: 0,
-			truncated: 0,
-			disagrees: 0,
-			stale: 0,
-			not_reviewed: 0
+			reviewed: 0
 		};
 	}
 	return null;
+}
+
+function reasonsOf(list: QueueItem[]): ReasonCounts {
+	const counts: ReasonCounts = {
+		failed: 0,
+		not_read: 0,
+		truncated: 0,
+		disagrees: 0,
+		stale: 0,
+		not_reviewed: 0
+	};
+	for (const item of list) for (const s of item.signals) counts[s.kind]++;
+	return counts;
 }
 
 function queueView(selection: QueueSelection, excluded: ResultKey[]): QueueView {
@@ -191,10 +200,8 @@ function queueView(selection: QueueSelection, excluded: ResultKey[]): QueueView 
 				reviewed: sum('reviewed'),
 				flagged: list.length,
 				unresolved: list.filter((i) => i.open).length,
-				truncated: sum('truncated'),
-				disagrees: sum('disagrees'),
-				stale: sum('stale'),
-				not_reviewed: sum('not_reviewed')
+				// As Rust counts them: every item's reasons.
+				reasons: reasonsOf(list)
 			},
 			items: list
 		},

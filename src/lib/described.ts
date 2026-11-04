@@ -3,20 +3,11 @@
 // (`kalamu-projects`); here a draft is only edited. Pure, so it is tested without the app.
 
 import type { DescriptionField } from './bindings/DescriptionField.js';
+import lists from './coreLists.json';
 
-/** Every part of a description, as `DescriptionField::ALL` orders them. */
-export const FIELDS: DescriptionField[] = [
-	'repository',
-	'fonds',
-	'series',
-	'file',
-	'shelfmark',
-	'creator',
-	'date',
-	'url',
-	'citation',
-	'rights'
-];
+/** Every part of a description, as `DescriptionField::ALL` orders them (written by `cargo
+ * test`). */
+export const FIELDS = lists.description_fields as DescriptionField[];
 
 /** Parts written over several lines. */
 export const LONG: DescriptionField[] = ['citation', 'rights'];

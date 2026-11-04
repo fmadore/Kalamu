@@ -88,9 +88,9 @@ async fn a_comparison_lists_where_its_set_ups_disagree_and_what_was_cut_off() {
     );
     assert_eq!(
         (
-            q.counts.truncated,
-            q.counts.disagrees,
-            q.counts.not_reviewed
+            q.counts.reasons.truncated,
+            q.counts.reasons.disagrees,
+            q.counts.reasons.not_reviewed
         ),
         (2, 6, 6)
     );
@@ -215,7 +215,7 @@ async fn an_answer_read_from_a_text_corrected_since_is_stale_even_once_reviewed(
         }]
     );
     assert!(q.items[0].reviewed && q.items[0].open);
-    assert_eq!((q.counts.stale, q.counts.unresolved), (1, 1));
+    assert_eq!((q.counts.reasons.stale, q.counts.unresolved), (1, 1));
 
     f.engine
         .delete_job(extraction.id)

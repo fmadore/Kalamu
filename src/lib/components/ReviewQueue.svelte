@@ -19,7 +19,6 @@
 		grouped,
 		itemKey,
 		placeOf,
-		reasonCounts,
 		reasonText,
 		shownItems,
 		type QueueFilter
@@ -57,7 +56,8 @@
 
 	const items = $derived(view?.queue.items ?? []);
 	const counts = $derived(view?.queue.counts);
-	const tally = $derived(reasonCounts(items));
+	/** Items carrying each reason, counted by Rust whatever is shown. */
+	const tally = $derived(counts?.reasons);
 	const shown = $derived(shownItems(items, filter));
 	const groups = $derived(grouped(shown));
 	/** The order the review steps through: what is not read first, as listed. */
@@ -228,7 +228,7 @@
 						onchange={() => toggleReason(r)}
 					/>
 					<span>{q.reason[r]}</span>
-					<span class="num muted">{tally[r]}</span>
+					<span class="num muted">{tally?.[r] ?? 0}</span>
 				</label>
 			{/each}
 			<label class="toggle">
