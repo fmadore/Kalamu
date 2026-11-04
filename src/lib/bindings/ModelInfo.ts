@@ -7,6 +7,7 @@ import type { Pricing } from "./Pricing";
 import type { ProviderId } from "./ProviderId";
 import type { Reasoning } from "./Reasoning";
 import type { Task } from "./Task";
+import type { Translation } from "./Translation";
 
 export type ModelInfo = { provider: ProviderId, id: string, name: string, description: string, tasks: Array<Task>, 
 /**
@@ -61,4 +62,8 @@ costly: boolean, pricing: Pricing, limits: Limits,
  * The thinking levels it accepts; `None` for a model that does not reason (an OCR or a
  * speech-to-text model).
  */
-reasoning?: Reasoning, };
+reasoning?: Reasoning, 
+/**
+ * Its name and description in other interface languages, by language (`fr`).
+ */
+translations?: { [key in string]: Translation }, };

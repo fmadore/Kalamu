@@ -2,6 +2,7 @@
 	// Offline engines' downloads: Whisper's models, as in Live Translation's settings, and the
 	// language data of an engine built into the app (Tesseract), one file per language. While a
 	// download runs the lists are polled for the bytes received.
+	import { modelDescription } from '#lib/catalogText.js';
 	import type { OfflineModel } from '#lib/bindings/OfflineModel.js';
 	import { describeError } from '#lib/errors.js';
 	import { listNames, messages } from '#lib/i18n/index.js';
@@ -143,7 +144,7 @@
 			</p>
 		{/if}
 		{#each downloadable as mod (mod.id)}
-			{@render row(status(mod.id), mod.id, mod.name, mod.description, missingCpu)}
+			{@render row(status(mod.id), mod.id, mod.name, modelDescription(mod), missingCpu)}
 		{/each}
 	{/if}
 	{#if builtIn.length > 0 && languageData.length > 0}

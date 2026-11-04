@@ -32,14 +32,24 @@
       "name": "Whisper (on this PC)",
       "key_url": "",
       "key_prefix": null,
-      "local": true
+      "local": true,
+      "translations": {
+        "fr": {
+          "name": "Whisper (sur cet ordinateur)"
+        }
+      }
     },
     {
       "id": "tesseract",
       "name": "Tesseract (on this computer)",
       "key_url": "",
       "key_prefix": null,
-      "local": true
+      "local": true,
+      "translations": {
+        "fr": {
+          "name": "Tesseract (sur cet ordinateur)"
+        }
+      }
     }
   ],
   "models": [
@@ -1128,7 +1138,12 @@
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Presque aussi précis que Large v3, plusieurs fois plus rapide ; le meilleur choix sur la plupart des ordinateurs. Téléchargement de 574 Mo."
+        }
+      }
     },
     {
       "provider": "whisper",
@@ -1183,7 +1198,12 @@
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Le plus précis des Whisper, et le plus lent : comptez environ la durée de l’enregistrement sur un portable. Téléchargement de 1,1 Go."
+        }
+      }
     },
     {
       "provider": "whisper",
@@ -1238,7 +1258,12 @@
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Rapide sur tout ordinateur, pour des enregistrements clairs dans des langues très parlées. Téléchargement de 190 Mo."
+        }
+      }
     },
     {
       "provider": "whisper",
@@ -1293,7 +1318,12 @@
         "per_minute": 0.0,
         "note": "Runs on this PC: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Très rapide et approximatif : un premier aperçu de ce que contient un enregistrement. Téléchargement de 60 Mo."
+        }
+      }
     },
     {
       "provider": "tesseract",
@@ -1362,7 +1392,12 @@
         "per_page": 0.0,
         "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
-      "limits": {}
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Pour les pages imprimées nettes : gratuit, et chaque mot revient avec son emplacement sur la page (ALTO, PDF interrogeable). Pas pour l’écriture manuscrite, et faible sur l’imprimé abîmé, les journaux pâlis et les mises en page complexes. Sa vitesse dépend du processeur de cet ordinateur : d’environ une seconde à plusieurs secondes par page. Ne détecte pas la langue : chaque langue choisie se télécharge une fois (3 à 15 Mo ; 100 Mo pour les langues écrites en lettres latines sans modèle propre, comme le haoussa, le mooré ou le wolof)."
+        }
+      }
     }
   ],
   "languages": [

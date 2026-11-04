@@ -1,6 +1,7 @@
 <script lang="ts">
 	// The model set-ups of a new job: one for a normal job, several to compare, each named by the
 	// siglum it will carry in the review.
+	import { modelDescription, providerName, providerNameOf } from '#lib/catalogText.js';
 	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
 	import { siglum } from '#lib/apparatus.js';
@@ -86,7 +87,7 @@
 						}}
 					>
 						{#each providers as p (p.id)}
-							<option value={p.id} disabled={!hasKey(p.id)}>{p.name}</option>
+							<option value={p.id} disabled={!hasKey(p.id)}>{providerName(p)}</option>
 						{/each}
 					</select>
 				</label>
@@ -165,7 +166,7 @@
 					</div>
 				{/if}
 				{#if info?.description}
-					<p class="muted small desc">{info.description}</p>
+					<p class="muted small desc">{modelDescription(info)}</p>
 				{/if}
 				{#if info && Array.isArray(info.languages)}
 					{@const names = info.languages
@@ -190,9 +191,7 @@
 								}}
 							>
 								{#each mergeProviders(catalog, rule) as id (id)}
-									<option value={id} disabled={!hasKey(id)}
-										>{catalog.providers.find((p) => p.id === id)?.name ?? id}</option
-									>
+									<option value={id} disabled={!hasKey(id)}>{providerNameOf(catalog, id)}</option>
 								{/each}
 							</select>
 						</label>
@@ -207,9 +206,7 @@
 						<p class="muted small desc">{m.newJob.mergeHint}</p>
 						{#if d.mergeProvider && !hasKey(d.mergeProvider)}
 							<p class="warning small">
-								{m.newJob.noKey(
-									catalog.providers.find((p) => p.id === d.mergeProvider)?.name ?? d.mergeProvider
-								)}
+								{m.newJob.noKey(providerNameOf(catalog, d.mergeProvider))}
 							</p>
 						{/if}
 						{#if mergeInfo(catalog, d)?.costly}
@@ -245,7 +242,7 @@
 				{/if}
 				{#if d.provider && !hasKey(d.provider)}
 					<p class="warning small">
-						{m.newJob.noKey(catalog.providers.find((p) => p.id === d.provider)?.name ?? d.provider)}
+						{m.newJob.noKey(providerNameOf(catalog, d.provider))}
 					</p>
 				{/if}
 			</div>
