@@ -27,11 +27,17 @@ Apple, so start them first.
   in with on the rented Mac. A separate Apple ID is fine, and simpler to remove afterwards.
 - [ ] **A test key** for one cloud provider, with a low spending cap (Gemini or Mistral), for the
   consent dialog and a cloud job. It is revoked at the end.
-- [ ] **Material for the screenshots**, from
-  [store-listing.md](store-listing.md#screenshots): six to ten issues of *The Monitor* from
-  [Chronicling America](https://chroniclingamerica.loc.gov/), the sample files, and an MP4 or
-  M4A recording you may use (for FFmpeg). Put them in one zip somewhere you can download from
-  (a GitHub release draft, a cloud drive link).
+- [ ] **Material for the screenshots**: `kalamu-screenshot-material.zip` (46 MB), made on the
+  PC in `screenshot-material/`, which git ignores. It holds eight whole issues of *The Monitor*
+  (Omaha) from 1915 and 1916, one PDF each with its text layer, in which the Rev. John Albert
+  Williams appears under several forms of his name (for the dictionary), and
+  `interview-two-speakers.wav`, a French interview between two voices (for the transcript with
+  named speakers). Its README gives the sources. Upload it where the Mac can download it (a
+  cloud drive link, or a draft GitHub release) and keep the link for the brief. The sample files
+  come from the release's `kalamu-samples.zip`. An M4A for the FFmpeg step is made on the Mac:
+  `afconvert -f m4af -d aac interview.wav interview.m4a`. To make the zip again, download the
+  issues' pages from `https://nebnewspapers.unl.edu/lccn/00225879/<date>/ed-1/seq-<n>.pdf`
+  (loc.gov's own pages stop scripts with a bot check).
 - [ ] **A VNC viewer on Windows**: [TigerVNC](https://tigervnc.org/) or RealVNC Viewer. Windows'
   own OpenSSH (`ssh`, `scp`) copies files back at the end.
 - [ ] **This checklist open on Windows**, not on the Mac.
@@ -86,7 +92,7 @@ Today is a test day for Kalamu, a desktop app for researchers (https://github.co
 3. Download files with curl in the terminal (Safari is read-only to you). A file fetched with curl is not quarantined, so before opening the disk image mark it as a browser would, to test Gatekeeper's first-open question:
    xattr -w com.apple.quarantine "0081;$(printf %x $(date +%s));Safari;" Kalamu_1.4.1_aarch64.dmg
 4. Write results.md in this folder as you go: for every step, passed, failed or not checked, and for each failure what you did, what you expected, what happened, with a screenshot of it in problems/. Write it after each step, not at the end.
-   The sample files: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip. Ask me for the link to the screenshot material (issues of The Monitor and a recording).
+   The sample files: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip. Ask me for the link to kalamu-screenshot-material.zip (eight issues of The Monitor and a two-speaker interview in French).
 5. Save the App Store screenshots in screenshots/, named 01-comparison … 10-offline, checked with sips (1440x900 or 2880x1800, hasAlpha no).
 6. Stop and ask me whenever a step needs a password, an Apple ID sign-in, or the test API key in Kalamu's Settings: I type those, you never do. Ask before anything that would send files to a cloud provider beyond the steps that use the test key, and keep to the estimate shown before each job.
 7. Do not change Kalamu's files, settings outside the app, or anything outside this folder and the app's own data, except what a step asks for (the test folder with accents, the test disk image).
@@ -185,7 +191,9 @@ researcher switching over would.
   which folder was needed and starts nothing.
 - [ ] **Resume from a bookmark**: start a long job in a granted folder, ⌘Q, *Quit now*, reopen:
   the job resumes and writes its results, with no question.
-- [ ] **FFmpeg in the sandbox**: transcribe the MP4 or M4A from a granted folder with Whisper;
+- [ ] **FFmpeg in the sandbox**: make an M4A of `interview.wav` with
+  `afconvert -f m4af -d aac interview.wav interview.m4a` and transcribe it from a granted folder
+  with Whisper;
   it converts and finishes. In the review the player plays it.
 - [ ] **A disk out of reach**: Disk Utility → File → New Image → Blank Image (100 MB), mount it,
   copy `interview.wav` onto it, and transcribe it there (grant the volume when asked). Quit,
