@@ -183,6 +183,15 @@ pub struct JobSummary {
     pub workflow: Option<String>,
 }
 
+/// The names of a job's sources, for finding it on the Jobs page by a file it read: each
+/// file's name, and a YouTube video's title when it was read.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct JobSources {
+    pub job_id: JobId,
+    pub names: Vec<String>,
+}
+
 impl Job {
     /// The models its set-ups call, each once, in set-up order.
     pub fn models(&self) -> Vec<String> {

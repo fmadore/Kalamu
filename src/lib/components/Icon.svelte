@@ -15,6 +15,7 @@
 	import Cloud from '@lucide/svelte/icons/cloud';
 	import Columns2 from '@lucide/svelte/icons/columns-2';
 	import Download from '@lucide/svelte/icons/download';
+	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import FilePlus from '@lucide/svelte/icons/file-plus';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import Flag from '@lucide/svelte/icons/flag';
@@ -75,6 +76,7 @@
 		laptop: Laptop,
 		link: Link,
 		list: List,
+		more: Ellipsis,
 		prompts: ScrollText,
 		settings: Settings,
 		close: X,

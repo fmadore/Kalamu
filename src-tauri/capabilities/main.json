@@ -69,6 +69,7 @@
     "allow-retry-failed",
     "allow-delete-job",
     "allow-list-jobs",
+    "allow-job-sources",
     "allow-get-job",
     "allow-job-pieces",
     "allow-job-text-outputs",

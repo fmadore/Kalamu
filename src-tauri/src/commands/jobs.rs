@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use kalamu_core::{InputKind, Job, JobId, JobSummary, PieceState, SourceFile, Task};
+use kalamu_core::{InputKind, Job, JobId, JobSources, JobSummary, PieceState, SourceFile, Task};
 use kalamu_engine::{Estimate, EstimateRequest, NewJob};
 use tauri::State;
 
@@ -291,6 +291,12 @@ pub async fn delete_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> 
 #[tauri::command]
 pub fn list_jobs(state: State<'_, AppState>) -> CmdResult<Vec<JobSummary>> {
     Ok(state.engine.jobs()?)
+}
+
+/// The names of every job's sources, for the Jobs page's search.
+#[tauri::command]
+pub fn job_sources(state: State<'_, AppState>) -> CmdResult<Vec<JobSources>> {
+    Ok(state.engine.job_sources()?)
 }
 
 #[tauri::command]

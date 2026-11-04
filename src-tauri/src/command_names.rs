@@ -61,6 +61,7 @@ pub const COMMANDS: &[&str] = &[
     "retry_failed",
     "delete_job",
     "list_jobs",
+    "job_sources",
     "get_job",
     "job_pieces",
     "job_text_outputs",

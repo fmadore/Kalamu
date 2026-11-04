@@ -20,6 +20,7 @@ import { searchCommand } from './mockSearch.js';
 import { queueCommand } from './mockQueue.js';
 import {
 	analysisJob,
+	archiveJobs,
 	EXPORT_OPTIONS,
 	analysisPieces,
 	article,
@@ -183,6 +184,9 @@ const presets: Preset[] = [
 	}
 ];
 
+/** Jobs deleted while looking at the mock, left out of the list from then on. */
+const deletedJobs = new Set<string>();
+
 /** Saved pipelines, as New job lists them. */
 let pipelines: Pipeline[] = [
 	{
@@ -324,6 +328,8 @@ function mockScores(jobId: string) {
 
 export function mockView(): View | null {
 	switch (new URLSearchParams(location.search).get('view') ?? '') {
+		case 'all-jobs':
+			return { name: 'allJobs' };
 		case 'jobs':
 			return { name: 'jobs', jobId: job.id };
 		case 'review':
@@ -507,8 +513,19 @@ export function installMock(): void {
 						pieces_total: i === 0 ? 4 : 2,
 						pieces_finished: i === 0 ? 4 : 2,
 						setup_count: 1
-					}))
+					})),
+					...archiveJobs.map(({ files: _, ...summary }) => summary)
+				].filter((j) => !deletedJobs.has(j.id));
+			case 'job_sources':
+				return [
+					{ job_id: job.id, names: [source.file_name] },
+					{ job_id: audioJob.id, names: [recording.file_name] },
+					{ job_id: videoJob.id, names: [video.file_name, video.title ?? ''] },
+					...archiveJobs.map((j) => ({ job_id: j.id, names: j.files }))
 				];
+			case 'delete_job':
+				deletedJobs.add(String(a.id));
+				return null;
 			case 'get_job':
 				if (a.id === videoJob.id) return videoJob;
 				if (a.id === contentsJob.id) return contentsJob;
@@ -518,7 +535,7 @@ export function installMock(): void {
 				const name = String(a.name).trim();
 				if (!name) return null;
 				for (const j of [job, audioJob, videoJob, analysisJob]) if (j.id === a.id) j.name = name;
-				for (const s of summaries) if (s.id === a.id) s.name = name;
+				for (const s of [...summaries, ...archiveJobs]) if (s.id === a.id) s.name = name;
 				return null;
 			}
 			case 'job_outputs': {
@@ -655,6 +672,11 @@ export function installMock(): void {
 						pieces: null
 					};
 				});
+			// A question before deleting (the dialog plugin's `ask`, a message with Yes and No):
+			// the browser's own, so the answer is the one clicked.
+			case 'plugin:dialog|message':
+				if (!a.buttons) return null;
+				return window.confirm(String(a.message ?? '')) ? 'Yes' : 'No';
 			case 'plugin:dialog|open':
 				// Recordings when the picker asks for them, documents otherwise.
 				if (JSON.stringify(a).includes('m4a'))

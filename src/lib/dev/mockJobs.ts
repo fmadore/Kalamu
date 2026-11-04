@@ -101,6 +101,62 @@ export const summaries: JobSummary[] = [
 	}
 ];
 
+/** Older finished jobs, enough for the sidebar to list only the most recent and link to the
+ *  Jobs page; each with the names of its files, for the page's search. */
+const ARCHIVE: [string, JobSummary['task'], string][] = [
+	['Fonds Cissé, carton 3', 'text_extraction', 'cisse-carton3'],
+	['Prêches du vendredi, Bobo-Dioulasso', 'audio_transcription', 'preche'],
+	['Journal officiel AOF, 1946', 'text_extraction', 'jo-aof-1946'],
+	['Entretien avec El Hadj Moussa', 'audio_transcription', 'moussa'],
+	['Correspondance du cercle de Kankan', 'text_extraction', 'kankan'],
+	['Revue Islam et Société, nº 12', 'contents', 'islam-societe-12'],
+	['Conférences Ramadan 2023', 'audio_transcription', 'ramadan-2023'],
+	['Rapports politiques, Niamey, 1952', 'text_extraction', 'niamey-1952'],
+	['Personnes et lieux, bulletins', 'analysis', 'bulletins'],
+	['Manuscrits ajami, lot 2', 'text_extraction', 'ajami-lot2'],
+	['Radio Al Houda, émissions', 'audio_transcription', 'al-houda'],
+	['Le Réveil, 1950–1951', 'contents', 'reveil'],
+	['Notes de terrain, Korhogo', 'text_extraction', 'korhogo'],
+	['Fatwas, recueil Diallo', 'text_correction', 'diallo-fatwas'],
+	['Archives de la mission, Lomé', 'text_extraction', 'lome-mission'],
+	['Entretiens Cotonou, série B', 'audio_transcription', 'cotonou-b'],
+	['Ton des articles, 1957', 'analysis', 'ton-1957'],
+	['Tracts électoraux, 1958', 'text_extraction', 'tracts-1958'],
+	['Sermons du Maouloud', 'audio_transcription', 'maouloud'],
+	['Registres scolaires, médersa', 'text_extraction', 'medersa'],
+	['Témoignages de pèlerins', 'audio_transcription', 'pelerins'],
+	['Bulletin Afrique-Information', 'text_extraction', 'afrique-info'],
+	['Circulaires du gouverneur', 'text_extraction', 'circulaires'],
+	['Lettres de Cerno Bokar', 'text_extraction', 'cerno-bokar']
+];
+
+export const archiveJobs: (JobSummary & { files: string[] })[] = ARCHIVE.map(
+	([name, task, stem], i) => {
+		const sources = 1 + ((i * 7) % 5);
+		const pieces = sources * (2 + (i % 4));
+		const failed = i % 9 === 4 ? 2 : 0;
+		const ext = task === 'audio_transcription' ? (i % 2 ? 'mp4' : 'm4a') : 'pdf';
+		return {
+			id: `00000000-0000-0000-0000-0000000a${String(i).padStart(4, '0')}`,
+			name,
+			task,
+			status: failed > 0 ? 'completed_with_errors' : i === 15 ? 'cancelled' : 'completed',
+			created_at: Date.now() - (2 + i * 3) * 86_400_000,
+			updated_at: Date.now() - (2 + i * 3) * 86_400_000 + 3_600_000,
+			source_count: sources,
+			setup_count: 1,
+			pieces_total: pieces,
+			pieces_finished: pieces - failed,
+			pieces_failed: failed,
+			pieces_truncated: 0,
+			cost_usd: task === 'text_correction' ? null : 0.004 * pieces,
+			models: [task === 'audio_transcription' ? 'voxtral-mini-transcribe-2' : 'gemini-3.8-flash'],
+			workflow: null,
+			files: Array.from({ length: sources }, (_, n) => `${stem}-${n + 1}.${ext}`)
+		};
+	}
+);
+
 export const texts = [
 	"Réception au Gouvernement général\nDakar, le 3 mai 1957\n\nLe Gouverneur général a reçu ce matin les délégués de la Mission catholique et de l'Union culturelle musulmane. L'entretien, qui s'est prolongé plus d'une heure, a porté sur l'enseignement dans les écoles de brousse et sur l'organisation du prochain pèlerinage.\nLes délégués ont remis au Gouverneur un mémoire signé par les notables de plusieurs cercles, demandant l'ouverture de classes du soir pour les adultes.\n\nUne réunion à Bamako\n\nLa réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam. Après la prière, l'assemblée a désigné une commission chargée de recueillir les cotisations pour la réfection du minaret.\nLe commandant de cercle assistait à la séance. Il a rappelé que les associations doivent déposer leurs statuts auprès de l'administration avant la fin du mois.",
 	"La réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam.",

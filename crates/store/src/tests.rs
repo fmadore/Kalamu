@@ -85,6 +85,33 @@ fn jobs_round_trip_and_are_listed_with_progress() -> Result<(), StoreError> {
     Ok(())
 }
 
+/// The Jobs page finds a job by a file it read: each source's name, and a video's title.
+#[test]
+fn job_sources_name_every_file_and_title() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let older = job();
+    let mut newer = job();
+    newer.created_at = Timestamp(older.created_at.0 + 1000);
+    let mut video = newer.sources[0].clone();
+    video.id = SourceId::new();
+    video.file_name = "abc123".into();
+    video.title = Some("Sermon du vendredi".into());
+    newer.sources.push(video);
+    store.create_job(&older)?;
+    store.create_job(&newer)?;
+
+    let listed = store.job_sources()?;
+    assert_eq!(listed.len(), 2);
+    assert_eq!(listed[0].job_id, newer.id);
+    assert_eq!(
+        listed[0].names,
+        ["letter.pdf", "abc123", "Sermon du vendredi"]
+    );
+    assert_eq!(listed[1].job_id, older.id);
+    assert_eq!(listed[1].names, ["letter.pdf"]);
+    Ok(())
+}
+
 #[test]
 fn a_renamed_job_keeps_everything_else() -> Result<(), StoreError> {
     let store = SqliteStore::in_memory()?;

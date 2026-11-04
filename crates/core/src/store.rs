@@ -3,8 +3,8 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    BatchRecord, CacheKey, Charge, Job, JobId, JobStatus, JobSummary, PieceState, SetupId,
-    SourceId, SpeakerNames, StoredResult, Timestamp,
+    BatchRecord, CacheKey, Charge, Job, JobId, JobSources, JobStatus, JobSummary, PieceState,
+    SetupId, SourceId, SpeakerNames, StoredResult, Timestamp,
 };
 
 /// A user's edit of one piece, stored on top of the AI output, which is never overwritten.
@@ -49,6 +49,8 @@ pub trait JobStore: Send + Sync {
     fn create_job(&self, job: &Job) -> Result<(), StoreError>;
     fn job(&self, id: JobId) -> Result<Job, StoreError>;
     fn list_jobs(&self) -> Result<Vec<JobSummary>, StoreError>;
+    /// The names of every job's sources, newest job first; a job without sources is left out.
+    fn job_sources(&self) -> Result<Vec<JobSources>, StoreError>;
     fn set_job_status(&self, id: JobId, status: JobStatus) -> Result<(), StoreError>;
     /// Gives a job a new name; nothing else about it changes.
     fn rename_job(&self, id: JobId, name: &str) -> Result<(), StoreError>;

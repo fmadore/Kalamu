@@ -419,6 +419,22 @@ pause and cancel that keep everything finished, progress on the taskbar or Dock 
 notification when a job finishes or needs attention. A job waiting for a batch says how many
 pieces the provider holds and when they are due.
 
+- **The sidebar's list of jobs** is grouped by what each needs from the researcher: *For you to
+  check* (workflow steps waiting for them), *Running*, *Unfinished* (interrupted, paused or not
+  yet started) and *Finished*. The first three are always listed in full. *Finished* lists the
+  8 most recent, and the job open in the main area when it is older, so the one being read or
+  reviewed is never hidden; its heading counts them all, and a link under the list,
+  *All jobs (243)*, opens the Jobs page. Folded to a rail, the sidebar keeps that page as an
+  icon. A right click on a job opens its menu: rename, add to a project, delete.
+- **The Jobs page** lists every job in a table: name (with how many files and the workflow it
+  is a step of), task, status, pieces, cost and date, fewer columns as the window narrows. A
+  search finds a job by its name, its workflow or the name of a file it read (a YouTube
+  video's title too), capitals and accents ignored; filters narrow it to a task or a status
+  (*For you to check* among them), and it sorts newest or oldest first or by name. Clicking a
+  row opens the job; each row's menu is the sidebar's, and rows chosen together are added to a
+  project or deleted at once (a running job cannot be deleted until it is paused or
+  cancelled).
+
 ## Projects
 
 A researcher's material outlives any one job: the same letter is extracted, corrected,
