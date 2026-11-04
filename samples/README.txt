@@ -1,14 +1,19 @@
 Kalamu sample files
 
-Six files to try Kalamu with, in particular for the Microsoft Store certification team. Three
-are historical documents in the public domain; three were made for Kalamu and may be used
-freely (CC0).
+Seven files to try Kalamu with, in particular for the store review teams. Three are historical
+documents in the public domain; four were made for Kalamu and may be used freely (CC0).
 
 Works with no account and no key
 --------------------------------
 interview.wav         A 20-second spoken passage in English, read by Windows' own speech
                       synthesis. In Settings > Offline, download the Whisper Base model (about 60 MB,
                       once), then New job > Transcribe audio > Whisper (on this computer) > Start.
+interview-two-speakers.wav
+                      A 90-second interview in French between two people, invented and read
+                      by two of Windows' French voices (Julie asks, Paul answers): a retired
+                      typesetter remembers a weekly paper in Ouagadougou. Offline, Whisper
+                      transcribes it without speakers; with Gemini or another cloud model
+                      that labels speakers, give them names in the review. Choose French.
 bulletin-page.jpg     Also offline: in Settings > Offline, under Text extraction with Tesseract,
                       download French (4 MB, once), then New job > Extract text > Tesseract
                       (on this computer) > French > Start. Formats include ALTO XML.
