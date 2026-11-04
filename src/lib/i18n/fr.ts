@@ -1170,11 +1170,12 @@ export const fr: Messages = {
 		extractSpreads: 'Les doubles pages sont d’abord scindées en deux',
 		extractRead: (model: string) => `${model} lit chaque page séparément`,
 		extractJoin: 'Réuni en un texte par fichier, numéros de page conservés',
-		extractPlace: 'Et note l’emplacement de chaque bloc de texte sur la page',
-		extractPlaces: (models: string) => `${models} note aussi l’emplacement de chaque bloc de texte`,
-		extractTextOnly: 'Le texte seul, sans son emplacement sur la page : pas de PDF interrogeable',
-		extractSearchable: 'Aussi un PDF interrogeable : l’original, avec une couche texte invisible',
-		extractPdfOnly: 'Pour les fichiers PDF seulement, pas les images',
+		extractPlace: 'Et note l’emplacement de son texte sur la page',
+		extractPlaces: (models: string) => `${models} note aussi l’emplacement de son texte`,
+		extractTextOnly:
+			'Le texte seul, sans son emplacement sur la page : ni PDF interrogeable ni ALTO',
+		extractSearchable: 'Aussi un fichier ALTO XML et un PDF interrogeable, chaque mot à sa place',
+		extractPdfOnly: 'Le PDF interrogeable pour les fichiers PDF seulement',
 		analysisSource: 'Un texte, un fichier Word ou un PDF',
 		analysisWhole: 'Lu en entier, d’un seul tenant, quel que soit le nombre de pages',
 		analysisFill: (model: string) => `${model} remplit vos champs`,
@@ -1614,7 +1615,7 @@ export const fr: Messages = {
 		terms: {
 			ocr: {
 				word: 'OCR et HTR',
-				text: 'La reconnaissance optique de caractères (OCR) transforme le texte imprimé d’une image en un texte que l’on peut chercher et modifier ; la reconnaissance d’écriture manuscrite (HTR) en fait autant pour l’écriture à la main. Kalamu fait l’une et l’autre avec des modèles d’IA qui lisent la page entière d’un coup, plutôt que lettre par lettre comme les anciens moteurs d’OCR. Ils s’en sortent mieux avec les colonnes, l’impression pâlie et les écritures difficiles, mais peuvent aussi se tromper de façons nouvelles (voir Hallucination).'
+				text: 'La reconnaissance optique de caractères (OCR) transforme le texte imprimé d’une image en un texte que l’on peut chercher et modifier ; la reconnaissance d’écriture manuscrite (HTR) en fait autant pour l’écriture à la main. Kalamu fait l’une et l’autre avec des modèles d’IA qui lisent la page entière d’un coup, plutôt que lettre par lettre comme les anciens moteurs d’OCR. Ils s’en sortent mieux avec les colonnes, l’impression pâlie et les écritures difficiles, mais peuvent aussi se tromper de façons nouvelles (voir Hallucination). Pour l’imprimé net, Kalamu propose aussi Tesseract, un moteur d’OCR de l’ancienne sorte, sur votre propre ordinateur.'
 			},
 			llm: {
 				word: 'LLM (grand modèle de langage)',
@@ -1623,6 +1624,10 @@ export const fr: Messages = {
 			whisper: {
 				word: 'Transcription hors ligne (Whisper)',
 				text: 'Whisper est un modèle ouvert de reconnaissance de la parole que Kalamu exécute sur votre propre ordinateur, après un téléchargement unique dans Paramètres. Rien n’est envoyé nulle part et rien n’est facturé. Il est plus lent que les modèles en ligne et ne sait pas distinguer les locuteurs.'
+			},
+			tesseract: {
+				word: 'Extraction de texte hors ligne (Tesseract)',
+				text: 'Tesseract est un moteur d’OCR ouvert que Kalamu exécute sur votre propre ordinateur. Téléchargez une fois dans Paramètres chaque langue que vous lisez ; ensuite, rien n’est envoyé nulle part et rien n’est facturé. Il lit bien l’imprimé net et note l’emplacement de chaque mot sur la page, ce qui donne des fichiers ALTO XML et des PDF interrogeables. L’écriture manuscrite, les pages pâlies ou abîmées et les mises en page complexes se lisent mieux avec un modèle d’IA. Il ne détecte pas la langue, vous la choisissez donc, et sa vitesse dépend du processeur de votre ordinateur.'
 			},
 			apiKey: {
 				word: 'Clé d’API',

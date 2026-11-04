@@ -14,6 +14,7 @@ export const TERMS: Term[] = [
 	'ocr',
 	'llm',
 	'whisper',
+	'tesseract',
 	'apiKey',
 	'prompt',
 	'setup',
@@ -34,9 +35,10 @@ export const PLACES: Partial<Record<Term, 'prompts'>> = { prompt: 'prompts' };
 
 /** The words a definition leans on, shown after it as "See also". */
 export const SEE_ALSO: Partial<Record<Term, Term[]>> = {
-	ocr: ['llm', 'hallucination'],
+	ocr: ['llm', 'tesseract', 'hallucination'],
 	llm: ['prompt', 'tokens', 'hallucination'],
 	whisper: ['apiKey'],
+	tesseract: ['ocr', 'machineReadable'],
 	prompt: ['pipeline', 'provenance'],
 	pipeline: ['workflow'],
 	workflow: ['pipeline', 'groundTruth'],

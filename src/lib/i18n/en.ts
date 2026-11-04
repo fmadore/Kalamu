@@ -1073,14 +1073,14 @@ export const en = {
 		extractSpreads: 'Double pages are split in two first',
 		extractRead: (model: string) => `${model} reads each page on its own`,
 		extractJoin: 'Joined into one text per file, page numbers kept',
-		/** Under the reading step, for a model that reports where text sits (Mistral OCR); the
-		 * second names it beside models that do not. */
-		extractPlace: 'And notes where each block of text sits on the page',
-		extractPlaces: (models: string) => `${models} also notes where each block of text sits`,
+		/** Under the reading step, for a model that reports where text sits (Tesseract, Mistral
+		 * OCR); the second names it beside models that do not. */
+		extractPlace: 'And notes where its text sits on the page',
+		extractPlaces: (models: string) => `${models} also notes where its text sits`,
 		/** Under the reading step, for models that do not (language models). */
-		extractTextOnly: 'Text only, not where it sits on the page: no searchable PDF',
-		extractSearchable: 'Also a searchable PDF: the original, with an invisible text layer',
-		extractPdfOnly: 'For PDF files only, not images',
+		extractTextOnly: 'Text only, not where it sits on the page: no searchable PDF or ALTO',
+		extractSearchable: 'Also ALTO XML and a searchable PDF, each word in its place',
+		extractPdfOnly: 'The searchable PDF for PDF files only',
 		analysisSource: 'A text, Word file or PDF',
 		analysisWhole: 'Read whole, as one piece, however many pages',
 		analysisFill: (model: string) => `${model} fills in your fields`,
@@ -1518,7 +1518,7 @@ export const en = {
 		terms: {
 			ocr: {
 				word: 'OCR and HTR',
-				text: 'Optical character recognition (OCR) turns printed text in an image into text you can search and edit; handwritten text recognition (HTR) does the same for handwriting. Kalamu does both with AI models that read the whole page at once, rather than letter by letter as older OCR engines did. They cope better with columns, faded print and difficult hands, but can also go wrong in new ways (see hallucination).'
+				text: 'Optical character recognition (OCR) turns printed text in an image into text you can search and edit; handwritten text recognition (HTR) does the same for handwriting. Kalamu does both with AI models that read the whole page at once, rather than letter by letter as older OCR engines did. They cope better with columns, faded print and difficult hands, but can also go wrong in new ways (see hallucination). For clean print it also offers Tesseract, an OCR engine of the older kind, on your own computer.'
 			},
 			llm: {
 				word: 'LLM (large language model)',
@@ -1527,6 +1527,10 @@ export const en = {
 			whisper: {
 				word: 'Offline transcription (Whisper)',
 				text: 'Whisper is an open speech-recognition model that Kalamu runs on your own computer, after a one-time download in Settings. Nothing is sent anywhere and nothing is billed. It is slower than the cloud models and cannot tell speakers apart.'
+			},
+			tesseract: {
+				word: 'Offline text extraction (Tesseract)',
+				text: 'Tesseract is an open OCR engine that Kalamu runs on your own computer. Download each language you read once in Settings; after that nothing is sent anywhere and nothing is billed. It reads clean print well and notes where every word sits on the page, which gives ALTO XML and searchable PDFs. Handwriting, faded or damaged pages and complex layouts read better with an AI model. It does not detect the language, so you choose it, and its speed depends on your computer’s processor.'
 			},
 			apiKey: {
 				word: 'API key',
