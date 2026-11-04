@@ -9,7 +9,9 @@ coding rules are in [AGENTS.md](../AGENTS.md).
 - Node.js 22 or 24.
 - On Windows, the WebView2 runtime, which ships with Windows 11. On macOS (Apple Silicon), the
   Xcode command-line tools (`xcode-select --install`) and CMake; nothing else needs setting.
-- On Windows, for offline transcription, which compiles whisper.cpp: LLVM (`clang-cl`), CMake and Ninja
+- On Windows, for offline transcription and text extraction, which compile whisper.cpp and
+  Tesseract with Leptonica (through `kreuzberg-tesseract`; on ARM64 with
+  `crates/offline/cmake/windows-arm64.cmake`, named in `.cargo/config.toml`): LLVM (`clang-cl`), CMake and Ninja
   (the Visual Studio Build Tools include the last two), with these variables set, as in CI:
   `CC=clang-cl`, `CXX=clang-cl`, `CXXFLAGS=-EHsc`, `CMAKE_GENERATOR=Ninja` and
   `LIBCLANG_PATH=C:\Program Files\LLVM\bin`.
@@ -67,7 +69,8 @@ an interview of two voices for the speakers. The runner extracts text with every
 transcribes the interview with speakers, runs the analyses, writes each job's outputs to its
 own folder in `<out>` and prints each set-up's estimate, then a line per piece with its status,
 the tokens billed (read, cached, written) and the cost. `LIVE_SKIP=gemini` leaves out a
-provider without credit; `LIVE_PACE=economy` sends the jobs as batches, which can take from a
+provider without credit; `LIVE_TESSDATA=<folder>` adds an offline Tesseract job read with the
+`fra` and `eng` data in that folder, which needs no key and can run with networking off; `LIVE_PACE=economy` sends the jobs as batches, which can take from a
 minute to hours. A batch leaves files in OpenAI's and Mistral's storage: delete them once the
 run ends.
 
@@ -78,7 +81,8 @@ parameters open a given state:
 
 | Parameter | Effect |
 | --- | --- |
-| `view=new`, `jobs`, `prompts`, `settings`, `glossary` | Opens that screen |
+| `view=new`, `jobs`, `prompts`, `settings`, `glossary` | Opens that screen (`jobs` is a job's page) |
+| `view=all-jobs` | Opens the Jobs page, with 24 older finished jobs |
 | `view=review`, `review-audio`, `review-analysis` | Opens the review of a sample extraction, recording or analysis |
 | `view=review-youtube`, `review-contents`, `review-correction` | Opens the review of a YouTube video, a table of contents or a correction |
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
@@ -114,7 +118,9 @@ git tag v1.0.0 && git push origin v1.0.0
 The workflow checks the tag against the version files and builds, into a draft release, both
 installers, both Store packages and the `.msixbundle` for Partner Center
 ([packaging-msix.md](packaging-msix.md)), the macOS disk image `Kalamu_<x.y.z>_aarch64.dmg`
-(signed ad hoc, with a check of its signature, FFmpeg and licences), and `kalamu-samples.zip`
+(signed with the Developer ID and notarised, with a check of its signatures, its stapled
+ticket, Gatekeeper's verdict, FFmpeg and licences: [the decision](decisions/2026-11-04-macos-notarisation.md)
+lists the six `APPLE_*` repository secrets it needs), and `kalamu-samples.zip`
 from `samples/`; it
 publishes the release once every asset is attached, as a pre-release while the version starts
 with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To

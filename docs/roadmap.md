@@ -4,22 +4,22 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (3 November 2026)
+## Status (4 November 2026)
 
-**Version 1.3.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
-disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
-[v1.3.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.3.0)
-([notes](release-1.3.0.md)). Version 1.2.0 passed certification and is in the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 3 November 2026; 1.3.0 is
-submitted next. Kalamu has been there since version 1.0.0 (2 November 2026). Everything below is tested against
+**Version 1.4.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
+signed, notarised disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
+[v1.4.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.4.0)
+([notes](release-1.4.0.md)). Version 1.3.0 is in the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H); 1.4.0 is submitted next. Kalamu has been there since version 1.0.0 (2 November 2026). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
 the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
 (`cargo run --example live`, see [development.md](development.md) and the
 [live runs](decisions/2026-11-03-live-runs.md)).
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
-ad hoc; it has not yet been opened on a real Mac
-([decision](decisions/2026-11-02-macos.md)).
+with an Apple Developer ID and notarised from 1.4.0
+([decision](decisions/2026-11-04-macos-notarisation.md)); it has not yet been opened on a real
+Mac ([decision](decisions/2026-11-02-macos.md)).
 
 ## Done
 
@@ -30,10 +30,10 @@ ad hoc; it has not yet been opened on a real Mac
 - **Text extraction.** Gemini, OpenAI, Claude and Mistral; PDF pages cut with `lopdf`, image
   preparation, input checks with splitting of double pages, language choice, line breaks kept
   as on the page or joined into running text, exports to `.txt`, `.md`, `.docx`, `.json` and
-  `.csv`, searchable PDFs from Mistral OCR.
+  `.csv`, searchable PDFs and ALTO XML from Mistral OCR and Tesseract.
 - **Offline text extraction with Tesseract**
   ([#46](https://github.com/fmadore/Kalamu/issues/46),
-  [decision](decisions/2026-11-04-tesseract.md)), not yet released: Tesseract 5 built into the
+  [decision](decisions/2026-11-04-tesseract.md)), in 1.4.0: Tesseract 5 built into the
   app, language data from `tessdata_best` downloaded per language from Settings (the Latin
   script model for Hausa, Mooré, Wolof and the other Latin-script languages without a model of
   their own), PDF pages drawn at 300 dpi with hayro, the languages asked for in New job since
@@ -89,6 +89,17 @@ ad hoc; it has not yet been opened on a real Mac
   pages showing what is left; a player for
   recordings with speakers that can be named; an analysis review that collates answers by
   field and finds names in the document.
+- **A smoother review and wider views** (1.4.0): the scan zooms about the pointer (Ctrl + wheel
+  or a pinch, 25% to 600%), moves by dragging and zooms on a place with a double click; choosing
+  a difference in either text brings it level in the other; the readings box can be dragged or
+  moved with the keyboard; curly and straight quotes and apostrophes count as the same reading,
+  in the differences and the error rates. Every view takes the window's width, with larger type
+  (body 16 px, the text being checked 19 px) and an 18rem sidebar listing the projects, onto
+  which a finished job can be dragged. *New prompt* writes a prompt from nothing, and Settings
+  is in tabs (API keys, Offline, General, About).
+- **The Jobs page** (1.4.0): every job in a table, searched by name, workflow or file name,
+  filtered by task or status and sorted, with actions on several rows at once; the sidebar's
+  *Finished* group shows the eight most recent.
 - **Comparison mode**, each set-up scored against the reviewed pages.
 - **Error rates after review, for any job**: character and word error rates against every
   page corrected or marked as reviewed, summed over all the characters and words, for the job
@@ -131,8 +142,8 @@ ad hoc; it has not yet been opened on a real Mac
   workflow, third-party notices for every crate and package, sample files for the certification
   team, and the listing for 1.0.0 ([packaging-msix.md](packaging-msix.md),
   [decision](decisions/2026-10-30-version-1.md)).
-- **A glossary** for colleagues new to these tools: a page beside Settings explaining sixteen
-  words the app uses (OCR and HTR, LLM, Whisper, API key, prompt, set-up, pipeline, workflow, tokens,
+- **A glossary** for colleagues new to these tools: a page beside Settings explaining seventeen
+  words the app uses (OCR and HTR, LLM, Whisper, Tesseract, API key, prompt, set-up, pipeline, workflow, tokens,
   reasoning effort, economy mode, ground truth, error rates, hallucination, provenance,
   machine-readable) and what each export format suits, with a filter, links between the
   words, and a help mark beside the headings that use them; written in the translation files
@@ -265,7 +276,7 @@ ad hoc; it has not yet been opened on a real Mac
   actions on one row or several), and an app icon
   drawn from the same mark. Under the tasks in New job, a diagram of how each task splits
   and joins the work, drawn with the user's own files; for text extraction it shows whether
-  the chosen model can also give a searchable PDF.
+  the chosen model can also give ALTO XML and a searchable PDF.
 - **Items read on their own, first increment**
   ([#50](https://github.com/fmadore/Kalamu/issues/50)): a table of contents' checked entries
   made into items once, then corrected, joined, split, added and removed by the researcher,
@@ -382,12 +393,12 @@ among them); the duplication and the large files it found are refactored next.
   than `low` for reading pages
   ([decision](decisions/2026-10-29-contents-review-and-answer-language.md)).
 - **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa
-  for choices, overlap for lists), shown in Jobs; a column added to an `.xlsx`. Project-wide
+  for choices, overlap for lists), shown on the job's page; a column added to an `.xlsx`. Project-wide
   entity/label reconciliation is tracked in [#48](https://github.com/fmadore/Kalamu/issues/48)
   and the research-workflow sequence below.
 - **Design improvements left from [issue #1](https://github.com/fmadore/Kalamu/issues/1)**,
   closed on 28 October when the name and icon were decided (its closing comment keeps these
-  here): a collation table in Jobs (pieces × set-ups, the sigla as column heads); an
+  here): a collation table on the job's page (pieces × set-ups, the sigla as column heads); an
   interrupted or paused job in the sidebar's foot with **Resume** (the sidebar already groups
   unfinished jobs, without the button); a page with a correction checked and captured; the
   error colour checked against the hand blue and the highlighter; and the placeholder dashes
@@ -409,8 +420,8 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.2.0 is the version there now, since
-3 November 2026, and 1.3.0 is submitted next.
+in [microsoft-store.md](microsoft-store.md); 1.3.0 is the version there now, and 1.4.0
+is submitted next.
 
 ## Research workflows (planned)
 
@@ -493,8 +504,7 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 - Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates
   kept; Kalamu's own extractions already keep their words' places when corrected.
 - French and German Store listings, with the translated interface.
-- macOS: signing and notarisation with an Apple Developer ID, so Gatekeeper does not ask; the
-  application menu's labels through the translation files; a first test on a real Mac (the
+- macOS: the application menu's labels through the translation files; a first test on a real Mac (the
   Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in WKWebView).
 - Linux x86-64: a `.deb` and an AppImage on GitHub releases, built and tested in CI, for a
   documented range of distributions; a third file in each platform layer (`platform/linux.rs`,

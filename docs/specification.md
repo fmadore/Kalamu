@@ -161,7 +161,8 @@ no text layer needs *Extract text* instead.
   audio.
 - **Language choice with auto-detect.** Extraction and transcription list only the languages
   the chosen model supports, with **Auto-detect** as the default; several can be chosen for
-  material that mixes languages (French and Mooré, say). Where a provider publishes no list
+  material that mixes languages (French and Mooré, say). Tesseract offers no Auto-detect: its
+  languages are chosen, and their data downloaded once in Settings › Offline. Where a provider publishes no list
   (GPT Transcribe, Voxtral), every language is offered and the model's description says so.
   New job says when a model's API takes fewer than were chosen: Whisper, Voxtral and OpenAI's
   diarizing model take one, so with several they detect the language; Voxtral takes none when
@@ -231,7 +232,7 @@ no text layer needs *Extract text* instead.
   or an internet connection, and keeps sensitive material on the PC.
 - **Interface in English and French**, with German to follow. All interface text lives in
   translation files (`src/lib/i18n/`), so adding a language needs no code changes. The
-  language is chosen in Settings; by default it is the first of the system's languages that
+  language is chosen in Settings › General; by default it is the first of the system's languages that
   Kalamu has, else English. Prompts, the models' answers and the files Kalamu writes keep their
   own language, and the default prompts stay in English, which the models follow best; their
   names and descriptions are translated.
@@ -305,9 +306,10 @@ together, so that a researcher knows what is sent and what comes back:
 - **Extract text**: a PDF or images split one piece per page (double pages in two first), each
   page read by the model, joined into one text per file with its page numbers. When a chosen
   model reports where text sits on the page (Tesseract, Mistral OCR), its pages are drawn with their
-  blocks boxed and a second result follows, joined by a plus rather than an arrow: the original
-  PDF with an invisible text layer, for PDF files only. With models that return text only (the
-  language models), a note under the reading says so, and that they give no searchable PDF. The
+  blocks boxed and a second result follows, joined by a plus rather than an arrow: ALTO XML with
+  each word in its place, and the original PDF with an invisible text layer, for PDF files
+  only. With models that return text only (the language models), a note under the reading says
+  so, and that they give no searchable PDF or ALTO. The
   diagram follows the same capability in the catalogue as the formats offered, never the
   provider's name.
 - **Analyse texts**: each document read whole, as one piece; the model fills in the prompt's
@@ -634,7 +636,7 @@ is remembered per task. Details are in [formats.md](formats.md).
 | **Transcription** | `.txt`, `.md`, `.docx`, `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
 | **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
 | **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.csv` and `.json` |
-| **Correction** | As text extraction, without the searchable PDF |
+| **Correction** | As text extraction, without the searchable PDF or ALTO XML |
 
 ## Prompts and analyses
 
@@ -701,7 +703,7 @@ Which kinds of file a task reads, which models can do it and which formats it wr
 engine's rules, given to the interface so New job offers only what will run, and checked again
 when a job is created: a source the task does not read, or a model that does not do the task or
 cannot read a YouTube link, is refused with a plain message, and formats the task does not
-write (from a pipeline saved for another task) are left out, as is a searchable PDF when no
+write (from a pipeline saved for another task) are left out, as are a searchable PDF and ALTO XML when no
 model of the job reports where text sits on the page. Where line breaks, samples and pages per
 call apply, which models are the app's and each provider's choice, and what a job will cost
 at each pace are the engine's to say too; the interface only shows them.
@@ -775,6 +777,7 @@ in [microsoft-store.md](microsoft-store.md), [packaging-msix.md](packaging-msix.
 [store-listing.md](store-listing.md) and [privacy.md](privacy.md).
 
 On macOS (Apple Silicon, macOS 13 and later), a disk image attached to each GitHub release,
-with FFmpeg and every licence inside. It is signed ad hoc for now, so macOS asks once, on first
-opening, to confirm it; signing and notarisation with an Apple Developer ID come later. Keys are
+with FFmpeg and every licence inside. From 1.4.0 it is signed with an Apple Developer ID and notarised, so
+Gatekeeper opens it without a detour through System Settings
+([decision](decisions/2026-11-04-macos-notarisation.md)). Keys are
 kept in the Keychain. There is no Mac App Store version ([decision](decisions/2026-11-02-macos.md)).

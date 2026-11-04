@@ -1,7 +1,7 @@
 # Privacy Policy — Kalamu
 
 **Effective date:** 4 November 2026, for offline text extraction with Tesseract and its
-language data, downloaded from GitHub. Version 1.0.0, the first Microsoft
+language data, downloaded from GitHub, which apply from version 1.4.0. Version 1.0.0, the first Microsoft
 Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
@@ -176,7 +176,7 @@ and unlocks nothing.
 
 ## Report a problem
 
-The flag in each review's header and *Report a problem* in Settings open GitHub's choice of
+The flag in each review's header and *Report a problem* in Settings › About open GitHub's choice of
 public issue forms (`https://github.com/fmadore/Kalamu/issues/new/choose`) in the default
 browser: a bug, feedback, or output that is offensive or harmful. The app passes that address to
 the browser and nothing else: it sends no document, result, key, version or other information

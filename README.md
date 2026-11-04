@@ -15,12 +15,12 @@ text.
 Free, with every feature included. If it is useful to you, you can
 [support its development](#support-development).
 
-**Status: version 1.3.0**, for Windows and macOS: from the Microsoft Store or the
+**Status: version 1.4.0**, for Windows and macOS: from the Microsoft Store or the
 [releases page](https://github.com/fmadore/Kalamu/releases), see [Install](#install). Text
 extraction, transcription and analyses have run against the live OpenAI, Claude and Mistral
 APIs; Gemini, offline Whisper and the cheaper batch mode have had fewer live runs, so try a
 small job first. See the
-[roadmap](docs/roadmap.md) and the [1.3.0 release notes](docs/release-1.3.0.md).
+[roadmap](docs/roadmap.md) and the [1.4.0 release notes](docs/release-1.4.0.md).
 
 ## What it does
 
@@ -63,8 +63,12 @@ small job first. See the
 - **See what needs checking across a project**: one list of the pages and answers that failed,
   were cut off, read differently by two models, read from a text corrected since, or are not
   yet reviewed, each opening its review at the right page. Nothing is sent to a model.
+- **Find any job** on the Jobs page: every job in a table, searched by name, workflow or file
+  name, filtered by task or status and sorted; rename, add to a project or delete several at
+  once.
 - **Check every result against its source**, side by side, with corrections kept apart from the
-  AI output, which is never overwritten. Search a document or a recording across all its pages
+  AI output, which is never overwritten. Zoom the scan about the pointer, and choose a
+  difference in either text to bring it level in the other. Search a document or a recording across all its pages
   (Ctrl F, or ⌘F on a Mac), and report inappropriate output from the review.
 - **Compare models** on the same documents, with their differences highlighted in the text and
   error rates against corrected pages.
@@ -100,9 +104,10 @@ so Windows SmartScreen warns on the first launch: choose **More info**, then **R
 
 **macOS 13 and later** (Apple Silicon): download `Kalamu_<version>_aarch64.dmg` from the
 [releases page](https://github.com/fmadore/Kalamu/releases) and drag Kalamu to Applications.
-The app is not yet signed with an Apple Developer ID, so the first time, macOS refuses to open
-it: open **System Settings → Privacy & Security**, choose **Open Anyway** beside Kalamu, and
-confirm. macOS may also ask once to let Kalamu use the key saved in your Keychain. Shortcuts
+The app is signed with an Apple Developer ID and notarised by Apple, so macOS opens it after
+the usual question about an app downloaded from the internet. If you used version 1.3.0 or
+earlier, which were not signed this way, macOS asks once more to let Kalamu use the keys saved in
+your Keychain: choose **Always Allow**. Shortcuts
 use ⌘ where Windows uses Ctrl; closing the window keeps Kalamu in the Dock, and ⌘Q asks first
 while jobs run.
 
@@ -132,7 +137,7 @@ Requirements, checks and the sample-data preview are in [docs/development.md](do
 Kalamu is free, and every feature stays free. If it is useful to you, you can help fund its
 development on [Buy Me a Coffee](https://buymeacoffee.com/fmadore). Supporting is entirely
 optional and does not unlock additional features; AI providers bill their own usage separately.
-The same link is in the app, at the foot of the sidebar and at the end of Settings.
+The same link is in the app, at the foot of the sidebar and in Settings › About.
 
 <a href="https://buymeacoffee.com/fmadore"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
 

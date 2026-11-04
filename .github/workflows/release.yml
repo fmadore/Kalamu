@@ -11,7 +11,7 @@ name: Release
 # Release assets: Kalamu_<version>_<arch>-setup.exe  the Windows installers, unsigned
 #                 Kalamu_<version>_<arch>.msix       to sign and install locally for verification
 #                 Kalamu_<version>.msixbundle        the Store submission (docs/microsoft-store.md)
-#                 Kalamu_<version>_aarch64.dmg       the macOS disk image, signed ad hoc
+#                 Kalamu_<version>_aarch64.dmg       the macOS disk image, signed and notarised
 #                 kalamu-samples.zip                 samples/, the files the certification notes use
 #
 # Normal flow: bump the version files, add docs/release-<version>.md, merge, then
@@ -241,16 +241,20 @@ jobs:
           releaseId: ${{ needs.prepare.outputs.release_id }}
           args: --target ${{ matrix.target }} --bundles nsis --config src-tauri/tauri.ffmpeg.conf.json
 
-  # The macOS disk image, for Apple Silicon, built natively. Signed ad hoc for now ("-" in
-  # src-tauri/tauri.macos.conf.json, which Tauri merges on macOS): Apple Silicon runs nothing
-  # unsigned, and Gatekeeper asks once, on first opening (README). Notarised signing needs an
-  # Apple Developer ID: then add APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD,
-  # APPLE_SIGNING_IDENTITY, APPLE_ID, APPLE_PASSWORD and APPLE_TEAM_ID to the build step's env.
+  # The macOS disk image, for Apple Silicon, built natively, signed with the Developer ID
+  # Application certificate and notarised by Apple, so Gatekeeper opens it without asking
+  # (docs/decisions/2026-11-04-macos-notarisation.md). The bundler imports APPLE_CERTIFICATE
+  # (the .p12, base64) into a temporary keychain, signs FFmpeg, ffprobe and then the app with
+  # APPLE_SIGNING_IDENTITY, which overrides the ad-hoc "-" of src-tauri/tauri.macos.conf.json
+  # that local builds keep, and sends the app to Apple's notary service with APPLE_ID, an
+  # app-specific APPLE_PASSWORD and APPLE_TEAM_ID, then staples the ticket to it.
   macos:
     name: Disk image (Apple Silicon)
     needs: prepare
     runs-on: macos-latest
-    timeout-minutes: 90
+    # Notarisation usually answers in minutes, but Apple's queue can hold a submission for
+    # hours (a new team's first ones especially): the first test run was cancelled at 90.
+    timeout-minutes: 240
     env:
       TARGET: aarch64-apple-darwin
     steps:
@@ -288,16 +292,44 @@ jobs:
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs "$TARGET"
 
-      - name: Build and attach the disk image
+      # Without them the bundler would fall back to ad-hoc signing and skip notarisation with
+      # only a warning: a release must not ship that way unnoticed.
+      - name: Check the signing secrets
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          missing=()
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing repository secrets for signing and notarising the Mac app: ${missing[*]}."
+            exit 1
+          fi
+
+      - name: Build, sign, notarise and attach the disk image
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           releaseId: ${{ needs.prepare.outputs.release_id }}
           args: --target aarch64-apple-darwin --bundles dmg --config src-tauri/tauri.ffmpeg.conf.json
 
-      # What the image holds, as a user gets it: the signed app, FFmpeg inside it, and every
-      # licence. Tauri removes the bare .app once the image is made, so the image is opened.
+      # What the image holds, as a user gets it: the app signed with the Developer ID, its
+      # notarisation ticket stapled and accepted by Gatekeeper, FFmpeg and ffprobe signed with
+      # the same identity and the hardened runtime, and every licence. Tauri removes the bare
+      # .app once the image is made, so the image is opened.
       - name: Check the app
         run: |
           dmg=$(ls "target/$TARGET/release/bundle/dmg/"Kalamu_*_aarch64.dmg)
@@ -306,7 +338,14 @@ jobs:
           trap 'hdiutil detach "$mnt" -quiet || true' EXIT
           app="$mnt/Kalamu.app"
           codesign --verify --deep --strict --verbose=2 "$app"
-          codesign -dv "$app" 2>&1 | grep -E 'Signature|Identifier|flags'
+          codesign -dv "$app" 2>&1 | grep -E 'Authority|TeamIdentifier|Identifier|flags'
+          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe"; do
+            details=$(codesign -dv --verbose=4 "$exe" 2>&1)
+            grep -q '^Authority=Developer ID Application:' <<< "$details"               || { echo "::error::$exe is not signed with the Developer ID."; exit 1; }
+            grep -q 'flags=.*runtime' <<< "$details"               || { echo "::error::$exe lacks the hardened runtime notarisation needs."; exit 1; }
+          done
+          xcrun stapler validate "$app"
+          spctl --assess --type execute --verbose=4 "$app"
           "$app/Contents/MacOS/ffmpeg" -hide_banner -version | sed -n 1p
           "$app/Contents/MacOS/ffprobe" -hide_banner -version | sed -n 1p
           for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt; do
