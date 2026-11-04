@@ -4,9 +4,7 @@
 use std::collections::BTreeMap;
 
 use kalamu_core::speakers::{labels, rename_segments, rename_text};
-use kalamu_core::{
-    Correction, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, SpeakerIndex, Task,
-};
+use kalamu_core::{Correction, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task};
 use kalamu_export::timed_lines;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -56,7 +54,7 @@ impl Engine {
     ) -> Result<Vec<PieceView>, EngineError> {
         let job = self.store.job(job_id)?;
         let corrections = self.store.corrections(job_id)?;
-        let speakers = SpeakerIndex::new(self.store.speaker_names(job_id)?);
+        let speakers = self.store.speakers(job_id)?;
         // A correction's source is read once, for the text each piece had before.
         let opened = match job.sources.iter().find(|s| s.id == source_id) {
             Some(source) if job.task == Task::TextCorrection => {

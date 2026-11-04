@@ -6,16 +6,22 @@ use kalamu_core::{InputKind, Job, JobId, JobSources, JobSummary, PieceState, Sou
 use kalamu_engine::{Estimate, EstimateRequest, NewJob};
 use tauri::State;
 
-use super::{AppState, InspectedFile};
+use super::{AppState, InspectedFile, off_thread};
 use crate::errors::{AppError, CmdResult, id};
 
 /// Files and folders dropped or chosen, expanded to the supported files for a task, sorted so
 /// numbered scans keep their order. Each is kept for later launches where a sandbox requires
 /// it, while the app may still reach it.
+///
+/// Walking folders can take a while on a network share, so it runs off the window's thread.
 #[tauri::command]
-pub fn expand_paths(state: State<'_, AppState>, paths: Vec<String>, task: Task) -> Vec<String> {
+pub async fn expand_paths(
+    state: State<'_, AppState>,
+    paths: Vec<String>,
+    task: Task,
+) -> CmdResult<Vec<String>> {
     state.grants.keep(&paths);
-    expand(paths, task)
+    off_thread(move || Ok(expand(paths, task))).await
 }
 
 /// The folders results would be written to beside these files that the app may not write to
@@ -62,7 +68,9 @@ fn expand(paths: Vec<String>, task: Task) -> Vec<String> {
     for p in paths {
         walk(Path::new(&p), task, &mut out, 0);
     }
-    out.dedup();
+    // A folder dropped with a file inside it names that file twice: once each, in order.
+    let mut seen = std::collections::HashSet::new();
+    out.retain(|p| seen.insert(p.clone()));
     out.into_iter().map(|p| p.display().to_string()).collect()
 }
 
@@ -78,13 +86,14 @@ fn is_apple_double(path: &Path) -> bool {
 /// Freezes the corrected text of a job's sources under one set-up, as sources a new analysis
 /// reads without reading the originals again.
 #[tauri::command]
-pub fn snapshot_job(
+pub async fn snapshot_job(
     state: State<'_, AppState>,
     id: JobId,
     setup: kalamu_core::SetupId,
     source: Option<kalamu_core::SourceId>,
 ) -> CmdResult<Vec<SourceFile>> {
-    Ok(state.engine.snapshot_sources(id, setup, source)?)
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.snapshot_sources(id, setup, source)?)).await
 }
 
 /// For a job that read frozen text, whether each text has been corrected since.

@@ -35,9 +35,8 @@ use std::time::Duration;
 
 use kalamu_catalog::Catalog;
 use kalamu_core::{
-    ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStore, JobSummary, PieceStatus,
-    ProgressEvent, Provider, ProviderError, ProviderId, SetupId, SourceDocuments, SourceFile,
-    SourceId, SpeakerNames, Timestamp,
+    ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStore, JobSummary, ProgressEvent,
+    Provider, ProviderId, SetupId, SourceDocuments, SourceFile, SourceId, SpeakerNames, Timestamp,
 };
 use kalamu_media::{Ffmpeg, OpenSource, Playback};
 use kalamu_prompts::PromptLibrary;
@@ -318,15 +317,6 @@ impl Engine {
         let job = self.store.job(job_id)?;
         self.write_outputs(&job, setup_id, source_id)
     }
-}
-
-/// Pieces of a job by status, for summaries.
-pub fn count(pieces: &[kalamu_core::PieceState], status: PieceStatus) -> usize {
-    pieces.iter().filter(|p| p.status == status).count()
-}
-
-pub(crate) fn is_retryable(err: &ProviderError) -> bool {
-    err.is_retryable()
 }
 
 #[cfg(test)]

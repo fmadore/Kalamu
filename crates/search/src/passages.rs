@@ -170,7 +170,7 @@ impl Search {
         let pieces = self.jobs.pieces(job.id)?;
         let stored = Stored {
             corrections: self.jobs.corrections(job.id)?,
-            speakers: SpeakerIndex::new(self.jobs.speaker_names(job.id)?),
+            speakers: self.jobs.speakers(job.id)?,
         };
         let indexed: HashMap<PassageKey, String> = self.index.stamps(job.id)?.into_iter().collect();
         let mut current = HashMap::new();

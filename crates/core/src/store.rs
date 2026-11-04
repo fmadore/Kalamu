@@ -118,6 +118,10 @@ pub trait JobStore: Send + Sync {
     /// Replaces the names given to one set-up's speakers in one recording.
     fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError>;
     fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError>;
+    /// The names given to every recording's speakers in a job, ready to look up piece by piece.
+    fn speakers(&self, job: JobId) -> Result<crate::SpeakerIndex, StoreError> {
+        Ok(crate::SpeakerIndex::new(self.speaker_names(job)?))
+    }
 
     /// Inserts or replaces a batch, by its own id.
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;

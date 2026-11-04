@@ -10,8 +10,7 @@ use kalamu_core::provenance::{
 use kalamu_core::speakers::{rename_segments, renamed_labels, text_as_left};
 use kalamu_core::{
     CacheKey, ExportDocument, ExportPart, InputKind, Job, PieceRef, PieceState, PieceStatus,
-    Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, SpeakerIndex, Task,
-    Timestamp, Usage,
+    Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, Task, Timestamp, Usage,
 };
 
 use crate::output::preprocessing;
@@ -39,7 +38,7 @@ impl Engine {
             .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
         let corrections = self.store.corrections(job.id)?;
         // The researcher's names for this recording's speakers, applied to every part.
-        let speakers = SpeakerIndex::new(self.store.speaker_names(job.id)?);
+        let speakers = self.store.speakers(job.id)?;
         let speaker_names = speakers.of(setup_id, source_id);
         let mut states: Vec<_> = self
             .store
@@ -124,9 +123,7 @@ impl Engine {
             if let Some(lang) = &result.output.detected_language {
                 detected.insert(lang.clone());
             }
-            let correction = corrections.iter().find(|c| {
-                c.setup_id == setup_id && c.source_id == source_id && c.index == state.index
-            });
+            let correction = kalamu_core::Correction::of(&corrections, state);
             let corrected_text = correction.and_then(|c| c.text.clone());
             // An analysis's corrected answers replace the model's, and its text is set out from
             // them again.

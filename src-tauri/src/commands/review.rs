@@ -8,16 +8,17 @@ use kalamu_engine::{ComparisonReport, DiffSpan, JobScores, PieceAudio, PieceView
 use kalamu_media::OpenSource;
 use tauri::{AppHandle, Manager, State};
 
-use super::{AppState, PagePreview};
+use super::{AppState, PagePreview, off_thread};
 use crate::errors::{AppError, CmdResult, id};
 
 #[tauri::command]
-pub fn source_pieces(
+pub async fn source_pieces(
     state: State<'_, AppState>,
     job_id: JobId,
     source_id: SourceId,
 ) -> CmdResult<Vec<PieceView>> {
-    Ok(state.engine.source_pieces(job_id, source_id)?)
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.source_pieces(job_id, source_id)?)).await
 }
 
 /// Where to hear one piece of a recording in the review view. The file is served to the player
@@ -126,45 +127,50 @@ pub async fn piece_preview(
 }
 
 #[tauri::command]
-pub fn save_correction(
+pub async fn save_correction(
     state: State<'_, AppState>,
     correction: Correction,
 ) -> CmdResult<Vec<String>> {
-    Ok(state.engine.save_correction(correction)?)
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.save_correction(correction)?)).await
 }
 
 /// Names the speakers of one set-up's transcription; returns the files written again.
 #[tauri::command]
-pub fn save_speaker_names(
+pub async fn save_speaker_names(
     state: State<'_, AppState>,
     job_id: JobId,
     names: SpeakerNames,
 ) -> CmdResult<Vec<String>> {
-    Ok(state.engine.save_speaker_names(job_id, names)?)
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.save_speaker_names(job_id, names)?)).await
 }
 
 #[tauri::command]
-pub fn export_source(
+pub async fn export_source(
     state: State<'_, AppState>,
     job_id: JobId,
     setup_id: SetupId,
     source_id: SourceId,
 ) -> CmdResult<Vec<String>> {
-    Ok(state.engine.export(job_id, setup_id, source_id)?)
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.export(job_id, setup_id, source_id)?)).await
 }
 
 #[tauri::command]
-pub fn compare_source(
+pub async fn compare_source(
     state: State<'_, AppState>,
     job_id: JobId,
     source_id: SourceId,
 ) -> CmdResult<ComparisonReport> {
-    Ok(state.engine.compare(job_id, source_id)?)
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.compare(job_id, source_id)?)).await
 }
 
 #[tauri::command]
-pub fn job_scores(state: State<'_, AppState>, job_id: JobId) -> CmdResult<JobScores> {
-    Ok(state.engine.job_scores(job_id)?)
+pub async fn job_scores(state: State<'_, AppState>, job_id: JobId) -> CmdResult<JobScores> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.job_scores(job_id)?)).await
 }
 
 #[tauri::command]

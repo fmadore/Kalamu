@@ -203,7 +203,7 @@ impl Projects {
                 JobRead {
                     pieces: self.jobs.pieces(job.id)?,
                     corrections: self.jobs.corrections(job.id)?,
-                    speakers: SpeakerIndex::new(self.jobs.speaker_names(job.id)?),
+                    speakers: self.jobs.speakers(job.id)?,
                 },
             );
         }

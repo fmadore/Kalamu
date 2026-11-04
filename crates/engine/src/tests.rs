@@ -12,7 +12,12 @@ use kalamu_core::{
 use kalamu_store::SqliteStore;
 
 use super::*;
-use kalamu_core::{JobStatus, StoreError};
+use kalamu_core::{JobStatus, PieceStatus, ProviderError, StoreError};
+
+/// Pieces of a job by status.
+fn count(pieces: &[kalamu_core::PieceState], status: PieceStatus) -> usize {
+    pieces.iter().filter(|p| p.status == status).count()
+}
 
 mod attention;
 mod batch;

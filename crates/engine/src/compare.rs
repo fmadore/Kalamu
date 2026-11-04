@@ -4,7 +4,7 @@
 //! here summed over every scored page rather than averaged page by page.
 
 use kalamu_core::speakers::rename_text;
-use kalamu_core::{Correction, Job, JobId, Setup, SetupId, SourceId, SpeakerIndex, Task};
+use kalamu_core::{Correction, Job, JobId, Setup, SetupId, SourceId, Task};
 use serde::{Deserialize, Serialize};
 use similar::{ChangeTag, TextDiff};
 use ts_rs::TS;
@@ -267,7 +267,7 @@ impl Engine {
     /// than the review's pieces: no preview, timings or original text.
     fn scored_pieces(&self, job: &Job, source_id: SourceId) -> Result<Vec<Scored>, EngineError> {
         let corrections = self.store.corrections(job.id)?;
-        let speakers = SpeakerIndex::new(self.store.speaker_names(job.id)?);
+        let speakers = self.store.speakers(job.id)?;
         let mut out = Vec::new();
         for state in self.store.pieces(job.id)? {
             if state.source_id != source_id {
