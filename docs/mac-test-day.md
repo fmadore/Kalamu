@@ -27,17 +27,17 @@ Apple, so start them first.
   in with on the rented Mac. A separate Apple ID is fine, and simpler to remove afterwards.
 - [ ] **A test key** for one cloud provider, with a low spending cap (Gemini or Mistral), for the
   consent dialog and a cloud job. It is revoked at the end.
-- [ ] **Material for the screenshots**: `kalamu-screenshot-material.zip` (46 MB), made on the
-  PC in `screenshot-material/`, which git ignores. It holds eight whole issues of *The Monitor*
-  (Omaha) from 1915 and 1916, one PDF each with its text layer, in which the Rev. John Albert
-  Williams appears under several forms of his name (for the dictionary), and
+- [ ] **Material for the screenshots**: `kalamu-screenshot-material.zip` (17 MB), made on the
+  PC in `screenshot-material/`, which git ignores. It holds nine whole issues of *The Daily
+  Nebraskan* (Lincoln) from spring 1911, one PDF each with its text layer, in which W. J. Bryan and
+  Professor Barbour appear under several forms of their names (for the dictionary), and
   `interview-two-speakers.wav`, a French interview between two voices (for the transcript with
   named speakers). Its README gives the sources. Upload it where the Mac can download it (a
   cloud drive link, or a draft GitHub release) and keep the link for the brief. The sample files
   come from the release's `kalamu-samples.zip`. An M4A for the FFmpeg step is made on the Mac:
   `afconvert -f m4af -d aac interview.wav interview.m4a`. To make the zip again, download the
-  issues' pages from `https://nebnewspapers.unl.edu/lccn/00225879/<date>/ed-1/seq-<n>.pdf`
-  (loc.gov's own pages stop scripts with a bot check).
+  issues' pages from `https://nebnewspapers.unl.edu/lccn/sn96080312/<date>/ed-1/seq-<n>.pdf`
+  (loc.gov's own pages stop scripts with a bot check), then screen every page as its README says.
 - [ ] **A VNC viewer on Windows**: [TigerVNC](https://tigervnc.org/) or RealVNC Viewer. Windows'
   own OpenSSH (`ssh`, `scp`) copies files back at the end.
 - [ ] **This checklist open on Windows**, not on the Mac.
@@ -92,7 +92,7 @@ Today is a test day for Kalamu, a desktop app for researchers (https://github.co
 3. Download files with curl in the terminal (Safari is read-only to you). A file fetched with curl is not quarantined, so before opening the disk image mark it as a browser would, to test Gatekeeper's first-open question:
    xattr -w com.apple.quarantine "0081;$(printf %x $(date +%s));Safari;" Kalamu_1.4.1_aarch64.dmg
 4. Write results.md in this folder as you go: for every step, passed, failed or not checked, and for each failure what you did, what you expected, what happened, with a screenshot of it in problems/. Write it after each step, not at the end.
-   The sample files: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip. Ask me for the link to kalamu-screenshot-material.zip (eight issues of The Monitor and a two-speaker interview in French).
+   The sample files: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip. Ask me for the link to kalamu-screenshot-material.zip (nine issues of The Daily Nebraskan and a two-speaker interview in French).
 5. Save the App Store screenshots in screenshots/, named 01-comparison … 10-offline, checked with sips (1440x900 or 2880x1800, hasAlpha no).
 6. Stop and ask me whenever a step needs a password, an Apple ID sign-in, or the test API key in Kalamu's Settings: I type those, you never do. Ask before anything that would send files to a cloud provider beyond the steps that use the test key, and keep to the estimate shown before each job.
 7. Do not change Kalamu's files, settings outside the app, or anything outside this folder and the app's own data, except what a step asks for (the test folder with accents, the test disk image).
@@ -206,14 +206,20 @@ researcher switching over would.
 
 ## Part C: screenshots (3 to 4 hours)
 
-The ten scenes and captions are in [store-listing.md](store-listing.md#screenshots), with "your
-Mac" for "your PC" in the tenth. Take them from the **TestFlight build** (the store app), in
-light mode, one size throughout.
+The ten scenes, captions and the files each one uses are in
+[store-listing.md](store-listing.md#screenshots), with "your Mac" for "your PC" in the tenth.
+Take them from the **TestFlight build** (the store app), in light mode, one size throughout.
+Use only that material: *The Daily Nebraskan* of 1911 from the two zips, the manuscript, the
+interviews and the invented bulletin. Nothing else goes in a shot, not even a document of your
+own, since everything legible in it counts as the listing's text.
 
-- [ ] **The demo project**, as the listing describes: *The Monitor, Omaha 1915–1916*, its
+- [ ] **The demo project**, as the listing describes: *The Daily Nebraskan, Lincoln 1911*, its
   collections and tags, the workflow *Newspapers* run on the issues, so the dictionary has the
   same people under several spellings. The workflow uses the test key: check the estimate first.
 - [ ] Name jobs as a researcher would; no `/Users/<name>` path, key or personal data visible.
+- [ ] **Read every shot word by word** at full size before keeping it: masthead, headlines, the
+  text pane, analysis answers, names in the dictionary. Retake it on another page or article if
+  anything on race, religion, violence or politics could be taken out of context.
 - [ ] **Capture the window alone**: ⌘⇧4, then Space, then hold ⌥ and click the window, which
   leaves out the shadow and its transparency. From the terminal (as Claude does), maximise the
   window and capture the screen silently, which gives the display's exact size:

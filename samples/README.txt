@@ -29,20 +29,21 @@ dodington-1755.jpg    A handwritten French report on the rocks where the East In
                       Bibliothèque nationale de France (btv1b53168804x), via Wikimedia
                       Commons. Public domain.
 
-the-monitor-1915.pdf  The Monitor (Omaha, Nebraska), 31 July 1915, page 1: a weekly newspaper
-                      of Omaha's African American community, with the machine-read text
-                      layer libraries supply. New job > Correct existing text, to correct
-                      that text; or Extract text, to read the columns again. Library of
-                      Congress, Chronicling America. Public domain (published in the United
-                      States in 1915).
+daily-nebraskan-1911.pdf
+                      The Daily Nebraskan (University of Nebraska, Lincoln), 5 April 1911,
+                      page 1: the students' daily, with the machine-read text layer
+                      libraries supply, full of errors. New job > Correct existing text, to
+                      correct that text; or Extract text, to read the columns again.
+                      Library of Congress, Chronicling America (LCCN sn96080312), through
+                      the University of Nebraska-Lincoln. Public domain (published in the
+                      United States in 1911).
 
-victoria-daily-times-1915.pdf
-                      The Victoria Daily Times (Victoria, British Columbia), 22 July 1915: a
-                      whole 16-page issue, scans only. New job > Detailed table of contents:
-                      one entry per article or item, with its pages, its authors and a
-                      summary. Its machine-read text layer was removed, so the pages are
-                      read from the scans. Internet Archive (victoriadailytimes19150722), via
-                      Wikimedia Commons. Public domain.
+daily-nebraskan-1911-issue.pdf
+                      The Daily Nebraskan, 24 May 1911: a whole four-page issue, scans only.
+                      New job > Detailed table of contents: one entry per article or item,
+                      with its pages, its authors and a summary. Its machine-read text
+                      layer was removed, so the pages are read from the scans. Same source
+                      and rights as above.
 
 bulletin-page.jpg     An invented newspaper page in French, made for Kalamu. New job >
                       Extract text.

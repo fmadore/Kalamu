@@ -10,7 +10,9 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 signed, notarised disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
 [v1.4.1 release](https://github.com/fmadore/Kalamu/releases/tag/v1.4.1)
 ([notes](release-1.4.1.md)). It is submitted next to the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), and is the first version
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), in place of 1.4.0, refused for
+a 1915 newspaper masthead in its screenshots (policy 11.5) and since given new screenshots and
+samples from *The Daily Nebraskan* of 1911, and is the first version
 prepared for the Mac App Store ([steps](mac-app-store.md)). Kalamu has been there since version 1.0.0 (2 November 2026). Everything below is tested against
 recorded provider responses. Text extraction, transcription and analyses have also run against
 the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
@@ -435,7 +437,7 @@ privacy policy's lines on the store build, and the steps in [mac-app-store.md](m
 
 Next, by the maintainer: the App ID, the two distribution certificates, the profile, the API key
 and the app in App Store Connect, with their secrets and `APPLE_APP_ID`; screenshots taken on a
-Mac; a first TestFlight build opened on a real Mac (*Next*, item 2); then the submission. After
+Mac from the screened material ([store-listing.md](store-listing.md#screenshots)); a first TestFlight build opened on a real Mac (*Next*, item 2); then the submission. After
 it: a way to grant again the folders of jobs made by the disk image, and a French listing.
 
 ## Research workflows (planned)
