@@ -252,7 +252,7 @@ uses:
 
 | # | Files |
 | --- | --- |
-| 1 | `daily-nebraskan-1911.pdf` (5 April 1911), Extract text with two set-ups, for instance Gemini and Claude; open the column on the agricultural students or the dramatic club |
+| 1 | `The Daily Nebraskan 1911-04-05.pdf`, the whole issue of the page in `daily-nebraskan-1911.pdf`, so the strip of pages has pages to mark reviewed |
 | 2 | The demo project below |
 | 3 | `dodington-1755.jpg`, with Claude or Mistral |
 | 4, 5 | The *Newspapers* workflow run on the nine issues |
@@ -278,7 +278,8 @@ most archives restrict commercial reuse: a Store listing is safest without them.
 **A demo project** for the shots that need one (2, 4 and 5), from public-domain material only:
 a project *The Daily Nebraskan, Lincoln 1911* with collections *February–March*, *April–May*,
 *Correspondence* and *Interviews*; the nine issues of `kalamu-screenshot-material.zip` (spring
-1911, four pages each, from Chronicling America), `dodington-1755.jpg` and `interview.wav`; tags
+1911, four pages each, from Chronicling America), `dodington-1755.jpg` and
+`interview-two-speakers.wav`; tags
 such as *agriculture*, *athletics* and *theatre* on a few documents. Save the example *Letters: read, check, then people
 and places* as a workflow *Newspapers*, its first step on the newspaper preset, and run it on the
 issues from the project's selection, so the dictionary
@@ -287,6 +288,37 @@ Bryan*, *Mr. Bryan*, who spoke at convocation on 28 March; *Prof. E. H. Barbour*
 Barbour*) for a model to propose merging, and a pair to keep apart (*Grace Bryan*, his daughter,
 whose wedding the 24 May issue announces). *Chancellor Avery* and *Dean Burnett* recur across
 issues as well.
+
+**The runs to make**, in this order, since the project, the dictionary and the analysis build on
+the workflow. Six runs; scenes 2, 8 and 10 need none. Name each job as a researcher would
+(*Daily Nebraskan, spring 1911*, *Dodington report, 1755*, *Interview, Ouagadougou*), and check
+each estimate before starting: only the first run is large (36 pages read, then analysed).
+
+1. **Workflow *Newspapers*** (scenes 4 and 5). In Workflows, start from the example *Letters:
+   read, check, then people and places*, name it *Newspapers*, and set its first step's preset
+   to *Newspaper or magazine*; the second stays *People, places and organisations*. Run it on
+   the nine issues from the project's selection. Take scene 4 when it stops after the first
+   step for review, *Continue* in view; correct a few words, then continue. Once the second step
+   is done, open the project's dictionary, ask a model to propose merges, and take scene 5 with
+   a proposal open.
+2. **Extract text, two set-ups** (scene 1): `The Daily Nebraskan 1911-04-05.pdf`, for instance
+   Gemini and Claude, on *Newspaper or magazine*. Mark a page or two reviewed, then open the
+   column on the agricultural students or the dramatic club with one set of readings open.
+3. **Extract text, handwriting** (scene 3): `dodington-1755.jpg` with Claude or Mistral (Gemini
+   refuses it), lines kept as on the page; correct one word.
+4. **Transcribe audio** (scene 6): `interview-two-speakers.wav` in French with Gemini, which
+   labels speakers; give both speakers names in the review.
+5. **Analyse texts, two set-ups** (scene 7): from the corrected result of the 5 April issue,
+   send its text into a new analysis whose prompt asks for a summary, people, places and a tone
+   with its reason (in Prompts, a copy of *People, places and organisations* with a summary and
+   a tone field added), on two models; point at a name the set-ups disagree on.
+6. **Detailed table of contents** (scene 9): `daily-nebraskan-1911-issue.pdf` on *Newspaper or
+   magazine issue*.
+
+Without a run: the project (scene 2), made by hand as above; New job (scene 8), Extract text on
+the folder of the nine issues with Gemini and Mistral OCR, captured before *Start* and left
+unstarted; Settings › Offline (scene 10), with Whisper Base and French for Tesseract downloaded,
+or Tesseract on `bulletin-page.jpg` for the $0.00 estimate.
 
 | # | What to show | Caption |
 | --- | --- | --- |
