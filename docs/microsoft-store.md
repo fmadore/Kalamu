@@ -14,9 +14,13 @@ the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-
 
 **Version 1.3.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)** (product ID `9MXT5555BZ1H`),
 published as an update from the `Kalamu_1.3.0.msixbundle` of the
-[v1.3.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.3.0). Version 1.4.1
-follows, from the `Kalamu_1.4.1.msixbundle` of its release; if 1.4.0 has not been submitted
-yet, submit 1.4.1 in its place. Its listing text, with the question asked before files are
+[v1.3.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.3.0). Version 1.4.0
+was refused on 5 November 2026 under policy 11.5 (offensive content, found in the "metadata
+description"): two screenshots showed the 1915 masthead of *The Monitor* (Omaha), which names
+its readers in the wording of its time. Version 1.4.1 is submitted in its place, from the
+`Kalamu_1.4.1.msixbundle` of its release, with new screenshots of screened material and the
+sample files changed to match ([store-listing.md](store-listing.md#screenshots)); delete the
+refused screenshots from the listing before uploading the new ones. Its listing text, with the question asked before files are
 first sent to each AI provider, is in [store-listing.md](store-listing.md). The first submission,
 1.0.0, passed certification on 2 November 2026 from the `Kalamu_1.0.0.msixbundle` of the
 [v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0). The steps below stay
@@ -57,6 +61,7 @@ this repository's notes, and Microsoft renumbers them from time to time.
 | 10.8.2 Payments outside Microsoft commerce | A voluntary donation through a secure third-party provider is allowed, and must be declared in Partner Center | The Buy Me a Coffee link unlocks nothing; tick the Product declaration and explain the link in the certification notes |
 | 11.2 and 10.1 Trademarks | Other companies' names only descriptively, no logos, no implied endorsement | Providers, YouTube and Word are named to say what the app works with; a trademark line ends the description |
 | 11.16 Live generative AI content | Disclose generative AI in the listing and in Partner Center; a way to report inappropriate output | The description and the Generative AI property say so; Report a problem opens GitHub's issue forms, `output.yml` among them |
+| 11.5 Offensive content | No offensive content in the app or its metadata, screenshots included | Screenshots and sample files show screened everyday material only; 1.4.0 was refused for a 1915 masthead ([Status](#status-4-november-2026)) |
 | Licence terms | Microsoft's Standard Application License Terms forbid reverse engineering, which the LGPL (FFmpeg) must allow | Kalamu's own [licence terms](store-license-terms.md) in "Additional license terms" |
 
 ## What is done
@@ -197,7 +202,8 @@ package identity changes where data is kept and how the window is drawn.
    The Store signs accepted packages. For later submissions, delete every package already
    listed before uploading, so no architecture ships stale.
 6. **Store listings** → English (United States): paste each block from
-   [store-listing.md](store-listing.md), upload the screenshots with their captions, and under
+   [store-listing.md](store-listing.md), upload the screenshots with their captions (after
+   reading each one word by word, as the listing guide says), and under
    **Additional license terms** paste [store-license-terms.md](store-license-terms.md).
 7. **Submission options** → **Notes for certification**: paste the notes from
    [store-listing.md](store-listing.md#notes-for-certification), with the test key if one is

@@ -22,7 +22,10 @@ store build, which came in #110 after that release. What is ready in the reposit
 - the privacy policy's lines on the store build (`grants.json`, the container).
 
 What only the maintainer can do: the Apple portal and App Store Connect steps, the GitHub
-secrets, the screenshots (on a Mac), and the first test on a real Mac through TestFlight.
+secrets, the screenshots (on a Mac, from the material in
+[store-listing.md](store-listing.md#screenshots)), and the first test on a real Mac through
+TestFlight. Nothing from the Windows set is reused: its 1.4.0 screenshots were refused by the
+Microsoft Store (see [What App Review may question](#what-app-review-may-question)).
 
 ## Once: at Apple
 
@@ -161,7 +164,12 @@ Gemini from YouTube; Kalamu downloads and stores none of it.
   optionally a test key with a spending cap in the review fields, never in the listing.
 - **Third-party AI (5.1.2(i)).** The notice before the first job to each provider names it,
   says what is sent and links the policy; the review notes point to it.
-- **Screenshots (2.3.3)** must show the Mac app, so they are taken on a Mac.
+- **Screenshots (2.3.3, 2.3.8)** must show the Mac app, so they are taken on a Mac, and suit all
+  audiences, since App Review reads the text in them as metadata. The Microsoft Store refused
+  Kalamu 1.4.0 under its policy 11.5 for a 1915 newspaper masthead in two screenshots; the Mac
+  set uses the material screened after that, *The Daily Nebraskan* of 1911, never the old
+  captures ([store-listing.md](store-listing.md#screenshots)). The sample files the review notes
+  point to were screened the same way.
 - **Privacy manifest** (`PrivacyInfo.xcprivacy`): not checked whether App Store Connect wants
   one for a macOS app; the upload's validation names it if so.
 

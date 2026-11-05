@@ -216,9 +216,11 @@ carries no text, so the Store's title and buttons can sit over its right side.
 
 ## Screenshots
 
-Taken for version 1.2.0: take them again from the installed 1.4.0 package, since they do not
-show its wider views, larger type, projects in the sidebar, Jobs link or Settings tabs. From the installed Store package, in one theme throughout (the light one, as
-the 1.0.0 captures). Store rules: `.png`, at least 1366 × 768,
+One set of ten scenes for both stores, taken again for 1.4.1: 1.4.0's were refused (below),
+and those of 1.2.0 before them do not show the wider views, larger type, projects in the
+sidebar, Jobs link or Settings tabs. Take them from the installed Store package, in one theme
+throughout (the light one, as the 1.0.0 captures); the Mac App Store's on a Mac, from the
+TestFlight build ([below](#screenshots-1)). Store rules: `.png`, at least 1366 × 768,
 under 50 MB; ten at most, five to eight recommended. The first one or two are what most people
 see, in search results and at the top of the listing, so they carry what sets Kalamu apart:
 checking AI text against its source. Keep what matters in the top two-thirds, where the Store
@@ -239,9 +241,33 @@ wording of its time. Historical sources carry such wording, so before a document
 screenshot, read what it shows (masthead, headlines, the text pane, analysis answers, names in
 the dictionary) and leave out anything on race, religion, violence or politics that a reviewer
 could take out of context, as well as caricatures in its advertisements. Prefer everyday
-material: a student newspaper, local news, a scientific report.
+material: a student newspaper, local news, a scientific report. Before uploading, open each
+image at full size and read it once more, word by word.
 
-**Material whose rights allow it.** Everything in `samples/`: the recording and the invented
+**The material.** All of it was screened this way, and comes in two zips:
+`kalamu-samples.zip` (the release's sample files) and `kalamu-screenshot-material.zip` (nine
+whole issues of *The Daily Nebraskan* of spring 1911 and `interview-two-speakers.wav`; made on
+the PC in `screenshot-material/`, which git ignores, and described in its README). Each scene
+uses:
+
+| # | Files |
+| --- | --- |
+| 1 | `daily-nebraskan-1911.pdf` (5 April 1911), Extract text with two set-ups, for instance Gemini and Claude; open the column on the agricultural students or the dramatic club |
+| 2 | The demo project below |
+| 3 | `dodington-1755.jpg`, with Claude or Mistral |
+| 4, 5 | The *Newspapers* workflow run on the nine issues |
+| 6 | `interview-two-speakers.wav`, with a cloud model that labels speakers, the two named in the review |
+| 7 | An article of an issue, analysed once its text is corrected: the agricultural students (5 April) or a convocation lecture |
+| 8 | The folder of the nine issues |
+| 9 | `daily-nebraskan-1911-issue.pdf` (24 May 1911, four pages) |
+| 10 | Settings › Offline, or `bulletin-page.jpg` with Tesseract |
+
+*The Monitor* and the *Victoria Daily Times* of 1915, used before, are out of the samples and
+the screenshots: the *Victoria* for its war news, and no pre-war year either, since every issue
+of 1912 screened as a replacement carried the period's words on Asian immigrants and Black
+Americans.
+
+**Other material whose rights allow it**, for scenes added later. Everything in `samples/`: the recording and the invented
 page (made for Kalamu, CC0), the 1755 manuscript and the 1911 newspaper (public domain, sources
 in its README); more public-domain newspapers from the Library of Congress's
 [Chronicling America](https://chroniclingamerica.loc.gov/) (no known restrictions), or older
@@ -411,6 +437,8 @@ At least one, up to ten, 16:10, without transparency, `.png` or `.jpeg`, all one
 1800** (a Retina Mac at its default scaling), or 2560 × 1600, 1440 × 900 or 1280 × 800. Take them
 on a Mac, of the Mac App Store build, so the window's title bar, traffic lights and menu bar are
 macOS's: screenshots of the Windows app would not show the app as it runs (Guideline 2.3.3).
-Use the same ten scenes and captions as the Microsoft Store above, with "your Mac" for "your PC"
-in the tenth. Capture the window alone with ⌘⇧4 then Space, which adds a shadow with
+Use the same ten scenes, captions and material as the Microsoft Store above, with "your Mac"
+for "your PC" in the tenth, and screen them the same way: App Review reads screenshots as
+metadata too, and asks that metadata suit all audiences (Guideline 2.3.8), Kalamu being rated
+4+. The step-by-step for the day on a Mac is Part C of [mac-test-day.md](mac-test-day.md). Capture the window alone with ⌘⇧4 then Space, which adds a shadow with
 transparency: hold ⌥ while clicking to leave it out, or export the image without alpha.

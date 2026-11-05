@@ -206,14 +206,20 @@ researcher switching over would.
 
 ## Part C: screenshots (3 to 4 hours)
 
-The ten scenes and captions are in [store-listing.md](store-listing.md#screenshots), with "your
-Mac" for "your PC" in the tenth. Take them from the **TestFlight build** (the store app), in
-light mode, one size throughout.
+The ten scenes, captions and the files each one uses are in
+[store-listing.md](store-listing.md#screenshots), with "your Mac" for "your PC" in the tenth.
+Take them from the **TestFlight build** (the store app), in light mode, one size throughout.
+Use only that material: *The Daily Nebraskan* of 1911 from the two zips, the manuscript, the
+interviews and the invented bulletin. Nothing else goes in a shot, not even a document of your
+own, since everything legible in it counts as the listing's text.
 
 - [ ] **The demo project**, as the listing describes: *The Daily Nebraskan, Lincoln 1911*, its
   collections and tags, the workflow *Newspapers* run on the issues, so the dictionary has the
   same people under several spellings. The workflow uses the test key: check the estimate first.
 - [ ] Name jobs as a researcher would; no `/Users/<name>` path, key or personal data visible.
+- [ ] **Read every shot word by word** at full size before keeping it: masthead, headlines, the
+  text pane, analysis answers, names in the dictionary. Retake it on another page or article if
+  anything on race, religion, violence or politics could be taken out of context.
 - [ ] **Capture the window alone**: ⌘⇧4, then Space, then hold ⌥ and click the window, which
   leaves out the shadow and its transparency. From the terminal (as Claude does), maximise the
   window and capture the screen silently, which gives the display's exact size:
