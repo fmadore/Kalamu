@@ -82,8 +82,8 @@ this repository's notes, and Microsoft renumbers them from time to time.
   made with Windows' speech synthesis, an invented newspaper page and its text (all CC0), a
   handwritten French report of 1755 from the Bibliothèque nationale de France, a 1911 page of
   *The Daily Nebraskan* (Lincoln) with its OCR text layer from the Library of Congress, and a whole
-  16-page issue of the *Victoria Daily Times* of 22 July 1915, scans only, for a table of
-  contents (all three public domain).
+  four-page issue of the same paper (24 May 1911), scans only, for a table of contents (all
+  public domain).
 
 ## Before the first submission
 

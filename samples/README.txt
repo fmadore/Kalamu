@@ -38,13 +38,12 @@ daily-nebraskan-1911.pdf
                       the University of Nebraska-Lincoln. Public domain (published in the
                       United States in 1911).
 
-victoria-daily-times-1915.pdf
-                      The Victoria Daily Times (Victoria, British Columbia), 22 July 1915: a
-                      whole 16-page issue, scans only. New job > Detailed table of contents:
-                      one entry per article or item, with its pages, its authors and a
-                      summary. Its machine-read text layer was removed, so the pages are
-                      read from the scans. Internet Archive (victoriadailytimes19150722), via
-                      Wikimedia Commons. Public domain.
+daily-nebraskan-1911-issue.pdf
+                      The Daily Nebraskan, 24 May 1911: a whole four-page issue, scans only.
+                      New job > Detailed table of contents: one entry per article or item,
+                      with its pages, its authors and a summary. Its machine-read text
+                      layer was removed, so the pages are read from the scans. Same source
+                      and rights as above.
 
 bulletin-page.jpg     An invented newspaper page in French, made for Kalamu. New job >
                       Extract text.
