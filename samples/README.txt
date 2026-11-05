@@ -29,12 +29,14 @@ dodington-1755.jpg    A handwritten French report on the rocks where the East In
                       Bibliothèque nationale de France (btv1b53168804x), via Wikimedia
                       Commons. Public domain.
 
-the-monitor-1915.pdf  The Monitor (Omaha, Nebraska), 31 July 1915, page 1: a weekly newspaper
-                      of Omaha's African American community, with the machine-read text
-                      layer libraries supply. New job > Correct existing text, to correct
-                      that text; or Extract text, to read the columns again. Library of
-                      Congress, Chronicling America. Public domain (published in the United
-                      States in 1915).
+daily-nebraskan-1911.pdf
+                      The Daily Nebraskan (University of Nebraska, Lincoln), 5 April 1911,
+                      page 1: the students' daily, with the machine-read text layer
+                      libraries supply, full of errors. New job > Correct existing text, to
+                      correct that text; or Extract text, to read the columns again.
+                      Library of Congress, Chronicling America (LCCN sn96080312), through
+                      the University of Nebraska-Lincoln. Public domain (published in the
+                      United States in 1911).
 
 victoria-daily-times-1915.pdf
                       The Victoria Daily Times (Victoria, British Columbia), 22 July 1915: a

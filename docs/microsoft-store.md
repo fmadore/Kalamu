@@ -80,8 +80,8 @@ this repository's notes, and Microsoft renumbers them from time to time.
   its licence texts) in each release build.
 - **Sample files for reviewers**: `samples/`, attached as `kalamu-samples.zip`: a recording
   made with Windows' speech synthesis, an invented newspaper page and its text (all CC0), a
-  handwritten French report of 1755 from the Bibliothèque nationale de France, a 1915 page of
-  *The Monitor* (Omaha) with its OCR text layer from the Library of Congress, and a whole
+  handwritten French report of 1755 from the Bibliothèque nationale de France, a 1911 page of
+  *The Daily Nebraskan* (Lincoln) with its OCR text layer from the Library of Congress, and a whole
   16-page issue of the *Victoria Daily Times* of 22 July 1915, scans only, for a table of
   contents (all three public domain).
 
@@ -94,7 +94,7 @@ In this order; the [roadmap](roadmap.md#toward-the-store-release) tracks them.
    `https://fmadore.github.io/Kalamu/privacy`, and check the page.
 2. **Live runs** from the installed package: every provider, economy mode, offline Whisper on
    `interview.wav`, extraction of `dodington-1755.jpg`, a table of contents, a correction of
-   `the-monitor-1915.pdf`, and the YouTube player under the
+   `daily-nebraskan-1911.pdf`, and the YouTube player under the
    packaged origin (see the [roadmap](roadmap.md#next)).
 3. **Screenshots** from the packaged app (see [store-listing.md](store-listing.md#screenshots)).
 4. **Decide on a test key** for the certification team ([below](#reviewer-access-to-cloud-features)).

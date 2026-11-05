@@ -186,7 +186,7 @@ team; a test key may be given here, never in the listing.
 ```text
 Product: Kalamu. Version: 1.4.1.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription) and Tesseract (text extraction of print). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1915 newspaper page with its machine-read text layer (the-monitor-1915.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole 16-page newspaper issue of 1915 for a table of contents (victoria-daily-times-1915.pdf, Internet Archive via Wikimedia Commons, public domain), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, choose the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
@@ -195,7 +195,7 @@ Offline route, with no account or key:
 4. Disconnect the network and repeat with another recording to confirm it runs offline. Results are written next to the sample file, as .txt and .docx with a provenance.json.
 5. Offline text extraction: in Settings > Offline, under Text extraction with Tesseract, download French (4 MB, once). Choose New job, then Extract text, add bulletin-page.jpg, choose Tesseract (on this computer) and French, and Start. The review shows the page beside its text; the formats include ALTO XML and a searchable PDF.
 
-Cloud features: text extraction (dodington-1755.jpg), correction of existing text (the-monitor-1915.pdf), analyses (bulletin.txt) and cloud transcription need the user's own key, entered in Settings and kept in Windows Credential Manager. [Either: A test Gemini API key with a small spending cap is provided for certification: <key>. Paste it in Settings under Google Gemini, then run New job > Extract text on bulletin-page.jpg (Gemini refuses dodington-1755.jpg without a reason; Claude and Mistral read it), New job > Correct existing text on the-monitor-1915.pdf, and New job > Analyse texts on bulletin.txt with People, places and organisations. Or: No test key is provided; these features need a key from the provider, as the listing says.] Before the first job sent to a provider, a dialog names it, says what is sent and links the privacy policy; Send records consent for that provider. An estimated cost is shown before each job starts. The cheaper mode sends a job to the provider's batch service, which may take up to a day to answer; it is optional and off by default.
+Cloud features: text extraction (dodington-1755.jpg), correction of existing text (daily-nebraskan-1911.pdf), analyses (bulletin.txt) and cloud transcription need the user's own key, entered in Settings and kept in Windows Credential Manager. [Either: A test Gemini API key with a small spending cap is provided for certification: <key>. Paste it in Settings under Google Gemini, then run New job > Extract text on bulletin-page.jpg (Gemini refuses dodington-1755.jpg without a reason; Claude and Mistral read it), New job > Correct existing text on daily-nebraskan-1911.pdf, and New job > Analyse texts on bulletin.txt with People, places and organisations. Or: No test key is provided; these features need a key from the provider, as the listing says.] Before the first job sent to a provider, a dialog names it, says what is sent and links the privacy policy; Send records consent for that provider. An estimated cost is shown before each job starts. The cheaper mode sends a job to the provider's batch service, which may take up to a day to answer; it is optional and off by default.
 
 YouTube: in Transcribe YouTube, the user pastes a link to a public video; Google's Gemini API reads the video from YouTube itself. Kalamu does not download, store or convert YouTube videos. The app asks YouTube's public oEmbed endpoint for the video title, and the review plays the video in YouTube's privacy-enhanced embedded player, loaded only when the user plays it.
 
@@ -232,8 +232,17 @@ set. Wait for toasts to go. Name the jobs as a researcher would ("Le Réveil du 
 throughout, so the set reads as one person's work. Rename the folders first: no `C:\Users\<name>`
 path, no real key, no personal data in a file name.
 
+**Every legible word is listing content.** The Store reads the text in a screenshot as the
+listing's own words: 1.4.0 was refused under policy 11.5 (offensive content, "metadata") for two
+screenshots of *The Monitor* (Omaha, 1915), whose masthead names the readers it served in the
+wording of its time. Historical sources carry such wording, so before a document goes into a
+screenshot, read what it shows (masthead, headlines, the text pane, analysis answers, names in
+the dictionary) and leave out anything on race, religion, violence or politics that a reviewer
+could take out of context, as well as caricatures in its advertisements. Prefer everyday
+material: a student newspaper, local news, a scientific report.
+
 **Material whose rights allow it.** Everything in `samples/`: the recording and the invented
-page (made for Kalamu, CC0), the 1755 manuscript and the 1915 newspaper (public domain, sources
+page (made for Kalamu, CC0), the 1755 manuscript and the 1911 newspaper (public domain, sources
 in its README); more public-domain newspapers from the Library of Congress's
 [Chronicling America](https://chroniclingamerica.loc.gov/) (no known restrictions), or older
 issues whose rights holder agrees; a handwritten letter in the public domain on Wikimedia
@@ -241,26 +250,29 @@ Commons; your own recording, or one made with the speaker's consent for this use
 most archives restrict commercial reuse: a Store listing is safest without them.
 
 **A demo project** for the shots that need one (2, 4 and 5), from public-domain material only:
-a project *The Monitor, Omaha 1915–1916* with collections *Issues 1915*, *Issues 1916*,
-*Correspondence* and *Interviews*; `the-monitor-1915.pdf` and six to ten more issues of *The
-Monitor* from Chronicling America, `dodington-1755.jpg` and `interview.wav`; tags such as
-*suffrage* and *churches* on a few documents. Save the example *Letters: read, check, then people
+a project *The Daily Nebraskan, Lincoln 1911* with collections *February–March*, *April–May*,
+*Correspondence* and *Interviews*; the nine issues of `kalamu-screenshot-material.zip` (spring
+1911, four pages each, from Chronicling America), `dodington-1755.jpg` and `interview.wav`; tags
+such as *agriculture*, *athletics* and *theatre* on a few documents. Save the example *Letters: read, check, then people
 and places* as a workflow *Newspapers*, its first step on the newspaper preset, and run it on the
 issues from the project's selection, so the dictionary
-has the same people under several spellings (*Rev. John Albert Williams*, *J. A. Williams*,
-*Father Williams*) for a model to propose merging.
+has the same people under several forms of their names (*William Jennings Bryan*, *W. J.
+Bryan*, *Mr. Bryan*, who spoke at convocation on 28 March; *Prof. E. H. Barbour*, *Professor
+Barbour*) for a model to propose merging, and a pair to keep apart (*Grace Bryan*, his daughter,
+whose wedding the 24 May issue announces). *Chancellor Avery* and *Dean Burnett* recur across
+issues as well.
 
 | # | What to show | Caption |
 | --- | --- | --- |
 | 1 | **Comparison in the review.** A newspaper column scanned on the left; on the right its text from set-up A, with two or three words highlighted where B reads differently, and one set of readings open over the text. The strip of pages below, a few marked reviewed. | Check every page beside its scan. Where two models read differently, the words are highlighted and you choose the right reading. |
-| 2 | **A project.** *The Monitor* project's documents: collections in the side list, tags on a few rows, the results column showing what each was read with and how much is reviewed, one row selected with the selection bar's actions. | Keep a project's documents together in collections and tags, each with every result read from it, whatever job made it. |
+| 2 | **A project.** *The Daily Nebraskan* project's documents: collections in the side list, tags on a few rows, the results column showing what each was read with and how much is reviewed, one row selected with the selection bar's actions. | Keep a project's documents together in collections and tags, each with every result read from it, whatever job made it. |
 | 3 | **Handwriting.** `dodington-1755.jpg`, read with Claude or Mistral (Gemini refuses it), beside its transcription, lines kept as on the page, one word corrected (blue). | Read handwritten letters and registers line by line, kept as on the page so each line is easy to check against the original. |
 | 4 | **A workflow run.** The *Newspapers* run with its first step done and stopped for review, the next step waiting, and *Continue* in view; or the workflow's drawing of its steps in Workflows. | Chain steps into a workflow: read the pages, check them, then analyse the corrected text. Nothing goes on until you say so. |
 | 5 | **The dictionary.** The People field: rows with their spellings and the documents naming them, look-alikes pointed out, and a model's proposal open (rows, label, reason, certainty) with Accept and Turn down. | Gather the people and places your analyses found across a project, and merge their spellings under your own label, or let a model propose merges you decide on. |
 | 6 | **Transcript.** The player above the transcript, speakers given real names, timestamps, the line being spoken highlighted. | Transcribe interviews with speakers and timestamps, give the speakers their names, and click any line to hear it. |
 | 7 | **Analysis.** An article beside its answers: summary, people, places and tone with its reason, two set-ups' sigla on the names they disagree on, a name pointed at and found in the text. | Ask your own questions of each text: summaries, people, places and tone, every answer shown beside the document it comes from. |
 | 8 | **New job, ready to start.** Extract text chosen, a folder of issues added, two set-ups (Gemini and Mistral OCR), the diagram of the task, and the estimate on the right with a cost per model. | Choose your files, a task and a model, and see the estimated cost before anything is sent to the provider. |
-| 9 | **Table of contents.** A newspaper issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
+| 9 | **Table of contents.** A *Daily Nebraskan* issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
 | 10 | **Offline.** Settings › Offline with a Whisper model and French for Tesseract downloaded, or New job with Tesseract (on this computer) chosen and the estimate at $0.00. | Transcribe recordings with Whisper and read printed pages with Tesseract, offline: free, no account or key, and nothing leaves your PC. |
 
 Search, the glossary, Prompts, the job's page and the Jobs page are left out of the ten: the
@@ -376,7 +388,7 @@ given here, never in the listing. Notes:
 ```text
 Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user sets up with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or offline with Whisper (transcription) and Tesseract (printed text). No sign-in: the app has no account of its own and sells nothing; provider usage is billed to the user's own account.
 
-Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; the-monitor-1915.pdf, a 1915 newspaper page; bulletin.txt).
+Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.4.1/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
 
 Offline route, no key needed:
 1. Settings > Offline > Transcription with Whisper: download Whisper Base (about 60 MB, once).
