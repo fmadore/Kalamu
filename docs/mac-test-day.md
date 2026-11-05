@@ -214,8 +214,10 @@ interviews and the invented bulletin. Nothing else goes in a shot, not even a do
 own, since everything legible in it counts as the listing's text.
 
 - [ ] **The demo project**, as the listing describes: *The Daily Nebraskan, Lincoln 1911*, its
-  collections and tags, the workflow *Newspapers* run on the issues, so the dictionary has the
-  same people under several spellings. The workflow uses the test key: check the estimate first.
+  collections and tags.
+- [ ] **The six runs**, in the order of *The runs to make* in
+  [store-listing.md](store-listing.md#screenshots), each scene taken as its run reaches it.
+  They use the test key: check each estimate first, the workflow's above all.
 - [ ] Name jobs as a researcher would; no `/Users/<name>` path, key or personal data visible.
 - [ ] **Read every shot word by word** at full size before keeping it: masthead, headlines, the
   text pane, analysis answers, names in the dictionary. Retake it on another page or article if
