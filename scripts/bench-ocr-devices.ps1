@@ -108,8 +108,11 @@ function Invoke-Page([string]$label, [string]$program, [string]$device, [string]
 		'-n', '6144', '-c', '10240', '-b', '4096', '-ub', '4096', '-t', "$threads", '-ngl', '99',
 		'--no-warmup')
 	if ($device) { $arguments += @('--device', $device) }
-	$answer = Join-Path $out "$label-$name.txt"
-	$log = Join-Path $out "$label-$name.log"
+	# The label names the device (`vulkan:Vulkan0`): a colon, among others, is refused in a
+	# Windows file name.
+	$file = ($label -replace '[<>:"/\\|?*]', '-') + "-$name"
+	$answer = Join-Path $out "$file.txt"
+	$log = Join-Path $out "$file.log"
 	$watch = [Diagnostics.Stopwatch]::StartNew()
 	$p = Start-Process -FilePath $program -ArgumentList ($arguments | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }) `
 		-NoNewWindow -Wait -PassThru -RedirectStandardOutput $answer -RedirectStandardError $log

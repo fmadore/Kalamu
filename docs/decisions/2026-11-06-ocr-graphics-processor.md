@@ -132,7 +132,27 @@ differ only in a few block positions, by a thousandth of the page.
   about 5%. The ARM64 build keeps `armv8.2-a+dotprod+fp16`, which still runs on the 8cx.
 
 `scripts/bench-ocr-devices.ps1` repeats the processor and Vulkan measurements on any Windows PC,
-for the NVIDIA or AMD, Intel and further Snapdragon machines still to measure.
+for the machines still to measure.
+
+### Measured on Intel's integrated Arc graphics
+
+An Intel Core Ultra 7 155H laptop (Meteor Lake, Arc Graphics with driver 32.0.101.8991), the
+sample page, the app's arguments, the builds of `llama-b12110-2`, one run each, with
+`scripts/bench-ocr-devices.ps1`:
+
+| Build and device | LightOnOCR-3 | GLM-OCR |
+| --- | --- | --- |
+| Processor, 8 threads (the app before) | 116.8 s, image 49 s | 98.8 s, image 73 s |
+| Vulkan, Arc Graphics | **51.5 s**, image 20 s | **43.4 s**, image 23 s |
+
+- **Vulkan reads both models correctly there, in less than half the processor's time.**
+  GLM-OCR's answers are the same byte for byte; LightOnOCR-3's text is the same, three block
+  positions moved by a thousandth of the page, as between processor builds.
+- **The app chooses that device.** The Vulkan build lists one, `Intel(R) Arc(TM) Graphics`
+  (18,400 MiB of shared memory); `device.rs` ranks it as integrated graphics, the Arc name
+  without an A or B model, and keeps it, being the only one.
+- **Intel laptops gain the most so far**: their processor reads a page more slowly than the
+  Snapdragon's (99–117 s against 58–69 s).
 
 ### Whisper
 
@@ -148,6 +168,7 @@ of its own.
 - `vision.rs` was already past 500 lines; the new logic lives in `device.rs` (device choice,
   fallback, speeds), and `llama.rs` gained the device listing. Splitting `vision.rs` (the
   recipes and the answer's reading apart from the provider) is left to the next checkpoint.
-- Measured so far on a Snapdragon laptop only (above), where the models stay on the processor.
-  Still to measure: an NVIDIA or AMD PC and one with Intel integrated graphics; the timings
+- Measured so far (above): on Intel's integrated Arc graphics both models read correctly in
+  less than half the processor's time; on a Snapdragon the Adreno reads wrongly through Vulkan
+  and the models stay on the processor. Still to measure: an NVIDIA or AMD card; the timings
   belong here once taken.

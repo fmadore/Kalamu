@@ -74,8 +74,10 @@ keeps your jobs, settings, presets and keys.
   should be several times faster, which Settings will show. On Windows they now run on the
   graphics processor through Vulkan when Kalamu finds one it can use
   ([#122](https://github.com/fmadore/Kalamu/issues/122)), falling back to the processor if a
-  page fails there; this has been built and checked in GitHub Actions, which has no graphics
-  processor, but not yet timed on a real NVIDIA, AMD, Intel or Snapdragon one.
+  page fails there. On a laptop with Intel's integrated Arc graphics both models read the same
+  text in less than half the processor's time (about 45–50 s a page against 100–115 s). On a
+  Snapdragon laptop the graphics processor read wrongly through Vulkan, so Kalamu keeps the
+  models on the processor there. NVIDIA and AMD cards have not been timed yet.
 - **The Mac versions** are built and tested on Macs in GitHub Actions, but have not yet been
   used on a real Mac, Whisper's Metal mode included. Please report what does not work with
   [Report a problem](https://github.com/fmadore/Kalamu/issues/new/choose). Intel Macs are not
