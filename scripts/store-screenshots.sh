@@ -20,35 +20,34 @@ screen() { system_profiler SPDisplaysDataType | grep -iE "resolution|retina|disp
 log "Screen before"
 screen
 
-change_res="/Library/Application Support/Veertu/Anka/addons/change_res"
-if [ -x "$change_res" ]; then
-	sudo "$change_res" 1440x900x32@30 || echo "::warning::change_res failed."
+# The runner's screen offers no size App Store Connect takes (its modes run from 640 × 480 to
+# 1920 × 1080, none 16:10, and Anka's change_res is refused), so the screen is made larger than
+# 1440 × 900 and the window alone is captured at exactly that size.
+W=1440
+H=900
+brew install -q jakehilborn/jakehilborn/displayplacer >/dev/null 2>&1 || true
+if command -v displayplacer >/dev/null; then
+	displayplacer list > "$out/display-modes.txt" 2>&1
+	id=$(awk '/^Persistent screen id:/ {print $4; exit}' "$out/display-modes.txt")
+	[ -n "$id" ] && displayplacer "id:$id res:1600x1200 scaling:off origin:(0,0) degree:0" || true
 	sleep 3
 else
-	echo "::warning::Anka's change_res is not on this runner."
-fi
-if ! system_profiler SPDisplaysDataType | grep -q "1440 x 900"; then
-	log "Trying displayplacer"
-	brew install -q jakehilborn/jakehilborn/displayplacer >/dev/null 2>&1 || true
-	if command -v displayplacer >/dev/null; then
-		displayplacer list > "$out/display-modes.txt" 2>&1
-		head -n 15 "$out/display-modes.txt"
-		grep -E "res:1440x900|res:1280x800|res:2880x1800|res:2560x1600" "$out/display-modes.txt" | head -n 8
-		id=$(awk '/^Persistent screen id:/ {print $4; exit}' "$out/display-modes.txt")
-		if [ -n "$id" ]; then
-			displayplacer "id:$id res:1440x900 scaling:off origin:(0,0) degree:0" \
-				|| displayplacer "id:$id res:1280x800 scaling:off origin:(0,0) degree:0" || true
-		fi
-		sleep 3
-	fi
+	echo "::warning::displayplacer could not be installed: the screen keeps its size."
 fi
 log "Screen after"
 screen
 
-# Light mode and the Dock hidden.
+# Light mode, the Dock hidden, a plain grey desktop behind the window's rounded corners.
 osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to false' || true
 defaults write com.apple.dock autohide -bool true
 killall Dock 2>/dev/null || true
+for grey in "/System/Library/Desktop Pictures/Solid Colors/Silver.png" \
+	"/System/Library/Desktop Pictures/Solid Colors/Stone.png"; do
+	if [ -f "$grey" ]; then
+		osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"$grey\"" || true
+		break
+	fi
+done
 
 open "$app"
 for _ in $(seq 1 60); do
@@ -58,12 +57,12 @@ for _ in $(seq 1 60); do
 done
 sleep 5
 
-# The window fills the screen below the menu bar, keeping its title bar and traffic lights.
-osascript -e 'tell application "System Events" to tell process "Kalamu"
+# The window, title bar and traffic lights included, is exactly W × H, just below the menu bar.
+osascript -e "tell application \"System Events\" to tell process \"Kalamu\"
 	set frontmost to true
-	set position of window 1 to {0, 0}
-	set size of window 1 to {3000, 3000}
-end tell' || echo "::warning::Could not place the window."
+	set position of window 1 to {40, 60}
+	set size of window 1 to {$W, $H}
+end tell" || echo "::warning::Could not place the window."
 sleep 2
 
 # The accessibility walker: with no argument it lists the window's controls (role | title |
@@ -144,8 +143,17 @@ click_at_bottom() {
 	end tell" && echo "clicked at $1, foot - $2"
 }
 
+# Captures the window's rectangle (read back from macOS, so it is the window's real place), and
+# keeps a JPEG copy, which has no alpha channel.
 shot() {
-	screencapture -x "$out/$1.png"
+	local rect
+	rect=$(osascript -e 'tell application "System Events" to tell process "Kalamu"
+		set {x, y} to position of window 1
+		set {w, h} to size of window 1
+	end tell
+	return (x as text) & "," & (y as text) & "," & (w as text) & "," & (h as text)')
+	screencapture -x -R"$rect" "$out/$1.png"
+	echo "$1: window at $rect"
 	sips -s format jpeg -s formatOptions best "$out/$1.png" --out "$out/$1.jpg" >/dev/null
 	echo "$1: $(sips -g pixelWidth -g pixelHeight -g hasAlpha "$out/$1.jpg" | tail -n 3 | tr -s ' \n' ' ')"
 }
