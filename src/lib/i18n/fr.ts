@@ -1617,9 +1617,12 @@ export const fr: Messages = {
 		noLanguageData: 'Aucune langue téléchargée pour l’instant.',
 		ocrTitle: 'Extraction de texte avec des modèles OCR',
 		ocrHint:
-			'De petits modèles de vision entraînés à lire des pages, qui s’exécutent sur cet ordinateur : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et ils fonctionnent sans connexion internet une fois téléchargés. Ils lisent bien mieux que Tesseract l’imprimé abîmé, les vieux journaux en colonnes, les tableaux et les mises en page mêlées, mais ils sont bien plus lents : de quelques dizaines de secondes à plus d’une minute par page, selon le processeur de cet ordinateur, sa mémoire et la quantité de texte sur la page. Sur un Mac, ils utilisent le processeur graphique et vont plusieurs fois plus vite. Comme tout modèle de langue, ils peuvent écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Pour l’imprimé net, Tesseract est plus rapide ; pour de gros volumes, un modèle en ligne.',
-		ocrSpeed: (seconds: number) =>
-			`Sur cet ordinateur : environ ${seconds} s par page, d’après les dernières pages lues.`,
+			'De petits modèles de vision entraînés à lire des pages, qui s’exécutent sur cet ordinateur : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et ils fonctionnent sans connexion internet une fois téléchargés. Ils lisent bien mieux que Tesseract l’imprimé abîmé, les vieux journaux en colonnes, les tableaux et les mises en page mêlées, mais ils sont bien plus lents : de quelques dizaines de secondes à plus d’une minute par page, selon le processeur de cet ordinateur, sa mémoire et la quantité de texte sur la page. Sur un Mac, et sous Windows quand Kalamu trouve un processeur graphique qu’il peut utiliser, ils s’exécutent sur le processeur graphique et vont plusieurs fois plus vite. Comme tout modèle de langue, ils peuvent écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Pour l’imprimé net, Tesseract est plus rapide ; pour de gros volumes, un modèle en ligne.',
+		ocrSpeed: (seconds: number, graphics: boolean) =>
+			`${graphics ? 'Sur le processeur graphique de cet ordinateur' : 'Sur cet ordinateur'} : environ ${seconds} s par page, d’après les dernières pages lues.`,
+		ocrGraphics: (name: string) => `Lire les pages avec le processeur graphique (${name})`,
+		ocrGraphicsHint:
+			'En général plusieurs fois plus rapide que le processeur. Si une page y échoue, Kalamu la relit avec le processeur et s’en tient au processeur jusqu’à son prochain démarrage. Désactivez cette option pour laisser le processeur graphique libre pour d’autres tâches.',
 		ocrNotTimed: 'Pas encore mesuré sur cet ordinateur : les premières pages lues le diront.',
 		ocrNoEngine:
 			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner les modèles OCR : les installateurs et la version du Store le contiennent.',

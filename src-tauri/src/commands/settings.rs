@@ -54,6 +54,9 @@ pub fn save_settings(state: State<'_, AppState>, settings: Settings) -> CmdResul
     settings
         .save(&state.paths.settings)
         .map_err(|e| AppError::new(id::SETTINGS, e))?;
+    state
+        .vision
+        .use_graphics_processor(settings.ocr_graphics_processor);
     *state.settings.lock().unwrap_or_else(|p| p.into_inner()) = settings;
     Ok(())
 }

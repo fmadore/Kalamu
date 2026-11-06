@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "externalBin": [
+      "binaries/ffmpeg",
+      "binaries/ffprobe",
+      "binaries/llama-mtmd-cli",
+      "binaries/llama-mtmd-cli-vulkan"
+    ],
+    "resources": {
+      "binaries/licenses/*": "licenses/"
+    }
+  }
+}

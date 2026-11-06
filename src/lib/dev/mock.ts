@@ -68,7 +68,8 @@ const settings: Settings = {
 	refresh_catalog: false,
 	favourite_languages: ['fr', 'ar'],
 	last_folder: null,
-	ai_consent: []
+	ai_consent: [],
+	ocr_graphics_processor: true
 };
 
 /** The prompt a dictionary sends for proposed merges, as Prompts lists it. */
@@ -486,6 +487,8 @@ export function installMock(): void {
 					})),
 					ocr_engine: true,
 					ocr_seconds_per_page: { 'lightonocr-3-1b': 38.4 },
+					ocr_device: 'cpu',
+					ocr_graphics_processor: null,
 					missing_cpu: []
 				};
 			case 'key_status':

@@ -1,7 +1,9 @@
-// Puts the bundled llama.cpp program, which runs the offline OCR models, where
-// `tauri build --config src-tauri/tauri.ffmpeg.conf.json` expects it:
-// src-tauri/binaries/llama-mtmd-cli-<target> (with `.exe` on Windows), plus its licence.
-// Downloads only the archive pinned in scripts/llama.json and checks its SHA-256 first.
+// Puts the bundled llama.cpp programs, which run the offline OCR models, where `tauri build`
+// expects them with the bundling configuration (src-tauri/tauri.ffmpeg.conf.json, or
+// tauri.ffmpeg.windows.conf.json on Windows): src-tauri/binaries/llama-mtmd-cli-<target> (with
+// `.exe` on Windows), on Windows also llama-mtmd-cli-vulkan-<target>.exe, which uses the graphics
+// processor, plus their licences. Downloads only the archives pinned in scripts/llama.json and
+// checks their SHA-256 first.
 //
 //   node scripts/fetch-llama.mjs [target-triple]    (default: this machine's system and architecture)
 
@@ -10,6 +12,7 @@ import { execFileSync } from 'node:child_process';
 import {
 	chmodSync,
 	copyFileSync,
+	existsSync,
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
@@ -24,37 +27,59 @@ const arch = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
 const target =
 	process.argv[2] ??
 	(process.platform === 'darwin' ? `${arch}-apple-darwin` : `${arch}-pc-windows-msvc`);
-const exe = target.includes('windows') ? '.exe' : '';
-const expected = pin.archives[target]?.sha256;
-if (!expected) {
-	console.error(
-		`No pinned llama.cpp archive for ${target} yet: run the llama.cpp workflow and fill scripts/llama.json.`
-	);
-	process.exit(1);
+const windows = target.includes('windows');
+const exe = windows ? '.exe' : '';
+
+// The processor build everywhere; the Vulkan build on Windows only (a Mac's build already uses
+// the graphics processor through Metal).
+const builds = [{ archive: 'llama', program: 'llama-mtmd-cli', pins: pin.archives, build: '' }];
+if (windows) {
+	builds.push({
+		archive: 'llama-vulkan',
+		program: 'llama-mtmd-cli-vulkan',
+		pins: pin.vulkan ?? {},
+		build: '-vulkan'
+	});
 }
 
-const name = `llama-${pin.version}-${target}.zip`;
-const bytes = await releaseAsset(pin.release, name);
-const actual = createHash('sha256').update(bytes).digest('hex');
-if (actual !== expected) throw new Error(`${name}: SHA-256 ${actual}, expected ${expected}`);
-
-const work = mkdtempSync(join(tmpdir(), 'kalamu-llama-'));
-writeFileSync(join(work, name), bytes);
 // bsdtar, shipped with Windows 10 and later, reads zip archives. Named by its full path: from Git
 // Bash, `tar` is GNU tar, which reads `C:` as a remote host.
 const tar =
 	process.platform === 'win32'
-		? join(process.env.SystemRoot ?? 'C:\Windows', 'System32', 'tar.exe')
+		? join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'tar.exe')
 		: 'tar';
-execFileSync(tar, ['-xf', join(work, name), '-C', work]);
 
 mkdirSync('src-tauri/binaries/licenses', { recursive: true });
-const installed = `src-tauri/binaries/llama-mtmd-cli-${target}${exe}`;
-copyFileSync(join(work, `llama-mtmd-cli${exe}`), installed);
-chmodSync(installed, 0o755);
-copyFileSync(
-	join(work, 'licenses', 'llama.cpp-MIT.txt'),
-	'src-tauri/binaries/licenses/llama.cpp-MIT.txt'
-);
-copyFileSync(join(work, 'BUILD.txt'), 'src-tauri/binaries/licenses/llama.cpp-BUILD.txt');
-console.log(`llama.cpp ${pin.version} for ${target} installed in src-tauri/binaries.`);
+for (const { archive, program, pins, build } of builds) {
+	const expected = pins[target]?.sha256;
+	if (!expected) {
+		console.error(
+			`No pinned ${archive} archive for ${target} yet: run the llama.cpp workflow and fill scripts/llama.json.`
+		);
+		process.exit(1);
+	}
+	const name = `${archive}-${pin.version}-${target}.zip`;
+	const bytes = await releaseAsset(pin.release, name);
+	const actual = createHash('sha256').update(bytes).digest('hex');
+	if (actual !== expected) throw new Error(`${name}: SHA-256 ${actual}, expected ${expected}`);
+
+	const work = mkdtempSync(join(tmpdir(), 'kalamu-llama-'));
+	writeFileSync(join(work, name), bytes);
+	execFileSync(tar, ['-xf', join(work, name), '-C', work]);
+
+	const installed = `src-tauri/binaries/${program}-${target}${exe}`;
+	copyFileSync(join(work, `${program}${exe}`), installed);
+	chmodSync(installed, 0o755);
+	copyFileSync(
+		join(work, 'licenses', 'llama.cpp-MIT.txt'),
+		'src-tauri/binaries/licenses/llama.cpp-MIT.txt'
+	);
+	copyFileSync(join(work, 'BUILD.txt'), `src-tauri/binaries/licenses/llama.cpp${build}-BUILD.txt`);
+	const vulkanLicence = join(work, 'licenses', 'Vulkan-Headers-MIT.txt');
+	if (existsSync(vulkanLicence)) {
+		copyFileSync(vulkanLicence, 'src-tauri/binaries/licenses/Vulkan-Headers-MIT.txt');
+	}
+	console.log(
+		`${program} (llama.cpp ${pin.version}) for ${target} installed in src-tauri/binaries.`
+	);
+}

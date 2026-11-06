@@ -6,7 +6,9 @@
 //!
 //! The program is built for the same processors as Whisper (`.cargo/config.toml`), on the
 //! processor on Windows and on the graphics processor with Metal on a Mac, by
-//! `.github/workflows/llama.yml`, and pinned in `scripts/llama.json`.
+//! `.github/workflows/llama.yml`, and pinned in `scripts/llama.json`. On Windows a second build,
+//! `llama-mtmd-cli-vulkan`, uses the graphics processor through Vulkan; it is run only when it
+//! lists a device (`device.rs`), since it needs the Vulkan loader graphics drivers install.
 
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -17,6 +19,13 @@ use kalamu_core::{ProviderError, StopSignal};
 
 /// The program's name, without the system's executable suffix.
 pub const PROGRAM: &str = "llama-mtmd-cli";
+
+/// The Windows build that uses the graphics processor through Vulkan.
+pub const VULKAN_PROGRAM: &str = "llama-mtmd-cli-vulkan";
+
+/// How long the program may take to list its devices: a graphics driver that hangs must not
+/// keep the OCR models from running on the processor.
+const LIST_DEVICES_LIMIT: Duration = Duration::from_secs(30);
 
 /// How often a running page checks whether the job was paused or cancelled.
 const POLL: Duration = Duration::from_millis(100);
@@ -55,10 +64,34 @@ pub struct Run {
     pub elapsed: Duration,
 }
 
+/// A device the program can run a model on besides the processor, as `--list-devices` names it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Device {
+    /// The program's name for it, given back with `--device`: `Vulkan0`.
+    pub id: String,
+    /// What the driver calls it: `NVIDIA GeForce RTX 4060 Laptop GPU`.
+    pub name: String,
+    /// Its memory in MiB, 0 when the driver reports none.
+    pub memory_mib: u64,
+}
+
 impl Llama {
-    /// Looks in `KALAMU_LLAMA_DIR`, then in `dirs` (the app's own folder), then, in development
-    /// builds only, on `PATH`.
+    /// The processor build: looks in `KALAMU_LLAMA_DIR`, then in `dirs` (the app's own folder),
+    /// then, in development builds only, on `PATH`.
     pub fn locate(dirs: &[PathBuf]) -> Option<Self> {
+        Self::locate_program(PROGRAM, dirs)
+    }
+
+    /// The Vulkan build, looked for in the same places; Windows only.
+    pub fn locate_vulkan(dirs: &[PathBuf]) -> Option<Self> {
+        if cfg!(windows) {
+            Self::locate_program(VULKAN_PROGRAM, dirs)
+        } else {
+            None
+        }
+    }
+
+    fn locate_program(name: &str, dirs: &[PathBuf]) -> Option<Self> {
         let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_LLAMA_DIR")
             .map(PathBuf::from)
             .into_iter()
@@ -70,7 +103,7 @@ impl Llama {
             candidates.extend(std::env::split_paths(&path));
         }
         candidates.into_iter().find_map(|dir| {
-            let program = dir.join(format!("{PROGRAM}{}", std::env::consts::EXE_SUFFIX));
+            let program = dir.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
             program.is_file().then_some(Self { program })
         })
     }
@@ -91,6 +124,42 @@ impl Llama {
         text.lines()
             .find_map(|line| line.trim().strip_prefix("version:"))
             .map(|v| v.trim().to_owned())
+    }
+
+    /// The devices besides the processor this build can run on: none for the processor build,
+    /// the graphics processors its Vulkan driver offers for the Vulkan build. An error when the
+    /// program does not start (no Vulkan loader on this system), fails or takes too long.
+    pub fn devices(&self) -> Result<Vec<Device>, String> {
+        let mut child = quiet(Command::new(&self.program).arg("--list-devices"))
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("could not start: {e}"))?;
+        let stdout = drain(child.stdout.take(), STDERR_KEPT);
+        let stderr = drain(child.stderr.take(), STDERR_KEPT);
+        let started = Instant::now();
+        let status = loop {
+            match child.try_wait() {
+                Ok(Some(status)) => break status,
+                Ok(None) if started.elapsed() < LIST_DEVICES_LIMIT => std::thread::sleep(POLL),
+                Ok(None) => {
+                    end(&mut child);
+                    return Err("took too long to list its devices".into());
+                }
+                Err(e) => {
+                    end(&mut child);
+                    return Err(e.to_string());
+                }
+            }
+        };
+        let listed = String::from_utf8_lossy(&stdout.join().unwrap_or_default()).into_owned();
+        if !status.success() {
+            let diagnostics =
+                String::from_utf8_lossy(&stderr.join().unwrap_or_default()).into_owned();
+            return Err(format!("{status}: {}", last_error(&diagnostics)));
+        }
+        Ok(parse_devices(&listed))
     }
 
     /// Runs the program with `args` until it ends, or until `stop` is raised, when it is ended
@@ -184,6 +253,37 @@ fn last_error(diagnostics: &str) -> String {
         .map_or_else(|| "no message".to_owned(), |l| (*l).to_owned())
 }
 
+/// The devices `--list-devices` prints after `Available devices:`, one a line:
+/// `  Vulkan0: NVIDIA GeForce RTX 3060 (12288 MiB, 11873 MiB free)`, or `  (none)`. A name may
+/// hold brackets of its own (`Intel(R) Arc(TM) Graphics`), so the memory is read from the end.
+fn parse_devices(listed: &str) -> Vec<Device> {
+    listed
+        .lines()
+        .skip_while(|line| !line.trim_start().starts_with("Available devices"))
+        .skip(1)
+        .filter_map(|line| {
+            let (id, rest) = line.trim().split_once(": ")?;
+            if id.is_empty() || id.contains(' ') {
+                return None;
+            }
+            let (name, memory) = match rest.rsplit_once(" (") {
+                Some((name, memory)) if memory.contains("MiB") => (name, memory),
+                _ => (rest, ""),
+            };
+            let memory_mib = memory
+                .split_whitespace()
+                .next()
+                .and_then(|n| n.parse().ok())
+                .unwrap_or(0);
+            Some(Device {
+                id: id.to_owned(),
+                name: name.trim().to_owned(),
+                memory_mib,
+            })
+        })
+        .collect()
+}
+
 /// The tokens written, from llama.cpp's closing timing line,
 /// `llama_perf_context_print:        eval time =  … ms /   812 runs   (…)`: one run per token
 /// after the first, which the prompt's evaluation gives.
@@ -233,6 +333,31 @@ llama_perf_context_print:        eval time =   20514.55 ms /   811 runs   (   25
 llama_perf_context_print:       total time =   31120.02 ms /  2101 tokens\n";
         assert_eq!(generated_tokens(stderr), Some(812));
         assert_eq!(generated_tokens("nothing here"), None);
+    }
+
+    #[test]
+    fn devices_are_read_from_the_listing() {
+        let listed = "ggml_vulkan: Found 2 Vulkan devices:\n\
+Available devices:\n\
+  Vulkan0: NVIDIA GeForce RTX 4060 Laptop GPU (8188 MiB, 7900 MiB free)\n\
+  Vulkan1: Intel(R) Arc(TM) Graphics (16384 MiB, 16000 MiB free)\n";
+        assert_eq!(
+            parse_devices(listed),
+            [
+                Device {
+                    id: "Vulkan0".into(),
+                    name: "NVIDIA GeForce RTX 4060 Laptop GPU".into(),
+                    memory_mib: 8188,
+                },
+                Device {
+                    id: "Vulkan1".into(),
+                    name: "Intel(R) Arc(TM) Graphics".into(),
+                    memory_mib: 16384,
+                },
+            ]
+        );
+        assert!(parse_devices("Available devices:\n  (none)\n").is_empty());
+        assert!(parse_devices("").is_empty());
     }
 
     #[test]

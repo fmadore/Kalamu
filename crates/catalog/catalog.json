@@ -1542,7 +1542,7 @@
       "provider": "local-ocr",
       "id": "lightonocr-3-1b",
       "name": "LightOnOCR-3 1B",
-      "description": "Offline. A small vision model trained for whole pages: reads degraded print, old newspapers in columns, tables and forms far better than Tesseract, and places each block of text on the page (ALTO, searchable PDF, by block). Like any language model it can write text that is not on the page: compare doubtful pages with Tesseract or a cloud model. Much slower than Tesseract: from tens of seconds to over a minute a page on a PC's processor, and several times faster on a Mac, where it uses the graphics processor. Reads any language written in the scripts it was trained on, best in European languages. 1.1 GB download.",
+      "description": "Offline. A small vision model trained for whole pages: reads degraded print, old newspapers in columns, tables and forms far better than Tesseract, and places each block of text on the page (ALTO, searchable PDF, by block). Like any language model it can write text that is not on the page: compare doubtful pages with Tesseract or a cloud model. Much slower than Tesseract: from tens of seconds to over a minute a page on a PC's processor, and several times faster on a graphics processor: a Mac's, or a PC's when Kalamu finds one it can use. Reads any language written in the scripts it was trained on, best in European languages. 1.1 GB download.",
       "tasks": [
         "text_extraction"
       ],
@@ -1576,7 +1576,7 @@
       "limits": {},
       "translations": {
         "fr": {
-          "description": "Hors ligne. Un petit modèle de vision entraîné sur des pages entières : lit bien mieux que Tesseract l’imprimé abîmé, les vieux journaux en colonnes, les tableaux et les formulaires, et place chaque bloc de texte sur la page (ALTO, PDF interrogeable, par bloc). Comme tout modèle de langue, il peut écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Bien plus lent que Tesseract : de quelques dizaines de secondes à plus d’une minute par page sur le processeur d’un PC, et plusieurs fois plus rapide sur un Mac, où il utilise le processeur graphique. Lit toute langue écrite dans les écritures qu’il a apprises, au mieux les langues européennes. Téléchargement de 1,1 Go."
+          "description": "Hors ligne. Un petit modèle de vision entraîné sur des pages entières : lit bien mieux que Tesseract l’imprimé abîmé, les vieux journaux en colonnes, les tableaux et les formulaires, et place chaque bloc de texte sur la page (ALTO, PDF interrogeable, par bloc). Comme tout modèle de langue, il peut écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Bien plus lent que Tesseract : de quelques dizaines de secondes à plus d’une minute par page sur le processeur d’un PC, et plusieurs fois plus rapide sur un processeur graphique : celui d’un Mac, ou celui d’un PC quand Kalamu en trouve un qu’il peut utiliser. Lit toute langue écrite dans les écritures qu’il a apprises, au mieux les langues européennes. Téléchargement de 1,1 Go."
         }
       }
     },
@@ -1584,7 +1584,7 @@
       "provider": "local-ocr",
       "id": "glm-ocr",
       "name": "GLM-OCR",
-      "description": "Offline. A small vision model for documents, strong on tables, formulas and Chinese, Japanese and Korean as well as European languages. Returns the text alone, without its place on the page. Like any language model it can write text that is not on the page: compare doubtful pages with Tesseract or a cloud model. Much slower than Tesseract: from tens of seconds to over a minute a page on a PC's processor, and several times faster on a Mac, where it uses the graphics processor. 1.4 GB download.",
+      "description": "Offline. A small vision model for documents, strong on tables, formulas and Chinese, Japanese and Korean as well as European languages. Returns the text alone, without its place on the page. Like any language model it can write text that is not on the page: compare doubtful pages with Tesseract or a cloud model. Much slower than Tesseract: from tens of seconds to over a minute a page on a PC's processor, and several times faster on a graphics processor: a Mac's, or a PC's when Kalamu finds one it can use. 1.4 GB download.",
       "tasks": [
         "text_extraction"
       ],
@@ -1615,7 +1615,7 @@
       "limits": {},
       "translations": {
         "fr": {
-          "description": "Hors ligne. Un petit modèle de vision pour les documents, à l’aise avec les tableaux, les formules et le chinois, le japonais et le coréen comme avec les langues européennes. Rend le texte seul, sans son emplacement sur la page. Comme tout modèle de langue, il peut écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Bien plus lent que Tesseract : de quelques dizaines de secondes à plus d’une minute par page sur le processeur d’un PC, et plusieurs fois plus rapide sur un Mac, où il utilise le processeur graphique. Téléchargement de 1,4 Go."
+          "description": "Hors ligne. Un petit modèle de vision pour les documents, à l’aise avec les tableaux, les formules et le chinois, le japonais et le coréen comme avec les langues européennes. Rend le texte seul, sans son emplacement sur la page. Comme tout modèle de langue, il peut écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Bien plus lent que Tesseract : de quelques dizaines de secondes à plus d’une minute par page sur le processeur d’un PC, et plusieurs fois plus rapide sur un processeur graphique : celui d’un Mac, ou celui d’un PC quand Kalamu en trouve un qu’il peut utiliser. Téléchargement de 1,4 Go."
         }
       }
     }

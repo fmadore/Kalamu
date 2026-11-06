@@ -32,6 +32,9 @@ pub struct Settings {
     /// the first job, run or proposal sent to it (App Review Guideline 5.1.2(i), and plain
     /// courtesy on Windows too). Only ever added to.
     pub ai_consent: Vec<ProviderId>,
+    /// Offline OCR models read on the graphics processor when Kalamu finds one it can use
+    /// (Windows, through Vulkan); off, they read on the processor.
+    pub ocr_graphics_processor: bool,
 }
 
 impl Default for Settings {
@@ -53,6 +56,7 @@ impl Default for Settings {
             favourite_languages: Vec::new(),
             last_folder: None,
             ai_consent: Vec::new(),
+            ocr_graphics_processor: true,
         }
     }
 }
