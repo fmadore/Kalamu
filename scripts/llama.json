@@ -1,16 +1,24 @@
 {
 	"comment": "The llama.cpp program bundled with the app to run the offline OCR models: archives produced by .github/workflows/llama.yml and published as assets of the GitHub release named in `release`. Fill `sha256` from the run's .zip.sha256 files; fetch-llama refuses an archive whose hash differs.",
-	"release": "llama-b12110-1",
+	"release": "llama-b12110-2",
 	"version": "b12110",
 	"archives": {
 		"x86_64-pc-windows-msvc": {
-			"sha256": "bac7fb10c754640b9383f25eb0d4589e1236f0cd702de967e922f5adaaeaf23a"
+			"sha256": "7dfd4ea94cf50157b938e3684ba7482a70fc6c579734a6aaabd4dd35983b23cb"
 		},
 		"aarch64-pc-windows-msvc": {
-			"sha256": "c192aa4b3be7a69c263f94b6f19034d90bb3cf88226c265f2054143c06372338"
+			"sha256": "2da8f80761be508638cf02a03000f8efb6142a12255c7399d689b5f364349c90"
 		},
 		"aarch64-apple-darwin": {
-			"sha256": "260cd2b8c1bd46e94103ed365c0ec9793d59f0c2f87521b89e73fc34d47bff34"
+			"sha256": "430312c08f3014dd43917dadbf43c7786219abf959216916d5d9903ecf6b5cec"
+		}
+	},
+	"vulkan": {
+		"x86_64-pc-windows-msvc": {
+			"sha256": "64fdb1176a9a15612df04cfc3f8dc5562652d102c6cb3bdb212f632ce438d737"
+		},
+		"aarch64-pc-windows-msvc": {
+			"sha256": "78ad5a036359f1ffcf5c87ce2cde339a6d8c32ecdc1cad2a51a4e32fdc75bce5"
 		}
 	}
 }
