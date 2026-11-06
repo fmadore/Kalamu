@@ -1,4 +1,5 @@
-//! Whether this processor can run the Whisper engine compiled into the app.
+//! Whether this processor can run the Whisper engine compiled into the app, and the OCR models'
+//! engine built for the same processors; how many threads they use, and on what device.
 //!
 //! Ported from Live Translation. ggml's CPU library is built for a fixed instruction-set level
 //! (`.cargo/config.toml`), not dispatched at run time, so on an older processor its first
@@ -70,9 +71,36 @@ pub fn missing_features() -> &'static [String] {
     MISSING.get_or_init(|| missing(REQUIRED, detected))
 }
 
+/// Where the offline models run: the graphics processor with Metal on a Mac, the processor
+/// elsewhere. The app turns on `metal` for macOS, where the OCR models' engine is built with
+/// Metal too (`.github/workflows/llama.yml`).
+pub(crate) const DEVICE: &str = if cfg!(feature = "metal") {
+    "metal"
+} else {
+    "cpu"
+};
+
+/// ggml's workers busy-wait, so a thread per hardware thread starves the interface; beyond
+/// about eight these models stop getting faster. Half the logical processors on x64 (one per
+/// core with SMT), all but one on ARM64, which has no SMT.
+pub(crate) fn threads(logical: usize) -> i32 {
+    let threads = if cfg!(target_arch = "x86_64") {
+        logical / 2
+    } else {
+        logical.saturating_sub(1)
+    };
+    i32::try_from(threads).unwrap_or(i32::MAX).clamp(1, 8)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn inference_threads_leave_room_and_stop_at_eight() {
+        assert_eq!(threads(1), 1);
+        assert_eq!(threads(64), 8);
+    }
 
     #[test]
     fn reports_exactly_the_missing_extensions() {

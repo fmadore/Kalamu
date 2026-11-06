@@ -135,7 +135,7 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         kalamu_offline::ModelManager::new(data.join("whisper-models"), &kalamu_offline::WHISPER);
     let tessdata =
         kalamu_offline::ModelManager::new(data.join("tesseract-data"), &kalamu_offline::TESSDATA);
-    // The bundled FFmpeg sits next to the executable (Tauri's sidecar layout).
+    // The bundled FFmpeg and llama.cpp sit next to the executable (Tauri's sidecar layout).
     let app_dir: Vec<std::path::PathBuf> = std::env::current_exe()
         .ok()
         .and_then(|exe| exe.parent().map(std::path::Path::to_path_buf))
@@ -145,9 +145,18 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
     if ffmpeg.is_none() {
         tracing::warn!("FFmpeg not found: recordings are sent whole and video is unavailable");
     }
+    let llama = kalamu_offline::Llama::locate(&app_dir);
+    if llama.is_none() {
+        tracing::warn!("llama.cpp not found: offline OCR models are unavailable");
+    }
+    let vision = Arc::new(kalamu_offline::Vision::new(
+        kalamu_offline::ModelManager::new(data.join("ocr-models"), &kalamu_offline::VISION),
+        llama,
+    ));
     let mut providers = kalamu_providers::registry(http.clone());
     providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
     providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
+    providers.push(vision.clone());
     let engine = Engine::new(
         store.clone(),
         providers,
@@ -186,6 +195,7 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         search_preparation: Arc::default(),
         models,
         tessdata,
+        vision,
         keys,
         grants,
         settings: Mutex::new(settings),

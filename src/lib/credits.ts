@@ -10,7 +10,10 @@ export const CREDIT_URLS: Record<string, string> = {
 	models: 'https://github.com/openai/whisper',
 	tesseract: 'https://github.com/tesseract-ocr/tesseract',
 	leptonica: 'https://github.com/DanBloomberg/leptonica',
-	hayro: 'https://github.com/LaurenzV/hayro'
+	hayro: 'https://github.com/LaurenzV/hayro',
+	llama: 'https://github.com/ggml-org/llama.cpp',
+	lighton: 'https://huggingface.co/lightonai/LightOnOCR-3-1B',
+	glm: 'https://huggingface.co/zai-org/GLM-OCR'
 };
 
 /** The author's page, linked from Settings → About. */

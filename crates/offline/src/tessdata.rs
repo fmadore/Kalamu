@@ -25,6 +25,7 @@ macro_rules! data {
             sha256: $sha,
             source: BEST,
             languages: &[$($lang),*],
+            pair: None,
         }
     };
 }
@@ -223,6 +224,7 @@ pub static FILES: [ModelFile; 27] = [
             "ha", "ig", "ff", "wo", "bm", "dyu", "mos", "ee", "fon", "tw", "so", "ln", "zu", "xh",
             "mg",
         ],
+        pair: None,
     },
 ];
 

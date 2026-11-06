@@ -61,7 +61,7 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | `prompts` | Default and user presets, variables, import/export; saved pipelines, workflow definitions and export profiles. | `core` |
 | `media` | Conversion and splitting: PDF pages cut with lopdf and drawn with hayro, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
-| `offline` | Whisper and Tesseract engines, behind the same trait as cloud providers. | `core`, `media` |
+| `offline` | Whisper, Tesseract and the OCR vision models (llama.cpp, run as a separate program), behind the same trait as cloud providers. | `core`, `media` |
 | `store` | SQLite job database and result cache, and the project and dictionary tables beside them. | `core` |
 | `projects` | Project workspaces: documents, collections, tags, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
 | `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |

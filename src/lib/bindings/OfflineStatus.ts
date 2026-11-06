@@ -15,6 +15,18 @@ language_data: Array<OfflineModel>,
  */
 tesseract_version: string, 
 /**
+ * The OCR vision models, each counted with its image encoder.
+ */
+ocr_models: Array<OfflineModel>, 
+/**
+ * Whether this copy of the app carries the engine that runs them.
+ */
+ocr_engine: boolean, 
+/**
+ * Seconds a page has taken on this computer, by model, from the pages it read last.
+ */
+ocr_seconds_per_page: { [key in string]: number }, 
+/**
  * Instruction-set extensions this processor lacks; empty when Whisper can run here.
  */
 missing_cpu: Array<string>, };

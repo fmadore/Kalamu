@@ -67,6 +67,7 @@ whisper.cpp and Tesseract ([development.md](development.md)). Then, for this PC'
 
 ```powershell
 npm run fetch:ffmpeg
+npm run fetch:llama
 node scripts/third-party-notices.mjs
 npm run bundle:msix:arm64
 ```

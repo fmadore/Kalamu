@@ -111,6 +111,18 @@
         "model": "tesseract-5",
         "recommended": false,
         "provider_default": true
+      },
+      {
+        "provider": "local-ocr",
+        "model": "lightonocr-3-1b",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "local-ocr",
+        "model": "glm-ocr",
+        "recommended": false,
+        "provider_default": false
       }
     ],
     "merge_models": [],

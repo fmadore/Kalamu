@@ -52,6 +52,8 @@ pub struct AppState {
     pub models: kalamu_offline::ModelManager,
     /// Tesseract's language data, shared with the Tesseract provider inside the engine.
     pub tessdata: kalamu_offline::ModelManager,
+    /// The offline OCR models, each with its image encoder, and the engine that runs them.
+    pub vision: Arc<kalamu_offline::Vision>,
     pub keys: Arc<CredentialKeys>,
     /// Folders and files the researcher handed the app, kept where a sandbox requires it.
     pub grants: crate::grants::Grants,

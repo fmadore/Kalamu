@@ -1,0 +1,16 @@
+{
+	"comment": "The llama.cpp program bundled with the app to run the offline OCR models: archives produced by .github/workflows/llama.yml and published as assets of the GitHub release named in `release`. Fill `sha256` from the run's .zip.sha256 files; fetch-llama refuses an archive whose hash differs.",
+	"release": "llama-b12110-1",
+	"version": "b12110",
+	"archives": {
+		"x86_64-pc-windows-msvc": {
+			"sha256": ""
+		},
+		"aarch64-pc-windows-msvc": {
+			"sha256": ""
+		},
+		"aarch64-apple-darwin": {
+			"sha256": ""
+		}
+	}
+}

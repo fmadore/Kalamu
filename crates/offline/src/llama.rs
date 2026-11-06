@@ -1,0 +1,256 @@
+//! llama.cpp's multimodal command-line program (`llama-mtmd-cli`), shipped next to the app and
+//! run once per page as a separate program, never linked in: whisper.cpp already links one copy
+//! of ggml into the app, and llama.cpp brings its own, of another version, whose symbols would
+//! clash with it (docs/decisions/2026-11-06-ocr-vision-models.md). A separate program also gives
+//! its memory back after each page and cannot take the app down if a page crashes it.
+//!
+//! The program is built for the same processors as Whisper (`.cargo/config.toml`), on the
+//! processor on Windows and on the graphics processor with Metal on a Mac, by
+//! `.github/workflows/llama.yml`, and pinned in `scripts/llama.json`.
+
+use std::io::Read;
+use std::path::{Path, PathBuf};
+use std::process::{Child, Command, Stdio};
+use std::time::{Duration, Instant};
+
+use kalamu_core::{ProviderError, StopSignal};
+
+/// The program's name, without the system's executable suffix.
+pub const PROGRAM: &str = "llama-mtmd-cli";
+
+/// How often a running page checks whether the job was paused or cancelled.
+const POLL: Duration = Duration::from_millis(100);
+
+/// The most of the program's diagnostics kept, from the end: enough for the error it ends with
+/// and the timing it prints.
+const STDERR_KEPT: usize = 64 * 1024;
+
+/// Windows' `CREATE_NO_WINDOW`: a console program started from the app must not flash a
+/// console window.
+#[cfg(windows)]
+fn quiet(command: &mut Command) -> &mut Command {
+    use std::os::windows::process::CommandExt;
+    command.creation_flags(0x0800_0000)
+}
+
+#[cfg(not(windows))]
+fn quiet(command: &mut Command) -> &mut Command {
+    command
+}
+
+/// The bundled program, once found.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Llama {
+    program: PathBuf,
+}
+
+/// What one run wrote.
+#[derive(Debug)]
+pub struct Run {
+    /// The model's answer, as the program prints it.
+    pub text: String,
+    /// The tokens the model wrote, from the timing the program prints last; `None` when it
+    /// printed none.
+    pub generated: Option<u32>,
+    pub elapsed: Duration,
+}
+
+impl Llama {
+    /// Looks in `KALAMU_LLAMA_DIR`, then in `dirs` (the app's own folder), then, in development
+    /// builds only, on `PATH`.
+    pub fn locate(dirs: &[PathBuf]) -> Option<Self> {
+        let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_LLAMA_DIR")
+            .map(PathBuf::from)
+            .into_iter()
+            .chain(dirs.iter().cloned())
+            .collect();
+        if cfg!(debug_assertions)
+            && let Some(path) = std::env::var_os("PATH")
+        {
+            candidates.extend(std::env::split_paths(&path));
+        }
+        candidates.into_iter().find_map(|dir| {
+            let program = dir.join(format!("{PROGRAM}{}", std::env::consts::EXE_SUFFIX));
+            program.is_file().then_some(Self { program })
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn at(program: PathBuf) -> Self {
+        Self { program }
+    }
+
+    /// The program's build, as it reports it (`version: 12110 (8c5a6f1)`), for provenance.
+    pub fn version(&self) -> Option<String> {
+        let output = quiet(Command::new(&self.program).arg("--version"))
+            .stdin(Stdio::null())
+            .output()
+            .ok()?;
+        let text = String::from_utf8_lossy(&output.stderr).into_owned()
+            + &String::from_utf8_lossy(&output.stdout);
+        text.lines()
+            .find_map(|line| line.trim().strip_prefix("version:"))
+            .map(|v| v.trim().to_owned())
+    }
+
+    /// Runs the program with `args` until it ends, or until `stop` is raised, when it is ended
+    /// at once and the page counts as interrupted: nothing was kept from it.
+    pub fn run(&self, args: &[String], stop: &StopSignal) -> Result<Run, ProviderError> {
+        let started = Instant::now();
+        let mut child = quiet(Command::new(&self.program).args(args))
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| {
+                ProviderError::Other(format!("The OCR model's engine could not start: {e}"))
+            })?;
+        // Both pipes are read while the program runs, so neither fills and stalls it.
+        let stdout = drain(child.stdout.take(), usize::MAX);
+        let stderr = drain(child.stderr.take(), STDERR_KEPT);
+        let status = loop {
+            if stop.is_stopped() {
+                end(&mut child);
+                return Err(ProviderError::Interrupted);
+            }
+            match child.try_wait() {
+                Ok(Some(status)) => break status,
+                Ok(None) => std::thread::sleep(POLL),
+                Err(e) => {
+                    end(&mut child);
+                    return Err(ProviderError::Other(format!(
+                        "The OCR model's engine stopped responding: {e}"
+                    )));
+                }
+            }
+        };
+        let text = String::from_utf8_lossy(&stdout.join().unwrap_or_default()).into_owned();
+        let diagnostics = String::from_utf8_lossy(&stderr.join().unwrap_or_default()).into_owned();
+        if !status.success() {
+            return Err(ProviderError::Other(format!(
+                "The OCR model's engine failed: {}",
+                last_error(&diagnostics)
+            )));
+        }
+        Ok(Run {
+            text,
+            generated: generated_tokens(&diagnostics),
+            elapsed: started.elapsed(),
+        })
+    }
+}
+
+fn end(child: &mut Child) {
+    let _ = child.kill();
+    let _ = child.wait();
+}
+
+/// Reads a pipe to its end on a thread of its own, keeping at most the last `keep` bytes.
+fn drain<R: Read + Send + 'static>(
+    pipe: Option<R>,
+    keep: usize,
+) -> std::thread::JoinHandle<Vec<u8>> {
+    std::thread::spawn(move || {
+        let mut kept = Vec::new();
+        let Some(mut pipe) = pipe else {
+            return kept;
+        };
+        let mut buffer = [0u8; 8192];
+        while let Ok(n) = pipe.read(&mut buffer) {
+            if n == 0 {
+                break;
+            }
+            kept.extend_from_slice(&buffer[..n]);
+            if kept.len() > keep {
+                kept.drain(..kept.len() - keep);
+            }
+        }
+        kept
+    })
+}
+
+/// The last line that reads as an error, or the last line at all.
+fn last_error(diagnostics: &str) -> String {
+    let lines: Vec<&str> = diagnostics
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .collect();
+    lines
+        .iter()
+        .rev()
+        .find(|l| l.to_ascii_lowercase().contains("error") || l.contains("failed"))
+        .or(lines.last())
+        .map_or_else(|| "no message".to_owned(), |l| (*l).to_owned())
+}
+
+/// The tokens written, from llama.cpp's closing timing line,
+/// `llama_perf_context_print:        eval time =  … ms /   812 runs   (…)`: one run per token
+/// after the first, which the prompt's evaluation gives.
+fn generated_tokens(diagnostics: &str) -> Option<u32> {
+    diagnostics.lines().rev().find_map(|line| {
+        let rest = line.split_once("llama_perf_context_print:")?.1.trim_start();
+        let rest = rest.strip_prefix("eval time")?;
+        let runs = rest.split_once('/')?.1.split_whitespace().next()?;
+        runs.parse::<u32>().ok().map(|n| n + 1)
+    })
+}
+
+/// A page written where the program can read it, deleted afterwards.
+pub struct PageFile {
+    _dir: tempfile::TempDir,
+    path: PathBuf,
+}
+
+impl PageFile {
+    pub fn write(bytes: &[u8], extension: &str) -> Result<Self, ProviderError> {
+        let dir = tempfile::Builder::new()
+            .prefix("kalamu-page-")
+            .tempdir()
+            .map_err(|e| ProviderError::Other(format!("Could not write the page image: {e}")))?;
+        let path = dir.path().join(format!("page.{extension}"));
+        std::fs::write(&path, bytes)
+            .map_err(|e| ProviderError::Other(format!("Could not write the page image: {e}")))?;
+        Ok(Self { _dir: dir, path })
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_tokens_written_come_from_the_closing_timing() {
+        let stderr = "load time = 812.4 ms\n\
+llama_perf_context_print:        load time =     812.40 ms\n\
+llama_perf_context_print: prompt eval time =   10432.11 ms /  1290 tokens (    8.09 ms per token)\n\
+llama_perf_context_print:        eval time =   20514.55 ms /   811 runs   (   25.30 ms per token)\n\
+llama_perf_context_print:       total time =   31120.02 ms /  2101 tokens\n";
+        assert_eq!(generated_tokens(stderr), Some(812));
+        assert_eq!(generated_tokens("nothing here"), None);
+    }
+
+    #[test]
+    fn a_failure_reports_its_last_error_line() {
+        let stderr = "loading model\nclip_init: failed to load image encoder\nmain: exiting\n";
+        assert_eq!(
+            last_error(stderr),
+            "clip_init: failed to load image encoder"
+        );
+        assert_eq!(last_error(""), "no message");
+    }
+
+    #[test]
+    fn a_missing_program_is_not_found() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(
+            Llama::locate(&[dir.path().to_owned()]).filter(|l| l.program.starts_with(dir.path())),
+            None
+        );
+    }
+}

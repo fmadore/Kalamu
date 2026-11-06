@@ -1,15 +1,16 @@
 <script lang="ts">
-	// Offline engines' downloads: Whisper's models, as in Live Translation's settings, and the
-	// language data of an engine built into the app (Tesseract), one file per language. Of the
-	// hundred-odd languages only those downloaded are listed; the others are found by name in a
-	// search box. While a download runs the lists are polled for the bytes received.
+	// Offline engines' downloads: Whisper's models, as in Live Translation's settings, the
+	// language data of an engine built into the app (Tesseract), one file per language, and the
+	// OCR vision models, each with how long a page took on this computer. Of the hundred-odd
+	// languages only those downloaded are listed; the others are found by name in a search box.
+	// While a download runs the lists are polled for the bytes received.
 	import { modelDescription } from '#lib/catalogText.js';
 	import type { OfflineModel } from '#lib/bindings/OfflineModel.js';
 	import { describeError } from '#lib/errors.js';
 	import { listNames, messages } from '#lib/i18n/index.js';
 	import { languageLabel } from '#lib/languages.js';
 	import { api } from '#lib/tauri.js';
-	import { app, refreshOffline, toast } from '#lib/state.svelte.js';
+	import { app, refreshOffline, secondsPerPage, toast } from '#lib/state.svelte.js';
 	import { locale } from '#lib/i18n/index.js';
 	import LanguageDataPicker from './LanguageDataPicker.svelte';
 	import ProgressBar from './ProgressBar.svelte';
@@ -22,15 +23,26 @@
 		)
 	);
 	const status = (id: string) => app.offline?.models.find((s) => s.id === id);
+	const ocrStatus = (id: string) => app.offline?.ocr_models.find((s) => s.id === id);
 	/** Models downloaded on their own (Whisper). */
 	const downloadable = $derived(local.filter((mod) => status(mod.id)));
+	/** OCR vision models, each with its image encoder. */
+	const ocr = $derived(local.filter((mod) => ocrStatus(mod.id)));
 	/** Engines built into the app, which need language data only (Tesseract). */
-	const builtIn = $derived(local.filter((mod) => !status(mod.id)));
+	const builtIn = $derived(local.filter((mod) => !status(mod.id) && !ocrStatus(mod.id)));
 	const downloading = $derived(
-		[...(app.offline?.models ?? []), ...(app.offline?.language_data ?? [])].some(
-			(s) => s.downloading
-		)
+		[
+			...(app.offline?.models ?? []),
+			...(app.offline?.language_data ?? []),
+			...(app.offline?.ocr_models ?? [])
+		].some((s) => s.downloading)
 	);
+	const noOcrEngine = $derived(app.offline !== null && !app.offline.ocr_engine);
+	/** How long a page took with an OCR model on this computer, in words. */
+	function ocrSpeed(id: string): string {
+		const seconds = secondsPerPage(id);
+		return seconds ? m.settings.ocrSpeed(seconds) : m.settings.ocrNotTimed;
+	}
 	const missingCpu = $derived((app.offline?.missing_cpu.length ?? 0) > 0);
 
 	/** Language data by the name of what it reads, in the interface language's order. */
@@ -176,6 +188,27 @@
 				/>
 			</div>
 		{/if}
+	{/if}
+	{#if ocr.length > 0}
+		<h3>{m.settings.ocrTitle}</h3>
+		<p class="muted small">{m.settings.ocrHint}</p>
+		{#if noOcrEngine}
+			<p class="warning small">{m.settings.ocrNoEngine}</p>
+		{:else if missingCpu}
+			<p class="warning small">
+				{m.settings.ocrCpu(app.offline?.missing_cpu.join(', ') ?? '')}
+			</p>
+		{/if}
+		{#each ocr as mod (mod.id)}
+			{@const s = ocrStatus(mod.id)}
+			{@render row(
+				s,
+				mod.id,
+				mod.name,
+				`${modelDescription(mod)}${s?.installed ? ` ${ocrSpeed(mod.id)}` : ''}`,
+				missingCpu || noOcrEngine
+			)}
+		{/each}
 	{/if}
 </section>
 
