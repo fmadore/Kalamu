@@ -77,8 +77,9 @@ impl Placement {
 }
 
 /// The graphics processor to read on, of those the Vulkan build lists: a discrete one before an
-/// integrated one (llama.cpp's own preference), a translation layer last, software renderers and
-/// devices too small for the models never; among equals, the first listed. `None` when none fits.
+/// integrated one (llama.cpp's own preference), a translation layer last; software renderers,
+/// devices too small for the models and those known to read wrongly never; among equals, the
+/// first listed. `None` when none fits.
 pub(crate) fn choose(devices: &[Device]) -> Option<&Device> {
     devices
         .iter()
@@ -86,12 +87,20 @@ pub(crate) fn choose(devices: &[Device]) -> Option<&Device> {
         .min_by_key(|d| rank(&d.name))
 }
 
+/// Devices measured to read wrongly through Vulkan, by a part of their name. A wrong reading ends
+/// normally, so the fallback after a failure would not catch it: these never get a page.
+/// Snapdragon's Adreno (X1-85, driver 31.0.152.1, llama.cpp b12110): encoding the sample page
+/// took six times as long as on the processor, and both models then wrote nonsense
+/// (docs/decisions/2026-11-06-ocr-graphics-processor.md).
+const READS_WRONGLY: [&str; 1] = ["adreno"];
+
 fn usable(device: &Device) -> bool {
     let name = device.name.to_ascii_lowercase();
     let software = ["basic render", "llvmpipe", "lavapipe", "swiftshader"]
         .iter()
         .any(|s| name.contains(s));
-    !software && (device.memory_mib == 0 || device.memory_mib >= MIN_MEMORY_MIB)
+    let wrong = READS_WRONGLY.iter().any(|s| name.contains(s));
+    !software && !wrong && (device.memory_mib == 0 || device.memory_mib >= MIN_MEMORY_MIB)
 }
 
 /// 0 for a name that reads as a discrete graphics card, 2 for Microsoft's Direct3D 12 layer
@@ -281,8 +290,15 @@ mod tests {
 
     #[test]
     fn integrated_graphics_are_used_when_alone() {
-        let snapdragon = [device("Vulkan0", "Qualcomm(R) Adreno(TM) X1-85 GPU", 16000)];
-        assert_eq!(choose(&snapdragon).unwrap().id, "Vulkan0");
+        let intel = [device("Vulkan0", "Intel(R) Arc(TM) Graphics", 16384)];
+        assert_eq!(choose(&intel).unwrap().id, "Vulkan0");
+    }
+
+    #[test]
+    fn snapdragon_reads_on_the_processor() {
+        // As this build's `--list-devices` prints it on a Snapdragon X Elite.
+        let snapdragon = [device("Vulkan0", "Qualcomm(R) Adreno(TM) X1-85 GPU", 12086)];
+        assert_eq!(choose(&snapdragon), None);
     }
 
     #[test]
@@ -299,10 +315,10 @@ mod tests {
         let layered = [
             device(
                 "Vulkan0",
-                "Microsoft Direct3D12 (Qualcomm(R) Adreno(TM) X1-85 GPU)",
+                "Microsoft Direct3D12 (AMD Radeon(TM) Graphics)",
                 0,
             ),
-            device("Vulkan1", "Qualcomm(R) Adreno(TM) X1-85 GPU", 16000),
+            device("Vulkan1", "AMD Radeon(TM) Graphics", 4096),
         ];
         assert_eq!(choose(&layered).unwrap().id, "Vulkan1");
         assert!(choose(&[]).is_none());

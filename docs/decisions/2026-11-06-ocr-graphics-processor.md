@@ -105,6 +105,35 @@ faster and correctly is kept. NPUs (Hexagon on Snapdragon, OpenVINO on Intel) ar
 measurement: llama.cpp's support for vision encoders there is partial and moving, and nothing
 is built for them yet.
 
+### Measured on a Snapdragon X Elite
+
+A Snapdragon X Elite X1E80100 laptop (12 cores, Adreno X1-85, Qualcomm driver 31.0.152.1,
+16 GB), the sample page, the app's arguments, the builds of run 42232655049 (`llama-b12110-2`),
+except the i8mm one, built locally from the same source with the same flags plus `+i8mm`:
+
+| Build and device | LightOnOCR-3 | GLM-OCR |
+| --- | --- | --- |
+| Processor, 8 threads (the app) | 68.7 s, image 42 s | 57.8 s, image 44 s |
+| Processor, 11 threads | 62.8 s, image 32 s | 60.7 s, image 36 s |
+| Processor with i8mm, 11 threads | 62.4 s, image 38 s | 50.2 s, image 37 s |
+| Vulkan, Adreno | 612 s, nonsense | 464 s, nonsense |
+| OpenCL, Adreno | out of memory (one 2.4 GB buffer); with `-ub 2048`, 862 s, nonsense | 45–46 s, image 17–18 s |
+| OpenCL, encoder on the Adreno, model on the processor (`-ngl 0`) | 310–449 s, nonsense | 30–32 s, image 17 s |
+
+Every GLM-OCR answer above is the same text, byte for byte; LightOnOCR's processor answers
+differ only in a few block positions, by a thousandth of the page.
+
+- **Vulkan on Adreno reads wrongly** and six times slower: a wrong reading ends normally, so the
+  fallback would not catch it. `device.rs` never chooses a device named Adreno.
+- **OpenCL reads GLM-OCR correctly and, with only its image encoder on the Adreno, in half the
+  time**; text generation is faster on the processor. LightOnOCR-3's image encoder reads wrongly
+  there, so it stays on the processor.
+- **i8mm and more threads** gave no clear gain on one page; runs of the same build vary by
+  about 5%. The ARM64 build keeps `armv8.2-a+dotprod+fp16`, which still runs on the 8cx.
+
+`scripts/bench-ocr-devices.ps1` repeats the processor and Vulkan measurements on any Windows PC,
+for the NVIDIA or AMD, Intel and further Snapdragon machines still to measure.
+
 ### Whisper
 
 Whisper could use the same graphics processor, but it is linked into the app with its own
@@ -119,6 +148,6 @@ of its own.
 - `vision.rs` was already past 500 lines; the new logic lives in `device.rs` (device choice,
   fallback, speeds), and `llama.rs` gained the device listing. Splitting `vision.rs` (the
   recipes and the answer's reading apart from the provider) is left to the next checkpoint.
-- Not yet tried: any run on a real graphics processor. The issue asks for at least one NVIDIA
-  or AMD PC, one with Intel integrated graphics and one Snapdragon laptop, where Vulkan is
-  compared with the OpenCL test build; the timings belong here once taken.
+- Measured so far on a Snapdragon laptop only (above), where the models stay on the processor.
+  Still to measure: an NVIDIA or AMD PC and one with Intel integrated graphics; the timings
+  belong here once taken.

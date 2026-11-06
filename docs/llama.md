@@ -19,7 +19,8 @@ models, and New job's readiness check refuses them; everything else works.
 The Vulkan build is looked for in the same places. At start-up the app asks it, off the
 interface's thread, which devices it finds (`--list-devices`, given half a minute), and keeps
 one with at least 2 GB of memory, a discrete card before integrated graphics, software renderers
-never (`crates/offline/src/device.rs`). It then reads every page there, passing that device with
+and Snapdragon's Adreno, which reads wrongly through Vulkan, never
+(`crates/offline/src/device.rs`). It then reads every page there, passing that device with
 `--device`, unless Settings › Offline turns it off. When the program does not start (no Vulkan
 loader on this PC), finds nothing usable or fails on a page, the processor build reads instead;
 after a failure, for the rest of the session.
