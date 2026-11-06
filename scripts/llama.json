@@ -4,13 +4,13 @@
 	"version": "b12110",
 	"archives": {
 		"x86_64-pc-windows-msvc": {
-			"sha256": ""
+			"sha256": "bac7fb10c754640b9383f25eb0d4589e1236f0cd702de967e922f5adaaeaf23a"
 		},
 		"aarch64-pc-windows-msvc": {
-			"sha256": ""
+			"sha256": "c192aa4b3be7a69c263f94b6f19034d90bb3cf88226c265f2054143c06372338"
 		},
 		"aarch64-apple-darwin": {
-			"sha256": ""
+			"sha256": "260cd2b8c1bd46e94103ed365c0ec9793d59f0c2f87521b89e73fc34d47bff34"
 		}
 	}
 }
