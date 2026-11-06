@@ -108,6 +108,11 @@
           "high"
         ],
         "default": "medium"
+      },
+      "translations": {
+        "fr": {
+          "description": "Rapide et peu coûteux ; lit bien l’imprimé et l’écriture manuscrite."
+        }
       }
     },
     {
@@ -221,6 +226,11 @@
       "limits": {
         "max_request_mb": 18,
         "max_audio_minutes": 30
+      },
+      "translations": {
+        "fr": {
+          "description": "La reconnaissance vocale de Google : locuteurs et minutage de chaque mot, pour les langues listées ci-dessous. Ne prend pas de prompt."
+        }
       }
     },
     {
@@ -273,6 +283,11 @@
           "high"
         ],
         "default": "medium"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le nouveau modèle phare de Google (octobre 2026), pour les écritures les plus difficiles, les numérisations abîmées et les longs documents."
+        }
       }
     },
     {
@@ -324,6 +339,11 @@
           "high"
         ],
         "default": "high"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le précédent modèle Pro, toujours en préversion ; Gemini 4 Argon fait de même pour moins cher."
+        }
       }
     },
     {
@@ -366,6 +386,11 @@
           "high"
         ],
         "default": "minimal"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle Gemini le moins cher, pour de grandes quantités de texte imprimé net."
+        }
       }
     },
     {
@@ -411,6 +436,11 @@
           "max"
         ],
         "default": "medium"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle principal d’OpenAI (il remplace GPT-6 Sol) ; lit les PDF et les images."
+        }
       }
     },
     {
@@ -454,6 +484,11 @@
           "max"
         ],
         "default": "medium"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle intermédiaire d’OpenAI (octobre 2026), à la moitié du prix de GPT-6.1 Sol ; lit les PDF et les images. Pas encore essayé sur des documents anciens."
+        }
       }
     },
     {
@@ -496,6 +531,11 @@
           "xhigh",
           "max"
         ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle le plus puissant et le plus cher d’OpenAI, pour les documents les plus difficiles."
+        }
       }
     },
     {
@@ -538,6 +578,11 @@
           "xhigh",
           "max"
         ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Petit et peu coûteux ; pour le texte imprimé net."
+        }
       }
     },
     {
@@ -568,7 +613,12 @@
       "limits": {
         "max_request_mb": 25
       },
-      "speakers": false
+      "speakers": false,
+      "translations": {
+        "fr": {
+          "description": "La reconnaissance vocale actuelle d’OpenAI : précise quand les langues se mêlent, mais en texte brut, sans locuteurs ni minutage. Ne prend pas de prompt. OpenAI documente la forme de ses codes de langue, pas une liste de langues."
+        }
+      }
     },
     {
       "provider": "openai",
@@ -597,6 +647,11 @@
       },
       "limits": {
         "max_request_mb": 25
+      },
+      "translations": {
+        "fr": {
+          "description": "Reconnaissance vocale avec les locuteurs et le minutage de chaque passage. OpenAI l’arrête le 26 février 2027 et n’a aucun autre modèle qui identifie les locuteurs. Ne prend pas de prompt."
+        }
       }
     },
     {
@@ -641,6 +696,11 @@
           "max"
         ],
         "default": "high"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle le plus puissant d’Anthropic, deux fois plus cher qu’Opus ; pour les manuscrits les plus difficiles et les longs rapports."
+        }
       }
     },
     {
@@ -684,6 +744,11 @@
           "max"
         ],
         "default": "medium"
+      },
+      "translations": {
+        "fr": {
+          "description": "L’Opus actuel d’Anthropic ; solide sur les mises en page difficiles et les documents en plusieurs langues. Lit les PDF et les images, pas l’audio."
+        }
       }
     },
     {
@@ -730,6 +795,11 @@
           "max"
         ],
         "default": "high"
+      },
+      "translations": {
+        "fr": {
+          "description": "Plus rapide et moins cher qu’Opus."
+        }
       }
     },
     {
@@ -774,6 +844,11 @@
           "max"
         ],
         "default": "medium"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle Claude le moins cher, pour le texte imprimé net."
+        }
       }
     },
     {
@@ -807,6 +882,11 @@
       "limits": {
         "max_request_mb": 50,
         "max_pages": 1000
+      },
+      "translations": {
+        "fr": {
+          "description": "Reconnaissance de texte dédiée, qui rend du Markdown avec les tableaux et les blocs de mise en page. Ne prend pas de prompt."
+        }
       }
     },
     {
@@ -840,6 +920,11 @@
       },
       "limits": {
         "max_audio_minutes": 180
+      },
+      "translations": {
+        "fr": {
+          "description": "La reconnaissance vocale la plus précise de Mistral (octobre 2026), avec les locuteurs. 50 langues ; Mistral en publie le nombre, pas la liste."
+        }
       }
     },
     {
@@ -869,6 +954,11 @@
       },
       "limits": {
         "max_audio_minutes": 180
+      },
+      "translations": {
+        "fr": {
+          "description": "Un Voxtral moins cher et plus rapide, pour de grands lots d’enregistrements. 50 langues ; Mistral en publie le nombre, pas la liste."
+        }
       }
     },
     {
@@ -907,6 +997,11 @@
           "none",
           "high"
         ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle de conversation principal de Mistral, pour analyser rapports, articles et transcriptions."
+        }
       }
     },
     {
@@ -944,6 +1039,11 @@
           "medium",
           "high"
         ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Le nouveau modèle phare de Mistral (octobre 2026), encore en préversion ; lit jusqu’à un million de jetons d’un coup et coûte moins que Medium 3.5."
+        }
       }
     },
     {
@@ -980,6 +1080,11 @@
           "none",
           "high"
         ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Rapide et peu coûteux, pour analyser de grandes collections."
+        }
       }
     },
     {
@@ -1011,6 +1116,11 @@
           "high",
           "max"
         ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle ouvert de Z.ai, que Mistral fait tourner sur ses propres serveurs avec la même clé. Ne lit que du texte : extrayez d’abord le texte des numérisations."
+        }
       }
     },
     {
@@ -1048,6 +1158,11 @@
           "high",
           "max"
         ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle ouvert rapide et peu coûteux de Z.ai, que Mistral fait tourner sur ses propres serveurs avec la même clé. Lit le texte, les PDF et les images."
+        }
       }
     },
     {
@@ -1081,6 +1196,11 @@
           "high",
           "max"
         ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle ouvert rapide et peu coûteux de DeepSeek, que Mistral fait tourner sur ses propres serveurs avec la même clé ; lit jusqu’à un million de jetons d’un coup. En préversion, avec des limites de débit serrées. Ne lit que du texte : extrayez d’abord le texte des numérisations."
+        }
       }
     },
     {

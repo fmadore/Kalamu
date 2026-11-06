@@ -49,7 +49,13 @@
 
 	function addSetup() {
 		const used = drafts.map((d) => `${d.provider}/${d.model}`);
-		drafts = [...drafts, newDraft(catalog, rule, presets[0]?.id ?? null, hasKey, used, input)];
+		// A comparison asks the same thing of another model: the new set-up starts on the prompt
+		// (or analysis) the others use, not on the task's default.
+		const shared = drafts.find((d) => presets.some((p) => p.id === d.presetId))?.presetId;
+		drafts = [
+			...drafts,
+			newDraft(catalog, rule, shared ?? presets[0]?.id ?? null, hasKey, used, input)
+		];
 	}
 </script>
 

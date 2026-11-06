@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Catalog } from './bindings/Catalog.js';
+import type { InspectedFile } from './bindings/InspectedFile.js';
+import type { SourceFile } from './bindings/SourceFile.js';
 import type { Task } from './bindings/Task.js';
 import rulesJson from './dev/taskRules.json';
 import { en } from './i18n/index.js';
@@ -16,6 +18,7 @@ import {
 	mergeModelsFor,
 	modelInfo,
 	modelsFor,
+	nameOfFile,
 	newDraft,
 	pagesPerCallOf,
 	providerDefault,
@@ -23,6 +26,7 @@ import {
 	type Rules,
 	rulesFor,
 	suggestName,
+	suggestionFits,
 	taskOf,
 	togetherOf,
 	toRequest,
@@ -106,6 +110,24 @@ describe('new job form', () => {
 			)
 		).toBe('Bulletin');
 		expect(suggestName(['C:\\x\\lettre.jpg'], ['C:\\x\\lettre.jpg'])).toBe('lettre.jpg');
+	});
+
+	it('suggests the name again once the file it came from is removed', () => {
+		const entry = (path: string): InspectedFile => ({
+			path,
+			source: { file_name: path.split('\\').pop()! } as SourceFile,
+			warnings: [],
+			error: null,
+			pieces: null
+		});
+		const issue = entry('C:\\Newspapers\\1911-04-05.pdf');
+		expect(suggestionFits('bulletin-page.jpg', [issue], false)).toBe(false);
+		expect(suggestionFits('1911-04-05.pdf', [issue], false)).toBe(true);
+		expect(suggestionFits('Newspapers', [issue], false)).toBe(true);
+		expect(suggestionFits('anything', [], false)).toBe(false);
+		const frozen = entry('C:\\data\\1911-04-05.txt');
+		expect(nameOfFile(frozen, true)).toBe('1911-04-05');
+		expect(suggestionFits('1911-02-15', [frozen], true)).toBe(false);
 	});
 
 	it('offers YouTube videos to the models that read their links only', () => {
