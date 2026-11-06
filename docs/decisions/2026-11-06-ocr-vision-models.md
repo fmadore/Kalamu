@@ -133,7 +133,10 @@ which models are offered.
 - The privacy policy names the two model repositories on Hugging Face and the new folder
   (`ocr-models`); the third-party notices and Settings › About credit llama.cpp and the models.
 - Release builds need the pinned program: until `scripts/llama.json` holds the archives'
-  SHA-256, `fetch-llama.mjs` stops the release workflows.
+  SHA-256, `fetch-llama.mjs` stops the release workflows. The workflow's `publish` job, run
+  once all three builds pass, publishes the archives as a pre-release and commits the pins to
+  its branch, so nobody waits on it; it needs write access to the repository's contents (and to
+  start the sandbox check again), and runs only for branches of this repository.
 - The catalogue refreshed from the repository reaches 1.4.1 and earlier, which do not know the
   `local-ocr` provider: their New job offers its models, and starting a job with one stops with
   the message for an unknown provider, before anything is read; their Settings show nothing for

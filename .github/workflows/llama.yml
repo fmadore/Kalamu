@@ -10,10 +10,10 @@ name: llama.cpp
 # fast they read on each kind of processor (the job's summary), and uploads, per architecture,
 # the program, its licence and the exact build line.
 #
-# Run by hand when llama.cpp is updated, publish the archives as assets of a GitHub release
-# named `llama-<tag>-<n>`, then pin their SHA-256 in `scripts/llama.json` so
-# `npm run fetch:llama` installs exactly these binaries. A pull request that changes this file
-# runs it too.
+# Run by hand when llama.cpp is updated, or through a pull request that changes this file. When
+# every build passes, the `publish` job publishes the archives as a GitHub release named
+# `llama-<tag>-<n>` and pins their SHA-256 in `scripts/llama.json` on the same branch, so
+# `npm run fetch:llama` installs exactly these binaries.
 
 on:
   workflow_dispatch:
@@ -217,3 +217,95 @@ jobs:
             llama-*.zip.sha256
             lightonocr-3-1b.txt
             glm-ocr.txt
+
+  # Once all three builds and their timings pass: the archives published as a GitHub release
+  # (a pre-release holding only them, as FFmpeg's, so it never becomes the app's "Latest"), their
+  # SHA-256 written into scripts/llama.json and committed to the branch that ran this, and the
+  # Mac App Store sandbox check run again on that commit, since a commit pushed with this job's
+  # token starts no workflow by itself. Skipped when scripts/llama.json already pins this tag,
+  # and for pull requests from forks, which get no write access.
+  publish:
+    needs: build
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency: llama-publish
+    permissions:
+      contents: write
+      actions: write
+    env:
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      # The branch's commit, not the merge commit a pull request's run is checked out at.
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # Credentials kept, unlike the other jobs: this one pushes the pins.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BRANCH }}
+
+      - name: Already pinned?
+        id: pinned
+        run: |
+          if jq -e --arg tag "$LLAMA_TAG" \
+            '.version == $tag and ([.archives[].sha256] | all(length == 64))' scripts/llama.json > /dev/null; then
+            echo "scripts/llama.json already pins llama.cpp ${LLAMA_TAG}: nothing to publish."
+            echo "done=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/download-artifact@v8
+        if: steps.pinned.outputs.done != 'true'
+        with:
+          pattern: llama-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish the release
+        if: steps.pinned.outputs.done != 'true'
+        run: |
+          # The next free number, so a second build of the same tag never replaces the first.
+          n=1
+          while gh release view "llama-${LLAMA_TAG}-${n}" > /dev/null 2>&1; do n=$((n + 1)); done
+          release="llama-${LLAMA_TAG}-${n}"
+          triples="x86_64-pc-windows-msvc aarch64-pc-windows-msvc aarch64-apple-darwin"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) as bundled with Kalamu to run the offline OCR models: llama.cpp ${LLAMA_TAG}, one static executable each for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal). This release only holds the archives the app is built with; it is not an app release."
+            echo
+            echo "- **Licence**: MIT (\`licenses/llama.cpp-MIT.txt\` in each archive). llama.cpp is not modified."
+            echo "- **Source**: [${LLAMA_TAG}](https://github.com/ggml-org/llama.cpp/releases/tag/${LLAMA_TAG}), source archive SHA-256 \`${LLAMA_SHA256}\`; each archive's \`BUILD.txt\` gives the build line."
+            echo "- **Built by** [.github/workflows/llama.yml](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${HEAD_SHA}/.github/workflows/llama.yml), [run ${GITHUB_RUN_ID}](${run_url}), whose summaries give each model's time on the sample page. How it is used: [docs/llama.md](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/docs/llama.md)."
+            echo
+            echo "SHA-256:"
+            echo
+            for t in $triples; do
+              echo "- \`llama-${LLAMA_TAG}-${t}.zip\`: \`$(sha256sum "dist/llama-${LLAMA_TAG}-${t}.zip" | cut -d' ' -f1)\`"
+            done
+          } > notes.md
+          files=()
+          for t in $triples; do files+=("dist/llama-${LLAMA_TAG}-${t}.zip"); done
+          gh release create "$release" "${files[@]}" --target "$HEAD_SHA" \
+            --title "llama.cpp ${LLAMA_TAG} (offline OCR models) for Kalamu" \
+            --notes-file notes.md --prerelease --latest=false
+          pins=$(for t in $triples; do
+            printf '%s\t%s\n' "$t" "$(sha256sum "dist/llama-${LLAMA_TAG}-${t}.zip" | cut -d' ' -f1)"
+          done | jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {key: .[0], value: {sha256: .[1]}}) | from_entries')
+          jq --tab --arg release "$release" --arg version "$LLAMA_TAG" --argjson archives "$pins" \
+            '.release = $release | .version = $version | .archives = $archives' scripts/llama.json > llama.json
+          mv llama.json scripts/llama.json
+          cat scripts/llama.json
+          echo "RELEASE=$release" >> "$GITHUB_ENV"
+
+      - name: Pin it on the branch
+        if: steps.pinned.outputs.done != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/llama.json
+          git commit -m "Pin llama.cpp ${LLAMA_TAG} from release ${RELEASE}"
+          git pull --rebase origin "$BRANCH"
+          git push origin "HEAD:${BRANCH}"
+          # The sandbox check fetches the pinned program; run it on the new commit.
+          gh workflow run app-store.yml --ref "$BRANCH"

@@ -32,12 +32,16 @@ and writes the seconds and the start of each answer to the job's summary.
 ## Updating it
 
 1. Set `LLAMA_TAG` and `LLAMA_SHA256` in the workflow to the new release and its source
-   archive's SHA-256, and run it (by hand, or through a pull request that changes it).
-2. Publish the three `llama-<tag>-<target>.zip` archives as assets of a GitHub release named
-   `llama-<tag>-<n>`.
-3. Write the release name, the tag and each archive's SHA-256 (from the `.zip.sha256` files)
-   into `scripts/llama.json`. `npm run fetch:llama -- <target>` then installs exactly that
-   archive into `src-tauri/binaries/`, and refuses one whose hash differs.
+   archive's SHA-256, and run it: through a pull request that changes it, or by hand.
+2. When the three builds and their timings pass, its `publish` job does the rest: it publishes
+   the three `llama-<tag>-<target>.zip` archives as a GitHub pre-release named
+   `llama-<tag>-<n>` (the next free number, never marked as the app's latest release), writes
+   the release name, the tag and each archive's SHA-256 into `scripts/llama.json`, commits that
+   to the branch that ran it, and runs the Mac App Store sandbox check again on that commit. It
+   does nothing when `scripts/llama.json` already pins the tag, and never runs for a pull
+   request from a fork.
+3. `npm run fetch:llama -- <target>` then installs exactly that archive into
+   `src-tauri/binaries/`, and refuses one whose hash differs.
 4. Release builds add `--config src-tauri/tauri.ffmpeg.conf.json`, which lists the program
    among the external binaries; the Mac App Store build signs it to inherit the app's sandbox
    (`scripts/sign-app-store.sh`).
