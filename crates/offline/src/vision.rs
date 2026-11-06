@@ -303,8 +303,10 @@ fn arguments(
     threads: i32,
 ) -> Vec<String> {
     let path = |p: &std::path::Path| p.to_string_lossy().into_owned();
-    // `<__media__>` places the image; LightOnOCR reads it with the instruction after it.
-    let prompt = format!("<__media__>{}", recipe.prompt);
+    // `<__media__>` places the image, the instruction follows it, and a line break ends it as the
+    // models' own chat templates do (`<|image_pad|>grounding\n<|im_end|>`): without it
+    // LightOnOCR ignored `grounding` and wrote no block positions.
+    let prompt = format!("<__media__>{}\n", recipe.prompt);
     [
         "-m".to_owned(),
         path(model),
@@ -689,7 +691,7 @@ mod tests {
         assert_eq!(pair("-m"), "m.gguf");
         assert_eq!(pair("--mmproj"), "e.gguf");
         assert_eq!(pair("--image"), "p.png");
-        assert_eq!(pair("-p"), "<__media__>grounding");
+        assert_eq!(pair("-p"), "<__media__>grounding\n");
         assert_eq!(pair("--temp"), "0");
         assert_eq!(pair("-t"), "4");
     }

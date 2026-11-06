@@ -116,15 +116,28 @@ range (tens of seconds to over a minute a page on a processor, several times fas
 graphics processor). The test page #105 suggested after installation was set aside for this:
 the first pages of a real job measure the same thing without a step of its own.
 
-### Benchmark: not yet run
+### Benchmark: a first timing, error rates still to do
 
 #105 asks for character error rates and seconds per page on real pages before choosing models.
-The models were downloaded on the development machine (Windows ARM64), but running llama.cpp's
-downloaded program there was not permitted in the session that built this, so no measurement
-was made. The workflow above times both models on the sample page on each of its three runners
-(Windows x64, Windows ARM64, macOS) and writes the result to its summary; the benchmark on IWAC
-newspapers, typescripts and French and Arabic print remains to do before release, and may change
-which models are offered.
+Running llama.cpp's downloaded program on the development machine was not permitted in the
+session that built this, so the first numbers come from the workflow above, which times both
+models on the sample page (`samples/bulletin-page.jpg`, 992 × 1403 pixels, a typed page of
+French) on GitHub's runners, with the app's arguments:
+
+| Runner | Threads | LightOnOCR-3 1B | GLM-OCR |
+| --- | --- | --- | --- |
+| Windows x64 (`windows-latest`) | 2 | 161 s | 153 s |
+| Windows ARM64 (`windows-11-arm`) | 3 | 135 s | 121 s |
+| macOS (`macos-latest`, a virtual machine) | 2 | 769 s | 440 s |
+
+Both read the page's text correctly on all three. These runners are small virtual machines
+(two to four cores; the Mac's has no usable graphics processor, so Metal could not help), so
+the numbers are an upper bound: a laptop with eight cores, or a real Mac's graphics processor,
+should be several times faster, which Settings will measure. LightOnOCR's first answers had no
+block positions: asked for `grounding` without the line break its chat template puts after the
+instruction, it wrote plain Markdown. The instruction now ends with one, and the workflow fails
+if LightOnOCR's answer places no block. The benchmark on IWAC newspapers, typescripts and French
+and Arabic print remains to do before release, and may change which models are offered.
 
 ## Consequences
 

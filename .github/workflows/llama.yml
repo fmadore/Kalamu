@@ -183,7 +183,7 @@ jobs:
             local start end
             start=$(date +%s)
             "$DIR/llama-mtmd-cli${EXE}" -m "models/$model" --mmproj "models/$encoder" \
-              --image samples/bulletin-page.jpg -p "<__media__>${prompt}" --jinja --temp 0 \
+              --image samples/bulletin-page.jpg -p "<__media__>${prompt}"$'\n' --jinja --temp 0 \
               -n 6144 -c 10240 -b 4096 -ub 4096 -t "$threads" -ngl 99 --no-warmup \
               > "$name.txt" 2> "$name.log" || { tail -30 "$name.log"; return 1; }
             end=$(date +%s)
@@ -199,6 +199,11 @@ jobs:
             if ! grep -qi bulletin "$name.txt"; then
               echo "::error::$name did not read the page's title (BULLETIN)."
               tail -40 "$name.log"
+              failed=1
+            fi
+            # LightOnOCR's grounding mode places each block: `![text](80,175,920,225)`.
+            if [ "$prompt" = grounding ] && ! grep -qE '^!\[[a-z_+]+\]\([0-9]+, ?[0-9]+, ?[0-9]+, ?[0-9]+\)' "$name.txt"; then
+              echo "::error::$name wrote no block positions in grounding mode."
               failed=1
             fi
           }
