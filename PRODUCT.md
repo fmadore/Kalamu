@@ -26,7 +26,7 @@ Kalamu turns recordings and scanned or handwritten documents into text (transcri
 OCR and HTR in one "extract text" task) and analyses texts with fields the researcher defines
 (a summary, the people and places named, a tone), using the AI
 provider the researcher chooses (Google Gemini, OpenAI, Anthropic Claude, Mistral) or offline:
-Whisper for recordings and Tesseract for printed pages. Success is trustworthy text the researcher has checked against the source, produced
+Whisper for recordings, and Tesseract or small OCR models for printed pages. Success is trustworthy text the researcher has checked against the source, produced
 without losing work or paying twice.
 
 ## Positioning
@@ -36,7 +36,7 @@ without losing work or paying twice.
   `provenance.json` records model, prompt, settings, and what was reviewed or corrected.
 - **Your files, your provider.** A desktop app: files go straight from the computer to the
   provider the researcher picks, under their own key, with nothing sent to the author; offline
-  Whisper and Tesseract keep sensitive recordings and scans on the computer.
+  Whisper, Tesseract and the OCR models keep sensitive recordings and scans on the computer.
 - **Never lose or repay work.** Every piece is cached and resumable after a close, a crash or a
   lost connection; costs are estimated before starting; jobs can keep running from the
   notification area or the menu bar.
@@ -48,7 +48,8 @@ without losing work or paying twice.
   page by page, with comparison of two or more models on difficult material.
 - Inputs: PDF, JPEG, PNG, TIFF, audio (MP3, M4A, WAV, …), video, plain text, Word.
 - Outputs written beside the sources: `.txt`, `.md`, `.docx`, `.json`, `.srt`, `.vtt`, `.csv`,
-  searchable PDF and ALTO XML (Tesseract or Mistral OCR), each with `provenance.json`.
+  searchable PDF and ALTO XML (Tesseract, Mistral OCR or LightOnOCR), each with
+  `provenance.json`.
 
 ## Capabilities and Constraints
 

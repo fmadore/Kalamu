@@ -340,11 +340,14 @@ fn arguments(
     .into()
 }
 
-/// A placeholder line, `![kind](x0,y0,x1,y1)`, as its kind and box in thousandths of the page.
-fn placeholder(line: &str) -> Option<(&str, [f32; 4])> {
-    let rest = line.trim().strip_prefix("![")?;
+/// A placeholder at the start of a line, `![kind](x0,y0,x1,y1)`, as its kind, its box in
+/// thousandths of the page, and what follows it on the same line: through llama.cpp the block's
+/// first line of text comes right after it (`![title](110,51,880,133) # BULLETIN…`), where the
+/// model's own examples break the line.
+fn placeholder(line: &str) -> Option<(&str, [f32; 4], &str)> {
+    let rest = line.trim_start().strip_prefix("![")?;
     let (kind, rest) = rest.split_once("](")?;
-    let numbers = rest.strip_suffix(')')?;
+    let (numbers, after) = rest.split_once(')')?;
     if kind.is_empty()
         || !kind
             .chars()
@@ -357,7 +360,10 @@ fn placeholder(line: &str) -> Option<(&str, [f32; 4])> {
     for corner in &mut corners {
         *corner = values.next()??;
     }
-    values.next().is_none().then_some((kind, corners))
+    values
+        .next()
+        .is_none()
+        .then_some((kind, corners, after.trim()))
 }
 
 /// LightOnOCR's grounded answer as the page's Markdown and its blocks of text on the page.
@@ -366,8 +372,13 @@ fn grounded(answer: &str) -> (String, Vec<TextRegion>) {
     let mut blocks: Vec<(String, [f32; 4], Vec<&str>)> = Vec::new();
     let mut before: Vec<&str> = Vec::new();
     for line in answer.lines() {
-        if let Some((kind, corners)) = placeholder(line) {
-            blocks.push((kind.trim_end_matches('+').to_owned(), corners, Vec::new()));
+        if let Some((kind, corners, first)) = placeholder(line) {
+            let lines = if first.is_empty() {
+                Vec::new()
+            } else {
+                vec![first]
+            };
+            blocks.push((kind.trim_end_matches('+').to_owned(), corners, lines));
         } else if let Some(block) = blocks.last_mut() {
             block.2.push(line);
         } else {
@@ -649,8 +660,31 @@ mod tests {
         assert_eq!(placeholder("![text](1,2,3)"), None);
         assert_eq!(
             placeholder("![aside_text](10, 20, 30, 40)"),
-            Some(("aside_text", [10.0, 20.0, 30.0, 40.0]))
+            Some(("aside_text", [10.0, 20.0, 30.0, 40.0], ""))
         );
+    }
+
+    /// LightOnOCR's answer through llama.cpp, from the workflow's run on the sample page: each
+    /// block's text starts on its placeholder's line.
+    #[test]
+    fn a_block_whose_text_starts_on_its_placeholder_line_is_placed() {
+        let answer = "\n![title](110,51,880,133) # BULLETIN DE L'AFRIQUE OCCIDENTALE FRANÇAISE\n\n\
+![text](841,155,922,171) DAKAR 3 MAI 1957 PAGE 1\n\n\
+![text](82,268,499,392) Le Gouverneur général a reçu ce matin les délégués.\n\
+Ils ont remis un mémoire.\n";
+        let (text, regions) = grounded(answer);
+        assert_eq!(
+            text,
+            "# BULLETIN DE L'AFRIQUE OCCIDENTALE FRANÇAISE\n\nDAKAR 3 MAI 1957 PAGE 1\n\n\
+Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mémoire."
+        );
+        assert_eq!(regions.len(), 3);
+        assert_eq!(
+            regions[0].text,
+            "BULLETIN DE L'AFRIQUE OCCIDENTALE FRANÇAISE"
+        );
+        assert!((regions[1].x - 0.841).abs() < 1e-6 && (regions[1].y - 0.155).abs() < 1e-6);
+        assert!(!text.contains("]("));
     }
 
     #[test]

@@ -17,6 +17,9 @@ interview-two-speakers.wav
 bulletin-page.jpg     Also offline: in Settings > Offline, under Text extraction with Tesseract,
                       download French (4 MB, once), then New job > Extract text > Tesseract
                       (on this computer) > French > Start. Formats include ALTO XML.
+                      Or, slower, with an OCR model: under Text extraction with OCR models,
+                      download LightOnOCR-3 1B (1.1 GB, once), then choose OCR models (on
+                      this computer) instead of Tesseract. No language to choose.
 
 Need a Gemini, OpenAI, Claude or Mistral API key, saved in Settings
 -------------------------------------------------------------------

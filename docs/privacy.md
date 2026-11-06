@@ -1,8 +1,8 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 6 November 2026, which applies from the first version after 1.4.1 that
-offers the offline OCR models: small vision models downloaded from Hugging Face at the user's
-request and run on the computer. The second policy of 4 November 2026, which applies to version
+**Effective date:** 6 November 2026, which applies from version 1.5.0, the first to offer the
+offline OCR models: small vision models downloaded from Hugging Face at the user's request and
+run on the computer. The second policy of 4 November 2026, which applies to version
 1.4.1, did not list them; it added the question asked before files are first sent to each cloud
 provider; for the Mac App Store build, the folders the user grants it, kept as bookmarks, and
 its data folder inside the app's own container; and the file paths the logs may hold. Version 1.0.0, the first Microsoft

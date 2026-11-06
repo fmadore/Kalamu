@@ -27,9 +27,11 @@ alert takes priority over feature work.
 ## What leaves the machine
 
 Files the user adds to a job go directly to the provider the user chose, under that provider's
-terms; offline Whisper and Tesseract keep recordings and pages on the computer. User-requested
-downloads, Whisper models from Hugging Face and Tesseract's language data from GitHub
-(`tessdata_best` at a pinned commit), are checked against their size and SHA-256 before use. The app also fetches
+terms; offline Whisper, Tesseract and the OCR models keep recordings and pages on the
+computer. User-requested downloads, Whisper models and the OCR models from Hugging Face and
+Tesseract's language data from GitHub (each at a pinned revision), are checked against their
+size and SHA-256 before use. The OCR models run in llama.cpp's program, built by this
+repository's workflow from a pinned, hash-checked source release and shipped with the app. The app also fetches
 the public model catalogue from this repository, and video titles from YouTube's oEmbed
 service. The developer receives no files, results or keys. See the
 [privacy policy](docs/privacy.md).
