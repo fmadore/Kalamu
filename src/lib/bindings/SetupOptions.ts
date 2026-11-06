@@ -26,4 +26,16 @@ speakers: number | null,
  * the job, its cache keys and provenance hold the level sent. `None` for a model that does
  * not reason, and in jobs made before levels could be chosen.
  */
-reasoning?: string, };
+reasoning?: string, 
+/**
+ * Names and words to spell as the researcher writes them (people, places, terms of the
+ * field), one per line or separated by commas, for a transcription model that takes them:
+ * Whisper reads them as its initial prompt. Left out when empty, so cache keys made before
+ * it existed stay valid.
+ */
+vocabulary?: string, 
+/**
+ * Write the speech in English rather than in the language spoken, for a model that can
+ * (Whisper Large v3, Small and Base; not Turbo). Left out when off.
+ */
+translate?: boolean, };

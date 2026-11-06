@@ -7,8 +7,10 @@ import type { Task } from './bindings/Task.js';
 import rulesJson from './dev/taskRules.json';
 import { en } from './i18n/index.js';
 import type { Preset } from './bindings/Preset.js';
+import type { Refused } from './bindings/Refused.js';
 import {
 	acceptsPrompt,
+	dictionaryNames,
 	draftsOf,
 	followingAnalysis,
 	formPipeline,
@@ -22,6 +24,7 @@ import {
 	newDraft,
 	pagesPerCallOf,
 	providerDefault,
+	readersOf,
 	readsKind,
 	type Rules,
 	rulesFor,
@@ -100,6 +103,44 @@ describe('new job form', () => {
 		expect(toRequest(catalog, 'audio_transcription', whisper).options.diarize).toBe(false);
 	});
 
+	it('sends names to spell and translation only to a model that uses them', () => {
+		const base = newDraft(catalog, rule('audio_transcription'), null, () => true);
+		const whisper = (model: string) => ({
+			...base,
+			provider: 'whisper',
+			model,
+			vocabulary: 'Samory Touré, Ouagadougou\n\nsamory touré',
+			translate: true
+		});
+		const large = toRequest(catalog, 'audio_transcription', whisper('whisper-large-v3')).options;
+		expect(large.vocabulary).toBe('Samory Touré\nOuagadougou');
+		expect(large.translate).toBe(true);
+		// Turbo was trained without translation.
+		const turbo = toRequest(catalog, 'audio_transcription', whisper('whisper-large-v3-turbo'));
+		expect(turbo.options.translate).toBeUndefined();
+		expect(turbo.options.vocabulary).toBe('Samory Touré\nOuagadougou');
+		// A cloud model is sent neither, so its answer and its key stay as they were.
+		const cloud = toRequest(catalog, 'audio_transcription', {
+			...whisper('x'),
+			...base,
+			vocabulary: 'Samory',
+			translate: true
+		});
+		expect(cloud.options).not.toHaveProperty('vocabulary');
+		expect(cloud.options).not.toHaveProperty('translate');
+	});
+
+	it('offers a project dictionary’s most found names to spell', () => {
+		expect(
+			dictionaryNames([
+				{ label: 'Bamako', documents: 2 },
+				{ label: 'Samory Touré', documents: 9 },
+				{ label: ' ', documents: 4 },
+				{ label: 'Bamako', documents: 1 }
+			])
+		).toEqual(['Samory Touré', 'Bamako']);
+	});
+
 	it('words input warnings and names jobs after what was added', () => {
 		const text = warningText({ source_id: 'x', kind: 'double_page_spread', pages: [2, 3] }, en);
 		expect(text).toContain('page 2, 3');
@@ -128,6 +169,26 @@ describe('new job form', () => {
 		const frozen = entry('C:\\data\\1911-04-05.txt');
 		expect(nameOfFile(frozen, true)).toBe('1911-04-05');
 		expect(suggestionFits('1911-02-15', [frozen], true)).toBe(false);
+	});
+
+	it('offers the tasks that read files dropped on the wrong one', () => {
+		const file = (file_name: string, kind: Refused['kind'], folder = false): Refused => ({
+			path: `C:/data/${file_name}`,
+			file_name,
+			kind,
+			folder
+		});
+		const interview = file('interview.mp3', 'audio');
+		expect(readersOf(rules, [interview], 'text_extraction')).toEqual(['audio_transcription']);
+		// A scan dropped on a transcription can be read, corrected… whatever reads images.
+		const offered = readersOf(rules, [file('page.jpg', 'image')], 'audio_transcription');
+		expect(offered).toContain('text_extraction');
+		expect(offered).not.toContain('audio_transcription');
+		// A recording and a scan together: no one task reads both.
+		expect(readersOf(rules, [interview, file('page.jpg', 'image')], 'analysis')).toEqual([]);
+		// A folder or an archive: nothing to offer.
+		expect(readersOf(rules, [file('letters.zip', null)], 'text_extraction')).toEqual([]);
+		expect(readersOf(rules, [file('empty', null, true)], 'text_extraction')).toEqual([]);
 	});
 
 	it('offers YouTube videos to the models that read their links only', () => {

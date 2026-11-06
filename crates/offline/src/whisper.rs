@@ -6,6 +6,14 @@
 //! in windows of about two minutes, cut at the quietest moment nearby. Between windows the job's
 //! stop signal is checked, so pausing a long transcription takes effect within one window
 //! without whisper.cpp's abort callback, which whisper-rs 0.16 only offers unsafely.
+//!
+//! Each window's language, unless the researcher chose one, is detected on its loudest thirty
+//! seconds rather than on its first, which may be silence or music. Lines are kept to subtitle
+//! length, cut between words at the times whisper.cpp gives each token; the text joins them
+//! into sentences. The names and words the researcher listed are Whisper's initial prompt, and
+//! a model that can translate writes English when asked. Runs of the same words, Whisper's
+//! known failure on silence and noise, are cut back, as are the subtitle credits it learnt from
+//! its training data. On a Mac, the model runs on the graphics processor (Metal).
 
 use std::sync::{Arc, Mutex, Weak};
 use std::time::{Duration, Instant};
@@ -15,7 +23,9 @@ use kalamu_core::{
     ApiKey, LanguageChoice, LanguageCode, PCM_16K_MONO, ProcessOutput, ProcessRequest, Provider,
     ProviderError, ProviderId, RequestSetting, Segment, StopSignal, Task, Tuning, Usage,
 };
-use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
+use whisper_rs::{
+    FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperState,
+};
 
 use crate::cpu;
 use crate::models::{self, ModelFile, ModelLease, ModelManager};
@@ -30,6 +40,21 @@ const SEARCH_BACK: usize = 20 * SAMPLE_RATE;
 const BEAM_SIZE: i32 = 5;
 /// The frame over which loudness is measured when looking for the quietest moment.
 const FRAME: usize = SAMPLE_RATE / 10;
+/// How much of a window its language is detected on: what Whisper's encoder reads at once.
+const DETECT: usize = 30 * SAMPLE_RATE;
+/// Longest line, as the subtitle export's cues, so a cue's times are Whisper's own.
+const MAX_LINE_CHARS: i32 = 84;
+/// Longest initial prompt: whisper.cpp keeps at most 224 tokens of it, about this much text.
+const MAX_PROMPT_CHARS: usize = 600;
+/// How many times running a word, or a group of words, is repeated before it counts as a loop.
+const LOOP_WORD: usize = 6;
+const LOOP_GROUP: usize = 4;
+/// Where the model runs: the graphics processor with Metal on a Mac, the processor elsewhere.
+const DEVICE: &str = if cfg!(feature = "metal") {
+    "metal"
+} else {
+    "cpu"
+};
 /// A loaded model is released after this long unused, to give its memory back.
 const IDLE_UNLOAD: Duration = Duration::from_secs(180);
 
@@ -118,7 +143,7 @@ impl Inner {
         let lease = self.models.lease(model)?;
         let bytes = lease.read_verified()?;
         let mut params = WhisperContextParameters::default();
-        params.use_gpu(false);
+        params.use_gpu(DEVICE == "metal");
         let context = WhisperContext::new_from_buffer_with_params(&bytes, params)
             .map(Arc::new)
             .map_err(|e| ProviderError::Other(format!("Could not load the model: {e}")))?;
@@ -144,7 +169,7 @@ fn ensure_cpu() -> Result<(), ProviderError> {
 }
 
 /// The language to decode in: the user's single choice when Whisper knows it, otherwise
-/// detection, which whisper.cpp does again for every window, as mixed recordings need.
+/// detection, again for every window, as mixed recordings need.
 fn language(choice: &LanguageChoice) -> Option<String> {
     match choice.codes() {
         [one] if whisper_rs::get_lang_id(one.as_str()).is_some() => Some(one.as_str().to_owned()),
@@ -218,43 +243,78 @@ struct Transcript {
     detected: Option<String>,
 }
 
+/// What a transcription asks of whisper.cpp beside the audio.
+#[derive(Debug, Default)]
+struct Decode<'a> {
+    /// The language chosen; detected window by window when `None`.
+    language: Option<&'a str>,
+    /// The voice-activity model, when downloaded: silences are skipped.
+    vad: Option<&'a str>,
+    /// The names and words to spell, as the initial prompt.
+    prompt: Option<String>,
+    /// Write English rather than the language spoken.
+    translate: bool,
+}
+
 fn transcribe(
     context: &WhisperContext,
     samples: &[f32],
-    language: Option<&str>,
-    vad: Option<&str>,
+    decode: &Decode<'_>,
     stop: &StopSignal,
 ) -> Result<Transcript, ProviderError> {
     let mut state = context.create_state().map_err(whisper_error)?;
-    let threads = threads(std::thread::available_parallelism().map_or(2, usize::from));
+    let threads = usize::try_from(threads(
+        std::thread::available_parallelism().map_or(2, usize::from),
+    ))
+    .unwrap_or(1);
     let mut segments = Vec::new();
-    let mut detected = None;
+    // How long each language detected was spoken, to name the recording's.
+    let mut heard: Vec<(&'static str, usize)> = Vec::new();
     for (start, end) in windows(samples) {
         if stop.is_stopped() {
             return Err(ProviderError::Interrupted);
         }
+        // Whisper needs at least a second of audio; padding affects inference, not timestamps.
+        let mut window = samples[start..end].to_vec();
+        window.resize(window.len().max(SAMPLE_RATE), 0.0);
+        let detected = match decode.language {
+            Some(_) => None,
+            None => detect_language(&mut state, &window, threads)?,
+        };
+        if let Some(lang) = detected {
+            match heard.iter_mut().find(|(l, _)| *l == lang) {
+                Some((_, length)) => *length += end - start,
+                None => heard.push((lang, end - start)),
+            }
+        }
+        let language = decode.language.or(detected);
         let mut params = FullParams::new(SamplingStrategy::BeamSearch {
             beam_size: BEAM_SIZE,
             patience: -1.0,
         });
         params.set_language(language);
-        params.set_n_threads(threads);
+        params.set_translate(decode.translate);
+        params.set_n_threads(i32::try_from(threads).unwrap_or(1));
         // Each window starts fresh: carrying text over is what lets Whisper fall into
-        // repeating itself for minutes.
+        // repeating itself for minutes. The names to spell are given to every window.
         params.set_no_context(true);
+        if let Some(prompt) = &decode.prompt {
+            params.set_initial_prompt(prompt);
+        }
+        // Lines of subtitle length, cut between words at the tokens' own times.
+        params.set_token_timestamps(true);
+        params.set_split_on_word(true);
+        params.set_max_len(MAX_LINE_CHARS);
         params.set_print_progress(false);
         params.set_print_realtime(false);
         params.set_print_timestamps(false);
         params.set_print_special(false);
         params.set_suppress_blank(true);
         params.set_suppress_nst(true);
-        if let Some(path) = vad {
+        if let Some(path) = decode.vad {
             params.set_vad_model_path(Some(path));
             params.enable_vad(true);
         }
-        // Whisper needs at least a second of audio; padding affects inference, not timestamps.
-        let mut window = samples[start..end].to_vec();
-        window.resize(window.len().max(SAMPLE_RATE), 0.0);
         state.full(params, &window).map_err(whisper_error)?;
         let offset_ms = (start * 1000 / SAMPLE_RATE) as u64;
         for segment in state.as_iter() {
@@ -274,11 +334,170 @@ fn transcribe(
                 text: text.to_owned(),
             });
         }
-        if language.is_none() && detected.is_none() {
-            detected = whisper_rs::get_lang_str(state.full_lang_id_from_state()).map(str::to_owned);
+    }
+    let detected = heard
+        .iter()
+        .max_by_key(|(_, length)| *length)
+        .map(|(lang, _)| (*lang).to_owned());
+    Ok(Transcript {
+        segments: without_loops(segments),
+        detected,
+    })
+}
+
+/// The language spoken in a window, detected on its loudest stretch, where speech most likely
+/// is; `None` when Whisper cannot tell.
+fn detect_language(
+    state: &mut WhisperState,
+    window: &[f32],
+    threads: usize,
+) -> Result<Option<&'static str>, ProviderError> {
+    let (from, to) = loudest_stretch(window, DETECT);
+    let mut stretch = window[from..to].to_vec();
+    stretch.resize(stretch.len().max(SAMPLE_RATE), 0.0);
+    state.pcm_to_mel(&stretch, threads).map_err(whisper_error)?;
+    let (id, _) = state.lang_detect(0, threads).map_err(whisper_error)?;
+    Ok(whisper_rs::get_lang_str(id))
+}
+
+/// Where the stretch of `len` samples holding the most sound begins and ends, in whole frames;
+/// all of `samples` when shorter.
+fn loudest_stretch(samples: &[f32], len: usize) -> (usize, usize) {
+    if samples.len() <= len {
+        return (0, samples.len());
+    }
+    let energy: Vec<f32> = samples
+        .chunks(FRAME)
+        .map(|frame| frame.iter().map(|s| s * s).sum())
+        .collect();
+    let frames = (len / FRAME).clamp(1, energy.len());
+    let mut sum: f32 = energy[..frames].iter().sum();
+    let mut best = (sum, 0);
+    for i in frames..energy.len() {
+        sum += energy[i] - energy[i - frames];
+        if sum > best.0 {
+            best = (sum, i + 1 - frames);
         }
     }
-    Ok(Transcript { segments, detected })
+    let start = (best.1 * FRAME).min(samples.len() - len);
+    (start, start + len)
+}
+
+/// The names and words to spell as Whisper's initial prompt: a list in the researcher's order,
+/// as much as whisper.cpp keeps, without the NUL a C string cannot hold.
+fn initial_prompt(terms: &[String]) -> Option<String> {
+    let mut kept: Vec<String> = Vec::new();
+    let mut length = 0;
+    for term in terms {
+        let term: String = term.chars().filter(|c| *c != '\0').collect();
+        let term = term.trim();
+        if term.is_empty() {
+            continue;
+        }
+        length += term.len() + 2;
+        if length > MAX_PROMPT_CHARS {
+            break;
+        }
+        kept.push(term.to_owned());
+    }
+    (!kept.is_empty()).then(|| format!("{}.", kept.join(", ")))
+}
+
+/// A word as loops are compared: without case or the punctuation around it.
+fn bare(word: &str) -> String {
+    word.trim_matches(|c: char| !c.is_alphanumeric())
+        .to_lowercase()
+}
+
+/// The text with a word said over and over, or a group of words, kept once: Whisper's loops
+/// on noise or silence. Words repeated a few times, as people do, are left.
+fn collapse_repeats(text: &str) -> String {
+    let words: Vec<&str> = text.split_whitespace().collect();
+    let keys: Vec<String> = words.iter().map(|w| bare(w)).collect();
+    let mut out: Vec<&str> = Vec::new();
+    let mut i = 0;
+    'words: while i < words.len() {
+        for n in 1..=8 {
+            let needed = if n == 1 { LOOP_WORD } else { LOOP_GROUP };
+            if i + n * needed > words.len() || keys[i..i + n].iter().all(String::is_empty) {
+                continue;
+            }
+            let mut times = 1;
+            while i + (times + 1) * n <= words.len()
+                && keys[i + times * n..i + (times + 1) * n] == keys[i..i + n]
+            {
+                times += 1;
+            }
+            if times >= needed {
+                out.extend(&words[i..i + n]);
+                i += times * n;
+                continue 'words;
+            }
+        }
+        out.push(words[i]);
+        i += 1;
+    }
+    out.join(" ")
+}
+
+/// Subtitle credits Whisper learnt from its training data and writes over silence or music.
+fn is_credit(text: &str) -> bool {
+    let text = text.to_lowercase();
+    text.contains("amara.org")
+        || ["sous-titres réalisés", "sous-titrage st", "subtitles by"]
+            .iter()
+            .any(|credit| text.starts_with(credit))
+}
+
+/// The lines without Whisper's loops: credits dropped, words said over and over kept once, and
+/// three or more lines in a row saying the same kept as one, lasting as long as they did.
+fn without_loops(segments: Vec<Segment>) -> Vec<Segment> {
+    let mut out: Vec<Segment> = Vec::new();
+    let mut run = 0;
+    for mut segment in segments {
+        if is_credit(&segment.text) {
+            continue;
+        }
+        segment.text = collapse_repeats(&segment.text);
+        if segment.text.is_empty() {
+            continue;
+        }
+        let same = out.last().is_some_and(|last| {
+            let key = |t: &str| t.split_whitespace().map(bare).collect::<Vec<_>>();
+            key(&last.text) == key(&segment.text)
+        });
+        run = if same { run + 1 } else { 0 };
+        if run >= 2 {
+            // A third line saying the same: the second is dropped, the first lasts until now.
+            if run == 2 {
+                out.pop();
+            }
+            if let Some(first) = out.last_mut() {
+                first.end_ms = first.end_ms.max(segment.end_ms);
+            }
+            continue;
+        }
+        out.push(segment);
+    }
+    out
+}
+
+/// The lines as running text: one sentence a line, as the lines of subtitle length are cut
+/// inside sentences.
+fn sentences(segments: &[Segment]) -> String {
+    let mut out = String::new();
+    for segment in segments {
+        let text = segment.text.trim();
+        if !out.is_empty() && !out.ends_with('\n') {
+            out.push(' ');
+        }
+        out.push_str(text);
+        let end = text.trim_end_matches(|c: char| c.is_whitespace() || "\"'»”’)]".contains(c));
+        if end.ends_with(['.', '?', '!', '…']) {
+            out.push('\n');
+        }
+    }
+    out.trim_end().to_owned()
 }
 
 #[async_trait]
@@ -317,6 +536,10 @@ impl Provider for Whisper {
             RequestSetting::new("beam_size", BEAM_SIZE),
             RequestSetting::new("no_context", true),
             RequestSetting::new("window_seconds", WINDOW / SAMPLE_RATE),
+            RequestSetting::new("language_detection", "loudest_30_seconds_of_each_window"),
+            RequestSetting::new("max_line_chars", MAX_LINE_CHARS),
+            RequestSetting::new("split_on_word", true),
+            RequestSetting::new("repetition_guard", true),
         ]
     }
 
@@ -327,6 +550,13 @@ impl Provider for Whisper {
         let mut settings = self.request_settings(request.task, request.model, request.tuning);
         if request.task == Task::AudioTranscription {
             settings.extend(voice_detection(self.inner.models.vad_path().is_some()));
+            settings.push(RequestSetting::new("device", DEVICE));
+            if request.options.translate {
+                settings.push(RequestSetting::new("translate", true));
+            }
+            if let Some(prompt) = initial_prompt(&request.options.vocabulary_terms()) {
+                settings.push(RequestSetting::new("initial_prompt", prompt));
+            }
         }
         settings
     }
@@ -350,6 +580,8 @@ impl Provider for Whisper {
         let inner = self.inner.clone();
         let samples = to_float(&request.input.bytes);
         let language = language(request.languages);
+        let prompt = initial_prompt(&request.options.vocabulary_terms());
+        let translate = request.options.translate;
         let stop = request.stop.clone();
         let transcript = tokio::task::spawn_blocking(move || {
             let _turn = lock(&inner.turn);
@@ -359,13 +591,13 @@ impl Provider for Whisper {
             }
             let context = inner.context(model)?;
             let vad = inner.models.vad_path();
-            let result = transcribe(
-                &context,
-                &samples,
-                language.as_deref(),
-                vad.as_deref(),
-                &stop,
-            );
+            let decode = Decode {
+                language: language.as_deref(),
+                vad: vad.as_deref(),
+                prompt,
+                translate,
+            };
+            let result = transcribe(&context, &samples, &decode, &stop);
             if let Some(loaded) = lock(&inner.loaded).as_mut() {
                 loaded.last_used = Instant::now();
             }
@@ -374,12 +606,7 @@ impl Provider for Whisper {
         .await
         .map_err(|e| ProviderError::Other(format!("Whisper stopped unexpectedly: {e}")))?;
         let (transcript, sample_count) = transcript?;
-        let text = transcript
-            .segments
-            .iter()
-            .map(|s| s.text.as_str())
-            .collect::<Vec<_>>()
-            .join("\n");
+        let text = sentences(&transcript.segments);
         Ok(ProcessOutput {
             text,
             segments: transcript.segments,
@@ -430,6 +657,96 @@ mod tests {
     }
 
     #[test]
+    fn language_is_detected_where_the_window_is_loudest() {
+        // Ten seconds of silence, then forty of sound: the thirty seconds start in the sound.
+        let mut samples = vec![0.0f32; 50 * SAMPLE_RATE];
+        for s in &mut samples[10 * SAMPLE_RATE..] {
+            *s = 0.3;
+        }
+        let (from, to) = loudest_stretch(&samples, DETECT);
+        assert!(from >= 10 * SAMPLE_RATE, "starts at {from}");
+        assert_eq!(to - from, DETECT);
+        // A window shorter than the stretch is read whole.
+        assert_eq!(
+            loudest_stretch(&samples[..SAMPLE_RATE], DETECT),
+            (0, SAMPLE_RATE)
+        );
+    }
+
+    #[test]
+    fn names_to_spell_become_a_prompt_whisper_keeps_whole() {
+        let names = vec!["Samory Touré".to_owned(), "Ouaga\0dougou".to_owned()];
+        assert_eq!(
+            initial_prompt(&names).as_deref(),
+            Some("Samory Touré, Ouagadougou.")
+        );
+        assert_eq!(initial_prompt(&[]), None);
+        let many: Vec<String> = (0..500).map(|i| format!("Name {i}")).collect();
+        assert!(initial_prompt(&many).unwrap().len() <= MAX_PROMPT_CHARS);
+    }
+
+    fn line(start_ms: u64, end_ms: u64, text: &str) -> Segment {
+        Segment {
+            start_ms,
+            end_ms,
+            speaker: None,
+            text: text.to_owned(),
+        }
+    }
+
+    #[test]
+    fn loops_are_cut_back_and_what_people_say_twice_is_kept() {
+        assert_eq!(
+            collapse_repeats("Il a dit merci merci merci merci merci merci merci."),
+            "Il a dit merci"
+        );
+        assert_eq!(
+            collapse_repeats("on y va, on y va, on y va, on y va, on y va et puis"),
+            "on y va, et puis"
+        );
+        assert_eq!(
+            collapse_repeats("non, non, non, je ne crois pas"),
+            "non, non, non, je ne crois pas"
+        );
+        let lines = vec![
+            line(0, 1_000, "Bonjour."),
+            line(1_000, 2_000, "Oui."),
+            line(2_000, 3_000, "Oui."),
+            line(3_000, 4_000, "Merci beaucoup."),
+            line(4_000, 5_000, "Merci beaucoup."),
+            line(5_000, 6_000, "merci beaucoup"),
+            line(6_000, 9_000, "Merci beaucoup."),
+            line(
+                9_000,
+                10_000,
+                "Sous-titres réalisés par la communauté d'Amara.org",
+            ),
+            line(10_000, 11_000, "Au revoir."),
+        ];
+        let kept = without_loops(lines);
+        let texts: Vec<_> = kept.iter().map(|s| s.text.as_str()).collect();
+        assert_eq!(
+            texts,
+            ["Bonjour.", "Oui.", "Oui.", "Merci beaucoup.", "Au revoir."]
+        );
+        assert_eq!((kept[3].start_ms, kept[3].end_ms), (3_000, 9_000));
+    }
+
+    #[test]
+    fn the_text_runs_one_sentence_a_line() {
+        let lines = [
+            line(0, 1_000, "Nous sommes arrivés à Bobo-Dioulasso"),
+            line(1_000, 2_000, "en 1957, avec mon père."),
+            line(2_000, 3_000, "Vous vous souvenez?"),
+            line(3_000, 4_000, "« Oui. »"),
+        ];
+        assert_eq!(
+            sentences(&lines),
+            "Nous sommes arrivés à Bobo-Dioulasso en 1957, avec mon père.\nVous vous souvenez?\n« Oui. »"
+        );
+    }
+
+    #[test]
     fn pcm_bytes_become_floats() {
         let pcm = [0x00, 0x80, 0xff, 0x7f, 0x00, 0x00];
         assert_eq!(to_float(&pcm), [-1.0, 32_767.0 / 32_768.0, 0.0]);
@@ -464,6 +781,9 @@ mod tests {
                 model.id
             );
             assert_eq!(model.inputs, [PCM_16K_MONO]);
+            assert!(model.vocabulary, "{} takes names to spell", model.id);
+            // Turbo was trained without translation; the others translate into English.
+            assert_eq!(model.translates, model.id != "whisper-large-v3-turbo");
             let kalamu_catalog::LanguageSupport::List(codes) = &model.languages else {
                 panic!("{} must list its languages", model.id);
             };
@@ -521,6 +841,11 @@ mod tests {
         };
         let off = sent(&whisper);
         assert!(off.contains(&RequestSetting::new("beam_size", BEAM_SIZE)));
+        assert!(off.contains(&RequestSetting::new("device", DEVICE)));
+        assert!(
+            !off.iter()
+                .any(|s| s.name == "translate" || s.name == "initial_prompt")
+        );
         assert!(off.contains(&RequestSetting::new("vad", false)));
         assert!(!off.iter().any(|s| s.name == "vad_model"));
 
@@ -554,17 +879,17 @@ mod tests {
         let audio = std::fs::read(std::env::var("WHISPER_SMOKE_AUDIO").unwrap()).unwrap();
         let bytes = std::fs::read(model).unwrap();
         let mut params = WhisperContextParameters::default();
-        params.use_gpu(false);
+        params.use_gpu(DEVICE == "metal");
         let context = WhisperContext::new_from_buffer_with_params(&bytes, params).unwrap();
         let vad = std::env::var("WHISPER_SMOKE_VAD").ok();
-        let transcript = transcribe(
-            &context,
-            &to_float(&audio),
-            None,
-            vad.as_deref(),
-            &StopSignal::default(),
-        )
-        .unwrap();
+        let decode = Decode {
+            vad: vad.as_deref(),
+            prompt: std::env::var("WHISPER_SMOKE_NAMES").ok(),
+            translate: std::env::var("WHISPER_SMOKE_TRANSLATE").is_ok(),
+            ..Decode::default()
+        };
+        let transcript =
+            transcribe(&context, &to_float(&audio), &decode, &StopSignal::default()).unwrap();
         println!("{:?} {:#?}", transcript.detected, transcript.segments);
         assert!(!transcript.segments.is_empty());
     }

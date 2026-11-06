@@ -142,11 +142,15 @@ export const en = {
 		back: 'All workflows',
 		name: 'Name of the workflow',
 		stepsTitle: 'Steps',
-		noSteps: 'Add a first step from one of your pipelines.',
-		noPipelines:
-			'Steps are made from pipelines. Set up a job in New job and save it as a pipeline first.',
+		noSteps:
+			'Add a first step: a prompt, as Kalamu ships it or as you wrote it, or one of your saved pipelines.',
 		addStep: 'Add a step',
-		addStepHint: 'From a pipeline',
+		addStepHint: 'Choose a prompt or a pipeline',
+		fromPipelines: 'Your pipelines',
+		fromPrompts: (task: string) => `Prompts · ${task}`,
+		prompt: 'Prompt',
+		promptMissing: 'A prompt no longer listed',
+		saveNeedsStep: 'Add a step to save the workflow',
 		stepNumber: (n: number) => `Step ${n}`,
 		reads: 'Works on',
 		readsFiles: 'The files or text you run it on',
@@ -837,6 +841,22 @@ export const en = {
 		addFiles: 'Add files',
 		addFolder: 'Add a folder',
 		dropHint: 'Or drop files and folders anywhere on this window.',
+		/** Files and folders added that the task chosen does not read. */
+		setAside: {
+			files: (names: string, task: string, n: number) =>
+				n === 1
+					? `Not added: ${names}. ${task} does not read this kind of file.`
+					: `Not added: ${names}. ${task} does not read these kinds of file.`,
+			folders: (names: string, task: string) =>
+				`Nothing added from ${names}: no file in it that ${task} reads.`,
+			kinds:
+				'Kalamu reads PDFs, images (JPEG, PNG, TIFF, WebP, HEIC), recordings, video files and texts (TXT, Markdown, Word, Excel, CSV).',
+			youtube:
+				'Here videos are added by their YouTube link. Recordings and video files on this computer are read by “Transcribe audio”.',
+			instead: (task: string) => `${task} instead`,
+			insteadHint: 'Switches the task and adds these files to it',
+			dismiss: 'Dismiss this message'
+		},
 		noFiles: 'No files yet.',
 		remove: 'Remove',
 		pages: (n: number) => (n === 1 ? '1 page' : `${n} pages`),
@@ -970,6 +990,16 @@ export const en = {
 		notDownloaded: 'This offline model has not been downloaded yet.',
 		openSettings: 'Download in Settings',
 		timestamps: 'Timestamps',
+		translate: 'Write it in English',
+		translateHint:
+			'Whisper writes what is said in English, whatever language is spoken. The transcript is then a translation, which provenance records.',
+		vocabulary: {
+			title: 'Names and words to spell',
+			placeholder: 'Samory Touré\nBobo-Dioulasso\nmadrasa',
+			hint: 'People, places and terms as you write them, one a line. Whisper reads them before each part of the recording and spells them so when it hears them. The first sixty or so are used.',
+			fromProject: 'Add the names in this project’s dictionary',
+			noProjectNames: 'This project’s dictionary has no names yet: they come from its analyses.'
+		},
 		sampleTitle: 'Try a sample first',
 		sample: (n: number) => `Only the first ${n} pages of each document`,
 		outputTitle: 'Results',
@@ -1247,6 +1277,11 @@ export const en = {
 		next: 'Next',
 		source: 'Source',
 		aiText: 'Model output',
+		itemMenu: (name: string) => `What to do with “${name}”`,
+		renameItem: 'Rename',
+		removeItem: 'Remove from the answers',
+		itemEverywhere:
+			'Changed in this document’s corrected answers, for every model that found it. The model’s own answers are kept.',
 		edit: 'Correct',
 		save: 'Save correction',
 		discard: 'Discard changes',
@@ -1478,6 +1513,10 @@ export const en = {
 			`Tesseract ${version} reads printed pages on this computer: nothing is sent, no key or account is needed, and it works without an internet connection once a language is downloaded. It is meant for clean print; handwriting, faded or damaged pages and complex layouts read better with a cloud model. Its speed depends on this computer’s processor: from about a second to several seconds a page. It does not detect the language: download each language you read, then choose it in New job.`,
 		latinScript: (languages: string) =>
 			`Languages written in Latin letters without a model of their own: ${languages}`,
+		noLanguageData: 'No language downloaded yet.',
+		addLanguageData: 'Download a language',
+		findLanguageData: 'Find a language by its name',
+		oneDownload: 'One download at a time: the next can start once this one is done.',
 		offlineHint:
 			'Whisper runs on this computer: recordings never leave it, no key or account is needed, and it works without an internet connection once a model is downloaded. It is slower than the cloud models and cannot label speakers. Large v3 Turbo suits most computers.',
 		offlineCpu: (missing: string) =>

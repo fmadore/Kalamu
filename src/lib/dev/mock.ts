@@ -623,8 +623,43 @@ export function installMock(): void {
 					}, 0);
 				return { rows, total_usd: total(false), total_economy_usd: total(true) };
 			}
-			case 'expand_paths':
-				return a.paths;
+			case 'expand_paths': {
+				// Files the task does not read are set aside with their kind, as the app does; a
+				// path without an extension stands for a folder already walked.
+				const kinds: Record<string, string> = {
+					pdf: 'pdf',
+					png: 'image',
+					jpg: 'image',
+					jpeg: 'image',
+					tif: 'image',
+					tiff: 'image',
+					mp3: 'audio',
+					wav: 'audio',
+					m4a: 'audio',
+					mp4: 'video',
+					mov: 'video',
+					txt: 'text',
+					md: 'text',
+					docx: 'text',
+					csv: 'text'
+				};
+				const reads = (taskRulesJson as TaskRules[]).find((r) => r.task === a.task)?.sources ?? [];
+				const ext = (p: string) => /\.([a-z0-9]+)$/i.exec(p)?.[1]?.toLowerCase();
+				const kind = (p: string) => kinds[ext(p) ?? ''] ?? null;
+				const kept = (p: string) => !ext(p) || reads.some((k) => k === kind(p));
+				const paths = a.paths as string[];
+				return {
+					paths: paths.filter(kept),
+					refused: paths
+						.filter((p) => !kept(p))
+						.map((p) => ({
+							path: p,
+							file_name: p.split(/[\\/]/).pop() ?? p,
+							kind: kind(p),
+							folder: false
+						}))
+				};
+			}
 			// Every provider counts as agreed to, so the screens and their tests run unasked.
 			case 'providers_to_consent':
 				return [];

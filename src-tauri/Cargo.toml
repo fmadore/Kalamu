@@ -58,6 +58,8 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 ts-rs.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
+# Whisper on the graphics processor (Metal), which every Apple Silicon Mac has.
+kalamu-offline = { workspace = true, features = ["metal"] }
 # Security-scoped bookmarks for the Mac App Store's sandboxed build (`src/platform/macos.rs`).
 objc2 = "0.6.5"
 objc2-foundation = { version = "0.3.2", default-features = false, features = [

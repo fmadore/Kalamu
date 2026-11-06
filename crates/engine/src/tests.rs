@@ -1577,6 +1577,36 @@ async fn a_set_up_s_reasoning_level_is_settled_and_sent_with_the_model_s_output_
     let calls = f.fake.calls();
     assert_eq!(f.run(chosen.id).await, JobStatus::Completed);
     assert_eq!(f.fake.calls(), calls + 1, "another level is another answer");
+
+    // Names to spell and translation are kept only for a model that uses them (Whisper), so
+    // they never change another model's answer or its key.
+    let ignored = f
+        .engine
+        .create_job(NewJob {
+            name: "Names".into(),
+            task: Task::TextExtraction,
+            sources: job.sources.clone(),
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: None,
+                label: None,
+                options: kalamu_core::SetupOptions {
+                    vocabulary: Some("Samory Touré".into()),
+                    translate: true,
+                    ..Default::default()
+                },
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(ignored.setups[0].options.vocabulary, None);
+    assert!(!ignored.setups[0].options.translate);
 }
 
 /// Gemini 3.5 Transcribe, as it answered live: priced by the minute in the catalogue, but its

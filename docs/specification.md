@@ -153,7 +153,9 @@ no text layer needs *Extract text* instead.
 ## Choosing and starting a job
 
 - **One file or a whole folder.** Choose files from the PC or drop a folder; the app processes
-  them one by one, shows progress, and picks up where it stopped after an interruption.
+  them one by one, shows progress, and picks up where it stopped after an interruption. Files
+  the task chosen does not read, and folders holding none it reads, are named rather than
+  dropped unseen, with the task that reads them offered instead.
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper
   and Tesseract,
   and later OpenRouter for open-weights models. The app shows only the providers and models
@@ -201,8 +203,10 @@ no text layer needs *Extract text* instead.
   carries, and the fields of an analysis. The output folder is left out.
 - **Workflows.** Pipelines run one after another on the same files
   ([decision](decisions/2026-11-01-workflow-runs.md), [#49](https://github.com/fmadore/Kalamu/issues/49)).
-  Each step is a saved pipeline and reads either the files or the text of an earlier
-  extraction, transcription or correction step, frozen as the researcher corrected it when the
+  Each step is a saved pipeline, or a prompt (one Kalamu ships or the researcher's own) on the
+  model New job would offer for it; a step of one set-up can take another prompt of its task,
+  and keeps its name unless it was still named after the old prompt. Each reads either the
+  files or the text of an earlier extraction, transcription or correction step, frozen as the researcher corrected it when the
   step starts; a step that reads one after it, or a table of contents or analysis's answers, is
   refused. A step can stop for a review: the steps that read it wait until the researcher says
   to continue. They also wait when some of its pages could not be read, until those are retried
@@ -364,7 +368,9 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   the model made is highlighted and the original reading can be taken back in one click.
 - **Analyses**: the document beside its answers, field by field. In a comparison every value
   carries the sigla of the set-ups that gave it, so agreement reads at a glance; reasons are
-  shown below; pointing at a name finds it in the document.
+  shown below; pointing at a name finds it in the document. A right click on a name in a list
+  renames or removes it at once, in the corrected answers of every set-up that gave it, each
+  left reviewed or not as it was.
 - **Correct in place.** Corrections are kept apart from the AI output, which is never
   overwritten. Exports use the corrected text or answers, and `provenance.json` records which
   pieces were reviewed or corrected.
@@ -666,11 +672,21 @@ is remembered per task. Details are in [formats.md](formats.md).
 ## Offline mode
 
 - **Audio transcription with Whisper** (whisper.cpp), with models downloaded once from Hugging
-  Face from Settings and verified before use.
+  Face from Settings and verified before use. It runs on the processor on Windows and on the
+  graphics processor (Metal) on a Mac. Each window of about two minutes is decoded in the
+  language chosen, or in the language detected on its loudest thirty seconds, so a recording
+  that changes language is followed. Lines are kept to subtitle length, cut between words at
+  the times Whisper gives each word; the text joins them into one sentence a line. New job
+  takes a list of names and words to spell (Whisper's initial prompt), which a job started from
+  a project can fill from the project's dictionary, and for the models trained to translate
+  (not Turbo), can have the speech written in English. Whisper's loops (a word or a line said
+  over and over, subtitle credits written over silence) are cut back. Provenance records each
+  of these settings.
 - **Text extraction with Tesseract** (Tesseract 5, built into the app), for clean print: PDFs
   and images read page by page on the computer, each word with its place on the page, so ALTO
   and a searchable PDF come from it too. Its language data is downloaded once per language from
   Settings, from a pinned revision of Tesseract's own `tessdata_best`, and verified before use;
+  Settings lists the languages downloaded and finds the others by name in a search box;
   languages written in Latin letters that Tesseract has no model for (Hausa, Mooré, Wolof,
   Bambara…) read with its Latin script model. Tesseract does not detect the language, so New
   job asks for it. Its speed depends on the computer's processor, from about a second to

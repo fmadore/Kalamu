@@ -20,6 +20,7 @@
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
+	import type { Refused } from '#lib/bindings/Refused.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
@@ -45,6 +46,8 @@
 		offeredFormats,
 		pagesPerCallOf,
 		providerDefault,
+		dictionaryNames,
+		readersOf,
 		readsKind,
 		rulesFor,
 		suggestName,
@@ -82,6 +85,16 @@
 	const rule = $derived(rulesFor(app.rules, task));
 	let files = $state<InspectedFile[]>([]);
 	let inspecting = $state(false);
+	/**
+	 * What the last files added gave that the task does not read, the tasks that read it, and
+	 * the files to move there; on YouTube, the recordings and videos dropped.
+	 */
+	let setAside = $state<{
+		refused: Refused[];
+		readers: Mode[];
+		move: string[];
+		youtube: boolean;
+	} | null>(null);
 	let languageMode = $state<'auto' | 'explicit'>('auto');
 	let languages = $state<string[]>([]);
 	let lineBreaks = $state<LineBreaks>('running_text');
@@ -179,7 +192,17 @@
 		hint: m.newJob.lines[`${value}_hint`]
 	}));
 
+	/** Moves the files set aside to a task that reads them. */
+	async function switchTo(next: Mode) {
+		const move = setAside?.move ?? [];
+		setAside = null;
+		picked++;
+		await loadTask(next);
+		await addPaths(move);
+	}
+
 	async function loadTask(next: Mode) {
+		if (next !== mode) setAside = null;
 		mode = next;
 		presets = await api.listPresets(task);
 		drafts = [newDraft(catalog, rule, presets[0]?.id ?? null, hasKey, [], input)];
@@ -203,16 +226,37 @@
 	}
 
 	async function addPaths(paths: string[]) {
-		// Videos are added by their link; dropped files belong to the other tasks.
-		if (paths.length === 0 || mode === 'youtube') return;
+		if (paths.length === 0) return;
 		error = null;
-		inspecting = true;
+		setAside = null;
 		try {
 			const expanded = await api.expandPaths(paths, task);
+			// Videos are added by their link: recordings and videos dropped here are offered to
+			// Transcribe audio, which reads them.
+			if (mode === 'youtube') {
+				const move = expanded.paths;
+				setAside = {
+					refused: [],
+					readers: move.length > 0 ? ['audio_transcription'] : [],
+					move,
+					youtube: true
+				};
+				return;
+			}
+			if (expanded.refused.length > 0) {
+				setAside = {
+					refused: expanded.refused,
+					readers: readersOf(app.rules, expanded.refused, mode),
+					move: expanded.refused.filter((r) => r.kind).map((r) => r.path),
+					youtube: false
+				};
+			}
+			if (expanded.paths.length === 0) return;
+			inspecting = true;
 			const known = new Set(files.map((f) => f.path));
-			const inspected = await api.inspectFiles(expanded.filter((p) => !known.has(p)));
+			const inspected = await api.inspectFiles(expanded.paths.filter((p) => !known.has(p)));
 			files = [...files, ...inspected];
-			suggest(suggestName(paths, expanded));
+			suggest(suggestName(paths, expanded.paths));
 		} catch (e) {
 			error = describeError(e, m);
 		} finally {
@@ -554,7 +598,59 @@
 			<FileList bind:files {task} {inspecting} onadd={addPaths} />
 		{/if}
 
-		<SetupList bind:drafts {task} {presets} {input} />
+		{#if setAside}
+			{@const aside = setAside}
+			{@const taskName = m.common.quoted(m.task[mode])}
+			{@const set = m.newJob.setAside}
+			{@const refusedFiles = aside.refused.filter((r) => !r.folder)}
+			{@const folders = aside.refused.filter((r) => r.folder)}
+			<div class="notice set-aside" role="status">
+				<div class="set-aside-text">
+					{#if aside.youtube}
+						<p>{set.youtube}</p>
+					{/if}
+					{#if refusedFiles.length > 0}
+						<p>
+							{set.files(
+								listNames(refusedFiles.map((r) => r.file_name)),
+								taskName,
+								refusedFiles.length
+							)}
+						</p>
+					{/if}
+					{#if folders.length > 0}
+						<p>{set.folders(listNames(folders.map((r) => r.file_name)), taskName)}</p>
+					{/if}
+					{#if refusedFiles.some((r) => r.kind === null)}
+						<p class="set-aside-kinds">{set.kinds}</p>
+					{/if}
+				</div>
+				<div class="set-aside-actions">
+					{#each aside.readers as reader (reader)}
+						<button class="btn sm" title={set.insteadHint} onclick={() => void switchTo(reader)}
+							><Icon name={taskOf(reader)} size={14} />{set.instead(m.task[reader])}</button
+						>
+					{/each}
+					<button
+						class="btn ghost sm icon"
+						aria-label={set.dismiss}
+						title={set.dismiss}
+						onclick={() => (setAside = null)}><Icon name="close" size={14} /></button
+					>
+				</div>
+			</div>
+		{/if}
+
+		<SetupList
+			bind:drafts
+			{task}
+			{presets}
+			{input}
+			projectNames={opening.project
+				? () =>
+						api.dictionaryView(opening.project!.id, null).then((view) => dictionaryNames(view.rows))
+				: undefined}
+		/>
 
 		<LanguageStep
 			bind:mode={languageMode}
@@ -655,6 +751,27 @@
 </div>
 
 <style>
+	/* Files added that the task does not read, beside the files: what and where else. */
+	.set-aside {
+		justify-content: space-between;
+		align-items: flex-start;
+	}
+	.set-aside-text {
+		display: grid;
+		gap: var(--space-1);
+		flex: 1 1 18rem;
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+	.set-aside-kinds {
+		color: var(--text-secondary);
+	}
+	.set-aside-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		align-items: center;
+	}
 	/* A page count, not a sentence: as wide as a few digits. */
 	.field.pages {
 		max-width: 10rem;

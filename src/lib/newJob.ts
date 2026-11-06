@@ -14,6 +14,7 @@ import type { Pace } from './bindings/Pace.js';
 import type { PagesPerCall } from './bindings/PagesPerCall.js';
 import type { Pipeline } from './bindings/Pipeline.js';
 import type { Preset } from './bindings/Preset.js';
+import type { Refused } from './bindings/Refused.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { Task } from './bindings/Task.js';
 import type { TaskRules } from './bindings/TaskRules.js';
@@ -56,6 +57,10 @@ export interface Draft {
 	label: string;
 	diarize: boolean;
 	timestamps: boolean;
+	/** Names and words to spell as written, one per line, for a model that takes them. */
+	vocabulary: string;
+	/** Write the speech in English, for a model that can. */
+	translate: boolean;
 	/** How much the model thinks; `null` for the level suggested for the task. */
 	reasoning: string | null;
 	/** For a table of contents, the model that combines the pages: any provider's. */
@@ -140,6 +145,20 @@ export function readsKind(rules: Rules, mode: Mode, kind: string | undefined): b
 	return kind !== 'youtube' && rulesFor(rules, mode).sources.some((k) => k === kind);
 }
 
+/**
+ * The other tasks that read the files a task set aside (an interview dropped on Extract text),
+ * to offer one instead. Folders and files Kalamu reads in no task are left out; none is offered
+ * when nothing set aside is a file of a kind some task reads.
+ */
+export function readersOf(rules: Rules, refused: Refused[], current: Mode): Mode[] {
+	const kinds = [...new Set(refused.flatMap((r) => (r.kind ? [r.kind] : [])))];
+	if (kinds.length === 0) return [];
+	return MODES.filter(
+		(m) =>
+			m !== current && m !== 'youtube' && kinds.every((k) => rulesFor(rules, m).sources.includes(k))
+	);
+}
+
 /** Models that can do a task and, when `input` is given, read it. */
 export function modelsFor(
 	catalog: Catalog,
@@ -158,6 +177,41 @@ function forTask(catalog: Catalog, rule: TaskRules, input?: string): ModelInfo[]
 
 export function modelInfo(catalog: Catalog, d: Draft): ModelInfo | undefined {
 	return catalog.models.find((m) => m.provider === d.provider && m.id === d.model);
+}
+
+/** Whether a transcription model takes a list of names and words to spell (Whisper). */
+export function takesVocabulary(model: ModelInfo | undefined, task: Task): boolean {
+	return task === 'audio_transcription' && model?.vocabulary === true;
+}
+
+/** Whether a transcription model can write the speech in English instead (Whisper but Turbo). */
+export function translates(model: ModelInfo | undefined, task: Task): boolean {
+	return task === 'audio_transcription' && model?.translates === true;
+}
+
+/**
+ * The names and words typed, one a line, without blank lines or repeats; the engine reads
+ * commas and semicolons as separators too.
+ */
+export function vocabularyOf(text: string): string {
+	const seen = new Set<string>();
+	return text
+		.split(/[\n,;]/)
+		.map((t) => t.trim())
+		.filter((t) => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()))
+		.join('\n');
+}
+
+/**
+ * The names a project's dictionary holds, most found first, to spell in a transcription: as
+ * many as Whisper keeps in its prompt.
+ */
+export function dictionaryNames(rows: { label: string; documents: number }[], max = 60): string[] {
+	return [...rows]
+		.sort((a, b) => b.documents - a.documents)
+		.map((r) => r.label.trim())
+		.filter((label, i, all) => label && all.indexOf(label) === i)
+		.slice(0, max);
 }
 
 /** Whisper cannot tell speakers apart; a missing flag means the model can. */
@@ -216,6 +270,8 @@ export function newDraft(
 		label: '',
 		diarize: true,
 		timestamps: true,
+		vocabulary: '',
+		translate: false,
 		reasoning: null,
 		// The pages' provider combines them, with its cheapest model: one key is enough.
 		mergeProvider: provider,
@@ -224,6 +280,8 @@ export function newDraft(
 }
 
 export function toRequest(catalog: Catalog, task: Task, d: Draft): SetupRequest {
+	const model = modelInfo(catalog, d);
+	const vocabulary = takesVocabulary(model, task) ? vocabularyOf(d.vocabulary) : '';
 	return {
 		provider: d.provider,
 		model: d.model,
@@ -234,7 +292,9 @@ export function toRequest(catalog: Catalog, task: Task, d: Draft): SetupRequest 
 			diarize: task === 'audio_transcription' && d.diarize && labelsSpeakers(modelInfo(catalog, d)),
 			timestamps: task === 'audio_transcription' && d.timestamps,
 			speakers: null,
-			reasoning: d.reasoning ?? undefined
+			reasoning: d.reasoning ?? undefined,
+			...(vocabulary ? { vocabulary } : {}),
+			...(translates(model, task) && d.translate ? { translate: true } : {})
 		},
 		merge:
 			task === 'contents' && d.mergeModel
@@ -459,6 +519,8 @@ export function draftsOf(p: Pipeline): Draft[] {
 		diarize: s.options.diarize,
 		reasoning: s.options.reasoning ?? null,
 		timestamps: s.options.timestamps,
+		vocabulary: s.options.vocabulary ?? '',
+		translate: s.options.translate ?? false,
 		mergeProvider: s.merge?.provider ?? s.provider,
 		mergeModel: s.merge?.model ?? s.model
 	}));

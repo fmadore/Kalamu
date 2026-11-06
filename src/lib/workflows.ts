@@ -6,6 +6,7 @@ import type { Catalog } from './bindings/Catalog.js';
 import type { ExportFormat } from './bindings/ExportFormat.js';
 import type { InputKind } from './bindings/InputKind.js';
 import type { Pipeline } from './bindings/Pipeline.js';
+import type { Preset } from './bindings/Preset.js';
 import type { RunStatus } from './bindings/RunStatus.js';
 import type { StepInput } from './bindings/StepInput.js';
 import type { StepState } from './bindings/StepState.js';
@@ -145,8 +146,66 @@ export const EXAMPLES: Record<Example, { task: Task; preset: string }[]> = {
 };
 
 /**
- * An example as a workflow to edit and save: each step on the model New job would offer (the
- * recommended one the researcher has a key for), the first checked before the second reads it.
+ * A prompt as a step's pipeline, on the model New job would offer for it (the recommended one
+ * the researcher has a key for), reading the languages itself, in the researcher's usual
+ * formats, its results beside the sources.
+ */
+export function presetPipeline(
+	task: Task,
+	presetId: string,
+	name: string,
+	catalog: Catalog,
+	rules: Rules,
+	hasKey: (provider: string) => boolean,
+	formatsFor: (task: Task) => ExportFormat[]
+): Pipeline {
+	const r = toRequest(catalog, task, newDraft(catalog, rulesFor(rules, task), presetId, hasKey));
+	return {
+		id: '',
+		name,
+		task,
+		setups: [
+			{
+				provider: r.provider,
+				model: r.model,
+				preset_id: r.preset_id,
+				label: null,
+				options: r.options
+			}
+		],
+		settings: {
+			languages: { mode: 'auto' },
+			sample_pages: null,
+			line_breaks: rulesFor(rules, task).line_breaks ? 'running_text' : null,
+			pace: 'fast'
+		},
+		formats: formatsFor(task),
+		destination: { kind: 'beside_sources' },
+		updated_at: 0
+	};
+}
+
+/**
+ * The step with another prompt. A step still named after its prompt takes the new prompt's
+ * name; one the researcher renamed keeps theirs. Only a step of one set-up has a prompt to
+ * change: a comparison's prompts are its own.
+ */
+export function withPreset(step: WorkflowStep, preset: Preset, previous?: Preset): WorkflowStep {
+	if (step.pipeline.setups.length !== 1) return step;
+	const named = !step.pipeline.name.trim() || step.pipeline.name === previous?.name;
+	return {
+		...step,
+		pipeline: {
+			...step.pipeline,
+			name: named ? preset.name : step.pipeline.name,
+			setups: [{ ...step.pipeline.setups[0], preset_id: preset.id }]
+		}
+	};
+}
+
+/**
+ * An example as a workflow to edit and save: each step on the model New job would offer, the
+ * first checked before the second reads it.
  */
 export function exampleWorkflow(
 	kind: Example,
@@ -156,36 +215,18 @@ export function exampleWorkflow(
 	hasKey: (provider: string) => boolean,
 	formatsFor: (task: Task) => ExportFormat[]
 ): Workflow {
-	const steps = EXAMPLES[kind].map(({ task, preset }, i): WorkflowStep => {
-		const r = toRequest(catalog, task, newDraft(catalog, rulesFor(rules, task), preset, hasKey));
-		const reads = rulesFor(rules, task).line_breaks;
-		return {
-			pipeline: {
-				id: '',
-				name: words.steps[i] ?? preset,
-				task,
-				setups: [
-					{
-						provider: r.provider,
-						model: r.model,
-						preset_id: r.preset_id,
-						label: null,
-						options: r.options
-					}
-				],
-				settings: {
-					languages: { mode: 'auto' },
-					sample_pages: null,
-					line_breaks: reads ? 'running_text' : null,
-					pace: 'fast'
-				},
-				formats: formatsFor(task),
-				destination: { kind: 'beside_sources' },
-				updated_at: 0
-			},
-			input: i === 0 ? SOURCES : { kind: 'step', step: i - 1 },
-			review: i === 0
-		};
-	});
+	const steps = EXAMPLES[kind].map(({ task, preset }, i): WorkflowStep => ({
+		pipeline: presetPipeline(
+			task,
+			preset,
+			words.steps[i] ?? preset,
+			catalog,
+			rules,
+			hasKey,
+			formatsFor
+		),
+		input: i === 0 ? SOURCES : { kind: 'step', step: i - 1 },
+		review: i === 0
+	}));
 	return { ...blankWorkflow(), name: words.name, steps };
 }

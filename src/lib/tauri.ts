@@ -41,6 +41,7 @@ import type { UnitsView } from './bindings/UnitsView.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { Estimate } from './bindings/Estimate.js';
+import type { Expanded } from './bindings/Expanded.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { Job } from './bindings/Job.js';
 import type { JobScores } from './bindings/JobScores.js';
@@ -135,7 +136,7 @@ export const api = {
 	duplicatePreset: (id: string, name: string) => invoke<Preset>('duplicate_preset', { id, name }),
 	exportPresets: (ids: string[], path: string) => invoke<void>('export_presets', { ids, path }),
 	importPresets: (path: string) => invoke<Preset[]>('import_presets', { path }),
-	expandPaths: (paths: string[], task: Task) => invoke<string[]>('expand_paths', { paths, task }),
+	expandPaths: (paths: string[], task: Task) => invoke<Expanded>('expand_paths', { paths, task }),
 	providersToConsent: (providers: string[]) =>
 		invoke<string[]>('providers_to_consent', { providers }),
 	consentProviders: (providers: string[]) => invoke<void>('consent_providers', { providers }),

@@ -49,7 +49,10 @@ Mac, which is second in *Next* below.
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
-  Settings. Jobs keep running from the notification area when the window is closed. Public
+  Settings: names and words to spell (from a project's dictionary too), English translation
+  except with Turbo, each window's language detected on its loudest stretch, lines of subtitle
+  length timed by word, loops cut back, and Metal on a Mac (built in CI, not yet run on a real
+  Mac). Jobs keep running from the notification area when the window is closed. Public
   YouTube videos transcribed from their link with Gemini, without downloading them, and reviewed
   beside the video, played on the dark stage in YouTube's privacy-enhanced player, each video
   named after its title

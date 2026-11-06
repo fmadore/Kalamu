@@ -156,8 +156,10 @@
 		font-size: var(--type-sm);
 		color: var(--text-body);
 	}
+	/* One column no wider than the menu: a long project name is cut short, never scrolled. */
 	.menu:popover-open {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: 1px;
 	}
 	button {
@@ -203,10 +205,12 @@
 	}
 	.projects {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		max-height: 12rem;
-		overflow-y: auto;
+		overflow: hidden auto;
 	}
 	.project {
+		min-width: 0;
 		padding-left: calc(var(--space-2) + 14px + var(--space-2));
 	}
 	.note {
@@ -215,6 +219,7 @@
 		color: var(--text-muted);
 	}
 	.ellipsis {
+		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;

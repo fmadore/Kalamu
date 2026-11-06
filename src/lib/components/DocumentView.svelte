@@ -445,7 +445,9 @@
 	.on {
 		color: var(--hand);
 	}
+	/* The result's actions: on one line when the pane allows, else wrapping between buttons
+	   rather than widening the table past the pane. */
 	.open {
-		white-space: nowrap;
+		line-height: 2.25;
 	}
 </style>

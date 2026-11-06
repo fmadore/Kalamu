@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Catalog } from './bindings/Catalog.js';
 import type { Pipeline } from './bindings/Pipeline.js';
+import type { Preset } from './bindings/Preset.js';
 import type { Task } from './bindings/Task.js';
 import type { WorkflowStep } from './bindings/WorkflowStep.js';
 import rulesJson from './dev/taskRules.json';
@@ -14,11 +15,13 @@ import {
 	inputChoices,
 	isRead,
 	moveStep,
+	presetPipeline,
 	removeStep,
 	SOURCES,
 	startsOn,
 	stepFrom,
-	textInputs
+	textInputs,
+	withPreset
 } from './workflows.js';
 
 const rules = rulesJson as Rules;
@@ -110,6 +113,63 @@ describe('example workflows', () => {
 				if (preset !== null) expect(presets).toContain(`"${preset}"`);
 			}
 		}
+	});
+});
+
+describe('steps made from prompts', () => {
+	const preset = (id: string, name: string): Preset => ({
+		id,
+		task: 'analysis',
+		name,
+		description: '',
+		instructions: '',
+		user_prompt: '',
+		builtin: true,
+		modified: false
+	});
+	const entities = preset('analysis.entities', 'People and places');
+	const summary = preset('analysis.summary_research', 'Research summary');
+
+	it('runs a prompt on the model New job would offer, as a step to add', () => {
+		const p = presetPipeline(
+			'analysis',
+			entities.id,
+			entities.name,
+			catalog,
+			rules,
+			() => true,
+			() => ['txt']
+		);
+		expect(p.name).toBe('People and places');
+		expect(p.setups).toHaveLength(1);
+		expect(p.setups[0].model).not.toBe('');
+		expect(p.setups[0].preset_id).toBe('analysis.entities');
+		expect(p.formats).toEqual(['txt']);
+		const [first] = build('text_extraction');
+		const step = stepFrom(p, [first], rules);
+		// After a step that reads the text, it reads that text.
+		expect(step.input).toEqual({ kind: 'step', step: 0 });
+	});
+
+	it('changes a step’s prompt, and its name while it still names the prompt', () => {
+		const p = presetPipeline(
+			'analysis',
+			entities.id,
+			entities.name,
+			catalog,
+			rules,
+			() => true,
+			() => []
+		);
+		const step: WorkflowStep = { pipeline: p, input: SOURCES, review: false };
+		const changed = withPreset(step, summary, entities);
+		expect(changed.pipeline.setups[0].preset_id).toBe('analysis.summary_research');
+		expect(changed.pipeline.name).toBe('Research summary');
+		const renamed = { ...step, pipeline: { ...p, name: 'Who is named' } };
+		expect(withPreset(renamed, summary, entities).pipeline.name).toBe('Who is named');
+		// A comparison keeps its own prompts.
+		const compared = { ...step, pipeline: { ...p, setups: [p.setups[0], p.setups[0]] } };
+		expect(withPreset(compared, summary, entities)).toBe(compared);
 	});
 });
 
