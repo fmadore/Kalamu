@@ -23,9 +23,10 @@ and `provenance.json` lists it under `failed`. Retrying it writes the files agai
 
 The original PDF, unchanged, with an invisible text layer so it can be searched and its text
 copied. Only models that report where text sits on the page can feed it: Tesseract, which
-places every line and word, and Mistral OCR, whose paragraph boxes are kept with each page.
+places every line and word, and Mistral OCR and LightOnOCR-3, whose block boxes are kept with
+each page.
 Text is set invisibly (render mode 3) in a glyph-less Unicode font, so any script stays
-searchable: each of Tesseract's lines over its own box, and each of Mistral's paragraphs spread
+searchable: each of Tesseract's lines over its own box, and each of Mistral's or LightOnOCR's blocks spread
 over the lines that fit its box; every line is stretched to its box's width. A corrected page
 keeps its words' places where the engine placed each word (see ALTO below); otherwise it is set
 as one block over the page. Only PDF sources get one; it is written as `<name>.searchable.pdf`,
@@ -45,7 +46,7 @@ Kalamu's version and, in `processingStepSettings`, the provider and model, and s
 positions are estimated. A page split into halves is put back together on the whole page.
 
 Offered only from models that report where text sits. Tesseract places every word. Mistral
-OCR places paragraphs only: their lines share the paragraph's height and their words each
+OCR and LightOnOCR-3 place blocks only: their lines share the paragraph's height and their words each
 line's width by their length, which the file says are estimated. A corrected page keeps its
 words' places, as iwac-ai-pipelines' ALTO correction does: the researcher's text is matched to
 the words the engine read, a word kept or changed staying in its box, words added sharing the

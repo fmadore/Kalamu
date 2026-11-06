@@ -48,15 +48,18 @@ Mac, which is second in *Next* below.
   macOS in CI; a full job with networking off is among the live runs still to do.
 - **Offline text extraction with small OCR vision models**
   ([#105](https://github.com/fmadore/Kalamu/issues/105),
-  [decision](decisions/2026-11-06-ocr-vision-models.md)), built, for the next release:
-  LightOnOCR-3 1B (blocks placed on the page, so ALTO and a searchable PDF) and GLM-OCR (text
-  only), downloaded from Settings with their image encoders, run by llama.cpp's own program
-  shipped next to the app, on the processor on Windows and with Metal on a Mac; the seconds a
-  page took on this computer shown in Settings and New job. Still to do before release: the
-  build workflow's first run and its archives published and pinned (`scripts/llama.json`), a
-  full job tried on a real Mac and on Windows x64, and a benchmark on real archive pages
-  (IWAC newspapers, typescripts, French and Arabic print) with error rates; PaddleOCR-VL
-  left out until then (see the decision).
+  [decision](decisions/2026-11-06-ocr-vision-models.md)), for 1.5.0
+  ([notes](release-1.5.0.md)): LightOnOCR-3 1B (blocks placed on the page, so ALTO and a
+  searchable PDF) and GLM-OCR (text only), downloaded from Settings with their image encoders,
+  run by llama.cpp's own program shipped next to the app (b12110, built by
+  `.github/workflows/llama.yml`, published as `llama-b12110-1` and pinned), on the processor on
+  Windows and with Metal on a Mac; the seconds a page took on this computer shown in Settings
+  and New job. Both read the sample page on the three CI runners, LightOnOCR with its blocks
+  placed, in two to three minutes on those small Windows machines. Still to do: a benchmark on
+  real archive pages (IWAC newspapers, typescripts, French and Arabic print) with error rates,
+  a full job on a real Mac and on Windows x64; PaddleOCR-VL left out until then (see the
+  decision). The graphics processor on Windows:
+  [#122](https://github.com/fmadore/Kalamu/issues/122).
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from

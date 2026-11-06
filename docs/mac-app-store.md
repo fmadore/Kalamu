@@ -162,8 +162,8 @@ Gemini from YouTube; Kalamu downloads and stores none of it.
 
 ## What App Review may question
 
-- **Downloaded models (2.4.5(iv), 2.5.2).** Whisper models and Tesseract language data are
-  downloaded from Settings. They are weights and data, not code, for features already in the
+- **Downloaded models (2.4.5(iv), 2.5.2).** Whisper models, the OCR models and Tesseract
+  language data are downloaded from Settings. They are weights and data, not code, for features already in the
   reviewed build; the review notes say so. If refused, the fallback is to bundle the smallest
   Whisper model and English language data in the store build.
 - **Bring-your-own keys.** The review notes give an offline route through the sample files, and
