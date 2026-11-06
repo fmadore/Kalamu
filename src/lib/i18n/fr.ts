@@ -1602,6 +1602,8 @@ export const fr: Messages = {
 		catalogUpdated: (date: string) => `Liste des modèles du ${date}`,
 		catalogRefresh: 'Chercher une liste de modèles à jour',
 		catalogAuto: 'Vérifier au démarrage',
+		catalogNote:
+			'Les prix sont en dollars américains, tirés de la liste que publie chaque fournisseur à la date ci-dessus. Ils changent : Kalamu n’affiche donc que des estimations. Un modèle marqué « préversion » peut changer ou être retiré.',
 		appearanceTitle: 'Apparence et langue',
 		theme: 'Thème',
 		themeSystem: 'Celui du système',

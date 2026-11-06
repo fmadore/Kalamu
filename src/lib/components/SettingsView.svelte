@@ -219,7 +219,7 @@
 						{m.settings.catalogAuto}
 					</label>
 				</div>
-				{#if app.catalog?.notes}<p class="muted small">{app.catalog.notes}</p>{/if}
+				<p class="muted small">{m.settings.catalogNote}</p>
 			</section>
 
 			<section class="card block" aria-labelledby="look-settings">

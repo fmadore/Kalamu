@@ -40,6 +40,7 @@
 		mergeInfo,
 		type Mode,
 		modelInfo,
+		nameOfFile,
 		newDraft,
 		offeredFormats,
 		pagesPerCallOf,
@@ -47,6 +48,7 @@
 		readsKind,
 		rulesFor,
 		suggestName,
+		suggestionFits,
 		taskOf,
 		togetherOf,
 		toRequest,
@@ -94,6 +96,26 @@
 	let formats = $state<ExportFormat[]>([]);
 	let destination = $state<OutputDestination>({ kind: 'beside_sources' });
 	let name = $state('');
+	/** The name Kalamu suggested from the files, as long as the field still holds it. */
+	let suggested = $state('');
+
+	/** Fills the name from the files, unless the researcher typed one of their own. */
+	function suggest(value: string) {
+		if (name && name !== suggested) return;
+		name = value;
+		suggested = value;
+	}
+
+	// A suggested name follows the files: once the file or folder it came from is removed, the
+	// first file left names the job, and no file leaves the field empty again.
+	$effect(() => {
+		if (!suggested || name !== suggested) return;
+		const frozen = opening.sources !== undefined;
+		if (suggestionFits(suggested, files, frozen)) return;
+		const next = files[0] ? nameOfFile(files[0], frozen) : '';
+		name = next;
+		suggested = next;
+	});
 	let estimate = $state<Estimate | null>(null);
 	const estimates = $derived(estimate?.rows ?? []);
 	let error = $state<string | null>(null);
@@ -190,7 +212,7 @@
 			const known = new Set(files.map((f) => f.path));
 			const inspected = await api.inspectFiles(expanded.filter((p) => !known.has(p)));
 			files = [...files, ...inspected];
-			if (!name) name = suggestName(paths, expanded);
+			suggest(suggestName(paths, expanded));
 		} catch (e) {
 			error = describeError(e, m);
 		} finally {
@@ -387,6 +409,7 @@
 		await refreshJobs();
 		files = [];
 		name = '';
+		suggested = '';
 		go(first ? { name: 'jobs', jobId: first } : { name: 'workflows', runId: view.run.id });
 	}
 
@@ -433,6 +456,7 @@
 			await refreshJobs();
 			files = [];
 			name = '';
+			suggested = '';
 			go({ name: 'jobs', jobId: job.id });
 		} catch (e) {
 			error = describeError(e, m);
@@ -461,7 +485,7 @@
 					error: null,
 					pieces: null
 				}));
-				if (!name) name = opening.sources[0]?.file_name.replace(/\.(txt|pdf)$/, '') ?? '';
+				if (files[0]) suggest(nameOfFile(files[0], true));
 			}
 			return opening.paths ? addPaths(opening.paths) : undefined;
 		});
@@ -521,7 +545,8 @@
 			<LinkList
 				bind:links={files}
 				onadd={(added) => {
-					if (!name) name = added.find((l) => l.source?.title)?.source?.title ?? '';
+					const titled = added.find((l) => l.source?.title)?.source?.title;
+					if (titled) suggest(titled);
 				}}
 				onerror={(e) => (error = e)}
 			/>

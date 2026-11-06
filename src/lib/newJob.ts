@@ -5,6 +5,7 @@
 import type { Catalog } from './bindings/Catalog.js';
 import type { ExportFormat } from './bindings/ExportFormat.js';
 import type { InputWarning } from './bindings/InputWarning.js';
+import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { JobSettings } from './bindings/JobSettings.js';
 import type { LineBreaks } from './bindings/LineBreaks.js';
 import type { ModelInfo } from './bindings/ModelInfo.js';
@@ -287,6 +288,28 @@ export function suggestName(added: string[], expanded: string[]): string {
 	const last = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() ?? '';
 	if (added.length === 1 && expanded.length > 1) return last(added[0]);
 	return expanded[0] ? last(expanded[0]) : '';
+}
+
+/** What a file is called in a job name: a video's title, or the file's name, without the
+ * `.txt` or `.pdf` of a text frozen from an earlier job. */
+export function nameOfFile(file: InspectedFile, frozen: boolean): string {
+	if (file.source?.title) return file.source.title;
+	const name = file.source?.file_name ?? file.path.split(/[\\/]/).filter(Boolean).pop() ?? '';
+	return frozen ? name.replace(/\.(txt|pdf)$/, '') : name;
+}
+
+/** Whether a name Kalamu suggested still fits the files: it names one of them, or a folder one
+ * of them is in. Once the file it came from is removed, the name is suggested again. */
+export function suggestionFits(
+	suggested: string,
+	files: InspectedFile[],
+	frozen: boolean
+): boolean {
+	return files.some(
+		(f) =>
+			nameOfFile(f, frozen) === suggested ||
+			f.path.split(/[\\/]/).filter(Boolean).slice(0, -1).includes(suggested)
+	);
 }
 
 /** The reasoning level the engine suggests for a draft's model and the task; none for a model

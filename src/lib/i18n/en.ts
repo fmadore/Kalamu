@@ -1499,6 +1499,8 @@ export const en = {
 		catalogUpdated: (date: string) => `Model list from ${date}`,
 		catalogRefresh: 'Check for an updated model list',
 		catalogAuto: 'Check at startup',
+		catalogNote:
+			'Prices are in US dollars, from each provider’s published list on the date above. They change, so Kalamu shows estimates only. A model marked “preview” may change or be withdrawn.',
 		appearanceTitle: 'Appearance and language',
 		theme: 'Theme',
 		themeSystem: 'Same as the system',
