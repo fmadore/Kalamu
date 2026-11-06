@@ -245,7 +245,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           releaseId: ${{ needs.prepare.outputs.release_id }}
-          args: --target ${{ matrix.target }} --bundles nsis --config src-tauri/tauri.ffmpeg.windows.conf.json
+          args: --target ${{ matrix.target }} --bundles nsis --config src-tauri/tauri.ffmpeg.windows-${{ matrix.arch }}.conf.json
 
   # The macOS disk image, for Apple Silicon, built natively, signed with the Developer ID
   # Application certificate and notarised by Apple, so Gatekeeper opens it without asking

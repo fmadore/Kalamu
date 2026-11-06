@@ -701,10 +701,13 @@ is remembered per task. Details are in [formats.md](formats.md).
   processor, from tens of seconds to over a minute a page, or on the graphics processor,
   several times faster: through Metal on a Mac, and on Windows through Vulkan with a second
   build of the program, used when it finds a graphics processor with memory enough (a discrete
-  card before integrated graphics). Settings names that graphics processor and can keep the
+  card before integrated graphics), and on Snapdragon's Adreno, where Vulkan reads wrongly,
+  through OpenCL for GLM-OCR's image encoder alone, the only model and part measured correct
+  there. Settings names that graphics processor and can keep the
   models on the processor; a page that fails on the graphics processor is read again on the
   processor, which the rest of the session keeps to. Provenance records the device that read
-  each page (`cpu`, `metal`, or `vulkan` with the device's name). Settings and New job show the
+  each page (`cpu`, `metal`, or `vulkan` or `opencl` with the device's name, and for OpenCL
+  that it ran the image encoder only). Settings and New job show the
   seconds a page took on this computer, on the device the next page goes to, once it has read
   some, rather than a promise. They take a fixed
   instruction, no prompt and no language; LightOnOCR-3 places each block of text on the page,
@@ -791,7 +794,8 @@ Licences matter for an MIT app in the Store. hayro is MIT or Apache 2.0; Tessera
 and Leptonica (BSD-2-Clause) are compiled into the app, their licences in the third-party
 notices, and Tesseract's language data is Apache 2.0. llama.cpp (MIT) is our own build of its
 multimodal program, shipped beside the app with its licence (on Windows also its Vulkan build,
-with Vulkan's headers, MIT, compiled in; the Vulkan loader comes with the graphics driver);
+with Vulkan's headers, MIT, compiled in, and on Windows ARM64 its OpenCL build, with Khronos's
+OpenCL headers, Apache 2.0; the loaders come with the graphics driver);
 LightOnOCR-3 (Apache 2.0) and
 GLM-OCR (MIT) are downloaded at the researcher's request. FFmpeg is our own
 audio-only build, LGPL v2.1 or later, run as separate programs rather than linked; its source is
@@ -811,7 +815,8 @@ Microsoft's standard terms forbid the reverse engineering the LGPL must allow. D
   extraction, and [hayro](https://crates.io/crates/hayro) to draw PDF pages for it.
 - [llama.cpp](https://github.com/ggml-org/llama.cpp)'s `llama-mtmd-cli`, built from a pinned
   release and run as a separate program, for the offline OCR models; on Windows a second build
-  of it with Vulkan for the graphics processor.
+  of it with Vulkan for the graphics processor, and on Windows ARM64 a third with OpenCL for
+  Snapdragon's Adreno.
 - Native builds for Windows x64 and ARM64, and macOS on Apple Silicon. What differs between the
   systems lives in one place per layer ([AGENTS.md](../AGENTS.md)).
 

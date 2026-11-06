@@ -24,13 +24,14 @@ ocr_models: Array<OfflineModel>,
 ocr_engine: boolean, 
 /**
  * Seconds a page has taken on this computer, by model, from the pages it read last, on
- * the device the next page goes to.
+ * the device that model's next page goes to.
  */
 ocr_seconds_per_page: { [key in string]: number }, 
 /**
- * Where the next page goes: `cpu`, `metal` or `vulkan`.
+ * Where each model's next page goes: `cpu`, `metal`, `vulkan` or `opencl` (the image
+ * encoder on the graphics processor, the rest on the processor).
  */
-ocr_device: string, 
+ocr_devices: { [key in string]: string }, 
 /**
  * The graphics processor Kalamu found for the OCR models on Windows, whether or not
  * Settings lets them use it; `None` when there is none it can use.

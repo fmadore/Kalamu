@@ -229,6 +229,11 @@ export function secondsPerPage(model: string): number | null | undefined {
 	return seconds === undefined ? null : Math.max(1, Math.round(seconds));
 }
 
+/** Whether an offline OCR model's next page uses the graphics processor, wholly or in part. */
+export function onGraphics(model: string): boolean {
+	return (app.offline?.ocr_devices[model] ?? 'cpu') !== 'cpu';
+}
+
 /** The chosen languages whose language data, for an engine that needs it, is not downloaded. */
 export function missingLanguageData(codes: string[]): string[] {
 	const data = app.offline?.language_data ?? [];

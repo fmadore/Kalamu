@@ -134,7 +134,8 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   (`tesseract-data`).
 - **Offline OCR models**, each with its image encoder, downloaded only when the user asks, and
   the seconds a page took with each on this computer, on the processor and, on Windows, on the
-  graphics processor, named as its driver names it (`ocr-models`).
+  graphics processor, named as its driver names it, and on a Snapdragon the graphics
+  processor's compiled programs, so later pages need not compile them again (`ocr-models`).
 - **Recording pieces converted for listening** (`listening`): the review's player plays most
   recordings straight from the original file; for a format it cannot play, the piece is
   converted on the computer and the copy kept, so it plays at once next time. The folder is

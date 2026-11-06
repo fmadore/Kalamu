@@ -7,8 +7,10 @@ copy would clash with it ([decision](decisions/2026-11-06-ocr-vision-models.md))
 MIT licensed; its licence and the exact build line are installed in the app's licences folder.
 
 On Windows a second build, `llama-mtmd-cli-vulkan`, reads on the graphics processor through
-Vulkan ([decision](decisions/2026-11-06-ocr-graphics-processor.md)). On a Mac the one build
-already uses the graphics processor through Metal.
+Vulkan ([decision](decisions/2026-11-06-ocr-graphics-processor.md)), and on Windows ARM64 a
+third, `llama-mtmd-cli-opencl`, runs GLM-OCR's image encoder on Snapdragon's Adreno through
+OpenCL ([decision](decisions/2026-11-06-ocr-opencl-adreno.md)). On a Mac the one build already
+uses the graphics processor through Metal.
 
 ## Where the app looks
 
@@ -24,6 +26,13 @@ and Snapdragon's Adreno, which reads wrongly through Vulkan, never
 `--device`, unless Settings › Offline turns it off. When the program does not start (no Vulkan
 loader on this PC), finds nothing usable or fails on a page, the processor build reads instead;
 after a failure, for the rest of the session.
+
+The OpenCL build is asked the same way and keeps the Adreno only. Each model lists the graphics
+builds it was measured correct with (`graphics` in `crates/offline/src/vision.rs`): LightOnOCR-3
+the Vulkan build, GLM-OCR the Vulkan and OpenCL builds. Through OpenCL only the image encoder
+runs on the Adreno (`--device GPUOpenCL -ngl 0`), the language model on the processor. Its
+compiled kernels are kept in the models' folder (`ocr-models/opencl-kernels`, through
+`GGML_OPENCL_KERNEL_CACHE_DIR`), so only the first page compiles them.
 
 ## The builds
 
@@ -42,10 +51,11 @@ release (`LLAMA_TAG`, checked against `LLAMA_SHA256`):
   read; the Vulkan build keeps them, so what it leaves to the processor runs the same;
 - on macOS, Metal with its shaders built in, for macOS 13 and later.
 
-It also builds, for Windows ARM64 only, a test program for Snapdragon's Adreno graphics
-processor through OpenCL (`llama-mtmd-cli-opencl`, with Khronos's loader beside it). It is kept
-as an artifact of the run, to compare with the Vulkan build on a Snapdragon laptop, and is
-neither published nor shipped.
+It also builds, for Windows ARM64 only, the OpenCL build for Snapdragon's Adreno
+(`llama-mtmd-cli-opencl`, with Qualcomm's own kernels and Khronos's OpenCL headers, version
+`OPENCL_TAG`). It needs only the OpenCL loader Qualcomm's driver installs (`OpenCL.dll`); the
+loader built from Khronos's source is used for its import library and to start the program on
+the runner, and is not shipped.
 
 Each run then times both models on `samples/bulletin-page.jpg` with the processor builds and
 the arguments the app gives, and writes the seconds and the start of each answer to the job's
@@ -59,16 +69,19 @@ devices they find and read the page once with GLM-OCR, on the processor, to show
    Vulkan SDK means a new `VULKAN_SDK_VERSION`, both installers' SHA-256 and
    `VULKAN_HEADERS_TAG`.
 2. When the builds and their timings pass, its `publish` job does the rest: it publishes the
-   three `llama-<tag>-<target>.zip` and the two `llama-vulkan-<tag>-<target>.zip` archives as a
+   three `llama-<tag>-<target>.zip`, the two `llama-vulkan-<tag>-<target>.zip` and the
+   `llama-opencl-<tag>-aarch64-pc-windows-msvc.zip` archives as a
    GitHub pre-release named `llama-<tag>-<n>` (the next free number, never marked as the app's
    latest release), writes the release name, the tag and each archive's SHA-256 into
    `scripts/llama.json`, commits that to the branch that ran it, and runs the Mac App Store
    sandbox check again on that commit. It does nothing when `scripts/llama.json` already pins
    the tag with every archive, and never runs for a pull request from a fork.
 3. `npm run fetch:llama -- <target>` then installs exactly those archives into
-   `src-tauri/binaries/` (the Vulkan build on Windows only), and refuses one whose hash differs.
+   `src-tauri/binaries/` (the Vulkan build on Windows, the OpenCL build on Windows ARM64), and
+   refuses one whose hash differs.
 4. Release builds add `--config src-tauri/tauri.ffmpeg.conf.json` on a Mac and
-   `--config src-tauri/tauri.ffmpeg.windows.conf.json` on Windows, which list the programs
+   `--config src-tauri/tauri.ffmpeg.windows-x64.conf.json` or `windows-arm64` on Windows, which
+   list the programs
    among the external binaries; the Mac App Store build signs its one to inherit the app's
    sandbox (`scripts/sign-app-store.sh`).
 

@@ -143,7 +143,7 @@ node scripts/third-party-notices.mjs
 ```
 
 ```bash
-npm run tauri build -- --bundles nsis --config src-tauri/tauri.ffmpeg.windows.conf.json
+npm run tauri build -- --bundles nsis --config src-tauri/tauri.ffmpeg.windows-x64.conf.json
 ```
 
 On a Mac the same two scripts fetch and describe the macOS build, and Tauri adds

@@ -1,13 +1,14 @@
 //! Where the OCR models' engine reads a page: the processor, the graphics processor through
 //! Metal on a Mac (the processor build already uses it), or, on Windows, the graphics processor
-//! through Vulkan, with the second build of llama.cpp's program
-//! (docs/decisions/2026-11-06-ocr-graphics-processor.md).
+//! with a second build of llama.cpp's program: through Vulkan, or through OpenCL on Snapdragon's
+//! Adreno, where Vulkan reads wrongly (docs/decisions/2026-11-06-ocr-graphics-processor.md).
 //!
-//! The Vulkan build is asked once a session which devices it finds. It is used only when it
-//! starts (it needs the Vulkan loader graphics drivers install) and finds a graphics processor
-//! with memory enough, when the researcher has not turned it off in Settings, and until a page
-//! fails on it: the session then reads on the processor. The device chosen is passed to the
-//! program, so the one recorded in provenance is the one that read the page.
+//! Each graphics build is asked once a session which devices it finds. It is used only when it
+//! starts (it needs the loader the graphics driver installs) and finds a device it is known to
+//! read correctly on, for a model measured correct there, when the researcher has not turned it
+//! off in Settings, and until a page fails on it: the session then reads on the processor. The
+//! device chosen is passed to the program, so the one recorded in provenance is the one that
+//! read the page.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -21,6 +22,27 @@ use crate::llama::{Device, Llama};
 /// (LightOnOCR-3 at Q8_0 needs about two and a half gigabytes).
 const MIN_MEMORY_MIB: u64 = 2048;
 
+/// A build of the program for a graphics processor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Backend {
+    /// `llama-mtmd-cli-vulkan`, Windows x64 and ARM64: the model and its image encoder on the
+    /// device.
+    Vulkan,
+    /// `llama-mtmd-cli-opencl`, Windows ARM64: the image encoder on Snapdragon's Adreno, the
+    /// language model on the processor, which writes faster there.
+    OpenCl,
+}
+
+impl Backend {
+    /// The device to read on, of those this build lists.
+    fn choose(self, devices: &[Device]) -> Option<&Device> {
+        match self {
+            Self::Vulkan => choose(devices),
+            Self::OpenCl => choose_adreno(devices),
+        }
+    }
+}
+
 /// Where a page is read.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Placement {
@@ -30,6 +52,8 @@ pub enum Placement {
     Metal,
     /// The Vulkan build, on this device.
     Vulkan(Device),
+    /// The OpenCL build: the image encoder on this device, the language model on the processor.
+    OpenCl(Device),
 }
 
 impl Placement {
@@ -42,35 +66,60 @@ impl Placement {
         }
     }
 
-    /// As provenance records it: `cpu`, `metal` or `vulkan`.
+    /// As provenance records it: `cpu`, `metal`, `vulkan` or `opencl`.
     pub fn kind(&self) -> &'static str {
         match self {
             Self::Processor => "cpu",
             Self::Metal => "metal",
             Self::Vulkan(_) => "vulkan",
+            Self::OpenCl(_) => "opencl",
         }
     }
 
-    /// The graphics processor's name, for Vulkan.
+    /// The graphics processor's name, for Vulkan and OpenCL.
     pub fn device_name(&self) -> Option<&str> {
         match self {
-            Self::Vulkan(device) => Some(&device.name),
+            Self::Vulkan(device) | Self::OpenCl(device) => Some(&device.name),
             _ => None,
         }
     }
 
-    /// The arguments that send the model and its image encoder to this device.
+    /// Whether only the image encoder runs on the graphics processor.
+    pub fn encoder_only(&self) -> bool {
+        matches!(self, Self::OpenCl(_))
+    }
+
+    /// The build that reads there, `None` for the processor build.
+    pub(crate) fn backend(&self) -> Option<Backend> {
+        match self {
+            Self::Vulkan(_) => Some(Backend::Vulkan),
+            Self::OpenCl(_) => Some(Backend::OpenCl),
+            _ => None,
+        }
+    }
+
+    /// The arguments that send the model and its image encoder to this device, given after the
+    /// fixed ones: `-ngl 0` keeps the language model's layers on the processor, while the image
+    /// encoder follows `--device`.
     pub(crate) fn arguments(&self) -> Vec<String> {
         match self {
             Self::Vulkan(device) => vec!["--device".to_owned(), device.id.clone()],
+            Self::OpenCl(device) => vec![
+                "--device".to_owned(),
+                device.id.clone(),
+                "-ngl".to_owned(),
+                "0".to_owned(),
+            ],
             _ => Vec::new(),
         }
     }
 
-    /// Speeds are kept apart for each device: `cpu`, `metal`, `vulkan:<name>`.
+    /// Speeds are kept apart for each device: `cpu`, `metal`, `vulkan:<name>`, `opencl:<name>`.
     fn speed_key(&self) -> String {
         match self {
-            Self::Vulkan(device) => format!("vulkan:{}", device.name),
+            Self::Vulkan(device) | Self::OpenCl(device) => {
+                format!("{}:{}", self.kind(), device.name)
+            }
             other => other.kind().to_owned(),
         }
     }
@@ -100,7 +149,19 @@ fn usable(device: &Device) -> bool {
         .iter()
         .any(|s| name.contains(s));
     let wrong = READS_WRONGLY.iter().any(|s| name.contains(s));
-    !software && !wrong && (device.memory_mib == 0 || device.memory_mib >= MIN_MEMORY_MIB)
+    !software && !wrong && enough_memory(device)
+}
+
+fn enough_memory(device: &Device) -> bool {
+    device.memory_mib == 0 || device.memory_mib >= MIN_MEMORY_MIB
+}
+
+/// Through OpenCL, Snapdragon's Adreno only: the one device it was measured correct on, with
+/// Qualcomm's own kernels. Elsewhere the Vulkan build covers the graphics processor.
+fn choose_adreno(devices: &[Device]) -> Option<&Device> {
+    devices
+        .iter()
+        .find(|d| d.name.to_ascii_lowercase().contains("adreno") && enough_memory(d))
 }
 
 /// 0 for a name that reads as a discrete graphics card, 2 for Microsoft's Direct3D 12 layer
@@ -133,8 +194,9 @@ fn rank(name: &str) -> u8 {
     if discrete || intel_card { 0 } else { 1 }
 }
 
-/// The Vulkan build and what is known of it this session.
+/// A graphics build and what is known of it this session.
 pub(crate) struct Graphics {
+    backend: Backend,
     program: Llama,
     /// Settings › Offline: use the graphics processor when there is one.
     wanted: AtomicBool,
@@ -145,13 +207,18 @@ pub(crate) struct Graphics {
 }
 
 impl Graphics {
-    pub(crate) fn new(program: Llama, wanted: bool) -> Self {
+    pub(crate) fn new(backend: Backend, program: Llama, wanted: bool) -> Self {
         Self {
+            backend,
             program,
             wanted: AtomicBool::new(wanted),
             found: OnceLock::new(),
             failed: AtomicBool::new(false),
         }
+    }
+
+    pub(crate) fn backend(&self) -> Backend {
+        self.backend
     }
 
     pub(crate) fn program(&self) -> &Llama {
@@ -167,6 +234,7 @@ impl Graphics {
         if !self.failed.swap(true, Ordering::Relaxed) {
             tracing::warn!(
                 reason,
+                backend = ?self.backend,
                 "a page failed on the graphics processor: the OCR models read on the processor until Kalamu restarts"
             );
         }
@@ -178,12 +246,17 @@ impl Graphics {
         self.found
             .get_or_init(|| match self.program.devices() {
                 Ok(devices) => {
-                    let chosen = choose(&devices).cloned();
-                    tracing::info!(?devices, ?chosen, "graphics processors for the OCR models");
+                    let chosen = self.backend.choose(&devices).cloned();
+                    tracing::info!(
+                        backend = ?self.backend,
+                        ?devices,
+                        ?chosen,
+                        "graphics processors for the OCR models"
+                    );
                     chosen
                 }
                 Err(error) => {
-                    tracing::info!(%error, "no graphics processor for the OCR models");
+                    tracing::info!(backend = ?self.backend, %error, "no graphics processor for the OCR models");
                     None
                 }
             })
@@ -199,9 +272,10 @@ impl Graphics {
     /// failed; `None` for the processor build.
     pub(crate) fn placement(&self, device: Option<&Device>) -> Option<Placement> {
         let usable = self.wanted.load(Ordering::Relaxed) && !self.failed.load(Ordering::Relaxed);
-        device
-            .filter(|_| usable)
-            .map(|d| Placement::Vulkan(d.clone()))
+        device.filter(|_| usable).map(|d| match self.backend {
+            Backend::Vulkan => Placement::Vulkan(d.clone()),
+            Backend::OpenCl => Placement::OpenCl(d.clone()),
+        })
     }
 }
 
@@ -295,10 +369,37 @@ mod tests {
     }
 
     #[test]
-    fn snapdragon_reads_on_the_processor() {
-        // As this build's `--list-devices` prints it on a Snapdragon X Elite.
-        let snapdragon = [device("Vulkan0", "Qualcomm(R) Adreno(TM) X1-85 GPU", 12086)];
-        assert_eq!(choose(&snapdragon), None);
+    fn snapdragon_uses_opencl_not_vulkan() {
+        // As each build's `--list-devices` prints it on a Snapdragon X Elite.
+        let vulkan = [device("Vulkan0", "Qualcomm(R) Adreno(TM) X1-85 GPU", 12086)];
+        assert_eq!(Backend::Vulkan.choose(&vulkan), None);
+        let opencl = [device(
+            "GPUOpenCL",
+            "Qualcomm(R) Adreno(TM) X1-85 GPU",
+            7990,
+        )];
+        assert_eq!(Backend::OpenCl.choose(&opencl).unwrap().id, "GPUOpenCL");
+        // OpenCL elsewhere is not measured: Vulkan covers it.
+        let nvidia = [device("GPUOpenCL", "NVIDIA GeForce RTX 3060", 12288)];
+        assert_eq!(Backend::OpenCl.choose(&nvidia), None);
+    }
+
+    #[test]
+    fn opencl_keeps_the_language_model_on_the_processor() {
+        let gpu = Graphics::new(Backend::OpenCl, Llama::at(PathBuf::from("nowhere")), true);
+        let adreno = device("GPUOpenCL", "Qualcomm(R) Adreno(TM) X1-85 GPU", 7990);
+        let placement = gpu.placement(Some(&adreno)).unwrap();
+        assert_eq!(placement.kind(), "opencl");
+        assert!(placement.encoder_only());
+        assert_eq!(placement.backend(), Some(Backend::OpenCl));
+        assert_eq!(
+            placement.arguments(),
+            ["--device", "GPUOpenCL", "-ngl", "0"]
+        );
+        assert_eq!(
+            placement.speed_key(),
+            "opencl:Qualcomm(R) Adreno(TM) X1-85 GPU"
+        );
     }
 
     #[test]
@@ -326,7 +427,7 @@ mod tests {
 
     #[test]
     fn the_graphics_processor_is_used_only_when_wanted_and_working() {
-        let gpu = Graphics::new(Llama::at(PathBuf::from("nowhere")), true);
+        let gpu = Graphics::new(Backend::Vulkan, Llama::at(PathBuf::from("nowhere")), true);
         let found = device("Vulkan0", "NVIDIA GeForce RTX 3060", 12288);
         let on_gpu = gpu.placement(Some(&found)).unwrap();
         assert_eq!(on_gpu.kind(), "vulkan");
@@ -342,7 +443,11 @@ mod tests {
 
     #[test]
     fn a_program_that_does_not_start_finds_no_device() {
-        let gpu = Graphics::new(Llama::at(PathBuf::from("no-such-program")), true);
+        let gpu = Graphics::new(
+            Backend::Vulkan,
+            Llama::at(PathBuf::from("no-such-program")),
+            true,
+        );
         assert_eq!(gpu.device_if_known(), None);
         assert_eq!(gpu.device(), None);
         assert_eq!(gpu.device_if_known(), Some(None));

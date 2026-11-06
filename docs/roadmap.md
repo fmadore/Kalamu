@@ -64,10 +64,13 @@ Mac, which is second in *Next* below.
   with Vulkan for Windows x64 and ARM64, run when it finds a graphics processor with memory
   enough, a discrete card first, unless Settings keeps the models on the processor; a page that
   fails there is read again on the processor, which the session then keeps to; provenance
-  names the device, and the seconds a page took are kept per device. CI builds it and an
-  OpenCL test build for Snapdragon's Adreno; still to do: timings on an NVIDIA or AMD card,
-  Intel integrated graphics and a Snapdragon laptop, where Vulkan and OpenCL are compared, and
-  NPUs (Hexagon, OpenVINO), to be measured before anything is built.
+  names the device, and the seconds a page took are kept per device. On a Snapdragon X Elite
+  Vulkan read wrongly on the Adreno, which is never chosen; through OpenCL, GLM-OCR's image
+  encoder reads there correctly, about 37 s a page against 58 s
+  ([decision](decisions/2026-11-06-ocr-opencl-adreno.md)), while LightOnOCR-3 stays on the
+  processor. Still to do: timings on an NVIDIA or AMD card and Intel integrated graphics, a
+  second Snapdragon driver and more pages, and NPUs (Hexagon, OpenVINO), to be measured
+  before anything is built.
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
