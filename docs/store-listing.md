@@ -334,8 +334,16 @@ or Tesseract on `bulletin-page.jpg` for the $0.00 estimate.
 | 10 | **Offline.** Settings › Offline with a Whisper model and French for Tesseract downloaded, or New job with Tesseract (on this computer) chosen and the estimate at $0.00. | Transcribe recordings with Whisper and read printed pages with Tesseract, offline: free, no account or key, and nothing leaves your PC. |
 
 Search, the glossary, Prompts, the job's page and the Jobs page are left out of the ten: the
-description and features name them. The captures are not kept in the repository; name them
-after the rows above (`01-comparison.png` … `10-offline.png`).
+description and features name them. Name the captures after the rows above
+(`01-comparison.png` … `10-offline.png`).
+
+The Microsoft Store set for 1.4.1 is in [store/screenshots/](store/screenshots/), `en/` for the
+English listing and `fr/` for the French one: 1920 × 1080 window captures of version 1.4.1 on
+Windows, light theme. Scene 4 shows the workflow's drawing in Workflows, and scene 10 New job
+with Tesseract on `bulletin-page.jpg`. In scene 1, pages 3 and 4 are marked reviewed without
+corrections, so its footer's error rates score set-up A at 0 %: correct those pages, or retake
+the image, before relying on the figures it shows. Read each image again at full size before
+uploading it.
 
 Leave out an image rather than show a feature that does not run as shown: certification checks
 that the screenshots match the app.
