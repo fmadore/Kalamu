@@ -68,9 +68,11 @@ Mac, which is second in *Next* below.
   Vulkan read wrongly on the Adreno, which is never chosen; through OpenCL, GLM-OCR's image
   encoder reads there correctly, about 37 s a page against 58 s
   ([decision](decisions/2026-11-06-ocr-opencl-adreno.md)), while LightOnOCR-3 stays on the
-  processor. Still to do: timings on an NVIDIA or AMD card and Intel integrated graphics, a
-  second Snapdragon driver and more pages, and NPUs (Hexagon, OpenVINO), to be measured
-  before anything is built.
+  processor. On Intel's integrated Arc graphics (Core Ultra 7 155H) Vulkan reads both models
+  correctly in less than half the processor's time (51.5 s against 116.8 s for LightOnOCR-3,
+  43.4 s against 98.8 s for GLM-OCR). Still to do: timings on an NVIDIA or AMD card, a second
+  Snapdragon driver and more pages, and NPUs (Hexagon, OpenVINO), to be measured before
+  anything is built.
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
