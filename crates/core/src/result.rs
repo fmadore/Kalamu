@@ -136,6 +136,45 @@ impl TextRegion {
     }
 }
 
+/// A block's Markdown or HTML (tables) as the words a reader would search for: what a text
+/// region holds for an engine that reports blocks of Markdown (Mistral OCR, LightOnOCR).
+pub fn plain_words(content: &str) -> String {
+    let mut out = String::new();
+    let mut in_tag = false;
+    let mut tag = String::new();
+    for c in content.chars() {
+        match c {
+            '<' => {
+                in_tag = true;
+                tag.clear();
+            }
+            '>' if in_tag => {
+                in_tag = false;
+                let name = tag.trim_start_matches('/').to_ascii_lowercase();
+                if name.starts_with("td") || name.starts_with("th") {
+                    out.push(' ');
+                } else if name.starts_with("tr") || name.starts_with("br") || name.starts_with('p')
+                {
+                    out.push('\n');
+                }
+            }
+            _ if in_tag => tag.push(c),
+            '*' | '_' | '`' => {}
+            _ => out.push(c),
+        }
+    }
+    out.lines()
+        .map(|l| {
+            l.trim()
+                .trim_start_matches('#')
+                .trim_start_matches(['-', '>'])
+                .trim()
+        })
+        .filter(|l| !l.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// A line of a [`TextRegion`], in the same page fractions.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]

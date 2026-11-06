@@ -76,6 +76,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-ffmpeg.mjs "$TARGET"
 
+      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
+      - name: Fetch the bundled llama.cpp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-llama.mjs "$TARGET"
+
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs "$TARGET"
 
@@ -89,9 +95,11 @@ jobs:
         run: |
           app="target/$TARGET/release/bundle/macos/Kalamu.app"
           scripts/sign-app-store.sh "$app" - src-tauri/appstore/Sandbox.plist
-          codesign -d --entitlements - --xml "$app/Contents/MacOS/ffmpeg" 2>/dev/null \
-            | grep -q 'com.apple.security.inherit' \
-            || { echo "::error::FFmpeg is not signed to inherit the app's sandbox."; exit 1; }
+          for tool in ffmpeg llama-mtmd-cli; do
+            codesign -d --entitlements - --xml "$app/Contents/MacOS/$tool" 2>/dev/null \
+              | grep -q 'com.apple.security.inherit' \
+              || { echo "::error::$tool is not signed to inherit the app's sandbox."; exit 1; }
+          done
           test -f "$app/Contents/Resources/container-migration.plist" \
             || { echo "::error::The container migration manifest is missing."; exit 1; }
 
@@ -126,6 +134,10 @@ jobs:
           ls "$logs"/kalamu.log* >/dev/null 2>&1             || { echo "::error::The sandboxed app wrote no log in the container."; exit 1; }
           if grep -q "FFmpeg not found" "$logs"/kalamu.log*; then
             echo "::error::FFmpeg did not run inside the sandbox."
+            exit 1
+          fi
+          if grep -q "llama.cpp not found" "$logs"/kalamu.log*; then
+            echo "::error::The app did not find llama.cpp's program inside the sandbox."
             exit 1
           fi
 
@@ -203,6 +215,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-ffmpeg.mjs "$TARGET"
+
+      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
+      - name: Fetch the bundled llama.cpp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-llama.mjs "$TARGET"
 
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs "$TARGET"

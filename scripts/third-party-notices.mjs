@@ -151,9 +151,9 @@ writeFileSync(
 		'Kalamu: third-party notices',
 		'',
 		'Kalamu is MIT licensed. It is built with the open-source software below, each under its own',
-		'licence. FFmpeg and Opus, which Kalamu runs as separate programs, have their licences in',
-		'the files beside this one. Whisper models are downloaded at the user’s request and are not',
-		'part of the app.',
+		'licence. FFmpeg, Opus and llama.cpp, which Kalamu runs as separate programs, have their',
+		'licences in the files beside this one. Whisper models and the OCR models (LightOnOCR-3,',
+		'Apache 2.0; GLM-OCR, MIT) are downloaded at the user’s request and are not part of the app.',
 		'',
 		section('Rust crates', rust),
 		section('Front-end packages', npm)

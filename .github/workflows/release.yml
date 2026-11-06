@@ -228,6 +228,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-ffmpeg.mjs ${{ matrix.target }}
 
+      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
+      - name: Fetch the bundled llama.cpp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-llama.mjs ${{ matrix.target }}
+
       # Installed in licenses/ beside FFmpeg's: every crate and package built into the app.
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs ${{ matrix.target }}
@@ -289,6 +295,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-ffmpeg.mjs "$TARGET"
 
+      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
+      - name: Fetch the bundled llama.cpp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-llama.mjs "$TARGET"
+
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs "$TARGET"
 
@@ -339,7 +351,7 @@ jobs:
           app="$mnt/Kalamu.app"
           codesign --verify --deep --strict --verbose=2 "$app"
           codesign -dv "$app" 2>&1 | grep -E 'Authority|TeamIdentifier|Identifier|flags'
-          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe"; do
+          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli"; do
             details=$(codesign -dv --verbose=4 "$exe" 2>&1)
             grep -q '^Authority=Developer ID Application:' <<< "$details"               || { echo "::error::$exe is not signed with the Developer ID."; exit 1; }
             grep -q 'flags=.*runtime' <<< "$details"               || { echo "::error::$exe lacks the hardened runtime notarisation needs."; exit 1; }
@@ -348,7 +360,8 @@ jobs:
           spctl --assess --type execute --verbose=4 "$app"
           "$app/Contents/MacOS/ffmpeg" -hide_banner -version | sed -n 1p
           "$app/Contents/MacOS/ffprobe" -hide_banner -version | sed -n 1p
-          for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt; do
+          "$app/Contents/MacOS/llama-mtmd-cli" --version
+          for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt llama.cpp-MIT.txt llama.cpp-BUILD.txt; do
             test -s "$app/Contents/Resources/licenses/$licence"
           done
           ls -l "target/$TARGET/release/bundle/dmg/"
@@ -411,6 +424,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-ffmpeg.mjs ${{ matrix.target }}
+
+      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
+      - name: Fetch the bundled llama.cpp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-llama.mjs ${{ matrix.target }}
 
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs ${{ matrix.target }}

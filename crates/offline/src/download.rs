@@ -43,7 +43,8 @@ impl Transfer {
 
 impl ModelManager {
     /// Downloads a model, and first the file every model of its engine needs if it is missing
-    /// (Whisper's voice-activity model).
+    /// (Whisper's voice-activity model) and the file it is paired with (a vision model's image
+    /// encoder).
     pub async fn download(&self, id: &str) -> Result<(), OfflineError> {
         let model = self
             .find(id)
@@ -53,6 +54,11 @@ impl ModelManager {
         {
             self.download_from(companion, &Transfer::pinned(companion))
                 .await?;
+        }
+        if let Some(pair) = model.pair
+            && !self.is_installed(pair)
+        {
+            self.download_from(pair, &Transfer::pinned(pair)).await?;
         }
         self.download_from(model, &Transfer::pinned(model)).await
     }

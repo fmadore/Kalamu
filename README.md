@@ -27,7 +27,10 @@ Store version is being prepared ([steps](docs/mac-app-store.md)).
 
 - **Extract text** from PDFs and images, printed or handwritten, with Gemini, OpenAI, Claude or
   Mistral, or offline with Tesseract for clean print: free, nothing sent, each word with its
-  place on the page; its speed depends on your computer's processor. Lines kept as on the
+  place on the page; its speed depends on your computer's processor. For degraded print, old
+  newspapers in columns and tables, small OCR vision models (LightOnOCR-3, GLM-OCR) also run
+  offline: much slower on a PC's processor, faster on a Mac's graphics processor, and, like
+  any language model, able to write text that is not on the page. Lines kept as on the
   page, or joined into running text; pages read one at a time or several together, still
   reviewed page by page. Choose how much each model thinks; every answer may use the whole
   output the model allows.

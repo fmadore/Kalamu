@@ -1514,6 +1514,16 @@ export const en = {
 		latinScript: (languages: string) =>
 			`Languages written in Latin letters without a model of their own: ${languages}`,
 		noLanguageData: 'No language downloaded yet.',
+		ocrTitle: 'Text extraction with OCR models',
+		ocrHint:
+			'Small vision models trained to read pages, run on this computer: nothing is sent, no key or account is needed, and they work without an internet connection once downloaded. They read degraded print, old newspapers in columns, tables and mixed layouts far better than Tesseract, but are much slower: from tens of seconds to over a minute a page, depending on this computer’s processor, its memory and how much text the page holds. On a Mac they use the graphics processor and are several times faster. Like any language model they can write text that is not on the page, so compare doubtful pages with Tesseract or a cloud model. For clean print Tesseract is quicker; for large volumes a cloud model is.',
+		ocrSpeed: (seconds: number) =>
+			`On this computer: about ${seconds} s a page, from the pages it read last.`,
+		ocrNotTimed: 'Not yet timed on this computer: the first pages read will tell.',
+		ocrNoEngine:
+			'This copy of Kalamu was built without the engine that runs OCR models: the installers and the Store’s version carry it.',
+		ocrCpu: (missing: string) =>
+			`This processor lacks ${missing}, which offline OCR models need. Use Tesseract or a cloud model instead.`,
 		addLanguageData: 'Download a language',
 		findLanguageData: 'Find a language by its name',
 		oneDownload: 'One download at a time: the next can start once this one is done.',
@@ -1554,7 +1564,7 @@ export const en = {
 		dataFolder: 'Data folder',
 		/** `{name}` marks a link; the names it shows are in `creditNames`. */
 		credits:
-			'Kalamu uses {ffmpeg} under the LGPL v2.1 (its {source} is published with each release), {opus} (BSD), {whisper} (MIT), the {models} (MIT), {tesseract} and its language data (Apache 2.0), {leptonica} (BSD) and {hayro} (MIT). The full licences are in the licences folder installed with the app.',
+			'Kalamu uses {ffmpeg} under the LGPL v2.1 (its {source} is published with each release), {opus} (BSD), {whisper} (MIT), the {models} (MIT), {tesseract} and its language data (Apache 2.0), {leptonica} (BSD), {hayro} (MIT), {llama} (MIT), {lighton} (Apache 2.0) and {glm} (MIT). The full licences are in the licences folder installed with the app.',
 		creditNames: {
 			ffmpeg: 'FFmpeg',
 			source: 'source',
@@ -1563,7 +1573,10 @@ export const en = {
 			models: 'Whisper models',
 			tesseract: 'Tesseract',
 			leptonica: 'Leptonica',
-			hayro: 'hayro'
+			hayro: 'hayro',
+			llama: 'llama.cpp',
+			lighton: 'LightOnOCR-3',
+			glm: 'GLM-OCR'
 		},
 		privacy:
 			'Nothing is sent to the developer: no files, keys, results or usage data. AI output can contain fluent but wrong text; check a sample against the source.'

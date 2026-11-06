@@ -213,8 +213,20 @@ export async function refreshOffline(): Promise<void> {
  */
 export function isInstalled(provider: string, model: string): boolean {
 	if (!app.catalog?.providers.find((p) => p.id === provider)?.local) return true;
-	const status = app.offline?.models.find((m) => m.id === model);
+	const status = [...(app.offline?.models ?? []), ...(app.offline?.ocr_models ?? [])].find(
+		(m) => m.id === model
+	);
 	return status ? status.installed : app.offline !== null;
+}
+
+/**
+ * For an offline OCR model, the seconds a page has taken on this computer, rounded, or `null`
+ * before it has read any; `undefined` for any other model.
+ */
+export function secondsPerPage(model: string): number | null | undefined {
+	if (!app.offline?.ocr_models.some((s) => s.id === model)) return undefined;
+	const seconds = app.offline.ocr_seconds_per_page[model];
+	return seconds === undefined ? null : Math.max(1, Math.round(seconds));
 }
 
 /** The chosen languages whose language data, for an engine that needs it, is not downloaded. */

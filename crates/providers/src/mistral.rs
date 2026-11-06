@@ -218,7 +218,7 @@ fn page_regions(page: &Value) -> Vec<TextRegion> {
                 n("bottom_right_x")?,
                 n("bottom_right_y")?,
             );
-            let text = plain_text(b.get("content").and_then(Value::as_str)?);
+            let text = kalamu_core::plain_words(b.get("content").and_then(Value::as_str)?);
             (!text.is_empty() && x1 > x0 && y1 > y0).then(|| {
                 TextRegion::block(
                     (x0 / width) as f32,
@@ -230,44 +230,6 @@ fn page_regions(page: &Value) -> Vec<TextRegion> {
             })
         })
         .collect()
-}
-
-/// A block's Markdown or HTML (tables) as the words a reader would search for.
-fn plain_text(content: &str) -> String {
-    let mut out = String::new();
-    let mut in_tag = false;
-    let mut tag = String::new();
-    for c in content.chars() {
-        match c {
-            '<' => {
-                in_tag = true;
-                tag.clear();
-            }
-            '>' if in_tag => {
-                in_tag = false;
-                let name = tag.trim_start_matches('/').to_ascii_lowercase();
-                if name.starts_with("td") || name.starts_with("th") {
-                    out.push(' ');
-                } else if name.starts_with("tr") || name.starts_with("br") || name.starts_with('p')
-                {
-                    out.push('\n');
-                }
-            }
-            _ if in_tag => tag.push(c),
-            '*' | '_' | '`' => {}
-            _ => out.push(c),
-        }
-    }
-    out.lines()
-        .map(|l| {
-            l.trim()
-                .trim_start_matches('#')
-                .trim_start_matches(['-', '>'])
-                .trim()
-        })
-        .filter(|l| !l.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 /// Mistral OCR leaves `![img-0.jpeg](img-0.jpeg)` where pictures were; they point nowhere.

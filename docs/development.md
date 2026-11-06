@@ -126,11 +126,16 @@ publishes the release once every asset is attached, as a pre-release while the v
 with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To
 rebuild a tag, run the workflow by hand from the Actions tab.
 
-To build an installer locally, fetch the bundled FFmpeg first; it comes from the build in
-`.github/workflows/ffmpeg.yml`:
+To build an installer locally, fetch the bundled FFmpeg and llama.cpp first; they come from the
+builds in `.github/workflows/ffmpeg.yml` and `.github/workflows/llama.yml`
+([llama.md](llama.md)):
 
 ```bash
 node scripts/fetch-ffmpeg.mjs
+```
+
+```bash
+node scripts/fetch-llama.mjs
 ```
 
 ```bash

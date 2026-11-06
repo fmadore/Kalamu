@@ -1615,6 +1615,16 @@ export const fr: Messages = {
 		latinScript: (languages: string) =>
 			`Langues écrites en lettres latines sans modèle propre : ${languages}`,
 		noLanguageData: 'Aucune langue téléchargée pour l’instant.',
+		ocrTitle: 'Extraction de texte avec des modèles OCR',
+		ocrHint:
+			'De petits modèles de vision entraînés à lire des pages, qui s’exécutent sur cet ordinateur : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et ils fonctionnent sans connexion internet une fois téléchargés. Ils lisent bien mieux que Tesseract l’imprimé abîmé, les vieux journaux en colonnes, les tableaux et les mises en page mêlées, mais ils sont bien plus lents : de quelques dizaines de secondes à plus d’une minute par page, selon le processeur de cet ordinateur, sa mémoire et la quantité de texte sur la page. Sur un Mac, ils utilisent le processeur graphique et vont plusieurs fois plus vite. Comme tout modèle de langue, ils peuvent écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Pour l’imprimé net, Tesseract est plus rapide ; pour de gros volumes, un modèle en ligne.',
+		ocrSpeed: (seconds: number) =>
+			`Sur cet ordinateur : environ ${seconds} s par page, d’après les dernières pages lues.`,
+		ocrNotTimed: 'Pas encore mesuré sur cet ordinateur : les premières pages lues le diront.',
+		ocrNoEngine:
+			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner les modèles OCR : les installateurs et la version du Store le contiennent.',
+		ocrCpu: (missing: string) =>
+			`Il manque à ce processeur ${missing}, dont les modèles OCR hors ligne ont besoin. Utilisez plutôt Tesseract ou un modèle en ligne.`,
 		addLanguageData: 'Télécharger une langue',
 		findLanguageData: 'Chercher une langue par son nom',
 		oneDownload:
@@ -1657,7 +1667,7 @@ export const fr: Messages = {
 		version: (v: string) => `Version ${v}`,
 		dataFolder: 'Dossier des données',
 		credits:
-			'Kalamu utilise {ffmpeg} sous licence LGPL v2.1 (son {source} est publié avec chaque version), {opus} (BSD), {whisper} (MIT), les {models} (MIT), {tesseract} et ses données de langue (Apache 2.0), {leptonica} (BSD) et {hayro} (MIT). Les licences complètes se trouvent dans le dossier des licences installé avec l’application.',
+			'Kalamu utilise {ffmpeg} sous licence LGPL v2.1 (son {source} est publié avec chaque version), {opus} (BSD), {whisper} (MIT), les {models} (MIT), {tesseract} et ses données de langue (Apache 2.0), {leptonica} (BSD), {hayro} (MIT), {llama} (MIT), {lighton} (Apache 2.0) et {glm} (MIT). Les licences complètes se trouvent dans le dossier des licences installé avec l’application.',
 		creditNames: {
 			ffmpeg: 'FFmpeg',
 			source: 'code source',
@@ -1666,7 +1676,10 @@ export const fr: Messages = {
 			models: 'modèles Whisper',
 			tesseract: 'Tesseract',
 			leptonica: 'Leptonica',
-			hayro: 'hayro'
+			hayro: 'hayro',
+			llama: 'llama.cpp',
+			lighton: 'LightOnOCR-3',
+			glm: 'GLM-OCR'
 		},
 		privacy:
 			'Rien n’est envoyé au développeur : ni fichiers, ni clés, ni résultats, ni données d’utilisation. Un texte produit par l’IA peut être fluide mais faux ; vérifiez un échantillon sur la source.'

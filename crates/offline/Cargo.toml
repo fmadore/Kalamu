@@ -1,6 +1,6 @@
 [package]
 name = "kalamu-offline"
-description = "Offline engines for Kalamu (Whisper, Tesseract), behind the same provider trait as the cloud."
+description = "Offline engines for Kalamu (Whisper, Tesseract, small OCR vision models), behind the same provider trait as the cloud."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,7 +13,9 @@ image.workspace = true
 reqwest.workspace = true
 kalamu-core.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 sha2.workspace = true
+tempfile.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
@@ -31,12 +33,13 @@ kreuzberg-tesseract = { version = "=4.10.4", default-features = false, features 
 
 [features]
 # Whisper on the graphics processor with Metal, its shaders built into the app. The app turns
-# it on for macOS in its own manifest; this crate never asks which system it runs on.
+# it on for macOS in its own manifest; this crate never asks which system it runs on. The OCR
+# models' engine, a separate program, is built with Metal for macOS too, and provenance then
+# says so.
 metal = ["whisper-rs/metal"]
 
 [dev-dependencies]
 kalamu-catalog.workspace = true
-tempfile.workspace = true
 
 [lints]
 workspace = true

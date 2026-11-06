@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-04",
+  "updated": "2026-11-06",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
     {
@@ -48,6 +48,18 @@
       "translations": {
         "fr": {
           "name": "Tesseract (sur cet ordinateur)"
+        }
+      }
+    },
+    {
+      "id": "local-ocr",
+      "name": "OCR models (on this computer)",
+      "key_url": "",
+      "key_prefix": null,
+      "local": true,
+      "translations": {
+        "fr": {
+          "name": "Modèles OCR (sur cet ordinateur)"
         }
       }
     }
@@ -1523,6 +1535,87 @@
       "translations": {
         "fr": {
           "description": "Hors ligne. Pour les pages imprimées nettes : gratuit, et chaque mot revient avec son emplacement sur la page (ALTO, PDF interrogeable). Pas pour l’écriture manuscrite, et faible sur l’imprimé abîmé, les journaux pâlis et les mises en page complexes. Sa vitesse dépend du processeur de cet ordinateur : d’environ une seconde à plusieurs secondes par page. Ne détecte pas la langue : chaque langue choisie se télécharge une fois (3 à 15 Mo ; 100 Mo pour les langues écrites en lettres latines sans modèle propre, comme le haoussa, le mooré ou le wolof)."
+        }
+      }
+    },
+    {
+      "provider": "local-ocr",
+      "id": "lightonocr-3-1b",
+      "name": "LightOnOCR-3 1B",
+      "description": "Offline. A small vision model trained for whole pages: reads degraded print, old newspapers in columns, tables and forms far better than Tesseract, and places each block of text on the page (ALTO, searchable PDF, by block). Like any language model it can write text that is not on the page: compare doubtful pages with Tesseract or a cloud model. Much slower than Tesseract: from tens of seconds to over a minute a page on a PC's processor, and several times faster on a Mac, where it uses the graphics processor. Reads any language written in the scripts it was trained on, best in European languages. 1.1 GB download.",
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "image/png",
+        "image/jpeg"
+      ],
+      "languages": [
+        "en",
+        "fr",
+        "de",
+        "es",
+        "it",
+        "nl",
+        "pt",
+        "zh",
+        "ja"
+      ],
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [
+        "text_extraction"
+      ],
+      "accepts_prompt": false,
+      "takes_language": false,
+      "layout": true,
+      "pricing": {
+        "per_page": 0.0,
+        "note": "Runs on this computer: free, and nothing is sent anywhere."
+      },
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Un petit modèle de vision entraîné sur des pages entières : lit bien mieux que Tesseract l’imprimé abîmé, les vieux journaux en colonnes, les tableaux et les formulaires, et place chaque bloc de texte sur la page (ALTO, PDF interrogeable, par bloc). Comme tout modèle de langue, il peut écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Bien plus lent que Tesseract : de quelques dizaines de secondes à plus d’une minute par page sur le processeur d’un PC, et plusieurs fois plus rapide sur un Mac, où il utilise le processeur graphique. Lit toute langue écrite dans les écritures qu’il a apprises, au mieux les langues européennes. Téléchargement de 1,1 Go."
+        }
+      }
+    },
+    {
+      "provider": "local-ocr",
+      "id": "glm-ocr",
+      "name": "GLM-OCR",
+      "description": "Offline. A small vision model for documents, strong on tables, formulas and Chinese, Japanese and Korean as well as European languages. Returns the text alone, without its place on the page. Like any language model it can write text that is not on the page: compare doubtful pages with Tesseract or a cloud model. Much slower than Tesseract: from tens of seconds to over a minute a page on a PC's processor, and several times faster on a Mac, where it uses the graphics processor. 1.4 GB download.",
+      "tasks": [
+        "text_extraction"
+      ],
+      "inputs": [
+        "image/png",
+        "image/jpeg"
+      ],
+      "languages": [
+        "zh",
+        "en",
+        "fr",
+        "es",
+        "ru",
+        "de",
+        "ja",
+        "ko"
+      ],
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "accepts_prompt": false,
+      "takes_language": false,
+      "layout": false,
+      "pricing": {
+        "per_page": 0.0,
+        "note": "Runs on this computer: free, and nothing is sent anywhere."
+      },
+      "limits": {},
+      "translations": {
+        "fr": {
+          "description": "Hors ligne. Un petit modèle de vision pour les documents, à l’aise avec les tableaux, les formules et le chinois, le japonais et le coréen comme avec les langues européennes. Rend le texte seul, sans son emplacement sur la page. Comme tout modèle de langue, il peut écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Bien plus lent que Tesseract : de quelques dizaines de secondes à plus d’une minute par page sur le processeur d’un PC, et plusieurs fois plus rapide sur un Mac, où il utilise le processeur graphique. Téléchargement de 1,4 Go."
         }
       }
     }

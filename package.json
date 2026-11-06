@@ -26,6 +26,7 @@
 		"test:webkit": "playwright test",
 		"tauri": "tauri",
 		"fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs",
+		"fetch:llama": "node scripts/fetch-llama.mjs",
 		"bundle:msix:x64": "node scripts/bundle-msix.mjs x64",
 		"bundle:msix:arm64": "node scripts/bundle-msix.mjs arm64"
 	},

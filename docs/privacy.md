@@ -1,9 +1,11 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 4 November 2026, the second policy of that day, which applies from
-version 1.4.1: for the question asked before files are first sent to each cloud provider; for
-the Mac App Store build, the folders the user grants it, kept as bookmarks, and its data folder
-inside the app's own container; and for the file paths the logs may hold. Version 1.0.0, the first Microsoft
+**Effective date:** 6 November 2026, which applies from the first version after 1.4.1 that
+offers the offline OCR models: small vision models downloaded from Hugging Face at the user's
+request and run on the computer. The second policy of 4 November 2026, which applies to version
+1.4.1, did not list them; it added the question asked before files are first sent to each cloud
+provider; for the Mac App Store build, the folders the user grants it, kept as bookmarks, and
+its data folder inside the app's own container; and the file paths the logs may hold. Version 1.0.0, the first Microsoft
 Store release, was published under the policy
 of 30 October 2026, which did not list projects or workflows; the policy of 1 November 2026 did
 not list the dictionary's proposed merges, the first of 2 November 2026 did not cover macOS,
@@ -21,8 +23,8 @@ chooses for each job:
 
 - through a cloud AI provider the user selects and configures with their own API key: Google
   Gemini, OpenAI, Anthropic Claude or Mistral; or
-- offline, on the user's computer: Whisper for transcription, and Tesseract for text
-  extraction from printed pages.
+- offline, on the user's computer: Whisper for transcription, and Tesseract and small OCR
+  vision models (LightOnOCR-3, GLM-OCR) for text extraction from page images.
 
 The developer operates no server for the app and receives nothing from it.
 
@@ -60,8 +62,9 @@ rules (from about a day to several weeks), in the user's account, and Kalamu col
 answers when it next opens.
 
 **Offline**, with Whisper, recordings are converted and transcribed on the computer and never
-uploaded; with Tesseract, PDF pages and images are drawn and read on the computer and never
-uploaded.
+uploaded; with Tesseract or an offline OCR model, PDF pages and images are drawn and read on the
+computer and never uploaded. The OCR models run in llama.cpp's program, shipped with the app,
+which opens no connection.
 
 Files and results may contain personal information about the people named or heard in them.
 Choose a provider whose terms suit the material, or work offline.
@@ -129,6 +132,8 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
 - **Whisper models**, downloaded only when the user asks (`whisper-models`).
 - **Tesseract language data**, one file per language, downloaded only when the user asks
   (`tesseract-data`).
+- **Offline OCR models**, each with its image encoder, downloaded only when the user asks, and
+  the seconds a page took with each on this computer (`ocr-models`).
 - **Recording pieces converted for listening** (`listening`): the review's player plays most
   recordings straight from the original file; for a format it cannot play, the piece is
   converted on the computer and the copy kept, so it plays at once next time. The folder is
@@ -164,8 +169,10 @@ Besides the provider the user chooses, the app connects to:
 
 - **GitHub** (`raw.githubusercontent.com`), at startup, to check for a newer catalogue of
   models and prices. It downloads a public file and sends nothing about the user.
-- **Hugging Face** (`huggingface.co`), only when the user downloads a Whisper model. The
-  download is checked against its size and SHA-256 before use.
+- **Hugging Face** (`huggingface.co`), only when the user downloads a Whisper model or an
+  offline OCR model, from a fixed version of the model's repository there (for the OCR models,
+  `prithivMLmods/LightOnOCR-3-1B-GGUF` and `ggml-org/GLM-OCR-GGUF`). The download is checked
+  against its size and SHA-256 before use, and nothing about the user is sent.
 - **GitHub** (`raw.githubusercontent.com`), only when the user downloads Tesseract's data for a
   language, from the Tesseract project's own repository at a fixed version. The download is
   checked against its size and SHA-256 before use, and nothing about the user is sent.

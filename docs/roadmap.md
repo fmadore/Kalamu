@@ -46,6 +46,17 @@ Mac, which is second in *Next* below.
   with estimated lines and words. A corrected page keeps its words' places, as
   iwac-ai-pipelines' ALTO correction does. Built and tested on Windows ARM64; Windows x64 and
   macOS in CI; a full job with networking off is among the live runs still to do.
+- **Offline text extraction with small OCR vision models**
+  ([#105](https://github.com/fmadore/Kalamu/issues/105),
+  [decision](decisions/2026-11-06-ocr-vision-models.md)), built, for the next release:
+  LightOnOCR-3 1B (blocks placed on the page, so ALTO and a searchable PDF) and GLM-OCR (text
+  only), downloaded from Settings with their image encoders, run by llama.cpp's own program
+  shipped next to the app, on the processor on Windows and with Metal on a Mac; the seconds a
+  page took on this computer shown in Settings and New job. Still to do before release: the
+  build workflow's first run and its archives published and pinned (`scripts/llama.json`), a
+  full job tried on a real Mac and on Windows x64, and a benchmark on real archive pages
+  (IWAC newspapers, typescripts, French and Arabic print) with error rates; PaddleOCR-VL
+  left out until then (see the decision).
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
@@ -508,11 +519,6 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 
 - German interface: `de.ts` beside `en.ts` and `fr.ts`.
 - OpenRouter for open-weights models.
-- **Offline text extraction with a small OCR vision model** (PaddleOCR-VL, GLM-OCR or
-  LightOnOCR) for print Tesseract reads badly (old newspapers, mixed layouts, tables), on the
-  computer through llama.cpp or another runtime, after a benchmark on real pages; much slower
-  than Tesseract on the processor, which the app must say:
-  [#105](https://github.com/fmadore/Kalamu/issues/105).
 - Linking names to imported local authority records (an id from candidate records, or none,
   with a reason), building on the project dictionary in #48.
 - Tables of contents of text files (a long Word report, a transcript, read in passages).

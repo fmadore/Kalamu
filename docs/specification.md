@@ -156,8 +156,8 @@ no text layer needs *Extract text* instead.
   them one by one, shows progress, and picks up where it stopped after an interruption. Files
   the task chosen does not read, and folders holding none it reads, are named rather than
   dropped unseen, with the task that reads them offered instead.
-- **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper
-  and Tesseract,
+- **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper,
+  Tesseract and OCR models,
   and later OpenRouter for open-weights models. The app shows only the providers and models
   that can handle the chosen task: Claude, for instance, reads documents but does not accept
   audio.
@@ -309,7 +309,7 @@ together, so that a researcher knows what is sent and what comes back:
 
 - **Extract text**: a PDF or images split one piece per page (double pages in two first), each
   page read by the model, joined into one text per file with its page numbers. When a chosen
-  model reports where text sits on the page (Tesseract, Mistral OCR), its pages are drawn with their
+  model reports where text sits on the page (Tesseract, Mistral OCR, LightOnOCR-3), its pages are drawn with their
   blocks boxed and a second result follows, joined by a plus rather than an arrow: ALTO XML with
   each word in its place, and the original PDF with an invisible text layer, for PDF files
   only. With models that return text only (the language models), a note under the reading says
@@ -638,7 +638,7 @@ is remembered per task. Details are in [formats.md](formats.md).
 
 | Task | Formats |
 | --- | --- |
-| **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original, from PDF sources) and ALTO XML (each block, line and word with its place) only from models that report where text sits on the page: Tesseract, word by word, and Mistral OCR, by paragraph (in ALTO its lines and words are then estimated); a corrected page keeps its words' places; PAGE XML later |
+| **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original, from PDF sources) and ALTO XML (each block, line and word with its place) only from models that report where text sits on the page: Tesseract, word by word, and Mistral OCR and LightOnOCR-3, by block (in ALTO their lines and words are then estimated); a corrected page keeps its words' places; PAGE XML later |
 | **Transcription** | `.txt`, `.md`, `.docx`, `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
 | **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
 | **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.csv` and `.json` |
@@ -693,8 +693,22 @@ is remembered per task. Details are in [formats.md](formats.md).
   several seconds a page, and Settings and the model's description say so. Handwriting presets
   are offered with cloud models only
   ([decision](decisions/2026-11-04-tesseract.md)).
-- **A small OCR vision model** (PaddleOCR-VL, GLM-OCR or LightOnOCR), for print Tesseract reads
-  badly, is planned: [#105](https://github.com/fmadore/Kalamu/issues/105).
+- **Text extraction with small OCR vision models** (LightOnOCR-3 1B, GLM-OCR), for print
+  Tesseract reads badly: degraded type, old newspapers in columns, mixed layouts, tables. Each
+  model and its image encoder are downloaded once from Settings, from a pinned revision on
+  Hugging Face (about 1.1 and 1.4 GB), and verified before use. They run in llama.cpp's own
+  program, shipped next to the app rather than linked into it, one page at a time: on the
+  processor on Windows, from tens of seconds to over a minute a page, and on the graphics
+  processor (Metal) on a Mac, several times faster. Settings and New job show the seconds a
+  page took on this computer once it has read some, rather than a promise. They take a fixed
+  instruction, no prompt and no language; LightOnOCR-3 places each block of text on the page,
+  which gives ALTO and a searchable PDF by block, while GLM-OCR returns the text alone. Like
+  any language model they can write text that is not on the page, which their descriptions
+  say: compare doubtful pages with Tesseract or a cloud model. A page whose answer reaches the
+  output limit is marked as cut short, and a line repeated over and over at its end is kept
+  once. Pausing ends the page being read, which is read again on resuming
+  ([decision](decisions/2026-11-06-ocr-vision-models.md),
+  [#105](https://github.com/fmadore/Kalamu/issues/105)).
 
 Offline results are a fallback, not the default for difficult material: the app says which
 engine produced a result and records it like any other. Analyses need a cloud model.
@@ -757,7 +771,8 @@ text alone, and a scan has its text extracted first. The tools ship inside the a
 (x64 and ARM64) and macOS (Apple Silicon).
 
 - **PDF to images** with [hayro](https://github.com/LaurenzV/hayro), a PDF rasterizer written
-  in Rust, page by page at 300 dpi, for engines that read images only (Tesseract); previews are
+  in Rust, page by page at 300 dpi, for engines that read images only (Tesseract, the offline
+  OCR models); previews are
   drawn in the interface with pdf.js.
 - **Image preparation**: multi-page TIFFs split, HEIC, WebP and BMP converted, oversized scans
   resized, orientation fixed from EXIF data.
@@ -768,7 +783,9 @@ text alone, and a scan has its text extracted first. The tools ship inside the a
 
 Licences matter for an MIT app in the Store. hayro is MIT or Apache 2.0; Tesseract (Apache 2.0)
 and Leptonica (BSD-2-Clause) are compiled into the app, their licences in the third-party
-notices, and Tesseract's language data is Apache 2.0. FFmpeg is our own
+notices, and Tesseract's language data is Apache 2.0. llama.cpp (MIT) is our own build of its
+multimodal program, shipped beside the app with its licence; LightOnOCR-3 (Apache 2.0) and
+GLM-OCR (MIT) are downloaded at the researcher's request. FFmpeg is our own
 audio-only build, LGPL v2.1 or later, run as separate programs rather than linked; its source is
 published with each release, and the Store listing carries our own licence terms because
 Microsoft's standard terms forbid the reverse engineering the LGPL must allow. Details are in
@@ -784,6 +801,8 @@ Microsoft's standard terms forbid the reverse engineering the LGPL must allow. D
 - [Tesseract](https://github.com/tesseract-ocr/tesseract) 5, through
   [kreuzberg-tesseract](https://crates.io/crates/kreuzberg-tesseract), for offline text
   extraction, and [hayro](https://crates.io/crates/hayro) to draw PDF pages for it.
+- [llama.cpp](https://github.com/ggml-org/llama.cpp)'s `llama-mtmd-cli`, built from a pinned
+  release and run as a separate program, for the offline OCR models.
 - Native builds for Windows x64 and ARM64, and macOS on Apple Silicon. What differs between the
   systems lives in one place per layer ([AGENTS.md](../AGENTS.md)).
 

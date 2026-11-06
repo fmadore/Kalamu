@@ -37,7 +37,10 @@ export default defineConfig(
 						'playwright.config.ts',
 						'e2e/*.ts'
 					],
-					defaultProject: 'tsconfig.json'
+					defaultProject: 'tsconfig.json',
+					// The files above, outside tsconfig.json, are linted with a default project:
+					// a handful of small scripts, above the parser's default of eight.
+					maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 16
 				},
 				tsconfigRootDir: import.meta.dirname,
 				extraFileExtensions: ['.svelte']

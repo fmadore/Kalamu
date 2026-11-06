@@ -27,7 +27,7 @@ use whisper_rs::{
     FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperState,
 };
 
-use crate::cpu;
+use crate::cpu::{self, DEVICE, threads};
 use crate::models::{self, ModelFile, ModelLease, ModelManager};
 
 pub const PROVIDER_ID: &str = "whisper";
@@ -49,12 +49,6 @@ const MAX_PROMPT_CHARS: usize = 600;
 /// How many times running a word, or a group of words, is repeated before it counts as a loop.
 const LOOP_WORD: usize = 6;
 const LOOP_GROUP: usize = 4;
-/// Where the model runs: the graphics processor with Metal on a Mac, the processor elsewhere.
-const DEVICE: &str = if cfg!(feature = "metal") {
-    "metal"
-} else {
-    "cpu"
-};
 /// A loaded model is released after this long unused, to give its memory back.
 const IDLE_UNLOAD: Duration = Duration::from_secs(180);
 
@@ -175,18 +169,6 @@ fn language(choice: &LanguageChoice) -> Option<String> {
         [one] if whisper_rs::get_lang_id(one.as_str()).is_some() => Some(one.as_str().to_owned()),
         _ => None,
     }
-}
-
-/// ggml's workers busy-wait, so a thread per hardware thread starves the interface; beyond
-/// about eight these models stop getting faster. Half the logical processors on x64 (one per
-/// core with SMT), all but one on ARM64, which has no SMT.
-fn threads(logical: usize) -> i32 {
-    let threads = if cfg!(target_arch = "x86_64") {
-        logical / 2
-    } else {
-        logical.saturating_sub(1)
-    };
-    i32::try_from(threads).unwrap_or(i32::MAX).clamp(1, 8)
 }
 
 /// 16-bit little-endian samples to the floats whisper.cpp reads.
@@ -861,12 +843,6 @@ mod tests {
             &Tuning::default(),
         );
         assert!(!fixed.iter().any(|s| s.name.starts_with("vad")));
-    }
-
-    #[test]
-    fn inference_threads_leave_room_and_stop_at_eight() {
-        assert_eq!(threads(1), 1);
-        assert_eq!(threads(64), 8);
     }
 
     /// A real transcription with a downloaded model; run with

@@ -65,6 +65,16 @@ A page typed by hand reaches ALTO and the searchable PDF; word positions are no 
 The window no longer freezes while a correction or an export is saved during a running job. Dialogs keep the keyboard inside, and a file dropped with its folder is listed once.
 ```
 
+Draft for the next version, which adds the offline OCR models; with it, change the features
+line on offline work to "Offline, with no account, key or cost: transcription with Whisper, and
+text extraction with Tesseract or small OCR models", add to the system requirements "Offline OCR
+models: internet once to download a model (about 1.1 or 1.4 GB), then runs on the CPU, from tens
+of seconds to over a minute a page", and name the OCR models in the certification notes:
+
+```text
+Extract text offline from degraded print, old newspapers in columns and tables with a small OCR model, LightOnOCR-3 or GLM-OCR: free, nothing sent, after a one-time download. Much slower than Tesseract on a PC; Settings and New job show how long a page takes on yours.
+```
+
 The 1.4.0 text, for the record:
 
 ```text

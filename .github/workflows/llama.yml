@@ -1,0 +1,316 @@
+name: llama.cpp
+
+# Builds llama.cpp's multimodal program (`llama-mtmd-cli`), which runs the offline OCR models
+# next to Kalamu (docs/llama.md; docs/decisions/2026-11-06-ocr-vision-models.md), for Windows x64
+# and ARM64 and for macOS on Apple Silicon: one self-contained executable each, from the pinned
+# release's source, built for the same processors as the Whisper linked into the app
+# (`.cargo/config.toml`), on the processor on Windows and with Metal on a Mac. MIT licensed.
+#
+# Each run then times both models on the sample page on its own runner, for the record of how
+# fast they read on each kind of processor (the job's summary), and uploads, per architecture,
+# the program, its licence and the exact build line.
+#
+# Run by hand when llama.cpp is updated, or through a pull request that changes this file. When
+# every build passes, the `publish` job publishes the archives as a GitHub release named
+# `llama-<tag>-<n>` and pins their SHA-256 in `scripts/llama.json` on the same branch, so
+# `npm run fetch:llama` installs exactly these binaries.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/llama.yml
+
+permissions:
+  contents: read
+
+env:
+  # The release llama.cpp names v0.9.0 (4 November 2026), and the SHA-256 of its source archive.
+  LLAMA_TAG: "b12110"
+  LLAMA_SHA256: "442a8ec2c5e8b8895175abfcede851964572370f0a56b33166c94905260da008"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - triple: x86_64-pc-windows-msvc
+            runner: windows-latest
+            # AVX2 with FMA and F16C, as Whisper (`crates/offline/src/cpu.rs` checks them).
+            cpu: >-
+              -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DGGML_BMI2=ON
+              -DGGML_SSE42=ON
+          - triple: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+            cpu: -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16
+          - triple: aarch64-apple-darwin
+            runner: macos-latest
+            # Metal, its shaders built into the program; macOS 13 and later, as the app.
+            cpu: >-
+              -DGGML_METAL=ON -DGGML_METAL_EMBED_LIBRARY=ON -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Git Bash on Windows has sha256sum but not shasum; macOS has shasum.
+      - name: Hash tool
+        run: |
+          if command -v sha256sum > /dev/null; then echo "SHA256=sha256sum"; else echo "SHA256=shasum -a 256"; fi >> "$GITHUB_ENV"
+
+      - name: Source
+        run: |
+          curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "llama.cpp-${LLAMA_TAG}.tar.gz" \
+            "https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMA_TAG}.tar.gz"
+          echo "${LLAMA_SHA256}  llama.cpp-${LLAMA_TAG}.tar.gz" | $SHA256 -c -
+          tar -xzf "llama.cpp-${LLAMA_TAG}.tar.gz"
+
+      # clang-cl, as for Whisper: ggml refuses MSVC itself on ARM64, and one compiler for both
+      # Windows targets keeps the instruction sets the same as the app's.
+      - name: Compiler (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "CC=clang-cl" >> $env:GITHUB_ENV
+          "CXX=clang-cl" >> $env:GITHUB_ENV
+          "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        if: runner.os == 'Windows'
+        with:
+          arch: ${{ matrix.triple == 'aarch64-pc-windows-msvc' && 'arm64' || 'x64' }}
+
+      # Static throughout: llama.cpp, ggml and the C runtime inside the one executable, so
+      # nothing is shipped beside it. No OpenMP (its runtime is a library of its own), no
+      # network (the models are downloaded by the app), no server, tests or examples.
+      - name: Build
+        run: |
+          BUILD=(
+            -DCMAKE_BUILD_TYPE=Release
+            -DBUILD_SHARED_LIBS=OFF
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+            -DGGML_NATIVE=OFF
+            -DGGML_OPENMP=OFF
+            -DGGML_BACKEND_DL=OFF
+            -DLLAMA_OPENSSL=OFF
+            -DLLAMA_BUILD_TESTS=OFF
+            -DLLAMA_BUILD_EXAMPLES=OFF
+            -DLLAMA_BUILD_SERVER=OFF
+            -DLLAMA_BUILD_APP=OFF
+            -DLLAMA_BUILD_TOOLS=ON
+            ${{ matrix.cpu }}
+          )
+          cmake -S "llama.cpp-${LLAMA_TAG}" -B build "${BUILD[@]}"
+          cmake --build build --config Release --target llama-mtmd-cli -j 4
+          printf '%s\n' "llama.cpp ${LLAMA_TAG}, built by .github/workflows/llama.yml in ${GITHUB_REPOSITORY}, run ${GITHUB_RUN_ID}." \
+            "cmake ${BUILD[*]}" > BUILD.txt
+          cat BUILD.txt
+
+      - name: Package
+        run: |
+          exe=""
+          [ "$RUNNER_OS" = Windows ] && exe=".exe"
+          program=$(find build -name "llama-mtmd-cli${exe}" -type f | head -1)
+          dir="llama-${LLAMA_TAG}-${{ matrix.triple }}"
+          mkdir -p "$dir/licenses"
+          cp "$program" "$dir/"
+          cp "llama.cpp-${LLAMA_TAG}/LICENSE" "$dir/licenses/llama.cpp-MIT.txt"
+          cp BUILD.txt "$dir/"
+          "$dir/llama-mtmd-cli${exe}" --version
+          # Nothing but the system's own libraries.
+          if [ "$RUNNER_OS" = macOS ]; then
+            otool -L "$dir/llama-mtmd-cli" | tee deps.txt
+            if tail -n +2 deps.txt | grep -v -E '^\s+(/usr/lib/|/System/Library/)'; then
+              echo "::error::llama-mtmd-cli links a library macOS does not have."; exit 1
+            fi
+          else
+            dumpbin //dependents "$dir/llama-mtmd-cli.exe" | tee deps.txt
+            # Only the listed libraries, not the header that names the file itself.
+            if grep -i -E '^\s+\S+\.dll\s*$' deps.txt | grep -i -E 'msvcp|vcruntime|vcomp|libomp|ggml|llama|mtmd'; then
+              echo "::error::llama-mtmd-cli needs a library Windows does not have."; exit 1
+            fi
+          fi
+          if [ "$RUNNER_OS" = Windows ]; then
+            pwsh -Command "Compress-Archive -Path '$dir/*' -DestinationPath '$dir.zip'"
+          else
+            (cd "$dir" && zip -r "../$dir.zip" .)
+          fi
+          $SHA256 "$dir.zip" | tee "$dir.zip.sha256"
+          echo "DIR=$dir" >> "$GITHUB_ENV"
+          echo "EXE=$exe" >> "$GITHUB_ENV"
+
+      # The models' files, pinned as in crates/offline/src/vision.rs.
+      - uses: actions/cache@v6
+        id: models
+        with:
+          path: models
+          key: ocr-models-lightonocr-3-1b-ff5c331-glm-ocr-65a42de
+
+      - name: Models
+        if: steps.models.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p models
+          get() {
+            curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "models/$2" "https://huggingface.co/$1/resolve/$3/$2"
+            echo "$4  models/$2" | $SHA256 -c -
+          }
+          get prithivMLmods/LightOnOCR-3-1B-GGUF LightOnOCR-3-1B.Q8_0.gguf ff5c331ec2cfee9de1c8054c21ccf88b8c5b0faa 2cf9771aaf236a1c25f389a344510c9ad4daa863e5fdd82651cf7d7834fede1c
+          get prithivMLmods/LightOnOCR-3-1B-GGUF LightOnOCR-3-1B.mmproj-q8_0.gguf ff5c331ec2cfee9de1c8054c21ccf88b8c5b0faa 7bbf40e6f3e91626843fdcbba67c7fe774821f3f0c537dcc8c769026a528839a
+          get ggml-org/GLM-OCR-GGUF GLM-OCR-Q8_0.gguf 65a42de1148dbed2297e922b5dbc7d9b70c36578 45bc244a6446aff850521dc41f18bc8d7105ad5f0c2c8c28af04e7cc4f4d50b1
+          get ggml-org/GLM-OCR-GGUF mmproj-GLM-OCR-Q8_0.gguf 65a42de1148dbed2297e922b5dbc7d9b70c36578 9c4b58e33e316ed142eb5dcb41abec3844d3e6e5dc361ffb782c3fa9d175141f
+
+      # The arguments the app gives (vision.rs, `arguments`), on the sample page, which is
+      # smaller than either model's largest image and is sent as it is.
+      - name: Time both models on the sample page
+        run: |
+          # As the app (crates/offline/src/cpu.rs): half the logical processors on x64, all but
+          # one on ARM64.
+          if [ "$RUNNER_OS" = macOS ]; then logical=$(sysctl -n hw.ncpu); else logical=$(nproc); fi
+          case "${{ matrix.triple }}" in
+            x86_64-*) threads=$(( logical / 2 )) ;;
+            *) threads=$(( logical - 1 )) ;;
+          esac
+          [ "$threads" -lt 1 ] && threads=1
+          [ "$threads" -gt 8 ] && threads=8
+          run() {
+            local name=$1 model=$2 encoder=$3 prompt=$4
+            local start end
+            start=$(date +%s)
+            "$DIR/llama-mtmd-cli${EXE}" -m "models/$model" --mmproj "models/$encoder" \
+              --image samples/bulletin-page.jpg -p "<__media__>${prompt}"$'\n' --jinja --temp 0 \
+              -n 6144 -c 10240 -b 4096 -ub 4096 -t "$threads" -ngl 99 --no-warmup \
+              > "$name.txt" 2> "$name.log" || { tail -30 "$name.log"; return 1; }
+            end=$(date +%s)
+            {
+              echo "### $name: $((end - start)) s on ${{ matrix.triple }} ($threads threads)"
+              echo
+              echo '```'
+              head -c 1500 "$name.txt"
+              echo
+              echo '```'
+              grep -E 'llama_perf_context_print|image slice|encoded in' "$name.log" | tail -8 | sed 's/^/    /' || true
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+            if ! grep -qi bulletin "$name.txt"; then
+              echo "::error::$name did not read the page's title (BULLETIN)."
+              tail -40 "$name.log"
+              failed=1
+            fi
+            # LightOnOCR's grounding mode places each block: `![text](80,175,920,225)`.
+            if [ "$prompt" = grounding ] && ! grep -qE '^!\[[a-z_+]+\]\([0-9]+, ?[0-9]+, ?[0-9]+, ?[0-9]+\)' "$name.txt"; then
+              echo "::error::$name wrote no block positions in grounding mode."
+              failed=1
+            fi
+          }
+          failed=0
+          run lightonocr-3-1b LightOnOCR-3-1B.Q8_0.gguf LightOnOCR-3-1B.mmproj-q8_0.gguf grounding
+          run glm-ocr GLM-OCR-Q8_0.gguf mmproj-GLM-OCR-Q8_0.gguf "Text Recognition:"
+          exit "$failed"
+
+      # Kept even when a model misreads the page, so its answer can be read.
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: llama-${{ matrix.triple }}
+          path: |
+            llama-*.zip
+            llama-*.zip.sha256
+            lightonocr-3-1b.txt
+            glm-ocr.txt
+
+  # Once all three builds and their timings pass: the archives published as a GitHub release
+  # (a pre-release holding only them, as FFmpeg's, so it never becomes the app's "Latest"), their
+  # SHA-256 written into scripts/llama.json and committed to the branch that ran this, and the
+  # Mac App Store sandbox check run again on that commit, since a commit pushed with this job's
+  # token starts no workflow by itself. Skipped when scripts/llama.json already pins this tag,
+  # and for pull requests from forks, which get no write access.
+  publish:
+    needs: build
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency: llama-publish
+    permissions:
+      contents: write
+      actions: write
+    env:
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      # The branch's commit, not the merge commit a pull request's run is checked out at.
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # Credentials kept, unlike the other jobs: this one pushes the pins.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BRANCH }}
+
+      - name: Already pinned?
+        id: pinned
+        run: |
+          if jq -e --arg tag "$LLAMA_TAG" \
+            '.version == $tag and ([.archives[].sha256] | all(length == 64))' scripts/llama.json > /dev/null; then
+            echo "scripts/llama.json already pins llama.cpp ${LLAMA_TAG}: nothing to publish."
+            echo "done=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/download-artifact@v8
+        if: steps.pinned.outputs.done != 'true'
+        with:
+          pattern: llama-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish the release
+        if: steps.pinned.outputs.done != 'true'
+        run: |
+          # The next free number, so a second build of the same tag never replaces the first.
+          n=1
+          while gh release view "llama-${LLAMA_TAG}-${n}" > /dev/null 2>&1; do n=$((n + 1)); done
+          release="llama-${LLAMA_TAG}-${n}"
+          triples="x86_64-pc-windows-msvc aarch64-pc-windows-msvc aarch64-apple-darwin"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) as bundled with Kalamu to run the offline OCR models: llama.cpp ${LLAMA_TAG}, one static executable each for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal). This release only holds the archives the app is built with; it is not an app release."
+            echo
+            echo "- **Licence**: MIT (\`licenses/llama.cpp-MIT.txt\` in each archive). llama.cpp is not modified."
+            echo "- **Source**: [${LLAMA_TAG}](https://github.com/ggml-org/llama.cpp/releases/tag/${LLAMA_TAG}), source archive SHA-256 \`${LLAMA_SHA256}\`; each archive's \`BUILD.txt\` gives the build line."
+            echo "- **Built by** [.github/workflows/llama.yml](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${HEAD_SHA}/.github/workflows/llama.yml), [run ${GITHUB_RUN_ID}](${run_url}), whose summaries give each model's time on the sample page. How it is used: [docs/llama.md](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/docs/llama.md)."
+            echo
+            echo "SHA-256:"
+            echo
+            for t in $triples; do
+              echo "- \`llama-${LLAMA_TAG}-${t}.zip\`: \`$(sha256sum "dist/llama-${LLAMA_TAG}-${t}.zip" | cut -d' ' -f1)\`"
+            done
+          } > notes.md
+          files=()
+          for t in $triples; do files+=("dist/llama-${LLAMA_TAG}-${t}.zip"); done
+          gh release create "$release" "${files[@]}" --target "$HEAD_SHA" \
+            --title "llama.cpp ${LLAMA_TAG} (offline OCR models) for Kalamu" \
+            --notes-file notes.md --prerelease --latest=false
+          pins=$(for t in $triples; do
+            printf '%s\t%s\n' "$t" "$(sha256sum "dist/llama-${LLAMA_TAG}-${t}.zip" | cut -d' ' -f1)"
+          done | jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {key: .[0], value: {sha256: .[1]}}) | from_entries')
+          jq --tab --arg release "$release" --arg version "$LLAMA_TAG" --argjson archives "$pins" \
+            '.release = $release | .version = $version | .archives = $archives' scripts/llama.json > llama.json
+          mv llama.json scripts/llama.json
+          cat scripts/llama.json
+          echo "RELEASE=$release" >> "$GITHUB_ENV"
+
+      - name: Pin it on the branch
+        if: steps.pinned.outputs.done != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/llama.json
+          git commit -m "Pin llama.cpp ${LLAMA_TAG} from release ${RELEASE}"
+          git pull --rebase origin "$BRANCH"
+          git push origin "HEAD:${BRANCH}"
+          # The sandbox check fetches the pinned program; run it on the new commit.
+          gh workflow run app-store.yml --ref "$BRANCH"

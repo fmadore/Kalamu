@@ -471,6 +471,21 @@ export function installMock(): void {
 						languages: languages as string[]
 					})),
 					tesseract_version: '5.5.2',
+					// LightOnOCR downloaded and timed on this computer, GLM-OCR not yet.
+					ocr_models: [
+						['lightonocr-3-1b', 1_088_895_872, true],
+						['glm-ocr', 1_434_837_056, false]
+					].map(([id, bytes, installed]) => ({
+						id: id as string,
+						bytes: bytes as number,
+						installed: installed as boolean,
+						downloading: false,
+						downloaded_bytes: 0,
+						in_use: false,
+						languages: []
+					})),
+					ocr_engine: true,
+					ocr_seconds_per_page: { 'lightonocr-3-1b': 38.4 },
 					missing_cpu: []
 				};
 			case 'key_status':
