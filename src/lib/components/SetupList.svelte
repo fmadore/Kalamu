@@ -21,23 +21,44 @@
 		newDraft,
 		providerDefault,
 		suggestedReasoning,
-		rulesFor
+		rulesFor,
+		takesVocabulary,
+		translates,
+		vocabularyOf
 	} from '#lib/newJob.js';
 	import { languageLabel } from '#lib/languages.js';
-	import { app, go, hasKey, isInstalled } from '#lib/state.svelte.js';
+	import { app, go, hasKey, isInstalled, toast } from '#lib/state.svelte.js';
+	import { describeError } from '#lib/errors.js';
 
 	let {
 		drafts = $bindable(),
 		task,
 		presets,
-		input
+		input,
+		projectNames
 	}: {
 		drafts: Draft[];
 		task: Task;
 		presets: Preset[];
 		/** What every model must read, such as YouTube links; any input of the task when absent. */
 		input?: string;
+		/** The names of the project the job is started from, for a model that spells them. */
+		projectNames?: () => Promise<string[]>;
 	} = $props();
+
+	/** Adds the project's names to those a set-up spells, after the researcher's own. */
+	async function addProjectNames(d: Draft) {
+		try {
+			const names = (await projectNames?.()) ?? [];
+			if (names.length === 0) {
+				toast(m.newJob.vocabulary.noProjectNames);
+				return;
+			}
+			d.vocabulary = vocabularyOf([d.vocabulary, ...names].join('\n'));
+		} catch (e) {
+			toast(describeError(e, m));
+		}
+	}
 
 	const m = messages();
 	const catalog = $derived(app.catalog!);
@@ -169,7 +190,33 @@
 						<label class="inline"
 							><input type="checkbox" bind:checked={d.timestamps} /> {m.newJob.timestamps}</label
 						>
+						{#if translates(info, task)}
+							<label class="inline" title={m.newJob.translateHint}
+								><input type="checkbox" bind:checked={d.translate} /> {m.newJob.translate}</label
+							>
+						{/if}
 					</div>
+					{#if translates(info, task) && d.translate}
+						<p class="muted small wide">{m.newJob.translateHint}</p>
+					{/if}
+					{#if takesVocabulary(info, task)}
+						<label class="field wide">
+							<span>{m.newJob.vocabulary.title}</span>
+							<textarea
+								rows="3"
+								bind:value={d.vocabulary}
+								placeholder={m.newJob.vocabulary.placeholder}
+								spellcheck="false"></textarea>
+							<span class="hint">{m.newJob.vocabulary.hint}</span>
+						</label>
+						{#if projectNames}
+							<div class="wide">
+								<button class="btn ghost sm" onclick={() => void addProjectNames(d)}
+									><Icon name="plus" size={14} />{m.newJob.vocabulary.fromProject}</button
+								>
+							</div>
+						{/if}
+					{/if}
 				{/if}
 				{#if info?.description}
 					<p class="muted small desc">{modelDescription(info)}</p>
@@ -384,7 +431,11 @@
 		color: var(--warn-text);
 		font-size: var(--type-xs);
 	}
+	/* The transcription's switches, across the set-up and wrapping, never past its edge. */
 	.opts {
+		grid-column: 1 / -1;
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-4);
 		min-height: var(--control-md);
 	}
 	.finds {
@@ -422,6 +473,15 @@
 	.merge select {
 		width: 100%;
 		min-width: 0;
+	}
+	/* Across the whole set-up, as the second step of a table of contents is. */
+	.wide {
+		grid-column: 1 / -1;
+		margin: 0;
+	}
+	.wide textarea {
+		width: 100%;
+		resize: vertical;
 	}
 	.inline {
 		display: inline-flex;

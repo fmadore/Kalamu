@@ -253,6 +253,13 @@ pub struct ModelInfo {
     /// Reports where text sits on the page, which a searchable PDF and ALTO need.
     #[serde(default)]
     pub layout: bool,
+    /// Takes a list of names and words to spell as written (Whisper's initial prompt).
+    #[serde(default)]
+    pub vocabulary: bool,
+    /// Can write the speech in English instead of the language spoken (Whisper, except Turbo,
+    /// which was trained without translation).
+    #[serde(default)]
+    pub translates: bool,
     /// A top-tier model priced far above what transcription and extraction usually need; the
     /// interface says so when it is chosen.
     #[serde(default)]

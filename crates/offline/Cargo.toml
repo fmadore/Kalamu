@@ -19,14 +19,20 @@ tokio.workspace = true
 tokio-util.workspace = true
 tracing.workspace = true
 ts-rs.workspace = true
-# As in Live Translation: CPU only, no default features (no CUDA, Metal or Vulkan). The second
-# pin fixes the vendored whisper.cpp (1.8.3), which the first does not.
+# No default features (no CUDA or Vulkan): the processor, as in Live Translation, except on a
+# Mac, where the app turns on `metal` below. The second pin fixes the vendored whisper.cpp
+# (1.8.3), which the first does not.
 whisper-rs = { version = "=0.16.0", default-features = false }
 whisper-rs-sys = "=0.15.0"
 # Tesseract 5.5.2 and Leptonica 1.87, built from source by its build script and linked in
 # (Apache 2.0 and BSD-2-Clause). Its build script takes any `zip` from 7 up; Cargo.lock keeps it
 # on 8, as the crate was released with (9 changed an API the script uses).
 kreuzberg-tesseract = { version = "=4.10.4", default-features = false, features = ["static-linking"] }
+
+[features]
+# Whisper on the graphics processor with Metal, its shaders built into the app. The app turns
+# it on for macOS in its own manifest; this crate never asks which system it runs on.
+metal = ["whisper-rs/metal"]
 
 [dev-dependencies]
 kalamu-catalog.workspace = true

@@ -1,18 +1,20 @@
 <script lang="ts">
-	// One workflow: its name and steps, each a saved pipeline with what it reads and whether to
-	// stop for a review after it. Saving makes a new version; a saved workflow can be run.
+	// One workflow: its name and steps, each a saved pipeline or a prompt on the model New job
+	// would offer, with what it reads and whether to stop for a review after it. A step of one
+	// set-up can take another prompt. Saving makes a new version; a saved workflow can be run.
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 	import RunStart from './RunStart.svelte';
 	import TermLink from './TermLink.svelte';
 	import WorkflowDiagram from './WorkflowDiagram.svelte';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
+	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { StepInput } from '#lib/bindings/StepInput.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { describeError } from '#lib/errors.js';
-	import { rulesFor } from '#lib/newJob.js';
+	import { acceptsPrompt, MODES, rulesFor, taskOf } from '#lib/newJob.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { app, go, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
 	import { api, ask, pickPipelineExport } from '#lib/tauri.js';
@@ -23,9 +25,11 @@
 		inputChoices,
 		isRead,
 		moveStep,
+		presetPipeline,
 		removeStep,
 		sameInput,
-		stepFrom
+		stepFrom,
+		withPreset
 	} from '#lib/workflows.js';
 
 	let {
@@ -48,6 +52,9 @@
 	/** The workflow as last saved, to tell whether the form holds changes. */
 	let saved = $state<string>('');
 	let pipelines = $state<Pipeline[]>([]);
+	/** The prompts each task offers, as New job lists them. */
+	let presets = $state<Preset[]>([]);
+	/** The step chosen to add: `pipeline:<id>` or `preset:<id>`. */
 	let adding = $state('');
 	let error = $state<string | null>(null);
 	let loaded = $state(false);
@@ -57,22 +64,30 @@
 	const modelName = (provider: string, model: string) =>
 		catalog.models.find((x) => x.provider === provider && x.id === model)?.name ?? model;
 
+	/** The tasks, in New job's order. */
+	const tasks: Task[] = [...new Set(MODES.map(taskOf))];
+	const presetsOf = (task: Task) => presets.filter((p) => p.task === task);
+
+	/** The researcher's usual formats for each task, as New job offers them. */
+	function formatsFor(task: Task) {
+		const offered = rulesFor(app.rules, task).formats;
+		const usual = (
+			task === 'audio_transcription' ? app.settings!.audio_formats : app.settings!.text_formats
+		).filter((f) => offered.includes(f));
+		return usual.length > 0 ? usual : offered.slice(0, 1);
+	}
+
 	onMount(async () => {
 		try {
-			const [all, list] = await Promise.all([api.listWorkflows(), api.listPipelines()]);
+			const [all, list, offered] = await Promise.all([
+				api.listWorkflows(),
+				api.listPipelines(),
+				Promise.all(tasks.map((t) => api.listPresets(t)))
+			]);
 			pipelines = list;
+			presets = offered.flat();
 			const found = all.find((x) => x.id === workflowId);
 			if (!found && example) {
-				// The researcher's usual formats for each task, as New job offers them.
-				const formatsFor = (task: Task) => {
-					const offered = rulesFor(app.rules, task).formats;
-					const usual = (
-						task === 'audio_transcription'
-							? app.settings!.audio_formats
-							: app.settings!.text_formats
-					).filter((f) => offered.includes(f));
-					return usual.length > 0 ? usual : offered.slice(0, 1);
-				};
 				workflow = exampleWorkflow(
 					example,
 					m.workflows.examples[example],
@@ -94,11 +109,34 @@
 	});
 
 	function add() {
-		const pipeline = pipelines.find((p) => p.id === adding);
+		const at = adding.indexOf(':');
+		const [kind, id] = [adding.slice(0, at), adding.slice(at + 1)];
+		const preset = kind === 'preset' ? presets.find((p) => p.id === id) : undefined;
+		const pipeline = preset
+			? presetPipeline(preset.task, preset.id, preset.name, catalog, app.rules, hasKey, formatsFor)
+			: pipelines.find((p) => kind === 'pipeline' && p.id === id);
 		if (!pipeline) return;
 		workflow.steps = [...workflow.steps, stepFrom(pipeline, workflow.steps, app.rules)];
 		if (!workflow.name.trim()) workflow.name = pipeline.name;
 		adding = '';
+	}
+
+	/** The prompt of a step of one set-up on a model that takes one, to change; else none. */
+	function promptOf(i: number): string | null {
+		const setups = workflow.steps[i].pipeline.setups;
+		const model = catalog.models.find(
+			(x) => x.provider === setups[0]?.provider && x.id === setups[0]?.model
+		);
+		if (setups.length !== 1 || !acceptsPrompt(model)) return null;
+		return setups[0].preset_id ?? '';
+	}
+
+	function setPrompt(i: number, id: string) {
+		const step = workflow.steps[i];
+		const preset = presets.find((p) => p.id === id);
+		if (!preset) return;
+		const previous = presets.find((p) => p.id === step.pipeline.setups[0]?.preset_id);
+		workflow.steps[i] = withPreset(step, preset, previous);
 	}
 
 	function inputLabel(input: StepInput): string {
@@ -175,7 +213,11 @@
 			<button class="btn ghost" onclick={exportFile}><Icon name="download" />{w.export}</button>
 			<button class="btn ghost danger" onclick={remove}>{w.delete}</button>
 		{/if}
-		<button class="btn primary" onclick={save} disabled={!dirty || workflow.steps.length === 0}
+		<button
+			class="btn primary"
+			onclick={save}
+			disabled={!dirty || workflow.steps.length === 0}
+			title={workflow.steps.length === 0 ? w.saveNeedsStep : undefined}
 			><Icon name="check" />{w.save}</button
 		>
 	</div>
@@ -196,11 +238,13 @@
 			/>
 		{/if}
 		{#if loaded && workflow.steps.length === 0}
-			<p class="muted">{pipelines.length === 0 ? w.noPipelines : w.noSteps}</p>
+			<p class="muted">{w.noSteps}</p>
 		{/if}
 		<ol class="steps">
 			{#each workflow.steps as step, i (i)}
 				{@const choices = inputChoices(workflow.steps, i, app.rules)}
+				{@const prompt = promptOf(i)}
+				{@const offered = presetsOf(step.pipeline.task)}
 				<li class="card step">
 					<div class="head">
 						<span class="what">
@@ -237,6 +281,19 @@
 					<p class="models">
 						{step.pipeline.setups.map((s) => modelName(s.provider, s.model)).join(' · ')}
 					</p>
+					{#if prompt !== null && offered.length > 0}
+						<label class="field">
+							<span>{w.prompt}</span>
+							<select value={prompt} onchange={(e) => setPrompt(i, e.currentTarget.value)}>
+								{#if !offered.some((p) => p.id === prompt)}
+									<option value={prompt} disabled>{w.promptMissing}</option>
+								{/if}
+								{#each offered as p (p.id)}
+									<option value={p.id}>{p.name}</option>
+								{/each}
+							</select>
+						</label>
+					{/if}
 					{#if choices.length < 2}
 						<p class="reads"><span class="label">{w.reads}:</span> {inputLabel(step.input)}</p>
 					{:else}
@@ -263,14 +320,27 @@
 				</li>
 			{/each}
 		</ol>
-		{#if pipelines.length > 0}
+		{#if pipelines.length > 0 || presets.length > 0}
 			<div class="add">
 				<label class="field">
 					<span>{w.addStep}</span>
 					<select bind:value={adding}>
 						<option value="" disabled>{w.addStepHint}</option>
-						{#each pipelines as p (p.id)}
-							<option value={p.id}>{p.name} · {m.task[p.task]}</option>
+						{#if pipelines.length > 0}
+							<optgroup label={w.fromPipelines}>
+								{#each pipelines as p (p.id)}
+									<option value="pipeline:{p.id}">{p.name} · {m.task[p.task]}</option>
+								{/each}
+							</optgroup>
+						{/if}
+						{#each tasks as t (t)}
+							{#if presetsOf(t).length > 0}
+								<optgroup label={w.fromPrompts(m.task[t])}>
+									{#each presetsOf(t) as p (p.id)}
+										<option value="preset:{p.id}">{p.name}</option>
+									{/each}
+								</optgroup>
+							{/if}
 						{/each}
 					</select>
 				</label>

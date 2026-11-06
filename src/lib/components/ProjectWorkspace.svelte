@@ -161,7 +161,7 @@
 			api.expandPaths([folder], 'analysis'),
 			api.expandPaths([folder], 'audio_transcription')
 		]);
-		await addPaths([...new Set([...texts, ...recordings])]);
+		await addPaths([...new Set([...texts.paths, ...recordings.paths])]);
 	}
 
 	onMount(() => {

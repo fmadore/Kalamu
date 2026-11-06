@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Offline engines' downloads: Whisper's models, as in Live Translation's settings, and the
-	// language data of an engine built into the app (Tesseract), one file per language. While a
-	// download runs the lists are polled for the bytes received.
+	// language data of an engine built into the app (Tesseract), one file per language. Of the
+	// hundred-odd languages only those downloaded are listed; the others are found by name in a
+	// search box. While a download runs the lists are polled for the bytes received.
 	import { modelDescription } from '#lib/catalogText.js';
 	import type { OfflineModel } from '#lib/bindings/OfflineModel.js';
 	import { describeError } from '#lib/errors.js';
@@ -10,6 +11,7 @@
 	import { api } from '#lib/tauri.js';
 	import { app, refreshOffline, toast } from '#lib/state.svelte.js';
 	import { locale } from '#lib/i18n/index.js';
+	import LanguageDataPicker from './LanguageDataPicker.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 
 	const m = messages();
@@ -44,6 +46,14 @@
 			})
 			.sort((a, b) => Number(a.script) - Number(b.script) || collator.compare(a.name, b.name));
 	});
+	/** Downloaded or downloading: listed as rows. */
+	const languagesKept = $derived(languageData.filter(({ s }) => s.installed || s.downloading));
+	/** The others, found by name. */
+	const languagesOffered = $derived(
+		languageData
+			.filter(({ s }) => !s.installed && !s.downloading)
+			.map(({ s, name }) => ({ id: s.id, name, bytes: Number(s.bytes) }))
+	);
 
 	let poll: ReturnType<typeof setInterval> | null = null;
 	$effect(() => {
@@ -150,9 +160,22 @@
 	{#if builtIn.length > 0 && languageData.length > 0}
 		<h3>{m.settings.tesseractTitle}</h3>
 		<p class="muted small">{m.settings.tesseractHint(app.offline?.tesseract_version ?? '')}</p>
-		{#each languageData as { s, name } (s.id)}
+		{#if languagesKept.length === 0}
+			<p class="muted small">{m.settings.noLanguageData}</p>
+		{/if}
+		{#each languagesKept as { s, name } (s.id)}
 			{@render row(s, s.id, name, '', false)}
 		{/each}
+		{#if languagesOffered.length > 0}
+			<div class="add-language">
+				<h4>{m.settings.addLanguageData}</h4>
+				<LanguageDataPicker
+					items={languagesOffered}
+					disabled={downloading}
+					onpick={(id) => void download(id)}
+				/>
+			</div>
+		{/if}
 	{/if}
 </section>
 
@@ -168,6 +191,16 @@
 	}
 	.small {
 		font-size: var(--type-sm);
+	}
+	.add-language {
+		display: grid;
+		gap: var(--space-2);
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--line);
+	}
+	h4 {
+		font-size: var(--type-sm);
+		font-weight: 500;
 	}
 	.model {
 		display: grid;

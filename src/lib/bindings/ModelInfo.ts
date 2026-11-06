@@ -54,6 +54,15 @@ two_letter_codes: boolean,
  */
 layout: boolean, 
 /**
+ * Takes a list of names and words to spell as written (Whisper's initial prompt).
+ */
+vocabulary: boolean, 
+/**
+ * Can write the speech in English instead of the language spoken (Whisper, except Turbo,
+ * which was trained without translation).
+ */
+translates: boolean, 
+/**
  * A top-tier model priced far above what transcription and extraction usually need; the
  * interface says so when it is chosen.
  */

@@ -45,6 +45,38 @@ pub struct SetupOptions {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub reasoning: Option<String>,
+    /// Names and words to spell as the researcher writes them (people, places, terms of the
+    /// field), one per line or separated by commas, for a transcription model that takes them:
+    /// Whisper reads them as its initial prompt. Left out when empty, so cache keys made before
+    /// it existed stay valid.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub vocabulary: Option<String>,
+    /// Write the speech in English rather than in the language spoken, for a model that can
+    /// (Whisper Large v3, Small and Base; not Turbo). Left out when off.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub translate: bool,
+}
+
+impl SetupOptions {
+    /// The names and words to spell, one each, trimmed, without empty ones or repeats.
+    pub fn vocabulary_terms(&self) -> Vec<String> {
+        let mut out: Vec<String> = Vec::new();
+        for term in self
+            .vocabulary
+            .as_deref()
+            .unwrap_or("")
+            .split(['\n', ',', ';'])
+            .map(str::trim)
+            .filter(|t| !t.is_empty())
+        {
+            if !out.iter().any(|o| o.eq_ignore_ascii_case(term)) {
+                out.push(term.to_owned());
+            }
+        }
+        out
+    }
 }
 
 /// One provider, model and prompt to run, as chosen in New job or saved in a pipeline, before
@@ -137,5 +169,33 @@ impl Setup {
             model: &m.model,
             prompt: &m.prompt,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn names_to_spell_are_read_one_each_without_repeats() {
+        let options = SetupOptions {
+            vocabulary: Some("Samory Touré, Ouagadougou\n\n samory touré ;Bobo-Dioulasso\n".into()),
+            ..SetupOptions::default()
+        };
+        assert_eq!(
+            options.vocabulary_terms(),
+            ["Samory Touré", "Ouagadougou", "Bobo-Dioulasso"]
+        );
+        assert!(SetupOptions::default().vocabulary_terms().is_empty());
+    }
+
+    /// Jobs and cache keys made before the names and the translation existed read the same.
+    #[test]
+    fn options_left_off_are_not_written() {
+        let json = serde_json::to_string(&SetupOptions::default()).unwrap_or_default();
+        assert!(
+            !json.contains("vocabulary") && !json.contains("translate"),
+            "{json}"
+        );
     }
 }

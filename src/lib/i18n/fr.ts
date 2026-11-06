@@ -218,11 +218,15 @@ export const fr: Messages = {
 		back: 'Toutes les chaînes',
 		name: 'Nom de la chaîne',
 		stepsTitle: 'Étapes',
-		noSteps: 'Ajoutez une première étape à partir de l’une de vos configurations.',
-		noPipelines:
-			'Les étapes se font à partir de configurations. Préparez d’abord un traitement dans Nouveau traitement et enregistrez-le comme configuration.',
+		noSteps:
+			'Ajoutez une première étape : un prompt, tel que Kalamu le fournit ou tel que vous l’avez écrit, ou l’une de vos configurations enregistrées.',
 		addStep: 'Ajouter une étape',
-		addStepHint: 'À partir d’une configuration',
+		addStepHint: 'Choisir un prompt ou une configuration',
+		fromPipelines: 'Vos configurations',
+		fromPrompts: (task: string) => `Prompts · ${task}`,
+		prompt: 'Prompt',
+		promptMissing: 'Un prompt qui n’est plus proposé',
+		saveNeedsStep: 'Ajoutez une étape pour enregistrer la chaîne',
 		stepNumber: (n: number) => `Étape ${n}`,
 		reads: 'Porte sur',
 		readsFiles: 'Les fichiers ou le texte sur lesquels vous l’exécutez',
@@ -931,6 +935,21 @@ export const fr: Messages = {
 		addFiles: 'Ajouter des fichiers',
 		addFolder: 'Ajouter un dossier',
 		dropHint: 'Ou déposez des fichiers et des dossiers n’importe où dans cette fenêtre.',
+		setAside: {
+			files: (names: string, task: string, n: number) =>
+				n === 1
+					? `Non ajouté : ${names}. ${task} ne lit pas ce type de fichier.`
+					: `Non ajoutés : ${names}. ${task} ne lit pas ces types de fichiers.`,
+			folders: (names: string, task: string) =>
+				`Rien n’a été ajouté depuis ${names} : aucun fichier que ${task} sait lire.`,
+			kinds:
+				'Kalamu lit les PDF, les images (JPEG, PNG, TIFF, WebP, HEIC), les enregistrements, les fichiers vidéo et les textes (TXT, Markdown, Word, Excel, CSV).',
+			youtube:
+				'Ici, les vidéos s’ajoutent par leur lien YouTube. Les enregistrements et fichiers vidéo de cet ordinateur se lisent avec « Transcrire un enregistrement ».',
+			instead: (task: string) => `Plutôt : ${task}`,
+			insteadHint: 'Change de tâche et y ajoute ces fichiers',
+			dismiss: 'Fermer ce message'
+		},
 		noFiles: 'Pas encore de fichiers.',
 		remove: 'Retirer',
 		pages: (n: number) => (n === 1 ? '1 page' : `${n} pages`),
@@ -1067,6 +1086,17 @@ export const fr: Messages = {
 		notDownloaded: 'Ce modèle hors ligne n’a pas encore été téléchargé.',
 		openSettings: 'Le télécharger dans Paramètres',
 		timestamps: 'Horodatage',
+		translate: 'L’écrire en anglais',
+		translateHint:
+			'Whisper écrit en anglais ce qui est dit, quelle que soit la langue parlée. La transcription est alors une traduction, ce que la provenance consigne.',
+		vocabulary: {
+			title: 'Noms et mots à orthographier',
+			placeholder: 'Samory Touré\nBobo-Dioulasso\nmadrasa',
+			hint: 'Personnes, lieux et termes tels que vous les écrivez, un par ligne. Whisper les lit avant chaque partie de l’enregistrement et les écrit ainsi quand il les entend. Les soixante premiers environ sont pris en compte.',
+			fromProject: 'Ajouter les noms du dictionnaire de ce projet',
+			noProjectNames:
+				'Le dictionnaire de ce projet n’a pas encore de noms : ils viennent de ses analyses.'
+		},
 		sampleTitle: 'Faire d’abord un essai',
 		sample: (n: number) => `Seulement les ${n} premières pages de chaque document`,
 		outputTitle: 'Résultats',
@@ -1340,6 +1370,11 @@ export const fr: Messages = {
 		next: 'Suivant',
 		source: 'Source',
 		aiText: 'Texte du modèle',
+		itemMenu: (name: string) => `Que faire de « ${name} » ?`,
+		renameItem: 'Renommer',
+		removeItem: 'Retirer des réponses',
+		itemEverywhere:
+			'Modifié dans les réponses corrigées de ce document, pour chaque modèle qui l’a relevé. Les réponses du modèle sont conservées.',
 		edit: 'Corriger',
 		save: 'Enregistrer la correction',
 		discard: 'Abandonner les modifications',
@@ -1579,6 +1614,11 @@ export const fr: Messages = {
 			`Tesseract ${version} lit les pages imprimées sur cet ordinateur : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et il fonctionne sans connexion internet une fois une langue téléchargée. Il est fait pour l’imprimé net ; l’écriture manuscrite, les pages pâlies ou abîmées et les mises en page complexes se lisent mieux avec un modèle en ligne. Sa vitesse dépend du processeur de cet ordinateur : d’environ une seconde à plusieurs secondes par page. Il ne détecte pas la langue : téléchargez chaque langue que vous lisez, puis choisissez-la dans Nouveau traitement.`,
 		latinScript: (languages: string) =>
 			`Langues écrites en lettres latines sans modèle propre : ${languages}`,
+		noLanguageData: 'Aucune langue téléchargée pour l’instant.',
+		addLanguageData: 'Télécharger une langue',
+		findLanguageData: 'Chercher une langue par son nom',
+		oneDownload:
+			'Un téléchargement à la fois : le suivant pourra commencer une fois celui-ci terminé.',
 		offlineHint:
 			'Whisper s’exécute sur cet ordinateur : les enregistrements ne le quittent jamais, aucune clé ni aucun compte n’est nécessaire, et il fonctionne sans connexion internet une fois un modèle téléchargé. Il est plus lent que les modèles en ligne et ne sait pas identifier les locuteurs. Large v3 Turbo convient à la plupart des ordinateurs.',
 		offlineCpu: (missing: string) =>

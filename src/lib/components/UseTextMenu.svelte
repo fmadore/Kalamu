@@ -112,6 +112,8 @@
 		border: 1px solid var(--line-strong);
 		border-radius: var(--radius-card);
 		box-shadow: var(--shadow-flyout);
+		/* Opened from a table cell that keeps its buttons on one line: the hints still wrap. */
+		white-space: normal;
 	}
 	.item {
 		display: flex;

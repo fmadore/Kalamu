@@ -4,15 +4,17 @@
 	// set-ups that gave it, so agreement reads at a glance; pointing at a name finds it in the
 	// document. Corrections are kept apart from the model's answers. A search keeps the fields
 	// whose answers or reasons hold its words, marked where they stand, and marks them in a text
-	// document too.
+	// document too. A right click on a name in a list renames or removes it at once, in the
+	// corrected answers of every set-up that found it.
 	import { onMount, tick } from 'svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
+	import ItemMenu from './ItemMenu.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
 	import SearchBar from './SearchBar.svelte';
 	import SiglaKey from './SiglaKey.svelte';
-	import { collate, holdsWords, type Witness } from '#lib/analysis.js';
+	import { collate, editItem, holdsItem, holdsWords, type Witness } from '#lib/analysis.js';
 	import { siglum } from '#lib/apparatus.js';
 	import type { Field } from '#lib/bindings/Field.js';
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
@@ -105,6 +107,40 @@
 		if (await review.save({ setup, index: 0, fields: answers, reviewed })) editing = null;
 	}
 
+	/** The name right-clicked, and where. */
+	let itemMenu = $state<{ key: string; value: string; x: number; y: number } | null>(null);
+
+	function openItemMenu(e: MouseEvent, f: Field) {
+		if (f.kind.type !== 'list' || editing) return;
+		const item = (e.target as HTMLElement).closest<HTMLElement>('[data-item]');
+		if (!item?.dataset.item) return;
+		e.preventDefault();
+		itemMenu = { key: f.key, value: item.dataset.item, x: e.clientX, y: e.clientY };
+	}
+
+	/**
+	 * Renames a name, or removes it when `to` is null, in the answers of every set-up that found
+	 * it, each kept as reviewed or not as it was.
+	 */
+	async function changeItem(key: string, from: string, to: string | null) {
+		hovered = null;
+		for (const s of setups) {
+			const v = viewOf(s);
+			if (!v || v.status === 'failed') continue;
+			const before = answersOf(v);
+			if (!holdsItem(before, key, from)) continue;
+			if (
+				!(await review.save({
+					setup: s,
+					index: 0,
+					fields: editItem(before, key, from, to),
+					reviewed: v.reviewed
+				}))
+			)
+				return;
+		}
+	}
+
 	function toggleReviewed() {
 		const first = setups[0];
 		if (first && lead) void save(first, lead.corrected_fields, !lead.reviewed);
@@ -159,6 +195,18 @@
 			: ''}</span
 	>
 {/snippet}
+
+{#if itemMenu}
+	{@const at = itemMenu}
+	<ItemMenu
+		value={at.value}
+		x={at.x}
+		y={at.y}
+		onrename={(to) => void changeItem(at.key, at.value, to)}
+		onremove={() => void changeItem(at.key, at.value, null)}
+		onclose={() => (itemMenu = null)}
+	/>
+{/if}
 
 <ReviewFrame
 	{jobId}
@@ -221,10 +269,11 @@
 				{#if readings.length === 0}
 					<p class="muted none">{m.review.noneFound}</p>
 				{:else if f.kind.type === 'list' || f.kind.type === 'choices'}
-					<p class="items">
+					<p class="items" oncontextmenu={(e) => openItemMenu(e, f)}>
 						{#each readings as r, k (r.value)}{#if k > 0}<span class="sep">{'; '}</span>{/if}<span
 								class="item"
 								class:partial={comparing && r.sigla.length < setups.length}
+								data-item={r.value}
 								role="mark"
 								onpointerenter={() => (hovered = r.value)}
 								onpointerleave={() => (hovered = null)}

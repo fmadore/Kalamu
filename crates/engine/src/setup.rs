@@ -112,6 +112,12 @@ impl Engine {
             let mut options = request.options.clone();
             if let Some(model) = catalog.model(&request.provider, &request.model) {
                 options.reasoning = model.tuning(task, options.reasoning.as_deref()).reasoning;
+                // Names to spell and translation only for a model that uses them, so another
+                // model's results and cache keys are not changed by what it ignores.
+                let terms = options.vocabulary_terms();
+                options.vocabulary =
+                    (model.vocabulary && !terms.is_empty()).then(|| terms.join("\n"));
+                options.translate &= model.translates;
             }
             let mut setup = Setup {
                 id: SetupId::new(),

@@ -4,14 +4,17 @@ use std::path::{Path, PathBuf};
 
 use kalamu_core::{InputKind, Job, JobId, JobSources, JobSummary, PieceState, SourceFile, Task};
 use kalamu_engine::{Estimate, EstimateRequest, NewJob};
+use serde::Serialize;
 use tauri::State;
+use ts_rs::TS;
 
 use super::{AppState, InspectedFile, off_thread};
 use crate::errors::{AppError, CmdResult, id};
 
 /// Files and folders dropped or chosen, expanded to the supported files for a task, sorted so
-/// numbered scans keep their order. Each is kept for later launches where a sandbox requires
-/// it, while the app may still reach it.
+/// numbered scans keep their order, with the files and folders that gave nothing the task can
+/// read, so New job can say so rather than drop them unseen. Each is kept for later launches
+/// where a sandbox requires it, while the app may still reach it.
 ///
 /// Walking folders can take a while on a network share, so it runs off the window's thread.
 #[tauri::command]
@@ -19,7 +22,7 @@ pub async fn expand_paths(
     state: State<'_, AppState>,
     paths: Vec<String>,
     task: Task,
-) -> CmdResult<Vec<String>> {
+) -> CmdResult<Expanded> {
     state.grants.keep(&paths);
     off_thread(move || Ok(expand(paths, task))).await
 }
@@ -43,7 +46,31 @@ pub fn keep_access(state: State<'_, AppState>, paths: Vec<String>) {
     state.grants.keep(&paths);
 }
 
-fn expand(paths: Vec<String>, task: Task) -> Vec<String> {
+/// What dropping or choosing files gave a task.
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct Expanded {
+    /// The files the task reads, in order.
+    pub paths: Vec<String>,
+    /// The files and folders dropped or chosen that gave none: a file of another kind, or a
+    /// folder with nothing the task reads inside. Files of another kind inside a folder are not
+    /// listed: a folder of scans often holds a stray file or two.
+    pub refused: Vec<Refused>,
+}
+
+/// A file or folder that gave the task nothing to read.
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct Refused {
+    pub path: String,
+    pub file_name: String,
+    /// The kind of a file Kalamu reads in another task; `None` for a folder or a file of a
+    /// kind Kalamu does not read at all.
+    pub kind: Option<InputKind>,
+    pub folder: bool,
+}
+
+fn expand(paths: Vec<String>, task: Task) -> Expanded {
     fn walk(path: &Path, task: Task, out: &mut Vec<PathBuf>, depth: usize) {
         if is_apple_double(path) {
             return;
@@ -65,13 +92,34 @@ fn expand(paths: Vec<String>, task: Task) -> Vec<String> {
         }
     }
     let mut out = Vec::new();
+    let mut refused = Vec::new();
     for p in paths {
-        walk(Path::new(&p), task, &mut out, 0);
+        let path = Path::new(&p);
+        let before = out.len();
+        walk(path, task, &mut out, 0);
+        if out.len() == before && !is_apple_double(path) {
+            let folder = path.is_dir();
+            refused.push(Refused {
+                file_name: path
+                    .file_name()
+                    .map_or_else(|| p.clone(), |n| n.to_string_lossy().into_owned()),
+                kind: if folder {
+                    None
+                } else {
+                    InputKind::from_path(path)
+                },
+                folder,
+                path: p,
+            });
+        }
     }
     // A folder dropped with a file inside it names that file twice: once each, in order.
     let mut seen = std::collections::HashSet::new();
     out.retain(|p| seen.insert(p.clone()));
-    out.into_iter().map(|p| p.display().to_string()).collect()
+    Expanded {
+        paths: out.into_iter().map(|p| p.display().to_string()).collect(),
+        refused,
+    }
 }
 
 /// The `._name.pdf` beside `name.pdf` that macOS writes on USB drives and network shares to
@@ -377,8 +425,38 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(dir.path().join("page-01.jpg"), b"jpeg").unwrap();
         std::fs::write(dir.path().join("._page-01.jpg"), b"metadata").unwrap();
-        let found = expand(vec![dir.path().display().to_string()], Task::TextExtraction);
+        let found = expand(vec![dir.path().display().to_string()], Task::TextExtraction).paths;
         assert_eq!(found.len(), 1);
         assert!(found[0].ends_with("page-01.jpg") && !found[0].contains("._"));
+    }
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn files_the_task_cannot_read_are_named_with_their_kind() {
+        let dir = tempfile::tempdir().unwrap();
+        let scan = dir.path().join("page-01.jpg");
+        let interview = dir.path().join("interview.mp3");
+        let archive = dir.path().join("letters.zip");
+        let empty = dir.path().join("empty");
+        for f in [&scan, &interview, &archive] {
+            std::fs::write(f, b"bytes").unwrap();
+        }
+        std::fs::create_dir(&empty).unwrap();
+        let all = [&scan, &interview, &archive, &empty].map(|p| p.display().to_string());
+        let found = expand(all.to_vec(), Task::TextExtraction);
+        assert_eq!(found.paths, vec![all[0].clone()]);
+        let refused: Vec<_> = found
+            .refused
+            .iter()
+            .map(|r| (r.file_name.as_str(), r.kind, r.folder))
+            .collect();
+        assert_eq!(
+            refused,
+            vec![
+                ("interview.mp3", Some(InputKind::Audio), false),
+                ("letters.zip", None, false),
+                ("empty", None, true),
+            ]
+        );
     }
 }
