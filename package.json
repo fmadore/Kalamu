@@ -62,5 +62,11 @@
 	},
 	"imports": {
 		"#lib/*": "./src/lib/*"
+	},
+	"overrides": {
+		"minimatch": "^11.0.5",
+		"@choochmeque/tauri-windows-bundle": {
+			"glob": "^14.0.4"
+		}
 	}
 }
