@@ -131,7 +131,8 @@ jobs:
             fi
           else
             dumpbin //dependents "$dir/llama-mtmd-cli.exe" | tee deps.txt
-            if grep -i -E 'msvcp|vcruntime|vcomp|libomp|ggml|llama' deps.txt; then
+            # Only the listed libraries, not the header that names the file itself.
+            if grep -i -E '^\s+\S+\.dll\s*$' deps.txt | grep -i -E 'msvcp|vcruntime|vcomp|libomp|ggml|llama|mtmd'; then
               echo "::error::llama-mtmd-cli needs a library Windows does not have."; exit 1
             fi
           fi
@@ -193,14 +194,22 @@ jobs:
               head -c 1500 "$name.txt"
               echo
               echo '```'
-              grep -E 'llama_perf_context_print|load time|image slice|encoded in' "$name.log" | tail -8 | sed 's/^/    /'
-            } >> "$GITHUB_STEP_SUMMARY"
-            grep -qi bulletin "$name.txt"
+              grep -E 'llama_perf_context_print|image slice|encoded in' "$name.log" | tail -8 | sed 's/^/    /' || true
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+            if ! grep -qi bulletin "$name.txt"; then
+              echo "::error::$name did not read the page's title (BULLETIN)."
+              tail -40 "$name.log"
+              failed=1
+            fi
           }
+          failed=0
           run lightonocr-3-1b LightOnOCR-3-1B.Q8_0.gguf LightOnOCR-3-1B.mmproj-q8_0.gguf grounding
           run glm-ocr GLM-OCR-Q8_0.gguf mmproj-GLM-OCR-Q8_0.gguf "Text Recognition:"
+          exit "$failed"
 
+      # Kept even when a model misreads the page, so its answer can be read.
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: llama-${{ matrix.triple }}
           path: |
