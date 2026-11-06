@@ -59,11 +59,16 @@ jobs:
         with:
           persist-credentials: false
 
+      # Git Bash on Windows has sha256sum but not shasum; macOS has shasum.
+      - name: Hash tool
+        run: |
+          if command -v sha256sum > /dev/null; then echo "SHA256=sha256sum"; else echo "SHA256=shasum -a 256"; fi >> "$GITHUB_ENV"
+
       - name: Source
         run: |
           curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "llama.cpp-${LLAMA_TAG}.tar.gz" \
             "https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMA_TAG}.tar.gz"
-          echo "${LLAMA_SHA256}  llama.cpp-${LLAMA_TAG}.tar.gz" | shasum -a 256 -c -
+          echo "${LLAMA_SHA256}  llama.cpp-${LLAMA_TAG}.tar.gz" | $SHA256 -c -
           tar -xzf "llama.cpp-${LLAMA_TAG}.tar.gz"
 
       # clang-cl, as for Whisper: ggml refuses MSVC itself on ARM64, and one compiler for both
@@ -135,7 +140,7 @@ jobs:
           else
             (cd "$dir" && zip -r "../$dir.zip" .)
           fi
-          shasum -a 256 "$dir.zip" | tee "$dir.zip.sha256"
+          $SHA256 "$dir.zip" | tee "$dir.zip.sha256"
           echo "DIR=$dir" >> "$GITHUB_ENV"
           echo "EXE=$exe" >> "$GITHUB_ENV"
 
@@ -152,7 +157,7 @@ jobs:
           mkdir -p models
           get() {
             curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "models/$2" "https://huggingface.co/$1/resolve/$3/$2"
-            echo "$4  models/$2" | shasum -a 256 -c -
+            echo "$4  models/$2" | $SHA256 -c -
           }
           get prithivMLmods/LightOnOCR-3-1B-GGUF LightOnOCR-3-1B.Q8_0.gguf ff5c331ec2cfee9de1c8054c21ccf88b8c5b0faa 2cf9771aaf236a1c25f389a344510c9ad4daa863e5fdd82651cf7d7834fede1c
           get prithivMLmods/LightOnOCR-3-1B-GGUF LightOnOCR-3-1B.mmproj-q8_0.gguf ff5c331ec2cfee9de1c8054c21ccf88b8c5b0faa 7bbf40e6f3e91626843fdcbba67c7fe774821f3f0c537dcc8c769026a528839a
