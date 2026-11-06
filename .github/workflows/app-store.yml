@@ -7,7 +7,8 @@ name: Mac App Store
 # - `sandbox` runs on pull requests that touch the sandbox's files, and on demand. It builds the
 #   app with the store's configuration, signs it ad hoc with the sandbox's entitlements (a runner
 #   has no provisioning profile), starts it, and checks that the data folder is in the container,
-#   that the disk image's data was copied there, and that FFmpeg runs inside the sandbox.
+#   that the disk image's data was copied there, and that FFmpeg runs inside the sandbox. With
+#   `screenshots` ticked, it then takes the store's screenshots (scripts/store-screenshots.sh).
 # - `upload` runs only on demand, with `upload` ticked, on the tag or branch chosen: it signs
 #   the app and the installer package with the Apple Distribution and Mac Installer
 #   Distribution certificates, embeds the provisioning profile, and uploads the package.
@@ -17,6 +18,10 @@ on:
     inputs:
       upload:
         description: Sign the build for the store and upload it to App Store Connect
+        type: boolean
+        default: false
+      screenshots:
+        description: Take the store's screenshots on the runner, at 1440 × 900, kept as an artifact
         type: boolean
         default: false
   pull_request:
@@ -123,6 +128,18 @@ jobs:
             echo "::error::FFmpeg did not run inside the sandbox."
             exit 1
           fi
+
+      - name: Take the store's screenshots
+        if: github.event_name == 'workflow_dispatch' && inputs.screenshots
+        run: scripts/store-screenshots.sh "$PWD/target/$TARGET/release/bundle/macos/Kalamu.app" "$RUNNER_TEMP/screenshots"
+
+      - name: Keep the screenshots
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.screenshots
+        uses: actions/upload-artifact@v7
+        with:
+          name: store-screenshots
+          path: ${{ runner.temp }}/screenshots
+          if-no-files-found: warn
 
   upload:
     name: Sign and upload to App Store Connect
