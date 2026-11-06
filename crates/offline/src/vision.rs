@@ -4,7 +4,8 @@
 //! and no key.
 //!
 //! The models run in llama.cpp's own program, shipped next to the app (`llama.rs`), one page at
-//! a time: each page takes the whole processor, or the graphics processor with Metal on a Mac.
+//! a time: each page takes the whole processor, or the graphics processor with Metal on a Mac and
+//! through Vulkan on Windows when there is one (`device.rs`).
 //! Each model is two files from Hugging Face at a pinned revision, the language model and its
 //! image encoder, downloaded together and checked against their SHA-256 before use.
 //!
@@ -23,7 +24,8 @@ use kalamu_core::{
     RequestSetting, Task, TextRegion, Tuning, Usage, plain_words,
 };
 
-use crate::cpu::{self, DEVICE, threads};
+use crate::cpu::{self, threads};
+use crate::device::{Graphics, Placement, Speeds};
 use crate::llama::{Llama, PageFile};
 use crate::models::{ModelFile, ModelManager, ModelSet};
 
@@ -151,14 +153,16 @@ struct Inner {
     llama: Option<Llama>,
     /// The engine's build, asked once.
     version: OnceLock<String>,
+    /// The Windows build that reads on the graphics processor through Vulkan, when shipped.
+    graphics: Option<Graphics>,
     /// One page at a time: each run takes every core the app can spare, or the graphics
     /// processor.
     turn: Mutex<()>,
     /// Files whose hash was checked in this session, with the size and time they had then: a
     /// gigabyte is read once, not before every page.
     verified: Mutex<BTreeMap<&'static str, (u64, Option<SystemTime>)>>,
-    /// Seconds a page took on this computer, per model, kept in the models' folder.
-    speeds: Mutex<BTreeMap<String, f32>>,
+    /// Seconds a page took on this computer, per device and model, kept in the models' folder.
+    speeds: Mutex<Speeds>,
 }
 
 fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
@@ -168,16 +172,21 @@ fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
 const SPEEDS_FILE: &str = "speeds.json";
 
 impl Vision {
-    /// `llama` is the bundled engine, `None` when this build of the app has none.
-    pub fn new(models: ModelManager, llama: Option<Llama>) -> Self {
-        let speeds = std::fs::read_to_string(models.dir().join(SPEEDS_FILE))
-            .ok()
-            .and_then(|text| serde_json::from_str(&text).ok())
-            .unwrap_or_default();
+    /// `llama` is the bundled engine, `None` when this build of the app has none; `vulkan` its
+    /// Windows build for the graphics processor, used when `use_graphics` (Settings) and it finds
+    /// one.
+    pub fn new(
+        models: ModelManager,
+        llama: Option<Llama>,
+        vulkan: Option<Llama>,
+        use_graphics: bool,
+    ) -> Self {
+        let speeds = Speeds::load(models.dir().join(SPEEDS_FILE));
         Self {
             inner: Arc::new(Inner {
                 models,
                 llama,
+                graphics: vulkan.map(|program| Graphics::new(program, use_graphics)),
                 version: OnceLock::new(),
                 turn: Mutex::new(()),
                 verified: Mutex::new(BTreeMap::new()),
@@ -195,9 +204,41 @@ impl Vision {
         self.inner.llama.is_some()
     }
 
-    /// Seconds a page has taken on this computer, per model, from the pages it read last.
+    /// Seconds a page has taken on this computer, per model, on the device the next page goes
+    /// to, from the pages it read last.
     pub fn speeds(&self) -> BTreeMap<String, f32> {
-        lock(&self.inner.speeds).clone()
+        lock(&self.inner.speeds).on(&self.inner.placement(false))
+    }
+
+    /// Where the next page goes, without waiting for the graphics processor to be found: the
+    /// processor (or Metal) until it is.
+    pub fn placement(&self) -> Placement {
+        self.inner.placement(false)
+    }
+
+    /// The graphics processor the Vulkan build found, whether or not it is used; `None` when
+    /// there is none, no Vulkan build, or it is still being asked.
+    pub fn graphics_processor(&self) -> Option<String> {
+        let graphics = self.inner.graphics.as_ref()?;
+        graphics
+            .device_if_known()
+            .flatten()
+            .map(|device| device.name.clone())
+    }
+
+    /// Asks the Vulkan build for its devices now, so the first page need not wait for it. Takes
+    /// up to half a minute when a driver hangs: run it off the interface's thread.
+    pub fn find_graphics_processor(&self) {
+        if let Some(graphics) = &self.inner.graphics {
+            graphics.device();
+        }
+    }
+
+    /// Settings › Offline: read on the graphics processor when there is one.
+    pub fn use_graphics_processor(&self, wanted: bool) {
+        if let Some(graphics) = &self.inner.graphics {
+            graphics.set_wanted(wanted);
+        }
     }
 }
 
@@ -209,6 +250,30 @@ impl Inner {
                 .and_then(Llama::version)
                 .unwrap_or_else(|| "unknown".to_owned())
         })
+    }
+
+    /// Where the next page goes. `wait`: ask the Vulkan build for its devices if it was not
+    /// asked yet, rather than reading on the processor meanwhile.
+    fn placement(&self, wait: bool) -> Placement {
+        self.graphics
+            .as_ref()
+            .and_then(|graphics| {
+                let device = if wait {
+                    graphics.device()
+                } else {
+                    graphics.device_if_known().flatten()
+                };
+                graphics.placement(device)
+            })
+            .unwrap_or_else(Placement::built_in)
+    }
+
+    /// The program that reads there.
+    fn program(&self, placement: &Placement) -> Result<&Llama, ProviderError> {
+        match (placement, &self.graphics) {
+            (Placement::Vulkan(_), Some(graphics)) => Ok(graphics.program()),
+            _ => self.llama(),
+        }
     }
 
     fn llama(&self) -> Result<&Llama, ProviderError> {
@@ -240,16 +305,9 @@ impl Inner {
         Ok(leases)
     }
 
-    /// Keeps a running average of the seconds a page takes, weighted to the latest pages.
-    fn record_speed(&self, model: &str, seconds: f32) {
-        let mut speeds = lock(&self.speeds);
-        let average = speeds
-            .get(model)
-            .map_or(seconds, |previous| previous * 0.7 + seconds * 0.3);
-        speeds.insert(model.to_owned(), average);
-        if let Ok(text) = serde_json::to_string(&*speeds) {
-            let _ = std::fs::write(self.models.dir().join(SPEEDS_FILE), text);
-        }
+    /// Keeps a running average of the seconds a page takes there, weighted to the latest pages.
+    fn record_speed(&self, placement: &Placement, model: &str, seconds: f32) {
+        lock(&self.speeds).record(placement, model, seconds);
     }
 }
 
@@ -330,8 +388,8 @@ fn arguments(
         BATCH.to_string(),
         "-t".to_owned(),
         threads.to_string(),
-        // Every layer on the graphics processor where the engine has one (Metal); ignored by
-        // the processor-only build.
+        // Every layer on the graphics processor where the engine has one (Metal, or the Vulkan
+        // build on the device `device.rs` names); ignored by the processor-only build.
         "-ngl".to_owned(),
         "99".to_owned(),
         // The warm-up pass only helps a program that answers many requests.
@@ -488,11 +546,16 @@ impl Provider for Vision {
         settings
     }
 
-    /// The fixed settings, and where the model ran on this computer.
+    /// The fixed settings, and where the model runs on this computer: `process` reads the page
+    /// there or, if that changed meanwhile, asks for it to be sent again.
     fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
         let mut settings = self.request_settings(request.task, request.model, request.tuning);
         if !settings.is_empty() {
-            settings.push(RequestSetting::new("device", DEVICE));
+            let placement = self.inner.placement(true);
+            settings.push(RequestSetting::new("device", placement.kind()));
+            if let Some(name) = placement.device_name() {
+                settings.push(RequestSetting::new("device_name", name));
+            }
         }
         settings
     }
@@ -510,6 +573,8 @@ impl Provider for Vision {
         }
         ensure_cpu()?;
         let (model, recipe) = find(request.model)?;
+        // Where `sent_settings` said, just before, that this page would be read.
+        let planned = self.inner.placement(true);
         let inner = self.inner.clone();
         let bytes = request.input.bytes.clone();
         let mime = request.input.mime.clone();
@@ -520,20 +585,42 @@ impl Provider for Vision {
             if stop.is_stopped() {
                 return Err(ProviderError::Interrupted);
             }
-            let llama = inner.llama()?;
+            // A page failed on the graphics processor, or Settings changed, while this one
+            // waited: sent again, its record names where it is read.
+            let placement = inner.placement(true);
+            if placement != planned {
+                return Err(ProviderError::Transient(
+                    "Offline OCR models moved to another device; the page is read again there"
+                        .into(),
+                ));
+            }
+            let llama = inner.program(&placement)?;
             let leases = inner.files(model)?;
             let (image, extension) = page_image(&bytes, &mime, recipe.max_side)?;
             let page = PageFile::write(&image, extension)?;
             let logical = std::thread::available_parallelism().map_or(2, usize::from);
-            let args = arguments(
+            let mut args = arguments(
                 leases[0].path(),
                 leases[1].path(),
                 page.path(),
                 recipe,
                 threads(logical),
             );
-            let run = llama.run(&args, &stop)?;
-            inner.record_speed(recipe.model, run.elapsed.as_secs_f32());
+            args.extend(placement.arguments());
+            let run = match (llama.run(&args, &stop), &inner.graphics) {
+                // Out of memory, a driver fault: the rest of the session reads on the processor,
+                // starting with this page, which the engine sends again.
+                (Err(ProviderError::Other(reason)), Some(graphics))
+                    if matches!(placement, Placement::Vulkan(_)) =>
+                {
+                    graphics.give_up(&reason);
+                    return Err(ProviderError::Transient(format!(
+                        "The graphics processor could not read this page ({reason}); it is read again on the processor"
+                    )));
+                }
+                (run, _) => run?,
+            };
+            inner.record_speed(&placement, recipe.model, run.elapsed.as_secs_f32());
             Ok((run, inner.version().to_owned()))
         })
         .await
@@ -744,7 +831,7 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
                 "{}",
                 model.id
             );
-            let vision = Vision::new(ModelManager::new(".".into(), &VISION), None);
+            let vision = Vision::new(ModelManager::new(".".into(), &VISION), None, None, true);
             for input in &model.inputs {
                 assert!(
                     vision
@@ -758,7 +845,12 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
     #[test]
     fn a_model_needs_the_engine_and_both_files() {
         let dir = tempfile::tempdir().unwrap();
-        let without = Vision::new(ModelManager::new(dir.path().to_owned(), &VISION), None);
+        let without = Vision::new(
+            ModelManager::new(dir.path().to_owned(), &VISION),
+            None,
+            None,
+            true,
+        );
         assert!(!without.available());
         assert!(matches!(
             without.check_ready("glm-ocr", &LanguageChoice::Auto),
@@ -768,6 +860,8 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
         let with = Vision::new(
             ModelManager::new(dir.path().to_owned(), &VISION),
             Some(engine),
+            None,
+            true,
         );
         let french = LanguageChoice::Explicit(vec![LanguageCode::new("fr")]);
         if cpu::missing_features().is_empty() {
@@ -790,7 +884,16 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
     async fn smoke() {
         let dir = std::env::var("VISION_SMOKE_DIR").unwrap();
         let llama = Llama::locate(&[]).expect("KALAMU_LLAMA_DIR names the engine's folder");
-        let vision = Vision::new(ModelManager::new(dir.into(), &VISION), Some(llama));
+        // The Vulkan build too, when it is in the same folder and finds a graphics processor.
+        let vulkan = Llama::locate_vulkan(&[]);
+        let vision = Vision::new(
+            ModelManager::new(dir.into(), &VISION),
+            Some(llama),
+            vulkan,
+            true,
+        );
+        vision.find_graphics_processor();
+        println!("== reading on {:?}", vision.placement());
         let page = std::fs::read(sample("bulletin-page.jpg")).unwrap();
         let input = kalamu_core::PreparedInput {
             piece: kalamu_core::PieceRef::page(1),

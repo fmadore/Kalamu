@@ -149,10 +149,17 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
     if llama.is_none() {
         tracing::warn!("llama.cpp not found: offline OCR models are unavailable");
     }
+    // On Windows, its build for the graphics processor, asked at once which one it finds, so
+    // Settings can name it and the first page need not wait.
+    let vulkan = kalamu_offline::Llama::locate_vulkan(&app_dir);
     let vision = Arc::new(kalamu_offline::Vision::new(
         kalamu_offline::ModelManager::new(data.join("ocr-models"), &kalamu_offline::VISION),
         llama,
+        vulkan,
+        settings.ocr_graphics_processor,
     ));
+    let finding = vision.clone();
+    std::thread::spawn(move || finding.find_graphics_processor());
     let mut providers = kalamu_providers::registry(http.clone());
     providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
     providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));

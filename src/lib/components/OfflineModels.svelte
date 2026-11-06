@@ -41,7 +41,23 @@
 	/** How long a page took with an OCR model on this computer, in words. */
 	function ocrSpeed(id: string): string {
 		const seconds = secondsPerPage(id);
-		return seconds ? m.settings.ocrSpeed(seconds) : m.settings.ocrNotTimed;
+		return seconds
+			? m.settings.ocrSpeed(seconds, app.offline?.ocr_device !== 'cpu')
+			: m.settings.ocrNotTimed;
+	}
+	/** The graphics processor found for the OCR models on Windows, offered as a choice. */
+	const graphics = $derived(app.offline?.ocr_graphics_processor ?? null);
+
+	/** Saved, then the status read again: the speeds shown follow the device. */
+	async function useGraphics() {
+		if (!app.settings) return;
+		try {
+			await api.saveSettings($state.snapshot(app.settings));
+		} catch (e) {
+			toast(describeError(e, m));
+		} finally {
+			await refreshOffline();
+		}
 	}
 	const missingCpu = $derived((app.offline?.missing_cpu.length ?? 0) > 0);
 
@@ -199,6 +215,19 @@
 				{m.settings.ocrCpu(app.offline?.missing_cpu.join(', ') ?? '')}
 			</p>
 		{/if}
+		{#if graphics && app.settings && !noOcrEngine && !missingCpu}
+			<div class="graphics">
+				<label class="inline small">
+					<input
+						type="checkbox"
+						bind:checked={app.settings.ocr_graphics_processor}
+						onchange={useGraphics}
+					/>
+					{m.settings.ocrGraphics(graphics)}
+				</label>
+				<p class="muted small">{m.settings.ocrGraphicsHint}</p>
+			</div>
+		{/if}
 		{#each ocr as mod (mod.id)}
 			{@const s = ocrStatus(mod.id)}
 			{@render row(
@@ -224,6 +253,15 @@
 	}
 	.small {
 		font-size: var(--type-sm);
+	}
+	.graphics {
+		display: grid;
+		gap: var(--space-1);
+	}
+	.inline {
+		display: inline-flex;
+		gap: var(--space-2);
+		align-items: center;
 	}
 	.add-language {
 		display: grid;

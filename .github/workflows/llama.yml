@@ -1,14 +1,23 @@
 name: llama.cpp
 
 # Builds llama.cpp's multimodal program (`llama-mtmd-cli`), which runs the offline OCR models
-# next to Kalamu (docs/llama.md; docs/decisions/2026-11-06-ocr-vision-models.md), for Windows x64
-# and ARM64 and for macOS on Apple Silicon: one self-contained executable each, from the pinned
-# release's source, built for the same processors as the Whisper linked into the app
-# (`.cargo/config.toml`), on the processor on Windows and with Metal on a Mac. MIT licensed.
+# next to Kalamu (docs/llama.md; docs/decisions/2026-11-06-ocr-vision-models.md and
+# 2026-11-06-ocr-graphics-processor.md), from the pinned release's source, for the same
+# processors as the Whisper linked into the app (`.cargo/config.toml`). MIT licensed.
 #
-# Each run then times both models on the sample page on its own runner, for the record of how
-# fast they read on each kind of processor (the job's summary), and uploads, per architecture,
-# the program, its licence and the exact build line.
+# - The processor build, one self-contained executable each for Windows x64 and ARM64, and for
+#   macOS on Apple Silicon, where it uses the graphics processor through Metal.
+# - The graphics-processor build for Windows x64 and ARM64 (`llama-mtmd-cli-vulkan`), through
+#   Vulkan, which the app runs instead when it finds a usable graphics processor. It needs the
+#   Vulkan loader that graphics drivers install (vulkan-1.dll), nothing else.
+# - A test build for Snapdragon's Adreno graphics processor through OpenCL
+#   (`llama-mtmd-cli-opencl`, Windows ARM64), kept as this run's artifact to compare with Vulkan
+#   on a real laptop, and never published or shipped.
+#
+# Each run then times the models on the sample page on its own runner, for the record of how
+# fast they read on each kind of processor (the job's summary). GitHub's runners have no
+# graphics processor, so the Vulkan and OpenCL builds list the devices they find and read the
+# page on the processor; their speed is measured on real machines.
 #
 # Run by hand when llama.cpp is updated, or through a pull request that changes this file. When
 # every build passes, the `publish` job publishes the archives as a GitHub release named
@@ -28,6 +37,13 @@ env:
   # The release llama.cpp names v0.9.0 (4 November 2026), and the SHA-256 of its source archive.
   LLAMA_TAG: "b12110"
   LLAMA_SHA256: "442a8ec2c5e8b8895175abfcede851964572370f0a56b33166c94905260da008"
+  # LunarG's Vulkan SDK, for the headers, the loader's import library and the shader compiler;
+  # nothing from it is shipped but the headers' licence. The installers' SHA-256 are the ones
+  # LunarG publishes (https://vulkan.lunarg.com/sdk/sha/<version>/<platform>/<file>.txt).
+  VULKAN_SDK_VERSION: "1.4.363.1"
+  VULKAN_HEADERS_TAG: "vulkan-sdk-1.4.363.0"
+  # Khronos's OpenCL headers and loader, for the Adreno test build only.
+  OPENCL_TAG: "v2026.05.29"
 
 jobs:
   build:
@@ -37,20 +53,61 @@ jobs:
         include:
           - triple: x86_64-pc-windows-msvc
             runner: windows-latest
+            variant: cpu
+            program: llama-mtmd-cli
+            archive: llama
             # AVX2 with FMA and F16C, as Whisper (`crates/offline/src/cpu.rs` checks them).
-            cpu: >-
+            flags: >-
               -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DGGML_BMI2=ON
               -DGGML_SSE42=ON
           - triple: aarch64-pc-windows-msvc
             runner: windows-11-arm
-            cpu: -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16
+            variant: cpu
+            program: llama-mtmd-cli
+            archive: llama
+            flags: -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16
           - triple: aarch64-apple-darwin
             runner: macos-latest
+            variant: cpu
+            program: llama-mtmd-cli
+            archive: llama
             # Metal, its shaders built into the program; macOS 13 and later, as the app.
-            cpu: >-
+            flags: >-
               -DGGML_METAL=ON -DGGML_METAL_EMBED_LIBRARY=ON -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
+          # The same processor code as the processor build, so a page the graphics processor
+          # leaves to it reads the same, plus Vulkan.
+          - triple: x86_64-pc-windows-msvc
+            runner: windows-latest
+            variant: vulkan
+            program: llama-mtmd-cli-vulkan
+            archive: llama-vulkan
+            sdk: X64
+            sdk_platform: windows
+            sdk_sha256: c02932bd9a968b22d404536108adaacac908c081cd6b0113f5bfefc523dd0a6a
+            flags: >-
+              -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DGGML_BMI2=ON
+              -DGGML_SSE42=ON -DGGML_VULKAN=ON
+          - triple: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+            variant: vulkan
+            program: llama-mtmd-cli-vulkan
+            archive: llama-vulkan
+            sdk: ARM64
+            sdk_platform: warm
+            sdk_sha256: 29d925e3ee4793f9c3977f34389ccb0273c0347bfacf2f08dd70104d6d096ceb
+            flags: -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16 -DGGML_VULKAN=ON
+          # Adreno's own OpenCL kernels, as llama.cpp's windows-opencl-adreno build.
+          - triple: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+            variant: opencl
+            program: llama-mtmd-cli-opencl
+            archive: llama-opencl
+            flags: >-
+              -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16 -DGGML_OPENCL=ON
+              -DGGML_OPENCL_USE_ADRENO_KERNELS=ON
+    name: build (${{ matrix.variant }}, ${{ matrix.triple }})
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 90
+    timeout-minutes: 120
     defaults:
       run:
         shell: bash
@@ -71,6 +128,48 @@ jobs:
           echo "${LLAMA_SHA256}  llama.cpp-${LLAMA_TAG}.tar.gz" | $SHA256 -c -
           tar -xzf "llama.cpp-${LLAMA_TAG}.tar.gz"
 
+      # The SDK for this runner's own architecture (`warm` is LunarG's name for Windows on Arm),
+      # so its shader compiler runs natively while ggml builds its shaders.
+      - name: Vulkan SDK
+        if: matrix.variant == 'vulkan'
+        shell: pwsh
+        run: |
+          $name = "vulkansdk-windows-${{ matrix.sdk }}-$env:VULKAN_SDK_VERSION.exe"
+          $installer = Join-Path $env:RUNNER_TEMP $name
+          curl.exe -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o $installer `
+            "https://sdk.lunarg.com/sdk/download/$env:VULKAN_SDK_VERSION/${{ matrix.sdk_platform }}/$name"
+          $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLower()
+          if ($hash -ne '${{ matrix.sdk_sha256 }}') { throw "$name has SHA-256 $hash, expected ${{ matrix.sdk_sha256 }}" }
+          $root = "C:\VulkanSDK\$env:VULKAN_SDK_VERSION"
+          & $installer --root $root --accept-licenses --default-answer --confirm-command install
+          if ($LASTEXITCODE -ne 0) { throw "The Vulkan SDK did not install ($LASTEXITCODE)." }
+          "VULKAN_SDK=$root" >> $env:GITHUB_ENV
+          "$root\Bin" >> $env:GITHUB_PATH
+
+      # Built with the compiler below, into a folder the llama.cpp build is pointed at. The
+      # loader (OpenCL.dll) goes into the test archive beside the program, in case the system
+      # has none of its own.
+      - name: OpenCL headers and loader
+        if: matrix.variant == 'opencl'
+        shell: pwsh
+        run: |
+          $prefix = Join-Path $env:RUNNER_TEMP 'opencl'
+          git clone --depth 1 --branch $env:OPENCL_TAG https://github.com/KhronosGroup/OpenCL-Headers
+          cmake -S OpenCL-Headers -B OpenCL-Headers/build -G Ninja -DBUILD_TESTING=OFF `
+            -DOPENCL_HEADERS_BUILD_TESTING=OFF -DOPENCL_HEADERS_BUILD_CXX_TESTS=OFF `
+            -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build OpenCL-Headers/build --target install
+          git clone --depth 1 --branch $env:OPENCL_TAG https://github.com/KhronosGroup/OpenCL-ICD-Loader
+          cmake -S OpenCL-ICD-Loader -B OpenCL-ICD-Loader/build -G Ninja -DCMAKE_BUILD_TYPE=Release `
+            -DBUILD_TESTING=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
+            -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build OpenCL-ICD-Loader/build --target install
+          "OPENCL_PREFIX=$($prefix -replace '\\', '/')" >> $env:GITHUB_ENV
+        env:
+          CC: clang-cl
+          CXX: clang-cl
+
       # clang-cl, as for Whisper: ggml refuses MSVC itself on ARM64, and one compiler for both
       # Windows targets keeps the instruction sets the same as the app's.
       - name: Compiler (Windows)
@@ -87,8 +186,9 @@ jobs:
           arch: ${{ matrix.triple == 'aarch64-pc-windows-msvc' && 'arm64' || 'x64' }}
 
       # Static throughout: llama.cpp, ggml and the C runtime inside the one executable, so
-      # nothing is shipped beside it. No OpenMP (its runtime is a library of its own), no
-      # network (the models are downloaded by the app), no server, tests or examples.
+      # nothing is shipped beside it but what the system or its graphics driver provides. No
+      # OpenMP (its runtime is a library of its own), no network (the models are downloaded by
+      # the app), no server, tests or examples.
       - name: Build
         run: |
           BUILD=(
@@ -104,12 +204,17 @@ jobs:
             -DLLAMA_BUILD_SERVER=OFF
             -DLLAMA_BUILD_APP=OFF
             -DLLAMA_BUILD_TOOLS=ON
-            ${{ matrix.cpu }}
+            ${{ matrix.flags }}
           )
+          [ -n "${OPENCL_PREFIX:-}" ] && BUILD+=("-DCMAKE_PREFIX_PATH=${OPENCL_PREFIX}")
           cmake -S "llama.cpp-${LLAMA_TAG}" -B build "${BUILD[@]}"
           cmake --build build --config Release --target llama-mtmd-cli -j 4
-          printf '%s\n' "llama.cpp ${LLAMA_TAG}, built by .github/workflows/llama.yml in ${GITHUB_REPOSITORY}, run ${GITHUB_RUN_ID}." \
-            "cmake ${BUILD[*]}" > BUILD.txt
+          {
+            echo "llama.cpp ${LLAMA_TAG}, built by .github/workflows/llama.yml in ${GITHUB_REPOSITORY}, run ${GITHUB_RUN_ID}."
+            [ "${{ matrix.variant }}" = vulkan ] && echo "Vulkan SDK ${VULKAN_SDK_VERSION}."
+            [ "${{ matrix.variant }}" = opencl ] && echo "OpenCL headers and loader ${OPENCL_TAG}."
+            echo "cmake ${BUILD[*]}"
+          } > BUILD.txt
           cat BUILD.txt
 
       - name: Package
@@ -117,23 +222,36 @@ jobs:
           exe=""
           [ "$RUNNER_OS" = Windows ] && exe=".exe"
           program=$(find build -name "llama-mtmd-cli${exe}" -type f | head -1)
-          dir="llama-${LLAMA_TAG}-${{ matrix.triple }}"
+          dir="${{ matrix.archive }}-${LLAMA_TAG}-${{ matrix.triple }}"
+          name="${{ matrix.program }}${exe}"
           mkdir -p "$dir/licenses"
-          cp "$program" "$dir/"
+          cp "$program" "$dir/$name"
           cp "llama.cpp-${LLAMA_TAG}/LICENSE" "$dir/licenses/llama.cpp-MIT.txt"
           cp BUILD.txt "$dir/"
-          "$dir/llama-mtmd-cli${exe}" --version
-          # Nothing but the system's own libraries.
+          if [ "${{ matrix.variant }}" = vulkan ]; then
+            # Vulkan's headers (Apache-2.0 OR MIT; taken under MIT) are compiled into the program.
+            curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o "$dir/licenses/Vulkan-Headers-MIT.txt" \
+              "https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/${VULKAN_HEADERS_TAG}/LICENSES/MIT.txt"
+          fi
+          if [ "${{ matrix.variant }}" = opencl ]; then
+            cp "${OPENCL_PREFIX}/bin/OpenCL.dll" "$dir/"
+          fi
+          "$dir/$name" --version
+          # Nothing but the system's own libraries, and for the graphics-processor builds the
+          # loader graphics drivers install (vulkan-1.dll, OpenCL.dll).
           if [ "$RUNNER_OS" = macOS ]; then
-            otool -L "$dir/llama-mtmd-cli" | tee deps.txt
+            otool -L "$dir/$name" | tee deps.txt
             if tail -n +2 deps.txt | grep -v -E '^\s+(/usr/lib/|/System/Library/)'; then
-              echo "::error::llama-mtmd-cli links a library macOS does not have."; exit 1
+              echo "::error::$name links a library macOS does not have."; exit 1
             fi
           else
-            dumpbin //dependents "$dir/llama-mtmd-cli.exe" | tee deps.txt
+            dumpbin //dependents "$dir/$name" | tee deps.txt
             # Only the listed libraries, not the header that names the file itself.
             if grep -i -E '^\s+\S+\.dll\s*$' deps.txt | grep -i -E 'msvcp|vcruntime|vcomp|libomp|ggml|llama|mtmd'; then
-              echo "::error::llama-mtmd-cli needs a library Windows does not have."; exit 1
+              echo "::error::$name needs a library Windows does not have."; exit 1
+            fi
+            if [ "${{ matrix.variant }}" = vulkan ] && ! grep -qi 'vulkan-1\.dll' deps.txt; then
+              echo "::error::$name was built without Vulkan."; exit 1
             fi
           fi
           if [ "$RUNNER_OS" = Windows ]; then
@@ -142,8 +260,9 @@ jobs:
             (cd "$dir" && zip -r "../$dir.zip" .)
           fi
           $SHA256 "$dir.zip" | tee "$dir.zip.sha256"
+          ls -l "$dir"
           echo "DIR=$dir" >> "$GITHUB_ENV"
-          echo "EXE=$exe" >> "$GITHUB_ENV"
+          echo "PROGRAM=$name" >> "$GITHUB_ENV"
 
       # The models' files, pinned as in crates/offline/src/vision.rs.
       - uses: actions/cache@v6
@@ -165,9 +284,23 @@ jobs:
           get ggml-org/GLM-OCR-GGUF GLM-OCR-Q8_0.gguf 65a42de1148dbed2297e922b5dbc7d9b70c36578 45bc244a6446aff850521dc41f18bc8d7105ad5f0c2c8c28af04e7cc4f4d50b1
           get ggml-org/GLM-OCR-GGUF mmproj-GLM-OCR-Q8_0.gguf 65a42de1148dbed2297e922b5dbc7d9b70c36578 9c4b58e33e316ed142eb5dcb41abec3844d3e6e5dc361ffb782c3fa9d175141f
 
+      # What the graphics-processor builds find here: on GitHub's runners, no graphics
+      # processor, so the page below is read on the processor, as the app would not do.
+      - name: Devices
+        if: matrix.variant != 'cpu'
+        run: |
+          {
+            echo "### ${{ matrix.variant }} on ${{ matrix.triple }}: devices"
+            echo
+            echo '```'
+            "$DIR/$PROGRAM" --list-devices 2>&1 | tail -20 || echo "--list-devices failed ($?)"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
       # The arguments the app gives (vision.rs, `arguments`), on the sample page, which is
-      # smaller than either model's largest image and is sent as it is.
-      - name: Time both models on the sample page
+      # smaller than either model's largest image and is sent as it is. The processor builds
+      # time both models; the others read the page once with GLM-OCR, to show they work.
+      - name: Time the models on the sample page
         run: |
           # As the app (crates/offline/src/cpu.rs): half the logical processors on x64, all but
           # one on ARM64.
@@ -178,57 +311,66 @@ jobs:
           esac
           [ "$threads" -lt 1 ] && threads=1
           [ "$threads" -gt 8 ] && threads=8
+          variant="${{ matrix.variant }}"
           run() {
             local name=$1 model=$2 encoder=$3 prompt=$4
             local start end
             start=$(date +%s)
-            "$DIR/llama-mtmd-cli${EXE}" -m "models/$model" --mmproj "models/$encoder" \
+            "$DIR/$PROGRAM" -m "models/$model" --mmproj "models/$encoder" \
               --image samples/bulletin-page.jpg -p "<__media__>${prompt}"$'\n' --jinja --temp 0 \
               -n 6144 -c 10240 -b 4096 -ub 4096 -t "$threads" -ngl 99 --no-warmup \
-              > "$name.txt" 2> "$name.log" || { tail -30 "$name.log"; return 1; }
+              > "$variant-$name.txt" 2> "$variant-$name.log" || { tail -30 "$variant-$name.log"; failed=1; return; }
             end=$(date +%s)
             {
-              echo "### $name: $((end - start)) s on ${{ matrix.triple }} ($threads threads)"
+              echo "### $name: $((end - start)) s on ${{ matrix.triple }}, $variant build ($threads threads)"
               echo
               echo '```'
-              head -c 1500 "$name.txt"
+              head -c 1500 "$variant-$name.txt"
               echo
               echo '```'
-              grep -E 'llama_perf_context_print|image slice|encoded in' "$name.log" | tail -8 | sed 's/^/    /' || true
+              grep -E 'using device|llama_perf_context_print|image slice|encoded in' "$variant-$name.log" | tail -8 | sed 's/^/    /' || true
             } | tee -a "$GITHUB_STEP_SUMMARY"
-            if ! grep -qi bulletin "$name.txt"; then
+            if ! grep -qi bulletin "$variant-$name.txt"; then
               echo "::error::$name did not read the page's title (BULLETIN)."
-              tail -40 "$name.log"
+              tail -40 "$variant-$name.log"
               failed=1
             fi
             # LightOnOCR's grounding mode places each block: `![text](80,175,920,225)`.
-            if [ "$prompt" = grounding ] && ! grep -qE '^!\[[a-z_+]+\]\([0-9]+, ?[0-9]+, ?[0-9]+, ?[0-9]+\)' "$name.txt"; then
+            if [ "$prompt" = grounding ] && ! grep -qE '^!\[[a-z_+]+\]\([0-9]+, ?[0-9]+, ?[0-9]+, ?[0-9]+\)' "$variant-$name.txt"; then
               echo "::error::$name wrote no block positions in grounding mode."
               failed=1
             fi
           }
           failed=0
-          run lightonocr-3-1b LightOnOCR-3-1B.Q8_0.gguf LightOnOCR-3-1B.mmproj-q8_0.gguf grounding
+          if [ "$variant" = cpu ]; then
+            run lightonocr-3-1b LightOnOCR-3-1B.Q8_0.gguf LightOnOCR-3-1B.mmproj-q8_0.gguf grounding
+          fi
           run glm-ocr GLM-OCR-Q8_0.gguf mmproj-GLM-OCR-Q8_0.gguf "Text Recognition:"
+          # The Adreno build is a test: without an OpenCL device it may refuse to start, which
+          # says nothing about a Snapdragon laptop.
+          if [ "$variant" = opencl ] && [ "$failed" = 1 ]; then
+            echo "::warning::The OpenCL test build could not read the page on this runner."
+            failed=0
+          fi
           exit "$failed"
 
       # Kept even when a model misreads the page, so its answer can be read.
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: llama-${{ matrix.triple }}
+          name: llama-${{ matrix.variant }}-${{ matrix.triple }}
           path: |
-            llama-*.zip
-            llama-*.zip.sha256
-            lightonocr-3-1b.txt
-            glm-ocr.txt
+            llama*.zip
+            llama*.zip.sha256
+            ${{ matrix.variant }}-*.txt
 
-  # Once all three builds and their timings pass: the archives published as a GitHub release
-  # (a pre-release holding only them, as FFmpeg's, so it never becomes the app's "Latest"), their
-  # SHA-256 written into scripts/llama.json and committed to the branch that ran this, and the
-  # Mac App Store sandbox check run again on that commit, since a commit pushed with this job's
-  # token starts no workflow by itself. Skipped when scripts/llama.json already pins this tag,
-  # and for pull requests from forks, which get no write access.
+  # Once every build and its timing pass: the processor and Vulkan archives published as a
+  # GitHub release (a pre-release holding only them, as FFmpeg's, so it never becomes the app's
+  # "Latest"), their SHA-256 written into scripts/llama.json and committed to the branch that ran
+  # this, and the Mac App Store sandbox check run again on that commit, since a commit pushed
+  # with this job's token starts no workflow by itself. The OpenCL test build stays an artifact
+  # of the run. Skipped when scripts/llama.json already pins this tag with every archive, and for
+  # pull requests from forks, which get no write access.
   publish:
     needs: build
     if: >-
@@ -245,6 +387,8 @@ jobs:
       # The branch's commit, not the merge commit a pull request's run is checked out at.
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TRIPLES: x86_64-pc-windows-msvc aarch64-pc-windows-msvc aarch64-apple-darwin
+      VULKAN_TRIPLES: x86_64-pc-windows-msvc aarch64-pc-windows-msvc
     steps:
       # Credentials kept, unlike the other jobs: this one pushes the pins.
       - uses: actions/checkout@v7
@@ -255,7 +399,10 @@ jobs:
         id: pinned
         run: |
           if jq -e --arg tag "$LLAMA_TAG" \
-            '.version == $tag and ([.archives[].sha256] | all(length == 64))' scripts/llama.json > /dev/null; then
+            '.version == $tag
+              and ([.archives[].sha256] | all(length == 64))
+              and ((.vulkan // {}) | has("x86_64-pc-windows-msvc") and has("aarch64-pc-windows-msvc"))
+              and ([.vulkan[].sha256] | all(length == 64))' scripts/llama.json > /dev/null; then
             echo "scripts/llama.json already pins llama.cpp ${LLAMA_TAG}: nothing to publish."
             echo "done=true" >> "$GITHUB_OUTPUT"
           fi
@@ -274,31 +421,40 @@ jobs:
           n=1
           while gh release view "llama-${LLAMA_TAG}-${n}" > /dev/null 2>&1; do n=$((n + 1)); done
           release="llama-${LLAMA_TAG}-${n}"
-          triples="x86_64-pc-windows-msvc aarch64-pc-windows-msvc aarch64-apple-darwin"
           run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          files=()
+          for t in $TRIPLES; do files+=("dist/llama-${LLAMA_TAG}-${t}.zip"); done
+          for t in $VULKAN_TRIPLES; do files+=("dist/llama-vulkan-${LLAMA_TAG}-${t}.zip"); done
           {
-            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) as bundled with Kalamu to run the offline OCR models: llama.cpp ${LLAMA_TAG}, one static executable each for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal). This release only holds the archives the app is built with; it is not an app release."
+            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) as bundled with Kalamu to run the offline OCR models: llama.cpp ${LLAMA_TAG}, one static executable each for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal), and for Windows x64 and ARM64 a second one that uses the graphics processor through Vulkan (\`llama-mtmd-cli-vulkan\`, Vulkan SDK ${VULKAN_SDK_VERSION}). This release only holds the archives the app is built with; it is not an app release."
             echo
-            echo "- **Licence**: MIT (\`licenses/llama.cpp-MIT.txt\` in each archive). llama.cpp is not modified."
+            echo "- **Licence**: MIT (\`licenses/llama.cpp-MIT.txt\` in each archive; the Vulkan builds add Vulkan's headers' licence). llama.cpp is not modified."
             echo "- **Source**: [${LLAMA_TAG}](https://github.com/ggml-org/llama.cpp/releases/tag/${LLAMA_TAG}), source archive SHA-256 \`${LLAMA_SHA256}\`; each archive's \`BUILD.txt\` gives the build line."
             echo "- **Built by** [.github/workflows/llama.yml](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${HEAD_SHA}/.github/workflows/llama.yml), [run ${GITHUB_RUN_ID}](${run_url}), whose summaries give each model's time on the sample page. How it is used: [docs/llama.md](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/docs/llama.md)."
             echo
             echo "SHA-256:"
             echo
-            for t in $triples; do
-              echo "- \`llama-${LLAMA_TAG}-${t}.zip\`: \`$(sha256sum "dist/llama-${LLAMA_TAG}-${t}.zip" | cut -d' ' -f1)\`"
+            for f in "${files[@]}"; do
+              echo "- \`$(basename "$f")\`: \`$(sha256sum "$f" | cut -d' ' -f1)\`"
             done
           } > notes.md
-          files=()
-          for t in $triples; do files+=("dist/llama-${LLAMA_TAG}-${t}.zip"); done
           gh release create "$release" "${files[@]}" --target "$HEAD_SHA" \
             --title "llama.cpp ${LLAMA_TAG} (offline OCR models) for Kalamu" \
             --notes-file notes.md --prerelease --latest=false
-          pins=$(for t in $triples; do
-            printf '%s\t%s\n' "$t" "$(sha256sum "dist/llama-${LLAMA_TAG}-${t}.zip" | cut -d' ' -f1)"
-          done | jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {key: .[0], value: {sha256: .[1]}}) | from_entries')
-          jq --tab --arg release "$release" --arg version "$LLAMA_TAG" --argjson archives "$pins" \
-            '.release = $release | .version = $version | .archives = $archives' scripts/llama.json > llama.json
+          pins() {
+            local prefix=$1; shift
+            for t in "$@"; do
+              printf '%s\t%s\n' "$t" "$(sha256sum "dist/${prefix}-${LLAMA_TAG}-${t}.zip" | cut -d' ' -f1)"
+            done | jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {key: .[0], value: {sha256: .[1]}}) | from_entries'
+          }
+          # shellcheck disable=SC2086
+          archives=$(pins llama $TRIPLES)
+          # shellcheck disable=SC2086
+          vulkan=$(pins llama-vulkan $VULKAN_TRIPLES)
+          jq --tab --arg release "$release" --arg version "$LLAMA_TAG" \
+            --argjson archives "$archives" --argjson vulkan "$vulkan" \
+            '.release = $release | .version = $version | .archives = $archives | .vulkan = $vulkan' \
+            scripts/llama.json > llama.json
           mv llama.json scripts/llama.json
           cat scripts/llama.json
           echo "RELEASE=$release" >> "$GITHUB_ENV"

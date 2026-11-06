@@ -4,7 +4,8 @@
 //   node scripts/bundle-msix.mjs x64|arm64      (npm run bundle:msix:x64 / bundle:msix:arm64)
 //
 // The bundler reads tauri.conf.json and tauri.windows.conf.json only, and `tauri build` merges the
-// latter on Windows by itself, so the FFmpeg configuration (tauri.ffmpeg.conf.json) is laid in as
+// latter on Windows by itself, so the Windows bundling configuration (tauri.ffmpeg.windows.conf.json:
+// FFmpeg and both llama.cpp programs) is laid in as
 // tauri.windows.conf.json for the build and removed afterwards: an ordinary build or `tauri dev`
 // must not need FFmpeg fetched. Fetch both first: `npm run fetch:ffmpeg -- <target>` and
 // `npm run fetch:llama -- <target>`.
@@ -23,7 +24,8 @@ const target = arch === 'x64' ? 'x86_64-pc-windows-msvc' : 'aarch64-pc-windows-m
 for (const [tool, fetch] of [
 	['ffmpeg', 'fetch:ffmpeg'],
 	['ffprobe', 'fetch:ffmpeg'],
-	['llama-mtmd-cli', 'fetch:llama']
+	['llama-mtmd-cli', 'fetch:llama'],
+	['llama-mtmd-cli-vulkan', 'fetch:llama']
 ]) {
 	if (!existsSync(`src-tauri/binaries/${tool}-${target}.exe`)) {
 		console.error(`${tool} is missing: run \`npm run ${fetch} -- ${target}\` first.`);
@@ -32,7 +34,7 @@ for (const [tool, fetch] of [
 }
 
 const windows = 'src-tauri/tauri.windows.conf.json';
-copyFileSync('src-tauri/tauri.ffmpeg.conf.json', windows);
+copyFileSync('src-tauri/tauri.ffmpeg.windows.conf.json', windows);
 try {
 	execFileSync(
 		process.execPath,

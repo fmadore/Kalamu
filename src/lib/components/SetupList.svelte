@@ -225,7 +225,9 @@
 					{@const seconds = secondsPerPage(info.id)}
 					<!-- An offline OCR model: how long a page takes here, measured, not promised. -->
 					<p class="muted small desc">
-						{seconds ? m.settings.ocrSpeed(seconds) : m.settings.ocrNotTimed}
+						{seconds
+							? m.settings.ocrSpeed(seconds, app.offline?.ocr_device !== 'cpu')
+							: m.settings.ocrNotTimed}
 					</p>
 				{/if}
 				{#if info && Array.isArray(info.languages)}

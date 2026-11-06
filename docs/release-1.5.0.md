@@ -11,8 +11,10 @@ changed, see the [1.4.1 release](https://github.com/fmadore/Kalamu/releases/tag/
   searchable PDF by block; **GLM-OCR** (1.4 GB) is strong on tables and on Chinese, Japanese and
   Korean, and returns the text alone. Download them once in Settings › Offline, under *Text
   extraction with OCR models*; each is checked against its fingerprint before use. They run in
-  llama.cpp, shipped inside the app: on the processor on Windows and on the graphics processor
-  (Metal) on a Mac. Pausing a job stops the page being read, which is read again on resuming.
+  llama.cpp, shipped inside the app: on the graphics processor when there is one Kalamu can use
+  (through Metal on a Mac, through Vulkan on Windows; Settings › Offline names it and can keep
+  the models on the processor), on the processor otherwise. Pausing a job stops the page being
+  read, which is read again on resuming.
 - **Speed measured on your computer.** These models are much slower than Tesseract on a PC's
   processor: from tens of seconds to over a minute a page. Settings and New job show the seconds
   a page took on your own computer once a model has read a few pages.
@@ -69,8 +71,11 @@ keeps your jobs, settings, presets and keys.
   both read it correctly, but not yet measured on a range of archive pages (error rates against
   Tesseract and the cloud models are to come), nor run on a real Mac's graphics processor. On
   those small test machines a page took two to three minutes on Windows; a recent computer
-  should be several times faster, which Settings will show. Using a PC's graphics processor is
-  planned: [#122](https://github.com/fmadore/Kalamu/issues/122).
+  should be several times faster, which Settings will show. On Windows they now run on the
+  graphics processor through Vulkan when Kalamu finds one it can use
+  ([#122](https://github.com/fmadore/Kalamu/issues/122)), falling back to the processor if a
+  page fails there; this has been built and checked in GitHub Actions, which has no graphics
+  processor, but not yet timed on a real NVIDIA, AMD, Intel or Snapdragon one.
 - **The Mac versions** are built and tested on Macs in GitHub Actions, but have not yet been
   used on a real Mac, Whisper's Metal mode included. Please report what does not work with
   [Report a problem](https://github.com/fmadore/Kalamu/issues/new/choose). Intel Macs are not

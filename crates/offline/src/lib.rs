@@ -4,6 +4,7 @@
 //! data are downloaded from the app.
 
 mod cpu;
+mod device;
 mod download;
 mod llama;
 mod models;
@@ -16,7 +17,8 @@ use kalamu_core::ProviderError;
 use thiserror::Error;
 
 pub use cpu::missing_features;
-pub use llama::Llama;
+pub use device::Placement;
+pub use llama::{Device, Llama};
 pub use models::{MODELS, ModelFile, ModelManager, ModelSet, ModelStatus, VAD, WHISPER, find};
 pub use tessdata::{TESSDATA, for_language as tessdata_for_language};
 pub use tesseract::{MODEL as TESSERACT_MODEL, TESSERACT_ID, Tesseract};

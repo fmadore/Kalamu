@@ -32,12 +32,13 @@ Things that are not what they look like:
   `tauri.conf.json`'s `identifier` and `productName`, which are not what Partner Center
   assigned: `49346FMadore.Kalamu` and `Kalamu` ([Store identity](microsoft-store.md#store-identity)).
   Ingestion fails if they differ by a character.
-- **FFmpeg is laid in for the build only.** The bundler reads `tauri.conf.json` and
-  `tauri.windows.conf.json` and nothing else; Kalamu keeps FFmpeg in
-  `tauri.ffmpeg.conf.json` so that a plain build or `tauri dev` does not need it fetched. The
-  script copies it to `src-tauri/tauri.windows.conf.json` (ignored) for the length of the
-  build, so the bundler stages `ffmpeg.exe` and `ffprobe.exe` beside `kalamu.exe` and the
-  `licenses/` folder with them, then removes it.
+- **FFmpeg and llama.cpp are laid in for the build only.** The bundler reads
+  `tauri.conf.json` and `tauri.windows.conf.json` and nothing else; Kalamu keeps the bundled
+  programs in `tauri.ffmpeg.windows.conf.json` so that a plain build or `tauri dev` does not
+  need them fetched. The script copies it to `src-tauri/tauri.windows.conf.json` (ignored) for
+  the length of the build, so the bundler stages `ffmpeg.exe`, `ffprobe.exe`,
+  `llama-mtmd-cli.exe` and `llama-mtmd-cli-vulkan.exe` beside `kalamu.exe` and the `licenses/`
+  folder with them, then removes it.
 - **No microphone.** Live Translation declares it; Kalamu reads recordings from files and never
   records, so its package asks for nothing beyond the network.
 

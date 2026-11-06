@@ -36,4 +36,9 @@ last_folder: string | null,
  * the first job, run or proposal sent to it (App Review Guideline 5.1.2(i), and plain
  * courtesy on Windows too). Only ever added to.
  */
-ai_consent: Array<ProviderId>, };
+ai_consent: Array<ProviderId>, 
+/**
+ * Offline OCR models read on the graphics processor when Kalamu finds one it can use
+ * (Windows, through Vulkan); off, they read on the processor.
+ */
+ocr_graphics_processor: boolean, };

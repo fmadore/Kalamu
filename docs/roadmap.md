@@ -58,8 +58,16 @@ Mac, which is second in *Next* below.
   placed, in two to three minutes on those small Windows machines. Still to do: a benchmark on
   real archive pages (IWAC newspapers, typescripts, French and Arabic print) with error rates,
   a full job on a real Mac and on Windows x64; PaddleOCR-VL left out until then (see the
-  decision). The graphics processor on Windows:
-  [#122](https://github.com/fmadore/Kalamu/issues/122).
+  decision). The graphics processor on Windows
+  ([#122](https://github.com/fmadore/Kalamu/issues/122),
+  [decision](decisions/2026-11-06-ocr-graphics-processor.md)): a second build of the program
+  with Vulkan for Windows x64 and ARM64, run when it finds a graphics processor with memory
+  enough, a discrete card first, unless Settings keeps the models on the processor; a page that
+  fails there is read again on the processor, which the session then keeps to; provenance
+  names the device, and the seconds a page took are kept per device. CI builds it and an
+  OpenCL test build for Snapdragon's Adreno; still to do: timings on an NVIDIA or AMD card,
+  Intel integrated graphics and a Snapdragon laptop, where Vulkan and OpenCL are compared, and
+  NPUs (Hexagon, OpenVINO), to be measured before anything is built.
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from

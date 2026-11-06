@@ -22,8 +22,14 @@ pub struct OfflineStatus {
     pub ocr_models: Vec<ModelStatus>,
     /// Whether this copy of the app carries the engine that runs them.
     pub ocr_engine: bool,
-    /// Seconds a page has taken on this computer, by model, from the pages it read last.
+    /// Seconds a page has taken on this computer, by model, from the pages it read last, on
+    /// the device the next page goes to.
     pub ocr_seconds_per_page: std::collections::BTreeMap<String, f32>,
+    /// Where the next page goes: `cpu`, `metal` or `vulkan`.
+    pub ocr_device: String,
+    /// The graphics processor Kalamu found for the OCR models on Windows, whether or not
+    /// Settings lets them use it; `None` when there is none it can use.
+    pub ocr_graphics_processor: Option<String>,
     /// Instruction-set extensions this processor lacks; empty when Whisper can run here.
     pub missing_cpu: Vec<String>,
 }
@@ -37,6 +43,8 @@ pub fn offline_status(state: State<'_, AppState>) -> OfflineStatus {
         ocr_models: state.vision.models().list(),
         ocr_engine: state.vision.available(),
         ocr_seconds_per_page: state.vision.speeds(),
+        ocr_device: state.vision.placement().kind().to_owned(),
+        ocr_graphics_processor: state.vision.graphics_processor(),
         missing_cpu: kalamu_offline::missing_features().to_vec(),
     }
 }
