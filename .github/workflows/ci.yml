@@ -116,6 +116,13 @@ jobs:
             | if command -v sha256sum > /dev/null; then sha256sum -c -; else shasum -a 256 -c -; fi
           echo "TESSERACT_SMOKE_DATA=$dir" >> "$GITHUB_ENV"
       - run: cargo test --workspace --locked
+      # The app's own binary, linked with the macOS features on (Whisper on Metal). The tests
+      # above link only test binaries, which leave out what only `main` reaches, so a native
+      # library the app needs can be missing without a test noticing: #120's Metal code linked
+      # nowhere but in the store and release builds. A debug build reuses what the tests built.
+      - name: Link the app (macOS)
+        if: runner.os == 'macOS'
+        run: cargo build -p kalamu --locked
       # The TypeScript bindings, and the rules, lists and worked cases the interface reads from
       # Rust, are written by the tests; they must match what is committed.
       - name: Bindings up to date
