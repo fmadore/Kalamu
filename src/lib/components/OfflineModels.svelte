@@ -10,7 +10,7 @@
 	import { listNames, messages } from '#lib/i18n/index.js';
 	import { languageLabel } from '#lib/languages.js';
 	import { api } from '#lib/tauri.js';
-	import { app, refreshOffline, secondsPerPage, toast } from '#lib/state.svelte.js';
+	import { app, onGraphics, refreshOffline, secondsPerPage, toast } from '#lib/state.svelte.js';
 	import { locale } from '#lib/i18n/index.js';
 	import LanguageDataPicker from './LanguageDataPicker.svelte';
 	import ProgressBar from './ProgressBar.svelte';
@@ -41,9 +41,7 @@
 	/** How long a page took with an OCR model on this computer, in words. */
 	function ocrSpeed(id: string): string {
 		const seconds = secondsPerPage(id);
-		return seconds
-			? m.settings.ocrSpeed(seconds, app.offline?.ocr_device !== 'cpu')
-			: m.settings.ocrNotTimed;
+		return seconds ? m.settings.ocrSpeed(seconds, onGraphics(id)) : m.settings.ocrNotTimed;
 	}
 	/** The graphics processor found for the OCR models on Windows, offered as a choice. */
 	const graphics = $derived(app.offline?.ocr_graphics_processor ?? null);

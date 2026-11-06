@@ -17,7 +17,7 @@ use kalamu_core::ProviderError;
 use thiserror::Error;
 
 pub use cpu::missing_features;
-pub use device::Placement;
+pub use device::{Backend, Placement};
 pub use llama::{Device, Llama};
 pub use models::{MODELS, ModelFile, ModelManager, ModelSet, ModelStatus, VAD, WHISPER, find};
 pub use tessdata::{TESSDATA, for_language as tessdata_for_language};

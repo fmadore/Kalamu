@@ -87,8 +87,8 @@ real machines.
 
 The `publish` job adds the two Vulkan archives to the release and to `scripts/llama.json`
 (`vulkan`), and `fetch-llama.mjs` installs the program on Windows only. Windows release builds
-bundle with `tauri.ffmpeg.windows.conf.json`, which lists it beside FFmpeg and the processor
-program; the Mac keeps `tauri.ffmpeg.conf.json`.
+bundle with `tauri.ffmpeg.windows-<arch>.conf.json`, which lists it beside FFmpeg and the
+processor program; the Mac keeps `tauri.ffmpeg.conf.json`.
 
 ### Licences
 
@@ -101,7 +101,8 @@ notices name it. The loader is not shipped: it comes with the graphics driver.
 The workflow also builds, for Windows ARM64, a test program with llama.cpp's OpenCL backend and
 Adreno kernels, with Khronos's loader beside it. It is kept as an artifact of the run, never
 published or shipped, to compare with the Vulkan build on a Snapdragon laptop; whichever reads
-faster and correctly is kept. NPUs (Hexagon on Snapdragon, OpenVINO on Intel) are left to
+faster and correctly is kept. Measured below; it became GLM-OCR's image encoder on the Adreno
+([decision](2026-11-06-ocr-opencl-adreno.md)). NPUs (Hexagon on Snapdragon, OpenVINO on Intel) are left to
 measurement: llama.cpp's support for vision encoders there is partial and moving, and nothing
 is built for them yet.
 

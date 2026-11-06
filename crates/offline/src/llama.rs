@@ -23,6 +23,9 @@ pub const PROGRAM: &str = "llama-mtmd-cli";
 /// The Windows build that uses the graphics processor through Vulkan.
 pub const VULKAN_PROGRAM: &str = "llama-mtmd-cli-vulkan";
 
+/// The Windows ARM64 build for Snapdragon's Adreno through OpenCL.
+pub const OPENCL_PROGRAM: &str = "llama-mtmd-cli-opencl";
+
 /// How long the program may take to list its devices: a graphics driver that hangs must not
 /// keep the OCR models from running on the processor.
 const LIST_DEVICES_LIMIT: Duration = Duration::from_secs(30);
@@ -51,6 +54,8 @@ fn quiet(command: &mut Command) -> &mut Command {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Llama {
     program: PathBuf,
+    /// Set for each run: where the OpenCL build keeps the kernels it compiles.
+    env: Vec<(String, PathBuf)>,
 }
 
 /// What one run wrote.
@@ -91,6 +96,29 @@ impl Llama {
         }
     }
 
+    /// The OpenCL build, looked for in the same places; Windows ARM64 only.
+    pub fn locate_opencl(dirs: &[PathBuf]) -> Option<Self> {
+        if cfg!(all(windows, target_arch = "aarch64")) {
+            Self::locate_program(OPENCL_PROGRAM, dirs)
+        } else {
+            None
+        }
+    }
+
+    /// The same program with `key` set to `value` for every run.
+    #[must_use]
+    pub fn with_env(mut self, key: &str, value: PathBuf) -> Self {
+        self.env.push((key.to_owned(), value));
+        self
+    }
+
+    fn command(&self) -> Command {
+        let mut command = Command::new(&self.program);
+        command.envs(self.env.iter().map(|(k, v)| (k, v)));
+        quiet(&mut command);
+        command
+    }
+
     fn locate_program(name: &str, dirs: &[PathBuf]) -> Option<Self> {
         let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_LLAMA_DIR")
             .map(PathBuf::from)
@@ -104,18 +132,26 @@ impl Llama {
         }
         candidates.into_iter().find_map(|dir| {
             let program = dir.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
-            program.is_file().then_some(Self { program })
+            program.is_file().then_some(Self {
+                program,
+                env: Vec::new(),
+            })
         })
     }
 
     #[cfg(test)]
     pub(crate) fn at(program: PathBuf) -> Self {
-        Self { program }
+        Self {
+            program,
+            env: Vec::new(),
+        }
     }
 
     /// The program's build, as it reports it (`version: 12110 (8c5a6f1)`), for provenance.
     pub fn version(&self) -> Option<String> {
-        let output = quiet(Command::new(&self.program).arg("--version"))
+        let output = self
+            .command()
+            .arg("--version")
             .stdin(Stdio::null())
             .output()
             .ok()?;
@@ -130,7 +166,9 @@ impl Llama {
     /// the graphics processors its Vulkan driver offers for the Vulkan build. An error when the
     /// program does not start (no Vulkan loader on this system), fails or takes too long.
     pub fn devices(&self) -> Result<Vec<Device>, String> {
-        let mut child = quiet(Command::new(&self.program).arg("--list-devices"))
+        let mut child = self
+            .command()
+            .arg("--list-devices")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -166,7 +204,9 @@ impl Llama {
     /// at once and the page counts as interrupted: nothing was kept from it.
     pub fn run(&self, args: &[String], stop: &StopSignal) -> Result<Run, ProviderError> {
         let started = Instant::now();
-        let mut child = quiet(Command::new(&self.program).args(args))
+        let mut child = self
+            .command()
+            .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

@@ -23,10 +23,11 @@ pub struct OfflineStatus {
     /// Whether this copy of the app carries the engine that runs them.
     pub ocr_engine: bool,
     /// Seconds a page has taken on this computer, by model, from the pages it read last, on
-    /// the device the next page goes to.
+    /// the device that model's next page goes to.
     pub ocr_seconds_per_page: std::collections::BTreeMap<String, f32>,
-    /// Where the next page goes: `cpu`, `metal` or `vulkan`.
-    pub ocr_device: String,
+    /// Where each model's next page goes: `cpu`, `metal`, `vulkan` or `opencl` (the image
+    /// encoder on the graphics processor, the rest on the processor).
+    pub ocr_devices: std::collections::BTreeMap<String, String>,
     /// The graphics processor Kalamu found for the OCR models on Windows, whether or not
     /// Settings lets them use it; `None` when there is none it can use.
     pub ocr_graphics_processor: Option<String>,
@@ -43,7 +44,12 @@ pub fn offline_status(state: State<'_, AppState>) -> OfflineStatus {
         ocr_models: state.vision.models().list(),
         ocr_engine: state.vision.available(),
         ocr_seconds_per_page: state.vision.speeds(),
-        ocr_device: state.vision.placement().kind().to_owned(),
+        ocr_devices: state
+            .vision
+            .placements()
+            .into_iter()
+            .map(|(model, placement)| (model, placement.kind().to_owned()))
+            .collect(),
         ocr_graphics_processor: state.vision.graphics_processor(),
         missing_cpu: kalamu_offline::missing_features().to_vec(),
     }

@@ -487,7 +487,7 @@ export function installMock(): void {
 					})),
 					ocr_engine: true,
 					ocr_seconds_per_page: { 'lightonocr-3-1b': 38.4 },
-					ocr_device: 'cpu',
+					ocr_devices: { 'lightonocr-3-1b': 'cpu', 'glm-ocr': 'cpu' },
 					ocr_graphics_processor: null,
 					missing_cpu: []
 				};

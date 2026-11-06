@@ -25,7 +25,7 @@ use kalamu_core::{
 };
 
 use crate::cpu::{self, threads};
-use crate::device::{Graphics, Placement, Speeds};
+use crate::device::{Backend, Graphics, Placement, Speeds};
 use crate::llama::{Llama, PageFile};
 use crate::models::{ModelFile, ModelManager, ModelSet};
 
@@ -107,6 +107,10 @@ struct Recipe {
     /// what the model's encoder takes anyway; sending them smaller saves the time.
     max_side: u32,
     quantisation: &'static str,
+    /// The graphics builds it reads correctly with, in the order tried. LightOnOCR-3's image
+    /// encoder reads wrongly on the Adreno through OpenCL, GLM-OCR's correctly
+    /// (docs/decisions/2026-11-06-ocr-graphics-processor.md).
+    graphics: &'static [Backend],
 }
 
 const RECIPES: [Recipe; 2] = [
@@ -117,6 +121,7 @@ const RECIPES: [Recipe; 2] = [
         reading: Reading::Grounded,
         max_side: 1540,
         quantisation: "Q8_0",
+        graphics: &[Backend::Vulkan],
     },
     Recipe {
         model: "glm-ocr",
@@ -124,6 +129,7 @@ const RECIPES: [Recipe; 2] = [
         reading: Reading::Plain,
         max_side: 1800,
         quantisation: "Q8_0",
+        graphics: &[Backend::Vulkan, Backend::OpenCl],
     },
 ];
 
@@ -153,8 +159,9 @@ struct Inner {
     llama: Option<Llama>,
     /// The engine's build, asked once.
     version: OnceLock<String>,
-    /// The Windows build that reads on the graphics processor through Vulkan, when shipped.
-    graphics: Option<Graphics>,
+    /// The Windows builds that read on the graphics processor (Vulkan, and OpenCL on ARM64),
+    /// those shipped.
+    graphics: Vec<Graphics>,
     /// One page at a time: each run takes every core the app can spare, or the graphics
     /// processor.
     turn: Mutex<()>,
@@ -170,23 +177,38 @@ fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
 }
 
 const SPEEDS_FILE: &str = "speeds.json";
+/// Where the OpenCL build keeps the kernels it compiled for this device, so later runs skip it.
+const OPENCL_KERNELS: &str = "opencl-kernels";
 
 impl Vision {
-    /// `llama` is the bundled engine, `None` when this build of the app has none; `vulkan` its
-    /// Windows build for the graphics processor, used when `use_graphics` (Settings) and it finds
-    /// one.
+    /// `llama` is the bundled engine, `None` when this build of the app has none; `graphics`
+    /// its builds for the graphics processor, used when `use_graphics` (Settings) and they find
+    /// one. The OpenCL build keeps the kernels it compiles in the models' folder.
     pub fn new(
         models: ModelManager,
         llama: Option<Llama>,
-        vulkan: Option<Llama>,
+        graphics: Vec<(Backend, Llama)>,
         use_graphics: bool,
     ) -> Self {
         let speeds = Speeds::load(models.dir().join(SPEEDS_FILE));
+        let kernels = models.dir().join(OPENCL_KERNELS);
+        let graphics = graphics
+            .into_iter()
+            .map(|(backend, program)| {
+                let program = match backend {
+                    Backend::OpenCl => {
+                        program.with_env("GGML_OPENCL_KERNEL_CACHE_DIR", kernels.clone())
+                    }
+                    Backend::Vulkan => program,
+                };
+                Graphics::new(backend, program, use_graphics)
+            })
+            .collect();
         Self {
             inner: Arc::new(Inner {
                 models,
                 llama,
-                graphics: vulkan.map(|program| Graphics::new(program, use_graphics)),
+                graphics,
                 version: OnceLock::new(),
                 turn: Mutex::new(()),
                 verified: Mutex::new(BTreeMap::new()),
@@ -204,39 +226,50 @@ impl Vision {
         self.inner.llama.is_some()
     }
 
-    /// Seconds a page has taken on this computer, per model, on the device the next page goes
-    /// to, from the pages it read last.
+    /// Seconds a page has taken on this computer, per model, on the device that model's next
+    /// page goes to, from the pages it read last.
     pub fn speeds(&self) -> BTreeMap<String, f32> {
-        lock(&self.inner.speeds).on(&self.inner.placement(false))
+        let speeds = lock(&self.inner.speeds);
+        RECIPES
+            .iter()
+            .filter_map(|recipe| {
+                let on = speeds.on(&self.inner.placement(recipe, false));
+                on.get(recipe.model).map(|s| (recipe.model.to_owned(), *s))
+            })
+            .collect()
     }
 
-    /// Where the next page goes, without waiting for the graphics processor to be found: the
-    /// processor (or Metal) until it is.
-    pub fn placement(&self) -> Placement {
-        self.inner.placement(false)
+    /// Where each model's next page goes, without waiting for the graphics processor to be
+    /// found: the processor (or Metal) until it is.
+    pub fn placements(&self) -> BTreeMap<String, Placement> {
+        RECIPES
+            .iter()
+            .map(|recipe| (recipe.model.to_owned(), self.inner.placement(recipe, false)))
+            .collect()
     }
 
-    /// The graphics processor the Vulkan build found, whether or not it is used; `None` when
-    /// there is none, no Vulkan build, or it is still being asked.
+    /// The graphics processor a graphics build found, whether or not it is used; `None` when
+    /// there is none, no graphics build, or it is still being asked.
     pub fn graphics_processor(&self) -> Option<String> {
-        let graphics = self.inner.graphics.as_ref()?;
-        graphics
-            .device_if_known()
-            .flatten()
+        self.inner
+            .graphics
+            .iter()
+            .find_map(|graphics| graphics.device_if_known().flatten())
             .map(|device| device.name.clone())
     }
 
-    /// Asks the Vulkan build for its devices now, so the first page need not wait for it. Takes
-    /// up to half a minute when a driver hangs: run it off the interface's thread.
+    /// Asks the graphics builds for their devices now, so the first page need not wait for
+    /// them. Takes up to half a minute each when a driver hangs: run it off the interface's
+    /// thread.
     pub fn find_graphics_processor(&self) {
-        if let Some(graphics) = &self.inner.graphics {
+        for graphics in &self.inner.graphics {
             graphics.device();
         }
     }
 
     /// Settings › Offline: read on the graphics processor when there is one.
     pub fn use_graphics_processor(&self, wanted: bool) {
-        if let Some(graphics) = &self.inner.graphics {
+        for graphics in &self.inner.graphics {
             graphics.set_wanted(wanted);
         }
     }
@@ -252,12 +285,14 @@ impl Inner {
         })
     }
 
-    /// Where the next page goes. `wait`: ask the Vulkan build for its devices if it was not
-    /// asked yet, rather than reading on the processor meanwhile.
-    fn placement(&self, wait: bool) -> Placement {
+    /// Where this model's next page goes: the first graphics build it reads correctly with that
+    /// found a device, else the processor. `wait`: ask the graphics builds for their devices if
+    /// they were not asked yet, rather than reading on the processor meanwhile.
+    fn placement(&self, recipe: &Recipe, wait: bool) -> Placement {
         self.graphics
-            .as_ref()
-            .and_then(|graphics| {
+            .iter()
+            .filter(|graphics| recipe.graphics.contains(&graphics.backend()))
+            .find_map(|graphics| {
                 let device = if wait {
                     graphics.device()
                 } else {
@@ -268,11 +303,16 @@ impl Inner {
             .unwrap_or_else(Placement::built_in)
     }
 
+    fn graphics(&self, placement: &Placement) -> Option<&Graphics> {
+        let backend = placement.backend()?;
+        self.graphics.iter().find(|g| g.backend() == backend)
+    }
+
     /// The program that reads there.
     fn program(&self, placement: &Placement) -> Result<&Llama, ProviderError> {
-        match (placement, &self.graphics) {
-            (Placement::Vulkan(_), Some(graphics)) => Ok(graphics.program()),
-            _ => self.llama(),
+        match self.graphics(placement) {
+            Some(graphics) => Ok(graphics.program()),
+            None => self.llama(),
         }
     }
 
@@ -550,11 +590,14 @@ impl Provider for Vision {
     /// there or, if that changed meanwhile, asks for it to be sent again.
     fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
         let mut settings = self.request_settings(request.task, request.model, request.tuning);
-        if !settings.is_empty() {
-            let placement = self.inner.placement(true);
+        if let (false, Ok((_, recipe))) = (settings.is_empty(), find(request.model)) {
+            let placement = self.inner.placement(recipe, true);
             settings.push(RequestSetting::new("device", placement.kind()));
             if let Some(name) = placement.device_name() {
                 settings.push(RequestSetting::new("device_name", name));
+            }
+            if placement.encoder_only() {
+                settings.push(RequestSetting::new("device_runs", "image encoder"));
             }
         }
         settings
@@ -574,7 +617,7 @@ impl Provider for Vision {
         ensure_cpu()?;
         let (model, recipe) = find(request.model)?;
         // Where `sent_settings` said, just before, that this page would be read.
-        let planned = self.inner.placement(true);
+        let planned = self.inner.placement(recipe, true);
         let inner = self.inner.clone();
         let bytes = request.input.bytes.clone();
         let mime = request.input.mime.clone();
@@ -587,7 +630,7 @@ impl Provider for Vision {
             }
             // A page failed on the graphics processor, or Settings changed, while this one
             // waited: sent again, its record names where it is read.
-            let placement = inner.placement(true);
+            let placement = inner.placement(recipe, true);
             if placement != planned {
                 return Err(ProviderError::Transient(
                     "Offline OCR models moved to another device; the page is read again there"
@@ -607,12 +650,10 @@ impl Provider for Vision {
                 threads(logical),
             );
             args.extend(placement.arguments());
-            let run = match (llama.run(&args, &stop), &inner.graphics) {
+            let run = match (llama.run(&args, &stop), inner.graphics(&placement)) {
                 // Out of memory, a driver fault: the rest of the session reads on the processor,
                 // starting with this page, which the engine sends again.
-                (Err(ProviderError::Other(reason)), Some(graphics))
-                    if matches!(placement, Placement::Vulkan(_)) =>
-                {
+                (Err(ProviderError::Other(reason)), Some(graphics)) => {
                     graphics.give_up(&reason);
                     return Err(ProviderError::Transient(format!(
                         "The graphics processor could not read this page ({reason}); it is read again on the processor"
@@ -831,7 +872,12 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
                 "{}",
                 model.id
             );
-            let vision = Vision::new(ModelManager::new(".".into(), &VISION), None, None, true);
+            let vision = Vision::new(
+                ModelManager::new(".".into(), &VISION),
+                None,
+                Vec::new(),
+                true,
+            );
             for input in &model.inputs {
                 assert!(
                     vision
@@ -848,7 +894,7 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
         let without = Vision::new(
             ModelManager::new(dir.path().to_owned(), &VISION),
             None,
-            None,
+            Vec::new(),
             true,
         );
         assert!(!without.available());
@@ -860,7 +906,7 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
         let with = Vision::new(
             ModelManager::new(dir.path().to_owned(), &VISION),
             Some(engine),
-            None,
+            Vec::new(),
             true,
         );
         let french = LanguageChoice::Explicit(vec![LanguageCode::new("fr")]);
@@ -884,16 +930,22 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
     async fn smoke() {
         let dir = std::env::var("VISION_SMOKE_DIR").unwrap();
         let llama = Llama::locate(&[]).expect("KALAMU_LLAMA_DIR names the engine's folder");
-        // The Vulkan build too, when it is in the same folder and finds a graphics processor.
-        let vulkan = Llama::locate_vulkan(&[]);
+        // The graphics builds too, when they are in the same folder and find a device.
+        let graphics = [
+            Llama::locate_vulkan(&[]).map(|p| (Backend::Vulkan, p)),
+            Llama::locate_opencl(&[]).map(|p| (Backend::OpenCl, p)),
+        ]
+        .into_iter()
+        .flatten()
+        .collect();
         let vision = Vision::new(
             ModelManager::new(dir.into(), &VISION),
             Some(llama),
-            vulkan,
+            graphics,
             true,
         );
         vision.find_graphics_processor();
-        println!("== reading on {:?}", vision.placement());
+        println!("== reading on {:?}", vision.placements());
         let page = std::fs::read(sample("bulletin-page.jpg")).unwrap();
         let input = kalamu_core::PreparedInput {
             piece: kalamu_core::PieceRef::page(1),

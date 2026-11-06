@@ -10,9 +10,11 @@ name: llama.cpp
 # - The graphics-processor build for Windows x64 and ARM64 (`llama-mtmd-cli-vulkan`), through
 #   Vulkan, which the app runs instead when it finds a usable graphics processor. It needs the
 #   Vulkan loader that graphics drivers install (vulkan-1.dll), nothing else.
-# - A test build for Snapdragon's Adreno graphics processor through OpenCL
-#   (`llama-mtmd-cli-opencl`, Windows ARM64), kept as this run's artifact to compare with Vulkan
-#   on a real laptop, and never published or shipped.
+# - The build for Snapdragon's Adreno graphics processor through OpenCL
+#   (`llama-mtmd-cli-opencl`, Windows ARM64), with Qualcomm's own kernels. Vulkan reads wrongly
+#   on the Adreno; through OpenCL, GLM-OCR's image encoder reads correctly in less than half the
+#   processor's time, so the app runs that model's encoder there. It needs the OpenCL loader
+#   Qualcomm's driver installs (OpenCL.dll), nothing else.
 #
 # Each run then times the models on the sample page on its own runner, for the record of how
 # fast they read on each kind of processor (the job's summary). GitHub's runners have no
@@ -42,7 +44,8 @@ env:
   # LunarG publishes (https://vulkan.lunarg.com/sdk/sha/<version>/<platform>/<file>.txt).
   VULKAN_SDK_VERSION: "1.4.363.1"
   VULKAN_HEADERS_TAG: "vulkan-sdk-1.4.363.0"
-  # Khronos's OpenCL headers and loader, for the Adreno test build only.
+  # Khronos's OpenCL headers (compiled in) and loader (its import library only), for the Adreno
+  # build.
   OPENCL_TAG: "v2026.05.29"
 
 jobs:
@@ -147,8 +150,8 @@ jobs:
           "$root\Bin" >> $env:GITHUB_PATH
 
       # Built with the compiler below, into a folder the llama.cpp build is pointed at. The
-      # loader (OpenCL.dll) goes into the test archive beside the program, in case the system
-      # has none of its own.
+      # loader is not shipped: on a Snapdragon, Qualcomm's driver installs its own OpenCL.dll.
+      # The one built here is put on PATH so the program starts on the runner, which has none.
       - name: OpenCL headers and loader
         if: matrix.variant == 'opencl'
         shell: pwsh
@@ -166,6 +169,7 @@ jobs:
             -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
           cmake --build OpenCL-ICD-Loader/build --target install
           "OPENCL_PREFIX=$($prefix -replace '\\', '/')" >> $env:GITHUB_ENV
+          "$prefix\bin" >> $env:GITHUB_PATH
         env:
           CC: clang-cl
           CXX: clang-cl
@@ -234,7 +238,8 @@ jobs:
               "https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/${VULKAN_HEADERS_TAG}/LICENSES/MIT.txt"
           fi
           if [ "${{ matrix.variant }}" = opencl ]; then
-            cp "${OPENCL_PREFIX}/bin/OpenCL.dll" "$dir/"
+            # Khronos's OpenCL headers (Apache 2.0) are compiled into the program.
+            cp OpenCL-Headers/LICENSE "$dir/licenses/OpenCL-Headers-Apache-2.0.txt"
           fi
           "$dir/$name" --version
           # Nothing but the system's own libraries, and for the graphics-processor builds the
@@ -252,6 +257,9 @@ jobs:
             fi
             if [ "${{ matrix.variant }}" = vulkan ] && ! grep -qi 'vulkan-1\.dll' deps.txt; then
               echo "::error::$name was built without Vulkan."; exit 1
+            fi
+            if [ "${{ matrix.variant }}" = opencl ] && ! grep -qi 'OpenCL\.dll' deps.txt; then
+              echo "::error::$name was built without OpenCL."; exit 1
             fi
           fi
           if [ "$RUNNER_OS" = Windows ]; then
@@ -346,12 +354,6 @@ jobs:
             run lightonocr-3-1b LightOnOCR-3-1B.Q8_0.gguf LightOnOCR-3-1B.mmproj-q8_0.gguf grounding
           fi
           run glm-ocr GLM-OCR-Q8_0.gguf mmproj-GLM-OCR-Q8_0.gguf "Text Recognition:"
-          # The Adreno build is a test: without an OpenCL device it may refuse to start, which
-          # says nothing about a Snapdragon laptop.
-          if [ "$variant" = opencl ] && [ "$failed" = 1 ]; then
-            echo "::warning::The OpenCL test build could not read the page on this runner."
-            failed=0
-          fi
           exit "$failed"
 
       # Kept even when a model misreads the page, so its answer can be read.
@@ -364,13 +366,13 @@ jobs:
             llama*.zip.sha256
             ${{ matrix.variant }}-*.txt
 
-  # Once every build and its timing pass: the processor and Vulkan archives published as a
-  # GitHub release (a pre-release holding only them, as FFmpeg's, so it never becomes the app's
+  # Once every build and its timing pass: the processor, Vulkan and OpenCL archives published as
+  # a GitHub release (a pre-release holding only them, as FFmpeg's, so it never becomes the app's
   # "Latest"), their SHA-256 written into scripts/llama.json and committed to the branch that ran
   # this, and the Mac App Store sandbox check run again on that commit, since a commit pushed
-  # with this job's token starts no workflow by itself. The OpenCL test build stays an artifact
-  # of the run. Skipped when scripts/llama.json already pins this tag with every archive, and for
-  # pull requests from forks, which get no write access.
+  # with this job's token starts no workflow by itself. Skipped when scripts/llama.json already
+  # pins this tag with every archive, and for pull requests from forks, which get no write
+  # access.
   publish:
     needs: build
     if: >-
@@ -389,6 +391,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TRIPLES: x86_64-pc-windows-msvc aarch64-pc-windows-msvc aarch64-apple-darwin
       VULKAN_TRIPLES: x86_64-pc-windows-msvc aarch64-pc-windows-msvc
+      OPENCL_TRIPLES: aarch64-pc-windows-msvc
     steps:
       # Credentials kept, unlike the other jobs: this one pushes the pins.
       - uses: actions/checkout@v7
@@ -402,7 +405,9 @@ jobs:
             '.version == $tag
               and ([.archives[].sha256] | all(length == 64))
               and ((.vulkan // {}) | has("x86_64-pc-windows-msvc") and has("aarch64-pc-windows-msvc"))
-              and ([.vulkan[].sha256] | all(length == 64))' scripts/llama.json > /dev/null; then
+              and ([.vulkan[].sha256] | all(length == 64))
+              and ((.opencl // {}) | has("aarch64-pc-windows-msvc"))
+              and ([.opencl[].sha256] | all(length == 64))' scripts/llama.json > /dev/null; then
             echo "scripts/llama.json already pins llama.cpp ${LLAMA_TAG}: nothing to publish."
             echo "done=true" >> "$GITHUB_OUTPUT"
           fi
@@ -425,10 +430,11 @@ jobs:
           files=()
           for t in $TRIPLES; do files+=("dist/llama-${LLAMA_TAG}-${t}.zip"); done
           for t in $VULKAN_TRIPLES; do files+=("dist/llama-vulkan-${LLAMA_TAG}-${t}.zip"); done
+          for t in $OPENCL_TRIPLES; do files+=("dist/llama-opencl-${LLAMA_TAG}-${t}.zip"); done
           {
-            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) as bundled with Kalamu to run the offline OCR models: llama.cpp ${LLAMA_TAG}, one static executable each for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal), and for Windows x64 and ARM64 a second one that uses the graphics processor through Vulkan (\`llama-mtmd-cli-vulkan\`, Vulkan SDK ${VULKAN_SDK_VERSION}). This release only holds the archives the app is built with; it is not an app release."
+            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) as bundled with Kalamu to run the offline OCR models: llama.cpp ${LLAMA_TAG}, one static executable each for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal), and for Windows x64 and ARM64 a second one that uses the graphics processor through Vulkan (\`llama-mtmd-cli-vulkan\`, Vulkan SDK ${VULKAN_SDK_VERSION}), and for Windows ARM64 a third one for Snapdragon's Adreno through OpenCL (\`llama-mtmd-cli-opencl\`, Khronos headers ${OPENCL_TAG}). This release only holds the archives the app is built with; it is not an app release."
             echo
-            echo "- **Licence**: MIT (\`licenses/llama.cpp-MIT.txt\` in each archive; the Vulkan builds add Vulkan's headers' licence). llama.cpp is not modified."
+            echo "- **Licence**: MIT (\`licenses/llama.cpp-MIT.txt\` in each archive; the Vulkan and OpenCL builds add their headers' licences). llama.cpp is not modified."
             echo "- **Source**: [${LLAMA_TAG}](https://github.com/ggml-org/llama.cpp/releases/tag/${LLAMA_TAG}), source archive SHA-256 \`${LLAMA_SHA256}\`; each archive's \`BUILD.txt\` gives the build line."
             echo "- **Built by** [.github/workflows/llama.yml](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${HEAD_SHA}/.github/workflows/llama.yml), [run ${GITHUB_RUN_ID}](${run_url}), whose summaries give each model's time on the sample page. How it is used: [docs/llama.md](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/docs/llama.md)."
             echo
@@ -451,9 +457,11 @@ jobs:
           archives=$(pins llama $TRIPLES)
           # shellcheck disable=SC2086
           vulkan=$(pins llama-vulkan $VULKAN_TRIPLES)
+          # shellcheck disable=SC2086
+          opencl=$(pins llama-opencl $OPENCL_TRIPLES)
           jq --tab --arg release "$release" --arg version "$LLAMA_TAG" \
-            --argjson archives "$archives" --argjson vulkan "$vulkan" \
-            '.release = $release | .version = $version | .archives = $archives | .vulkan = $vulkan' \
+            --argjson archives "$archives" --argjson vulkan "$vulkan" --argjson opencl "$opencl" \
+            '.release = $release | .version = $version | .archives = $archives | .vulkan = $vulkan | .opencl = $opencl' \
             scripts/llama.json > llama.json
           mv llama.json scripts/llama.json
           cat scripts/llama.json

@@ -1518,10 +1518,10 @@ export const en = {
 		ocrHint:
 			'Small vision models trained to read pages, run on this computer: nothing is sent, no key or account is needed, and they work without an internet connection once downloaded. They read degraded print, old newspapers in columns, tables and mixed layouts far better than Tesseract, but are much slower: from tens of seconds to over a minute a page, depending on this computer’s processor, its memory and how much text the page holds. On a Mac, and on Windows when Kalamu finds a graphics processor it can use, they run on the graphics processor and are several times faster. Like any language model they can write text that is not on the page, so compare doubtful pages with Tesseract or a cloud model. For clean print Tesseract is quicker; for large volumes a cloud model is.',
 		ocrSpeed: (seconds: number, graphics: boolean) =>
-			`On this computer${graphics ? '’s graphics processor' : ''}: about ${seconds} s a page, from the pages it read last.`,
+			`On this computer${graphics ? ', with its graphics processor' : ''}: about ${seconds} s a page, from the pages it read last.`,
 		ocrGraphics: (name: string) => `Read pages on the graphics processor (${name})`,
 		ocrGraphicsHint:
-			'Usually several times faster than the processor. If a page fails there, Kalamu reads it again on the processor and keeps to the processor until it is restarted. Turn this off to leave the graphics processor free for other work.',
+			'Usually faster than the processor, often several times. Only the models known to read correctly on this graphics processor use it; the others read on the processor. If a page fails there, Kalamu reads it again on the processor and keeps to the processor until it is restarted. Turn this off to leave the graphics processor free for other work.',
 		ocrNotTimed: 'Not yet timed on this computer: the first pages read will tell.',
 		ocrNoEngine:
 			'This copy of Kalamu was built without the engine that runs OCR models: the installers and the Store’s version carry it.',
