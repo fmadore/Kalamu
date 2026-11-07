@@ -15,7 +15,7 @@ uses the graphics processor through Metal.
 ## Where the app looks
 
 Next to the executable (Tauri's sidecar layout), or in `KALAMU_LLAMA_DIR`; development builds
-also accept one on `PATH`. Without it, Settings › Offline says this copy has no engine for OCR
+also accept one on `PATH`. Without it, Settings › Offline models says this copy has no engine for OCR
 models, and New job's readiness check refuses them; everything else works.
 
 The Vulkan build is looked for in the same places. At start-up the app asks it, off the
@@ -23,7 +23,7 @@ interface's thread, which devices it finds (`--list-devices`, given half a minut
 one with at least 2 GB of memory, a discrete card before integrated graphics, software renderers
 and Snapdragon's Adreno, which reads wrongly through Vulkan, never
 (`crates/offline/src/device.rs`). It then reads every page there, passing that device with
-`--device`, unless Settings › Offline turns it off. When the program does not start (no Vulkan
+`--device`, unless Settings › Offline models turns it off. When the program does not start (no Vulkan
 loader on this PC), finds nothing usable or fails on a page, the processor build reads instead;
 after a failure, for the rest of the session.
 

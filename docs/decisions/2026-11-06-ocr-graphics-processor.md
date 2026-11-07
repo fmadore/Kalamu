@@ -50,7 +50,7 @@ The device kept is passed to the program (`--device Vulkan<n>`), which also send
 encoder there, so the device in provenance is the one that read the page. llama.cpp's own
 choice, without it, would spread the model over every discrete card.
 
-The app uses it unless Settings › Offline says not to (*Read pages on the graphics processor*,
+The app uses it unless Settings › Offline models says not to (*Read pages on the graphics processor*,
 naming the device, on by default and shown only when one was found). If the program fails on a
 page (out of memory, a driver fault), the rest of the session reads on the processor: the page
 returns a transient error, and the engine sends it again, so its record names the processor.

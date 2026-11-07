@@ -39,7 +39,7 @@ Whisper, Tesseract or the OCR models. Three things shape the submission:
   nothing happened (policy 10.1.2.20), so reviewers need a route that works.
 - **The credential-free routes are offline.** After a one-time model download from Hugging
   Face, Whisper transcribes on the PC with no account, key or network; after downloading French
-  in Settings › Offline, Tesseract extracts the text of `bulletin-page.jpg` the same way. The
+  in Settings › Offline models, Tesseract extracts the text of `bulletin-page.jpg` the same way. The
   certification notes walk through both with the sample files. Handwriting, corrections and
   analyses still need a key; see
   [Reviewer access to cloud features](#reviewer-access-to-cloud-features).
@@ -154,7 +154,7 @@ package identity changes where data is kept and how the window is drawn.
 - [ ] Offline: download Whisper Base in Settings (and cancel a download part-way once),
       transcribe `interview.wav` from `kalamu-samples.zip` with the network off, review it
       beside the player, find "Mopti" with Ctrl F, export `.txt`, `.srt` and `.docx`.
-- [ ] Offline text: download French under Text extraction with Tesseract in Settings › Offline,
+- [ ] Offline text: download French under Text extraction with Tesseract in Settings › Offline models,
       extract `bulletin-page.jpg` with the network off, and export `.txt` and `.alto.xml`.
 - [ ] Each provider, with a real key saved in Credential Manager: text extraction of the sample
       page, an analysis of the sample text, a recording where the provider takes audio; costs

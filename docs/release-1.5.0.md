@@ -9,12 +9,13 @@ changed, see the [1.4.1 release](https://github.com/fmadore/Kalamu/releases/tag/
 - **Offline OCR models** for *Extract text*: **LightOnOCR-3 1B** (1.1 GB) reads whole pages,
   columns and tables, and places each block of text on the page, so it gives ALTO XML and a
   searchable PDF by block; **GLM-OCR** (1.4 GB) is strong on tables and on Chinese, Japanese and
-  Korean, and returns the text alone. Download them once in Settings › Offline, under *Text
+  Korean, and returns the text alone. Download them once in Settings › Offline models, under *Text
   extraction with OCR models*; each is checked against its fingerprint before use. They run in
   llama.cpp, shipped inside the app: on the graphics processor when there is one Kalamu can use
-  (through Metal on a Mac, through Vulkan on Windows; Settings › Offline names it and can keep
-  the models on the processor), on the processor otherwise. Pausing a job stops the page being
-  read, which is read again on resuming.
+  (through Metal on a Mac, through Vulkan on Windows, and on a Snapdragon laptop GLM-OCR's image
+  step through OpenCL; Settings › Offline models names it and can keep the models on the
+  processor), on the processor otherwise. Pausing a job stops the page being read, which is read
+  again on resuming.
 - **Speed measured on your computer.** These models are much slower than Tesseract on a PC's
   processor: from tens of seconds to over a minute a page. Settings and New job show the seconds
   a page took on your own computer once a model has read a few pages.
@@ -32,7 +33,7 @@ changed, see the [1.4.1 release](https://github.com/fmadore/Kalamu/releases/tag/
   can be changed.
 - **Analyses**: right-click a name in a list to rename or remove it in every set-up's corrected
   answers.
-- **Settings › Offline** lists only the Tesseract languages you downloaded; find the others by
+- **Settings › Offline models** lists only the Tesseract languages you downloaded; find the others by
   name.
 
 ## Fixed
@@ -44,6 +45,10 @@ changed, see the [1.4.1 release](https://github.com/fmadore/Kalamu/releases/tag/
   French.
 - Menus and buttons that overflowed sideways (the job menu's projects, *Use this text*, the
   document view's actions, the transcription options) now wrap.
+- **Review**: a scan whose file was moved or deleted says so, instead of "No preview for this
+  file type".
+- **Settings**: the *Offline* tab is now *Offline models*, Tesseract's language download says it
+  is Tesseract's, and the sections no longer run into the line below them.
 
 ## Download
 
@@ -76,8 +81,12 @@ keeps your jobs, settings, presets and keys.
   ([#122](https://github.com/fmadore/Kalamu/issues/122)), falling back to the processor if a
   page fails there. On a laptop with Intel's integrated Arc graphics both models read the same
   text in less than half the processor's time (about 45–50 s a page against 100–115 s). On a
-  Snapdragon laptop the graphics processor read wrongly through Vulkan, so Kalamu keeps the
-  models on the processor there. NVIDIA and AMD cards have not been timed yet.
+  Snapdragon laptop the graphics processor reads wrongly through Vulkan, so Kalamu never uses it
+  that way; through OpenCL it reads GLM-OCR's page image correctly, and GLM-OCR takes about 37 s
+  a page against 58 s, while LightOnOCR-3 stays on the processor. That rests on one Snapdragon X
+  Elite and one Qualcomm driver so far. NVIDIA and AMD cards have not been timed yet. A page
+  already read is reused from the cache wherever it was read, even after the graphics processor
+  is turned off.
 - **The Mac versions** are built and tested on Macs in GitHub Actions, but have not yet been
   used on a real Mac, Whisper's Metal mode included. Please report what does not work with
   [Report a problem](https://github.com/fmadore/Kalamu/issues/new/choose). Intel Macs are not
