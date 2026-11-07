@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 use super::{Mistral, chat};
 use crate::analysis;
 use crate::batch::{self, Answer};
-use crate::http::{send_json, send_text};
+use crate::http::send_json;
 
 impl Mistral {
     pub(super) async fn submit(
@@ -93,7 +93,9 @@ impl Mistral {
             .unwrap_or_default();
         for file in ["output_file", "error_file"] {
             if results.is_empty() || file == "error_file" {
-                results.extend(self.file_lines(key, &status, file).await?);
+                results.extend(
+                    batch::file_lines(&self.client, &self.base_url, key, &status, file).await?,
+                );
             }
         }
         let answers: Vec<Answer> = results
@@ -109,24 +111,6 @@ impl Mistral {
             return Ok(BatchProgress::Abandoned(reason.to_string()));
         }
         Ok(BatchProgress::Ended(answers))
-    }
-
-    async fn file_lines(
-        &self,
-        key: &ApiKey,
-        status: &Value,
-        field: &str,
-    ) -> Result<Vec<Value>, ProviderError> {
-        let Some(file) = status.get(field).and_then(Value::as_str) else {
-            return Ok(Vec::new());
-        };
-        let body = send_text(
-            self.client
-                .get(format!("{}/files/{file}/content", self.base_url))
-                .bearer_auth(key.expose()),
-        )
-        .await?;
-        Ok(batch::lines(&body))
     }
 }
 

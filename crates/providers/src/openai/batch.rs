@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 
 use super::OpenAi;
 use crate::batch::{self, Answer};
-use crate::http::{send_json, send_text};
+use crate::http::send_json;
 
 impl OpenAi {
     pub(super) async fn submit(
@@ -77,8 +77,13 @@ impl OpenAi {
             // An expired or cancelled batch keeps what it finished; the rest are in the error
             // file.
             "completed" | "expired" | "cancelled" => {
-                let mut lines = self.file_lines(key, &status, "output_file_id").await?;
-                lines.extend(self.file_lines(key, &status, "error_file_id").await?);
+                let mut lines =
+                    batch::file_lines(&self.client, &self.base_url, key, &status, "output_file_id")
+                        .await?;
+                lines.extend(
+                    batch::file_lines(&self.client, &self.base_url, key, &status, "error_file_id")
+                        .await?,
+                );
                 Ok(BatchProgress::Ended(
                     lines
                         .iter()
@@ -97,24 +102,6 @@ impl OpenAi {
                 total: counts("total"),
             }),
         }
-    }
-
-    async fn file_lines(
-        &self,
-        key: &ApiKey,
-        status: &Value,
-        field: &str,
-    ) -> Result<Vec<Value>, ProviderError> {
-        let Some(file) = status.get(field).and_then(Value::as_str) else {
-            return Ok(Vec::new());
-        };
-        let body = send_text(
-            self.client
-                .get(format!("{}/files/{file}/content", self.base_url))
-                .bearer_auth(key.expose()),
-        )
-        .await?;
-        Ok(batch::lines(&body))
     }
 }
 
