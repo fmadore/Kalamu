@@ -1655,7 +1655,9 @@
         "output_per_mtok": 0.0,
         "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
-      "limits": {},
+      "limits": {
+        "max_output_tokens": 8192
+      },
       "translations": {
         "fr": {
           "description": "Hors ligne. Un petit modèle de langue de Google pour les analyses, les tables des matières et les corrections, sans rien envoyer nulle part : le meilleur des deux modèles hors ligne. Comme tout modèle de langue, il peut oublier ou inventer des noms et des faits, et il est bien moins bon que les modèles en ligne : ses réponses sont plus pauvres et il suit moins bien les longues consignes, alors vérifiez-les. Lit des textes d’environ 11 000 mots au plus, et des pages photographiées ; un PDF s’analyse une fois son texte extrait. Lent sur le processeur d’un PC, jusqu’à plusieurs minutes pour un long texte, et plusieurs fois plus rapide sur un processeur graphique : celui d’un Mac, ou celui d’un PC quand Kalamu en trouve un qu’il peut utiliser ; s’il a peu de mémoire propre, il prend une partie du modèle. Au mieux dans les langues très parlées. Demande environ 8 Go de mémoire libre. Téléchargement de 6,1 Go."
@@ -1684,7 +1686,9 @@
         "output_per_mtok": 0.0,
         "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
-      "limits": {},
+      "limits": {
+        "max_output_tokens": 8192
+      },
       "translations": {
         "fr": {
           "description": "Hors ligne. Le plus petit des Gemma, pour les ordinateurs qui ont moins de mémoire : plus rapide que E4B, et nettement moins bon. Comme tout modèle de langue, il peut oublier ou inventer des noms et des faits, et il est bien moins bon que les modèles en ligne : ses réponses sont plus pauvres et il suit moins bien les longues consignes, alors vérifiez-les. Lit des textes d’environ 11 000 mots au plus, et des pages photographiées ; un PDF s’analyse une fois son texte extrait. Lent sur le processeur d’un PC, jusqu’à plusieurs minutes pour un long texte, et plusieurs fois plus rapide sur un processeur graphique : celui d’un Mac, ou celui d’un PC quand Kalamu en trouve un qu’il peut utiliser ; s’il a peu de mémoire propre, il prend une partie du modèle. Au mieux dans les langues très parlées. Demande environ 5 Go de mémoire libre. Téléchargement de 4,3 Go."

@@ -26,8 +26,5 @@
 			"sha256": "f5c475c2d770fe950ecc7a2c8b7fc001f50958bf262d710ebbb5248878c0dd79"
 		}
 	},
-	"programs": [
-		"llama-mtmd-cli",
-		"llama-completion"
-	]
+	"programs": ["llama-mtmd-cli", "llama-completion"]
 }

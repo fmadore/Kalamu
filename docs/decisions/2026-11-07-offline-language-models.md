@@ -74,8 +74,19 @@ it has, `fetch-llama.mjs` stops the release builds.
 
 llama.cpp turns the analysis's JSON schema into a grammar, so a small model cannot break the
 answer's shape, only fill it badly; the answer is then checked against the fields as every
-provider's is. An answer that reaches the output limit (8,192 tokens) is refused without a
-retry, since greedy decoding would write it again.
+provider's is. An answer that reaches the output limit is refused without a retry, since greedy
+decoding would write it again. The limit is the catalogue's `max_output_tokens` (8,192), which
+the engine passes like any model's and provenance records; the provider keeps it between 512 and
+8,192.
+
+### No thinking to choose
+
+Gemma 4 can think before answering, but llama.cpp's text program applies the schema's grammar
+from the first token, which leaves no room for a thought block: only llama.cpp's server knows
+where thinking ends and starts the grammar there. So the models have no reasoning levels in the
+catalogue, New job offers none, and thinking is off. Small models gain little from it, and on a
+processor it would add minutes to every document. Temperature (0), the context (32K) and the
+image budget are fixed, since the cache assumes the same request answers the same way.
 
 ### What they read at once
 

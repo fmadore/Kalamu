@@ -549,6 +549,8 @@ jobs:
             '.release = $release | .version = $version | .programs = ["llama-mtmd-cli", "llama-completion"] | .archives = $archives | .vulkan = $vulkan | .opencl = $opencl' \
             scripts/llama.json > llama.json
           mv llama.json scripts/llama.json
+          # As the repository's Prettier writes it, so CI's format check passes on the pin commit.
+          npx --yes prettier@3.9.10 --write scripts/llama.json
           cat scripts/llama.json
           echo "RELEASE=$release" >> "$GITHUB_ENV"
 

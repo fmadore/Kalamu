@@ -116,8 +116,19 @@ fn recipe(model: &str) -> Option<&'static Recipe> {
 /// tokens, but reading that many on a processor takes far too long, and its memory grows with
 /// it; 32K holds a text of some twenty pages.
 const CONTEXT: u32 = 32_768;
-/// The most an answer may run to: a long table of contents or a corrected page fits.
+/// The most an answer may run to, the catalogue's `max_output_tokens` for these models: a long
+/// table of contents or a corrected page fits. A smaller limit from the catalogue is kept.
 const MAX_TOKENS: u32 = 8192;
+/// Below this an analysis's fields with their reasons would not fit.
+const MIN_TOKENS: u32 = 512;
+
+/// The output limit for a request: the catalogue's, as the engine passes it, within the room the
+/// context leaves.
+fn output_limit(tuning: &Tuning) -> u32 {
+    tuning
+        .max_output_tokens
+        .map_or(MAX_TOKENS, |n| n.clamp(MIN_TOKENS, MAX_TOKENS))
+}
 /// The most characters of text sent: what fits in the context beside the answer and the
 /// instructions at about three characters a token, a cautious rate for European languages. A
 /// text in another script may hold more tokens than this allows, which llama.cpp then refuses
@@ -249,8 +260,8 @@ fn too_long(chars: usize) -> ProviderError {
     ))
 }
 
-/// The arguments both programs share: the model, greedy decoding, the answer's schema, the
-/// context and the threads; and on a graphics processor (Metal, or the Vulkan build's device)
+/// The arguments both programs share, but for the output limit (`-n`, added by `process`): the
+/// model, greedy decoding, the answer's schema, the context and the threads; and on a graphics processor (Metal, or the Vulkan build's device)
 /// as many layers as its memory holds beside the fixed context, the rest on the processor
 /// (`-ngl auto` with `--fit on`), so a card with little memory of its own still helps rather
 /// than failing or being passed over. The processor-only build ignores both.
@@ -264,8 +275,6 @@ fn common_arguments(model: &str, schema: &str, threads: i32) -> Vec<String> {
         // Greedy decoding: the same request answers the same each time, as the cache assumes.
         "--temp",
         "0",
-        "-n",
-        &MAX_TOKENS.to_string(),
         "-c",
         &CONTEXT.to_string(),
         "-b",
@@ -385,7 +394,7 @@ impl Provider for LocalLlm {
         }
     }
 
-    fn request_settings(&self, task: Task, model: &str, _tuning: &Tuning) -> Vec<RequestSetting> {
+    fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
         let (Task::Analysis, Ok((file, recipe))) = (task, find(model)) else {
             return Vec::new();
         };
@@ -396,7 +405,7 @@ impl Provider for LocalLlm {
             RequestSetting::new("quantisation", recipe.quantisation),
             RequestSetting::new("temperature", 0),
             RequestSetting::new("thinking", "off"),
-            RequestSetting::new("max_output_tokens", MAX_TOKENS),
+            RequestSetting::new("max_output_tokens", output_limit(tuning)),
             RequestSetting::new("context_tokens", CONTEXT),
         ];
         if let Some(encoder) = file.pair {
@@ -448,6 +457,7 @@ impl Provider for LocalLlm {
         let planned = self.inner.placement(recipe, true);
         let inner = self.inner.clone();
         let stop = request.stop.clone();
+        let limit = output_limit(request.tuning);
         let (run, version): (Run, String) = tokio::task::spawn_blocking(move || {
             let _turn = inner.host.turn();
             if stop.is_stopped() {
@@ -492,6 +502,7 @@ impl Provider for LocalLlm {
                     )
                 }
             };
+            args.extend(["-n".to_owned(), limit.to_string()]);
             args.extend(placement.arguments());
             let ran = match reading {
                 Reading::Text { .. } => llama.run_text(&args, &stop),
@@ -527,9 +538,9 @@ impl Provider for LocalLlm {
             ..Usage::default()
         };
         // Greedy decoding writes the same again: an answer cut short is not worth retrying.
-        if run.generated.is_some_and(|n| n >= MAX_TOKENS) {
+        if run.generated.is_some_and(|n| n >= limit) {
             return Err(ProviderError::Other(format!(
-                "The answer ran past the offline model's limit of {MAX_TOKENS} tokens; ask for \
+                "The answer ran past the offline model's limit of {limit} tokens; ask for \
                  fewer or shorter fields, or choose a cloud model"
             )));
         }
@@ -603,6 +614,19 @@ mod tests {
                 .model(&ProviderId::new(LLM_ID), recipe.model)
                 .unwrap();
             assert_eq!(model.tasks, [Task::Analysis], "{}", model.id);
+            // The output limit the engine passes is this provider's; no thinking to choose, since
+            // the text program holds the answer to the schema from its first token.
+            assert_eq!(
+                model.limits.max_output_tokens,
+                Some(MAX_TOKENS),
+                "{}",
+                model.id
+            );
+            assert!(model.reasoning.is_none(), "{}", model.id);
+            assert_eq!(
+                output_limit(&model.tuning(Task::Analysis, None)),
+                MAX_TOKENS
+            );
             for input in &model.inputs {
                 assert!(
                     llm.accepted_inputs(Task::Analysis)
@@ -738,6 +762,18 @@ mod tests {
         assert_eq!(pair("-p"), "<__media__>Fill.");
         assert_eq!(pair("-sys"), "Sys");
         assert_eq!(pair("--image-max-tokens"), IMAGE_TOKENS.to_string());
+    }
+
+    #[test]
+    fn the_output_limit_follows_the_catalogue_within_bounds() {
+        let tuning = |n| Tuning {
+            reasoning: None,
+            max_output_tokens: n,
+        };
+        assert_eq!(output_limit(&tuning(None)), MAX_TOKENS);
+        assert_eq!(output_limit(&tuning(Some(2048))), 2048);
+        assert_eq!(output_limit(&tuning(Some(100))), MIN_TOKENS);
+        assert_eq!(output_limit(&tuning(Some(128_000))), MAX_TOKENS);
     }
 
     #[test]
