@@ -71,9 +71,15 @@ impl Settings {
     }
 
     pub fn save(&self, path: &Path) -> std::io::Result<()> {
-        let json = serde_json::to_string_pretty(self).map_err(std::io::Error::other)?;
-        let tmp = path.with_extension("json.pending");
-        std::fs::write(&tmp, json)?;
-        std::fs::rename(&tmp, path)
+        write_json(path, self)
     }
+}
+
+/// Writes `value` as JSON whole through a temporary file beside `path`, so a crash never leaves
+/// half a file.
+pub(crate) fn write_json(path: &Path, value: &impl Serialize) -> std::io::Result<()> {
+    let json = serde_json::to_string_pretty(value).map_err(std::io::Error::other)?;
+    let tmp = path.with_extension("json.pending");
+    std::fs::write(&tmp, json)?;
+    std::fs::rename(&tmp, path)
 }
