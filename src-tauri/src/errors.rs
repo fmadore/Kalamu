@@ -93,6 +93,8 @@ pub mod id {
     pub const FILE: &str = "file.read";
     /// A result file that could not be opened: moved, deleted, or no app for it.
     pub const OPEN: &str = "file.open";
+    /// A job's source file that is no longer where it was added, so its pages cannot be shown.
+    pub const FILE_MISSING: &str = "file.missing";
     pub const INTERNAL: &str = "app.internal";
     /// A YouTube video that is private, so no one outside its owner can read it.
     pub const SOURCE_PRIVATE: &str = "source.private";

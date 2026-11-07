@@ -1592,7 +1592,7 @@ export const fr: Messages = {
 		tabsLabel: 'Sections des paramètres',
 		tabs: {
 			keys: 'Clés d’API',
-			offline: 'Hors ligne',
+			offline: 'Modèles hors ligne',
 			general: 'Général',
 			about: 'À propos'
 		},
@@ -1628,7 +1628,7 @@ export const fr: Messages = {
 			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner les modèles OCR : les installateurs et la version du Store le contiennent.',
 		ocrCpu: (missing: string) =>
 			`Il manque à ce processeur ${missing}, dont les modèles OCR hors ligne ont besoin. Utilisez plutôt Tesseract ou un modèle en ligne.`,
-		addLanguageData: 'Télécharger une langue',
+		addLanguageData: 'Télécharger une langue pour Tesseract',
 		findLanguageData: 'Chercher une langue par son nom',
 		oneDownload:
 			'Un téléchargement à la fois : le suivant pourra commencer une fois celui-ci terminé.',
@@ -1990,6 +1990,8 @@ export const fr: Messages = {
 		'catalog.invalid': 'La liste des modèles téléchargée n’a pas pu être lue.',
 		'file.read': 'Le fichier n’a pas pu être lu ou écrit.',
 		'file.open': 'Ce fichier n’a pas pu être ouvert. Il a peut-être été déplacé ou supprimé.',
+		'file.missing':
+			'Le fichier n’est plus là où il a été ajouté : ses pages ne peuvent pas être affichées. Ses résultats sont conservés ; remettez-le à sa place pour le voir ici.',
 		'app.internal': 'Une erreur s’est produite dans l’application.',
 		'app.notDesktop': 'Cette fonction n’est disponible que dans l’application de bureau.'
 	}
