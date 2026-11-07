@@ -33,6 +33,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use std::time::Duration;
 
+use crate::control::lock;
 use kalamu_catalog::Catalog;
 use kalamu_core::{
     ApiKey, Correction, InputKind, InputWarning, Job, JobId, JobStore, JobSummary, ProgressEvent,
@@ -178,7 +179,7 @@ impl Engine {
     }
 
     pub fn with_prompts<T>(&self, f: impl FnOnce(&mut PromptLibrary) -> T) -> T {
-        let mut guard = self.prompts.lock().unwrap_or_else(|p| p.into_inner());
+        let mut guard = lock(&self.prompts);
         f(&mut guard)
     }
 

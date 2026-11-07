@@ -1,7 +1,7 @@
 //! Starting, pausing and cancelling a job: its one run at a time, the requests checked
 //! between pieces, and the status it ends with.
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use kalamu_core::{JobId, JobStatus, PieceStatus, ProgressEvent, StopSignal, Timestamp};
 
@@ -17,6 +17,12 @@ pub(crate) struct Control {
     pub stop: StopSignal,
 }
 
+/// Locks `mutex`, carrying on if a thread panicked while holding it, as every lock in the
+/// engine does: what each guards stays readable.
+pub(crate) fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
 impl Engine {
     pub fn is_running(&self, id: JobId) -> bool {
         self.running
@@ -28,7 +34,7 @@ impl Engine {
     /// Stops after the pieces in flight; everything finished is kept and the job can resume.
     pub fn pause(&self, id: JobId) {
         if let Some(control) = self.control(id) {
-            let mut control = control.lock().unwrap_or_else(|p| p.into_inner());
+            let mut control = lock(&control);
             control.pause = true;
             control.stop.stop();
         }
@@ -36,7 +42,7 @@ impl Engine {
 
     pub fn cancel(&self, id: JobId) {
         if let Some(control) = self.control(id) {
-            let mut control = control.lock().unwrap_or_else(|p| p.into_inner());
+            let mut control = lock(&control);
             control.cancel = true;
             control.stop.stop();
         }
@@ -78,7 +84,7 @@ impl Engine {
     {
         let control = Arc::new(Mutex::new(Control::default()));
         {
-            let mut running = self.running.lock().unwrap_or_else(|p| p.into_inner());
+            let mut running = lock(&self.running);
             if running.contains_key(&id) {
                 return Err(EngineError::AlreadyRunning);
             }
@@ -93,11 +99,7 @@ impl Engine {
                 JobStatus::Interrupted
             });
             let _ = engine.store.set_job_status(id, status);
-            engine
-                .running
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .remove(&id);
+            lock(&engine.running).remove(&id);
             engine.emit(ProgressEvent::JobFinished { job_id: id, status });
             engine.job_ended(id, then_start);
         });

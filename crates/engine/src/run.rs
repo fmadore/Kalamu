@@ -11,6 +11,7 @@ use futures::stream::FuturesUnordered;
 use kalamu_core::{JobId, JobStatus, Pace, ProgressEvent, Setup, SetupId, Task};
 use kalamu_media::OpenSource;
 
+use crate::control::lock;
 use crate::group::Unit;
 use crate::piece::{Input, Outcome};
 use crate::plan::Existing;
@@ -39,11 +40,7 @@ impl Engine {
                 .check_ready(step.model, &job.settings.languages)
                 .map_err(EngineError::NotReady)?;
         }
-        let stop = control
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .stop
-            .clone();
+        let stop = lock(&control).stop.clone();
         self.store.set_job_status(job_id, JobStatus::Running)?;
         self.reopen_unsent(job_id)?;
         // Set-ups sent as batches; the others, and every set-up of a fast job, go one by one.
@@ -302,7 +299,7 @@ pub(crate) enum StopKind {
 }
 
 pub(crate) fn stop_requested(control: &Mutex<Control>) -> Option<StopKind> {
-    let c = control.lock().unwrap_or_else(|p| p.into_inner());
+    let c = lock(control);
     if c.cancel {
         Some(StopKind::Cancel)
     } else if c.pause {
@@ -315,5 +312,5 @@ pub(crate) fn stop_requested(control: &Mutex<Control>) -> Option<StopKind> {
 /// Pauses the job: its key or account stopped working, and every further call would fail.
 fn stop_for(control: &Mutex<Control>, job_id: JobId, message: &str) {
     tracing::warn!(job = %job_id, %message, "stopping job");
-    control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
+    lock(control).pause = true;
 }
