@@ -489,6 +489,21 @@ export function installMock(): void {
 					ocr_seconds_per_page: { 'lightonocr-3-1b': 38.4 },
 					ocr_devices: { 'lightonocr-3-1b': 'cpu', 'glm-ocr': 'cpu' },
 					ocr_graphics_processor: null,
+					// Gemma 4 E4B downloaded, E2B not.
+					llm_models: [
+						['gemma-4-e4b', 6_146_493_536, true],
+						['gemma-4-e2b', 4_336_349_920, false]
+					].map(([id, bytes, installed]) => ({
+						id: id as string,
+						bytes: bytes as number,
+						installed: installed as boolean,
+						downloading: false,
+						downloaded_bytes: 0,
+						in_use: false,
+						languages: []
+					})),
+					llm_engine: true,
+					llm_devices: { 'gemma-4-e4b': 'cpu', 'gemma-4-e2b': 'cpu' },
 					missing_cpu: []
 				};
 			case 'key_status':

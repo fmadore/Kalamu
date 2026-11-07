@@ -4,6 +4,12 @@
 //! clash with it (docs/decisions/2026-11-06-ocr-vision-models.md). A separate program also gives
 //! its memory back after each page and cannot take the app down if a page crashes it.
 //!
+//! Beside each build sits its text program (`llama-completion`, with the same suffix), which the
+//! offline language models read texts with: the multimodal program answers once only about an
+//! image, and takes its request on the command line, which Windows limits to about 32,000
+//! characters; the text program reads the instructions, the document and the answer's schema
+//! from files (docs/decisions/2026-11-07-offline-language-models.md).
+//!
 //! The program is built for the same processors as Whisper (`.cargo/config.toml`), on the
 //! processor on Windows and on the graphics processor with Metal on a Mac, by
 //! `.github/workflows/llama.yml`, and pinned in `scripts/llama.json`. On Windows a second build,
@@ -19,6 +25,9 @@ use kalamu_core::{ProviderError, StopSignal};
 
 /// The program's name, without the system's executable suffix.
 pub const PROGRAM: &str = "llama-mtmd-cli";
+
+/// The text program's name; each build's has the same suffix as its multimodal program.
+pub const TEXT_PROGRAM: &str = "llama-completion";
 
 /// The Windows build that uses the graphics processor through Vulkan.
 pub const VULKAN_PROGRAM: &str = "llama-mtmd-cli-vulkan";
@@ -54,6 +63,8 @@ fn quiet(command: &mut Command) -> &mut Command {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Llama {
     program: PathBuf,
+    /// The same build's text program, when it was shipped.
+    text: Option<PathBuf>,
     /// Set for each run: where the OpenCL build keeps the kernels it compiles.
     env: Vec<(String, PathBuf)>,
 }
@@ -66,6 +77,9 @@ pub struct Run {
     /// The tokens the model wrote, from the timing the program prints last; `None` when it
     /// printed none.
     pub generated: Option<u32>,
+    /// The tokens the model read (the instructions, the text or the image), from the same
+    /// timing; `None` when it printed none.
+    pub read: Option<u32>,
     pub elapsed: Duration,
 }
 
@@ -112,8 +126,17 @@ impl Llama {
         self
     }
 
+    /// Whether this build also has its text program.
+    pub fn reads_text(&self) -> bool {
+        self.text.is_some()
+    }
+
     fn command(&self) -> Command {
-        let mut command = Command::new(&self.program);
+        self.command_for(&self.program)
+    }
+
+    fn command_for(&self, program: &Path) -> Command {
+        let mut command = Command::new(program);
         command.envs(self.env.iter().map(|(k, v)| (k, v)));
         quiet(&mut command);
         command
@@ -130,10 +153,13 @@ impl Llama {
         {
             candidates.extend(std::env::split_paths(&path));
         }
+        let exe = std::env::consts::EXE_SUFFIX;
         candidates.into_iter().find_map(|dir| {
-            let program = dir.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
-            program.is_file().then_some(Self {
+            let program = dir.join(format!("{name}{exe}"));
+            let text = dir.join(format!("{}{exe}", name.replacen(PROGRAM, TEXT_PROGRAM, 1)));
+            program.is_file().then(|| Self {
                 program,
+                text: text.is_file().then_some(text),
                 env: Vec::new(),
             })
         })
@@ -143,6 +169,7 @@ impl Llama {
     pub(crate) fn at(program: PathBuf) -> Self {
         Self {
             program,
+            text: None,
             env: Vec::new(),
         }
     }
@@ -203,16 +230,36 @@ impl Llama {
     /// Runs the program with `args` until it ends, or until `stop` is raised, when it is ended
     /// at once and the page counts as interrupted: nothing was kept from it.
     pub fn run(&self, args: &[String], stop: &StopSignal) -> Result<Run, ProviderError> {
+        self.run_program(&self.program, args, stop)
+    }
+
+    /// Runs the text program the same way.
+    pub fn run_text(&self, args: &[String], stop: &StopSignal) -> Result<Run, ProviderError> {
+        let text = self.text.as_ref().ok_or_else(|| {
+            ProviderError::Unsupported(
+                "This copy of Kalamu has no engine for offline language models to read texts with"
+                    .into(),
+            )
+        })?;
+        self.run_program(text, args, stop)
+    }
+
+    fn run_program(
+        &self,
+        program: &Path,
+        args: &[String],
+        stop: &StopSignal,
+    ) -> Result<Run, ProviderError> {
         let started = Instant::now();
         let mut child = self
-            .command()
+            .command_for(program)
             .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
             .map_err(|e| {
-                ProviderError::Other(format!("The OCR model's engine could not start: {e}"))
+                ProviderError::Other(format!("The offline model's engine could not start: {e}"))
             })?;
         // Both pipes are read while the program runs, so neither fills and stalls it.
         let stdout = drain(child.stdout.take(), usize::MAX);
@@ -228,7 +275,7 @@ impl Llama {
                 Err(e) => {
                     end(&mut child);
                     return Err(ProviderError::Other(format!(
-                        "The OCR model's engine stopped responding: {e}"
+                        "The offline model's engine stopped responding: {e}"
                     )));
                 }
             }
@@ -237,13 +284,14 @@ impl Llama {
         let diagnostics = String::from_utf8_lossy(&stderr.join().unwrap_or_default()).into_owned();
         if !status.success() {
             return Err(ProviderError::Other(format!(
-                "The OCR model's engine failed: {}",
+                "The offline model's engine failed: {}",
                 last_error(&diagnostics)
             )));
         }
         Ok(Run {
             text,
             generated: generated_tokens(&diagnostics),
+            read: prompt_tokens(&diagnostics),
             elapsed: started.elapsed(),
         })
     }
@@ -288,7 +336,10 @@ fn last_error(diagnostics: &str) -> String {
     lines
         .iter()
         .rev()
-        .find(|l| l.to_ascii_lowercase().contains("error") || l.contains("failed"))
+        .find(|l| {
+            let l = l.to_ascii_lowercase();
+            l.contains("error") || l.contains("failed") || l.contains("too long")
+        })
         .or(lines.last())
         .map_or_else(|| "no message".to_owned(), |l| (*l).to_owned())
 }
@@ -336,6 +387,44 @@ fn generated_tokens(diagnostics: &str) -> Option<u32> {
     })
 }
 
+/// Files written where the program can read them (a text's instructions, the text, the answer's
+/// schema), deleted afterwards.
+pub struct Scratch {
+    dir: tempfile::TempDir,
+}
+
+impl Scratch {
+    pub fn new() -> Result<Self, ProviderError> {
+        let dir = tempfile::Builder::new()
+            .prefix("kalamu-text-")
+            .tempdir()
+            .map_err(|e| ProviderError::Other(format!("Could not write the request: {e}")))?;
+        Ok(Self { dir })
+    }
+
+    /// Writes `bytes` as `name` and returns its path.
+    pub fn write(&self, name: &str, bytes: &[u8]) -> Result<PathBuf, ProviderError> {
+        let path = self.dir.path().join(name);
+        std::fs::write(&path, bytes)
+            .map_err(|e| ProviderError::Other(format!("Could not write the request: {e}")))?;
+        Ok(path)
+    }
+}
+
+/// The tokens read, from `llama_perf_context_print: prompt eval time = … ms /  1290 tokens (…)`.
+fn prompt_tokens(diagnostics: &str) -> Option<u32> {
+    diagnostics.lines().rev().find_map(|line| {
+        let rest = line.split_once("llama_perf_context_print:")?.1.trim_start();
+        let rest = rest.strip_prefix("prompt eval time")?;
+        rest.split_once('/')?
+            .1
+            .split_whitespace()
+            .next()?
+            .parse()
+            .ok()
+    })
+}
+
 /// A page written where the program can read it, deleted afterwards.
 pub struct PageFile {
     _dir: tempfile::TempDir,
@@ -359,6 +448,27 @@ impl PageFile {
     }
 }
 
+/// The page as the model should see it: no larger than `max_side` on its longest side, as PNG,
+/// or the original bytes when they are small enough already.
+pub fn page_image(
+    bytes: &[u8],
+    mime: &str,
+    max_side: u32,
+) -> Result<(Vec<u8>, &'static str), ProviderError> {
+    let image = image::load_from_memory(bytes)
+        .map_err(|e| ProviderError::InvalidRequest(format!("The page image is unreadable: {e}")))?;
+    if image.width().max(image.height()) <= max_side {
+        let extension = if mime == "image/png" { "png" } else { "jpg" };
+        return Ok((bytes.to_vec(), extension));
+    }
+    let resized = image.resize(max_side, max_side, image::imageops::FilterType::Lanczos3);
+    let mut png = std::io::Cursor::new(Vec::new());
+    resized
+        .write_to(&mut png, image::ImageFormat::Png)
+        .map_err(|e| ProviderError::Other(format!("Could not prepare the page image: {e}")))?;
+    Ok((png.into_inner(), "png"))
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
@@ -372,6 +482,7 @@ llama_perf_context_print: prompt eval time =   10432.11 ms /  1290 tokens (    8
 llama_perf_context_print:        eval time =   20514.55 ms /   811 runs   (   25.30 ms per token)\n\
 llama_perf_context_print:       total time =   31120.02 ms /  2101 tokens\n";
         assert_eq!(generated_tokens(stderr), Some(812));
+        assert_eq!(prompt_tokens(stderr), Some(1290));
         assert_eq!(generated_tokens("nothing here"), None);
     }
 
@@ -408,6 +519,34 @@ Available devices:\n\
             "clip_init: failed to load image encoder"
         );
         assert_eq!(last_error(""), "no message");
+        let long = "load
+main: prompt is too long (40210 tokens, max 32764)
+exiting
+";
+        assert_eq!(
+            last_error(long),
+            "main: prompt is too long (40210 tokens, max 32764)"
+        );
+    }
+
+    #[test]
+    fn the_text_program_is_found_beside_its_build() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = std::env::consts::EXE_SUFFIX;
+        std::fs::write(dir.path().join(format!("llama-mtmd-cli-vulkan{exe}")), b"").unwrap();
+        let without = Llama::locate_program(VULKAN_PROGRAM, &[dir.path().to_owned()]).unwrap();
+        assert!(!without.reads_text());
+        std::fs::write(
+            dir.path().join(format!("llama-completion-vulkan{exe}")),
+            b"",
+        )
+        .unwrap();
+        let with = Llama::locate_program(VULKAN_PROGRAM, &[dir.path().to_owned()]).unwrap();
+        assert!(with.reads_text());
+        assert_eq!(
+            with.text.unwrap(),
+            dir.path().join(format!("llama-completion-vulkan{exe}"))
+        );
     }
 
     #[test]

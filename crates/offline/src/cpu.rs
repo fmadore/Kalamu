@@ -71,6 +71,20 @@ pub fn missing_features() -> &'static [String] {
     MISSING.get_or_init(|| missing(REQUIRED, detected))
 }
 
+/// An error naming what this processor lacks, for an engine built for the same processors as
+/// Whisper (`engine`, in the plural, "offline OCR models"), with what to use instead.
+pub(crate) fn ensure(engine: &str, instead: &str) -> Result<(), kalamu_core::ProviderError> {
+    let missing = missing_features();
+    if missing.is_empty() {
+        Ok(())
+    } else {
+        Err(kalamu_core::ProviderError::Unsupported(format!(
+            "This processor lacks {}, which {engine} need; {instead}",
+            missing.join(", ")
+        )))
+    }
+}
+
 /// Where the offline models run: the graphics processor with Metal on a Mac, the processor
 /// elsewhere. The app turns on `metal` for macOS, where the OCR models' engine is built with
 /// Metal too (`.github/workflows/llama.yml`).

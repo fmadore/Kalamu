@@ -41,7 +41,10 @@ Store version is being prepared ([steps](docs/mac-app-store.md)).
 - **Analyse texts** with fields you define: a summary, the people, places and organisations a
   document names, its tone with a reason, themes from your own list. Ready-made analyses cover
   the common needs, including the question, argument, methods and findings of a scholarly
-  publication for a literature review.
+  publication for a literature review. Offline, small language models from Google (Gemma 4 E4B
+  and E2B) analyse texts and photographed pages, make tables of contents and correct text with
+  nothing sent: far weaker than the cloud models and slow on a processor, faster on a graphics
+  processor, so check their answers.
 - **Make a detailed table of contents** of a long document: a newspaper or magazine issue, an
   archival file scanned in one piece, a book or report. One model reads each page, another,
   cheaper one (from any provider) combines the pages into one entry per article or item, with

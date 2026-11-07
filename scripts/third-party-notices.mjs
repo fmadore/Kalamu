@@ -155,7 +155,8 @@ writeFileSync(
 		'licences in the files beside this one, as do the Vulkan headers (Khronos, MIT) built into',
 		'llama.cpp’s graphics-processor program on Windows and the OpenCL headers (Khronos, Apache',
 		'2.0) built into its Snapdragon program. Whisper models and the OCR models (LightOnOCR-3,',
-		'Apache 2.0; GLM-OCR, MIT) are downloaded at the user’s request and are not part of the app.',
+		'Apache 2.0; GLM-OCR, MIT) and the language models (Gemma 4, Apache 2.0) are downloaded at',
+		'the user’s request and are not part of the app.',
 		'',
 		section('Rust crates', rust),
 		section('Front-end packages', npm)
