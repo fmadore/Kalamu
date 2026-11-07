@@ -152,7 +152,7 @@ Gemini from YouTube; Kalamu downloads and stores none of it.
    [store-listing.md](store-listing.md#mac-app-store-app-store-connect), add the screenshots, and
    choose *Manually release this version* for the first one. Without a Mac at hand, the
    workflow's *screenshots* input (Actions → *Mac App Store* → *Run workflow*) captures the
-   sandboxed app on the runner at 1440 × 900, the start screen and Settings › Offline, kept as
+   sandboxed app on the runner at 1440 × 900, the start screen and Settings › Offline models, kept as
    the run's `store-screenshots` artifact: enough to submit, though the ten scenes of
    [store-listing.md](store-listing.md#screenshots) need a Mac and real material. The runner's
    screen offers no size App Store Connect takes, so it is set to 1600 × 1200 and the window

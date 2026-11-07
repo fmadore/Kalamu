@@ -3,7 +3,9 @@
 	// language data of an engine built into the app (Tesseract), one file per language, and the
 	// OCR vision models, each with how long a page took on this computer. Of the hundred-odd
 	// languages only those downloaded are listed; the others are found by name in a search box.
-	// While a download runs the lists are polled for the bytes received.
+	// While a download runs the lists are polled for the bytes received; on opening they are read
+	// again, since the seconds a page took change as jobs run.
+	import { onMount } from 'svelte';
 	import { modelDescription } from '#lib/catalogText.js';
 	import type { OfflineModel } from '#lib/bindings/OfflineModel.js';
 	import { describeError } from '#lib/errors.js';
@@ -16,6 +18,8 @@
 	import ProgressBar from './ProgressBar.svelte';
 
 	const m = messages();
+
+	onMount(() => void refreshOffline());
 
 	const local = $derived(
 		(app.catalog?.models ?? []).filter(
@@ -241,13 +245,22 @@
 
 <style>
 	.block {
-		padding: var(--space-4) 0 0;
+		padding: var(--space-4) 0 var(--space-5);
 		display: grid;
 		gap: var(--space-3);
 	}
+	/* Each engine after the first starts below a stronger line and well clear of the one before,
+	   so a part such as Tesseract's language download reads as the engine's above it. */
 	h3 {
 		font-size: var(--type-md);
+		margin-top: var(--space-5);
+		padding-top: var(--space-5);
+		border-top: 2px solid var(--line-strong);
+	}
+	h3:first-of-type {
 		margin-top: var(--space-3);
+		padding-top: 0;
+		border-top: 0;
 	}
 	.small {
 		font-size: var(--type-sm);
@@ -261,11 +274,10 @@
 		gap: var(--space-2);
 		align-items: center;
 	}
+	/* With Tesseract's languages above it, not set apart like the next engine. */
 	.add-language {
 		display: grid;
 		gap: var(--space-2);
-		padding-top: var(--space-3);
-		border-top: 1px solid var(--line);
 	}
 	h4 {
 		font-size: var(--type-sm);

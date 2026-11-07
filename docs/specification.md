@@ -164,7 +164,7 @@ no text layer needs *Extract text* instead.
 - **Language choice with auto-detect.** Extraction and transcription list only the languages
   the chosen model supports, with **Auto-detect** as the default; several can be chosen for
   material that mixes languages (French and Mooré, say). Tesseract offers no Auto-detect: its
-  languages are chosen, and their data downloaded once in Settings › Offline. Where a provider publishes no list
+  languages are chosen, and their data downloaded once in Settings › Offline models. Where a provider publishes no list
   (GPT Transcribe, Voxtral), every language is offered and the model's description says so.
   New job says when a model's API takes fewer than were chosen: Whisper, Voxtral and OpenAI's
   diarizing model take one, so with several they detect the language; Voxtral takes none when

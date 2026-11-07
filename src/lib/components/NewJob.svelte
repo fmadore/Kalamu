@@ -65,6 +65,7 @@
 		liveJob,
 		missingLanguageData,
 		refreshJobs,
+		refreshOffline,
 		toast,
 		type FromProject
 	} from '#lib/state.svelte.js';
@@ -517,6 +518,8 @@
 	}
 
 	onMount(() => {
+		// The OCR models' seconds a page and device change as jobs run: read them again.
+		void refreshOffline();
 		// Opened from a finished job's "Summarise" button: its results are the files.
 		void loadTask(opening.task ?? mode).then(() => {
 			// Text frozen from a job's corrected results, or an item's pages cut out of its

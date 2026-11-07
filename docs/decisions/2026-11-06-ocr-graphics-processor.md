@@ -50,7 +50,7 @@ The device kept is passed to the program (`--device Vulkan<n>`), which also send
 encoder there, so the device in provenance is the one that read the page. llama.cpp's own
 choice, without it, would spread the model over every discrete card.
 
-The app uses it unless Settings › Offline says not to (*Read pages on the graphics processor*,
+The app uses it unless Settings › Offline models says not to (*Read pages on the graphics processor*,
 naming the device, on by default and shown only when one was found). If the program fails on a
 page (out of memory, a driver fault), the rest of the session reads on the processor: the page
 returns a transient error, and the engine sends it again, so its record names the processor.
@@ -64,8 +64,11 @@ Each page's request settings record `device` (`cpu`, `metal`, `vulkan`) and, for
 another order than the processor and can, rarely, choose a different token. The device is not
 part of the cache key, as Metal was not: the cache is per computer, provenance says where each
 page was read, and keying by device would read every page again after a driver update or a
-change in Settings, for differences that are rare and small. A researcher who wants a page read
-on the processor turns the graphics processor off and asks for the page again.
+change in Settings, for differences that are rare and small. So a page already read is taken
+from the cache wherever it was read, even after the graphics processor is turned off, and its
+provenance still names the device that read it (seen in the 1.5.0-rc1 test); Kalamu offers no
+way to read a cached page again on another device. Turning the graphics processor off changes
+where new pages are read.
 
 ### Speeds per device
 

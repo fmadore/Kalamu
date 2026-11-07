@@ -23,6 +23,9 @@ pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
 /// Name of the event carrying [`kalamu_search::SearchProgress`]: how far a project's text is
 /// prepared for searching.
 pub const SEARCH_PROGRESS_EVENT: &str = "search-progress";
+/// Sent when what the offline status reports changed outside a command: the graphics processor
+/// the OCR models use, found after start-up.
+pub const OFFLINE_CHANGED_EVENT: &str = "offline-changed";
 
 pub fn run() {
     // The data folder is settled, and an earlier one moved into it, before Tauri builds the

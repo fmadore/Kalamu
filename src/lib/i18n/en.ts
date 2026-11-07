@@ -1491,7 +1491,7 @@ export const en = {
 		tabsLabel: 'Settings sections',
 		tabs: {
 			keys: 'API keys',
-			offline: 'Offline',
+			offline: 'Offline models',
 			general: 'General',
 			about: 'About'
 		},
@@ -1527,7 +1527,7 @@ export const en = {
 			'This copy of Kalamu was built without the engine that runs OCR models: the installers and the Store’s version carry it.',
 		ocrCpu: (missing: string) =>
 			`This processor lacks ${missing}, which offline OCR models need. Use Tesseract or a cloud model instead.`,
-		addLanguageData: 'Download a language',
+		addLanguageData: 'Download a language for Tesseract',
 		findLanguageData: 'Find a language by its name',
 		oneDownload: 'One download at a time: the next can start once this one is done.',
 		offlineHint:
@@ -1897,6 +1897,8 @@ export const en = {
 		'catalog.invalid': 'The downloaded model list could not be read.',
 		'file.read': 'The file could not be read or written.',
 		'file.open': 'This file could not be opened. It may have been moved or deleted.',
+		'file.missing':
+			'The file is no longer where it was added, so its pages cannot be shown. Its results are kept; put it back to see it here.',
 		'app.internal': 'Something went wrong inside the app.',
 		'app.notDesktop': 'This works only in the desktop app.'
 	}

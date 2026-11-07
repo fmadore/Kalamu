@@ -315,8 +315,13 @@
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 	}
+	/* The tabs' own line already sits above the first section (Offline models' included). */
+	.panel > :global(.card:first-child) {
+		border-top: 0;
+	}
+	/* Room below as above, so the next section's line does not touch the last one's text. */
 	.block {
-		padding: var(--space-4) 0 0;
+		padding: var(--space-4) 0 var(--space-5);
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-3);

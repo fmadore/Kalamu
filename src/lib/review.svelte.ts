@@ -67,8 +67,11 @@ export class Review {
 			.then((p) => {
 				if (this.#page === index) this.preview = p;
 			})
-			.catch(() => {
-				if (this.#page === index) this.preview = { mime: 'none', data: '' };
+			// Not drawable: `PageImage` shows the error (a file moved or deleted, say) in its place.
+			.catch((e) => {
+				if (this.#page === index) {
+					this.preview = { mime: 'error', data: describeError(e, messages()) };
+				}
 			});
 	}
 

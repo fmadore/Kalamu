@@ -16,7 +16,7 @@ use tracing_subscriber::prelude::*;
 use crate::commands::{self, AppState, Paths};
 use crate::secrets::CredentialKeys;
 use crate::settings::Settings;
-use crate::{PROGRESS_EVENT, grants, platform, tray};
+use crate::{OFFLINE_CHANGED_EVENT, PROGRESS_EVENT, grants, platform, tray};
 
 type SetupResult<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -32,6 +32,7 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
         .unwrap_or_else(|p| p.into_inner())
         .refresh_catalog;
     app.manage(state);
+    find_graphics_processor(app.handle());
     app.manage(tray::TrayMenu::default());
     // Without a tray the window can still be used; closing it just pauses jobs.
     if let Err(e) = tray::init(app.handle()) {
@@ -47,6 +48,17 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
         });
     }
     Ok(())
+}
+
+/// Asks the OCR models' graphics builds which device they find, off the interface's thread (a
+/// driver may take seconds), so the first page need not wait; then tells the interface, which
+/// read the offline status before the answer and reads it again to name the device in Settings.
+fn find_graphics_processor(app: &tauri::AppHandle) {
+    let handle = app.clone();
+    std::thread::spawn(move || {
+        handle.state::<AppState>().vision.find_graphics_processor();
+        let _ = handle.emit(OFFLINE_CHANGED_EVENT, ());
+    });
 }
 
 /// The data and log folders, made if needed, with logging started and the move of an earlier
@@ -150,8 +162,7 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         tracing::warn!("llama.cpp not found: offline OCR models are unavailable");
     }
     // On Windows, its builds for the graphics processor (Vulkan; OpenCL for Snapdragon's
-    // Adreno), asked at once which one they find, so Settings can name it and the first page
-    // need not wait.
+    // Adreno), asked which one they find once the app is set up (`find_graphics_processor`).
     let graphics = [
         kalamu_offline::Llama::locate_vulkan(&app_dir)
             .map(|p| (kalamu_offline::Backend::Vulkan, p)),
@@ -167,8 +178,6 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         graphics,
         settings.ocr_graphics_processor,
     ));
-    let finding = vision.clone();
-    std::thread::spawn(move || finding.find_graphics_processor());
     let mut providers = kalamu_providers::registry(http.clone());
     providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
     providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));

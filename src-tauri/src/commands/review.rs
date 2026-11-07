@@ -82,6 +82,11 @@ pub async fn piece_preview(
         .find(|s| s.id == source_id)
         .cloned()
         .ok_or_else(|| AppError::new("job.not_found", source_id))?;
+    // Only scans and images are previewed, never a link: a path that is not a file was moved
+    // or deleted since the job read it.
+    if !std::path::Path::new(&source.path).is_file() {
+        return Err(AppError::new(id::FILE_MISSING, &source.path));
+    }
     let cached = state.preview.lock().ok().and_then(|c| {
         c.as_ref()
             .filter(|(id, _)| *id == source_id)

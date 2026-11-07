@@ -391,7 +391,7 @@ uses:
 | 7 | An article of an issue, analysed once its text is corrected: the agricultural students (5 April) or a convocation lecture |
 | 8 | The folder of the nine issues |
 | 9 | `daily-nebraskan-1911-issue.pdf` (24 May 1911, four pages) |
-| 10 | Settings › Offline, or `bulletin-page.jpg` with Tesseract |
+| 10 | Settings › Offline models, or `bulletin-page.jpg` with Tesseract |
 
 *The Monitor* and the *Victoria Daily Times* of 1915, used before, are out of the samples and
 the screenshots: the *Victoria* for its war news, and no pre-war year either, since every issue
@@ -448,7 +448,7 @@ each estimate before starting: only the first run is large (36 pages read, then 
 
 Without a run: the project (scene 2), made by hand as above; New job (scene 8), Extract text on
 the folder of the nine issues with Gemini and Mistral OCR, captured before *Start* and left
-unstarted; Settings › Offline (scene 10), with Whisper Base and French for Tesseract downloaded,
+unstarted; Settings › Offline models (scene 10), with Whisper Base and French for Tesseract downloaded,
 or Tesseract on `bulletin-page.jpg` for the $0.00 estimate.
 
 | # | What to show | Caption |
@@ -462,7 +462,7 @@ or Tesseract on `bulletin-page.jpg` for the $0.00 estimate.
 | 7 | **Analysis.** An article beside its answers: summary, people, places and tone with its reason, two set-ups' sigla on the names they disagree on, a name pointed at and found in the text. | Ask your own questions of each text: summaries, people, places and tone, every answer shown beside the document it comes from. |
 | 8 | **New job, ready to start.** Extract text chosen, a folder of issues added, two set-ups (Gemini and Mistral OCR), the diagram of the task, and the estimate on the right with a cost per model. | Choose your files, a task and a model, and see the estimated cost before anything is sent to the provider. |
 | 9 | **Table of contents.** A *Daily Nebraskan* issue's page on the left, the entries on the right with titles, pages, authors and summaries, the entries on the page shown marked; the strip of pages below. | Turn a whole newspaper issue or archival file into a detailed table of contents: each article with its pages, authors and summary. |
-| 10 | **Offline.** Settings › Offline with a Whisper model and French for Tesseract downloaded, or New job with Tesseract (on this computer) chosen and the estimate at $0.00. | Transcribe recordings with Whisper and read printed pages with Tesseract, offline: free, no account or key, and nothing leaves your PC. |
+| 10 | **Offline.** Settings › Offline models with a Whisper model and French for Tesseract downloaded, or New job with Tesseract (on this computer) chosen and the estimate at $0.00. | Transcribe recordings with Whisper and read printed pages with Tesseract, offline: free, no account or key, and nothing leaves your PC. |
 
 Search, the glossary, Prompts, the job's page and the Jobs page are left out of the ten: the
 description and features name them. Name the captures after the rows above

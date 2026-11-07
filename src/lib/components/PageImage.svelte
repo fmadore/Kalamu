@@ -103,6 +103,9 @@
 		<p class="muted">{m.common.loading}</p>
 	{:else if drawable && !failed}
 		<canvas bind:this={canvas} aria-label={m.review.source}></canvas>
+	{:else if preview.mime === 'error'}
+		<!-- The page could not be read: `data` holds why, in words. -->
+		<p class="muted">{preview.data}</p>
 	{:else}
 		<p class="muted">{m.review.noPreview}</p>
 	{/if}

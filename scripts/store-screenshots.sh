@@ -172,8 +172,8 @@ sleep 2
 shot 09-settings
 ax > "$out/controls-settings.txt" 2>&1 || true
 
-log "Settings › Offline"
-ax "Offline" || echo "::warning::No Offline tab found by name."
+log "Settings › Offline models"
+ax "Offline models" || echo "::warning::No Offline models tab found by name."
 sleep 2
 shot 10-offline
 
