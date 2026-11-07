@@ -95,7 +95,7 @@ jobs:
         run: |
           app="target/$TARGET/release/bundle/macos/Kalamu.app"
           scripts/sign-app-store.sh "$app" - src-tauri/appstore/Sandbox.plist
-          for tool in ffmpeg llama-mtmd-cli; do
+          for tool in ffmpeg llama-mtmd-cli llama-completion; do
             codesign -d --entitlements - --xml "$app/Contents/MacOS/$tool" 2>/dev/null \
               | grep -q 'com.apple.security.inherit' \
               || { echo "::error::$tool is not signed to inherit the app's sandbox."; exit 1; }
@@ -138,6 +138,10 @@ jobs:
           fi
           if grep -q "llama.cpp not found" "$logs"/kalamu.log*; then
             echo "::error::The app did not find llama.cpp's program inside the sandbox."
+            exit 1
+          fi
+          if grep -q "llama.cpp's text program not found" "$logs"/kalamu.log*; then
+            echo "::error::The app did not find llama.cpp's text program inside the sandbox."
             exit 1
           fi
 

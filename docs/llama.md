@@ -1,13 +1,19 @@
-# llama.cpp, bundled for the offline OCR models
+# llama.cpp, bundled for the offline OCR and language models
 
 Kalamu runs its offline OCR models (LightOnOCR-3, GLM-OCR) in llama.cpp's multimodal program,
 `llama-mtmd-cli`, shipped next to the app's executable as FFmpeg is and started once per page.
+Its offline language models (Gemma 4 E4B and E2B) read page images with the same program and
+texts with llama.cpp's text program, `llama-completion`, shipped beside it, which takes the
+instructions, the text and the answer's schema from files: the multimodal program answers once
+only about an image, and takes its request on the command line, which Windows limits to about
+32,000 characters ([decision](decisions/2026-11-07-offline-language-models.md)). Both engines
+share the programs and take turns (`crates/offline/src/host.rs`).
 It is never linked into the app: whisper.cpp already links a copy of ggml, and llama.cpp's own
 copy would clash with it ([decision](decisions/2026-11-06-ocr-vision-models.md)). llama.cpp is
 MIT licensed; its licence and the exact build line are installed in the app's licences folder.
 
-On Windows a second build, `llama-mtmd-cli-vulkan`, reads on the graphics processor through
-Vulkan ([decision](decisions/2026-11-06-ocr-graphics-processor.md)), and on Windows ARM64 a
+On Windows a second build, `llama-mtmd-cli-vulkan` with `llama-completion-vulkan`, runs on the
+graphics processor through Vulkan ([decision](decisions/2026-11-06-ocr-graphics-processor.md)), and on Windows ARM64 a
 third, `llama-mtmd-cli-opencl`, runs GLM-OCR's image encoder on Snapdragon's Adreno through
 OpenCL ([decision](decisions/2026-11-06-ocr-opencl-adreno.md)). On a Mac the one build already
 uses the graphics processor through Metal.
@@ -16,7 +22,9 @@ uses the graphics processor through Metal.
 
 Next to the executable (Tauri's sidecar layout), or in `KALAMU_LLAMA_DIR`; development builds
 also accept one on `PATH`. Without it, Settings › Offline models says this copy has no engine for OCR
-models, and New job's readiness check refuses them; everything else works.
+models, and New job's readiness check refuses them; everything else works. Each build's text
+program is looked for beside its multimodal program, with the same suffix; without it the
+language models are refused the same way.
 
 The Vulkan build is looked for in the same places. At start-up the app asks it, off the
 interface's thread, which devices it finds (`--list-devices`, given half a minute), and keeps
@@ -28,8 +36,13 @@ loader on this PC), finds nothing usable or fails on a page, the processor build
 after a failure, for the rest of the session.
 
 The OpenCL build is asked the same way and keeps the Adreno only. Each model lists the graphics
-builds it was measured correct with (`graphics` in `crates/offline/src/vision.rs`): LightOnOCR-3
-the Vulkan build, GLM-OCR the Vulkan and OpenCL builds. Through OpenCL only the image encoder
+builds it was measured correct with (`graphics` in `crates/offline/src/vision.rs` and
+`llm.rs`): LightOnOCR-3 the Vulkan build, GLM-OCR the Vulkan and OpenCL builds, the Gemma models
+the Vulkan build. The OCR models put every layer on the device (`-ngl 99`); the Gemma models,
+several times larger, as many as its memory holds beside their fixed context, the rest on the
+processor (`-ngl auto --fit on`), so a card with little memory of its own still speeds them up.
+On a Mac both run on Metal. A failure on the graphics processor sends both engines back to the
+processor for the rest of the session. Through OpenCL only the image encoder
 runs on the Adreno (`--device GPUOpenCL -ngl 0`), the language model on the processor. Its
 compiled kernels are kept in the models' folder (`ocr-models/opencl-kernels`, through
 `GGML_OPENCL_KERNEL_CACHE_DIR`), so only the first page compiles them.
@@ -42,8 +55,8 @@ release (`LLAMA_TAG`, checked against `LLAMA_SHA256`):
 - the processor build for Windows x64, Windows ARM64 and macOS on Apple Silicon, and the Vulkan
   build for Windows x64 and ARM64, with LunarG's Vulkan SDK (`VULKAN_SDK_VERSION`, each
   installer checked against the SHA-256 LunarG publishes);
-- each one static executable, the C runtime included, with nothing shipped beside it; the
-  workflow fails if it needs a library the system lacks. The Vulkan build needs only the Vulkan
+- each the multimodal and the text program, static executables, the C runtime included, with
+  nothing shipped beside them; the workflow fails if one needs a library the system lacks. The Vulkan build needs only the Vulkan
   loader (`vulkan-1.dll`), which graphics drivers install;
 - no OpenMP, no networking (the app downloads the models), no server, tests or examples;
 - the processors Whisper is built for (`.cargo/config.toml`): AVX2 with FMA and F16C on x64,
@@ -61,6 +74,10 @@ Each run then times both models on `samples/bulletin-page.jpg` with the processo
 the arguments the app gives, and writes the seconds and the start of each answer to the job's
 summary. GitHub's runners have no graphics processor: the Vulkan and OpenCL builds list the
 devices they find and read the page once with GLM-OCR, on the processor, to show they work.
+The processor builds also ask Gemma 4 E2B for a short analysis through the text program, with
+the app's arguments, and fail if its answer is not the schema's JSON. The release's
+`scripts/llama.json` lists the programs its archives hold (`programs`); a pin without the text
+program is built again.
 
 ## Updating it
 

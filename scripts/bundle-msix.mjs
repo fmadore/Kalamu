@@ -26,6 +26,8 @@ for (const [tool, fetch] of [
 	['ffprobe', 'fetch:ffmpeg'],
 	['llama-mtmd-cli', 'fetch:llama'],
 	['llama-mtmd-cli-vulkan', 'fetch:llama'],
+	['llama-completion', 'fetch:llama'],
+	['llama-completion-vulkan', 'fetch:llama'],
 	...(arch === 'arm64' ? [['llama-mtmd-cli-opencl', 'fetch:llama']] : [])
 ]) {
 	if (!existsSync(`src-tauri/binaries/${tool}-${target}.exe`)) {

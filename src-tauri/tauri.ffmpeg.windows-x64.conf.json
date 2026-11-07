@@ -5,7 +5,9 @@
       "binaries/ffmpeg",
       "binaries/ffprobe",
       "binaries/llama-mtmd-cli",
-      "binaries/llama-mtmd-cli-vulkan"
+      "binaries/llama-mtmd-cli-vulkan",
+      "binaries/llama-completion",
+      "binaries/llama-completion-vulkan"
     ],
     "resources": {
       "binaries/licenses/*": "licenses/"

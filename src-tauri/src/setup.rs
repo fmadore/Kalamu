@@ -50,13 +50,13 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
     Ok(())
 }
 
-/// Asks the OCR models' graphics builds which device they find, off the interface's thread (a
+/// Asks llama.cpp's graphics builds, which run the OCR and language models, which device they find, off the interface's thread (a
 /// driver may take seconds), so the first page need not wait; then tells the interface, which
 /// read the offline status before the answer and reads it again to name the device in Settings.
 fn find_graphics_processor(app: &tauri::AppHandle) {
     let handle = app.clone();
     std::thread::spawn(move || {
-        handle.state::<AppState>().vision.find_graphics_processor();
+        handle.state::<AppState>().llama.find_graphics_processor();
         let _ = handle.emit(OFFLINE_CHANGED_EVENT, ());
     });
 }
@@ -159,7 +159,14 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
     }
     let llama = kalamu_offline::Llama::locate(&app_dir);
     if llama.is_none() {
-        tracing::warn!("llama.cpp not found: offline OCR models are unavailable");
+        tracing::warn!("llama.cpp not found: offline OCR and language models are unavailable");
+    } else if !llama
+        .as_ref()
+        .is_some_and(kalamu_offline::Llama::reads_text)
+    {
+        tracing::warn!(
+            "llama.cpp's text program not found: offline language models are unavailable"
+        );
     }
     // On Windows, its builds for the graphics processor (Vulkan; OpenCL for Snapdragon's
     // Adreno), asked which one they find once the app is set up (`find_graphics_processor`).
@@ -172,16 +179,27 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
     .into_iter()
     .flatten()
     .collect();
-    let vision = Arc::new(kalamu_offline::Vision::new(
-        kalamu_offline::ModelManager::new(data.join("ocr-models"), &kalamu_offline::VISION),
+    // Shared by the OCR and language models, which take turns. The OpenCL build's compiled
+    // kernels stay where the OCR models first kept them.
+    let llama = Arc::new(kalamu_offline::LlamaHost::new(
         llama,
         graphics,
         settings.ocr_graphics_processor,
+        data.join("ocr-models").join("opencl-kernels"),
+    ));
+    let vision = Arc::new(kalamu_offline::Vision::new(
+        kalamu_offline::ModelManager::new(data.join("ocr-models"), &kalamu_offline::VISION),
+        llama.clone(),
+    ));
+    let llm = Arc::new(kalamu_offline::LocalLlm::new(
+        kalamu_offline::ModelManager::new(data.join("language-models"), &kalamu_offline::LLM),
+        llama.clone(),
     ));
     let mut providers = kalamu_providers::registry(http.clone());
     providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
     providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
     providers.push(vision.clone());
+    providers.push(llm.clone());
     let engine = Engine::new(
         store.clone(),
         providers,
@@ -220,7 +238,9 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         search_preparation: Arc::default(),
         models,
         tessdata,
+        llama,
         vision,
+        llm,
         keys,
         grants,
         settings: Mutex::new(settings),

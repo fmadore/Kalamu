@@ -1,5 +1,5 @@
 //! Offline engines' downloads: Whisper's models, as in Live Translation, Tesseract's language
-//! data, one file per language, and the OCR vision models, each with its image encoder.
+//! data, one file per language, and the OCR and language models, each with its encoder.
 
 use kalamu_offline::{ModelManager, ModelStatus};
 use serde::Serialize;
@@ -28,9 +28,15 @@ pub struct OfflineStatus {
     /// Where each model's next page goes: `cpu`, `metal`, `vulkan` or `opencl` (the image
     /// encoder on the graphics processor, the rest on the processor).
     pub ocr_devices: std::collections::BTreeMap<String, String>,
-    /// The graphics processor Kalamu found for the OCR models on Windows, whether or not
-    /// Settings lets them use it; `None` when there is none it can use.
+    /// The graphics processor Kalamu found for the OCR and language models on Windows, whether
+    /// or not Settings lets them use it; `None` when there is none it can use.
     pub ocr_graphics_processor: Option<String>,
+    /// The offline language models, each counted with its encoder.
+    pub llm_models: Vec<ModelStatus>,
+    /// Whether this copy of the app carries the programs that run them.
+    pub llm_engine: bool,
+    /// Where each language model's next request goes: `cpu`, `metal` or `vulkan`.
+    pub llm_devices: std::collections::BTreeMap<String, String>,
     /// Instruction-set extensions this processor lacks; empty when Whisper can run here.
     pub missing_cpu: Vec<String>,
 }
@@ -50,18 +56,28 @@ pub fn offline_status(state: State<'_, AppState>) -> OfflineStatus {
             .into_iter()
             .map(|(model, placement)| (model, placement.kind().to_owned()))
             .collect(),
-        ocr_graphics_processor: state.vision.graphics_processor(),
+        ocr_graphics_processor: state.llama.graphics_processor(),
+        llm_models: state.llm.models().list(),
+        llm_engine: state.llm.available(),
+        llm_devices: state
+            .llm
+            .placements()
+            .into_iter()
+            .map(|(model, placement)| (model, placement.kind().to_owned()))
+            .collect(),
         missing_cpu: kalamu_offline::missing_features().to_vec(),
     }
 }
 
-/// The engine whose file `id` is: Tesseract's language data, an OCR vision model or, failing
-/// those, Whisper's models, which report an unknown id.
+/// The engine whose file `id` is: Tesseract's language data, an OCR or language model or,
+/// failing those, Whisper's models, which report an unknown id.
 fn manager<'a>(state: &'a AppState, id: &str) -> &'a ModelManager {
     if state.tessdata.find(id).is_some() {
         &state.tessdata
     } else if state.vision.models().find(id).is_some() {
         state.vision.models()
+    } else if state.llm.models().find(id).is_some() {
+        state.llm.models()
     } else {
         &state.models
     }
@@ -80,6 +96,7 @@ pub fn cancel_model_download(state: State<'_, AppState>) {
     state.models.cancel_download();
     state.tessdata.cancel_download();
     state.vision.models().cancel_download();
+    state.llm.models().cancel_download();
 }
 
 #[tauri::command]

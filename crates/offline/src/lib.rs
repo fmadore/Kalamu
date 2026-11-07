@@ -1,12 +1,16 @@
-//! Offline engines: Whisper for transcription, and Tesseract and small OCR vision models for
-//! text extraction. They implement the same [`kalamu_core::Provider`] trait as the cloud
-//! providers, so the engine treats them alike; they need no key, and their models and language
-//! data are downloaded from the app.
+//! Offline engines: Whisper for transcription, Tesseract and small OCR vision models for text
+//! extraction, and small language models for analyses, tables of contents and corrections. They
+//! implement the same [`kalamu_core::Provider`] trait as the cloud providers, so the engine
+//! treats them alike; they need no key, and their models and language data are downloaded from
+//! the app. The OCR and language models run in llama.cpp's programs, which they share
+//! ([`LlamaHost`]).
 
 mod cpu;
 mod device;
 mod download;
+mod host;
 mod llama;
+mod llm;
 mod models;
 mod tessdata;
 mod tesseract;
@@ -18,7 +22,9 @@ use thiserror::Error;
 
 pub use cpu::missing_features;
 pub use device::{Backend, Placement};
+pub use host::LlamaHost;
 pub use llama::{Device, Llama};
+pub use llm::{LLM, LLM_ID, LLM_MODELS, LocalLlm};
 pub use models::{MODELS, ModelFile, ModelManager, ModelSet, ModelStatus, VAD, WHISPER, find};
 pub use tessdata::{TESSDATA, for_language as tessdata_for_language};
 pub use tesseract::{MODEL as TESSERACT_MODEL, TESSERACT_ID, Tesseract};
