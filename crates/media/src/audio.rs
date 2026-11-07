@@ -27,7 +27,6 @@ const LONG_MS: u64 = 2 * 60 * 60_000;
 
 pub struct AudioSource {
     path: PathBuf,
-    kind: InputKind,
     /// The file's own MIME type, when a provider might take it as it is.
     mime: Option<&'static str>,
     duration_ms: u64,
@@ -138,7 +137,6 @@ impl AudioSource {
         }
         Ok(Self {
             path,
-            kind: source.kind,
             mime,
             duration_ms: source.duration_ms.unwrap_or(0),
             even_out: source.even_out_volume,
@@ -263,10 +261,6 @@ impl AudioSource {
             mime: format.mime().to_owned(),
             bytes,
         })
-    }
-
-    pub fn is_video(&self) -> bool {
-        self.kind == InputKind::Video
     }
 }
 

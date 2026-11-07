@@ -59,10 +59,6 @@ impl BatchPhase {
             _ => return None,
         })
     }
-
-    pub fn is_open(self) -> bool {
-        matches!(self, Self::Sending | Self::Waiting)
-    }
 }
 
 /// A batch as the store keeps it.
