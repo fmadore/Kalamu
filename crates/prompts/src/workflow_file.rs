@@ -9,7 +9,7 @@ use kalamu_core::{StepInput, Timestamp};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::record::{date, import_presets, remap_presets, task_name};
+use crate::record::{import_presets, remap_presets, task_name};
 use crate::workflows::shareable;
 use crate::{PipelineFile, PromptError, PromptLibrary, Workflow, WorkflowLibrary};
 
@@ -57,7 +57,7 @@ impl WorkflowFile {
             "A Kalamu workflow (version {}), exported on {} from {} {}. The JSON file \
              exported with it can be imported into Kalamu to run the same steps.\n",
             w.version,
-            date(self.exported_at),
+            self.exported_at.utc_date(),
             self.generator.name,
             self.generator.version
         );

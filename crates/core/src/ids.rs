@@ -114,4 +114,54 @@ impl Timestamp {
             .unwrap_or_default();
         Self(millis)
     }
+
+    /// The day in UTC, `YYYY-MM-DD`.
+    pub fn utc_date(self) -> String {
+        let (year, month, day) = civil_from_days(self.0.div_euclid(86_400_000));
+        format!("{year:04}-{month:02}-{day:02}")
+    }
+
+    /// The moment in UTC to the second, as an `xsd:dateTime` (`2026-11-04T09:30:00Z`).
+    pub fn utc_date_time(self) -> String {
+        let secs = self.0.div_euclid(1000);
+        let rest = secs.rem_euclid(86_400);
+        format!(
+            "{}T{:02}:{:02}:{:02}Z",
+            self.utc_date(),
+            rest / 3600,
+            rest / 60 % 60,
+            rest % 60
+        )
+    }
+}
+
+/// Year, month and day of a count of days since 1970, from Howard Hinnant's `civil_from_days`.
+fn civil_from_days(days: i64) -> (i64, i64, i64) {
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    (year, month, day)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Timestamp;
+
+    #[test]
+    fn times_are_written_in_utc() {
+        assert_eq!(Timestamp(0).utc_date(), "1970-01-01");
+        assert_eq!(Timestamp(1_793_096_727_000).utc_date(), "2026-10-27");
+        assert_eq!(Timestamp(0).utc_date_time(), "1970-01-01T00:00:00Z");
+        assert_eq!(
+            Timestamp(1_793_785_800_000).utc_date_time(),
+            "2026-11-04T09:50:00Z"
+        );
+        assert_eq!(Timestamp(-1).utc_date_time(), "1969-12-31T23:59:59Z");
+    }
 }
