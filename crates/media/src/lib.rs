@@ -406,6 +406,15 @@ impl OpenSource {
                         .into(),
                 ));
             }
+            // A model that reads texts and single page images, not whole PDFs (the offline
+            // language models).
+            Self::Pdf(_) => {
+                return Err(MediaError::NeedsConversion(
+                    "This model does not read PDFs whole. Extract the text first, then analyse \
+                     the result, or choose a model that reads PDFs."
+                        .into(),
+                ));
+            }
             // One image per call: the pages of a multi-page TIFF would be read apart.
             Self::Image(img) if img.page_count() > 1 => {
                 return Err(MediaError::NeedsConversion(format!(

@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Offline engines' downloads: Whisper's models, as in Live Translation's settings, the
-	// language data of an engine built into the app (Tesseract), one file per language, and the
-	// OCR vision models, each with how long a page took on this computer. Of the hundred-odd
+	// language data of an engine built into the app (Tesseract), one file per language, the
+	// OCR vision models, each with how long a page took on this computer, and the language
+	// models for analyses. Of the hundred-odd
 	// languages only those downloaded are listed; the others are found by name in a search box.
 	// While a download runs the lists are polled for the bytes received; on opening they are read
 	// again, since the seconds a page took change as jobs run.
@@ -28,20 +29,27 @@
 	);
 	const status = (id: string) => app.offline?.models.find((s) => s.id === id);
 	const ocrStatus = (id: string) => app.offline?.ocr_models.find((s) => s.id === id);
+	const llmStatus = (id: string) => app.offline?.llm_models.find((s) => s.id === id);
 	/** Models downloaded on their own (Whisper). */
 	const downloadable = $derived(local.filter((mod) => status(mod.id)));
 	/** OCR vision models, each with its image encoder. */
 	const ocr = $derived(local.filter((mod) => ocrStatus(mod.id)));
+	/** Language models for analyses, each with its encoder. */
+	const llm = $derived(local.filter((mod) => llmStatus(mod.id)));
 	/** Engines built into the app, which need language data only (Tesseract). */
-	const builtIn = $derived(local.filter((mod) => !status(mod.id) && !ocrStatus(mod.id)));
+	const builtIn = $derived(
+		local.filter((mod) => !status(mod.id) && !ocrStatus(mod.id) && !llmStatus(mod.id))
+	);
 	const downloading = $derived(
 		[
 			...(app.offline?.models ?? []),
 			...(app.offline?.language_data ?? []),
-			...(app.offline?.ocr_models ?? [])
+			...(app.offline?.ocr_models ?? []),
+			...(app.offline?.llm_models ?? [])
 		].some((s) => s.downloading)
 	);
 	const noOcrEngine = $derived(app.offline !== null && !app.offline.ocr_engine);
+	const noLlmEngine = $derived(app.offline !== null && !app.offline.llm_engine);
 	/** How long a page took with an OCR model on this computer, in words. */
 	function ocrSpeed(id: string): string {
 		const seconds = secondsPerPage(id);
@@ -238,6 +246,26 @@
 				mod.name,
 				`${modelDescription(mod)}${s?.installed ? ` ${ocrSpeed(mod.id)}` : ''}`,
 				missingCpu || noOcrEngine
+			)}
+		{/each}
+	{/if}
+	{#if llm.length > 0}
+		<h3>{m.settings.llmTitle}</h3>
+		<p class="muted small">{m.settings.llmHint}</p>
+		{#if noLlmEngine}
+			<p class="warning small">{m.settings.llmNoEngine}</p>
+		{:else if missingCpu}
+			<p class="warning small">
+				{m.settings.llmCpu(app.offline?.missing_cpu.join(', ') ?? '')}
+			</p>
+		{/if}
+		{#each llm as mod (mod.id)}
+			{@render row(
+				llmStatus(mod.id),
+				mod.id,
+				mod.name,
+				modelDescription(mod),
+				missingCpu || noLlmEngine
 			)}
 		{/each}
 	{/if}

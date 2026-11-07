@@ -351,7 +351,7 @@ jobs:
           app="$mnt/Kalamu.app"
           codesign --verify --deep --strict --verbose=2 "$app"
           codesign -dv "$app" 2>&1 | grep -E 'Authority|TeamIdentifier|Identifier|flags'
-          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli"; do
+          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli" "$app/Contents/MacOS/llama-completion"; do
             details=$(codesign -dv --verbose=4 "$exe" 2>&1)
             grep -q '^Authority=Developer ID Application:' <<< "$details"               || { echo "::error::$exe is not signed with the Developer ID."; exit 1; }
             grep -q 'flags=.*runtime' <<< "$details"               || { echo "::error::$exe lacks the hardened runtime notarisation needs."; exit 1; }
@@ -361,6 +361,7 @@ jobs:
           "$app/Contents/MacOS/ffmpeg" -hide_banner -version | sed -n 1p
           "$app/Contents/MacOS/ffprobe" -hide_banner -version | sed -n 1p
           "$app/Contents/MacOS/llama-mtmd-cli" --version
+          "$app/Contents/MacOS/llama-completion" --version
           for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt llama.cpp-MIT.txt llama.cpp-BUILD.txt; do
             test -s "$app/Contents/Resources/licenses/$licence"
           done

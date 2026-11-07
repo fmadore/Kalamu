@@ -13,7 +13,8 @@ export const CREDIT_URLS: Record<string, string> = {
 	hayro: 'https://github.com/LaurenzV/hayro',
 	llama: 'https://github.com/ggml-org/llama.cpp',
 	lighton: 'https://huggingface.co/lightonai/LightOnOCR-3-1B',
-	glm: 'https://huggingface.co/zai-org/GLM-OCR'
+	glm: 'https://huggingface.co/zai-org/GLM-OCR',
+	gemma: 'https://huggingface.co/google/gemma-4-E4B-it'
 };
 
 /** The author's page, linked from Settings → About. */

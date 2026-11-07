@@ -15,8 +15,7 @@
 //! the page; the catalogue's descriptions say so.
 
 use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex, OnceLock};
-use std::time::SystemTime;
+use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use kalamu_core::{
@@ -25,8 +24,9 @@ use kalamu_core::{
 };
 
 use crate::cpu::{self, threads};
-use crate::device::{Backend, Graphics, Placement, Speeds};
-use crate::llama::{Llama, PageFile};
+use crate::device::{Backend, Placement, Speeds};
+use crate::host::{Checked, LlamaHost, lock};
+use crate::llama::{PageFile, page_image};
 use crate::models::{ModelFile, ModelManager, ModelSet};
 
 pub const VISION_ID: &str = "local-ocr";
@@ -156,62 +156,24 @@ pub struct Vision {
 
 struct Inner {
     models: ModelManager,
-    llama: Option<Llama>,
-    /// The engine's build, asked once.
-    version: OnceLock<String>,
-    /// The Windows builds that read on the graphics processor (Vulkan, and OpenCL on ARM64),
-    /// those shipped.
-    graphics: Vec<Graphics>,
-    /// One page at a time: each run takes every core the app can spare, or the graphics
-    /// processor.
-    turn: Mutex<()>,
-    /// Files whose hash was checked in this session, with the size and time they had then: a
-    /// gigabyte is read once, not before every page.
-    verified: Mutex<BTreeMap<&'static str, (u64, Option<SystemTime>)>>,
+    /// The llama.cpp programs, shared with the offline language models, which take turns with
+    /// these.
+    host: Arc<LlamaHost>,
+    checked: Checked,
     /// Seconds a page took on this computer, per device and model, kept in the models' folder.
     speeds: Mutex<Speeds>,
 }
 
-fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
-    m.lock().unwrap_or_else(|e| e.into_inner())
-}
-
 const SPEEDS_FILE: &str = "speeds.json";
-/// Where the OpenCL build keeps the kernels it compiled for this device, so later runs skip it.
-const OPENCL_KERNELS: &str = "opencl-kernels";
 
 impl Vision {
-    /// `llama` is the bundled engine, `None` when this build of the app has none; `graphics`
-    /// its builds for the graphics processor, used when `use_graphics` (Settings) and they find
-    /// one. The OpenCL build keeps the kernels it compiles in the models' folder.
-    pub fn new(
-        models: ModelManager,
-        llama: Option<Llama>,
-        graphics: Vec<(Backend, Llama)>,
-        use_graphics: bool,
-    ) -> Self {
+    pub fn new(models: ModelManager, host: Arc<LlamaHost>) -> Self {
         let speeds = Speeds::load(models.dir().join(SPEEDS_FILE));
-        let kernels = models.dir().join(OPENCL_KERNELS);
-        let graphics = graphics
-            .into_iter()
-            .map(|(backend, program)| {
-                let program = match backend {
-                    Backend::OpenCl => {
-                        program.with_env("GGML_OPENCL_KERNEL_CACHE_DIR", kernels.clone())
-                    }
-                    Backend::Vulkan => program,
-                };
-                Graphics::new(backend, program, use_graphics)
-            })
-            .collect();
         Self {
             inner: Arc::new(Inner {
                 models,
-                llama,
-                graphics,
-                version: OnceLock::new(),
-                turn: Mutex::new(()),
-                verified: Mutex::new(BTreeMap::new()),
+                host,
+                checked: Checked::default(),
                 speeds: Mutex::new(speeds),
             }),
         }
@@ -223,7 +185,7 @@ impl Vision {
 
     /// Whether this build of the app carries the engine.
     pub fn available(&self) -> bool {
-        self.inner.llama.is_some()
+        self.inner.host.available()
     }
 
     /// Seconds a page has taken on this computer, per model, on the device that model's next
@@ -247,102 +209,14 @@ impl Vision {
             .map(|recipe| (recipe.model.to_owned(), self.inner.placement(recipe, false)))
             .collect()
     }
-
-    /// The graphics processor a graphics build found, whether or not it is used; `None` when
-    /// there is none, no graphics build, or it is still being asked.
-    pub fn graphics_processor(&self) -> Option<String> {
-        self.inner
-            .graphics
-            .iter()
-            .find_map(|graphics| graphics.device_if_known().flatten())
-            .map(|device| device.name.clone())
-    }
-
-    /// Asks the graphics builds for their devices now, so the first page need not wait for
-    /// them. Takes up to half a minute each when a driver hangs: run it off the interface's
-    /// thread.
-    pub fn find_graphics_processor(&self) {
-        for graphics in &self.inner.graphics {
-            graphics.device();
-        }
-    }
-
-    /// Settings › Offline: read on the graphics processor when there is one.
-    pub fn use_graphics_processor(&self, wanted: bool) {
-        for graphics in &self.inner.graphics {
-            graphics.set_wanted(wanted);
-        }
-    }
 }
 
 impl Inner {
-    fn version(&self) -> &str {
-        self.version.get_or_init(|| {
-            self.llama
-                .as_ref()
-                .and_then(Llama::version)
-                .unwrap_or_else(|| "unknown".to_owned())
-        })
-    }
-
     /// Where this model's next page goes: the first graphics build it reads correctly with that
     /// found a device, else the processor. `wait`: ask the graphics builds for their devices if
     /// they were not asked yet, rather than reading on the processor meanwhile.
     fn placement(&self, recipe: &Recipe, wait: bool) -> Placement {
-        self.graphics
-            .iter()
-            .filter(|graphics| recipe.graphics.contains(&graphics.backend()))
-            .find_map(|graphics| {
-                let device = if wait {
-                    graphics.device()
-                } else {
-                    graphics.device_if_known().flatten()
-                };
-                graphics.placement(device)
-            })
-            .unwrap_or_else(Placement::built_in)
-    }
-
-    fn graphics(&self, placement: &Placement) -> Option<&Graphics> {
-        let backend = placement.backend()?;
-        self.graphics.iter().find(|g| g.backend() == backend)
-    }
-
-    /// The program that reads there.
-    fn program(&self, placement: &Placement) -> Result<&Llama, ProviderError> {
-        match self.graphics(placement) {
-            Some(graphics) => Ok(graphics.program()),
-            None => self.llama(),
-        }
-    }
-
-    fn llama(&self) -> Result<&Llama, ProviderError> {
-        self.llama.as_ref().ok_or_else(|| {
-            ProviderError::Unsupported(
-                "This copy of Kalamu has no engine for offline OCR models".into(),
-            )
-        })
-    }
-
-    /// The model and encoder files, leased against removal and checked against their hashes,
-    /// once per session unless they changed.
-    fn files(
-        &self,
-        model: &'static ModelFile,
-    ) -> Result<Vec<crate::models::ModelLease>, ProviderError> {
-        let mut leases = Vec::new();
-        for file in std::iter::once(model).chain(model.pair) {
-            let lease = self.models.lease(file)?;
-            let meta = std::fs::metadata(lease.path())
-                .map_err(|e| ProviderError::Other(format!("Could not read {}: {e}", file.file)))?;
-            let seen = (meta.len(), meta.modified().ok());
-            if lock(&self.verified).get(file.id) != Some(&seen) {
-                lease.verify()?;
-                lock(&self.verified).insert(file.id, seen);
-            }
-            leases.push(lease);
-        }
-        Ok(leases)
+        self.host.placement(recipe.graphics, wait)
     }
 
     /// Keeps a running average of the seconds a page takes there, weighted to the latest pages.
@@ -352,15 +226,7 @@ impl Inner {
 }
 
 fn ensure_cpu() -> Result<(), ProviderError> {
-    let missing = cpu::missing_features();
-    if missing.is_empty() {
-        Ok(())
-    } else {
-        Err(ProviderError::Unsupported(format!(
-            "This processor lacks {}, which offline OCR models need; use Tesseract or a cloud model",
-            missing.join(", ")
-        )))
-    }
+    cpu::ensure("offline OCR models", "use Tesseract or a cloud model")
 }
 
 fn find(model: &str) -> Result<(&'static ModelFile, &'static Recipe), ProviderError> {
@@ -369,27 +235,6 @@ fn find(model: &str) -> Result<(&'static ModelFile, &'static Recipe), ProviderEr
         .find(|m| m.id == model)
         .zip(recipe(model))
         .ok_or_else(|| ProviderError::Unsupported(format!("Unknown offline OCR model {model}")))
-}
-
-/// The page as the model should see it: no larger than `max_side` on its longest side, as PNG,
-/// or the original bytes when they are small enough already.
-fn page_image(
-    bytes: &[u8],
-    mime: &str,
-    max_side: u32,
-) -> Result<(Vec<u8>, &'static str), ProviderError> {
-    let image = image::load_from_memory(bytes)
-        .map_err(|e| ProviderError::InvalidRequest(format!("The page image is unreadable: {e}")))?;
-    if image.width().max(image.height()) <= max_side {
-        let extension = if mime == "image/png" { "png" } else { "jpg" };
-        return Ok((bytes.to_vec(), extension));
-    }
-    let resized = image.resize(max_side, max_side, image::imageops::FilterType::Lanczos3);
-    let mut png = std::io::Cursor::new(Vec::new());
-    resized
-        .write_to(&mut png, image::ImageFormat::Png)
-        .map_err(|e| ProviderError::Other(format!("Could not prepare the page image: {e}")))?;
-    Ok((png.into_inner(), "png"))
 }
 
 /// The engine's arguments for one page.
@@ -548,7 +393,7 @@ impl Provider for Vision {
     }
 
     fn check_ready(&self, model: &str, _languages: &LanguageChoice) -> Result<(), ProviderError> {
-        self.inner.llama()?;
+        self.inner.host.llama()?;
         ensure_cpu()?;
         let (file, _) = find(model)?;
         if self.inner.models.is_ready(file) {
@@ -570,7 +415,7 @@ impl Provider for Vision {
             return Vec::new();
         };
         let mut settings = vec![
-            RequestSetting::new("engine", format!("llama.cpp {}", self.inner.version())),
+            RequestSetting::new("engine", format!("llama.cpp {}", self.inner.host.version())),
             RequestSetting::new("model_file", file.file),
             RequestSetting::new("model_sha256", file.sha256),
             RequestSetting::new("quantisation", recipe.quantisation),
@@ -623,7 +468,7 @@ impl Provider for Vision {
         let mime = request.input.mime.clone();
         let stop = request.stop.clone();
         let (run, version) = tokio::task::spawn_blocking(move || {
-            let _turn = lock(&inner.turn);
+            let _turn = inner.host.turn();
             // A pause that came while waiting for the turn.
             if stop.is_stopped() {
                 return Err(ProviderError::Interrupted);
@@ -637,8 +482,8 @@ impl Provider for Vision {
                         .into(),
                 ));
             }
-            let llama = inner.program(&placement)?;
-            let leases = inner.files(model)?;
+            let llama = inner.host.program(&placement)?;
+            let leases = inner.checked.leases(&inner.models, model)?;
             let (image, extension) = page_image(&bytes, &mime, recipe.max_side)?;
             let page = PageFile::write(&image, extension)?;
             let logical = std::thread::available_parallelism().map_or(2, usize::from);
@@ -650,7 +495,7 @@ impl Provider for Vision {
                 threads(logical),
             );
             args.extend(placement.arguments());
-            let run = match (llama.run(&args, &stop), inner.graphics(&placement)) {
+            let run = match (llama.run(&args, &stop), inner.host.graphics(&placement)) {
                 // Out of memory, a driver fault: the rest of the session reads on the processor,
                 // starting with this page, which the engine sends again.
                 (Err(ProviderError::Other(reason)), Some(graphics)) => {
@@ -662,7 +507,7 @@ impl Provider for Vision {
                 (run, _) => run?,
             };
             inner.record_speed(&placement, recipe.model, run.elapsed.as_secs_f32());
-            Ok((run, inner.version().to_owned()))
+            Ok((run, inner.host.version().to_owned()))
         })
         .await
         .map_err(|e| {
@@ -709,6 +554,7 @@ impl Provider for Vision {
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
+    use crate::llama::Llama;
     use kalamu_core::LanguageCode;
 
     /// A page from the repository's samples.
@@ -874,9 +720,7 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
             );
             let vision = Vision::new(
                 ModelManager::new(".".into(), &VISION),
-                None,
-                Vec::new(),
-                true,
+                Arc::new(LlamaHost::none()),
             );
             for input in &model.inputs {
                 assert!(
@@ -893,9 +737,7 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
         let dir = tempfile::tempdir().unwrap();
         let without = Vision::new(
             ModelManager::new(dir.path().to_owned(), &VISION),
-            None,
-            Vec::new(),
-            true,
+            Arc::new(LlamaHost::none()),
         );
         assert!(!without.available());
         assert!(matches!(
@@ -905,9 +747,12 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
         let engine = Llama::at(dir.path().join("llama-mtmd-cli"));
         let with = Vision::new(
             ModelManager::new(dir.path().to_owned(), &VISION),
-            Some(engine),
-            Vec::new(),
-            true,
+            Arc::new(LlamaHost::new(
+                Some(engine),
+                Vec::new(),
+                true,
+                dir.path().to_owned(),
+            )),
         );
         let french = LanguageChoice::Explicit(vec![LanguageCode::new("fr")]);
         if cpu::missing_features().is_empty() {
@@ -938,13 +783,14 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
         .into_iter()
         .flatten()
         .collect();
-        let vision = Vision::new(
-            ModelManager::new(dir.into(), &VISION),
+        let host = Arc::new(LlamaHost::new(
             Some(llama),
             graphics,
             true,
-        );
-        vision.find_graphics_processor();
+            std::env::temp_dir().join("kalamu-opencl-kernels"),
+        ));
+        host.find_graphics_processor();
+        let vision = Vision::new(ModelManager::new(dir.into(), &VISION), host);
         println!("== reading on {:?}", vision.placements());
         let page = std::fs::read(sample("bulletin-page.jpg")).unwrap();
         let input = kalamu_core::PreparedInput {

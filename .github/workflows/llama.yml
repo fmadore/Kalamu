@@ -2,8 +2,11 @@ name: llama.cpp
 
 # Builds llama.cpp's multimodal program (`llama-mtmd-cli`), which runs the offline OCR models
 # next to Kalamu (docs/llama.md; docs/decisions/2026-11-06-ocr-vision-models.md and
-# 2026-11-06-ocr-graphics-processor.md), from the pinned release's source, for the same
-# processors as the Whisper linked into the app (`.cargo/config.toml`). MIT licensed.
+# 2026-11-06-ocr-graphics-processor.md), and its text program (`llama-completion`), which the
+# offline language models read texts with (docs/decisions/2026-11-07-offline-language-models.md),
+# from the pinned release's source, for the same processors as the Whisper linked into the app
+# (`.cargo/config.toml`). MIT licensed. The processor and Vulkan archives hold both programs; the
+# OpenCL archive the multimodal program only.
 #
 # - The processor build, one self-contained executable each for Windows x64 and ARM64, and for
 #   macOS on Apple Silicon, where it uses the graphics processor through Metal.
@@ -17,7 +20,8 @@ name: llama.cpp
 #   Qualcomm's driver installs (OpenCL.dll), nothing else.
 #
 # Each run then times the models on the sample page on its own runner, for the record of how
-# fast they read on each kind of processor (the job's summary). GitHub's runners have no
+# fast they read on each kind of processor (the job's summary), and the processor builds check
+# that Gemma 4 E2B answers a short analysis in its schema through the text program. GitHub's runners have no
 # graphics processor, so the Vulkan and OpenCL builds list the devices they find and read the
 # page on the processor; their speed is measured on real machines.
 #
@@ -58,6 +62,7 @@ jobs:
             runner: windows-latest
             variant: cpu
             program: llama-mtmd-cli
+            text: llama-completion
             archive: llama
             # AVX2 with FMA and F16C, as Whisper (`crates/offline/src/cpu.rs` checks them).
             flags: >-
@@ -67,12 +72,14 @@ jobs:
             runner: windows-11-arm
             variant: cpu
             program: llama-mtmd-cli
+            text: llama-completion
             archive: llama
             flags: -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16
           - triple: aarch64-apple-darwin
             runner: macos-latest
             variant: cpu
             program: llama-mtmd-cli
+            text: llama-completion
             archive: llama
             # Metal, its shaders built into the program; macOS 13 and later, as the app.
             flags: >-
@@ -83,6 +90,7 @@ jobs:
             runner: windows-latest
             variant: vulkan
             program: llama-mtmd-cli-vulkan
+            text: llama-completion-vulkan
             archive: llama-vulkan
             sdk: X64
             sdk_platform: windows
@@ -94,6 +102,7 @@ jobs:
             runner: windows-11-arm
             variant: vulkan
             program: llama-mtmd-cli-vulkan
+            text: llama-completion-vulkan
             archive: llama-vulkan
             sdk: ARM64
             sdk_platform: warm
@@ -212,7 +221,9 @@ jobs:
           )
           [ -n "${OPENCL_PREFIX:-}" ] && BUILD+=("-DCMAKE_PREFIX_PATH=${OPENCL_PREFIX}")
           cmake -S "llama.cpp-${LLAMA_TAG}" -B build "${BUILD[@]}"
-          cmake --build build --config Release --target llama-mtmd-cli -j 4
+          targets=(llama-mtmd-cli)
+          [ -n "${{ matrix.text }}" ] && targets+=(llama-completion)
+          cmake --build build --config Release --target "${targets[@]}" -j 4
           {
             echo "llama.cpp ${LLAMA_TAG}, built by .github/workflows/llama.yml in ${GITHUB_REPOSITORY}, run ${GITHUB_RUN_ID}."
             [ "${{ matrix.variant }}" = vulkan ] && echo "Vulkan SDK ${VULKAN_SDK_VERSION}."
@@ -230,6 +241,12 @@ jobs:
           name="${{ matrix.program }}${exe}"
           mkdir -p "$dir/licenses"
           cp "$program" "$dir/$name"
+          names=("$name")
+          if [ -n "${{ matrix.text }}" ]; then
+            text=$(find build -name "llama-completion${exe}" -type f | head -1)
+            cp "$text" "$dir/${{ matrix.text }}${exe}"
+            names+=("${{ matrix.text }}${exe}")
+          fi
           cp "llama.cpp-${LLAMA_TAG}/LICENSE" "$dir/licenses/llama.cpp-MIT.txt"
           cp BUILD.txt "$dir/"
           if [ "${{ matrix.variant }}" = vulkan ]; then
@@ -241,27 +258,29 @@ jobs:
             # Khronos's OpenCL headers (Apache 2.0) are compiled into the program.
             cp OpenCL-Headers/LICENSE "$dir/licenses/OpenCL-Headers-Apache-2.0.txt"
           fi
-          "$dir/$name" --version
-          # Nothing but the system's own libraries, and for the graphics-processor builds the
-          # loader graphics drivers install (vulkan-1.dll, OpenCL.dll).
-          if [ "$RUNNER_OS" = macOS ]; then
-            otool -L "$dir/$name" | tee deps.txt
-            if tail -n +2 deps.txt | grep -v -E '^\s+(/usr/lib/|/System/Library/)'; then
-              echo "::error::$name links a library macOS does not have."; exit 1
+          for exe_name in "${names[@]}"; do
+            "$dir/$exe_name" --version
+            # Nothing but the system's own libraries, and for the graphics-processor builds the
+            # loader graphics drivers install (vulkan-1.dll, OpenCL.dll).
+            if [ "$RUNNER_OS" = macOS ]; then
+              otool -L "$dir/$exe_name" | tee deps.txt
+              if tail -n +2 deps.txt | grep -v -E '^\s+(/usr/lib/|/System/Library/)'; then
+                echo "::error::$exe_name links a library macOS does not have."; exit 1
+              fi
+            else
+              dumpbin //dependents "$dir/$exe_name" | tee deps.txt
+              # Only the listed libraries, not the header that names the file itself.
+              if grep -i -E '^\s+\S+\.dll\s*$' deps.txt | grep -i -E 'msvcp|vcruntime|vcomp|libomp|ggml|llama|mtmd'; then
+                echo "::error::$exe_name needs a library Windows does not have."; exit 1
+              fi
+              if [ "${{ matrix.variant }}" = vulkan ] && ! grep -qi 'vulkan-1\.dll' deps.txt; then
+                echo "::error::$exe_name was built without Vulkan."; exit 1
+              fi
+              if [ "${{ matrix.variant }}" = opencl ] && ! grep -qi 'OpenCL\.dll' deps.txt; then
+                echo "::error::$exe_name was built without OpenCL."; exit 1
+              fi
             fi
-          else
-            dumpbin //dependents "$dir/$name" | tee deps.txt
-            # Only the listed libraries, not the header that names the file itself.
-            if grep -i -E '^\s+\S+\.dll\s*$' deps.txt | grep -i -E 'msvcp|vcruntime|vcomp|libomp|ggml|llama|mtmd'; then
-              echo "::error::$name needs a library Windows does not have."; exit 1
-            fi
-            if [ "${{ matrix.variant }}" = vulkan ] && ! grep -qi 'vulkan-1\.dll' deps.txt; then
-              echo "::error::$name was built without Vulkan."; exit 1
-            fi
-            if [ "${{ matrix.variant }}" = opencl ] && ! grep -qi 'OpenCL\.dll' deps.txt; then
-              echo "::error::$name was built without OpenCL."; exit 1
-            fi
-          fi
+          done
           if [ "$RUNNER_OS" = Windows ]; then
             pwsh -Command "Compress-Archive -Path '$dir/*' -DestinationPath '$dir.zip'"
           else
@@ -271,8 +290,9 @@ jobs:
           ls -l "$dir"
           echo "DIR=$dir" >> "$GITHUB_ENV"
           echo "PROGRAM=$name" >> "$GITHUB_ENV"
+          echo "TEXT_PROGRAM=${{ matrix.text }}${exe}" >> "$GITHUB_ENV"
 
-      # The models' files, pinned as in crates/offline/src/vision.rs.
+      # The OCR models' files, pinned as in crates/offline/src/vision.rs.
       - uses: actions/cache@v6
         id: models
         with:
@@ -356,6 +376,69 @@ jobs:
           run glm-ocr GLM-OCR-Q8_0.gguf mmproj-GLM-OCR-Q8_0.gguf "Text Recognition:"
           exit "$failed"
 
+      # Gemma 4 E2B's language model, pinned as in crates/offline/src/llm.rs; the text program
+      # does not load its encoder.
+      - uses: actions/cache@v6
+        if: matrix.variant == 'cpu'
+        id: gemma
+        with:
+          path: gemma
+          key: gemma-4-e2b-675cff4
+
+      - name: Gemma
+        if: matrix.variant == 'cpu' && steps.gemma.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p gemma
+          curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o gemma/gemma-4-E2B_q4_0-it.gguf \
+            "https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf/resolve/675cff42a74c774d6cb76f76d8eacb49b48c9b93/gemma-4-E2B_q4_0-it.gguf"
+          echo "fa401b55b07ee70a54c6dae3903c783a6e65064312529ea57175cb5f8dec6634  gemma/gemma-4-E2B_q4_0-it.gguf" | $SHA256 -c -
+
+      # The arguments the app gives a text (llm.rs, `text_arguments`): instructions, text and
+      # schema from files, one turn without thinking, the answer held to the schema. Fails if
+      # the answer is not the schema's JSON.
+      - name: Analyse a short text with Gemma 4 E2B
+        if: matrix.variant == 'cpu'
+        run: |
+          if [ "$RUNNER_OS" = macOS ]; then logical=$(sysctl -n hw.ncpu); else logical=$(nproc); fi
+          case "${{ matrix.triple }}" in
+            x86_64-*) threads=$(( logical / 2 )) ;;
+            *) threads=$(( logical - 1 )) ;;
+          esac
+          [ "$threads" -lt 1 ] && threads=1
+          [ "$threads" -gt 8 ] && threads=8
+          printf '%s' "You analyse historical documents. Answer in French." > instructions.txt
+          {
+            echo '<document name="bulletin.txt">'
+            echo "Dakar, le 3 mai 1957. Le Gouverneur général a reçu ce matin les délégués des syndicats de Dakar et de Thiès, qui lui ont remis un mémoire sur les salaires des cheminots."
+            echo '</document>'
+            echo
+            printf '%s' "Fill in the fields for this document."
+          } > request.txt
+          echo '{"type":"object","properties":{"summary":{"type":"string","description":"Summary: one sentence"},"places":{"type":"array","items":{"type":"string"},"description":"Places: as spelled in the document"},"tone":{"type":"string","enum":["Positive","Neutral","Negative"],"description":"Tone"}},"required":["summary","places","tone"],"additionalProperties":false}' > schema.json
+          start=$(date +%s)
+          "$DIR/$TEXT_PROGRAM" -m gemma/gemma-4-E2B_q4_0-it.gguf -jf schema.json --jinja --temp 0 \
+            -n 8192 -c 32768 -b 2048 -ub 2048 -t "$threads" -ngl auto --fit on --no-warmup \
+            -sysf instructions.txt -f request.txt -cnv -st --reasoning off --no-display-prompt \
+            > gemma-e2b.txt 2> gemma-e2b.log || { tail -40 gemma-e2b.log; exit 1; }
+          end=$(date +%s)
+          answer=$(sed 's/ *\[end of text\] *$//' gemma-e2b.txt)
+          {
+            echo "### gemma-4-e2b: $((end - start)) s on ${{ matrix.triple }} ($threads threads)"
+            echo
+            echo '```'
+            echo "$answer"
+            echo '```'
+            grep -E 'llama_perf_context_print' gemma-e2b.log | tail -4 | sed 's/^/    /' || true
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          # Python is on every runner (jq may not be on Windows on Arm's).
+          if [ "$RUNNER_OS" = Windows ]; then py=python; else py=python3; fi
+          check='import json, sys; a = json.load(sys.stdin); assert isinstance(a["summary"], str) and isinstance(a["places"], list) and a["tone"] in ("Positive", "Neutral", "Negative")'
+          if ! echo "$answer" | "$py" -c "$check"; then
+            echo "::error::Gemma 4 E2B's answer is not the schema's JSON."
+            tail -40 gemma-e2b.log
+            exit 1
+          fi
+
       # Kept even when a model misreads the page, so its answer can be read.
       - uses: actions/upload-artifact@v7
         if: always()
@@ -365,6 +448,7 @@ jobs:
             llama*.zip
             llama*.zip.sha256
             ${{ matrix.variant }}-*.txt
+            gemma-*.txt
 
   # Once every build and its timing pass: the processor, Vulkan and OpenCL archives published as
   # a GitHub release (a pre-release holding only them, as FFmpeg's, so it never becomes the app's
@@ -403,6 +487,7 @@ jobs:
         run: |
           if jq -e --arg tag "$LLAMA_TAG" \
             '.version == $tag
+              and .programs == ["llama-mtmd-cli", "llama-completion"]
               and ([.archives[].sha256] | all(length == 64))
               and ((.vulkan // {}) | has("x86_64-pc-windows-msvc") and has("aarch64-pc-windows-msvc"))
               and ([.vulkan[].sha256] | all(length == 64))
@@ -432,7 +517,7 @@ jobs:
           for t in $VULKAN_TRIPLES; do files+=("dist/llama-vulkan-${LLAMA_TAG}-${t}.zip"); done
           for t in $OPENCL_TRIPLES; do files+=("dist/llama-opencl-${LLAMA_TAG}-${t}.zip"); done
           {
-            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) as bundled with Kalamu to run the offline OCR models: llama.cpp ${LLAMA_TAG}, one static executable each for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal), and for Windows x64 and ARM64 a second one that uses the graphics processor through Vulkan (\`llama-mtmd-cli-vulkan\`, Vulkan SDK ${VULKAN_SDK_VERSION}), and for Windows ARM64 a third one for Snapdragon's Adreno through OpenCL (\`llama-mtmd-cli-opencl\`, Khronos headers ${OPENCL_TAG}). This release only holds the archives the app is built with; it is not an app release."
+            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) and text program (\`llama-completion\`) as bundled with Kalamu to run the offline OCR and language models: llama.cpp ${LLAMA_TAG}, static executables for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal), and for Windows x64 and ARM64 a second pair that uses the graphics processor through Vulkan (\`llama-mtmd-cli-vulkan\`, \`llama-completion-vulkan\`, Vulkan SDK ${VULKAN_SDK_VERSION}), and for Windows ARM64 a multimodal program for Snapdragon's Adreno through OpenCL (\`llama-mtmd-cli-opencl\`, Khronos headers ${OPENCL_TAG}). This release only holds the archives the app is built with; it is not an app release."
             echo
             echo "- **Licence**: MIT (\`licenses/llama.cpp-MIT.txt\` in each archive; the Vulkan and OpenCL builds add their headers' licences). llama.cpp is not modified."
             echo "- **Source**: [${LLAMA_TAG}](https://github.com/ggml-org/llama.cpp/releases/tag/${LLAMA_TAG}), source archive SHA-256 \`${LLAMA_SHA256}\`; each archive's \`BUILD.txt\` gives the build line."
@@ -445,7 +530,7 @@ jobs:
             done
           } > notes.md
           gh release create "$release" "${files[@]}" --target "$HEAD_SHA" \
-            --title "llama.cpp ${LLAMA_TAG} (offline OCR models) for Kalamu" \
+            --title "llama.cpp ${LLAMA_TAG} (offline OCR and language models) for Kalamu" \
             --notes-file notes.md --prerelease --latest=false
           pins() {
             local prefix=$1; shift
@@ -461,7 +546,7 @@ jobs:
           opencl=$(pins llama-opencl $OPENCL_TRIPLES)
           jq --tab --arg release "$release" --arg version "$LLAMA_TAG" \
             --argjson archives "$archives" --argjson vulkan "$vulkan" --argjson opencl "$opencl" \
-            '.release = $release | .version = $version | .archives = $archives | .vulkan = $vulkan | .opencl = $opencl' \
+            '.release = $release | .version = $version | .programs = ["llama-mtmd-cli", "llama-completion"] | .archives = $archives | .vulkan = $vulkan | .opencl = $opencl' \
             scripts/llama.json > llama.json
           mv llama.json scripts/llama.json
           cat scripts/llama.json

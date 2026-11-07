@@ -67,6 +67,36 @@ Whisper learns the names and words you give it, can write a recording in English
 Also: a workflow step from any prompt; rename a name across an analysis's answers; New job names the files it cannot read and keeps a job's name in step with its files; model descriptions in French.
 ```
 
+### Draft for the next version: offline analyses
+
+Not yet in the listing: for the version after 1.5.0, once it is built and tried. It replaces
+the "What's new" text above, one feature line and adds a line to the system requirements, in
+English and French.
+
+```text
+Analyse texts offline: two small language models from Google, Gemma 4 E4B and E2B, fill in your analyses' fields, make tables of contents and correct text on your PC, free and with nothing sent, after a one-time download. Far weaker than the cloud models, so check their answers; faster with a graphics processor.
+```
+
+```text
+Offline, with no account, key or cost: transcription with Whisper, text extraction with Tesseract or small OCR models, and analyses with small language models
+```
+
+```text
+Offline language models: internet once to download a model (about 4.3 or 6.1 GB) and 5 to 8 GB of free memory, then run on the CPU, faster on a graphics processor
+```
+
+```text
+Analysez des textes hors ligne : deux petits modèles de langue de Google, Gemma 4 E4B et E2B, remplissent les champs de vos analyses, font des tables des matières et corrigent du texte sur votre PC, gratuitement et sans rien envoyer, après un téléchargement unique. Bien moins bons que les modèles en ligne, alors vérifiez leurs réponses ; plus rapides avec un processeur graphique.
+```
+
+```text
+Hors ligne, sans compte, sans clé ni frais : transcription avec Whisper, extraction de texte avec Tesseract ou de petits modèles OCR, et analyses avec de petits modèles de langue
+```
+
+```text
+Modèles de langue hors ligne : internet une fois pour télécharger un modèle (environ 4,3 ou 6,1 Go) et 5 à 8 Go de mémoire libre, puis fonctionnent sur le processeur, plus vite avec un processeur graphique
+```
+
 The 1.4.1 text, for the record:
 
 ```text

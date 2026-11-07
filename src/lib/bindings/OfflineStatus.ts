@@ -33,10 +33,22 @@ ocr_seconds_per_page: { [key in string]: number },
  */
 ocr_devices: { [key in string]: string }, 
 /**
- * The graphics processor Kalamu found for the OCR models on Windows, whether or not
- * Settings lets them use it; `None` when there is none it can use.
+ * The graphics processor Kalamu found for the OCR and language models on Windows, whether
+ * or not Settings lets them use it; `None` when there is none it can use.
  */
 ocr_graphics_processor: string | null, 
+/**
+ * The offline language models, each counted with its encoder.
+ */
+llm_models: Array<OfflineModel>, 
+/**
+ * Whether this copy of the app carries the programs that run them.
+ */
+llm_engine: boolean, 
+/**
+ * Where each language model's next request goes: `cpu`, `metal` or `vulkan`.
+ */
+llm_devices: { [key in string]: string }, 
 /**
  * Instruction-set extensions this processor lacks; empty when Whisper can run here.
  */

@@ -27,6 +27,7 @@ pub mod snapshot;
 pub mod source;
 pub mod speakers;
 pub mod store;
+pub mod structured;
 pub mod task;
 pub mod tied;
 pub mod units;
