@@ -64,8 +64,11 @@ Each page's request settings record `device` (`cpu`, `metal`, `vulkan`) and, for
 another order than the processor and can, rarely, choose a different token. The device is not
 part of the cache key, as Metal was not: the cache is per computer, provenance says where each
 page was read, and keying by device would read every page again after a driver update or a
-change in Settings, for differences that are rare and small. A researcher who wants a page read
-on the processor turns the graphics processor off and asks for the page again.
+change in Settings, for differences that are rare and small. So a page already read is taken
+from the cache wherever it was read, even after the graphics processor is turned off, and its
+provenance still names the device that read it (seen in the 1.5.0-rc1 test); Kalamu offers no
+way to read a cached page again on another device. Turning the graphics processor off changes
+where new pages are read.
 
 ### Speeds per device
 

@@ -3,7 +3,9 @@
 	// language data of an engine built into the app (Tesseract), one file per language, and the
 	// OCR vision models, each with how long a page took on this computer. Of the hundred-odd
 	// languages only those downloaded are listed; the others are found by name in a search box.
-	// While a download runs the lists are polled for the bytes received.
+	// While a download runs the lists are polled for the bytes received; on opening they are read
+	// again, since the seconds a page took change as jobs run.
+	import { onMount } from 'svelte';
 	import { modelDescription } from '#lib/catalogText.js';
 	import type { OfflineModel } from '#lib/bindings/OfflineModel.js';
 	import { describeError } from '#lib/errors.js';
@@ -16,6 +18,8 @@
 	import ProgressBar from './ProgressBar.svelte';
 
 	const m = messages();
+
+	onMount(() => void refreshOffline());
 
 	const local = $derived(
 		(app.catalog?.models ?? []).filter(
