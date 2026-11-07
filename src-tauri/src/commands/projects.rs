@@ -236,49 +236,57 @@ pub fn rename_tag(
 }
 
 /// Writes the documents' descriptions where the researcher chose, as `.json` and `.csv`:
-/// every part with where it came from, or the columns of a saved export profile.
+/// every part with where it came from, or the columns of a saved export profile. Off the
+/// window's thread, since it reads every document of the project.
 #[tauri::command]
-pub fn export_descriptions(
+pub async fn export_descriptions(
     state: State<'_, AppState>,
     project: ProjectId,
     collection: Option<CollectionId>,
     profile: Option<String>,
     path: String,
 ) -> CmdResult<()> {
-    let path = std::path::Path::new(&path);
-    let write = super::write_text;
-    if let Some(id) = profile {
-        let profile = state
-            .profiles
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .get(&id)?;
-        // The dictionary is read only when a column writes through its labels.
-        let labels = if profile.columns.iter().any(|c| c.value.reads_labels()) {
-            state.dictionary.labels(project)?
-        } else {
-            kalamu_core::Labels::default()
-        };
-        let projects = &state.projects;
+    let profile = match profile {
+        Some(id) => Some(
+            state
+                .profiles
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .get(&id)?,
+        ),
+        None => None,
+    };
+    let projects = state.projects.clone();
+    let dictionary = state.dictionary.clone();
+    super::off_thread(move || {
+        let path = std::path::Path::new(&path);
+        let write = super::write_text;
+        if let Some(profile) = profile {
+            // The dictionary is read only when a column writes through its labels.
+            let labels = if profile.columns.iter().any(|c| c.value.reads_labels()) {
+                dictionary.labels(project)?
+            } else {
+                kalamu_core::Labels::default()
+            };
+            write(
+                path.with_extension("json"),
+                projects.export_profiled_json(project, collection, &profile, &labels)?,
+            )?;
+            return write(
+                path.with_extension("csv"),
+                table_csv(&projects.profiled_table(project, collection, &profile, &labels)?)?,
+            );
+        }
         write(
             path.with_extension("json"),
-            projects.export_profiled_json(project, collection, &profile, &labels)?,
+            projects.export_descriptions_json(project, collection)?,
         )?;
-        return write(
+        write(
             path.with_extension("csv"),
-            table_csv(&projects.profiled_table(project, collection, &profile, &labels)?)?,
-        );
-    }
-    write(
-        path.with_extension("json"),
-        state
-            .projects
-            .export_descriptions_json(project, collection)?,
-    )?;
-    write(
-        path.with_extension("csv"),
-        table_csv(&state.projects.descriptions_table(project, collection)?)?,
-    )
+            table_csv(&projects.descriptions_table(project, collection)?)?,
+        )
+    })
+    .await
 }
 
 /// A project's table as CSV, a failure said as the project export's.
