@@ -90,6 +90,8 @@
 				app.rules = rules;
 				app.settings = settings;
 				applyLanguage();
+				// Before the first reading, so a graphics processor found meanwhile is not missed.
+				unlisten.push(await on.offlineChanged(() => void refreshOffline()));
 				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline(), refreshWaiting()]);
 				// Jobs cut short by the last close: show them first.
 				if (startView) go(startView);

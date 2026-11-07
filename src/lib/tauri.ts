@@ -324,7 +324,9 @@ export const api = {
 export const on = {
 	progress: (handler: (event: ProgressEvent) => void) => listen('progress', handler),
 	closeRequested: (handler: () => void) => listen<null>('close-requested', handler),
-	searchProgress: (handler: (event: SearchProgress) => void) => listen('search-progress', handler)
+	searchProgress: (handler: (event: SearchProgress) => void) => listen('search-progress', handler),
+	/** The offline status changed outside a command: read it again. */
+	offlineChanged: (handler: () => void) => listen<null>('offline-changed', handler)
 };
 
 const PAGES = ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'];
