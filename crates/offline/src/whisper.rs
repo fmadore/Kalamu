@@ -30,25 +30,21 @@ use whisper_rs::{
 use crate::cpu::{self, DEVICE, threads};
 use crate::models::{self, ModelFile, ModelLease, ModelManager};
 
+mod audio;
+mod clean;
+
+use audio::{WINDOW, loudest_stretch, to_float, windows};
+use clean::{initial_prompt, sentences, without_loops};
+
 pub const PROVIDER_ID: &str = "whisper";
 
 const SAMPLE_RATE: usize = 16_000;
-/// Target window length, and how far back from it the cut may move to find a pause.
-const WINDOW: usize = 120 * SAMPLE_RATE;
-const SEARCH_BACK: usize = 20 * SAMPLE_RATE;
 /// whisper.cpp's own command-line default for file transcription.
 const BEAM_SIZE: i32 = 5;
-/// The frame over which loudness is measured when looking for the quietest moment.
-const FRAME: usize = SAMPLE_RATE / 10;
 /// How much of a window its language is detected on: what Whisper's encoder reads at once.
 const DETECT: usize = 30 * SAMPLE_RATE;
 /// Longest line, as the subtitle export's cues, so a cue's times are Whisper's own.
 const MAX_LINE_CHARS: i32 = 84;
-/// Longest initial prompt: whisper.cpp keeps at most 224 tokens of it, about this much text.
-const MAX_PROMPT_CHARS: usize = 600;
-/// How many times running a word, or a group of words, is repeated before it counts as a loop.
-const LOOP_WORD: usize = 6;
-const LOOP_GROUP: usize = 4;
 /// A loaded model is released after this long unused, to give its memory back.
 const IDLE_UNLOAD: Duration = Duration::from_secs(180);
 
@@ -169,38 +165,6 @@ fn language(choice: &LanguageChoice) -> Option<String> {
         [one] if whisper_rs::get_lang_id(one.as_str()).is_some() => Some(one.as_str().to_owned()),
         _ => None,
     }
-}
-
-/// 16-bit little-endian samples to the floats whisper.cpp reads.
-fn to_float(pcm: &[u8]) -> Vec<f32> {
-    pcm.as_chunks::<2>()
-        .0
-        .iter()
-        .map(|b| f32::from(i16::from_le_bytes(*b)) / 32_768.0)
-        .collect()
-}
-
-/// Where to cut `samples` into windows of about [`WINDOW`]: at the quietest frame of the last
-/// [`SEARCH_BACK`] before each target, so a cut falls in a pause rather than inside a word. The
-/// last window may be up to a quarter longer rather than leaving a scrap.
-fn windows(samples: &[f32]) -> Vec<(usize, usize)> {
-    let mut out = Vec::new();
-    let mut start = 0;
-    while samples.len() - start > WINDOW + WINDOW / 4 {
-        let target = start + WINDOW;
-        let from = target - SEARCH_BACK;
-        let quietest = samples[from..target]
-            .chunks(FRAME)
-            .enumerate()
-            .map(|(i, frame)| (i, frame.iter().map(|s| s * s).sum::<f32>()))
-            .min_by(|a, b| a.1.total_cmp(&b.1))
-            .map_or(SEARCH_BACK, |(i, _)| i * FRAME + FRAME / 2);
-        let cut = from + quietest;
-        out.push((start, cut));
-        start = cut;
-    }
-    out.push((start, samples.len()));
-    out
 }
 
 fn whisper_error(e: impl std::fmt::Display) -> ProviderError {
@@ -342,146 +306,6 @@ fn detect_language(
     Ok(whisper_rs::get_lang_str(id))
 }
 
-/// Where the stretch of `len` samples holding the most sound begins and ends, in whole frames;
-/// all of `samples` when shorter.
-fn loudest_stretch(samples: &[f32], len: usize) -> (usize, usize) {
-    if samples.len() <= len {
-        return (0, samples.len());
-    }
-    let energy: Vec<f32> = samples
-        .chunks(FRAME)
-        .map(|frame| frame.iter().map(|s| s * s).sum())
-        .collect();
-    let frames = (len / FRAME).clamp(1, energy.len());
-    let mut sum: f32 = energy[..frames].iter().sum();
-    let mut best = (sum, 0);
-    for i in frames..energy.len() {
-        sum += energy[i] - energy[i - frames];
-        if sum > best.0 {
-            best = (sum, i + 1 - frames);
-        }
-    }
-    let start = (best.1 * FRAME).min(samples.len() - len);
-    (start, start + len)
-}
-
-/// The names and words to spell as Whisper's initial prompt: a list in the researcher's order,
-/// as much as whisper.cpp keeps, without the NUL a C string cannot hold.
-fn initial_prompt(terms: &[String]) -> Option<String> {
-    let mut kept: Vec<String> = Vec::new();
-    let mut length = 0;
-    for term in terms {
-        let term: String = term.chars().filter(|c| *c != '\0').collect();
-        let term = term.trim();
-        if term.is_empty() {
-            continue;
-        }
-        length += term.len() + 2;
-        if length > MAX_PROMPT_CHARS {
-            break;
-        }
-        kept.push(term.to_owned());
-    }
-    (!kept.is_empty()).then(|| format!("{}.", kept.join(", ")))
-}
-
-/// A word as loops are compared: without case or the punctuation around it.
-fn bare(word: &str) -> String {
-    word.trim_matches(|c: char| !c.is_alphanumeric())
-        .to_lowercase()
-}
-
-/// The text with a word said over and over, or a group of words, kept once: Whisper's loops
-/// on noise or silence. Words repeated a few times, as people do, are left.
-fn collapse_repeats(text: &str) -> String {
-    let words: Vec<&str> = text.split_whitespace().collect();
-    let keys: Vec<String> = words.iter().map(|w| bare(w)).collect();
-    let mut out: Vec<&str> = Vec::new();
-    let mut i = 0;
-    'words: while i < words.len() {
-        for n in 1..=8 {
-            let needed = if n == 1 { LOOP_WORD } else { LOOP_GROUP };
-            if i + n * needed > words.len() || keys[i..i + n].iter().all(String::is_empty) {
-                continue;
-            }
-            let mut times = 1;
-            while i + (times + 1) * n <= words.len()
-                && keys[i + times * n..i + (times + 1) * n] == keys[i..i + n]
-            {
-                times += 1;
-            }
-            if times >= needed {
-                out.extend(&words[i..i + n]);
-                i += times * n;
-                continue 'words;
-            }
-        }
-        out.push(words[i]);
-        i += 1;
-    }
-    out.join(" ")
-}
-
-/// Subtitle credits Whisper learnt from its training data and writes over silence or music.
-fn is_credit(text: &str) -> bool {
-    let text = text.to_lowercase();
-    text.contains("amara.org")
-        || ["sous-titres réalisés", "sous-titrage st", "subtitles by"]
-            .iter()
-            .any(|credit| text.starts_with(credit))
-}
-
-/// The lines without Whisper's loops: credits dropped, words said over and over kept once, and
-/// three or more lines in a row saying the same kept as one, lasting as long as they did.
-fn without_loops(segments: Vec<Segment>) -> Vec<Segment> {
-    let mut out: Vec<Segment> = Vec::new();
-    let mut run = 0;
-    for mut segment in segments {
-        if is_credit(&segment.text) {
-            continue;
-        }
-        segment.text = collapse_repeats(&segment.text);
-        if segment.text.is_empty() {
-            continue;
-        }
-        let same = out.last().is_some_and(|last| {
-            let key = |t: &str| t.split_whitespace().map(bare).collect::<Vec<_>>();
-            key(&last.text) == key(&segment.text)
-        });
-        run = if same { run + 1 } else { 0 };
-        if run >= 2 {
-            // A third line saying the same: the second is dropped, the first lasts until now.
-            if run == 2 {
-                out.pop();
-            }
-            if let Some(first) = out.last_mut() {
-                first.end_ms = first.end_ms.max(segment.end_ms);
-            }
-            continue;
-        }
-        out.push(segment);
-    }
-    out
-}
-
-/// The lines as running text: one sentence a line, as the lines of subtitle length are cut
-/// inside sentences.
-fn sentences(segments: &[Segment]) -> String {
-    let mut out = String::new();
-    for segment in segments {
-        let text = segment.text.trim();
-        if !out.is_empty() && !out.ends_with('\n') {
-            out.push(' ');
-        }
-        out.push_str(text);
-        let end = text.trim_end_matches(|c: char| c.is_whitespace() || "\"'»”’)]".contains(c));
-        if end.ends_with(['.', '?', '!', '…']) {
-            out.push('\n');
-        }
-    }
-    out.trim_end().to_owned()
-}
-
 #[async_trait]
 impl Provider for Whisper {
     fn id(&self) -> ProviderId {
@@ -617,122 +441,6 @@ impl Provider for Whisper {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn windows_cover_the_audio_and_cut_in_the_quietest_moment() {
-        // Five minutes of "speech" with one silent frame in the search range before 2:00.
-        let mut samples = vec![0.5f32; 300 * SAMPLE_RATE];
-        let quiet = WINDOW - 5 * SAMPLE_RATE;
-        for s in &mut samples[quiet..quiet + FRAME] {
-            *s = 0.0;
-        }
-        let cuts = windows(&samples);
-        assert_eq!(cuts.first().unwrap().0, 0);
-        assert_eq!(cuts.last().unwrap().1, samples.len());
-        for pair in cuts.windows(2) {
-            assert_eq!(pair[0].1, pair[1].0, "windows must touch without gaps");
-        }
-        assert_eq!(cuts[0].1, quiet + FRAME / 2);
-        // Short audio is one window, and a scrap is folded into the last one.
-        assert_eq!(windows(&samples[..60 * SAMPLE_RATE]).len(), 1);
-        assert_eq!(windows(&samples[..145 * SAMPLE_RATE]).len(), 1);
-    }
-
-    #[test]
-    fn language_is_detected_where_the_window_is_loudest() {
-        // Ten seconds of silence, then forty of sound: the thirty seconds start in the sound.
-        let mut samples = vec![0.0f32; 50 * SAMPLE_RATE];
-        for s in &mut samples[10 * SAMPLE_RATE..] {
-            *s = 0.3;
-        }
-        let (from, to) = loudest_stretch(&samples, DETECT);
-        assert!(from >= 10 * SAMPLE_RATE, "starts at {from}");
-        assert_eq!(to - from, DETECT);
-        // A window shorter than the stretch is read whole.
-        assert_eq!(
-            loudest_stretch(&samples[..SAMPLE_RATE], DETECT),
-            (0, SAMPLE_RATE)
-        );
-    }
-
-    #[test]
-    fn names_to_spell_become_a_prompt_whisper_keeps_whole() {
-        let names = vec!["Samory Touré".to_owned(), "Ouaga\0dougou".to_owned()];
-        assert_eq!(
-            initial_prompt(&names).as_deref(),
-            Some("Samory Touré, Ouagadougou.")
-        );
-        assert_eq!(initial_prompt(&[]), None);
-        let many: Vec<String> = (0..500).map(|i| format!("Name {i}")).collect();
-        assert!(initial_prompt(&many).unwrap().len() <= MAX_PROMPT_CHARS);
-    }
-
-    fn line(start_ms: u64, end_ms: u64, text: &str) -> Segment {
-        Segment {
-            start_ms,
-            end_ms,
-            speaker: None,
-            text: text.to_owned(),
-        }
-    }
-
-    #[test]
-    fn loops_are_cut_back_and_what_people_say_twice_is_kept() {
-        assert_eq!(
-            collapse_repeats("Il a dit merci merci merci merci merci merci merci."),
-            "Il a dit merci"
-        );
-        assert_eq!(
-            collapse_repeats("on y va, on y va, on y va, on y va, on y va et puis"),
-            "on y va, et puis"
-        );
-        assert_eq!(
-            collapse_repeats("non, non, non, je ne crois pas"),
-            "non, non, non, je ne crois pas"
-        );
-        let lines = vec![
-            line(0, 1_000, "Bonjour."),
-            line(1_000, 2_000, "Oui."),
-            line(2_000, 3_000, "Oui."),
-            line(3_000, 4_000, "Merci beaucoup."),
-            line(4_000, 5_000, "Merci beaucoup."),
-            line(5_000, 6_000, "merci beaucoup"),
-            line(6_000, 9_000, "Merci beaucoup."),
-            line(
-                9_000,
-                10_000,
-                "Sous-titres réalisés par la communauté d'Amara.org",
-            ),
-            line(10_000, 11_000, "Au revoir."),
-        ];
-        let kept = without_loops(lines);
-        let texts: Vec<_> = kept.iter().map(|s| s.text.as_str()).collect();
-        assert_eq!(
-            texts,
-            ["Bonjour.", "Oui.", "Oui.", "Merci beaucoup.", "Au revoir."]
-        );
-        assert_eq!((kept[3].start_ms, kept[3].end_ms), (3_000, 9_000));
-    }
-
-    #[test]
-    fn the_text_runs_one_sentence_a_line() {
-        let lines = [
-            line(0, 1_000, "Nous sommes arrivés à Bobo-Dioulasso"),
-            line(1_000, 2_000, "en 1957, avec mon père."),
-            line(2_000, 3_000, "Vous vous souvenez?"),
-            line(3_000, 4_000, "« Oui. »"),
-        ];
-        assert_eq!(
-            sentences(&lines),
-            "Nous sommes arrivés à Bobo-Dioulasso en 1957, avec mon père.\nVous vous souvenez?\n« Oui. »"
-        );
-    }
-
-    #[test]
-    fn pcm_bytes_become_floats() {
-        let pcm = [0x00, 0x80, 0xff, 0x7f, 0x00, 0x00];
-        assert_eq!(to_float(&pcm), [-1.0, 32_767.0 / 32_768.0, 0.0]);
-    }
 
     #[test]
     fn only_a_single_known_language_is_forced() {
