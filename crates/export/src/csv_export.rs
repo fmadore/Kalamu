@@ -1,5 +1,6 @@
-use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Task};
+use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Table, Task};
 
+use crate::table_csv;
 use crate::timeline::timeline;
 
 /// One row per page (text extraction), per segment (transcription) or per document (summary),
@@ -16,47 +17,50 @@ impl Exporter for CsvExporter {
     }
 
     fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
-        let err = |e: csv::Error| ExportError::Write {
-            format: "CSV",
-            message: e.to_string(),
-        };
-        let mut writer = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
-        match doc.task {
-            Task::TextExtraction | Task::TextCorrection => {
-                writer
-                    .write_record(["page", "text", "corrected", "reviewed"])
-                    .map_err(err)?;
-                for (i, part) in doc.parts.iter().enumerate() {
-                    writer
-                        .write_record([
-                            part.piece.label(),
-                            crate::part_text(doc, i),
-                            part.corrected.to_string(),
-                            part.reviewed.to_string(),
-                        ])
-                        .map_err(err)?;
+        Ok(table_csv(&table(doc))?.into_bytes())
+    }
+}
+
+fn table(doc: &ExportDocument) -> Table {
+    match doc.task {
+        Task::TextExtraction | Task::TextCorrection => Table {
+            headings: strings(["page", "text", "corrected", "reviewed"]),
+            rows: doc
+                .parts
+                .iter()
+                .enumerate()
+                .map(|(i, part)| {
+                    vec![
+                        part.piece.label(),
+                        crate::part_text(doc, i),
+                        part.corrected.to_string(),
+                        part.reviewed.to_string(),
+                    ]
+                })
+                .collect(),
+        },
+        // One row per document, one column per field (and per reason), labelled as the
+        // researcher named them, so the file opens as a table in a spreadsheet.
+        Task::Analysis => {
+            let fields = doc
+                .setup
+                .prompt
+                .schema
+                .as_ref()
+                .map(|s| s.fields.as_slice())
+                .unwrap_or_default();
+            let mut headings = vec!["file".to_string()];
+            for field in fields {
+                headings.push(field.label.clone());
+                if field.reason {
+                    headings.push(format!("{} (reason)", field.label));
                 }
             }
-            // One row per document, one column per field (and per reason), labelled as the
-            // researcher named them, so the file opens as a table in a spreadsheet.
-            Task::Analysis => {
-                let fields = doc
-                    .setup
-                    .prompt
-                    .schema
-                    .as_ref()
-                    .map(|s| s.fields.as_slice())
-                    .unwrap_or_default();
-                let mut header = vec!["file".to_string()];
-                for field in fields {
-                    header.push(field.label.clone());
-                    if field.reason {
-                        header.push(format!("{} (reason)", field.label));
-                    }
-                }
-                header.extend(["corrected".into(), "reviewed".into()]);
-                writer.write_record(&header).map_err(err)?;
-                for part in &doc.parts {
+            headings.extend(["corrected".into(), "reviewed".into()]);
+            let rows = doc
+                .parts
+                .iter()
+                .map(|part| {
                     let mut row = vec![doc.source.file_name.clone()];
                     for field in fields {
                         let answer = part.fields.iter().find(|a| a.key == field.key);
@@ -66,48 +70,50 @@ impl Exporter for CsvExporter {
                         }
                     }
                     row.extend([part.corrected.to_string(), part.reviewed.to_string()]);
-                    writer.write_record(&row).map_err(err)?;
-                }
-            }
-            // One row per entry: title, pages, then the researcher's fields.
-            Task::Contents => {
-                let fields = crate::contents::fields(doc);
-                let mut header = vec!["file".to_string()];
-                header.extend(fields.iter().map(|f| f.label.clone()));
-                header.extend(["corrected".into(), "reviewed".into()]);
-                writer.write_record(&header).map_err(err)?;
-                let part = doc
-                    .parts
-                    .iter()
-                    .find(|p| p.piece == kalamu_core::PieceRef::Whole);
-                let (corrected, reviewed) =
-                    part.map_or((false, false), |p| (p.corrected, p.reviewed));
-                for entry in crate::contents::list(doc) {
+                    row
+                })
+                .collect();
+            Table { headings, rows }
+        }
+        // One row per entry: title, pages, then the researcher's fields.
+        Task::Contents => {
+            let fields = crate::contents::fields(doc);
+            let mut headings = vec!["file".to_string()];
+            headings.extend(fields.iter().map(|f| f.label.clone()));
+            headings.extend(["corrected".into(), "reviewed".into()]);
+            let part = doc
+                .parts
+                .iter()
+                .find(|p| p.piece == kalamu_core::PieceRef::Whole);
+            let (corrected, reviewed) = part.map_or((false, false), |p| (p.corrected, p.reviewed));
+            let rows = crate::contents::list(doc)
+                .iter()
+                .map(|entry| {
                     let mut row = vec![doc.source.file_name.clone()];
                     row.extend(fields.iter().map(|f| crate::contents::value(entry, &f.key)));
                     row.extend([corrected.to_string(), reviewed.to_string()]);
-                    writer.write_record(&row).map_err(err)?;
-                }
-            }
-            Task::AudioTranscription => {
-                writer
-                    .write_record(["start", "end", "speaker", "text"])
-                    .map_err(err)?;
-                for seg in timeline(doc) {
-                    writer
-                        .write_record([
-                            kalamu_core::result::clock(seg.start_ms),
-                            kalamu_core::result::clock(seg.end_ms),
-                            seg.speaker.unwrap_or_default(),
-                            seg.text,
-                        ])
-                        .map_err(err)?;
-                }
-            }
+                    row
+                })
+                .collect();
+            Table { headings, rows }
         }
-        writer.into_inner().map_err(|e| ExportError::Write {
-            format: "CSV",
-            message: e.to_string(),
-        })
+        Task::AudioTranscription => Table {
+            headings: strings(["start", "end", "speaker", "text"]),
+            rows: timeline(doc)
+                .into_iter()
+                .map(|seg| {
+                    vec![
+                        kalamu_core::result::clock(seg.start_ms),
+                        kalamu_core::result::clock(seg.end_ms),
+                        seg.speaker.unwrap_or_default(),
+                        seg.text,
+                    ]
+                })
+                .collect(),
+        },
     }
+}
+
+fn strings<const N: usize>(words: [&str; N]) -> Vec<String> {
+    words.map(String::from).to_vec()
 }
