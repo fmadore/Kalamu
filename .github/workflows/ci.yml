@@ -139,9 +139,8 @@ jobs:
         with:
           path: ${{ runner.temp }}/whisper-smoke
           key: whisper-smoke-422f1ae452ade6f3-29940d98d42b91fb
-      - name: Whisper smoke test
+      - name: Whisper smoke-test models
         shell: bash
-        timeout-minutes: 15
         run: |
           dir="$RUNNER_TEMP/whisper-smoke"
           mkdir -p "$dir"
@@ -154,9 +153,15 @@ jobs:
             422f1ae452ade6f30a004d7e5c6a43195e4433bc370bf23fac9cc591f01a8898 ggml-base-q5_1.bin \
             29940d98d42b91fbd05ce489f3ecf7c72f0a42f027e4875919a28fb4c04ea2cf ggml-silero-v5.1.2.bin \
             | if command -v sha256sum > /dev/null; then sha256sum -c -; else shasum -a 256 -c -; fi
-          cd "$GITHUB_WORKSPACE"
-          WHISPER_SMOKE_MODEL="$dir/ggml-base-q5_1.bin" WHISPER_SMOKE_VAD="$dir/ggml-silero-v5.1.2.bin" \
-            cargo test -p kalamu-offline --locked whisper::tests::smoke -- --ignored --nocapture --exact
+      # The runner's default shell, not Git Bash, which on Windows rewrites environment values
+      # that look like paths for the programs it starts (CXXFLAGS=/EHsc among them) and would
+      # rebuild whisper.cpp with them.
+      - name: Whisper smoke test
+        timeout-minutes: 15
+        env:
+          WHISPER_SMOKE_MODEL: ${{ runner.temp }}/whisper-smoke/ggml-base-q5_1.bin
+          WHISPER_SMOKE_VAD: ${{ runner.temp }}/whisper-smoke/ggml-silero-v5.1.2.bin
+        run: cargo test -p kalamu-offline --locked whisper::tests::smoke -- --ignored --nocapture --exact
       # The app's own binary, linked with the macOS features on (Whisper on Metal). The tests
       # above link only test binaries, which leave out what only `main` reaches, so a native
       # library the app needs can be missing without a test noticing: #120's Metal code linked
