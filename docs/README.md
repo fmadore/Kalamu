@@ -38,3 +38,4 @@
 | [Store listing](store-listing.md) | Paste-ready listing text, certification and review notes and screenshot captions, for both stores |
 | [Store licence terms](store-license-terms.md) | The terms shown on the Store listing, replacing Microsoft's standard ones |
 | [Security policy](../SECURITY.md) | Reporting vulnerabilities, credentials, installer signing |
+| [Repository statistics](repository-statistics.md) | Downloads per version and visits to the repository, recorded daily on the `stats` branch |
