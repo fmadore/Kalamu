@@ -12,8 +12,7 @@ export const en = {
 	 */
 	presets: {} as Record<string, { name: string; description: string }>,
 	app: {
-		name: 'Kalamu',
-		tagline: 'Transcription and text extraction'
+		name: 'Kalamu'
 	},
 	shell: {
 		jobs: 'Jobs',
@@ -341,6 +340,7 @@ export const en = {
 		openReview: 'Open the review',
 		export: 'Export',
 		exported: 'The dictionary was saved as JSON, with a CSV of every form found beside it.',
+		fileName: (project: string) => `${project} dictionary`,
 		proposals: {
 			title: 'Proposed merges',
 			ask: 'Ask a model to propose merges',
@@ -1111,7 +1111,6 @@ export const en = {
 		extractTextOnly: 'Text only, not where it sits on the page: no searchable PDF or ALTO',
 		extractSearchable: 'Also ALTO XML and a searchable PDF, each word in its place',
 		extractPdfOnly: 'The searchable PDF for PDF files only',
-		analysisSource: 'A text, Word file or PDF',
 		analysisWhole: 'Read whole, as one piece, however many pages',
 		analysisFill: (model: string) => `${model} fills in your fields`,
 		analysisTable: 'One row of answers per document, ready for a spreadsheet',
@@ -1276,7 +1275,6 @@ export const en = {
 		previous: 'Previous',
 		next: 'Next',
 		source: 'Source',
-		aiText: 'Model output',
 		itemMenu: (name: string) => `What to do with “${name}”`,
 		renameItem: 'Rename',
 		removeItem: 'Remove from the answers',

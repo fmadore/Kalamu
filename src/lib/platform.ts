@@ -13,6 +13,17 @@ export function primary(e: KeyboardEvent | MouseEvent, mac = isMac): boolean {
 	return mac ? e.metaKey : e.ctrlKey;
 }
 
+/** Whether the wheel zooms rather than scrolls: with Ctrl on every system, as a trackpad pinch
+ *  arrives, and with Command too on a Mac. */
+export function zoomsWithWheel(e: WheelEvent, mac = isMac): boolean {
+	return e.ctrlKey || (mac && e.metaKey);
+}
+
+/** The shortcut modifier alone, as each system writes it: "⌘" on a Mac, "Ctrl" elsewhere. */
+export function modifier(mac = isMac): string {
+	return mac ? '⌘' : messages().keys.ctrl;
+}
+
 /** A shortcut with that modifier, as each system writes it: "⌘N" on a Mac, "Ctrl N" elsewhere. */
 export function shortcut(key: string, mac = isMac): string {
 	return mac ? `⌘${key}` : `${messages().keys.ctrl} ${key}`;

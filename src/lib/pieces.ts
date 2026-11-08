@@ -2,6 +2,7 @@
 // each page in the strip.
 
 import type { PieceRef } from './bindings/PieceRef.js';
+import type { Segment } from './bindings/Segment.js';
 import type { Messages } from './i18n/index.js';
 
 /** A time in a recording, as hours, minutes and seconds: "01:02:03". */
@@ -10,6 +11,11 @@ export function clock(ms: number): string {
 	return [s / 3600, (s / 60) % 60, s % 60]
 		.map((n) => String(Math.floor(n)).padStart(2, '0'))
 		.join(':');
+}
+
+/** Whether a line is being heard `seconds` into its recording. */
+export function sounding(segment: Segment, seconds: number): boolean {
+	return seconds * 1000 >= Number(segment.start_ms) && seconds * 1000 < Number(segment.end_ms);
 }
 
 /** A piece's full name: "Page 3", "Page 3, left half", "Passage 2", "From 00:10:00". A whole

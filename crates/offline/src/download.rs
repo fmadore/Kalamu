@@ -11,7 +11,8 @@ use sha2::{Digest, Sha256};
 use tokio_util::sync::CancellationToken;
 
 use crate::OfflineError;
-use crate::models::{ModelFile, ModelManager, io, lock};
+use crate::host::lock;
+use crate::models::{ModelFile, ModelManager, io};
 
 /// No overall deadline: Large is a gigabyte, and a slow or proxied network is still a network.
 /// A connection that stops delivering is what fails, after this long without a byte.

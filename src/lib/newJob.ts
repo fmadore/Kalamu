@@ -19,6 +19,7 @@ import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { Task } from './bindings/Task.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Messages } from './i18n/index.js';
+import { baseName, pathParts } from './paths.js';
 import { YOUTUBE_LINK } from './youtube.js';
 
 /**
@@ -345,16 +346,15 @@ export function duration(ms: number, m: Messages): string {
 
 /** A job name from what was added: the folder's name, or the first file's. */
 export function suggestName(added: string[], expanded: string[]): string {
-	const last = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() ?? '';
-	if (added.length === 1 && expanded.length > 1) return last(added[0]);
-	return expanded[0] ? last(expanded[0]) : '';
+	if (added.length === 1 && expanded.length > 1) return baseName(added[0]);
+	return expanded[0] ? baseName(expanded[0]) : '';
 }
 
 /** What a file is called in a job name: a video's title, or the file's name, without the
  * `.txt` or `.pdf` of a text frozen from an earlier job. */
 export function nameOfFile(file: InspectedFile, frozen: boolean): string {
 	if (file.source?.title) return file.source.title;
-	const name = file.source?.file_name ?? file.path.split(/[\\/]/).filter(Boolean).pop() ?? '';
+	const name = file.source?.file_name ?? baseName(file.path);
 	return frozen ? name.replace(/\.(txt|pdf)$/, '') : name;
 }
 
@@ -366,9 +366,7 @@ export function suggestionFits(
 	frozen: boolean
 ): boolean {
 	return files.some(
-		(f) =>
-			nameOfFile(f, frozen) === suggested ||
-			f.path.split(/[\\/]/).filter(Boolean).slice(0, -1).includes(suggested)
+		(f) => nameOfFile(f, frozen) === suggested || pathParts(f.path).slice(0, -1).includes(suggested)
 	);
 }
 

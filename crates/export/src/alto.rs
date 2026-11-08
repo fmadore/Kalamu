@@ -100,7 +100,7 @@ http://www.loc.gov/alto/v4/alto-4-4.xsd\">\n",
 <processingStepSettings>{}</processingStepSettings>\n      \
 <processingSoftware>\n        <softwareName>{}</softwareName>\n        \
 <softwareVersion>{}</softwareVersion>\n      </processingSoftware>\n    </Processing>",
-            iso_8601(doc.provenance.created_at.0),
+            doc.provenance.created_at.utc_date_time(),
             esc(&settings),
             esc(&doc.provenance.generator.name),
             esc(&doc.provenance.generator.version),
@@ -251,28 +251,6 @@ fn estimated_lines(region: &TextRegion) -> Vec<TextLine> {
         .collect()
 }
 
-/// Milliseconds since 1970 as an `xsd:dateTime` in UTC (`2026-11-04T09:30:00Z`).
-fn iso_8601(millis: i64) -> String {
-    let secs = millis.div_euclid(1000);
-    let (days, rest) = (secs.div_euclid(86_400), secs.rem_euclid(86_400));
-    // Howard Hinnant's days-to-civil algorithm.
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let day = doy - (153 * mp + 2) / 5 + 1;
-    let month = if mp < 10 { mp + 3 } else { mp - 9 };
-    let year = yoe + era * 400 + i64::from(month <= 2);
-    format!(
-        "{year:04}-{month:02}-{day:02}T{:02}:{:02}:{:02}Z",
-        rest / 3600,
-        rest / 60 % 60,
-        rest % 60
-    )
-}
-
 /// Text escaped for an XML attribute or element; characters XML 1.0 forbids are dropped.
 fn esc(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
@@ -304,12 +282,6 @@ mod tests {
         assert_eq!(lines[0].words[0].x, 0.1);
         let last = lines[0].words.last().map(|w| w.x + w.width).unwrap_or(0.0);
         assert!((last - 0.5).abs() < 1e-5, "the words fill the line");
-    }
-
-    #[test]
-    fn times_are_written_as_xml_dates() {
-        assert_eq!(iso_8601(0), "1970-01-01T00:00:00Z");
-        assert_eq!(iso_8601(1_793_785_800_000), "2026-11-04T09:50:00Z");
     }
 
     #[test]

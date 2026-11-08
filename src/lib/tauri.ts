@@ -71,6 +71,7 @@ import type { Task } from './bindings/Task.js';
 import type { TrayState } from './bindings/TrayState.js';
 import { providerNameOf } from './catalogText.js';
 import { listNames, localisePreset, messages } from './i18n/index.js';
+import { baseName } from './paths.js';
 
 /** The published privacy policy, named wherever the app asks before sending files. */
 export const PRIVACY_URL = 'https://fmadore.github.io/Kalamu/privacy';
@@ -79,6 +80,21 @@ export const isTauri = (): boolean =>
 	typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 export type Unlisten = () => void;
+
+/** Listens while a component is on screen. Returns the cleanup for `onMount` or `$effect`, which
+ *  also removes a listener registered only after the component has gone. */
+export function listenWhileMounted(subscribe: () => Promise<Unlisten>): Unlisten {
+	let unlisten: Unlisten | undefined;
+	let gone = false;
+	void subscribe().then((u) => {
+		if (gone) u();
+		else unlisten = u;
+	});
+	return () => {
+		gone = true;
+		unlisten?.();
+	};
+}
 
 async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
 	if (!isTauri()) {
@@ -368,11 +384,10 @@ const EXTENSIONS: Record<Task, string[]> = {
 	]
 };
 
-/** File and folder pickers. */
-export async function pickFiles(task: Task): Promise<string[]> {
+/** Files with these extensions, several at once. */
+async function pickSources(extensions: string[]): Promise<string[]> {
 	if (!isTauri()) return [];
 	const { open } = await import('@tauri-apps/plugin-dialog');
-	const extensions = EXTENSIONS[task];
 	const picked = await open({
 		multiple: true,
 		filters: [{ name: messages().common.sources, extensions }]
@@ -380,16 +395,14 @@ export async function pickFiles(task: Task): Promise<string[]> {
 	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
 }
 
+/** The files a task reads. */
+export function pickFiles(task: Task): Promise<string[]> {
+	return pickSources(EXTENSIONS[task]);
+}
+
 /** Files of any kind Kalamu reads, for a project's documents. */
-export async function pickDocuments(): Promise<string[]> {
-	if (!isTauri()) return [];
-	const { open } = await import('@tauri-apps/plugin-dialog');
-	const extensions = [...new Set(Object.values(EXTENSIONS).flat())];
-	const picked = await open({
-		multiple: true,
-		filters: [{ name: messages().common.sources, extensions }]
-	});
-	return picked === null ? [] : Array.isArray(picked) ? picked : [picked];
+export function pickDocuments(): Promise<string[]> {
+	return pickSources([...new Set(Object.values(EXTENSIONS).flat())]);
 }
 
 export async function pickFolder(): Promise<string | null> {
@@ -399,29 +412,9 @@ export async function pickFolder(): Promise<string | null> {
 	return typeof picked === 'string' ? picked : null;
 }
 
-export async function pickSaveFile(defaultPath: string): Promise<string | null> {
-	if (!isTauri()) return null;
-	const { save } = await import('@tauri-apps/plugin-dialog');
-	return save({ defaultPath, filters: [{ name: 'JSON', extensions: ['json'] }] });
-}
-
-/** Where to write a dictionary: the JSON file of its entries, with the CSV of every form
- *  beside it. */
-export async function pickDictionaryExport(name: string): Promise<string | null> {
-	if (!isTauri()) return null;
-	const { save } = await import('@tauri-apps/plugin-dialog');
-	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });
-}
-
-/** Where to write a project's descriptions: the JSON file, with its CSV twin beside it. */
-export async function pickDescriptionsExport(name: string): Promise<string | null> {
-	if (!isTauri()) return null;
-	const { save } = await import('@tauri-apps/plugin-dialog');
-	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });
-}
-
-/** Where to write a pipeline's record: the JSON file, with its Markdown twin beside it. */
-export async function pickPipelineExport(name: string): Promise<string | null> {
+/** Where to write a JSON file named `name`: a preset, a profile, a dictionary, a project's
+ *  descriptions or a pipeline's record, some with a CSV or Markdown twin written beside it. */
+export async function pickJsonSave(name: string): Promise<string | null> {
 	if (!isTauri()) return null;
 	const { save } = await import('@tauri-apps/plugin-dialog');
 	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });
@@ -449,7 +442,7 @@ export async function askForFolders(paths: string[]): Promise<boolean> {
 	if (!isTauri() || paths.length === 0) return true;
 	const m = messages();
 	const { ask, open } = await import('@tauri-apps/plugin-dialog');
-	const nameOf = (folder: string) => folder.split(/[\\/]/).pop() || folder;
+	const nameOf = (folder: string) => baseName(folder) || folder;
 	for (const folder of await api.foldersToAsk(paths)) {
 		const go = await ask(m.access.ask(nameOf(folder)), {
 			kind: 'info',
@@ -501,6 +494,19 @@ export async function askConsent(providers: string[], catalog: Catalog | null): 
 	if (!go) return false;
 	await api.consentProviders(needed);
 	return true;
+}
+
+/** What a job or a workflow run asks before it starts: consent for each cloud provider its
+ *  set-ups send to, then, in the Mac App Store's build, the folders beside the sources that
+ *  results go to. False when the researcher declines either. */
+export async function mayStart(
+	setups: SetupRequest[],
+	catalog: Catalog | null,
+	sources: SourceFile[],
+	beside: boolean
+): Promise<boolean> {
+	if (!(await askConsent(providersOf(setups), catalog))) return false;
+	return !beside || askForFolders(besidePlaces(sources));
 }
 
 /** A yes/no question in a native dialog. */

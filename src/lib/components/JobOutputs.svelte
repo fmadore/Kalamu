@@ -4,6 +4,7 @@
 	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
+	import { baseName } from '#lib/paths.js';
 	import { revealInFolder } from '#lib/tauri.js';
 
 	let {
@@ -22,7 +23,7 @@
 	<h2 id="written-head">{m.jobs.outputs}<TermLink term="provenance" /></h2>
 	<ul class="written">
 		{#each written as path (path)}
-			{@const name = path.split(/[\\/]/).pop()}
+			{@const name = baseName(path)}
 			<li>
 				<button class="link mono" title={m.jobs.openFile} onclick={() => onopen(path)}
 					><Icon name="file" size={14} />{name}</button

@@ -12,8 +12,8 @@
 //! page and released after a few minutes unused.
 
 use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex, Weak};
-use std::time::{Duration, Instant};
+use std::sync::{Arc, Mutex};
+use std::time::Instant;
 use tokio::sync::Semaphore;
 
 use async_trait::async_trait;
@@ -23,6 +23,7 @@ use kalamu_core::{
 };
 use kreuzberg_tesseract::{TessPageSegMode, TesseractAPI};
 
+use crate::host::{self, IDLE_UNLOAD, lock};
 use crate::models::{ModelFile, ModelLease, ModelManager};
 use crate::tessdata::{self, DATA_REVISION};
 
@@ -30,9 +31,6 @@ pub const TESSERACT_ID: &str = "tesseract";
 /// The one model in the catalogue: Tesseract 5 with `tessdata_best`. A new engine or data
 /// revision that reads differently gets a new id, so results cached under this one stay theirs.
 pub const MODEL: &str = "tesseract-5";
-
-/// Loaded language data is released after this long unused, to give its memory back.
-const IDLE_UNLOAD: Duration = Duration::from_secs(180);
 
 pub struct Tesseract {
     inner: Arc<Inner>,
@@ -54,10 +52,6 @@ struct Engine {
     api: TesseractAPI,
     _leases: Vec<ModelLease>,
     last_used: Instant,
-}
-
-fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
-    m.lock().unwrap_or_else(|e| e.into_inner())
 }
 
 /// How many pages are read at once: one per core, leaving one for the interface, and at most
@@ -90,24 +84,12 @@ impl Tesseract {
 
     /// Starts, once, the task that releases engines left unused.
     fn start_janitor(&self) {
-        let mut started = lock(&self.inner.janitor);
-        if *started {
-            return;
-        }
-        *started = true;
-        let inner: Weak<Inner> = Arc::downgrade(&self.inner);
-        tokio::spawn(async move {
-            loop {
-                tokio::time::sleep(Duration::from_secs(30)).await;
-                let Some(inner) = inner.upgrade() else {
-                    return;
-                };
-                let mut idle = lock(&inner.idle);
-                let before = idle.len();
-                idle.retain(|e| e.last_used.elapsed() <= IDLE_UNLOAD);
-                if idle.len() < before {
-                    tracing::info!("released {} idle Tesseract engines", before - idle.len());
-                }
+        host::sweep_idle(&self.inner, &self.inner.janitor, |inner| {
+            let mut idle = lock(&inner.idle);
+            let before = idle.len();
+            idle.retain(|e| e.last_used.elapsed() <= IDLE_UNLOAD);
+            if idle.len() < before {
+                tracing::info!("released {} idle Tesseract engines", before - idle.len());
             }
         });
     }

@@ -2,7 +2,7 @@
 //! researcher exports them: each unit's id, title, pages in the original, file and fields, so
 //! the files can be catalogued elsewhere and traced back to their source.
 
-use kalamu_core::{DocumentUnit, ExportError, Field};
+use kalamu_core::{DocumentUnit, ExportError, Field, Table};
 use serde_json::{Value, json};
 
 /// One exported unit and where its pages went.
@@ -19,40 +19,34 @@ pub struct Row<'a> {
 
 /// One row per unit, a column per entry field, labelled as the researcher named them.
 pub fn csv(rows: &[Row<'_>], fields: &[Field]) -> Result<Vec<u8>, ExportError> {
-    let err = |e: csv::Error| ExportError::Write {
-        format: "CSV",
-        message: e.to_string(),
-    };
-    let mut writer = csv::Writer::from_writer(kalamu_core::export::CSV_BOM.to_vec());
-    let mut header: Vec<String> = ["id", "number", "title", "pages", "file"]
+    let mut headings: Vec<String> = ["id", "number", "title", "pages", "file"]
         .map(String::from)
         .to_vec();
-    header.extend(fields.iter().map(|f| f.label.clone()));
-    header.extend(["original".into(), "original_sha256".into()]);
-    writer.write_record(&header).map_err(err)?;
-    for row in rows {
-        let mut record = vec![
-            row.unit.id.to_string(),
-            (row.unit.position + 1).to_string(),
-            row.unit.title.clone(),
-            row.pages.clone(),
-            row.file_name.clone(),
-        ];
-        record.extend(fields.iter().map(|f| {
-            row.unit
-                .fields
-                .iter()
-                .find(|a| a.key == f.key)
-                .map(|a| a.value.joined())
-                .unwrap_or_default()
-        }));
-        record.extend([row.original.clone(), row.original_sha256.clone()]);
-        writer.write_record(&record).map_err(err)?;
-    }
-    writer.into_inner().map_err(|e| ExportError::Write {
-        format: "CSV",
-        message: e.to_string(),
-    })
+    headings.extend(fields.iter().map(|f| f.label.clone()));
+    headings.extend(["original".into(), "original_sha256".into()]);
+    let rows = rows
+        .iter()
+        .map(|row| {
+            let mut record = vec![
+                row.unit.id.to_string(),
+                (row.unit.position + 1).to_string(),
+                row.unit.title.clone(),
+                row.pages.clone(),
+                row.file_name.clone(),
+            ];
+            record.extend(fields.iter().map(|f| {
+                row.unit
+                    .fields
+                    .iter()
+                    .find(|a| a.key == f.key)
+                    .map(|a| a.value.joined())
+                    .unwrap_or_default()
+            }));
+            record.extend([row.original.clone(), row.original_sha256.clone()]);
+            record
+        })
+        .collect();
+    Ok(crate::table_csv(&Table { headings, rows })?.into_bytes())
 }
 
 /// The units with their pages as the original numbers them (`{"kind": "page", "number": 3}`),

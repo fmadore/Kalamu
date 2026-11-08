@@ -82,8 +82,7 @@ export const fr: Messages = {
 		}
 	} as Record<string, { name: string; description: string }>,
 	app: {
-		name: 'Kalamu',
-		tagline: 'Transcription et extraction de texte'
+		name: 'Kalamu'
 	},
 	shell: {
 		jobs: 'Traitements',
@@ -421,6 +420,7 @@ export const fr: Messages = {
 		export: 'Exporter',
 		exported:
 			'Le dictionnaire a été enregistré en JSON, avec à côté un CSV de toutes les formes relevées.',
+		fileName: (project: string) => `Dictionnaire ${project}`,
 		proposals: {
 			title: 'Regroupements proposés',
 			ask: 'Demander à un modèle de proposer des regroupements',
@@ -1206,7 +1206,6 @@ export const fr: Messages = {
 			'Le texte seul, sans son emplacement sur la page : ni PDF interrogeable ni ALTO',
 		extractSearchable: 'Aussi un fichier ALTO XML et un PDF interrogeable, chaque mot à sa place',
 		extractPdfOnly: 'Le PDF interrogeable pour les fichiers PDF seulement',
-		analysisSource: 'Un texte, un fichier Word ou un PDF',
 		analysisWhole: 'Lu en entier, d’un seul tenant, quel que soit le nombre de pages',
 		analysisFill: (model: string) => `${model} remplit vos champs`,
 		analysisTable: 'Une ligne de réponses par document, prête pour un tableur',
@@ -1369,7 +1368,6 @@ export const fr: Messages = {
 		previous: 'Précédent',
 		next: 'Suivant',
 		source: 'Source',
-		aiText: 'Texte du modèle',
 		itemMenu: (name: string) => `Que faire de « ${name} » ?`,
 		renameItem: 'Renommer',
 		removeItem: 'Retirer des réponses',

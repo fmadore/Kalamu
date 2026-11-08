@@ -17,7 +17,7 @@
 	import { acceptsPrompt, MODES, rulesFor, taskOf } from '#lib/newJob.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { app, go, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
-	import { api, ask, pickPipelineExport } from '#lib/tauri.js';
+	import { api, ask, pickJsonSave } from '#lib/tauri.js';
 	import {
 		blankWorkflow,
 		type Example,
@@ -175,7 +175,7 @@
 	}
 
 	async function exportFile() {
-		const path = await pickPipelineExport(workflow.name);
+		const path = await pickJsonSave(workflow.name);
 		if (!path) return;
 		try {
 			await api.exportWorkflow(workflow.id, path);

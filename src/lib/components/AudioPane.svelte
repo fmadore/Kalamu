@@ -9,6 +9,7 @@
 	import type { PieceAudio } from '#lib/bindings/PieceAudio.js';
 	import type { Segment } from '#lib/bindings/Segment.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { clock, sounding } from '#lib/pieces.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -105,13 +106,6 @@
 		}
 	}
 
-	function clock(ms: number): string {
-		const s = Math.floor(ms / 1000);
-		return [s / 3600, (s / 60) % 60, s % 60]
-			.map((n) => String(Math.floor(n)).padStart(2, '0'))
-			.join(':');
-	}
-
 	function playFrom(ms: number) {
 		cued = null;
 		if (!player) return;
@@ -128,7 +122,7 @@
 		void player.play();
 	}
 
-	const playing = (s: Segment) => now * 1000 >= Number(s.start_ms) && now * 1000 < Number(s.end_ms);
+	const playing = (s: Segment) => sounding(s, now);
 	/** The piece's length in seconds; 0 until the player has read it. */
 	const length = $derived(Math.max(0, end - start));
 	const done = $derived(length > 0 ? (100 * now) / length : 0);

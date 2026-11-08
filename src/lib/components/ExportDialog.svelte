@@ -22,14 +22,7 @@
 		valueKey
 	} from '#lib/profiles.js';
 	import { toast } from '#lib/state.svelte.js';
-	import {
-		api,
-		ask,
-		askForFolders,
-		pickDescriptionsExport,
-		pickPresetFile,
-		pickSaveFile
-	} from '#lib/tauri.js';
+	import { api, ask, askForFolders, pickPresetFile, pickJsonSave } from '#lib/tauri.js';
 	import Dialog from './Dialog.svelte';
 	import Icon from './Icon.svelte';
 
@@ -147,7 +140,7 @@
 		if (!current) return;
 		const profile = current;
 		const fixed = hasFixedTexts(profile) && (await ask(p.shareFixed));
-		const path = await pickSaveFile(`${profile.name}.json`);
+		const path = await pickJsonSave(profile.name);
 		if (!path) return;
 		await action.run(async () => {
 			await api.shareExportProfile(profile.id, fixed, path);
@@ -167,7 +160,7 @@
 	}
 
 	async function exportNow() {
-		const path = await pickDescriptionsExport(p.fileName(name));
+		const path = await pickJsonSave(p.fileName(name));
 		if (!path) return;
 		await action.run(async () => {
 			// The CSV goes beside the JSON: in the Mac App Store's build, its folder is asked for.

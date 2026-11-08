@@ -144,14 +144,7 @@ impl Grants {
     /// Written whole through a temporary file, as the settings are, so a crash never leaves
     /// half a list.
     fn save(&self, kept: &BTreeMap<PathBuf, String>) {
-        let written = serde_json::to_string_pretty(kept)
-            .map_err(std::io::Error::other)
-            .and_then(|json| {
-                let tmp = self.file.with_extension("json.pending");
-                std::fs::write(&tmp, json)?;
-                std::fs::rename(&tmp, &self.file)
-            });
-        if let Err(e) = written {
+        if let Err(e) = crate::settings::write_json(&self.file, kept) {
             tracing::warn!(error = %e, "granted folders not saved");
         }
     }

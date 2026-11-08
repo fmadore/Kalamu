@@ -12,6 +12,7 @@ use kalamu_core::{
 };
 use kalamu_media::OpenSource;
 
+use crate::control::lock;
 use crate::{Engine, EngineError};
 
 /// What a call reads: a piece still to cut from its source, or an input already made (a table
@@ -392,7 +393,7 @@ impl Engine {
     pub(crate) fn add_cost(&self, job_id: JobId, spent: &Mutex<f64>, cost: Option<f64>) {
         let Some(cost) = cost else { return };
         let total = {
-            let mut spent = spent.lock().unwrap_or_else(|p| p.into_inner());
+            let mut spent = lock(spent);
             *spent += cost;
             *spent
         };

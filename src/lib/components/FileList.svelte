@@ -6,6 +6,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { duration, rulesFor, warningText } from '#lib/newJob.js';
+	import { baseName } from '#lib/paths.js';
 	import { app } from '#lib/state.svelte.js';
 	import { pickFiles, pickFolder } from '#lib/tauri.js';
 
@@ -71,9 +72,7 @@
 		<ul class="files">
 			{#each files as file, i (file.source?.id ?? file.path)}
 				<!-- Frozen text and an item's pages are named after their document, not the stored copy. -->
-				{@const fileName = file.source?.derived_from
-					? file.source.file_name
-					: file.path.split(/[\\/]/).pop()}
+				{@const fileName = file.source?.derived_from ? file.source.file_name : baseName(file.path)}
 				{@const warnings = shownWarnings(file)}
 				<li class:warned={warnings.length > 0} class:failed={!!file.error}>
 					<div class="file">

@@ -15,6 +15,7 @@ use tokio_util::sync::CancellationToken;
 use ts_rs::TS;
 
 use crate::OfflineError;
+use crate::host::lock;
 
 /// The `ggerganov/whisper.cpp` revision the speech models come from, as in Live Translation.
 const WHISPER_REPO: &str =
@@ -156,10 +157,6 @@ pub struct ModelManager {
     pub(crate) dir: PathBuf,
     pub(crate) set: &'static ModelSet,
     pub(crate) state: Arc<Mutex<State>>,
-}
-
-pub(crate) fn lock(state: &Mutex<State>) -> std::sync::MutexGuard<'_, State> {
-    state.lock().unwrap_or_else(|e| e.into_inner())
 }
 
 pub(crate) fn io(e: impl std::fmt::Display) -> OfflineError {

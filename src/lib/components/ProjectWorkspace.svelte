@@ -20,7 +20,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { lastSearch } from '#lib/projectSearch.js';
 	import { go, refreshProjects, toast } from '#lib/state.svelte.js';
-	import { api, ask, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
+	import { api, ask, listenWhileMounted, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
 
 	let {
 		projectId,
@@ -166,9 +166,7 @@
 
 	onMount(() => {
 		void load();
-		let unlisten: (() => void) | undefined;
-		void onDrop((paths) => void addPaths(paths)).then((u) => (unlisten = u));
-		return () => unlisten?.();
+		return listenWhileMounted(() => onDrop((paths) => void addPaths(paths)));
 	});
 </script>
 
@@ -498,11 +496,6 @@
 	.grow {
 		flex: 1;
 		min-width: 0;
-	}
-	.ellipsis {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 	.naming {
 		padding: var(--space-1) 0;

@@ -100,7 +100,7 @@ impl PipelineFile {
             out,
             "A Kalamu pipeline, exported on {} from {} {}. The JSON file exported with \
              it can be imported into Kalamu to run the same pipeline.\n",
-            date(self.exported_at),
+            self.exported_at.utc_date(),
             self.generator.name,
             self.generator.version
         );
@@ -374,21 +374,6 @@ fn cell(text: &str) -> String {
     text.replace('|', "\\|").replace(['\r', '\n'], " ")
 }
 
-/// `YYYY-MM-DD` in UTC, from Howard Hinnant's `civil_from_days`.
-pub(crate) fn date(at: Timestamp) -> String {
-    let days = at.0.div_euclid(86_400_000);
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z - era * 146_097;
-    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let day = doy - (153 * mp + 2) / 5 + 1;
-    let month = if mp < 10 { mp + 3 } else { mp - 9 };
-    let year = yoe + era * 400 + i64::from(month <= 2);
-    format!("{year:04}-{month:02}-{day:02}")
-}
-
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
@@ -507,11 +492,5 @@ mod tests {
                 .import(&old.to_json().unwrap(), &mut prompts)
                 .is_err()
         );
-    }
-
-    #[test]
-    fn dates_are_written_in_utc() {
-        assert_eq!(date(Timestamp(0)), "1970-01-01");
-        assert_eq!(date(Timestamp(1_793_096_727_000)), "2026-10-27");
     }
 }

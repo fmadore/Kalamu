@@ -545,6 +545,13 @@ textarea:focus-visible {
 	font-variant-numeric: tabular-nums;
 }
 
+/* One line, cut with an ellipsis where it does not fit: names in lists and menus. */
+.ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 /* A siglum: the letter that names a set-up wherever set-ups are listed. */
 .siglum {
 	display: inline-grid;

@@ -2,8 +2,10 @@
 //! ids they were sent with, counts given as numbers or strings, and a reason for each failed
 //! item that the researcher can read.
 
-use kalamu_core::{ProcessOutput, ProviderError};
+use kalamu_core::{ApiKey, ProcessOutput, ProviderError};
 use serde_json::Value;
+
+use crate::http::send_text;
 
 /// One answer of a batch, under the item id it was sent with.
 pub(crate) type Answer = (String, Result<ProcessOutput, ProviderError>);
@@ -31,6 +33,27 @@ pub(crate) fn lines(body: &str) -> Vec<Value> {
         .filter(|l| !l.is_empty())
         .filter_map(|l| serde_json::from_str(l).ok())
         .collect()
+}
+
+/// The lines of the file a batch's status names under `field` (`/files/{id}/content`, as OpenAI
+/// and Mistral serve them); none when the status names no file there.
+pub(crate) async fn file_lines(
+    client: &reqwest::Client,
+    base_url: &str,
+    key: &ApiKey,
+    status: &Value,
+    field: &str,
+) -> Result<Vec<Value>, ProviderError> {
+    let Some(file) = status.get(field).and_then(Value::as_str) else {
+        return Ok(Vec::new());
+    };
+    let body = send_text(
+        client
+            .get(format!("{base_url}/files/{file}/content"))
+            .bearer_auth(key.expose()),
+    )
+    .await?;
+    Ok(lines(&body))
 }
 
 /// A failed item, from the error object or message the service gives for it. An item is never

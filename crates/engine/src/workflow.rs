@@ -23,6 +23,7 @@ use kalamu_prompts::Workflow;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::control::lock;
 use crate::{Engine, EngineError, NewJob};
 
 /// A workflow to start on a selection of files.
@@ -187,7 +188,7 @@ impl Engine {
     /// the researcher to start, as at launch, when nothing is sent without them.
     pub(crate) fn advance_run(self: &Arc<Self>, id: RunId, start: bool) -> Result<(), EngineError> {
         // One advance at a time: two steps finishing together must not start a step twice.
-        let _turn = self.workflows.lock().unwrap_or_else(|p| p.into_inner());
+        let _turn = lock(&self.workflows);
         let run = self.store.run(id)?;
         if run.cancelled {
             return Ok(());
@@ -334,7 +335,7 @@ impl Engine {
         // Taken as an advance takes it: a step being started is started before the run is read
         // here, and cancelled with the others; none starts after.
         let run = {
-            let _turn = self.workflows.lock().unwrap_or_else(|p| p.into_inner());
+            let _turn = lock(&self.workflows);
             self.store.cancel_run(id)?;
             self.store.run(id)?
         };

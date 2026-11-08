@@ -11,6 +11,7 @@ use kalamu_core::{
 };
 
 use super::{BatchOutcome, waiting};
+use crate::control::lock;
 use crate::{Control, Engine, EngineError};
 
 impl Engine {
@@ -73,7 +74,7 @@ impl Engine {
                         self.abandon(job, batch, Some(reason)).await?;
                     }
                     Err(err) if err.is_fatal_for_job() => {
-                        control.lock().unwrap_or_else(|p| p.into_inner()).pause = true;
+                        lock(control).pause = true;
                         outcome.fatal = Some(err.to_string());
                         outcome.waiting = true;
                         return Ok(outcome);

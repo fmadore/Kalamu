@@ -158,11 +158,6 @@
 		font-weight: 600;
 		min-width: 0;
 	}
-	.ellipsis {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.description {
 		color: var(--text-secondary);
 		font-size: var(--type-sm);

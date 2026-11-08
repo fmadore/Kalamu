@@ -38,6 +38,7 @@ pub enum Item {
     Form { form: String },
 }
 
+#[derive(Clone)]
 pub struct Dictionary {
     pub(crate) projects: Arc<dyn ProjectStore>,
     pub(crate) jobs: Arc<dyn JobStore>,

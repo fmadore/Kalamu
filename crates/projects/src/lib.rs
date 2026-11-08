@@ -46,6 +46,7 @@ pub struct ProjectSummary {
     pub jobs: u32,
 }
 
+#[derive(Clone)]
 pub struct Projects {
     pub(crate) store: Arc<dyn ProjectStore>,
     pub(crate) jobs: Arc<dyn JobStore>,
