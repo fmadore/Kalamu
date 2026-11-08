@@ -1,0 +1,70 @@
+name: Repository statistics
+
+# Once a day, records each release's download count and the visits to the repository on the
+# `stats` branch, whose README shows them as tables and charts; the CSV files beside it keep the
+# full history for a spreadsheet or a dashboard. GitHub keeps visits for 14 days only and shows
+# downloads only as a running total, so nothing older can be rebuilt later: a missed day costs
+# nothing for visits (the next run fills it in) and one point of the download history.
+#
+# Visits need the STATS_TOKEN secret: a fine-grained personal access token for this repository
+# with Repository permissions > Administration: Read-only. Without it, downloads are still
+# recorded and the run says what is missing. See scripts/repo-stats.mjs for the files.
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-statistics
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: github.repository_owner == 'fmadore'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # The data lives on its own branch, created by the first run, so daily commits never touch
+      # the default branch or start CI.
+      - name: Check out the stats branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" stats > /dev/null; then
+            git clone --depth 1 --branch stats --single-branch "$remote" "$RUNNER_TEMP/stats"
+          else
+            git init -b stats "$RUNNER_TEMP/stats"
+            git -C "$RUNNER_TEMP/stats" remote add origin "$remote"
+          fi
+
+      - name: Record downloads and visits
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+        run: node scripts/repo-stats.mjs "$RUNNER_TEMP/stats"
+
+      - name: Commit
+        run: |
+          cd "$RUNNER_TEMP/stats"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Statistics for $(date -u +%F)"
+          git push origin stats
