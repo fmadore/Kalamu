@@ -93,7 +93,6 @@ pub fn run() {
             commands::workflows::list_runs,
             commands::workflows::get_run,
             commands::workflows::job_step,
-            commands::workflows::job_step,
             commands::workflows::approve_step,
             commands::workflows::cancel_run,
             commands::workflows::delete_run,
@@ -210,31 +209,62 @@ mod tests {
     use kalamu_catalog::Catalog;
 
     /// The handler, the command list and the capability must agree: a command missing from
-    /// any of them is a rejected call at run time.
+    /// any of them is a rejected call at run time, and a name listed twice hides a mistake.
     #[test]
     fn every_command_is_registered_listed_and_granted() {
-        let lib = include_str!("lib.rs");
-        let capability = include_str!("../capabilities/main.json");
-        for name in COMMANDS {
-            assert!(
-                lib.lines().any(|l| l.trim().starts_with("commands::")
-                    && l.trim().ends_with(&format!("::{name},"))),
-                "{name} is not in generate_handler!"
-            );
-            let permission = format!("\"allow-{}\"", name.replace('_', "-"));
-            assert!(capability.contains(&permission), "{name} is not granted");
+        use std::collections::BTreeSet;
+
+        fn duplicates<'a>(names: impl IntoIterator<Item = &'a str>) -> Vec<&'a str> {
+            let mut seen = BTreeSet::new();
+            names.into_iter().filter(|n| !seen.insert(*n)).collect()
         }
-        let registered = lib
+
+        let lib = include_str!("lib.rs");
+        let handler_start = lib.find("generate_handler![").unwrap();
+        let handler_end = handler_start + lib[handler_start..].find("])").unwrap();
+        let handler: Vec<&str> = lib[handler_start..handler_end]
             .lines()
-            .filter(|l| {
-                let l = l.trim();
-                l.starts_with("commands::") && l.ends_with(',') && !l.contains('(')
-            })
-            .count();
+            .filter_map(|l| l.trim().strip_prefix("commands::")?.strip_suffix(','))
+            .map(|path| path.rsplit("::").next().unwrap())
+            .collect();
         assert_eq!(
-            registered,
-            COMMANDS.len(),
-            "generate_handler! has unlisted commands"
+            duplicates(COMMANDS.iter().copied()),
+            [] as [&str; 0],
+            "listed twice"
+        );
+        assert_eq!(
+            duplicates(handler.iter().copied()),
+            [] as [&str; 0],
+            "registered twice"
+        );
+        assert_eq!(handler, COMMANDS, "generate_handler! and COMMANDS differ");
+
+        let capability: serde_json::Value =
+            serde_json::from_str(include_str!("../capabilities/main.json")).unwrap();
+        let granted: Vec<String> = capability["permissions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|p| p.as_str())
+            .filter_map(|p| p.strip_prefix("allow-"))
+            .map(|p| p.replace('-', "_"))
+            .collect();
+        assert_eq!(
+            duplicates(granted.iter().map(String::as_str)),
+            [] as [&str; 0],
+            "granted twice"
+        );
+        let granted: BTreeSet<&str> = granted.iter().map(String::as_str).collect();
+        let listed: BTreeSet<&str> = COMMANDS.iter().copied().collect();
+        assert_eq!(
+            listed.difference(&granted).collect::<Vec<_>>(),
+            [] as [&&str; 0],
+            "commands not granted"
+        );
+        assert_eq!(
+            granted.difference(&listed).collect::<Vec<_>>(),
+            [] as [&&str; 0],
+            "permissions for commands that do not exist"
         );
     }
 
