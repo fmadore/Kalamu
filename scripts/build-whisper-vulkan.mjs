@@ -10,6 +10,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, mkdirSync } from 'node:fs';
+import { join, parse } from 'node:path';
 
 const target = process.argv[2];
 const targets = ['x86_64-pc-windows-msvc', 'aarch64-pc-windows-msvc'];
@@ -22,14 +23,25 @@ if (!process.env.VULKAN_SDK) {
 	process.exit(1);
 }
 
+// A short target folder: ggml configures its Vulkan shader generator as a nested CMake project
+// deep inside Cargo's build folder, and under target/<triple>/release its paths pass Windows'
+// 260-character limit (rc.exe then cannot write its files; seen in Live Translation's CI). The
+// runner's temporary folder on CI, otherwise a folder at the root of the drive;
+// WHISPER_VULKAN_TARGET_DIR chooses another.
+const targetDir =
+	process.env.WHISPER_VULKAN_TARGET_DIR ??
+	(process.env.RUNNER_TEMP
+		? join(process.env.RUNNER_TEMP, 'wv')
+		: join(parse(process.cwd()).root, 'wv'));
+
 execFileSync(
 	'cargo',
 	['build', '--release', '--locked', '-p', 'whisper-vulkan', '--target', target],
-	{ stdio: 'inherit' }
+	{ stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: targetDir } }
 );
 mkdirSync('src-tauri/binaries', { recursive: true });
 copyFileSync(
-	`target/${target}/release/whisper-vulkan.exe`,
+	join(targetDir, target, 'release', 'whisper-vulkan.exe'),
 	`src-tauri/binaries/whisper-vulkan-${target}.exe`
 );
 console.log(`src-tauri/binaries/whisper-vulkan-${target}.exe`);

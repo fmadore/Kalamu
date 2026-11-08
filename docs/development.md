@@ -17,7 +17,10 @@ coding rules are in [AGENTS.md](../AGENTS.md).
   `LIBCLANG_PATH=C:\Program Files\LLVM\bin`.
 - Only to build Whisper's Vulkan helper (`helpers/whisper-vulkan`, Windows releases): LunarG's
   [Vulkan SDK](https://vulkan.lunarg.com/sdk/home), which sets `VULKAN_SDK`, then
-  `npm run build:whisper-vulkan -- <target>`. Everything else builds without it; `--workspace`
+  `npm run build:whisper-vulkan -- <target>`, which builds in `\wv` at the root of the drive
+  (`WHISPER_VULKAN_TARGET_DIR` chooses another): under `target\<triple>\release`, the folders
+  ggml makes for its Vulkan shader generator pass Windows' 260-character path limit. Everything
+  else builds without it; `--workspace`
   commands then take `--exclude whisper-vulkan`. On Linux the helper builds with the
   distribution's Vulkan headers and `glslc`. To run Whisper through it from a development build,
   copy `src-tauri/binaries/whisper-vulkan-<target>.exe` beside the app as `whisper-vulkan.exe`.
