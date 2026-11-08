@@ -50,13 +50,16 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
     Ok(())
 }
 
-/// Asks llama.cpp's graphics builds, which run the OCR and language models, which device they find, off the interface's thread (a
-/// driver may take seconds), so the first page need not wait; then tells the interface, which
-/// read the offline status before the answer and reads it again to name the device in Settings.
+/// Asks llama.cpp's graphics builds, which run the OCR and language models, and Whisper's Vulkan
+/// helper which device they find, off the interface's thread (a driver may take seconds), so
+/// the first page or recording need not wait; then tells the interface, which read the offline
+/// status before the answer and reads it again to name the device in Settings.
 fn find_graphics_processor(app: &tauri::AppHandle) {
     let handle = app.clone();
     std::thread::spawn(move || {
-        handle.state::<AppState>().llama.find_graphics_processor();
+        let state = handle.state::<AppState>();
+        state.llama.find_graphics_processor();
+        state.whisper.find_graphics_processor();
         let _ = handle.emit(OFFLINE_CHANGED_EVENT, ());
     });
 }
@@ -195,8 +198,15 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         kalamu_offline::ModelManager::new(data.join("language-models"), &kalamu_offline::LLM),
         llama.clone(),
     ));
+    // Whisper on Windows also has a helper for the graphics processor (Vulkan), which follows
+    // the same Settings choice as the OCR and language models.
+    let whisper = Arc::new(kalamu_offline::Whisper::with_helper(
+        models.clone(),
+        kalamu_offline::Whisper::locate_helper(&app_dir),
+        settings.ocr_graphics_processor,
+    ));
     let mut providers = kalamu_providers::registry(http.clone());
-    providers.push(Arc::new(kalamu_offline::Whisper::new(models.clone())));
+    providers.push(whisper.clone());
     providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
     providers.push(vision.clone());
     providers.push(llm.clone());
@@ -237,6 +247,7 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         search_generation: Arc::default(),
         search_preparation: Arc::default(),
         models,
+        whisper,
         tessdata,
         llama,
         vision,

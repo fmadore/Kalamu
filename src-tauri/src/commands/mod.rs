@@ -50,6 +50,8 @@ pub struct AppState {
     pub search_preparation: Arc<std::sync::atomic::AtomicU64>,
     /// Whisper models, shared with the Whisper provider inside the engine.
     pub models: kalamu_offline::ModelManager,
+    /// The Whisper provider, for its graphics processor (Settings, the offline status).
+    pub whisper: Arc<kalamu_offline::Whisper>,
     /// Tesseract's language data, shared with the Tesseract provider inside the engine.
     pub tessdata: kalamu_offline::ModelManager,
     /// llama.cpp's programs, shared by the offline OCR and language models.

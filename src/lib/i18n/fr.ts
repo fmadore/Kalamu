@@ -1621,9 +1621,9 @@ export const fr: Messages = {
 		ocrSpeed: (seconds: number, graphics: boolean) =>
 			`Sur cet ordinateur${graphics ? ', avec son processeur graphique' : ''} : environ ${seconds} s par page, d’après les dernières pages lues.`,
 		ocrGraphics: (name: string) =>
-			`Faire tourner les modèles OCR et les modèles de langue sur le processeur graphique (${name})`,
+			`Faire tourner Whisper, les modèles OCR et les modèles de langue sur le processeur graphique (${name})`,
 		ocrGraphicsHint:
-			'En général plus rapide que le processeur, souvent plusieurs fois. Seuls les modèles dont on sait qu’ils lisent correctement sur ce processeur graphique l’utilisent ; les autres lisent avec le processeur. Si une page y échoue, Kalamu la relit avec le processeur et s’en tient au processeur jusqu’à son prochain démarrage. Les modèles de langue hors ligne ci-dessous suivent aussi ce choix, en y plaçant autant du modèle que sa mémoire en contient. Désactivez cette option pour laisser le processeur graphique libre pour d’autres tâches.',
+			'En général plus rapide que le processeur, souvent plusieurs fois. Seuls les modèles dont on sait qu’ils lisent correctement sur ce processeur graphique l’utilisent ; les autres lisent avec le processeur. Si une page y échoue, Kalamu la relit avec le processeur et s’en tient au processeur jusqu’à son prochain démarrage. Les modèles de langue hors ligne ci-dessous suivent aussi ce choix, en y plaçant autant du modèle que sa mémoire en contient, de même que Whisper sous Windows : un enregistrement qui y échoue est retranscrit avec le processeur. Désactivez cette option pour laisser le processeur graphique libre pour d’autres tâches.',
 		ocrNotTimed: 'Pas encore mesuré sur cet ordinateur : les premières pages lues le diront.',
 		ocrNoEngine:
 			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner les modèles OCR : les installateurs et la version du Store le contiennent.',

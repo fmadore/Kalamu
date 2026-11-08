@@ -8,7 +8,8 @@
       "binaries/llama-mtmd-cli-vulkan",
       "binaries/llama-mtmd-cli-opencl",
       "binaries/llama-completion",
-      "binaries/llama-completion-vulkan"
+      "binaries/llama-completion-vulkan",
+      "binaries/whisper-vulkan"
     ],
     "resources": {
       "binaries/licenses/*": "licenses/"

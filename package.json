@@ -27,6 +27,7 @@
 		"tauri": "tauri",
 		"fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs",
 		"fetch:llama": "node scripts/fetch-llama.mjs",
+		"build:whisper-vulkan": "node scripts/build-whisper-vulkan.mjs",
 		"bundle:msix:x64": "node scripts/bundle-msix.mjs x64",
 		"bundle:msix:arm64": "node scripts/bundle-msix.mjs arm64"
 	},

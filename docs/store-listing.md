@@ -67,11 +67,15 @@ Whisper learns the names and words you give it, can write a recording in English
 Also: a workflow step from any prompt; rename a name across an analysis's answers; New job names the files it cannot read and keeps a job's name in step with its files; model descriptions in French.
 ```
 
-### Draft for the next version: offline analyses
+### Draft for the next version: offline analyses, and Whisper on the graphics processor
 
 Not yet in the listing: for the version after 1.5.0, once it is built and tried. It replaces
 the "What's new" text above, one feature line and adds a line to the system requirements, in
-English and French.
+English and French. Whisper's changes
+([decision](decisions/2026-11-08-whisper-graphics-processor.md)) add a paragraph to that
+"What's new", and replace a sentence of the description, the system requirement on offline
+transcription and the certification notes' last paragraph; they are at the
+[end of this draft](#whisper-on-the-graphics-processor), with the Mac App Store's.
 
 ```text
 Analyse texts offline: two small language models from Google, Gemma 4 E4B and E2B, fill in your analyses' fields, make tables of contents and correct text on your PC, free and with nothing sent, after a one-time download. Far weaker than the cloud models, so check their answers; faster with a graphics processor.
@@ -95,6 +99,58 @@ Hors ligne, sans compte, sans clé ni frais : transcription avec Whisper, extrac
 
 ```text
 Modèles de langue hors ligne : internet une fois pour télécharger un modèle (environ 4,3 ou 6,1 Go) et 5 à 8 Go de mémoire libre, puis fonctionnent sur le processeur, plus vite avec un processeur graphique
+```
+
+#### Whisper on the graphics processor
+
+On Windows, Whisper runs on a suitable graphics processor through `whisper-vulkan.exe`, a
+program in the package beside Kalamu's own (no new capability, no network connection), and
+Settings' graphics-processor choice now names it. Speech detection now really skips silence
+and music (before, the setting did nothing), a pause takes effect within moments, and lines
+Whisper invents over silence are dropped. The paragraph to add to "What's new", after the
+offline analyses' (the two stay well under 1,500 characters):
+
+```text
+Whisper transcribes on your PC's graphics processor when it has a suitable one, and goes back to the processor by itself if anything fails. It now skips silence and music, so it no longer writes lines over them, and pausing stops a transcription within moments.
+```
+
+```text
+Whisper transcrit sur le processeur graphique de votre PC s’il en a un qui convient, et revient de lui-même au processeur en cas d’échec. Il ignore désormais les silences et la musique, et n’y écrit donc plus de lignes, et une pause arrête une transcription en quelques instants.
+```
+
+In the description's transcription paragraph, the sentence "Offline, Whisper transcribes on
+your PC with no account, key or internet connection, and nothing leaves the computer; give it
+the names and words to spell, or have it write the speech in English." becomes:
+
+```text
+Offline, Whisper transcribes on your PC with no account, key or internet connection, on its graphics processor when it has a suitable one, skipping silence and music, and nothing leaves the computer; give it the names and words to spell, or have it write the speech in English.
+```
+
+```text
+Hors ligne, Whisper transcrit sur votre PC sans compte, sans clé et sans connexion internet, sur son processeur graphique s’il en a un qui convient, en ignorant les silences et la musique, et rien ne quitte l’ordinateur ; donnez-lui les noms et les mots à orthographier, ou faites-lui écrire les propos en anglais.
+```
+
+The system requirement on offline transcription:
+
+```text
+Offline transcription: internet once to download a Whisper model (about 60 MB to 1.1 GB), then runs on the CPU, faster on a graphics processor
+```
+
+```text
+Transcription hors ligne : internet une fois pour télécharger un modèle Whisper (de 60 Mo à 1,1 Go environ), puis fonctionne sur le processeur, plus vite avec un processeur graphique
+```
+
+The certification notes' last paragraph:
+
+```text
+The full-trust desktop process reads the files the user selects, converts audio with bundled FFmpeg executables (LGPL; source published with each release, licence terms in the listing), runs Whisper and Tesseract on the CPU, or Whisper on the graphics processor through a bundled helper executable (whisper-vulkan.exe, built from this app's source, started and stopped only by it) when the PC has one the app can use, runs the OCR models in a bundled llama.cpp executable (MIT) started once per page, or in its second build that uses the graphics processor through Vulkan when the PC has one the app can use, stores API keys in Windows Credential Manager and writes results where the user chooses. It connects only to the provider the user selects, to Hugging Face for the Whisper and OCR model downloads the user requests, to GitHub for the public model catalogue and Tesseract's language data the user requests and to YouTube as described above. There is no developer server, telemetry, driver, service or auto-start task.
+```
+
+The Mac App Store description's TRANSCRIBE paragraph (Whisper already ran on the Mac's graphics
+processor; speech detection is what is new there):
+
+```text
+Recordings and videos with speakers and timestamps; give the speakers their real names. Offline, Whisper transcribes on your Mac's graphics processor with no account or key, skipping silence and music, and nothing leaves the computer; give it the names and words to spell. With Gemini, public YouTube videos are transcribed from their link.
 ```
 
 The 1.4.1 text, for the record:

@@ -1520,9 +1520,9 @@ export const en = {
 		ocrSpeed: (seconds: number, graphics: boolean) =>
 			`On this computer${graphics ? ', with its graphics processor' : ''}: about ${seconds} s a page, from the pages it read last.`,
 		ocrGraphics: (name: string) =>
-			`Run the OCR and language models on the graphics processor (${name})`,
+			`Run Whisper, the OCR and the language models on the graphics processor (${name})`,
 		ocrGraphicsHint:
-			'Usually faster than the processor, often several times. Only the models known to read correctly on this graphics processor use it; the others read on the processor. If a page fails there, Kalamu reads it again on the processor and keeps to the processor until it is restarted. The offline language models below follow this choice too, putting as much of the model there as its memory holds. Turn this off to leave the graphics processor free for other work.',
+			'Usually faster than the processor, often several times. Only the models known to read correctly on this graphics processor use it; the others read on the processor. If a page fails there, Kalamu reads it again on the processor and keeps to the processor until it is restarted. The offline language models below follow this choice too, putting as much of the model there as its memory holds, and so does Whisper on Windows: a recording that fails there is transcribed again on the processor. Turn this off to leave the graphics processor free for other work.',
 		ocrNotTimed: 'Not yet timed on this computer: the first pages read will tell.',
 		ocrNoEngine:
 			'This copy of Kalamu was built without the engine that runs OCR models: the installers and the Store’s version carry it.',

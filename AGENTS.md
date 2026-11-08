@@ -70,6 +70,13 @@ Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP o
 | `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job. | all of the above through their traits |
 | `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging. | `engine`, `projects`, `dictionary`, `search`, and others only to wire them up |
 
+Beside the crates, `helpers/whisper-vulkan` is a program, not a library: whisper.cpp built with
+Vulkan, shipped next to the app on Windows like llama.cpp's programs and started by `offline`
+(`whisper/helper.rs`). It depends on no internal crate; it includes `offline`'s
+`whisper/engine.rs` by path, so both decode the same way. It needs LunarG's Vulkan SDK, so
+`--workspace` commands exclude it where there is none
+([decision](docs/decisions/2026-11-08-whisper-graphics-processor.md)).
+
 Key traits, defined in `core`:
 
 - **`Provider`**: declares its capabilities (tasks, accepted inputs, languages, limits) and

@@ -57,6 +57,9 @@ pub fn save_settings(state: State<'_, AppState>, settings: Settings) -> CmdResul
     state
         .llama
         .use_graphics_processor(settings.ocr_graphics_processor);
+    state
+        .whisper
+        .use_graphics_processor(settings.ocr_graphics_processor);
     *state.settings.lock().unwrap_or_else(|p| p.into_inner()) = settings;
     Ok(())
 }

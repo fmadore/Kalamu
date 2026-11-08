@@ -68,7 +68,9 @@ answers when it next opens.
 uploaded; with Tesseract or an offline OCR model, PDF pages and images are drawn and read on the
 computer and never uploaded; with an offline language model, texts and page images are read
 and analysed on the computer and never uploaded. The OCR and language models run in llama.cpp's
-programs, shipped with the app, which open no connection.
+programs, shipped with the app, which open no connection; on Windows, Whisper may run in
+`whisper-vulkan`, a program shipped with the app for the graphics processor, which receives the
+audio through the computer's own memory and opens no connection either.
 
 Files and results may contain personal information about the people named or heard in them.
 Choose a provider whose terms suit the material, or work offline.

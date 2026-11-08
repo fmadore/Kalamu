@@ -1,0 +1,33 @@
+name: Vulkan SDK
+description: >-
+  LunarG's Vulkan SDK for the runner's own architecture, checked against the SHA-256 LunarG
+  publishes, for building the Whisper Vulkan helper (headers, the loader's import library and
+  the shader compiler). The same version and hashes as llama.yml.
+
+runs:
+  using: composite
+  steps:
+    - name: Install the Vulkan SDK
+      shell: pwsh
+      env:
+        VULKAN_SDK_VERSION: "1.4.363.1"
+      run: |
+        # `warm` is LunarG's name for Windows on Arm; its shader compiler then runs natively.
+        if ($env:RUNNER_ARCH -eq 'ARM64') {
+          $sdk = 'ARM64'; $platform = 'warm'
+          $expected = '29d925e3ee4793f9c3977f34389ccb0273c0347bfacf2f08dd70104d6d096ceb'
+        } else {
+          $sdk = 'X64'; $platform = 'windows'
+          $expected = 'c02932bd9a968b22d404536108adaacac908c081cd6b0113f5bfefc523dd0a6a'
+        }
+        $name = "vulkansdk-windows-$sdk-$env:VULKAN_SDK_VERSION.exe"
+        $installer = Join-Path $env:RUNNER_TEMP $name
+        curl.exe -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o $installer `
+          "https://sdk.lunarg.com/sdk/download/$env:VULKAN_SDK_VERSION/$platform/$name"
+        $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLower()
+        if ($hash -ne $expected) { throw "$name has SHA-256 $hash, expected $expected" }
+        $root = "C:\VulkanSDK\$env:VULKAN_SDK_VERSION"
+        & $installer --root $root --accept-licenses --default-answer --confirm-command install
+        if ($LASTEXITCODE -ne 0) { throw "The Vulkan SDK did not install ($LASTEXITCODE)." }
+        "VULKAN_SDK=$root" >> $env:GITHUB_ENV
+        "$root\Bin" >> $env:GITHUB_PATH

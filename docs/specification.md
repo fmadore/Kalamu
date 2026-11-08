@@ -672,16 +672,23 @@ is remembered per task. Details are in [formats.md](formats.md).
 ## Offline mode
 
 - **Audio transcription with Whisper** (whisper.cpp), with models downloaded once from Hugging
-  Face from Settings and verified before use. It runs on the processor on Windows and on the
-  graphics processor (Metal) on a Mac. Each window of about two minutes is decoded in the
-  language chosen, or in the language detected on its loudest thirty seconds, so a recording
-  that changes language is followed. Lines are kept to subtitle length, cut between words at
+  Face from Settings and verified before use. It runs on the graphics processor: through Metal
+  on a Mac, and on Windows through Vulkan in a helper program shipped beside the app, when it
+  finds a usable graphics processor and Settings allows it; otherwise on the processor, and a
+  recording that fails on the graphics processor is transcribed again on the processor
+  ([decision](decisions/2026-11-08-whisper-graphics-processor.md)). Where the voice-activity
+  model is downloaded, only each window's speech is decoded, its times mapped back to the
+  recording. Each window of about two minutes is decoded in the language chosen, or in the
+  language detected on its loudest thirty seconds of speech, so a recording that changes
+  language is followed. Lines are kept to subtitle length, cut between words at
   the times Whisper gives each word; the text joins them into one sentence a line. New job
-  takes a list of names and words to spell (Whisper's initial prompt), which a job started from
+  takes a list of names and words to spell (Whisper's prompt, fitted to the model's own
+  tokenizer; lines that only read it back are dropped), which a job started from
   a project can fill from the project's dictionary, and for the models trained to translate
   (not Turbo), can have the speech written in English. Whisper's loops (a word or a line said
-  over and over, subtitle credits written over silence) are cut back. Provenance records each
-  of these settings.
+  over and over, subtitle credits written over silence) are cut back, and lines it was unsure of
+  in a window it judged silent are dropped. Pausing stops a transcription within one pass of
+  the model. Provenance records each of these settings and the device.
 - **Text extraction with Tesseract** (Tesseract 5, built into the app), for clean print: PDFs
   and images read page by page on the computer, each word with its place on the page, so ALTO
   and a searchable PDF come from it too. Its language data is downloaded once per language from
