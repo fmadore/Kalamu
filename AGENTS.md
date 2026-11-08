@@ -38,6 +38,9 @@ change ships to both. The maintainer works on Windows, so the Mac is the side to
   `Live-translation`) for the part being built, and port what they already solve rather than
   reinventing it. Note in the decision log where Kalamu deliberately differs.
 - Check the latest version of every dependency on its registry before adding it.
+- When the `tauri-dev` skill is installed (it lives in `fmadore/agent-skills`), load it for
+  framework detail: Tauri's current versions and pitfalls, the ACL, CSP, signing and Store
+  packaging. This file wins where the two differ, and every rule here holds without it.
 
 ## Dependencies and security
 
@@ -53,6 +56,8 @@ change ships to both. The maintainer works on Windows, so the Mac is the side to
 
 A Cargo workspace (Rust 2024 edition) of small crates with one job each, plus a thin Tauri app.
 Dependencies point inwards: the domain knows nothing about Tauri, SQLite, HTTP or FFmpeg.
+`crates/core/tests/architecture.rs` holds the table's last column and fails when a crate
+depends on one it may not; a new crate goes into both.
 
 | Crate | Responsibility | May depend on |
 | --- | --- | --- |
@@ -118,7 +123,8 @@ Rules that keep this modular:
   workflow step is a job like any other, and only the engine decides when one starts.
 - **Async with Tokio**; cancellation and pause are explicit, not by dropping tasks mid-write.
 - **Errors**: `thiserror` types in library crates, with messages a researcher can understand at
-  the edge; `anyhow` only in `app`. No `unwrap()` or `expect()` outside tests and startup.
+  the edge; `anyhow` only in `app`. No `unwrap()` or `expect()` outside tests and startup:
+  Clippy denies both, so startup code that needs one says why in an `#[allow]`.
 - **Secrets** never leave the system keychain except into the request that needs them, and never
   reach logs, the store or `provenance.json`.
 
