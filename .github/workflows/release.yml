@@ -466,6 +466,18 @@ jobs:
           Move-Item -LiteralPath $msix.FullName -Destination $asset -Force
           "msix=$asset" >> $env:GITHUB_OUTPUT
 
+      # The package must carry Whisper's Vulkan helper beside the other programs: the bundler copies what the configuration declares, and
+      # this checks the result, so a package without it never reaches the release.
+      - name: Check what the package carries
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead('${{ steps.package.outputs.msix }}')
+          try { $entries = $zip.Entries | ForEach-Object { $_.FullName -replace '\\', '/' } } finally { $zip.Dispose() }
+          $missing = @('kalamu.exe', 'whisper-vulkan.exe', 'llama-mtmd-cli-vulkan.exe') | Where-Object { $_ -notin $entries }
+          if ($missing) { throw "The package lacks: $($missing -join ', ')" }
+          Write-Output "The package carries every required file."
+
       # The bare .msix is what a tester signs and installs locally: signing a bundle does not
       # sign the packages inside it.
       - name: Attach the MSIX to the release
