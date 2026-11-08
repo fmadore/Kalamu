@@ -228,11 +228,6 @@
 	.job-name :global(.icon) {
 		color: var(--text-secondary);
 	}
-	.ellipsis {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.job-meta {
 		padding-left: 1.375rem;
 		font-size: var(--type-xs);

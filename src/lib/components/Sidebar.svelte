@@ -322,11 +322,6 @@
 	.turn.open {
 		transform: rotate(90deg);
 	}
-	.ellipsis {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.drag-ghost {
 		position: fixed;
 		z-index: 60;

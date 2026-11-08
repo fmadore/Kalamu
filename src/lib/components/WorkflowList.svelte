@@ -217,11 +217,6 @@
 		font-weight: 600;
 		min-width: 0;
 	}
-	.ellipsis {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.hint {
 		margin: 0;
 		font-size: var(--type-sm);

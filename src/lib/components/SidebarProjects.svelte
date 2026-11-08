@@ -50,11 +50,6 @@
 	.project .ellipsis {
 		min-width: 0;
 	}
-	.ellipsis {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.project {
 		width: 100%;
 		display: flex;
