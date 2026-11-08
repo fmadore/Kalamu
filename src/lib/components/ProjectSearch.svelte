@@ -30,7 +30,7 @@
 		searchableQuery
 	} from '#lib/projectSearch.js';
 	import { go, toast } from '#lib/state.svelte.js';
-	import { api, on } from '#lib/tauri.js';
+	import { api, listenWhileMounted, on } from '#lib/tauri.js';
 
 	let {
 		projectId,
@@ -99,17 +99,12 @@
 	// The text prepared before the first search, so that it need not wait; a search begun
 	// meanwhile carries on from where the preparation got to.
 	onMount(() => {
-		let unlisten: (() => void) | undefined;
-		let gone = false;
-		void on
-			.searchProgress((p) => {
+		const stop = listenWhileMounted(() =>
+			on.searchProgress((p) => {
 				if (p.project_id !== projectId) return;
 				preparing = p.done < p.total ? { done: p.done, total: p.total } : null;
 			})
-			.then((u) => {
-				if (gone) u();
-				else unlisten = u;
-			});
+		);
 		void api
 			.prepareProjectSearch(projectId)
 			.catch(() => {
@@ -118,10 +113,7 @@
 			.finally(() => {
 				if (!busy) preparing = null;
 			});
-		return () => {
-			gone = true;
-			unlisten?.();
-		};
+		return stop;
 	});
 
 	async function rebuild() {

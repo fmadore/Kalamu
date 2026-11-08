@@ -57,7 +57,7 @@
 		toRequest,
 		type Together
 	} from '#lib/newJob.js';
-	import { api, askConsent, askForFolders, besidePlaces, onDrop, providersOf } from '#lib/tauri.js';
+	import { api, listenWhileMounted, mayStart, onDrop } from '#lib/tauri.js';
 	import {
 		app,
 		go,
@@ -468,10 +468,8 @@
 				...drafts.map((d) => toRequest(catalog, task, d)),
 				...(preset ? thenPipeline(preset).setups : [])
 			];
-			if (!(await askConsent(providersOf(setups), catalog))) return;
-			// In the Mac App Store's build, the folders beside the sources must be granted first.
 			const beside = destination.kind === 'beside_sources';
-			if (beside && !(await askForFolders(besidePlaces($state.snapshot(sources))))) return;
+			if (!(await mayStart(setups, catalog, $state.snapshot(sources), beside))) return;
 			if (preset) {
 				await startWithAnalysis(preset);
 				return;
@@ -544,9 +542,7 @@
 			.listPresets('analysis')
 			.then((p) => (analysisPresets = p))
 			.catch(() => undefined);
-		let unlisten: (() => void) | undefined;
-		void onDrop((paths) => void addPaths(paths)).then((u) => (unlisten = u));
-		return () => unlisten?.();
+		return listenWhileMounted(() => onDrop((paths) => void addPaths(paths)));
 	});
 </script>
 

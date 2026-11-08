@@ -6,7 +6,7 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { api, pickPresetFile, pickSaveFile } from '#lib/tauri.js';
+	import { api, pickPresetFile, pickJsonSave } from '#lib/tauri.js';
 	import { toast } from '#lib/state.svelte.js';
 
 	let { presetId }: { presetId?: string } = $props();
@@ -119,7 +119,7 @@
 				onclick={() =>
 					run(async () => {
 						if (!selected) return;
-						const path = await pickSaveFile(`${selected.name}.json`);
+						const path = await pickJsonSave(selected.name);
 						if (path) await api.exportPresets([selected.id], path);
 					})}>{m.prompts.export}</button
 			>
