@@ -56,7 +56,7 @@ Mac, which is second in *Next* below.
   Windows and with Metal on a Mac; the seconds a page took on this computer shown in Settings
   and New job. Both read the sample page on the three CI runners, LightOnOCR with its blocks
   placed, in two to three minutes on those small Windows machines. Still to do: a benchmark on
-  real archive pages (IWAC newspapers, typescripts, French and Arabic print) with error rates,
+  real archive pages (newspapers, typescripts, French and Arabic print) with error rates,
   a full job on a real Mac and on Windows x64; PaddleOCR-VL left out until then (see the
   decision). The graphics processor on Windows
   ([#122](https://github.com/fmadore/Kalamu/issues/122),
@@ -343,16 +343,19 @@ Mac, which is second in *Next* below.
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
-1. **What the [4 November checkpoint](decisions/2026-11-04-checkpoint.md) left.** The 3
-   November checkpoint's refactor and a checkpoint after 1.4.0 are done: one reading of a
-   project's results, one corrected text and speakers' names index, tables written by the
-   `export` crate, the interface's shared code, Rust's lists and match cases sent to the
-   interface, the large files split, ten bugs fixed (an empty page typed by the researcher
-   missing from ALTO, guessed word boxes presented as measured, a granted folder dropped when out
-   of reach, photos turned by EXIF read unturned, the window frozen while results were written,
-   among them). Left: Whisper's voice detection on accented data folders on Windows; the
-   folders out of reach shown at launch; Tesseract's drawing resolution in provenance and its
-   engines pooled; the duplication still to fold (listed in the decision).
+1. **What the [8 November checkpoint](decisions/2026-11-08-checkpoint.md) left.** The
+   checkpoint after 1.5.0 folded the duplication the 4 November one listed (one UTC date in
+   core, every CSV through the `export` crate, one batch file reader, the engine's and the
+   offline engines' locks and idle sweepers, one write-then-rename in the app), moved the
+   descriptions export off the window's thread, split `catalog` and Whisper's audio windows,
+   and shared the interface's pickers, path names, players' clock and start-up questions; a
+   drop listener left registered after a screen closed was fixed. Left: the file picker's
+   extensions sent from Rust (they have drifted: `.aiff`, `.wmv`, `.m4v`, `.xlsx` are hidden),
+   FFmpeg's and llama.cpp's shared helpers, the tests that write files for the interface,
+   `tauri.ts`, `mock.ts`, `vision.rs`, `llm.rs` and the larger screens split, and from 4
+   November Whisper's voice detection on accented data folders on Windows, the folders out of
+   reach shown at launch, and Tesseract's drawing resolution in provenance and its engines
+   pooled (all listed in the decision).
 2. **A first run on a real Mac.** The disk image is signed and notarised and a sandboxed build is
    ready for the Mac App Store, but Kalamu has not yet been opened on a Mac
    ([decision](decisions/2026-11-02-macos.md)). Before TestFlight: the disk image through
