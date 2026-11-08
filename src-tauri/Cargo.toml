@@ -83,8 +83,8 @@ custom-protocol = ["tauri/custom-protocol"]
 unsafe_code = "deny"
 
 [lints.clippy]
-unwrap_used = "warn"
-expect_used = "warn"
+unwrap_used = "deny"
+expect_used = "deny"
 
 [dev-dependencies]
 tempfile.workspace = true
