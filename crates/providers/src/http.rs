@@ -13,8 +13,9 @@ use serde_json::Value;
 pub fn client() -> Client {
     Client::builder()
         .connect_timeout(Duration::from_secs(15))
-        // Long handwritten pages and recordings can take minutes on the slower models.
-        .timeout(Duration::from_secs(600))
+        // Long handwritten pages and recordings can take minutes on the slower models, and
+        // Google advises at least 15 minutes for hard prompts on Gemini 4 Argon.
+        .timeout(Duration::from_secs(900))
         .user_agent(concat!("Kalamu/", env!("CARGO_PKG_VERSION")))
         .build()
         .unwrap_or_default()
