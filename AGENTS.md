@@ -38,6 +38,9 @@ change ships to both. The maintainer works on Windows, so the Mac is the side to
   `Live-translation`) for the part being built, and port what they already solve rather than
   reinventing it. Note in the decision log where Kalamu deliberately differs.
 - Check the latest version of every dependency on its registry before adding it.
+- When the `tauri-dev` skill is installed (it lives in `fmadore/agent-skills`), load it for
+  framework detail: Tauri's current versions and pitfalls, the ACL, CSP, signing and Store
+  packaging. This file wins where the two differ, and every rule here holds without it.
 
 ## Dependencies and security
 
