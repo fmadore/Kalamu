@@ -9,6 +9,7 @@
 	import TranscriptLines from './TranscriptLines.svelte';
 	import type { Segment } from '#lib/bindings/Segment.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { sounding } from '#lib/pieces.js';
 	import { openLink } from '#lib/state.svelte.js';
 	import { EMBED_ORIGIN, embedUrl, playerCommand, playerNews, videoAt } from '#lib/youtube.js';
 
@@ -98,7 +99,7 @@
 		if (s) untrack(() => playFrom(s.ms));
 	});
 
-	const current = (s: Segment) => now * 1000 >= Number(s.start_ms) && now * 1000 < Number(s.end_ms);
+	const current = (s: Segment) => sounding(s, now);
 </script>
 
 <div class="box">

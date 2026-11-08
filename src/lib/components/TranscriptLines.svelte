@@ -3,6 +3,7 @@
 	// plays the recording or video beside it from that moment.
 	import type { Segment } from '#lib/bindings/Segment.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { clock } from '#lib/pieces.js';
 
 	let {
 		segments,
@@ -22,13 +23,6 @@
 	} = $props();
 
 	const m = messages();
-
-	function clock(ms: number): string {
-		const s = Math.floor(ms / 1000);
-		return [s / 3600, (s / 60) % 60, s % 60]
-			.map((n) => String(Math.floor(n)).padStart(2, '0'))
-			.join(':');
-	}
 
 	/** Each speaker keeps one of two colours, in the order they first speak. */
 	const voices = $derived([...new Set(segments.flatMap((s) => (s.speaker ? [s.speaker] : [])))]);
