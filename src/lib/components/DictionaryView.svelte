@@ -103,7 +103,7 @@
 	}
 
 	async function exportAll() {
-		const path = await pickJsonSave(`${projectName} dictionary`);
+		const path = await pickJsonSave(m.dictionary.fileName(projectName));
 		if (!path) return;
 		try {
 			// The CSV goes beside the JSON: in the Mac App Store's build, its folder is asked for.
