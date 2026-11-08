@@ -56,7 +56,12 @@ pub fn offline_status(state: State<'_, AppState>) -> OfflineStatus {
             .into_iter()
             .map(|(model, placement)| (model, placement.kind().to_owned()))
             .collect(),
-        ocr_graphics_processor: state.llama.graphics_processor(),
+        // The OCR models' graphics build, or else Whisper's helper: the one Settings choice
+        // covers both.
+        ocr_graphics_processor: state
+            .llama
+            .graphics_processor()
+            .or_else(|| state.whisper.graphics_processor()),
         llm_models: state.llm.models().list(),
         llm_engine: state.llm.available(),
         llm_devices: state

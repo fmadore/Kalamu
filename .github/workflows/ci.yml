@@ -97,8 +97,22 @@ jobs:
       - name: Front-end stub
         shell: bash
         run: mkdir -p build && echo '<!doctype html><title>stub</title>' > build/index.html
+      # Whisper's Vulkan helper (helpers/whisper-vulkan) needs LunarG's SDK on Windows. The x64
+      # lane builds, lints and tests it; the others leave it out, and release.yml builds it for
+      # both Windows architectures.
+      - name: Vulkan SDK
+        if: matrix.os == 'windows-latest'
+        uses: ./.github/actions/vulkan-sdk
+      - name: Which crates
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = windows-latest ]; then
+            echo "WORKSPACE_ARGS=--workspace" >> "$GITHUB_ENV"
+          else
+            echo "WORKSPACE_ARGS=--workspace --exclude whisper-vulkan" >> "$GITHUB_ENV"
+          fi
       - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo clippy ${{ env.WORKSPACE_ARGS }} --all-targets --locked -- -D warnings
       # French and English language data at the revision the app downloads, checked against
       # the same hashes, so the tests read a real page with Tesseract on every system.
       - name: Tesseract language data for the smoke test
@@ -115,7 +129,34 @@ jobs:
             8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba eng.traineddata \
             | if command -v sha256sum > /dev/null; then sha256sum -c -; else shasum -a 256 -c -; fi
           echo "TESSERACT_SMOKE_DATA=$dir" >> "$GITHUB_ENV"
-      - run: cargo test --workspace --locked
+      - run: cargo test ${{ env.WORKSPACE_ARGS }} --locked
+      # Whisper on a real recording, the sample interview, with the pinned Base model and the
+      # voice-activity model, checked against the hashes the app downloads them with: speech
+      # detection, the lines' times, and a stop inside a window through whisper.cpp's abort
+      # callback. On the Mac it runs on Metal. Cached on the hashes, so each is fetched once.
+      - name: Cache the smoke-test Whisper models
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/whisper-smoke
+          key: whisper-smoke-422f1ae452ade6f3-29940d98d42b91fb
+      - name: Whisper smoke test
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          dir="$RUNNER_TEMP/whisper-smoke"
+          mkdir -p "$dir"
+          cd "$dir"
+          [ -f ggml-base-q5_1.bin ] || curl -fsSL --retry 5 -o ggml-base-q5_1.bin \
+            https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-base-q5_1.bin
+          [ -f ggml-silero-v5.1.2.bin ] || curl -fsSL --retry 5 -o ggml-silero-v5.1.2.bin \
+            https://huggingface.co/ggml-org/whisper-vad/resolve/9ffd54a1e1ee413ddf265af9913beaf518d1639b/ggml-silero-v5.1.2.bin
+          printf '%s  %s\n' \
+            422f1ae452ade6f30a004d7e5c6a43195e4433bc370bf23fac9cc591f01a8898 ggml-base-q5_1.bin \
+            29940d98d42b91fbd05ce489f3ecf7c72f0a42f027e4875919a28fb4c04ea2cf ggml-silero-v5.1.2.bin \
+            | if command -v sha256sum > /dev/null; then sha256sum -c -; else shasum -a 256 -c -; fi
+          cd "$GITHUB_WORKSPACE"
+          WHISPER_SMOKE_MODEL="$dir/ggml-base-q5_1.bin" WHISPER_SMOKE_VAD="$dir/ggml-silero-v5.1.2.bin" \
+            cargo test -p kalamu-offline --locked whisper::tests::smoke -- --ignored --nocapture --exact
       # The app's own binary, linked with the macOS features on (Whisper on Metal). The tests
       # above link only test binaries, which leave out what only `main` reaches, so a native
       # library the app needs can be missing without a test noticing: #120's Metal code linked

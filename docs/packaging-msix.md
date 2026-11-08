@@ -38,7 +38,9 @@ Things that are not what they look like:
   `llama-mtmd-cli-opencl.exe`) so that a plain build or `tauri dev` does not
   need them fetched. The script copies it to `src-tauri/tauri.windows.conf.json` (ignored) for
   the length of the build, so the bundler stages `ffmpeg.exe`, `ffprobe.exe`,
-  `llama-mtmd-cli.exe` and `llama-mtmd-cli-vulkan.exe` beside `kalamu.exe` and the `licenses/`
+  `llama-mtmd-cli.exe`, `llama-mtmd-cli-vulkan.exe` and Whisper's `whisper-vulkan.exe` (built
+  first with `npm run build:whisper-vulkan -- <target>`, which needs LunarG's Vulkan SDK) beside
+  `kalamu.exe` and the `licenses/`
   folder with them, then removes it.
 - **No microphone.** Live Translation declares it; Kalamu reads recordings from files and never
   records, so its package asks for nothing beyond the network.

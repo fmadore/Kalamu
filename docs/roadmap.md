@@ -91,7 +91,11 @@ Mac, which is second in *Next* below.
   Settings: names and words to spell (from a project's dictionary too), English translation
   except with Turbo, each window's language detected on its loudest stretch, lines of subtitle
   length timed by word, loops cut back, and Metal on a Mac (built in CI, not yet run on a real
-  Mac). Jobs keep running from the notification area when the window is closed. Public
+  Mac). On Windows, Whisper on the graphics processor through a Vulkan helper; speech detection
+  that really skips silence (before, the setting did nothing); pausing within one pass of the
+  model; Live Translation's token prompt, echo and silence filters; and a smoke test on every CI
+  lane ([decision](decisions/2026-11-08-whisper-graphics-processor.md)). Speeds on real graphics
+  processors are still to be measured. Jobs keep running from the notification area when the window is closed. Public
   YouTube videos transcribed from their link with Gemini, without downloading them, and reviewed
   beside the video, played on the dark stage in YouTube's privacy-enhanced player, each video
   named after its title

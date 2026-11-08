@@ -1,0 +1,25 @@
+[package]
+name = "whisper-vulkan"
+description = "Kalamu's Whisper on a graphics processor, through Vulkan, as a helper program beside the app."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+# A program of its own rather than part of the app: whisper.cpp's Vulkan backend calls the
+# Vulkan loader (`vulkan-1.dll`) directly, so whatever links it cannot start on a PC without
+# one. Here, a PC without the loader, a driver fault or a graphics processor out of memory ends
+# this program, and Kalamu transcribes on the processor instead. The same design as Live
+# Translation's helper (docs/decisions/2026-11-08-whisper-graphics-processor.md).
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+hex.workspace = true
+# The offline crate's pins, with Vulkan.
+whisper-rs = { version = "=0.16.0", default-features = false, features = ["vulkan"] }
+whisper-rs-sys = "=0.15.0"
+
+[lints]
+workspace = true

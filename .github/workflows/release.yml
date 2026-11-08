@@ -234,6 +234,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-llama.mjs ${{ matrix.target }}
 
+      # Whisper on the graphics processor through Vulkan, a helper built here from the workspace
+      # and declared as a sidecar in tauri.ffmpeg.windows-<arch>.conf.json
+      # (docs/decisions/2026-11-08-whisper-graphics-processor.md).
+      - name: Vulkan SDK
+        uses: ./.github/actions/vulkan-sdk
+
+      - name: Build Whisper's Vulkan helper
+        run: node scripts/build-whisper-vulkan.mjs ${{ matrix.target }}
+
       # Installed in licenses/ beside FFmpeg's: every crate and package built into the app.
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs ${{ matrix.target }}
@@ -431,6 +440,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-llama.mjs ${{ matrix.target }}
+
+      - name: Vulkan SDK
+        uses: ./.github/actions/vulkan-sdk
+
+      - name: Build Whisper's Vulkan helper
+        run: node scripts/build-whisper-vulkan.mjs ${{ matrix.target }}
 
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs ${{ matrix.target }}
