@@ -1620,14 +1620,22 @@ export const fr: Messages = {
 			'De petits modèles de vision entraînés à lire des pages, qui s’exécutent sur cet ordinateur : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et ils fonctionnent sans connexion internet une fois téléchargés. Ils lisent bien mieux que Tesseract l’imprimé abîmé, les vieux journaux en colonnes, les tableaux et les mises en page mêlées, mais ils sont bien plus lents : de quelques dizaines de secondes à plus d’une minute par page, selon le processeur de cet ordinateur, sa mémoire et la quantité de texte sur la page. Sur un Mac, et sous Windows quand Kalamu trouve un processeur graphique qu’il peut utiliser, ils s’exécutent sur le processeur graphique et vont plusieurs fois plus vite. Comme tout modèle de langue, ils peuvent écrire du texte qui n’est pas sur la page : comparez les pages douteuses avec Tesseract ou un modèle en ligne. Pour l’imprimé net, Tesseract est plus rapide ; pour de gros volumes, un modèle en ligne.',
 		ocrSpeed: (seconds: number, graphics: boolean) =>
 			`Sur cet ordinateur${graphics ? ', avec son processeur graphique' : ''} : environ ${seconds} s par page, d’après les dernières pages lues.`,
-		ocrGraphics: (name: string) => `Lire les pages avec le processeur graphique (${name})`,
+		ocrGraphics: (name: string) =>
+			`Faire tourner Whisper, les modèles OCR et les modèles de langue sur le processeur graphique (${name})`,
 		ocrGraphicsHint:
-			'En général plus rapide que le processeur, souvent plusieurs fois. Seuls les modèles dont on sait qu’ils lisent correctement sur ce processeur graphique l’utilisent ; les autres lisent avec le processeur. Si une page y échoue, Kalamu la relit avec le processeur et s’en tient au processeur jusqu’à son prochain démarrage. Désactivez cette option pour laisser le processeur graphique libre pour d’autres tâches.',
+			'En général plus rapide que le processeur, souvent plusieurs fois. Seuls les modèles dont on sait qu’ils lisent correctement sur ce processeur graphique l’utilisent ; les autres lisent avec le processeur. Si une page y échoue, Kalamu la relit avec le processeur et s’en tient au processeur jusqu’à son prochain démarrage. Les modèles de langue hors ligne ci-dessous suivent aussi ce choix, en y plaçant autant du modèle que sa mémoire en contient, de même que Whisper sous Windows : un enregistrement qui y échoue est retranscrit avec le processeur. Désactivez cette option pour laisser le processeur graphique libre pour d’autres tâches.',
 		ocrNotTimed: 'Pas encore mesuré sur cet ordinateur : les premières pages lues le diront.',
 		ocrNoEngine:
 			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner les modèles OCR : les installateurs et la version du Store le contiennent.',
 		ocrCpu: (missing: string) =>
 			`Il manque à ce processeur ${missing}, dont les modèles OCR hors ligne ont besoin. Utilisez plutôt Tesseract ou un modèle en ligne.`,
+		llmTitle: 'Analyses avec des modèles de langue',
+		llmHint:
+			'De petits modèles de langue de Google, qui s’exécutent sur cet ordinateur, pour les analyses, les tables des matières et les corrections : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et ils fonctionnent sans connexion internet une fois téléchargés. Ils sont bien moins bons que les modèles en ligne : leurs réponses sont plus pauvres, ils peuvent oublier ou inventer des noms et des faits, et ils suivent moins bien les longues consignes, alors vérifiez ce qu’ils écrivent. Ils lisent des textes d’environ 11 000 mots au plus, et des pages photographiées ; pour analyser un PDF, extrayez d’abord son texte. Ils sont lents sur le processeur, jusqu’à plusieurs minutes pour un long texte, et plusieurs fois plus rapides sur un processeur graphique : celui d’un Mac, ou sous Windows un processeur graphique que Kalamu peut utiliser ; s’il a peu de mémoire propre, il prend une partie du modèle. Chacun demande plusieurs gigaoctets de mémoire libre pendant qu’il travaille.',
+		llmNoEngine:
+			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner les modèles de langue hors ligne : les installateurs et la version du Store le contiennent.',
+		llmCpu: (missing: string) =>
+			`Il manque à ce processeur ${missing}, dont les modèles de langue hors ligne ont besoin. Utilisez plutôt un modèle en ligne.`,
 		addLanguageData: 'Télécharger une langue pour Tesseract',
 		findLanguageData: 'Chercher une langue par son nom',
 		oneDownload:
@@ -1670,7 +1678,7 @@ export const fr: Messages = {
 		version: (v: string) => `Version ${v}`,
 		dataFolder: 'Dossier des données',
 		credits:
-			'Kalamu utilise {ffmpeg} sous licence LGPL v2.1 (son {source} est publié avec chaque version), {opus} (BSD), {whisper} (MIT), les {models} (MIT), {tesseract} et ses données de langue (Apache 2.0), {leptonica} (BSD), {hayro} (MIT), {llama} (MIT), {lighton} (Apache 2.0) et {glm} (MIT). Les licences complètes se trouvent dans le dossier des licences installé avec l’application.',
+			'Kalamu utilise {ffmpeg} sous licence LGPL v2.1 (son {source} est publié avec chaque version), {opus} (BSD), {whisper} (MIT), les {models} (MIT), {tesseract} et ses données de langue (Apache 2.0), {leptonica} (BSD), {hayro} (MIT), {llama} (MIT), {lighton} (Apache 2.0), {glm} (MIT) et {gemma} (Apache 2.0). Les licences complètes se trouvent dans le dossier des licences installé avec l’application.',
 		creditNames: {
 			ffmpeg: 'FFmpeg',
 			source: 'code source',
@@ -1682,7 +1690,8 @@ export const fr: Messages = {
 			hayro: 'hayro',
 			llama: 'llama.cpp',
 			lighton: 'LightOnOCR-3',
-			glm: 'GLM-OCR'
+			glm: 'GLM-OCR',
+			gemma: 'Gemma 4'
 		},
 		privacy:
 			'Rien n’est envoyé au développeur : ni fichiers, ni clés, ni résultats, ni données d’utilisation. Un texte produit par l’IA peut être fluide mais faux ; vérifiez un échantillon sur la source.'

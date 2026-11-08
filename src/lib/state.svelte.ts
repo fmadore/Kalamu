@@ -213,9 +213,11 @@ export async function refreshOffline(): Promise<void> {
  */
 export function isInstalled(provider: string, model: string): boolean {
 	if (!app.catalog?.providers.find((p) => p.id === provider)?.local) return true;
-	const status = [...(app.offline?.models ?? []), ...(app.offline?.ocr_models ?? [])].find(
-		(m) => m.id === model
-	);
+	const status = [
+		...(app.offline?.models ?? []),
+		...(app.offline?.ocr_models ?? []),
+		...(app.offline?.llm_models ?? [])
+	].find((m) => m.id === model);
 	return status ? status.installed : app.offline !== null;
 }
 

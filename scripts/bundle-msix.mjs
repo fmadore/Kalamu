@@ -1,5 +1,5 @@
 // Builds the Microsoft Store package for one architecture with @choochmeque/tauri-windows-bundle,
-// FFmpeg, llama.cpp and their licences inside (see docs/packaging-msix.md).
+// FFmpeg, llama.cpp, Whisper's Vulkan helper and their licences inside (see docs/packaging-msix.md).
 //
 //   node scripts/bundle-msix.mjs x64|arm64      (npm run bundle:msix:x64 / bundle:msix:arm64)
 //
@@ -26,7 +26,10 @@ for (const [tool, fetch] of [
 	['ffprobe', 'fetch:ffmpeg'],
 	['llama-mtmd-cli', 'fetch:llama'],
 	['llama-mtmd-cli-vulkan', 'fetch:llama'],
-	...(arch === 'arm64' ? [['llama-mtmd-cli-opencl', 'fetch:llama']] : [])
+	['llama-completion', 'fetch:llama'],
+	['llama-completion-vulkan', 'fetch:llama'],
+	...(arch === 'arm64' ? [['llama-mtmd-cli-opencl', 'fetch:llama']] : []),
+	['whisper-vulkan', 'build:whisper-vulkan']
 ]) {
 	if (!existsSync(`src-tauri/binaries/${tool}-${target}.exe`)) {
 		console.error(`${tool} is missing: run \`npm run ${fetch} -- ${target}\` first.`);

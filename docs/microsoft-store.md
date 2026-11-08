@@ -154,6 +154,12 @@ package identity changes where data is kept and how the window is drawn.
 - [ ] Offline: download Whisper Base in Settings (and cancel a download part-way once),
       transcribe `interview.wav` from `kalamu-samples.zip` with the network off, review it
       beside the player, find "Mopti" with Ctrl F, export `.txt`, `.srt` and `.docx`.
+- [ ] From the version after 1.5.0: the package carries `whisper-vulkan.exe` beside
+      `kalamu.exe`. On a PC with a usable graphics processor, the result's `provenance.json`
+      says `"device": "vulkan"` and names it; with the graphics-processor choice in Settings off
+      it says `cpu`; on a Snapdragon it stays on the processor. With the voice-activity model
+      downloaded, a recording with long silences has no lines in them. Pausing a long
+      transcription stops it within moments.
 - [ ] Offline text: download French under Text extraction with Tesseract in Settings › Offline models,
       extract `bulletin-page.jpg` with the network off, and export `.txt` and `.alto.xml`.
 - [ ] Each provider, with a real key saved in Credential Manager: text extraction of the sample
@@ -212,7 +218,7 @@ package identity changes where data is kept and how the window is drawn.
    [store-listing.md](store-listing.md#notes-for-certification), with the test key if one is
    given. **Restricted capabilities**: justify `runFullTrust`:
 
-   > Win32 desktop app packaged as MSIX (Tauri/WebView2). The full-trust process reads the documents and recordings the user selects, converts audio with the bundled FFmpeg executables, runs offline Whisper transcription and Tesseract text extraction on the CPU, runs the offline OCR models in a bundled llama.cpp executable started once per page, keeps API keys in Windows Credential Manager, writes results next to the user's files or in a folder they choose, and keeps a job running from the notification area while its window is closed. No driver, service, auto-start task, telemetry or developer server.
+   > Win32 desktop app packaged as MSIX (Tauri/WebView2). The full-trust process reads the documents and recordings the user selects, converts audio with the bundled FFmpeg executables, runs offline Whisper transcription and Tesseract text extraction on the CPU, or Whisper on the graphics processor in a bundled helper executable, runs the offline OCR models in a bundled llama.cpp executable started once per page, keeps API keys in Windows Credential Manager, writes results next to the user's files or in a folder they choose, and keeps a job running from the notification area while its window is closed. No driver, service, auto-start task, telemetry or developer server.
 
 8. **Submit**, then watch certification: an accepted upload is not a pass. Record the date and
    the result in this file's Status.

@@ -157,7 +157,7 @@ no text layer needs *Extract text* instead.
   the task chosen does not read, and folders holding none it reads, are named rather than
   dropped unseen, with the task that reads them offered instead.
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper,
-  Tesseract and OCR models,
+  Tesseract, OCR models and language models,
   and later OpenRouter for open-weights models. The app shows only the providers and models
   that can handle the chosen task: Claude, for instance, reads documents but does not accept
   audio.
@@ -672,16 +672,23 @@ is remembered per task. Details are in [formats.md](formats.md).
 ## Offline mode
 
 - **Audio transcription with Whisper** (whisper.cpp), with models downloaded once from Hugging
-  Face from Settings and verified before use. It runs on the processor on Windows and on the
-  graphics processor (Metal) on a Mac. Each window of about two minutes is decoded in the
-  language chosen, or in the language detected on its loudest thirty seconds, so a recording
-  that changes language is followed. Lines are kept to subtitle length, cut between words at
+  Face from Settings and verified before use. It runs on the graphics processor: through Metal
+  on a Mac, and on Windows through Vulkan in a helper program shipped beside the app, when it
+  finds a usable graphics processor and Settings allows it; otherwise on the processor, and a
+  recording that fails on the graphics processor is transcribed again on the processor
+  ([decision](decisions/2026-11-08-whisper-graphics-processor.md)). Where the voice-activity
+  model is downloaded, only each window's speech is decoded, its times mapped back to the
+  recording. Each window of about two minutes is decoded in the language chosen, or in the
+  language detected on its loudest thirty seconds of speech, so a recording that changes
+  language is followed. Lines are kept to subtitle length, cut between words at
   the times Whisper gives each word; the text joins them into one sentence a line. New job
-  takes a list of names and words to spell (Whisper's initial prompt), which a job started from
+  takes a list of names and words to spell (Whisper's prompt, fitted to the model's own
+  tokenizer; lines that only read it back are dropped), which a job started from
   a project can fill from the project's dictionary, and for the models trained to translate
   (not Turbo), can have the speech written in English. Whisper's loops (a word or a line said
-  over and over, subtitle credits written over silence) are cut back. Provenance records each
-  of these settings.
+  over and over, subtitle credits written over silence) are cut back, and lines it was unsure of
+  in a window it judged silent are dropped. Pausing stops a transcription within one pass of
+  the model. Provenance records each of these settings and the device.
 - **Text extraction with Tesseract** (Tesseract 5, built into the app), for clean print: PDFs
   and images read page by page on the computer, each word with its place on the page, so ALTO
   and a searchable PDF come from it too. Its language data is downloaded once per language from
@@ -719,8 +726,25 @@ is remembered per task. Details are in [formats.md](formats.md).
   ([decision](decisions/2026-11-06-ocr-vision-models.md),
   [#105](https://github.com/fmadore/Kalamu/issues/105)).
 
+- **Analyses, tables of contents and corrections with small language models** (Gemma 4 E4B
+  and E2B, from Google), for material that must not leave the computer. Each model and its
+  encoder are downloaded once from Settings, from a pinned revision of Google's own repository
+  on Hugging Face (about 6.1 and 4.3 GB), and verified before use. They run in llama.cpp's
+  programs, shared with the OCR models, which they take turns with: a text through the text
+  program, which reads the instructions, the text and the fields from files; a photographed page
+  or a page of an issue through the multimodal program. The answer is held to the analysis's
+  fields as it is written (llama.cpp turns their schema into a grammar), then checked as every
+  provider's is; decoding is greedy, thinking off. They read a text of up to about 11,000 words
+  at once (a context of 32K tokens) and say so when one is longer; a PDF is analysed once its
+  text is extracted. On a Mac they run on Metal; on Windows they follow the OCR models' graphics
+  processor and Settings choice, with as many of their layers there as its memory holds and the
+  rest on the processor, so a card with little memory of its own still helps. Snapdragon's
+  Adreno runs them on the processor until OpenCL is measured correct for them. They are far
+  weaker than the cloud models, which their descriptions say
+  ([decision](decisions/2026-11-07-offline-language-models.md)).
+
 Offline results are a fallback, not the default for difficult material: the app says which
-engine produced a result and records it like any other. Analyses need a cloud model.
+engine produced a result and records it like any other.
 
 ## Privacy
 

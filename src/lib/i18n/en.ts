@@ -1519,14 +1519,22 @@ export const en = {
 			'Small vision models trained to read pages, run on this computer: nothing is sent, no key or account is needed, and they work without an internet connection once downloaded. They read degraded print, old newspapers in columns, tables and mixed layouts far better than Tesseract, but are much slower: from tens of seconds to over a minute a page, depending on this computer’s processor, its memory and how much text the page holds. On a Mac, and on Windows when Kalamu finds a graphics processor it can use, they run on the graphics processor and are several times faster. Like any language model they can write text that is not on the page, so compare doubtful pages with Tesseract or a cloud model. For clean print Tesseract is quicker; for large volumes a cloud model is.',
 		ocrSpeed: (seconds: number, graphics: boolean) =>
 			`On this computer${graphics ? ', with its graphics processor' : ''}: about ${seconds} s a page, from the pages it read last.`,
-		ocrGraphics: (name: string) => `Read pages on the graphics processor (${name})`,
+		ocrGraphics: (name: string) =>
+			`Run Whisper, the OCR and the language models on the graphics processor (${name})`,
 		ocrGraphicsHint:
-			'Usually faster than the processor, often several times. Only the models known to read correctly on this graphics processor use it; the others read on the processor. If a page fails there, Kalamu reads it again on the processor and keeps to the processor until it is restarted. Turn this off to leave the graphics processor free for other work.',
+			'Usually faster than the processor, often several times. Only the models known to read correctly on this graphics processor use it; the others read on the processor. If a page fails there, Kalamu reads it again on the processor and keeps to the processor until it is restarted. The offline language models below follow this choice too, putting as much of the model there as its memory holds, and so does Whisper on Windows: a recording that fails there is transcribed again on the processor. Turn this off to leave the graphics processor free for other work.',
 		ocrNotTimed: 'Not yet timed on this computer: the first pages read will tell.',
 		ocrNoEngine:
 			'This copy of Kalamu was built without the engine that runs OCR models: the installers and the Store’s version carry it.',
 		ocrCpu: (missing: string) =>
 			`This processor lacks ${missing}, which offline OCR models need. Use Tesseract or a cloud model instead.`,
+		llmTitle: 'Analyses with language models',
+		llmHint:
+			'Small language models from Google, run on this computer, for analyses, tables of contents and corrections: nothing is sent, no key or account is needed, and they work without an internet connection once downloaded. They are far weaker than the cloud models: their answers are plainer, they can miss or invent names and facts, and they follow long instructions less well, so check what they write. They read texts of up to about 11,000 words, and photographed pages; to analyse a PDF, extract its text first. They are slow on a processor, up to several minutes for a long text, and several times faster on a graphics processor: a Mac’s, or on Windows one Kalamu can use; one with little memory of its own takes part of the model. Each needs several gigabytes of free memory while it runs.',
+		llmNoEngine:
+			'This copy of Kalamu was built without the engine that runs offline language models: the installers and the Store’s version carry it.',
+		llmCpu: (missing: string) =>
+			`This processor lacks ${missing}, which offline language models need. Use a cloud model instead.`,
 		addLanguageData: 'Download a language for Tesseract',
 		findLanguageData: 'Find a language by its name',
 		oneDownload: 'One download at a time: the next can start once this one is done.',
@@ -1567,7 +1575,7 @@ export const en = {
 		dataFolder: 'Data folder',
 		/** `{name}` marks a link; the names it shows are in `creditNames`. */
 		credits:
-			'Kalamu uses {ffmpeg} under the LGPL v2.1 (its {source} is published with each release), {opus} (BSD), {whisper} (MIT), the {models} (MIT), {tesseract} and its language data (Apache 2.0), {leptonica} (BSD), {hayro} (MIT), {llama} (MIT), {lighton} (Apache 2.0) and {glm} (MIT). The full licences are in the licences folder installed with the app.',
+			'Kalamu uses {ffmpeg} under the LGPL v2.1 (its {source} is published with each release), {opus} (BSD), {whisper} (MIT), the {models} (MIT), {tesseract} and its language data (Apache 2.0), {leptonica} (BSD), {hayro} (MIT), {llama} (MIT), {lighton} (Apache 2.0), {glm} (MIT) and {gemma} (Apache 2.0). The full licences are in the licences folder installed with the app.',
 		creditNames: {
 			ffmpeg: 'FFmpeg',
 			source: 'source',
@@ -1579,7 +1587,8 @@ export const en = {
 			hayro: 'hayro',
 			llama: 'llama.cpp',
 			lighton: 'LightOnOCR-3',
-			glm: 'GLM-OCR'
+			glm: 'GLM-OCR',
+			gemma: 'Gemma 4'
 		},
 		privacy:
 			'Nothing is sent to the developer: no files, keys, results or usage data. AI output can contain fluent but wrong text; check a sample against the source.'

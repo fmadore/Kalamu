@@ -195,6 +195,20 @@ fn a_photographed_page_is_analysed_as_one_image() -> Result<(), MediaError> {
 }
 
 #[test]
+fn a_model_reading_texts_and_images_asks_for_a_pdf_s_text_first() -> Result<(), MediaError> {
+    let pdf = OpenSource::Pdf(Box::new(PdfSource::from_bytes(&sample_pdf(&[A4], true))?));
+    let accepted = ["text/plain", "image/png", "image/jpeg"];
+    let Err(err) = pdf.prepare(&PieceRef::Whole, &accepted, "bulletin") else {
+        panic!("a whole PDF is not sent as one image");
+    };
+    assert!(err.to_string().contains("Extract the text first"), "{err}");
+    // Its pages, for a table of contents, are drawn as images.
+    let page = pdf.prepare(&PieceRef::page(1), &accepted, "bulletin")?;
+    assert_eq!(page.mime, "image/png");
+    Ok(())
+}
+
+#[test]
 fn images_are_converted_split_and_checked() -> Result<(), MediaError> {
     let img = ImageSource::from_bytes(png(3000, 2000), "png")?;
     assert!(img.is_spread(1));

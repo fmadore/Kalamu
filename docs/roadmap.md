@@ -73,13 +73,29 @@ Mac, which is second in *Next* below.
   43.4 s against 98.8 s for GLM-OCR). Still to do: timings on an NVIDIA or AMD card, a second
   Snapdragon driver and more pages, and NPUs (Hexagon, OpenVINO), to be measured before
   anything is built.
+- **Offline analyses with small language models**
+  ([decision](decisions/2026-11-07-offline-language-models.md)), after 1.5.0: Gemma 4 E4B and
+  E2B, Google's own 4-bit files downloaded from Settings with their encoders, for analyses,
+  tables of contents and corrections with nothing sent. A text goes to llama.cpp's text program
+  (`llama-completion`, now built and shipped beside the multimodal program), a page image to the
+  multimodal one; the answer is held to the fields' schema as it is written. The two offline
+  engines on llama.cpp share its programs and take turns (`LlamaHost`), and the analysis schema
+  moved to `core` for both. On Windows they use the graphics processor the OCR models found,
+  with as many layers as its memory holds; Metal on a Mac. Still to do: the llama.cpp workflow's
+  run that builds and pins the text program, a full job on a real document on each system,
+  their speed on a processor and a graphics processor, a comparison of their answers with the
+  cloud models' on the ready-made analyses, and OpenCL on Snapdragon's Adreno, measured first.
 - **Audio transcription.** Recordings and videos split at pauses and converted by FFmpeg, checks
   for quiet, long or silent files with an "even out the volume" fix, speakers and timestamps,
   `.srt`, `.vtt` and `.csv`. Offline transcription with Whisper, models downloaded from
   Settings: names and words to spell (from a project's dictionary too), English translation
   except with Turbo, each window's language detected on its loudest stretch, lines of subtitle
   length timed by word, loops cut back, and Metal on a Mac (built in CI, not yet run on a real
-  Mac). Jobs keep running from the notification area when the window is closed. Public
+  Mac). On Windows, Whisper on the graphics processor through a Vulkan helper; speech detection
+  that really skips silence (before, the setting did nothing); pausing within one pass of the
+  model; Live Translation's token prompt, echo and silence filters; and a smoke test on every CI
+  lane ([decision](decisions/2026-11-08-whisper-graphics-processor.md)). Speeds on real graphics
+  processors are still to be measured. Jobs keep running from the notification area when the window is closed. Public
   YouTube videos transcribed from their link with Gemini, without downloading them, and reviewed
   beside the video, played on the dark stage in YouTube's privacy-enhanced player, each video
   named after its title

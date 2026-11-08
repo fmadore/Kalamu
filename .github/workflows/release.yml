@@ -234,6 +234,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-llama.mjs ${{ matrix.target }}
 
+      # Whisper on the graphics processor through Vulkan, a helper built here from the workspace
+      # and declared as a sidecar in tauri.ffmpeg.windows-<arch>.conf.json
+      # (docs/decisions/2026-11-08-whisper-graphics-processor.md).
+      - name: Vulkan SDK
+        uses: ./.github/actions/vulkan-sdk
+
+      - name: Build Whisper's Vulkan helper
+        run: node scripts/build-whisper-vulkan.mjs ${{ matrix.target }}
+
       # Installed in licenses/ beside FFmpeg's: every crate and package built into the app.
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs ${{ matrix.target }}
@@ -351,7 +360,7 @@ jobs:
           app="$mnt/Kalamu.app"
           codesign --verify --deep --strict --verbose=2 "$app"
           codesign -dv "$app" 2>&1 | grep -E 'Authority|TeamIdentifier|Identifier|flags'
-          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli"; do
+          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli" "$app/Contents/MacOS/llama-completion"; do
             details=$(codesign -dv --verbose=4 "$exe" 2>&1)
             grep -q '^Authority=Developer ID Application:' <<< "$details"               || { echo "::error::$exe is not signed with the Developer ID."; exit 1; }
             grep -q 'flags=.*runtime' <<< "$details"               || { echo "::error::$exe lacks the hardened runtime notarisation needs."; exit 1; }
@@ -361,6 +370,7 @@ jobs:
           "$app/Contents/MacOS/ffmpeg" -hide_banner -version | sed -n 1p
           "$app/Contents/MacOS/ffprobe" -hide_banner -version | sed -n 1p
           "$app/Contents/MacOS/llama-mtmd-cli" --version
+          "$app/Contents/MacOS/llama-completion" --version
           for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt llama.cpp-MIT.txt llama.cpp-BUILD.txt; do
             test -s "$app/Contents/Resources/licenses/$licence"
           done
@@ -431,6 +441,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/fetch-llama.mjs ${{ matrix.target }}
 
+      - name: Vulkan SDK
+        uses: ./.github/actions/vulkan-sdk
+
+      - name: Build Whisper's Vulkan helper
+        run: node scripts/build-whisper-vulkan.mjs ${{ matrix.target }}
+
       - name: Write the third-party notices
         run: node scripts/third-party-notices.mjs ${{ matrix.target }}
 
@@ -449,6 +465,18 @@ jobs:
           $asset = Join-Path 'target/msix' "Kalamu_${version}_${{ matrix.arch }}.msix"
           Move-Item -LiteralPath $msix.FullName -Destination $asset -Force
           "msix=$asset" >> $env:GITHUB_OUTPUT
+
+      # The package must carry Whisper's Vulkan helper beside the other programs: the bundler copies what the configuration declares, and
+      # this checks the result, so a package without it never reaches the release.
+      - name: Check what the package carries
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead('${{ steps.package.outputs.msix }}')
+          try { $entries = $zip.Entries | ForEach-Object { $_.FullName -replace '\\', '/' } } finally { $zip.Dispose() }
+          $missing = @('kalamu.exe', 'whisper-vulkan.exe', 'llama-mtmd-cli-vulkan.exe') | Where-Object { $_ -notin $entries }
+          if ($missing) { throw "The package lacks: $($missing -join ', ')" }
+          Write-Output "The package carries every required file."
 
       # The bare .msix is what a tester signs and installs locally: signing a bundle does not
       # sign the packages inside it.

@@ -1,8 +1,10 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 6 November 2026, which applies from version 1.5.0, the first to offer the
-offline OCR models: small vision models downloaded from Hugging Face at the user's request and
-run on the computer. The second policy of 4 November 2026, which applies to version
+**Effective date:** 7 November 2026, which applies from the first version to offer the offline
+language models: small models from Google downloaded from Hugging Face at the user's request and
+run on the computer, for analyses, tables of contents and corrections. The policy of 6 November
+2026, which applies to version 1.5.0, did not list them; it added the offline OCR models. The
+second policy of 4 November 2026, which applies to version
 1.4.1, did not list them; it added the question asked before files are first sent to each cloud
 provider; for the Mac App Store build, the folders the user grants it, kept as bookmarks, and
 its data folder inside the app's own container; and the file paths the logs may hold. Version 1.0.0, the first Microsoft
@@ -23,8 +25,9 @@ chooses for each job:
 
 - through a cloud AI provider the user selects and configures with their own API key: Google
   Gemini, OpenAI, Anthropic Claude or Mistral; or
-- offline, on the user's computer: Whisper for transcription, and Tesseract and small OCR
-  vision models (LightOnOCR-3, GLM-OCR) for text extraction from page images.
+- offline, on the user's computer: Whisper for transcription, Tesseract and small OCR vision
+  models (LightOnOCR-3, GLM-OCR) for text extraction from page images, and small language
+  models (Gemma 4 E4B and E2B) for analyses, tables of contents and corrections.
 
 The developer operates no server for the app and receives nothing from it.
 
@@ -63,8 +66,11 @@ answers when it next opens.
 
 **Offline**, with Whisper, recordings are converted and transcribed on the computer and never
 uploaded; with Tesseract or an offline OCR model, PDF pages and images are drawn and read on the
-computer and never uploaded. The OCR models run in llama.cpp's program, shipped with the app,
-which opens no connection.
+computer and never uploaded; with an offline language model, texts and page images are read
+and analysed on the computer and never uploaded. The OCR and language models run in llama.cpp's
+programs, shipped with the app, which open no connection; on Windows, Whisper may run in
+`whisper-vulkan`, a program shipped with the app for the graphics processor, which receives the
+audio through the computer's own memory and opens no connection either.
 
 Files and results may contain personal information about the people named or heard in them.
 Choose a provider whose terms suit the material, or work offline.
@@ -136,6 +142,9 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   the seconds a page took with each on this computer, on the processor and, on Windows, on the
   graphics processor, named as its driver names it, and on a Snapdragon the graphics
   processor's compiled programs, so later pages need not compile them again (`ocr-models`).
+- **Offline language models**, each with its image and audio encoder, downloaded only when the
+  user asks (`language-models`). While one runs, the text it reads, its instructions and the
+  fields asked for are written to a temporary folder, removed once it has answered.
 - **Recording pieces converted for listening** (`listening`): the review's player plays most
   recordings straight from the original file; for a format it cannot play, the piece is
   converted on the computer and the copy kept, so it plays at once next time. The folder is
@@ -159,7 +168,7 @@ deletes them. Exported files stay where they were written.
 
 ## API keys
 
-No key is needed for offline transcription or text extraction. Provider keys are stored in the system's keychain
+No key is needed for offline transcription, text extraction or analysis. Provider keys are stored in the system's keychain
 (Windows Credential Manager, or the login Keychain on macOS) and read only by the app's native
 core. A key is sent only to the provider that issued
 it, to authenticate requests. It is never written to the job database, the logs or
@@ -171,9 +180,11 @@ Besides the provider the user chooses, the app connects to:
 
 - **GitHub** (`raw.githubusercontent.com`), at startup, to check for a newer catalogue of
   models and prices. It downloads a public file and sends nothing about the user.
-- **Hugging Face** (`huggingface.co`), only when the user downloads a Whisper model or an
-  offline OCR model, from a fixed version of the model's repository there (for the OCR models,
-  `prithivMLmods/LightOnOCR-3-1B-GGUF` and `ggml-org/GLM-OCR-GGUF`). The download is checked
+- **Hugging Face** (`huggingface.co`), only when the user downloads a Whisper model, an
+  offline OCR model or an offline language model, from a fixed version of the model's repository
+  there (for the OCR models, `prithivMLmods/LightOnOCR-3-1B-GGUF` and `ggml-org/GLM-OCR-GGUF`;
+  for the language models, Google's `google/gemma-4-E4B-it-qat-q4_0-gguf` and
+  `google/gemma-4-E2B-it-qat-q4_0-gguf`). The download is checked
   against its size and SHA-256 before use, and nothing about the user is sent.
 - **GitHub** (`raw.githubusercontent.com`), only when the user downloads Tesseract's data for a
   language, from the Tesseract project's own repository at a fixed version. The download is

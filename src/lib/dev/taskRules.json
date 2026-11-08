@@ -273,6 +273,18 @@
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e4b",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e2b",
+        "recommended": false,
+        "provider_default": false
       }
     ],
     "merge_models": [],
@@ -424,6 +436,18 @@
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e4b",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e2b",
+        "recommended": false,
+        "provider_default": false
       }
     ],
     "merge_models": [],
@@ -560,6 +584,18 @@
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e4b",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e2b",
+        "recommended": false,
+        "provider_default": false
       }
     ],
     "merge_models": [
@@ -686,6 +722,18 @@
         "provider": "mistral",
         "model": "deepseek-v4-1-flash-1017",
         "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e4b",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e2b",
         "recommended": false,
         "provider_default": false
       }

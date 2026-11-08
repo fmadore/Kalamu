@@ -132,7 +132,9 @@ The notarised app from the releases page, as a researcher installs it.
   and choose *Always Allow*.
 - [ ] **Whisper offline**: Settings → Offline, download Whisper Base. New job → Transcribe audio,
   `interview.wav`, *Whisper (on this computer)*, Whisper Base, Start. It finishes; the review
-  shows the transcript beside the player.
+  shows the transcript beside the player, and `provenance.json` says `"device": "metal"` and,
+  with the voice-activity model downloaded, `"vad": true`. Pause a longer recording
+  (`interview-two-speakers.wav`) a moment after it starts: it stops within seconds.
 - [ ] **The player**: play, click a line, the position moves to it. (VNC usually carries no
   sound: check that it plays, not what it sounds like.)
 - [ ] **Search**: ⌘F, type `Mopti`, the match is marked.

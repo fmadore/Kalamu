@@ -1,6 +1,9 @@
 [workspace]
 resolver = "3"
-members = ["crates/*", "src-tauri"]
+# `helpers/whisper-vulkan` is Whisper on the graphics processor through Vulkan, a program of its
+# own beside the app (`crates/offline/src/whisper/helper.rs`). It needs LunarG's Vulkan SDK on
+# Windows, so `--workspace` commands that run where there is none exclude it.
+members = ["crates/*", "src-tauri", "helpers/whisper-vulkan"]
 default-members = ["crates/*"]
 
 [workspace.package]
