@@ -14,7 +14,7 @@
 	import { findTerm } from '#lib/analysis.js';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { formatPercent, messages } from '#lib/i18n/index.js';
-	import { isMac, primary, shortcut } from '#lib/platform.js';
+	import { modifier, primary, shortcut, zoomsWithWheel } from '#lib/platform.js';
 	import { keep, recall } from '#lib/stored.js';
 	import {
 		between,
@@ -119,7 +119,7 @@
 		learned = true;
 		keep(HINT_KEY, 1);
 	}
-	const hint = $derived(m.review.zoomHint(isMac ? '⌘' : m.keys.ctrl));
+	const hint = $derived(m.review.zoomHint(modifier()));
 
 	// Ctrl and the wheel zoom the page, not the window; so does a trackpad pinch, which reaches
 	// the page as the wheel with Ctrl on every system (⌘ and the wheel too, on a Mac). The
@@ -130,7 +130,7 @@
 	$effect(() => {
 		if (!desk || kind !== 'scan') return;
 		const onwheel = (e: WheelEvent) => {
-			if (!e.ctrlKey && !(isMac && e.metaKey)) return;
+			if (!zoomsWithWheel(e)) return;
 			e.preventDefault();
 			cancelAnimationFrame(glide);
 			const factor = wheelFactor(e.deltaY, e.deltaMode);

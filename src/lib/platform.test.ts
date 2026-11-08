@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { osNames, primary, shifted, shortcut } from './platform.js';
+import { modifier, osNames, primary, shifted, shortcut, zoomsWithWheel } from './platform.js';
 
 describe('platform', () => {
 	it('takes Command on a Mac and Ctrl elsewhere as the shortcut modifier', () => {
@@ -17,6 +17,17 @@ describe('platform', () => {
 		expect(shortcut('↵', true)).toBe('⌘↵');
 		expect(shifted('F', true)).toBe('⇧F');
 		expect(shifted('F', false)).toBe('Shift F');
+		expect(modifier(true)).toBe('⌘');
+		expect(modifier(false)).toBe('Ctrl');
+	});
+
+	it('zooms with Ctrl and the wheel everywhere, and with Command too on a Mac', () => {
+		const command = { metaKey: true, ctrlKey: false } as WheelEvent;
+		const ctrl = { metaKey: false, ctrlKey: true } as WheelEvent;
+		expect(zoomsWithWheel(ctrl, false)).toBe(true);
+		expect(zoomsWithWheel(ctrl, true)).toBe(true);
+		expect(zoomsWithWheel(command, true)).toBe(true);
+		expect(zoomsWithWheel(command, false)).toBe(false);
 	});
 
 	it('names the keychain and the tray for each system', () => {
