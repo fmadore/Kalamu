@@ -36,7 +36,8 @@ Store version is being prepared ([steps](docs/mac-app-store.md)).
   reviewed page by page. Choose how much each model thinks; every answer may use the whole
   output the model allows.
 - **Transcribe audio and video**, with speakers and timestamps, in the cloud or offline with
-  Whisper. Speakers can be given their real names. Public YouTube videos are transcribed from
+  Whisper, on the graphics processor where there is a usable one (Metal on a Mac, Vulkan on
+  Windows), skipping silence and music. Speakers can be given their real names. Public YouTube videos are transcribed from
   their link with Gemini, without downloading them.
 - **Analyse texts** with fields you define: a summary, the people, places and organisations a
   document names, its tone with a reason, themes from your own list. Ready-made analyses cover

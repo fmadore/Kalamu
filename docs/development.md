@@ -15,6 +15,16 @@ coding rules are in [AGENTS.md](../AGENTS.md).
   (the Visual Studio Build Tools include the last two), with these variables set, as in CI:
   `CC=clang-cl`, `CXX=clang-cl`, `CXXFLAGS=-EHsc`, `CMAKE_GENERATOR=Ninja` and
   `LIBCLANG_PATH=C:\Program Files\LLVM\bin`.
+- Only to build Whisper's Vulkan helper (`helpers/whisper-vulkan`, Windows releases): LunarG's
+  [Vulkan SDK](https://vulkan.lunarg.com/sdk/home), which sets `VULKAN_SDK`, then
+  `npm run build:whisper-vulkan -- <target>`. Everything else builds without it; `--workspace`
+  commands then take `--exclude whisper-vulkan`. On Linux the helper builds with the
+  distribution's Vulkan headers and `glslc`. To run Whisper through it from a development build,
+  copy `src-tauri/binaries/whisper-vulkan-<target>.exe` beside the app as `whisper-vulkan.exe`.
+- To run Whisper on a real recording: `WHISPER_SMOKE_MODEL=<ggml-base-q5_1.bin>
+  WHISPER_SMOKE_VAD=<ggml-silero-v5.1.2.bin> cargo test -p kalamu-offline whisper::tests::smoke
+  -- --ignored --exact --nocapture`, as CI does; `whisper::tests::vulkan_smoke` does the same
+  through the helper named by `WHISPER_VULKAN_HELPER`.
 - For recordings and videos during development, an FFmpeg on `PATH` (releases bundle their own
   LGPL build; see [ffmpeg.md](ffmpeg.md)).
 
