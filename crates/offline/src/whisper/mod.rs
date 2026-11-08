@@ -32,8 +32,8 @@ mod text;
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, OnceLock, Weak};
-use std::time::{Duration, Instant};
+use std::sync::{Arc, Mutex, OnceLock};
+use std::time::Instant;
 
 use async_trait::async_trait;
 use kalamu_core::{
@@ -43,6 +43,7 @@ use kalamu_core::{
 use whisper_rs::{FullParams, WhisperContext, WhisperContextParameters, WhisperState};
 
 use crate::cpu::{self, DEVICE, threads};
+use crate::host::{self, IDLE_UNLOAD, lock};
 use crate::models::{self, ModelFile, ModelLease, ModelManager};
 use engine::{BEAM_SIZE, MAX_LINE_CHARS, RawSegment};
 use speech::{Speech, Vad};
@@ -58,8 +59,6 @@ const SEARCH_BACK: usize = 20 * SAMPLE_RATE;
 const FRAME: usize = SAMPLE_RATE / 10;
 /// How much of a window its language is detected on: what Whisper's encoder reads at once.
 const DETECT: usize = 30 * SAMPLE_RATE;
-/// A loaded model is released after this long unused, to give its memory back.
-const IDLE_UNLOAD: Duration = Duration::from_secs(180);
 /// The helper's file name, beside the app's executable (Tauri's sidecar layout).
 const HELPER: &str = "whisper-vulkan";
 
@@ -150,10 +149,6 @@ struct Loaded {
     last_used: Instant,
 }
 
-fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
-    m.lock().unwrap_or_else(|e| e.into_inner())
-}
-
 impl Whisper {
     /// Whisper in the app only.
     pub fn new(models: ModelManager) -> Self {
@@ -217,30 +212,18 @@ impl Whisper {
 
     /// Starts, once, the task that releases a model left unused.
     fn start_janitor(&self) {
-        let mut started = lock(&self.inner.janitor);
-        if *started {
-            return;
-        }
-        *started = true;
-        let inner: Weak<Inner> = Arc::downgrade(&self.inner);
-        tokio::spawn(async move {
-            loop {
-                tokio::time::sleep(Duration::from_secs(30)).await;
-                let Some(inner) = inner.upgrade() else {
-                    return;
-                };
-                // Never while a transcription holds the turn.
-                let Ok(_turn) = inner.turn.try_lock() else {
-                    continue;
-                };
-                let mut loaded = lock(&inner.loaded);
-                if loaded
-                    .as_ref()
-                    .is_some_and(|l| l.last_used.elapsed() > IDLE_UNLOAD)
-                {
-                    tracing::info!("releasing the idle Whisper model");
-                    *loaded = None;
-                }
+        host::sweep_idle(&self.inner, &self.inner.janitor, |inner| {
+            // Never while a transcription holds the turn.
+            let Ok(_turn) = inner.turn.try_lock() else {
+                return;
+            };
+            let mut loaded = lock(&inner.loaded);
+            if loaded
+                .as_ref()
+                .is_some_and(|l| l.last_used.elapsed() > IDLE_UNLOAD)
+            {
+                tracing::info!("releasing the idle Whisper model");
+                *loaded = None;
             }
         });
     }
@@ -1036,7 +1019,7 @@ mod tests {
         let stop = StopSignal::default();
         let stopper = stop.clone();
         std::thread::spawn(move || {
-            std::thread::sleep(Duration::from_millis(300));
+            std::thread::sleep(std::time::Duration::from_millis(300));
             stopper.stop();
         });
         let started = Instant::now();

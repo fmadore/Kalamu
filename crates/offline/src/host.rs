@@ -7,8 +7,8 @@
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use std::sync::{Mutex, MutexGuard, OnceLock};
-use std::time::SystemTime;
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
+use std::time::{Duration, SystemTime};
 
 use kalamu_core::ProviderError;
 
@@ -18,6 +18,34 @@ use crate::models::{ModelFile, ModelLease, ModelManager};
 
 pub(crate) fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
     m.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+/// How long a loaded model or language data may sit unused before it is released, to give its
+/// memory back.
+pub(crate) const IDLE_UNLOAD: Duration = Duration::from_secs(180);
+
+/// Starts, once (`started` remembers it), the task that runs `sweep` on `inner` every thirty
+/// seconds to release what was left unused, until `inner` is dropped.
+pub(crate) fn sweep_idle<I: Send + Sync + 'static>(
+    inner: &Arc<I>,
+    started: &Mutex<bool>,
+    sweep: impl Fn(&I) + Send + 'static,
+) {
+    let mut started = lock(started);
+    if *started {
+        return;
+    }
+    *started = true;
+    let inner = Arc::downgrade(inner);
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(30)).await;
+            let Some(inner) = inner.upgrade() else {
+                return;
+            };
+            sweep(&inner);
+        }
+    });
 }
 
 /// The bundled llama.cpp programs and what is known of them this session.
