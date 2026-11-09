@@ -32,10 +32,14 @@ jobs:
       - run: npm run build
       - name: npm audit (runtime dependencies)
         run: npm audit --omit=dev
+      # Every main screen opens without an error in Chromium, the engine of Windows' WebView2;
+      # the webkit job below opens them in macOS's.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:chromium
 
   # The interface in WebKit, the engine of macOS's webview, on a Mac: every main screen opens
   # without an error, shortcuts are written with ⌘, and the player takes the formats the engine
-  # sends it there. Windows runs it in Chromium, which the frontend job's checks cover.
+  # sends it there. Windows runs it in Chromium, where the frontend job opens the same screens.
   webkit:
     runs-on: macos-latest
     timeout-minutes: 20
@@ -162,12 +166,12 @@ jobs:
           WHISPER_SMOKE_MODEL: ${{ runner.temp }}/whisper-smoke/ggml-base-q5_1.bin
           WHISPER_SMOKE_VAD: ${{ runner.temp }}/whisper-smoke/ggml-silero-v5.1.2.bin
         run: cargo test -p kalamu-offline --locked whisper::tests::smoke -- --ignored --nocapture --exact
-      # The app's own binary, linked with the macOS features on (Whisper on Metal). The tests
-      # above link only test binaries, which leave out what only `main` reaches, so a native
-      # library the app needs can be missing without a test noticing: #120's Metal code linked
-      # nowhere but in the store and release builds. A debug build reuses what the tests built.
-      - name: Link the app (macOS)
-        if: runner.os == 'macOS'
+      # The app's own binary, linked on every system. The tests above link only test binaries,
+      # which leave out what only `main` reaches, so a native library the app needs can be
+      # missing without a test noticing: #120's Metal code linked nowhere but in the store and
+      # release builds, and on Windows the app was first linked when a release was tagged. A
+      # debug build reuses what the tests built.
+      - name: Link the app
         run: cargo build -p kalamu --locked
       # The TypeScript bindings, and the rules, lists and worked cases the interface reads from
       # Rust, are written by the tests; they must match what is committed.

@@ -1,0 +1,40 @@
+name: Audit
+
+# CI audits the dependencies when the code changes. An advisory published against dependencies
+# that have not changed would wait for the next push, so this asks again every week.
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust-security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: cargo-audit@0.22.2
+      # Called directly rather than through the `cargo` proxy, which would first install the
+      # whole pinned toolchain.
+      - name: RustSec audit
+        run: cargo-audit audit
+
+  npm-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: npm audit (runtime dependencies)
+        run: npm audit --omit=dev

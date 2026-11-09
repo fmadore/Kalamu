@@ -1,6 +1,7 @@
-// The interface in WebKit, the engine of macOS's webview, against the dev server's sample data
-// (`?mock`): CI runs it on a Mac (`npm run test:webkit`), since the maintainers build on
-// Windows, where the app runs in Chromium. See docs/development.md.
+// The interface against the dev server's sample data (`?mock`), in the two engines it runs in:
+// WebKit, the engine of macOS's webview, which CI runs on a Mac (`npm run test:webkit`) since the
+// maintainers build on Windows; and Chromium, the engine of Windows' WebView2
+// (`npm run test:chromium`). See docs/development.md.
 
 import { defineConfig, devices } from '@playwright/test';
 
@@ -12,7 +13,10 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['list']] : 'list',
 	// English whatever the machine's language: the specs find elements by their English names.
 	use: { baseURL: 'http://localhost:5173', locale: 'en-US' },
-	projects: [{ name: 'webkit', use: { ...devices['Desktop Safari'] } }],
+	projects: [
+		{ name: 'webkit', use: { ...devices['Desktop Safari'] } },
+		{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }
+	],
 	webServer: {
 		command: 'npm run dev -- --port 5173 --strictPort',
 		url: 'http://localhost:5173',
