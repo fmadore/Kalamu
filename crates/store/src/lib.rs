@@ -109,6 +109,10 @@ impl JobStore for SqliteStore {
         jobs::upsert_piece(self, piece)
     }
 
+    fn upsert_pieces(&self, pieces: &[PieceState]) -> Result<(), StoreError> {
+        jobs::upsert_pieces(self, pieces)
+    }
+
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError> {
         jobs::pieces(self, job)
     }

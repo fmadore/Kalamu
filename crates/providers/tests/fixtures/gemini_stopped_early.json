@@ -1,0 +1,21 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          { "text": "Bamako, le 3 mai 1957\nMonsieur le" }
+        ]
+      },
+      "finishReason": "SAFETY",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1290,
+    "candidatesTokenCount": 12,
+    "totalTokenCount": 1302
+  },
+  "modelVersion": "gemini-3.8-flash-001",
+  "responseId": "fixture"
+}

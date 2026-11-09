@@ -149,6 +149,7 @@ impl Engine {
                         &key,
                         &opened,
                         &mut gathered,
+                        &stop,
                     )
                     .await?;
                 if let Some(message) = &outcome.fatal {
@@ -254,7 +255,7 @@ impl Engine {
         // those sent before the app was last closed.
         if !batched.is_empty() {
             if stop_requested(&control).is_none() {
-                let outcome = self.send_gathered(&job, &mut gathered).await?;
+                let outcome = self.send_gathered(&job, &mut gathered, &stop).await?;
                 batch_outcome.merge(outcome);
             }
             if batch_outcome.fatal.is_none() {

@@ -46,7 +46,7 @@ pub struct Estimate {
 
 impl Engine {
     pub fn estimate(&self, request: &EstimateRequest) -> Estimate {
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         let pages: u32 = request
             .sources
             .iter()

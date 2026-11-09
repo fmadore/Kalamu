@@ -10,6 +10,7 @@ use kalamu_core::{
 use kalamu_media::OpenSource;
 
 use super::{BatchOutcome, Gathered, stem, waiting};
+use crate::piece::wait_unless_stopped;
 use crate::{Engine, EngineError};
 
 impl Engine {
@@ -57,6 +58,7 @@ impl Engine {
         key: &CacheKey,
         opened: &Arc<OpenSource>,
         gathered: &mut HashMap<SetupId, Gathered>,
+        stop: &StopSignal,
     ) -> Result<BatchOutcome, EngineError> {
         if let Some(cached) = self.store.cached_result(key)? {
             state.status = PieceStatus::Cached;
@@ -91,7 +93,7 @@ impl Engine {
             && (bucket.pieces.len() >= limits.max_items
                 || bucket.bytes + input.bytes.len() > limits.max_bytes)
         {
-            outcome = self.send(job, setup, std::mem::take(bucket)).await?;
+            outcome = self.send(job, setup, std::mem::take(bucket), stop).await?;
         }
         bucket.bytes += input.bytes.len();
         bucket.pieces.push((state, input));
@@ -103,29 +105,31 @@ impl Engine {
         &self,
         job: &Job,
         gathered: &mut HashMap<SetupId, Gathered>,
+        stop: &StopSignal,
     ) -> Result<BatchOutcome, EngineError> {
         let mut outcome = BatchOutcome::default();
         for setup in &job.setups {
             if let Some(bucket) = gathered.remove(&setup.id)
                 && !bucket.pieces.is_empty()
             {
-                outcome.merge(self.send(job, setup, bucket).await?);
+                outcome.merge(self.send(job, setup, bucket, stop).await?);
             }
         }
         Ok(outcome)
     }
 
-    /// Records a batch, marks its pieces as submitted, then sends it.
+    /// Records a batch, marks its pieces as submitted, then sends it. A pause or cancel while
+    /// it waits out a rate limit puts its pieces back in the queue, unsent.
     pub(super) async fn send(
         &self,
         job: &Job,
         setup: &Setup,
         bucket: Gathered,
+        stop: &StopSignal,
     ) -> Result<BatchOutcome, EngineError> {
         let provider = self.provider(&setup.provider)?;
         let api_key = self.api_key(setup)?;
         let now = Timestamp::now();
-        let stop = StopSignal::default();
         let tuning = self.tuning(
             job.task,
             &setup.provider,
@@ -149,7 +153,7 @@ impl Engine {
                         options: &setup.options,
                         tuning: &tuning,
                         analysis: setup.prompt.schema.as_ref(),
-                        stop: &stop,
+                        stop,
                     },
                 )
             })
@@ -194,7 +198,17 @@ impl Engine {
             && attempt < self.config.max_attempts
         {
             let delay = retry_after.unwrap_or(self.config.base_delay * 2u32.pow(attempt));
-            tokio::time::sleep(delay).await;
+            if wait_unless_stopped(delay, stop).await {
+                drop(requests);
+                record.phase = BatchPhase::Abandoned;
+                record.updated_at = Timestamp::now();
+                self.store.put_batch(&record)?;
+                for mut state in states {
+                    state.status = PieceStatus::Pending;
+                    self.save(&mut state, None)?;
+                }
+                return Ok(BatchOutcome::default());
+            }
             sent = provider.submit_batch(&api_key, &requests).await;
             attempt += 1;
         }

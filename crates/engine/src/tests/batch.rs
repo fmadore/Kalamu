@@ -23,6 +23,11 @@ struct Batchy {
     effort: Mutex<&'static str>,
     /// A page whose answer breaks its fields, billed all the same (0: none).
     refused: std::sync::atomic::AtomicU32,
+    /// What every poll fails with, if anything.
+    poll_error: Mutex<Option<ProviderError>>,
+    polls: AtomicUsize,
+    /// Rate limits answered to submissions before one is taken.
+    rate_limits: AtomicUsize,
 }
 
 impl Batchy {
@@ -93,6 +98,13 @@ impl Provider for Batchy {
         _key: &ApiKey,
         requests: &[(String, ProcessRequest<'_>)],
     ) -> Result<String, ProviderError> {
+        if self.rate_limits.load(Ordering::SeqCst) > 0 {
+            self.rate_limits.fetch_sub(1, Ordering::SeqCst);
+            return Err(ProviderError::RateLimited {
+                retry_after: Some(Duration::from_secs(300)),
+                message: "slow down".into(),
+            });
+        }
         let items = requests
             .iter()
             .map(|(id, r)| match r.input.piece {
@@ -113,6 +125,15 @@ impl Provider for Batchy {
         _context: BatchContext<'_>,
         ids: &[String],
     ) -> Result<BatchProgress, ProviderError> {
+        self.polls.fetch_add(1, Ordering::SeqCst);
+        if let Some(err) = self
+            .poll_error
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
+        {
+            return Err(err);
+        }
         if self.expire.load(Ordering::SeqCst) {
             return Ok(BatchProgress::Abandoned("the batch expired".into()));
         }
@@ -454,4 +475,113 @@ async fn an_expired_batch_fails_its_pages_for_a_later_retry() {
     assert_eq!(e.batchy.submitted(), 2);
     let pieces = e.f.store.pieces(job.id).unwrap_or_default();
     assert_eq!(count(&pieces, PieceStatus::Done), 2);
+}
+
+/// A batch the provider no longer knows (a 404 on its status) is given up on at once with the
+/// reason, its pages failed for a later retry, instead of being asked about for ever.
+#[tokio::test]
+async fn a_batch_that_cannot_be_read_is_given_up_on_with_the_reason() {
+    let e = economy();
+    *e.batchy
+        .poll_error
+        .lock()
+        .unwrap_or_else(|p| p.into_inner()) =
+        Some(ProviderError::InvalidRequest("batch not found".into()));
+    let job = e.job(2, Pace::Economy);
+    assert_eq!(e.f.run(job.id).await, JobStatus::CompletedWithErrors);
+    assert_eq!(e.batchy.polls.load(Ordering::SeqCst), 1, "asked once");
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Failed), 2);
+    assert!(
+        pieces.iter().all(|p| p
+            .error
+            .as_deref()
+            .is_some_and(|e| e.contains("batch not found"))),
+        "{pieces:?}"
+    );
+    let batches = e.f.store.batches(job.id).unwrap_or_default();
+    assert!(batches.iter().all(|b| b.phase == BatchPhase::Abandoned));
+}
+
+/// A passing failure is asked about again while the batch may still come back; one that goes
+/// on long after the batch was due gives it up.
+#[tokio::test]
+async fn a_batch_unreachable_long_after_it_was_due_is_given_up_on() {
+    let e = economy();
+    *e.batchy
+        .poll_error
+        .lock()
+        .unwrap_or_else(|p| p.into_inner()) = Some(ProviderError::Transient("503".into()));
+    let job = e.job(2, Pace::Economy);
+    let events = e.start_until_waiting(job.id, 1).await;
+    // Within its window: asked about again and again, never given up.
+    while e.batchy.polls.load(Ordering::SeqCst) < 40 {
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    let batches = e.f.store.batches(job.id).unwrap_or_default();
+    assert!(batches.iter().all(|b| b.phase == BatchPhase::Waiting));
+    e.f.engine.pause(job.id);
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Paused);
+
+    // Sent three days ago, and still unreachable: given up on, its pages failed.
+    for mut batch in e.f.store.batches(job.id).unwrap_or_default() {
+        batch.submitted_at = Timestamp(Timestamp::now().0 - 3 * kalamu_core::BATCH_WINDOW_MS);
+        e.f.store
+            .put_batch(&batch)
+            .unwrap_or_else(|e| panic!("{e}"));
+    }
+    let events = e.f.engine.subscribe();
+    e.f.engine
+        .collect_waiting(job.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        e.finish(job.id, events).await,
+        JobStatus::CompletedWithErrors
+    );
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Failed), 2);
+    assert!(
+        pieces
+            .iter()
+            .all(|p| p.error.as_deref().is_some_and(|e| e.contains("503"))),
+        "{pieces:?}"
+    );
+    let batches = e.f.store.batches(job.id).unwrap_or_default();
+    assert!(batches.iter().all(|b| b.phase == BatchPhase::Abandoned));
+}
+
+/// Pausing while a batch waits out a rate limit stops the wait at once, and the batch's pages,
+/// never sent, go back in the queue.
+#[tokio::test]
+async fn pausing_ends_the_wait_for_a_rate_limit_before_a_batch_is_sent() {
+    let e = economy();
+    e.batchy.rate_limits.store(usize::MAX, Ordering::SeqCst);
+    let job = e.job(2, Pace::Economy);
+    let mut events = e.f.engine.subscribe();
+    e.f.engine.start(job.id).unwrap_or_else(|e| panic!("{e}"));
+    // Both pages marked as submitted: the batch is recorded and waiting out the limit.
+    loop {
+        let submitted = count(
+            &e.f.store.pieces(job.id).unwrap_or_default(),
+            PieceStatus::Submitted,
+        );
+        if submitted == 2 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(5)).await;
+    }
+    e.f.engine.pause(job.id);
+    let status = loop {
+        match tokio::time::timeout(Duration::from_secs(5), events.recv()).await {
+            Ok(Ok(ProgressEvent::JobFinished { status, .. })) => break status,
+            Ok(Ok(_)) => {}
+            other => panic!("the five-minute wait was not ended by the pause: {other:?}"),
+        }
+    };
+    assert_eq!(status, JobStatus::Paused);
+    assert_eq!(e.batchy.submitted(), 0);
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Pending), 2);
+    let batches = e.f.store.batches(job.id).unwrap_or_default();
+    assert!(batches.iter().all(|b| b.phase == BatchPhase::Abandoned));
 }

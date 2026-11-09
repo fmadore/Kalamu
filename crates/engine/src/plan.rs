@@ -66,9 +66,9 @@ impl Engine {
         Ok(Ok(pieces))
     }
 
-    /// Records every piece × set-up of a source and returns those still to read: a piece
-    /// finished under the same key is skipped, one in a batch the provider still holds is left
-    /// to be collected.
+    /// Records every piece × set-up of a source, all at once, and returns those still to read:
+    /// a piece finished under the same key is skipped, one in a batch the provider still holds
+    /// is left to be collected.
     pub(crate) fn record_pieces(
         &self,
         job: &Job,
@@ -77,6 +77,9 @@ impl Engine {
         existing: &Existing,
     ) -> Result<Vec<Work>, EngineError> {
         let mut work = Vec::new();
+        // Written together, so a close part-way never leaves a recording's plan recorded in
+        // part, which a resume would take for the whole plan.
+        let mut rows = Vec::new();
         for setup in &job.setups {
             // Pages read several at a time are answered in another context than alone: their
             // keys say so, and an answer read one way is never reused for the other.
@@ -91,8 +94,7 @@ impl Engine {
                 // once they are read (`merge_pages`).
                 if job.task == Task::Contents && *piece == PieceRef::Whole {
                     if !existing.contains_key(&(setup.id, source.id, index)) {
-                        self.store
-                            .upsert_piece(&pending(job, setup, source, index, piece, None))?;
+                        rows.push(pending(job, setup, source, index, piece, None));
                     }
                     continue;
                 }
@@ -121,10 +123,11 @@ impl Engine {
                     },
                     None => pending(job, setup, source, index, piece, Some(key.0.clone())),
                 };
-                self.store.upsert_piece(&state)?;
+                rows.push(state.clone());
                 work.push((setup.clone(), state, key));
             }
         }
+        self.store.upsert_pieces(&rows)?;
         Ok(work)
     }
 }
@@ -153,7 +156,9 @@ fn pending(
 }
 
 /// The pieces already recorded for a recording, in order; empty for documents, whose pages are
-/// cheap to list again, and for a recording not started yet.
+/// cheap to list again, for a recording not started yet, and for a plan that does not run
+/// without a gap to the recording's end (recorded in part by an earlier version), which is
+/// planned again.
 fn stored_pieces(existing: &Existing, job: &Job, source: &SourceFile) -> Vec<PieceRef> {
     let audio = matches!(
         source.kind,
@@ -170,5 +175,14 @@ fn stored_pieces(existing: &Existing, job: &Job, source: &SourceFile) -> Vec<Pie
         .filter(|p| p.setup_id == first.id && p.source_id == source.id)
         .collect();
     mine.sort_by_key(|p| p.index);
+    let gapless = mine.iter().enumerate().all(|(i, p)| p.index == i as u32);
+    let to_the_end = match mine.last().map(|p| &p.piece) {
+        Some(PieceRef::Segment { end_ms, .. }) => *end_ms >= source.duration_ms.unwrap_or(0),
+        Some(_) => true,
+        None => false,
+    };
+    if !gapless || !to_the_end {
+        return Vec::new();
+    }
     mine.into_iter().map(|p| p.piece.clone()).collect()
 }

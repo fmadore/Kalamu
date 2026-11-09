@@ -60,6 +60,9 @@ pub trait JobStore: Send + Sync {
     fn mark_running_as_interrupted(&self) -> Result<Vec<JobId>, StoreError>;
 
     fn upsert_piece(&self, piece: &PieceState) -> Result<(), StoreError>;
+    /// Records several pieces at once, all or none: a source's plan is never left recorded in
+    /// part, to be taken for the whole plan when the job resumes.
+    fn upsert_pieces(&self, pieces: &[PieceState]) -> Result<(), StoreError>;
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError>;
 
     fn cached_result(&self, key: &CacheKey) -> Result<Option<StoredResult>, StoreError>;

@@ -44,6 +44,10 @@ impl JobStore for Failing {
         self.0.upsert_piece(piece)
     }
 
+    fn upsert_pieces(&self, pieces: &[PieceState]) -> Result<(), StoreError> {
+        self.0.upsert_pieces(pieces)
+    }
+
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError> {
         self.0.pieces(job)
     }

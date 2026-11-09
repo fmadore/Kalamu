@@ -59,15 +59,29 @@ fn network(err: reqwest::Error) -> ProviderError {
 }
 
 fn header_retry_after(response: &Response) -> Option<Duration> {
-    response
-        .headers()
-        .get(reqwest::header::RETRY_AFTER)?
-        .to_str()
-        .ok()?
-        .trim()
-        .parse::<f64>()
-        .ok()
-        .map(Duration::from_secs_f64)
+    retry_after_value(
+        response
+            .headers()
+            .get(reqwest::header::RETRY_AFTER)?
+            .to_str()
+            .ok()?,
+    )
+}
+
+/// The longest wait a provider may ask for before a retry. A longer one would hold a slot of
+/// the job for nothing: the call is tried again after this, and asked to wait again if need be.
+const MAX_RETRY_WAIT_SECS: f64 = 300.0;
+
+/// A `Retry-After` header in seconds. An HTTP date, a negative or a non-finite number is
+/// ignored, and the engine falls back to its own delay.
+fn retry_after_value(value: &str) -> Option<Duration> {
+    wait(value.trim().parse::<f64>().ok()?)
+}
+
+/// A wait in seconds as asked, capped; `None` for one that is negative or not a number.
+fn wait(secs: f64) -> Option<Duration> {
+    (secs.is_finite() && secs >= 0.0)
+        .then(|| Duration::from_secs_f64(secs.min(MAX_RETRY_WAIT_SECS)))
 }
 
 /// The provider's own error message, from the shapes the four providers use.
@@ -99,7 +113,7 @@ fn stated_retry(message: &str) -> Option<Duration> {
     } else {
         secs
     };
-    Some(Duration::from_secs_f64(secs.min(300.0)))
+    wait(secs)
 }
 
 pub(crate) fn status_error(
@@ -274,5 +288,30 @@ mod tests {
         ));
         assert!(status_error(StatusCode::SERVICE_UNAVAILABLE, None, "busy").is_retryable());
         assert!(!status_error(StatusCode::BAD_REQUEST, None, "bad").is_retryable());
+    }
+
+    #[test]
+    fn a_wait_asked_for_is_bounded_and_nonsense_is_ignored() {
+        assert_eq!(retry_after_value(" 7 "), Some(Duration::from_secs(7)));
+        assert_eq!(retry_after_value("0.5"), Some(Duration::from_millis(500)));
+        assert_eq!(retry_after_value("86400"), Some(Duration::from_secs(300)));
+        for nonsense in [
+            "-3",
+            "NaN",
+            "inf",
+            "-inf",
+            "1e400",
+            "Wed, 21 Oct 2026 07:28:00 GMT",
+        ] {
+            assert_eq!(retry_after_value(nonsense), None, "{nonsense}");
+        }
+        assert_eq!(
+            stated_retry("Please retry in 86400s."),
+            Some(Duration::from_secs(300))
+        );
+        assert_eq!(
+            stated_retry(&format!("Please retry in {}s", "9".repeat(400))),
+            None
+        );
     }
 }

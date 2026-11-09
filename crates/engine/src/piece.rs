@@ -80,7 +80,7 @@ impl Engine {
         model: &str,
         chosen: Option<&str>,
     ) -> Tuning {
-        self.catalog()
+        self.current_catalog()
             .model(provider, model)
             .map(|m| m.tuning(task, chosen))
             .unwrap_or_else(|| Tuning {
@@ -98,7 +98,7 @@ impl Engine {
         step: Step<'_>,
     ) -> Result<Vec<&'static str>, EngineError> {
         let provider = self.provider(step.provider)?;
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         let model = catalog.model(step.provider, step.model);
         Ok(provider
             .accepted_inputs(job.task)
@@ -228,7 +228,7 @@ impl Engine {
         sent: Vec<RequestSetting>,
         duration_ms: u64,
     ) -> Result<Option<f64>, EngineError> {
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         let cost = catalog
             .model(step.provider, step.model)
             .and_then(|m| catalog.actual_cost(m, &output.usage));
@@ -372,7 +372,7 @@ impl Engine {
         usage: &Usage,
         spent: &Mutex<f64>,
     ) -> Result<(), EngineError> {
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         let cost = catalog
             .model(provider, model)
             .and_then(|m| catalog.actual_cost(m, usage));
@@ -405,7 +405,7 @@ impl Engine {
 }
 
 /// Waits `delay`, ending early if the job is paused or cancelled; true when it was.
-async fn wait_unless_stopped(delay: Duration, stop: &StopSignal) -> bool {
+pub(crate) async fn wait_unless_stopped(delay: Duration, stop: &StopSignal) -> bool {
     let step = Duration::from_millis(100);
     let mut left = delay;
     while !left.is_zero() && !stop.is_stopped() {

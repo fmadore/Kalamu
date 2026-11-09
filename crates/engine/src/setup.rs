@@ -28,7 +28,7 @@ pub struct NewJob {
 
 impl Engine {
     pub fn create_job(&self, mut new: NewJob) -> Result<Job, EngineError> {
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         Self::check_new(&catalog, &new)?;
         crate::rules::writable_formats(&catalog, new.task, &new.setups, &mut new.output.formats);
         let setups = self.freeze_setups(&catalog, new.task, &new.settings, &new.setups)?;

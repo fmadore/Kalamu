@@ -20,7 +20,7 @@ impl Engine {
     }
 
     pub fn pipeline_file(&self, pipeline: Pipeline) -> Result<PipelineFile, EngineError> {
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         let mut setups = Vec::new();
         let mut presets: Vec<Preset> = Vec::new();
         for setup in &pipeline.setups {

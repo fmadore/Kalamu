@@ -229,10 +229,23 @@ pub(crate) fn mark_running_as_interrupted(store: &SqliteStore) -> Result<Vec<Job
 }
 
 pub(crate) fn upsert_piece(store: &SqliteStore, piece: &PieceState) -> Result<(), StoreError> {
-    store
-        .conn()
-        .execute(
-            "INSERT INTO pieces
+    upsert_piece_on(&store.conn(), piece)
+}
+
+/// Records several pieces in one transaction: all of them, or none if one fails.
+pub(crate) fn upsert_pieces(store: &SqliteStore, pieces: &[PieceState]) -> Result<(), StoreError> {
+    let mut conn = store.conn();
+    let tx = conn.transaction().map_err(db)?;
+    for piece in pieces {
+        upsert_piece_on(&tx, piece)?;
+    }
+    tx.commit().map_err(db)
+}
+
+/// Records a piece on `conn`, which may be a transaction's.
+fn upsert_piece_on(conn: &Connection, piece: &PieceState) -> Result<(), StoreError> {
+    conn.execute(
+        "INSERT INTO pieces
                 (job_id, setup_id, source_id, idx, piece, status, cache_key, error, attempts,
                  updated_at)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
@@ -240,20 +253,20 @@ pub(crate) fn upsert_piece(store: &SqliteStore, piece: &PieceState) -> Result<()
                 piece = excluded.piece, status = excluded.status,
                 cache_key = excluded.cache_key, error = excluded.error,
                 attempts = excluded.attempts, updated_at = excluded.updated_at",
-            params![
-                piece.job_id.to_string(),
-                piece.setup_id.to_string(),
-                piece.source_id.to_string(),
-                piece.index,
-                to_json(&piece.piece)?,
-                piece.status.as_str(),
-                piece.cache_key,
-                piece.error,
-                piece.attempts,
-                piece.updated_at.0,
-            ],
-        )
-        .map_err(db)?;
+        params![
+            piece.job_id.to_string(),
+            piece.setup_id.to_string(),
+            piece.source_id.to_string(),
+            piece.index,
+            to_json(&piece.piece)?,
+            piece.status.as_str(),
+            piece.cache_key,
+            piece.error,
+            piece.attempts,
+            piece.updated_at.0,
+        ],
+    )
+    .map_err(db)?;
     Ok(())
 }
 

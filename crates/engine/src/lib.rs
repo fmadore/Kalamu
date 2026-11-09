@@ -105,7 +105,8 @@ impl Default for EngineConfig {
 pub struct Engine {
     pub(crate) store: Arc<dyn JobStore>,
     pub(crate) providers: Vec<Arc<dyn Provider>>,
-    pub(crate) catalog: RwLock<Catalog>,
+    /// Shared, so a call reads it without copying it; replaced whole when refreshed.
+    pub(crate) catalog: RwLock<Arc<Catalog>>,
     pub(crate) prompts: Mutex<PromptLibrary>,
     pub(crate) keys: Arc<dyn KeySource>,
     pub(crate) config: EngineConfig,
@@ -134,7 +135,7 @@ impl Engine {
         Arc::new(Self {
             store,
             providers,
-            catalog: RwLock::new(catalog),
+            catalog: RwLock::new(Arc::new(catalog)),
             prompts: Mutex::new(prompts),
             keys,
             config,
@@ -166,16 +167,22 @@ impl Engine {
         let _ = self.events.send(event);
     }
 
+    /// A copy of the catalogue in use.
     pub fn catalog(&self) -> Catalog {
+        Catalog::clone(&self.current_catalog())
+    }
+
+    /// The catalogue in use, shared: what the engine reads several times per piece.
+    pub(crate) fn current_catalog(&self) -> Arc<Catalog> {
         self.catalog
             .read()
-            .map(|c| c.clone())
-            .unwrap_or_else(|p| p.into_inner().clone())
+            .map(|c| Arc::clone(&c))
+            .unwrap_or_else(|p| Arc::clone(&p.into_inner()))
     }
 
     pub fn set_catalog(&self, catalog: Catalog) {
         let mut guard = self.catalog.write().unwrap_or_else(|p| p.into_inner());
-        *guard = catalog;
+        *guard = Arc::new(catalog);
     }
 
     pub fn with_prompts<T>(&self, f: impl FnOnce(&mut PromptLibrary) -> T) -> T {
@@ -277,7 +284,7 @@ impl Engine {
     }
 
     pub(crate) fn piece_length(&self, job: &Job) -> u64 {
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         job.setups
             .iter()
             .filter_map(|s| catalog.model(&s.provider, &s.model))
@@ -293,7 +300,10 @@ impl Engine {
         correction.updated_at = Timestamp::now();
         self.store.put_correction(&correction)?;
         let job = self.store.job(correction.job_id)?;
-        self.write_outputs(&job, correction.setup_id, correction.source_id)
+        // The correction is kept whatever happens to the files: a format that cannot be written
+        // again (the scan has moved, say) is logged, and said when the files are asked for.
+        let (files, _) = self.write_each_output(&job, correction.setup_id, correction.source_id)?;
+        Ok(files)
     }
 
     /// Saves the names given to one set-up's speakers in one recording and rewrites its outputs
@@ -305,7 +315,9 @@ impl Engine {
     ) -> Result<Vec<String>, EngineError> {
         self.store.put_speaker_names(job_id, &names)?;
         let job = self.store.job(job_id)?;
-        self.write_outputs(&job, names.setup_id, names.source_id)
+        // As for a correction: the names are kept whatever happens to the files.
+        let (files, _) = self.write_each_output(&job, names.setup_id, names.source_id)?;
+        Ok(files)
     }
 
     /// The outputs for one source and set-up, written again from stored results.

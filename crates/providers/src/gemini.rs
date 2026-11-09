@@ -175,6 +175,8 @@ impl Gemini {
                 ));
             }
             other if text.is_empty() => return Err(blocked(refusal(other))),
+            // Stopped early for another reason (a filter, a language it will not write): what
+            // was written is kept, marked as cut off like an answer at the output limit.
             _ => {}
         }
         Ok(ProcessOutput {
@@ -188,22 +190,13 @@ impl Gemini {
                 .map(str::to_string),
             fields: Vec::new(),
             regions: Vec::new(),
-            truncated: finish == "MAX_TOKENS",
+            truncated: !matches!(finish, "STOP" | "FINISH_REASON_UNSPECIFIED"),
         })
     }
 
     /// A response as the task reads it: an analysis's answer is checked against its fields.
     fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
-        let output = Self::parse(response)?;
-        match (context.task, context.analysis) {
-            (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
-                analysis::finish(output, fields)
-            }
-            (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
-                ProviderError::InvalidRequest("an analysis needs fields".into()),
-            ),
-            _ => Ok(output),
-        }
+        analysis::read(context, Self::parse(response)?)
     }
 }
 

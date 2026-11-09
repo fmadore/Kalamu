@@ -1048,6 +1048,99 @@ async fn an_answer_cut_off_at_the_output_limit_is_marked() {
     }
 }
 
+/// An answer stopped early for a reason other than the output limit (a Gemini filter after it
+/// wrote, an OpenAI response left incomplete) keeps what was written, marked as cut off, never
+/// as a whole page; one with nothing written is a refusal that carries what was billed.
+#[tokio::test]
+async fn an_answer_stopped_early_for_another_reason_is_marked_as_cut_off() {
+    let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());
+    let input = page();
+    let cases: [(&str, &str, &str); 2] = [
+        (
+            "gemini_stopped_early.json",
+            "gemini-3.8-flash",
+            "Bamako, le 3 mai 1957\nMonsieur le",
+        ),
+        (
+            "openai_incomplete.json",
+            "gpt-6-luna",
+            "RÉPUBLIQUE DU NIGER\nFraternité",
+        ),
+    ];
+    for (name, model, text) in cases {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(fixture(name)))
+            .mount(&server)
+            .await;
+        let provider: Box<dyn Provider> = if model.starts_with("gemini") {
+            Box::new(Gemini::with_base_url(client(), &server.uri()))
+        } else {
+            Box::new(OpenAi::with_base_url(client(), &server.uri()))
+        };
+        let output = provider
+            .process(
+                &ApiKey::new("k"),
+                request(Task::TextExtraction, model, &input, &langs, &opts),
+            )
+            .await
+            .unwrap_or_else(|e| panic!("{model}: {e}"));
+        assert_eq!(output.text, text, "{model}");
+        assert!(output.truncated, "{model}");
+    }
+
+    // Incomplete with nothing written: refused, with what the response counted.
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "incomplete",
+            "incomplete_details": { "reason": "interrupted" },
+            "output": [],
+            "usage": { "input_tokens": 1500, "output_tokens": 0 }
+        })))
+        .mount(&server)
+        .await;
+    let empty = OpenAi::with_base_url(client(), &server.uri())
+        .process(
+            &ApiKey::new("k"),
+            request(Task::TextExtraction, "gpt-6-luna", &input, &langs, &opts),
+        )
+        .await;
+    assert!(
+        matches!(&empty, Err(ProviderError::Blocked { reason, usage: Some(u) })
+            if reason.contains("interrupted") && u.input_tokens == 1500),
+        "{empty:?}"
+    );
+}
+
+/// An analysis's answer cut off at the output limit cannot be read and is not worth asking for
+/// again: it fails once, not to be retried, carrying what it was billed.
+#[tokio::test]
+async fn an_analysis_cut_off_at_the_output_limit_fails_without_retry() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(fixture("anthropic_max_tokens_analysis.json")),
+        )
+        .mount(&server)
+        .await;
+    let (input, langs, opts) = (document(), LanguageChoice::Auto, SetupOptions::default());
+    let err = Anthropic::with_base_url(client(), &server.uri())
+        .process(
+            &ApiKey::new("k"),
+            request(Task::Analysis, "claude-haiku-5-5", &input, &langs, &opts),
+        )
+        .await
+        .err()
+        .unwrap_or_else(|| panic!("a cut-off analysis cannot be read"));
+    assert!(matches!(err, ProviderError::CutOff { .. }), "{err}");
+    assert!(!err.is_retryable());
+    assert_eq!(
+        err.billed().map(|u| (u.input_tokens, u.output_tokens)),
+        Some((2100, 64_000))
+    );
+}
+
 /// A provider, its model, the task, and where its body holds the level and the output limit.
 type Case = (
     Box<dyn Provider>,
