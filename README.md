@@ -8,7 +8,7 @@ text.
 
 *Kalamu* is Swahili for pen, from the Arabic *qalam*.
 
-**Windows 11 (x64 and ARM64) · macOS 13 and later (Apple Silicon) · English and French interface (German planned) · MIT licence**
+**Windows 11 (x64 and ARM64) · macOS 14 and later (Apple Silicon) · English and French interface (German planned) · MIT licence**
 
 <a href="https://apps.microsoft.com/detail/9MXT5555BZ1H?referrer=appbadge&mode=direct"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" height="48"></a>&nbsp;&nbsp;<a href="https://buymeacoffee.com/fmadore"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
 
@@ -111,7 +111,7 @@ the Store. Or download `Kalamu_<version>_x64-setup.exe` (Intel and AMD PCs) or
 [releases page](https://github.com/fmadore/Kalamu/releases). These installers are not signed,
 so Windows SmartScreen warns on the first launch: choose **More info**, then **Run anyway**.
 
-**macOS 13 and later** (Apple Silicon): download `Kalamu_<version>_aarch64.dmg` from the
+**macOS 14 and later** (Apple Silicon): download `Kalamu_<version>_aarch64.dmg` from the
 [releases page](https://github.com/fmadore/Kalamu/releases) and drag Kalamu to Applications.
 The app is signed with an Apple Developer ID and notarised by Apple, so macOS opens it after
 the usual question about an app downloaded from the internet. If you used version 1.3.0 or

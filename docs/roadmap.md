@@ -4,25 +4,33 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (4 November 2026)
+## Status (9 November 2026)
 
-**Version 1.4.1** is the latest release: unsigned installers for Windows x64 and ARM64 and a
+**Version 1.5.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 signed, notarised disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
-[v1.4.1 release](https://github.com/fmadore/Kalamu/releases/tag/v1.4.1)
-([notes](release-1.4.1.md)). It is submitted next to the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), in place of 1.4.0, refused for
-a 1915 newspaper masthead in its screenshots (policy 11.5) and since given new screenshots and
-samples from *The Daily Nebraskan* of 1911, and is the first version
-prepared for the Mac App Store ([steps](mac-app-store.md)). Kalamu has been there since version 1.0.0 (2 November 2026). Everything below is tested against
-recorded provider responses. Text extraction, transcription and analyses have also run against
-the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
-(`cargo run --example live`, see [development.md](development.md) and the
-[live runs](decisions/2026-11-03-live-runs.md)).
+[v1.5.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.5.0)
+([notes](release-1.5.0.md)), and it is the version sent to the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), where Kalamu has been since
+version 1.0.0 (2 November 2026). **Version 1.6.0** is prepared, not yet tagged
+([notes](release-1.6.0.md)): offline analyses with Gemma 4 and Whisper on a Windows PC's graphics
+processor. Version 1.4.1 was the first prepared for the Mac App Store
+([steps](mac-app-store.md)). Everything below is tested against recorded provider responses. Text
+extraction, transcription and analyses have also run against the live Gemini, OpenAI, Claude and
+Mistral APIs with real keys, at once and in economy mode (`cargo run --example live`, see
+[development.md](development.md) and the [live runs](decisions/2026-11-03-live-runs.md)).
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
 with an Apple Developer ID and notarised from 1.4.0
 ([decision](decisions/2026-11-04-macos-notarisation.md)); it has not yet been opened on a real
-Mac, which is second in *Next* below.
+Mac, which is third in *Next* below. From the version after 1.5.0 it asks for **macOS 14 or
+later** (13 before): the interface uses what WebKit has from Safari 17 on
+([review](decisions/2026-11-09-review.md)).
+
+A [review of the whole app on 9 November](decisions/2026-11-09-review.md) (the Rust crates, the
+shell and CI, the interface's code, and every screen on its sample data) found the bugs and
+improvements that open *Next*; what it did not fix at once is tracked in
+[#143](https://github.com/fmadore/Kalamu/issues/143) to
+[#149](https://github.com/fmadore/Kalamu/issues/149).
 
 ## Done
 
@@ -70,9 +78,9 @@ Mac, which is second in *Next* below.
   ([decision](decisions/2026-11-06-ocr-opencl-adreno.md)), while LightOnOCR-3 stays on the
   processor. On Intel's integrated Arc graphics (Core Ultra 7 155H) Vulkan reads both models
   correctly in less than half the processor's time (51.5 s against 116.8 s for LightOnOCR-3,
-  43.4 s against 98.8 s for GLM-OCR). Still to do: timings on an NVIDIA or AMD card, a second
-  Snapdragon driver and more pages, and NPUs (Hexagon, OpenVINO), to be measured before
-  anything is built.
+  43.4 s against 98.8 s for GLM-OCR). #122 is closed with this. Still to do, among the live
+  runs below: timings on an NVIDIA or AMD card, a second Snapdragon driver and more pages, and
+  NPUs (Hexagon, OpenVINO), to be measured before anything is built.
 - **Offline analyses with small language models**
   ([decision](decisions/2026-11-07-offline-language-models.md)), after 1.5.0: Gemma 4 E4B and
   E2B, Google's own 4-bit files downloaded from Settings with their encoders, for analyses,
