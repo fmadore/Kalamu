@@ -1,6 +1,6 @@
 # Kalamu: statistics
 
-Updated 2026-11-08 by the daily *Repository statistics* workflow (`.github/workflows/stats.yml` on the default branch). The figures are kept in [`data/`](data/) as CSV files, one row per day, for a spreadsheet or a dashboard.
+Updated 2026-11-09 by the daily *Repository statistics* workflow (`.github/workflows/stats.yml` on the default branch). The figures are kept in [`data/`](data/) as CSV files, one row per day, for a spreadsheet or a dashboard.
 
 | Downloads, versions | Downloads, all releases | Views, last 14 days |
 | ---: | ---: | ---: |
@@ -17,9 +17,9 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 | [v1.4.0](https://github.com/fmadore/Kalamu/releases/tag/v1.4.0) | 2026-11-04 | 8 | 8 | 8 |
 | [v1.3.0](https://github.com/fmadore/Kalamu/releases/tag/v1.3.0) | 2026-11-03 | 24 | 24 | 24 |
 | [v1.2.0](https://github.com/fmadore/Kalamu/releases/tag/v1.2.0) | 2026-11-03 | 40 | 40 | 40 |
-| [v1.1.2](https://github.com/fmadore/Kalamu/releases/tag/v1.1.2) | 2026-11-02 | 35 | 35 | 35 |
-| [v1.1.1](https://github.com/fmadore/Kalamu/releases/tag/v1.1.1) | 2026-11-02 | 12 | 12 | 12 |
-| [v1.1.0](https://github.com/fmadore/Kalamu/releases/tag/v1.1.0) | 2026-11-02 | 15 | 15 | 15 |
+| [v1.1.2](https://github.com/fmadore/Kalamu/releases/tag/v1.1.2) | 2026-11-02 | 35 | … | 35 |
+| [v1.1.1](https://github.com/fmadore/Kalamu/releases/tag/v1.1.1) | 2026-11-02 | 12 | … | 12 |
+| [v1.1.0](https://github.com/fmadore/Kalamu/releases/tag/v1.1.0) | 2026-11-02 | 15 | … | 15 |
 | [v1.0.0](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0) | 2026-10-30 | 38 | … | 38 |
 | [v0.4.0](https://github.com/fmadore/Kalamu/releases/tag/v0.4.0) (pre-release) | 2026-10-29 | 15 | … | 15 |
 | [v0.3.0](https://github.com/fmadore/Kalamu/releases/tag/v0.3.0) (pre-release) | 2026-10-28 | 11 | … | 11 |
