@@ -1,7 +1,7 @@
 <script lang="ts">
 	import TermLink from './TermLink.svelte';
-	// A job's facts as one strip, cells divided by hairlines: its task, progress, models, error
-	// rates where pages were reviewed, pace, cost and date.
+	// A job's facts as one strip, cells divided by hairlines: its task, progress, models, pace,
+	// cost and date, and under them, across the strip, the error rates where pages were reviewed.
 	import { siglum } from '#lib/apparatus.js';
 	import type { Job } from '#lib/bindings/Job.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
@@ -58,7 +58,7 @@
 		</dd>
 	</div>
 	{#if totals.some((t) => t !== null)}
-		<div class="wide">
+		<div class="row">
 			<dt>{m.scores.title}<TermLink term="errorRates" /></dt>
 			<dd class="scores">
 				{#each totals as total, i (i)}
@@ -91,12 +91,16 @@
 </dl>
 
 <style>
+	/* Each cell draws the hairlines above and before it; those along the strip's own edge fall
+	   under its border, clipped, so a cell that wraps to a new row is divided from the one
+	   above it too. */
 	.facts {
 		display: flex;
 		flex-wrap: wrap;
 		margin: 0;
 		border: 1px solid var(--line);
 		border-radius: var(--radius-card);
+		overflow: hidden;
 	}
 	.facts > div {
 		flex: 1 1 10rem;
@@ -105,10 +109,16 @@
 		align-content: start;
 		padding: var(--space-3) var(--space-4);
 		border-left: 1px solid var(--line);
-		margin-left: -1px;
+		border-top: 1px solid var(--line);
+		margin: -1px 0 0 -1px;
 	}
 	.facts > .wide {
 		flex: 2 1 14rem;
+	}
+	/* The error rates are sentences: a row of their own, across the strip, under the short facts. */
+	.facts > .row {
+		order: 1;
+		flex-basis: 100%;
 	}
 	dt {
 		font-size: var(--type-xs);

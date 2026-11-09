@@ -57,11 +57,16 @@
 	const chosen = $derived(selection.of(rows, (r) => r.key));
 	const allChosen = $derived(rows.length > 0 && chosen.length === rows.length);
 
+	/** Raised by each reading, so a slower answer for an earlier scope is dropped. */
+	let viewTicket = 0;
+
 	async function load() {
+		const ticket = ++viewTicket;
 		try {
-			view = await api.dictionaryView(projectId, scope || null);
+			const read = await api.dictionaryView(projectId, scope || null);
+			if (ticket === viewTicket) view = read;
 		} catch (e) {
-			action.fail(e);
+			if (ticket === viewTicket) action.fail(e);
 		}
 	}
 
@@ -69,22 +74,29 @@
 		return byKey.get(key)?.label ?? key;
 	}
 
+	/** Raised by each row opened or closed, so the evidence for a row opened earlier and read
+	 * later is not shown under the one opened since. */
+	let evidenceTicket = 0;
+
 	async function showEvidence(key: string) {
+		const ticket = ++evidenceTicket;
 		const row = byKey.get(key);
 		if (!row) {
 			open = null;
 			return;
 		}
 		open = key;
-		evidence = await api.dictionaryEvidence(
+		const found = await api.dictionaryEvidence(
 			projectId,
 			row.namespace,
 			row.forms.map((f) => f.form)
 		);
+		if (ticket === evidenceTicket) evidence = found;
 	}
 
 	async function toggleOpen(row: DictionaryRow) {
 		if (open === row.key) {
+			evidenceTicket++;
 			open = null;
 			return;
 		}

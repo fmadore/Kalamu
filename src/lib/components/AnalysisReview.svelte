@@ -25,7 +25,7 @@
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { find, searchable } from '#lib/search.js';
-	import type { ReviewFind } from '#lib/state.svelte.js';
+	import { guardDraft, type ReviewFind } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
@@ -39,8 +39,9 @@
 	/** The page of a scan shown. */
 	let page = $state(0);
 	let hovered = $state<string | null>(null);
-	/** The answers being corrected. */
-	let editing = $state<{ setupId: string; draft: Draft } | null>(null);
+	/** The answers being corrected, and the draft they were opened on, to tell whether they
+	 * changed. */
+	let editing = $state<{ setupId: string; draft: Draft; from: string } | null>(null);
 
 	const source = $derived(review.source);
 	const setups = $derived(review.setups);
@@ -100,7 +101,8 @@
 	}
 
 	function startEditing(setup: Setup) {
-		editing = { setupId: setup.id, draft: toDraft(fields, answersOf(viewOf(setup))) };
+		const draft = toDraft(fields, answersOf(viewOf(setup)));
+		editing = { setupId: setup.id, draft, from: JSON.stringify(draft) };
 	}
 
 	async function save(setup: Setup, answers: FieldAnswer[] | null, reviewed: boolean) {
@@ -152,11 +154,16 @@
 
 	onMount(() => {
 		void review.load();
+		const release = guardDraft({
+			dirty: () => editing !== null && JSON.stringify(editing.draft) !== editing.from,
+			discard: () => (editing = null)
+		});
 		// Opened from a project's search: its words, searched here too.
 		if (opening) {
 			searching = true;
 			query = opening.query;
 		}
+		return release;
 	});
 </script>
 

@@ -15,6 +15,7 @@
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { formatPercent, messages } from '#lib/i18n/index.js';
 	import { modifier, primary, shortcut, zoomsWithWheel } from '#lib/platform.js';
+	import { shortcutsHeld } from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
 	import {
 		between,
@@ -228,7 +229,7 @@
 	}
 
 	function onkeydown(e: KeyboardEvent) {
-		if (kind !== 'scan' || !primary(e) || e.altKey) return;
+		if (kind !== 'scan' || !primary(e) || e.altKey || shortcutsHeld()) return;
 		const target = e.target;
 		if (target instanceof Element && target.closest('input, textarea, select, [contenteditable]'))
 			return;

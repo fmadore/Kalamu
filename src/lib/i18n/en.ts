@@ -820,6 +820,9 @@ export const en = {
 		}
 	},
 	newJob: {
+		/** Empties the form kept from an earlier visit. */
+		startOver: 'Start over',
+		startOverHint: 'Empty the form: files, models and settings',
 		then: {
 			title: 'Then (optional)',
 			hint: 'Once the text is read, Kalamu can analyse it for you: the people and places it names, a summary, its tone.',
@@ -1795,7 +1798,11 @@ export const en = {
 		preview: 'preview',
 		retiring: 'retiring',
 		opensInBrowser: ' (opens in your browser)',
-		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`
+		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`,
+		/** Asked before leaving a correction, a prompt or a workflow with changes not saved. */
+		unsaved: 'Your changes are not saved. Leave and discard them?',
+		discardChanges: 'Discard changes',
+		keepEditing: 'Keep editing'
 	},
 	error: {
 		'search.too_short': 'Type a word of three letters at least.',
@@ -1885,6 +1892,8 @@ export const en = {
 		'provider.other': 'The provider sent an unexpected response.',
 		'provider.invalid_answer':
 			'The model’s answer did not match the fields of the analysis; Kalamu asks it again.',
+		'provider.cut_off':
+			'The answer stopped at the model’s output limit before it was complete. Send fewer pages in each call, ask for fewer or shorter fields, or choose a model that can write a longer answer.',
 		'provider.not_installed':
 			'This offline model, or the language data it needs, has not been downloaded. Download it in Settings.',
 		'provider.interrupted': 'Stopped before the end; it will continue when the job resumes.',

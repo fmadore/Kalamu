@@ -160,10 +160,13 @@
 		text-align: left;
 		cursor: pointer;
 	}
-	.item:hover,
-	.item:focus-visible {
+	.item:hover {
 		background: var(--wash);
-		outline: none;
+	}
+	/* The keyboard's place, told apart from the pointer's: the app's focus ring, inside the row. */
+	.item:focus-visible {
+		outline: var(--focus-width) solid var(--focus);
+		outline-offset: calc(-1 * var(--focus-width));
 	}
 	.danger {
 		color: var(--warn-text);

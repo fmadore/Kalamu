@@ -914,6 +914,8 @@ export const fr: Messages = {
 		}
 	},
 	newJob: {
+		startOver: 'Recommencer',
+		startOverHint: 'Vider le formulaire : fichiers, modèles et réglages',
 		then: {
 			title: 'Ensuite (facultatif)',
 			hint: 'Une fois le texte lu, Kalamu peut l’analyser pour vous : les personnes et les lieux qu’il nomme, un résumé, sa tonalité.',
@@ -1878,7 +1880,11 @@ export const fr: Messages = {
 		preview: 'préversion',
 		retiring: 'bientôt retiré',
 		opensInBrowser: ' (s’ouvre dans votre navigateur)',
-		linkFailed: (url: string) => `Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`
+		linkFailed: (url: string) =>
+			`Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`,
+		unsaved: 'Vos modifications ne sont pas enregistrées. Quitter et les abandonner ?',
+		discardChanges: 'Abandonner les modifications',
+		keepEditing: 'Continuer à modifier'
 	},
 	error: {
 		'search.too_short': 'Tapez un mot d’au moins trois lettres.',
@@ -1977,6 +1983,8 @@ export const fr: Messages = {
 		'provider.other': 'Le fournisseur a envoyé une réponse inattendue.',
 		'provider.invalid_answer':
 			'La réponse du modèle ne correspondait pas aux champs de l’analyse ; Kalamu lui repose la question.',
+		'provider.cut_off':
+			'La réponse s’est arrêtée à la limite de sortie du modèle avant d’être complète. Envoyez moins de pages par appel, demandez des champs moins nombreux ou plus courts, ou choisissez un modèle capable d’écrire une réponse plus longue.',
 		'provider.not_installed':
 			'Ce modèle hors ligne ou ses données de langue n’ont pas encore été téléchargés. Téléchargez-les dans Paramètres.',
 		'provider.interrupted': 'Arrêté avant la fin ; il reprendra quand le traitement reprendra.',

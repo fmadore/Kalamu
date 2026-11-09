@@ -115,3 +115,19 @@ export function lastSearch(
 export function keepSearch(projectId: string, request: SearchRequest, view: SearchView | null) {
 	last.set(projectId, { request, view });
 }
+
+/** The project whose search opened the review last, until the project opens again. */
+let searchedFrom: string | null = null;
+
+/** A match was opened in this project's search: the project opens on the search next time. */
+export function leaveForMatch(projectId: string): void {
+	searchedFrom = projectId;
+}
+
+/** Whether the project opens on its search, as it does once after a match in it was opened;
+ * opened any other way, it opens on its documents. */
+export function backToSearch(projectId: string): boolean {
+	const back = searchedFrom === projectId;
+	searchedFrom = null;
+	return back;
+}

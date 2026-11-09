@@ -36,6 +36,8 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
 		gap: var(--space-3);
+		/* A field with the project's hint under it is taller: its neighbours keep their height. */
+		align-items: start;
 	}
 	.long {
 		grid-column: 1 / -1;

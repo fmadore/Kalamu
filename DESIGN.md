@@ -345,7 +345,7 @@ The **mark** is "two witnesses": on a warm graphite tile (#1e1d1b), a cream hand
 
 Each screen opens with a **masthead**: at least 3.5rem tall, white, a hairline below, the title (and a back link or breadcrumb) at left and actions at right. Below it a **sheet**: one column as wide as the window, padding 1.5rem 2rem 3rem, sections 2rem apart.
 
-**New job** is a form beside a summary: the form (as wide as the window leaves it) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
+**New job** is a form beside a summary (a ghost **Start over** in the masthead empties it once it holds files or a name; the form is otherwise kept when the researcher leaves for Settings and comes back): the form (as wide as the window leaves it) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
 
 **Review** splits the work area 0.95fr (source) to 1.05fr (text); **Compare** in the masthead adds a third pane with another set-up's whole text (a third each). The boundaries between panes are **splitters**: a 9px invisible grip on the hairline that shows a 3px line on hover (line-hover) and while dragged or focused (bright text); arrow keys move it 2% (Shift 10%), a double click puts it back, and no pane gets narrower than about 16rem. Widths and the open compare pane are remembered on the computer, the same for the three reviews (text, analysis, table of contents), which share one frame. Each pane has a 2.75rem bar on top. The text pane sets each line in a grid with a 2.25rem number column, numbers printed every fifth line and on every line that differs. **Search** (Ctrl F, or the magnifier in the masthead) opens a row under the masthead: the field, the count ("2 of 11"), previous and next, a **List** of the matches in a flyout grouped by page under sticky mono headings, each with the words around it and, in a recording, its time; Escape closes the list, then the search. A page strip runs along the bottom on surface-quiet: for a scan, each page as a small thumbnail with its number under it; for a recording, a numbered tile per piece; and a tally with a green progress bar.
 
@@ -353,15 +353,15 @@ Each screen opens with a **masthead**: at least 3.5rem tall, white, a hairline b
 
 **Settings** opens on a tab list (API keys, Offline, General, About), each tab a sheet of its own; a link into Settings opens the tab it is about.
 
-**Job detail** sets the job's facts as one bordered strip of cells divided by hairlines, then the files as a bordered table with per-set-up progress bars.
+**Job detail** sets the job's facts as one bordered strip of cells divided by hairlines, the short facts in one row and the errors found in review in a row of their own under them, as wide as the strip so each set-up's sentence stays on one line; then the files as a bordered table with per-set-up progress bars.
 
 Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls are 1.875rem (small), 2.25rem (default) and 2.75rem (large) tall.
 
 **Responsive range:**
 - **1100px and narrower**: New job's summary leaves the side and becomes a sticky footer with the figure and Start, lifted by a soft upward shadow.
-- **1000px and narrower**: every review stacks the source above the text (source 16rem to 42vh), and the compared text below both; the splitters hide. Prompts stacks its list above the editor.
+- **1000px and narrower**: every review stacks the source above the text (source 16rem to 42vh), and the compared text below both; the splitters hide. In a short window the source gives way first and the text keeps at least 16rem; when even that does not fit, the work area scrolls above the page strip. Prompts stacks its list above the editor.
 - **820px and narrower**: masthead and sheet padding tighten to 1rem; the review tally hides.
-- **760px and narrower**: the sidebar sits above the work (at most 38vh), folded to one row; joined choice strips become one column.
+- **760px and narrower**: the sidebar sits above the work, folded to one row whatever was chosen in a wide window (its button or Ctrl B unfolds it to a scrolling column of at most 38vh); joined choice strips become one column.
 - **1680px and wider**: reading text rises to 1.3125rem.
 
 At no width does a view scroll sideways: grids, tables, rows and diagrams fit the width there is.

@@ -509,11 +509,17 @@ export async function mayStart(
 	return !beside || askForFolders(besidePlaces(sources));
 }
 
-/** A yes/no question in a native dialog. */
-export async function ask(message: string): Promise<boolean> {
+/** A yes/no question in a native dialog, its buttons named by `labels` when given. */
+export async function ask(
+	message: string,
+	labels?: { ok: string; cancel: string }
+): Promise<boolean> {
 	if (!isTauri()) return window.confirm(message);
 	const { ask } = await import('@tauri-apps/plugin-dialog');
-	return ask(message, { kind: 'warning' });
+	return ask(message, {
+		kind: 'warning',
+		...(labels ? { okLabel: labels.ok, cancelLabel: labels.cancel } : {})
+	});
 }
 
 export async function revealInFolder(path: string): Promise<void> {

@@ -3,8 +3,10 @@
 	// its folder.
 	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
+	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { baseName } from '#lib/paths.js';
+	import { toast } from '#lib/state.svelte.js';
 	import { revealInFolder } from '#lib/tauri.js';
 
 	let {
@@ -32,7 +34,8 @@
 					class="btn ghost sm icon"
 					title={m.jobs.openFolder}
 					aria-label="{m.jobs.openFolder}{m.common.colon} {name}"
-					onclick={() => revealInFolder(path)}><Icon name="folder" size={14} /></button
+					onclick={() => revealInFolder(path).catch((e: unknown) => toast(describeError(e, m)))}
+					><Icon name="folder" size={14} /></button
 				>
 			</li>
 		{/each}

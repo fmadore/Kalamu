@@ -131,3 +131,38 @@ export function level(pane: HTMLElement | null, el: Element | null, height: numb
 		behavior: still() ? 'auto' : 'smooth'
 	});
 }
+
+/**
+ * Makes a text box as tall as its text, for a webview without CSS `field-sizing: content`
+ * (WebKit before Safari 26.2, which macOS 14 and 15 ship): the pane around it then scrolls
+ * the text, and a caret's place in the box is its place in the pane. Where the webview sizes
+ * the box itself, nothing is done. An attachment: `{@attach growWithText}`.
+ */
+export function growWithText(area: HTMLTextAreaElement): (() => void) | undefined {
+	if (typeof CSS !== 'undefined' && CSS.supports('field-sizing', 'content')) return;
+	const fit = () => {
+		// Shrunk first, so text taken out gives its room back, the panes around it kept where
+		// they were scrolled; the borders are added back.
+		const scrolled: [Element, number][] = [];
+		for (let el = area.parentElement; el; el = el.parentElement) {
+			if (el.scrollTop > 0) scrolled.push([el, el.scrollTop]);
+		}
+		area.style.height = 'auto';
+		area.style.height = `${area.scrollHeight + area.offsetHeight - area.clientHeight}px`;
+		for (const [el, top] of scrolled) el.scrollTop = top;
+	};
+	fit();
+	area.addEventListener('input', fit);
+	// A narrower or wider pane wraps the lines anew.
+	let width = area.clientWidth;
+	const resized = new ResizeObserver(() => {
+		if (area.clientWidth === width) return;
+		width = area.clientWidth;
+		fit();
+	});
+	resized.observe(area);
+	return () => {
+		area.removeEventListener('input', fit);
+		resized.disconnect();
+	};
+}

@@ -163,7 +163,10 @@
 		{/if}
 		<div class="actions">
 			{#if s?.downloading}
-				<button class="btn sm" onclick={() => api.cancelModelDownload()}
+				<button
+					class="btn sm"
+					onclick={() =>
+						api.cancelModelDownload().catch((e: unknown) => toast(describeError(e, m)))}
 					>{m.settings.cancelDownload}</button
 				>
 			{:else if s?.installed}

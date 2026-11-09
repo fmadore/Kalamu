@@ -69,15 +69,20 @@
 		return { kind: 'project' };
 	}
 
+	/** Raised by each reading, so a slower answer for an earlier scope is dropped. */
+	let ticket = 0;
+
 	async function load() {
+		const mine = ++ticket;
 		loading = true;
 		error = null;
 		try {
-			view = await api.reviewQueue(projectId, selectionOf(scope), excluded);
+			const read = await api.reviewQueue(projectId, selectionOf(scope), excluded);
+			if (mine === ticket) view = read;
 		} catch (e) {
-			error = describeError(e, m);
+			if (mine === ticket) error = describeError(e, m);
 		} finally {
-			loading = false;
+			if (mine === ticket) loading = false;
 		}
 	}
 

@@ -17,7 +17,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { primary, shortcut } from '#lib/platform.js';
 	import { columns, layout } from '#lib/review.svelte.js';
-	import { go } from '#lib/state.svelte.js';
+	import { go, shortcutsHeld } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
@@ -118,6 +118,7 @@
 	}
 
 	function onkeydown(e: KeyboardEvent) {
+		if (shortcutsHeld()) return;
 		if (primary(e) && e.key.toLowerCase() === 'f' && search) {
 			e.preventDefault();
 			void openSearch();
@@ -356,14 +357,17 @@
 		border-left: 1px solid var(--line);
 		background: var(--paper);
 	}
-	/* A narrow window: the panes stack, at fixed shares, with no handles between them. */
+	/* A narrow window: the panes stack, at fixed shares, with no handles between them. The text
+	   keeps room enough to read and correct in, the source giving way first in a short window;
+	   when even that does not fit, the panes scroll together above the page strip. */
 	@media (max-width: 1000px) {
 		.work {
 			grid-template-columns: 1fr;
-			grid-template-rows: minmax(16rem, 42vh) minmax(0, 1fr);
+			grid-template-rows: minmax(min(16rem, 26vh), 42vh) minmax(16rem, 1fr);
+			overflow-y: auto;
 		}
 		.work.comparing {
-			grid-template-rows: minmax(14rem, 34vh) minmax(0, 1fr) minmax(0, 1fr);
+			grid-template-rows: minmax(min(14rem, 22vh), 34vh) minmax(16rem, 1fr) minmax(12rem, 1fr);
 		}
 		.work :global(.splitter) {
 			display: none;

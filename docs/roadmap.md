@@ -351,7 +351,42 @@ improvements that open *Next*; what it did not fix at once is tracked in
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
-1. **What the [8 November checkpoint](decisions/2026-11-08-checkpoint.md) left.** The
+1. **What the [review of 9 November](decisions/2026-11-09-review.md) found.** Fixed at once,
+   each with a test: structured answers cut off at the output limit sent once instead of four
+   times; batches that can no longer be read given up on; `Retry-After` bounded; answers stopped
+   early marked as cut off; a recording's plan recorded whole; a format that cannot be written
+   reported; an unsaved correction, prompt or workflow asked about before it is left; New job's
+   form kept across Settings; the review in a short window; an estimate, evidence or search
+   overtaken by an older answer; a description lost to a tag; folders dropped on a project;
+   dialogs that hold the shortcuts; the job page's errors in a row of their own. macOS 14 is the
+   minimum. Still to check: these on Windows and in WebKit, since the shell and `offline` do not
+   build where the review ran, and the cut-off message for an analysis stopped by a filter
+   rather than the limit. Left, in this order:
+   - **Work that can always be stopped and formats archives hold**
+     ([#144](https://github.com/fmadore/Kalamu/issues/144)): FFmpeg cancelled and timed out,
+     llama.cpp's watchdog, a graphics processor not given up for one bad page, downloads that
+     resume and check the disk, 1-bit TIFF, 24-bit AIFF.
+   - **The shell** ([#148](https://github.com/fmadore/Kalamu/issues/148)): a start-up failure
+     that says why, an update notice for the installer and the disk image, the tray and
+     notification computed by the engine, the keychain off the window's thread.
+   - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)): signing
+     secrets kept from build code, the Windows app linked and packaged on a pull request, the
+     screens opened in Chromium too, interaction tests, checksums and an attestation.
+   - **Large jobs** ([#143](https://github.com/fmadore/Kalamu/issues/143)): a benchmark first,
+     then exports that read only their source's rows, corrections that do not rewrite every
+     file, the job list, tables and thumbnails; a way to clear results nothing uses.
+   - **Keyboard and accessibility** ([#146](https://github.com/fmadore/Kalamu/issues/146)): the
+     readings reached from the keyboard, an analysis's names without a pointer, control
+     boundaries at 3:1, errors that stay and are announced.
+   - **A model's abilities in the catalogue**
+     ([#147](https://github.com/fmadore/Kalamu/issues/147)), an architecture checkpoint item:
+     five places match a model's or a preset's name.
+   - **Interface** ([#149](https://github.com/fmadore/Kalamu/issues/149)): going back where one
+     came from, remembered filters and rotation, a shortcut overview, a drop target that shows,
+     undo for removals, a recording's transcript shown once.
+   - CSV cells that begin with `=`, `+`, `-` or `@` (a telephone number, a list item) are read
+     as formulas by a spreadsheet: an option of the CSV writer, decided table by table.
+2. **What the [8 November checkpoint](decisions/2026-11-08-checkpoint.md) left.** The
    checkpoint after 1.5.0 folded the duplication the 4 November one listed (one UTC date in
    core, every CSV through the `export` crate, one batch file reader, the engine's and the
    offline engines' locks and idle sweepers, one write-then-rename in the app), moved the
@@ -364,24 +399,24 @@ In this order. Work that keeps what has shipped sound comes before new features.
    November Whisper's voice detection on accented data folders on Windows, the folders out of
    reach shown at launch, and Tesseract's drawing resolution in provenance and its engines
    pooled (all listed in the decision).
-2. **A first run on a real Mac.** The disk image is signed and notarised and a sandboxed build is
+3. **A first run on a real Mac.** The disk image is signed and notarised and a sandboxed build is
    ready for the Mac App Store, but Kalamu has not yet been opened on a Mac
    ([decision](decisions/2026-11-02-macos.md)). Before TestFlight: the disk image through
    Gatekeeper, the Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in
    WKWebView, a Whisper and a Tesseract job, and the interface in WebKit at the sizes CI does not
    try.
-3. **Economy mode's loose ends**, a shipped feature: reading OpenAI's batch answers in a live run
+4. **Economy mode's loose ends**, a shipped feature: reading OpenAI's batch answers in a live run
    (on 3 November it had answered none after 35 minutes); deleting the files a batch leaves in
    the user's OpenAI and Mistral storage once its answers are collected (Mistral's inline batches
    leave their requests as a file too, 951 KB for two pages); then Gemini batches through a JSONL
    file, to lift the 20 MB inline limit, several pages per call in economy mode, and Voxtral
    transcription in batches once its format is documented
    ([live runs](decisions/2026-11-03-live-runs.md)).
-4. **Source-linked review, first step
+5. **Source-linked review, first step
    ([#84](https://github.com/fmadore/Kalamu/issues/84))**: Tesseract's words and Mistral OCR's
    estimated lines drawn over the scan, each opening its text, with the page as a fallback where
    a provider returns none. Kalamu already keeps these boxes for ALTO and the searchable PDF.
-5. **What is left of the research workflows**, below.
+6. **What is left of the research workflows**, below.
 
 ### What is left of the research workflows
 
@@ -474,8 +509,7 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.3.0 is the version there now, and 1.4.0
-is submitted next.
+in [microsoft-store.md](microsoft-store.md); 1.5.0 is the latest sent.
 
 ## Toward the Mac App Store
 

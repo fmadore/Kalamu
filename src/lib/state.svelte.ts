@@ -21,7 +21,7 @@ import type { Term } from './glossary.js';
 import type { Example } from './workflows.js';
 import type { QueueFilter } from './queue.js';
 import { messages, resolveLocale, setLocale, type Locale } from './i18n/index.js';
-import { api, notify, openUrl } from './tauri.js';
+import { api, ask, notify, openUrl } from './tauri.js';
 
 /** A project New job was opened from: the job it starts is tied to the project's documents. */
 export interface FromProject {
@@ -149,8 +149,66 @@ export const app = $state({
 	locale: 'en' as Locale
 });
 
+let dialogs = 0;
+
+/** A dialog opened over the window: until it closes, the window's own shortcuts wait. */
+export function holdShortcuts(): () => void {
+	dialogs++;
+	return () => {
+		dialogs--;
+	};
+}
+
+/** Whether a dialog is open, so a shortcut of the screen behind it does nothing. */
+export function shortcutsHeld(): boolean {
+	return dialogs > 0;
+}
+
+/** Work on screen that is not saved yet: a correction, a prompt, a workflow. */
+export interface Draft {
+	/** Whether it differs from what was opened. */
+	dirty: () => boolean;
+	/** Drops it, once the researcher has agreed to. */
+	discard: () => void;
+}
+
+const drafts = new Set<Draft>();
+let asking: Promise<boolean> | null = null;
+
+/** Keeps a draft from being dropped unasked while it is on screen; the function returned lets
+ * it go, for a component to call as it unmounts. */
+export function guardDraft(draft: Draft): () => void {
+	drafts.add(draft);
+	return () => {
+		drafts.delete(draft);
+	};
+}
+
+/** Does `then` at once when no draft holds changes; otherwise asks first, and drops the drafts
+ * before doing it only if the researcher agrees. Leaving the screen and turning to another
+ * piece in it both go through here, so no way out loses a draft silently. */
+export function leaveThen(then: () => void): void {
+	const dirty = [...drafts].filter((d) => d.dirty());
+	if (dirty.length === 0) {
+		then();
+		return;
+	}
+	const m = messages();
+	// A second way out tried while the question is up waits for the same answer.
+	asking ??= ask(m.common.unsaved, { ok: m.common.discardChanges, cancel: m.common.keepEditing })
+		.catch(() => false)
+		.finally(() => (asking = null));
+	void asking.then((discard) => {
+		if (!discard) return;
+		dirty.forEach((d) => d.discard());
+		then();
+	});
+}
+
 export function go(view: View): void {
-	app.view = view;
+	leaveThen(() => {
+		app.view = view;
+	});
 }
 
 /** Puts the interface in the language the settings ask for, the tray menu included. */
@@ -351,11 +409,14 @@ function updateProgressDisplays(): void {
 		.catch(() => undefined);
 }
 
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Shows a message for four seconds from the last time it was shown, even when it is the same
+ * message again. */
 export function toast(message: string): void {
 	app.toast = message;
-	setTimeout(() => {
-		if (app.toast === message) app.toast = null;
-	}, 4000);
+	clearTimeout(toastTimer);
+	toastTimer = setTimeout(() => (app.toast = null), 4000);
 }
 
 /** Open a web page in the default browser, and say so when it cannot be opened. */

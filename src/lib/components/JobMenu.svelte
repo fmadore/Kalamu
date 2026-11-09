@@ -8,7 +8,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { deleteJob } from '#lib/jobActions.svelte.js';
-	import { toast } from '#lib/state.svelte.js';
+	import { refreshProjects, toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -77,6 +77,8 @@
 		try {
 			await api.linkJob(p.project.id, job.id, null);
 			toast(m.shell.addedTo(p.project.name));
+			// The sidebar counts each project's documents: this one has more.
+			void refreshProjects();
 		} catch (e) {
 			toast(describeError(e, m));
 		}
@@ -177,10 +179,13 @@
 		text-align: left;
 		cursor: pointer;
 	}
-	button:hover:not(:disabled),
-	button:focus-visible {
+	button:hover:not(:disabled) {
 		background: var(--wash);
-		outline: none;
+	}
+	/* The keyboard's place, told apart from the pointer's: the app's focus ring, inside the row. */
+	button:focus-visible {
+		outline: var(--focus-width) solid var(--focus);
+		outline-offset: calc(-1 * var(--focus-width));
 	}
 	button:disabled {
 		color: var(--text-faint);

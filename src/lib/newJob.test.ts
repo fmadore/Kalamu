@@ -13,9 +13,12 @@ import {
 	dictionaryNames,
 	draftsOf,
 	followingAnalysis,
+	forgetForm,
 	formPipeline,
+	formToOpen,
 	inputOf,
 	jobSettings,
+	keepForm,
 	mergeDefault,
 	mergeModelsFor,
 	modelInfo,
@@ -33,6 +36,7 @@ import {
 	taskOf,
 	togetherOf,
 	toRequest,
+	type NewJobForm,
 	warningText
 } from './newJob.js';
 
@@ -348,5 +352,50 @@ describe('the New job form as a pipeline', () => {
 			kind: 'beside_sources'
 		});
 		expect(none.formats).toEqual(rule('analysis').formats.slice(0, 1));
+	});
+});
+
+describe('the New job form kept between visits', () => {
+	const form: NewJobForm = {
+		mode: 'analysis',
+		files: [],
+		frozen: false,
+		project: undefined,
+		languageMode: 'auto',
+		languages: [],
+		lineBreaks: 'running_text',
+		pace: 'fast',
+		drafts: [],
+		sample: false,
+		samplePages: 3,
+		together: 'one',
+		togetherPages: 4,
+		formats: ['markdown'],
+		destination: { kind: 'beside_sources' },
+		name: 'Letters',
+		suggested: '',
+		thenPreset: null,
+		thenCheck: true
+	};
+
+	it('comes back when New job opens plainly, until forgotten', () => {
+		keepForm(form);
+		expect(formToOpen({})).toBe(form);
+		expect(formToOpen({})).toBe(form);
+		forgetForm();
+		expect(formToOpen({})).toBeNull();
+	});
+
+	it('gives way to anything new to start from, and does not come back after it', () => {
+		for (const opening of [
+			{ task: 'analysis' as const },
+			{ paths: ['a.pdf'] },
+			{ sources: [] },
+			{ project: { id: 'p', name: 'Project' } }
+		]) {
+			keepForm(form);
+			expect(formToOpen(opening)).toBeNull();
+			expect(formToOpen({})).toBeNull();
+		}
 	});
 });

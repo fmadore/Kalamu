@@ -179,9 +179,14 @@
 		font-size: var(--type-sm);
 		text-align: left;
 	}
-	button:hover:not(:disabled),
-	button:focus-visible {
+	button:hover:not(:disabled) {
 		background: var(--wash);
+		color: var(--text-bright);
+	}
+	/* The keyboard's place, told apart from the pointer's: the app's focus ring, inside the row. */
+	button:focus-visible {
+		outline: var(--focus-width) solid var(--focus);
+		outline-offset: calc(-1 * var(--focus-width));
 		color: var(--text-bright);
 	}
 	button:disabled {

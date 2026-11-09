@@ -24,7 +24,7 @@
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
-	import { caretTop, level, placeInText, reveal } from '#lib/caret.js';
+	import { caretTop, growWithText, level, placeInText, reveal } from '#lib/caret.js';
 	import { Comparison, shownText, witnessesOf, witnessName } from '#lib/compare.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { shifted } from '#lib/platform.js';
@@ -32,7 +32,7 @@
 	import { layout, Review } from '#lib/review.svelte.js';
 	import { ReviewSearch } from '#lib/reviewSearch.svelte.js';
 	import { describeScore } from '#lib/scores.js';
-	import type { ReviewFind } from '#lib/state.svelte.js';
+	import { guardDraft, leaveThen, shortcutsHeld, type ReviewFind } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -59,7 +59,8 @@
 		const at = start;
 		if (at !== undefined) untrack(() => goTo(at));
 	});
-	let editing = $state<{ setupId: string; text: string } | null>(null);
+	/** The text being corrected, and the text it was opened on, to tell whether it changed. */
+	let editing = $state<{ setupId: string; text: string; from: string } | null>(null);
 	let showDiff = $state(true);
 	let spans = $state<Record<string, DiffSpan[]>>({});
 	/** The difference whose readings are open over the text. Pinned once clicked or stepped to, it
@@ -178,7 +179,7 @@
 	 * that line where it stood on screen. */
 	async function correctHere(setupId: string) {
 		const place = placeInText(textPane, base);
-		editing = { setupId, text: base };
+		editing = { setupId, text: base, from: base };
 		if (!place) return;
 		await tick();
 		const pane = textPane;
@@ -268,11 +269,14 @@
 			void save(first, lead.corrected_text, !lead.reviewed);
 	}
 
+	/** Turns to another piece, asking first when a correction holds changes. */
 	function goTo(i: number) {
-		index = i;
-		editing = null;
-		hide();
-		stepped = null;
+		leaveThen(() => {
+			index = i;
+			editing = null;
+			hide();
+			stepped = null;
+		});
 	}
 
 	function step(delta: number) {
@@ -281,7 +285,7 @@
 	}
 
 	function onKey(e: KeyboardEvent) {
-		if ((e.target as HTMLElement).closest('input, textarea, select')) return;
+		if (shortcutsHeld() || (e.target as HTMLElement).closest('input, textarea, select')) return;
 		if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'f' && !editing) {
 			e.preventDefault();
 			stepEntry(e.shiftKey ? -1 : 1);
@@ -298,6 +302,10 @@
 
 	onMount(() => {
 		void review.load();
+		return guardDraft({
+			dirty: () => editing !== null && editing.text !== editing.from,
+			discard: () => (editing = null)
+		});
 	});
 </script>
 
@@ -315,7 +323,12 @@
 		class="pages"
 		aria-label={m.review.title}
 		value={index}
-		onchange={(e) => goTo(Number(e.currentTarget.value))}
+		onchange={(e) => {
+			const list = e.currentTarget;
+			goTo(Number(list.value));
+			// Kept on the piece shown while the researcher is asked about a correction.
+			list.value = String(index);
+		}}
 	>
 		{#each indices as i (i)}
 			{@const v = views.find((x) => x.index === i)}
@@ -512,8 +525,11 @@
 				? () => save(target, null, kept?.reviewed ?? false)
 				: undefined}
 		>
-			<textarea class="editor" bind:value={editing.text} aria-label="{m.review.edit} {target.label}"
-			></textarea>
+			<textarea
+				class="editor"
+				bind:value={editing.text}
+				aria-label="{m.review.edit} {target.label}"
+				{@attach growWithText}></textarea>
 		</CorrectionEditor>
 	{:else if !lead || (lead.ai_text === null && lead.status !== 'failed')}
 		<p class="muted">{m.review.notDone}</p>
@@ -592,7 +608,10 @@
 			viewOf={viewFor}
 			answered={(v) => v.ai_text !== null}
 			corrected={(v) => v.corrected_text != null}
-			onedit={(s, v) => (editing = { setupId: s.id, text: shownText(v) })}
+			onedit={(s, v) => {
+				const text = shownText(v);
+				editing = { setupId: s.id, text, from: text };
+			}}
 			onreviewed={(s, v, on) => save(s, v.corrected_text, on)}
 		/>
 	{/if}
@@ -648,7 +667,8 @@
 		color: var(--warn-text);
 		font-size: var(--type-sm);
 	}
-	/* As tall as its text, so the pane scrolls it as it scrolls the text read. */
+	/* As tall as its text, so the pane scrolls it as it scrolls the text read; where the webview
+	   cannot size it so, `growWithText` does. */
 	.editor {
 		width: 100%;
 		min-height: 24rem;

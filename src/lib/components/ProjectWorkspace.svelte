@@ -18,7 +18,7 @@
 	import { changed, type Draft } from '#lib/described.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { lastSearch } from '#lib/projectSearch.js';
+	import { backToSearch } from '#lib/projectSearch.js';
 	import { go, refreshProjects, toast } from '#lib/state.svelte.js';
 	import { api, ask, listenWhileMounted, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
 
@@ -47,7 +47,7 @@
 	});
 	// Coming back from a review opened by the search shows the search again.
 	// svelte-ignore state_referenced_locally
-	const searched = lastSearch(projectId) !== undefined;
+	const searched = backToSearch(projectId);
 	// svelte-ignore state_referenced_locally
 	let pane = $state<'documents' | 'search' | 'queue' | 'dictionary' | 'activity'>(
 		opening ?? (searched ? 'search' : 'documents')
@@ -131,15 +131,16 @@
 		show();
 	}
 
-	/** Files chosen, dropped or found in a folder, read and added as documents. */
-	async function addPaths(paths: string[]) {
-		if (paths.length === 0) return;
+	/** Files chosen, dropped or found in a folder, read and added as documents; `refused` files
+	 * were already found to be of no kind Kalamu reads. */
+	async function addPaths(paths: string[], refused = 0) {
+		if (paths.length === 0 && refused === 0) return;
 		adding = true;
 		action.error = null;
 		try {
-			const inspected = await api.inspectFiles(paths);
+			const inspected = paths.length > 0 ? await api.inspectFiles(paths) : [];
 			const sources = inspected.map((f) => f.source).filter((s): s is SourceFile => !!s);
-			const unread = inspected.length - sources.length;
+			const unread = inspected.length - sources.length + refused;
 			if (sources.length > 0) {
 				await api.addDocuments(projectId, sources, collectionId ?? null);
 				toast(m.projects.addedFiles(sources.length));
@@ -153,20 +154,33 @@
 		}
 	}
 
+	/** Files and folders chosen or dropped, a folder opened to the files in it of every kind a
+	 * task reads (documents and images, recordings and videos), then added. */
+	async function addExpanded(paths: string[]) {
+		if (paths.length === 0) return;
+		try {
+			const [texts, recordings] = await Promise.all([
+				api.expandPaths(paths, 'analysis'),
+				api.expandPaths(paths, 'audio_transcription')
+			]);
+			// A file neither reads is said to be left out; a folder with nothing in it is not.
+			const refused = texts.refused.filter(
+				(r) => !r.folder && recordings.refused.some((o) => o.path === r.path)
+			).length;
+			await addPaths([...new Set([...texts.paths, ...recordings.paths])], refused);
+		} catch (e) {
+			action.fail(e);
+		}
+	}
+
 	async function addFolder() {
 		const folder = await pickFolder();
-		if (!folder) return;
-		// Every kind of file a task reads: documents and images, recordings and videos.
-		const [texts, recordings] = await Promise.all([
-			api.expandPaths([folder], 'analysis'),
-			api.expandPaths([folder], 'audio_transcription')
-		]);
-		await addPaths([...new Set([...texts.paths, ...recordings.paths])]);
+		if (folder) await addExpanded([folder]);
 	}
 
 	onMount(() => {
 		void load();
-		return listenWhileMounted(() => onDrop((paths) => void addPaths(paths)));
+		return listenWhileMounted(() => onDrop((paths) => void addExpanded(paths)));
 	});
 </script>
 

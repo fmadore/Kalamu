@@ -128,9 +128,13 @@
 		text-align: left;
 		cursor: pointer;
 	}
-	.item:hover:not(:disabled),
-	.item:focus-visible {
+	.item:hover:not(:disabled) {
 		background: var(--wash);
+	}
+	/* The keyboard's place, told apart from the pointer's: the app's focus ring, inside the row. */
+	.item:focus-visible {
+		outline: var(--focus-width) solid var(--focus);
+		outline-offset: calc(-1 * var(--focus-width));
 	}
 	.item :global(svg) {
 		flex: none;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import AllJobs from '#lib/components/AllJobs.svelte';
 	import AnalysisReview from '#lib/components/AnalysisReview.svelte';
 	import ContentsReview from '#lib/components/ContentsReview.svelte';
@@ -26,6 +27,7 @@
 		refreshKeys,
 		refreshOffline,
 		refreshWaiting,
+		shortcutsHeld,
 		type View
 	} from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
@@ -52,16 +54,25 @@
 	const SIDEBAR_KEY = 'kalamu.sidebar.collapsed';
 	let collapsed = $state(recall(SIDEBAR_KEY, (v) => v === 1, false));
 	$effect(() => keep(SIDEBAR_KEY, collapsed ? 1 : 0));
+	// A narrow window sets the sidebar above the work, folded to one row until it is unfolded
+	// there; the choice made in a wide window is kept for when the window widens again.
+	const narrow = new MediaQuery('max-width: 760px');
+	let narrowOpen = $state(false);
+	const folded = $derived(narrow.current ? !narrowOpen : collapsed);
+	function fold(to: boolean) {
+		if (narrow.current) narrowOpen = !to;
+		else collapsed = to;
+	}
 
 	function onKey(e: KeyboardEvent) {
-		if (!primary(e) || e.altKey || e.shiftKey) return;
+		if (!primary(e) || e.altKey || e.shiftKey || shortcutsHeld()) return;
 		const key = e.key.toLowerCase();
 		if (key === 'n') {
 			e.preventDefault();
 			go({ name: 'new' });
 		} else if (key === 'b') {
 			e.preventDefault();
-			collapsed = !collapsed;
+			fold(!folded);
 		}
 	}
 
@@ -111,8 +122,8 @@
 
 <!-- Every screen takes its text once, when drawn: a change of language draws them again. -->
 {#key app.locale}
-	<div class="shell" class:collapsed>
-		<Sidebar bind:collapsed />
+	<div class="shell" class:collapsed={folded}>
+		<Sidebar bind:collapsed={() => folded, fold} />
 
 		<main>
 			{#if loadError}
@@ -120,7 +131,10 @@
 			{:else if !app.catalog || !app.settings}
 				<div class="sheet"><p class="muted">{m.common.loading}</p></div>
 			{:else if app.view.name === 'new'}
-				<NewJob opening={app.view} />
+				<!-- Opened afresh each time it is asked for: with the form left, or blank. -->
+				{#key app.view}
+					<NewJob opening={app.view} />
+				{/key}
 			{:else if app.view.name === 'jobs'}
 				<JobsView jobId={app.view.jobId} />
 			{:else if app.view.name === 'allJobs'}

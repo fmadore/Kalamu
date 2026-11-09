@@ -47,6 +47,9 @@
 		pagesPerCallOf,
 		providerDefault,
 		dictionaryNames,
+		forgetForm,
+		formToOpen,
+		keepForm,
 		readersOf,
 		readsKind,
 		rulesFor,
@@ -66,6 +69,7 @@
 		missingLanguageData,
 		refreshJobs,
 		refreshOffline,
+		shortcutsHeld,
 		toast,
 		type FromProject
 	} from '#lib/state.svelte.js';
@@ -77,14 +81,23 @@
 	} = $props();
 
 	const m = messages();
+	/** The form left here earlier, given back when New job opens with nothing new to start. */
+	// svelte-ignore state_referenced_locally
+	const kept = formToOpen(opening);
+	/** Where the form came from: text frozen from results, a project; kept with the form. */
+	// svelte-ignore state_referenced_locally
+	const from = {
+		frozen: kept ? kept.frozen : opening.sources !== undefined,
+		project: kept ? kept.project : opening.project
+	};
 
-	let mode = $state<Mode>('text_extraction');
+	let mode = $state<Mode>(kept?.mode ?? 'text_extraction');
 	const task = $derived(taskOf(mode));
 	/** What every model must read: YouTube links for videos, else anything the task takes. */
 	const input = $derived(inputOf(mode));
 	/** The engine's rules for the task: which files, models and formats suit it. */
 	const rule = $derived(rulesFor(app.rules, task));
-	let files = $state<InspectedFile[]>([]);
+	let files = $state<InspectedFile[]>(kept?.files ?? []);
 	let inspecting = $state(false);
 	/**
 	 * What the last files added gave that the task does not read, the tasks that read it, and
@@ -96,22 +109,22 @@
 		move: string[];
 		youtube: boolean;
 	} | null>(null);
-	let languageMode = $state<'auto' | 'explicit'>('auto');
-	let languages = $state<string[]>([]);
-	let lineBreaks = $state<LineBreaks>('running_text');
-	let pace = $state<Pace>('fast');
-	let drafts = $state<Draft[]>([]);
+	let languageMode = $state<'auto' | 'explicit'>(kept?.languageMode ?? 'auto');
+	let languages = $state<string[]>(kept?.languages ?? []);
+	let lineBreaks = $state<LineBreaks>(kept?.lineBreaks ?? 'running_text');
+	let pace = $state<Pace>(kept?.pace ?? 'fast');
+	let drafts = $state<Draft[]>(kept?.drafts ?? []);
 	let presets = $state<Preset[]>([]);
-	let sample = $state(false);
-	let samplePages = $state(3);
+	let sample = $state(kept?.sample ?? false);
+	let samplePages = $state(kept?.samplePages ?? 3);
 	/** How many pages of a PDF go in one call: one, several, or as many as fit. */
-	let together = $state<Together>('one');
-	let togetherPages = $state(4);
-	let formats = $state<ExportFormat[]>([]);
-	let destination = $state<OutputDestination>({ kind: 'beside_sources' });
-	let name = $state('');
+	let together = $state<Together>(kept?.together ?? 'one');
+	let togetherPages = $state(kept?.togetherPages ?? 4);
+	let formats = $state<ExportFormat[]>(kept?.formats ?? []);
+	let destination = $state<OutputDestination>(kept?.destination ?? { kind: 'beside_sources' });
+	let name = $state(kept?.name ?? '');
 	/** The name Kalamu suggested from the files, as long as the field still holds it. */
-	let suggested = $state('');
+	let suggested = $state(kept?.suggested ?? '');
 
 	/** Fills the name from the files, unless the researcher typed one of their own. */
 	function suggest(value: string) {
@@ -124,9 +137,8 @@
 	// first file left names the job, and no file leaves the field empty again.
 	$effect(() => {
 		if (!suggested || name !== suggested) return;
-		const frozen = opening.sources !== undefined;
-		if (suggestionFits(suggested, files, frozen)) return;
-		const next = files[0] ? nameOfFile(files[0], frozen) : '';
+		if (suggestionFits(suggested, files, from.frozen)) return;
+		const next = files[0] ? nameOfFile(files[0], from.frozen) : '';
 		name = next;
 		suggested = next;
 	});
@@ -138,8 +150,8 @@
 	/** The name being typed for a new pipeline, while saving one. */
 	let naming = $state<string | null>(null);
 	/** An analysis to run on the text once it is read (and checked), or none. */
-	let thenPreset = $state<string | null>(null);
-	let thenCheck = $state(true);
+	let thenPreset = $state<string | null>(kept?.thenPreset ?? null);
+	let thenCheck = $state(kept?.thenCheck ?? true);
 	let analysisPresets = $state<Preset[]>([]);
 
 	const catalog = $derived(app.catalog!);
@@ -202,10 +214,17 @@
 		await addPaths(move);
 	}
 
+	/** Raised by each task picked, so the prompts of a task picked earlier and read later are
+	 * not put under the one picked since. */
+	let taskTicket = 0;
+
 	async function loadTask(next: Mode) {
 		if (next !== mode) setAside = null;
 		mode = next;
-		presets = await api.listPresets(task);
+		const ticket = ++taskTicket;
+		const listed = await api.listPresets(task);
+		if (ticket !== taskTicket) return;
+		presets = listed;
 		drafts = [newDraft(catalog, rule, presets[0]?.id ?? null, hasKey, [], input)];
 		// A table of contents reads best as a document and a spreadsheet.
 		formats =
@@ -285,6 +304,8 @@
 	);
 
 	let estimateTimer: ReturnType<typeof setTimeout> | null = null;
+	/** Raised by each change to what is estimated, so an older, slower answer is dropped. */
+	let estimateTicket = 0;
 	$effect(() => {
 		const req = {
 			task,
@@ -293,6 +314,7 @@
 			sample_pages: sample && paged ? samplePages : null
 		};
 		if (estimateTimer) clearTimeout(estimateTimer);
+		const ticket = ++estimateTicket;
 		if (req.sources.length === 0 || req.setups.length === 0) {
 			estimate = null;
 			return;
@@ -300,8 +322,12 @@
 		estimateTimer = setTimeout(() => {
 			api
 				.estimateCost(req)
-				.then((e) => (estimate = e))
-				.catch(() => (estimate = null));
+				.then((e) => {
+					if (ticket === estimateTicket) estimate = e;
+				})
+				.catch(() => {
+					if (ticket === estimateTicket) estimate = null;
+				});
 		}, 250);
 	});
 
@@ -446,15 +472,13 @@
 			},
 			name: jobName,
 			sources: $state.snapshot(sources),
-			project: opening.project?.id ?? null,
-			collection: opening.project?.collectionId ?? null
+			project: from.project?.id ?? null,
+			collection: from.project?.collectionId ?? null
 		});
 		const first = view.steps[0]?.job?.id;
 		if (first) liveJob(first);
 		await refreshJobs();
-		files = [];
-		name = '';
-		suggested = '';
+		started();
 		go(first ? { name: 'jobs', jobId: first } : { name: 'workflows', runId: view.run.id });
 	}
 
@@ -489,7 +513,7 @@
 			liveJob(job.id);
 			// Started from a project: its files are the project's documents. The job runs even
 			// if this fails, and can be added from the project later.
-			const project = opening.project;
+			const project = from.project;
 			if (project) {
 				await api
 					.linkJob(project.id, job.id, project.collectionId ?? null)
@@ -497,9 +521,7 @@
 			}
 			await api.startJob(job.id);
 			await refreshJobs();
-			files = [];
-			name = '';
-			suggested = '';
+			started();
 			go({ name: 'jobs', jobId: job.id });
 		} catch (e) {
 			error = describeError(e, m);
@@ -508,8 +530,49 @@
 		}
 	}
 
+	/** Set once the job has started: the form is not kept for next time. */
+	let done = false;
+
+	function started() {
+		done = true;
+		forgetForm();
+	}
+
+	/** Empties the form, files and all, for a job of another kind. */
+	function startOver() {
+		done = true;
+		forgetForm();
+		go({ name: 'new' });
+	}
+
+	// The form is kept as it changes, so leaving New job (for Settings, say) loses nothing.
+	$effect(() => {
+		const form = {
+			mode,
+			files: $state.snapshot(files),
+			frozen: from.frozen,
+			project: from.project,
+			languageMode,
+			languages: $state.snapshot(languages),
+			lineBreaks,
+			pace,
+			drafts: $state.snapshot(drafts),
+			sample,
+			samplePages,
+			together,
+			togetherPages,
+			formats: $state.snapshot(formats),
+			destination: $state.snapshot(destination),
+			name,
+			suggested,
+			thenPreset,
+			thenCheck
+		};
+		if (!done) keepForm(form);
+	});
+
 	function onKey(e: KeyboardEvent) {
-		if (primary(e) && e.key === 'Enter' && ready && !starting) {
+		if (primary(e) && e.key === 'Enter' && ready && !starting && !shortcutsHeld()) {
 			e.preventDefault();
 			void start();
 		}
@@ -519,21 +582,32 @@
 		// The OCR models' seconds a page and device change as jobs run: read them again.
 		void refreshOffline();
 		// Opened from a finished job's "Summarise" button: its results are the files.
-		void loadTask(opening.task ?? mode).then(() => {
-			// Text frozen from a job's corrected results, or an item's pages cut out of its
-			// document: already inspected, nothing to do.
-			if (opening.sources) {
-				files = opening.sources.map((source) => ({
-					path: source.path,
-					source,
-					warnings: [],
-					error: null,
-					pieces: null
-				}));
-				if (files[0]) suggest(nameOfFile(files[0], true));
-			}
-			return opening.paths ? addPaths(opening.paths) : undefined;
-		});
+		const fail = (e: unknown) => (error = describeError(e, m));
+		// Coming back to the form left here: only the task's prompts are read again.
+		if (kept) {
+			api
+				.listPresets(task)
+				.then((p) => (presets = p))
+				.catch(fail);
+		} else {
+			loadTask(opening.task ?? mode)
+				.then(() => {
+					// Text frozen from a job's corrected results, or an item's pages cut out of its
+					// document: already inspected, nothing to do.
+					if (opening.sources) {
+						files = opening.sources.map((source) => ({
+							path: source.path,
+							source,
+							warnings: [],
+							error: null,
+							pieces: null
+						}));
+						if (files[0]) suggest(nameOfFile(files[0], true));
+					}
+					return opening.paths ? addPaths(opening.paths) : undefined;
+				})
+				.catch(fail);
+		}
 		api
 			.listPipelines()
 			.then((p) => (pipelines = p))
@@ -553,10 +627,15 @@
 		<h1>{m.newJob.title}</h1>
 		<p class="lede">{m.newJob.lede}</p>
 	</div>
+	{#if files.length > 0 || name}
+		<button class="btn ghost" title={m.newJob.startOverHint} onclick={startOver}
+			>{m.newJob.startOver}</button
+		>
+	{/if}
 </header>
-{#if opening.project}
+{#if from.project}
 	<p class="notice from-project">
-		<Icon name="project" size={14} />{m.projects.fromProject(opening.project.name)}
+		<Icon name="project" size={14} />{m.projects.fromProject(from.project.name)}
 	</p>
 {/if}
 
@@ -570,7 +649,7 @@
 				{mode}
 				onpick={(t) => {
 					picked++;
-					void loadTask(t);
+					loadTask(t).catch((e: unknown) => (error = describeError(e, m)));
 				}}
 			/>
 			<PipelineDiagram
@@ -626,7 +705,10 @@
 				</div>
 				<div class="set-aside-actions">
 					{#each aside.readers as reader (reader)}
-						<button class="btn sm" title={set.insteadHint} onclick={() => void switchTo(reader)}
+						<button
+							class="btn sm"
+							title={set.insteadHint}
+							onclick={() => switchTo(reader).catch((e: unknown) => (error = describeError(e, m)))}
 							><Icon name={taskOf(reader)} size={14} />{set.instead(m.task[reader])}</button
 						>
 					{/each}
@@ -645,9 +727,9 @@
 			{task}
 			{presets}
 			{input}
-			projectNames={opening.project
+			projectNames={from.project
 				? () =>
-						api.dictionaryView(opening.project!.id, null).then((view) => dictionaryNames(view.rows))
+						api.dictionaryView(from.project!.id, null).then((view) => dictionaryNames(view.rows))
 				: undefined}
 		/>
 

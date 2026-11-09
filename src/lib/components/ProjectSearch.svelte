@@ -26,6 +26,7 @@
 		hitWords,
 		keepSearch,
 		lastSearch,
+		leaveForMatch,
 		reviewFind,
 		searchableQuery
 	} from '#lib/projectSearch.js';
@@ -54,21 +55,27 @@
 	const tasks = $derived(request.generated ? [...TEXT_TASKS, ...GENERATED_TASKS] : TEXT_TASKS);
 	const ready = $derived(searchableQuery(request.query, request.mode));
 
+	/** Raised by each search, so only the newest one's answer, failure or end is shown. */
+	let ticket = 0;
+
 	async function run() {
 		if (!ready) return;
 		const asked = $state.snapshot(request);
+		const mine = ++ticket;
 		busy = true;
 		error = null;
 		try {
-			view = await api.projectSearch(projectId, asked);
-			keepSearch(projectId, asked, view);
+			const found = await api.projectSearch(projectId, asked);
+			if (mine !== ticket) return;
+			view = found;
+			keepSearch(projectId, asked, found);
 			preparing = null;
 		} catch (e) {
 			// A newer search replaced this one; its answer comes on its own.
-			if ((e as { id?: string })?.id === 'search.stopped') return;
+			if (mine !== ticket || (e as { id?: string })?.id === 'search.stopped') return;
 			error = describeError(e, m);
 		} finally {
-			busy = false;
+			if (mine === ticket) busy = false;
 		}
 	}
 
@@ -88,6 +95,7 @@
 	}
 
 	function open(result: ResultHits, hit: Hit) {
+		leaveForMatch(projectId);
 		go({
 			name: 'review',
 			jobId: result.job_id,
