@@ -5,12 +5,12 @@
 use kalamu_core::{
     ApiKey, BatchContext, BatchProgress, ProcessOutput, ProcessRequest, ProviderError, Task,
 };
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use super::{Mistral, chat};
 use crate::analysis;
-use crate::batch::{self, Answer};
-use crate::http::send_json;
+use crate::batch::{self, Answer, Body};
+use crate::http::{send_json, with_json_body};
 
 impl Mistral {
     pub(super) async fn submit(
@@ -21,37 +21,32 @@ impl Mistral {
         let Some((_, first)) = requests.first() else {
             return Err(ProviderError::InvalidRequest("an empty batch".into()));
         };
-        let (endpoint, bodies) = match first.task {
-            Task::TextExtraction => (
-                "/v1/ocr",
-                requests
-                    .iter()
-                    .map(|(id, r)| json!({ "custom_id": id, "body": Self::ocr_body(r) }))
-                    .collect::<Vec<_>>(),
-            ),
-            Task::Analysis | Task::Contents | Task::TextCorrection => {
-                let mut bodies = Vec::new();
-                for (id, request) in requests {
-                    let fields = analysis::fields(request)?;
-                    bodies.push(json!({ "custom_id": id, "body": chat::body(request, fields) }));
-                }
-                ("/v1/chat/completions", bodies)
-            }
+        let endpoint = match first.task {
+            Task::TextExtraction => "/v1/ocr",
+            Task::Analysis | Task::Contents | Task::TextCorrection => "/v1/chat/completions",
             Task::AudioTranscription => {
                 return Err(ProviderError::Unsupported("batched transcription".into()));
             }
         };
-        let created = send_json(
+        let head = format!(
+            r#"{{"endpoint":{},"model":{},"requests":["#,
+            batch::quoted(endpoint),
+            batch::quoted(first.model)
+        );
+        let mut body = Body::new(&head, requests);
+        for (id, request) in requests {
+            let item = match first.task {
+                Task::TextExtraction => Self::ocr_body(request),
+                _ => chat::body(request, analysis::fields(request)?),
+            };
+            body.item(&[("body", &item), ("custom_id", &Value::from(id.as_str()))])?;
+        }
+        let created = send_json(with_json_body(
             self.client
                 .post(format!("{}/batch/jobs", self.base_url))
-                .bearer_auth(key.expose())
-                .json(&json!({
-                    "endpoint": endpoint,
-                    "model": first.model,
-                    "requests": bodies,
-                    "timeout_hours": 24,
-                })),
-        )
+                .bearer_auth(key.expose()),
+            body.finish(r#"],"timeout_hours":24}"#),
+        ))
         .await?;
         created
             .get("id")
@@ -153,6 +148,8 @@ fn read(context: BatchContext<'_>, body: &Value) -> Result<ProcessOutput, Provid
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
 
     #[test]
