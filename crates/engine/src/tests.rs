@@ -23,6 +23,7 @@ mod attention;
 mod batch;
 mod contents;
 mod large;
+mod later;
 mod pages;
 mod snapshot;
 mod sources;
@@ -776,6 +777,8 @@ async fn comparison_jobs_write_one_set_of_files_per_setup_and_score_them() {
             updated_at: Timestamp::now(),
         })
         .unwrap_or_else(|e| panic!("{e}"));
+    // The files are written later, and before they are listed.
+    f.engine.outputs(job.id).unwrap_or_else(|e| panic!("{e}"));
     let flash = std::fs::read_to_string(f.dir.path().join("lettre.flash.txt")).unwrap_or_default();
     assert!(
         flash.contains("pro page 1"),
@@ -1172,6 +1175,7 @@ async fn speaker_names_rename_the_review_and_the_files_but_not_the_output() {
             },
         )
         .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.engine.write_outdated().ok(), Some(0));
     let txt = std::fs::read_to_string(f.dir.path().join("entretien.txt")).unwrap_or_default();
     assert!(txt.contains("Imam Traoré: page 1"), "{txt}");
     let provenance: serde_json::Value = serde_json::from_slice(
@@ -1268,6 +1272,7 @@ async fn an_analysis_reads_each_document_once_and_corrections_replace_its_answer
             updated_at: Timestamp::now(),
         })
         .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.engine.write_outdated().ok(), Some(0));
     let csv =
         std::fs::read_to_string(f.dir.path().join("bulletin.analysis.csv")).unwrap_or_default();
     assert!(csv.contains("Bamako; Ségou"), "{csv}");

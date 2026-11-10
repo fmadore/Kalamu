@@ -206,9 +206,9 @@ export const api = {
 	},
 	sourceText: (jobId: string, sourceId: string) =>
 		invoke<string>('source_text', { jobId, sourceId }),
-	saveCorrection: (correction: Correction) => invoke<string[]>('save_correction', { correction }),
+	saveCorrection: (correction: Correction) => invoke<void>('save_correction', { correction }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
-		invoke<string[]>('save_speaker_names', { jobId, names }),
+		invoke<void>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>
 		invoke<string[]>('export_source', { jobId, setupId, sourceId }),
 	compareSource: (jobId: string, sourceId: string) =>

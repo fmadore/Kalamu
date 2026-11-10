@@ -282,8 +282,8 @@ async fn large_job() {
     );
 }
 
-/// One correction in a long document: every output of the source is written again, the
-/// searchable copy from the whole original.
+/// Corrections in a long document: each save only stores and marks, and every output of the
+/// source is written again once afterwards, the searchable copy from the whole original.
 #[tokio::test]
 #[ignore = "a timing, not a check: run by hand before and after a change to exports"]
 async fn long_document_correction() {
@@ -343,9 +343,12 @@ async fn long_document_correction() {
             .unwrap_or_else(|e| panic!("{e}"));
     }
     eprintln!(
-        "save_correction in a {PAGES}-page document: {:.1} ms",
+        "save_correction in a {PAGES}-page document: {:.2} ms",
         ms(start) / f64::from(runs)
     );
+    let start = Instant::now();
+    assert_eq!(f.engine.write_outdated().ok(), Some(0));
+    eprintln!("its files written afterwards, once: {:.1} ms", ms(start));
 }
 
 /// Pruning the cache keeps every answer a job still refers to: a job read again after another

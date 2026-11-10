@@ -14,6 +14,7 @@ mod document;
 mod error;
 mod estimate;
 mod group;
+mod later;
 mod listen;
 mod output;
 mod piece;
@@ -30,7 +31,7 @@ mod workflow;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, OnceLock, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock, Weak};
 use std::time::Duration;
 
 use crate::control::lock;
@@ -84,6 +85,8 @@ pub struct EngineConfig {
     pub playback: Playback,
     /// Where frozen copies of corrected text are kept for later jobs to read.
     pub snapshots: PathBuf,
+    /// How long after a job's last correction or speakers' names its files are written again.
+    pub write_delay: Duration,
 }
 
 impl Default for EngineConfig {
@@ -98,6 +101,7 @@ impl Default for EngineConfig {
             listening_cache: std::env::temp_dir().join("kalamu-listening"),
             playback: Playback::default(),
             snapshots: std::env::temp_dir().join("kalamu-snapshots"),
+            write_delay: Duration::from_secs(3),
         }
     }
 }
@@ -120,6 +124,10 @@ pub struct Engine {
     /// The project documents a source is, named in its results' provenance; none until the app
     /// gives them.
     pub(crate) documents: OnceLock<Arc<dyn SourceDocuments>>,
+    /// Files out of date, written once the researcher stops saving.
+    pub(crate) later: Arc<later::Later>,
+    /// The engine itself, for the task that writes them.
+    pub(crate) me: Weak<Engine>,
 }
 
 impl Engine {
@@ -132,7 +140,7 @@ impl Engine {
         config: EngineConfig,
     ) -> Arc<Self> {
         let (events, _) = broadcast::channel(1024);
-        Arc::new(Self {
+        Arc::new_cyclic(|me| Self {
             store,
             providers,
             catalog: RwLock::new(Arc::new(catalog)),
@@ -144,6 +152,8 @@ impl Engine {
             workflows: Mutex::new(()),
             writing: Mutex::new(()),
             documents: OnceLock::new(),
+            later: Arc::default(),
+            me: me.clone(),
         })
     }
 
@@ -293,31 +303,27 @@ impl Engine {
             .fold(kalamu_media::DEFAULT_PIECE_MS, u64::min)
     }
 
-    /// Saves the user's correction or review mark for one piece and rewrites that source's
-    /// outputs so files on disk always match what the review view shows.
-    pub fn save_correction(&self, correction: Correction) -> Result<Vec<String>, EngineError> {
+    /// Saves the user's correction or review mark for one piece. Its source's files are
+    /// marked out of date with it and written once the researcher stops saving
+    /// ([`Engine::write_outdated`]), or sooner when they are listed or exported.
+    pub fn save_correction(&self, correction: Correction) -> Result<(), EngineError> {
         let mut correction = correction;
         correction.updated_at = Timestamp::now();
         self.store.put_correction(&correction)?;
-        let job = self.store.job(correction.job_id)?;
-        // The correction is kept whatever happens to the files: a format that cannot be written
-        // again (the scan has moved, say) is logged, and said when the files are asked for.
-        let (files, _) = self.write_each_output(&job, correction.setup_id, correction.source_id)?;
-        Ok(files)
+        self.write_later(correction.job_id);
+        Ok(())
     }
 
-    /// Saves the names given to one set-up's speakers in one recording and rewrites its outputs
-    /// with them.
+    /// Saves the names given to one set-up's speakers in one recording; its files are written
+    /// again with them as after a correction.
     pub fn save_speaker_names(
         &self,
         job_id: JobId,
         names: SpeakerNames,
-    ) -> Result<Vec<String>, EngineError> {
+    ) -> Result<(), EngineError> {
         self.store.put_speaker_names(job_id, &names)?;
-        let job = self.store.job(job_id)?;
-        // As for a correction: the names are kept whatever happens to the files.
-        let (files, _) = self.write_each_output(&job, names.setup_id, names.source_id)?;
-        Ok(files)
+        self.write_later(job_id);
+        Ok(())
     }
 
     /// Deletes the stored answers no job's pieces refer to any more, those of deleted jobs

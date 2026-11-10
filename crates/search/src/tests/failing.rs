@@ -2,7 +2,8 @@
 //! say so rather than count the documents as having nothing read.
 
 use kalamu_core::{
-    BatchRecord, CacheKey, Charge, JobSources, JobSummary, SetupId, SourceId, StoreError,
+    BatchRecord, CacheKey, Charge, JobSources, JobSummary, OutdatedFiles, SetupId, SourceId,
+    StoreError,
 };
 
 use super::*;
@@ -128,6 +129,14 @@ impl JobStore for Failing {
         source: SourceId,
     ) -> Result<Vec<SpeakerNames>, StoreError> {
         self.0.source_speaker_names(job, setup, source)
+    }
+
+    fn outdated_files(&self, job: Option<JobId>) -> Result<Vec<OutdatedFiles>, StoreError> {
+        self.0.outdated_files(job)
+    }
+
+    fn clear_outdated(&self, files: &OutdatedFiles) -> Result<(), StoreError> {
+        self.0.clear_outdated(files)
     }
 
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError> {

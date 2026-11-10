@@ -76,7 +76,7 @@ export class Review {
 	}
 
 	/** Stores a correction, or only whether a piece is reviewed, and reads the pieces again (the
-	 * result files are written again too). False when it failed, the error shown. */
+	 * result files are written again a few seconds later). False when it failed, the error shown. */
 	async save(c: {
 		setup: Setup;
 		index: number;

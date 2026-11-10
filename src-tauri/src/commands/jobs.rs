@@ -153,30 +153,38 @@ pub fn derived_state(
     Ok(state.engine.derived_states(id)?)
 }
 
-/// The text files a finished job wrote, to summarise them in a new job.
+/// The text files a finished job wrote, to summarise them in a new job. Files left out of date
+/// by corrections are written first, off the window's thread.
 #[tauri::command]
-pub fn job_text_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<String>> {
-    Ok(state.engine.text_outputs(id)?)
+pub async fn job_text_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<String>> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.text_outputs(id)?)).await
 }
 
-/// Every file a job wrote that is still on disk, for its page's "Written" list.
+/// Every file a job wrote that is still on disk, for its page's "Written" list. Files left out
+/// of date by corrections are written first, off the window's thread.
 #[tauri::command]
-pub fn job_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<String>> {
-    Ok(state.engine.outputs(id)?)
+pub async fn job_outputs(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<String>> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.outputs(id)?)).await
 }
 
 /// Opens a file the job wrote in the app the system has for it; JSON opens in the plain text
 /// editor every computer has (`platform`), as there is often no app for it. Only the job's own
 /// files, so the interface cannot open anything else on the computer.
 #[tauri::command]
-pub fn open_output(
+pub async fn open_output(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
     id: JobId,
     path: String,
 ) -> CmdResult<()> {
     use tauri_plugin_opener::OpenerExt;
-    if !state.engine.outputs(id)?.contains(&path) {
+    let engine = state.engine.clone();
+    if !off_thread(move || Ok(engine.outputs(id)?))
+        .await?
+        .contains(&path)
+    {
         return Err(AppError::new(id::OPEN, &path));
     }
     let with = path

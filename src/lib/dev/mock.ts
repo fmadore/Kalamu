@@ -622,7 +622,7 @@ export function installMock(): void {
 				return texts[0];
 			case 'save_speaker_names':
 				nameSpeakers((a.names as { names: Record<string, string> }).names);
-				return [];
+				return null;
 			case 'piece_audio':
 				// The tone stands in for a whole recording, the piece for a span of it.
 				toneUrl ??= URL.createObjectURL(new Blob([toneWav()], { type: 'audio/wav' }));
@@ -778,8 +778,9 @@ export function installMock(): void {
 					'C:\\Archives\\Bulletin\\bulletin-1957-06.pdf',
 					'C:\\Archives\\Letters\\lettre-gouverneur.jpg'
 				];
-			case 'job_text_outputs':
 			case 'save_correction':
+				return null;
+			case 'job_text_outputs':
 			case 'export_source':
 				return [];
 			default:

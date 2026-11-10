@@ -291,8 +291,8 @@ fn forward_progress(app: &tauri::App, engine: &Arc<Engine>, store: &Arc<SqliteSt
     });
 }
 
-/// Work left from the last close: workflow steps whose input became ready, and batches the
-/// providers still hold.
+/// Work left from the last close: workflow steps whose input became ready, files left out of
+/// date, and batches the providers still hold.
 fn resume(engine: &Arc<Engine>, waiting: Vec<JobId>) {
     // Workflow steps whose input became ready as the app closed: their jobs are made,
     // and wait for the researcher like any interrupted job. After subscribing, so a
@@ -300,6 +300,16 @@ fn resume(engine: &Arc<Engine>, waiting: Vec<JobId>) {
     if let Err(e) = engine.resume_runs() {
         tracing::warn!(error = %e, "workflow runs not resumed");
     }
+
+    // Files a crash or a failed write left out of date, written off the window's thread. One
+    // whose folder cannot be reached yet (a share, a folder the Mac App Store's build has no
+    // grant for) keeps its mark and is tried again at the next write that asks for it.
+    let writing = engine.clone();
+    std::thread::spawn(move || match writing.write_outdated() {
+        Ok(0) => {}
+        Ok(count) => tracing::warn!(count, "files out of date not written at launch"),
+        Err(e) => tracing::warn!(error = %e, "files out of date not written at launch"),
+    });
 
     // Collect the answers of batches sent before the app was last closed.
     let resumed = engine.clone();
