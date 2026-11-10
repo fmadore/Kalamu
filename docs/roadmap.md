@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (9 November 2026)
+## Status (10 November 2026)
 
 **Version 1.5.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 signed, notarised disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
@@ -361,29 +361,41 @@ In this order. Work that keeps what has shipped sound comes before new features.
    dialogs that hold the shortcuts; the job page's errors in a row of their own. macOS 14 is the
    minimum. Still to check: these on Windows and in WebKit, since the shell and `offline` do not
    build where the review ran, and the cut-off message for an analysis stopped by a filter
-   rather than the limit. Left, in this order:
-   - **Work that can always be stopped and formats archives hold**
-     ([#144](https://github.com/fmadore/Kalamu/issues/144)): FFmpeg cancelled and timed out,
-     llama.cpp's watchdog, a graphics processor not given up for one bad page, downloads that
-     resume and check the disk, 1-bit TIFF, 24-bit AIFF.
+   rather than the limit. A [second round on 10 November](decisions/2026-11-10-second-round.md)
+   took up part of what was left: FFmpeg stopped by a pause and by a watchdog, 1-bit, palette and
+   CMYK TIFF pages, a source's failure kept across a restart; exports that read only their
+   source's rows (a 2,000-page job's files written in 3.6 s where it took 55), costs read from
+   an index, a result cache the engine can prune; the readings, an analysis's names and a zoomed
+   scan reached from the keyboard, controls' edges at 3:1, failures that stay and are read out;
+   Back, remembered filters, panes and rotation, Ctrl F on the tables, a shortcut overview, a
+   drop target that shows, undo for two removals; the screens opened in Chromium in CI, the app
+   linked on every system, a weekly audit. Left, in this order:
    - **The shell** ([#148](https://github.com/fmadore/Kalamu/issues/148)): a start-up failure
      that says why, an update notice for the installer and the disk image, the tray and
-     notification computed by the engine, the keychain off the window's thread.
+     notification computed by the engine, the keychain off the window's thread; and a *Clear
+     unused results* in Settings, on the engine's `prune_results`
+     ([#143](https://github.com/fmadore/Kalamu/issues/143)).
+   - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)): llama.cpp's
+     runs on `media`'s stoppable runner, with a watchdog; a graphics processor not given up for
+     one bad page; downloads that resume and check the disk; 24-bit AIFF at the next FFmpeg
+     build; children that end with the app.
    - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)): signing
-     secrets kept from build code, the Windows app linked and packaged on a pull request, the
-     screens opened in Chromium too, interaction tests, checksums and an attestation.
-   - **Large jobs** ([#143](https://github.com/fmadore/Kalamu/issues/143)): a benchmark first,
-     then exports that read only their source's rows, corrections that do not rewrite every
-     file, the job list, tables and thumbnails; a way to clear results nothing uses.
-   - **Keyboard and accessibility** ([#146](https://github.com/fmadore/Kalamu/issues/146)): the
-     readings reached from the keyboard, an analysis's names without a pointer, control
-     boundaries at 3:1, errors that stay and are announced.
+     secrets kept from build code, the installers packaged on a pull request, interaction
+     tests, checksums and an attestation.
+   - **Large jobs, the rest** ([#143](https://github.com/fmadore/Kalamu/issues/143)): a
+     correction in a long PDF still writes every file of its source again (121 ms a save on a
+     300-page sample), which needs the files marked out of date and written when the review
+     closes, at quit and at the next launch; the job page's counts, tables and thumbnails in
+     the interface; batches held in memory.
    - **A model's abilities in the catalogue**
      ([#147](https://github.com/fmadore/Kalamu/issues/147)), an architecture checkpoint item:
      five places match a model's or a preset's name.
-   - **Interface** ([#149](https://github.com/fmadore/Kalamu/issues/149)): going back where one
-     came from, remembered filters and rotation, a shortcut overview, a drop target that shows,
-     undo for removals, a recording's transcript shown once.
+   - **Keyboard and interface, the rest**
+     ([#146](https://github.com/fmadore/Kalamu/issues/146),
+     [#149](https://github.com/fmadore/Kalamu/issues/149)): all of it tried in WebKit and with a
+     screen reader; a recording's transcript shown once and following the player; the marks of
+     a project's Results column reached from the keyboard; several jobs linked or deleted, and a
+     name renamed across set-ups, in one command.
    - CSV cells that begin with `=`, `+`, `-` or `@` (a telephone number, a list item) are read
      as formulas by a spreadsheet: an option of the CSV writer, decided table by table.
 2. **What the [8 November checkpoint](decisions/2026-11-08-checkpoint.md) left.** The
