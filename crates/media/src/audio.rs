@@ -8,7 +8,7 @@
 
 use std::path::{Path, PathBuf};
 
-use kalamu_core::{InputKind, PieceRef, PreparedInput, SourceFile, WarningKind};
+use kalamu_core::{InputKind, PieceRef, PreparedInput, SourceFile, StopSignal, WarningKind};
 
 use crate::MediaError;
 use crate::ffmpeg::{Ffmpeg, Probe};
@@ -32,6 +32,8 @@ pub struct AudioSource {
     duration_ms: u64,
     even_out: bool,
     ffmpeg: Option<Ffmpeg>,
+    /// Raised when the job this recording is read for is paused or cancelled.
+    stop: StopSignal,
 }
 
 /// The MIME type providers expect for an audio file, from its extension.
@@ -125,6 +127,15 @@ pub fn plan(duration_ms: u64, silences: &[(u64, u64)], target_ms: u64) -> Vec<(u
 
 impl AudioSource {
     pub fn open(source: &SourceFile, ffmpeg: Option<&Ffmpeg>) -> Result<Self, MediaError> {
+        Self::open_with_stop(source, ffmpeg, &StopSignal::default())
+    }
+
+    /// [`Self::open`], with FFmpeg's runs on it ended as soon as `stop` is raised.
+    pub fn open_with_stop(
+        source: &SourceFile,
+        ffmpeg: Option<&Ffmpeg>,
+        stop: &StopSignal,
+    ) -> Result<Self, MediaError> {
         let path = PathBuf::from(&source.path);
         let mime = match source.kind {
             InputKind::Audio => audio_mime(&path),
@@ -141,26 +152,35 @@ impl AudioSource {
             duration_ms: source.duration_ms.unwrap_or(0),
             even_out: source.even_out_volume,
             ffmpeg: ffmpeg.cloned(),
+            stop: stop.clone(),
         })
     }
 
     /// Analyses the recording (one decoding pass) and plans its pieces. Without FFmpeg, the
-    /// recording is one piece sent as it is.
+    /// recording is one piece sent as it is. Empty when the pass was stopped.
     pub fn pieces(&self, target_ms: u64) -> Vec<PieceRef> {
+        self.try_pieces(target_ms).unwrap_or_default()
+    }
+
+    /// [`Self::pieces`], or [`MediaError::Stopped`] when the pass was stopped: then no plan is
+    /// made, since cuts at fixed marks would be kept for good once recorded. A pass that fails
+    /// otherwise cuts at fixed marks.
+    pub fn try_pieces(&self, target_ms: u64) -> Result<Vec<PieceRef>, MediaError> {
         let spans = match &self.ffmpeg {
             Some(ffmpeg) if self.duration_ms > target_ms + target_ms / 4 => {
-                let silences = ffmpeg
-                    .analyse(&self.path)
-                    .map(|a| a.silences)
-                    .unwrap_or_else(|e| {
+                let silences = match ffmpeg.analyse_with_stop(&self.path, &self.stop) {
+                    Ok(analysis) => analysis.silences,
+                    Err(MediaError::Stopped) => return Err(MediaError::Stopped),
+                    Err(e) => {
                         tracing::warn!(error = %e, "no silence analysis; cutting at fixed marks");
                         Vec::new()
-                    });
+                    }
+                };
                 plan(self.duration_ms, &silences, target_ms)
             }
             _ => vec![(0, self.duration_ms)],
         };
-        spans
+        Ok(spans
             .into_iter()
             .enumerate()
             .map(|(index, (start_ms, end_ms))| PieceRef::Segment {
@@ -168,7 +188,7 @@ impl AudioSource {
                 start_ms,
                 end_ms,
             })
-            .collect()
+            .collect())
     }
 
     /// One piece in a format the provider takes: the file itself when it is a single piece in
@@ -220,7 +240,14 @@ impl AudioSource {
             MediaError::NeedsConversion("No audio format this model takes can be written.".into())
         })?;
         let end = if *end_ms == 0 { u64::MAX / 2 } else { *end_ms };
-        let bytes = ffmpeg.extract(&self.path, *start_ms, end, format, self.even_out)?;
+        let bytes = ffmpeg.extract_with_stop(
+            &self.path,
+            *start_ms,
+            end,
+            format,
+            self.even_out,
+            &self.stop,
+        )?;
         Ok(PreparedInput {
             piece: piece.clone(),
             file_name: format!("{file_stem}-{:02}.{}", index + 1, format.extension()),

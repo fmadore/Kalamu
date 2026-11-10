@@ -24,6 +24,7 @@ mod batch;
 mod contents;
 mod pages;
 mod snapshot;
+mod sources;
 mod workflow;
 
 /// Answers with the page label; can be told to fail some pages a number of times.

@@ -75,6 +75,8 @@ impl Engine {
         };
         let input = match prepared {
             Ok(input) => input,
+            // Paused or cancelled while FFmpeg cut the piece: it stays pending, for the resume.
+            Err(kalamu_media::MediaError::Stopped) => return Ok(BatchOutcome::default()),
             Err(e) => {
                 state.status = PieceStatus::Failed;
                 state.error = Some(e.to_string());

@@ -10,7 +10,7 @@ use kalamu_core::{
     ProcessRequest, ProgressEvent, Provider, ProviderError, ProviderId, RequestSetting,
     SetupOptions, SourceFile, Step, StopSignal, StoredResult, Task, Timestamp, Tuning, Usage,
 };
-use kalamu_media::OpenSource;
+use kalamu_media::{MediaError, OpenSource};
 
 use crate::control::lock;
 use crate::{Engine, EngineError};
@@ -155,6 +155,13 @@ impl Engine {
         };
         let input = match prepared {
             Ok(input) => input,
+            // Paused or cancelled while FFmpeg cut the piece: it is read on resuming.
+            Err(MediaError::Stopped) => {
+                state.status = PieceStatus::Pending;
+                state.error = None;
+                self.save(&mut state, None)?;
+                return Ok(Outcome::Interrupted);
+            }
             Err(e) => {
                 state.status = PieceStatus::Failed;
                 state.error = Some(e.to_string());
