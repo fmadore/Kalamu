@@ -5,7 +5,7 @@
 
 use kalamu_core::provenance::{ProvenanceDescribed, ProvenanceDocument};
 use kalamu_core::{
-    CollectionId, DescribedBy, DescriptionField, Document, DocumentId, JobId, Project,
+    CollectionId, CsvCells, DescribedBy, DescriptionField, Document, DocumentId, JobId, Project,
     ProjectError, ProjectId, SourceDescription, SourceDocuments, SourceId, StoreError, Table,
     Timestamp, cleaned, same_tag, tag_name,
 };
@@ -338,9 +338,12 @@ impl Projects {
             }
             rows.push(row);
         }
+        // For a spreadsheet, beside the JSON that keeps every value exactly; another tool's
+        // import has the export profiles, written as they are.
         Ok(Table {
             headings: head,
             rows,
+            cells: CsvCells::Guarded,
         })
     }
 }

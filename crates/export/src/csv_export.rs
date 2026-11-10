@@ -1,4 +1,4 @@
-use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, Table, Task};
+use kalamu_core::{CsvCells, ExportDocument, ExportError, ExportFormat, Exporter, Table, Task};
 
 use crate::table_csv;
 use crate::timeline::timeline;
@@ -21,9 +21,13 @@ impl Exporter for CsvExporter {
     }
 }
 
+/// Every task's table is guarded: the text was read off a document by a model (a list item, a
+/// telephone number, a formula quoted, or one planted to run), the file is for a spreadsheet,
+/// and the JSON export keeps the text exactly for a program.
 fn table(doc: &ExportDocument) -> Table {
     match doc.task {
         Task::TextExtraction | Task::TextCorrection => Table {
+            cells: CsvCells::Guarded,
             headings: strings(["page", "text", "corrected", "reviewed"]),
             rows: doc
                 .parts
@@ -73,7 +77,11 @@ fn table(doc: &ExportDocument) -> Table {
                     row
                 })
                 .collect();
-            Table { headings, rows }
+            Table {
+                headings,
+                rows,
+                cells: CsvCells::Guarded,
+            }
         }
         // One row per entry: title, pages, then the researcher's fields.
         Task::Contents => {
@@ -95,9 +103,14 @@ fn table(doc: &ExportDocument) -> Table {
                     row
                 })
                 .collect();
-            Table { headings, rows }
+            Table {
+                headings,
+                rows,
+                cells: CsvCells::Guarded,
+            }
         }
         Task::AudioTranscription => Table {
+            cells: CsvCells::Guarded,
             headings: strings(["start", "end", "speaker", "text"]),
             rows: timeline(doc)
                 .into_iter()

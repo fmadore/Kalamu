@@ -426,6 +426,23 @@ fn text_formats_match_golden_files() {
     check("corrected.csv", &run(ExportFormat::Csv, &corrected()));
 }
 
+/// A transcription's CSV is for a spreadsheet: a line a spreadsheet would compute is shown as
+/// text, while the JSON keeps it exactly.
+#[test]
+fn a_csv_cell_a_spreadsheet_would_compute_is_written_as_text() {
+    let mut doc = interview();
+    doc.parts[0].segments[0].text = "- Oui, au +223 20 22 33 44.".into();
+    doc.parts[0].segments[1].text = "=1+1".into();
+    let csv = String::from_utf8(run(ExportFormat::Csv, &doc)).unwrap_or_default();
+    assert!(
+        csv.contains("Speaker 1,\"'- Oui, au +223 20 22 33 44.\""),
+        "{csv}"
+    );
+    assert!(csv.contains("Speaker 2,'=1+1"), "{csv}");
+    let json = String::from_utf8(run(ExportFormat::Json, &doc)).unwrap_or_default();
+    assert!(json.contains("\"=1+1\""), "{json}");
+}
+
 #[test]
 fn word_files_are_valid_documents_with_the_text() {
     let bytes = run(ExportFormat::Docx, &letter());
