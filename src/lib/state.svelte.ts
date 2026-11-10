@@ -145,6 +145,9 @@ export const app = $state({
 	queue: null as QueueTrail | null,
 	closeRequested: false,
 	toast: null as string | null,
+	/** A failure shown until the researcher dismisses it, numbered so the same one shown again
+	 * is read out again. */
+	toastError: null as { text: string; n: number } | null,
 	/** The interface language in use; the screens are drawn again when it changes. */
 	locale: 'en' as Locale
 });
@@ -412,11 +415,21 @@ function updateProgressDisplays(): void {
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** Shows a message for four seconds from the last time it was shown, even when it is the same
- * message again. */
-export function toast(message: string): void {
+ * message again. A failure (`kind: 'error'`) is read out at once and stays until dismissed, so
+ * it can be read again. */
+export function toast(message: string, options: { kind?: 'error' } = {}): void {
+	if (options.kind === 'error') {
+		app.toastError = { text: message, n: (app.toastError?.n ?? 0) + 1 };
+		return;
+	}
 	app.toast = message;
 	clearTimeout(toastTimer);
 	toastTimer = setTimeout(() => (app.toast = null), 4000);
+}
+
+/** Puts away the failure shown. */
+export function dismissError(): void {
+	app.toastError = null;
 }
 
 /** Open a web page in the default browser, and say so when it cannot be opened. */
@@ -424,6 +437,6 @@ export async function openLink(url: string): Promise<void> {
 	try {
 		await openUrl(url);
 	} catch {
-		toast(messages().common.linkFailed(url));
+		toast(messages().common.linkFailed(url), { kind: 'error' });
 	}
 }

@@ -517,7 +517,7 @@
 			if (project) {
 				await api
 					.linkJob(project.id, job.id, project.collectionId ?? null)
-					.catch(() => toast(m.projects.linkFailed(project.name)));
+					.catch(() => toast(m.projects.linkFailed(project.name), { kind: 'error' }));
 			}
 			await api.startJob(job.id);
 			await refreshJobs();

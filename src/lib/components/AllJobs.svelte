@@ -84,7 +84,7 @@
 			selection.clear();
 			await refreshProjects();
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 
@@ -95,7 +95,7 @@
 		try {
 			for (const id of ids) await api.deleteJob(id);
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 		selection.clear();
 		await refreshJobs();

@@ -111,7 +111,8 @@
 	/** Plays; a play cut short by the next piece's recording (or a pause) is no failure. */
 	function play() {
 		player?.play().catch((e: unknown) => {
-			if (!(e instanceof DOMException && e.name === 'AbortError')) toast(describeError(e, m));
+			if (!(e instanceof DOMException && e.name === 'AbortError'))
+				toast(describeError(e, m), { kind: 'error' });
 		});
 	}
 

@@ -64,7 +64,7 @@
 		try {
 			await api.saveSettings($state.snapshot(app.settings));
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		} finally {
 			await refreshOffline();
 		}
@@ -114,7 +114,7 @@
 			await started;
 		} catch (e) {
 			if (!(typeof e === 'object' && e && 'id' in e && e.id === 'offline.cancelled')) {
-				toast(describeError(e, m));
+				toast(describeError(e, m), { kind: 'error' });
 			}
 		} finally {
 			await refreshOffline();
@@ -125,7 +125,7 @@
 		try {
 			await api.removeModel(id);
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		} finally {
 			await refreshOffline();
 		}
@@ -166,7 +166,9 @@
 				<button
 					class="btn sm"
 					onclick={() =>
-						api.cancelModelDownload().catch((e: unknown) => toast(describeError(e, m)))}
+						api
+							.cancelModelDownload()
+							.catch((e: unknown) => toast(describeError(e, m), { kind: 'error' }))}
 					>{m.settings.cancelDownload}</button
 				>
 			{:else if s?.installed}

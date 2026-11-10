@@ -13,6 +13,7 @@
 	import SettingsView from '#lib/components/SettingsView.svelte';
 	import GlossaryView from '#lib/components/GlossaryView.svelte';
 	import WorkflowsView from '#lib/components/WorkflowsView.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -22,6 +23,7 @@
 		app,
 		applyLanguage,
 		applyProgress,
+		dismissError,
 		go,
 		refreshJobs,
 		refreshKeys,
@@ -184,9 +186,35 @@
 	{/if}
 {/key}
 
-{#if app.toast}
-	<div class="toast" role="status">{app.toast}</div>
-{/if}
+<!-- Mounted empty, so a message put into them is read out (VoiceOver misses a live region that
+     arrives with its text): a failure at once, and kept until dismissed; a confirmation politely. -->
+<div class="toasts">
+	<div role="alert">
+		{#if app.toastError}
+			{#key app.toastError.n}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div
+					class="toast error"
+					onkeydown={(e) => {
+						if (e.key === 'Escape') dismissError();
+					}}
+				>
+					<span class="dot" aria-hidden="true"></span>
+					<span class="message">{app.toastError.text}</span>
+					<button
+						class="dismiss"
+						aria-label={m.common.dismissMessage}
+						title={m.common.dismissMessage}
+						onclick={dismissError}><Icon name="close" size={14} /></button
+					>
+				</div>
+			{/key}
+		{/if}
+	</div>
+	<div role="status">
+		{#if app.toast}<div class="toast">{app.toast}</div>{/if}
+	</div>
+</div>
 
 <style>
 	.shell {
@@ -205,18 +233,69 @@
 		min-width: 0;
 		background: var(--surface-0);
 	}
-	.toast {
+	/* The messages, bottom right over the work: a failure kept above a passing confirmation. */
+	.toasts {
 		position: fixed;
 		bottom: var(--space-5);
 		right: var(--space-5);
-		max-width: 28rem;
+		z-index: 40;
+		display: grid;
+		justify-items: end;
+		gap: var(--space-2);
+		max-width: min(28rem, calc(100vw - 2 * var(--space-5)));
+	}
+	.toast {
 		padding: var(--space-3) var(--space-4);
 		background: var(--ink);
 		color: var(--on-ink);
 		border-radius: var(--radius-control);
 		box-shadow: var(--shadow-flyout);
 		font-size: var(--type-sm);
-		z-index: 40;
+	}
+	/* A failure: the same ink, marked by the danger dot, with its own way to put it away. */
+	.toast.error {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-3);
+		padding-right: var(--space-2);
+	}
+	.dot {
+		flex: none;
+		width: 6px;
+		height: 6px;
+		border-radius: 3px;
+		background: var(--on-ink-danger);
+		transform: translateY(-0.1em);
+	}
+	.message {
+		flex: 1;
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+	.dismiss {
+		flex: none;
+		display: grid;
+		place-items: center;
+		align-self: start;
+		width: var(--control-sm);
+		height: var(--control-sm);
+		margin: calc(-1 * var(--space-1)) 0;
+		padding: 0;
+		border: 0;
+		border-radius: var(--radius-tag);
+		background: transparent;
+		color: var(--on-ink-muted);
+		cursor: pointer;
+		transition: background-color 120ms ease-out;
+	}
+	.dismiss:hover {
+		color: var(--on-ink);
+		background: color-mix(in srgb, var(--on-ink) 14%, transparent);
+	}
+	.dismiss:focus-visible {
+		color: var(--on-ink);
+		outline-color: var(--on-ink);
+		outline-offset: -2px;
 	}
 	/* A narrow window: the list sits above the work, short enough to leave it room. */
 	@media (max-width: 760px) {

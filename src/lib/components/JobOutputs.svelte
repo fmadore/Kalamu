@@ -34,8 +34,10 @@
 					class="btn ghost sm icon"
 					title={m.jobs.openFolder}
 					aria-label="{m.jobs.openFolder}{m.common.colon} {name}"
-					onclick={() => revealInFolder(path).catch((e: unknown) => toast(describeError(e, m)))}
-					><Icon name="folder" size={14} /></button
+					onclick={() =>
+						revealInFolder(path).catch((e: unknown) =>
+							toast(describeError(e, m), { kind: 'error' })
+						)}><Icon name="folder" size={14} /></button
 				>
 			</li>
 		{/each}

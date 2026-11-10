@@ -28,7 +28,7 @@
 			await api.quitApp();
 		} catch (e) {
 			quitting = false;
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 
