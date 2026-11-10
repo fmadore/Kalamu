@@ -194,7 +194,7 @@
 	}
 	.toggle[aria-expanded='true'] {
 		background: var(--wash);
-		border-color: var(--line-strong);
+		border-color: var(--control-line-hover);
 	}
 	/* The matches, under the search and over the review. */
 	.list {

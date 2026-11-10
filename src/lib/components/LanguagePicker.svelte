@@ -65,7 +65,7 @@
 		try {
 			await api.saveSettings($state.snapshot(app.settings));
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 
@@ -219,13 +219,13 @@
 		align-items: center;
 		gap: var(--space-2);
 		padding-left: var(--space-3);
-		border: 1px solid var(--line-strong);
+		border: 1px solid var(--control-line);
 		border-radius: var(--radius-control);
 		background: var(--surface-2);
 		color: var(--text-muted);
 	}
 	.box:hover {
-		border-color: var(--line-hover);
+		border-color: var(--control-line-hover);
 	}
 	.box:focus-within {
 		border-color: var(--text-bright);

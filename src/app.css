@@ -44,12 +44,18 @@
 	--line-soft: #eeebe5;
 	--line-strong: #d6d1c7;
 	--line-hover: #a8a297;
+	/* The edge of a control (a field, a list to choose from, a bordered button, a radio drawn
+	   here): 3:1 at least on every surface it sits on, so it can be told from the page. */
+	--control-line: #8a8478;
+	--control-line-hover: #5d5950;
 
 	/* Ink: primary actions, progress, the selected state. */
 	--ink: #171612;
 	--ink-hover: #2e2c27;
 	--on-ink: #ffffff;
 	--on-ink-muted: #bdb9b0;
+	/* A failure's mark on the ink of the toast. */
+	--on-ink-danger: #ff8a7d;
 	--wash: rgba(23, 22, 18, 0.05);
 	/* Words found by a search: a grey wash, the one gone to in ink. */
 	--found: rgba(23, 22, 18, 0.16);
@@ -142,10 +148,13 @@
 		--line-soft: #282623;
 		--line-strong: #3e3b36;
 		--line-hover: #605c55;
+		--control-line: #7a756c;
+		--control-line-hover: #a09a8f;
 		--ink: #eeece6;
 		--ink-hover: #ffffff;
 		--on-ink: #171612;
 		--on-ink-muted: #57534a;
+		--on-ink-danger: #b42318;
 		--wash: rgba(255, 255, 255, 0.06);
 		--marker: #e8c547;
 		--hand: #7fa2ff;
@@ -195,10 +204,13 @@
 	--line-soft: #282623;
 	--line-strong: #3e3b36;
 	--line-hover: #605c55;
+	--control-line: #7a756c;
+	--control-line-hover: #a09a8f;
 	--ink: #eeece6;
 	--ink-hover: #ffffff;
 	--on-ink: #171612;
 	--on-ink-muted: #57534a;
+	--on-ink-danger: #b42318;
 	--wash: rgba(255, 255, 255, 0.06);
 	--marker: #e8c547;
 	--hand: #7fa2ff;
@@ -329,7 +341,7 @@ textarea {
 	gap: var(--space-2);
 	min-height: var(--control-md);
 	padding: 0 var(--space-3);
-	border: 1px solid var(--line);
+	border: 1px solid var(--control-line);
 	border-radius: var(--radius-control);
 	background: var(--surface-2);
 	color: var(--text-bright);
@@ -343,7 +355,7 @@ textarea {
 }
 
 .btn:hover:not(:disabled) {
-	border-color: var(--line-hover);
+	border-color: var(--control-line-hover);
 }
 
 .btn:disabled {
@@ -433,7 +445,7 @@ select,
 textarea {
 	min-height: var(--control-md);
 	padding: var(--space-1) var(--space-3);
-	border: 1px solid var(--line-strong);
+	border: 1px solid var(--control-line);
 	border-radius: var(--radius-control);
 	background: var(--surface-2);
 	color: var(--text-bright);
@@ -457,7 +469,7 @@ textarea {
 input:hover,
 select:hover,
 textarea:hover {
-	border-color: var(--line-hover);
+	border-color: var(--control-line-hover);
 }
 
 input[type='text']:focus-visible,

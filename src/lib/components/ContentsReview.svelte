@@ -380,7 +380,7 @@
 	/* A view that is on reads as pressed in, not as an action. */
 	.toggle[aria-pressed='true'] {
 		background: var(--wash);
-		border-color: var(--line-strong);
+		border-color: var(--control-line-hover);
 	}
 	/* The entries as a numbered table of contents, set in the reading face. */
 	.entries {

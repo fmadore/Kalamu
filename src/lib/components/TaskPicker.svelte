@@ -90,7 +90,7 @@
 		width: 0.875rem;
 		height: 0.875rem;
 		border-radius: 50%;
-		border: 1.5px solid var(--line-hover);
+		border: 1.5px solid var(--control-line);
 		flex: none;
 	}
 	.selected .radio {
