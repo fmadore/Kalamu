@@ -70,7 +70,7 @@ import type { Release } from './bindings/Release.js';
 import type { Settings } from './bindings/Settings.js';
 import type { TagRenamed } from './bindings/TagRenamed.js';
 import type { Task } from './bindings/Task.js';
-import type { TrayState } from './bindings/TrayState.js';
+import type { ShellLabels } from './bindings/ShellLabels.js';
 import { providerNameOf } from './catalogText.js';
 import { listNames, localisePreset, messages } from './i18n/index.js';
 import { baseName } from './paths.js';
@@ -338,8 +338,7 @@ export const api = {
 		invoke<void>('detach_job', { project, document, job, source }),
 	reviewQueue: (project: string, selection: QueueSelection, excluded: ResultKey[]) =>
 		invoke<QueueView>('review_queue', { project, selection, excluded }),
-	setTaskbarProgress: (percent: number | null) => invoke<void>('set_taskbar_progress', { percent }),
-	setTrayState: (state: TrayState) => invoke<void>('set_tray_state', { state }),
+	setShellLabels: (labels: ShellLabels) => invoke<void>('set_shell_labels', { labels }),
 	hideWindow: () => invoke<void>('hide_window'),
 	quitApp: () => invoke<void>('quit_app')
 };

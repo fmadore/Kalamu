@@ -18,7 +18,9 @@ use crate::commands::{self, AppState, Paths};
 use crate::secrets::CredentialKeys;
 use crate::settings::Settings;
 use crate::start_failure::{self, Cause, StartError};
-use crate::{CATALOG_CHANGED_EVENT, OFFLINE_CHANGED_EVENT, PROGRESS_EVENT, grants, platform, tray};
+use crate::{
+    CATALOG_CHANGED_EVENT, OFFLINE_CHANGED_EVENT, PROGRESS_EVENT, activity, grants, platform, tray,
+};
 
 type SetupResult<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -37,6 +39,9 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
         Err(e) => fail(app, &e, Some(logs.as_path())),
     };
     forward_progress(app, &state.engine, &store);
+    // The tray, the taskbar and the notifications follow the engine here, not in the webview.
+    app.manage(activity::Activity::default());
+    activity::watch(app.handle(), state.engine.subscribe());
     resume(&state.engine, waiting);
     let refresh = state
         .settings

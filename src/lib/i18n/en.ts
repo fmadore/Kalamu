@@ -1867,8 +1867,10 @@ export const en = {
 		quit: 'Quit',
 		quitPausing: 'Pause jobs and quit',
 		idle: 'No jobs running',
-		running: (jobs: number, percent: number) =>
-			`${jobs === 1 ? '1 job' : `${jobs} jobs`} running · ${percent}%`
+		/** The status line, its numbers filled in by the app as jobs run: `percent` and `jobs`
+		 * are placeholders, to be kept as they are. */
+		runningOne: (percent: string) => `1 job running · ${percent}%`,
+		runningMany: (jobs: string, percent: string) => `${jobs} jobs running · ${percent}%`
 	},
 	common: {
 		cancel: 'Cancel',

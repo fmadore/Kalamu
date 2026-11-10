@@ -147,8 +147,7 @@ pub const COMMANDS: &[&str] = &[
     "project_search",
     "rebuild_search_index",
     "prepare_project_search",
-    "set_taskbar_progress",
-    "set_tray_state",
+    "set_shell_labels",
     "hide_window",
     "quit_app",
 ];

@@ -15,6 +15,7 @@ import type { Release } from './bindings/Release.js';
 import type { ResultKey } from './bindings/ResultKey.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
+import type { ShellLabels } from './bindings/ShellLabels.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import type { StepState } from './bindings/StepState.js';
 import type { Task } from './bindings/Task.js';
@@ -23,7 +24,7 @@ import type { Example } from './workflows.js';
 import type { QueueFilter } from './queue.js';
 import { leaving, samePlace } from './history.js';
 import { messages, resolveLocale, setLocale, type Locale } from './i18n/index.js';
-import { api, ask, notify, openUrl } from './tauri.js';
+import { api, ask, openUrl } from './tauri.js';
 
 /** A project New job was opened from: the job it starts is tied to the project's documents. */
 export interface FromProject {
@@ -277,7 +278,8 @@ export function returnTo(view: View): void {
 	else go(view);
 }
 
-/** Puts the interface in the language the settings ask for, the tray menu included. */
+/** Puts the interface in the language the settings ask for, the tray menu and the
+ * notifications included. */
 export function applyLanguage(): void {
 	const locale = resolveLocale(
 		app.settings?.language ?? 'system',
@@ -285,7 +287,42 @@ export function applyLanguage(): void {
 	);
 	setLocale(locale);
 	app.locale = locale;
-	updateProgressDisplays();
+	void api.setShellLabels(shellLabels()).catch(() => undefined);
+}
+
+/** The words the app shows outside the window: the tray menu, and the notification when a job
+ * finishes. The app fills in the numbers and names itself from the engine, so they stay right
+ * while the window is hidden, when the webview's timers are slowed; the placeholders in braces
+ * are its to fill. */
+export function shellLabels(): ShellLabels {
+	const m = messages();
+	return {
+		tray: {
+			open: m.tray.open,
+			pause: m.tray.pause,
+			quit: m.tray.quit,
+			quit_pausing: m.tray.quitPausing,
+			idle: m.tray.idle,
+			running_one: m.tray.runningOne('{percent}'),
+			running_many: m.tray.runningMany('{jobs}', '{percent}'),
+			tooltip: `${m.app.name}${m.common.colon} {status}`
+		},
+		notice: {
+			title: m.app.name,
+			body: `{job}${m.common.colon} {state}`,
+			statuses: {
+				pending: m.status.pending,
+				running: m.status.running,
+				paused: m.status.paused,
+				interrupted: m.status.interrupted,
+				completed: m.status.completed,
+				completed_with_errors: m.status.completed_with_errors,
+				cancelled: m.status.cancelled
+			},
+			review: m.workflows.notify.review,
+			attention: m.workflows.notify.attention
+		}
+	};
 }
 
 export function hasKey(provider: string): boolean {
@@ -299,7 +336,6 @@ export async function refreshProjects(): Promise<void> {
 
 export async function refreshJobs(): Promise<void> {
 	app.jobs = await api.listJobs();
-	updateProgressDisplays();
 }
 
 /** Which workflow steps wait for the researcher, for the job list, the job's page and review. */
@@ -441,45 +477,13 @@ export function applyProgress(event: ProgressEvent): void {
 				dueBy: event.due_by
 			};
 			break;
-		case 'job_finished': {
+		// The notification it sends is the app's own (`activity.rs`), like the tray's line.
+		case 'job_finished':
 			app.runs++;
 			void refreshJobs();
-			const m = messages();
-			const job = app.jobs.find((j) => j.id === event.job_id);
-			// A workflow step that now waits says so: the next step needs the researcher.
-			void refreshWaiting().then(() => {
-				const waits = app.waiting[event.job_id];
-				const said = waits
-					? m.workflows.notify[waits.state === 'review' ? 'review' : 'attention']
-					: m.status[event.status];
-				void notify(m.app.name, `${job?.name ?? ''}${m.common.colon} ${said}`);
-			});
+			void refreshWaiting();
 			break;
-		}
 	}
-}
-
-/** Overall progress of running jobs on the taskbar button and in the tray menu. */
-function updateProgressDisplays(): void {
-	const running = app.jobs.filter((j) => j.status === 'running');
-	const total = running.reduce((n, j) => n + j.pieces_total, 0);
-	const done = running.reduce((n, j) => n + j.pieces_finished, 0);
-	const percent = total > 0 ? Math.round((100 * done) / total) : null;
-	void api.setTaskbarProgress(percent).catch(() => undefined);
-	const m = messages();
-	const status = running.length === 0 ? m.tray.idle : m.tray.running(running.length, percent ?? 0);
-	void api
-		.setTrayState({
-			running: running.length > 0,
-			labels: {
-				status,
-				tooltip: `${m.app.name}${m.common.colon} ${status}`,
-				open: m.tray.open,
-				pause: m.tray.pause,
-				quit: running.length > 0 ? m.tray.quitPausing : m.tray.quit
-			}
-		})
-		.catch(() => undefined);
 }
 
 /** A button in the toast: what it says, and what it does. */

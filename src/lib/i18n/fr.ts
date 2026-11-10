@@ -1948,8 +1948,8 @@ export const fr: Messages = {
 		quit: 'Quitter',
 		quitPausing: 'Mettre en pause et quitter',
 		idle: 'Aucun traitement en cours',
-		running: (jobs: number, percent: number) =>
-			`${jobs === 1 ? '1 traitement en cours' : `${jobs} traitements en cours`} · ${percent} %`
+		runningOne: (percent: string) => `1 traitement en cours · ${percent} %`,
+		runningMany: (jobs: string, percent: string) => `${jobs} traitements en cours · ${percent} %`
 	},
 	common: {
 		cancel: 'Annuler',

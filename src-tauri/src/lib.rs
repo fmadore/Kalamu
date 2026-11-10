@@ -2,6 +2,7 @@
 //! folder, the window, taskbar or Dock) and exposes it to the interface through typed commands
 //! and events. What differs between Windows and macOS is in [`platform`].
 
+mod activity;
 mod command_names;
 mod commands;
 mod errors;
@@ -196,8 +197,7 @@ pub fn run() {
             commands::search::project_search,
             commands::search::rebuild_search_index,
             commands::search::prepare_project_search,
-            commands::window::set_taskbar_progress,
-            commands::window::set_tray_state,
+            commands::window::set_shell_labels,
             commands::window::hide_window,
             commands::window::quit_app,
         ])
