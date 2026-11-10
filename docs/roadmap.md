@@ -396,8 +396,11 @@ In this order. Work that keeps what has shipped sound comes before new features.
      under 0.1 ms); still to try on Windows and a Mac, where CI is the first to build the
      shell's part.
    - **A model's abilities in the catalogue**
-     ([#147](https://github.com/fmadore/Kalamu/issues/147)), an architecture checkpoint item:
-     five places match a model's or a preset's name.
+     ([#147](https://github.com/fmadore/Kalamu/issues/147)). Done
+     ([decision](decisions/2026-11-10-model-abilities.md)): Claude's fallback, OpenAI's speakers
+     and Gemini's speech request follow the catalogue, Mistral guesses no level from a name, and
+     a prompt says its pages are dense; cache keys unchanged. Still to compile on CI: one test in
+     `offline`.
    - **Keyboard and interface, the rest**
      ([#146](https://github.com/fmadore/Kalamu/issues/146),
      [#149](https://github.com/fmadore/Kalamu/issues/149)): all of it tried in WebKit and with a
