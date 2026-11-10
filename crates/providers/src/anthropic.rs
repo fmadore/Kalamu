@@ -23,8 +23,8 @@ use reqwest::{Client, RequestBuilder};
 use serde_json::{Value, json};
 
 use crate::analysis;
-use crate::batch::{self, Answer};
-use crate::http::{base64, ids, send_json, send_text};
+use crate::batch::{self, Answer, Body};
+use crate::http::{base64, ids, send_json, send_text, with_json_body};
 
 const BASE_URL: &str = "https://api.anthropic.com/v1";
 const API_VERSION: &str = "2026-10-21";
@@ -314,18 +314,19 @@ impl Provider for Anthropic {
         key: &ApiKey,
         requests: &[(String, ProcessRequest<'_>)],
     ) -> Result<String, ProviderError> {
-        let requests: Vec<Value> = requests
-            .iter()
-            .map(|(id, request)| json!({ "custom_id": id, "params": Self::body(request, true) }))
-            .collect();
-        let response = send_json(
+        let mut body = Body::new(r#"{"requests":["#, requests);
+        for (id, request) in requests {
+            let id = Value::from(id.as_str());
+            body.item(&[("custom_id", &id), ("params", &Self::body(request, true))])?;
+        }
+        let response = send_json(with_json_body(
             self.authorised(
                 self.client
                     .post(format!("{}/messages/batches", self.base_url)),
                 key,
-            )
-            .json(&json!({ "requests": requests })),
-        )
+            ),
+            body.finish("]}"),
+        ))
         .await?;
         response
             .get("id")

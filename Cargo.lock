@@ -2928,6 +2928,7 @@ dependencies = [
 name = "kalamu-projects"
 version = "1.5.0"
 dependencies = [
+ "csv",
  "kalamu-core",
  "kalamu-export",
  "kalamu-store",

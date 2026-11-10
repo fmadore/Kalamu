@@ -7,8 +7,8 @@ use reqwest::multipart::{Form, Part};
 use serde_json::{Value, json};
 
 use super::OpenAi;
-use crate::batch::{self, Answer};
-use crate::http::send_json;
+use crate::batch::{self, Answer, Body};
+use crate::http::{send_json, upload_timeout};
 
 impl OpenAi {
     pub(super) async fn submit(
@@ -16,18 +16,19 @@ impl OpenAi {
         key: &ApiKey,
         requests: &[(String, ProcessRequest<'_>)],
     ) -> Result<String, ProviderError> {
-        let mut jsonl = String::new();
+        let mut jsonl = Body::new("", requests);
+        let (method, url) = (Value::from("POST"), Value::from("/v1/responses"));
         for (id, request) in requests {
-            let line = json!({
-                "custom_id": id,
-                "method": "POST",
-                "url": "/v1/responses",
-                "body": Self::extraction_body(request),
-            });
-            jsonl.push_str(&line.to_string());
-            jsonl.push('\n');
+            jsonl.line(&[
+                ("body", &Self::extraction_body(request)),
+                ("custom_id", &Value::from(id.as_str())),
+                ("method", &method),
+                ("url", &url),
+            ])?;
         }
-        let file = Part::bytes(jsonl.into_bytes())
+        let jsonl = jsonl.finish("");
+        let timeout = upload_timeout(jsonl.len());
+        let file = Part::bytes(jsonl)
             .file_name("batch.jsonl")
             .mime_str("application/jsonl")
             .map_err(|e| ProviderError::InvalidRequest(e.to_string()))?;
@@ -35,6 +36,7 @@ impl OpenAi {
             self.client
                 .post(format!("{}/files", self.base_url))
                 .bearer_auth(key.expose())
+                .timeout(timeout)
                 .multipart(Form::new().text("purpose", "batch").part("file", file)),
         )
         .await?;

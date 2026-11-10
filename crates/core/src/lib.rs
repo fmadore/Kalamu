@@ -48,7 +48,7 @@ pub use dictionary::{
 };
 pub use event::ProgressEvent;
 pub use export::{
-    ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter, Table,
+    CsvCells, ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter, Table,
 };
 pub use fingerprint::CacheKey;
 pub use ids::{

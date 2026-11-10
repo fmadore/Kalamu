@@ -118,6 +118,38 @@ fn a_profile_writes_its_columns_under_its_headings() {
     assert!(!csv.contains(",b,"), "a collection keeps to its documents");
 }
 
+/// A profile is often for another tool's import, so its cells are written exactly, even those a
+/// spreadsheet would read as formulas, and read back as they were.
+#[test]
+fn a_profiles_cells_are_written_as_they_are_for_another_tools_import() {
+    let f = fixture();
+    let (p, docs, _) = described_project(&f);
+    let own: SourceDescription = [
+        (F::Shelfmark, "-12 bis".to_string()),
+        (F::Citation, "=HYPERLINK(\"x\")".to_string()),
+    ]
+    .into_iter()
+    .collect();
+    f.projects.describe_document(p, docs[0], own).unwrap();
+    let mut profile = omeka();
+    profile.missing = "-".into();
+    let table = f
+        .projects
+        .profiled_table(p, None, &profile, &Labels::default())
+        .unwrap();
+    assert_eq!(table.cells, kalamu_core::CsvCells::AsWritten);
+    let csv = csv_body(table.clone());
+    assert!(csv.starts_with("dcterms:identifier,"), "{csv}");
+    assert!(csv.contains("\n-12 bis,a,"), "{csv}");
+    assert!(csv.contains(",\"=HYPERLINK(\"\"x\"\")\","), "{csv}");
+    let read: Vec<Vec<String>> = csv::ReaderBuilder::new()
+        .from_reader(csv.as_bytes())
+        .records()
+        .map(|r| r.unwrap().iter().map(String::from).collect())
+        .collect();
+    assert_eq!(read, table.rows, "read back exactly as written");
+}
+
 #[test]
 fn a_profiles_json_keeps_its_order_lists_and_missing_values() {
     let f = fixture();
@@ -156,12 +188,18 @@ fn every_column_writes_what_the_default_csv_does() {
         missing: String::new(),
         ..omeka()
     };
+    let profiled = f
+        .projects
+        .profiled_table(p, None, &every, &Labels::default())
+        .unwrap();
+    let described = f.projects.descriptions_table(p, None).unwrap();
     assert_eq!(
-        f.projects
-            .profiled_table(p, None, &every, &Labels::default())
-            .unwrap(),
-        f.projects.descriptions_table(p, None).unwrap()
+        (profiled.headings, profiled.rows),
+        (described.headings, described.rows)
     );
+    // Only what a spreadsheet would compute differs: the profile writes it as it is.
+    assert_eq!(profiled.cells, kalamu_core::CsvCells::AsWritten);
+    assert_eq!(described.cells, kalamu_core::CsvCells::Guarded);
 }
 
 /// A correction of one piece of a job's only set-up over a source.

@@ -89,7 +89,16 @@ pub struct EngineConfig {
     pub snapshots: PathBuf,
     /// How long after a job's last correction or speakers' names its files are written again.
     pub write_delay: Duration,
+    /// The most prepared input one economy batch carries, whatever the provider allows: a
+    /// larger job is sent as several batches. A batch's body is held in memory while it is
+    /// uploaded, and a failed upload is sent again whole, so neither should reach the hundreds
+    /// of megabytes a provider may accept.
+    pub max_batch_bytes: usize,
 }
+
+/// 48 MiB of prepared input, about 64 MB once pages are written in base64: a few dozen scans
+/// a batch, uploaded in under ten minutes at 1 Mbit/s.
+pub const MAX_BATCH_BYTES: usize = 48 * 1024 * 1024;
 
 impl Default for EngineConfig {
     fn default() -> Self {
@@ -104,6 +113,7 @@ impl Default for EngineConfig {
             playback: Playback::default(),
             snapshots: std::env::temp_dir().join("kalamu-snapshots"),
             write_delay: Duration::from_secs(3),
+            max_batch_bytes: MAX_BATCH_BYTES,
         }
     }
 }

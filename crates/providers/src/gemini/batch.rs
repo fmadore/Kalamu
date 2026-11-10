@@ -7,8 +7,8 @@ use kalamu_core::{ApiKey, BatchContext, BatchProgress, ProcessRequest, ProviderE
 use serde_json::{Value, json};
 
 use super::Gemini;
-use crate::batch::{self, Answer};
-use crate::http::send_json;
+use crate::batch::{self, Answer, Body};
+use crate::http::{send_json, with_json_body};
 
 impl Gemini {
     pub(super) async fn submit(
@@ -19,25 +19,22 @@ impl Gemini {
         let Some((_, first)) = requests.first() else {
             return Err(ProviderError::InvalidRequest("an empty batch".into()));
         };
-        let inline: Vec<Value> = requests
-            .iter()
-            .map(|(id, request)| json!({ "request": Self::body(request), "metadata": { "key": id } }))
-            .collect();
+        let mut body = Body::new(
+            r#"{"batch":{"display_name":"kalamu","input_config":{"requests":{"requests":["#,
+            requests,
+        );
+        for (id, request) in requests {
+            let metadata = json!({ "key": id });
+            body.item(&[("metadata", &metadata), ("request", &Self::body(request))])?;
+        }
         let url = format!(
             "{}/models/{}:batchGenerateContent",
             self.base_url, first.model
         );
-        let created = send_json(
-            self.client
-                .post(url)
-                .header("x-goog-api-key", key.expose())
-                .json(&json!({
-                    "batch": {
-                        "display_name": "kalamu",
-                        "input_config": { "requests": { "requests": inline } },
-                    }
-                })),
-        )
+        let created = send_json(with_json_body(
+            self.client.post(url).header("x-goog-api-key", key.expose()),
+            body.finish("]}}}}"),
+        ))
         .await?;
         created
             .get("name")

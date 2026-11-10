@@ -151,6 +151,38 @@ fn descriptions_are_written_out_with_where_each_part_came_from() {
     assert!(first["description"].get("fonds").is_none());
 }
 
+/// The descriptions' CSV is for a spreadsheet: a value that would be read as a formula is shown
+/// as text, a number stays a number, and the JSON keeps the value exactly.
+#[test]
+fn a_description_a_spreadsheet_would_compute_is_written_as_text() {
+    let f = fixture();
+    let p = f.projects.create("Archives", "").unwrap();
+    let docs = f
+        .projects
+        .add_documents(p.id, vec![f.file("a.pdf", "a")], None)
+        .unwrap();
+    f.projects
+        .describe_document(
+            p.id,
+            docs[0],
+            description(&[
+                (F::Shelfmark, "+A/3"),
+                (F::File, "-12"),
+                (F::Rights, "@cc-by"),
+            ]),
+        )
+        .unwrap();
+    let csv = csv_body(f.projects.descriptions_table(p.id, None).unwrap());
+    assert!(csv.contains(",-12,document,'+A/3,document,"), "{csv}");
+    assert!(csv.contains(",'@cc-by,document"), "{csv}");
+    let json: serde_json::Value =
+        serde_json::from_str(&f.projects.export_descriptions_json(p.id, None).unwrap()).unwrap();
+    assert_eq!(
+        json["documents"][0]["description"]["shelfmark"]["value"],
+        "+A/3"
+    );
+}
+
 #[test]
 fn a_tag_is_renamed_across_the_project_and_merges_with_one_in_use() {
     let f = fixture();

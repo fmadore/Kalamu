@@ -1,14 +1,92 @@
-//! What the four batch services share: answers that come back as JSON Lines or lists under the
-//! ids they were sent with, counts given as numbers or strings, and a reason for each failed
-//! item that the researcher can read.
+//! What the four batch services share: a body written once, item by item; answers that come
+//! back as JSON Lines or lists under the ids they were sent with, counts given as numbers or
+//! strings, and a reason for each failed item that the researcher can read.
 
-use kalamu_core::{ApiKey, ProcessOutput, ProviderError};
+use kalamu_core::{ApiKey, ProcessOutput, ProcessRequest, ProviderError};
 use serde_json::Value;
 
 use crate::http::send_text;
 
 /// One answer of a batch, under the item id it was sent with.
 pub(crate) type Answer = (String, Result<ProcessOutput, ProviderError>);
+
+/// A batch's body, written straight into the one buffer that is sent: each item is built on
+/// its own, written, and dropped, so a batch is held once as its pieces and once as the bytes
+/// on their way, never also as a tree of JSON values or a second serialised copy.
+pub(crate) struct Body {
+    bytes: Vec<u8>,
+    first: bool,
+}
+
+impl Body {
+    /// A body that starts with `head` (the JSON before the list of requests, or nothing for
+    /// JSON Lines), with room for `requests` so the buffer is not copied as it grows.
+    pub(crate) fn new(head: &str, requests: &[(String, ProcessRequest<'_>)]) -> Self {
+        let mut bytes = Vec::with_capacity(head.len() + room(requests));
+        bytes.extend_from_slice(head.as_bytes());
+        Self { bytes, first: true }
+    }
+
+    /// One item of a JSON list: an object of `fields`, in their order.
+    pub(crate) fn item(&mut self, fields: &[(&str, &Value)]) -> Result<(), ProviderError> {
+        if !self.first {
+            self.bytes.push(b',');
+        }
+        self.first = false;
+        self.object(fields)
+    }
+
+    /// One line of a JSON Lines file: an object of `fields`, in their order.
+    pub(crate) fn line(&mut self, fields: &[(&str, &Value)]) -> Result<(), ProviderError> {
+        self.object(fields)?;
+        self.bytes.push(b'\n');
+        Ok(())
+    }
+
+    /// The body, closed with `tail`.
+    pub(crate) fn finish(mut self, tail: &str) -> Vec<u8> {
+        self.bytes.extend_from_slice(tail.as_bytes());
+        self.bytes
+    }
+
+    fn object(&mut self, fields: &[(&str, &Value)]) -> Result<(), ProviderError> {
+        self.bytes.push(b'{');
+        for (i, (name, value)) in fields.iter().enumerate() {
+            if i > 0 {
+                self.bytes.push(b',');
+            }
+            serde_json::to_writer(&mut self.bytes, name).map_err(unwritable)?;
+            self.bytes.push(b':');
+            serde_json::to_writer(&mut self.bytes, value).map_err(unwritable)?;
+        }
+        self.bytes.push(b'}');
+        Ok(())
+    }
+}
+
+/// What a batch's requests should take once written: each input as base64, its prompts, and
+/// room for the settings around them. Only a size to reserve, so an estimate is enough.
+fn room(requests: &[(String, ProcessRequest<'_>)]) -> usize {
+    requests
+        .iter()
+        .map(|(id, r)| {
+            r.input.bytes.len().div_ceil(3) * 4
+                + r.prompt.len()
+                + r.user_prompt.len()
+                + id.len()
+                + 2048
+        })
+        .sum()
+}
+
+fn unwritable(err: serde_json::Error) -> ProviderError {
+    ProviderError::Other(format!("the batch could not be written: {err}"))
+}
+
+/// A JSON string, quoted and escaped, for a body's head.
+pub(crate) fn quoted(text: &str) -> String {
+    Value::from(text).to_string()
+}
 
 /// A count the provider may write as `12` or `"12"`.
 pub(crate) fn count(value: Option<&Value>) -> u32 {
