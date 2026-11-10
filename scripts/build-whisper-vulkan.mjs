@@ -25,14 +25,13 @@ if (!process.env.VULKAN_SDK) {
 
 // A short target folder: ggml configures its Vulkan shader generator as a nested CMake project
 // deep inside Cargo's build folder, and under target/<triple>/release its paths pass Windows'
-// 260-character limit (rc.exe then cannot write its files; seen in Live Translation's CI). The
-// runner's temporary folder on CI, otherwise a folder at the root of the drive;
+// 260-character limit (rc.exe then cannot write its files; seen in Live Translation's CI). So a
+// folder at the root of the drive, on CI too: under the runner's temporary folder
+// (C:\a\_temp\wv) the shader generator's compiler check wrote an object file 261 characters long
+// on ARM64 and 260 on x64, and MSVC's cl.exe failed on the first with "C1083: Cannot open compiler
+// generated file: ''" (v1.6.0's first release run). C:\wv is 8 characters shorter.
 // WHISPER_VULKAN_TARGET_DIR chooses another.
-const targetDir =
-	process.env.WHISPER_VULKAN_TARGET_DIR ??
-	(process.env.RUNNER_TEMP
-		? join(process.env.RUNNER_TEMP, 'wv')
-		: join(parse(process.cwd()).root, 'wv'));
+const targetDir = process.env.WHISPER_VULKAN_TARGET_DIR ?? join(parse(process.cwd()).root, 'wv');
 
 execFileSync(
 	'cargo',
