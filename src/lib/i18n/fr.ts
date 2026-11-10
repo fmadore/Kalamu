@@ -1519,6 +1519,9 @@ export const fr: Messages = {
 		userPrompt: 'Requête envoyée avec chaque page',
 		userPromptDocument: 'Requête envoyée avec chaque document',
 		mergeInstructions: 'Instructions pour regrouper les pages',
+		dense: 'Pages chargées de texte',
+		denseHint:
+			'Pour les journaux et autres pages aux colonnes serrées. Quand un traitement lit plusieurs pages par appel, il en regroupe moins, pour que la réponse ait la place de tout leur texte.',
 		save: 'Enregistrer',
 		duplicate: 'Dupliquer',
 		copyName: (name: string) => `${name} (copie)`,

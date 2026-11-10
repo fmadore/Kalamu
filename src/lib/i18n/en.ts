@@ -1427,6 +1427,9 @@ export const en = {
 		userPrompt: 'Request sent with each page',
 		userPromptDocument: 'Request sent with each document',
 		mergeInstructions: 'Instructions for combining the pages',
+		dense: 'Pages full of text',
+		denseHint:
+			'For newspapers and other pages of close columns. When a job reads several pages in one call, fewer go together, so the answer has room for all their text.',
 		save: 'Save',
 		duplicate: 'Duplicate',
 		copyName: (name: string) => `${name} (copy)`,

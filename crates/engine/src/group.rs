@@ -12,7 +12,6 @@
 //! one answer, with room for its thinking: a dense newspaper page counts for more than a
 //! letter's.
 
-use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use kalamu_core::{
@@ -25,8 +24,9 @@ use crate::piece::{Called, Input, Outcome, finish, preview};
 use crate::plan::Work;
 use crate::{Engine, EngineError};
 
-/// Words a page of each kind is expected to take in the answer, in tokens: a dense newspaper
-/// page, and anything else (a letter, a report, a register).
+/// Words a page of each kind is expected to take in the answer, in tokens: a dense page (a
+/// newspaper's, or any preset marked dense), and anything else (a letter, a report, a
+/// register).
 const NEWSPAPER_PAGE_TOKENS: u32 = 4_000;
 const PAGE_TOKENS: u32 = 1_500;
 /// The share of the output limit the pages' text may fill; the rest is room for thinking and
@@ -46,16 +46,18 @@ pub(crate) enum Unit {
 
 /// The most pages `setup`'s model reads in one call: as many as its answer has room for, within
 /// the provider's own limit on pages; one for a model that takes no instructions or no PDF.
-pub(crate) fn pages_cap(catalog: &kalamu_catalog::Catalog, setup: &Setup) -> u32 {
+/// `dense` is the preset's hint that its pages carry much text (a newspaper's).
+pub(crate) fn pages_cap(catalog: &kalamu_catalog::Catalog, setup: &Setup, dense: bool) -> u32 {
     let Some(model) = catalog.model(&setup.provider, &setup.model) else {
         return 1;
     };
     if !model.accepts_prompt || !model.inputs.iter().any(|i| i == "application/pdf") {
         return 1;
     }
-    let per_page = match setup.prompt.preset_id.as_deref() {
-        Some(id) if id.contains("newspaper") => NEWSPAPER_PAGE_TOKENS,
-        _ => PAGE_TOKENS,
+    let per_page = if dense {
+        NEWSPAPER_PAGE_TOKENS
+    } else {
+        PAGE_TOKENS
     };
     let output = model.limits.max_output_tokens.unwrap_or(UNKNOWN_OUTPUT);
     let fits = (output / OUTPUT_SHARE.1 * OUTPUT_SHARE.0 / per_page).max(1);
@@ -86,10 +88,15 @@ impl Engine {
         {
             return 1;
         }
-        // Settled when the job was created; worked out again only for a job made before.
-        let cap = setup
-            .pages_cap
-            .unwrap_or_else(|| pages_cap(&self.current_catalog(), setup));
+        // Settled when the job was created; worked out again only for a job made before, with
+        // the density of the preset it names as it is now.
+        let cap = setup.pages_cap.unwrap_or_else(|| {
+            let dense = setup.prompt.preset_id.as_deref().is_some_and(|id| {
+                self.with_prompts(|p| p.get(id))
+                    .is_ok_and(|preset| preset.is_dense())
+            });
+            pages_cap(&self.current_catalog(), setup, dense)
+        });
         let pages = source.page_count.unwrap_or(1);
         asked.asked(pages).min(cap).min(pages).max(1)
     }
@@ -184,10 +191,7 @@ impl Engine {
         }
 
         let accepted = self.accepted(job, step)?;
-        let stem = Path::new(&source.file_name)
-            .file_stem()
-            .map(|s| s.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "pages".into());
+        let stem = crate::source_stem(&source.file_name, "pages");
         let prepared = {
             let opened = opened.clone();
             tokio::task::spawn_blocking(move || opened.prepare_pages(first, last, &accepted, &stem))

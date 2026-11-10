@@ -29,6 +29,8 @@ pub(crate) struct Default {
     pub schema: Option<fn() -> AnalysisSchema>,
     /// A table of contents' second step.
     pub merge: Option<&'static str>,
+    /// Pages full of text (a newspaper's), of which fewer go together in one call.
+    pub dense: bool,
 }
 
 /// A table of contents' first step, sent with each page.
@@ -416,6 +418,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: PAGE_REQUEST,
         schema: None,
         merge: None,
+        dense: false,
     },
     Default {
         id: "text_extraction.newspaper",
@@ -426,6 +429,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: PAGE_REQUEST,
         schema: None,
         merge: None,
+        dense: true,
     },
     Default {
         id: "text_extraction.handwritten",
@@ -436,6 +440,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: HANDWRITING_REQUEST,
         schema: None,
         merge: None,
+        dense: false,
     },
     Default {
         id: "audio_transcription.interview",
@@ -446,6 +451,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: RECORDING_REQUEST,
         schema: None,
         merge: None,
+        dense: false,
     },
     Default {
         id: "audio_transcription.translate_english",
@@ -456,6 +462,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: RECORDING_REQUEST,
         schema: None,
         merge: None,
+        dense: false,
     },
     Default {
         id: "analysis.summary_research",
@@ -466,6 +473,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(summary_research),
         merge: None,
+        dense: false,
     },
     Default {
         id: "analysis.summary_publication",
@@ -476,6 +484,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(summary_publication),
         merge: None,
+        dense: false,
     },
     Default {
         id: "analysis.entities",
@@ -486,6 +495,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(entities),
         merge: None,
+        dense: false,
     },
     Default {
         id: "analysis.tone",
@@ -496,6 +506,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: ANALYSIS_REQUEST,
         schema: Some(tone),
         merge: None,
+        dense: false,
     },
     Default {
         id: "contents.periodical",
@@ -506,6 +517,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: CONTENTS_REQUEST,
         schema: Some(contents_periodical),
         merge: Some(include_str!("../defaults/contents-periodical-merge.md")),
+        dense: false,
     },
     Default {
         id: "contents.archival_file",
@@ -516,6 +528,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: CONTENTS_REQUEST,
         schema: Some(contents_archival),
         merge: Some(include_str!("../defaults/contents-archival-merge.md")),
+        dense: false,
     },
     Default {
         id: "contents.book",
@@ -526,6 +539,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: CONTENTS_REQUEST,
         schema: Some(contents_book),
         merge: Some(include_str!("../defaults/contents-book-merge.md")),
+        dense: false,
     },
     Default {
         id: "text_correction.general",
@@ -536,5 +550,6 @@ pub(crate) const DEFAULTS: &[Default] = &[
         user_prompt: CORRECTION_REQUEST,
         schema: None,
         merge: None,
+        dense: false,
     },
 ];

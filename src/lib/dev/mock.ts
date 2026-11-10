@@ -108,7 +108,8 @@ const presets: Preset[] = [
 		instructions: '# Newspaper or magazine page…',
 		user_prompt: 'Transcribe this page completely, following the instructions given.',
 		builtin: true,
-		modified: true
+		modified: true,
+		dense: true
 	},
 	{
 		id: 'audio_transcription.interview',

@@ -28,6 +28,21 @@ impl Fixture {
     }
 
     fn sampled_job(&self, source: SourceFile, together: PagesPerCall, sample: Option<u32>) -> Job {
+        self.job_with(source, together, sample, None)
+    }
+
+    /// A job whose pages all go together, read with `preset`.
+    fn preset_job(&self, source: SourceFile, preset: &str) -> Job {
+        self.job_with(source, PagesPerCall::Whole, None, Some(preset))
+    }
+
+    fn job_with(
+        &self,
+        source: SourceFile,
+        together: PagesPerCall,
+        sample: Option<u32>,
+        preset: Option<&str>,
+    ) -> Job {
         self.engine
             .create_job(NewJob {
                 name: "Registre".into(),
@@ -36,7 +51,7 @@ impl Fixture {
                 setups: vec![SetupRequest {
                     provider: ProviderId::new("fake"),
                     model: "fake-model".into(),
-                    preset_id: None,
+                    preset_id: preset.map(str::to_string),
                     label: None,
                     options: Default::default(),
                     merge: None,
@@ -216,4 +231,53 @@ async fn pages_go_one_by_one_where_grouping_does_not_apply() {
     assert_eq!(f.run(job.id).await, JobStatus::Completed);
     assert!(f.groups().is_empty());
     assert_eq!(f.fake.calls(), 3);
+}
+
+/// How many pages go together follows the preset's density hint, never its id or name: with
+/// 65,536 tokens of answer, 26 ordinary pages fit, or 9 dense ones.
+#[tokio::test]
+async fn a_dense_preset_sends_fewer_pages_together_whatever_it_is_called() {
+    let f = fixture();
+    f.listed(65_536);
+    let cap = |preset: &str| f.preset_job(f.pdf("journal.pdf", 30), preset).setups[0].pages_cap;
+    assert_eq!(cap("text_extraction.newspaper"), Some(9));
+    assert_eq!(cap("text_extraction.printed"), Some(26));
+
+    let own = |name: &str, dense: Option<bool>| {
+        f.engine
+            .with_prompts(|p| {
+                let mut own = p.get("text_extraction.printed")?;
+                own.id = String::new();
+                own.name = name.into();
+                own.dense = dense;
+                p.save(own)
+            })
+            .map(|p| p.id)
+            .unwrap_or_else(|e| panic!("{e}"))
+    };
+    let gazettes = own("Gazettes", Some(true));
+    assert_eq!(
+        cap(&gazettes),
+        Some(9),
+        "the researcher's own, marked dense"
+    );
+    let named = own("Newspaper pages", None);
+    assert_eq!(cap(&named), Some(26), "a name says nothing");
+    let copy = f
+        .engine
+        .with_prompts(|p| p.duplicate("text_extraction.newspaper", "Le Réveil"))
+        .map(|p| p.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(cap(&copy), Some(9), "a copy of the newspaper default");
+
+    // A job made before the cap was settled works it out again from the preset it names.
+    for (preset, pages) in [(gazettes.as_str(), 9), ("text_extraction.printed", 26)] {
+        let job = f.preset_job(f.pdf("journal.pdf", 30), preset);
+        let mut setup = job.setups[0].clone();
+        setup.pages_cap = None;
+        assert_eq!(
+            f.engine.pages_per_call(&job, &job.sources[0], &setup),
+            pages
+        );
+    }
 }

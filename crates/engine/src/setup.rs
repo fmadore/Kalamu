@@ -102,6 +102,7 @@ impl Engine {
                 n += 1;
             }
             labels.push(label.clone());
+            let dense = preset.is_dense();
             let merge = if task == Task::Contents {
                 Some(self.merge_step(catalog, settings, request, preset)?)
             } else {
@@ -133,7 +134,7 @@ impl Engine {
             // resumes never regroups pages already read.
             let several = !matches!(settings.pages_per_call, None | Some(PagesPerCall::One));
             if task.groups_pages() && several {
-                setup.pages_cap = Some(crate::group::pages_cap(catalog, &setup));
+                setup.pages_cap = Some(crate::group::pages_cap(catalog, &setup, dense));
             }
             setups.push(setup);
         }

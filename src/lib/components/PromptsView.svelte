@@ -34,6 +34,7 @@
 					draft.instructions !== selected.instructions ||
 					draft.user_prompt !== selected.user_prompt ||
 					(draft.merge_instructions ?? null) !== (selected.merge_instructions ?? null) ||
+					!!draft.dense !== !!selected.dense ||
 					JSON.stringify(draft.schema) !== JSON.stringify(selected.schema)))
 	);
 
@@ -57,6 +58,7 @@
 			user_prompt: copy?.user_prompt ?? '',
 			builtin: false,
 			modified: false,
+			dense: false,
 			...(copy?.schema ? { schema: copy.schema } : {}),
 			...(copy?.merge_instructions ? { merge_instructions: copy.merge_instructions } : {})
 		};
@@ -225,6 +227,23 @@
 				>
 				<textarea class="short mono" bind:value={draft.user_prompt}></textarea>
 			</label>
+			{#if draft.task === 'text_extraction'}
+				<!-- How much text a page carries, which sizes the pages sent together in one call. -->
+				<div class="field">
+					<label class="inline">
+						<input
+							type="checkbox"
+							checked={!!draft.dense}
+							aria-describedby="prompt-dense-hint"
+							onchange={(e) => {
+								if (draft) draft.dense = e.currentTarget.checked;
+							}}
+						/>
+						{m.prompts.dense}
+					</label>
+					<p class="muted small" id="prompt-dense-hint">{m.prompts.denseHint}</p>
+				</div>
+			{/if}
 			{#if draft.task === 'contents'}
 				<!-- The second step: how the pages' readings are combined into entries. -->
 				<label class="field">
@@ -310,6 +329,12 @@
 		max-height: 100%;
 	}
 	.small {
+		font-size: var(--type-sm);
+	}
+	.inline {
+		display: inline-flex;
+		gap: var(--space-2);
+		align-items: center;
 		font-size: var(--type-sm);
 	}
 	.row {
