@@ -175,6 +175,7 @@ mod tests {
 
         let markdown = shared.to_markdown();
         assert!(markdown.starts_with("# Letters\n"));
+        assert!(crate::beside::written_by_export(&markdown));
         assert!(markdown.contains(
             "2. **People and places**: analysis, reads the text of step 1 (Extract) as \
              corrected when it starts."

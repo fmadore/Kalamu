@@ -436,6 +436,7 @@ mod tests {
         assert_eq!(file.pipeline.destination, OutputDestination::default());
         let md = file.to_markdown();
         assert!(md.starts_with("# Literature review\n"));
+        assert!(crate::beside::written_by_export(&md));
         assert!(md.contains("- Model: Mistral Small 4 (`mistral-small-2603`)"));
         assert!(md.contains("`reasoning_effort` = `none`"));
         assert!(md.contains("- Prompt: Tone of the document (built in)"));

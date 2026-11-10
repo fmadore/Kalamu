@@ -4,6 +4,7 @@
 //! Defaults are never changed on disk. Editing one saves an override under the same id;
 //! resetting deletes the override. User presets are one JSON file each in the presets folder.
 
+mod beside;
 mod defaults;
 mod dictionary;
 mod folder;
@@ -14,6 +15,7 @@ mod render;
 mod workflow_file;
 mod workflows;
 
+pub use beside::markdown_beside;
 pub use dictionary::DICTIONARY_MERGES;
 pub use pipelines::{Pipeline, PipelineLibrary};
 pub use profiles::{ProfileFile, ProfileLibrary};

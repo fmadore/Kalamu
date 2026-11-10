@@ -34,18 +34,20 @@ pub fn delete_pipeline(state: State<'_, AppState>, id: String) -> CmdResult<()> 
 }
 
 /// Writes the pipeline's record twice, side by side: the JSON file another Kalamu imports
-/// at `path`, and the same with a `.md` extension as Markdown for a methods section.
+/// at `path`, and the same as Markdown for a methods section, whose path it returns.
 #[tauri::command]
-pub fn export_pipeline(state: State<'_, AppState>, id: String, path: String) -> CmdResult<()> {
+pub fn export_pipeline(state: State<'_, AppState>, id: String, path: String) -> CmdResult<String> {
     let pipeline = state
         .pipelines
         .lock()
         .unwrap_or_else(|p| p.into_inner())
         .get(&id)?;
     let file = state.engine.pipeline_file(pipeline)?;
-    let path = std::path::Path::new(&path);
-    super::write_text(path.with_extension("json"), file.to_json()?)?;
-    super::write_text(path.with_extension("md"), file.to_markdown())
+    super::write_record(
+        std::path::Path::new(&path),
+        file.to_json()?,
+        file.to_markdown(),
+    )
 }
 
 /// Adds a shared pipeline and the presets it brings.

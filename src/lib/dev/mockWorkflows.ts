@@ -106,7 +106,7 @@ export function workflowCommand(cmd: string, a: Record<string, unknown>): unknow
 			workflows = workflows.filter((x) => x.id !== a.id);
 			return null;
 		case 'export_workflow':
-			return null;
+			return String(a.path).replace(/\.json$/i, '.md');
 		case 'list_runs':
 			return runs;
 		case 'get_run':
