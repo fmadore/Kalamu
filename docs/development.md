@@ -128,7 +128,8 @@ macOS (Apple Silicon):
 1. Move the version in `package.json` (with `npm version <x.y.z> --no-git-tag-version`), the
    workspace `Cargo.toml` and `src-tauri/tauri.conf.json` together, and let Cargo update
    `Cargo.lock`.
-2. Write the release notes in `docs/release-<x.y.z>.md`: they become the release's body.
+2. Write the release notes in `docs/release-<x.y.z>.md`: they become the release's body,
+   followed by [checking-downloads.md](checking-downloads.md) with the version filled in.
 3. Merge, then tag `main` and push the tag:
 
 ```bash
@@ -144,7 +145,29 @@ lists the six `APPLE_*` repository secrets it needs), and `kalamu-samples.zip`
 from `samples/`; it
 publishes the release once every asset is attached, as a pre-release while the version starts
 with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To
-rebuild a tag, run the workflow by hand from the Actions tab.
+rebuild a tag, run the workflow by hand from the Actions tab; a tag cut before the workflow took
+its present shape (November 2026) lacks `.github/actions/windows-packages` and cannot be rebuilt
+this way.
+
+The jobs that compile (`npm ci`, build scripts, Cargo) hold a read-only token and no secret: each
+Windows architecture is compiled once and packaged twice, the Mac app is compiled unsigned, and
+a separate job signs and notarises it with `tauri bundle`, with the packages installed without
+their install scripts and nothing compiled. Only the jobs that create, fill and publish the
+release can write to the repository, and they run nothing but `gh` and the shell. The release
+also carries `SHA256SUMS`, every asset's SHA-256, and a build attestation for each asset listed
+there, kept by GitHub. The publish step adds [checking-downloads.md](checking-downloads.md) to
+the release notes, so every release says how to check them; by hand:
+
+```bash
+sha256sum -c SHA256SUMS --ignore-missing
+gh attestation verify Kalamu_1.6.0_x64-setup.exe --repo fmadore/Kalamu
+```
+
+A pull request that touches the packaging (the Tauri and MSIX configuration, the bundled
+programs' pins, the scripts that fetch, build or package them, `release.yml`) runs
+`.github/workflows/packaging.yml`: the Windows installer and Store package made as a tag makes
+them, from a debug build and for x64, with nothing signed or uploaded. Run it by hand from the
+Actions tab for both architectures before tagging a release whose packaging changed.
 
 4. Once the release is published, set `latest_version` at the top of
    `crates/catalog/catalog.json` to its version and `updated` to the day, and merge. Copies
