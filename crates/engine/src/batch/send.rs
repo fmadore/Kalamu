@@ -91,13 +91,17 @@ impl Engine {
                 });
             }
         };
+        // The provider says what one batch may hold; the engine holds less, so that no body
+        // nears the hundreds of megabytes a provider accepts.
         let limits = self.provider(&setup.provider)?.batch_limits();
+        let max_bytes = limits.max_bytes.min(self.config.max_batch_bytes);
         let bucket = gathered.entry(setup.id).or_default();
         let mut outcome = BatchOutcome::default();
-        // Send what is gathered first if this piece would take the batch over a limit.
+        // Send what is gathered first if this piece would take the batch over a limit. A piece
+        // larger than the limit on its own still goes, alone.
         if !bucket.pieces.is_empty()
             && (bucket.pieces.len() >= limits.max_items
-                || bucket.bytes + input.bytes.len() > limits.max_bytes)
+                || bucket.bytes + input.bytes.len() > max_bytes)
         {
             outcome = self.send(job, setup, std::mem::take(bucket), stop).await?;
         }
