@@ -22,6 +22,8 @@ use crate::commands::AppState;
 pub const PROGRESS_EVENT: &str = "progress";
 /// Sent when the window is closed while jobs run, so the interface can ask first.
 pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
+/// Sent by the application menu's Settings… on macOS, so the interface opens Settings.
+pub const OPEN_SETTINGS_EVENT: &str = "open-settings";
 /// Name of the event carrying [`kalamu_search::SearchProgress`]: how far a project's text is
 /// prepared for searching.
 pub const SEARCH_PROGRESS_EVENT: &str = "search-progress";

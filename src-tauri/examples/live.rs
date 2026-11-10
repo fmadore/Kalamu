@@ -1,5 +1,5 @@
 //! Runs real jobs against the live provider APIs, with the keys saved in the app's Settings
-//! (Windows Credential Manager), to check every task end to end before a release. Never run in
+//! (Credential Manager on Windows, the Keychain on macOS), to check every task end to end before a release. Never run in
 //! CI: it spends money and needs keys.
 //!
 //!   cargo run -p kalamu --example live -- <samples> <out> [job name filter]
@@ -268,11 +268,15 @@ fn engine(out: &Path) -> anyhow::Result<(Arc<Engine>, Arc<SqliteStore>)> {
     std::fs::create_dir_all(&data)?;
     let store = Arc::new(SqliteStore::open(&data.join("jobs.sqlite"))?);
     let prompts = PromptLibrary::open(&data.join("presets"))?;
-    // The installed app's FFmpeg, or KALAMU_FFMPEG_DIR.
-    let installed = std::env::var_os("LOCALAPPDATA")
-        .map(|d| PathBuf::from(d).join("Kalamu"))
-        .into_iter()
-        .collect::<Vec<_>>();
+    // The installed app's FFmpeg (in Kalamu's folder in Windows' local app data, or inside the
+    // Mac app in Applications), or KALAMU_FFMPEG_DIR.
+    let installed = [
+        std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("Kalamu")),
+        Some(PathBuf::from("/Applications/Kalamu.app/Contents/MacOS")),
+    ]
+    .into_iter()
+    .flatten()
+    .collect::<Vec<_>>();
     let ffmpeg = kalamu_media::Ffmpeg::locate(&installed);
     println!(
         "FFmpeg: {}",

@@ -7,6 +7,7 @@ use std::process::Child;
 use std::sync::OnceLock;
 
 use kalamu_media::Playback;
+use tauri::image::Image;
 use tauri::utils::config::AppDirectoriesOverride;
 use tauri::{App, AppHandle, RunEvent};
 use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
@@ -29,6 +30,10 @@ pub const CLOSE_HIDES_WINDOW: bool = false;
 /// A left click on the notification-area icon opens the window, as Windows users expect; the
 /// menu is on right click.
 pub const TRAY_MENU_ON_LEFT_CLICK: bool = false;
+
+/// The notification area shows icons in colour: the tray uses the bundle icon, as the taskbar
+/// does.
+pub const TRAY_TEMPLATE: Option<Image<'static>> = None;
 
 /// What the review view's player (Chromium, in WebView2) plays.
 pub const PLAYBACK: Playback = Playback::CHROMIUM;

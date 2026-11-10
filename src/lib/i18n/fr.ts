@@ -96,6 +96,7 @@ export const fr: Messages = {
 		collapse: 'Masquer la liste des traitements',
 		expand: 'Afficher la liste des traitements',
 		sidebarShortcut: 'B',
+		settingsShortcut: ',',
 		jobMenu: (name: string) => `Actions pour « ${name} »`,
 		addToProject: 'Ajouter à un projet',
 		noProjects: 'Aucun projet pour l’instant. Créez-en un dans Projets.',
