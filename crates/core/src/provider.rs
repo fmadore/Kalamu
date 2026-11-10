@@ -82,9 +82,11 @@ pub struct PreparedInput {
     pub file_name: String,
 }
 
-/// What a request asks of the model beyond the prompt, per model: how much to think, and how
-/// long its answer may be. The engine fills it from the catalogue and the set-up; a provider
-/// falls back to its own setting where a field is `None` for a model the catalogue lacks.
+/// What a request asks of the model beyond the prompt, per model: how much to think, how long
+/// its answer may be, and what the model is where that shapes the request. The engine fills it
+/// from the catalogue and the set-up, so a provider never decides by a model's name. A provider
+/// falls back to its own setting where a field is `None` for a model the catalogue lacks, and
+/// such a model has none of the abilities below.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct Tuning {
@@ -92,6 +94,19 @@ pub struct Tuning {
     pub reasoning: Option<String>,
     /// The model's output limit; `None` when its provider documents none.
     pub max_output_tokens: Option<u32>,
+    /// A refusal may be answered again by another of the provider's models, on the provider's
+    /// side (Claude's server-side fallback): the catalogue's `refusal_fallback`.
+    #[serde(default)]
+    pub refusal_fallback: bool,
+    /// Labels who speaks, which a provider may ask for in a response format of its own (OpenAI's
+    /// diarizing model): the catalogue's `speakers`.
+    #[serde(default)]
+    pub speakers: bool,
+    /// Takes no instructions: a dedicated OCR or speech-to-text model, to which a provider may
+    /// send the input alone (Gemini's speech-to-text request). The catalogue's `accepts_prompt`
+    /// turned round, so that a model the catalogue lacks is sent the ordinary request.
+    #[serde(default)]
+    pub no_prompt: bool,
 }
 
 /// Everything a provider needs for one call.

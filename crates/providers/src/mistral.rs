@@ -277,7 +277,7 @@ impl Provider for Mistral {
         }
     }
 
-    fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+    fn request_settings(&self, task: Task, _model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
         match task {
             Task::TextExtraction => vec![
                 RequestSetting::new("include_image_base64", false),
@@ -285,7 +285,7 @@ impl Provider for Mistral {
                 RequestSetting::new("include_blocks", true),
             ],
             Task::Analysis | Task::Contents | Task::TextCorrection => {
-                chat::request_settings(model, tuning)
+                chat::request_settings(tuning)
             }
             Task::AudioTranscription => Vec::new(),
         }

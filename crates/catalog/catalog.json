@@ -747,6 +747,7 @@
       "status": "stable",
       "recommended_for": [],
       "provider_default_for": [],
+      "refusal_fallback": true,
       "pricing": {
         "input_per_mtok": 4.0,
         "output_per_mtok": 20.0,
@@ -798,6 +799,7 @@
         "text_extraction",
         "analysis"
       ],
+      "refusal_fallback": true,
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 10.0,

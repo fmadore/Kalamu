@@ -4,11 +4,12 @@
 //! `document_url` is read by that OCR before the model sees it (Mistral's "Document QnA").
 //!
 //! `reasoning_effort` is the level set for the job, from the levels the catalogue lists for the
-//! model; for a model it lacks, the lowest: `none` for Mistral's own models, whose answer then
+//! model, whose lowest is the suggestion: `none` for Mistral's own models, whose answer then
 //! comes back as one string, and `low` for GLM and DeepSeek, which offer only `low`, `high` and
-//! `max` and may answer in thinking and text chunks. `max_tokens` is the model's documented
-//! output limit, and is left out where Mistral documents none, so the model writes until it is
-//! done.
+//! `max` and may answer in thinking and text chunks. A model the catalogue lacks is sent none,
+//! and thinks as much as Mistral's default for it: no level is accepted by every model.
+//! `max_tokens` is the model's documented output limit, and is left out where Mistral documents
+//! none, so the model writes until it is done.
 
 use kalamu_core::{
     AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, RequestSetting, Tuning, Usage,
@@ -18,22 +19,15 @@ use serde_json::{Value, json};
 use crate::analysis;
 use crate::http::data_url;
 
-pub(super) fn request_settings(model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
-    let mut settings = vec![RequestSetting::new(
-        "reasoning_effort",
-        effort(model, tuning),
-    )];
+pub(super) fn request_settings(tuning: &Tuning) -> Vec<RequestSetting> {
+    let mut settings = Vec::new();
+    if let Some(effort) = &tuning.reasoning {
+        settings.push(RequestSetting::new("reasoning_effort", effort.as_str()));
+    }
     if let Some(max) = tuning.max_output_tokens {
         settings.push(RequestSetting::new("max_tokens", max));
     }
     settings
-}
-
-fn effort<'a>(model: &str, tuning: &'a Tuning) -> &'a str {
-    tuning
-        .reasoning
-        .as_deref()
-        .unwrap_or_else(|| lowest_effort(model))
 }
 
 pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Value {
@@ -66,21 +60,14 @@ pub(super) fn body(request: &ProcessRequest<'_>, fields: &AnalysisSchema) -> Val
                 "strict": true,
             },
         },
-        "reasoning_effort": effort(request.model, request.tuning),
     });
+    if let Some(effort) = &request.tuning.reasoning {
+        body["reasoning_effort"] = json!(effort);
+    }
     if let Some(max) = request.tuning.max_output_tokens {
         body["max_tokens"] = json!(max);
     }
     body
-}
-
-/// Z.ai's GLM rejects `none`; DeepSeek V4.1's own lowest setting is `low` as well.
-fn lowest_effort(model: &str) -> &'static str {
-    if model.starts_with("zai-glm") || model.starts_with("deepseek") {
-        "low"
-    } else {
-        "none"
-    }
 }
 
 pub(super) fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {

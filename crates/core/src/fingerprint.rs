@@ -174,4 +174,29 @@ mod tests {
         assert_ne!(base, language);
         assert_ne!(base, evened, "a fix to the input changes the result");
     }
+
+    /// Keys of results already stored never change: a newspaper page read by Claude Opus, as
+    /// keyed before models' abilities and presets' density were recorded (#147). What a
+    /// provider learns from the catalogue, and how many pages go together, are not in a key.
+    #[test]
+    fn keys_of_stored_results_stay_as_they_were() {
+        let mut opus = setup("# Newspaper or magazine page");
+        opus.provider = ProviderId::new("anthropic");
+        opus.model = "claude-opus-5-5".into();
+        opus.prompt.preset_id = Some("text_extraction.newspaper".into());
+        opus.options.reasoning = Some("low".into());
+        let key = CacheKey::compute(
+            Task::TextExtraction,
+            "abc",
+            &PieceRef::page(3),
+            &opus,
+            &LanguageChoice::Explicit(vec![LanguageCode::new("fr")]),
+            &[],
+        );
+        // Computed by this test on the commit before the change (9b3fd85).
+        assert_eq!(
+            key.as_str(),
+            "ace2d5efb73011e7904c0454ecf2030c1af99251938a5233e75b1e95d7063010"
+        );
+    }
 }

@@ -1,7 +1,6 @@
 //! One piece's call: taken from the cache, or prepared, sent to its provider with retries, and
 //! stored; and what every path that stores an answer shares (the piece's new state, its cost).
 
-use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -71,8 +70,9 @@ pub(crate) fn finish(task: Task, output: ProcessOutput) -> ProcessOutput {
 impl Engine {
     /// What a request to `model` asks beyond the prompt: the reasoning level chosen for the
     /// set-up (the suggestion when none was, the nearest the model has when it lacks it) and
-    /// the model's whole output limit, from the catalogue. A model the catalogue lacks is sent
-    /// the level chosen, and its provider's own limit.
+    /// the model's whole output limit, from the catalogue, with the abilities that shape its
+    /// request. A model the catalogue lacks is sent the level chosen and its provider's own
+    /// limit, and is taken to have none of those abilities.
     pub(crate) fn tuning(
         &self,
         task: Task,
@@ -85,7 +85,7 @@ impl Engine {
             .map(|m| m.tuning(task, chosen))
             .unwrap_or_else(|| Tuning {
                 reasoning: chosen.map(str::to_string),
-                max_output_tokens: None,
+                ..Tuning::default()
             })
     }
 
@@ -143,10 +143,7 @@ impl Engine {
             Input::Ready(input) => Ok(input),
             Input::Open(opened) => {
                 let accepted = self.accepted(job, step)?;
-                let stem = Path::new(&source.file_name)
-                    .file_stem()
-                    .map(|s| s.to_string_lossy().into_owned())
-                    .unwrap_or_else(|| "page".into());
+                let stem = crate::source_stem(&source.file_name, "page");
                 let piece = state.piece.clone();
                 tokio::task::spawn_blocking(move || opened.prepare(&piece, &accepted, &stem))
                     .await

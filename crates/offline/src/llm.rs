@@ -791,8 +791,8 @@ mod tests {
     #[test]
     fn the_output_limit_follows_the_catalogue_within_bounds() {
         let tuning = |n| Tuning {
-            reasoning: None,
             max_output_tokens: n,
+            ..Tuning::default()
         };
         assert_eq!(output_limit(&tuning(None)), MAX_TOKENS);
         assert_eq!(output_limit(&tuning(Some(2048))), 2048);

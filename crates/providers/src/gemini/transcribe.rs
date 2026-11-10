@@ -4,7 +4,7 @@
 
 use kalamu_core::{
     LanguageChoice, ProcessOutput, ProcessRequest, ProviderError, RequestSetting, Segment,
-    SetupOptions,
+    SetupOptions, Tuning,
 };
 use serde_json::{Value, json};
 
@@ -191,9 +191,10 @@ pub(super) fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
     Ok(output)
 }
 
-/// One of Google's speech-to-text models, which take no prompt.
-pub(super) fn transcriber(model: &str) -> bool {
-    model.contains("transcribe")
+/// One of Google's speech-to-text models: a model the catalogue says takes no prompt, since
+/// every other Gemini model is sent instructions.
+pub(super) fn transcriber(tuning: &Tuning) -> bool {
+    tuning.no_prompt
 }
 
 /// Speakers when asked for; word timings whenever timestamps or speakers are, since the lines
