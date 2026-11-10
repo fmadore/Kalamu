@@ -5,6 +5,7 @@
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import type { Pipeline } from '../bindings/Pipeline.js';
 import type { Catalog } from '../bindings/Catalog.js';
+import type { Correction } from '../bindings/Correction.js';
 import type { Preset } from '../bindings/Preset.js';
 import type { Settings } from '../bindings/Settings.js';
 import type { TaskRules } from '../bindings/TaskRules.js';
@@ -805,7 +806,20 @@ export function installMock(): void {
 					'C:\\Archives\\Bulletin\\bulletin-1957-06.pdf',
 					'C:\\Archives\\Letters\\lettre-gouverneur.jpg'
 				];
-			case 'save_correction':
+			case 'save_correction': {
+				// Kept on the sample piece, as the store keeps it, so the review shows the
+				// correction again when it reads the pieces anew.
+				const c = a.correction as Correction;
+				const piece = [...pieces, ...analysisPieces, ...contentsPieces, ...correctionPieces].find(
+					(p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index
+				);
+				if (piece) {
+					piece.corrected_text = c.text;
+					piece.corrected_fields = c.fields ?? null;
+					piece.reviewed = c.reviewed;
+				}
+				return null;
+			}
 			case 'save_corrections':
 				return null;
 			case 'rename_listed':

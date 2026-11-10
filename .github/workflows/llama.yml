@@ -124,7 +124,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -293,7 +293,7 @@ jobs:
           echo "TEXT_PROGRAM=${{ matrix.text }}${exe}" >> "$GITHUB_ENV"
 
       # The OCR models' files, pinned as in crates/offline/src/vision.rs.
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: models
         with:
           path: models
@@ -378,7 +378,7 @@ jobs:
 
       # Gemma 4 E2B's language model, pinned as in crates/offline/src/llm.rs; the text program
       # does not load its encoder.
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: matrix.variant == 'cpu'
         id: gemma
         with:
@@ -440,7 +440,7 @@ jobs:
           fi
 
       # Kept even when a model misreads the page, so its answer can be read.
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: llama-${{ matrix.variant }}-${{ matrix.triple }}
@@ -478,7 +478,7 @@ jobs:
       OPENCL_TRIPLES: aarch64-pc-windows-msvc
     steps:
       # Credentials kept, unlike the other jobs: this one pushes the pins.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.BRANCH }}
 
@@ -497,7 +497,7 @@ jobs:
             echo "done=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         if: steps.pinned.outputs.done != 'true'
         with:
           pattern: llama-*

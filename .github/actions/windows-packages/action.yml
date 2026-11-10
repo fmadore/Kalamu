@@ -1,0 +1,205 @@
+name: Windows packages
+description: >-
+  Builds the app once for one Windows architecture and makes both of its packages from that
+  build: the Store package (.msix) and the NSIS installer, each with FFmpeg, llama.cpp, Whisper's
+  Vulkan helper and the licences. Neither is signed and nothing is uploaded: release.yml attaches
+  what this makes, and packaging.yml runs it on pull requests that touch the packaging. Run it
+  after actions/checkout, in a job whose token is read-only.
+
+inputs:
+  arch:
+    description: x64 or arm64, the runner's own architecture.
+    required: true
+  profile:
+    description: >-
+      release for what a tag ships (full LTO); debug for a dry run, which checks the packaging
+      in a fraction of the time.
+    default: release
+  whisper-vulkan:
+    description: >-
+      build to build Whisper's Vulkan helper (helpers/whisper-vulkan) as a release does;
+      placeholder to stand a copy of FFmpeg in for it, so a dry run checks that the packages
+      carry the sidecar without spending a build of whisper.cpp on it (CI's x64 lane builds it).
+    default: build
+  save-cache:
+    description: Whether the Rust cache is saved at the end ("true" or "false").
+    default: "false"
+
+outputs:
+  installer:
+    description: The NSIS installer, Kalamu_<version>_<arch>-setup.exe.
+    value: ${{ steps.packages.outputs.installer }}
+  msix:
+    description: The Store package, Kalamu_<version>_<arch>.msix.
+    value: ${{ steps.packages.outputs.msix }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check the inputs
+      shell: pwsh
+      env:
+        ARCH: ${{ inputs.arch }}
+        PROFILE: ${{ inputs.profile }}
+        WHISPER_VULKAN: ${{ inputs.whisper-vulkan }}
+      run: |
+        $target = switch ($env:ARCH) {
+          'x64' { 'x86_64-pc-windows-msvc' }
+          'arm64' { 'aarch64-pc-windows-msvc' }
+          default { throw "arch must be x64 or arm64, not '$env:ARCH'." }
+        }
+        if ($env:PROFILE -notin 'release', 'debug') { throw "profile must be release or debug, not '$env:PROFILE'." }
+        if ($env:WHISPER_VULKAN -notin 'build', 'placeholder') { throw "whisper-vulkan must be build or placeholder, not '$env:WHISPER_VULKAN'." }
+        "KALAMU_TARGET=$target" >> $env:GITHUB_ENV
+
+    # As in CI: whisper.cpp and Tesseract build with clang-cl and Ninja, which ship with the
+    # Windows images.
+    - name: Configure native Whisper compiler
+      shell: pwsh
+      run: |
+        "CC=clang-cl" >> $env:GITHUB_ENV
+        "CXX=clang-cl" >> $env:GITHUB_ENV
+        "CXXFLAGS=/EHsc" >> $env:GITHUB_ENV
+        "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
+        "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+
+    # The toolchain pinned in rust-toolchain.toml. Each runner builds for its own architecture.
+    - name: Rust toolchain
+      shell: pwsh
+      run: rustup toolchain install
+
+    # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of its
+    # own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
+    # `target/` with that folder emptied, and the build then finds no sources to build: keep it
+    # out of the cache, in the runner's temporary folder.
+    - name: Keep Tesseract's build outside the cached target folder
+      shell: pwsh
+      run: '"TESSERACT_RS_CACHE_DIR=$env:RUNNER_TEMP\tesseract" >> $env:GITHUB_ENV'
+    - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      with:
+        # CI's prefix: the same GGML_* values. A release restores only: a cache saved by a tag
+        # run is scoped to that tag, so nothing else could restore it.
+        prefix-key: whisper-cpu-${{ runner.arch }}-v2
+        save-if: ${{ inputs.save-cache }}
+
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 24
+        cache: npm
+
+    # Every step that builds runs in PowerShell, the runner's default shell: Git Bash rewrites
+    # environment values that look like paths for the programs it starts (CXXFLAGS=/EHsc among
+    # them), which would rebuild whisper.cpp with them.
+    - name: Install the front end's packages
+      shell: pwsh
+      run: npm ci
+
+    # The LGPL build from the ffmpeg-* release, checked against scripts/ffmpeg.json.
+    - name: Fetch the bundled FFmpeg
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: node scripts/fetch-ffmpeg.mjs $env:KALAMU_TARGET
+
+    # llama.cpp's programs for the offline models, checked against scripts/llama.json.
+    - name: Fetch the bundled llama.cpp
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: node scripts/fetch-llama.mjs $env:KALAMU_TARGET
+
+    # Whisper on the graphics processor through Vulkan, a helper built from the workspace and
+    # declared as a sidecar in tauri.ffmpeg.windows-<arch>.conf.json
+    # (docs/decisions/2026-11-08-whisper-graphics-processor.md).
+    - name: Vulkan SDK
+      if: inputs.whisper-vulkan == 'build'
+      uses: ./.github/actions/vulkan-sdk
+
+    - name: Build Whisper's Vulkan helper
+      if: inputs.whisper-vulkan == 'build'
+      shell: pwsh
+      run: node scripts/build-whisper-vulkan.mjs $env:KALAMU_TARGET
+
+    - name: Stand in for Whisper's Vulkan helper
+      if: inputs.whisper-vulkan == 'placeholder'
+      shell: pwsh
+      run: >-
+        Copy-Item -LiteralPath "src-tauri/binaries/ffmpeg-$env:KALAMU_TARGET.exe"
+        -Destination "src-tauri/binaries/whisper-vulkan-$env:KALAMU_TARGET.exe"
+
+    # Installed in licenses/ beside FFmpeg's: every crate and package built into the app.
+    - name: Write the third-party notices
+      shell: pwsh
+      run: node scripts/third-party-notices.mjs $env:KALAMU_TARGET
+
+    # The one compilation. Both packages are made from it: the Store package first, from the
+    # executable as `tauri build --no-bundle` leaves it, as the Store bundler's own build did;
+    # then the installer, whose bundler marks its executable with the bundle type as
+    # `tauri build --bundles nsis` does.
+    - name: Build the app
+      shell: pwsh
+      env:
+        ARCH: ${{ inputs.arch }}
+        PROFILE: ${{ inputs.profile }}
+      run: |
+        $debug = if ($env:PROFILE -eq 'debug') { @('--debug') } else { @() }
+        npx tauri build --target $env:KALAMU_TARGET --no-bundle @debug --config "src-tauri/tauri.ffmpeg.windows-$env:ARCH.conf.json"
+        if ($LASTEXITCODE -ne 0) { throw "tauri build failed with exit code $LASTEXITCODE" }
+
+    - name: Make the MSIX package
+      shell: pwsh
+      env:
+        ARCH: ${{ inputs.arch }}
+        PROFILE: ${{ inputs.profile }}
+      run: |
+        $debug = if ($env:PROFILE -eq 'debug') { @('--debug') } else { @() }
+        node scripts/bundle-msix.mjs $env:ARCH --prebuilt @debug
+        if ($LASTEXITCODE -ne 0) { throw "bundle-msix.mjs failed with exit code $LASTEXITCODE" }
+
+    - name: Make the NSIS installer
+      shell: pwsh
+      env:
+        ARCH: ${{ inputs.arch }}
+        PROFILE: ${{ inputs.profile }}
+      run: |
+        $debug = if ($env:PROFILE -eq 'debug') { @('--debug') } else { @() }
+        npx tauri bundle --target $env:KALAMU_TARGET --bundles nsis --no-sign @debug --config "src-tauri/tauri.ffmpeg.windows-$env:ARCH.conf.json"
+        if ($LASTEXITCODE -ne 0) { throw "tauri bundle failed with exit code $LASTEXITCODE" }
+
+    # The bundler names the package after the manifest's DisplayName; the release assets follow
+    # the installers' convention.
+    - name: Name the packages
+      id: packages
+      shell: pwsh
+      env:
+        ARCH: ${{ inputs.arch }}
+        PROFILE: ${{ inputs.profile }}
+      run: |
+        $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+        $nsis = "target/$env:KALAMU_TARGET/$env:PROFILE/bundle/nsis"
+        $installer = "$nsis/Kalamu_${version}_$env:ARCH-setup.exe"
+        if (-not (Test-Path -LiteralPath $installer)) {
+          $found = Get-ChildItem $nsis -ErrorAction SilentlyContinue
+          throw "The installer is not $installer; the bundler made: $($found.Name -join ', ')"
+        }
+        $msix = Get-ChildItem 'target/msix' | Where-Object Extension -eq '.msix' | Select-Object -First 1
+        if (-not $msix) { throw 'tauri-windows-bundle produced no .msix.' }
+        $asset = Join-Path 'target/msix' "Kalamu_${version}_$env:ARCH.msix"
+        Move-Item -LiteralPath $msix.FullName -Destination $asset -Force
+        "installer=$installer" >> $env:GITHUB_OUTPUT
+        "msix=$asset" >> $env:GITHUB_OUTPUT
+
+    # The package must carry Whisper's Vulkan helper and the llama.cpp programs beside the app:
+    # the bundler copies what the configuration declares, and this checks the result, so a
+    # package without them never reaches a release.
+    - name: Check what the package carries
+      shell: pwsh
+      env:
+        MSIX: ${{ steps.packages.outputs.msix }}
+      run: |
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $env:MSIX).Path)
+        try { $entries = $zip.Entries | ForEach-Object { $_.FullName -replace '\\', '/' } } finally { $zip.Dispose() }
+        $missing = @('kalamu.exe', 'whisper-vulkan.exe', 'llama-mtmd-cli-vulkan.exe') | Where-Object { $_ -notin $entries }
+        if ($missing) { throw "The package lacks: $($missing -join ', ')" }
+        Write-Output "The package carries every required file."

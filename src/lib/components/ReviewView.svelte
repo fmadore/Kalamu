@@ -240,16 +240,17 @@
 		pane?.querySelector<HTMLElement>(`[data-entry="${id}"]`) ?? null;
 
 	/** Opens the main text for correction where the researcher is reading, the caret there and
-	 * that line where it stood on screen. */
+	 * that line where it stood on screen; the focus goes into it even where that place is not
+	 * known, as the button that opened it is gone. */
 	async function correctHere(setupId: string) {
 		const place = placeInText(textPane, base);
 		editing = { setupId, text: base, from: base };
-		if (!place) return;
 		await tick();
 		const pane = textPane;
 		const area = pane?.querySelector<HTMLTextAreaElement>('textarea.editor');
 		if (!pane || !area) return;
 		area.focus({ preventScroll: true });
+		if (!place) return;
 		area.setSelectionRange(place.start, place.end);
 		const areaTop =
 			area.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop;

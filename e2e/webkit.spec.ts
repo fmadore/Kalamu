@@ -1,5 +1,6 @@
-// Each main screen opens in WebKit without an error, shortcuts are written as on a Mac, and the
-// player plays the formats the engine sends it on macOS (`Playback::WEBKIT` in crates/media).
+// Each main screen opens without an error, in English and in French, in WebKit and Chromium;
+// in WebKit on a Mac, shortcuts are written as on a Mac and the player plays the formats the
+// engine sends it on macOS (`Playback::WEBKIT` in crates/media).
 
 import { expect, test, type Page } from '@playwright/test';
 
@@ -42,6 +43,22 @@ for (const view of VIEWS) {
 		expect(errors).toEqual([]);
 	});
 }
+
+// The same screens on a system set to French, which the interface follows by default.
+test.describe('in French', () => {
+	test.use({ locale: 'fr-FR' });
+	for (const view of VIEWS) {
+		test(`the ${view || 'start'} screen opens in French without an error`, async ({ page }) => {
+			const errors = collectErrors(page);
+			await page.goto(`/?mock${view ? `&view=${view}` : ''}`);
+			await page.waitForLoadState('networkidle');
+			await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+			await expect(page.getByRole('navigation', { name: 'Traitements' })).toBeVisible();
+			await expect(page.locator('main, [role="main"]').first()).toBeVisible();
+			expect(errors).toEqual([]);
+		});
+	}
+});
 
 test('shortcuts are written with ⌘ on a Mac', async ({ page }) => {
 	test.skip(process.platform !== 'darwin', 'WebKit reports a Mac only on macOS');
