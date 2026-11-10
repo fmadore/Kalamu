@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { modifier, osNames, primary, shifted, shortcut, zoomsWithWheel } from './platform.js';
+import {
+	alted,
+	backShortcut,
+	isBack,
+	modifier,
+	osNames,
+	primary,
+	shifted,
+	shortcut,
+	zoomsWithWheel
+} from './platform.js';
 
 describe('platform', () => {
 	it('takes Command on a Mac and Ctrl elsewhere as the shortcut modifier', () => {
@@ -34,5 +44,32 @@ describe('platform', () => {
 		expect(osNames(false).keychain).toContain('Credential Manager');
 		expect(osNames(true).keychain).toContain('Keychain');
 		expect(osNames(true).tray).toContain('menu bar');
+	});
+
+	it('goes back with Alt and the left arrow, and with ⌘[ on a Mac only', () => {
+		const key = (key: string, held: Partial<KeyboardEvent> = {}) =>
+			({
+				key,
+				altKey: false,
+				ctrlKey: false,
+				metaKey: false,
+				shiftKey: false,
+				...held
+			}) as KeyboardEvent;
+		expect(isBack(key('ArrowLeft', { altKey: true }), false)).toBe(true);
+		expect(isBack(key('ArrowLeft', { altKey: true }), true)).toBe(true);
+		expect(isBack(key('[', { metaKey: true }), true)).toBe(true);
+		expect(isBack(key('[', { metaKey: true }), false)).toBe(false);
+		expect(isBack(key('ArrowLeft'), false)).toBe(false);
+		expect(isBack(key('ArrowLeft', { altKey: true, shiftKey: true }), false)).toBe(false);
+		expect(isBack(key('ArrowLeft', { altKey: true, ctrlKey: true }), false)).toBe(false);
+	});
+
+	it('writes Back for each system, with no key in a review on Windows', () => {
+		expect(alted('←', true)).toBe('⌥←');
+		expect(alted('←', false)).toBe('Alt ←');
+		expect(backShortcut(false, false)).toBe('Alt ←');
+		expect(backShortcut(true, false)).toBeNull();
+		expect(backShortcut(true, true)).toBe('⌘[');
 	});
 });

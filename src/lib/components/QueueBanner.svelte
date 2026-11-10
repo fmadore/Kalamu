@@ -5,7 +5,7 @@
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
 	import { placeOf, reasonText } from '#lib/queue.js';
-	import { app, go } from '#lib/state.svelte.js';
+	import { app, go, returnTo } from '#lib/state.svelte.js';
 
 	let { jobId }: { jobId: string } = $props();
 	const m = messages();
@@ -27,17 +27,20 @@
 		const next = trail.items[at];
 		if (!next) return;
 		trail.at = at;
-		go({
-			name: 'review',
-			jobId: next.job_id,
-			sourceId: next.source_id,
-			index: next.index ?? undefined
-		});
+		go(
+			{
+				name: 'review',
+				jobId: next.job_id,
+				sourceId: next.source_id,
+				index: next.index ?? undefined
+			},
+			{ replace: true }
+		);
 	}
 
 	function back() {
 		if (!trail) return;
-		go({
+		returnTo({
 			name: 'projects',
 			projectId: trail.projectId,
 			pane: 'queue',

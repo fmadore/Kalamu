@@ -14,10 +14,13 @@ colors:
   line-soft: "#eeebe5"
   line-strong: "#d6d1c7"
   line-hover: "#a8a297"
+  control-line: "#8a8478"
+  control-line-hover: "#5d5950"
   graphite-ink: "#171612"
   graphite-ink-hover: "#2e2c27"
   on-ink: "#ffffff"
   on-ink-muted: "#bdb9b0"
+  on-ink-danger: "#ff8a7d"
   wash: "rgba(23, 22, 18, 0.05)"
   highlighter: "#ffd84d"
   on-highlighter: "#171612"
@@ -49,6 +52,9 @@ colors:
   dark-surface-raised: "#272522"
   dark-stage: "#100f0e"
   dark-line: "#2f2d29"
+  dark-control-line: "#7a756c"
+  dark-control-line-hover: "#a09a8f"
+  dark-on-ink-danger: "#b42318"
   dark-ink: "#eeece6"
   dark-highlighter: "#e8c547"
   dark-hand-blue: "#7fa2ff"
@@ -125,6 +131,7 @@ components:
   button:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text-bright}"
+    borderColor: "{colors.control-line}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0 0.75rem"
@@ -165,6 +172,7 @@ components:
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text-bright}"
+    borderColor: "{colors.control-line}"
     typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0.25rem 0.75rem"
@@ -285,7 +293,7 @@ The same world holds from a window snapped beside another to a large monitor, an
 A warm graphite palette of paper greys and one ink, with two marker colours whose rarity carries the meaning and a small set of status hues used as text on a wash.
 
 ### Primary
-- **Graphite Ink** (#171612; dark-ink #eeece6 in dark): primary buttons, the sidebar's New job button, the toast, progress fills, the play button and scrubber, the selected task's inset ring, focus outlines and the checked state of native controls. Hover lifts to **Graphite Ink Hover** (#2e2c27). Text on it is **On Ink** (#ffffff), with **On Ink Muted** (#bdb9b0) for the shortcut inside a primary button.
+- **Graphite Ink** (#171612; dark-ink #eeece6 in dark): primary buttons, the sidebar's New job button, the toast, progress fills, the play button and scrubber, the selected task's inset ring, focus outlines and the checked state of native controls. Hover lifts to **Graphite Ink Hover** (#2e2c27). Text on it is **On Ink** (#ffffff), with **On Ink Muted** (#bdb9b0) for the shortcut inside a primary button and the toast's close button, and **On Ink Danger** (#ff8a7d; #b42318 on the near-white ink of dark mode, 7.9:1 and 5.6:1) for the dot that marks a failure in the toast.
 
 ### Secondary
 - **Highlighter** (#ffd84d; dark-highlighter #e8c547): words where the set-ups read differently, as a filled mark with a 2px bleed; a name pointed at in an analysed document; the swatch in the difference count and the legend; the marker stroke in the app's mark. Text on it is always **On Highlighter** (#171612), in both themes.
@@ -297,10 +305,11 @@ A warm graphite palette of paper greys and one ink, with two marker colours whos
 - **Chrome Grey** (#efece6; dark-chrome #171614): the sidebar, plain chips. The frame around the work.
 - **Surface** (#fdfcfa; dark-surface #1d1c1a), with **Surface Raised** (#ffffff; #272522) for what is lifted onto it: the main work surface, mastheads, buttons, inputs, the reading text. **Surface Quiet** (#f8f6f2): side panels (New job's summary), the review page strip, the audio source pane, hover on choice tiles.
 - **Stage** (#1f1e1c; dark-stage #100f0e): the lightbox under a scan. **Stage Raised** (#2b2a27) for the zoom pill, **Stage Line** (#383632) for its rules, **On Stage** (#e8e6e1) and **On Stage Muted** (#aeaaa2) for text on it.
-- **Lines**: line (#e5e1d9) for borders and dividers, line-soft (#eeebe5) between rows of one table, line-strong (#d6d1c7) for input borders, dashed slots and sigla, line-hover (#a8a297) for a border under the pointer.
+- **Lines**: line (#e5e1d9) for borders and dividers, line-soft (#eeebe5) between rows of one table, line-strong (#d6d1c7) for dashed slots, sigla and drawings, line-hover (#a8a297) for a border under the pointer (splitters, cards, page tiles).
+- **Control line** (#8a8478; dark-control-line #7a756c): the edge of what is operated, where the edge is what tells it from the page: fields, selects, text areas, the language pickers' boxes, the default button, the radio drawn in the task strip. At least 3:1 against every surface a control sits on (light: 3.7 on white, 3.6 on surface, 3.4 on surface quiet, 3.2 on chrome; dark: 3.3 on surface raised, 3.7 on surface, 3.6 on surface quiet, 3.9 on chrome), as WCAG asks of a control's boundary, and still a pencil line, lighter than any text. **Control line hover** (#5d5950; #a09a8f in dark) under the pointer and on a view that is on (pressed); focus takes bright text. Dividers, tables and hairlines keep the quiet lines.
 - **Wash** (5% ink): hover ground for ghost buttons, list rows and transcript lines.
 - **Found** (16% ink; 20% white in dark): words a search found, as a wash over the text; the match gone to is filled in graphite ink with on-ink text, the way a focus is drawn. Neither yellow, which marks the models' disagreements, nor blue, which is the researcher's hand.
-- **Text**: bright (#171612) for headings and values, body (#1e1d19), secondary (#4d4a42), muted (#615d54) for hints and metadata, faint (#938e84) only for decoration that repeats a value given elsewhere (line numbers, the slash in a breadcrumb).
+- **Text**: bright (#171612) for headings and values, body (#1e1d19), secondary (#4d4a42), muted (#615d54) for hints and metadata (a field's kind in an analysis, an item a menu cannot do now), faint (#938e84, 3.2:1) only for decoration that repeats a value given elsewhere (line numbers, the slash in a breadcrumb), never for words to read.
 - **Status**: ok-green (#1f7a4d), warn-amber (#d97f00), danger-red (#b42318), each with a darker text tone and a pale wash. Used as coloured text on a wash, a 6px dot, or a thin bar; never as a filled button.
 - **Speakers**: speaker 1 teal (#0f8a7e; #5cc8bc in dark) and speaker 2 amber (#d97f00), each as a tag of dark text on a pale wash, told apart by lightness as well as hue. Neither is blue, which belongs to the researcher's hand.
 
@@ -345,23 +354,31 @@ The **mark** is "two witnesses": on a warm graphite tile (#1e1d1b), a cream hand
 
 Each screen opens with a **masthead**: at least 3.5rem tall, white, a hairline below, the title (and a back link or breadcrumb) at left and actions at right. Below it a **sheet**: one column as wide as the window, padding 1.5rem 2rem 3rem, sections 2rem apart.
 
-**New job** is a form beside a summary: the form (as wide as the window leaves it) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
+**Back** returns to the screen the researcher came from, as it was left: a project's search with its results, the list of what to check at its item, a document, a job. It is Alt ← (and ⌘[ on a Mac) and the mouse's back button anywhere outside a field; in a review Alt and the arrows turn pages, so there a Mac's ⌘[ is the only key. The last 30 screens are kept, in memory only, and a change inside a screen (a project's pane, a collection, a review's page, stepping through what to check) replaces its place rather than adding one. A back link that names where it goes (*Projects*, the project's name, *All workflows*, the job in a review's breadcrumb) goes back when that is where the screen was opened from, and otherwise opens it; a review opened from elsewhere adds an icon-only Back button before its breadcrumb. Every way out still asks first about a changed draft.
+
+**Remembered on the computer**, each read back only if still valid (a filter or tag no longer offered stops filtering): the Jobs page's task, status and sort (not the words typed), each project's pane and its table's sort and tag, and each scan's quarter turns (for the 200 sources turned last). **Ctrl F** (⌘F) goes to the screen's filter or search field (Jobs, a project's documents, search and dictionary, the Glossary), marked `data-find`; a review keeps its own search.
+
+While files are dragged over the window, the screen that takes them (New job, a project) is covered by a **drop target**: a 2px dashed line-strong ring inset 0.75rem from the work area, on the wash, with a raised label saying what dropping does; it goes when the files leave, are dropped or the drag is given up.
+
+**New job** is a form beside a summary (a ghost **Start over** in the masthead empties it once it holds files or a name; the form is otherwise kept when the researcher leaves for Settings and comes back): the form (as wide as the window leaves it) runs numbered steps, each with a mono step number (01, 02…) hung in a 2.75rem margin and counted by CSS so a step a task does not need leaves no gap; a 21rem sticky summary aside on surface-quiet carries the estimate as a large mono figure, the rows behind it, and the large Start button with its shortcut. Choices such as the three tasks are one joined control: tiles in a single bordered strip, the selected tile lifted to white with a 1.5px inset ink ring and a filled radio.
 
 **Review** splits the work area 0.95fr (source) to 1.05fr (text); **Compare** in the masthead adds a third pane with another set-up's whole text (a third each). The boundaries between panes are **splitters**: a 9px invisible grip on the hairline that shows a 3px line on hover (line-hover) and while dragged or focused (bright text); arrow keys move it 2% (Shift 10%), a double click puts it back, and no pane gets narrower than about 16rem. Widths and the open compare pane are remembered on the computer, the same for the three reviews (text, analysis, table of contents), which share one frame. Each pane has a 2.75rem bar on top. The text pane sets each line in a grid with a 2.25rem number column, numbers printed every fifth line and on every line that differs. **Search** (Ctrl F, or the magnifier in the masthead) opens a row under the masthead: the field, the count ("2 of 11"), previous and next, a **List** of the matches in a flyout grouped by page under sticky mono headings, each with the words around it and, in a recording, its time; Escape closes the list, then the search. A page strip runs along the bottom on surface-quiet: for a scan, each page as a small thumbnail with its number under it; for a recording, a numbered tile per piece; and a tally with a green progress bar.
 
 **Jobs** is one bordered table of every job (`.data-table`), with a filter row above it (`.table-filters`) and, when rows are chosen, a selection bar (`.selection-bar`). Its columns have fixed widths, so a long name wraps rather than widening the page, and drop one by one through container queries as the page itself narrows, whether the sidebar is open or folded.
 
+The **Glossary** ends with **Keyboard**: every shortcut, grouped by where it works (everywhere, New job, a review, a review's search, a scan), the keys in mono as the system in use writes them, alternatives joined by a muted "or".
+
 **Settings** opens on a tab list (API keys, Offline, General, About), each tab a sheet of its own; a link into Settings opens the tab it is about.
 
-**Job detail** sets the job's facts as one bordered strip of cells divided by hairlines, then the files as a bordered table with per-set-up progress bars.
+**Job detail** sets the job's facts as one bordered strip of cells divided by hairlines, the short facts in one row and the errors found in review in a row of their own under them, as wide as the strip so each set-up's sentence stays on one line; then the files as a bordered table with per-set-up progress bars.
 
 Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls are 1.875rem (small), 2.25rem (default) and 2.75rem (large) tall.
 
 **Responsive range:**
 - **1100px and narrower**: New job's summary leaves the side and becomes a sticky footer with the figure and Start, lifted by a soft upward shadow.
-- **1000px and narrower**: every review stacks the source above the text (source 16rem to 42vh), and the compared text below both; the splitters hide. Prompts stacks its list above the editor.
+- **1000px and narrower**: every review stacks the source above the text (source 16rem to 42vh), and the compared text below both; the splitters hide. In a short window the source gives way first and the text keeps at least 16rem; when even that does not fit, the work area scrolls above the page strip. Prompts stacks its list above the editor.
 - **820px and narrower**: masthead and sheet padding tighten to 1rem; the review tally hides.
-- **760px and narrower**: the sidebar sits above the work (at most 38vh), folded to one row; joined choice strips become one column.
+- **760px and narrower**: the sidebar sits above the work, folded to one row whatever was chosen in a wide window (its button or Ctrl B unfolds it to a scrolling column of at most 38vh); joined choice strips become one column.
 - **1680px and wider**: reading text rises to 1.3125rem.
 
 At no width does a view scroll sideways: grids, tables, rows and diagrams fit the width there is.
@@ -393,11 +410,11 @@ Icons come from Lucide through one icon component, at an absolute 1.5px stroke i
 ### Buttons
 Quiet and firm: a sans label at weight 500, an icon only where its meaning is universal (zoom, previous, next, close).
 - **Shape:** 7px corners, 2.25rem tall, 0 0.75rem padding; small 1.875rem with 0.625rem padding and caption type; large 2.75rem with 1.5rem padding.
-- **Default:** white ground, line border, bright text; hover darkens the border to line-hover.
+- **Default:** white ground, control-line border, bright text; hover darkens the border to control-line-hover, as does a view that is on (pressed in, on the wash).
 - **Primary:** graphite ink ground and border, white text, a muted mono shortcut inside; hover lifts to ink hover.
 - **Ghost:** transparent; hover takes the wash.
 - **Danger:** danger-red text with a pale red border, never a red fill.
-- **Disabled:** 45% opacity. **Focus:** a 2px ink outline offset 2px (on-stage colour over the lightbox).
+- **Disabled:** 45% opacity. In a menu or list of choices, an item that cannot be used now is muted text with no hover, legible beside the bright items. **Focus:** a 2px ink outline offset 2px (on-stage colour over the lightbox).
 - Transitions: background and border colour, 120ms ease-out; removed under reduced motion.
 
 ### Chips
@@ -408,22 +425,25 @@ Quiet and firm: a sans label at weight 500, an icon only where its meaning is un
 A set-up's letter wherever set-ups are compared: a 1.25rem square of mono uppercase in secondary text, line-strong border, 4px corners, white ground.
 
 ### Inputs / Fields
-- **Style:** white ground, line-strong border, 7px corners, 2.25rem tall, padding 0.25rem 0.75rem; textareas 0.75rem padding and 1.55 line height. Label above in secondary text, weight 500.
-- **Hover:** border to line-hover. **Focus:** border to bright text with a 3px wash ring, no outline.
+- **Style:** white ground, control-line border, 7px corners, 2.25rem tall, padding 0.25rem 0.75rem; textareas 0.75rem padding and 1.55 line height. Label above in secondary text, weight 500.
+- **Hover:** border to control-line-hover. **Focus:** border to bright text with a 3px wash ring, no outline.
+- **Checkboxes and radios** are the system's own, checked in ink (`accent-color`), with the system's edge. Joined choice strips keep a quiet line round them: their radios, not their edge, say they are choices.
 
 ### Navigation
-- **Sidebar:** chrome grey, 18rem (3.25rem folded), hairline right edge. Rows are 7px-cornered, transparent at rest, wash on hover, lifted onto white when current. The New job button is a full-width ink button; when New job is open it takes a 1.5px ink ring offset by the chrome.
+- **Sidebar:** chrome grey, 18rem (3.25rem folded), hairline right edge. Rows are 7px-cornered, transparent at rest, wash on hover, lifted onto white when current. A job row's menu is a small ghost ⋯ button at its end, shown only under the pointer, with the focus in the row or while the menu is open (the name makes room for it then); Tab always reaches it after its job, and the menu opens under it, the focus going back to it when the menu closes. The New job button is a full-width ink button; when New job is open it takes a 1.5px ink ring offset by the chrome.
 
 ### Masthead
 White, at least 3.5rem, hairline below; a title in title type, an optional muted lede or a back link, actions at right. In Review the title is a breadcrumb: the job name, a faint slash, then the file name in mono, with a pager (previous, a mono select, next) and the actions.
 
 ### Review: the lightbox and the marked text (signature)
-- **Source pane:** a scan on the stage, padded 1.5rem with room below for a centred **zoom pill** (stage raised, 9px corners, ghost controls in on-stage colours, a mono percentage). Zooming, from 25% to 600%, follows Ctrl and the wheel or a pinch frame by frame (the drawing is stretched at once and drawn sharp again once it rests) and keeps the point under the pointer in place; the buttons, Ctrl + and Ctrl − glide there in 180ms around the middle of the pane. A page larger than its pane is moved by dragging it (grab cursor), gliding on a little when let go; a double click zooms to 250% on the place, or back to the pane's width. Until the reader has zoomed once, a pill above the zoom pill says how, while the pointer is over the page. A recording instead sits on surface-quiet with the player on top.
+- **Source pane:** a scan on the stage, padded 1.5rem with room below for a centred **zoom pill** (stage raised, 9px corners, ghost controls in on-stage colours, a mono percentage). The quarter turns of a page scanned sideways are remembered for the source. Zooming, from 25% to 600%, follows Ctrl and the wheel or a pinch frame by frame (the drawing is stretched at once and drawn sharp again once it rests) and keeps the point under the pointer in place; the buttons, Ctrl + and Ctrl − glide there in 180ms around the middle of the pane. A page larger than its pane is moved by dragging it (grab cursor), gliding on a little when let go, or from the keyboard: the page is a tab stop ("Page image"), its focus a 2px on-stage outline inside the pane's edge, and the arrow keys move it 48px, with Shift most of the pane; a double click zooms to 250% on the place, or back to the pane's width. Until the reader has zoomed once, a pill above the zoom pill says how, while the pointer is over the page. A recording instead sits on surface-quiet with the player on top.
 - **Text pane:** a bar with the set-up's label in mono, a count of differences beside a yellow swatch, and a switch to show them; the reading text below; a foot with mono metadata and a legend (yellow block for "models differ", blue line for "your correction").
-- **Disagreements:** each differing word is a button set in the highlighter with a 2px bleed. Pointing at it or opening it adds a 1.5px bright ring outside the yellow. Words another model adds, where the text has none, are a 0.3em highlighter bar between the words.
-- **Readings:** pointing at a disagreement for 300ms shows its readings over the text, under the words (over them when the pane has no room below), max 25rem, white with the flyout shadow and 10px corners, rising 3px into place over 120ms. They stay while the pointer is on the words or on them; a click, F, or focusing inside pins them until Escape, the close button or a click elsewhere. Their head is a handle: dragged (or moved with the arrow keys from the grip at its left, Shift for longer steps) they move aside to show the sentence under them, and stay where they were put. Choosing a difference in either text brings it level in the other. The one in the text comes first, in bold, with an "In the text" chip; each other reading is a whole row to click, its words in the reading serif over who reads them (mono), "Use this reading" at right; a field takes your own.
+- **Disagreements:** each differing word is a button set in the highlighter with a 2px bleed. Pointing at it or opening it adds a 1.5px bright ring outside the yellow. A text's differences are one tab stop however many there are, held by the one open or last reached (the first otherwise): ← and → go from one to the next, Home and End to the first and last, without opening them; ↑ and ↓ still scroll the pane. Words another model adds, where the text has none, are a 0.3em highlighter bar between the words.
+- **Readings:** pointing at a disagreement for 300ms shows its readings over the text, under the words (over them when the pane has no room below), max 25rem, white with the flyout shadow and 10px corners, rising 3px into place over 120ms. They stay while the pointer is on the words or on them; a click, F, or focusing inside pins them until Escape, the close button or a click elsewhere. Opened from the keyboard (Enter or Space on the words, F or Shift F), they take the focus, on their first reading to use; Tab runs through them from the words, which they follow in the tab order, and Escape (in their own field too), the close button or a reading used gives the focus back to the words, or after a correction to that place or the next difference once the differences are worked out again. Readings shown by pointing never take the focus. Their head is a handle: dragged (or moved with the arrow keys from the grip at its left, Shift for longer steps) they move aside to show the sentence under them, and stay where they were put. Choosing a difference in either text brings it level in the other. The one in the text comes first, in bold, with an "In the text" chip; each other reading is a whole row to click, its words in the reading serif over who reads them (mono), "Use this reading" at right; a field takes your own.
 - **Compared text:** another set-up's own words on paper, in the reading serif without line numbers, its differences in the same highlighter (a gap mark where it leaves words out). Pointing at a difference in either text rings it in both; clicking one in the compared text pins its readings in the text. A select picks the set-up when there are several.
 - **Corrections:** corrected words lose the yellow and take a 2px hand-blue underline offset 0.25em; hover takes the hand wash.
+- **Turning pages:** Page Up and Page Down, or Alt ← and Alt →, turn to the previous or next piece, except in a field or editor, and except that Page Up and Page Down scroll a pane that has the focus to be scrolled (the page image, a text file, a text pane holding nothing else to focus), as they do everywhere. Every pane scrolls from the keyboard in both webviews: one holding a button or a field is scrolled from there; one holding nothing focusable becomes a tab stop, named for what it holds, once its text is taller than it.
+- **Analysis answers:** the names of an answer are one tab stop, ← and → going from one to the next; a name pointed at or focused takes the highlighter and is marked where it stands in the document. A click, Enter, a right click or the menu key (Shift F10) opens its menu, rename or remove, under the name; closing it gives the focus back to the name, or after a change to the name renamed or the next one.
 - **Page strip:** for a scan, each page as a 2.5rem-wide thumbnail (3:4, top of the page, 2px corners, a hairline ring) over its mono number; thumbnails are drawn as they scroll into view, two at a time, and kept for the session. For a recording, 2rem tiles with a mono number. Reviewed pages show a check and ok-green number; the current page is ringed in bright text and lifted onto the raised surface. A tally beside it with a 4px green bar.
 
 ### Audio Player
@@ -433,6 +453,9 @@ A white strip with 10px corners and the raised shadow: a round 2.5rem ink play b
 Numbered steps with mono numbers in the margin; joined choice strips for task and output; a model set-up as a white bordered card, side-by-side columns (min 17rem) when comparing, with a dashed column that adds another model. The summary aside ends in the large Start button with Ctrl Enter.
 
 Under the task strip, **How it works** sits on surface-quiet with 10px corners: the task's three or four steps in a row, each a small drawing over a caption, joined by Lucide chevrons (two a row, without chevrons, in a narrow form). The drawings use the interface's own marks: white sheets with line-strong hairlines, line-hover strokes for text, the highlighter on names an analysis finds (with ink on it), the speaker colours in a transcript, ink for a progress sweep; file names, page numbers and lengths in mono. It plays once, about 2.5 s, when a task is picked or Play again is pressed; its resting styles are the last frame, so reduced motion shows it whole.
+
+### Toast
+A message about what was just done, on ink with the flyout shadow, bottom right. A confirmation stays four seconds and is read out politely. A failure is read out at once and stays until it is put away with its close button or Escape: the same ink, marked by a 6px on-ink-danger dot before the words, never a red fill. Both speak through live regions that are always there, empty, so the words put in are read in every webview. A confirmation of a removal that can be taken back (a name from an analysis's answers, documents from a collection) ends in a small ghost button, *Undo*, on-ink with a 14% on-ink hover and an on-ink focus ring, reachable by Tab; it then stays eight seconds, and the focus comes back to the name put back.
 
 ### Notices
 A full-width banner or inline notice in warn-text on the warn wash (7px corners inline), stating what happened and what to do. File problems hang under their file in the same treatment, danger-tinted when a file cannot be used.

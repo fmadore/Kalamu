@@ -4,25 +4,33 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (4 November 2026)
+## Status (10 November 2026)
 
-**Version 1.4.1** is the latest release: unsigned installers for Windows x64 and ARM64 and a
+**Version 1.5.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 signed, notarised disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
-[v1.4.1 release](https://github.com/fmadore/Kalamu/releases/tag/v1.4.1)
-([notes](release-1.4.1.md)). It is submitted next to the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), in place of 1.4.0, refused for
-a 1915 newspaper masthead in its screenshots (policy 11.5) and since given new screenshots and
-samples from *The Daily Nebraskan* of 1911, and is the first version
-prepared for the Mac App Store ([steps](mac-app-store.md)). Kalamu has been there since version 1.0.0 (2 November 2026). Everything below is tested against
-recorded provider responses. Text extraction, transcription and analyses have also run against
-the live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
-(`cargo run --example live`, see [development.md](development.md) and the
-[live runs](decisions/2026-11-03-live-runs.md)).
+[v1.5.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.5.0)
+([notes](release-1.5.0.md)), and it is the version sent to the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), where Kalamu has been since
+version 1.0.0 (2 November 2026). **Version 1.6.0** is prepared, not yet tagged
+([notes](release-1.6.0.md)): offline analyses with Gemma 4 and Whisper on a Windows PC's graphics
+processor. Version 1.4.1 was the first prepared for the Mac App Store
+([steps](mac-app-store.md)). Everything below is tested against recorded provider responses. Text
+extraction, transcription and analyses have also run against the live Gemini, OpenAI, Claude and
+Mistral APIs with real keys, at once and in economy mode (`cargo run --example live`, see
+[development.md](development.md) and the [live runs](decisions/2026-11-03-live-runs.md)).
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
 with an Apple Developer ID and notarised from 1.4.0
 ([decision](decisions/2026-11-04-macos-notarisation.md)); it has not yet been opened on a real
-Mac, which is second in *Next* below.
+Mac, which is third in *Next* below. From the version after 1.5.0 it asks for **macOS 14 or
+later** (13 before): the interface uses what WebKit has from Safari 17 on
+([review](decisions/2026-11-09-review.md)).
+
+A [review of the whole app on 9 November](decisions/2026-11-09-review.md) (the Rust crates, the
+shell and CI, the interface's code, and every screen on its sample data) found the bugs and
+improvements that open *Next*; what it did not fix at once is tracked in
+[#143](https://github.com/fmadore/Kalamu/issues/143) to
+[#149](https://github.com/fmadore/Kalamu/issues/149).
 
 ## Done
 
@@ -70,9 +78,9 @@ Mac, which is second in *Next* below.
   ([decision](decisions/2026-11-06-ocr-opencl-adreno.md)), while LightOnOCR-3 stays on the
   processor. On Intel's integrated Arc graphics (Core Ultra 7 155H) Vulkan reads both models
   correctly in less than half the processor's time (51.5 s against 116.8 s for LightOnOCR-3,
-  43.4 s against 98.8 s for GLM-OCR). Still to do: timings on an NVIDIA or AMD card, a second
-  Snapdragon driver and more pages, and NPUs (Hexagon, OpenVINO), to be measured before
-  anything is built.
+  43.4 s against 98.8 s for GLM-OCR). #122 is closed with this. Still to do, among the live
+  runs below: timings on an NVIDIA or AMD card, a second Snapdragon driver and more pages, and
+  NPUs (Hexagon, OpenVINO), to be measured before anything is built.
 - **Offline analyses with small language models**
   ([decision](decisions/2026-11-07-offline-language-models.md)), after 1.5.0: Gemma 4 E4B and
   E2B, Google's own 4-bit files downloaded from Settings with their encoders, for analyses,
@@ -343,7 +351,54 @@ Mac, which is second in *Next* below.
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
-1. **What the [8 November checkpoint](decisions/2026-11-08-checkpoint.md) left.** The
+1. **What the [review of 9 November](decisions/2026-11-09-review.md) found.** Fixed at once,
+   each with a test: structured answers cut off at the output limit sent once instead of four
+   times; batches that can no longer be read given up on; `Retry-After` bounded; answers stopped
+   early marked as cut off; a recording's plan recorded whole; a format that cannot be written
+   reported; an unsaved correction, prompt or workflow asked about before it is left; New job's
+   form kept across Settings; the review in a short window; an estimate, evidence or search
+   overtaken by an older answer; a description lost to a tag; folders dropped on a project;
+   dialogs that hold the shortcuts; the job page's errors in a row of their own. macOS 14 is the
+   minimum. Still to check: these on Windows and in WebKit, since the shell and `offline` do not
+   build where the review ran, and the cut-off message for an analysis stopped by a filter
+   rather than the limit. A [second round on 10 November](decisions/2026-11-10-second-round.md)
+   took up part of what was left: FFmpeg stopped by a pause and by a watchdog, 1-bit, palette and
+   CMYK TIFF pages, a source's failure kept across a restart; exports that read only their
+   source's rows (a 2,000-page job's files written in 3.6 s where it took 55), costs read from
+   an index, a result cache the engine can prune; the readings, an analysis's names and a zoomed
+   scan reached from the keyboard, controls' edges at 3:1, failures that stay and are read out;
+   Back, remembered filters, panes and rotation, Ctrl F on the tables, a shortcut overview, a
+   drop target that shows, undo for two removals; the screens opened in Chromium in CI, the app
+   linked on every system, a weekly audit. Left, in this order:
+   - **The shell** ([#148](https://github.com/fmadore/Kalamu/issues/148)): a start-up failure
+     that says why, an update notice for the installer and the disk image, the tray and
+     notification computed by the engine, the keychain off the window's thread; and a *Clear
+     unused results* in Settings, on the engine's `prune_results`
+     ([#143](https://github.com/fmadore/Kalamu/issues/143)).
+   - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)): llama.cpp's
+     runs on `media`'s stoppable runner, with a watchdog; a graphics processor not given up for
+     one bad page; downloads that resume and check the disk; 24-bit AIFF at the next FFmpeg
+     build; children that end with the app.
+   - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)): signing
+     secrets kept from build code, the installers packaged on a pull request, interaction
+     tests, checksums and an attestation.
+   - **Large jobs, the rest** ([#143](https://github.com/fmadore/Kalamu/issues/143)): a
+     correction in a long PDF still writes every file of its source again (121 ms a save on a
+     300-page sample), which needs the files marked out of date and written when the review
+     closes, at quit and at the next launch; the job page's counts, tables and thumbnails in
+     the interface; batches held in memory.
+   - **A model's abilities in the catalogue**
+     ([#147](https://github.com/fmadore/Kalamu/issues/147)), an architecture checkpoint item:
+     five places match a model's or a preset's name.
+   - **Keyboard and interface, the rest**
+     ([#146](https://github.com/fmadore/Kalamu/issues/146),
+     [#149](https://github.com/fmadore/Kalamu/issues/149)): all of it tried in WebKit and with a
+     screen reader; a recording's transcript shown once and following the player; the marks of
+     a project's Results column reached from the keyboard; several jobs linked or deleted, and a
+     name renamed across set-ups, in one command.
+   - CSV cells that begin with `=`, `+`, `-` or `@` (a telephone number, a list item) are read
+     as formulas by a spreadsheet: an option of the CSV writer, decided table by table.
+2. **What the [8 November checkpoint](decisions/2026-11-08-checkpoint.md) left.** The
    checkpoint after 1.5.0 folded the duplication the 4 November one listed (one UTC date in
    core, every CSV through the `export` crate, one batch file reader, the engine's and the
    offline engines' locks and idle sweepers, one write-then-rename in the app), moved the
@@ -356,24 +411,24 @@ In this order. Work that keeps what has shipped sound comes before new features.
    November Whisper's voice detection on accented data folders on Windows, the folders out of
    reach shown at launch, and Tesseract's drawing resolution in provenance and its engines
    pooled (all listed in the decision).
-2. **A first run on a real Mac.** The disk image is signed and notarised and a sandboxed build is
+3. **A first run on a real Mac.** The disk image is signed and notarised and a sandboxed build is
    ready for the Mac App Store, but Kalamu has not yet been opened on a Mac
    ([decision](decisions/2026-11-02-macos.md)). Before TestFlight: the disk image through
    Gatekeeper, the Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in
    WKWebView, a Whisper and a Tesseract job, and the interface in WebKit at the sizes CI does not
    try.
-3. **Economy mode's loose ends**, a shipped feature: reading OpenAI's batch answers in a live run
+4. **Economy mode's loose ends**, a shipped feature: reading OpenAI's batch answers in a live run
    (on 3 November it had answered none after 35 minutes); deleting the files a batch leaves in
    the user's OpenAI and Mistral storage once its answers are collected (Mistral's inline batches
    leave their requests as a file too, 951 KB for two pages); then Gemini batches through a JSONL
    file, to lift the 20 MB inline limit, several pages per call in economy mode, and Voxtral
    transcription in batches once its format is documented
    ([live runs](decisions/2026-11-03-live-runs.md)).
-4. **Source-linked review, first step
+5. **Source-linked review, first step
    ([#84](https://github.com/fmadore/Kalamu/issues/84))**: Tesseract's words and Mistral OCR's
    estimated lines drawn over the scan, each opening its text, with the page as a fallback where
    a provider returns none. Kalamu already keeps these boxes for ALTO and the searchable PDF.
-5. **What is left of the research workflows**, below.
+6. **What is left of the research workflows**, below.
 
 ### What is left of the research workflows
 
@@ -466,8 +521,7 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.3.0 is the version there now, and 1.4.0
-is submitted next.
+in [microsoft-store.md](microsoft-store.md); 1.5.0 is the latest sent.
 
 ## Toward the Mac App Store
 

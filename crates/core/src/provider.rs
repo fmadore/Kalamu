@@ -145,6 +145,15 @@ pub enum ProviderError {
     /// the job's cost.
     #[error("The answer did not fit the analysis: {reason}")]
     InvalidAnswer { reason: String, usage: Usage },
+    /// A structured answer the model stopped writing at its output limit, so it cannot be read.
+    /// Asking again would stop at the same place and be billed again; `usage` is what this one
+    /// consumed, which the engine adds to the job's cost.
+    #[error(
+        "The answer stopped at the model's output limit before it was complete: send fewer pages \
+         in each call, ask for fewer or shorter fields, or choose a model that can write a \
+         longer answer"
+    )]
+    CutOff { usage: Usage },
     /// An offline engine whose model has not been downloaded.
     #[error("Not installed: {0}")]
     NotInstalled(String),
@@ -166,6 +175,7 @@ impl ProviderError {
             Self::Unsupported(_) => "provider.unsupported",
             Self::Other(_) => "provider.other",
             Self::InvalidAnswer { .. } => "provider.invalid_answer",
+            Self::CutOff { .. } => "provider.cut_off",
             Self::NotInstalled(_) => "provider.not_installed",
             Self::Interrupted => "provider.interrupted",
         }
@@ -184,8 +194,17 @@ impl ProviderError {
     /// were refused before the model answered.
     pub fn billed(&self) -> Option<&Usage> {
         match self {
-            Self::InvalidAnswer { usage, .. } => Some(usage),
+            Self::InvalidAnswer { usage, .. } | Self::CutOff { usage } => Some(usage),
             Self::Blocked { usage, .. } => usage.as_ref(),
+            _ => None,
+        }
+    }
+
+    /// What a failed call was billed for, to mark it as billed at a batch's price.
+    pub fn billed_mut(&mut self) -> Option<&mut Usage> {
+        match self {
+            Self::InvalidAnswer { usage, .. } | Self::CutOff { usage } => Some(usage),
+            Self::Blocked { usage, .. } => usage.as_mut(),
             _ => None,
         }
     }

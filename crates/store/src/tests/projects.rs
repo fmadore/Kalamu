@@ -147,3 +147,41 @@ fn deleting_organisation_never_deletes_jobs_and_deleting_a_job_unlinks_it() -> R
     ));
     Ok(())
 }
+
+/// Each export names the documents its source is: their links are found by job and source,
+/// in every project, oldest first, and no other link comes with them.
+#[test]
+fn a_source_s_links_are_found_in_every_project() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let mut job = job();
+    let mut other = job.sources[0].clone();
+    other.id = SourceId::new();
+    job.sources.push(other);
+    store.create_job(&job)?;
+    let (a, b) = (project("Mission archives"), project("Press"));
+    store.put_project(&a)?;
+    store.put_project(&b)?;
+    let mut links = Vec::new();
+    for (at, (p, source)) in [(&b, 0), (&a, 0), (&a, 1)].into_iter().enumerate() {
+        let doc = document(p, &job);
+        store.put_document(&doc)?;
+        let link = DocumentLink {
+            document_id: doc.id,
+            job_id: job.id,
+            source_id: job.sources[source].id,
+            linked_at: Timestamp(10 + at as i64),
+        };
+        store.put_link(&link)?;
+        links.push(link);
+    }
+    assert_eq!(
+        store.links_of(job.id, job.sources[0].id)?,
+        links[..2].to_vec()
+    );
+    assert_eq!(
+        store.links_of(job.id, job.sources[1].id)?,
+        links[2..].to_vec()
+    );
+    assert!(store.links_of(JobId::new(), job.sources[0].id)?.is_empty());
+    Ok(())
+}

@@ -7,7 +7,7 @@
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { api, pickPresetFile, pickJsonSave } from '#lib/tauri.js';
-	import { toast } from '#lib/state.svelte.js';
+	import { guardDraft, leaveThen, toast } from '#lib/state.svelte.js';
 
 	let { presetId }: { presetId?: string } = $props();
 
@@ -18,6 +18,8 @@
 	let presets = $state<Preset[]>([]);
 	let selectedId = $state<string | null>(null);
 	let draft = $state<Preset | null>(null);
+	/** The draft as it was opened, to tell whether leaving it would lose anything. */
+	let openedAs = 'null';
 	const action = new Action();
 
 	const selected = $derived(presets.find((p) => p.id === selectedId) ?? null);
@@ -64,12 +66,14 @@
 		action.error = null;
 		selectedId = null;
 		draft = blank(selected?.task ?? 'text_extraction');
+		openedAs = JSON.stringify(draft);
 	}
 
 	function select(id: string | null) {
 		selectedId = id;
 		const p = presets.find((x) => x.id === id);
 		draft = p ? structuredClone($state.snapshot(p)) : null;
+		openedAs = JSON.stringify(draft);
 	}
 
 	/** Runs a change, then reads the prompts again, the one it names chosen. */
@@ -85,7 +89,11 @@
 	];
 
 	onMount(() => {
-		void load();
+		void action.run(() => load());
+		return guardDraft({
+			dirty: () => JSON.stringify(draft) !== openedAs,
+			discard: () => select(selectedId)
+		});
 	});
 </script>
 
@@ -99,7 +107,7 @@
 <div class="layout">
 	<section class="list" aria-labelledby="prompts-title">
 		<div class="row">
-			<button class="btn sm primary" onclick={create}
+			<button class="btn sm primary" onclick={() => leaveThen(create)}
 				><Icon name="plus" size={14} />{m.prompts.newPrompt}</button
 			>
 			<button
@@ -124,6 +132,8 @@
 					})}>{m.prompts.export}</button
 			>
 		</div>
+		<!-- The prompts could not be read: said here, where the list would be. -->
+		{#if action.error && !draft}<p class="chip danger" role="alert">{action.error}</p>{/if}
 		{#each tasks as task (task)}
 			<h2 class="label group">{m.task[task]}</h2>
 			{#if task === 'analysis'}<p class="muted small">{m.prompts.analysisHint}</p>{/if}
@@ -131,7 +141,11 @@
 			<ul>
 				{#each presets.filter((p) => p.task === task && p.id !== DICTIONARY) as p (p.id)}
 					<li>
-						<button class="item" class:active={p.id === selectedId} onclick={() => select(p.id)}>
+						<button
+							class="item"
+							class:active={p.id === selectedId}
+							onclick={() => leaveThen(() => select(p.id))}
+						>
 							<span>{p.name}</span>
 							<span class="chip"
 								>{p.modified
@@ -150,7 +164,11 @@
 			<p class="muted small">{m.prompts.dictionaryHint}</p>
 			<ul>
 				<li>
-					<button class="item" class:active={p.id === selectedId} onclick={() => select(p.id)}>
+					<button
+						class="item"
+						class:active={p.id === selectedId}
+						onclick={() => leaveThen(() => select(p.id))}
+					>
 						<span>{p.name}</span>
 						<span class="chip">{p.modified ? m.prompts.modified : m.prompts.builtin}</span>
 					</button>

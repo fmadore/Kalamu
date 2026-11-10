@@ -6,13 +6,42 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use kalamu_core::{
-    BatchContext, BatchPhase, BatchProgress, BatchRecord, Job, JobId, JobStatus, PieceState,
-    PieceStatus, ProcessOutput, ProviderError, Setup, SourceId, StoredResult, Timestamp,
+    BATCH_WINDOW_MS, BatchContext, BatchPhase, BatchProgress, BatchRecord, Job, JobId, JobStatus,
+    PieceState, PieceStatus, ProcessOutput, ProviderError, Setup, SourceId, StoredResult,
+    Timestamp,
 };
 
 use super::{BatchOutcome, waiting};
 use crate::control::lock;
 use crate::{Control, Engine, EngineError};
+
+/// How long after its window a batch that cannot be read is still asked about. Gemini gives a
+/// batch up to 48 hours, twice the 24-hour window the others promise; past that every provider
+/// has ended it one way or another, so a batch still unreadable is not coming back.
+const OVERDUE_MS: i64 = BATCH_WINDOW_MS;
+
+/// Polls in a row that must fail before an overdue batch is given up on, so that one failure
+/// on a computer just woken, its network not yet up, does not lose answers the provider holds.
+const UNREADABLE_POLLS: u32 = 30;
+
+/// Why a batch that cannot be read is given up on, or `None` to ask again next time: a failure
+/// that will not change (the provider no longer knows the batch, or refuses the request), or
+/// passing failures that have gone on, `failures` polls in a row, well past its window.
+fn given_up(batch: &BatchRecord, err: &ProviderError, failures: u32) -> Option<String> {
+    if !err.is_retryable() {
+        return Some(format!(
+            "The batch could not be read from the provider: {err}"
+        ));
+    }
+    let overdue = Timestamp::now().0 > batch.submitted_at.0 + BATCH_WINDOW_MS + OVERDUE_MS;
+    (overdue && failures >= UNREADABLE_POLLS).then(|| {
+        format!(
+            "The provider could not be reached about this batch long after it was due, so its \
+             answers are given up on; retry the failed pages to send them again. Last error: \
+             {err}"
+        )
+    })
+}
 
 impl Engine {
     /// Polls every waiting batch of a job until all are collected, or the job is paused or
@@ -24,6 +53,8 @@ impl Engine {
         spent: &Mutex<f64>,
     ) -> Result<BatchOutcome, EngineError> {
         let mut outcome = BatchOutcome::default();
+        // Failed polls in a row, by batch.
+        let mut unreadable: HashMap<String, u32> = HashMap::new();
         loop {
             let open: Vec<BatchRecord> = self
                 .store
@@ -62,7 +93,11 @@ impl Engine {
                 };
                 let ids: Vec<String> = batch.items.iter().map(|i| i.id.clone()).collect();
                 let remote = batch.remote_id.clone().unwrap_or_default();
-                match provider.poll_batch(&api_key, &remote, context, &ids).await {
+                let polled = provider.poll_batch(&api_key, &remote, context, &ids).await;
+                if polled.is_ok() {
+                    unreadable.remove(&batch.id);
+                }
+                match polled {
                     Ok(BatchProgress::Working { finished, .. }) => {
                         self.emit(waiting(&batch, finished));
                     }
@@ -79,8 +114,18 @@ impl Engine {
                         outcome.waiting = true;
                         return Ok(outcome);
                     }
-                    // A network hiccup or a busy service: ask again next time.
-                    Err(err) => tracing::info!(batch = %remote, error = %err, "batch not read"),
+                    Err(err) => {
+                        let failures = unreadable.entry(batch.id.clone()).or_default();
+                        *failures += 1;
+                        if let Some(reason) = given_up(&batch, &err, *failures) {
+                            tracing::warn!(batch = %remote, error = %err, "batch given up on");
+                            outcome.failed = true;
+                            self.abandon(job, batch, Some(reason)).await?;
+                        } else {
+                            // A network hiccup or a busy service: ask again next time.
+                            tracing::info!(batch = %remote, error = %err, "batch not read");
+                        }
+                    }
                 }
             }
             let next = Instant::now() + self.config.batch_poll;
@@ -112,7 +157,7 @@ impl Engine {
             .filter(|p| p.setup_id == batch.setup_id)
             .map(|p| ((p.source_id, p.index), p))
             .collect();
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         let model = catalog.model(&setup.provider, &setup.model);
         let waited = (Timestamp::now().0 - batch.submitted_at.0).max(0) as u64;
         let mut outcome = BatchOutcome::default();
@@ -156,7 +201,7 @@ impl Engine {
                 }
                 Err(mut err) => {
                     // A refused answer was billed at the batch's price.
-                    if let ProviderError::InvalidAnswer { usage, .. } = &mut err {
+                    if let Some(usage) = err.billed_mut() {
                         usage.batch = true;
                     }
                     self.charge(&state, &setup.provider, &setup.model, &err, spent)?;

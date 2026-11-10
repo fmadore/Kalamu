@@ -1,7 +1,9 @@
 //! A job database that fails to read any job, as a locked or damaged file would: search must
 //! say so rather than count the documents as having nothing read.
 
-use kalamu_core::{BatchRecord, CacheKey, Charge, JobSources, JobSummary, StoreError};
+use kalamu_core::{
+    BatchRecord, CacheKey, Charge, JobSources, JobSummary, SetupId, SourceId, StoreError,
+};
 
 use super::*;
 
@@ -44,8 +46,21 @@ impl JobStore for Failing {
         self.0.upsert_piece(piece)
     }
 
+    fn upsert_pieces(&self, pieces: &[PieceState]) -> Result<(), StoreError> {
+        self.0.upsert_pieces(pieces)
+    }
+
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError> {
         self.0.pieces(job)
+    }
+
+    fn source_pieces(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<PieceState>, StoreError> {
+        self.0.source_pieces(job, setup, source)
     }
 
     fn cached_result(&self, key: &CacheKey) -> Result<Option<StoredResult>, StoreError> {
@@ -64,6 +79,19 @@ impl JobStore for Failing {
         self.0.charges(job)
     }
 
+    fn source_charges(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<Charge>, StoreError> {
+        self.0.source_charges(job, setup, source)
+    }
+
+    fn prune_results(&self) -> Result<kalamu_core::PrunedResults, StoreError> {
+        self.0.prune_results()
+    }
+
     fn put_result(&self, result: &StoredResult) -> Result<(), StoreError> {
         self.0.put_result(result)
     }
@@ -76,12 +104,30 @@ impl JobStore for Failing {
         self.0.corrections(job)
     }
 
+    fn source_corrections(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<Correction>, StoreError> {
+        self.0.source_corrections(job, setup, source)
+    }
+
     fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError> {
         self.0.put_speaker_names(job, names)
     }
 
     fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError> {
         self.0.speaker_names(job)
+    }
+
+    fn source_speaker_names(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<SpeakerNames>, StoreError> {
+        self.0.source_speaker_names(job, setup, source)
     }
 
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError> {

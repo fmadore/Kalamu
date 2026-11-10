@@ -4,8 +4,8 @@
 use std::path::{Path, PathBuf};
 
 use kalamu_core::{
-    ExportFormat, InputKind, Job, JobId, OutputDestination, PieceState, PieceStatus, ProgressEvent,
-    Setup, SetupId, SourceFile, SourceId, Task,
+    ExportError, ExportFormat, InputKind, Job, JobId, OutputDestination, PieceState, PieceStatus,
+    ProgressEvent, Setup, SetupId, SourceFile, SourceId, Task,
 };
 
 use crate::control::lock;
@@ -21,25 +21,32 @@ impl Engine {
         source_id: SourceId,
         setups: &[&Setup],
     ) -> Result<bool, EngineError> {
-        let states = self.store.pieces(job.id)?;
         let mut failed = false;
         for setup in setups {
-            let mine: Vec<&PieceState> = states
-                .iter()
-                .filter(|p| p.setup_id == setup.id && p.source_id == source_id)
-                .collect();
-            let settled = |p: &&PieceState| {
+            let mine = self.store.source_pieces(job.id, setup.id, source_id)?;
+            let settled = |p: &PieceState| {
                 p.status.is_finished()
                     || (p.status == PieceStatus::Failed && job.task != Task::Contents)
             };
             if mine.iter().all(settled) && mine.iter().any(|p| p.status.is_finished()) {
-                match self.write_outputs(job, setup.id, source_id) {
-                    Ok(files) => self.emit(ProgressEvent::SourceExported {
-                        job_id: job.id,
-                        setup_id: setup.id,
-                        source_id,
-                        files,
-                    }),
+                match self.write_each_output(job, setup.id, source_id) {
+                    Ok((files, problems)) => {
+                        self.emit(ProgressEvent::SourceExported {
+                            job_id: job.id,
+                            setup_id: setup.id,
+                            source_id,
+                            files,
+                        });
+                        // A format that could not be written, the others written all the same.
+                        for error in problems {
+                            failed = true;
+                            self.emit(ProgressEvent::SourceFailed {
+                                job_id: job.id,
+                                source_id,
+                                error,
+                            });
+                        }
+                    }
                     Err(e) => {
                         failed = true;
                         self.emit(ProgressEvent::SourceFailed {
@@ -54,19 +61,51 @@ impl Engine {
         Ok(failed)
     }
 
+    /// Writes a source's outputs under one set-up and returns the files written; a format that
+    /// could not be written fails the call, once the others are written.
     pub(crate) fn write_outputs(
         &self,
         job: &Job,
         setup_id: SetupId,
         source_id: SourceId,
     ) -> Result<Vec<String>, EngineError> {
+        let (files, problems) = self.write_each_output(job, setup_id, source_id)?;
+        if problems.is_empty() {
+            Ok(files)
+        } else {
+            Err(EngineError::Output(problems.join("; ")))
+        }
+    }
+
+    /// Writes every chosen format a task has and `provenance.json`, and returns the files
+    /// written and why any format could not be. A format the task does not have is skipped.
+    pub(crate) fn write_each_output(
+        &self,
+        job: &Job,
+        setup_id: SetupId,
+        source_id: SourceId,
+    ) -> Result<(Vec<String>, Vec<String>), EngineError> {
         let _writing = lock(&self.writing);
         let document = self.export_document(job, setup_id, source_id)?;
         let (dir, base) = output_base(job, &document.source, &document.setup.label);
         std::fs::create_dir_all(&dir).map_err(|e| EngineError::Output(e.to_string()))?;
 
         let mut written = Vec::new();
+        let mut problems = Vec::new();
+        // A searchable PDF and ALTO need a model that reports where text sits: in a comparison
+        // they are chosen for the set-ups whose model does, and skipped for the others.
+        let layout = {
+            let catalog = self.current_catalog();
+            job.setups
+                .iter()
+                .find(|s| s.id == setup_id)
+                .and_then(|s| catalog.model(&s.provider, &s.model))
+                .is_none_or(|m| m.layout)
+        };
         for format in &job.output.formats {
+            if format.needs_layout() && !layout {
+                continue;
+            }
             let Some(exporter) = kalamu_export::exporter(*format) else {
                 continue;
             };
@@ -75,8 +114,10 @@ impl Engine {
             }
             let bytes = match exporter.export(&document) {
                 Ok(bytes) => bytes,
+                Err(ExportError::Unsupported(_)) => continue,
                 Err(e) => {
-                    tracing::warn!(?format, error = %e, "export skipped");
+                    tracing::warn!(?format, error = %e, "export failed");
+                    problems.push(e.to_string());
                     continue;
                 }
             };
@@ -89,7 +130,7 @@ impl Engine {
             written.push(path.display().to_string());
         }
         written.push(write_provenance(&dir, &base, &document)?);
-        Ok(written)
+        Ok((written, problems))
     }
 
     /// Writes again a source's `provenance.json`, and the `.json` result that holds it, under

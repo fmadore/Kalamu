@@ -2,9 +2,10 @@
 	// The sidebar's list of jobs, grouped by what they need from the researcher: workflow steps
 	// that wait for them first, since nothing moves until they act. Finished jobs are the most
 	// recent few, then a link to the Jobs page, which lists them all; what runs, stopped early or
-	// waits is always listed in full, and so is the job open in the main area. A job's menu (a
-	// right click or the keyboard's menu key) renames it, adds it to a project or deletes it; a
-	// finished job can be dragged onto a project.
+	// waits is always listed in full, and so is the job open in the main area. A job's menu (its
+	// ⋯ button, shown on hover or focus and always reached by Tab; a right click or the keyboard's
+	// menu key) renames it, adds it to a project or deletes it; a finished job can be dragged onto
+	// a project.
 	import Icon from './Icon.svelte';
 	import JobMenu from './JobMenu.svelte';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
@@ -23,10 +24,11 @@
 
 	function openMenu(e: MouseEvent, job: JobSummary) {
 		e.preventDefault();
-		// From the keyboard's menu key there is no pointer: open under the job.
+		// From the ⋯ button or the keyboard's menu key there is no pointer to open at: under the
+		// button or the job.
 		const at = (e.currentTarget as HTMLElement).getBoundingClientRect();
-		const keyboard = e.button !== 2 && e.clientX === 0 && e.clientY === 0;
-		menu = { job, x: keyboard ? at.left + 12 : e.clientX, y: keyboard ? at.bottom : e.clientY };
+		const pointer = e.type === 'contextmenu' && (e.clientX !== 0 || e.clientY !== 0);
+		menu = { job, x: pointer ? e.clientX : at.left, y: pointer ? e.clientY : at.bottom };
 	}
 
 	/** The job the main area shows, whether as its detail or in review. */
@@ -87,7 +89,7 @@
 			</h2>
 			<ul>
 				{#each group.jobs as job (job.id)}
-					<li>
+					<li class:menu-open={menu?.job.id === job.id}>
 						{#if rename.editing?.id === job.id}
 							<input
 								class="rename"
@@ -134,6 +136,13 @@
 									>
 								{/if}
 							</button>
+							<button
+								class="more btn ghost sm icon"
+								aria-label={m.shell.jobMenu(job.name)}
+								title={m.shell.jobMenu(job.name)}
+								aria-haspopup="menu"
+								onclick={(e) => openMenu(e, job)}><Icon name="more" size={16} /></button
+							>
 						{/if}
 					</li>
 				{/each}
@@ -187,6 +196,28 @@
 		padding: 0;
 		display: grid;
 		gap: 2px;
+	}
+	li {
+		position: relative;
+	}
+	/* The job's menu at the end of its row: shown only where the pointer or the focus is, or
+	   while the menu is open, so the list stays quiet; the job's name makes room for it. */
+	.more {
+		position: absolute;
+		top: var(--space-1);
+		right: var(--space-1);
+		opacity: 0;
+		transition: opacity 120ms ease-out;
+	}
+	li:hover .more,
+	li:focus-within .more,
+	li.menu-open .more {
+		opacity: 1;
+	}
+	li:hover .job,
+	li:focus-within .job,
+	li.menu-open .job {
+		padding-right: calc(var(--control-sm) + var(--space-1));
 	}
 	.job {
 		width: 100%;

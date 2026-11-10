@@ -16,7 +16,7 @@
 	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import { rulesFor } from '#lib/newJob.js';
-	import { app, go, toast } from '#lib/state.svelte.js';
+	import { app, go, returnTo, toast } from '#lib/state.svelte.js';
 	import { api, ask, revealInFolder } from '#lib/tauri.js';
 
 	let { projectId, documentId }: { projectId: string; documentId: string } = $props();
@@ -42,13 +42,17 @@
 		return [...groups.entries()];
 	});
 
-	async function load() {
+	/** Reads the document again. A description being edited is kept, unless `fresh` (the first
+	 * reading, or once the description is saved): a tag or a collection changed meanwhile does not
+	 * throw it away. */
+	async function load(fresh = false) {
+		const keep = !fresh && describing;
 		try {
 			[detail, project] = await Promise.all([
 				api.documentDetail(projectId, documentId),
 				api.projectView(projectId)
 			]);
-			draftDescription = { ...detail.document.source_description };
+			if (!keep) draftDescription = { ...detail.document.source_description };
 		} catch (e) {
 			action.fail(e);
 		}
@@ -69,7 +73,10 @@
 	async function saveDescription(e: SubmitEvent) {
 		e.preventDefault();
 		const description = $state.snapshot(draftDescription);
-		await action.run(() => api.describeDocument(projectId, documentId, description));
+		await action.run(
+			() => api.describeDocument(projectId, documentId, description),
+			() => load(true)
+		);
 		if (!action.error) toast(m.projects.describe.saved);
 	}
 
@@ -107,12 +114,14 @@
 		await action.run(() => api.mergeDocuments(projectId, id, documentId));
 	}
 
-	onMount(() => void load());
+	onMount(() => void load(true));
 </script>
 
 <header class="masthead">
 	<div>
-		<button class="back" onclick={() => go({ name: 'projects', projectId, collectionId: from })}
+		<button
+			class="back"
+			onclick={() => returnTo({ name: 'projects', projectId, collectionId: from })}
 			><Icon name="back" size={14} />{project?.project.name ?? m.projects.back}</button
 		>
 		{#if draftTitle !== null}
@@ -156,7 +165,9 @@
 				{#if detail.missing}
 					<span class="chip danger">{m.projects.missing}</span>
 				{:else if doc.source.kind !== 'youtube'}
-					<button class="btn ghost sm" onclick={() => revealInFolder(doc.source.path)}
+					<button
+						class="btn ghost sm"
+						onclick={() => action.run(() => revealInFolder(doc.source.path), null)}
 						><Icon name="folder" size={14} />{m.projects.document.reveal}</button
 					>
 				{/if}

@@ -66,7 +66,7 @@ export class JobDrag {
 			toast(m.shell.addedTo(target.project.name));
 			await refreshProjects();
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	};
 }

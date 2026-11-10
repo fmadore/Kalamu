@@ -30,13 +30,7 @@ impl Engine {
         let Some(step) = setup.merge_step() else {
             return Ok(Outcome::Finished);
         };
-        let mut states: Vec<PieceState> = self
-            .store
-            .pieces(job.id)?
-            .into_iter()
-            .filter(|p| p.setup_id == setup.id && p.source_id == source.id)
-            .collect();
-        states.sort_by_key(|p| p.index);
+        let mut states: Vec<PieceState> = self.store.source_pieces(job.id, setup.id, source.id)?;
         let Some(position) = states.iter().position(|p| p.piece == PieceRef::Whole) else {
             return Ok(Outcome::Finished);
         };

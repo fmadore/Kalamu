@@ -64,7 +64,7 @@
 			}
 			d.vocabulary = vocabularyOf([d.vocabulary, ...names].join('\n'));
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 

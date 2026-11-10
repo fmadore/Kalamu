@@ -858,7 +858,7 @@ GitHub releases. The submission, the policies it must meet, the package and the 
 in [microsoft-store.md](microsoft-store.md), [packaging-msix.md](packaging-msix.md),
 [store-listing.md](store-listing.md) and [privacy.md](privacy.md).
 
-On macOS (Apple Silicon, macOS 13 and later), a disk image attached to each GitHub release,
+On macOS (Apple Silicon, macOS 14 and later), a disk image attached to each GitHub release,
 with FFmpeg and every licence inside. From 1.4.0 it is signed with an Apple Developer ID and notarised, so
 Gatekeeper opens it without a detour through System Settings
 ([decision](decisions/2026-11-04-macos-notarisation.md)). Keys are

@@ -44,12 +44,18 @@
 	--line-soft: #eeebe5;
 	--line-strong: #d6d1c7;
 	--line-hover: #a8a297;
+	/* The edge of a control (a field, a list to choose from, a bordered button, a radio drawn
+	   here): 3:1 at least on every surface it sits on, so it can be told from the page. */
+	--control-line: #8a8478;
+	--control-line-hover: #5d5950;
 
 	/* Ink: primary actions, progress, the selected state. */
 	--ink: #171612;
 	--ink-hover: #2e2c27;
 	--on-ink: #ffffff;
 	--on-ink-muted: #bdb9b0;
+	/* A failure's mark on the ink of the toast. */
+	--on-ink-danger: #ff8a7d;
 	--wash: rgba(23, 22, 18, 0.05);
 	/* Words found by a search: a grey wash, the one gone to in ink. */
 	--found: rgba(23, 22, 18, 0.16);
@@ -127,60 +133,17 @@
 	}
 }
 
+/* Before the page sets its theme, its first paint takes the system's ground, so a dark system
+   does not flash white. */
 @media (prefers-color-scheme: dark) {
-	:root:not([data-theme='light']) {
+	:root:not([data-theme]) {
 		color-scheme: dark;
-		--chrome: #171614;
-		--surface-0: #1d1c1a;
-		--surface-1: #21201d;
-		--surface-2: #272522;
-		--paper: #1d1c1a;
-		--stage: #100f0e;
-		--stage-raised: #21201d;
-		--stage-line: #2d2b28;
-		--line: #2f2d29;
-		--line-soft: #282623;
-		--line-strong: #3e3b36;
-		--line-hover: #605c55;
-		--ink: #eeece6;
-		--ink-hover: #ffffff;
-		--on-ink: #171612;
-		--on-ink-muted: #57534a;
-		--wash: rgba(255, 255, 255, 0.06);
-		--marker: #e8c547;
-		--hand: #7fa2ff;
-		--hand-wash: rgba(127, 162, 255, 0.14);
-		--found: rgba(255, 255, 255, 0.2);
-		--ok: #5fc48f;
-		--ok-text: #7fd6a6;
-		--ok-wash: rgba(95, 196, 143, 0.14);
-		--warn: #f0a742;
-		--warn-text: #f3c27a;
-		--warn-wash: rgba(240, 167, 66, 0.12);
-		--warn-border: rgba(240, 167, 66, 0.3);
-		--danger: #ff8a7d;
-		--danger-text: #ffa59a;
-		--danger-wash: rgba(255, 138, 125, 0.12);
-		--danger-border: rgba(255, 138, 125, 0.35);
-		--speaker-1: #5cc8bc;
-		--speaker-1-wash: rgba(92, 200, 188, 0.16);
-		--speaker-1-text: #8fded4;
-		--speaker-2: #f0a742;
-		--speaker-2-wash: rgba(240, 167, 66, 0.16);
-		--speaker-2-text: #f3c27a;
-		--text-bright: #f4f2ec;
-		--text-body: #e4e0d8;
-		--text-secondary: #bab5ab;
-		--text-muted: #a09a8f;
-		--text-faint: #767168;
-		--modal-scrim: rgba(0, 0, 0, 0.6);
-		--shadow-raised: 0 0 0 1px var(--line);
-		--shadow-pop: 0 0 0 1px var(--line-strong), 0 16px 40px -8px rgba(0, 0, 0, 0.6);
-		--shadow-flyout: 0 24px 64px -16px rgba(0, 0, 0, 0.7);
-		--focus: #eeece6;
+		background: #1d1c1a;
 	}
 }
 
+/* Dark, set on the page whether it is chosen or follows the system's theme (`+page.svelte`),
+   so the tokens are written once. */
 :root[data-theme='dark'] {
 	color-scheme: dark;
 	--chrome: #171614;
@@ -195,10 +158,13 @@
 	--line-soft: #282623;
 	--line-strong: #3e3b36;
 	--line-hover: #605c55;
+	--control-line: #7a756c;
+	--control-line-hover: #a09a8f;
 	--ink: #eeece6;
 	--ink-hover: #ffffff;
 	--on-ink: #171612;
 	--on-ink-muted: #57534a;
+	--on-ink-danger: #b42318;
 	--wash: rgba(255, 255, 255, 0.06);
 	--marker: #e8c547;
 	--hand: #7fa2ff;
@@ -329,7 +295,7 @@ textarea {
 	gap: var(--space-2);
 	min-height: var(--control-md);
 	padding: 0 var(--space-3);
-	border: 1px solid var(--line);
+	border: 1px solid var(--control-line);
 	border-radius: var(--radius-control);
 	background: var(--surface-2);
 	color: var(--text-bright);
@@ -343,7 +309,7 @@ textarea {
 }
 
 .btn:hover:not(:disabled) {
-	border-color: var(--line-hover);
+	border-color: var(--control-line-hover);
 }
 
 .btn:disabled {
@@ -433,7 +399,7 @@ select,
 textarea {
 	min-height: var(--control-md);
 	padding: var(--space-1) var(--space-3);
-	border: 1px solid var(--line-strong);
+	border: 1px solid var(--control-line);
 	border-radius: var(--radius-control);
 	background: var(--surface-2);
 	color: var(--text-bright);
@@ -457,7 +423,7 @@ textarea {
 input:hover,
 select:hover,
 textarea:hover {
-	border-color: var(--line-hover);
+	border-color: var(--control-line-hover);
 }
 
 input[type='text']:focus-visible,

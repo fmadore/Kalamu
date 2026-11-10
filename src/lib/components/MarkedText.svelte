@@ -3,9 +3,11 @@
 	// numbered lines, a number in the margin every fifth line and on every line that differs; a
 	// compared text runs on as written. Where one text has words the other lacks, a narrow mark
 	// stands for them. A place pointed at is shown linked in both texts. Words searched for are
-	// marked in the reading text, the match gone to more strongly.
+	// marked in the reading text, the match gone to more strongly. The places are one tab stop
+	// between them, however many there are: ← and → (Home and End) go from one to the next.
 	import { numbered as numberedLine, type Entry, type Line } from '#lib/apparatus.js';
 	import { clearFound, markFound } from '#lib/found.js';
+	import { rovingStop, rovingTarget } from '#lib/keys.js';
 
 	let {
 		lines = null,
@@ -19,8 +21,10 @@
 		controls = null,
 		find = '',
 		current = -1,
+		stop = null,
 		onfound,
 		onpick,
+		onmove,
 		onpoint,
 		onaway
 	}: {
@@ -45,29 +49,52 @@
 		current?: number;
 		/** Given where the match gone to stands, each time the marks are drawn. */
 		onfound?: (at: Range) => void;
-		onpick: (entry: number) => void;
+		/** The place that holds the tab stop, when it is in this text; else the first. */
+		stop?: number | null;
+		/** A place chosen, and whether from the keyboard (Enter or Space) rather than a click. */
+		onpick: (entry: number, keyboard: boolean) => void;
+		/** The focus moved to a place with the arrow keys. */
+		onmove?: (entry: number) => void;
 		onpoint: (e: PointerEvent, entry: number) => void;
 		onaway: () => void;
 	} = $props();
 
-	let reading = $state<HTMLElement | null>(null);
+	let root = $state<HTMLElement | null>(null);
 
 	// The marks follow the words, the match gone to and the text as drawn.
 	$effect(() => {
-		void lines;
-		if (!reading || !find) return;
-		const now = markFound(reading, '.t', find, current);
+		if (!lines || !root || !find) return;
+		const now = markFound(root, '.t', find, current);
 		if (now) onfound?.(now);
 		return clearFound;
 	});
+
+	/** The places in the order they stand in this text, each once though it runs over lines. */
+	const order = $derived([
+		...new Set(
+			(lines ? lines.flatMap((l) => l.parts) : parts).flatMap((p) =>
+				p.entry === null ? [] : [p.entry]
+			)
+		)
+	]);
+	const tabStop = $derived(rovingStop(order, stop));
+
+	function rove(e: KeyboardEvent, id: number) {
+		if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+		const to = rovingTarget(order, id, e.key);
+		if (to === null) return;
+		e.preventDefault();
+		root?.querySelector<HTMLElement>(`[data-entry="${to}"]`)?.focus();
+		onmove?.(to);
+	}
 </script>
 
 <!-- Inline, with no white space between the parts: the text is set as written. -->
 <!-- prettier-ignore -->
-{#snippet text(part: Line['parts'][number])}{#if part.entry !== null}{@const id = part.entry}<button class="mark" class:empty={part.text === ''} class:marked class:corr={corrected(id)} class:on={selected === id} class:linked={hovered === id} data-entry={id} aria-expanded={controls ? selected === id : undefined} aria-controls={controls && selected === id ? controls : undefined} aria-label={part.text === '' ? emptyLabel : undefined} onclick={() => onpick(id)} onpointerenter={(e) => onpoint(e, id)} onpointerleave={onaway}>{part.text}</button>{:else}{part.text}{/if}{/snippet}
+{#snippet text(part: Line['parts'][number])}{#if part.entry !== null}{@const id = part.entry}<button class="mark" class:empty={part.text === ''} class:marked class:corr={corrected(id)} class:on={selected === id} class:linked={hovered === id} data-entry={id} aria-expanded={controls ? selected === id : undefined} aria-controls={controls && selected === id ? controls : undefined} aria-label={part.text === '' ? emptyLabel : undefined} tabindex={tabStop === id ? 0 : -1} onclick={(e) => onpick(id, e.detail === 0)} onkeydown={(e) => rove(e, id)} onpointerenter={(e) => onpoint(e, id)} onpointerleave={onaway}>{part.text}</button>{:else}{part.text}{/if}{/snippet}
 
 {#if lines}
-	<div class="text numbered" lang="" bind:this={reading}>
+	<div class="text numbered" lang="" bind:this={root}>
 		{#each lines as line, li (li)}
 			<div class="line" class:blank={line.number === 0}>
 				{#if numberedLine(line.number, entries)}<span class="n num" aria-hidden="true"
@@ -80,7 +107,7 @@
 	</div>
 {:else}
 	<!-- prettier-ignore -->
-	<div class="text run" lang="">{#each parts as part, k (k)}{@render text(part)}{/each}</div>
+	<div class="text run" lang="" bind:this={root}>{#each parts as part, k (k)}{@render text(part)}{/each}</div>
 {/if}
 
 <style>

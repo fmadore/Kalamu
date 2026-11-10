@@ -53,7 +53,7 @@ export class RowRename {
 		try {
 			await renameJob(typed.id, typed.name);
 		} catch (e) {
-			toast(describeError(e, messages()));
+			toast(describeError(e, messages()), { kind: 'error' });
 		}
 	};
 

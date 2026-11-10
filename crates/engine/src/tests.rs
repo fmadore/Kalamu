@@ -22,8 +22,10 @@ fn count(pieces: &[kalamu_core::PieceState], status: PieceStatus) -> usize {
 mod attention;
 mod batch;
 mod contents;
+mod large;
 mod pages;
 mod snapshot;
+mod sources;
 mod workflow;
 
 /// Answers with the page label; can be told to fail some pages a number of times.
@@ -571,6 +573,63 @@ async fn answers_billed_but_refused_count_in_the_cost() {
             .as_f64()
             .is_some_and(|c| (c - 3.0 * call).abs() < 1e-12)
     );
+}
+
+/// A structured answer cut off at the model's output limit is not asked for again, which would
+/// stop at the same place and be billed again: it is sent once, fails with the reason, and what
+/// it was billed counts in the cost and among the refused answers.
+#[tokio::test]
+async fn an_answer_cut_off_at_the_output_limit_is_sent_once_and_paid_for() {
+    let f = fixture();
+    let mut catalog = f.engine.catalog();
+    let mut priced = catalog
+        .models
+        .iter()
+        .find(|m| m.id == "gemini-3.8-flash")
+        .cloned()
+        .unwrap_or_else(|| panic!("a priced model"));
+    priced.provider = ProviderId::new("fake");
+    priced.id = "priced-model".into();
+    priced.pricing.batch_discount = None;
+    catalog.models.push(priced);
+    f.engine.set_catalog(catalog);
+    let usage = Usage {
+        input_tokens: 1000,
+        output_tokens: 100,
+        ..Usage::default()
+    };
+    // Were it retried, the later calls would succeed.
+    f.fake.fail(2, vec![ProviderError::CutOff { usage }]);
+    let job = f.new_job(vec![f.pdf("letters.pdf", 2)], &["priced-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
+    assert_eq!(f.fake.calls(), 2, "the cut-off answer is sent once");
+
+    let pieces = f.store.pieces(job.id).unwrap_or_default();
+    let failed = pieces
+        .iter()
+        .find(|p| p.status == PieceStatus::Failed)
+        .unwrap_or_else(|| panic!("the cut-off page failed"));
+    assert_eq!(failed.attempts, 1);
+    assert!(
+        failed
+            .error
+            .as_deref()
+            .is_some_and(|e| e.contains("output limit")),
+        "{:?}",
+        failed.error
+    );
+
+    // Each call read 1,000 tokens and wrote 100: $0.001125, one kept and one refused.
+    let call = 0.001_125;
+    let charges = f.store.charges(job.id).unwrap_or_default();
+    assert_eq!(charges.len(), 1, "{charges:?}");
+    let spent = f.store.spent(job.id).unwrap_or_default();
+    assert!((spent - 2.0 * call).abs() < 1e-12, "{spent}");
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("letters.provenance.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(provenance["refused"]["answers"], 1);
 }
 
 /// Provenance lists what was done to a source, not every fix its settings allowed: a spread
@@ -1714,4 +1773,160 @@ async fn gemini_transcribe_is_costed_from_its_tokens_through_a_whole_job() {
         .or_else(|| provenance["usage"]["cost_usd"].as_f64())
         .unwrap_or_default();
     assert!((cost - expected).abs() < 1e-9, "{provenance}");
+}
+
+/// A recording keeps the cuts planned the first time only when they were recorded whole: a plan
+/// recorded in part (by a version that wrote it a row at a time, closed part-way) is planned
+/// again rather than taken for the whole recording; and a source's plan is now written at once.
+#[tokio::test]
+async fn a_recording_planned_in_part_is_planned_again_on_resume() {
+    let f = fixture();
+    let path = f.dir.path().join("interview.wav");
+    std::fs::write(&path, tone_wav()).unwrap_or_else(|_| panic!("write recording"));
+    let source = kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"));
+    let job = f.new_job_for(Task::AudioTranscription, vec![source], &["fake-model"]);
+    let mut source = job.sources[0].clone();
+    source.duration_ms = Some(1_000);
+    let opened =
+        Arc::new(kalamu_media::OpenSource::open(&source, None).unwrap_or_else(|e| panic!("{e}")));
+    let segment = |index: u32, start_ms: u64, end_ms: u64| kalamu_core::PieceRef::Segment {
+        index,
+        start_ms,
+        end_ms,
+    };
+    let recorded = |cuts: &[(u64, u64)]| -> crate::plan::Existing {
+        cuts.iter()
+            .enumerate()
+            .map(|(i, (start, end))| {
+                let index = i as u32;
+                let state = kalamu_core::PieceState {
+                    job_id: job.id,
+                    setup_id: job.setups[0].id,
+                    source_id: source.id,
+                    index,
+                    piece: segment(index, *start, *end),
+                    status: PieceStatus::Pending,
+                    cache_key: None,
+                    error: None,
+                    attempts: 0,
+                    updated_at: Timestamp(0),
+                };
+                ((state.setup_id, state.source_id, index), state)
+            })
+            .collect()
+    };
+    let plan = |existing: crate::plan::Existing| {
+        let (engine, job, source, opened) = (&f.engine, &job, &source, &opened);
+        async move {
+            engine
+                .plan(job, source, opened, &existing)
+                .await
+                .unwrap_or_else(|e| panic!("{e}"))
+                .unwrap_or_else(|e| panic!("{e}"))
+        }
+    };
+
+    // Only the first of two pieces was recorded: the recording is planned again, whole.
+    assert_eq!(
+        plan(recorded(&[(0, 400)])).await,
+        vec![segment(0, 0, 1_000)]
+    );
+    // Recorded to its end: the cuts are kept, not moved under results already stored.
+    assert_eq!(
+        plan(recorded(&[(0, 400), (400, 1_000)])).await,
+        vec![segment(0, 0, 400), segment(1, 400, 1_000)]
+    );
+
+    // Every piece of the source is recorded, in one go.
+    let pieces = vec![segment(0, 0, 400), segment(1, 400, 1_000)];
+    let work = f
+        .engine
+        .record_pieces(&job, &source, &pieces, &crate::plan::Existing::new())
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(work.len(), 2);
+    let stored = f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(
+        stored.iter().map(|p| p.piece.clone()).collect::<Vec<_>>(),
+        pieces
+    );
+}
+
+/// A chosen format that cannot be written reaches the researcher, the other files written all
+/// the same; one the set-up's model cannot have (ALTO from a model that reports no positions,
+/// in a comparison where another does) is skipped without a word.
+#[tokio::test]
+async fn a_chosen_format_that_cannot_be_written_is_reported() {
+    let f = fixture();
+    let mut catalog = f.engine.catalog();
+    let listed = catalog
+        .models
+        .iter()
+        .find(|m| m.id == "gemini-3.8-flash")
+        .cloned()
+        .unwrap_or_else(|| panic!("a listed model"));
+    for (id, layout) in [("positional-model", true), ("plain-model", false)] {
+        let mut model = listed.clone();
+        model.provider = ProviderId::new("fake");
+        model.id = id.into();
+        model.layout = layout;
+        catalog.models.push(model);
+    }
+    f.engine.set_catalog(catalog);
+    let job = f
+        .engine
+        .create_job(NewJob {
+            name: "Alto".into(),
+            task: Task::TextExtraction,
+            sources: vec![f.pdf("bulletin.pdf", 1)],
+            setups: ["positional-model", "plain-model"]
+                .map(|model| SetupRequest {
+                    provider: ProviderId::new("fake"),
+                    model: model.into(),
+                    preset_id: None,
+                    label: None,
+                    options: Default::default(),
+                    merge: None,
+                })
+                .into(),
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt, ExportFormat::Alto],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("create job: {e}"));
+    assert!(job.output.formats.contains(&ExportFormat::Alto));
+
+    // The fake model reports no positions though listed as one that does: ALTO fails, once,
+    // for that set-up alone, and says why.
+    let mut events = f.engine.subscribe();
+    assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
+    let (mut reported, mut written) = (Vec::new(), Vec::new());
+    while let Ok(event) = events.try_recv() {
+        match event {
+            ProgressEvent::SourceFailed { error, .. } => reported.push(error),
+            ProgressEvent::SourceExported { files, .. } => written.extend(files),
+            _ => {}
+        }
+    }
+    assert_eq!(reported.len(), 1, "{reported:?}");
+    assert!(reported[0].contains("text positions"), "{reported:?}");
+    assert_eq!(
+        written.iter().filter(|f| f.ends_with(".txt")).count(),
+        2,
+        "the text of both set-ups is written: {written:?}"
+    );
+    assert!(!written.iter().any(|f| f.ends_with(".xml")), "{written:?}");
+
+    // Written again on request, the failure is the call's.
+    let again = f.engine.export(job.id, job.setups[0].id, job.sources[0].id);
+    assert!(
+        matches!(&again, Err(EngineError::Output(e)) if e.contains("text positions")),
+        "{again:?}"
+    );
+    assert!(
+        f.engine
+            .export(job.id, job.setups[1].id, job.sources[0].id)
+            .is_ok()
+    );
 }

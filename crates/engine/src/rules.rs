@@ -117,7 +117,7 @@ pub(crate) fn writable_formats(
 impl Engine {
     /// Every task's rules, against the catalogue in use.
     pub fn task_rules(&self) -> Vec<TaskRules> {
-        task_rules(&self.catalog())
+        task_rules(&self.current_catalog())
     }
 
     /// Refuses a job whose sources the task does not read, or whose models do not do the task

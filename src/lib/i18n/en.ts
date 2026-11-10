@@ -46,7 +46,9 @@ export const en = {
 		jobs: 'Jobs',
 		prompts: 'Prompts',
 		settings: 'Settings',
-		glossary: 'Glossary'
+		glossary: 'Glossary',
+		/** Back to the screen left, in a masthead. */
+		back: 'Back'
 	},
 	task: {
 		text_extraction: 'Extract text',
@@ -508,9 +510,8 @@ export const en = {
 		wholeResult: 'The whole result',
 		preferredBadge: 'Preferred',
 		reviewedBadge: 'Reviewed',
-		revision: (revision: string) => `Answer ${revision}`,
-		revisionHint:
-			'The stored answer, by the start of its fingerprint, and when it was stored. A new answer is reviewed afresh.',
+		answered: (when: string) => `Answered ${when}`,
+		answeredHint: 'When the answer was stored. A new answer is reviewed afresh.',
 		open: (document: string, place: string) => `Open ${document}, ${place}, in the review`,
 		more: (n: number) => `Show ${n} more`,
 		banner: {
@@ -588,6 +589,10 @@ export const en = {
 		addFiles: 'Add files',
 		addFolder: 'Add a folder',
 		addedFiles: (n: number) => (n === 1 ? '1 document added' : `${n} documents added`),
+		/** Over the project while files are dragged over the window. */
+		dropHere: 'Drop here to add them to the project',
+		removedFromCollection: (n: number, collection: string) =>
+			`${n === 1 ? '1 document' : `${n} documents`} removed from “${collection}”`,
 		notReadable: (n: number) =>
 			n === 1
 				? '1 file could not be read and was left out.'
@@ -728,8 +733,6 @@ export const en = {
 			export: 'Export…',
 			close: 'Close'
 		},
-		tagged: (tag: string, n: number) =>
-			`${n === 1 ? '1 document' : `${n} documents`} tagged “${tag}”`,
 		columnResults: 'Results',
 		columnDate: 'Added',
 		selectAll: 'Select all documents shown',
@@ -757,9 +760,12 @@ export const en = {
 			text: 'Text',
 			youtube: 'YouTube'
 		},
-		taskResults: (task: string, n: number, reviewed: number) =>
-			`${task}: ${n === 1 ? '1 result' : `${n} results`}${reviewed > 0 ? `, ${reviewed} reviewed` : ''}`,
-		preferredMark: 'preferred',
+		/** A task's marks in the table's Results column, in words. */
+		taskResults: (task: string, n: number, reviewed: number, preferred: boolean) =>
+			`${task}: ${n === 1 ? '1 result' : `${n} results`}${reviewed > 0 ? `, ${reviewed} reviewed` : ''}${preferred ? (n === 1 ? ', preferred' : ', one of them preferred') : ''}`,
+		resultCount: (n: number) => (n === 1 ? '1 result' : `${n} results`),
+		reviewedMark: (n: number) => (n === 1 ? '1 reviewed' : `${n} reviewed`),
+		preferredMark: 'Preferred: the result relied on for this document',
 		fromProject: (name: string) =>
 			`Started from the project “${name}”: the job’s files become its documents, and its results theirs.`,
 		linkFailed: (name: string) =>
@@ -801,7 +807,6 @@ export const en = {
 			cost: 'Cost',
 			preferred: 'Preferred',
 			prefer: 'Make preferred',
-			unprefer: 'No longer preferred',
 			preferHint: 'The result you rely on for this task. A newer run never replaces it.',
 			open: 'Review',
 			openJob: 'Job page',
@@ -820,6 +825,9 @@ export const en = {
 		}
 	},
 	newJob: {
+		/** Empties the form kept from an earlier visit. */
+		startOver: 'Start over',
+		startOverHint: 'Empty the form: files, models and settings',
 		then: {
 			title: 'Then (optional)',
 			hint: 'Once the text is read, Kalamu can analyse it for you: the people and places it names, a summary, its tone.',
@@ -841,6 +849,8 @@ export const en = {
 		addFiles: 'Add files',
 		addFolder: 'Add a folder',
 		dropHint: 'Or drop files and folders anywhere on this window.',
+		/** Over New job while files are dragged over the window. */
+		dropHere: 'Drop here to add them to the job',
 		/** Files and folders added that the task chosen does not read. */
 		setAside: {
 			files: (names: string, task: string, n: number) =>
@@ -1271,13 +1281,17 @@ export const en = {
 		playVideoNote: 'Plays from YouTube, in its privacy-enhanced player.',
 		videoBlocked:
 			'This video cannot be played here: its owner may not allow it, or this computer is offline.',
-		keywords: 'Keywords',
 		previous: 'Previous',
 		next: 'Next',
 		source: 'Source',
 		itemMenu: (name: string) => `What to do with “${name}”`,
 		renameItem: 'Rename',
 		removeItem: 'Remove from the answers',
+		itemLocates: 'Marked in the source while it has the focus.',
+		itemKeys:
+			'Marked in the source while it has the focus. Enter, or the menu key, renames or removes it.',
+		pageImage: 'Page image: the arrow keys move it, with Shift by longer steps',
+		itemRemoved: (name: string) => `“${name}” removed from the answers`,
 		itemEverywhere:
 			'Changed in this document’s corrected answers, for every model that found it. The model’s own answers are kept.',
 		edit: 'Correct',
@@ -1603,6 +1617,52 @@ export const en = {
 		lede: 'The words Kalamu uses, for colleagues new to these tools, and what each export format suits.',
 		wordsTitle: 'Words',
 		formatsTitle: 'Export formats',
+		/** The shortcuts, by where they work, written for the system in use. */
+		keysTitle: 'Keyboard',
+		keysLede:
+			'The shortcuts, by where they work. A shortcut of the screen behind waits while a dialog is open.',
+		/** Between two keys that do the same. */
+		keysOr: 'or',
+		keyPlaces: {
+			everywhere: 'Everywhere',
+			newJob: 'New job',
+			review: 'In a review',
+			search: 'In a review’s search',
+			scan: 'On a scan'
+		},
+		keys: {
+			newJob: 'Open New job',
+			sidebar: 'Fold or unfold the sidebar',
+			find: 'Go to the filter or search field: on Jobs, a project’s documents, its search and dictionary, and here',
+			back: (pageBack: string) =>
+				`Go back to the screen you came from, as the mouse’s back button does. In a review ${pageBack} turns to the previous page instead.`,
+			escape: 'Close a menu or a dialog, or put away a failure message that has the focus',
+			start: 'Start the job',
+			addLinks: 'Add the YouTube links pasted',
+			newLine: 'Start another line among the links',
+			reviewed: 'Mark the page reviewed, or not reviewed; while correcting, save the correction',
+			nextPage: 'Next page or part; Page Down scrolls a pane instead when it has the focus',
+			previousPage: 'Previous page or part; Page Up scrolls a pane instead when it has the focus',
+			differenceSteps: 'On a difference in the text: the previous or next one',
+			differenceEnds: 'On a difference in the text: the first or last one',
+			openReadings: 'On a difference in the text: open its readings, the focus in them',
+			nameSteps:
+				'On a name in an analysis: the previous or next one (Home and End: the first or last)',
+			nameMenu: 'On a name in an analysis: the menu to rename or remove it',
+			nextDifference: 'Next place where the models differ, its readings open',
+			previousDifference: 'Previous place where the models differ',
+			closeReadings: 'Close the readings, from their own field too',
+			moveReadings: 'Move the readings aside, from the grip at their left; with Shift, further',
+			splitter: 'Move the boundary between two panes, once it has the focus; with Shift, further',
+			search: 'Search the text, or go back to the search field',
+			nextMatch: 'Next match',
+			previousMatch: 'Previous match',
+			closeSearch: 'Close the list of matches, then the search',
+			zoomIn: 'Zoom in',
+			zoomOut: 'Zoom out',
+			fit: 'Fit the page to the pane’s width',
+			pan: 'On the page image: move the page; with Shift, by most of the pane'
+		},
 		filter: 'Find a word',
 		noMatch: 'No word by that name.',
 		seeAlso: 'See also',
@@ -1767,7 +1827,15 @@ export const en = {
 	/** Key names in shortcuts; on a Mac the modifier is written ⌘. */
 	keys: {
 		ctrl: 'Ctrl',
-		shift: 'Shift'
+		shift: 'Shift',
+		alt: 'Alt',
+		escape: 'Esc',
+		pageUp: 'Page Up',
+		pageDown: 'Page Down',
+		home: 'Home',
+		end: 'End',
+		space: 'Space',
+		menu: 'Menu key'
 	},
 	tray: {
 		open: 'Open Kalamu',
@@ -1780,8 +1848,11 @@ export const en = {
 	},
 	common: {
 		cancel: 'Cancel',
+		/** In the toast, after a removal it can take back. */
+		undo: 'Undo',
 		save: 'Save',
 		close: 'Close',
+		dismissMessage: 'Dismiss this message',
 		loading: 'Loading…',
 		/** After a label, before what it labels: French sets a space before it. */
 		colon: ':',
@@ -1795,7 +1866,11 @@ export const en = {
 		preview: 'preview',
 		retiring: 'retiring',
 		opensInBrowser: ' (opens in your browser)',
-		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`
+		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`,
+		/** Asked before leaving a correction, a prompt or a workflow with changes not saved. */
+		unsaved: 'Your changes are not saved. Leave and discard them?',
+		discardChanges: 'Discard changes',
+		keepEditing: 'Keep editing'
 	},
 	error: {
 		'search.too_short': 'Type a word of three letters at least.',
@@ -1885,6 +1960,8 @@ export const en = {
 		'provider.other': 'The provider sent an unexpected response.',
 		'provider.invalid_answer':
 			'The model’s answer did not match the fields of the analysis; Kalamu asks it again.',
+		'provider.cut_off':
+			'The answer stopped at the model’s output limit before it was complete. Send fewer pages in each call, ask for fewer or shorter fields, or choose a model that can write a longer answer.',
 		'provider.not_installed':
 			'This offline model, or the language data it needs, has not been downloaded. Download it in Settings.',
 		'provider.interrupted': 'Stopped before the end; it will continue when the job resumes.',

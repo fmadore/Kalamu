@@ -8,6 +8,7 @@ use kalamu_core::{PieceRef, PieceStatus, ProviderId, SetupId, SourceId, Timestam
 
 mod projects;
 mod runs;
+mod scoped;
 mod search;
 
 fn job() -> Job {
@@ -83,6 +84,33 @@ fn jobs_round_trip_and_are_listed_with_progress() -> Result<(), StoreError> {
     assert_eq!(listed[0].pieces_total, 2);
     assert_eq!(listed[0].pieces_finished, 1);
     assert_eq!(listed[0].pieces_failed, 1);
+    Ok(())
+}
+
+/// Pieces recorded together are recorded all or none: one that cannot be written (here, of a
+/// job the database does not hold) leaves none of the others behind.
+#[test]
+fn pieces_recorded_together_are_all_or_none() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    let mut stray = piece(&job, 2, PieceStatus::Pending);
+    stray.job_id = JobId::new();
+    let refused = store.upsert_pieces(&[
+        piece(&job, 0, PieceStatus::Pending),
+        piece(&job, 1, PieceStatus::Pending),
+        stray,
+    ]);
+    assert!(refused.is_err());
+    assert!(store.pieces(job.id)?.is_empty(), "nothing kept");
+
+    store.upsert_pieces(&[
+        piece(&job, 0, PieceStatus::Pending),
+        piece(&job, 1, PieceStatus::Done),
+    ])?;
+    let pieces = store.pieces(job.id)?;
+    assert_eq!(pieces.len(), 2);
+    assert_eq!(pieces[1].status, PieceStatus::Done);
     Ok(())
 }
 
@@ -468,5 +496,28 @@ fn units_are_kept_in_order_and_go_with_their_job() -> Result<(), StoreError> {
 
     store.delete_job(job.id)?;
     assert!(store.units(job.id)?.is_empty());
+    Ok(())
+}
+
+/// Lookups by job and by document have indexes of their own.
+#[test]
+fn lookups_by_job_and_by_document_are_indexed() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let conn = store.conn();
+    let mut stmt = conn
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'index'")
+        .map_err(db)?;
+    let names: Vec<String> = stmt
+        .query_map([], |row| row.get(0))
+        .map_err(db)?
+        .collect::<Result<_, _>>()
+        .map_err(db)?;
+    for index in [
+        "document_links_by_job",
+        "preferred_results_by_job",
+        "collection_documents_by_document",
+    ] {
+        assert!(names.iter().any(|n| n == index), "{index}: {names:?}");
+    }
     Ok(())
 }

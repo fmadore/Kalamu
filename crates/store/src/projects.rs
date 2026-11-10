@@ -8,7 +8,7 @@ use kalamu_core::{
     Collection, CollectionId, Document, DocumentId, DocumentLink, JobId, PreferredResult, Project,
     ProjectId, ProjectStore, SetupId, SourceId, StoreError, Task, Timestamp,
 };
-use rusqlite::{OptionalExtension, params};
+use rusqlite::{Connection, OptionalExtension, params, params_from_iter};
 
 use super::{SqliteStore, corrupt, db, to_json};
 
@@ -62,6 +62,40 @@ pub(crate) const DESCRIPTIONS: &str = r#"
 ALTER TABLE projects ADD COLUMN source_defaults TEXT NOT NULL DEFAULT '{}';
 ALTER TABLE documents ADD COLUMN source_description TEXT NOT NULL DEFAULT '{}';
 "#;
+
+/// The links `filter` keeps (`l` is `document_links`), oldest first.
+fn links_where(
+    conn: &Connection,
+    filter: &str,
+    args: &[String],
+) -> Result<Vec<DocumentLink>, StoreError> {
+    let mut stmt = conn
+        .prepare(&format!(
+            "SELECT l.document_id, l.job_id, l.source_id, l.linked_at FROM document_links l
+             {filter} ORDER BY l.linked_at, l.rowid"
+        ))
+        .map_err(db)?;
+    let rows = stmt
+        .query_map(params_from_iter(args), |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, i64>(3)?,
+            ))
+        })
+        .map_err(db)?;
+    rows.map(|r| {
+        let (d, j, s, at) = r.map_err(db)?;
+        Ok(DocumentLink {
+            document_id: id(&d)?,
+            job_id: id(&j)?,
+            source_id: id(&s)?,
+            linked_at: Timestamp(at),
+        })
+    })
+    .collect()
+}
 
 fn id<T: std::str::FromStr>(s: &str) -> Result<T, StoreError>
 where
@@ -379,34 +413,20 @@ impl ProjectStore for SqliteStore {
     }
 
     fn links(&self, pid: ProjectId) -> Result<Vec<DocumentLink>, StoreError> {
-        let conn = self.conn();
-        let mut stmt = conn
-            .prepare(
-                "SELECT l.document_id, l.job_id, l.source_id, l.linked_at FROM document_links l
-                 JOIN documents d ON d.id = l.document_id WHERE d.project_id = ?1
-                 ORDER BY l.linked_at, l.rowid",
-            )
-            .map_err(db)?;
-        let rows = stmt
-            .query_map([pid.to_string()], |row| {
-                Ok((
-                    row.get::<_, String>(0)?,
-                    row.get::<_, String>(1)?,
-                    row.get::<_, String>(2)?,
-                    row.get::<_, i64>(3)?,
-                ))
-            })
-            .map_err(db)?;
-        rows.map(|r| {
-            let (d, j, s, at) = r.map_err(db)?;
-            Ok(DocumentLink {
-                document_id: id(&d)?,
-                job_id: id(&j)?,
-                source_id: id(&s)?,
-                linked_at: Timestamp(at),
-            })
-        })
-        .collect()
+        links_where(
+            &self.conn(),
+            "JOIN documents d ON d.id = l.document_id WHERE d.project_id = ?1",
+            &[pid.to_string()],
+        )
+    }
+
+    fn links_of(&self, job: JobId, source: SourceId) -> Result<Vec<DocumentLink>, StoreError> {
+        // Found through `document_links_by_job`.
+        links_where(
+            &self.conn(),
+            "WHERE l.job_id = ?1 AND l.source_id = ?2",
+            &[job.to_string(), source.to_string()],
+        )
     }
 
     fn set_preferred(

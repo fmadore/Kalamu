@@ -56,10 +56,12 @@ npm run format:check && npm run check && npm run lint && npm test
 What differs between Windows and macOS is in `src-tauri/src/platform/` and `src/lib/platform.ts`
 (see [AGENTS.md](../AGENTS.md)). The macOS file is not compiled on Windows, so CI's macOS lane is
 where it is checked. The interface's main screens are also opened in WebKit, the engine of the
-macOS webview, on a Mac in CI; on any machine, after `npx playwright install webkit`:
+macOS webview, on a Mac in CI, and in Chromium, the engine of Windows' WebView2; on any
+machine, after `npx playwright install webkit chromium`:
 
 ```bash
 npm run test:webkit
+npm run test:chromium
 ```
 
 `cargo test` also regenerates the TypeScript types in `src/lib/bindings/` from the Rust

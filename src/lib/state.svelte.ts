@@ -20,8 +20,9 @@ import type { Task } from './bindings/Task.js';
 import type { Term } from './glossary.js';
 import type { Example } from './workflows.js';
 import type { QueueFilter } from './queue.js';
+import { leaving, samePlace } from './history.js';
 import { messages, resolveLocale, setLocale, type Locale } from './i18n/index.js';
-import { api, notify, openUrl } from './tauri.js';
+import { api, ask, notify, openUrl } from './tauri.js';
 
 /** A project New job was opened from: the job it starts is tied to the project's documents. */
 export interface FromProject {
@@ -60,8 +61,9 @@ export type View =
 			projectId?: string;
 			collectionId?: string;
 			documentId?: string;
-			/** Opens the project on its list of what to check, over these documents if given. */
-			pane?: 'queue';
+			/** The pane the project shows; when not given, the one it was left on. */
+			pane?: ProjectPane;
+			/** Documents chosen in the table, for the list of what to check. */
 			selection?: string[];
 	  }
 	| { name: 'jobs'; jobId?: string }
@@ -91,6 +93,9 @@ export type View =
 	| { name: 'prompts'; presetId?: string }
 	| { name: 'settings'; tab?: SettingsTab }
 	| { name: 'glossary'; term?: Term | 'formats' };
+
+/** The panes of a project, down its side. */
+export type ProjectPane = 'documents' | 'search' | 'queue' | 'dictionary' | 'activity';
 
 /** The sections of Settings, each a tab. */
 export type SettingsTab = 'keys' | 'offline' | 'general' | 'about';
@@ -145,12 +150,128 @@ export const app = $state({
 	queue: null as QueueTrail | null,
 	closeRequested: false,
 	toast: null as string | null,
+	/** A failure shown until the researcher dismisses it, numbered so the same one shown again
+	 * is read out again. */
+	toastError: null as { text: string; n: number } | null,
+	/** What the toast offers to do about what it says, such as undoing it. */
+	toastAction: null as ToastAction | null,
+	/** Whether files are being dragged over the window, for the screen that takes them to show
+	 * it will. */
+	filesOver: false,
+	/** The screen on view that takes files dropped on the window, and what it does with them. */
+	dropTarget: null as { id: number; label: string } | null,
 	/** The interface language in use; the screens are drawn again when it changes. */
 	locale: 'en' as Locale
 });
 
-export function go(view: View): void {
+let dialogs = 0;
+
+/** A dialog opened over the window: until it closes, the window's own shortcuts wait. */
+export function holdShortcuts(): () => void {
+	dialogs++;
+	return () => {
+		dialogs--;
+	};
+}
+
+/** Whether a dialog is open, so a shortcut of the screen behind it does nothing. */
+export function shortcutsHeld(): boolean {
+	return dialogs > 0;
+}
+
+/** Work on screen that is not saved yet: a correction, a prompt, a workflow. */
+export interface Draft {
+	/** Whether it differs from what was opened. */
+	dirty: () => boolean;
+	/** Drops it, once the researcher has agreed to. */
+	discard: () => void;
+}
+
+const drafts = new Set<Draft>();
+let asking: Promise<boolean> | null = null;
+
+/** Keeps a draft from being dropped unasked while it is on screen; the function returned lets
+ * it go, for a component to call as it unmounts. */
+export function guardDraft(draft: Draft): () => void {
+	drafts.add(draft);
+	return () => {
+		drafts.delete(draft);
+	};
+}
+
+/** Does `then` at once when no draft holds changes; otherwise asks first, and drops the drafts
+ * before doing it only if the researcher agrees. Leaving the screen and turning to another
+ * piece in it both go through here, so no way out loses a draft silently. */
+export function leaveThen(then: () => void): void {
+	const dirty = [...drafts].filter((d) => d.dirty());
+	if (dirty.length === 0) {
+		then();
+		return;
+	}
+	const m = messages();
+	// A second way out tried while the question is up waits for the same answer.
+	asking ??= ask(m.common.unsaved, { ok: m.common.discardChanges, cancel: m.common.keepEditing })
+		.catch(() => false)
+		.finally(() => (asking = null));
+	void asking.then((discard) => {
+		if (!discard) return;
+		dirty.forEach((d) => d.discard());
+		then();
+	});
+}
+
+/** The screens left, to go back through; see `history.ts`. */
+let past = $state<View[]>([]);
+
+let dropTargets = 0;
+
+/** Says that the screen on view takes files dropped on the window, and what for (`label`), so
+ * the window shows it while files are dragged over it; the function returned stops, for a
+ * component to call as it unmounts. */
+export function takeFiles(label: string): () => void {
+	const id = ++dropTargets;
+	app.dropTarget = { id, label };
+	return () => {
+		if (app.dropTarget?.id === id) app.dropTarget = null;
+	};
+}
+
+/** Opens a screen, the one left kept to come back to; with `replace`, in its place, as stepping
+ * through a list of what to check does, so Back returns to the list. */
+export function go(view: View, { replace = false } = {}): void {
+	leaveThen(() => {
+		if (!replace) past = leaving(past, $state.snapshot(app.view) as View, view);
+		app.view = view;
+	});
+}
+
+/** Sets what the screen on view shows, as it changes inside it (a project's pane), so that
+ * coming back to it shows the same; nothing is added to go back through. */
+export function settle(view: View): void {
 	app.view = view;
+}
+
+/** Whether there is a screen to go back to. */
+export function canGoBack(): boolean {
+	return past.length > 0;
+}
+
+/** Goes back to the screen left last, as it was left. */
+export function back(): void {
+	if (past.length === 0) return;
+	leaveThen(() => {
+		const previous = past[past.length - 1];
+		past = past.slice(0, -1);
+		app.view = previous;
+	});
+}
+
+/** Goes to `view` by going back, when that is where the screen was opened from, so it comes
+ * back as it was left; otherwise opens it. For a link that names where it goes. */
+export function returnTo(view: View): void {
+	const previous = past[past.length - 1];
+	if (previous && samePlace(previous, view)) back();
+	else go(view);
 }
 
 /** Puts the interface in the language the settings ask for, the tray menu included. */
@@ -351,11 +472,51 @@ function updateProgressDisplays(): void {
 		.catch(() => undefined);
 }
 
-export function toast(message: string): void {
+/** A button in the toast: what it says, and what it does. */
+export interface ToastAction {
+	label: string;
+	run: () => void;
+}
+
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Shows a message for four seconds from the last time it was shown, even when it is the same
+ * message again; with an action (`action`, such as undoing it), eight, to leave time to take it.
+ * A failure (`kind: 'error'`) is read out at once and stays until dismissed, so it can be read
+ * again. */
+export function toast(
+	message: string,
+	options: { kind?: 'error'; action?: ToastAction } = {}
+): void {
+	if (options.kind === 'error') {
+		app.toastError = { text: message, n: (app.toastError?.n ?? 0) + 1 };
+		return;
+	}
+	const action = options.action ?? null;
 	app.toast = message;
-	setTimeout(() => {
-		if (app.toast === message) app.toast = null;
-	}, 4000);
+	app.toastAction = action;
+	clearTimeout(toastTimer);
+	toastTimer = setTimeout(
+		() => {
+			app.toast = null;
+			app.toastAction = null;
+		},
+		action ? 8000 : 4000
+	);
+}
+
+/** Takes the toast's action, and puts the toast away. */
+export function takeToastAction(): void {
+	const action = app.toastAction;
+	clearTimeout(toastTimer);
+	app.toast = null;
+	app.toastAction = null;
+	action?.run();
+}
+
+/** Puts away the failure shown. */
+export function dismissError(): void {
+	app.toastError = null;
 }
 
 /** Open a web page in the default browser, and say so when it cannot be opened. */
@@ -363,6 +524,6 @@ export async function openLink(url: string): Promise<void> {
 	try {
 		await openUrl(url);
 	} catch {
-		toast(messages().common.linkFailed(url));
+		toast(messages().common.linkFailed(url), { kind: 'error' });
 	}
 }

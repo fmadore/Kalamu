@@ -16,7 +16,15 @@
 	import { describeError } from '#lib/errors.js';
 	import { acceptsPrompt, MODES, rulesFor, taskOf } from '#lib/newJob.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { app, go, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
+	import {
+		app,
+		go,
+		guardDraft,
+		returnTo,
+		hasKey,
+		toast,
+		type FromProject
+	} from '#lib/state.svelte.js';
 	import { api, ask, pickJsonSave } from '#lib/tauri.js';
 	import {
 		blankWorkflow,
@@ -51,6 +59,9 @@
 	let workflow = $state<Workflow>(blankWorkflow());
 	/** The workflow as last saved, to tell whether the form holds changes. */
 	let saved = $state<string>('');
+	/** The workflow as it was opened or last saved, to tell whether leaving would lose
+	 * anything: a new one counts as changed only once something in it was. */
+	let openedAs = '';
 	let pipelines = $state<Pipeline[]>([]);
 	/** The prompts each task offers, as New job lists them. */
 	let presets = $state<Preset[]>([]);
@@ -104,9 +115,17 @@
 		} catch (e) {
 			error = describeError(e, m);
 		} finally {
+			openedAs = JSON.stringify(workflow);
 			loaded = true;
 		}
 	});
+
+	onMount(() =>
+		guardDraft({
+			dirty: () => loaded && JSON.stringify(workflow) !== openedAs,
+			discard: () => (openedAs = JSON.stringify(workflow))
+		})
+	);
 
 	function add() {
 		const at = adding.indexOf(':');
@@ -157,6 +176,7 @@
 			const result = await api.saveWorkflow($state.snapshot(workflow));
 			workflow = result;
 			saved = JSON.stringify(result);
+			openedAs = saved;
 			toast(w.savedAs(result.name, result.version));
 			if (workflowId !== result.id)
 				go({ name: 'workflows', workflowId: result.id, paths, sources, project });
@@ -189,6 +209,8 @@
 		if (!(await ask(w.deleteConfirm(workflow.name)))) return;
 		try {
 			await api.deleteWorkflow(workflow.id);
+			// Deleted on purpose: nothing left to ask about.
+			openedAs = JSON.stringify(workflow);
 			go({ name: 'workflows' });
 		} catch (e) {
 			error = describeError(e, m);
@@ -198,7 +220,9 @@
 
 <header class="masthead">
 	<div class="title">
-		<button class="btn ghost sm" onclick={() => go({ name: 'workflows', paths, sources, project })}
+		<button
+			class="btn ghost sm"
+			onclick={() => returnTo({ name: 'workflows', paths, sources, project })}
 			><Icon name="back" />{w.back}</button
 		>
 		<label class="field name">

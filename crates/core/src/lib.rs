@@ -79,7 +79,7 @@ pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, Setu
 pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
 pub use source::{InputKind, SourceFile};
 pub use speakers::{SpeakerIndex, SpeakerNames};
-pub use store::{Correction, JobStore, StoreError};
+pub use store::{Correction, JobStore, PrunedResults, StoreError};
 pub use task::Task;
 pub use tied::{TiedResult, TiedResults};
 pub use units::{DocumentUnit, FrozenUnit, PagesError, SeedProblem, SharedPage, UnitError};

@@ -2839,6 +2839,7 @@ dependencies = [
  "kalamu-core",
  "kalamu-export",
  "kalamu-media",
+ "kalamu-projects",
  "kalamu-prompts",
  "kalamu-store",
  "serde",

@@ -118,7 +118,7 @@ impl Engine {
             return Err(EngineError::EmptyJob);
         }
         check_steps(&workflow.shape()).map_err(EngineError::Workflow)?;
-        let catalog = self.catalog();
+        let catalog = self.current_catalog();
         let texts: Vec<SourceFile> = sources.iter().map(as_text).collect();
         let mut steps = Vec::new();
         for (i, step) in workflow.steps.iter().enumerate() {

@@ -3,9 +3,9 @@
 	// themes so the page is the brightest thing on screen, with zoom (also Ctrl and the wheel or
 	// a pinch, Ctrl + and Ctrl −, Ctrl 0 to fit; ⌘ on a Mac) and a quarter turn either way for a
 	// page scanned sideways. Zooming keeps the point under the pointer where it is (the middle of
-	// the pane, from the buttons and keys); the page is moved by dragging it, and a double click
-	// zooms in on a place or back to the pane's width. A hint says so until the reader has zoomed
-	// once. Or a text file set as text, with words looked for marked; or a player for a
+	// the pane, from the buttons and keys); the page is moved by dragging it, or with the arrow
+	// keys once the page has the focus, and a double click zooms in on a place or back to the
+	// pane's width. A hint says so until the reader has zoomed once. Or a text file set as text, with words looked for marked; or a player for a
 	// recording or a video. Where no strip of pages runs below, buttons over the scan turn its
 	// pages.
 	import { flushSync, type Snippet } from 'svelte';
@@ -14,8 +14,10 @@
 	import { findTerm } from '#lib/analysis.js';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { formatPercent, messages } from '#lib/i18n/index.js';
+	import { panStep, scrollableByKeys } from '#lib/keys.js';
 	import { modifier, primary, shortcut, zoomsWithWheel } from '#lib/platform.js';
-	import { keep, recall } from '#lib/stored.js';
+	import { shortcutsHeld } from '#lib/state.svelte.js';
+	import { keep, keepFor, recall, recallFor } from '#lib/stored.js';
 	import {
 		between,
 		clampZoom,
@@ -28,6 +30,7 @@
 
 	let {
 		kind,
+		sourceId = null,
 		piece = null,
 		paging = null,
 		onstep,
@@ -38,6 +41,8 @@
 		player
 	}: {
 		kind: 'scan' | 'text' | 'player';
+		/** The source, whose turn is remembered on this computer. */
+		sourceId?: string | null;
 		/** The piece shown, after "Source". */
 		piece?: string | null;
 		paging?: { at: number; count: number } | null;
@@ -53,8 +58,20 @@
 	const m = messages();
 
 	let zoom = $state(1);
-	/** The reader's quarter turns, for every page of the source. */
-	let rotation = $state<Rotation>(0);
+	/** The reader's quarter turns, for every page of the source, remembered for the sources
+	 * turned last so a page scanned sideways stays turned. */
+	const ROTATION_KEY = 'kalamu.review.rotation';
+	const ROTATIONS: unknown[] = [90, 180, 270];
+	// svelte-ignore state_referenced_locally
+	let rotation = $state<Rotation>(
+		(sourceId &&
+			recallFor(ROTATION_KEY, sourceId, (v) => (ROTATIONS.includes(v) ? (v as Rotation) : null))) ||
+			0
+	);
+	function turnBy(by: 1 | -1) {
+		rotation = turn(rotation, by);
+		if (sourceId) keepFor(ROTATION_KEY, sourceId, rotation === 0 ? null : rotation, 200);
+	}
 	let desk = $state<HTMLElement | null>(null);
 
 	const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -212,6 +229,18 @@
 		coast = requestAnimationFrame(frame);
 	}
 
+	/** The arrow keys move the page under the focus, a short step or, with Shift, most of the
+	 * pane; Alt and the arrows are left to turn the page. */
+	function pan(e: KeyboardEvent) {
+		if (e.altKey || e.ctrlKey || e.metaKey || !desk) return;
+		const by = panStep(e.key, e.shiftKey, { width: desk.clientWidth, height: desk.clientHeight });
+		if (!by || !canMove()) return;
+		e.preventDefault();
+		cancelAnimationFrame(coast);
+		desk.scrollLeft += by.x;
+		desk.scrollTop += by.y;
+	}
+
 	/** A double click zooms in on the place, or back to the pane's width when zoomed in. */
 	function ondblclick(e: MouseEvent) {
 		// Measured, not read from the target: while the page is held, clicks reach the desk.
@@ -228,7 +257,7 @@
 	}
 
 	function onkeydown(e: KeyboardEvent) {
-		if (kind !== 'scan' || !primary(e) || e.altKey) return;
+		if (kind !== 'scan' || !primary(e) || e.altKey || shortcutsHeld()) return;
 		const target = e.target;
 		if (target instanceof Element && target.closest('input, textarea, select, [contenteditable]'))
 			return;
@@ -266,12 +295,17 @@
 		{/if}
 	</div>
 	{#if kind === 'scan'}
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<!-- A tab stop of its own, so the keyboard can move the page as the pointer drags it. -->
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 		<div
 			class="desk scan"
 			class:movable={zoom > 1}
 			class:grabbing
 			bind:this={desk}
+			role="group"
+			tabindex="0"
+			aria-label={m.review.pageImage}
+			onkeydown={pan}
 			onpointerdown={grab}
 			onpointermove={move}
 			onpointerup={release}
@@ -311,17 +345,17 @@
 				class="tool"
 				aria-label={m.review.turnLeft}
 				title={m.review.turnLeft}
-				onclick={() => (rotation = turn(rotation, -1))}><Icon name="turn-left" /></button
+				onclick={() => turnBy(-1)}><Icon name="turn-left" /></button
 			>
 			<button
 				class="tool"
 				aria-label={m.review.turnRight}
 				title={m.review.turnRight}
-				onclick={() => (rotation = turn(rotation, 1))}><Icon name="turn-right" /></button
+				onclick={() => turnBy(1)}><Icon name="turn-right" /></button
 			>
 		</div>
 	{:else if kind === 'text'}
-		<div class="desk document" lang="">
+		<div class="desk document" lang="" {@attach scrollableByKeys(m.review.source)}>
 			{#if text === null}
 				<p class="muted">{m.common.loading}</p>
 			{:else}
@@ -368,6 +402,11 @@
 	.scan.grabbing {
 		cursor: grabbing;
 		user-select: none;
+	}
+	/* Over the lightbox the focus is drawn in the stage's own light, inside the pane's edge. */
+	.scan:focus-visible {
+		outline-color: var(--on-stage);
+		outline-offset: calc(-1 * var(--focus-width) - 2px);
 	}
 	/* How to zoom and move, over the lightbox above the zoom bar, until the reader has zoomed. */
 	.zoom-hint {

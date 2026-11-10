@@ -71,7 +71,7 @@
 		try {
 			await api.saveSettings($state.snapshot(app.settings));
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 
@@ -88,7 +88,7 @@
 			app.rules = await api.taskRules();
 			toast(m.settings.catalogUpdated(formatDay(app.catalog.updated)));
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 </script>
@@ -175,11 +175,15 @@
 								>{m.settings.getKey}</button
 							>
 						</div>
-						{#if status[p.id]}
-							<p class="small" class:ok={status[p.id].ok} class:err={!status[p.id].ok}>
-								{status[p.id].text}
-							</p>
-						{/if}
+						<!-- Mounted empty, so the result of a test is read out when it comes. -->
+						<p
+							class="small result"
+							role="status"
+							class:ok={status[p.id]?.ok}
+							class:err={status[p.id] && !status[p.id].ok}
+						>
+							{status[p.id]?.text ?? ''}
+						</p>
 					</div>
 				{/each}
 			</section>
@@ -353,6 +357,10 @@
 	}
 	.key p {
 		grid-column: 2;
+	}
+	/* No result yet: the row takes no room, and no gap above it. */
+	.result:empty {
+		margin-top: calc(-1 * var(--space-2));
 	}
 	.ok {
 		color: var(--ok);

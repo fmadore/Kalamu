@@ -81,15 +81,13 @@ impl Engine {
         setup_id: SetupId,
         source_id: SourceId,
     ) -> Result<Vec<PieceRef>, EngineError> {
-        let mut pieces: Vec<_> = self
+        Ok(self
             .store
-            .pieces(job_id)?
+            .source_pieces(job_id, setup_id, source_id)?
             .into_iter()
-            .filter(|p| p.setup_id == setup_id && p.source_id == source_id)
             .filter(|p| matches!(p.piece, PieceRef::Page { .. }))
-            .collect();
-        pieces.sort_by_key(|p| p.index);
-        Ok(pieces.into_iter().map(|p| p.piece).collect())
+            .map(|p| p.piece)
+            .collect())
     }
 
     /// The combined entries as the researcher left them, or none before the pages are combined.
@@ -103,10 +101,13 @@ impl Engine {
         if job.task != Task::Contents {
             return Err(UnitError::NotContents.into());
         }
-        let corrections = self.store.corrections(job_id)?;
-        let Some(merged) = self.store.pieces(job_id)?.into_iter().find(|p| {
-            p.setup_id == setup_id && p.source_id == source_id && p.piece == PieceRef::Whole
-        }) else {
+        let corrections = self.store.source_corrections(job_id, setup_id, source_id)?;
+        let Some(merged) = self
+            .store
+            .source_pieces(job_id, setup_id, source_id)?
+            .into_iter()
+            .find(|p| p.piece == PieceRef::Whole)
+        else {
             return Ok(None);
         };
         Ok(self
@@ -379,12 +380,13 @@ impl Engine {
 
     /// The unit's pages the researcher marked as reviewed in the table of contents.
     fn reviewed_pages(&self, unit: &DocumentUnit) -> Result<Vec<PieceRef>, EngineError> {
-        let corrections = self.store.corrections(unit.job_id)?;
+        let corrections =
+            self.store
+                .source_corrections(unit.job_id, unit.setup_id, unit.source_id)?;
         Ok(self
             .store
-            .pieces(unit.job_id)?
+            .source_pieces(unit.job_id, unit.setup_id, unit.source_id)?
             .into_iter()
-            .filter(|p| p.setup_id == unit.setup_id && p.source_id == unit.source_id)
             .filter(|p| p.status.is_finished())
             .filter(|p| kalamu_core::Correction::of(&corrections, p).is_some_and(|c| c.reviewed))
             .map(|p| p.piece)

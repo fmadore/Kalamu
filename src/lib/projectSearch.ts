@@ -102,8 +102,9 @@ export function hitWords(hit: Hit): { text: string; found: boolean }[] {
 	return out;
 }
 
-/** The last search of each project in this session, so that coming back from a review shows
- * it again. Kept in memory only. */
+/** The last search of each project in this session, with what it found, so that coming back to
+ * the search (Back from a match's review, say) shows it again without searching anew. Kept in
+ * memory only. */
 const last = new Map<string, { request: SearchRequest; view: SearchView | null }>();
 
 export function lastSearch(

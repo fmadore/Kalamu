@@ -410,6 +410,7 @@
 	@media (max-width: 760px) {
 		.side {
 			max-height: 38vh;
+			overflow-y: auto;
 			border-right: 0;
 			border-bottom: 1px solid var(--line);
 		}

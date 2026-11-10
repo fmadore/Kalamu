@@ -10,7 +10,9 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatDate, formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import {
+		DEFAULT_JOB_LIST_VIEW,
 		UNFINISHED,
+		readJobListView,
 		shownJobs,
 		sortJobs,
 		type JobSort,
@@ -19,14 +21,19 @@
 	import { focusName, RowRename } from '#lib/jobActions.svelte.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { app, go, refreshJobs, refreshProjects, toast } from '#lib/state.svelte.js';
+	import { keep, recall } from '#lib/stored.js';
 	import { api, ask } from '#lib/tauri.js';
 
 	const m = messages();
 
+	// The filters and sort as the page was left, remembered on this computer.
+	const VIEW_KEY = 'kalamu.jobs.view';
+	const left = recall(VIEW_KEY, readJobListView, DEFAULT_JOB_LIST_VIEW);
 	let query = $state('');
-	let task = $state<Task | ''>('');
-	let status = $state<StatusFilter>('');
-	let sort = $state<JobSort>('newest');
+	let task = $state<Task | ''>(left.task);
+	let status = $state<StatusFilter>(left.status);
+	let sort = $state<JobSort>(left.sort);
+	$effect(() => keep(VIEW_KEY, { task, status, sort }));
 	const selection = new Selection();
 	let target = $state('');
 
@@ -41,18 +48,32 @@
 			.catch(() => undefined);
 	});
 
+	// The choices of the filters: only the tasks and states some job has.
+	const tasks = $derived([...new Set(app.jobs.map((j) => j.task))]);
+	const states = $derived([...new Set(app.jobs.map((j) => j.status))]);
+	const anyWaiting = $derived(app.jobs.some((j) => app.waiting[j.id]));
+	// A filter no job answers any longer, kept from an earlier visit, stops filtering.
+	const taskShown = $derived(task && tasks.includes(task) ? task : '');
+	const statusShown = $derived(
+		status === 'waiting'
+			? anyWaiting
+				? status
+				: ''
+			: status && states.includes(status)
+				? status
+				: ''
+	);
+
 	const shown = $derived(
-		sortJobs(shownJobs(app.jobs, { query, task, status }, sources, app.waiting), sort)
+		sortJobs(
+			shownJobs(app.jobs, { query, task: taskShown, status: statusShown }, sources, app.waiting),
+			sort
+		)
 	);
 	const chosen = $derived(selection.of(shown, (j) => j.id));
 	const allChosen = $derived(shown.length > 0 && chosen.length === shown.length);
 	const anyRunning = $derived(chosen.some((j) => j.status === 'running'));
 	const projects = $derived(app.projects.filter((p) => !p.project.archived));
-
-	// The choices of the filters: only the tasks and states some job has.
-	const tasks = $derived([...new Set(app.jobs.map((j) => j.task))]);
-	const states = $derived([...new Set(app.jobs.map((j) => j.status))]);
-	const anyWaiting = $derived(app.jobs.some((j) => app.waiting[j.id]));
 
 	/** The job whose menu is open, and where. */
 	let menu = $state<{ job: JobSummary; x: number; y: number } | null>(null);
@@ -84,7 +105,7 @@
 			selection.clear();
 			await refreshProjects();
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 
@@ -95,7 +116,7 @@
 		try {
 			for (const id of ids) await api.deleteJob(id);
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 		selection.clear();
 		await refreshJobs();
@@ -139,17 +160,21 @@
 				<input
 					type="text"
 					bind:value={query}
+					data-find
 					placeholder={m.allJobs.search}
 					aria-label={m.allJobs.search}
 				/>
 			</label>
-			<select bind:value={task} aria-label={m.allJobs.columnTask}>
+			<select bind:value={() => taskShown, (v) => (task = v)} aria-label={m.allJobs.columnTask}>
 				<option value="">{m.allJobs.anyTask}</option>
 				{#each tasks as t (t)}
 					<option value={t}>{m.task[t]}</option>
 				{/each}
 			</select>
-			<select bind:value={status} aria-label={m.allJobs.columnStatus}>
+			<select
+				bind:value={() => statusShown, (v) => (status = v)}
+				aria-label={m.allJobs.columnStatus}
+			>
 				<option value="">{m.allJobs.anyStatus}</option>
 				{#if anyWaiting}<option value="waiting">{m.shell.toCheck}</option>{/if}
 				{#each states as s (s)}

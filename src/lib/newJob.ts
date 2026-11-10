@@ -19,6 +19,7 @@ import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { Task } from './bindings/Task.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Messages } from './i18n/index.js';
+import type { FromProject } from './state.svelte.js';
 import { baseName, pathParts } from './paths.js';
 import { YOUTUBE_LINK } from './youtube.js';
 
@@ -522,4 +523,64 @@ export function draftsOf(p: Pipeline): Draft[] {
 		mergeProvider: s.merge?.provider ?? s.provider,
 		mergeModel: s.merge?.model ?? s.model
 	}));
+}
+
+/**
+ * The New job form as the researcher left it: kept while they step away (to Settings for a
+ * key, say) and given back when they come back to New job with nothing new to start from.
+ */
+export interface NewJobForm {
+	mode: Mode;
+	files: InspectedFile[];
+	/** The files were text frozen from earlier results, not files to read. */
+	frozen: boolean;
+	/** The project the form was opened from, which the job joins. */
+	project: FromProject | undefined;
+	languageMode: 'auto' | 'explicit';
+	languages: string[];
+	lineBreaks: LineBreaks;
+	pace: Pace;
+	drafts: Draft[];
+	sample: boolean;
+	samplePages: number;
+	together: Together;
+	togetherPages: number;
+	formats: ExportFormat[];
+	destination: OutputDestination;
+	name: string;
+	suggested: string;
+	thenPreset: string | null;
+	thenCheck: boolean;
+}
+
+let keptForm: NewJobForm | null = null;
+
+/** Keeps the form as it stands, for the next time New job opens. */
+export function keepForm(form: NewJobForm): void {
+	keptForm = form;
+}
+
+/** Forgets the form kept: the job was started, or the researcher asked for a blank one. */
+export function forgetForm(): void {
+	keptForm = null;
+}
+
+/**
+ * The form to open with: the one kept when New job opens plainly, none when it opens on
+ * something to start from (a task, files, results or a project), which also forgets the one
+ * kept so it cannot come back over the new start.
+ */
+export function formToOpen(opening: {
+	task?: Task;
+	paths?: string[];
+	sources?: unknown[];
+	project?: FromProject;
+}): NewJobForm | null {
+	const fresh =
+		opening.task !== undefined ||
+		opening.paths !== undefined ||
+		opening.sources !== undefined ||
+		opening.project !== undefined;
+	if (fresh) keptForm = null;
+	return keptForm;
 }

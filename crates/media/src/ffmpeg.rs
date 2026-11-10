@@ -5,12 +5,26 @@
 //! tools"); FFmpeg is never linked into the app. Development builds also accept one on `PATH`.
 
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Command;
+use std::time::Duration;
 
+use kalamu_core::StopSignal;
 use serde::Deserialize;
 
 use crate::MediaError;
 pub use crate::audio_format::AudioFormat;
+use crate::program::{self, Ended, Finished};
+
+/// How long FFmpeg may go without writing anything before it is taken to be stuck, as it is
+/// when reading from a network share or a disk that went away.
+///
+/// A silence, not a cap on the whole run: decoding a recording of ten hours to find its pauses
+/// is legitimate and may take minutes on a slow computer, so no length of run can be called too
+/// long. What FFmpeg does not do while it works is stay silent: with `-progress` it reports
+/// twice a second while it decodes, and a piece it writes arrives on its output as it goes. Two
+/// minutes leave room for a drive waking up or a share slow to answer; ffprobe, which writes
+/// only when done, reads no more than a file's headers in that time.
+const SILENCE: Duration = Duration::from_secs(120);
 
 /// Where the two programs are, once found.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -61,10 +75,10 @@ impl Ffmpeg {
         if !ffmpeg.is_file() || !ffprobe.is_file() {
             return None;
         }
-        let encoders = quiet(Command::new(&ffmpeg).args(["-hide_banner", "-encoders"]))
-            .stdin(Stdio::null())
-            .output()
-            .ok()?;
+        let mut command = Command::new(&ffmpeg);
+        command.args(["-hide_banner", "-encoders"]);
+        quiet(&mut command);
+        let encoders = program::run(command, &StopSignal::default(), SILENCE).ok()?;
         let opus = String::from_utf8_lossy(&encoders.stdout).contains("libopus");
         Some(Self {
             ffmpeg,
@@ -73,11 +87,13 @@ impl Ffmpeg {
         })
     }
 
-    fn run(&self, program: &Path, args: &[&str]) -> Result<std::process::Output, MediaError> {
-        quiet(Command::new(program).args(args))
-            .stdin(Stdio::null())
-            .output()
-            .map_err(|e| MediaError::Tool(format!("could not start {}: {e}", program.display())))
+    /// Runs one of the two programs to its end, unless `stop` is raised ([`MediaError::Stopped`])
+    /// or it goes silent for [`SILENCE`].
+    fn run(&self, tool: &Path, args: &[&str], stop: &StopSignal) -> Result<Finished, MediaError> {
+        let mut command = Command::new(tool);
+        command.args(args);
+        quiet(&mut command);
+        program::run(command, stop, SILENCE).map_err(|ended| ended_error(tool, ended))
     }
 
     /// Length and streams of an audio or video file.
@@ -94,6 +110,7 @@ impl Ffmpeg {
                 "-show_streams",
                 &path_text,
             ],
+            &StopSignal::default(),
         )?;
         if !output.status.success() {
             return Err(MediaError::Tool(last_line(&output.stderr)));
@@ -103,12 +120,24 @@ impl Ffmpeg {
 
     /// Silences and loudness over the whole recording, in one decoding pass.
     pub fn analyse(&self, path: &Path) -> Result<Analysis, MediaError> {
+        self.analyse_with_stop(path, &StopSignal::default())
+    }
+
+    /// [`Self::analyse`], ended as soon as `stop` is raised: a pass over a recording of several
+    /// hours must not hold up a pause.
+    pub fn analyse_with_stop(
+        &self,
+        path: &Path,
+        stop: &StopSignal,
+    ) -> Result<Analysis, MediaError> {
         let path_text = path.to_string_lossy();
         let output = self.run(
             &self.ffmpeg,
             &[
                 "-hide_banner",
                 "-nostats",
+                "-progress",
+                PROGRESS,
                 "-i",
                 &path_text,
                 "-map",
@@ -120,6 +149,7 @@ impl Ffmpeg {
                 "null",
                 "-",
             ],
+            stop,
         )?;
         if !output.status.success() {
             return Err(MediaError::Tool(last_line(&output.stderr)));
@@ -144,6 +174,8 @@ impl Ffmpeg {
                 &[
                     "-hide_banner",
                     "-nostats",
+                    "-progress",
+                    PROGRESS,
                     "-ss",
                     &start,
                     "-t",
@@ -159,6 +191,7 @@ impl Ffmpeg {
                     "null",
                     "-",
                 ],
+                &StopSignal::default(),
             )?;
             if let Some(mean) = parse_analysis(&String::from_utf8_lossy(&output.stderr)).mean_db {
                 means.push(mean);
@@ -180,7 +213,22 @@ impl Ffmpeg {
         format: AudioFormat,
         even_out: bool,
     ) -> Result<Vec<u8>, MediaError> {
-        self.extract_with(path, start_ms, end_ms, &format.encoder_args(), even_out)
+        let stop = StopSignal::default();
+        self.extract_with_stop(path, start_ms, end_ms, format, even_out, &stop)
+    }
+
+    /// [`Self::extract`], ended as soon as `stop` is raised.
+    pub fn extract_with_stop(
+        &self,
+        path: &Path,
+        start_ms: u64,
+        end_ms: u64,
+        format: AudioFormat,
+        even_out: bool,
+        stop: &StopSignal,
+    ) -> Result<Vec<u8>, MediaError> {
+        let encoder = format.encoder_args();
+        self.extract_with(path, (start_ms, end_ms), &encoder, even_out, stop)
     }
 
     /// The span `[start_ms, end_ms)` to listen to in the review view: like [`Self::extract`],
@@ -193,16 +241,23 @@ impl Ffmpeg {
         end_ms: u64,
         format: AudioFormat,
     ) -> Result<Vec<u8>, MediaError> {
-        self.extract_with(path, start_ms, end_ms, &format.listening_args(), false)
+        let stop = StopSignal::default();
+        self.extract_with(
+            path,
+            (start_ms, end_ms),
+            &format.listening_args(),
+            false,
+            &stop,
+        )
     }
 
     fn extract_with(
         &self,
         path: &Path,
-        start_ms: u64,
-        end_ms: u64,
+        (start_ms, end_ms): (u64, u64),
         encoder_args: &[&str],
         even_out: bool,
+        stop: &StopSignal,
     ) -> Result<Vec<u8>, MediaError> {
         let path_text = path.to_string_lossy();
         let (start, length) = (seconds(start_ms), seconds(end_ms.saturating_sub(start_ms)));
@@ -212,6 +267,8 @@ impl Ffmpeg {
             "-nostats",
             "-v",
             "error",
+            "-progress",
+            PROGRESS,
             "-ss",
             &start,
             "-t",
@@ -234,7 +291,7 @@ impl Ffmpeg {
         }
         args.extend(encoder_args);
         args.push("pipe:1");
-        let output = self.run(&self.ffmpeg, &args)?;
+        let output = self.run(&self.ffmpeg, &args, stop)?;
         if !output.status.success() || output.stdout.is_empty() {
             return Err(MediaError::Tool(last_line(&output.stderr)));
         }
@@ -259,20 +316,53 @@ impl Ffmpeg {
     }
 }
 
+/// Where FFmpeg reports its progress: its error output, read with its log, so the watchdog
+/// hears it however quiet the log is set. The reports are `key=value` lines, which
+/// [`last_line`] passes over and the log's readers do not match.
+const PROGRESS: &str = "pipe:2";
+
 const SILENCE_AND_VOLUME: &str = "silencedetect=noise=-35dB:duration=0.5,volumedetect";
+
+/// A run that gave no result, as the researcher reads it.
+fn ended_error(tool: &Path, ended: Ended) -> MediaError {
+    match ended {
+        Ended::NotStarted(e) => {
+            MediaError::Tool(format!("could not start {}: {e}", tool.display()))
+        }
+        Ended::Stopped => MediaError::Stopped,
+        Ended::Silent(after) => MediaError::Tool(format!(
+            "it made no progress for {} minutes and was stopped. If the file is on a network or \
+             external drive, check that it is still connected",
+            after.as_secs() / 60
+        )),
+        Ended::Lost(e) => MediaError::Tool(format!("it stopped responding: {e}")),
+    }
+}
 
 fn seconds(ms: u64) -> String {
     format!("{}.{:03}", ms / 1000, ms % 1000)
 }
 
+/// The last line of FFmpeg's log that is not a progress report.
 fn last_line(stderr: &[u8]) -> String {
     String::from_utf8_lossy(stderr)
         .lines()
         .rev()
-        .find(|l| !l.trim().is_empty())
+        .find(|l| !l.trim().is_empty() && !is_progress(l.trim()))
         .unwrap_or("FFmpeg failed")
         .trim()
         .to_owned()
+}
+
+/// A line of `-progress`'s report: `out_time_us=2995374`, `progress=continue`.
+fn is_progress(line: &str) -> bool {
+    line.split_once('=').is_some_and(|(key, value)| {
+        !key.is_empty()
+            && key
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
+            && !value.contains(char::is_whitespace)
+    })
 }
 
 /// What ffprobe says about a file.
@@ -480,6 +570,50 @@ mod tests {
                 .unwrap();
             assert!(ogg.starts_with(b"OggS"));
         }
+    }
+
+    #[test]
+    fn an_error_is_read_past_the_progress_reports() {
+        let log = b"[in#0 @ 0x1] Error opening input: No such file or directory\n\
+                    out_time_us=0\nspeed=N/A\nprogress=end\n";
+        assert_eq!(
+            last_line(log),
+            "[in#0 @ 0x1] Error opening input: No such file or directory"
+        );
+        assert!(!is_progress(
+            "size=N/A time=00:00:02.99 bitrate=N/A speed= 317x"
+        ));
+    }
+
+    /// With a real FFmpeg: a run asked to stop ends as stopped, not as failed, and writes
+    /// nothing.
+    #[test]
+    fn a_stopped_run_is_not_a_failure() {
+        let Some(ffmpeg) = Ffmpeg::locate(&[]) else {
+            eprintln!("no FFmpeg found; skipped");
+            return;
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let wav = dir.path().join("tone.wav");
+        let mut command = Command::new(&ffmpeg.ffmpeg);
+        command
+            .args(["-hide_banner", "-v", "error", "-f", "lavfi", "-i"])
+            .arg("sine=d=600")
+            .arg(&wav);
+        assert!(quiet(&mut command).status().unwrap().success());
+        let stop = StopSignal::default();
+        stop.stop();
+        assert!(matches!(
+            ffmpeg.analyse_with_stop(&wav, &stop),
+            Err(MediaError::Stopped)
+        ));
+        assert!(matches!(
+            ffmpeg.extract_with_stop(&wav, 0, 600_000, AudioFormat::Wav, false, &stop),
+            Err(MediaError::Stopped)
+        ));
+        // Unstopped, the progress reports are not taken for the log.
+        let analysis = ffmpeg.analyse(&wav).unwrap();
+        assert!(analysis.mean_db.is_some(), "{analysis:?}");
     }
 
     #[test]

@@ -8,11 +8,13 @@
 //! a correction made afterwards never changes what an earlier analysis read; it only marks it
 //! as out of date.
 
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::path::Path;
 
 use kalamu_core::snapshot::{PartText, build};
 use kalamu_core::{
-    DerivedFrom, InputKind, JobId, PieceStatus, SetupId, Snapshot, SourceFile, SourceId, Task,
+    DerivedFrom, InputKind, Job, JobId, PieceStatus, SetupId, Snapshot, SourceFile, SourceId, Task,
     Timestamp,
 };
 use serde::{Deserialize, Serialize};
@@ -47,15 +49,14 @@ impl Engine {
     /// pieces not read (numbered from 1), failed or still to do.
     fn frozen_text(
         &self,
-        job_id: JobId,
+        job: &Job,
         setup_id: SetupId,
         source_id: SourceId,
     ) -> Result<(String, Vec<kalamu_core::SnapshotPart>, Vec<u32>, Task), EngineError> {
-        let job = self.store.job(job_id)?;
         if !job.task.yields_text() {
             return Err(EngineError::NotText);
         }
-        let doc = self.export_document(&job, setup_id, source_id)?;
+        let doc = self.export_document(job, setup_id, source_id)?;
         let texts: Vec<PartText<'_>> = doc
             .parts
             .iter()
@@ -70,9 +71,8 @@ impl Engine {
         let (text, parts) = build(&texts);
         let missing = self
             .store
-            .pieces(job_id)?
+            .source_pieces(job.id, setup_id, source_id)?
             .iter()
-            .filter(|p| p.setup_id == setup_id && p.source_id == source_id)
             .filter(|p| !p.status.is_finished() || p.status == PieceStatus::Failed)
             .map(|p| p.index + 1)
             .collect();
@@ -109,7 +109,7 @@ impl Engine {
             .iter()
             .filter(|s| only.is_none_or(|id| s.id == id))
         {
-            let (text, parts, missing, task) = self.frozen_text(job_id, setup_id, source.id)?;
+            let (text, parts, missing, task) = self.frozen_text(&job, setup_id, source.id)?;
             if parts.is_empty() || text.trim().is_empty() {
                 continue;
             }
@@ -204,6 +204,8 @@ impl Engine {
     pub fn derived_states(&self, job_id: JobId) -> Result<Vec<DerivedState>, EngineError> {
         let job = self.store.job(job_id)?;
         let mut out = Vec::new();
+        // The jobs read from, each read once however many of this job's sources it gave.
+        let mut upstream: HashMap<JobId, Option<Job>> = HashMap::new();
         for source in &job.sources {
             let Some(from) = &source.derived_from else {
                 continue;
@@ -224,7 +226,19 @@ impl Engine {
                 });
                 continue;
             }
-            let freshness = match self.frozen_text(from.job_id, from.setup_id, from.source_id) {
+            let read_from = match upstream.entry(from.job_id) {
+                Entry::Occupied(entry) => entry.into_mut(),
+                Entry::Vacant(entry) => entry.insert(match self.store.job(from.job_id) {
+                    Ok(job) => Some(job),
+                    Err(kalamu_core::StoreError::NotFound) => None,
+                    Err(e) => return Err(e.into()),
+                }),
+            };
+            let frozen = match read_from {
+                Some(read_from) => self.frozen_text(read_from, from.setup_id, from.source_id),
+                None => Err(EngineError::Store(kalamu_core::StoreError::NotFound)),
+            };
+            let freshness = match frozen {
                 Ok((text, ..)) => {
                     if kalamu_core::fingerprint::sha256_hex(text.as_bytes()) == source.sha256 {
                         Freshness::Current

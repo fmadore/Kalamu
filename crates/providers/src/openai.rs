@@ -129,16 +129,17 @@ impl OpenAi {
             reason,
             usage: Self::usage(response).reported(),
         };
-        let mut truncated = false;
-        if response.get("status").and_then(Value::as_str) == Some("incomplete") {
-            let reason = response
-                .pointer("/incomplete_details/reason")
-                .and_then(Value::as_str)
-                .unwrap_or("unknown");
-            truncated = reason == "max_output_tokens";
-            if reason == "content_filter" {
-                return Err(blocked("OpenAI's content filter stopped this page".into()));
-            }
+        // At the output limit or for any other reason, an incomplete answer keeps what was
+        // written, marked as cut off.
+        let incomplete = (response.get("status").and_then(Value::as_str) == Some("incomplete"))
+            .then(|| {
+                response
+                    .pointer("/incomplete_details/reason")
+                    .and_then(Value::as_str)
+                    .unwrap_or("unknown")
+            });
+        if incomplete == Some("content_filter") {
+            return Err(blocked("OpenAI's content filter stopped this page".into()));
         }
         let mut text = String::new();
         let mut refusal = None;
@@ -172,9 +173,13 @@ impl OpenAi {
             }
         }
         if text.is_empty() {
-            return Err(match refusal {
-                Some(r) => blocked(r),
-                None => ProviderError::Other("OpenAI returned no text".into()),
+            return Err(match (refusal, incomplete) {
+                (Some(r), _) => blocked(r),
+                (None, Some(reason)) => blocked(format!(
+                    "OpenAI stopped before writing any text ({reason}); try again, or choose \
+                     another model"
+                )),
+                (None, None) => ProviderError::Other("OpenAI returned no text".into()),
             });
         }
         Ok(ProcessOutput {
@@ -188,22 +193,13 @@ impl OpenAi {
                 .map(str::to_string),
             fields: Vec::new(),
             regions: Vec::new(),
-            truncated,
+            truncated: incomplete.is_some(),
         })
     }
 
     /// A response as the task reads it: an analysis's answer is checked against its fields.
     fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
-        let output = Self::parse_extraction(response)?;
-        match (context.task, context.analysis) {
-            (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
-                analysis::finish(output, fields)
-            }
-            (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
-                ProviderError::InvalidRequest("an analysis needs fields".into()),
-            ),
-            _ => Ok(output),
-        }
+        analysis::read(context, Self::parse_extraction(response)?)
     }
 
     async fn transcribe(

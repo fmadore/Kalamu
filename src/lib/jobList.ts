@@ -86,3 +86,50 @@ export function sortJobs(jobs: JobSummary[], by: JobSort): JobSummary[] {
 			return sorted.sort((a, b) => name(a, b) || b.created_at - a.created_at);
 	}
 }
+
+/** How the Jobs page was left: its filters and sort, remembered on this computer. The words
+ *  typed are not kept. */
+export interface JobListView {
+	task: Task | '';
+	status: StatusFilter;
+	sort: JobSort;
+}
+
+export const DEFAULT_JOB_LIST_VIEW: JobListView = { task: '', status: '', sort: 'newest' };
+
+// Every task, state and order, keyed by the types generated from Rust, so a value added there
+// fails the type check until it is read back here.
+const TASKS: Record<Task, true> = {
+	text_extraction: true,
+	audio_transcription: true,
+	analysis: true,
+	contents: true,
+	text_correction: true
+};
+const STATES: Record<JobStatus, true> = {
+	pending: true,
+	running: true,
+	paused: true,
+	interrupted: true,
+	completed: true,
+	completed_with_errors: true,
+	cancelled: true
+};
+const SORTS: Record<JobSort, true> = { newest: true, oldest: true, name: true };
+
+/** Whether `v` is one of the keys of `map`. */
+export function oneOf<K extends string>(map: Record<K, true>, v: unknown): v is K {
+	return typeof v === 'string' && Object.hasOwn(map, v);
+}
+
+/** The Jobs page's view as kept, each value that is not one of today's set back to its
+ *  default; `null` for anything that is no kept view. */
+export function readJobListView(stored: unknown): JobListView | null {
+	if (typeof stored !== 'object' || stored === null) return null;
+	const { task, status, sort } = stored as Record<string, unknown>;
+	return {
+		task: oneOf(TASKS, task) ? task : '',
+		status: status === 'waiting' || oneOf(STATES, status) ? status : '',
+		sort: oneOf(SORTS, sort) ? sort : DEFAULT_JOB_LIST_VIEW.sort
+	};
+}

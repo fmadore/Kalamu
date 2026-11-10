@@ -89,7 +89,7 @@ impl Engine {
         // Settled when the job was created; worked out again only for a job made before.
         let cap = setup
             .pages_cap
-            .unwrap_or_else(|| pages_cap(&self.catalog(), setup));
+            .unwrap_or_else(|| pages_cap(&self.current_catalog(), setup));
         let pages = source.page_count.unwrap_or(1);
         asked.asked(pages).min(cap).min(pages).max(1)
     }
@@ -195,7 +195,7 @@ impl Engine {
                 .map_err(|e| EngineError::Output(e.to_string()))?
         };
         let limit = self
-            .catalog()
+            .current_catalog()
             .model(&setup.provider, &setup.model)
             .and_then(|m| m.limits.max_request_mb)
             .map(|mb| mb as usize * 1024 * 1024);

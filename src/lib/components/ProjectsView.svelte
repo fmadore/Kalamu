@@ -3,6 +3,7 @@
 	import DocumentView from './DocumentView.svelte';
 	import ProjectList from './ProjectList.svelte';
 	import ProjectWorkspace from './ProjectWorkspace.svelte';
+	import type { ProjectPane } from '#lib/state.svelte.js';
 
 	let {
 		projectId,
@@ -14,7 +15,7 @@
 		projectId?: string;
 		collectionId?: string;
 		documentId?: string;
-		pane?: 'queue';
+		pane?: ProjectPane;
 		selection?: string[];
 	} = $props();
 </script>

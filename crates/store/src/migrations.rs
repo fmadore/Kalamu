@@ -98,4 +98,18 @@ ALTER TABLE documents ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
     dictionary::PROPOSALS,
     units::MIGRATION,
     projects::DESCRIPTIONS,
+    // Lookups by job (a job deleted, a job's documents) and by document (its collections),
+    // which the tables' keys, led by another column, do not serve.
+    r#"
+CREATE INDEX IF NOT EXISTS document_links_by_job ON document_links(job_id, source_id);
+CREATE INDEX IF NOT EXISTS preferred_results_by_job ON preferred_results(job_id);
+CREATE INDEX IF NOT EXISTS collection_documents_by_document
+    ON collection_documents(document_id);
+"#,
+    // A result's cost and whether it was cut off, which the job list and a job's cost add up:
+    // in the table they come after the answer itself, so reading them walked through every
+    // answer's pages. The index holds them alone.
+    r#"
+CREATE INDEX IF NOT EXISTS results_costs ON results(cache_key, cost_usd, truncated);
+"#,
 ];

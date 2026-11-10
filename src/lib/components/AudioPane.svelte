@@ -8,8 +8,10 @@
 	import TranscriptLines from './TranscriptLines.svelte';
 	import type { PieceAudio } from '#lib/bindings/PieceAudio.js';
 	import type { Segment } from '#lib/bindings/Segment.js';
+	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { clock, sounding } from '#lib/pieces.js';
+	import { toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -106,11 +108,19 @@
 		}
 	}
 
+	/** Plays; a play cut short by the next piece's recording (or a pause) is no failure. */
+	function play() {
+		player?.play().catch((e: unknown) => {
+			if (!(e instanceof DOMException && e.name === 'AbortError'))
+				toast(describeError(e, m), { kind: 'error' });
+		});
+	}
+
 	function playFrom(ms: number) {
 		cued = null;
 		if (!player) return;
 		player.currentTime = start + ms / 1000;
-		void player.play();
+		play();
 	}
 
 	const jump = (segment: Segment) => playFrom(Number(segment.start_ms));
@@ -119,7 +129,7 @@
 		if (!player) return;
 		if (!player.paused) return player.pause();
 		if (end > 0 && player.currentTime >= end) player.currentTime = start;
-		void player.play();
+		play();
 	}
 
 	const playing = (s: Segment) => sounding(s, now);

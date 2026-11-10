@@ -2,8 +2,9 @@
 	import Dialog from './Dialog.svelte';
 	import { messages } from '#lib/i18n/index.js';
 	import { osNames } from '#lib/platform.js';
+	import { describeError } from '#lib/errors.js';
 	import { api, notify } from '#lib/tauri.js';
-	import { app } from '#lib/state.svelte.js';
+	import { app, toast } from '#lib/state.svelte.js';
 
 	const m = messages();
 	let quitting = $state(false);
@@ -15,14 +16,25 @@
 		)
 	);
 
+	/** Quits, waiting for the pieces sent; if the app cannot, the question is asked again. */
 	async function quit() {
 		quitting = true;
-		await api.quitApp();
+		await quitNow();
 	}
 
 	/** Asked again while it waits, the app quits at once. */
 	async function quitNow() {
-		await api.quitApp();
+		try {
+			await api.quitApp();
+		} catch (e) {
+			quitting = false;
+			toast(describeError(e, m), { kind: 'error' });
+		}
+	}
+
+	/** Escape answers "Stay", unless quitting is already under way. */
+	function stay() {
+		if (!quitting) app.closeRequested = false;
 	}
 
 	async function background() {
@@ -32,7 +44,7 @@
 	}
 </script>
 
-<Dialog labelledby="close-title" describedby="close-body" alert>
+<Dialog labelledby="close-title" describedby="close-body" alert onescape={stay}>
 	<h2 id="close-title">{m.close.title}</h2>
 	<p id="close-body" aria-live="polite">
 		{quitting && inFlight > 0 ? m.close.waiting(inFlight) : m.close.body(osNames().tray)}
@@ -41,7 +53,7 @@
 		{#if quitting}
 			<button class="btn" onclick={quitNow}>{m.close.quitNow}</button>
 		{:else}
-			<button class="btn" onclick={() => (app.closeRequested = false)}>{m.close.stay}</button>
+			<button class="btn" onclick={stay}>{m.close.stay}</button>
 			<button class="btn" onclick={quit}>{m.close.quit}</button>
 			<button class="btn primary" onclick={background}>{m.close.background}</button>
 		{/if}

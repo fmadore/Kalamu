@@ -31,7 +31,7 @@
 	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { searchable } from '#lib/search.js';
-	import type { ReviewFind } from '#lib/state.svelte.js';
+	import { guardDraft, type ReviewFind } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
@@ -54,6 +54,8 @@
 	let page = $state(0);
 	/** The entries being corrected, one draft each. */
 	let editing = $state<Draft[] | null>(null);
+	/** The entries as the correction opened on them, to tell whether they changed. */
+	let editingFrom = '';
 	/** The items made from the entries shown instead of the entries. */
 	let itemsShown = $state(false);
 
@@ -168,6 +170,11 @@
 		void tick().then(() => list?.children[at]?.scrollIntoView({ block: 'start' }));
 	});
 
+	function startEditing() {
+		editing = entries.map((e) => toDraft(fields, e));
+		editingFrom = JSON.stringify(editing);
+	}
+
 	function addEntry() {
 		const draft = toDraft(fields, []);
 		draft[PAGES] = String(pageNumber);
@@ -187,6 +194,10 @@
 			searching = true;
 			query = opening.query;
 		}
+		return guardDraft({
+			dirty: () => editing !== null && JSON.stringify(editing) !== editingFrom,
+			discard: () => (editing = null)
+		});
 	});
 </script>
 
@@ -196,7 +207,7 @@
 			>{m.units.tab}</button
 		>
 		{#if !itemsShown}
-			<button class="btn" onclick={() => (editing = entries.map((e) => toDraft(fields, e)))}
+			<button class="btn" onclick={startEditing}
 				><Icon name="edit" size={14} />{m.review.editEntries}</button
 			>
 		{/if}
@@ -267,6 +278,7 @@
 
 <ReviewFrame
 	{jobId}
+	{sourceId}
 	jobName={review.job?.name ?? null}
 	fileName={review.source?.file_name ?? ''}
 	error={review.error}
@@ -369,7 +381,7 @@
 	/* A view that is on reads as pressed in, not as an action. */
 	.toggle[aria-pressed='true'] {
 		background: var(--wash);
-		border-color: var(--line-strong);
+		border-color: var(--control-line-hover);
 	}
 	/* The entries as a numbered table of contents, set in the reading face. */
 	.entries {

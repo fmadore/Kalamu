@@ -1,0 +1,19 @@
+{
+  "id": "resp_fixture",
+  "object": "response",
+  "status": "incomplete",
+  "incomplete_details": { "reason": "interrupted" },
+  "model": "gpt-6-luna",
+  "output": [
+    { "type": "reasoning", "id": "rs_fixture", "summary": [] },
+    {
+      "type": "message",
+      "id": "msg_fixture",
+      "role": "assistant",
+      "content": [
+        { "type": "output_text", "text": "RÉPUBLIQUE DU NIGER\nFraternité", "annotations": [] }
+      ]
+    }
+  ],
+  "usage": { "input_tokens": 1500, "output_tokens": 9, "total_tokens": 1509 }
+}

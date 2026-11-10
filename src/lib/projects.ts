@@ -45,6 +45,26 @@ export function sortDocuments(rows: DocumentRow[], by: DocumentSort): DocumentRo
 	}
 }
 
+/** How a project's table was left: its sort and the tag filtered on, remembered on this
+ *  computer. */
+export interface DocumentTableView {
+	sort: DocumentSort;
+	tag: string;
+}
+
+const SORTS: DocumentSort[] = ['title', 'added', 'run'];
+
+/** The table's view as kept, a sort that is not one of today's back to the title; `null` for
+ *  anything that is no kept view. Whether the tag is still carried is the table's to check. */
+export function readDocumentTableView(stored: unknown): DocumentTableView | null {
+	if (typeof stored !== 'object' || stored === null) return null;
+	const { sort, tag } = stored as Record<string, unknown>;
+	return {
+		sort: SORTS.find((s) => s === sort) ?? 'title',
+		tag: typeof tag === 'string' ? tag : ''
+	};
+}
+
 /** The task New job opens on for a selection: transcription when every document is a
  *  recording, otherwise text extraction (the researcher can change it there). */
 export function taskFor(rows: DocumentRow[]): Task {

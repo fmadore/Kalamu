@@ -291,6 +291,9 @@ pub trait ProjectStore: Send + Sync {
         source: SourceId,
     ) -> Result<(), StoreError>;
     fn links(&self, project: ProjectId) -> Result<Vec<DocumentLink>, StoreError>;
+    /// The links to one source of one job, in every project, oldest first: what each export
+    /// of that source names, found without reading every project's links.
+    fn links_of(&self, job: JobId, source: SourceId) -> Result<Vec<DocumentLink>, StoreError>;
 
     /// Sets, or with `None` clears, the preferred result of a task for a document.
     fn set_preferred(

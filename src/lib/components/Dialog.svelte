@@ -1,8 +1,10 @@
 <script lang="ts">
 	// A dialog over a dimmed window: the screen behind it waits until it is answered. Focus moves
 	// into it as it opens, Tab and Shift+Tab stay inside it, and focus goes back to what opened it
-	// once it closes. Escape does what `onescape` says, when it is given.
+	// once it closes. Escape does what `onescape` says, when it is given. Everything else in the
+	// window is inert while it is open, and the window's shortcuts wait.
 	import type { Snippet } from 'svelte';
+	import { holdShortcuts } from '#lib/state.svelte.js';
 
 	let {
 		labelledby,
@@ -34,9 +36,25 @@
 		);
 	}
 
+	/** Makes everything in the window but the dialog inert: every sibling of the dialog and of
+	 * each of its ancestors. Returns what gives it back. */
+	function inertAround(box: HTMLElement): () => void {
+		const made: Element[] = [];
+		for (let el: Element | null = box; el && el !== document.body; el = el.parentElement) {
+			for (const sibling of el.parentElement?.children ?? []) {
+				if (sibling === el || sibling.hasAttribute('inert')) continue;
+				sibling.setAttribute('inert', '');
+				made.push(sibling);
+			}
+		}
+		return () => made.forEach((el) => el.removeAttribute('inert'));
+	}
+
 	/** Takes focus in, keeps Tab inside, and gives focus back to the opener on closing. */
 	function trap(box: HTMLElement) {
 		const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		const release = holdShortcuts();
+		const revive = inertAround(box);
 		(focusable(box)[0] ?? box).focus();
 		function keys(e: KeyboardEvent) {
 			if (e.key !== 'Tab') return;
@@ -59,6 +77,8 @@
 		box.addEventListener('keydown', keys);
 		return () => {
 			box.removeEventListener('keydown', keys);
+			revive();
+			release();
 			if (opener?.isConnected) opener.focus();
 		};
 	}
@@ -74,7 +94,7 @@
 	<div
 		class="dialog {size}"
 		role={alert ? 'alertdialog' : 'dialog'}
-		aria-modal={alert ? undefined : 'true'}
+		aria-modal="true"
 		aria-labelledby={labelledby}
 		aria-describedby={describedby}
 		tabindex="-1"

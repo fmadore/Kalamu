@@ -204,16 +204,7 @@ impl Anthropic {
 
     /// A message as the task reads it: an analysis's answer is checked against its fields.
     fn read(context: BatchContext<'_>, response: &Value) -> Result<ProcessOutput, ProviderError> {
-        let output = Self::parse(response)?;
-        match (context.task, context.analysis) {
-            (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
-                analysis::finish(output, fields)
-            }
-            (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
-                ProviderError::InvalidRequest("an analysis needs fields".into()),
-            ),
-            _ => Ok(output),
-        }
+        analysis::read(context, Self::parse(response)?)
     }
 
     fn authorised(&self, request: RequestBuilder, key: &ApiKey) -> RequestBuilder {

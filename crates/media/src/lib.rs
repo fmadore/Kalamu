@@ -12,6 +12,7 @@ mod checks;
 mod ffmpeg;
 mod image_source;
 mod pdf;
+pub mod program;
 mod render;
 mod text_source;
 
@@ -21,7 +22,8 @@ use std::path::Path;
 use std::time::UNIX_EPOCH;
 
 use kalamu_core::{
-    InputKind, InputWarning, PieceRef, PreparedInput, SourceFile, SourceId, YOUTUBE_LINK,
+    InputKind, InputWarning, PieceRef, PreparedInput, SourceFile, SourceId, StopSignal,
+    YOUTUBE_LINK,
 };
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -52,6 +54,9 @@ pub enum MediaError {
     NeedsConversion(String),
     #[error("FFmpeg failed: {0}")]
     Tool(String),
+    /// The job was paused or cancelled while FFmpeg worked; it was ended, and nothing failed.
+    #[error("Stopped before the file was converted")]
+    Stopped,
     #[error(
         "This file has changed since it was added to the job. Start a new job with it to read it as it is now"
     )]
@@ -161,13 +166,23 @@ pub enum OpenSource {
 
 impl OpenSource {
     pub fn open(source: &SourceFile, ffmpeg: Option<&Ffmpeg>) -> Result<Self, MediaError> {
+        Self::open_with_stop(source, ffmpeg, &StopSignal::default())
+    }
+
+    /// [`Self::open`] for a job's run: FFmpeg's work on a recording (the pass that finds its
+    /// pauses, each piece cut) ends as soon as `stop` is raised, with [`MediaError::Stopped`].
+    pub fn open_with_stop(
+        source: &SourceFile,
+        ffmpeg: Option<&Ffmpeg>,
+        stop: &StopSignal,
+    ) -> Result<Self, MediaError> {
         let path = Path::new(&source.path);
         match source.kind {
             InputKind::Pdf => Ok(Self::Pdf(Box::new(PdfSource::open(path)?))),
             InputKind::Image => Ok(Self::Image(ImageSource::open(path)?)),
-            InputKind::Audio | InputKind::Video => {
-                Ok(Self::Audio(AudioSource::open(source, ffmpeg)?))
-            }
+            InputKind::Audio | InputKind::Video => Ok(Self::Audio(AudioSource::open_with_stop(
+                source, ffmpeg, stop,
+            )?)),
             InputKind::Text => Ok(Self::Text(TextSource::open(path)?)),
             InputKind::YouTube => Ok(Self::YouTube(source.path.clone())),
         }
@@ -176,15 +191,29 @@ impl OpenSource {
     /// The pieces to process, in reading order: every page, each spread as two pages when the
     /// user asked for it, and only the first `sample` pages when trying a sample; recordings
     /// in pieces of at most about `piece_ms`, cut at pauses (which decodes the whole file).
+    /// Empty for a recording whose pass was stopped; see [`Self::try_pieces`].
     pub fn pieces(&self, split_spreads: bool, sample: Option<u32>, piece_ms: u64) -> Vec<PieceRef> {
+        self.try_pieces(split_spreads, sample, piece_ms)
+            .unwrap_or_default()
+    }
+
+    /// [`Self::pieces`], or [`MediaError::Stopped`] when the source was opened with a stop
+    /// signal that was raised while a recording's pauses were being found. That is the only
+    /// error: a pass that fails otherwise cuts at fixed marks.
+    pub fn try_pieces(
+        &self,
+        split_spreads: bool,
+        sample: Option<u32>,
+        piece_ms: u64,
+    ) -> Result<Vec<PieceRef>, MediaError> {
         let mut pieces = Vec::new();
         let pages = match self {
             Self::Pdf(pdf) => pdf.page_count(),
             Self::Image(img) => img.page_count(),
-            Self::Audio(audio) => return audio.pieces(piece_ms),
+            Self::Audio(audio) => return audio.try_pieces(piece_ms),
             // A YouTube link cannot be clipped reliably: Gemini still hears the whole sound
             // track (see the decision of 27 October 2026), so a video is one piece.
-            Self::Text(_) | Self::YouTube(_) => return vec![PieceRef::Whole],
+            Self::Text(_) | Self::YouTube(_) => return Ok(vec![PieceRef::Whole]),
         };
         let last = sample.map_or(pages, |n| n.min(pages));
         for number in 1..=last {
@@ -205,7 +234,7 @@ impl OpenSource {
                 pieces.push(PieceRef::page(number));
             }
         }
-        pieces
+        Ok(pieces)
     }
 
     /// The pieces a correction sends: every page of a PDF (its text layer, so spreads are not

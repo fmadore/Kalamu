@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { DocumentRow } from './bindings/DocumentRow.js';
 import type { InputKind } from './bindings/InputKind.js';
-import { selectionPaths, shownDocuments, sortDocuments, tagsOf, taskFor } from './projects.js';
+import {
+	readDocumentTableView,
+	selectionPaths,
+	shownDocuments,
+	sortDocuments,
+	tagsOf,
+	taskFor
+} from './projects.js';
 
 function row(
 	title: string,
@@ -104,5 +111,14 @@ describe('the project document table', () => {
 		const gone = row('gone', { missing: true });
 		const video = row('video', { kind: 'youtube', path: 'https://youtu.be/x' });
 		expect(selectionPaths([rows[1], gone, video])).toEqual(['C:\\Archives\\page 10.pdf']);
+	});
+
+	it('reads back the sort and tag kept, a sort no longer offered set back to the title', () => {
+		expect(readDocumentTableView({ sort: 'run', tag: 'Dakar' })).toEqual({
+			sort: 'run',
+			tag: 'Dakar'
+		});
+		expect(readDocumentTableView({ sort: 'size', tag: 3 })).toEqual({ sort: 'title', tag: '' });
+		expect(readDocumentTableView('title')).toBeNull();
 	});
 });

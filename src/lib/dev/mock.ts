@@ -328,6 +328,12 @@ function mockScores(jobId: string) {
 	return [];
 }
 
+/** Whether the window shows files being dragged over it (`?dragging`), which only the desktop
+ * app can tell. */
+export function mockDragging(): boolean {
+	return new URLSearchParams(location.search).has('dragging');
+}
+
 export function mockView(): View | null {
 	switch (new URLSearchParams(location.search).get('view') ?? '') {
 		case 'all-jobs':
@@ -753,9 +759,14 @@ export function installMock(): void {
 				});
 			// A question before deleting (the dialog plugin's `ask`, a message with Yes and No):
 			// the browser's own, so the answer is the one clicked.
-			case 'plugin:dialog|message':
+			case 'plugin:dialog|message': {
 				if (!a.buttons) return null;
-				return window.confirm(String(a.message ?? '')) ? 'Yes' : 'No';
+				// With its buttons named, the answer is the name of the one clicked.
+				const named = (a.buttons as { OkCancelCustom?: [string, string] }).OkCancelCustom;
+				const yes = window.confirm(String(a.message ?? ''));
+				if (named) return yes ? named[0] : named[1];
+				return yes ? 'Yes' : 'No';
+			}
 			case 'plugin:dialog|open':
 				// Recordings when the picker asks for them, documents otherwise.
 				if (JSON.stringify(a).includes('m4a'))

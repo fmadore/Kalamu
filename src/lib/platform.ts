@@ -34,6 +34,28 @@ export function shifted(key: string, mac = isMac): string {
 	return mac ? `⇧${key}` : `${messages().keys.shift} ${key}`;
 }
 
+/** A shortcut with Alt, as each system writes it: "⌥←" on a Mac, "Alt ←" elsewhere. */
+export function alted(key: string, mac = isMac): string {
+	return mac ? `⌥${key}` : `${messages().keys.alt} ${key}`;
+}
+
+/** Whether a key goes back to the screen left: Alt and the left arrow, and ⌘[ on a Mac, as in
+ *  the systems' own browsers. */
+export function isBack(e: KeyboardEvent, mac = isMac): boolean {
+	const only = (held: boolean) =>
+		held && [e.ctrlKey, e.metaKey, e.altKey].filter(Boolean).length === 1;
+	if (e.shiftKey) return false;
+	if (mac && only(e.metaKey) && e.key === '[') return true;
+	return only(e.altKey) && e.key === 'ArrowLeft';
+}
+
+/** How Back is written for this system. In a review Alt and the arrows turn the pages, so a
+ *  Mac's ⌘[ is its only key there, and elsewhere there is none (`null`). */
+export function backShortcut(inReview = false, mac = isMac): string | null {
+	if (mac) return '⌘[';
+	return inReview ? null : alted('←', mac);
+}
+
 /** What this system calls its keychain and the place the tray icon sits. */
 export function osNames(mac = isMac) {
 	return messages().os[mac ? 'macos' : 'windows'];

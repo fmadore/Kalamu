@@ -88,7 +88,9 @@ pub fn tagged_document(input: &PreparedInput) -> String {
 
 /// Turns the model's JSON answer into checked answers, with the plain-text rendering as the
 /// output's text. Tolerates a code fence around the JSON, which some models add even under a
-/// schema. An answer that breaks the fields is retried by the engine, never stored empty.
+/// schema. An answer that breaks the fields is retried by the engine, never stored empty; one
+/// the model stopped writing at its output limit fails once, since asking again would stop at
+/// the same place and be billed again.
 pub fn finish(
     mut output: ProcessOutput,
     fields: &AnalysisSchema,
@@ -100,9 +102,18 @@ pub fn finish(
         .map_or(raw, |r| r.trim_end_matches("```"))
         .trim();
     // Refused or not, the answer was written and billed: its usage goes with the error.
-    let rejected = |reason: String| ProviderError::InvalidAnswer {
-        reason,
-        usage: output.usage.clone(),
+    let truncated = output.truncated;
+    let rejected = |reason: String| {
+        if truncated {
+            ProviderError::CutOff {
+                usage: output.usage.clone(),
+            }
+        } else {
+            ProviderError::InvalidAnswer {
+                reason,
+                usage: output.usage.clone(),
+            }
+        }
     };
     let answer: Value = serde_json::from_str(raw)
         .map_err(|e| rejected(format!("the answer was not valid JSON: {e}")))?;
@@ -217,5 +228,41 @@ mod tests {
             // The answer was billed though refused: its usage goes with the error.
             assert_eq!(err.billed(), Some(&usage));
         }
+    }
+
+    #[test]
+    fn an_answer_cut_off_at_the_output_limit_fails_once_and_is_billed() {
+        let usage = crate::Usage {
+            input_tokens: 9_000,
+            output_tokens: 32_000,
+            ..crate::Usage::default()
+        };
+        let err = finish(
+            ProcessOutput {
+                text: r#"{"summary":"Une réunion du conseil où"#.into(),
+                usage: usage.clone(),
+                truncated: true,
+                ..ProcessOutput::default()
+            },
+            &fields(),
+        )
+        .unwrap_err();
+        assert!(matches!(err, ProviderError::CutOff { .. }), "{err}");
+        assert!(!err.is_retryable());
+        assert!(!err.is_fatal_for_job());
+        assert_eq!(err.billed(), Some(&usage));
+        assert!(err.to_string().contains("output limit"), "{err}");
+
+        // A whole answer that happened to reach the limit is read as any other.
+        let out = finish(
+            ProcessOutput {
+                text: r#"{"summary":"x","tone":"Positive","tone_reason":"y"}"#.into(),
+                truncated: true,
+                ..ProcessOutput::default()
+            },
+            &fields(),
+        )
+        .unwrap();
+        assert_eq!(out.fields[0].value, FieldValue::Text("x".into()));
     }
 }

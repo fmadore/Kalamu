@@ -58,7 +58,7 @@ changed, see the [1.5.0 release](https://github.com/fmadore/Kalamu/releases/tag/
 - **Mac App Store**: once Apple has reviewed it.
 - `Kalamu_1.6.0_x64-setup.exe`: Windows 11 on Intel and AMD PCs.
 - `Kalamu_1.6.0_arm64-setup.exe`: Windows 11 on ARM64 (Snapdragon laptops).
-- `Kalamu_1.6.0_aarch64.dmg`: macOS 13 or later on a Mac with Apple Silicon (M1 and later).
+- `Kalamu_1.6.0_aarch64.dmg`: macOS 14 or later on a Mac with Apple Silicon (M1 and later).
   Open it and drag Kalamu to Applications.
 - `kalamu-samples.zip`: a short recording, scanned pages, a newspaper issue and a text to try
   the app with.

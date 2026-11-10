@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { keep, recall } from './stored.js';
+import { keep, keepFor, recall, recallFor } from './stored.js';
 
 const isNumber = (v: unknown) => (typeof v === 'number' ? v : null);
 
@@ -41,5 +41,40 @@ describe('what is remembered on this computer', () => {
 		vi.stubGlobal('localStorage', undefined);
 		expect(() => keep('split', 0.4)).not.toThrow();
 		expect(recall('split', isNumber, 0.5)).toBe(0.5);
+		expect(() => keepFor('turns', 's1', 90, 2)).not.toThrow();
+		expect(recallFor('turns', 's1', isNumber)).toBeNull();
+	});
+});
+
+describe('what is remembered for each of several things', () => {
+	it('reads back each one, forgets one set to null, and refuses what it does not accept', () => {
+		vi.stubGlobal('localStorage', memory());
+		keepFor('turns', 's1', 90, 10);
+		keepFor('turns', 's2', 'sideways', 10);
+		expect(recallFor('turns', 's1', isNumber)).toBe(90);
+		expect(recallFor('turns', 's2', isNumber)).toBeNull();
+		expect(recallFor('turns', 's3', isNumber)).toBeNull();
+		keepFor('turns', 's1', null, 10);
+		expect(recallFor('turns', 's1', isNumber)).toBeNull();
+	});
+
+	it('keeps only the ones kept last', () => {
+		vi.stubGlobal('localStorage', memory());
+		keepFor('turns', 's1', 90, 2);
+		keepFor('turns', 's2', 180, 2);
+		// Kept again, s1 is now the most recent, so s2 goes when s3 comes.
+		keepFor('turns', 's1', 270, 2);
+		keepFor('turns', 's3', 90, 2);
+		expect(recallFor('turns', 's1', isNumber)).toBe(270);
+		expect(recallFor('turns', 's2', isNumber)).toBeNull();
+		expect(recallFor('turns', 's3', isNumber)).toBe(90);
+	});
+
+	it('reads nothing from a value that is no list', () => {
+		vi.stubGlobal('localStorage', memory());
+		keep('turns', { s1: 90 });
+		expect(recallFor('turns', 's1', isNumber)).toBeNull();
+		keepFor('turns', 's1', 90, 2);
+		expect(recallFor('turns', 's1', isNumber)).toBe(90);
 	});
 });

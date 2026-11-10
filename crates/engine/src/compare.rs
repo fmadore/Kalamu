@@ -266,29 +266,33 @@ impl Engine {
     /// Each piece of a source with the texts scoring reads, in page and set-up order. Lighter
     /// than the review's pieces: no preview, timings or original text.
     fn scored_pieces(&self, job: &Job, source_id: SourceId) -> Result<Vec<Scored>, EngineError> {
-        let corrections = self.store.corrections(job.id)?;
-        let speakers = self.store.speakers(job.id)?;
         let mut out = Vec::new();
-        for state in self.store.pieces(job.id)? {
-            if state.source_id != source_id {
-                continue;
-            }
-            let result = self.store.finished_result(&state)?;
-            let correction = Correction::of(&corrections, &state);
+        // Only this source's rows, set-up by set-up: scoring every source of a large job reads
+        // each row once.
+        for setup in &job.setups {
+            let corrections = self.store.source_corrections(job.id, setup.id, source_id)?;
+            let speakers = kalamu_core::SpeakerIndex::new(
+                self.store
+                    .source_speaker_names(job.id, setup.id, source_id)?,
+            );
             // As the review shows them: with the researcher's names for the speakers.
-            let speaker_names = speakers.of(state.setup_id, source_id);
-            out.push(Scored {
-                setup_id: state.setup_id,
-                index: state.index,
-                ai_text: result
-                    .as_ref()
-                    .map(|r| rename_text(&r.output.text, speaker_names)),
-                corrected_text: correction
-                    .and_then(|c| c.text.as_deref())
-                    .map(|t| rename_text(t, speaker_names)),
-                reviewed: correction.is_some_and(|c| c.reviewed),
-                cost_usd: result.as_ref().and_then(|r| r.cost_usd),
-            });
+            let speaker_names = speakers.of(setup.id, source_id);
+            for state in self.store.source_pieces(job.id, setup.id, source_id)? {
+                let result = self.store.finished_result(&state)?;
+                let correction = Correction::of(&corrections, &state);
+                out.push(Scored {
+                    setup_id: state.setup_id,
+                    index: state.index,
+                    ai_text: result
+                        .as_ref()
+                        .map(|r| rename_text(&r.output.text, speaker_names)),
+                    corrected_text: correction
+                        .and_then(|c| c.text.as_deref())
+                        .map(|t| rename_text(t, speaker_names)),
+                    reviewed: correction.is_some_and(|c| c.reviewed),
+                    cost_usd: result.as_ref().and_then(|r| r.cost_usd),
+                });
+            }
         }
         let order = |id: SetupId| job.setups.iter().position(|s| s.id == id);
         out.sort_by_key(|p| (p.index, order(p.setup_id)));

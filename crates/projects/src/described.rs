@@ -59,18 +59,25 @@ impl SourceDocuments for Projects {
         job: JobId,
         source: SourceId,
     ) -> Result<Vec<ProvenanceDocument>, StoreError> {
+        // Only this source's links are read, not every project's: each export asks.
+        let links = self.store.links_of(job, source)?;
+        if links.is_empty() {
+            return Ok(Vec::new());
+        }
+        let mut documents = Vec::new();
+        for link in &links {
+            match self.store.document(link.document_id) {
+                Ok(document) => documents.push(document),
+                Err(StoreError::NotFound) => continue,
+                Err(e) => return Err(e),
+            }
+        }
+        // Project by project, in the order of the list of projects, each one's documents in
+        // the order they were linked.
         let mut out = Vec::new();
         for project in self.store.projects()? {
-            let links = self.store.links(project.id)?;
-            for link in links
-                .iter()
-                .filter(|l| l.job_id == job && l.source_id == source)
-            {
-                let document = match self.store.document(link.document_id) {
-                    Ok(document) => document,
-                    Err(StoreError::NotFound) => continue,
-                    Err(e) => return Err(e),
-                };
+            for document in documents.iter().filter(|d| d.project_id == project.id) {
+                let document = document.clone();
                 let description = described(&document, &project.source_defaults)
                     .into_iter()
                     .map(|d| {

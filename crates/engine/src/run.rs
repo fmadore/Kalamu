@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use kalamu_core::{JobId, JobStatus, Pace, ProgressEvent, Setup, SetupId, Task};
+use kalamu_core::{JobId, JobStatus, Pace, ProgressEvent, Setup, SetupId, SourceId, Task};
 use kalamu_media::OpenSource;
 
 use crate::control::lock;
@@ -85,18 +85,21 @@ impl Engine {
             });
         }
         let spent = Arc::new(Mutex::new(earlier));
+        // Sources that could not be opened or planned in this run: nothing of theirs to combine.
+        let mut unread: HashSet<SourceId> = HashSet::new();
         for source in &job.sources {
             if stop_requested(&control).is_some() {
                 break;
             }
             // A file changed since it was added is refused: its pieces would be cached under the
             // fingerprint of what it held then.
+            // Opened with the job's stop signal, so a pause ends FFmpeg's work on a recording.
             let opened = {
-                let source = source.clone();
+                let (source, stop) = (source.clone(), stop.clone());
                 let ffmpeg = self.config.ffmpeg.clone();
                 tokio::task::spawn_blocking(move || {
                     kalamu_media::check_unchanged(&source)?;
-                    OpenSource::open(&source, ffmpeg.as_ref())
+                    OpenSource::open_with_stop(&source, ffmpeg.as_ref(), &stop)
                 })
                 .await
                 .map_err(|e| EngineError::Output(e.to_string()))?
@@ -105,23 +108,20 @@ impl Engine {
                 Ok(o) => Arc::new(o),
                 Err(e) => {
                     failed = true;
-                    self.emit(ProgressEvent::SourceFailed {
-                        job_id,
-                        source_id: source.id,
-                        error: e.to_string(),
-                    });
+                    unread.insert(source.id);
+                    self.source_failed(&job, source, &existing, &e.to_string())?;
                     continue;
                 }
             };
             let pieces = match self.plan(&job, source, &opened, &existing).await? {
                 Ok(pieces) => pieces,
+                // Paused or cancelled while a recording's pauses were found: nothing is
+                // planned, and the job ends as asked.
+                Err(_) if stop_requested(&control).is_some() => break,
                 Err(error) => {
                     failed = true;
-                    self.emit(ProgressEvent::SourceFailed {
-                        job_id,
-                        source_id: source.id,
-                        error,
-                    });
+                    unread.insert(source.id);
+                    self.source_failed(&job, source, &existing, &error)?;
                     continue;
                 }
             };
@@ -149,6 +149,7 @@ impl Engine {
                         &key,
                         &opened,
                         &mut gathered,
+                        &stop,
                     )
                     .await?;
                 if let Some(message) = &outcome.fatal {
@@ -254,7 +255,7 @@ impl Engine {
         // those sent before the app was last closed.
         if !batched.is_empty() {
             if stop_requested(&control).is_none() {
-                let outcome = self.send_gathered(&job, &mut gathered).await?;
+                let outcome = self.send_gathered(&job, &mut gathered, &stop).await?;
                 batch_outcome.merge(outcome);
             }
             if batch_outcome.fatal.is_none() {
@@ -268,7 +269,10 @@ impl Engine {
                 .collect();
             for source in &job.sources {
                 // The pages came back from the batch: combine them, at once.
-                if job.task == Task::Contents && stop_requested(&control).is_none() {
+                if job.task == Task::Contents
+                    && stop_requested(&control).is_none()
+                    && !unread.contains(&source.id)
+                {
                     for setup in &setups {
                         match self.merge_pages(&job, source, setup, &spent, &stop).await? {
                             Outcome::Finished => {}
