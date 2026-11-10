@@ -39,7 +39,7 @@ impl SqliteStore {
         let applied: i64 = conn
             .pragma_query_value(None, "user_version", |row| row.get(0))
             .map_err(db)?;
-        let applied = usize::try_from(applied).unwrap_or_default();
+        let applied = schema_known(applied, migrations::MIGRATIONS.len())?;
         for (i, migration) in migrations::MIGRATIONS.iter().enumerate().skip(applied) {
             conn.execute_batch(&format!(
                 "BEGIN; {migration} PRAGMA user_version = {}; COMMIT;",
@@ -59,6 +59,20 @@ impl SqliteStore {
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
+}
+
+/// The migrations a database has had (`PRAGMA user_version`), if this version knows them all.
+/// More than it knows means a newer Kalamu wrote it: its tables may hold what this version would
+/// lose or misread, so it is refused rather than run on.
+fn schema_known(applied: i64, known: usize) -> Result<usize, StoreError> {
+    let applied = usize::try_from(applied).unwrap_or_default();
+    if applied > known {
+        return Err(StoreError::Newer {
+            found: applied as u64,
+            known: known as u64,
+        });
+    }
+    Ok(applied)
 }
 
 fn db(err: rusqlite::Error) -> StoreError {

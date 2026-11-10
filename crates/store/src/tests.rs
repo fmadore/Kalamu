@@ -523,6 +523,42 @@ fn a_database_file_survives_reopening() -> Result<(), StoreError> {
     Ok(())
 }
 
+/// A database a newer Kalamu migrated further is refused, and left as it was, rather than run
+/// on by a version that does not know its tables.
+#[test]
+fn a_database_from_a_newer_version_is_refused_and_left_alone() -> Result<(), StoreError> {
+    let dir = tempfile::tempdir().map_err(corrupt)?;
+    let path = dir.path().join("jobs.sqlite");
+    let job = job();
+    let known = migrations::MIGRATIONS.len() as i64;
+    {
+        let store = SqliteStore::open(&path)?;
+        store.create_job(&job)?;
+        store
+            .conn()
+            .pragma_update(None, "user_version", known + 1)
+            .map_err(db)?;
+    }
+    match SqliteStore::open(&path) {
+        Err(StoreError::Newer { found, known: k }) => {
+            assert_eq!((found, k), (known as u64 + 1, known as u64));
+        }
+        Err(e) => panic!("refused for another reason: {e}"),
+        Ok(_) => panic!("a newer database was opened"),
+    }
+    let version: i64 = Connection::open(&path)
+        .map_err(db)?
+        .pragma_query_value(None, "user_version", |row| row.get(0))
+        .map_err(db)?;
+    assert_eq!(version, known + 1);
+    assert_eq!(
+        schema_known(known, migrations::MIGRATIONS.len())?,
+        known as usize
+    );
+    assert_eq!(schema_known(0, migrations::MIGRATIONS.len())?, 0);
+    Ok(())
+}
+
 #[test]
 fn units_are_kept_in_order_and_go_with_their_job() -> Result<(), StoreError> {
     let store = SqliteStore::in_memory()?;
