@@ -204,12 +204,16 @@ pub(crate) fn rename_job(store: &SqliteStore, id: JobId, name: &str) -> Result<(
     tx.commit().map_err(db)
 }
 
-pub(crate) fn delete_job(store: &SqliteStore, id: JobId) -> Result<(), StoreError> {
-    store
-        .conn()
-        .execute("DELETE FROM jobs WHERE id = ?1", [id.to_string()])
-        .map_err(db)?;
-    Ok(())
+/// Deletes jobs, with everything that cascades from them, in one transaction: all of them, or
+/// none if one fails.
+pub(crate) fn delete_jobs(store: &SqliteStore, ids: &[JobId]) -> Result<(), StoreError> {
+    let mut conn = store.conn();
+    let tx = conn.transaction().map_err(db)?;
+    for id in ids {
+        tx.execute("DELETE FROM jobs WHERE id = ?1", [id.to_string()])
+            .map_err(db)?;
+    }
+    tx.commit().map_err(db)
 }
 
 pub(crate) fn mark_running_as_interrupted(store: &SqliteStore) -> Result<Vec<JobId>, StoreError> {
