@@ -51,8 +51,12 @@ updates:
     schedule:
       interval: weekly
 
+  # Every action is pinned by commit, with its version in a comment, which Dependabot keeps up
+  # to date: the workflows' and the local composite actions' (.github/actions) alike.
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - /.github/actions/*
     schedule:
       interval: weekly
     groups:
