@@ -4,15 +4,19 @@
 //! PC), finds no usable graphics processor, stops answering, dies — comes back as an error; the
 //! caller then transcribes on the processor. Ported from Live Translation's `whisper/gpu.rs`.
 
-use std::io::{self, BufRead, BufReader};
-use std::path::Path;
+use std::collections::VecDeque;
+use std::io::{self, BufRead, BufReader, Read};
+use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use kalamu_core::StopSignal;
 
 use super::engine::{self, Decode, Devices, RawSegment, Request, Response};
+use crate::diagnostics;
+use crate::host::lock;
 use crate::models::ModelLease;
 
 /// How long the helper may take to list the graphics processors: a hanging driver must not hold
@@ -27,6 +31,9 @@ const DECODE_TIMEOUT: Duration = Duration::from_secs(600);
 const SHORT_TIMEOUT: Duration = Duration::from_secs(30);
 /// How often a wait for an answer looks at the job's stop signal.
 const POLL: Duration = Duration::from_millis(100);
+/// The most lines of the helper's standard error kept, from the end, for the log when it fails;
+/// `diagnostics` keeps the last of those that read as diagnostics.
+const STDERR_LINES: usize = 200;
 
 /// Why the helper did not answer.
 #[derive(Debug)]
@@ -58,10 +65,45 @@ fn command(program: &Path) -> Command {
     command
 }
 
+/// The last [`STDERR_LINES`] lines of a pipe, read to its end on a thread of its own, so a
+/// talkative driver or Vulkan layer never fills it and stalls the helper.
+fn keep_last_lines<R: Read + Send + 'static>(pipe: R) -> Arc<Mutex<VecDeque<String>>> {
+    let kept = Arc::new(Mutex::new(VecDeque::with_capacity(STDERR_LINES)));
+    let lines = kept.clone();
+    std::thread::spawn(move || {
+        for line in BufReader::new(pipe).lines().map_while(Result::ok) {
+            let mut lines = lock(&lines);
+            if lines.len() == STDERR_LINES {
+                lines.pop_front();
+            }
+            lines.push_back(line);
+        }
+    });
+    kept
+}
+
+/// Logs the end of the helper's standard error after it failed.
+fn log_stderr(program: &Path, during: &str, kept: &Mutex<VecDeque<String>>) {
+    let text = lock(kept).iter().fold(String::new(), |mut text, line| {
+        text.push_str(line);
+        text.push('\n');
+        text
+    });
+    diagnostics::warn(program, during, text.as_bytes());
+}
+
 /// The graphics processor the helper would use, asked with `--list-devices`; `None` when it
-/// cannot start, finds none it can use, or does not answer within [`LIST_TIMEOUT`].
+/// cannot start, finds none it can use, or does not answer within [`LIST_TIMEOUT`]. Its first
+/// line is the answer: it is ended once that is read, whether or not it would have exited.
 pub(super) fn find_device(program: &Path) -> Option<String> {
-    let mut child = command(program).arg("--list-devices").spawn().ok()?;
+    // No input, and its standard error read as it comes: a full pipe would stall it before
+    // its answer, and Whisper would stay on the processor all session.
+    let mut child = command(program)
+        .arg("--list-devices")
+        .stdin(Stdio::null())
+        .spawn()
+        .ok()?;
+    let stderr = child.stderr.take().map(keep_last_lines);
     let stdout = child.stdout.take()?;
     let (sender, answer) = mpsc::channel();
     std::thread::spawn(move || {
@@ -72,14 +114,25 @@ pub(super) fn find_device(program: &Path) -> Option<String> {
     let line = answer.recv_timeout(LIST_TIMEOUT).ok();
     let _ = child.kill();
     let _ = child.wait();
-    let found: Devices = serde_json::from_str(line?.trim()).ok()?;
+    let found = line
+        .as_deref()
+        .and_then(|line| serde_json::from_str::<Devices>(line.trim()).ok());
+    let Some(found) = found else {
+        if let Some(stderr) = &stderr {
+            log_stderr(program, "listing its devices", stderr);
+        }
+        return None;
+    };
     tracing::info!(devices = ?found.devices, chosen = ?found.chosen, "graphics processors for Whisper");
     found.chosen
 }
 
 pub(super) struct Worker {
     child: Child,
+    program: PathBuf,
     stdin: ChildStdin,
+    /// The last lines of its standard error, logged when it fails.
+    stderr: Arc<Mutex<VecDeque<String>>>,
     /// What the helper answers, read on a thread of its own so every wait can time out.
     answers: Receiver<io::Result<Response>>,
     /// The graphics processor, as its driver names it.
@@ -117,15 +170,14 @@ impl Worker {
                 }
             }
         });
-        // whisper.cpp and ggml write what they are doing to standard error: kept in the log.
-        std::thread::spawn(move || {
-            for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-                tracing::debug!(target: "whisper_vulkan", "{line}");
-            }
-        });
+        // whisper.cpp and ggml write what they are doing to standard error: the last lines are
+        // logged when the helper fails (`diagnostics`).
+        let stderr = keep_last_lines(stderr);
         let mut worker = Self {
             child,
+            program: program.to_path_buf(),
             stdin,
+            stderr,
             answers,
             device: String::new(),
             text_context: 0,
@@ -135,18 +187,27 @@ impl Worker {
             bytes: lease.model.bytes,
             sha256: lease.model.sha256.to_owned(),
         };
-        match worker.ask(&load, None, LOAD_TIMEOUT, None)? {
+        let loaded = match worker.ask(&load, None, LOAD_TIMEOUT, None)? {
             Response::Loaded {
                 device,
                 text_context,
             } => {
                 worker.device = device;
                 worker.text_context = text_context;
-                Ok(worker)
+                return Ok(worker);
             }
-            Response::Failed { message } => Err(Failure::Failed(message)),
-            other => Err(Failure::failed(format!("Unexpected answer: {other:?}"))),
+            Response::Failed { message } => Failure::Failed(message),
+            other => Failure::failed(format!("Unexpected answer: {other:?}")),
+        };
+        Err(worker.logged(loaded))
+    }
+
+    /// `failure`, once the end of the helper's standard error is in the log when it failed.
+    fn logged(&self, failure: Failure) -> Failure {
+        if let Failure::Failed(_) = &failure {
+            log_stderr(&self.program, "a failed request", &self.stderr);
         }
+        failure
     }
 
     /// Send `request` (and `samples`) and wait for its answer. The helper is stopped when the
@@ -165,10 +226,9 @@ impl Worker {
             None => Ok(()),
         });
         if let Err(error) = sent {
-            return Err(Failure::failed(format!(
-                "The helper stopped ({}): {error}",
-                self.status()
-            )));
+            let failure =
+                Failure::failed(format!("The helper stopped ({}): {error}", self.status()));
+            return Err(self.logged(failure));
         }
         let deadline = Instant::now() + timeout;
         loop {
@@ -177,17 +237,16 @@ impl Worker {
                 return Err(Failure::Stopped);
             }
             match self.answers.recv_timeout(POLL) {
-                Ok(answer) => return answer.map_err(Failure::failed),
+                Ok(answer) => return answer.map_err(|e| self.logged(Failure::failed(e))),
                 Err(RecvTimeoutError::Timeout) if Instant::now() < deadline => {}
                 Err(RecvTimeoutError::Timeout) => {
                     self.stop();
-                    return Err(Failure::failed("The helper stopped answering"));
+                    return Err(self.logged(Failure::failed("The helper stopped answering")));
                 }
                 Err(RecvTimeoutError::Disconnected) => {
-                    return Err(Failure::failed(format!(
-                        "The helper stopped ({})",
-                        self.status()
-                    )));
+                    let failure =
+                        Failure::failed(format!("The helper stopped ({})", self.status()));
+                    return Err(self.logged(failure));
                 }
             }
         }
@@ -212,7 +271,7 @@ impl Worker {
         let request = Request::Detect { threads };
         match self.ask(&request, Some(samples), SHORT_TIMEOUT, Some(stop))? {
             Response::Detected { language } => Ok(language),
-            Response::Failed { message } => Err(Failure::Failed(message)),
+            Response::Failed { message } => Err(self.logged(Failure::Failed(message))),
             other => Err(Failure::failed(format!("Unexpected answer: {other:?}"))),
         }
     }
@@ -227,7 +286,7 @@ impl Worker {
         let request = Request::Decode(decode.clone());
         match self.ask(&request, Some(samples), DECODE_TIMEOUT, Some(stop))? {
             Response::Decoded { segments } => Ok(segments),
-            Response::Failed { message } => Err(Failure::Failed(message)),
+            Response::Failed { message } => Err(self.logged(Failure::Failed(message))),
             other => Err(Failure::failed(format!("Unexpected answer: {other:?}"))),
         }
     }

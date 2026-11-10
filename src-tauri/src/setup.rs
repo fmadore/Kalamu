@@ -189,6 +189,8 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         graphics,
         settings.ocr_graphics_processor,
         data.join("ocr-models").join("opencl-kernels"),
+        // Each run's page image or text, emptied at start-up of what a crash left.
+        data.join("offline-scratch"),
     ));
     let vision = Arc::new(kalamu_offline::Vision::new(
         kalamu_offline::ModelManager::new(data.join("ocr-models"), &kalamu_offline::VISION),

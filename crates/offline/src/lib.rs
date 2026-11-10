@@ -7,6 +7,7 @@
 
 mod cpu;
 mod device;
+mod diagnostics;
 mod download;
 mod host;
 mod llama;
