@@ -5,6 +5,7 @@
 	import DictionaryDetails from './DictionaryDetails.svelte';
 	import DictionaryProposals from './DictionaryProposals.svelte';
 	import Icon from './Icon.svelte';
+	import MoreRows from './MoreRows.svelte';
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { DictionaryRow } from '#lib/bindings/DictionaryRow.js';
 	import type { DictionaryView } from '#lib/bindings/DictionaryView.js';
@@ -18,6 +19,7 @@
 	} from '#lib/dictionary.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { Paging, rowIndex } from '#lib/paging.svelte.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { toast } from '#lib/state.svelte.js';
 	import { api, askForFolders, pickJsonSave } from '#lib/tauri.js';
@@ -54,6 +56,18 @@
 	);
 	const rows = $derived(view ? shownRows(view.rows, namespace, query, filter) : []);
 	const byKey = $derived(new Map((view?.rows ?? []).map((r) => [r.key, r])));
+	// A long field is drawn a page at a time, from its first page again when filtered.
+	const paging = new Paging();
+	const drawn = $derived(paging.of(rows));
+	let table = $state<HTMLTableElement | null>(null);
+	$effect(() => {
+		void [namespace, query, filter, scope];
+		paging.reset();
+	});
+	/** Where the row whose details are open is drawn: its details are a row of their own. */
+	const openAt = $derived(drawn.findIndex((r) => r.key === open));
+	/** A drawn row's place among the table's rows, counting the details drawn above it. */
+	const placeOf = (i: number) => rowIndex(i) + (openAt >= 0 && i > openAt ? 1 : 0);
 	const chosen = $derived(selection.of(rows, (r) => r.key));
 	const allChosen = $derived(rows.length > 0 && chosen.length === rows.length);
 
@@ -274,9 +288,13 @@
 			{#if rows.length === 0}
 				<p class="muted">{m.dictionary.noMatch}</p>
 			{:else}
-				<table class="data-table">
+				<table
+					class="data-table"
+					bind:this={table}
+					aria-rowcount={rows.length + 1 + (openAt >= 0 ? 1 : 0)}
+				>
 					<thead>
-						<tr>
+						<tr aria-rowindex={1}>
 							<th class="check">
 								<input
 									type="checkbox"
@@ -292,8 +310,8 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each rows as row (row.key)}
-							<tr class:chosen={selection.has(row.key)}>
+						{#each drawn as row, i (row.key)}
+							<tr data-row={i} aria-rowindex={placeOf(i)} class:chosen={selection.has(row.key)}>
 								<td class="check">
 									<input
 										type="checkbox"
@@ -362,7 +380,7 @@
 								</td>
 							</tr>
 							{#if open === row.key}
-								<tr class="details">
+								<tr class="details" aria-rowindex={placeOf(i) + 1}>
 									<td></td>
 									<td colspan="4">
 										<DictionaryDetails
@@ -377,6 +395,7 @@
 						{/each}
 					</tbody>
 				</table>
+				<MoreRows {paging} total={rows.length} {table} />
 			{/if}
 		{/if}
 	{/if}

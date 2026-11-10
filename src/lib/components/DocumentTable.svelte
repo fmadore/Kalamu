@@ -3,12 +3,14 @@
 	// from it. Selected documents can be grouped, ungrouped, removed, or sent to New job, whose
 	// job is then tied to them.
 	import Icon from './Icon.svelte';
+	import MoreRows from './MoreRows.svelte';
 	import TagInput from './TagInput.svelte';
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { DocumentRow } from '#lib/bindings/DocumentRow.js';
 	import type { TagView } from '#lib/bindings/TagView.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { formatDate, formatDateTime, messages } from '#lib/i18n/index.js';
+	import { Paging, rowIndex } from '#lib/paging.svelte.js';
 	import {
 		selectionPaths,
 		shownDocuments,
@@ -70,6 +72,14 @@
 	// A tag no document carries any longer stops filtering.
 	const filterTag = $derived(tags.some((t) => t.name === tag) ? tag : '');
 	const shown = $derived(sortDocuments(shownDocuments(rows, collectionId, query, filterTag), sort));
+	// A long list is drawn a page at a time, from its first page again when filtered or sorted.
+	const paging = new Paging();
+	const drawn = $derived(paging.of(shown));
+	let table = $state<HTMLTableElement | null>(null);
+	$effect(() => {
+		void [query, filterTag, sort, collectionId];
+		paging.reset();
+	});
 	const chosen = $derived(selection.of(shown, (r) => r.document.id));
 	const allChosen = $derived(shown.length > 0 && chosen.length === shown.length);
 	const names = $derived(new Map(collections.map((c) => [c.collection.id, c.collection.name])));
@@ -273,9 +283,9 @@
 	{#if shown.length === 0}
 		<p class="muted">{m.projects.noMatch}</p>
 	{:else}
-		<table class="data-table">
+		<table class="data-table" bind:this={table} aria-rowcount={shown.length + 1}>
 			<thead>
-				<tr>
+				<tr aria-rowindex={1}>
 					<th class="check">
 						<input
 							type="checkbox"
@@ -292,9 +302,9 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each shown as row (row.document.id)}
+				{#each drawn as row, i (row.document.id)}
 					{@const doc = row.document}
-					<tr class:chosen={selection.has(doc.id)}>
+					<tr data-row={i} aria-rowindex={rowIndex(i)} class:chosen={selection.has(doc.id)}>
 						<td class="check">
 							<input
 								type="checkbox"
@@ -345,8 +355,17 @@
 										t.reviewed,
 										t.preferred
 									)}
-									<!-- Each mark says what it counts on pointing; the whole, in words, to a screen reader. -->
-									<span class="result" class:reviewed={t.reviewed > 0} title={said}>
+									<!-- Each mark says what it counts on pointing. The whole is a button that opens
+									     the document: named by the sentence, which it also shows when the keyboard
+									     reaches it. -->
+									<button
+										class="result"
+										class:reviewed={t.reviewed > 0}
+										title={said}
+										aria-label={said}
+										data-said={said}
+										onclick={() => open(doc.id)}
+									>
 										<span class="mark" aria-hidden="true" title={m.task[t.task]}
 											><Icon name={t.task} size={13} /></span
 										>
@@ -364,8 +383,7 @@
 												aria-hidden="true"
 												title={m.projects.preferredMark}><Icon name="star" size={12} filled /></span
 											>{/if}
-										<span class="sr-only">{said}</span>
-									</span>
+									</button>
 								{/each}
 							{/if}
 						</td>
@@ -376,6 +394,7 @@
 				{/each}
 			</tbody>
 		</table>
+		<MoreRows {paging} total={shown.length} {table} />
 	{/if}
 {/if}
 
@@ -448,11 +467,39 @@
 		white-space: nowrap;
 	}
 	.result {
+		position: relative;
 		display: inline-flex;
 		align-items: center;
 		gap: 2px;
 		margin-right: var(--space-2);
+		padding: 1px 3px;
+		border: 0;
+		border-radius: var(--radius-tag);
+		background: none;
 		color: var(--text-secondary);
+		font: inherit;
+		cursor: pointer;
+	}
+	.result:hover {
+		background: var(--wash);
+	}
+	/* Reached from the keyboard, the marks say in words what they count, under them. */
+	.result:focus-visible::after {
+		content: attr(data-said);
+		position: absolute;
+		top: calc(100% + 4px);
+		right: 0;
+		z-index: 2;
+		width: max-content;
+		max-width: 20rem;
+		padding: var(--space-1) var(--space-2);
+		border-radius: var(--radius-tag);
+		background: var(--surface-2);
+		box-shadow: var(--shadow-flyout);
+		color: var(--text-bright);
+		font-size: var(--type-xs);
+		white-space: normal;
+		text-align: left;
 	}
 	.result.reviewed {
 		color: var(--ok-text);

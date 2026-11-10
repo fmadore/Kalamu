@@ -2,7 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use kalamu_core::{InputKind, Job, JobId, JobSources, JobSummary, PieceState, SourceFile, Task};
+use kalamu_core::{
+    InputKind, Job, JobId, JobSources, JobSummary, PieceState, SourceFile, SourceId, Task,
+};
 use kalamu_engine::{Estimate, EstimateRequest, NewJob};
 use serde::Serialize;
 use tauri::State;
@@ -402,6 +404,18 @@ pub fn get_job(state: State<'_, AppState>, id: JobId) -> CmdResult<Job> {
 #[tauri::command]
 pub fn job_pieces(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<PieceState>> {
     Ok(state.engine.pieces(id)?)
+}
+
+/// A job's progress for its page: the pieces held in batches, and each of `sources` counted
+/// under every set-up. Read again as progress arrives, so it sends counts, not pieces.
+#[tauri::command]
+pub async fn job_progress(
+    state: State<'_, AppState>,
+    id: JobId,
+    sources: Vec<SourceId>,
+) -> CmdResult<kalamu_engine::JobProgress> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.job_progress(id, &sources)?)).await
 }
 
 #[cfg(test)]

@@ -343,3 +343,24 @@ fn a_file_changed_since_it_was_added_is_refused() -> Result<(), MediaError> {
     assert!(matches!(check_unchanged(&source), Err(MediaError::Changed)));
     Ok(())
 }
+
+#[test]
+fn a_thumbnail_is_a_small_picture_of_the_page() -> Result<(), MediaError> {
+    let read =
+        |bytes: &[u8]| image::load_from_memory(bytes).map_err(|e| MediaError::Image(e.to_string()));
+    // A PDF page is drawn as wide as asked, keeping its proportions.
+    let page = PdfSource::from_bytes(&sample_pdf(&[A4], true))?.page_pdf(1, None)?;
+    let (mime, bytes) = thumbnail(&page, "application/pdf", 80)?;
+    assert_eq!(mime, "image/png");
+    let drawn = read(&bytes)?;
+    assert_eq!(drawn.width(), 80);
+    assert!((112..=114).contains(&drawn.height()), "{}", drawn.height());
+    // An image is made smaller, and never larger than the limit.
+    let (mime, bytes) = thumbnail(&png(2000, 3000), "image/png", 10_000)?;
+    assert_eq!(mime, "image/jpeg");
+    let small = read(&bytes)?;
+    assert_eq!(small.width(), THUMBNAIL_MAX_WIDTH);
+    assert_eq!(small.height(), 600);
+    assert!(thumbnail(b"not an image", "image/png", 80).is_err());
+    Ok(())
+}
