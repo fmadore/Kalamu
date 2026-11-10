@@ -70,6 +70,7 @@
 		refreshJobs,
 		refreshOffline,
 		shortcutsHeld,
+		takeFiles,
 		toast,
 		type FromProject
 	} from '#lib/state.svelte.js';
@@ -616,7 +617,12 @@
 			.listPresets('analysis')
 			.then((p) => (analysisPresets = p))
 			.catch(() => undefined);
-		return listenWhileMounted(() => onDrop((paths) => void addPaths(paths)));
+		const release = takeFiles(m.newJob.dropHere);
+		const stop = listenWhileMounted(() => onDrop((paths) => void addPaths(paths)));
+		return () => {
+			release();
+			stop();
+		};
 	});
 </script>
 

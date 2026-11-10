@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { JobSummary } from './bindings/JobSummary.js';
-import { finishedShown, groupOf, shownJobs, sortJobs } from './jobList.js';
+import {
+	DEFAULT_JOB_LIST_VIEW,
+	finishedShown,
+	groupOf,
+	readJobListView,
+	shownJobs,
+	sortJobs
+} from './jobList.js';
 
 function job(id: string, options: Partial<JobSummary> = {}): JobSummary {
 	return {
@@ -102,5 +109,22 @@ describe('sortJobs', () => {
 		expect(sortJobs(jobs, 'newest').map((j) => j.id)).toEqual(['b', 'a', 'c']);
 		expect(sortJobs(jobs, 'oldest').map((j) => j.id)).toEqual(['c', 'a', 'b']);
 		expect(sortJobs(jobs, 'name').map((j) => j.id)).toEqual(['c', 'b', 'a']);
+	});
+});
+
+describe('readJobListView', () => {
+	it('reads back the filters and sort kept', () => {
+		const kept = { task: 'analysis', status: 'waiting', sort: 'name' };
+		expect(readJobListView(kept)).toEqual(kept);
+		expect(readJobListView({ task: '', status: 'paused', sort: 'oldest' })?.status).toBe('paused');
+	});
+
+	it('sets back each value that is not one of today’s, and refuses what is no view', () => {
+		expect(readJobListView({ task: 'translation', status: 'lost', sort: 'size' })).toEqual(
+			DEFAULT_JOB_LIST_VIEW
+		);
+		expect(readJobListView({ task: 'toString', status: 7 })).toEqual(DEFAULT_JOB_LIST_VIEW);
+		expect(readJobListView('newest')).toBeNull();
+		expect(readJobListView(null)).toBeNull();
 	});
 });

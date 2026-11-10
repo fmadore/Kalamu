@@ -102,8 +102,9 @@ export function hitWords(hit: Hit): { text: string; found: boolean }[] {
 	return out;
 }
 
-/** The last search of each project in this session, so that coming back from a review shows
- * it again. Kept in memory only. */
+/** The last search of each project in this session, with what it found, so that coming back to
+ * the search (Back from a match's review, say) shows it again without searching anew. Kept in
+ * memory only. */
 const last = new Map<string, { request: SearchRequest; view: SearchView | null }>();
 
 export function lastSearch(
@@ -114,20 +115,4 @@ export function lastSearch(
 
 export function keepSearch(projectId: string, request: SearchRequest, view: SearchView | null) {
 	last.set(projectId, { request, view });
-}
-
-/** The project whose search opened the review last, until the project opens again. */
-let searchedFrom: string | null = null;
-
-/** A match was opened in this project's search: the project opens on the search next time. */
-export function leaveForMatch(projectId: string): void {
-	searchedFrom = projectId;
-}
-
-/** Whether the project opens on its search, as it does once after a match in it was opened;
- * opened any other way, it opens on its documents. */
-export function backToSearch(projectId: string): boolean {
-	const back = searchedFrom === projectId;
-	searchedFrom = null;
-	return back;
 }

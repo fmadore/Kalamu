@@ -2,7 +2,8 @@
 	// One project: its collections down the side, the documents of the one chosen (or all) in a
 	// table, a search through the text of every document, what in them needs checking, its
 	// dictionary of the names its analyses found, and its activity, the jobs that read them.
-	// Files dropped on the window join it.
+	// It opens on the pane it was left on, remembered on this computer. Files dropped on the
+	// window join it.
 	import { onMount } from 'svelte';
 	import AttachDialog from './AttachDialog.svelte';
 	import DescriptionFields from './DescriptionFields.svelte';
@@ -18,8 +19,17 @@
 	import { changed, type Draft } from '#lib/described.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { backToSearch } from '#lib/projectSearch.js';
-	import { go, refreshProjects, toast } from '#lib/state.svelte.js';
+	import {
+		app,
+		go,
+		refreshProjects,
+		returnTo,
+		settle,
+		takeFiles,
+		toast,
+		type ProjectPane
+	} from '#lib/state.svelte.js';
+	import { keepFor, recallFor } from '#lib/stored.js';
 	import { api, ask, listenWhileMounted, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
 
 	let {
@@ -30,8 +40,8 @@
 	}: {
 		projectId: string;
 		collectionId?: string;
-		/** The pane to open on: the list of what to check. */
-		opening?: 'queue';
+		/** The pane to open on; the one it was left on when not given. */
+		opening?: ProjectPane;
 		/** Documents chosen in the table, for the list of what to check. */
 		selection?: string[];
 	} = $props();
@@ -45,12 +55,13 @@
 			void refreshProjects();
 		}
 	});
-	// Coming back from a review opened by the search shows the search again.
-	// svelte-ignore state_referenced_locally
-	const searched = backToSearch(projectId);
-	// svelte-ignore state_referenced_locally
-	let pane = $state<'documents' | 'search' | 'queue' | 'dictionary' | 'activity'>(
-		opening ?? (searched ? 'search' : 'documents')
+	const PANE_KEY = 'kalamu.project.pane';
+	const PANES: ProjectPane[] = ['documents', 'search', 'queue', 'dictionary', 'activity'];
+	let pane = $state<ProjectPane>(
+		// svelte-ignore state_referenced_locally
+		opening ??
+			recallFor(PANE_KEY, projectId, (v) => PANES.find((p) => p === v) ?? null) ??
+			'documents'
 	);
 	let editing = $state(false);
 	let draftName = $state('');
@@ -61,10 +72,20 @@
 	let exporting = $state(false);
 	let adding = $state(false);
 
-	// Asked again for the list of what to check (from the table's selection), it opens.
+	// Asked again for a pane (the list of what to check, from the table's selection), it opens.
 	$effect(() => {
-		if (opening) pane = opening;
+		if (opening) {
+			pane = opening;
+			keepFor(PANE_KEY, projectId, opening, 100);
+		}
 	});
+
+	/** Shows a pane, remembered on this computer and in the view, so Back returns to it. */
+	function showPane(to: ProjectPane) {
+		pane = to;
+		keepFor(PANE_KEY, projectId, to, 100);
+		if (app.view.name === 'projects') settle({ ...app.view, pane: to });
+	}
 
 	const project = $derived(view?.project);
 	const collection = $derived(view?.collections.find((c) => c.collection.id === collectionId));
@@ -78,8 +99,8 @@
 	}
 
 	function show(id?: string) {
-		pane = 'documents';
-		go({ name: 'projects', projectId, collectionId: id });
+		keepFor(PANE_KEY, projectId, 'documents', 100);
+		go({ name: 'projects', projectId, collectionId: id, pane: 'documents' });
 	}
 
 	function startEdit() {
@@ -180,13 +201,21 @@
 
 	onMount(() => {
 		void load();
-		return listenWhileMounted(() => onDrop((paths) => void addExpanded(paths)));
+		// The pane opened on is set in the view, for Back to come back to it whatever is
+		// remembered by then.
+		if (app.view.name === 'projects' && !app.view.pane) settle({ ...app.view, pane });
+		const release = takeFiles(m.projects.dropHere);
+		const stop = listenWhileMounted(() => onDrop((paths) => void addExpanded(paths)));
+		return () => {
+			release();
+			stop();
+		};
 	});
 </script>
 
 <header class="masthead">
 	<div>
-		<button class="back" onclick={() => go({ name: 'projects' })}
+		<button class="back" onclick={() => returnTo({ name: 'projects' })}
 			><Icon name="back" size={14} />{m.projects.back}</button
 		>
 		<h1>{project?.name ?? ''}</h1>
@@ -288,7 +317,7 @@
 				class="section search"
 				class:current={pane === 'search'}
 				aria-current={pane === 'search' ? 'page' : undefined}
-				onclick={() => (pane = 'search')}
+				onclick={() => showPane('search')}
 			>
 				<Icon name="search" size={14} /><span class="grow">{m.search.title}</span>
 			</button>
@@ -296,7 +325,7 @@
 				class="section"
 				class:current={pane === 'queue'}
 				aria-current={pane === 'queue' ? 'page' : undefined}
-				onclick={() => (pane = 'queue')}
+				onclick={() => showPane('queue')}
 			>
 				<Icon name="flag" size={14} /><span class="grow">{m.queue.title}</span>
 			</button>
@@ -304,7 +333,7 @@
 				class="section"
 				class:current={pane === 'dictionary'}
 				aria-current={pane === 'dictionary' ? 'page' : undefined}
-				onclick={() => (pane = 'dictionary')}
+				onclick={() => showPane('dictionary')}
 			>
 				<Icon name="glossary" size={14} /><span class="grow">{m.dictionary.title}</span>
 			</button>
@@ -312,7 +341,7 @@
 				class="section activity"
 				class:current={pane === 'activity'}
 				aria-current={pane === 'activity' ? 'page' : undefined}
-				onclick={() => (pane = 'activity')}
+				onclick={() => showPane('activity')}
 			>
 				<Icon name="list" size={14} /><span class="grow">{m.projects.activity}</span>
 				<span class="num">{view.jobs.length}</span>

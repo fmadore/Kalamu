@@ -12,6 +12,7 @@
 	import {
 		selectionPaths,
 		shownDocuments,
+		readDocumentTableView,
 		sortDocuments,
 		tagsOf,
 		taskFor,
@@ -19,6 +20,7 @@
 	} from '#lib/projects.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { go, toast } from '#lib/state.svelte.js';
+	import { keepFor, recallFor } from '#lib/stored.js';
 	import { api, ask } from '#lib/tauri.js';
 
 	let {
@@ -42,8 +44,13 @@
 	} = $props();
 	const m = messages();
 
+	// The sort and the tag filtered on as the project's table was left, remembered on this
+	// computer for the projects opened last.
+	const VIEW_KEY = 'kalamu.project.table';
+	// svelte-ignore state_referenced_locally
+	const left = recallFor(VIEW_KEY, projectId, readDocumentTableView);
 	let query = $state('');
-	let sort = $state<DocumentSort>('title');
+	let sort = $state<DocumentSort>(left?.sort ?? 'title');
 	const selection = new Selection();
 	/** A change to the documents chosen: the choice is cleared and the project read again. */
 	const action = new Action({
@@ -54,7 +61,8 @@
 		report: (message) => onerror(message)
 	});
 	let target = $state('');
-	let tag = $state('');
+	let tag = $state(left?.tag ?? '');
+	$effect(() => keepFor(VIEW_KEY, projectId, { sort, tag }, 100));
 	let untagging = $state('');
 	/** The new name typed for the tag filtered on, while renaming it. */
 	let renaming = $state<string | null>(null);
@@ -105,8 +113,23 @@
 
 	async function removeFromCollection() {
 		if (!collectionId) return;
+		const from = collectionId;
 		const ids = chosen.map((r) => r.document.id);
-		await action.run(() => api.removeFromCollection(projectId, collectionId, ids));
+		const name = collections.find((c) => c.collection.id === from)?.collection.name ?? '';
+		await action.run(
+			() => api.removeFromCollection(projectId, from, ids),
+			async () => {
+				selection.clear();
+				await onchange();
+				// Put back from the toast: the documents themselves stay in the project.
+				toast(m.projects.removedFromCollection(ids.length, name), {
+					action: {
+						label: m.common.undo,
+						run: () => void action.run(() => api.addToCollection(projectId, from, ids))
+					}
+				});
+			}
+		);
 	}
 
 	async function removeDocuments() {
@@ -138,12 +161,13 @@
 			<input
 				type="text"
 				bind:value={query}
+				data-find
 				placeholder={m.projects.search}
 				aria-label={m.projects.search}
 			/>
 		</label>
 		{#if tags.length > 0}
-			<select bind:value={tag} aria-label={m.projects.tagFilter}>
+			<select bind:value={() => filterTag, (v) => (tag = v)} aria-label={m.projects.tagFilter}>
 				<option value="">{m.projects.anyTag}</option>
 				{#each tags as t (t.name)}
 					<option value={t.name}>{m.projects.tagCount(t.name, t.documents)}</option>
@@ -315,20 +339,32 @@
 								<span class="muted">{m.projects.noResults}</span>
 							{:else}
 								{#each row.tasks as t (t.task)}
-									<span
-										class="result"
-										class:reviewed={t.reviewed > 0}
-										title={m.projects.taskResults(m.task[t.task], t.results, t.reviewed)}
-									>
-										<Icon name={t.task} size={13} />
-										<span class="num">{t.results}</span>
-										{#if t.reviewed > 0}<Icon name="check" size={12} />{/if}
-										{#if t.preferred}<Icon name="star" size={12} filled />{/if}
-										<span class="sr-only"
-											>{m.projects.taskResults(m.task[t.task], t.results, t.reviewed)}{t.preferred
-												? `, ${m.projects.preferredMark}`
-												: ''}</span
+									{@const said = m.projects.taskResults(
+										m.task[t.task],
+										t.results,
+										t.reviewed,
+										t.preferred
+									)}
+									<!-- Each mark says what it counts on pointing; the whole, in words, to a screen reader. -->
+									<span class="result" class:reviewed={t.reviewed > 0} title={said}>
+										<span class="mark" aria-hidden="true" title={m.task[t.task]}
+											><Icon name={t.task} size={13} /></span
 										>
+										<span class="num" aria-hidden="true" title={m.projects.resultCount(t.results)}
+											>{t.results}</span
+										>
+										{#if t.reviewed > 0}<span
+												class="mark"
+												aria-hidden="true"
+												title={m.projects.reviewedMark(t.reviewed)}
+												><Icon name="check" size={12} /></span
+											>{/if}
+										{#if t.preferred}<span
+												class="mark"
+												aria-hidden="true"
+												title={m.projects.preferredMark}><Icon name="star" size={12} filled /></span
+											>{/if}
+										<span class="sr-only">{said}</span>
 									</span>
 								{/each}
 							{/if}
@@ -420,6 +456,9 @@
 	}
 	.result.reviewed {
 		color: var(--ok-text);
+	}
+	.result .mark {
+		display: inline-grid;
 	}
 	.date {
 		white-space: nowrap;

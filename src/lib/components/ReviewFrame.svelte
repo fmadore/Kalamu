@@ -1,5 +1,6 @@
 <script lang="ts">
-	// The frame every review shares. The masthead: back to the job, the file, the menu of pages,
+	// The frame every review shares. The masthead: back to where the review was opened from,
+	// the job and the file, the menu of pages,
 	// the actions and "mark as reviewed". Below it the source (a scan on its lightbox with zoom, a
 	// text file set as text, or a player), the text or answers beside it, and a third pane while a
 	// compared text is open, with handles on the boundaries; the strip of pages at the foot. In a
@@ -7,7 +8,8 @@
 	// or Alt and the arrows, turn the pages, except that Page Up and Page Down scroll a pane
 	// focused to be scrolled; Ctrl F opens the search, under the masthead. On a Mac ⌘ takes
 	// Ctrl's place, as in every shortcut (`platform.ts`). The panes scroll from the keyboard in
-	// every webview (`scrollableByKeys`).
+	// every webview (`scrollableByKeys`). Its keys are on the document, so they come before the
+	// window's own: Alt and the arrows turn pages here, not go back.
 	import { tick, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 	import QueueBanner from './QueueBanner.svelte';
@@ -18,12 +20,13 @@
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { FIELDS, pageKeysStay, scrollableByKeys } from '#lib/keys.js';
-	import { primary, shortcut } from '#lib/platform.js';
+	import { backShortcut, primary, shortcut } from '#lib/platform.js';
 	import { columns, layout } from '#lib/review.svelte.js';
-	import { go, shortcutsHeld } from '#lib/state.svelte.js';
+	import { back, canGoBack, returnTo, shortcutsHeld } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
+		sourceId,
 		jobName,
 		fileName,
 		error,
@@ -56,6 +59,7 @@
 		strip
 	}: {
 		jobId: string;
+		sourceId: string;
 		jobName: string | null;
 		fileName: string;
 		error: string | null;
@@ -149,12 +153,21 @@
 	}
 </script>
 
-<svelte:window {onkeydown} />
+<svelte:document {onkeydown} />
 
 <div class="review">
 	<header class="masthead">
 		<div class="crumbs">
-			<button class="back" onclick={() => go({ name: 'jobs', jobId })} title={m.review.back}
+			{#if canGoBack()}
+				{@const keys = backShortcut(true)}
+				<button
+					class="btn ghost icon sm go-back"
+					aria-label={m.nav.back}
+					title={keys ? `${m.nav.back} (${keys})` : m.nav.back}
+					onclick={back}><Icon name="back" size={14} /></button
+				>
+			{/if}
+			<button class="back" onclick={() => returnTo({ name: 'jobs', jobId })} title={m.review.back}
 				>{jobName ?? m.review.title}</button
 			>
 			<span class="slash" aria-hidden="true">/</span>
@@ -204,7 +217,18 @@
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 
 	<div class="work" class:comparing style:--columns={columns(cuts)} bind:clientWidth={width}>
-		<SourcePane kind={source} {piece} {paging} {onstep} {preview} {text} {find} {found} {player} />
+		<SourcePane
+			kind={source}
+			{sourceId}
+			{piece}
+			{paging}
+			{onstep}
+			{preview}
+			{text}
+			{find}
+			{found}
+			{player}
+		/>
 
 		<Splitter
 			label={m.review.resizeSource}
@@ -262,6 +286,11 @@
 		flex-wrap: nowrap;
 		gap: var(--space-2);
 		min-width: 0;
+	}
+	.go-back {
+		flex: none;
+		align-self: center;
+		margin-left: calc(-1 * var(--space-2));
 	}
 	.crumbs .back {
 		font-size: var(--type-md);

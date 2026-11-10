@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ExportFormat } from './bindings/ExportFormat.js';
-import { FORMATS, filterTerms, SEE_ALSO, TERMS } from './glossary.js';
+import { FORMATS, filterTerms, keyboard, SEE_ALSO, TERMS } from './glossary.js';
 import { en } from './i18n/index.js';
 
 describe('glossary', () => {
@@ -46,5 +46,25 @@ describe('glossary', () => {
 		expect(filterTerms(en, 'HTR')).toContain('ocr');
 		expect(filterTerms(en, 'siglum')).toEqual(['setup']);
 		expect(filterTerms(en, 'zzzz')).toEqual([]);
+	});
+
+	it('lists the shortcuts by where they work, written for each system', () => {
+		for (const mac of [false, true]) {
+			const groups = keyboard(en, mac);
+			expect(groups.map((g) => g.place)).toEqual(Object.keys(en.glossary.keyPlaces));
+			for (const g of groups) {
+				for (const row of g.rows) {
+					expect(row.does.length).toBeGreaterThan(5);
+					expect(row.keys.every((k) => k.length > 0)).toBe(true);
+				}
+			}
+		}
+		const keys = (mac: boolean) => keyboard(en, mac).flatMap((g) => g.rows.flatMap((r) => r.keys));
+		expect(keys(false)).toContain('Ctrl N');
+		expect(keys(false)).toContain('Alt ←');
+		expect(keys(false)).not.toContain('⌘[');
+		expect(keys(true)).toContain('⌘N');
+		expect(keys(true)).toContain('⌘[');
+		expect(keys(true).some((k) => k.includes('Ctrl'))).toBe(false);
 	});
 });

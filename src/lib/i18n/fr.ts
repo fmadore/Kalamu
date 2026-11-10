@@ -113,7 +113,9 @@ export const fr: Messages = {
 		jobs: 'Traitements',
 		prompts: 'Prompts',
 		settings: 'Paramètres',
-		glossary: 'Glossaire'
+		glossary: 'Glossaire',
+		/** Back to the screen left, in a masthead. */
+		back: 'Retour'
 	},
 	task: {
 		text_extraction: 'Extraire le texte',
@@ -594,9 +596,9 @@ export const fr: Messages = {
 		wholeResult: 'Le résultat entier',
 		preferredBadge: 'Retenu',
 		reviewedBadge: 'Relu',
-		revision: (revision: string) => `Réponse ${revision}`,
-		revisionHint:
-			'La réponse enregistrée, désignée par le début de son empreinte, et sa date d’enregistrement. Une nouvelle réponse est à relire de nouveau.',
+		answered: (when: string) => `Réponse du ${when}`,
+		answeredHint:
+			'La date d’enregistrement de la réponse. Une nouvelle réponse est à relire de nouveau.',
 		open: (document: string, place: string) => `Ouvrir ${document}, ${place}, en relecture`,
 		more: (n: number) => `Afficher ${n} de plus`,
 		banner: {
@@ -678,6 +680,9 @@ export const fr: Messages = {
 		addFiles: 'Ajouter des fichiers',
 		addFolder: 'Ajouter un dossier',
 		addedFiles: (n: number) => (n === 1 ? '1 document ajouté' : `${n} documents ajoutés`),
+		dropHere: 'Déposez-les ici pour les ajouter au projet',
+		removedFromCollection: (n: number, collection: string) =>
+			`${n === 1 ? '1 document retiré' : `${n} documents retirés`} de « ${collection} »`,
 		notReadable: (n: number) =>
 			n === 1
 				? '1 fichier n’a pas pu être lu et a été laissé de côté.'
@@ -819,8 +824,6 @@ export const fr: Messages = {
 			export: 'Exporter…',
 			close: 'Fermer'
 		},
-		tagged: (tag: string, n: number) =>
-			`${n === 1 ? '1 document étiqueté' : `${n} documents étiquetés`} « ${tag} »`,
 		columnResults: 'Résultats',
 		columnDate: 'Ajouté',
 		selectAll: 'Sélectionner tous les documents affichés',
@@ -848,9 +851,11 @@ export const fr: Messages = {
 			text: 'Texte',
 			youtube: 'YouTube'
 		},
-		taskResults: (task: string, n: number, reviewed: number) =>
-			`${task} : ${n === 1 ? '1 résultat' : `${n} résultats`}${reviewed > 0 ? `, ${reviewed} relu${reviewed > 1 ? 's' : ''}` : ''}`,
-		preferredMark: 'retenu',
+		taskResults: (task: string, n: number, reviewed: number, preferred: boolean) =>
+			`${task} : ${n === 1 ? '1 résultat' : `${n} résultats`}${reviewed > 0 ? `, ${reviewed} relu${reviewed > 1 ? 's' : ''}` : ''}${preferred ? (n === 1 ? ', retenu' : ', dont un retenu') : ''}`,
+		resultCount: (n: number) => (n === 1 ? '1 résultat' : `${n} résultats`),
+		reviewedMark: (n: number) => (n === 1 ? '1 relu' : `${n} relus`),
+		preferredMark: 'Retenu : le résultat sur lequel s’appuyer pour ce document',
 		fromProject: (name: string) =>
 			`Lancé depuis le projet « ${name} » : les fichiers du traitement deviennent ses documents, et ses résultats les leurs.`,
 		linkFailed: (name: string) =>
@@ -893,7 +898,6 @@ export const fr: Messages = {
 			cost: 'Coût',
 			preferred: 'Retenu',
 			prefer: 'Retenir',
-			unprefer: 'Ne plus retenir',
 			preferHint:
 				'Le résultat sur lequel vous vous appuyez pour cette tâche. Un traitement plus récent ne le remplace jamais.',
 			open: 'Relire',
@@ -937,6 +941,7 @@ export const fr: Messages = {
 		addFiles: 'Ajouter des fichiers',
 		addFolder: 'Ajouter un dossier',
 		dropHint: 'Ou déposez des fichiers et des dossiers n’importe où dans cette fenêtre.',
+		dropHere: 'Déposez-les ici pour les ajouter au traitement',
 		setAside: {
 			files: (names: string, task: string, n: number) =>
 				n === 1
@@ -1366,7 +1371,6 @@ export const fr: Messages = {
 		playVideoNote: 'Lue depuis YouTube, dans son lecteur à confidentialité renforcée.',
 		videoBlocked:
 			'Cette vidéo ne peut pas être lue ici : son propriétaire ne l’autorise peut-être pas, ou cet ordinateur est hors ligne.',
-		keywords: 'Mots-clés',
 		previous: 'Précédent',
 		next: 'Suivant',
 		source: 'Source',
@@ -1377,6 +1381,7 @@ export const fr: Messages = {
 		itemKeys:
 			'Marqué dans la source tant qu’il a le focus. Entrée, ou la touche de menu, le renomme ou le retire.',
 		pageImage: 'Image de la page : les flèches la déplacent, avec Maj par pas plus longs',
+		itemRemoved: (name: string) => `« ${name} » retiré des réponses`,
 		itemEverywhere:
 			'Modifié dans les réponses corrigées de ce document, pour chaque modèle qui l’a relevé. Les réponses du modèle sont conservées.',
 		edit: 'Corriger',
@@ -1710,6 +1715,44 @@ export const fr: Messages = {
 		lede: 'Les mots qu’emploie Kalamu, pour les collègues qui découvrent ces outils, et l’usage de chaque format d’export.',
 		wordsTitle: 'Mots',
 		formatsTitle: 'Formats d’export',
+		keysTitle: 'Clavier',
+		keysLede:
+			'Les raccourcis, selon l’endroit où ils agissent. Ceux de l’écran derrière attendent tant qu’une boîte de dialogue est ouverte.',
+		keysOr: 'ou',
+		keyPlaces: {
+			everywhere: 'Partout',
+			newJob: 'Nouveau traitement',
+			review: 'En relecture',
+			search: 'Dans la recherche d’une relecture',
+			scan: 'Sur un scan'
+		},
+		keys: {
+			newJob: 'Ouvrir Nouveau traitement',
+			sidebar: 'Replier ou déplier la barre latérale',
+			find: 'Aller au champ de filtre ou de recherche : dans Traitements, les documents d’un projet, sa recherche et son dictionnaire, et ici',
+			back: (pageBack: string) =>
+				`Revenir à l’écran d’où vous venez, comme le bouton Précédent de la souris. En relecture, ${pageBack} tourne plutôt à la page précédente.`,
+			escape: 'Fermer un menu ou une boîte de dialogue',
+			start: 'Lancer le traitement',
+			addLinks: 'Ajouter les liens YouTube collés',
+			newLine: 'Commencer une autre ligne de liens',
+			reviewed: 'Marquer la page comme relue, ou non relue ; pendant une correction, l’enregistrer',
+			nextPage: 'Page ou partie suivante',
+			previousPage: 'Page ou partie précédente',
+			nextDifference: 'Passage suivant où les modèles divergent, ses versions ouvertes',
+			previousDifference: 'Passage précédent où les modèles divergent',
+			closeReadings: 'Fermer les versions',
+			moveReadings: 'Écarter les versions, depuis la poignée à leur gauche ; avec Maj, plus loin',
+			splitter:
+				'Déplacer la limite entre deux volets, une fois qu’elle a le focus ; avec Maj, plus loin',
+			search: 'Chercher dans le texte, ou revenir au champ de recherche',
+			nextMatch: 'Occurrence suivante',
+			previousMatch: 'Occurrence précédente',
+			closeSearch: 'Fermer la liste des occurrences, puis la recherche',
+			zoomIn: 'Agrandir',
+			zoomOut: 'Réduire',
+			fit: 'Ajuster la page à la largeur du volet'
+		},
 		filter: 'Chercher un mot',
 		noMatch: 'Aucun mot de ce nom.',
 		seeAlso: 'Voir aussi',
@@ -1860,7 +1903,11 @@ export const fr: Messages = {
 	},
 	keys: {
 		ctrl: 'Ctrl',
-		shift: 'Maj'
+		shift: 'Maj',
+		alt: 'Alt',
+		escape: 'Échap',
+		pageUp: 'Pg préc',
+		pageDown: 'Pg suiv'
 	},
 	tray: {
 		open: 'Ouvrir Kalamu',
@@ -1873,6 +1920,7 @@ export const fr: Messages = {
 	},
 	common: {
 		cancel: 'Annuler',
+		undo: 'Annuler',
 		save: 'Enregistrer',
 		close: 'Fermer',
 		dismissMessage: 'Fermer ce message',

@@ -9,7 +9,7 @@
 	import { Action } from '#lib/action.svelte.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
-	import { app, go, refreshJobs } from '#lib/state.svelte.js';
+	import { app, go, refreshJobs, returnTo } from '#lib/state.svelte.js';
 	import { api, ask } from '#lib/tauri.js';
 	import { tone } from '#lib/workflows.js';
 
@@ -80,7 +80,7 @@
 	{@const { run, status, steps } = view}
 	<header class="masthead">
 		<div class="title">
-			<button class="btn ghost sm" onclick={() => go({ name: 'workflows' })}
+			<button class="btn ghost sm" onclick={() => returnTo({ name: 'workflows' })}
 				><Icon name="back" />{w.back}</button
 			>
 			<h1>{run.name}</h1>

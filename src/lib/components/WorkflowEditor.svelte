@@ -16,7 +16,15 @@
 	import { describeError } from '#lib/errors.js';
 	import { acceptsPrompt, MODES, rulesFor, taskOf } from '#lib/newJob.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { app, go, guardDraft, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
+	import {
+		app,
+		go,
+		guardDraft,
+		returnTo,
+		hasKey,
+		toast,
+		type FromProject
+	} from '#lib/state.svelte.js';
 	import { api, ask, pickJsonSave } from '#lib/tauri.js';
 	import {
 		blankWorkflow,
@@ -212,7 +220,9 @@
 
 <header class="masthead">
 	<div class="title">
-		<button class="btn ghost sm" onclick={() => go({ name: 'workflows', paths, sources, project })}
+		<button
+			class="btn ghost sm"
+			onclick={() => returnTo({ name: 'workflows', paths, sources, project })}
 			><Icon name="back" />{w.back}</button
 		>
 		<label class="field name">

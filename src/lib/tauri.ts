@@ -546,6 +546,16 @@ export async function onDrop(handler: (paths: string[]) => void): Promise<Unlist
 	});
 }
 
+/** Whether files are being dragged over the window: from when they enter it until they leave,
+ *  are dropped, or the drag is given up. */
+export async function onDragging(handler: (over: boolean) => void): Promise<Unlisten> {
+	if (!isTauri()) return () => {};
+	const { getCurrentWebview } = await import('@tauri-apps/api/webview');
+	return getCurrentWebview().onDragDropEvent((event) => {
+		handler(event.payload.type === 'enter' || event.payload.type === 'over');
+	});
+}
+
 /** A system notification, when the window is not in front (or `always`). */
 export async function notify(title: string, body: string, always = false): Promise<void> {
 	if (!isTauri() || (!always && document.hasFocus())) return;

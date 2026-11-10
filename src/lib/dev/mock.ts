@@ -328,6 +328,12 @@ function mockScores(jobId: string) {
 	return [];
 }
 
+/** Whether the window shows files being dragged over it (`?dragging`), which only the desktop
+ * app can tell. */
+export function mockDragging(): boolean {
+	return new URLSearchParams(location.search).has('dragging');
+}
+
 export function mockView(): View | null {
 	switch (new URLSearchParams(location.search).get('view') ?? '') {
 		case 'all-jobs':

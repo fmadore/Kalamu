@@ -28,7 +28,7 @@
 	import { Review } from '#lib/review.svelte.js';
 	import { find, searchable } from '#lib/search.js';
 	import { rovingStop, rovingTarget } from '#lib/keys.js';
-	import { guardDraft, type ReviewFind } from '#lib/state.svelte.js';
+	import { guardDraft, toast, type ReviewFind } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
@@ -157,22 +157,35 @@
 	 */
 	async function changeItem(key: string, from: string, to: string | null) {
 		hovered = null;
-		const before = collate(key, witnesses).map((r) => r.value);
+		const listed = collate(key, witnesses).map((r) => r.value);
+		/** Each set-up's corrected answers and review as they stood, to put back. */
+		const changed: { setup: Setup; fields: FieldAnswer[] | null; reviewed: boolean }[] = [];
+		let failed = false;
 		for (const s of setups) {
 			const v = viewOf(s);
 			if (!v || v.status === 'failed') continue;
 			const before = answersOf(v);
 			if (!holdsItem(before, key, from)) continue;
-			if (
-				!(await review.save({
-					setup: s,
-					index: 0,
-					fields: editItem(before, key, from, to),
-					reviewed: v.reviewed
-				}))
-			)
-				return;
+			const was = { setup: s, fields: $state.snapshot(v.corrected_fields), reviewed: v.reviewed };
+			const saved = await review.save({
+				setup: s,
+				index: 0,
+				fields: editItem(before, key, from, to),
+				reviewed: v.reviewed
+			});
+			if (!saved) {
+				failed = true;
+				break;
+			}
+			changed.push(was);
 		}
+		// A name removed can be put back from the toast, as it was in each set-up's answers.
+		if (to === null && changed.length > 0) {
+			toast(m.review.itemRemoved(from), {
+				action: { label: m.common.undo, run: () => void putBack(key, from, changed) }
+			});
+		}
+		if (failed) return;
 		// The focus, lost with the name it was on, goes to the name renamed or to the next one.
 		await tick();
 		if (document.activeElement && document.activeElement !== document.body) return;
@@ -180,10 +193,27 @@
 		const next =
 			to !== null && now.includes(to)
 				? to
-				: now[Math.min(Math.max(before.indexOf(from), 0), now.length - 1)];
+				: now[Math.min(Math.max(listed.indexOf(from), 0), now.length - 1)];
 		if (next === undefined) return;
 		itemStops[key] = next;
 		focusItem(key, next);
+	}
+
+	/** Puts each set-up's corrected answers and review back as they were, and the focus, lost
+	 * with the toast's button, on the name put back. */
+	async function putBack(
+		key: string,
+		name: string,
+		changed: { setup: Setup; fields: FieldAnswer[] | null; reviewed: boolean }[]
+	) {
+		for (const c of changed) {
+			if (!(await review.save({ index: 0, ...c }))) return;
+		}
+		await tick();
+		if (document.activeElement && document.activeElement !== document.body) return;
+		if (!collate(key, witnesses).some((r) => r.value === name)) return;
+		itemStops[key] = name;
+		focusItem(key, name);
 	}
 
 	function toggleReviewed() {
@@ -260,6 +290,7 @@
 
 <ReviewFrame
 	{jobId}
+	{sourceId}
 	jobName={review.job?.name ?? null}
 	fileName={source?.file_name ?? ''}
 	error={review.error}

@@ -181,6 +181,7 @@
 				<input
 					type="text"
 					bind:value={query}
+					data-find
 					placeholder={m.dictionary.search}
 					aria-label={m.dictionary.search}
 				/>

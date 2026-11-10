@@ -151,11 +151,11 @@
 						<span class="chip {tone(s)}">{reasonText(s, m, item.piece === null)}</span>
 					{/each}
 					{#if item.reviewed}<span class="chip ok">{q.reviewedBadge}</span>{/if}
-					{#if item.revision}
-						<span class="revision mono muted" title={q.revisionHint}
-							>{q.revision(item.revision)}{#if item.answered_at}, {formatDateTime(
-									item.answered_at
-								)}{/if}</span
+					<!-- When the answer was stored; its fingerprint tells no two rows apart, a piece
+					     having one answer at a time. -->
+					{#if item.answered_at}
+						<span class="revision num muted" title={q.answeredHint}
+							>{q.answered(formatDateTime(item.answered_at))}</span
 						>
 					{/if}
 				</span>

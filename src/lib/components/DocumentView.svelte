@@ -16,7 +16,7 @@
 	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import { rulesFor } from '#lib/newJob.js';
-	import { app, go, toast } from '#lib/state.svelte.js';
+	import { app, go, returnTo, toast } from '#lib/state.svelte.js';
 	import { api, ask, revealInFolder } from '#lib/tauri.js';
 
 	let { projectId, documentId }: { projectId: string; documentId: string } = $props();
@@ -119,7 +119,9 @@
 
 <header class="masthead">
 	<div>
-		<button class="back" onclick={() => go({ name: 'projects', projectId, collectionId: from })}
+		<button
+			class="back"
+			onclick={() => returnTo({ name: 'projects', projectId, collectionId: from })}
 			><Icon name="back" size={14} />{project?.project.name ?? m.projects.back}</button
 		>
 		{#if draftTitle !== null}

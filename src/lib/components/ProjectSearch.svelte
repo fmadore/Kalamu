@@ -26,7 +26,6 @@
 		hitWords,
 		keepSearch,
 		lastSearch,
-		leaveForMatch,
 		reviewFind,
 		searchableQuery
 	} from '#lib/projectSearch.js';
@@ -95,7 +94,6 @@
 	}
 
 	function open(result: ResultHits, hit: Hit) {
-		leaveForMatch(projectId);
 		go({
 			name: 'review',
 			jobId: result.job_id,
@@ -156,6 +154,7 @@
 			<input
 				type="search"
 				bind:value={request.query}
+				data-find
 				placeholder={m.search.placeholder}
 				aria-label={m.search.query}
 			/>

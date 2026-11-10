@@ -8,10 +8,8 @@ import {
 	hitOrigin,
 	hitPlace,
 	hitWords,
-	backToSearch,
 	keepSearch,
 	lastSearch,
-	leaveForMatch,
 	reviewFind,
 	searchableQuery
 } from './projectSearch.js';
@@ -129,17 +127,6 @@ describe('project search', () => {
 			results: 'preferred',
 			generated: false
 		});
-	});
-
-	it('opens the project on its search once, after a match in it was opened', () => {
-		expect(backToSearch('p1')).toBe(false);
-		leaveForMatch('p1');
-		expect(backToSearch('p2')).toBe(false);
-		// Opening another project forgets it too.
-		expect(backToSearch('p1')).toBe(false);
-		leaveForMatch('p1');
-		expect(backToSearch('p1')).toBe(true);
-		expect(backToSearch('p1')).toBe(false);
 	});
 });
 

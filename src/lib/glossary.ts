@@ -4,6 +4,7 @@
 
 import type { ExportFormat } from './bindings/ExportFormat.js';
 import type { Messages } from './i18n/index.js';
+import { alted, backShortcut, isMac, shifted, shortcut } from './platform.js';
 import { find } from './search.js';
 
 export type Term = keyof Messages['glossary']['terms'];
@@ -75,6 +76,78 @@ export const FORMATS: (ExportFormat | 'provenance')[] = [
 
 /** The anchor of a term on the page, which links from elsewhere in the app go to. */
 export const anchor = (term: Term | 'formats') => `glossary-${term}`;
+
+/** Where a shortcut works, in the order the page lists them. */
+export type KeyPlace = keyof Messages['glossary']['keyPlaces'];
+
+/** A shortcut: the keys that do it (any one of them), and what it does. */
+export interface KeyRow {
+	keys: string[];
+	does: string;
+}
+
+/**
+ * Every shortcut of the app, by where it works, written for this system (`platform.ts`). Each
+ * is one a handler answers: the window's (`+page.svelte`), New job's, the review's frame,
+ * text and search, the scan, the readings and the splitters. One added there is listed here.
+ */
+export function keyboard(m: Messages, mac = isMac): { place: KeyPlace; rows: KeyRow[] }[] {
+	const k = m.glossary.keys;
+	const back = backShortcut(false, mac);
+	return [
+		{
+			place: 'everywhere',
+			rows: [
+				{ keys: [shortcut('N', mac)], does: k.newJob },
+				{ keys: [shortcut('B', mac)], does: k.sidebar },
+				{ keys: [shortcut('F', mac)], does: k.find },
+				{
+					keys: mac ? [back ?? '', alted('←', mac)] : [back ?? ''],
+					does: k.back(alted('←', mac))
+				},
+				{ keys: [m.keys.escape], does: k.escape }
+			]
+		},
+		{
+			place: 'newJob',
+			rows: [
+				{ keys: [shortcut('↵', mac)], does: k.start },
+				{ keys: ['↵'], does: k.addLinks },
+				{ keys: [shifted('↵', mac)], does: k.newLine }
+			]
+		},
+		{
+			place: 'review',
+			rows: [
+				{ keys: [shortcut('↵', mac)], does: k.reviewed },
+				{ keys: [m.keys.pageDown, alted('→', mac)], does: k.nextPage },
+				{ keys: [m.keys.pageUp, alted('←', mac)], does: k.previousPage },
+				{ keys: ['F'], does: k.nextDifference },
+				{ keys: [shifted('F', mac)], does: k.previousDifference },
+				{ keys: [m.keys.escape], does: k.closeReadings },
+				{ keys: ['← ↑ → ↓'], does: k.moveReadings },
+				{ keys: ['← →'], does: k.splitter },
+				{ keys: [shortcut('F', mac)], does: k.search }
+			]
+		},
+		{
+			place: 'search',
+			rows: [
+				{ keys: ['↵'], does: k.nextMatch },
+				{ keys: [shifted('↵', mac)], does: k.previousMatch },
+				{ keys: [m.keys.escape], does: k.closeSearch }
+			]
+		},
+		{
+			place: 'scan',
+			rows: [
+				{ keys: [shortcut('+', mac)], does: k.zoomIn },
+				{ keys: [shortcut('−', mac)], does: k.zoomOut },
+				{ keys: [shortcut('0', mac)], does: k.fit }
+			]
+		}
+	];
+}
 
 /** The terms whose word or definition holds the words typed, ignoring capitals and accents, in
  * the alphabetical order of their words in the interface language. */

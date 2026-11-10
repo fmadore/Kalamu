@@ -17,7 +17,7 @@
 	import { panStep, scrollableByKeys } from '#lib/keys.js';
 	import { modifier, primary, shortcut, zoomsWithWheel } from '#lib/platform.js';
 	import { shortcutsHeld } from '#lib/state.svelte.js';
-	import { keep, recall } from '#lib/stored.js';
+	import { keep, keepFor, recall, recallFor } from '#lib/stored.js';
 	import {
 		between,
 		clampZoom,
@@ -30,6 +30,7 @@
 
 	let {
 		kind,
+		sourceId = null,
 		piece = null,
 		paging = null,
 		onstep,
@@ -40,6 +41,8 @@
 		player
 	}: {
 		kind: 'scan' | 'text' | 'player';
+		/** The source, whose turn is remembered on this computer. */
+		sourceId?: string | null;
 		/** The piece shown, after "Source". */
 		piece?: string | null;
 		paging?: { at: number; count: number } | null;
@@ -55,8 +58,20 @@
 	const m = messages();
 
 	let zoom = $state(1);
-	/** The reader's quarter turns, for every page of the source. */
-	let rotation = $state<Rotation>(0);
+	/** The reader's quarter turns, for every page of the source, remembered for the sources
+	 * turned last so a page scanned sideways stays turned. */
+	const ROTATION_KEY = 'kalamu.review.rotation';
+	const ROTATIONS: unknown[] = [90, 180, 270];
+	// svelte-ignore state_referenced_locally
+	let rotation = $state<Rotation>(
+		(sourceId &&
+			recallFor(ROTATION_KEY, sourceId, (v) => (ROTATIONS.includes(v) ? (v as Rotation) : null))) ||
+			0
+	);
+	function turnBy(by: 1 | -1) {
+		rotation = turn(rotation, by);
+		if (sourceId) keepFor(ROTATION_KEY, sourceId, rotation === 0 ? null : rotation, 200);
+	}
 	let desk = $state<HTMLElement | null>(null);
 
 	const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -330,13 +345,13 @@
 				class="tool"
 				aria-label={m.review.turnLeft}
 				title={m.review.turnLeft}
-				onclick={() => (rotation = turn(rotation, -1))}><Icon name="turn-left" /></button
+				onclick={() => turnBy(-1)}><Icon name="turn-left" /></button
 			>
 			<button
 				class="tool"
 				aria-label={m.review.turnRight}
 				title={m.review.turnRight}
-				onclick={() => (rotation = turn(rotation, 1))}><Icon name="turn-right" /></button
+				onclick={() => turnBy(1)}><Icon name="turn-right" /></button
 			>
 		</div>
 	{:else if kind === 'text'}
