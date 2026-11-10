@@ -17,9 +17,11 @@ Windows SDK's `MakeAppx`.
 | `src-tauri/gen/windows/bundle.config.json` | Publisher, capabilities (`internetClient`; the bundler adds `runFullTrust`), resource index |
 | `src-tauri/gen/windows/AppxManifest.xml.template` | The manifest, with the reserved identity written out and `{{PLACEHOLDER}}`s the bundler fills per architecture |
 | `src-tauri/gen/windows/Assets/*.png` | Store logo, tiles and the 42 taskbar sizes, rendered by `scripts/msix-assets.py` |
-| `scripts/bundle-msix.mjs` | `npm run bundle:msix:{x64,arm64}`: checks FFmpeg is fetched, then runs the bundler with FFmpeg's configuration |
+| `scripts/bundle-msix.mjs` | `npm run bundle:msix:{x64,arm64}`: checks FFmpeg is fetched, then runs the bundler with FFmpeg's configuration; `--prebuilt` packages an app already built |
 | `scripts/third-party-notices.mjs` | Writes `licenses/THIRD-PARTY-NOTICES.txt`, which every installer and package carries |
-| `.github/workflows/release.yml` → `msix`, `bundle` | Native x64 and ARM64 packages, then one `.msixbundle` for Partner Center |
+| `.github/actions/windows-packages` | One build per architecture, then its package and its installer |
+| `.github/workflows/release.yml` → `windows`, `bundle` | Native x64 and ARM64 packages, then one `.msixbundle` for Partner Center |
+| `.github/workflows/packaging.yml` | The same action as a dry run, on pull requests that touch the packaging |
 
 `src-tauri/gen/` is otherwise generated and ignored; `.gitignore` keeps `gen/windows/`.
 
@@ -95,9 +97,19 @@ keeps its data in its own folder under `%LOCALAPPDATA%\Packages\`, apart from an
 
 ## What CI does
 
-The `msix` job runs on `windows-latest` (x64) and `windows-11-arm` (ARM64), fetches FFmpeg,
-writes the notices and runs `npm run bundle:msix:<arch>`; it renames the package
-`Kalamu_<version>_<arch>.msix`, attaches it to the draft release and hands it to `bundle`,
-which combines both into `Kalamu_<version>.msixbundle` with `MakeAppx bundle` and attaches it.
-`publish` checks every asset is there before the release goes public. The packages are
-unsigned: Partner Center signs what it accepts.
+The `windows` job runs on `windows-latest` (x64) and `windows-11-arm` (ARM64) through
+`.github/actions/windows-packages`: it fetches FFmpeg and llama.cpp, builds Whisper's Vulkan
+helper, writes the notices and compiles the app once with
+`tauri build --no-bundle --config src-tauri/tauri.ffmpeg.windows-<arch>.conf.json`. From that
+build `node scripts/bundle-msix.mjs <arch> --prebuilt` makes the package (the bundler's own
+compilation is replaced by an `echo`, since it has no switch to skip it), then
+`tauri bundle --bundles nsis --no-sign` the installer; the package comes first because the
+installer's bundler marks the executable with its bundle type, which the package never carried.
+The job renames the package `Kalamu_<version>_<arch>.msix`, checks what it carries and hands it
+to `bundle`, which combines both into `Kalamu_<version>.msixbundle` with `MakeAppx bundle`;
+`upload` attaches them with the other assets, and `publish` checks every asset is there before
+the release goes public. The packages are unsigned: Partner Center signs what it accepts.
+
+`.github/workflows/packaging.yml` runs the same action without uploading anything on pull
+requests that touch the packaging (x64, a debug build, a copy of FFmpeg standing in for the
+Vulkan helper) and by hand for both architectures, so a broken configuration fails before a tag.

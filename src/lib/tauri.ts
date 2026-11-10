@@ -45,6 +45,7 @@ import type { Expanded } from './bindings/Expanded.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { Job } from './bindings/Job.js';
 import type { JobScores } from './bindings/JobScores.js';
+import type { JobProgress } from './bindings/JobProgress.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { JobSources } from './bindings/JobSources.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
@@ -70,7 +71,7 @@ import type { Release } from './bindings/Release.js';
 import type { Settings } from './bindings/Settings.js';
 import type { TagRenamed } from './bindings/TagRenamed.js';
 import type { Task } from './bindings/Task.js';
-import type { TrayState } from './bindings/TrayState.js';
+import type { ShellLabels } from './bindings/ShellLabels.js';
 import { providerNameOf } from './catalogText.js';
 import { listNames, localisePreset, messages } from './i18n/index.js';
 import { baseName } from './paths.js';
@@ -174,12 +175,17 @@ export const api = {
 	cancelJob: (id: string) => invoke<void>('cancel_job', { id }),
 	retryFailed: (id: string) => invoke<void>('retry_failed', { id }),
 	deleteJob: (id: string) => invoke<void>('delete_job', { id }),
+	/** Deletes several jobs, all or none. */
+	deleteJobs: (ids: string[]) => invoke<void>('delete_jobs', { ids }),
 	renameJob: (id: string, name: string) => invoke<void>('rename_job', { id, name }),
 	listJobs: () => invoke<JobSummary[]>('list_jobs'),
 	/** The names of every job's sources, for finding a job by a file it read. */
 	jobSources: () => invoke<JobSources[]>('job_sources'),
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
+	/** The job's pieces held in batches, and each of `sources` counted under every set-up. */
+	jobProgress: (id: string, sources: string[]) =>
+		invoke<JobProgress>('job_progress', { id, sources }),
 	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),
 	/** Freezes a job's corrected text under a set-up: every source's, or one source's. */
 	snapshotJob: (id: string, setup: string, source: string | null = null) =>
@@ -204,6 +210,9 @@ export const api = {
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>
 		invoke<PagePreview>('piece_preview', { jobId, sourceId, index }),
+	/** A page drawn `width` pixels wide, as a small image, for the strip of thumbnails. */
+	pieceThumbnail: (jobId: string, sourceId: string, index: number, width: number) =>
+		invoke<PagePreview>('piece_thumbnail', { jobId, sourceId, index, width }),
 	pieceAudio: (jobId: string, sourceId: string, index: number, convert: boolean) =>
 		invoke<PieceAudio>('piece_audio', { jobId, sourceId, index, convert }),
 	/** A file `pieceAudio` named, as an address the player streams (Tauri's asset protocol). */
@@ -214,6 +223,18 @@ export const api = {
 	sourceText: (jobId: string, sourceId: string) =>
 		invoke<string>('source_text', { jobId, sourceId }),
 	saveCorrection: (correction: Correction) => invoke<void>('save_correction', { correction }),
+	/** Stores several corrections, all or none. */
+	saveCorrections: (corrections: Correction[]) => invoke<void>('save_corrections', { corrections }),
+	/** Renames a listed name in every set-up that found it, or takes it out when `to` is null,
+	 * all or none; gives back those set-ups' corrections as they stood, to put back. */
+	renameListed: (
+		jobId: string,
+		sourceId: string,
+		index: number,
+		key: string,
+		from: string,
+		to: string | null
+	) => invoke<Correction[]>('rename_listed', { jobId, sourceId, index, key, from, to }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
 		invoke<void>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>
@@ -334,12 +355,14 @@ export const api = {
 		invoke<string[]>('attach_job', { project, job, choices, collection }),
 	linkJob: (project: string, job: string, collection: string | null) =>
 		invoke<string[]>('link_job', { project, job, collection }),
+	/** Links several jobs to their documents, all or none. */
+	linkJobs: (project: string, jobs: string[], collection: string | null) =>
+		invoke<string[]>('link_jobs', { project, jobs, collection }),
 	detachJob: (project: string, document: string, job: string, source: string) =>
 		invoke<void>('detach_job', { project, document, job, source }),
 	reviewQueue: (project: string, selection: QueueSelection, excluded: ResultKey[]) =>
 		invoke<QueueView>('review_queue', { project, selection, excluded }),
-	setTaskbarProgress: (percent: number | null) => invoke<void>('set_taskbar_progress', { percent }),
-	setTrayState: (state: TrayState) => invoke<void>('set_tray_state', { state }),
+	setShellLabels: (labels: ShellLabels) => invoke<void>('set_shell_labels', { labels }),
 	hideWindow: () => invoke<void>('hide_window'),
 	quitApp: () => invoke<void>('quit_app')
 };

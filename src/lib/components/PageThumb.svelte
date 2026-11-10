@@ -26,27 +26,22 @@
 </script>
 
 <script lang="ts">
-	// One page of a source, small, in the review's strip of pages.
-	import { renderPdfPage } from '#lib/pdf.js';
+	// One page of a source, small, in the review's strip of pages: drawn by the app at the
+	// thumbnail's size, so a few kilobytes cross over rather than the whole page.
 	import { api } from '#lib/tauri.js';
 
 	let { jobId, sourceId, index }: { jobId: string; sourceId: string; index: number } = $props();
 
+	/** The thumbnail's width in CSS pixels (2.5rem), drawn at twice that or the screen's density. */
 	const WIDTH = 40;
 	const key = $derived(`${jobId}/${sourceId}/${index}`);
 	let src = $state<string | null>(null);
 	let box = $state<HTMLElement | null>(null);
 
 	async function draw(key: string) {
-		const preview = await api.piecePreview(jobId, sourceId, index);
-		let url: string | null = null;
-		if (preview.mime === 'application/pdf') {
-			const canvas = document.createElement('canvas');
-			await renderPdfPage(preview.data, canvas, WIDTH * 2);
-			url = canvas.toDataURL('image/jpeg', 0.8);
-		} else if (preview.mime.startsWith('image/') && !preview.mime.includes('hei')) {
-			url = `data:${preview.mime};base64,${preview.data}`;
-		}
+		const pixels = Math.round(WIDTH * Math.max(2, window.devicePixelRatio || 1));
+		const small = await api.pieceThumbnail(jobId, sourceId, index, pixels);
+		const url = small.mime.startsWith('image/') ? `data:${small.mime};base64,${small.data}` : null;
 		if (url) drawn.set(key, url);
 		src = url;
 	}

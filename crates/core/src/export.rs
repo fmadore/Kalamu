@@ -105,6 +105,25 @@ pub struct ExportDocument {
 pub struct Table {
     pub headings: Vec<String>,
     pub rows: Vec<Vec<String>>,
+    /// What the CSV writer does with a cell a spreadsheet would take for a formula, decided by
+    /// whoever makes the table, for what the file is for.
+    pub cells: CsvCells,
+}
+
+/// How a table's cells are written as CSV. A spreadsheet reads a cell that begins with `=`,
+/// `+`, `-` or `@` (or a tab or carriage return before one) as a formula: a telephone number,
+/// a list item or a formula quoted in a transcription is computed, shown as an error, or, from a
+/// hostile document, runs a command.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum CsvCells {
+    /// Such a cell is written after an apostrophe, so a spreadsheet shows it as text; a cell
+    /// that is a number, negative included, stays a number. For a file meant to be opened in a
+    /// spreadsheet, whose exact text the JSON export of the same data keeps.
+    #[default]
+    Guarded,
+    /// Every cell exactly as it is, for a file another program imports, where a changed cell
+    /// would be imported changed.
+    AsWritten,
 }
 
 #[derive(Debug, Error)]

@@ -284,6 +284,15 @@ pub trait ProjectStore: Send + Sync {
     fn members(&self, project: ProjectId) -> Result<Vec<(CollectionId, DocumentId)>, StoreError>;
 
     fn put_link(&self, link: &DocumentLink) -> Result<(), StoreError>;
+    /// Writes what attaching jobs makes, all or none: new documents, their places in a
+    /// collection, and the links of jobs' sources to documents. A job, or several, is never
+    /// left attached in part.
+    fn attach_documents(
+        &self,
+        documents: &[Document],
+        members: &[(CollectionId, DocumentId)],
+        links: &[DocumentLink],
+    ) -> Result<(), StoreError>;
     fn remove_link(
         &self,
         document: DocumentId,

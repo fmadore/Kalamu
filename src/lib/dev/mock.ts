@@ -5,6 +5,7 @@
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import type { Pipeline } from '../bindings/Pipeline.js';
 import type { Catalog } from '../bindings/Catalog.js';
+import type { Correction } from '../bindings/Correction.js';
 import type { Preset } from '../bindings/Preset.js';
 import type { Settings } from '../bindings/Settings.js';
 import type { TaskRules } from '../bindings/TaskRules.js';
@@ -15,6 +16,7 @@ import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import taskRulesJson from './taskRules.json';
 import { DOCUMENT_ID, PROJECT_ID, projectCommand, seedProjects } from './mockProjects.js';
 import { NO_RESULT } from './noResult.js';
+import { enlarge, largeRows, progressOf } from './mockLarge.js';
 import { profileCommand } from './mockProfiles.js';
 import { searchCommand } from './mockSearch.js';
 import { queueCommand } from './mockQueue.js';
@@ -28,6 +30,7 @@ import {
 	audioPieces,
 	audioSetup,
 	job,
+	listedBefore,
 	nameSpeakers,
 	pieces,
 	recording,
@@ -424,7 +427,7 @@ export function installMock(): void {
 		]
 	});
 	seedWorkflows(pipelines[0], pipelines[1], summaries[0], source);
-	mockIPC((cmd, args) => {
+	const answer = (cmd: string, args?: unknown): unknown => {
 		const a = (args ?? {}) as Record<string, unknown>;
 		const profile = profileCommand(cmd, a);
 		if (profile !== undefined) return profile;
@@ -496,16 +499,17 @@ export function installMock(): void {
 						languages: languages as string[]
 					})),
 					tesseract_version: '5.5.2',
-					// LightOnOCR downloaded and timed on this computer, GLM-OCR not yet.
+					// LightOnOCR downloaded and timed on this computer; GLM-OCR's download stopped
+					// part-way, what it received kept.
 					ocr_models: [
-						['lightonocr-3-1b', 1_088_895_872, true],
-						['glm-ocr', 1_434_837_056, false]
-					].map(([id, bytes, installed]) => ({
+						['lightonocr-3-1b', 1_088_895_872, true, 0],
+						['glm-ocr', 1_434_837_056, false, 512_000_000]
+					].map(([id, bytes, installed, kept]) => ({
 						id: id as string,
 						bytes: bytes as number,
 						installed: installed as boolean,
 						downloading: false,
-						downloaded_bytes: 0,
+						downloaded_bytes: kept as number,
 						in_use: false,
 						languages: []
 					})),
@@ -585,6 +589,9 @@ export function installMock(): void {
 			case 'delete_job':
 				deletedJobs.add(String(a.id));
 				return null;
+			case 'delete_jobs':
+				for (const id of a.ids as string[]) deletedJobs.add(id);
+				return null;
 			case 'get_job':
 				if (a.id === videoJob.id) return videoJob;
 				if (a.id === contentsJob.id) return contentsJob;
@@ -630,6 +637,8 @@ export function installMock(): void {
 					attempts: 1,
 					updated_at: 0
 				}));
+			case 'job_progress':
+				return progressOf(pieces, a.sources as string[]);
 			case 'source_pieces':
 				if (a.jobId === analysisJob.id) return analysisPieces;
 				if (a.jobId === contentsJob.id) return contentsPieces;
@@ -646,6 +655,7 @@ export function installMock(): void {
 				toneUrl ??= URL.createObjectURL(new Blob([toneWav()], { type: 'audio/wav' }));
 				return { path: toneUrl, start_ms: 2_000, end_ms: 8_000, original: true };
 			case 'piece_preview':
+			case 'piece_thumbnail':
 				// A synthetic scan as an image: shown everywhere, headless browsers included.
 				return { mime: 'image/jpeg', data: SAMPLE_SCAN.split(',')[1] ?? '' };
 			case 'compare_source':
@@ -796,8 +806,24 @@ export function installMock(): void {
 					'C:\\Archives\\Bulletin\\bulletin-1957-06.pdf',
 					'C:\\Archives\\Letters\\lettre-gouverneur.jpg'
 				];
-			case 'save_correction':
+			case 'save_correction': {
+				// Kept on the sample piece, as the store keeps it, so the review shows the
+				// correction again when it reads the pieces anew.
+				const c = a.correction as Correction;
+				const piece = [...pieces, ...analysisPieces, ...contentsPieces, ...correctionPieces].find(
+					(p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index
+				);
+				if (piece) {
+					piece.corrected_text = c.text;
+					piece.corrected_fields = c.fields ?? null;
+					piece.reviewed = c.reviewed;
+				}
 				return null;
+			}
+			case 'save_corrections':
+				return null;
+			case 'rename_listed':
+				return listedBefore(a);
 			case 'job_text_outputs':
 			case 'export_source':
 				return [];
@@ -806,6 +832,15 @@ export function installMock(): void {
 				if (NO_RESULT.has(cmd) || cmd.startsWith('plugin:')) return null;
 				throw { id: 'app.notDesktop', detail: cmd };
 		}
+	};
+	// `rows=3000`: thousands of rows in the long tables and the sample job.
+	const rows = largeRows();
+	mockIPC((cmd, args) => {
+		const a = (args ?? {}) as Record<string, unknown>;
+		const result = answer(cmd, args);
+		return result instanceof Promise
+			? result.then((r) => enlarge(cmd, a, r, rows, job))
+			: enlarge(cmd, a, result, rows, job);
 	});
 	// `piece_audio` names a blob URL here, not a file, so it is its own address.
 	(

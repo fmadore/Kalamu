@@ -29,6 +29,26 @@ pub(crate) fn data_url(mime: &str, bytes: &[u8]) -> String {
     format!("data:{mime};base64,{}", base64(bytes))
 }
 
+/// The slowest upload a batch is given time for: 1 Mbit/s, a weak connection's upstream.
+const SLOWEST_UPLOAD_BYTES_PER_SEC: u64 = 128 * 1024;
+
+/// What a request that uploads `bytes` is given before it is called timed out: five minutes
+/// for the provider to answer, plus the body at the slowest upload. A batch of 64 MB has about
+/// thirteen minutes, one of 200 MB half an hour; a fixed fifteen minutes cut the large ones off
+/// while they were still being sent.
+pub(crate) fn upload_timeout(bytes: usize) -> Duration {
+    Duration::from_secs(300 + bytes as u64 / SLOWEST_UPLOAD_BYTES_PER_SEC)
+}
+
+/// A request carrying a JSON body already written (a batch's), given the time to upload it.
+/// The bytes become the request's body as they are, without another copy.
+pub(crate) fn with_json_body(request: RequestBuilder, body: Vec<u8>) -> RequestBuilder {
+    request
+        .timeout(upload_timeout(body.len()))
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
+        .body(body)
+}
+
 /// Sends a request and returns the JSON body of a successful response.
 pub(crate) async fn send_json(request: RequestBuilder) -> Result<Value, ProviderError> {
     let body = send_text(request).await?;
@@ -288,6 +308,18 @@ mod tests {
         ));
         assert!(status_error(StatusCode::SERVICE_UNAVAILABLE, None, "busy").is_retryable());
         assert!(!status_error(StatusCode::BAD_REQUEST, None, "bad").is_retryable());
+    }
+
+    #[test]
+    fn an_upload_has_time_in_proportion_to_its_size() {
+        assert_eq!(upload_timeout(0), Duration::from_secs(300));
+        let mb = |n: usize| upload_timeout(n * 1_000_000).as_secs();
+        assert_eq!(mb(64), 300 + 488);
+        assert_eq!(mb(200), 300 + 1525);
+        assert!(
+            mb(200) > 900,
+            "longer than the fixed fifteen minutes it replaces"
+        );
     }
 
     #[test]

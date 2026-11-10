@@ -139,18 +139,20 @@
 	description: string,
 	blocked: boolean
 )}
+	{@const received = Number(s?.downloaded_bytes ?? 0)}
+	{@const pct = Math.floor((100 * received) / Math.max(1, Number(s?.bytes ?? 0)))}
+	<!-- A download stopped part-way: what it kept is continued by the next one. -->
+	{@const stopped = !!s && !s.downloading && !s.installed && received > 0}
 	<div class="model">
 		<div class="name">
 			<strong>{name}</strong>
 			<span class="muted small">{m.settings.size(Number(s?.bytes ?? 0))}</span>
 			{#if s?.downloading}
-				<span class="chip"
-					>{m.settings.modelDownloading(
-						Math.floor((100 * Number(s.downloaded_bytes)) / Math.max(1, Number(s.bytes)))
-					)}</span
-				>
+				<span class="chip">{m.settings.modelDownloading(pct)}</span>
 			{:else if s?.installed}
 				<span class="chip ok">{s.in_use ? m.settings.modelInUse : m.settings.modelInstalled}</span>
+			{:else if stopped}
+				<span class="chip">{m.settings.modelStopped(pct)}</span>
 			{:else}
 				<span class="chip">{m.settings.modelMissing}</span>
 			{/if}
@@ -158,8 +160,11 @@
 		{#if description}
 			<p class="muted small">{description}</p>
 		{/if}
-		{#if s?.downloading}
-			<ProgressBar done={Number(s.downloaded_bytes)} total={Number(s.bytes)} label={name} />
+		{#if s?.downloading || stopped}
+			<ProgressBar done={received} total={Number(s?.bytes ?? 0)} label={name} />
+		{/if}
+		{#if stopped}
+			<p class="muted small">{m.settings.modelKept(m.settings.size(received))}</p>
 		{/if}
 		<div class="actions">
 			{#if s?.downloading}
@@ -179,8 +184,14 @@
 				<button
 					class="btn sm primary"
 					disabled={downloading || blocked}
-					onclick={() => download(id)}>{m.settings.download}</button
+					onclick={() => download(id)}
+					>{stopped ? m.settings.continueDownload : m.settings.download}</button
 				>
+				{#if stopped}
+					<button class="btn sm ghost danger" disabled={downloading} onclick={() => remove(id)}
+						>{m.settings.discardDownload}</button
+					>
+				{/if}
 			{/if}
 		</div>
 	</div>

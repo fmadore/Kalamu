@@ -5,11 +5,16 @@
 //! stalls it, and every read counts as a sign of life. FFmpeg's runs (`ffmpeg.rs`) and the
 //! offline engines' llama.cpp programs (`offline/src/llama.rs`) both run here, each with the
 //! limits its program's way of working allows ([`Limits`]).
+//!
+//! Every program Kalamu starts, here or by the Whisper helper's own loop, is started with
+//! [`spawn`] and reported [`reaped`] once waited for, so the shell's [`Keeper`] can make sure
+//! none outlives the app (`src-tauri/src/platform/`). This crate never asks which system it runs
+//! on: it calls what the shell gave it.
 
 use std::io::Read;
 use std::process::{Child, Command, ExitStatus, Stdio};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, OnceLock};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
@@ -18,6 +23,44 @@ use kalamu_core::StopSignal;
 /// How often the stop signal and the watchdog are looked at: a pause ends the program within a
 /// tenth of a second of being asked.
 const POLL: Duration = Duration::from_millis(100);
+
+/// What the shell does with every program started here so that none outlives the app, given
+/// once at start-up, before the first program runs ([`keep_with`]). Without one, as in tests,
+/// programs are simply started and reaped.
+#[derive(Debug, Clone, Copy)]
+pub struct Keeper {
+    /// Told of each program just after it started.
+    pub adopt: fn(&Child),
+    /// Told of each program's process id once it was reaped, when the id may be reused.
+    pub release: fn(u32),
+}
+
+static KEEPER: OnceLock<Keeper> = OnceLock::new();
+
+/// Sets the [`Keeper`] for the rest of the process; a second call is ignored.
+pub fn keep_with(keeper: Keeper) {
+    let _ = KEEPER.set(keeper);
+}
+
+/// Starts `command` and hands the program to the [`Keeper`].
+///
+/// The program is adopted just after it starts: one that starts a program of its own in that
+/// instant could leave it outside, which FFmpeg, llama.cpp and the Whisper helper never do.
+pub fn spawn(command: &mut Command) -> std::io::Result<Child> {
+    let child = command.spawn()?;
+    if let Some(keeper) = KEEPER.get() {
+        (keeper.adopt)(&child);
+    }
+    Ok(child)
+}
+
+/// Tells the [`Keeper`] that `child` was waited for, so it no longer answers for its process
+/// id. Called again for the same program, it does nothing more.
+pub fn reaped(child: &Child) {
+    if let Some(keeper) = KEEPER.get() {
+        (keeper.release)(child.id());
+    }
+}
 
 /// What a program wrote, once it ended on its own.
 #[derive(Debug)]
@@ -87,15 +130,16 @@ pub fn run_with(
     limits: Limits,
 ) -> Result<Finished, Unfinished> {
     let started = Instant::now();
-    let mut child = command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| Unfinished {
-            ended: Ended::NotStarted(e),
-            stderr: Vec::new(),
-        })?;
+    let mut child = spawn(
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()),
+    )
+    .map_err(|e| Unfinished {
+        ended: Ended::NotStarted(e),
+        stderr: Vec::new(),
+    })?;
     // Milliseconds since `started` of the last read on either pipe.
     let heard = Arc::new(AtomicU64::new(0));
     let stdout = drain(child.stdout.take(), heard.clone(), started, usize::MAX);
@@ -129,7 +173,10 @@ pub fn run_with(
             return ended(&mut child, Ended::TooLong(overall), stderr);
         }
         match child.try_wait() {
-            Ok(Some(status)) => break status,
+            Ok(Some(status)) => {
+                reaped(&child);
+                break status;
+            }
             Ok(None) => std::thread::sleep(poll),
             Err(e) => return ended(&mut child, Ended::Lost(e), stderr),
         }
@@ -146,6 +193,7 @@ pub fn run_with(
 fn end(child: &mut Child) {
     let _ = child.kill();
     let _ = child.wait();
+    reaped(child);
 }
 
 /// Reads a pipe to its end on a thread of its own, noting when it last heard from it and
@@ -220,6 +268,28 @@ mod tests {
             .args(["--test-threads", "1"])
             .env(ROLE, role);
         command
+    }
+
+    static ADOPTED: std::sync::Mutex<Vec<u32>> = std::sync::Mutex::new(Vec::new());
+    static RELEASED: std::sync::Mutex<Vec<u32>> = std::sync::Mutex::new(Vec::new());
+
+    /// The keeper hears of a program when it starts and again once it was reaped, so it never
+    /// answers for a process id the system may have given to another program.
+    #[test]
+    fn the_keeper_adopts_each_program_and_releases_it_once_reaped() {
+        keep_with(Keeper {
+            adopt: |child| ADOPTED.lock().unwrap().push(child.id()),
+            release: |id| RELEASED.lock().unwrap().push(id),
+        });
+        let mut command = fake("quick");
+        command.stdout(Stdio::null()).stderr(Stdio::null());
+        let mut child = spawn(&mut command).unwrap();
+        let id = child.id();
+        assert!(ADOPTED.lock().unwrap().contains(&id));
+        assert!(!RELEASED.lock().unwrap().contains(&id));
+        child.wait().unwrap();
+        reaped(&child);
+        assert!(RELEASED.lock().unwrap().contains(&id));
     }
 
     #[test]

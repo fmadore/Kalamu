@@ -2,8 +2,8 @@
 //! job started in the project linked at once, a link undone.
 
 use kalamu_core::{
-    CollectionId, Document, DocumentId, DocumentLink, JobId, ProjectError, ProjectId, SourceId,
-    Timestamp,
+    CollectionId, Document, DocumentId, DocumentLink, Job, JobId, ProjectError, ProjectId,
+    SourceId, Timestamp,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -64,6 +64,40 @@ fn proposed(
         })
 }
 
+/// How each source of `job` would be attached, given the project's documents and links.
+fn matches(job: &Job, documents: &[Document], links: &[DocumentLink]) -> Vec<SourceMatch> {
+    job.sources
+        .iter()
+        .map(|source| {
+            let proposed = proposed(documents, links, source);
+            SourceMatch {
+                source_id: source.id,
+                file_name: source.file_name.clone(),
+                path: source.path.clone(),
+                linked: links
+                    .iter()
+                    .find(|l| l.job_id == job.id && l.source_id == source.id)
+                    .map(|l| l.document_id),
+                proposed,
+                same_content: documents
+                    .iter()
+                    .filter(|d| d.source.sha256 == source.sha256 && Some(d.id) != proposed)
+                    .map(DocumentBrief::of)
+                    .collect(),
+            }
+        })
+        .collect()
+}
+
+/// What attaching writes, gathered before it is written at once: new documents, their places
+/// in a collection, and the links of sources to documents.
+#[derive(Default)]
+struct Attachment {
+    documents: Vec<Document>,
+    members: Vec<(CollectionId, DocumentId)>,
+    links: Vec<DocumentLink>,
+}
+
 impl Projects {
     /// How each source of a job would be attached to the project, for the researcher to check.
     pub fn attach_plan(
@@ -75,28 +109,7 @@ impl Projects {
         let job = self.jobs.job(job).map_err(missing)?;
         let documents = self.store.documents(project)?;
         let links = self.store.links(project)?;
-        Ok(job
-            .sources
-            .iter()
-            .map(|source| {
-                let proposed = proposed(&documents, &links, source);
-                SourceMatch {
-                    source_id: source.id,
-                    file_name: source.file_name.clone(),
-                    path: source.path.clone(),
-                    linked: links
-                        .iter()
-                        .find(|l| l.job_id == job.id && l.source_id == source.id)
-                        .map(|l| l.document_id),
-                    proposed,
-                    same_content: documents
-                        .iter()
-                        .filter(|d| d.source.sha256 == source.sha256 && Some(d.id) != proposed)
-                        .map(DocumentBrief::of)
-                        .collect(),
-                }
-            })
-            .collect())
+        Ok(matches(&job, &documents, &links))
     }
 
     /// Attaches a job's sources as the researcher chose: each to an existing document of the
@@ -115,7 +128,74 @@ impl Projects {
             self.collection(project, c)?;
         }
         let job = self.jobs.job(job).map_err(missing)?;
-        // Every choice is checked before anything is written.
+        let mut plan = Attachment::default();
+        let out = self.plan(project, &job, choices, collection, &mut plan)?;
+        self.store
+            .attach_documents(&plan.documents, &plan.members, &plan.links)?;
+        self.touch(project)?;
+        Ok(out)
+    }
+
+    /// Links a job started from the project to its documents: each source to the document it
+    /// was added as, or to a new document. Its files were chosen in the project, so they are
+    /// its documents; nothing is asked.
+    pub fn link_job(
+        &self,
+        project: ProjectId,
+        job: JobId,
+        collection: Option<CollectionId>,
+    ) -> Result<Vec<DocumentId>, ProjectError> {
+        self.link_jobs(project, &[job], collection)
+    }
+
+    /// Links several jobs to their documents as [`Projects::link_job`] links one, all or none:
+    /// every job is checked and planned before anything is written, and what is written is
+    /// written at once. A later job's source the same as an earlier one's joins the document
+    /// made for it. The documents, job after job and source after source.
+    pub fn link_jobs(
+        &self,
+        project: ProjectId,
+        jobs: &[JobId],
+        collection: Option<CollectionId>,
+    ) -> Result<Vec<DocumentId>, ProjectError> {
+        self.store.project(project).map_err(missing)?;
+        if let Some(c) = collection {
+            self.collection(project, c)?;
+        }
+        let mut documents = self.store.documents(project)?;
+        let mut links = self.store.links(project)?;
+        let mut plan = Attachment::default();
+        let mut out = Vec::new();
+        for &id in jobs {
+            let job = self.jobs.job(id).map_err(missing)?;
+            let choices: Vec<AttachChoice> = matches(&job, &documents, &links)
+                .into_iter()
+                .map(|m| AttachChoice {
+                    source_id: m.source_id,
+                    document: m.linked.or(m.proposed),
+                })
+                .collect();
+            let (made, tied) = (plan.documents.len(), plan.links.len());
+            out.extend(self.plan(project, &job, &choices, collection, &mut plan)?);
+            documents.extend_from_slice(&plan.documents[made..]);
+            links.extend_from_slice(&plan.links[tied..]);
+        }
+        self.store
+            .attach_documents(&plan.documents, &plan.members, &plan.links)?;
+        self.touch(project)?;
+        Ok(out)
+    }
+
+    /// Adds to `plan` what attaching `job`'s sources as chosen writes, checking every choice
+    /// first; a document chosen may be one the plan already makes. The documents, in order.
+    fn plan(
+        &self,
+        project: ProjectId,
+        job: &Job,
+        choices: &[AttachChoice],
+        collection: Option<CollectionId>,
+        plan: &mut Attachment,
+    ) -> Result<Vec<DocumentId>, ProjectError> {
         let mut planned = Vec::new();
         for choice in choices {
             let source = job
@@ -123,7 +203,9 @@ impl Projects {
                 .iter()
                 .find(|s| s.id == choice.source_id)
                 .ok_or_else(|| ProjectError::Elsewhere("The file".into()))?;
-            if let Some(document) = choice.document {
+            if let Some(document) = choice.document
+                && !plan.documents.iter().any(|d| d.id == document)
+            {
                 self.document_in(project, document)?;
             }
             planned.push((source, choice.document));
@@ -143,43 +225,23 @@ impl Projects {
                         tags: Vec::new(),
                         source_description: Default::default(),
                     };
-                    self.store.put_document(&document)?;
+                    let id = document.id;
+                    plan.documents.push(document);
                     if let Some(c) = collection {
-                        self.store.add_member(c, document.id)?;
+                        plan.members.push((c, id));
                     }
-                    document.id
+                    id
                 }
             };
-            self.store.put_link(&DocumentLink {
+            plan.links.push(DocumentLink {
                 document_id: id,
                 job_id: job.id,
                 source_id: source.id,
                 linked_at: now,
-            })?;
+            });
             out.push(id);
         }
-        self.touch(project)?;
         Ok(out)
-    }
-
-    /// Links a job started from the project to its documents: each source to the document it
-    /// was added as, or to a new document. Its files were chosen in the project, so they are
-    /// its documents; nothing is asked.
-    pub fn link_job(
-        &self,
-        project: ProjectId,
-        job: JobId,
-        collection: Option<CollectionId>,
-    ) -> Result<Vec<DocumentId>, ProjectError> {
-        let choices: Vec<AttachChoice> = self
-            .attach_plan(project, job)?
-            .into_iter()
-            .map(|m| AttachChoice {
-                source_id: m.source_id,
-                document: m.linked.or(m.proposed),
-            })
-            .collect();
-        self.attach(project, job, &choices, collection)
     }
 
     /// Unties one source of a job from a document; the job and its results stay.

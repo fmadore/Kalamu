@@ -4,8 +4,8 @@
 //! Columns that read a document's result are filled by [`crate::resulted`].
 
 use kalamu_core::{
-    CollectionId, Document, ExportProfile, Labels, ProfileValue, ProjectError, ProjectId, Table,
-    Timestamp,
+    CollectionId, CsvCells, Document, ExportProfile, Labels, ProfileValue, ProjectError, ProjectId,
+    Table, Timestamp,
 };
 use serde::Serialize;
 use serde::ser::SerializeMap;
@@ -171,7 +171,10 @@ impl Projects {
         labels: &Labels,
     ) -> Result<Table, ProjectError> {
         let (_, rows) = self.profiled_rows(project, collection, profile, labels)?;
+        // A profile says what each cell holds, often for another tool's import (a catalogue's
+        // CSV import), which would take an added apostrophe as part of the value.
         Ok(Table {
+            cells: CsvCells::AsWritten,
             headings: profile.columns.iter().map(|c| c.heading.clone()).collect(),
             rows: rows
                 .into_iter()

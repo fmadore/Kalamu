@@ -19,6 +19,7 @@ mod listen;
 mod output;
 mod piece;
 mod plan;
+mod progress;
 mod realign;
 mod record;
 mod review;
@@ -53,6 +54,7 @@ pub use error::EngineError;
 pub use estimate::{Estimate, EstimateRequest, EstimateRow};
 pub use kalamu_core::SetupRequest;
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
+pub use progress::{FileProgress, JobProgress};
 pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
 pub use setup::NewJob;
@@ -87,7 +89,16 @@ pub struct EngineConfig {
     pub snapshots: PathBuf,
     /// How long after a job's last correction or speakers' names its files are written again.
     pub write_delay: Duration,
+    /// The most prepared input one economy batch carries, whatever the provider allows: a
+    /// larger job is sent as several batches. A batch's body is held in memory while it is
+    /// uploaded, and a failed upload is sent again whole, so neither should reach the hundreds
+    /// of megabytes a provider may accept.
+    pub max_batch_bytes: usize,
 }
+
+/// 48 MiB of prepared input, about 64 MB once pages are written in base64: a few dozen scans
+/// a batch, uploaded in under ten minutes at 1 Mbit/s.
+pub const MAX_BATCH_BYTES: usize = 48 * 1024 * 1024;
 
 impl Default for EngineConfig {
     fn default() -> Self {
@@ -102,6 +113,7 @@ impl Default for EngineConfig {
             playback: Playback::default(),
             snapshots: std::env::temp_dir().join("kalamu-snapshots"),
             write_delay: Duration::from_secs(3),
+            max_batch_bytes: MAX_BATCH_BYTES,
         }
     }
 }
@@ -236,8 +248,16 @@ impl Engine {
     }
 
     pub fn delete_job(&self, id: JobId) -> Result<(), EngineError> {
-        self.cancel(id);
-        Ok(self.store.delete_job(id)?)
+        self.delete_jobs(&[id])
+    }
+
+    /// Deletes several jobs, each stopped first, all or none: a selection deleted is never
+    /// left deleted in part.
+    pub fn delete_jobs(&self, ids: &[JobId]) -> Result<(), EngineError> {
+        for &id in ids {
+            self.cancel(id);
+        }
+        Ok(self.store.delete_jobs(ids)?)
     }
 
     /// Inspects files for a new job: hash, kind, page count or length, and the input checks.

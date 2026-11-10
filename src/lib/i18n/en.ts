@@ -1562,6 +1562,11 @@ export const en = {
 		modelInstalled: 'Downloaded',
 		modelMissing: 'Not downloaded',
 		modelDownloading: (pct: number) => `Downloading… ${pct}%`,
+		modelStopped: (pct: number) => `Stopped at ${pct}%`,
+		modelKept: (size: string) =>
+			`The ${size} already downloaded are kept: the download will continue from there.`,
+		continueDownload: 'Continue download',
+		discardDownload: 'Discard',
 		modelInUse: 'In use by a job',
 		download: 'Download',
 		cancelDownload: 'Cancel',
@@ -1867,8 +1872,10 @@ export const en = {
 		quit: 'Quit',
 		quitPausing: 'Pause jobs and quit',
 		idle: 'No jobs running',
-		running: (jobs: number, percent: number) =>
-			`${jobs === 1 ? '1 job' : `${jobs} jobs`} running · ${percent}%`
+		/** The status line, its numbers filled in by the app as jobs run: `percent` and `jobs`
+		 * are placeholders, to be kept as they are. */
+		runningOne: (percent: string) => `1 job running · ${percent}%`,
+		runningMany: (jobs: string, percent: string) => `${jobs} jobs running · ${percent}%`
 	},
 	common: {
 		cancel: 'Cancel',
@@ -1897,7 +1904,10 @@ export const en = {
 		/** Asked before leaving a correction, a prompt or a workflow with changes not saved. */
 		unsaved: 'Your changes are not saved. Leave and discard them?',
 		discardChanges: 'Discard changes',
-		keepEditing: 'Keep editing'
+		keepEditing: 'Keep editing',
+		/** Under a long table drawn a page at a time. */
+		shownRows: (shown: number, total: number) => `${shown} of ${total} shown`,
+		showMore: (n: number) => `Show ${n} more`
 	},
 	error: {
 		'search.too_short': 'Type a word of three letters at least.',

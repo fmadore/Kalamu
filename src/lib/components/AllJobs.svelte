@@ -5,6 +5,7 @@
 	// rows chosen together can be added to a project or deleted at once.
 	import Icon from './Icon.svelte';
 	import JobMenu from './JobMenu.svelte';
+	import MoreRows from './MoreRows.svelte';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
@@ -19,6 +20,7 @@
 		type StatusFilter
 	} from '#lib/jobList.js';
 	import { focusName, RowRename } from '#lib/jobActions.svelte.js';
+	import { Paging, rowIndex } from '#lib/paging.svelte.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { app, go, refreshJobs, refreshProjects, toast } from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
@@ -70,6 +72,14 @@
 			sort
 		)
 	);
+	// A long list is drawn a page at a time, from its first page again when filtered or sorted.
+	const paging = new Paging();
+	const drawn = $derived(paging.of(shown));
+	let table = $state<HTMLTableElement | null>(null);
+	$effect(() => {
+		void [query, taskShown, statusShown, sort];
+		paging.reset();
+	});
 	const chosen = $derived(selection.of(shown, (j) => j.id));
 	const allChosen = $derived(shown.length > 0 && chosen.length === shown.length);
 	const anyRunning = $derived(chosen.some((j) => j.status === 'running'));
@@ -100,7 +110,7 @@
 		if (!project) return;
 		const ids = chosen.map((j) => j.id);
 		try {
-			for (const id of ids) await api.linkJob(projectId, id, null);
+			await api.linkJobs(projectId, ids, null);
 			toast(m.allJobs.addedTo(ids.length, project.project.name));
 			selection.clear();
 			await refreshProjects();
@@ -114,7 +124,7 @@
 		if (ids.length === 0 || anyRunning) return;
 		if (!(await ask(m.allJobs.deleteConfirm(ids.length)))) return;
 		try {
-			for (const id of ids) await api.deleteJob(id);
+			await api.deleteJobs(ids);
 		} catch (e) {
 			toast(describeError(e, m), { kind: 'error' });
 		}
@@ -223,9 +233,9 @@
 		{#if shown.length === 0}
 			<p class="muted">{m.allJobs.noMatch}</p>
 		{:else}
-			<table class="data-table jobs-table">
+			<table class="data-table jobs-table" bind:this={table} aria-rowcount={shown.length + 1}>
 				<thead>
-					<tr>
+					<tr aria-rowindex={1}>
 						<th class="check">
 							<input
 								type="checkbox"
@@ -244,10 +254,12 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each shown as job (job.id)}
+					{#each drawn as job, i (job.id)}
 						{@const waits = app.waiting[job.id]}
 						<!-- The row opens its job on a click; from the keyboard, its name does. -->
 						<tr
+							data-row={i}
+							aria-rowindex={rowIndex(i)}
 							class:chosen={selection.has(job.id)}
 							onclick={(e) => openRow(e, job)}
 							oncontextmenu={(e) => openMenu(e, job)}
@@ -327,6 +339,7 @@
 					{/each}
 				</tbody>
 			</table>
+			<MoreRows {paging} total={shown.length} {table} />
 		{/if}
 	{/if}
 </div>

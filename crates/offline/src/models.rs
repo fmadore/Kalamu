@@ -136,6 +136,8 @@ pub struct ModelStatus {
     pub bytes: u64,
     pub installed: bool,
     pub downloading: bool,
+    /// While downloading, the bytes received so far; otherwise, for a model not installed,
+    /// what an interrupted download kept, from which the next one continues.
     #[ts(type = "number")]
     pub downloaded_bytes: u64,
     /// Loaded by a running job, so it cannot be removed now.
@@ -186,6 +188,13 @@ impl ModelManager {
         fs::metadata(self.dir.join(model.file)).is_ok_and(|m| m.len() == model.bytes)
     }
 
+    /// The bytes of `model` an interrupted download kept under its `.part` name; none when the
+    /// part is longer than the file, which the next download drops.
+    pub(crate) fn kept(&self, model: &ModelFile) -> u64 {
+        let kept = fs::metadata(self.dir.join(model.partial())).map_or(0, |m| m.len());
+        if kept > model.bytes { 0 } else { kept }
+    }
+
     /// The model and the file it is paired with, both downloaded.
     pub fn is_ready(&self, model: &ModelFile) -> bool {
         self.is_installed(model) && model.pair.is_none_or(|pair| self.is_installed(pair))
@@ -206,12 +215,26 @@ impl ModelManager {
                         model.pair.filter(|p| p.id == d.0).map(|_| d.2)
                     }
                 });
+                let installed = self.is_ready(model);
+                let kept = || {
+                    if installed {
+                        return 0;
+                    }
+                    let pair = model.pair.map_or(0, |p| {
+                        if self.is_installed(p) {
+                            p.bytes
+                        } else {
+                            self.kept(p)
+                        }
+                    });
+                    pair + self.kept(model)
+                };
                 ModelStatus {
                     id: model.id.to_owned(),
                     bytes: model.bytes + pair,
-                    installed: self.is_ready(model),
+                    installed,
                     downloading: downloaded.is_some(),
-                    downloaded_bytes: downloaded.unwrap_or(0),
+                    downloaded_bytes: downloaded.unwrap_or_else(kept),
                     in_use: state.leases.contains(&model.id),
                     languages: model.languages.iter().map(|&l| l.to_owned()).collect(),
                 }

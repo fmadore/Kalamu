@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -96,7 +96,7 @@ jobs:
             --enable-protocol=file,pipe
             --enable-demuxer=aac,aiff,amr,asf,avi,caf,flac,flv,matroska,mov,mp3,mpegts,ogg,w64,wav,wv
             --enable-parser=aac,aac_latm,ac3,flac,mpegaudio,opus,vorbis
-            --enable-decoder=aac,aac_latm,ac3,eac3,alac,amrnb,amrwb,flac,mp1,mp2,mp3,mp3float,opus,vorbis,wavpack,wmav1,wmav2,wmapro,wmalossless,pcm_alaw,pcm_mulaw,pcm_f32le,pcm_f64le,pcm_s16be,pcm_s16le,pcm_s24le,pcm_s32le,pcm_u8,adpcm_ima_wav,adpcm_ms,gsm_ms
+            --enable-decoder=aac,aac_latm,ac3,eac3,alac,amrnb,amrwb,flac,mp1,mp2,mp3,mp3float,opus,vorbis,wavpack,wmav1,wmav2,wmapro,wmalossless,wmavoice,pcm_alaw,pcm_mulaw,pcm_f32be,pcm_f32le,pcm_f64le,pcm_s8,pcm_s16be,pcm_s16le,pcm_s24be,pcm_s24le,pcm_s32be,pcm_s32le,pcm_u8,adpcm_ima_qt,adpcm_ima_wav,adpcm_ms,gsm_ms
             --enable-encoder=flac,libopus,pcm_s16le
             --enable-muxer=flac,null,ogg,pcm_s16le,wav,webm
             --enable-filter=aformat,anull,aresample,atrim,dynaudnorm,format,null,pan,silencedetect,volumedetect
@@ -123,7 +123,7 @@ jobs:
           (cd "$dir" && zip -r "../$dir.zip" .)
           sha256sum "$dir.zip" | tee "$dir.zip.sha256"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ffmpeg-${{ matrix.triple }}
           path: |
@@ -143,7 +143,7 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: "13.0"
       TRIPLE: aarch64-apple-darwin
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -190,7 +190,7 @@ jobs:
             --enable-protocol=file,pipe
             --enable-demuxer=aac,aiff,amr,asf,avi,caf,flac,flv,matroska,mov,mp3,mpegts,ogg,w64,wav,wv
             --enable-parser=aac,aac_latm,ac3,flac,mpegaudio,opus,vorbis
-            --enable-decoder=aac,aac_latm,ac3,eac3,alac,amrnb,amrwb,flac,mp1,mp2,mp3,mp3float,opus,vorbis,wavpack,wmav1,wmav2,wmapro,wmalossless,pcm_alaw,pcm_mulaw,pcm_f32le,pcm_f64le,pcm_s16be,pcm_s16le,pcm_s24le,pcm_s32le,pcm_u8,adpcm_ima_wav,adpcm_ms,gsm_ms
+            --enable-decoder=aac,aac_latm,ac3,eac3,alac,amrnb,amrwb,flac,mp1,mp2,mp3,mp3float,opus,vorbis,wavpack,wmav1,wmav2,wmapro,wmalossless,wmavoice,pcm_alaw,pcm_mulaw,pcm_f32be,pcm_f32le,pcm_f64le,pcm_s8,pcm_s16be,pcm_s16le,pcm_s24be,pcm_s24le,pcm_s32be,pcm_s32le,pcm_u8,adpcm_ima_qt,adpcm_ima_wav,adpcm_ms,gsm_ms
             --enable-encoder=flac,libopus,pcm_s16le
             --enable-muxer=flac,null,ogg,pcm_s16le,wav,webm
             --enable-filter=aformat,anull,aresample,atrim,dynaudnorm,format,null,pan,silencedetect,volumedetect
@@ -205,8 +205,9 @@ jobs:
             "Built by .github/workflows/ffmpeg.yml in ${GITHUB_REPOSITORY}, run ${GITHUB_RUN_ID}." \
             "" "configure ${CONFIGURE[*]}" > "$RUNNER_TEMP/BUILD.txt"
 
-      # As the Windows builds are checked: it starts, reports the right licence and has the Opus
-      # encoder; and it links only what macOS itself provides, nothing from Homebrew or elsewhere.
+      # As the Windows builds are checked: it starts, reports the right licence, has the Opus
+      # encoder and reads a 24- and a 32-bit AIFF; and it links only what macOS itself provides,
+      # nothing from Homebrew or elsewhere.
       - name: Check
         run: |
           bin="$RUNNER_TEMP/out/bin"
@@ -214,6 +215,30 @@ jobs:
           "$bin/ffmpeg" -hide_banner -L | grep -q '2\.1'
           "$bin/ffmpeg" -hide_banner -encoders | grep -q libopus
           "$bin/ffprobe" -hide_banner -version
+          # Archives' recordings it must read: 24- and 32-bit AIFF (big-endian samples).
+          python3 - <<'EOF'
+          import math, struct
+          # A second of a 440 Hz tone as big-endian AIFF, written by hand: the build has no AIFF muxer.
+          # The sample rate, 44100, is written as AIFF's 80-bit extended float.
+          for bits in (24, 32):
+              rate, width = 44100, bits // 8
+              peak = 2 ** (bits - 1) - 1
+              frames = b"".join(
+                  int(0.5 * peak * math.sin(2 * math.pi * 440 * i / rate)).to_bytes(width, "big", signed=True)
+                  for i in range(rate)
+              )
+              comm = struct.pack(">hIh", 1, rate, bits) + bytes.fromhex("400EAC44000000000000")
+              ssnd = struct.pack(">II", 0, 0) + frames
+              body = b"AIFF" + b"COMM" + struct.pack(">I", len(comm)) + comm
+              body += b"SSND" + struct.pack(">I", len(ssnd)) + ssnd
+              with open(f"tone{bits}.aiff", "wb") as out:
+                  out.write(b"FORM" + struct.pack(">I", len(body)) + body)
+          EOF
+          for bits in 24 32; do
+            codec=$("$bin/ffprobe" -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "tone$bits.aiff")
+            [ "$codec" = "pcm_s${bits}be" ] || { echo "::error::tone$bits.aiff read as '$codec'"; exit 1; }
+            "$bin/ffmpeg" -hide_banner -v error -i "tone$bits.aiff" -f null -
+          done
           for tool in ffmpeg ffprobe; do
             otool -L "$bin/$tool"
             if otool -L "$bin/$tool" | tail -n +2 | grep -Ev '^\s*(/usr/lib/|/System/Library/Frameworks/)'; then
@@ -232,7 +257,7 @@ jobs:
           (cd "$dir" && zip -r "../$dir.zip" .)
           shasum -a 256 "$dir.zip" | tee "$dir.zip.sha256"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ffmpeg-aarch64-apple-darwin
           path: |
@@ -240,8 +265,8 @@ jobs:
             ffmpeg-*.zip.sha256
             sources/*
 
-  # Run each build on its own architecture: it starts, reports the right licence and has the
-  # Opus encoder.
+  # Run each build on its own architecture: it starts, reports the right licence, has the Opus
+  # encoder and reads a 24- and a 32-bit AIFF.
   check:
     needs: build
     strategy:
@@ -254,7 +279,7 @@ jobs:
             triple: aarch64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ffmpeg-${{ matrix.triple }}
       - name: Licence and encoders
@@ -266,3 +291,32 @@ jobs:
           $encoders = & out/ffmpeg.exe -hide_banner -encoders | Out-String
           if ($encoders -notmatch 'libopus') { throw 'no Opus encoder' }
           & out/ffprobe.exe -hide_banner -version
+      # Archives' recordings it must read: 24- and 32-bit AIFF (big-endian samples).
+      - name: AIFF fixtures
+        shell: python
+        run: |
+          import math, struct
+          # A second of a 440 Hz tone as big-endian AIFF, written by hand: the build has no AIFF muxer.
+          # The sample rate, 44100, is written as AIFF's 80-bit extended float.
+          for bits in (24, 32):
+              rate, width = 44100, bits // 8
+              peak = 2 ** (bits - 1) - 1
+              frames = b"".join(
+                  int(0.5 * peak * math.sin(2 * math.pi * 440 * i / rate)).to_bytes(width, "big", signed=True)
+                  for i in range(rate)
+              )
+              comm = struct.pack(">hIh", 1, rate, bits) + bytes.fromhex("400EAC44000000000000")
+              ssnd = struct.pack(">II", 0, 0) + frames
+              body = b"AIFF" + b"COMM" + struct.pack(">I", len(comm)) + comm
+              body += b"SSND" + struct.pack(">I", len(ssnd)) + ssnd
+              with open(f"tone{bits}.aiff", "wb") as out:
+                  out.write(b"FORM" + struct.pack(">I", len(body)) + body)
+      - name: Read 24- and 32-bit AIFF
+        shell: pwsh
+        run: |
+          foreach ($bits in 24, 32) {
+            $codec = (& out/ffprobe.exe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "tone$bits.aiff" | Out-String).Trim()
+            if ($codec -ne "pcm_s${bits}be") { throw "tone$bits.aiff read as '$codec'" }
+            & out/ffmpeg.exe -hide_banner -v error -i "tone$bits.aiff" -f null -
+            if ($LASTEXITCODE -ne 0) { throw "tone$bits.aiff could not be decoded" }
+          }

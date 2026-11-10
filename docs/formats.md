@@ -10,6 +10,13 @@ A page or segment that could not be read after its retries does not keep the res
 stands as `[Not read: reason]` in the text formats and the CSV, with a `failed` reason in JSON,
 and `provenance.json` lists it under `failed`. Retrying it writes the files again.
 
+In the CSV files a cell that begins with `=`, `+`, `-`, `@`, a tab or a carriage return, and is
+not simply a number, is written with an apostrophe before it (`'- Oui`), so a spreadsheet shows
+it as text instead of computing it as a formula. The JSON beside it keeps the text exactly. A
+table written through an export profile is the exception: its cells are written as they are,
+since another tool's import would take the apostrophe as part of the value
+([decision](decisions/2026-11-10-fourth-round.md)).
+
 ## Text, Markdown and Word
 
 - **`.txt`**: the text, with `--- Page N ---` before each page when there is more than one (as

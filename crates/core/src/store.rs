@@ -87,6 +87,8 @@ pub trait JobStore: Send + Sync {
     /// Gives a job a new name; nothing else about it changes.
     fn rename_job(&self, id: JobId, name: &str) -> Result<(), StoreError>;
     fn delete_job(&self, id: JobId) -> Result<(), StoreError>;
+    /// Deletes several jobs at once, all or none: a selection is never left deleted in part.
+    fn delete_jobs(&self, ids: &[JobId]) -> Result<(), StoreError>;
 
     /// Marks every running job as interrupted; called at startup after a crash or close.
     fn mark_running_as_interrupted(&self) -> Result<Vec<JobId>, StoreError>;
@@ -171,6 +173,9 @@ pub trait JobStore: Send + Sync {
     /// Stores a correction and marks its source's files under its set-up out of date, in one
     /// transaction.
     fn put_correction(&self, correction: &Correction) -> Result<(), StoreError>;
+    /// Stores several corrections, each marking its files out of date, all or none: a change
+    /// made across set-ups is never left made in some of them.
+    fn put_corrections(&self, corrections: &[Correction]) -> Result<(), StoreError>;
     fn corrections(&self, job: JobId) -> Result<Vec<Correction>, StoreError>;
     /// The corrections of one source's pieces under one set-up.
     fn source_corrections(

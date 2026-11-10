@@ -6,7 +6,7 @@ use kalamu_core::{
     ApiKey, BatchContext, BatchProgress, LanguageChoice, PieceRef, PreparedInput, ProcessRequest,
     Provider, ProviderError, SetupOptions, StopSignal, Task, Tuning,
 };
-use kalamu_providers::{Anthropic, OpenAi, client};
+use kalamu_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
 use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -252,4 +252,72 @@ async fn openai_uploads_a_jsonl_file_and_reads_the_output_and_error_files() {
     answers.sort_by(|a, b| a.0.cmp(&b.0));
     assert!(answers[0].1.is_ok());
     assert!(matches!(answers[1].1, Err(ProviderError::Transient(_))));
+}
+
+/// Gemini's and Mistral's batches are written item by item into the body that is sent: still
+/// one JSON document of the documented shape, each request under its id, sent as JSON.
+#[tokio::test]
+async fn gemini_and_mistral_send_each_request_of_a_batch_under_its_id() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(serde_json::json!({ "name": "batches/1", "id": "job_1" })),
+        )
+        .mount(&server)
+        .await;
+    let key = ApiKey::new("k");
+    let (pages, langs, opts) = (
+        [page(1), page(2), page(3)],
+        LanguageChoice::Auto,
+        SetupOptions::default(),
+    );
+    let gemini = Gemini::with_base_url(client(), &server.uri());
+    let sent = gemini
+        .submit_batch(&key, &requests("gemini-3.8-flash", &pages, &langs, &opts))
+        .await;
+    assert_eq!(sent.as_deref(), Ok("batches/1"));
+    let mistral = Mistral::with_base_url(client(), &server.uri());
+    let sent = mistral
+        .submit_batch(&key, &requests("mistral-ocr-latest", &pages, &langs, &opts))
+        .await;
+    assert_eq!(sent.as_deref(), Ok("job_1"));
+
+    let received = server.received_requests().await.unwrap_or_default();
+    assert_eq!(received.len(), 2);
+    for request in &received {
+        assert_eq!(
+            request
+                .headers
+                .get("content-type")
+                .and_then(|v| v.to_str().ok()),
+            Some("application/json")
+        );
+    }
+    let gemini: serde_json::Value = serde_json::from_slice(&received[0].body).unwrap_or_default();
+    assert_eq!(gemini["batch"]["display_name"], "kalamu");
+    let items = gemini
+        .pointer("/batch/input_config/requests/requests")
+        .and_then(serde_json::Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    assert_eq!(items.len(), 3, "{gemini}");
+    for (i, item) in items.iter().enumerate() {
+        assert_eq!(item["metadata"]["key"], format!("p{i}"));
+        assert!(item["request"]["contents"].is_array(), "{item}");
+    }
+
+    let mistral: serde_json::Value = serde_json::from_slice(&received[1].body).unwrap_or_default();
+    assert_eq!(mistral["endpoint"], "/v1/ocr");
+    assert_eq!(mistral["model"], "mistral-ocr-latest");
+    assert_eq!(mistral["timeout_hours"], 24);
+    let items = mistral["requests"].as_array().cloned().unwrap_or_default();
+    assert_eq!(items.len(), 3, "{mistral}");
+    for (i, item) in items.iter().enumerate() {
+        assert_eq!(item["custom_id"], format!("p{i}"));
+        assert_eq!(
+            item["body"]["document"]["document_url"],
+            "data:application/pdf;base64,JVBERi0xLjUgZmFrZQ=="
+        );
+    }
 }

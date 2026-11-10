@@ -2780,6 +2780,7 @@ dependencies = [
  "kalamu-search",
  "kalamu-store",
  "keyring",
+ "libc",
  "objc2",
  "objc2-foundation",
  "reqwest",
@@ -2799,6 +2800,7 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "ts-rs",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2926,6 +2928,7 @@ dependencies = [
 name = "kalamu-projects"
 version = "1.5.0"
 dependencies = [
+ "csv",
  "kalamu-core",
  "kalamu-export",
  "kalamu-store",

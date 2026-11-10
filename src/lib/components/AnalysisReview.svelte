@@ -16,8 +16,9 @@
 	import ReviewFrame from './ReviewFrame.svelte';
 	import SearchBar from './SearchBar.svelte';
 	import SiglaKey from './SiglaKey.svelte';
-	import { collate, editItem, holdsItem, holdsWords, type Witness } from '#lib/analysis.js';
+	import { collate, holdsWords, type Witness } from '#lib/analysis.js';
 	import { siglum } from '#lib/apparatus.js';
+	import type { Correction } from '#lib/bindings/Correction.js';
 	import type { Field } from '#lib/bindings/Field.js';
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
@@ -153,39 +154,22 @@
 
 	/**
 	 * Renames a name, or removes it when `to` is null, in the answers of every set-up that found
-	 * it, each kept as reviewed or not as it was.
+	 * it, each kept as reviewed or not as it was: one command, all the set-ups or none.
 	 */
 	async function changeItem(key: string, from: string, to: string | null) {
 		hovered = null;
 		const listed = collate(key, witnesses).map((r) => r.value);
-		/** Each set-up's corrected answers and review as they stood, to put back. */
-		const changed: { setup: Setup; fields: FieldAnswer[] | null; reviewed: boolean }[] = [];
-		let failed = false;
-		for (const s of setups) {
-			const v = viewOf(s);
-			if (!v || v.status === 'failed') continue;
-			const before = answersOf(v);
-			if (!holdsItem(before, key, from)) continue;
-			const was = { setup: s, fields: $state.snapshot(v.corrected_fields), reviewed: v.reviewed };
-			const saved = await review.save({
-				setup: s,
-				index: 0,
-				fields: editItem(before, key, from, to),
-				reviewed: v.reviewed
-			});
-			if (!saved) {
-				failed = true;
-				break;
-			}
-			changed.push(was);
-		}
+		/** Each set-up's corrections as they stood, to put back. */
+		const changed = await review.renameListed(0, key, from, to);
+		if (changed === null) return;
 		// A name removed can be put back from the toast, as it was in each set-up's answers.
 		if (to === null && changed.length > 0) {
 			toast(m.review.itemRemoved(from), {
 				action: { label: m.common.undo, run: () => void putBack(key, from, changed) }
 			});
+		} else if (changed.length > 0) {
+			toast(m.review.saved);
 		}
-		if (failed) return;
 		// The focus, lost with the name it was on, goes to the name renamed or to the next one.
 		await tick();
 		if (document.activeElement && document.activeElement !== document.body) return;
@@ -201,14 +185,8 @@
 
 	/** Puts each set-up's corrected answers and review back as they were, and the focus, lost
 	 * with the toast's button, on the name put back. */
-	async function putBack(
-		key: string,
-		name: string,
-		changed: { setup: Setup; fields: FieldAnswer[] | null; reviewed: boolean }[]
-	) {
-		for (const c of changed) {
-			if (!(await review.save({ index: 0, ...c }))) return;
-		}
+	async function putBack(key: string, name: string, changed: Correction[]) {
+		if (!(await review.putBack(changed))) return;
 		await tick();
 		if (document.activeElement && document.activeElement !== document.body) return;
 		if (!collate(key, witnesses).some((r) => r.value === name)) return;

@@ -13,15 +13,24 @@ name: Release
 #                 Kalamu_<version>.msixbundle        the Store submission (docs/microsoft-store.md)
 #                 Kalamu_<version>_aarch64.dmg       the macOS disk image, signed and notarised
 #                 kalamu-samples.zip                 samples/, the files the certification notes use
+#                 SHA256SUMS                         the SHA-256 of each asset above, attested
 #
 # Normal flow: bump the version files, add docs/release-<version>.md, merge, then
 # `git tag v1.0.0 && git push origin v1.0.0`. `prepare` checks the tag against the version files
-# and creates the draft; `build` attaches the installers, `msix` the packages and `bundle` the
-# Store bundle; `publish` makes the release public with
-# docs/release-<version>.md from the tagged commit as its body, as a pre-release while the
-# version starts with 0. Until that last step nothing is public, so a failed job leaves a draft to
-# re-run rather than a spent version. A hyphenated tag (v0.3.0-rc1) is a validation build: the
-# same assets in a draft that stays unpublished until someone promotes it by hand.
+# and creates the draft; `windows` builds each architecture once and makes its installer and
+# Store package, `bundle` the Store bundle, `macos` the app and `notarise` the signed and
+# notarised disk image; `checksums` lists every asset's SHA-256, `attest` attests them and
+# `upload` attaches them all; `publish` makes the release public with docs/release-<version>.md
+# from the tagged commit (and docs/checking-downloads.md after it) as its body, as a pre-release
+# while the version starts with 0. Until that last step nothing is public, so a failed job leaves
+# a draft to re-run rather than a spent version. A hyphenated tag (v0.3.0-rc1) is a validation
+# build: the same assets in a draft that stays unpublished until someone promotes it by hand.
+#
+# Secrets and tokens stay away from build code (#145): every job that runs `npm ci`, a build
+# script or the compiler has a read-only token and no secret. Only `notarise` sees Apple's
+# secrets, and it runs no package's install script and compiles nothing: it signs the app
+# `macos` built, with Tauri's bundler, as app-store.yml does. Only `prepare`, `upload` and
+# `publish` can write to the repository, and they run nothing but `gh`, `zip` and the shell.
 #
 # Rebuild a tag: run this workflow manually (Actions tab -> Run workflow) with an existing tag.
 # A release that is already published keeps its title, body and state; only its assets are
@@ -38,7 +47,7 @@ on:
         required: true
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ inputs.tag || github.ref_name }}
@@ -46,6 +55,8 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  # Read by the shell as "$TAG", never written into a script: a tag name is the pusher's text.
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   # Cheap checks before Windows build time, then the one release every later job uploads to.
@@ -55,20 +66,20 @@ jobs:
     name: Version check and draft release
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: write
     outputs:
       release_id: ${{ steps.release.outputs.id }}
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ env.TAG }}
           persist-credentials: false
 
       - name: Check the tag against the version files
         id: version
         shell: bash
-        env:
-          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           package=$(jq -r .version package.json)
           tauri=$(jq -r .version src-tauri/tauri.conf.json)
@@ -97,14 +108,13 @@ jobs:
 
           echo "version=$package" >> "$GITHUB_OUTPUT"
 
-      # As in Live Translation, the release is found or created here rather than by tauri-action,
-      # which beside a published release would open a second draft, and every job uploads to it.
+      # As in Live Translation, the release is found or created here, and `upload` attaches every
+      # asset to it.
       - name: Find or create the draft release
         id: release
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.tag || github.ref_name }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           # GET /releases/tags/{tag} does not return drafts, so list every release instead.
@@ -150,7 +160,6 @@ jobs:
               ;;
           esac
 
-          # Without an id tauri-action would skip its uploads silently.
           if ! [[ "$id" =~ ^[0-9]+$ ]]; then
             echo "::error::No release id for $TAG."
             exit 1
@@ -158,17 +167,22 @@ jobs:
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
       # The files the Store's certification notes point reviewers to (samples/README.txt).
-      - name: Attach the sample files
+      - name: Zip the sample files
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.tag || github.ref_name }}
-        run: |
-          (cd samples && zip -X -q ../kalamu-samples.zip ./*)
-          gh release upload "$TAG" kalamu-samples.zip --clobber -R "$GITHUB_REPOSITORY"
+        run: (cd samples && zip -X -q ../kalamu-samples.zip ./*)
 
-  build:
-    name: Installer (${{ matrix.arch }})
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: asset-samples
+          path: kalamu-samples.zip
+          retention-days: 1
+          if-no-files-found: error
+
+  # Each architecture compiled once, natively, and packaged twice from that build: the installer
+  # and the Store package (.github/actions/windows-packages, which the packaging dry run runs on
+  # pull requests too). Nothing here is signed.
+  windows:
+    name: Installer and MSIX package (${{ matrix.arch }})
     needs: prepare
     strategy:
       fail-fast: false
@@ -176,322 +190,35 @@ jobs:
         include:
           - arch: x64
             runner: windows-latest
-            target: x86_64-pc-windows-msvc
           - arch: arm64
             runner: windows-11-arm
-            target: aarch64-pc-windows-msvc
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ env.TAG }}
           persist-credentials: false
 
-      # As in CI: whisper.cpp builds with clang-cl and Ninja, which ship with the Windows images.
-      - name: Configure native Whisper compiler
-        shell: pwsh
-        run: |
-          "CC=clang-cl" >> $env:GITHUB_ENV
-          "CXX=clang-cl" >> $env:GITHUB_ENV
-          "CXXFLAGS=/EHsc" >> $env:GITHUB_ENV
-          "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
-          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
-
-      # The toolchain pinned in rust-toolchain.toml. Each runner builds for its own architecture.
-      - run: rustup toolchain install
-
-      # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of
-      # its own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
-      # `target/` with that folder emptied, and the build then finds no sources to build: keep
-      # it out of the cache, in the runner's temporary folder.
-      - name: Keep Tesseract's build outside the cached target folder
-        shell: bash
-        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Build and package
+        id: packages
+        uses: ./.github/actions/windows-packages
         with:
-          # CI's key: the same GGML_* values. Restore only: a cache saved by a tag run is scoped
-          # to that tag, so nothing else could restore it, and it would push CI's caches out.
-          prefix-key: whisper-cpu-${{ runner.arch }}-v2
-          save-if: false
+          arch: ${{ matrix.arch }}
 
-      - uses: actions/setup-node@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      # The LGPL build from the ffmpeg-* release, checked against scripts/ffmpeg.json.
-      - name: Fetch the bundled FFmpeg
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/fetch-ffmpeg.mjs ${{ matrix.target }}
-
-      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
-      - name: Fetch the bundled llama.cpp
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/fetch-llama.mjs ${{ matrix.target }}
-
-      # Whisper on the graphics processor through Vulkan, a helper built here from the workspace
-      # and declared as a sidecar in tauri.ffmpeg.windows-<arch>.conf.json
-      # (docs/decisions/2026-11-08-whisper-graphics-processor.md).
-      - name: Vulkan SDK
-        uses: ./.github/actions/vulkan-sdk
-
-      - name: Build Whisper's Vulkan helper
-        run: node scripts/build-whisper-vulkan.mjs ${{ matrix.target }}
-
-      # Installed in licenses/ beside FFmpeg's: every crate and package built into the app.
-      - name: Write the third-party notices
-        run: node scripts/third-party-notices.mjs ${{ matrix.target }}
-
-      # With a release id, tauri-action only uploads, replacing assets of the same name.
-      - name: Build and attach the installer
-        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          releaseId: ${{ needs.prepare.outputs.release_id }}
-          args: --target ${{ matrix.target }} --bundles nsis --config src-tauri/tauri.ffmpeg.windows-${{ matrix.arch }}.conf.json
-
-  # The macOS disk image, for Apple Silicon, built natively, signed with the Developer ID
-  # Application certificate and notarised by Apple, so Gatekeeper opens it without asking
-  # (docs/decisions/2026-11-04-macos-notarisation.md). The bundler imports APPLE_CERTIFICATE
-  # (the .p12, base64) into a temporary keychain, signs FFmpeg, ffprobe and then the app with
-  # APPLE_SIGNING_IDENTITY, which overrides the ad-hoc "-" of src-tauri/tauri.macos.conf.json
-  # that local builds keep, and sends the app to Apple's notary service with APPLE_ID, an
-  # app-specific APPLE_PASSWORD and APPLE_TEAM_ID, then staples the ticket to it.
-  macos:
-    name: Disk image (Apple Silicon)
-    needs: prepare
-    runs-on: macos-latest
-    # Notarisation usually answers in minutes, but Apple's queue can hold a submission for
-    # hours (a new team's first ones especially): the first test run was cancelled at 90.
-    timeout-minutes: 240
-    env:
-      TARGET: aarch64-apple-darwin
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.tag || github.ref_name }}
-          persist-credentials: false
-
-      - run: rustup toolchain install
-
-      # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of
-      # its own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
-      # `target/` with that folder emptied, and the build then finds no sources to build: keep
-      # it out of the cache, in the runner's temporary folder.
-      - name: Keep Tesseract's build outside the cached target folder
-        shell: bash
-        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-        with:
-          prefix-key: whisper-cpu-${{ runner.arch }}-v2
-          save-if: false
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      - name: Fetch the bundled FFmpeg
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/fetch-ffmpeg.mjs "$TARGET"
-
-      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
-      - name: Fetch the bundled llama.cpp
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/fetch-llama.mjs "$TARGET"
-
-      - name: Write the third-party notices
-        run: node scripts/third-party-notices.mjs "$TARGET"
-
-      # Without them the bundler would fall back to ad-hoc signing and skip notarisation with
-      # only a warning: a release must not ship that way unnoticed.
-      - name: Check the signing secrets
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          missing=()
-          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
-            [ -n "${!name}" ] || missing+=("$name")
-          done
-          if [ ${#missing[@]} -gt 0 ]; then
-            echo "::error::Missing repository secrets for signing and notarising the Mac app: ${missing[*]}."
-            exit 1
-          fi
-
-      - name: Build, sign, notarise and attach the disk image
-        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        with:
-          releaseId: ${{ needs.prepare.outputs.release_id }}
-          args: --target aarch64-apple-darwin --bundles dmg --config src-tauri/tauri.ffmpeg.conf.json
-
-      # What the image holds, as a user gets it: the app signed with the Developer ID, its
-      # notarisation ticket stapled and accepted by Gatekeeper, FFmpeg and ffprobe signed with
-      # the same identity and the hardened runtime, and every licence. Tauri removes the bare
-      # .app once the image is made, so the image is opened.
-      - name: Check the app
-        run: |
-          dmg=$(ls "target/$TARGET/release/bundle/dmg/"Kalamu_*_aarch64.dmg)
-          mnt=$(mktemp -d)
-          hdiutil attach -readonly -nobrowse -mountpoint "$mnt" "$dmg"
-          trap 'hdiutil detach "$mnt" -quiet || true' EXIT
-          app="$mnt/Kalamu.app"
-          codesign --verify --deep --strict --verbose=2 "$app"
-          codesign -dv "$app" 2>&1 | grep -E 'Authority|TeamIdentifier|Identifier|flags'
-          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli" "$app/Contents/MacOS/llama-completion"; do
-            details=$(codesign -dv --verbose=4 "$exe" 2>&1)
-            grep -q '^Authority=Developer ID Application:' <<< "$details"               || { echo "::error::$exe is not signed with the Developer ID."; exit 1; }
-            grep -q 'flags=.*runtime' <<< "$details"               || { echo "::error::$exe lacks the hardened runtime notarisation needs."; exit 1; }
-          done
-          xcrun stapler validate "$app"
-          spctl --assess --type execute --verbose=4 "$app"
-          "$app/Contents/MacOS/ffmpeg" -hide_banner -version | sed -n 1p
-          "$app/Contents/MacOS/ffprobe" -hide_banner -version | sed -n 1p
-          "$app/Contents/MacOS/llama-mtmd-cli" --version
-          "$app/Contents/MacOS/llama-completion" --version
-          for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt llama.cpp-MIT.txt llama.cpp-BUILD.txt; do
-            test -s "$app/Contents/Resources/licenses/$licence"
-          done
-          ls -l "target/$TARGET/release/bundle/dmg/"
-
-  # The Store package for each architecture, built natively as the installers are. The bundler
-  # compiles the app again with `--no-bundle`; scripts/bundle-msix.mjs puts FFmpeg and the
-  # licences inside (docs/packaging-msix.md).
-  msix:
-    name: MSIX package (${{ matrix.arch }})
-    needs: prepare
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x64
-            runner: windows-latest
-            target: x86_64-pc-windows-msvc
-          - arch: arm64
-            runner: windows-11-arm
-            target: aarch64-pc-windows-msvc
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.tag || github.ref_name }}
-          persist-credentials: false
-
-      - name: Configure native Whisper compiler
-        shell: pwsh
-        run: |
-          "CC=clang-cl" >> $env:GITHUB_ENV
-          "CXX=clang-cl" >> $env:GITHUB_ENV
-          "CXXFLAGS=/EHsc" >> $env:GITHUB_ENV
-          "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
-          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
-
-      - run: rustup toolchain install
-
-      # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of
-      # its own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
-      # `target/` with that folder emptied, and the build then finds no sources to build: keep
-      # it out of the cache, in the runner's temporary folder.
-      - name: Keep Tesseract's build outside the cached target folder
-        shell: bash
-        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-        with:
-          prefix-key: whisper-cpu-${{ runner.arch }}-v2
-          save-if: false
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      - name: Fetch the bundled FFmpeg
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/fetch-ffmpeg.mjs ${{ matrix.target }}
-
-      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
-      - name: Fetch the bundled llama.cpp
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/fetch-llama.mjs ${{ matrix.target }}
-
-      - name: Vulkan SDK
-        uses: ./.github/actions/vulkan-sdk
-
-      - name: Build Whisper's Vulkan helper
-        run: node scripts/build-whisper-vulkan.mjs ${{ matrix.target }}
-
-      - name: Write the third-party notices
-        run: node scripts/third-party-notices.mjs ${{ matrix.target }}
-
-      - name: Build the MSIX package
-        run: npm run bundle:msix:${{ matrix.arch }}
-
-      # The bundler names its output after the manifest's DisplayName; the release assets follow
-      # the installers' convention.
-      - name: Name the package
-        id: package
-        shell: pwsh
-        run: |
-          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $msix = Get-ChildItem 'target/msix' | Where-Object Extension -eq '.msix' | Select-Object -First 1
-          if (-not $msix) { throw 'tauri-windows-bundle produced no .msix.' }
-          $asset = Join-Path 'target/msix' "Kalamu_${version}_${{ matrix.arch }}.msix"
-          Move-Item -LiteralPath $msix.FullName -Destination $asset -Force
-          "msix=$asset" >> $env:GITHUB_OUTPUT
-
-      # The package must carry Whisper's Vulkan helper beside the other programs: the bundler copies what the configuration declares, and
-      # this checks the result, so a package without it never reaches the release.
-      - name: Check what the package carries
-        shell: pwsh
-        run: |
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $zip = [System.IO.Compression.ZipFile]::OpenRead('${{ steps.package.outputs.msix }}')
-          try { $entries = $zip.Entries | ForEach-Object { $_.FullName -replace '\\', '/' } } finally { $zip.Dispose() }
-          $missing = @('kalamu.exe', 'whisper-vulkan.exe', 'llama-mtmd-cli-vulkan.exe') | Where-Object { $_ -notin $entries }
-          if ($missing) { throw "The package lacks: $($missing -join ', ')" }
-          Write-Output "The package carries every required file."
+          name: asset-installer-${{ matrix.arch }}
+          path: ${{ steps.packages.outputs.installer }}
+          retention-days: 1
+          if-no-files-found: error
 
       # The bare .msix is what a tester signs and installs locally: signing a bundle does not
       # sign the packages inside it.
-      - name: Attach the MSIX to the release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >-
-          gh release upload "${{ inputs.tag || github.ref_name }}"
-          "${{ steps.package.outputs.msix }}" --clobber
-
-      - name: Upload the MSIX for bundling
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: msix-${{ matrix.arch }}
-          path: ${{ steps.package.outputs.msix }}
+          name: asset-msix-${{ matrix.arch }}
+          path: ${{ steps.packages.outputs.msix }}
           retention-days: 1
           if-no-files-found: error
 
@@ -499,19 +226,19 @@ jobs:
   # takes, so no architecture ships stale on a later update.
   bundle:
     name: Store bundle (x64 + ARM64)
-    needs: msix
+    needs: windows
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ env.TAG }}
           persist-credentials: false
 
       - name: Download both architectures
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: msix-*
+          pattern: asset-msix-*
           path: packages
           merge-multiple: true
 
@@ -535,52 +262,328 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "MakeAppx failed with exit code $LASTEXITCODE" }
           "bundle=$bundle" >> $env:GITHUB_OUTPUT
 
-      - name: Attach the bundle to the release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: asset-msixbundle
+          path: ${{ steps.bundle.outputs.bundle }}
+          retention-days: 1
+          if-no-files-found: error
+
+  # The macOS app for Apple Silicon, compiled natively and left unsigned: `notarise` signs it.
+  # Only the executable, the programs and licences beside it (src-tauri/binaries) and the built
+  # front end the configuration names go on; the bundler makes the .app from them there. A tar
+  # keeps their executable bits, which an artifact alone loses.
+  macos:
+    name: App (Apple Silicon)
+    needs: prepare
+    runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      TARGET: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - run: rustup toolchain install
+
+      # Tesseract's build (kreuzberg-tesseract) keeps the sources it downloads in a folder of
+      # its own, `target/tesseract` by default (`.cargo/config.toml`). The Rust cache restores
+      # `target/` with that folder emptied, and the build then finds no sources to build: keep
+      # it out of the cache, in the runner's temporary folder.
+      - name: Keep Tesseract's build outside the cached target folder
+        shell: bash
+        run: echo "TESSERACT_RS_CACHE_DIR=$RUNNER_TEMP/tesseract" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          prefix-key: whisper-cpu-${{ runner.arch }}-v2
+          save-if: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch the bundled FFmpeg
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >-
-          gh release upload "${{ inputs.tag || github.ref_name }}"
-          "${{ steps.bundle.outputs.bundle }}" --clobber
+        run: node scripts/fetch-ffmpeg.mjs "$TARGET"
 
-  # The last step: every asset is attached, so the draft can go public with the prepared body
-  # from the tagged commit. A hyphenated tag is never published here, and a release that is
-  # already published is left as it is.
-  publish:
-    name: Publish the release
-    needs: [prepare, build, macos, bundle]
-    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+      # llama.cpp's program for the offline OCR models, checked against scripts/llama.json.
+      - name: Fetch the bundled llama.cpp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/fetch-llama.mjs "$TARGET"
+
+      - name: Write the third-party notices
+        run: node scripts/third-party-notices.mjs "$TARGET"
+
+      - name: Build the app, unsigned
+        run: >-
+          npx tauri build --target "$TARGET" --no-bundle
+          --config src-tauri/tauri.ffmpeg.conf.json
+
+      - name: Pack the build for signing
+        run: tar -cf "$RUNNER_TEMP/macos-build.tar" "target/$TARGET/release/kalamu" src-tauri/binaries build
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-build
+          path: ${{ runner.temp }}/macos-build.tar
+          retention-days: 1
+          if-no-files-found: error
+
+  # The macOS disk image, signed with the Developer ID Application certificate and notarised by
+  # Apple, so Gatekeeper opens it without asking (docs/decisions/2026-11-04-macos-notarisation.md).
+  # `tauri bundle` makes the .app from the build `macos` left, imports APPLE_CERTIFICATE (the
+  # .p12, base64) into a temporary keychain, signs FFmpeg, ffprobe, the llama.cpp programs and
+  # then the app with APPLE_SIGNING_IDENTITY, which overrides the ad-hoc "-" of
+  # src-tauri/tauri.macos.conf.json that local builds keep, sends the app to Apple's notary
+  # service with APPLE_ID, an app-specific APPLE_PASSWORD and APPLE_TEAM_ID, staples the ticket
+  # to it and makes the image. The packages are installed without their install scripts and
+  # nothing is compiled, so no dependency's code runs beside the secrets.
+  notarise:
+    name: Disk image, signed and notarised (Apple Silicon)
+    needs: macos
+    runs-on: macos-latest
+    # Notarisation usually answers in minutes, but Apple's queue can hold a submission for
+    # hours (a new team's first ones especially): the first test run was cancelled at 90.
+    timeout-minutes: 240
+    env:
+      TARGET: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      # Without them the bundler would fall back to ad-hoc signing and skip notarisation with
+      # only a warning: a release must not ship that way unnoticed.
+      - name: Check the signing secrets
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          missing=()
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing repository secrets for signing and notarising the Mac app: ${missing[*]}."
+            exit 1
+          fi
+
+      # The bundler asks Cargo where the workspace builds; the pinned toolchain answers.
+      - run: rustup toolchain install
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      # Tauri's command-line tool, which signs; --ignore-scripts so no package's install script
+      # runs on this machine.
+      - run: npm ci --ignore-scripts
+
+      - name: Download the build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: macos-build
+          path: ${{ runner.temp }}
+
+      - name: Unpack the build
+        run: tar -xf "$RUNNER_TEMP/macos-build.tar"
+
+      - name: Sign, notarise and make the disk image
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: >-
+          npx tauri bundle --target "$TARGET" --bundles dmg
+          --config src-tauri/tauri.ffmpeg.conf.json
+
+      # What the image holds, as a user gets it: the app signed with the Developer ID, its
+      # notarisation ticket stapled and accepted by Gatekeeper, FFmpeg and ffprobe signed with
+      # the same identity and the hardened runtime, and every licence. Tauri removes the bare
+      # .app once the image is made, so the image is opened.
+      - name: Check the app
+        id: dmg
+        run: |
+          dmg=$(ls "target/$TARGET/release/bundle/dmg/"Kalamu_*_aarch64.dmg)
+          mnt=$(mktemp -d)
+          hdiutil attach -readonly -nobrowse -mountpoint "$mnt" "$dmg"
+          trap 'hdiutil detach "$mnt" -quiet || true' EXIT
+          app="$mnt/Kalamu.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          codesign -dv "$app" 2>&1 | grep -E 'Authority|TeamIdentifier|Identifier|flags'
+          for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli" "$app/Contents/MacOS/llama-completion"; do
+            details=$(codesign -dv --verbose=4 "$exe" 2>&1)
+            grep -q '^Authority=Developer ID Application:' <<< "$details"               || { echo "::error::$exe is not signed with the Developer ID."; exit 1; }
+            grep -q 'flags=.*runtime' <<< "$details"               || { echo "::error::$exe lacks the hardened runtime notarisation needs."; exit 1; }
+          done
+          xcrun stapler validate "$app"
+          spctl --assess --type execute --verbose=4 "$app"
+          "$app/Contents/MacOS/ffmpeg" -hide_banner -version | sed -n 1p
+          "$app/Contents/MacOS/ffprobe" -hide_banner -version | sed -n 1p
+          "$app/Contents/MacOS/llama-mtmd-cli" --version
+          "$app/Contents/MacOS/llama-completion" --version
+          for licence in THIRD-PARTY-NOTICES.txt FFmpeg-LGPL-2.1.txt Opus-BSD-3-Clause.txt FFmpeg-BUILD.txt llama.cpp-MIT.txt llama.cpp-BUILD.txt; do
+            test -s "$app/Contents/Resources/licenses/$licence"
+          done
+          ls -l "target/$TARGET/release/bundle/dmg/"
+          echo "dmg=$dmg" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: asset-dmg
+          path: ${{ steps.dmg.outputs.dmg }}
+          retention-days: 1
+          if-no-files-found: error
+
+  # Every asset the other jobs made, with SHA256SUMS listing each one's SHA-256. It runs when
+  # some of them failed too, as each job used to attach its own: a validation build's draft then
+  # still carries what was built, and `publish` refuses an incomplete release.
+  checksums:
+    name: Checksums
+    needs: [prepare, windows, bundle, notarise]
+    if: ${{ !cancelled() && needs.prepare.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - name: Download the assets
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          pattern: asset-*
+          path: assets
+          merge-multiple: true
+
+      - name: Write SHA256SUMS
+        working-directory: assets
+        run: |
+          shopt -s nullglob
+          files=(*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::No job produced an asset."
+            exit 1
+          fi
+          sha256sum -- "${files[@]}" | LC_ALL=C sort -k2 > ../SHA256SUMS
+          mv ../SHA256SUMS .
+          cat SHA256SUMS
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-assets
+          path: assets/
+          retention-days: 1
+          if-no-files-found: error
+
+  # A signed statement, kept by GitHub and checked with `gh attestation verify`, that each asset
+  # in SHA256SUMS was built by this workflow from the tagged commit. This job alone may ask for
+  # the identity token and write attestations; it reads only SHA256SUMS.
+  attest:
+    name: Build attestation
+    needs: checksums
+    if: ${{ !cancelled() && needs.checksums.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download the checksums
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-assets
+          path: assets
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: assets/SHA256SUMS
+
+  # Attaches every asset and SHA256SUMS to the draft, replacing assets of the same name.
+  upload:
+    name: Attach the assets
+    needs: [prepare, checksums]
+    if: ${{ !cancelled() && needs.checksums.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Download the assets
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-assets
+          path: assets
+
+      - name: Check and attach them
+        working-directory: assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sha256sum -c SHA256SUMS
+          gh release upload "$TAG" ./* --clobber -R "$GITHUB_REPOSITORY"
+
+  # The last step: every asset is attached and attested, so the draft can go public with the
+  # prepared body from the tagged commit. A hyphenated tag is never published here, and a release
+  # that is already published is left as it is.
+  publish:
+    name: Publish the release
+    needs: [prepare, windows, bundle, notarise, upload, attest]
+    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
           persist-credentials: false
 
       - name: Check the assets and publish
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.tag || github.ref_name }}
           VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_ID: ${{ needs.prepare.outputs.release_id }}
         run: |
-          draft=$(gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.prepare.outputs.release_id }}" --jq .draft)
+          draft=$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq .draft)
           if [ "$draft" != true ]; then
             echo "::notice::$TAG is already published; its title and body are left as they are."
             exit 0
           fi
 
-          assets=$(gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.prepare.outputs.release_id }}" --jq '.assets[].name')
+          assets=$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq '.assets[].name')
           for asset in "Kalamu_${VERSION}_x64-setup.exe" "Kalamu_${VERSION}_arm64-setup.exe" \
             "Kalamu_${VERSION}_x64.msix" "Kalamu_${VERSION}_arm64.msix" "Kalamu_${VERSION}.msixbundle" \
-            "Kalamu_${VERSION}_aarch64.dmg" kalamu-samples.zip; do
+            "Kalamu_${VERSION}_aarch64.dmg" kalamu-samples.zip SHA256SUMS; do
             if ! grep -qx "$asset" <<< "$assets"; then
               echo "::error::$asset is not attached; the release stays a draft."
               exit 1
             fi
           done
 
+          # The notes written for this version, then how to check a download, the same for every
+          # release with the version filled in (a tag cut before that page existed has the notes
+          # alone).
+          cp "docs/release-$VERSION.md" "$RUNNER_TEMP/notes.md"
+          if [ -s docs/checking-downloads.md ]; then
+            { echo; sed "s/<version>/$VERSION/g" docs/checking-downloads.md; } >> "$RUNNER_TEMP/notes.md"
+          fi
+
           latest=true
           if [[ "$VERSION" == 0.* ]]; then latest=false; fi
           gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --draft=false --latest="$latest" \
-            --title "Kalamu $VERSION" --notes-file "docs/release-$VERSION.md"
+            --title "Kalamu $VERSION" --notes-file "$RUNNER_TEMP/notes.md"

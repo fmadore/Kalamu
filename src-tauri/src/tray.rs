@@ -1,18 +1,16 @@
 //! The tray icon (in the notification area on Windows, the menu bar on macOS), so jobs keep
 //! running with the window closed.
 //!
-//! Ported from Live Translation's tray. The menu holds no state of its own: the interface
-//! pushes the job status and the translated labels through `set_tray_state`, and they are
-//! written onto the live items. Open, Pause all and Quit need nothing from the interface, so
-//! they keep working while the window is hidden or the interface is busy.
+//! Ported from Live Translation's tray. The menu holds no state of its own: `activity` works out
+//! the job status from the engine's events and words it with the interface's translated labels,
+//! and it is written onto the live items. Open, Pause all and Quit need nothing from the
+//! interface, so they keep working while the window is hidden or the interface is busy.
 
 use std::sync::Mutex;
 
-use serde::Deserialize;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Wry};
-use ts_rs::TS;
 
 use crate::commands::AppState;
 use crate::commands::window::{pause_and_quit, pause_running, show_main_window};
@@ -23,18 +21,16 @@ const ID_OPEN: &str = "tray-open";
 const ID_PAUSE: &str = "tray-pause";
 const ID_QUIT: &str = "tray-quit";
 
-/// What the interface knows and the menu shows.
-#[derive(Debug, Clone, Deserialize, TS)]
-#[ts(export)]
+/// What the menu shows.
+#[derive(Debug, Clone)]
 pub struct TrayState {
     /// Whether any job is running, which enables *Pause all*.
     pub running: bool,
     pub labels: TrayLabels,
 }
 
-/// The menu's text, translated by the interface.
-#[derive(Debug, Clone, Deserialize, TS)]
-#[ts(export)]
+/// The menu's text, in the interface's language.
+#[derive(Debug, Clone)]
 pub struct TrayLabels {
     /// The first, disabled line: "2 jobs running · 45%" or "No jobs running".
     pub status: String,
@@ -69,7 +65,7 @@ struct Items<I = MenuItem<Wry>> {
     written: Written,
 }
 
-/// What was last written onto each item. The interface pushes on every progress refresh, but
+/// What was last written onto each item. The menu is written on every progress refresh, but
 /// usually only the status line has changed; each write is a native menu call.
 #[derive(Default)]
 struct Written {
@@ -90,7 +86,15 @@ fn write_text(item: &impl MenuEntry, written: &mut String, text: &str) {
 }
 
 impl<I: MenuEntry> Items<I> {
-    /// Write the interface's view onto the menu. Returns the tooltip when it changed, since
+    /// Enable *Pause all* when jobs run, disabled rather than hidden, so "nothing to pause"
+    /// reads differently from "no such entry".
+    fn set_running(&mut self, running: bool) {
+        if self.written.pause_enabled != Some(running) && self.pause.set_enabled(running).is_ok() {
+            self.written.pause_enabled = Some(running);
+        }
+    }
+
+    /// Write the state onto the menu. Returns the tooltip when it changed, since
     /// the tooltip belongs to the icon rather than to a menu item.
     fn apply(&mut self, state: &TrayState) -> Option<String> {
         let labels = &state.labels;
@@ -99,17 +103,12 @@ impl<I: MenuEntry> Items<I> {
         write_text(&self.open, &mut written.open, &labels.open);
         write_text(&self.pause, &mut written.pause, &labels.pause);
         write_text(&self.quit, &mut written.quit, &labels.quit);
-        // Disabled rather than hidden, so "nothing to pause" reads differently from "no such
-        // entry".
-        if written.pause_enabled != Some(state.running)
-            && self.pause.set_enabled(state.running).is_ok()
-        {
-            written.pause_enabled = Some(state.running);
-        }
-        (written.tooltip != labels.tooltip).then(|| {
+        let tooltip = (written.tooltip != labels.tooltip).then(|| {
             written.tooltip.clone_from(&labels.tooltip);
             labels.tooltip.clone()
-        })
+        });
+        self.set_running(state.running);
+        tooltip
     }
 }
 
@@ -131,10 +130,18 @@ impl TrayMenu {
             let _ = tray.set_tooltip(Some(tooltip));
         }
     }
+
+    /// Only whether jobs run, before the interface's words have arrived.
+    pub fn set_running(&self, running: bool) {
+        let mut guard = self.items.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(items) = guard.as_mut() {
+            items.set_running(running);
+        }
+    }
 }
 
 /// Build the icon and its menu. Called once from `setup`. The English labels are placeholders
-/// until the interface pushes its translated ones, a moment after launch.
+/// until the interface sends its translated ones, a moment after launch.
 pub fn init(app: &AppHandle) -> tauri::Result<()> {
     let status = MenuItem::with_id(app, "tray-status", "Kalamu", false, None::<&str>)?;
     let open = MenuItem::with_id(app, ID_OPEN, "Open Kalamu", true, None::<&str>)?;

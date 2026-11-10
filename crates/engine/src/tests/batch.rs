@@ -28,6 +28,8 @@ struct Batchy {
     polls: AtomicUsize,
     /// Rate limits answered to submissions before one is taken.
     rate_limits: AtomicUsize,
+    /// Items a batch may hold, as the provider declares it (0: two).
+    max_items: AtomicUsize,
 }
 
 impl Batchy {
@@ -88,7 +90,10 @@ impl Provider for Batchy {
 
     fn batch_limits(&self) -> BatchLimits {
         BatchLimits {
-            max_items: 2,
+            max_items: match self.max_items.load(Ordering::SeqCst) {
+                0 => 2,
+                n => n,
+            },
             ..BatchLimits::default()
         }
     }
@@ -186,6 +191,15 @@ impl Provider for Batchy {
 }
 
 fn engine(store: Arc<SqliteStore>, batchy: Arc<Batchy>) -> Arc<Engine> {
+    engine_with(store, batchy, kalamu_core::BatchLimits::default().max_bytes)
+}
+
+/// An engine that sends at most `max_batch_bytes` of prepared input a batch.
+fn engine_with(
+    store: Arc<SqliteStore>,
+    batchy: Arc<Batchy>,
+    max_batch_bytes: usize,
+) -> Arc<Engine> {
     Engine::new(
         store,
         vec![batchy],
@@ -196,6 +210,7 @@ fn engine(store: Arc<SqliteStore>, batchy: Arc<Batchy>) -> Arc<Engine> {
             base_delay: Duration::from_millis(5),
             app_version: "test".into(),
             batch_poll: Duration::from_millis(10),
+            max_batch_bytes,
             ..EngineConfig::default()
         },
     )
@@ -437,6 +452,99 @@ async fn closing_the_app_mid_batch_collects_the_answers_on_the_next_launch() {
         efforts,
         vec![(0, "low".into()), (1, "low".into()), (2, "high".into())]
     );
+}
+
+#[tokio::test]
+async fn a_job_larger_than_the_engine_s_cap_is_sent_as_several_batches_and_resumed() {
+    // The provider would take a thousand pages a batch; the engine takes one page's bytes.
+    let mut e = economy();
+    e.batchy.max_items.store(1_000, Ordering::SeqCst);
+    e.batchy.working_polls.store(usize::MAX, Ordering::SeqCst);
+    e.f.engine = engine_with(e.f.store.clone(), e.batchy.clone(), 1);
+    let job = e.job(4, Pace::Economy);
+    let events = e.start_until_waiting(job.id, 4).await;
+    assert_eq!(
+        e.batchy.submitted(),
+        4,
+        "one page a batch, whatever the provider allows"
+    );
+    let batches = e.f.store.batches(job.id).unwrap_or_default();
+    assert!(batches.iter().all(|b| b.items.len() == 1), "{batches:?}");
+
+    // The app is closed while the provider holds them, and the last batch was never
+    // confirmed as sent.
+    e.f.engine.pause(job.id);
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Paused);
+    e.f.store
+        .set_job_status(job.id, JobStatus::Running)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let mut last =
+        e.f.store
+            .batches(job.id)
+            .unwrap_or_default()
+            .into_iter()
+            .find(|b| b.items.iter().any(|i| i.index == 3))
+            .unwrap_or_else(|| panic!("no batch holds page 4"));
+    last.phase = BatchPhase::Sending;
+    last.remote_id = None;
+    e.f.store.put_batch(&last).unwrap_or_else(|e| panic!("{e}"));
+
+    // The next launch collects the three batches the provider holds and, resumed, sends the
+    // fourth page again, alone: nothing is sent twice that was confirmed, nothing is lost.
+    e.batchy.working_polls.store(0, Ordering::SeqCst);
+    let relaunched = engine_with(e.f.store.clone(), e.batchy.clone(), 1);
+    relaunched.recover().unwrap_or_else(|e| panic!("{e}"));
+    let events = relaunched.subscribe();
+    relaunched.start(job.id).unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Completed);
+    assert_eq!(e.batchy.submitted(), 5);
+    assert_eq!(e.batchy.pages_sent(), vec![1, 2, 3, 4, 4]);
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Done), 4);
+    let collected =
+        e.f.store
+            .batches(job.id)
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|b| b.phase == BatchPhase::Collected)
+            .count();
+    assert_eq!(
+        collected, 4,
+        "three collected at launch, the fourth sent again"
+    );
+
+    // Each page is billed once, at the batch price, and provenance counts every batch's usage.
+    let mut billed = 0;
+    for piece in &pieces {
+        let key = CacheKey(piece.cache_key.clone().unwrap_or_default());
+        let result =
+            e.f.store
+                .cached_result(&key)
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| panic!("no result for piece {}", piece.index));
+        assert!(
+            result.output.usage.batch,
+            "page {} billed as a batch",
+            piece.index
+        );
+        billed += result.output.usage.input_tokens;
+    }
+    assert_eq!(billed, 4_000);
+    let provenance: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(e.f.dir.path().join("register.provenance.json"))
+            .unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(provenance["usage"]["input_tokens"], 4_000, "{provenance}");
+    assert_eq!(provenance["pieces"], 4, "{provenance}");
+    let txt = std::fs::read_to_string(e.f.dir.path().join("register.txt")).unwrap_or_default();
+    for n in 1..=4 {
+        assert!(
+            txt.contains(&format!("batched page {n}")),
+            "page {n}: {txt}"
+        );
+    }
 }
 
 #[tokio::test]

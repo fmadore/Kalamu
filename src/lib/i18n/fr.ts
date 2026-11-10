@@ -1659,6 +1659,11 @@ export const fr: Messages = {
 		modelInstalled: 'Téléchargé',
 		modelMissing: 'Non téléchargé',
 		modelDownloading: (pct: number) => `Téléchargement… ${pct} %`,
+		modelStopped: (pct: number) => `Interrompu à ${pct} %`,
+		modelKept: (size: string) =>
+			`Les ${size} déjà téléchargés sont gardés : le téléchargement reprendra à partir de là.`,
+		continueDownload: 'Reprendre le téléchargement',
+		discardDownload: 'Abandonner',
 		modelInUse: 'Utilisé par un traitement',
 		download: 'Télécharger',
 		cancelDownload: 'Annuler',
@@ -1948,8 +1953,8 @@ export const fr: Messages = {
 		quit: 'Quitter',
 		quitPausing: 'Mettre en pause et quitter',
 		idle: 'Aucun traitement en cours',
-		running: (jobs: number, percent: number) =>
-			`${jobs === 1 ? '1 traitement en cours' : `${jobs} traitements en cours`} · ${percent} %`
+		runningOne: (percent: string) => `1 traitement en cours · ${percent} %`,
+		runningMany: (jobs: string, percent: string) => `${jobs} traitements en cours · ${percent} %`
 	},
 	common: {
 		cancel: 'Annuler',
@@ -1973,7 +1978,9 @@ export const fr: Messages = {
 			`Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`,
 		unsaved: 'Vos modifications ne sont pas enregistrées. Quitter et les abandonner ?',
 		discardChanges: 'Abandonner les modifications',
-		keepEditing: 'Continuer à modifier'
+		keepEditing: 'Continuer à modifier',
+		shownRows: (shown: number, total: number) => `${shown} affichés sur ${total}`,
+		showMore: (n: number) => `Afficher ${n} de plus`
 	},
 	error: {
 		'search.too_short': 'Tapez un mot d’au moins trois lettres.',

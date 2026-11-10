@@ -2,7 +2,7 @@
 //! their forms as written, review status and the pairs kept apart; and every form a result
 //! listed in CSV, as written beside the entry and label it maps to.
 
-use kalamu_core::{DictionaryError, ProjectId, Table, Timestamp};
+use kalamu_core::{CsvCells, DictionaryError, ProjectId, Table, Timestamp};
 use serde::Serialize;
 
 use crate::Dictionary;
@@ -108,6 +108,12 @@ impl Dictionary {
                 }
             }
         }
-        Ok(Table { headings, rows })
+        // For a spreadsheet: the forms come from model answers read off documents, and the
+        // entries' JSON export keeps them exactly.
+        Ok(Table {
+            headings,
+            rows,
+            cells: CsvCells::Guarded,
+        })
     }
 }

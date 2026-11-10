@@ -2,7 +2,7 @@
 //! researcher exports them: each unit's id, title, pages in the original, file and fields, so
 //! the files can be catalogued elsewhere and traced back to their source.
 
-use kalamu_core::{DocumentUnit, ExportError, Field, Table};
+use kalamu_core::{CsvCells, DocumentUnit, ExportError, Field, Table};
 use serde_json::{Value, json};
 
 /// One exported unit and where its pages went.
@@ -46,7 +46,14 @@ pub fn csv(rows: &[Row<'_>], fields: &[Field]) -> Result<Vec<u8>, ExportError> {
             record
         })
         .collect();
-    Ok(crate::table_csv(&Table { headings, rows })?.into_bytes())
+    // Titles and fields come from a model's reading of the document, opened in a spreadsheet;
+    // the JSON written beside it is the list for another program.
+    let table = Table {
+        headings,
+        rows,
+        cells: CsvCells::Guarded,
+    };
+    Ok(crate::table_csv(&table)?.into_bytes())
 }
 
 /// The units with their pages as the original numbers them (`{"kind": "page", "number": 3}`),

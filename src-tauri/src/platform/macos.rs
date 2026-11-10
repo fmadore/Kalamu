@@ -3,7 +3,9 @@
 //! back, and Quit asks first while jobs run. In the Mac App Store's build, the App Sandbox's
 //! grants are kept as security-scoped bookmarks.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use kalamu_media::Playback;
 use objc2::runtime::Bool;
@@ -102,10 +104,53 @@ pub fn init(app: &mut App) -> tauri::Result<()> {
 }
 
 /// A click on the Dock icon, or opening the app again from Finder, brings back the window the
-/// red button hid: it does not start a second process.
+/// red button hid: it does not start a second process. When the app quits, the programs it
+/// started end with it ([`keep_children`]).
 pub fn on_run_event(app: &AppHandle, event: RunEvent) {
-    if let RunEvent::Reopen { .. } = event {
-        show_main_window(app);
+    match event {
+        RunEvent::Reopen { .. } => show_main_window(app),
+        RunEvent::Exit => end_children(),
+        _ => {}
+    }
+}
+
+/// The programs the app started (FFmpeg and ffprobe, llama.cpp, the Whisper helper) are kept
+/// by process id while they run, and ended when the app quits by any of its own ways: Quit,
+/// a second Quit, the window closed while idle, logging out.
+///
+/// macOS has no Job Object, and nothing ends a child when its parent dies: after a crash, a
+/// Force Quit or a `kill`, a program goes on until it next writes to a pipe of the app's, which
+/// then ends it; one that is computing in silence, or hung, runs to its end. A program's id is
+/// forgotten once it was reaped, so the app never ends a later process that was given it.
+pub fn keep_children() {
+    kalamu_media::program::keep_with(kalamu_media::program::Keeper {
+        adopt: |child| {
+            running().insert(child.id());
+        },
+        release: |id| {
+            running().remove(&id);
+        },
+    });
+}
+
+/// The process ids of the programs the app started and has not reaped yet.
+static RUNNING: Mutex<BTreeSet<u32>> = Mutex::new(BTreeSet::new());
+
+fn running() -> MutexGuard<'static, BTreeSet<u32>> {
+    RUNNING.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+/// Ends every program the app started that still runs, as `Child::kill` does.
+// The crate denies unsafe code; `kill` is the exception, since every call to the C library is
+// unsafe.
+#[allow(unsafe_code)]
+fn end_children() {
+    for id in std::mem::take(&mut *running()) {
+        if let Ok(pid) = libc::pid_t::try_from(id) {
+            // SAFETY: `kill` takes plain numbers; the id is a child of this process not yet
+            // reaped, so it names no other process.
+            unsafe { libc::kill(pid, libc::SIGKILL) };
+        }
     }
 }
 

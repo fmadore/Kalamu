@@ -323,6 +323,37 @@ fn a_job_started_in_the_project_is_linked_to_its_documents() {
 }
 
 #[test]
+fn several_jobs_are_linked_together_or_not_at_all() {
+    let f = fixture();
+    let p = f.projects.create("Interviews", "").unwrap();
+    let c = f.projects.create_collection(p.id, "Added").unwrap();
+    let (a, b) = (f.file("a.pdf", "a"), f.file("b.pdf", "b"));
+    let first = f.job(Task::TextExtraction, vec![a.clone()]);
+    // The same file read again by a second job, and another file.
+    let second = f.job(Task::Analysis, vec![a, b]);
+
+    // A job that does not exist stops the whole selection before anything is written.
+    let missing = kalamu_core::JobId::new();
+    assert!(
+        f.projects
+            .link_jobs(p.id, &[first.id, missing], Some(c.id))
+            .is_err()
+    );
+    assert!(f.store.documents(p.id).unwrap().is_empty());
+    assert!(f.store.links(p.id).unwrap().is_empty());
+
+    let linked = f
+        .projects
+        .link_jobs(p.id, &[first.id, second.id], Some(c.id))
+        .unwrap();
+    assert_eq!(linked.len(), 3);
+    assert_eq!(linked[0], linked[1], "the same file is one document");
+    assert_eq!(f.store.documents(p.id).unwrap().len(), 2);
+    assert_eq!(f.store.links(p.id).unwrap().len(), 3);
+    assert_eq!(f.store.members(p.id).unwrap().len(), 2);
+}
+
+#[test]
 fn an_analysis_of_frozen_text_joins_the_document_it_was_read_from() {
     let f = fixture();
     let p = f.projects.create("Letters", "").unwrap();

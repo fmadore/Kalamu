@@ -1,0 +1,94 @@
+name: Packaging dry run
+
+# What a tag runs to package the Windows app, short of signing and uploading: the bundled
+# programs fetched against their pins, the sidecar configuration, scripts/bundle-msix.mjs and
+# both bundlers, through the same action release.yml uses (.github/actions/windows-packages). A
+# pull request that breaks the installer's or the Store package's configuration fails here
+# rather than on a tag.
+#
+# Kept affordable: a debug build (no full LTO), with a copy of FFmpeg standing in for Whisper's
+# Vulkan helper (CI's x64 lane builds the helper itself), and on pull requests x64 only. Run it by
+# hand (Actions tab -> Run workflow) for both architectures, before tagging a release whose
+# packaging changed. A run on main, or by hand, saves the Rust cache pull requests restore. The
+# packages it makes are not kept: the run passes or fails. Keep the two path lists the same.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/packaging.yml
+      - .github/workflows/release.yml
+      - .github/actions/windows-packages/**
+      - .github/actions/vulkan-sdk/**
+      - scripts/bundle-msix.mjs
+      - scripts/fetch-ffmpeg.mjs
+      - scripts/fetch-llama.mjs
+      - scripts/ffmpeg.json
+      - scripts/llama.json
+      - scripts/build-whisper-vulkan.mjs
+      - scripts/third-party-notices.mjs
+      - scripts/release-asset.mjs
+      - src-tauri/tauri.conf.json
+      - src-tauri/tauri.ffmpeg.windows-*.conf.json
+      - src-tauri/gen/windows/**
+      - src-tauri/icons/**
+      - src-tauri/windows-app-manifest.xml
+      - src-tauri/build.rs
+      - package.json
+      - package-lock.json
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/packaging.yml
+      - .github/workflows/release.yml
+      - .github/actions/windows-packages/**
+      - .github/actions/vulkan-sdk/**
+      - scripts/bundle-msix.mjs
+      - scripts/fetch-ffmpeg.mjs
+      - scripts/fetch-llama.mjs
+      - scripts/ffmpeg.json
+      - scripts/llama.json
+      - scripts/build-whisper-vulkan.mjs
+      - scripts/third-party-notices.mjs
+      - scripts/release-asset.mjs
+      - src-tauri/tauri.conf.json
+      - src-tauri/tauri.ffmpeg.windows-*.conf.json
+      - src-tauri/gen/windows/**
+      - src-tauri/icons/**
+      - src-tauri/windows-app-manifest.xml
+      - src-tauri/build.rs
+      - package.json
+      - package-lock.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: packaging-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    name: Installer and MSIX package (${{ matrix.arch }}, dry run)
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: ${{ fromJSON(github.event_name == 'pull_request' && '["x64"]' || '["x64","arm64"]') }}
+    runs-on: ${{ matrix.arch == 'arm64' && 'windows-11-arm' || 'windows-latest' }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and package
+        id: packages
+        uses: ./.github/actions/windows-packages
+        with:
+          arch: ${{ matrix.arch }}
+          profile: debug
+          whisper-vulkan: placeholder
+          save-cache: ${{ github.event_name != 'pull_request' }}

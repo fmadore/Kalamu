@@ -2,7 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use kalamu_core::{InputKind, Job, JobId, JobSources, JobSummary, PieceState, SourceFile, Task};
+use kalamu_core::{
+    InputKind, Job, JobId, JobSources, JobSummary, PieceState, SourceFile, SourceId, Task,
+};
 use kalamu_engine::{Estimate, EstimateRequest, NewJob};
 use serde::Serialize;
 use tauri::State;
@@ -383,6 +385,25 @@ pub async fn delete_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> 
     Ok(())
 }
 
+/// Deletes the jobs chosen on the Jobs page, all or none; their batches are cancelled and their
+/// passages leave the search index as [`delete_job`] does for one.
+#[tauri::command]
+pub async fn delete_jobs(state: State<'_, AppState>, ids: Vec<JobId>) -> CmdResult<()> {
+    for &id in &ids {
+        state.engine.cancel(id);
+        if let Err(e) = state.engine.cancel_batches(id).await {
+            tracing::warn!(job = %id, error = %e, "batches not cancelled");
+        }
+    }
+    state.engine.delete_jobs(&ids)?;
+    for id in ids {
+        if let Err(e) = state.search.forget_job(id) {
+            tracing::warn!(job = %id, error = %e, "passages not removed from the search index");
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub fn list_jobs(state: State<'_, AppState>) -> CmdResult<Vec<JobSummary>> {
     Ok(state.engine.jobs()?)
@@ -402,6 +423,18 @@ pub fn get_job(state: State<'_, AppState>, id: JobId) -> CmdResult<Job> {
 #[tauri::command]
 pub fn job_pieces(state: State<'_, AppState>, id: JobId) -> CmdResult<Vec<PieceState>> {
     Ok(state.engine.pieces(id)?)
+}
+
+/// A job's progress for its page: the pieces held in batches, and each of `sources` counted
+/// under every set-up. Read again as progress arrives, so it sends counts, not pieces.
+#[tauri::command]
+pub async fn job_progress(
+    state: State<'_, AppState>,
+    id: JobId,
+    sources: Vec<SourceId>,
+) -> CmdResult<kalamu_engine::JobProgress> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.job_progress(id, &sources)?)).await
 }
 
 #[cfg(test)]

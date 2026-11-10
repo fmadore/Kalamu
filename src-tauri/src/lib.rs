@@ -2,6 +2,7 @@
 //! folder, the window, taskbar or Dock) and exposes it to the interface through typed commands
 //! and events. What differs between Windows and macOS is in [`platform`].
 
+mod activity;
 mod command_names;
 mod commands;
 mod errors;
@@ -32,6 +33,8 @@ pub const OFFLINE_CHANGED_EVENT: &str = "offline-changed";
 pub const CATALOG_CHANGED_EVENT: &str = "catalog-changed";
 
 pub fn run() {
+    // Before any program is started: none may outlive the app.
+    platform::keep_children();
     // The data folder is settled, and an earlier one moved into it, before Tauri builds the
     // window, whose webview data goes there too.
     let (folders, moved) = platform::data_folder();
@@ -114,10 +117,12 @@ pub fn run() {
             commands::jobs::cancel_job,
             commands::jobs::retry_failed,
             commands::jobs::delete_job,
+            commands::jobs::delete_jobs,
             commands::jobs::list_jobs,
             commands::jobs::job_sources,
             commands::jobs::get_job,
             commands::jobs::job_pieces,
+            commands::jobs::job_progress,
             commands::jobs::job_text_outputs,
             commands::jobs::snapshot_job,
             commands::jobs::derived_state,
@@ -134,9 +139,12 @@ pub fn run() {
             commands::jobs::rename_job,
             commands::review::source_pieces,
             commands::review::piece_preview,
+            commands::review::piece_thumbnail,
             commands::review::piece_audio,
             commands::review::source_text,
             commands::review::save_correction,
+            commands::review::save_corrections,
+            commands::review::rename_listed,
             commands::review::save_speaker_names,
             commands::review::export_source,
             commands::review::compare_source,
@@ -177,6 +185,7 @@ pub fn run() {
             commands::projects::attach_plan,
             commands::projects::attach_job,
             commands::projects::link_job,
+            commands::projects::link_jobs,
             commands::projects::detach_job,
             commands::projects::review_queue,
             commands::dictionary::dictionary_view,
@@ -196,8 +205,7 @@ pub fn run() {
             commands::search::project_search,
             commands::search::rebuild_search_index,
             commands::search::prepare_project_search,
-            commands::window::set_taskbar_progress,
-            commands::window::set_tray_state,
+            commands::window::set_shell_labels,
             commands::window::hide_window,
             commands::window::quit_app,
         ])

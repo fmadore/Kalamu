@@ -1,6 +1,30 @@
 // Draws a page of a source: the one page of a page preview (a single-page PDF from
-// `piece_preview`) with pdf.js, or an image, for the source pane and the thumbnails in the
-// review's strip of pages.
+// `piece_preview`) with pdf.js, or an image, for the source pane. The strip's thumbnails are
+// drawn small by the app (`piece_thumbnail`) and need none of this.
+
+/** The one pdf.js worker every page opened shares, started with the first: each page opened
+ * otherwise starts a worker of its own, a thread and its memory, while the previous one is
+ * still being let go. */
+type Opened = { pdfjs: typeof import('pdfjs-dist'); worker: import('pdfjs-dist').PDFWorker };
+let shared: Promise<Opened> | null = null;
+
+function pdfWorker(): Promise<Opened> {
+	shared ??= (async () => {
+		const pdfjs = await import('pdfjs-dist');
+		const url = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
+		pdfjs.GlobalWorkerOptions.workerSrc = url.default;
+		return { pdfjs, worker: new pdfjs.PDFWorker({ name: null }) };
+	})().catch((e: unknown) => {
+		// A worker that failed to start is tried again with the next page.
+		shared = null;
+		throw e;
+	});
+	return shared.then((opened) => {
+		if (!opened.worker.destroyed) return opened;
+		shared = null;
+		return pdfWorker();
+	});
+}
 
 function bytes(b64: string): Uint8Array {
 	const raw = atob(b64);
@@ -65,12 +89,12 @@ export class SourcePage {
 			await image.decode();
 			return new SourcePage(null, image, async () => {});
 		}
-		const pdfjs = await import('pdfjs-dist');
-		const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
-		pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+		const { pdfjs, worker } = await pdfWorker();
 		// Decoders, colour profiles, character maps and fonts, served by vite.config.js.
 		const at = (folder: string) => new URL(`/pdfjs/${folder}/`, window.location.href).href;
+		// Destroying the document leaves the shared worker running for the next page.
 		const task = pdfjs.getDocument({
+			worker,
 			data: bytes(data),
 			wasmUrl: at('wasm'),
 			cMapUrl: at('cmaps'),
@@ -127,19 +151,5 @@ export class SourcePage {
 
 	destroy(): Promise<void> {
 		return this.close();
-	}
-}
-
-/** Draws a page once, `width` CSS pixels wide: for the strip's thumbnails. */
-export async function renderPdfPage(
-	data: string,
-	target: HTMLCanvasElement,
-	width: number
-): Promise<void> {
-	const page = await SourcePage.open('application/pdf', data);
-	try {
-		await page.draw(target, width);
-	} finally {
-		await page.destroy();
 	}
 }
