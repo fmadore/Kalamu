@@ -1,11 +1,20 @@
 //! Windows: WebView2 (Chromium) plays the review's recordings, Notepad opens JSON files, and the
 //! window closes as Windows apps do, with the notification-area icon keeping running jobs.
 
+use std::os::windows::io::AsRawHandle;
 use std::path::{Path, PathBuf};
+use std::process::Child;
+use std::sync::OnceLock;
 
 use kalamu_media::Playback;
 use tauri::utils::config::AppDirectoriesOverride;
 use tauri::{App, AppHandle, RunEvent};
+use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
+use windows_sys::Win32::System::JobObjects::{
+    AssignProcessToJobObject, CreateJobObjectW, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JobObjectExtendedLimitInformation,
+    SetInformationJobObject,
+};
 
 use super::Moved;
 use crate::grants::Access;
@@ -101,8 +110,108 @@ pub fn init(_app: &mut App) -> tauri::Result<()> {
     Ok(())
 }
 
-/// No run event is Windows-only.
+/// No run event is Windows-only: the programs the app started end with it through their job
+/// ([`keep_children`]), however it ends.
 pub fn on_run_event(_app: &AppHandle, _event: RunEvent) {}
+
+/// Every program the app starts (FFmpeg and ffprobe, llama.cpp, the Whisper helper) is put in
+/// one Job Object that ends them all when it closes. The app holds the job's only handle until
+/// its process ends, and Windows closes it then however the process ended: a second Quit, a
+/// crash, Task Manager.
+///
+/// Each program is put in the job as it starts, rather than the app's own process at start-up
+/// (which every child would then inherit): the opener starts the browser, File Explorer or
+/// Notepad from inside the app's process (`ShellExecuteExW`), and those must outlive it; so
+/// must WebView2's own processes go on as WebView2 decides. Nesting is allowed since Windows
+/// 8, so the Microsoft Store's package, whose processes already run in a job, and `tauri dev`
+/// work the same.
+pub fn keep_children() {
+    kalamu_media::program::keep_with(kalamu_media::program::Keeper {
+        adopt: |child| {
+            let Some(job) = job() else { return };
+            if !job.assign(child) {
+                tracing::warn!(
+                    error = %std::io::Error::last_os_error(),
+                    "a program the app started is not in its job: it may outlive the app"
+                );
+            }
+        },
+        // A job holds processes, not ids: nothing to forget.
+        release: |_| {},
+    });
+}
+
+/// The job of the programs the app starts, made with the first of them (when logging has
+/// started, so a refusal is logged) and kept open until the process ends.
+fn job() -> Option<&'static Job> {
+    static JOB: OnceLock<Option<Job>> = OnceLock::new();
+    JOB.get_or_init(|| {
+        let job = Job::new();
+        if job.is_none() {
+            tracing::warn!(
+                error = %std::io::Error::last_os_error(),
+                "no job for the programs the app starts: they may outlive it"
+            );
+        }
+        job
+    })
+    .as_ref()
+}
+
+/// A Job Object that ends its processes when its last handle closes.
+struct Job(HANDLE);
+
+// SAFETY: a kernel handle may be used and closed from any thread.
+#[allow(unsafe_code)]
+unsafe impl Send for Job {}
+// SAFETY: as above; the job is only assigned to, which Windows serialises.
+#[allow(unsafe_code)]
+unsafe impl Sync for Job {}
+
+// The crate denies unsafe code; these Job Object calls are the exception, since every call to
+// the system's own API through windows-sys is unsafe.
+#[allow(unsafe_code)]
+impl Job {
+    /// A new job with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, or `None` if Windows refused it.
+    /// Its handle is not inheritable, so no program started from the app keeps it open.
+    fn new() -> Option<Self> {
+        // SAFETY: no security attributes (a handle that is not inherited) and no name.
+        let handle = unsafe { CreateJobObjectW(std::ptr::null(), std::ptr::null()) };
+        if handle.is_null() {
+            return None;
+        }
+        let job = Self(handle);
+        // SAFETY: a plain structure of numbers, for which zero is a valid value.
+        let mut limits: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = unsafe { std::mem::zeroed() };
+        limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        let size = u32::try_from(std::mem::size_of_val(&limits)).ok()?;
+        // SAFETY: `limits` lives for the whole call and `size` is its size.
+        let set = unsafe {
+            SetInformationJobObject(
+                job.0,
+                JobObjectExtendedLimitInformation,
+                (&raw const limits).cast(),
+                size,
+            )
+        };
+        (set != 0).then_some(job)
+    }
+
+    /// Puts a running program in the job; `false` if Windows refused.
+    fn assign(&self, child: &Child) -> bool {
+        // SAFETY: both handles are open: the job's until it is dropped, the child's while
+        // `child` is borrowed.
+        unsafe { AssignProcessToJobObject(self.0, child.as_raw_handle()) != 0 }
+    }
+}
+
+#[allow(unsafe_code)]
+impl Drop for Job {
+    fn drop(&mut self) {
+        // SAFETY: the handle is open and owned by this value alone.
+        unsafe { CloseHandle(self.0) };
+    }
+}
 
 /// Nothing beyond the window itself to bring back.
 pub fn show_app(_app: &AppHandle) {}
@@ -121,8 +230,42 @@ pub fn access() -> Access {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use std::path::Path;
+    use std::process::{Command, Stdio};
+    use std::time::{Duration, Instant};
 
-    use super::{EARLIER_FOLDERS, package_family};
+    use super::{EARLIER_FOLDERS, Job, package_family};
+
+    /// What Windows does when the app's process ends, however it ends: it closes the job's
+    /// handle, and the programs in the job end with it.
+    #[test]
+    fn a_program_in_the_job_ends_when_the_job_closes() {
+        let job = Job::new().unwrap();
+        // Every Windows has `ping`; sixty echoes take a minute.
+        let mut child = Command::new("ping")
+            .args(["-n", "60", "127.0.0.1"])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+        assert!(job.assign(&child));
+        std::thread::sleep(Duration::from_millis(300));
+        assert!(
+            child.try_wait().unwrap().is_none(),
+            "ended before the job closed"
+        );
+
+        drop(job);
+        let closed = Instant::now();
+        // Ended by the job, long before its minute: Windows gives it the exit code 0.
+        while child.try_wait().unwrap().is_none() {
+            assert!(
+                closed.elapsed() < Duration::from_secs(10),
+                "still running after the job closed"
+            );
+            std::thread::sleep(Duration::from_millis(50));
+        }
+    }
 
     /// The folder the data moves from is the one earlier versions used: Tauri's, named after
     /// the bundle identifier.

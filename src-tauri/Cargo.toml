@@ -64,7 +64,18 @@ ts-rs.workspace = true
 # is on 0.17).
 rfd = { version = "0.17.2", default-features = false, features = ["common-controls-v6"] }
 
+[target.'cfg(windows)'.dependencies]
+# The Job Object that ends FFmpeg, llama.cpp and the Whisper helper with the app
+# (`src/platform/windows.rs`). The version the tree already builds, so nothing new is compiled.
+windows-sys = { version = "0.61.2", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_JobObjects",
+] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
+# Ends the programs the app started when it quits (`src/platform/macos.rs`).
+libc = "0.2.191"
 # Whisper on the graphics processor (Metal), which every Apple Silicon Mac has.
 kalamu-offline = { workspace = true, features = ["metal"] }
 # Security-scoped bookmarks for the Mac App Store's sandboxed build (`src/platform/macos.rs`).
@@ -84,8 +95,9 @@ objc2-foundation = { version = "0.3.2", default-features = false, features = [
 custom-protocol = ["tauri/custom-protocol"]
 
 # The workspace's lints, except that unsafe code is denied rather than forbidden: the shell
-# calls the system's own API in one place, the Mac App Store build's security-scoped bookmarks
-# (`src/platform/macos.rs`), where objc2 marks the calls unsafe and `#[allow]` says why.
+# calls the system's own API in `src/platform/` only, for the Mac App Store build's
+# security-scoped bookmarks and for ending the programs the app started, where each `#[allow]`
+# says why.
 [lints.rust]
 unsafe_code = "deny"
 
