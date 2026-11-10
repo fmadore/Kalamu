@@ -213,9 +213,11 @@ pub fn run() {
         .map(|app| {
             app.run(|app, event| {
                 // Every way of quitting ends here: the files corrections left out of date are
-                // written before the process ends.
+                // written before the process ends, and Whisper's model is released before the
+                // process's own clean-up would find it loaded.
                 if matches!(event, tauri::RunEvent::Exit) {
                     commands::window::write_before_exit(app);
+                    commands::window::release_before_exit(app);
                 }
                 platform::on_run_event(app, event);
             });
