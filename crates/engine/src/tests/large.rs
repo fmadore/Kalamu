@@ -254,6 +254,33 @@ async fn large_job() {
     }
     eprintln!("spent: {:.2} ms", ms(start) / runs as f64);
 
+    // What a running job's page reads twice a second: every piece, or the counts of the files
+    // it shows (the first two hundred).
+    let start = Instant::now();
+    let mut sent = 0;
+    for _ in 0..runs {
+        let pieces = f.engine.pieces(job.id).unwrap_or_else(|e| panic!("{e}"));
+        sent = serde_json::to_vec(&pieces).map(|v| v.len()).unwrap_or(0);
+    }
+    eprintln!(
+        "job page, every piece: {:.2} ms, {sent} bytes of JSON",
+        ms(start) / runs as f64
+    );
+    let shown: Vec<SourceId> = job.sources.iter().take(200).map(|s| s.id).collect();
+    let start = Instant::now();
+    for _ in 0..runs {
+        let progress = f
+            .engine
+            .job_progress(job.id, &shown)
+            .unwrap_or_else(|e| panic!("{e}"));
+        assert_eq!(progress.files.len(), 400);
+        sent = serde_json::to_vec(&progress).map(|v| v.len()).unwrap_or(0);
+    }
+    eprintln!(
+        "job page, counts of 200 files: {:.2} ms, {sent} bytes of JSON",
+        ms(start) / runs as f64
+    );
+
     let start = Instant::now();
     for i in 0..runs {
         f.engine

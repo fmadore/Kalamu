@@ -75,6 +75,44 @@ pub async fn piece_preview(
     source_id: SourceId,
     index: u32,
 ) -> CmdResult<PagePreview> {
+    let prepared = page_of(&state, job_id, source_id, index).await?;
+    Ok(PagePreview {
+        mime: prepared.mime,
+        data: base64::engine::general_purpose::STANDARD.encode(prepared.bytes),
+    })
+}
+
+/// One page of a source drawn `width` pixels wide, for the review's strip of thumbnails: a
+/// small PNG or JPEG instead of the whole page that `piece_preview` sends.
+#[tauri::command]
+pub async fn piece_thumbnail(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+    index: u32,
+    width: u32,
+) -> CmdResult<PagePreview> {
+    let prepared = page_of(&state, job_id, source_id, index).await?;
+    let (mime, bytes) = tokio::task::spawn_blocking(move || {
+        kalamu_media::thumbnail(&prepared.bytes, &prepared.mime, width)
+    })
+    .await
+    .map_err(|e| AppError::new(id::INTERNAL, e))?
+    .map_err(|e| AppError::new("media.read", e))?;
+    Ok(PagePreview {
+        mime,
+        data: base64::engine::general_purpose::STANDARD.encode(bytes),
+    })
+}
+
+/// One page of a source as a single-page PDF or an image, its source opened once for the
+/// pages after it.
+async fn page_of(
+    state: &State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+    index: u32,
+) -> CmdResult<kalamu_core::PreparedInput> {
     let job = state.engine.job(job_id)?;
     let source = job
         .sources
@@ -115,7 +153,7 @@ pub async fn piece_preview(
         .get(index as usize)
         .cloned()
         .ok_or_else(|| AppError::new("media.read", format!("no piece {index}")))?;
-    let prepared = tokio::task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || {
         opened.prepare(
             &piece,
             &["application/pdf", "image/png", "image/jpeg", "image/webp"],
@@ -124,11 +162,7 @@ pub async fn piece_preview(
     })
     .await
     .map_err(|e| AppError::new(id::INTERNAL, e))?
-    .map_err(|e| AppError::new("media.read", e))?;
-    Ok(PagePreview {
-        mime: prepared.mime,
-        data: base64::engine::general_purpose::STANDARD.encode(prepared.bytes),
-    })
+    .map_err(|e| AppError::new("media.read", e))
 }
 
 /// Stores a correction; the source's files are written again a few seconds after the last
