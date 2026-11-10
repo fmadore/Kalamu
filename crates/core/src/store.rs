@@ -34,6 +34,19 @@ impl Correction {
     }
 }
 
+/// A source's files under one set-up that are older than what is stored: a correction or
+/// speakers' names were saved since they were written. Kept in the store until they are written
+/// again, so neither a crash nor a write that failed leaves them behind for good.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OutdatedFiles {
+    pub job_id: JobId,
+    pub setup_id: SetupId,
+    pub source_id: SourceId,
+    /// Raised by each save, so files written from what was stored before a later save never
+    /// clear its mark.
+    pub generation: i64,
+}
+
 /// What pruning the result cache freed ([`JobStore::prune_results`]).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct PrunedResults {
@@ -145,6 +158,8 @@ pub trait JobStore: Send + Sync {
     /// run), so the researcher's corrections stay over the text they corrected.
     fn put_result(&self, result: &StoredResult) -> Result<(), StoreError>;
 
+    /// Stores a correction and marks its source's files under its set-up out of date, in one
+    /// transaction.
     fn put_correction(&self, correction: &Correction) -> Result<(), StoreError>;
     fn corrections(&self, job: JobId) -> Result<Vec<Correction>, StoreError>;
     /// The corrections of one source's pieces under one set-up.
@@ -155,7 +170,8 @@ pub trait JobStore: Send + Sync {
         source: SourceId,
     ) -> Result<Vec<Correction>, StoreError>;
 
-    /// Replaces the names given to one set-up's speakers in one recording.
+    /// Replaces the names given to one set-up's speakers in one recording and marks its files
+    /// under that set-up out of date, in one transaction.
     fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError>;
     fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError>;
     /// The names given to one set-up's speakers in one recording: none, or one entry.
@@ -169,6 +185,12 @@ pub trait JobStore: Send + Sync {
     fn speakers(&self, job: JobId) -> Result<crate::SpeakerIndex, StoreError> {
         Ok(crate::SpeakerIndex::new(self.speaker_names(job)?))
     }
+
+    /// The files marked out of date ([`OutdatedFiles`]), of one job or of every job.
+    fn outdated_files(&self, job: Option<JobId>) -> Result<Vec<OutdatedFiles>, StoreError>;
+    /// Clears a mark once its files are written, unless a save raised it since: those files
+    /// may not hold what that save stored.
+    fn clear_outdated(&self, files: &OutdatedFiles) -> Result<(), StoreError>;
 
     /// Inserts or replaces a batch, by its own id.
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;

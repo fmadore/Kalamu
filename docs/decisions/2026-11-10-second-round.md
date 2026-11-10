@@ -61,6 +61,19 @@ be compiled there; what they would take up is listed under *Left*.
   November rule that it opens on its documents.
 - **The dark colours are written once**; the page always carries its theme, taken from the
   system until the settings are read.
+- **A correction's files are written later.** Saving a correction or speakers' names stores
+  it and marks the source's files under that set-up out of date (`outdated_files`, one row per
+  job, set-up and source, deleted with its job) in the same transaction, and writes nothing.
+  The engine writes them once no save has come for that job for three seconds, from one task
+  of its own; before a job's files are listed, opened, exported or read for a summary; when the
+  app exits, whichever way it was quit (for at most twenty seconds, so a share that stopped
+  answering does not hold the exit); and at the next launch, off the window's thread, so a
+  crash leaves nothing old for good. A mark is cleared only once every format is written, and
+  only at the generation read before the files were: a save during the write keeps its mark.
+  A write that fails (the scan moved, the folder gone, a folder the Mac App Store's build has
+  no grant for yet) keeps its mark, is logged and reported as the job's `SourceFailed`, and is
+  tried again at the next of these, never in a loop. The files are what the immediate write
+  made, byte for byte; a job's first files at the end of its run are still written at once.
 
 ## Done
 
@@ -85,6 +98,13 @@ be compiled there; what they would take up is listed under *Left*.
   work area while files are dragged over a screen that takes them; *Undo* after removing a name
   from an analysis or documents from a collection; words on the marks of a project's Results
   column; the answer's fingerprint gone from *To check*.
+- **Corrections written later**: `JobStore::outdated_files` and `clear_outdated`, the mark
+  set by `put_correction` and `put_speaker_names`; `Engine::write_outdated` and
+  `finish_writing`; the shell writes at exit and at launch, and lists a job's files off the
+  window's thread since listing may now write. On the 300-page sample, a save takes 0.04 to
+  0.06 ms where it took 84 ms on the same machine (121 ms where it was first timed), and the
+  files are written once afterwards in 80 to 120 ms. The review's toasts say the files follow
+  in a few seconds.
 - **CI** (#145): the screen tests have a Chromium project, run on the Linux lane; the app's own
   binary is linked on Windows x64 and ARM64 as on macOS; `audit.yml` runs `cargo audit` and
   `npm audit` every week.
@@ -96,11 +116,6 @@ be compiled there; what they would take up is listed under *Left*.
 - **The offline engines** (#144): `llama.rs::run_program` on `media`'s runner with a silence
   limit of its own; the graphics processor given up too easily; downloads; the FFmpeg build's
   decoders.
-- **A correction in a long PDF** (#143) still writes every file of its source again: 121 ms a
-  save on a 300-page sample of tiny pages, more on real scans. Writing later needs the shell to
-  write at the review's close and at quit; the safest form marks the files out of date in the
-  database, in the correction's own transaction, and writes them at the next launch as well, so
-  that a crash never leaves them behind for good. To decide before it is built.
 - **Also from #143**: a job's whole record is read for each export and each earlier source's
   name compared, about 1 ms and 2 ms on the 2,000-source job; the interface's side (the running
   job's counts, tables that draw every row, thumbnails).
@@ -114,6 +129,9 @@ be compiled there; what they would take up is listed under *Left*.
   read.
 - The shell's build with `MediaError::Stopped` and the new trait methods: no signature it calls
   changed, but CI is the first to compile it.
+- The writes at exit and at launch on Windows and on a Mac, the Mac App Store's build among
+  them: the shell's part (`RunEvent::Exit`, the launch thread, the job's files listed off the
+  window's thread) is first compiled by CI.
 - The sparse 1 GB recording the engine's pause test writes, on NTFS, where FFmpeg is on the
   runner's path (the test is skipped where it is not).
 - A real drag of files over the window: the frame was drawn from a switch in the sample data.
@@ -126,4 +144,5 @@ be compiled there; what they would take up is listed under *Left*.
 - DESIGN.md records the controls' edge, the failure message, the keyboard rules, Back, what is
   remembered, the drop target and the toast's action.
 - The privacy policy is unchanged: nothing new is sent, and what is newly remembered (filters,
-  panes, rotations) stays in the webview's storage on the computer with the sidebar's fold.
+  panes, rotations) stays in the webview's storage on the computer with the sidebar's fold. The
+  job database's new marks say only which files are to be written again.

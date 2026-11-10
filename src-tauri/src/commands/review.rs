@@ -131,22 +131,22 @@ pub async fn piece_preview(
     })
 }
 
+/// Stores a correction; the source's files are written again a few seconds after the last
+/// one, or sooner when they are listed or exported.
 #[tauri::command]
-pub async fn save_correction(
-    state: State<'_, AppState>,
-    correction: Correction,
-) -> CmdResult<Vec<String>> {
+pub async fn save_correction(state: State<'_, AppState>, correction: Correction) -> CmdResult<()> {
     let engine = state.engine.clone();
     off_thread(move || Ok(engine.save_correction(correction)?)).await
 }
 
-/// Names the speakers of one set-up's transcription; returns the files written again.
+/// Names the speakers of one set-up's transcription; the files are written again as after a
+/// correction.
 #[tauri::command]
 pub async fn save_speaker_names(
     state: State<'_, AppState>,
     job_id: JobId,
     names: SpeakerNames,
-) -> CmdResult<Vec<String>> {
+) -> CmdResult<()> {
     let engine = state.engine.clone();
     off_thread(move || Ok(engine.save_speaker_names(job_id, names)?)).await
 }

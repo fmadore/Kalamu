@@ -196,7 +196,16 @@ pub fn run() {
             commands::window::quit_app,
         ])
         .build(context)
-        .map(|app| app.run(platform::on_run_event));
+        .map(|app| {
+            app.run(|app, event| {
+                // Every way of quitting ends here: the files corrections left out of date are
+                // written before the process ends.
+                if matches!(event, tauri::RunEvent::Exit) {
+                    commands::window::write_before_exit(app);
+                }
+                platform::on_run_event(app, event);
+            });
+        });
     if let Err(e) = result {
         tracing::error!(error = %e, "the app could not start");
     }

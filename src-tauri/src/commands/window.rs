@@ -118,3 +118,20 @@ pub async fn pause_and_quit(app: AppHandle) {
     }
     app.exit(0);
 }
+
+/// How long exiting waits for the files corrections left out of date: past this, a folder on a
+/// share that stopped answering, they are written at the next launch.
+const WRITE_WAIT: Duration = Duration::from_secs(20);
+
+/// Writes the files corrections left out of date as the app exits, whichever way it was quit.
+/// What cannot be written keeps its mark and is written at the next launch.
+pub fn write_before_exit(app: &AppHandle) {
+    let Some(state) = app.try_state::<AppState>() else {
+        return;
+    };
+    match state.engine.finish_writing(WRITE_WAIT) {
+        Ok(0) => {}
+        Ok(count) => tracing::warn!(count, "files out of date left for the next launch"),
+        Err(e) => tracing::warn!(error = %e, "files out of date left for the next launch"),
+    }
+}

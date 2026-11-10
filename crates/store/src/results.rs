@@ -6,7 +6,7 @@ use kalamu_core::{
 };
 use rusqlite::{params, params_from_iter};
 
-use super::{SqliteStore, corrupt, db, scoped, to_json};
+use super::{SqliteStore, corrupt, db, outdated, scoped, to_json};
 
 pub(crate) fn add_charge(store: &SqliteStore, charge: &Charge) -> Result<(), StoreError> {
     store
@@ -78,28 +78,34 @@ pub(crate) fn put_correction(
     store: &SqliteStore,
     correction: &Correction,
 ) -> Result<(), StoreError> {
-    store
-        .conn()
-        .execute(
-            "INSERT INTO corrections
-                (job_id, setup_id, source_id, idx, text, reviewed, updated_at, fields)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-             ON CONFLICT (job_id, setup_id, source_id, idx) DO UPDATE SET
-                text = excluded.text, reviewed = excluded.reviewed,
-                updated_at = excluded.updated_at, fields = excluded.fields",
-            params![
-                correction.job_id.to_string(),
-                correction.setup_id.to_string(),
-                correction.source_id.to_string(),
-                correction.index,
-                correction.text,
-                correction.reviewed,
-                correction.updated_at.0,
-                correction.fields.as_ref().map(to_json).transpose()?,
-            ],
-        )
-        .map_err(db)?;
-    Ok(())
+    let mut conn = store.conn();
+    let tx = conn.transaction().map_err(db)?;
+    tx.execute(
+        "INSERT INTO corrections
+            (job_id, setup_id, source_id, idx, text, reviewed, updated_at, fields)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+         ON CONFLICT (job_id, setup_id, source_id, idx) DO UPDATE SET
+            text = excluded.text, reviewed = excluded.reviewed,
+            updated_at = excluded.updated_at, fields = excluded.fields",
+        params![
+            correction.job_id.to_string(),
+            correction.setup_id.to_string(),
+            correction.source_id.to_string(),
+            correction.index,
+            correction.text,
+            correction.reviewed,
+            correction.updated_at.0,
+            correction.fields.as_ref().map(to_json).transpose()?,
+        ],
+    )
+    .map_err(db)?;
+    outdated::mark(
+        &tx,
+        correction.job_id,
+        correction.setup_id,
+        correction.source_id,
+    )?;
+    tx.commit().map_err(db)
 }
 
 /// A job's corrections, or with `scope` one source's under one set-up.
@@ -179,6 +185,7 @@ pub(crate) fn put_speaker_names(
         )
         .map_err(db)?;
     }
+    outdated::mark(&tx, job, names.setup_id, names.source_id)?;
     tx.commit().map_err(db)
 }
 

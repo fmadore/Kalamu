@@ -1313,7 +1313,7 @@ export const en = {
 			'The model’s answer stopped at its length limit here, so the end may be missing. Check it against the source, or correct it.',
 		noPreview: 'No preview for this file type.',
 		notDone: 'Not read yet.',
-		saved: 'Saved; the result files were updated.',
+		saved: 'Saved; the result files follow in a few seconds.',
 		pieceReviewed: (label: string) => `${label}, reviewed`,
 		zoomOutShortcut: '−',
 		zoomInShortcut: '+',
@@ -1339,7 +1339,7 @@ export const en = {
 		speakerPlaceholder: 'Name',
 		speakerName: (label: string) => `Name for ${label}`,
 		saveNames: 'Save names',
-		namesSaved: 'Names saved; the result files were updated.',
+		namesSaved: 'Names saved; the result files follow in a few seconds.',
 		speakersPieces:
 			'This recording was sent in several pieces: the same label may be a different person in each piece. Names apply to the whole recording.',
 		yourCorrections: 'Your corrections',

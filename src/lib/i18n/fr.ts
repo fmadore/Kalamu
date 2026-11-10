@@ -1403,7 +1403,7 @@ export const fr: Messages = {
 			'La réponse du modèle s’est arrêtée ici à sa longueur maximale : la fin manque peut-être. Vérifiez-la sur la source, ou corrigez-la.',
 		noPreview: 'Pas d’aperçu pour ce type de fichier.',
 		notDone: 'Pas encore lu.',
-		saved: 'Enregistré ; les fichiers de résultats ont été mis à jour.',
+		saved: 'Enregistré ; les fichiers de résultats suivent dans quelques secondes.',
 		pieceReviewed: (label: string) => `${label}, relu`,
 		zoomOutShortcut: '−',
 		zoomInShortcut: '+',
@@ -1431,7 +1431,7 @@ export const fr: Messages = {
 		speakerPlaceholder: 'Nom',
 		speakerName: (label: string) => `Nom pour ${label}`,
 		saveNames: 'Enregistrer les noms',
-		namesSaved: 'Noms enregistrés ; les fichiers de résultats ont été mis à jour.',
+		namesSaved: 'Noms enregistrés ; les fichiers de résultats suivent dans quelques secondes.',
 		speakersPieces:
 			'Cet enregistrement a été envoyé en plusieurs segments : une même étiquette peut désigner une personne différente dans chacun. Les noms s’appliquent à tout l’enregistrement.',
 		yourCorrections: 'Vos corrections',

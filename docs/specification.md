@@ -373,7 +373,10 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   left reviewed or not as it was.
 - **Correct in place.** Corrections are kept apart from the AI output, which is never
   overwritten. Exports use the corrected text or answers, and `provenance.json` records which
-  pieces were reviewed or corrected.
+  pieces were reviewed or corrected. A correction or speakers' names mark the source's files
+  out of date in the job database as they are saved; the files are written a few seconds after
+  the last save, before the job's files are listed, opened or exported, when the app quits and
+  at the next launch, so a crash or a folder out of reach never leaves them old for good.
 - **Search** (Ctrl F) through the whole document as the review shows it, corrections included,
   ignoring capitals, accents and Arabic vowel marks: every page of a scan or every piece of a
   recording, the matches counted and listed by page or by the time of their line, Enter going

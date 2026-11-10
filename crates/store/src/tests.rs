@@ -418,6 +418,57 @@ fn speaker_names_replace_each_other() -> Result<(), StoreError> {
     Ok(())
 }
 
+/// A save marks its source's files out of date with it; a mark is cleared only at the
+/// generation the files were written from, and goes with its job.
+#[test]
+fn saves_mark_files_out_of_date_until_written() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    let (setup, source) = (job.setups[0].id, job.sources[0].id);
+    assert!(store.outdated_files(None)?.is_empty());
+    let correction = Correction {
+        job_id: job.id,
+        setup_id: setup,
+        source_id: source,
+        index: 0,
+        text: Some("Corrected".into()),
+        fields: None,
+        reviewed: true,
+        updated_at: Timestamp::now(),
+    };
+    store.put_correction(&correction)?;
+    let marked = store.outdated_files(Some(job.id))?;
+    assert_eq!(marked.len(), 1);
+    assert_eq!((marked[0].setup_id, marked[0].source_id), (setup, source));
+
+    // Names saved after the files were read: clearing the earlier generation keeps the mark.
+    let names = SpeakerNames {
+        setup_id: setup,
+        source_id: source,
+        names: [("Speaker 1".to_string(), "Imam".to_string())]
+            .into_iter()
+            .collect(),
+    };
+    store.put_speaker_names(job.id, &names)?;
+    store.clear_outdated(&marked[0])?;
+    let later = store.outdated_files(None)?;
+    assert_eq!(later.len(), 1);
+    assert!(later[0].generation > marked[0].generation);
+    store.clear_outdated(&later[0])?;
+    assert!(store.outdated_files(None)?.is_empty());
+
+    store.put_correction(&correction)?;
+    assert_eq!(store.outdated_files(Some(job.id))?.len(), 1);
+    assert!(store.outdated_files(Some(JobId::new()))?.is_empty());
+    store.delete_job(job.id)?;
+    assert!(
+        store.outdated_files(None)?.is_empty(),
+        "deleted with the job"
+    );
+    Ok(())
+}
+
 #[test]
 fn batches_are_kept_with_their_job_and_survive_startup() -> Result<(), StoreError> {
     let store = SqliteStore::in_memory()?;

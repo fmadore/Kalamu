@@ -79,6 +79,7 @@ impl Engine {
 
     /// Writes every chosen format a task has and `provenance.json`, and returns the files
     /// written and why any format could not be. A format the task does not have is skipped.
+    /// Files marked out of date are no longer so once every format is written.
     pub(crate) fn write_each_output(
         &self,
         job: &Job,
@@ -86,6 +87,29 @@ impl Engine {
         source_id: SourceId,
     ) -> Result<(Vec<String>, Vec<String>), EngineError> {
         let _writing = lock(&self.writing);
+        // The mark is read under the lock every write takes, before what is written is read:
+        // a save after this raises it, and clearing this generation leaves that save's mark.
+        let outdated = self
+            .store
+            .outdated_files(Some(job.id))?
+            .into_iter()
+            .find(|m| m.setup_id == setup_id && m.source_id == source_id);
+        let (written, problems) = self.write_files(job, setup_id, source_id)?;
+        if problems.is_empty()
+            && let Some(mark) = outdated
+        {
+            self.store.clear_outdated(&mark)?;
+        }
+        Ok((written, problems))
+    }
+
+    /// [`Engine::write_each_output`]'s files, with the lock held.
+    fn write_files(
+        &self,
+        job: &Job,
+        setup_id: SetupId,
+        source_id: SourceId,
+    ) -> Result<(Vec<String>, Vec<String>), EngineError> {
         let document = self.export_document(job, setup_id, source_id)?;
         let (dir, base) = output_base(job, &document.source, &document.setup.label);
         std::fs::create_dir_all(&dir).map_err(|e| EngineError::Output(e.to_string()))?;
@@ -183,6 +207,7 @@ impl Engine {
 
     /// The plain-text results a finished job wrote, for summarising them in a new job.
     pub fn text_outputs(&self, job_id: JobId) -> Result<Vec<String>, EngineError> {
+        self.write_outdated_before_reading(job_id);
         let job = self.store.job(job_id)?;
         let mut out = Vec::new();
         for source in &job.sources {
@@ -201,8 +226,10 @@ impl Engine {
 
     /// Every file a job has written that is still there: each chosen format, then
     /// `provenance.json`, for every source and set-up. Read from disk, so the list outlives the
-    /// run that wrote it and leaves out files moved or deleted since.
+    /// run that wrote it and leaves out files moved or deleted since. Files out of date are
+    /// written first, so what is opened from the list holds the last corrections.
     pub fn outputs(&self, job_id: JobId) -> Result<Vec<String>, EngineError> {
+        self.write_outdated_before_reading(job_id);
         let job = self.store.job(job_id)?;
         let extensions: Vec<&str> = job
             .output
@@ -225,6 +252,16 @@ impl Engine {
             }
         }
         Ok(out)
+    }
+}
+
+impl Engine {
+    /// A job's files out of date, written before they are listed or read. One that cannot be
+    /// written is reported as the job's `SourceFailed` and listed as it is on disk.
+    fn write_outdated_before_reading(&self, job_id: JobId) {
+        if let Err(e) = self.write_outdated_of(Some(job_id)) {
+            tracing::warn!(job = %job_id, error = %e, "files out of date not written");
+        }
     }
 }
 

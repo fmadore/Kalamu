@@ -9,7 +9,8 @@ use std::sync::{Mutex, MutexGuard};
 
 use kalamu_core::{
     BatchRecord, CacheKey, Charge, Correction, Job, JobId, JobSources, JobStatus, JobStore,
-    JobSummary, PieceState, SetupId, SourceId, SpeakerNames, StoreError, StoredResult,
+    JobSummary, OutdatedFiles, PieceState, SetupId, SourceId, SpeakerNames, StoreError,
+    StoredResult,
 };
 use rusqlite::Connection;
 
@@ -213,6 +214,14 @@ impl JobStore for SqliteStore {
         results::speaker_names(self, job, Some((setup, source)))
     }
 
+    fn outdated_files(&self, job: Option<JobId>) -> Result<Vec<OutdatedFiles>, StoreError> {
+        outdated::of(self, job)
+    }
+
+    fn clear_outdated(&self, files: &OutdatedFiles) -> Result<(), StoreError> {
+        outdated::clear(self, files)
+    }
+
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError> {
         batches::put_batch(self, batch)
     }
@@ -306,6 +315,7 @@ mod dictionary;
 mod jobs;
 use jobs::insert_job;
 mod migrations;
+mod outdated;
 mod projects;
 mod results;
 mod runs;

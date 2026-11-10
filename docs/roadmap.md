@@ -382,11 +382,13 @@ In this order. Work that keeps what has shipped sound comes before new features.
    - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)): signing
      secrets kept from build code, the installers packaged on a pull request, interaction
      tests, checksums and an attestation.
-   - **Large jobs, the rest** ([#143](https://github.com/fmadore/Kalamu/issues/143)): a
-     correction in a long PDF still writes every file of its source again (121 ms a save on a
-     300-page sample), which needs the files marked out of date and written when the review
-     closes, at quit and at the next launch; the job page's counts, tables and thumbnails in
-     the interface; batches held in memory.
+   - **Large jobs, the rest** ([#143](https://github.com/fmadore/Kalamu/issues/143)): the job
+     page's counts, tables and thumbnails in the interface; batches held in memory. A
+     correction no longer writes its source's files on the spot: they are marked out of date
+     with it and written a few seconds after the last save, before they are listed or
+     exported, at quit and at the next launch (a save in a 300-page PDF went from 84 ms to
+     under 0.1 ms); still to try on Windows and a Mac, where CI is the first to build the
+     shell's part.
    - **A model's abilities in the catalogue**
      ([#147](https://github.com/fmadore/Kalamu/issues/147)), an architecture checkpoint item:
      five places match a model's or a preset's name.

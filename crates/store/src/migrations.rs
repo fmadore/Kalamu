@@ -1,6 +1,6 @@
 //! The database's schema: one migration per release that changed it, applied in order.
 
-use super::{dictionary, projects, runs, snapshots, units};
+use super::{dictionary, outdated, projects, runs, snapshots, units};
 
 /// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
 pub(crate) const MIGRATIONS: &[&str] = &[
@@ -112,4 +112,7 @@ CREATE INDEX IF NOT EXISTS collection_documents_by_document
     r#"
 CREATE INDEX IF NOT EXISTS results_costs ON results(cache_key, cost_usd, truncated);
 "#,
+    // A source's files marked out of date when a correction or speakers' names are saved, and
+    // written later; the mark outlives a crash, so the next launch writes them.
+    outdated::MIGRATION,
 ];
