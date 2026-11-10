@@ -1,11 +1,11 @@
 //! App information, settings and the model catalogue.
 
-use kalamu_catalog::Catalog;
-use kalamu_core::ProviderId;
+use kalamu_catalog::{Catalog, Release};
+use kalamu_core::{ProviderId, PrunedResults};
 use kalamu_engine::TaskRules;
 use tauri::State;
 
-use super::{AppInfo, AppState, INTERRUPTED};
+use super::{AppInfo, AppState, INTERRUPTED, SETTINGS_SET_ASIDE};
 use crate::errors::{AppError, CmdResult, id};
 use crate::platform;
 use crate::settings::Settings;
@@ -25,7 +25,43 @@ pub fn app_info(state: State<'_, AppState>) -> AppInfo {
         // its bundle declares.
         system_languages: sys_locale::get_locales().collect(),
         app_store: platform::access().sandboxed,
+        settings_set_aside: SETTINGS_SET_ASIDE
+            .lock()
+            .map(|p| p.clone())
+            .unwrap_or_default()
+            .map(|p| platform::shown_path(&p).display().to_string()),
     }
+}
+
+/// A release newer than this copy, as the catalogue in use names it. Never for a copy a store
+/// keeps up to date (the Microsoft Store's, the Mac App Store's), which must not offer one.
+#[tauri::command]
+pub fn newer_release(state: State<'_, AppState>) -> Option<Release> {
+    if platform::updated_by_store() {
+        return None;
+    }
+    state
+        .engine
+        .catalog()
+        .newer_release(env!("CARGO_PKG_VERSION"))
+}
+
+/// Deletes the stored answers no job refers to any more, those of deleted jobs above all, and
+/// gives their space back to the disk. Refused while a job runs: the database is held while it
+/// is compacted, which on a large one takes a while.
+#[tauri::command]
+pub async fn clear_unused_results(state: State<'_, AppState>) -> CmdResult<PrunedResults> {
+    if super::window::jobs_running(&state) {
+        return Err(AppError::new(id::JOBS_RUNNING, "clear unused results"));
+    }
+    let engine = state.engine.clone();
+    let pruned = super::off_thread(move || Ok(engine.prune_results()?)).await?;
+    tracing::info!(
+        results = pruned.results,
+        bytes = pruned.bytes,
+        "unused results cleared"
+    );
+    Ok(pruned)
 }
 
 #[tauri::command]

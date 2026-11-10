@@ -957,8 +957,10 @@ export const en = {
 			`Delete the pipeline “${name}”? Jobs already run with it are kept.`,
 		pipelineExport: (name: string) =>
 			`Export “${name}”: models, settings and full prompts, to cite or share`,
-		pipelineExported: (file: string) =>
-			`Saved ${file}.json, to import into Kalamu, and ${file}.md, for a methods section.`,
+		/** `markdown` is the Markdown file's name, `file.md` unless a file of the researcher's had
+		 * that name. */
+		pipelineExported: (file: string, markdown: string) =>
+			`Saved ${file}.json, to import into Kalamu, and ${markdown}, for a methods section.`,
 		pipelineImport: 'Import a pipeline',
 		pipelineImported: (name: string) => `Imported “${name}” with its prompts.`,
 		linesTitle: 'Line breaks',
@@ -1606,7 +1608,26 @@ export const en = {
 			gemma: 'Gemma 4'
 		},
 		privacy:
-			'Nothing is sent to the developer: no files, keys, results or usage data. AI output can contain fluent but wrong text; check a sample against the source.'
+			'Nothing is sent to the developer: no files, keys, results or usage data. AI output can contain fluent but wrong text; check a sample against the source.',
+		/** A release newer than this copy, named by the model list (never in a store's copy). */
+		newerRelease: (version: string) => `Kalamu ${version} is available.`,
+		releasePage: 'What’s new, and the download',
+		hideRelease: 'Hide until the next version',
+		storageTitle: 'Stored answers',
+		storageHint:
+			'Kalamu keeps every answer a model gave, so a page asked for again with the same settings costs nothing. Clearing removes the answers kept from jobs you deleted, to free space on the disk; asking for one of those pages again would be paid for again.',
+		clearUnused: 'Clear unused results',
+		clearUnusedBusy: 'Available once no job is running.',
+		clearUnusedConfirm:
+			'Remove the answers kept from deleted jobs? Asking for the same pages again would be paid for again.',
+		clearUnusedOk: 'Clear',
+		clearUnusedDone: (count: number, answers: string, size: string) =>
+			count === 0
+				? 'No unused answers to remove.'
+				: `${answers} ${count === 1 ? 'answer' : 'answers'} removed, ${size} freed.`,
+		/** At start-up, when the settings file could not be read and was moved aside. */
+		setAside: (path: string) =>
+			`Your settings could not be read, so Kalamu started with its defaults. The old file is kept as ${path}.`
 	},
 	report: {
 		/** Bugs and feedback; also the way Store policy 11.16 asks for to flag harmful output,
@@ -1869,6 +1890,9 @@ export const en = {
 		preview: 'preview',
 		retiring: 'retiring',
 		opensInBrowser: ' (opens in your browser)',
+		/** An exported record's Markdown, written under another name than the JSON's. */
+		markdownBeside: (name: string) =>
+			`The Markdown was saved as “${name}”, since a file of yours already had its name.`,
 		linkFailed: (url: string) => `This page could not be opened in your browser: ${url}`,
 		/** Asked before leaving a correction, a prompt or a workflow with changes not saved. */
 		unsaved: 'Your changes are not saved. Leave and discard them?',
@@ -1989,6 +2013,7 @@ export const en = {
 		'file.missing':
 			'The file is no longer where it was added, so its pages cannot be shown. Its results are kept; put it back to see it here.',
 		'app.internal': 'Something went wrong inside the app.',
+		'app.jobs_running': 'Not while a job is running: pause it or wait for it to finish.',
 		'app.notDesktop': 'This works only in the desktop app.'
 	}
 };

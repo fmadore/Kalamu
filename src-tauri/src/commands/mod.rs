@@ -93,6 +93,9 @@ pub struct AppInfo {
     /// The Mac App Store's build, which runs in the App Sandbox: it asks for a folder before
     /// writing results beside sources, and offers no support link (App Review Guideline 3.1.1).
     pub app_store: bool,
+    /// Where the settings file that could not be read at this launch was moved, as File
+    /// Explorer or Finder shows it; the defaults are in use. The interface says so once.
+    pub settings_set_aside: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -125,6 +128,13 @@ pub(crate) static INTERRUPTED: Mutex<Vec<JobId>> = Mutex::new(Vec::new());
 
 pub fn remember_interrupted(ids: Vec<JobId>) {
     *INTERRUPTED.lock().unwrap_or_else(|p| p.into_inner()) = ids;
+}
+
+/// Where an unreadable settings file was moved at this launch, if one was.
+pub(crate) static SETTINGS_SET_ASIDE: Mutex<Option<PathBuf>> = Mutex::new(None);
+
+pub fn remember_settings_reset(set_aside: Option<PathBuf>) {
+    *SETTINGS_SET_ASIDE.lock().unwrap_or_else(|p| p.into_inner()) = set_aside;
 }
 
 /// The cloud providers among `providers` the researcher has not agreed to send their files to,
@@ -180,4 +190,21 @@ async fn off_thread<T: Send + 'static>(
 /// Writes an exported file (a record, a dictionary) where the researcher chose.
 fn write_text(path: PathBuf, text: String) -> Result<(), AppError> {
     std::fs::write(path, text).map_err(|e| AppError::new(crate::errors::id::FILE, e))
+}
+
+/// Writes a pipeline's or a workflow's record: the JSON at `path`, whose name the researcher
+/// chose (the save dialog asked before replacing it), and the Markdown beside it, which never
+/// replaces a file an export did not write ([`kalamu_prompts::markdown_beside`]). Returns the
+/// Markdown file's path, for the interface to name when it is not `name.md`.
+fn write_record(
+    path: &std::path::Path,
+    json: String,
+    markdown: String,
+) -> Result<String, AppError> {
+    let json_path = path.with_extension("json");
+    let markdown_path = kalamu_prompts::markdown_beside(&json_path)
+        .ok_or_else(|| AppError::new(crate::errors::id::FILE, json_path.display()))?;
+    write_text(json_path, json)?;
+    write_text(markdown_path.clone(), markdown)?;
+    Ok(markdown_path.display().to_string())
 }

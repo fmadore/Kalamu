@@ -2,7 +2,7 @@
 //! state every command shares, progress forwarded to the interface, and the work left from the
 //! last close picked up again.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use kalamu_catalog::Catalog;
@@ -11,19 +11,31 @@ use kalamu_engine::{Engine, EngineConfig};
 use kalamu_prompts::PromptLibrary;
 use kalamu_store::SqliteStore;
 use tauri::{Emitter, Manager};
+use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::prelude::*;
 
 use crate::commands::{self, AppState, Paths};
 use crate::secrets::CredentialKeys;
 use crate::settings::Settings;
-use crate::{OFFLINE_CHANGED_EVENT, PROGRESS_EVENT, grants, platform, tray};
+use crate::start_failure::{self, Cause, StartError};
+use crate::{CATALOG_CHANGED_EVENT, OFFLINE_CHANGED_EVENT, PROGRESS_EVENT, grants, platform, tray};
 
 type SetupResult<T> = Result<T, Box<dyn std::error::Error>>;
 
-/// Tauri's setup: everything the app needs before its first command.
+/// How many days of logs are kept; older daily files are deleted.
+const LOG_DAYS: usize = 30;
+
+/// Tauri's setup: everything the app needs before its first command. A launch that cannot
+/// finish tells the researcher why and ends ([`fail`]).
 pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult<()> {
-    let (data, logs) = folders(app, moved)?;
-    let (state, store, waiting) = assemble(data, logs)?;
+    let (data, logs) = match folders(app, moved) {
+        Ok(found) => found,
+        Err(e) => fail(app, &StartError::new(Cause::Folders, e), None),
+    };
+    let (state, store, waiting) = match assemble(data, logs.clone()) {
+        Ok(assembled) => assembled,
+        Err(e) => fail(app, &e, Some(logs.as_path())),
+    };
     forward_progress(app, &state.engine, &store);
     resume(&state.engine, waiting);
     let refresh = state
@@ -42,12 +54,34 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
         let handle = app.handle().clone();
         tauri::async_runtime::spawn(async move {
             let state = handle.state::<AppState>();
-            if let Err(e) = commands::settings::refresh_catalog(state).await {
-                tracing::info!(error = %e, "catalogue not refreshed");
+            match commands::settings::refresh_catalog(state).await {
+                // The interface read the catalogue at start-up, perhaps before this answer: it
+                // reads it again, with the release it names.
+                Ok(_) => {
+                    let _ = handle.emit(CATALOG_CHANGED_EVENT, ());
+                }
+                Err(e) => tracing::info!(error = %e, "catalogue not refreshed"),
             }
         });
     }
     Ok(())
+}
+
+/// Ends a launch that cannot finish: the cause is logged, the window put away, and the
+/// researcher told in a native message what stopped it and where the logs are; the app ends once
+/// they close it. Starting anyway would leave a window whose every command fails.
+fn fail(app: &tauri::App, failure: &StartError, logs: Option<&Path>) -> ! {
+    tracing::error!(error = %failure, "the app could not start");
+    // The log is written out first: the message waits for the researcher, who may end the
+    // process instead of closing it.
+    if let Some(log) = app.try_state::<Mutex<Option<WorkerGuard>>>() {
+        drop(log.lock().unwrap_or_else(|p| p.into_inner()).take());
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+    start_failure::tell(failure, logs);
+    std::process::exit(1)
 }
 
 /// Asks llama.cpp's graphics builds, which run the OCR and language models, and Whisper's Vulkan
@@ -95,15 +129,19 @@ fn folders(app: &mut tauri::App, moved: platform::Moved) -> SetupResult<(PathBuf
 }
 
 /// The state the commands share, the job database it opened, and the jobs whose batches the
-/// providers still hold, to collect.
-fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteStore>, Vec<JobId>)> {
+/// providers still hold, to collect; or what kept them from being opened.
+fn assemble(
+    data: PathBuf,
+    logs: PathBuf,
+) -> Result<(AppState, Arc<SqliteStore>, Vec<JobId>), StartError> {
     let paths = Paths {
         settings: data.join("settings.json"),
         catalog_cache: data.join("catalog.json"),
         logs,
         data: data.clone(),
     };
-    let settings = Settings::load(&paths.settings);
+    let (settings, set_aside) = Settings::load(&paths.settings);
+    commands::remember_settings_reset(set_aside);
     // Folders and files granted at earlier launches, opened again before the engine
     // resumes any job or workflow run that reads or writes there.
     let grants = grants::Grants::open(data.join("grants.json"), platform::access());
@@ -111,7 +149,8 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
     if open > 0 {
         tracing::info!(count = open, "granted folders and files opened again");
     }
-    let store = Arc::new(SqliteStore::open(&data.join("jobs.sqlite"))?);
+    let store =
+        Arc::new(SqliteStore::open(&data.join("jobs.sqlite")).map_err(StartError::database)?);
     // Projects share the job database, so deleting a job unlinks it from its documents.
     let projects = kalamu_projects::Projects::new(store.clone(), store.clone());
     let dictionary =
@@ -123,7 +162,10 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
             Ok(index) => Arc::new(index),
             Err(e) => {
                 tracing::warn!(error = %e, "search index kept in memory only");
-                Arc::new(kalamu_store::SqliteIndex::in_memory()?)
+                Arc::new(
+                    kalamu_store::SqliteIndex::in_memory()
+                        .map_err(|e| StartError::new(Cause::Database, e))?,
+                )
             }
         };
     let search = Arc::new(kalamu_search::Search::new(
@@ -138,10 +180,14 @@ fn assemble(data: PathBuf, logs: PathBuf) -> SetupResult<(AppState, Arc<SqliteSt
         Ok(n) => tracing::info!(jobs = n, "deleted jobs removed from the search index"),
         Err(e) => tracing::warn!(error = %e, "search index not pruned"),
     });
-    let prompts = PromptLibrary::open(&data.join("presets"))?;
-    let pipelines = kalamu_prompts::PipelineLibrary::open(&data.join("pipelines"))?;
-    let workflows = kalamu_prompts::WorkflowLibrary::open(&data.join("workflows"))?;
-    let profiles = kalamu_prompts::ProfileLibrary::open(&data.join("export-profiles"))?;
+    let library = |e: kalamu_prompts::PromptError| StartError::new(Cause::Libraries, e);
+    let prompts = PromptLibrary::open(&data.join("presets")).map_err(library)?;
+    let pipelines =
+        kalamu_prompts::PipelineLibrary::open(&data.join("pipelines")).map_err(library)?;
+    let workflows =
+        kalamu_prompts::WorkflowLibrary::open(&data.join("workflows")).map_err(library)?;
+    let profiles =
+        kalamu_prompts::ProfileLibrary::open(&data.join("export-profiles")).map_err(library)?;
     let cached = std::fs::read_to_string(&paths.catalog_cache).ok();
     let catalog = Catalog::newest(cached.as_deref());
     let http = kalamu_providers::client();
@@ -324,11 +370,24 @@ fn resume(engine: &Arc<Engine>, waiting: Vec<JobId>) {
     });
 }
 
-fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking::WorkerGuard> {
+fn init_logging(dir: &std::path::Path) -> Option<WorkerGuard> {
     let filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| "kalamu=info,kalamu_lib=info,kalamu_engine=info,warn".into());
-    // Release builds have no console, and long batch jobs need a record: log to a daily file.
-    let appender = tracing_appender::rolling::daily(dir, "kalamu.log");
+    // Release builds have no console, and long batch jobs need a record: log to a daily file
+    // (`kalamu.log.2026-11-10`), the last month of them kept.
+    let appender = match tracing_appender::rolling::RollingFileAppender::builder()
+        .rotation(tracing_appender::rolling::Rotation::DAILY)
+        .filename_prefix("kalamu.log")
+        .max_log_files(LOG_DAYS)
+        .build(dir)
+    {
+        Ok(appender) => appender,
+        Err(e) => {
+            eprintln!("no log file in {}: {e}", dir.display());
+            record_panics(dir);
+            return None;
+        }
+    };
     let (file, guard) = tracing_appender::non_blocking(appender);
     let _ = tracing_subscriber::registry()
         .with(filter)

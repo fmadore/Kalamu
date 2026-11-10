@@ -87,6 +87,15 @@ fn package_family(exe: &Path) -> Option<String> {
     })
 }
 
+/// Whether a store keeps this copy up to date: the Microsoft Store's package, known by where it
+/// runs. It must not offer updates of its own; the installer's copy is told of a new release.
+pub fn updated_by_store() -> bool {
+    std::env::current_exe()
+        .ok()
+        .and_then(|exe| package_family(&exe))
+        .is_some()
+}
+
 /// Nothing to add: Windows apps have no application menu.
 pub fn init(_app: &mut App) -> tauri::Result<()> {
     Ok(())

@@ -358,6 +358,10 @@ export function mockView(): View | null {
 			return { name: 'prompts' };
 		case 'settings':
 			return { name: 'settings' };
+		case 'settings-general':
+			return { name: 'settings', tab: 'general' };
+		case 'settings-about':
+			return { name: 'settings', tab: 'about' };
 		case 'glossary':
 			return { name: 'glossary' };
 		case 'new':
@@ -442,7 +446,11 @@ export function installMock(): void {
 					logs_dir: '',
 					interrupted: [],
 					system_languages: [...navigator.languages],
-					app_store: false
+					app_store: false,
+					// `?set-aside`: the settings file could not be read at this launch.
+					settings_set_aside: new URLSearchParams(location.search).has('set-aside')
+						? 'C:\\Users\\you\\AppData\\Local\\Kalamu Data\\settings.json.bad'
+						: null
 				};
 			case 'get_settings':
 				return settings;
@@ -450,6 +458,15 @@ export function installMock(): void {
 				return catalog;
 			case 'task_rules':
 				return taskRules;
+			// `?release`: the model list names a release newer than this copy.
+			case 'newer_release':
+				return new URLSearchParams(location.search).has('release')
+					? { version: '1.6.0', url: 'https://github.com/fmadore/Kalamu/releases/tag/v1.6.0' }
+					: null;
+			case 'clear_unused_results':
+				return { results: 1284, bytes: 48_620_000 };
+			case 'export_pipeline':
+				return String(a.path).replace(/\.json$/i, '.md');
 			case 'offline_status':
 				return {
 					models: catalog.models

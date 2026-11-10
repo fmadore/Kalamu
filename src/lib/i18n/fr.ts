@@ -1049,8 +1049,8 @@ export const fr: Messages = {
 			`Supprimer la configuration « ${name} » ? Les traitements déjà effectués avec elle sont conservés.`,
 		pipelineExport: (name: string) =>
 			`Exporter « ${name} » : modèles, réglages et prompts complets, pour les citer ou les partager`,
-		pipelineExported: (file: string) =>
-			`${file}.json enregistré, à importer dans Kalamu, et ${file}.md, pour une section méthodologique.`,
+		pipelineExported: (file: string, markdown: string) =>
+			`${file}.json enregistré, à importer dans Kalamu, et ${markdown}, pour une section méthodologique.`,
 		pipelineImport: 'Importer une configuration',
 		pipelineImported: (name: string) => `« ${name} » importée avec ses prompts.`,
 		linesTitle: 'Retours à la ligne',
@@ -1706,7 +1706,24 @@ export const fr: Messages = {
 			gemma: 'Gemma 4'
 		},
 		privacy:
-			'Rien n’est envoyé au développeur : ni fichiers, ni clés, ni résultats, ni données d’utilisation. Un texte produit par l’IA peut être fluide mais faux ; vérifiez un échantillon sur la source.'
+			'Rien n’est envoyé au développeur : ni fichiers, ni clés, ni résultats, ni données d’utilisation. Un texte produit par l’IA peut être fluide mais faux ; vérifiez un échantillon sur la source.',
+		newerRelease: (version: string) => `Kalamu ${version} est disponible.`,
+		releasePage: 'Les nouveautés et le téléchargement',
+		hideRelease: 'Masquer jusqu’à la prochaine version',
+		storageTitle: 'Réponses conservées',
+		storageHint:
+			'Kalamu conserve chaque réponse donnée par un modèle : une page demandée de nouveau avec les mêmes réglages ne coûte rien. Le nettoyage supprime les réponses conservées des traitements que vous avez supprimés, pour libérer de la place sur le disque ; redemander l’une de ces pages serait de nouveau payant.',
+		clearUnused: 'Supprimer les résultats inutilisés',
+		clearUnusedBusy: 'Disponible quand aucun traitement n’est en cours.',
+		clearUnusedConfirm:
+			'Supprimer les réponses conservées des traitements supprimés ? Redemander les mêmes pages serait de nouveau payant.',
+		clearUnusedOk: 'Supprimer',
+		clearUnusedDone: (count: number, answers: string, size: string) =>
+			count === 0
+				? 'Aucune réponse inutilisée à supprimer.'
+				: `${answers} ${count === 1 ? 'réponse supprimée' : 'réponses supprimées'}, ${size} libérés.`,
+		setAside: (path: string) =>
+			`Vos paramètres n’ont pas pu être lus : Kalamu a démarré avec ses réglages par défaut. L’ancien fichier est conservé sous ${path}.`
 	},
 	report: {
 		link: 'Signaler un problème',
@@ -1949,6 +1966,9 @@ export const fr: Messages = {
 		preview: 'préversion',
 		retiring: 'bientôt retiré',
 		opensInBrowser: ' (s’ouvre dans votre navigateur)',
+		/** An exported record's Markdown, written under another name than the JSON's. */
+		markdownBeside: (name: string) =>
+			`Le Markdown a été enregistré sous « ${name} », un de vos fichiers portant déjà son nom.`,
 		linkFailed: (url: string) =>
 			`Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`,
 		unsaved: 'Vos modifications ne sont pas enregistrées. Quitter et les abandonner ?',
@@ -2079,6 +2099,8 @@ export const fr: Messages = {
 		'file.missing':
 			'Le fichier n’est plus là où il a été ajouté : ses pages ne peuvent pas être affichées. Ses résultats sont conservés ; remettez-le à sa place pour le voir ici.',
 		'app.internal': 'Une erreur s’est produite dans l’application.',
+		'app.jobs_running':
+			'Pas pendant qu’un traitement est en cours : mettez-le en pause ou attendez qu’il se termine.',
 		'app.notDesktop': 'Cette fonction n’est disponible que dans l’application de bureau.'
 	}
 };

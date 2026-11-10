@@ -59,19 +59,21 @@ impl CredentialKeys {
         keyring::Entry::new(service, &account(provider)).map_err(|e| AppError::new(id::KEYCHAIN, e))
     }
 
-    fn stored(service: &str, provider: &ProviderId) -> Option<String> {
-        Self::entry_in(service, provider)
-            .ok()?
-            .get_password()
-            .ok()
-            .filter(|key| !key.trim().is_empty())
+    /// The key stored under `service`: `Ok(None)` when the keychain has none, an error when it
+    /// could not be asked (locked, its prompt refused).
+    fn stored(service: &str, provider: &ProviderId) -> Result<Option<String>, keyring::Error> {
+        match keyring::Entry::new(service, &account(provider))?.get_password() {
+            Ok(key) => Ok(Some(key).filter(|key| !key.trim().is_empty())),
+            Err(keyring::Error::NoEntry) => Ok(None),
+            Err(e) => Err(e),
+        }
     }
 
-    fn read(provider: &ProviderId) -> Option<String> {
-        if let Some(key) = Self::stored(SERVICE, provider) {
-            return Some(key);
+    fn read(provider: &ProviderId) -> Result<Option<String>, keyring::Error> {
+        if let Some(key) = Self::stored(SERVICE, provider)? {
+            return Ok(Some(key));
         }
-        if let Some(key) = Self::stored(LEGACY_SERVICE, provider) {
+        if let Some(key) = Self::stored(LEGACY_SERVICE, provider)? {
             // Moved, not copied, so the key lives in one place; left where it was if the
             // new entry cannot be written.
             if Self::entry(provider).is_ok_and(|e| e.set_password(&key).is_ok())
@@ -79,14 +81,14 @@ impl CredentialKeys {
             {
                 let _ = old.delete_credential();
             }
-            return Some(key);
+            return Ok(Some(key));
         }
         if cfg!(debug_assertions) {
-            return std::env::var(env_var(provider))
+            return Ok(std::env::var(env_var(provider))
                 .ok()
-                .filter(|k| !k.trim().is_empty());
+                .filter(|k| !k.trim().is_empty()));
         }
-        None
+        Ok(None)
     }
 
     pub fn set(&self, provider: &ProviderId, key: &str) -> Result<(), AppError> {
@@ -124,12 +126,25 @@ impl CredentialKeys {
 }
 
 impl KeySource for CredentialKeys {
+    /// The key, read from the keychain the first time and then from memory. Only an answer is
+    /// kept, a key or the keychain's word that there is none: a read that failed (the keychain
+    /// locked, its prompt refused) is asked again next time, so the key does not look missing
+    /// until the app is restarted.
     fn key(&self, provider: &ProviderId) -> Option<ApiKey> {
         let mut cache = self.lock();
-        let entry = cache
-            .entry(provider.clone())
-            .or_insert_with(|| Self::read(provider));
-        entry.clone().map(ApiKey::new)
+        if let Some(known) = cache.get(provider) {
+            return known.clone().map(ApiKey::new);
+        }
+        match Self::read(provider) {
+            Ok(key) => {
+                cache.insert(provider.clone(), key.clone());
+                key.map(ApiKey::new)
+            }
+            Err(e) => {
+                tracing::warn!(provider = %provider, error = %e, "the keychain could not be read");
+                None
+            }
+        }
     }
 }
 

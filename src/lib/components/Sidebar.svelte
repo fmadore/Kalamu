@@ -4,6 +4,7 @@
 	// Settings, Glossary, support). A finished job dragged onto a listed project is added to it,
 	// as its menu's Add to a project does. It folds to a rail of icons named by their tooltips,
 	// leaving the room to the work.
+	import ExternalLink from './ExternalLink.svelte';
 	import Icon from './Icon.svelte';
 	import SidebarJobs from './SidebarJobs.svelte';
 	import SidebarProjects from './SidebarProjects.svelte';
@@ -40,6 +41,15 @@
 
 	/** A finished job carried onto a project: the projects unfold to take it. */
 	const drag = new JobDrag(() => (showProjects = true));
+
+	// A newer release, said once at the foot until hidden; hidden for that version only, so the
+	// next one is said again. Settings › About always says it.
+	const RELEASE_KEY = 'kalamu.release.hidden';
+	let hiddenRelease = $state(recall(RELEASE_KEY, (v) => (typeof v === 'string' ? v : null), ''));
+	$effect(() => keep(RELEASE_KEY, hiddenRelease));
+	const release = $derived(
+		app.release && app.release.version !== hiddenRelease ? app.release : null
+	);
 </script>
 
 <svelte:window
@@ -190,6 +200,20 @@
 		{/if}
 		{#if offlineReady && !collapsed}
 			<p class="offline"><span class="dot" aria-hidden="true"></span>{m.shell.offlineReady}</p>
+		{/if}
+		{#if release && !collapsed}
+			<p class="release">
+				<span
+					>{m.settings.newerRelease(release.version)}
+					<ExternalLink href={release.url}>{m.settings.releasePage}</ExternalLink></span
+				>
+				<button
+					class="hide-release"
+					aria-label={m.settings.hideRelease}
+					title={m.settings.hideRelease}
+					onclick={() => (hiddenRelease = release.version)}><Icon name="close" size={14} /></button
+				>
+			</p>
 		{/if}
 	</div>
 </nav>
@@ -405,6 +429,41 @@
 		height: 6px;
 		border-radius: 3px;
 		background: var(--ok);
+	}
+	/* A newer release: a quiet line like the one above, with a link and a way to hide it. */
+	.release {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-1);
+		padding: var(--space-2) 0 0 0.625rem;
+		font-size: var(--type-xs);
+		color: var(--text-muted);
+	}
+	.release > span {
+		flex: 1;
+		min-width: 0;
+	}
+	.hide-release {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 1.5rem;
+		height: 1.5rem;
+		margin-top: -0.2rem;
+		padding: 0;
+		border: 0;
+		border-radius: var(--radius-tag);
+		background: none;
+		color: var(--text-muted);
+		cursor: pointer;
+	}
+	.hide-release:hover {
+		background: var(--wash);
+		color: var(--text-bright);
+	}
+	.hide-release:focus-visible {
+		outline: var(--focus-width) solid var(--focus);
+		outline-offset: 1px;
 	}
 	/* A narrow window: the list sits above the work, short enough to leave it room. */
 	@media (max-width: 760px) {

@@ -7,19 +7,29 @@ use tauri::State;
 use super::{AppState, KeyStatus};
 use crate::errors::{AppError, CmdResult, id};
 
+/// Which providers have a key. Off the window's thread: the first time, each provider's key is
+/// read from the keychain, and on a Mac the Keychain may ask the researcher first.
 #[tauri::command]
-pub fn key_status(state: State<'_, AppState>) -> Vec<KeyStatus> {
-    state
+pub async fn key_status(state: State<'_, AppState>) -> CmdResult<Vec<KeyStatus>> {
+    let providers: Vec<(ProviderId, bool)> = state
         .engine
         .catalog()
         .providers
         .iter()
-        .map(|p| KeyStatus {
-            provider: p.id.clone(),
-            // An offline engine needs no key, so it is always usable.
-            saved: p.local || state.keys.has(&p.id),
-        })
-        .collect()
+        .map(|p| (p.id.clone(), p.local))
+        .collect();
+    let keys = state.keys.clone();
+    super::off_thread(move || {
+        Ok(providers
+            .into_iter()
+            .map(|(provider, local)| KeyStatus {
+                // An offline engine needs no key, so it is always usable.
+                saved: local || keys.has(&provider),
+                provider,
+            })
+            .collect())
+    })
+    .await
 }
 
 #[tauri::command]

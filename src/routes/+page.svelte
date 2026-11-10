@@ -29,9 +29,11 @@
 		refreshJobs,
 		refreshKeys,
 		refreshOffline,
+		refreshRelease,
 		refreshWaiting,
 		shortcutsHeld,
 		takeToastAction,
+		toast,
 		type View
 	} from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
@@ -133,7 +135,27 @@
 				applyLanguage();
 				// Before the first reading, so a graphics processor found meanwhile is not missed.
 				unlisten.push(await on.offlineChanged(() => void refreshOffline()));
-				await Promise.all([refreshKeys(), refreshJobs(), refreshOffline(), refreshWaiting()]);
+				// The model list refreshed at start-up may answer after the first reading.
+				unlisten.push(
+					await on.catalogChanged(() => {
+						void (async () => {
+							app.catalog = await api.getCatalog();
+							app.rules = await api.taskRules();
+							await refreshRelease();
+						})().catch(() => undefined);
+					})
+				);
+				await Promise.all([
+					refreshKeys(),
+					refreshJobs(),
+					refreshOffline(),
+					refreshWaiting(),
+					refreshRelease()
+				]);
+				// Settings that could not be read were moved aside: said once, until dismissed.
+				if (info.settings_set_aside) {
+					toast(m.settings.setAside(info.settings_set_aside), { kind: 'error' });
+				}
 				// Jobs cut short by the last close: show them first.
 				if (startView) go(startView);
 				else if (info.interrupted.length > 0) go({ name: 'jobs', jobId: info.interrupted[0] });

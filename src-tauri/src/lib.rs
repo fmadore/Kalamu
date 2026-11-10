@@ -10,6 +10,7 @@ mod platform;
 mod secrets;
 mod settings;
 mod setup;
+mod start_failure;
 mod tray;
 
 use tauri::{Emitter, Manager};
@@ -26,6 +27,9 @@ pub const SEARCH_PROGRESS_EVENT: &str = "search-progress";
 /// Sent when what the offline status reports changed outside a command: the graphics processor
 /// the OCR models use, found after start-up.
 pub const OFFLINE_CHANGED_EVENT: &str = "offline-changed";
+/// Sent when the catalogue was refreshed at start-up, after the interface first read it: the
+/// models it lists and the release it names are read again.
+pub const CATALOG_CHANGED_EVENT: &str = "catalog-changed";
 
 pub fn run() {
     // The data folder is settled, and an earlier one moved into it, before Tauri builds the
@@ -64,6 +68,8 @@ pub fn run() {
             commands::settings::get_catalog,
             commands::settings::refresh_catalog,
             commands::settings::task_rules,
+            commands::settings::newer_release,
+            commands::settings::clear_unused_results,
             commands::keys::key_status,
             commands::keys::set_api_key,
             commands::keys::clear_api_key,
