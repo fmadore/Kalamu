@@ -1,59 +1,73 @@
 <script lang="ts">
 	// A job's files as a table: each file's progress under every set-up, the errors met, its
-	// error rate where pages were reviewed, and the way into its review.
+	// error rate where pages were reviewed, and the way into its review. A long job's files are
+	// drawn a page at a time; the engine counts the pieces of the files drawn.
 	import Missing from './Missing.svelte';
+	import MoreRows from './MoreRows.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import { siglum } from '#lib/apparatus.js';
+	import type { FileProgress } from '#lib/bindings/FileProgress.js';
 	import type { Job } from '#lib/bindings/Job.js';
+	import type { JobProgress } from '#lib/bindings/JobProgress.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
-	import type { PieceState } from '#lib/bindings/PieceState.js';
+	import type { SetupScore } from '#lib/bindings/SetupScore.js';
 	import { messages } from '#lib/i18n/index.js';
+	import type { Paging } from '#lib/paging.svelte.js';
 	import { describeScore } from '#lib/scores.js';
 	import { go } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
 		job,
-		pieces,
+		progress,
+		paging,
 		scores
 	}: {
 		jobId: string;
 		job: Job;
-		/** Every piece's state, read again as progress arrives. */
-		pieces: PieceState[];
+		/** The drawn files' pieces counted under each set-up, read again as progress arrives. */
+		progress: JobProgress;
+		/** How many of the job's files are drawn. */
+		paging: Paging;
 		/** Error rates against the pages reviewed so far, for tasks that produce text. */
 		scores: JobScores | null;
 	} = $props();
 	const m = messages();
 
+	const key = (sourceId: string, setupId: string) => `${sourceId}/${setupId}`;
+	/** Each drawn file's counts under each set-up, looked up by row. */
+	const counted = $derived(
+		new Map<string, FileProgress>(progress.files.map((f) => [key(f.source_id, f.setup_id), f]))
+	);
+	/** Each document's score under each set-up. */
+	const scored = $derived(
+		new Map<string, SetupScore>(
+			(scores?.sources ?? []).flatMap((s) =>
+				s.scores.map((score) => [key(s.source_id, score.setup_id), score] as const)
+			)
+		)
+	);
+	const drawn = $derived(paging.of(job.sources));
+	let list = $state<HTMLElement | null>(null);
+
 	/** One set-up's score on one document, in a sentence. */
 	function documentScore(sourceId: string, setupId: string): string | null {
-		const score = scores?.sources
-			.find((s) => s.source_id === sourceId)
-			?.scores.find((s) => s.setup_id === setupId);
+		const score = scored.get(key(sourceId, setupId));
 		return score ? describeScore(score, job.task, m) : null;
 	}
 
-	function counts(setupId: string, sourceId: string) {
-		const mine = pieces.filter((p) => p.setup_id === setupId && p.source_id === sourceId);
-		return {
-			total: mine.length,
-			done: mine.filter((p) => p.status === 'done' || p.status === 'cached').length,
-			failed: mine.filter((p) => p.status === 'failed').length,
-			errors: [...new Set(mine.flatMap((p) => (p.error ? [p.error] : [])))]
-		};
-	}
+	const NONE = { total: 0, done: 0, failed: 0, errors: [] as string[] };
 </script>
 
 <section aria-labelledby="files-head" class="files">
 	<h2 id="files-head">{m.jobs.files}</h2>
-	<div class="table">
-		{#each job.sources as source (source.id)}
-			<div class="row">
+	<div class="table" bind:this={list}>
+		{#each drawn as source, i (source.id)}
+			<div class="row" data-row={i}>
 				<span class="file mono">{source.file_name}</span>
 				<div class="progress">
 					{#each job.setups as setup, i (setup.id)}
-						{@const c = counts(setup.id, source.id)}
+						{@const c = counted.get(key(source.id, setup.id)) ?? NONE}
 						<div class="setup-progress">
 							{#if job.setups.length > 1}<i class="siglum" title={setup.label}>{siglum(i)}</i>{/if}
 							<ProgressBar
@@ -66,7 +80,7 @@
 								>{#if c.total > 0}{c.done}/{c.total}{:else}<Missing />{/if}</span
 							>
 						</div>
-						{#each c.errors.slice(0, 3) as e (e)}
+						{#each c.errors as e (e)}
 							<p class="err">{e}</p>
 						{/each}
 						{@const score = documentScore(source.id, setup.id)}
@@ -79,6 +93,7 @@
 			</div>
 		{/each}
 	</div>
+	<MoreRows {paging} total={job.sources.length} table={list} />
 </section>
 
 <style>

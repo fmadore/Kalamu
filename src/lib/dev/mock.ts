@@ -15,6 +15,7 @@ import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import taskRulesJson from './taskRules.json';
 import { DOCUMENT_ID, PROJECT_ID, projectCommand, seedProjects } from './mockProjects.js';
 import { NO_RESULT } from './noResult.js';
+import { enlarge, largeRows, progressOf } from './mockLarge.js';
 import { profileCommand } from './mockProfiles.js';
 import { searchCommand } from './mockSearch.js';
 import { queueCommand } from './mockQueue.js';
@@ -424,7 +425,7 @@ export function installMock(): void {
 		]
 	});
 	seedWorkflows(pipelines[0], pipelines[1], summaries[0], source);
-	mockIPC((cmd, args) => {
+	const answer = (cmd: string, args?: unknown): unknown => {
 		const a = (args ?? {}) as Record<string, unknown>;
 		const profile = profileCommand(cmd, a);
 		if (profile !== undefined) return profile;
@@ -630,6 +631,8 @@ export function installMock(): void {
 					attempts: 1,
 					updated_at: 0
 				}));
+			case 'job_progress':
+				return progressOf(pieces, a.sources as string[]);
 			case 'source_pieces':
 				if (a.jobId === analysisJob.id) return analysisPieces;
 				if (a.jobId === contentsJob.id) return contentsPieces;
@@ -646,6 +649,7 @@ export function installMock(): void {
 				toneUrl ??= URL.createObjectURL(new Blob([toneWav()], { type: 'audio/wav' }));
 				return { path: toneUrl, start_ms: 2_000, end_ms: 8_000, original: true };
 			case 'piece_preview':
+			case 'piece_thumbnail':
 				// A synthetic scan as an image: shown everywhere, headless browsers included.
 				return { mime: 'image/jpeg', data: SAMPLE_SCAN.split(',')[1] ?? '' };
 			case 'compare_source':
@@ -806,6 +810,15 @@ export function installMock(): void {
 				if (NO_RESULT.has(cmd) || cmd.startsWith('plugin:')) return null;
 				throw { id: 'app.notDesktop', detail: cmd };
 		}
+	};
+	// `rows=3000`: thousands of rows in the long tables and the sample job.
+	const rows = largeRows();
+	mockIPC((cmd, args) => {
+		const a = (args ?? {}) as Record<string, unknown>;
+		const result = answer(cmd, args);
+		return result instanceof Promise
+			? result.then((r) => enlarge(cmd, a, r, rows, job))
+			: enlarge(cmd, a, result, rows, job);
 	});
 	// `piece_audio` names a blob URL here, not a file, so it is its own address.
 	(

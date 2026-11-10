@@ -9,11 +9,12 @@
 	import type { Job } from '#lib/bindings/Job.js';
 	import type { DerivedState } from '#lib/bindings/DerivedState.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
-	import type { PieceState } from '#lib/bindings/PieceState.js';
+	import type { JobProgress } from '#lib/bindings/JobProgress.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { deleteJob, renameJob } from '#lib/jobActions.svelte.js';
 	import { rulesFor } from '#lib/newJob.js';
+	import { Paging } from '#lib/paging.svelte.js';
 	import { api } from '#lib/tauri.js';
 	import { app, go, liveJob, refreshJobs } from '#lib/state.svelte.js';
 
@@ -21,7 +22,11 @@
 	const m = messages();
 
 	let job = $state<Job | null>(null);
-	let pieces = $state<PieceState[]>([]);
+	/** The drawn files' pieces counted, and the pieces held in batches. */
+	let progress = $state<JobProgress>({ held: 0, files: [] });
+	/** How many of the job's files are drawn. */
+	const paging = new Paging();
+	const drawnSources = $derived(job ? paging.of(job.sources).map((s) => s.id) : []);
 	const action = new Action({ after: () => refreshJobs() });
 	/** The files the job wrote that are still on disk. */
 	let written = $state<string[]>([]);
@@ -41,14 +46,13 @@
 	/** What the job has cost over all its runs: live while it runs, stored otherwise. */
 	const spent = $derived(running && live ? live.spent : (summary?.cost_usd ?? 0));
 	/** Pieces the provider's batch service holds, in economy mode. */
-	const held = $derived(pieces.filter((p) => p.status === 'submitted').length);
+	const held = $derived(progress.held);
 	/** When the last of the batches is due, as the engine last reported. */
 	const dueBy = $derived(Math.max(0, ...Object.values(live?.batches ?? {}).map((b) => b.dueBy)));
 
 	async function load() {
 		try {
 			job = await api.getJob(jobId);
-			pieces = await api.jobPieces(jobId);
 		} catch (e) {
 			action.fail(e);
 		}
@@ -93,7 +97,24 @@
 		else if (e.key === 'Escape') draftName = null;
 	}
 
-	// Reload piece states as progress arrives, at most twice a second.
+	/** Raised by each reading, so a slower answer for fewer files is dropped. */
+	let progressTicket = 0;
+	function readProgress(sources: string[]) {
+		const ticket = ++progressTicket;
+		void api
+			.jobProgress(jobId, sources)
+			.then((p) => {
+				if (ticket === progressTicket) progress = p;
+			})
+			.catch(() => undefined);
+	}
+
+	// The counts of the files drawn, read at once when more are drawn.
+	$effect(() => {
+		if (job) readProgress(drawnSources);
+	});
+
+	// Read again as progress arrives, at most twice a second.
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	$effect(() => {
 		void summary?.pieces_finished;
@@ -102,10 +123,7 @@
 		if (timer) return;
 		timer = setTimeout(() => {
 			timer = null;
-			void api
-				.jobPieces(jobId)
-				.then((p) => (pieces = p))
-				.catch(() => undefined);
+			if (job) readProgress(drawnSources);
 		}, 500);
 	});
 
@@ -247,7 +265,7 @@
 
 		<JobFacts {job} {summary} {spent} {scores} />
 
-		<JobFiles {jobId} {job} {pieces} {scores} />
+		<JobFiles {jobId} {job} {progress} {paging} {scores} />
 
 		{#if live?.preview}
 			<section aria-labelledby="preview-head" class="files">

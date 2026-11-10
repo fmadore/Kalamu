@@ -1897,7 +1897,10 @@ export const en = {
 		/** Asked before leaving a correction, a prompt or a workflow with changes not saved. */
 		unsaved: 'Your changes are not saved. Leave and discard them?',
 		discardChanges: 'Discard changes',
-		keepEditing: 'Keep editing'
+		keepEditing: 'Keep editing',
+		/** Under a long table drawn a page at a time. */
+		shownRows: (shown: number, total: number) => `${shown} of ${total} shown`,
+		showMore: (n: number) => `Show ${n} more`
 	},
 	error: {
 		'search.too_short': 'Type a word of three letters at least.',

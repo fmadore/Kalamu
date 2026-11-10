@@ -45,6 +45,7 @@ import type { Expanded } from './bindings/Expanded.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { Job } from './bindings/Job.js';
 import type { JobScores } from './bindings/JobScores.js';
+import type { JobProgress } from './bindings/JobProgress.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { JobSources } from './bindings/JobSources.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
@@ -180,6 +181,9 @@ export const api = {
 	jobSources: () => invoke<JobSources[]>('job_sources'),
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
 	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
+	/** The job's pieces held in batches, and each of `sources` counted under every set-up. */
+	jobProgress: (id: string, sources: string[]) =>
+		invoke<JobProgress>('job_progress', { id, sources }),
 	jobTextOutputs: (id: string) => invoke<string[]>('job_text_outputs', { id }),
 	/** Freezes a job's corrected text under a set-up: every source's, or one source's. */
 	snapshotJob: (id: string, setup: string, source: string | null = null) =>
@@ -204,6 +208,9 @@ export const api = {
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>
 		invoke<PagePreview>('piece_preview', { jobId, sourceId, index }),
+	/** A page drawn `width` pixels wide, as a small image, for the strip of thumbnails. */
+	pieceThumbnail: (jobId: string, sourceId: string, index: number, width: number) =>
+		invoke<PagePreview>('piece_thumbnail', { jobId, sourceId, index, width }),
 	pieceAudio: (jobId: string, sourceId: string, index: number, convert: boolean) =>
 		invoke<PieceAudio>('piece_audio', { jobId, sourceId, index, convert }),
 	/** A file `pieceAudio` named, as an address the player streams (Tauri's asset protocol). */

@@ -1973,7 +1973,9 @@ export const fr: Messages = {
 			`Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`,
 		unsaved: 'Vos modifications ne sont pas enregistrées. Quitter et les abandonner ?',
 		discardChanges: 'Abandonner les modifications',
-		keepEditing: 'Continuer à modifier'
+		keepEditing: 'Continuer à modifier',
+		shownRows: (shown: number, total: number) => `${shown} affichés sur ${total}`,
+		showMore: (n: number) => `Afficher ${n} de plus`
 	},
 	error: {
 		'search.too_short': 'Tapez un mot d’au moins trois lettres.',
