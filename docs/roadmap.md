@@ -375,10 +375,16 @@ In this order. Work that keeps what has shipped sound comes before new features.
      notification computed by the engine, the keychain off the window's thread; and a *Clear
      unused results* in Settings, on the engine's `prune_results`
      ([#143](https://github.com/fmadore/Kalamu/issues/143)).
-   - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)): llama.cpp's
-     runs on `media`'s stoppable runner, with a watchdog; a graphics processor not given up for
-     one bad page; downloads that resume and check the disk; 24-bit AIFF at the next FFmpeg
-     build; children that end with the app.
+   - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)). Done
+     ([decision](decisions/2026-11-10-offline-robustness.md)), built and tested on Linux: llama.cpp's
+     runs on `media`'s stoppable runner, ended after ten minutes of silence, its version bounded;
+     a graphics processor given up only when the processor answers what failed on it, at once
+     when it hangs; model downloads that continue where they stopped and check the drive's free
+     space first; the Whisper helper's device listing no longer stalled by its own diagnostics;
+     a failed engine's last diagnostic lines in the log; page images and texts in a folder of
+     the app's own, emptied at start-up. Still to check on a PC with a graphics processor and on
+     a Mac, where CI is the first to build the shell's one-line part. Left: 24-bit AIFF at the
+     next FFmpeg build; children that end with the app (a Job Object on Windows).
    - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)): signing
      secrets kept from build code, the installers packaged on a pull request, interaction
      tests, checksums and an attestation.
