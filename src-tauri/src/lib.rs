@@ -33,6 +33,8 @@ pub const OFFLINE_CHANGED_EVENT: &str = "offline-changed";
 pub const CATALOG_CHANGED_EVENT: &str = "catalog-changed";
 
 pub fn run() {
+    // Before any program is started: none may outlive the app.
+    platform::keep_children();
     // The data folder is settled, and an earlier one moved into it, before Tauri builds the
     // window, whose webview data goes there too.
     let (folders, moved) = platform::data_folder();

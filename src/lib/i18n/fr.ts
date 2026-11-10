@@ -1659,6 +1659,11 @@ export const fr: Messages = {
 		modelInstalled: 'Téléchargé',
 		modelMissing: 'Non téléchargé',
 		modelDownloading: (pct: number) => `Téléchargement… ${pct} %`,
+		modelStopped: (pct: number) => `Interrompu à ${pct} %`,
+		modelKept: (size: string) =>
+			`Les ${size} déjà téléchargés sont gardés : le téléchargement reprendra à partir de là.`,
+		continueDownload: 'Reprendre le téléchargement',
+		discardDownload: 'Abandonner',
 		modelInUse: 'Utilisé par un traitement',
 		download: 'Télécharger',
 		cancelDownload: 'Annuler',

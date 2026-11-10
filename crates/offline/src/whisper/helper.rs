@@ -13,6 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use kalamu_core::StopSignal;
+use kalamu_media::program;
 
 use super::engine::{self, Decode, Devices, RawSegment, Request, Response};
 use crate::diagnostics;
@@ -98,11 +99,8 @@ fn log_stderr(program: &Path, during: &str, kept: &Mutex<VecDeque<String>>) {
 pub(super) fn find_device(program: &Path) -> Option<String> {
     // No input, and its standard error read as it comes: a full pipe would stall it before
     // its answer, and Whisper would stay on the processor all session.
-    let mut child = command(program)
-        .arg("--list-devices")
-        .stdin(Stdio::null())
-        .spawn()
-        .ok()?;
+    let mut child =
+        program::spawn(command(program).arg("--list-devices").stdin(Stdio::null())).ok()?;
     let stderr = child.stderr.take().map(keep_last_lines);
     let stdout = child.stdout.take()?;
     let (sender, answer) = mpsc::channel();
@@ -114,6 +112,7 @@ pub(super) fn find_device(program: &Path) -> Option<String> {
     let line = answer.recv_timeout(LIST_TIMEOUT).ok();
     let _ = child.kill();
     let _ = child.wait();
+    program::reaped(&child);
     let found = line
         .as_deref()
         .and_then(|line| serde_json::from_str::<Devices>(line.trim()).ok());
@@ -144,12 +143,13 @@ pub(super) struct Worker {
 impl Worker {
     /// Start `program` and load the leased model on the graphics processor it chooses.
     pub fn start(program: &Path, lease: &ModelLease) -> Result<Self, Failure> {
-        let mut child = command(program)
-            .spawn()
+        let mut child = program::spawn(&mut command(program))
             .map_err(|e| Failure::failed(format!("Could not start {}: {e}", program.display())))?;
         let pipes = (child.stdin.take(), child.stdout.take(), child.stderr.take());
         let (Some(stdin), Some(stdout), Some(stderr)) = pipes else {
             let _ = child.kill();
+            let _ = child.wait();
+            program::reaped(&child);
             return Err(Failure::failed("The helper started without its pipes"));
         };
         let (sender, answers) = mpsc::channel();
@@ -294,6 +294,7 @@ impl Worker {
     fn stop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
+        program::reaped(&self.child);
     }
 
     /// How the helper ended, for the log, once it has.
