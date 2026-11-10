@@ -187,6 +187,17 @@ impl ModelManager {
         self.progress(kept);
         // The bytes kept, hashed again so the whole file is checked in one pass.
         let mut hash = partial.hash(token).await?;
+        if kept == transfer.bytes {
+            // Whole already (the app closed between the last byte and the install): checked
+            // and installed without asking for anything.
+            if hex::encode(hash.finalize()) == transfer.sha256 {
+                let destination = self.dir.join(&partial.final_name);
+                partial.install(destination).await?;
+                return Ok(Attempt::Installed);
+            }
+            partial.discard().await;
+            return Ok(Attempt::StartOver);
+        }
         let mut request = client.get(&transfer.url);
         if kept > 0 {
             request = request.header(RANGE, format!("bytes={kept}-"));
@@ -796,6 +807,19 @@ mod tests {
             .unwrap();
         assert_eq!(fs::read(dir.path().join(BASE.file)).unwrap(), PAYLOAD);
         assert_eq!(*asked.lock().unwrap(), [""]);
+    }
+
+    #[tokio::test]
+    async fn a_whole_part_is_installed_without_asking_again() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join(BASE.partial()), PAYLOAD).unwrap();
+        let (url, asked) = file_server(Server::Ranges);
+        ModelManager::new(dir.path().to_owned(), &WHISPER)
+            .download_from(BASE, &transfer(url))
+            .await
+            .unwrap();
+        assert_eq!(files(dir.path()), [BASE.file]);
+        assert!(asked.lock().unwrap().is_empty());
     }
 
     #[tokio::test]

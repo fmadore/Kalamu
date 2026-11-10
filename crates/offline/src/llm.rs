@@ -531,10 +531,14 @@ impl Provider for LocalLlm {
                     ]),
                 ),
             };
-            // The request's own fault, wherever it ran: says nothing of the device.
+            // The request's own fault, wherever it ran: says nothing against the device, and on
+            // the processor clears a suspicion this request raised.
             if let Err(RunError::Failed(reason)) = &ran
                 && reason.contains("too long")
             {
+                if inner.host.graphics(&placement).is_none() {
+                    let _ = inner.host.settle(&placement, request, ran, Work::Request);
+                }
                 return Err(ProviderError::InvalidRequest(
                     "This text is too long for the offline language models. Split it into \
                      shorter documents, or choose a cloud model."
