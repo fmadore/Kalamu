@@ -3,10 +3,13 @@
 **Effective date:** 10 November 2026, which applies from the first version to write the
 offline models' working files (a page image, a text being read) in a folder of the app's own,
 emptied at each start, and to keep an unfinished model download so that it continues where it
-stopped. The policy of 7 November 2026 did not say so; it applies from the first version to
-offer the offline language models: small models from Google downloaded from Hugging Face at the
-user's request and run on the computer, for analyses, tables of contents and corrections. The
-policy of 6 November
+stopped; to tell a copy installed from the releases page that a newer version is out, from the
+catalogue file it already downloads (nothing new is fetched or sent); to keep a settings file
+it cannot read beside the new one rather than replace it; to keep a month of logs; and to let
+the user clear the stored results no job uses. The policy of 7 November 2026 did not say so;
+it applies from the first version to offer the offline language models: small models from
+Google downloaded from Hugging Face at the user's request and run on the computer, for
+analyses, tables of contents and corrections. The policy of 6 November
 2026, which applies to version 1.5.0, did not list them; it added the offline OCR models. The
 second policy of 4 November 2026, which applies to version
 1.4.1, did not list them; it added the question asked before files are first sent to each cloud
@@ -98,7 +101,8 @@ Kalamu's, on the same computer only:
   corrections and review marks, the names given to speakers, and what each call cost.
   Results are kept by a fingerprint of the file and settings, so the same work is never paid
   for twice; deleting a job removes the job, its progress and corrections, while the stored
-  results stay until the app is uninstalled. The same database keeps the user's **projects**:
+  results stay until the user clears those no job uses (Settings › General, *Clear unused
+  results*) or the app is uninstalled. The same database keeps the user's **projects**:
   their names and descriptions, the source description their documents share, their
   collections, the titles, tags, source descriptions (repository, shelfmark, citation and the
   like, as the user types them), paths, sizes and fingerprints of their documents, which jobs read each document, and the results the user marked as
@@ -133,6 +137,9 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   for them: the answers are kept in the job database.
 - **Settings** (`settings.json`): preferences such as formats, destination, theme, favourite
   languages, the last folder chosen, and the cloud providers the user agreed to send files to.
+  A settings file the app cannot read is moved aside as `settings.json.bad` (with a number
+  when an earlier one is there), never overwritten, and the app says where; it stays until
+  the user deletes it.
 - **Prompts, pipelines and workflows** the user saves (`presets`, `pipelines`, `workflows`),
   and a copy of the model catalogue. An exported workflow, like an exported pipeline, holds its
   steps, models, settings and prompts, never keys, files, folders or results.
@@ -166,7 +173,8 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
 - **Logs**, for troubleshooting: what the app did and the errors it met, with job identifiers
   and the paths of the files and folders concerned, and, when an offline engine fails, the last
   lines of its diagnostics, only those that read as a program's own messages. They contain no
-  API keys and no document text.
+  API keys and no document text. One file is written a day, and those older than thirty days
+  are deleted.
 
 Results are also written as files where the user chooses: next to the original files or in a
 chosen folder, each with a `provenance.json` that records the model, prompt and settings used
@@ -190,7 +198,11 @@ it, to authenticate requests. It is never written to the job database, the logs 
 Besides the provider the user chooses, the app connects to:
 
 - **GitHub** (`raw.githubusercontent.com`), at startup, to check for a newer catalogue of
-  models and prices. It downloads a public file and sends nothing about the user.
+  models and prices. It downloads a public file and sends nothing about the user. The same
+  file names the latest version of Kalamu: a copy installed from the releases page says when
+  a newer one is out, with a link to its page on GitHub that opens in the browser only if the
+  user follows it. Nothing more is fetched or sent for it, and the Microsoft Store and Mac App
+  Store apps, which their stores keep up to date, never say it.
 - **Hugging Face** (`huggingface.co`), only when the user downloads a Whisper model, an
   offline OCR model or an offline language model, from a fixed version of the model's repository
   there (for the OCR models, `prithivMLmods/LightOnOCR-3-1B-GGUF` and `ggml-org/GLM-OCR-GGUF`;

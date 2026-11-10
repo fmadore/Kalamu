@@ -460,6 +460,8 @@ A message about what was just done, on ink with the flyout shadow, bottom right.
 ### Notices
 A full-width banner or inline notice in warn-text on the warn wash (7px corners inline), stating what happened and what to do. File problems hang under their file in the same treatment, danger-tinted when a file cannot be used.
 
+A newer release is not a warning: it is a quiet line in caption type and muted text at the sidebar's foot, under the offline line, with its link and a small ghost close button that hides it until the next version; Settings › About says it too, without the button. Store copies never show it.
+
 ## Do's and Don'ts
 
 ### Do:

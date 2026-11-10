@@ -105,6 +105,9 @@ parameters open a given state:
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `view=projects`, `project`, `document` | Opens the list of projects, a sample project, or one of its documents |
 | `view=workflows`, `workflow`, `run` | Opens the workflows and their runs, a sample workflow, or its run waiting for a review |
+| `view=settings-general`, `settings-about` | Opens Settings on its General or About tab |
+| `release` | The model list names a release newer than this copy (the sidebar's line, About) |
+| `set-aside` | The settings file could not be read at launch and was moved aside |
 | `theme=light` or `dark` | Forces the theme |
 | `open=<word>` | Opens the readings of the highlighted words with that text in the review |
 | `compare` | Opens the review with another set-up's text in the compare pane |
@@ -142,6 +145,13 @@ from `samples/`; it
 publishes the release once every asset is attached, as a pre-release while the version starts
 with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To
 rebuild a tag, run the workflow by hand from the Actions tab.
+
+4. Once the release is published, set `latest_version` at the top of
+   `crates/catalog/catalog.json` to its version and `updated` to the day, and merge. Copies
+   installed from the releases page (not the Store apps) read it at their next refresh and
+   say that the new version is out, with a link to its page here
+   ([decision](decisions/2026-11-10-shell.md)). Only a plain version (`1.6.0`) is read; the
+   app never names one before its release is public, since the link is made from the number.
 
 To build an installer locally, fetch the bundled FFmpeg and llama.cpp first; they come from the
 builds in `.github/workflows/ffmpeg.yml` and `.github/workflows/llama.yml`

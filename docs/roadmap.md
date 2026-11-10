@@ -370,11 +370,18 @@ In this order. Work that keeps what has shipped sound comes before new features.
    Back, remembered filters, panes and rotation, Ctrl F on the tables, a shortcut overview, a
    drop target that shows, undo for two removals; the screens opened in Chromium in CI, the app
    linked on every system, a weekly audit. Left, in this order:
-   - **The shell** ([#148](https://github.com/fmadore/Kalamu/issues/148)): a start-up failure
-     that says why, an update notice for the installer and the disk image, the tray and
-     notification computed by the engine, the keychain off the window's thread; and a *Clear
-     unused results* in Settings, on the engine's `prune_results`
-     ([#143](https://github.com/fmadore/Kalamu/issues/143)).
+   - **The shell** ([#148](https://github.com/fmadore/Kalamu/issues/148)). Done on
+     [10 November](decisions/2026-11-10-shell.md), first compiled by CI: a start-up that cannot
+     open its folders, its job database (a newer version's is now refused by the store) or its
+     libraries says why in a native message, in English or French, naming the logs folder, and
+     ends; unreadable settings moved aside and said once; the keychain read off the window's
+     thread, a failed read no longer kept as a missing key; an exported record's Markdown never
+     replacing a file of the researcher's; FFmpeg and llama.cpp chosen by an environment
+     variable in development builds only; a month of logs; *Clear unused results* in Settings
+     ([#143](https://github.com/fmadore/Kalamu/issues/143)); and the installer's and disk
+     image's copies told of a newer release from the model list. Left: the tray, the taskbar
+     and the notifications computed by the engine rather than from the interface's job list;
+     all of it tried on a real Windows PC and Mac.
    - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)). Done
      ([decision](decisions/2026-11-10-offline-robustness.md)), built and tested on Linux: llama.cpp's
      runs on `media`'s stoppable runner, ended after ten minutes of silence, its version bounded;
