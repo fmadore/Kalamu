@@ -4,8 +4,10 @@
 	// set-ups that gave it, so agreement reads at a glance; pointing at a name finds it in the
 	// document. Corrections are kept apart from the model's answers. A search keeps the fields
 	// whose answers or reasons hold its words, marked where they stand, and marks them in a text
-	// document too. A right click on a name in a list renames or removes it at once, in the
-	// corrected answers of every set-up that found it.
+	// document too. A name in a list renames or removes it at once, in the corrected answers of
+	// every set-up that found it, from its menu: a click, Enter, a right click or the menu key.
+	// The names of an answer are one tab stop, ← and → going from one to the next; a name with
+	// the focus is found in the document as one pointed at.
 	import { onMount, tick } from 'svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
@@ -25,6 +27,7 @@
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { find, searchable } from '#lib/search.js';
+	import { rovingStop, rovingTarget } from '#lib/keys.js';
 	import { guardDraft, type ReviewFind } from '#lib/state.svelte.js';
 
 	let {
@@ -109,15 +112,43 @@
 		if (await review.save({ setup, index: 0, fields: answers, reviewed })) editing = null;
 	}
 
-	/** The name right-clicked, and where. */
+	/** The name whose menu is open, and where. */
 	let itemMenu = $state<{ key: string; value: string; x: number; y: number } | null>(null);
 
+	/** Opens a name's menu: at the pointer for a right click, under the name otherwise. */
 	function openItemMenu(e: MouseEvent, f: Field) {
 		if (f.kind.type !== 'list' || editing) return;
 		const item = (e.target as HTMLElement).closest<HTMLElement>('[data-item]');
 		if (!item?.dataset.item) return;
 		e.preventDefault();
-		itemMenu = { key: f.key, value: item.dataset.item, x: e.clientX, y: e.clientY };
+		const pointer = e.type === 'contextmenu' && (e.clientX !== 0 || e.clientY !== 0);
+		const at = item.getBoundingClientRect();
+		itemMenu = {
+			key: f.key,
+			value: item.dataset.item,
+			x: pointer ? e.clientX : at.left,
+			y: pointer ? e.clientY : at.bottom + 4
+		};
+	}
+
+	/** The name of each answer that holds its tab stop, once one was reached. */
+	let itemStops = $state<Record<string, string>>({});
+
+	function focusItem(key: string, value: string) {
+		answersPane
+			?.querySelector<HTMLElement>(
+				`[data-field="${CSS.escape(key)}"] [data-item="${CSS.escape(value)}"]`
+			)
+			?.focus();
+	}
+
+	function roveItems(e: KeyboardEvent, key: string, values: string[], at: string) {
+		if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+		const to = rovingTarget(values, at, e.key);
+		if (to === null) return;
+		e.preventDefault();
+		itemStops[key] = to;
+		focusItem(key, to);
 	}
 
 	/**
@@ -126,6 +157,7 @@
 	 */
 	async function changeItem(key: string, from: string, to: string | null) {
 		hovered = null;
+		const before = collate(key, witnesses).map((r) => r.value);
 		for (const s of setups) {
 			const v = viewOf(s);
 			if (!v || v.status === 'failed') continue;
@@ -141,6 +173,17 @@
 			)
 				return;
 		}
+		// The focus, lost with the name it was on, goes to the name renamed or to the next one.
+		await tick();
+		if (document.activeElement && document.activeElement !== document.body) return;
+		const now = collate(key, witnesses).map((r) => r.value);
+		const next =
+			to !== null && now.includes(to)
+				? to
+				: now[Math.min(Math.max(before.indexOf(from), 0), now.length - 1)];
+		if (next === undefined) return;
+		itemStops[key] = next;
+		focusItem(key, next);
 	}
 
 	function toggleReviewed() {
@@ -276,17 +319,31 @@
 				{#if readings.length === 0}
 					<p class="muted none">{m.review.noneFound}</p>
 				{:else if f.kind.type === 'list' || f.kind.type === 'choices'}
+					{@const named = f.kind.type === 'list'}
+					{@const values = readings.map((r) => r.value)}
+					{@const stop = rovingStop(values, itemStops[f.key])}
 					<p class="items" oncontextmenu={(e) => openItemMenu(e, f)}>
-						{#each readings as r, k (r.value)}{#if k > 0}<span class="sep">{'; '}</span>{/if}<span
+						{#each readings as r, k (r.value)}{#if k > 0}<span class="sep">{'; '}</span>{/if}<button
+								type="button"
 								class="item"
+								class:named
 								class:partial={comparing && r.sigla.length < setups.length}
 								data-item={r.value}
-								role="mark"
+								tabindex={stop === r.value ? 0 : -1}
+								aria-haspopup={named ? 'menu' : undefined}
+								aria-describedby={named ? 'item-keys' : 'item-locates'}
+								onclick={(e) => openItemMenu(e, f)}
+								onkeydown={(e) => roveItems(e, f.key, values, r.value)}
+								onfocus={() => {
+									hovered = r.value;
+									itemStops[f.key] = r.value;
+								}}
+								onblur={() => (hovered = null)}
 								onpointerenter={() => (hovered = r.value)}
 								onpointerleave={() => (hovered = null)}
 								>{r.value}{#if comparing && r.sigla.length < setups.length}<sup class="found"
 										>{r.sigla.join(' ')}</sup
-									>{/if}</span
+									>{/if}</button
 							>{/each}
 					</p>
 				{:else}
@@ -310,6 +367,11 @@
 				{/if}
 			</div>
 		{/each}
+	{/if}
+
+	{#if !editing}
+		<span class="sr-only" id="item-keys">{m.review.itemKeys}</span>
+		<span class="sr-only" id="item-locates">{m.review.itemLocates}</span>
 	{/if}
 
 	{#if !editing && comparing}
@@ -355,7 +417,7 @@
 	.kind {
 		font-weight: 400;
 		margin-left: var(--space-2);
-		color: var(--text-faint);
+		color: var(--text-muted);
 	}
 	.answer p + p {
 		margin-top: var(--space-2);
@@ -363,15 +425,32 @@
 	.answer .siglum {
 		margin-right: 0.35em;
 	}
+	/* A name reads as the text around it; pointed at or focused, it takes the highlighter, as
+	   where it is found in the document. */
 	.items .item {
+		display: inline;
+		padding: 0;
+		border: 0;
 		border-radius: 2px;
+		background: none;
+		color: inherit;
+		font: inherit;
+		line-height: inherit;
+		text-align: inherit;
 		cursor: default;
 		transition: background-color 120ms ease-out;
 	}
-	.items .item:hover {
+	.items .item.named {
+		cursor: pointer;
+	}
+	.items .item:hover,
+	.items .item:focus-visible {
 		background: var(--marker);
 		color: var(--on-marker);
 		box-shadow: 0 0 0 2px var(--marker);
+	}
+	.items .item:focus-visible {
+		outline-offset: 3px;
 	}
 	/* The sigla of the set-ups that found a name, when not all of them did. */
 	.found {

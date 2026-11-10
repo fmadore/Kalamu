@@ -1373,6 +1373,10 @@ export const fr: Messages = {
 		itemMenu: (name: string) => `Que faire de « ${name} » ?`,
 		renameItem: 'Renommer',
 		removeItem: 'Retirer des réponses',
+		itemLocates: 'Marqué dans la source tant qu’il a le focus.',
+		itemKeys:
+			'Marqué dans la source tant qu’il a le focus. Entrée, ou la touche de menu, le renomme ou le retire.',
+		pageImage: 'Image de la page : les flèches la déplacent, avec Maj par pas plus longs',
 		itemEverywhere:
 			'Modifié dans les réponses corrigées de ce document, pour chaque modèle qui l’a relevé. Les réponses du modèle sont conservées.',
 		edit: 'Corriger',
@@ -1871,6 +1875,7 @@ export const fr: Messages = {
 		cancel: 'Annuler',
 		save: 'Enregistrer',
 		close: 'Fermer',
+		dismissMessage: 'Fermer ce message',
 		loading: 'Chargement…',
 		colon: ' :',
 		semicolon: ' ; ',

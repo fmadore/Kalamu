@@ -15,7 +15,9 @@
 		marked,
 		selected,
 		hovered,
+		stop,
 		onpick,
+		onmove,
 		onhover
 	}: {
 		compared: Witness | undefined;
@@ -27,7 +29,11 @@
 		marked: boolean;
 		selected: number | null;
 		hovered: number | null;
-		onpick: (id: number) => void;
+		/** The difference that holds the tab stop, when the witness has it. */
+		stop: number | null;
+		/** A difference chosen, and whether from the keyboard. */
+		onpick: (id: number, keyboard: boolean) => void;
+		onmove: (id: number) => void;
 		/** The difference under the pointer, or null once it leaves. */
 		onhover: (id: number | null) => void;
 	} = $props();
@@ -45,8 +51,10 @@
 		{marked}
 		{selected}
 		{hovered}
+		{stop}
 		emptyLabel={m.review.leftOutHere}
 		{onpick}
+		{onmove}
 		onpoint={(_, id) => onhover(id)}
 		onaway={() => onhover(null)}
 	/>

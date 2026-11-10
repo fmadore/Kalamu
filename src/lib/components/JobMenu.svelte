@@ -1,12 +1,14 @@
 <script lang="ts">
-	// What can be done to a job from the job list, opened by a right click or the keyboard's menu
-	// key: rename it, add it to a project, delete it. At the pointer, kept inside the window; closed
-	// by Escape, a click elsewhere or a choice.
+	// What can be done to a job from the job list, opened by its ⋯ button, a right click or the
+	// keyboard's menu key: rename it, add it to a project, delete it. At the pointer or under the
+	// button, kept inside the window; closed by Escape, a click elsewhere or a choice, the focus
+	// going back to where it was.
 	import Icon from './Icon.svelte';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import type { ProjectSummary } from '#lib/bindings/ProjectSummary.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { giveFocusBack } from '#lib/keys.js';
 	import { deleteJob } from '#lib/jobActions.svelte.js';
 	import { refreshProjects, toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -28,6 +30,8 @@
 	const m = messages();
 
 	let box = $state<HTMLElement | null>(null);
+	/** What had the focus when the menu opened, given it back when the menu closes. */
+	const opener = document.activeElement;
 	let projects = $state<ProjectSummary[] | null>(null);
 	const running = $derived(job.status === 'running');
 
@@ -80,7 +84,7 @@
 			// The sidebar counts each project's documents: this one has more.
 			void refreshProjects();
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 
@@ -89,7 +93,7 @@
 		try {
 			await deleteJob(job.id);
 		} catch (e) {
-			toast(describeError(e, m));
+			toast(describeError(e, m), { kind: 'error' });
 		}
 	}
 </script>
@@ -103,7 +107,9 @@
 	aria-label={m.shell.jobMenu(job.name)}
 	onkeydown={keys}
 	ontoggle={(e) => {
-		if (e.newState === 'closed') onclose();
+		if (e.newState !== 'closed') return;
+		giveFocusBack(opener, box);
+		onclose();
 	}}
 >
 	<button
@@ -187,8 +193,9 @@
 		outline: var(--focus-width) solid var(--focus);
 		outline-offset: calc(-1 * var(--focus-width));
 	}
+	/* Unavailable, yet legible: muted beside the bright items, with no hover. */
 	button:disabled {
-		color: var(--text-faint);
+		color: var(--text-muted);
 		cursor: default;
 	}
 	.danger:not(:disabled) {

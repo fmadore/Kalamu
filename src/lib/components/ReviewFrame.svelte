@@ -4,8 +4,10 @@
 	// text file set as text, or a player), the text or answers beside it, and a third pane while a
 	// compared text is open, with handles on the boundaries; the strip of pages at the foot. In a
 	// narrow window the panes stack. Ctrl Enter marks the piece reviewed; Page Up and Page Down,
-	// or Alt and the arrows, turn the pages; Ctrl F opens the search, under the masthead. On a Mac
-	// ⌘ takes Ctrl's place, as in every shortcut (`platform.ts`).
+	// or Alt and the arrows, turn the pages, except that Page Up and Page Down scroll a pane
+	// focused to be scrolled; Ctrl F opens the search, under the masthead. On a Mac ⌘ takes
+	// Ctrl's place, as in every shortcut (`platform.ts`). The panes scroll from the keyboard in
+	// every webview (`scrollableByKeys`).
 	import { tick, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 	import QueueBanner from './QueueBanner.svelte';
@@ -15,6 +17,7 @@
 	import Splitter from './Splitter.svelte';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { FIELDS, pageKeysStay, scrollableByKeys } from '#lib/keys.js';
 	import { primary, shortcut } from '#lib/platform.js';
 	import { columns, layout } from '#lib/review.svelte.js';
 	import { go, shortcutsHeld } from '#lib/state.svelte.js';
@@ -130,7 +133,9 @@
 			onreviewed();
 			return;
 		}
-		if ((e.target as HTMLElement).closest('input, textarea, select')) return;
+		if ((e.target as HTMLElement).closest(FIELDS)) return;
+		const paging = e.key === 'PageDown' || e.key === 'PageUp';
+		if (paging && pageKeysStay(e.target)) return;
 		const delta =
 			e.key === 'PageDown' || (e.altKey && e.key === 'ArrowRight')
 				? 1
@@ -218,7 +223,9 @@
 				</span>
 				{#if tools}<span class="tools">{@render tools()}</span>{/if}
 			</div>
-			<div class="page" bind:this={textPane}>{@render children()}</div>
+			<div class="page" bind:this={textPane} {@attach scrollableByKeys(label)}>
+				{@render children()}
+			</div>
 			{#if foot}<div class="foot">{@render foot()}</div>{/if}
 			{#if panel}<div class="panel">{@render panel()}</div>{/if}
 		</section>
@@ -232,7 +239,9 @@
 			/>
 			<section class="pane third" aria-label={thirdLabel}>
 				<div class="pane-bar">{@render thirdBar?.()}</div>
-				<div class="page" bind:this={thirdPane}>{@render third()}</div>
+				<div class="page" bind:this={thirdPane} {@attach scrollableByKeys(thirdLabel)}>
+					{@render third()}
+				</div>
 			</section>
 		{/if}
 	</div>
@@ -291,7 +300,7 @@
 	/* A view that is on reads as pressed in, not as an action. */
 	.toggle[aria-pressed='true'] {
 		background: var(--wash);
-		border-color: var(--line-strong);
+		border-color: var(--control-line-hover);
 	}
 	.error {
 		color: var(--danger-text);

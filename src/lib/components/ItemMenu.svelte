@@ -1,10 +1,12 @@
 <script lang="ts">
-	// What can be done to one name an analysis found, opened by a right click on it: rename it or
-	// remove it, straight away, without opening the editor. At the pointer, kept inside the
-	// window; closed by Escape, a click elsewhere or a choice. Renaming turns the menu into a
+	// What can be done to one name an analysis found, opened from the name (a click, Enter, a
+	// right click or the menu key): rename it or remove it, straight away, without opening the
+	// editor. At the pointer or under the name, kept inside the window; closed by Escape, a click
+	// elsewhere or a choice, the focus going back to the name. Renaming turns the menu into a
 	// field holding the name.
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
+	import { giveFocusBack } from '#lib/keys.js';
 
 	let {
 		value,
@@ -26,6 +28,8 @@
 	const m = messages();
 
 	let box = $state<HTMLElement | null>(null);
+	/** What had the focus when the menu opened, given it back when the menu closes. */
+	const opener = document.activeElement;
 	let renaming = $state(false);
 	// svelte-ignore state_referenced_locally
 	let draft = $state(value);
@@ -91,7 +95,9 @@
 	aria-label={m.review.itemMenu(value)}
 	onkeydown={keys}
 	ontoggle={(e) => {
-		if (e.newState === 'closed') onclose();
+		if (e.newState !== 'closed') return;
+		giveFocusBack(opener, box);
+		onclose();
 	}}
 >
 	{#if renaming}

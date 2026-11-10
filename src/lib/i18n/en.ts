@@ -1281,6 +1281,10 @@ export const en = {
 		itemMenu: (name: string) => `What to do with “${name}”`,
 		renameItem: 'Rename',
 		removeItem: 'Remove from the answers',
+		itemLocates: 'Marked in the source while it has the focus.',
+		itemKeys:
+			'Marked in the source while it has the focus. Enter, or the menu key, renames or removes it.',
+		pageImage: 'Page image: the arrow keys move it, with Shift by longer steps',
 		itemEverywhere:
 			'Changed in this document’s corrected answers, for every model that found it. The model’s own answers are kept.',
 		edit: 'Correct',
@@ -1785,6 +1789,7 @@ export const en = {
 		cancel: 'Cancel',
 		save: 'Save',
 		close: 'Close',
+		dismissMessage: 'Dismiss this message',
 		loading: 'Loading…',
 		/** After a label, before what it labels: French sets a space before it. */
 		colon: ':',
