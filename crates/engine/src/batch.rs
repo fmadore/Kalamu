@@ -62,10 +62,3 @@ pub(super) fn waiting(batch: &BatchRecord, finished: u32) -> ProgressEvent {
         due_by: Timestamp(batch.submitted_at.0 + BATCH_WINDOW_MS),
     }
 }
-
-pub(super) fn stem(file_name: &str) -> String {
-    std::path::Path::new(file_name)
-        .file_stem()
-        .map(|s| s.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "page".into())
-}

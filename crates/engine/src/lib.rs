@@ -346,5 +346,14 @@ impl Engine {
     }
 }
 
+/// A source's file name without its extension, for the names of what is made from it (a page
+/// sent to a provider, an output file); `fallback` for a name that has none (`.pdf`, empty).
+pub(crate) fn source_stem(file_name: &str, fallback: &str) -> String {
+    Path::new(file_name).file_stem().map_or_else(
+        || fallback.to_string(),
+        |s| s.to_string_lossy().into_owned(),
+    )
+}
+
 #[cfg(test)]
 mod tests;
