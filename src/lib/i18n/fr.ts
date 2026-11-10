@@ -1732,16 +1732,24 @@ export const fr: Messages = {
 			find: 'Aller au champ de filtre ou de recherche : dans Traitements, les documents d’un projet, sa recherche et son dictionnaire, et ici',
 			back: (pageBack: string) =>
 				`Revenir à l’écran d’où vous venez, comme le bouton Précédent de la souris. En relecture, ${pageBack} tourne plutôt à la page précédente.`,
-			escape: 'Fermer un menu ou une boîte de dialogue',
+			escape:
+				'Fermer un menu ou une boîte de dialogue, ou ranger un message d’échec qui a le focus',
 			start: 'Lancer le traitement',
 			addLinks: 'Ajouter les liens YouTube collés',
 			newLine: 'Commencer une autre ligne de liens',
 			reviewed: 'Marquer la page comme relue, ou non relue ; pendant une correction, l’enregistrer',
-			nextPage: 'Page ou partie suivante',
-			previousPage: 'Page ou partie précédente',
+			nextPage: 'Page ou partie suivante ; Pg suiv fait plutôt défiler un volet qui a le focus',
+			previousPage:
+				'Page ou partie précédente ; Pg préc fait plutôt défiler un volet qui a le focus',
+			differenceSteps: 'Sur une différence du texte : la précédente ou la suivante',
+			differenceEnds: 'Sur une différence du texte : la première ou la dernière',
+			openReadings: 'Sur une différence du texte : ouvrir ses versions, le focus dedans',
+			nameSteps:
+				'Sur un nom d’une analyse : le précédent ou le suivant (Début et Fin : le premier ou le dernier)',
+			nameMenu: 'Sur un nom d’une analyse : le menu pour le renommer ou le retirer',
 			nextDifference: 'Passage suivant où les modèles divergent, ses versions ouvertes',
 			previousDifference: 'Passage précédent où les modèles divergent',
-			closeReadings: 'Fermer les versions',
+			closeReadings: 'Fermer les versions, depuis leur propre champ aussi',
 			moveReadings: 'Écarter les versions, depuis la poignée à leur gauche ; avec Maj, plus loin',
 			splitter:
 				'Déplacer la limite entre deux volets, une fois qu’elle a le focus ; avec Maj, plus loin',
@@ -1751,7 +1759,8 @@ export const fr: Messages = {
 			closeSearch: 'Fermer la liste des occurrences, puis la recherche',
 			zoomIn: 'Agrandir',
 			zoomOut: 'Réduire',
-			fit: 'Ajuster la page à la largeur du volet'
+			fit: 'Ajuster la page à la largeur du volet',
+			pan: 'Sur l’image de la page : déplacer la page ; avec Maj, de presque tout le volet'
 		},
 		filter: 'Chercher un mot',
 		noMatch: 'Aucun mot de ce nom.',
@@ -1907,7 +1916,11 @@ export const fr: Messages = {
 		alt: 'Alt',
 		escape: 'Échap',
 		pageUp: 'Pg préc',
-		pageDown: 'Pg suiv'
+		pageDown: 'Pg suiv',
+		home: 'Début',
+		end: 'Fin',
+		space: 'Espace',
+		menu: 'Touche de menu'
 	},
 	tray: {
 		open: 'Ouvrir Kalamu',

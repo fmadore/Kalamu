@@ -124,9 +124,14 @@ export function keyboard(m: Messages, mac = isMac): { place: KeyPlace; rows: Key
 				{ keys: [m.keys.pageUp, alted('←', mac)], does: k.previousPage },
 				{ keys: ['F'], does: k.nextDifference },
 				{ keys: [shifted('F', mac)], does: k.previousDifference },
+				{ keys: ['← →'], does: k.differenceSteps },
+				{ keys: [m.keys.home, m.keys.end], does: k.differenceEnds },
+				{ keys: ['↵', m.keys.space], does: k.openReadings },
 				{ keys: [m.keys.escape], does: k.closeReadings },
 				{ keys: ['← ↑ → ↓'], does: k.moveReadings },
 				{ keys: ['← →'], does: k.splitter },
+				{ keys: ['← →', m.keys.home, m.keys.end], does: k.nameSteps },
+				{ keys: ['↵', m.keys.space, shifted('F10', mac), m.keys.menu], does: k.nameMenu },
 				{ keys: [shortcut('F', mac)], does: k.search }
 			]
 		},
@@ -143,7 +148,8 @@ export function keyboard(m: Messages, mac = isMac): { place: KeyPlace; rows: Key
 			rows: [
 				{ keys: [shortcut('+', mac)], does: k.zoomIn },
 				{ keys: [shortcut('−', mac)], does: k.zoomOut },
-				{ keys: [shortcut('0', mac)], does: k.fit }
+				{ keys: [shortcut('0', mac)], does: k.fit },
+				{ keys: ['← ↑ → ↓'], does: k.pan }
 			]
 		}
 	];

@@ -1636,16 +1636,22 @@ export const en = {
 			find: 'Go to the filter or search field: on Jobs, a project’s documents, its search and dictionary, and here',
 			back: (pageBack: string) =>
 				`Go back to the screen you came from, as the mouse’s back button does. In a review ${pageBack} turns to the previous page instead.`,
-			escape: 'Close a menu or a dialog',
+			escape: 'Close a menu or a dialog, or put away a failure message that has the focus',
 			start: 'Start the job',
 			addLinks: 'Add the YouTube links pasted',
 			newLine: 'Start another line among the links',
 			reviewed: 'Mark the page reviewed, or not reviewed; while correcting, save the correction',
-			nextPage: 'Next page or part',
-			previousPage: 'Previous page or part',
+			nextPage: 'Next page or part; Page Down scrolls a pane instead when it has the focus',
+			previousPage: 'Previous page or part; Page Up scrolls a pane instead when it has the focus',
+			differenceSteps: 'On a difference in the text: the previous or next one',
+			differenceEnds: 'On a difference in the text: the first or last one',
+			openReadings: 'On a difference in the text: open its readings, the focus in them',
+			nameSteps:
+				'On a name in an analysis: the previous or next one (Home and End: the first or last)',
+			nameMenu: 'On a name in an analysis: the menu to rename or remove it',
 			nextDifference: 'Next place where the models differ, its readings open',
 			previousDifference: 'Previous place where the models differ',
-			closeReadings: 'Close the readings',
+			closeReadings: 'Close the readings, from their own field too',
 			moveReadings: 'Move the readings aside, from the grip at their left; with Shift, further',
 			splitter: 'Move the boundary between two panes, once it has the focus; with Shift, further',
 			search: 'Search the text, or go back to the search field',
@@ -1654,7 +1660,8 @@ export const en = {
 			closeSearch: 'Close the list of matches, then the search',
 			zoomIn: 'Zoom in',
 			zoomOut: 'Zoom out',
-			fit: 'Fit the page to the pane’s width'
+			fit: 'Fit the page to the pane’s width',
+			pan: 'On the page image: move the page; with Shift, by most of the pane'
 		},
 		filter: 'Find a word',
 		noMatch: 'No word by that name.',
@@ -1824,7 +1831,11 @@ export const en = {
 		alt: 'Alt',
 		escape: 'Esc',
 		pageUp: 'Page Up',
-		pageDown: 'Page Down'
+		pageDown: 'Page Down',
+		home: 'Home',
+		end: 'End',
+		space: 'Space',
+		menu: 'Menu key'
 	},
 	tray: {
 		open: 'Open Kalamu',
