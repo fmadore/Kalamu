@@ -1,45 +1,23 @@
-//! The window: progress on the taskbar or Dock icon, the tray icon, hiding and closing.
+//! The window: the words of the tray icon and the notifications, hiding and closing.
 
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
 use kalamu_core::JobId;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager};
 
 use super::AppState;
+use crate::activity::ShellLabels;
 use crate::errors::CmdResult;
-use crate::tray::{TrayMenu, TrayState};
 
-/// Progress on the taskbar button (Windows) or the Dock icon (macOS): 0–100, or `None` to
-/// clear it.
-#[tauri::command]
-pub fn set_taskbar_progress(app: AppHandle, percent: Option<u32>) {
-    use tauri::window::{ProgressBarState, ProgressBarStatus};
-    if let Some(window) = app.get_webview_window("main") {
-        let state = match percent {
-            Some(p) => ProgressBarState {
-                status: Some(ProgressBarStatus::Normal),
-                progress: Some(u64::from(p.min(100))),
-            },
-            None => ProgressBarState {
-                status: Some(ProgressBarStatus::None),
-                progress: None,
-            },
-        };
-        let _ = window.set_progress_bar(state);
-    }
-}
-
-/// The job status and translated labels for the tray menu.
+/// The words the tray menu and the notifications use, translated by the interface: sent at
+/// start-up and when the language changes. What they say of the jobs is worked out by the shell
+/// from the engine's events (`activity`), so it stays right while the window is hidden.
 ///
 /// Synchronous on purpose: Tauri runs sync commands on the main thread, where menu items live.
 #[tauri::command]
-#[expect(
-    clippy::needless_pass_by_value,
-    reason = "Tauri commands receive their arguments by value"
-)]
-pub fn set_tray_state(app: AppHandle, tray: State<'_, TrayMenu>, state: TrayState) {
-    tray.apply(&app, &state);
+pub fn set_shell_labels(app: AppHandle, labels: ShellLabels) {
+    crate::activity::set_labels(&app, labels);
 }
 
 /// Hides the window; jobs keep running and the tray icon brings it back.
@@ -66,6 +44,8 @@ pub fn show_main_window(app: &AppHandle) {
         let _ = window.unminimize();
         let _ = window.set_focus();
     }
+    // Windows drops a hidden window's taskbar progress; it is written again.
+    crate::activity::show(app);
 }
 
 /// Whether any job is running, so closing or quitting asks first.

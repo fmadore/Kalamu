@@ -155,8 +155,7 @@
     "allow-project-search",
     "allow-rebuild-search-index",
     "allow-prepare-project-search",
-    "allow-set-taskbar-progress",
-    "allow-set-tray-state",
+    "allow-set-shell-labels",
     "allow-hide-window",
     "allow-quit-app"
   ]
