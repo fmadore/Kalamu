@@ -385,6 +385,7 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 		}
 		case 'attach_job':
 		case 'link_job':
+		case 'link_jobs':
 		case 'detach_job':
 		case 'merge_documents':
 			return [];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collate, editItem, findTerm, holdsItem, holdsWords } from './analysis.js';
+import { collate, findTerm, holdsWords } from './analysis.js';
 
 const a = {
 	siglum: 'a',
@@ -57,32 +57,5 @@ describe('analysis collation', () => {
 		expect(holdsWords('tone', [a, b], 'factual')).toBe(true);
 		expect(holdsWords('tone', [a, b], 'dakar')).toBe(false);
 		expect(holdsWords('missing', [a, b], 'dakar')).toBe(false);
-	});
-});
-
-describe('renaming or removing a name found', () => {
-	const answers = [
-		{ key: 'people', value: ['Samory Touré', 'El Hadj Omar', 'samory touré '], reason: 'Named' },
-		{ key: 'summary', value: 'A letter.' }
-	];
-
-	it('renames every spelling of the name, keeping the reason and the other fields', () => {
-		const renamed = editItem(answers, 'people', 'Samory Touré', 'Almamy Samory');
-		expect(renamed[0]).toEqual({
-			key: 'people',
-			value: ['Almamy Samory', 'El Hadj Omar'],
-			reason: 'Named'
-		});
-		expect(renamed[1]).toBe(answers[1]);
-		expect(holdsItem(renamed, 'people', 'almamy samory')).toBe(true);
-		expect(holdsItem(renamed, 'people', 'Samory Touré')).toBe(false);
-	});
-
-	it('merges a name renamed to one already listed, and removes one renamed to nothing', () => {
-		expect(editItem(answers, 'people', 'El Hadj Omar', 'Samory Touré')[0].value).toEqual([
-			'Samory Touré'
-		]);
-		expect(editItem(answers, 'people', 'El Hadj Omar', null)[0].value).toEqual(['Samory Touré']);
-		expect(editItem(answers, 'people', 'El Hadj Omar', '  ')[0].value).toEqual(['Samory Touré']);
 	});
 });

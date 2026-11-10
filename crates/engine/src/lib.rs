@@ -236,8 +236,16 @@ impl Engine {
     }
 
     pub fn delete_job(&self, id: JobId) -> Result<(), EngineError> {
-        self.cancel(id);
-        Ok(self.store.delete_job(id)?)
+        self.delete_jobs(&[id])
+    }
+
+    /// Deletes several jobs, each stopped first, all or none: a selection deleted is never
+    /// left deleted in part.
+    pub fn delete_jobs(&self, ids: &[JobId]) -> Result<(), EngineError> {
+        for &id in ids {
+            self.cancel(id);
+        }
+        Ok(self.store.delete_jobs(ids)?)
     }
 
     /// Inspects files for a new job: hash, kind, page count or length, and the input checks.

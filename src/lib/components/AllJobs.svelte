@@ -100,7 +100,7 @@
 		if (!project) return;
 		const ids = chosen.map((j) => j.id);
 		try {
-			for (const id of ids) await api.linkJob(projectId, id, null);
+			await api.linkJobs(projectId, ids, null);
 			toast(m.allJobs.addedTo(ids.length, project.project.name));
 			selection.clear();
 			await refreshProjects();
@@ -114,7 +114,7 @@
 		if (ids.length === 0 || anyRunning) return;
 		if (!(await ask(m.allJobs.deleteConfirm(ids.length)))) return;
 		try {
-			for (const id of ids) await api.deleteJob(id);
+			await api.deleteJobs(ids);
 		} catch (e) {
 			toast(describeError(e, m), { kind: 'error' });
 		}

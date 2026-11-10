@@ -15,6 +15,7 @@ pub mod fingerprint;
 pub mod ids;
 pub mod job;
 pub mod language;
+pub mod list_items;
 pub mod pages;
 pub mod profile;
 pub mod project;

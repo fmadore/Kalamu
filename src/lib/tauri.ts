@@ -174,6 +174,8 @@ export const api = {
 	cancelJob: (id: string) => invoke<void>('cancel_job', { id }),
 	retryFailed: (id: string) => invoke<void>('retry_failed', { id }),
 	deleteJob: (id: string) => invoke<void>('delete_job', { id }),
+	/** Deletes several jobs, all or none. */
+	deleteJobs: (ids: string[]) => invoke<void>('delete_jobs', { ids }),
 	renameJob: (id: string, name: string) => invoke<void>('rename_job', { id, name }),
 	listJobs: () => invoke<JobSummary[]>('list_jobs'),
 	/** The names of every job's sources, for finding a job by a file it read. */
@@ -214,6 +216,18 @@ export const api = {
 	sourceText: (jobId: string, sourceId: string) =>
 		invoke<string>('source_text', { jobId, sourceId }),
 	saveCorrection: (correction: Correction) => invoke<void>('save_correction', { correction }),
+	/** Stores several corrections, all or none. */
+	saveCorrections: (corrections: Correction[]) => invoke<void>('save_corrections', { corrections }),
+	/** Renames a listed name in every set-up that found it, or takes it out when `to` is null,
+	 * all or none; gives back those set-ups' corrections as they stood, to put back. */
+	renameListed: (
+		jobId: string,
+		sourceId: string,
+		index: number,
+		key: string,
+		from: string,
+		to: string | null
+	) => invoke<Correction[]>('rename_listed', { jobId, sourceId, index, key, from, to }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
 		invoke<void>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>
@@ -334,6 +348,9 @@ export const api = {
 		invoke<string[]>('attach_job', { project, job, choices, collection }),
 	linkJob: (project: string, job: string, collection: string | null) =>
 		invoke<string[]>('link_job', { project, job, collection }),
+	/** Links several jobs to their documents, all or none. */
+	linkJobs: (project: string, jobs: string[], collection: string | null) =>
+		invoke<string[]>('link_jobs', { project, jobs, collection }),
 	detachJob: (project: string, document: string, job: string, source: string) =>
 		invoke<void>('detach_job', { project, document, job, source }),
 	reviewQueue: (project: string, selection: QueueSelection, excluded: ResultKey[]) =>

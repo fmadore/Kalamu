@@ -139,6 +139,35 @@ pub async fn save_correction(state: State<'_, AppState>, correction: Correction)
     off_thread(move || Ok(engine.save_correction(correction)?)).await
 }
 
+/// Stores several corrections at once, all or none: a change across set-ups put back.
+#[tauri::command]
+pub async fn save_corrections(
+    state: State<'_, AppState>,
+    corrections: Vec<Correction>,
+) -> CmdResult<()> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.save_corrections(corrections)?)).await
+}
+
+/// Renames a name an analysis listed, or takes it out when `to` is none, in every set-up that
+/// found it, all or none; gives back those set-ups' corrections as they stood, to put back.
+#[tauri::command]
+pub async fn rename_listed(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+    index: u32,
+    key: String,
+    from: String,
+    to: Option<String>,
+) -> CmdResult<Vec<Correction>> {
+    let engine = state.engine.clone();
+    off_thread(move || {
+        Ok(engine.rename_listed(job_id, source_id, index, &key, &from, to.as_deref())?)
+    })
+    .await
+}
+
 /// Names the speakers of one set-up's transcription; the files are written again as after a
 /// correction.
 #[tauri::command]
