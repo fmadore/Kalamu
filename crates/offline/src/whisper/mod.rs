@@ -33,8 +33,8 @@ mod text;
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
-use std::time::Instant;
+use std::sync::{Arc, Mutex, OnceLock, TryLockError};
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use kalamu_core::{
@@ -223,6 +223,29 @@ impl Whisper {
                 *loaded = None;
             }
         });
+    }
+
+    /// Releases the loaded model and the voice-activity model, waiting at most `limit` for a
+    /// transcription that still holds the turn; whether they were released. Called as the app
+    /// exits: on a Mac the model's Metal buffers must be freed before the process's own
+    /// clean-up frees ggml's Metal device, which aborts the app (a crash report, "quit
+    /// unexpectedly") when buffers are still there, as they are for three minutes after a
+    /// transcription ([`IDLE_UNLOAD`]).
+    pub fn release(&self, limit: Duration) -> bool {
+        let deadline = Instant::now() + limit;
+        let _turn = loop {
+            match self.inner.turn.try_lock() {
+                Ok(turn) => break turn,
+                Err(TryLockError::Poisoned(e)) => break e.into_inner(),
+                Err(TryLockError::WouldBlock) if Instant::now() < deadline => {
+                    std::thread::sleep(Duration::from_millis(50));
+                }
+                Err(TryLockError::WouldBlock) => return false,
+            }
+        };
+        *lock(&self.inner.loaded) = None;
+        *lock(&self.inner.vad) = None;
+        true
     }
 }
 
@@ -686,6 +709,22 @@ impl Provider for Whisper {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
+
+    /// Released as the app exits, but never from under a transcription: past the limit the
+    /// model is left to it.
+    #[test]
+    fn release_waits_for_the_turn_and_no_longer() {
+        let dir = tempfile::tempdir().unwrap();
+        let whisper = Whisper::new(ModelManager::new(dir.path().to_owned(), &models::WHISPER));
+        assert!(whisper.release(Duration::ZERO));
+
+        let turn = lock(&whisper.inner.turn);
+        let started = Instant::now();
+        assert!(!whisper.release(Duration::from_millis(200)));
+        assert!(started.elapsed() >= Duration::from_millis(200));
+        drop(turn);
+        assert!(whisper.release(Duration::ZERO));
+    }
 
     #[test]
     fn only_a_single_known_language_is_forced() {
