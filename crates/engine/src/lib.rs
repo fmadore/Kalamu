@@ -320,6 +320,14 @@ impl Engine {
         Ok(files)
     }
 
+    /// Deletes the stored answers no job's pieces refer to any more, those of deleted jobs
+    /// above all, and gives the space back to the disk: how many, and how many bytes. Safe
+    /// while a job runs, since a piece records its key before its answer is stored; the
+    /// database is held while it is compacted, which on a large one takes a while.
+    pub fn prune_results(&self) -> Result<kalamu_core::PrunedResults, EngineError> {
+        Ok(self.store.prune_results()?)
+    }
+
     /// The outputs for one source and set-up, written again from stored results.
     pub fn export(
         &self,

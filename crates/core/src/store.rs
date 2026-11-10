@@ -34,6 +34,15 @@ impl Correction {
     }
 }
 
+/// What pruning the result cache freed ([`JobStore::prune_results`]).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct PrunedResults {
+    /// Results deleted.
+    pub results: u64,
+    /// The database's size before less its size after, in bytes.
+    pub bytes: u64,
+}
+
 #[derive(Debug, Error)]
 pub enum StoreError {
     #[error("Job not found")]
@@ -64,6 +73,14 @@ pub trait JobStore: Send + Sync {
     /// part, to be taken for the whole plan when the job resumes.
     fn upsert_pieces(&self, pieces: &[PieceState]) -> Result<(), StoreError>;
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError>;
+    /// One source's pieces under one set-up, in their order: what writing its files reads,
+    /// without the rest of a job of thousands of sources.
+    fn source_pieces(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<PieceState>, StoreError>;
 
     fn cached_result(&self, key: &CacheKey) -> Result<Option<StoredResult>, StoreError>;
     /// The answer stored for a finished piece; none for one not finished.
@@ -110,6 +127,19 @@ pub trait JobStore: Send + Sync {
     /// Records a call billed without a result to keep.
     fn add_charge(&self, charge: &Charge) -> Result<(), StoreError>;
     fn charges(&self, job: JobId) -> Result<Vec<Charge>, StoreError>;
+    /// The charges of one source's pieces under one set-up, in the order they were billed.
+    fn source_charges(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<Charge>, StoreError>;
+    /// Deletes the stored results that no piece of any job refers to (those of deleted jobs,
+    /// and answers a piece read again under another key no longer uses), then gives the space
+    /// back to the disk. A piece records its key before its answer is stored, so a result a
+    /// job is waiting for or will read is never one of them; a result deleted is paid for
+    /// again if the same work is asked for later.
+    fn prune_results(&self) -> Result<PrunedResults, StoreError>;
     /// Stores a result unless one is already stored under its key. The first answer is kept,
     /// never replaced by a later one (two identical set-ups, a batch collected after a fast
     /// run), so the researcher's corrections stay over the text they corrected.
@@ -117,10 +147,24 @@ pub trait JobStore: Send + Sync {
 
     fn put_correction(&self, correction: &Correction) -> Result<(), StoreError>;
     fn corrections(&self, job: JobId) -> Result<Vec<Correction>, StoreError>;
+    /// The corrections of one source's pieces under one set-up.
+    fn source_corrections(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<Correction>, StoreError>;
 
     /// Replaces the names given to one set-up's speakers in one recording.
     fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError>;
     fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError>;
+    /// The names given to one set-up's speakers in one recording: none, or one entry.
+    fn source_speaker_names(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<SpeakerNames>, StoreError>;
     /// The names given to every recording's speakers in a job, ready to look up piece by piece.
     fn speakers(&self, job: JobId) -> Result<crate::SpeakerIndex, StoreError> {
         Ok(crate::SpeakerIndex::new(self.speaker_names(job)?))

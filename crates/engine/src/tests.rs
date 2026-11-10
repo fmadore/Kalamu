@@ -22,6 +22,7 @@ fn count(pieces: &[kalamu_core::PieceState], status: PieceStatus) -> usize {
 mod attention;
 mod batch;
 mod contents;
+mod large;
 mod pages;
 mod snapshot;
 mod sources;

@@ -106,4 +106,10 @@ CREATE INDEX IF NOT EXISTS preferred_results_by_job ON preferred_results(job_id)
 CREATE INDEX IF NOT EXISTS collection_documents_by_document
     ON collection_documents(document_id);
 "#,
+    // A result's cost and whether it was cut off, which the job list and a job's cost add up:
+    // in the table they come after the answer itself, so reading them walked through every
+    // answer's pages. The index holds them alone.
+    r#"
+CREATE INDEX IF NOT EXISTS results_costs ON results(cache_key, cost_usd, truncated);
+"#,
 ];

@@ -4,9 +4,9 @@
 use kalamu_core::{
     Charge, Correction, JobId, SetupId, SourceId, SpeakerNames, StoreError, Timestamp,
 };
-use rusqlite::params;
+use rusqlite::{params, params_from_iter};
 
-use super::{SqliteStore, corrupt, db, to_json};
+use super::{SqliteStore, corrupt, db, scoped, to_json};
 
 pub(crate) fn add_charge(store: &SqliteStore, charge: &Charge) -> Result<(), StoreError> {
     store
@@ -29,16 +29,25 @@ pub(crate) fn add_charge(store: &SqliteStore, charge: &Charge) -> Result<(), Sto
     Ok(())
 }
 
-pub(crate) fn charges(store: &SqliteStore, job: JobId) -> Result<Vec<Charge>, StoreError> {
+/// A job's charges, or with `scope` one source's under one set-up, in the order they were
+/// billed.
+pub(crate) fn charges(
+    store: &SqliteStore,
+    job: JobId,
+    scope: Option<(SetupId, SourceId)>,
+) -> Result<Vec<Charge>, StoreError> {
+    let (sql, args) = scoped(
+        "SELECT setup_id, source_id, idx, usage, cost_usd, created_at
+         FROM charges WHERE job_id = ?1",
+        "ORDER BY rowid",
+        "ORDER BY rowid",
+        job,
+        scope,
+    );
     let conn = store.conn();
-    let mut stmt = conn
-        .prepare(
-            "SELECT setup_id, source_id, idx, usage, cost_usd, created_at
-             FROM charges WHERE job_id = ?1 ORDER BY rowid",
-        )
-        .map_err(db)?;
+    let mut stmt = conn.prepare(&sql).map_err(db)?;
     let rows = stmt
-        .query_map([job.to_string()], |row| {
+        .query_map(params_from_iter(&args), |row| {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, String>(1)?,
@@ -93,16 +102,24 @@ pub(crate) fn put_correction(
     Ok(())
 }
 
-pub(crate) fn corrections(store: &SqliteStore, job: JobId) -> Result<Vec<Correction>, StoreError> {
+/// A job's corrections, or with `scope` one source's under one set-up.
+pub(crate) fn corrections(
+    store: &SqliteStore,
+    job: JobId,
+    scope: Option<(SetupId, SourceId)>,
+) -> Result<Vec<Correction>, StoreError> {
+    let (sql, args) = scoped(
+        "SELECT setup_id, source_id, idx, text, reviewed, updated_at, fields
+         FROM corrections WHERE job_id = ?1",
+        "",
+        "",
+        job,
+        scope,
+    );
     let conn = store.conn();
-    let mut stmt = conn
-        .prepare(
-            "SELECT setup_id, source_id, idx, text, reviewed, updated_at, fields
-             FROM corrections WHERE job_id = ?1",
-        )
-        .map_err(db)?;
+    let mut stmt = conn.prepare(&sql).map_err(db)?;
     let rows = stmt
-        .query_map([job.to_string()], |row| {
+        .query_map(params_from_iter(&args), |row| {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, String>(1)?,
@@ -165,19 +182,23 @@ pub(crate) fn put_speaker_names(
     tx.commit().map_err(db)
 }
 
+/// The names given to speakers in a job, or with `scope` in one recording under one set-up.
 pub(crate) fn speaker_names(
     store: &SqliteStore,
     job: JobId,
+    scope: Option<(SetupId, SourceId)>,
 ) -> Result<Vec<SpeakerNames>, StoreError> {
+    let (sql, args) = scoped(
+        "SELECT setup_id, source_id, label, name FROM speaker_names WHERE job_id = ?1",
+        "ORDER BY setup_id, source_id",
+        "",
+        job,
+        scope,
+    );
     let conn = store.conn();
-    let mut stmt = conn
-        .prepare(
-            "SELECT setup_id, source_id, label, name FROM speaker_names
-             WHERE job_id = ?1 ORDER BY setup_id, source_id",
-        )
-        .map_err(db)?;
+    let mut stmt = conn.prepare(&sql).map_err(db)?;
     let rows = stmt
-        .query_map([job.to_string()], |row| {
+        .query_map(params_from_iter(&args), |row| {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, String>(1)?,

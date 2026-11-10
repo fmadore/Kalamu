@@ -8,6 +8,7 @@ use kalamu_core::{PieceRef, PieceStatus, ProviderId, SetupId, SourceId, Timestam
 
 mod projects;
 mod runs;
+mod scoped;
 mod search;
 
 fn job() -> Job {

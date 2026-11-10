@@ -36,17 +36,16 @@ impl Engine {
             .find(|s| s.id == source_id)
             .cloned()
             .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
-        let corrections = self.store.corrections(job.id)?;
+        // Only this source's rows are read: a job of thousands of sources writes each one's
+        // files without reading the others'.
+        let corrections = self.store.source_corrections(job.id, setup_id, source_id)?;
         // The researcher's names for this recording's speakers, applied to every part.
-        let speakers = self.store.speakers(job.id)?;
+        let speakers = kalamu_core::SpeakerIndex::new(
+            self.store
+                .source_speaker_names(job.id, setup_id, source_id)?,
+        );
         let speaker_names = speakers.of(setup_id, source_id);
-        let mut states: Vec<_> = self
-            .store
-            .pieces(job.id)?
-            .into_iter()
-            .filter(|p| p.setup_id == setup_id && p.source_id == source_id)
-            .collect();
-        states.sort_by_key(|p| p.index);
+        let states = self.store.source_pieces(job.id, setup_id, source_id)?;
 
         let mut parts = Vec::new();
         let mut usage = Usage::default();
@@ -280,10 +279,7 @@ impl Engine {
         source_id: SourceId,
     ) -> Result<Option<ProvenanceRefused>, EngineError> {
         let mut refused: Option<ProvenanceRefused> = None;
-        for charge in self.store.charges(job.id)? {
-            if charge.setup_id != setup_id || charge.source_id != source_id {
-                continue;
-            }
+        for charge in self.store.source_charges(job.id, setup_id, source_id)? {
             let entry = refused.get_or_insert_with(|| ProvenanceRefused {
                 answers: 0,
                 usage: Usage::default(),

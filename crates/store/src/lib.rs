@@ -9,7 +9,7 @@ use std::sync::{Mutex, MutexGuard};
 
 use kalamu_core::{
     BatchRecord, CacheKey, Charge, Correction, Job, JobId, JobSources, JobStatus, JobStore,
-    JobSummary, PieceState, SpeakerNames, StoreError, StoredResult,
+    JobSummary, PieceState, SetupId, SourceId, SpeakerNames, StoreError, StoredResult,
 };
 use rusqlite::Connection;
 
@@ -68,6 +68,26 @@ fn corrupt(err: impl std::fmt::Display) -> StoreError {
     StoreError::Corrupt(err.to_string())
 }
 
+/// A query over a job's rows (`select` ends with `WHERE job_id = ?1`) sorted by `order`, or,
+/// with `scope`, over one source's rows under one set-up sorted by `order_one`, and its
+/// arguments. The tables kept per piece have keys that begin with `(job_id, setup_id,
+/// source_id)`, so the narrowed query reads only that source's rows, however large the job.
+fn scoped(
+    select: &str,
+    order: &str,
+    order_one: &str,
+    job: JobId,
+    scope: Option<(SetupId, SourceId)>,
+) -> (String, Vec<String>) {
+    match scope {
+        None => (format!("{select} {order}"), vec![job.to_string()]),
+        Some((setup, source)) => (
+            format!("{select} AND setup_id = ?2 AND source_id = ?3 {order_one}"),
+            vec![job.to_string(), setup.to_string(), source.to_string()],
+        ),
+    }
+}
+
 fn to_json<T: serde::Serialize>(value: &T) -> Result<String, StoreError> {
     serde_json::to_string(value).map_err(corrupt)
 }
@@ -114,7 +134,16 @@ impl JobStore for SqliteStore {
     }
 
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError> {
-        jobs::pieces(self, job)
+        jobs::pieces(self, job, None)
+    }
+
+    fn source_pieces(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<PieceState>, StoreError> {
+        jobs::pieces(self, job, Some((setup, source)))
     }
 
     fn cached_result(&self, key: &CacheKey) -> Result<Option<StoredResult>, StoreError> {
@@ -130,7 +159,20 @@ impl JobStore for SqliteStore {
     }
 
     fn charges(&self, job: JobId) -> Result<Vec<Charge>, StoreError> {
-        results::charges(self, job)
+        results::charges(self, job, None)
+    }
+
+    fn source_charges(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<Charge>, StoreError> {
+        results::charges(self, job, Some((setup, source)))
+    }
+
+    fn prune_results(&self) -> Result<kalamu_core::PrunedResults, StoreError> {
+        jobs::prune_results(self)
     }
 
     fn put_result(&self, result: &StoredResult) -> Result<(), StoreError> {
@@ -142,7 +184,16 @@ impl JobStore for SqliteStore {
     }
 
     fn corrections(&self, job: JobId) -> Result<Vec<Correction>, StoreError> {
-        results::corrections(self, job)
+        results::corrections(self, job, None)
+    }
+
+    fn source_corrections(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<Correction>, StoreError> {
+        results::corrections(self, job, Some((setup, source)))
     }
 
     fn put_speaker_names(&self, job: JobId, names: &SpeakerNames) -> Result<(), StoreError> {
@@ -150,7 +201,16 @@ impl JobStore for SqliteStore {
     }
 
     fn speaker_names(&self, job: JobId) -> Result<Vec<SpeakerNames>, StoreError> {
-        results::speaker_names(self, job)
+        results::speaker_names(self, job, None)
+    }
+
+    fn source_speaker_names(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<SpeakerNames>, StoreError> {
+        results::speaker_names(self, job, Some((setup, source)))
     }
 
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError> {

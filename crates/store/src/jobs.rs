@@ -3,11 +3,11 @@
 
 use kalamu_core::{
     CacheKey, Job, JobId, JobSources, JobStatus, JobSummary, PieceRef, PieceState, PieceStatus,
-    ProviderId, SetupId, SourceId, StoreError, StoredResult, Timestamp,
+    ProviderId, PrunedResults, SetupId, SourceId, StoreError, StoredResult, Timestamp,
 };
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{Connection, OptionalExtension, params, params_from_iter};
 
-use super::{SqliteStore, corrupt, db, to_json};
+use super::{SqliteStore, corrupt, db, scoped, to_json};
 
 pub(crate) fn parse_status(s: &str) -> Result<JobStatus, StoreError> {
     JobStatus::parse(s).ok_or_else(|| corrupt(format!("unknown job status {s}")))
@@ -53,26 +53,35 @@ pub(crate) fn job(store: &SqliteStore, id: JobId) -> Result<Job, StoreError> {
     Ok(job)
 }
 
+/// Every job with its pieces' progress and cost. A result's cost and cut-off mark are read
+/// from `results_costs`, named because SQLite otherwise takes the table's key and walks
+/// through each stored answer, which comes before them in the row, to reach them.
+pub(crate) const LIST_JOBS: &str = "SELECT j.data, j.status, j.updated_at,
+        COUNT(p.idx),
+        COALESCE(SUM(p.status IN ('done', 'cached')), 0),
+        COALESCE(SUM(p.status = 'failed'), 0),
+        COALESCE(SUM(p.status IN ('done', 'cached') AND r.truncated), 0),
+        SUM(CASE WHEN p.status = 'done' THEN r.cost_usd END),
+        (SELECT SUM(c.cost_usd) FROM charges c WHERE c.job_id = j.id),
+        (SELECT json_extract(w.data, '$.workflow_name')
+         FROM run_steps s JOIN runs w ON w.id = s.run_id
+         WHERE s.job_id = j.id LIMIT 1)
+    FROM jobs j LEFT JOIN pieces p ON p.job_id = j.id
+    LEFT JOIN results r INDEXED BY results_costs ON r.cache_key = p.cache_key
+    GROUP BY j.id
+    ORDER BY j.created_at DESC";
+
+/// What a job's own calls cost: a piece done by this job paid for its result; a cached one
+/// reused another's. Answers refused after being billed were paid for too. Costs are read from
+/// `results_costs`, as in [`LIST_JOBS`].
+pub(crate) const SPENT: &str = "SELECT (SELECT COALESCE(SUM(r.cost_usd), 0) FROM pieces p
+             JOIN results r INDEXED BY results_costs ON r.cache_key = p.cache_key
+             WHERE p.job_id = ?1 AND p.status = 'done')
+          + (SELECT COALESCE(SUM(cost_usd), 0) FROM charges WHERE job_id = ?1)";
+
 pub(crate) fn list_jobs(store: &SqliteStore) -> Result<Vec<JobSummary>, StoreError> {
     let conn = store.conn();
-    let mut stmt = conn
-        .prepare(
-            "SELECT j.data, j.status, j.updated_at,
-                    COUNT(p.idx),
-                    COALESCE(SUM(p.status IN ('done', 'cached')), 0),
-                    COALESCE(SUM(p.status = 'failed'), 0),
-                    COALESCE(SUM(p.status IN ('done', 'cached') AND r.truncated), 0),
-                    SUM(CASE WHEN p.status = 'done' THEN r.cost_usd END),
-                    (SELECT SUM(c.cost_usd) FROM charges c WHERE c.job_id = j.id),
-                    (SELECT json_extract(w.data, '$.workflow_name')
-                     FROM run_steps s JOIN runs w ON w.id = s.run_id
-                     WHERE s.job_id = j.id LIMIT 1)
-             FROM jobs j LEFT JOIN pieces p ON p.job_id = j.id
-             LEFT JOIN results r ON r.cache_key = p.cache_key
-             GROUP BY j.id
-             ORDER BY j.created_at DESC",
-        )
-        .map_err(db)?;
+    let mut stmt = conn.prepare(LIST_JOBS).map_err(db)?;
     let rows = stmt
         .query_map([], |row| {
             Ok((
@@ -270,17 +279,25 @@ fn upsert_piece_on(conn: &Connection, piece: &PieceState) -> Result<(), StoreErr
     Ok(())
 }
 
-pub(crate) fn pieces(store: &SqliteStore, job: JobId) -> Result<Vec<PieceState>, StoreError> {
+/// A job's pieces, or with `scope` one source's under one set-up, in their order.
+pub(crate) fn pieces(
+    store: &SqliteStore,
+    job: JobId,
+    scope: Option<(SetupId, SourceId)>,
+) -> Result<Vec<PieceState>, StoreError> {
+    let (sql, args) = scoped(
+        "SELECT setup_id, source_id, idx, piece, status, cache_key, error, attempts,
+                updated_at
+         FROM pieces WHERE job_id = ?1",
+        "ORDER BY source_id, setup_id, idx",
+        "ORDER BY idx",
+        job,
+        scope,
+    );
     let conn = store.conn();
-    let mut stmt = conn
-        .prepare(
-            "SELECT setup_id, source_id, idx, piece, status, cache_key, error, attempts,
-                    updated_at
-             FROM pieces WHERE job_id = ?1 ORDER BY source_id, setup_id, idx",
-        )
-        .map_err(db)?;
+    let mut stmt = conn.prepare(&sql).map_err(db)?;
     let rows = stmt
-        .query_map([job.to_string()], |row| {
+        .query_map(params_from_iter(&args), |row| {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, String>(1)?,
@@ -361,19 +378,42 @@ pub(crate) fn cached_result(
 }
 
 pub(crate) fn spent(store: &SqliteStore, job: JobId) -> Result<f64, StoreError> {
-    // A piece done by this job paid for its result; a cached one reused another's. Answers
-    // refused after being billed were paid for too.
     store
         .conn()
-        .query_row(
-            "SELECT (SELECT COALESCE(SUM(r.cost_usd), 0) FROM pieces p
-                     JOIN results r ON r.cache_key = p.cache_key
-                     WHERE p.job_id = ?1 AND p.status = 'done')
-                  + (SELECT COALESCE(SUM(cost_usd), 0) FROM charges WHERE job_id = ?1)",
-            [job.to_string()],
-            |row| row.get(0),
-        )
+        .query_row(SPENT, [job.to_string()], |row| row.get(0))
         .map_err(db)
+}
+
+pub(crate) fn prune_results(store: &SqliteStore) -> Result<PrunedResults, StoreError> {
+    let conn = store.conn();
+    let size = |conn: &Connection| -> Result<u64, StoreError> {
+        let pages: i64 = conn
+            .query_row("PRAGMA page_count", [], |row| row.get(0))
+            .map_err(db)?;
+        let page_size: i64 = conn
+            .query_row("PRAGMA page_size", [], |row| row.get(0))
+            .map_err(db)?;
+        Ok(u64::try_from(pages.saturating_mul(page_size)).unwrap_or_default())
+    };
+    let before = size(&conn)?;
+    // One statement, so no piece takes up a key between the keys being read and the results
+    // being deleted. `pieces.cache_key` is the only column that names a result; a piece
+    // without a key yet keeps nothing, and its NULL must not empty the list (`NOT IN` a list
+    // holding NULL matches nothing).
+    let results = conn
+        .execute(
+            "DELETE FROM results WHERE cache_key NOT IN
+                (SELECT cache_key FROM pieces WHERE cache_key IS NOT NULL)",
+            [],
+        )
+        .map_err(db)?;
+    // Gives the space back to the system, as clearing the search index does.
+    conn.execute_batch("VACUUM;").map_err(db)?;
+    let after = size(&conn)?;
+    Ok(PrunedResults {
+        results: results as u64,
+        bytes: before.saturating_sub(after),
+    })
 }
 
 pub(crate) fn put_result(store: &SqliteStore, result: &StoredResult) -> Result<(), StoreError> {

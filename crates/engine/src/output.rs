@@ -21,14 +21,10 @@ impl Engine {
         source_id: SourceId,
         setups: &[&Setup],
     ) -> Result<bool, EngineError> {
-        let states = self.store.pieces(job.id)?;
         let mut failed = false;
         for setup in setups {
-            let mine: Vec<&PieceState> = states
-                .iter()
-                .filter(|p| p.setup_id == setup.id && p.source_id == source_id)
-                .collect();
-            let settled = |p: &&PieceState| {
+            let mine = self.store.source_pieces(job.id, setup.id, source_id)?;
+            let settled = |p: &PieceState| {
                 p.status.is_finished()
                     || (p.status == PieceStatus::Failed && job.task != Task::Contents)
             };
