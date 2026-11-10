@@ -7,7 +7,12 @@ export type Catalog = { schema_version: number,
 /**
  * `YYYY-MM-DD`; the newer of two catalogues wins.
  */
-updated: string, notes: string, providers: Array<ProviderInfo>, models: Array<ModelInfo>, 
+updated: string, notes: string, 
+/**
+ * The version of Kalamu last released (`1.5.0`), from which a copy installed from the
+ * releases page learns that a newer one is out ([`Catalog::newer_release`]).
+ */
+latest_version?: string, providers: Array<ProviderInfo>, models: Array<ModelInfo>, 
 /**
  * Languages offered for models that accept any language, with English names for prompts.
  * The interface shows names in its own language.

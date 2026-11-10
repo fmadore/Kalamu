@@ -13,7 +13,9 @@ use thiserror::Error;
 use ts_rs::TS;
 
 mod cost;
+mod release;
 pub use cost::CostEstimate;
+pub use release::{Release, Version};
 
 /// The catalogue shipped with this build.
 pub const BUNDLED: &str = include_str!("../catalog.json");
@@ -33,6 +35,11 @@ pub struct Catalog {
     pub updated: String,
     #[serde(default)]
     pub notes: String,
+    /// The version of Kalamu last released (`1.5.0`), from which a copy installed from the
+    /// releases page learns that a newer one is out ([`Catalog::newer_release`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub latest_version: Option<String>,
     pub providers: Vec<ProviderInfo>,
     pub models: Vec<ModelInfo>,
     /// Languages offered for models that accept any language, with English names for prompts.
@@ -363,6 +370,7 @@ impl Catalog {
             schema_version: SCHEMA_VERSION,
             updated: String::new(),
             notes: String::new(),
+            latest_version: None,
             providers: Vec::new(),
             models: Vec::new(),
             languages: Vec::new(),
