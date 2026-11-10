@@ -24,8 +24,9 @@ FFmpeg and ffprobe run as separate programs, started by the `media` crate
 - **Evening out the volume** (`dynaudnorm`), on request, for quiet or uneven speakers. It is
   recorded in `provenance.json` and in the cache key.
 
-Development builds also find an FFmpeg on `PATH`; release builds look only next to the app's
-executable, or in `KALAMU_FFMPEG_DIR`. Without FFmpeg, recordings in a format the provider
+Release builds look only next to the app's executable, so no environment variable chooses the
+program run on a researcher's recordings. Development builds also look in `KALAMU_FFMPEG_DIR`
+first and on `PATH` last. Without FFmpeg, recordings in a format the provider
 takes are sent whole, and video is unavailable.
 
 ## The bundled build

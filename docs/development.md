@@ -28,8 +28,10 @@ coding rules are in [AGENTS.md](../AGENTS.md).
   WHISPER_SMOKE_VAD=<ggml-silero-v5.1.2.bin> cargo test -p kalamu-offline whisper::tests::smoke
   -- --ignored --exact --nocapture`, as CI does; `whisper::tests::vulkan_smoke` does the same
   through the helper named by `WHISPER_VULKAN_HELPER`.
-- For recordings and videos during development, an FFmpeg on `PATH` (releases bundle their own
-  LGPL build; see [ffmpeg.md](ffmpeg.md)).
+- For recordings and videos during development, an FFmpeg on `PATH` or in the folder
+  `KALAMU_FFMPEG_DIR` names (releases bundle their own LGPL build and look nowhere else; see
+  [ffmpeg.md](ffmpeg.md)); llama.cpp's programs likewise on `PATH` or in `KALAMU_LLAMA_DIR`
+  ([llama.md](llama.md)).
 
 ## Run
 

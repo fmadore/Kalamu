@@ -20,8 +20,9 @@ uses the graphics processor through Metal.
 
 ## Where the app looks
 
-Next to the executable (Tauri's sidecar layout), or in `KALAMU_LLAMA_DIR`; development builds
-also accept one on `PATH`. Without it, Settings › Offline models says this copy has no engine for OCR
+Next to the executable (Tauri's sidecar layout), and in release builds nowhere else, so no
+environment variable chooses the program run on a researcher's pages. Development builds also
+look in `KALAMU_LLAMA_DIR` first and on `PATH` last. Without it, Settings › Offline models says this copy has no engine for OCR
 models, and New job's readiness check refuses them; everything else works. Each build's text
 program is looked for beside its multimodal program, with the same suffix; without it the
 language models are refused the same way.

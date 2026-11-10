@@ -144,8 +144,8 @@ pub struct Device {
 }
 
 impl Llama {
-    /// The processor build: looks in `KALAMU_LLAMA_DIR`, then in `dirs` (the app's own folder),
-    /// then, in development builds only, on `PATH`.
+    /// The processor build: looks in `dirs` (the app's own folder); in development builds only,
+    /// first in `KALAMU_LLAMA_DIR` and last on `PATH`.
     pub fn locate(dirs: &[PathBuf]) -> Option<Self> {
         Self::locate_program(PROGRAM, dirs)
     }
@@ -193,6 +193,7 @@ impl Llama {
 
     fn locate_program(name: &str, dirs: &[PathBuf]) -> Option<Self> {
         let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_LLAMA_DIR")
+            .filter(|_| cfg!(debug_assertions))
             .map(PathBuf::from)
             .into_iter()
             .chain(dirs.iter().cloned())

@@ -53,10 +53,12 @@ fn exe(name: &str) -> String {
 }
 
 impl Ffmpeg {
-    /// Looks in `KALAMU_FFMPEG_DIR`, then in `dirs` (the app's own folder), then, in
-    /// development builds only, on `PATH`.
+    /// Looks in `dirs` (the app's own folder); in development builds only, first in
+    /// `KALAMU_FFMPEG_DIR` and last on `PATH`. A release build runs only the FFmpeg it ships
+    /// with on the researcher's files, whatever the environment says.
     pub fn locate(dirs: &[PathBuf]) -> Option<Self> {
         let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_FFMPEG_DIR")
+            .filter(|_| cfg!(debug_assertions))
             .map(PathBuf::from)
             .into_iter()
             .chain(dirs.iter().cloned())
