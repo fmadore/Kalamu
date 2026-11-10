@@ -1,8 +1,9 @@
 <script lang="ts">
-	// The recording next to its transcript: the piece under review plays here, the line being
-	// spoken is highlighted, and clicking a line jumps to it. Times are shown on the recording's
-	// clock; the player plays only this piece, from the recording itself when it can. A search
-	// that goes to a line plays it too, once the piece is loaded.
+	// The recording, over the turns of its transcript: the piece under review plays here, the
+	// turn being spoken is highlighted (and told to the review, which marks it in the text), and
+	// clicking a turn plays from it. Times are shown on the recording's clock; the player plays
+	// only this piece, from the recording itself when it can. A search that goes to a line plays
+	// it too, once the piece is loaded.
 	import { untrack } from 'svelte';
 	import Icon from './Icon.svelte';
 	import TranscriptLines from './TranscriptLines.svelte';
@@ -20,7 +21,8 @@
 		index,
 		offsetMs,
 		segments,
-		seek = null
+		seek = null,
+		onheard
 	}: {
 		jobId: string;
 		sourceId: string;
@@ -29,6 +31,9 @@
 		segments: Segment[];
 		/** Play from this time into the piece; a new `id` plays again. */
 		seek?: { ms: number; id: number } | null;
+		/** Told the line being heard (its place in `segments`, -1 for none) and whether the
+		 * recording plays, each time either changes. */
+		onheard?: (line: number, playing: boolean) => void;
 	} = $props();
 
 	const m = messages();
@@ -133,6 +138,8 @@
 	}
 
 	const playing = (s: Segment) => sounding(s, now);
+	const heard = $derived(segments.findIndex(playing));
+	$effect(() => onheard?.(heard, !paused));
 	/** The piece's length in seconds; 0 until the player has read it. */
 	const length = $derived(Math.max(0, end - start));
 	const done = $derived(length > 0 ? (100 * now) / length : 0);
