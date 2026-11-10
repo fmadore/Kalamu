@@ -142,8 +142,8 @@ runs:
         ARCH: ${{ inputs.arch }}
         PROFILE: ${{ inputs.profile }}
       run: |
-        $debug = if ($env:PROFILE -eq 'debug') { @('--debug') } else { @() }
-        node node_modules/@tauri-apps/cli/tauri.js build --verbose --target $env:KALAMU_TARGET --no-bundle @debug --config "src-tauri/tauri.ffmpeg.windows-$env:ARCH.conf.json"
+        $debug = @(if ($env:PROFILE -eq 'debug') { '--debug' })
+        node node_modules/@tauri-apps/cli/tauri.js build --target $env:KALAMU_TARGET --no-bundle @debug --config "src-tauri/tauri.ffmpeg.windows-$env:ARCH.conf.json"
         if ($LASTEXITCODE -ne 0) { throw "tauri build failed with exit code $LASTEXITCODE" }
 
     - name: Make the MSIX package
@@ -152,7 +152,7 @@ runs:
         ARCH: ${{ inputs.arch }}
         PROFILE: ${{ inputs.profile }}
       run: |
-        $debug = if ($env:PROFILE -eq 'debug') { @('--debug') } else { @() }
+        $debug = @(if ($env:PROFILE -eq 'debug') { '--debug' })
         node scripts/bundle-msix.mjs $env:ARCH --prebuilt @debug
         if ($LASTEXITCODE -ne 0) { throw "bundle-msix.mjs failed with exit code $LASTEXITCODE" }
 
@@ -162,7 +162,7 @@ runs:
         ARCH: ${{ inputs.arch }}
         PROFILE: ${{ inputs.profile }}
       run: |
-        $debug = if ($env:PROFILE -eq 'debug') { @('--debug') } else { @() }
+        $debug = @(if ($env:PROFILE -eq 'debug') { '--debug' })
         node node_modules/@tauri-apps/cli/tauri.js bundle --target $env:KALAMU_TARGET --bundles nsis --no-sign @debug --config "src-tauri/tauri.ffmpeg.windows-$env:ARCH.conf.json"
         if ($LASTEXITCODE -ne 0) { throw "tauri bundle failed with exit code $LASTEXITCODE" }
 
