@@ -133,7 +133,11 @@ impl JobStore for SqliteStore {
     }
 
     fn delete_job(&self, id: JobId) -> Result<(), StoreError> {
-        jobs::delete_job(self, id)
+        jobs::delete_jobs(self, &[id])
+    }
+
+    fn delete_jobs(&self, ids: &[JobId]) -> Result<(), StoreError> {
+        jobs::delete_jobs(self, ids)
     }
 
     fn mark_running_as_interrupted(&self) -> Result<Vec<JobId>, StoreError> {
@@ -195,7 +199,11 @@ impl JobStore for SqliteStore {
     }
 
     fn put_correction(&self, correction: &Correction) -> Result<(), StoreError> {
-        results::put_correction(self, correction)
+        results::put_corrections(self, std::slice::from_ref(correction))
+    }
+
+    fn put_corrections(&self, corrections: &[Correction]) -> Result<(), StoreError> {
+        results::put_corrections(self, corrections)
     }
 
     fn corrections(&self, job: JobId) -> Result<Vec<Correction>, StoreError> {

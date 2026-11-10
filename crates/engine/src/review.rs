@@ -3,8 +3,11 @@
 
 use std::collections::BTreeMap;
 
+use kalamu_core::list_items::{holds_item, rename_item};
 use kalamu_core::speakers::{labels, rename_segments, rename_text};
-use kalamu_core::{Correction, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task};
+use kalamu_core::{
+    Correction, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task, Timestamp,
+};
 use kalamu_export::timed_lines;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -119,5 +122,84 @@ impl Engine {
         }
         out.sort_by_key(|p| (p.index, p.setup_id));
         Ok(out)
+    }
+
+    /// Renames a name an analysis listed in field `key`, or takes it out when `to` is none or
+    /// blank, in the answers of every set-up that found it in one piece, each kept reviewed or
+    /// not as it was. All the set-ups change or none does. Gives back their corrections as they
+    /// stood before (a set-up never corrected as an empty one), for
+    /// [`Engine::save_corrections`] to put back; none when no set-up held the name.
+    pub fn rename_listed(
+        &self,
+        job_id: JobId,
+        source_id: SourceId,
+        index: u32,
+        key: &str,
+        from: &str,
+        to: Option<&str>,
+    ) -> Result<Vec<Correction>, EngineError> {
+        let job = self.store.job(job_id)?;
+        let corrections = self.store.corrections(job_id)?;
+        let now = Timestamp::now();
+        let (mut before, mut after) = (Vec::new(), Vec::new());
+        for setup in &job.setups {
+            let pieces = self.store.source_pieces(job_id, setup.id, source_id)?;
+            let Some(piece) = pieces.iter().find(|p| p.index == index) else {
+                continue;
+            };
+            if piece.status == PieceStatus::Failed {
+                continue;
+            }
+            let Some(answers) = self.store.answers(piece, &corrections)? else {
+                continue;
+            };
+            if !holds_item(&answers, key, from) {
+                continue;
+            }
+            let was = Correction::of(&corrections, piece)
+                .cloned()
+                .unwrap_or(Correction {
+                    job_id,
+                    setup_id: setup.id,
+                    source_id,
+                    index,
+                    text: None,
+                    fields: None,
+                    reviewed: false,
+                    updated_at: now,
+                });
+            after.push(Correction {
+                fields: Some(rename_item(&answers, key, from, to)),
+                updated_at: now,
+                ..was.clone()
+            });
+            before.push(was);
+        }
+        if !after.is_empty() {
+            self.store.put_corrections(&after)?;
+            self.write_later(job_id);
+        }
+        Ok(before)
+    }
+
+    /// Saves several corrections or review marks at once, all or none, as
+    /// [`Engine::save_correction`] saves one: what [`Engine::rename_listed`] changed, put back.
+    pub fn save_corrections(&self, corrections: Vec<Correction>) -> Result<(), EngineError> {
+        let now = Timestamp::now();
+        let corrections: Vec<Correction> = corrections
+            .into_iter()
+            .map(|c| Correction {
+                updated_at: now,
+                ..c
+            })
+            .collect();
+        self.store.put_corrections(&corrections)?;
+        let mut jobs: Vec<JobId> = corrections.iter().map(|c| c.job_id).collect();
+        jobs.sort_unstable();
+        jobs.dedup();
+        for job in jobs {
+            self.write_later(job);
+        }
+        Ok(())
     }
 }

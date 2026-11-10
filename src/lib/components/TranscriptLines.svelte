@@ -1,6 +1,8 @@
 <script lang="ts">
-	// A transcript's timed lines: when each begins, who speaks, what was said. Clicking a line
-	// plays the recording or video beside it from that moment.
+	// A transcript's turns, under the player: when each begins, who speaks, and its opening words
+	// on one line to know it by. The words themselves are read and corrected in the text beside
+	// it, shown once; this is where to listen from. Clicking a turn plays the recording or video
+	// from that moment.
 	import type { Segment } from '#lib/bindings/Segment.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { clock } from '#lib/pieces.js';
@@ -78,14 +80,14 @@
 		align-content: start;
 		gap: 2px;
 	}
-	/* One turn: its time, who speaks, what was said. */
+	/* One turn: its time, who speaks, how it opens. */
 	.line {
 		display: grid;
 		grid-template-columns: 4.75rem auto minmax(0, 1fr);
 		gap: var(--space-3);
 		align-items: baseline;
 		width: 100%;
-		padding: var(--space-2) var(--space-3);
+		padding: var(--space-1) var(--space-3);
 		border: 0;
 		border-radius: var(--radius-control);
 		background: none;
@@ -127,10 +129,16 @@
 		background: var(--speaker-2-wash);
 		color: var(--speaker-2-text);
 	}
+	/* The turn's opening words, to know it by: one line in the interface's face, the words read
+	   in the text beside it. */
 	.said {
-		font-family: var(--font-text);
-		font-size: var(--type-lg);
-		line-height: 1.55;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		font-size: var(--type-sm);
+		color: var(--text-secondary);
+	}
+	.now .said {
 		color: var(--text-body);
 	}
 	.line:not(:has(.speaker)) {

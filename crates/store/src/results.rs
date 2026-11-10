@@ -74,12 +74,22 @@ pub(crate) fn charges(
     Ok(charges)
 }
 
-pub(crate) fn put_correction(
+/// Stores corrections, and marks each one's source's files out of date, in one transaction:
+/// all of them, or none if one fails.
+pub(crate) fn put_corrections(
     store: &SqliteStore,
-    correction: &Correction,
+    corrections: &[Correction],
 ) -> Result<(), StoreError> {
     let mut conn = store.conn();
     let tx = conn.transaction().map_err(db)?;
+    for correction in corrections {
+        put_correction_on(&tx, correction)?;
+    }
+    tx.commit().map_err(db)
+}
+
+/// Stores one correction on `conn`, a transaction's, and marks its files out of date.
+fn put_correction_on(tx: &rusqlite::Connection, correction: &Correction) -> Result<(), StoreError> {
     tx.execute(
         "INSERT INTO corrections
             (job_id, setup_id, source_id, idx, text, reviewed, updated_at, fields)
@@ -100,12 +110,11 @@ pub(crate) fn put_correction(
     )
     .map_err(db)?;
     outdated::mark(
-        &tx,
+        tx,
         correction.job_id,
         correction.setup_id,
         correction.source_id,
-    )?;
-    tx.commit().map_err(db)
+    )
 }
 
 /// A job's corrections, or with `scope` one source's under one set-up.

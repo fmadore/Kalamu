@@ -5,6 +5,8 @@
 	// readings over the text, any of which can be taken as a correction. Another set-up's whole
 	// text can open in a third pane beside it. A search finds words across every page of the text
 	// shown, corrections included, and goes to each match (a recording plays from its line).
+	// A recording's transcript is shown once, as this text: the player's pane holds the turns to
+	// listen from, and the passage being heard is marked here and followed while it plays.
 	import { onMount, tick, untrack } from 'svelte';
 	import AudioPane from './AudioPane.svelte';
 	import CompareBar from './CompareBar.svelte';
@@ -26,6 +28,7 @@
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { caretTop, growWithText, level, placeInText, reveal } from '#lib/caret.js';
 	import { Comparison, shownText, witnessesOf, witnessName } from '#lib/compare.svelte.js';
+	import { clearHeard, markHeard, placeLines } from '#lib/heard.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { shifted } from '#lib/platform.js';
 	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
@@ -100,6 +103,8 @@
 	const online = $derived(source?.kind === 'youtube');
 	const recording = $derived(source?.kind === 'audio' || source?.kind === 'video' || online);
 	const timed = $derived(current.find((v) => v.segments.length > 0) ?? current[0]);
+	/** The turn the player is at (from 0 in `timed`'s lines, -1 for none) and whether it plays. */
+	let heard = $state({ line: -1, playing: false });
 
 	function viewFor(setup: Setup | undefined): PieceView | undefined {
 		return setup ? current.find((v) => v.setup_id === setup.id) : undefined;
@@ -131,6 +136,20 @@
 		}
 	});
 
+	/** Where each of the player's turns stands in the text shown, corrections included. */
+	const said = $derived((timed?.segments ?? []).map((s) => s.text));
+	const placed = $derived(recording ? placeLines(base, said) : []);
+	/** When the researcher last scrolled the text; following the player waits a moment after. */
+	let scrolledAt = 0;
+	$effect(() => {
+		const pane = textPane;
+		if (!pane) return;
+		const scrolled = () => (scrolledAt = Date.now());
+		const events = ['wheel', 'touchmove', 'keydown'] as const;
+		for (const name of events) pane.addEventListener(name, scrolled, { passive: true });
+		return () => events.forEach((name) => pane.removeEventListener(name, scrolled));
+	});
+
 	const entries: Entry[] = $derived(
 		apparatus(
 			base,
@@ -138,6 +157,26 @@
 		)
 	);
 	const reading = $derived(lines(base, entries));
+
+	// The passage the player is at is marked in the text, drawn again with the text, and kept in
+	// view while it plays, unless the researcher has just scrolled the text away.
+	$effect(() => {
+		const span = editing ? null : (placed[heard.line] ?? null);
+		const playing = heard.playing;
+		const pane = textPane;
+		void [reading, showDiff, selected];
+		if (!pane || !recording) return;
+		let gone = false;
+		void tick().then(() => {
+			if (gone) return;
+			const at = markHeard(pane, '.t', span);
+			if (at && playing && Date.now() - scrolledAt > 4_000) reveal(pane, at);
+		});
+		return () => {
+			gone = true;
+			clearHeard();
+		};
+	});
 
 	// Once a reading used is in the text and its differences are worked out again, the focus
 	// goes back to that place, or to the next one if it no longer differs.
@@ -432,6 +471,7 @@
 			title={source.title ?? null}
 			segments={timed?.segments ?? []}
 			seek={finder.seek}
+			onheard={(line, playing) => (heard = { line, playing })}
 		/>
 	{:else}
 		<AudioPane
@@ -441,6 +481,7 @@
 			offsetMs={timed?.piece.kind === 'segment' ? Number(timed.piece.start_ms) : 0}
 			segments={timed?.segments ?? []}
 			seek={finder.seek}
+			onheard={(line, playing) => (heard = { line, playing })}
 		/>
 	{/if}
 {/snippet}

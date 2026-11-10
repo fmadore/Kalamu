@@ -179,6 +179,55 @@ fn document(
     })
 }
 
+/// Inserts or updates a document on `conn`, which may be a transaction's.
+fn put_document_on(conn: &Connection, document: &Document) -> Result<(), StoreError> {
+    conn.execute(
+        "INSERT INTO documents
+            (id, project_id, title, source, created_at, tags, source_description)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+         ON CONFLICT(id) DO UPDATE SET title = ?3, source = ?4, tags = ?6,
+            source_description = ?7",
+        params![
+            document.id.to_string(),
+            document.project_id.to_string(),
+            document.title,
+            to_json(&document.source)?,
+            document.created_at.0,
+            to_json(&document.tags)?,
+            to_json(&document.source_description)?,
+        ],
+    )
+    .map_err(db)?;
+    Ok(())
+}
+
+/// Puts a document in a collection on `conn`, which may be a transaction's; once only.
+fn add_member_on(conn: &Connection, cid: CollectionId, did: DocumentId) -> Result<(), StoreError> {
+    conn.execute(
+        "INSERT OR IGNORE INTO collection_documents (collection_id, document_id)
+         VALUES (?1, ?2)",
+        params![cid.to_string(), did.to_string()],
+    )
+    .map_err(db)?;
+    Ok(())
+}
+
+/// Ties a job's source to a document on `conn`, which may be a transaction's; once only.
+fn put_link_on(conn: &Connection, link: &DocumentLink) -> Result<(), StoreError> {
+    conn.execute(
+        "INSERT OR IGNORE INTO document_links (document_id, job_id, source_id, linked_at)
+         VALUES (?1, ?2, ?3, ?4)",
+        params![
+            link.document_id.to_string(),
+            link.job_id.to_string(),
+            link.source_id.to_string(),
+            link.linked_at.0,
+        ],
+    )
+    .map_err(db)?;
+    Ok(())
+}
+
 impl ProjectStore for SqliteStore {
     fn put_project(&self, project: &Project) -> Result<(), StoreError> {
         self.conn()
@@ -288,25 +337,7 @@ impl ProjectStore for SqliteStore {
     }
 
     fn put_document(&self, document: &Document) -> Result<(), StoreError> {
-        self.conn()
-            .execute(
-                "INSERT INTO documents
-                    (id, project_id, title, source, created_at, tags, source_description)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
-                 ON CONFLICT(id) DO UPDATE SET title = ?3, source = ?4, tags = ?6,
-                    source_description = ?7",
-                params![
-                    document.id.to_string(),
-                    document.project_id.to_string(),
-                    document.title,
-                    to_json(&document.source)?,
-                    document.created_at.0,
-                    to_json(&document.tags)?,
-                    to_json(&document.source_description)?,
-                ],
-            )
-            .map_err(db)?;
-        Ok(())
+        put_document_on(&self.conn(), document)
     }
 
     fn documents(&self, pid: ProjectId) -> Result<Vec<Document>, StoreError> {
@@ -345,14 +376,7 @@ impl ProjectStore for SqliteStore {
     }
 
     fn add_member(&self, cid: CollectionId, did: DocumentId) -> Result<(), StoreError> {
-        self.conn()
-            .execute(
-                "INSERT OR IGNORE INTO collection_documents (collection_id, document_id)
-                 VALUES (?1, ?2)",
-                params![cid.to_string(), did.to_string()],
-            )
-            .map_err(db)?;
-        Ok(())
+        add_member_on(&self.conn(), cid, did)
     }
 
     fn remove_member(&self, cid: CollectionId, did: DocumentId) -> Result<(), StoreError> {
@@ -386,19 +410,27 @@ impl ProjectStore for SqliteStore {
     }
 
     fn put_link(&self, link: &DocumentLink) -> Result<(), StoreError> {
-        self.conn()
-            .execute(
-                "INSERT OR IGNORE INTO document_links (document_id, job_id, source_id, linked_at)
-                 VALUES (?1, ?2, ?3, ?4)",
-                params![
-                    link.document_id.to_string(),
-                    link.job_id.to_string(),
-                    link.source_id.to_string(),
-                    link.linked_at.0,
-                ],
-            )
-            .map_err(db)?;
-        Ok(())
+        put_link_on(&self.conn(), link)
+    }
+
+    fn attach_documents(
+        &self,
+        documents: &[Document],
+        members: &[(CollectionId, DocumentId)],
+        links: &[DocumentLink],
+    ) -> Result<(), StoreError> {
+        let mut conn = self.conn();
+        let tx = conn.transaction().map_err(db)?;
+        for document in documents {
+            put_document_on(&tx, document)?;
+        }
+        for &(cid, did) in members {
+            add_member_on(&tx, cid, did)?;
+        }
+        for link in links {
+            put_link_on(&tx, link)?;
+        }
+        tx.commit().map_err(db)
     }
 
     fn remove_link(&self, did: DocumentId, job: JobId, source: SourceId) -> Result<(), StoreError> {

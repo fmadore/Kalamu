@@ -2,6 +2,7 @@
 // a scan shown on the lightbox; and where the boundaries between the panes sit.
 
 import type { ComparisonReport } from './bindings/ComparisonReport.js';
+import type { Correction } from './bindings/Correction.js';
 import type { FieldAnswer } from './bindings/FieldAnswer.js';
 import type { Job } from './bindings/Job.js';
 import type { PagePreview } from './bindings/PagePreview.js';
@@ -98,6 +99,40 @@ export class Review {
 			});
 			await this.refresh();
 			toast(messages().review.saved);
+			return true;
+		} catch (e) {
+			this.error = describeError(e, messages());
+			return false;
+		}
+	}
+
+	/** Renames a listed name in every set-up that found it, or takes it out when `to` is null,
+	 * all or none, and reads the pieces again. The set-ups' corrections as they stood, to put
+	 * back with `putBack`; null when it failed, the error shown. */
+	async renameListed(
+		index: number,
+		key: string,
+		from: string,
+		to: string | null
+	): Promise<Correction[] | null> {
+		this.error = null;
+		try {
+			const before = await api.renameListed(this.jobId, this.sourceId, index, key, from, to);
+			await this.refresh();
+			return before;
+		} catch (e) {
+			this.error = describeError(e, messages());
+			return null;
+		}
+	}
+
+	/** Puts corrections back as they stood, all or none, and reads the pieces again. False when
+	 * it failed, the error shown. */
+	async putBack(corrections: Correction[]): Promise<boolean> {
+		this.error = null;
+		try {
+			await api.saveCorrections(corrections);
+			await this.refresh();
 			return true;
 		} catch (e) {
 			this.error = describeError(e, messages());

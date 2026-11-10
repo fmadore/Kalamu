@@ -366,6 +366,22 @@ pub fn link_job(
     Ok(documents)
 }
 
+/// Ties several jobs to their documents as [`link_job`] ties one, all or none: the jobs chosen
+/// on the Jobs page, added to a project.
+#[tauri::command]
+pub fn link_jobs(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    jobs: Vec<JobId>,
+    collection: Option<CollectionId>,
+) -> CmdResult<Vec<DocumentId>> {
+    let documents = state.projects.link_jobs(project, &jobs, collection)?;
+    for job in jobs {
+        refresh_job(&state, job);
+    }
+    Ok(documents)
+}
+
 #[tauri::command]
 pub fn detach_job(
     state: State<'_, AppState>,

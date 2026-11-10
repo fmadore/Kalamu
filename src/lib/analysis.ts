@@ -46,35 +46,6 @@ export function collate(key: string, witnesses: Witness[]): Reading[] {
 	return out;
 }
 
-/** Whether an answer to a list field holds an item, matched as the collation matches. */
-export function holdsItem(answers: FieldAnswer[], key: string, item: string): boolean {
-	return valuesOf(answers.find((a) => a.key === key)?.value).some((v) => same(v, item));
-}
-
-/**
- * The answers with one item of a list field renamed, or removed when `to` is blank, matched as
- * the collation matches (ignoring case). An item renamed to one the list already holds is kept
- * once. Other fields, and each field's reason, are untouched.
- */
-export function editItem(
-	answers: FieldAnswer[],
-	key: string,
-	from: string,
-	to: string | null
-): FieldAnswer[] {
-	const next = to?.trim() ?? '';
-	return answers.map((a) => {
-		if (a.key !== key || !Array.isArray(a.value)) return a;
-		if (!a.value.every((v) => typeof v === 'string')) return a;
-		const out: string[] = [];
-		for (const item of a.value as string[]) {
-			const value = same(item, from) ? next : item;
-			if (value && !out.some((o) => same(o, value))) out.push(value);
-		}
-		return { ...a, value: out };
-	});
-}
-
 /** Whether any witness's answer to a field, or its reason, holds the words searched for. */
 export function holdsWords(key: string, witnesses: Witness[], query: string): boolean {
 	return witnesses.some((w) => {

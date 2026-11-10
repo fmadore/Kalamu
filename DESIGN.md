@@ -307,8 +307,9 @@ A warm graphite palette of paper greys and one ink, with two marker colours whos
 - **Stage** (#1f1e1c; dark-stage #100f0e): the lightbox under a scan. **Stage Raised** (#2b2a27) for the zoom pill, **Stage Line** (#383632) for its rules, **On Stage** (#e8e6e1) and **On Stage Muted** (#aeaaa2) for text on it.
 - **Lines**: line (#e5e1d9) for borders and dividers, line-soft (#eeebe5) between rows of one table, line-strong (#d6d1c7) for dashed slots, sigla and drawings, line-hover (#a8a297) for a border under the pointer (splitters, cards, page tiles).
 - **Control line** (#8a8478; dark-control-line #7a756c): the edge of what is operated, where the edge is what tells it from the page: fields, selects, text areas, the language pickers' boxes, the default button, the radio drawn in the task strip. At least 3:1 against every surface a control sits on (light: 3.7 on white, 3.6 on surface, 3.4 on surface quiet, 3.2 on chrome; dark: 3.3 on surface raised, 3.7 on surface, 3.6 on surface quiet, 3.9 on chrome), as WCAG asks of a control's boundary, and still a pencil line, lighter than any text. **Control line hover** (#5d5950; #a09a8f in dark) under the pointer and on a view that is on (pressed); focus takes bright text. Dividers, tables and hairlines keep the quiet lines.
-- **Wash** (5% ink): hover ground for ghost buttons, list rows and transcript lines.
+- **Wash** (5% ink): hover ground for ghost buttons, list rows and a transcript's turns.
 - **Found** (16% ink; 20% white in dark): words a search found, as a wash over the text; the match gone to is filled in graphite ink with on-ink text, the way a focus is drawn. Neither yellow, which marks the models' disagreements, nor blue, which is the researcher's hand.
+- **Heard** (7% ink; 8% white in dark): the passage of a recording the player is at, a fainter wash than found over the whole turn.
 - **Text**: bright (#171612) for headings and values, body (#1e1d19), secondary (#4d4a42), muted (#615d54) for hints and metadata (a field's kind in an analysis, an item a menu cannot do now), faint (#938e84, 3.2:1) only for decoration that repeats a value given elsewhere (line numbers, the slash in a breadcrumb), never for words to read.
 - **Status**: ok-green (#1f7a4d), warn-amber (#d97f00), danger-red (#b42318), each with a darker text tone and a pale wash. Used as coloured text on a wash, a 6px dot, or a thin bar; never as a filled button.
 - **Speakers**: speaker 1 teal (#0f8a7e; #5cc8bc in dark) and speaker 2 amber (#d97f00), each as a tag of dark text on a pale wash, told apart by lightness as well as hue. Neither is blue, which belongs to the researcher's hand.
@@ -337,7 +338,7 @@ A warm graphite palette of paper greys and one ink, with two marker colours whos
 - **Label** (Instrument Sans 500, 0.9375rem): buttons, field labels, list items, inputs.
 - **Caption** (Instrument Sans 500, 0.875rem): chips, metadata, hints, sidebar group heads, the page strip.
 - **Reading** (Source Serif 4 400, 1.1875rem, 1.7): the text being checked and the correction editor, as wide as their pane. Rises to 1.3125rem in windows 1680px and wider.
-- **Reading small** (Source Serif 4 400, 1.125rem, 1.55 to 1.65): readings in the readings card, transcript lines, analysis answers, text previews in a job.
+- **Reading small** (Source Serif 4 400, 1.125rem, 1.55 to 1.65): readings in the readings card, analysis answers, text previews in a job.
 - **Machine** (IBM Plex Mono 400, 0.92em of its context): file names, model and set-up labels, times, costs, counts, page numbers, output paths, the prompt editor.
 - **Machine mark** (IBM Plex Mono, 0.75rem): keyboard shortcuts, step numbers (01, 02), marginal line numbers, sigla, sidebar counts. The smallest size in the system.
 - **Figure** (IBM Plex Mono 500, 1.875rem, -0.02em): the cost estimate in New job’s summary; 1.5rem when the summary becomes a footer.
@@ -392,7 +393,7 @@ At no width does a view scroll sideways: grids, tables, rows and diagrams fit th
 Flat by default, with tonal layering doing most of the work: chrome grey behind, white for the work, a quiet grey for side panels. Shadows appear on three kinds of thing: a selected item lifted onto white, an overlay that floats over content, and a scan lying on the lightbox.
 
 ### Shadow Vocabulary
-- **Raised** (`box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(23, 22, 18, 0.06)`; dark: the ring alone): the current sidebar job or tool, the active prompt, the audio player, the transcript line now playing.
+- **Raised** (`box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(23, 22, 18, 0.06)`; dark: the ring alone): the current sidebar job or tool, the active prompt, the audio player, the transcript's turn now playing.
 - **Pop** (`box-shadow: 0 0 0 1px var(--line), 0 12px 32px -8px rgba(23, 22, 18, 0.18)`): the language list in New job.
 - **Flyout** (`box-shadow: 0 18px 48px -16px rgba(23, 22, 18, 0.35)`): the readings over the text, the close dialog and the toast.
 - **Page** (`box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.4)`): a scan on the lightbox, with a 2px corner.
@@ -451,7 +452,9 @@ White, at least 3.5rem, hairline below; a title in title type, an optional muted
 - **Page strip:** for a scan, each page as a 2.5rem-wide thumbnail (3:4, top of the page, 2px corners, a hairline ring) over its mono number; thumbnails are drawn by the app at their own size (`piece_thumbnail`, a few kilobytes) as they scroll into view, two at a time, and kept for the session; the page in the source pane is drawn with pdf.js, one worker shared by every page opened. For a recording, 2rem tiles with a mono number. Reviewed pages show a check and ok-green number; the current page is ringed in bright text and lifted onto the raised surface. A tally beside it with a 4px green bar.
 
 ### Audio Player
-A white strip with 10px corners and the raised shadow: a round 2.5rem ink play button, mono times, a 4px track filled in ink with an ink thumb ringed in white. Below, transcript lines: a mono timestamp, a speaker tag, and what was said in the reading serif. Hover takes the wash; the line now playing is lifted onto white.
+A white strip with 10px corners and the raised shadow: a round 2.5rem ink play button, mono times, a 4px track filled in ink with an ink thumb ringed in white. Below, the transcript's **turns**, where to listen from: a mono timestamp, a speaker tag, and the turn's opening words on one line in the interface face (small, secondary, cut with an ellipsis), so a turn can be known without the words being shown a second time. A click or Enter plays from the turn. Hover takes the wash; the turn now playing is lifted onto white and kept in view while it plays.
+
+**A recording's transcript is shown once.** Its words stand in the text pane only, as the text read, corrected and exported, with the speakers' names and the differences marked like any text's; the player's pane never repeats them. The passage the player is at is found in that text (by its words, past a speaker's label or a written time, so a correction that keeps most of a turn's words keeps it found) and laid over it as a faint wash (`heard`: 7% ink; 8% white in dark), under a search's marks; while the recording plays the text scrolls to keep it a third of the way down, waiting four seconds after the reader scrolls, as the turns do. While the text is being corrected nothing is marked. A turn the correction took out is simply not marked.
 
 ### New job steps and summary
 Numbered steps with mono numbers in the margin; joined choice strips for task and output; a model set-up as a white bordered card, side-by-side columns (min 17rem) when comparing, with a dashed column that adds another model. The summary aside ends in the large Start button with Ctrl Enter.

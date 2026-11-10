@@ -1,6 +1,7 @@
 // The sample jobs the development mock answers with: a newspaper read by two set-ups, a
 // recording, a YouTube video and an analysis.
 
+import type { Correction } from '../bindings/Correction.js';
 import type { Job } from '../bindings/Job.js';
 import type { JobSummary } from '../bindings/JobSummary.js';
 import type { PieceView } from '../bindings/PieceView.js';
@@ -426,3 +427,27 @@ export const analysisPieces: PieceView[] = analysisSetups.map((s, i) => ({
 	source_text: null,
 	truncated: false
 }));
+
+/** What `rename_listed` gives back: the corrections, as they stood, of the analysis set-ups
+ * whose answer to the field holds the name. The preview keeps no correction, as with
+ * `save_correction`. */
+export function listedBefore(a: Record<string, unknown>): Correction[] {
+	const same = (v: unknown) =>
+		typeof v === 'string' && v.trim().toLowerCase() === String(a.from).trim().toLowerCase();
+	return analysisPieces
+		.filter((v) => v.source_id === a.sourceId && v.index === a.index && v.status !== 'failed')
+		.filter((v) => {
+			const value = (v.corrected_fields ?? v.ai_fields).find((f) => f.key === a.key)?.value;
+			return Array.isArray(value) ? value.some(same) : same(value);
+		})
+		.map((v) => ({
+			job_id: analysisJob.id,
+			setup_id: v.setup_id,
+			source_id: v.source_id,
+			index: v.index,
+			text: v.corrected_text,
+			fields: v.corrected_fields ?? undefined,
+			reviewed: v.reviewed,
+			updated_at: 0
+		}));
+}

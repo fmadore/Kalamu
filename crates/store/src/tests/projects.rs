@@ -96,6 +96,45 @@ fn a_project_keeps_its_documents_collections_links_and_choices() -> Result<(), S
 }
 
 #[test]
+fn what_attaching_makes_is_written_whole_or_not_at_all() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    let p = project("Mission archives");
+    store.put_project(&p)?;
+    let letters = collection(&p, "Letters");
+    store.put_collection(&letters)?;
+    let doc = document(&p, &job);
+    let link = |document_id, job_id| DocumentLink {
+        document_id,
+        job_id,
+        source_id: job.sources[0].id,
+        linked_at: Timestamp(4),
+    };
+
+    // The last link names a job that does not exist: the document and its place go too.
+    let refused = store.attach_documents(
+        std::slice::from_ref(&doc),
+        &[(letters.id, doc.id)],
+        &[link(doc.id, job.id), link(doc.id, JobId::new())],
+    );
+    assert!(refused.is_err());
+    assert!(store.documents(p.id)?.is_empty());
+    assert!(store.members(p.id)?.is_empty());
+    assert!(store.links(p.id)?.is_empty());
+
+    store.attach_documents(
+        std::slice::from_ref(&doc),
+        &[(letters.id, doc.id)],
+        &[link(doc.id, job.id)],
+    )?;
+    assert_eq!(store.documents(p.id)?, vec![doc.clone()]);
+    assert_eq!(store.members(p.id)?, vec![(letters.id, doc.id)]);
+    assert_eq!(store.links(p.id)?.len(), 1);
+    Ok(())
+}
+
+#[test]
 fn deleting_organisation_never_deletes_jobs_and_deleting_a_job_unlinks_it() -> Result<(), StoreError>
 {
     let store = SqliteStore::in_memory()?;

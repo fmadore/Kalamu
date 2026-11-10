@@ -1,5 +1,6 @@
 <script lang="ts">
-	// A YouTube video next to its transcript, on the dark stage like a scan. Nothing is asked of
+	// A YouTube video over the turns of its transcript, on the dark stage like a scan; the turn
+	// being spoken is told to the review, which marks it in the text. Nothing is asked of
 	// YouTube until the researcher plays: a poster stands in, and the first play (or a click on a
 	// line, or a match of a search) loads YouTube's privacy-enhanced player there. The player is driven by messages, so
 	// no YouTube script runs in the app. A video its owner keeps off other sites, or an offline
@@ -17,13 +18,17 @@
 		url,
 		title,
 		segments,
-		seek = null
+		seek = null,
+		onheard
 	}: {
 		url: string;
 		title: string | null;
 		segments: Segment[];
 		/** Play from this time into the video; a new `id` plays again. */
 		seek?: { ms: number; id: number } | null;
+		/** Told the line being heard (its place in `segments`, -1 for none) and whether the
+		 * video plays, each time either changes. */
+		onheard?: (line: number, playing: boolean) => void;
 	} = $props();
 
 	const m = messages();
@@ -100,6 +105,8 @@
 	});
 
 	const current = (s: Segment) => sounding(s, now);
+	const said = $derived(segments.findIndex(current));
+	$effect(() => onheard?.(said, playing));
 </script>
 
 <div class="box">

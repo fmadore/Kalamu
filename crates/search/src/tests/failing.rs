@@ -39,6 +39,10 @@ impl JobStore for Failing {
         self.0.delete_job(id)
     }
 
+    fn delete_jobs(&self, ids: &[JobId]) -> Result<(), StoreError> {
+        self.0.delete_jobs(ids)
+    }
+
     fn mark_running_as_interrupted(&self) -> Result<Vec<JobId>, StoreError> {
         self.0.mark_running_as_interrupted()
     }
@@ -99,6 +103,10 @@ impl JobStore for Failing {
 
     fn put_correction(&self, correction: &Correction) -> Result<(), StoreError> {
         self.0.put_correction(correction)
+    }
+
+    fn put_corrections(&self, corrections: &[Correction]) -> Result<(), StoreError> {
+        self.0.put_corrections(corrections)
     }
 
     fn corrections(&self, job: JobId) -> Result<Vec<Correction>, StoreError> {

@@ -395,6 +395,54 @@ fn corrections_are_kept_per_piece() -> Result<(), StoreError> {
 }
 
 #[test]
+fn corrections_saved_together_are_all_kept_or_none() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    let correction = |job_id: JobId, index: u32| Correction {
+        job_id,
+        setup_id: job.setups[0].id,
+        source_id: job.sources[0].id,
+        index,
+        text: Some(format!("Page {}", index + 1)),
+        fields: None,
+        reviewed: true,
+        updated_at: Timestamp::now(),
+    };
+    let both = [correction(job.id, 0), correction(job.id, 1)];
+    store.put_corrections(&both)?;
+    assert_eq!(store.corrections(job.id)?, both.to_vec());
+    assert_eq!(store.outdated_files(Some(job.id))?.len(), 1);
+
+    // The second belongs to no job: the first, written before it, is not kept either.
+    let mut changed = correction(job.id, 0);
+    changed.text = Some("Changed".into());
+    assert!(
+        store
+            .put_corrections(&[changed, correction(JobId::new(), 0)])
+            .is_err()
+    );
+    assert_eq!(store.corrections(job.id)?, both.to_vec());
+    Ok(())
+}
+
+#[test]
+fn jobs_deleted_together_go_with_everything_they_hold() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let (first, second, kept) = (job(), job(), job());
+    for job in [&first, &second, &kept] {
+        store.create_job(job)?;
+        store.upsert_piece(&piece(job, 0, PieceStatus::Done))?;
+    }
+    store.delete_jobs(&[first.id, second.id])?;
+    let left: Vec<JobId> = store.list_jobs()?.iter().map(|j| j.id).collect();
+    assert_eq!(left, vec![kept.id]);
+    assert!(store.pieces(first.id)?.is_empty());
+    assert_eq!(store.pieces(kept.id)?.len(), 1);
+    Ok(())
+}
+
+#[test]
 fn speaker_names_replace_each_other() -> Result<(), StoreError> {
     let store = SqliteStore::in_memory()?;
     let job = job();

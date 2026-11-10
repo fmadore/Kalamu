@@ -29,6 +29,7 @@ import {
 	audioPieces,
 	audioSetup,
 	job,
+	listedBefore,
 	nameSpeakers,
 	pieces,
 	recording,
@@ -587,6 +588,9 @@ export function installMock(): void {
 			case 'delete_job':
 				deletedJobs.add(String(a.id));
 				return null;
+			case 'delete_jobs':
+				for (const id of a.ids as string[]) deletedJobs.add(id);
+				return null;
 			case 'get_job':
 				if (a.id === videoJob.id) return videoJob;
 				if (a.id === contentsJob.id) return contentsJob;
@@ -802,7 +806,10 @@ export function installMock(): void {
 					'C:\\Archives\\Letters\\lettre-gouverneur.jpg'
 				];
 			case 'save_correction':
+			case 'save_corrections':
 				return null;
+			case 'rename_listed':
+				return listedBefore(a);
 			case 'job_text_outputs':
 			case 'export_source':
 				return [];

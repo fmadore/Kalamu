@@ -19,6 +19,7 @@ fn count(pieces: &[kalamu_core::PieceState], status: PieceStatus) -> usize {
     pieces.iter().filter(|p| p.status == status).count()
 }
 
+mod answers;
 mod attention;
 mod batch;
 mod contents;

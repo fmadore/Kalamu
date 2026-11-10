@@ -385,6 +385,25 @@ pub async fn delete_job(state: State<'_, AppState>, id: JobId) -> CmdResult<()> 
     Ok(())
 }
 
+/// Deletes the jobs chosen on the Jobs page, all or none; their batches are cancelled and their
+/// passages leave the search index as [`delete_job`] does for one.
+#[tauri::command]
+pub async fn delete_jobs(state: State<'_, AppState>, ids: Vec<JobId>) -> CmdResult<()> {
+    for &id in &ids {
+        state.engine.cancel(id);
+        if let Err(e) = state.engine.cancel_batches(id).await {
+            tracing::warn!(job = %id, error = %e, "batches not cancelled");
+        }
+    }
+    state.engine.delete_jobs(&ids)?;
+    for id in ids {
+        if let Err(e) = state.search.forget_job(id) {
+            tracing::warn!(job = %id, error = %e, "passages not removed from the search index");
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub fn list_jobs(state: State<'_, AppState>) -> CmdResult<Vec<JobSummary>> {
     Ok(state.engine.jobs()?)

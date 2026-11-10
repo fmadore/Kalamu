@@ -355,8 +355,10 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
 - **Compare**: another set-up's whole text in a third pane beside the text, its differences
   highlighted the same way; pointing at one marks it in both texts, and choosing one in either
   brings it level in the other.
-- **Audio too**: a player next to the transcript; the line being spoken is highlighted, and
-  clicking a line jumps to it. A piece plays at once, from the recording itself (MP3, M4A,
+- **Audio too**: a player next to the transcript, which is shown once, as the text read and
+  corrected; under the player its turns (time, speaker, opening words) say where to listen
+  from, and clicking one plays from it. The passage being heard is marked in the text and kept
+  in view while it plays. A piece plays at once, from the recording itself (MP3, M4A,
   AAC, WAV, Ogg, Opus, FLAC, WebM, MP4); other formats are converted once and the copy kept. When a model labelled speakers, the researcher can give each
   label a name ("Speaker 2" → "Imam Ouédraogo"); names replace the labels in the review and in
   every file, and the model's own output keeps its labels.
