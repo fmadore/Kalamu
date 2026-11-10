@@ -1970,9 +1970,11 @@ export const en = {
 		'offline.in_use': 'A running job uses this model; pause it first.',
 		'offline.cancelled': 'Download cancelled.',
 		'offline.download':
-			'The model could not be downloaded. Check your internet connection and try again.',
+			'The model could not be downloaded. Check your internet connection and try again: the download continues where it stopped.',
 		'offline.integrity': 'The downloaded model was damaged and has been discarded. Try again.',
 		'offline.io': 'The model file could not be read or written.',
+		'offline.no_space':
+			'There is not enough free space on the drive that holds the models. Free some space and try again.',
 		'output.write': 'The result files could not be written.',
 		'keys.keychain': 'The system’s keychain refused the request.',
 		'keys.format': 'This key contains a character no API key has, so it was not saved.',

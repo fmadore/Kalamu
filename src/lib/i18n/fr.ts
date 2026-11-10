@@ -2059,9 +2059,11 @@ export const fr: Messages = {
 		'offline.in_use': 'Un traitement en cours utilise ce modèle ; mettez-le d’abord en pause.',
 		'offline.cancelled': 'Téléchargement annulé.',
 		'offline.download':
-			'Le modèle n’a pas pu être téléchargé. Vérifiez votre connexion internet et réessayez.',
+			'Le modèle n’a pas pu être téléchargé. Vérifiez votre connexion internet et réessayez : le téléchargement reprendra là où il s’est arrêté.',
 		'offline.integrity': 'Le modèle téléchargé était endommagé et a été supprimé. Réessayez.',
 		'offline.io': 'Le fichier du modèle n’a pas pu être lu ou écrit.',
+		'offline.no_space':
+			'Il n’y a pas assez d’espace libre sur le disque qui contient les modèles. Libérez de la place et réessayez.',
 		'output.write': 'Les fichiers de résultats n’ont pas pu être écrits.',
 		'keys.keychain': 'Le trousseau du système a refusé la demande.',
 		'keys.format':

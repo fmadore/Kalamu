@@ -1,8 +1,12 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 7 November 2026, which applies from the first version to offer the offline
-language models: small models from Google downloaded from Hugging Face at the user's request and
-run on the computer, for analyses, tables of contents and corrections. The policy of 6 November
+**Effective date:** 10 November 2026, which applies from the first version to write the
+offline models' working files (a page image, a text being read) in a folder of the app's own,
+emptied at each start, and to keep an unfinished model download so that it continues where it
+stopped. The policy of 7 November 2026 did not say so; it applies from the first version to
+offer the offline language models: small models from Google downloaded from Hugging Face at the
+user's request and run on the computer, for analyses, tables of contents and corrections. The
+policy of 6 November
 2026, which applies to version 1.5.0, did not list them; it added the offline OCR models. The
 second policy of 4 November 2026, which applies to version
 1.4.1, did not list them; it added the question asked before files are first sent to each cloud
@@ -135,7 +139,10 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
 - **Export profiles** the user saves (`export-profiles`): the columns of a descriptions export,
   their headings and any fixed text typed for every row. A shared profile holds its columns,
   and its fixed texts only when the user asks; never a project's descriptions.
-- **Whisper models**, downloaded only when the user asks (`whisper-models`).
+- **Whisper models**, downloaded only when the user asks (`whisper-models`). A download that
+  stops (the connection lost, cancelled, the app closed) keeps what arrived beside the model,
+  under its name ending in `.part`, so the next download continues it; removing the model
+  removes it too. This holds for every model and language file below.
 - **Tesseract language data**, one file per language, downloaded only when the user asks
   (`tesseract-data`).
 - **Offline OCR models**, each with its image encoder, downloaded only when the user asks, and
@@ -143,8 +150,11 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   graphics processor, named as its driver names it, and on a Snapdragon the graphics
   processor's compiled programs, so later pages need not compile them again (`ocr-models`).
 - **Offline language models**, each with its image and audio encoder, downloaded only when the
-  user asks (`language-models`). While one runs, the text it reads, its instructions and the
-  fields asked for are written to a temporary folder, removed once it has answered.
+  user asks (`language-models`).
+- **The offline models' working files** (`offline-scratch`): while an offline OCR or language
+  model runs, the page image it reads, or the text, its instructions and the fields asked for,
+  are written there, and removed once it has answered. What a crash or a forced quit left is
+  removed when the app next starts.
 - **Recording pieces converted for listening** (`listening`): the review's player plays most
   recordings straight from the original file; for a format it cannot play, the piece is
   converted on the computer and the copy kept, so it plays at once next time. The folder is
@@ -154,8 +164,9 @@ turned down. The texts sent for proposals are kept with the frozen text below. A
   without asking. A folder out of reach at launch (a disk not connected) is kept for the next.
   The other builds keep nothing of the kind.
 - **Logs**, for troubleshooting: what the app did and the errors it met, with job identifiers
-  and the paths of the files and folders concerned. They contain no API keys and no document
-  text.
+  and the paths of the files and folders concerned, and, when an offline engine fails, the last
+  lines of its diagnostics, only those that read as a program's own messages. They contain no
+  API keys and no document text.
 
 Results are also written as files where the user chooses: next to the original files or in a
 chosen folder, each with a `provenance.json` that records the model, prompt and settings used

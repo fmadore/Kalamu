@@ -8,6 +8,7 @@ license.workspace = true
 
 [dependencies]
 async-trait.workspace = true
+fs4.workspace = true
 hex.workspace = true
 image.workspace = true
 reqwest.workspace = true

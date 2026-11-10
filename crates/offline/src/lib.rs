@@ -52,6 +52,19 @@ pub enum OfflineError {
     Integrity,
     #[error("Could not read or write the model file: {0}")]
     Io(String),
+    /// Too little free space on the models' drive for what is still to download.
+    #[error(
+        "Not enough free space on the drive that holds the models: {} needed, {} available",
+        gigabytes(*needed),
+        gigabytes(*available)
+    )]
+    NoSpace { needed: u64, available: u64 },
+}
+
+/// Bytes as gigabytes with one decimal, as the systems' own file managers count them (10^9).
+fn gigabytes(bytes: u64) -> String {
+    let tenths = bytes / 100_000_000;
+    format!("{}.{} GB", tenths / 10, tenths % 10)
 }
 
 impl OfflineError {
@@ -66,6 +79,7 @@ impl OfflineError {
             Self::Stalled | Self::Download(_) => "offline.download",
             Self::Integrity => "offline.integrity",
             Self::Io(_) => "offline.io",
+            Self::NoSpace { .. } => "offline.no_space",
         }
     }
 }
@@ -76,5 +90,22 @@ impl From<OfflineError> for ProviderError {
             OfflineError::NotInstalled(model) => Self::NotInstalled(model),
             other => Self::Other(other.to_string()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn free_space_is_said_in_gigabytes() {
+        let error = OfflineError::NoSpace {
+            needed: 6_408_000_000,
+            available: 950_000_000,
+        };
+        assert_eq!(
+            error.to_string(),
+            "Not enough free space on the drive that holds the models: 6.4 GB needed, 0.9 GB available"
+        );
     }
 }
