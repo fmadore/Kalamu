@@ -1562,6 +1562,11 @@ export const en = {
 		modelInstalled: 'Downloaded',
 		modelMissing: 'Not downloaded',
 		modelDownloading: (pct: number) => `Downloading… ${pct}%`,
+		modelStopped: (pct: number) => `Stopped at ${pct}%`,
+		modelKept: (size: string) =>
+			`The ${size} already downloaded are kept: the download will continue from there.`,
+		continueDownload: 'Continue download',
+		discardDownload: 'Discard',
 		modelInUse: 'In use by a job',
 		download: 'Download',
 		cancelDownload: 'Cancel',

@@ -768,6 +768,58 @@ mod tests {
             fs::read(dir.path().join(BASE.partial())).unwrap(),
             &PAYLOAD[..15]
         );
+        // Stopped, the list still shows what was kept, for the next download to continue.
+        let status = manager
+            .list()
+            .into_iter()
+            .find(|m| m.id == BASE.id)
+            .unwrap();
+        assert!(!status.downloading && !status.installed);
+        assert_eq!(status.downloaded_bytes, 15);
+    }
+
+    /// Not downloading, the list shows the part kept, and a paired encoder already whole; a part
+    /// longer than its file counts for nothing, as the next download drops it.
+    #[test]
+    fn a_stopped_download_shows_what_the_next_one_continues_from() {
+        let dir = tempfile::tempdir().unwrap();
+        let manager = ModelManager::new(dir.path().to_owned(), &WHISPER);
+        let shown = |manager: &ModelManager| {
+            manager
+                .list()
+                .into_iter()
+                .find(|m| m.id == BASE.id)
+                .unwrap()
+                .downloaded_bytes
+        };
+        assert_eq!(shown(&manager), 0);
+        fs::write(dir.path().join(BASE.partial()), &PAYLOAD[..10]).unwrap();
+        assert_eq!(shown(&manager), 10);
+        // Lengthened without writing it.
+        fs::File::options()
+            .write(true)
+            .open(dir.path().join(BASE.partial()))
+            .unwrap()
+            .set_len(BASE.bytes + 1)
+            .unwrap();
+        assert_eq!(shown(&manager), 0);
+
+        // A vision model whose encoder arrived whole before the download stopped.
+        let model = &crate::vision::VISION_MODELS[0];
+        let encoder = model.pair.unwrap();
+        let manager = ModelManager::new(dir.path().to_owned(), &crate::vision::VISION);
+        fs::File::create(dir.path().join(encoder.file))
+            .unwrap()
+            .set_len(encoder.bytes)
+            .unwrap();
+        fs::write(dir.path().join(model.partial()), &PAYLOAD[..10]).unwrap();
+        let status = manager
+            .list()
+            .into_iter()
+            .find(|m| m.id == model.id)
+            .unwrap();
+        assert_eq!(status.downloaded_bytes, encoder.bytes + 10);
+        assert_eq!(status.bytes, encoder.bytes + model.bytes);
     }
 
     #[tokio::test]

@@ -3,7 +3,12 @@
 /**
  * What the Settings view shows for each model.
  */
-export type OfflineModel = { id: string, bytes: number, installed: boolean, downloading: boolean, downloaded_bytes: number, 
+export type OfflineModel = { id: string, bytes: number, installed: boolean, downloading: boolean, 
+/**
+ * While downloading, the bytes received so far; otherwise, for a model not installed,
+ * what an interrupted download kept, from which the next one continues.
+ */
+downloaded_bytes: number, 
 /**
  * Loaded by a running job, so it cannot be removed now.
  */
