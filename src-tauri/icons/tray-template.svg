@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 18 18">
+  <!-- The macOS menu-bar icon (tray-template.png, 36 px for the menu bar's 18 points): the two
+       sheets of small.svg as a template image, black on clear, which macOS tints. The
+       handwritten sheet behind is drawn in outline, the transcribed one in front solid with its
+       lines and the highlighted one cut out, and a clear gap between the two. -->
+  <defs>
+    <mask id="gap" maskUnits="userSpaceOnUse" x="0" y="0" width="18" height="18">
+      <rect width="18" height="18" fill="#fff"/>
+      <rect x="7.2" y="3.4" width="8" height="11.2" rx="1" transform="rotate(6 11.2 9)"
+            fill="#000" stroke="#000" stroke-width="2.6"/>
+    </mask>
+    <mask id="lines" maskUnits="userSpaceOnUse" x="0" y="0" width="18" height="18">
+      <g transform="rotate(6 11.2 9)">
+        <rect x="7.2" y="3.4" width="8" height="11.2" rx="1" fill="#fff"/>
+        <rect x="8.6" y="5.6" width="5.2" height="1.1" rx="0.55" fill="#000"/>
+        <rect x="8.4" y="8.1" width="5.8" height="2" rx="0.6" fill="#000"/>
+        <rect x="8.6" y="11.5" width="4" height="1.1" rx="0.55" fill="#000"/>
+      </g>
+    </mask>
+  </defs>
+  <g mask="url(#gap)">
+    <g transform="rotate(-9 6.2 9)">
+      <rect x="2.4" y="3.6" width="7.6" height="10.8" rx="1" fill="none" stroke="#000" stroke-width="1.3"/>
+      <rect x="4" y="6.4" width="3.4" height="1.1" rx="0.55" fill="#000"/>
+      <rect x="4" y="9" width="4.2" height="1.1" rx="0.55" fill="#000"/>
+    </g>
+  </g>
+  <rect width="18" height="18" fill="#000" mask="url(#lines)"/>
+</svg>

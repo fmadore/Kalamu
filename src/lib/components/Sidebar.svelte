@@ -182,7 +182,7 @@
 			class:current={app.view.name === 'settings'}
 			aria-current={app.view.name === 'settings' ? 'page' : undefined}
 			aria-label={collapsed ? m.nav.settings : undefined}
-			title={collapsed ? m.nav.settings : undefined}
+			title="{m.nav.settings} ({shortcut(m.shell.settingsShortcut)})"
 			onclick={() => go({ name: 'settings' })}
 			><Icon name="settings" size={16} />{#if !collapsed}{m.nav.settings}{/if}</button
 		>

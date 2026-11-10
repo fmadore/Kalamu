@@ -27,6 +27,7 @@ export const en = {
 		collapse: 'Hide the job list',
 		expand: 'Show the job list',
 		sidebarShortcut: 'B',
+		settingsShortcut: ',',
 		/** The menu a right click (Control-click on a Mac) opens on a job in the list. */
 		jobMenu: (name: string) => `Actions for “${name}”`,
 		addToProject: 'Add to a project',
