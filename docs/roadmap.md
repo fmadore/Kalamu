@@ -379,9 +379,10 @@ In this order. Work that keeps what has shipped sound comes before new features.
      replacing a file of the researcher's; FFmpeg and llama.cpp chosen by an environment
      variable in development builds only; a month of logs; *Clear unused results* in Settings
      ([#143](https://github.com/fmadore/Kalamu/issues/143)); and the installer's and disk
-     image's copies told of a newer release from the model list. Left: the tray, the taskbar
-     and the notifications computed by the engine rather than from the interface's job list;
-     all of it tried on a real Windows PC and Mac.
+     image's copies told of a newer release from the model list. The
+     [fourth round](decisions/2026-11-10-fourth-round.md) moved the tray, the taskbar and the
+     notification to the shell, which follows the engine's own events. Left: all of it tried on
+     a real Windows PC and Mac, with the window hidden for a whole job.
    - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)). Done
      ([decision](decisions/2026-11-10-offline-robustness.md)), built and tested on Linux: llama.cpp's
      runs on `media`'s stoppable runner, ended after ten minutes of silence, its version bounded;
@@ -390,13 +391,25 @@ In this order. Work that keeps what has shipped sound comes before new features.
      space first; the Whisper helper's device listing no longer stalled by its own diagnostics;
      a failed engine's last diagnostic lines in the log; page images and texts in a folder of
      the app's own, emptied at start-up. Still to check on a PC with a graphics processor and on
-     a Mac, where CI is the first to build the shell's one-line part. Left: 24-bit AIFF at the
-     next FFmpeg build; children that end with the app (a Job Object on Windows).
-   - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)): signing
-     secrets kept from build code, the installers packaged on a pull request, interaction
-     tests, checksums and an attestation.
-   - **Large jobs, the rest** ([#143](https://github.com/fmadore/Kalamu/issues/143)): the job
-     page's counts, tables and thumbnails in the interface; batches held in memory. A
+     a Mac, where CI is the first to build the shell's one-line part. The
+     [fourth round](decisions/2026-11-10-fourth-round.md) added: the programs the app starts
+     ended with it (a Job Object on Windows, however the app ends; on a Mac when it quits by its
+     own ways), a stopped download's progress in Settings, and FFmpeg's build list with the
+     decoders of 24- and 32-bit AIFF. Left: that FFmpeg build run, published and pinned; on a
+     Mac, the programs after a crash or a Force Quit.
+   - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)). Written
+     ([decision](decisions/2026-11-10-fourth-round.md)), not yet run: signing secrets only in
+     the job that notarises, which compiles nothing; one Windows build per architecture for
+     both packages; a packaging dry run on pull requests that touch the packaging; checksums and
+     an attestation with every release; every action pinned by commit; interaction tests in
+     Chromium and WebKit, and the screens opened in French. Left: the dry run, then a
+     validation tag, before the next release.
+   - **Large jobs, the rest** ([#143](https://github.com/fmadore/Kalamu/issues/143)). Done
+     ([decision](decisions/2026-11-10-fourth-round.md)): the long tables drawn 200 rows at a
+     time, a running job's page reading counts instead of every piece, thumbnails drawn small
+     by the app and one pdf.js worker; economy batches of at most 48 MiB, their body written
+     once (213 MiB above the input before, 46 after), an upload given time for its size. Left:
+     the counts made by a query, and a way to reach a large job's failed files. A
      correction no longer writes its source's files on the spot: they are marked out of date
      with it and written a few seconds after the last save, before they are listed or
      exported, at quit and at the next launch (a save in a 300-page PDF went from 84 ms to
@@ -410,12 +423,16 @@ In this order. Work that keeps what has shipped sound comes before new features.
      `offline`.
    - **Keyboard and interface, the rest**
      ([#146](https://github.com/fmadore/Kalamu/issues/146),
-     [#149](https://github.com/fmadore/Kalamu/issues/149)): all of it tried in WebKit and with a
-     screen reader; a recording's transcript shown once and following the player; the marks of
-     a project's Results column reached from the keyboard; several jobs linked or deleted, and a
-     name renamed across set-ups, in one command.
-   - CSV cells that begin with `=`, `+`, `-` or `@` (a telephone number, a list item) are read
-     as formulas by a spreadsheet: an option of the CSV writer, decided table by table.
+     [#149](https://github.com/fmadore/Kalamu/issues/149)). Done
+     ([decision](decisions/2026-11-10-fourth-round.md)): a recording's transcript shown once,
+     the passage heard marked in it and kept in view; the marks of a project's Results column
+     reached from the keyboard; several jobs linked or deleted, and a name renamed across
+     set-ups, each in one command and one transaction. Left: all of it tried in WebKit on a
+     Mac and with a screen reader.
+   - CSV cells that begin with `=`, `+`, `-` or `@` (a telephone number, a list item) were read
+     as formulas by a spreadsheet. Done ([decision](decisions/2026-11-10-fourth-round.md)): they
+     are written with an apostrophe before them, numbers excepted, in every table but an export
+     profile's, which another tool imports. Still to look at in a real spreadsheet.
 2. **What the [8 November checkpoint](decisions/2026-11-08-checkpoint.md) left.** The
    checkpoint after 1.5.0 folded the duplication the 4 November one listed (one UTC date in
    core, every CSV through the `export` crate, one batch file reader, the engine's and the
