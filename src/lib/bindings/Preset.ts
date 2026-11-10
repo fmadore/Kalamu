@@ -28,4 +28,12 @@ schema?: AnalysisSchema,
  * For a table of contents, the instructions of the second step, which combines the pages'
  * readings into entries. May use `{languages}`.
  */
-merge_instructions?: string, };
+merge_instructions?: string, 
+/**
+ * For a text extraction, its pages carry much text (a newspaper's columns), so fewer of
+ * them go together in one call when several are asked for. Read it with
+ * [`Preset::is_dense`]: `None`, in a file written before the hint existed, means a
+ * default's own (the newspaper's is dense) and no for the researcher's own prompts, as
+ * those files were read then. The library always holds it settled.
+ */
+dense?: boolean, };

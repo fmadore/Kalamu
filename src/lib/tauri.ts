@@ -65,6 +65,8 @@ import type { ProjectView } from './bindings/ProjectView.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import type { SourceMatch } from './bindings/SourceMatch.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
+import type { PrunedResults } from './bindings/PrunedResults.js';
+import type { Release } from './bindings/Release.js';
 import type { Settings } from './bindings/Settings.js';
 import type { TagRenamed } from './bindings/TagRenamed.js';
 import type { Task } from './bindings/Task.js';
@@ -117,6 +119,10 @@ export const api = {
 	getCatalog: () => invoke<Catalog>('get_catalog'),
 	refreshCatalog: () => invoke<Catalog>('refresh_catalog'),
 	taskRules: () => invoke<TaskRules[]>('task_rules'),
+	/** A release newer than this copy, named by the model list; never in a store's copy. */
+	newerRelease: () => invoke<Release | null>('newer_release'),
+	/** Deletes the answers no job refers to any more; refused while a job runs. */
+	clearUnusedResults: () => invoke<PrunedResults>('clear_unused_results'),
 	keyStatus: () => invoke<KeyStatus[]>('key_status'),
 	setApiKey: (provider: string, key: string) => invoke<void>('set_api_key', { provider, key }),
 	clearApiKey: (provider: string) => invoke<void>('clear_api_key', { provider }),
@@ -131,14 +137,15 @@ export const api = {
 	listPipelines: () => invoke<Pipeline[]>('list_pipelines'),
 	savePipeline: (pipeline: Pipeline) => invoke<Pipeline>('save_pipeline', { pipeline }),
 	deletePipeline: (id: string) => invoke<void>('delete_pipeline', { id }),
-	exportPipeline: (id: string, path: string) => invoke<void>('export_pipeline', { id, path }),
+	/** Writes the JSON and its Markdown, and gives where the Markdown went. */
+	exportPipeline: (id: string, path: string) => invoke<string>('export_pipeline', { id, path }),
 	importPipeline: (path: string) => invoke<Pipeline>('import_pipeline', { path }),
 	listWorkflows: () => invoke<Workflow[]>('list_workflows'),
 	saveWorkflow: (workflow: Workflow) => invoke<Workflow>('save_workflow', { workflow }),
 	duplicateWorkflow: (id: string, name: string) =>
 		invoke<Workflow>('duplicate_workflow', { id, name }),
 	deleteWorkflow: (id: string) => invoke<void>('delete_workflow', { id }),
-	exportWorkflow: (id: string, path: string) => invoke<void>('export_workflow', { id, path }),
+	exportWorkflow: (id: string, path: string) => invoke<string>('export_workflow', { id, path }),
 	importWorkflow: (path: string) => invoke<Workflow>('import_workflow', { path }),
 	startRun: (start: StartRun) => invoke<RunView>('start_run', { start }),
 	listRuns: () => invoke<RunView[]>('list_runs'),
@@ -342,7 +349,9 @@ export const on = {
 	closeRequested: (handler: () => void) => listen<null>('close-requested', handler),
 	searchProgress: (handler: (event: SearchProgress) => void) => listen('search-progress', handler),
 	/** The offline status changed outside a command: read it again. */
-	offlineChanged: (handler: () => void) => listen<null>('offline-changed', handler)
+	offlineChanged: (handler: () => void) => listen<null>('offline-changed', handler),
+	/** The model list was refreshed at start-up: read it again, with the release it names. */
+	catalogChanged: (handler: () => void) => listen<null>('catalog-changed', handler)
 };
 
 const PAGES = ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'];

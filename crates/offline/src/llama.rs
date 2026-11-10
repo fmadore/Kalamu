@@ -16,12 +16,14 @@
 //! `llama-mtmd-cli-vulkan`, uses the graphics processor through Vulkan; it is run only when it
 //! lists a device (`device.rs`), since it needs the Vulkan loader graphics drivers install.
 
-use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
+use std::process::Command;
 use std::time::{Duration, Instant};
 
 use kalamu_core::{ProviderError, StopSignal};
+use kalamu_media::program::{self, Ended, Limits, Unfinished};
+
+use crate::diagnostics;
 
 /// The program's name, without the system's executable suffix.
 pub const PROGRAM: &str = "llama-mtmd-cli";
@@ -39,8 +41,27 @@ pub const OPENCL_PROGRAM: &str = "llama-mtmd-cli-opencl";
 /// keep the OCR models from running on the processor.
 const LIST_DEVICES_LIMIT: Duration = Duration::from_secs(30);
 
-/// How often a running page checks whether the job was paused or cancelled.
-const POLL: Duration = Duration::from_millis(100);
+/// How long the program may take to say which build it is: it loads no model to do so.
+const VERSION_LIMIT: Duration = Duration::from_secs(30);
+
+/// How long a run may write nothing on either pipe before it is taken to be hung and ended, as
+/// a graphics driver that stopped answering leaves it: holding the host's turn, every later
+/// page and request would wait behind it until the researcher cancelled.
+///
+/// A silence, not a bound on the whole run, because the program is rarely silent for long
+/// while it works: it writes a line for each step of loading (with a dot for each percent of
+/// the model read), and the answer token by token on its standard output. What it does in
+/// silence is a single step of computation: encoding the page image (49 s and 73 s on an Intel
+/// laptop's processor, 42 to 44 s on a Snapdragon's, more on CI's small runners, which take two
+/// to three minutes for a whole page), reading one batch of a text's tokens (up to 2,048 for
+/// the language models, a few minutes on a weak processor) or the image's (one batch of up to
+/// 4,096), and, with the model's file mapped rather than read, the first touch of five
+/// gigabytes on a slow disk. None of these is known to pass three or four minutes on a
+/// computer the models run on at all; ten leave room for a computer two or three times slower
+/// than the slowest measured, and a hang is still ended rather than waited on for ever. No
+/// overall bound: the output limit (`-n`) already bounds how much is written, and a slow
+/// computer that keeps writing is working (docs/decisions/2026-11-10-offline-robustness.md).
+pub(crate) const SILENCE: Duration = Duration::from_secs(600);
 
 /// The most of the program's diagnostics kept, from the end: enough for the error it ends with
 /// and the timing it prints.
@@ -69,6 +90,34 @@ pub struct Llama {
     env: Vec<(String, PathBuf)>,
 }
 
+/// Why a run gave no answer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RunError {
+    /// The job was paused or cancelled: the program was ended.
+    Stopped,
+    /// It wrote nothing for this long ([`SILENCE`]) and was ended: a driver or the program
+    /// hung.
+    Hung(Duration),
+    /// It could not start or ended with an error, and why, as the researcher reads it.
+    Failed(String),
+    /// This copy of the app does not carry the program asked for.
+    Missing(String),
+}
+
+impl From<RunError> for ProviderError {
+    fn from(e: RunError) -> Self {
+        match e {
+            RunError::Stopped => Self::Interrupted,
+            RunError::Hung(after) => Self::Other(format!(
+                "The offline model's engine made no progress for {} minutes and was stopped",
+                after.as_secs() / 60
+            )),
+            RunError::Failed(reason) => Self::Other(reason),
+            RunError::Missing(reason) => Self::Unsupported(reason),
+        }
+    }
+}
+
 /// What one run wrote.
 #[derive(Debug)]
 pub struct Run {
@@ -95,8 +144,8 @@ pub struct Device {
 }
 
 impl Llama {
-    /// The processor build: looks in `KALAMU_LLAMA_DIR`, then in `dirs` (the app's own folder),
-    /// then, in development builds only, on `PATH`.
+    /// The processor build: looks in `dirs` (the app's own folder); in development builds only,
+    /// first in `KALAMU_LLAMA_DIR` and last on `PATH`.
     pub fn locate(dirs: &[PathBuf]) -> Option<Self> {
         Self::locate_program(PROGRAM, dirs)
     }
@@ -144,6 +193,7 @@ impl Llama {
 
     fn locate_program(name: &str, dirs: &[PathBuf]) -> Option<Self> {
         let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_LLAMA_DIR")
+            .filter(|_| cfg!(debug_assertions))
             .map(PathBuf::from)
             .into_iter()
             .chain(dirs.iter().cloned())
@@ -175,13 +225,17 @@ impl Llama {
     }
 
     /// The program's build, as it reports it (`version: 12110 (8c5a6f1)`), for provenance.
+    /// Given [`VERSION_LIMIT`]: it is asked from an export, which must not wait on a program
+    /// that hangs.
     pub fn version(&self) -> Option<String> {
-        let output = self
-            .command()
-            .arg("--version")
-            .stdin(Stdio::null())
-            .output()
-            .ok()?;
+        let mut command = self.command();
+        command.arg("--version");
+        let limits = Limits {
+            overall: Some(VERSION_LIMIT),
+            stderr_kept: STDERR_KEPT,
+            ..Limits::silence(VERSION_LIMIT)
+        };
+        let output = program::run_with(command, &StopSignal::default(), limits).ok()?;
         let text = String::from_utf8_lossy(&output.stderr).into_owned()
             + &String::from_utf8_lossy(&output.stdout);
         text.lines()
@@ -193,50 +247,48 @@ impl Llama {
     /// the graphics processors its Vulkan driver offers for the Vulkan build. An error when the
     /// program does not start (no Vulkan loader on this system), fails or takes too long.
     pub fn devices(&self) -> Result<Vec<Device>, String> {
-        let mut child = self
-            .command()
-            .arg("--list-devices")
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|e| format!("could not start: {e}"))?;
-        let stdout = drain(child.stdout.take(), STDERR_KEPT);
-        let stderr = drain(child.stderr.take(), STDERR_KEPT);
-        let started = Instant::now();
-        let status = loop {
-            match child.try_wait() {
-                Ok(Some(status)) => break status,
-                Ok(None) if started.elapsed() < LIST_DEVICES_LIMIT => std::thread::sleep(POLL),
-                Ok(None) => {
-                    end(&mut child);
-                    return Err("took too long to list its devices".into());
-                }
-                Err(e) => {
-                    end(&mut child);
-                    return Err(e.to_string());
-                }
+        let mut command = self.command();
+        command.arg("--list-devices");
+        let limits = Limits {
+            overall: Some(LIST_DEVICES_LIMIT),
+            stderr_kept: STDERR_KEPT,
+            ..Limits::silence(LIST_DEVICES_LIMIT)
+        };
+        let listed = match program::run_with(command, &StopSignal::default(), limits) {
+            Ok(listed) => listed,
+            Err(Unfinished {
+                ended: Ended::NotStarted(e),
+                ..
+            }) => return Err(format!("could not start: {e}")),
+            Err(Unfinished { ended, stderr }) => {
+                diagnostics::warn(&self.program, "listing its devices", &stderr);
+                return Err(match ended {
+                    Ended::Silent(_) | Ended::TooLong(_) => {
+                        "took too long to list its devices".to_owned()
+                    }
+                    other => format!("{other:?}"),
+                });
             }
         };
-        let listed = String::from_utf8_lossy(&stdout.join().unwrap_or_default()).into_owned();
-        if !status.success() {
-            let diagnostics =
-                String::from_utf8_lossy(&stderr.join().unwrap_or_default()).into_owned();
-            return Err(format!("{status}: {}", last_error(&diagnostics)));
+        if !listed.status.success() {
+            diagnostics::warn(&self.program, "listing its devices", &listed.stderr);
+            let stderr = String::from_utf8_lossy(&listed.stderr);
+            return Err(format!("{}: {}", listed.status, last_error(&stderr)));
         }
-        Ok(parse_devices(&listed))
+        Ok(parse_devices(&String::from_utf8_lossy(&listed.stdout)))
     }
 
-    /// Runs the program with `args` until it ends, or until `stop` is raised, when it is ended
-    /// at once and the page counts as interrupted: nothing was kept from it.
-    pub fn run(&self, args: &[String], stop: &StopSignal) -> Result<Run, ProviderError> {
+    /// Runs the program with `args` until it ends, until `stop` is raised, when it is ended at
+    /// once and the page counts as interrupted, or until it has written nothing for
+    /// [`SILENCE`]. Nothing is kept from a run that did not end on its own.
+    pub fn run(&self, args: &[String], stop: &StopSignal) -> Result<Run, RunError> {
         self.run_program(&self.program, args, stop)
     }
 
     /// Runs the text program the same way.
-    pub fn run_text(&self, args: &[String], stop: &StopSignal) -> Result<Run, ProviderError> {
+    pub fn run_text(&self, args: &[String], stop: &StopSignal) -> Result<Run, RunError> {
         let text = self.text.as_ref().ok_or_else(|| {
-            ProviderError::Unsupported(
+            RunError::Missing(
                 "This copy of Kalamu has no engine for offline language models to read texts with"
                     .into(),
             )
@@ -249,41 +301,38 @@ impl Llama {
         program: &Path,
         args: &[String],
         stop: &StopSignal,
-    ) -> Result<Run, ProviderError> {
+    ) -> Result<Run, RunError> {
         let started = Instant::now();
-        let mut child = self
-            .command_for(program)
-            .args(args)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|e| {
-                ProviderError::Other(format!("The offline model's engine could not start: {e}"))
-            })?;
-        // Both pipes are read while the program runs, so neither fills and stalls it.
-        let stdout = drain(child.stdout.take(), usize::MAX);
-        let stderr = drain(child.stderr.take(), STDERR_KEPT);
-        let status = loop {
-            if stop.is_stopped() {
-                end(&mut child);
-                return Err(ProviderError::Interrupted);
-            }
-            match child.try_wait() {
-                Ok(Some(status)) => break status,
-                Ok(None) => std::thread::sleep(POLL),
-                Err(e) => {
-                    end(&mut child);
-                    return Err(ProviderError::Other(format!(
+        let mut command = self.command_for(program);
+        command.args(args);
+        let limits = Limits {
+            stderr_kept: STDERR_KEPT,
+            ..Limits::silence(SILENCE)
+        };
+        let finished = program::run_with(command, stop, limits).map_err(|unfinished| {
+            let Unfinished { ended, stderr } = unfinished;
+            match ended {
+                Ended::Stopped => RunError::Stopped,
+                Ended::NotStarted(e) => {
+                    RunError::Failed(format!("The offline model's engine could not start: {e}"))
+                }
+                Ended::Silent(after) | Ended::TooLong(after) => {
+                    diagnostics::warn(program, "a run that made no progress", &stderr);
+                    RunError::Hung(after)
+                }
+                Ended::Lost(e) => {
+                    diagnostics::warn(program, "a run it lost track of", &stderr);
+                    RunError::Failed(format!(
                         "The offline model's engine stopped responding: {e}"
-                    )));
+                    ))
                 }
             }
-        };
-        let text = String::from_utf8_lossy(&stdout.join().unwrap_or_default()).into_owned();
-        let diagnostics = String::from_utf8_lossy(&stderr.join().unwrap_or_default()).into_owned();
-        if !status.success() {
-            return Err(ProviderError::Other(format!(
+        })?;
+        let text = String::from_utf8_lossy(&finished.stdout).into_owned();
+        let diagnostics = String::from_utf8_lossy(&finished.stderr).into_owned();
+        if !finished.status.success() {
+            diagnostics::warn(program, "a failed run", &finished.stderr);
+            return Err(RunError::Failed(format!(
                 "The offline model's engine failed: {}",
                 last_error(&diagnostics)
             )));
@@ -295,35 +344,6 @@ impl Llama {
             elapsed: started.elapsed(),
         })
     }
-}
-
-fn end(child: &mut Child) {
-    let _ = child.kill();
-    let _ = child.wait();
-}
-
-/// Reads a pipe to its end on a thread of its own, keeping at most the last `keep` bytes.
-fn drain<R: Read + Send + 'static>(
-    pipe: Option<R>,
-    keep: usize,
-) -> std::thread::JoinHandle<Vec<u8>> {
-    std::thread::spawn(move || {
-        let mut kept = Vec::new();
-        let Some(mut pipe) = pipe else {
-            return kept;
-        };
-        let mut buffer = [0u8; 8192];
-        while let Ok(n) = pipe.read(&mut buffer) {
-            if n == 0 {
-                break;
-            }
-            kept.extend_from_slice(&buffer[..n]);
-            if kept.len() > keep {
-                kept.drain(..kept.len() - keep);
-            }
-        }
-        kept
-    })
 }
 
 /// The last line that reads as an error, or the last line at all.
@@ -387,6 +407,55 @@ fn generated_tokens(diagnostics: &str) -> Option<u32> {
     })
 }
 
+/// The names of the folders a run's files are written in, inside the scratch folder: only
+/// folders with these names are swept from it.
+const SCRATCH_PREFIXES: [&str; 2] = ["kalamu-text-", "kalamu-page-"];
+
+/// A folder of its own for one run's files, in `root` (the app's scratch folder, or the
+/// system's temporary folder when there is none), deleted when dropped.
+fn scratch_dir(root: &Path, prefix: &str) -> std::io::Result<tempfile::TempDir> {
+    let builder = {
+        let mut builder = tempfile::Builder::new();
+        builder.prefix(prefix);
+        builder
+    };
+    if root.as_os_str().is_empty() {
+        builder.tempdir()
+    } else {
+        std::fs::create_dir_all(root)?;
+        builder.tempdir_in(root)
+    }
+}
+
+/// Deletes what runs left in the scratch folder when the app was killed or crashed before it
+/// could delete their files: the page images and a text's instructions and contents, the
+/// researcher's material. Only the folders runs make are touched, so a wrong root deletes
+/// nothing else. Called once, before any run.
+pub(crate) fn sweep_scratch(root: &Path) {
+    if root.as_os_str().is_empty() {
+        return;
+    }
+    let Ok(entries) = std::fs::read_dir(root) else {
+        return;
+    };
+    let mut swept = 0;
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let ours = SCRATCH_PREFIXES
+            .iter()
+            .any(|prefix| name.to_string_lossy().starts_with(prefix));
+        if ours
+            && entry.file_type().is_ok_and(|t| t.is_dir())
+            && std::fs::remove_dir_all(entry.path()).is_ok()
+        {
+            swept += 1;
+        }
+    }
+    if swept > 0 {
+        tracing::info!(swept, "files of interrupted offline runs deleted");
+    }
+}
+
 /// Files written where the program can read them (a text's instructions, the text, the answer's
 /// schema), deleted afterwards.
 pub struct Scratch {
@@ -394,10 +463,9 @@ pub struct Scratch {
 }
 
 impl Scratch {
-    pub fn new() -> Result<Self, ProviderError> {
-        let dir = tempfile::Builder::new()
-            .prefix("kalamu-text-")
-            .tempdir()
+    /// A folder for one request's files in `root`, the app's scratch folder.
+    pub fn new(root: &Path) -> Result<Self, ProviderError> {
+        let dir = scratch_dir(root, SCRATCH_PREFIXES[0])
             .map_err(|e| ProviderError::Other(format!("Could not write the request: {e}")))?;
         Ok(Self { dir })
     }
@@ -432,10 +500,9 @@ pub struct PageFile {
 }
 
 impl PageFile {
-    pub fn write(bytes: &[u8], extension: &str) -> Result<Self, ProviderError> {
-        let dir = tempfile::Builder::new()
-            .prefix("kalamu-page-")
-            .tempdir()
+    /// Writes the page in a folder of its own in `root`, the app's scratch folder.
+    pub fn write(root: &Path, bytes: &[u8], extension: &str) -> Result<Self, ProviderError> {
+        let dir = scratch_dir(root, SCRATCH_PREFIXES[1])
             .map_err(|e| ProviderError::Other(format!("Could not write the page image: {e}")))?;
         let path = dir.path().join(format!("page.{extension}"));
         std::fs::write(&path, bytes)
@@ -547,6 +614,51 @@ exiting
             with.text.unwrap(),
             dir.path().join(format!("llama-completion-vulkan{exe}"))
         );
+    }
+
+    #[test]
+    fn run_files_go_in_the_scratch_folder_and_what_a_crash_left_is_swept() {
+        let root = tempfile::tempdir().unwrap();
+        let scratch = root.path().join("offline-scratch");
+        let page = PageFile::write(&scratch, b"png", "png").unwrap();
+        assert!(page.path().starts_with(&scratch));
+        let request = Scratch::new(&scratch).unwrap();
+        let text = request.write("request.txt", b"a text").unwrap();
+        assert!(text.starts_with(&scratch));
+        // As a kill leaves them: never dropped.
+        std::mem::forget(page);
+        std::mem::forget(request);
+        // Something else in the folder is not the sweep's to delete.
+        std::fs::write(scratch.join("notes.txt"), b"kept").unwrap();
+        std::fs::create_dir(scratch.join("kept")).unwrap();
+        assert_eq!(std::fs::read_dir(&scratch).unwrap().count(), 4);
+        sweep_scratch(&scratch);
+        let mut left: Vec<String> = std::fs::read_dir(&scratch)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        left.sort();
+        assert_eq!(left, ["kept", "notes.txt"]);
+        // No root: the system's temporary folder, never swept.
+        sweep_scratch(Path::new(""));
+        let page = PageFile::write(Path::new(""), b"png", "png").unwrap();
+        assert!(page.path().starts_with(std::env::temp_dir()));
+    }
+
+    #[test]
+    fn a_program_that_does_not_start_fails_its_run() {
+        let llama = Llama::at(PathBuf::from("no-such-llama-program"));
+        let ran = llama.run(&[], &StopSignal::default());
+        assert!(
+            matches!(&ran, Err(RunError::Failed(m)) if m.contains("could not start")),
+            "{ran:?}"
+        );
+        assert!(matches!(
+            llama.run_text(&[], &StopSignal::default()),
+            Err(RunError::Missing(_))
+        ));
+        assert_eq!(llama.version(), None);
+        assert!(llama.devices().unwrap_err().starts_with("could not start"));
     }
 
     #[test]

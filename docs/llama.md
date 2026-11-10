@@ -20,8 +20,9 @@ uses the graphics processor through Metal.
 
 ## Where the app looks
 
-Next to the executable (Tauri's sidecar layout), or in `KALAMU_LLAMA_DIR`; development builds
-also accept one on `PATH`. Without it, Settings › Offline models says this copy has no engine for OCR
+Next to the executable (Tauri's sidecar layout), and in release builds nowhere else, so no
+environment variable chooses the program run on a researcher's pages. Development builds also
+look in `KALAMU_LLAMA_DIR` first and on `PATH` last. Without it, Settings › Offline models says this copy has no engine for OCR
 models, and New job's readiness check refuses them; everything else works. Each build's text
 program is looked for beside its multimodal program, with the same suffix; without it the
 language models are refused the same way.
@@ -32,8 +33,11 @@ one with at least 2 GB of memory, a discrete card before integrated graphics, so
 and Snapdragon's Adreno, which reads wrongly through Vulkan, never
 (`crates/offline/src/device.rs`). It then reads every page there, passing that device with
 `--device`, unless Settings › Offline models turns it off. When the program does not start (no Vulkan
-loader on this PC), finds nothing usable or fails on a page, the processor build reads instead;
-after a failure, for the rest of the session.
+loader on this PC) or finds nothing usable, the processor build reads instead. When a page or a
+request fails there, it is sent again to the processor: if the processor answers, the device was
+the cause and the rest of the session runs on the processor; if it fails there too, the request
+was, and the device is used again. A run that hangs there gives the device up at once
+([decision](decisions/2026-11-10-offline-robustness.md)).
 
 The OpenCL build is asked the same way and keeps the Adreno only. Each model lists the graphics
 builds it was measured correct with (`graphics` in `crates/offline/src/vision.rs` and
@@ -41,11 +45,24 @@ builds it was measured correct with (`graphics` in `crates/offline/src/vision.rs
 the Vulkan build. The OCR models put every layer on the device (`-ngl 99`); the Gemma models,
 several times larger, as many as its memory holds beside their fixed context, the rest on the
 processor (`-ngl auto --fit on`), so a card with little memory of its own still speeds them up.
-On a Mac both run on Metal. A failure on the graphics processor sends both engines back to the
+On a Mac both run on Metal. A device given up after a failure sends both engines back to the
 processor for the rest of the session. Through OpenCL only the image encoder
 runs on the Adreno (`--device GPUOpenCL -ngl 0`), the language model on the processor. Its
 compiled kernels are kept in the models' folder (`ocr-models/opencl-kernels`, through
 `GGML_OPENCL_KERNEL_CACHE_DIR`), so only the first page compiles them.
+
+## How a run is watched
+
+Each run goes through `media`'s program runner, as FFmpeg's do (`kalamu_media::program`): both
+pipes read as it runs, a pause or a cancel ending it within a tenth of a second, and a run that
+writes nothing on either pipe for ten minutes ended as hung (`llama::SILENCE`): a step of
+computation (encoding a page image, a batch of a text's tokens) is the longest the programs stay
+silent, a few minutes at most on a weak processor, and the answer comes token by token. There is
+no limit on a whole run. `--version` and `--list-devices` are given 30 s in all. The page image,
+or the text with its instructions and schema, is written in a folder of its own inside
+`offline-scratch` in the app's data folder, deleted after the run; what a crash left there is
+deleted at the next start. When a run fails or hangs, the last lines of its standard error that
+read as the program's own messages go to the log at `warn`; its answer never does.
 
 ## The builds
 

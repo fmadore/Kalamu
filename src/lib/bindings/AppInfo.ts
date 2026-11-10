@@ -15,4 +15,9 @@ system_languages: Array<string>,
  * The Mac App Store's build, which runs in the App Sandbox: it asks for a folder before
  * writing results beside sources, and offers no support link (App Review Guideline 3.1.1).
  */
-app_store: boolean, };
+app_store: boolean, 
+/**
+ * Where the settings file that could not be read at this launch was moved, as File
+ * Explorer or Finder shows it; the defaults are in use. The interface says so once.
+ */
+settings_set_aside: string | null, };

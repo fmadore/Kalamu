@@ -121,7 +121,7 @@ impl ModelSet {
 
 impl ModelFile {
     /// The fixed name a download is written under until it has been verified, so the next
-    /// download can find and delete what an interrupted one left behind.
+    /// download can continue what an interrupted one left behind.
     pub(crate) fn partial(&self) -> String {
         format!("{}.part", self.file)
     }
@@ -238,11 +238,14 @@ impl ModelManager {
         if state.download.is_some() {
             return Err(OfflineError::Busy);
         }
+        // What an unfinished download kept goes with it, to give the space back.
         for file in std::iter::once(model).chain(model.pair) {
-            match fs::remove_file(self.dir.join(file.file)) {
-                Ok(()) => {}
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-                Err(e) => return Err(io(e)),
+            for name in [file.file.to_owned(), file.partial()] {
+                match fs::remove_file(self.dir.join(name)) {
+                    Ok(()) => {}
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => return Err(io(e)),
+                }
             }
         }
         Ok(())

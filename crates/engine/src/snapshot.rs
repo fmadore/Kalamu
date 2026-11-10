@@ -10,7 +10,6 @@
 
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use std::path::Path;
 
 use kalamu_core::snapshot::{PartText, build};
 use kalamu_core::{
@@ -134,10 +133,7 @@ impl Engine {
                 created_at: Timestamp::now(),
             };
             self.store.put_snapshot(&snapshot)?;
-            let stem = Path::new(&source.file_name)
-                .file_stem()
-                .map(|s| s.to_string_lossy().into_owned())
-                .unwrap_or_else(|| source.file_name.clone());
+            let stem = crate::source_stem(&source.file_name, &source.file_name);
             out.push(SourceFile {
                 id: SourceId::new(),
                 path: path.display().to_string(),

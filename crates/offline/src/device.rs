@@ -6,16 +6,17 @@
 //! Each graphics build is asked once a session which devices it finds. It is used only when it
 //! starts (it needs the loader the graphics driver installs) and finds a device it is known to
 //! read correctly on, for a model measured correct there, when the researcher has not turned it
-//! off in Settings, and until a page fails on it: the session then reads on the processor. The
-//! device chosen is passed to the program, so the one recorded in provenance is the one that
-//! read the page.
+//! off in Settings, and until it is shown to fail where the processor does not ([`verdict`]):
+//! the session then reads on the processor. The device chosen is passed to the program, so the
+//! one recorded in provenance is the one that read the page.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Mutex, OnceLock};
 
 use crate::cpu::DEVICE;
+use crate::host::lock;
 use crate::llama::{Device, Llama};
 
 /// Below this, a graphics processor cannot hold a model, its image encoder and a page's context
@@ -194,6 +195,58 @@ fn rank(name: &str) -> u8 {
     if discrete || intel_card { 0 } else { 1 }
 }
 
+/// How a run ended, as far as the device is concerned.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Outcome {
+    /// It answered.
+    Answered,
+    /// The job was paused or cancelled: it says nothing either way.
+    Stopped,
+    /// It wrote nothing for the watchdog's limit and was ended.
+    Hung,
+    /// It could not start, or ended with an error.
+    Failed,
+}
+
+/// What a run tells of a graphics build.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Verdict {
+    /// Nothing new.
+    Unchanged,
+    /// A request failed there: it runs again on the processor, as does everything else until
+    /// that run tells whether the device or the request was the cause.
+    Suspect,
+    /// The device was the cause: the rest of the session runs on the processor.
+    GiveUp,
+    /// The request was the cause: the device is used again.
+    Keep,
+}
+
+/// The rule for giving a graphics processor up. The fallback exists because Vulkan crashed, ran
+/// out of memory or failed on some drivers, which the processor build does not; but a request
+/// can fail by itself (a schema llama.cpp cannot turn into a grammar, an image its decoder
+/// refuses, a command line past Windows' limit), and giving the device up for that sent every
+/// later page to the processor for nothing, where the same request then failed again. So:
+///
+/// - a run on the graphics processor that answers, or is stopped, changes nothing;
+/// - one that hangs is the device's fault, as a driver that stopped answering is: given up at
+///   once (the processor has never been seen to hang on a page);
+/// - one that fails makes the device a suspect: the request runs again on the processor
+///   (`retry_of_suspect` then holds for it). If it answers there, the device was the cause and
+///   is given up, as before; if it fails or hangs there too, the request was, and the device
+///   is used again. A stop there leaves the suspicion for the next try.
+pub(crate) fn verdict(on_graphics: bool, retry_of_suspect: bool, outcome: Outcome) -> Verdict {
+    match (on_graphics, outcome) {
+        (_, Outcome::Stopped) => Verdict::Unchanged,
+        (true, Outcome::Answered) => Verdict::Unchanged,
+        (true, Outcome::Hung) => Verdict::GiveUp,
+        (true, Outcome::Failed) => Verdict::Suspect,
+        (false, _) if !retry_of_suspect => Verdict::Unchanged,
+        (false, Outcome::Answered) => Verdict::GiveUp,
+        (false, Outcome::Hung | Outcome::Failed) => Verdict::Keep,
+    }
+}
+
 /// A graphics build and what is known of it this session.
 pub(crate) struct Graphics {
     backend: Backend,
@@ -204,6 +257,9 @@ pub(crate) struct Graphics {
     found: OnceLock<Option<Device>>,
     /// A page failed on it: the rest of the session reads on the processor.
     failed: AtomicBool,
+    /// A request that failed on it, by its fingerprint, with why, while it runs again on the
+    /// processor to tell whose fault it was ([`verdict`]). Meanwhile everything runs there.
+    suspect: Mutex<Option<(u64, String)>>,
 }
 
 impl Graphics {
@@ -214,6 +270,7 @@ impl Graphics {
             wanted: AtomicBool::new(wanted),
             found: OnceLock::new(),
             failed: AtomicBool::new(false),
+            suspect: Mutex::new(None),
         }
     }
 
@@ -229,13 +286,48 @@ impl Graphics {
         self.wanted.store(wanted, Ordering::Relaxed);
     }
 
-    /// After a page failed on the graphics processor.
+    /// Applies what a run told of this build: `request` is the run's fingerprint, `reason` why
+    /// it failed, when it did.
+    pub(crate) fn apply(&self, verdict: Verdict, request: u64, reason: &str) {
+        match verdict {
+            Verdict::Unchanged => {}
+            Verdict::Suspect => {
+                tracing::warn!(
+                    reason,
+                    backend = ?self.backend,
+                    "a request failed on the graphics processor: it runs again on the processor, which tells whether the device or the request was the cause"
+                );
+                *lock(&self.suspect) = Some((request, reason.to_owned()));
+            }
+            Verdict::GiveUp => {
+                let first = lock(&self.suspect)
+                    .take()
+                    .map_or_else(|| reason.to_owned(), |(_, first)| first);
+                self.give_up(&first);
+            }
+            Verdict::Keep => {
+                if lock(&self.suspect).take().is_some() {
+                    tracing::info!(
+                        backend = ?self.backend,
+                        "the request failed on the processor too: the graphics processor is used again"
+                    );
+                }
+            }
+        }
+    }
+
+    /// The fingerprint of the request this build is suspected for, if any.
+    pub(crate) fn suspected(&self) -> Option<u64> {
+        lock(&self.suspect).as_ref().map(|(request, _)| *request)
+    }
+
+    /// After a run showed the graphics processor to be the cause.
     pub(crate) fn give_up(&self, reason: &str) {
         if !self.failed.swap(true, Ordering::Relaxed) {
             tracing::warn!(
                 reason,
                 backend = ?self.backend,
-                "a page failed on the graphics processor: the OCR models read on the processor until Kalamu restarts"
+                "the graphics processor failed where the processor did not: the offline models run on the processor until Kalamu restarts"
             );
         }
     }
@@ -268,10 +360,12 @@ impl Graphics {
         self.found.get().map(Option::as_ref)
     }
 
-    /// Where the next page goes: the graphics processor when it is wanted, found and has not
-    /// failed; `None` for the processor build.
+    /// Where the next page goes: the graphics processor when it is wanted, found, has not
+    /// failed and is not suspected; `None` for the processor build.
     pub(crate) fn placement(&self, device: Option<&Device>) -> Option<Placement> {
-        let usable = self.wanted.load(Ordering::Relaxed) && !self.failed.load(Ordering::Relaxed);
+        let usable = self.wanted.load(Ordering::Relaxed)
+            && !self.failed.load(Ordering::Relaxed)
+            && self.suspected().is_none();
         device.filter(|_| usable).map(|d| match self.backend {
             Backend::Vulkan => Placement::Vulkan(d.clone()),
             Backend::OpenCl => Placement::OpenCl(d.clone()),
@@ -438,6 +532,43 @@ mod tests {
         assert_eq!(gpu.placement(Some(&found)), None);
         gpu.set_wanted(true);
         gpu.give_up("out of memory");
+        assert_eq!(gpu.placement(Some(&found)), None);
+    }
+
+    #[test]
+    fn the_device_is_given_up_only_when_the_processor_does_better() {
+        use Outcome::*;
+        // On the graphics processor.
+        assert_eq!(verdict(true, false, Answered), Verdict::Unchanged);
+        assert_eq!(verdict(true, false, Stopped), Verdict::Unchanged);
+        assert_eq!(verdict(true, false, Failed), Verdict::Suspect);
+        assert_eq!(verdict(true, false, Hung), Verdict::GiveUp);
+        // The same request again on the processor.
+        assert_eq!(verdict(false, true, Answered), Verdict::GiveUp);
+        assert_eq!(verdict(false, true, Failed), Verdict::Keep);
+        assert_eq!(verdict(false, true, Hung), Verdict::Keep);
+        assert_eq!(verdict(false, true, Stopped), Verdict::Unchanged);
+        // Another request on the processor says nothing of the device.
+        for outcome in [Answered, Failed, Hung, Stopped] {
+            assert_eq!(verdict(false, false, outcome), Verdict::Unchanged);
+        }
+    }
+
+    #[test]
+    fn a_suspect_device_waits_for_the_processor_s_answer() {
+        let gpu = Graphics::new(Backend::Vulkan, Llama::at(PathBuf::from("nowhere")), true);
+        let found = device("Vulkan0", "NVIDIA GeForce RTX 3060", 12288);
+        // A request the processor fails too: the device comes back.
+        gpu.apply(Verdict::Suspect, 7, "failed to parse grammar");
+        assert_eq!(gpu.suspected(), Some(7));
+        assert_eq!(gpu.placement(Some(&found)), None);
+        gpu.apply(Verdict::Keep, 7, "failed to parse grammar");
+        assert_eq!(gpu.suspected(), None);
+        assert!(gpu.placement(Some(&found)).is_some());
+        // One the processor answers: given up for the session.
+        gpu.apply(Verdict::Suspect, 8, "out of device memory");
+        gpu.apply(Verdict::GiveUp, 8, "");
+        assert_eq!(gpu.suspected(), None);
         assert_eq!(gpu.placement(Some(&found)), None);
     }
 

@@ -25,7 +25,8 @@
 		toast,
 		type FromProject
 	} from '#lib/state.svelte.js';
-	import { api, ask, pickJsonSave } from '#lib/tauri.js';
+	import { baseName } from '#lib/paths.js';
+	import { api, ask, askForFolders, pickJsonSave } from '#lib/tauri.js';
 	import {
 		blankWorkflow,
 		type Example,
@@ -198,8 +199,14 @@
 		const path = await pickJsonSave(workflow.name);
 		if (!path) return;
 		try {
-			await api.exportWorkflow(workflow.id, path);
-			toast(w.exported(path));
+			// The Markdown goes beside the JSON: in the Mac App Store's build, its folder is asked for.
+			if (!(await askForFolders([path]))) return;
+			const markdown = await api.exportWorkflow(workflow.id, path);
+			const md = baseName(markdown) || markdown;
+			const expected = `${(baseName(path) || path).replace(/\.json$/i, '')}.md`;
+			toast(
+				md === expected ? w.exported(path) : `${w.exported(path)} ${m.common.markdownBeside(md)}`
+			);
 		} catch (e) {
 			error = describeError(e, m);
 		}

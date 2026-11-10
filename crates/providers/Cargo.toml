@@ -14,6 +14,8 @@ kalamu-core.workspace = true
 serde_json.workspace = true
 
 [dev-dependencies]
+# The tests send each model what the bundled catalogue says of it, as the engine does.
+kalamu-catalog.workspace = true
 tokio.workspace = true
 wiremock.workspace = true
 

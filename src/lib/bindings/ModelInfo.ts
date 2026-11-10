@@ -66,7 +66,14 @@ translates: boolean,
  * A top-tier model priced far above what transcription and extraction usually need; the
  * interface says so when it is chosen.
  */
-costly: boolean, pricing: Pricing, limits: Limits, 
+costly: boolean, 
+/**
+ * When its safety classifier refuses a request, the provider can answer it again with
+ * another of its models, on its own side (Claude's server-side fallback, which Opus and
+ * Sonnet have and Haiku has not). Absent, as in catalogues written before it, means no:
+ * this build never reads a catalogue older than the one it ships with ([`Catalog::newest`]).
+ */
+refusal_fallback?: boolean, pricing: Pricing, limits: Limits, 
 /**
  * The thinking levels it accepts; `None` for a model that does not reason (an OCR or a
  * speech-to-text model).

@@ -13,7 +13,9 @@ use thiserror::Error;
 use ts_rs::TS;
 
 mod cost;
+mod release;
 pub use cost::CostEstimate;
+pub use release::{Release, Version};
 
 /// The catalogue shipped with this build.
 pub const BUNDLED: &str = include_str!("../catalog.json");
@@ -33,6 +35,11 @@ pub struct Catalog {
     pub updated: String,
     #[serde(default)]
     pub notes: String,
+    /// The version of Kalamu last released (`1.5.0`), from which a copy installed from the
+    /// releases page learns that a newer one is out ([`Catalog::newer_release`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub latest_version: Option<String>,
     pub providers: Vec<ProviderInfo>,
     pub models: Vec<ModelInfo>,
     /// Languages offered for models that accept any language, with English names for prompts.
@@ -264,6 +271,13 @@ pub struct ModelInfo {
     /// interface says so when it is chosen.
     #[serde(default)]
     pub costly: bool,
+    /// When its safety classifier refuses a request, the provider can answer it again with
+    /// another of its models, on its own side (Claude's server-side fallback, which Opus and
+    /// Sonnet have and Haiku has not). Absent, as in catalogues written before it, means no:
+    /// this build never reads a catalogue older than the one it ships with ([`Catalog::newest`]).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub refusal_fallback: bool,
     #[serde(default)]
     pub pricing: Pricing,
     #[serde(default)]
@@ -291,11 +305,15 @@ impl ModelInfo {
     }
 
     /// What a request for a task sends: the reasoning level (the set-up's choice, or the
-    /// suggestion) and the model's whole output limit.
+    /// suggestion), the model's whole output limit, and the abilities that shape its request,
+    /// so that its provider never tells models apart by name.
     pub fn tuning(&self, task: Task, chosen: Option<&str>) -> kalamu_core::Tuning {
         kalamu_core::Tuning {
             reasoning: self.reasoning.as_ref().and_then(|r| r.level(task, chosen)),
             max_output_tokens: self.limits.max_output_tokens,
+            refusal_fallback: self.refusal_fallback,
+            speakers: self.speakers,
+            no_prompt: !self.accepts_prompt,
         }
     }
 
@@ -352,6 +370,7 @@ impl Catalog {
             schema_version: SCHEMA_VERSION,
             updated: String::new(),
             notes: String::new(),
+            latest_version: None,
             providers: Vec::new(),
             models: Vec::new(),
             languages: Vec::new(),

@@ -1,7 +1,8 @@
 //! OpenAI: the Responses API for text extraction and summaries (PDF pages as `input_file`,
 //! images as `input_image` at high detail) and the transcriptions endpoint for audio: speaker
-//! labels from the diarizing model (deprecated, shutting down 2027-02-26), plain text with
-//! several language hints from `gpt-transcribe`.
+//! labels from a model the catalogue says labels speakers (the diarizing model, deprecated,
+//! shutting down 2027-02-26), plain text with several language hints from any other
+//! (`gpt-transcribe`).
 //!
 //! Neither Python pipeline uses OpenAI for these tasks, so this follows the API reference
 //! rather than ported code.
@@ -212,7 +213,8 @@ impl OpenAi {
             .file_name(input.file_name.clone())
             .mime_str(&input.mime)
             .map_err(|e| ProviderError::InvalidRequest(e.to_string()))?;
-        let diarize = request.model.contains("diarize");
+        // A model the catalogue says labels speakers answers with them in a format of its own.
+        let diarize = request.tuning.speakers;
         let mut form = Form::new()
             .part("file", file)
             .text("model", request.model.to_string())

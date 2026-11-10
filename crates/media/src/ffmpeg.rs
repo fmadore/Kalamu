@@ -53,10 +53,12 @@ fn exe(name: &str) -> String {
 }
 
 impl Ffmpeg {
-    /// Looks in `KALAMU_FFMPEG_DIR`, then in `dirs` (the app's own folder), then, in
-    /// development builds only, on `PATH`.
+    /// Looks in `dirs` (the app's own folder); in development builds only, first in
+    /// `KALAMU_FFMPEG_DIR` and last on `PATH`. A release build runs only the FFmpeg it ships
+    /// with on the researcher's files, whatever the environment says.
     pub fn locate(dirs: &[PathBuf]) -> Option<Self> {
         let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_FFMPEG_DIR")
+            .filter(|_| cfg!(debug_assertions))
             .map(PathBuf::from)
             .into_iter()
             .chain(dirs.iter().cloned())
@@ -333,6 +335,11 @@ fn ended_error(tool: &Path, ended: Ended) -> MediaError {
         Ended::Silent(after) => MediaError::Tool(format!(
             "it made no progress for {} minutes and was stopped. If the file is on a network or \
              external drive, check that it is still connected",
+            after.as_secs() / 60
+        )),
+        // FFmpeg's runs have no overall limit; kept for the match to be complete.
+        Ended::TooLong(after) => MediaError::Tool(format!(
+            "it ran for more than {} minutes and was stopped",
             after.as_secs() / 60
         )),
         Ended::Lost(e) => MediaError::Tool(format!("it stopped responding: {e}")),

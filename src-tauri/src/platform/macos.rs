@@ -135,6 +135,12 @@ pub fn access() -> Access {
     }
 }
 
+/// Whether a store keeps this copy up to date: the Mac App Store's build, the sandboxed one. It
+/// must not offer updates of its own; the disk image's copy is told of a new release.
+pub fn updated_by_store() -> bool {
+    access().sandboxed
+}
+
 /// A security-scoped bookmark of a path the app can reach now.
 fn bookmark(path: &Path) -> Option<Vec<u8>> {
     let url = NSURL::fileURLWithPath(&NSString::from_str(path.to_str()?));

@@ -94,7 +94,7 @@ fn request<'a>(
         input,
         languages,
         options,
-        tuning: &TUNING,
+        tuning: tuning(task, model),
         analysis: (task == Task::Analysis).then(|| &*FIELDS),
         stop: &STOP,
     }
@@ -102,6 +102,34 @@ fn request<'a>(
 
 /// A model the catalogue lacks: each provider's own settings.
 static TUNING: std::sync::LazyLock<Tuning> = std::sync::LazyLock::new(Tuning::default);
+
+/// What the engine sends each model the bundled catalogue lists, for each task: the suggested
+/// level, the output limit and the abilities that shape the request.
+static CATALOGUED: std::sync::LazyLock<Vec<(Task, String, Tuning)>> =
+    std::sync::LazyLock::new(|| {
+        let catalog = kalamu_catalog::Catalog::bundled();
+        let tasks = [
+            Task::TextExtraction,
+            Task::AudioTranscription,
+            Task::Analysis,
+            Task::Contents,
+            Task::TextCorrection,
+        ];
+        catalog
+            .models
+            .iter()
+            .flat_map(|m| tasks.map(|task| (task, m.id.clone(), m.tuning(task, None))))
+            .collect()
+    });
+
+/// The tuning the engine sends `model` for `task`: the catalogue's, or a provider's own
+/// settings for a model the catalogue lacks.
+fn tuning(task: Task, model: &str) -> &'static Tuning {
+    CATALOGUED
+        .iter()
+        .find(|(t, m, _)| *t == task && m == model)
+        .map_or(&*TUNING, |(_, _, tuning)| tuning)
+}
 
 /// Cloud providers ignore the stop signal; one shared, never-set signal will do.
 static STOP: std::sync::LazyLock<StopSignal> = std::sync::LazyLock::new(StopSignal::default);
@@ -783,10 +811,14 @@ async fn gemini_transcribe_sends_no_prompt_and_reads_speakers_and_timings() {
     assert!(sent.pointer("/generationConfig/thinkingConfig").is_none());
     // A pipeline's record states the set-up's options apart, so it claims none of the
     // settings they decide; the result's provenance gives the ones sent.
-    let tuning = Tuning::default();
+    let catalogued = tuning(Task::AudioTranscription, "gemini-3.5-transcribe");
     assert!(
         gemini
-            .request_settings(Task::AudioTranscription, "gemini-3.5-transcribe", &tuning)
+            .request_settings(
+                Task::AudioTranscription,
+                "gemini-3.5-transcribe",
+                catalogued
+            )
             .is_empty()
     );
     let named = request(
@@ -872,7 +904,7 @@ async fn the_settings_a_provider_reports_are_the_ones_it_sends() {
             // absent from its body, not only those it keeps present.
             let named: Vec<String> = [Task::TextExtraction, Task::Analysis]
                 .into_iter()
-                .flat_map(|task| provider.request_settings(task, model, &TUNING))
+                .flat_map(|task| provider.request_settings(task, model, tuning(task, model)))
                 .map(|s| s.name)
                 .collect();
             for (task, input) in [
@@ -972,7 +1004,11 @@ async fn the_settings_recorded_for_a_batch_are_the_ones_it_sends() {
         let request = request(Task::TextExtraction, model, &input, &langs, &opts);
         let settings = provider.sent_settings(&request, true);
         let named: Vec<String> = provider
-            .request_settings(Task::TextExtraction, model, &TUNING)
+            .request_settings(
+                Task::TextExtraction,
+                model,
+                tuning(Task::TextExtraction, model),
+            )
             .into_iter()
             .map(|s| s.name)
             .collect();
@@ -1165,6 +1201,7 @@ async fn each_model_is_sent_its_own_reasoning_level_and_output_limit() {
     let tuned = Tuning {
         reasoning: Some("high".into()),
         max_output_tokens: Some(128_000),
+        ..Tuning::default()
     };
     let cases: [Case; 4] = [
         (
@@ -1227,7 +1264,7 @@ async fn each_model_is_sent_its_own_reasoning_level_and_output_limit() {
     let mut request = request(Task::Analysis, "mistral-medium-3-5", &whole, &langs, &opts);
     let open = Tuning {
         reasoning: Some("none".into()),
-        max_output_tokens: None,
+        ..Tuning::default()
     };
     request.tuning = &open;
     let _ = mistral.process(&ApiKey::new("k"), request).await;

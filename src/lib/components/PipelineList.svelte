@@ -31,9 +31,9 @@
 			if (!path) return;
 			// The Markdown goes beside the JSON: in the Mac App Store's build, its folder is asked for.
 			if (!(await askForFolders([path]))) return;
-			await api.exportPipeline(p.id, path);
+			const markdown = await api.exportPipeline(p.id, path);
 			const file = (baseName(path) || path).replace(/\.json$/i, '');
-			toast(m.newJob.pipelineExported(file));
+			toast(m.newJob.pipelineExported(file, baseName(markdown) || markdown));
 		});
 
 	const importPipeline = () =>

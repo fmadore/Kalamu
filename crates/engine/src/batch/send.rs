@@ -9,9 +9,9 @@ use kalamu_core::{
 };
 use kalamu_media::OpenSource;
 
-use super::{BatchOutcome, Gathered, stem, waiting};
+use super::{BatchOutcome, Gathered, waiting};
 use crate::piece::wait_unless_stopped;
-use crate::{Engine, EngineError};
+use crate::{Engine, EngineError, source_stem};
 
 impl Engine {
     /// Before a job runs: a batch never confirmed as sent is abandoned, and a piece marked as
@@ -68,7 +68,11 @@ impl Engine {
         }
         let accepted = self.accepted(job, setup.step())?;
         let prepared = {
-            let (opened, piece, stem) = (opened.clone(), state.piece.clone(), stem(source_name));
+            let (opened, piece, stem) = (
+                opened.clone(),
+                state.piece.clone(),
+                source_stem(source_name, "page"),
+            );
             tokio::task::spawn_blocking(move || opened.prepare(&piece, &accepted, &stem))
                 .await
                 .map_err(|e| EngineError::Output(e.to_string()))?

@@ -25,7 +25,7 @@ use kalamu_core::{
 
 use crate::cpu::{self, threads};
 use crate::device::{Backend, Placement, Speeds};
-use crate::host::{Checked, LlamaHost, lock};
+use crate::host::{Checked, LlamaHost, Work, fingerprint, lock};
 use crate::llama::{PageFile, page_image};
 use crate::models::{ModelFile, ModelManager, ModelSet};
 
@@ -485,7 +485,7 @@ impl Provider for Vision {
             let llama = inner.host.program(&placement)?;
             let leases = inner.checked.leases(&inner.models, model)?;
             let (image, extension) = page_image(&bytes, &mime, recipe.max_side)?;
-            let page = PageFile::write(&image, extension)?;
+            let page = PageFile::write(inner.host.scratch(), &image, extension)?;
             let logical = std::thread::available_parallelism().map_or(2, usize::from);
             let mut args = arguments(
                 leases[0].path(),
@@ -495,17 +495,14 @@ impl Provider for Vision {
                 threads(logical),
             );
             args.extend(placement.arguments());
-            let run = match (llama.run(&args, &stop), inner.host.graphics(&placement)) {
-                // Out of memory, a driver fault: the rest of the session reads on the processor,
-                // starting with this page, which the engine sends again.
-                (Err(ProviderError::Other(reason)), Some(graphics)) => {
-                    graphics.give_up(&reason);
-                    return Err(ProviderError::Transient(format!(
-                        "The graphics processor could not read this page ({reason}); it is read again on the processor"
-                    )));
-                }
-                (run, _) => run?,
-            };
+            // A failure on the graphics processor sends the page back to the engine, which
+            // reads it again on the processor; whether the device is then given up depends on
+            // how that goes (`device::verdict`).
+            let request = fingerprint(&[recipe.model.as_bytes(), &bytes]);
+            let run =
+                inner
+                    .host
+                    .settle(&placement, request, llama.run(&args, &stop), Work::Page)?;
             inner.record_speed(&placement, recipe.model, run.elapsed.as_secs_f32());
             Ok((run, inner.host.version().to_owned()))
         })
@@ -752,6 +749,7 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
                 Vec::new(),
                 true,
                 dir.path().to_owned(),
+                dir.path().join("scratch"),
             )),
         );
         let french = LanguageChoice::Explicit(vec![LanguageCode::new("fr")]);
@@ -788,6 +786,7 @@ Le Gouverneur général a reçu ce matin les délégués.\nIls ont remis un mém
             graphics,
             true,
             std::env::temp_dir().join("kalamu-opencl-kernels"),
+            std::env::temp_dir().join("kalamu-offline-scratch"),
         ));
         host.find_graphics_processor();
         let vision = Vision::new(ModelManager::new(dir.into(), &VISION), host);

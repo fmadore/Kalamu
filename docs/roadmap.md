@@ -370,15 +370,28 @@ In this order. Work that keeps what has shipped sound comes before new features.
    Back, remembered filters, panes and rotation, Ctrl F on the tables, a shortcut overview, a
    drop target that shows, undo for two removals; the screens opened in Chromium in CI, the app
    linked on every system, a weekly audit. Left, in this order:
-   - **The shell** ([#148](https://github.com/fmadore/Kalamu/issues/148)): a start-up failure
-     that says why, an update notice for the installer and the disk image, the tray and
-     notification computed by the engine, the keychain off the window's thread; and a *Clear
-     unused results* in Settings, on the engine's `prune_results`
-     ([#143](https://github.com/fmadore/Kalamu/issues/143)).
-   - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)): llama.cpp's
-     runs on `media`'s stoppable runner, with a watchdog; a graphics processor not given up for
-     one bad page; downloads that resume and check the disk; 24-bit AIFF at the next FFmpeg
-     build; children that end with the app.
+   - **The shell** ([#148](https://github.com/fmadore/Kalamu/issues/148)). Done on
+     [10 November](decisions/2026-11-10-shell.md), first compiled by CI: a start-up that cannot
+     open its folders, its job database (a newer version's is now refused by the store) or its
+     libraries says why in a native message, in English or French, naming the logs folder, and
+     ends; unreadable settings moved aside and said once; the keychain read off the window's
+     thread, a failed read no longer kept as a missing key; an exported record's Markdown never
+     replacing a file of the researcher's; FFmpeg and llama.cpp chosen by an environment
+     variable in development builds only; a month of logs; *Clear unused results* in Settings
+     ([#143](https://github.com/fmadore/Kalamu/issues/143)); and the installer's and disk
+     image's copies told of a newer release from the model list. Left: the tray, the taskbar
+     and the notifications computed by the engine rather than from the interface's job list;
+     all of it tried on a real Windows PC and Mac.
+   - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)). Done
+     ([decision](decisions/2026-11-10-offline-robustness.md)), built and tested on Linux: llama.cpp's
+     runs on `media`'s stoppable runner, ended after ten minutes of silence, its version bounded;
+     a graphics processor given up only when the processor answers what failed on it, at once
+     when it hangs; model downloads that continue where they stopped and check the drive's free
+     space first; the Whisper helper's device listing no longer stalled by its own diagnostics;
+     a failed engine's last diagnostic lines in the log; page images and texts in a folder of
+     the app's own, emptied at start-up. Still to check on a PC with a graphics processor and on
+     a Mac, where CI is the first to build the shell's one-line part. Left: 24-bit AIFF at the
+     next FFmpeg build; children that end with the app (a Job Object on Windows).
    - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)): signing
      secrets kept from build code, the installers packaged on a pull request, interaction
      tests, checksums and an attestation.
@@ -390,8 +403,11 @@ In this order. Work that keeps what has shipped sound comes before new features.
      under 0.1 ms); still to try on Windows and a Mac, where CI is the first to build the
      shell's part.
    - **A model's abilities in the catalogue**
-     ([#147](https://github.com/fmadore/Kalamu/issues/147)), an architecture checkpoint item:
-     five places match a model's or a preset's name.
+     ([#147](https://github.com/fmadore/Kalamu/issues/147)). Done
+     ([decision](decisions/2026-11-10-model-abilities.md)): Claude's fallback, OpenAI's speakers
+     and Gemini's speech request follow the catalogue, Mistral guesses no level from a name, and
+     a prompt says its pages are dense; cache keys unchanged. Still to compile on CI: one test in
+     `offline`.
    - **Keyboard and interface, the rest**
      ([#146](https://github.com/fmadore/Kalamu/issues/146),
      [#149](https://github.com/fmadore/Kalamu/issues/149)): all of it tried in WebKit and with a

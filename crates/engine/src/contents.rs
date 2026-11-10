@@ -5,7 +5,6 @@
 //! retried, resumed and counted in the job's progress. Its key is made from the pages' own keys:
 //! reading a page again, or choosing another merge model or prompt, makes it new.
 
-use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use kalamu_core::{
@@ -77,10 +76,7 @@ impl Engine {
             .iter()
             .map(|(label, fields)| (label.clone(), fields.as_slice()))
             .collect();
-        let stem = Path::new(&source.file_name)
-            .file_stem()
-            .map(|s| s.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "document".into());
+        let stem = crate::source_stem(&source.file_name, "document");
         let input = PreparedInput {
             piece: PieceRef::Whole,
             mime: "text/plain".into(),

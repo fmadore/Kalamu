@@ -1588,6 +1588,9 @@ async fn a_set_up_s_reasoning_level_is_settled_and_sent_with_the_model_s_output_
         default: None,
     });
     fake.limits.max_output_tokens = Some(4_096);
+    // Its abilities reach the provider with the level, whatever it is called.
+    fake.refusal_fallback = true;
+    fake.speakers = false;
     catalog.models.push(fake);
     f.engine.set_catalog(catalog);
 
@@ -1609,6 +1612,9 @@ async fn a_set_up_s_reasoning_level_is_settled_and_sent_with_the_model_s_output_
         Some(&kalamu_core::Tuning {
             reasoning: Some("none".into()),
             max_output_tokens: Some(4_096),
+            refusal_fallback: true,
+            speakers: false,
+            no_prompt: false,
         })
     );
 

@@ -465,10 +465,7 @@ impl Engine {
 
 /// A source's name without its extension.
 fn stem(source: &SourceFile) -> String {
-    Path::new(&source.file_name)
-        .file_stem()
-        .map(|s| s.to_string_lossy().into_owned())
-        .unwrap_or_else(|| source.file_name.clone())
+    crate::source_stem(&source.file_name, &source.file_name)
 }
 
 fn file_name(path: &Path) -> String {

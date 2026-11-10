@@ -102,6 +102,8 @@ pub mod id {
     pub const SOURCE_MISSING: &str = "source.not_found";
     /// Work sent to a cloud provider the researcher has not agreed to send their files to.
     pub const CONSENT: &str = "provider.consent";
+    /// Work that waits until no job runs, such as clearing unused results.
+    pub const JOBS_RUNNING: &str = "app.jobs_running";
 }
 
 pub type CmdResult<T> = Result<T, AppError>;

@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "updated": "2026-11-07",
+  "latest_version": "1.5.0",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
     {
@@ -747,6 +748,7 @@
       "status": "stable",
       "recommended_for": [],
       "provider_default_for": [],
+      "refusal_fallback": true,
       "pricing": {
         "input_per_mtok": 4.0,
         "output_per_mtok": 20.0,
@@ -798,6 +800,7 @@
         "text_extraction",
         "analysis"
       ],
+      "refusal_fallback": true,
       "pricing": {
         "input_per_mtok": 2.0,
         "output_per_mtok": 10.0,

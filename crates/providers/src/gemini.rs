@@ -17,8 +17,9 @@
 //! through batch mode ([`batch`]); recordings and YouTube links, which a batch is not documented
 //! to take, always go one by one.
 //!
-//! Google's speech-to-text models (`gemini-3.5-transcribe`) take a request of their own: the
-//! recording and `audioTranscriptionConfig` only, no prompt, system instruction or thinking.
+//! Google's speech-to-text models (`gemini-3.5-transcribe`, which the catalogue lists as taking
+//! no prompt) take a request of their own: the recording and `audioTranscriptionConfig` only,
+//! no prompt, system instruction or thinking.
 //! Speakers and word timings come back beside the text, one part per utterance.
 
 mod batch;
@@ -238,10 +239,10 @@ impl Provider for Gemini {
         }
     }
 
-    fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+    fn request_settings(&self, task: Task, _model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
         // Its speakers and word timings are the set-up's own options, which the record states
         // apart; it sends nothing else a pipeline could set.
-        if transcribe::transcriber(model) {
+        if transcribe::transcriber(tuning) {
             return Vec::new();
         }
         // As for a page, which every task but a transcription or a correction reads.
@@ -253,7 +254,7 @@ impl Provider for Gemini {
     }
 
     fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
-        if transcribe::transcriber(request.model) {
+        if transcribe::transcriber(request.tuning) {
             return transcribe::settings(request.options);
         }
         settings(&request.input.mime, request.tuning)
@@ -271,7 +272,7 @@ impl Provider for Gemini {
             )));
         }
         let url = format!("{}/models/{}:generateContent", self.base_url, request.model);
-        if transcribe::transcriber(request.model) {
+        if transcribe::transcriber(request.tuning) {
             if request.task != Task::AudioTranscription || request.input.mime == YOUTUBE_LINK {
                 return Err(ProviderError::InvalidRequest(format!(
                     "{} transcribes recordings only",

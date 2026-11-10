@@ -26,8 +26,8 @@ use kalamu_core::{
 
 use crate::cpu::{self, threads};
 use crate::device::{Backend, Placement};
-use crate::host::{Checked, LlamaHost};
-use crate::llama::{Run, Scratch, page_image};
+use crate::host::{Checked, LlamaHost, Work, fingerprint};
+use crate::llama::{Run, RunError, Scratch, page_image};
 use crate::models::{ModelFile, ModelManager, ModelSet};
 
 pub const LLM_ID: &str = "local-llm";
@@ -473,8 +473,9 @@ impl Provider for LocalLlm {
             let llama = inner.host.program(&placement)?;
             let leases = inner.checked.leases(&inner.models, model)?;
             let path = |p: &std::path::Path| p.to_string_lossy().into_owned();
-            let scratch = Scratch::new()?;
-            let schema = path(&scratch.write("schema.json", schema.as_bytes())?);
+            let scratch = Scratch::new(inner.host.scratch())?;
+            let schema_text = schema;
+            let schema = path(&scratch.write("schema.json", schema_text.as_bytes())?);
             let logical = std::thread::available_parallelism().map_or(2, usize::from);
             let threads = threads(logical);
             let model_path = path(leases[0].path());
@@ -504,28 +505,50 @@ impl Provider for LocalLlm {
             };
             args.extend(["-n".to_owned(), limit.to_string()]);
             args.extend(placement.arguments());
-            let ran = match reading {
-                Reading::Text { .. } => llama.run_text(&args, &stop),
-                Reading::Page { .. } => llama.run(&args, &stop),
+            let (ran, request) = match &reading {
+                Reading::Text { system, user } => (
+                    llama.run_text(&args, &stop),
+                    fingerprint(&[
+                        recipe.model.as_bytes(),
+                        schema_text.as_bytes(),
+                        system.as_bytes(),
+                        user.as_bytes(),
+                    ]),
+                ),
+                Reading::Page {
+                    system,
+                    user,
+                    image,
+                    ..
+                } => (
+                    llama.run(&args, &stop),
+                    fingerprint(&[
+                        recipe.model.as_bytes(),
+                        schema_text.as_bytes(),
+                        system.as_bytes(),
+                        user.as_bytes(),
+                        image,
+                    ]),
+                ),
             };
-            let run = match (ran, inner.host.graphics(&placement)) {
-                (Err(ProviderError::Other(reason)), _) if reason.contains("too long") => {
-                    return Err(ProviderError::InvalidRequest(
-                        "This text is too long for the offline language models. Split it into \
-                         shorter documents, or choose a cloud model."
-                            .into(),
-                    ));
+            // The request's own fault, wherever it ran: says nothing against the device, and on
+            // the processor clears a suspicion this request raised.
+            if let Err(RunError::Failed(reason)) = &ran
+                && reason.contains("too long")
+            {
+                if inner.host.graphics(&placement).is_none() {
+                    let _ = inner.host.settle(&placement, request, ran, Work::Request);
                 }
-                // Out of memory, a driver fault: the rest of the session runs on the processor,
-                // starting with this request, which the engine sends again.
-                (Err(ProviderError::Other(reason)), Some(graphics)) => {
-                    graphics.give_up(&reason);
-                    return Err(ProviderError::Transient(format!(
-                        "The graphics processor could not run this request ({reason}); it runs again on the processor"
-                    )));
-                }
-                (ran, _) => ran?,
-            };
+                return Err(ProviderError::InvalidRequest(
+                    "This text is too long for the offline language models. Split it into \
+                     shorter documents, or choose a cloud model."
+                        .into(),
+                ));
+            }
+            // A failure on the graphics processor sends the request back to the engine, which
+            // runs it again on the processor; whether the device is then given up depends on
+            // how that goes (`device::verdict`).
+            let run = inner.host.settle(&placement, request, ran, Work::Request)?;
             Ok((run, inner.host.version().to_owned()))
         })
         .await
@@ -657,6 +680,7 @@ mod tests {
                 Vec::new(),
                 true,
                 dir.path().to_owned(),
+                dir.path().join("scratch"),
             )),
         );
         assert!(!multimodal.available());
@@ -767,8 +791,8 @@ mod tests {
     #[test]
     fn the_output_limit_follows_the_catalogue_within_bounds() {
         let tuning = |n| Tuning {
-            reasoning: None,
             max_output_tokens: n,
+            ..Tuning::default()
         };
         assert_eq!(output_limit(&tuning(None)), MAX_TOKENS);
         assert_eq!(output_limit(&tuning(Some(2048))), 2048);
@@ -815,6 +839,7 @@ mod tests {
             Vec::new(),
             true,
             std::env::temp_dir(),
+            std::env::temp_dir().join("kalamu-offline-scratch"),
         ));
         let llm = LocalLlm::new(ModelManager::new(dir.into(), &LLM), host);
         let fields = summary();

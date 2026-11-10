@@ -6,7 +6,7 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatDay, localeNames, messages, placeholders } from '#lib/i18n/index.js';
 	import { osNames } from '#lib/platform.js';
-	import { api } from '#lib/tauri.js';
+	import { api, ask } from '#lib/tauri.js';
 	import {
 		app,
 		applyLanguage,
@@ -14,6 +14,7 @@
 		hasKey,
 		openLink,
 		refreshKeys,
+		refreshRelease,
 		toast,
 		type SettingsTab
 	} from '#lib/state.svelte.js';
@@ -86,9 +87,33 @@
 			app.catalog = await api.refreshCatalog();
 			// A model added or retired changes which models suit each task.
 			app.rules = await api.taskRules();
+			// The list may name a newer release.
+			await refreshRelease();
 			toast(m.settings.catalogUpdated(formatDay(app.catalog.updated)));
 		} catch (e) {
 			toast(describeError(e, m), { kind: 'error' });
+		}
+	}
+
+	// The engine holds the database while it compacts it, so clearing waits until no job runs.
+	const jobsRunning = $derived(app.jobs.some((j) => j.status === 'running'));
+	let clearing = $state(false);
+
+	async function clearUnused() {
+		const agreed = await ask(m.settings.clearUnusedConfirm, {
+			ok: m.settings.clearUnusedOk,
+			cancel: m.common.cancel
+		});
+		if (!agreed) return;
+		clearing = true;
+		try {
+			const { results, bytes } = await api.clearUnusedResults();
+			const count = new Intl.NumberFormat(m.locale.tag).format(results);
+			toast(m.settings.clearUnusedDone(results, count, m.settings.size(bytes)));
+		} catch (e) {
+			toast(describeError(e, m), { kind: 'error' });
+		} finally {
+			clearing = false;
 		}
 	}
 </script>
@@ -226,6 +251,17 @@
 				<p class="muted small">{m.settings.catalogNote}</p>
 			</section>
 
+			<section class="card block" aria-labelledby="storage-settings">
+				<h2 id="storage-settings">{m.settings.storageTitle}</h2>
+				<p class="muted small">{m.settings.storageHint}</p>
+				<div class="row">
+					<button class="btn sm" disabled={jobsRunning || clearing} onclick={clearUnused}
+						>{m.settings.clearUnused}</button
+					>
+					{#if jobsRunning}<span class="muted small">{m.settings.clearUnusedBusy}</span>{/if}
+				</div>
+			</section>
+
 			<section class="card block" aria-labelledby="look-settings">
 				<h2 id="look-settings">{m.settings.appearanceTitle}</h2>
 				<label class="field narrow">
@@ -251,6 +287,12 @@
 			<section class="card block" aria-labelledby="about">
 				<h2 id="about">{m.settings.aboutTitle}</h2>
 				<p>{m.settings.version(app.info?.version ?? '')}</p>
+				{#if app.release}
+					<p class="small">
+						{m.settings.newerRelease(app.release.version)}
+						<ExternalLink href={app.release.url}>{m.settings.releasePage}</ExternalLink>
+					</p>
+				{/if}
 				<p class="small">
 					{m.settings.dataFolder}{m.common.colon} <span class="path">{app.info?.data_dir}</span>
 				</p>

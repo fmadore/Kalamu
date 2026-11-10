@@ -335,10 +335,7 @@ fn place(job: &Job, source: &SourceFile) -> (PathBuf, String) {
     let stem = if source.kind == InputKind::YouTube {
         source.file_name.clone()
     } else {
-        Path::new(&source.file_name)
-            .file_stem()
-            .map(|s| s.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "result".into())
+        crate::source_stem(&source.file_name, "result")
     };
     (dir, stem)
 }

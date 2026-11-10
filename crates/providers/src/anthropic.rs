@@ -1,10 +1,10 @@
 //! Anthropic Claude through the Messages API, as raw HTTP (there is no official Rust SDK).
 //!
 //! API version 2026-10-21, which refuses sampling parameters, so none are sent. Effort is set to
-//! `low`, the setting iwac-ai-pipelines uses for page transcription. On models that support it,
-//! a safety-classifier refusal is retried server-side on a fallback model (`fallbacks:
-//! "default"`); the response's `model` field names the model that wrote the text, and that is
-//! what provenance records.
+//! `low`, the setting iwac-ai-pipelines uses for page transcription. On models the catalogue
+//! says support it (`refusal_fallback`), a safety-classifier refusal is retried server-side on a
+//! fallback model (`fallbacks: "default"`); the response's `model` field names the model that
+//! wrote the text, and that is what provenance records.
 //!
 //! The system prompt carries a cache marker: it is the part every page of a job shares, and on
 //! the current models a prefix of 512 tokens or more is then read back at a tenth of the price
@@ -29,8 +29,6 @@ use crate::http::{base64, ids, send_json, send_text};
 const BASE_URL: &str = "https://api.anthropic.com/v1";
 const API_VERSION: &str = "2026-10-21";
 const FALLBACK_BETA: &str = "server-side-fallback-2026-07-01";
-/// Haiku has no server-side fallback.
-const FALLBACK_MODELS: &[&str] = &["claude-opus-5-5", "claude-sonnet-5-5"];
 /// For a model the catalogue lacks; one in the catalogue gets its own output limit (128,000 on
 /// the current models) and the effort set for the job.
 const MAX_TOKENS: u32 = 16_000;
@@ -44,13 +42,14 @@ fn tuned(tuning: &Tuning) -> (&str, u32) {
     )
 }
 
-/// A batch refuses `fallbacks`, so only a request sent on its own asks for them.
-fn sends_fallbacks(model: &str, batched: bool) -> bool {
-    !batched && FALLBACK_MODELS.contains(&model)
+/// A batch refuses `fallbacks`, so only a request sent on its own asks for them, of a model that
+/// has them (Haiku has none).
+fn sends_fallbacks(tuning: &Tuning, batched: bool) -> bool {
+    !batched && tuning.refusal_fallback
 }
 
 /// The settings a request carries, decided as `body` decides them.
-fn settings(task: Task, model: &str, tuning: &Tuning, batched: bool) -> Vec<RequestSetting> {
+fn settings(task: Task, tuning: &Tuning, batched: bool) -> Vec<RequestSetting> {
     if task == Task::AudioTranscription {
         return Vec::new();
     }
@@ -60,7 +59,7 @@ fn settings(task: Task, model: &str, tuning: &Tuning, batched: bool) -> Vec<Requ
         RequestSetting::new("max_tokens", max),
         RequestSetting::new("system.*.cache_control.type", "ephemeral"),
     ];
-    if sends_fallbacks(model, batched) {
+    if sends_fallbacks(tuning, batched) {
         settings.push(RequestSetting::new("fallbacks", "default"));
     }
     settings
@@ -122,7 +121,7 @@ impl Anthropic {
             }],
             "output_config": { "effort": effort },
         });
-        if sends_fallbacks(request.model, batched) {
+        if sends_fallbacks(request.tuning, batched) {
             body["fallbacks"] = json!("default");
         }
         if let Some(fields) = request.analysis {
@@ -254,12 +253,12 @@ impl Provider for Anthropic {
         }
     }
 
-    fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
-        settings(task, model, tuning, false)
+    fn request_settings(&self, task: Task, _model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
+        settings(task, tuning, false)
     }
 
     fn sent_settings(&self, request: &ProcessRequest<'_>, batched: bool) -> Vec<RequestSetting> {
-        settings(request.task, request.model, request.tuning, batched)
+        settings(request.task, request.tuning, batched)
     }
 
     async fn process(
@@ -275,7 +274,7 @@ impl Provider for Anthropic {
         let mut http = self
             .authorised(self.client.post(format!("{}/messages", self.base_url)), key)
             .json(&Self::body(&request, false));
-        if FALLBACK_MODELS.contains(&request.model) {
+        if sends_fallbacks(request.tuning, false) {
             http = http.header("anthropic-beta", FALLBACK_BETA);
         }
         let context = BatchContext {

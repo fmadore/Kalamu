@@ -48,11 +48,14 @@ pub struct OutdatedFiles {
 }
 
 /// What pruning the result cache freed ([`JobStore::prune_results`]).
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
 pub struct PrunedResults {
     /// Results deleted.
+    #[ts(type = "number")]
     pub results: u64,
     /// The database's size before less its size after, in bytes.
+    #[ts(type = "number")]
     pub bytes: u64,
 }
 
@@ -64,6 +67,13 @@ pub enum StoreError {
     Database(String),
     #[error("Stored data could not be read: {0}")]
     Corrupt(String),
+    /// The database was written by a newer version of Kalamu, whose changes this one does not
+    /// know: running on it could lose them, so it is not opened.
+    #[error(
+        "The job database was written by a newer version of Kalamu (schema {found}; this \
+         version knows {known})"
+    )]
+    Newer { found: u64, known: u64 },
 }
 
 /// Persistence used by the engine. Implemented by SQLite in production and in memory in tests.

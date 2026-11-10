@@ -28,8 +28,10 @@ coding rules are in [AGENTS.md](../AGENTS.md).
   WHISPER_SMOKE_VAD=<ggml-silero-v5.1.2.bin> cargo test -p kalamu-offline whisper::tests::smoke
   -- --ignored --exact --nocapture`, as CI does; `whisper::tests::vulkan_smoke` does the same
   through the helper named by `WHISPER_VULKAN_HELPER`.
-- For recordings and videos during development, an FFmpeg on `PATH` (releases bundle their own
-  LGPL build; see [ffmpeg.md](ffmpeg.md)).
+- For recordings and videos during development, an FFmpeg on `PATH` or in the folder
+  `KALAMU_FFMPEG_DIR` names (releases bundle their own LGPL build and look nowhere else; see
+  [ffmpeg.md](ffmpeg.md)); llama.cpp's programs likewise on `PATH` or in `KALAMU_LLAMA_DIR`
+  ([llama.md](llama.md)).
 
 ## Run
 
@@ -103,6 +105,9 @@ parameters open a given state:
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `view=projects`, `project`, `document` | Opens the list of projects, a sample project, or one of its documents |
 | `view=workflows`, `workflow`, `run` | Opens the workflows and their runs, a sample workflow, or its run waiting for a review |
+| `view=settings-general`, `settings-about` | Opens Settings on its General or About tab |
+| `release` | The model list names a release newer than this copy (the sidebar's line, About) |
+| `set-aside` | The settings file could not be read at launch and was moved aside |
 | `theme=light` or `dark` | Forces the theme |
 | `open=<word>` | Opens the readings of the highlighted words with that text in the review |
 | `compare` | Opens the review with another set-up's text in the compare pane |
@@ -140,6 +145,13 @@ from `samples/`; it
 publishes the release once every asset is attached, as a pre-release while the version starts
 with 0. A hyphenated tag (`v1.0.0-rc1`) builds the same draft and leaves it unpublished. To
 rebuild a tag, run the workflow by hand from the Actions tab.
+
+4. Once the release is published, set `latest_version` at the top of
+   `crates/catalog/catalog.json` to its version and `updated` to the day, and merge. Copies
+   installed from the releases page (not the Store apps) read it at their next refresh and
+   say that the new version is out, with a link to its page here
+   ([decision](decisions/2026-11-10-shell.md)). Only a plain version (`1.6.0`) is read; the
+   app never names one before its release is public, since the link is made from the number.
 
 To build an installer locally, fetch the bundled FFmpeg and llama.cpp first; they come from the
 builds in `.github/workflows/ffmpeg.yml` and `.github/workflows/llama.yml`

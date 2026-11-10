@@ -85,7 +85,8 @@ Vulkan, shipped next to the app on Windows like llama.cpp's programs and started
 Key traits, defined in `core`:
 
 - **`Provider`**: declares its capabilities (tasks, accepted inputs, languages, limits) and
-  processes one prepared piece. The engine never matches on a provider's name.
+  processes one prepared piece. The engine never matches on a provider's name, nor a provider
+  on a model's: what shapes a model's request is a catalogue field, passed in `Tuning`.
 - **`Exporter`**: turns stored results into one format. Adding a format touches nothing else.
 - **`JobStore`**: persistence used by the engine (jobs, results, snapshots, workflow runs), so
   the engine can be tested with an in-memory store.

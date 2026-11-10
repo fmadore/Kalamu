@@ -178,7 +178,8 @@ no text layer needs *Extract text* instead.
   as many as the model can write in one answer, so it sees an article that runs over the next
   page. Each page is still reviewed, corrected and exported on its own: the model marks where
   each page begins, and a page it leaves out or cuts short is read again alone
-  ([decision](decisions/2026-11-01-pages-per-call.md)).
+  ([decision](decisions/2026-11-01-pages-per-call.md)). A prompt marked *Pages full of text*
+  (the newspaper default, and any the researcher marks) sends fewer pages together.
 - **How much the model thinks.** For a model that reasons, *Thinking* offers the levels its
   provider documents, set to a suggestion: the lowest for reading pages and recordings, `low`
   for analyses. More thinking can help a hard hand or an analysis, and costs more. Every answer
@@ -658,6 +659,9 @@ is remembered per task. Details are in [formats.md](formats.md).
   where the prompts are kept and links to them.
 - **Variables** `{languages}` and `{speakers}` are filled from the job's settings, so one prompt
   works across projects.
+- **Pages full of text.** A text extraction prompt can say its pages are dense (the newspaper
+  default does), so fewer go together when a job reads several pages in one call. The hint is
+  the prompt's, never read from its name, and travels with it when it is copied or shared.
 - **Share** prompts and analyses by exporting and importing them as small JSON files.
 - **Recorded in provenance.** Each output's `provenance.json` stores the full prompt text and
   the analysis's fields, so results stay reproducible after a preset is edited.
@@ -665,7 +669,10 @@ is remembered per task. Details are in [formats.md](formats.md).
 ## Keeping models current
 
 - **A model catalogue as data, not code**: each provider's models, tasks, languages, limits and
-  prices in a catalogue file the app refreshes from this repository without a new release.
+  prices in a catalogue file the app refreshes from this repository without a new release. What
+  shapes a model's request (whether it takes a prompt, labels speakers, has a server-side
+  fallback on a refusal) is a field of its entry, never read from its name, so a new model is
+  a new entry ([decision](decisions/2026-11-10-model-abilities.md)).
 - **A recommended model per task**, reviewed whenever a provider releases something better;
   older models remain selectable and retired ones are flagged.
 - **The exact model version is recorded** in `provenance.json`, with the settings each request

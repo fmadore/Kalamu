@@ -401,3 +401,70 @@ fn the_dictionarys_prompt_is_listed_and_edited_but_never_offered_for_documents()
     );
     Ok(())
 }
+
+#[test]
+fn the_newspaper_default_is_dense_and_its_copies_keep_it() -> Result<(), PromptError> {
+    let mut library = PromptLibrary::in_memory();
+    let dense: Vec<String> = library
+        .list(None)
+        .into_iter()
+        .filter(Preset::is_dense)
+        .map(|p| p.id)
+        .collect();
+    assert_eq!(dense, ["text_extraction.newspaper"]);
+
+    // A researcher's own copy is sized like the default, whatever it is called.
+    let copy = library.duplicate("text_extraction.newspaper", "Le Réveil")?;
+    assert!(copy.id.starts_with("user-") && copy.is_dense());
+    // And their own prompt may be marked dense, or not, whatever its name says.
+    let mut own = library.get("text_extraction.printed")?;
+    own.id = String::new();
+    own.name = "Gazettes".into();
+    own.dense = Some(true);
+    assert!(library.save(own)?.is_dense());
+    let mut named = library.get("text_extraction.printed")?;
+    named.id = String::new();
+    named.name = "Newspaper pages".into();
+    assert!(!library.save(named)?.is_dense());
+    // Only pages read for their text go together, so no other task's prompt is dense.
+    let mut analysis = library.get("analysis.entities")?;
+    analysis.dense = Some(true);
+    assert!(!library.save(analysis)?.is_dense());
+    Ok(())
+}
+
+/// Files written before the hint existed: an edited default, a researcher's prompt and a
+/// shared file, none of which says.
+#[test]
+fn presets_saved_before_the_density_hint_read_as_they_did() -> Result<(), PromptError> {
+    let dir = tempfile::tempdir().map_err(io)?;
+    let mut library = PromptLibrary::open(dir.path())?;
+    let mut edited = library.get("text_extraction.newspaper")?;
+    edited.instructions = "Shorter.".into();
+    library.save(edited)?;
+    let mut own = library.get("text_extraction.printed")?;
+    own.id = String::new();
+    let own = library.save(own)?;
+    for id in ["text_extraction.newspaper", own.id.as_str()] {
+        let path = dir.path().join(format!("{id}.json"));
+        let mut file: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&path).map_err(io)?).map_err(io)?;
+        assert!(file.get("dense").is_some(), "{id}: the hint is written");
+        if let Some(fields) = file.as_object_mut() {
+            fields.remove("dense");
+        }
+        fs::write(&path, file.to_string()).map_err(io)?;
+    }
+    let reopened = PromptLibrary::open(dir.path())?;
+    assert!(reopened.get("text_extraction.newspaper")?.is_dense());
+    assert!(!reopened.get(&own.id)?.is_dense());
+
+    let mut library = reopened;
+    let old_file = library
+        .export(&["text_extraction.newspaper".to_string()])?
+        .replace("\"dense\": true,", "")
+        .replace(",\n      \"dense\": true", "");
+    assert!(!old_file.contains("dense"), "{old_file}");
+    assert!(library.import(&old_file)?[0].is_dense());
+    Ok(())
+}

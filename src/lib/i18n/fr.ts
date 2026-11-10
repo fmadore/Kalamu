@@ -1049,8 +1049,8 @@ export const fr: Messages = {
 			`Supprimer la configuration « ${name} » ? Les traitements déjà effectués avec elle sont conservés.`,
 		pipelineExport: (name: string) =>
 			`Exporter « ${name} » : modèles, réglages et prompts complets, pour les citer ou les partager`,
-		pipelineExported: (file: string) =>
-			`${file}.json enregistré, à importer dans Kalamu, et ${file}.md, pour une section méthodologique.`,
+		pipelineExported: (file: string, markdown: string) =>
+			`${file}.json enregistré, à importer dans Kalamu, et ${markdown}, pour une section méthodologique.`,
 		pipelineImport: 'Importer une configuration',
 		pipelineImported: (name: string) => `« ${name} » importée avec ses prompts.`,
 		linesTitle: 'Retours à la ligne',
@@ -1519,6 +1519,9 @@ export const fr: Messages = {
 		userPrompt: 'Requête envoyée avec chaque page',
 		userPromptDocument: 'Requête envoyée avec chaque document',
 		mergeInstructions: 'Instructions pour regrouper les pages',
+		dense: 'Pages chargées de texte',
+		denseHint:
+			'Pour les journaux et autres pages aux colonnes serrées. Quand un traitement lit plusieurs pages par appel, il en regroupe moins, pour que la réponse ait la place de tout leur texte.',
 		save: 'Enregistrer',
 		duplicate: 'Dupliquer',
 		copyName: (name: string) => `${name} (copie)`,
@@ -1703,7 +1706,24 @@ export const fr: Messages = {
 			gemma: 'Gemma 4'
 		},
 		privacy:
-			'Rien n’est envoyé au développeur : ni fichiers, ni clés, ni résultats, ni données d’utilisation. Un texte produit par l’IA peut être fluide mais faux ; vérifiez un échantillon sur la source.'
+			'Rien n’est envoyé au développeur : ni fichiers, ni clés, ni résultats, ni données d’utilisation. Un texte produit par l’IA peut être fluide mais faux ; vérifiez un échantillon sur la source.',
+		newerRelease: (version: string) => `Kalamu ${version} est disponible.`,
+		releasePage: 'Les nouveautés et le téléchargement',
+		hideRelease: 'Masquer jusqu’à la prochaine version',
+		storageTitle: 'Réponses conservées',
+		storageHint:
+			'Kalamu conserve chaque réponse donnée par un modèle : une page demandée de nouveau avec les mêmes réglages ne coûte rien. Le nettoyage supprime les réponses conservées des traitements que vous avez supprimés, pour libérer de la place sur le disque ; redemander l’une de ces pages serait de nouveau payant.',
+		clearUnused: 'Supprimer les résultats inutilisés',
+		clearUnusedBusy: 'Disponible quand aucun traitement n’est en cours.',
+		clearUnusedConfirm:
+			'Supprimer les réponses conservées des traitements supprimés ? Redemander les mêmes pages serait de nouveau payant.',
+		clearUnusedOk: 'Supprimer',
+		clearUnusedDone: (count: number, answers: string, size: string) =>
+			count === 0
+				? 'Aucune réponse inutilisée à supprimer.'
+				: `${answers} ${count === 1 ? 'réponse supprimée' : 'réponses supprimées'}, ${size} libérés.`,
+		setAside: (path: string) =>
+			`Vos paramètres n’ont pas pu être lus : Kalamu a démarré avec ses réglages par défaut. L’ancien fichier est conservé sous ${path}.`
 	},
 	report: {
 		link: 'Signaler un problème',
@@ -1946,6 +1966,9 @@ export const fr: Messages = {
 		preview: 'préversion',
 		retiring: 'bientôt retiré',
 		opensInBrowser: ' (s’ouvre dans votre navigateur)',
+		/** An exported record's Markdown, written under another name than the JSON's. */
+		markdownBeside: (name: string) =>
+			`Le Markdown a été enregistré sous « ${name} », un de vos fichiers portant déjà son nom.`,
 		linkFailed: (url: string) =>
 			`Cette page n’a pas pu être ouverte dans votre navigateur : ${url}`,
 		unsaved: 'Vos modifications ne sont pas enregistrées. Quitter et les abandonner ?',
@@ -2059,9 +2082,11 @@ export const fr: Messages = {
 		'offline.in_use': 'Un traitement en cours utilise ce modèle ; mettez-le d’abord en pause.',
 		'offline.cancelled': 'Téléchargement annulé.',
 		'offline.download':
-			'Le modèle n’a pas pu être téléchargé. Vérifiez votre connexion internet et réessayez.',
+			'Le modèle n’a pas pu être téléchargé. Vérifiez votre connexion internet et réessayez : le téléchargement reprendra là où il s’est arrêté.',
 		'offline.integrity': 'Le modèle téléchargé était endommagé et a été supprimé. Réessayez.',
 		'offline.io': 'Le fichier du modèle n’a pas pu être lu ou écrit.',
+		'offline.no_space':
+			'Il n’y a pas assez d’espace libre sur le disque qui contient les modèles. Libérez de la place et réessayez.',
 		'output.write': 'Les fichiers de résultats n’ont pas pu être écrits.',
 		'keys.keychain': 'Le trousseau du système a refusé la demande.',
 		'keys.format':
@@ -2074,6 +2099,8 @@ export const fr: Messages = {
 		'file.missing':
 			'Le fichier n’est plus là où il a été ajouté : ses pages ne peuvent pas être affichées. Ses résultats sont conservés ; remettez-le à sa place pour le voir ici.',
 		'app.internal': 'Une erreur s’est produite dans l’application.',
+		'app.jobs_running':
+			'Pas pendant qu’un traitement est en cours : mettez-le en pause ou attendez qu’il se termine.',
 		'app.notDesktop': 'Cette fonction n’est disponible que dans l’application de bureau.'
 	}
 };

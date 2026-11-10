@@ -11,6 +11,7 @@ import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { PieceStatus } from './bindings/PieceStatus.js';
 import type { QueueItem } from './bindings/QueueItem.js';
+import type { Release } from './bindings/Release.js';
 import type { ResultKey } from './bindings/ResultKey.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
@@ -137,6 +138,8 @@ export const app = $state({
 	rules: [] as TaskRules[],
 	keys: [] as KeyStatus[],
 	offline: null as OfflineStatus | null,
+	/** A release newer than this copy, as the model list names it; never in a store's copy. */
+	release: null as Release | null,
 	settings: null as Settings | null,
 	jobs: [] as JobSummary[],
 	/** The projects, for the sidebar's list of them. */
@@ -325,6 +328,13 @@ export async function refreshKeys(): Promise<void> {
 
 export async function refreshOffline(): Promise<void> {
 	app.offline = await api.offlineStatus();
+}
+
+/** The release the model list names, if newer than this copy; kept as it was when it cannot be
+ * asked. Only an https page is ever offered as its link. */
+export async function refreshRelease(): Promise<void> {
+	const release = await api.newerRelease().catch(() => app.release);
+	app.release = release?.url.startsWith('https://') ? release : null;
 }
 
 /**

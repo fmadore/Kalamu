@@ -10,7 +10,6 @@ export const NO_RESULT = new Set([
 	'delete_job',
 	'delete_preset',
 	'download_model',
-	'export_pipeline',
 	'export_presets',
 	'hide_window',
 	'pause_job',

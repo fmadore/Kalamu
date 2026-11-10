@@ -57,6 +57,13 @@ tracing-appender = "0.2.5"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 ts-rs.workspace = true
 
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+# The message shown when the app cannot start (`src/start_failure.rs`), before the interface
+# exists: the system's own message box, called directly on the main thread. The version and
+# features the dialog plugin already builds, so nothing new is compiled (0.18 is out; the plugin
+# is on 0.17).
+rfd = { version = "0.17.2", default-features = false, features = ["common-controls-v6"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 # Whisper on the graphics processor (Metal), which every Apple Silicon Mac has.
 kalamu-offline = { workspace = true, features = ["metal"] }

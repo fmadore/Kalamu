@@ -332,3 +332,74 @@ fn reasoning_suggests_the_lowest_for_reading_and_keeps_to_the_levels_a_model_has
     // Where Mistral documents no output limit, none is set.
     assert_eq!(medium.limits.max_output_tokens, None);
 }
+
+/// The abilities providers read from the catalogue (#147) are, for today's models, exactly what
+/// they decided by name before: Claude's fallback for Opus and Sonnet 5.5, OpenAI's speakers
+/// for the diarizing model, Gemini's speech request for its transcribe model, and the lowest
+/// thinking level Mistral's hosted GLM and DeepSeek accept.
+#[test]
+fn abilities_are_what_providers_once_read_from_names() -> Result<(), CatalogError> {
+    let catalog = Catalog::from_json(BUNDLED)?;
+    for model in &catalog.models {
+        let id = model.id.as_str();
+        let tuning = model.tuning(Task::AudioTranscription, None);
+        match model.provider.as_str() {
+            "anthropic" => assert_eq!(
+                tuning.refusal_fallback,
+                ["claude-opus-5-5", "claude-sonnet-5-5"].contains(&id),
+                "{id}"
+            ),
+            "openai" if model.does(Task::AudioTranscription) => {
+                assert_eq!(tuning.speakers, id.contains("diarize"), "{id}");
+            }
+            "gemini" => assert_eq!(tuning.no_prompt, id.contains("transcribe"), "{id}"),
+            // The guess applied only to a model the catalogue lacks: every chat model listed
+            // has its levels, GLM's and DeepSeek's starting at `low`.
+            "mistral" if model.tasks == [Task::Analysis] => {
+                let first = model.reasoning.as_ref().and_then(|r| r.levels.first());
+                assert!(first.is_some(), "{id}");
+                if id.starts_with("zai-glm") || id.starts_with("deepseek") {
+                    assert_eq!(first.map(String::as_str), Some("low"), "{id}");
+                }
+            }
+            _ => {}
+        }
+        assert!(!tuning.refusal_fallback || model.provider.as_str() == "anthropic");
+    }
+    Ok(())
+}
+
+/// A catalogue written before the abilities were (a cache from an older release, its fields
+/// absent) loads, reads as lacking them, and is never preferred to the bundled one, which has
+/// them: this build never reads a catalogue older than its own. A newer catalogue's fields
+/// this build does not know are ignored, so older releases read today's file.
+#[test]
+fn a_catalogue_without_the_abilities_never_replaces_the_bundled_one() -> Result<(), CatalogError> {
+    let parse = |json: &str| -> Result<serde_json::Value, CatalogError> {
+        serde_json::from_str(json).map_err(|e| CatalogError::Invalid(e.to_string()))
+    };
+    let mut old = parse(BUNDLED)?;
+    for model in old["models"].as_array_mut().into_iter().flatten() {
+        if let Some(fields) = model.as_object_mut() {
+            fields.remove("refusal_fallback");
+        }
+    }
+    let same_day = old.to_string();
+    let read = Catalog::from_json(&same_day)?;
+    assert!(read.models.iter().all(|m| !m.refusal_fallback));
+    let opus = |c: &Catalog| {
+        c.model(&ProviderId::new("anthropic"), "claude-opus-5-5")
+            .map(|m| m.tuning(Task::TextExtraction, None).refusal_fallback)
+    };
+    assert_eq!(opus(&Catalog::newest(Some(&same_day))), Some(true));
+    old["updated"] = "2026-10-01".into();
+    assert_eq!(opus(&Catalog::newest(Some(&old.to_string()))), Some(true));
+
+    let mut newer = parse(BUNDLED)?;
+    newer["a_field_not_yet_known"] = "9.9.9".into();
+    for model in newer["models"].as_array_mut().into_iter().flatten() {
+        model["an_ability_not_yet_known"] = true.into();
+    }
+    assert_eq!(Catalog::from_json(&newer.to_string())?, Catalog::bundled());
+    Ok(())
+}

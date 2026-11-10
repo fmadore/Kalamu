@@ -303,6 +303,8 @@ impl PipelineLibrary {
 /// Adds a shared file's presets: one identical to a preset already here is used as it is; any
 /// other becomes a new user preset (a default's copy named after `owner`), so an import never
 /// changes the user's own prompts or the defaults. Returns the id each preset has here.
+/// Identical means the same words and fields: the density hint is left out, so a file written
+/// before it existed still finds the default it was made from.
 pub(crate) fn import_presets(
     presets: Vec<Preset>,
     owner: &str,
@@ -324,6 +326,8 @@ pub(crate) fn import_presets(
             preset.id.clone()
         } else {
             let mut copy = preset.clone();
+            // A file written before the density hint: a default's copy keeps the default's.
+            copy.settle_density();
             copy.id = String::new();
             copy.builtin = false;
             copy.modified = false;
@@ -432,6 +436,7 @@ mod tests {
         assert_eq!(file.pipeline.destination, OutputDestination::default());
         let md = file.to_markdown();
         assert!(md.starts_with("# Literature review\n"));
+        assert!(crate::beside::written_by_export(&md));
         assert!(md.contains("- Model: Mistral Small 4 (`mistral-small-2603`)"));
         assert!(md.contains("`reasoning_effort` = `none`"));
         assert!(md.contains("- Prompt: Tone of the document (built in)"));
@@ -473,6 +478,35 @@ mod tests {
         );
 
         assert!(pipelines.import("{}", &mut prompts).is_err());
+    }
+
+    /// A pipeline file written before presets carried a density: the newspaper default, edited,
+    /// is copied dense, as the default it came from; a preset that differs only in the hint is
+    /// still the local one.
+    #[test]
+    fn a_pipeline_file_without_the_density_hint_keeps_the_default_s() {
+        let mut prompts = PromptLibrary::in_memory();
+        let mut pipelines = PipelineLibrary::in_memory();
+        let mut old = file(&prompts, "text_extraction.newspaper");
+        old.presets[0].dense = None;
+        old.presets[0].instructions = "Column by column.".into();
+        let json = old.to_json().unwrap();
+        assert!(!json.contains("\"dense\""));
+        let imported = pipelines.import(&json, &mut prompts).unwrap();
+        let copy = prompts
+            .get(imported.setups[0].preset_id.as_deref().unwrap())
+            .unwrap();
+        assert!(copy.id.starts_with("user-") && copy.is_dense());
+
+        let mut same = file(&prompts, "text_extraction.newspaper");
+        same.presets[0].dense = Some(false);
+        let imported = pipelines
+            .import(&same.to_json().unwrap(), &mut prompts)
+            .unwrap();
+        assert_eq!(
+            imported.setups[0].preset_id.as_deref(),
+            Some("text_extraction.newspaper")
+        );
     }
 
     #[test]

@@ -4,6 +4,7 @@
 //! Defaults are never changed on disk. Editing one saves an override under the same id;
 //! resetting deletes the override. User presets are one JSON file each in the presets folder.
 
+mod beside;
 mod defaults;
 mod dictionary;
 mod folder;
@@ -14,6 +15,7 @@ mod render;
 mod workflow_file;
 mod workflows;
 
+pub use beside::markdown_beside;
 pub use dictionary::DICTIONARY_MERGES;
 pub use pipelines::{Pipeline, PipelineLibrary};
 pub use profiles::{ProfileFile, ProfileLibrary};
@@ -59,6 +61,14 @@ pub struct Preset {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub merge_instructions: Option<String>,
+    /// For a text extraction, its pages carry much text (a newspaper's columns), so fewer of
+    /// them go together in one call when several are asked for. Read it with
+    /// [`Preset::is_dense`]: `None`, in a file written before the hint existed, means a
+    /// default's own (the newspaper's is dense) and no for the researcher's own prompts, as
+    /// those files were read then. The library always holds it settled.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub dense: Option<bool>,
 }
 
 /// The request sent with a table of contents' second step.
@@ -147,6 +157,7 @@ impl PromptLibrary {
                     preset.builtin = false;
                     preset.modified = false;
                 }
+                preset.settle_density();
                 saved.insert(preset.id.clone(), preset);
             }
         }
@@ -216,6 +227,12 @@ impl PromptLibrary {
     pub fn save(&mut self, mut preset: Preset) -> Result<Preset, PromptError> {
         if preset.name.trim().is_empty() || preset.instructions.trim().is_empty() {
             return Err(PromptError::Incomplete);
+        }
+        // Settled by the id it comes with, before a new id is given; only pages read for their
+        // text are ever sent together, so only those can be dense.
+        preset.settle_density();
+        if !preset.task.groups_pages() {
+            preset.dense = Some(false);
         }
         // The dictionary reads its prompt's answer by these fields: only the words can change.
         if preset.id == DICTIONARY_MERGES {
@@ -313,6 +330,8 @@ impl PromptLibrary {
         file.presets
             .into_iter()
             .map(|mut preset| {
+                // A file shared before the hint existed: a default's copy keeps its density.
+                preset.settle_density();
                 preset.id = String::new();
                 self.save(preset)
             })
@@ -321,6 +340,18 @@ impl PromptLibrary {
 }
 
 impl Preset {
+    /// Whether its pages carry much text, so that fewer go together in one call. A preset
+    /// whose file does not say is read as the default of its id is, the researcher's own as
+    /// not dense; the density is a hint about the material, never matched on the name.
+    pub fn is_dense(&self) -> bool {
+        self.dense.unwrap_or_else(|| shipped_density(&self.id))
+    }
+
+    /// Writes down the density it is read with, so that a new id keeps it.
+    pub(crate) fn settle_density(&mut self) {
+        self.dense = Some(self.is_dense());
+    }
+
     /// Fills in variables and freezes the result for a job.
     pub fn snapshot(&self, ctx: &RenderContext) -> PromptSnapshot {
         // The schema the model answers in: the fields themselves for an analysis, each page's
@@ -392,7 +423,18 @@ fn builtin(d: &defaults::Default) -> Preset {
             schema
         }),
         merge_instructions: d.merge.map(str::to_string),
+        dense: Some(d.dense),
     }
+}
+
+/// The density a default ships with, under its id or a retired id it replaced; no for any
+/// other preset.
+fn shipped_density(id: &str) -> bool {
+    let id = defaults::current(id);
+    defaults::DEFAULTS
+        .iter()
+        .chain(std::iter::once(&dictionary::DICTIONARY))
+        .any(|d| d.id == id && d.dense)
 }
 
 fn is_builtin_id(id: &str) -> bool {
