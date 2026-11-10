@@ -335,6 +335,11 @@ fn ended_error(tool: &Path, ended: Ended) -> MediaError {
              external drive, check that it is still connected",
             after.as_secs() / 60
         )),
+        // FFmpeg's runs have no overall limit; kept for the match to be complete.
+        Ended::TooLong(after) => MediaError::Tool(format!(
+            "it ran for more than {} minutes and was stopped",
+            after.as_secs() / 60
+        )),
         Ended::Lost(e) => MediaError::Tool(format!("it stopped responding: {e}")),
     }
 }
