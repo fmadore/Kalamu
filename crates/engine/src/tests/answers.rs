@@ -31,10 +31,15 @@ async fn two_readings(f: &Fixture) -> (Job, SourceFile) {
     (job, source)
 }
 
+/// Each set-up's place and review mark, in the job's order of set-ups: the store lists pieces
+/// by set-up id, which is random.
 fn places(f: &Fixture, job: &Job, source: &SourceFile) -> Vec<(Option<FieldValue>, bool)> {
-    f.engine
+    let mut pieces = f
+        .engine
         .source_pieces(job.id, source.id)
-        .unwrap_or_default()
+        .unwrap_or_default();
+    pieces.sort_by_key(|v| job.setups.iter().position(|s| s.id == v.setup_id));
+    pieces
         .iter()
         .map(|v| {
             let place = v
