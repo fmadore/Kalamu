@@ -33,7 +33,8 @@ Store version is being prepared ([steps](docs/mac-app-store.md)).
   through Vulkan), and, like
   any language model, able to write text that is not on the page. Lines kept as on the
   page, or joined into running text; pages read one at a time or several together, still
-  reviewed page by page. Choose how much each model thinks; every answer may use the whole
+  reviewed page by page. A folder of photographed pages can be read as one document, its pages
+  in the order of their names (page 2 before page 10) or in yours. Choose how much each model thinks; every answer may use the whole
   output the model allows.
 - **Transcribe audio and video**, with speakers and timestamps, in the cloud or offline with
   Whisper, on the graphics processor where there is a usable one (Metal on a Mac, Vulkan on

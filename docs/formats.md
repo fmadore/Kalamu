@@ -6,6 +6,12 @@ names carry the set-up's label: `letter.gemini-3.8-flash.txt`. Two sources that 
 name in one folder (`scan.pdf` and `scan.tif`, or two `scan.pdf` sent to one folder) keep apart:
 the later ones in the job are numbered, `scan (2).txt`, regardless of case.
 
+Images read as the pages of one document ([#52](https://github.com/fmadore/Kalamu/issues/52))
+give one result, as a PDF does: one `.txt`, `.md`, `.docx`, `.json` and `.csv`, its pages
+numbered in the document's order (`--- Page 3 ---`), named after the document and written in the
+folder of its first page (`Box 3.txt`, `Box 3.provenance.json`). The images themselves are never
+copied, moved or changed.
+
 A page or segment that could not be read after its retries does not keep the rest from disk: it
 stands as `[Not read: reason]` in the text formats and the CSV, with a `failed` reason in JSON,
 and `provenance.json` lists it under `failed`. Retrying it writes the files again.
@@ -36,7 +42,7 @@ Text is set invisibly (render mode 3) in a glyph-less Unicode font, so any scrip
 searchable: each of Tesseract's lines over its own box, and each of Mistral's or LightOnOCR's blocks spread
 over the lines that fit its box; every line is stretched to its box's width. A corrected page
 keeps its words' places where the engine placed each word (see ALTO below); otherwise it is set
-as one block over the page. Only PDF sources get one; it is written as `<name>.searchable.pdf`,
+as one block over the page. Only PDF sources get one, not images, a document of images included; it is written as `<name>.searchable.pdf`,
 never replacing the source. New job says before a job whether it will have one: the format is
 offered, and the task's diagram draws ALTO XML and the searchable PDF as a second result, only when a
 chosen model reports where text sits; under any other model, the diagram notes that it gives text only.
@@ -47,7 +53,8 @@ chosen model reports where text sits; under any other model, the diagram notes t
 Transkribus read it: one file per document, a `Page` per page, then `TextBlock`, `TextLine` and
 `String` for each word, with `SP` between words. Positions are in pixels (`MeasurementUnit`
 `pixel`): those of the image for an image source, those of the page drawn at 300 dpi for a PDF
-(as Tesseract reads it), the page's own `WIDTH` and `HEIGHT` given. A word carries the engine's
+(as Tesseract reads it), the page's own `WIDTH` and `HEIGHT` given; for a document of images,
+each page measured in its own image, the file named after the document. A word carries the engine's
 confidence (`WC`, 0 to 1) where it gave one. `Description` names the source file, the date,
 Kalamu's version and, in `processingStepSettings`, the provider and model, and says when
 positions are estimated. A page split into halves is put back together on the whole page.
@@ -174,7 +181,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `generator` | `{ "name": "Kalamu", "version": "…" }` |
 | `created_at` | Milliseconds since 1970, UTC |
 | `task`, `engine` | `text_extraction`, `audio_transcription`, `analysis`, `contents`, `text_correction` or `translation`; `cloud` or `offline` |
-| `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it; for text frozen from an earlier result (*Use this text in a new job*, or a workflow step reading an earlier one), the frozen text's name, SHA-256 and size, and `derived_from`: that result's `job_id`, `setup_id`, `source_id` and `task`, the `original_path`, when it was frozen (`frozen_at`), how many pieces it holds and how many were `reviewed` and `corrected`, and the pieces `missing` from it; for an item's pages cut from a table of contents' source, the same with `task` `contents`, its pages as the pieces (`reviewed` counting those marked in the table of contents), and `unit`: the item's `id`, `title`, `revision` and `pages` as the original numbers them |
+| `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it; for text frozen from an earlier result (*Use this text in a new job*, or a workflow step reading an earlier one), the frozen text's name, SHA-256 and size, and `derived_from`: that result's `job_id`, `setup_id`, `source_id` and `task`, the `original_path`, when it was frozen (`frozen_at`), how many pieces it holds and how many were `reviewed` and `corrected`, and the pieces `missing` from it; for an item's pages cut from a table of contents' source, the same with `task` `contents`, its pages as the pieces (`reviewed` counting those marked in the table of contents), and `unit`: the item's `id`, `title`, `revision` and `pages` as the original numbers them; for a document of images, the document's name, the SHA-256 of its pages' hashes in their order and their total size, and `pages`: each file in the order read, with `page` (the document's page it begins), its `id` (the same wherever the page is moved), `file_name`, `path`, `sha256`, `size_bytes`, `modified_ms`, `frames` (pages the file holds, more than one for a multi-page TIFF) and the researcher's `label`, if any |
 | `documents` | The project documents the source is, in each project whose document it is: `project_id`, `project_name`, `document_id`, `title`, and `description`, each part of the source's description as it stood when the file was written (`repository`, `fonds`, `series`, `file`, `shelfmark`, `creator`, `date`, `url`, `citation`, `rights`) as `{ "value", "from" }`, `from` being `document` or `project`; parts with no value are left out. Supplied by the researcher, never by a model. Absent for a job tied to no project |
 | `provider`, `model` | As requested |
 | `model_versions` | The versions the provider reported, when they differ from `model` (including a fallback model) |
