@@ -98,6 +98,8 @@
 		width: 1.375rem;
 		height: 1.375rem;
 		margin-left: var(--space-1);
+		/* Overhangs the line instead of growing it, so a label with one stays its height. */
+		margin-block: -0.25rem;
 		padding: 0;
 		border: 0;
 		border-radius: var(--radius-control);
