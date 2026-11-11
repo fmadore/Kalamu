@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import AllJobs from '#lib/components/AllJobs.svelte';
 	import AnalysisReview from '#lib/components/AnalysisReview.svelte';
@@ -102,6 +102,26 @@
 			field.focus();
 			field.select();
 		}
+	}
+
+	let toasts = $state<HTMLElement | null>(null);
+	/** What had the focus before it went into the messages, to give it back to. */
+	let beforeToasts: HTMLElement | null = null;
+
+	function intoToasts(e: FocusEvent) {
+		const from = e.relatedTarget;
+		if (from instanceof HTMLElement && !toasts?.contains(from)) beforeToasts = from;
+	}
+
+	/** Puts the failure away; the focus, when it was on the message, goes back to where it came
+	 * from rather than to nothing. */
+	async function dismissFailure() {
+		const inside = toasts?.contains(document.activeElement) ?? false;
+		dismissError();
+		if (!inside) return;
+		await tick();
+		if (beforeToasts?.isConnected) beforeToasts.focus();
+		beforeToasts = null;
 	}
 
 	/** The mouse's back button goes back, as in a browser. */
@@ -255,7 +275,7 @@
 
 <!-- Mounted empty, so a message put into them is read out (VoiceOver misses a live region that
      arrives with its text): a failure at once, and kept until dismissed; a confirmation politely. -->
-<div class="toasts">
+<div class="toasts" bind:this={toasts} onfocusin={intoToasts}>
 	<div role="alert">
 		{#if app.toastError}
 			{#key app.toastError.n}
@@ -263,7 +283,7 @@
 				<div
 					class="toast error"
 					onkeydown={(e) => {
-						if (e.key === 'Escape') dismissError();
+						if (e.key === 'Escape') void dismissFailure();
 					}}
 				>
 					<span class="dot" aria-hidden="true"></span>
@@ -272,7 +292,7 @@
 						class="dismiss"
 						aria-label={m.common.dismissMessage}
 						title={m.common.dismissMessage}
-						onclick={dismissError}><Icon name="close" size={14} /></button
+						onclick={() => void dismissFailure()}><Icon name="close" size={14} /></button
 					>
 				</div>
 			{/key}

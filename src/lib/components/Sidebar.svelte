@@ -50,6 +50,17 @@
 	const release = $derived(
 		app.release && app.release.version !== hiddenRelease ? app.release : null
 	);
+
+	/** Glossary, the last of the foot's tools in every build: where the focus goes when the line
+	 * under them that holds it is hidden. */
+	let lastTool = $state<HTMLElement | null>(null);
+
+	/** Hides the release line; the focus, lost with its button, goes to the tools above it. */
+	function hideRelease(e: MouseEvent, version: string) {
+		const hadFocus = document.activeElement === e.currentTarget;
+		hiddenRelease = version;
+		if (hadFocus) lastTool?.focus();
+	}
 </script>
 
 <svelte:window
@@ -187,6 +198,7 @@
 			><Icon name="settings" size={16} />{#if !collapsed}{m.nav.settings}{/if}</button
 		>
 		<button
+			bind:this={lastTool}
 			class="tool"
 			class:current={app.view.name === 'glossary'}
 			aria-current={app.view.name === 'glossary' ? 'page' : undefined}
@@ -211,7 +223,7 @@
 					class="hide-release"
 					aria-label={m.settings.hideRelease}
 					title={m.settings.hideRelease}
-					onclick={() => (hiddenRelease = release.version)}><Icon name="close" size={14} /></button
+					onclick={(e) => hideRelease(e, release.version)}><Icon name="close" size={14} /></button
 				>
 			</p>
 		{/if}
