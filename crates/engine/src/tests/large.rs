@@ -75,10 +75,6 @@ fn write_split(
     let (dir, base) = names(&document.source, &setup.label);
     steps.add("names: output base", start, 0);
 
-    let start = Instant::now();
-    std::fs::create_dir_all(&dir).unwrap_or_else(|e| panic!("{e}"));
-    steps.add("disk: create_dir_all", start, 0);
-
     let mut files: Vec<(String, Vec<u8>)> = Vec::new();
     for format in &job.output.formats {
         let Some(exporter) = kalamu_export::exporter(*format) else {
@@ -385,10 +381,12 @@ async fn large_job() {
 
     let setups: Vec<&Setup> = job.setups.iter().collect();
     let start = Instant::now();
+    // Worked out once, as a run does.
+    let names = crate::output::OutputNames::of(&job);
     for source in &job.sources {
         let failed = f
             .engine
-            .export_finished(&job, source.id, &setups)
+            .export_finished(&job, &names, source.id, &setups)
             .unwrap_or_else(|e| panic!("{e}"));
         assert!(!failed);
     }
@@ -399,17 +397,40 @@ async fn large_job() {
 
     // The names alone, for every source under every set-up, as the job's writes ask for them.
     let start = Instant::now();
+    let names = crate::output::OutputNames::of(&job);
     for source in &job.sources {
         for setup in &job.setups {
-            std::hint::black_box(crate::output::output_base(&job, source, &setup.label));
+            std::hint::black_box(names.base(&job, source, &setup.label));
         }
     }
-    eprintln!("  of which the output names: {:.0} ms", ms(start));
+    eprintln!("  of which the output names: {:.1} ms", ms(start));
+
+    // The same files written again: each replaced, as a resumed job or a new export replaces
+    // it, where the pass above made new ones.
+    let start = Instant::now();
+    for source in &job.sources {
+        f.engine
+            .export_finished(&job, &names, source.id, &setups)
+            .unwrap_or_else(|e| panic!("{e}"));
+    }
+    eprintln!(
+        "export_finished again, every file replaced: {:.0} ms",
+        ms(start)
+    );
+
+    // Listing the job's files, as its page does to open them.
+    let start = Instant::now();
+    let listed = f.engine.outputs(job.id).unwrap_or_else(|e| panic!("{e}"));
+    eprintln!(
+        "outputs (the job's files listed): {:.0} ms, {} files",
+        ms(start),
+        listed.len()
+    );
 
     // Writing a source's files, step by step, for one source in ten (over the files the pass
     // above wrote: each is replaced, as a later export or a resumed job replaces it).
     let mut steps = Steps::default();
-    let names = |source: &SourceFile, label: &str| crate::output::output_base(&job, source, label);
+    let names = |source: &SourceFile, label: &str| names.base(&job, source, label);
     let sampled: Vec<&SourceFile> = job.sources.iter().step_by(10).collect();
     for source in &sampled {
         for setup in &job.setups {

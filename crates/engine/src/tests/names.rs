@@ -12,10 +12,17 @@ use super::*;
 
 /// Each source's files under each set-up, as `folder/base` from the temporary folder.
 fn names(f: &Fixture, job: &Job) -> Vec<String> {
+    let all = crate::output::OutputNames::of(job);
     let mut out = Vec::new();
     for source in &job.sources {
         for setup in &job.setups {
-            let (dir, base) = crate::output::output_base(job, source, &setup.label);
+            let (dir, base) = all.base(job, source, &setup.label);
+            // One source's names, worked out alone, are the same.
+            let alone = crate::output::OutputNames::of_source(job, source.id);
+            assert_eq!(
+                alone.base(job, source, &setup.label),
+                (dir.clone(), base.clone())
+            );
             let folder = dir
                 .strip_prefix(f.dir.path())
                 .map(|d| d.to_string_lossy().replace('\\', "/"))

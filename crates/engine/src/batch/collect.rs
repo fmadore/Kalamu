@@ -287,8 +287,9 @@ impl Engine {
         let outcome = self.wait_for_batches(&job, &control, &spent).await?;
         let setups: Vec<&Setup> = job.setups.iter().collect();
         let mut failed = outcome.failed;
+        let names = crate::output::OutputNames::of(&job);
         for source in &job.sources {
-            failed |= self.export_finished(&job, source.id, &setups)?;
+            failed |= self.export_finished(&job, &names, source.id, &setups)?;
         }
         let pieces = self.store.pieces(job_id)?;
         let left = pieces
