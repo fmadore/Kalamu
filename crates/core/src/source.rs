@@ -77,4 +77,10 @@ pub struct SourceFile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub derived_from: Option<crate::DerivedFrom>,
+    /// For a document of image files read as its pages, the files in the document's order
+    /// (#52); empty for every other source. `path` then names the document in its first
+    /// page's folder and `sha256` is [`crate::ordered::manifest_sha256`].
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<crate::PageFile>>")]
+    pub pages: Vec<crate::PageFile>,
 }

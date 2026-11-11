@@ -4,6 +4,7 @@
 
 import type { Catalog } from './bindings/Catalog.js';
 import type { ExportFormat } from './bindings/ExportFormat.js';
+import type { ImageDocument } from './bindings/ImageDocument.js';
 import type { InputWarning } from './bindings/InputWarning.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { JobSettings } from './bindings/JobSettings.js';
@@ -20,6 +21,7 @@ import type { Task } from './bindings/Task.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import type { Messages } from './i18n/index.js';
 import type { FromProject } from './state.svelte.js';
+import type { Grouping } from './pageOrder.js';
 import { baseName, pathParts } from './paths.js';
 import { YOUTUBE_LINK } from './youtube.js';
 
@@ -132,7 +134,8 @@ export function rulesFor(rules: Rules, task: Task): TaskRules {
 			samples: false,
 			pages_per_call: false,
 			splits_spreads: false,
-			reads_text_layer: false
+			reads_text_layer: false,
+			page_documents: false
 		}
 	);
 }
@@ -662,6 +665,10 @@ export interface NewJobForm {
 	suggested: string;
 	thenPreset: string | null;
 	thenCheck: boolean;
+	/** Several images: each its own document, or the pages of one (#52). */
+	grouping?: Grouping;
+	pageDoc?: ImageDocument | null;
+	docName?: string;
 }
 
 let keptForm: NewJobForm | null = null;

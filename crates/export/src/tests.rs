@@ -28,6 +28,7 @@ fn source(name: &str, kind: InputKind) -> SourceFile {
         even_out_volume: false,
         title: None,
         derived_from: None,
+        pages: Vec::new(),
     }
 }
 
@@ -69,6 +70,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
             title: None,
             read_at: None,
             derived_from: None,
+            pages: kalamu_core::provenance::ProvenancePage::of(&source.pages),
         },
         documents: vec![],
         engine: "cloud".into(),
@@ -403,6 +405,57 @@ fn translated() -> ExportDocument {
     )
 }
 
+/// The letter read from three photographs made one document (#52): written as one result,
+/// page by page as a PDF's, its provenance recording each page's file in the order read.
+fn photographed_letter() -> ExportDocument {
+    let page = |name: &str, sha: &str, label: Option<&str>| kalamu_core::PageFile {
+        id: kalamu_core::ordered::page_id(&format!(r"C:\archive\Box 3\{name}"), sha),
+        path: format!(r"C:\archive\Box 3\{name}"),
+        file_name: name.into(),
+        sha256: sha.repeat(32),
+        size_bytes: 2048,
+        modified_ms: None,
+        frames: 1,
+        label: label.map(str::to_string),
+    };
+    let source = SourceFile::image_document(
+        "Lettre au Gouverneur",
+        vec![
+            page("IMG_0002.jpg", "a1", Some("f. 1r")),
+            page("IMG_0010.jpg", "b2", None),
+            page("IMG_0011.jpg", "c3", None),
+        ],
+    );
+    let mut doc = letter();
+    doc.provenance.source = ProvenanceSource {
+        file_name: source.file_name.clone(),
+        sha256: source.sha256.clone(),
+        size_bytes: source.size_bytes,
+        url: None,
+        title: None,
+        read_at: None,
+        derived_from: None,
+        pages: kalamu_core::provenance::ProvenancePage::of(&source.pages),
+    };
+    doc.source = source;
+    doc
+}
+
+#[test]
+fn a_document_of_images_matches_golden_files() {
+    let doc = photographed_letter();
+    check("photographed.txt", &run(ExportFormat::Txt, &doc));
+    check("photographed.md", &run(ExportFormat::Markdown, &doc));
+    check("photographed.json", &run(ExportFormat::Json, &doc));
+    // Pages are numbered as the document's, like a PDF's: the same text as the PDF letter.
+    assert_eq!(
+        run(ExportFormat::Txt, &doc),
+        run(ExportFormat::Txt, &letter())
+    );
+    // No PDF to lay a text layer over: the format is not written for images.
+    assert!(exporter(ExportFormat::SearchablePdf).is_some_and(|e| e.export(&doc).is_err()));
+}
+
 fn check(name: &str, actual: &[u8]) {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("golden")
@@ -649,6 +702,45 @@ fn alto_places_each_word_and_estimates_blocks_placed_whole() {
     let mut plain = doc;
     plain.parts[0].regions.clear();
     assert!(exporter(ExportFormat::Alto).is_some_and(|e| e.export(&plain).is_err()));
+}
+
+/// ALTO from a document of images: each page measured in its own file.
+#[test]
+fn alto_of_a_document_of_images_measures_each_page_in_its_file() {
+    use kalamu_core::TextRegion;
+    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    let mut pages = Vec::new();
+    for (name, width) in [("p1.png", 1000), ("p2.png", 2000)] {
+        let path = dir.path().join(name);
+        image::DynamicImage::ImageRgb8(image::RgbImage::new(width, 1500))
+            .save(&path)
+            .unwrap_or_else(|e| panic!("{e}"));
+        pages.push(kalamu_core::PageFile {
+            id: name.into(),
+            path: path.display().to_string(),
+            file_name: name.into(),
+            sha256: "00".repeat(32),
+            size_bytes: 1,
+            modified_ms: None,
+            frames: 1,
+            label: None,
+        });
+    }
+    let source = SourceFile::image_document("Pages", pages);
+    let part = |n: u32| ExportPart {
+        piece: kalamu_core::PieceRef::page(n),
+        text: "Mot".into(),
+        segments: vec![],
+        corrected: false,
+        reviewed: false,
+        fields: vec![],
+        regions: vec![TextRegion::block(0.5, 0.1, 0.2, 0.02, "Mot")],
+        failed: None,
+    };
+    let doc = document(Task::TextExtraction, source, vec![part(1), part(2)]);
+    let xml = String::from_utf8(run(ExportFormat::Alto, &doc)).unwrap_or_default();
+    assert!(xml.contains("WIDTH=\"1000\""), "{xml}");
+    assert!(xml.contains("WIDTH=\"2000\""), "{xml}");
 }
 
 #[test]

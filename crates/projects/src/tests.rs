@@ -62,6 +62,7 @@ impl Fixture {
             even_out_volume: false,
             title: None,
             derived_from: None,
+            pages: Vec::new(),
         }
     }
 
@@ -523,6 +524,7 @@ fn a_project_and_its_organisation_survive_a_restart() {
         even_out_volume: false,
         title: None,
         derived_from: None,
+        pages: Vec::new(),
     };
     let (project, collection) = {
         let store = Arc::new(SqliteStore::open(&path).unwrap());

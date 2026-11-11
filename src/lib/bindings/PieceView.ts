@@ -47,4 +47,8 @@ source_text: string | null,
 /**
  * The model's answer stopped at its output limit: the end of the piece may be missing.
  */
-truncated: boolean, };
+truncated: boolean, 
+/**
+ * For a page of a document of images, the original file it is, where it lies.
+ */
+original_file?: string, };

@@ -32,6 +32,7 @@ fn job() -> Job {
             even_out_volume: false,
             title: None,
             derived_from: None,
+            pages: Vec::new(),
         }],
         setups: vec![Setup {
             id: SetupId::new(),
@@ -139,6 +140,52 @@ fn job_sources_name_every_file_and_title() -> Result<(), StoreError> {
     );
     assert_eq!(listed[1].job_id, older.id);
     assert_eq!(listed[1].names, ["letter.pdf"]);
+    Ok(())
+}
+
+/// A document of images keeps its pages, their order, hashes and labels in the job's own row,
+/// so it survives a restart; a job stored before such documents existed reads as it was.
+#[test]
+fn a_document_of_pages_is_kept_with_its_job_in_order() -> Result<(), StoreError> {
+    let page = |name: &str, sha: &str| kalamu_core::PageFile {
+        id: kalamu_core::ordered::page_id(name, sha),
+        path: format!(r"C:\archive\Box 3\{name}"),
+        file_name: name.into(),
+        sha256: sha.into(),
+        size_bytes: 100,
+        modified_ms: Some(1),
+        frames: 1,
+        label: Some(format!("f. {name}")),
+    };
+    let mut job = job();
+    job.sources = vec![SourceFile::image_document(
+        "Box 3",
+        vec![page("10.jpg", "bb"), page("2.jpg", "aa")],
+    )];
+    let dir = tempfile::tempdir().map_err(|e| StoreError::Database(e.to_string()))?;
+    let path = dir.path().join("jobs.db");
+    SqliteStore::open(&path)?.create_job(&job)?;
+    // Opened again, as after a restart.
+    let reopened = SqliteStore::open(&path)?.job(job.id)?;
+    assert_eq!(reopened.sources, job.sources);
+    let names: Vec<&str> = reopened.sources[0]
+        .pages
+        .iter()
+        .map(|p| p.file_name.as_str())
+        .collect();
+    assert_eq!(
+        names,
+        ["10.jpg", "2.jpg"],
+        "the researcher's order, not sorted again"
+    );
+
+    // A source written without pages, as every job before them was.
+    let old: SourceFile = serde_json::from_value(serde_json::json!({
+        "id": SourceId::new(), "path": "C:\\a.pdf", "file_name": "a.pdf", "sha256": "x",
+        "size_bytes": 1, "kind": "pdf", "page_count": 1, "duration_ms": null
+    }))
+    .map_err(|e| StoreError::Database(e.to_string()))?;
+    assert!(old.pages.is_empty() && !old.is_page_set());
     Ok(())
 }
 

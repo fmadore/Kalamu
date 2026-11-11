@@ -16,6 +16,7 @@ pub mod ids;
 pub mod job;
 pub mod language;
 pub mod list_items;
+pub mod ordered;
 pub mod pages;
 pub mod profile;
 pub mod progress;
@@ -61,6 +62,7 @@ pub use job::{
     OutputSettings, Pace,
 };
 pub use language::{LanguageChoice, LanguageCode};
+pub use ordered::{PageFile, PageNote, natural_cmp, natural_sort, page_notes};
 pub use pages::PagesPerCall;
 pub use profile::{ExportProfile, ProfileColumn, ProfileError, ProfileStarter, ProfileValue};
 pub use progress::{ERRORS_LISTED, FileProgress, JobProgress};

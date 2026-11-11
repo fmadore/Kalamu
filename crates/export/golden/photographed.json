@@ -1,0 +1,143 @@
+{
+  "parts": [
+    {
+      "corrected": false,
+      "label": "1",
+      "piece": {
+        "kind": "page",
+        "number": 1
+      },
+      "reviewed": true,
+      "segments": [],
+      "text": "Bamako, le 3 mai 1957\n\nMonsieur le Gouverneur,\nj'ai l'honneur de vous "
+    },
+    {
+      "corrected": true,
+      "label": "2",
+      "piece": {
+        "kind": "page",
+        "number": 2
+      },
+      "reviewed": true,
+      "segments": [],
+      "text": "rendre compte de la réunion tenue à la mosquée.\n\n[ILLEGIBLE]"
+    },
+    {
+      "corrected": false,
+      "failed": "Gemini's copyright filter stopped this page (RECITATION)",
+      "label": "3",
+      "piece": {
+        "kind": "page",
+        "number": 3
+      },
+      "reviewed": false,
+      "segments": [],
+      "text": ""
+    }
+  ],
+  "provenance": {
+    "corrected": [
+      2
+    ],
+    "cost_usd": 0.002,
+    "created_at": 0,
+    "engine": "cloud",
+    "generator": {
+      "name": "Kalamu",
+      "version": "0.1.0"
+    },
+    "languages": {
+      "mode": "auto"
+    },
+    "model": "gemini-3.8-flash",
+    "options": {
+      "diarize": false,
+      "speakers": null,
+      "temperature": null,
+      "timestamps": false
+    },
+    "pieces": 3,
+    "prompt": {
+      "preset_id": "text_extraction.printed_diplomatic",
+      "preset_name": "Printed document, diplomatic",
+      "sha256": "abababababababababababababababababababababababababababababababab",
+      "text": "Transcribe.",
+      "user_prompt": "Transcribe this page."
+    },
+    "provider": "gemini",
+    "request": [
+      {
+        "name": "generationConfig.thinkingConfig.thinkingLevel",
+        "value": "low"
+      },
+      {
+        "name": "generationConfig.maxOutputTokens",
+        "value": "65535"
+      }
+    ],
+    "reviewed": [
+      1,
+      2
+    ],
+    "schema_version": 1,
+    "source": {
+      "file_name": "Lettre au Gouverneur",
+      "pages": [
+        {
+          "file_name": "IMG_0002.jpg",
+          "frames": 1,
+          "id": "9c689d775d05ce9f",
+          "label": "f. 1r",
+          "page": 1,
+          "path": "C:\\archive\\Box 3\\IMG_0002.jpg",
+          "sha256": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+          "size_bytes": 2048
+        },
+        {
+          "file_name": "IMG_0010.jpg",
+          "frames": 1,
+          "id": "b516b148e80a6d87",
+          "page": 2,
+          "path": "C:\\archive\\Box 3\\IMG_0010.jpg",
+          "sha256": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+          "size_bytes": 2048
+        },
+        {
+          "file_name": "IMG_0011.jpg",
+          "frames": 1,
+          "id": "a84ef265353fbb4e",
+          "page": 3,
+          "path": "C:\\archive\\Box 3\\IMG_0011.jpg",
+          "sha256": "c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
+          "size_bytes": 2048
+        }
+      ],
+      "sha256": "41f00d6ee53d155bcad5849c427d8ea7bf02f19b52dec9fc3a45875d4256a902",
+      "size_bytes": 6144
+    },
+    "task": "text_extraction",
+    "usage": {
+      "audio_seconds": 0.0,
+      "batch": false,
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "pages": 0
+    }
+  },
+  "schema": "kalamu-result",
+  "schema_version": 1,
+  "setup": {
+    "label": "gemini-flash",
+    "model": "gemini-3.8-flash",
+    "prompt": "Printed document, diplomatic",
+    "provider": "gemini"
+  },
+  "source": {
+    "file_name": "Lettre au Gouverneur",
+    "sha256": "41f00d6ee53d155bcad5849c427d8ea7bf02f19b52dec9fc3a45875d4256a902",
+    "size_bytes": 6144
+  },
+  "task": "text_extraction"
+}

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use kalamu_core::{
-    ExportError, ExportFormat, InputKind, Job, JobId, OutputDestination, PieceState, PieceStatus,
+    ExportError, ExportFormat, Job, JobId, OutputDestination, PieceState, PieceStatus,
     ProgressEvent, Setup, SetupId, SourceFile, SourceId, Task,
 };
 
@@ -420,8 +420,9 @@ fn place(job: &Job, source: &SourceFile) -> (PathBuf, String) {
             .unwrap_or_default(),
         OutputDestination::Folder(folder) => PathBuf::from(folder),
     };
-    // A video's name is its title, whose dots are not an extension.
-    let stem = if source.kind == InputKind::YouTube {
+    // A video's name is its title, and a document of pages its name, whose dots are not an
+    // extension.
+    let stem = if source.names_itself() {
         source.file_name.clone()
     } else {
         crate::source_stem(&source.file_name, "result")

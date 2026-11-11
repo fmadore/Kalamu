@@ -1100,6 +1100,32 @@ export const fr: Messages = {
 				'Les images, et les PDF dont les doubles pages sont scindées, sont lus une page à la fois.',
 			noPrompt: (models: string) => `${models} lit les pages une à une.`
 		},
+		grouping: {
+			title: 'Comment lire les images',
+			separate: 'Des documents séparés',
+			separate_hint: 'Chaque image est un document à part, avec ses propres fichiers de résultat.',
+			one: 'Les pages d’un seul document',
+			one_hint:
+				'Les images sont les pages d’un même document : lues dans l’ordre ci-dessous et enregistrées en un seul résultat.',
+			name: 'Nom du document',
+			nameHint: 'Les fichiers de résultat portent ce nom, dans le dossier de la première page.',
+			order: 'Ordre des pages',
+			orderHint:
+				'Rangées selon les numéros des noms de fichiers, la page 2 avant la page 10. Déplacez une page avec ses boutons, ou faites-la glisser.',
+			sorting: 'Mise en ordre des pages…',
+			position: (n: number) => `Page ${n}`,
+			moveUp: (name: string) => `Monter ${name}`,
+			moveDown: (name: string) => `Descendre ${name}`,
+			missing: (from: number, to: number) =>
+				from === to
+					? `Aucun fichier numéroté ${from} avant celui-ci`
+					: `Aucun fichier numéroté de ${from} à ${to} avant celui-ci`,
+			duplicate: (n: number) => `Un autre fichier porte aussi le numéro ${n}`,
+			naturalOrder: 'Revenir à l’ordre des noms',
+			formats:
+				'Un PDF interrogeable n’est produit qu’à partir d’un PDF. L’ALTO, quand le modèle donne les positions, place chaque page dans sa propre image.',
+			refused: 'Une analyse lit chaque image comme un document à part.'
+		},
 		lines: {
 			running_text: 'Texte continu',
 			running_text_hint:
@@ -1413,6 +1439,8 @@ export const fr: Messages = {
 		document: 'Document entier',
 		video: 'Vidéo entière',
 		openVideo: 'Ouvrir sur YouTube',
+		originalFile: (name: string) => `Original : ${name}`,
+		originalHint: 'Ouvrir l’image d’origine de cette page',
 		videoPlayer: 'La vidéo, dans le lecteur de YouTube',
 		videoHint: 'Cliquez sur une ligne pour lire la vidéo à partir de là.',
 		videoHintOpen: 'Cliquez sur une ligne pour ouvrir la vidéo à ce moment sur YouTube.',

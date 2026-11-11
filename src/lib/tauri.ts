@@ -43,6 +43,7 @@ import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { Estimate } from './bindings/Estimate.js';
 import type { Expanded } from './bindings/Expanded.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
+import type { ImageDocument } from './bindings/ImageDocument.js';
 import type { Job } from './bindings/Job.js';
 import type { JobScores } from './bindings/JobScores.js';
 import type { JobProgress } from './bindings/JobProgress.js';
@@ -166,6 +167,10 @@ export const api = {
 	foldersToAsk: (paths: string[]) => invoke<string[]>('folders_to_ask', { paths }),
 	keepAccess: (paths: string[]) => invoke<void>('keep_access', { paths }),
 	inspectFiles: (paths: string[]) => invoke<InspectedFile[]>('inspect_files', { paths }),
+	/** Images already inspected, made the pages of one document, in the natural order of their
+	 * names; an empty name gives the document its folder's. */
+	imageDocument: (name: string, sources: SourceFile[]) =>
+		invoke<ImageDocument>('image_document', { name, sources }),
 	inspectLinks: (links: string[]) => invoke<InspectedFile[]>('inspect_links', { links }),
 	estimateCost: (request: EstimateRequest) => invoke<Estimate>('estimate_cost', { request }),
 	createJob: (job: NewJob) => invoke<Job>('create_job', { job }),
@@ -204,6 +209,8 @@ export const api = {
 	exportUnits: (ids: string[], folder: string) => invoke<string[]>('export_units', { ids, folder }),
 	jobOutputs: (id: string) => invoke<string[]>('job_outputs', { id }),
 	openOutput: (id: string, path: string) => invoke<void>('open_output', { id, path }),
+	/** Opens the original file of a page the job read. */
+	openOriginal: (id: string, path: string) => invoke<void>('open_original', { id, path }),
 	sourcePieces: (jobId: string, sourceId: string) =>
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>

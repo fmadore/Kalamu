@@ -105,10 +105,13 @@ impl Engine {
                     }
                     continue;
                 }
+                // A page of a document of images is keyed by its own file, never by where it
+                // stands, so a page moved is not read again.
+                let (content, at) = source.cache_identity(piece);
                 let key = CacheKey::compute(
                     job.task,
-                    &source.sha256,
-                    piece,
+                    content,
+                    &at,
                     setup,
                     &job.settings.languages,
                     &fixes,

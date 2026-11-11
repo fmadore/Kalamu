@@ -370,6 +370,7 @@ impl Engine {
                     original_path: source.path.clone(),
                     unit: Some(FrozenUnit::from(&unit)),
                 }),
+                pages: Vec::new(),
             });
         }
         if out.is_empty() {

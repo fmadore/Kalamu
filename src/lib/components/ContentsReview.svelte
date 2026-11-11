@@ -290,6 +290,7 @@
 	onstep={step}
 	source="scan"
 	piece={shownPage ? pieceLabel(shownPage.piece, m) : m.review.page(String(pageNumber))}
+	original={shownPage?.original_file ?? null}
 	paging={{ at: page, count: pageViews.length }}
 	preview={review.preview}
 	witness={{

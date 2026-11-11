@@ -184,3 +184,35 @@ test('a large job’s failed files are listed alone, however far down they sit',
 	await expect(far).toHaveCount(0);
 	await expect(main.getByText('page-00009.pdf', { exact: true })).toBeVisible();
 });
+
+test('a folder of photographs becomes one document, its pages put in order', async ({ page }) => {
+	// The sample folder holds IMG_10, IMG_2, IMG_1 and IMG_3 (src/lib/dev/mockPages.ts).
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: 'Add a folder' }).click();
+	await expect(main.getByRole('button', { name: 'Remove IMG_10.jpg' })).toBeVisible();
+
+	const separate = main.getByRole('radio', { name: /^Separate documents/ });
+	await expect(separate).toBeChecked();
+	await main.getByRole('radio', { name: /^Pages of one document/ }).check();
+	await expect(main.getByRole('textbox', { name: 'Name of the document' })).toHaveValue('Box 3');
+
+	const order = main.getByRole('list', { name: 'Order of the pages' });
+	const names = () => order.getByRole('listitem').locator('.name').allTextContents();
+	await expect.poll(names).toEqual(['IMG_1.jpg', 'IMG_2.jpg', 'IMG_3.jpg', 'IMG_10.jpg']);
+	await expect(order.getByText('No files numbered 4 to 9 before this one')).toBeVisible();
+
+	// Moved with the keyboard: the focus stays on the page moved.
+	await order.getByRole('button', { name: 'Move IMG_10.jpg up' }).focus();
+	await page.keyboard.press('Enter');
+	await expect.poll(names).toEqual(['IMG_1.jpg', 'IMG_2.jpg', 'IMG_10.jpg', 'IMG_3.jpg']);
+	await expect(order.getByRole('button', { name: 'Move IMG_10.jpg up' })).toBeFocused();
+	await expect(order.getByRole('button', { name: 'Move IMG_1.jpg up' })).toBeDisabled();
+
+	await main.getByRole('button', { name: 'Back to the order of the names' }).click();
+	await expect.poll(names).toEqual(['IMG_1.jpg', 'IMG_2.jpg', 'IMG_3.jpg', 'IMG_10.jpg']);
+
+	// Read as separate documents again, the order is not asked for.
+	await separate.check();
+	await expect(order).toHaveCount(0);
+});

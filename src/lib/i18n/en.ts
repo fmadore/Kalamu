@@ -999,6 +999,32 @@ export const en = {
 			alone: 'Images, and PDFs whose double pages are split, are read one page at a time.',
 			noPrompt: (models: string) => `${models} reads pages one at a time.`
 		},
+		grouping: {
+			title: 'How the images are read',
+			separate: 'Separate documents',
+			separate_hint: 'Each image is a document of its own, with its own result files.',
+			one: 'Pages of one document',
+			one_hint:
+				'The images are the pages of one document: read in the order below and written as one result.',
+			name: 'Name of the document',
+			nameHint: 'The result files are named after it, in the folder of the first page.',
+			order: 'Order of the pages',
+			orderHint:
+				'Sorted by the numbers in the file names, page 2 before page 10. Move a page with its buttons, or drag it.',
+			sorting: 'Putting the pages in order…',
+			position: (n: number) => `Page ${n}`,
+			moveUp: (name: string) => `Move ${name} up`,
+			moveDown: (name: string) => `Move ${name} down`,
+			missing: (from: number, to: number) =>
+				from === to
+					? `No file numbered ${from} before this one`
+					: `No files numbered ${from} to ${to} before this one`,
+			duplicate: (n: number) => `Another file is also numbered ${n}`,
+			naturalOrder: 'Back to the order of the names',
+			formats:
+				'A searchable PDF is written only from a PDF. ALTO, when the model gives positions, places each page in its own image.',
+			refused: 'An analysis reads each image as a document of its own.'
+		},
 		lines: {
 			running_text: 'Running text',
 			running_text_hint:
@@ -1315,6 +1341,8 @@ export const en = {
 		document: 'Whole document',
 		video: 'Whole video',
 		openVideo: 'Open on YouTube',
+		originalFile: (name: string) => `Original: ${name}`,
+		originalHint: 'Open the original image of this page',
 		videoPlayer: 'The video, in YouTube’s player',
 		videoHint: 'Click a line to play the video from there.',
 		videoHintOpen: 'Click a line to open the video there on YouTube.',

@@ -121,9 +121,12 @@ async fn page_of(
         .cloned()
         .ok_or_else(|| AppError::new("job.not_found", source_id))?;
     // Only scans and images are previewed, never a link: a path that is not a file was moved
-    // or deleted since the job read it.
-    if !std::path::Path::new(&source.path).is_file() {
-        return Err(AppError::new(id::FILE_MISSING, &source.path));
+    // or deleted since the job read it. A document of pages has a file per page, checked below.
+    fn missing(file: Option<&str>) -> Option<&str> {
+        file.filter(|f| !std::path::Path::new(f).is_file())
+    }
+    if let Some(file) = missing(source.file_of(&kalamu_core::PieceRef::Whole)) {
+        return Err(AppError::new(id::FILE_MISSING, file));
     }
     let cached = state.preview.lock().ok().and_then(|c| {
         c.as_ref()
@@ -153,6 +156,9 @@ async fn page_of(
         .get(index as usize)
         .cloned()
         .ok_or_else(|| AppError::new("media.read", format!("no piece {index}")))?;
+    if let Some(file) = missing(source.file_of(&piece)) {
+        return Err(AppError::new(id::FILE_MISSING, file));
+    }
     tokio::task::spawn_blocking(move || {
         opened.prepare(
             &piece,

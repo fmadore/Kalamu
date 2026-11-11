@@ -44,6 +44,18 @@ improvements that open *Next*; what it did not fix at once is tracked in
   *Image description and keywords* when every file is an image, unless a prompt was chosen;
   the review of a PDF's translation or correction shows the text the model read at a click,
   the page a click away.
+- **Ordered image documents, first increment** ([#52](https://github.com/fmadore/Kalamu/issues/52),
+  [decision](decisions/2026-11-11-ordered-image-documents.md)): several images in New job are
+  read either as separate documents, as before, or as the pages of one document, named (the
+  folder's name unless changed) and put in the natural order of their names, page 2 before page
+  10, with numbers that skip or repeat pointed out; pages move with buttons or by dragging. An
+  extraction or a table of contents reads the document page by page as it reads a PDF, each page
+  cached under its own file, so a page moved, or read alone before, is not read again; a page
+  whose file was moved or replaced fails alone, named. The review links each page to its
+  original file; the results are one document named after it, and `provenance.json` records the
+  pages in order with their paths and hashes. Left for later: labels for pages in New job,
+  reordering a job already made, analyses of such a document, its items, and pairing existing
+  transcriptions with the scans.
 - **Image description and keywords** ([#168](https://github.com/fmadore/Kalamu/issues/168)): a
   ready-made analysis for photographs, posters, maps and other images, giving a description of
   what is visibly there (its first sentence a summary on its own), the kind of image, keywords,
@@ -527,8 +539,17 @@ In this order. Work that keeps what has shipped sound comes before new features.
   the whole issue rather than read again; items as a project's documents and as rows of the
   descriptions export (from [#55](https://github.com/fmadore/Kalamu/issues/55)); importing an
   exported list back; a large issue's pages combined in bounded groups rather than in one
-  request. Items of a multi-page image wait for ordered image documents
-  ([#52](https://github.com/fmadore/Kalamu/issues/52)).
+  request. Items of a multi-page image, and of a document of images
+  ([#52](https://github.com/fmadore/Kalamu/issues/52)), can be made but not yet read on their
+  own.
+- **Ordered image documents, what is left of
+  [#52](https://github.com/fmadore/Kalamu/issues/52)**: page labels typed in New job (the
+  manifest holds them already); reordering, adding or removing pages of a job already made;
+  an analysis of such a document (several images in one request); a document of images added to
+  a project as such before any job reads it; several pages of images sent in one call; and the
+  second increment, existing transcriptions paired with their scans by name and reviewed
+  without another reading
+  ([decision](decisions/2026-11-11-ordered-image-documents.md)).
 - **Project dictionary, what is left of
   [#48](https://github.com/fmadore/Kalamu/issues/48)**: a live run of proposed merges with
   each provider, on a field of a few hundred rows; comparing rows far apart in the alphabet
@@ -682,7 +703,7 @@ first workflow increment.
 | Improvement | First useful increment and dependency | Tracking |
 | --- | --- | --- |
 | Research-question screening | Relevance preset, explanations, filters and researcher selection; verified evidence spans build on #47 | [#51](https://github.com/fmadore/Kalamu/issues/51) |
-| Ordered image documents and paired transcriptions | Import photographs as one document with reviewable order; then pair existing text with scans | [#52](https://github.com/fmadore/Kalamu/issues/52) |
+| Ordered image documents and paired transcriptions | Import photographs as one document with reviewable order (first increment done: New job's choice and order, extraction and table of contents page by page, review, one result with its pages in provenance); then pair existing text with scans | [#52](https://github.com/fmadore/Kalamu/issues/52) |
 | Persistent image preparation | Crop, processing rotation and adjustable spread splitting; transformation recipes preserve originals and source coordinates | [#53](https://github.com/fmadore/Kalamu/issues/53) |
 | Source-linked review | Providers' existing regions drawn over the scan, each opening its text, with a page-only fallback; then stable region identities and researcher-drawn regions. Coordinates shared with #53, text anchors from #47 | [#84](https://github.com/fmadore/Kalamu/issues/84) |
 | Context-aware processing | Bounded neighboring pages; then date/place proposals with evidence, literal readings and explicit inference status, shown in export profiles beside the literal value | [#54](https://github.com/fmadore/Kalamu/issues/54) |
@@ -700,7 +721,8 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 - Linking names to imported local authority records (an id from candidate records, or none,
   with a reason), building on the project dictionary in #48.
 - Tables of contents of text files (a long Word report, a transcript, read in passages).
-  Ordered photographs and item-level extraction/export are tracked in #52 and #50 above.
+  Ordered photographs (first increment done) and item-level extraction/export are tracked in
+  #52 and #50 above.
 - Post-interview analysis with research profiles and evidence-linked themes/quotations:
   [#38](https://github.com/fmadore/Kalamu/issues/38), using the shared snapshot foundation.
 - Explore assisted TEI encoding with reusable project profiles:

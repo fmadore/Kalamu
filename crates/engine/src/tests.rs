@@ -26,6 +26,7 @@ mod contents;
 mod large;
 mod later;
 mod names;
+mod ordered;
 mod pages;
 mod reading;
 mod snapshot;
