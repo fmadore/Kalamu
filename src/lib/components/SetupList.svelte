@@ -180,7 +180,7 @@
 								>
 							{/each}
 						</select>
-						<span class="hint">{m.newJob.reasoning.hint}</span>
+						<small>{m.newJob.reasoning.hint}</small>
 					</label>
 				{/if}
 				{#if drafts.length > 1}
@@ -356,7 +356,8 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
 		gap: var(--space-3);
-		align-items: end;
+		/* Top-aligned, so a field with a hint under it keeps its label and control in line. */
+		align-items: start;
 		align-content: start;
 		padding: var(--space-4);
 		border: 1px solid var(--line);

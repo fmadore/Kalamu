@@ -349,12 +349,12 @@
 				<label class="field">
 					<span>{p.separator}</span>
 					<input type="text" class="mono" bind:value={draft.list_separator} />
-					<small class="muted">{p.separatorHint}</small>
+					<small>{p.separatorHint}</small>
 				</label>
 				<label class="field">
 					<span>{p.missing}</span>
 					<input type="text" class="mono" bind:value={draft.missing} />
-					<small class="muted">{p.missingHint}</small>
+					<small>{p.missingHint}</small>
 				</label>
 			</div>
 			<label class="check">

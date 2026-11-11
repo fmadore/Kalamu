@@ -388,9 +388,19 @@ textarea {
 	color: var(--on-ink-muted);
 }
 
+/* Rows stay their own height: a field stretched beside a taller neighbour (one whose hint
+   wraps) keeps its control the same size and leaves the space below. */
 .field {
 	display: grid;
 	gap: var(--space-1);
+	align-content: start;
+}
+
+/* A field's hint, under its control. */
+.field > small {
+	font-size: var(--type-xs);
+	line-height: 1.4;
+	color: var(--text-muted);
 }
 
 .field > span,
