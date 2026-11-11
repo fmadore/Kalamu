@@ -309,6 +309,19 @@ mod tests {
             ])
             .is_ok()
         );
+        // Extract, translate the text, analyse the translation.
+        assert!(
+            check_steps(&[
+                (TextExtraction, StepInput::Sources),
+                (Translation, read(0)),
+                (Analysis, read(1)),
+            ])
+            .is_ok()
+        );
+        assert_eq!(
+            check_steps(&[(Analysis, StepInput::Sources), (Translation, read(0))]),
+            Err(WorkflowError::NotText { step: 2 })
+        );
         assert_eq!(
             check_steps(&[(Analysis, read(0))]),
             Err(WorkflowError::NotEarlier { step: 1 })

@@ -1,12 +1,13 @@
 <script lang="ts">
 	// Sends a result's text, as the researcher corrected it, into a new round: an analysis, a
-	// correction, or a saved workflow. The text is frozen first (snapshots, #47), so nothing is
+	// correction, a translation, or a saved workflow. The text is frozen first (snapshots, #47), so nothing is
 	// read again and a later correction does not change what the new round read.
 	import Icon from './Icon.svelte';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { go, type FromProject } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
+	import type { Task } from '#lib/bindings/Task.js';
 
 	let {
 		jobId,
@@ -31,8 +32,14 @@
 	let menu = $state<HTMLDetailsElement | null>(null);
 	let busy = $state(false);
 
-	type Choice = 'analyse' | 'correct' | 'workflow';
-	const choices: Choice[] = ['analyse', 'correct', 'workflow'];
+	type Choice = 'analyse' | 'correct' | 'translate' | 'workflow';
+	const choices: Choice[] = ['analyse', 'correct', 'translate', 'workflow'];
+	/** The task each choice opens New job on, and the icon it shows. */
+	const TASKS: Record<Exclude<Choice, 'workflow'>, Task> = {
+		analyse: 'analysis',
+		correct: 'text_correction',
+		translate: 'translation'
+	};
 
 	async function choose(choice: Choice) {
 		if (menu) menu.open = false;
@@ -40,13 +47,7 @@
 		try {
 			const sources = await api.snapshotJob(jobId, setupId, sourceId);
 			if (choice === 'workflow') go({ name: 'workflows', sources, project });
-			else
-				go({
-					name: 'new',
-					task: choice === 'analyse' ? 'analysis' : 'text_correction',
-					sources,
-					project
-				});
+			else go({ name: 'new', task: TASKS[choice], sources, project });
 		} catch (e) {
 			onerror(describeError(e, m));
 		} finally {
@@ -63,14 +64,7 @@
 		{#each choices as choice (choice)}
 			<li>
 				<button class="item" onclick={() => choose(choice)} disabled={busy}>
-					<Icon
-						name={choice === 'analyse'
-							? 'analysis'
-							: choice === 'correct'
-								? 'text_correction'
-								: 'workflow'}
-						size={16}
-					/>
+					<Icon name={choice === 'workflow' ? 'workflow' : TASKS[choice]} size={16} />
 					<span>
 						<span class="label">{u[choice]}</span>
 						<span class="sub">{u[`${choice}Hint`]}</span>

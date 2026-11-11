@@ -104,7 +104,8 @@ const TASKS: Record<Task, true> = {
 	audio_transcription: true,
 	analysis: true,
 	contents: true,
-	text_correction: true
+	text_correction: true,
+	translation: true
 };
 const STATES: Record<JobStatus, true> = {
 	pending: true,

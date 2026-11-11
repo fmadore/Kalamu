@@ -21,17 +21,19 @@ pub(crate) fn fields<'a>(
         .ok_or_else(|| ProviderError::InvalidRequest("an analysis needs fields".into()))
 }
 
-/// An answer as its task reads it: an analysis's, a table of contents' or a correction's is
+/// An answer as its task reads it: an analysis's, a table of contents', a correction's or a
+/// translation's is
 /// checked against its fields; any other is kept as written.
 pub(crate) fn read(
     context: BatchContext<'_>,
     output: ProcessOutput,
 ) -> Result<ProcessOutput, ProviderError> {
     match (context.task, context.analysis) {
-        (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
-            finish(output, fields)
-        }
-        (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
+        (
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation,
+            Some(fields),
+        ) => finish(output, fields),
+        (Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation, None) => Err(
             ProviderError::InvalidRequest("an analysis needs fields".into()),
         ),
         _ => Ok(output),

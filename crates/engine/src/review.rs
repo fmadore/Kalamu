@@ -41,8 +41,9 @@ pub struct PieceView {
     pub speakers: Vec<String>,
     /// The names the researcher gave this set-up's speakers in this recording.
     pub speaker_names: BTreeMap<String, String>,
-    /// For a correction, the text as it was before: the PDF page's text layer or the text
-    /// file's page or passage, which the review compares with the correction.
+    /// For a correction or a translation, the text as it was before: the PDF page's text layer
+    /// or the text file's page or passage, which the review compares with the correction and
+    /// shows beside the translation.
     pub source_text: Option<String>,
     /// The model's answer stopped at its output limit: the end of the piece may be missing.
     pub truncated: bool,
@@ -58,9 +59,10 @@ impl Engine {
         let job = self.store.job(job_id)?;
         let corrections = self.store.corrections(job_id)?;
         let speakers = self.store.speakers(job_id)?;
-        // A correction's source is read once, for the text each piece had before.
+        // A correction's or a translation's source is read once, for the text each piece had
+        // before.
         let opened = match job.sources.iter().find(|s| s.id == source_id) {
-            Some(source) if job.task == Task::TextCorrection => {
+            Some(source) if job.task.rewrites_text() => {
                 kalamu_media::OpenSource::open(source, self.config.ffmpeg.as_ref()).ok()
             }
             _ => None,

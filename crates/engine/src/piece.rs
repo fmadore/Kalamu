@@ -57,10 +57,11 @@ pub(crate) fn clean(mut output: ProcessOutput) -> ProcessOutput {
     output
 }
 
-/// A provider's answer as the task stores it: a correction's one field becomes the page's text.
+/// A provider's answer as the task stores it: a correction's or a translation's one field
+/// becomes the page's text.
 pub(crate) fn finish(task: Task, output: ProcessOutput) -> ProcessOutput {
     let mut output = clean(output);
-    if task == Task::TextCorrection {
+    if task.rewrites_text() {
         output.text = kalamu_core::correction::text(&output.fields);
         output.fields = Vec::new();
     }
@@ -90,8 +91,8 @@ impl Engine {
     }
 
     /// The provider's formats for the task, narrowed to those the model reads: a text-only
-    /// model behind a provider that takes PDFs and images is sent text alone. A correction
-    /// sends text whatever the model reads.
+    /// model behind a provider that takes PDFs and images is sent text alone. A correction or a
+    /// translation sends text whatever the model reads.
     pub(crate) fn accepted(
         &self,
         job: &Job,
@@ -105,7 +106,7 @@ impl Engine {
             .iter()
             .copied()
             .filter(|mime| model.is_none_or(|m| m.inputs.iter().any(|i| i == mime)))
-            .filter(|mime| job.task != Task::TextCorrection || *mime == "text/plain")
+            .filter(|mime| !job.task.rewrites_text() || *mime == "text/plain")
             .collect())
     }
 

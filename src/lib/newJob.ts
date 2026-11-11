@@ -30,12 +30,13 @@ import { YOUTUBE_LINK } from './youtube.js';
 export type Mode = Task | 'youtube';
 
 /**
- * In the order New job shows them, two by two: reading pages, then working on texts, then
+ * In the order New job shows them: reading pages, then working on texts that exist, then
  * spoken sources.
  */
 export const MODES: Mode[] = [
 	'text_extraction',
 	'text_correction',
+	'translation',
 	'analysis',
 	'contents',
 	'audio_transcription',
@@ -95,6 +96,7 @@ export function rulesFor(rules: Rules, task: Task): TaskRules {
 			sources: [],
 			formats: [],
 			answers_in_language: false,
+			needs_language: false,
 			models: [],
 			merge_models: [],
 			yields_text: false,

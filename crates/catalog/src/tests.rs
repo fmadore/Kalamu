@@ -241,6 +241,8 @@ fn contents_and_corrections_take_the_analysis_models_that_read_their_input() {
     let corrections = ids(Task::TextCorrection);
     assert!(corrections.iter().any(|m| m.starts_with("deepseek")));
     assert!(!corrections.iter().any(|m| m.starts_with("voxtral")));
+    // A translation takes the same models as a correction: analysis models that read text.
+    assert_eq!(ids(Task::Translation), corrections);
     assert!(
         catalog
             .merge_models()

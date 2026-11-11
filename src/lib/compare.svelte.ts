@@ -1,6 +1,7 @@
 // The texts a review compares with the text shown, and the one opened beside it: each other
 // set-up's reading, the model's own text under a correction, and for a correction the text it
-// corrected. Each is named by a siglum, as in an edition's apparatus.
+// corrected. Each is named by a siglum, as in an edition's apparatus. A translation's source is
+// in another language, so it is shown beside the translation, never compared with it.
 
 import { siglum } from './apparatus.js';
 import type { PieceView } from './bindings/PieceView.js';
@@ -38,7 +39,8 @@ export function witnessesOf(
 	if (lead?.corrected_text != null && lead.ai_text != null) {
 		out.push({ key: 'model', siglum: siglum(0), text: lead.ai_text });
 	}
-	// A correction is compared with the text it corrected, so every change shows.
+	// A correction is compared with the text it corrected, so every change shows; a translation
+	// is not, being in another language.
 	if (task === 'text_correction' && lead?.source_text != null) {
 		out.push({ key: 'source', siglum: m.review.originalSiglum, text: lead.source_text });
 	}

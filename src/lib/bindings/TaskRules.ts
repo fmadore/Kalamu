@@ -21,6 +21,11 @@ formats: Array<ExportFormat>,
  */
 answers_in_language: boolean, 
 /**
+ * Whether that language must be chosen, with no detection to fall back on: a
+ * translation's.
+ */
+needs_language: boolean, 
+/**
  * The models that do it, in catalogue order.
  */
 models: Array<ModelRef>, 

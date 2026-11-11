@@ -227,7 +227,7 @@ impl Provider for Gemini {
                 "audio/webm",
                 YOUTUBE_LINK,
             ],
-            Task::Analysis | Task::Contents | Task::TextCorrection => &[
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation => &[
                 "text/plain",
                 "application/pdf",
                 "image/png",
@@ -245,9 +245,10 @@ impl Provider for Gemini {
         if transcribe::transcriber(tuning) {
             return Vec::new();
         }
-        // As for a page, which every task but a transcription or a correction reads.
+        // As for a page, which every task but a transcription, a correction or a translation
+        // reads.
         let page = match task {
-            Task::AudioTranscription | Task::TextCorrection => "text/plain",
+            Task::AudioTranscription | Task::TextCorrection | Task::Translation => "text/plain",
             _ => "application/pdf",
         };
         settings(page, tuning)

@@ -191,13 +191,16 @@ fn rank(level: &str) -> usize {
 }
 
 impl Reasoning {
-    /// The level suggested for a task. Reading a page, a recording or a text to correct needs
-    /// little thought, so the lowest; an analysis or a table of contents starts at `low`, or the
+    /// The level suggested for a task. Reading a page, a recording or a text to correct or
+    /// translate needs little thought, so the lowest; an analysis or a table of contents starts at `low`, or the
     /// lowest where the model has no `low`. The researcher can raise either.
     pub fn suggested(&self, task: Task) -> Option<&str> {
         let lowest = self.levels.first().map(String::as_str);
         match task {
-            Task::TextExtraction | Task::AudioTranscription | Task::TextCorrection => lowest,
+            Task::TextExtraction
+            | Task::AudioTranscription
+            | Task::TextCorrection
+            | Task::Translation => lowest,
             Task::Analysis | Task::Contents => self
                 .levels
                 .iter()
@@ -418,8 +421,8 @@ impl Catalog {
 
     /// Models that can do a task, in catalogue order (recommended first within a provider),
     /// those replaced or retired included: New job offers them only to a set-up that already
-    /// names one. A table of contents and a correction are made of analyses, so they take the analysis models
-    /// that read their input: pages, or text.
+    /// names one. A table of contents, a correction and a translation are made of analyses, so
+    /// they take the analysis models that read their input: pages, or text.
     pub fn models_for(&self, task: Task) -> Vec<&ModelInfo> {
         self.models.iter().filter(|m| m.does(task)).collect()
     }

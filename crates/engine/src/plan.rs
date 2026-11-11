@@ -22,7 +22,7 @@ pub(crate) type Work = (Setup, PieceState, CacheKey);
 
 impl Engine {
     /// The pieces a source is cut into for the job's task. An error is the source's own (a
-    /// correction of a file with no text), reported and skipped by the caller.
+    /// correction or a translation of a file with no text), reported and skipped by the caller.
     pub(crate) async fn plan(
         &self,
         job: &Job,
@@ -36,8 +36,9 @@ impl Engine {
         let mut pieces = if job.task == Task::Analysis {
             // An analysis reads the whole document at once.
             vec![PieceRef::Whole]
-        } else if job.task == Task::TextCorrection {
-            // A correction reads the text there is: a PDF's pages, a text file's passages.
+        } else if job.task.rewrites_text() {
+            // A correction or a translation reads the text there is: a PDF's pages, a text
+            // file's passages.
             let (opened, sample) = (opened.clone(), job.settings.sample_pages);
             let planned = tokio::task::spawn_blocking(move || opened.text_pieces(sample))
                 .await

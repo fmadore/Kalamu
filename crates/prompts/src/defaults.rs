@@ -16,7 +16,10 @@
 //! The tables of contents port iwac-ai-pipelines' `AI_summary_issue` prompts (page extraction
 //! and consolidation), in English and without their Islamic-magazine specifics; the archival
 //! file and the book are new, on the same two steps. The correction keeps `AI_ocr_correction`'s
-//! rules for any printed text, its newspaper ones included.
+//! rules for any printed text, its newspaper ones included. The translation is new: it takes
+//! the translated interview's rules (everything in order, names kept, the original term beside a
+//! culturally specific one) to any text, its target named by `{languages}` as an analysis's
+//! answer language is.
 
 use kalamu_core::{AnalysisSchema, Field, FieldKind, Task};
 
@@ -41,6 +44,9 @@ const CONTENTS_REQUEST: &str = "List the articles or items on this page and fill
 
 const CORRECTION_REQUEST: &str =
     "Correct the machine-read text above, following the instructions given.";
+
+const TRANSLATION_REQUEST: &str = "Translate the text above completely, without summarising or \
+leaving out any part, following the instructions given.";
 
 /// zmo-ai-pipelines' `USER_PROMPT`.
 const PAGE_REQUEST: &str = "Transcribe this page completely, following the instructions given.";
@@ -628,6 +634,17 @@ pub(crate) const DEFAULTS: &[Default] = &[
         description: "Corrects machine-reading errors only, columns put back in order; spelling, wording and style of the time kept.",
         instructions: include_str!("../defaults/correction-general.md"),
         user_prompt: CORRECTION_REQUEST,
+        schema: None,
+        merge: None,
+        dense: false,
+    },
+    Default {
+        id: "translation.research",
+        task: Task::Translation,
+        name: "Translation for research",
+        description: "Everything translated in order, nothing summarised; names kept as written, the original beside culturally specific terms, the layout and a transcript's speakers and times kept.",
+        instructions: include_str!("../defaults/translation-research.md"),
+        user_prompt: TRANSLATION_REQUEST,
         schema: None,
         merge: None,
         dense: false,

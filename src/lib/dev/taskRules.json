@@ -15,6 +15,7 @@
       "alto"
     ],
     "answers_in_language": false,
+    "needs_language": false,
     "models": [
       {
         "provider": "gemini",
@@ -162,6 +163,7 @@
       "csv"
     ],
     "answers_in_language": false,
+    "needs_language": false,
     "models": [
       {
         "provider": "gemini",
@@ -327,6 +329,185 @@
     "reads_text_layer": true
   },
   {
+    "task": "translation",
+    "sources": [
+      "text",
+      "pdf"
+    ],
+    "formats": [
+      "txt",
+      "markdown",
+      "docx",
+      "json",
+      "csv"
+    ],
+    "answers_in_language": true,
+    "needs_language": true,
+    "models": [
+      {
+        "provider": "gemini",
+        "model": "gemini-3.8-flash",
+        "suggested_reasoning": "low",
+        "recommended": true,
+        "provider_default": true
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-4-argon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.1-pro-preview",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "suggested_reasoning": "minimal",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6.1-terra",
+        "suggested_reasoning": "none",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "suggested_reasoning": "none",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-fable-5-2",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "claude-fable-5-2"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-opus-5-5",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-5-5",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "mistral",
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "mistral",
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "mistral-large-4-0"
+      },
+      {
+        "provider": "mistral",
+        "model": "mistral-small-2603",
+        "suggested_reasoning": "none",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "mistral",
+        "model": "zai-glm-5-3",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "mistral",
+        "model": "zai-glm-5-3-flash",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "mistral",
+        "model": "deepseek-v4-1-flash-1017",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e4b",
+        "recommended": false,
+        "provider_default": true
+      },
+      {
+        "provider": "local-llm",
+        "model": "gemma-4-e2b",
+        "recommended": false,
+        "provider_default": false
+      }
+    ],
+    "merge_models": [],
+    "yields_text": true,
+    "line_breaks": false,
+    "samples": true,
+    "pages_per_call": false,
+    "splits_spreads": false,
+    "reads_text_layer": true
+  },
+  {
     "task": "analysis",
     "sources": [
       "text",
@@ -341,6 +522,7 @@
       "csv"
     ],
     "answers_in_language": true,
+    "needs_language": false,
     "models": [
       {
         "provider": "gemini",
@@ -519,6 +701,7 @@
       "json"
     ],
     "answers_in_language": true,
+    "needs_language": false,
     "models": [
       {
         "provider": "gemini",
@@ -841,6 +1024,7 @@
       "csv"
     ],
     "answers_in_language": false,
+    "needs_language": false,
     "models": [
       {
         "provider": "gemini",

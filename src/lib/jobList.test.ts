@@ -120,7 +120,7 @@ describe('readJobListView', () => {
 	});
 
 	it('sets back each value that is not one of today’s, and refuses what is no view', () => {
-		expect(readJobListView({ task: 'translation', status: 'lost', sort: 'size' })).toEqual(
+		expect(readJobListView({ task: 'dubbing', status: 'lost', sort: 'size' })).toEqual(
 			DEFAULT_JOB_LIST_VIEW
 		);
 		expect(readJobListView({ task: 'toString', status: 7 })).toEqual(DEFAULT_JOB_LIST_VIEW);

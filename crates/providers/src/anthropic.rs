@@ -243,7 +243,7 @@ impl Provider for Anthropic {
         match task {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
             Task::AudioTranscription => &[],
-            Task::Analysis | Task::Contents | Task::TextCorrection => &[
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation => &[
                 "text/plain",
                 "application/pdf",
                 "image/png",

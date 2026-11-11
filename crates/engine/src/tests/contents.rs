@@ -1,14 +1,15 @@
-//! A table of contents read by one provider and combined by another, and corrections of text
-//! that already exists, against fake providers that answer the schemas they are sent.
+//! A table of contents read by one provider and combined by another, and corrections and
+//! translations of text that already exists, against fake providers that answer the schemas
+//! they are sent.
 
-use kalamu_core::{Field, MergeModel, PieceRef};
+use kalamu_core::{Field, JobSettings, LanguageChoice, LanguageCode, MergeModel, PieceRef};
 
 use super::*;
 
 mod units;
 
 /// Answers whatever schema it is sent: a page's entries (two articles over three pages), the
-/// combined entries (grouped by title), or a corrected text.
+/// combined entries (grouped by title), or a corrected or translated text.
 struct Structured {
     id: &'static str,
     calls: AtomicUsize,
@@ -103,10 +104,15 @@ impl Provider for Structured {
             .unwrap_or_else(|| panic!("both tasks answer in fields"));
         let entry_fields = kalamu_core::contents::entry_fields(schema);
         let answers = match schema.fields[0].key.as_str() {
-            // A correction.
+            // A correction, or a translation: the same one field, told apart by its label.
             "text" => {
                 assert_eq!(input.mime, "text/plain", "a correction sends text");
-                vec![text_answer("text", &format!("Corrigé: {}", read.trim()))]
+                let done = if schema.fields[0].label.starts_with("Translated") {
+                    "Translated"
+                } else {
+                    "Corrigé"
+                };
+                vec![text_answer("text", &format!("{done}: {}", read.trim()))]
             }
             // A page of a table of contents.
             "entries" if schema.fields.len() == 2 => {
@@ -474,4 +480,169 @@ async fn existing_text_is_corrected_page_by_page_and_compared_with_what_it_was()
     assert_eq!(views[1].ai_text.as_deref(), Some("Corrigé: Suite du rccit"));
     assert_eq!(views[1].source_text.as_deref(), Some("Suite du rccit"));
     assert!(views[1].ai_fields.is_empty(), "stored as text, not fields");
+}
+
+impl Two {
+    /// A translation into `languages` with the shipped prompt.
+    fn translation(
+        &self,
+        sources: Vec<SourceFile>,
+        languages: LanguageChoice,
+    ) -> Result<Job, EngineError> {
+        self.engine.create_job(NewJob {
+            name: "Translation".into(),
+            task: Task::Translation,
+            sources,
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("reader"),
+                model: "big".into(),
+                preset_id: Some("translation.research".into()),
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: JobSettings {
+                languages,
+                ..Default::default()
+            },
+            output: OutputSettings {
+                formats: vec![ExportFormat::Txt, ExportFormat::Csv],
+                ..Default::default()
+            },
+        })
+    }
+}
+
+fn english() -> LanguageChoice {
+    LanguageChoice::Explicit(vec![LanguageCode::new("en")])
+}
+
+#[tokio::test]
+async fn a_translation_needs_the_language_it_translates_into() {
+    let t = two();
+    let txt = t.file("lettre.txt", "Le Hajj de 1957\n".as_bytes());
+    assert!(matches!(
+        t.translation(vec![txt.clone()], LanguageChoice::Auto),
+        Err(EngineError::NoLanguage)
+    ));
+    let job = t
+        .translation(vec![txt], english())
+        .unwrap_or_else(|e| panic!("{e}"));
+    // The target is in the prompt; no choice of lines reaches it.
+    let prompt = &job.setups[0].prompt;
+    assert!(prompt.text.contains("into English"), "{}", prompt.text);
+    assert!(!prompt.text.contains("## Line breaks"));
+}
+
+#[tokio::test]
+async fn existing_text_is_translated_page_by_page_and_shown_beside_what_it_was() {
+    let t = two();
+    let pdf = t.file(
+        "bulletin.pdf",
+        &kalamu_media::sample_pdf(&[(595.0, 842.0); 2], true),
+    );
+    let txt = t.file(
+        "gallica.txt",
+        "--- Page 1 ---\n\nLe Hajj de 1957\n\n--- Page 2 ---\n\nSuite du récit\n".as_bytes(),
+    );
+    let job = t
+        .translation(vec![pdf, txt.clone()], english())
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(t.run(job.id).await, JobStatus::Completed);
+    assert_eq!(t.reader.calls(), 4);
+
+    let translated = t.read("gallica.translated.en.txt");
+    assert!(
+        translated.contains("--- Page 2 ---\n\nTranslated: Suite du récit"),
+        "{translated}"
+    );
+    assert!(t.read("gallica.txt").contains("Suite du récit"));
+    assert!(
+        t.read("bulletin.translated.en.txt")
+            .contains("Translated: Page 1 of the Bulletin")
+    );
+    assert!(
+        t.read("gallica.translated.en.csv")
+            .contains("Translated: Le Hajj")
+    );
+    let views = t
+        .engine
+        .source_pieces(job.id, txt.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        views[1].ai_text.as_deref(),
+        Some("Translated: Suite du récit")
+    );
+    assert_eq!(views[1].source_text.as_deref(), Some("Suite du récit"));
+    assert!(views[1].ai_fields.is_empty(), "stored as text, not fields");
+
+    // Crashed during a second run with a page in flight: resuming sends nothing again.
+    let mut piece = t.engine.store.pieces(job.id).unwrap_or_default()[3].clone();
+    piece.status = PieceStatus::Running;
+    t.engine
+        .store
+        .upsert_piece(&piece)
+        .unwrap_or_else(|e| panic!("{e}"));
+    t.engine
+        .store
+        .set_job_status(job.id, JobStatus::Running)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(t.engine.recover().unwrap_or_default(), vec![job.id]);
+    assert_eq!(t.run(job.id).await, JobStatus::Completed);
+    assert_eq!(
+        t.reader.calls(),
+        4,
+        "the page in flight came from the cache"
+    );
+
+    // The same text translated again, by a new job, is not paid for twice.
+    let again = t
+        .translation(
+            vec![t.file("copie.txt", "Le Hajj de 1957\n".as_bytes())],
+            english(),
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    let calls = t.reader.calls();
+    assert_eq!(t.run(again.id).await, JobStatus::Completed);
+    assert!(t.reader.calls() <= calls + 1);
+}
+
+#[tokio::test]
+async fn a_corrected_text_frozen_as_left_is_translated_and_its_translation_analysed() {
+    let t = two();
+    let txt = t.file("gallica.txt", "Le Hajj de 1957\n".as_bytes());
+    let correction = t.job(
+        Task::TextCorrection,
+        vec![txt],
+        "text_correction.general",
+        None,
+    );
+    assert_eq!(t.run(correction.id).await, JobStatus::Completed);
+    let frozen = t
+        .engine
+        .snapshot(correction.id, correction.setups[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let translation = t
+        .translation(frozen, english())
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(t.run(translation.id).await, JobStatus::Completed);
+    assert_eq!(
+        t.reader.inputs().last().map(|i| i.trim().to_string()),
+        Some("Corrigé: Le Hajj de 1957".into()),
+        "the translation read the corrected text, not the file"
+    );
+    let views = t
+        .engine
+        .source_pieces(translation.id, translation.sources[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        views[0].ai_text.as_deref(),
+        Some("Translated: Corrigé: Le Hajj de 1957")
+    );
+    // Its text goes on into a new round, as any text does.
+    let next = t
+        .engine
+        .snapshot(translation.id, translation.setups[0].id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(next.len(), 1);
 }

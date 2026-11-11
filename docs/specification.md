@@ -50,6 +50,7 @@ Where Kalamu departs from these projects, the reason is written down in
 | **Analyse texts** | Text, Word, PDF, photographed pages, photographs and other images, and the results of earlier jobs | The researcher's own fields for each document: a summary, the people and places it names, its tone, what an image shows… |
 | **Detailed table of contents** | A long PDF or multi-page image: a newspaper or magazine issue, an archival file scanned in one piece, a book or report | One entry per article or item, with its title, its pages and the researcher's fields |
 | **Correct existing text** | A PDF's text layer, or a text or Word file from a digital library | The text corrected page by page or passage by passage, its spelling of the time kept |
+| **Translate a text** | A PDF's text layer, a text or Word file, or the text of an earlier result | The text in the language chosen, page by page or passage by passage, nothing summarised or left out |
 
 **OCR and HTR are one task.** Current vision models read print and handwriting with the same
 call, so the app has a single **Extract text** task and the difference lies in the prompt:
@@ -135,9 +136,10 @@ item's pages as a PDF with a list of the items as CSV and JSON
 ([decision](decisions/2026-11-02-document-units.md)). Only a PDF's items can be cut out so far.
 
 **A result's text can go into a new round.** *Use this text in a new job* on an extraction, a
-transcription or a correction, on the job's page or among a project document's results, freezes
-the text as the researcher left it, corrections and speaker names included (from a document,
-only that document's), and opens an analysis of it, a correction of it, or Workflows to run a
+transcription, a correction or a translation, on the job's page or among a project document's
+results, freezes the text as the researcher left it, corrections and speaker names included
+(from a document, only that document's), and opens an analysis of it, a correction or a
+translation of it, or Workflows to run a
 saved workflow or an example on it: nothing is read again or exported and imported. Workflows
 that start by reading scans or recordings are shown but cannot be chosen for text. The frozen copy never changes, so a correction made afterwards does not
 alter what the analysis read; the analysis is marked out of date, with a way to analyse the
@@ -154,6 +156,26 @@ keeps the document's spelling, wording and style; its preset keeps iwac-ai-pipel
 OCR-correction rules, those for newspapers included. The review highlights every change against
 the original. A scan with
 no text layer needs *Extract text* instead.
+
+**A text is translated as a task of its own** ([#167](https://github.com/fmadore/Kalamu/issues/167),
+[decision](decisions/2026-11-11-translation.md)). *Translate a text* reads what a correction reads
+(a PDF's text layer, a text or Word file) and, above all, a result's text frozen through *Use
+this text in a new job*: an extraction, a transcription or a correction as the researcher left
+it. It sends that text page by page, or in passages, and the answer comes back as the one field
+of a correction's, so every model that answers in fields and reads text can translate, cloud
+or offline, with nothing new asked of providers. The job's language is the language translated
+into, one only and always chosen: New job and a workflow's step ask for it, and a job without
+one is refused before anything is sent. Its preset, *Translation for research*, translates
+everything in order, summarising and leaving out nothing; keeps names of people, places and
+organisations as written; gives the original beside a culturally specific term; marks an
+unsure reading `[word?]`; keeps paragraphs, headings and a transcript's speaker labels and
+times exactly; adds no notes of its own; and, since the source may be machine-read, translates
+what is meant where a misreading is obvious and never invents. The translation follows the
+layout of the text it reads, so it offers no choice of lines. It is a result of its own, never
+replacing the source, written as `<name>.translated.<code>` in the formats of a correction; the
+review shows each page of the source beside its translation, which is corrected as any text is,
+with no differences view between two languages. Its text yields a text: it can be analysed, or
+read by a later workflow step. Subtitles of a translated transcript come later.
 
 ## Choosing and starting a job
 
@@ -178,7 +200,8 @@ no text layer needs *Extract text* instead.
   `two_letter_codes`). Analyses and tables of contents have
   an answer language instead, by default the document's own and then said outright so that a
   model reading English instructions does not drift into English; names and titles stay as the
-  document spells them, and a table of contents' entries are combined in one language.
+  document spells them, and a table of contents' entries are combined in one language. A
+  translation's language is the one it translates into, and has no default: it is chosen.
 - **Pages per call.** A text extraction sends a PDF one page at a time, or several pages, or
   as many as the model can write in one answer, so it sees an article that runs over the next
   page. Each page is still reviewed, corrected and exported on its own: the model marks where
@@ -212,7 +235,7 @@ no text layer needs *Extract text* instead.
   Each step is a saved pipeline, or a prompt (one Kalamu ships or the researcher's own) on the
   model New job would offer for it; a step of one set-up can take another prompt of its task,
   and keeps its name unless it was still named after the old prompt. Each reads either the
-  files or the text of an earlier extraction, transcription or correction step, frozen as the researcher corrected it when the
+  files or the text of an earlier extraction, transcription, correction or translation step, frozen as the researcher corrected it when the
   step starts; a step that reads one after it, or a table of contents or analysis's answers, is
   refused. A step can stop for a review: the steps that read it wait until the researcher says
   to continue. They also wait when some of its pages could not be read, until those are retried
@@ -229,7 +252,7 @@ no text layer needs *Extract text* instead.
   step that could not start, for want of any text read, starts once its input is. A workflow is exported and imported like a pipeline,
   and a run can start from a project's selection, its jobs tied to the documents.
 - **The simplest workflow needs no building.** The last section of New job, *Then*, offers to
-  analyse the text once it is read (an extraction, a transcription or a correction), by default
+  analyse the text once it is read (an extraction, a transcription, a correction or a translation), by default
   after the researcher has checked it; nothing is sent for the analysis before they continue.
   Ready-made examples (letters, interviews, a digital library's text) open in Workflows on the
   models the researcher has keys for, and an animated drawing of the steps, the researcher's
@@ -305,7 +328,7 @@ with short tips where they are relevant, and checks each file before a job start
 | **Very long or very quiet recordings, long silences** | Transcription drifts or skips quiet speech | Even out the volume; recordings are split at pauses |
 | **Auto-detect on short or mixed recordings** | Detection is unreliable on little speech | Choose the language(s) explicitly |
 | **Several documents in one file, or one document over several files** (analyses) | An analysis reads each file whole, however many pages, and gives it one set of answers, so keywords and names mix or split | One file per document; a tip says so, as it cannot be checked. A file that holds many documents (an issue, an archival file) suits a detailed table of contents |
-| **A scan without a text layer** (correction) | There is no text to correct | Extract text instead; the page is reported with that advice |
+| **A scan without a text layer** (correction, translation) | There is no text to correct or translate | Extract text instead; the page is reported with that advice |
 
 Checks never block a job: users can dismiss a warning. Fixes are applied to working copies,
 never to the originals, and recorded in `provenance.json`.
@@ -332,6 +355,8 @@ together, so that a researcher knows what is sent and what comes back:
   a table of entries with their pages and the prompt's fields.
 - **Correct existing text**: the text there is, its misreadings marked; one piece per page or
   passage; the model corrects them; every change shown against the original.
+- **Translate a text**: the text there is; one piece per page or passage; the model translates
+  each, leaving nothing out; each page of the text beside its translation.
 
 Once files are added, it uses them: the first file's name, pages or length, its pieces (counted
 by the engine, as for the long-recording check), the chosen model and the prompt's fields. It
@@ -374,6 +399,10 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   shown, each opening its first page.
 - **Corrections of existing text**: the original text is a witness of its own, so every change
   the model made is highlighted and the original reading can be taken back in one click.
+- **Translations**: the text translated stands in the source pane beside the translation, page
+  by page, as a text file's text does (a PDF's scan stays in its place); it is not a witness,
+  since two languages have no differences to mark. The translation is corrected as any text is,
+  and in a comparison two models' translations are compared as any two readings are.
 - **Analyses**: the document beside its answers, field by field. In a comparison every value
   carries the sigla of the set-ups that gave it, so agreement reads at a glance; reasons are
   shown below; pointing at a name finds it in the document. A right click on a name in a list
@@ -654,6 +683,7 @@ is remembered per task. Details are in [formats.md](formats.md).
 | **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
 | **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.csv` and `.json` |
 | **Correction** | As text extraction, without the searchable PDF or ALTO XML |
+| **Translation** | As a correction; subtitles of a translated transcript later |
 
 ## Prompts and analyses
 

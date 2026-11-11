@@ -55,6 +55,10 @@ Store version is being prepared ([steps](docs/mac-app-store.md)).
 - **Correct existing text**: the noisy OCR of a PDF's text layer or of a digital library's text
   file, corrected page by page with its spelling of the time kept, every change shown against
   the original.
+- **Translate a text**: a text file, a PDF's text layer, or the text of an extraction, a
+  transcription or a correction as you left it, put into the language you choose page by page,
+  nothing summarised or left out, names kept as written; the review shows the translation
+  beside the text, and its own text can be analysed in turn.
 - **Organise your material in projects**: documents grouped in collections (one document can
   be in several), each with every transcription, extraction and analysis made of it, whatever
   job made it. Add files before reading them, add jobs you ran before without paying again,

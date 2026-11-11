@@ -30,6 +30,7 @@ const MAX_LISTED = 1000;
 const TASKS: Task[] = [
 	'text_extraction',
 	'text_correction',
+	'translation',
 	'analysis',
 	'contents',
 	'audio_transcription'

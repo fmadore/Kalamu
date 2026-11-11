@@ -85,6 +85,7 @@
 	const tasks: Task[] = [
 		'text_extraction',
 		'text_correction',
+		'translation',
 		'audio_transcription',
 		'analysis',
 		'contents'

@@ -1,6 +1,8 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 10 November 2026, which applies from the first version to write the
+**Effective date:** 11 November 2026, which applies from the first version to translate
+texts: the text a translation reads is sent as a correction's is, to the provider the user
+chose. The policy of 10 November 2026 did not say so; it applies from the first version to write the
 offline models' working files (a page image, a text being read) in a folder of the app's own,
 emptied at each start, and to keep an unfinished model download so that it continues where it
 stopped; to tell a copy installed from the releases page that a newer version is out, from the
@@ -34,7 +36,7 @@ chooses for each job:
   Gemini, OpenAI, Anthropic Claude or Mistral; or
 - offline, on the user's computer: Whisper for transcription, Tesseract and small OCR vision
   models (LightOnOCR-3, GLM-OCR) for text extraction from page images, and small language
-  models (Gemma 4 E4B and E2B) for analyses, tables of contents and corrections.
+  models (Gemma 4 E4B and E2B) for analyses, tables of contents, corrections and translations.
 
 The developer operates no server for the app and receives nothing from it.
 
@@ -55,8 +57,8 @@ user's computer to that provider, with the instructions for the task (the prompt
 analysis, the fields to answer), and processed under the user's account and the provider's
 terms. Before sending, the app may convert a piece into a form the provider accepts, for
 example cutting a PDF into pages or a recording into segments; the original files are never
-changed. To correct existing text, the app sends the text it reads from the file (a PDF's text
-layer, or a text file's pages or passages) rather than the file. For a detailed table of
+changed. To correct or translate existing text, the app sends the text it reads from the file
+(a PDF's text layer, or a text file's pages or passages) rather than the file. For a detailed table of
 contents, each page goes to the provider chosen to read the pages, and the entries read on
 them, as text, to the provider chosen to combine them, which may be another provider. With a
 YouTube link, Gemini fetches the public video from YouTube itself; Kalamu does not download the

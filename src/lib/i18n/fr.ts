@@ -75,6 +75,11 @@ export const fr: Messages = {
 			name: 'Livre, rapport ou thèse',
 			description: 'Parties, chapitres et sections avec leurs pages et un résumé de chacun.'
 		},
+		'translation.research': {
+			name: 'Traduction pour la recherche',
+			description:
+				'Tout est traduit dans l’ordre, rien n’est résumé ; les noms restent tels qu’écrits, le mot d’origine accompagne les termes propres à une culture, la mise en page ainsi que les intervenants et les horodatages d’une transcription sont conservés.'
+		},
 		'text_correction.general': {
 			name: 'Document imprimé ou journal',
 			description:
@@ -139,7 +144,10 @@ export const fr: Messages = {
 			'Numéros de journaux et de magazines, dossiers d’archives, livres : une entrée par article ou par pièce, avec ses pages',
 		text_correction: 'Corriger un texte existant',
 		text_correctionHint:
-			'Texte issu d’une lecture automatique, d’une bibliothèque numérique ou d’un PDF, corrigé page par page : TXT, Word, PDF'
+			'Texte issu d’une lecture automatique, d’une bibliothèque numérique ou d’un PDF, corrigé page par page : TXT, Word, PDF',
+		translation: 'Traduire un texte',
+		translationHint:
+			'Un texte que vous avez déjà, dans un fichier, un PDF ou un résultat antérieur, traduit dans une autre langue page par page : TXT, Word, PDF'
 	},
 	useText: {
 		button: 'Utiliser ce texte dans un nouveau traitement',
@@ -150,6 +158,9 @@ export const fr: Messages = {
 		correct: 'Le corriger',
 		correctHint:
 			'Un modèle corrige les erreurs de lecture en conservant l’orthographe et la formulation ; chaque modification est signalée.',
+		translate: 'Le traduire',
+		translateHint:
+			'Dans la langue de votre choix, sans rien omettre ; la relecture montre la traduction à côté du texte.',
 		workflow: 'Lui appliquer une chaîne de traitement',
 		workflowHint: 'Plusieurs étapes successives, parmi vos chaînes ou à partir d’un exemple.'
 	},
@@ -233,6 +244,8 @@ export const fr: Messages = {
 		fromPrompts: (task: string) => `Prompts · ${task}`,
 		prompt: 'Prompt',
 		promptMissing: 'Un prompt qui n’est plus proposé',
+		language: 'Traduire en',
+		languageNone: 'Choisissez une langue',
 		saveNeedsStep: 'Ajoutez une étape pour enregistrer la chaîne',
 		stepNumber: (n: number) => `Étape ${n}`,
 		reads: 'Porte sur',
@@ -778,6 +791,7 @@ export const fr: Messages = {
 			tasks: {
 				text_extraction: 'Extraction du texte',
 				text_correction: 'Correction du texte',
+				translation: 'Traduction',
 				audio_transcription: 'Transcription',
 				analysis: 'Analyse',
 				contents: 'Table des matières'
@@ -982,6 +996,9 @@ export const fr: Messages = {
 			'Choisissez une langue pour que les résumés, les sujets et les justifications y soient rédigés, quelle que soit la langue du document. Les noms restent écrits comme dans le document.',
 		contentsLanguageHint:
 			'Choisissez une langue pour que le résumé de chaque entrée y soit rédigé, quelle que soit la langue des pages. Les titres et les noms restent tels qu’imprimés.',
+		translationLanguageTitle: 'Traduire en',
+		translationLanguageHint:
+			'Le texte est traduit dans cette langue, quelle que soit sa langue d’origine. Les noms de personnes, de lieux et d’organisations restent écrits comme dans le texte.',
 		languageHint:
 			'Préciser la langue aide pour les documents courts ou bruités. Choisissez-en plusieurs pour les documents ou enregistrements qui mêlent les langues.',
 		addLanguage: 'Ajouter une langue…',
@@ -1206,7 +1223,11 @@ export const fr: Messages = {
 		correctionInput:
 			'Kalamu corrige le texte déjà présent dans le fichier : la couche texte d’un PDF, ou un fichier texte provenant d’une bibliothèque numérique (Gallica, Europeana, Internet Archive…). Une numérisation sans couche texte relève plutôt d’Extraire le texte.',
 		correctionCheck:
-			'La relecture met en évidence chaque modification par rapport au texte d’origine. Vérifiez les noms, les chiffres et les dates, que la lecture automatique se trompe le plus souvent à lire.'
+			'La relecture met en évidence chaque modification par rapport au texte d’origine. Vérifiez les noms, les chiffres et les dates, que la lecture automatique se trompe le plus souvent à lire.',
+		translationInput:
+			'Kalamu traduit un texte qui existe déjà : un fichier texte ou Word, la couche texte d’un PDF, ou le texte d’une extraction, d’une transcription ou d’une correction, avec Utiliser ce texte dans un nouveau traitement. Corrigez d’abord un texte issu d’une lecture automatique : la traduction ne vaut que ce que vaut le texte qu’elle lit.',
+		translationCheck:
+			'La relecture montre chaque page du texte à côté de sa traduction. Vérifiez les noms, les chiffres et les dates, ainsi que les mots que le modèle a marqués comme incertains, par exemple [mot?].'
 	},
 	pipeline: {
 		title: 'Comment ça marche',
@@ -1255,7 +1276,11 @@ export const fr: Messages = {
 		correctionSplit: 'Un segment par page, ou par passage d’un texte long',
 		correctionRead: (model: string) => `${model} corrige les erreurs de lecture automatique`,
 		correctionCompare:
-			'Chaque modification signalée par rapport au texte d’origine, à garder ou à annuler'
+			'Chaque modification signalée par rapport au texte d’origine, à garder ou à annuler',
+		translationSource:
+			'Un texte qui existe déjà : un fichier, la couche texte d’un PDF ou un résultat antérieur',
+		translationRead: (model: string) => `${model} traduit chaque page, sans rien omettre`,
+		translationBeside: 'Chaque page du texte à côté de sa traduction, à vérifier et à corriger'
 	},
 	scores: {
 		title: 'Erreurs relevées en relecture',
@@ -2038,12 +2063,13 @@ export const fr: Messages = {
 		'unit.none_chosen': 'Choisissez au moins une pièce.',
 		'job.not_found': 'Ce traitement n’existe plus.',
 		'job.not_text':
-			'Seuls le texte extrait, les transcriptions et le texte corrigé peuvent être analysés de cette façon.',
+			'Seuls le texte extrait, les transcriptions, le texte corrigé et les traductions peuvent être analysés de cette façon.',
 		'job.nothing_read':
 			'Rien n’a encore été lu : il n’y a donc rien à analyser. Lancez le traitement, ou attendez ses premières pages.',
 		'job.database': 'La base de données des traitements n’a pas pu être lue ou écrite.',
 		'job.running': 'Ce traitement est déjà en cours.',
 		'job.empty': 'Ajoutez au moins un fichier et choisissez un modèle.',
+		'job.no_language': 'Choisissez la langue dans laquelle traduire.',
 		'job.link_needs_folder':
 			'Choisissez un dossier pour les résultats : une vidéo YouTube n’a pas de dossier à elle à côté duquel les écrire.',
 		'source.private':
@@ -2067,7 +2093,7 @@ export const fr: Messages = {
 		'workflow.no_steps': 'Une chaîne de traitement demande au moins une étape.',
 		'workflow.not_earlier': 'Une étape ne peut lire qu’une étape qui la précède.',
 		'workflow.not_text':
-			'Une étape ne peut lire que le texte d’une extraction, d’une transcription ou d’une correction.',
+			'Une étape ne peut lire que le texte d’une extraction, d’une transcription, d’une correction ou d’une traduction.',
 		'workflow.cannot_read_text':
 			'La tâche de cette étape ne lit pas de texte : faites-lui plutôt lire les fichiers.',
 		'workflow.not_finished': 'Cette étape n’est pas encore terminée.',
