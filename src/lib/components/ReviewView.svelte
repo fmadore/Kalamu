@@ -603,6 +603,7 @@
 	onstep={step}
 	source={recording ? 'player' : source?.kind === 'text' ? 'text' : 'scan'}
 	piece={labelOf(lead ?? current[0])}
+	original={current[0]?.original_file ?? null}
 	preview={review.preview}
 	text={lead?.source_text ?? review.text}
 	{player}

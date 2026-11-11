@@ -7,6 +7,7 @@
 	import LanguageStep from './LanguageStep.svelte';
 	import LinkList from './LinkList.svelte';
 	import OutputStep from './OutputStep.svelte';
+	import PageOrder from './PageOrder.svelte';
 	import PipelineDiagram from './PipelineDiagram.svelte';
 	import PipelineList from './PipelineList.svelte';
 	import SetupList from './SetupList.svelte';
@@ -16,6 +17,7 @@
 	import type { Estimate } from '#lib/bindings/Estimate.js';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
+	import type { ImageDocument } from '#lib/bindings/ImageDocument.js';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
@@ -61,6 +63,13 @@
 		toRequest,
 		type Together
 	} from '#lib/newJob.js';
+	import {
+		type Grouping,
+		imageSources,
+		jobSources,
+		offersOneDocument,
+		sameImages
+	} from '#lib/pageOrder.js';
 	import { api, listenWhileMounted, mayStart, onDrop } from '#lib/tauri.js';
 	import {
 		app,
@@ -185,7 +194,49 @@
 	];
 	const languageIgnored = $derived(namesOf((model) => !takesLanguage(model)));
 	const noPrompt = $derived(namesOf((model) => !acceptsPrompt(model)));
-	const sources = $derived(files.flatMap((f) => (f.source ? [f.source] : [])));
+	/** Several images: each a document of its own, or the pages of one document (#52). */
+	let grouping = $state<Grouping>(kept?.grouping ?? 'separate');
+	/** The document the engine made of the images, in the order the researcher left. */
+	let pageDoc = $state<ImageDocument | null>(kept?.pageDoc ?? null);
+	let docName = $state(kept?.docName ?? '');
+	let sorting = $state(false);
+	const images = $derived(imageSources(files));
+	const oneOffered = $derived(offersOneDocument(rule, images));
+	/** Asks the engine for the document of these images, in the natural order of their names:
+	 * when they are first read as one, when the images change, or to undo the researcher's order. */
+	async function orderPages(again = false) {
+		const wanted = $state.snapshot(images);
+		if (!again && sameImages(pageDoc, wanted)) return;
+		sorting = true;
+		try {
+			const made = await api.imageDocument(docName, wanted);
+			// Images changed while the engine sorted: the newer call settles it.
+			if (!sameImages(made, imageSources(files))) return;
+			pageDoc = made;
+			if (!docName.trim()) docName = made.source.file_name;
+		} catch (e) {
+			error = describeError(e, m);
+		} finally {
+			sorting = false;
+		}
+	}
+	$effect(() => {
+		if (oneOffered && grouping === 'one' && !sameImages(pageDoc, images)) void orderPages();
+	});
+	const sources = $derived(jobSources(files, oneOffered ? grouping : 'separate', pageDoc, docName));
+	/** The files as the job reads them, for the diagram: the document in place of its images. */
+	const readFiles = $derived<InspectedFile[]>(
+		sources.map(
+			(s) =>
+				files.find((f) => f.source?.id === s.id) ?? {
+					path: s.path,
+					source: s,
+					warnings: [],
+					error: null,
+					pieces: null
+				}
+		)
+	);
 	/** Times a task was picked, so its diagram plays; opening New job shows it at rest. */
 	let picked = $state(0);
 	const chosenFields = $derived(
@@ -580,7 +631,10 @@
 			name,
 			suggested,
 			thenPreset,
-			thenCheck
+			thenCheck,
+			grouping,
+			pageDoc: $state.snapshot(pageDoc),
+			docName
 		};
 		if (!done) keepForm(form);
 	});
@@ -673,7 +727,7 @@
 			/>
 			<PipelineDiagram
 				{mode}
-				{files}
+				files={readFiles}
 				fields={chosenFields}
 				models={namesOf((model) => model !== undefined)}
 				mergeModels={mergeNames}
@@ -693,6 +747,15 @@
 			/>
 		{:else}
 			<FileList bind:files {task} {inspecting} onadd={addPaths} />
+			{#if oneOffered}
+				<PageOrder
+					bind:grouping
+					bind:doc={pageDoc}
+					bind:name={docName}
+					{sorting}
+					onnatural={() => void orderPages(true)}
+				/>
+			{/if}
 		{/if}
 
 		{#if setAside}
