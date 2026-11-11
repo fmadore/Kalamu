@@ -1,18 +1,161 @@
-//! A large job timed (#143): 2,000 one-page sources read by two set-ups, every page stored with
+//! A large job timed (#143): 5,000 one-page sources read by two set-ups, every page stored with
 //! the size of a real page's answer, a few corrections and refused answers, and each source a
 //! document in two projects. Ignored by default; run it with
-//! `cargo test -p kalamu-engine --release large_job -- --ignored --nocapture`.
+//! `cargo test -p kalamu-engine --release large_job -- --ignored --nocapture`, and with
+//! `KALAMU_LARGE_SOURCES=2000` before it for the smaller job the earlier rounds measured.
 
+use std::collections::BTreeMap;
+use std::path::Path;
 use std::time::Instant;
 
 use kalamu_core::{
-    Charge, Document, DocumentId, DocumentLink, PieceRef, PieceState, Project, ProjectId,
-    ProjectStore, Setup, StoredResult, TextRegion,
+    Charge, Document, DocumentId, DocumentLink, ExportError, PieceRef, PieceState, Project,
+    ProjectId, ProjectStore, Setup, StoredResult, TextRegion,
 };
 
 use super::*;
 
-const SOURCES: usize = 2_000;
+/// The issue's 5,000 sources, unless `KALAMU_LARGE_SOURCES` says otherwise.
+fn sources_count() -> usize {
+    std::env::var("KALAMU_LARGE_SOURCES")
+        .ok()
+        .and_then(|n| n.parse().ok())
+        .unwrap_or(5_000)
+}
+
+/// Time spent in each step of writing files, with how often and how many bytes.
+#[derive(Default)]
+struct Steps(BTreeMap<String, (f64, usize, usize)>);
+
+impl Steps {
+    fn add(&mut self, step: impl Into<String>, start: Instant, bytes: usize) {
+        let entry = self.0.entry(step.into()).or_default();
+        entry.0 += ms(start);
+        entry.1 += 1;
+        entry.2 += bytes;
+    }
+
+    fn print(&self, per: usize) {
+        let total: f64 = self.0.values().map(|v| v.0).sum();
+        for (step, (time, count, bytes)) in &self.0 {
+            eprintln!(
+                "  {step:<28} {:>8.3} ms a source  {:>5.1} %  ({count} times, {} bytes each)",
+                time / per as f64,
+                100.0 * time / total,
+                bytes / (*count).max(1)
+            );
+        }
+        eprintln!("  {:<28} {:>8.3} ms a source", "all", total / per as f64);
+    }
+}
+
+/// What `write_files` does for one source under one set-up, step by step, each timed.
+fn write_split(
+    f: &Fixture,
+    job: &Job,
+    names: &dyn Fn(&SourceFile, &str) -> (PathBuf, String),
+    source: &SourceFile,
+    setup: &Setup,
+    steps: &mut Steps,
+) {
+    let start = Instant::now();
+    let pieces = f.store.source_pieces(job.id, setup.id, source.id);
+    let marks = f.store.outdated_files(Some(job.id));
+    assert!(pieces.is_ok() && marks.is_ok());
+    steps.add("store: pieces and marks", start, 0);
+
+    let start = Instant::now();
+    let document = f
+        .engine
+        .export_document(job, setup.id, source.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    steps.add("read: export_document", start, 0);
+
+    let start = Instant::now();
+    let (dir, base) = names(&document.source, &setup.label);
+    steps.add("names: output base", start, 0);
+
+    let mut files: Vec<(String, Vec<u8>)> = Vec::new();
+    for format in &job.output.formats {
+        let Some(exporter) = kalamu_export::exporter(*format) else {
+            continue;
+        };
+        if !exporter.supports(job.task) {
+            continue;
+        }
+        let start = Instant::now();
+        let bytes = match exporter.export(&document) {
+            Ok(bytes) => bytes,
+            Err(ExportError::Unsupported(_)) => continue,
+            Err(e) => panic!("{e}"),
+        };
+        steps.add(
+            format!("render: {}", format.extension()),
+            start,
+            bytes.len(),
+        );
+        files.push((format.extension().to_string(), bytes));
+    }
+    let start = Instant::now();
+    let provenance = serde_json::to_vec_pretty(&document.provenance).unwrap_or_default();
+    steps.add("render: provenance.json", start, provenance.len());
+    files.push(("provenance.json".into(), provenance));
+
+    for (ext, bytes) in files {
+        let path = dir.join(format!("{base}.{ext}"));
+        let tmp = path.with_extension(format!(
+            "{}.pending",
+            path.extension().and_then(|e| e.to_str()).unwrap_or("out")
+        ));
+        let start = Instant::now();
+        std::fs::write(&tmp, &bytes).unwrap_or_else(|e| panic!("{e}"));
+        steps.add(format!("disk: write {ext}.pending"), start, bytes.len());
+        let start = Instant::now();
+        std::fs::rename(&tmp, &path).unwrap_or_else(|e| panic!("{e}"));
+        steps.add(format!("disk: rename {ext}"), start, 0);
+    }
+}
+
+/// What writing a file costs on this disk, apart from what is in it: small files and larger
+/// ones, written new or over themselves, straight or through a temporary file renamed.
+fn disk_probe(root: &Path) {
+    let dir = root.join("probe");
+    std::fs::create_dir_all(&dir).unwrap_or_else(|e| panic!("{e}"));
+    let n = 500;
+    let probe = |label: &str, size: usize, atomic: bool, prefix: &str| {
+        let bytes = vec![b'x'; size];
+        let start = Instant::now();
+        for i in 0..n {
+            let path = dir.join(format!("{prefix}-{i}.txt"));
+            if atomic {
+                crate::output::write_atomic(&path, &bytes).unwrap_or_else(|e| panic!("{e}"));
+            } else {
+                std::fs::write(&path, &bytes).unwrap_or_else(|e| panic!("{e}"));
+            }
+        }
+        eprintln!("  {label:<44} {:.3} ms a file", ms(start) / n as f64);
+    };
+    probe("1 KB, new, written straight", 1_000, false, "a");
+    probe("1 KB, over itself, written straight", 1_000, false, "a");
+    probe("1 KB, new, temporary file renamed", 1_000, true, "b");
+    probe(
+        "1 KB, over itself, temporary file renamed",
+        1_000,
+        true,
+        "b",
+    );
+    probe("100 KB, new, written straight", 100_000, false, "c");
+    probe("100 KB, new, temporary file renamed", 100_000, true, "d");
+    let start = Instant::now();
+    for i in 0..n {
+        let _ = dir.join(format!("a-{i}.txt")).is_file();
+    }
+    eprintln!(
+        "  {:<44} {:.3} ms a file",
+        "is_file on an existing file",
+        ms(start) / n as f64
+    );
+}
 
 /// The engine over a database file, as the app opens it, in a temporary folder.
 fn on_disk() -> Fixture {
@@ -70,11 +213,12 @@ fn ms(start: Instant) -> f64 {
 #[tokio::test]
 #[ignore = "a timing, not a check: run by hand before and after a change to exports"]
 async fn large_job() {
+    let count = sources_count();
     let f = on_disk();
     let built = Instant::now();
     let template = f.pdf("template.pdf", 1);
     let bytes = std::fs::read(&template.path).unwrap_or_default();
-    let sources: Vec<SourceFile> = (0..SOURCES)
+    let sources: Vec<SourceFile> = (0..count)
         .map(|i| {
             let name = format!("page-{i:04}.pdf");
             let path = f.dir.path().join(&name);
@@ -199,12 +343,12 @@ async fn large_job() {
             f.store.clone(),
         )));
     eprintln!(
-        "large job: {SOURCES} sources x {} set-ups built in {:.0} ms",
+        "large job: {count} sources x {} set-ups built in {:.0} ms",
         job.setups.len(),
         ms(built)
     );
 
-    let middle = &job.sources[SOURCES / 2];
+    let middle = &job.sources[count / 2];
     let setup = job.setups[0].id;
     let start = Instant::now();
     let runs = 20;
@@ -225,26 +369,87 @@ async fn large_job() {
             .unwrap_or_else(|e| panic!("{e}"));
     }
     eprintln!("export of one source: {:.2} ms", ms(start) / runs as f64);
+    // Of which reading the job's record, which `export` does first and a run does once.
+    let start = Instant::now();
+    for _ in 0..runs {
+        f.store.job(job.id).unwrap_or_else(|e| panic!("{e}"));
+    }
+    eprintln!(
+        "  of which the job's record read: {:.2} ms",
+        ms(start) / runs as f64
+    );
 
     let setups: Vec<&Setup> = job.setups.iter().collect();
     let start = Instant::now();
+    // Worked out once, as a run does.
+    let names = crate::output::OutputNames::of(&job);
     for source in &job.sources {
         let failed = f
             .engine
-            .export_finished(&job, source.id, &setups)
+            .export_finished(&job, &names, source.id, &setups)
             .unwrap_or_else(|e| panic!("{e}"));
         assert!(!failed);
     }
     eprintln!(
-        "export_finished over the job ({SOURCES} sources): {:.0} ms",
+        "export_finished over the job ({count} sources): {:.0} ms",
         ms(start)
     );
+
+    // The names alone, for every source under every set-up, as the job's writes ask for them.
+    let start = Instant::now();
+    let names = crate::output::OutputNames::of(&job);
+    for source in &job.sources {
+        for setup in &job.setups {
+            std::hint::black_box(names.base(&job, source, &setup.label));
+        }
+    }
+    eprintln!("  of which the output names: {:.1} ms", ms(start));
+
+    // The same files written again: each replaced, as a resumed job or a new export replaces
+    // it, where the pass above made new ones.
+    let start = Instant::now();
+    for source in &job.sources {
+        f.engine
+            .export_finished(&job, &names, source.id, &setups)
+            .unwrap_or_else(|e| panic!("{e}"));
+    }
+    eprintln!(
+        "export_finished again, every file replaced: {:.0} ms",
+        ms(start)
+    );
+
+    // Listing the job's files, as its page does to open them.
+    let start = Instant::now();
+    let listed = f.engine.outputs(job.id).unwrap_or_else(|e| panic!("{e}"));
+    eprintln!(
+        "outputs (the job's files listed): {:.0} ms, {} files",
+        ms(start),
+        listed.len()
+    );
+
+    // Writing a source's files, step by step, for one source in ten (over the files the pass
+    // above wrote: each is replaced, as a later export or a resumed job replaces it).
+    let mut steps = Steps::default();
+    let names = |source: &SourceFile, label: &str| names.base(&job, source, label);
+    let sampled: Vec<&SourceFile> = job.sources.iter().step_by(10).collect();
+    for source in &sampled {
+        for setup in &job.setups {
+            write_split(&f, &job, &names, source, setup, &mut steps);
+        }
+    }
+    eprintln!(
+        "a source's files written, step by step (one source in ten, {} set-ups):",
+        job.setups.len()
+    );
+    steps.print(sampled.len());
+    eprintln!("writing a file on this disk:");
+    disk_probe(f.dir.path());
 
     let start = Instant::now();
     let runs = 10;
     for _ in 0..runs {
         let jobs = f.store.list_jobs().unwrap_or_else(|e| panic!("{e}"));
-        assert_eq!(jobs[0].pieces_total as usize, SOURCES * 2);
+        assert_eq!(jobs[0].pieces_total as usize, count * 2);
     }
     eprintln!("list_jobs: {:.2} ms", ms(start) / runs as f64);
 

@@ -13,6 +13,7 @@ use kalamu_media::OpenSource;
 
 use crate::control::lock;
 use crate::group::Unit;
+use crate::output::OutputNames;
 use crate::piece::{Input, Outcome};
 use crate::plan::Existing;
 use crate::{Control, Engine, EngineError};
@@ -87,6 +88,8 @@ impl Engine {
         let spent = Arc::new(Mutex::new(earlier));
         // Sources that could not be opened or planned in this run: nothing of theirs to combine.
         let mut unread: HashSet<SourceId> = HashSet::new();
+        // The names of the job's files, worked out once for every source the run writes.
+        let names = OutputNames::of(&job);
         for source in &job.sources {
             if stop_requested(&control).is_some() {
                 break;
@@ -248,7 +251,7 @@ impl Engine {
 
             // Write outputs for every set-up whose pieces of this source are all done.
             let setups: Vec<&Setup> = job.setups.iter().collect();
-            failed |= self.export_finished(&job, source.id, &setups)?;
+            failed |= self.export_finished(&job, &names, source.id, &setups)?;
         }
 
         // Economy mode: send what is gathered, then wait for every batch of the job, including
@@ -281,7 +284,7 @@ impl Engine {
                         }
                     }
                 }
-                failed |= self.export_finished(&job, source.id, &setups)?;
+                failed |= self.export_finished(&job, &names, source.id, &setups)?;
             }
             failed |= batch_outcome.failed;
             interrupted |= batch_outcome.waiting;

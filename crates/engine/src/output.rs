@@ -1,6 +1,7 @@
 //! Writing results to disk: every chosen format plus `provenance.json`, next to the source or
 //! into the chosen folder, from stored results with corrections applied.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use kalamu_core::{
@@ -15,9 +16,11 @@ impl Engine {
     /// Writes the outputs of each set-up whose pieces of a source are all settled, done or failed
     /// after their retries, with at least one done; true when one could not be written. A table
     /// of contents waits for all of them: without its combined entries it has nothing to write.
+    /// `names` are the job's, worked out once for every source it writes.
     pub(crate) fn export_finished(
         &self,
         job: &Job,
+        names: &OutputNames,
         source_id: SourceId,
         setups: &[&Setup],
     ) -> Result<bool, EngineError> {
@@ -29,7 +32,7 @@ impl Engine {
                     || (p.status == PieceStatus::Failed && job.task != Task::Contents)
             };
             if mine.iter().all(settled) && mine.iter().any(|p| p.status.is_finished()) {
-                match self.write_each_output(job, setup.id, source_id) {
+                match self.write_each_output(job, names, setup.id, source_id) {
                     Ok((files, problems)) => {
                         self.emit(ProgressEvent::SourceExported {
                             job_id: job.id,
@@ -69,7 +72,8 @@ impl Engine {
         setup_id: SetupId,
         source_id: SourceId,
     ) -> Result<Vec<String>, EngineError> {
-        let (files, problems) = self.write_each_output(job, setup_id, source_id)?;
+        let names = OutputNames::of_source(job, source_id);
+        let (files, problems) = self.write_each_output(job, &names, setup_id, source_id)?;
         if problems.is_empty() {
             Ok(files)
         } else {
@@ -83,6 +87,7 @@ impl Engine {
     pub(crate) fn write_each_output(
         &self,
         job: &Job,
+        names: &OutputNames,
         setup_id: SetupId,
         source_id: SourceId,
     ) -> Result<(Vec<String>, Vec<String>), EngineError> {
@@ -94,7 +99,7 @@ impl Engine {
             .outdated_files(Some(job.id))?
             .into_iter()
             .find(|m| m.setup_id == setup_id && m.source_id == source_id);
-        let (written, problems) = self.write_files(job, setup_id, source_id)?;
+        let (written, problems) = self.write_files(job, names, setup_id, source_id)?;
         if problems.is_empty()
             && let Some(mark) = outdated
         {
@@ -107,12 +112,13 @@ impl Engine {
     fn write_files(
         &self,
         job: &Job,
+        names: &OutputNames,
         setup_id: SetupId,
         source_id: SourceId,
     ) -> Result<(Vec<String>, Vec<String>), EngineError> {
         let document = self.export_document(job, setup_id, source_id)?;
-        let (dir, base) = output_base(job, &document.source, &document.setup.label);
-        std::fs::create_dir_all(&dir).map_err(|e| EngineError::Output(e.to_string()))?;
+        // The folder is made by the first file written into it (`write_atomic`).
+        let (dir, base) = names.base(job, &document.source, &document.setup.label);
 
         let mut written = Vec::new();
         let mut problems = Vec::new();
@@ -176,9 +182,10 @@ impl Engine {
         let Some(source) = job.sources.iter().find(|s| s.id == source_id) else {
             return Ok(Vec::new());
         };
+        let names = OutputNames::of_source(&job, source_id);
         let mut written = Vec::new();
         for setup in &job.setups {
-            let (dir, base) = output_base(&job, source, &setup.label);
+            let (dir, base) = names.base(&job, source, &setup.label);
             if existing_output(&dir, &base, "provenance.json", &source.path).is_none() {
                 continue;
             }
@@ -209,10 +216,11 @@ impl Engine {
     pub fn text_outputs(&self, job_id: JobId) -> Result<Vec<String>, EngineError> {
         self.write_outdated_before_reading(job_id);
         let job = self.store.job(job_id)?;
+        let names = OutputNames::of(&job);
         let mut out = Vec::new();
         for source in &job.sources {
             for setup in &job.setups {
-                let (dir, base) = output_base(&job, source, &setup.label);
+                let (dir, base) = names.base(&job, source, &setup.label);
                 let path = ["txt", "md"]
                     .into_iter()
                     .find_map(|ext| existing_output(&dir, &base, ext, &source.path));
@@ -239,10 +247,11 @@ impl Engine {
             .map(|f| f.extension())
             .chain(["provenance.json"])
             .collect();
+        let names = OutputNames::of(&job);
         let mut out = Vec::new();
         for source in &job.sources {
             for setup in &job.setups {
-                let (dir, base) = output_base(&job, source, &setup.label);
+                let (dir, base) = names.base(&job, source, &setup.label);
                 out.extend(
                     extensions
                         .iter()
@@ -278,62 +287,122 @@ fn write_provenance(
     Ok(path.display().to_string())
 }
 
-/// Where a source's results go and the name they share: the source's name, with the set-up's
-/// label in comparison mode, and `.analysis`, `.contents`, `.corrected` or `.translated.` and
-/// the language's code after it so they never replace the transcription or extraction they
-/// read, the text file corrected, or a translation of the same text into another language.
+/// Where each source of a job writes its results, and the name they start from: the source's
+/// own, numbered when an earlier source of the job would write under the same name in the same
+/// folder. Worked out in one pass over the job's sources, once for all the writes that need
+/// them, so writing a job's files grows with its sources and not with their square.
 ///
 /// Two sources that would share a name in one folder (`scan.pdf` and `scan.tif`, or two
 /// `scan.pdf` from different folders sent to one) would write over each other's files: the later
 /// ones in the job are numbered, `scan (2)`, as Windows names copies. Windows ignores case, so
-/// the comparison does too.
-fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, String) {
-    let (dir, mut stem) = place(job, source);
-    let key = |dir: &Path, stem: &str| (dir.to_string_lossy().to_lowercase(), stem.to_lowercase());
-    let mine = key(&dir, &stem);
-    let earlier = job
-        .sources
-        .iter()
-        .take_while(|s| s.id != source.id)
-        .filter(|s| {
-            let (d, s) = place(job, s);
-            key(&d, &s) == mine
-        })
-        .count();
-    if earlier > 0 {
-        stem = format!("{stem} ({})", earlier + 1);
+/// the comparison does too. The names follow the job's order of sources alone, so a job resumed
+/// or exported again names its files as the run that first wrote them.
+pub(crate) struct OutputNames {
+    stems: HashMap<SourceId, (PathBuf, String)>,
+}
+
+impl OutputNames {
+    /// The names of every source of the job.
+    pub(crate) fn of(job: &Job) -> Self {
+        Self::through(job, None)
     }
-    let mut base = if job.is_comparison() {
-        format!("{stem}.{setup_label}")
-    } else {
-        stem
-    };
-    match job.task {
-        Task::Analysis => base.push_str(".analysis"),
-        Task::Contents => base.push_str(".contents"),
-        Task::TextCorrection => base.push_str(".corrected"),
-        Task::Translation => {
-            base.push_str(".translated");
-            // A code is letters and hyphens (`fr`, `zh-hans`); anything else is left out of a
-            // file name.
-            let code: String = job
-                .settings
-                .languages
-                .codes()
-                .first()
-                .map(|c| c.as_str())
-                .unwrap_or_default()
-                .chars()
-                .filter(|c| c.is_ascii_alphanumeric() || *c == '-')
-                .collect();
-            if !code.is_empty() {
-                base.push('.');
-                base.push_str(&code);
+
+    /// The names of the job's sources up to this one: enough for its own files.
+    pub(crate) fn of_source(job: &Job, source: SourceId) -> Self {
+        Self::through(job, Some(source))
+    }
+
+    fn through(job: &Job, last: Option<SourceId>) -> Self {
+        let mut seen: HashMap<(String, String), usize> = HashMap::new();
+        let mut stems = HashMap::with_capacity(job.sources.len());
+        for source in &job.sources {
+            let (dir, stem) = place(job, source);
+            let earlier = seen.entry(name_key(&dir, &stem)).or_insert(0);
+            let stem = numbered(stem, *earlier);
+            *earlier += 1;
+            // A source listed twice keeps the name of its first place.
+            stems.entry(source.id).or_insert((dir, stem));
+            if last == Some(source.id) {
+                break;
             }
         }
-        Task::TextExtraction | Task::AudioTranscription => {}
+        Self { stems }
     }
-    (dir, base)
+
+    /// Where a source's results go and the name they share: its name in the job, with the
+    /// set-up's label in comparison mode, and `.analysis`, `.contents`, `.corrected` or
+    /// `.translated.` and the language's code after it so they never replace the transcription
+    /// or extraction they read, the text file corrected, or a translation of the same text into
+    /// another language.
+    pub(crate) fn base(
+        &self,
+        job: &Job,
+        source: &SourceFile,
+        setup_label: &str,
+    ) -> (PathBuf, String) {
+        let (dir, stem) = match self.stems.get(&source.id) {
+            Some((dir, stem)) => (dir.clone(), stem.clone()),
+            // A source the job does not list: numbered after every source of its name.
+            None => {
+                let (dir, stem) = place(job, source);
+                let mine = name_key(&dir, &stem);
+                let earlier = job
+                    .sources
+                    .iter()
+                    .filter(|s| {
+                        let (d, s) = place(job, s);
+                        name_key(&d, &s) == mine
+                    })
+                    .count();
+                (dir, numbered(stem, earlier))
+            }
+        };
+        let mut base = if job.is_comparison() {
+            format!("{stem}.{setup_label}")
+        } else {
+            stem
+        };
+        match job.task {
+            Task::Analysis => base.push_str(".analysis"),
+            Task::Contents => base.push_str(".contents"),
+            Task::TextCorrection => base.push_str(".corrected"),
+            Task::Translation => {
+                base.push_str(".translated");
+                // A code is letters and hyphens (`fr`, `zh-hans`); anything else is left out of
+                // a file name.
+                let code: String = job
+                    .settings
+                    .languages
+                    .codes()
+                    .first()
+                    .map(|c| c.as_str())
+                    .unwrap_or_default()
+                    .chars()
+                    .filter(|c| c.is_ascii_alphanumeric() || *c == '-')
+                    .collect();
+                if !code.is_empty() {
+                    base.push('.');
+                    base.push_str(&code);
+                }
+            }
+            Task::TextExtraction | Task::AudioTranscription => {}
+        }
+        (dir, base)
+    }
+}
+
+/// Two names meet when their folder and name are the same but for case.
+fn name_key(dir: &Path, stem: &str) -> (String, String) {
+    (dir.to_string_lossy().to_lowercase(), stem.to_lowercase())
+}
+
+/// The name, numbered after the earlier sources of the same name: `scan`, `scan (2)`.
+fn numbered(stem: String, earlier: usize) -> String {
+    if earlier > 0 {
+        format!("{stem} ({})", earlier + 1)
+    } else {
+        stem
+    }
 }
 
 /// The folder a source's results go to, and the name they start from: the source's own.
@@ -386,13 +455,23 @@ pub(crate) fn preprocessing(source: &SourceFile) -> Vec<String> {
     out
 }
 
-/// Write to a temporary file, then rename, so a crash never leaves half a file.
+/// Write to a temporary file, then rename, so a crash never leaves half a file. The folder is
+/// made when it is missing, not asked after for every file: on Windows that question cost a
+/// quarter of a millisecond a file.
 pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), EngineError> {
     let tmp = path.with_extension(format!(
         "{}.pending",
         path.extension().and_then(|e| e.to_str()).unwrap_or("out")
     ));
-    std::fs::write(&tmp, bytes)
-        .map_err(|e| EngineError::Output(format!("{}: {e}", path.display())))?;
+    let failed = |e: std::io::Error| EngineError::Output(format!("{}: {e}", path.display()));
+    match std::fs::write(&tmp, bytes) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            if let Some(dir) = path.parent() {
+                std::fs::create_dir_all(dir).map_err(failed)?;
+            }
+            std::fs::write(&tmp, bytes).map_err(failed)?;
+        }
+        written => written.map_err(failed)?,
+    }
     std::fs::rename(&tmp, path).map_err(|e| EngineError::Output(format!("{}: {e}", path.display())))
 }

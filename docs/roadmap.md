@@ -442,9 +442,12 @@ In this order. Work that keeps what has shipped sound comes before new features.
      once (213 MiB above the input before, 46 after), an upload given time for its size. The
      [third round](decisions/2026-11-11-large-jobs-third.md) had the store count a job's
      progress from an index of its own, added *Files with failures* to a job's page so failed
-     files are reached however far down they sit, and removed the unused `job_pieces`. Left: a
-     source's file name still compared with every earlier source's when its files are written,
-     and a benchmark of 5,000 sources. A
+     files are reached however far down they sit, and removed the unused `job_pieces`. The
+     [export names round](decisions/2026-11-11-export-names.md) worked out a job's file names
+     once per run, in one pass (7.7 s down to 7 ms at 5,000 sources), stopped asking after the
+     folder for every file, and raised the benchmark to the issue's 5,000 sources. What remains
+     of writing a source's files is Windows making and renaming eight small files. Left: a
+     quiet rerun of the benchmark. A
      correction no longer writes its source's files on the spot: they are marked out of date
      with it and written a few seconds after the last save, before they are listed or
      exported, at quit and at the next launch (a save in a 300-page PDF went from 84 ms to
