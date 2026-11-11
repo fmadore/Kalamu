@@ -261,6 +261,41 @@ fn every_analysis_default_has_valid_fields_described_in_its_prompt() {
     assert!(text.contains("in `tone_reason`"));
 }
 
+/// The image description says it is made for images, edited or not; no other default does, and
+/// neither does a copy, which is the researcher's own.
+#[test]
+fn only_the_image_description_is_made_for_images() -> Result<(), PromptError> {
+    let dir = tempfile::tempdir().map_err(|e| PromptError::Io(e.to_string()))?;
+    let mut library = PromptLibrary::open(dir.path())?;
+    let made_for: Vec<(String, kalamu_core::InputKind)> = library
+        .list(None)
+        .into_iter()
+        .filter_map(|p| p.made_for.map(|k| (p.id, k)))
+        .collect();
+    assert_eq!(
+        made_for,
+        [(
+            "analysis.image_description".to_string(),
+            kalamu_core::InputKind::Image
+        )]
+    );
+    let mut edited = library.get("analysis.image_description")?;
+    edited.description = "Mine".into();
+    edited.made_for = None;
+    assert_eq!(
+        library.save(edited)?.made_for,
+        Some(kalamu_core::InputKind::Image)
+    );
+    let reopened = PromptLibrary::open(dir.path())?;
+    assert_eq!(
+        reopened.get("analysis.image_description")?.made_for,
+        Some(kalamu_core::InputKind::Image)
+    );
+    let copy = library.duplicate("analysis.image_description", "My images")?;
+    assert_eq!(copy.made_for, None);
+    Ok(())
+}
+
 #[test]
 fn the_image_description_describes_what_is_seen_and_lists_only_written_names()
 -> Result<(), PromptError> {

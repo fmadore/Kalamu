@@ -45,6 +45,7 @@
 		find = '',
 		found = false,
 		player,
+		switchable = null,
 		witness,
 		label,
 		tools,
@@ -88,6 +89,8 @@
 		/** Whether those words are a search's rather than a name pointed at. */
 		found?: boolean;
 		player?: Snippet;
+		/** A PDF whose text was read: the source pane switches between its page and that text. */
+		switchable?: { onswitch: () => void } | null;
 		/** Whose text or answers lead, over them. */
 		witness: { label: string; siglum?: string | null; note?: string | null; corrected: boolean };
 		/** What the text pane holds, for screen readers. */
@@ -228,6 +231,7 @@
 			{find}
 			{found}
 			{player}
+			{switchable}
 		/>
 
 		<Splitter

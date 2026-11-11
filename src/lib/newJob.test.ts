@@ -9,6 +9,8 @@ import { en } from './i18n/index.js';
 import type { Preset } from './bindings/Preset.js';
 import type { Refused } from './bindings/Refused.js';
 import {
+	IMAGES,
+	suggestedPreset,
 	acceptsPrompt,
 	dictionaryNames,
 	draftsOf,
@@ -62,12 +64,9 @@ describe('new job form', () => {
 			'voxtral-small-transcribe-3-0'
 		);
 		// Google's speech-to-text model for recordings; it takes no prompt.
-		const transcribe = providerDefault(
-			catalog,
-			rule('audio_transcription'),
-			'gemini',
+		const transcribe = providerDefault(catalog, rule('audio_transcription'), 'gemini', [
 			'audio/mpeg'
-		);
+		]);
 		expect(transcribe).toBe('gemini-3.5-transcribe');
 		expect(acceptsPrompt(catalog.models.find((m) => m.id === transcribe))).toBe(false);
 	});
@@ -288,7 +287,7 @@ describe('new job form', () => {
 		const inspected = (kind: SourceFile['kind']) =>
 			({ path: `a.${kind}`, source: { kind } as SourceFile }) as InspectedFile;
 		const analysis = rule('analysis');
-		const texts = inputOf('analysis', [inspected('text'), inspected('pdf')]);
+		const texts = inputOf('analysis', [inspected('text')]);
 		expect(texts).toBeUndefined();
 		expect(modelsFor(catalog, analysis, 'mistral', texts).map((m) => m.id)).toContain(
 			'zai-glm-5-3'
@@ -310,7 +309,52 @@ describe('new job form', () => {
 				images
 			)
 		).toBe(true);
-		expect(inputOf('youtube', [inspected('image')])).toBe(inputOf('youtube'));
+		expect(inputOf('youtube', [inspected('image')])).toEqual(inputOf('youtube'));
+	});
+
+	it('suggests the prompt made for images when every file is one', () => {
+		const inspected = (kind: SourceFile['kind']) =>
+			({ path: `a.${kind}`, source: { kind } as SourceFile }) as InspectedFile;
+		const preset = (id: string, made_for?: SourceFile['kind']): Preset => ({
+			id,
+			task: 'analysis',
+			name: id,
+			description: '',
+			instructions: '',
+			user_prompt: '',
+			builtin: true,
+			modified: false,
+			...(made_for ? { made_for } : {})
+		});
+		const presets = [
+			preset('analysis.summary_research'),
+			preset('analysis.image_description', 'image')
+		];
+		expect(suggestedPreset(presets, [])).toBe('analysis.summary_research');
+		expect(suggestedPreset(presets, [inspected('image'), inspected('image')])).toBe(
+			'analysis.image_description'
+		);
+		expect(suggestedPreset(presets, [inspected('image'), inspected('pdf')])).toBe(
+			'analysis.summary_research'
+		);
+		expect(suggestedPreset([], [inspected('image')])).toBeNull();
+	});
+
+	it('offers PDFs to an analysis only on models that read them whole', () => {
+		const inspected = (kind: SourceFile['kind']) =>
+			({ path: `a.${kind}`, source: { kind } as SourceFile }) as InspectedFile;
+		const analysis = rule('analysis');
+		const pdfs = inputOf('analysis', [inspected('text'), inspected('pdf')]);
+		const mistral = modelsFor(catalog, analysis, 'mistral', pdfs).map((m) => m.id);
+		expect(mistral).toContain('mistral-large-4-0');
+		expect(mistral).not.toContain('zai-glm-5-3');
+		// Gemma reads page images, not whole PDFs.
+		expect(modelsFor(catalog, analysis, 'local-llm', pdfs)).toEqual([]);
+		// Images and PDFs together need both.
+		const both = inputOf('analysis', [inspected('image'), inspected('pdf')]);
+		expect(both).toEqual([IMAGES, 'application/pdf']);
+		// A translation reads a PDF's text layer: a model that reads text only is offered.
+		expect(inputOf('translation', [inspected('pdf')])).toBeUndefined();
 	});
 });
 

@@ -21,7 +21,7 @@
 //! culturally specific one) to any text, its target named by `{languages}` as an analysis's
 //! answer language is.
 
-use kalamu_core::{AnalysisSchema, Field, FieldKind, Task};
+use kalamu_core::{AnalysisSchema, Field, FieldKind, InputKind, Task};
 
 pub(crate) struct Default {
     pub id: &'static str,
@@ -36,6 +36,9 @@ pub(crate) struct Default {
     pub merge: Option<&'static str>,
     /// Pages full of text (a newspaper's), of which fewer go together in one call.
     pub dense: bool,
+    /// The kind of source it is made for, which New job suggests it for: the image description's
+    /// images. Most are made for whatever their task reads.
+    pub made_for: Option<InputKind>,
 }
 
 /// A table of contents' first step, sent with each page.
@@ -494,6 +497,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: None,
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "text_extraction.newspaper",
@@ -505,6 +509,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: None,
         merge: None,
         dense: true,
+        made_for: None,
     },
     Default {
         id: "text_extraction.handwritten",
@@ -516,6 +521,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: None,
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "audio_transcription.interview",
@@ -527,6 +533,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: None,
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "audio_transcription.translate_english",
@@ -538,6 +545,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: None,
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "analysis.summary_research",
@@ -549,6 +557,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: Some(summary_research),
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "analysis.summary_publication",
@@ -560,6 +569,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: Some(summary_publication),
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "analysis.entities",
@@ -571,6 +581,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: Some(entities),
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "analysis.tone",
@@ -582,6 +593,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: Some(tone),
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "analysis.image_description",
@@ -593,6 +605,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: Some(image_description),
         merge: None,
         dense: false,
+        made_for: Some(InputKind::Image),
     },
     Default {
         id: "contents.periodical",
@@ -604,6 +617,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: Some(contents_periodical),
         merge: Some(include_str!("../defaults/contents-periodical-merge.md")),
         dense: false,
+        made_for: None,
     },
     Default {
         id: "contents.archival_file",
@@ -615,6 +629,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: Some(contents_archival),
         merge: Some(include_str!("../defaults/contents-archival-merge.md")),
         dense: false,
+        made_for: None,
     },
     Default {
         id: "contents.book",
@@ -626,6 +641,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: Some(contents_book),
         merge: Some(include_str!("../defaults/contents-book-merge.md")),
         dense: false,
+        made_for: None,
     },
     Default {
         id: "text_correction.general",
@@ -637,6 +653,7 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: None,
         merge: None,
         dense: false,
+        made_for: None,
     },
     Default {
         id: "translation.research",
@@ -648,5 +665,6 @@ pub(crate) const DEFAULTS: &[Default] = &[
         schema: None,
         merge: None,
         dense: false,
+        made_for: None,
     },
 ];

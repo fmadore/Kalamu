@@ -34,6 +34,16 @@ improvements that open *Next*; what it did not fix at once is tracked in
 
 ## Done
 
+- **Translation and image description, follow-ups**
+  ([decision](decisions/2026-11-11-translation-followups.md)): a job whose model cannot read its
+  files (images or a whole PDF for a model that reads text only) is refused when it is made, a
+  saved pipeline or workflow included, for the reason each page would have failed with, and New
+  job offers only models that read PDFs whole for an analysis of a PDF; a workflow with a
+  translation step and no language is not saved; a ready-made workflow reads, translates and
+  summarises documents in another language, the language left to choose; New job chooses
+  *Image description and keywords* when every file is an image, unless a prompt was chosen;
+  the review of a PDF's translation or correction shows the text the model read at a click,
+  the page a click away.
 - **Image description and keywords** ([#168](https://github.com/fmadore/Kalamu/issues/168)): a
   ready-made analysis for photographs, posters, maps and other images, giving a description of
   what is visibly there (its first sentence a summary on its own), the kind of image, keywords,
@@ -527,9 +537,8 @@ In this order. Work that keeps what has shipped sound comes before new features.
   further.
 - **Translation, what is left of [#167](https://github.com/fmadore/Kalamu/issues/167)**:
   subtitles (SRT, WebVTT) of a translated transcript, its times kept; a project glossary (term
-  and translation) from the dictionary; models trained to translate, offline; a ready-made
-  workflow that translates, once an example can ask for its language; the text layer beside a
-  PDF's translation in the review, which shows the scan. A live run with each provider.
+  and translation) from the dictionary; models trained to translate, offline. A live run with
+  each provider.
 - **Project search, the rest** (its first and second deliveries closed
   [#86](https://github.com/fmadore/Kalamu/issues/86)): alternatives (one word or another);
   searching two letters, and less folding work for very common words

@@ -29,7 +29,7 @@ pub struct NewJob {
 impl Engine {
     pub fn create_job(&self, mut new: NewJob) -> Result<Job, EngineError> {
         let catalog = self.current_catalog();
-        Self::check_new(&catalog, &new)?;
+        self.check_new(&catalog, &new)?;
         crate::rules::writable_formats(&catalog, new.task, &new.setups, &mut new.output.formats);
         let setups = self.freeze_setups(&catalog, new.task, &new.settings, &new.setups)?;
         self.insert_job(
@@ -43,8 +43,8 @@ impl Engine {
     }
 
     /// Whether a job can be made of what was chosen: files and set-ups, a folder for what has
-    /// none to write beside, sources the task reads and models that do it.
-    pub(crate) fn check_new(catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
+    /// none to write beside, sources the task reads and models that do it and can read them.
+    pub(crate) fn check_new(&self, catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
         if new.sources.is_empty() || new.setups.is_empty() {
             return Err(EngineError::EmptyJob);
         }
@@ -60,7 +60,8 @@ impl Engine {
         {
             return Err(EngineError::LinkNeedsFolder);
         }
-        Self::check_job(catalog, new)
+        Self::check_job(catalog, new)?;
+        self.check_reading(catalog, new)
     }
 
     /// The set-ups as a job runs them: each prompt rendered with the job's settings and frozen,

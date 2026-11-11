@@ -4,6 +4,7 @@
 
 use kalamu_catalog::Catalog;
 use kalamu_core::{ExportFormat, InputKind, ProviderId, Task, YOUTUBE_LINK};
+use kalamu_media::Reading;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -158,6 +159,36 @@ impl Engine {
             }
             if !model.does(new.task) || (links && !model.inputs.iter().any(|i| i == YOUTUBE_LINK)) {
                 return Err(EngineError::UnsupportedModel(request.model.clone()));
+            }
+        }
+        Ok(())
+    }
+
+    /// Refuses a job whose model cannot be given one of its sources at all: images or a whole
+    /// PDF to a model that reads text only, a whole PDF to one that reads images but no PDF.
+    /// Decided by media's own rule ([`kalamu_media::readable`]) on what the model would be sent
+    /// ([`crate::piece::accepted_inputs`]), so the job is refused for exactly what each piece
+    /// would have failed on. A model the catalogue does not list is left to its provider.
+    pub(crate) fn check_reading(&self, catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
+        let reading = if new.task == Task::Analysis {
+            Reading::Whole
+        } else {
+            Reading::Pieces
+        };
+        for request in &new.setups {
+            let Some(model) = catalog.model(&request.provider, &request.model) else {
+                continue;
+            };
+            let provider = self.provider(&request.provider)?;
+            let accepted = crate::piece::accepted_inputs(provider.as_ref(), Some(model), new.task);
+            for source in &new.sources {
+                if let Err(e) = kalamu_media::readable(source.kind, reading, &accepted) {
+                    return Err(EngineError::CannotRead {
+                        model: model.name.clone(),
+                        file: source.file_name.clone(),
+                        reason: e.to_string(),
+                    });
+                }
             }
         }
         Ok(())
