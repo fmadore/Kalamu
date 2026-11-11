@@ -134,6 +134,27 @@ cargo test -p kalamu-engine --release large_job -- --ignored --nocapture
 KALAMU_LARGE_SOURCES=2000 cargo test -p kalamu-engine --release large_job -- --ignored --nocapture
 ```
 
+Rerun that way the same day, alone, after the change (once each, on the branch that gathers this
+round's work):
+
+| | 2,000 | 5,000 |
+| --- | --- | --- |
+| `export_finished` over the job | 33,512 ms | 59,935 ms |
+| … a source | 16.8 ms | 12.0 ms |
+| … of which the names, over the job | 4.3 ms | 5.8 ms |
+| `export_finished` again, every file replaced | 34,519 ms | 87,298 ms |
+| A source's files, split, all steps | 15.7 ms | 15.5 ms |
+| … of which writing and renaming its 8 files | 12.5 ms | 11.8 ms |
+| `outputs` (the job's files listed) | 1,008 ms | 1,985 ms |
+| `list_jobs` | 9.8 ms | 37.8 ms |
+| Job page, counts of 200 files | 6.2 ms | 2.8 ms |
+
+Alone, before the change, 2,000 sources took 27,308 ms: the quiet machine gives no faster a
+total after it, although the names fell from over a second to 4 ms. What decides the total on
+this computer is the disk, at 12 to 17 ms a source from one run to the next, and that varies by
+more than the names ever cost at this size. The change is therefore shown by the names' own
+line and by a source costing no more at 5,000 than at 2,000, not by the total.
+
 ## Left
 
 - **The remaining cost is Windows' own.** About 85 % of a source's time is making and renaming
