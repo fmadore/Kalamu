@@ -34,6 +34,13 @@ improvements that open *Next*; what it did not fix at once is tracked in
 
 ## Done
 
+- **Image description and keywords** ([#168](https://github.com/fmadore/Kalamu/issues/168)): a
+  ready-made analysis for photographs, posters, maps and other images, giving a description of
+  what is visibly there (its first sentence a summary on its own), the kind of image, keywords,
+  the text written on the image, and the people, places and organisations that text names, so
+  the project dictionary gathers them. Nothing is inferred from appearance. With images among
+  the sources, New job now offers only models that read images: the text-only ones (GLM 5.3,
+  DeepSeek V4.1 Flash) were offered before and failed on each image.
 - **Only the newest models offered, older ones kept**
   ([decision](decisions/2026-11-11-model-successors.md)): Claude Fable 5.2 and Gemini 4 Carbon
   added, Mistral Large 4 out of preview and Mistral's default; Fable 5.1 and Mistral Medium 3.5
@@ -127,8 +134,9 @@ improvements that open *Next*; what it did not fix at once is tracked in
 - **Analyses.** With Gemini, OpenAI, Claude and Mistral, including the Z.ai GLM and DeepSeek
   models Mistral hosts. Fields defined by the researcher
   (text, lists of names or terms, one or several choices, reasons), sent as each provider's
-  structured output and checked on return; four ready-made analyses (summary and keywords,
-  scholarly publication, people, places and organisations, tone); a field editor in Prompts;
+  structured output and checked on return; five ready-made analyses (summary and keywords,
+  scholarly publication, people, places and organisations, tone, image description and
+  keywords); a field editor in Prompts;
   CSV with a column per field.
 - **Default prompts, one per kind of material**: printed or typed documents, newspapers and
   handwriting for text extraction, each for any language and either reading direction;
