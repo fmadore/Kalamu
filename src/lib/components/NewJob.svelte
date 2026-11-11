@@ -285,12 +285,14 @@
 		}
 	}
 
-	/** A model that cannot detect the language needs the languages chosen and downloaded. */
+	/** A model that cannot detect the language needs the languages chosen and downloaded; a
+	 * translation, the language it translates into. */
 	const languagesReady = $derived(
-		modelsNotDetecting(models).length === 0 ||
+		(modelsNotDetecting(models).length === 0 ||
 			(languageMode === 'explicit' &&
 				languages.length > 0 &&
-				missingLanguageData(languages).length === 0)
+				missingLanguageData(languages).length === 0)) &&
+			(!rule.needs_language || (languageMode === 'explicit' && languages.length > 0))
 	);
 
 	const ready = $derived(

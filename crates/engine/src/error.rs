@@ -32,6 +32,9 @@ pub enum EngineError {
     AlreadyRunning,
     #[error("The job needs at least one file and one set-up")]
     EmptyJob,
+    /// A translation started without the language to translate into.
+    #[error("Choose the language to translate into")]
+    NoLanguage,
     /// The link as pasted; the interface says what is wrong with it.
     #[error("{0}")]
     NotYouTube(String),
@@ -78,6 +81,7 @@ impl EngineError {
             Self::UnsupportedSource(_) => "source.unsupported",
             Self::AlreadyRunning => "job.running",
             Self::EmptyJob => "job.empty",
+            Self::NoLanguage => "job.no_language",
             Self::NotYouTube(_) => "source.not_youtube",
             Self::LinkNeedsFolder => "job.link_needs_folder",
             Self::Output(_) => "output.write",

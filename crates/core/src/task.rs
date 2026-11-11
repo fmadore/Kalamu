@@ -24,13 +24,17 @@ pub enum Task {
     /// Text that already exists (a PDF's text layer, a text file from a digital library)
     /// corrected page by page, its spelling and wording kept.
     TextCorrection,
+    /// Text that already exists (a PDF's text layer, a text file, an earlier result's text)
+    /// written in another language page by page, nothing summarised or left out.
+    Translation,
 }
 
 impl Task {
     /// Every task, in the order New job offers them.
-    pub const ALL: [Task; 5] = [
+    pub const ALL: [Task; 6] = [
         Self::TextExtraction,
         Self::TextCorrection,
+        Self::Translation,
         Self::Analysis,
         Self::Contents,
         Self::AudioTranscription,
@@ -43,29 +47,30 @@ impl Task {
             Self::Analysis => "analysis",
             Self::Contents => "contents",
             Self::TextCorrection => "text_correction",
+            Self::Translation => "translation",
         }
     }
 
     /// The kind of call a provider makes for this task. Providers know three: reading a page,
-    /// transcribing, and answering in fields. A table of contents and a correction are made of
-    /// answers in fields (the entries on a page, the corrected text), so they reach providers
-    /// as analyses and need nothing new from them.
+    /// transcribing, and answering in fields. A table of contents, a correction and a
+    /// translation are made of answers in fields (the entries on a page, the corrected or
+    /// translated text), so they reach providers as analyses and need nothing new from them.
     pub fn request_task(self) -> Task {
         match self {
-            Self::Contents | Self::TextCorrection => Self::Analysis,
+            Self::Contents | Self::TextCorrection | Self::Translation => Self::Analysis,
             other => other,
         }
     }
 
     /// Whether a model that does `self.request_task()` and reads `inputs` can do this task: a
-    /// table of contents reads pages (PDF or images); a correction reads text.
+    /// table of contents reads pages (PDF or images); a correction or a translation reads text.
     pub fn reads(self, inputs: &[String]) -> bool {
         let has = |mime: &str| inputs.iter().any(|i| i == mime);
         match self {
             Self::Contents => {
                 has("application/pdf") || inputs.iter().any(|i| i.starts_with("image/"))
             }
-            Self::TextCorrection => has("text/plain"),
+            Self::TextCorrection | Self::Translation => has("text/plain"),
             _ => true,
         }
     }
@@ -77,12 +82,13 @@ impl Task {
     }
 
     /// The kinds of source the task reads: pages for an extraction or a table of contents, text
-    /// there is for a correction (a PDF's text layer or a text file), any document for an
-    /// analysis, and recordings, videos and YouTube links for a transcription.
+    /// there is for a correction or a translation (a PDF's text layer, a text file, an earlier
+    /// result's text), any document for an analysis, and recordings, videos and YouTube links
+    /// for a transcription.
     pub fn source_kinds(self) -> &'static [InputKind] {
         match self {
             Self::TextExtraction | Self::Contents => &[InputKind::Pdf, InputKind::Image],
-            Self::TextCorrection => &[InputKind::Text, InputKind::Pdf],
+            Self::TextCorrection | Self::Translation => &[InputKind::Text, InputKind::Pdf],
             Self::Analysis => &[InputKind::Text, InputKind::Pdf, InputKind::Image],
             Self::AudioTranscription => &[InputKind::Audio, InputKind::Video, InputKind::YouTube],
         }
@@ -100,28 +106,50 @@ impl Task {
         match self {
             Self::TextExtraction => &[Txt, Markdown, Docx, Json, Csv, SearchablePdf, Alto],
             Self::AudioTranscription => &[Txt, Markdown, Docx, Srt, Vtt, Json, Csv],
-            Self::Analysis | Self::TextCorrection => &[Txt, Markdown, Docx, Json, Csv],
+            Self::Analysis | Self::TextCorrection | Self::Translation => {
+                &[Txt, Markdown, Docx, Json, Csv]
+            }
             Self::Contents => &[Markdown, Docx, Csv, Txt, Json],
         }
     }
 
     /// Whether the job's language is the one the model answers in, one only, rather than the
     /// source's: an analysis's fields and a table of contents' entries are written by the
-    /// model; an extraction, a transcription or a correction keep the source's words.
+    /// model, and a translation in the language it translates into; an extraction, a
+    /// transcription or a correction keep the source's words.
     pub fn answers_in_language(self) -> bool {
-        matches!(self, Self::Analysis | Self::Contents)
+        matches!(self, Self::Analysis | Self::Contents | Self::Translation)
+    }
+
+    /// Whether the job's language must be chosen: a translation has no language to fall back
+    /// on, as an analysis falls back on the document's own.
+    pub fn needs_language(self) -> bool {
+        self == Self::Translation
     }
 
     /// Whether the task's result is a text another task can read: an extraction, a
-    /// transcription or a correction, not an analysis's fields or a table of contents' entries.
+    /// transcription, a correction or a translation, not an analysis's fields or a table of
+    /// contents' entries.
     pub fn yields_text(self) -> bool {
         matches!(
             self,
-            Self::TextExtraction | Self::AudioTranscription | Self::TextCorrection
+            Self::TextExtraction
+                | Self::AudioTranscription
+                | Self::TextCorrection
+                | Self::Translation
         )
     }
 
-    /// Whether its text keeps lines as on the page or joins them, as the researcher chooses.
+    /// Whether it reads a text there is and writes it anew, piece by piece, as the one field of
+    /// an answer: a correction, in the source's language, or a translation, in the job's. The
+    /// text each piece had before is kept for the review.
+    pub fn rewrites_text(self) -> bool {
+        matches!(self, Self::TextCorrection | Self::Translation)
+    }
+
+    /// Whether its text keeps lines as on the page or joins them, as the researcher chooses. A
+    /// translation follows the layout of the text it reads: a page's lines do not carry over
+    /// into another language, and the text it reads has already made that choice.
     pub fn has_line_breaks(self) -> bool {
         matches!(self, Self::TextExtraction | Self::TextCorrection)
     }
@@ -130,7 +158,7 @@ impl Task {
     pub fn takes_samples(self) -> bool {
         matches!(
             self,
-            Self::TextExtraction | Self::TextCorrection | Self::Contents
+            Self::TextExtraction | Self::TextCorrection | Self::Translation | Self::Contents
         )
     }
 
@@ -140,7 +168,7 @@ impl Task {
     }
 
     /// Whether double pages are worth splitting: not for an analysis, which reads a document
-    /// whole, nor a correction, which reads the text layer.
+    /// whole, nor a correction or a translation, which read the text layer.
     pub fn splits_spreads(self) -> bool {
         matches!(self, Self::TextExtraction | Self::Contents)
     }
@@ -148,7 +176,7 @@ impl Task {
     /// Whether a PDF's text layer is what it reads, rather than a sign that reading is not
     /// needed.
     pub fn reads_text_layer(self) -> bool {
-        self == Self::TextCorrection
+        self.rewrites_text()
     }
 }
 
@@ -172,5 +200,23 @@ mod tests {
                 .contains(&ExportFormat::SearchablePdf)
         );
         assert!(!Task::Analysis.formats().contains(&ExportFormat::Srt));
+    }
+
+    #[test]
+    fn a_translation_reads_what_a_correction_reads_and_answers_in_the_jobs_language() {
+        let (t, c) = (Task::Translation, Task::TextCorrection);
+        assert_eq!(t.as_str(), "translation");
+        assert_eq!(t.request_task(), Task::Analysis);
+        assert_eq!(t.source_kinds(), c.source_kinds());
+        assert_eq!(t.formats(), c.formats());
+        assert!(t.yields_text() && t.rewrites_text() && t.takes_samples());
+        assert!(t.reads_text_layer() && !t.splits_spreads() && !t.groups_pages());
+        assert!(t.answers_in_language() && !c.answers_in_language());
+        assert!(t.needs_language() && !c.needs_language());
+        assert!(!t.has_line_breaks() && c.has_line_breaks());
+        assert!(t.reads(&["text/plain".to_string()]));
+        assert!(!t.reads(&["image/png".to_string()]));
+        // Offered right after a correction.
+        assert_eq!(Task::ALL[2], t);
     }
 }

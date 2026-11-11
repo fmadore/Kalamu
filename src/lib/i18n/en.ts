@@ -66,7 +66,10 @@ export const en = {
 			'Newspaper and magazine issues, archival files, books: one entry per article or item, with its pages',
 		text_correction: 'Correct existing text',
 		text_correctionHint:
-			'Machine-read text from a digital library or a PDF, corrected page by page: TXT, Word, PDF'
+			'Machine-read text from a digital library or a PDF, corrected page by page: TXT, Word, PDF',
+		translation: 'Translate a text',
+		translationHint:
+			'Text you already have, from a file, a PDF or an earlier result, put into another language page by page: TXT, Word, PDF'
 	},
 	useText: {
 		button: 'Use this text in a new job',
@@ -77,6 +80,9 @@ export const en = {
 		correct: 'Correct it',
 		correctHint:
 			'A model fixes reading errors, keeping the spelling and wording; every change is shown.',
+		translate: 'Translate it',
+		translateHint:
+			'Into a language you choose, everything kept in order; the review shows it beside the text.',
 		workflow: 'Run a workflow on it',
 		workflowHint: 'Several steps one after another, from your workflows or an example.'
 	},
@@ -152,6 +158,8 @@ export const en = {
 		fromPrompts: (task: string) => `Prompts · ${task}`,
 		prompt: 'Prompt',
 		promptMissing: 'A prompt no longer listed',
+		language: 'Translate into',
+		languageNone: 'Choose a language',
 		saveNeedsStep: 'Add a step to save the workflow',
 		stepNumber: (n: number) => `Step ${n}`,
 		reads: 'Works on',
@@ -683,6 +691,7 @@ export const en = {
 			tasks: {
 				text_extraction: 'Text extraction',
 				text_correction: 'Text correction',
+				translation: 'Translation',
 				audio_transcription: 'Transcription',
 				analysis: 'Analysis',
 				contents: 'Table of contents'
@@ -887,6 +896,9 @@ export const en = {
 			'Choose a language to have summaries, subjects and reasons written in it, whatever the language of the document. Names stay as the document spells them.',
 		contentsLanguageHint:
 			'Choose a language to have every entry’s summary written in it, whatever the language of the pages. Titles and names stay as printed.',
+		translationLanguageTitle: 'Translate into',
+		translationLanguageHint:
+			'The text is translated into this language, whatever language or languages it is in. Names of people, places and organisations stay as the text spells them.',
 		languageHint:
 			'Choosing helps with short or noisy material. Pick several for documents or recordings that mix languages.',
 		addLanguage: 'Add a language…',
@@ -1107,7 +1119,11 @@ export const en = {
 		correctionInput:
 			'Kalamu corrects the text already in the file: a PDF’s own text layer, or a text file from a digital library (Gallica, Europeana, Internet Archive…). A scan without a text layer needs Extract text instead.',
 		correctionCheck:
-			'The review highlights every change against the original text. Check names, numbers and dates, which machine reading gets wrong most often.'
+			'The review highlights every change against the original text. Check names, numbers and dates, which machine reading gets wrong most often.',
+		translationInput:
+			'Kalamu translates text that already exists: a text or Word file, a PDF’s own text layer, or the text of an earlier extraction, transcription or correction through Use this text in a new job. Correct a machine-read text first: the translation is only as good as the text it reads.',
+		translationCheck:
+			'The review shows each page of the text beside its translation. Check names, figures and dates, and the words the model marked as unsure, such as [word?].'
 	},
 	// The diagram under the tasks in New job: how the work is split and put back together, with
 	// the user's own files once they are added.
@@ -1161,7 +1177,11 @@ export const en = {
 		correctionSource: 'Text that already exists: a PDF’s text layer or a text file',
 		correctionSplit: 'One piece per page, or per passage of a long text',
 		correctionRead: (model: string) => `${model} corrects the machine-reading errors`,
-		correctionCompare: 'Every change shown against the original text, to keep or undo'
+		correctionCompare: 'Every change shown against the original text, to keep or undo',
+		translationSource:
+			'A text that already exists: a file, a PDF’s text layer or an earlier result',
+		translationRead: (model: string) => `${model} translates each page, leaving nothing out`,
+		translationBeside: 'Each page of the text beside its translation, to check and correct'
 	},
 	scores: {
 		title: 'Errors found in review',
@@ -1951,12 +1971,14 @@ export const en = {
 		'unit.bad_split': 'Split an item between two of its pages.',
 		'unit.none_chosen': 'Choose at least one item.',
 		'job.not_found': 'This job no longer exists.',
-		'job.not_text': 'Only extracted text, transcripts and corrected text can be analysed this way.',
+		'job.not_text':
+			'Only extracted text, transcripts, corrected text and translations can be analysed this way.',
 		'job.nothing_read':
 			'Nothing has been read yet, so there is nothing to analyse. Run the job, or wait for its first pages.',
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',
+		'job.no_language': 'Choose the language to translate into.',
 		'job.link_needs_folder':
 			'Choose a folder for the results: a YouTube video has no folder of its own to write them next to.',
 		'source.private':
@@ -1978,7 +2000,7 @@ export const en = {
 		'workflow.no_steps': 'A workflow needs at least one step.',
 		'workflow.not_earlier': 'A step can only read a step that comes before it.',
 		'workflow.not_text':
-			'A step can only read the text of an extraction, a transcription or a correction.',
+			'A step can only read the text of an extraction, a transcription, a correction or a translation.',
 		'workflow.cannot_read_text':
 			'This step’s task does not read text: let it read the files instead.',
 		'workflow.not_finished': 'This step has not finished yet.',

@@ -47,6 +47,9 @@ pub struct TaskRules {
     pub formats: Vec<ExportFormat>,
     /// Whether the job's language is the one the model answers in, one only.
     pub answers_in_language: bool,
+    /// Whether that language must be chosen, with no detection to fall back on: a
+    /// translation's.
+    pub needs_language: bool,
     /// The models that do it, in catalogue order.
     pub models: Vec<ModelRef>,
     /// For a table of contents, the models that can combine its pages; empty otherwise.
@@ -94,6 +97,7 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
             sources: task.source_kinds().to_vec(),
             formats: task.formats().to_vec(),
             answers_in_language: task.answers_in_language(),
+            needs_language: task.needs_language(),
             yields_text: task.yields_text(),
             line_breaks: task.has_line_breaks(),
             samples: task.takes_samples(),
@@ -133,12 +137,16 @@ impl Engine {
     }
 
     /// Refuses a job whose sources the task does not read, whose models do not do the task or
-    /// read its sources, or name a model its provider no longer serves. A model the catalogue
+    /// read its sources, or name a model its provider no longer serves, and a translation with no
+    /// language to translate into. A model the catalogue
     /// does not list is left to its provider, which refuses what it cannot take; one replaced by
     /// a newer model still runs, as the pipeline or comparison that named it asked.
     pub(crate) fn check_job(catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
         if let Some(source) = new.sources.iter().find(|s| !new.task.reads_source(s.kind)) {
             return Err(EngineError::UnsupportedSource(source.file_name.clone()));
+        }
+        if new.task.needs_language() && new.settings.languages.codes().is_empty() {
+            return Err(EngineError::NoLanguage);
         }
         let links = new.sources.iter().any(|s| s.kind == InputKind::YouTube);
         for request in &new.setups {

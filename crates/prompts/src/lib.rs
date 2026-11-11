@@ -79,6 +79,10 @@ following the instructions given.";
 const CORRECTION_ANSWER: &str = "\n\n## Answer\n\nPut the whole corrected text, and nothing \
 else, in the field `text`. When the text needs no correction, return it unchanged.";
 
+/// Appended to a translation's instructions: where the translated text goes in the answer.
+const TRANSLATION_ANSWER: &str = "\n\n## Answer\n\nPut the whole translated text, and nothing \
+else, in the field `text`. When the page or passage holds no text, leave the field empty.";
+
 #[derive(Debug, Error)]
 pub enum PromptError {
     #[error("Preset not found: {0}")]
@@ -260,7 +264,10 @@ impl PromptLibrary {
                     return Err(PromptError::Incomplete);
                 }
             }
-            Task::TextExtraction | Task::AudioTranscription | Task::TextCorrection => {
+            Task::TextExtraction
+            | Task::AudioTranscription
+            | Task::TextCorrection
+            | Task::Translation => {
                 preset.schema = None;
                 preset.merge_instructions = None;
             }
@@ -355,11 +362,13 @@ impl Preset {
     /// Fills in variables and freezes the result for a job.
     pub fn snapshot(&self, ctx: &RenderContext) -> PromptSnapshot {
         // The schema the model answers in: the fields themselves for an analysis, each page's
-        // entries for a table of contents, the corrected text for a correction.
+        // entries for a table of contents, the corrected or translated text for a correction or
+        // a translation.
         let schema = match self.task {
             Task::Analysis => self.schema.clone(),
             Task::Contents => self.schema.as_ref().map(kalamu_core::contents::page_schema),
             Task::TextCorrection => Some(kalamu_core::correction::schema()),
+            Task::Translation => Some(kalamu_core::correction::translation_schema()),
             Task::TextExtraction | Task::AudioTranscription => None,
         };
         // The fields are described in words as well as sent as a schema: the schema fixes the
@@ -367,6 +376,9 @@ impl Preset {
         let instructions = match (self.task, &schema) {
             (Task::TextCorrection, _) => {
                 format!("{}{CORRECTION_ANSWER}", self.instructions.trim_end())
+            }
+            (Task::Translation, _) => {
+                format!("{}{TRANSLATION_ANSWER}", self.instructions.trim_end())
             }
             (_, Some(schema)) => format!("{}{}", self.instructions.trim_end(), describe(schema)),
             (_, None) => self.instructions.clone(),

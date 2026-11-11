@@ -385,6 +385,7 @@ const EXTENSIONS: Record<Task, string[]> = {
 	text_extraction: PAGES,
 	contents: PAGES,
 	text_correction: ['txt', 'md', 'docx', 'pdf'],
+	translation: ['txt', 'md', 'docx', 'pdf'],
 	audio_transcription: [
 		'mp3',
 		'wav',

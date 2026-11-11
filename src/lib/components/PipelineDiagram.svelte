@@ -232,13 +232,14 @@
 				{/each}
 			</tbody>
 		</table>
-	{:else if kind === 'ocr' || kind === 'correct'}
-		<!-- A page of machine-read text: its misreadings, then the same lines corrected. -->
+	{:else if kind === 'ocr' || kind === 'correct' || kind === 'text' || kind === 'translate'}
+		<!-- A page of machine-read text: its misreadings, then the same lines corrected; or a
+		     page of text, then the same page written anew in another language. -->
 		<svg width={W} height="72" viewBox="0 0 {W} 72">
 			<rect class="paper" x="44" y="4" width="52" height="64" rx="2" />
 			{#each { length: 7 } as _, k (k)}
 				<rect
-					class={kind === 'ocr' ? 'print' : 'stub'}
+					class={kind === 'ocr' || kind === 'text' ? 'print' : 'stub'}
 					x="50"
 					y={12 + k * 7}
 					width={k % 3 === 2 ? 26 : 40}
@@ -246,7 +247,7 @@
 					rx="1"
 				/>
 			{/each}
-			{#each FLAWS as [line, x, w], j (j)}
+			{#each kind === 'ocr' || kind === 'correct' ? FLAWS : [] as [line, x, w], j (j)}
 				{#if kind === 'ocr'}
 					<rect class="flaw" x={50 + x} y={12 + line * 7 - 1} width={w} height="4" rx="1" />
 				{:else}
@@ -264,8 +265,9 @@
 				{/if}
 			{/each}
 		</svg>
-	{:else if kind === 'compare'}
-		<!-- The original and the correction side by side, each change marked in both. -->
+	{:else if kind === 'compare' || kind === 'beside'}
+		<!-- The original and the correction side by side, each change marked in both; or the
+		     original and its translation side by side, with nothing to mark between them. -->
 		<svg width={W} height="72" viewBox="0 0 {W} 72">
 			{#each [0, 1] as side (side)}
 				{@const x = side === 0 ? 30 : 74}
@@ -280,7 +282,7 @@
 						rx="1"
 					/>
 				{/each}
-				{#each [[1, 10], [3, 4]] as [line, dx], j (j)}
+				{#each kind === 'compare' ? [[1, 10], [3, 4]] : [] as [line, dx], j (j)}
 					<rect
 						class="{side === 0 ? 'flaw' : 'mark'} marker"
 						style="--j: {j}"

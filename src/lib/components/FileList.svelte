@@ -139,6 +139,10 @@
 				<li>{m.tips.correctionInput}</li>
 				<li>{m.tips.correctionCheck}</li>
 				<li>{m.tips.results}</li>
+			{:else if task === 'translation'}
+				<li>{m.tips.translationInput}</li>
+				<li>{m.tips.translationCheck}</li>
+				<li>{m.tips.results}</li>
 			{:else}
 				<li>{task === 'text_extraction' ? m.tips.scanning : m.tips.recording}</li>
 				<li>{m.tips.results}</li>

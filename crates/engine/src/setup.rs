@@ -219,7 +219,7 @@ impl Engine {
             language_names: Self::language_names(catalog, settings),
             speakers: options.speakers,
             line_breaks: settings.line_breaks.filter(|_| task.has_line_breaks()),
-            answers: matches!(task, Task::Analysis | Task::Contents),
+            answers: task.answers_in_language(),
         }
     }
 

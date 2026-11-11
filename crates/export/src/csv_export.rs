@@ -26,7 +26,7 @@ impl Exporter for CsvExporter {
 /// and the JSON export keeps the text exactly for a program.
 fn table(doc: &ExportDocument) -> Table {
     match doc.task {
-        Task::TextExtraction | Task::TextCorrection => Table {
+        Task::TextExtraction | Task::TextCorrection | Task::Translation => Table {
             cells: CsvCells::Guarded,
             headings: strings(["page", "text", "corrected", "reviewed"]),
             rows: doc

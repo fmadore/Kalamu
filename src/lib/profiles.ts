@@ -26,6 +26,7 @@ export type DocumentValue = (typeof DOCUMENT_VALUES)[number];
 export const RESULT_TASKS: Task[] = [
 	'text_extraction',
 	'text_correction',
+	'translation',
 	'audio_transcription',
 	'analysis',
 	'contents'

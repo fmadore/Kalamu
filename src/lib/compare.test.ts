@@ -32,6 +32,13 @@ describe('the texts a review compares', () => {
 		expect(shownText(undefined)).toBe('');
 	});
 
+	it('shows a translation beside its source, never compared with it', () => {
+		const lead = view({ ai_text: 'model', corrected_text: 'mine', source_text: 'original' });
+		expect(witnessesOf(setups.slice(0, 1), () => lead, 'translation', en)).toEqual([
+			{ key: 'model', siglum: 'a', text: 'model' }
+		]);
+	});
+
 	it('names who reads what each siglum names', () => {
 		expect(witnessName('a', setups, en)).toBe('flash, model output');
 		expect(witnessName('O', setups, en)).toBe('Original text');

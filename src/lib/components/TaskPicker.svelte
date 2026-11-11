@@ -1,6 +1,7 @@
 <script lang="ts">
-	// The tasks of a new job as one joined choice, two by two: reading pages, working on texts,
-	// spoken sources. Each is named and explained in a line.
+	// The tasks of a new job as one joined choice, two by two in New job's order: reading pages,
+	// working on texts, spoken sources; an odd one out at the end takes the whole row. Each is
+	// named and explained in a line.
 	import { messages } from '#lib/i18n/index.js';
 	import { type Mode, MODES } from '#lib/newJob.js';
 
@@ -62,11 +63,15 @@
 	.task:nth-child(2) {
 		border-radius: 0 var(--radius-card) 0 0;
 	}
-	.task:nth-child(5) {
+	.task:nth-last-child(2):nth-child(odd) {
 		border-radius: 0 0 0 var(--radius-card);
 	}
-	.task:nth-child(6) {
+	.task:last-child:nth-child(even) {
 		border-radius: 0 0 var(--radius-card) 0;
+	}
+	.task:last-child:nth-child(odd) {
+		grid-column: 1 / -1;
+		border-radius: 0 0 var(--radius-card) var(--radius-card);
 	}
 	.task:hover {
 		background: var(--surface-1);

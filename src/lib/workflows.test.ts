@@ -59,6 +59,8 @@ describe('workflow steps', () => {
 			0,
 			1
 		]);
+		// A text is translated, and the translation analysed.
+		expect(inputs(build('text_extraction', 'translation', 'analysis'))).toEqual(['files', 0, 1]);
 		// A table of contents reads scans, never text.
 		expect(inputs(build('text_extraction', 'contents'))).toEqual(['files', 'files']);
 		expect(textInputs(steps, 0, rules)).toEqual([]);

@@ -34,6 +34,14 @@ improvements that open *Next*; what it did not fix at once is tracked in
 
 ## Done
 
+- **Translate a text, first increment** ([#167](https://github.com/fmadore/Kalamu/issues/167),
+  [decision](decisions/2026-11-11-translation.md)): a task of its own after *Correct existing
+  text*, reading a text file, a PDF's text layer or a result's text frozen through *Use this
+  text in a new job*, page by page into the one language chosen, with the *Translation for
+  research* prompt; the review shows each page of the source beside its translation, with no
+  differences view; the formats of a correction, written as `.translated.<code>`; a workflow
+  step after any step that yields a text, and its own text analysed in turn. Offline language
+  models now take corrections, tables of contents and translations, which they refused before.
 - **Only the newest models offered, older ones kept**
   ([decision](decisions/2026-11-11-model-successors.md)): Claude Fable 5.2 and Gemini 4 Carbon
   added, Mistral Large 4 out of preview and Mistral's default; Fable 5.1 and Mistral Medium 3.5
@@ -505,6 +513,11 @@ In this order. Work that keeps what has shipped sound comes before new features.
   together, from a project's selection. A live run of a two-step workflow, and one in economy
   mode across a restart. Try *Then* and the examples with one or two colleagues before going
   further.
+- **Translation, what is left of [#167](https://github.com/fmadore/Kalamu/issues/167)**:
+  subtitles (SRT, WebVTT) of a translated transcript, its times kept; a project glossary (term
+  and translation) from the dictionary; models trained to translate, offline; a ready-made
+  workflow that translates, once an example can ask for its language; the text layer beside a
+  PDF's translation in the review, which shows the scan. A live run with each provider.
 - **Project search, the rest** (its first and second deliveries closed
   [#86](https://github.com/fmadore/Kalamu/issues/86)): alternatives (one word or another);
   searching two letters, and less folding work for very common words
@@ -639,6 +652,7 @@ first workflow increment.
 | Source-linked review | Providers' existing regions drawn over the scan, each opening its text, with a page-only fallback; then stable region identities and researcher-drawn regions. Coordinates shared with #53, text anchors from #47 | [#84](https://github.com/fmadore/Kalamu/issues/84) |
 | Context-aware processing | Bounded neighboring pages; then date/place proposals with evidence, literal readings and explicit inference status, shown in export profiles beside the literal value | [#54](https://github.com/fmadore/Kalamu/issues/54) |
 | Archival metadata and export profiles | Supplied source descriptions and reusable local CSV/JSON mappings (done; closed). Normalised and inferred values moved to #54, item-level rows to #50 | [#55](https://github.com/fmadore/Kalamu/issues/55) |
+| Translation | A task of its own over existing text and frozen results, a workflow step after extraction or transcription, the source beside the translation in review (first increment done); then subtitles of a translated transcript and a project glossary | [#167](https://github.com/fmadore/Kalamu/issues/167) |
 
 Scope is local research preparation, review and export. External collection-system integration
 and publishing are excluded from this work. Implementation follows the architecture checkpoints

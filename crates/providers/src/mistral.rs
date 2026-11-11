@@ -267,7 +267,7 @@ impl Provider for Mistral {
                 "audio/ogg",
                 "audio/webm",
             ],
-            Task::Analysis | Task::Contents | Task::TextCorrection => &[
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation => &[
                 "text/plain",
                 "application/pdf",
                 "image/png",
@@ -284,7 +284,7 @@ impl Provider for Mistral {
                 RequestSetting::new("table_format", OCR_TABLE_FORMAT),
                 RequestSetting::new("include_blocks", true),
             ],
-            Task::Analysis | Task::Contents | Task::TextCorrection => {
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation => {
                 chat::request_settings(tuning)
             }
             Task::AudioTranscription => Vec::new(),
@@ -308,7 +308,7 @@ impl Provider for Mistral {
                 Self::parse_ocr(&response)
             }
             Task::AudioTranscription => self.transcribe(key, &request).await,
-            Task::Analysis | Task::Contents | Task::TextCorrection => {
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation => {
                 let fields = analysis::fields(&request)?;
                 let response = send_json(
                     self.client

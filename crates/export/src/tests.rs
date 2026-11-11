@@ -381,6 +381,28 @@ fn corrected() -> ExportDocument {
     )
 }
 
+/// An earlier result's text translated page by page, the second page corrected in review.
+fn translated() -> ExportDocument {
+    let part = |number: u32, text: &str, corrected: bool| ExportPart {
+        piece: kalamu_core::PieceRef::Page { number, half: None },
+        text: text.into(),
+        segments: vec![],
+        corrected,
+        reviewed: corrected,
+        fields: vec![],
+        regions: vec![],
+        failed: None,
+    };
+    document(
+        Task::Translation,
+        source("lettre.txt", InputKind::Text),
+        vec![
+            part(1, "The government has decided.", false),
+            part(2, "[00:01:15] Speaker 2: The meeting is closed.", true),
+        ],
+    )
+}
+
 fn check(name: &str, actual: &[u8]) {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("golden")
@@ -424,6 +446,8 @@ fn text_formats_match_golden_files() {
     check("contents.csv", &run(ExportFormat::Csv, &contents()));
     check("corrected.txt", &run(ExportFormat::Txt, &corrected()));
     check("corrected.csv", &run(ExportFormat::Csv, &corrected()));
+    check("translated.txt", &run(ExportFormat::Txt, &translated()));
+    check("translated.csv", &run(ExportFormat::Csv, &translated()));
 }
 
 /// A transcription's CSV is for a spreadsheet: a line a spreadsheet would compute is shown as

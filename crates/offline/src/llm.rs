@@ -388,14 +388,15 @@ impl Provider for LocalLlm {
     }
 
     fn accepted_inputs(&self, task: Task) -> &'static [&'static str] {
-        match task {
+        // A table of contents, a correction and a translation are answers in fields too.
+        match task.request_task() {
             Task::Analysis => &["text/plain", "image/png", "image/jpeg"],
             _ => &[],
         }
     }
 
     fn request_settings(&self, task: Task, model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
-        let (Task::Analysis, Ok((file, recipe))) = (task, find(model)) else {
+        let (Task::Analysis, Ok((file, recipe))) = (task.request_task(), find(model)) else {
             return Vec::new();
         };
         let mut settings = vec![
@@ -439,7 +440,7 @@ impl Provider for LocalLlm {
         _key: &ApiKey,
         request: ProcessRequest<'_>,
     ) -> Result<ProcessOutput, ProviderError> {
-        if request.task != Task::Analysis {
+        if request.task.request_task() != Task::Analysis {
             return Err(ProviderError::Unsupported(
                 "Offline language models answer in fields; they do not read pages or recordings"
                     .into(),

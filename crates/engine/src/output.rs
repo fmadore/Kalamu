@@ -279,8 +279,9 @@ fn write_provenance(
 }
 
 /// Where a source's results go and the name they share: the source's name, with the set-up's
-/// label in comparison mode, and `.analysis`, `.contents` or `.corrected` after it so they never
-/// replace the transcription or extraction they read, or the text file corrected.
+/// label in comparison mode, and `.analysis`, `.contents`, `.corrected` or `.translated.` and
+/// the language's code after it so they never replace the transcription or extraction they
+/// read, the text file corrected, or a translation of the same text into another language.
 ///
 /// Two sources that would share a name in one folder (`scan.pdf` and `scan.tif`, or two
 /// `scan.pdf` from different folders sent to one) would write over each other's files: the later
@@ -311,6 +312,25 @@ fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, S
         Task::Analysis => base.push_str(".analysis"),
         Task::Contents => base.push_str(".contents"),
         Task::TextCorrection => base.push_str(".corrected"),
+        Task::Translation => {
+            base.push_str(".translated");
+            // A code is letters and hyphens (`fr`, `zh-hans`); anything else is left out of a
+            // file name.
+            let code: String = job
+                .settings
+                .languages
+                .codes()
+                .first()
+                .map(|c| c.as_str())
+                .unwrap_or_default()
+                .chars()
+                .filter(|c| c.is_ascii_alphanumeric() || *c == '-')
+                .collect();
+            if !code.is_empty() {
+                base.push('.');
+                base.push_str(&code);
+            }
+        }
         Task::TextExtraction | Task::AudioTranscription => {}
     }
     (dir, base)

@@ -22,6 +22,7 @@
 	import Folder from '@lucide/svelte/icons/folder';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import GripVertical from '@lucide/svelte/icons/grip-vertical';
+	import Languages from '@lucide/svelte/icons/languages';
 	import Laptop from '@lucide/svelte/icons/laptop';
 	import Library from '@lucide/svelte/icons/library';
 	import List from '@lucide/svelte/icons/list';
@@ -98,6 +99,7 @@
 		analysis: TextSearch,
 		contents: ListTree,
 		text_correction: SpellCheck,
+		translation: Languages,
 		workflow: WorkflowIcon,
 		'zoom-in': ZoomIn,
 		'zoom-out': ZoomOut

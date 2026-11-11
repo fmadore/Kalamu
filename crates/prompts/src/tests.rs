@@ -359,6 +359,32 @@ fn a_correction_answers_with_its_text_in_one_field() {
 }
 
 #[test]
+fn a_translation_answers_in_one_field_in_the_language_chosen() {
+    let library = PromptLibrary::in_memory();
+    let preset = library.default_for(Task::Translation);
+    assert_eq!(preset.id, "translation.research");
+    let snapshot = preset.snapshot(&RenderContext {
+        languages: LanguageChoice::Explicit(vec![LanguageCode::new("en")]),
+        language_names: vec!["English".into()],
+        answers: Task::Translation.answers_in_language(),
+        line_breaks: None,
+        ..RenderContext::default()
+    });
+    assert_eq!(
+        snapshot.schema,
+        Some(kalamu_core::correction::translation_schema())
+    );
+    assert!(snapshot.text.contains("in the field `text`"));
+    assert!(snapshot.text.contains("Translate everything into English"));
+    assert!(!snapshot.text.contains("{languages}"));
+    // The target is named in the prompt itself, so no note is added after it; nor a choice of
+    // lines, which a translation does not have.
+    assert!(!snapshot.text.contains("## Language\n\nWrite your answers"));
+    assert!(!snapshot.text.contains("## Line breaks"));
+    assert!(!snapshot.user_prompt.is_empty());
+}
+
+#[test]
 fn the_dictionarys_prompt_is_listed_and_edited_but_never_offered_for_documents()
 -> Result<(), PromptError> {
     let dir = tempfile::tempdir().map_err(io)?;

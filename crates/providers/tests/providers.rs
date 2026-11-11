@@ -114,6 +114,7 @@ static CATALOGUED: std::sync::LazyLock<Vec<(Task, String, Tuning)>> =
             Task::Analysis,
             Task::Contents,
             Task::TextCorrection,
+            Task::Translation,
         ];
         catalog
             .models
