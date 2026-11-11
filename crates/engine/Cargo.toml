@@ -23,6 +23,7 @@ ts-rs.workspace = true
 
 [dev-dependencies]
 async-trait.workspace = true
+image.workspace = true
 kalamu-media = { workspace = true, features = ["test-support"] }
 kalamu-projects.workspace = true
 kalamu-store.workspace = true

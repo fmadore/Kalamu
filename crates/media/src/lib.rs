@@ -11,6 +11,7 @@ mod audio_format;
 mod checks;
 mod ffmpeg;
 mod image_source;
+mod page_set;
 mod pdf;
 pub mod program;
 mod render;
@@ -31,6 +32,7 @@ use thiserror::Error;
 pub use audio::{AudioSource, DEFAULT_PIECE_MS, Playback, audio_mime, plan};
 pub use ffmpeg::{AudioFormat, Ffmpeg, Probe};
 pub use image_source::ImageSource;
+pub use page_set::PageSet;
 pub use pdf::PdfSource;
 #[cfg(any(test, feature = "test-support"))]
 pub use pdf::sample_pdf;
@@ -62,6 +64,11 @@ pub enum MediaError {
         "This file has changed since it was added to the job. Start a new job with it to read it as it is now"
     )]
     Changed,
+    /// One file of a document of pages holds something else now than when it was added.
+    #[error(
+        "The page's file {0} has changed since it was added to the job. Start a new job with it to read it as it is now"
+    )]
+    PageChanged(String),
 }
 
 /// Hashes a file and works out what it is, without loading it all into memory twice. FFmpeg,
@@ -100,11 +107,12 @@ pub fn inspect(path: &Path, ffmpeg: Option<&Ffmpeg>) -> Result<SourceFile, Media
         even_out_volume: false,
         title: None,
         derived_from: None,
+        pages: Vec::new(),
     })
 }
 
 /// When a file was last modified, in milliseconds since 1970, where the system says.
-fn modified_ms(metadata: &std::fs::Metadata) -> Option<i64> {
+pub(crate) fn modified_ms(metadata: &std::fs::Metadata) -> Option<i64> {
     let since = metadata.modified().ok()?.duration_since(UNIX_EPOCH).ok()?;
     i64::try_from(since.as_millis()).ok()
 }
@@ -114,7 +122,9 @@ fn modified_ms(metadata: &std::fs::Metadata) -> Option<i64> {
 /// touched but not changed is still read. A changed file is refused: what it holds now would be
 /// cached under the fingerprint of what it held then.
 pub fn check_unchanged(source: &SourceFile) -> Result<(), MediaError> {
-    if source.kind == InputKind::YouTube {
+    // A document of pages is checked page by page as each is read, so one file moved or
+    // replaced fails its page alone (`PageSet`).
+    if source.kind == InputKind::YouTube || source.is_page_set() {
         return Ok(());
     }
     let path = Path::new(&source.path);
@@ -157,6 +167,8 @@ pub fn hash_file(path: &Path) -> Result<String, MediaError> {
 pub enum OpenSource {
     Pdf(Box<PdfSource>),
     Image(ImageSource),
+    /// A document of image files, read as its pages in its order.
+    Pages(PageSet),
     /// A recording, or the sound track of a video.
     Audio(AudioSource),
     /// Plain text, Markdown, CSV or Word, for summaries.
@@ -177,6 +189,9 @@ impl OpenSource {
         ffmpeg: Option<&Ffmpeg>,
         stop: &StopSignal,
     ) -> Result<Self, MediaError> {
+        if source.is_page_set() {
+            return Ok(Self::Pages(PageSet::new(source.pages.clone())));
+        }
         let path = Path::new(&source.path);
         match source.kind {
             InputKind::Pdf => Ok(Self::Pdf(Box::new(PdfSource::open(path)?))),
@@ -211,6 +226,7 @@ impl OpenSource {
         let pages = match self {
             Self::Pdf(pdf) => pdf.page_count(),
             Self::Image(img) => img.page_count(),
+            Self::Pages(set) => set.page_count(),
             Self::Audio(audio) => return audio.try_pieces(piece_ms),
             // A YouTube link cannot be clipped reliably: Gemini still hears the whole sound
             // track (see the decision of 27 October 2026), so a video is one piece.
@@ -222,6 +238,7 @@ impl OpenSource {
                 && match self {
                     Self::Pdf(pdf) => pdf.is_spread(number),
                     Self::Image(img) => img.is_spread(number),
+                    Self::Pages(set) => set.is_spread(number),
                     Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => false,
                 };
             if spread {
@@ -245,7 +262,7 @@ impl OpenSource {
         let mut pieces: Vec<PieceRef> = match self {
             Self::Pdf(pdf) => (1..=pdf.page_count()).map(PieceRef::page).collect(),
             Self::Text(text) => text.sections()?.into_iter().map(|(p, _)| p).collect(),
-            Self::Image(_) | Self::Audio(_) | Self::YouTube(_) => {
+            Self::Image(_) | Self::Pages(_) | Self::Audio(_) | Self::YouTube(_) => {
                 return Err(MediaError::NeedsConversion(
                     "This file holds no text to correct. Extract its text first, then correct \
                      the result."
@@ -383,6 +400,7 @@ impl OpenSource {
                 }
             }
             Self::Image(img) => img.prepare(*number, *half, accepted)?,
+            Self::Pages(set) => set.prepare(*number, *half, accepted)?,
             Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => unreachable_audio()?,
         };
         let ext = mime
@@ -403,6 +421,7 @@ impl OpenSource {
         let kinds = match self {
             Self::Pdf(pdf) => checks::pdf_warnings(pdf),
             Self::Image(img) => checks::image_warnings(img),
+            Self::Pages(set) => set.warnings(),
             // Recordings are checked with FFmpeg by `recording_warnings`; a YouTube video is not
             // seen before the provider reads it.
             Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => Vec::new(),
@@ -428,6 +447,14 @@ impl OpenSource {
             }
             Self::Text(text) if accepted.contains(&"text/plain") => {
                 ("text/plain".to_string(), text.text()?.into_bytes())
+            }
+            // Several files are not one request; the engine refuses an analysis of them before
+            // this is reached.
+            Self::Pages(_) => {
+                return Err(MediaError::NeedsConversion(
+                    "An analysis reads a document as one file. Extract the text of these pages                      first, then analyse the result."
+                        .into(),
+                ));
             }
             Self::Pdf(_) | Self::Image(_) if accepted == ["text/plain"] => {
                 return Err(MediaError::NeedsConversion(

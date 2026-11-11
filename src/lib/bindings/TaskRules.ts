@@ -57,4 +57,8 @@ splits_spreads: boolean,
 /**
  * A PDF's text layer is what it reads, not a sign it need not run.
  */
-reads_text_layer: boolean, };
+reads_text_layer: boolean, 
+/**
+ * Several images can be read as the pages of one document.
+ */
+page_documents: boolean, };

@@ -67,6 +67,8 @@ pub struct TaskRules {
     pub splits_spreads: bool,
     /// A PDF's text layer is what it reads, not a sign it need not run.
     pub reads_text_layer: bool,
+    /// Several images can be read as the pages of one document.
+    pub page_documents: bool,
 }
 
 fn refs<'a>(
@@ -104,6 +106,7 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
             pages_per_call: task.groups_pages(),
             splits_spreads: task.splits_spreads(),
             reads_text_layer: task.reads_text_layer(),
+            page_documents: task.reads_page_documents(),
             models: refs(catalog, task, catalog.models_for(task)),
             merge_models: if task == Task::Contents {
                 refs(catalog, task, catalog.merge_models())
@@ -142,7 +145,10 @@ impl Engine {
     /// does not list is left to its provider, which refuses what it cannot take; one replaced by
     /// a newer model still runs, as the pipeline or comparison that named it asked.
     pub(crate) fn check_job(catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
-        if let Some(source) = new.sources.iter().find(|s| !new.task.reads_source(s.kind)) {
+        let unread = |s: &&kalamu_core::SourceFile| {
+            !new.task.reads_source(s.kind) || (s.is_page_set() && !new.task.reads_page_documents())
+        };
+        if let Some(source) = new.sources.iter().find(unread) {
             return Err(EngineError::UnsupportedSource(source.file_name.clone()));
         }
         if new.task.needs_language() && new.settings.languages.codes().is_empty() {

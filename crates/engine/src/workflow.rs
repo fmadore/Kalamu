@@ -93,6 +93,7 @@ fn as_text(source: &SourceFile) -> SourceFile {
             original_path: source.path.clone(),
             unit: None,
         }),
+        pages: Vec::new(),
     }
 }
 

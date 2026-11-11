@@ -147,7 +147,8 @@
     "samples": true,
     "pages_per_call": true,
     "splits_spreads": true,
-    "reads_text_layer": false
+    "reads_text_layer": false,
+    "page_documents": true
   },
   {
     "task": "text_correction",
@@ -326,7 +327,8 @@
     "samples": true,
     "pages_per_call": false,
     "splits_spreads": false,
-    "reads_text_layer": true
+    "reads_text_layer": true,
+    "page_documents": false
   },
   {
     "task": "translation",
@@ -505,7 +507,8 @@
     "samples": true,
     "pages_per_call": false,
     "splits_spreads": false,
-    "reads_text_layer": true
+    "reads_text_layer": true,
+    "page_documents": false
   },
   {
     "task": "analysis",
@@ -685,7 +688,8 @@
     "samples": false,
     "pages_per_call": false,
     "splits_spreads": false,
-    "reads_text_layer": false
+    "reads_text_layer": false,
+    "page_documents": false
   },
   {
     "task": "contents",
@@ -1005,7 +1009,8 @@
     "samples": true,
     "pages_per_call": false,
     "splits_spreads": true,
-    "reads_text_layer": false
+    "reads_text_layer": false,
+    "page_documents": true
   },
   {
     "task": "audio_transcription",
@@ -1115,6 +1120,7 @@
     "samples": false,
     "pages_per_call": false,
     "splits_spreads": false,
-    "reads_text_layer": false
+    "reads_text_layer": false,
+    "page_documents": false
   }
 ]

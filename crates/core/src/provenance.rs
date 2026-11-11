@@ -203,6 +203,40 @@ pub struct ProvenanceSource {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub derived_from: Option<ProvenanceDerived>,
+    /// For a document of image files, its pages in the order read: each file where it lies,
+    /// its hash and identity, and the number of the first page it holds. `sha256` above is the
+    /// hash of these files' contents in this order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<ProvenancePage>>")]
+    pub pages: Vec<ProvenancePage>,
+}
+
+/// One file of a document of image files, as `provenance.json` records it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenancePage {
+    /// The document's page this file begins, numbered from 1 as in the files written.
+    pub page: u32,
+    #[serde(flatten)]
+    pub file: crate::PageFile,
+}
+
+impl ProvenancePage {
+    /// A document's pages, each with the number of its first page.
+    pub fn of(pages: &[crate::PageFile]) -> Vec<Self> {
+        let mut first = 1;
+        pages
+            .iter()
+            .map(|file| {
+                let page = Self {
+                    page: first,
+                    file: file.clone(),
+                };
+                first += file.frames.max(1);
+                page
+            })
+            .collect()
+    }
 }
 
 /// The earlier result a source's text was frozen from.

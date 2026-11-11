@@ -173,6 +173,13 @@ impl Task {
         matches!(self, Self::TextExtraction | Self::Contents)
     }
 
+    /// Whether the task reads a document of image files page by page, as it reads a PDF's
+    /// pages: an extraction and a table of contents. An analysis reads a document whole, in one
+    /// request of one file, which several images are not.
+    pub fn reads_page_documents(self) -> bool {
+        matches!(self, Self::TextExtraction | Self::Contents)
+    }
+
     /// Whether a PDF's text layer is what it reads, rather than a sign that reading is not
     /// needed.
     pub fn reads_text_layer(self) -> bool {

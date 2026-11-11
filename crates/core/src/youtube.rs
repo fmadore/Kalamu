@@ -76,6 +76,7 @@ impl SourceFile {
             even_out_volume: false,
             title: None,
             derived_from: None,
+            pages: Vec::new(),
         })
     }
 
