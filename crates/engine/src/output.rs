@@ -287,7 +287,7 @@ fn write_provenance(
 /// `scan.pdf` from different folders sent to one) would write over each other's files: the later
 /// ones in the job are numbered, `scan (2)`, as Windows names copies. Windows ignores case, so
 /// the comparison does too.
-fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, String) {
+pub(crate) fn output_base(job: &Job, source: &SourceFile, setup_label: &str) -> (PathBuf, String) {
     let (dir, mut stem) = place(job, source);
     let key = |dir: &Path, stem: &str| (dir.to_string_lossy().to_lowercase(), stem.to_lowercase());
     let mine = key(&dir, &stem);

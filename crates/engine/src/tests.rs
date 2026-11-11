@@ -25,6 +25,7 @@ mod batch;
 mod contents;
 mod large;
 mod later;
+mod names;
 mod pages;
 mod snapshot;
 mod sources;
