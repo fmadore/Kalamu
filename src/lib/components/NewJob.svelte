@@ -53,6 +53,7 @@
 		readersOf,
 		readsInput,
 		readsKind,
+		suggestedPreset,
 		rulesFor,
 		suggestName,
 		suggestionFits,
@@ -179,6 +180,17 @@
 			if (next) d.model = next;
 		}
 	});
+	/** The prompt Kalamu last chose for the files; a set-up still holding it was not chosen by the
+	 * researcher, and follows the files. Not state: it only remembers what was chosen. */
+	let autoPreset: string | null = null;
+	// Files that are all images suggest the prompt made for images (and others the task's first),
+	// in every set-up whose prompt is still Kalamu's choice; one the researcher chose stays.
+	$effect(() => {
+		const next = suggestedPreset(presets, files);
+		if (next === autoPreset) return;
+		for (const d of drafts) if (d.presetId === autoPreset) d.presetId = next;
+		autoPreset = next;
+	});
 	/** Distinct names of the chosen models matching a test, for the notes under a choice. */
 	const namesOf = (test: (model: ModelInfo | undefined) => boolean) => [
 		...new Set(models.filter(test).map((model) => model?.name ?? ''))
@@ -237,7 +249,8 @@
 		const listed = await api.listPresets(task);
 		if (ticket !== taskTicket) return;
 		presets = listed;
-		drafts = [newDraft(catalog, rule, presets[0]?.id ?? null, hasKey, [], input)];
+		autoPreset = suggestedPreset(presets, files);
+		drafts = [newDraft(catalog, rule, autoPreset, hasKey, [], input)];
 		// A table of contents reads best as a document and a spreadsheet.
 		formats =
 			task === 'contents'

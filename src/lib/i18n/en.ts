@@ -232,6 +232,12 @@ export const en = {
 				name: 'Digital library text: correct, then summarise',
 				about: 'Machine-read text from a digital library, corrected, then summarised.',
 				steps: ['Correct the text', 'Summary and keywords']
+			},
+			translated: {
+				name: 'Documents in another language: read, check, translate, then summarise',
+				about:
+					'Scanned documents read and checked, translated into the language you choose, then summarised from the translation.',
+				steps: ['Read the text', 'Translate the text', 'Summary and keywords']
 			}
 		},
 		stepState: {
@@ -1319,6 +1325,10 @@ export const en = {
 		previous: 'Previous',
 		next: 'Next',
 		source: 'Source',
+		showOriginal: 'Show the text read',
+		showOriginalHint: 'The page’s text as the model was given it, in place of the page image',
+		showPage: 'Show the page',
+		showPageHint: 'The page image, in place of the text the model was given',
 		itemMenu: (name: string) => `What to do with “${name}”`,
 		renameItem: 'Rename',
 		removeItem: 'Remove from the answers',
@@ -2027,6 +2037,8 @@ export const en = {
 		'provider.unsupported': 'This model cannot do this task.',
 		'provider.retired':
 			'Its provider no longer serves this model. Choose the model that replaces it in New job.',
+		'provider.cannot_read':
+			'This model cannot read some of the files: images need a model that reads images, and an analysis of a PDF a model that reads PDFs. Choose another model, or extract the text first and analyse the result.',
 		'source.unsupported':
 			'One of the files cannot be read for this task. Remove it, or choose another task.',
 		'provider.auth': 'The provider rejected the API key. Check it in Settings.',

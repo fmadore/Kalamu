@@ -198,6 +198,7 @@ const presets: Preset[] = [
 		user_prompt: 'Look at the image above and fill in each field.',
 		builtin: true,
 		modified: false,
+		made_for: 'image',
 		schema: {
 			fields: [
 				{

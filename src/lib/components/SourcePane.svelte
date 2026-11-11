@@ -38,7 +38,8 @@
 		text = null,
 		find = '',
 		found = false,
-		player
+		player,
+		switchable = null
 	}: {
 		kind: 'scan' | 'text' | 'player';
 		/** The source, whose turn is remembered on this computer. */
@@ -54,6 +55,9 @@
 		/** Whether they are a search's, marked grey, rather than a name pointed at, in yellow. */
 		found?: boolean;
 		player?: Snippet;
+		/** A PDF whose text was read for a correction or a translation: the scan or that text,
+		 * switched from the bar. */
+		switchable?: { onswitch: () => void } | null;
 	} = $props();
 	const m = messages();
 
@@ -274,6 +278,15 @@
 <section class="pane source" class:stage={kind === 'scan'} aria-label={m.review.source}>
 	<div class="pane-bar">
 		<span class="title mono">{m.review.source}{piece ? ` · ${piece}` : ''}</span>
+		{#if switchable}
+			<button
+				class="tool wide switch"
+				aria-pressed={kind === 'text'}
+				title={kind === 'text' ? m.review.showPageHint : m.review.showOriginalHint}
+				onclick={switchable.onswitch}
+				>{kind === 'text' ? m.review.showPage : m.review.showOriginal}</button
+			>
+		{/if}
 		{#if paging && paging.count > 1 && onstep}
 			<span class="paging">
 				<button
@@ -509,6 +522,20 @@
 	}
 	.tool:hover:not(:disabled) {
 		background: rgba(255, 255, 255, 0.08);
+	}
+	/* Switching between the page and its text, at the bar's end, before any paging. */
+	.switch {
+		margin-left: auto;
+		color: var(--on-stage);
+	}
+	.switch + .paging {
+		margin-left: 0;
+	}
+	.source:not(.stage) .switch {
+		color: var(--text-secondary);
+	}
+	.source:not(.stage) .switch:hover {
+		background: var(--surface-2);
 	}
 	.tool:disabled {
 		opacity: 0.4;

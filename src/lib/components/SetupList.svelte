@@ -18,6 +18,7 @@
 		mergeProviders,
 		modelInfo,
 		modelsFor,
+		type Needs,
 		newDraft,
 		pickerModels,
 		replacedModel,
@@ -51,7 +52,7 @@
 		task: Task;
 		presets: Preset[];
 		/** What every model must read, such as YouTube links; any input of the task when absent. */
-		input?: string;
+		input?: Needs;
 		/** The names of the project the job is started from, for a model that spells them. */
 		projectNames?: () => Promise<string[]>;
 	} = $props();

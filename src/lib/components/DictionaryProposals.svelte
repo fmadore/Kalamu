@@ -34,7 +34,7 @@
 	const m = messages();
 	const p = $derived(m.dictionary.proposals);
 	/** Models read the rows as text. */
-	const TEXT = 'text/plain';
+	const TEXT = ['text/plain'];
 
 	let view = $state<ProposalsView | null>(null);
 	const action = new Action({ after: () => load() });

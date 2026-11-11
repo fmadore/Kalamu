@@ -320,6 +320,12 @@ export const fr: Messages = {
 				about:
 					'Texte issu de la lecture automatique d’une bibliothèque numérique, corrigé, puis résumé.',
 				steps: ['Corriger le texte', 'Résumé et mots-clés']
+			},
+			translated: {
+				name: 'Documents dans une autre langue : lire, vérifier, traduire, puis résumer',
+				about:
+					'Documents numérisés lus et vérifiés, traduits dans la langue de votre choix, puis résumés à partir de la traduction.',
+				steps: ['Lire le texte', 'Traduire le texte', 'Résumé et mots-clés']
 			}
 		},
 		stepState: {
@@ -1417,6 +1423,10 @@ export const fr: Messages = {
 		previous: 'Précédent',
 		next: 'Suivant',
 		source: 'Source',
+		showOriginal: 'Voir le texte de départ',
+		showOriginalHint: 'Le texte de la page tel que le modèle l’a reçu, à la place de l’image',
+		showPage: 'Voir la page',
+		showPageHint: 'L’image de la page, à la place du texte reçu par le modèle',
 		itemMenu: (name: string) => `Que faire de « ${name} » ?`,
 		renameItem: 'Renommer',
 		removeItem: 'Retirer des réponses',
@@ -2115,6 +2125,8 @@ export const fr: Messages = {
 		'provider.unsupported': 'Ce modèle ne sait pas effectuer cette tâche.',
 		'provider.retired':
 			'Son fournisseur ne sert plus ce modèle. Choisissez celui qui le remplace dans Nouveau traitement.',
+		'provider.cannot_read':
+			'Ce modèle ne sait pas lire certains des fichiers : une image demande un modèle qui lit les images, et l’analyse d’un PDF un modèle qui lit les PDF. Choisissez un autre modèle, ou extrayez d’abord le texte puis analysez le résultat.',
 		'source.unsupported':
 			'L’un des fichiers ne peut pas être lu pour cette tâche. Retirez-le, ou choisissez une autre tâche.',
 		'provider.auth': 'Le fournisseur a refusé la clé d’API. Vérifiez-la dans Paramètres.',

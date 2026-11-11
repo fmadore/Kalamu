@@ -28,7 +28,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use kalamu_core::{AnalysisSchema, PromptSnapshot, SchemaError, Task};
+use kalamu_core::{AnalysisSchema, InputKind, PromptSnapshot, SchemaError, Task};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -69,6 +69,12 @@ pub struct Preset {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub dense: Option<bool>,
+    /// The kind of source a ready-made prompt is made for, which New job suggests it for when
+    /// every file is of that kind: images for the image description. Always the shipped
+    /// default's, edited or not, and empty for the researcher's own prompts and their copies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub made_for: Option<InputKind>,
 }
 
 /// The request sent with a table of contents' second step.
@@ -162,6 +168,7 @@ impl PromptLibrary {
                     preset.modified = false;
                 }
                 preset.settle_density();
+                preset.made_for = shipped_made_for(&preset.id);
                 saved.insert(preset.id.clone(), preset);
             }
         }
@@ -283,6 +290,7 @@ impl PromptLibrary {
         }
         preset.builtin = is_default;
         preset.modified = is_default;
+        preset.made_for = shipped_made_for(&preset.id);
         if let Some(dir) = &self.dir {
             write_atomic(&dir.join(format!("{}.json", preset.id)), &preset)?;
         }
@@ -436,7 +444,16 @@ fn builtin(d: &defaults::Default) -> Preset {
         }),
         merge_instructions: d.merge.map(str::to_string),
         dense: Some(d.dense),
+        made_for: d.made_for,
     }
+}
+
+/// The kind of source the default of this id is made for; none for any other preset.
+fn shipped_made_for(id: &str) -> Option<InputKind> {
+    defaults::DEFAULTS
+        .iter()
+        .find(|d| d.id == id)
+        .and_then(|d| d.made_for)
 }
 
 /// The density a default ships with, under its id or a retired id it replaced; no for any

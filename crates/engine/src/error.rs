@@ -25,6 +25,14 @@ pub enum EngineError {
     /// A model its provider no longer serves, named by an older pipeline or comparison.
     #[error("{0} is no longer served by its provider; choose the model that replaces it")]
     RetiredModel(String),
+    /// A model given a source it cannot read: images to a model that reads text only, a whole
+    /// PDF to one that reads no PDF. The reason is media's, as each piece would have failed.
+    #[error("{model} cannot read {file}: {reason}")]
+    CannotRead {
+        model: String,
+        file: String,
+        reason: String,
+    },
     /// A source of a kind the task does not read.
     #[error("{0} cannot be read for this task")]
     UnsupportedSource(String),
@@ -78,6 +86,7 @@ impl EngineError {
             Self::NotReady(e) => e.code(),
             Self::UnsupportedModel(_) => "provider.unsupported",
             Self::RetiredModel(_) => "provider.retired",
+            Self::CannotRead { .. } => "provider.cannot_read",
             Self::UnsupportedSource(_) => "source.unsupported",
             Self::AlreadyRunning => "job.running",
             Self::EmptyJob => "job.empty",

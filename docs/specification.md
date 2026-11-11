@@ -102,8 +102,12 @@ places and organisations, the tone of a document, and an image's description, ki
 written text and the names that text gives), and common fields are one click away when building
 one. The image description says only what can be seen: people by number, activity and dress,
 never an identity guessed from a face, and no date, place or name the image does not itself
-state ([#168](https://github.com/fmadore/Kalamu/issues/168)). When the sources include images,
-New job offers only models that read images. The app turns
+state ([#168](https://github.com/fmadore/Kalamu/issues/168)). When every source is an image,
+New job chooses it for the researcher, unless they chose a prompt themselves. When the sources
+include images, New job offers only models that read images, and for an analysis of a PDF only
+models that read PDFs; a job that asks a model for what it cannot read (a saved pipeline or
+workflow, an older window) is refused before anything is sent, for the reason each page would
+have failed with ([decision](decisions/2026-11-11-translation-followups.md)). The app turns
 the fields into each provider's structured output, so the answer always has exactly these
 fields, and checks it again before storing it: an answer that breaks the fields is asked for
 again, never stored empty. Named entity recognition and sentiment analysis are analyses, not
@@ -164,8 +168,9 @@ this text in a new job*: an extraction, a transcription or a correction as the r
 it. It sends that text page by page, or in passages, and the answer comes back as the one field
 of a correction's, so every model that answers in fields and reads text can translate, cloud
 or offline, with nothing new asked of providers. The job's language is the language translated
-into, one only and always chosen: New job and a workflow's step ask for it, and a job without
-one is refused before anything is sent. Its preset, *Translation for research*, translates
+into, one only and always chosen: New job and a workflow's step ask for it, a workflow with a
+translation step and no language is not saved, and a job without one is refused before
+anything is sent. Its preset, *Translation for research*, translates
 everything in order, summarising and leaving out nothing; keeps names of people, places and
 organisations as written; gives the original beside a culturally specific term; marks an
 unsure reading `[word?]`; keeps paragraphs, headings and a transcript's speaker labels and
@@ -173,7 +178,8 @@ times exactly; adds no notes of its own; and, since the source may be machine-re
 what is meant where a misreading is obvious and never invents. The translation follows the
 layout of the text it reads, so it offers no choice of lines. It is a result of its own, never
 replacing the source, written as `<name>.translated.<code>` in the formats of a correction; the
-review shows each page of the source beside its translation, which is corrected as any text is,
+review shows each page of the source beside its translation (for a PDF, its page or, at a click,
+the text the model read), which is corrected as any text is,
 with no differences view between two languages. Its text yields a text: it can be analysed, or
 read by a later workflow step. Subtitles of a translated transcript come later.
 
@@ -254,8 +260,9 @@ read by a later workflow step. Subtitles of a translated transcript come later.
 - **The simplest workflow needs no building.** The last section of New job, *Then*, offers to
   analyse the text once it is read (an extraction, a transcription, a correction or a translation), by default
   after the researcher has checked it; nothing is sent for the analysis before they continue.
-  Ready-made examples (letters, interviews, a digital library's text) open in Workflows on the
-  models the researcher has keys for, and an animated drawing of the steps, the researcher's
+  Ready-made examples (letters, interviews, a digital library's text, documents in another
+  language read, translated and summarised) open in Workflows on the models the researcher has
+  keys for, the translating one asking for the language to translate into before it is saved, and an animated drawing of the steps, the researcher's
   check among them, shows how each workflow runs.
 - **Continuing happens where the researcher already is.** A job that is a workflow's step says
   so on its page and in its review, with what comes next and, when the next step waits for
@@ -400,7 +407,9 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
 - **Corrections of existing text**: the original text is a witness of its own, so every change
   the model made is highlighted and the original reading can be taken back in one click.
 - **Translations**: the text translated stands in the source pane beside the translation, page
-  by page, as a text file's text does (a PDF's scan stays in its place); it is not a witness,
+  by page, as a text file's text does; a PDF keeps its page there, and *Show the text read*
+  puts the text the model was given in its place, for a translation or a correction (*Show the
+  page* brings the page back); it is not a witness,
   since two languages have no differences to mark. The translation is corrected as any text is,
   and in a comparison two models' translations are compared as any two readings are.
 - **Analyses**: the document beside its answers, field by field. In a comparison every value

@@ -46,6 +46,22 @@ test('a correction is saved and found again on coming back to the page', async (
 	await expect(text).not.toContainText('deux cents fidèles');
 });
 
+test('a PDF’s corrected text shows the text the model read beside it, the page a click away', async ({
+	page
+}) => {
+	await open(page, 'review-correction');
+	const main = page.getByRole('main');
+	const source = main.getByRole('region', { name: 'Source' });
+	await expect(source.getByRole('group', { name: /^Page image/ })).toBeVisible();
+	await main.getByRole('button', { name: 'Show the text read' }).click();
+	// The text layer as the model was given it, misreadings and all.
+	await expect(source).toContainText('Le Gouvernenr général');
+	await main.getByRole('button', { name: 'Next', exact: true }).click();
+	await expect(source).toContainText('commis- sion');
+	await main.getByRole('button', { name: 'Show the page' }).click();
+	await expect(source.getByRole('group', { name: /^Page image/ })).toBeVisible();
+});
+
 test('a dialog keeps the focus inside until Escape closes it', async ({ page }) => {
 	await open(page, 'project');
 	// Opened from the keyboard: WebKit, as Safari does, leaves a clicked button without the

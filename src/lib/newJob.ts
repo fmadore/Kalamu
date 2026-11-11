@@ -50,20 +50,48 @@ export function taskOf(mode: Mode): Task {
 /** Any image format, as `inputOf` asks it: the engine converts an image into one the model reads. */
 export const IMAGES = 'image/*';
 
+/** What every chosen model must read, each of the inputs listed; anything the task takes when
+ * absent. */
+export type Needs = string[] | undefined;
+
 /**
- * The input every chosen model must read: YouTube links; images when an image is among the
- * files, since a model that reads text only fails on each of them; else anything the task takes.
+ * The inputs every chosen model must read, as the engine refuses a job otherwise (media's
+ * `readable`): YouTube links; images when an image is among the files, since a model that reads
+ * text only fails on each of them; for an analysis, which reads a document whole, PDFs when a
+ * PDF is among them. A correction or a translation reads a PDF's text layer, and other tasks
+ * read a PDF's pages as text for a model that reads text only, so neither needs more.
  */
-export function inputOf(mode: Mode, files: InspectedFile[] = []): string | undefined {
-	if (mode === 'youtube') return YOUTUBE_LINK;
-	return files.some((f) => f.source?.kind === 'image') ? IMAGES : undefined;
+export function inputOf(mode: Mode, files: InspectedFile[] = []): Needs {
+	if (mode === 'youtube') return [YOUTUBE_LINK];
+	const has = (kind: string) => files.some((f) => f.source?.kind === kind);
+	const needs = [
+		...(has('image') ? [IMAGES] : []),
+		...(mode === 'analysis' && has('pdf') ? ['application/pdf'] : [])
+	];
+	return needs.length > 0 ? needs : undefined;
 }
 
-/** Whether a model reads `input`: a format it lists, or any image for `IMAGES`. */
-export function readsInput(model: ModelInfo | undefined, input: string | undefined): boolean {
-	if (input === undefined) return true;
-	if (input === IMAGES) return model?.inputs.some((i) => i.startsWith('image/')) ?? false;
-	return model?.inputs.includes(input) ?? false;
+/** Whether a model reads every input in `needs`: a format it lists, or any image for `IMAGES`. */
+export function readsInput(model: ModelInfo | undefined, needs: Needs): boolean {
+	return (needs ?? []).every((input) =>
+		input === IMAGES
+			? (model?.inputs.some((i) => i.startsWith('image/')) ?? false)
+			: (model?.inputs.includes(input) ?? false)
+	);
+}
+
+/**
+ * The prompt New job chooses for a task's files: a ready-made prompt made for their kind when
+ * every file is of it (the image description for images, as the engine marks it), else the
+ * task's first. The caller applies it only where the researcher has not chosen a prompt.
+ */
+export function suggestedPreset(presets: Preset[], files: InspectedFile[]): string | null {
+	const kinds = files.map((f) => f.source?.kind);
+	const made =
+		kinds.length > 0
+			? presets.find((p) => p.made_for !== undefined && kinds.every((k) => k === p.made_for))
+			: undefined;
+	return (made ?? presets[0])?.id ?? null;
 }
 
 /** One model set-up as edited in the form. */
@@ -197,14 +225,14 @@ export function modelsFor(
 	catalog: Catalog,
 	rule: TaskRules,
 	provider: string,
-	input?: string
+	input?: Needs
 ): ModelInfo[] {
 	return forTask(catalog, rule, input).filter((m) => m.provider === provider);
 }
 
 /** Models offered for new work that can do a task and read `input`: a model replaced by a newer
  * one or retired is not offered, though a set-up that names it keeps it. */
-function forTask(catalog: Catalog, rule: TaskRules, input?: string): ModelInfo[] {
+function forTask(catalog: Catalog, rule: TaskRules, input?: Needs): ModelInfo[] {
 	return catalog.models.filter((m) => offered(rule.models, m) && readsInput(m, input));
 }
 
@@ -214,7 +242,7 @@ export function pickerModels(
 	catalog: Catalog,
 	rule: TaskRules,
 	d: Draft,
-	input?: string
+	input?: Needs
 ): ModelInfo[] {
 	const models = modelsFor(catalog, rule, d.provider, input);
 	const chosen = modelInfo(catalog, d);
@@ -314,7 +342,7 @@ export function providerDefault(
 	catalog: Catalog,
 	rule: TaskRules,
 	provider: string,
-	input?: string
+	input?: Needs
 ): string {
 	const models = modelsFor(catalog, rule, provider, input);
 	return (models.find((m) => providerChoice(rule, m)) ?? models[0])?.id ?? '';
@@ -332,7 +360,7 @@ export function newDraft(
 	presetId: string | null,
 	hasKey: (provider: string) => boolean,
 	used: string[] = [],
-	input?: string
+	input?: Needs
 ): Draft {
 	const offered = forTask(catalog, rule, input);
 	const usable = offered.filter((m) => hasKey(m.provider));

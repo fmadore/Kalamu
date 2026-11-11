@@ -13,6 +13,7 @@ mod ffmpeg;
 mod image_source;
 mod pdf;
 pub mod program;
+mod readable;
 mod render;
 mod text_source;
 
@@ -34,6 +35,7 @@ pub use image_source::ImageSource;
 pub use pdf::PdfSource;
 #[cfg(any(test, feature = "test-support"))]
 pub use pdf::sample_pdf;
+pub use readable::{Reading, readable};
 pub use render::{THUMBNAIL_MAX_WIDTH, thumbnail};
 pub use text_source::TextSource;
 
@@ -343,6 +345,7 @@ impl OpenSource {
         if *piece == PieceRef::Whole {
             return self.prepare_whole(accepted, file_stem);
         }
+        readable(self.kind(), Reading::Pieces, accepted)?;
         // A model that reads text only (a correction, a text model reading a page) gets the
         // piece's text.
         let text_only = accepted == ["text/plain"];
@@ -398,6 +401,17 @@ impl OpenSource {
         })
     }
 
+    /// The kind of source it was opened from; a video's sound track counts as a recording.
+    pub fn kind(&self) -> InputKind {
+        match self {
+            Self::Pdf(_) => InputKind::Pdf,
+            Self::Image(_) => InputKind::Image,
+            Self::Audio(_) => InputKind::Audio,
+            Self::Text(_) => InputKind::Text,
+            Self::YouTube(_) => InputKind::YouTube,
+        }
+    }
+
     /// Problems likely to hurt the result, found from page sizes and metadata only.
     pub fn warnings(&self, source_id: SourceId) -> Vec<InputWarning> {
         let kinds = match self {
@@ -422,29 +436,10 @@ impl OpenSource {
         accepted: &[&str],
         file_stem: &str,
     ) -> Result<PreparedInput, MediaError> {
+        readable(self.kind(), Reading::Whole, accepted)?;
         let (mime, bytes) = match self {
-            Self::Pdf(pdf) if accepted.contains(&"application/pdf") => {
-                ("application/pdf".to_string(), pdf.whole()?)
-            }
-            Self::Text(text) if accepted.contains(&"text/plain") => {
-                ("text/plain".to_string(), text.text()?.into_bytes())
-            }
-            Self::Pdf(_) | Self::Image(_) if accepted == ["text/plain"] => {
-                return Err(MediaError::NeedsConversion(
-                    "This model reads text only. Extract the text first, then analyse the \
-                     result, or choose a model that reads PDFs and images."
-                        .into(),
-                ));
-            }
-            // A model that reads texts and single page images, not whole PDFs (the offline
-            // language models).
-            Self::Pdf(_) => {
-                return Err(MediaError::NeedsConversion(
-                    "This model does not read PDFs whole. Extract the text first, then analyse \
-                     the result, or choose a model that reads PDFs."
-                        .into(),
-                ));
-            }
+            Self::Pdf(pdf) => ("application/pdf".to_string(), pdf.whole()?),
+            Self::Text(text) => ("text/plain".to_string(), text.text()?.into_bytes()),
             // One image per call: the pages of a multi-page TIFF would be read apart.
             Self::Image(img) if img.page_count() > 1 => {
                 return Err(MediaError::NeedsConversion(format!(

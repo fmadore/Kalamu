@@ -104,8 +104,10 @@ describe('example workflows', () => {
 				() => ['txt']
 			);
 			expect(w.name).toBe(en.workflows.examples[kind].name);
-			expect(inputs(w.steps)).toEqual(['files', 0]);
-			expect(w.steps.map((s) => s.review)).toEqual([true, false]);
+			expect(en.workflows.examples[kind].steps).toHaveLength(w.steps.length);
+			// Each later step reads the one before it, and only the first is checked.
+			expect(inputs(w.steps)).toEqual(['files', ...w.steps.slice(1).map((_, i) => i)]);
+			expect(w.steps.map((s) => s.review)).toEqual(w.steps.map((_, i) => i === 0));
 			// The second step reads only what the first can give it.
 			expect(textInputs(w.steps, 1, rules)).toEqual([{ kind: 'step', step: 0 }]);
 			for (const s of w.steps) {
@@ -115,6 +117,26 @@ describe('example workflows', () => {
 				if (preset !== null) expect(presets).toContain(`"${preset}"`);
 			}
 		}
+	});
+
+	it('translates into a language left for the researcher to choose', () => {
+		const w = exampleWorkflow(
+			'translated',
+			en.workflows.examples.translated,
+			catalog,
+			rules,
+			() => true,
+			() => ['txt']
+		);
+		expect(w.steps.map((s) => s.pipeline.task)).toEqual([
+			'text_extraction',
+			'translation',
+			'analysis'
+		]);
+		// No language chosen: the engine refuses to save it until one is.
+		expect(w.steps[1].pipeline.settings.languages).toEqual({ mode: 'auto' });
+		// The analysis reads the translation.
+		expect(w.steps[2].input).toEqual({ kind: 'step', step: 1 });
 	});
 });
 

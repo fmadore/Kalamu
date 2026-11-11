@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use kalamu_core::workflow::check_steps;
+use kalamu_core::workflow::{check_languages, check_steps};
 use kalamu_core::{OutputDestination, StepInput, Task, Timestamp};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -67,13 +67,19 @@ impl Workflow {
             .collect()
     }
 
-    /// Whether every step can run: a name, a model for each step, and inputs that read text
-    /// from a step before.
+    /// Whether every step can run: a name, a model for each step, inputs that read text from a
+    /// step before, and a language for each translation to translate into.
     pub fn check(&self) -> Result<(), PromptError> {
         if self.name.trim().is_empty() || self.steps.iter().any(|s| s.pipeline.setups.is_empty()) {
             return Err(PromptError::IncompleteWorkflow);
         }
-        check_steps(&self.shape()).map_err(PromptError::Workflow)
+        check_steps(&self.shape()).map_err(PromptError::Workflow)?;
+        let languages: Vec<_> = self
+            .steps
+            .iter()
+            .map(|s| (s.pipeline.task, &s.pipeline.settings.languages))
+            .collect();
+        check_languages(&languages).map_err(PromptError::Workflow)
     }
 
     /// With the default that replaced each retired one its steps name.
@@ -247,6 +253,21 @@ pub(crate) mod tests {
             library.save(fields),
             Err(PromptError::Workflow(WorkflowError::NotText { step: 3 }))
         ));
+        let mut untranslated = extract_then_analyse("Untranslated");
+        untranslated.steps.push(WorkflowStep {
+            pipeline: pipeline("Translate", Task::Translation),
+            input: StepInput::Step { step: 0 },
+            review: false,
+        });
+        let refused = library.save(untranslated.clone());
+        assert!(matches!(
+            refused,
+            Err(PromptError::Workflow(WorkflowError::NoLanguage { step: 3 }))
+        ));
+        assert_eq!(refused.map_err(|e| e.code()).err(), Some("job.no_language"));
+        untranslated.steps[2].pipeline.settings.languages =
+            kalamu_core::LanguageChoice::Explicit(vec![kalamu_core::LanguageCode::new("en")]);
+        assert!(library.save(untranslated).is_ok());
         let mut forged = extract_then_analyse("Forged");
         forged.id = "../settings".into();
         assert!(library.save(forged).is_err());

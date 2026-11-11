@@ -11,8 +11,8 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    CollectionId, InputKind, JobId, JobSettings, JobStatus, OutputSettings, ProjectId, RunId,
-    Setup, SourceFile, Task, Timestamp,
+    CollectionId, InputKind, JobId, JobSettings, JobStatus, LanguageChoice, OutputSettings,
+    ProjectId, RunId, Setup, SourceFile, Task, Timestamp,
 };
 
 /// What a step reads.
@@ -41,6 +41,10 @@ pub enum WorkflowError {
     /// The step's task does not read text (an extraction reads scans).
     #[error("Step {step} cannot read text")]
     CannotReadText { step: u32 },
+    /// A translation step with no language to translate into: the message of a job refused for
+    /// the same reason when the run starts, so the researcher reads one sentence for both.
+    #[error("Step {step}: Choose the language to translate into")]
+    NoLanguage { step: u32 },
 }
 
 impl WorkflowError {
@@ -51,6 +55,7 @@ impl WorkflowError {
             Self::NotEarlier { .. } => "workflow.not_earlier",
             Self::NotText { .. } => "workflow.not_text",
             Self::CannotReadText { .. } => "workflow.cannot_read_text",
+            Self::NoLanguage { .. } => "job.no_language",
         }
     }
 
@@ -58,9 +63,10 @@ impl WorkflowError {
     pub fn step(&self) -> Option<u32> {
         match self {
             Self::NoSteps => None,
-            Self::NotEarlier { step } | Self::NotText { step } | Self::CannotReadText { step } => {
-                Some(*step)
-            }
+            Self::NotEarlier { step }
+            | Self::NotText { step }
+            | Self::CannotReadText { step }
+            | Self::NoLanguage { step } => Some(*step),
         }
     }
 }
@@ -88,6 +94,18 @@ pub fn check_steps(steps: &[(Task, StepInput)]) -> Result<(), WorkflowError> {
         }
     }
     Ok(())
+}
+
+/// Checks that every step whose task must be told its language (a translation's target) was
+/// given one. Steps are given as their task and the languages chosen, in order.
+pub fn check_languages(steps: &[(Task, &LanguageChoice)]) -> Result<(), WorkflowError> {
+    match steps
+        .iter()
+        .position(|(task, languages)| task.needs_language() && languages.codes().is_empty())
+    {
+        Some(i) => Err(WorkflowError::NoLanguage { step: i as u32 + 1 }),
+        None => Ok(()),
+    }
 }
 
 /// One step of a run, frozen when the run started: its prompts are those of that moment.
