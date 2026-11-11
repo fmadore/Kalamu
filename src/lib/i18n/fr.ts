@@ -1294,6 +1294,13 @@ export const fr: Messages = {
 		truncatedNote:
 			'La réponse du modèle s’est arrêtée à sa longueur maximale : la fin de ces segments manque peut-être. La relecture les signale ; vérifiez-les sur la source.',
 		files: 'Fichiers',
+		filesShown: 'Fichiers affichés',
+		allFiles: (n: number) => `Tous les fichiers (${n})`,
+		failedFiles: (n: number) => `Fichiers en échec (${n})`,
+		failedListed: (n: number, total: number) =>
+			n <= 1
+				? `${n} fichier en échec affiché sur ${total}`
+				: `${n} fichiers en échec affichés sur ${total}`,
 		livePreview: 'Dernier résultat',
 		outputs: 'Écrits',
 		created: 'Créé',

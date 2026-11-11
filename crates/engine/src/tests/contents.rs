@@ -403,7 +403,7 @@ async fn a_page_that_fails_holds_the_combining_until_it_is_retried() {
     );
     assert_eq!(t.run(job.id).await, JobStatus::CompletedWithErrors);
     assert_eq!(t.small.calls(), 0);
-    let pieces = t.engine.pieces(job.id).unwrap_or_default();
+    let pieces = t.engine.store.pieces(job.id).unwrap_or_default();
     let merge = pieces
         .iter()
         .find(|p| p.piece == PieceRef::Whole)

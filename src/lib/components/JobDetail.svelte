@@ -23,10 +23,28 @@
 
 	let job = $state<Job | null>(null);
 	/** The drawn files' pieces counted, and the pieces held in batches. */
-	let progress = $state<JobProgress>({ held: 0, files: [] });
-	/** How many of the job's files are drawn. */
+	let progress = $state<JobProgress>({ held: 0, failed_sources: [], files: [] });
+	/** Whether only the files with a failed piece are listed. */
+	let onlyFailed = $state(false);
+	/** The job's files with a failed piece, drawn or not, as the store last counted them. */
+	const failed = $derived(new Set(progress.failed_sources));
+	/** Once no file fails any longer (after a retry), the filter stops filtering. */
+	const filtering = $derived(onlyFailed && failed.size > 0);
+	/** The files listed, in the job's order: every one, or those that failed. */
+	const listed = $derived(
+		job ? (filtering ? job.sources.filter((s) => failed.has(s.id)) : job.sources) : []
+	);
+	/** How many of the listed files are drawn. */
 	const paging = new Paging();
-	const drawnSources = $derived(job ? paging.of(job.sources).map((s) => s.id) : []);
+	const drawnSources = $derived(paging.of(listed).map((s) => s.id));
+	/** The drawn files as one value, which changes only when they do: each reading makes a new
+	 * list of failed files, and the same files drawn must not be read again for it. */
+	const drawnKey = $derived(drawnSources.join(' '));
+
+	function showFailed(only: boolean) {
+		onlyFailed = only;
+		paging.reset();
+	}
 	const action = new Action({ after: () => refreshJobs() });
 	/** The files the job wrote that are still on disk. */
 	let written = $state<string[]>([]);
@@ -109,9 +127,10 @@
 			.catch(() => undefined);
 	}
 
-	// The counts of the files drawn, read at once when more are drawn.
+	// The counts of the files drawn, read at once when more, or others, are drawn.
 	$effect(() => {
-		if (job) readProgress(drawnSources);
+		const drawn = drawnKey;
+		if (job) readProgress(drawn ? drawn.split(' ') : []);
 	});
 
 	// Read again as progress arrives, at most twice a second.
@@ -265,7 +284,17 @@
 
 		<JobFacts {job} {summary} {spent} {scores} />
 
-		<JobFiles {jobId} {job} {progress} {paging} {scores} />
+		<JobFiles
+			{jobId}
+			{job}
+			sources={listed}
+			failedCount={failed.size}
+			{filtering}
+			onfilter={showFailed}
+			{progress}
+			{paging}
+			{scores}
+		/>
 
 		{#if live?.preview}
 			<section aria-labelledby="preview-head" class="files">

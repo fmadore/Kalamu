@@ -96,7 +96,7 @@ async fn pages_are_sent_together_and_kept_page_by_page() {
     assert_eq!(f.fake.calls(), 3, "two groups, and the last page alone");
 
     // Every page is its own result, in the file and in the review.
-    let pieces = f.engine.pieces(job.id).unwrap_or_default();
+    let pieces = f.store.pieces(job.id).unwrap_or_default();
     assert_eq!(pieces.len(), 7);
     assert!(pieces.iter().all(|p| p.status.is_finished()));
     let txt = f.text("registre.txt");

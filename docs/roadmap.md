@@ -413,8 +413,12 @@ In this order. Work that keeps what has shipped sound comes before new features.
      ([decision](decisions/2026-11-10-fourth-round.md)): the long tables drawn 200 rows at a
      time, a running job's page reading counts instead of every piece, thumbnails drawn small
      by the app and one pdf.js worker; economy batches of at most 48 MiB, their body written
-     once (213 MiB above the input before, 46 after), an upload given time for its size. Left:
-     the counts made by a query, and a way to reach a large job's failed files. A
+     once (213 MiB above the input before, 46 after), an upload given time for its size. The
+     [third round](decisions/2026-11-11-large-jobs-third.md) had the store count a job's
+     progress from an index of its own, added *Files with failures* to a job's page so failed
+     files are reached however far down they sit, and removed the unused `job_pieces`. Left: a
+     source's file name still compared with every earlier source's when its files are written,
+     and a benchmark of 5,000 sources. A
      correction no longer writes its source's files on the spot: they are marked out of date
      with it and written a few seconds after the last save, before they are listed or
      exported, at quit and at the next launch (a save in a 300-page PDF went from 84 ms to

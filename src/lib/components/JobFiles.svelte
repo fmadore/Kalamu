@@ -1,13 +1,15 @@
 <script lang="ts">
 	// A job's files as a table: each file's progress under every set-up, the errors met, its
 	// error rate where pages were reviewed, and the way into its review. A long job's files are
-	// drawn a page at a time; the engine counts the pieces of the files drawn.
+	// drawn a page at a time; the store counts the pieces of the files drawn. The files with a
+	// failure can be listed alone, so they are reached however far down a long job they sit.
 	import Missing from './Missing.svelte';
 	import MoreRows from './MoreRows.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import { siglum } from '#lib/apparatus.js';
 	import type { FileProgress } from '#lib/bindings/FileProgress.js';
 	import type { Job } from '#lib/bindings/Job.js';
+	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { JobProgress } from '#lib/bindings/JobProgress.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
 	import type { SetupScore } from '#lib/bindings/SetupScore.js';
@@ -19,12 +21,23 @@
 	let {
 		jobId,
 		job,
+		sources,
+		failedCount,
+		filtering,
+		onfilter,
 		progress,
 		paging,
 		scores
 	}: {
 		jobId: string;
 		job: Job;
+		/** The files listed, in the job's order: every one, or those with a failure. */
+		sources: readonly SourceFile[];
+		/** How many of the job's files have a failed piece, drawn or not. */
+		failedCount: number;
+		/** Whether only the files with a failure are listed. */
+		filtering: boolean;
+		onfilter: (onlyFailed: boolean) => void;
 		/** The drawn files' pieces counted under each set-up, read again as progress arrives. */
 		progress: JobProgress;
 		/** How many of the job's files are drawn. */
@@ -47,7 +60,7 @@
 			)
 		)
 	);
-	const drawn = $derived(paging.of(job.sources));
+	const drawn = $derived(paging.of(sources));
 	let list = $state<HTMLElement | null>(null);
 
 	/** One set-up's score on one document, in a sentence. */
@@ -60,7 +73,23 @@
 </script>
 
 <section aria-labelledby="files-head" class="files">
-	<h2 id="files-head">{m.jobs.files}</h2>
+	<div class="files-head">
+		<h2 id="files-head">{m.jobs.files}</h2>
+		{#if failedCount > 0}
+			<select
+				value={filtering ? 'failed' : 'all'}
+				onchange={(e) => onfilter(e.currentTarget.value === 'failed')}
+				aria-label={m.jobs.filesShown}
+			>
+				<option value="all">{m.jobs.allFiles(job.sources.length)}</option>
+				<option value="failed">{m.jobs.failedFiles(failedCount)}</option>
+			</select>
+		{/if}
+	</div>
+	<!-- Always there, so a screen reader hears the count when the list is filtered. -->
+	<p class="sr-only" role="status">
+		{filtering ? m.jobs.failedListed(sources.length, job.sources.length) : ''}
+	</p>
 	<div class="table" bind:this={list}>
 		{#each drawn as source, i (source.id)}
 			<div class="row" data-row={i}>
@@ -93,12 +122,19 @@
 			</div>
 		{/each}
 	</div>
-	<MoreRows {paging} total={job.sources.length} table={list} />
+	<MoreRows {paging} total={sources.length} table={list} />
 </section>
 
 <style>
 	.files {
 		display: grid;
+		gap: var(--space-3);
+	}
+	.files-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
 		gap: var(--space-3);
 	}
 	.table {

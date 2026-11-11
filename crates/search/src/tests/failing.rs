@@ -2,8 +2,8 @@
 //! say so rather than count the documents as having nothing read.
 
 use kalamu_core::{
-    BatchRecord, CacheKey, Charge, JobSources, JobSummary, OutdatedFiles, SetupId, SourceId,
-    StoreError,
+    BatchRecord, CacheKey, Charge, JobProgress, JobSources, JobSummary, OutdatedFiles, SetupId,
+    SourceId, StoreError,
 };
 
 use super::*;
@@ -57,6 +57,10 @@ impl JobStore for Failing {
 
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError> {
         self.0.pieces(job)
+    }
+
+    fn job_progress(&self, job: JobId, sources: &[SourceId]) -> Result<JobProgress, StoreError> {
+        self.0.job_progress(job, sources)
     }
 
     fn source_pieces(

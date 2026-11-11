@@ -53,8 +53,8 @@ pub(crate) use control::Control;
 pub use error::EngineError;
 pub use estimate::{Estimate, EstimateRequest, EstimateRow};
 pub use kalamu_core::SetupRequest;
+pub use kalamu_core::{FileProgress, JobProgress};
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
-pub use progress::{FileProgress, JobProgress};
 pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
 pub use setup::NewJob;
@@ -231,10 +231,6 @@ impl Engine {
 
     pub fn job(&self, id: JobId) -> Result<Job, EngineError> {
         Ok(self.store.job(id)?)
-    }
-
-    pub fn pieces(&self, id: JobId) -> Result<Vec<kalamu_core::PieceState>, EngineError> {
-        Ok(self.store.pieces(id)?)
     }
 
     /// Renames a job, running or not: the name is only its label, and the files it writes are
