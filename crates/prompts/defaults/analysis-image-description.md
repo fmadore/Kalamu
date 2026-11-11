@@ -42,7 +42,9 @@ often scanned, sometimes faded, torn or cropped.
   never give two keywords that say the same thing ("market", "marketplace").
 - Text in the image: every caption, sign, inscription, stamp, banner and handwritten note, as
   written, in its own language and spelling, without translating it; one piece of text per line.
-  Leave it empty when the image has no text.
+  Leave it empty when the image has no text. When the image is a page of text, give only its
+  title, headings, captions, stamps and shelf marks, not the body of the text: reading a page
+  in full is another task, and a line you cannot read is left out, never guessed.
 - People, places and organisations: only those named in the image's own text, spelled as
   written there. Never a person recognised from a face, a place recognised from a landscape or a
   building, or an organisation guessed from a uniform or an emblem without its name. Leave a

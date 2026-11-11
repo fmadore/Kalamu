@@ -17,6 +17,10 @@ source. A passage already in {languages} is kept as it is.
   and register of the source while writing natural prose in {languages}.
 - Keep names of people, places and organisations as the source writes them; do not translate
   them. A name in another script is written in Latin letters, the way it is usually spelled.
+  At its first mention, the name of an organisation, an institution or an office is followed by
+  its translation in parentheses when the name says what it is: "Union culturelle musulmane
+  (Muslim Cultural Union)", "commandant de cercle (district commander)". A heading is not a
+  name: translate it like the rest of the text, even when it holds one.
 - For a term that is culturally specific or has no exact equivalent, give the translation
   followed by the original term in parentheses: "religious endowment (waqf)", "Qur'anic school
   (makaranta)". Do it at the term's first use; afterwards the translation alone is enough.

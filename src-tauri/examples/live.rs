@@ -4,7 +4,8 @@
 //!
 //!   cargo run -p kalamu --example live -- <samples> <out> [job name filter]
 //!
-//! `<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`; each job
+//! `<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav`, `article.txt` and, for the
+//! image description, `image.jpg`; each job
 //! writes its outputs to its own folder in `<out>` and the run ends with a table of pieces.
 //! `LIVE_SKIP=gemini,openai` leaves out providers; `LIVE_PACE=economy` sends every job through
 //! the providers' batch services. `LIVE_TESSDATA=<folder>` adds the offline job, read with
@@ -226,6 +227,30 @@ fn plans() -> Vec<Plan> {
                 })
                 .collect(),
             settings: JobSettings::default(),
+            formats: vec![ExportFormat::Txt, ExportFormat::Csv, ExportFormat::Json],
+        },
+        // A text put into English, whatever its language.
+        Plan {
+            name: "translation",
+            task: Task::Translation,
+            files: &["article.txt"],
+            setups: analysis("translation.research"),
+            settings: JobSettings {
+                languages: LanguageChoice::Explicit(vec![LanguageCode::new("en")]),
+                ..JobSettings::default()
+            },
+            formats: vec![ExportFormat::Txt, ExportFormat::Json],
+        },
+        // What two images show, answered in French; it also needs `image.jpg`.
+        Plan {
+            name: "image-description",
+            task: Task::Analysis,
+            files: &["newspaper.jpg", "image.jpg"],
+            setups: analysis("analysis.image_description"),
+            settings: JobSettings {
+                languages: LanguageChoice::Explicit(vec![LanguageCode::new("fr")]),
+                ..JobSettings::default()
+            },
             formats: vec![ExportFormat::Txt, ExportFormat::Csv, ExportFormat::Json],
         },
     ]
