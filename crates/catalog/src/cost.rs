@@ -72,13 +72,16 @@ impl Catalog {
                 }
                 _ => None,
             },
-            // Each page's text sent and written back corrected, as JSON.
-            Task::TextCorrection => match (p.input_per_mtok, p.output_per_mtok) {
+            // Each page's text sent and written back corrected or translated, as JSON; a
+            // translation runs a little longer than its source in most pairs of languages.
+            Task::TextCorrection | Task::Translation => match (p.input_per_mtok, p.output_per_mtok)
+            {
                 (Some(input), Some(output)) => {
                     let pages = f64::from(pages.max(1));
                     let prompt_tokens = prompt_chars as f64 / 4.0;
                     let tokens_in = pages * (OUTPUT_TOKENS_PER_PAGE + prompt_tokens);
-                    let tokens_out = pages * OUTPUT_TOKENS_PER_PAGE * 1.1;
+                    let longer = if task == Task::Translation { 1.25 } else { 1.1 };
+                    let tokens_out = pages * OUTPUT_TOKENS_PER_PAGE * longer;
                     Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
                 }
                 _ => None,

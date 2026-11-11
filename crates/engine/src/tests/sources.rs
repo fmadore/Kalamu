@@ -54,6 +54,7 @@ async fn a_source_that_cannot_be_opened_keeps_its_reason_after_a_restart() {
     // After a restart the reason is still there, on one failed piece standing for the file.
     let engine = f.restarted();
     let pieces: Vec<_> = engine
+        .store
         .pieces(job.id)
         .unwrap_or_default()
         .into_iter()
@@ -98,6 +99,7 @@ async fn a_source_that_cannot_be_opened_keeps_its_reason_after_a_restart() {
         .unwrap_or_else(|e| panic!("retry: {e}"));
     assert_eq!(finished(&mut events, job.id).await, JobStatus::Completed);
     let mut pieces: Vec<_> = engine
+        .store
         .pieces(job.id)
         .unwrap_or_default()
         .into_iter()

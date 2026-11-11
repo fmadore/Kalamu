@@ -18,6 +18,7 @@ pub mod language;
 pub mod list_items;
 pub mod pages;
 pub mod profile;
+pub mod progress;
 pub mod project;
 pub mod provenance;
 pub mod provider;
@@ -62,6 +63,7 @@ pub use job::{
 pub use language::{LanguageChoice, LanguageCode};
 pub use pages::PagesPerCall;
 pub use profile::{ExportProfile, ProfileColumn, ProfileError, ProfileStarter, ProfileValue};
+pub use progress::{ERRORS_LISTED, FileProgress, JobProgress};
 pub use project::{
     Collection, DescribedBy, DescriptionField, Document, DocumentLink, PreferredResult, Project,
     ProjectError, ProjectStore, SourceDescription, cleaned, same_tag, tag_name,

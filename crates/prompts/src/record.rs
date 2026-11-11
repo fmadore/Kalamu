@@ -106,8 +106,9 @@ impl PipelineFile {
         );
         out.push_str("## Task\n\n");
         let _ = writeln!(out, "- Task: {}", task_name(p.task));
-        // An analysis's or a table of contents' language is the one its answers are written in.
-        let answers = matches!(p.task, Task::Analysis | Task::Contents);
+        // An analysis's, a table of contents' or a translation's language is the one its
+        // answers are written in.
+        let answers = p.task.answers_in_language();
         let languages = match &p.settings.languages {
             LanguageChoice::Explicit(_) if !self.language_names.is_empty() => {
                 self.language_names.join(", ")
@@ -359,6 +360,7 @@ pub(crate) fn task_name(task: Task) -> &'static str {
         Task::Analysis => "analysis",
         Task::Contents => "detailed table of contents",
         Task::TextCorrection => "correction of existing text",
+        Task::Translation => "translation",
     }
 }
 

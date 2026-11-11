@@ -77,7 +77,6 @@
     "allow-list-jobs",
     "allow-job-sources",
     "allow-get-job",
-    "allow-job-pieces",
     "allow-job-progress",
     "allow-job-text-outputs",
     "allow-snapshot-job",

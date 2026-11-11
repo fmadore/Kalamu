@@ -9,12 +9,17 @@
 //! faithful, searchable), the entities its NER rules and the tone its sentiment scales (labels,
 //! never numbers, with a reason), without their collection-specific parts. The scholarly
 //! publication summary has no ancestor there: its fields follow what a social-science literature
-//! review compares.
+//! review compares. The image description has none either: it keeps the summary's rules (only
+//! what the source shows, no inference, the first sentence on its own) for what an image shows,
+//! and lists only the names its own text gives (#168).
 //!
 //! The tables of contents port iwac-ai-pipelines' `AI_summary_issue` prompts (page extraction
 //! and consolidation), in English and without their Islamic-magazine specifics; the archival
 //! file and the book are new, on the same two steps. The correction keeps `AI_ocr_correction`'s
-//! rules for any printed text, its newspaper ones included.
+//! rules for any printed text, its newspaper ones included. The translation is new: it takes
+//! the translated interview's rules (everything in order, names kept, the original term beside a
+//! culturally specific one) to any text, its target named by `{languages}` as an analysis's
+//! answer language is.
 
 use kalamu_core::{AnalysisSchema, Field, FieldKind, Task};
 
@@ -40,6 +45,9 @@ const CONTENTS_REQUEST: &str = "List the articles or items on this page and fill
 const CORRECTION_REQUEST: &str =
     "Correct the machine-read text above, following the instructions given.";
 
+const TRANSLATION_REQUEST: &str = "Translate the text above completely, without summarising or \
+leaving out any part, following the instructions given.";
+
 /// zmo-ai-pipelines' `USER_PROMPT`.
 const PAGE_REQUEST: &str = "Transcribe this page completely, following the instructions given.";
 
@@ -54,6 +62,9 @@ const RECORDING_REQUEST: &str = "Transcribe this recording, following the instru
 
 const ANALYSIS_REQUEST: &str =
     "Read the document above and fill in each field, following the instructions given.";
+
+const IMAGE_REQUEST: &str =
+    "Look at the image above and fill in each field, following the instructions given.";
 
 fn field(label: &str, instructions: &str, kind: FieldKind, reason: bool) -> Field {
     Field {
@@ -268,6 +279,70 @@ fn tone() -> AnalysisSchema {
                     "Opinion",
                 ]),
                 true,
+            ),
+        ],
+    }
+}
+
+/// A catalogue entry for an image: what it shows, what it is, keywords, its own text, and the
+/// names that text gives. The lists carry the entities preset's labels, so the project
+/// dictionary gathers their names with the documents'.
+fn image_description() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Description",
+                "What is visibly there, following the instructions above, in {languages}; the \
+                 first sentence a summary on its own.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Kind of image",
+                "What the image is as an object, not what it shows.",
+                choice(&[
+                    "Photograph",
+                    "Poster or advertisement",
+                    "Map or plan",
+                    "Drawing or painting",
+                    "Printed page",
+                    "Manuscript page",
+                    "Object",
+                    "Other",
+                ]),
+                false,
+            ),
+            field(
+                "Keywords",
+                "Subjects visibly present, in {languages}, specific before general, with no two \
+                 saying the same thing.",
+                list(12),
+                false,
+            ),
+            field(
+                "Text in the image",
+                "Captions, signs, inscriptions and stamps, as written, one per line; empty when \
+                 there is none.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "People",
+                "People named in the image's own text.",
+                list(20),
+                false,
+            ),
+            field(
+                "Places",
+                "Places named in the image's own text.",
+                list(20),
+                false,
+            ),
+            field(
+                "Organisations",
+                "Organisations named in the image's own text.",
+                list(20),
+                false,
             ),
         ],
     }
@@ -509,6 +584,17 @@ pub(crate) const DEFAULTS: &[Default] = &[
         dense: false,
     },
     Default {
+        id: "analysis.image_description",
+        task: Task::Analysis,
+        name: "Image description and keywords",
+        description: "What each photograph, poster, map or other image shows, as a catalogue would describe it, with keywords, the text written on it and the names that text gives.",
+        instructions: include_str!("../defaults/analysis-image-description.md"),
+        user_prompt: IMAGE_REQUEST,
+        schema: Some(image_description),
+        merge: None,
+        dense: false,
+    },
+    Default {
         id: "contents.periodical",
         task: Task::Contents,
         name: "Newspaper or magazine issue",
@@ -548,6 +634,17 @@ pub(crate) const DEFAULTS: &[Default] = &[
         description: "Corrects machine-reading errors only, columns put back in order; spelling, wording and style of the time kept.",
         instructions: include_str!("../defaults/correction-general.md"),
         user_prompt: CORRECTION_REQUEST,
+        schema: None,
+        merge: None,
+        dense: false,
+    },
+    Default {
+        id: "translation.research",
+        task: Task::Translation,
+        name: "Translation for research",
+        description: "Everything translated in order, nothing summarised; names kept as written, the original beside culturally specific terms, the layout and a transcript's speakers and times kept.",
+        instructions: include_str!("../defaults/translation-research.md"),
+        user_prompt: TRANSLATION_REQUEST,
         schema: None,
         merge: None,
         dense: false,

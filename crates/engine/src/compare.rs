@@ -238,13 +238,10 @@ fn reference(pieces: &[Scored], index: u32) -> Option<&str> {
         })
 }
 
-/// Extracted text, transcriptions and corrections have a text to score; analyses and tables
-/// of contents answer in fields.
+/// Extracted text, transcriptions, corrections and translations have a text to score, against
+/// the researcher's own correction of it; analyses and tables of contents answer in fields.
 fn scored(task: Task) -> bool {
-    matches!(
-        task,
-        Task::TextExtraction | Task::AudioTranscription | Task::TextCorrection
-    )
+    task.yields_text()
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]

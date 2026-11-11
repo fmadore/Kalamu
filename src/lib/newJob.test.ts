@@ -31,6 +31,7 @@ import {
 	pagesPerCallOf,
 	providerDefault,
 	readersOf,
+	readsInput,
 	readsKind,
 	type Rules,
 	rulesFor,
@@ -282,6 +283,35 @@ describe('new job form', () => {
 			'gemini-3.8-flash'
 		);
 	});
+
+	it('offers images to an analysis only on models that read them', () => {
+		const inspected = (kind: SourceFile['kind']) =>
+			({ path: `a.${kind}`, source: { kind } as SourceFile }) as InspectedFile;
+		const analysis = rule('analysis');
+		const texts = inputOf('analysis', [inspected('text'), inspected('pdf')]);
+		expect(texts).toBeUndefined();
+		expect(modelsFor(catalog, analysis, 'mistral', texts).map((m) => m.id)).toContain(
+			'zai-glm-5-3'
+		);
+		const images = inputOf('analysis', [inspected('text'), inspected('image')]);
+		const mistral = modelsFor(catalog, analysis, 'mistral', images).map((m) => m.id);
+		expect(mistral).toContain('mistral-large-4-0');
+		expect(mistral).not.toContain('zai-glm-5-3');
+		expect(mistral).not.toContain('deepseek-v4-1-flash-1017');
+		// Any image format will do: the engine converts a TIFF into one the model reads.
+		const glm = catalog.models.find((m) => m.id === 'zai-glm-5-3');
+		expect(readsInput(glm, images)).toBe(false);
+		expect(
+			readsInput(
+				modelInfo(
+					catalog,
+					newDraft(catalog, analysis, null, () => true)
+				),
+				images
+			)
+		).toBe(true);
+		expect(inputOf('youtube', [inspected('image')])).toBe(inputOf('youtube'));
+	});
 });
 
 describe('tables of contents and corrections', () => {
@@ -290,6 +320,11 @@ describe('tables of contents and corrections', () => {
 		expect(rule('contents').answers_in_language).toBe(true);
 		expect(rule('text_correction').answers_in_language).toBe(false);
 		expect(rule('text_extraction').answers_in_language).toBe(false);
+		// A translation answers in the language chosen, which must be chosen.
+		expect(rule('translation').answers_in_language).toBe(true);
+		expect(rule('translation').needs_language).toBe(true);
+		expect(rule('analysis').needs_language).toBe(false);
+		expect(rule('translation').line_breaks).toBe(false);
 	});
 
 	it('reads pages with a vision model and combines them with any text model', () => {
@@ -322,6 +357,12 @@ describe('tables of contents and corrections', () => {
 		expect(readsKind(rules, 'text_correction', 'text')).toBe(true);
 		expect(readsKind(rules, 'text_correction', 'image')).toBe(false);
 		expect(taskOf('text_correction')).toBe('text_correction');
+		expect(readsKind(rules, 'translation', 'text')).toBe(true);
+		expect(readsKind(rules, 'translation', 'pdf')).toBe(true);
+		expect(readsKind(rules, 'translation', 'image')).toBe(false);
+		expect(modelsFor(catalog, rule('translation'), 'mistral').map((m) => m.id)).toEqual(
+			modelsFor(catalog, rule('text_correction'), 'mistral').map((m) => m.id)
+		);
 	});
 });
 

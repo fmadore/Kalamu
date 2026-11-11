@@ -321,7 +321,7 @@ impl Provider for OpenAi {
             Task::TextExtraction => &["application/pdf", "image/png", "image/jpeg", "image/webp"],
             // The formats the speech-to-text guide lists (October 2026): not FLAC or Ogg.
             Task::AudioTranscription => &["audio/mpeg", "audio/wav", "audio/mp4", "audio/webm"],
-            Task::Analysis | Task::Contents | Task::TextCorrection => &[
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation => &[
                 "text/plain",
                 "application/pdf",
                 "image/png",
@@ -333,7 +333,11 @@ impl Provider for OpenAi {
 
     fn request_settings(&self, task: Task, _model: &str, tuning: &Tuning) -> Vec<RequestSetting> {
         match task {
-            Task::TextExtraction | Task::Analysis | Task::Contents | Task::TextCorrection => {
+            Task::TextExtraction
+            | Task::Analysis
+            | Task::Contents
+            | Task::TextCorrection
+            | Task::Translation => {
                 let mut settings =
                     vec![RequestSetting::new("prompt_cache_options.mode", "explicit")];
                 if let Some(effort) = &tuning.reasoning {
@@ -356,7 +360,11 @@ impl Provider for OpenAi {
         request: ProcessRequest<'_>,
     ) -> Result<ProcessOutput, ProviderError> {
         match request.task {
-            Task::TextExtraction | Task::Analysis | Task::Contents | Task::TextCorrection => {
+            Task::TextExtraction
+            | Task::Analysis
+            | Task::Contents
+            | Task::TextCorrection
+            | Task::Translation => {
                 let response = send_json(
                     self.client
                         .post(format!("{}/responses", self.base_url))

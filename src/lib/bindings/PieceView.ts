@@ -39,8 +39,9 @@ speakers: Array<string>,
  */
 speaker_names: { [key in string]: string }, 
 /**
- * For a correction, the text as it was before: the PDF page's text layer or the text
- * file's page or passage, which the review compares with the correction.
+ * For a correction or a translation, the text as it was before: the PDF page's text layer
+ * or the text file's page or passage, which the review compares with the correction and
+ * shows beside the translation.
  */
 source_text: string | null, 
 /**

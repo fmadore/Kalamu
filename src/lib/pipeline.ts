@@ -30,7 +30,10 @@ export type Art =
 	| 'toc'
 	| 'ocr'
 	| 'correct'
-	| 'compare';
+	| 'compare'
+	| 'text'
+	| 'translate'
+	| 'beside';
 
 /** `detail` names the user's file, in mono; `note` adds what the step does with it; `also`
  * marks a second result beside the one before it rather than a step after it. */
@@ -163,6 +166,13 @@ export function stagesFor(d: Diagram, m: Messages): Stage[] {
 				{ art: 'pages', caption: m.pipeline.correctionSplit },
 				{ art: 'correct', caption: m.pipeline.correctionRead(model) },
 				{ art: 'compare', caption: m.pipeline.correctionCompare, note: more }
+			];
+		case 'translation':
+			return [
+				{ art: 'text', caption: m.pipeline.translationSource, detail: fileDetail },
+				{ art: 'pages', caption: m.pipeline.correctionSplit },
+				{ art: 'translate', caption: m.pipeline.translationRead(model) },
+				{ art: 'beside', caption: m.pipeline.translationBeside, note: more }
 			];
 		case 'youtube':
 			return [

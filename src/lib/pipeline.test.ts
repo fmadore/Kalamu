@@ -75,6 +75,12 @@ describe('New job’s diagram', () => {
 			'correct',
 			'compare'
 		]);
+		expect(arts(diagram({ mode: 'translation' }))).toEqual([
+			'text',
+			'pages',
+			'translate',
+			'beside'
+		]);
 		expect(arts(diagram({ mode: 'youtube' }))).toEqual(['link', 'send', 'watch', 'transcript']);
 	});
 

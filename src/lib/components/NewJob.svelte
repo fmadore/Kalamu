@@ -51,6 +51,7 @@
 		formToOpen,
 		keepForm,
 		readersOf,
+		readsInput,
 		readsKind,
 		rulesFor,
 		suggestName,
@@ -94,11 +95,12 @@
 
 	let mode = $state<Mode>(kept?.mode ?? 'text_extraction');
 	const task = $derived(taskOf(mode));
-	/** What every model must read: YouTube links for videos, else anything the task takes. */
-	const input = $derived(inputOf(mode));
 	/** The engine's rules for the task: which files, models and formats suit it. */
 	const rule = $derived(rulesFor(app.rules, task));
 	let files = $state<InspectedFile[]>(kept?.files ?? []);
+	/** What every model must read: YouTube links for videos, images when there are images,
+	 * else anything the task takes. */
+	const input = $derived(inputOf(mode, files));
 	let inspecting = $state(false);
 	/**
 	 * What the last files added gave that the task does not read, the tasks that read it, and
@@ -168,6 +170,15 @@
 		return same ? { ...draft, provider: provider!, model: same } : draft;
 	});
 	const models = $derived(drafts.map((d) => modelInfo(catalog, d)));
+	// A set-up chosen before images were added leaves a model that cannot read them for its
+	// provider's default among those that can, rather than leaving Start refused unsaid.
+	$effect(() => {
+		for (const d of drafts) {
+			if (!d.model || readsInput(modelInfo(catalog, d), input)) continue;
+			const next = providerDefault(catalog, rule, d.provider, input);
+			if (next) d.model = next;
+		}
+	});
 	/** Distinct names of the chosen models matching a test, for the notes under a choice. */
 	const namesOf = (test: (model: ModelInfo | undefined) => boolean) => [
 		...new Set(models.filter(test).map((model) => model?.name ?? ''))
@@ -285,12 +296,14 @@
 		}
 	}
 
-	/** A model that cannot detect the language needs the languages chosen and downloaded. */
+	/** A model that cannot detect the language needs the languages chosen and downloaded; a
+	 * translation, the language it translates into. */
 	const languagesReady = $derived(
-		modelsNotDetecting(models).length === 0 ||
+		(modelsNotDetecting(models).length === 0 ||
 			(languageMode === 'explicit' &&
 				languages.length > 0 &&
-				missingLanguageData(languages).length === 0)
+				missingLanguageData(languages).length === 0)) &&
+			(!rule.needs_language || (languageMode === 'explicit' && languages.length > 0))
 	);
 
 	const ready = $derived(
@@ -299,7 +312,7 @@
 			drafts.length > 0 &&
 			drafts.every((d) => d.model && hasKey(d.provider)) &&
 			(task !== 'contents' || drafts.every((d) => d.mergeModel && hasKey(d.mergeProvider))) &&
-			(input === undefined || models.every((model) => model?.inputs.includes(input))) &&
+			models.every((model) => readsInput(model, input)) &&
 			(mode !== 'youtube' || destination.kind === 'folder') &&
 			formats.length > 0
 	);

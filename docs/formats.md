@@ -120,6 +120,14 @@ never replaced by its correction. Pages keep their `--- Page N ---` markers; pas
 without pages carry none, as the cut means nothing to a reader, and are numbered `§1`, `§2` in
 the CSV.
 
+## Translated text
+
+Written as `<name>.translated.<code>.txt` (and `.md`, `.docx`, `.json`, `.csv`), `<code>` being
+the language translated into (`gallica.translated.en.txt`), so a text is never replaced by its
+translation and translations into two languages do not replace each other. Pages and passages
+are kept as for corrected text, and the CSV has the same columns. Subtitles of a translated
+transcript are not written yet.
+
 ## Subtitles and spreadsheets
 
 - **`.srt` / `.vtt`**: cues of at most 84 characters and 6 seconds, from timed segments or from
@@ -165,7 +173,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 | --- | --- |
 | `generator` | `{ "name": "Kalamu", "version": "…" }` |
 | `created_at` | Milliseconds since 1970, UTC |
-| `task`, `engine` | `text_extraction`, `audio_transcription`, `analysis`, `contents` or `text_correction`; `cloud` or `offline` |
+| `task`, `engine` | `text_extraction`, `audio_transcription`, `analysis`, `contents`, `text_correction` or `translation`; `cloud` or `offline` |
 | `source` | File name, SHA-256 and size of the original; for a YouTube video, its title with the id (`<title> [<id>]`, or `youtube-<id>` when the title could not be read), the SHA-256 of its id, its `url`, `title` and `read_at`, when the provider first read it; for text frozen from an earlier result (*Use this text in a new job*, or a workflow step reading an earlier one), the frozen text's name, SHA-256 and size, and `derived_from`: that result's `job_id`, `setup_id`, `source_id` and `task`, the `original_path`, when it was frozen (`frozen_at`), how many pieces it holds and how many were `reviewed` and `corrected`, and the pieces `missing` from it; for an item's pages cut from a table of contents' source, the same with `task` `contents`, its pages as the pieces (`reviewed` counting those marked in the table of contents), and `unit`: the item's `id`, `title`, `revision` and `pages` as the original numbers them |
 | `documents` | The project documents the source is, in each project whose document it is: `project_id`, `project_name`, `document_id`, `title`, and `description`, each part of the source's description as it stood when the file was written (`repository`, `fonds`, `series`, `file`, `shelfmark`, `creator`, `date`, `url`, `citation`, `rights`) as `{ "value", "from" }`, `from` being `document` or `project`; parts with no value are left out. Supplied by the researcher, never by a model. Absent for a job tied to no project |
 | `provider`, `model` | As requested |

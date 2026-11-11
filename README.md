@@ -42,7 +42,8 @@ Store version is being prepared ([steps](docs/mac-app-store.md)).
 - **Analyse texts** with fields you define: a summary, the people, places and organisations a
   document names, its tone with a reason, themes from your own list. Ready-made analyses cover
   the common needs, including the question, argument, methods and findings of a scholarly
-  publication for a literature review. Offline, small language models from Google (Gemma 4 E4B
+  publication for a literature review, and a description with keywords of what a photograph,
+  poster or map shows. Offline, small language models from Google (Gemma 4 E4B
   and E2B) analyse texts and photographed pages, make tables of contents and correct text with
   nothing sent: far weaker than the cloud models and slow on a processor, faster on a graphics
   processor, so check their answers.
@@ -54,6 +55,10 @@ Store version is being prepared ([steps](docs/mac-app-store.md)).
 - **Correct existing text**: the noisy OCR of a PDF's text layer or of a digital library's text
   file, corrected page by page with its spelling of the time kept, every change shown against
   the original.
+- **Translate a text**: a text file, a PDF's text layer, or the text of an extraction, a
+  transcription or a correction as you left it, put into the language you choose page by page,
+  nothing summarised or left out, names kept as written; the review shows the translation
+  beside the text, and its own text can be analysed in turn.
 - **Organise your material in projects**: documents grouped in collections (one document can
   be in several), each with every transcription, extraction and analysis made of it, whatever
   job made it. Add files before reading them, add jobs you ran before without paying again,

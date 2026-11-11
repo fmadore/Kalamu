@@ -23,7 +23,9 @@ impl Mistral {
         };
         let endpoint = match first.task {
             Task::TextExtraction => "/v1/ocr",
-            Task::Analysis | Task::Contents | Task::TextCorrection => "/v1/chat/completions",
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation => {
+                "/v1/chat/completions"
+            }
             Task::AudioTranscription => {
                 return Err(ProviderError::Unsupported("batched transcription".into()));
             }
@@ -135,10 +137,11 @@ fn answer(context: BatchContext<'_>, line: &Value) -> Option<Answer> {
 
 fn read(context: BatchContext<'_>, body: &Value) -> Result<ProcessOutput, ProviderError> {
     match (context.task, context.analysis) {
-        (Task::Analysis | Task::Contents | Task::TextCorrection, Some(fields)) => {
-            analysis::finish(chat::parse(body)?, fields)
-        }
-        (Task::Analysis | Task::Contents | Task::TextCorrection, None) => Err(
+        (
+            Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation,
+            Some(fields),
+        ) => analysis::finish(chat::parse(body)?, fields),
+        (Task::Analysis | Task::Contents | Task::TextCorrection | Task::Translation, None) => Err(
             ProviderError::InvalidRequest("an analysis needs fields".into()),
         ),
         _ => Mistral::parse_ocr(body),

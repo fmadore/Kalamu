@@ -3,8 +3,8 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    BatchRecord, CacheKey, Charge, Job, JobId, JobSources, JobStatus, JobSummary, PieceState,
-    SetupId, SourceId, SpeakerNames, StoredResult, Timestamp,
+    BatchRecord, CacheKey, Charge, Job, JobId, JobProgress, JobSources, JobStatus, JobSummary,
+    PieceState, SetupId, SourceId, SpeakerNames, StoredResult, Timestamp,
 };
 
 /// A user's edit of one piece, stored on top of the AI output, which is never overwritten.
@@ -98,6 +98,11 @@ pub trait JobStore: Send + Sync {
     /// part, to be taken for the whole plan when the job resumes.
     fn upsert_pieces(&self, pieces: &[PieceState]) -> Result<(), StoreError>;
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError>;
+    /// The job's progress for its page, counted by the store: the pieces held in batches over
+    /// the whole job, and each file in `sources` under each set-up that has pieces of it (how
+    /// many are planned, done and failed, and the first [`crate::ERRORS_LISTED`] different
+    /// reasons in the pieces' order). Only counts are read, never the pieces themselves.
+    fn job_progress(&self, job: JobId, sources: &[SourceId]) -> Result<JobProgress, StoreError>;
     /// One source's pieces under one set-up, in their order: what writing its files reads,
     /// without the rest of a job of thousands of sources.
     fn source_pieces(

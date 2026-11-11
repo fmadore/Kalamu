@@ -57,6 +57,17 @@ export const contentsPresets: Preset[] = [
 		user_prompt: 'Correct the machine-read text above, following the instructions given.',
 		builtin: true,
 		modified: false
+	},
+	{
+		id: 'translation.research',
+		task: 'translation',
+		name: 'Translation for research',
+		description:
+			'Everything translated in order, nothing summarised; names kept as written, the original beside culturally specific terms.',
+		instructions: '# Translating a text for research…',
+		user_prompt: 'Translate the text above completely, following the instructions given.',
+		builtin: true,
+		modified: false
 	}
 ];
 

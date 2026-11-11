@@ -14,6 +14,7 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { describeError } from '#lib/errors.js';
+	import { languageLabel, offeredLanguages } from '#lib/languages.js';
 	import { acceptsPrompt, findModel, MODES, rulesFor, taskOf } from '#lib/newJob.js';
 	import { messages } from '#lib/i18n/index.js';
 	import {
@@ -157,6 +158,16 @@
 		if (!preset) return;
 		const previous = presets.find((p) => p.id === step.pipeline.setups[0]?.preset_id);
 		workflow.steps[i] = withPreset(step, preset, previous);
+	}
+
+	/** The language a step translates into; none chosen yet when its pipeline detects one. */
+	function languageOf(i: number): string {
+		const chosen = workflow.steps[i].pipeline.settings.languages;
+		return chosen.mode === 'explicit' ? (chosen.languages[0] ?? '') : '';
+	}
+
+	function setLanguage(i: number, code: string) {
+		workflow.steps[i].pipeline.settings.languages = { mode: 'explicit', languages: [code] };
 	}
 
 	function inputLabel(input: StepInput): string {
@@ -321,6 +332,20 @@
 								{/if}
 								{#each offered as p (p.id)}
 									<option value={p.id}>{p.name}</option>
+								{/each}
+							</select>
+						</label>
+					{/if}
+					{#if rulesFor(app.rules, step.pipeline.task).needs_language}
+						{@const language = languageOf(i)}
+						<label class="field">
+							<span>{w.language}</span>
+							<select value={language} onchange={(e) => setLanguage(i, e.currentTarget.value)}>
+								{#if !language}
+									<option value="" disabled>{w.languageNone}</option>
+								{/if}
+								{#each offeredLanguages( catalog, step.pipeline.setups.map( (s) => findModel(catalog, s.provider, s.model) ) ) as l (l.code)}
+									<option value={l.code}>{languageLabel(catalog, l.code)}</option>
 								{/each}
 							</select>
 						</label>

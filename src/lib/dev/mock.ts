@@ -187,6 +187,82 @@ const presets: Preset[] = [
 				}
 			]
 		}
+	},
+	{
+		id: 'analysis.image_description',
+		task: 'analysis',
+		name: 'Image description and keywords',
+		description:
+			'What each photograph, poster, map or other image shows, as a catalogue would describe it, with keywords, the text written on it and the names that text gives.',
+		instructions: '# Image description and keywords\n\nYou describe images for a researcher…',
+		user_prompt: 'Look at the image above and fill in each field.',
+		builtin: true,
+		modified: false,
+		schema: {
+			fields: [
+				{
+					key: 'description',
+					label: 'Description',
+					instructions: 'What is visibly there; the first sentence a summary on its own.',
+					kind: { type: 'text' },
+					reason: false
+				},
+				{
+					key: 'kind_of_image',
+					label: 'Kind of image',
+					instructions: 'What the image is as an object, not what it shows.',
+					kind: {
+						type: 'choice',
+						values: [
+							'Photograph',
+							'Poster or advertisement',
+							'Map or plan',
+							'Drawing or painting',
+							'Printed page',
+							'Manuscript page',
+							'Object',
+							'Other'
+						]
+					},
+					reason: false
+				},
+				{
+					key: 'keywords',
+					label: 'Keywords',
+					instructions: 'Subjects visibly present, specific before general.',
+					kind: { type: 'list', max: 12 },
+					reason: false
+				},
+				{
+					key: 'text_in_the_image',
+					label: 'Text in the image',
+					instructions: 'Captions, signs, inscriptions and stamps, as written.',
+					kind: { type: 'text' },
+					reason: false
+				},
+				{
+					key: 'people',
+					label: 'People',
+					instructions: "People named in the image's own text.",
+					kind: { type: 'list', max: 20 },
+					reason: false
+				},
+				{
+					key: 'places',
+					label: 'Places',
+					instructions: "Places named in the image's own text.",
+					kind: { type: 'list', max: 20 },
+					reason: false
+				},
+				{
+					key: 'organisations',
+					label: 'Organisations',
+					instructions: "Organisations named in the image's own text.",
+					kind: { type: 'list', max: 20 },
+					reason: false
+				}
+			]
+		}
 	}
 ];
 
@@ -629,14 +705,6 @@ export function installMock(): void {
 				];
 			case 'derived_state':
 				return [];
-			case 'job_pieces':
-				return pieces.map((p) => ({
-					...p,
-					job_id: job.id,
-					cache_key: 'k',
-					attempts: 1,
-					updated_at: 0
-				}));
 			case 'job_progress':
 				return progressOf(pieces, a.sources as string[]);
 			case 'source_pieces':

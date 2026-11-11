@@ -369,7 +369,7 @@ async fn run(
             _ => {}
         }
     };
-    for piece in engine.pieces(job.id)? {
+    for piece in store.pieces(job.id)? {
         let setup = job.setups.iter().find(|s| s.id == piece.setup_id);
         let source = job.sources.iter().find(|s| s.id == piece.source_id);
         // What the provider reported, and the cost the catalogue puts on it.

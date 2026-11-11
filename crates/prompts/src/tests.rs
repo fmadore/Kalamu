@@ -1,4 +1,4 @@
-use kalamu_core::{LanguageChoice, LanguageCode, LineBreaks};
+use kalamu_core::{FieldKind, LanguageChoice, LanguageCode, LineBreaks};
 
 use super::*;
 
@@ -262,6 +262,60 @@ fn every_analysis_default_has_valid_fields_described_in_its_prompt() {
 }
 
 #[test]
+fn the_image_description_describes_what_is_seen_and_lists_only_written_names()
+-> Result<(), PromptError> {
+    let library = PromptLibrary::in_memory();
+    let preset = library.get("analysis.image_description")?;
+    assert!(preset.builtin && preset.task == Task::Analysis);
+    assert!(
+        library
+            .list(Some(Task::Analysis))
+            .iter()
+            .any(|p| p.id == preset.id)
+    );
+    let french = RenderContext {
+        languages: LanguageChoice::Explicit(vec![LanguageCode::new("fr")]),
+        language_names: vec!["French".into()],
+        answers: true,
+        ..RenderContext::default()
+    };
+    let snapshot = preset.snapshot(&french);
+    assert!(snapshot.text.contains("- Write in French."));
+    assert!(!snapshot.text.contains("{languages}"));
+    assert!(
+        snapshot
+            .text
+            .contains("Never name a person from their face")
+    );
+    assert!(snapshot.text.contains(
+        "(`kind_of_image`, exactly one of: Photograph, Poster or advertisement, Map or plan, \
+         Drawing or painting, Printed page, Manuscript page, Object, Other)"
+    ));
+    assert!(
+        snapshot
+            .text
+            .contains("(`keywords`, a list of names or terms, at most 12")
+    );
+    assert!(snapshot.text.contains("(`text_in_the_image`, text)"));
+    assert!(snapshot.user_prompt.contains("image above"));
+
+    // Its names are lists under the entities preset's labels, so the dictionary gathers both.
+    let schema = snapshot.schema.unwrap_or_default();
+    let lists: Vec<&str> = schema
+        .fields
+        .iter()
+        .filter(|f| matches!(f.kind, FieldKind::List { .. }))
+        .map(|f| f.label.as_str())
+        .collect();
+    assert_eq!(lists, ["Keywords", "People", "Places", "Organisations"]);
+    let entities = library.get("analysis.entities")?.schema.unwrap_or_default();
+    for label in ["People", "Places", "Organisations"] {
+        assert!(entities.fields.iter().any(|f| f.label == label), "{label}");
+    }
+    Ok(())
+}
+
+#[test]
 fn an_analysis_cannot_be_saved_without_fields_and_others_lose_theirs() {
     let mut library = PromptLibrary::in_memory();
     let mut analysis = library
@@ -356,6 +410,32 @@ fn a_correction_answers_with_its_text_in_one_field() {
     assert!(snapshot.text.contains("in the field `text`"));
     assert!(snapshot.text.contains("## Line breaks"));
     assert!(!snapshot.text.contains("## What to find"));
+}
+
+#[test]
+fn a_translation_answers_in_one_field_in_the_language_chosen() {
+    let library = PromptLibrary::in_memory();
+    let preset = library.default_for(Task::Translation);
+    assert_eq!(preset.id, "translation.research");
+    let snapshot = preset.snapshot(&RenderContext {
+        languages: LanguageChoice::Explicit(vec![LanguageCode::new("en")]),
+        language_names: vec!["English".into()],
+        answers: Task::Translation.answers_in_language(),
+        line_breaks: None,
+        ..RenderContext::default()
+    });
+    assert_eq!(
+        snapshot.schema,
+        Some(kalamu_core::correction::translation_schema())
+    );
+    assert!(snapshot.text.contains("in the field `text`"));
+    assert!(snapshot.text.contains("Translate everything into English"));
+    assert!(!snapshot.text.contains("{languages}"));
+    // The target is named in the prompt itself, so no note is added after it; nor a choice of
+    // lines, which a translation does not have.
+    assert!(!snapshot.text.contains("## Language\n\nWrite your answers"));
+    assert!(!snapshot.text.contains("## Line breaks"));
+    assert!(!snapshot.user_prompt.is_empty());
 }
 
 #[test]

@@ -1,8 +1,9 @@
 <script lang="ts">
 	// New job's language step: detected, or chosen from the languages the models read (one, for
-	// an analysis or a table of contents, which answer in it), with notes on the models that
-	// ignore or do not read a language. A model that cannot detect the language (Tesseract)
-	// needs it chosen, and its language data downloaded.
+	// an analysis, a table of contents or a translation, which answer in it), with notes on the
+	// models that ignore or do not read a language. A model that cannot detect the language
+	// (Tesseract) needs it chosen, and its language data downloaded; so does a translation, the
+	// language it translates into.
 	import LanguagePicker from './LanguagePicker.svelte';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { Task } from '#lib/bindings/Task.js';
@@ -64,28 +65,36 @@
 	/** Models that cannot detect the language: it must be chosen, and its data downloaded. */
 	const notDetecting = $derived(modelsNotDetecting(models));
 	const missingData = $derived(notDetecting.length > 0 ? missingLanguageData(languages) : []);
+	/** The language must be chosen: a translation's, or one a model cannot detect. */
+	const needed = $derived(rulesFor(app.rules, task).needs_language);
 	$effect(() => {
-		if (notDetecting.length > 0 && mode === 'auto') mode = 'explicit';
+		if ((needed || notDetecting.length > 0) && mode === 'auto') mode = 'explicit';
 	});
 </script>
 
 <section class="step block" aria-labelledby="lang-title">
 	<h2 id="lang-title">
-		{answers ? m.newJob.analysisLanguageTitle : m.newJob.languageTitle}
+		{needed
+			? m.newJob.translationLanguageTitle
+			: answers
+				? m.newJob.analysisLanguageTitle
+				: m.newJob.languageTitle}
 	</h2>
 	{#if ignored.length === models.length}
 		<p class="hint">{m.newJob.languageIgnoredAll(listNames(ignored))}</p>
 	{:else}
-		<div class="row">
-			<label class="inline"
-				><input type="radio" bind:group={mode} value="auto" disabled={notDetecting.length > 0} />
-				{answers ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
-			>
-			<label class="inline"
-				><input type="radio" bind:group={mode} value="explicit" />
-				{m.newJob.languagePick}</label
-			>
-		</div>
+		{#if !needed}
+			<div class="row">
+				<label class="inline"
+					><input type="radio" bind:group={mode} value="auto" disabled={notDetecting.length > 0} />
+					{answers ? m.newJob.analysisLanguageAuto : m.newJob.languageAuto}</label
+				>
+				<label class="inline"
+					><input type="radio" bind:group={mode} value="explicit" />
+					{m.newJob.languagePick}</label
+				>
+			</div>
+		{/if}
 		{#if notDetecting.length > 0}
 			<p class="hint">{m.newJob.languageNotDetected(listNames(notDetecting))}</p>
 		{/if}
@@ -131,7 +140,9 @@
 				? m.newJob.analysisLanguageHint
 				: task === 'contents'
 					? m.newJob.contentsLanguageHint
-					: m.newJob.languageHint}
+					: task === 'translation'
+						? m.newJob.translationLanguageHint
+						: m.newJob.languageHint}
 		</p>
 		{#if ignored.length > 0}
 			<p class="hint">{m.newJob.languageIgnoredSome(listNames(ignored))}</p>

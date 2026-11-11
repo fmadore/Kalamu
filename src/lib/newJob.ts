@@ -30,12 +30,13 @@ import { YOUTUBE_LINK } from './youtube.js';
 export type Mode = Task | 'youtube';
 
 /**
- * In the order New job shows them, two by two: reading pages, then working on texts, then
+ * In the order New job shows them: reading pages, then working on texts that exist, then
  * spoken sources.
  */
 export const MODES: Mode[] = [
 	'text_extraction',
 	'text_correction',
+	'translation',
 	'analysis',
 	'contents',
 	'audio_transcription',
@@ -46,9 +47,23 @@ export function taskOf(mode: Mode): Task {
 	return mode === 'youtube' ? 'audio_transcription' : mode;
 }
 
-/** The input every chosen model must read: YouTube links, or anything the task takes. */
-export function inputOf(mode: Mode): string | undefined {
-	return mode === 'youtube' ? YOUTUBE_LINK : undefined;
+/** Any image format, as `inputOf` asks it: the engine converts an image into one the model reads. */
+export const IMAGES = 'image/*';
+
+/**
+ * The input every chosen model must read: YouTube links; images when an image is among the
+ * files, since a model that reads text only fails on each of them; else anything the task takes.
+ */
+export function inputOf(mode: Mode, files: InspectedFile[] = []): string | undefined {
+	if (mode === 'youtube') return YOUTUBE_LINK;
+	return files.some((f) => f.source?.kind === 'image') ? IMAGES : undefined;
+}
+
+/** Whether a model reads `input`: a format it lists, or any image for `IMAGES`. */
+export function readsInput(model: ModelInfo | undefined, input: string | undefined): boolean {
+	if (input === undefined) return true;
+	if (input === IMAGES) return model?.inputs.some((i) => i.startsWith('image/')) ?? false;
+	return model?.inputs.includes(input) ?? false;
 }
 
 /** One model set-up as edited in the form. */
@@ -81,6 +96,7 @@ export function rulesFor(rules: Rules, task: Task): TaskRules {
 			sources: [],
 			formats: [],
 			answers_in_language: false,
+			needs_language: false,
 			models: [],
 			merge_models: [],
 			yields_text: false,
@@ -189,9 +205,7 @@ export function modelsFor(
 /** Models offered for new work that can do a task and read `input`: a model replaced by a newer
  * one or retired is not offered, though a set-up that names it keeps it. */
 function forTask(catalog: Catalog, rule: TaskRules, input?: string): ModelInfo[] {
-	return catalog.models.filter(
-		(m) => offered(rule.models, m) && (input === undefined || m.inputs.includes(input))
-	);
+	return catalog.models.filter((m) => offered(rule.models, m) && readsInput(m, input));
 }
 
 /** The models the picker lists for a set-up: those offered, and the one it names when that one
