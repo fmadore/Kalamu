@@ -1,7 +1,7 @@
 # Store listing text
 
 Paste-ready text for Kalamu's two store listings, kept for the **next submission**, version
-1.5.0: the Microsoft Store (Partner Center) first, whose `Kalamu_1.5.0.msixbundle` the release
+1.6.0: the Microsoft Store (Partner Center) first, whose `Kalamu_1.6.0.msixbundle` the release
 workflow builds (the first, 1.0.0, was certified on 2 November 2026), in
 [English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), whose first submission is
@@ -32,15 +32,15 @@ that the features listed still match the app.
 ### Description — full text
 
 ```text
-Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key, so their usage charges apply and are billed by them; the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, and printed pages read offline with Tesseract or, for difficult print, a small OCR model, free, after a one-time download.
+Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key, so their usage charges apply and are billed by them; the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, printed pages read offline with Tesseract or, for difficult print, a small OCR model, and texts analysed offline with a small language model, free, after a one-time download.
 
 Extract text from PDFs and images, printed or handwritten: newspapers, reports, letters, registers and manuscripts. Keep the lines as on the page, to check against the scan, or join them into running text for reading and searching. Before a job starts, Kalamu checks the files and suggests fixes: double pages to split, scans whose resolution is too low, recordings that are too quiet.
 
-Transcribe recordings and videos with speakers and timestamps, and give the speakers their real names. Long recordings are cut at pauses and sent piece by piece. Offline, Whisper transcribes on your PC with no account, key or internet connection, and nothing leaves the computer; give it the names and words to spell, or have it write the speech in English. Speaker labels need a cloud model. With Gemini, public YouTube videos are transcribed from their link, without downloading them.
+Transcribe recordings and videos with speakers and timestamps, and give the speakers their real names. Long recordings are cut at pauses and sent piece by piece. Offline, Whisper transcribes on your PC with no account, key or internet connection, on its graphics processor when it has a suitable one, skipping silence and music, and nothing leaves the computer; give it the names and words to spell, or have it write the speech in English. Speaker labels need a cloud model. With Gemini, public YouTube videos are transcribed from their link, without downloading them.
 
 Make a detailed table of contents of a long document: a newspaper or magazine issue, an archival file scanned in one piece, a book or report. One model reads each page, another, cheaper one combines the pages into one entry per article or item, with its pages and the fields you choose. Correct the noisy text that digital libraries supply, page by page, with every change shown against the original.
 
-Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations a document names, its tone with a reason, themes from your own list. Ready-made analyses cover common needs, including the question, argument, methods and findings of a scholarly publication for a literature review. Answers come back in the shape you asked for and can be exported as a spreadsheet with a column per field.
+Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations a document names, its tone with a reason, themes from your own list. Ready-made analyses cover common needs, including the question, argument, methods and findings of a scholarly publication for a literature review. Answers come back in the shape you asked for and can be exported as a spreadsheet with a column per field. Offline, two small language models from Google, Gemma 4 E4B and E2B, fill in your fields, make tables of contents and correct text on your PC with nothing sent; they are far weaker than the cloud models, so check their answers.
 
 Check every result beside its source: the page next to its text, or the recording next to its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Search a document or a recording across all its pages, corrections included, and go to each match. A glossary explains the words these tools use, from OCR and tokens to error rates and hallucination, for colleagues new to them. Compare two or more models on the same documents: their differences are highlighted in the text, with error rates against the pages you have corrected.
 
@@ -57,7 +57,17 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.5.0
+### What's new in this version — 1.6.0
+
+```text
+Analyse texts offline: two small language models from Google, Gemma 4 E4B and E2B, fill in your analyses' fields, make tables of contents and correct text on your PC, free and with nothing sent, after a one-time download. Far weaker than the cloud models, so check their answers; faster with a graphics processor.
+
+Whisper transcribes on your PC's graphics processor when it has a suitable one, and goes back to the processor by itself if anything fails. It now skips silence and music, so it no longer writes lines over them, and pausing stops a transcription within moments.
+
+Also: long handwritten pages with Gemini no longer time out.
+```
+
+The 1.5.0 text, for the record:
 
 ```text
 Read difficult print offline: two small OCR models, LightOnOCR-3 and GLM-OCR, read old newspapers in columns, faded type and tables on your PC, free and with nothing sent, after a one-time download. LightOnOCR places each block on the page, for ALTO and a searchable PDF. Much slower than Tesseract: Settings and New job show how long a page takes on your PC.
@@ -65,92 +75,6 @@ Read difficult print offline: two small OCR models, LightOnOCR-3 and GLM-OCR, re
 Whisper learns the names and words you give it, can write a recording in English, and follows a recording that changes language, with subtitle lines cut where the words fall.
 
 Also: a workflow step from any prompt; rename a name across an analysis's answers; New job names the files it cannot read and keeps a job's name in step with its files; model descriptions in French.
-```
-
-### Draft for the next version: offline analyses, and Whisper on the graphics processor
-
-Not yet in the listing: for the version after 1.5.0, once it is built and tried. It replaces
-the "What's new" text above, one feature line and adds a line to the system requirements, in
-English and French. Whisper's changes
-([decision](decisions/2026-11-08-whisper-graphics-processor.md)) add a paragraph to that
-"What's new", and replace a sentence of the description, the system requirement on offline
-transcription and the certification notes' last paragraph; they are at the
-[end of this draft](#whisper-on-the-graphics-processor), with the Mac App Store's.
-
-```text
-Analyse texts offline: two small language models from Google, Gemma 4 E4B and E2B, fill in your analyses' fields, make tables of contents and correct text on your PC, free and with nothing sent, after a one-time download. Far weaker than the cloud models, so check their answers; faster with a graphics processor.
-```
-
-```text
-Offline, with no account, key or cost: transcription with Whisper, text extraction with Tesseract or small OCR models, and analyses with small language models
-```
-
-```text
-Offline language models: internet once to download a model (about 4.3 or 6.1 GB) and 5 to 8 GB of free memory, then run on the CPU, faster on a graphics processor
-```
-
-```text
-Analysez des textes hors ligne : deux petits modèles de langue de Google, Gemma 4 E4B et E2B, remplissent les champs de vos analyses, font des tables des matières et corrigent du texte sur votre PC, gratuitement et sans rien envoyer, après un téléchargement unique. Bien moins bons que les modèles en ligne, alors vérifiez leurs réponses ; plus rapides avec un processeur graphique.
-```
-
-```text
-Hors ligne, sans compte, sans clé ni frais : transcription avec Whisper, extraction de texte avec Tesseract ou de petits modèles OCR, et analyses avec de petits modèles de langue
-```
-
-```text
-Modèles de langue hors ligne : internet une fois pour télécharger un modèle (environ 4,3 ou 6,1 Go) et 5 à 8 Go de mémoire libre, puis fonctionnent sur le processeur, plus vite avec un processeur graphique
-```
-
-#### Whisper on the graphics processor
-
-On Windows, Whisper runs on a suitable graphics processor through `whisper-vulkan.exe`, a
-program in the package beside Kalamu's own (no new capability, no network connection), and
-Settings' graphics-processor choice now names it. Speech detection now really skips silence
-and music (before, the setting did nothing), a pause takes effect within moments, and lines
-Whisper invents over silence are dropped. The paragraph to add to "What's new", after the
-offline analyses' (the two stay well under 1,500 characters):
-
-```text
-Whisper transcribes on your PC's graphics processor when it has a suitable one, and goes back to the processor by itself if anything fails. It now skips silence and music, so it no longer writes lines over them, and pausing stops a transcription within moments.
-```
-
-```text
-Whisper transcrit sur le processeur graphique de votre PC s’il en a un qui convient, et revient de lui-même au processeur en cas d’échec. Il ignore désormais les silences et la musique, et n’y écrit donc plus de lignes, et une pause arrête une transcription en quelques instants.
-```
-
-In the description's transcription paragraph, the sentence "Offline, Whisper transcribes on
-your PC with no account, key or internet connection, and nothing leaves the computer; give it
-the names and words to spell, or have it write the speech in English." becomes:
-
-```text
-Offline, Whisper transcribes on your PC with no account, key or internet connection, on its graphics processor when it has a suitable one, skipping silence and music, and nothing leaves the computer; give it the names and words to spell, or have it write the speech in English.
-```
-
-```text
-Hors ligne, Whisper transcrit sur votre PC sans compte, sans clé et sans connexion internet, sur son processeur graphique s’il en a un qui convient, en ignorant les silences et la musique, et rien ne quitte l’ordinateur ; donnez-lui les noms et les mots à orthographier, ou faites-lui écrire les propos en anglais.
-```
-
-The system requirement on offline transcription:
-
-```text
-Offline transcription: internet once to download a Whisper model (about 60 MB to 1.1 GB), then runs on the CPU, faster on a graphics processor
-```
-
-```text
-Transcription hors ligne : internet une fois pour télécharger un modèle Whisper (de 60 Mo à 1,1 Go environ), puis fonctionne sur le processeur, plus vite avec un processeur graphique
-```
-
-The certification notes' last paragraph:
-
-```text
-The full-trust desktop process reads the files the user selects, converts audio with bundled FFmpeg executables (LGPL; source published with each release, licence terms in the listing), runs Whisper and Tesseract on the CPU, or Whisper on the graphics processor through a bundled helper executable (whisper-vulkan.exe, built from this app's source, started and stopped only by it) when the PC has one the app can use, runs the OCR models in a bundled llama.cpp executable (MIT) started once per page, or in its second build that uses the graphics processor through Vulkan when the PC has one the app can use, stores API keys in Windows Credential Manager and writes results where the user chooses. It connects only to the provider the user selects, to Hugging Face for the Whisper and OCR model downloads the user requests, to GitHub for the public model catalogue and Tesseract's language data the user requests and to YouTube as described above. There is no developer server, telemetry, driver, service or auto-start task.
-```
-
-The Mac App Store description's TRANSCRIBE paragraph (Whisper already ran on the Mac's graphics
-processor; speech detection is what is new there):
-
-```text
-Recordings and videos with speakers and timestamps; give the speakers their real names. Offline, Whisper transcribes on your Mac's graphics processor with no account or key, skipping silence and music, and nothing leaves the computer; give it the names and words to spell. With Gemini, public YouTube videos are transcribed from their link.
 ```
 
 The 1.4.1 text, for the record:
@@ -224,7 +148,7 @@ changed files refused; files written despite a failing page; the third-party lic
 ```text
 Extract text from scanned and handwritten PDFs and images with Gemini, OpenAI, Claude or Mistral
 Transcribe recordings and videos with timestamps, in the cloud with speakers or offline
-Offline, with no account, key or cost: transcription with Whisper, and text extraction with Tesseract or small OCR models
+Offline, with no account, key or cost: transcription with Whisper, text extraction with Tesseract or small OCR models, and analyses with small language models
 Transcribe public YouTube videos from their link with Gemini, without downloading them
 Analyse texts with your own fields or ready-made ones: people, places, tone, a publication's argument
 Make detailed tables of contents of newspaper issues, archival files and books, then read each article on its own
@@ -269,13 +193,15 @@ Enter each line as a separate requirement (under 200 characters):
 ```text
 Windows 11 with the Microsoft Edge WebView2 Runtime; native x64 and ARM64 packages
 Cloud features: internet and your own Gemini, OpenAI, Anthropic or Mistral account and API key; the provider bills usage
-Offline transcription: internet once to download a Whisper model (about 60 MB to 1.1 GB), then runs on the CPU
+Offline transcription: internet once to download a Whisper model (about 60 MB to 1.1 GB), then runs on the CPU, faster on a graphics processor
 Offline text extraction: internet once to download each language for Tesseract (about 3 to 15 MB; 100 MB for languages in Latin letters without their own model), then runs on the CPU
 Offline OCR models: internet once to download a model (about 1.1 or 1.4 GB), then runs on the CPU, from tens of seconds to over a minute a page
+Offline language models: internet once to download a model (about 4.3 or 6.1 GB) and 5 to 8 GB of free memory, then run on the CPU, faster on a graphics processor
 ```
 
-Recommended memory: 8 GB; Whisper's larger models and the OCR models need more, and their speed
-depends on the processor.
+Recommended memory: 8 GB; Whisper's larger models, the OCR models and the language models need
+more (Gemma 4 E4B about 8 GB free while it runs), and their speed depends on the processor and
+the graphics processor.
 
 ## French (France)
 
@@ -287,15 +213,15 @@ fields; the text here fits them.
 ### Description — texte complet
 
 ```text
-Lisez des documents numérisés et manuscrits, transcrivez des entretiens et analysez des textes avec le fournisseur d’IA de votre choix, puis vérifiez chaque résultat sur sa source. Kalamu fonctionne avec Google Gemini, OpenAI, Anthropic Claude et Mistral, avec votre propre compte et votre propre clé d’API : leurs frais d’utilisation s’appliquent et vous sont facturés par eux, et l’application affiche une estimation du coût avant tout envoi. Les enregistrements peuvent aussi être transcrits hors ligne avec Whisper, et les pages imprimées lues hors ligne avec Tesseract ou, pour l’imprimé difficile, un petit modèle OCR, gratuitement, après un téléchargement unique.
+Lisez des documents numérisés et manuscrits, transcrivez des entretiens et analysez des textes avec le fournisseur d’IA de votre choix, puis vérifiez chaque résultat sur sa source. Kalamu fonctionne avec Google Gemini, OpenAI, Anthropic Claude et Mistral, avec votre propre compte et votre propre clé d’API : leurs frais d’utilisation s’appliquent et vous sont facturés par eux, et l’application affiche une estimation du coût avant tout envoi. Les enregistrements peuvent aussi être transcrits hors ligne avec Whisper, les pages imprimées lues hors ligne avec Tesseract ou, pour l’imprimé difficile, un petit modèle OCR, et les textes analysés hors ligne avec un petit modèle de langue, gratuitement, après un téléchargement unique.
 
 Extrayez le texte de PDF et d’images, imprimés ou manuscrits : journaux, rapports, lettres, registres et manuscrits. Gardez les lignes comme sur la page, pour les comparer au scan, ou réunissez-les en texte suivi pour la lecture et la recherche. Avant de lancer un traitement, Kalamu vérifie les fichiers et propose des corrections : doubles pages à séparer, scans de trop faible résolution, enregistrements trop faibles.
 
-Transcrivez des enregistrements et des vidéos avec les locuteurs et l’horodatage, et donnez aux locuteurs leur vrai nom. Les longs enregistrements sont coupés aux pauses et envoyés morceau par morceau. Hors ligne, Whisper transcrit sur votre PC sans compte, sans clé et sans connexion internet, et rien ne quitte l’ordinateur ; donnez-lui les noms et les mots à orthographier, ou faites-lui écrire les propos en anglais. Distinguer les locuteurs demande un modèle en ligne. Avec Gemini, les vidéos YouTube publiques sont transcrites à partir de leur lien, sans être téléchargées.
+Transcrivez des enregistrements et des vidéos avec les locuteurs et l’horodatage, et donnez aux locuteurs leur vrai nom. Les longs enregistrements sont coupés aux pauses et envoyés morceau par morceau. Hors ligne, Whisper transcrit sur votre PC sans compte, sans clé et sans connexion internet, sur son processeur graphique s’il en a un qui convient, en ignorant les silences et la musique, et rien ne quitte l’ordinateur ; donnez-lui les noms et les mots à orthographier, ou faites-lui écrire les propos en anglais. Distinguer les locuteurs demande un modèle en ligne. Avec Gemini, les vidéos YouTube publiques sont transcrites à partir de leur lien, sans être téléchargées.
 
 Dressez la table des matières détaillée d’un long document : un numéro de journal ou de revue, un dossier d’archives numérisé d’un seul tenant, un livre ou un rapport. Un modèle lit chaque page, un autre, moins cher, réunit les pages en une entrée par article ou par pièce, avec ses pages et les champs que vous choisissez. Corrigez page par page le texte bruité que fournissent les bibliothèques numériques, chaque modification montrée face à l’original.
 
-Analysez des textes avec les champs que vous définissez, comme vous le feriez pour un assistant de recherche : un résumé, les personnes, lieux et organisations qu’un document nomme, sa tonalité avec une justification, des thèmes tirés de votre propre liste. Des analyses toutes prêtes couvrent les besoins courants, dont la question, l’argument, les méthodes et les résultats d’une publication scientifique pour une revue de littérature. Les réponses reviennent dans la forme demandée et s’exportent en tableur, une colonne par champ.
+Analysez des textes avec les champs que vous définissez, comme vous le feriez pour un assistant de recherche : un résumé, les personnes, lieux et organisations qu’un document nomme, sa tonalité avec une justification, des thèmes tirés de votre propre liste. Des analyses toutes prêtes couvrent les besoins courants, dont la question, l’argument, les méthodes et les résultats d’une publication scientifique pour une revue de littérature. Les réponses reviennent dans la forme demandée et s’exportent en tableur, une colonne par champ. Hors ligne, deux petits modèles de langue de Google, Gemma 4 E4B et E2B, remplissent vos champs, font des tables des matières et corrigent du texte sur votre PC sans rien envoyer ; ils sont bien moins bons que les modèles en ligne, alors vérifiez leurs réponses.
 
 Vérifiez chaque résultat à côté de sa source : la page à côté de son texte, ou l’enregistrement à côté de sa transcription, ligne par ligne. Les corrections sont conservées à part du texte produit par l’IA, qui n’est jamais écrasé, et vous marquez ce que vous avez relu. Cherchez dans toutes les pages d’un document ou d’un enregistrement, corrections comprises, et allez à chaque occurrence. Un glossaire explique les mots de ces outils, de l’OCR et des tokens aux taux d’erreur et aux hallucinations, pour les collègues qui les découvrent. Comparez deux modèles ou plus sur les mêmes documents : leurs différences sont surlignées dans le texte, avec les taux d’erreur par rapport aux pages que vous avez corrigées.
 
@@ -312,7 +238,17 @@ Nécessite Windows 11 avec Microsoft Edge WebView2 Runtime, en versions natives 
 Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI OpCo, LLC ; Claude est une marque d’Anthropic, PBC ; Mistral AI est une marque de Mistral AI ; Microsoft Word est une marque du groupe Microsoft. Kalamu est un projet indépendant, ni affilié à aucune d’elles ni approuvé par elles.
 ```
 
-### Nouveautés de cette version — 1.5.0
+### Nouveautés de cette version — 1.6.0
+
+```text
+Analysez des textes hors ligne : deux petits modèles de langue de Google, Gemma 4 E4B et E2B, remplissent les champs de vos analyses, font des tables des matières et corrigent du texte sur votre PC, gratuitement et sans rien envoyer, après un téléchargement unique. Bien moins bons que les modèles en ligne, alors vérifiez leurs réponses ; plus rapides avec un processeur graphique.
+
+Whisper transcrit sur le processeur graphique de votre PC s’il en a un qui convient, et revient de lui-même au processeur en cas d’échec. Il ignore désormais les silences et la musique, et n’y écrit donc plus de lignes, et une pause arrête une transcription en quelques instants.
+
+Aussi : les longues pages manuscrites lues avec Gemini n’expirent plus.
+```
+
+Le texte de 1.5.0, pour mémoire :
 
 ```text
 Lisez l’imprimé difficile hors ligne : deux petits modèles OCR, LightOnOCR-3 et GLM-OCR, lisent sur votre PC les vieux journaux en colonnes, les caractères pâlis et les tableaux, gratuitement et sans rien envoyer, après un téléchargement unique. LightOnOCR place chaque bloc sur la page, pour l’ALTO et le PDF interrogeable. Bien plus lents que Tesseract : les Paramètres et Nouveau traitement indiquent le temps que prend une page sur votre PC.
@@ -327,7 +263,7 @@ Aussi : une étape de chaîne à partir de n’importe quel prompt ; renommer un
 ```text
 Extraire le texte de PDF et d’images numérisés ou manuscrits avec Gemini, OpenAI, Claude ou Mistral
 Transcrire des enregistrements et des vidéos avec l’horodatage, en ligne avec les locuteurs ou hors ligne
-Hors ligne, sans compte, sans clé ni frais : transcription avec Whisper, extraction de texte avec Tesseract ou de petits modèles OCR
+Hors ligne, sans compte, sans clé ni frais : transcription avec Whisper, extraction de texte avec Tesseract ou de petits modèles OCR, et analyses avec de petits modèles de langue
 Transcrire des vidéos YouTube publiques à partir de leur lien avec Gemini, sans les télécharger
 Analyser des textes avec vos propres champs ou des champs tout prêts : personnes, lieux, tonalité, argument d’une publication
 Dresser la table des matières détaillée de numéros de journaux, de dossiers d’archives et de livres, puis lire chaque article à part
@@ -370,9 +306,10 @@ documents historiques
 ```text
 Windows 11 avec Microsoft Edge WebView2 Runtime ; versions natives x64 et ARM64
 Fonctions en ligne : internet et votre propre compte et clé d’API Gemini, OpenAI, Anthropic ou Mistral ; le fournisseur facture l’utilisation
-Transcription hors ligne : internet une fois pour télécharger un modèle Whisper (de 60 Mo à 1,1 Go environ), puis fonctionne sur le processeur
+Transcription hors ligne : internet une fois pour télécharger un modèle Whisper (de 60 Mo à 1,1 Go environ), puis fonctionne sur le processeur, plus vite avec un processeur graphique
 Extraction de texte hors ligne : internet une fois par langue de Tesseract (3 à 15 Mo ; 100 Mo pour les langues en lettres latines sans modèle propre), puis sur le processeur
 Modèles OCR hors ligne : internet une fois pour télécharger un modèle (1,1 ou 1,4 Go), puis sur le processeur, de quelques dizaines de secondes à plus d’une minute par page
+Modèles de langue hors ligne : internet une fois pour télécharger un modèle (4,3 ou 6,1 Go) et 5 à 8 Go de mémoire libre, puis sur le processeur, plus vite avec un processeur graphique
 ```
 
 ### Légendes des captures d’écran
@@ -400,9 +337,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.5.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), and Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.6.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.5.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.6.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, choose the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
@@ -411,6 +348,7 @@ Offline route, with no account or key:
 4. Disconnect the network and repeat with another recording to confirm it runs offline. Results are written next to the sample file, as .txt and .docx with a provenance.json.
 5. Offline text extraction: in Settings > Offline, under Text extraction with Tesseract, download French (4 MB, once). Choose New job, then Extract text, add bulletin-page.jpg, choose Tesseract (on this computer) and French, and Start. The review shows the page beside its text; the formats include ALTO XML and a searchable PDF.
 6. Optional, slower: under Text extraction with OCR models, download LightOnOCR-3 1B (1.1 GB, once) and read bulletin-page.jpg with it the same way (Provider: OCR models (on this computer)). On the processor a page takes from tens of seconds to a few minutes; Settings then shows the time it took.
+7. Optional, slower: under Analyses with language models, download Gemma 4 E2B (4.3 GB, once; about 5 GB of free memory while it runs). Choose New job, then Analyse texts, add bulletin.txt, choose Language models (on this computer), Gemma 4 E2B and People, places and organisations, and Start. On the processor it takes up to a few minutes.
 
 Cloud features: text extraction (dodington-1755.jpg), correction of existing text (daily-nebraskan-1911.pdf), analyses (bulletin.txt) and cloud transcription need the user's own key, entered in Settings and kept in Windows Credential Manager. [Either: A test Gemini API key with a small spending cap is provided for certification: <key>. Paste it in Settings under Google Gemini, then run New job > Extract text on bulletin-page.jpg (Gemini refuses dodington-1755.jpg without a reason; Claude and Mistral read it), New job > Correct existing text on daily-nebraskan-1911.pdf, and New job > Analyse texts on bulletin.txt with People, places and organisations. Or: No test key is provided; these features need a key from the provider, as the listing says.] Before the first job sent to a provider, a dialog names it, says what is sent and links the privacy policy; Send records consent for that provider. An estimated cost is shown before each job starts. The cheaper mode sends a job to the provider's batch service, which may take up to a day to answer; it is optional and off by default.
 
@@ -420,7 +358,7 @@ Generative AI (Store Policy 11.16): every result is text generated by the AI mod
 
 Voluntary support link (Store Policy 10.8.2): Buy me a coffee, at the foot of the sidebar and in Settings › About, under Support development, opens https://buymeacoffee.com/fmadore in the default browser. Buy Me a Coffee, a third-party service, takes any payment on its own site. The app has no in-app purchase, collects no payment information, and a donation unlocks, removes or changes nothing. The Product declaration "This product allows users to make purchases, but does not use the Microsoft Store commerce system" is ticked for this link.
 
-The full-trust desktop process reads the files the user selects, converts audio with bundled FFmpeg executables (LGPL; source published with each release, licence terms in the listing), runs Whisper and Tesseract on the CPU, runs the OCR models in a bundled llama.cpp executable (MIT) started once per page, or in its second build that uses the graphics processor through Vulkan when the PC has one the app can use, stores API keys in Windows Credential Manager and writes results where the user chooses. It connects only to the provider the user selects, to Hugging Face for the Whisper and OCR model downloads the user requests, to GitHub for the public model catalogue and Tesseract's language data the user requests and to YouTube as described above. There is no developer server, telemetry, driver, service or auto-start task.
+The full-trust desktop process reads the files the user selects, converts audio with bundled FFmpeg executables (LGPL; source published with each release, licence terms in the listing), runs Whisper and Tesseract on the CPU, or Whisper on the graphics processor through a bundled helper executable (whisper-vulkan.exe, built from this app's source, started and stopped only by it) when the PC has one the app can use, runs the OCR and language models in a bundled llama.cpp executable (MIT) started once per page or text, or in its second build that uses the graphics processor through Vulkan when the PC has one the app can use, stores API keys in Windows Credential Manager and writes results where the user chooses. It connects only to the provider the user selects, to Hugging Face for the Whisper, OCR and language model downloads the user requests, to GitHub for the public model catalogue and Tesseract's language data the user requests and to YouTube as described above. There is no developer server, telemetry, driver, service or auto-start task.
 ```
 
 ## Hero image
@@ -569,16 +507,16 @@ that the screenshots match the app.
 
 # Mac App Store (App Store Connect)
 
-Paste-ready text for the Mac App Store listing, written for version 1.5.0, the first to be
+Paste-ready text for the Mac App Store listing, written for version 1.6.0, the first to be
 submitted if it is ready before a Mac is (1.4.1 was prepared but has not been sent; for it, leave
-out the OCR models below). The steps,
+out the OCR and language models below). The steps,
 the age rating and the App Privacy answers are in [mac-app-store.md](mac-app-store.md).
 App Store Connect's limits, checked when this text was written: name and subtitle 30
 characters, promotional text 170, description 4,000, keywords 100 (comma-separated, without
 spaces after the commas, and no other company's trademark, Guideline 2.3.7), review notes
 4,000. The text here fits: name 6, subtitle 25, promotional
-text 167, description 3509, keywords 100,
-review notes 3502.
+text 167, description 3785, keywords 100,
+review notes 3874.
 
 Differences from the Microsoft Store text: macOS words (the Keychain, "your Mac"); no Buy Me a
 Coffee line, since the store build hides that link (Guideline 3.1.1); the description in short
@@ -613,16 +551,16 @@ Read scanned and handwritten documents, transcribe interviews and analyse texts 
 ### Description
 
 ```text
-Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key: their usage charges apply and are billed by them, and the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, and printed pages read offline with Tesseract or, for difficult print, a small OCR model, free, after a one-time download.
+Read scanned and handwritten documents, transcribe interviews and analyse texts with the AI provider of your choice, then check every result against its source. Kalamu works with Google Gemini, OpenAI, Anthropic Claude and Mistral under your own account and API key: their usage charges apply and are billed by them, and the app shows an estimated cost before anything is sent. Recordings can also be transcribed offline with Whisper, printed pages read offline with Tesseract or, for difficult print, a small OCR model, and texts analysed offline with a small language model, free, after a one-time download.
 
 EXTRACT AND CORRECT TEXT
 Read PDFs and images, printed or handwritten: newspapers, reports, letters, registers, manuscripts. Keep the lines as on the page, or join them into running text. Kalamu checks the files first and suggests fixes for double pages, low resolution and quiet recordings. Correct the noisy text digital libraries supply, with every change shown against the original.
 
 TRANSCRIBE
-Recordings and videos with speakers and timestamps; give the speakers their real names. Offline, Whisper transcribes on your Mac with no account or key, and nothing leaves the computer; give it the names and words to spell. With Gemini, public YouTube videos are transcribed from their link.
+Recordings and videos with speakers and timestamps; give the speakers their real names. Offline, Whisper transcribes on your Mac's graphics processor with no account or key, skipping silence and music, and nothing leaves the computer; give it the names and words to spell. With Gemini, public YouTube videos are transcribed from their link.
 
 TABLES OF CONTENTS AND ANALYSES
-Turn a newspaper issue, an archival file or a book into a detailed table of contents, one entry per article with its pages, then read each article on its own. Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations named, the tone with a reason, themes from your own list.
+Turn a newspaper issue, an archival file or a book into a detailed table of contents, one entry per article with its pages, then read each article on its own. Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations named, the tone with a reason, themes from your own list. Offline, two small language models from Google, Gemma 4 E4B and E2B, do this on your Mac with nothing sent; they are far weaker than the cloud models, so check their answers.
 
 CHECK EVERY RESULT
 The page beside its text, the recording beside its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Compare two models on the same pages, their differences highlighted, with error rates against your corrections. Search a document, or a whole project, corrections included.
@@ -673,9 +611,9 @@ Connect asks; they are not public). Fill in the bracketed part of the notes; a t
 given here, never in the listing. Notes:
 
 ```text
-Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user sets up with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or offline with Whisper (transcription), and Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (printed text). No sign-in: the app has no account of its own and sells nothing; provider usage is billed to the user's own account.
+Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user sets up with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (printed text), and two small language models, Gemma 4 E4B and E2B (analyses). No sign-in: the app has no account of its own and sells nothing; provider usage is billed to the user's own account.
 
-Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.5.0/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
+Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.6.0/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
 
 Offline route, no key needed:
 1. Settings > Offline > Transcription with Whisper: download Whisper Base (about 60 MB, once).
@@ -683,12 +621,13 @@ Offline route, no key needed:
 3. When done, Review: the transcript beside a player; click a line to hear it, edit a word (the correction is kept apart), press Cmd F and type "Mopti".
 4. Settings > Offline > Text extraction with Tesseract: download French (4 MB). New job > Extract text, bulletin-page.jpg, Tesseract, French, Start. The formats include ALTO XML and a searchable PDF.
 5. Optional: Settings > Offline > Text extraction with OCR models: download LightOnOCR-3 1B (1.1 GB). Read bulletin-page.jpg with it the same way (Provider: OCR models (on this computer)); it runs on the Mac's graphics processor.
+6. Optional: Settings > Offline > Analyses with language models: download Gemma 4 E2B (4.3 GB). New job > Analyse texts, bulletin.txt, Provider: Language models (on this computer), Gemma 4 E2B, People, places and organisations, Start.
 
 Cloud features need the user's own key, entered in Settings and kept in the Keychain. [Either: A test Gemini key with a spending cap: <key>. Paste it in Settings under Google Gemini, then New job > Extract text on bulletin-page.jpg, or Analyse texts on bulletin.txt. Or: No test key is provided.] Before the first job sent to a provider, a dialog names the provider, says what is sent (the pages, recordings or text and any personal information in them), that it goes under the user's account and the provider's terms, and links the privacy policy; Send records consent for that provider, Cancel sends nothing (Guideline 5.1.2(i)).
 
-Downloads (2.4.5(iv), 2.5.2): Whisper models and the OCR models (from Hugging Face) and Tesseract language data (from GitHub) are model weights and data files, not code; the features using them are in this build and are only offered for download in Settings, each verified by SHA-256. The model catalogue refreshed at start is a JSON list of models and prices from the app's GitHub repository, not code. There is no self-updater.
+Downloads (2.4.5(iv), 2.5.2): Whisper models, the OCR models and the language models (from Hugging Face) and Tesseract language data (from GitHub) are model weights and data files, not code; the features using them are in this build and are only offered for download in Settings, each verified by SHA-256. The model catalogue refreshed at start is a JSON list of models and prices from the app's GitHub repository, not code. There is no self-updater.
 
-Sandbox: the app reads only files and folders the user picks or drops, and keeps security-scoped bookmarks so jobs resume after a restart. FFmpeg and ffprobe inside the bundle convert audio, and llama.cpp's llama-mtmd-cli, also inside the bundle, runs the OCR models once per page; all three are signed to inherit the sandbox and open no connection. Outgoing connections only: the chosen provider, Hugging Face and GitHub for downloads the user asks for, YouTube's oEmbed and privacy-enhanced player for a public video the user pastes.
+Sandbox: the app reads only files and folders the user picks or drops, and keeps security-scoped bookmarks so jobs resume after a restart. FFmpeg and ffprobe inside the bundle convert audio, and llama.cpp's llama-mtmd-cli and llama-completion, also inside the bundle, run the OCR models once per page and the language models once per text; all four are signed to inherit the sandbox and open no connection. Outgoing connections only: the chosen provider, Hugging Face and GitHub for downloads the user asks for, YouTube's oEmbed and privacy-enhanced player for a public video the user pastes.
 
 Every result is text generated by the model the user chooses; it is always shown beside its source to be checked. Report a problem (the flag in each review and Settings > About) opens GitHub's issue forms in the browser. The developer receives no data, files, keys or telemetry.
 ```
