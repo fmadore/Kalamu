@@ -188,8 +188,11 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
                 show_main_window(tray.app_handle());
             }
         });
-    // The bundle icon, so the tray matches the taskbar or the Dock.
-    if let Some(icon) = app.default_window_icon() {
+    // A template image where the system tints menu-bar icons (macOS); elsewhere the bundle
+    // icon, so the tray matches the taskbar.
+    if let Some(icon) = platform::TRAY_TEMPLATE {
+        builder = builder.icon(icon).icon_as_template(true);
+    } else if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }
     builder.build(app)?;
@@ -206,7 +209,9 @@ fn on_menu_event(app: &AppHandle, id: &str) {
             let app = app.clone();
             tauri::async_runtime::spawn(pause_and_quit(app));
         }
-        other => tracing::warn!("unknown tray menu id: {other}"),
+        // Every menu's events reach here, the application menu's too (`platform`), which
+        // handles its own.
+        _ => {}
     }
 }
 

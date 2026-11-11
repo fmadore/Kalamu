@@ -12,9 +12,11 @@ use objc2::runtime::Bool;
 use objc2_foundation::{
     NSData, NSString, NSURL, NSURLBookmarkCreationOptions, NSURLBookmarkResolutionOptions,
 };
-use tauri::menu::{Menu, MenuItem, MenuItemKind};
+use tauri::image::Image;
+use tauri::menu::{HELP_SUBMENU_ID, Menu, MenuItem, MenuItemKind, PredefinedMenuItem};
 use tauri::utils::config::{AppDirectoriesOverride, AppDirectoryOverrides};
 use tauri::{App, AppHandle, Emitter, Manager, RunEvent};
+use tauri_plugin_opener::OpenerExt;
 
 use super::Moved;
 use crate::commands::AppState;
@@ -30,10 +32,25 @@ pub const CLOSE_HIDES_WINDOW: bool = true;
 /// Menu-bar icons open their menu on a click.
 pub const TRAY_MENU_ON_LEFT_CLICK: bool = true;
 
+/// The menu-bar icon: a template image, black shapes on clear, which macOS tints to suit a
+/// light, dark or tinted menu bar, as every menu-bar icon does. Drawn from `icons/small.svg`'s
+/// two sheets (`icons/tray-template.svg`).
+pub const TRAY_TEMPLATE: Option<Image<'static>> =
+    Some(tauri::include_image!("icons/tray-template.png"));
+
 /// What the review view's player (WebKit) plays.
 pub const PLAYBACK: Playback = Playback::WEBKIT;
 
 const ID_QUIT: &str = "app-quit";
+const ID_SETTINGS: &str = "app-settings";
+const ID_REPORT: &str = "help-report";
+const ID_WEBSITE: &str = "help-website";
+
+/// Where Help › Report a Problem… goes: GitHub's choice of forms, as Settings' link
+/// (`src/lib/support.ts`).
+const REPORT_URL: &str = "https://github.com/fmadore/Kalamu/issues/new/choose";
+/// Where Help › Kalamu Website goes: the project's page, with its README.
+const WEBSITE_URL: &str = "https://github.com/fmadore/Kalamu";
 
 /// The data folder in `~/Library/Application Support` and the logs' in `~/Library/Logs`, named
 /// as Mac apps name theirs.
@@ -75,17 +92,24 @@ pub fn shown_path(path: &Path) -> PathBuf {
 }
 
 /// Tauri's default application menu, which gives the Edit commands (Cmd+C, Cmd+V…) their
-/// shortcuts, with its Quit replaced: the system's ends the process at once, without the
-/// question asked while jobs run or the wait for pieces already sent.
+/// shortcuts, with what a Mac app's menus hold: Settings… (Cmd+,) under About, a Help menu
+/// that is not empty, and Quit replaced, since the system's ends the process at once, without
+/// the question asked while jobs run or the wait for pieces already sent. In English, as the
+/// rest of Tauri's default menu is.
 pub fn init(app: &mut App) -> tauri::Result<()> {
     let handle = app.handle().clone();
     let menu = Menu::default(&handle)?;
-    // The application menu comes first and ends with Quit.
+    // The application menu comes first: About, then Settings…, and Quit last.
     if let Some(MenuItemKind::Submenu(app_menu)) = menu.items()?.into_iter().next() {
         if let Some(quit) = app_menu.items()?.into_iter().last() {
             app_menu.remove(&quit)?;
         }
         let name = handle.package_info().name.clone();
+        app_menu.insert(
+            &MenuItem::with_id(&handle, ID_SETTINGS, "Settings…", true, Some("CmdOrCtrl+,"))?,
+            1,
+        )?;
+        app_menu.insert(&PredefinedMenuItem::separator(&handle)?, 1)?;
         app_menu.append(&MenuItem::with_id(
             &handle,
             ID_QUIT,
@@ -94,13 +118,44 @@ pub fn init(app: &mut App) -> tauri::Result<()> {
             Some("CmdOrCtrl+Q"),
         )?)?;
     }
+    // Tauri's Help menu, empty on macOS, which adds its search field.
+    if let Some(MenuItemKind::Submenu(help)) = menu.get(HELP_SUBMENU_ID) {
+        let name = handle.package_info().name.clone();
+        help.append(&MenuItem::with_id(
+            &handle,
+            ID_WEBSITE,
+            format!("{name} Website"),
+            true,
+            None::<&str>,
+        )?)?;
+        help.append(&MenuItem::with_id(
+            &handle,
+            ID_REPORT,
+            "Report a Problem…",
+            true,
+            None::<&str>,
+        )?)?;
+    }
     app.set_menu(menu)?;
-    app.on_menu_event(|app, event| {
-        if event.id() == ID_QUIT {
-            request_quit(app);
+    app.on_menu_event(|app, event| match event.id().as_ref() {
+        ID_QUIT => request_quit(app),
+        ID_SETTINGS => {
+            show_main_window(app);
+            let _ = app.emit(crate::OPEN_SETTINGS_EVENT, ());
         }
+        ID_REPORT => open_url(app, REPORT_URL),
+        ID_WEBSITE => open_url(app, WEBSITE_URL),
+        // The menu-bar icon's own items, handled in `tray.rs`.
+        _ => {}
     });
     Ok(())
+}
+
+/// Opens `url` in the researcher's browser.
+fn open_url(app: &AppHandle, url: &str) {
+    if let Err(error) = app.opener().open_url(url, None::<&str>) {
+        tracing::warn!(url, %error, "could not open the page");
+    }
 }
 
 /// A click on the Dock icon, or opening the app again from Finder, brings back the window the

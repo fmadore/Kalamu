@@ -1234,7 +1234,7 @@
       "provider": "whisper",
       "id": "whisper-large-v3-turbo",
       "name": "Whisper Large v3 Turbo",
-      "description": "Offline. Close to Large v3 accuracy at several times its speed; the best choice on most PCs. 574 MB download.",
+      "description": "Offline. Close to Large v3 accuracy at several times its speed; the best choice on most computers. 574 MB download.",
       "tasks": [
         "audio_transcription"
       ],
@@ -1359,7 +1359,7 @@
       "provider": "whisper",
       "id": "whisper-small",
       "name": "Whisper Small",
-      "description": "Offline. Fast on any PC, for clear recordings in widely spoken languages. 190 MB download.",
+      "description": "Offline. Fast on any computer, for clear recordings in widely spoken languages. 190 MB download.",
       "tasks": [
         "audio_transcription"
       ],

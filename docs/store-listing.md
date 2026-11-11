@@ -643,4 +643,16 @@ for "your PC" in the tenth, and screen them the same way: App Review reads scree
 metadata too, and asks that metadata suit all audiences (Guideline 2.3.8), Kalamu being rated
 4+. The step-by-step for the day on a Mac is Part C of [mac-test-day.md](mac-test-day.md). Capture the window alone with ⌘⇧4 then Space, which adds a shadow with
 transparency: hold ⌥ while clicking to leave it out, or export the image without alpha. Keep
-the set in [store/screenshots/macos/](store/screenshots/), `en/` and `fr/`, beside the Windows one.
+the set in [store/screenshots/macos/](store/screenshots/macos/), `en/` and `fr/`, beside the Windows one.
+
+The set for 1.5.0 is there: 1440 × 900 window captures, light theme, without alpha (the
+window's rounded corners filled with white), of the sandboxed App Store build made from the
+source on an Apple Silicon Mac, macOS 26, the French set with the interface in French and the
+same jobs. The scenes follow the Windows set: scene 4 shows the workflow's drawing, scene 10
+New job with Tesseract and French on `bulletin-page.jpg`. In scene 1 the reading open is
+*tht* (Gemini, as printed) against *the* (Claude); in scene 3 the corrected word is *Velüe*,
+line D. The workflow, its steps and the analysis prompt were made with the interface in
+English, so their names stay English in the French set, as in the Windows one. In scene 7 the
+answers are scrolled past *People*, whose 1911 list includes a name that reads as a present-day
+politician's. Retake them from the TestFlight build before the first submission if anything
+differs there.

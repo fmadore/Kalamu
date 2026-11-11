@@ -90,6 +90,10 @@
 		} else if (key === 'b') {
 			e.preventDefault();
 			fold(!folded);
+		} else if (key === ',') {
+			// On a Mac the application menu's Settings… takes the key first (`openSettings`).
+			e.preventDefault();
+			go({ name: 'settings' });
 		} else if (key === 'f') {
 			// The screen's filter or search field, marked `data-find`.
 			const field = document.querySelector<HTMLInputElement>('main [data-find]');
@@ -166,6 +170,11 @@
 			unlisten.push(await on.progress(applyProgress));
 			unlisten.push(await onDragging((over) => (app.filesOver = over)));
 			unlisten.push(await on.closeRequested(() => (app.closeRequested = true)));
+			unlisten.push(
+				await on.openSettings(() => {
+					if (!shortcutsHeld()) go({ name: 'settings' });
+				})
+			);
 		})();
 		return () => unlisten.forEach((u) => u());
 	});

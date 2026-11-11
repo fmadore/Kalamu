@@ -39,8 +39,17 @@ changed, see the [1.5.0 release](https://github.com/fmadore/Kalamu/releases/tag/
   "Thank you." over room noise), and a line that only reads back the names and words you gave
   it, are left out. Those names and words now reach Whisper as the model's own tokens, cut to
   what it can hold from the top of your list.
+- **On a Mac, Settings… and Help**
+  ([#160](https://github.com/fmadore/Kalamu/pull/160)). The application menu has *Settings…*
+  (⌘,), which opens Settings, also from the menu bar while the window is hidden; ⌘, works in the
+  window too. The Help menu, empty until now, opens Kalamu's website and *Report a Problem…*.
+  The menu-bar icon is drawn as macOS's own are, dark or light to suit the bar.
 
 ## Fixed
+
+- **Quitting on a Mac soon after a Whisper transcription** no longer ends in a crash report
+  ([#159](https://github.com/fmadore/Kalamu/pull/159)): the Whisper model, kept in memory for a
+  few minutes after a recording, is released before the app exits.
 
 - **Speech detection did nothing before this version.** When the voice-activity model was
   downloaded, Kalamu set whisper.cpp's switch for it and `provenance.json` said `"vad": true`,
@@ -87,7 +96,9 @@ keys.
   doubtful pages with Tesseract or a cloud model. NVIDIA and AMD cards have not been timed with
   them yet; on a Snapdragon laptop only GLM-OCR's page image uses the graphics processor.
 - **The Mac versions** are built and tested on Macs in GitHub Actions, Whisper on Metal
-  included, but have not yet been used on a real Mac. Intel Macs are not supported.
+  included, and have now been tried on one Mac with Apple Silicon (macOS 26), the Mac App Store
+  build included; they have had far fewer hours of use than the Windows versions. Intel Macs
+  are not supported.
 - **Moving from the disk image to the Mac App Store app**: jobs made by the disk image read
   files the store app has not been given yet. To run one again, add its folder to a new job
   once. macOS may also ask once more to let Kalamu use the keys saved in your Keychain: choose

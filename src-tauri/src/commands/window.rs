@@ -115,3 +115,19 @@ pub fn write_before_exit(app: &AppHandle) {
         Err(e) => tracing::warn!(error = %e, "files out of date left for the next launch"),
     }
 }
+
+/// How long exiting waits for a transcription still running to let go of Whisper's model: a
+/// stopped one does within one pass of the encoder.
+const RELEASE_WAIT: Duration = Duration::from_secs(5);
+
+/// Releases Whisper's model as the app exits, whichever way it was quit, so the process's own
+/// clean-up does not find it still loaded: on a Mac, ggml's Metal device then aborts the app
+/// with "quit unexpectedly".
+pub fn release_before_exit(app: &AppHandle) {
+    let Some(state) = app.try_state::<AppState>() else {
+        return;
+    };
+    if !state.whisper.release(RELEASE_WAIT) {
+        tracing::warn!("Whisper was still transcribing as the app exited");
+    }
+}

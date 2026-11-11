@@ -22,6 +22,8 @@ use crate::commands::AppState;
 pub const PROGRESS_EVENT: &str = "progress";
 /// Sent when the window is closed while jobs run, so the interface can ask first.
 pub const CLOSE_REQUESTED_EVENT: &str = "close-requested";
+/// Sent by the application menu's Settings… on macOS, so the interface opens Settings.
+pub const OPEN_SETTINGS_EVENT: &str = "open-settings";
 /// Name of the event carrying [`kalamu_search::SearchProgress`]: how far a project's text is
 /// prepared for searching.
 pub const SEARCH_PROGRESS_EVENT: &str = "search-progress";
@@ -213,9 +215,11 @@ pub fn run() {
         .map(|app| {
             app.run(|app, event| {
                 // Every way of quitting ends here: the files corrections left out of date are
-                // written before the process ends.
+                // written before the process ends, and Whisper's model is released before the
+                // process's own clean-up would find it loaded.
                 if matches!(event, tauri::RunEvent::Exit) {
                     commands::window::write_before_exit(app);
+                    commands::window::release_before_exit(app);
                 }
                 platform::on_run_event(app, event);
             });
