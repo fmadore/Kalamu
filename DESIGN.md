@@ -369,6 +369,8 @@ While files are dragged over the window, the screen that takes them (New job, a 
 
 **Long tables are drawn a page at a time**: the Jobs table, a project's documents, its dictionary and a job's files draw their first 200 rows, with "200 of 5000 shown" and a ghost **Show 200 more** under them (`MoreRows`), as the list of what to check does; the focus goes to the first row added. Finding, filtering, sorting, ticking all and the selection bar work on every row, not only those drawn, and a filter or sort draws from the first page again. A screen reader hears the whole count (`aria-rowcount`, each row's `aria-rowindex`).
 
+A job's **Files** heading has a select on its right once any file has a failed piece: **All files (5000)** or **Files with failures (12)**, the second counted by the store over the whole job, so files that failed far down a long job are reached without drawing the rows before them. Filtering lists them in the job's order from the first page, and a polite status, always mounted and visually hidden, says "12 files with failures listed, of 5000". When a retry leaves no file failing, the select goes and every file is listed again.
+
 In a project's documents, each task's marks in the **Results** column (its icon, the count, a check for reviewed, a star for preferred) are one quiet button that opens the document: each mark names itself on pointing, and the keyboard reaching the button shows the whole in words under it, in a small raised label (the flyout shadow, 5px corners), which is also its accessible name.
 
 The **Glossary** ends with **Keyboard**: every shortcut, grouped by where it works (everywhere, New job, a review, a review's search, a scan), the keys in mono as the system in use writes them, alternatives joined by a muted "or".

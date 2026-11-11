@@ -123,7 +123,6 @@ pub fn run() {
             commands::jobs::list_jobs,
             commands::jobs::job_sources,
             commands::jobs::get_job,
-            commands::jobs::job_pieces,
             commands::jobs::job_progress,
             commands::jobs::job_text_outputs,
             commands::jobs::snapshot_job,

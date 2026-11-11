@@ -6,6 +6,7 @@ use kalamu_core::{
 use super::*;
 use kalamu_core::{PieceRef, PieceStatus, ProviderId, SetupId, SourceId, Timestamp};
 
+mod progress;
 mod projects;
 mod runs;
 mod scoped;

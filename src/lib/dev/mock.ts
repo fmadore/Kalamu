@@ -705,14 +705,6 @@ export function installMock(): void {
 				];
 			case 'derived_state':
 				return [];
-			case 'job_pieces':
-				return pieces.map((p) => ({
-					...p,
-					job_id: job.id,
-					cache_key: 'k',
-					attempts: 1,
-					updated_at: 0
-				}));
 			case 'job_progress':
 				return progressOf(pieces, a.sources as string[]);
 			case 'source_pieces':

@@ -34,7 +34,7 @@ describe("the mock's large sample", () => {
 		expect(largeRows('?rows=nope')).toBe(0);
 	});
 
-	it("counts a job's pieces as the engine does", () => {
+	it("counts a job's pieces as the store does", () => {
 		const piece = (setup: string, source: string, status: string, error: string | null = null) =>
 			({ setup_id: setup, source_id: source, status, error }) as const;
 		const progress = progressOf(
@@ -49,6 +49,7 @@ describe("the mock's large sample", () => {
 			['one']
 		);
 		expect(progress.held).toBe(2);
+		expect(progress.failed_sources).toEqual(['one']);
 		expect(progress.files).toEqual([
 			{ source_id: 'one', setup_id: 'a', total: 4, done: 2, failed: 2, errors: ['refused'] },
 			{ source_id: 'one', setup_id: 'b', total: 1, done: 0, failed: 0, errors: [] }

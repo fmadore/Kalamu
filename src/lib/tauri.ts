@@ -53,7 +53,6 @@ import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
 import type { PieceAudio } from './bindings/PieceAudio.js';
-import type { PieceState } from './bindings/PieceState.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
 import type { Project } from './bindings/Project.js';
@@ -182,7 +181,6 @@ export const api = {
 	/** The names of every job's sources, for finding a job by a file it read. */
 	jobSources: () => invoke<JobSources[]>('job_sources'),
 	getJob: (id: string) => invoke<Job>('get_job', { id }),
-	jobPieces: (id: string) => invoke<PieceState[]>('job_pieces', { id }),
 	/** The job's pieces held in batches, and each of `sources` counted under every set-up. */
 	jobProgress: (id: string, sources: string[]) =>
 		invoke<JobProgress>('job_progress', { id, sources }),

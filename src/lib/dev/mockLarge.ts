@@ -1,7 +1,7 @@
 // Thousands of rows, for timing the long tables and a large job's page in the mock
 // (`?mock&rows=3000`): jobs on the Jobs page, documents in the sample project, names in its
 // dictionary and files in the sample job, added to what the mock answers. Also the engine's
-// counting of a job's pieces (`job_progress`), which the mock answers like the engine.
+// counting of a job's pieces (`job_progress`), which the mock answers like the store.
 
 import type { DictionaryView } from '../bindings/DictionaryView.js';
 import type { Job } from '../bindings/Job.js';
@@ -23,14 +23,16 @@ type Counted = {
 	error: string | null;
 };
 
-/** The engine's `job_progress`: the pieces held over the whole job, and each of `sources`
- * counted under every set-up, at most three different errors listed. */
+/** The store's `job_progress`: the pieces held and the files that failed over the whole job,
+ * and each of `sources` counted under every set-up, at most three different errors listed. */
 export function progressOf(pieces: readonly Counted[], sources: readonly string[]): JobProgress {
 	const wanted = new Set(sources);
 	const rows = new Map<string, JobProgress['files'][number]>();
 	let held = 0;
+	const failed = new Set<string>();
 	for (const p of pieces) {
 		if (p.status === 'submitted') held++;
+		if (p.status === 'failed') failed.add(p.source_id);
 		if (!wanted.has(p.source_id)) continue;
 		const key = `${p.source_id}/${p.setup_id}`;
 		let row = rows.get(key);
@@ -50,7 +52,7 @@ export function progressOf(pieces: readonly Counted[], sources: readonly string[
 		if (p.status === 'failed') row.failed++;
 		if (p.error && row.errors.length < 3 && !row.errors.includes(p.error)) row.errors.push(p.error);
 	}
-	return { held, files: [...rows.values()] };
+	return { held, failed_sources: [...failed].sort(), files: [...rows.values()] };
 }
 
 const bigId = (kind: string, i: number) => `${kind}-${String(i).padStart(6, '0')}`;
@@ -116,7 +118,11 @@ export function enlarge(
 			if (a.id !== sample.id) return result;
 			const more = progressOf(largePieces(sample, n), a.sources as string[]);
 			const progress = result as JobProgress;
-			return { held: progress.held + more.held, files: [...progress.files, ...more.files] };
+			return {
+				held: progress.held + more.held,
+				failed_sources: [...progress.failed_sources, ...more.failed_sources],
+				files: [...progress.files, ...more.files]
+			};
 		}
 		case 'project_view': {
 			const view = result as ProjectView;

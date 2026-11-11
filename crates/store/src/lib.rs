@@ -8,8 +8,8 @@ use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
 
 use kalamu_core::{
-    BatchRecord, CacheKey, Charge, Correction, Job, JobId, JobSources, JobStatus, JobStore,
-    JobSummary, OutdatedFiles, PieceState, SetupId, SourceId, SpeakerNames, StoreError,
+    BatchRecord, CacheKey, Charge, Correction, Job, JobId, JobProgress, JobSources, JobStatus,
+    JobStore, JobSummary, OutdatedFiles, PieceState, SetupId, SourceId, SpeakerNames, StoreError,
     StoredResult,
 };
 use rusqlite::Connection;
@@ -154,6 +154,10 @@ impl JobStore for SqliteStore {
 
     fn pieces(&self, job: JobId) -> Result<Vec<PieceState>, StoreError> {
         jobs::pieces(self, job, None)
+    }
+
+    fn job_progress(&self, job: JobId, sources: &[SourceId]) -> Result<JobProgress, StoreError> {
+        progress::job_progress(self, job, sources)
     }
 
     fn source_pieces(
@@ -338,6 +342,7 @@ mod jobs;
 use jobs::insert_job;
 mod migrations;
 mod outdated;
+mod progress;
 mod projects;
 mod results;
 mod runs;

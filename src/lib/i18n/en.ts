@@ -1205,6 +1205,13 @@ export const en = {
 		truncatedNote:
 			'The model’s answer stopped at its length limit, so the end of these pieces may be missing. The review marks them; check them against the source.',
 		files: 'Files',
+		/** A job's files: every one, or only those with a failed piece, however far down. */
+		filesShown: 'Files shown',
+		allFiles: (n: number) => `All files (${n})`,
+		failedFiles: (n: number) => `Files with failures (${n})`,
+		/** Read out when only the files with failures are listed. */
+		failedListed: (n: number, total: number) =>
+			`${n === 1 ? '1 file' : `${n} files`} with failures listed, of ${total}`,
 		livePreview: 'Latest result',
 		outputs: 'Written',
 		created: 'Created',

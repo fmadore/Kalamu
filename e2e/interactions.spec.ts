@@ -147,3 +147,24 @@ test('New job keeps what was chosen across a visit to Settings', async ({ page }
 		'Gemini 4 Argon'
 	);
 });
+
+test('a large job’s failed files are listed alone, however far down they sit', async ({ page }) => {
+	// A thousand files more, one in fifty failing under the second set-up (src/lib/dev/mockLarge.ts).
+	await open(page, 'jobs&rows=1000');
+	const main = page.getByRole('main');
+	const far = main.getByText('page-00208.pdf', { exact: true });
+	await expect(main.getByText('page-00009.pdf', { exact: true })).toBeVisible();
+	await expect(far).toHaveCount(0);
+
+	const shown = main.getByRole('combobox', { name: 'Files shown' });
+	await shown.selectOption('failed');
+	await expect(far).toBeVisible();
+	await expect(main.getByText('page-00009.pdf', { exact: true })).toHaveCount(0);
+	await expect(main.getByRole('status').filter({ hasText: 'with failures listed' })).toHaveText(
+		/^\d+ files with failures listed, of 100\d$/
+	);
+
+	await shown.selectOption('all');
+	await expect(far).toHaveCount(0);
+	await expect(main.getByText('page-00009.pdf', { exact: true })).toBeVisible();
+});

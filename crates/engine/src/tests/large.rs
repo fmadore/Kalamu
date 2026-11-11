@@ -254,12 +254,13 @@ async fn large_job() {
     }
     eprintln!("spent: {:.2} ms", ms(start) / runs as f64);
 
-    // What a running job's page reads twice a second: every piece, or the counts of the files
-    // it shows (the first two hundred).
+    // What a running job's page reads twice a second: every piece (as it did until the
+    // fourth round, and as counting them in the engine did until the third round of large
+    // jobs), or the counts of the files it shows (the first two hundred), made by the store.
     let start = Instant::now();
     let mut sent = 0;
     for _ in 0..runs {
-        let pieces = f.engine.pieces(job.id).unwrap_or_else(|e| panic!("{e}"));
+        let pieces = f.store.pieces(job.id).unwrap_or_else(|e| panic!("{e}"));
         sent = serde_json::to_vec(&pieces).map(|v| v.len()).unwrap_or(0);
     }
     eprintln!(
