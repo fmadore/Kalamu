@@ -424,7 +424,7 @@
 	async function applyPipeline(p: Pipeline) {
 		// A transcription pipeline applied to videos keeps the videos.
 		await loadTask(mode === 'youtube' && p.task === 'audio_transcription' ? 'youtube' : p.task);
-		drafts = draftsOf(p);
+		drafts = draftsOf(p, catalog);
 		languageMode = p.settings.languages.mode;
 		languages = p.settings.languages.mode === 'explicit' ? [...p.settings.languages.languages] : [];
 		lineBreaks = p.settings.line_breaks ?? 'running_text';

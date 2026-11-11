@@ -124,7 +124,10 @@ impl Engine {
                 id: SetupId::new(),
                 label,
                 provider: request.provider.clone(),
-                model: request.model.clone(),
+                // An id the catalogue once gave the model is sent as it is now.
+                model: catalog
+                    .canonical_id(&request.provider, &request.model)
+                    .to_string(),
                 prompt,
                 options,
                 merge,
@@ -229,10 +232,13 @@ impl Engine {
         request: &SetupRequest,
         preset: Preset,
     ) -> Result<MergeStep, EngineError> {
-        let chosen = request.merge.clone().unwrap_or_else(|| MergeModel {
+        let mut chosen = request.merge.clone().unwrap_or_else(|| MergeModel {
             provider: request.provider.clone(),
             model: request.model.clone(),
         });
+        chosen.model = catalog
+            .canonical_id(&chosen.provider, &chosen.model)
+            .to_string();
         let provider = self.provider(&chosen.provider)?;
         let reads_text = catalog
             .model(&chosen.provider, &chosen.model)

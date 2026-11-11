@@ -34,6 +34,11 @@ improvements that open *Next*; what it did not fix at once is tracked in
 
 ## Done
 
+- **Only the newest models offered, older ones kept**
+  ([decision](decisions/2026-11-11-model-successors.md)): Claude Fable 5.2 and Gemini 4 Carbon
+  added, Mistral Large 4 out of preview and Mistral's default; Fable 5.1 and Mistral Medium 3.5
+  give way to their successors in New job but keep working in the pipelines and comparisons
+  that name them, marked, with their replacement a click away.
 - **Foundations.** Rust workspace and Tauri shell, job database with caching and resuming,
   progress and taskbar progress, model catalogue refreshed from the repository, prompt library,
   keys in Credential Manager, English interface with translation files, CI with `cargo audit`

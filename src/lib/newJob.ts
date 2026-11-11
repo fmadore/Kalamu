@@ -97,6 +97,11 @@ export function rulesFor(rules: Rules, task: Task): TaskRules {
 const refOf = (refs: TaskRules['models'], m: ModelInfo) =>
 	refs.find((r) => r.provider === m.provider && r.model === m.id);
 const listed = (refs: TaskRules['models'], m: ModelInfo) => refOf(refs, m) !== undefined;
+/** Listed and offered for new work: neither replaced by a newer model nor retired. */
+const offered = (refs: TaskRules['models'], m: ModelInfo) => {
+	const ref = refOf(refs, m);
+	return ref !== undefined && ref.replaced_by === undefined && ref.retired !== true;
+};
 /** The app's choice for the task, and each provider's, as the engine reads the catalogue. */
 const recommended = (rule: TaskRules, m: ModelInfo) => refOf(rule.models, m)?.recommended === true;
 const providerChoice = (rule: TaskRules, m: ModelInfo) =>
@@ -109,7 +114,17 @@ export function doesTask(rule: TaskRules, model: ModelInfo): boolean {
 
 /** Models that can combine a table of contents' pages, for one provider. */
 export function mergeModelsFor(catalog: Catalog, rule: TaskRules, provider: string): ModelInfo[] {
-	return catalog.models.filter((m) => m.provider === provider && listed(rule.merge_models, m));
+	return catalog.models.filter((m) => m.provider === provider && offered(rule.merge_models, m));
+}
+
+/** The models the merge picker lists: those offered, and the one the set-up names when that one
+ * was replaced, so a pipeline that names it shows it as it is. */
+export function mergePickerModels(catalog: Catalog, rule: TaskRules, d: Draft): ModelInfo[] {
+	const models = mergeModelsFor(catalog, rule, d.mergeProvider);
+	const chosen = mergeInfo(catalog, d);
+	return chosen && !models.includes(chosen) && listed(rule.merge_models, chosen)
+		? [...models, chosen]
+		: models;
 }
 
 /** Providers with a model that can combine the pages. */
@@ -171,14 +186,65 @@ export function modelsFor(
 	return forTask(catalog, rule, input).filter((m) => m.provider === provider);
 }
 
+/** Models offered for new work that can do a task and read `input`: a model replaced by a newer
+ * one or retired is not offered, though a set-up that names it keeps it. */
 function forTask(catalog: Catalog, rule: TaskRules, input?: string): ModelInfo[] {
 	return catalog.models.filter(
-		(m) => doesTask(rule, m) && (input === undefined || m.inputs.includes(input))
+		(m) => offered(rule.models, m) && (input === undefined || m.inputs.includes(input))
 	);
 }
 
+/** The models the picker lists for a set-up: those offered, and the one it names when that one
+ * was replaced or retired, so a pipeline or comparison that names it shows it as it is. */
+export function pickerModels(
+	catalog: Catalog,
+	rule: TaskRules,
+	d: Draft,
+	input?: string
+): ModelInfo[] {
+	const models = modelsFor(catalog, rule, d.provider, input);
+	const chosen = modelInfo(catalog, d);
+	return chosen && !models.includes(chosen) && doesTask(rule, chosen)
+		? [...models, chosen]
+		: models;
+}
+
+/** A model replaced by a newer one or retired, as New job shows it, with the model offered in
+ * its place. */
+export interface Replaced {
+	model: ModelInfo;
+	retired: boolean;
+	replacement: ModelInfo | undefined;
+}
+
+/** How a model was replaced; nothing for a model still offered or one the rules do not list. */
+export function replacedModel(
+	catalog: Catalog,
+	refs: TaskRules['models'],
+	model: ModelInfo | undefined
+): Replaced | undefined {
+	const ref = model && refOf(refs, model);
+	if (!model || !ref || (ref.replaced_by === undefined && ref.retired !== true)) return undefined;
+	const replacement = catalog.models.find(
+		(m) => m.provider === model.provider && m.id === ref.replaced_by
+	);
+	return { model, retired: ref.retired === true, replacement };
+}
+
+/** The catalogue's entry for a model, by its id or by an id the catalogue once gave it. */
+export function findModel(catalog: Catalog, provider: string, id: string): ModelInfo | undefined {
+	const of = (id: string) => catalog.models.find((m) => m.provider === provider && m.id === id);
+	const alias = catalog.aliases?.find((a) => a.provider === provider && a.id === id);
+	return of(id) ?? (alias ? of(alias.model) : undefined);
+}
+
+/** A model's id as the catalogue writes it now; an id it does not know, as it is. */
+export function canonicalId(catalog: Catalog, provider: string, id: string): string {
+	return findModel(catalog, provider, id)?.id ?? id;
+}
+
 export function modelInfo(catalog: Catalog, d: Draft): ModelInfo | undefined {
-	return catalog.models.find((m) => m.provider === d.provider && m.id === d.model);
+	return findModel(catalog, d.provider, d.model);
 }
 
 /** Whether a transcription model takes a list of names and words to spell (Whisper). */
@@ -307,7 +373,7 @@ export function toRequest(catalog: Catalog, task: Task, d: Draft): SetupRequest 
 
 /** The draft's merge model, for the catalogue's name. */
 export function mergeInfo(catalog: Catalog, d: Draft): ModelInfo | undefined {
-	return catalog.models.find((m) => m.provider === d.mergeProvider && m.id === d.mergeModel);
+	return findModel(catalog, d.mergeProvider, d.mergeModel);
 }
 
 export function warningText(w: InputWarning, m: Messages): string {
@@ -508,11 +574,14 @@ export function followingAnalysis(
 	};
 }
 
-/** A saved pipeline's set-ups as the form edits them. */
-export function draftsOf(p: Pipeline): Draft[] {
+/** A saved pipeline's set-ups as the form edits them, each model under the id the catalogue
+ * writes now (a model replaced by a newer one is kept: New job offers its replacement). */
+export function draftsOf(p: Pipeline, catalog?: Catalog): Draft[] {
+	const id = (provider: string, model: string) =>
+		catalog ? canonicalId(catalog, provider, model) : model;
 	return p.setups.map((s) => ({
 		provider: s.provider,
-		model: s.model,
+		model: id(s.provider, s.model),
 		presetId: s.preset_id,
 		label: s.label ?? '',
 		diarize: s.options.diarize,
@@ -521,7 +590,7 @@ export function draftsOf(p: Pipeline): Draft[] {
 		vocabulary: s.options.vocabulary ?? '',
 		translate: s.options.translate ?? false,
 		mergeProvider: s.merge?.provider ?? s.provider,
-		mergeModel: s.merge?.model ?? s.model
+		mergeModel: id(s.merge?.provider ?? s.provider, s.merge?.model ?? s.model)
 	}));
 }
 

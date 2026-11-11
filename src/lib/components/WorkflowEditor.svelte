@@ -14,7 +14,7 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { describeError } from '#lib/errors.js';
-	import { acceptsPrompt, MODES, rulesFor, taskOf } from '#lib/newJob.js';
+	import { acceptsPrompt, findModel, MODES, rulesFor, taskOf } from '#lib/newJob.js';
 	import { messages } from '#lib/i18n/index.js';
 	import {
 		app,
@@ -74,7 +74,7 @@
 	const dirty = $derived(JSON.stringify(workflow) !== saved);
 	const catalog = $derived(app.catalog!);
 	const modelName = (provider: string, model: string) =>
-		catalog.models.find((x) => x.provider === provider && x.id === model)?.name ?? model;
+		findModel(catalog, provider, model)?.name ?? model;
 
 	/** The tasks, in New job's order. */
 	const tasks: Task[] = [...new Set(MODES.map(taskOf))];

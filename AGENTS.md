@@ -62,7 +62,7 @@ depends on one it may not; a new crate goes into both.
 | Crate | Responsibility | May depend on |
 | --- | --- | --- |
 | `core` | Domain types (job, source file, piece, result, provenance, task, language), the traits below, errors, and the shared readings of stored results (a document's results, corrected text, speakers' names). No I/O. | nothing internal |
-| `catalog` | Model catalogue: loading, refreshing, capability queries (tasks, inputs, languages, limits, prices). | `core` |
+| `catalog` | Model catalogue: loading, refreshing, capability queries (tasks, inputs, languages, limits, prices), and each model's line: the successor its provider names, retired models, ids once used (aliases). | `core` |
 | `prompts` | Default and user presets, variables, import/export; saved pipelines, workflow definitions and export profiles. | `core` |
 | `media` | Conversion and splitting: PDF pages cut with lopdf and drawn with hayro, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
@@ -100,8 +100,9 @@ Key traits, defined in `core`:
 Rules that keep this modular:
 
 - **Adding a provider, model, export format or prompt preset is local.** A new provider is a
-  new module plus one registration line; a new model is a catalogue entry; a new format is a new
-  exporter. If it needs edits in several crates, the design is wrong: fix the design first.
+  new module plus one registration line; a new model is a catalogue entry (and, when its provider
+  names it the replacement of an older one, a `successor` on that one, never its removal); a new
+  format is a new exporter. If it needs edits in several crates, the design is wrong: fix the design first.
 - **What differs between operating systems lives in one place per layer.** In the shell,
   `src-tauri/src/platform/`, one file per system with the same items; in the interface,
   `src/lib/platform.ts`; in Tauri's configuration, `tauri.<system>.conf.json`. The crates below

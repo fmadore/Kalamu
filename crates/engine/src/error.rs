@@ -22,6 +22,9 @@ pub enum EngineError {
     NotReady(ProviderError),
     #[error("{0} cannot do this task")]
     UnsupportedModel(String),
+    /// A model its provider no longer serves, named by an older pipeline or comparison.
+    #[error("{0} is no longer served by its provider; choose the model that replaces it")]
+    RetiredModel(String),
     /// A source of a kind the task does not read.
     #[error("{0} cannot be read for this task")]
     UnsupportedSource(String),
@@ -71,6 +74,7 @@ impl EngineError {
             Self::MissingKey(_) => "provider.missing_key",
             Self::NotReady(e) => e.code(),
             Self::UnsupportedModel(_) => "provider.unsupported",
+            Self::RetiredModel(_) => "provider.retired",
             Self::UnsupportedSource(_) => "source.unsupported",
             Self::AlreadyRunning => "job.running",
             Self::EmptyJob => "job.empty",

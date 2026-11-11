@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-07",
+  "updated": "2026-11-11",
   "latest_version": "1.5.0",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
@@ -260,9 +260,9 @@
     },
     {
       "provider": "gemini",
-      "id": "gemini-4-argon",
-      "name": "Gemini 4 Argon",
-      "description": "Google's new flagship (October 2026), for the hardest handwriting, degraded scans and long documents.",
+      "id": "gemini-4-carbon",
+      "name": "Gemini 4 Carbon",
+      "description": "Google's strongest model (November 2026), for the hardest handwriting, degraded scans and long documents.",
       "tasks": [
         "text_extraction",
         "audio_transcription",
@@ -311,7 +311,64 @@
       },
       "translations": {
         "fr": {
-          "description": "Le nouveau modèle phare de Google (octobre 2026), pour les écritures les plus difficiles, les numérisations abîmées et les longs documents."
+          "description": "Le modèle le plus puissant de Google (novembre 2026), pour les écritures les plus difficiles, les numérisations abîmées et les longs documents."
+        }
+      }
+    },
+    {
+      "provider": "gemini",
+      "id": "gemini-4-argon",
+      "name": "Gemini 4 Argon",
+      "description": "Google's efficient Gemini 4 model (October 2026): at Carbon's price, it answers faster and thinks with fewer tokens, so each page costs less.",
+      "tasks": [
+        "text_extraction",
+        "audio_transcription",
+        "analysis"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/flac",
+        "audio/ogg",
+        "audio/aac",
+        "audio/webm",
+        "video/x-youtube",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "costly": true,
+      "pricing": {
+        "input_per_mtok": 2.0,
+        "output_per_mtok": 10.0,
+        "note": "Introductory price until 2026-11-30, then $4 / $20.",
+        "cached_input_per_mtok": 0.1,
+        "batch_discount": 0.5
+      },
+      "limits": {
+        "max_request_mb": 18,
+        "max_output_tokens": 65536
+      },
+      "reasoning": {
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle Gemini 4 efficace de Google (octobre 2026) : au prix de Carbon, il répond plus vite et réfléchit avec moins de jetons, si bien que chaque page coûte moins cher."
         }
       }
     },
@@ -681,8 +738,8 @@
     },
     {
       "provider": "anthropic",
-      "id": "claude-fable-5-1",
-      "name": "Claude Fable 5.1",
+      "id": "claude-fable-5-2",
+      "name": "Claude Fable 5.2",
       "description": "Anthropic's most capable model, at twice Opus's price; for the hardest manuscripts and long reports.",
       "tasks": [
         "text_extraction",
@@ -697,6 +754,56 @@
       ],
       "languages": "any",
       "status": "stable",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "costly": true,
+      "pricing": {
+        "input_per_mtok": 8.0,
+        "output_per_mtok": 40.0,
+        "cached_input_per_mtok": 0.2,
+        "cache_write_per_mtok": 10.0,
+        "batch_discount": 0.5
+      },
+      "limits": {
+        "max_request_mb": 32,
+        "max_pages": 600,
+        "max_output_tokens": 128000
+      },
+      "reasoning": {
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle le plus puissant d’Anthropic, deux fois plus cher qu’Opus ; pour les manuscrits les plus difficiles et les longs rapports."
+        }
+      }
+    },
+    {
+      "provider": "anthropic",
+      "id": "claude-fable-5-1",
+      "name": "Claude Fable 5.1",
+      "description": "The previous Fable: Claude Fable 5.2 replaces it at a lower price. Anthropic still serves it.",
+      "tasks": [
+        "text_extraction",
+        "analysis"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "successor": "claude-fable-5-2",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -724,7 +831,7 @@
       },
       "translations": {
         "fr": {
-          "description": "Le modèle le plus puissant d’Anthropic, deux fois plus cher qu’Opus ; pour les manuscrits les plus difficiles et les longs rapports."
+          "description": "Le Fable précédent : Claude Fable 5.2 le remplace pour moins cher. Anthropic le sert toujours."
         }
       }
     },
@@ -990,9 +1097,9 @@
     },
     {
       "provider": "mistral",
-      "id": "mistral-medium-3-5",
-      "name": "Mistral Medium 3.5",
-      "description": "Mistral's main chat model, for analyses of reports, articles and transcripts.",
+      "id": "mistral-large-4-0",
+      "name": "Mistral Large 4",
+      "description": "Mistral's flagship (November 2026), for analyses of reports, articles and transcripts; reads up to a million tokens at once.",
       "tasks": [
         "analysis"
       ],
@@ -1009,47 +1116,6 @@
       "provider_default_for": [
         "analysis"
       ],
-      "pricing": {
-        "input_per_mtok": 1.5,
-        "output_per_mtok": 7.5,
-        "cached_input_per_mtok": 0.15,
-        "batch_discount": 0.5
-      },
-      "limits": {
-        "max_request_mb": 50,
-        "max_pages": 1000
-      },
-      "reasoning": {
-        "levels": [
-          "none",
-          "high"
-        ]
-      },
-      "translations": {
-        "fr": {
-          "description": "Le modèle de conversation principal de Mistral, pour analyser rapports, articles et transcriptions."
-        }
-      }
-    },
-    {
-      "provider": "mistral",
-      "id": "mistral-large-4-0",
-      "name": "Mistral Large 4",
-      "description": "Mistral's new flagship (October 2026), still in preview; reads up to a million tokens at once and costs less than Medium 3.5.",
-      "tasks": [
-        "analysis"
-      ],
-      "inputs": [
-        "text/plain",
-        "application/pdf",
-        "image/png",
-        "image/jpeg",
-        "image/webp"
-      ],
-      "languages": "any",
-      "status": "preview",
-      "recommended_for": [],
-      "provider_default_for": [],
       "pricing": {
         "input_per_mtok": 0.7,
         "output_per_mtok": 2.1,
@@ -1069,7 +1135,49 @@
       },
       "translations": {
         "fr": {
-          "description": "Le nouveau modèle phare de Mistral (octobre 2026), encore en préversion ; lit jusqu’à un million de jetons d’un coup et coûte moins que Medium 3.5."
+          "description": "Le modèle phare de Mistral (novembre 2026), pour analyser rapports, articles et transcriptions ; lit jusqu’à un million de jetons d’un coup."
+        }
+      }
+    },
+    {
+      "provider": "mistral",
+      "id": "mistral-medium-3-5",
+      "name": "Mistral Medium 3.5",
+      "description": "Replaced by Mistral Large 4, which costs less; Mistral stops serving it on 2027-04-30.",
+      "tasks": [
+        "analysis"
+      ],
+      "inputs": [
+        "text/plain",
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
+      "languages": "any",
+      "status": "deprecated",
+      "successor": "mistral-large-4-0",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 1.5,
+        "output_per_mtok": 7.5,
+        "cached_input_per_mtok": 0.15,
+        "batch_discount": 0.5
+      },
+      "limits": {
+        "max_request_mb": 50,
+        "max_pages": 1000
+      },
+      "reasoning": {
+        "levels": [
+          "none",
+          "high"
+        ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Remplacé par Mistral Large 4, moins cher ; Mistral cesse de le servir le 30 avril 2027."
         }
       }
     },
@@ -1697,6 +1805,13 @@
           "description": "Hors ligne. Le plus petit des Gemma, pour les ordinateurs qui ont moins de mémoire : plus rapide que E4B, et nettement moins bon. Comme tout modèle de langue, il peut oublier ou inventer des noms et des faits, et il est bien moins bon que les modèles en ligne : ses réponses sont plus pauvres et il suit moins bien les longues consignes, alors vérifiez-les. Lit des textes d’environ 11 000 mots au plus, et des pages photographiées ; un PDF s’analyse une fois son texte extrait. Lent sur le processeur d’un PC, jusqu’à plusieurs minutes pour un long texte, et plusieurs fois plus rapide sur un processeur graphique : celui d’un Mac, ou celui d’un PC quand Kalamu en trouve un qu’il peut utiliser ; s’il a peu de mémoire propre, il prend une partie du modèle. Au mieux dans les langues très parlées. Demande environ 5 Go de mémoire libre. Téléchargement de 4,3 Go."
         }
       }
+    }
+  ],
+  "aliases": [
+    {
+      "provider": "mistral",
+      "id": "deepseek-v4p1-flash-1017",
+      "model": "deepseek-v4-1-flash-1017"
     }
   ],
   "languages": [

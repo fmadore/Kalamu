@@ -73,7 +73,19 @@ costly: boolean,
  * Sonnet have and Haiku has not). Absent, as in catalogues written before it, means no:
  * this build never reads a catalogue older than the one it ships with ([`Catalog::newest`]).
  */
-refusal_fallback?: boolean, pricing: Pricing, limits: Limits, 
+refusal_fallback?: boolean, 
+/**
+ * The model its provider names as this one's replacement, from the same provider. A model
+ * with one is no longer offered for new work, but whatever names it (a pipeline, a job, a
+ * comparison) still finds its name, prices and settings, and runs it while the provider
+ * serves it. Older builds ignore the field and keep offering the model.
+ */
+successor?: string, 
+/**
+ * Its provider no longer serves it: kept so that old jobs and pipelines still read, never
+ * sent.
+ */
+retired?: boolean, pricing: Pricing, limits: Limits, 
 /**
  * The thinking levels it accepts; `None` for a model that does not reason (an OCR or a
  * speech-to-text model).

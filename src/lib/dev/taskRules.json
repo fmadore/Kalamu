@@ -25,6 +25,13 @@
       },
       {
         "provider": "gemini",
+        "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
         "model": "gemini-4-argon",
         "suggested_reasoning": "low",
         "recommended": false,
@@ -74,10 +81,18 @@
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1",
+        "model": "claude-fable-5-2",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "claude-fable-5-2"
       },
       {
         "provider": "anthropic",
@@ -157,6 +172,13 @@
       },
       {
         "provider": "gemini",
+        "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
         "model": "gemini-4-argon",
         "suggested_reasoning": "low",
         "recommended": false,
@@ -206,10 +228,18 @@
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1",
+        "model": "claude-fable-5-2",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "claude-fable-5-2"
       },
       {
         "provider": "anthropic",
@@ -234,17 +264,18 @@
       },
       {
         "provider": "mistral",
-        "model": "mistral-medium-3-5",
-        "suggested_reasoning": "none",
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
       },
       {
         "provider": "mistral",
-        "model": "mistral-large-4-0",
-        "suggested_reasoning": "low",
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "mistral-large-4-0"
       },
       {
         "provider": "mistral",
@@ -320,6 +351,13 @@
       },
       {
         "provider": "gemini",
+        "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
         "model": "gemini-4-argon",
         "suggested_reasoning": "low",
         "recommended": false,
@@ -369,10 +407,18 @@
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1",
+        "model": "claude-fable-5-2",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "claude-fable-5-2"
       },
       {
         "provider": "anthropic",
@@ -397,17 +443,18 @@
       },
       {
         "provider": "mistral",
-        "model": "mistral-medium-3-5",
-        "suggested_reasoning": "none",
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
       },
       {
         "provider": "mistral",
-        "model": "mistral-large-4-0",
-        "suggested_reasoning": "low",
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "mistral-large-4-0"
       },
       {
         "provider": "mistral",
@@ -482,6 +529,13 @@
       },
       {
         "provider": "gemini",
+        "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
         "model": "gemini-4-argon",
         "suggested_reasoning": "low",
         "recommended": false,
@@ -531,10 +585,18 @@
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1",
+        "model": "claude-fable-5-2",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "claude-fable-5-2"
       },
       {
         "provider": "anthropic",
@@ -559,17 +621,18 @@
       },
       {
         "provider": "mistral",
-        "model": "mistral-medium-3-5",
-        "suggested_reasoning": "none",
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
       },
       {
         "provider": "mistral",
-        "model": "mistral-large-4-0",
-        "suggested_reasoning": "low",
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "mistral-large-4-0"
       },
       {
         "provider": "mistral",
@@ -608,6 +671,13 @@
       },
       {
         "provider": "gemini",
+        "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
         "model": "gemini-4-argon",
         "suggested_reasoning": "low",
         "recommended": false,
@@ -657,10 +727,18 @@
       },
       {
         "provider": "anthropic",
-        "model": "claude-fable-5-1",
+        "model": "claude-fable-5-2",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-fable-5-1",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "claude-fable-5-2"
       },
       {
         "provider": "anthropic",
@@ -685,17 +763,18 @@
       },
       {
         "provider": "mistral",
-        "model": "mistral-medium-3-5",
-        "suggested_reasoning": "none",
+        "model": "mistral-large-4-0",
+        "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
       },
       {
         "provider": "mistral",
-        "model": "mistral-large-4-0",
-        "suggested_reasoning": "low",
+        "model": "mistral-medium-3-5",
+        "suggested_reasoning": "none",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "mistral-large-4-0"
       },
       {
         "provider": "mistral",
@@ -775,6 +854,13 @@
         "model": "gemini-3.5-transcribe",
         "recommended": false,
         "provider_default": true
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
       },
       {
         "provider": "gemini",

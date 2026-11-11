@@ -23,7 +23,10 @@ import {
 	mergeModelsFor,
 	modelInfo,
 	modelsFor,
+	mergePickerModels,
 	nameOfFile,
+	pickerModels,
+	replacedModel,
 	newDraft,
 	pagesPerCallOf,
 	providerDefault,
@@ -74,6 +77,64 @@ describe('new job form', () => {
 			`${first.provider}/${first.model}`
 		]);
 		expect(`${second.provider}/${second.model}`).not.toBe(`${first.provider}/${first.model}`);
+	});
+
+	it('offers only the newest model of each line, and keeps an older one a set-up names', () => {
+		const analysis = rule('analysis');
+		const claude = modelsFor(catalog, analysis, 'anthropic').map((m) => m.id);
+		expect(claude).toContain('claude-fable-5-2');
+		expect(claude).not.toContain('claude-fable-5-1');
+		// Argon and Carbon are two lines of Gemini 4, both offered.
+		const gemini = modelsFor(catalog, analysis, 'gemini').map((m) => m.id);
+		expect(gemini).toEqual(expect.arrayContaining(['gemini-4-carbon', 'gemini-4-argon']));
+		expect(providerDefault(catalog, analysis, 'mistral')).toBe('mistral-large-4-0');
+		// No new set-up is given a replaced model, even when nothing else is left.
+		const used = catalog.models.map((m) => `${m.provider}/${m.id}`);
+		const d = newDraft(catalog, analysis, null, (p) => p === 'anthropic', used.slice(0, -1));
+		expect(d.model).not.toBe('claude-fable-5-1');
+
+		// A pipeline saved with Fable 5.1 shows it, marked, with Fable 5.2 to switch to.
+		const old = {
+			...newDraft(catalog, analysis, null, () => true),
+			provider: 'anthropic',
+			model: 'claude-fable-5-1'
+		};
+		const listed = pickerModels(catalog, analysis, old).map((m) => m.id);
+		expect(listed).toContain('claude-fable-5-1');
+		const replaced = replacedModel(catalog, analysis.models, modelInfo(catalog, old));
+		expect(replaced?.model.name).toBe('Claude Fable 5.1');
+		expect(replaced?.retired).toBe(false);
+		expect(replaced?.replacement?.id).toBe('claude-fable-5-2');
+		expect(
+			replacedModel(
+				catalog,
+				analysis.models,
+				modelInfo(catalog, { ...old, model: 'claude-fable-5-2' })
+			)
+		).toBeUndefined();
+		// The model that combines a table of contents' pages is kept the same way.
+		const contents = rule('contents');
+		const merge = { ...old, mergeProvider: 'mistral', mergeModel: 'mistral-medium-3-5' };
+		expect(mergeModelsFor(catalog, contents, 'mistral').map((m) => m.id)).not.toContain(
+			'mistral-medium-3-5'
+		);
+		expect(mergePickerModels(catalog, contents, merge).map((m) => m.id)).toContain(
+			'mistral-medium-3-5'
+		);
+	});
+
+	it('reads a model under an id the catalogue once gave it', () => {
+		const saved = {
+			setups: [
+				{ provider: 'mistral', model: 'deepseek-v4p1-flash-1017', preset_id: null, options: {} }
+			]
+		} as unknown as Parameters<typeof draftsOf>[0];
+		const [d] = draftsOf(saved, catalog);
+		expect(d.model).toBe('deepseek-v4-1-flash-1017');
+		expect(d.mergeModel).toBe('deepseek-v4-1-flash-1017');
+		expect(modelInfo(catalog, { ...d, model: 'deepseek-v4p1-flash-1017' })?.name).toBe(
+			'DeepSeek V4.1 Flash'
+		);
 	});
 
 	it('sends no prompt to models that take none', () => {

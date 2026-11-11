@@ -17,4 +17,13 @@ recommended: boolean,
 /**
  * Its provider's choice for the task, offered when the researcher picks that provider.
  */
-provider_default: boolean, };
+provider_default: boolean, 
+/**
+ * For a model replaced by a newer one or retired, the model offered in its place: New job
+ * offers it only to a set-up that already names it, beside a button for its replacement.
+ */
+replaced_by?: string, 
+/**
+ * Its provider no longer serves it: a job naming it is refused before anything is sent.
+ */
+retired?: boolean, };

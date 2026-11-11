@@ -1000,6 +1000,11 @@ export const en = {
 		noSpeakers: 'This model cannot label speakers',
 		costly:
 			'Very expensive, and most likely more than this task needs: the recommended models read print, handwriting and speech almost as well for a fraction of the cost. Try a sample first.',
+		modelReplaced: (model: string, next: string) =>
+			`${next} replaces ${model}. This set-up keeps ${model} while its provider serves it, so its results stay comparable with earlier ones.`,
+		modelRetired: (model: string) =>
+			`Its provider no longer serves ${model}: choose another model to start the job.`,
+		useModel: (model: string) => `Use ${model}`,
 		notDownloaded: 'This offline model has not been downloaded yet.',
 		openSettings: 'Download in Settings',
 		timestamps: 'Timestamps',
@@ -1897,6 +1902,10 @@ export const en = {
 		unknown: 'Not known',
 		preview: 'preview',
 		retiring: 'retiring',
+		/** A model a newer one replaces, kept for set-ups that name it. */
+		replaced: 'replaced',
+		/** A model its provider no longer serves. */
+		retired: 'no longer served',
 		opensInBrowser: ' (opens in your browser)',
 		/** An exported record's Markdown, written under another name than the JSON's. */
 		markdownBeside: (name: string) =>
@@ -1987,6 +1996,8 @@ export const en = {
 		'provider.consent':
 			'Kalamu has not been allowed to send your files to this provider. Start again and choose Send when asked.',
 		'provider.unsupported': 'This model cannot do this task.',
+		'provider.retired':
+			'Its provider no longer serves this model. Choose the model that replaces it in New job.',
 		'source.unsupported':
 			'One of the files cannot be read for this task. Remove it, or choose another task.',
 		'provider.auth': 'The provider rejected the API key. Check it in Settings.',
