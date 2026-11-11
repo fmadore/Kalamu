@@ -30,7 +30,7 @@ import {
 	audioPieces,
 	audioSetup,
 	job,
-	listedBefore,
+	renameListed,
 	nameSpeakers,
 	pieces,
 	recording,
@@ -371,7 +371,18 @@ function wordDiff(left: string, right: string): { kind: string; text: string }[]
 	return out;
 }
 
-/** The screen to open on, from `?mock&view=…`, for screenshots of each screen. */
+/** Keeps a correction on its sample piece, as the store keeps it, so the review shows it again
+ * when it reads the pieces anew. */
+function keepCorrection(c: Correction): void {
+	const piece = [...pieces, ...analysisPieces, ...contentsPieces, ...correctionPieces].find(
+		(p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index
+	);
+	if (!piece) return;
+	piece.corrected_text = c.text;
+	piece.corrected_fields = c.fields ?? null;
+	piece.reviewed = c.reviewed;
+}
+
 /** Error rates against reviewed pages: the comparison and the interviews have some. */
 function mockScores(jobId: string) {
 	if (jobId === job.id) {
@@ -415,6 +426,7 @@ export function mockDragging(): boolean {
 	return new URLSearchParams(location.search).has('dragging');
 }
 
+/** The screen to open on, from `?mock&view=…`, for screenshots of each screen. */
 export function mockView(): View | null {
 	switch (new URLSearchParams(location.search).get('view') ?? '') {
 		case 'all-jobs':
@@ -875,24 +887,15 @@ export function installMock(): void {
 					'C:\\Archives\\Bulletin\\bulletin-1957-06.pdf',
 					'C:\\Archives\\Letters\\lettre-gouverneur.jpg'
 				];
-			case 'save_correction': {
-				// Kept on the sample piece, as the store keeps it, so the review shows the
-				// correction again when it reads the pieces anew.
-				const c = a.correction as Correction;
-				const piece = [...pieces, ...analysisPieces, ...contentsPieces, ...correctionPieces].find(
-					(p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index
-				);
-				if (piece) {
-					piece.corrected_text = c.text;
-					piece.corrected_fields = c.fields ?? null;
-					piece.reviewed = c.reviewed;
-				}
+			case 'save_correction':
+				keepCorrection(a.correction as Correction);
 				return null;
-			}
 			case 'save_corrections':
+				// One transaction in the store; here, each kept in turn.
+				for (const c of a.corrections as Correction[]) keepCorrection(c);
 				return null;
 			case 'rename_listed':
-				return listedBefore(a);
+				return renameListed(a);
 			case 'job_text_outputs':
 			case 'export_source':
 				return [];

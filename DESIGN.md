@@ -385,7 +385,7 @@ Spacing follows a 4px-based scale (0.25, 0.5, 0.75, 1, 1.5, 2, 3rem). Controls a
 - **1100px and narrower**: New job's summary leaves the side and becomes a sticky footer with the figure and Start, lifted by a soft upward shadow.
 - **1000px and narrower**: every review stacks the source above the text (source 16rem to 42vh), and the compared text below both; the splitters hide. In a short window the source gives way first and the text keeps at least 16rem; when even that does not fit, the work area scrolls above the page strip. Prompts stacks its list above the editor.
 - **820px and narrower**: masthead and sheet padding tighten to 1rem; the review tally hides.
-- **760px and narrower**: the sidebar sits above the work, folded to one row whatever was chosen in a wide window (its button or Ctrl B unfolds it to a scrolling column of at most 38vh); joined choice strips become one column.
+- **760px and narrower**: the sidebar sits above the work, folded to one row whatever was chosen in a wide window (its button or Ctrl B unfolds it to a scrolling column of at most 38vh); joined choice strips become one column. Checked down to 640 × 560, with nothing scrolling sideways.
 - **1680px and wider**: reading text rises to 1.3125rem.
 
 At no width does a view scroll sideways: grids, tables, rows and diagrams fit the width there is.
@@ -465,12 +465,12 @@ Numbered steps with mono numbers in the margin; joined choice strips for task an
 Under the task strip, **How it works** sits on surface-quiet with 10px corners: the task's three or four steps in a row, each a small drawing over a caption, joined by Lucide chevrons (two a row, without chevrons, in a narrow form). The drawings use the interface's own marks: white sheets with line-strong hairlines, line-hover strokes for text, the highlighter on names an analysis finds (with ink on it), the speaker colours in a transcript, ink for a progress sweep; file names, page numbers and lengths in mono. It plays once, about 2.5 s, when a task is picked or Play again is pressed; its resting styles are the last frame, so reduced motion shows it whole.
 
 ### Toast
-A message about what was just done, on ink with the flyout shadow, bottom right. A confirmation stays four seconds and is read out politely. A failure is read out at once and stays until it is put away with its close button or Escape: the same ink, marked by a 6px on-ink-danger dot before the words, never a red fill. Both speak through live regions that are always there, empty, so the words put in are read in every webview. A confirmation of a removal that can be taken back (a name from an analysis's answers, documents from a collection) ends in a small ghost button, *Undo*, on-ink with a 14% on-ink hover and an on-ink focus ring, reachable by Tab; it then stays eight seconds, and the focus comes back to the name put back.
+A message about what was just done, on ink with the flyout shadow, bottom right. A confirmation stays four seconds and is read out politely. A failure is read out at once and stays until it is put away with its close button or Escape, the focus then going back to where it was before it went to the message: the same ink, marked by a 6px on-ink-danger dot before the words, never a red fill. Both speak through live regions that are always there, empty, so the words put in are read in every webview. A confirmation of a removal that can be taken back (a name from an analysis's answers, documents from a collection) ends in a small ghost button, *Undo*, on-ink with a 14% on-ink hover and an on-ink focus ring, reachable by Tab; it then stays eight seconds, and the focus comes back to the name put back.
 
 ### Notices
 A full-width banner or inline notice in warn-text on the warn wash (7px corners inline), stating what happened and what to do. File problems hang under their file in the same treatment, danger-tinted when a file cannot be used.
 
-A newer release is not a warning: it is a quiet line in caption type and muted text at the sidebar's foot, under the offline line, with its link and a small ghost close button that hides it until the next version; Settings › About says it too, without the button. Store copies never show it.
+A newer release is not a warning: it is a quiet line in caption type and muted text at the sidebar's foot, under the offline line, with its link and a small ghost close button that hides it until the next version, the focus then going to Glossary above it; Settings › About says it too, without the button. Store copies never show it.
 
 ## Do's and Don'ts
 

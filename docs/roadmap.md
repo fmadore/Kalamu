@@ -412,8 +412,12 @@ In this order. Work that keeps what has shipped sound comes before new features.
      ([#143](https://github.com/fmadore/Kalamu/issues/143)); and the installer's and disk
      image's copies told of a newer release from the model list. The
      [fourth round](decisions/2026-11-10-fourth-round.md) moved the tray, the taskbar and the
-     notification to the shell, which follows the engine's own events. Left: all of it tried on
-     a real Windows PC and Mac, with the window hidden for a whole job.
+     notification to the shell, which follows the engine's own events. The
+     [fifth round](decisions/2026-11-11-fifth-round.md) weighed Tauri's signed updater and left
+     it (a new request at each launch, a signing secret, and nothing the Store copies may use).
+     Left: a message for a launch that fails before setup (a webview that cannot be made), the
+     symbols of `panic.log` on a Mac, and all of it tried on a real Windows PC and Mac, with the
+     window hidden for a whole job.
    - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)). Done
      ([decision](decisions/2026-11-10-offline-robustness.md)), built and tested on Linux: llama.cpp's
      runs on `media`'s stoppable runner, ended after ten minutes of silence, its version bounded;
@@ -465,8 +469,15 @@ In this order. Work that keeps what has shipped sound comes before new features.
      ([decision](decisions/2026-11-10-fourth-round.md)): a recording's transcript shown once,
      the passage heard marked in it and kept in view; the marks of a project's Results column
      reached from the keyboard; several jobs linked or deleted, and a name renamed across
-     set-ups, each in one command and one transaction. Left: all of it tried in WebKit on a
-     Mac and with a screen reader.
+     set-ups, each in one command and one transaction. A
+     [fifth round](decisions/2026-11-11-fifth-round.md) checked every bullet of both issues
+     against the code and found them done; their acceptance is now proved with the keyboard in
+     Chromium and WebKit (a text page reviewed through its readings, an analysis's names renamed
+     and removed, a failure that stays, Back to where a review was opened from, Ctrl F, the
+     remembered choices, a window of 640 × 560), and the focus no longer falls to nothing when
+     a failure is dismissed or the release line hidden. Left: all of it tried in WebKit on a
+     Mac, where Tab skips buttons unless the system's keyboard navigation is on, and with a
+     screen reader.
    - CSV cells that begin with `=`, `+`, `-` or `@` (a telephone number, a list item) were read
      as formulas by a spreadsheet. Done ([decision](decisions/2026-11-10-fourth-round.md)): they
      are written with an apostrophe before them, numbers excepted, in every table but an export
