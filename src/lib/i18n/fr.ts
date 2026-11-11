@@ -57,6 +57,11 @@ export const fr: Messages = {
 			description:
 				'Si chaque document présente son sujet de façon positive ou négative, et à quel point il exprime des opinions, avec une justification pour chaque réponse.'
 		},
+		'analysis.image_description': {
+			name: 'Description d’image et mots-clés',
+			description:
+				'Ce que montre chaque photographie, affiche, carte ou autre image, décrit comme dans un catalogue, avec des mots-clés, le texte écrit sur l’image et les noms que ce texte donne.'
+		},
 		'contents.periodical': {
 			name: 'Numéro de journal ou de magazine',
 			description: 'Une entrée par article, avec sa rubrique, ses auteurs, ses pages et un résumé.'

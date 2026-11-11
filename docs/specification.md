@@ -47,7 +47,7 @@ Where Kalamu departs from these projects, the reason is written down in
 | --- | --- | --- |
 | **Extract text** (printed and handwritten) | PDF, JPEG, PNG, TIFF | Text per page, its lines kept as on the page or joined into running text |
 | **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`…, or a public YouTube link | Transcript with optional speakers and timestamps; speakers can be given names |
-| **Analyse texts** | Text, Word, PDF, photographed pages, and the results of earlier jobs | The researcher's own fields for each document: a summary, the people and places it names, its tone… |
+| **Analyse texts** | Text, Word, PDF, photographed pages, photographs and other images, and the results of earlier jobs | The researcher's own fields for each document: a summary, the people and places it names, its tone, what an image shows… |
 | **Detailed table of contents** | A long PDF or multi-page image: a newspaper or magazine issue, an archival file scanned in one piece, a book or report | One entry per article or item, with its title, its pages and the researcher's fields |
 | **Correct existing text** | A PDF's text layer, or a text or Word file from a digital library | The text corrected page by page or passage by passage, its spelling of the time kept |
 
@@ -97,7 +97,12 @@ field has a name, a kind of answer and, in the researcher's words, what belongs 
 Any field can ask for a one-sentence reason. Ready-made analyses cover the common needs (a
 summary with keywords, its first sentence short enough for a catalogue, a social-science publication's
 question, argument, theory, methods, data, case and findings for a literature review, people,
-places and organisations, the tone of a document), and common fields are one click away when building one. The app turns
+places and organisations, the tone of a document, and an image's description, kind, keywords,
+written text and the names that text gives), and common fields are one click away when building
+one. The image description says only what can be seen: people by number, activity and dress,
+never an identity guessed from a face, and no date, place or name the image does not itself
+state ([#168](https://github.com/fmadore/Kalamu/issues/168)). When the sources include images,
+New job offers only models that read images. The app turns
 the fields into each provider's structured output, so the answer always has exactly these
 fields, and checks it again before storing it: an answer that breaks the fields is asked for
 again, never stored empty. Named entity recognition and sentiment analysis are analyses, not

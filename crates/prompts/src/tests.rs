@@ -1,4 +1,4 @@
-use kalamu_core::{LanguageChoice, LanguageCode, LineBreaks};
+use kalamu_core::{FieldKind, LanguageChoice, LanguageCode, LineBreaks};
 
 use super::*;
 
@@ -259,6 +259,60 @@ fn every_analysis_default_has_valid_fields_described_in_its_prompt() {
     let text = tone.map(|s| s.text).unwrap_or_default();
     assert!(text.contains("(`tone`, exactly one of: Positive, Neutral, Negative, Mixed)"));
     assert!(text.contains("in `tone_reason`"));
+}
+
+#[test]
+fn the_image_description_describes_what_is_seen_and_lists_only_written_names()
+-> Result<(), PromptError> {
+    let library = PromptLibrary::in_memory();
+    let preset = library.get("analysis.image_description")?;
+    assert!(preset.builtin && preset.task == Task::Analysis);
+    assert!(
+        library
+            .list(Some(Task::Analysis))
+            .iter()
+            .any(|p| p.id == preset.id)
+    );
+    let french = RenderContext {
+        languages: LanguageChoice::Explicit(vec![LanguageCode::new("fr")]),
+        language_names: vec!["French".into()],
+        answers: true,
+        ..RenderContext::default()
+    };
+    let snapshot = preset.snapshot(&french);
+    assert!(snapshot.text.contains("- Write in French."));
+    assert!(!snapshot.text.contains("{languages}"));
+    assert!(
+        snapshot
+            .text
+            .contains("Never name a person from their face")
+    );
+    assert!(snapshot.text.contains(
+        "(`kind_of_image`, exactly one of: Photograph, Poster or advertisement, Map or plan, \
+         Drawing or painting, Printed page, Manuscript page, Object, Other)"
+    ));
+    assert!(
+        snapshot
+            .text
+            .contains("(`keywords`, a list of names or terms, at most 12")
+    );
+    assert!(snapshot.text.contains("(`text_in_the_image`, text)"));
+    assert!(snapshot.user_prompt.contains("image above"));
+
+    // Its names are lists under the entities preset's labels, so the dictionary gathers both.
+    let schema = snapshot.schema.unwrap_or_default();
+    let lists: Vec<&str> = schema
+        .fields
+        .iter()
+        .filter(|f| matches!(f.kind, FieldKind::List { .. }))
+        .map(|f| f.label.as_str())
+        .collect();
+    assert_eq!(lists, ["Keywords", "People", "Places", "Organisations"]);
+    let entities = library.get("analysis.entities")?.schema.unwrap_or_default();
+    for label in ["People", "Places", "Organisations"] {
+        assert!(entities.fields.iter().any(|f| f.label == label), "{label}");
+    }
+    Ok(())
 }
 
 #[test]

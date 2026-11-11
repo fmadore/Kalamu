@@ -31,6 +31,7 @@ import {
 	pagesPerCallOf,
 	providerDefault,
 	readersOf,
+	readsInput,
 	readsKind,
 	type Rules,
 	rulesFor,
@@ -281,6 +282,35 @@ describe('new job form', () => {
 		expect(providerDefault(catalog, rule('audio_transcription'), 'gemini', input)).toBe(
 			'gemini-3.8-flash'
 		);
+	});
+
+	it('offers images to an analysis only on models that read them', () => {
+		const inspected = (kind: SourceFile['kind']) =>
+			({ path: `a.${kind}`, source: { kind } as SourceFile }) as InspectedFile;
+		const analysis = rule('analysis');
+		const texts = inputOf('analysis', [inspected('text'), inspected('pdf')]);
+		expect(texts).toBeUndefined();
+		expect(modelsFor(catalog, analysis, 'mistral', texts).map((m) => m.id)).toContain(
+			'zai-glm-5-3'
+		);
+		const images = inputOf('analysis', [inspected('text'), inspected('image')]);
+		const mistral = modelsFor(catalog, analysis, 'mistral', images).map((m) => m.id);
+		expect(mistral).toContain('mistral-large-4-0');
+		expect(mistral).not.toContain('zai-glm-5-3');
+		expect(mistral).not.toContain('deepseek-v4-1-flash-1017');
+		// Any image format will do: the engine converts a TIFF into one the model reads.
+		const glm = catalog.models.find((m) => m.id === 'zai-glm-5-3');
+		expect(readsInput(glm, images)).toBe(false);
+		expect(
+			readsInput(
+				modelInfo(
+					catalog,
+					newDraft(catalog, analysis, null, () => true)
+				),
+				images
+			)
+		).toBe(true);
+		expect(inputOf('youtube', [inspected('image')])).toBe(inputOf('youtube'));
 	});
 });
 
