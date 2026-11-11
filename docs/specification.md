@@ -675,8 +675,17 @@ is remembered per task. Details are in [formats.md](formats.md).
   shapes a model's request (whether it takes a prompt, labels speakers, has a server-side
   fallback on a refusal) is a field of its entry, never read from its name, so a new model is
   a new entry ([decision](decisions/2026-11-10-model-abilities.md)).
-- **A recommended model per task**, reviewed whenever a provider releases something better;
-  older models remain selectable and retired ones are flagged.
+- **A recommended model per task**, reviewed whenever a provider releases something better.
+- **Only the newest model of each line is offered.** When a provider names a newer model as the
+  replacement of an older one (Claude Fable 5.2 for 5.1), the older entry stays in the catalogue
+  with a `successor` and is no longer offered for new work; models of separate lines (Gemini 4
+  Carbon and Argon, Claude Opus and Sonnet) are all offered. A pipeline, comparison, workflow or
+  job that names a replaced model keeps it, shows its name, and runs it while its provider
+  serves it, so its results stay comparable; New job marks it and offers its replacement in one
+  click, never switching on its own. A model its provider no longer serves is marked `retired`:
+  a job naming it is refused before anything is sent. No entry is ever removed, and an id the
+  catalogue corrected is kept as an alias of the model's id now
+  ([decision](decisions/2026-11-11-model-successors.md)).
 - **The exact model version is recorded** in `provenance.json`, with the settings each request
   carried (reasoning effort, output limit, media resolution), kept with each result when it
   was sent so that an update of the app never rewrites them.

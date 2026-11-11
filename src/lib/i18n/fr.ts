@@ -1091,6 +1091,11 @@ export const fr: Messages = {
 		noSpeakers: 'Ce modèle ne sait pas identifier les locuteurs',
 		costly:
 			'Très coûteux, et très probablement plus que ce que demande cette tâche : les modèles recommandés lisent l’imprimé, l’écriture manuscrite et la parole presque aussi bien pour une fraction du prix. Faites d’abord un essai sur un échantillon.',
+		modelReplaced: (model: string, next: string) =>
+			`${next} remplace ${model}. Cette configuration garde ${model} tant que son fournisseur le sert, pour que ses résultats restent comparables aux précédents.`,
+		modelRetired: (model: string) =>
+			`Son fournisseur ne sert plus ${model} : choisissez un autre modèle pour lancer le traitement.`,
+		useModel: (model: string) => `Utiliser ${model}`,
 		notDownloaded: 'Ce modèle hors ligne n’a pas encore été téléchargé.',
 		openSettings: 'Le télécharger dans Paramètres',
 		timestamps: 'Horodatage',
@@ -1971,6 +1976,8 @@ export const fr: Messages = {
 		unknown: 'Inconnu',
 		preview: 'préversion',
 		retiring: 'bientôt retiré',
+		replaced: 'remplacé',
+		retired: 'plus servi',
 		opensInBrowser: ' (s’ouvre dans votre navigateur)',
 		/** An exported record's Markdown, written under another name than the JSON's. */
 		markdownBeside: (name: string) =>
@@ -2068,6 +2075,8 @@ export const fr: Messages = {
 		'provider.consent':
 			'Kalamu n’a pas l’autorisation d’envoyer vos fichiers à ce fournisseur. Recommencez et choisissez Envoyer quand la question est posée.',
 		'provider.unsupported': 'Ce modèle ne sait pas effectuer cette tâche.',
+		'provider.retired':
+			'Son fournisseur ne sert plus ce modèle. Choisissez celui qui le remplace dans Nouveau traitement.',
 		'source.unsupported':
 			'L’un des fichiers ne peut pas être lu pour cette tâche. Retirez-le, ou choisissez une autre tâche.',
 		'provider.auth': 'Le fournisseur a refusé la clé d’API. Vérifiez-la dans Paramètres.',

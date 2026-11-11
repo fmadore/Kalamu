@@ -25,6 +25,15 @@ pub struct ModelRef {
     pub recommended: bool,
     /// Its provider's choice for the task, offered when the researcher picks that provider.
     pub provider_default: bool,
+    /// For a model replaced by a newer one or retired, the model offered in its place: New job
+    /// offers it only to a set-up that already names it, beside a button for its replacement.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub replaced_by: Option<String>,
+    /// Its provider no longer serves it: a job naming it is refused before anything is sent.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub retired: bool,
 }
 
 /// What a task takes and gives, for the interface.
@@ -58,6 +67,7 @@ pub struct TaskRules {
 }
 
 fn refs<'a>(
+    catalog: &Catalog,
     task: Task,
     models: impl IntoIterator<Item = &'a kalamu_catalog::ModelInfo>,
 ) -> Vec<ModelRef> {
@@ -69,6 +79,8 @@ fn refs<'a>(
             suggested_reasoning: m.tuning(task, None).reasoning,
             recommended: m.is_recommended_for(task),
             provider_default: m.is_provider_default_for(task),
+            replaced_by: catalog.replacement(m).map(|r| r.id.clone()),
+            retired: m.retired,
         })
         .collect()
 }
@@ -88,9 +100,9 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
             pages_per_call: task.groups_pages(),
             splits_spreads: task.splits_spreads(),
             reads_text_layer: task.reads_text_layer(),
-            models: refs(task, catalog.models_for(task)),
+            models: refs(catalog, task, catalog.models_for(task)),
             merge_models: if task == Task::Contents {
-                refs(task, catalog.merge_models())
+                refs(catalog, task, catalog.merge_models())
             } else {
                 Vec::new()
             },
@@ -120,9 +132,10 @@ impl Engine {
         task_rules(&self.current_catalog())
     }
 
-    /// Refuses a job whose sources the task does not read, or whose models do not do the task
-    /// or read its sources. A model the catalogue does not list is left to its provider, which
-    /// refuses what it cannot take.
+    /// Refuses a job whose sources the task does not read, whose models do not do the task or
+    /// read its sources, or name a model its provider no longer serves. A model the catalogue
+    /// does not list is left to its provider, which refuses what it cannot take; one replaced by
+    /// a newer model still runs, as the pipeline or comparison that named it asked.
     pub(crate) fn check_job(catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
         if let Some(source) = new.sources.iter().find(|s| !new.task.reads_source(s.kind)) {
             return Err(EngineError::UnsupportedSource(source.file_name.clone()));
@@ -132,6 +145,9 @@ impl Engine {
             let Some(model) = catalog.model(&request.provider, &request.model) else {
                 continue;
             };
+            if model.retired {
+                return Err(EngineError::RetiredModel(model.name.clone()));
+            }
             if !model.does(new.task) || (links && !model.inputs.iter().any(|i| i == YOUTUBE_LINK)) {
                 return Err(EngineError::UnsupportedModel(request.model.clone()));
             }
@@ -242,5 +258,67 @@ mod tests {
             ..new
         };
         assert!(Engine::check_job(&catalog, &new).is_ok());
+    }
+
+    fn fable_5_1_job() -> NewJob {
+        NewJob {
+            name: "Test".into(),
+            task: Task::Analysis,
+            sources: Vec::new(),
+            setups: vec![crate::SetupRequest {
+                provider: ProviderId::new("anthropic"),
+                model: "claude-fable-5-1".into(),
+                preset_id: None,
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: Default::default(),
+        }
+    }
+
+    /// A model replaced by a newer one stays in the rules, marked with its replacement, so New
+    /// job can show a pipeline that names it; it still runs.
+    #[test]
+    fn a_replaced_model_is_marked_and_still_runs() {
+        let catalog = Catalog::bundled();
+        let rules = task_rules(&catalog);
+        let analysis = rules.iter().find(|r| r.task == Task::Analysis);
+        let entry = |id: &str| {
+            analysis
+                .and_then(|r| r.models.iter().find(|m| m.model == id))
+                .cloned()
+        };
+        let old = entry("claude-fable-5-1");
+        assert_eq!(
+            old.as_ref().and_then(|m| m.replaced_by.as_deref()),
+            Some("claude-fable-5-2")
+        );
+        assert!(old.is_some_and(|m| !m.retired && !m.recommended && !m.provider_default));
+        assert!(entry("claude-fable-5-2").is_some_and(|m| m.replaced_by.is_none()));
+        assert!(Engine::check_job(&catalog, &fable_5_1_job()).is_ok());
+    }
+
+    /// Once its provider no longer serves it, a job naming it is refused before anything is
+    /// sent, with a message that says a replacement exists.
+    #[test]
+    fn a_retired_model_is_refused() {
+        let mut catalog = Catalog::bundled();
+        for model in catalog.models.iter_mut() {
+            if model.id == "claude-fable-5-1" {
+                model.retired = true;
+            }
+        }
+        assert!(matches!(
+            Engine::check_job(&catalog, &fable_5_1_job()),
+            Err(EngineError::RetiredModel(name)) if name == "Claude Fable 5.1"
+        ));
+        let rules = task_rules(&catalog);
+        let retired = rules
+            .iter()
+            .flat_map(|r| &r.models)
+            .find(|m| m.model == "claude-fable-5-1");
+        assert!(retired.is_some_and(|m| m.retired && m.replaced_by.is_some()));
     }
 }

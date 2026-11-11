@@ -13,8 +13,10 @@ use thiserror::Error;
 use ts_rs::TS;
 
 mod cost;
+mod lineage;
 mod release;
 pub use cost::CostEstimate;
+pub use lineage::ModelAlias;
 pub use release::{Release, Version};
 
 /// The catalogue shipped with this build.
@@ -42,6 +44,11 @@ pub struct Catalog {
     pub latest_version: Option<String>,
     pub providers: Vec<ProviderInfo>,
     pub models: Vec<ModelInfo>,
+    /// Ids the catalogue once gave a model it now lists under another (a corrected spelling),
+    /// so that a pipeline saved with the old one still finds it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<ModelAlias>>")]
+    pub aliases: Vec<ModelAlias>,
     /// Languages offered for models that accept any language, with English names for prompts.
     /// The interface shows names in its own language.
     pub languages: Vec<LanguageInfo>,
@@ -278,6 +285,18 @@ pub struct ModelInfo {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[ts(optional, as = "Option<bool>")]
     pub refusal_fallback: bool,
+    /// The model its provider names as this one's replacement, from the same provider. A model
+    /// with one is no longer offered for new work, but whatever names it (a pipeline, a job, a
+    /// comparison) still finds its name, prices and settings, and runs it while the provider
+    /// serves it. Older builds ignore the field and keep offering the model.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub successor: Option<String>,
+    /// Its provider no longer serves it: kept so that old jobs and pipelines still read, never
+    /// sent.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub retired: bool,
     #[serde(default)]
     pub pricing: Pricing,
     #[serde(default)]
@@ -315,6 +334,11 @@ impl ModelInfo {
             speakers: self.speakers,
             no_prompt: !self.accepts_prompt,
         }
+    }
+
+    /// Whether it is offered for new work: neither replaced by a newer model nor retired.
+    pub fn is_offered(&self) -> bool {
+        self.successor.is_none() && !self.retired
     }
 
     /// Whether this is the app's default for a task; the analysis default serves the tasks made
@@ -373,6 +397,7 @@ impl Catalog {
             latest_version: None,
             providers: Vec::new(),
             models: Vec::new(),
+            aliases: Vec::new(),
             languages: Vec::new(),
         }
     }
@@ -391,14 +416,9 @@ impl Catalog {
         self.providers.iter().find(|p| &p.id == id)
     }
 
-    pub fn model(&self, provider: &ProviderId, id: &str) -> Option<&ModelInfo> {
-        self.models
-            .iter()
-            .find(|m| &m.provider == provider && m.id == id)
-    }
-
-    /// Models that can do a task, in catalogue order (recommended first within a provider). A
-    /// table of contents and a correction are made of analyses, so they take the analysis models
+    /// Models that can do a task, in catalogue order (recommended first within a provider),
+    /// those replaced or retired included: New job offers them only to a set-up that already
+    /// names one. A table of contents and a correction are made of analyses, so they take the analysis models
     /// that read their input: pages, or text.
     pub fn models_for(&self, task: Task) -> Vec<&ModelInfo> {
         self.models.iter().filter(|m| m.does(task)).collect()
@@ -417,6 +437,7 @@ impl Catalog {
         let candidates: Vec<&ModelInfo> = self
             .models_for(task)
             .into_iter()
+            .filter(|m| m.is_offered())
             .filter(|m| available.is_empty() || available.contains(&m.provider))
             .collect();
         candidates

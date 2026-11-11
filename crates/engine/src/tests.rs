@@ -1942,3 +1942,29 @@ async fn a_chosen_format_that_cannot_be_written_is_reported() {
             .is_ok()
     );
 }
+
+/// A pipeline saved with an id the catalogue has since corrected runs the same model, and the
+/// job records and sends the id as it is now.
+#[tokio::test]
+async fn an_old_model_id_is_sent_as_the_catalogue_writes_it_now() {
+    let f = fixture();
+    let mut catalog = f.engine.catalog();
+    let mut model = catalog
+        .models
+        .iter()
+        .find(|m| m.id == "gemini-3.8-flash")
+        .cloned()
+        .unwrap_or_else(|| panic!("a model to copy"));
+    model.provider = ProviderId::new("fake");
+    model.id = "fake-model-1".into();
+    catalog.models.push(model);
+    catalog.aliases.push(kalamu_catalog::ModelAlias {
+        provider: ProviderId::new("fake"),
+        id: "fake-model-one".into(),
+        model: "fake-model-1".into(),
+    });
+    f.engine.set_catalog(catalog);
+    let job = f.new_job(vec![f.pdf("letters.pdf", 1)], &["fake-model-one"]);
+    assert_eq!(job.setups[0].model, "fake-model-1");
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+}

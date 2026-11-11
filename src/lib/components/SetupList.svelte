@@ -14,11 +14,13 @@
 		labelsSpeakers,
 		mergeDefault,
 		mergeInfo,
-		mergeModelsFor,
+		mergePickerModels,
 		mergeProviders,
 		modelInfo,
 		modelsFor,
 		newDraft,
+		pickerModels,
+		replacedModel,
 		providerDefault,
 		suggestedReasoning,
 		rulesFor,
@@ -103,6 +105,7 @@
 	<div class="setups" class:compare={drafts.length > 1}>
 		{#each drafts as d, i (i)}
 			{@const info = modelInfo(catalog, d)}
+			{@const replaced = replacedModel(catalog, rule.models, info)}
 			<div class="setup">
 				{#if drafts.length > 1}
 					<div class="witness">
@@ -129,13 +132,18 @@
 				<label class="field">
 					<span>{m.newJob.model}</span>
 					<select bind:value={d.model}>
-						{#each modelsFor(catalog, rule, d.provider, input) as mod (mod.id)}
+						{#each pickerModels(catalog, rule, d, input) as mod (mod.id)}
+							{@const old = replacedModel(catalog, rule.models, mod)}
 							<option value={mod.id}
-								>{mod.name}{mod.status === 'preview'
-									? ` (${m.common.preview})`
-									: mod.status === 'deprecated'
-										? ` (${m.common.retiring})`
-										: ''}</option
+								>{mod.name}{old?.retired
+									? ` (${m.common.retired})`
+									: old
+										? ` (${m.common.replaced})`
+										: mod.status === 'preview'
+											? ` (${m.common.preview})`
+											: mod.status === 'deprecated'
+												? ` (${m.common.retiring})`
+												: ''}</option
 							>
 						{/each}
 					</select>
@@ -266,7 +274,7 @@
 						<label class="field">
 							<span>{m.newJob.model}</span>
 							<select bind:value={d.mergeModel}>
-								{#each mergeModelsFor(catalog, rule, d.mergeProvider) as mod (mod.id)}
+								{#each mergePickerModels(catalog, rule, d) as mod (mod.id)}
 									<option value={mod.id}>{mod.name}</option>
 								{/each}
 							</select>
@@ -296,6 +304,19 @@
 							>
 						</p>
 					{/if}
+				{/if}
+				{#if replaced}
+					<p class="warning small">
+						{replaced.retired
+							? m.newJob.modelRetired(replaced.model.name)
+							: m.newJob.modelReplaced(replaced.model.name, replaced.replacement?.name ?? '')}
+						{#if replaced.replacement}
+							{@const next = replaced.replacement}
+							<button class="btn sm" onclick={() => (d.model = next.id)}
+								>{m.newJob.useModel(next.name)}</button
+							>
+						{/if}
+					</p>
 				{/if}
 				{#if info?.costly}
 					<p class="warning small">{m.newJob.costly}</p>
