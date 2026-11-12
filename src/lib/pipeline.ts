@@ -117,7 +117,11 @@ export function stagesFor(d: Diagram, m: Messages): Stage[] {
 					note: first?.split_spreads ? m.pipeline.extractSpreads : undefined
 				},
 				{ art: placed ? 'place' : 'read', caption: m.pipeline.extractRead(model), note: placeNote },
-				{ art: 'joined', caption: m.pipeline.extractJoin, note: more },
+				{
+					art: 'joined',
+					caption: first?.pages?.length ? m.pipeline.extractJoinDocument : m.pipeline.extractJoin,
+					note: more
+				},
 				...(placed
 					? [
 							{

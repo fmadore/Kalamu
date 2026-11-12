@@ -111,6 +111,11 @@
 	}
 
 	const lead = $derived(viewFor(setups[0]));
+	/** A PDF whose text layer a correction or a translation read: its page keeps the source
+	 * pane, and the text the model read is one click away, on every page until switched back. */
+	const readText = $derived(source?.kind === 'pdf' && typeof lead?.source_text === 'string');
+	let originalChosen = $state(false);
+	const showOriginal = $derived(readText && originalChosen);
 	const base = $derived(shownText(lead));
 	const corrected = $derived(lead?.corrected_text != null);
 
@@ -601,11 +606,13 @@
 	reviewed={lead && lead.ai_text !== null && !editing ? lead.reviewed : null}
 	onreviewed={toggleReviewed}
 	onstep={step}
-	source={recording ? 'player' : source?.kind === 'text' ? 'text' : 'scan'}
+	source={recording ? 'player' : source?.kind === 'text' || showOriginal ? 'text' : 'scan'}
 	piece={labelOf(lead ?? current[0])}
+	original={current[0]?.original_file ?? null}
 	preview={review.preview}
 	text={lead?.source_text ?? review.text}
 	{player}
+	switchable={readText ? { onswitch: () => (originalChosen = !originalChosen) } : null}
 	witness={{
 		label: setups[0]?.label ?? '',
 		siglum: setups.length > 1 ? siglum(0) : null,

@@ -155,6 +155,7 @@ impl Engine {
                     original_path: source.path.clone(),
                     unit: None,
                 }),
+                pages: Vec::new(),
             });
         }
         if out.is_empty() {
@@ -190,6 +191,7 @@ impl Engine {
                 even_out_volume: false,
                 title: None,
                 derived_from: None,
+                pages: Vec::new(),
             });
         }
         Ok(out)

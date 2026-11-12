@@ -51,6 +51,7 @@ fn source(name: &str) -> SourceFile {
         even_out_volume: false,
         title: None,
         derived_from: None,
+        pages: Vec::new(),
     }
 }
 

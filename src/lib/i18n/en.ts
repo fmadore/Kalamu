@@ -232,6 +232,12 @@ export const en = {
 				name: 'Digital library text: correct, then summarise',
 				about: 'Machine-read text from a digital library, corrected, then summarised.',
 				steps: ['Correct the text', 'Summary and keywords']
+			},
+			translated: {
+				name: 'Documents in another language: read, check, translate, then summarise',
+				about:
+					'Scanned documents read and checked, translated into the language you choose, then summarised from the translation.',
+				steps: ['Read the text', 'Translate the text', 'Summary and keywords']
 			}
 		},
 		stepState: {
@@ -993,6 +999,34 @@ export const en = {
 			alone: 'Images, and PDFs whose double pages are split, are read one page at a time.',
 			noPrompt: (models: string) => `${models} reads pages one at a time.`
 		},
+		grouping: {
+			title: 'How the images are read',
+			separate: 'Separate documents',
+			separate_hint: 'Each image is a document of its own, with its own result files.',
+			one: 'Pages of one document',
+			one_hint:
+				'The images are the pages of one document: read in the order below and written as one result.',
+			name: 'Name of the document',
+			nameHint: 'The result files are named after it, in the folder of the first page.',
+			order: 'Order of the pages',
+			orderHint:
+				'Sorted by the numbers in the file names, page 2 before page 10. Move a page with its buttons, or drag it.',
+			/** In place of `orderHint` once a page was moved by hand. */
+			orderHintMoved: 'In the order you chose. Move a page with its buttons, or drag it.',
+			sorting: 'Putting the pages in order…',
+			position: (n: number) => `Page ${n}`,
+			moveUp: (name: string) => `Move ${name} up`,
+			moveDown: (name: string) => `Move ${name} down`,
+			missing: (from: number, to: number) =>
+				from === to
+					? `No file numbered ${from} before this one`
+					: `No files numbered ${from} to ${to} before this one`,
+			duplicate: (n: number) => `Another file is also numbered ${n}`,
+			naturalOrder: 'Back to the order of the names',
+			formats:
+				'A searchable PDF is written only from a PDF. ALTO, when the model gives positions, places each page in its own image.',
+			refused: 'An analysis reads each image as a document of its own.'
+		},
 		lines: {
 			running_text: 'Running text',
 			running_text_hint:
@@ -1137,6 +1171,8 @@ export const en = {
 		extractSpreads: 'Double pages are split in two first',
 		extractRead: (model: string) => `${model} reads each page on its own`,
 		extractJoin: 'Joined into one text per file, page numbers kept',
+		/** In place of `extractJoin` when images are read as the pages of one document. */
+		extractJoinDocument: 'Joined into one text for the document, page numbers kept',
 		/** Under the reading step, for a model that reports where text sits (Tesseract, Mistral
 		 * OCR); the second names it beside models that do not. */
 		extractPlace: 'And notes where its text sits on the page',
@@ -1309,6 +1345,8 @@ export const en = {
 		document: 'Whole document',
 		video: 'Whole video',
 		openVideo: 'Open on YouTube',
+		originalFile: (name: string) => `Original: ${name}`,
+		originalHint: 'Open the original image of this page',
 		videoPlayer: 'The video, in YouTube’s player',
 		videoHint: 'Click a line to play the video from there.',
 		videoHintOpen: 'Click a line to open the video there on YouTube.',
@@ -1319,6 +1357,10 @@ export const en = {
 		previous: 'Previous',
 		next: 'Next',
 		source: 'Source',
+		showOriginal: 'Show the text read',
+		showOriginalHint: 'The page’s text as the model was given it, in place of the page image',
+		showPage: 'Show the page',
+		showPageHint: 'The page image, in place of the text the model was given',
 		itemMenu: (name: string) => `What to do with “${name}”`,
 		renameItem: 'Rename',
 		removeItem: 'Remove from the answers',
@@ -1944,7 +1986,9 @@ export const en = {
 		keepEditing: 'Keep editing',
 		/** Under a long table drawn a page at a time. */
 		shownRows: (shown: number, total: number) => `${shown} of ${total} shown`,
-		showMore: (n: number) => `Show ${n} more`
+		showMore: (n: number) => `Show ${n} more`,
+		/** An error that names the step of a workflow at fault. */
+		atStep: (n: number, sentence: string) => `Step ${n}: ${sentence}`
 	},
 	error: {
 		'search.too_short': 'Type a word of three letters at least.',
@@ -2027,6 +2071,8 @@ export const en = {
 		'provider.unsupported': 'This model cannot do this task.',
 		'provider.retired':
 			'Its provider no longer serves this model. Choose the model that replaces it in New job.',
+		'provider.cannot_read':
+			'This model cannot read some of the files: images need a model that reads images, and an analysis of a PDF a model that reads PDFs. Choose another model, or extract the text first and analyse the result.',
 		'source.unsupported':
 			'One of the files cannot be read for this task. Remove it, or choose another task.',
 		'provider.auth': 'The provider rejected the API key. Check it in Settings.',

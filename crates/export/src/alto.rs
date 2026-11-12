@@ -58,9 +58,28 @@ impl Exporter for AltoExporter {
                     })
                     .collect()
             }
+            // Each page measured in its own file: one image, or a document of images, whose
+            // pages are files of their own sizes.
             InputKind::Image => {
-                let (w, h) = image_size(&doc.source.path)?;
-                pages.keys().map(|&n| (n, (w, h))).collect()
+                let mut measured: std::collections::HashMap<&str, (f32, f32)> =
+                    std::collections::HashMap::new();
+                let mut sizes = Vec::new();
+                for &n in pages.keys() {
+                    let path = doc
+                        .source
+                        .page_file(n)
+                        .map_or(doc.source.path.as_str(), |(p, _)| p.path.as_str());
+                    let size = match measured.get(path) {
+                        Some(size) => *size,
+                        None => {
+                            let size = image_size(path)?;
+                            measured.insert(path, size);
+                            size
+                        }
+                    };
+                    sizes.push((n, size));
+                }
+                sizes
             }
             _ => return Err(ExportError::Unsupported("ALTO (from a PDF or an image)")),
         };

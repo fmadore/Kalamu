@@ -4,4 +4,9 @@ export type AppError = {
 /**
  * `job.not_found`, `provider.auth`…; the interface looks up the sentence.
  */
-id: string, detail?: string, };
+id: string, detail?: string, 
+/**
+ * The step of a workflow at fault, numbered from 1: the interface names it before the
+ * sentence, and clears the message once that step is changed.
+ */
+step?: number, };

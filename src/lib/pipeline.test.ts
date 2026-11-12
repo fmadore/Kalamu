@@ -37,6 +37,16 @@ const diagram = (over: Partial<Diagram>): Diagram => ({
 const arts = (d: Diagram) => stagesFor(d, en).map((s) => s.art);
 
 describe('New job’s diagram', () => {
+	it('joins the pages of a document of images into one text for the document', () => {
+		const joined = (files: InspectedFile[]) =>
+			stagesFor(diagram({ files }), en).find((s) => s.art === 'joined')?.caption;
+		expect(joined([file()])).toBe(en.pipeline.extractJoin);
+		const page = { id: 'p', path: 'a.jpg', file_name: 'a.jpg', sha256: 'x', size_bytes: 1 };
+		const pages = [{ ...page, frames: 1 }];
+		const doc: InspectedFile = { ...file(), source: { ...source, kind: 'image', pages } };
+		expect(joined([doc])).toBe(en.pipeline.extractJoinDocument);
+	});
+
 	it('reads a scan page by page, and adds a searchable PDF when a model places the text', () => {
 		expect(arts(diagram({ models: ['Flash'] }))).toEqual(['stack', 'pages', 'read', 'joined']);
 		const placed = stagesFor(diagram({ models: ['Flash'], searchable: ['Flash'] }), en);

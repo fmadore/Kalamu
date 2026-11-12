@@ -46,6 +46,22 @@ test('a correction is saved and found again on coming back to the page', async (
 	await expect(text).not.toContainText('deux cents fidèles');
 });
 
+test('a PDF’s corrected text shows the text the model read beside it, the page a click away', async ({
+	page
+}) => {
+	await open(page, 'review-correction');
+	const main = page.getByRole('main');
+	const source = main.getByRole('region', { name: 'Source' });
+	await expect(source.getByRole('group', { name: /^Page image/ })).toBeVisible();
+	await main.getByRole('button', { name: 'Show the text read' }).click();
+	// The text layer as the model was given it, misreadings and all.
+	await expect(source).toContainText('Le Gouvernenr général');
+	await main.getByRole('button', { name: 'Next', exact: true }).click();
+	await expect(source).toContainText('commis- sion');
+	await main.getByRole('button', { name: 'Show the page' }).click();
+	await expect(source.getByRole('group', { name: /^Page image/ })).toBeVisible();
+});
+
 test('a dialog keeps the focus inside until Escape closes it', async ({ page }) => {
 	await open(page, 'project');
 	// Opened from the keyboard: WebKit, as Safari does, leaves a clicked button without the
@@ -167,4 +183,74 @@ test('a large job’s failed files are listed alone, however far down they sit',
 	await shown.selectOption('all');
 	await expect(far).toHaveCount(0);
 	await expect(main.getByText('page-00009.pdf', { exact: true })).toBeVisible();
+});
+
+test('a folder of photographs becomes one document, its pages put in order', async ({ page }) => {
+	// The sample folder holds IMG_10, IMG_2, IMG_1 and IMG_3 (src/lib/dev/mockPages.ts).
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: 'Add a folder' }).click();
+	await expect(main.getByRole('button', { name: 'Remove IMG_10.jpg' })).toBeVisible();
+
+	const separate = main.getByRole('radio', { name: /^Separate documents/ });
+	await expect(separate).toBeChecked();
+	await main.getByRole('radio', { name: /^Pages of one document/ }).check();
+	await expect(main.getByRole('textbox', { name: 'Name of the document' })).toHaveValue('Box 3');
+
+	const order = main.getByRole('list', { name: 'Order of the pages' });
+	const names = () => order.getByRole('listitem').locator('.name').allTextContents();
+	await expect.poll(names).toEqual(['IMG_1.jpg', 'IMG_2.jpg', 'IMG_3.jpg', 'IMG_10.jpg']);
+	await expect(order.getByText('No files numbered 4 to 9 before this one')).toBeVisible();
+
+	// Moved with the keyboard: the focus stays on the page moved.
+	await order.getByRole('button', { name: 'Move IMG_10.jpg up' }).focus();
+	await page.keyboard.press('Enter');
+	await expect.poll(names).toEqual(['IMG_1.jpg', 'IMG_2.jpg', 'IMG_10.jpg', 'IMG_3.jpg']);
+	await expect(order.getByRole('button', { name: 'Move IMG_10.jpg up' })).toBeFocused();
+	await expect(order.getByRole('button', { name: 'Move IMG_1.jpg up' })).toBeDisabled();
+
+	await expect(main.getByText(/^In the order you chose/)).toBeVisible();
+
+	await main.getByRole('button', { name: 'Back to the order of the names' }).click();
+	await expect.poll(names).toEqual(['IMG_1.jpg', 'IMG_2.jpg', 'IMG_3.jpg', 'IMG_10.jpg']);
+	await expect(main.getByText(/^Sorted by the numbers in the file names/)).toBeVisible();
+
+	// Dragged with the pointer, which the window leaves to the page (its own drag and drop is
+	// kept for files dropped onto it): IMG_10 goes before IMG_2, then IMG_1 below IMG_3.
+	const drag = async (name: string, onto: string) => {
+		const row = (file: string) =>
+			order.getByRole('listitem').filter({ has: page.getByText(file, { exact: true }) });
+		const from = await row(name).locator('.name').boundingBox();
+		const to = await row(onto).locator('.name').boundingBox();
+		if (!from || !to) throw new Error('A page is out of view');
+		await page.mouse.move(from.x + 4, from.y + from.height / 2);
+		await page.mouse.down();
+		await page.mouse.move(to.x + 4, to.y + to.height / 2, { steps: 8 });
+		await page.mouse.up();
+	};
+	await drag('IMG_10.jpg', 'IMG_2.jpg');
+	await expect.poll(names).toEqual(['IMG_1.jpg', 'IMG_10.jpg', 'IMG_2.jpg', 'IMG_3.jpg']);
+	await drag('IMG_1.jpg', 'IMG_3.jpg');
+	await expect.poll(names).toEqual(['IMG_10.jpg', 'IMG_2.jpg', 'IMG_3.jpg', 'IMG_1.jpg']);
+	await expect(main.getByText(/^In the order you chose/)).toBeVisible();
+
+	// The job is named after the document, as long as no name of its own was typed.
+	const jobName = main.getByRole('textbox', { name: 'Name of the job' });
+	await main.getByRole('textbox', { name: 'Name of the document' }).fill('Box 3 letters');
+	await expect(jobName).toHaveValue('Box 3 letters');
+
+	// Read as separate documents again, the order is not asked for, and the folder names the job.
+	await separate.check();
+	await expect(order).toHaveCount(0);
+	await expect(jobName).toHaveValue('Box 3');
+});
+
+test('New job says why Start waits for the language to translate into', async ({ page }) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Translate a text/ }).click();
+	await main.getByRole('button', { name: 'Add files' }).click();
+	const start = page.getByRole('button', { name: /^Start(?! over)/ });
+	await expect(start).toBeDisabled();
+	await expect(start).toHaveAccessibleDescription('Choose the language to translate into.');
 });

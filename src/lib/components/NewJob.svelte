@@ -7,6 +7,7 @@
 	import LanguageStep from './LanguageStep.svelte';
 	import LinkList from './LinkList.svelte';
 	import OutputStep from './OutputStep.svelte';
+	import PageOrder from './PageOrder.svelte';
 	import PipelineDiagram from './PipelineDiagram.svelte';
 	import PipelineList from './PipelineList.svelte';
 	import SetupList from './SetupList.svelte';
@@ -16,6 +17,7 @@
 	import type { Estimate } from '#lib/bindings/Estimate.js';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
+	import type { ImageDocument } from '#lib/bindings/ImageDocument.js';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
@@ -53,6 +55,7 @@
 		readersOf,
 		readsInput,
 		readsKind,
+		suggestedPreset,
 		rulesFor,
 		suggestName,
 		suggestionFits,
@@ -61,6 +64,13 @@
 		toRequest,
 		type Together
 	} from '#lib/newJob.js';
+	import {
+		type Grouping,
+		imageSources,
+		jobSources,
+		offersOneDocument,
+		sameImages
+	} from '#lib/pageOrder.js';
 	import { api, listenWhileMounted, mayStart, onDrop } from '#lib/tauri.js';
 	import {
 		app,
@@ -126,22 +136,29 @@
 	let formats = $state<ExportFormat[]>(kept?.formats ?? []);
 	let destination = $state<OutputDestination>(kept?.destination ?? { kind: 'beside_sources' });
 	let name = $state(kept?.name ?? '');
-	/** The name Kalamu suggested from the files, as long as the field still holds it. */
+	/** The name Kalamu suggested, as long as the field still holds it. */
 	let suggested = $state(kept?.suggested ?? '');
+	/** The name the files suggest, kept while the document's name stands in for it. */
+	let fromFiles = $state(kept?.fromFiles ?? kept?.suggested ?? '');
 
 	/** Fills the name from the files, unless the researcher typed one of their own. */
 	function suggest(value: string) {
+		fromFiles = value;
 		if (name && name !== suggested) return;
 		name = value;
 		suggested = value;
 	}
 
 	// A suggested name follows the files: once the file or folder it came from is removed, the
-	// first file left names the job, and no file leaves the field empty again.
+	// first file left names the job, and no file leaves the field empty again. Images read as
+	// the pages of one document name the job after the document.
 	$effect(() => {
 		if (!suggested || name !== suggested) return;
-		if (suggestionFits(suggested, files, from.frozen)) return;
-		const next = files[0] ? nameOfFile(files[0], from.frozen) : '';
+		if (!suggestionFits(fromFiles, files, from.frozen)) {
+			fromFiles = files[0] ? nameOfFile(files[0], from.frozen) : '';
+		}
+		const next = (oneOffered && grouping === 'one' && docName.trim()) || fromFiles;
+		if (next === suggested) return;
 		name = next;
 		suggested = next;
 	});
@@ -179,13 +196,69 @@
 			if (next) d.model = next;
 		}
 	});
+	/** The prompt Kalamu last chose for the files; a set-up still holding it was not chosen by the
+	 * researcher, and follows the files. Not state: it only remembers what was chosen. */
+	let autoPreset: string | null = null;
+	// Files that are all images suggest the prompt made for images (and others the task's first),
+	// in every set-up whose prompt is still Kalamu's choice; one the researcher chose stays.
+	$effect(() => {
+		const next = suggestedPreset(presets, files);
+		if (next === autoPreset) return;
+		for (const d of drafts) if (d.presetId === autoPreset) d.presetId = next;
+		autoPreset = next;
+	});
 	/** Distinct names of the chosen models matching a test, for the notes under a choice. */
 	const namesOf = (test: (model: ModelInfo | undefined) => boolean) => [
 		...new Set(models.filter(test).map((model) => model?.name ?? ''))
 	];
 	const languageIgnored = $derived(namesOf((model) => !takesLanguage(model)));
 	const noPrompt = $derived(namesOf((model) => !acceptsPrompt(model)));
-	const sources = $derived(files.flatMap((f) => (f.source ? [f.source] : [])));
+	/** Several images: each a document of its own, or the pages of one document (#52). */
+	let grouping = $state<Grouping>(kept?.grouping ?? 'separate');
+	/** The document the engine made of the images, in the order the researcher left. */
+	let pageDoc = $state<ImageDocument | null>(kept?.pageDoc ?? null);
+	let docName = $state(kept?.docName ?? '');
+	/** A page was moved by hand since the engine last put the pages in order. */
+	let byHand = $state(kept?.byHand ?? false);
+	let sorting = $state(false);
+	const images = $derived(imageSources(files));
+	const oneOffered = $derived(offersOneDocument(rule, images));
+	/** Asks the engine for the document of these images, in the natural order of their names:
+	 * when they are first read as one, when the images change, or to undo the researcher's order. */
+	async function orderPages(again = false) {
+		const wanted = $state.snapshot(images);
+		if (!again && sameImages(pageDoc, wanted)) return;
+		sorting = true;
+		try {
+			const made = await api.imageDocument(docName, wanted);
+			// Images changed while the engine sorted: the newer call settles it.
+			if (!sameImages(made, imageSources(files))) return;
+			pageDoc = made;
+			byHand = false;
+			if (!docName.trim()) docName = made.source.file_name;
+		} catch (e) {
+			error = describeError(e, m);
+		} finally {
+			sorting = false;
+		}
+	}
+	$effect(() => {
+		if (oneOffered && grouping === 'one' && !sameImages(pageDoc, images)) void orderPages();
+	});
+	const sources = $derived(jobSources(files, oneOffered ? grouping : 'separate', pageDoc, docName));
+	/** The files as the job reads them, for the diagram: the document in place of its images. */
+	const readFiles = $derived<InspectedFile[]>(
+		sources.map(
+			(s) =>
+				files.find((f) => f.source?.id === s.id) ?? {
+					path: s.path,
+					source: s,
+					warnings: [],
+					error: null,
+					pieces: null
+				}
+		)
+	);
 	/** Times a task was picked, so its diagram plays; opening New job shows it at rest. */
 	let picked = $state(0);
 	const chosenFields = $derived(
@@ -237,7 +310,8 @@
 		const listed = await api.listPresets(task);
 		if (ticket !== taskTicket) return;
 		presets = listed;
-		drafts = [newDraft(catalog, rule, presets[0]?.id ?? null, hasKey, [], input)];
+		autoPreset = suggestedPreset(presets, files);
+		drafts = [newDraft(catalog, rule, autoPreset, hasKey, [], input)];
 		// A table of contents reads best as a document and a spreadsheet.
 		formats =
 			task === 'contents'
@@ -384,7 +458,11 @@
 	const blocker = $derived(
 		mode === 'youtube' && sources.length > 0 && destination.kind !== 'folder'
 			? m.newJob.needFolder
-			: null
+			: rule.needs_language &&
+				  sources.length > 0 &&
+				  !(languageMode === 'explicit' && languages.length > 0)
+				? m.error['job.no_language']
+				: null
 	);
 
 	/** The settings shared by every set-up, as a job and a pipeline store them. */
@@ -579,8 +657,13 @@
 			destination: $state.snapshot(destination),
 			name,
 			suggested,
+			fromFiles,
 			thenPreset,
-			thenCheck
+			thenCheck,
+			grouping,
+			pageDoc: $state.snapshot(pageDoc),
+			docName,
+			byHand
 		};
 		if (!done) keepForm(form);
 	});
@@ -673,7 +756,7 @@
 			/>
 			<PipelineDiagram
 				{mode}
-				{files}
+				files={readFiles}
 				fields={chosenFields}
 				models={namesOf((model) => model !== undefined)}
 				mergeModels={mergeNames}
@@ -693,6 +776,16 @@
 			/>
 		{:else}
 			<FileList bind:files {task} {inspecting} onadd={addPaths} />
+			{#if oneOffered}
+				<PageOrder
+					bind:grouping
+					bind:doc={pageDoc}
+					bind:name={docName}
+					bind:byHand
+					{sorting}
+					onnatural={() => void orderPages(true)}
+				/>
+			{/if}
 		{/if}
 
 		{#if setAside}

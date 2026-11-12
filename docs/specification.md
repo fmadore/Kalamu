@@ -45,10 +45,10 @@ Where Kalamu departs from these projects, the reason is written down in
 
 | Task | Input | Output |
 | --- | --- | --- |
-| **Extract text** (printed and handwritten) | PDF, JPEG, PNG, TIFF | Text per page, its lines kept as on the page or joined into running text |
+| **Extract text** (printed and handwritten) | PDF, JPEG, PNG, TIFF, or several images read as the pages of one document | Text per page, its lines kept as on the page or joined into running text |
 | **Transcribe audio or video** | `.mp3`, `.wav`, `.m4a`, `.mp4`…, or a public YouTube link | Transcript with optional speakers and timestamps; speakers can be given names |
 | **Analyse texts** | Text, Word, PDF, photographed pages, photographs and other images, and the results of earlier jobs | The researcher's own fields for each document: a summary, the people and places it names, its tone, what an image shows… |
-| **Detailed table of contents** | A long PDF or multi-page image: a newspaper or magazine issue, an archival file scanned in one piece, a book or report | One entry per article or item, with its title, its pages and the researcher's fields |
+| **Detailed table of contents** | A long PDF, a multi-page image or several images read as one document: a newspaper or magazine issue, an archival file scanned in one piece, a book or report | One entry per article or item, with its title, its pages and the researcher's fields |
 | **Correct existing text** | A PDF's text layer, or a text or Word file from a digital library | The text corrected page by page or passage by passage, its spelling of the time kept |
 | **Translate a text** | A PDF's text layer, a text or Word file, or the text of an earlier result | The text in the language chosen, page by page or passage by passage, nothing summarised or left out |
 
@@ -102,8 +102,12 @@ places and organisations, the tone of a document, and an image's description, ki
 written text and the names that text gives), and common fields are one click away when building
 one. The image description says only what can be seen: people by number, activity and dress,
 never an identity guessed from a face, and no date, place or name the image does not itself
-state ([#168](https://github.com/fmadore/Kalamu/issues/168)). When the sources include images,
-New job offers only models that read images. The app turns
+state ([#168](https://github.com/fmadore/Kalamu/issues/168)). When every source is an image,
+New job chooses it for the researcher, unless they chose a prompt themselves. When the sources
+include images, New job offers only models that read images, and for an analysis of a PDF only
+models that read PDFs; a job that asks a model for what it cannot read (a saved pipeline or
+workflow, an older window) is refused before anything is sent, for the reason each page would
+have failed with ([decision](decisions/2026-11-11-translation-followups.md)). The app turns
 the fields into each provider's structured output, so the answer always has exactly these
 fields, and checks it again before storing it: an answer that breaks the fields is asked for
 again, never stored empty. Named entity recognition and sentiment analysis are analyses, not
@@ -164,8 +168,9 @@ this text in a new job*: an extraction, a transcription or a correction as the r
 it. It sends that text page by page, or in passages, and the answer comes back as the one field
 of a correction's, so every model that answers in fields and reads text can translate, cloud
 or offline, with nothing new asked of providers. The job's language is the language translated
-into, one only and always chosen: New job and a workflow's step ask for it, and a job without
-one is refused before anything is sent. Its preset, *Translation for research*, translates
+into, one only and always chosen: New job and a workflow's step ask for it, a workflow with a
+translation step and no language is not saved, and a job without one is refused before
+anything is sent. Its preset, *Translation for research*, translates
 everything in order, summarising and leaving out nothing; keeps names of people, places and
 organisations as written; gives the original beside a culturally specific term; marks an
 unsure reading `[word?]`; keeps paragraphs, headings and a transcript's speaker labels and
@@ -173,7 +178,8 @@ times exactly; adds no notes of its own; and, since the source may be machine-re
 what is meant where a misreading is obvious and never invents. The translation follows the
 layout of the text it reads, so it offers no choice of lines. It is a result of its own, never
 replacing the source, written as `<name>.translated.<code>` in the formats of a correction; the
-review shows each page of the source beside its translation, which is corrected as any text is,
+review shows each page of the source beside its translation (for a PDF, its page or, at a click,
+the text the model read), which is corrected as any text is,
 with no differences view between two languages. Its text yields a text: it can be analysed, or
 read by a later workflow step. Subtitles of a translated transcript come later.
 
@@ -183,6 +189,24 @@ read by a later workflow step. Subtitles of a translated transcript come later.
   them one by one, shows progress, and picks up where it stopped after an interruption. Files
   the task chosen does not read, and folders holding none it reads, are named rather than
   dropped unseen, with the task that reads them offered instead.
+- **Several images, one document** ([#52](https://github.com/fmadore/Kalamu/issues/52),
+  [decision](decisions/2026-11-11-ordered-image-documents.md)). With two images or more, an
+  extraction or a table of contents asks whether they are separate documents (as before) or the
+  pages of one: the photographs of a letter, a register, an archival file. As one, the document
+  is named (the folder's name unless changed; the name of its result files, kept to what Windows
+  and macOS both accept) and its pages are put in the natural order of their names: numbers read
+  as numbers (page 2 before page 10, `p001` with `p9`), capitals ignored, spaces, `_`, `-` and
+  `.` taken alike, digits of other scripts compared as letters. Numbers that skip or repeat in
+  the names are pointed out beside their page, never fixed. Pages move with buttons, which the
+  keyboard reaches, or by dragging. Each page keeps its identity, its file's path and content,
+  apart from its place: it is read under its own file's fingerprint, so a page moved, or read
+  alone in another job, is never read again, while a table of contents combines its pages again
+  in their new order. The order and the files are kept with the job, after a restart too; the
+  images are never copied, moved or changed, and a page whose file was moved, deleted or
+  replaced since fails alone, named, the others read. The document is read page by page as a
+  PDF is, with the same sample of first pages; its pages go one per call. An analysis reads
+  each image as a document of its own. Typing a label for each page, reordering a job already
+  made and pairing existing transcriptions with the scans come later.
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper,
   Tesseract, OCR models and language models,
   and later OpenRouter for open-weights models. The app shows only the providers and models
@@ -254,8 +278,9 @@ read by a later workflow step. Subtitles of a translated transcript come later.
 - **The simplest workflow needs no building.** The last section of New job, *Then*, offers to
   analyse the text once it is read (an extraction, a transcription, a correction or a translation), by default
   after the researcher has checked it; nothing is sent for the analysis before they continue.
-  Ready-made examples (letters, interviews, a digital library's text) open in Workflows on the
-  models the researcher has keys for, and an animated drawing of the steps, the researcher's
+  Ready-made examples (letters, interviews, a digital library's text, documents in another
+  language read, translated and summarised) open in Workflows on the models the researcher has
+  keys for, the translating one asking for the language to translate into before it is saved, and an animated drawing of the steps, the researcher's
   check among them, shows how each workflow runs.
 - **Continuing happens where the researcher already is.** A job that is a workflow's step says
   so on its page and in its review, with what comes next and, when the next step waits for
@@ -290,7 +315,8 @@ paying twice.
   the model, prompt, analysis fields and settings. Re-running a folder skips what was already
   done with the same settings; changing the prompt or model reprocesses only what it affects.
   A file changed on disk since it was added to a job is refused rather than read under its
-  old fingerprint, and the first answer stored for a fingerprint is kept, never replaced.
+  old fingerprint, and the first answer stored for a fingerprint is kept, never replaced. A page
+  of a document of images has the fingerprint of its own file, wherever it stands.
 - **Batches outlive the app.** In the cheaper mode, a batch is recorded before it is sent;
   the app can be closed while the provider works, and collects the answers when it opens
   again, without sending anything twice, nor anything new: the rest of the job waits for the
@@ -373,7 +399,8 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   the right with line numbers in the margin, page navigation, zoom (Ctrl and the wheel or a
   pinch, about the point under the pointer; a double click on a place) with the page moved by
   dragging it, and a strip of pages,
-  thumbnails for scans and images, showing which are reviewed. The boundary between them can be
+  thumbnails for scans and images, showing which are reviewed. A page of a document of images
+  opens its original file from the masthead. The boundary between them can be
   dragged, and the job list folded away (Ctrl B), for more room.
 - **Differences in the text.** Where another model, or the model under a correction, reads
   differently, the words are highlighted. Pointing at them shows the readings over the text,
@@ -400,7 +427,9 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
 - **Corrections of existing text**: the original text is a witness of its own, so every change
   the model made is highlighted and the original reading can be taken back in one click.
 - **Translations**: the text translated stands in the source pane beside the translation, page
-  by page, as a text file's text does (a PDF's scan stays in its place); it is not a witness,
+  by page, as a text file's text does; a PDF keeps its page there, and *Show the text read*
+  puts the text the model was given in its place, for a translation or a correction (*Show the
+  page* brings the page back); it is not a witness,
   since two languages have no differences to mark. The translation is corrected as any text is,
   and in a comparison two models' translations are compared as any two readings are.
 - **Analyses**: the document beside its answers, field by field. In a comparison every value
@@ -493,7 +522,8 @@ analysed, compared. A **project** keeps it together
   lies on the PC (never copied, moved or changed), its title, and every result read from it.
   The same file at the same place is added once; two files with the same content are pointed
   out but stay two documents until the researcher merges them, since a copy and a second item
-  can share their bytes.
+  can share their bytes. Images read as the pages of one document are one document, missing
+  when any of its files is.
 - **In the sidebar**, the projects are listed under *Projects*. A finished job dragged onto one
   is added to it, as its menu's *Add to a project* does.
 - **Collections** group documents as the researcher likes (correspondence, a newspaper's

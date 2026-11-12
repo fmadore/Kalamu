@@ -15,6 +15,7 @@ use tokio::sync::Notify;
 use tokio::time::Instant;
 
 use crate::control::lock;
+use crate::output::OutputNames;
 use crate::{Engine, EngineError};
 
 /// The jobs whose files are due, and the one task that writes them.
@@ -144,21 +145,25 @@ impl Engine {
     /// files could not be written.
     pub(crate) fn write_outdated_of(&self, job: Option<JobId>) -> Result<usize, EngineError> {
         let marks = self.store.outdated_files(job)?;
-        let mut jobs: HashMap<JobId, Job> = HashMap::new();
+        // Each job read once, and its files' names worked out once, for all its marks.
+        let mut jobs: HashMap<JobId, (Job, OutputNames)> = HashMap::new();
         let mut failed = 0;
         for mark in marks {
             let job = match jobs.get(&mark.job_id) {
                 Some(job) => Ok(job),
                 None => match self.store.job(mark.job_id) {
-                    Ok(job) => Ok(&*jobs.entry(mark.job_id).or_insert(job)),
+                    Ok(job) => {
+                        let names = OutputNames::of(&job);
+                        Ok(&*jobs.entry(mark.job_id).or_insert((job, names)))
+                    }
                     // Deleted meanwhile: its marks went with it.
                     Err(StoreError::NotFound) => continue,
                     Err(e) => Err(e),
                 },
             };
-            let written = job
-                .map_err(EngineError::from)
-                .and_then(|job| self.write_each_output(job, mark.setup_id, mark.source_id));
+            let written = job.map_err(EngineError::from).and_then(|(job, names)| {
+                self.write_each_output(job, names, mark.setup_id, mark.source_id)
+            });
             let problems = match written {
                 Ok((_, problems)) => problems,
                 Err(e) => vec![e.to_string()],

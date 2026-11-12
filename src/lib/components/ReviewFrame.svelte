@@ -22,7 +22,10 @@
 	import { FIELDS, pageKeysStay, scrollableByKeys } from '#lib/keys.js';
 	import { backShortcut, primary, shortcut } from '#lib/platform.js';
 	import { columns, layout } from '#lib/review.svelte.js';
-	import { back, canGoBack, returnTo, shortcutsHeld } from '#lib/state.svelte.js';
+	import { back, canGoBack, returnTo, shortcutsHeld, toast } from '#lib/state.svelte.js';
+	import { describeError } from '#lib/errors.js';
+	import { baseName } from '#lib/paths.js';
+	import { api } from '#lib/tauri.js';
 
 	let {
 		jobId,
@@ -39,12 +42,14 @@
 		onstep,
 		source,
 		piece = null,
+		original = null,
 		paging = null,
 		preview = null,
 		text = null,
 		find = '',
 		found = false,
 		player,
+		switchable = null,
 		witness,
 		label,
 		tools,
@@ -79,6 +84,8 @@
 		source: 'scan' | 'text' | 'player';
 		/** The piece shown, after "Source" over it. */
 		piece?: string | null;
+		/** For a page of a document of images, its original file, opened from the masthead. */
+		original?: string | null;
 		/** Buttons to turn the scan's pages over it, where there is no strip. */
 		paging?: { at: number; count: number } | null;
 		preview?: PagePreview | null;
@@ -88,6 +95,8 @@
 		/** Whether those words are a search's rather than a name pointed at. */
 		found?: boolean;
 		player?: Snippet;
+		/** A PDF whose text was read: the source pane switches between its page and that text. */
+		switchable?: { onswitch: () => void } | null;
 		/** Whose text or answers lead, over them. */
 		witness: { label: string; siglum?: string | null; note?: string | null; corrected: boolean };
 		/** What the text pane holds, for screen readers. */
@@ -176,6 +185,20 @@
 		{#if pager}<div class="pager">{@render pager()}</div>{/if}
 		<div class="actions">
 			<ReportLink iconOnly />
+			{#if original}
+				{@const file = original}
+				<button
+					class="btn ghost sm original"
+					title={m.review.originalHint}
+					onclick={() =>
+						api
+							.openOriginal(jobId, file)
+							.catch((e) => toast(describeError(e, m), { kind: 'error' }))}
+					><Icon name="folder" size={14} /><span class="mono"
+						>{m.review.originalFile(baseName(file))}</span
+					></button
+				>
+			{/if}
 			{#if search}
 				<button
 					class="btn icon toggle"
@@ -228,6 +251,7 @@
 			{find}
 			{found}
 			{player}
+			{switchable}
 		/>
 
 		<Splitter

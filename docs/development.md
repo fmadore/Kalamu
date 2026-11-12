@@ -68,9 +68,12 @@ npm run test:chromium
 
 Both open every main screen in English and in French, and run a few interactions
 (`e2e/interactions.spec.ts`): a correction saved and found again, a dialog's focus trap and
-Escape, the window's shortcuts, a project search, New job kept across Settings. They start the
-dev server on port 5173, or reuse one already there; `KALAMU_E2E_PORT=5291` picks another, for
-two checkouts tested side by side.
+Escape, the window's shortcuts, a project search, New job kept across Settings; and what is done
+from the keyboard alone (`e2e/keyboard.spec.ts`): a text page reviewed and corrected through its
+readings, an analysis's name located, renamed, removed and put back, a failure dismissed, Back to
+where a review was opened from, Ctrl F on each table, the remembered choices after a reload, a
+window of 640 × 560, the release line hidden. They start the dev server on port 5173, or reuse
+one already there; `KALAMU_E2E_PORT=5291` picks another, for two checkouts tested side by side.
 
 `cargo test` also regenerates the TypeScript types in `src/lib/bindings/` from the Rust
 definitions; commit them with the Rust change. Exporters are checked against golden files in

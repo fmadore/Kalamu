@@ -4,8 +4,8 @@
 use std::collections::BTreeSet;
 
 use kalamu_core::provenance::{
-    GeneratorInfo, ProvenanceDerived, ProvenanceDocument, ProvenanceMerge, ProvenancePrompt,
-    ProvenanceRefused, ProvenanceSource,
+    GeneratorInfo, ProvenanceDerived, ProvenanceDocument, ProvenanceMerge, ProvenancePage,
+    ProvenancePrompt, ProvenanceRefused, ProvenanceSource,
 };
 use kalamu_core::speakers::{rename_segments, renamed_labels, text_as_left};
 use kalamu_core::{
@@ -227,6 +227,7 @@ impl Engine {
                     missing: s.missing,
                     unit: source.derived_from.as_ref().and_then(|d| d.unit.clone()),
                 }),
+                pages: ProvenancePage::of(&source.pages),
             },
             documents: self.source_documents(job, source_id),
             engine: engine.into(),

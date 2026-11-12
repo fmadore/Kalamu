@@ -6,7 +6,8 @@
 	import type { ComparisonReport } from '#lib/bindings/ComparisonReport.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
-	import { formatPercent, formatUsd, messages } from '#lib/i18n/index.js';
+	import { formatPercent, messages } from '#lib/i18n/index.js';
+	import { pieceCost } from '#lib/pieces.js';
 
 	let {
 		report,
@@ -52,9 +53,7 @@
 	{:else if ownScore}
 		<span title={m.scores.note}>{ownScore}</span>
 	{:else}
-		{lead?.model_version ?? setups[0]?.model ?? ''}{lead?.cost_usd
-			? ` · ${formatUsd(lead.cost_usd)}`
-			: ''}
+		{lead?.model_version ?? setups[0]?.model ?? ''}{pieceCost(lead, m)}
 	{/if}
 </span>
 {#if compared || corrected}

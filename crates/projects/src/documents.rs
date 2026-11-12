@@ -3,8 +3,8 @@
 use std::path::Path;
 
 use kalamu_core::{
-    CollectionId, Document, DocumentId, DocumentLink, InputKind, JobId, ProjectError, ProjectId,
-    SetupId, SourceFile, Task, Timestamp, same_tag, tag_name,
+    CollectionId, Document, DocumentId, DocumentLink, JobId, ProjectError, ProjectId, SetupId,
+    SourceFile, Task, Timestamp, same_tag, tag_name,
 };
 
 use crate::{Projects, missing, named};
@@ -13,6 +13,10 @@ use crate::{Projects, missing, named};
 pub(crate) fn default_title(source: &SourceFile) -> String {
     if let Some(title) = source.title.as_deref().filter(|t| !t.trim().is_empty()) {
         return title.trim().to_string();
+    }
+    // A document of pages is named, not a file with an extension.
+    if source.names_itself() {
+        return source.file_name.clone();
     }
     Path::new(&source.file_name)
         .file_stem()
@@ -27,9 +31,10 @@ pub(crate) fn same_file(a: &SourceFile, b: &SourceFile) -> bool {
     a.sha256 == b.sha256 && a.path == b.path
 }
 
-/// A file no longer where it was added (a YouTube video has no file).
+/// A file no longer where it was added (a YouTube video has no file); for a document of
+/// pages, any of its files.
 pub(crate) fn is_missing(source: &SourceFile) -> bool {
-    source.kind != InputKind::YouTube && !Path::new(&source.path).exists()
+    source.files().iter().any(|f| !Path::new(f).exists())
 }
 
 impl Projects {

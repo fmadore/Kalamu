@@ -71,7 +71,7 @@ pub struct StepView {
 
 /// A stand-in for the text a later step will read from `source`, to check the step before the
 /// run starts: a text, from that original.
-fn as_text(source: &SourceFile) -> SourceFile {
+pub(crate) fn as_text(source: &SourceFile) -> SourceFile {
     SourceFile {
         id: SourceId::new(),
         path: String::new(),
@@ -93,6 +93,7 @@ fn as_text(source: &SourceFile) -> SourceFile {
             original_path: source.path.clone(),
             unit: None,
         }),
+        pages: Vec::new(),
     }
 }
 
@@ -139,7 +140,7 @@ impl Engine {
                     ..Default::default()
                 },
             };
-            Self::check_new(&catalog, &new).map_err(|e| in_step(i, e))?;
+            self.check_new(&catalog, &new).map_err(|e| in_step(i, e))?;
             let mut new = new;
             crate::rules::writable_formats(
                 &catalog,

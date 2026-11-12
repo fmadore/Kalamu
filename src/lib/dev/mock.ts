@@ -30,7 +30,7 @@ import {
 	audioPieces,
 	audioSetup,
 	job,
-	listedBefore,
+	renameListed,
 	nameSpeakers,
 	pieces,
 	recording,
@@ -46,6 +46,8 @@ import {
 
 import { RUN_ID, seedWorkflows, WORKFLOW_ID, workflowCommand } from './mockWorkflows.js';
 import { unitCommand } from './mockUnits.js';
+import { mockImageDocument, PHOTO_FOLDER, PHOTOS } from './mockPages.js';
+import type { SourceFile } from '../bindings/SourceFile.js';
 import {
 	contentsJob,
 	contentsPieces,
@@ -198,6 +200,7 @@ const presets: Preset[] = [
 		user_prompt: 'Look at the image above and fill in each field.',
 		builtin: true,
 		modified: false,
+		made_for: 'image',
 		schema: {
 			fields: [
 				{
@@ -370,7 +373,18 @@ function wordDiff(left: string, right: string): { kind: string; text: string }[]
 	return out;
 }
 
-/** The screen to open on, from `?mock&view=…`, for screenshots of each screen. */
+/** Keeps a correction on its sample piece, as the store keeps it, so the review shows it again
+ * when it reads the pieces anew. */
+function keepCorrection(c: Correction): void {
+	const piece = [...pieces, ...analysisPieces, ...contentsPieces, ...correctionPieces].find(
+		(p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index
+	);
+	if (!piece) return;
+	piece.corrected_text = c.text;
+	piece.corrected_fields = c.fields ?? null;
+	piece.reviewed = c.reviewed;
+}
+
 /** Error rates against reviewed pages: the comparison and the interviews have some. */
 function mockScores(jobId: string) {
 	if (jobId === job.id) {
@@ -414,6 +428,7 @@ export function mockDragging(): boolean {
 	return new URLSearchParams(location.search).has('dragging');
 }
 
+/** The screen to open on, from `?mock&view=…`, for screenshots of each screen. */
 export function mockView(): View | null {
 	switch (new URLSearchParams(location.search).get('view') ?? '') {
 		case 'all-jobs':
@@ -782,7 +797,8 @@ export function installMock(): void {
 				const ext = (p: string) => /\.([a-z0-9]+)$/i.exec(p)?.[1]?.toLowerCase();
 				const kind = (p: string) => kinds[ext(p) ?? ''] ?? null;
 				const kept = (p: string) => !ext(p) || reads.some((k) => k === kind(p));
-				const paths = a.paths as string[];
+				// The sample folder of photographs is walked into its images.
+				const paths = (a.paths as string[]).flatMap((p) => (p === PHOTO_FOLDER ? PHOTOS : [p]));
 				return {
 					paths: paths.filter(kept),
 					refused: paths
@@ -819,6 +835,20 @@ export function installMock(): void {
 							pieces: minutes > 25 ? Math.ceil((minutes - 25) / 20) + 1 : 1
 						};
 					}
+					// A photograph: one page, its own content.
+					if (/\.(jpg|png)$/.test(path)) {
+						const sha256 = Array.from(path, (c) => c.charCodeAt(0).toString(16))
+							.join('')
+							.slice(-64)
+							.padStart(64, '0');
+						return {
+							path,
+							source: { ...source, id, path, file_name, sha256, kind: 'image', page_count: 1 },
+							warnings: [],
+							error: null,
+							pieces: null
+						};
+					}
 					return {
 						path,
 						source: { ...source, id, path, file_name, page_count: i === 0 ? 3 : 1 },
@@ -833,6 +863,10 @@ export function installMock(): void {
 						pieces: null
 					};
 				});
+			case 'image_document':
+				return mockImageDocument(String(a.name ?? ''), a.sources as SourceFile[]);
+			case 'open_original':
+				return null;
 			case 'inspect_links':
 				// The engine's check, roughly: an eleven-character id after a YouTube address.
 				return (a.links as string[]).map((link, i) => {
@@ -864,6 +898,8 @@ export function installMock(): void {
 				return yes ? 'Yes' : 'No';
 			}
 			case 'plugin:dialog|open':
+				// A folder of photographs when the picker asks for a folder.
+				if (JSON.stringify(a).includes('"directory":true')) return PHOTO_FOLDER;
 				// Recordings when the picker asks for them, documents otherwise.
 				if (JSON.stringify(a).includes('m4a'))
 					return [
@@ -874,24 +910,15 @@ export function installMock(): void {
 					'C:\\Archives\\Bulletin\\bulletin-1957-06.pdf',
 					'C:\\Archives\\Letters\\lettre-gouverneur.jpg'
 				];
-			case 'save_correction': {
-				// Kept on the sample piece, as the store keeps it, so the review shows the
-				// correction again when it reads the pieces anew.
-				const c = a.correction as Correction;
-				const piece = [...pieces, ...analysisPieces, ...contentsPieces, ...correctionPieces].find(
-					(p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index
-				);
-				if (piece) {
-					piece.corrected_text = c.text;
-					piece.corrected_fields = c.fields ?? null;
-					piece.reviewed = c.reviewed;
-				}
+			case 'save_correction':
+				keepCorrection(a.correction as Correction);
 				return null;
-			}
 			case 'save_corrections':
+				// One transaction in the store; here, each kept in turn.
+				for (const c of a.corrections as Correction[]) keepCorrection(c);
 				return null;
 			case 'rename_listed':
-				return listedBefore(a);
+				return renameListed(a);
 			case 'job_text_outputs':
 			case 'export_source':
 				return [];

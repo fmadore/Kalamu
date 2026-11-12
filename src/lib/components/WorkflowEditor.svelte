@@ -13,7 +13,7 @@
 	import type { StepInput } from '#lib/bindings/StepInput.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
-	import { describeError } from '#lib/errors.js';
+	import { describeError, errorStep } from '#lib/errors.js';
 	import { languageLabel, offeredLanguages } from '#lib/languages.js';
 	import { acceptsPrompt, findModel, MODES, rulesFor, taskOf } from '#lib/newJob.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -70,9 +70,18 @@
 	/** The step chosen to add: `pipeline:<id>` or `preset:<id>`. */
 	let adding = $state('');
 	let error = $state<string | null>(null);
+	/** The step the error names, numbered from 1, and that step as it was when refused: the
+	 * error goes once the step is changed. */
+	let errorAt = $state<{ step: number; was: string } | null>(null);
 	let loaded = $state(false);
 
 	const dirty = $derived(JSON.stringify(workflow) !== saved);
+	$effect(() => {
+		if (errorAt && JSON.stringify(workflow.steps[errorAt.step - 1]) !== errorAt.was) {
+			error = null;
+			errorAt = null;
+		}
+	});
 	const catalog = $derived(app.catalog!);
 	const modelName = (provider: string, model: string) =>
 		findModel(catalog, provider, model)?.name ?? model;
@@ -184,6 +193,7 @@
 
 	async function save() {
 		error = null;
+		errorAt = null;
 		try {
 			const result = await api.saveWorkflow($state.snapshot(workflow));
 			workflow = result;
@@ -194,6 +204,8 @@
 				go({ name: 'workflows', workflowId: result.id, paths, sources, project });
 		} catch (e) {
 			error = describeError(e, m);
+			const step = errorStep(e);
+			if (step !== null) errorAt = { step, was: JSON.stringify(workflow.steps[step - 1]) };
 		}
 	}
 

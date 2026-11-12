@@ -25,7 +25,10 @@ mod batch;
 mod contents;
 mod large;
 mod later;
+mod names;
+mod ordered;
 mod pages;
+mod reading;
 mod snapshot;
 mod sources;
 mod workflow;
@@ -1301,43 +1304,33 @@ async fn a_text_only_model_is_not_sent_the_formats_its_provider_takes() {
     catalog.models.push(model);
     f.engine.set_catalog(catalog);
     let source = f.pdf("scan.pdf", 1);
-    let job = f
-        .engine
-        .create_job(NewJob {
-            name: "Text only".into(),
-            task: Task::Analysis,
-            sources: vec![source],
-            setups: vec![SetupRequest {
-                provider: ProviderId::new("fake"),
-                model: "fake-text".into(),
-                preset_id: Some("analysis.entities".into()),
-                label: None,
-                options: Default::default(),
-                merge: None,
-            }],
-            settings: Default::default(),
-            output: OutputSettings {
-                formats: vec![ExportFormat::Txt],
-                ..Default::default()
-            },
-        })
-        .unwrap_or_else(|e| panic!("{e}"));
-    f.run(job.id).await;
-    assert_eq!(
-        f.fake.calls(),
-        0,
-        "the fake provider takes PDFs, the model does not"
-    );
-    let pieces = f.store.pieces(job.id).unwrap_or_default();
-    assert_eq!(pieces[0].status, PieceStatus::Failed);
-    assert!(
-        pieces[0]
-            .error
-            .as_deref()
-            .is_some_and(|e| e.contains("reads text only")),
-        "{:?}",
-        pieces[0].error
-    );
+    let job = f.engine.create_job(NewJob {
+        name: "Text only".into(),
+        task: Task::Analysis,
+        sources: vec![source],
+        setups: vec![SetupRequest {
+            provider: ProviderId::new("fake"),
+            model: "fake-text".into(),
+            preset_id: Some("analysis.entities".into()),
+            label: None,
+            options: Default::default(),
+            merge: None,
+        }],
+        settings: Default::default(),
+        output: OutputSettings {
+            formats: vec![ExportFormat::Txt],
+            ..Default::default()
+        },
+    });
+    // The fake provider takes PDFs, the model does not: the job is refused before anything is
+    // sent, with the reason each piece would have failed with.
+    match job {
+        Err(e @ EngineError::CannotRead { .. }) => {
+            assert!(e.to_string().contains("reads text only"), "{e}");
+        }
+        other => panic!("expected CannotRead, got {other:?}"),
+    }
+    assert_eq!(f.fake.calls(), 0);
 }
 
 #[test]

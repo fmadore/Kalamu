@@ -2,8 +2,9 @@
 // each page in the strip.
 
 import type { PieceRef } from './bindings/PieceRef.js';
+import type { PieceView } from './bindings/PieceView.js';
 import type { Segment } from './bindings/Segment.js';
-import type { Messages } from './i18n/index.js';
+import { formatUsd, type Messages } from './i18n/index.js';
 
 /** A time in a recording, as hours, minutes and seconds: "01:02:03". */
 export function clock(ms: number): string {
@@ -60,4 +61,12 @@ export function enginePages(pages: string, m: Messages): string {
 		(text, half) => text.replace(new RegExp(m.units.halves[half], 'gi'), half),
 		pages
 	);
+}
+
+/** What a piece cost, after its model's name: " · $0.003", or " · From cache" for a piece
+ * answered from an earlier reading, which was not paid for again (the result keeps the cost
+ * of the call that made it); nothing when the cost is not known. */
+export function pieceCost(view: PieceView | undefined, m: Messages): string {
+	if (view?.status === 'cached') return ` · ${m.status.cached}`;
+	return view?.cost_usd ? ` · ${formatUsd(view.cost_usd)}` : '';
 }

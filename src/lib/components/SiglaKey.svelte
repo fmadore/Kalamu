@@ -4,7 +4,8 @@
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { siglum } from '#lib/apparatus.js';
-	import { formatUsd, messages } from '#lib/i18n/index.js';
+	import { messages } from '#lib/i18n/index.js';
+	import { pieceCost } from '#lib/pieces.js';
 
 	let {
 		setups,
@@ -34,7 +35,7 @@
 			<span class="name mono">{s.label}</span>
 			<span class="meta muted mono">
 				{#if v?.status === 'failed'}<span class="failed">{m.status.failed}</span>
-				{:else}{v?.model_version ?? s.model}{v?.cost_usd ? ` · ${formatUsd(v.cost_usd)}` : ''}{/if}
+				{:else}{v?.model_version ?? s.model}{pieceCost(v, m)}{/if}
 			</span>
 			{#if i > 0 && v && answered(v)}
 				<span class="tools">

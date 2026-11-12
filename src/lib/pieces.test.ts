@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { en, fr } from './i18n/index.js';
-import { clock, enginePages, pieceLabel, pieceNumber, typedPages } from './pieces.js';
+import type { PieceView } from './bindings/PieceView.js';
+import { clock, enginePages, pieceCost, pieceLabel, pieceNumber, typedPages } from './pieces.js';
 
 describe('the names of pieces', () => {
 	it('names pages, their halves, passages and whole sources', () => {
@@ -30,5 +31,16 @@ describe('the halves in a list of pages', () => {
 		expect(enginePages('1, 8 (Gauche), 9 droite', fr)).toBe('1, 8 (left), 9 right');
 		expect(typedPages('8 (left)', en)).toBe('8 (left)');
 		expect(enginePages('8 (left)', en)).toBe('8 (left)');
+	});
+});
+
+describe('what a piece cost', () => {
+	it('says a piece answered from the cache was not paid for again', () => {
+		const view = (over: Partial<PieceView>) =>
+			({ status: 'done', cost_usd: 0.003, ...over }) as PieceView;
+		expect(pieceCost(view({}), en)).toBe(' · $0.003');
+		expect(pieceCost(view({ status: 'cached' }), en)).toBe(' · From cache');
+		expect(pieceCost(view({ cost_usd: null }), en)).toBe('');
+		expect(pieceCost(undefined, en)).toBe('');
 	});
 });

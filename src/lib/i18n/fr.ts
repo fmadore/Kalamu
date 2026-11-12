@@ -320,6 +320,12 @@ export const fr: Messages = {
 				about:
 					'Texte issu de la lecture automatique d’une bibliothèque numérique, corrigé, puis résumé.',
 				steps: ['Corriger le texte', 'Résumé et mots-clés']
+			},
+			translated: {
+				name: 'Documents dans une autre langue : lire, vérifier, traduire, puis résumer',
+				about:
+					'Documents numérisés lus et vérifiés, traduits dans la langue de votre choix, puis résumés à partir de la traduction.',
+				steps: ['Lire le texte', 'Traduire le texte', 'Résumé et mots-clés']
 			}
 		},
 		stepState: {
@@ -1094,6 +1100,34 @@ export const fr: Messages = {
 				'Les images, et les PDF dont les doubles pages sont scindées, sont lus une page à la fois.',
 			noPrompt: (models: string) => `${models} lit les pages une à une.`
 		},
+		grouping: {
+			title: 'Comment lire les images',
+			separate: 'Des documents séparés',
+			separate_hint: 'Chaque image est un document à part, avec ses propres fichiers de résultat.',
+			one: 'Les pages d’un seul document',
+			one_hint:
+				'Les images sont les pages d’un même document : lues dans l’ordre ci-dessous et enregistrées en un seul résultat.',
+			name: 'Nom du document',
+			nameHint: 'Les fichiers de résultat portent ce nom, dans le dossier de la première page.',
+			order: 'Ordre des pages',
+			orderHint:
+				'Rangées selon les numéros des noms de fichiers, la page 2 avant la page 10. Déplacez une page avec ses boutons, ou faites-la glisser.',
+			orderHintMoved:
+				'Dans l’ordre que vous avez choisi. Déplacez une page avec ses boutons, ou faites-la glisser.',
+			sorting: 'Mise en ordre des pages…',
+			position: (n: number) => `Page ${n}`,
+			moveUp: (name: string) => `Monter ${name}`,
+			moveDown: (name: string) => `Descendre ${name}`,
+			missing: (from: number, to: number) =>
+				from === to
+					? `Aucun fichier numéroté ${from} avant celui-ci`
+					: `Aucun fichier numéroté de ${from} à ${to} avant celui-ci`,
+			duplicate: (n: number) => `Un autre fichier porte aussi le numéro ${n}`,
+			naturalOrder: 'Revenir à l’ordre des noms',
+			formats:
+				'Un PDF interrogeable n’est produit qu’à partir d’un PDF. L’ALTO, quand le modèle donne les positions, place chaque page dans sa propre image.',
+			refused: 'Une analyse lit chaque image comme un document à part.'
+		},
 		lines: {
 			running_text: 'Texte continu',
 			running_text_hint:
@@ -1239,6 +1273,7 @@ export const fr: Messages = {
 		extractSpreads: 'Les doubles pages sont d’abord scindées en deux',
 		extractRead: (model: string) => `${model} lit chaque page séparément`,
 		extractJoin: 'Réuni en un texte par fichier, numéros de page conservés',
+		extractJoinDocument: 'Réuni en un seul texte pour le document, numéros de page conservés',
 		extractPlace: 'Et note l’emplacement de son texte sur la page',
 		extractPlaces: (models: string) => `${models} note aussi l’emplacement de son texte`,
 		extractTextOnly:
@@ -1407,6 +1442,8 @@ export const fr: Messages = {
 		document: 'Document entier',
 		video: 'Vidéo entière',
 		openVideo: 'Ouvrir sur YouTube',
+		originalFile: (name: string) => `Original : ${name}`,
+		originalHint: 'Ouvrir l’image d’origine de cette page',
 		videoPlayer: 'La vidéo, dans le lecteur de YouTube',
 		videoHint: 'Cliquez sur une ligne pour lire la vidéo à partir de là.',
 		videoHintOpen: 'Cliquez sur une ligne pour ouvrir la vidéo à ce moment sur YouTube.',
@@ -1417,6 +1454,10 @@ export const fr: Messages = {
 		previous: 'Précédent',
 		next: 'Suivant',
 		source: 'Source',
+		showOriginal: 'Voir le texte de départ',
+		showOriginalHint: 'Le texte de la page tel que le modèle l’a reçu, à la place de l’image',
+		showPage: 'Voir la page',
+		showPageHint: 'L’image de la page, à la place du texte reçu par le modèle',
 		itemMenu: (name: string) => `Que faire de « ${name} » ?`,
 		renameItem: 'Renommer',
 		removeItem: 'Retirer des réponses',
@@ -2025,7 +2066,8 @@ export const fr: Messages = {
 		discardChanges: 'Abandonner les modifications',
 		keepEditing: 'Continuer à modifier',
 		shownRows: (shown: number, total: number) => `${shown} affichés sur ${total}`,
-		showMore: (n: number) => `Afficher ${n} de plus`
+		showMore: (n: number) => `Afficher ${n} de plus`,
+		atStep: (n: number, sentence: string) => `Étape ${n} : ${sentence}`
 	},
 	error: {
 		'search.too_short': 'Tapez un mot d’au moins trois lettres.',
@@ -2115,6 +2157,8 @@ export const fr: Messages = {
 		'provider.unsupported': 'Ce modèle ne sait pas effectuer cette tâche.',
 		'provider.retired':
 			'Son fournisseur ne sert plus ce modèle. Choisissez celui qui le remplace dans Nouveau traitement.',
+		'provider.cannot_read':
+			'Ce modèle ne sait pas lire certains des fichiers : une image demande un modèle qui lit les images, et l’analyse d’un PDF un modèle qui lit les PDF. Choisissez un autre modèle, ou extrayez d’abord le texte puis analysez le résultat.',
 		'source.unsupported':
 			'L’un des fichiers ne peut pas être lu pour cette tâche. Retirez-le, ou choisissez une autre tâche.',
 		'provider.auth': 'Le fournisseur a refusé la clé d’API. Vérifiez-la dans Paramètres.',

@@ -68,6 +68,24 @@ pub(crate) fn finish(task: Task, output: ProcessOutput) -> ProcessOutput {
     output
 }
 
+/// The provider's formats for the task, narrowed to those the model reads: a text-only model
+/// behind a provider that takes PDFs and images is sent text alone. A correction or a
+/// translation sends text whatever the model reads. A model the catalogue lacks is left to its
+/// provider.
+pub(crate) fn accepted_inputs(
+    provider: &dyn Provider,
+    model: Option<&kalamu_catalog::ModelInfo>,
+    task: Task,
+) -> Vec<&'static str> {
+    provider
+        .accepted_inputs(task)
+        .iter()
+        .copied()
+        .filter(|mime| model.is_none_or(|m| m.inputs.iter().any(|i| i == mime)))
+        .filter(|mime| !task.rewrites_text() || *mime == "text/plain")
+        .collect()
+}
+
 impl Engine {
     /// What a request to `model` asks beyond the prompt: the reasoning level chosen for the
     /// set-up (the suggestion when none was, the nearest the model has when it lacks it) and
@@ -90,9 +108,7 @@ impl Engine {
             })
     }
 
-    /// The provider's formats for the task, narrowed to those the model reads: a text-only
-    /// model behind a provider that takes PDFs and images is sent text alone. A correction or a
-    /// translation sends text whatever the model reads.
+    /// What a set-up's model is sent: [`accepted_inputs`].
     pub(crate) fn accepted(
         &self,
         job: &Job,
@@ -101,13 +117,7 @@ impl Engine {
         let provider = self.provider(step.provider)?;
         let catalog = self.current_catalog();
         let model = catalog.model(step.provider, step.model);
-        Ok(provider
-            .accepted_inputs(job.task)
-            .iter()
-            .copied()
-            .filter(|mime| model.is_none_or(|m| m.inputs.iter().any(|i| i == mime)))
-            .filter(|mime| !job.task.rewrites_text() || *mime == "text/plain")
-            .collect())
+        Ok(accepted_inputs(provider.as_ref(), model, job.task))
     }
 
     #[allow(clippy::too_many_arguments)]

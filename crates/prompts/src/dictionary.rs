@@ -54,4 +54,5 @@ pub(crate) const DICTIONARY: Default = Default {
     schema: Some(kalamu_core::dictionary::proposal::schema),
     merge: None,
     dense: false,
+    made_for: None,
 };

@@ -127,8 +127,12 @@ export function tone(status: RunStatus | StepState): string {
 	}
 }
 
-/** Ready-made workflows for colleagues new to them: read, check, then analyse. */
-export type Example = 'letters' | 'interviews' | 'library';
+/**
+ * Ready-made workflows for colleagues new to them: read, check, then analyse. The translating
+ * one leaves the language to translate into for the researcher to choose: it cannot be saved,
+ * so cannot run, until they have (`check_languages`).
+ */
+export type Example = 'letters' | 'interviews' | 'library' | 'translated';
 
 export const EXAMPLES: Record<Example, { task: Task; preset: string }[]> = {
 	letters: [
@@ -141,6 +145,11 @@ export const EXAMPLES: Record<Example, { task: Task; preset: string }[]> = {
 	],
 	library: [
 		{ task: 'text_correction', preset: 'text_correction.general' },
+		{ task: 'analysis', preset: 'analysis.summary_research' }
+	],
+	translated: [
+		{ task: 'text_extraction', preset: 'text_extraction.printed' },
+		{ task: 'translation', preset: 'translation.research' },
 		{ task: 'analysis', preset: 'analysis.summary_research' }
 	]
 };

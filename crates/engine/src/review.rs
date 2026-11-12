@@ -47,6 +47,10 @@ pub struct PieceView {
     pub source_text: Option<String>,
     /// The model's answer stopped at its output limit: the end of the piece may be missing.
     pub truncated: bool,
+    /// For a page of a document of images, the original file it is, where it lies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub original_file: Option<String>,
 }
 
 impl Engine {
@@ -61,7 +65,8 @@ impl Engine {
         let speakers = self.store.speakers(job_id)?;
         // A correction's or a translation's source is read once, for the text each piece had
         // before.
-        let opened = match job.sources.iter().find(|s| s.id == source_id) {
+        let source = job.sources.iter().find(|s| s.id == source_id);
+        let opened = match source {
             Some(source) if job.task.rewrites_text() => {
                 kalamu_media::OpenSource::open(source, self.config.ffmpeg.as_ref()).ok()
             }
@@ -120,6 +125,12 @@ impl Engine {
                 speaker_names,
                 source_text: opened.as_ref().and_then(|o| o.text_of(&state.piece).ok()),
                 truncated,
+                original_file: match (&state.piece, source) {
+                    (PieceRef::Page { number, .. }, Some(source)) => {
+                        source.page_file(*number).map(|(page, _)| page.path.clone())
+                    }
+                    _ => None,
+                },
             });
         }
         out.sort_by_key(|p| (p.index, p.setup_id));

@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { describeError } from './errors.js';
+import { describeError, errorStep } from './errors.js';
 import { en } from './i18n/index.js';
 
 /** Every id the Rust side can send, read from its source so a new id needs a sentence. */
@@ -46,5 +46,12 @@ describe('error sentences', () => {
 		);
 		expect(describeError({ id: 'future.thing', detail: 'disk full' }, en)).toBe('disk full');
 		expect(describeError(new Error('boom'), en)).toBe('boom');
+	});
+
+	it('name the step of a workflow once, before the sentence', () => {
+		const refused = { id: 'job.no_language', step: 2 };
+		expect(describeError(refused, en)).toBe('Step 2: Choose the language to translate into.');
+		expect(errorStep(refused)).toBe(2);
+		expect(errorStep({ id: 'job.no_language' })).toBeNull();
 	});
 });

@@ -197,6 +197,46 @@ pub async fn open_output(
         .map_err(|e| AppError::new(id::OPEN, e))
 }
 
+/// Opens the original file of a page of one of the job's sources, in the app the system has
+/// for it, from the review. Only files the job read, so the interface cannot open anything else
+/// on the computer.
+#[tauri::command]
+pub async fn open_original(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    id: JobId,
+    path: String,
+) -> CmdResult<()> {
+    use tauri_plugin_opener::OpenerExt;
+    let job = state.engine.job(id)?;
+    if !job
+        .sources
+        .iter()
+        .any(|s| s.files().contains(&path.as_str()))
+    {
+        return Err(AppError::new(id::OPEN, &path));
+    }
+    if !std::path::Path::new(&path).is_file() {
+        return Err(AppError::new(id::FILE_MISSING, &path));
+    }
+    app.opener()
+        .open_path(&path, None::<&str>)
+        .map_err(|e| AppError::new(id::OPEN, e))
+}
+
+/// Image files already inspected, made one document whose pages they are: in the natural order
+/// of their names, with what their numbers say and every page's checks. Nothing is read again
+/// but the images' sizes, for the checks.
+#[tauri::command]
+pub async fn image_document(
+    state: State<'_, AppState>,
+    name: String,
+    sources: Vec<SourceFile>,
+) -> CmdResult<kalamu_engine::ImageDocument> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.image_document(&name, &sources)?)).await
+}
+
 #[tauri::command]
 pub async fn inspect_files(
     state: State<'_, AppState>,
@@ -265,6 +305,7 @@ pub async fn inspect_links(
                     Some(AppError {
                         id: refused.into(),
                         detail: None,
+                        step: None,
                     }),
                 ),
                 (Err(e), _) => (None, Some(e.into())),

@@ -4,7 +4,8 @@
 //!
 //!   cargo run -p kalamu --example live -- <samples> <out> [job name filter]
 //!
-//! `<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav` and `article.txt`; each job
+//! `<samples>` holds `newspaper.jpg`, `letter.pdf`, `interview.wav`, `article.txt` and, for the
+//! image description, `image.jpg`; each job
 //! writes its outputs to its own folder in `<out>` and the run ends with a table of pieces.
 //! `LIVE_SKIP=gemini,openai` leaves out providers; `LIVE_PACE=economy` sends every job through
 //! the providers' batch services. `LIVE_TESSDATA=<folder>` adds the offline job, read with
@@ -228,6 +229,43 @@ fn plans() -> Vec<Plan> {
             settings: JobSettings::default(),
             formats: vec![ExportFormat::Txt, ExportFormat::Csv, ExportFormat::Json],
         },
+        // A text put into English, whatever its language.
+        Plan {
+            name: "translation",
+            task: Task::Translation,
+            files: &["article.txt"],
+            setups: analysis("translation.research"),
+            settings: JobSettings {
+                languages: LanguageChoice::Explicit(vec![LanguageCode::new("en")]),
+                ..JobSettings::default()
+            },
+            formats: vec![ExportFormat::Txt, ExportFormat::Json],
+        },
+        // Three images read as the pages of one document, given out of order; it needs
+        // `page-1.jpg`, `page-2.jpg` and `page-10.jpg`.
+        Plan {
+            name: "document-box-3",
+            task: Task::TextExtraction,
+            files: &["page-10.jpg", "page-1.jpg", "page-2.jpg"],
+            setups: vec![
+                setup("gemini", "gemini-3.8-flash", None, plain()),
+                setup("anthropic", "claude-haiku-5-5", None, plain()),
+            ],
+            settings: JobSettings::default(),
+            formats: vec![ExportFormat::Txt, ExportFormat::Json, ExportFormat::Alto],
+        },
+        // What two images show, answered in French; it also needs `image.jpg`.
+        Plan {
+            name: "image-description",
+            task: Task::Analysis,
+            files: &["newspaper.jpg", "image.jpg"],
+            setups: analysis("analysis.image_description"),
+            settings: JobSettings {
+                languages: LanguageChoice::Explicit(vec![LanguageCode::new("fr")]),
+                ..JobSettings::default()
+            },
+            formats: vec![ExportFormat::Txt, ExportFormat::Csv, ExportFormat::Json],
+        },
     ]
 }
 
@@ -322,6 +360,21 @@ async fn run(
             println!("  warning: {w:?}");
         }
         sources.push(source);
+    }
+    // A plan named `document-<name>` reads its images as the pages of one document of that name.
+    if let Some(name) = plan.name.strip_prefix("document-") {
+        let document = engine.image_document(name, &sources)?;
+        for note in &document.notes {
+            println!("  note: {note:?}");
+        }
+        let pages: Vec<&str> = document
+            .source
+            .pages
+            .iter()
+            .map(|p| p.file_name.as_str())
+            .collect();
+        println!("  pages in order: {}", pages.join(", "));
+        sources = vec![document.source];
     }
     // The estimate New job would show, to set against what the providers billed.
     let estimate = engine.estimate(&EstimateRequest {

@@ -25,7 +25,8 @@
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
 	import { clearFound, markFound } from '#lib/found.js';
-	import { formatUsd, messages } from '#lib/i18n/index.js';
+	import { messages } from '#lib/i18n/index.js';
+	import { pieceCost } from '#lib/pieces.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { find, searchable } from '#lib/search.js';
 	import { rovingStop, rovingTarget } from '#lib/keys.js';
@@ -247,11 +248,7 @@
 {/snippet}
 
 {#snippet foot()}
-	<span class="mono"
-		>{lead?.model_version ?? setups[0]?.model ?? ''}{lead?.cost_usd
-			? ` · ${formatUsd(lead.cost_usd)}`
-			: ''}</span
-	>
+	<span class="mono">{lead?.model_version ?? setups[0]?.model ?? ''}{pieceCost(lead, m)}</span>
 {/snippet}
 
 {#if itemMenu}

@@ -57,7 +57,7 @@ pub use kalamu_core::{FileProgress, JobProgress};
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use review::PieceView;
 pub use rules::{ModelRef, TaskRules, task_rules};
-pub use setup::NewJob;
+pub use setup::{ImageDocument, NewJob};
 pub use snapshot::{DerivedState, Freshness};
 pub use units::{SeedReport, UnitEdit, UnitView, UnitsView};
 pub use workflow::{JobStep, RunView, StartRun, StepView};
@@ -277,6 +277,51 @@ impl Engine {
                 Ok((source, warnings))
             })
             .collect()
+    }
+
+    /// Image files already inspected, made one document of pages named `name`: in the natural
+    /// order of their names, each page tied to its file, with what their numbers say (gaps,
+    /// repeats) and the checks of every page, numbered as the document numbers them. Nothing
+    /// is hashed again.
+    pub fn image_document(
+        &self,
+        name: &str,
+        sources: &[SourceFile],
+    ) -> Result<ImageDocument, EngineError> {
+        let mut pages = Vec::new();
+        for source in sources {
+            let page = kalamu_core::PageFile::of(source)
+                .ok_or_else(|| EngineError::UnsupportedSource(source.file_name.clone()))?;
+            pages.push(page);
+        }
+        if pages.is_empty() {
+            return Err(EngineError::EmptyJob);
+        }
+        pages.sort_by(|a, b| {
+            kalamu_core::natural_cmp(&a.file_name, &b.file_name)
+                .then_with(|| kalamu_core::natural_cmp(&a.path, &b.path))
+        });
+        let notes = kalamu_core::page_notes(&pages);
+        // Unnamed, the document takes its folder's name.
+        let folder = Path::new(&pages[0].path)
+            .parent()
+            .and_then(Path::file_name)
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let name = if name.trim().is_empty() {
+            folder.as_str()
+        } else {
+            name
+        };
+        let source = SourceFile::image_document(name, pages);
+        let warnings = OpenSource::open(&source, None)
+            .map(|open| open.warnings(source.id))
+            .unwrap_or_default();
+        Ok(ImageDocument {
+            source,
+            notes,
+            warnings,
+        })
     }
 
     /// YouTube links pasted for a new job, each checked and turned into a source. The video is
