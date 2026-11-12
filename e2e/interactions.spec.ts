@@ -146,7 +146,8 @@ test('New job keeps what was chosen across a visit to Settings', async ({ page }
 	await main.getByRole('textbox', { name: 'Name of the job' }).fill('Bulletins de Dakar');
 	await main.getByRole('checkbox', { name: 'Markdown (.md)' }).check();
 	await main.getByRole('radio', { name: /^As on the page/ }).check();
-	await main.getByRole('combobox', { name: 'Model' }).selectOption({ label: 'Gemini 4 Argon' });
+	await main.getByRole('combobox', { name: 'Model' }).click();
+	await main.getByRole('option', { name: /^Gemini 4 Argon/ }).click();
 
 	const sidebar = page.getByRole('navigation', { name: 'Jobs' });
 	await sidebar.getByRole('button', { name: 'Settings' }).click();
@@ -159,9 +160,53 @@ test('New job keeps what was chosen across a visit to Settings', async ({ page }
 	);
 	await expect(main.getByRole('checkbox', { name: 'Markdown (.md)' })).toBeChecked();
 	await expect(main.getByRole('radio', { name: /^As on the page/ })).toBeChecked();
-	await expect(main.getByRole('combobox', { name: 'Model' }).locator('option:checked')).toHaveText(
-		'Gemini 4 Argon'
+	await expect(main.getByRole('combobox', { name: 'Model' })).toHaveText(/Gemini 4 Argon/);
+});
+
+test('New job lists models by tier across providers, and remembers it', async ({ page }) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	const setups = main.getByRole('region', { name: /^Model and prompt/ });
+	const model = setups.getByRole('combobox', { name: 'Model' }).first();
+	// By provider: a provider field, and the provider's models under their tiers, each with its
+	// description before it is chosen.
+	await expect(setups.getByRole('combobox', { name: 'Provider' }).first()).toBeVisible();
+	await model.click();
+	const list = page.getByRole('listbox', { name: 'Model' });
+	await expect(list.getByRole('group').first()).toHaveAccessibleName('Most capable');
+	await expect(list.getByRole('option', { name: /^Gemini 4 Hydrogen/ })).toContainText(
+		'next step after 3.8 Flash'
 	);
+	// The keys move through the list, Enter chooses, and the focus goes back to the field.
+	await page.keyboard.press('ArrowDown');
+	await page.keyboard.press('Enter');
+	await expect(list).toBeHidden();
+	await expect(model).toBeFocused();
+	await expect(model).toHaveText(/Gemini 4 Hydrogen/);
+
+	await setups.getByRole('button', { name: 'Tier', exact: true }).click();
+	await expect(setups.getByRole('button', { name: 'Tier', exact: true })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+	await expect(setups.getByRole('combobox', { name: 'Provider' })).toHaveCount(0);
+	// One list of every provider's models: choosing Claude's chooses Anthropic.
+	await model.click();
+	await list.getByRole('option', { name: /^Claude Sonnet 5\.5/ }).click();
+	await expect(model).toHaveText(/Claude Sonnet 5\.5\s*Anthropic Claude/);
+	await expect(setups.getByText('Balanced', { exact: true }).filter({ visible: true })).toHaveCount(
+		1
+	);
+
+	await page.reload();
+	await page.waitForLoadState('networkidle');
+	await expect(
+		page.getByRole('main').getByRole('button', { name: 'Tier', exact: true })
+	).toHaveAttribute('aria-pressed', 'true');
+	await page.getByRole('main').getByRole('button', { name: 'Provider', exact: true }).click();
+	await expect(
+		page.getByRole('main').getByRole('combobox', { name: 'Provider' }).first()
+	).toBeVisible();
 });
 
 test('a large job’s failed files are listed alone, however far down they sit', async ({ page }) => {

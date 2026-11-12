@@ -74,6 +74,7 @@ mod tests {
     /// new ids; never remove one.
     const SHIPPED: &[(&str, &str)] = &[
         ("gemini", "gemini-3.8-flash"),
+        ("gemini", "gemini-4-hydrogen"),
         ("gemini", "gemini-3.5-transcribe"),
         ("gemini", "gemini-4-carbon"),
         ("gemini", "gemini-4-argon"),

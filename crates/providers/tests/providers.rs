@@ -299,6 +299,15 @@ async fn gemini_reads_youtube_videos_from_their_link_at_low_resolution() {
         })))
         .mount(&server)
         .await;
+    // Gemini 4's stop at the most one request writes, when more was asked for.
+    Mock::given(method("POST"))
+        .and(path("/models/hop:generateContent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "candidates": [{ "finishReason": "CONTINUATION", "continuationToken": "t",
+                "content": { "parts": [{ "text": "[00:00:01] Bonjour." }] } }]
+        })))
+        .mount(&server)
+        .await;
     let gemini = Gemini::with_base_url(client(), &server.uri());
     let (input, langs, opts) = (youtube(), LanguageChoice::Auto, SetupOptions::default());
     let key = ApiKey::new("k");
@@ -324,10 +333,12 @@ Monsieur le Gouverneur,"
         Err(ProviderError::InvalidRequest(m)) if m.contains("removed")
     ));
     assert!(matches!(run("badkey").await, Err(ProviderError::Auth(_))));
-    assert!(matches!(
-        run("long").await,
-        Err(ProviderError::InvalidRequest(m)) if m.contains("too long")
-    ));
+    for cut_off in ["long", "hop"] {
+        assert!(matches!(
+            run(cut_off).await,
+            Err(ProviderError::InvalidRequest(m)) if m.contains("too long")
+        ));
+    }
 }
 
 #[tokio::test]

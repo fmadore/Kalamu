@@ -405,3 +405,19 @@ fn a_catalogue_without_the_abilities_never_replaces_the_bundled_one() -> Result<
     assert_eq!(Catalog::from_json(&newer.to_string())?, Catalog::bundled());
     Ok(())
 }
+
+/// Every entry says where it stands among its provider's models: the default an entry without
+/// one is read as is for a catalogue written by hand elsewhere, not for the bundled one.
+#[test]
+fn every_model_names_its_tier() -> Result<(), CatalogError> {
+    let json: serde_json::Value =
+        serde_json::from_str(BUNDLED).map_err(|e| CatalogError::Invalid(e.to_string()))?;
+    for model in json["models"].as_array().into_iter().flatten() {
+        assert!(
+            matches!(model["tier"].as_str(), Some("top" | "balanced" | "light")),
+            "{}",
+            model["id"]
+        );
+    }
+    Ok(())
+}

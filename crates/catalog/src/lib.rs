@@ -96,6 +96,21 @@ pub enum ModelStatus {
     Deprecated,
 }
 
+/// Where a model stands among its provider's own, as the provider presents it: its most capable
+/// (and dearest), the middle of its range, or its lightweight one. New job groups its model
+/// lists by it. A class, not a ranking across providers: a dedicated OCR or speech model is
+/// classed beside its provider's others, an offline one beside the other models of its family.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum Tier {
+    Top,
+    /// What an entry that names no tier is read as; every bundled entry names one.
+    #[default]
+    Balanced,
+    Light,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(untagged)]
 #[ts(export)]
@@ -240,6 +255,9 @@ pub struct ModelInfo {
     pub inputs: Vec<String>,
     pub languages: LanguageSupport,
     pub status: ModelStatus,
+    /// Where it stands among its provider's models. Older builds ignore the field.
+    #[serde(default)]
+    pub tier: Tier,
     /// Tasks for which this is the app's default choice.
     #[serde(default)]
     pub recommended_for: Vec<Task>,

@@ -429,12 +429,16 @@ fn settings(mime: &str, tuning: &Tuning) -> Vec<RequestSetting> {
 }
 
 /// The answer stopped at the output limit. A page keeps what was read, but a video's transcript
-/// would end part-way with nothing to show where.
+/// would end part-way with nothing to show where. `CONTINUATION` is Gemini 4's stop at the most
+/// one request writes (64K tokens, 32K for Carbon and Argon without streaming) when more was
+/// asked for: the catalogue asks for no more, but a model whose entry did would stop so.
 fn truncated(response: &Value) -> bool {
-    response
-        .pointer("/candidates/0/finishReason")
-        .and_then(Value::as_str)
-        == Some("MAX_TOKENS")
+    matches!(
+        response
+            .pointer("/candidates/0/finishReason")
+            .and_then(Value::as_str),
+        Some("MAX_TOKENS" | "CONTINUATION")
+    )
 }
 
 /// Gemini's refusals of a YouTube link, in words a researcher can act on. A private video comes

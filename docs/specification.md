@@ -741,6 +741,13 @@ is remembered per task. Details are in [formats.md](formats.md).
   fallback on a refusal) is a field of its entry, never read from its name, so a new model is
   a new entry ([decision](decisions/2026-11-10-model-abilities.md)).
 - **A recommended model per task**, reviewed whenever a provider releases something better.
+- **A tier for every model**, where it stands among its provider's own as the provider presents
+  it: most capable, balanced or lightweight; an offline model among its own family. New job
+  lists models by provider (a provider field, then its models under their tiers) or by tier (one
+  list of every provider's models, most capable first, those on this computer apart), as the
+  researcher last chose. Each model in the list is shown with its tier's mark (three bars) and
+  its description, so it is read about before it is chosen. A tier compares a provider's models with each other, never with another provider's
+  ([decision](decisions/2026-11-12-gemini-4-hydrogen.md)).
 - **Only the newest model of each line is offered.** When a provider names a newer model as the
   replacement of an older one (Claude Fable 5.2 for 5.1), the older entry stays in the catalogue
   with a `successor` and is no longer offered for new work; models of separate lines (Gemini 4

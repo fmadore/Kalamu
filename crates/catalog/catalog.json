@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-11",
+  "updated": "2026-11-12",
   "latest_version": "1.5.0",
   "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
   "providers": [
@@ -107,6 +107,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [
         "text_extraction",
         "analysis"
@@ -137,6 +138,63 @@
       "translations": {
         "fr": {
           "description": "Rapide et peu coûteux ; lit bien l’imprimé et l’écriture manuscrite."
+        }
+      }
+    },
+    {
+      "provider": "gemini",
+      "id": "gemini-4-hydrogen",
+      "name": "Gemini 4 Hydrogen",
+      "description": "Google's fast Gemini 4 model (November 2026), the next step after 3.8 Flash: quicker, at the price 3.8 Flash reaches in January 2027.",
+      "tasks": [
+        "text_extraction",
+        "audio_transcription",
+        "analysis"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/flac",
+        "audio/ogg",
+        "audio/aac",
+        "audio/webm",
+        "video/x-youtube",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "tier": "balanced",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 1.5,
+        "output_per_mtok": 7.5,
+        "cached_input_per_mtok": 0.075,
+        "batch_discount": 0.5
+      },
+      "limits": {
+        "max_request_mb": 18,
+        "max_output_tokens": 65536
+      },
+      "reasoning": {
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle Gemini 4 rapide de Google (novembre 2026), la suite de 3.8 Flash : plus rapide, au prix que 3.8 Flash atteint en janvier 2027."
         }
       }
     },
@@ -237,6 +295,7 @@
         "vi"
       ],
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "audio_transcription"
@@ -287,6 +346,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -299,7 +359,7 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 65536
+        "max_output_tokens": 32768
       },
       "reasoning": {
         "levels": [
@@ -344,6 +404,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -356,7 +417,7 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 65536
+        "max_output_tokens": 32768
       },
       "reasoning": {
         "levels": [
@@ -401,6 +462,7 @@
       ],
       "languages": "any",
       "status": "preview",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -448,6 +510,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -493,6 +556,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction",
@@ -543,6 +607,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -591,6 +656,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -638,6 +704,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -684,6 +751,7 @@
       "languages": "any",
       "two_letter_codes": true,
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "audio_transcription"
@@ -720,6 +788,7 @@
       "language_hints": "one",
       "two_letter_codes": true,
       "status": "deprecated",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -754,6 +823,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -803,6 +873,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "successor": "claude-fable-5-2",
       "recommended_for": [],
       "provider_default_for": [],
@@ -853,6 +924,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "refusal_fallback": true,
@@ -902,6 +974,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction",
@@ -954,6 +1027,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1001,6 +1075,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction"
@@ -1042,6 +1117,7 @@
       "languages": "any",
       "language_hints": "one_without_timestamps",
       "status": "preview",
+      "tier": "balanced",
       "recommended_for": [
         "audio_transcription"
       ],
@@ -1080,6 +1156,7 @@
       "languages": "any",
       "language_hints": "one_without_timestamps",
       "status": "preview",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1112,6 +1189,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [
         "analysis"
@@ -1156,6 +1234,7 @@
       ],
       "languages": "any",
       "status": "deprecated",
+      "tier": "balanced",
       "successor": "mistral-large-4-0",
       "recommended_for": [],
       "provider_default_for": [],
@@ -1198,6 +1277,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1235,6 +1315,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1275,6 +1356,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1313,6 +1395,7 @@
       ],
       "languages": "any",
       "status": "preview",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1383,6 +1466,7 @@
       ],
       "language_hints": "one",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "audio_transcription"
@@ -1446,6 +1530,7 @@
       ],
       "language_hints": "one",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1508,6 +1593,7 @@
       ],
       "language_hints": "one",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1570,6 +1656,7 @@
       ],
       "language_hints": "one",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1643,6 +1730,7 @@
         "mg"
       ],
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction"
@@ -1685,6 +1773,7 @@
         "ja"
       ],
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction"
@@ -1726,6 +1815,7 @@
         "ko"
       ],
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1757,6 +1847,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "analysis"
@@ -1790,6 +1881,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
