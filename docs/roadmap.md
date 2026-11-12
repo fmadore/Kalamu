@@ -76,6 +76,9 @@ improvements that open *Next*; what it did not fix at once is tracked in
   added, Mistral Large 4 out of preview and Mistral's default; Fable 5.1 and Mistral Medium 3.5
   give way to their successors in New job but keep working in the pipelines and comparisons
   that name them, marked, with their replacement a click away.
+- **Gemini 4 Hydrogen** ([decision](decisions/2026-11-12-gemini-4-hydrogen.md)): Google's fast
+  Gemini 4 model added beside 3.8 Flash, which stays the default until their prices meet on
+  1 January 2027; Carbon and Argon now ask for the 32K tokens Google lets one request write.
 - **Foundations.** Rust workspace and Tauri shell, job database with caching and resuming,
   progress and taskbar progress, model catalogue refreshed from the repository, prompt library,
   keys in Credential Manager, English interface with translation files, CI with `cargo audit`

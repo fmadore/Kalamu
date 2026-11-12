@@ -84,9 +84,16 @@ describe('new job form', () => {
 		const claude = modelsFor(catalog, analysis, 'anthropic').map((m) => m.id);
 		expect(claude).toContain('claude-fable-5-2');
 		expect(claude).not.toContain('claude-fable-5-1');
-		// Argon and Carbon are two lines of Gemini 4, both offered.
+		// Argon, Carbon and Hydrogen are three lines of Gemini 4, all offered beside 3.8 Flash.
 		const gemini = modelsFor(catalog, analysis, 'gemini').map((m) => m.id);
-		expect(gemini).toEqual(expect.arrayContaining(['gemini-4-carbon', 'gemini-4-argon']));
+		expect(gemini).toEqual(
+			expect.arrayContaining([
+				'gemini-4-carbon',
+				'gemini-4-argon',
+				'gemini-4-hydrogen',
+				'gemini-3.8-flash'
+			])
+		);
 		expect(providerDefault(catalog, analysis, 'mistral')).toBe('mistral-large-4-0');
 		// No new set-up is given a replaced model, even when nothing else is left.
 		const used = catalog.models.map((m) => `${m.provider}/${m.id}`);
