@@ -50,7 +50,10 @@ test('a text page is reviewed, corrected and marked as reviewed from the keyboar
 	await page.keyboard.press('Enter');
 	const readings = page.getByRole('dialog', { name: 'Choose the correct reading' });
 	await expect(readings).toBeVisible();
-	expect(await readings.evaluate((box) => box.contains(document.activeElement))).toBe(true);
+	// The focus moves in once the readings are drawn: waited for, not read at once.
+	await expect
+		.poll(() => readings.evaluate((box) => box.contains(document.activeElement)))
+		.toBe(true);
 
 	// Escape closes them and gives the focus back to the words.
 	await page.keyboard.press('Escape');
@@ -71,7 +74,9 @@ test('a text page is reviewed, corrected and marked as reviewed from the keyboar
 	await expect(readings).toBeHidden();
 	await expect(text).toContainText('trois cents fidèles');
 	// The focus stays in the text, on the place corrected or the next difference.
-	expect(await text.evaluate((pane) => pane.contains(document.activeElement))).toBe(true);
+	await expect
+		.poll(() => text.evaluate((pane) => pane.contains(document.activeElement)))
+		.toBe(true);
 
 	// The window's shortcut marks it as not reviewed and as reviewed in turn (the sample's
 	// first page starts reviewed): it ends reviewed.
