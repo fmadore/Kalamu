@@ -1,14 +1,15 @@
 <script lang="ts">
 	// A set-up's provider and model. Listed by provider, a provider field chooses whose models the
-	// model field lists, under their tiers; listed by tier, one model field lists every
-	// provider's, the most capable first, each named with its provider, and choosing one chooses
-	// its provider too. A provider without a key is offered but cannot be chosen, either way.
+	// model menu lists, under their tiers; listed by tier, one model menu lists every provider's,
+	// the most capable first, each named with its provider, and choosing one chooses its provider
+	// too. A provider without a key is offered but cannot be chosen, either way.
 	import type { Catalog } from '#lib/bindings/Catalog.js';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import { providerNameOf } from '#lib/catalogText.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { hasKey } from '#lib/state.svelte.js';
-	import { acrossProviders, byTier, type ModelsBy } from '#lib/tiers.js';
+	import { acrossProviders, byTier, type ModelGroup, type ModelsBy } from '#lib/tiers.js';
+	import ModelMenu from './ModelMenu.svelte';
 
 	let {
 		catalog,
@@ -41,7 +42,12 @@
 		provider && !providers.includes(provider) ? [...providers, provider] : providers
 	);
 	const all = $derived(listed.flatMap((id) => models(id)));
-	const keyOf = (mod: ModelInfo) => `${mod.provider}/${mod.id}`;
+	const chosen = $derived(all.find((mod) => mod.provider === provider && mod.id === model));
+	const headingOf = (group: ModelGroup) =>
+		group.tier ? m.newJob.tiers.group[group.tier] : m.newJob.tiers.local;
+	const nameOf = (mod: ModelInfo) => `${mod.name}${suffix(mod)}`;
+	const isLocal = (mod: ModelInfo) =>
+		catalog.providers.some((p) => p.id === mod.provider && p.local);
 </script>
 
 {#if by === 'provider'}
@@ -53,44 +59,29 @@
 			{/each}
 		</select>
 	</label>
-	<label class="field">
-		<span>{m.newJob.model}</span>
-		<select bind:value={model}>
-			{#each byTier(models(provider)) as group (group.key)}
-				<optgroup label={group.tier ? m.newJob.tiers.group[group.tier] : ''}>
-					{#each group.models as mod (mod.id)}
-						<option value={mod.id}>{mod.name}{suffix(mod)}</option>
-					{/each}
-				</optgroup>
-			{/each}
-		</select>
-	</label>
+	<ModelMenu
+		label={m.newJob.model}
+		groups={byTier(models(provider))}
+		{chosen}
+		{headingOf}
+		{nameOf}
+		onchoose={(mod) => (model = mod.id)}
+	/>
 {:else}
-	<label class="field">
-		<span>{m.newJob.model}</span>
-		<select
-			value={`${provider}/${model}`}
-			onchange={(e) => {
-				const chosen = all.find((mod) => keyOf(mod) === e.currentTarget.value);
-				if (chosen) {
-					provider = chosen.provider;
-					model = chosen.id;
-				}
-			}}
-		>
-			{#each acrossProviders(all, catalog.providers) as group (group.key)}
-				<optgroup label={group.tier ? m.newJob.tiers.group[group.tier] : m.newJob.tiers.local}>
-					{#each group.models as mod (keyOf(mod))}
-						<option value={keyOf(mod)} disabled={!hasKey(mod.provider)}
-							>{group.tier
-								? m.newJob.tiers.withProvider(mod.name, providerNameOf(catalog, mod.provider))
-								: mod.name}{suffix(mod)}</option
-						>
-					{/each}
-				</optgroup>
-			{/each}
-		</select>
-	</label>
+	<ModelMenu
+		label={m.newJob.model}
+		groups={acrossProviders(all, catalog.providers)}
+		{chosen}
+		{headingOf}
+		{nameOf}
+		providerOf={(mod) => (isLocal(mod) ? null : providerNameOf(catalog, mod.provider))}
+		unavailable={(mod) =>
+			hasKey(mod.provider) ? null : m.newJob.tiers.noKey(providerNameOf(catalog, mod.provider))}
+		onchoose={(mod) => {
+			provider = mod.provider;
+			model = mod.id;
+		}}
+	/>
 {/if}
 
 <style>

@@ -947,7 +947,8 @@ export const en = {
 			/** Beside the chosen model. */
 			one: { top: 'Most capable', balanced: 'Balanced', light: 'Lightweight' },
 			local: 'On this computer',
-			withProvider: (model: string, provider: string) => `${model} · ${provider}`
+			/** Under a model whose provider has no key yet. */
+			noKey: (provider: string) => `No ${provider} key yet: add one in Settings.`
 		},
 		/** Under a model that documents its languages: opens the list. */
 		modelLanguages: (n: number) => `The ${n} languages it supports`,

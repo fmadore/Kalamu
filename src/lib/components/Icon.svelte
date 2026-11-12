@@ -9,6 +9,7 @@
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import BookOpen from '@lucide/svelte/icons/book-open';
 	import Check from '@lucide/svelte/icons/check';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import CircleQuestionMark from '@lucide/svelte/icons/circle-question-mark';
@@ -66,6 +67,7 @@
 		check: Check,
 		previous: ChevronLeft,
 		chevron: ChevronRight,
+		expand: ChevronDown,
 		cloud: Cloud,
 		glossary: BookOpen,
 		help: CircleQuestionMark,

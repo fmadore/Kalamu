@@ -6,7 +6,6 @@
 	import Icon from './Icon.svelte';
 	import ModelPicker from './ModelPicker.svelte';
 	import ModelsByToggle from './ModelsByToggle.svelte';
-	import TierMark from './TierMark.svelte';
 	import { siglum } from '#lib/apparatus.js';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
@@ -249,9 +248,9 @@
 					{/if}
 				{/if}
 				{#if info}
-					<!-- Where it stands among its provider's models, then what it is for. -->
+					<!-- Its tier in words (the field shows its bars), then what it is for. -->
 					<p class="muted small desc">
-						<span class="tier"><TierMark tier={info.tier} /> {m.newJob.tiers.one[info.tier]}</span>
+						<span class="tier">{m.newJob.tiers.one[info.tier]}</span>
 						{#if info.description}{modelDescription(info)}{/if}
 					</p>
 				{/if}

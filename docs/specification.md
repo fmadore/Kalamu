@@ -745,8 +745,8 @@ is remembered per task. Details are in [formats.md](formats.md).
   it: most capable, balanced or lightweight; an offline model among its own family. New job
   lists models by provider (a provider field, then its models under their tiers) or by tier (one
   list of every provider's models, most capable first, those on this computer apart), as the
-  researcher last chose, and marks the chosen model's tier beside its description with three
-  bars. A tier compares a provider's models with each other, never with another provider's
+  researcher last chose. Each model in the list is shown with its tier's mark (three bars) and
+  its description, so it is read about before it is chosen. A tier compares a provider's models with each other, never with another provider's
   ([decision](decisions/2026-11-12-gemini-4-hydrogen.md)).
 - **Only the newest model of each line is offered.** When a provider names a newer model as the
   replacement of an older one (Claude Fable 5.2 for 5.1), the older entry stays in the catalogue

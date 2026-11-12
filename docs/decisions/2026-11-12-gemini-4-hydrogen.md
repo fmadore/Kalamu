@@ -57,10 +57,16 @@ lightest, nor set models of several providers side by side.
   provider, then those on this computer under a heading of their own, never mixed with the
   cloud's; choosing one chooses its provider. A provider without a key is listed but cannot be
   chosen, either way. The second step of a table of contents follows the same choice.
-- **Native selects with `optgroup`**, not a custom list: a select's options hold only text, so
-  the tiers are headings, and the icon (three bars, as many filled as the tier is high) leads
-  the chosen model's description, with the tier's name beside it. Keyboard, screen readers and
-  both webviews keep the system's behaviour.
+- **A model menu of Kalamu's own** (`ModelMenu`), not a native select. A first version kept the
+  select with `optgroup` headings, but a select's options hold only text: no tier mark, no
+  description, and the system's own drawing of bold headings over indented names, which did not
+  look like the rest of the form. The menu is a select-only combobox in the top layer, as the
+  other popovers are: the button shows the chosen model's tier mark (three bars, as many filled
+  as the tier is high), its name and, listed by tier, its provider; the list shows each tier
+  under a sticky heading with its mark, and each model with its description (two lines at most)
+  or, without a key, why it cannot be chosen. It takes the keys a select takes (arrows, Home,
+  End, a letter, Enter or Space, Escape) and gives the focus back to the button. The provider
+  field stays a native select.
 - **A glossary entry**, *Tier*, linked beside the buttons, says that a tier compares a
   provider's models with each other.
 - The dictionary's merge proposals keep their provider and model fields for now.

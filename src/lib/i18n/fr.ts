@@ -1046,7 +1046,7 @@ export const fr: Messages = {
 			group: { top: 'Les plus puissants', balanced: 'Équilibrés', light: 'Légers' },
 			one: { top: 'Le plus puissant', balanced: 'Équilibré', light: 'Léger' },
 			local: 'Sur cet ordinateur',
-			withProvider: (model: string, provider: string) => `${model} · ${provider}`
+			noKey: (provider: string) => `Pas encore de clé ${provider} : ajoutez-en une dans Paramètres.`
 		},
 		modelLanguages: (n: number) => `Les ${n} langues qu’il prend en charge`,
 		reasoning: {
