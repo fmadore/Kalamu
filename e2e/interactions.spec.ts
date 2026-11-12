@@ -164,6 +164,36 @@ test('New job keeps what was chosen across a visit to Settings', async ({ page }
 	);
 });
 
+test('New job lists models by tier across providers, and remembers it', async ({ page }) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	const setups = main.getByRole('region', { name: /^Model and prompt/ });
+	const model = setups.getByRole('combobox', { name: 'Model' }).first();
+	// By provider: a provider field, and the provider's models under their tiers.
+	await expect(setups.getByRole('combobox', { name: 'Provider' }).first()).toBeVisible();
+	await expect(model.locator('optgroup').first()).toHaveAttribute('label', 'Most capable');
+
+	await setups.getByRole('button', { name: 'Tier', exact: true }).click();
+	await expect(setups.getByRole('button', { name: 'Tier', exact: true })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+	await expect(setups.getByRole('combobox', { name: 'Provider' })).toHaveCount(0);
+	// One list of every provider's models: choosing Claude's chooses Anthropic.
+	await model.selectOption({ label: 'Claude Sonnet 5.5 · Anthropic Claude' });
+	await expect(setups.getByText('Balanced', { exact: true }).first()).toBeVisible();
+
+	await page.reload();
+	await page.waitForLoadState('networkidle');
+	await expect(
+		page.getByRole('main').getByRole('button', { name: 'Tier', exact: true })
+	).toHaveAttribute('aria-pressed', 'true');
+	await page.getByRole('main').getByRole('button', { name: 'Provider', exact: true }).click();
+	await expect(
+		page.getByRole('main').getByRole('combobox', { name: 'Provider' }).first()
+	).toBeVisible();
+});
+
 test('a large job’s failed files are listed alone, however far down they sit', async ({ page }) => {
 	// A thousand files more, one in fifty failing under the second set-up (src/lib/dev/mockLarge.ts).
 	await open(page, 'jobs&rows=1000');

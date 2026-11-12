@@ -107,6 +107,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [
         "text_extraction",
         "analysis"
@@ -169,6 +170,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -293,6 +295,7 @@
         "vi"
       ],
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "audio_transcription"
@@ -343,6 +346,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -400,6 +404,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -457,6 +462,7 @@
       ],
       "languages": "any",
       "status": "preview",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -504,6 +510,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -549,6 +556,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction",
@@ -599,6 +607,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -647,6 +656,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -694,6 +704,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -740,6 +751,7 @@
       "languages": "any",
       "two_letter_codes": true,
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "audio_transcription"
@@ -776,6 +788,7 @@
       "language_hints": "one",
       "two_letter_codes": true,
       "status": "deprecated",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -810,6 +823,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -859,6 +873,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "successor": "claude-fable-5-2",
       "recommended_for": [],
       "provider_default_for": [],
@@ -909,6 +924,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "refusal_fallback": true,
@@ -958,6 +974,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction",
@@ -1010,6 +1027,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1057,6 +1075,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction"
@@ -1098,6 +1117,7 @@
       "languages": "any",
       "language_hints": "one_without_timestamps",
       "status": "preview",
+      "tier": "balanced",
       "recommended_for": [
         "audio_transcription"
       ],
@@ -1136,6 +1156,7 @@
       "languages": "any",
       "language_hints": "one_without_timestamps",
       "status": "preview",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1168,6 +1189,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [
         "analysis"
@@ -1212,6 +1234,7 @@
       ],
       "languages": "any",
       "status": "deprecated",
+      "tier": "balanced",
       "successor": "mistral-large-4-0",
       "recommended_for": [],
       "provider_default_for": [],
@@ -1254,6 +1277,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1291,6 +1315,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1331,6 +1356,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1369,6 +1395,7 @@
       ],
       "languages": "any",
       "status": "preview",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {
@@ -1439,6 +1466,7 @@
       ],
       "language_hints": "one",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "audio_transcription"
@@ -1502,6 +1530,7 @@
       ],
       "language_hints": "one",
       "status": "stable",
+      "tier": "top",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1564,6 +1593,7 @@
       ],
       "language_hints": "one",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1626,6 +1656,7 @@
       ],
       "language_hints": "one",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1699,6 +1730,7 @@
         "mg"
       ],
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction"
@@ -1741,6 +1773,7 @@
         "ja"
       ],
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "text_extraction"
@@ -1782,6 +1815,7 @@
         "ko"
       ],
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [],
       "accepts_prompt": false,
@@ -1813,6 +1847,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "balanced",
       "recommended_for": [],
       "provider_default_for": [
         "analysis"
@@ -1846,6 +1881,7 @@
       ],
       "languages": "any",
       "status": "stable",
+      "tier": "light",
       "recommended_for": [],
       "provider_default_for": [],
       "pricing": {

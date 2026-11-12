@@ -938,6 +938,17 @@ export const en = {
 		model: 'Model',
 		prompt: 'Prompt',
 		noPrompt: 'This model takes no prompt',
+		/** How the model fields list models, and the tiers they are grouped under. */
+		tiers: {
+			listBy: 'List models by',
+			by: { provider: 'Provider', tier: 'Tier' },
+			/** Headings in a model list. */
+			group: { top: 'Most capable', balanced: 'Balanced', light: 'Lightweight' },
+			/** Beside the chosen model. */
+			one: { top: 'Most capable', balanced: 'Balanced', light: 'Lightweight' },
+			local: 'On this computer',
+			withProvider: (model: string, provider: string) => `${model} · ${provider}`
+		},
 		/** Under a model that documents its languages: opens the list. */
 		modelLanguages: (n: number) => `The ${n} languages it supports`,
 		reasoning: {
@@ -1821,6 +1832,10 @@ export const en = {
 			reasoning: {
 				word: 'Thinking (reasoning effort)',
 				text: 'How much some models work through a question before answering. The intermediate steps are billed as tokens written but not shown. More effort can help with hard judgements, such as an analysis or a difficult hand, but costs more and takes longer. Each model offers its own levels; New job suggests the lowest for reading pages and recordings, and you can choose another for each model under Thinking. The level used is recorded in the provenance.'
+			},
+			tier: {
+				word: 'Tier',
+				text: 'Where a model stands among its provider’s own: its most capable (slower and dearer, for the hardest hands and documents), the middle of its range, or its lightweight one (fast and cheap, for clean print). A tier compares a provider’s models with each other, not with another provider’s: a balanced model of one may read better than the most capable of another. Models on this computer are classed among their own family. New job lists models under their tiers, by provider or all together; the price and a trial on a few pages tell the rest.'
 			},
 			economy: {
 				word: 'Cheaper mode (batches)',

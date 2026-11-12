@@ -79,6 +79,8 @@ improvements that open *Next*; what it did not fix at once is tracked in
 - **Gemini 4 Hydrogen** ([decision](decisions/2026-11-12-gemini-4-hydrogen.md)): Google's fast
   Gemini 4 model added beside 3.8 Flash, which stays the default until their prices meet on
   1 January 2027; Carbon and Argon now ask for the 32K tokens Google lets one request write.
+  Every model has a tier (most capable, balanced, lightweight), and New job lists models by
+  provider or by tier across providers, marking the chosen one's tier beside its description.
 - **Foundations.** Rust workspace and Tauri shell, job database with caching and resuming,
   progress and taskbar progress, model catalogue refreshed from the repository, prompt library,
   keys in Credential Manager, English interface with translation files, CI with `cargo audit`

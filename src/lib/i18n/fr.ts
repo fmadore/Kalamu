@@ -1040,6 +1040,14 @@ export const fr: Messages = {
 		model: 'Modèle',
 		prompt: 'Prompt',
 		noPrompt: 'Ce modèle ne prend pas de prompt',
+		tiers: {
+			listBy: 'Classer les modèles par',
+			by: { provider: 'Fournisseur', tier: 'Gamme' },
+			group: { top: 'Les plus puissants', balanced: 'Équilibrés', light: 'Légers' },
+			one: { top: 'Le plus puissant', balanced: 'Équilibré', light: 'Léger' },
+			local: 'Sur cet ordinateur',
+			withProvider: (model: string, provider: string) => `${model} · ${provider}`
+		},
 		modelLanguages: (n: number) => `Les ${n} langues qu’il prend en charge`,
 		reasoning: {
 			title: 'Réflexion',
@@ -1921,6 +1929,10 @@ export const fr: Messages = {
 			reasoning: {
 				word: 'Réflexion (effort de raisonnement)',
 				text: 'Le travail que certains modèles consacrent à une question avant d’y répondre. Les étapes intermédiaires sont facturées comme des tokens écrits, mais ne sont pas montrées. Plus d’effort peut aider pour les jugements difficiles, comme une analyse ou une écriture ardue, mais coûte plus cher et prend plus de temps. Chaque modèle propose ses propres niveaux ; Nouveau traitement suggère le plus bas pour la lecture des pages et des enregistrements, et vous pouvez en choisir un autre pour chaque modèle sous Réflexion. Le niveau utilisé est consigné dans la provenance.'
+			},
+			tier: {
+				word: 'Gamme',
+				text: 'La place d’un modèle parmi ceux de son fournisseur : le plus puissant (plus lent et plus cher, pour les écritures et les documents les plus difficiles), le milieu de sa gamme, ou le plus léger (rapide et bon marché, pour l’imprimé net). La gamme compare les modèles d’un même fournisseur entre eux, non avec ceux d’un autre : un modèle équilibré de l’un peut lire mieux que le plus puissant d’un autre. Les modèles sur cet ordinateur sont classés parmi ceux de leur famille. Nouveau traitement range les modèles par gamme, par fournisseur ou tous ensemble ; le prix et un essai sur quelques pages disent le reste.'
 			},
 			economy: {
 				word: 'Mode économique (par lots)',

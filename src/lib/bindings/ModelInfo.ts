@@ -7,6 +7,7 @@ import type { Pricing } from "./Pricing";
 import type { ProviderId } from "./ProviderId";
 import type { Reasoning } from "./Reasoning";
 import type { Task } from "./Task";
+import type { Tier } from "./Tier";
 import type { Translation } from "./Translation";
 
 export type ModelInfo = { provider: ProviderId, id: string, name: string, description: string, tasks: Array<Task>, 
@@ -14,6 +15,10 @@ export type ModelInfo = { provider: ProviderId, id: string, name: string, descri
  * MIME types the model reads.
  */
 inputs: Array<string>, languages: LanguageSupport, status: ModelStatus, 
+/**
+ * Where it stands among its provider's models. Older builds ignore the field.
+ */
+tier: Tier, 
 /**
  * Tasks for which this is the app's default choice.
  */

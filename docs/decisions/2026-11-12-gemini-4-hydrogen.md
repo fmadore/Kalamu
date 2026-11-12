@@ -1,4 +1,4 @@
-# 2026-11-12 · Gemini 4 Hydrogen, and what one Gemini request may write
+# 2026-11-12 · Gemini 4 Hydrogen, what one Gemini request may write, and model tiers
 
 ## Context
 
@@ -35,6 +35,35 @@ refused with a 400. The catalogue asked 65,536 of both.
   The catalogue never asks beyond a hop, so this guards an entry that one day would.
 - **Levels as Google lists them**; Kalamu suggests `low` for reading and analysing, and a
   `minimal` chosen elsewhere becomes `low`, the nearest level Hydrogen has.
+
+## Tiers in New job
+
+Choosing a model meant choosing a provider first, then reading a model's description only once
+it was chosen: nothing said which of a provider's models was its strongest, its middle or its
+lightest, nor set models of several providers side by side.
+
+- **`tier` on every catalogue entry**: `top`, `balanced` or `light`, where the model stands among
+  its provider's own as the provider presents it (Carbon, Argon and 3.1 Pro top; 3.8 Flash,
+  Hydrogen and Transcribe balanced; Flash-Lite light). It is a class, not a score across
+  providers: Hydrogen outscores Argon on Google's own index and is still Google's balanced
+  model. A dedicated OCR or speech model is classed beside its provider's others; an offline one
+  beside its family's (Whisper Large v3 top, Base light). An entry without a tier reads as
+  `balanced`; a test makes every bundled entry name one. Older builds ignore the field, so the
+  catalogue needs no new schema version.
+- **List models by provider or by tier**, two joined buttons beside the step's heading,
+  remembered on the computer (by provider at first, as before). By provider, the provider field
+  stays and the model field groups its models under their tiers. By tier, one model field lists
+  every provider's models under Most capable, Balanced and Lightweight, each named with its
+  provider, then those on this computer under a heading of their own, never mixed with the
+  cloud's; choosing one chooses its provider. A provider without a key is listed but cannot be
+  chosen, either way. The second step of a table of contents follows the same choice.
+- **Native selects with `optgroup`**, not a custom list: a select's options hold only text, so
+  the tiers are headings, and the icon (three bars, as many filled as the tier is high) leads
+  the chosen model's description, with the tier's name beside it. Keyboard, screen readers and
+  both webviews keep the system's behaviour.
+- **A glossary entry**, *Tier*, linked beside the buttons, says that a tier compares a
+  provider's models with each other.
+- The dictionary's merge proposals keep their provider and model fields for now.
 
 ## Consequences
 

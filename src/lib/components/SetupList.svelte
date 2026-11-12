@@ -1,10 +1,14 @@
 <script lang="ts">
 	// The model set-ups of a new job: one for a normal job, several to compare, each named by the
 	// siglum it will carry in the review.
-	import { modelDescription, providerName, providerNameOf } from '#lib/catalogText.js';
+	import { modelDescription, providerNameOf } from '#lib/catalogText.js';
 	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
+	import ModelPicker from './ModelPicker.svelte';
+	import ModelsByToggle from './ModelsByToggle.svelte';
+	import TierMark from './TierMark.svelte';
 	import { siglum } from '#lib/apparatus.js';
+	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -14,6 +18,7 @@
 		labelsSpeakers,
 		mergeDefault,
 		mergeInfo,
+		mergeModelsFor,
 		mergePickerModels,
 		mergeProviders,
 		modelInfo,
@@ -40,6 +45,7 @@
 		toast
 	} from '#lib/state.svelte.js';
 	import { describeError } from '#lib/errors.js';
+	import { keepModelsBy, recallModelsBy } from '#lib/tiers.js';
 
 	let {
 		drafts = $bindable(),
@@ -76,8 +82,32 @@
 	/** The engine's rules for the task: which models do it. */
 	const rule = $derived(rulesFor(app.rules, task));
 	const providers = $derived(
-		catalog.providers.filter((p) => modelsFor(catalog, rule, p.id, input).length > 0)
+		catalog.providers
+			.filter((p) => modelsFor(catalog, rule, p.id, input).length > 0)
+			.map((p) => p.id)
 	);
+	/** By provider or by tier, as the researcher last listed them. */
+	let modelsBy = $state(recallModelsBy());
+	$effect(() => keepModelsBy(modelsBy));
+
+	/** A provider's models for a set-up: those offered, and the one it names if replaced. */
+	const modelsOf = (d: Draft) => (provider: string) =>
+		provider === d.provider
+			? pickerModels(catalog, rule, d, input)
+			: modelsFor(catalog, rule, provider, input);
+	/** What follows a model's name: whether it was replaced, is in preview or is being retired. */
+	function suffix(mod: ModelInfo): string {
+		const old = replacedModel(catalog, rule.models, mod);
+		return old?.retired
+			? ` (${m.common.retired})`
+			: old
+				? ` (${m.common.replaced})`
+				: mod.status === 'preview'
+					? ` (${m.common.preview})`
+					: mod.status === 'deprecated'
+						? ` (${m.common.retiring})`
+						: '';
+	}
 
 	function addSetup() {
 		const used = drafts.map((d) => `${d.provider}/${d.model}`);
@@ -92,7 +122,12 @@
 </script>
 
 <section class="step block" aria-labelledby="setups-title">
-	<h2 id="setups-title">{m.newJob.setupsTitle}<TermLink term="setup" /></h2>
+	<div class="head">
+		<h2 id="setups-title">{m.newJob.setupsTitle}<TermLink term="setup" /></h2>
+		<span class="by">
+			<ModelsByToggle bind:by={modelsBy} /><TermLink term="tier" />
+		</span>
+	</div>
 	{#if !app.keys.some((k) => k.saved)}
 		<p class="warning">
 			{m.newJob.noProvider}
@@ -117,38 +152,16 @@
 						>
 					</div>
 				{/if}
-				<label class="field">
-					<span>{m.newJob.provider}</span>
-					<select
-						bind:value={d.provider}
-						onchange={() => {
-							d.model = providerDefault(catalog, rule, d.provider, input);
-						}}
-					>
-						{#each providers as p (p.id)}
-							<option value={p.id} disabled={!hasKey(p.id)}>{providerName(p)}</option>
-						{/each}
-					</select>
-				</label>
-				<label class="field">
-					<span>{m.newJob.model}</span>
-					<select bind:value={d.model}>
-						{#each pickerModels(catalog, rule, d, input) as mod (mod.id)}
-							{@const old = replacedModel(catalog, rule.models, mod)}
-							<option value={mod.id}
-								>{mod.name}{old?.retired
-									? ` (${m.common.retired})`
-									: old
-										? ` (${m.common.replaced})`
-										: mod.status === 'preview'
-											? ` (${m.common.preview})`
-											: mod.status === 'deprecated'
-												? ` (${m.common.retiring})`
-												: ''}</option
-							>
-						{/each}
-					</select>
-				</label>
+				<ModelPicker
+					{catalog}
+					by={modelsBy}
+					{providers}
+					models={modelsOf(d)}
+					defaultFor={(provider) => providerDefault(catalog, rule, provider, input)}
+					bind:provider={d.provider}
+					bind:model={d.model}
+					{suffix}
+				/>
 				<label class="field">
 					<span
 						>{task === 'analysis'
@@ -235,8 +248,12 @@
 						{/if}
 					{/if}
 				{/if}
-				{#if info?.description}
-					<p class="muted small desc">{modelDescription(info)}</p>
+				{#if info}
+					<!-- Where it stands among its provider's models, then what it is for. -->
+					<p class="muted small desc">
+						<span class="tier"><TierMark tier={info.tier} /> {m.newJob.tiers.one[info.tier]}</span>
+						{#if info.description}{modelDescription(info)}{/if}
+					</p>
 				{/if}
 				{#if info && secondsPerPage(info.id) !== undefined}
 					{@const seconds = secondsPerPage(info.id)}
@@ -259,27 +276,18 @@
 					<!-- The second step: any provider's model that reads text. -->
 					<div class="merge" role="group" aria-labelledby="merge-{i}">
 						<p class="label merge-title" id="merge-{i}">{m.newJob.mergeTitle}</p>
-						<label class="field">
-							<span>{m.newJob.provider}</span>
-							<select
-								bind:value={d.mergeProvider}
-								onchange={() => {
-									d.mergeModel = mergeDefault(catalog, rule, d.mergeProvider);
-								}}
-							>
-								{#each mergeProviders(catalog, rule) as id (id)}
-									<option value={id} disabled={!hasKey(id)}>{providerNameOf(catalog, id)}</option>
-								{/each}
-							</select>
-						</label>
-						<label class="field">
-							<span>{m.newJob.model}</span>
-							<select bind:value={d.mergeModel}>
-								{#each mergePickerModels(catalog, rule, d) as mod (mod.id)}
-									<option value={mod.id}>{mod.name}</option>
-								{/each}
-							</select>
-						</label>
+						<ModelPicker
+							{catalog}
+							by={modelsBy}
+							providers={mergeProviders(catalog, rule)}
+							models={(provider) =>
+								provider === d.mergeProvider
+									? mergePickerModels(catalog, rule, d)
+									: mergeModelsFor(catalog, rule, provider)}
+							defaultFor={(provider) => mergeDefault(catalog, rule, provider)}
+							bind:provider={d.mergeProvider}
+							bind:model={d.mergeModel}
+						/>
 						<p class="muted small desc">{m.newJob.mergeHint}</p>
 						{#if d.mergeProvider && !hasKey(d.mergeProvider)}
 							<p class="warning small">
@@ -357,6 +365,26 @@
 	.block {
 		display: grid;
 		gap: var(--space-3);
+	}
+	.head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2) var(--space-3);
+	}
+	.head h2 {
+		flex: 1 1 auto;
+	}
+	.by {
+		display: inline-flex;
+		align-items: center;
+	}
+	/* The chosen model's tier, its mark and name, before its description. */
+	.tier {
+		margin-right: var(--space-2);
+		color: var(--text-secondary);
+		font-weight: 500;
+		white-space: nowrap;
 	}
 	.row {
 		display: flex;
@@ -507,10 +535,6 @@
 	.merge .warning {
 		grid-column: 1 / -1;
 		margin: 0;
-	}
-	.merge select {
-		width: 100%;
-		min-width: 0;
 	}
 	/* Across the whole set-up, as the second step of a table of contents is. */
 	.wide {
