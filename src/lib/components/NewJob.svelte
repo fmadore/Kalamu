@@ -136,22 +136,29 @@
 	let formats = $state<ExportFormat[]>(kept?.formats ?? []);
 	let destination = $state<OutputDestination>(kept?.destination ?? { kind: 'beside_sources' });
 	let name = $state(kept?.name ?? '');
-	/** The name Kalamu suggested from the files, as long as the field still holds it. */
+	/** The name Kalamu suggested, as long as the field still holds it. */
 	let suggested = $state(kept?.suggested ?? '');
+	/** The name the files suggest, kept while the document's name stands in for it. */
+	let fromFiles = $state(kept?.fromFiles ?? kept?.suggested ?? '');
 
 	/** Fills the name from the files, unless the researcher typed one of their own. */
 	function suggest(value: string) {
+		fromFiles = value;
 		if (name && name !== suggested) return;
 		name = value;
 		suggested = value;
 	}
 
 	// A suggested name follows the files: once the file or folder it came from is removed, the
-	// first file left names the job, and no file leaves the field empty again.
+	// first file left names the job, and no file leaves the field empty again. Images read as
+	// the pages of one document name the job after the document.
 	$effect(() => {
 		if (!suggested || name !== suggested) return;
-		if (suggestionFits(suggested, files, from.frozen)) return;
-		const next = files[0] ? nameOfFile(files[0], from.frozen) : '';
+		if (!suggestionFits(fromFiles, files, from.frozen)) {
+			fromFiles = files[0] ? nameOfFile(files[0], from.frozen) : '';
+		}
+		const next = (oneOffered && grouping === 'one' && docName.trim()) || fromFiles;
+		if (next === suggested) return;
 		name = next;
 		suggested = next;
 	});
@@ -211,6 +218,8 @@
 	/** The document the engine made of the images, in the order the researcher left. */
 	let pageDoc = $state<ImageDocument | null>(kept?.pageDoc ?? null);
 	let docName = $state(kept?.docName ?? '');
+	/** A page was moved by hand since the engine last put the pages in order. */
+	let byHand = $state(kept?.byHand ?? false);
 	let sorting = $state(false);
 	const images = $derived(imageSources(files));
 	const oneOffered = $derived(offersOneDocument(rule, images));
@@ -225,6 +234,7 @@
 			// Images changed while the engine sorted: the newer call settles it.
 			if (!sameImages(made, imageSources(files))) return;
 			pageDoc = made;
+			byHand = false;
 			if (!docName.trim()) docName = made.source.file_name;
 		} catch (e) {
 			error = describeError(e, m);
@@ -448,7 +458,11 @@
 	const blocker = $derived(
 		mode === 'youtube' && sources.length > 0 && destination.kind !== 'folder'
 			? m.newJob.needFolder
-			: null
+			: rule.needs_language &&
+				  sources.length > 0 &&
+				  !(languageMode === 'explicit' && languages.length > 0)
+				? m.error['job.no_language']
+				: null
 	);
 
 	/** The settings shared by every set-up, as a job and a pipeline store them. */
@@ -643,11 +657,13 @@
 			destination: $state.snapshot(destination),
 			name,
 			suggested,
+			fromFiles,
 			thenPreset,
 			thenCheck,
 			grouping,
 			pageDoc: $state.snapshot(pageDoc),
-			docName
+			docName,
+			byHand
 		};
 		if (!done) keepForm(form);
 	});
@@ -765,6 +781,7 @@
 					bind:grouping
 					bind:doc={pageDoc}
 					bind:name={docName}
+					bind:byHand
 					{sorting}
 					onnatural={() => void orderPages(true)}
 				/>

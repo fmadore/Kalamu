@@ -1112,6 +1112,8 @@ export const fr: Messages = {
 			order: 'Ordre des pages',
 			orderHint:
 				'Rangées selon les numéros des noms de fichiers, la page 2 avant la page 10. Déplacez une page avec ses boutons, ou faites-la glisser.',
+			orderHintMoved:
+				'Dans l’ordre que vous avez choisi. Déplacez une page avec ses boutons, ou faites-la glisser.',
 			sorting: 'Mise en ordre des pages…',
 			position: (n: number) => `Page ${n}`,
 			moveUp: (name: string) => `Monter ${name}`,
@@ -1271,6 +1273,7 @@ export const fr: Messages = {
 		extractSpreads: 'Les doubles pages sont d’abord scindées en deux',
 		extractRead: (model: string) => `${model} lit chaque page séparément`,
 		extractJoin: 'Réuni en un texte par fichier, numéros de page conservés',
+		extractJoinDocument: 'Réuni en un seul texte pour le document, numéros de page conservés',
 		extractPlace: 'Et note l’emplacement de son texte sur la page',
 		extractPlaces: (models: string) => `${models} note aussi l’emplacement de son texte`,
 		extractTextOnly:
@@ -2063,7 +2066,8 @@ export const fr: Messages = {
 		discardChanges: 'Abandonner les modifications',
 		keepEditing: 'Continuer à modifier',
 		shownRows: (shown: number, total: number) => `${shown} affichés sur ${total}`,
-		showMore: (n: number) => `Afficher ${n} de plus`
+		showMore: (n: number) => `Afficher ${n} de plus`,
+		atStep: (n: number, sentence: string) => `Étape ${n} : ${sentence}`
 	},
 	error: {
 		'search.too_short': 'Tapez un mot d’au moins trois lettres.',

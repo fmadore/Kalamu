@@ -2,7 +2,9 @@
 	// Several images in New job: each a document of its own, or the pages of one document, named
 	// and put in order. The order comes from the engine (the numbers in the names read as
 	// numbers); the researcher moves pages with buttons, or by dragging them. Numbers that skip
-	// or repeat are pointed out beside their page, never fixed.
+	// or repeat are pointed out beside their page, never fixed. Dragging follows the pointer
+	// rather than the browser's own drag and drop, which the window gives over to files dropped
+	// from File Explorer or Finder (as the sidebar's jobs do).
 	import ChoiceStrip from './ChoiceStrip.svelte';
 	import Icon from './Icon.svelte';
 	import type { ImageDocument } from '#lib/bindings/ImageDocument.js';
@@ -13,6 +15,7 @@
 		grouping = $bindable(),
 		doc = $bindable(),
 		name = $bindable(),
+		byHand = $bindable(),
 		sorting,
 		onnatural
 	}: {
@@ -20,6 +23,8 @@
 		/** The document the engine made of the images, once it has. */
 		doc: ImageDocument | null;
 		name: string;
+		/** A page was moved by the researcher since the engine last put them in order. */
+		byHand: boolean;
 		/** The engine is putting the pages in order. */
 		sorting: boolean;
 		/** Puts the pages back in the order of their names. */
@@ -34,14 +39,58 @@
 		hint: g[`${value}_hint`]
 	}));
 	const pages = $derived(doc?.source.pages ?? []);
-	/** The page being dragged, by its place. */
+	/** A page pressed with the pointer, by its place, and where, until it is let go. */
+	let press: { from: number; x: number; y: number } | null = null;
+	/** The page being dragged, by its place, once the pointer moved far enough. */
 	let dragged = $state<number | null>(null);
 	/** The place a dragged page would go. */
 	let over = $state<number | null>(null);
 
 	function move(from: number, to: number) {
-		if (!doc) return;
+		if (!doc || from === to) return;
 		doc.source.pages = movePage(pages, from, to);
+		byHand = true;
+	}
+
+	/** A row pressed: with a mouse anywhere but its buttons, with a finger or pen on its grip,
+	 * so the list still scrolls under a finger. */
+	function grab(e: PointerEvent, from: number) {
+		const target = e.target as HTMLElement;
+		if (e.button !== 0 || target.closest('button')) return;
+		if (e.pointerType !== 'mouse' && !target.closest('.grip')) return;
+		press = { from, x: e.clientX, y: e.clientY };
+		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+	}
+
+	function carry(e: PointerEvent) {
+		if (!press) return;
+		if (dragged === null) {
+			if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) return;
+			dragged = press.from;
+		}
+		const row = document
+			.elementFromPoint(e.clientX, e.clientY)
+			?.closest<HTMLElement>('li[data-place]');
+		if (row) over = Number(row.dataset.place);
+		// Near the list's edges, the list scrolls to the pages out of view.
+		const list = (e.currentTarget as HTMLElement).closest('ol');
+		const box = list?.getBoundingClientRect();
+		if (list && box) {
+			if (e.clientY < box.top + 24) list.scrollTop -= 12;
+			else if (e.clientY > box.bottom - 24) list.scrollTop += 12;
+		}
+	}
+
+	/** Lets go: the page dragged goes where the pointer is, if anywhere in the list. */
+	function drop() {
+		if (dragged !== null && over !== null) move(dragged, over);
+		cancel();
+	}
+
+	function cancel() {
+		press = null;
+		dragged = null;
+		over = null;
 	}
 
 	/** Moves a page by a button and keeps the focus on the same button of the page moved, so the
@@ -73,7 +122,7 @@
 				><Icon name="replay" size={14} />{g.naturalOrder}</button
 			>
 		</div>
-		<p class="hint">{g.orderHint}</p>
+		<p class="hint">{byHand ? g.orderHintMoved : g.orderHint}</p>
 		{#if sorting && !doc}
 			<p class="hint">{g.sorting}</p>
 		{/if}
@@ -85,30 +134,16 @@
 						m
 					)}
 					<li
-						draggable="true"
+						data-place={i}
 						class:dragging={dragged === i}
-						class:over={over === i && dragged !== i}
+						class:over={over === i && dragged !== null && dragged > i}
+						class:under={over === i && dragged !== null && dragged < i}
 						class:noted={notes.length > 0}
-						ondragstart={(e) => {
-							dragged = i;
-							e.dataTransfer?.setData('text/plain', String(i));
-							if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
-						}}
-						ondragover={(e) => {
-							if (dragged === null) return;
-							e.preventDefault();
-							over = i;
-						}}
-						ondrop={(e) => {
-							e.preventDefault();
-							if (dragged !== null) move(dragged, i);
-							dragged = null;
-							over = null;
-						}}
-						ondragend={() => {
-							dragged = null;
-							over = null;
-						}}
+						onpointerdown={(e) => grab(e, i)}
+						onpointermove={carry}
+						onpointerup={drop}
+						onpointercancel={cancel}
+						onlostpointercapture={cancel}
 					>
 						<span class="grip" aria-hidden="true"><Icon name="grip" size={14} /></span>
 						<span class="number mono">{g.position(i + 1)}</span>
@@ -184,6 +219,8 @@
 		padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
 		border-top: 1px solid var(--line-soft);
 		cursor: grab;
+		user-select: none;
+		-webkit-user-select: none;
 	}
 	.pages li:first-child {
 		border-top: 0;
@@ -191,12 +228,18 @@
 	.pages li.dragging {
 		opacity: 0.5;
 	}
+	/* Where the page dragged would go: above the row when moved up, below it when moved down. */
 	.pages li.over {
 		box-shadow: inset 0 2px 0 var(--accent, var(--text-bright));
+	}
+	.pages li.under {
+		box-shadow: inset 0 -2px 0 var(--accent, var(--text-bright));
 	}
 	.grip {
 		color: var(--text-muted);
 		display: inline-flex;
+		/* A finger on the grip drags the page instead of scrolling the list. */
+		touch-action: none;
 	}
 	.number {
 		font-size: var(--type-xs);

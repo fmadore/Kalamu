@@ -663,12 +663,16 @@ export interface NewJobForm {
 	destination: OutputDestination;
 	name: string;
 	suggested: string;
+	/** The name the files suggest, while the document's name stands in for it. */
+	fromFiles?: string;
 	thenPreset: string | null;
 	thenCheck: boolean;
 	/** Several images: each its own document, or the pages of one (#52). */
 	grouping?: Grouping;
 	pageDoc?: ImageDocument | null;
 	docName?: string;
+	/** A page was moved by hand since the engine last put the pages in order. */
+	byHand?: boolean;
 }
 
 let keptForm: NewJobForm | null = null;

@@ -79,6 +79,16 @@ pages and their places, would read every page again when one page moved.
   in the order read with the page it begins, its id, path, hash, size, frames and label. ALTO is
   written when the model gives positions, each page measured in its own image; a searchable PDF
   needs a PDF, as for a single image, and New job says so beside the order.
+- **Pages dragged with the pointer, not the browser's drag and drop.** The window keeps
+  `dragDropEnabled` on so files can be dropped onto it from File Explorer or Finder, and on
+  Windows WebView2 then never delivers HTML5 drag events inside the page: a page dragged in the
+  order did not move, although the browser tests passed. `PageOrder.svelte` therefore follows
+  pointer events, as the sidebar's job dragged onto a project does (`jobDrag.svelte.ts`): the row
+  pressed captures the pointer, becomes a drag after a few pixels, and is let go on the row under
+  the pointer, the list scrolling near its edges. A mouse drags from anywhere on the row but its
+  buttons, a finger or pen from its grip, so the list still scrolls under a finger. The ↑/↓
+  buttons and the keyboard stay the way to move a page without dragging. The browser tests
+  drive the drag with the mouse, so they exercise the same path as the app in both engines.
 - **Review and projects.** `PieceView.original_file` names a page's file, and the masthead opens
   it (`open_original`, which opens only files of the job's sources). A project takes the
   document as one: its title is its name, and it is missing when any of its files is.

@@ -1011,6 +1011,8 @@ export const en = {
 			order: 'Order of the pages',
 			orderHint:
 				'Sorted by the numbers in the file names, page 2 before page 10. Move a page with its buttons, or drag it.',
+			/** In place of `orderHint` once a page was moved by hand. */
+			orderHintMoved: 'In the order you chose. Move a page with its buttons, or drag it.',
 			sorting: 'Putting the pages in order…',
 			position: (n: number) => `Page ${n}`,
 			moveUp: (name: string) => `Move ${name} up`,
@@ -1169,6 +1171,8 @@ export const en = {
 		extractSpreads: 'Double pages are split in two first',
 		extractRead: (model: string) => `${model} reads each page on its own`,
 		extractJoin: 'Joined into one text per file, page numbers kept',
+		/** In place of `extractJoin` when images are read as the pages of one document. */
+		extractJoinDocument: 'Joined into one text for the document, page numbers kept',
 		/** Under the reading step, for a model that reports where text sits (Tesseract, Mistral
 		 * OCR); the second names it beside models that do not. */
 		extractPlace: 'And notes where its text sits on the page',
@@ -1982,7 +1986,9 @@ export const en = {
 		keepEditing: 'Keep editing',
 		/** Under a long table drawn a page at a time. */
 		shownRows: (shown: number, total: number) => `${shown} of ${total} shown`,
-		showMore: (n: number) => `Show ${n} more`
+		showMore: (n: number) => `Show ${n} more`,
+		/** An error that names the step of a workflow at fault. */
+		atStep: (n: number, sentence: string) => `Step ${n}: ${sentence}`
 	},
 	error: {
 		'search.too_short': 'Type a word of three letters at least.',

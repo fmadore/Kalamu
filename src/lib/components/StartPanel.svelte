@@ -75,9 +75,14 @@
 
 	<div class="go">
 		{#if blocker && !starting}
-			<p class="blocker">{blocker}</p>
+			<p class="blocker" id="start-blocker">{blocker}</p>
 		{/if}
-		<button class="btn primary lg" disabled={!ready || starting} onclick={onstart}>
+		<button
+			class="btn primary lg"
+			disabled={!ready || starting}
+			aria-describedby={blocker && !starting ? 'start-blocker' : undefined}
+			onclick={onstart}
+		>
 			{starting ? m.newJob.starting : m.newJob.start}<span class="kbd"
 				>{shortcut(m.newJob.startShortcut)}</span
 			>
