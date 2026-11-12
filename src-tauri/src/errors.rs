@@ -2,8 +2,9 @@
 //! with a stable id, the interface words it from its translation files. The detail is the
 //! untranslated technical text (a provider's message, a path), shown after the sentence.
 
-use kalamu_core::ProviderError;
+use kalamu_core::{ProviderError, WorkflowError};
 use kalamu_engine::EngineError;
+use kalamu_prompts::PromptError;
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -15,6 +16,11 @@ pub struct AppError {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub detail: Option<String>,
+    /// The step of a workflow at fault, numbered from 1: the interface names it before the
+    /// sentence, and clears the message once that step is changed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub step: Option<u32>,
 }
 
 impl AppError {
@@ -22,6 +28,7 @@ impl AppError {
         Self {
             id: id.to_string(),
             detail: Some(format!("{detail:#}")),
+            step: None,
         }
     }
 }
@@ -37,7 +44,26 @@ impl std::fmt::Display for AppError {
 
 impl From<EngineError> for AppError {
     fn from(e: EngineError) -> Self {
-        Self::new(e.code(), e)
+        match e {
+            // The step is the interface's to word; the detail is what went wrong in it.
+            EngineError::Step { step, source } => Self {
+                step: Some(step),
+                ..Self::from(*source)
+            },
+            EngineError::Workflow(e) | EngineError::Prompt(PromptError::Workflow(e)) => e.into(),
+            e => Self::new(e.code(), e),
+        }
+    }
+}
+
+/// A workflow refused: the sentence and the step say it all, so no English detail repeats them.
+impl From<WorkflowError> for AppError {
+    fn from(e: WorkflowError) -> Self {
+        Self {
+            id: e.code().to_string(),
+            detail: None,
+            step: e.step(),
+        }
     }
 }
 
@@ -53,9 +79,12 @@ impl From<kalamu_offline::OfflineError> for AppError {
     }
 }
 
-impl From<kalamu_prompts::PromptError> for AppError {
-    fn from(e: kalamu_prompts::PromptError) -> Self {
-        Self::new(e.code(), e)
+impl From<PromptError> for AppError {
+    fn from(e: PromptError) -> Self {
+        match e {
+            PromptError::Workflow(e) => e.into(),
+            e => Self::new(e.code(), e),
+        }
     }
 }
 
@@ -107,3 +136,36 @@ pub mod id {
 }
 
 pub type CmdResult<T> = Result<T, AppError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_refused_workflow_names_its_step_once() {
+        let refused: AppError = PromptError::Workflow(WorkflowError::NoLanguage { step: 2 }).into();
+        assert_eq!(
+            refused,
+            AppError {
+                id: "job.no_language".into(),
+                detail: None,
+                step: Some(2),
+            }
+        );
+    }
+
+    #[test]
+    fn a_step_that_cannot_run_keeps_its_detail() {
+        let refused: AppError = EngineError::Step {
+            step: 3,
+            source: Box::new(EngineError::MissingKey("gemini".into())),
+        }
+        .into();
+        assert_eq!(refused.id, "provider.missing_key");
+        assert_eq!(refused.step, Some(3));
+        assert_eq!(
+            refused.detail.as_deref(),
+            Some("No API key saved for gemini")
+        );
+    }
+}

@@ -305,6 +305,7 @@ pub async fn inspect_links(
                     Some(AppError {
                         id: refused.into(),
                         detail: None,
+                        step: None,
                     }),
                 ),
                 (Err(e), _) => (None, Some(e.into())),
