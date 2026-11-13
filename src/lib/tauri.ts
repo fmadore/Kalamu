@@ -400,11 +400,15 @@ const EXTENSIONS: Record<Task, string[]> = {
 		'ogg',
 		'opus',
 		'wma',
+		'aiff',
+		'aif',
 		'webm',
 		'mp4',
 		'mov',
 		'mkv',
-		'avi'
+		'avi',
+		'wmv',
+		'm4v'
 	],
 	analysis: [
 		'txt',

@@ -1,16 +1,16 @@
 {
 	"comment": "The FFmpeg build bundled with the app: archives produced by .github/workflows/ffmpeg.yml and published as assets of the GitHub release named in `release`. Fill `sha256` from the run's .zip.sha256 files; fetch-ffmpeg refuses an archive whose hash differs.",
-	"release": "ffmpeg-9.0.2-1",
+	"release": "ffmpeg-9.0.2-2",
 	"version": "9.0.2",
 	"archives": {
 		"x86_64-pc-windows-msvc": {
-			"sha256": "7383ed1ba3ee01b757ce457f12082b466e4bade7f302d55df942f6d0c4515df2"
+			"sha256": "d24ecce0e87ccfe75b90b21e2d395769d332737676e12f207b0f204a0744a80b"
 		},
 		"aarch64-pc-windows-msvc": {
-			"sha256": "64d77a2979e3e0e4a516986faf791353139fc16c5cabf9435b59c916d1d0729d"
+			"sha256": "123e62a0717bfeb1eeb6abd3ce9196ebb80db972124815a02c3aa07b9834ab64"
 		},
 		"aarch64-apple-darwin": {
-			"sha256": "cd275abf244627416a9f613695234f196ca4f9398a96ca93fb518323909383ac"
+			"sha256": "e9dad58f83c978cf22900e4162f2a1d2baf6d8a7c4884cc3a3ad344861b2490e"
 		}
 	}
 }

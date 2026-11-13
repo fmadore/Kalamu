@@ -1,11 +1,11 @@
 # Store listing text
 
 Paste-ready text for Kalamu's two store listings, kept for the **next submission**, version
-1.6.0: the Microsoft Store (Partner Center) first, whose `Kalamu_1.6.0.msixbundle` the release
-workflow builds (the first, 1.0.0, was certified on 2 November 2026), in
-[English](#english-united-states) and [French](#french-france), then the
-[Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), whose first submission is
-the version current when a Mac is at hand (1.4.1 was prepared but has not been sent). The submission and update steps are in [microsoft-store.md](microsoft-store.md) and
+1.7.0: the Microsoft Store (Partner Center) first, whose `Kalamu_1.7.0.msixbundle` the release
+workflow builds (1.6.0 is the version live there; the first, 1.0.0, was certified on 2 November
+2026), in [English](#english-united-states) and [French](#french-france), then the
+[Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.6.0, the first
+submission, is in review. The submission and update steps are in [microsoft-store.md](microsoft-store.md) and
 [mac-app-store.md](mac-app-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 
@@ -57,7 +57,21 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.6.0
+### What's new in this version — 1.7.0
+
+```text
+Translate a text: a text file, a PDF's own text or a result you have corrected is put into the language you choose, page by page, and shown beside its source to check. A workflow can translate after the pages are read and checked.
+
+Photographs of the pages of one letter, register or file can be read as one document, in the order of their names or the one you set by dragging.
+
+Image description and keywords: a ready-made analysis of what a photograph, poster or map shows, with the text written on it and the names that text gives.
+
+New job lists models by provider or by tier, from each provider's most capable to its lightest, and offers only the newest model of each line: Claude Fable 5.2, Gemini 4 Carbon and Hydrogen, Mistral Large 4.
+
+Also: a job whose model cannot read its files is refused before anything is sent, and large jobs show their progress and write their files faster.
+```
+
+The 1.6.0 text, for the record:
 
 ```text
 Analyse texts offline: two small language models from Google, Gemma 4 E4B and E2B, fill in your analyses' fields, make tables of contents and correct text on your PC, free and with nothing sent, after a one-time download. Far weaker than the cloud models, so check their answers; faster with a graphics processor.
@@ -238,7 +252,21 @@ Nécessite Windows 11 avec Microsoft Edge WebView2 Runtime, en versions natives 
 Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI OpCo, LLC ; Claude est une marque d’Anthropic, PBC ; Mistral AI est une marque de Mistral AI ; Microsoft Word est une marque du groupe Microsoft. Kalamu est un projet indépendant, ni affilié à aucune d’elles ni approuvé par elles.
 ```
 
-### Nouveautés de cette version — 1.6.0
+### Nouveautés de cette version — 1.7.0
+
+```text
+Traduisez un texte : un fichier texte, le texte d’un PDF ou un résultat que vous avez corrigé est mis dans la langue que vous choisissez, page par page, et montré à côté de sa source pour le vérifier. Une chaîne de traitement peut traduire une fois les pages lues et vérifiées.
+
+Les photographies des pages d’une même lettre, d’un registre ou d’un dossier peuvent être lues comme un seul document, dans l’ordre de leurs noms ou dans celui que vous fixez en les faisant glisser.
+
+Description d’image et mots-clés : une analyse toute prête de ce que montre une photographie, une affiche ou une carte, avec le texte écrit dessus et les noms que ce texte donne.
+
+Nouveau traitement classe les modèles par fournisseur ou par gamme, du plus puissant au plus léger de chaque fournisseur, et ne propose que le plus récent de chaque lignée : Claude Fable 5.2, Gemini 4 Carbon et Hydrogen, Mistral Large 4.
+
+Aussi : un traitement dont le modèle ne sait pas lire les fichiers est refusé avant tout envoi, et les gros traitements affichent leur avancement et écrivent leurs fichiers plus vite.
+```
+
+Le texte de 1.6.0, pour mémoire :
 
 ```text
 Analysez des textes hors ligne : deux petits modèles de langue de Google, Gemma 4 E4B et E2B, remplissent les champs de vos analyses, font des tables des matières et corrigent du texte sur votre PC, gratuitement et sans rien envoyer, après un téléchargement unique. Bien moins bons que les modèles en ligne, alors vérifiez leurs réponses ; plus rapides avec un processeur graphique.
@@ -337,9 +365,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.6.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.7.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.6.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.7.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, choose the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
@@ -507,9 +535,9 @@ that the screenshots match the app.
 
 # Mac App Store (App Store Connect)
 
-Paste-ready text for the Mac App Store listing, written for version 1.6.0, the first to be
-submitted if it is ready before a Mac is (1.4.1 was prepared but has not been sent; for it, leave
-out the OCR and language models below). The steps,
+Paste-ready text for the Mac App Store listing. Version 1.6.0, the first submission, was sent
+with it and is in review; the next version, 1.7.0, keeps the same text, with *What's New* and the
+sample files' link below. The steps,
 the age rating and the App Privacy answers are in [mac-app-store.md](mac-app-store.md).
 App Store Connect's limits, checked when this text was written: name and subtitle 30
 characters, promotional text 170, description 4,000, keywords 100 (comma-separated, without
@@ -590,8 +618,20 @@ OCR,HTR,handwriting,transcription,speech to text,interview,archive,historian,dig
 
 ### What's New
 
-Not asked for the first version on the store. From the next one, adapt the Microsoft Store's
-*What's new* above.
+Not asked for the first version on the store (1.6.0). For 1.7.0, the Microsoft Store's text, which
+names no system (Apple allows 4,000 characters):
+
+```text
+Translate a text: a text file, a PDF's own text or a result you have corrected is put into the language you choose, page by page, and shown beside its source to check. A workflow can translate after the pages are read and checked.
+
+Photographs of the pages of one letter, register or file can be read as one document, in the order of their names or the one you set by dragging.
+
+Image description and keywords: a ready-made analysis of what a photograph, poster or map shows, with the text written on it and the names that text gives.
+
+New job lists models by provider or by tier, from each provider's most capable to its lightest, and offers only the newest model of each line: Claude Fable 5.2, Gemini 4 Carbon and Hydrogen, Mistral Large 4.
+
+Also: a job whose model cannot read its files is refused before anything is sent, and large jobs show their progress and write their files faster.
+```
 
 ### URLs and copyright
 
@@ -613,7 +653,7 @@ given here, never in the listing. Notes:
 ```text
 Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user sets up with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (printed text), and two small language models, Gemma 4 E4B and E2B (analyses). No sign-in: the app has no account of its own and sells nothing; provider usage is billed to the user's own account.
 
-Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.6.0/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
+Sample files: https://github.com/fmadore/Kalamu/releases/download/v1.7.0/kalamu-samples.zip (interview.wav, a recording; bulletin-page.jpg, an invented newspaper page; dodington-1755.jpg, a 1755 manuscript; daily-nebraskan-1911.pdf, a 1911 newspaper page; bulletin.txt).
 
 Offline route, no key needed:
 1. Settings > Offline > Transcription with Whisper: download Whisper Base (about 60 MB, once).

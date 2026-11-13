@@ -8,10 +8,14 @@ policy in [privacy.md](privacy.md). Why the store build is made this way is in t
 [build decision](decisions/2026-11-04-mac-app-store-build.md); the Microsoft Store's own steps
 are in [microsoft-store.md](microsoft-store.md).
 
-## Status (4 November 2026)
+## Status (13 November 2026)
 
-**Not yet submitted.** The first submission is version **1.4.1**: the `v1.4.0` tag predates the
-store build, which came in #110 after that release. What is ready in the repository:
+**Version 1.6.0 is in App Review**, the first submission: the *Mac App Store* workflow signed and
+uploaded it from the `v1.6.0` tag on 11 November 2026, after the app was tried on a Mac with
+Apple Silicon (macOS 26), and it was submitted with the listing in
+[store-listing.md](store-listing.md#mac-app-store-app-store-connect). The next version, 1.7.0,
+follows the same steps once Apple has answered, with a *What's New* text. What the repository
+provides:
 
 - the sandboxed build, its entitlements, the container migration and FFmpeg signed to inherit
   the sandbox, started and checked in CI by the *Mac App Store* workflow;
@@ -22,10 +26,10 @@ store build, which came in #110 after that release. What is ready in the reposit
 - the privacy policy's lines on the store build (`grants.json`, the container).
 
 What only the maintainer can do: the Apple portal and App Store Connect steps, the GitHub
-secrets, the screenshots (on a Mac, from the material in
-[store-listing.md](store-listing.md#screenshots)), and the first test on a real Mac through
-TestFlight. Nothing from the Windows set is reused: its 1.4.0 screenshots were refused by the
-Microsoft Store (see [What App Review may question](#what-app-review-may-question)).
+secrets, the screenshots (taken on a Mac, from the material in
+[store-listing.md](store-listing.md#screenshots)), and each submission. Nothing from the Windows
+set is reused: its 1.4.0 screenshots were refused by the Microsoft Store (see
+[What App Review may question](#what-app-review-may-question)).
 
 ## Once: at Apple
 

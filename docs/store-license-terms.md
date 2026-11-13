@@ -29,7 +29,7 @@ Kalamu does not own these components.
   [GNU Lesser General Public License version 2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
   or later. FFmpeg is a trademark of Fabrice Bellard. The exact source code of the build
   Kalamu ships (FFmpeg 9.0.2 and Opus 1.6.1), with its build configuration, can be downloaded
-  from https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-1. It runs as separate
+  from https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-2. It runs as separate
   programs, which you may replace with your own build.
 - **Opus**, built into FFmpeg: BSD 3-Clause licence, © Xiph.Org Foundation and contributors.
 - **whisper.cpp** (MIT) and **whisper-rs** (Unlicense), for offline transcription. Whisper
