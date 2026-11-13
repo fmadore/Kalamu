@@ -177,6 +177,9 @@ test('New job lists models by tier across providers, and remembers it', async ({
 	await expect(list.getByRole('option', { name: /^Gemini 4 Hydrogen/ })).toContainText(
 		'next step after 3.8 Flash'
 	);
+	// Opening puts the focus on the chosen model, once the browser has told the list it is open:
+	// a key pressed before then reaches the button, not the list.
+	await expect(list.getByRole('option', { name: /^Gemini 3\.8 Flash/ })).toBeFocused();
 	// The keys move through the list, Enter chooses, and the focus goes back to the field.
 	await page.keyboard.press('ArrowDown');
 	await page.keyboard.press('Enter');
