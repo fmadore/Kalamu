@@ -6,15 +6,16 @@ with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
 ## Status (13 November 2026)
 
-**Version 1.6.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
-signed, notarised disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
-[v1.6.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.6.0)
-([notes](release-1.6.0.md)). It is the version live in the
+**Version 1.7.0** is the latest release, published on 13 November 2026: unsigned installers for
+Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
+FFmpeg bundled, are on the
+[v1.7.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0)
+([notes](release-1.7.0.md)): translation, images read as the pages of one document, an image
+description and models listed by tier. It is the next update for both stores. **Version 1.6.0**
+([notes](release-1.6.0.md)) is the version live in the
 [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), where Kalamu has been since
 version 1.0.0 (2 November 2026), and the first sent to the Mac App Store, where it is in App
-Review ([steps](mac-app-store.md)). **Version 1.7.0** is prepared, not yet tagged
-([notes](release-1.7.0.md)): translation, images read as the pages of one document, an image
-description and models listed by tier. Everything below is tested against recorded provider
+Review ([steps](mac-app-store.md)). Everything below is tested against recorded provider
 responses. Text extraction, transcription, analyses and translation have also run against the
 live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
 (`cargo run --example live`, see [development.md](development.md) and the
