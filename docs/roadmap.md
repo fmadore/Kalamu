@@ -4,33 +4,35 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (10 November 2026)
+## Status (13 November 2026)
 
-**Version 1.5.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
+**Version 1.6.0** is the latest release: unsigned installers for Windows x64 and ARM64 and a
 signed, notarised disk image for macOS on Apple Silicon, each with FFmpeg bundled, are on the
-[v1.5.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.5.0)
-([notes](release-1.5.0.md)), and it is the version sent to the
+[v1.6.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.6.0)
+([notes](release-1.6.0.md)). It is the version live in the
 [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), where Kalamu has been since
-version 1.0.0 (2 November 2026). **Version 1.6.0** is prepared, not yet tagged
-([notes](release-1.6.0.md)): offline analyses with Gemma 4 and Whisper on a Windows PC's graphics
-processor. Version 1.4.1 was the first prepared for the Mac App Store
-([steps](mac-app-store.md)). Everything below is tested against recorded provider responses. Text
-extraction, transcription and analyses have also run against the live Gemini, OpenAI, Claude and
-Mistral APIs with real keys, at once and in economy mode (`cargo run --example live`, see
-[development.md](development.md) and the [live runs](decisions/2026-11-03-live-runs.md)).
+version 1.0.0 (2 November 2026), and the first sent to the Mac App Store, where it is in App
+Review ([steps](mac-app-store.md)). **Version 1.7.0** is prepared, not yet tagged
+([notes](release-1.7.0.md)): translation, images read as the pages of one document, an image
+description and models listed by tier. Everything below is tested against recorded provider
+responses. Text extraction, transcription, analyses and translation have also run against the
+live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
+(`cargo run --example live`, see [development.md](development.md) and the
+[live runs](decisions/2026-11-03-live-runs.md)).
 
 **macOS** (Apple Silicon) is built and tested in CI and has a disk image from 1.1.2 on, signed
 with an Apple Developer ID and notarised from 1.4.0
-([decision](decisions/2026-11-04-macos-notarisation.md)); it has not yet been opened on a real
-Mac, which is third in *Next* below. From the version after 1.5.0 it asks for **macOS 14 or
-later** (13 before): the interface uses what WebKit has from Safari 17 on
-([review](decisions/2026-11-09-review.md)).
+([decision](decisions/2026-11-04-macos-notarisation.md)). Before 1.6.0 it was tried on one Mac
+with Apple Silicon (macOS 26), the sandboxed Mac App Store build included, where the App Store
+screenshots were taken; what is left of a first run on a Mac is third in *Next* below. From 1.6.0
+it asks for **macOS 14 or later** (13 before): the interface uses what WebKit has from Safari 17
+on ([review](decisions/2026-11-09-review.md)).
 
 A [review of the whole app on 9 November](decisions/2026-11-09-review.md) (the Rust crates, the
 shell and CI, the interface's code, and every screen on its sample data) found the bugs and
-improvements that open *Next*; what it did not fix at once is tracked in
+improvements that open *Next*; what it did not fix at once was tracked in
 [#143](https://github.com/fmadore/Kalamu/issues/143) to
-[#149](https://github.com/fmadore/Kalamu/issues/149).
+[#149](https://github.com/fmadore/Kalamu/issues/149), of which #148 and #144 are still open.
 
 ## Done
 
@@ -449,14 +451,16 @@ In this order. Work that keeps what has shipped sound comes before new features.
      own ways), a stopped download's progress in Settings, and FFmpeg's build list with the
      decoders of 24- and 32-bit AIFF. Left: that FFmpeg build run, published and pinned; on a
      Mac, the programs after a crash or a Force Quit.
-   - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145)). Written
-     ([decision](decisions/2026-11-10-fourth-round.md)), not yet run: signing secrets only in
-     the job that notarises, which compiles nothing; one Windows build per architecture for
-     both packages; a packaging dry run on pull requests that touch the packaging; checksums and
-     an attestation with every release; every action pinned by commit; interaction tests in
-     Chromium and WebKit, and the screens opened in French. Left: the dry run, then a
-     validation tag, before the next release.
-   - **Large jobs, the rest** ([#143](https://github.com/fmadore/Kalamu/issues/143)). Done
+   - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145), closed).
+     Done ([decision](decisions/2026-11-10-fourth-round.md)): signing secrets only in the job
+     that notarises, which compiles nothing; one Windows build per architecture for both
+     packages; a packaging dry run on pull requests that touch the packaging; checksums and an
+     attestation with every release; every action pinned by commit; interaction tests in
+     Chromium and WebKit, and the screens opened in French. The dry run passed on `main`, and
+     v1.6.0 was the first tag it built: its first run failed on the ARM64 lane's path to
+     Whisper's Vulkan helper, fixed in #163, and the second published every asset with
+     `SHA256SUMS`.
+   - **Large jobs, the rest** ([#143](https://github.com/fmadore/Kalamu/issues/143), closed). Done
      ([decision](decisions/2026-11-10-fourth-round.md)): the long tables drawn 200 rows at a
      time, a running job's page reading counts instead of every piece, thumbnails drawn small
      by the app and one pdf.js worker; economy batches of at most 48 MiB, their body written
@@ -467,22 +471,24 @@ In this order. Work that keeps what has shipped sound comes before new features.
      [export names round](decisions/2026-11-11-export-names.md) worked out a job's file names
      once per run, in one pass (7.7 s down to 7 ms at 5,000 sources), stopped asking after the
      folder for every file, and raised the benchmark to the issue's 5,000 sources. What remains
-     of writing a source's files is Windows making and renaming eight small files. Left: a
-     quiet rerun of the benchmark. A
+     of writing a source's files is Windows making and renaming eight small files: the
+     benchmark run alone on a quiet machine found the disk decides it, at 12 to 17 ms a source
+     (recorded in the decision). A
      correction no longer writes its source's files on the spot: they are marked out of date
      with it and written a few seconds after the last save, before they are listed or
      exported, at quit and at the next launch (a save in a 300-page PDF went from 84 ms to
      under 0.1 ms); still to try on Windows and a Mac, where CI is the first to build the
-     shell's part.
+     shell's part. Two smaller costs are left without an issue of their own: listing a job's
+     files checks each one on the disk (2 s for 40,000), and the job list parses each job's
+     record.
    - **A model's abilities in the catalogue**
-     ([#147](https://github.com/fmadore/Kalamu/issues/147)). Done
+     ([#147](https://github.com/fmadore/Kalamu/issues/147), closed). Done
      ([decision](decisions/2026-11-10-model-abilities.md)): Claude's fallback, OpenAI's speakers
      and Gemini's speech request follow the catalogue, Mistral guesses no level from a name, and
-     a prompt says its pages are dense; cache keys unchanged. Still to compile on CI: one test in
-     `offline`.
+     a prompt says its pages are dense; cache keys unchanged, every test passing on CI.
    - **Keyboard and interface, the rest**
      ([#146](https://github.com/fmadore/Kalamu/issues/146),
-     [#149](https://github.com/fmadore/Kalamu/issues/149)). Done
+     [#149](https://github.com/fmadore/Kalamu/issues/149), both closed). Done
      ([decision](decisions/2026-11-10-fourth-round.md)): a recording's transcript shown once,
      the passage heard marked in it and kept in view; the marks of a project's Results column
      reached from the keyboard; several jobs linked or deleted, and a name renamed across
@@ -492,9 +498,9 @@ In this order. Work that keeps what has shipped sound comes before new features.
      Chromium and WebKit (a text page reviewed through its readings, an analysis's names renamed
      and removed, a failure that stays, Back to where a review was opened from, Ctrl F, the
      remembered choices, a window of 640 × 560), and the focus no longer falls to nothing when
-     a failure is dismissed or the release line hidden. Left: all of it tried in WebKit on a
-     Mac, where Tab skips buttons unless the system's keyboard navigation is on, and with a
-     screen reader.
+     a failure is dismissed or the release line hidden. Left, with the first run on a Mac
+     (item 3): all of it tried in WebKit on a Mac, where Tab skips buttons unless the system's
+     keyboard navigation is on, and with VoiceOver and Narrator.
    - CSV cells that begin with `=`, `+`, `-` or `@` (a telephone number, a list item) were read
      as formulas by a spreadsheet. Done ([decision](decisions/2026-11-10-fourth-round.md)): they
      are written with an apostrophe before them, numbers excepted, in every table but an export
@@ -512,12 +518,13 @@ In this order. Work that keeps what has shipped sound comes before new features.
    November Whisper's voice detection on accented data folders on Windows, the folders out of
    reach shown at launch, and Tesseract's drawing resolution in provenance and its engines
    pooled (all listed in the decision).
-3. **A first run on a real Mac.** The disk image is signed and notarised and a sandboxed build is
-   ready for the Mac App Store, but Kalamu has not yet been opened on a Mac
-   ([decision](decisions/2026-11-02-macos.md)). Before TestFlight: the disk image through
-   Gatekeeper, the Keychain's prompts, ⌘Q, the Dock and the menu-bar icon, YouTube's player in
-   WKWebView, a Whisper and a Tesseract job, and the interface in WebKit at the sizes CI does not
-   try.
+3. **A first run on a real Mac, the rest.** Before 1.6.0 the sandboxed Mac App Store build was
+   opened on one Mac with Apple Silicon (macOS 26): the application menu, ⌘, and ⌘Q, and the
+   menu-bar icon were tried and fixed there (#160), and the jobs of the App Store screenshots run
+   ([decision](decisions/2026-11-02-macos.md)). Not yet written down as tried: the disk image
+   through Gatekeeper, the Keychain's prompts, the Dock, YouTube's player in WKWebView, a Whisper
+   job, the interface in WebKit at the sizes CI does not try, Tab and VoiceOver (item 1), and
+   what 1.7.0 adds.
 4. **Economy mode's loose ends**, a shipped feature: reading OpenAI's batch answers in a live run
    (on 3 November it had answered none after 35 minutes); deleting the files a batch leaves in
    the user's OpenAI and Mistral storage once its answers are collected (Mistral's inline batches
@@ -635,7 +642,7 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.5.0 is the latest sent.
+in [microsoft-store.md](microsoft-store.md); 1.6.0 is live, and 1.7.0 is the next update.
 
 ## Toward the Mac App Store
 
@@ -652,10 +659,12 @@ version 1.4.1: a question before files are first sent to each cloud provider (Gu
 5.1.2(i), on Windows too), the listing, review notes, age rating and App Privacy answers, the
 privacy policy's lines on the store build, and the steps in [mac-app-store.md](mac-app-store.md).
 
-Next, by the maintainer: the App ID, the two distribution certificates, the profile, the API key
-and the app in App Store Connect, with their secrets and `APPLE_APP_ID`; screenshots taken on a
-Mac from the screened material ([store-listing.md](store-listing.md#screenshots)); a first TestFlight build opened on a real Mac (*Next*, item 2); then the submission. After
-it: a way to grant again the folders of jobs made by the disk image, and a French listing.
+Done by the maintainer: the App ID, the distribution certificates, the profile, the API key and
+the app in App Store Connect, with their secrets; the screenshots, taken on a Mac from the
+screened material ([store-listing.md](store-listing.md#screenshots)); and the first submission,
+version 1.6.0, uploaded from its tag on 11 November 2026 and in App Review. Next: Apple's answer,
+then 1.7.0 with a *What's New* text. After it: a way to grant again the folders of jobs made by
+the disk image, and a French listing.
 
 ## Research workflows (planned)
 

@@ -10,18 +10,17 @@ This follows what [Live Translation](https://github.com/fmadore/Live-translation
 the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-walkthrough.md`,
 `store-updates.md` and `packaging-msix.md`); where Kalamu differs, the reason is given here.
 
-## Status (4 November 2026)
+## Status (13 November 2026)
 
-**Version 1.3.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)** (product ID `9MXT5555BZ1H`),
-published as an update from the `Kalamu_1.3.0.msixbundle` of the
-[v1.3.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.3.0). Version 1.4.0
-was refused on 5 November 2026 under policy 11.5 (offensive content, found in the "metadata
-description"): two screenshots showed the 1915 masthead of *The Monitor* (Omaha), which names
-its readers in the wording of its time. Version 1.4.1 is submitted in its place, from the
-`Kalamu_1.4.1.msixbundle` of its release, with new screenshots of screened material and the
-sample files changed to match ([store-listing.md](store-listing.md#screenshots)); delete the
-refused screenshots from the listing before uploading the new ones. Its listing text, with the question asked before files are
-first sent to each AI provider, is in [store-listing.md](store-listing.md). The first submission,
+**Version 1.6.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)**
+(product ID `9MXT5555BZ1H`), published as an update from the `Kalamu_1.6.0.msixbundle` of the
+[v1.6.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.6.0). The next update is
+1.7.0, from the `Kalamu_1.7.0.msixbundle` of its release, with the listing text, What's new and
+certification notes in [store-listing.md](store-listing.md). Version 1.4.0 was refused on
+5 November 2026 under policy 11.5 (offensive content, found in the "metadata description"): two
+screenshots showed the 1915 masthead of *The Monitor* (Omaha), which names its readers in the
+wording of its time; 1.4.1 replaced it with screenshots of screened material and sample files
+changed to match ([store-listing.md](store-listing.md#screenshots)). The first submission,
 1.0.0, passed certification on 2 November 2026 from the `Kalamu_1.0.0.msixbundle` of the
 [v1.0.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.0.0). The steps below stay
 as the record of the first submission and the procedure for updates.
