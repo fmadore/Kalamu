@@ -449,8 +449,9 @@ In this order. Work that keeps what has shipped sound comes before new features.
      [fourth round](decisions/2026-11-10-fourth-round.md) added: the programs the app starts
      ended with it (a Job Object on Windows, however the app ends; on a Mac when it quits by its
      own ways), a stopped download's progress in Settings, and FFmpeg's build list with the
-     decoders of 24- and 32-bit AIFF. Left: that FFmpeg build run, published and pinned; on a
-     Mac, the programs after a crash or a Force Quit.
+     decoders of 24- and 32-bit AIFF, built on 13 November, checked on each architecture and
+     pinned as `ffmpeg-9.0.2-2` for 1.7.0, with `.aiff` and `.aif` in the file picker. Left: on
+     a Mac, the programs after a crash or a Force Quit.
    - **The release pipeline** ([#145](https://github.com/fmadore/Kalamu/issues/145), closed).
      Done ([decision](decisions/2026-11-10-fourth-round.md)): signing secrets only in the job
      that notarises, which compiles nothing; one Windows build per architecture for both
@@ -512,7 +513,8 @@ In this order. Work that keeps what has shipped sound comes before new features.
    descriptions export off the window's thread, split `catalog` and Whisper's audio windows,
    and shared the interface's pickers, path names, players' clock and start-up questions; a
    drop listener left registered after a screen closed was fixed. Left: the file picker's
-   extensions sent from Rust (they have drifted: `.aiff`, `.wmv`, `.m4v`, `.xlsx` are hidden),
+   extensions sent from Rust (they have drifted: `.xlsx` is hidden; `.aiff`, `.aif`, `.wmv` and `.m4v` were added by hand
+   for 1.7.0),
    FFmpeg's and llama.cpp's shared helpers, the tests that write files for the interface,
    `tauri.ts`, `mock.ts`, `vision.rs`, `llm.rs` and the larger screens split, and from 4
    November Whisper's voice detection on accented data folders on Windows, the folders out of

@@ -70,6 +70,10 @@ each provider's most capable to its lightest. For what 1.6.0 changed, see the
   offered models that read only text.
 - **The offline language models** refused the corrections and tables of contents New job
   offered them.
+- **Recordings in 24- and 32-bit AIFF**, as archives often keep them, are read: the bundled
+  FFmpeg now has their decoders ([#144](https://github.com/fmadore/Kalamu/issues/144)), and the
+  file picker lists `.aiff` and `.aif` files, and `.wmv` and `.m4v` videos, which before could
+  only be dropped on New job.
 - **Gemini 4 Argon and Carbon** ask for at most 32,768 tokens of output, the most Google accepts
   from one request, instead of 65,536.
 - **A page answered from the cache** showed the cost of the call that first read it; it now says
@@ -139,7 +143,7 @@ keys. Once 1.7.0 has opened your job database, an earlier version refuses it.
 
 Kalamu bundles FFmpeg 9.0.2 (audio only) under the LGPL v2.1 or later, with libopus (BSD). The
 exact source of the bundled FFmpeg, its build configuration and licences are in the
-[ffmpeg-9.0.2-1 release](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-1). The
+[ffmpeg-9.0.2-2 release](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-2). The
 offline OCR and language models run in llama.cpp b12110 (MIT), whose build is described in the
 [llama-b12110-1 release](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-1); the
 models themselves, LightOnOCR-3 (Apache 2.0), GLM-OCR (MIT) and Gemma 4 E4B and E2B (Apache
