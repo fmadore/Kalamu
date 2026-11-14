@@ -292,7 +292,7 @@ jobs:
           echo "PROGRAM=$name" >> "$GITHUB_ENV"
           echo "TEXT_PROGRAM=${{ matrix.text }}${exe}" >> "$GITHUB_ENV"
 
-      # The OCR models' files, pinned as in crates/offline/src/vision.rs.
+      # The OCR models' files, pinned as in crates/offline/src/vision/mod.rs.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: models
         with:
@@ -325,7 +325,7 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      # The arguments the app gives (vision.rs, `arguments`), on the sample page, which is
+      # The arguments the app gives (vision/mod.rs, `arguments`), on the sample page, which is
       # smaller than either model's largest image and is sent as it is. The processor builds
       # time both models; the others read the page once with GLM-OCR, to show they work.
       - name: Time the models on the sample page
@@ -376,7 +376,7 @@ jobs:
           run glm-ocr GLM-OCR-Q8_0.gguf mmproj-GLM-OCR-Q8_0.gguf "Text Recognition:"
           exit "$failed"
 
-      # Gemma 4 E2B's language model, pinned as in crates/offline/src/llm.rs; the text program
+      # Gemma 4 E2B's language model, pinned as in crates/offline/src/llm/mod.rs; the text program
       # does not load its encoder.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: matrix.variant == 'cpu'
@@ -393,7 +393,7 @@ jobs:
             "https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf/resolve/675cff42a74c774d6cb76f76d8eacb49b48c9b93/gemma-4-E2B_q4_0-it.gguf"
           echo "fa401b55b07ee70a54c6dae3903c783a6e65064312529ea57175cb5f8dec6634  gemma/gemma-4-E2B_q4_0-it.gguf" | $SHA256 -c -
 
-      # The arguments the app gives a text (llm.rs, `text_arguments`): instructions, text and
+      # The arguments the app gives a text (llm/command.rs, `text_arguments`): instructions, text and
       # schema from files, one turn without thinking, the answer held to the schema. Fails if
       # the answer is not the schema's JSON.
       - name: Analyse a short text with Gemma 4 E2B

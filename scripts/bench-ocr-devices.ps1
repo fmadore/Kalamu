@@ -1,6 +1,6 @@
 <#
 Times Kalamu's offline OCR models on this PC, on the processor and on each device the
-graphics-processor builds find, with the arguments the app gives (crates/offline/src/vision.rs),
+graphics-processor builds find, with the arguments the app gives (crates/offline/src/vision/mod.rs),
 so a decision about which device the app may use rests on measurements
 (docs/decisions/2026-11-06-ocr-graphics-processor.md).
 
@@ -32,7 +32,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-# As scripts/llama.json and crates/offline/src/vision.rs pin them.
+# As scripts/llama.json and crates/offline/src/vision/mod.rs pin them.
 $release = 'llama-b12110-2'
 $tag = 'b12110'
 $archives = @{
