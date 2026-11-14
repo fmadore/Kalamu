@@ -185,13 +185,7 @@ mod tests {
                 serde_json::json!({ "text": text, "query": query, "found": found(text, query) })
             })
             .collect();
-        let path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/lib/matchCases.json");
-        let json = serde_json::to_string_pretty(&cases)? + "\n";
-        if std::fs::read_to_string(&path).ok().as_deref() != Some(json.as_str()) {
-            std::fs::write(&path, json)?;
-        }
-        Ok(())
+        kalamu_core::test_support::write_interface_json("src/lib/matchCases.json", &cases)
     }
 
     #[test]

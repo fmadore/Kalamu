@@ -32,6 +32,8 @@ pub mod speakers;
 pub mod store;
 pub mod structured;
 pub mod task;
+#[cfg(any(test, feature = "test-support"))]
+pub mod test_support;
 pub mod tied;
 pub mod units;
 pub mod warning;
@@ -113,12 +115,6 @@ mod interface_lists {
                 .collect::<Vec<_>>(),
             "queue_reasons": crate::Signal::KINDS,
         });
-        let path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/lib/coreLists.json");
-        let json = serde_json::to_string_pretty(&lists)? + "\n";
-        if std::fs::read_to_string(&path).ok().as_deref() != Some(json.as_str()) {
-            std::fs::write(&path, json)?;
-        }
-        Ok(())
+        crate::test_support::write_interface_json("src/lib/coreLists.json", &lists)
     }
 }

@@ -306,15 +306,7 @@ mod tests {
             })
             .collect();
         let rules = serde_json::json!({ "min_query": MIN_QUERY, "cases": cases });
-        let path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/lib/searchRules.json");
-        let json = serde_json::to_string_pretty(&rules)?
-            + "
-";
-        if std::fs::read_to_string(&path).ok().as_deref() != Some(json.as_str()) {
-            std::fs::write(&path, json)?;
-        }
-        Ok(())
+        kalamu_core::test_support::write_interface_json("src/lib/searchRules.json", &rules)
     }
 
     fn passage(texts: &[&str]) -> Passage {
