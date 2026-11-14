@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (13 November 2026)
+## Status (14 November 2026)
 
 **Version 1.7.0** is the latest release, published on 13 November 2026: unsigned installers for
 Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
@@ -513,14 +513,18 @@ In this order. Work that keeps what has shipped sound comes before new features.
    offline engines' locks and idle sweepers, one write-then-rename in the app), moved the
    descriptions export off the window's thread, split `catalog` and Whisper's audio windows,
    and shared the interface's pickers, path names, players' clock and start-up questions; a
-   drop listener left registered after a screen closed was fixed. Left: the file picker's
-   extensions sent from Rust (they have drifted: `.xlsx` is hidden; `.aiff`, `.aif`, `.wmv` and `.m4v` were added by hand
-   for 1.7.0),
-   FFmpeg's and llama.cpp's shared helpers, the tests that write files for the interface,
-   `tauri.ts`, `mock.ts`, `vision.rs`, `llm.rs` and the larger screens split, and from 4
-   November Whisper's voice detection on accented data folders on Windows, the folders out of
-   reach shown at launch, and Tesseract's drawing resolution in provenance and its engines
-   pooled (all listed in the decision).
+   drop listener left registered after a screen closed was fixed. A
+   [round on 14 November](decisions/2026-11-14-checkpoint-leftovers.md) took up the nine things
+   it listed: the file pickers' extensions sent from Rust, in one table the engine reads too
+   (correcting and translating a text now offer `.csv`, and a dropped `.xlsx`, which was never
+   read, is refused when dropped); FFmpeg's, llama.cpp's and the Whisper helper's shared
+   helpers; one helper for the tests that write files for the interface; `timed_lines` in core;
+   `tauri.ts`, `mock.ts`, `vision.rs`, `llm.rs` and `llama.rs` split; and one sort order for the
+   reader, in the interface language. Left: the larger screens split (`NewJob.svelte`,
+   `ReviewView.svelte`, `ProjectWorkspace.svelte`, `SetupList.svelte`), the shared interface
+   pieces not yet used everywhere, and from 4 November Whisper's voice detection on accented
+   data folders on Windows, the folders out of reach shown at launch, and Tesseract's drawing
+   resolution in provenance and its engines pooled (all listed in the decision).
 3. **A first run on a real Mac, the rest.** Before 1.6.0 the sandboxed Mac App Store build was
    opened on one Mac with Apple Silicon (macOS 26): the application menu, ⌘, and ⌘Q, and the
    menu-bar icon were tried and fixed there (#160), and the jobs of the App Store screenshots run
