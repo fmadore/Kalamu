@@ -1,6 +1,7 @@
 //! Turning transcription parts into one continuous timeline, and the timeline into subtitle
 //! cues.
 
+use kalamu_core::timed::{close_ends, segments_from_text};
 use kalamu_core::{ExportDocument, PieceRef, Segment};
 
 /// Longest subtitle line pair, as in zmo-ai-pipelines' subtitle export.
@@ -26,80 +27,6 @@ pub fn timeline(doc: &ExportDocument) -> Vec<Segment> {
     }
     close_ends(&mut out);
     out
-}
-
-/// The timed lines of one piece whose model wrote `[hh:mm:ss]` markers into its text, each
-/// ending where the next begins, for the review.
-pub fn timed_lines(text: &str) -> Vec<Segment> {
-    let mut out = segments_from_text(text, 0);
-    close_ends(&mut out);
-    out
-}
-
-/// Closes each segment at the next one's start when the model gave no end.
-fn close_ends(segments: &mut [Segment]) {
-    for i in 0..segments.len() {
-        if segments[i].end_ms <= segments[i].start_ms {
-            let next = segments.get(i + 1).map(|s| s.start_ms);
-            segments[i].end_ms = next
-                .filter(|&n| n > segments[i].start_ms)
-                .unwrap_or(segments[i].start_ms + 4_000);
-        }
-    }
-}
-
-/// Reads lines like `[00:01:05] Speaker 2: text`. Lines without a timestamp continue the
-/// previous segment. Times are shifted by `offset_ms`.
-pub fn segments_from_text(text: &str, offset_ms: u64) -> Vec<Segment> {
-    let mut out: Vec<Segment> = Vec::new();
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-        if let Some((ms, rest)) = parse_stamp(line) {
-            let (speaker, body) = split_speaker(rest);
-            out.push(Segment {
-                start_ms: offset_ms + ms,
-                end_ms: 0,
-                speaker,
-                text: body.to_string(),
-            });
-        } else if let Some(last) = out.last_mut() {
-            last.text.push(' ');
-            last.text.push_str(line);
-        }
-    }
-    out
-}
-
-fn parse_stamp(line: &str) -> Option<(u64, &str)> {
-    let rest = line.strip_prefix('[')?;
-    let (stamp, rest) = rest.split_once(']')?;
-    let parts: Vec<u64> = stamp
-        .split(':')
-        .map(|p| p.trim().parse::<u64>().ok())
-        .collect::<Option<Vec<_>>>()?;
-    let secs = match parts.as_slice() {
-        [h, m, s] => h * 3600 + m * 60 + s,
-        [m, s] => m * 60 + s,
-        _ => return None,
-    };
-    Some((secs * 1000, rest.trim_start()))
-}
-
-fn split_speaker(rest: &str) -> (Option<String>, &str) {
-    if let Some((label, body)) = rest.split_once(':') {
-        let label = label.trim();
-        let looks_like_label = !label.is_empty()
-            && label.len() <= 40
-            && label.split_whitespace().count() <= 4
-            && !label.contains('[');
-        if looks_like_label {
-            return (Some(label.to_string()), body.trim_start());
-        }
-    }
-    (None, rest)
 }
 
 /// Subtitle cues: long segments are split at word boundaries, with time shared out by length.
