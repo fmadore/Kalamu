@@ -2,7 +2,7 @@
 # than `stable` so a new release's Clippy lints arrive in a Dependabot pull request, not on
 # main. When bumping it, set `rust-version` in the root Cargo.toml to the same version.
 [toolchain]
-channel = "1.99.1"
+channel = "1.100.0"
 profile = "minimal"
 components = ["clippy", "rustfmt"]
 # Both architectures the app ships for, so either machine can build the other's package.
