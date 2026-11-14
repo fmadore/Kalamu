@@ -4,7 +4,7 @@
 import type { Catalog } from './bindings/Catalog.js';
 import type { LanguageInfo } from './bindings/LanguageInfo.js';
 import type { ModelInfo } from './bindings/ModelInfo.js';
-import { languageName } from './i18n/index.js';
+import { languageName, readerOrder } from './i18n/index.js';
 
 /** Mistral OCR reads any language and takes none; a missing flag means the model takes one. */
 export function takesLanguage(model: ModelInfo | undefined): boolean {
@@ -85,11 +85,10 @@ export function searchKey(text: string): string {
 export function findLanguages(
 	languages: LanguageInfo[],
 	query: string,
-	name: (l: LanguageInfo) => string,
-	locale: string
+	name: (l: LanguageInfo) => string
 ): LanguageInfo[] {
 	const q = searchKey(query.trim());
-	const collator = new Intl.Collator(locale, { sensitivity: 'base' });
+	const collator = readerOrder({ sensitivity: 'base' });
 	return languages
 		.filter(
 			(l) =>

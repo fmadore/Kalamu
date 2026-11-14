@@ -3,6 +3,7 @@
 
 import type { DocumentRow } from './bindings/DocumentRow.js';
 import type { Task } from './bindings/Task.js';
+import { readerOrder } from './i18n/index.js';
 import { folded } from './search.js';
 
 export type DocumentSort = 'title' | 'added' | 'run';
@@ -29,11 +30,9 @@ export function shownDocuments(
 /** Sorted by title (as a reader sorts: `page 2` before `page 10`), newest added first, or
  *  most recently read first, with documents never read last. */
 export function sortDocuments(rows: DocumentRow[], by: DocumentSort): DocumentRow[] {
+	const order = readerOrder({ numeric: true, sensitivity: 'base' });
 	const title = (a: DocumentRow, b: DocumentRow) =>
-		a.document.title.localeCompare(b.document.title, undefined, {
-			numeric: true,
-			sensitivity: 'base'
-		});
+		order.compare(a.document.title, b.document.title);
 	const sorted = [...rows];
 	switch (by) {
 		case 'title':
@@ -81,7 +80,7 @@ export function selectionPaths(rows: DocumentRow[]): string[] {
 
 /** The tags some documents carry, each once, sorted as a reader sorts. */
 export function tagsOf(rows: DocumentRow[]): string[] {
-	return [...new Set(rows.flatMap((r) => r.document.tags))].sort((a, b) =>
-		a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+	return [...new Set(rows.flatMap((r) => r.document.tags))].sort(
+		readerOrder({ numeric: true, sensitivity: 'base' }).compare
 	);
 }

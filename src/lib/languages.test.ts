@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Catalog } from './bindings/Catalog.js';
 import type { LanguageInfo } from './bindings/LanguageInfo.js';
+import { setLocale } from './i18n/index.js';
 import {
 	findLanguages,
 	modelsNeedingTwoLetters,
@@ -56,9 +57,11 @@ describe('languages offered in New job', () => {
 			{ code: 'ar', name: 'Arabic' }
 		];
 		const fr = (l: LanguageInfo) => ({ mos: 'mooré', fr: 'français', ar: 'arabe' })[l.code] ?? '';
-		expect(findLanguages(langs, '', fr, 'fr').map((l) => l.code)).toEqual(['ar', 'fr', 'mos']);
-		expect(findLanguages(langs, 'moore', fr, 'fr').map((l) => l.code)).toEqual(['mos']);
-		expect(findLanguages(langs, 'French', fr, 'fr').map((l) => l.code)).toEqual(['fr']);
-		expect(findLanguages(langs, 'AR', fr, 'fr').map((l) => l.code)).toEqual(['ar']);
+		setLocale('fr');
+		expect(findLanguages(langs, '', fr).map((l) => l.code)).toEqual(['ar', 'fr', 'mos']);
+		expect(findLanguages(langs, 'moore', fr).map((l) => l.code)).toEqual(['mos']);
+		expect(findLanguages(langs, 'French', fr).map((l) => l.code)).toEqual(['fr']);
+		expect(findLanguages(langs, 'AR', fr).map((l) => l.code)).toEqual(['ar']);
+		setLocale('en');
 	});
 });

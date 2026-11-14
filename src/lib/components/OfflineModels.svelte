@@ -10,11 +10,10 @@
 	import { modelDescription } from '#lib/catalogText.js';
 	import type { OfflineModel } from '#lib/bindings/OfflineModel.js';
 	import { describeError } from '#lib/errors.js';
-	import { listNames, messages } from '#lib/i18n/index.js';
+	import { listNames, messages, readerOrder } from '#lib/i18n/index.js';
 	import { languageLabel } from '#lib/languages.js';
 	import { api } from '#lib/tauri.js';
 	import { app, onGraphics, refreshOffline, secondsPerPage, toast } from '#lib/state.svelte.js';
-	import { locale } from '#lib/i18n/index.js';
 	import LanguageDataPicker from './LanguageDataPicker.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 
@@ -75,7 +74,7 @@
 	const languageData = $derived.by(() => {
 		const catalog = app.catalog;
 		if (!catalog) return [];
-		const collator = new Intl.Collator(locale(), { sensitivity: 'base' });
+		const collator = readerOrder({ sensitivity: 'base' });
 		return (app.offline?.language_data ?? [])
 			.map((s) => {
 				const names = s.languages.map((code) => languageLabel(catalog, code));
