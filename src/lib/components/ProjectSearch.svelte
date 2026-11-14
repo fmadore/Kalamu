@@ -16,6 +16,7 @@
 	import type { SearchView } from '#lib/bindings/SearchView.js';
 	import type { TagView } from '#lib/bindings/TagView.js';
 	import type { Task } from '#lib/bindings/Task.js';
+	import lists from '#lib/coreLists.json';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { TEXT_TASKS } from '#lib/profiles.js';
@@ -38,7 +39,9 @@
 		tags
 	}: { projectId: string; collections: CollectionView[]; tags: TagView[] } = $props();
 	const m = messages();
-	const GENERATED_TASKS: Task[] = ['analysis', 'contents'];
+	/** The tasks whose results the model writes (an analysis's fields, a table of contents'
+	 *  entries) rather than a text: those `Task::yields_text` leaves out, from Rust. */
+	const GENERATED_TASKS = (lists.tasks as Task[]).filter((t) => !TEXT_TASKS.includes(t));
 	const REVIEW: ReviewFilter[] = ['any', 'reviewed', 'not_reviewed'];
 	const MODES: MatchMode[] = ['phrase', 'all_words', 'near'];
 

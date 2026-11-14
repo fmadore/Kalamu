@@ -74,6 +74,7 @@ import type { Task } from './bindings/Task.js';
 import type { ShellLabels } from './bindings/ShellLabels.js';
 import { providerNameOf } from './catalogText.js';
 import { listNames, localisePreset, messages } from './i18n/index.js';
+import { documentExtensions, taskExtensions } from './newJob.js';
 import { baseName } from './paths.js';
 
 /** The published privacy policy, named wherever the app asks before sending files. */
@@ -384,50 +385,6 @@ export const on = {
 	catalogChanged: (handler: () => void) => listen<null>('catalog-changed', handler)
 };
 
-const PAGES = ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'];
-/** The files each task reads, by extension. */
-const EXTENSIONS: Record<Task, string[]> = {
-	text_extraction: PAGES,
-	contents: PAGES,
-	text_correction: ['txt', 'md', 'docx', 'pdf'],
-	translation: ['txt', 'md', 'docx', 'pdf'],
-	audio_transcription: [
-		'mp3',
-		'wav',
-		'm4a',
-		'aac',
-		'flac',
-		'ogg',
-		'opus',
-		'wma',
-		'aiff',
-		'aif',
-		'webm',
-		'mp4',
-		'mov',
-		'mkv',
-		'avi',
-		'wmv',
-		'm4v'
-	],
-	analysis: [
-		'txt',
-		'md',
-		'docx',
-		'csv',
-		'pdf',
-		'png',
-		'jpg',
-		'jpeg',
-		'tif',
-		'tiff',
-		'webp',
-		'bmp',
-		'heic',
-		'heif'
-	]
-};
-
 /** Files with these extensions, several at once. */
 async function pickSources(extensions: string[]): Promise<string[]> {
 	if (!isTauri()) return [];
@@ -441,12 +398,12 @@ async function pickSources(extensions: string[]): Promise<string[]> {
 
 /** The files a task reads. */
 export function pickFiles(task: Task): Promise<string[]> {
-	return pickSources(EXTENSIONS[task]);
+	return pickSources(taskExtensions(task));
 }
 
 /** Files of any kind Kalamu reads, for a project's documents. */
 export function pickDocuments(): Promise<string[]> {
-	return pickSources([...new Set(Object.values(EXTENSIONS).flat())]);
+	return pickSources(documentExtensions());
 }
 
 export async function pickFolder(): Promise<string | null> {
