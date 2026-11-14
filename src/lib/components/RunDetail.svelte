@@ -10,7 +10,8 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, returnTo } from '#lib/state.svelte.js';
-	import { api, ask } from '#lib/tauri.js';
+	import { ask } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 	import { tone } from '#lib/workflows.js';
 
 	let { runId }: { runId: string } = $props();

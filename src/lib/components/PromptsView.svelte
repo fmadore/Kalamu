@@ -6,7 +6,8 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { api, pickPresetFile, pickJsonSave } from '#lib/tauri.js';
+	import { pickPresetFile, pickJsonSave } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 	import { guardDraft, leaveThen, toast } from '#lib/state.svelte.js';
 
 	let { presetId }: { presetId?: string } = $props();

@@ -17,7 +17,8 @@
 	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import { rulesFor } from '#lib/newJob.js';
 	import { app, go, returnTo, toast } from '#lib/state.svelte.js';
-	import { api, ask, revealInFolder } from '#lib/tauri.js';
+	import { ask } from '#lib/dialogs.js';
+	import { api, revealInFolder } from '#lib/tauri.js';
 
 	let { projectId, documentId }: { projectId: string; documentId: string } = $props();
 	const m = messages();

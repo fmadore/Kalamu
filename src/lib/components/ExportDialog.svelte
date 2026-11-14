@@ -22,7 +22,8 @@
 		valueKey
 	} from '#lib/profiles.js';
 	import { toast } from '#lib/state.svelte.js';
-	import { api, ask, askForFolders, pickPresetFile, pickJsonSave } from '#lib/tauri.js';
+	import { ask, askForFolders, pickPresetFile, pickJsonSave } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 	import Dialog from './Dialog.svelte';
 	import Icon from './Icon.svelte';
 

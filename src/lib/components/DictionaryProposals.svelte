@@ -13,7 +13,8 @@
 	import { formatDate, formatUsd, messages } from '#lib/i18n/index.js';
 	import { modelsFor, providerDefault, rulesFor } from '#lib/newJob.js';
 	import { app, go, hasKey, refreshJobs } from '#lib/state.svelte.js';
-	import { api, askConsent, providersOf } from '#lib/tauri.js';
+	import { askConsent, providersOf } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 
 	let {
 		projectId,

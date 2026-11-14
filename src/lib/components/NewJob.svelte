@@ -71,7 +71,8 @@
 		offersOneDocument,
 		sameImages
 	} from '#lib/pageOrder.js';
-	import { api, listenWhileMounted, mayStart, onDrop } from '#lib/tauri.js';
+	import { mayStart } from '#lib/dialogs.js';
+	import { api, listenWhileMounted, onDrop } from '#lib/tauri.js';
 	import {
 		app,
 		go,

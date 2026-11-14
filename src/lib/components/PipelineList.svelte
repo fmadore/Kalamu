@@ -7,7 +7,8 @@
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { baseName } from '#lib/paths.js';
-	import { api, ask, askForFolders, pickJsonSave, pickPresetFile } from '#lib/tauri.js';
+	import { ask, askForFolders, pickJsonSave, pickPresetFile } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 	import { toast } from '#lib/state.svelte.js';
 
 	let {

@@ -23,7 +23,8 @@
 	import { Selection } from '#lib/selection.svelte.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { keepFor, recallFor } from '#lib/stored.js';
-	import { api, ask } from '#lib/tauri.js';
+	import { ask } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 
 	let {
 		projectId,

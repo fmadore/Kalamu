@@ -24,7 +24,8 @@ import type { Example } from './workflows.js';
 import type { QueueFilter } from './queue.js';
 import { leaving, samePlace } from './history.js';
 import { messages, resolveLocale, setLocale, type Locale } from './i18n/index.js';
-import { api, ask, openUrl } from './tauri.js';
+import { ask } from './dialogs.js';
+import { api, openUrl } from './tauri.js';
 
 /** A project New job was opened from: the job it starts is tied to the project's documents. */
 export interface FromProject {

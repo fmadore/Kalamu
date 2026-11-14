@@ -30,7 +30,8 @@
 		type ProjectPane
 	} from '#lib/state.svelte.js';
 	import { keepFor, recallFor } from '#lib/stored.js';
-	import { api, ask, listenWhileMounted, onDrop, pickDocuments, pickFolder } from '#lib/tauri.js';
+	import { ask, pickDocuments, pickFolder } from '#lib/dialogs.js';
+	import { api, listenWhileMounted, onDrop } from '#lib/tauri.js';
 
 	let {
 		projectId,
