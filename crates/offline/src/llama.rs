@@ -138,22 +138,16 @@ impl Llama {
         Self::locate_program(PROGRAM, dirs)
     }
 
-    /// The Vulkan build, looked for in the same places; Windows only.
+    /// The Vulkan build, looked for in the same places. Only the Windows packages ship it
+    /// (`tauri.ffmpeg.windows-*.conf.json`), so elsewhere it is simply not found.
     pub fn locate_vulkan(dirs: &[PathBuf]) -> Option<Self> {
-        if cfg!(windows) {
-            Self::locate_program(VULKAN_PROGRAM, dirs)
-        } else {
-            None
-        }
+        Self::locate_program(VULKAN_PROGRAM, dirs)
     }
 
-    /// The OpenCL build, looked for in the same places; Windows ARM64 only.
+    /// The OpenCL build, looked for in the same places. Only the Windows ARM64 package ships it,
+    /// so elsewhere it is simply not found.
     pub fn locate_opencl(dirs: &[PathBuf]) -> Option<Self> {
-        if cfg!(all(windows, target_arch = "aarch64")) {
-            Self::locate_program(OPENCL_PROGRAM, dirs)
-        } else {
-            None
-        }
+        Self::locate_program(OPENCL_PROGRAM, dirs)
     }
 
     /// The same program with `key` set to `value` for every run.
