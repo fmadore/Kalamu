@@ -21,6 +21,7 @@ use std::process::Command;
 use std::time::{Duration, Instant};
 
 use kalamu_core::{ProviderError, StopSignal};
+use kalamu_media::bundled::{self, quiet};
 use kalamu_media::program::{self, Ended, Limits, Unfinished};
 
 use crate::diagnostics;
@@ -66,19 +67,6 @@ pub(crate) const SILENCE: Duration = Duration::from_secs(600);
 /// The most of the program's diagnostics kept, from the end: enough for the error it ends with
 /// and the timing it prints.
 const STDERR_KEPT: usize = 64 * 1024;
-
-/// Windows' `CREATE_NO_WINDOW`: a console program started from the app must not flash a
-/// console window.
-#[cfg(windows)]
-fn quiet(command: &mut Command) -> &mut Command {
-    use std::os::windows::process::CommandExt;
-    command.creation_flags(0x0800_0000)
-}
-
-#[cfg(not(windows))]
-fn quiet(command: &mut Command) -> &mut Command {
-    command
-}
 
 /// The bundled program, once found.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -192,27 +180,18 @@ impl Llama {
     }
 
     fn locate_program(name: &str, dirs: &[PathBuf]) -> Option<Self> {
-        let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_LLAMA_DIR")
-            .filter(|_| cfg!(debug_assertions))
-            .map(PathBuf::from)
-            .into_iter()
-            .chain(dirs.iter().cloned())
-            .collect();
-        if cfg!(debug_assertions)
-            && let Some(path) = std::env::var_os("PATH")
-        {
-            candidates.extend(std::env::split_paths(&path));
-        }
         let exe = std::env::consts::EXE_SUFFIX;
-        candidates.into_iter().find_map(|dir| {
-            let program = dir.join(format!("{name}{exe}"));
-            let text = dir.join(format!("{}{exe}", name.replacen(PROGRAM, TEXT_PROGRAM, 1)));
-            program.is_file().then(|| Self {
-                program,
-                text: text.is_file().then_some(text),
-                env: Vec::new(),
+        bundled::folders("KALAMU_LLAMA_DIR", dirs)
+            .into_iter()
+            .find_map(|dir| {
+                let program = dir.join(format!("{name}{exe}"));
+                let text = dir.join(format!("{}{exe}", name.replacen(PROGRAM, TEXT_PROGRAM, 1)));
+                program.is_file().then(|| Self {
+                    program,
+                    text: text.is_file().then_some(text),
+                    env: Vec::new(),
+                })
             })
-        })
     }
 
     #[cfg(test)]

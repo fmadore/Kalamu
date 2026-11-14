@@ -13,6 +13,7 @@ use serde::Deserialize;
 
 use crate::MediaError;
 pub use crate::audio_format::AudioFormat;
+use crate::bundled::{self, quiet};
 use crate::program::{self, Ended, Finished};
 
 /// How long FFmpeg may go without writing anything before it is taken to be stuck, as it is
@@ -35,19 +36,6 @@ pub struct Ffmpeg {
     opus: bool,
 }
 
-/// Windows' `CREATE_NO_WINDOW`: a console program started from the app must not flash a
-/// console window.
-#[cfg(windows)]
-fn quiet(command: &mut Command) -> &mut Command {
-    use std::os::windows::process::CommandExt;
-    command.creation_flags(0x0800_0000)
-}
-
-#[cfg(not(windows))]
-fn quiet(command: &mut Command) -> &mut Command {
-    command
-}
-
 fn exe(name: &str) -> String {
     format!("{name}{}", std::env::consts::EXE_SUFFIX)
 }
@@ -57,18 +45,9 @@ impl Ffmpeg {
     /// `KALAMU_FFMPEG_DIR` and last on `PATH`. A release build runs only the FFmpeg it ships
     /// with on the researcher's files, whatever the environment says.
     pub fn locate(dirs: &[PathBuf]) -> Option<Self> {
-        let mut candidates: Vec<PathBuf> = std::env::var_os("KALAMU_FFMPEG_DIR")
-            .filter(|_| cfg!(debug_assertions))
-            .map(PathBuf::from)
+        bundled::folders("KALAMU_FFMPEG_DIR", dirs)
             .into_iter()
-            .chain(dirs.iter().cloned())
-            .collect();
-        if cfg!(debug_assertions)
-            && let Some(path) = std::env::var_os("PATH")
-        {
-            candidates.extend(std::env::split_paths(&path));
-        }
-        candidates.into_iter().find_map(|dir| Self::in_dir(&dir))
+            .find_map(|dir| Self::in_dir(&dir))
     }
 
     fn in_dir(dir: &Path) -> Option<Self> {
