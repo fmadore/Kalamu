@@ -22,6 +22,7 @@ use super::Moved;
 use crate::commands::AppState;
 use crate::commands::window::{jobs_running, show_main_window};
 use crate::grants::Access;
+use crate::start_failure::Webview;
 
 /// The app a job's JSON files open in; every Mac has TextEdit.
 pub const JSON_APP: Option<&str> = Some("TextEdit");
@@ -40,6 +41,9 @@ pub const TRAY_TEMPLATE: Option<Image<'static>> =
 
 /// What the review view's player (WebKit) plays.
 pub const PLAYBACK: Playback = Playback::WEBKIT;
+
+/// What draws the window, named when it cannot be made: the system's own WebKit.
+pub const WEBVIEW: Webview = Webview::WebKit;
 
 const ID_QUIT: &str = "app-quit";
 const ID_SETTINGS: &str = "app-settings";

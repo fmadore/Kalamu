@@ -34,6 +34,16 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
         Ok(found) => found,
         Err(e) => fail(app, &StartError::new(Cause::Folders, e), None),
     };
+    // The window is made here rather than by Tauri before setup (`"create": false`), so a
+    // webview that cannot be made (WebView2 missing or damaged) is said like any other cause,
+    // with the log already started.
+    if let Err(e) = main_window(app) {
+        fail(
+            app,
+            &StartError::new(Cause::Window, e),
+            Some(logs.as_path()),
+        );
+    }
     let (state, store, waiting) = match assemble(data, logs.clone()) {
         Ok(assembled) => assembled,
         Err(e) => fail(app, &e, Some(logs.as_path())),
@@ -85,6 +95,26 @@ fn fail(app: &tauri::App, failure: &StartError, logs: Option<&Path>) -> ! {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
     }
+    start_failure::tell(failure, logs);
+    std::process::exit(1)
+}
+
+/// Makes the windows `tauri.conf.json` lists, as Tauri would have before setup.
+fn main_window(app: &tauri::App) -> tauri::Result<()> {
+    for config in &app.config().app.windows {
+        tauri::WebviewWindowBuilder::from_config(app.handle(), config)?.build()?;
+    }
+    Ok(())
+}
+
+/// Ends a launch that failed before Tauri's setup (its `build`, or its event loop), so before
+/// logging started: logging is started in the logs folder when it can be, then the researcher
+/// is told as in [`fail`]. There is no app yet, and no window to put away.
+pub(crate) fn fail_before_setup(failure: &StartError, logs: Option<&Path>) -> ! {
+    let logs = logs.filter(|dir| std::fs::create_dir_all(dir).is_ok());
+    let guard = logs.and_then(init_logging);
+    tracing::error!(error = %failure, "the app could not start");
+    drop(guard);
     start_failure::tell(failure, logs);
     std::process::exit(1)
 }
