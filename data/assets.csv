@@ -215,3 +215,11 @@ date,tag,asset,downloads
 2026-11-14,v1.7.0,Kalamu_1.7.0.msixbundle,2
 2026-11-14,v1.7.0,kalamu-samples.zip,1
 2026-11-14,v1.7.0,SHA256SUMS,1
+2026-11-15,ffmpeg-9.0.2-2,ffmpeg-9.0.2-aarch64-pc-windows-msvc.zip,6
+2026-11-15,ffmpeg-9.0.2-2,ffmpeg-9.0.2-x86_64-pc-windows-msvc.zip,10
+2026-11-15,llama-b12110-1,llama-b12110-aarch64-pc-windows-msvc.zip,14
+2026-11-15,llama-b12110-1,llama-b12110-x86_64-pc-windows-msvc.zip,28
+2026-11-15,llama-b12110-1,llama-opencl-b12110-aarch64-pc-windows-msvc.zip,14
+2026-11-15,llama-b12110-1,llama-vulkan-b12110-aarch64-pc-windows-msvc.zip,14
+2026-11-15,llama-b12110-1,llama-vulkan-b12110-x86_64-pc-windows-msvc.zip,28
+2026-11-15,v1.7.0,Kalamu_1.7.0_aarch64.dmg,2
