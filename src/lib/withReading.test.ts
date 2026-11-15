@@ -29,11 +29,29 @@ describe('a reading taken into the text', () => {
 		expect(withReading(base, at(base, 'cafe'), 'café ☕')).toBe('a café ☕ here');
 	});
 
-	it('takes an empty reading by leaving the words out, the spaces around them kept', () => {
+	it('takes an empty reading by leaving the words out with one of the spaces around them', () => {
 		const base = 'one two three';
-		// Both spaces stay: the text reads "one  three".
-		expect(withReading(base, at(base, 'two'), '')).toBe('one  three');
-		expect(withReading(base, at(base, 'one'), '')).toBe(' two three');
+		expect(withReading(base, at(base, 'two'), '')).toBe('one three');
+		expect(withReading(base, at(base, 'one'), '')).toBe('two three');
+		expect(withReading(base, at(base, 'three'), '')).toBe('one two');
+		expect(withReading(base, at(base, 'one two'), '')).toBe('three');
+	});
+
+	it('leaves no space at either end of a line, nor before punctuation, for an empty reading', () => {
+		const base = 'one two\nthree four';
+		expect(withReading(base, at(base, 'two'), '')).toBe('one\nthree four');
+		expect(withReading(base, at(base, 'three'), '')).toBe('one two\nfour');
+		const comma = 'one two, three';
+		expect(withReading(comma, at(comma, 'two'), '')).toBe('one, three');
+		// French keeps its space before a colon.
+		const colon = 'il dit : non';
+		expect(withReading(colon, at(colon, 'dit'), '')).toBe('il : non');
+	});
+
+	it('keeps the spaces when nothing is left out, or the reading is not empty', () => {
+		const base = 'one two three';
+		expect(withReading(base, { start: 3, end: 3, lemma: '' }, '')).toBe(base);
+		expect(withReading(base, at(base, 'two'), 'deux')).toBe('one deux three');
 	});
 
 	it('puts words another witness adds where the empty lemma stands', () => {
