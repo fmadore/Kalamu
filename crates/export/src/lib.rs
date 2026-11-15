@@ -10,6 +10,7 @@ mod csv_export;
 mod docx;
 mod json;
 mod markdown;
+mod records;
 mod searchable_pdf;
 mod subtitles;
 mod table;

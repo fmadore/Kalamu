@@ -3,8 +3,8 @@ use kalamu_core::{CsvCells, ExportDocument, ExportError, ExportFormat, Exporter,
 use crate::table_csv;
 use crate::timeline::timeline;
 
-/// One row per page (text extraction), per segment (transcription) or per document (summary),
-/// for spreadsheets.
+/// One row per page (text extraction), per segment (transcription), per document (analysis)
+/// or per entry (records, a table of contents), for spreadsheets.
 pub struct CsvExporter;
 
 impl Exporter for CsvExporter {
@@ -25,6 +25,10 @@ impl Exporter for CsvExporter {
 /// telephone number, a formula quoted, or one planted to run), the file is for a spreadsheet,
 /// and the JSON export keeps the text exactly for a program.
 fn table(doc: &ExportDocument) -> Table {
+    // Records: one row per entry, however many pages.
+    if let Some(columns) = crate::records::columns(doc) {
+        return crate::records::table(doc, columns);
+    }
     match doc.task {
         Task::TextExtraction | Task::TextCorrection | Task::Translation => Table {
             cells: CsvCells::Guarded,

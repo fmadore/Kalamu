@@ -13,6 +13,8 @@ use kalamu_core::{
 
 use super::*;
 
+mod records;
+
 fn source(name: &str, kind: InputKind) -> SourceFile {
     SourceFile {
         id: SourceId(uuid_nil()),
