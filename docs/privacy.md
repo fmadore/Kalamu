@@ -1,6 +1,9 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 11 November 2026, which applies from the first version to translate
+**Effective date:** 15 November 2026, which applies from the first version to delete what the
+cheaper mode's batches leave in the user's storage at OpenAI and Mistral, and to keep, for a
+job deleted meanwhile, the record of such a batch until that is done. The policy of 11 November
+2026 did not say so; it applies from the first version to translate
 texts: the text a translation reads is sent as a correction's is, to the provider the user
 chose. The policy of 10 November 2026 did not say so; it applies from the first version to write the
 offline models' working files (a page image, a text being read) in a folder of the app's own,
@@ -71,7 +74,15 @@ only when the user asks.
 **In the cheaper mode** (economy), pieces are sent to the provider's batch service instead of
 one by one. The provider keeps the batch, its input and its answers for a time set by its own
 rules (from about a day to several weeks), in the user's account, and Kalamu collects the
-answers when it next opens.
+answers when it next opens. At OpenAI and Mistral a batch also leaves files in the account's
+storage: the requests, with the pages or text they hold, the answers and the errors. Once the
+answers are stored on the computer, or the batch is cancelled or has failed, Kalamu deletes
+the files that batch names, and only those; it never lists or touches anything else in the
+account's storage. If the provider cannot be reached it tries again when the app is next
+opened, a few times, after which the files stay until the provider's own rules remove them
+(30 days at OpenAI; Mistral states no end) or the user deletes them there. Batches sent by
+earlier versions are not cleaned. Claude and Gemini batches leave no such files; those
+providers keep the batch itself by their own rules (up to 29 days at Anthropic).
 
 **Offline**, with Whisper, recordings are converted and transcribed on the computer and never
 uploaded; with Tesseract or an offline OCR model, PDF pages and images are drawn and read on the

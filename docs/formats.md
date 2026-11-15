@@ -87,6 +87,24 @@ model's where there are any.
   named it, a `<field> (reason)` column after each field that asks for a reason, then
   `corrected` and `reviewed`. List items are joined with semicolons.
 
+### Records
+
+An analysis whose fields are one repeating group (*One row per entry*) is read page by page,
+and its files hold one row per entry, from the corrected rows.
+
+- **CSV**: `file`, `page`, `position` (the entry's place on its page, from 1), then one column
+  per column of the group, named as the researcher named it, with a `<column> (reason)` after
+  each that asks for a reason, then `corrected`, `reviewed` (those of the row's page) and
+  `not_read`. A page that failed or was cut off is one row with no position and
+  `[Not read: reason]` under `not_read`, so its entries are never taken for none. Cells that
+  begin with `=`, `+`, `-` or `@` are written as in the other tables.
+- **JSON**: the usual envelope, its parts without `fields`, and a top-level `rows` list: for
+  each entry `file`, `page`, `position`, a `fields` object with each cell under its column's
+  key (text, or an array for a list and several choices), `corrected`, `reviewed` and, where
+  any column gave one, `reasons`. A page not read has no rows; its part says `failed`.
+- **Text formats** (`.txt`, `.md`, `.docx`) are not yet made for rows: each page shows only
+  its rows' first column, joined with semicolons. Use the CSV or the JSON.
+
 ## Tables of contents
 
 Written as `<name>.contents.md` (and `.docx`, `.csv`, `.txt`, `.json`) beside the source. Only
