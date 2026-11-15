@@ -60,10 +60,15 @@ corrected: Array<number>,
  */
 reviewed: Array<number>, 
 /**
- * Pages or segments whose answer stopped at the model's output limit, so their end may be
- * missing; for a table of contents, the pages read and the combined entries alike.
+ * Pages or segments whose answer stopped before its end, at the model's output limit or
+ * for another reason the provider gave, so their end may be missing; for a table of
+ * contents, the pages read and the combined entries alike.
  */
 truncated?: Array<number>, 
+/**
+ * Those of `truncated` that a provider's filter stopped, rather than the output limit.
+ */
+cut_by_filter?: Array<number>, 
 /**
  * Pages or segments that could not be read after their retries, marked in the files.
  */

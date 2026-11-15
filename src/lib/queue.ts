@@ -41,7 +41,11 @@ export function reasonText(signal: Signal, m: Messages, wholeResult = false): st
 		case 'not_read':
 			return wholeResult ? d.neverStarted : d.notRead;
 		case 'truncated':
-			return d.truncated;
+			return signal.reason === 'filter'
+				? d.truncatedFilter
+				: signal.reason === 'other'
+					? d.truncatedOther
+					: d.truncated;
 		case 'disagrees':
 			return signal.fields.length > 0
 				? d.disagreesFields(listNames(signal.with), listNames(signal.fields))

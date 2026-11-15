@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { en, fr } from './i18n/index.js';
 import type { PieceView } from './bindings/PieceView.js';
-import { clock, enginePages, pieceCost, pieceLabel, pieceNumber, typedPages } from './pieces.js';
+import {
+	clock,
+	cutOffNotes,
+	cutOffText,
+	enginePages,
+	pieceCost,
+	pieceLabel,
+	pieceNumber,
+	typedPages
+} from './pieces.js';
 
 describe('the names of pieces', () => {
 	it('names pages, their halves, passages and whole sources', () => {
@@ -42,5 +51,35 @@ describe('what a piece cost', () => {
 		expect(pieceCost(view({ status: 'cached' }), en)).toBe(' · From cache');
 		expect(pieceCost(view({ cost_usd: null }), en)).toBe('');
 		expect(pieceCost(undefined, en)).toBe('');
+	});
+});
+
+describe('an answer stopped before its end', () => {
+	const view = (setup_id: string, over: Partial<PieceView>) =>
+		({ setup_id, truncated: true, ...over }) as PieceView;
+
+	it('says why each set-up stopped, the limit apart from a filter', () => {
+		const notes = cutOffNotes(
+			['a', 'b', 'c', 'd'],
+			[
+				view('a', {}),
+				view('b', { cut_reason: 'filter' }),
+				view('c', { truncated: false }),
+				view('d', { cut_reason: 'limit' })
+			],
+			en
+		);
+		expect(notes).toEqual([
+			{ text: en.review.truncated, setups: [0, 3] },
+			{ text: en.review.truncatedFilter, setups: [1] }
+		]);
+		expect(en.review.truncatedFilter).not.toContain('length limit');
+		expect(cutOffNotes(['a'], [view('a', { truncated: false })], en)).toEqual([]);
+	});
+
+	it('has a sentence for each reason in French too', () => {
+		expect(cutOffText('filter', fr)).toContain('filtre');
+		expect(cutOffText('other', fr)).not.toContain('longueur maximale');
+		expect(cutOffText(undefined, fr)).toBe(fr.review.truncated);
 	});
 });

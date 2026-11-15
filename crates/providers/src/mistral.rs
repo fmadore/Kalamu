@@ -92,6 +92,7 @@ impl Mistral {
             fields: Vec::new(),
             regions,
             truncated: false,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 
@@ -185,6 +186,7 @@ impl Mistral {
             fields: Vec::new(),
             regions: Vec::new(),
             truncated: false,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 }

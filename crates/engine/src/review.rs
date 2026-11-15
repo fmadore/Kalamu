@@ -7,8 +7,8 @@ use kalamu_core::list_items::{holds_item, rename_item};
 use kalamu_core::speakers::{labels, rename_segments, rename_text};
 use kalamu_core::timed::timed_lines;
 use kalamu_core::{
-    Correction, FieldAnswer, JobId, PieceRef, PieceStatus, RowEdit, SetupId, SourceId, Task,
-    Timestamp,
+    Correction, CutReason, FieldAnswer, JobId, PieceRef, PieceStatus, RowEdit, SetupId, SourceId,
+    Task, Timestamp,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -46,8 +46,11 @@ pub struct PieceView {
     /// or the text file's page or passage, which the review compares with the correction and
     /// shows beside the translation.
     pub source_text: Option<String>,
-    /// The model's answer stopped at its output limit: the end of the piece may be missing.
+    /// The model's answer stopped before its end: the end of the piece may be missing.
     pub truncated: bool,
+    /// Why it stopped, when `truncated`: the output limit, a filter, or another reason.
+    #[serde(default, skip_serializing_if = "CutReason::is_limit")]
+    pub cut_reason: CutReason,
     /// For a page of a document of images, the original file it is, where it lies.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -90,6 +93,10 @@ impl Engine {
                 _ => Vec::new(),
             };
             let truncated = result.as_ref().is_some_and(|r| r.output.truncated);
+            let cut_reason = result
+                .as_ref()
+                .map(|r| r.output.cut_reason)
+                .unwrap_or_default();
             out.push(PieceView {
                 setup_id: state.setup_id,
                 source_id,
@@ -126,6 +133,7 @@ impl Engine {
                 speaker_names,
                 source_text: opened.as_ref().and_then(|o| o.text_of(&state.piece).ok()),
                 truncated,
+                cut_reason,
                 original_file: match (&state.piece, source) {
                     (PieceRef::Page { number, .. }, Some(source)) => {
                         source.page_file(*number).map(|(page, _)| page.path.clone())

@@ -13,7 +13,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{DocumentId, JobId, PieceRef, SetupId, SourceId, Task, Timestamp};
+use crate::{CutReason, DocumentId, JobId, PieceRef, SetupId, SourceId, Task, Timestamp};
 
 /// One result the queue reads: a set-up of a job over the source that is a document.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -47,8 +47,9 @@ pub enum Signal {
     Failed { error: Option<String> },
     /// Not read yet: waiting, being read, with the provider in a batch, or never started.
     NotRead,
-    /// The answer stopped at the model's output limit: the end may be missing.
-    Truncated,
+    /// The answer stopped before its end, at the model's output limit or for the reason the
+    /// provider gave: the end may be missing.
+    Truncated { reason: CutReason },
     /// Other set-ups of the same job read it differently: their labels, how many words
     /// differ from the one that differs most (texts), and the fields answered differently
     /// (analyses and tables of contents). Prose fields are not compared, since two models
@@ -168,7 +169,7 @@ impl ReasonCounts {
         let count = match signal {
             Signal::Failed { .. } => &mut self.failed,
             Signal::NotRead => &mut self.not_read,
-            Signal::Truncated => &mut self.truncated,
+            Signal::Truncated { .. } => &mut self.truncated,
             Signal::Disagrees { .. } => &mut self.disagrees,
             Signal::Stale { .. } => &mut self.stale,
             Signal::NotReviewed => &mut self.not_reviewed,
@@ -195,7 +196,9 @@ mod tests {
         let one_of_each = [
             Signal::Failed { error: None },
             Signal::NotRead,
-            Signal::Truncated,
+            Signal::Truncated {
+                reason: CutReason::Limit,
+            },
             Signal::Disagrees {
                 with: Vec::new(),
                 words: 0,

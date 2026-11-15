@@ -17,7 +17,7 @@ mod batch;
 
 use async_trait::async_trait;
 use kalamu_core::{
-    ApiKey, BatchContext, BatchLimits, BatchProgress, LanguageChoice, ProcessOutput,
+    ApiKey, BatchContext, BatchLimits, BatchProgress, CutReason, LanguageChoice, ProcessOutput,
     ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, Tuning,
     Usage,
 };
@@ -195,6 +195,12 @@ impl OpenAi {
             fields: Vec::new(),
             regions: Vec::new(),
             truncated: incomplete.is_some(),
+            // The content filter was refused above; what is left is the limit or anything else
+            // (`interrupted`…).
+            cut_reason: match incomplete {
+                Some("max_output_tokens") | None => CutReason::Limit,
+                Some(_) => CutReason::Other,
+            },
         })
     }
 
@@ -306,6 +312,7 @@ impl OpenAi {
             fields: Vec::new(),
             regions: Vec::new(),
             truncated: false,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 }

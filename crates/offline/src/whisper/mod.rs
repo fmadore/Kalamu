@@ -693,6 +693,7 @@ impl Provider for Whisper {
             fields: Vec::new(),
             regions: Vec::new(),
             truncated: false,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 

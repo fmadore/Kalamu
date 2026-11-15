@@ -195,7 +195,8 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `options` | Diarization, timestamps, speaker count, and the reasoning level chosen or suggested for the set-up (`reasoning`, absent for a model that does not reason) |
 | `pieces`, `corrected`, `reviewed` | Number of pages or segments, and which were corrected or reviewed |
 | `failed` | Pages or segments that could not be read after their retries, marked in the files. Absent when none was |
-| `truncated` | Pages or segments whose answer stopped at the model's output limit, so their end may be missing; for a table of contents, the pages read and the combined entries alike. Absent when none was |
+| `truncated` | Pages or segments whose answer stopped before its end, at the model's output limit or for another reason the provider gave, so their end may be missing; for a table of contents, the pages read and the combined entries alike. Absent when none was |
+| `cut_by_filter` | Those of `truncated` that a provider's filter (safety, a blocked term) stopped, rather than the output limit. Absent when none was |
 | `preprocessing` | Fixes applied to working copies (`split_spreads`, `even_out_volume`, `sample_first_3_pages`): only those made, so `split_spreads` only where a spread was found, and a sample only of a document longer than it |
 | `renamed_speakers` | The model's speaker labels the researcher gave names, which replace them in every file. The names are in the files, not here, so the record can be shared without them. Absent when none was |
 | `usage`, `cost_usd` | Tokens, audio seconds or pages billed, the input read from or written to the provider's prompt cache (`cached_input_tokens`, `cache_write_tokens`, parts of `input_tokens`), whether the calls went through a batch service (`batch`), and the cost from catalogue prices with those discounts, for the results kept |

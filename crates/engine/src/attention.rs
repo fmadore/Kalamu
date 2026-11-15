@@ -210,7 +210,9 @@ pub(crate) fn assess(loaded: &Loaded, target: &ReviewTarget, queue: &mut ReviewQ
                 queue.counts.reviewed += u32::from(reviewed);
                 if let Some(result) = loaded.result(piece) {
                     if result.output.truncated {
-                        signals.push(Signal::Truncated);
+                        signals.push(Signal::Truncated {
+                            reason: result.output.cut_reason,
+                        });
                     }
                     if let Some(signal) = disagreement(loaded, setup, piece, result) {
                         signals.push(signal);

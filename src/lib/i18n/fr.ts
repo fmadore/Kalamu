@@ -618,6 +618,8 @@ export const fr: Messages = {
 			notRead: 'Pas encore lu',
 			neverStarted: 'Pas encore lancé',
 			truncated: 'Arrêté à la longueur maximale du modèle : la fin manque peut-être',
+			truncatedFilter: 'Arrêté par le filtre du fournisseur : la fin manque peut-être',
+			truncatedOther: 'Arrêté avant la fin par le fournisseur : la fin manque peut-être',
 			disagreesWords: (labels: string, words: number) =>
 				`Lit autrement que ${labels} : ${words <= 1 ? `${words} mot` : `${words} mots`}`,
 			disagreesFields: (labels: string, fields: string) =>
@@ -1375,7 +1377,7 @@ export const fr: Messages = {
 		failed: (n: number) => `${n} en échec`,
 		truncated: (n: number) => (n <= 1 ? `${n} tronqué` : `${n} tronqués`),
 		truncatedNote:
-			'La réponse du modèle s’est arrêtée à sa longueur maximale : la fin de ces segments manque peut-être. La relecture les signale ; vérifiez-les sur la source.',
+			'La réponse du modèle s’est arrêtée avant la fin, à sa longueur maximale ou par le filtre du fournisseur : la fin de ces segments manque peut-être. La relecture les signale et dit pourquoi ; vérifiez-les sur la source.',
 		files: 'Fichiers',
 		filesShown: 'Fichiers affichés',
 		allFiles: (n: number) => `Tous les fichiers (${n})`,
@@ -1503,6 +1505,10 @@ export const fr: Messages = {
 		agreement: (pct: string) => `${pct} de différence`,
 		truncated:
 			'La réponse du modèle s’est arrêtée ici à sa longueur maximale : la fin manque peut-être. Vérifiez-la sur la source, ou corrigez-la.',
+		truncatedFilter:
+			'Le filtre du fournisseur a arrêté ici la réponse du modèle : la fin manque peut-être. Vérifiez-la sur la source, ou corrigez-la ; un autre modèle la lira peut-être en entier.',
+		truncatedOther:
+			'Le fournisseur a arrêté ici la réponse du modèle avant la fin : la fin manque peut-être. Vérifiez-la sur la source, ou corrigez-la.',
 		noPreview: 'Pas d’aperçu pour ce type de fichier.',
 		notDone: 'Pas encore lu.',
 		saved: 'Enregistré ; les fichiers de résultats suivent dans quelques secondes.',
@@ -2233,6 +2239,10 @@ export const fr: Messages = {
 			'La réponse du modèle ne correspondait pas aux champs de l’analyse ; Kalamu lui repose la question.',
 		'provider.cut_off':
 			'La réponse s’est arrêtée à la limite de sortie du modèle avant d’être complète. Envoyez moins de pages par appel, demandez des champs moins nombreux ou plus courts, ou choisissez un modèle capable d’écrire une réponse plus longue.',
+		'provider.cut_off_filter':
+			'Le filtre du fournisseur a arrêté la réponse avant qu’elle soit complète, elle ne peut donc pas être lue : le fournisseur refuse d’écrire sur un passage de ce texte. Essayez un autre modèle ou un autre fournisseur.',
+		'provider.cut_off_other':
+			'Le fournisseur a arrêté la réponse avant qu’elle soit complète, pour une autre raison que la limite de sortie, elle ne peut donc pas être lue. Réessayez plus tard, ou choisissez un autre modèle.',
 		'provider.not_installed':
 			'Ce modèle hors ligne ou ses données de langue n’ont pas encore été téléchargés. Téléchargez-les dans Paramètres.',
 		'provider.interrupted': 'Arrêté avant la fin ; il reprendra quand le traitement reprendra.',

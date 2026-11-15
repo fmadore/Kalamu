@@ -1,9 +1,11 @@
 // The names of a source's pieces in the review: in the menu of pages, over the source, under
 // each page in the strip.
 
+import type { CutReason } from './bindings/CutReason.js';
 import type { PieceRef } from './bindings/PieceRef.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Segment } from './bindings/Segment.js';
+import type { SetupId } from './bindings/SetupId.js';
 import { formatUsd, type Messages } from './i18n/index.js';
 
 /** A time in a recording, as hours, minutes and seconds: "01:02:03". */
@@ -69,4 +71,35 @@ export function enginePages(pages: string, m: Messages): string {
 export function pieceCost(view: PieceView | undefined, m: Messages): string {
 	if (view?.status === 'cached') return ` · ${m.status.cached}`;
 	return view?.cost_usd ? ` · ${formatUsd(view.cost_usd)}` : '';
+}
+
+/** Why an answer stopped before its end, as the review says it: at the model's length limit,
+ * by the provider's filter, or for another reason. */
+export function cutOffText(reason: CutReason | undefined, m: Messages): string {
+	switch (reason) {
+		case 'filter':
+			return m.review.truncatedFilter;
+		case 'other':
+			return m.review.truncatedOther;
+		case 'limit':
+		case undefined:
+			return m.review.truncated;
+	}
+}
+
+/** The set-ups, by their place, whose answer for this piece stopped before its end, gathered by
+ * why it stopped, each with its sentence: the limit first, then a filter, then the rest. */
+export function cutOffNotes(
+	setups: readonly SetupId[],
+	current: readonly PieceView[],
+	m: Messages
+): { text: string; setups: number[] }[] {
+	const reasons: CutReason[] = ['limit', 'filter', 'other'];
+	return reasons.flatMap((reason) => {
+		const cut = setups.flatMap((id, i) => {
+			const view = current.find((v) => v.setup_id === id);
+			return view?.truncated && (view.cut_reason ?? 'limit') === reason ? [i] : [];
+		});
+		return cut.length > 0 ? [{ text: cutOffText(reason, m), setups: cut }] : [];
+	});
 }

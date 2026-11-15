@@ -27,8 +27,8 @@ mod transcribe;
 
 use async_trait::async_trait;
 use kalamu_core::{
-    ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
-    ProviderError, ProviderId, RequestSetting, Task, Tuning, Usage, YOUTUBE_LINK,
+    ApiKey, BatchContext, BatchLimits, BatchProgress, CutReason, ProcessOutput, ProcessRequest,
+    Provider, ProviderError, ProviderId, RequestSetting, Task, Tuning, Usage, YOUTUBE_LINK,
 };
 use reqwest::Client;
 use serde_json::{Value, json};
@@ -192,6 +192,7 @@ impl Gemini {
             fields: Vec::new(),
             regions: Vec::new(),
             truncated: !matches!(finish, "STOP" | "FINISH_REASON_UNSPECIFIED"),
+            cut_reason: cut_reason(finish),
         })
     }
 
@@ -439,6 +440,23 @@ fn truncated(response: &Value) -> bool {
             .and_then(Value::as_str),
         Some("MAX_TOKENS" | "CONTINUATION")
     )
+}
+
+/// Why an answer that stopped before its end did: the output limit (`MAX_TOKENS`,
+/// `CONTINUATION`), one of Gemini's filters, or another reason (`LANGUAGE`, `OTHER`…).
+fn cut_reason(finish: &str) -> CutReason {
+    match finish {
+        "SAFETY"
+        | "RECITATION"
+        | "BLOCKLIST"
+        | "PROHIBITED_CONTENT"
+        | "SPII"
+        | "IMAGE_SAFETY"
+        | "IMAGE_PROHIBITED_CONTENT"
+        | "IMAGE_RECITATION" => CutReason::Filter,
+        "MAX_TOKENS" | "CONTINUATION" | "STOP" | "FINISH_REASON_UNSPECIFIED" => CutReason::Limit,
+        _ => CutReason::Other,
+    }
 }
 
 /// Gemini's refusals of a YouTube link, in words a researcher can act on. A private video comes

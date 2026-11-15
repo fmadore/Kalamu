@@ -82,8 +82,8 @@ pub use provider::{
 };
 pub use records::{RowEdit, RowError};
 pub use result::{
-    Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,
-    TextLine, TextRegion, TextWord, Usage, plain_words,
+    Charge, CutReason, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment,
+    StoredResult, TextLine, TextRegion, TextWord, Usage, plain_words,
 };
 pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};

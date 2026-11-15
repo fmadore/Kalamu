@@ -31,7 +31,7 @@
 	import { clearHeard, markHeard, placeLines } from '#lib/heard.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { shifted } from '#lib/platform.js';
-	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
+	import { cutOffNotes, pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { Readings, wordsIn } from '#lib/readings.svelte.js';
 	import { layout, Review } from '#lib/review.svelte.js';
 	import { ReviewSearch } from '#lib/reviewSearch.svelte.js';
@@ -79,9 +79,13 @@
 	const setups = $derived(review.setups);
 	const indices = $derived([...new Set(views.map((v) => v.index))].sort((a, b) => a - b));
 	const current = $derived(views.filter((v) => v.index === index));
-	/** The set-ups whose answer for this page stopped at the model's output limit. */
+	/** The set-ups whose answer for this page stopped before its end, by why it stopped. */
 	const cutOff = $derived(
-		setups.flatMap((s, i) => (current.find((v) => v.setup_id === s.id)?.truncated ? [i] : []))
+		cutOffNotes(
+			setups.map((s) => s.id),
+			current,
+			m
+		)
 	);
 	/** A single model's error rate on this document, once pages are reviewed. */
 	const ownScore = $derived(
@@ -545,12 +549,13 @@
 	{:else if lead.status === 'failed'}
 		<p class="error">{lead.error}</p>
 	{:else}
-		{#if cutOff.length > 0}
+		{#each cutOff as note (note.text)}
 			<p class="cut-off" role="note">
-				{#if setups.length > 1}{#each cutOff as i (i)}<i class="siglum">{siglum(i)}</i>{/each}{/if}
-				{m.review.truncated}
+				{#if setups.length > 1}{#each note.setups as i (i)}<i class="siglum">{siglum(i)}</i
+						>{/each}{/if}
+				{note.text}
 			</p>
-		{/if}
+		{/each}
 		<MarkedText
 			lines={reading}
 			{entries}

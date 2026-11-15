@@ -512,6 +512,8 @@ export const en = {
 			notRead: 'Not read yet',
 			neverStarted: 'Not started yet',
 			truncated: 'Stopped at the model’s length limit: the end may be missing',
+			truncatedFilter: 'Stopped by the provider’s filter: the end may be missing',
+			truncatedOther: 'Stopped early by the provider: the end may be missing',
 			disagreesWords: (labels: string, words: number) =>
 				`Reads differently from ${labels}: ${words === 1 ? '1 word' : `${words} words`}`,
 			disagreesFields: (labels: string, fields: string) =>
@@ -1271,7 +1273,7 @@ export const en = {
 		failed: (n: number) => (n === 1 ? '1 failed' : `${n} failed`),
 		truncated: (n: number) => `${n} cut off`,
 		truncatedNote:
-			'The model’s answer stopped at its length limit, so the end of these pieces may be missing. The review marks them; check them against the source.',
+			'The model’s answer stopped before its end, at its length limit or by the provider’s filter, so the end of these pieces may be missing. The review marks them and says why; check them against the source.',
 		files: 'Files',
 		/** A job's files: every one, or only those with a failed piece, however far down. */
 		filesShown: 'Files shown',
@@ -1400,6 +1402,10 @@ export const en = {
 		agreement: (pct: string) => `${pct} different`,
 		truncated:
 			'The model’s answer stopped at its length limit here, so the end may be missing. Check it against the source, or correct it.',
+		truncatedFilter:
+			'The provider’s filter stopped the model’s answer here, so the end may be missing. Check it against the source, or correct it; another model may read it whole.',
+		truncatedOther:
+			'The provider stopped the model’s answer here before its end, so the end may be missing. Check it against the source, or correct it.',
 		noPreview: 'No preview for this file type.',
 		notDone: 'Not read yet.',
 		saved: 'Saved; the result files follow in a few seconds.',
@@ -2140,6 +2146,10 @@ export const en = {
 			'The model’s answer did not match the fields of the analysis; Kalamu asks it again.',
 		'provider.cut_off':
 			'The answer stopped at the model’s output limit before it was complete. Send fewer pages in each call, ask for fewer or shorter fields, or choose a model that can write a longer answer.',
+		'provider.cut_off_filter':
+			'The provider’s filter stopped the answer before it was complete, so it cannot be read: the provider will not write about something in this text. Try another model or provider.',
+		'provider.cut_off_other':
+			'The provider stopped the answer before it was complete, for a reason other than the output limit, so it cannot be read. Try again later, or choose another model.',
 		'provider.not_installed':
 			'This offline model, or the language data it needs, has not been downloaded. Download it in Settings.',
 		'provider.interrupted': 'Stopped before the end; it will continue when the job resumes.',
