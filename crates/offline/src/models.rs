@@ -7,7 +7,7 @@
 
 use std::fs;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, Weak};
 
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -153,12 +153,20 @@ pub(crate) struct State {
     pub(crate) leases: Vec<&'static str>,
 }
 
+/// An engine that keeps files loaded while it holds no lease on them (Tesseract's idle
+/// engines), told when one is removed so it lets go of what it loaded from it.
+pub(crate) trait Release: Send + Sync {
+    fn release(&self, id: &'static str);
+}
+
 /// Downloads, lists, removes and lends out one engine's model files in one folder.
 #[derive(Clone)]
 pub struct ModelManager {
     pub(crate) dir: PathBuf,
     pub(crate) set: &'static ModelSet,
     pub(crate) state: Arc<Mutex<State>>,
+    /// Told of each file removed; held weakly, so an engine dropped is forgotten.
+    releasers: Arc<Mutex<Vec<Weak<dyn Release>>>>,
 }
 
 pub(crate) fn io(e: impl std::fmt::Display) -> OfflineError {
@@ -171,7 +179,15 @@ impl ModelManager {
             dir,
             set,
             state: Arc::default(),
+            releasers: Arc::default(),
         }
+    }
+
+    /// Tells `releaser` of every file removed from now on.
+    pub(crate) fn on_remove(&self, releaser: Weak<dyn Release>) {
+        let mut releasers = lock(&self.releasers);
+        releasers.retain(|r| r.strong_count() > 0);
+        releasers.push(releaser);
     }
 
     /// One of this engine's files.
@@ -271,6 +287,18 @@ impl ModelManager {
                 }
             }
         }
+        drop(state);
+        // Engines that loaded the files without holding them let go of them, outside the
+        // locks: what they drop may lock them again.
+        let releasers: Vec<Arc<dyn Release>> = lock(&self.releasers)
+            .iter()
+            .filter_map(Weak::upgrade)
+            .collect();
+        for file in std::iter::once(model).chain(model.pair) {
+            for releaser in &releasers {
+                releaser.release(file.id);
+            }
+        }
         Ok(())
     }
 
@@ -320,10 +348,7 @@ impl ModelLease {
         if bytes != self.model.bytes {
             return Err(OfflineError::Integrity);
         }
-        let mut file = fs::File::open(&self.path).map_err(io)?;
-        let mut hash = Sha256::new();
-        std::io::copy(&mut file, &mut hash).map_err(io)?;
-        if hex::encode(hash.finalize()) != self.model.sha256 {
+        if sha256_of_file(&self.path)? != self.model.sha256 {
             return Err(OfflineError::Integrity);
         }
         Ok(())
@@ -343,6 +368,15 @@ impl ModelLease {
         }
         Ok(data)
     }
+}
+
+/// The SHA-256 of the file at `path` in hexadecimal, read a few kilobytes at a time: the same
+/// as hashing its bytes at once (`hex::encode(Sha256::digest(bytes))`) without holding them.
+pub(crate) fn sha256_of_file(path: &std::path::Path) -> Result<String, OfflineError> {
+    let mut file = fs::File::open(path).map_err(io)?;
+    let mut hash = Sha256::new();
+    std::io::copy(&mut file, &mut hash).map_err(io)?;
+    Ok(hex::encode(hash.finalize()))
 }
 
 impl Drop for ModelLease {
@@ -381,5 +415,66 @@ mod tests {
         ));
         manager.remove(BASE.id).unwrap();
         assert!(files(dir.path()).is_empty());
+    }
+
+    /// The hash read a few kilobytes at a time is the hash of the bytes at once, byte for byte:
+    /// it is compared with the pinned SHA-256 of every model file, so any difference would
+    /// refuse files that are right. Sizes around `std::io::copy`'s 8 KiB buffer, and one of
+    /// several megabytes.
+    #[test]
+    fn the_streamed_hash_is_the_hash_of_the_whole_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut seed = 0x2545_f491_4f6c_dd1du64;
+        for size in [0usize, 1, 8191, 8192, 8193, 65_537, 3 * 1024 * 1024 + 7] {
+            let bytes: Vec<u8> = (0..size)
+                .map(|_| {
+                    seed ^= seed << 13;
+                    seed ^= seed >> 7;
+                    seed ^= seed << 17;
+                    seed as u8
+                })
+                .collect();
+            let path = dir.path().join(format!("{size}.bin"));
+            fs::write(&path, &bytes).unwrap();
+            assert_eq!(
+                sha256_of_file(&path).unwrap(),
+                hex::encode(Sha256::digest(&bytes)),
+                "{size} bytes"
+            );
+        }
+        // And a known value: the SHA-256 of "abc" (FIPS 180-2).
+        let abc = dir.path().join("abc");
+        fs::write(&abc, b"abc").unwrap();
+        assert_eq!(
+            sha256_of_file(&abc).unwrap(),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+    }
+
+    struct Released(Mutex<Vec<&'static str>>);
+
+    impl Release for Released {
+        fn release(&self, id: &'static str) {
+            lock(&self.0).push(id);
+        }
+    }
+
+    #[test]
+    fn removing_a_file_tells_the_engines_that_loaded_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let manager = ModelManager::new(dir.path().to_owned(), &WHISPER);
+        let released = Arc::new(Released(Mutex::new(Vec::new())));
+        let weak: Weak<Released> = Arc::downgrade(&released);
+        manager.clone().on_remove(weak);
+        manager.remove(BASE.id).unwrap();
+        assert_eq!(*lock(&released.0), [BASE.id]);
+        // A dropped engine is forgotten.
+        drop(released);
+        manager.remove(BASE.id).unwrap();
+        assert!(
+            lock(&manager.releasers)
+                .iter()
+                .all(|r| r.strong_count() == 0)
+        );
     }
 }
