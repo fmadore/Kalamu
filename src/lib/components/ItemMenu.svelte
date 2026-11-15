@@ -60,7 +60,6 @@
 	role={renaming ? 'dialog' : 'menu'}
 	width="17rem"
 	moves={!renaming}
-	homeEnd={false}
 	{onclose}
 >
 	{#if renaming}
