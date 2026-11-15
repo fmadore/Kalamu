@@ -3,12 +3,12 @@
 	// keyboard's menu key: rename it, add it to a project, delete it. At the pointer or under the
 	// button, kept inside the window; closed by Escape, a click elsewhere or a choice, the focus
 	// going back to where it was.
+	import ContextMenu from './ContextMenu.svelte';
 	import Icon from './Icon.svelte';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import type { ProjectSummary } from '#lib/bindings/ProjectSummary.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { giveFocusBack } from '#lib/keys.js';
 	import { deleteJob } from '#lib/jobActions.svelte.js';
 	import { refreshProjects, toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -31,9 +31,7 @@
 	/** Adding to a project and deleting, what went wrong said in an error toast. */
 	const action = new Action({ report: (message) => toast(message, { kind: 'error' }) });
 
-	let box = $state<HTMLElement | null>(null);
-	/** What had the focus when the menu opened, given it back when the menu closes. */
-	const opener = document.activeElement;
+	let menu = $state<ContextMenu | null>(null);
 	let projects = $state<ProjectSummary[] | null>(null);
 	const running = $derived(job.status === 'running');
 
@@ -44,38 +42,8 @@
 			.catch(() => (projects = []));
 	});
 
-	$effect(() => {
-		if (!box) return;
-		box.showPopover();
-		const { offsetWidth: w, offsetHeight: h } = box;
-		box.style.left = `${Math.max(8, Math.min(x, innerWidth - w - 8))}px`;
-		box.style.top = `${Math.max(8, Math.min(y, innerHeight - h - 8))}px`;
-		items()[0]?.focus();
-	});
-
-	const items = () =>
-		box ? [...box.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')] : [];
-
-	function keys(e: KeyboardEvent) {
-		const all = items();
-		const at = all.indexOf(document.activeElement as HTMLButtonElement);
-		const to =
-			e.key === 'ArrowDown'
-				? (at + 1) % all.length
-				: e.key === 'ArrowUp'
-					? (at - 1 + all.length) % all.length
-					: e.key === 'Home'
-						? 0
-						: e.key === 'End'
-							? all.length - 1
-							: -1;
-		if (to < 0) return;
-		e.preventDefault();
-		all[to]?.focus();
-	}
-
 	function close() {
-		box?.hidePopover();
+		menu?.close();
 	}
 
 	async function addTo(p: ProjectSummary) {
@@ -94,20 +62,7 @@
 	}
 </script>
 
-<div
-	bind:this={box}
-	class="menu"
-	popover="auto"
-	role="menu"
-	tabindex="-1"
-	aria-label={m.shell.jobMenu(job.name)}
-	onkeydown={keys}
-	ontoggle={(e) => {
-		if (e.newState !== 'closed') return;
-		giveFocusBack(opener, box);
-		onclose();
-	}}
->
+<ContextMenu bind:this={menu} {x} {y} label={m.shell.jobMenu(job.name)} width="15rem" {onclose}>
 	<button
 		type="button"
 		role="menuitem"
@@ -142,30 +97,9 @@
 		title={running ? m.shell.pauseFirst : undefined}
 		onclick={remove}>{m.jobs.delete}</button
 	>
-</div>
+</ContextMenu>
 
 <style>
-	/* In the top layer, placed at the pointer by the effect above. */
-	.menu {
-		position: fixed;
-		inset: auto;
-		margin: 0;
-		width: 15rem;
-		padding: var(--space-1);
-		border: 0;
-		border-radius: var(--radius-card);
-		background: var(--surface-2);
-		box-shadow: var(--shadow-pop);
-		font-family: var(--font-ui);
-		font-size: var(--type-sm);
-		color: var(--text-body);
-	}
-	/* One column no wider than the menu: a long project name is cut short, never scrolled. */
-	.menu:popover-open {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		gap: 1px;
-	}
 	button {
 		display: flex;
 		align-items: center;
