@@ -6,10 +6,12 @@
 //! places paragraphs only: their lines share the block's height and their words its width,
 //! and the file says those positions are estimated.
 //!
-//! Positions are in pixels: those of the image for an image source, and of the page drawn at
-//! 300 dpi for a PDF, as Tesseract reads it. A page split into halves is put back together, as
-//! in the searchable PDF.
+//! Positions are in pixels: those of the image for an image source, and for a PDF those of the
+//! page drawn as Tesseract read it, at the resolution its result records (300 dpi, or less for
+//! a very large page; 300 for results read before it was recorded). A page split into halves is
+//! put back together, as in the searchable PDF.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use kalamu_core::{
@@ -21,7 +23,9 @@ use crate::searchable_pdf::{pdf_page_sizes, regions_by_page};
 
 pub struct AltoExporter;
 
-/// PDF pages are measured as drawn at this resolution.
+/// PDF pages are measured as drawn at this resolution when their result records none: what
+/// every page was drawn at before the resolution was recorded, and what a model reading the PDF
+/// itself is measured at.
 const PDF_DPI: f32 = 300.0;
 
 fn error(message: impl std::fmt::Display) -> ExportError {
@@ -47,13 +51,16 @@ impl Exporter for AltoExporter {
                 "this model reported no text positions; choose Tesseract or Mistral OCR for ALTO",
             ));
         }
+        // Each PDF page's resolution, as drawn for the engine that read it.
+        let dpi = page_resolutions(doc);
         let sizes: Vec<(u32, (f32, f32))> = match doc.source.kind {
             InputKind::Pdf => {
                 let bytes = std::fs::read(&doc.source.path).map_err(error)?;
                 pdf_page_sizes(&bytes)?
                     .into_iter()
                     .map(|(n, (w, h))| {
-                        let px = |points: f32| (points / 72.0 * PDF_DPI).round();
+                        let dpi = dpi.get(&n).copied().unwrap_or(PDF_DPI);
+                        let px = |points: f32| (points / 72.0 * dpi).round();
                         (n, (px(w), px(h)))
                     })
                     .collect()
@@ -105,7 +112,7 @@ http://www.loc.gov/alto/v4/alto-4-4.xsd\">\n",
             doc.provenance.model
         );
         if doc.source.kind == InputKind::Pdf {
-            settings.push_str("; PDF pages measured at 300 dpi");
+            settings.push_str(&measured(&dpi, &read_pages(doc)));
         }
         if estimated {
             settings.push_str(
@@ -125,15 +132,7 @@ http://www.loc.gov/alto/v4/alto-4-4.xsd\">\n",
             esc(&doc.provenance.generator.version),
         );
         x.push_str("  </Description>\n  <Layout>\n");
-        // The pages read, a page that held no text included; not those a sample left out.
-        let read: std::collections::BTreeSet<u32> = doc
-            .parts
-            .iter()
-            .filter_map(|p| match p.piece {
-                kalamu_core::PieceRef::Page { number, .. } => Some(number),
-                _ => None,
-            })
-            .collect();
+        let read = read_pages(doc);
         for (number, (width, height)) in sizes.into_iter().filter(|(n, _)| read.contains(n)) {
             let regions = pages.get(&number).map(Vec::as_slice).unwrap_or_default();
             page(&mut x, number, width, height, regions);
@@ -141,6 +140,56 @@ http://www.loc.gov/alto/v4/alto-4-4.xsd\">\n",
         x.push_str("  </Layout>\n</alto>\n");
         Ok(x.into_bytes())
     }
+}
+
+/// The pages read, a page that held no text included; not those a sample left out.
+fn read_pages(doc: &ExportDocument) -> BTreeSet<u32> {
+    doc.parts
+        .iter()
+        .filter_map(|p| match p.piece {
+            kalamu_core::PieceRef::Page { number, .. } => Some(number),
+            _ => None,
+        })
+        .collect()
+}
+
+/// The resolution each page was drawn at, where its result records one; for a page split into
+/// halves, that of its first half.
+fn page_resolutions(doc: &ExportDocument) -> BTreeMap<u32, f32> {
+    let mut dpi = BTreeMap::new();
+    for part in &doc.parts {
+        if let (kalamu_core::PieceRef::Page { number, .. }, Some(drawn)) =
+            (&part.piece, part.drawn_dpi)
+        {
+            dpi.entry(*number).or_insert(drawn);
+        }
+    }
+    dpi
+}
+
+/// The processing settings' note on how PDF pages are measured: `at 300 dpi`, or, where some
+/// were drawn smaller, each other resolution with its pages.
+fn measured(dpi: &BTreeMap<u32, f32>, read: &BTreeSet<u32>) -> String {
+    let mut others: BTreeMap<String, Vec<u32>> = BTreeMap::new();
+    for &page in read {
+        let value = dpi.get(&page).copied().unwrap_or(PDF_DPI);
+        if (value - PDF_DPI).abs() > f32::EPSILON {
+            others.entry(written(value)).or_default().push(page);
+        }
+    }
+    let mut note = format!("; PDF pages measured at {} dpi", written(PDF_DPI));
+    for (value, pages) in others {
+        let pages: Vec<String> = pages.iter().map(u32::to_string).collect();
+        let label = if pages.len() == 1 { "page" } else { "pages" };
+        let _ = write!(note, ", {label} {} at {value} dpi", pages.join(", "));
+    }
+    note
+}
+
+/// A resolution as written: two decimals at most, `300` rather than `300.00`.
+fn written(dpi: f32) -> String {
+    let text = format!("{dpi:.2}");
+    text.trim_end_matches('0').trim_end_matches('.').to_owned()
 }
 
 /// An image's width and height as shown, after its EXIF orientation.

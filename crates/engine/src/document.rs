@@ -74,6 +74,7 @@ impl Engine {
                     fields: Vec::new(),
                     regions: Vec::new(),
                     failed: Some(state.error.clone().unwrap_or_default()),
+                    drawn_dpi: None,
                 });
                 continue;
             }
@@ -188,6 +189,7 @@ impl Engine {
                 fields,
                 regions,
                 failed: None,
+                drawn_dpi: kalamu_core::provenance::page_resolution(&result.request),
             });
         }
 

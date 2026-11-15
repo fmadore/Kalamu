@@ -28,6 +28,7 @@ use kreuzberg_tesseract::{TessPageSegMode, TesseractAPI};
 use crate::host::{self, Checked, IDLE_UNLOAD, lock};
 use crate::models::{ModelFile, ModelLease, ModelManager, Release};
 use crate::tessdata::{self, DATA_REVISION};
+use kalamu_core::provenance::PAGE_RESOLUTION;
 use pool::Pool;
 
 pub const TESSERACT_ID: &str = "tesseract";
@@ -188,6 +189,41 @@ impl Release for Inner {
 
 fn engine_error(e: impl std::fmt::Display) -> ProviderError {
     ProviderError::Other(format!("Tesseract failed: {e}"))
+}
+
+/// The keyword under which a PDF page drawn by `kalamu-media` states the resolution it was drawn
+/// at (`render.rs`); a scan given as a PNG never carries it.
+const DRAWN_KEYWORD: &[u8] = b"Kalamu drawn dpi";
+
+/// The resolution a PDF page was drawn at, as the drawn PNG states it (`300`, `252`); `None` for
+/// any other image, a scan's own resolution tag included. Read from the chunks before the image
+/// data, never from the pixels; Tesseract is not told it, so it reads the page as before.
+fn drawn_resolution(png: &[u8]) -> Option<String> {
+    if !png.starts_with(b"\x89PNG\r\n\x1a\n") {
+        return None;
+    }
+    let mut at = 8;
+    while let Some(header) = png.get(at..at + 8) {
+        let length = usize::try_from(u32::from_be_bytes(header[..4].try_into().ok()?)).ok()?;
+        let kind = &header[4..8];
+        if kind == b"IDAT" {
+            return None;
+        }
+        let data = png.get(at + 8..at + 8 + length)?;
+        if kind == b"tEXt"
+            && let Some(value) = data
+                .strip_prefix(DRAWN_KEYWORD)
+                .and_then(|rest| rest.strip_prefix(b"\0"))
+        {
+            let value = std::str::from_utf8(value).ok()?;
+            return value
+                .parse::<f32>()
+                .is_ok_and(|dpi| dpi.is_finite() && dpi > 0.0)
+                .then(|| value.to_owned());
+        }
+        at += 12 + length;
+    }
+    None
 }
 
 /// A page decoded to grey levels, as Tesseract reads it.
@@ -384,11 +420,15 @@ impl Provider for Tesseract {
         ]
     }
 
-    /// The fixed settings, and the language data loaded for this job.
+    /// The fixed settings, the language data loaded for this job, and for a PDF page the
+    /// resolution it was drawn at.
     fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
         let mut settings = self.request_settings(request.task, request.model, request.tuning);
         if let Ok(files) = data_for(request.languages) {
             settings.push(RequestSetting::new("languages", names(&files)));
+        }
+        if let Some(dpi) = drawn_resolution(&request.input.bytes) {
+            settings.push(RequestSetting::new(PAGE_RESOLUTION, format!("{dpi} dpi")));
         }
         settings
     }
@@ -525,6 +565,100 @@ mod tests {
         let mut pool = lock(&tesseract.inner.idle);
         assert!(pool.take("fra").is_none());
         assert!(pool.take("eng").is_some());
+    }
+
+    /// A PDF page as `kalamu-media` draws it for Tesseract.
+    fn drawn(size: (f32, f32)) -> kalamu_core::PreparedInput {
+        let pdf = kalamu_media::sample_pdf(&[size], true);
+        let source = kalamu_media::OpenSource::Pdf(Box::new(
+            kalamu_media::PdfSource::from_bytes(&pdf).unwrap(),
+        ));
+        source
+            .prepare(&kalamu_core::PieceRef::page(1), &["image/png"], "p")
+            .unwrap()
+    }
+
+    /// The PNG without its ancillary chunks (`pHYs`, `tEXt`): the page as drawn before the
+    /// resolution was written into it.
+    fn without_ancillary_chunks(png: &[u8]) -> Vec<u8> {
+        let mut out = png[..8].to_vec();
+        let mut at = 8;
+        while at + 12 <= png.len() {
+            let length = u32::from_be_bytes(png[at..at + 4].try_into().unwrap()) as usize;
+            let critical = png[at + 4].is_ascii_uppercase();
+            if critical {
+                out.extend_from_slice(&png[at..at + 12 + length]);
+            }
+            at += 12 + length;
+        }
+        out
+    }
+
+    fn sent(input: &kalamu_core::PreparedInput) -> Vec<RequestSetting> {
+        let tesseract = Tesseract::new(ModelManager::new(".".into(), &tessdata::TESSDATA));
+        let languages = LanguageChoice::Explicit(vec![LanguageCode::new("fr")]);
+        let options = kalamu_core::SetupOptions::default();
+        let stop = kalamu_core::StopSignal::default();
+        tesseract.sent_settings(
+            &ProcessRequest {
+                task: Task::TextExtraction,
+                model: MODEL,
+                prompt: "",
+                user_prompt: "",
+                input,
+                languages: &languages,
+                options: &options,
+                tuning: &Tuning::default(),
+                analysis: None,
+                stop: &stop,
+            },
+            false,
+        )
+    }
+
+    fn resolution(settings: &[RequestSetting]) -> Option<&str> {
+        settings
+            .iter()
+            .find(|s| s.name == PAGE_RESOLUTION)
+            .map(|s| s.value.as_str())
+    }
+
+    /// Each PDF page's record says the resolution it was drawn at: 300 dpi for a page of normal
+    /// size, less for a poster drawn 7,000 pixels on its longest side. An image that was not
+    /// drawn from a PDF, a scan with its own resolution tag included, records none.
+    #[test]
+    fn the_record_of_a_pdf_page_says_the_resolution_it_was_drawn_at() {
+        let a4 = drawn((595.0, 842.0));
+        assert_eq!(resolution(&sent(&a4)), Some("300 dpi"));
+        let poster = drawn((2000.0, 1000.0));
+        assert_eq!(resolution(&sent(&poster)), Some("252 dpi"));
+        let scan = kalamu_core::PreparedInput {
+            bytes: without_ancillary_chunks(&a4.bytes),
+            ..a4.clone()
+        };
+        assert_eq!(resolution(&sent(&scan)), None);
+        let mut tagged = image::DynamicImage::new_luma8(8, 8);
+        tagged.invert();
+        let mut png = Vec::new();
+        tagged
+            .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+            .unwrap();
+        assert_eq!(drawn_resolution(&png), None);
+        assert_eq!(drawn_resolution(b"\xFF\xD8\xFF\xE0 a JPEG"), None);
+    }
+
+    /// What Tesseract is given is the same as before the drawn page stated its resolution:
+    /// the same grey levels, width and height, and no resolution of its own (the engine is
+    /// never told one, so it estimates as it always did).
+    #[test]
+    fn tesseract_is_given_the_same_page_as_before() {
+        for size in [(595.0, 842.0), (2000.0, 1000.0)] {
+            let page = drawn(size);
+            let now = decode(&page.bytes).unwrap();
+            let before = decode(&without_ancillary_chunks(&page.bytes)).unwrap();
+            assert_eq!((now.width, now.height), (before.width, before.height));
+            assert!(now.pixels == before.pixels, "{size:?}");
+        }
     }
 
     #[test]
