@@ -330,11 +330,16 @@ test('the language box opens its list, moves through it with the arrows and take
 	await page.keyboard.press('ArrowUp');
 	await expect(box).toBeFocused();
 
-	// Escape from the list goes back to the box, which opens the list again as it takes the
-	// focus; Escape in the box closes it.
+	// Escape from the list closes it and goes back to the box, the list staying closed; ↓ opens
+	// it again, and Escape in the box closes it.
 	await page.keyboard.press('ArrowDown');
 	await expect(picks.first()).toBeFocused();
 	await page.keyboard.press('Escape');
+	await expect(box).toBeFocused();
+	await expect(list).toBeHidden();
+	await page.keyboard.press('ArrowDown');
+	await expect(picks.first()).toBeFocused();
+	await page.keyboard.press('ArrowUp');
 	await expect(box).toBeFocused();
 	await expect(list).toBeVisible();
 	await page.keyboard.press('Escape');
