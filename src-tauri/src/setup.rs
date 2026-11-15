@@ -364,13 +364,17 @@ fn resume(engine: &Arc<Engine>, waiting: Vec<JobId>) {
         Err(e) => tracing::warn!(error = %e, "files out of date not written at launch"),
     });
 
-    // Collect the answers of batches sent before the app was last closed.
+    // Collect the answers of batches sent before the app was last closed, then delete what
+    // ended batches left in the providers' storage (jobs collecting now clean up their own).
     let resumed = engine.clone();
     tauri::async_runtime::spawn(async move {
         for id in waiting {
             if let Err(e) = resumed.collect_waiting(id) {
                 tracing::warn!(job = %id, error = %e, "batches not collected");
             }
+        }
+        if let Err(e) = resumed.clean_up_batches().await {
+            tracing::warn!(error = %e, "batch files not cleaned up at launch");
         }
     });
 }

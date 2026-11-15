@@ -6,7 +6,11 @@
 //! resumes, and one never confirmed as sent (still `Sending`) puts its pieces back in the queue.
 //! The one gap is a crash between the provider accepting a batch and its id being written,
 //! which would send those pieces again; the window is one HTTP response.
+//!
+//! Once a batch's answers are stored, or it is given up on, what it left in the provider's
+//! storage is deleted ([`cleanup`]).
 
+mod cleanup;
 mod collect;
 mod send;
 

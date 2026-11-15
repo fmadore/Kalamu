@@ -7,6 +7,8 @@ use kalamu_core::{BatchContext, BatchLimits, BatchPhase, BatchProgress, JobSetti
 
 use super::*;
 
+mod cleanup;
+
 /// A batch as the fake service holds it: its id, and each item's id and page number.
 type Sent = (String, Vec<(String, u32)>);
 
@@ -30,6 +32,20 @@ struct Batchy {
     rate_limits: AtomicUsize,
     /// Items a batch may hold, as the provider declares it (0: two).
     max_items: AtomicUsize,
+    /// Ended batches are still settling (being cancelled): they name no file yet.
+    settling: AtomicBool,
+    /// Times a batch's files were asked for.
+    listed: AtomicUsize,
+    /// What deleting a file fails with, if anything.
+    delete_error: Mutex<Option<ProviderError>>,
+    /// Attempts to delete a file, failed or not.
+    deletes: AtomicUsize,
+    /// Files deleted, in order.
+    deleted: Mutex<Vec<String>>,
+    /// The job database, to see what was stored when each file was deleted.
+    store: Mutex<Option<Arc<SqliteStore>>>,
+    /// Pieces still with the provider (submitted) at each deletion.
+    submitted_at_delete: Mutex<Vec<usize>>,
 }
 
 impl Batchy {
@@ -187,6 +203,67 @@ impl Provider for Batchy {
             .unwrap_or_else(|p| p.into_inner())
             .push(batch_id.to_string());
         Ok(())
+    }
+
+    /// Each batch leaves its requests and its answers, named after it.
+    async fn batch_files(
+        &self,
+        _key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        self.listed.fetch_add(1, Ordering::SeqCst);
+        if self.settling.load(Ordering::SeqCst) {
+            return Ok(None);
+        }
+        Ok(Some(vec![
+            format!("{batch_id}-in"),
+            format!("{batch_id}-out"),
+        ]))
+    }
+
+    async fn delete_batch_file(&self, _key: &ApiKey, file_id: &str) -> Result<(), ProviderError> {
+        self.deletes.fetch_add(1, Ordering::SeqCst);
+        if let Some(err) = self
+            .delete_error
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
+        {
+            return Err(err);
+        }
+        let store = self.store.lock().unwrap_or_else(|p| p.into_inner()).clone();
+        if let Some(store) = store {
+            let mut submitted = 0;
+            for job in store.list_jobs().unwrap_or_default() {
+                submitted += store
+                    .pieces(job.id)
+                    .unwrap_or_default()
+                    .iter()
+                    .filter(|p| p.status == PieceStatus::Submitted)
+                    .count();
+            }
+            self.submitted_at_delete
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .push(submitted);
+        }
+        self.deleted
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .push(file_id.to_string());
+        Ok(())
+    }
+}
+
+impl Batchy {
+    fn deleted(&self) -> Vec<String> {
+        let mut deleted = self
+            .deleted
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone();
+        deleted.sort();
+        deleted
     }
 }
 

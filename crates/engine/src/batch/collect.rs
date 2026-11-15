@@ -1,5 +1,6 @@
 //! Collecting: waiting batches polled until they end, their answers stored as single calls'
-//! would be, and batches given up on.
+//! would be, and batches given up on; then what each left at the provider is deleted
+//! ([`super::cleanup`]).
 
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
@@ -53,6 +54,8 @@ impl Engine {
         spent: &Mutex<f64>,
     ) -> Result<BatchOutcome, EngineError> {
         let mut outcome = BatchOutcome::default();
+        // Files a crash or a failure left at the provider after an earlier collection.
+        self.clean_up_job(job.id).await?;
         // Failed polls in a row, by batch.
         let mut unreadable: HashMap<String, u32> = HashMap::new();
         loop {
@@ -78,7 +81,7 @@ impl Engine {
                 }
                 None => {}
             }
-            for batch in open {
+            for mut batch in open {
                 let setup = job
                     .setups
                     .iter()
@@ -102,7 +105,9 @@ impl Engine {
                         self.emit(waiting(&batch, finished));
                     }
                     Ok(BatchProgress::Ended(answers)) => {
-                        outcome.merge(self.collect(job, batch, answers, spent)?);
+                        outcome.merge(self.collect(job, &mut batch, answers, spent)?);
+                        // Only now, the answers stored, is what the batch left deleted.
+                        self.clean_up(&mut batch).await?;
                     }
                     Ok(BatchProgress::Abandoned(reason)) => {
                         outcome.failed = true;
@@ -139,7 +144,7 @@ impl Engine {
     fn collect(
         &self,
         job: &Job,
-        mut batch: BatchRecord,
+        batch: &mut BatchRecord,
         answers: Vec<(String, Result<ProcessOutput, ProviderError>)>,
         spent: &Mutex<f64>,
     ) -> Result<BatchOutcome, EngineError> {
@@ -214,12 +219,14 @@ impl Engine {
         }
         batch.phase = BatchPhase::Collected;
         batch.updated_at = Timestamp::now();
-        self.store.put_batch(&batch)?;
+        Self::due_for_cleanup(batch);
+        self.store.put_batch(batch)?;
         Ok(outcome)
     }
 
     /// Gives up on a batch: cancelled by the user (`reason` is `None`; the provider is asked to
-    /// stop and the pieces are left to do) or ended by the provider without answers.
+    /// stop and the pieces are left to do) or ended by the provider without answers. What it
+    /// left at the provider is then deleted, once the provider says it has settled.
     pub(super) async fn abandon(
         &self,
         job: &Job,
@@ -256,11 +263,13 @@ impl Engine {
         }
         batch.phase = BatchPhase::Abandoned;
         batch.updated_at = Timestamp::now();
+        Self::due_for_cleanup(&mut batch);
         self.store.put_batch(&batch)?;
-        Ok(())
+        self.clean_up(&mut batch).await
     }
 
-    /// Asks the provider to stop a job's waiting batches, before the job is deleted.
+    /// Asks the provider to stop a job's waiting batches, before the job is deleted. What they
+    /// left at the provider is deleted once they settle, the job deleted or not.
     pub async fn cancel_batches(&self, job_id: JobId) -> Result<(), EngineError> {
         let job = self.store.job(job_id)?;
         for batch in self.store.batches(job_id)? {
