@@ -33,9 +33,17 @@ fn fixed(key: &str, label: &str, instructions: &str) -> Field {
     }
 }
 
-/// Checks the researcher's entry fields: a valid schema whose keys leave the fixed ones free.
+/// Checks the researcher's entry fields: a valid schema whose keys leave the fixed ones free,
+/// and no repeating group, the entries being one already.
 pub fn validate(entry: &AnalysisSchema) -> Result<(), SchemaError> {
     entry.validate()?;
+    if let Some(group) = entry
+        .fields
+        .iter()
+        .find(|f| matches!(f.kind, FieldKind::Entries { .. }))
+    {
+        return Err(SchemaError::NestedGroup(group.label.trim().to_string()));
+    }
     match entry
         .fields
         .iter()

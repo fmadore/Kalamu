@@ -53,8 +53,9 @@ pub enum FieldKind {
     /// Any of a fixed set: themes from the researcher's own list.
     Choices { values: Vec<String> },
     /// A list of entries, each with its own fields: the articles of a table of contents, with
-    /// a title, pages and a summary each. Built by Kalamu for a table of contents; the field
-    /// editor does not offer it.
+    /// a title, pages and a summary each, or the rows of a register page, its columns the
+    /// entries' fields. The field editor offers it as a repeating group ("one of these per
+    /// entry"), an analysis's only field ([`crate::records`]).
     Entries { fields: Vec<Field> },
 }
 
@@ -124,6 +125,18 @@ pub enum SchemaError {
     Duplicate(String),
     #[error("\"{0}\" needs at least two values to choose from")]
     TooFewValues(String),
+    /// A repeating group with no column.
+    #[error("\"{0}\" needs at least one column")]
+    EmptyGroup(String),
+    /// A repeating group among another's columns.
+    #[error("\"{0}\" cannot hold another repeating group")]
+    NestedGroup(String),
+    #[error("An analysis holds one repeating group at most")]
+    TwoGroups,
+    /// A repeating group beside other fields: an analysis is either answered once per document
+    /// or row by row, page by page.
+    #[error("A repeating group is the analysis's only field: put \"{0}\" in it as a column")]
+    GroupNotAlone(String),
 }
 
 /// The property that holds a field's reason in the model's answer.
@@ -132,33 +145,39 @@ pub fn reason_key(key: &str) -> String {
 }
 
 impl AnalysisSchema {
-    /// Gives new fields a key from their label, unique within the schema; existing keys stay.
+    /// Gives new fields a key from their label, unique among the fields beside them (a
+    /// repeating group's columns among themselves); existing keys stay.
     pub fn assign_keys(&mut self) {
-        let mut taken: Vec<String> = self
-            .fields
-            .iter()
-            .filter(|f| !f.key.is_empty())
-            .map(|f| f.key.clone())
-            .collect();
-        for (i, field) in self.fields.iter_mut().enumerate() {
-            if !field.key.is_empty() {
-                continue;
-            }
-            let base = key_for(&field.label).unwrap_or_else(|| format!("field_{}", i + 1));
-            let mut key = base.clone();
-            let mut n = 2;
-            while taken.contains(&key) {
-                key = format!("{base}_{n}");
-                n += 1;
-            }
-            taken.push(key.clone());
-            field.key = key;
-        }
+        assign_keys(&mut self.fields);
     }
 
-    /// Checks a schema before it is saved or run.
+    /// Checks a schema before it is saved or run: names given and distinct, choices to choose
+    /// from, and a repeating group with columns and no group inside it.
     pub fn validate(&self) -> Result<(), SchemaError> {
-        validate_fields(&self.fields)
+        validate_fields(&self.fields, false)
+    }
+
+    /// Checks a researcher's analysis: [`AnalysisSchema::validate`], and at most one repeating
+    /// group, which is then the only field ([`crate::records`]).
+    pub fn validate_analysis(&self) -> Result<(), SchemaError> {
+        self.validate()?;
+        let groups: Vec<&Field> = self
+            .fields
+            .iter()
+            .filter(|f| matches!(f.kind, FieldKind::Entries { .. }))
+            .collect();
+        match groups.as_slice() {
+            [] => Ok(()),
+            [_] => match self
+                .fields
+                .iter()
+                .find(|f| !matches!(f.kind, FieldKind::Entries { .. }))
+            {
+                Some(other) => Err(SchemaError::GroupNotAlone(other.label.trim().to_string())),
+                None => Ok(()),
+            },
+            _ => Err(SchemaError::TwoGroups),
+        }
     }
 
     /// Reads the model's JSON answer into one answer per field, tidied: text trimmed, list items
@@ -175,7 +194,33 @@ impl AnalysisSchema {
     }
 }
 
-fn validate_fields(fields: &[Field]) -> Result<(), SchemaError> {
+fn assign_keys(fields: &mut [Field]) {
+    let mut taken: Vec<String> = fields
+        .iter()
+        .filter(|f| !f.key.is_empty())
+        .map(|f| f.key.clone())
+        .collect();
+    for (i, field) in fields.iter_mut().enumerate() {
+        if let FieldKind::Entries { fields } = &mut field.kind {
+            assign_keys(fields);
+        }
+        if !field.key.is_empty() {
+            continue;
+        }
+        let base = key_for(&field.label).unwrap_or_else(|| format!("field_{}", i + 1));
+        let mut key = base.clone();
+        let mut n = 2;
+        while taken.contains(&key) {
+            key = format!("{base}_{n}");
+            n += 1;
+        }
+        taken.push(key.clone());
+        field.key = key;
+    }
+}
+
+/// `inside` when the fields are a repeating group's columns.
+fn validate_fields(fields: &[Field], inside: bool) -> Result<(), SchemaError> {
     if fields.is_empty() {
         return Err(SchemaError::Empty);
     }
@@ -202,7 +247,13 @@ fn validate_fields(fields: &[Field]) -> Result<(), SchemaError> {
             }
         }
         if let FieldKind::Entries { fields } = &field.kind {
-            validate_fields(fields)?;
+            if inside {
+                return Err(SchemaError::NestedGroup(label.to_string()));
+            }
+            if fields.is_empty() {
+                return Err(SchemaError::EmptyGroup(label.to_string()));
+            }
+            validate_fields(fields, true)?;
         }
     }
     Ok(())
@@ -389,144 +440,4 @@ pub fn latest_labels<'a>(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-mod tests {
-    use serde_json::json;
-
-    use super::*;
-
-    fn field(label: &str, kind: FieldKind, reason: bool) -> Field {
-        Field {
-            key: String::new(),
-            label: label.into(),
-            instructions: String::new(),
-            kind,
-            reason,
-        }
-    }
-
-    fn schema() -> AnalysisSchema {
-        let mut schema = AnalysisSchema {
-            fields: vec![
-                field("Résumé", FieldKind::Text, false),
-                field("Lieux cités", FieldKind::List { max: Some(2) }, false),
-                field(
-                    "Tone",
-                    FieldKind::Choice {
-                        values: vec!["Positive".into(), "Negative".into()],
-                    },
-                    true,
-                ),
-                field(
-                    "Themes",
-                    FieldKind::Choices {
-                        values: vec!["Education".into(), "Pilgrimage".into()],
-                    },
-                    false,
-                ),
-            ],
-        };
-        schema.assign_keys();
-        schema
-    }
-
-    #[test]
-    fn keys_come_from_labels_and_stay_unique() {
-        let keys: Vec<_> = schema().fields.into_iter().map(|f| f.key).collect();
-        assert_eq!(keys, ["resume", "lieux_cites", "tone", "themes"]);
-        let mut twice = AnalysisSchema {
-            fields: vec![
-                field("Places", FieldKind::Text, false),
-                field("places!", FieldKind::Text, false),
-                field("2024", FieldKind::Text, false),
-            ],
-        };
-        twice.assign_keys();
-        let keys: Vec<_> = twice.fields.iter().map(|f| f.key.as_str()).collect();
-        assert_eq!(keys, ["places", "places_2", "field_3"]);
-        assert_eq!(twice.validate(), Ok(()));
-        twice.fields[1].label = "places".into();
-        assert_eq!(
-            twice.validate(),
-            Err(SchemaError::Duplicate("places".into()))
-        );
-    }
-
-    #[test]
-    fn choices_need_two_values() {
-        let mut one = AnalysisSchema {
-            fields: vec![field(
-                "Tone",
-                FieldKind::Choice {
-                    values: vec!["Positive".into(), " positive ".into()],
-                },
-                false,
-            )],
-        };
-        one.assign_keys();
-        assert_eq!(
-            one.validate(),
-            Err(SchemaError::TooFewValues("Tone".into()))
-        );
-        assert_eq!(schema().validate(), Ok(()));
-        assert_eq!(
-            AnalysisSchema::default().validate(),
-            Err(SchemaError::Empty)
-        );
-    }
-
-    #[test]
-    fn answers_are_tidied_and_checked() {
-        let schema = schema();
-        let answers = schema
-            .read_answer(&json!({
-                "resume": "  Une réunion à Bamako. ",
-                "lieux_cites": ["Bamako", "bamako", " Dakar ", "Ségou"],
-                "tone": "negative",
-                "tone_reason": "Critical of the decision.",
-                "themes": ["pilgrimage", "Education", "Pilgrimage"]
-            }))
-            .unwrap();
-        assert_eq!(
-            answers[0].value,
-            FieldValue::Text("Une réunion à Bamako.".into())
-        );
-        assert_eq!(
-            answers[1].value,
-            FieldValue::List(vec!["Bamako".into(), "Dakar".into()])
-        );
-        assert_eq!(answers[2].value, FieldValue::Text("Negative".into()));
-        assert_eq!(
-            answers[2].reason.as_deref(),
-            Some("Critical of the decision.")
-        );
-        assert_eq!(
-            answers[3].value,
-            FieldValue::List(vec!["Pilgrimage".into(), "Education".into()])
-        );
-        assert_eq!(
-            schema.render(&answers),
-            "Résumé\nUne réunion à Bamako.\n\nLieux cités: Bamako; Dakar\n\nTone: Negative\n\
-             Reason: Critical of the decision.\n\nThemes: Pilgrimage; Education"
-        );
-    }
-
-    #[test]
-    fn broken_answers_are_errors_not_empty_results() {
-        let schema = schema();
-        let base = json!({ "resume": "x", "lieux_cites": [], "tone": "Positive", "themes": [] });
-        assert!(schema.read_answer(&base).is_ok());
-        let mut missing = base.clone();
-        missing.as_object_mut().unwrap().remove("lieux_cites");
-        assert!(
-            schema
-                .read_answer(&missing)
-                .unwrap_err()
-                .contains("Lieux cités")
-        );
-        let mut outside = base.clone();
-        outside["tone"] = json!("Mixed");
-        assert!(schema.read_answer(&outside).unwrap_err().contains("Mixed"));
-        assert!(schema.read_answer(&json!(["x"])).is_err());
-    }
-}
+mod tests;

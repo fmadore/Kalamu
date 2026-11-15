@@ -23,6 +23,7 @@ pub mod progress;
 pub mod project;
 pub mod provenance;
 pub mod provider;
+pub mod records;
 pub mod result;
 pub mod search;
 pub mod setup;
@@ -79,6 +80,7 @@ pub use provider::{
     ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, RequestSetting,
     StopSignal, Tuning,
 };
+pub use records::{RowEdit, RowError};
 pub use result::{
     Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,
     TextLine, TextRegion, TextWord, Usage, plain_words,
