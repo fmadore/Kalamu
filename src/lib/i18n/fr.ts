@@ -62,6 +62,16 @@ export const fr: Messages = {
 			description:
 				'Ce que montre chaque photographie, affiche, carte ou autre image, décrit comme dans un catalogue, avec des mots-clés, le texte écrit sur l’image et les noms que ce texte donne.'
 		},
+		'analysis.directory': {
+			name: 'Annuaire ou liste, une ligne par entrée',
+			description:
+				'Chaque entrée de chaque page, dans l’ordre de lecture : le nom, la profession, l’adresse et les remarques tels qu’imprimés, pour un annuaire, une liste de membres ou un tableau imprimé.'
+		},
+		'analysis.register': {
+			name: 'Registre, une ligne par entrée',
+			description:
+				'Chaque acte de chaque page d’un registre paroissial ou d’état civil, ou d’un livre de comptes : numéro, date, nature de l’acte, nom, lieu, personnes citées et remarques, tels qu’écrits, signes de répétition compris.'
+		},
 		'contents.periodical': {
 			name: 'Numéro de journal ou de magazine',
 			description: 'Une entrée par article, avec sa rubrique, ses auteurs, ses pages et un résumé.'
