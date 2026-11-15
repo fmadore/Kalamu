@@ -316,16 +316,24 @@ impl ModelManager {
         })
     }
 
-    /// The voice-activity model's path, when it is installed and whisper.cpp can open it:
-    /// whisper.cpp opens it by name with the C runtime, which cannot read non-ASCII paths on
-    /// Windows, so a user folder with an accented name goes without it there. macOS opens
-    /// UTF-8 paths.
+    /// The voice-activity model's path, when it is installed and whisper.cpp can open it.
     pub fn vad_path(&self) -> Option<String> {
         let path = self.dir.join(VAD.file);
         let path = path.to_str()?;
-        let readable = !cfg!(windows) || path.is_ascii();
-        (self.is_installed(&VAD) && readable).then(|| path.to_owned())
+        (self.is_installed(&VAD) && whisper_opens(path)).then(|| path.to_owned())
     }
+}
+
+/// Whether whisper.cpp opens a file by this path, which whisper-rs hands it as UTF-8. On macOS
+/// the system takes UTF-8 paths as they are. On Windows, built with MSVC or clang-cl as Kalamu
+/// is, whisper.cpp turns the path into wide characters itself (`std::codecvt_utf8<wchar_t>`)
+/// and opens that, so an accented user folder (`C:\Users\Frédérick`) opens with or without the
+/// app's UTF-8 code page manifest: tried on Windows ARM64 from a test program, which has none.
+/// The conversion stops at the Basic Multilingual Plane, though: a folder named with a
+/// character beyond it (an emoji) does not open, so the model is left out there rather than
+/// tried. A limit of the C++ library's conversion, not a choice of Kalamu's.
+fn whisper_opens(path: &str) -> bool {
+    !cfg!(windows) || path.chars().all(|c| u32::from(c) <= 0xFFFF)
 }
 
 /// A model file lent to a job.
@@ -415,6 +423,21 @@ mod tests {
         ));
         manager.remove(BASE.id).unwrap();
         assert!(files(dir.path()).is_empty());
+    }
+
+    #[test]
+    fn whisper_opens_accented_folders_and_on_windows_none_beyond_the_basic_plane() {
+        assert!(whisper_opens(
+            r"C:\Users\Frédérick\AppData\Local\Kalamu\ggml-silero.bin"
+        ));
+        assert!(whisper_opens(
+            "/Users/Frédérick/Library/Kalamu/ggml-silero.bin"
+        ));
+        assert!(whisper_opens(r"C:\Users\山田\ggml-silero.bin"));
+        assert_eq!(
+            whisper_opens(r"C:\Users\😀\ggml-silero.bin"),
+            !cfg!(windows)
+        );
     }
 
     /// The hash read a few kilobytes at a time is the hash of the bytes at once, byte for byte:
