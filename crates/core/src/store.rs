@@ -215,6 +215,12 @@ pub trait JobStore: Send + Sync {
     /// Inserts or replaces a batch, by its own id.
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;
     fn batches(&self, job: JobId) -> Result<Vec<BatchRecord>, StoreError>;
+    /// Batches of deleted jobs whose files are still to delete at the provider: deleting a job
+    /// keeps the record of each such batch here, apart from the job, until its cleanup ends.
+    fn batch_leftovers(&self) -> Result<Vec<BatchRecord>, StoreError>;
+    /// Records how the cleanup of a deleted job's batch stands, by its id; one with nothing
+    /// left to do ([`BatchRecord::cleanup_pending`] false) is forgotten.
+    fn put_batch_leftover(&self, batch: &BatchRecord) -> Result<(), StoreError>;
 
     /// Keeps a snapshot of corrected text; one already kept under its id is left as it is.
     fn put_snapshot(&self, snapshot: &crate::Snapshot) -> Result<(), StoreError>;

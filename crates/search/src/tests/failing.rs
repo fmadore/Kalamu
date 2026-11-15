@@ -159,6 +159,14 @@ impl JobStore for Failing {
         self.0.batches(job)
     }
 
+    fn batch_leftovers(&self) -> Result<Vec<BatchRecord>, StoreError> {
+        self.0.batch_leftovers()
+    }
+
+    fn put_batch_leftover(&self, batch: &BatchRecord) -> Result<(), StoreError> {
+        self.0.put_batch_leftover(batch)
+    }
+
     fn put_snapshot(&self, snapshot: &kalamu_core::Snapshot) -> Result<(), StoreError> {
         self.0.put_snapshot(snapshot)
     }

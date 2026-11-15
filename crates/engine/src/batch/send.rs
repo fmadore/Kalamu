@@ -188,6 +188,7 @@ impl Engine {
                 .collect(),
             submitted_at: now,
             updated_at: now,
+            cleanup: None,
         };
         self.store.put_batch(&record)?;
         let mut states: Vec<PieceState> = Vec::with_capacity(bucket.pieces.len());

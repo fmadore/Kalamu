@@ -46,7 +46,8 @@ pub use attention::{
     QueueCounts, QueueItem, ReasonCounts, ReviewQueue, ReviewScope, ReviewTarget, Signal,
 };
 pub use batch::{
-    BATCH_WINDOW_MS, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress, BatchRecord,
+    BATCH_WINDOW_MS, BatchCleanup, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress,
+    BatchRecord,
 };
 pub use dictionary::{
     DictionaryError, DictionaryStore, Entry, KeptApart, Labels, ProposalGroup, ProposalRequest,

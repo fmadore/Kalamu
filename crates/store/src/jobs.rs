@@ -210,6 +210,8 @@ pub(crate) fn delete_jobs(store: &SqliteStore, ids: &[JobId]) -> Result<(), Stor
     let mut conn = store.conn();
     let tx = conn.transaction().map_err(db)?;
     for id in ids {
+        // What its batches left at the provider is still deleted afterwards.
+        super::batches::keep_leftovers(&tx, *id)?;
         tx.execute("DELETE FROM jobs WHERE id = ?1", [id.to_string()])
             .map_err(db)?;
     }
