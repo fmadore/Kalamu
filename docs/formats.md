@@ -52,12 +52,15 @@ chosen model reports where text sits; under any other model, the diagram notes t
 [ALTO](https://www.loc.gov/standards/alto/) version 4, as digital libraries, eScriptorium and
 Transkribus read it: one file per document, a `Page` per page, then `TextBlock`, `TextLine` and
 `String` for each word, with `SP` between words. Positions are in pixels (`MeasurementUnit`
-`pixel`): those of the image for an image source, those of the page drawn at 300 dpi for a PDF
-(as Tesseract reads it), the page's own `WIDTH` and `HEIGHT` given; for a document of images,
+`pixel`): those of the image for an image source, those of the page as it was drawn for a PDF
+(as Tesseract reads it: at 300 dpi, or less for a page whose longest side would pass 7,000
+pixels, the resolution its result records; a result that records none, read by 1.7.0 or
+earlier, is measured at 300), the page's own `WIDTH` and `HEIGHT` given; for a document of images,
 each page measured in its own image, the file named after the document. A word carries the engine's
 confidence (`WC`, 0 to 1) where it gave one. `Description` names the source file, the date,
-Kalamu's version and, in `processingStepSettings`, the provider and model, and says when
-positions are estimated. A page split into halves is put back together on the whole page.
+Kalamu's version and, in `processingStepSettings`, the provider and model, the resolution PDF
+pages are measured at (naming the pages drawn at less than 300 dpi), and says when positions
+are estimated. A page split into halves is put back together on the whole page.
 
 Offered only from models that report where text sits. Tesseract places every word. Mistral
 OCR and LightOnOCR-3 place blocks only: their lines share the paragraph's height and their words each
@@ -185,7 +188,7 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `documents` | The project documents the source is, in each project whose document it is: `project_id`, `project_name`, `document_id`, `title`, and `description`, each part of the source's description as it stood when the file was written (`repository`, `fonds`, `series`, `file`, `shelfmark`, `creator`, `date`, `url`, `citation`, `rights`) as `{ "value", "from" }`, `from` being `document` or `project`; parts with no value are left out. Supplied by the researcher, never by a model. Absent for a job tied to no project |
 | `provider`, `model` | As requested |
 | `model_versions` | The versions the provider reported, when they differ from `model` (including a fallback model) |
-| `request` | What the requests carried besides the prompt, each as `{ "name", "value" }` named by its path in the request (`output_config.effort`, `generationConfig.maxOutputTokens`, `beam_size`): reasoning effort, output limit, media resolution; for Whisper, `vad` (whether silences were skipped with the voice-activity model, used when it is downloaded) and `vad_model`; for Tesseract, `engine` (`Tesseract 5.5.2`), `language_data` (`tessdata_best@e12c65a`), `ocr_engine_mode` (`lstm`) and `page_segmentation` (`auto`). For pages read several at a time, `pages` names the pages that went in one call (`5-8`). Recorded with each piece's result when it was sent, so a later version of Kalamu never rewrites it; a name listed twice means pieces were read with different values. Absent for results stored by 0.4.0 and earlier |
+| `request` | What the requests carried besides the prompt, each as `{ "name", "value" }` named by its path in the request (`output_config.effort`, `generationConfig.maxOutputTokens`, `beam_size`): reasoning effort, output limit, media resolution; for Whisper, `vad` (whether silences were skipped with the voice-activity model, used when it is downloaded) and `vad_model`; for Tesseract, `engine` (`Tesseract 5.5.2`), `language_data` (`tessdata_best@e12c65a`), `ocr_engine_mode` (`lstm`), `page_segmentation` (`auto`) and, for a PDF, `page_resolution` (`300 dpi`: what the page was drawn at). For pages read several at a time, `pages` names the pages that went in one call (`5-8`). Recorded with each piece's result when it was sent, so a later version of Kalamu never rewrites it; a name listed twice means pieces were read with different values. Absent for results stored by 0.4.0 and earlier |
 | `prompt` | Preset id and name, the full instructions and per-page request sent, and their SHA-256 |
 | `merge` | For a table of contents, the model and prompt that combined the pages: `provider`, `model`, `model_versions`, `request`, `prompt`, and that step's `usage` and `cost_usd`, its share of the totals below |
 | `languages`, `detected_languages` | What the user chose, and what the model reported |

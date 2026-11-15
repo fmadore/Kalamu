@@ -130,6 +130,7 @@ fn letter() -> ExportDocument {
                 fields: vec![],
                 regions: vec![],
                 failed: None,
+                drawn_dpi: None,
             },
             ExportPart {
                 piece: kalamu_core::PieceRef::page(2),
@@ -140,6 +141,7 @@ fn letter() -> ExportDocument {
                 fields: vec![],
                 regions: vec![],
                 failed: None,
+                drawn_dpi: None,
             },
             // Refused every time: the letter is still written, the page marked in its place.
             ExportPart {
@@ -151,6 +153,7 @@ fn letter() -> ExportDocument {
                 fields: vec![],
                 regions: vec![],
                 failed: Some("Gemini's copyright filter stopped this page (RECITATION)".into()),
+                drawn_dpi: None,
             },
         ],
     )
@@ -187,6 +190,7 @@ fn interview() -> ExportDocument {
                 fields: vec![],
                 regions: vec![],
                 failed: None,
+                drawn_dpi: None,
             },
             ExportPart {
                 // A prompt-based model that wrote timestamps into its text.
@@ -202,6 +206,7 @@ fn interview() -> ExportDocument {
                 fields: vec![],
                 regions: vec![],
                 failed: None,
+                drawn_dpi: None,
             },
         ],
     )
@@ -266,6 +271,7 @@ fn analysis() -> ExportDocument {
             fields,
             regions: vec![],
             failed: None,
+            drawn_dpi: None,
         }],
     );
     doc.setup.prompt.schema = Some(schema.clone());
@@ -344,6 +350,7 @@ fn contents() -> ExportDocument {
             ]),
             regions: vec![],
             failed: None,
+            drawn_dpi: None,
         }],
     );
     doc.setup.merge = Some(kalamu_core::MergeStep {
@@ -372,6 +379,7 @@ fn corrected() -> ExportDocument {
         fields: vec![],
         regions: vec![],
         failed: None,
+        drawn_dpi: None,
     };
     document(
         Task::TextCorrection,
@@ -394,6 +402,7 @@ fn translated() -> ExportDocument {
         fields: vec![],
         regions: vec![],
         failed: None,
+        drawn_dpi: None,
     };
     document(
         Task::Translation,
@@ -549,22 +558,33 @@ fn every_format_has_one_exporter() {
 
 /// A one-page A4 PDF at `path`.
 fn a4_pdf(path: &std::path::Path) {
+    pdf_of_pages(path, &[(595, 842)]);
+}
+
+/// A PDF whose pages have these sizes, in points.
+fn pdf_of_pages(path: &std::path::Path, sizes: &[(i64, i64)]) {
     use lopdf::{Document, Object, Stream, dictionary};
     let mut pdf = Document::with_version("1.7");
     let pages = pdf.new_object_id();
     let content = pdf.add_object(Stream::new(dictionary! {}, b"0 0 m 10 10 l S".to_vec()));
-    let page = pdf.add_object(dictionary! {
-        "Type" => "Page",
-        "Parent" => pages,
-        "Contents" => content,
-    });
+    let kids: Vec<Object> = sizes
+        .iter()
+        .map(|&(w, h)| {
+            pdf.add_object(dictionary! {
+                "Type" => "Page",
+                "Parent" => pages,
+                "Contents" => content,
+                "MediaBox" => vec![0.into(), 0.into(), w.into(), h.into()],
+            })
+            .into()
+        })
+        .collect();
     pdf.objects.insert(
         pages,
         Object::Dictionary(dictionary! {
             "Type" => "Pages",
-            "Kids" => vec![page.into()],
-            "Count" => 1,
-            "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+            "Kids" => kids,
+            "Count" => i64::try_from(sizes.len()).unwrap_or(0),
         }),
     );
     let catalog = pdf.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages });
@@ -600,6 +620,7 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
                 "Dakar, le 3 mai 1957",
             )],
             failed: None,
+            drawn_dpi: None,
         }],
     );
     let bytes = exporter(ExportFormat::SearchablePdf)
@@ -672,6 +693,7 @@ fn alto_places_each_word_and_estimates_blocks_placed_whole() {
             fields: vec![],
             regions: vec![placed.clone(), whole],
             failed: None,
+            drawn_dpi: None,
         }],
     );
     check("letter.alto.xml", &run(ExportFormat::Alto, &doc));
@@ -691,6 +713,56 @@ fn alto_places_each_word_and_estimates_blocks_placed_whole() {
     let mut plain = doc;
     plain.parts[0].regions.clear();
     assert!(exporter(ExportFormat::Alto).is_some_and(|e| e.export(&plain).is_err()));
+}
+
+/// ALTO from a PDF whose second page, a poster, was drawn below 300 dpi for Tesseract: each
+/// page measured at the resolution its result records, and the file says which.
+#[test]
+fn alto_measures_each_pdf_page_at_the_resolution_it_was_drawn_at() {
+    use kalamu_core::TextRegion;
+    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    let path = dir.path().join("affiche.pdf");
+    // A4, then 2,000 by 1,000 points, drawn 7,000 pixels wide: 252 dpi.
+    pdf_of_pages(&path, &[(595, 842), (2000, 1000)]);
+    let mut src = source("affiche.pdf", InputKind::Pdf);
+    src.path = path.display().to_string();
+    let page = |number: u32, text: &str, drawn_dpi: f32| ExportPart {
+        piece: kalamu_core::PieceRef::page(number),
+        text: text.into(),
+        segments: vec![],
+        corrected: false,
+        reviewed: false,
+        fields: vec![],
+        regions: vec![TextRegion {
+            lines: vec![kalamu_core::TextLine {
+                x: 0.1,
+                y: 0.1,
+                width: 0.5,
+                height: 0.02,
+                words: vec![word(0.1, 0.1, 0.5, text, Some(0.9))],
+            }],
+            ..TextRegion::block(0.1, 0.1, 0.5, 0.02, text)
+        }],
+        failed: None,
+        drawn_dpi: Some(drawn_dpi),
+    };
+    let doc = document(
+        Task::TextExtraction,
+        src,
+        vec![page(1, "Dakar", 300.0), page(2, "Bamako", 252.0)],
+    );
+    let xml = run(ExportFormat::Alto, &doc);
+    check("poster.alto.xml", &xml);
+    let xml = String::from_utf8(xml).unwrap_or_default();
+    assert!(
+        xml.contains("PDF pages measured at 300 dpi, page 2 at 252 dpi"),
+        "{xml}"
+    );
+    // 2,000 points at 252 dpi.
+    assert!(
+        xml.contains("PHYSICAL_IMG_NR=\"2\" WIDTH=\"7000\" HEIGHT=\"3500\""),
+        "{xml}"
+    );
 }
 
 /// ALTO from a document of images: each page measured in its own file.
@@ -725,6 +797,7 @@ fn alto_of_a_document_of_images_measures_each_page_in_its_file() {
         fields: vec![],
         regions: vec![TextRegion::block(0.5, 0.1, 0.2, 0.02, "Mot")],
         failed: None,
+        drawn_dpi: None,
     };
     let doc = document(Task::TextExtraction, source, vec![part(1), part(2)]);
     let xml = String::from_utf8(run(ExportFormat::Alto, &doc)).unwrap_or_default();

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v4#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/alto/v4/alto-4-4.xsd">
+  <Description>
+    <MeasurementUnit>pixel</MeasurementUnit>
+    <sourceImageInformation>
+      <fileName>affiche.pdf</fileName>
+    </sourceImageInformation>
+    <Processing ID="processing_1">
+      <processingDateTime>1970-01-01T00:00:00Z</processingDateTime>
+      <processingStepSettings>gemini gemini-3.8-flash; PDF pages measured at 300 dpi, page 2 at 252 dpi</processingStepSettings>
+      <processingSoftware>
+        <softwareName>Kalamu</softwareName>
+        <softwareVersion>0.1.0</softwareVersion>
+      </processingSoftware>
+    </Processing>
+  </Description>
+  <Layout>
+    <Page ID="page_1" PHYSICAL_IMG_NR="1" WIDTH="2479" HEIGHT="3508">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="2479" HEIGHT="3508">
+        <TextBlock ID="p1_b1" HPOS="248" VPOS="351" WIDTH="1240" HEIGHT="70">
+          <TextLine ID="p1_b1_l1" HPOS="248" VPOS="351" WIDTH="1240" HEIGHT="70">
+            <String ID="p1_b1_l1_w1" CONTENT="Dakar" HPOS="248" VPOS="351" WIDTH="1240" HEIGHT="70" WC="0.90"/>
+          </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+    <Page ID="page_2" PHYSICAL_IMG_NR="2" WIDTH="7000" HEIGHT="3500">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="7000" HEIGHT="3500">
+        <TextBlock ID="p2_b1" HPOS="700" VPOS="350" WIDTH="3500" HEIGHT="70">
+          <TextLine ID="p2_b1_l1" HPOS="700" VPOS="350" WIDTH="3500" HEIGHT="70">
+            <String ID="p2_b1_l1_w1" CONTENT="Bamako" HPOS="700" VPOS="350" WIDTH="3500" HEIGHT="70" WC="0.90"/>
+          </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

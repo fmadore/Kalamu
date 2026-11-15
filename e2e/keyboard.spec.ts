@@ -153,6 +153,72 @@ test('a name in an analysis is located, renamed and removed from the keyboard', 
 	await expect(renamed).toBeFocused();
 });
 
+test('a job’s menu moves round its items, goes to either end, and gives the focus back', async ({
+	page
+}) => {
+	await open(page, 'all-jobs');
+	const more = page
+		.getByRole('main')
+		.getByRole('button', { name: /^Actions for “/ })
+		.first();
+	const name = (await more.getAttribute('aria-label')) ?? '';
+	await more.focus();
+	await page.keyboard.press('Enter');
+	const menu = page.getByRole('menu', { name, exact: true });
+	const rename = menu.getByRole('menuitem', { name: 'Rename' });
+	await expect(rename).toBeFocused();
+	await expect(menu).not.toContainText('Loading…');
+
+	// The items the keys reach: a disabled one (Delete, while the job runs) is passed over.
+	const reached = menu.locator('[role="menuitem"]:not(:disabled)');
+	const last = reached.last();
+	await page.keyboard.press('End');
+	await expect(last).toBeFocused();
+	await page.keyboard.press('Home');
+	await expect(rename).toBeFocused();
+	await page.keyboard.press('ArrowUp');
+	await expect(last).toBeFocused();
+	await page.keyboard.press('ArrowDown');
+	await expect(rename).toBeFocused();
+	if ((await reached.count()) > 1) {
+		await page.keyboard.press('ArrowDown');
+		await expect(reached.nth(1)).toBeFocused();
+	}
+
+	// Escape closes it, and the focus goes back to the button that opened it.
+	await page.keyboard.press('Escape');
+	await expect(menu).toBeHidden();
+	await expect(more).toBeFocused();
+});
+
+test('a name’s menu moves round its two items, without Home and End, and gives the focus back', async ({
+	page
+}) => {
+	await open(page, 'review-analysis');
+	const places = page
+		.getByRole('main')
+		.getByRole('region', { name: 'Answers' })
+		.locator('[data-field="places"]');
+	const dakar = places.getByRole('button', { name: 'Dakar', exact: true });
+	await dakar.focus();
+	await page.keyboard.press('Enter');
+	const menu = page.getByRole('menu', { name: 'What to do with “Dakar”' });
+	const rename = menu.getByRole('menuitem', { name: 'Rename' });
+	const remove = menu.getByRole('menuitem', { name: 'Remove from the answers' });
+	await expect(rename).toBeFocused();
+	await page.keyboard.press('ArrowUp');
+	await expect(remove).toBeFocused();
+	await page.keyboard.press('ArrowDown');
+	await expect(rename).toBeFocused();
+	// This menu has never taken Home and End: the focus stays where it is.
+	await page.keyboard.press('End');
+	await expect(rename).toBeFocused();
+
+	await page.keyboard.press('Escape');
+	await expect(menu).toBeHidden();
+	await expect(dakar).toBeFocused();
+});
+
 /** Goes back from a review with the keyboard: ⌘[ on a Mac; elsewhere Alt ← turns the review's
  * pages, so the Back button is reached and pressed. */
 async function backFromReview(page: Page): Promise<void> {

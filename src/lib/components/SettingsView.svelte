@@ -3,6 +3,7 @@
 	// The tab is part of the view, so a link from elsewhere ("Download in Settings") opens the
 	// section it is about.
 	import { AUTHOR_URL, CREDIT_URLS } from '#lib/credits.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatDay, localeNames, messages, placeholders } from '#lib/i18n/index.js';
 	import { osNames } from '#lib/platform.js';
@@ -68,13 +69,13 @@
 		}
 	}
 
+	/** Saving the settings and refreshing the catalogue, what went wrong said in an error toast. */
+	const change = new Action({ report: (message) => toast(message, { kind: 'error' }) });
+
 	async function saveSettings() {
 		if (!app.settings) return;
-		try {
-			await api.saveSettings($state.snapshot(app.settings));
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
+		const settings = $state.snapshot(app.settings);
+		await change.run(() => api.saveSettings(settings));
 	}
 
 	/** Saved first, then applied: this screen is drawn again in the new language. */
@@ -84,21 +85,21 @@
 	}
 
 	async function refreshCatalog() {
-		try {
-			app.catalog = await api.refreshCatalog();
+		await change.run(async () => {
+			const catalog = await api.refreshCatalog();
+			app.catalog = catalog;
 			// A model added or retired changes which models suit each task.
 			app.rules = await api.taskRules();
 			// The list may name a newer release.
 			await refreshRelease();
-			toast(m.settings.catalogUpdated(formatDay(app.catalog.updated)));
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
+			toast(m.settings.catalogUpdated(formatDay(catalog.updated)));
+		});
 	}
 
 	// The engine holds the database while it compacts it, so clearing waits until no job runs.
 	const jobsRunning = $derived(app.jobs.some((j) => j.status === 'running'));
-	let clearing = $state(false);
+	/** Clearing unused results, busy meanwhile, what went wrong said in an error toast. */
+	const clear = new Action({ report: (message) => toast(message, { kind: 'error' }) });
 
 	async function clearUnused() {
 		const agreed = await ask(m.settings.clearUnusedConfirm, {
@@ -106,16 +107,13 @@
 			cancel: m.common.cancel
 		});
 		if (!agreed) return;
-		clearing = true;
-		try {
-			const { results, bytes } = await api.clearUnusedResults();
-			const count = new Intl.NumberFormat(m.locale.tag).format(results);
-			toast(m.settings.clearUnusedDone(results, count, m.settings.size(bytes)));
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		} finally {
-			clearing = false;
-		}
+		await clear.run(
+			() => api.clearUnusedResults(),
+			({ results, bytes }) => {
+				const count = new Intl.NumberFormat(m.locale.tag).format(results);
+				toast(m.settings.clearUnusedDone(results, count, m.settings.size(bytes)));
+			}
+		);
 	}
 </script>
 
@@ -256,7 +254,7 @@
 				<h2 id="storage-settings">{m.settings.storageTitle}</h2>
 				<p class="muted small">{m.settings.storageHint}</p>
 				<div class="row">
-					<button class="btn sm" disabled={jobsRunning || clearing} onclick={clearUnused}
+					<button class="btn sm" disabled={jobsRunning || clear.busy} onclick={clearUnused}
 						>{m.settings.clearUnused}</button
 					>
 					{#if jobsRunning}<span class="muted small">{m.settings.clearUnusedBusy}</span>{/if}

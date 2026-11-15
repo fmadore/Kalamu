@@ -294,3 +294,31 @@ impl ProvenancePrompt {
         }
     }
 }
+
+/// The request setting that records the resolution a PDF page was drawn at for an engine that
+/// reads images only (Tesseract), as `300 dpi`: kept with each result, so ALTO measures the page
+/// as it was read. Results stored before it was recorded have none, and were drawn at 300 dpi.
+pub const PAGE_RESOLUTION: &str = "page_resolution";
+
+/// The resolution a result's page was drawn at, from its request settings ([`PAGE_RESOLUTION`]).
+pub fn page_resolution(request: &[RequestSetting]) -> Option<f32> {
+    request
+        .iter()
+        .find(|setting| setting.name == PAGE_RESOLUTION)
+        .and_then(|setting| setting.value.trim_end_matches(" dpi").parse().ok())
+        .filter(|dpi: &f32| dpi.is_finite() && *dpi > 0.0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_resolution_a_page_was_drawn_at_is_read_back() {
+        let drawn = |value: &str| vec![RequestSetting::new(PAGE_RESOLUTION, value)];
+        assert_eq!(page_resolution(&drawn("300 dpi")), Some(300.0));
+        assert_eq!(page_resolution(&drawn("241.32 dpi")), Some(241.32));
+        assert_eq!(page_resolution(&drawn("none")), None);
+        assert_eq!(page_resolution(&[RequestSetting::new("engine", "x")]), None);
+    }
+}

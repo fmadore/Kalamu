@@ -1,18 +1,18 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
 	import { onMount } from 'svelte';
-	import TermLink from './TermLink.svelte';
-	import ChoiceStrip from './ChoiceStrip.svelte';
 	import FileList from './FileList.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import LinkList from './LinkList.svelte';
 	import OutputStep from './OutputStep.svelte';
+	import PaceStep from './PaceStep.svelte';
 	import PageOrder from './PageOrder.svelte';
-	import PipelineDiagram from './PipelineDiagram.svelte';
 	import PipelineList from './PipelineList.svelte';
+	import ReadingOptions from './ReadingOptions.svelte';
+	import SetAsideNotice, { type SetAside } from './SetAsideNotice.svelte';
 	import SetupList from './SetupList.svelte';
 	import StartPanel from './StartPanel.svelte';
-	import TaskPicker from './TaskPicker.svelte';
+	import TaskStep from './TaskStep.svelte';
 	import ThenStep from './ThenStep.svelte';
 	import type { Estimate } from '#lib/bindings/Estimate.js';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
@@ -22,38 +22,30 @@
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
-	import type { Refused } from '#lib/bindings/Refused.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
-	import { formatUsd, listNames, messages } from '#lib/i18n/index.js';
+	import { messages } from '#lib/i18n/index.js';
+	import { followEstimate } from '#lib/newJobEstimate.svelte.js';
 	import { primary } from '#lib/platform.js';
 	import { modelsNotDetecting, takesLanguage } from '#lib/languages.js';
 	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
 	import type { Pace } from '#lib/bindings/Pace.js';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import {
-		acceptsPrompt,
-		type Draft,
 		draftsOf,
 		followingAnalysis,
 		formPipeline,
 		inputOf,
 		jobSettings as settingsOf,
-		mergeInfo,
 		type Mode,
-		modelInfo,
 		nameOfFile,
-		newDraft,
 		offeredFormats,
 		pagesPerCallOf,
-		providerDefault,
-		dictionaryNames,
 		forgetForm,
 		formToOpen,
 		keepForm,
 		readersOf,
-		readsInput,
 		readsKind,
 		suggestedPreset,
 		rulesFor,
@@ -61,9 +53,18 @@
 		suggestionFits,
 		taskOf,
 		togetherOf,
-		toRequest,
 		type Together
 	} from '#lib/newJob.js';
+	import {
+		acceptsPrompt,
+		type Draft,
+		dictionaryNames,
+		modelInfo,
+		newDraft,
+		providerDefault,
+		readsInput,
+		toRequest
+	} from '#lib/newJobModels.js';
 	import {
 		type Grouping,
 		imageSources,
@@ -113,16 +114,8 @@
 	 * else anything the task takes. */
 	const input = $derived(inputOf(mode, files));
 	let inspecting = $state(false);
-	/**
-	 * What the last files added gave that the task does not read, the tasks that read it, and
-	 * the files to move there; on YouTube, the recordings and videos dropped.
-	 */
-	let setAside = $state<{
-		refused: Refused[];
-		readers: Mode[];
-		move: string[];
-		youtube: boolean;
-	} | null>(null);
+	/** What the last files added gave that the task does not read, and where else it goes. */
+	let setAside = $state<SetAside | null>(null);
 	let languageMode = $state<'auto' | 'explicit'>(kept?.languageMode ?? 'auto');
 	let languages = $state<string[]>(kept?.languages ?? []);
 	let lineBreaks = $state<LineBreaks>(kept?.lineBreaks ?? 'running_text');
@@ -247,49 +240,13 @@
 		if (oneOffered && grouping === 'one' && !sameImages(pageDoc, images)) void orderPages();
 	});
 	const sources = $derived(jobSources(files, oneOffered ? grouping : 'separate', pageDoc, docName));
-	/** The files as the job reads them, for the diagram: the document in place of its images. */
-	const readFiles = $derived<InspectedFile[]>(
-		sources.map(
-			(s) =>
-				files.find((f) => f.source?.id === s.id) ?? {
-					path: s.path,
-					source: s,
-					warnings: [],
-					error: null,
-					pieces: null
-				}
-		)
-	);
 	/** Times a task was picked, so its diagram plays; opening New job shows it at rest. */
 	let picked = $state(0);
-	const chosenFields = $derived(
-		presets.find((p) => p.id === drafts[0]?.presetId)?.schema?.fields.map((f) => f.label) ?? []
-	);
-	/** The models that combine a table of contents' pages, for the diagram. */
-	const mergeNames = $derived([
-		...new Set(drafts.map((d) => mergeInfo(catalog, d)?.name ?? d.mergeModel).filter(Boolean))
-	]);
-	/** The chosen models that can also write a searchable PDF, for the diagram. */
-	const searchableFrom = $derived(
-		offeredFormats(catalog, rule, drafts).includes('searchable_pdf')
-			? namesOf((model) => model?.layout === true)
-			: []
-	);
 	/** Where samples and line breaks apply, as the engine says. */
 	const paged = $derived(rule.samples);
 	const linesApply = $derived(rule.line_breaks);
-	const togetherOptions = (['one', 'several', 'whole'] as const).map((value) => ({
-		value,
-		label: m.newJob.together[value],
-		hint: m.newJob.together[`${value}_hint`]
-	}));
 	/** What the job sends for it; nothing for one page at a time, as before. */
 	const pagesPerCall = $derived(pagesPerCallOf(rule, together, togetherPages));
-	const lineOptions = (['running_text', 'as_on_page'] as const).map((value) => ({
-		value,
-		label: m.newJob.lines[value],
-		hint: m.newJob.lines[`${value}_hint`]
-	}));
 
 	/** Moves the files set aside to a task that reads them. */
 	async function switchTo(next: Mode) {
@@ -392,33 +349,15 @@
 			formats.length > 0
 	);
 
-	let estimateTimer: ReturnType<typeof setTimeout> | null = null;
-	/** Raised by each change to what is estimated, so an older, slower answer is dropped. */
-	let estimateTicket = 0;
-	$effect(() => {
-		const req = {
+	followEstimate(
+		() => ({
 			task,
 			sources: $state.snapshot(sources),
 			setups: drafts.filter((d) => d.model).map((d) => toRequest(catalog, task, d)),
 			sample_pages: sample && paged ? samplePages : null
-		};
-		if (estimateTimer) clearTimeout(estimateTimer);
-		const ticket = ++estimateTicket;
-		if (req.sources.length === 0 || req.setups.length === 0) {
-			estimate = null;
-			return;
-		}
-		estimateTimer = setTimeout(() => {
-			api
-				.estimateCost(req)
-				.then((e) => {
-					if (ticket === estimateTicket) estimate = e;
-				})
-				.catch(() => {
-					if (ticket === estimateTicket) estimate = null;
-				});
-		}, 250);
-	});
+		}),
+		(e) => (estimate = e)
+	);
 
 	/** Economy mode is offered when one of the chosen models goes through a batch service. */
 	const economyOffered = $derived(
@@ -433,27 +372,6 @@
 	const totalFor = (at: Pace) =>
 		(at === 'economy' ? estimate?.total_economy_usd : estimate?.total_usd) ?? null;
 	const totalEstimate = $derived(totalFor(chosenPace));
-	const notBatched = $derived(
-		estimates
-			.filter((r) => r.estimate.economy_usd === null)
-			.map(
-				(r) =>
-					catalog.models.find((x) => x.provider === r.provider && x.id === r.model)?.name ?? r.model
-			)
-	);
-
-	/** The paces, each with what the job costs at it. */
-	const paceOptions = $derived(
-		(['fast', 'economy'] as const).map((value) => {
-			const total = totalFor(value);
-			return {
-				value,
-				label: m.newJob.pace[value],
-				hint: m.newJob.pace[`${value}_hint`],
-				price: total !== null ? formatUsd(total) : null
-			};
-		})
-	);
 
 	/** Why Start is unavailable, when the form cannot say it where the user is looking. */
 	const blocker = $derived(
@@ -746,25 +664,21 @@
 	<div class="form steps">
 		<PipelineList bind:pipelines onapply={applyPipeline} onerror={(e) => (error = e)} />
 
-		<section class="step" aria-labelledby="task-label">
-			<h2 id="task-label">{m.newJob.taskLabel}</h2>
-			<TaskPicker
-				{mode}
-				onpick={(t) => {
-					picked++;
-					loadTask(t).catch((e: unknown) => (error = describeError(e, m)));
-				}}
-			/>
-			<PipelineDiagram
-				{mode}
-				files={readFiles}
-				fields={chosenFields}
-				models={namesOf((model) => model !== undefined)}
-				mergeModels={mergeNames}
-				searchable={searchableFrom}
-				play={picked}
-			/>
-		</section>
+		<TaskStep
+			{mode}
+			{files}
+			{sources}
+			{presets}
+			{drafts}
+			{catalog}
+			{rule}
+			{namesOf}
+			play={picked}
+			onpick={(t) => {
+				picked++;
+				loadTask(t).catch((e: unknown) => (error = describeError(e, m)));
+			}}
+		/>
 
 		{#if mode === 'youtube'}
 			<LinkList
@@ -790,49 +704,12 @@
 		{/if}
 
 		{#if setAside}
-			{@const aside = setAside}
-			{@const taskName = m.common.quoted(m.task[mode])}
-			{@const set = m.newJob.setAside}
-			{@const refusedFiles = aside.refused.filter((r) => !r.folder)}
-			{@const folders = aside.refused.filter((r) => r.folder)}
-			<div class="notice set-aside" role="status">
-				<div class="set-aside-text">
-					{#if aside.youtube}
-						<p>{set.youtube}</p>
-					{/if}
-					{#if refusedFiles.length > 0}
-						<p>
-							{set.files(
-								listNames(refusedFiles.map((r) => r.file_name)),
-								taskName,
-								refusedFiles.length
-							)}
-						</p>
-					{/if}
-					{#if folders.length > 0}
-						<p>{set.folders(listNames(folders.map((r) => r.file_name)), taskName)}</p>
-					{/if}
-					{#if refusedFiles.some((r) => r.kind === null)}
-						<p class="set-aside-kinds">{set.kinds}</p>
-					{/if}
-				</div>
-				<div class="set-aside-actions">
-					{#each aside.readers as reader (reader)}
-						<button
-							class="btn sm"
-							title={set.insteadHint}
-							onclick={() => switchTo(reader).catch((e: unknown) => (error = describeError(e, m)))}
-							><Icon name={taskOf(reader)} size={14} />{set.instead(m.task[reader])}</button
-						>
-					{/each}
-					<button
-						class="btn ghost sm icon"
-						aria-label={set.dismiss}
-						title={set.dismiss}
-						onclick={() => (setAside = null)}><Icon name="close" size={14} /></button
-					>
-				</div>
-			</div>
+			<SetAsideNotice
+				aside={setAside}
+				{mode}
+				onswitch={(reader) => switchTo(reader).catch((e: unknown) => (error = describeError(e, m)))}
+				ondismiss={() => (setAside = null)}
+			/>
 		{/if}
 
 		<SetupList
@@ -854,53 +731,20 @@
 			ignored={languageIgnored}
 		/>
 
-		{#if linesApply}
-			<section class="step block" aria-labelledby="lines-title">
-				<h2 id="lines-title">{m.newJob.linesTitle}</h2>
-				{#if noPrompt.length === models.length}
-					<p class="hint">{m.newJob.linesNoPromptAll(listNames(noPrompt))}</p>
-				{:else}
-					<ChoiceStrip bind:value={lineBreaks} options={lineOptions} />
-					{#if noPrompt.length > 0}
-						<p class="hint">{m.newJob.linesNoPromptSome(listNames(noPrompt))}</p>
-					{/if}
-				{/if}
-			</section>
-		{/if}
-
-		{#if rule.pages_per_call}
-			<section class="step block" aria-labelledby="together-title">
-				<h2 id="together-title">{m.newJob.together.title}</h2>
-				<ChoiceStrip bind:value={together} options={togetherOptions} />
-				{#if together === 'several'}
-					<label class="field pages">
-						<span>{m.newJob.together.pages}</span>
-						<input type="number" min="2" max="100" bind:value={togetherPages} />
-					</label>
-				{/if}
-				{#if together !== 'one'}
-					<p class="hint">{m.newJob.together.safety}</p>
-					{#if chosenPace === 'economy'}
-						<p class="hint">{m.newJob.together.economy}</p>
-					{/if}
-					{#if sources.some((s) => s.kind !== 'pdf' || s.split_spreads)}
-						<p class="hint">{m.newJob.together.alone}</p>
-					{/if}
-					{#if noPrompt.length > 0}
-						<p class="hint">{m.newJob.together.noPrompt(listNames(noPrompt))}</p>
-					{/if}
-				{/if}
-			</section>
-		{/if}
+		<ReadingOptions
+			bind:lineBreaks
+			bind:together
+			bind:togetherPages
+			{linesApply}
+			pagesTogether={rule.pages_per_call}
+			{models}
+			{noPrompt}
+			pace={chosenPace}
+			{sources}
+		/>
 
 		{#if economyOffered}
-			<section class="step block" aria-labelledby="pace-title">
-				<h2 id="pace-title">{m.newJob.paceTitle}<TermLink term="economy" /></h2>
-				<ChoiceStrip bind:value={pace} options={paceOptions} />
-				{#if pace === 'economy' && notBatched.length > 0}
-					<p class="hint">{m.newJob.paceNotBatched(listNames(notBatched))}</p>
-				{/if}
-			</section>
+			<PaceStep bind:pace {estimates} {catalog} {totalFor} />
 		{/if}
 
 		<OutputStep
@@ -945,31 +789,6 @@
 </div>
 
 <style>
-	/* Files added that the task does not read, beside the files: what and where else. */
-	.set-aside {
-		justify-content: space-between;
-		align-items: flex-start;
-	}
-	.set-aside-text {
-		display: grid;
-		gap: var(--space-1);
-		flex: 1 1 18rem;
-		min-width: 0;
-		overflow-wrap: anywhere;
-	}
-	.set-aside-kinds {
-		color: var(--text-secondary);
-	}
-	.set-aside-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
-		align-items: center;
-	}
-	/* A page count, not a sentence: as wide as a few digits. */
-	.field.pages {
-		max-width: 10rem;
-	}
 	.from-project {
 		margin: var(--space-3) var(--space-5) 0;
 	}
@@ -995,15 +814,6 @@
 		align-content: start;
 		gap: var(--space-6);
 		padding: var(--space-5) var(--space-6) var(--space-7);
-	}
-	.block {
-		display: grid;
-		gap: var(--space-3);
-	}
-	.hint {
-		font-size: var(--type-xs);
-		color: var(--text-muted);
-		max-width: 60ch;
 	}
 	@media (max-width: 1100px) {
 		.layout {

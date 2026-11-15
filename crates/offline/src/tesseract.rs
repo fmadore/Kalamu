@@ -9,11 +9,13 @@
 //!
 //! Tesseract reads a page on one core (it is built without OpenMP), so several pages are read
 //! at once, each by an engine of its own, up to [`max_engines`]; an engine is kept for the next
-//! page and released after a few minutes unused.
+//! page in the same languages (`pool.rs`), and released after a few minutes unused or when the
+//! language data it loaded is deleted.
+
+mod pool;
 
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
 use tokio::sync::Semaphore;
 
 use async_trait::async_trait;
@@ -23,9 +25,11 @@ use kalamu_core::{
 };
 use kreuzberg_tesseract::{TessPageSegMode, TesseractAPI};
 
-use crate::host::{self, IDLE_UNLOAD, lock};
-use crate::models::{ModelFile, ModelLease, ModelManager};
+use crate::host::{self, Checked, IDLE_UNLOAD, lock};
+use crate::models::{ModelFile, ModelLease, ModelManager, Release};
 use crate::tessdata::{self, DATA_REVISION};
+use kalamu_core::provenance::PAGE_RESOLUTION;
+use pool::Pool;
 
 pub const TESSERACT_ID: &str = "tesseract";
 /// The one model in the catalogue: Tesseract 5 with `tessdata_best`. A new engine or data
@@ -38,20 +42,22 @@ pub struct Tesseract {
 
 struct Inner {
     data: ModelManager,
-    /// Engines not reading a page, each with its languages loaded.
-    idle: Mutex<Vec<Engine>>,
+    /// Engines not reading a page, keyed by the languages they loaded.
+    idle: Mutex<Pool<TesseractAPI>>,
+    /// Language data whose hash was checked this session.
+    checked: Checked,
     /// One permit per page read at once.
     slots: Arc<Semaphore>,
     janitor: Mutex<bool>,
 }
 
-/// Tesseract with the language data of one job loaded.
+/// Tesseract with the language data of one job loaded, reading a page: its files are leased
+/// meanwhile, so they cannot be deleted under it.
 struct Engine {
     /// The languages loaded, as Tesseract names them (`fra+eng`).
     names: String,
     api: TesseractAPI,
-    _leases: Vec<ModelLease>,
-    last_used: Instant,
+    leases: Vec<ModelLease>,
 }
 
 /// How many pages are read at once: one per core, leaving one for the interface, and at most
@@ -63,14 +69,17 @@ fn max_engines(cores: usize) -> usize {
 impl Tesseract {
     pub fn new(data: ModelManager) -> Self {
         let cores = std::thread::available_parallelism().map_or(2, usize::from);
-        Self {
-            inner: Arc::new(Inner {
-                data,
-                idle: Mutex::new(Vec::new()),
-                slots: Arc::new(Semaphore::new(max_engines(cores))),
-                janitor: Mutex::new(false),
-            }),
-        }
+        let engines = max_engines(cores);
+        let inner = Arc::new(Inner {
+            data,
+            idle: Mutex::new(Pool::new(engines)),
+            checked: Checked::default(),
+            slots: Arc::new(Semaphore::new(engines)),
+            janitor: Mutex::new(false),
+        });
+        let releaser: std::sync::Weak<dyn Release> = Arc::downgrade(&inner) as _;
+        inner.data.on_remove(releaser);
+        Self { inner }
     }
 
     pub fn data(&self) -> &ModelManager {
@@ -85,11 +94,9 @@ impl Tesseract {
     /// Starts, once, the task that releases engines left unused.
     fn start_janitor(&self) {
         host::sweep_idle(&self.inner, &self.inner.janitor, |inner| {
-            let mut idle = lock(&inner.idle);
-            let before = idle.len();
-            idle.retain(|e| e.last_used.elapsed() <= IDLE_UNLOAD);
-            if idle.len() < before {
-                tracing::info!("released {} idle Tesseract engines", before - idle.len());
+            let released = lock(&inner.idle).sweep(IDLE_UNLOAD);
+            if !released.is_empty() {
+                tracing::info!("released {} idle Tesseract engines", released.len());
             }
         });
     }
@@ -124,22 +131,22 @@ fn names(files: &[&'static ModelFile]) -> String {
 }
 
 impl Inner {
-    /// An engine with `files` loaded: an idle one, or a new one, its files checked against
-    /// their hashes before Tesseract opens them. Idle engines with other languages are released.
+    /// An engine with `files` loaded and leased: an idle one, or a new one, its files checked
+    /// against their hashes, once a session, before Tesseract opens them.
     fn take(&self, files: &[&'static ModelFile]) -> Result<Engine, ProviderError> {
         let wanted = names(files);
-        {
-            let mut idle = lock(&self.idle);
-            idle.retain(|e| e.names == wanted);
-            if let Some(engine) = idle.pop() {
-                return Ok(engine);
-            }
-        }
+        // Leased first: data deleted since an engine loaded it is refused, as it is installed
+        // no longer, rather than read from memory.
         let mut leases = Vec::new();
         for file in files {
-            let lease = self.data.lease(file)?;
-            lease.read_verified()?;
-            leases.push(lease);
+            leases.extend(self.checked.leases(&self.data, file)?);
+        }
+        if let Some(api) = lock(&self.idle).take(&wanted) {
+            return Ok(Engine {
+                names: wanted,
+                api,
+                leases,
+            });
         }
         let api = TesseractAPI::new().map_err(engine_error)?;
         // Tesseract opens the files itself, by a path in the system's encoding; on Windows the
@@ -153,20 +160,70 @@ impl Inner {
         Ok(Engine {
             names: wanted,
             api,
-            _leases: leases,
-            last_used: Instant::now(),
+            leases,
         })
     }
 
-    /// Keeps an engine for the next page.
-    fn give_back(&self, mut engine: Engine) {
-        engine.last_used = Instant::now();
-        lock(&self.idle).push(engine);
+    /// Keeps an engine for the next page, without its leases; the engine unused the longest
+    /// goes when the pool is full.
+    fn give_back(&self, engine: Engine) {
+        let files = engine.leases.iter().map(|l| l.model.id).collect();
+        let pushed_out = lock(&self.idle).put(engine.names, files, engine.api);
+        drop(pushed_out);
+        drop(engine.leases);
+    }
+}
+
+impl Release for Inner {
+    /// Language data deleted in Settings: the idle engines that loaded it go at once.
+    fn release(&self, id: &'static str) {
+        let released = lock(&self.idle).release(id);
+        if !released.is_empty() {
+            tracing::info!(
+                "released {} Tesseract engines with deleted language data",
+                released.len()
+            );
+        }
     }
 }
 
 fn engine_error(e: impl std::fmt::Display) -> ProviderError {
     ProviderError::Other(format!("Tesseract failed: {e}"))
+}
+
+/// The keyword under which a PDF page drawn by `kalamu-media` states the resolution it was drawn
+/// at (`render.rs`); a scan given as a PNG never carries it.
+const DRAWN_KEYWORD: &[u8] = b"Kalamu drawn dpi";
+
+/// The resolution a PDF page was drawn at, as the drawn PNG states it (`300`, `252`); `None` for
+/// any other image, a scan's own resolution tag included. Read from the chunks before the image
+/// data, never from the pixels; Tesseract is not told it, so it reads the page as before.
+fn drawn_resolution(png: &[u8]) -> Option<String> {
+    if !png.starts_with(b"\x89PNG\r\n\x1a\n") {
+        return None;
+    }
+    let mut at = 8;
+    while let Some(header) = png.get(at..at + 8) {
+        let length = usize::try_from(u32::from_be_bytes(header[..4].try_into().ok()?)).ok()?;
+        let kind = &header[4..8];
+        if kind == b"IDAT" {
+            return None;
+        }
+        let data = png.get(at + 8..at + 8 + length)?;
+        if kind == b"tEXt"
+            && let Some(value) = data
+                .strip_prefix(DRAWN_KEYWORD)
+                .and_then(|rest| rest.strip_prefix(b"\0"))
+        {
+            let value = std::str::from_utf8(value).ok()?;
+            return value
+                .parse::<f32>()
+                .is_ok_and(|dpi| dpi.is_finite() && dpi > 0.0)
+                .then(|| value.to_owned());
+        }
+        at += 12 + length;
+    }
+    None
 }
 
 /// A page decoded to grey levels, as Tesseract reads it.
@@ -363,11 +420,15 @@ impl Provider for Tesseract {
         ]
     }
 
-    /// The fixed settings, and the language data loaded for this job.
+    /// The fixed settings, the language data loaded for this job, and for a PDF page the
+    /// resolution it was drawn at.
     fn sent_settings(&self, request: &ProcessRequest<'_>, _batched: bool) -> Vec<RequestSetting> {
         let mut settings = self.request_settings(request.task, request.model, request.tuning);
         if let Ok(files) = data_for(request.languages) {
             settings.push(RequestSetting::new("languages", names(&files)));
+        }
+        if let Some(dpi) = drawn_resolution(&request.input.bytes) {
+            settings.push(RequestSetting::new(PAGE_RESOLUTION, format!("{dpi} dpi")));
         }
         settings
     }
@@ -482,6 +543,122 @@ mod tests {
         );
         assert_eq!(word.confidence, Some(0.965));
         assert_eq!(regions[1].text, "Réception");
+    }
+
+    /// Deleting language data in Settings releases the idle engines that loaded it, and is not
+    /// refused as in use: idle engines hold no lease.
+    #[test]
+    fn deleting_language_data_releases_its_idle_engines_at_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let tesseract = Tesseract::new(ModelManager::new(
+            dir.path().to_owned(),
+            &tessdata::TESSDATA,
+        ));
+        let idle = |key: &str, files: Vec<&'static str>| {
+            lock(&tesseract.inner.idle).put(key.into(), files, TesseractAPI::new().unwrap())
+        };
+        assert!(idle("fra", vec!["tesseract-fra"]).is_empty());
+        assert!(idle("eng", vec!["tesseract-eng"]).is_empty());
+        assert!(tesseract.data().list().iter().all(|status| !status.in_use));
+        // Through a clone, as the app's Settings hold one.
+        tesseract.data().clone().remove("tesseract-fra").unwrap();
+        let mut pool = lock(&tesseract.inner.idle);
+        assert!(pool.take("fra").is_none());
+        assert!(pool.take("eng").is_some());
+    }
+
+    /// A PDF page as `kalamu-media` draws it for Tesseract.
+    fn drawn(size: (f32, f32)) -> kalamu_core::PreparedInput {
+        let pdf = kalamu_media::sample_pdf(&[size], true);
+        let source = kalamu_media::OpenSource::Pdf(Box::new(
+            kalamu_media::PdfSource::from_bytes(&pdf).unwrap(),
+        ));
+        source
+            .prepare(&kalamu_core::PieceRef::page(1), &["image/png"], "p")
+            .unwrap()
+    }
+
+    /// The PNG without its ancillary chunks (`pHYs`, `tEXt`): the page as drawn before the
+    /// resolution was written into it.
+    fn without_ancillary_chunks(png: &[u8]) -> Vec<u8> {
+        let mut out = png[..8].to_vec();
+        let mut at = 8;
+        while at + 12 <= png.len() {
+            let length = u32::from_be_bytes(png[at..at + 4].try_into().unwrap()) as usize;
+            let critical = png[at + 4].is_ascii_uppercase();
+            if critical {
+                out.extend_from_slice(&png[at..at + 12 + length]);
+            }
+            at += 12 + length;
+        }
+        out
+    }
+
+    fn sent(input: &kalamu_core::PreparedInput) -> Vec<RequestSetting> {
+        let tesseract = Tesseract::new(ModelManager::new(".".into(), &tessdata::TESSDATA));
+        let languages = LanguageChoice::Explicit(vec![LanguageCode::new("fr")]);
+        let options = kalamu_core::SetupOptions::default();
+        let stop = kalamu_core::StopSignal::default();
+        tesseract.sent_settings(
+            &ProcessRequest {
+                task: Task::TextExtraction,
+                model: MODEL,
+                prompt: "",
+                user_prompt: "",
+                input,
+                languages: &languages,
+                options: &options,
+                tuning: &Tuning::default(),
+                analysis: None,
+                stop: &stop,
+            },
+            false,
+        )
+    }
+
+    fn resolution(settings: &[RequestSetting]) -> Option<&str> {
+        settings
+            .iter()
+            .find(|s| s.name == PAGE_RESOLUTION)
+            .map(|s| s.value.as_str())
+    }
+
+    /// Each PDF page's record says the resolution it was drawn at: 300 dpi for a page of normal
+    /// size, less for a poster drawn 7,000 pixels on its longest side. An image that was not
+    /// drawn from a PDF, a scan with its own resolution tag included, records none.
+    #[test]
+    fn the_record_of_a_pdf_page_says_the_resolution_it_was_drawn_at() {
+        let a4 = drawn((595.0, 842.0));
+        assert_eq!(resolution(&sent(&a4)), Some("300 dpi"));
+        let poster = drawn((2000.0, 1000.0));
+        assert_eq!(resolution(&sent(&poster)), Some("252 dpi"));
+        let scan = kalamu_core::PreparedInput {
+            bytes: without_ancillary_chunks(&a4.bytes),
+            ..a4.clone()
+        };
+        assert_eq!(resolution(&sent(&scan)), None);
+        let mut tagged = image::DynamicImage::new_luma8(8, 8);
+        tagged.invert();
+        let mut png = Vec::new();
+        tagged
+            .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+            .unwrap();
+        assert_eq!(drawn_resolution(&png), None);
+        assert_eq!(drawn_resolution(b"\xFF\xD8\xFF\xE0 a JPEG"), None);
+    }
+
+    /// What Tesseract is given is the same as before the drawn page stated its resolution:
+    /// the same grey levels, width and height, and no resolution of its own (the engine is
+    /// never told one, so it estimates as it always did).
+    #[test]
+    fn tesseract_is_given_the_same_page_as_before() {
+        for size in [(595.0, 842.0), (2000.0, 1000.0)] {
+            let page = drawn(size);
+            let now = decode(&page.bytes).unwrap();
+            let before = decode(&without_ancillary_chunks(&page.bytes)).unwrap();
+            assert_eq!((now.width, now.height), (before.width, before.height));
+            assert!(now.pixels == before.pixels, "{size:?}");
+        }
     }
 
     #[test]

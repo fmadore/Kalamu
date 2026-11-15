@@ -147,7 +147,11 @@ impl Speech {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::single_range_in_vec_init)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::single_range_in_vec_init
+)]
 mod tests {
     use super::*;
 
@@ -187,6 +191,28 @@ mod tests {
         // Within the window whatever whisper.cpp reports.
         let edge = Speech::join(&samples, &[9 * SECOND..12 * SECOND]).unwrap();
         assert_eq!(edge.samples.len(), SECOND + MARGIN);
+    }
+
+    /// The voice-activity model opened from a folder whose name has an accent, when the model
+    /// is at hand: `WHISPER_VAD_MODEL` names `ggml-silero-v5.1.2.bin`. A test program has no
+    /// UTF-8 code page manifest, unlike the app, so on Windows this shows that whisper.cpp needs
+    /// none: it turns the UTF-8 path into wide characters itself.
+    #[test]
+    fn smoke_vad_opens_from_an_accented_folder() {
+        let Ok(model) = std::env::var("WHISPER_VAD_MODEL") else {
+            return;
+        };
+        let dir = tempfile::Builder::new()
+            .prefix("kalamu-é-test")
+            .tempdir()
+            .unwrap();
+        std::fs::copy(&model, dir.path().join(crate::models::VAD.file)).unwrap();
+        let models =
+            crate::models::ModelManager::new(dir.path().to_owned(), &crate::models::WHISPER);
+        let path = models.vad_path().expect("an accented folder is readable");
+        assert!(!path.is_ascii(), "{path}");
+        let mut vad = Vad::load(&path).expect("whisper.cpp opens the accented path");
+        assert_eq!(vad.speech(&vec![0.0; 2 * SECOND]), Some(Vec::new()));
     }
 
     #[test]

@@ -6,13 +6,14 @@
 	// window join it.
 	import { onMount } from 'svelte';
 	import AttachDialog from './AttachDialog.svelte';
-	import DescriptionFields from './DescriptionFields.svelte';
 	import DictionaryView from './DictionaryView.svelte';
 	import DocumentTable from './DocumentTable.svelte';
 	import ExportDialog from './ExportDialog.svelte';
 	import Icon from './Icon.svelte';
 	import ProjectActivity from './ProjectActivity.svelte';
+	import ProjectEditForm from './ProjectEditForm.svelte';
 	import ProjectSearch from './ProjectSearch.svelte';
+	import ProjectSections from './ProjectSections.svelte';
 	import ReviewQueue from './ReviewQueue.svelte';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
@@ -246,108 +247,26 @@
 {#if project?.archived}<p class="notice banner">{m.projects.archivedNotice}</p>{/if}
 
 {#if editing}
-	<form class="edit" onsubmit={saveEdit}>
-		<label class="field">
-			<span>{m.projects.name}</span>
-			<input type="text" bind:value={draftName} required />
-		</label>
-		<label class="field">
-			<span>{m.projects.description}</span>
-			<textarea rows="2" bind:value={draftDescription} placeholder={m.projects.descriptionHint}
-			></textarea>
-		</label>
-		<fieldset class="defaults">
-			<legend>{m.projects.describe.projectTitle}</legend>
-			<p class="muted hint">{m.projects.describe.projectLede}</p>
-			<DescriptionFields bind:value={draftDefaults} />
-		</fieldset>
-		<div class="row">
-			<button type="button" class="btn ghost" onclick={() => (editing = false)}
-				>{m.projects.cancel}</button
-			>
-			<button class="btn primary" disabled={!draftName.trim()}>{m.projects.save}</button>
-		</div>
-	</form>
+	<ProjectEditForm
+		bind:name={draftName}
+		bind:description={draftDescription}
+		bind:defaults={draftDefaults}
+		onsubmit={saveEdit}
+		oncancel={() => (editing = false)}
+	/>
 {/if}
 
 {#if view}
 	<div class="workspace">
-		<nav class="sections" aria-label={m.projects.collections}>
-			<button
-				class="section"
-				class:current={pane === 'documents' && !collectionId}
-				aria-current={pane === 'documents' && !collectionId ? 'page' : undefined}
-				onclick={() => show()}
-			>
-				<Icon name="project" size={14} /><span class="grow">{m.projects.allDocuments}</span>
-				<span class="num">{view.documents.length}</span>
-			</button>
-
-			<h2 class="group-head">{m.projects.collections}</h2>
-			{#each view.collections as c (c.collection.id)}
-				<button
-					class="section"
-					class:current={pane === 'documents' && collectionId === c.collection.id}
-					aria-current={pane === 'documents' && collectionId === c.collection.id
-						? 'page'
-						: undefined}
-					onclick={() => show(c.collection.id)}
-				>
-					<Icon name="collection" size={14} /><span class="grow ellipsis">{c.collection.name}</span>
-					<span class="num">{c.documents}</span>
-				</button>
-			{/each}
-			{#if naming && !naming.id}
-				<form class="naming" onsubmit={saveCollection}>
-					<!-- svelte-ignore a11y_autofocus -->
-					<input
-						type="text"
-						bind:value={naming.name}
-						aria-label={m.projects.collectionName}
-						autofocus
-						onkeydown={(e) => e.key === 'Escape' && (naming = null)}
-					/>
-				</form>
-			{:else}
-				<button class="section add" onclick={() => (naming = { id: null, name: '' })}
-					><Icon name="plus" size={14} />{m.projects.newCollection}</button
-				>
-			{/if}
-
-			<button
-				class="section search"
-				class:current={pane === 'search'}
-				aria-current={pane === 'search' ? 'page' : undefined}
-				onclick={() => showPane('search')}
-			>
-				<Icon name="search" size={14} /><span class="grow">{m.search.title}</span>
-			</button>
-			<button
-				class="section"
-				class:current={pane === 'queue'}
-				aria-current={pane === 'queue' ? 'page' : undefined}
-				onclick={() => showPane('queue')}
-			>
-				<Icon name="flag" size={14} /><span class="grow">{m.queue.title}</span>
-			</button>
-			<button
-				class="section"
-				class:current={pane === 'dictionary'}
-				aria-current={pane === 'dictionary' ? 'page' : undefined}
-				onclick={() => showPane('dictionary')}
-			>
-				<Icon name="glossary" size={14} /><span class="grow">{m.dictionary.title}</span>
-			</button>
-			<button
-				class="section activity"
-				class:current={pane === 'activity'}
-				aria-current={pane === 'activity' ? 'page' : undefined}
-				onclick={() => showPane('activity')}
-			>
-				<Icon name="list" size={14} /><span class="grow">{m.projects.activity}</span>
-				<span class="num">{view.jobs.length}</span>
-			</button>
-		</nav>
+		<ProjectSections
+			{view}
+			{pane}
+			{collectionId}
+			bind:naming
+			onshow={show}
+			onpane={showPane}
+			onname={saveCollection}
+		/>
 
 		<section class="main">
 			{#if pane === 'activity'}
@@ -455,87 +374,11 @@
 	.banner {
 		margin: var(--space-3) var(--space-5) 0;
 	}
-	.edit {
-		display: grid;
-		gap: var(--space-3);
-		padding: var(--space-4) var(--space-5);
-		border-bottom: 1px solid var(--line);
-	}
-	.defaults {
-		display: grid;
-		gap: var(--space-2);
-		margin: 0;
-		padding: var(--space-3) 0 0;
-		border: 0;
-		border-top: 1px solid var(--line-soft);
-	}
-	.defaults legend {
-		padding: 0;
-		font-size: var(--type-sm);
-		font-weight: 500;
-		color: var(--text-bright);
-	}
-	.defaults .hint {
-		font-size: var(--type-xs);
-	}
-	.row {
-		display: flex;
-		justify-content: flex-end;
-		gap: var(--space-2);
-	}
 	/* Down to the foot of the window, so the column of sections keeps its rule. */
 	.workspace {
 		display: grid;
 		grid-template-columns: 14rem minmax(0, 1fr);
 		min-height: calc(100vh - 3.5rem);
-	}
-	.sections {
-		display: grid;
-		align-content: start;
-		gap: 1px;
-		padding: var(--space-4) var(--space-2);
-		border-right: 1px solid var(--line);
-		min-width: 0;
-	}
-	.group-head {
-		margin: var(--space-4) var(--space-2) var(--space-1);
-		font-size: var(--type-xs);
-		font-weight: 500;
-		color: var(--text-muted);
-	}
-	.section {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		min-height: var(--control-md);
-		padding: 0 var(--space-2);
-		border: 0;
-		border-radius: var(--radius-control);
-		background: none;
-		color: var(--text-secondary);
-		font-size: var(--type-sm);
-		text-align: left;
-		cursor: pointer;
-		min-width: 0;
-	}
-	.section:hover {
-		background: var(--wash);
-		color: var(--text-bright);
-	}
-	.section.current {
-		background: var(--wash);
-		color: var(--text-bright);
-		font-weight: 500;
-	}
-	.section.add {
-		color: var(--text-muted);
-	}
-	.section.search {
-		margin-top: var(--space-4);
-	}
-	.section .num {
-		color: var(--text-muted);
-		font-size: var(--type-xs);
 	}
 	.grow {
 		flex: 1;
@@ -568,20 +411,6 @@
 		.workspace {
 			grid-template-columns: minmax(0, 1fr);
 			grid-template-rows: auto 1fr;
-		}
-		/* The sections wrap onto a second line rather than scroll sideways. */
-		.sections {
-			display: flex;
-			flex-wrap: wrap;
-			border-right: 0;
-			border-bottom: 1px solid var(--line);
-			padding: var(--space-2) var(--space-4);
-		}
-		.group-head {
-			display: none;
-		}
-		.section.search {
-			margin-top: 0;
 		}
 	}
 </style>

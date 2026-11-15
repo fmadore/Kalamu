@@ -43,6 +43,8 @@ metal = ["whisper-rs/metal"]
 
 [dev-dependencies]
 kalamu-catalog.workspace = true
+# Its sample PDFs, drawn as Tesseract is sent them.
+kalamu-media = { workspace = true, features = ["test-support"] }
 
 [lints]
 workspace = true

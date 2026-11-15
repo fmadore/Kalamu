@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (14 November 2026)
+## Status (15 November 2026)
 
 **Version 1.7.0** is the latest release, published on 13 November 2026: unsigned installers for
 Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
@@ -402,6 +402,22 @@ improvements that open *Next*; what it did not fix at once was tracked in
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
+Items 1 and 2 are done in code: what they leave is to be tried by hand, gathered here, and
+none of it waits on the others.
+
+- **In the packaged app on Windows**: correcting and translating a text offer `.csv`, and a
+  dropped `.xlsx` is refused; a Tesseract job on a PDF with a large page records
+  `page_resolution` in `provenance.json` and ALTO; language data deleted right after a job; a
+  transcription from an accented data folder; the window hidden for a whole job; the job's and
+  the name's menus and the two language pickers with the keyboard and with Narrator; the CSV
+  apostrophe in a real spreadsheet; the offline engines on a PC with a graphics processor.
+- **On a Mac** (with item 3): all of the above in WebKit, Tab with the system's keyboard
+  navigation on and off, VoiceOver, the symbols of `panic.log`, the programs Kalamu starts
+  after a crash or a Force Quit, and the folders out of reach shown at launch in the Mac App
+  Store build.
+- **Still to write**: a message for a launch that fails before setup (a webview that cannot be
+  made); the cut-off message for an analysis stopped by a filter rather than the limit.
+
 1. **What the [review of 9 November](decisions/2026-11-09-review.md) found.** Fixed at once,
    each with a test: structured answers cut off at the output limit sent once instead of four
    times; batches that can no longer be read given up on; `Retry-After` bounded; answers stopped
@@ -520,11 +536,16 @@ In this order. Work that keeps what has shipped sound comes before new features.
    read, is refused when dropped); FFmpeg's, llama.cpp's and the Whisper helper's shared
    helpers; one helper for the tests that write files for the interface; `timed_lines` in core;
    `tauri.ts`, `mock.ts`, `vision.rs`, `llm.rs` and `llama.rs` split; and one sort order for the
-   reader, in the interface language. Left: the larger screens split (`NewJob.svelte`,
-   `ReviewView.svelte`, `ProjectWorkspace.svelte`, `SetupList.svelte`), the shared interface
-   pieces not yet used everywhere, and from 4 November Whisper's voice detection on accented
-   data folders on Windows, the folders out of reach shown at launch, and Tesseract's drawing
-   resolution in provenance and its engines pooled (all listed in the decision).
+   reader, in the interface language. A
+   [second round on 15 November](decisions/2026-11-15-checkpoint-rest.md) took up the rest: New
+   job, the review, a project and a job's set-ups split into smaller files; twelve more screens'
+   commands through `Action`, one `ContextMenu` and one `FindBox` for the two language pickers;
+   Tesseract's engines pooled, their language data deleted at once, and the resolution a PDF
+   page was drawn at recorded and used by ALTO; and Whisper's voice detection from an accented
+   data folder on Windows. Left: from 4 November, the folders out of reach shown at launch (the
+   Mac App Store build's, with item 3); a transcription from an accented folder tried in the
+   packaged app; and what the round saw and left (an empty reading's spaces, Escape in the
+   language pickers, Home and End in a name's menu).
 3. **A first run on a real Mac, the rest.** Before 1.6.0 the sandboxed Mac App Store build was
    opened on one Mac with Apple Silicon (macOS 26): the application menu, ⌘, and ⌘Q, and the
    menu-bar icon were tried and fixed there (#160), and the jobs of the App Store screenshots run
@@ -543,7 +564,16 @@ In this order. Work that keeps what has shipped sound comes before new features.
    ([#84](https://github.com/fmadore/Kalamu/issues/84))**: Tesseract's words and Mistral OCR's
    estimated lines drawn over the scan, each opening its text, with the page as a fallback where
    a provider returns none. Kalamu already keeps these boxes for ALTO and the searchable PDF.
-6. **What is left of the research workflows**, below.
+6. **Records, first increment ([#171](https://github.com/fmadore/Kalamu/issues/171))**: a
+   serial source (a directory, a register, a membership list, a ledger) read into one row per
+   entry, with the columns the researcher defines. The field editor offers a repeating group,
+   which `FieldKind::Entries` already describes for tables of contents; a job reads each page
+   on its own; the review lists a page's rows beside the scan, corrected, added or removed in
+   the correction layer; `.csv` and `.json` hold one row per entry with its document, page and
+   place on the page. Then entries that run over a page (with #54), where each row sits (with
+   item 5) and rows across a project. An analysis with a repeating group rather than a task of
+   its own, unless the first increment shows otherwise.
+7. **What is left of the research workflows**, below.
 
 ### What is left of the research workflows
 
@@ -671,7 +701,9 @@ the app in App Store Connect, with their secrets; the screenshots, taken on a Ma
 screened material ([store-listing.md](store-listing.md#screenshots)); and the first submission,
 version 1.6.0, uploaded from its tag on 11 November 2026 and in App Review. Next: Apple's answer,
 then 1.7.0 with a *What's New* text. After it: a way to grant again the folders of jobs made by
-the disk image, and a French listing.
+the disk image, a French listing, and optional tips through in-app purchase, the only way
+Apple allows the store build to ask for support
+([#113](https://github.com/fmadore/Kalamu/issues/113)).
 
 ## Research workflows (planned)
 

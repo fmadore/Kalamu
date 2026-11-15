@@ -8,7 +8,7 @@
 	import type { RunView } from '#lib/bindings/RunView.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { app, go, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
 	import { pickPresetFile } from '#lib/dialogs.js';
@@ -26,13 +26,15 @@
 	let workflows = $state<Workflow[]>([]);
 	let runs = $state<RunView[]>([]);
 	let loaded = $state(false);
-	let error = $state<string | null>(null);
+	/** What went wrong reading or importing, said above the lists until another failure replaces
+	 * it: neither clears it, so a reading that failed stays said after an import. */
+	const action = new Action();
 
 	async function load() {
 		try {
 			[workflows, runs] = await Promise.all([api.listWorkflows(), api.listRuns()]);
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		} finally {
 			loaded = true;
 		}
@@ -46,7 +48,7 @@
 			toast(w.imported(workflow.name));
 			await load();
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -82,7 +84,7 @@
 </header>
 
 <div class="sheet">
-	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
+	{#if action.error}<p class="chip danger" role="alert">{action.error}</p>{/if}
 	{#if project && paths?.length}
 		<p class="chip">{w.files(paths.length)} · {w.fromProject(project.name)}</p>
 	{/if}

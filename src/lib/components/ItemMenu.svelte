@@ -4,9 +4,9 @@
 	// editor. At the pointer or under the name, kept inside the window; closed by Escape, a click
 	// elsewhere or a choice, the focus going back to the name. Renaming turns the menu into a
 	// field holding the name.
+	import ContextMenu from './ContextMenu.svelte';
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
-	import { giveFocusBack } from '#lib/keys.js';
 
 	let {
 		value,
@@ -27,55 +27,21 @@
 	} = $props();
 	const m = messages();
 
-	let box = $state<HTMLElement | null>(null);
-	/** What had the focus when the menu opened, given it back when the menu closes. */
-	const opener = document.activeElement;
+	let menu = $state<ContextMenu | null>(null);
 	let renaming = $state(false);
 	// svelte-ignore state_referenced_locally
 	let draft = $state(value);
 	let field = $state<HTMLInputElement | null>(null);
 
-	function place() {
-		if (!box) return;
-		const { offsetWidth: w, offsetHeight: h } = box;
-		box.style.left = `${Math.max(8, Math.min(x, innerWidth - w - 8))}px`;
-		box.style.top = `${Math.max(8, Math.min(y, innerHeight - h - 8))}px`;
-	}
-
-	$effect(() => {
-		if (!box) return;
-		box.showPopover();
-		place();
-		items()[0]?.focus();
-	});
-
 	$effect(() => {
 		if (!renaming || !field) return;
-		place();
+		menu?.place();
 		field.focus();
 		field.select();
 	});
 
-	const items = () =>
-		box ? [...box.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')] : [];
-
-	function keys(e: KeyboardEvent) {
-		if (renaming) return;
-		const all = items();
-		const at = all.indexOf(document.activeElement as HTMLButtonElement);
-		const to =
-			e.key === 'ArrowDown'
-				? (at + 1) % all.length
-				: e.key === 'ArrowUp'
-					? (at - 1 + all.length) % all.length
-					: -1;
-		if (to < 0) return;
-		e.preventDefault();
-		all[to]?.focus();
-	}
-
 	function close() {
-		box?.hidePopover();
+		menu?.close();
 	}
 
 	function submit(e: SubmitEvent) {
@@ -86,19 +52,16 @@
 	}
 </script>
 
-<div
-	bind:this={box}
-	class="menu"
-	popover="auto"
+<ContextMenu
+	bind:this={menu}
+	{x}
+	{y}
+	label={m.review.itemMenu(value)}
 	role={renaming ? 'dialog' : 'menu'}
-	tabindex="-1"
-	aria-label={m.review.itemMenu(value)}
-	onkeydown={keys}
-	ontoggle={(e) => {
-		if (e.newState !== 'closed') return;
-		giveFocusBack(opener, box);
-		onclose();
-	}}
+	width="17rem"
+	moves={!renaming}
+	homeEnd={false}
+	{onclose}
 >
 	{#if renaming}
 		<form onsubmit={submit}>
@@ -128,29 +91,9 @@
 			}}><Icon name="close" size={14} />{m.review.removeItem}</button
 		>
 	{/if}
-</div>
+</ContextMenu>
 
 <style>
-	/* In the top layer, placed at the pointer by the effects above. */
-	.menu {
-		position: fixed;
-		inset: auto;
-		margin: 0;
-		width: 17rem;
-		padding: var(--space-1);
-		border: 0;
-		border-radius: var(--radius-card);
-		background: var(--surface-2);
-		box-shadow: var(--shadow-pop);
-		font-family: var(--font-ui);
-		font-size: var(--type-sm);
-		color: var(--text-body);
-	}
-	.menu:popover-open {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		gap: 1px;
-	}
 	.item {
 		display: flex;
 		align-items: center;

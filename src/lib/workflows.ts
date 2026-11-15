@@ -13,7 +13,8 @@ import type { StepState } from './bindings/StepState.js';
 import type { Task } from './bindings/Task.js';
 import type { Workflow } from './bindings/Workflow.js';
 import type { WorkflowStep } from './bindings/WorkflowStep.js';
-import { newDraft, type Rules, rulesFor, toRequest } from './newJob.js';
+import { type Rules, rulesFor } from './newJob.js';
+import { newDraft, toRequest } from './newJobModels.js';
 
 export const SOURCES: StepInput = { kind: 'sources' };
 

@@ -11,7 +11,7 @@
 	import type { QueueView } from '#lib/bindings/QueueView.js';
 	import type { ResultKey } from '#lib/bindings/ResultKey.js';
 	import type { Signal } from '#lib/bindings/Signal.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import {
 		DEFAULT_FILTER,
@@ -50,7 +50,9 @@
 		kept ? { ...kept.filter, reasons: [...kept.filter.reasons] } : { ...DEFAULT_FILTER }
 	);
 	let view = $state<QueueView | null>(null);
-	let error = $state<string | null>(null);
+	/** What went wrong reading the queue, said above it. Only its error is used: a reading
+	 * overtaken by a newer one neither says its failure nor ends the newer one's wait. */
+	const action = new Action();
 	let loading = $state(false);
 	let limit = $state({ processing: PAGE, answers: PAGE });
 
@@ -75,12 +77,12 @@
 	async function load() {
 		const mine = ++ticket;
 		loading = true;
-		error = null;
+		action.error = null;
 		try {
 			const read = await api.reviewQueue(projectId, selectionOf(scope), excluded);
 			if (mine === ticket) view = read;
 		} catch (e) {
-			if (mine === ticket) error = describeError(e, m);
+			if (mine === ticket) action.fail(e);
 		} finally {
 			if (mine === ticket) loading = false;
 		}
@@ -170,7 +172,7 @@
 		<h2>{q.title}</h2>
 	</div>
 	<p class="muted lede">{q.lede}</p>
-	{#if error}<p class="chip danger banner" role="alert">{error}</p>{/if}
+	{#if action.error}<p class="chip danger banner" role="alert">{action.error}</p>{/if}
 
 	<div class="table-filters">
 		<label class="pick">

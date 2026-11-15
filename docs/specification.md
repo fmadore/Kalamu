@@ -897,8 +897,9 @@ text alone, and a scan has its text extracted first. The tools ship inside the a
 (x64 and ARM64) and macOS (Apple Silicon).
 
 - **PDF to images** with [hayro](https://github.com/LaurenzV/hayro), a PDF rasterizer written
-  in Rust, page by page at 300 dpi, for engines that read images only (Tesseract, the offline
-  OCR models); previews are
+  in Rust, page by page at 300 dpi, or less for a page whose longest side would pass 7,000
+  pixels, for engines that read images only (Tesseract, the offline OCR models); the drawn
+  page states its resolution, which Tesseract's result records and ALTO measures by; previews are
   drawn in the interface with pdf.js.
 - **Image preparation**: multi-page TIFFs split, HEIC, WebP and BMP converted, oversized scans
   resized, orientation fixed from EXIF data.

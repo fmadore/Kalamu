@@ -1,49 +1,16 @@
 <script lang="ts">
 	// The model set-ups of a new job: one for a normal job, several to compare, each named by the
 	// siglum it will carry in the review.
-	import { modelDescription, providerNameOf } from '#lib/catalogText.js';
 	import TermLink from './TermLink.svelte';
 	import Icon from './Icon.svelte';
-	import ModelPicker from './ModelPicker.svelte';
 	import ModelsByToggle from './ModelsByToggle.svelte';
-	import { siglum } from '#lib/apparatus.js';
-	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
+	import SetupCard from './SetupCard.svelte';
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
-	import { messages, readerOrder } from '#lib/i18n/index.js';
-	import {
-		acceptsPrompt,
-		type Draft,
-		labelsSpeakers,
-		mergeDefault,
-		mergeInfo,
-		mergeModelsFor,
-		mergePickerModels,
-		mergeProviders,
-		modelInfo,
-		modelsFor,
-		type Needs,
-		newDraft,
-		pickerModels,
-		replacedModel,
-		providerDefault,
-		suggestedReasoning,
-		rulesFor,
-		takesVocabulary,
-		translates,
-		vocabularyOf
-	} from '#lib/newJob.js';
-	import { languageLabel } from '#lib/languages.js';
-	import {
-		app,
-		go,
-		hasKey,
-		isInstalled,
-		onGraphics,
-		secondsPerPage,
-		toast
-	} from '#lib/state.svelte.js';
-	import { describeError } from '#lib/errors.js';
+	import { messages } from '#lib/i18n/index.js';
+	import { type Draft, modelsFor, type Needs, newDraft } from '#lib/newJobModels.js';
+	import { rulesFor } from '#lib/newJob.js';
+	import { app, go, hasKey } from '#lib/state.svelte.js';
 	import { keepModelsBy, recallModelsBy } from '#lib/tiers.js';
 
 	let {
@@ -62,20 +29,6 @@
 		projectNames?: () => Promise<string[]>;
 	} = $props();
 
-	/** Adds the project's names to those a set-up spells, after the researcher's own. */
-	async function addProjectNames(d: Draft) {
-		try {
-			const names = (await projectNames?.()) ?? [];
-			if (names.length === 0) {
-				toast(m.newJob.vocabulary.noProjectNames);
-				return;
-			}
-			d.vocabulary = vocabularyOf([d.vocabulary, ...names].join('\n'));
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
-	}
-
 	const m = messages();
 	const catalog = $derived(app.catalog!);
 	/** The engine's rules for the task: which models do it. */
@@ -88,25 +41,6 @@
 	/** By provider or by tier, as the researcher last listed them. */
 	let modelsBy = $state(recallModelsBy());
 	$effect(() => keepModelsBy(modelsBy));
-
-	/** A provider's models for a set-up: those offered, and the one it names if replaced. */
-	const modelsOf = (d: Draft) => (provider: string) =>
-		provider === d.provider
-			? pickerModels(catalog, rule, d, input)
-			: modelsFor(catalog, rule, provider, input);
-	/** What follows a model's name: whether it was replaced, is in preview or is being retired. */
-	function suffix(mod: ModelInfo): string {
-		const old = replacedModel(catalog, rule.models, mod);
-		return old?.retired
-			? ` (${m.common.retired})`
-			: old
-				? ` (${m.common.replaced})`
-				: mod.status === 'preview'
-					? ` (${m.common.preview})`
-					: mod.status === 'deprecated'
-						? ` (${m.common.retiring})`
-						: '';
-	}
 
 	function addSetup() {
 		const used = drafts.map((d) => `${d.provider}/${d.model}`);
@@ -138,211 +72,20 @@
 	<!-- One set-up lays its fields in a row; two or more stand side by side, one column per
 	     witness, so the set-ups read across like the sigla key in the review. -->
 	<div class="setups" class:compare={drafts.length > 1}>
-		{#each drafts as d, i (i)}
-			{@const info = modelInfo(catalog, d)}
-			{@const replaced = replacedModel(catalog, rule.models, info)}
-			<div class="setup">
-				{#if drafts.length > 1}
-					<div class="witness">
-						<i class="siglum">{siglum(i)}</i>
-						<span class="witness-name mono">{d.label || info?.name || d.model}</span>
-						<button class="btn ghost sm" onclick={() => (drafts = drafts.filter((_, j) => j !== i))}
-							>{m.newJob.removeSetup}</button
-						>
-					</div>
-				{/if}
-				<ModelPicker
-					{catalog}
-					by={modelsBy}
-					{providers}
-					models={modelsOf(d)}
-					defaultFor={(provider) => providerDefault(catalog, rule, provider, input)}
-					bind:provider={d.provider}
-					bind:model={d.model}
-					{suffix}
-				/>
-				<label class="field">
-					<span
-						>{task === 'analysis'
-							? m.newJob.analysis
-							: task === 'contents'
-								? m.newJob.kindOfDocument
-								: m.newJob.prompt}<TermLink term="prompt" /></span
-					>
-					{#if !acceptsPrompt(info)}
-						<select disabled><option>{m.newJob.noPrompt}</option></select>
-					{:else}
-						<select bind:value={d.presetId}>
-							{#each presets as p (p.id)}
-								<option value={p.id}>{p.name}</option>
-							{/each}
-						</select>
-					{/if}
-				</label>
-				{#if info?.reasoning}
-					{@const suggested = suggestedReasoning(rule, d)}
-					<label class="field">
-						<span>{m.newJob.reasoning.title}<TermLink term="reasoning" /></span>
-						<!-- Each level once; choosing the suggested one leaves the choice to the engine. -->
-						<select
-							value={d.reasoning && info.reasoning.levels.includes(d.reasoning)
-								? d.reasoning
-								: (suggested ?? info.reasoning.levels[0])}
-							onchange={(e) => {
-								const level = e.currentTarget.value;
-								d.reasoning = level === suggested ? null : level;
-							}}
-						>
-							{#each info.reasoning.levels as level (level)}
-								<option value={level}
-									>{level === suggested
-										? m.newJob.reasoning.suggested(m.newJob.reasoning.level(level))
-										: m.newJob.reasoning.level(level)}</option
-								>
-							{/each}
-						</select>
-						<small>{m.newJob.reasoning.hint}</small>
-					</label>
-				{/if}
-				{#if drafts.length > 1}
-					<label class="field">
-						<span>{m.newJob.label}</span>
-						<input type="text" bind:value={d.label} placeholder={d.model} />
-					</label>
-				{/if}
-				{#if task === 'audio_transcription'}
-					<div class="row opts">
-						<label class="inline"
-							><input type="checkbox" bind:checked={d.diarize} disabled={!labelsSpeakers(info)} />
-							{labelsSpeakers(info) ? m.newJob.diarize : m.newJob.noSpeakers}</label
-						>
-						<label class="inline"
-							><input type="checkbox" bind:checked={d.timestamps} /> {m.newJob.timestamps}</label
-						>
-						{#if translates(info, task)}
-							<label class="inline" title={m.newJob.translateHint}
-								><input type="checkbox" bind:checked={d.translate} /> {m.newJob.translate}</label
-							>
-						{/if}
-					</div>
-					{#if translates(info, task) && d.translate}
-						<p class="muted small wide">{m.newJob.translateHint}</p>
-					{/if}
-					{#if takesVocabulary(info, task)}
-						<label class="field wide">
-							<span>{m.newJob.vocabulary.title}</span>
-							<textarea
-								rows="3"
-								bind:value={d.vocabulary}
-								placeholder={m.newJob.vocabulary.placeholder}
-								spellcheck="false"></textarea>
-							<span class="hint">{m.newJob.vocabulary.hint}</span>
-						</label>
-						{#if projectNames}
-							<div class="wide">
-								<button class="btn ghost sm" onclick={() => void addProjectNames(d)}
-									><Icon name="plus" size={14} />{m.newJob.vocabulary.fromProject}</button
-								>
-							</div>
-						{/if}
-					{/if}
-				{/if}
-				{#if info}
-					<!-- Its tier in words (the field shows its bars), then what it is for. -->
-					<p class="muted small desc">
-						<span class="tier">{m.newJob.tiers.one[info.tier]}</span>
-						{#if info.description}{modelDescription(info)}{/if}
-					</p>
-				{/if}
-				{#if info && secondsPerPage(info.id) !== undefined}
-					{@const seconds = secondsPerPage(info.id)}
-					<!-- An offline OCR model: how long a page takes here, measured, not promised. -->
-					<p class="muted small desc">
-						{seconds ? m.settings.ocrSpeed(seconds, onGraphics(info.id)) : m.settings.ocrNotTimed}
-					</p>
-				{/if}
-				{#if info && Array.isArray(info.languages)}
-					{@const names = info.languages
-						.map((code) => languageLabel(catalog, code))
-						.sort(readerOrder().compare)}
-					<!-- The languages its maker documents, for a model that lists them. -->
-					<details class="langs">
-						<summary class="small">{m.newJob.modelLanguages(names.length)}</summary>
-						<p class="muted small">{names.join(', ')}</p>
-					</details>
-				{/if}
-				{#if task === 'contents'}
-					<!-- The second step: any provider's model that reads text. -->
-					<div class="merge" role="group" aria-labelledby="merge-{i}">
-						<p class="label merge-title" id="merge-{i}">{m.newJob.mergeTitle}</p>
-						<ModelPicker
-							{catalog}
-							by={modelsBy}
-							providers={mergeProviders(catalog, rule)}
-							models={(provider) =>
-								provider === d.mergeProvider
-									? mergePickerModels(catalog, rule, d)
-									: mergeModelsFor(catalog, rule, provider)}
-							defaultFor={(provider) => mergeDefault(catalog, rule, provider)}
-							bind:provider={d.mergeProvider}
-							bind:model={d.mergeModel}
-						/>
-						<p class="muted small desc">{m.newJob.mergeHint}</p>
-						{#if d.mergeProvider && !hasKey(d.mergeProvider)}
-							<p class="warning small">
-								{m.newJob.noKey(providerNameOf(catalog, d.mergeProvider))}
-							</p>
-						{/if}
-						{#if mergeInfo(catalog, d)?.costly}
-							<p class="warning small">{m.newJob.costly}</p>
-						{/if}
-					</div>
-				{/if}
-				{#if task === 'analysis' || task === 'contents'}
-					{@const fields = presets.find((p) => p.id === d.presetId)?.schema?.fields ?? []}
-					{#if fields.length > 0}
-						<p class="small desc finds">
-							<span class="label">{task === 'contents' ? m.newJob.entryHas : m.newJob.finds}</span>
-							{(task === 'contents'
-								? [m.review.entryTitle, m.review.entryPages, ...fields.map((f) => f.label)]
-								: fields.map((f) => f.label)
-							).join(' · ')}
-							<button class="link" onclick={() => go({ name: 'prompts' })}
-								>{m.newJob.editFields}</button
-							>
-						</p>
-					{/if}
-				{/if}
-				{#if replaced}
-					<p class="warning small">
-						{replaced.retired
-							? m.newJob.modelRetired(replaced.model.name)
-							: m.newJob.modelReplaced(replaced.model.name, replaced.replacement?.name ?? '')}
-						{#if replaced.replacement}
-							{@const next = replaced.replacement}
-							<button class="btn sm" onclick={() => (d.model = next.id)}
-								>{m.newJob.useModel(next.name)}</button
-							>
-						{/if}
-					</p>
-				{/if}
-				{#if info?.costly}
-					<p class="warning small">{m.newJob.costly}</p>
-				{/if}
-				{#if d.model && !isInstalled(d.provider, d.model)}
-					<p class="warning small">
-						{m.newJob.notDownloaded}
-						<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'offline' })}
-							>{m.newJob.openSettings}</button
-						>
-					</p>
-				{/if}
-				{#if d.provider && !hasKey(d.provider)}
-					<p class="warning small">
-						{m.newJob.noKey(providerNameOf(catalog, d.provider))}
-					</p>
-				{/if}
-			</div>
+		{#each drafts as _, i (i)}
+			<SetupCard
+				bind:draft={drafts[i]}
+				index={i}
+				compare={drafts.length > 1}
+				{task}
+				{presets}
+				{input}
+				{projectNames}
+				{rule}
+				{providers}
+				by={modelsBy}
+				onremove={() => (drafts = drafts.filter((_, j) => j !== i))}
+			/>
 		{/each}
 		{#if drafts.length > 1}
 			<button class="add-column" onclick={addSetup}
@@ -378,18 +121,6 @@
 		display: inline-flex;
 		align-items: center;
 	}
-	/* The chosen model's tier, its mark and name, before its description. */
-	.tier {
-		margin-right: var(--space-2);
-		color: var(--text-secondary);
-		font-weight: 500;
-		white-space: nowrap;
-	}
-	.row {
-		display: flex;
-		gap: var(--space-3);
-		align-items: center;
-	}
 	.small {
 		font-size: var(--type-xs);
 	}
@@ -400,22 +131,6 @@
 	.setups.compare {
 		grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
 		align-items: stretch;
-	}
-	.setup {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-		gap: var(--space-3);
-		/* Top-aligned, so a field with a hint under it keeps its label and control in line. */
-		align-items: start;
-		align-content: start;
-		padding: var(--space-4);
-		border: 1px solid var(--line);
-		border-radius: var(--radius-card);
-		background: var(--surface-2);
-	}
-	/* In a comparison each column stacks its fields, so every set-up reads top to bottom. */
-	.compare .setup {
-		grid-template-columns: minmax(0, 1fr);
 	}
 	.add-column {
 		display: flex;
@@ -440,41 +155,6 @@
 		border-color: var(--line-hover);
 		color: var(--text-bright);
 	}
-	.setup select,
-	.setup input {
-		width: 100%;
-		min-width: 0;
-	}
-	.desc,
-	.langs,
-	.witness,
-	.setup .warning {
-		grid-column: 1 / -1;
-	}
-	.langs summary {
-		width: fit-content;
-		color: var(--text-secondary);
-		cursor: pointer;
-	}
-	.langs p {
-		margin: var(--space-1) 0 0;
-		max-width: 75ch;
-	}
-	.witness {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		margin: 0;
-		font-size: var(--type-sm);
-		color: var(--text-bright);
-	}
-	.witness-name {
-		flex: 1;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.add {
 		display: flex;
 		flex-wrap: wrap;
@@ -495,60 +175,5 @@
 		background: var(--warn-wash);
 		color: var(--warn-text);
 		font-size: var(--type-xs);
-	}
-	/* The transcription's switches, across the set-up and wrapping, never past its edge. */
-	.opts {
-		grid-column: 1 / -1;
-		flex-wrap: wrap;
-		gap: var(--space-2) var(--space-4);
-		min-height: var(--control-md);
-	}
-	.finds {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
-		align-items: baseline;
-	}
-	.link {
-		border: 0;
-		background: none;
-		padding: 0;
-		color: var(--text-bright);
-		text-decoration: underline;
-		text-underline-offset: 0.18em;
-		cursor: pointer;
-		font-size: var(--type-xs);
-	}
-	/* The second step, under the first: its own provider and model, side by side. */
-	.merge {
-		grid-column: 1 / -1;
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-		gap: var(--space-2) var(--space-3);
-		align-items: end;
-		padding: var(--space-3) 0 0;
-		border-top: 1px solid var(--line);
-	}
-	.merge-title,
-	.merge .desc,
-	.merge .warning {
-		grid-column: 1 / -1;
-		margin: 0;
-	}
-	/* Across the whole set-up, as the second step of a table of contents is. */
-	.wide {
-		grid-column: 1 / -1;
-		margin: 0;
-	}
-	.wide textarea {
-		width: 100%;
-		resize: vertical;
-	}
-	.inline {
-		display: inline-flex;
-		gap: var(--space-2);
-		align-items: center;
-		white-space: nowrap;
-		font-size: var(--type-sm);
 	}
 </style>

@@ -60,6 +60,7 @@ Numbers are the checkpoint's.
   voice detection on accented data folders on Windows, the folders out of reach shown at launch,
   and Tesseract's drawing resolution in provenance and its engines pooled.
 - Seen and left: `offline/src/models.rs` tests the system for a path that must be ASCII on
-  Windows, a limit of the C library rather than a choice of build.
+  Windows. Taken up on [15 November](2026-11-15-checkpoint-rest.md): accented paths open, and
+  the limit is narrower than was written here.
 - Checked on Windows ARM64. `bundled.rs`'s side for other systems and the Whisper helper's call
   to it are first compiled for macOS by CI.

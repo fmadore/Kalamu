@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 	import type { ProjectSummary } from '#lib/bindings/ProjectSummary.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { go } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -12,7 +12,8 @@
 	const m = messages();
 	let projects = $state<ProjectSummary[]>([]);
 	let loaded = $state(false);
-	let error = $state<string | null>(null);
+	/** Reading and starting projects, what went wrong said above the list. */
+	const action = new Action();
 	let showArchived = $state(false);
 	let creating = $state(false);
 	let name = $state('');
@@ -25,7 +26,7 @@
 		try {
 			projects = await api.listProjects();
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		} finally {
 			loaded = true;
 		}
@@ -33,13 +34,10 @@
 
 	async function create(e: SubmitEvent) {
 		e.preventDefault();
-		error = null;
-		try {
-			const project = await api.createProject(name, description);
-			go({ name: 'projects', projectId: project.id });
-		} catch (err) {
-			error = describeError(err, m);
-		}
+		await action.run(
+			() => api.createProject(name, description),
+			(project) => go({ name: 'projects', projectId: project.id })
+		);
 	}
 
 	onMount(() => void load());
@@ -58,7 +56,7 @@
 </header>
 
 <div class="sheet">
-	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
+	{#if action.error}<p class="chip danger" role="alert">{action.error}</p>{/if}
 
 	{#if creating}
 		<form class="card create" onsubmit={create} aria-labelledby="new-project">

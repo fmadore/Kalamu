@@ -85,6 +85,11 @@ pub struct ExportPart {
     /// still written, the piece marked in its place.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub failed: Option<String>,
+    /// For a PDF page drawn as an image for an engine that reads images only (Tesseract), the
+    /// resolution it was drawn at, from the result's record; `None` when the page was not
+    /// drawn, or was read before the resolution was recorded, which was at 300 dpi.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub drawn_dpi: Option<f32>,
 }
 
 /// Everything an exporter needs for one source under one set-up.

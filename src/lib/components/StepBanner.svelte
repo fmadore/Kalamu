@@ -4,7 +4,7 @@
 	// colleague who has checked the text never has to find the workflow's own page.
 	import Icon from './Icon.svelte';
 	import type { JobStep } from '#lib/bindings/JobStep.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, refreshWaiting } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -14,8 +14,13 @@
 	const m = messages();
 	const w = m.workflows;
 	let found = $state<JobStep | null>(null);
-	let error = $state<string | null>(null);
-	let busy = $state(false);
+	/** Continuing: the workflow and the jobs read again, its failure said in the banner. */
+	const action = new Action({
+		after: async () => {
+			await Promise.all([refreshWaiting(), refreshJobs()]);
+			app.runs++;
+		}
+	});
 
 	$effect(() => {
 		void app.runs;
@@ -39,17 +44,8 @@
 
 	async function proceed() {
 		if (!found) return;
-		error = null;
-		busy = true;
-		try {
-			await api.approveStep(found.view.run.id, found.step);
-			await Promise.all([refreshWaiting(), refreshJobs()]);
-			app.runs++;
-		} catch (e) {
-			error = describeError(e, m);
-		} finally {
-			busy = false;
-		}
+		const { view, step } = found;
+		await action.run(() => api.approveStep(view.run.id, step));
 	}
 </script>
 
@@ -68,15 +64,17 @@
 					? w.banner.nextAfterCheck(next.join(', '))
 					: w.banner.next(next.join(', '))}
 			{/if}
-			{#if error}<span class="error">{error}</span>{/if}
+			{#if action.error}<span class="error">{action.error}</span>{/if}
 		</p>
 		<span class="buttons">
 			{#if where === 'review'}
-				<button class="btn sm primary" onclick={proceed} disabled={busy}
+				<button class="btn sm primary" onclick={proceed} disabled={action.busy}
 					><Icon name="check" size={14} />{w.continue}</button
 				>
 			{:else if where === 'attention'}
-				<button class="btn sm primary" onclick={proceed} disabled={busy}>{w.continueAnyway}</button>
+				<button class="btn sm primary" onclick={proceed} disabled={action.busy}
+					>{w.continueAnyway}</button
+				>
 			{/if}
 			<button class="btn sm ghost" onclick={() => go({ name: 'workflows', runId: run.id })}
 				>{w.banner.see}</button
