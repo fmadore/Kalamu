@@ -1691,6 +1691,18 @@ export const fr: Messages = {
 		up: 'Monter',
 		down: 'Descendre',
 		add: 'Ajouter un champ',
+		rowsToggle: 'Une ligne par entrée',
+		rowsHint:
+			'Pour un registre, un annuaire ou une liste de noms : chaque page est lue séparément, et chaque entrée de la page devient une ligne dont les colonnes sont les champs ci-dessous. Désactivé, l’analyse répond une fois par document.',
+		rowsLabel: 'Entrées',
+		rowsInstructions: 'Chaque entrée de cette page, une ligne par entrée, dans l’ordre de lecture.',
+		rowsWhich: 'Les entrées à relever',
+		columns: 'Colonnes',
+		columnsHint:
+			'Ce qu’il faut relever dans chaque entrée. Chaque colonne devient une colonne du tableur exporté, avec la page et la place de l’entrée sur la page.',
+		firstColumn: 'Nom',
+		addColumn: 'Ajouter une colonne',
+		removeColumn: (label: string) => `Retirer ${label || 'cette colonne'}`,
 		templates: {
 			summary: {
 				label: 'Résumé',
@@ -2168,6 +2180,11 @@ export const fr: Messages = {
 		'prompt.unnamed_field': 'Chaque champ doit avoir un nom.',
 		'prompt.duplicate_field': 'Deux champs portent le même nom.',
 		'prompt.few_values': 'Un choix demande au moins deux valeurs entre lesquelles choisir.',
+		'prompt.empty_group': 'Une ligne par entrée demande au moins une colonne.',
+		'prompt.nested_group': 'Une colonne ne peut pas contenir elle-même des lignes.',
+		'prompt.two_groups': 'Une analyse donne une ligne par entrée une seule fois, pas deux.',
+		'prompt.group_alone':
+			'Avec une ligne par entrée, chaque champ est une colonne de la ligne : placez-y les autres champs.',
 		'records.not_records': 'Cette analyse n’a pas de lignes à corriger.',
 		'records.no_row': 'Cette ligne n’est plus sur la page. Les lignes ont été relues.',
 		'records.no_column': 'Cette colonne ne fait pas partie de l’analyse.',

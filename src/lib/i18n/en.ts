@@ -1584,6 +1584,18 @@ export const en = {
 		up: 'Move up',
 		down: 'Move down',
 		add: 'Add a field',
+		rowsToggle: 'One row per entry',
+		rowsHint:
+			'For a register, a directory or a list of names: each page is read on its own, and every entry on it becomes a row whose columns are the fields below. Turned off, the analysis answers once for each document.',
+		rowsLabel: 'Entries',
+		rowsInstructions: 'Every entry on this page, one row each, in reading order.',
+		rowsWhich: 'Which entries to read',
+		columns: 'Columns',
+		columnsHint:
+			'What to read in each entry. Each column becomes a column in the spreadsheet export, with the page and the entry’s place on it.',
+		firstColumn: 'Name',
+		addColumn: 'Add a column',
+		removeColumn: (label: string) => `Remove ${label || 'this column'}`,
 		templates: {
 			summary: {
 				label: 'Summary',
@@ -2079,6 +2091,11 @@ export const en = {
 		'prompt.unnamed_field': 'Every field needs a name.',
 		'prompt.duplicate_field': 'Two fields have the same name.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',
+		'prompt.empty_group': 'One row per entry needs at least one column.',
+		'prompt.nested_group': 'A column cannot itself hold rows.',
+		'prompt.two_groups': 'An analysis gives one row per entry once, not twice.',
+		'prompt.group_alone':
+			'With one row per entry, every field is a column of the row: move the other fields into it.',
 		'records.not_records': 'This analysis has no rows to correct.',
 		'records.no_row': 'This row is no longer on the page. The rows were read again.',
 		'records.no_column': 'This column is not in the analysis.',

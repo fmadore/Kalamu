@@ -15,6 +15,45 @@ async function primary(page: Page): Promise<'Meta' | 'Control'> {
 	return mac ? 'Meta' : 'Control';
 }
 
+test('an analysis gives one row per entry, its fields becoming the columns', async ({ page }) => {
+	await open(page, 'prompts-analysis');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /People, places and organisations/ }).click();
+	const editor = main
+		.getByRole('region', { name: 'Columns' })
+		.or(main.getByRole('region', { name: 'Fields' }));
+	const rows = main.getByRole('checkbox', { name: 'One row per entry' });
+	await expect(rows).not.toBeChecked();
+	await rows.focus();
+	await page.keyboard.press('Space');
+	await expect(rows).toBeChecked();
+
+	// The three fields are now the columns, under which entries to read.
+	await expect(main.getByRole('heading', { name: 'Columns' })).toBeVisible();
+	await expect(main.getByRole('textbox', { name: 'Which entries to read' })).toHaveValue(
+		/Every entry on this page/
+	);
+	const names = editor.getByRole('textbox', { name: 'Name', exact: true });
+	await expect(names).toHaveCount(3);
+	await expect(names.first()).toHaveValue('People');
+	// A column asks for no reason.
+	await expect(editor.getByRole('checkbox', { name: 'Ask for a reason' })).toHaveCount(0);
+
+	await main.getByRole('button', { name: 'Add a column' }).click();
+	await expect(names).toHaveCount(4);
+	await names.last().fill('Address');
+	await main.getByRole('button', { name: 'Remove Subjects' }).click();
+	await expect(names).toHaveCount(3);
+	await expect(names.last()).toHaveValue('Address');
+
+	// Turned off, the columns are the analysis's fields again.
+	await rows.focus();
+	await page.keyboard.press('Space');
+	await expect(main.getByRole('heading', { name: 'Fields' })).toBeVisible();
+	await expect(names).toHaveCount(3);
+	await expect(main.getByRole('button', { name: 'Save' })).toBeEnabled();
+});
+
 test('a page’s rows are corrected, added, removed and reviewed from the keyboard', async ({
 	page
 }) => {

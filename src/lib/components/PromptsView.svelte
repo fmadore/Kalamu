@@ -261,7 +261,7 @@
 			{#if draft.id === DICTIONARY}
 				<p class="muted small">{m.prompts.dictionaryFields}</p>
 			{:else if draft.schema}
-				<FieldsEditor bind:schema={draft.schema} />
+				<FieldsEditor bind:schema={draft.schema} groups={draft.task === 'analysis'} />
 			{/if}
 			{#if action.error}<p class="chip danger">{action.error}</p>{/if}
 			<div class="actions">

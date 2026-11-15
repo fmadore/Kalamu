@@ -72,7 +72,8 @@ Escape, the window's shortcuts, a project search, New job kept across Settings; 
 from the keyboard alone (`e2e/keyboard.spec.ts`): a text page reviewed and corrected through its
 readings, an analysis's name located, renamed, removed and put back, a failure dismissed, Back to
 where a review was opened from, Ctrl F on each table, the remembered choices after a reload, a
-window of 640 × 560, the release line hidden. They start the dev server on port 5173, or reuse
+window of 640 × 560, the release line hidden; and records (`e2e/records.spec.ts`): an analysis
+turned into one row per entry, a page's rows corrected, added, removed and reviewed. They start the dev server on port 5173, or reuse
 one already there; `KALAMU_E2E_PORT=5291` picks another, for two checkouts tested side by side.
 
 `cargo test` also regenerates the TypeScript types in `src/lib/bindings/` from the Rust
@@ -110,7 +111,7 @@ parameters open a given state:
 | `view=new`, `jobs`, `prompts`, `settings`, `glossary` | Opens that screen (`jobs` is a job's page) |
 | `view=all-jobs` | Opens the Jobs page, with 24 older finished jobs |
 | `view=review`, `review-audio`, `review-analysis` | Opens the review of a sample extraction, recording or analysis |
-| `view=review-youtube`, `review-contents`, `review-correction` | Opens the review of a YouTube video, a table of contents or a correction |
+| `view=review-youtube`, `review-contents`, `review-correction`, `review-records` | Opens the review of a YouTube video, a table of contents, a correction or records (a directory's rows, page by page) |
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `view=projects`, `project`, `document` | Opens the list of projects, a sample project, or one of its documents |
 | `view=workflows`, `workflow`, `run` | Opens the workflows and their runs, a sample workflow, or its run waiting for a review |

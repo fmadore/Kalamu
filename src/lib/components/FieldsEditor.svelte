@@ -1,20 +1,35 @@
 <script lang="ts">
 	// The fields of an analysis: what to find in each document. Each field is a name, the kind of
 	// answer it takes and, in the researcher's words, what belongs in it. Common fields are one
-	// click away; keys are given by the core when the analysis is saved.
+	// click away; keys are given by the core when the analysis is saved. An analysis can instead
+	// give one row per entry (#171): its fields become the columns of a repeating group, its only
+	// field, and each page is read on its own. The core checks the fields when they are saved.
 	import Icon from './Icon.svelte';
 	import type { AnalysisSchema } from '#lib/bindings/AnalysisSchema.js';
 	import type { Field } from '#lib/bindings/Field.js';
 	import type { FieldKind } from '#lib/bindings/FieldKind.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { moved } from '#lib/profiles.js';
+	import { groupOf } from '#lib/records.js';
 
-	let { schema = $bindable() }: { schema: AnalysisSchema } = $props();
+	let {
+		schema = $bindable(),
+		groups = false
+	}: {
+		schema: AnalysisSchema;
+		/** Whether one row per entry is offered: for an analysis, not a table of contents. */
+		groups?: boolean;
+	} = $props();
 	const m = messages();
 
-	/** The kinds a researcher picks from; entries are Kalamu's own, for tables of contents. */
+	/** The kinds a researcher picks from; a repeating group is chosen by the switch above. */
 	type Kind = Exclude<FieldKind['type'], 'entries'>;
 	const kinds: Kind[] = ['text', 'list', 'choice', 'choices'];
+
+	/** The repeating group, when the analysis gives one row per entry. */
+	const group = $derived(groups ? groupOf(schema) : null);
+	/** The fields edited: the group's columns, or the analysis's own fields. */
+	const list = $derived(group?.kind.type === 'entries' ? group.kind.fields : schema.fields);
 
 	const values = (kind: FieldKind) =>
 		kind.type === 'choice' || kind.type === 'choices' ? kind.values : [];
@@ -26,12 +41,52 @@
 		return { type, values: values(previous) };
 	}
 
+	/** Puts the fields edited back where they belong. */
+	function setList(fields: Field[]) {
+		if (group) schema.fields = [{ ...group, kind: { type: 'entries', fields } }];
+		else schema.fields = fields;
+	}
+
 	function update(i: number, change: Partial<Field>) {
-		schema.fields[i] = { ...schema.fields[i], ...change };
+		setList(list.map((f, j) => (j === i ? { ...f, ...change } : f)));
 	}
 
 	function move(i: number, by: number) {
-		schema.fields = moved(schema.fields, i, by);
+		setList(moved(list, i, by));
+	}
+
+	function updateGroup(change: Partial<Field>) {
+		if (group) schema.fields = [{ ...group, ...change }];
+	}
+
+	/** One row per entry, or one answer per document: the fields become the group's columns, or
+	 * its columns the fields again. A column asks for no reason. */
+	function toggleRows(on: boolean) {
+		if (on && !group) {
+			const columns: Field[] = schema.fields
+				.filter((f) => f.kind.type !== 'entries')
+				.map((f) => ({ ...f, reason: false }));
+			if (columns.length === 0) {
+				columns.push({
+					key: '',
+					label: m.fields.firstColumn,
+					instructions: '',
+					kind: { type: 'text' },
+					reason: false
+				});
+			}
+			schema.fields = [
+				{
+					key: '',
+					label: m.fields.rowsLabel,
+					instructions: m.fields.rowsInstructions,
+					kind: { type: 'entries', fields: columns },
+					reason: false
+				}
+			];
+		} else if (!on && group?.kind.type === 'entries') {
+			schema.fields = group.kind.fields;
+		}
 	}
 
 	type Template = keyof typeof m.fields.templates;
@@ -60,16 +115,48 @@
 			kind,
 			reason: template === 'tone'
 		};
-		schema.fields = [...schema.fields, field];
+		setList([...list, field]);
+	}
+
+	function addColumn() {
+		setList([
+			...list,
+			{ key: '', label: '', instructions: '', kind: { type: 'text' }, reason: false }
+		]);
 	}
 </script>
 
 <section class="fields" aria-labelledby="fields-title">
-	<h2 id="fields-title">{m.fields.title}</h2>
-	<p class="muted small">{m.fields.hint}</p>
+	<h2 id="fields-title">{group ? m.fields.columns : m.fields.title}</h2>
+	{#if groups}
+		<div class="rows-switch">
+			<label class="inline">
+				<input
+					type="checkbox"
+					checked={group !== null}
+					aria-describedby="fields-rows-hint"
+					onchange={(e) => toggleRows(e.currentTarget.checked)}
+				/>
+				{m.fields.rowsToggle}
+			</label>
+			<p class="muted small" id="fields-rows-hint">{m.fields.rowsHint}</p>
+		</div>
+	{/if}
+	{#if group}
+		<label class="field">
+			<span>{m.fields.rowsWhich}</span>
+			<textarea
+				rows="2"
+				value={group.instructions}
+				oninput={(e) => updateGroup({ instructions: e.currentTarget.value })}></textarea>
+		</label>
+		<p class="muted small">{m.fields.columnsHint}</p>
+	{:else}
+		<p class="muted small">{m.fields.hint}</p>
+	{/if}
 
 	<ol>
-		{#each schema.fields as field, i (i)}
+		{#each list as field, i (i)}
 			<li class="field-row">
 				<div class="top">
 					<label class="field name">
@@ -118,17 +205,16 @@
 						>
 						<button
 							class="btn sm icon"
-							disabled={i === schema.fields.length - 1}
+							disabled={i === list.length - 1}
 							aria-label={m.fields.down}
 							title={m.fields.down}
 							onclick={() => move(i, 1)}><Icon name="down" /></button
 						>
 						<button
 							class="btn sm icon ghost"
-							aria-label={m.fields.remove(field.label)}
-							title={m.fields.remove(field.label)}
-							onclick={() => (schema.fields = schema.fields.filter((_, j) => j !== i))}
-							><Icon name="close" /></button
+							aria-label={group ? m.fields.removeColumn(field.label) : m.fields.remove(field.label)}
+							title={group ? m.fields.removeColumn(field.label) : m.fields.remove(field.label)}
+							onclick={() => setList(list.filter((_, j) => j !== i))}><Icon name="close" /></button
 						>
 					</div>
 				</div>
@@ -161,25 +247,33 @@
 						value={field.instructions}
 						oninput={(e) => update(i, { instructions: e.currentTarget.value })}></textarea>
 				</label>
-				<label class="inline">
-					<input
-						type="checkbox"
-						checked={field.reason}
-						onchange={(e) => update(i, { reason: e.currentTarget.checked })}
-					/>
-					{m.fields.reason}
-				</label>
+				{#if !group}
+					<label class="inline">
+						<input
+							type="checkbox"
+							checked={field.reason}
+							onchange={(e) => update(i, { reason: e.currentTarget.checked })}
+						/>
+						{m.fields.reason}
+					</label>
+				{/if}
 			</li>
 		{/each}
 	</ol>
 
 	<div class="add">
-		<span class="label">{m.fields.add}</span>
-		{#each templates as template (template)}
-			<button class="btn sm" onclick={() => add(template)}
-				><Icon name="plus" size={14} />{m.fields.templates[template].label}</button
+		{#if group}
+			<button class="btn sm" onclick={addColumn}
+				><Icon name="plus" size={14} />{m.fields.addColumn}</button
 			>
-		{/each}
+		{:else}
+			<span class="label">{m.fields.add}</span>
+			{#each templates as template (template)}
+				<button class="btn sm" onclick={() => add(template)}
+					><Icon name="plus" size={14} />{m.fields.templates[template].label}</button
+				>
+			{/each}
+		{/if}
 	</div>
 </section>
 
@@ -192,6 +286,10 @@
 	}
 	.small {
 		font-size: var(--type-sm);
+	}
+	.rows-switch {
+		display: grid;
+		gap: var(--space-1);
 	}
 	ol {
 		list-style: none;
