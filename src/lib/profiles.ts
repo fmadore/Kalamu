@@ -87,8 +87,9 @@ export function draftProfile(name: string, columns: ProfileColumn[]): ExportProf
 	};
 }
 
-/** The columns with the one at `from` moved by `by` places, kept within the list. */
-export function moved(columns: ProfileColumn[], from: number, by: number): ProfileColumn[] {
+/** The columns (or an analysis's fields) with the one at `from` moved by `by` places, kept
+ * within the list. */
+export function moved<T>(columns: T[], from: number, by: number): T[] {
 	const to = Math.max(0, Math.min(columns.length - 1, from + by));
 	if (to === from) return columns;
 	const out = [...columns];

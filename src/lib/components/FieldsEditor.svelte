@@ -7,6 +7,7 @@
 	import type { Field } from '#lib/bindings/Field.js';
 	import type { FieldKind } from '#lib/bindings/FieldKind.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { moved } from '#lib/profiles.js';
 
 	let { schema = $bindable() }: { schema: AnalysisSchema } = $props();
 	const m = messages();
@@ -30,10 +31,7 @@
 	}
 
 	function move(i: number, by: number) {
-		const fields = [...schema.fields];
-		const [field] = fields.splice(i, 1);
-		fields.splice(i + by, 0, field);
-		schema.fields = fields;
+		schema.fields = moved(schema.fields, i, by);
 	}
 
 	type Template = keyof typeof m.fields.templates;
