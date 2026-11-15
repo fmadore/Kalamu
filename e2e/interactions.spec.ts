@@ -264,10 +264,14 @@ test('a folder of photographs becomes one document, its pages put in order', asy
 	await expect(main.getByText(/^Sorted by the numbers in the file names/)).toBeVisible();
 
 	// Dragged with the pointer, which the window leaves to the page (its own drag and drop is
-	// kept for files dropped onto it): IMG_10 goes before IMG_2, then IMG_1 below IMG_3.
+	// kept for files dropped onto it): IMG_10 goes before IMG_2, then IMG_1 below IMG_3. The mouse
+	// goes where the rows are, so the list is brought into view first, as a researcher scrolls to
+	// it: focusing the button above does not always scroll the window in WebKit, which left the
+	// last row below the window's edge, pressed where no row receives the press.
 	const drag = async (name: string, onto: string) => {
 		const row = (file: string) =>
 			order.getByRole('listitem').filter({ has: page.getByText(file, { exact: true }) });
+		await order.scrollIntoViewIfNeeded();
 		const from = await row(name).locator('.name').boundingBox();
 		const to = await row(onto).locator('.name').boundingBox();
 		if (!from || !to) throw new Error('A page is out of view');
