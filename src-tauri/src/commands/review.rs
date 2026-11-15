@@ -3,9 +3,7 @@
 use std::sync::Arc;
 
 use base64::Engine as _;
-use kalamu_core::{
-    Correction, JobId, PageRegions, RowEdit, SetupId, SourceId, SpeakerNames,
-};
+use kalamu_core::{Correction, JobId, PageRegions, RowEdit, SetupId, SourceId, SpeakerNames};
 use kalamu_engine::{ComparisonReport, DiffSpan, JobScores, PieceAudio, PieceView};
 use kalamu_media::OpenSource;
 use tauri::{AppHandle, Manager, State};

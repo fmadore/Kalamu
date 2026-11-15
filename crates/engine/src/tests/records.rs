@@ -56,8 +56,9 @@ impl Provider for Rows {
         let failing = self.failing.lock().unwrap_or_else(|p| p.into_inner());
         if let Some((_, err)) = failing.iter().find(|(n, _)| *n == number) {
             return Err(match err {
-                ProviderError::CutOff { usage } => ProviderError::CutOff {
+                ProviderError::CutOff { usage, reason } => ProviderError::CutOff {
                     usage: usage.clone(),
+                    reason: *reason,
                 },
                 other => ProviderError::InvalidRequest(other.to_string()),
             });
@@ -284,6 +285,7 @@ async fn a_page_cut_off_or_failed_is_marked_and_listed_never_complete() {
                 2,
                 ProviderError::CutOff {
                     usage: Usage::default(),
+                    reason: kalamu_core::CutReason::Limit,
                 },
             ),
             (3, ProviderError::Other("refused".into())),
