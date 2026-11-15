@@ -5,6 +5,7 @@
 import type { Correction } from '../bindings/Correction.js';
 import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import { progressOf } from './mockLarge.js';
+import { mockRegions } from './mockRegions.js';
 import {
 	analysisJob,
 	analysisPieces,
@@ -243,6 +244,8 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 			// The tone stands in for a whole recording, the piece for a span of it.
 			toneUrl ??= URL.createObjectURL(new Blob([toneWav()], { type: 'audio/wav' }));
 			return { path: toneUrl, start_ms: 2_000, end_ms: 8_000, original: true };
+		case 'page_regions':
+			return mockRegions(String(a.jobId), String(a.setupId), Number(a.index));
 		case 'piece_preview':
 		case 'piece_thumbnail':
 			// A synthetic scan as an image: shown everywhere, headless browsers included.

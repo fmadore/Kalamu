@@ -1418,6 +1418,21 @@ export const en = {
 		zoomHint: (key: string) => `${key} + wheel: zoom · drag: move · double-click: zoom in`,
 		turnLeft: 'Turn the page left',
 		turnRight: 'Turn the page right',
+		regionsShow: 'Show text regions',
+		regionsHint:
+			'Outline the blocks, lines and words the model placed on the page; select one to find its text',
+		regionsNone: 'This model did not place the text on this page.',
+		regionsFallback:
+			'This model did not place the text on this page: check the text against the whole page.',
+		regionsLabel: 'Text regions on the page: the arrow keys go from one to the next',
+		regionMarked: 'Marked in the text.',
+		regionNotPlaced:
+			'Not marked in the text: these words stand there more than once, or not exactly as read.',
+		regionNotPlacedCorrected:
+			'Not marked in the text: the page was corrected, and these words no longer stand there once, exactly as read.',
+		regionEstimated:
+			'Approximate: the model placed only the whole block, so its lines and words are estimated.',
+		regionClose: 'Close',
 		play: 'Play',
 		pausePlayback: 'Pause',
 		position: 'Position in this piece',

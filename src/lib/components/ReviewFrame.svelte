@@ -21,6 +21,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { FIELDS, pageKeysStay, scrollableByKeys } from '#lib/keys.js';
 	import { backShortcut, primary, shortcut } from '#lib/platform.js';
+	import type { Rotation } from '#lib/pdf.js';
 	import { columns, layout } from '#lib/review.svelte.js';
 	import { back, canGoBack, returnTo, shortcutsHeld, toast } from '#lib/state.svelte.js';
 	import { describeError } from '#lib/errors.js';
@@ -50,6 +51,9 @@
 		found = false,
 		player,
 		switchable = null,
+		sourceTools,
+		overlay,
+		sourceNote,
 		witness,
 		label,
 		tools,
@@ -97,6 +101,12 @@
 		player?: Snippet;
 		/** A PDF whose text was read: the source pane switches between its page and that text. */
 		switchable?: { onswitch: () => void } | null;
+		/** More tools for a scan, in the source pane's bar. */
+		sourceTools?: Snippet;
+		/** Drawn over the scan, given the zoom and the reader's quarter turns. */
+		overlay?: Snippet<[number, Rotation]>;
+		/** A note over the top of the scan. */
+		sourceNote?: Snippet;
 		/** Whose text or answers lead, over them. */
 		witness: { label: string; siglum?: string | null; note?: string | null; corrected: boolean };
 		/** What the text pane holds, for screen readers. */
@@ -252,6 +262,9 @@
 			{found}
 			{player}
 			{switchable}
+			tools={sourceTools}
+			{overlay}
+			note={sourceNote}
 		/>
 
 		<Splitter

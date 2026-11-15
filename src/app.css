@@ -250,6 +250,13 @@ body {
 	color: var(--on-ink);
 }
 
+/* The place of the text region chosen on the scan: pointed at there, found here, so in the
+   highlighter, as the region itself is. */
+::highlight(region) {
+	background-color: var(--marker);
+	color: var(--on-marker);
+}
+
 h1,
 h2,
 h3 {

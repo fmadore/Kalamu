@@ -16,6 +16,9 @@
 	import MarkedText from './MarkedText.svelte';
 	import PageStrip from './PageStrip.svelte';
 	import ReadingsPopover from './ReadingsPopover.svelte';
+	import RegionLayer from './RegionLayer.svelte';
+	import RegionNote from './RegionNote.svelte';
+	import RegionTools from './RegionTools.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
 	import ScoreFoot from './ScoreFoot.svelte';
 	import SearchBar from './SearchBar.svelte';
@@ -32,7 +35,9 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { shifted } from '#lib/platform.js';
 	import { cutOffNotes, pieceLabel, pieceNumber } from '#lib/pieces.js';
+	import type { Rotation } from '#lib/pdf.js';
 	import { Readings, wordsIn } from '#lib/readings.svelte.js';
+	import { followRegions, Regions } from '#lib/regions.svelte.js';
 	import { layout, Review } from '#lib/review.svelte.js';
 	import { ReviewSearch } from '#lib/reviewSearch.svelte.js';
 	import { FIELDS } from '#lib/keys.js';
@@ -113,6 +118,13 @@
 	const base = $derived(shownText(lead));
 	const corrected = $derived(lead?.corrected_text != null);
 
+	/** Where the text sits on a scan read for its text, drawn over it on request (#84): read
+	 * again for the page shown and whenever its text changes, so places follow a correction. */
+	const offerRegions = $derived(job?.task === 'text_extraction' && review.paged && !showOriginal);
+	// svelte-ignore state_referenced_locally
+	const regions = new Regions(jobId, sourceId);
+	$effect(() => regions.load(setups[0]?.id, index, base, offerRegions));
+
 	/** The witnesses compared with the text shown: each other set-up, and the model itself when
 	 * its text was corrected. */
 	const witnesses = $derived(witnessesOf(setups, viewFor, job?.task, m));
@@ -161,6 +173,12 @@
 		entries: () => entries,
 		textPane: () => textPane,
 		comparePane: () => comparePane
+	});
+	followRegions(regions, {
+		pane: () => textPane,
+		text: () => base,
+		editing: () => editing !== null,
+		redrawn: () => [reading, showDiff, readings.selected]
 	});
 
 	// The passage the player is at is marked in the text, drawn again with the text, and kept in
@@ -390,6 +408,12 @@
 	{/if}
 {/snippet}
 
+{#snippet regionTools()}<RegionTools {regions} />{/snippet}
+{#snippet regionLayer(zoom: number, rotation: Rotation)}
+	{#if regions.shown}<RegionLayer {regions} {zoom} {rotation} />{/if}
+{/snippet}
+{#snippet regionNote()}<RegionNote {regions} />{/snippet}
+
 {#snippet searchBar()}
 	<SearchBar
 		bind:query={finder.query}
@@ -511,6 +535,9 @@
 	text={lead?.source_text ?? review.text}
 	{player}
 	switchable={readText ? { onswitch: () => (originalChosen = !originalChosen) } : null}
+	sourceTools={offerRegions ? regionTools : undefined}
+	overlay={offerRegions ? regionLayer : undefined}
+	sourceNote={offerRegions ? regionNote : undefined}
 	witness={{
 		label: setups[0]?.label ?? '',
 		siglum: setups.length > 1 ? siglum(0) : null,

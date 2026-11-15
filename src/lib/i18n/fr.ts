@@ -1522,6 +1522,21 @@ export const fr: Messages = {
 			`${key} + molette : zoomer · glisser : déplacer · double-clic : agrandir`,
 		turnLeft: 'Faire pivoter la page vers la gauche',
 		turnRight: 'Faire pivoter la page vers la droite',
+		regionsShow: 'Afficher les zones de texte',
+		regionsHint:
+			'Encadre les blocs, les lignes et les mots que le modèle a situés sur la page ; choisissez-en un pour trouver son texte',
+		regionsNone: 'Ce modèle n’a pas situé le texte sur cette page.',
+		regionsFallback:
+			'Ce modèle n’a pas situé le texte sur cette page : comparez le texte à la page entière.',
+		regionsLabel: 'Zones de texte de la page : les flèches passent de l’une à l’autre',
+		regionMarked: 'Marqué dans le texte.',
+		regionNotPlaced:
+			'Non marqué dans le texte : ces mots y figurent plusieurs fois, ou pas exactement tels qu’ils ont été lus.',
+		regionNotPlacedCorrected:
+			'Non marqué dans le texte : la page a été corrigée, et ces mots n’y figurent plus une seule fois tels qu’ils ont été lus.',
+		regionEstimated:
+			'Approximatif : le modèle n’a situé que le bloc entier, ses lignes et ses mots sont donc estimés.',
+		regionClose: 'Fermer',
 		play: 'Lire',
 		pausePlayback: 'Pause',
 		position: 'Position dans ce segment',

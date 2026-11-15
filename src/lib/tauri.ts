@@ -54,6 +54,7 @@ import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
+import type { PageRegions } from './bindings/PageRegions.js';
 import type { PieceAudio } from './bindings/PieceAudio.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
@@ -214,6 +215,9 @@ export const api = {
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>
 		invoke<PagePreview>('piece_preview', { jobId, sourceId, index }),
+	/** Where the text of a piece sits on it, under one set-up, placed in the text shown. */
+	pageRegions: (jobId: string, sourceId: string, setupId: string, index: number) =>
+		invoke<PageRegions>('page_regions', { jobId, sourceId, setupId, index }),
 	/** A page drawn `width` pixels wide, as a small image, for the strip of thumbnails. */
 	pieceThumbnail: (jobId: string, sourceId: string, index: number, width: number) =>
 		invoke<PagePreview>('piece_thumbnail', { jobId, sourceId, index, width }),
