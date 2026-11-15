@@ -5,7 +5,7 @@
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { siglum } from '#lib/apparatus.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -30,7 +30,9 @@
 
 	const m = messages();
 	let drafts = $state<Record<string, Record<string, string>>>({});
-	let error = $state<string | null>(null);
+	/** Saving names, what went wrong said under the list. */
+	const action = new Action();
+	/** The set-up whose names are being saved, whose button waits meanwhile. */
 	let saving = $state<string | null>(null);
 
 	/** The set-ups that labelled speakers in this piece, with their siglum. */
@@ -50,18 +52,14 @@
 	});
 
 	async function save(setup: Setup, view: PieceView) {
-		error = null;
 		saving = setup.id;
-		try {
+		await action.run(async () => {
 			const names = { ...view.speaker_names, ...drafts[setup.id] };
 			await api.saveSpeakerNames(jobId, { setup_id: setup.id, source_id: sourceId, names });
 			await onsaved();
 			toast(m.review.namesSaved);
-		} catch (e) {
-			error = describeError(e, m);
-		} finally {
-			saving = null;
-		}
+		});
+		saving = null;
 	}
 </script>
 
@@ -100,7 +98,7 @@
 			</form>
 		{/each}
 		{#if manyPieces}<p class="muted hint">{m.review.speakersPieces}</p>{/if}
-		{#if error}<p class="error" role="alert">{error}</p>{/if}
+		{#if action.error}<p class="error" role="alert">{action.error}</p>{/if}
 	</section>
 {/if}
 

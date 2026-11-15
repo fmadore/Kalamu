@@ -3,7 +3,7 @@
 	// correction, a translation, or a saved workflow. The text is frozen first (snapshots, #47), so nothing is
 	// read again and a later correction does not change what the new round read.
 	import Icon from './Icon.svelte';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { go, type FromProject } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
@@ -30,7 +30,8 @@
 	const m = messages();
 	const u = m.useText;
 	let menu = $state<HTMLDetailsElement | null>(null);
-	let busy = $state(false);
+	/** Freezing the text; what went wrong goes to the screen that shows the errors. */
+	const action = new Action({ report: (message) => onerror(message) });
 
 	type Choice = 'analyse' | 'correct' | 'translate' | 'workflow';
 	const choices: Choice[] = ['analyse', 'correct', 'translate', 'workflow'];
@@ -43,27 +44,24 @@
 
 	async function choose(choice: Choice) {
 		if (menu) menu.open = false;
-		busy = true;
-		try {
-			const sources = await api.snapshotJob(jobId, setupId, sourceId);
-			if (choice === 'workflow') go({ name: 'workflows', sources, project });
-			else go({ name: 'new', task: TASKS[choice], sources, project });
-		} catch (e) {
-			onerror(describeError(e, m));
-		} finally {
-			busy = false;
-		}
+		await action.run(
+			() => api.snapshotJob(jobId, setupId, sourceId),
+			(sources) => {
+				if (choice === 'workflow') go({ name: 'workflows', sources, project });
+				else go({ name: 'new', task: TASKS[choice], sources, project });
+			}
+		);
 	}
 </script>
 
 <details class="use-text" bind:this={menu}>
-	<summary class="btn" class:sm={small} aria-disabled={busy} title={u.hint}>
+	<summary class="btn" class:sm={small} aria-disabled={action.busy} title={u.hint}>
 		{small ? u.short : u.button}<Icon name="chevron" size={12} />
 	</summary>
 	<ul class="menu" role="list">
 		{#each choices as choice (choice)}
 			<li>
-				<button class="item" onclick={() => choose(choice)} disabled={busy}>
+				<button class="item" onclick={() => choose(choice)} disabled={action.busy}>
 					<Icon name={choice === 'workflow' ? 'workflow' : TASKS[choice]} size={16} />
 					<span>
 						<span class="label">{u[choice]}</span>

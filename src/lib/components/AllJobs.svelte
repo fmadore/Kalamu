@@ -8,7 +8,7 @@
 	import MoreRows from './MoreRows.svelte';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import type { Task } from '#lib/bindings/Task.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { formatDate, formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
 	import {
 		DEFAULT_JOB_LIST_VIEW,
@@ -28,6 +28,8 @@
 	import { api } from '#lib/tauri.js';
 
 	const m = messages();
+	/** Adding to a project and deleting, what went wrong said in an error toast. */
+	const action = new Action({ report: (message) => toast(message, { kind: 'error' }) });
 
 	// The filters and sort as the page was left, remembered on this computer.
 	const VIEW_KEY = 'kalamu.jobs.view';
@@ -110,25 +112,19 @@
 		const project = projects.find((p) => p.project.id === projectId);
 		if (!project) return;
 		const ids = chosen.map((j) => j.id);
-		try {
+		await action.run(async () => {
 			await api.linkJobs(projectId, ids, null);
 			toast(m.allJobs.addedTo(ids.length, project.project.name));
 			selection.clear();
 			await refreshProjects();
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
+		});
 	}
 
 	async function remove() {
 		const ids = chosen.map((j) => j.id);
 		if (ids.length === 0 || anyRunning) return;
 		if (!(await ask(m.allJobs.deleteConfirm(ids.length)))) return;
-		try {
-			await api.deleteJobs(ids);
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
+		await action.run(() => api.deleteJobs(ids));
 		selection.clear();
 		await refreshJobs();
 	}

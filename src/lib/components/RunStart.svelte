@@ -8,6 +8,7 @@
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Workflow } from '#lib/bindings/Workflow.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, type FromProject } from '#lib/state.svelte.js';
@@ -32,8 +33,9 @@
 	let files = $state<InspectedFile[]>([]);
 	let name = $state('');
 	let costs = $state<(number | null | undefined)[]>([]);
-	let error = $state<string | null>(null);
-	let starting = $state(false);
+	/** Starting the run, busy while it starts; adding files says its failure here too, without
+	 * holding Start back. */
+	const action = new Action();
 
 	const sources = $derived(files.flatMap((f) => (f.source ? [f.source] : [])));
 	const catalog = $derived(app.catalog!);
@@ -47,12 +49,12 @@
 
 	async function add(chosen: string[]) {
 		if (chosen.length === 0) return;
-		error = null;
+		action.error = null;
 		try {
 			const known = new Set(files.map((f) => f.path));
 			files = [...files, ...(await api.inspectFiles(chosen.filter((p) => !known.has(p))))];
 		} catch (e) {
-			error = describeError(e, m);
+			action.fail(e);
 		}
 	}
 
@@ -112,9 +114,7 @@
 	}
 
 	async function start() {
-		error = null;
-		starting = true;
-		try {
+		await action.run(async () => {
 			const setups = workflow.steps.flatMap((s) => s.pipeline.setups);
 			const beside = workflow.steps.some((s) => s.pipeline.destination.kind === 'beside_sources');
 			if (!(await mayStart(setups, app.catalog, $state.snapshot(sources), beside))) return;
@@ -127,17 +127,13 @@
 			});
 			await refreshJobs();
 			go({ name: 'workflows', runId: view.run.id });
-		} catch (e) {
-			error = describeError(e, m);
-		} finally {
-			starting = false;
-		}
+		});
 	}
 </script>
 
 <section class="card run" aria-labelledby="run-workflow">
 	<h2 id="run-workflow">{w.runTitle}</h2>
-	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
+	{#if action.error}<p class="chip danger" role="alert">{action.error}</p>{/if}
 	{#if project}<p class="muted">{w.fromProject(project.name)}</p>{/if}
 
 	<div class="files">
@@ -173,7 +169,7 @@
 				<span>{w.runName}</span>
 				<input type="text" bind:value={name} />
 			</label>
-			<button class="btn primary" onclick={start} disabled={starting}
+			<button class="btn primary" onclick={start} disabled={action.busy}
 				><Icon name="play" />{w.start}</button
 			>
 		</div>

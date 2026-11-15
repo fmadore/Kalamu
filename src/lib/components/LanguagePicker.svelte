@@ -3,7 +3,7 @@
 	// in alphabetical order, favourites first. Starring a language saves it in Settings.
 	import Icon from './Icon.svelte';
 	import type { LanguageInfo } from '#lib/bindings/LanguageInfo.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { languageName, messages } from '#lib/i18n/index.js';
 	import { findLanguages, languageLabel } from '#lib/languages.js';
 	import { api } from '#lib/tauri.js';
@@ -25,6 +25,8 @@
 
 	const m = messages();
 	const listId = $props.id();
+	/** Saving the favourites, what went wrong said in an error toast. */
+	const action = new Action({ report: (message) => toast(message, { kind: 'error' }) });
 
 	let query = $state('');
 	let open = $state(false);
@@ -61,11 +63,8 @@
 			? favourites.filter((c) => c !== code)
 			: [...favourites, code];
 		app.settings.favourite_languages = next;
-		try {
-			await api.saveSettings($state.snapshot(app.settings));
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
+		const settings = $state.snapshot(app.settings);
+		await action.run(() => api.saveSettings(settings));
 	}
 
 	/** Arrow keys move between the languages, Escape goes back to the box. */

@@ -6,7 +6,7 @@
 	import Icon from './Icon.svelte';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
 	import type { ProjectSummary } from '#lib/bindings/ProjectSummary.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { giveFocusBack } from '#lib/keys.js';
 	import { deleteJob } from '#lib/jobActions.svelte.js';
@@ -28,6 +28,8 @@
 		onclose: () => void;
 	} = $props();
 	const m = messages();
+	/** Adding to a project and deleting, what went wrong said in an error toast. */
+	const action = new Action({ report: (message) => toast(message, { kind: 'error' }) });
 
 	let box = $state<HTMLElement | null>(null);
 	/** What had the focus when the menu opened, given it back when the menu closes. */
@@ -78,23 +80,17 @@
 
 	async function addTo(p: ProjectSummary) {
 		close();
-		try {
+		await action.run(async () => {
 			await api.linkJob(p.project.id, job.id, null);
 			toast(m.shell.addedTo(p.project.name));
 			// The sidebar counts each project's documents: this one has more.
 			void refreshProjects();
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
+		});
 	}
 
 	async function remove() {
 		close();
-		try {
-			await deleteJob(job.id);
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
+		await action.run(() => deleteJob(job.id));
 	}
 </script>
 

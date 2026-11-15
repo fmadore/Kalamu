@@ -41,7 +41,7 @@
 		secondsPerPage,
 		toast
 	} from '#lib/state.svelte.js';
-	import { describeError } from '#lib/errors.js';
+	import { Action } from '#lib/action.svelte.js';
 	import type { ModelsBy } from '#lib/tiers.js';
 
 	let {
@@ -80,17 +80,17 @@
 
 	/** Adds the project's names to those a set-up spells, after the researcher's own. */
 	async function addProjectNames(d: Draft) {
-		try {
+		await action.run(async () => {
 			const names = (await projectNames?.()) ?? [];
 			if (names.length === 0) {
 				toast(m.newJob.vocabulary.noProjectNames);
 				return;
 			}
 			d.vocabulary = vocabularyOf([d.vocabulary, ...names].join('\n'));
-		} catch (e) {
-			toast(describeError(e, m), { kind: 'error' });
-		}
+		});
 	}
+	/** Reading the project's names, what went wrong said in an error toast. */
+	const action = new Action({ report: (message) => toast(message, { kind: 'error' }) });
 
 	const m = messages();
 	const catalog = $derived(app.catalog!);
