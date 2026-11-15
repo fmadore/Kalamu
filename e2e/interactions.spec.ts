@@ -302,3 +302,75 @@ test('New job says why Start waits for the language to translate into', async ({
 	await expect(start).toBeDisabled();
 	await expect(start).toHaveAccessibleDescription('Choose the language to translate into.');
 });
+
+test('the language box opens its list, moves through it with the arrows and takes the first found with Enter', async ({
+	page
+}) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Translate a text/ }).click();
+	await main.getByRole('button', { name: 'Add files' }).click();
+	const box = main.getByRole('searchbox', { name: 'Type to find a language' });
+	const list = page.locator(`[id="${await box.getAttribute('aria-controls')}"]`);
+	const picks = list.locator('button.pick');
+
+	// ↓ from the box goes to the first language, ↓ and ↑ move, ↑ from the first goes back.
+	await box.focus();
+	await expect(list).toBeVisible();
+	await page.keyboard.press('ArrowDown');
+	await expect(picks.first()).toBeFocused();
+	await page.keyboard.press('ArrowDown');
+	await expect(picks.nth(1)).toBeFocused();
+	await page.keyboard.press('ArrowUp');
+	await expect(picks.first()).toBeFocused();
+	await page.keyboard.press('ArrowUp');
+	await expect(box).toBeFocused();
+
+	// Escape from the list goes back to the box, which opens the list again as it takes the
+	// focus; Escape in the box closes it.
+	await page.keyboard.press('ArrowDown');
+	await expect(picks.first()).toBeFocused();
+	await page.keyboard.press('Escape');
+	await expect(box).toBeFocused();
+	await expect(list).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(list).toBeHidden();
+
+	// Typing opens it again; Enter takes the first language found as a chip, empties the box and
+	// keeps the focus in it.
+	const chips = main.getByRole('button', { name: /^Remove / });
+	const before = await chips.count();
+	await page.keyboard.type('a');
+	await expect(list).toBeVisible();
+	await expect(picks.first()).toBeVisible();
+	await page.keyboard.press('Enter');
+	await expect(chips).toHaveCount(before + 1);
+	await expect(box).toHaveValue('');
+	await expect(box).toBeFocused();
+});
+
+test('the language data box takes the same keys, in Settings', async ({ page }) => {
+	await open(page, 'settings');
+	const main = page.getByRole('main');
+	await main.getByRole('tab', { name: 'Offline models' }).click();
+	const box = main.getByRole('searchbox', { name: 'Find a language by its name' }).first();
+	await box.scrollIntoViewIfNeeded();
+	const list = page.locator(`[id="${await box.getAttribute('aria-controls')}"]`);
+
+	// The sample data has a download running: the list says so, and its languages wait, out of
+	// the arrows' reach, the focus staying in the box.
+	await box.focus();
+	await expect(list).toBeVisible();
+	await expect(list).toContainText('One download at a time');
+	await expect(list.getByRole('button').first()).toBeDisabled();
+	await page.keyboard.press('ArrowDown');
+	await expect(box).toBeFocused();
+	// Enter takes nothing while it runs; Escape closes the list, and typing opens it again.
+	await page.keyboard.press('Enter');
+	await expect(list).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(list).toBeHidden();
+	await page.keyboard.type('ar');
+	await expect(list).toBeVisible();
+	await expect(list).toContainText('Arabic');
+});
