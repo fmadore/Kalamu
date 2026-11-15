@@ -70,6 +70,21 @@ pub struct TaskRules {
     pub reads_text_layer: bool,
     /// Several images can be read as the pages of one document.
     pub page_documents: bool,
+    /// For an analysis whose fields are one repeating group (records), which reads each page
+    /// on its own: what it offers then, in place of `samples`, `splits_spreads` and
+    /// `page_documents`. `None` for the other tasks.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub by_page: Option<PageReading>,
+}
+
+/// What a task offers when it reads page by page.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct PageReading {
+    pub samples: bool,
+    pub splits_spreads: bool,
+    pub page_documents: bool,
 }
 
 fn refs<'a>(
@@ -108,6 +123,12 @@ pub fn task_rules(catalog: &Catalog) -> Vec<TaskRules> {
             splits_spreads: task.splits_spreads(),
             reads_text_layer: task.reads_text_layer(),
             page_documents: task.reads_page_documents(),
+            // Records are read as a table of contents' pages are.
+            by_page: (task == Task::Analysis).then_some(PageReading {
+                samples: true,
+                splits_spreads: true,
+                page_documents: true,
+            }),
             models: refs(catalog, task, catalog.models_for(task)),
             merge_models: if task == Task::Contents {
                 refs(catalog, task, catalog.merge_models())
@@ -144,10 +165,16 @@ impl Engine {
     /// read its sources, or name a model its provider no longer serves, and a translation with no
     /// language to translate into. A model the catalogue
     /// does not list is left to its provider, which refuses what it cannot take; one replaced by
-    /// a newer model still runs, as the pipeline or comparison that named it asked.
-    pub(crate) fn check_job(catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
+    /// a newer model still runs, as the pipeline or comparison that named it asked. `by_page`
+    /// for records, which read a document of images page by page.
+    pub(crate) fn check_job(
+        catalog: &Catalog,
+        new: &NewJob,
+        by_page: bool,
+    ) -> Result<(), EngineError> {
+        let pages = new.task.reads_page_documents() || by_page;
         let unread = |s: &&kalamu_core::SourceFile| {
-            !new.task.reads_source(s.kind) || (s.is_page_set() && !new.task.reads_page_documents())
+            !new.task.reads_source(s.kind) || (s.is_page_set() && !pages)
         };
         if let Some(source) = new.sources.iter().find(unread) {
             return Err(EngineError::UnsupportedSource(source.file_name.clone()));
@@ -175,8 +202,13 @@ impl Engine {
     /// Decided by media's own rule ([`kalamu_media::readable`]) on what the model would be sent
     /// ([`crate::piece::accepted_inputs`]), so the job is refused for exactly what each piece
     /// would have failed on. A model the catalogue does not list is left to its provider.
-    pub(crate) fn check_reading(&self, catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
-        let reading = if new.task == Task::Analysis {
+    pub(crate) fn check_reading(
+        &self,
+        catalog: &Catalog,
+        new: &NewJob,
+        by_page: bool,
+    ) -> Result<(), EngineError> {
+        let reading = if new.task == Task::Analysis && !by_page {
             Reading::Whole
         } else {
             Reading::Pieces
@@ -291,7 +323,7 @@ mod tests {
             output: Default::default(),
         };
         assert!(matches!(
-            Engine::check_job(&catalog, &new),
+            Engine::check_job(&catalog, &new, false),
             Err(EngineError::UnsupportedModel(m)) if m == whisper
         ));
         // The same model transcribes.
@@ -299,7 +331,7 @@ mod tests {
             task: Task::AudioTranscription,
             ..new
         };
-        assert!(Engine::check_job(&catalog, &new).is_ok());
+        assert!(Engine::check_job(&catalog, &new, false).is_ok());
     }
 
     fn fable_5_1_job() -> NewJob {
@@ -339,7 +371,7 @@ mod tests {
         );
         assert!(old.is_some_and(|m| !m.retired && !m.recommended && !m.provider_default));
         assert!(entry("claude-fable-5-2").is_some_and(|m| m.replaced_by.is_none()));
-        assert!(Engine::check_job(&catalog, &fable_5_1_job()).is_ok());
+        assert!(Engine::check_job(&catalog, &fable_5_1_job(), false).is_ok());
     }
 
     /// Once its provider no longer serves it, a job naming it is refused before anything is
@@ -353,7 +385,7 @@ mod tests {
             }
         }
         assert!(matches!(
-            Engine::check_job(&catalog, &fable_5_1_job()),
+            Engine::check_job(&catalog, &fable_5_1_job(), false),
             Err(EngineError::RetiredModel(name)) if name == "Claude Fable 5.1"
         ));
         let rules = task_rules(&catalog);

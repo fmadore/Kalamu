@@ -69,6 +69,13 @@ pub enum EngineError {
     StepNotFinished,
     #[error(transparent)]
     Unit(#[from] kalamu_core::UnitError),
+    /// A comparison of analyses some of which read page by page, one row per entry, and others
+    /// whole documents: their results would not line up.
+    #[error("An analysis read page by page cannot be compared with one read whole")]
+    MixedReading,
+    /// A change to a page's rows that cannot be made.
+    #[error(transparent)]
+    Rows(#[from] kalamu_core::RowError),
 }
 
 impl EngineError {
@@ -101,6 +108,8 @@ impl EngineError {
             Self::Step { source, .. } => source.code(),
             Self::StepNotFinished => "workflow.not_finished",
             Self::Unit(e) => e.code(),
+            Self::MixedReading => "job.mixed_reading",
+            Self::Rows(e) => e.code(),
         }
     }
 }

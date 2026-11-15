@@ -30,6 +30,7 @@ mod names;
 mod ordered;
 mod pages;
 mod reading;
+mod records;
 mod snapshot;
 mod sources;
 mod workflow;
