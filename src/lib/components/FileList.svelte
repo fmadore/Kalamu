@@ -5,7 +5,8 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { duration, rulesFor, warningText } from '#lib/newJob.js';
+	import { duration, warningText } from '#lib/fileNotes.js';
+	import { rulesFor } from '#lib/newJob.js';
 	import { baseName } from '#lib/paths.js';
 	import { app } from '#lib/state.svelte.js';
 	import { pickFiles, pickFolder } from '#lib/dialogs.js';

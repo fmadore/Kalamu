@@ -28,11 +28,11 @@
 		replacedModel,
 		providerDefault,
 		suggestedReasoning,
-		rulesFor,
 		takesVocabulary,
 		translates,
 		vocabularyOf
-	} from '#lib/newJob.js';
+	} from '#lib/newJobModels.js';
+	import { rulesFor } from '#lib/newJob.js';
 	import { languageLabel } from '#lib/languages.js';
 	import {
 		app,

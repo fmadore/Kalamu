@@ -10,7 +10,8 @@
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { TaskRules } from '#lib/bindings/TaskRules.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { type Draft, mergeInfo, type Mode, offeredFormats } from '#lib/newJob.js';
+	import { type Mode, offeredFormats } from '#lib/newJob.js';
+	import { type Draft, mergeInfo } from '#lib/newJobModels.js';
 
 	let {
 		mode,

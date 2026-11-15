@@ -5,7 +5,8 @@
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import { listNames, type Messages } from './i18n/index.js';
-import { duration, type Mode } from './newJob.js';
+import { duration } from './fileNotes.js';
+import type { Mode } from './newJob.js';
 
 /** The drawing a step is shown by. */
 export type Art =

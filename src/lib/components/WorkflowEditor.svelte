@@ -15,7 +15,8 @@
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { describeError, errorStep } from '#lib/errors.js';
 	import { languageLabel, offeredLanguages } from '#lib/languages.js';
-	import { acceptsPrompt, findModel, MODES, rulesFor, taskOf } from '#lib/newJob.js';
+	import { MODES, rulesFor, taskOf } from '#lib/newJob.js';
+	import { acceptsPrompt, findModel } from '#lib/newJobModels.js';
 	import { messages } from '#lib/i18n/index.js';
 	import {
 		app,

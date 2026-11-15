@@ -33,26 +33,19 @@
 	import type { Pace } from '#lib/bindings/Pace.js';
 	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import {
-		acceptsPrompt,
-		type Draft,
 		draftsOf,
 		followingAnalysis,
 		formPipeline,
 		inputOf,
 		jobSettings as settingsOf,
 		type Mode,
-		modelInfo,
 		nameOfFile,
-		newDraft,
 		offeredFormats,
 		pagesPerCallOf,
-		providerDefault,
-		dictionaryNames,
 		forgetForm,
 		formToOpen,
 		keepForm,
 		readersOf,
-		readsInput,
 		readsKind,
 		suggestedPreset,
 		rulesFor,
@@ -60,9 +53,18 @@
 		suggestionFits,
 		taskOf,
 		togetherOf,
-		toRequest,
 		type Together
 	} from '#lib/newJob.js';
+	import {
+		acceptsPrompt,
+		type Draft,
+		dictionaryNames,
+		modelInfo,
+		newDraft,
+		providerDefault,
+		readsInput,
+		toRequest
+	} from '#lib/newJobModels.js';
 	import {
 		type Grouping,
 		imageSources,

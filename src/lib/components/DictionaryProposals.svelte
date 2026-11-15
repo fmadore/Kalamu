@@ -11,7 +11,8 @@
 	import type { ProposalsView } from '#lib/bindings/ProposalsView.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { formatDate, formatUsd, messages } from '#lib/i18n/index.js';
-	import { modelsFor, providerDefault, rulesFor } from '#lib/newJob.js';
+	import { rulesFor } from '#lib/newJob.js';
+	import { modelsFor, providerDefault } from '#lib/newJobModels.js';
 	import { app, go, hasKey, refreshJobs } from '#lib/state.svelte.js';
 	import { askConsent, providersOf } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';

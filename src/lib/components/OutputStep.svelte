@@ -8,7 +8,8 @@
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { type Draft, type Mode, offeredFormats, rulesFor } from '#lib/newJob.js';
+	import { type Mode, offeredFormats, rulesFor } from '#lib/newJob.js';
+	import type { Draft } from '#lib/newJobModels.js';
 	import { pickFolder } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
 	import { app } from '#lib/state.svelte.js';
