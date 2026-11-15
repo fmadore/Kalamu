@@ -9,7 +9,8 @@
 	import type { Task } from '#lib/bindings/Task.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { type Draft, type Mode, offeredFormats, rulesFor } from '#lib/newJob.js';
-	import { api, pickFolder } from '#lib/tauri.js';
+	import { pickFolder } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 	import { app } from '#lib/state.svelte.js';
 
 	let {

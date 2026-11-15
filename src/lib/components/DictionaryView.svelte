@@ -22,7 +22,8 @@
 	import { Paging, rowIndex } from '#lib/paging.svelte.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { toast } from '#lib/state.svelte.js';
-	import { api, askForFolders, pickJsonSave } from '#lib/tauri.js';
+	import { askForFolders, pickJsonSave } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 
 	let {
 		projectId,

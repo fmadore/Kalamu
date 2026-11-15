@@ -11,6 +11,53 @@
     "citation",
     "rights"
   ],
+  "extensions": {
+    "audio": [
+      "mp3",
+      "wav",
+      "m4a",
+      "aac",
+      "flac",
+      "ogg",
+      "opus",
+      "wma",
+      "aiff",
+      "aif"
+    ],
+    "image": [
+      "png",
+      "jpg",
+      "jpeg",
+      "tif",
+      "tiff",
+      "webp",
+      "bmp",
+      "heic",
+      "heif"
+    ],
+    "pdf": [
+      "pdf"
+    ],
+    "text": [
+      "txt",
+      "md",
+      "docx",
+      "csv"
+    ],
+    "video": [
+      "mp4",
+      "mov",
+      "mkv",
+      "avi",
+      "webm",
+      "wmv",
+      "m4v"
+    ]
+  },
+  "layout_formats": [
+    "searchable_pdf",
+    "alto"
+  ],
   "queue_reasons": [
     "failed",
     "not_read",
@@ -18,6 +65,42 @@
     "disagrees",
     "stale",
     "not_reviewed"
+  ],
+  "task_sources": {
+    "analysis": [
+      "text",
+      "pdf",
+      "image"
+    ],
+    "audio_transcription": [
+      "audio",
+      "video",
+      "youtube"
+    ],
+    "contents": [
+      "pdf",
+      "image"
+    ],
+    "text_correction": [
+      "text",
+      "pdf"
+    ],
+    "text_extraction": [
+      "pdf",
+      "image"
+    ],
+    "translation": [
+      "text",
+      "pdf"
+    ]
+  },
+  "tasks": [
+    "text_extraction",
+    "text_correction",
+    "translation",
+    "analysis",
+    "contents",
+    "audio_transcription"
   ],
   "text_tasks": [
     "text_extraction",

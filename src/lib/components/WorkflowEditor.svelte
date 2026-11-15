@@ -27,7 +27,8 @@
 		type FromProject
 	} from '#lib/state.svelte.js';
 	import { baseName } from '#lib/paths.js';
-	import { api, ask, askForFolders, pickJsonSave } from '#lib/tauri.js';
+	import { ask, askForFolders, pickJsonSave } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 	import {
 		blankWorkflow,
 		type Example,

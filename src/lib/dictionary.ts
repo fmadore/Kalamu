@@ -4,6 +4,7 @@
 
 import type { DictionaryRow } from './bindings/DictionaryRow.js';
 import type { Item } from './bindings/Item.js';
+import { readerOrder } from './i18n/index.js';
 import { folded } from './search.js';
 
 export type RowFilter = 'all' | 'to_review' | 'similar' | 'reviewed' | 'unseen';
@@ -44,8 +45,9 @@ export function itemOf(row: DictionaryRow): Item {
 export function proposedLabel(rows: DictionaryRow[]): string {
 	const reviewed = rows.find((r) => r.entry !== null && r.reviewed);
 	if (reviewed) return reviewed.label;
+	const order = readerOrder();
 	const best = [...rows].sort(
-		(a, b) => b.documents - a.documents || a.label.localeCompare(b.label)
+		(a, b) => b.documents - a.documents || order.compare(a.label, b.label)
 	)[0];
 	return best?.label ?? '';
 }

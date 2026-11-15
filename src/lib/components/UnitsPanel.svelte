@@ -13,7 +13,8 @@
 	import { enginePages, pieceLabel, typedPages } from '#lib/pieces.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { go } from '#lib/state.svelte.js';
-	import { api, pickFolder } from '#lib/tauri.js';
+	import { pickFolder } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 
 	let {
 		jobId,

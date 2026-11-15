@@ -7,7 +7,7 @@ use docx_rs::{
     TableRowChild,
 };
 
-use kalamu_core::{PageHalf, PieceRef};
+use kalamu_core::{InputKind, PageHalf, PieceRef};
 
 use crate::MediaError;
 
@@ -18,7 +18,8 @@ pub struct TextSource {
 impl TextSource {
     pub fn open(path: &Path) -> Result<Self, MediaError> {
         let ext = extension(path);
-        if !matches!(ext.as_str(), "txt" | "md" | "csv" | "docx") {
+        // The one table of what is read as text, which the file pickers are given too.
+        if !InputKind::Text.extensions().contains(&ext.as_str()) {
             return Err(MediaError::UnsupportedKind);
         }
         Ok(Self {

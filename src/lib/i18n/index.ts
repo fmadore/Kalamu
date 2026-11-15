@@ -56,6 +56,27 @@ export function placeholders(message: string): ({ text: string } | { name: strin
 		.filter((part) => !('text' in part) || part.text !== '');
 }
 
+const collators = new Map<string, Intl.Collator>();
+
+/**
+ * Text in the order a reader of the interface language expects ("Éric" beside "Eric", not after
+ * "Zoé"). Each list states how it differs from the plain order: `numeric` puts `part 2` before
+ * `part 10`, `sensitivity: 'base'` sets capitals and accents aside. `tag` fixes the language
+ * instead, for a catalog given explicitly.
+ */
+export function readerOrder(
+	options: Intl.CollatorOptions = {},
+	tag: string = CATALOGS[current].locale.tag
+): Intl.Collator {
+	const key = `${tag} ${JSON.stringify(options)}`;
+	let collator = collators.get(key);
+	if (!collator) {
+		collator = new Intl.Collator(tag, options);
+		collators.set(key, collator);
+	}
+	return collator;
+}
+
 /** Names joined as the interface language joins them: "Whisper Base and Mistral OCR". */
 export function listNames(names: string[]): string {
 	return new Intl.ListFormat(CATALOGS[current].locale.tag, { type: 'conjunction' }).format(names);

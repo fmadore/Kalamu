@@ -5,6 +5,7 @@
 import type { JobStatus } from './bindings/JobStatus.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { Task } from './bindings/Task.js';
+import { readerOrder } from './i18n/index.js';
 import { folded } from './search.js';
 
 /** How many finished jobs the sidebar lists before its link to the Jobs page. */
@@ -74,8 +75,8 @@ export type JobSort = 'newest' | 'oldest' | 'name';
 
 /** Newest or oldest first, or by name as a reader sorts (`part 2` before `part 10`). */
 export function sortJobs(jobs: JobSummary[], by: JobSort): JobSummary[] {
-	const name = (a: JobSummary, b: JobSummary) =>
-		a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+	const order = readerOrder({ numeric: true, sensitivity: 'base' });
+	const name = (a: JobSummary, b: JobSummary) => order.compare(a.name, b.name);
 	const sorted = [...jobs];
 	switch (by) {
 		case 'newest':

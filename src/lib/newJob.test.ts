@@ -13,6 +13,7 @@ import {
 	suggestedPreset,
 	acceptsPrompt,
 	dictionaryNames,
+	documentExtensions,
 	draftsOf,
 	followingAnalysis,
 	forgetForm,
@@ -21,6 +22,7 @@ import {
 	inputOf,
 	jobSettings,
 	keepForm,
+	LAYOUT_FORMATS,
 	mergeDefault,
 	mergeModelsFor,
 	modelInfo,
@@ -39,6 +41,7 @@ import {
 	rulesFor,
 	suggestName,
 	suggestionFits,
+	taskExtensions,
 	taskOf,
 	togetherOf,
 	toRequest,
@@ -550,5 +553,47 @@ describe('the New job form kept between visits', () => {
 			expect(formToOpen(opening)).toBeNull();
 			expect(formToOpen({})).toBeNull();
 		}
+	});
+});
+
+describe('the files each task’s picker offers', () => {
+	const PAGES = ['pdf', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'bmp', 'heic', 'heif'];
+	const TEXT = ['txt', 'md', 'docx', 'csv'];
+
+	it('offers the extensions of each kind of source the task reads, as Rust lists them', () => {
+		expect(taskExtensions('text_extraction')).toEqual(PAGES);
+		expect(taskExtensions('contents')).toEqual(PAGES);
+		expect(taskExtensions('text_correction')).toEqual([...TEXT, 'pdf']);
+		expect(taskExtensions('translation')).toEqual([...TEXT, 'pdf']);
+		expect(taskExtensions('analysis')).toEqual([...TEXT, ...PAGES]);
+		const recordings = taskExtensions('audio_transcription');
+		for (const ext of ['mp3', 'aiff', 'aif', 'wma', 'mp4', 'webm', 'wmv', 'm4v']) {
+			expect(recordings).toContain(ext);
+		}
+		expect(recordings).not.toContain('pdf');
+	});
+
+	it('agrees with the kinds the engine’s rules say each task reads', () => {
+		for (const r of rules) {
+			const offered = taskExtensions(r.task);
+			expect(offered.length > 0).toBe(true);
+			if (!r.sources.includes('text')) expect(offered).not.toContain('txt');
+			if (!r.sources.includes('pdf')) expect(offered).not.toContain('pdf');
+			if (!r.sources.includes('audio')) expect(offered).not.toContain('mp3');
+		}
+	});
+
+	it('never offers a spreadsheet, which no task reads', () => {
+		expect(documentExtensions()).not.toContain('xlsx');
+	});
+
+	it('offers a project every file some task reads, once each', () => {
+		const all = documentExtensions();
+		expect(new Set(all).size).toBe(all.length);
+		for (const ext of [...PAGES, ...TEXT, 'mp3', 'mov']) expect(all).toContain(ext);
+	});
+
+	it('names the formats that need a model reporting layout, from Rust', () => {
+		expect(LAYOUT_FORMATS).toEqual(['searchable_pdf', 'alto']);
 	});
 });

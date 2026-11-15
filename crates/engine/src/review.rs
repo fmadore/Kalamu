@@ -5,10 +5,10 @@ use std::collections::BTreeMap;
 
 use kalamu_core::list_items::{holds_item, rename_item};
 use kalamu_core::speakers::{labels, rename_segments, rename_text};
+use kalamu_core::timed::timed_lines;
 use kalamu_core::{
     Correction, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task, Timestamp,
 };
-use kalamu_export::timed_lines;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 

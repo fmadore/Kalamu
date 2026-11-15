@@ -6,7 +6,8 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatDay, localeNames, messages, placeholders } from '#lib/i18n/index.js';
 	import { osNames } from '#lib/platform.js';
-	import { api, ask } from '#lib/tauri.js';
+	import { ask } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 	import {
 		app,
 		applyLanguage,

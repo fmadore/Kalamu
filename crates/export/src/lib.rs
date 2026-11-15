@@ -20,7 +20,7 @@ pub mod units;
 use kalamu_core::{ExportDocument, ExportFormat, Exporter};
 
 pub use table::table_csv;
-pub use timeline::{cues, segments_from_text, timed_lines, timeline};
+pub use timeline::{cues, timeline};
 
 /// Every exporter, in the order formats are offered.
 pub fn all() -> Vec<Box<dyn Exporter>> {
@@ -94,7 +94,7 @@ fn body_text(doc: &ExportDocument, index: usize) -> String {
                 return part.text.trim().to_string();
             }
         };
-        parsed = segments_from_text(&part.text, offset);
+        parsed = kalamu_core::timed::segments_from_text(&part.text, offset);
         if parsed.is_empty() {
             return part.text.trim().to_string();
         }

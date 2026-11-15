@@ -6,6 +6,10 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[features]
+# Exposes `test_support` (writing a file for the interface) to other crates' tests.
+test-support = []
+
 [dependencies]
 async-trait.workspace = true
 hex.workspace = true

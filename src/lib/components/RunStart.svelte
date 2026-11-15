@@ -11,7 +11,8 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, type FromProject } from '#lib/state.svelte.js';
-	import { api, mayStart, pickDocuments } from '#lib/tauri.js';
+	import { mayStart, pickDocuments } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 
 	let {
 		workflow,

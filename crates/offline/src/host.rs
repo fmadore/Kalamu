@@ -1,5 +1,5 @@
-//! The llama.cpp programs the offline engines built on it share: the OCR models (`vision.rs`)
-//! and the language models (`llm.rs`). One host for both, so they take turns: each run takes
+//! The llama.cpp programs the offline engines built on it share: the OCR models (`vision/`)
+//! and the language models (`llm/`). One host for both, so they take turns: each run takes
 //! every core the app can spare, or the graphics processor, and two at once would only slow
 //! both and could exhaust the graphics processor's memory. The graphics builds are asked once a
 //! session which device they find, and a run that fails there where it does not on the

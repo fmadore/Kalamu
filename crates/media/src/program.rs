@@ -3,7 +3,7 @@
 //!
 //! Both pipes are read on threads of their own while the program runs, so neither fills and
 //! stalls it, and every read counts as a sign of life. FFmpeg's runs (`ffmpeg.rs`) and the
-//! offline engines' llama.cpp programs (`offline/src/llama.rs`) both run here, each with the
+//! offline engines' llama.cpp programs (`offline/src/llama/`) both run here, each with the
 //! limits its program's way of working allows ([`Limits`]).
 //!
 //! Every program Kalamu starts, here or by the Whisper helper's own loop, is started with

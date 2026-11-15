@@ -5,6 +5,7 @@
 import type { Catalog } from './bindings/Catalog.js';
 import type { ExportFormat } from './bindings/ExportFormat.js';
 import type { ImageDocument } from './bindings/ImageDocument.js';
+import type { InputKind } from './bindings/InputKind.js';
 import type { InputWarning } from './bindings/InputWarning.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { JobSettings } from './bindings/JobSettings.js';
@@ -19,6 +20,7 @@ import type { Refused } from './bindings/Refused.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { Task } from './bindings/Task.js';
 import type { TaskRules } from './bindings/TaskRules.js';
+import lists from './coreLists.json';
 import type { Messages } from './i18n/index.js';
 import type { FromProject } from './state.svelte.js';
 import type { Grouping } from './pageOrder.js';
@@ -189,9 +191,25 @@ export function mergeDefault(catalog: Catalog, rule: TaskRules, provider: string
 	return [...models].sort((a, b) => price(a) - price(b))[0]?.id ?? '';
 }
 
-/** Formats written only from a model that reports where text sits on the page, as the
- * engine's `ExportFormat::needs_layout` says. */
-const LAYOUT_FORMATS: ExportFormat[] = ['searchable_pdf', 'alto'];
+/** Formats written only from a model that reports where text sits on the page, as
+ * `ExportFormat::needs_layout` says (written by `cargo test`). */
+export const LAYOUT_FORMATS = lists.layout_formats as ExportFormat[];
+
+/** The extensions of each kind of file, from `InputKind::EXTENSIONS`: the table Rust reads a
+ * file's kind from. */
+const EXTENSIONS = lists.extensions as Partial<Record<InputKind, string[]>>;
+
+/** The files a task reads, by extension: those of each kind of source it reads
+ * (`Task::source_kinds`), so the picker offers what the engine reads and nothing else. */
+export function taskExtensions(task: Task): string[] {
+	const kinds = (lists.task_sources as Record<Task, InputKind[]>)[task] ?? [];
+	return kinds.flatMap((kind) => EXTENSIONS[kind] ?? []);
+}
+
+/** Files of any kind some task reads, for a project's documents. */
+export function documentExtensions(): string[] {
+	return [...new Set((lists.tasks as Task[]).flatMap(taskExtensions))];
+}
 
 /**
  * The formats to offer: a searchable PDF and ALTO only when a chosen model reports where text

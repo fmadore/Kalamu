@@ -8,7 +8,7 @@
 	import { duration, rulesFor, warningText } from '#lib/newJob.js';
 	import { baseName } from '#lib/paths.js';
 	import { app } from '#lib/state.svelte.js';
-	import { pickFiles, pickFolder } from '#lib/tauri.js';
+	import { pickFiles, pickFolder } from '#lib/dialogs.js';
 
 	let {
 		files = $bindable(),

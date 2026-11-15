@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { en } from './en.js';
 import { fr } from './fr.js';
-import { placeholders, resolveLocale } from './index.js';
+import { locale, placeholders, readerOrder, resolveLocale, setLocale } from './index.js';
 import { CREDIT_URLS } from '../credits.js';
 
 /** Every key of a catalog, as dotted paths, with what each holds: text, a list or a function
@@ -82,5 +82,46 @@ describe('placeholders', () => {
 			expect(CREDIT_URLS).toHaveProperty(part.name);
 			expect(en.settings.creditNames).toHaveProperty(part.name);
 		}
+	});
+});
+
+describe('the reader order', () => {
+	afterEach(() => setLocale('en'));
+
+	it('puts accented names beside their plain letters in French', () => {
+		setLocale('fr');
+		expect(locale()).toBe('fr');
+		const names = ['Zoé', 'Émile', 'eric', 'Ousmane', 'Éric', 'Abdou', 'Œuvre'];
+		expect([...names].sort(readerOrder().compare)).toEqual([
+			'Abdou',
+			'Émile',
+			'eric',
+			'Éric',
+			'Œuvre',
+			'Ousmane',
+			'Zoé'
+		]);
+		// Setting capitals and accents aside makes them the same name.
+		expect(readerOrder({ sensitivity: 'base' }).compare('Éric', 'eric')).toBe(0);
+		expect(readerOrder().compare('Éric', 'eric')).not.toBe(0);
+	});
+
+	it('reads the numbers in names as numbers only when asked', () => {
+		const parts = ['part 10', 'part 2', 'Part 1'];
+		expect([...parts].sort(readerOrder({ numeric: true, sensitivity: 'base' }).compare)).toEqual([
+			'Part 1',
+			'part 2',
+			'part 10'
+		]);
+		expect([...parts].sort(readerOrder().compare)).toEqual(['Part 1', 'part 10', 'part 2']);
+	});
+
+	it('follows the interface language unless a language is given', () => {
+		setLocale('fr');
+		expect(readerOrder().resolvedOptions().locale).toBe('fr');
+		expect(readerOrder({}, 'en').resolvedOptions().locale).toBe('en');
+		setLocale('en');
+		expect(readerOrder().resolvedOptions().locale).toBe('en');
+		expect(readerOrder({ numeric: true })).toBe(readerOrder({ numeric: true }));
 	});
 });

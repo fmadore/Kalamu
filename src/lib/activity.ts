@@ -4,6 +4,7 @@
 import type { JobStatus } from './bindings/JobStatus.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { Task } from './bindings/Task.js';
+import { readerOrder } from './i18n/index.js';
 
 export type Period = 'any' | 'week' | 'month' | 'year';
 
@@ -68,7 +69,7 @@ export function activityChoices(jobs: JobSummary[]): {
 	workflows: string[];
 } {
 	const sorted = <T extends string>(values: Iterable<T>) =>
-		[...new Set(values)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+		[...new Set(values)].sort(readerOrder({ numeric: true }).compare);
 	return {
 		tasks: sorted(jobs.map((j) => j.task)),
 		statuses: sorted(jobs.map((j) => j.status)),

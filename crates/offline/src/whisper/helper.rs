@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use kalamu_core::StopSignal;
-use kalamu_media::program;
+use kalamu_media::{bundled, program};
 
 use super::engine::{self, Decode, Devices, RawSegment, Request, Response};
 use crate::diagnostics;
@@ -57,12 +57,8 @@ fn command(program: &Path) -> Command {
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        // CREATE_NO_WINDOW: the helper is a console program; no console may flash up.
-        command.creation_flags(0x0800_0000);
-    }
+    // The helper is a console program; no console may flash up.
+    bundled::quiet(&mut command);
     command
 }
 

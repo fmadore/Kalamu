@@ -547,17 +547,6 @@ fn every_format_has_one_exporter() {
     assert_eq!(formats.len(), 9);
 }
 
-#[test]
-fn timestamps_in_text_become_segments() {
-    let segs = segments_from_text("[00:01:05] Speaker 2: Oui.\ncontinued\n[01:10] Hm.", 1000);
-    assert_eq!(segs.len(), 2);
-    assert_eq!(segs[0].start_ms, 66_000);
-    assert_eq!(segs[0].speaker.as_deref(), Some("Speaker 2"));
-    assert_eq!(segs[0].text, "Oui. continued");
-    assert_eq!(segs[1].start_ms, 71_000);
-    assert_eq!(segs[1].speaker, None);
-}
-
 /// A one-page A4 PDF at `path`.
 fn a4_pdf(path: &std::path::Path) {
     use lopdf::{Document, Object, Stream, dictionary};

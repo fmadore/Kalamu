@@ -10,7 +10,7 @@
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { messages, readerOrder } from '#lib/i18n/index.js';
 	import {
 		acceptsPrompt,
 		type Draft,
@@ -264,7 +264,7 @@
 				{#if info && Array.isArray(info.languages)}
 					{@const names = info.languages
 						.map((code) => languageLabel(catalog, code))
-						.sort((a, b) => a.localeCompare(b))}
+						.sort(readerOrder().compare)}
 					<!-- The languages its maker documents, for a model that lists them. -->
 					<details class="langs">
 						<summary class="small">{m.newJob.modelLanguages(names.length)}</summary>

@@ -3,7 +3,7 @@
 // files; this module only orders and links them, so it can be tested on its own.
 
 import type { ExportFormat } from './bindings/ExportFormat.js';
-import type { Messages } from './i18n/index.js';
+import { readerOrder, type Messages } from './i18n/index.js';
 import { alted, backShortcut, isMac, shifted, shortcut } from './platform.js';
 import { find } from './search.js';
 
@@ -159,7 +159,7 @@ export function keyboard(m: Messages, mac = isMac): { place: KeyPlace; rows: Key
 /** The terms whose word or definition holds the words typed, ignoring capitals and accents, in
  * the alphabetical order of their words in the interface language. */
 export function filterTerms(m: Messages, query: string): Term[] {
-	const order = new Intl.Collator(m.locale.tag, { sensitivity: 'base' });
+	const order = readerOrder({ sensitivity: 'base' }, m.locale.tag);
 	const shown =
 		query.trim() === ''
 			? [...TERMS]

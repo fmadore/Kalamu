@@ -38,8 +38,7 @@
 		findLanguages(
 			offered.filter((l) => !selected.includes(l.code)),
 			query,
-			name,
-			m.locale.tag
+			name
 		)
 	);
 	const starred = $derived(found.filter((l) => favourites.includes(l.code)));

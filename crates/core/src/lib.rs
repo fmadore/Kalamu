@@ -32,7 +32,10 @@ pub mod speakers;
 pub mod store;
 pub mod structured;
 pub mod task;
+#[cfg(any(test, feature = "test-support"))]
+pub mod test_support;
 pub mod tied;
+pub mod timed;
 pub mod units;
 pub mod warning;
 pub mod workflow;
@@ -100,25 +103,48 @@ pub const PIPELINE_VERSION: u32 = 1;
 #[cfg(test)]
 mod interface_lists {
     /// The lists the interface would otherwise copy from Rust's enums and rules: the parts of a
-    /// source description in order, the tasks whose results are a text, and the queue's reasons.
+    /// source description in order, every task in New job's order and those whose results are
+    /// a text, the queue's reasons, the extensions of each kind of file and the kinds each task
+    /// reads (the file pickers), and the formats written only from a model that reports layout.
     /// `cargo test` keeps `src/lib/coreLists.json` current, as it does `searchRules.json`; the
     /// interface imports it, so the two sides cannot drift.
     #[test]
     fn export_lists_for_the_interface() -> Result<(), Box<dyn std::error::Error>> {
+        use crate::{ExportFormat, InputKind, Task};
+        let extensions: serde_json::Map<String, serde_json::Value> = InputKind::EXTENSIONS
+            .iter()
+            .map(|(kind, exts)| Ok((name(kind)?, serde_json::json!(exts))))
+            .collect::<Result<_, serde_json::Error>>()?;
+        let task_sources: serde_json::Map<String, serde_json::Value> = Task::ALL
+            .iter()
+            .map(|t| (t.as_str().to_string(), serde_json::json!(t.source_kinds())))
+            .collect();
+        let mut layout_formats: Vec<ExportFormat> = Vec::new();
+        for format in Task::ALL.iter().flat_map(|t| t.formats()) {
+            if format.needs_layout() && !layout_formats.contains(format) {
+                layout_formats.push(*format);
+            }
+        }
         let lists = serde_json::json!({
             "description_fields": crate::DescriptionField::ALL,
-            "text_tasks": crate::Task::ALL
+            "tasks": Task::ALL,
+            "text_tasks": Task::ALL
                 .iter()
                 .filter(|t| t.yields_text())
                 .collect::<Vec<_>>(),
             "queue_reasons": crate::Signal::KINDS,
+            "extensions": extensions,
+            "task_sources": task_sources,
+            "layout_formats": layout_formats,
         });
-        let path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/lib/coreLists.json");
-        let json = serde_json::to_string_pretty(&lists)? + "\n";
-        if std::fs::read_to_string(&path).ok().as_deref() != Some(json.as_str()) {
-            std::fs::write(&path, json)?;
+        crate::test_support::write_interface_json("src/lib/coreLists.json", &lists)
+    }
+
+    /// A value's name as it is sent to the interface (`"pdf"`, `"youtube"`).
+    fn name(value: &impl serde::Serialize) -> Result<String, serde_json::Error> {
+        match serde_json::to_value(value)? {
+            serde_json::Value::String(s) => Ok(s),
+            other => Ok(other.to_string()),
         }
-        Ok(())
     }
 }

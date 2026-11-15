@@ -21,20 +21,45 @@ pub enum InputKind {
 }
 
 impl InputKind {
+    /// The file extensions of each kind of file, lowercase: the one table [`Self::from_path`]
+    /// reads, and the one the interface's file pickers are given (`coreLists.json`), so a file
+    /// is offered exactly when it is read. A YouTube video has no file, so none.
+    pub const EXTENSIONS: [(InputKind, &'static [&'static str]); 5] = [
+        (Self::Pdf, &["pdf"]),
+        (
+            Self::Image,
+            &[
+                "png", "jpg", "jpeg", "tif", "tiff", "webp", "bmp", "heic", "heif",
+            ],
+        ),
+        (
+            Self::Audio,
+            &[
+                "mp3", "wav", "m4a", "aac", "flac", "ogg", "opus", "wma", "aiff", "aif",
+            ],
+        ),
+        (
+            Self::Video,
+            &["mp4", "mov", "mkv", "avi", "webm", "wmv", "m4v"],
+        ),
+        // What `kalamu-media`'s text source opens: a spreadsheet (`.xlsx`) is not read.
+        (Self::Text, &["txt", "md", "docx", "csv"]),
+    ];
+
+    /// The extensions of files of this kind.
+    pub fn extensions(self) -> &'static [&'static str] {
+        Self::EXTENSIONS
+            .iter()
+            .find(|(kind, _)| *kind == self)
+            .map_or(&[], |(_, extensions)| *extensions)
+    }
+
     pub fn from_path(path: &Path) -> Option<Self> {
         let ext = path.extension()?.to_str()?.to_ascii_lowercase();
-        Some(match ext.as_str() {
-            "pdf" => Self::Pdf,
-            "png" | "jpg" | "jpeg" | "tif" | "tiff" | "webp" | "bmp" | "heic" | "heif" => {
-                Self::Image
-            }
-            "mp3" | "wav" | "m4a" | "aac" | "flac" | "ogg" | "opus" | "wma" | "aiff" | "aif" => {
-                Self::Audio
-            }
-            "mp4" | "mov" | "mkv" | "avi" | "webm" | "wmv" | "m4v" => Self::Video,
-            "txt" | "md" | "docx" | "xlsx" | "csv" => Self::Text,
-            _ => return None,
-        })
+        Self::EXTENSIONS
+            .iter()
+            .find(|(_, extensions)| extensions.contains(&ext.as_str()))
+            .map(|(kind, _)| *kind)
     }
 }
 
@@ -83,4 +108,50 @@ pub struct SourceFile {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(optional, as = "Option<Vec<crate::PageFile>>")]
     pub pages: Vec<crate::PageFile>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_extension_reads_as_its_kind_in_any_case() {
+        for (kind, extensions) in InputKind::EXTENSIONS {
+            assert!(!extensions.is_empty(), "{kind:?}");
+            assert_eq!(kind.extensions(), extensions);
+            for ext in extensions {
+                assert_eq!(*ext, ext.to_ascii_lowercase(), "{ext}");
+                for name in [
+                    format!("a.{ext}"),
+                    format!("A.{}", ext.to_ascii_uppercase()),
+                ] {
+                    assert_eq!(InputKind::from_path(Path::new(&name)), Some(kind), "{name}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn no_extension_belongs_to_two_kinds() {
+        let all: Vec<&str> = InputKind::EXTENSIONS
+            .iter()
+            .flat_map(|(_, e)| e.iter().copied())
+            .collect();
+        let unique: std::collections::BTreeSet<&str> = all.iter().copied().collect();
+        assert_eq!(all.len(), unique.len());
+    }
+
+    #[test]
+    fn files_kalamu_does_not_read_have_no_kind() {
+        for name in [
+            "table.xlsx",
+            "notes.odt",
+            "archive.zip",
+            "README",
+            "dossier.",
+        ] {
+            assert_eq!(InputKind::from_path(Path::new(name)), None, "{name}");
+        }
+        assert!(InputKind::YouTube.extensions().is_empty());
+    }
 }

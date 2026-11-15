@@ -8,6 +8,7 @@
 
 mod audio;
 mod audio_format;
+pub mod bundled;
 mod checks;
 mod ffmpeg;
 mod image_source;

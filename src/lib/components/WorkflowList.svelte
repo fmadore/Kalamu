@@ -11,7 +11,8 @@
 	import { describeError } from '#lib/errors.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
 	import { app, go, hasKey, toast, type FromProject } from '#lib/state.svelte.js';
-	import { api, pickPresetFile } from '#lib/tauri.js';
+	import { pickPresetFile } from '#lib/dialogs.js';
+	import { api } from '#lib/tauri.js';
 	import { EXAMPLES, type Example, exampleWorkflow, startsOn, tone } from '#lib/workflows.js';
 
 	let {

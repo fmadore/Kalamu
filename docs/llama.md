@@ -40,8 +40,8 @@ was, and the device is used again. A run that hangs there gives the device up at
 ([decision](decisions/2026-11-10-offline-robustness.md)).
 
 The OpenCL build is asked the same way and keeps the Adreno only. Each model lists the graphics
-builds it was measured correct with (`graphics` in `crates/offline/src/vision.rs` and
-`llm.rs`): LightOnOCR-3 the Vulkan build, GLM-OCR the Vulkan and OpenCL builds, the Gemma models
+builds it was measured correct with (`graphics` in `crates/offline/src/vision/mod.rs` and
+`llm/mod.rs`): LightOnOCR-3 the Vulkan build, GLM-OCR the Vulkan and OpenCL builds, the Gemma models
 the Vulkan build. The OCR models put every layer on the device (`-ngl 99`); the Gemma models,
 several times larger, as many as its memory holds beside their fixed context, the rest on the
 processor (`-ngl auto --fit on`), so a card with little memory of its own still speeds them up.
@@ -121,4 +121,4 @@ program is built again.
 
 A new llama.cpp may read a page differently. The cache keys results by model, not by engine
 build or device, so when an update changes what a model writes, give the model a new id in the
-catalogue and in `crates/offline/src/vision.rs`, as for Tesseract.
+catalogue and in `crates/offline/src/vision/mod.rs`, as for Tesseract.

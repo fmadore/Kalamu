@@ -5,7 +5,8 @@ import type { JobSummary } from './bindings/JobSummary.js';
 import { describeError } from './errors.js';
 import { messages } from './i18n/index.js';
 import { app, go, refreshJobs, toast } from './state.svelte.js';
-import { api, ask } from './tauri.js';
+import { ask } from './dialogs.js';
+import { api } from './tauri.js';
 
 /**
  * Renames job `id` to the name typed, without spaces at its ends, unless that is empty or its
