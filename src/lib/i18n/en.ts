@@ -1502,7 +1502,22 @@ export const en = {
 		answersFound: (n: number, total: number) =>
 			`${n} of ${total} ${total === 1 ? 'answer' : 'answers'}`,
 		inDocument: (n: number) => `${n} in the document`,
-		noAnswerFound: 'No answer holds these words.'
+		noAnswerFound: 'No answer holds these words.',
+		rowsTitle: 'Rows on this page',
+		rows: (n: number) => (n === 1 ? '1 row' : `${n} rows`),
+		rowNumber: 'No.',
+		rowActions: 'Row',
+		noRows: 'No entry was read on this page.',
+		rowsNotRead:
+			'This page could not be read, so its entries are missing. Retry it from the job’s page.',
+		addRow: 'Add a row',
+		insertRow: (n: number) => `Add a row after row ${n}`,
+		removeRow: (n: number) => `Remove row ${n}`,
+		cell: (column: string, n: number) => `${column}, row ${n}`,
+		noChoice: 'None',
+		rowsBy: 'Rows read by',
+		rowsKept:
+			'Each change is saved at once, apart from the model’s rows, which stay as they were. Separate a list’s names with semicolons.'
 	},
 	prompts: {
 		title: 'Prompts',
@@ -2046,6 +2061,8 @@ export const en = {
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',
 		'job.no_language': 'Choose the language to translate into.',
+		'job.mixed_reading':
+			'An analysis giving one row per entry reads page by page, so it cannot be compared with one answering once per document. Choose the same kind of analysis for every model.',
 		'job.link_needs_folder':
 			'Choose a folder for the results: a YouTube video has no folder of its own to write them next to.',
 		'source.private':
@@ -2062,6 +2079,10 @@ export const en = {
 		'prompt.unnamed_field': 'Every field needs a name.',
 		'prompt.duplicate_field': 'Two fields have the same name.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',
+		'records.not_records': 'This analysis has no rows to correct.',
+		'records.no_row': 'This row is no longer on the page. The rows were read again.',
+		'records.no_column': 'This column is not in the analysis.',
+		'records.not_a_choice': 'Choose one of the column’s values, or leave the cell empty.',
 		'prompt.unnamed_pipeline': 'A pipeline needs a name and at least one model.',
 		'workflow.incomplete': 'A workflow needs a name and at least one step, each with a model.',
 		'workflow.no_steps': 'A workflow needs at least one step.',

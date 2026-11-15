@@ -7,6 +7,7 @@ import type { FieldAnswer } from './bindings/FieldAnswer.js';
 import type { Job } from './bindings/Job.js';
 import type { PagePreview } from './bindings/PagePreview.js';
 import type { PieceView } from './bindings/PieceView.js';
+import type { RowEdit } from './bindings/RowEdit.js';
 import type { Setup } from './bindings/Setup.js';
 import { describeError } from './errors.js';
 import { messages } from './i18n/index.js';
@@ -99,6 +100,21 @@ export class Review {
 			});
 			await this.refresh();
 			toast(messages().review.saved);
+			return true;
+		} catch (e) {
+			this.error = describeError(e, messages());
+			return false;
+		}
+	}
+
+	/** Makes one change to a page's rows in a records analysis (a cell, a row added or
+	 * removed), kept apart from the model's, and reads the pieces again. False when it failed,
+	 * the error shown. */
+	async editRows(setup: Setup, index: number, change: RowEdit): Promise<boolean> {
+		this.error = null;
+		try {
+			await api.editRows(this.jobId, setup.id, this.sourceId, index, change);
+			await this.refresh();
 			return true;
 		} catch (e) {
 			this.error = describeError(e, messages());

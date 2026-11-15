@@ -42,6 +42,7 @@ import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { Estimate } from './bindings/Estimate.js';
 import type { Expanded } from './bindings/Expanded.js';
+import type { RowEdit } from './bindings/RowEdit.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { ImageDocument } from './bindings/ImageDocument.js';
 import type { Job } from './bindings/Job.js';
@@ -226,6 +227,9 @@ export const api = {
 	sourceText: (jobId: string, sourceId: string) =>
 		invoke<string>('source_text', { jobId, sourceId }),
 	saveCorrection: (correction: Correction) => invoke<void>('save_correction', { correction }),
+	/** Makes one change to a page's rows in a records analysis, in its corrected answers. */
+	editRows: (jobId: string, setupId: string, sourceId: string, index: number, change: RowEdit) =>
+		invoke<void>('edit_rows', { jobId, setupId, sourceId, index, change }),
 	/** Stores several corrections, all or none. */
 	saveCorrections: (corrections: Correction[]) => invoke<void>('save_corrections', { corrections }),
 	/** Renames a listed name in every set-up that found it, or takes it out when `to` is null,

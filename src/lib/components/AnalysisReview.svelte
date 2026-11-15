@@ -7,12 +7,14 @@
 	// document too. A name in a list renames or removes it at once, in the corrected answers of
 	// every set-up that found it, from its menu: a click, Enter, a right click or the menu key.
 	// The names of an answer are one tab stop, ← and → going from one to the next; a name with
-	// the focus is found in the document as one pointed at.
+	// the focus is found in the document as one pointed at. An analysis whose fields are one
+	// repeating group gives rows, page by page, reviewed in a table of its own (`RecordsReview`).
 	import { onMount, tick } from 'svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
 	import ItemMenu from './ItemMenu.svelte';
+	import RecordsReview from './RecordsReview.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
 	import SearchBar from './SearchBar.svelte';
 	import SiglaKey from './SiglaKey.svelte';
@@ -27,6 +29,7 @@
 	import { clearFound, markFound } from '#lib/found.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { pieceCost } from '#lib/pieces.js';
+	import { groupOf } from '#lib/records.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { find, searchable } from '#lib/search.js';
 	import { rovingStop, rovingTarget } from '#lib/keys.js';
@@ -35,8 +38,15 @@
 	let {
 		jobId,
 		sourceId,
-		find: opening
-	}: { jobId: string; sourceId: string; find?: ReviewFind } = $props();
+		find: opening,
+		start
+	}: {
+		jobId: string;
+		sourceId: string;
+		find?: ReviewFind;
+		/** The piece to open on, from 0: a page of records chosen in the list of what to check. */
+		start?: number;
+	} = $props();
 	const m = messages();
 	// svelte-ignore state_referenced_locally
 	const review = new Review(jobId, sourceId);
@@ -51,6 +61,8 @@
 	const source = $derived(review.source);
 	const setups = $derived(review.setups);
 	const fields = $derived(setups[0]?.prompt.schema?.fields ?? []);
+	/** Records: rows page by page, reviewed in their own table. */
+	const records = $derived(groupOf(setups[0]?.prompt.schema) !== null);
 	const pages = $derived(source?.kind === 'pdf' ? (source.page_count ?? 1) : 1);
 	const viewOf = (s: Setup | undefined) => review.views.find((v) => v.setup_id === s?.id);
 	const answersOf = (v: PieceView | undefined): FieldAnswer[] =>
@@ -98,8 +110,10 @@
 		);
 	});
 
-	// A PDF or image is shown page by page; a text document as text.
-	$effect(() => review.showPage(page));
+	// A PDF or image is shown page by page; a text document as text. Records show their own.
+	$effect(() => {
+		if (!records) review.showPage(page);
+	});
 
 	function step(delta: number) {
 		page = Math.min(Math.max(page + delta, 0), pages - 1);
@@ -251,146 +265,151 @@
 	<span class="mono">{lead?.model_version ?? setups[0]?.model ?? ''}{pieceCost(lead, m)}</span>
 {/snippet}
 
-{#if itemMenu}
-	{@const at = itemMenu}
-	<ItemMenu
-		value={at.value}
-		x={at.x}
-		y={at.y}
-		onrename={(to) => void changeItem(at.key, at.value, to)}
-		onremove={() => void changeItem(at.key, at.value, null)}
-		onclose={() => (itemMenu = null)}
-	/>
-{/if}
-
-<ReviewFrame
-	{jobId}
-	{sourceId}
-	jobName={review.job?.name ?? null}
-	fileName={source?.file_name ?? ''}
-	error={review.error}
-	{actions}
-	search={searchBar}
-	bind:searching
-	bind:textPane={answersPane}
-	reviewed={lead && lead.status !== 'failed' && !editing ? lead.reviewed : null}
-	onreviewed={toggleReviewed}
-	onstep={pages > 1 ? step : undefined}
-	source={source?.kind === 'text' ? 'text' : 'scan'}
-	piece={pages > 1 ? m.review.page(String(page + 1)) : null}
-	paging={{ at: page, count: pages }}
-	preview={review.preview}
-	text={review.text}
-	find={hovered ?? (filtering ? query : '')}
-	found={hovered === null && filtering}
-	witness={{
-		label: setups[0]?.label ?? '',
-		siglum: comparing ? siglum(0) : null,
-		corrected: lead?.corrected_fields != null
-	}}
-	label={m.review.answers}
-	{tools}
-	{foot}
->
-	{#if editing && editedSetup}
-		{@const target = editedSetup}
-		{@const draft = editing.draft}
-		{@const kept = viewOf(target)}
-		<CorrectionEditor
-			label={target.label}
-			siglum={comparing ? siglum(setups.indexOf(target)) : null}
-			onsave={() => save(target, fromDraft(fields, draft, answersOf(kept)), true)}
-			ondiscard={() => (editing = null)}
-			onrevert={kept?.corrected_fields ? () => save(target, null, kept.reviewed) : undefined}
-		>
-			<div>
-				{#each fields as f (f.key)}
-					<div class="answer">
-						<h2>{f.label} <span class="kind">{kindLabel(f)}</span></h2>
-						<FieldInput field={f} bind:value={draft[f.key]} />
-					</div>
-				{/each}
-			</div>
-		</CorrectionEditor>
-	{:else if !lead || (lead.ai_fields.length === 0 && lead.status !== 'failed')}
-		<p class="muted">{m.review.notDone}</p>
-	{:else if lead.status === 'failed'}
-		<p class="error">{lead.error}</p>
-	{:else}
-		{#if shown.length === 0}<p class="muted">{m.review.noAnswerFound}</p>{/if}
-		{#each shown as f (f.key)}
-			{@const readings = collate(f.key, witnesses)}
-			<div class="answer" data-field={f.key} class:opened={opening?.field === f.key}>
-				<h2>{f.label}</h2>
-				{#if readings.length === 0}
-					<p class="muted none">{m.review.noneFound}</p>
-				{:else if f.kind.type === 'list' || f.kind.type === 'choices'}
-					{@const named = f.kind.type === 'list'}
-					{@const values = readings.map((r) => r.value)}
-					{@const stop = rovingStop(values, itemStops[f.key])}
-					<p class="items" oncontextmenu={(e) => openItemMenu(e, f)}>
-						{#each readings as r, k (r.value)}{#if k > 0}<span class="sep">{'; '}</span>{/if}<button
-								type="button"
-								class="item"
-								class:named
-								class:partial={comparing && r.sigla.length < setups.length}
-								data-item={r.value}
-								tabindex={stop === r.value ? 0 : -1}
-								aria-haspopup={named ? 'menu' : undefined}
-								aria-describedby={named ? 'item-keys' : 'item-locates'}
-								onclick={(e) => openItemMenu(e, f)}
-								onkeydown={(e) => roveItems(e, f.key, values, r.value)}
-								onfocus={() => {
-									hovered = r.value;
-									itemStops[f.key] = r.value;
-								}}
-								onblur={() => (hovered = null)}
-								onpointerenter={() => (hovered = r.value)}
-								onpointerleave={() => (hovered = null)}
-								>{r.value}{#if comparing && r.sigla.length < setups.length}<sup class="found"
-										>{r.sigla.join(' ')}</sup
-									>{/if}</button
-							>{/each}
-					</p>
-				{:else}
-					{#each readings as r (r.value)}
-						<p class:prose={f.kind.type === 'text'} class:choice={f.kind.type === 'choice'}>
-							{#if comparing}<i class="siglum">{r.sigla.join(' ')}</i>{/if}
-							{r.value}
-						</p>
-					{/each}
-				{/if}
-				{#if f.reason}
-					{#each witnesses as w (w.siglum)}
-						{@const reason = w.answers.find((a) => a.key === f.key)?.reason}
-						{#if reason}
-							<p class="reason">
-								{#if comparing}<i class="siglum">{w.siglum}</i>{/if}
-								{reason}
-							</p>
-						{/if}
-					{/each}
-				{/if}
-			</div>
-		{/each}
-	{/if}
-
-	{#if !editing}
-		<span class="sr-only" id="item-keys">{m.review.itemKeys}</span>
-		<span class="sr-only" id="item-locates">{m.review.itemLocates}</span>
-	{/if}
-
-	{#if !editing && comparing}
-		<SiglaKey
-			{setups}
-			viewOf={(s) => viewOf(s)}
-			answered={(v) => v.status !== 'failed'}
-			corrected={(v) => v.corrected_fields != null}
-			onedit={(s) => startEditing(s)}
-			onreviewed={(s, v, on) => save(s, v.corrected_fields, on)}
+{#if records}
+	<RecordsReview {review} {start} />
+{:else}
+	{#if itemMenu}
+		{@const at = itemMenu}
+		<ItemMenu
+			value={at.value}
+			x={at.x}
+			y={at.y}
+			onrename={(to) => void changeItem(at.key, at.value, to)}
+			onremove={() => void changeItem(at.key, at.value, null)}
+			onclose={() => (itemMenu = null)}
 		/>
 	{/if}
-</ReviewFrame>
+
+	<ReviewFrame
+		{jobId}
+		{sourceId}
+		jobName={review.job?.name ?? null}
+		fileName={source?.file_name ?? ''}
+		error={review.error}
+		{actions}
+		search={searchBar}
+		bind:searching
+		bind:textPane={answersPane}
+		reviewed={lead && lead.status !== 'failed' && !editing ? lead.reviewed : null}
+		onreviewed={toggleReviewed}
+		onstep={pages > 1 ? step : undefined}
+		source={source?.kind === 'text' ? 'text' : 'scan'}
+		piece={pages > 1 ? m.review.page(String(page + 1)) : null}
+		paging={{ at: page, count: pages }}
+		preview={review.preview}
+		text={review.text}
+		find={hovered ?? (filtering ? query : '')}
+		found={hovered === null && filtering}
+		witness={{
+			label: setups[0]?.label ?? '',
+			siglum: comparing ? siglum(0) : null,
+			corrected: lead?.corrected_fields != null
+		}}
+		label={m.review.answers}
+		{tools}
+		{foot}
+	>
+		{#if editing && editedSetup}
+			{@const target = editedSetup}
+			{@const draft = editing.draft}
+			{@const kept = viewOf(target)}
+			<CorrectionEditor
+				label={target.label}
+				siglum={comparing ? siglum(setups.indexOf(target)) : null}
+				onsave={() => save(target, fromDraft(fields, draft, answersOf(kept)), true)}
+				ondiscard={() => (editing = null)}
+				onrevert={kept?.corrected_fields ? () => save(target, null, kept.reviewed) : undefined}
+			>
+				<div>
+					{#each fields as f (f.key)}
+						<div class="answer">
+							<h2>{f.label} <span class="kind">{kindLabel(f)}</span></h2>
+							<FieldInput field={f} bind:value={draft[f.key]} />
+						</div>
+					{/each}
+				</div>
+			</CorrectionEditor>
+		{:else if !lead || (lead.ai_fields.length === 0 && lead.status !== 'failed')}
+			<p class="muted">{m.review.notDone}</p>
+		{:else if lead.status === 'failed'}
+			<p class="error">{lead.error}</p>
+		{:else}
+			{#if shown.length === 0}<p class="muted">{m.review.noAnswerFound}</p>{/if}
+			{#each shown as f (f.key)}
+				{@const readings = collate(f.key, witnesses)}
+				<div class="answer" data-field={f.key} class:opened={opening?.field === f.key}>
+					<h2>{f.label}</h2>
+					{#if readings.length === 0}
+						<p class="muted none">{m.review.noneFound}</p>
+					{:else if f.kind.type === 'list' || f.kind.type === 'choices'}
+						{@const named = f.kind.type === 'list'}
+						{@const values = readings.map((r) => r.value)}
+						{@const stop = rovingStop(values, itemStops[f.key])}
+						<p class="items" oncontextmenu={(e) => openItemMenu(e, f)}>
+							{#each readings as r, k (r.value)}{#if k > 0}<span class="sep">{'; '}</span
+									>{/if}<button
+									type="button"
+									class="item"
+									class:named
+									class:partial={comparing && r.sigla.length < setups.length}
+									data-item={r.value}
+									tabindex={stop === r.value ? 0 : -1}
+									aria-haspopup={named ? 'menu' : undefined}
+									aria-describedby={named ? 'item-keys' : 'item-locates'}
+									onclick={(e) => openItemMenu(e, f)}
+									onkeydown={(e) => roveItems(e, f.key, values, r.value)}
+									onfocus={() => {
+										hovered = r.value;
+										itemStops[f.key] = r.value;
+									}}
+									onblur={() => (hovered = null)}
+									onpointerenter={() => (hovered = r.value)}
+									onpointerleave={() => (hovered = null)}
+									>{r.value}{#if comparing && r.sigla.length < setups.length}<sup class="found"
+											>{r.sigla.join(' ')}</sup
+										>{/if}</button
+								>{/each}
+						</p>
+					{:else}
+						{#each readings as r (r.value)}
+							<p class:prose={f.kind.type === 'text'} class:choice={f.kind.type === 'choice'}>
+								{#if comparing}<i class="siglum">{r.sigla.join(' ')}</i>{/if}
+								{r.value}
+							</p>
+						{/each}
+					{/if}
+					{#if f.reason}
+						{#each witnesses as w (w.siglum)}
+							{@const reason = w.answers.find((a) => a.key === f.key)?.reason}
+							{#if reason}
+								<p class="reason">
+									{#if comparing}<i class="siglum">{w.siglum}</i>{/if}
+									{reason}
+								</p>
+							{/if}
+						{/each}
+					{/if}
+				</div>
+			{/each}
+		{/if}
+
+		{#if !editing}
+			<span class="sr-only" id="item-keys">{m.review.itemKeys}</span>
+			<span class="sr-only" id="item-locates">{m.review.itemLocates}</span>
+		{/if}
+
+		{#if !editing && comparing}
+			<SiglaKey
+				{setups}
+				viewOf={(s) => viewOf(s)}
+				answered={(v) => v.status !== 'failed'}
+				corrected={(v) => v.corrected_fields != null}
+				onedit={(s) => startEditing(s)}
+				onreviewed={(s, v, on) => save(s, v.corrected_fields, on)}
+			/>
+		{/if}
+	</ReviewFrame>
+{/if}
 
 <style>
 	.error {

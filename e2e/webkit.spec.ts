@@ -16,6 +16,7 @@ const VIEWS = [
 	'review-audio',
 	'review-analysis',
 	'review-contents',
+	'review-records',
 	'review-correction',
 	'projects',
 	'document',

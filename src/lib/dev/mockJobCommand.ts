@@ -28,6 +28,7 @@ import {
 	videoPieces
 } from './mockJobs.js';
 import { contentsJob, contentsPieces, correctionJob, correctionPieces } from './mockContents.js';
+import { editRows, recordsJob, recordsPieces } from './mockRecords.js';
 
 /** Jobs deleted while looking at the mock, left out of the list from then on. */
 const deletedJobs = new Set<string>();
@@ -89,9 +90,13 @@ function wordDiff(left: string, right: string): { kind: string; text: string }[]
 /** Keeps a correction on its sample piece, as the store keeps it, so the review shows it again
  * when it reads the pieces anew. */
 function keepCorrection(c: Correction): void {
-	const piece = [...pieces, ...analysisPieces, ...contentsPieces, ...correctionPieces].find(
-		(p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index
-	);
+	const piece = [
+		...pieces,
+		...analysisPieces,
+		...contentsPieces,
+		...correctionPieces,
+		...recordsPieces
+	].find((p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index);
 	if (!piece) return;
 	piece.corrected_text = c.text;
 	piece.corrected_fields = c.fields ?? null;
@@ -157,6 +162,16 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 					pieces_finished: i === 0 ? 4 : 2,
 					setup_count: 1
 				})),
+				{
+					...summaries[0],
+					id: recordsJob.id,
+					name: recordsJob.name,
+					task: recordsJob.task,
+					status: 'completed_with_errors',
+					pieces_total: 3,
+					pieces_finished: 2,
+					setup_count: 1
+				},
 				...archiveJobs.map(({ files: _, ...summary }) => summary)
 			].filter((j) => !deletedJobs.has(j.id));
 		case 'job_sources':
@@ -176,6 +191,7 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 			if (a.id === videoJob.id) return videoJob;
 			if (a.id === contentsJob.id) return contentsJob;
 			if (a.id === correctionJob.id) return correctionJob;
+			if (a.id === recordsJob.id) return recordsJob;
 			return a.id === audioJob.id ? audioJob : a.id === analysisJob.id ? analysisJob : job;
 		case 'rename_job': {
 			const name = String(a.name).trim();
@@ -215,6 +231,7 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 			if (a.jobId === analysisJob.id) return analysisPieces;
 			if (a.jobId === contentsJob.id) return contentsPieces;
 			if (a.jobId === correctionJob.id) return correctionPieces;
+			if (a.jobId === recordsJob.id) return recordsPieces;
 			if (a.jobId === videoJob.id) return videoPieces();
 			return a.jobId === audioJob.id ? audioPieces() : pieces;
 		case 'source_text':
@@ -251,6 +268,8 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 			return null;
 		case 'rename_listed':
 			return renameListed(a);
+		case 'edit_rows':
+			return editRows(a);
 		case 'job_text_outputs':
 		case 'export_source':
 			return [];

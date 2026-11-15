@@ -1607,7 +1607,22 @@ export const fr: Messages = {
 		answersFound: (n: number, total: number) =>
 			`${n} ${n <= 1 ? 'réponse' : 'réponses'} sur ${total}`,
 		inDocument: (n: number) => `${n} dans le document`,
-		noAnswerFound: 'Aucune réponse ne contient ces mots.'
+		noAnswerFound: 'Aucune réponse ne contient ces mots.',
+		rowsTitle: 'Lignes de cette page',
+		rows: (n: number) => (n <= 1 ? `${n} ligne` : `${n} lignes`),
+		rowNumber: 'N°',
+		rowActions: 'Ligne',
+		noRows: 'Aucune entrée n’a été relevée sur cette page.',
+		rowsNotRead:
+			'Cette page n’a pas pu être lue : ses entrées manquent. Relancez-la depuis la page du traitement.',
+		addRow: 'Ajouter une ligne',
+		insertRow: (n: number) => `Ajouter une ligne après la ligne ${n}`,
+		removeRow: (n: number) => `Retirer la ligne ${n}`,
+		cell: (column: string, n: number) => `${column}, ligne ${n}`,
+		noChoice: 'Aucun',
+		rowsBy: 'Lignes relevées par',
+		rowsKept:
+			'Chaque modification est enregistrée aussitôt, à part des lignes du modèle, qui restent telles quelles. Séparez les noms d’une liste par des points-virgules.'
 	},
 	prompts: {
 		title: 'Prompts',
@@ -2134,6 +2149,8 @@ export const fr: Messages = {
 		'job.running': 'Ce traitement est déjà en cours.',
 		'job.empty': 'Ajoutez au moins un fichier et choisissez un modèle.',
 		'job.no_language': 'Choisissez la langue dans laquelle traduire.',
+		'job.mixed_reading':
+			'Une analyse qui donne une ligne par entrée lit page par page : elle ne peut pas être comparée à une analyse qui répond une fois par document. Choisissez le même genre d’analyse pour chaque modèle.',
 		'job.link_needs_folder':
 			'Choisissez un dossier pour les résultats : une vidéo YouTube n’a pas de dossier à elle à côté duquel les écrire.',
 		'source.private':
@@ -2151,6 +2168,10 @@ export const fr: Messages = {
 		'prompt.unnamed_field': 'Chaque champ doit avoir un nom.',
 		'prompt.duplicate_field': 'Deux champs portent le même nom.',
 		'prompt.few_values': 'Un choix demande au moins deux valeurs entre lesquelles choisir.',
+		'records.not_records': 'Cette analyse n’a pas de lignes à corriger.',
+		'records.no_row': 'Cette ligne n’est plus sur la page. Les lignes ont été relues.',
+		'records.no_column': 'Cette colonne ne fait pas partie de l’analyse.',
+		'records.not_a_choice': 'Choisissez l’une des valeurs de la colonne, ou laissez la case vide.',
 		'prompt.unnamed_pipeline': 'Une configuration demande un nom et au moins un modèle.',
 		'workflow.incomplete':
 			'Une chaîne de traitement demande un nom et au moins une étape, chacune avec un modèle.',

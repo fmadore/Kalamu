@@ -93,6 +93,7 @@ pub const COMMANDS: &[&str] = &[
     "source_text",
     "save_correction",
     "save_corrections",
+    "edit_rows",
     "rename_listed",
     "save_speaker_names",
     "export_source",
