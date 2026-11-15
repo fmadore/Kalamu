@@ -26,18 +26,20 @@
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
-	import { caretTop, growWithText, level, placeInText, reveal } from '#lib/caret.js';
+	import { caretTop, growWithText, placeInText, reveal } from '#lib/caret.js';
 	import { Comparison, shownText, witnessesOf, witnessName } from '#lib/compare.svelte.js';
 	import { clearHeard, markHeard, placeLines } from '#lib/heard.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { shifted } from '#lib/platform.js';
 	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
+	import { Readings, wordsIn } from '#lib/readings.svelte.js';
 	import { layout, Review } from '#lib/review.svelte.js';
 	import { ReviewSearch } from '#lib/reviewSearch.svelte.js';
 	import { FIELDS } from '#lib/keys.js';
 	import { describeScore } from '#lib/scores.js';
 	import { guardDraft, leaveThen, shortcutsHeld, type ReviewFind } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
+	import { withReading } from '#lib/withReading.js';
 
 	let {
 		jobId,
@@ -67,20 +69,8 @@
 	let editing = $state<{ setupId: string; text: string; from: string } | null>(null);
 	let showDiff = $state(true);
 	let spans = $state<Record<string, DiffSpan[]>>({});
-	/** The difference whose readings are open over the text. Pinned once clicked or stepped to, it
-	 * stays until closed; only pointed at, it shows while the pointer is on it or its readings. */
-	let selected = $state<number | null>(null);
-	let pinned = $state(false);
-	/** The difference last opened by a click or a step, or reached with the arrow keys, kept
-	 * once its readings close, so the next step goes on from it rather than from the first. */
-	let stepped = $state<number | null>(null);
-	/** The text the pinned readings were opened from, where the focus goes back when they close. */
-	let opener: HTMLElement | null = null;
-	/** The difference under the pointer, in either text: highlighted in both. */
-	let hovered = $state<number | null>(null);
 	let textPane = $state<HTMLElement | null>(null);
 	let comparePane = $state<HTMLElement | null>(null);
-	let hoverTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const job = $derived(review.job);
 	const source = $derived(review.source);
@@ -162,6 +152,12 @@
 		)
 	);
 	const reading = $derived(lines(base, entries));
+	/** The readings open over the text, and the difference last reached. */
+	const readings = new Readings({
+		entries: () => entries,
+		textPane: () => textPane,
+		comparePane: () => comparePane
+	});
 
 	// The passage the player is at is marked in the text, drawn again with the text, and kept in
 	// view while it plays, unless the researcher has just scrolled the text away.
@@ -169,7 +165,7 @@
 		const span = editing ? null : (placed[heard.line] ?? null);
 		const playing = heard.playing;
 		const pane = textPane;
-		void [reading, showDiff, selected];
+		void [reading, showDiff, readings.selected];
 		if (!pane || !recording) return;
 		let gone = false;
 		void tick().then(() => {
@@ -191,7 +187,7 @@
 		const target = entries.find((x) => x.start >= want.at) ?? entries.at(-1);
 		untrack(() => {
 			refocus = null;
-			if (target) stepped = target.id;
+			if (target) readings.stepped = target.id;
 		});
 		void tick().then(() => {
 			const words = target ? wordsIn(textPane, target.id) : null;
@@ -201,48 +197,9 @@
 	});
 	/** An entry whose readings include the model's own text marks a correction. */
 	const isCorrection = (e: Entry) => corrected && e.readings.some((r) => r.siglum === siglum(0));
-	const open = $derived(entries.find((e) => e.id === selected) ?? null);
-	/** The difference that holds the texts' one tab stop: the one open, else the last reached. */
-	const stop = $derived((pinned ? selected : null) ?? stepped);
 
 	/** Who reads what: the first set-up's model output under a correction, or another set-up. */
 	const nameOf = (s: string) => witnessName(s, setups, m);
-
-	/** Shows a difference's readings over the text. */
-	function show(id: number, pin: boolean) {
-		clearTimeout(hoverTimer);
-		selected = id;
-		pinned = pin;
-		if (pin) stepped = id;
-	}
-
-	function hide() {
-		clearTimeout(hoverTimer);
-		selected = null;
-		pinned = false;
-	}
-
-	/** Pointing at highlighted words shows their readings after a moment, unless some are pinned. */
-	function pointAt(e: PointerEvent, id: number) {
-		hovered = id;
-		if (e.pointerType !== 'mouse' || pinned) return;
-		clearTimeout(hoverTimer);
-		hoverTimer = setTimeout(() => show(id, false), selected === null ? 300 : 60);
-	}
-
-	/** Leaving the words or their readings closes readings that are not pinned. */
-	function pointAway() {
-		hovered = null;
-		if (pinned) return;
-		clearTimeout(hoverTimer);
-		hoverTimer = setTimeout(() => {
-			if (!pinned) hide();
-		}, 250);
-	}
-
-	/** The words of a difference in a pane. */
-	const wordsIn = (pane: HTMLElement | null, id: number) =>
-		pane?.querySelector<HTMLElement>(`[data-entry="${id}"]`) ?? null;
 
 	/** Opens the main text for correction where the researcher is reading, the caret there and
 	 * that line where it stood on screen; the focus goes into it even where that place is not
@@ -262,63 +219,6 @@
 		pane.scrollTop = areaTop + caretTop(area, place.start) - place.below;
 	}
 
-	/** Opens a difference and pins it, bringing its words into view in both texts, whichever
-	 * text it was chosen in. Chosen from the keyboard, the focus goes into its readings. */
-	async function choose(id: number, from?: HTMLElement | null, keyboard = false) {
-		show(id, true);
-		opener = from ?? textPane;
-		await tick();
-		const words = wordsIn(textPane, id);
-		const other = wordsIn(comparePane, id);
-		const clicked = from ? wordsIn(from, id) : null;
-		if (from && clicked) {
-			// Chosen in one text: the other comes level with it, so both read the same place.
-			const height = clicked.getBoundingClientRect().top - from.getBoundingClientRect().top;
-			if (from === textPane) level(comparePane, other, height);
-			else level(textPane, words, height);
-		} else {
-			reveal(textPane, words);
-			reveal(comparePane, other);
-		}
-		words?.focus({ preventScroll: true });
-		if (keyboard) await focusReadings();
-	}
-
-	/** Takes the focus to the first reading to choose, once the readings are placed. */
-	async function focusReadings() {
-		await tick();
-		await new Promise((done) => requestAnimationFrame(done));
-		const box = textPane?.querySelector<HTMLElement>('.readings');
-		(box?.querySelector<HTMLElement>('.pick') ?? box?.querySelector<HTMLElement>('input'))?.focus({
-			preventScroll: true
-		});
-	}
-
-	/** Closes pinned readings, the focus back on the words they were opened from. */
-	async function closeReadings() {
-		const was = selected;
-		const from = opener;
-		hide();
-		if (was === null) return;
-		await tick();
-		(wordsIn(from, was) ?? wordsIn(textPane, was))?.focus({ preventScroll: true });
-	}
-
-	/** A click anywhere else closes pinned readings. */
-	function onPointerDown(e: PointerEvent) {
-		if (!pinned || (e.target as HTMLElement).closest('.readings, [data-entry], [data-step]'))
-			return;
-		hide();
-	}
-
-	function stepEntry(delta: number, keyboard = false) {
-		if (entries.length === 0) return;
-		const at = entries.findIndex((e) => e.id === (selected ?? stepped));
-		const next = at < 0 ? (delta > 0 ? 0 : entries.length - 1) : at + delta;
-		const target = entries[(next + entries.length) % entries.length];
-		void choose(target.id, undefined, keyboard);
-	}
-
 	/** Where the focus goes once a reading used from the readings is in the text and the
 	 * differences are worked out again: the place it was, or the next one. */
 	let refocus = $state<{ at: number; round: number } | null>(null);
@@ -327,17 +227,8 @@
 	async function useReading(e: Entry, text: string) {
 		const first = setups[0];
 		if (!first || !lead) return;
-		// The entry's range may end in punctuation shared by every reading and left out of them.
-		const range = base.slice(e.start, e.end);
-		const tail = range.startsWith(e.lemma) ? range.slice(e.lemma.length) : '';
-		const next = base.slice(0, e.start) + text + tail + base.slice(e.end);
-		const focused = textPane?.querySelector('.readings')?.contains(document.activeElement);
-		const from = opener;
-		hide();
-		if (focused) {
-			refocus = { at: e.start, round: rounds };
-			(wordsIn(from, e.id) ?? wordsIn(textPane, e.id))?.focus({ preventScroll: true });
-		}
+		const next = withReading(base, e, text);
+		if (readings.leave(e.id)) refocus = { at: e.start, round: rounds };
 		if (!(await save(first, next, lead.reviewed))) refocus = null;
 	}
 
@@ -378,8 +269,7 @@
 		leaveThen(() => {
 			index = i;
 			editing = null;
-			hide();
-			stepped = null;
+			readings.reset();
 			refocus = null;
 		});
 	}
@@ -394,15 +284,19 @@
 		const target = e.target as HTMLElement;
 		const inField = target.closest(FIELDS) !== null;
 		// Escape closes the readings from anywhere but another field, their own included.
-		if (e.key === 'Escape' && selected !== null && (!inField || target.closest('.readings'))) {
-			if (pinned) void closeReadings();
-			else hide();
+		if (
+			e.key === 'Escape' &&
+			readings.selected !== null &&
+			(!inField || target.closest('.readings'))
+		) {
+			if (readings.pinned) void readings.close();
+			else readings.hide();
 			return;
 		}
 		if (inField) return;
 		if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'f' && !editing) {
 			e.preventDefault();
-			stepEntry(e.shiftKey ? -1 : 1, true);
+			readings.step(e.shiftKey ? -1 : 1, true);
 		}
 	}
 
@@ -417,7 +311,7 @@
 	});
 </script>
 
-<svelte:window onkeydown={onKey} onpointerdown={onPointerDown} />
+<svelte:window onkeydown={onKey} onpointerdown={readings.onPointerDown} />
 
 {#snippet pager()}
 	<button
@@ -515,14 +409,14 @@
 				aria-label={m.review.previousDifference}
 				title="{m.review.previousDifference} ({shifted('F')})"
 				data-step
-				onclick={() => stepEntry(-1)}><Icon name="up" size={14} /></button
+				onclick={() => readings.step(-1)}><Icon name="up" size={14} /></button
 			>
 			<button
 				class="btn sm icon"
 				aria-label={m.review.nextDifference}
 				title="{m.review.nextDifference} (F)"
 				data-step
-				onclick={() => stepEntry(1)}><Icon name="down" size={14} /></button
+				onclick={() => readings.step(1)}><Icon name="down" size={14} /></button
 			>
 		{:else if Object.keys(spans).length === witnesses.length}
 			<span class="count">{m.review.noDifferences}</span>
@@ -562,12 +456,12 @@
 		{spans}
 		{entries}
 		marked={showDiff}
-		{selected}
-		{hovered}
-		{stop}
-		onpick={(id, keyboard) => void choose(id, comparePane, keyboard)}
-		onmove={(id) => (stepped = id)}
-		onhover={(id) => (hovered = id)}
+		selected={readings.selected}
+		hovered={readings.hovered}
+		stop={readings.stop}
+		onpick={(id, keyboard) => void readings.choose(id, comparePane, keyboard)}
+		onmove={(id) => (readings.stepped = id)}
+		onhover={(id) => (readings.hovered = id)}
 	/>
 {/snippet}
 
@@ -661,8 +555,8 @@
 			lines={reading}
 			{entries}
 			marked={showDiff}
-			{selected}
-			{hovered}
+			selected={readings.selected}
+			hovered={readings.hovered}
 			corrected={(id) => {
 				const e = entries.find((x) => x.id === id);
 				return e !== undefined && isCorrection(e);
@@ -676,15 +570,17 @@
 				finder.revealing = false;
 				reveal(textPane, at);
 			}}
-			{stop}
+			stop={readings.stop}
 			onpick={(id, keyboard) =>
-				selected === id && pinned ? hide() : void choose(id, textPane, keyboard)}
-			onmove={(id) => (stepped = id)}
-			onpoint={pointAt}
-			onaway={pointAway}
+				readings.selected === id && readings.pinned
+					? readings.hide()
+					: void readings.choose(id, textPane, keyboard)}
+			onmove={(id) => (readings.stepped = id)}
+			onpoint={readings.pointAt}
+			onaway={readings.pointAway}
 		/>
-		{#if open && textPane}
-			{@const e = open}
+		{#if readings.open && textPane}
+			{@const e = readings.open}
 			{@const pane = textPane}
 			{#key e.id}
 				<ReadingsPopover
@@ -700,10 +596,10 @@
 					witnessName={nameOf}
 					{pane}
 					onuse={(text) => useReading(e, text)}
-					onclose={() => void closeReadings()}
-					onenter={() => clearTimeout(hoverTimer)}
-					onleave={pointAway}
-					onpin={() => (pinned = true)}
+					onclose={() => void readings.close()}
+					onenter={readings.hold}
+					onleave={readings.pointAway}
+					onpin={() => (readings.pinned = true)}
 				/>
 			{/key}
 		{/if}
