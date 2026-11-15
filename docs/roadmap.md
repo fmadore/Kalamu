@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (14 November 2026)
+## Status (15 November 2026)
 
 **Version 1.7.0** is the latest release, published on 13 November 2026: unsigned installers for
 Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
@@ -520,11 +520,16 @@ In this order. Work that keeps what has shipped sound comes before new features.
    read, is refused when dropped); FFmpeg's, llama.cpp's and the Whisper helper's shared
    helpers; one helper for the tests that write files for the interface; `timed_lines` in core;
    `tauri.ts`, `mock.ts`, `vision.rs`, `llm.rs` and `llama.rs` split; and one sort order for the
-   reader, in the interface language. Left: the larger screens split (`NewJob.svelte`,
-   `ReviewView.svelte`, `ProjectWorkspace.svelte`, `SetupList.svelte`), the shared interface
-   pieces not yet used everywhere, and from 4 November Whisper's voice detection on accented
-   data folders on Windows, the folders out of reach shown at launch, and Tesseract's drawing
-   resolution in provenance and its engines pooled (all listed in the decision).
+   reader, in the interface language. A
+   [second round on 15 November](decisions/2026-11-15-checkpoint-rest.md) took up the rest: New
+   job, the review, a project and a job's set-ups split into smaller files; twelve more screens'
+   commands through `Action`, one `ContextMenu` and one `FindBox` for the two language pickers;
+   Tesseract's engines pooled, their language data deleted at once, and the resolution a PDF
+   page was drawn at recorded and used by ALTO; and Whisper's voice detection from an accented
+   data folder on Windows. Left: from 4 November, the folders out of reach shown at launch (the
+   Mac App Store build's, with item 3); a transcription from an accented folder tried in the
+   packaged app; and what the round saw and left (an empty reading's spaces, Escape in the
+   language pickers, Home and End in a name's menu).
 3. **A first run on a real Mac, the rest.** Before 1.6.0 the sandboxed Mac App Store build was
    opened on one Mac with Apple Silicon (macOS 26): the application menu, ⌘, and ⌘Q, and the
    menu-bar icon were tried and fixed there (#160), and the jobs of the App Store screenshots run
