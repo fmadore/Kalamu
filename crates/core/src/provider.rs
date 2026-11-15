@@ -332,4 +332,26 @@ pub trait Provider: Send + Sync {
         let _ = (key, batch_id);
         Err(ProviderError::Unsupported("batches".into()))
     }
+
+    /// The files an ended batch left in the account's storage (the requests uploaded or kept,
+    /// the answers, the errors), by the ids the provider gives for them, for
+    /// [`Provider::delete_batch_file`]. Read from the batch itself, by its id: never a listing
+    /// of the account's storage, so only what that batch made is named. `None` while the batch
+    /// can still change (being cancelled), to ask again later; none for a batch the provider no
+    /// longer knows. Providers whose batches leave no file keep the default, which names none.
+    async fn batch_files(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        let _ = (key, batch_id);
+        Ok(Some(Vec::new()))
+    }
+
+    /// Deletes one file named by [`Provider::batch_files`]. A file already gone counts as
+    /// deleted.
+    async fn delete_batch_file(&self, key: &ApiKey, file_id: &str) -> Result<(), ProviderError> {
+        let _ = (key, file_id);
+        Err(ProviderError::Unsupported("deleting batch files".into()))
+    }
 }

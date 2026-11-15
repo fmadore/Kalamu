@@ -1,6 +1,11 @@
 //! Mistral batch jobs: OCR or chat requests sent inline to `/v1/batch/jobs`, at half price, with
 //! a 24-hour limit. Results are read inline (`?inline=true`), or from the output file when the
 //! job has one. The reference types each result only as a map, so the common shapes are read.
+//!
+//! A job keeps its files in the account's storage, with no stated end ("the results do not
+//! expire at this time"): the input files (a live run found inline requests stored as a file
+//! too), the output file and the error file. Once a job has settled, [`Mistral::files_of`] names them from the
+//! job and each is deleted with `DELETE /v1/files/{file_id}`.
 
 use kalamu_core::{
     ApiKey, BatchContext, BatchProgress, ProcessOutput, ProcessRequest, ProviderError, Task,
@@ -55,6 +60,25 @@ impl Mistral {
             .and_then(Value::as_str)
             .map(str::to_string)
             .ok_or_else(|| ProviderError::Other("Mistral gave the batch no id".into()))
+    }
+
+    /// The files a settled job left: its input files, output file and error file. `None` while
+    /// it may still write some (queued, running, cancellation requested).
+    pub(super) async fn files_of(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        let url = format!("{}/batch/jobs/{batch_id}", self.base_url);
+        let Some(status) = batch::status_if_known(&self.client, url, key).await? else {
+            return Ok(Some(Vec::new()));
+        };
+        match status.get("status").and_then(Value::as_str).unwrap_or("") {
+            "SUCCESS" | "FAILED" | "TIMEOUT_EXCEEDED" | "CANCELLED" => Ok(Some(
+                batch::named_files(&status, &["input_files", "output_file", "error_file"]),
+            )),
+            _ => Ok(None),
+        }
     }
 
     pub(super) async fn poll(

@@ -1,6 +1,10 @@
 //! OpenAI's Batch API: the Responses requests written to a JSON Lines file, uploaded, and run as
 //! one batch at half price within 24 hours. Answers come back in an output file and failures in
 //! an error file, both keyed by `custom_id` and in any order.
+//!
+//! The three files stay in the account's storage (30 days by default, for `purpose=batch`)
+//! until deleted: once a batch has settled, [`OpenAi::files_of`] names them from the batch and
+//! each is deleted with `DELETE /v1/files/{file_id}`.
 
 use kalamu_core::{ApiKey, BatchContext, BatchProgress, ProcessRequest, ProviderError};
 use reqwest::multipart::{Form, Part};
@@ -44,6 +48,17 @@ impl OpenAi {
             .get("id")
             .and_then(Value::as_str)
             .ok_or_else(|| ProviderError::Other("OpenAI gave the batch file no id".into()))?;
+        let created = self.create(key, file_id).await;
+        if created.is_err() {
+            // No batch will name the file: it is deleted now, or it would stay in the account's
+            // storage with the pages it holds. Should the batch have been made all the same
+            // (a request timed out), it then fails to start instead of being billed unread.
+            let _ = batch::delete_file(&self.client, &self.base_url, key, file_id).await;
+        }
+        created
+    }
+
+    async fn create(&self, key: &ApiKey, file_id: &str) -> Result<String, ProviderError> {
         let created = send_json(
             self.client
                 .post(format!("{}/batches", self.base_url))
@@ -60,6 +75,26 @@ impl OpenAi {
             .and_then(Value::as_str)
             .map(str::to_string)
             .ok_or_else(|| ProviderError::Other("OpenAI gave the batch no id".into()))
+    }
+
+    /// The files a settled batch left: the requests uploaded, the answers and the errors.
+    /// `None` while it may still write some (validating, running, finalizing, cancelling).
+    pub(super) async fn files_of(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        let url = format!("{}/batches/{batch_id}", self.base_url);
+        let Some(status) = batch::status_if_known(&self.client, url, key).await? else {
+            return Ok(Some(Vec::new()));
+        };
+        match status.get("status").and_then(Value::as_str).unwrap_or("") {
+            "completed" | "failed" | "expired" | "cancelled" => Ok(Some(batch::named_files(
+                &status,
+                &["input_file_id", "output_file_id", "error_file_id"],
+            ))),
+            _ => Ok(None),
+        }
     }
 
     pub(super) async fn poll(
