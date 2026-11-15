@@ -12,8 +12,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use kalamu_core::{
-    ExportDocument, ExportError, ExportFormat, Exporter, InputKind, PageHalf, PieceRef, Task,
-    TextRegion,
+    ExportDocument, ExportError, ExportFormat, Exporter, InputKind, PieceRef, Task, TextRegion,
 };
 use lopdf::{Dictionary, Document, Object, ObjectId, Stream, dictionary};
 
@@ -77,25 +76,7 @@ pub(crate) fn regions_by_page(doc: &ExportDocument) -> BTreeMap<u32, Vec<TextReg
             continue;
         };
         for region in &part.regions {
-            let mut r = region.clone();
-            let start = match half {
-                Some(PageHalf::Left) => Some(0.0),
-                Some(PageHalf::Right) => Some(0.5),
-                None => None,
-            };
-            if let Some(start) = start {
-                let halve = |x: &mut f32, width: &mut f32| {
-                    *x = start + *x * 0.5;
-                    *width *= 0.5;
-                };
-                halve(&mut r.x, &mut r.width);
-                for line in &mut r.lines {
-                    halve(&mut line.x, &mut line.width);
-                    for word in &mut line.words {
-                        halve(&mut word.x, &mut word.width);
-                    }
-                }
-            }
+            let r = region.onto_whole_page(*half);
             pages.entry(*number).or_default().push(r);
         }
     }

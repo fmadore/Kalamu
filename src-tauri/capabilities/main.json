@@ -96,6 +96,7 @@
     "allow-rename-job",
     "allow-source-pieces",
     "allow-piece-preview",
+    "allow-page-regions",
     "allow-piece-thumbnail",
     "allow-piece-audio",
     "allow-source-text",

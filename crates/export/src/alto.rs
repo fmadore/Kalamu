@@ -15,8 +15,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use kalamu_core::{
-    ExportDocument, ExportError, ExportFormat, Exporter, InputKind, Task, TextLine, TextRegion,
-    TextWord,
+    ExportDocument, ExportError, ExportFormat, Exporter, InputKind, Task, TextRegion,
 };
 
 use crate::searchable_pdf::{pdf_page_sizes, regions_by_page};
@@ -239,7 +238,7 @@ fn page(x: &mut String, number: u32, pw: f32, ph: f32, regions: &[TextRegion]) {
             pos(region.x, region.y, region.width, region.height, pw, ph)
         );
         let lines = if region.lines.is_empty() {
-            estimated_lines(region)
+            region.estimated_lines()
         } else {
             region.lines.clone()
         };
@@ -273,52 +272,6 @@ fn page(x: &mut String, number: u32, pw: f32, ph: f32, regions: &[TextRegion]) {
     x.push_str("      </PrintSpace>\n    </Page>\n");
 }
 
-/// A block placed whole, as lines sharing its height and words sharing each line's width by
-/// their length.
-fn estimated_lines(region: &TextRegion) -> Vec<TextLine> {
-    let texts: Vec<&str> = region
-        .text
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty())
-        .collect();
-    let height = region.height / texts.len().max(1) as f32;
-    texts
-        .iter()
-        .enumerate()
-        .map(|(i, text)| {
-            let y = region.y + i as f32 * height;
-            let words: Vec<&str> = text.split_whitespace().collect();
-            let total: usize = words.iter().map(|w| w.chars().count() + 1).sum::<usize>() - 1;
-            let unit = region.width / total.max(1) as f32;
-            let mut offset = 0.0;
-            let words = words
-                .iter()
-                .map(|w| {
-                    let width = w.chars().count() as f32 * unit;
-                    let word = TextWord {
-                        x: region.x + offset,
-                        y,
-                        width,
-                        height,
-                        text: (*w).to_owned(),
-                        confidence: None,
-                    };
-                    offset += width + unit;
-                    word
-                })
-                .collect();
-            TextLine {
-                x: region.x,
-                y,
-                width: region.width,
-                height,
-                words,
-            }
-        })
-        .collect()
-}
-
 /// Text escaped for an XML attribute or element; characters XML 1.0 forbids are dropped.
 fn esc(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
@@ -339,18 +292,6 @@ fn esc(text: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn a_block_placed_whole_gets_estimated_lines_and_words() {
-        let region = TextRegion::block(0.1, 0.2, 0.4, 0.1, "Dakar, le\n3 mai");
-        let lines = estimated_lines(&region);
-        assert_eq!(lines.len(), 2);
-        assert_eq!(lines[1].y, 0.25);
-        assert_eq!(lines[0].words.len(), 2);
-        assert_eq!(lines[0].words[0].x, 0.1);
-        let last = lines[0].words.last().map(|w| w.x + w.width).unwrap_or(0.0);
-        assert!((last - 0.5).abs() < 1e-5, "the words fill the line");
-    }
 
     #[test]
     fn text_is_escaped_for_xml() {

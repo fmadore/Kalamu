@@ -144,6 +144,7 @@ pub fn run() {
             commands::jobs::rename_job,
             commands::review::source_pieces,
             commands::review::piece_preview,
+            commands::review::page_regions,
             commands::review::piece_thumbnail,
             commands::review::piece_audio,
             commands::review::source_text,

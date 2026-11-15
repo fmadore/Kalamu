@@ -31,6 +31,7 @@ mod ordered;
 mod pages;
 mod reading;
 mod records;
+mod regions;
 mod snapshot;
 mod sources;
 mod workflow;

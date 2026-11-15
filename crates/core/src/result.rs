@@ -103,10 +103,10 @@ pub struct Segment {
     pub text: String,
 }
 
-/// Where a block of text sits on its page, for a searchable PDF and ALTO: fractions of the
-/// page's width and height, measured from its top-left corner as displayed. Only models that
-/// report layout give them: Mistral OCR at paragraph level, Tesseract down to each word, in
-/// `lines`.
+/// Where a block of text sits on its page, for a searchable PDF, ALTO and the review's overlay
+/// ([`crate::regions`]): fractions of the page's width and height, measured from its top-left
+/// corner as displayed. Only models that report layout give them: Mistral OCR and LightOnOCR
+/// at block level, Tesseract down to each word, in `lines`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct TextRegion {

@@ -88,6 +88,7 @@ pub const COMMANDS: &[&str] = &[
     "rename_job",
     "source_pieces",
     "piece_preview",
+    "page_regions",
     "piece_thumbnail",
     "piece_audio",
     "source_text",

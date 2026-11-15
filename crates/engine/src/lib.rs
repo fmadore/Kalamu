@@ -22,6 +22,7 @@ mod plan;
 mod progress;
 mod realign;
 mod record;
+mod regions;
 mod review;
 mod rules;
 mod run;
