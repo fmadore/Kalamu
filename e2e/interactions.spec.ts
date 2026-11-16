@@ -175,17 +175,19 @@ test('New job lists models by tier across providers, and remembers it', async ({
 	const list = page.getByRole('listbox', { name: 'Model' });
 	await expect(list.getByRole('group').first()).toHaveAccessibleName('Most capable');
 	await expect(list.getByRole('option', { name: /^Gemini 4 Hydrogen/ })).toContainText(
-		'next step after 3.8 Flash'
+		'which replaces 3.8 Flash'
 	);
+	// A model replaced by a newer one is not offered.
+	await expect(list.getByRole('option', { name: /^Gemini 3\.8 Flash/ })).toHaveCount(0);
 	// Opening puts the focus on the chosen model, once the browser has told the list it is open:
 	// a key pressed before then reaches the button, not the list.
-	await expect(list.getByRole('option', { name: /^Gemini 3\.8 Flash/ })).toBeFocused();
+	await expect(list.getByRole('option', { name: /^Gemini 4 Hydrogen/ })).toBeFocused();
 	// The keys move through the list, Enter chooses, and the focus goes back to the field.
 	await page.keyboard.press('ArrowDown');
 	await page.keyboard.press('Enter');
 	await expect(list).toBeHidden();
 	await expect(model).toBeFocused();
-	await expect(model).toHaveText(/Gemini 4 Hydrogen/);
+	await expect(model).toHaveText(/Gemini 3\.5 Flash-Lite/);
 
 	await setups.getByRole('button', { name: 'Tier', exact: true }).click();
 	await expect(setups.getByRole('button', { name: 'Tier', exact: true })).toHaveAttribute(

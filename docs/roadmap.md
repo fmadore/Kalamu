@@ -100,6 +100,10 @@ improvements that open *Next*; what it did not fix at once was tracked in
   1 January 2027; Carbon and Argon now ask for the 32K tokens Google lets one request write.
   Every model has a tier (most capable, balanced, lightweight), and New job lists models by
   provider or by tier across providers, marking the chosen one's tier beside its description.
+- **Hydrogen in place of 3.8 Flash** ([decision](decisions/2026-11-16-older-gemini-lines.md)):
+  Gemini 4 Hydrogen is now the default and replaces 3.8 Flash, and Gemini 4 Argon replaces
+  3.1 Pro; both older models stay in the pipelines that name them. The model menu follows its
+  button when the page scrolls, and shows a model's whole description under the pointer.
 - **Foundations.** Rust workspace and Tauri shell, job database with caching and resuming,
   progress and taskbar progress, model catalogue refreshed from the repository, prompt library,
   keys in Credential Manager, English interface with translation files, CI with `cargo audit`
