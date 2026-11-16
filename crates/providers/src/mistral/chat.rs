@@ -12,7 +12,8 @@
 //! none, so the model writes until it is done.
 
 use kalamu_core::{
-    AnalysisSchema, ProcessOutput, ProcessRequest, ProviderError, RequestSetting, Tuning, Usage,
+    AnalysisSchema, CutReason, ProcessOutput, ProcessRequest, ProviderError, RequestSetting,
+    Tuning, Usage,
 };
 use serde_json::{Value, json};
 
@@ -100,9 +101,17 @@ pub(super) fn parse(response: &Value) -> Result<ProcessOutput, ProviderError> {
     let finish = choice
         .and_then(|c| c.get("finish_reason"))
         .and_then(Value::as_str);
+    // Any early stop with text keeps it, marked as cut off: at the limit of the answer
+    // (`length`) or of the model's context (`model_length`), or for another reason (`error`).
+    // Mistral's chat has no filter that stops an answer part-way.
+    let truncated = !matches!(finish, None | Some("stop" | "tool_calls"));
     Ok(ProcessOutput {
         text,
-        truncated: finish == Some("length"),
+        truncated,
+        cut_reason: match finish {
+            Some("length" | "model_length") | None => CutReason::Limit,
+            Some(_) => CutReason::Other,
+        },
         usage: Usage {
             input_tokens: count("prompt_tokens"),
             output_tokens: count("completion_tokens"),
@@ -154,7 +163,25 @@ mod tests {
         }))
         .unwrap();
         assert!(cut.truncated, "kept, and marked as cut off");
+        assert_eq!(cut.cut_reason, CutReason::Limit);
         assert!(!out_of(&json!("{}")).truncated);
+    }
+
+    #[test]
+    fn an_answer_stopped_for_another_reason_says_so() {
+        let stopped = |finish: &str| {
+            parse(&json!({
+                "choices": [{ "index": 0, "finish_reason": finish,
+                    "message": { "role": "assistant", "content": "{\"summary\":\"Bamako" } }],
+            }))
+            .unwrap()
+        };
+        let context = stopped("model_length");
+        assert!(context.truncated);
+        assert_eq!(context.cut_reason, CutReason::Limit);
+        let error = stopped("error");
+        assert!(error.truncated);
+        assert_eq!(error.cut_reason, CutReason::Other);
     }
 
     fn out_of(content: &Value) -> ProcessOutput {

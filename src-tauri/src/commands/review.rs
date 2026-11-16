@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use base64::Engine as _;
-use kalamu_core::{Correction, JobId, SetupId, SourceId, SpeakerNames};
+use kalamu_core::{Correction, JobId, PageRegions, RowEdit, SetupId, SourceId, SpeakerNames};
 use kalamu_engine::{ComparisonReport, DiffSpan, JobScores, PieceAudio, PieceView};
 use kalamu_media::OpenSource;
 use tauri::{AppHandle, Manager, State};
@@ -80,6 +80,21 @@ pub async fn piece_preview(
         mime: prepared.mime,
         data: base64::engine::general_purpose::STANDARD.encode(prepared.bytes),
     })
+}
+
+/// Where a page's text sits, for drawing over the scan in the review: the regions the engine
+/// stored for one piece under one set-up, in fractions of the piece as `piece_preview` sends it,
+/// each placed in the text shown where that is certain. Reads the store only.
+#[tauri::command]
+pub async fn page_regions(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+    setup_id: SetupId,
+    index: u32,
+) -> CmdResult<PageRegions> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.page_regions(job_id, source_id, setup_id, index)?)).await
 }
 
 /// One page of a source drawn `width` pixels wide, for the review's strip of thumbnails: a
@@ -177,6 +192,21 @@ async fn page_of(
 pub async fn save_correction(state: State<'_, AppState>, correction: Correction) -> CmdResult<()> {
     let engine = state.engine.clone();
     off_thread(move || Ok(engine.save_correction(correction)?)).await
+}
+
+/// Makes one change to a page's rows in a records analysis (a cell, a row added or removed),
+/// in the page's corrected answers; the files are written again as after a correction.
+#[tauri::command]
+pub async fn edit_rows(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    setup_id: SetupId,
+    source_id: SourceId,
+    index: u32,
+    change: RowEdit,
+) -> CmdResult<()> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.edit_rows(job_id, setup_id, source_id, index, &change)?)).await
 }
 
 /// Stores several corrections at once, all or none: a change across set-ups put back.

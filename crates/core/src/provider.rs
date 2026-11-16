@@ -9,7 +9,7 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    AnalysisSchema, BatchContext, BatchLimits, BatchProgress, LanguageChoice, PieceRef,
+    AnalysisSchema, BatchContext, BatchLimits, BatchProgress, CutReason, LanguageChoice, PieceRef,
     ProcessOutput, ProviderId, SetupOptions, Task, Usage,
 };
 
@@ -160,21 +160,38 @@ pub enum ProviderError {
     /// the job's cost.
     #[error("The answer did not fit the analysis: {reason}")]
     InvalidAnswer { reason: String, usage: Usage },
-    /// A structured answer the model stopped writing at its output limit, so it cannot be read.
+    /// A structured answer the model stopped writing before its end, so it cannot be read: at
+    /// its output limit, or stopped by a filter or for another reason the provider gave.
     /// Asking again would stop at the same place and be billed again; `usage` is what this one
     /// consumed, which the engine adds to the job's cost.
-    #[error(
-        "The answer stopped at the model's output limit before it was complete: send fewer pages \
-         in each call, ask for fewer or shorter fields, or choose a model that can write a \
-         longer answer"
-    )]
-    CutOff { usage: Usage },
+    #[error("{}", cut_off_message(*reason))]
+    CutOff { usage: Usage, reason: CutReason },
     /// An offline engine whose model has not been downloaded.
     #[error("Not installed: {0}")]
     NotInstalled(String),
     /// Stopped part-way because the job was paused or cancelled; the piece is done again later.
     #[error("Stopped before the end")]
     Interrupted,
+}
+
+/// What [`ProviderError::CutOff`] says, by why the answer stopped.
+fn cut_off_message(reason: CutReason) -> &'static str {
+    match reason {
+        CutReason::Limit => {
+            "The answer stopped at the model's output limit before it was complete: send fewer \
+             pages in each call, ask for fewer or shorter fields, or choose a model that can \
+             write a longer answer"
+        }
+        CutReason::Filter => {
+            "The provider's filter stopped the answer before it was complete, so it cannot be \
+             read: the provider will not write about something in this text; try another model \
+             or provider"
+        }
+        CutReason::Other => {
+            "The provider stopped the answer before it was complete, for a reason other than \
+             the output limit, so it cannot be read: try again later, or choose another model"
+        }
+    }
 }
 
 impl ProviderError {
@@ -190,7 +207,11 @@ impl ProviderError {
             Self::Unsupported(_) => "provider.unsupported",
             Self::Other(_) => "provider.other",
             Self::InvalidAnswer { .. } => "provider.invalid_answer",
-            Self::CutOff { .. } => "provider.cut_off",
+            Self::CutOff { reason, .. } => match reason {
+                CutReason::Limit => "provider.cut_off",
+                CutReason::Filter => "provider.cut_off_filter",
+                CutReason::Other => "provider.cut_off_other",
+            },
             Self::NotInstalled(_) => "provider.not_installed",
             Self::Interrupted => "provider.interrupted",
         }
@@ -209,7 +230,7 @@ impl ProviderError {
     /// were refused before the model answered.
     pub fn billed(&self) -> Option<&Usage> {
         match self {
-            Self::InvalidAnswer { usage, .. } | Self::CutOff { usage } => Some(usage),
+            Self::InvalidAnswer { usage, .. } | Self::CutOff { usage, .. } => Some(usage),
             Self::Blocked { usage, .. } => usage.as_ref(),
             _ => None,
         }
@@ -218,7 +239,7 @@ impl ProviderError {
     /// What a failed call was billed for, to mark it as billed at a batch's price.
     pub fn billed_mut(&mut self) -> Option<&mut Usage> {
         match self {
-            Self::InvalidAnswer { usage, .. } | Self::CutOff { usage } => Some(usage),
+            Self::InvalidAnswer { usage, .. } | Self::CutOff { usage, .. } => Some(usage),
             Self::Blocked { usage, .. } => usage.as_mut(),
             _ => None,
         }
@@ -331,5 +352,27 @@ pub trait Provider: Send + Sync {
     async fn cancel_batch(&self, key: &ApiKey, batch_id: &str) -> Result<(), ProviderError> {
         let _ = (key, batch_id);
         Err(ProviderError::Unsupported("batches".into()))
+    }
+
+    /// The files an ended batch left in the account's storage (the requests uploaded or kept,
+    /// the answers, the errors), by the ids the provider gives for them, for
+    /// [`Provider::delete_batch_file`]. Read from the batch itself, by its id: never a listing
+    /// of the account's storage, so only what that batch made is named. `None` while the batch
+    /// can still change (being cancelled), to ask again later; none for a batch the provider no
+    /// longer knows. Providers whose batches leave no file keep the default, which names none.
+    async fn batch_files(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        let _ = (key, batch_id);
+        Ok(Some(Vec::new()))
+    }
+
+    /// Deletes one file named by [`Provider::batch_files`]. A file already gone counts as
+    /// deleted.
+    async fn delete_batch_file(&self, key: &ApiKey, file_id: &str) -> Result<(), ProviderError> {
+        let _ = (key, file_id);
+        Err(ProviderError::Unsupported("deleting batch files".into()))
     }
 }

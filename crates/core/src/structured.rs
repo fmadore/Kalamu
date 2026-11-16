@@ -102,11 +102,12 @@ pub fn finish(
         .map_or(raw, |r| r.trim_end_matches("```"))
         .trim();
     // Refused or not, the answer was written and billed: its usage goes with the error.
-    let truncated = output.truncated;
+    let (truncated, cut_reason) = (output.truncated, output.cut_reason);
     let rejected = |reason: String| {
         if truncated {
             ProviderError::CutOff {
                 usage: output.usage.clone(),
+                reason: cut_reason,
             }
         } else {
             ProviderError::InvalidAnswer {
@@ -264,5 +265,60 @@ mod tests {
         )
         .unwrap();
         assert_eq!(out.fields[0].value, FieldValue::Text("x".into()));
+    }
+
+    #[test]
+    fn an_answer_stopped_by_a_filter_says_so_and_not_the_limit() {
+        let cut = |cut_reason| {
+            finish(
+                ProcessOutput {
+                    text: r#"{"summary":"Une réunion"#.into(),
+                    truncated: true,
+                    cut_reason,
+                    ..ProcessOutput::default()
+                },
+                &fields(),
+            )
+            .unwrap_err()
+        };
+        let filter = cut(crate::CutReason::Filter);
+        assert!(
+            matches!(
+                filter,
+                ProviderError::CutOff {
+                    reason: crate::CutReason::Filter,
+                    ..
+                }
+            ),
+            "{filter}"
+        );
+        assert_eq!(filter.code(), "provider.cut_off_filter");
+        assert!(filter.to_string().contains("filter"), "{filter}");
+        assert!(!filter.to_string().contains("output limit"), "{filter}");
+        assert!(!filter.is_retryable());
+
+        let other = cut(crate::CutReason::Other);
+        assert_eq!(other.code(), "provider.cut_off_other");
+        assert_eq!(cut(crate::CutReason::Limit).code(), "provider.cut_off");
+    }
+
+    #[test]
+    fn an_answer_stored_before_the_reason_was_kept_reads_as_the_limit() {
+        let old: ProcessOutput = serde_json::from_str(
+            r#"{"text":"Bamako","detected_language":null,"model_version":null,"truncated":true}"#,
+        )
+        .unwrap();
+        assert_eq!(old.cut_reason, crate::CutReason::Limit);
+        // And one stopped at the limit is written as before, without the reason.
+        let written = serde_json::to_value(&old).unwrap();
+        assert!(written.get("cut_reason").is_none(), "{written}");
+        let filtered = ProcessOutput {
+            cut_reason: crate::CutReason::Filter,
+            ..old
+        };
+        assert_eq!(
+            serde_json::to_value(&filtered).unwrap()["cut_reason"],
+            "filter"
+        );
     }
 }

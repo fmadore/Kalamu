@@ -103,10 +103,10 @@ pub struct Segment {
     pub text: String,
 }
 
-/// Where a block of text sits on its page, for a searchable PDF and ALTO: fractions of the
-/// page's width and height, measured from its top-left corner as displayed. Only models that
-/// report layout give them: Mistral OCR at paragraph level, Tesseract down to each word, in
-/// `lines`.
+/// Where a block of text sits on its page, for a searchable PDF, ALTO and the review's overlay
+/// ([`crate::regions`]): fractions of the page's width and height, measured from its top-left
+/// corner as displayed. Only models that report layout give them: Mistral OCR and LightOnOCR
+/// at block level, Tesseract down to each word, in `lines`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct TextRegion {
@@ -256,6 +256,27 @@ impl Usage {
     }
 }
 
+/// Why an answer stopped before its end, as the provider reported it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum CutReason {
+    /// The model's output limit. Results stored before the reason was kept read as this one,
+    /// the only reason they could have been marked for.
+    #[default]
+    Limit,
+    /// A filter of the provider's (safety, copyright, a blocked term) stopped the answer.
+    Filter,
+    /// Anything else the provider reported (an interruption, a language it will not write…).
+    Other,
+}
+
+impl CutReason {
+    pub fn is_limit(&self) -> bool {
+        *self == Self::Limit
+    }
+}
+
 /// The result of processing one piece.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -276,10 +297,14 @@ pub struct ProcessOutput {
     /// Text blocks and their place on the page, from models that report layout.
     #[serde(default)]
     pub regions: Vec<TextRegion>,
-    /// The answer stopped at the model's output limit: what was read is kept, but the end of
-    /// the piece may be missing.
+    /// The answer stopped before its end: what was read is kept, but the end of the piece may
+    /// be missing.
     #[serde(default)]
     pub truncated: bool,
+    /// Why it stopped, when `truncated`; left out of the stored answer when it was the output
+    /// limit, so results written before it was kept read the same.
+    #[serde(default, skip_serializing_if = "CutReason::is_limit")]
+    pub cut_reason: CutReason,
 }
 
 /// A cached result, keyed by [`crate::CacheKey`].

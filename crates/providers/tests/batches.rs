@@ -321,3 +321,196 @@ async fn gemini_and_mistral_send_each_request_of_a_batch_under_its_id() {
         );
     }
 }
+
+/// What a settled OpenAI batch left is named from the batch, by its id, and deleted file by
+/// file; a batch still running names nothing yet, and a file or batch already gone is no error.
+#[tokio::test]
+async fn openai_names_a_settled_batch_s_files_and_deletes_them() {
+    let server = MockServer::start().await;
+    for (id, status) in [("batch_done", "completed"), ("batch_busy", "cancelling")] {
+        Mock::given(method("GET"))
+            .and(path(format!("/batches/{id}")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "id": id,
+                "object": "batch",
+                "status": status,
+                "input_file_id": "file-in",
+                "output_file_id": "file-out",
+                "error_file_id": null,
+            })))
+            .mount(&server)
+            .await;
+    }
+    Mock::given(method("GET"))
+        .and(path("/batches/batch_gone"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+            "error": { "message": "No batch found with id 'batch_gone'.",
+                "type": "invalid_request_error" } })))
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/files/file-in"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "id": "file-in", "object": "file", "deleted": true })))
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/files/file-out"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+            "error": { "message": "No such File object: file-out" } })))
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/files/file-busy"))
+        .respond_with(ResponseTemplate::new(503).set_body_string("overloaded"))
+        .mount(&server)
+        .await;
+
+    let openai = OpenAi::with_base_url(client(), &server.uri());
+    let key = ApiKey::new("k");
+    assert_eq!(
+        openai.batch_files(&key, "batch_done").await,
+        Ok(Some(vec!["file-in".into(), "file-out".into()]))
+    );
+    assert_eq!(openai.batch_files(&key, "batch_busy").await, Ok(None));
+    assert_eq!(
+        openai.batch_files(&key, "batch_gone").await,
+        Ok(Some(Vec::new()))
+    );
+    assert_eq!(openai.delete_batch_file(&key, "file-in").await, Ok(()));
+    assert_eq!(
+        openai.delete_batch_file(&key, "file-out").await,
+        Ok(()),
+        "already gone"
+    );
+    assert!(matches!(
+        openai.delete_batch_file(&key, "file-busy").await,
+        Err(ProviderError::Transient(_))
+    ));
+    // Only the batches asked about and the files named were touched: nothing was listed.
+    let received = server.received_requests().await.unwrap_or_default();
+    assert!(
+        received.iter().all(|r| r.url.path() != "/files"),
+        "{received:?}"
+    );
+}
+
+/// An uploaded file no batch will name, because creating the batch failed, is deleted at once.
+#[tokio::test]
+async fn openai_deletes_the_uploaded_file_when_the_batch_is_not_made() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/files"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(serde_json::json!({ "id": "file-in" })),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/batches"))
+        .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
+            "error": { "message": "Invalid endpoint" } })))
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/files/file-in"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "id": "file-in", "object": "file", "deleted": true })))
+        .mount(&server)
+        .await;
+    let openai = OpenAi::with_base_url(client(), &server.uri());
+    let (pages, langs, opts) = ([page(1)], LanguageChoice::Auto, SetupOptions::default());
+    let sent = openai
+        .submit_batch(
+            &ApiKey::new("k"),
+            &requests("gpt-6-luna", &pages, &langs, &opts),
+        )
+        .await;
+    assert_eq!(
+        sent,
+        Err(ProviderError::InvalidRequest("Invalid endpoint".into()))
+    );
+    let received = server.received_requests().await.unwrap_or_default();
+    assert!(
+        received
+            .iter()
+            .any(|r| r.method.as_str() == "DELETE" && r.url.path() == "/files/file-in"),
+        "{received:?}"
+    );
+}
+
+/// A settled Mistral job names its input, output and error files; one still running names
+/// nothing yet. Each is deleted by its id.
+#[tokio::test]
+async fn mistral_names_a_settled_job_s_files_and_deletes_them() {
+    let server = MockServer::start().await;
+    for (id, status) in [
+        ("job_done", "SUCCESS"),
+        ("job_busy", "CANCELLATION_REQUESTED"),
+    ] {
+        Mock::given(method("GET"))
+            .and(path(format!("/batch/jobs/{id}")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "id": id,
+                "object": "batch",
+                "status": status,
+                "input_files": ["7ad0c39f-inline"],
+                "output_file": "c1d2e3f4-out",
+                "error_file": "a9b8c7d6-err",
+                "endpoint": "/v1/ocr",
+                "total_requests": 2,
+            })))
+            .mount(&server)
+            .await;
+    }
+    for file in ["7ad0c39f-inline", "c1d2e3f4-out"] {
+        Mock::given(method("DELETE"))
+            .and(path(format!("/files/{file}")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "id": file, "object": "file", "deleted": true })))
+            .mount(&server)
+            .await;
+    }
+    let mistral = Mistral::with_base_url(client(), &server.uri());
+    let key = ApiKey::new("k");
+    assert_eq!(
+        mistral.batch_files(&key, "job_done").await,
+        Ok(Some(vec![
+            "7ad0c39f-inline".into(),
+            "c1d2e3f4-out".into(),
+            "a9b8c7d6-err".into()
+        ]))
+    );
+    assert_eq!(mistral.batch_files(&key, "job_busy").await, Ok(None));
+    assert_eq!(
+        mistral.delete_batch_file(&key, "7ad0c39f-inline").await,
+        Ok(())
+    );
+    // Not mounted: the mock server answers 404, which counts as deleted.
+    assert_eq!(
+        mistral.delete_batch_file(&key, "a9b8c7d6-err").await,
+        Ok(())
+    );
+    // The job's status is read without its answers inline.
+    let received = server.received_requests().await.unwrap_or_default();
+    assert!(
+        received.iter().all(|r| r.url.query().is_none()),
+        "{received:?}"
+    );
+}
+
+/// Claude and Gemini batches leave no file in the account's storage: nothing is named.
+#[tokio::test]
+async fn claude_and_gemini_batches_name_no_file() {
+    let key = ApiKey::new("k");
+    let claude = Anthropic::with_base_url(client(), "http://127.0.0.1:9");
+    assert_eq!(
+        claude.batch_files(&key, "msgbatch_1").await,
+        Ok(Some(Vec::new()))
+    );
+    let gemini = Gemini::with_base_url(client(), "http://127.0.0.1:9");
+    assert_eq!(
+        gemini.batch_files(&key, "batches/1").await,
+        Ok(Some(Vec::new()))
+    );
+}

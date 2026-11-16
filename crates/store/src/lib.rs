@@ -256,6 +256,14 @@ impl JobStore for SqliteStore {
         batches::batches(self, job)
     }
 
+    fn batch_leftovers(&self) -> Result<Vec<BatchRecord>, StoreError> {
+        batches::batch_leftovers(self)
+    }
+
+    fn put_batch_leftover(&self, batch: &BatchRecord) -> Result<(), StoreError> {
+        batches::put_batch_leftover(self, batch)
+    }
+
     fn put_snapshot(&self, snapshot: &kalamu_core::Snapshot) -> Result<(), StoreError> {
         snapshots::put(self, snapshot)
     }

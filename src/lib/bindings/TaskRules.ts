@@ -2,6 +2,7 @@
 import type { ExportFormat } from "./ExportFormat";
 import type { InputKind } from "./InputKind";
 import type { ModelRef } from "./ModelRef";
+import type { PageReading } from "./PageReading";
 import type { Task } from "./Task";
 
 /**
@@ -61,4 +62,10 @@ reads_text_layer: boolean,
 /**
  * Several images can be read as the pages of one document.
  */
-page_documents: boolean, };
+page_documents: boolean, 
+/**
+ * For an analysis whose fields are one repeating group (records), which reads each page
+ * on its own: what it offers then, in place of `samples`, `splits_spreads` and
+ * `page_documents`. `None` for the other tasks.
+ */
+by_page?: PageReading, };

@@ -87,6 +87,24 @@ model's where there are any.
   named it, a `<field> (reason)` column after each field that asks for a reason, then
   `corrected` and `reviewed`. List items are joined with semicolons.
 
+### Records
+
+An analysis whose fields are one repeating group (*One row per entry*) is read page by page,
+and its files hold one row per entry, from the corrected rows.
+
+- **CSV**: `file`, `page`, `position` (the entry's place on its page, from 1), then one column
+  per column of the group, named as the researcher named it, with a `<column> (reason)` after
+  each that asks for a reason, then `corrected`, `reviewed` (those of the row's page) and
+  `not_read`. A page that failed or was cut off is one row with no position and
+  `[Not read: reason]` under `not_read`, so its entries are never taken for none. Cells that
+  begin with `=`, `+`, `-` or `@` are written as in the other tables.
+- **JSON**: the usual envelope, its parts without `fields`, and a top-level `rows` list: for
+  each entry `file`, `page`, `position`, a `fields` object with each cell under its column's
+  key (text, or an array for a list and several choices), `corrected`, `reviewed` and, where
+  any column gave one, `reasons`. A page not read has no rows; its part says `failed`.
+- **Text formats** (`.txt`, `.md`, `.docx`) are not yet made for rows: each page shows only
+  its rows' first column, joined with semicolons. Use the CSV or the JSON.
+
 ## Tables of contents
 
 Written as `<name>.contents.md` (and `.docx`, `.csv`, `.txt`, `.json`) beside the source. Only
@@ -195,7 +213,8 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `options` | Diarization, timestamps, speaker count, and the reasoning level chosen or suggested for the set-up (`reasoning`, absent for a model that does not reason) |
 | `pieces`, `corrected`, `reviewed` | Number of pages or segments, and which were corrected or reviewed |
 | `failed` | Pages or segments that could not be read after their retries, marked in the files. Absent when none was |
-| `truncated` | Pages or segments whose answer stopped at the model's output limit, so their end may be missing; for a table of contents, the pages read and the combined entries alike. Absent when none was |
+| `truncated` | Pages or segments whose answer stopped before its end, at the model's output limit or for another reason the provider gave, so their end may be missing; for a table of contents, the pages read and the combined entries alike. Absent when none was |
+| `cut_by_filter` | Those of `truncated` that a provider's filter (safety, a blocked term) stopped, rather than the output limit. Absent when none was |
 | `preprocessing` | Fixes applied to working copies (`split_spreads`, `even_out_volume`, `sample_first_3_pages`): only those made, so `split_spreads` only where a spread was found, and a sample only of a document longer than it |
 | `renamed_speakers` | The model's speaker labels the researcher gave names, which replace them in every file. The names are in the files, not here, so the record can be shared without them. Absent when none was |
 | `usage`, `cost_usd` | Tokens, audio seconds or pages billed, the input read from or written to the provider's prompt cache (`cached_input_tokens`, `cache_write_tokens`, parts of `input_tokens`), whether the calls went through a batch service (`batch`), and the cost from catalogue prices with those discounts, for the results kept |

@@ -356,3 +356,49 @@ fn an_analysis_of_a_document_of_images_is_refused() {
     });
     assert!(matches!(refused, Err(EngineError::UnsupportedSource(_))));
 }
+
+/// Records (#171) read a document of images page by page, as an extraction does: one call per
+/// page, each keyed by its own file.
+#[tokio::test]
+async fn records_read_a_document_of_images_page_by_page() {
+    let p = pages();
+    let files = p.images(&["r1.png", "r2.png"]);
+    let made = p
+        .engine
+        .image_document("Register", &files)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let job = p
+        .engine
+        .create_job(NewJob {
+            name: "Register".into(),
+            task: Task::Analysis,
+            sources: vec![made.source],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("eye"),
+                model: "eye-1".into(),
+                preset_id: Some("analysis.register".into()),
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: Default::default(),
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    let mut events = p.engine.subscribe();
+    p.engine.start(job.id).unwrap_or_else(|e| panic!("{e}"));
+    loop {
+        match tokio::time::timeout(Duration::from_secs(10), events.recv()).await {
+            Ok(Ok(ProgressEvent::JobFinished { job_id, .. })) if job_id == job.id => break,
+            Ok(Ok(_)) => {}
+            other => panic!("no JobFinished event: {other:?}"),
+        }
+    }
+    assert_eq!(p.eye.calls.load(Ordering::SeqCst), 2, "one call per page");
+    let pieces = p.store.pieces(job.id).unwrap_or_default();
+    assert!(
+        pieces
+            .iter()
+            .all(|s| matches!(s.piece, PieceRef::Page { .. }))
+    );
+}

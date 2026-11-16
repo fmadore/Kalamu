@@ -19,9 +19,12 @@
 //! rules for any printed text, its newspaper ones included. The translation is new: it takes
 //! the translated interview's rules (everything in order, names kept, the original term beside a
 //! culturally specific one) to any text, its target named by `{languages}` as an analysis's
-//! answer language is.
+//! answer language is. The directory and the register are records analyses (#171), new: one row
+//! per entry, read page by page, every cell as written ([`records`]).
 
 use kalamu_core::{AnalysisSchema, Field, FieldKind, InputKind, Task};
+
+mod records;
 
 pub(crate) struct Default {
     pub id: &'static str,
@@ -606,6 +609,30 @@ pub(crate) const DEFAULTS: &[Default] = &[
         merge: None,
         dense: false,
         made_for: Some(InputKind::Image),
+    },
+    Default {
+        id: "analysis.directory",
+        task: Task::Analysis,
+        name: "Directory or list, one row per entry",
+        description: "Every entry on every page, in reading order: the name, occupation, address and remarks as printed, for a city directory, a membership list or a printed table.",
+        instructions: include_str!("../defaults/records-directory.md"),
+        user_prompt: records::RECORDS_REQUEST,
+        schema: Some(records::directory),
+        merge: None,
+        dense: false,
+        made_for: None,
+    },
+    Default {
+        id: "analysis.register",
+        task: Task::Analysis,
+        name: "Register, one row per entry",
+        description: "Every entry on every page of a parish or civil register or a ledger: number, date, kind of entry, name, place, the people named and remarks, as written, repetition marks included.",
+        instructions: include_str!("../defaults/records-register.md"),
+        user_prompt: records::RECORDS_REQUEST,
+        schema: Some(records::register),
+        merge: None,
+        dense: false,
+        made_for: None,
     },
     Default {
         id: "contents.periodical",

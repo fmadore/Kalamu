@@ -20,6 +20,24 @@ compile_error!("Kalamu ships for Windows and macOS: add src-tauri/src/platform/<
 
 use std::path::PathBuf;
 
+use tauri::utils::config::AppDirectoriesOverride;
+
+/// The logs folder of the folders each system's `data_folder` gives, as Tauri resolves it
+/// (`logs` in a single root), for a launch that fails before Tauri can be asked. `None` when it
+/// names a folder only Tauri can resolve (`$LOCALDATA`…, when the home folder is not known).
+pub fn log_folder(folders: &AppDirectoriesOverride) -> Option<PathBuf> {
+    let log = match folders {
+        AppDirectoriesOverride::Root(root) => root.join("logs"),
+        AppDirectoriesOverride::Directories(dirs) => dirs.log.clone()?,
+    };
+    let unresolved = log
+        .components()
+        .next()
+        .and_then(|c| c.as_os_str().to_str())
+        .is_some_and(|first| first.starts_with('$'));
+    (!unresolved).then_some(log)
+}
+
 /// What became of an earlier data folder at this start.
 pub enum Moved {
     /// There was none, or the data folder already exists.

@@ -227,7 +227,7 @@
 				<!-- Another source is another review, loaded afresh; another page of it is not. -->
 				{#key `${jobId}/${sourceId}`}
 					{#if task === 'analysis'}
-						<AnalysisReview {jobId} {sourceId} {find} />
+						<AnalysisReview {jobId} {sourceId} start={index} {find} />
 					{:else if task === 'contents'}
 						<ContentsReview {jobId} {sourceId} start={index} {find} />
 					{:else}

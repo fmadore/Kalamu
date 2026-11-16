@@ -4,9 +4,9 @@
 //! with recorded responses when live keys are available for a recording run.
 
 use kalamu_core::{
-    AnalysisSchema, ApiKey, Field, FieldKind, FieldValue, LanguageChoice, LanguageCode, PieceRef,
-    PreparedInput, ProcessRequest, Provider, ProviderError, SetupOptions, StopSignal, Task, Tuning,
-    YOUTUBE_LINK,
+    AnalysisSchema, ApiKey, CutReason, Field, FieldKind, FieldValue, LanguageChoice, LanguageCode,
+    PieceRef, PreparedInput, ProcessRequest, Provider, ProviderError, SetupOptions, StopSignal,
+    Task, Tuning, YOUTUBE_LINK,
 };
 use kalamu_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
 use wiremock::matchers::{body_partial_json, header, method, path};
@@ -1093,6 +1093,7 @@ async fn an_answer_cut_off_at_the_output_limit_is_marked() {
             .unwrap_or_else(|e| panic!("{model}: {e}"));
         assert_eq!(output.text, "Bamako, le 3", "{model}");
         assert!(output.truncated, "{model}");
+        assert_eq!(output.cut_reason, CutReason::Limit, "{model}");
     }
 }
 
@@ -1103,19 +1104,23 @@ async fn an_answer_cut_off_at_the_output_limit_is_marked() {
 async fn an_answer_stopped_early_for_another_reason_is_marked_as_cut_off() {
     let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());
     let input = page();
-    let cases: [(&str, &str, &str); 2] = [
+    // Gemini's safety filter, and OpenAI's `interrupted`: each says why, so the message is not
+    // the output limit's.
+    let cases: [(&str, &str, &str, CutReason); 2] = [
         (
             "gemini_stopped_early.json",
             "gemini-3.8-flash",
             "Bamako, le 3 mai 1957\nMonsieur le",
+            CutReason::Filter,
         ),
         (
             "openai_incomplete.json",
             "gpt-6-luna",
             "RÉPUBLIQUE DU NIGER\nFraternité",
+            CutReason::Other,
         ),
     ];
-    for (name, model, text) in cases {
+    for (name, model, text, reason) in cases {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
             .respond_with(ResponseTemplate::new(200).set_body_json(fixture(name)))
@@ -1135,6 +1140,7 @@ async fn an_answer_stopped_early_for_another_reason_is_marked_as_cut_off() {
             .unwrap_or_else(|e| panic!("{model}: {e}"));
         assert_eq!(output.text, text, "{model}");
         assert!(output.truncated, "{model}");
+        assert_eq!(output.cut_reason, reason, "{model}");
     }
 
     // Incomplete with nothing written: refused, with what the response counted.
@@ -1181,12 +1187,58 @@ async fn an_analysis_cut_off_at_the_output_limit_fails_without_retry() {
         .await
         .err()
         .unwrap_or_else(|| panic!("a cut-off analysis cannot be read"));
-    assert!(matches!(err, ProviderError::CutOff { .. }), "{err}");
+    assert!(
+        matches!(
+            err,
+            ProviderError::CutOff {
+                reason: CutReason::Limit,
+                ..
+            }
+        ),
+        "{err}"
+    );
+    assert_eq!(err.code(), "provider.cut_off");
     assert!(!err.is_retryable());
     assert_eq!(
         err.billed().map(|u| (u.input_tokens, u.output_tokens)),
         Some((2100, 64_000))
     );
+}
+
+/// An analysis's answer a filter stopped half-way fails as the limit's does, but says it was
+/// the filter: the researcher is not told to send fewer pages.
+#[tokio::test]
+async fn an_analysis_stopped_by_a_filter_says_so() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(fixture("gemini_safety_analysis.json")),
+        )
+        .mount(&server)
+        .await;
+    let (input, langs, opts) = (document(), LanguageChoice::Auto, SetupOptions::default());
+    let err = Gemini::with_base_url(client(), &server.uri())
+        .process(
+            &ApiKey::new("k"),
+            request(Task::Analysis, "gemini-3.8-flash", &input, &langs, &opts),
+        )
+        .await
+        .err()
+        .unwrap_or_else(|| panic!("a filtered analysis cannot be read"));
+    assert!(
+        matches!(
+            err,
+            ProviderError::CutOff {
+                reason: CutReason::Filter,
+                ..
+            }
+        ),
+        "{err}"
+    );
+    assert_eq!(err.code(), "provider.cut_off_filter");
+    assert!(!err.to_string().contains("output limit"), "{err}");
+    assert!(!err.is_retryable());
+    assert_eq!(err.billed().map(|u| u.input_tokens), Some(2100));
 }
 
 /// A provider, its model, the task, and where its body holds the level and the output limit.

@@ -181,6 +181,87 @@ fn accepted_images_pass_through_unchanged() -> Result<(), MediaError> {
     Ok(())
 }
 
+/// `png` with an `eXIf` chunk giving EXIF orientation `orientation` (6: turn a quarter clockwise
+/// to show it upright), as a phone writes it.
+fn oriented_png(png: &[u8], orientation: u8) -> Vec<u8> {
+    // A big-endian TIFF header and one IFD entry: tag 0x0112, SHORT, one value.
+    let exif = [
+        b'M',
+        b'M',
+        0,
+        42,
+        0,
+        0,
+        0,
+        8,
+        0,
+        1,
+        0x01,
+        0x12,
+        0,
+        3,
+        0,
+        0,
+        0,
+        1,
+        0,
+        orientation,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ];
+    let crc = |bytes: &[u8]| {
+        let mut crc = 0xFFFF_FFFFu32;
+        for &byte in bytes {
+            crc ^= u32::from(byte);
+            for _ in 0..8 {
+                crc = if crc & 1 == 1 {
+                    (crc >> 1) ^ 0xEDB8_8320
+                } else {
+                    crc >> 1
+                };
+            }
+        }
+        !crc
+    };
+    let after_header = 8 + 4 + 4 + 13 + 4;
+    let mut out = png[..after_header].to_vec();
+    out.extend_from_slice(&(exif.len() as u32).to_be_bytes());
+    let mut typed = b"eXIf".to_vec();
+    typed.extend_from_slice(&exif);
+    out.extend_from_slice(&typed);
+    out.extend_from_slice(&crc(&typed).to_be_bytes());
+    out.extend_from_slice(&png[after_header..]);
+    out
+}
+
+#[test]
+fn an_image_turned_by_exif_is_previewed_upright_as_the_engines_read_it() -> Result<(), MediaError> {
+    // Stored 4 × 2 pixels on its side, the top-right pixel marked; EXIF says to turn it a quarter
+    // clockwise. Upright it is 2 × 4, the mark at the bottom right.
+    let mut stored = RgbImage::from_pixel(4, 2, image::Rgb([255, 255, 255]));
+    stored.put_pixel(3, 0, image::Rgb([255, 0, 0]));
+    let mut plain = Vec::new();
+    DynamicImage::ImageRgb8(stored)
+        .write_to(&mut Cursor::new(&mut plain), ImageFormat::Png)
+        .map_err(|e| MediaError::Image(e.to_string()))?;
+    let img = ImageSource::from_bytes(oriented_png(&plain, 6), "png")?;
+    // What the review shows and an engine reads is the same upright picture, never the file as
+    // stored: a region's fractions, measured on it, fall on the same pixels in the preview.
+    let (mime, out) = img.prepare(1, None, &["image/png", "image/jpeg"])?;
+    assert_eq!(mime, "image/png");
+    let shown = image::load_from_memory(&out)
+        .map_err(|e| MediaError::Image(e.to_string()))?
+        .to_rgb8();
+    assert_eq!(shown.dimensions(), (2, 4));
+    assert_eq!(shown.get_pixel(1, 3), &image::Rgb([255, 0, 0]));
+    assert_eq!(shown.get_pixel(0, 0), &image::Rgb([255, 255, 255]));
+    Ok(())
+}
+
 #[test]
 fn a_photographed_page_is_analysed_as_one_image() -> Result<(), MediaError> {
     let bytes = png(2400, 3300);

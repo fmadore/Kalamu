@@ -18,6 +18,7 @@ impl Exporter for JsonExporter {
     }
 
     fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
+        let records = crate::records::columns(doc).is_some();
         let parts: Vec<_> = doc
             .parts
             .iter()
@@ -50,6 +51,8 @@ impl Exporter for JsonExporter {
                         })
                         .collect();
                     part["entries"] = json!(entries);
+                } else if records {
+                    // Records: the rows are listed once, below, each with its page.
                 } else if !p.fields.is_empty() {
                     let fields: serde_json::Map<_, _> = p
                         .fields
@@ -69,7 +72,7 @@ impl Exporter for JsonExporter {
                 part
             })
             .collect();
-        let value = json!({
+        let mut value = json!({
             "schema": SCHEMA,
             "schema_version": SCHEMA_VERSION,
             "task": doc.task,
@@ -87,6 +90,10 @@ impl Exporter for JsonExporter {
             "parts": parts,
             "provenance": doc.provenance,
         });
+        // Records: one object per entry, with its file, page and place on the page.
+        if records {
+            value["rows"] = json!(crate::records::json_rows(doc));
+        }
         serde_json::to_vec_pretty(&value).map_err(|e| ExportError::Write {
             format: "JSON",
             message: e.to_string(),

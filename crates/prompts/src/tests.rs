@@ -2,6 +2,8 @@ use kalamu_core::{FieldKind, LanguageChoice, LanguageCode, LineBreaks};
 
 use super::*;
 
+mod records;
+
 #[test]
 fn every_task_has_defaults_and_ids_are_unique() {
     let library = PromptLibrary::in_memory();
@@ -244,7 +246,7 @@ fn every_analysis_default_has_valid_fields_described_in_its_prompt() {
     assert!(analyses.len() >= 4);
     for preset in analyses {
         let schema = preset.schema.clone().unwrap_or_default();
-        assert_eq!(schema.validate(), Ok(()), "{}", preset.id);
+        assert_eq!(schema.validate_analysis(), Ok(()), "{}", preset.id);
         let snapshot = preset.snapshot(&RenderContext::default());
         assert_eq!(snapshot.schema.as_ref(), Some(&schema));
         assert!(snapshot.text.contains("## What to find"), "{}", preset.id);

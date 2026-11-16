@@ -3,8 +3,9 @@
 	// at the pane's width times the zoom, turned by the reader's rotation. The page is opened once
 	// per preview. A change of zoom is shown at once by stretching the drawing, so zooming follows
 	// the wheel or the pinch frame by frame; the page is drawn again, sharp, once the zoom has
-	// rested a moment. A new page, a turn or a resized pane draw it straight away.
-	import { untrack } from 'svelte';
+	// rested a moment. A new page, a turn or a resized pane draw it straight away. What is drawn
+	// over the page (its text regions) lies in the page's own box, so it follows all of this.
+	import { untrack, type Snippet } from 'svelte';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { type Rotation, SourcePage } from '#lib/pdf.js';
@@ -12,8 +13,15 @@
 	let {
 		preview,
 		zoom = 1,
-		rotation = 0
-	}: { preview: PagePreview | null; zoom?: number; rotation?: Rotation } = $props();
+		rotation = 0,
+		overlay
+	}: {
+		preview: PagePreview | null;
+		zoom?: number;
+		rotation?: Rotation;
+		/** Drawn over the page, once it is drawn. */
+		overlay?: Snippet;
+	} = $props();
 	const m = messages();
 
 	let canvas = $state<HTMLCanvasElement | null>(null);
@@ -102,7 +110,10 @@
 	{#if !preview}
 		<p class="muted">{m.common.loading}</p>
 	{:else if drawable && !failed}
-		<canvas bind:this={canvas} aria-label={m.review.source}></canvas>
+		<div class="sheet">
+			<canvas bind:this={canvas} aria-label={m.review.source}></canvas>
+			{#if drawn}{@render overlay?.()}{/if}
+		</div>
 	{:else if preview.mime === 'error'}
 		<!-- The page could not be read: `data` holds why, in words. -->
 		<p class="muted">{preview.data}</p>
@@ -123,8 +134,12 @@
 	}
 	/* The page lies on the lightbox: a crisp edge and a soft drop beneath. */
 	/* Never shrunk to the pane: stretched by a zoom, it keeps the size the zoom gives it. */
-	canvas {
+	.sheet {
+		position: relative;
 		flex: none;
+	}
+	canvas {
+		display: block;
 		max-width: none;
 		border-radius: 2px;
 		box-shadow: var(--shadow-page);

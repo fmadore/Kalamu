@@ -512,6 +512,8 @@ export const en = {
 			notRead: 'Not read yet',
 			neverStarted: 'Not started yet',
 			truncated: 'Stopped at the model’s length limit: the end may be missing',
+			truncatedFilter: 'Stopped by the provider’s filter: the end may be missing',
+			truncatedOther: 'Stopped early by the provider: the end may be missing',
 			disagreesWords: (labels: string, words: number) =>
 				`Reads differently from ${labels}: ${words === 1 ? '1 word' : `${words} words`}`,
 			disagreesFields: (labels: string, fields: string) =>
@@ -1271,7 +1273,7 @@ export const en = {
 		failed: (n: number) => (n === 1 ? '1 failed' : `${n} failed`),
 		truncated: (n: number) => `${n} cut off`,
 		truncatedNote:
-			'The model’s answer stopped at its length limit, so the end of these pieces may be missing. The review marks them; check them against the source.',
+			'The model’s answer stopped before its end, at its length limit or by the provider’s filter, so the end of these pieces may be missing. The review marks them and says why; check them against the source.',
 		files: 'Files',
 		/** A job's files: every one, or only those with a failed piece, however far down. */
 		filesShown: 'Files shown',
@@ -1400,6 +1402,10 @@ export const en = {
 		agreement: (pct: string) => `${pct} different`,
 		truncated:
 			'The model’s answer stopped at its length limit here, so the end may be missing. Check it against the source, or correct it.',
+		truncatedFilter:
+			'The provider’s filter stopped the model’s answer here, so the end may be missing. Check it against the source, or correct it; another model may read it whole.',
+		truncatedOther:
+			'The provider stopped the model’s answer here before its end, so the end may be missing. Check it against the source, or correct it.',
 		noPreview: 'No preview for this file type.',
 		notDone: 'Not read yet.',
 		saved: 'Saved; the result files follow in a few seconds.',
@@ -1412,6 +1418,21 @@ export const en = {
 		zoomHint: (key: string) => `${key} + wheel: zoom · drag: move · double-click: zoom in`,
 		turnLeft: 'Turn the page left',
 		turnRight: 'Turn the page right',
+		regionsShow: 'Show text regions',
+		regionsHint:
+			'Outline the blocks, lines and words the model placed on the page; select one to find its text',
+		regionsNone: 'This model did not place the text on this page.',
+		regionsFallback:
+			'This model did not place the text on this page: check the text against the whole page.',
+		regionsLabel: 'Text regions on the page: the arrow keys go from one to the next',
+		regionMarked: 'Marked in the text.',
+		regionNotPlaced:
+			'Not marked in the text: these words stand there more than once, or not exactly as read.',
+		regionNotPlacedCorrected:
+			'Not marked in the text: the page was corrected, and these words no longer stand there once, exactly as read.',
+		regionEstimated:
+			'Approximate: the model placed only the whole block, so its lines and words are estimated.',
+		regionClose: 'Close',
 		play: 'Play',
 		pausePlayback: 'Pause',
 		position: 'Position in this piece',
@@ -1502,7 +1523,22 @@ export const en = {
 		answersFound: (n: number, total: number) =>
 			`${n} of ${total} ${total === 1 ? 'answer' : 'answers'}`,
 		inDocument: (n: number) => `${n} in the document`,
-		noAnswerFound: 'No answer holds these words.'
+		noAnswerFound: 'No answer holds these words.',
+		rowsTitle: 'Rows on this page',
+		rows: (n: number) => (n === 1 ? '1 row' : `${n} rows`),
+		rowNumber: 'No.',
+		rowActions: 'Row',
+		noRows: 'No entry was read on this page.',
+		rowsNotRead:
+			'This page could not be read, so its entries are missing. Retry it from the job’s page.',
+		addRow: 'Add a row',
+		insertRow: (n: number) => `Add a row after row ${n}`,
+		removeRow: (n: number) => `Remove row ${n}`,
+		cell: (column: string, n: number) => `${column}, row ${n}`,
+		noChoice: 'None',
+		rowsBy: 'Rows read by',
+		rowsKept:
+			'Each change is saved at once, apart from the model’s rows, which stay as they were. Separate a list’s names with semicolons.'
 	},
 	prompts: {
 		title: 'Prompts',
@@ -1569,6 +1605,18 @@ export const en = {
 		up: 'Move up',
 		down: 'Move down',
 		add: 'Add a field',
+		rowsToggle: 'One row per entry',
+		rowsHint:
+			'For a register, a directory or a list of names: each page is read on its own, and every entry on it becomes a row whose columns are the fields below. Turned off, the analysis answers once for each document.',
+		rowsLabel: 'Entries',
+		rowsInstructions: 'Every entry on this page, one row each, in reading order.',
+		rowsWhich: 'Which entries to read',
+		columns: 'Columns',
+		columnsHint:
+			'What to read in each entry. Each column becomes a column in the spreadsheet export, with the page and the entry’s place on it.',
+		firstColumn: 'Name',
+		addColumn: 'Add a column',
+		removeColumn: (label: string) => `Remove ${label || 'this column'}`,
 		templates: {
 			summary: {
 				label: 'Summary',
@@ -2046,6 +2094,8 @@ export const en = {
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',
 		'job.no_language': 'Choose the language to translate into.',
+		'job.mixed_reading':
+			'An analysis giving one row per entry reads page by page, so it cannot be compared with one answering once per document. Choose the same kind of analysis for every model.',
 		'job.link_needs_folder':
 			'Choose a folder for the results: a YouTube video has no folder of its own to write them next to.',
 		'source.private':
@@ -2062,6 +2112,15 @@ export const en = {
 		'prompt.unnamed_field': 'Every field needs a name.',
 		'prompt.duplicate_field': 'Two fields have the same name.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',
+		'prompt.empty_group': 'One row per entry needs at least one column.',
+		'prompt.nested_group': 'A column cannot itself hold rows.',
+		'prompt.two_groups': 'An analysis gives one row per entry once, not twice.',
+		'prompt.group_alone':
+			'With one row per entry, every field is a column of the row: move the other fields into it.',
+		'records.not_records': 'This analysis has no rows to correct.',
+		'records.no_row': 'This row is no longer on the page. The rows were read again.',
+		'records.no_column': 'This column is not in the analysis.',
+		'records.not_a_choice': 'Choose one of the column’s values, or leave the cell empty.',
 		'prompt.unnamed_pipeline': 'A pipeline needs a name and at least one model.',
 		'workflow.incomplete': 'A workflow needs a name and at least one step, each with a model.',
 		'workflow.no_steps': 'A workflow needs at least one step.',
@@ -2102,6 +2161,10 @@ export const en = {
 			'The model’s answer did not match the fields of the analysis; Kalamu asks it again.',
 		'provider.cut_off':
 			'The answer stopped at the model’s output limit before it was complete. Send fewer pages in each call, ask for fewer or shorter fields, or choose a model that can write a longer answer.',
+		'provider.cut_off_filter':
+			'The provider’s filter stopped the answer before it was complete, so it cannot be read: the provider will not write about something in this text. Try another model or provider.',
+		'provider.cut_off_other':
+			'The provider stopped the answer before it was complete, for a reason other than the output limit, so it cannot be read. Try again later, or choose another model.',
 		'provider.not_installed':
 			'This offline model, or the language data it needs, has not been downloaded. Download it in Settings.',
 		'provider.interrupted': 'Stopped before the end; it will continue when the job resumes.',

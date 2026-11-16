@@ -119,6 +119,10 @@ impl PromptError {
             Self::Schema(SchemaError::Unnamed) => "prompt.unnamed_field",
             Self::Schema(SchemaError::Duplicate(_)) => "prompt.duplicate_field",
             Self::Schema(SchemaError::TooFewValues(_)) => "prompt.few_values",
+            Self::Schema(SchemaError::EmptyGroup(_)) => "prompt.empty_group",
+            Self::Schema(SchemaError::NestedGroup(_)) => "prompt.nested_group",
+            Self::Schema(SchemaError::TwoGroups) => "prompt.two_groups",
+            Self::Schema(SchemaError::GroupNotAlone(_)) => "prompt.group_alone",
             Self::IncompletePipeline => "prompt.unnamed_pipeline",
             Self::IncompleteWorkflow => "workflow.incomplete",
             Self::Workflow(e) => e.code(),
@@ -256,7 +260,7 @@ impl PromptLibrary {
             Task::Analysis => {
                 let schema = preset.schema.as_mut().ok_or(SchemaError::Empty)?;
                 schema.assign_keys();
-                schema.validate()?;
+                schema.validate_analysis()?;
                 preset.merge_instructions = None;
             }
             Task::Contents => {

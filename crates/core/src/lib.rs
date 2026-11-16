@@ -23,6 +23,8 @@ pub mod progress;
 pub mod project;
 pub mod provenance;
 pub mod provider;
+pub mod records;
+pub mod regions;
 pub mod result;
 pub mod search;
 pub mod setup;
@@ -46,7 +48,8 @@ pub use attention::{
     QueueCounts, QueueItem, ReasonCounts, ReviewQueue, ReviewScope, ReviewTarget, Signal,
 };
 pub use batch::{
-    BATCH_WINDOW_MS, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress, BatchRecord,
+    BATCH_WINDOW_MS, BatchCleanup, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress,
+    BatchRecord,
 };
 pub use dictionary::{
     DictionaryError, DictionaryStore, Entry, KeptApart, Labels, ProposalGroup, ProposalRequest,
@@ -78,9 +81,11 @@ pub use provider::{
     ApiKey, PCM_16K_MONO, PreparedInput, ProcessRequest, Provider, ProviderError, RequestSetting,
     StopSignal, Tuning,
 };
+pub use records::{RowEdit, RowError};
+pub use regions::{PageRegions, ShownRegion, TextMapping, TextSpan};
 pub use result::{
-    Charge, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment, StoredResult,
-    TextLine, TextRegion, TextWord, Usage, plain_words,
+    Charge, CutReason, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment,
+    StoredResult, TextLine, TextRegion, TextWord, Usage, plain_words,
 };
 pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};

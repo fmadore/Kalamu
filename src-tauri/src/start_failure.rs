@@ -1,5 +1,5 @@
 //! A launch that cannot finish: the data folder, the job database or the saved libraries could
-//! not be opened. The interface does not exist yet, so the researcher is told in a native
+//! not be opened, or the window could not be made (Tauri itself, or its webview, failing). The interface does not exist yet, so the researcher is told in a native
 //! message, which names the cause and the logs folder, and the app ends.
 //!
 //! The one place the shell words text itself: every other sentence the researcher reads comes
@@ -21,6 +21,22 @@ pub(crate) enum Cause {
     NewerDatabase,
     /// The saved prompts, pipelines, workflows or export profiles could not be opened.
     Libraries,
+    /// The window or its webview could not be made, or Tauri itself could not start: WebView2
+    /// missing or damaged on Windows, more rarely the system's WebKit on macOS.
+    Window,
+}
+
+/// What draws the window's contents, named in the message when it cannot be made.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(
+    dead_code,
+    reason = "each system's build names only its own webview (`platform::WEBVIEW`)"
+)]
+pub(crate) enum Webview {
+    /// Microsoft Edge WebView2, which Windows 11 includes and the installer sets up on Windows 10.
+    WebView2,
+    /// The system's own WebKit, part of macOS.
+    WebKit,
 }
 
 /// A launch that failed: what stopped it, and the technical detail for the logs and the
@@ -80,8 +96,44 @@ fn language(system: &[String]) -> Language {
         .unwrap_or(Language::English)
 }
 
+/// What to do when the window cannot be made, for each system's webview.
+fn window_advice(webview: Webview, english: bool) -> &'static str {
+    match (webview, english) {
+        (Webview::WebView2, true) => {
+            "Kalamu could not open its window. Windows draws it with Microsoft Edge WebView2, \
+             which may be missing or damaged: install the WebView2 Runtime from Microsoft's \
+             website, or repair it from Installed apps in Settings, then open Kalamu again."
+        }
+        (Webview::WebView2, false) => {
+            "Kalamu n’a pas pu ouvrir sa fenêtre. Windows l’affiche avec Microsoft Edge \
+             WebView2, qui manque peut-être ou est endommagé\u{a0}: installez WebView2 Runtime \
+             depuis le site de Microsoft, ou réparez-le depuis Applications installées dans \
+             Paramètres, puis rouvrez Kalamu."
+        }
+        (Webview::WebKit, true) => {
+            "Kalamu could not open its window, which macOS draws with its own WebKit. Restart \
+             the Mac, or update macOS, then open Kalamu again."
+        }
+        (Webview::WebKit, false) => {
+            "Kalamu n’a pas pu ouvrir sa fenêtre, que macOS affiche avec son propre WebKit. \
+             Redémarrez le Mac, ou mettez macOS à jour, puis rouvrez Kalamu."
+        }
+    }
+}
+
 /// The message's title and text.
 fn message(cause: Cause, detail: &str, logs: Option<&Path>, system: &[String]) -> (String, String) {
+    message_for(cause, crate::platform::WEBVIEW, detail, logs, system)
+}
+
+/// The message's title and text, for the system whose webview is `webview`.
+fn message_for(
+    cause: Cause,
+    webview: Webview,
+    detail: &str,
+    logs: Option<&Path>,
+    system: &[String],
+) -> (String, String) {
     let english = language(system) == Language::English;
     let title = if english {
         "Kalamu could not start"
@@ -125,6 +177,7 @@ fn message(cause: Cause, detail: &str, logs: Option<&Path>, system: &[String]) -
              profils d’export enregistrés. Le disque est peut-être plein, ou un fichier est \
              peut-être endommagé."
         }
+        (Cause::Window, english) => window_advice(webview, english),
     };
     let details = if english { "Details" } else { "Détails" };
     // French sets a no-break space before a colon, as the interface does.
@@ -160,6 +213,8 @@ pub(crate) fn tell(failure: &StartError, logs: Option<&Path>) {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
 
     fn tags(tags: &[&str]) -> Vec<String> {
@@ -194,6 +249,61 @@ mod tests {
         assert!(text.contains("jobs.sqlite"), "{text}");
         assert!(text.contains("Détails\u{a0}: disk full"), "{text}");
         assert!(!text.contains("journaux"), "{text}");
+    }
+
+    #[test]
+    fn a_window_that_cannot_be_made_names_each_system_s_webview() {
+        let logs = Path::new("logs-folder");
+        let (_, text) = message_for(
+            Cause::Window,
+            Webview::WebView2,
+            "WebView2 not found",
+            Some(logs),
+            &tags(&["en-US"]),
+        );
+        assert!(text.contains("Microsoft Edge WebView2"), "{text}");
+        assert!(text.contains("Installed apps"), "{text}");
+        assert!(text.contains("Details: WebView2 not found"), "{text}");
+        assert!(text.contains("logs-folder"), "{text}");
+
+        let (title, text) = message_for(
+            Cause::Window,
+            Webview::WebKit,
+            "no webview",
+            None,
+            &tags(&["fr-FR"]),
+        );
+        assert_eq!(title, "Kalamu n’a pas pu démarrer");
+        assert!(text.contains("WebKit"), "{text}");
+        assert!(text.contains("macOS"), "{text}");
+        assert!(!text.contains("WebView2"), "{text}");
+
+        // The message this system shows is its own webview's.
+        let (_, here) = message(Cause::Window, "x", None, &tags(&["en-US"]));
+        let mine = if cfg!(windows) { "WebView2" } else { "WebKit" };
+        assert!(here.contains(mine), "{here}");
+    }
+
+    #[test]
+    fn the_logs_folder_is_known_before_tauri_starts() {
+        use tauri::utils::config::{AppDirectoriesOverride, AppDirectoryOverrides};
+        let root = PathBuf::from("Kalamu Data");
+        assert_eq!(
+            crate::platform::log_folder(&AppDirectoriesOverride::Root(root.clone())),
+            Some(root.join("logs"))
+        );
+        let log = PathBuf::from("Logs").join("Kalamu");
+        let dirs = AppDirectoriesOverride::Directories(AppDirectoryOverrides {
+            config: None,
+            data: None,
+            local_data: None,
+            cache: None,
+            log: Some(log.clone()),
+        });
+        assert_eq!(crate::platform::log_folder(&dirs), Some(log));
+        // A folder Tauri would still resolve (no home known) cannot be used before it starts.
+        let unresolved = AppDirectoriesOverride::Root(PathBuf::from("$LOCALDATA").join("Kalamu"));
+        assert_eq!(crate::platform::log_folder(&unresolved), None);
     }
 
     #[test]

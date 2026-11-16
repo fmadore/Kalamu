@@ -37,6 +37,22 @@ improvements that open *Next*; what it did not fix at once was tracked in
 
 ## Done
 
+- **Records, first increment** ([#171](https://github.com/fmadore/Kalamu/issues/171),
+  [decision](decisions/2026-11-15-records-regions-batch-files.md)), after 1.7.0: an analysis
+  whose fields are one repeating group, chosen in the field editor with *One row per entry*,
+  reads a directory, a register or a list page by page into one row per entry; the review lists
+  a page's rows beside the scan, a cell corrected and a row added or removed in the correction
+  layer; `.csv` and `.json` hold one row per entry with its file, page and position, a page not
+  read standing as a row that says so; two ready-made examples, a directory and a register.
+- **Source-linked review, first step** ([#84](https://github.com/fmadore/Kalamu/issues/84)),
+  after 1.7.0: *Show text regions* in the text review draws Tesseract's blocks, lines and words
+  and Mistral OCR's and LightOnOCR-3's blocks over the scan, estimated lines and words dashed;
+  a region chosen with the pointer or the keyboard shows its text and marks its place in the
+  page's text only where that place is certain; a page whose model placed nothing says so.
+- **Economy mode, a batch's files deleted**, after 1.7.0: once a batch's answers are stored, or
+  it is given up on, the files it left in the researcher's OpenAI and Mistral storage are
+  deleted, by the ids the batch names; finished at the next launch after a crash, and for a job
+  deleted meanwhile.
 - **Translation and image description, follow-ups**
   ([decision](decisions/2026-11-11-translation-followups.md)): a job whose model cannot read its
   files (images or a whole PDF for a model that reads text only) is refused when it is made, a
@@ -415,8 +431,14 @@ none of it waits on the others.
   navigation on and off, VoiceOver, the symbols of `panic.log`, the programs Kalamu starts
   after a crash or a Force Quit, and the folders out of reach shown at launch in the Mac App
   Store build.
-- **Still to write**: a message for a launch that fails before setup (a webview that cannot be
-  made); the cut-off message for an analysis stopped by a filter rather than the limit.
+- **Written on 15 November**
+  ([decision](decisions/2026-11-15-records-regions-batch-files.md)), to try on both systems:
+  the launch now that Kalamu's setup makes the window, and its message when the webview cannot
+  be made (on Windows, with `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER` set to a folder that does not
+  exist); an answer stopped by a provider's filter saying so. Escape in the language pickers,
+  Home and End in a name's menu and an empty reading's spaces are done too.
+- **What 15 November added**: the text regions on real Tesseract and Mistral OCR pages, with a
+  trackpad and a screen reader; a records job on a real directory and register.
 
 1. **What the [review of 9 November](decisions/2026-11-09-review.md) found.** Fixed at once,
    each with a test: structured answers cut off at the output limit sent once instead of four
@@ -451,8 +473,8 @@ none of it waits on the others.
      notification to the shell, which follows the engine's own events. The
      [fifth round](decisions/2026-11-11-fifth-round.md) weighed Tauri's signed updater and left
      it (a new request at each launch, a signing secret, and nothing the Store copies may use).
-     Left: a message for a launch that fails before setup (a webview that cannot be made), the
-     symbols of `panic.log` on a Mac, and all of it tried on a real Windows PC and Mac, with the
+     A launch that fails before setup (a webview that cannot be made) has its message since
+     15 November. Left: the symbols of `panic.log` on a Mac, and all of it tried on a real Windows PC and Mac, with the
      window hidden for a whole job.
    - **The offline engines** ([#144](https://github.com/fmadore/Kalamu/issues/144)). Done
      ([decision](decisions/2026-11-10-offline-robustness.md)), built and tested on Linux: llama.cpp's
@@ -544,8 +566,8 @@ none of it waits on the others.
    page was drawn at recorded and used by ALTO; and Whisper's voice detection from an accented
    data folder on Windows. Left: from 4 November, the folders out of reach shown at launch (the
    Mac App Store build's, with item 3); a transcription from an accented folder tried in the
-   packaged app; and what the round saw and left (an empty reading's spaces, Escape in the
-   language pickers, Home and End in a name's menu).
+   packaged app. What the round saw and left (an empty reading's spaces, Escape in the
+   language pickers, Home and End in a name's menu) was done on 15 November.
 3. **A first run on a real Mac, the rest.** Before 1.6.0 the sandboxed Mac App Store build was
    opened on one Mac with Apple Silicon (macOS 26): the application menu, ⌘, and ⌘Q, and the
    menu-bar icon were tried and fixed there (#160), and the jobs of the App Store screenshots run
@@ -554,25 +576,22 @@ none of it waits on the others.
    job, the interface in WebKit at the sizes CI does not try, Tab and VoiceOver (item 1), and
    what 1.7.0 adds.
 4. **Economy mode's loose ends**, a shipped feature: reading OpenAI's batch answers in a live run
-   (on 3 November it had answered none after 35 minutes); deleting the files a batch leaves in
-   the user's OpenAI and Mistral storage once its answers are collected (Mistral's inline batches
-   leave their requests as a file too, 951 KB for two pages); then Gemini batches through a JSONL
-   file, to lift the 20 MB inline limit, several pages per call in economy mode, and Voxtral
-   transcription in batches once its format is documented
-   ([live runs](decisions/2026-11-03-live-runs.md)).
-5. **Source-linked review, first step
-   ([#84](https://github.com/fmadore/Kalamu/issues/84))**: Tesseract's words and Mistral OCR's
-   estimated lines drawn over the scan, each opening its text, with the page as a fallback where
-   a provider returns none. Kalamu already keeps these boxes for ALTO and the searchable PDF.
-6. **Records, first increment ([#171](https://github.com/fmadore/Kalamu/issues/171))**: a
-   serial source (a directory, a register, a membership list, a ledger) read into one row per
-   entry, with the columns the researcher defines. The field editor offers a repeating group,
-   which `FieldKind::Entries` already describes for tables of contents; a job reads each page
-   on its own; the review lists a page's rows beside the scan, corrected, added or removed in
-   the correction layer; `.csv` and `.json` hold one row per entry with its document, page and
-   place on the page. Then entries that run over a page (with #54), where each row sits (with
-   item 5) and rows across a project. An analysis with a repeating group rather than a task of
-   its own, unless the first increment shows otherwise.
+   (on 3 November it had answered none after 35 minutes); a live run of the deleting of a
+   batch's files, done on 15 November, which must show whether Mistral names its inline
+   requests' file (951 KB for two pages) among the job's; deleting Claude's batches, which its
+   API allows; then Gemini batches through a JSONL file, to lift the 20 MB inline limit, several
+   pages per call in economy mode, and Voxtral transcription in batches once its format is
+   documented ([live runs](decisions/2026-11-03-live-runs.md)).
+5. **Source-linked review, the second step
+   ([#84](https://github.com/fmadore/Kalamu/issues/84))**, the first being done: stable region
+   identities with their granularity and origin, regions drawn or adjusted by the researcher in
+   a layer of their own, a region read again as a piece of its own, and the regions in the
+   analysis and contents reviews.
+6. **Records, the second increment ([#171](https://github.com/fmadore/Kalamu/issues/171))**,
+   the first being done: entries that run over a page (with #54), where each row sits (with
+   item 5), rows across a project, a cut-off page read again in halves, error rates by row, and the
+   text formats, which show only each page's first column.
+   Before it, a records job on real directories and registers, and one in economy mode.
 7. **What is left of the research workflows**, below.
 
 ### What is left of the research workflows

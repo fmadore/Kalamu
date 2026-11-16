@@ -76,12 +76,53 @@ pub struct BatchRecord {
     pub items: Vec<BatchItem>,
     pub submitted_at: Timestamp,
     pub updated_at: Timestamp,
+    /// What the batch left in the provider's storage, to delete: set when the batch is collected
+    /// or given up on, and written with that change, so a restart in between finishes the
+    /// deleting. `None` while the batch waits, for one never accepted, and for batches recorded
+    /// before Kalamu deleted anything.
+    #[serde(default)]
+    pub cleanup: Option<BatchCleanup>,
 }
 
 impl BatchRecord {
     /// A fresh id for a batch about to be recorded.
     pub fn new_id() -> String {
         uuid::Uuid::new_v4().to_string()
+    }
+
+    /// Something is still to delete at the provider: the batch has ended, collected or given
+    /// up on, and its files are neither all deleted nor left after too many failures. Never
+    /// true of a batch still sending or waiting, whose files are still needed.
+    pub fn cleanup_pending(&self) -> bool {
+        matches!(self.phase, BatchPhase::Collected | BatchPhase::Abandoned)
+            && self.cleanup.as_ref().is_some_and(BatchCleanup::pending)
+    }
+}
+
+/// The deleting of what an ended batch left in the provider's storage (the requests it uploaded,
+/// the answers and the errors), by the ids the provider gave for that batch: never by listing
+/// the account's storage, so only what Kalamu's own batches made is ever deleted.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct BatchCleanup {
+    /// The files still to delete, by the provider's ids; `None` until the provider has named
+    /// them, which it does once the batch can no longer change (a cancelled batch may still be
+    /// writing its answers for a few minutes).
+    pub files: Option<Vec<String>>,
+    /// Rounds that failed, the provider unreachable or refusing; after
+    /// [`BatchCleanup::MAX_FAILURES`] the files are left.
+    pub failures: u32,
+    /// Given up on: what `files` still names (or, if `None`, whatever the batch left) stays in
+    /// the provider's storage, until the provider's own retention ends.
+    pub given_up: bool,
+}
+
+impl BatchCleanup {
+    /// Rounds that may fail, one at each collection or launch, before the files are left.
+    pub const MAX_FAILURES: u32 = 5;
+
+    pub fn pending(&self) -> bool {
+        !self.given_up && self.files.as_ref().is_none_or(|files| !files.is_empty())
     }
 }
 

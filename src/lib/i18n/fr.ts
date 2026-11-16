@@ -62,6 +62,16 @@ export const fr: Messages = {
 			description:
 				'Ce que montre chaque photographie, affiche, carte ou autre image, décrit comme dans un catalogue, avec des mots-clés, le texte écrit sur l’image et les noms que ce texte donne.'
 		},
+		'analysis.directory': {
+			name: 'Annuaire ou liste, une ligne par entrée',
+			description:
+				'Chaque entrée de chaque page, dans l’ordre de lecture : le nom, la profession, l’adresse et les remarques tels qu’imprimés, pour un annuaire, une liste de membres ou un tableau imprimé.'
+		},
+		'analysis.register': {
+			name: 'Registre, une ligne par entrée',
+			description:
+				'Chaque acte de chaque page d’un registre paroissial ou d’état civil, ou d’un livre de comptes : numéro, date, nature de l’acte, nom, lieu, personnes citées et remarques, tels qu’écrits, signes de répétition compris.'
+		},
 		'contents.periodical': {
 			name: 'Numéro de journal ou de magazine',
 			description: 'Une entrée par article, avec sa rubrique, ses auteurs, ses pages et un résumé.'
@@ -608,6 +618,8 @@ export const fr: Messages = {
 			notRead: 'Pas encore lu',
 			neverStarted: 'Pas encore lancé',
 			truncated: 'Arrêté à la longueur maximale du modèle : la fin manque peut-être',
+			truncatedFilter: 'Arrêté par le filtre du fournisseur : la fin manque peut-être',
+			truncatedOther: 'Arrêté avant la fin par le fournisseur : la fin manque peut-être',
 			disagreesWords: (labels: string, words: number) =>
 				`Lit autrement que ${labels} : ${words <= 1 ? `${words} mot` : `${words} mots`}`,
 			disagreesFields: (labels: string, fields: string) =>
@@ -1365,7 +1377,7 @@ export const fr: Messages = {
 		failed: (n: number) => `${n} en échec`,
 		truncated: (n: number) => (n <= 1 ? `${n} tronqué` : `${n} tronqués`),
 		truncatedNote:
-			'La réponse du modèle s’est arrêtée à sa longueur maximale : la fin de ces segments manque peut-être. La relecture les signale ; vérifiez-les sur la source.',
+			'La réponse du modèle s’est arrêtée avant la fin, à sa longueur maximale ou par le filtre du fournisseur : la fin de ces segments manque peut-être. La relecture les signale et dit pourquoi ; vérifiez-les sur la source.',
 		files: 'Fichiers',
 		filesShown: 'Fichiers affichés',
 		allFiles: (n: number) => `Tous les fichiers (${n})`,
@@ -1493,6 +1505,10 @@ export const fr: Messages = {
 		agreement: (pct: string) => `${pct} de différence`,
 		truncated:
 			'La réponse du modèle s’est arrêtée ici à sa longueur maximale : la fin manque peut-être. Vérifiez-la sur la source, ou corrigez-la.',
+		truncatedFilter:
+			'Le filtre du fournisseur a arrêté ici la réponse du modèle : la fin manque peut-être. Vérifiez-la sur la source, ou corrigez-la ; un autre modèle la lira peut-être en entier.',
+		truncatedOther:
+			'Le fournisseur a arrêté ici la réponse du modèle avant la fin : la fin manque peut-être. Vérifiez-la sur la source, ou corrigez-la.',
 		noPreview: 'Pas d’aperçu pour ce type de fichier.',
 		notDone: 'Pas encore lu.',
 		saved: 'Enregistré ; les fichiers de résultats suivent dans quelques secondes.',
@@ -1506,6 +1522,21 @@ export const fr: Messages = {
 			`${key} + molette : zoomer · glisser : déplacer · double-clic : agrandir`,
 		turnLeft: 'Faire pivoter la page vers la gauche',
 		turnRight: 'Faire pivoter la page vers la droite',
+		regionsShow: 'Afficher les zones de texte',
+		regionsHint:
+			'Encadre les blocs, les lignes et les mots que le modèle a situés sur la page ; choisissez-en un pour trouver son texte',
+		regionsNone: 'Ce modèle n’a pas situé le texte sur cette page.',
+		regionsFallback:
+			'Ce modèle n’a pas situé le texte sur cette page : comparez le texte à la page entière.',
+		regionsLabel: 'Zones de texte de la page : les flèches passent de l’une à l’autre',
+		regionMarked: 'Marqué dans le texte.',
+		regionNotPlaced:
+			'Non marqué dans le texte : ces mots y figurent plusieurs fois, ou pas exactement tels qu’ils ont été lus.',
+		regionNotPlacedCorrected:
+			'Non marqué dans le texte : la page a été corrigée, et ces mots n’y figurent plus une seule fois tels qu’ils ont été lus.',
+		regionEstimated:
+			'Approximatif : le modèle n’a situé que le bloc entier, ses lignes et ses mots sont donc estimés.',
+		regionClose: 'Fermer',
 		play: 'Lire',
 		pausePlayback: 'Pause',
 		position: 'Position dans ce segment',
@@ -1597,7 +1628,22 @@ export const fr: Messages = {
 		answersFound: (n: number, total: number) =>
 			`${n} ${n <= 1 ? 'réponse' : 'réponses'} sur ${total}`,
 		inDocument: (n: number) => `${n} dans le document`,
-		noAnswerFound: 'Aucune réponse ne contient ces mots.'
+		noAnswerFound: 'Aucune réponse ne contient ces mots.',
+		rowsTitle: 'Lignes de cette page',
+		rows: (n: number) => (n <= 1 ? `${n} ligne` : `${n} lignes`),
+		rowNumber: 'N°',
+		rowActions: 'Ligne',
+		noRows: 'Aucune entrée n’a été relevée sur cette page.',
+		rowsNotRead:
+			'Cette page n’a pas pu être lue : ses entrées manquent. Relancez-la depuis la page du traitement.',
+		addRow: 'Ajouter une ligne',
+		insertRow: (n: number) => `Ajouter une ligne après la ligne ${n}`,
+		removeRow: (n: number) => `Retirer la ligne ${n}`,
+		cell: (column: string, n: number) => `${column}, ligne ${n}`,
+		noChoice: 'Aucun',
+		rowsBy: 'Lignes relevées par',
+		rowsKept:
+			'Chaque modification est enregistrée aussitôt, à part des lignes du modèle, qui restent telles quelles. Séparez les noms d’une liste par des points-virgules.'
 	},
 	prompts: {
 		title: 'Prompts',
@@ -1666,6 +1712,18 @@ export const fr: Messages = {
 		up: 'Monter',
 		down: 'Descendre',
 		add: 'Ajouter un champ',
+		rowsToggle: 'Une ligne par entrée',
+		rowsHint:
+			'Pour un registre, un annuaire ou une liste de noms : chaque page est lue séparément, et chaque entrée de la page devient une ligne dont les colonnes sont les champs ci-dessous. Désactivé, l’analyse répond une fois par document.',
+		rowsLabel: 'Entrées',
+		rowsInstructions: 'Chaque entrée de cette page, une ligne par entrée, dans l’ordre de lecture.',
+		rowsWhich: 'Les entrées à relever',
+		columns: 'Colonnes',
+		columnsHint:
+			'Ce qu’il faut relever dans chaque entrée. Chaque colonne devient une colonne du tableur exporté, avec la page et la place de l’entrée sur la page.',
+		firstColumn: 'Nom',
+		addColumn: 'Ajouter une colonne',
+		removeColumn: (label: string) => `Retirer ${label || 'cette colonne'}`,
 		templates: {
 			summary: {
 				label: 'Résumé',
@@ -2124,6 +2182,8 @@ export const fr: Messages = {
 		'job.running': 'Ce traitement est déjà en cours.',
 		'job.empty': 'Ajoutez au moins un fichier et choisissez un modèle.',
 		'job.no_language': 'Choisissez la langue dans laquelle traduire.',
+		'job.mixed_reading':
+			'Une analyse qui donne une ligne par entrée lit page par page : elle ne peut pas être comparée à une analyse qui répond une fois par document. Choisissez le même genre d’analyse pour chaque modèle.',
 		'job.link_needs_folder':
 			'Choisissez un dossier pour les résultats : une vidéo YouTube n’a pas de dossier à elle à côté duquel les écrire.',
 		'source.private':
@@ -2141,6 +2201,15 @@ export const fr: Messages = {
 		'prompt.unnamed_field': 'Chaque champ doit avoir un nom.',
 		'prompt.duplicate_field': 'Deux champs portent le même nom.',
 		'prompt.few_values': 'Un choix demande au moins deux valeurs entre lesquelles choisir.',
+		'prompt.empty_group': 'Une ligne par entrée demande au moins une colonne.',
+		'prompt.nested_group': 'Une colonne ne peut pas contenir elle-même des lignes.',
+		'prompt.two_groups': 'Une analyse donne une ligne par entrée une seule fois, pas deux.',
+		'prompt.group_alone':
+			'Avec une ligne par entrée, chaque champ est une colonne de la ligne : placez-y les autres champs.',
+		'records.not_records': 'Cette analyse n’a pas de lignes à corriger.',
+		'records.no_row': 'Cette ligne n’est plus sur la page. Les lignes ont été relues.',
+		'records.no_column': 'Cette colonne ne fait pas partie de l’analyse.',
+		'records.not_a_choice': 'Choisissez l’une des valeurs de la colonne, ou laissez la case vide.',
 		'prompt.unnamed_pipeline': 'Une configuration demande un nom et au moins un modèle.',
 		'workflow.incomplete':
 			'Une chaîne de traitement demande un nom et au moins une étape, chacune avec un modèle.',
@@ -2185,6 +2254,10 @@ export const fr: Messages = {
 			'La réponse du modèle ne correspondait pas aux champs de l’analyse ; Kalamu lui repose la question.',
 		'provider.cut_off':
 			'La réponse s’est arrêtée à la limite de sortie du modèle avant d’être complète. Envoyez moins de pages par appel, demandez des champs moins nombreux ou plus courts, ou choisissez un modèle capable d’écrire une réponse plus longue.',
+		'provider.cut_off_filter':
+			'Le filtre du fournisseur a arrêté la réponse avant qu’elle soit complète, elle ne peut donc pas être lue : le fournisseur refuse d’écrire sur un passage de ce texte. Essayez un autre modèle ou un autre fournisseur.',
+		'provider.cut_off_other':
+			'Le fournisseur a arrêté la réponse avant qu’elle soit complète, pour une autre raison que la limite de sortie, elle ne peut donc pas être lue. Réessayez plus tard, ou choisissez un autre modèle.',
 		'provider.not_installed':
 			'Ce modèle hors ligne ou ses données de langue n’ont pas encore été téléchargés. Téléchargez-les dans Paramètres.',
 		'provider.interrupted': 'Arrêté avant la fin ; il reprendra quand le traitement reprendra.',

@@ -11,11 +11,12 @@
 	import { flushSync, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
+	import ZoomPill from './ZoomPill.svelte';
 	import { findTerm } from '#lib/analysis.js';
 	import type { PagePreview } from '#lib/bindings/PagePreview.js';
-	import { formatPercent, messages } from '#lib/i18n/index.js';
+	import { messages } from '#lib/i18n/index.js';
 	import { panStep, scrollableByKeys } from '#lib/keys.js';
-	import { modifier, primary, shortcut, zoomsWithWheel } from '#lib/platform.js';
+	import { modifier, primary, zoomsWithWheel } from '#lib/platform.js';
 	import { shortcutsHeld } from '#lib/state.svelte.js';
 	import { keep, keepFor, recall, recallFor } from '#lib/stored.js';
 	import {
@@ -39,7 +40,10 @@
 		find = '',
 		found = false,
 		player,
-		switchable = null
+		switchable = null,
+		tools,
+		overlay,
+		note
 	}: {
 		kind: 'scan' | 'text' | 'player';
 		/** The source, whose turn is remembered on this computer. */
@@ -58,6 +62,12 @@
 		/** A PDF whose text was read for a correction or a translation: the scan or that text,
 		 * switched from the bar. */
 		switchable?: { onswitch: () => void } | null;
+		/** More tools for the scan, at the start of the bar's end. */
+		tools?: Snippet;
+		/** Drawn over the scan, inside its box, given the zoom and the reader's turn. */
+		overlay?: Snippet<[number, Rotation]>;
+		/** A note over the top of the lightbox. */
+		note?: Snippet;
 	} = $props();
 	const m = messages();
 
@@ -172,8 +182,9 @@
 	});
 
 	/* Moving the page by dragging it, with the main button or the wheel's; let go while moving,
-	   it glides on a little and slows to a stop. */
-	let drag: { x: number; y: number; id: number } | null = null;
+	   it glides on a little and slows to a stop. The pointer is held only once it has moved, so
+	   a click on what is drawn over the page (its text regions) still reaches it. */
+	let drag: { x: number; y: number; id: number; held: boolean } | null = null;
 	let grabbing = $state(false);
 	let velocity = { x: 0, y: 0, at: 0 };
 	let coast = 0;
@@ -187,14 +198,18 @@
 		if (!(e.target as Element).closest('.page-image')) return;
 		e.preventDefault();
 		cancelAnimationFrame(coast);
-		drag = { x: e.clientX, y: e.clientY, id: e.pointerId };
+		drag = { x: e.clientX, y: e.clientY, id: e.pointerId, held: false };
 		velocity = { x: 0, y: 0, at: performance.now() };
 		grabbing = true;
-		desk?.setPointerCapture(e.pointerId);
 	}
 
 	function move(e: PointerEvent) {
 		if (!drag || !desk || e.pointerId !== drag.id) return;
+		if (!drag.held) {
+			if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 3) return;
+			desk.setPointerCapture(e.pointerId);
+			drag.held = true;
+		}
 		const dx = e.clientX - drag.x;
 		const dy = e.clientY - drag.y;
 		desk.scrollLeft -= dx;
@@ -212,9 +227,11 @@
 
 	function release(e: PointerEvent) {
 		if (!drag || e.pointerId !== drag.id) return;
+		const held = drag.held;
 		drag = null;
 		grabbing = false;
-		desk?.releasePointerCapture(e.pointerId);
+		if (held) desk?.releasePointerCapture(e.pointerId);
+		else return;
 		// No glide once the hand has stopped, nor under reduced motion.
 		if (still() || performance.now() - velocity.at > 60) return;
 		let { x, y } = velocity;
@@ -275,9 +292,12 @@
 
 <svelte:window {onkeydown} />
 
+{#snippet drawnOver()}{@render overlay?.(zoom, rotation)}{/snippet}
+
 <section class="pane source" class:stage={kind === 'scan'} aria-label={m.review.source}>
 	<div class="pane-bar">
 		<span class="title mono">{m.review.source}{piece ? ` · ${piece}` : ''}</span>
+		{#if kind === 'scan'}{@render tools?.()}{/if}
 		{#if switchable}
 			<button
 				class="tool wide switch"
@@ -327,46 +347,13 @@
 			onpointerleave={() => (hovering = false)}
 			{ondblclick}
 		>
-			<PageImage {preview} {zoom} {rotation} />
+			<PageImage {preview} {zoom} {rotation} overlay={overlay ? drawnOver : undefined} />
 		</div>
+		{@render note?.()}
 		{#if !learned && hovering && preview}
 			<p class="zoom-hint" role="note">{hint}</p>
 		{/if}
-		<div class="zoom">
-			<button
-				class="tool"
-				aria-label={m.review.zoomOut}
-				title="{m.review.zoomOut} ({shortcut(m.review.zoomOutShortcut)})"
-				onclick={() => zoomStep(1 / 1.25)}><Icon name="zoom-out" /></button
-			>
-			<span class="zoom-value mono" title={hint}>{formatPercent(Math.round(zoom * 100) / 100)}</span
-			>
-			<button
-				class="tool"
-				aria-label={m.review.zoomIn}
-				title="{m.review.zoomIn} ({shortcut(m.review.zoomInShortcut)})"
-				onclick={() => zoomStep(1.25)}><Icon name="zoom-in" /></button
-			>
-			<span class="zoom-rule" aria-hidden="true"></span>
-			<button
-				class="tool wide"
-				title="{m.review.fitWidth} ({shortcut(m.review.zoomFitShortcut)})"
-				onclick={() => glideTo(1)}>{m.review.fitWidth}</button
-			>
-			<span class="zoom-rule" aria-hidden="true"></span>
-			<button
-				class="tool"
-				aria-label={m.review.turnLeft}
-				title={m.review.turnLeft}
-				onclick={() => turnBy(-1)}><Icon name="turn-left" /></button
-			>
-			<button
-				class="tool"
-				aria-label={m.review.turnRight}
-				title={m.review.turnRight}
-				onclick={() => turnBy(1)}><Icon name="turn-right" /></button
-			>
-		</div>
+		<ZoomPill {zoom} {hint} onzoom={zoomStep} onfit={() => glideTo(1)} onturn={turnBy} />
 	{:else if kind === 'text'}
 		<div class="desk document" lang="" {@attach scrollableByKeys(m.review.source)}>
 			{#if text === null}
@@ -487,22 +474,6 @@
 		font-size: var(--type-xs);
 		color: var(--on-stage-muted);
 	}
-	.zoom {
-		position: absolute;
-		left: 50%;
-		bottom: var(--space-4);
-		transform: translateX(-50%);
-		display: flex;
-		align-items: center;
-		gap: 2px;
-		padding: var(--space-1);
-		border-radius: 9px;
-		background: var(--stage-raised);
-		box-shadow:
-			0 0 0 1px var(--stage-line),
-			0 8px 24px rgba(0, 0, 0, 0.35);
-		color: var(--on-stage);
-	}
 	.tool {
 		display: grid;
 		place-items: center;
@@ -543,17 +514,6 @@
 	}
 	.tool:focus-visible {
 		outline-color: var(--on-stage);
-	}
-	.zoom-value {
-		min-width: 3rem;
-		text-align: center;
-		font-size: var(--type-xs);
-	}
-	.zoom-rule {
-		width: 1px;
-		height: 1.125rem;
-		margin: 0 var(--space-1);
-		background: var(--stage-line);
 	}
 	/* A narrow window stacks the panes: the source on top. */
 	@media (max-width: 1000px) {

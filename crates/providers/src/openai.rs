@@ -17,7 +17,7 @@ mod batch;
 
 use async_trait::async_trait;
 use kalamu_core::{
-    ApiKey, BatchContext, BatchLimits, BatchProgress, LanguageChoice, ProcessOutput,
+    ApiKey, BatchContext, BatchLimits, BatchProgress, CutReason, LanguageChoice, ProcessOutput,
     ProcessRequest, Provider, ProviderError, ProviderId, RequestSetting, Segment, Task, Tuning,
     Usage,
 };
@@ -195,6 +195,12 @@ impl OpenAi {
             fields: Vec::new(),
             regions: Vec::new(),
             truncated: incomplete.is_some(),
+            // The content filter was refused above; what is left is the limit or anything else
+            // (`interrupted`…).
+            cut_reason: match incomplete {
+                Some("max_output_tokens") | None => CutReason::Limit,
+                Some(_) => CutReason::Other,
+            },
         })
     }
 
@@ -306,6 +312,7 @@ impl OpenAi {
             fields: Vec::new(),
             regions: Vec::new(),
             truncated: false,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 }
@@ -431,5 +438,17 @@ impl Provider for OpenAi {
         )
         .await
         .map(|_| ())
+    }
+
+    async fn batch_files(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        self.files_of(key, batch_id).await
+    }
+
+    async fn delete_batch_file(&self, key: &ApiKey, file_id: &str) -> Result<(), ProviderError> {
+        crate::batch::delete_file(&self.client, &self.base_url, key, file_id).await
     }
 }

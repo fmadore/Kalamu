@@ -55,10 +55,14 @@ pub struct Provenance {
     /// Pages or segments the user marked as reviewed.
     #[serde(default)]
     pub reviewed: Vec<u32>,
-    /// Pages or segments whose answer stopped at the model's output limit, so their end may be
-    /// missing; for a table of contents, the pages read and the combined entries alike.
+    /// Pages or segments whose answer stopped before its end, at the model's output limit or
+    /// for another reason the provider gave, so their end may be missing; for a table of
+    /// contents, the pages read and the combined entries alike.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub truncated: Vec<u32>,
+    /// Those of `truncated` that a provider's filter stopped, rather than the output limit.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cut_by_filter: Vec<u32>,
     /// Pages or segments that could not be read after their retries, marked in the files.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub failed: Vec<u32>,

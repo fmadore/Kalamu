@@ -72,6 +72,7 @@
 		offersOneDocument,
 		sameImages
 	} from '#lib/pageOrder.js';
+	import { readingRule } from '#lib/records.js';
 	import { mayStart } from '#lib/dialogs.js';
 	import { api, listenWhileMounted, onDrop } from '#lib/tauri.js';
 	import {
@@ -108,7 +109,7 @@
 	let mode = $state<Mode>(kept?.mode ?? 'text_extraction');
 	const task = $derived(taskOf(mode));
 	/** The engine's rules for the task: which files, models and formats suit it. */
-	const rule = $derived(rulesFor(app.rules, task));
+	const taskRule = $derived(rulesFor(app.rules, task));
 	let files = $state<InspectedFile[]>(kept?.files ?? []);
 	/** What every model must read: YouTube links for videos, images when there are images,
 	 * else anything the task takes. */
@@ -122,6 +123,14 @@
 	let pace = $state<Pace>(kept?.pace ?? 'fast');
 	let drafts = $state<Draft[]>(kept?.drafts ?? []);
 	let presets = $state<Preset[]>([]);
+	/** The task's rules, and for records chosen in every set-up what the task offers read page
+	 * by page. */
+	const rule = $derived(
+		readingRule(
+			taskRule,
+			drafts.map((d) => presets.find((p) => p.id === d.presetId)?.schema)
+		)
+	);
 	let sample = $state(kept?.sample ?? false);
 	let samplePages = $state(kept?.samplePages ?? 3);
 	/** How many pages of a PDF go in one call: one, several, or as many as fit. */

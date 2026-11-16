@@ -320,15 +320,22 @@ paying twice.
 - **Batches outlive the app.** In the cheaper mode, a batch is recorded before it is sent;
   the app can be closed while the provider works, and collects the answers when it opens
   again, without sending anything twice, nor anything new: the rest of the job waits for the
-  researcher to resume it.
+  researcher to resume it. Once a batch's answers are stored, or it is given up on, the
+  files it left in the account's storage at the provider (OpenAI's and Mistral's requests,
+  answers and errors) are deleted, by the ids the batch itself names and never from a listing
+  of that storage; the ids are recorded first, so a crash in between, or a job deleted
+  meanwhile, is finished at the next launch. A deleting that fails never touches the job: it
+  is tried again at later launches, five times, then left and recorded as left
+  ([decision](decisions/2026-11-15-records-regions-batch-files.md)).
 - **Failures are retried, then reported.** Rate limits, network errors and answers that break
   an analysis's fields are retried with increasing delays; an answer refused for breaking its
   fields was billed all the same, so it counts in the job's cost and `provenance.json` lists
   it apart. A piece that still fails is marked
   as failed with a readable reason, the rest of the queue continues, and failed pieces can be
-  retried later on their own. An answer that stops at the model's length limit is kept but
-  marked as cut off: the job's page counts such pieces, the review warns on each, and
-  `provenance.json` lists them. A piece that still fails does not keep its document from disk:
+  retried later on their own. An answer that stops before its end is kept but
+  marked as cut off, with why: at the model's length limit, by a filter of the provider's, or
+  for another reason it gave. The job's page counts such pieces, the review warns on each in
+  the words of its reason, and `provenance.json` lists them, those a filter stopped apart. A piece that still fails does not keep its document from disk:
   the files are written with `[Not read: reason]` in its place, `provenance.json` lists it, and
   retrying it writes them again, whole (a table of contents, which has nothing to write without
   its combined entries, waits for all its pages).
@@ -402,6 +409,25 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   thumbnails for scans and images, showing which are reviewed. A page of a document of images
   opens its original file from the masthead. The boundary between them can be
   dragged, and the job list folded away (Ctrl B), for more room.
+- **Text regions over the scan** ([#84](https://github.com/fmadore/Kalamu/issues/84), first
+  step). For a text extraction, *Show text regions* draws where the engine placed the text:
+  blocks, then lines from 175% and words from 350%. Tesseract's are its own; within a block
+  Mistral OCR or LightOnOCR-3 placed whole, lines and words are estimated as ALTO estimates
+  them and drawn dashed. The regions are one tab stop, walked in reading order with the
+  arrows, each named by its text. A region chosen shows its own text and marks its place in
+  the page's text only where that place is certain: by position when the text is the regions'
+  words in order, otherwise only where its words stand exactly once in the model's text and
+  once in the text shown. A repeated phrase, or words a correction changed, are not marked,
+  and the review says why; a click in the text chooses a region only where one was placed. A
+  page whose model placed nothing says so and is checked against the whole page. Nothing is
+  sent: the regions are read from the stored result. A region's box is given in fractions (0
+  to 1) of the width and height of the piece as the review shows it, from its top-left
+  corner: the piece as the engines read it, so a PDF page with its own rotation applied, one
+  half of a split spread as that half alone, an image turned upright by its EXIF orientation.
+  The fractions do not depend on the resolution a PDF page was drawn at, which only ALTO's
+  pixels need, nor on the zoom; the reader's quarter turns are laid over them. Exports put a
+  spread's halves back on the whole page
+  ([decision](decisions/2026-11-15-records-regions-batch-files.md)).
 - **Differences in the text.** Where another model, or the model under a correction, reads
   differently, the words are highlighted. Pointing at them shows the readings over the text,
   each named by its set-up; clicking them, or stepping through them with F or the arrows above
@@ -729,6 +755,18 @@ is remembered per task. Details are in [formats.md](formats.md).
 - **Pages full of text.** A text extraction prompt can say its pages are dense (the newspaper
   default does), so fewer go together when a job reads several pages in one call. The hint is
   the prompt's, never read from its name, and travels with it when it is copied or shared.
+- **Records: one row per entry.** In the field editor, *One row per entry* makes an analysis's
+  fields the columns of a repeating group (text, one choice, several choices, a list), for a
+  directory, a register, a membership list or a ledger. The group is then the analysis's only
+  field, and there is one. Such an analysis reads a PDF, images or a document of images page by
+  page, as an extraction does (a text file whole), and answers each page with its entries in
+  reading order, held to the columns by the provider's structured output. Whether it does is
+  read from its fields, never its name; a comparison cannot mix it with an analysis read once
+  per document. The review lists the page's rows beside the scan: a cell is corrected, a row
+  added or removed, in the correction layer, each change made in Rust and the model's rows
+  kept; a page that failed or was cut off says so and shows no rows. Two ready-made examples,
+  a directory and a register, keep what is written (ditto marks included) and carry nothing
+  down from a heading ([decision](decisions/2026-11-15-records-regions-batch-files.md)).
 - **Share** prompts and analyses by exporting and importing them as small JSON files.
 - **Recorded in provenance.** Each output's `provenance.json` stores the full prompt text and
   the analysis's fields, so results stay reproducible after a preset is edited.

@@ -2,7 +2,8 @@
 	// A search box over a list that opens under it as the box takes the focus or is typed in.
 	// ↓ in the box goes to the list's first item, ↓ and ↑ move through the items, ↑ from the
 	// first goes back to the box; Escape closes the list (from the list, the focus goes back to
-	// the box) and so does the focus leaving both. Each picker (a job's languages, the language
+	// the box, the list staying closed until the box is typed in or ↓ pressed) and so does the
+	// focus leaving both. Each picker (a job's languages, the language
 	// data in Settings) gives its own list, labels and what Enter in the box takes.
 	import type { Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
@@ -40,6 +41,8 @@
 	const listId = $props.id();
 	let box = $state<HTMLInputElement>();
 	let list = $state<HTMLElement>();
+	/** While Escape from the list hands the focus back to the box, which then stays closed. */
+	let closing = false;
 
 	/** Puts the focus back in the box. */
 	export function focus() {
@@ -61,7 +64,10 @@
 			else buttons[Math.min(next, buttons.length - 1)]?.focus();
 		} else if (e.key === 'Escape') {
 			open = false;
+			// The box taking the focus back must not open the list Escape just closed.
+			closing = true;
 			box?.focus();
+			closing = false;
 		}
 	}
 
@@ -96,7 +102,9 @@
 			aria-controls={listId}
 			autocomplete="off"
 			spellcheck="false"
-			onfocus={() => (open = true)}
+			onfocus={() => {
+				if (!closing) open = true;
+			}}
 			oninput={() => (open = true)}
 			onkeydown={onBoxKey}
 		/>

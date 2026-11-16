@@ -85,7 +85,7 @@ function items(excluded: ResultKey[]): QueueItem[] {
 			setup_id: job.setups[1].id,
 			setup_label: job.setups[1].label,
 			signals: [
-				{ kind: 'truncated' },
+				{ kind: 'truncated', reason: 'limit' },
 				{ kind: 'disagrees', with: [job.setups[0].label], words: 12, fields: [] },
 				{ kind: 'not_reviewed' }
 			]

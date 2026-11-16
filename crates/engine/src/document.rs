@@ -9,8 +9,9 @@ use kalamu_core::provenance::{
 };
 use kalamu_core::speakers::{rename_segments, renamed_labels, text_as_left};
 use kalamu_core::{
-    CacheKey, ExportDocument, ExportPart, InputKind, Job, PieceRef, PieceState, PieceStatus,
-    Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, Task, Timestamp, Usage,
+    CacheKey, CutReason, ExportDocument, ExportPart, InputKind, Job, PieceRef, PieceState,
+    PieceStatus, Provenance, RequestSetting, Segment, SetupId, SourceFile, SourceId, Task,
+    Timestamp, Usage,
 };
 
 use crate::output::preprocessing;
@@ -59,7 +60,7 @@ impl Engine {
         let mut detected = BTreeSet::new();
         let mut first_read: Option<Timestamp> = None;
         let (mut corrected, mut reviewed, mut truncated) = (Vec::new(), Vec::new(), Vec::new());
-        let mut failed = Vec::new();
+        let (mut failed, mut cut_by_filter) = (Vec::new(), Vec::new());
         for state in &states {
             // A piece that failed after its retries is marked in its place, so the rest of the
             // document still reaches the researcher (a table of contents has only its entries).
@@ -99,6 +100,9 @@ impl Engine {
             first_read = Some(first_read.map_or(result.created_at, |t| t.min(result.created_at)));
             if result.output.truncated {
                 truncated.push(state.index + 1);
+                if result.output.cut_reason == CutReason::Filter {
+                    cut_by_filter.push(state.index + 1);
+                }
             }
             gather(
                 if combined {
@@ -254,6 +258,7 @@ impl Engine {
             corrected,
             reviewed,
             truncated,
+            cut_by_filter,
             failed,
             preprocessing,
             renamed_speakers: renamed_labels(speaker_names),

@@ -40,6 +40,8 @@ pub fn run() {
     // The data folder is settled, and an earlier one moved into it, before Tauri builds the
     // window, whose webview data goes there too.
     let (folders, moved) = platform::data_folder();
+    // Known now, for a launch that fails before setup has started logging there.
+    let logs = platform::log_folder(&folders);
     let mut context = tauri::generate_context!();
     context.config_mut().app.app_directories_override = Some(folders);
     let result = tauri::Builder::default()
@@ -142,11 +144,13 @@ pub fn run() {
             commands::jobs::rename_job,
             commands::review::source_pieces,
             commands::review::piece_preview,
+            commands::review::page_regions,
             commands::review::piece_thumbnail,
             commands::review::piece_audio,
             commands::review::source_text,
             commands::review::save_correction,
             commands::review::save_corrections,
+            commands::review::edit_rows,
             commands::review::rename_listed,
             commands::review::save_speaker_names,
             commands::review::export_source,
@@ -225,8 +229,13 @@ pub fn run() {
                 platform::on_run_event(app, event);
             });
         });
+    // Tauri could not start at all (its event loop, a plugin): said as setup's failures are,
+    // through the same message. A window that cannot be made is setup's own (`"create": false`).
     if let Err(e) = result {
-        tracing::error!(error = %e, "the app could not start");
+        setup::fail_before_setup(
+            &start_failure::StartError::new(start_failure::Cause::Window, e),
+            logs.as_deref(),
+        );
     }
 }
 
@@ -294,6 +303,25 @@ mod tests {
             [] as [&&str; 0],
             "permissions for commands that do not exist"
         );
+    }
+
+    /// Tauri makes no window before setup, which makes them itself, so a webview that cannot be
+    /// made is told in the start-up message rather than ending in Tauri's own panic. A system's
+    /// configuration that listed its windows again would replace the list, `create` with it.
+    #[test]
+    fn setup_makes_the_windows() {
+        let config: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let windows = config["app"]["windows"].as_array().unwrap();
+        assert!(!windows.is_empty());
+        assert!(windows.iter().all(|w| w["create"] == false), "{windows:?}");
+        for other in [
+            include_str!("../tauri.macos.conf.json"),
+            include_str!("../tauri.appstore.conf.json"),
+        ] {
+            let other: serde_json::Value = serde_json::from_str(other).unwrap();
+            assert!(other["app"]["windows"].is_null(), "{other}");
+        }
     }
 
     /// The opener opens only the addresses its permission lists, and `opener:allow-open-url`

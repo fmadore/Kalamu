@@ -1,0 +1,231 @@
+{
+  "parts": [
+    {
+      "corrected": false,
+      "label": "1",
+      "piece": {
+        "kind": "page",
+        "number": 1
+      },
+      "reviewed": false,
+      "segments": [],
+      "text": "Name\nAbadie (J.)\n\nOccupation\nboulanger\n\nAddress\n12, r. Carnot\n\nName\nAchard (Vve)\n\nOccupation\nmodiste\n\nAddress\n3, pl. du Marché\n\nName\nBonnet (L.)\n\nOccupation\ncordonnier\n\nAddress\n\"\n\nName\nBouvier frères\n\nOccupation\nnégociants\n\nAddress\ndo."
+    },
+    {
+      "corrected": false,
+      "failed": "The answer was cut off at the model's output limit",
+      "label": "2",
+      "piece": {
+        "kind": "page",
+        "number": 2
+      },
+      "reviewed": false,
+      "segments": [],
+      "text": ""
+    },
+    {
+      "corrected": true,
+      "label": "3",
+      "piece": {
+        "kind": "page",
+        "number": 3
+      },
+      "reviewed": true,
+      "segments": [],
+      "text": "Name\n=Durand\n\nOccupation\n-\n\nAddress\n+33 4 75 00 00\n\nName\n@Dupont\n\nOccupation\ntailleur\n\nAddress\n8, r. Neuve"
+    }
+  ],
+  "provenance": {
+    "corrected": [
+      3
+    ],
+    "cost_usd": 0.002,
+    "created_at": 0,
+    "engine": "cloud",
+    "failed": [
+      2
+    ],
+    "generator": {
+      "name": "Kalamu",
+      "version": "0.1.0"
+    },
+    "languages": {
+      "mode": "auto"
+    },
+    "model": "gemini-3.8-flash",
+    "options": {
+      "diarize": false,
+      "speakers": null,
+      "temperature": null,
+      "timestamps": false
+    },
+    "pieces": 3,
+    "prompt": {
+      "preset_id": "text_extraction.printed_diplomatic",
+      "preset_name": "Printed document, diplomatic",
+      "schema": {
+        "fields": [
+          {
+            "instructions": "",
+            "key": "entries",
+            "kind": {
+              "fields": [
+                {
+                  "instructions": "",
+                  "key": "name",
+                  "kind": {
+                    "type": "text"
+                  },
+                  "label": "Name",
+                  "reason": false
+                },
+                {
+                  "instructions": "",
+                  "key": "occupation",
+                  "kind": {
+                    "type": "text"
+                  },
+                  "label": "Occupation",
+                  "reason": false
+                },
+                {
+                  "instructions": "",
+                  "key": "address",
+                  "kind": {
+                    "type": "text"
+                  },
+                  "label": "Address",
+                  "reason": false
+                }
+              ],
+              "type": "entries"
+            },
+            "label": "Entries",
+            "reason": false
+          }
+        ]
+      },
+      "sha256": "abababababababababababababababababababababababababababababababab",
+      "text": "Transcribe.",
+      "user_prompt": "Transcribe this page."
+    },
+    "provider": "gemini",
+    "request": [
+      {
+        "name": "generationConfig.thinkingConfig.thinkingLevel",
+        "value": "low"
+      },
+      {
+        "name": "generationConfig.maxOutputTokens",
+        "value": "65535"
+      }
+    ],
+    "reviewed": [
+      3
+    ],
+    "schema_version": 1,
+    "source": {
+      "file_name": "annuaire-1902.pdf",
+      "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+      "size_bytes": 1024
+    },
+    "task": "analysis",
+    "usage": {
+      "audio_seconds": 0.0,
+      "batch": false,
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "pages": 0
+    }
+  },
+  "rows": [
+    {
+      "corrected": false,
+      "fields": {
+        "address": "12, r. Carnot",
+        "name": "Abadie (J.)",
+        "occupation": "boulanger"
+      },
+      "file": "annuaire-1902.pdf",
+      "page": "1",
+      "position": 1,
+      "reviewed": false
+    },
+    {
+      "corrected": false,
+      "fields": {
+        "address": "3, pl. du Marché",
+        "name": "Achard (Vve)",
+        "occupation": "modiste"
+      },
+      "file": "annuaire-1902.pdf",
+      "page": "1",
+      "position": 2,
+      "reviewed": false
+    },
+    {
+      "corrected": false,
+      "fields": {
+        "address": "\"",
+        "name": "Bonnet (L.)",
+        "occupation": "cordonnier"
+      },
+      "file": "annuaire-1902.pdf",
+      "page": "1",
+      "position": 3,
+      "reviewed": false
+    },
+    {
+      "corrected": false,
+      "fields": {
+        "address": "do.",
+        "name": "Bouvier frères",
+        "occupation": "négociants"
+      },
+      "file": "annuaire-1902.pdf",
+      "page": "1",
+      "position": 4,
+      "reviewed": false
+    },
+    {
+      "corrected": true,
+      "fields": {
+        "address": "+33 4 75 00 00",
+        "name": "=Durand",
+        "occupation": "-"
+      },
+      "file": "annuaire-1902.pdf",
+      "page": "3",
+      "position": 1,
+      "reviewed": true
+    },
+    {
+      "corrected": true,
+      "fields": {
+        "address": "8, r. Neuve",
+        "name": "@Dupont",
+        "occupation": "tailleur"
+      },
+      "file": "annuaire-1902.pdf",
+      "page": "3",
+      "position": 2,
+      "reviewed": true
+    }
+  ],
+  "schema": "kalamu-result",
+  "schema_version": 1,
+  "setup": {
+    "label": "gemini-flash",
+    "model": "gemini-3.8-flash",
+    "prompt": "Printed document, diplomatic",
+    "provider": "gemini"
+  },
+  "source": {
+    "file_name": "annuaire-1902.pdf",
+    "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+    "size_bytes": 1024
+  },
+  "task": "analysis"
+}

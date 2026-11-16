@@ -75,8 +75,36 @@ impl Engine {
         {
             return Err(EngineError::LinkNeedsFolder);
         }
-        Self::check_job(catalog, new)?;
-        self.check_reading(catalog, new)
+        let by_page = self.reads_by_page(new)?;
+        Self::check_job(catalog, new, by_page)?;
+        self.check_reading(catalog, new, by_page)
+    }
+
+    /// Whether a new analysis reads page by page, its presets' fields one repeating group each
+    /// ([`crate::plan::reads_by_page`] for a job made); refused when some set-ups would and
+    /// others would not, as their results would not line up.
+    pub(crate) fn reads_by_page(&self, new: &NewJob) -> Result<bool, EngineError> {
+        if new.task != Task::Analysis {
+            return Ok(false);
+        }
+        let mut records = Vec::new();
+        for request in &new.setups {
+            let preset = match request.preset_id.as_deref() {
+                Some(id) => self.with_prompts(|p| p.get(id))?,
+                None => self.with_prompts(|p| p.default_for(new.task)),
+            };
+            records.push(
+                preset
+                    .schema
+                    .as_ref()
+                    .is_some_and(kalamu_core::records::is_records),
+            );
+        }
+        match (records.iter().all(|r| *r), records.iter().any(|r| *r)) {
+            (true, _) => Ok(!records.is_empty()),
+            (false, true) => Err(EngineError::MixedReading),
+            (false, false) => Ok(false),
+        }
     }
 
     /// The set-ups as a job runs them: each prompt rendered with the job's settings and frozen,

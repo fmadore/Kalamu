@@ -717,7 +717,12 @@
     "pages_per_call": false,
     "splits_spreads": false,
     "reads_text_layer": false,
-    "page_documents": false
+    "page_documents": false,
+    "by_page": {
+      "samples": true,
+      "splits_spreads": true,
+      "page_documents": true
+    }
   },
   {
     "task": "contents",

@@ -77,7 +77,9 @@ async fn a_comparison_lists_where_its_set_ups_disagree_and_what_was_cut_off() {
     assert_eq!(
         flash_2.signals,
         vec![
-            Signal::Truncated,
+            Signal::Truncated {
+                reason: kalamu_core::CutReason::Limit,
+            },
             Signal::Disagrees {
                 with: vec!["pro".into()],
                 words: 2,

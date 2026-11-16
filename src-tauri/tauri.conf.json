@@ -21,6 +21,7 @@
     "windows": [
       {
         "label": "main",
+        "create": false,
         "title": "Kalamu",
         "url": "/",
         "width": 1280,

@@ -39,7 +39,7 @@ function item(signals: Signal[], over: Partial<QueueItem> = {}): QueueItem {
 }
 
 const failed = item([{ kind: 'failed', error: '503' }], { index: 0 });
-const cut = item([{ kind: 'truncated' }, { kind: 'not_reviewed' }], { index: 1 });
+const cut = item([{ kind: 'truncated', reason: 'limit' }, { kind: 'not_reviewed' }], { index: 1 });
 const plain = item([{ kind: 'not_reviewed' }], { index: 2 });
 const resolved = item([{ kind: 'disagrees', with: ['pro'], words: 3, fields: [] }], {
 	index: 3,
@@ -75,6 +75,11 @@ describe('the review queue', () => {
 	it('says each reason in words', () => {
 		expect(reasonText({ kind: 'failed', error: '503' }, en)).toBe('Failed: 503');
 		expect(reasonText({ kind: 'not_read' }, en, true)).toBe('Not started yet');
+		expect(reasonText({ kind: 'truncated', reason: 'limit' }, en)).toContain('length limit');
+		expect(reasonText({ kind: 'truncated', reason: 'filter' }, en)).toBe(
+			'Stopped by the provider’s filter: the end may be missing'
+		);
+		expect(reasonText({ kind: 'truncated', reason: 'other' }, en)).not.toContain('limit');
 		expect(reasonText({ kind: 'disagrees', with: ['pro'], words: 1, fields: [] }, en)).toBe(
 			'Reads differently from pro: 1 word'
 		);

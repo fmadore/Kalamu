@@ -33,8 +33,11 @@ impl Engine {
         // A recording resumed keeps the pieces planned the first time: planning decodes the
         // whole file, and the cuts must not move under results already stored.
         let stored = stored_pieces(existing, job, source);
-        let mut pieces = if job.task == Task::Analysis {
-            // An analysis reads the whole document at once.
+        let mut pieces = if job.task == Task::Analysis
+            && (!reads_by_page(job) || source.kind == kalamu_core::InputKind::Text)
+        {
+            // An analysis reads the whole document at once; records read a text file whole too,
+            // having no pages to cut it into.
             vec![PieceRef::Whole]
         } else if job.task.rewrites_text() {
             // A correction or a translation reads the text there is: a PDF's pages, a text
@@ -180,6 +183,20 @@ impl Engine {
         }
         Ok(())
     }
+}
+
+/// Whether a job is records: an analysis whose every set-up's fields are one repeating group
+/// ([`kalamu_core::records`]), so each page of a scan is read on its own, its entries one row
+/// each. Decided by the fields frozen into the job, never by a preset's name.
+pub(crate) fn reads_by_page(job: &Job) -> bool {
+    job.task == Task::Analysis
+        && !job.setups.is_empty()
+        && job.setups.iter().all(|s| {
+            s.prompt
+                .schema
+                .as_ref()
+                .is_some_and(kalamu_core::records::is_records)
+        })
 }
 
 /// A piece recorded for the first time, not yet sent.

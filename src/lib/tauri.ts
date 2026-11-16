@@ -42,6 +42,7 @@ import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { Estimate } from './bindings/Estimate.js';
 import type { Expanded } from './bindings/Expanded.js';
+import type { RowEdit } from './bindings/RowEdit.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { ImageDocument } from './bindings/ImageDocument.js';
 import type { Job } from './bindings/Job.js';
@@ -53,6 +54,7 @@ import type { KeyStatus } from './bindings/KeyStatus.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
+import type { PageRegions } from './bindings/PageRegions.js';
 import type { PieceAudio } from './bindings/PieceAudio.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
@@ -213,6 +215,9 @@ export const api = {
 		invoke<PieceView[]>('source_pieces', { jobId, sourceId }),
 	piecePreview: (jobId: string, sourceId: string, index: number) =>
 		invoke<PagePreview>('piece_preview', { jobId, sourceId, index }),
+	/** Where the text of a piece sits on it, under one set-up, placed in the text shown. */
+	pageRegions: (jobId: string, sourceId: string, setupId: string, index: number) =>
+		invoke<PageRegions>('page_regions', { jobId, sourceId, setupId, index }),
 	/** A page drawn `width` pixels wide, as a small image, for the strip of thumbnails. */
 	pieceThumbnail: (jobId: string, sourceId: string, index: number, width: number) =>
 		invoke<PagePreview>('piece_thumbnail', { jobId, sourceId, index, width }),
@@ -226,6 +231,9 @@ export const api = {
 	sourceText: (jobId: string, sourceId: string) =>
 		invoke<string>('source_text', { jobId, sourceId }),
 	saveCorrection: (correction: Correction) => invoke<void>('save_correction', { correction }),
+	/** Makes one change to a page's rows in a records analysis, in its corrected answers. */
+	editRows: (jobId: string, setupId: string, sourceId: string, index: number, change: RowEdit) =>
+		invoke<void>('edit_rows', { jobId, setupId, sourceId, index, change }),
 	/** Stores several corrections, all or none. */
 	saveCorrections: (corrections: Correction[]) => invoke<void>('save_corrections', { corrections }),
 	/** Renames a listed name in every set-up that found it, or takes it out when `to` is null,

@@ -16,8 +16,8 @@
 
 use async_trait::async_trait;
 use kalamu_core::{
-    ApiKey, BatchContext, BatchLimits, BatchProgress, ProcessOutput, ProcessRequest, Provider,
-    ProviderError, ProviderId, RequestSetting, Task, Tuning, Usage,
+    ApiKey, BatchContext, BatchLimits, BatchProgress, CutReason, ProcessOutput, ProcessRequest,
+    Provider, ProviderError, ProviderId, RequestSetting, Task, Tuning, Usage,
 };
 use reqwest::{Client, RequestBuilder};
 use serde_json::{Value, json};
@@ -197,7 +197,10 @@ impl Anthropic {
                 .map(str::to_string),
             fields: Vec::new(),
             regions: Vec::new(),
-            truncated: stop == "max_tokens",
+            // Claude stops part-way only at a limit, of the answer or of its context window: a
+            // refusal (its filter) was turned away above.
+            truncated: matches!(stop, "max_tokens" | "model_context_window_exceeded"),
+            cut_reason: CutReason::Limit,
         })
     }
 

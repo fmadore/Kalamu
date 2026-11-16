@@ -1,0 +1,10 @@
+{
+  "entries": [
+    { "name": "Abadie (J.)", "occupation": "boulanger", "address": "12, r. Carnot" },
+    { "name": "Achard (Vve)", "occupation": "modiste", "address": "3, pl. du Marché" },
+    { "name": "Allard (P.-M.)", "occupation": "avocat", "address": "5, r. Gambetta" },
+    { "name": "Bonnet (L.)", "occupation": "cordonnier", "address": "\"" },
+    { "name": "Bouvier frères", "occupation": "négociants", "address": "do." },
+    { "name": "Brun (Mme)", "occupation": "", "address": "17, quai de l'Isère" }
+  ]
+}

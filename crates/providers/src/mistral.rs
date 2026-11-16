@@ -92,6 +92,7 @@ impl Mistral {
             fields: Vec::new(),
             regions,
             truncated: false,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 
@@ -185,6 +186,7 @@ impl Mistral {
             fields: Vec::new(),
             regions: Vec::new(),
             truncated: false,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 }
@@ -371,5 +373,17 @@ impl Provider for Mistral {
         )
         .await
         .map(|_| ())
+    }
+
+    async fn batch_files(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        self.files_of(key, batch_id).await
+    }
+
+    async fn delete_batch_file(&self, key: &ApiKey, file_id: &str) -> Result<(), ProviderError> {
+        crate::batch::delete_file(&self.client, &self.base_url, key, file_id).await
     }
 }

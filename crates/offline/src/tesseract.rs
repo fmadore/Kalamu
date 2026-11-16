@@ -485,6 +485,7 @@ impl Provider for Tesseract {
             fields: Vec::new(),
             regions,
             truncated: false,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 

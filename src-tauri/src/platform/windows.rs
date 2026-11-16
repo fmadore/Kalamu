@@ -19,6 +19,7 @@ use windows_sys::Win32::System::JobObjects::{
 
 use super::Moved;
 use crate::grants::Access;
+use crate::start_failure::Webview;
 
 /// The app a job's JSON files open in: Windows often has none for them, and every PC has
 /// Notepad.
@@ -37,6 +38,10 @@ pub const TRAY_TEMPLATE: Option<Image<'static>> = None;
 
 /// What the review view's player (Chromium, in WebView2) plays.
 pub const PLAYBACK: Playback = Playback::CHROMIUM;
+
+/// What draws the window, named when it cannot be made: WebView2, which may be missing or
+/// damaged.
+pub const WEBVIEW: Webview = Webview::WebView2;
 
 /// The app's data folder in `%LOCALAPPDATA%`, named for the people who open it. Not `Kalamu`,
 /// which the per-user installer takes for the program itself and its uninstaller removes.

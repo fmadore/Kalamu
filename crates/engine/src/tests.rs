@@ -30,6 +30,8 @@ mod names;
 mod ordered;
 mod pages;
 mod reading;
+mod records;
+mod regions;
 mod snapshot;
 mod sources;
 mod workflow;
@@ -49,6 +51,8 @@ struct Fake {
     groups: Mutex<Vec<(u32, u32)>>,
     /// A page a multi-page answer leaves unmarked (0: none).
     unmarked: std::sync::atomic::AtomicU32,
+    /// The page given by `cut_off` is stopped by a filter rather than the output limit.
+    cut_by_filter: std::sync::atomic::AtomicBool,
     /// Multi-page answers stop at the output limit.
     cut_groups: std::sync::atomic::AtomicBool,
 }
@@ -64,6 +68,7 @@ impl Fake {
             groups: Mutex::new(Vec::new()),
             unmarked: std::sync::atomic::AtomicU32::new(0),
             cut_groups: std::sync::atomic::AtomicBool::new(false),
+            cut_by_filter: std::sync::atomic::AtomicBool::new(false),
         })
     }
 
@@ -208,6 +213,11 @@ impl Provider for Fake {
             },
             model_version: Some(format!("{}-001", request.model)),
             truncated: self.cut_off.load(Ordering::SeqCst) == *number,
+            cut_reason: if self.cut_by_filter.load(Ordering::SeqCst) {
+                kalamu_core::CutReason::Filter
+            } else {
+                kalamu_core::CutReason::Limit
+            },
             ..ProcessOutput::default()
         })
     }
@@ -605,7 +615,13 @@ async fn an_answer_cut_off_at_the_output_limit_is_sent_once_and_paid_for() {
         ..Usage::default()
     };
     // Were it retried, the later calls would succeed.
-    f.fake.fail(2, vec![ProviderError::CutOff { usage }]);
+    f.fake.fail(
+        2,
+        vec![ProviderError::CutOff {
+            usage,
+            reason: kalamu_core::CutReason::Limit,
+        }],
+    );
     let job = f.new_job(vec![f.pdf("letters.pdf", 2)], &["priced-model"]);
     assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
     assert_eq!(f.fake.calls(), 2, "the cut-off answer is sent once");
@@ -1055,6 +1071,35 @@ async fn an_answer_cut_off_at_the_output_limit_is_marked_everywhere() {
     )
     .unwrap_or_default();
     assert_eq!(provenance["truncated"], serde_json::json!([2]));
+    assert!(provenance.get("cut_by_filter").is_none(), "{provenance}");
+    assert!(views.iter().all(|v| v.cut_reason.is_limit()));
+}
+
+#[tokio::test]
+async fn an_answer_stopped_by_a_filter_says_so_in_the_review_and_provenance() {
+    let f = fixture();
+    f.fake.cut_off.store(2, Ordering::SeqCst);
+    f.fake.cut_by_filter.store(true, Ordering::SeqCst);
+    let source = f.pdf("registre.pdf", 3);
+    let job = f.new_job(vec![source.clone()], &["fake-model"]);
+    assert_eq!(f.run(job.id).await, JobStatus::Completed);
+
+    let views = f
+        .engine
+        .source_pieces(job.id, source.id)
+        .unwrap_or_default();
+    let cut: Vec<(u32, kalamu_core::CutReason)> = views
+        .iter()
+        .filter(|v| v.truncated)
+        .map(|v| (v.index, v.cut_reason))
+        .collect();
+    assert_eq!(cut, vec![(1, kalamu_core::CutReason::Filter)]);
+    let provenance: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(f.dir.path().join("registre.provenance.json")).unwrap_or_default(),
+    )
+    .unwrap_or_default();
+    assert_eq!(provenance["truncated"], serde_json::json!([2]));
+    assert_eq!(provenance["cut_by_filter"], serde_json::json!([2]));
 }
 
 #[tokio::test]

@@ -48,6 +48,10 @@ try a small job first. See the [roadmap](docs/roadmap.md) and the
   and E2B) analyse texts and photographed pages, make tables of contents and correct text with
   nothing sent: far weaker than the cloud models and slow on a processor, faster on a graphics
   processor, so check their answers.
+- **Turn a directory, a register or a list into a table**: an analysis with *One row per
+  entry* reads each page into one row per entry, in the columns you define (surname, trade,
+  address; date, name, place), each row checked and corrected beside its page and exported as
+  one spreadsheet.
 - **Make a detailed table of contents** of a long document: a newspaper or magazine issue, an
   archival file scanned in one piece, a book or report. One model reads each page, another,
   cheaper one (from any provider) combines the pages into one entry per article or item, with
@@ -83,7 +87,9 @@ try a small job first. See the [roadmap](docs/roadmap.md) and the
   once.
 - **Check every result against its source**, side by side, with corrections kept apart from the
   AI output, which is never overwritten. Zoom the scan about the pointer, and choose a
-  difference in either text to bring it level in the other. Search a document or a recording across all its pages
+  difference in either text to bring it level in the other. Where the model placed its text on
+  the page (Tesseract, Mistral OCR, LightOnOCR), show the regions over the scan and choose one
+  to find its words in the text. Search a document or a recording across all its pages
   (Ctrl F, or ⌘F on a Mac), and report inappropriate output from the review.
 - **Compare models** on the same documents, with their differences highlighted in the text and
   error rates against corrected pages.

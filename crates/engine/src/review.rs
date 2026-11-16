@@ -7,7 +7,8 @@ use kalamu_core::list_items::{holds_item, rename_item};
 use kalamu_core::speakers::{labels, rename_segments, rename_text};
 use kalamu_core::timed::timed_lines;
 use kalamu_core::{
-    Correction, FieldAnswer, JobId, PieceRef, PieceStatus, SetupId, SourceId, Task, Timestamp,
+    Correction, CutReason, FieldAnswer, JobId, PieceRef, PieceStatus, RowEdit, SetupId, SourceId,
+    Task, Timestamp,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -45,8 +46,11 @@ pub struct PieceView {
     /// or the text file's page or passage, which the review compares with the correction and
     /// shows beside the translation.
     pub source_text: Option<String>,
-    /// The model's answer stopped at its output limit: the end of the piece may be missing.
+    /// The model's answer stopped before its end: the end of the piece may be missing.
     pub truncated: bool,
+    /// Why it stopped, when `truncated`: the output limit, a filter, or another reason.
+    #[serde(default, skip_serializing_if = "CutReason::is_limit")]
+    pub cut_reason: CutReason,
     /// For a page of a document of images, the original file it is, where it lies.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -89,6 +93,10 @@ impl Engine {
                 _ => Vec::new(),
             };
             let truncated = result.as_ref().is_some_and(|r| r.output.truncated);
+            let cut_reason = result
+                .as_ref()
+                .map(|r| r.output.cut_reason)
+                .unwrap_or_default();
             out.push(PieceView {
                 setup_id: state.setup_id,
                 source_id,
@@ -125,6 +133,7 @@ impl Engine {
                 speaker_names,
                 source_text: opened.as_ref().and_then(|o| o.text_of(&state.piece).ok()),
                 truncated,
+                cut_reason,
                 original_file: match (&state.piece, source) {
                     (PieceRef::Page { number, .. }, Some(source)) => {
                         source.page_file(*number).map(|(page, _)| page.path.clone())
@@ -193,6 +202,51 @@ impl Engine {
             self.write_later(job_id);
         }
         Ok(before)
+    }
+
+    /// Makes one change to a page's rows in a records analysis (a cell typed, a row added or
+    /// removed), on the page's answers as the researcher left them: the model's stay as they
+    /// are, the page's corrected answers hold the change, and the page stays reviewed or not as
+    /// it was. A page not read has no rows to change.
+    pub fn edit_rows(
+        &self,
+        job_id: JobId,
+        setup_id: SetupId,
+        source_id: SourceId,
+        index: u32,
+        change: &RowEdit,
+    ) -> Result<(), EngineError> {
+        let job = self.store.job(job_id)?;
+        let schema = job
+            .setups
+            .iter()
+            .find(|s| s.id == setup_id)
+            .and_then(|s| s.prompt.schema.as_ref())
+            .ok_or(EngineError::Rows(kalamu_core::RowError::NotRecords))?;
+        let pieces = self.store.source_pieces(job_id, setup_id, source_id)?;
+        let piece = pieces
+            .iter()
+            .find(|p| p.index == index)
+            .ok_or(EngineError::Store(kalamu_core::StoreError::NotFound))?;
+        let corrections = self.store.source_corrections(job_id, setup_id, source_id)?;
+        let answers = self
+            .store
+            .answers(piece, &corrections)?
+            .ok_or(EngineError::NothingRead)?;
+        let fields = kalamu_core::records::edit(schema, &answers, change)?;
+        let reviewed = Correction::of(&corrections, piece).is_some_and(|c| c.reviewed);
+        self.store.put_correction(&Correction {
+            job_id,
+            setup_id,
+            source_id,
+            index,
+            text: None,
+            fields: Some(fields),
+            reviewed,
+            updated_at: Timestamp::now(),
+        })?;
+        self.write_later(job_id);
+        Ok(())
     }
 
     /// Saves several corrections or review marks at once, all or none, as

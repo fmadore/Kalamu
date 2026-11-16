@@ -1,6 +1,6 @@
 //! The database's schema: one migration per release that changed it, applied in order.
 
-use super::{dictionary, outdated, progress, projects, runs, snapshots, units};
+use super::{batches, dictionary, outdated, progress, projects, runs, snapshots, units};
 
 /// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
 pub(crate) const MIGRATIONS: &[&str] = &[
@@ -118,4 +118,6 @@ CREATE INDEX IF NOT EXISTS results_costs ON results(cache_key, cost_usd, truncat
     // A job's pieces by file, with their set-up and status: a running job's page counts the
     // files it shows from this index alone.
     progress::MIGRATION,
+    // Batches of deleted jobs whose files at the provider are still to delete.
+    batches::LEFTOVERS,
 ];

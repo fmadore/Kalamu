@@ -68,6 +68,30 @@ pub(crate) async fn send_text(request: RequestBuilder) -> Result<String, Provide
     Err(status_error(status, retry_after, &body))
 }
 
+/// Sends a request and returns the JSON body of a successful response, or `None` when the
+/// provider answers that what was asked for does not exist (404): a batch it no longer knows,
+/// a file already deleted.
+pub(crate) async fn send_json_if_found(
+    request: RequestBuilder,
+) -> Result<Option<Value>, ProviderError> {
+    let response = request.send().await.map_err(network)?;
+    let status = response.status();
+    let retry_after = header_retry_after(&response);
+    let body = response.text().await.map_err(network)?;
+    if status == StatusCode::NOT_FOUND {
+        return Ok(None);
+    }
+    if !status.is_success() {
+        return Err(status_error(status, retry_after, &body));
+    }
+    if body.trim().is_empty() {
+        return Ok(Some(Value::Null));
+    }
+    serde_json::from_str(&body)
+        .map(Some)
+        .map_err(|e| ProviderError::Other(format!("invalid JSON: {e}")))
+}
+
 fn network(err: reqwest::Error) -> ProviderError {
     if err.is_timeout() {
         ProviderError::Transient("the request timed out".into())

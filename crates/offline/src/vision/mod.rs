@@ -436,6 +436,7 @@ impl Provider for Vision {
             fields: Vec::new(),
             regions,
             truncated,
+            cut_reason: kalamu_core::CutReason::Limit,
         })
     }
 

@@ -191,7 +191,7 @@ test('a job’s menu moves round its items, goes to either end, and gives the fo
 	await expect(more).toBeFocused();
 });
 
-test('a name’s menu moves round its two items, without Home and End, and gives the focus back', async ({
+test('a name’s menu moves round its two items, Home and End as in the job’s, and gives the focus back', async ({
 	page
 }) => {
 	await open(page, 'review-analysis');
@@ -210,8 +210,22 @@ test('a name’s menu moves round its two items, without Home and End, and gives
 	await expect(remove).toBeFocused();
 	await page.keyboard.press('ArrowDown');
 	await expect(rename).toBeFocused();
-	// This menu has never taken Home and End: the focus stays where it is.
+	// Home and End go to the first and the last item, as in the job's menu.
 	await page.keyboard.press('End');
+	await expect(remove).toBeFocused();
+	await page.keyboard.press('Home');
+	await expect(rename).toBeFocused();
+
+	// While renaming, the menu holds a form: Home and End stay the box's own.
+	await page.keyboard.press('Enter');
+	const field = page.getByRole('dialog', { name: 'What to do with “Dakar”' }).getByRole('textbox');
+	await expect(field).toBeFocused();
+	await page.keyboard.press('End');
+	await expect(field).toBeFocused();
+	await page.keyboard.press('Escape');
+	await expect(menu).toBeHidden();
+	await dakar.focus();
+	await page.keyboard.press('Enter');
 	await expect(rename).toBeFocused();
 
 	await page.keyboard.press('Escape');

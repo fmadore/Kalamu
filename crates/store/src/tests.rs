@@ -1,6 +1,7 @@
 use kalamu_core::{
-    BatchItem, BatchPhase, FieldAnswer, FieldValue, InputKind, JobSettings, OutputSettings,
-    ProcessOutput, PromptSnapshot, RequestSetting, Setup, SetupOptions, SourceFile, Task,
+    BatchCleanup, BatchItem, BatchPhase, FieldAnswer, FieldValue, InputKind, JobSettings,
+    OutputSettings, ProcessOutput, PromptSnapshot, RequestSetting, Setup, SetupOptions, SourceFile,
+    Task,
 };
 
 use super::*;
@@ -587,6 +588,7 @@ fn batches_are_kept_with_their_job_and_survive_startup() -> Result<(), StoreErro
         }],
         submitted_at: Timestamp::now(),
         updated_at: Timestamp::now(),
+        cleanup: None,
     };
     store.put_batch(&batch)?;
     batch.remote_id = Some("batches/123".into());
@@ -600,6 +602,127 @@ fn batches_are_kept_with_their_job_and_survive_startup() -> Result<(), StoreErro
 
     store.delete_job(job.id)?;
     assert!(store.batches(job.id)?.is_empty());
+    assert!(
+        store.batch_leftovers()?.is_empty(),
+        "a waiting batch has nothing to delete yet"
+    );
+    Ok(())
+}
+
+fn ended_batch(job: &Job, id: &str, cleanup: Option<BatchCleanup>) -> BatchRecord {
+    BatchRecord {
+        id: id.into(),
+        job_id: job.id,
+        setup_id: job.setups[0].id,
+        provider: ProviderId::new("openai"),
+        remote_id: Some(format!("remote-{id}")),
+        phase: BatchPhase::Collected,
+        items: Vec::new(),
+        submitted_at: Timestamp::now(),
+        updated_at: Timestamp::now(),
+        cleanup,
+    }
+}
+
+/// A job deleted while what its batches left at the provider is still to delete keeps those
+/// batches' records, apart from it, until the deleting ends; batches with nothing left go.
+#[test]
+fn a_deleted_job_s_batches_with_files_to_delete_are_kept_until_deleted() -> Result<(), StoreError> {
+    let store = SqliteStore::in_memory()?;
+    let job = job();
+    store.create_job(&job)?;
+    let pending = ended_batch(&job, "b1", Some(BatchCleanup::default()));
+    let named = ended_batch(
+        &job,
+        "b2",
+        Some(BatchCleanup {
+            files: Some(vec!["file-in".into()]),
+            ..BatchCleanup::default()
+        }),
+    );
+    let done = ended_batch(
+        &job,
+        "b3",
+        Some(BatchCleanup {
+            files: Some(Vec::new()),
+            ..BatchCleanup::default()
+        }),
+    );
+    let left = ended_batch(
+        &job,
+        "b4",
+        Some(BatchCleanup {
+            given_up: true,
+            ..BatchCleanup::default()
+        }),
+    );
+    let older = ended_batch(&job, "b5", None);
+    for batch in [&pending, &named, &done, &left, &older] {
+        store.put_batch(batch)?;
+    }
+    store.delete_job(job.id)?;
+    assert!(store.batches(job.id)?.is_empty());
+    assert_eq!(
+        store.batch_leftovers()?,
+        vec![pending.clone(), named.clone()]
+    );
+
+    // Its files deleted, a batch is forgotten; one still in progress is kept as it stands.
+    let mut finished = pending;
+    finished.cleanup = Some(BatchCleanup {
+        files: Some(Vec::new()),
+        ..BatchCleanup::default()
+    });
+    store.put_batch_leftover(&finished)?;
+    let mut failed = named;
+    if let Some(cleanup) = failed.cleanup.as_mut() {
+        cleanup.failures = 1;
+    }
+    store.put_batch_leftover(&failed)?;
+    assert_eq!(store.batch_leftovers()?, vec![failed]);
+    Ok(())
+}
+
+/// A database from before batches' files were deleted opens: the table for deleted jobs'
+/// batches is added, and a batch recorded then reads with no cleanup due, so nothing it left
+/// is deleted behind the researcher's back.
+#[test]
+fn a_database_from_before_batch_cleanup_opens_with_its_batches() -> Result<(), StoreError> {
+    let dir = tempfile::tempdir().map_err(corrupt)?;
+    let path = dir.path().join("jobs.sqlite");
+    let job = job();
+    let previous = migrations::MIGRATIONS.len() as i64 - 1;
+    let batch = ended_batch(&job, "b1", None);
+    {
+        let store = SqliteStore::open(&path)?;
+        store.create_job(&job)?;
+        let conn = store.conn();
+        conn.execute_batch("DROP TABLE batch_leftovers;")
+            .map_err(db)?;
+        conn.pragma_update(None, "user_version", previous)
+            .map_err(db)?;
+        // A batch as the previous version wrote it: no `cleanup` field.
+        let mut old = serde_json::to_value(&batch).map_err(corrupt)?;
+        if let Some(fields) = old.as_object_mut() {
+            fields.remove("cleanup");
+        }
+        conn.execute(
+            "INSERT INTO batches (id, job_id, phase, submitted_at, data)
+             VALUES ('b1', ?1, 'collected', 0, ?2)",
+            rusqlite::params![job.id.to_string(), old.to_string()],
+        )
+        .map_err(db)?;
+    }
+    let store = SqliteStore::open(&path)?;
+    let read = store.batches(job.id)?;
+    assert_eq!(read, vec![batch]);
+    assert!(!read[0].cleanup_pending());
+    assert!(store.batch_leftovers()?.is_empty());
+    let version: i64 = store
+        .conn()
+        .pragma_query_value(None, "user_version", |row| row.get(0))
+        .map_err(db)?;
+    assert_eq!(version, previous + 1);
     Ok(())
 }
 

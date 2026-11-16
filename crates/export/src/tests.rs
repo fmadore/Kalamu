@@ -13,6 +13,8 @@ use kalamu_core::{
 
 use super::*;
 
+mod records;
+
 fn source(name: &str, kind: InputKind) -> SourceFile {
     SourceFile {
         id: SourceId(uuid_nil()),
@@ -97,6 +99,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         corrected: vec![2],
         reviewed: vec![1, 2],
         truncated: vec![],
+        cut_by_filter: vec![],
         failed: vec![],
         preprocessing: vec![],
         renamed_speakers: vec![],
