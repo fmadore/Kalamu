@@ -1,10 +1,10 @@
 # Kalamu: statistics
 
-Updated 2026-11-15 by the daily *Repository statistics* workflow (`.github/workflows/stats.yml` on the default branch). The figures are kept in [`data/`](data/) as CSV files, one row per day, for a spreadsheet or a dashboard.
+Updated 2026-11-16 by the daily *Repository statistics* workflow (`.github/workflows/stats.yml` on the default branch). The figures are kept in [`data/`](data/) as CSV files, one row per day, for a spreadsheet or a dashboard.
 
 | Downloads, versions | Downloads, all releases | Views, last 14 days |
 | ---: | ---: | ---: |
-| 306 | 542 | 107 |
+| 306 | 560 | 84 |
 
 ## Downloads per version
 
@@ -32,8 +32,8 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 
 | Release | Published | Downloads | Last 7 days | Last 30 days |
 | --- | --- | ---: | ---: | ---: |
-| [ffmpeg-9.0.2-2](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-2) (pre-release) | 2026-11-13 | 23 | 23 | 23 |
-| [llama-b12110-1](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-1) (pre-release) | 2026-11-07 | 114 | 108 | 114 |
+| [ffmpeg-9.0.2-2](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-2) (pre-release) | 2026-11-13 | 29 | 29 | 29 |
+| [llama-b12110-1](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-1) (pre-release) | 2026-11-07 | 126 | 120 | 126 |
 | [llama-b12110-3](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-3) (pre-release) | 2026-11-06 | 22 | 18 | 22 |
 | [ffmpeg-9.0.2-1](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-1) (pre-release) | 2026-10-25 | 77 | 35 | 77 |
 
@@ -44,8 +44,8 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 ```mermaid
 xychart-beta
     title "Downloads per day (all releases)"
-    x-axis ["11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15"]
-    bar [0, 0, 104, 38, 35, 79, 8]
+    x-axis ["11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16"]
+    bar [0, 0, 104, 38, 35, 79, 8, 18]
 ```
 
 ## Files of v1.7.0
@@ -68,7 +68,7 @@ Bars are views, the line unique visitors (GitHub's daily figures, UTC; today is 
 ```mermaid
 xychart-beta
     title "Views and unique visitors"
-    x-axis ["10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13"]
-    bar [0, 0, 5, 19, 19, 18, 1, 2, 26, 17, 18, 3, 15, 3, 0, 1, 5, 11, 2, 6]
-    line [0, 0, 5, 14, 14, 15, 1, 2, 14, 12, 14, 2, 11, 3, 0, 1, 5, 10, 2, 6]
+    x-axis ["10-25", "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01", "11-02", "11-03", "11-04", "11-05", "11-06", "11-07", "11-08", "11-09", "11-10", "11-11", "11-12", "11-13", "11-14"]
+    bar [0, 0, 5, 19, 19, 18, 1, 2, 26, 17, 18, 3, 15, 3, 0, 1, 5, 11, 2, 6, 3]
+    line [0, 0, 5, 14, 14, 15, 1, 2, 14, 12, 14, 2, 11, 3, 0, 1, 5, 10, 2, 6, 2]
 ```
