@@ -4,18 +4,21 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (15 November 2026)
+## Status (16 November 2026)
 
 **Version 1.7.0** is the latest release, published on 13 November 2026: unsigned installers for
 Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
 FFmpeg bundled, are on the
 [v1.7.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0)
 ([notes](release-1.7.0.md)): translation, images read as the pages of one document, an image
-description and models listed by tier. It is the next update for both stores. **Version 1.6.0**
-([notes](release-1.6.0.md)) is the version live in the
+description and models listed by tier. It is the version live in the
 [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), where Kalamu has been since
-version 1.0.0 (2 November 2026), and the first sent to the Mac App Store, where it is in App
-Review ([steps](mac-app-store.md)). Everything below is tested against recorded provider
+version 1.0.0 (2 November 2026). **Version 1.6.0** ([notes](release-1.6.0.md)), the first sent
+to the Mac App Store, is still in App Review there ([steps](mac-app-store.md)). The next
+version, 1.8.0, gathers what *Done* lists after 1.7.0 (records, text regions over the scan, a
+batch's files deleted, Gemini 4 Hydrogen as the default); before it is tagged, the packaged app
+is tried by hand on Windows ([windows-test-pass.md](windows-test-pass.md)), with the live runs
+it names. Everything below is tested against recorded provider
 responses. Text extraction, transcription, analyses and translation have also run against the
 live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
 (`cargo run --example live`, see [development.md](development.md) and the
@@ -702,7 +705,7 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.6.0 is live, and 1.7.0 is the next update.
+in [microsoft-store.md](microsoft-store.md); 1.7.0 is live, and 1.8.0 is the next update.
 
 ## Toward the Mac App Store
 
@@ -722,8 +725,9 @@ privacy policy's lines on the store build, and the steps in [mac-app-store.md](m
 Done by the maintainer: the App ID, the distribution certificates, the profile, the API key and
 the app in App Store Connect, with their secrets; the screenshots, taken on a Mac from the
 screened material ([store-listing.md](store-listing.md#screenshots)); and the first submission,
-version 1.6.0, uploaded from its tag on 11 November 2026 and in App Review. Next: Apple's answer,
-then 1.7.0 with a *What's New* text. After it: a way to grant again the folders of jobs made by
+version 1.6.0, uploaded from its tag on 11 November 2026 and still in App Review on
+16 November. Next: Apple's answer, then the latest release with a *What's New* text (1.7.0, or
+1.8.0 if it is tagged by then). After it: a way to grant again the folders of jobs made by
 the disk image, a French listing, and optional tips through in-app purchase, the only way
 Apple allows the store build to ask for support
 ([#113](https://github.com/fmadore/Kalamu/issues/113)).
