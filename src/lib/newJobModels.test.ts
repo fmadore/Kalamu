@@ -31,7 +31,7 @@ const rule = (task: Task) => rulesFor(rules, task);
 describe('new job form', () => {
 	it('starts with the recommended model the user has a key for', () => {
 		const d = newDraft(catalog, rule('text_extraction'), 'p', () => true);
-		expect(d.model).toBe('gemini-3.8-flash');
+		expect(d.model).toBe('gemini-4-hydrogen');
 		const claudeOnly = newDraft(catalog, rule('text_extraction'), 'p', (p) => p === 'anthropic');
 		expect(claudeOnly.provider).toBe('anthropic');
 		// Each provider's everyday model, not its first or costliest.
@@ -61,16 +61,14 @@ describe('new job form', () => {
 		const claude = modelsFor(catalog, analysis, 'anthropic').map((m) => m.id);
 		expect(claude).toContain('claude-fable-5-2');
 		expect(claude).not.toContain('claude-fable-5-1');
-		// Argon, Carbon and Hydrogen are three lines of Gemini 4, all offered beside 3.8 Flash.
+		// Argon, Carbon and Hydrogen are three lines of Gemini 4, all offered; Hydrogen replaces
+		// 3.8 Flash and Argon 3.1 Pro.
 		const gemini = modelsFor(catalog, analysis, 'gemini').map((m) => m.id);
 		expect(gemini).toEqual(
-			expect.arrayContaining([
-				'gemini-4-carbon',
-				'gemini-4-argon',
-				'gemini-4-hydrogen',
-				'gemini-3.8-flash'
-			])
+			expect.arrayContaining(['gemini-4-carbon', 'gemini-4-argon', 'gemini-4-hydrogen'])
 		);
+		expect(gemini).not.toContain('gemini-3.8-flash');
+		expect(gemini).not.toContain('gemini-3.1-pro-preview');
 		expect(providerDefault(catalog, analysis, 'mistral')).toBe('mistral-large-4-0');
 		// No new set-up is given a replaced model, even when nothing else is left.
 		const used = catalog.models.map((m) => `${m.provider}/${m.id}`);
@@ -136,7 +134,7 @@ describe('new job form', () => {
 
 	it('summarises texts and PDFs with the recommended model', () => {
 		const d = newDraft(catalog, rule('analysis'), 'analysis.summary_research', () => true);
-		expect(d.model).toBe('gemini-3.8-flash');
+		expect(d.model).toBe('gemini-4-hydrogen');
 		expect(readsKind(rules, 'analysis', 'text')).toBe(true);
 		expect(readsKind(rules, 'analysis', 'pdf')).toBe(true);
 		// A photographed page is read as one document, as the engine allows.
@@ -213,7 +211,7 @@ describe('new job form', () => {
 			0
 		);
 		expect(providerDefault(catalog, rule('audio_transcription'), 'gemini', input)).toBe(
-			'gemini-3.8-flash'
+			'gemini-4-hydrogen'
 		);
 	});
 
@@ -276,13 +274,13 @@ describe('tables of contents and corrections', () => {
 			'deepseek-v4-1-flash-1017'
 		);
 		const d = newDraft(catalog, rule('contents'), 'contents.periodical', () => true);
-		expect(d.model).toBe('gemini-3.8-flash');
+		expect(d.model).toBe('gemini-4-hydrogen');
 		expect(d.mergeProvider).toBe('gemini');
 		expect(mergeModelsFor(catalog, rule('contents'), 'gemini').map((m) => m.id)).toContain(
 			d.mergeModel
 		);
-		// Gemini Pro reads the pages, Mistral combines them.
-		const mixed = { ...d, model: 'gemini-3.1-pro-preview', mergeProvider: 'mistral' };
+		// Gemini 4 Argon reads the pages, Mistral combines them.
+		const mixed = { ...d, model: 'gemini-4-argon', mergeProvider: 'mistral' };
 		mixed.mergeModel = mergeDefault(catalog, rule('contents'), 'mistral');
 		const request = toRequest(catalog, 'contents', mixed);
 		expect(request.merge).toEqual({ provider: 'mistral', model: mixed.mergeModel });

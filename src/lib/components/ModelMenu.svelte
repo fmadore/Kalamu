@@ -4,7 +4,7 @@
 	// before it is chosen. A select-only combobox: the arrow keys, Home and End move through the
 	// list, a letter jumps to the next model starting with it, Enter or Space chooses, Escape or
 	// a click elsewhere closes, and the focus goes back to the button. In the top layer, under the
-	// button or over it when the window has no room below.
+	// button or over it when the window has no room below, following it when the page scrolls.
 	import Icon from './Icon.svelte';
 	import TierMark from './TierMark.svelte';
 	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
@@ -64,6 +64,38 @@
 		list.style.bottom = down ? '' : `${innerHeight - at.top + 4}px`;
 	}
 
+	// While open, the list follows the button when the page scrolls or the window changes size: it
+	// sits in the top layer, so it would otherwise stay where it opened, over another field.
+	$effect(() => {
+		if (!open) return;
+		const follow = (e: Event) => {
+			if (!(e.target instanceof Node && list?.contains(e.target))) place();
+		};
+		addEventListener('scroll', follow, { capture: true, passive: true });
+		addEventListener('resize', follow);
+		return () => {
+			removeEventListener('scroll', follow, { capture: true });
+			removeEventListener('resize', follow);
+		};
+	});
+
+	/** Scrolls the list alone, never the page behind it, so that an option shows below its
+	 * group's sticky heading: in the middle on opening, just into view when moving. */
+	function reveal(option: HTMLElement | undefined, centre = false) {
+		if (!list || !option) return;
+		const heading = option.closest('.group')?.querySelector<HTMLElement>('.heading');
+		const covered = heading?.offsetHeight ?? 0;
+		const top = option.offsetTop;
+		const bottom = top + option.offsetHeight;
+		if (centre) {
+			list.scrollTop = top - (list.clientHeight - option.offsetHeight) / 2;
+		} else if (top - covered < list.scrollTop) {
+			list.scrollTop = top - covered;
+		} else if (bottom > list.scrollTop + list.clientHeight) {
+			list.scrollTop = bottom - list.clientHeight;
+		}
+	}
+
 	function toggled(e: ToggleEvent) {
 		open = e.newState === 'open';
 		if (!open) {
@@ -74,7 +106,7 @@
 		const all = options();
 		const start = all.find((o) => o.getAttribute('aria-selected') === 'true') ?? all[0];
 		start?.focus({ preventScroll: true });
-		start?.scrollIntoView({ block: 'center' });
+		reveal(start, true);
 	}
 
 	function choose(model: ModelInfo) {
@@ -114,8 +146,8 @@
 			);
 		} else return;
 		e.preventDefault();
-		all[to]?.focus();
-		all[to]?.scrollIntoView({ block: 'nearest' });
+		all[to]?.focus({ preventScroll: true });
+		reveal(all[to]);
 	}
 </script>
 
@@ -325,7 +357,13 @@
 		grid-row: span 2;
 		color: var(--text-bright);
 	}
-	/* Two lines at most: the whole description is under the fields once the model is chosen. */
+	/* Two lines at most, so the list stays short; the model under the pointer or in focus shows
+	   its whole description, which grows downwards and leaves the pointer on the same model. */
+	.option:hover .desc,
+	.option:focus .desc {
+		-webkit-line-clamp: unset;
+		line-clamp: unset;
+	}
 	.desc {
 		grid-column: 1;
 		display: -webkit-box;

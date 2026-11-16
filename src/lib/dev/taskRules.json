@@ -21,15 +21,16 @@
         "provider": "gemini",
         "model": "gemini-3.8-flash",
         "suggested_reasoning": "low",
-        "recommended": true,
-        "provider_default": true
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gemini-4-hydrogen"
       },
       {
         "provider": "gemini",
         "model": "gemini-4-hydrogen",
         "suggested_reasoning": "low",
-        "recommended": false,
-        "provider_default": false
+        "recommended": true,
+        "provider_default": true
       },
       {
         "provider": "gemini",
@@ -50,7 +51,8 @@
         "model": "gemini-3.1-pro-preview",
         "suggested_reasoning": "low",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "gemini-4-argon"
       },
       {
         "provider": "gemini",
@@ -177,15 +179,16 @@
         "provider": "gemini",
         "model": "gemini-3.8-flash",
         "suggested_reasoning": "low",
-        "recommended": true,
-        "provider_default": true
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gemini-4-hydrogen"
       },
       {
         "provider": "gemini",
         "model": "gemini-4-hydrogen",
         "suggested_reasoning": "low",
-        "recommended": false,
-        "provider_default": false
+        "recommended": true,
+        "provider_default": true
       },
       {
         "provider": "gemini",
@@ -206,7 +209,8 @@
         "model": "gemini-3.1-pro-preview",
         "suggested_reasoning": "low",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "gemini-4-argon"
       },
       {
         "provider": "gemini",
@@ -364,15 +368,16 @@
         "provider": "gemini",
         "model": "gemini-3.8-flash",
         "suggested_reasoning": "low",
-        "recommended": true,
-        "provider_default": true
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gemini-4-hydrogen"
       },
       {
         "provider": "gemini",
         "model": "gemini-4-hydrogen",
         "suggested_reasoning": "low",
-        "recommended": false,
-        "provider_default": false
+        "recommended": true,
+        "provider_default": true
       },
       {
         "provider": "gemini",
@@ -393,7 +398,8 @@
         "model": "gemini-3.1-pro-preview",
         "suggested_reasoning": "low",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "gemini-4-argon"
       },
       {
         "provider": "gemini",
@@ -552,15 +558,16 @@
         "provider": "gemini",
         "model": "gemini-3.8-flash",
         "suggested_reasoning": "low",
-        "recommended": true,
-        "provider_default": true
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gemini-4-hydrogen"
       },
       {
         "provider": "gemini",
         "model": "gemini-4-hydrogen",
         "suggested_reasoning": "low",
-        "recommended": false,
-        "provider_default": false
+        "recommended": true,
+        "provider_default": true
       },
       {
         "provider": "gemini",
@@ -581,7 +588,8 @@
         "model": "gemini-3.1-pro-preview",
         "suggested_reasoning": "low",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "gemini-4-argon"
       },
       {
         "provider": "gemini",
@@ -744,15 +752,16 @@
         "provider": "gemini",
         "model": "gemini-3.8-flash",
         "suggested_reasoning": "low",
-        "recommended": true,
-        "provider_default": true
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gemini-4-hydrogen"
       },
       {
         "provider": "gemini",
         "model": "gemini-4-hydrogen",
         "suggested_reasoning": "low",
-        "recommended": false,
-        "provider_default": false
+        "recommended": true,
+        "provider_default": true
       },
       {
         "provider": "gemini",
@@ -773,7 +782,8 @@
         "model": "gemini-3.1-pro-preview",
         "suggested_reasoning": "low",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "gemini-4-argon"
       },
       {
         "provider": "gemini",
@@ -893,15 +903,16 @@
         "provider": "gemini",
         "model": "gemini-3.8-flash",
         "suggested_reasoning": "low",
-        "recommended": true,
-        "provider_default": true
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gemini-4-hydrogen"
       },
       {
         "provider": "gemini",
         "model": "gemini-4-hydrogen",
         "suggested_reasoning": "low",
-        "recommended": false,
-        "provider_default": false
+        "recommended": true,
+        "provider_default": true
       },
       {
         "provider": "gemini",
@@ -922,7 +933,8 @@
         "model": "gemini-3.1-pro-preview",
         "suggested_reasoning": "low",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "gemini-4-argon"
       },
       {
         "provider": "gemini",
@@ -1083,7 +1095,8 @@
         "model": "gemini-3.8-flash",
         "suggested_reasoning": "low",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "gemini-4-hydrogen"
       },
       {
         "provider": "gemini",
@@ -1117,7 +1130,8 @@
         "model": "gemini-3.1-pro-preview",
         "suggested_reasoning": "low",
         "recommended": false,
-        "provider_default": false
+        "provider_default": false,
+        "replaced_by": "gemini-4-argon"
       },
       {
         "provider": "openai",
