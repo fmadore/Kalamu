@@ -1,11 +1,11 @@
 # Store listing text
 
-Paste-ready text for Kalamu's two store listings, kept for the **next submission**, version
-1.7.0: the Microsoft Store (Partner Center) first, whose `Kalamu_1.7.0.msixbundle` the release
-workflow builds (1.6.0 is the version live there; the first, 1.0.0, was certified on 2 November
+Paste-ready text for Kalamu's two store listings, as written for version 1.7.0: the Microsoft
+Store (Partner Center) first, where 1.7.0 is live (the first, 1.0.0, was certified on 2 November
 2026), in [English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.6.0, the first
-submission, is in review. The submission and update steps are in [microsoft-store.md](microsoft-store.md) and
+submission, is in review and 1.7.0 follows once Apple has answered. The *What's new* blocks for
+1.8.0 are written before its submission. The submission and update steps are in [microsoft-store.md](microsoft-store.md) and
 [mac-app-store.md](mac-app-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 
