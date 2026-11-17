@@ -268,17 +268,24 @@
 {#if records}
 	<RecordsReview {review} {start} />
 {:else}
-	{#if itemMenu}
-		{@const at = itemMenu}
-		<ItemMenu
-			value={at.value}
-			x={at.x}
-			y={at.y}
-			onrename={(to) => void changeItem(at.key, at.value, to)}
-			onremove={() => void changeItem(at.key, at.value, null)}
-			onclose={() => (itemMenu = null)}
-		/>
-	{/if}
+	<!-- Each opening is a menu of its own. A menu says it has closed a moment after it hides, so
+	     one opened again on the same name in that moment would otherwise be taken for the one
+	     that closed, and never show. -->
+	{#key itemMenu}
+		{#if itemMenu}
+			{@const at = itemMenu}
+			<ItemMenu
+				value={at.value}
+				x={at.x}
+				y={at.y}
+				onrename={(to) => void changeItem(at.key, at.value, to)}
+				onremove={() => void changeItem(at.key, at.value, null)}
+				onclose={() => {
+					if (itemMenu === at) itemMenu = null;
+				}}
+			/>
+		{/if}
+	{/key}
 
 	<ReviewFrame
 		{jobId}

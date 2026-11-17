@@ -230,6 +230,21 @@ test('a name’s menu moves round its two items, Home and End as in the job’s,
 
 	await page.keyboard.press('Escape');
 	await expect(menu).toBeHidden();
+
+	// Opened again in the very moment it closes, before the menu has said it closed: it shows.
+	await dakar.focus();
+	await page.keyboard.press('Enter');
+	await expect(rename).toBeFocused();
+	await menu.evaluate(async (open) => {
+		open.hidePopover();
+		document.querySelector<HTMLElement>('[data-field="places"] [data-item="Dakar"]')?.click();
+		// Long enough for the menu that closed to have said so.
+		await new Promise((done) => setTimeout(done, 200));
+	});
+	await expect(menu).toBeVisible();
+	await expect(rename).toBeFocused();
+	await page.keyboard.press('Escape');
+	await expect(menu).toBeHidden();
 	await expect(dakar).toBeFocused();
 });
 
