@@ -94,6 +94,14 @@
 
 	const m = messages();
 	const catalog = $derived(app.catalog!);
+	/** What the prompt list is called for this task. */
+	const promptLabel = $derived(
+		task === 'analysis'
+			? m.newJob.analysis
+			: task === 'contents'
+				? m.newJob.kindOfDocument
+				: m.newJob.prompt
+	);
 	const info = $derived(modelInfo(catalog, d));
 	const replaced = $derived(replacedModel(catalog, rule.models, info));
 
@@ -135,18 +143,14 @@
 		bind:model={d.model}
 		{suffix}
 	/>
+	<!-- The label holds the glossary's button, which keeps it from naming the list: each list
+	     is named by its own aria-label. -->
 	<label class="field">
-		<span
-			>{task === 'analysis'
-				? m.newJob.analysis
-				: task === 'contents'
-					? m.newJob.kindOfDocument
-					: m.newJob.prompt}<TermLink term="prompt" /></span
-		>
+		<span>{promptLabel}<TermLink term="prompt" /></span>
 		{#if !acceptsPrompt(info)}
-			<select disabled><option>{m.newJob.noPrompt}</option></select>
+			<select disabled aria-label={promptLabel}><option>{m.newJob.noPrompt}</option></select>
 		{:else}
-			<select bind:value={d.presetId}>
+			<select bind:value={d.presetId} aria-label={promptLabel}>
 				{#each presets as p (p.id)}
 					<option value={p.id}>{p.name}</option>
 				{/each}
@@ -159,6 +163,7 @@
 			<span>{m.newJob.reasoning.title}<TermLink term="reasoning" /></span>
 			<!-- Each level once; choosing the suggested one leaves the choice to the engine. -->
 			<select
+				aria-label={m.newJob.reasoning.title}
 				value={d.reasoning && info.reasoning.levels.includes(d.reasoning)
 					? d.reasoning
 					: (suggested ?? info.reasoning.levels[0])}
