@@ -1,12 +1,12 @@
 # Store listing text
 
-Paste-ready text for Kalamu's two store listings, as written for version 1.7.0: the Microsoft
-Store (Partner Center) first, where 1.7.0 is live (the first, 1.0.0, was certified on 2 November
-2026), in [English](#english-united-states) and [French](#french-france), then the
+Paste-ready text for Kalamu's two store listings: the Microsoft Store (Partner Center) first,
+where 1.7.0 is live and 1.8.0 is the next update, its *What's new* and certification notes
+below (the first version, 1.0.0, was certified on 2 November 2026), in
+[English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.6.0, the first
-submission, is in review and 1.7.0 follows once Apple has answered. The *What's new* blocks for
-1.8.0 are written before its submission. The submission and update steps are in [microsoft-store.md](microsoft-store.md) and
-[mac-app-store.md](mac-app-store.md). Check every block against the app as packaged before
+submission, is in review and 1.7.0 follows once Apple has answered. The submission and update
+steps are in [microsoft-store.md](microsoft-store.md) and [mac-app-store.md](mac-app-store.md). Check every block against the app as packaged before
 pasting: a listing that promises what a reviewer cannot find fails certification.
 
 Every paragraph inside a block is one unwrapped line, because Partner Center keeps line breaks;
@@ -57,7 +57,21 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.7.0
+### What's new in this version — 1.8.0
+
+```text
+Registers, directories and lists as tables: a ready-made analysis reads each page and lists its entries one row per entry, in your columns, with the file, page and place of each. Correct a cell, add or remove a row beside the scan, and export a spreadsheet (.csv) or JSON.
+
+Text regions over the scan: the review can draw where each block, line and word sits on the page, and choosing one, with the pointer or the arrow keys, marks its place in the text.
+
+Economy mode now deletes what a batch left in your OpenAI or Mistral storage once its answers are safe.
+
+Gemini 4 Hydrogen is Gemini's default and replaces Gemini 3.8 Flash; Gemini 4 Argon replaces Gemini 3.1 Pro.
+
+Also: an answer stopped by the provider's filter says so; a window that cannot open says why at launch; keyboard and screen reader fixes in the language pickers and menus.
+```
+
+The 1.7.0 text, for the record:
 
 ```text
 Translate a text: a text file, a PDF's own text or a result you have corrected is put into the language you choose, page by page, and shown beside its source to check. A workflow can translate after the pages are read and checked.
@@ -252,7 +266,21 @@ Nécessite Windows 11 avec Microsoft Edge WebView2 Runtime, en versions natives 
 Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI OpCo, LLC ; Claude est une marque d’Anthropic, PBC ; Mistral AI est une marque de Mistral AI ; Microsoft Word est une marque du groupe Microsoft. Kalamu est un projet indépendant, ni affilié à aucune d’elles ni approuvé par elles.
 ```
 
-### Nouveautés de cette version — 1.7.0
+### Nouveautés de cette version — 1.8.0
+
+```text
+Registres, annuaires et listes en tableaux : une analyse toute prête lit chaque page et relève ses entrées, une ligne par entrée, selon vos colonnes, avec le fichier, la page et la place de chacune. Corrigez une cellule, ajoutez ou supprimez une ligne à côté du scan, puis exportez un tableur (.csv) ou du JSON.
+
+Les zones de texte sur le scan : la relecture peut montrer où se trouve chaque bloc, ligne et mot sur la page, et en choisir un, à la souris ou avec les flèches, marque sa place dans le texte.
+
+Le mode économique supprime désormais ce qu’un lot a laissé dans votre espace OpenAI ou Mistral, une fois ses réponses à l’abri.
+
+Gemini 4 Hydrogen devient le modèle Gemini par défaut et remplace Gemini 3.8 Flash ; Gemini 4 Argon remplace Gemini 3.1 Pro.
+
+Aussi : une réponse arrêtée par le filtre du fournisseur le dit ; une fenêtre qui ne peut pas s’ouvrir dit pourquoi au lancement ; des corrections pour le clavier et les lecteurs d’écran dans les sélecteurs de langue et les menus.
+```
+
+Le texte de 1.7.0, pour mémoire :
 
 ```text
 Traduisez un texte : un fichier texte, le texte d’un PDF ou un résultat que vous avez corrigé est mis dans la langue que vous choisissez, page par page, et montré à côté de sa source pour le vérifier. Une chaîne de traitement peut traduire une fois les pages lues et vérifiées.
@@ -365,9 +393,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.7.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.8.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.7.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.8.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, choose the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.
