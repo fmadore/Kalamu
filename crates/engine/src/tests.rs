@@ -25,6 +25,7 @@ mod attention;
 mod batch;
 mod contents;
 mod drawn;
+mod images;
 mod large;
 mod later;
 mod names;

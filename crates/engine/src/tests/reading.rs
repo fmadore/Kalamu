@@ -116,6 +116,51 @@ fn a_text_only_model_is_refused_images_and_whole_pdfs() {
     );
 }
 
+/// The image description (#168) on a model that reads text only is refused for JPEG, PNG and
+/// TIFF files as they are inspected, naming the file; a model that reads images takes them.
+#[test]
+fn the_image_description_is_refused_on_a_model_that_does_not_read_images() {
+    use std::io::Cursor;
+
+    let f = fixture();
+    let engine = engine();
+    let images: Vec<SourceFile> = [
+        ("photo.jpg", image::ImageFormat::Jpeg),
+        ("poster.png", image::ImageFormat::Png),
+        ("plan.tif", image::ImageFormat::Tiff),
+    ]
+    .into_iter()
+    .map(|(name, format)| {
+        let mut bytes = Vec::new();
+        image::DynamicImage::ImageRgb8(image::RgbImage::new(32, 24))
+            .write_to(&mut Cursor::new(&mut bytes), format)
+            .unwrap_or_else(|e| panic!("{e}"));
+        let path = f.dir.path().join(name);
+        std::fs::write(&path, bytes).unwrap_or_else(|e| panic!("{e}"));
+        kalamu_media::inspect(&path, None).unwrap_or_else(|e| panic!("inspect: {e}"))
+    })
+    .collect();
+    let described = |model: &str, sources: Vec<SourceFile>| {
+        let mut new = job(Task::Analysis, model, sources);
+        new.setups[0].preset_id = Some("analysis.image_description".into());
+        new
+    };
+    for refused in &images {
+        assert_eq!(refused.kind, kalamu_core::InputKind::Image);
+        match engine.create_job(described("zai-glm-5-3", vec![refused.clone()])) {
+            Err(e @ EngineError::CannotRead { .. }) => {
+                assert!(e.to_string().contains(&refused.file_name), "{e}");
+            }
+            other => panic!("expected CannotRead, got {other:?}"),
+        }
+    }
+    assert!(
+        engine
+            .create_job(described("zai-glm-5-3-flash", images))
+            .is_ok()
+    );
+}
+
 /// A workflow is checked the same way when it starts: a step analysing the files themselves on a
 /// model that reads text only is refused, a step analysing an earlier step's text is not.
 #[test]
