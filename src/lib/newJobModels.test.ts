@@ -69,6 +69,13 @@ describe('new job form', () => {
 		);
 		expect(gemini).not.toContain('gemini-3.8-flash');
 		expect(gemini).not.toContain('gemini-3.1-pro-preview');
+		// GPT-6.2 Sol replaces 6.1 Sol, and 6.2 Astra the first Astra.
+		const openai = modelsFor(catalog, analysis, 'openai').map((m) => m.id);
+		expect(openai).toEqual(expect.arrayContaining(['gpt-6.2-sol', 'gpt-6.2-astra']));
+		expect(openai).not.toContain('gpt-6.1-sol');
+		expect(openai).not.toContain('gpt-6-astra');
+		expect(providerDefault(catalog, analysis, 'openai')).toBe('gpt-6.2-sol');
+		expect(providerDefault(catalog, rule('text_extraction'), 'openai')).toBe('gpt-6.2-sol');
 		expect(providerDefault(catalog, analysis, 'mistral')).toBe('mistral-large-4-0');
 		// No new set-up is given a replaced model, even when nothing else is left.
 		const used = catalog.models.map((m) => `${m.provider}/${m.id}`);

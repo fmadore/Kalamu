@@ -80,6 +80,8 @@ mod tests {
         ("gemini", "gemini-4-argon"),
         ("gemini", "gemini-3.1-pro-preview"),
         ("gemini", "gemini-3.5-flash-lite"),
+        ("openai", "gpt-6.2-sol"),
+        ("openai", "gpt-6.2-astra"),
         ("openai", "gpt-6.1-sol"),
         ("openai", "gpt-6.1-terra"),
         ("openai", "gpt-6-astra"),
