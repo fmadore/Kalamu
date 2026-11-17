@@ -10,15 +10,16 @@ This follows what [Live Translation](https://github.com/fmadore/Live-translation
 the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-walkthrough.md`,
 `store-updates.md` and `packaging-msix.md`); where Kalamu differs, the reason is given here.
 
-## Status (16 November 2026)
+## Status (17 November 2026)
 
 **Version 1.7.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)**
 (product ID `9MXT5555BZ1H`, package version 1.7.0.0), published as an update from the
 `Kalamu_1.7.0.msixbundle` of the
-[v1.7.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0). The next update is
-1.8.0, after the packaged app is tried by hand ([windows-test-pass.md](windows-test-pass.md)),
-with the listing text, What's new and certification notes in
-[store-listing.md](store-listing.md). Version 1.4.0 was refused on
+[v1.7.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0). **1.8.0 is the next
+update**: its `Kalamu_1.8.0.msixbundle` is on the
+[v1.8.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.8.0), tried by hand on
+Windows as `v1.8.0-rc1` ([windows-test-pass.md](windows-test-pass.md)), with What's new and the
+certification notes in [store-listing.md](store-listing.md). Version 1.4.0 was refused on
 5 November 2026 under policy 11.5 (offensive content, found in the "metadata description"): two
 screenshots showed the 1915 masthead of *The Monitor* (Omaha), which names its readers in the
 wording of its time; 1.4.1 replaced it with screenshots of screened material and sample files
