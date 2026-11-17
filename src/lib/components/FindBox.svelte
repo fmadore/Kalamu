@@ -2,8 +2,8 @@
 	// A search box over a list that opens under it as the box takes the focus or is typed in.
 	// ↓ in the box goes to the list's first item, ↓ and ↑ move through the items, ↑ from the
 	// first goes back to the box; Escape closes the list (from the list, the focus goes back to
-	// the box, the list staying closed until the box is typed in or ↓ pressed) and so does the
-	// focus leaving both. Each picker (a job's languages, the language
+	// the box, the list staying closed until the box is typed in or ↓ pressed; in the box, what was
+	// typed stays) and so does the focus leaving both. Each picker (a job's languages, the language
 	// data in Settings) gives its own list, labels and what Enter in the box takes.
 	import type { Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
@@ -79,6 +79,9 @@
 		} else if (e.key === 'Enter') {
 			if (onenter()) e.preventDefault();
 		} else if (e.key === 'Escape') {
+			// A search box empties itself on Escape in WebView2 and WebKit, and the input that
+			// follows would open the list again: Escape closes the list and keeps what was typed.
+			e.preventDefault();
 			open = false;
 		}
 	}
