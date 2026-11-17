@@ -988,7 +988,7 @@ export const fr: Messages = {
 			folders: (names: string, task: string) =>
 				`Rien n’a été ajouté depuis ${names} : aucun fichier que ${task} sait lire.`,
 			kinds:
-				'Kalamu lit les PDF, les images (JPEG, PNG, TIFF, WebP, HEIC), les enregistrements, les fichiers vidéo et les textes (TXT, Markdown, Word, Excel, CSV).',
+				'Kalamu lit les PDF, les images (JPEG, PNG, TIFF, WebP, HEIC), les enregistrements, les fichiers vidéo et les textes (TXT, Markdown, Word, CSV).',
 			youtube:
 				'Ici, les vidéos s’ajoutent par leur lien YouTube. Les enregistrements et fichiers vidéo de cet ordinateur se lisent avec « Transcrire un enregistrement ».',
 			instead: (task: string) => `Plutôt : ${task}`,

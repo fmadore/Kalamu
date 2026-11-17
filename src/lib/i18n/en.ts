@@ -878,7 +878,7 @@ export const en = {
 			folders: (names: string, task: string) =>
 				`Nothing added from ${names}: no file in it that ${task} reads.`,
 			kinds:
-				'Kalamu reads PDFs, images (JPEG, PNG, TIFF, WebP, HEIC), recordings, video files and texts (TXT, Markdown, Word, Excel, CSV).',
+				'Kalamu reads PDFs, images (JPEG, PNG, TIFF, WebP, HEIC), recordings, video files and texts (TXT, Markdown, Word, CSV).',
 			youtube:
 				'Here videos are added by their YouTube link. Recordings and video files on this computer are read by “Transcribe audio”.',
 			instead: (task: string) => `${task} instead`,

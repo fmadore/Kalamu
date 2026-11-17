@@ -5,6 +5,8 @@ import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import type { Task } from './bindings/Task.js';
 import rulesJson from './dev/taskRules.json';
+import { en } from './i18n/en.js';
+import { fr } from './i18n/fr.js';
 import type { Preset } from './bindings/Preset.js';
 import type { Refused } from './bindings/Refused.js';
 import {
@@ -309,6 +311,10 @@ describe('the files each task’s picker offers', () => {
 
 	it('never offers a spreadsheet, which no task reads', () => {
 		expect(documentExtensions()).not.toContain('xlsx');
+	});
+
+	it('names no spreadsheet among the files Kalamu reads, in every language', () => {
+		for (const m of [en, fr]) expect(m.newJob.setAside.kinds).not.toMatch(/Excel|xlsx/i);
 	});
 
 	it('offers a project every file some task reads, once each', () => {
