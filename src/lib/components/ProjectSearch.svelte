@@ -243,7 +243,9 @@
 		</label>
 	</div>
 
-	{#if request.mode !== 'phrase'}<p class="hint muted">{m.search.quotesHint}</p>{/if}
+	<p class="hint muted">
+		{request.mode === 'phrase' ? m.search.orHint : m.search.quotesHint}
+	</p>
 	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
 	{#if request.query.trim() && !ready}<p class="muted">{m.search.tooShort}</p>{/if}
 	{#if preparing}

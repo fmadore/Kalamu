@@ -16,7 +16,7 @@ matches: number,
  */
 listed: number, 
 /**
- * What was looked for: the phrase, or each word or quoted phrase.
+ * What was looked for: the phrase, or each word or quoted phrase, alternatives included.
  */
 terms: Array<string>, 
 /**

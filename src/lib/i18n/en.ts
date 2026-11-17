@@ -401,7 +401,7 @@ export const en = {
 		query: 'Words to find',
 		placeholder: 'A name, an organisation, a phrase…',
 		go: 'Search',
-		tooShort: 'Type three letters at least.',
+		tooShort: 'Type two letters at least.',
 		mode: 'Find',
 		modes: {
 			phrase: 'The exact phrase',
@@ -411,7 +411,9 @@ export const en = {
 		near: 'At most',
 		nearWords: 'words apart',
 		quotesHint:
-			'Each word is looked for in the same page or answer. Put words that belong together between quotes: “mission catholique” Koupéla.',
+			'Each word is looked for in the same page or answer. Put words that belong together between quotes, and OR in capitals between two words when either will do: “mission catholique” Koupéla OR Ouagadougou.',
+		orHint:
+			'Write OR in capitals between two phrases to find either: mission catholique OR mission protestante.',
 		ignored: (words: string) => `Left out, too short to look for: ${words}.`,
 		preparing: (done: number, total: number) =>
 			`Preparing the text for searching: ${done} of ${total === 1 ? '1 page or part' : `${total} pages or parts`}…`,
@@ -2088,7 +2090,7 @@ export const en = {
 		atStep: (n: number, sentence: string) => `Step ${n}: ${sentence}`
 	},
 	error: {
-		'search.too_short': 'Type a word of three letters at least.',
+		'search.too_short': 'Type a word of two letters at least.',
 		'search.stopped': 'The search was replaced by a newer one.',
 		'search.index':
 			'The search could not read its copy of your results’ text. Prepare the text again from the search; your results are not affected.',

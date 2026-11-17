@@ -84,18 +84,40 @@ fn scale() {
     let t = Instant::now();
     let common = f.find(&request("mosquée"));
     let common_query = t.elapsed();
+    let t = Instant::now();
+    let two = f.find(&request("de"));
+    let two_query = t.elapsed();
+    let t = Instant::now();
+    let either = f.find(&request("union culturelle musulmane OR La Mecque"));
+    let either_query = t.elapsed();
+    let mut rare = request("Tabaski OR zakat Ouagadougou");
+    rare.mode = MatchMode::AllWords;
+    let t = Instant::now();
+    let rare = f.find(&rare);
+    let rare_query = t.elapsed();
     let size = f.index.size().unwrap();
     assert_eq!(first.matches as usize, DOCUMENTS / 50);
     assert_eq!(again.matches, first.matches);
+    // "de" on its own, never inside "des" or "étudiants".
+    assert!(two.matches > 0 && two.matches < common.matches * 2);
+    assert!(either.matches > first.matches);
     println!(
         "{DOCUMENTS} documents, {} pages, {text_mb:.1} MB of text: first search (indexing) {:.2?}, \
-         then {:.2?}; a common word ({} matches, {} listed) {:.2?}; index {} passages, {:.1} MB",
+         then {:.2?}; a common word ({} matches, {} listed) {:.2?}; a common word of two letters \
+         ({} matches) {:.2?}; a phrase or another ({} matches) {:.2?}; one word or another and a \
+         third ({} matches) {:.2?}; index {} passages, {:.1} MB",
         DOCUMENTS * PAGES,
         indexing,
         query,
         common.matches,
         common.listed,
         common_query,
+        two.matches,
+        two_query,
+        either.matches,
+        either_query,
+        rare.matches,
+        rare_query,
         size.passages,
         size.bytes as f64 / 1e6
     );

@@ -503,7 +503,7 @@ export const fr: Messages = {
 		query: 'Mots à chercher',
 		placeholder: 'Un nom, une organisation, une expression…',
 		go: 'Chercher',
-		tooShort: 'Tapez au moins trois lettres.',
+		tooShort: 'Tapez au moins deux lettres.',
 		mode: 'Trouver',
 		modes: {
 			phrase: 'L’expression exacte',
@@ -513,7 +513,9 @@ export const fr: Messages = {
 		near: 'Au plus',
 		nearWords: 'mots d’écart',
 		quotesHint:
-			'Chaque mot est cherché dans la même page ou la même réponse. Mettez entre guillemets les mots qui vont ensemble : « mission catholique » Koupéla.',
+			'Chaque mot est cherché dans la même page ou la même réponse. Mettez entre guillemets les mots qui vont ensemble, et OU en majuscules entre deux mots quand l’un ou l’autre suffit : « mission catholique » Koupéla OU Ouagadougou.',
+		orHint:
+			'Écrivez OU en majuscules entre deux expressions pour trouver l’une ou l’autre : mission catholique OU mission protestante.',
 		ignored: (words: string) => `Laissés de côté, trop courts pour être cherchés : ${words}.`,
 		preparing: (done: number, total: number) =>
 			`Préparation du texte pour la recherche : ${done} sur ${total <= 1 ? `${total} page ou partie` : `${total} pages ou parties`}…`,
@@ -2170,7 +2172,7 @@ export const fr: Messages = {
 		atStep: (n: number, sentence: string) => `Étape ${n} : ${sentence}`
 	},
 	error: {
-		'search.too_short': 'Tapez un mot d’au moins trois lettres.',
+		'search.too_short': 'Tapez un mot d’au moins deux lettres.',
 		'search.stopped': 'La recherche a été remplacée par une plus récente.',
 		'search.index':
 			'La recherche n’a pas pu lire sa copie du texte de vos résultats. Préparez à nouveau le texte depuis la recherche ; vos résultats ne sont pas touchés.',

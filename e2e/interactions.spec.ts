@@ -140,6 +140,34 @@ test('a project search finds a passage, accents aside, and opens it in the revie
 	await expect(main.getByRole('region', { name: 'Reading text' })).toContainText('pèlerinage');
 });
 
+test('a project search finds one phrase or another, and a word of two letters', async ({
+	page
+}) => {
+	await open(page, 'project');
+	await page
+		.getByRole('navigation', { name: 'Collections' })
+		.getByRole('button', { name: 'Search' })
+		.click();
+	const search = page.getByRole('search');
+	const main = page.getByRole('main');
+	await expect(main.getByText(/^Write OR in capitals between two phrases/)).toBeVisible();
+
+	const box = search.getByRole('searchbox', { name: 'Words to find' });
+	await box.fill('pelerinage OR mosquee de Bamako');
+	await search.getByRole('button', { name: 'Search' }).click();
+	await expect(main.getByText('3 matches in 1 document')).toBeVisible();
+	await expect(main.locator('mark')).toHaveText([
+		'pèlerinage',
+		'mosquée de Bamako',
+		'mosquée de Bamako'
+	]);
+
+	// Two letters are searched as a word on their own.
+	await box.fill('du');
+	await expect(search.getByRole('button', { name: 'Search' })).toBeEnabled();
+	await expect(main.getByText('Type two letters at least.')).toBeHidden();
+});
+
 test('New job keeps what was chosen across a visit to Settings', async ({ page }) => {
 	await open(page, 'new');
 	const main = page.getByRole('main');

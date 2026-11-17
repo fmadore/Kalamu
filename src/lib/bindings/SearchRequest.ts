@@ -7,7 +7,8 @@ import type { Task } from "./Task";
 
 export type SearchRequest = { 
 /**
- * The words looked for, read as `mode` says.
+ * The words looked for, read as `mode` says; `OR` or `OU` in capitals between two words
+ * or phrases makes them alternatives, either of which will do.
  */
 query: string, mode: MatchMode, 
 /**

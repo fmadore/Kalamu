@@ -11,6 +11,7 @@ import {
 	keepSearch,
 	lastSearch,
 	reviewFind,
+	parseQuery,
 	searchableQuery
 } from './projectSearch.js';
 import rules from './searchRules.json';
@@ -136,6 +137,17 @@ describe('searchableQuery', () => {
 			expect(searchableQuery(c.query, c.mode as MatchMode), `${c.mode}: ${c.query}`).toBe(
 				c.searchable
 			);
+		}
+	});
+
+	it('reads words, phrases and alternatives as Rust reads them', () => {
+		for (const c of rules.cases) {
+			const parsed = parseQuery(c.query, c.mode as MatchMode);
+			expect(
+				parsed.groups.map((g) => g.map((t) => t.typed)),
+				`${c.mode}: ${c.query}`
+			).toEqual(c.groups);
+			expect(parsed.ignored, `${c.mode}: ${c.query}`).toEqual(c.ignored);
 		}
 	});
 });

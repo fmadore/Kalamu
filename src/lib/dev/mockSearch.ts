@@ -1,7 +1,8 @@
 // Project search for the browser preview (`?mock&view=project`, then Search): the sample
 // bulletin's two readings and its analysis, and the sample interview, searched as the search
 // crate searches them (`kalamu_search`), without its index: the query read as a phrase, every
-// word or words near each other; the collection, tag, task and review filters; the preferred
+// word or words near each other, alternatives among them and words of two letters on their
+// own; the collection, tag, task and review filters; the preferred
 // readings or all of them; and what models wrote about the documents when asked. Development
 // builds only.
 
@@ -17,7 +18,7 @@ import type { ResultHits } from '../bindings/ResultHits.js';
 import type { SearchRequest } from '../bindings/SearchRequest.js';
 import type { SearchView } from '../bindings/SearchView.js';
 import type { Task } from '../bindings/Task.js';
-import { MIN_QUERY } from '../projectSearch.js';
+import { parseQuery, type ParsedQuery, type Term } from '../projectSearch.js';
 import { context, find, folded, type Match } from '../search.js';
 import { analysisJob, analysisPieces, audioJob, audioPieces, job, pieces } from './mockJobs.js';
 import { DOCUMENT_ID, documentsIn } from './mockProjects.js';
@@ -35,42 +36,15 @@ const TASKS: Task[] = [
 	'contents',
 	'audio_transcription'
 ];
-const QUOTES = /["“”«»]/;
-const PUNCTUATION = /^[!-/:-@[-`{-~]+|[!-/:-@[-`{-~]+$/g;
+const LETTER = /[\p{Alphabetic}\p{N}]/u;
 
 const yieldsText = (task: Task) => taskRules.find((r) => r.task === task)?.yields_text ?? false;
 
-/** A word or words looked for: as typed, which the review searches for when a match opens. */
-interface Term {
-	typed: string;
-	needle: string;
-}
-
-/** The terms of a query as `mode` reads it, as `terms::parse`: the whole query for a phrase,
- * else each word, words between quotes kept together, punctuation around a word set aside. A
- * term shorter than the shortest searched for is left out and named. */
-export function parseQuery(query: string, mode: MatchMode): { terms: Term[]; ignored: string[] } {
-	const written =
-		mode === 'phrase'
-			? [query.trim()]
-			: query.split(QUOTES).flatMap((chunk, i) =>
-					i % 2 === 1
-						? [chunk.split(/\s+/).filter(Boolean).join(' ')]
-						: chunk
-								.split(/\s+/)
-								.filter(Boolean)
-								.map((w) => w.replace(PUNCTUATION, ''))
-				);
-	const out: { terms: Term[]; ignored: string[] } = { terms: [], ignored: [] };
-	for (const typed of written.filter(Boolean)) {
-		const needle = folded(typed);
-		if ([...needle].length < MIN_QUERY) {
-			if (!out.ignored.includes(typed)) out.ignored.push(typed);
-		} else if (!out.terms.some((t) => t.needle === needle)) {
-			out.terms.push({ typed, needle });
-		}
-	}
-	return out;
+/** Whether a match stands as a word on its own: no letter or digit just before or after it. */
+function alone(text: string, m: Match): boolean {
+	const before = [...text.slice(0, m.start)].at(-1) ?? ' ';
+	const after = [...text.slice(m.end)][0] ?? ' ';
+	return !LETTER.test(before) && !LETTER.test(after);
 }
 
 /** One part of a piece searched apart from the others: its text, or one answer or reason. */
@@ -133,6 +107,8 @@ function passage(of: Job, v: PieceView): Passage {
 /** One place a term stands in a part. */
 interface Place {
 	term: number;
+	/** The group of alternatives its term is in. */
+	group: number;
 	/** Which match of its term it is in the piece, as the review counts them. */
 	nth: number;
 	span: Match;
@@ -151,22 +127,22 @@ function wordNumbers(text: string): number[] {
 	});
 }
 
-/** Where every term stands with at most `near` words between the first and the last, as
- * `terms::clusters`. */
-function clusters(text: string, places: Place[], terms: number, near: number): Place[][] {
+/** Where a term of every group stands with at most `near` words between the first and the
+ * last, as `terms::clusters`. */
+function clusters(text: string, places: Place[], groups: number, near: number): Place[][] {
 	const words = wordNumbers(text);
 	const word = (at: number) => words[at] ?? 0;
-	let latest: (Place | undefined)[] = Array(terms).fill(undefined);
+	let latest: (Place | undefined)[] = Array(groups).fill(undefined);
 	const out: Place[][] = [];
 	for (const p of places) {
-		latest[p.term] = p;
+		latest[p.group] = p;
 		const chosen = latest.filter((q) => q !== undefined);
-		if (chosen.length < terms) continue;
+		if (chosen.length < groups) continue;
 		const first = chosen.reduce((a, b) => (b.span.start < a.span.start ? b : a));
 		const between = Math.max(0, word(p.span.start) - word(Math.max(0, first.span.end - 1)) - 1);
 		if (between <= near) {
 			out.push([...chosen].sort((a, b) => a.span.start - b.span.start || a.term - b.term));
-			latest = Array(terms).fill(undefined);
+			latest = Array(groups).fill(undefined);
 		}
 	}
 	return out;
@@ -184,29 +160,36 @@ function shown(text: string, start: number, at: number): number {
 	return n;
 }
 
-/** The matches of the terms in one piece, as `terms::hits`: a match never runs from one part
- * into the next, and every term's matches are counted through the whole piece. */
-function passageHits(at: Passage, terms: Term[], mode: MatchMode, near: number): Hit[] {
+/** The matches of the query in one piece, as `terms::hits`: a match never runs from one part
+ * into the next, and every term's matches are counted through the whole piece, those of a
+ * two-letter word inside a longer one too, as the review counts them. */
+function passageHits(at: Passage, query: ParsedQuery, mode: MatchMode, near: number): Hit[] {
 	const out: { hit: Hit; order: [number, number] }[] = [];
+	const terms: (Term & { group: number })[] = query.groups.flatMap((g, group) =>
+		g.map((t) => ({ ...t, group }))
+	);
 	const nth = terms.map(() => 0);
 	at.parts.forEach((part, p) => {
 		const places: Place[] = [];
-		let every = true;
+		const held = query.groups.map(() => false);
 		terms.forEach((term, t) => {
 			const found = find(part.text, term.typed);
-			every &&= found.length > 0;
 			const lines = part.lines.flatMap(([ms, text]) => find(text, term.typed).map(() => ms));
 			const timed = at.startMs !== null && lines.length > 0 && lines.length === found.length;
-			found.forEach((span, i) =>
+			found.forEach((span, i) => {
+				const n = nth[t]++;
+				if (term.word && !alone(part.text, span)) return;
+				held[term.group] = true;
 				places.push({
 					term: t,
-					nth: nth[t]++,
+					group: term.group,
+					nth: n,
 					span,
 					atMs: timed ? (at.startMs ?? 0) + lines[i] : null
-				})
-			);
+				});
+			});
 		});
-		if (!every) return;
+		if (!held.every(Boolean)) return;
 		places.sort((a, b) => a.span.start - b.span.start || a.term - b.term);
 		const make = (first: Place, span: Match, marks: Match[]) => {
 			const words = context(part.text, span);
@@ -233,7 +216,7 @@ function passageHits(at: Passage, terms: Term[], mode: MatchMode, near: number):
 			});
 		};
 		if (mode === 'near') {
-			for (const cluster of clusters(part.text, places, terms.length, near)) {
+			for (const cluster of clusters(part.text, places, query.groups.length, near)) {
 				const end = Math.max(...cluster.map((q) => q.span.end));
 				make(
 					cluster[0],
@@ -274,7 +257,7 @@ function candidates(documentId: string): Candidate[] {
 
 function search(request: SearchRequest): SearchView {
 	const query = parseQuery(request.query, request.mode);
-	if (query.terms.length === 0) throw { id: 'search.too_short' };
+	if (query.groups.length === 0) throw { id: 'search.too_short' };
 	const inScope = documentsIn({ collection: request.collection, tag: request.tag });
 	const wanted = (task: Task) =>
 		(yieldsText(task) || request.generated) && (request.task === null || request.task === task);
@@ -304,7 +287,7 @@ function search(request: SearchRequest): SearchView {
 				const hits = done
 					.filter((v) => request.review === 'any' || v.reviewed === (request.review === 'reviewed'))
 					.sort((a, b) => a.index - b.index)
-					.flatMap((v) => passageHits(passage(c.of, v), query.terms, request.mode, request.near));
+					.flatMap((v) => passageHits(passage(c.of, v), query, request.mode, request.near));
 				if (hits.length === 0) continue;
 				const setup = c.of.setups[c.setup];
 				results.push({
@@ -346,7 +329,7 @@ function search(request: SearchRequest): SearchView {
 		documents: listed,
 		matches,
 		listed: Math.min(matches, MAX_LISTED),
-		terms: query.terms.map((t) => t.typed),
+		terms: query.groups.flat().map((t) => t.typed),
 		ignored: query.ignored,
 		coverage
 	};
