@@ -1,7 +1,7 @@
 # Store listing text
 
 Paste-ready text for Kalamu's two store listings: the Microsoft Store (Partner Center) first,
-where 1.7.0 is live and 1.8.0 is the next update, its *What's new* and certification notes
+where 1.8.0 is live and 1.8.1 is the next update, its *What's new* and certification notes
 below (the first version, 1.0.0, was certified on 2 November 2026), in
 [English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.6.0, the first
@@ -57,7 +57,15 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.8.0
+### What's new in this version — 1.8.1
+
+```text
+The scan in the review stays still: when the window was not full screen, the page could keep resizing, flickering between two widths and staying blurry. It now keeps one size.
+
+Everything else is as in 1.8.0: registers, directories and lists read as tables, one row per entry; text regions drawn over the scan; economy mode deleting what a batch left in your OpenAI or Mistral storage; Gemini 4 Hydrogen as Gemini's default.
+```
+
+The 1.8.0 text, for the record:
 
 ```text
 Registers, directories and lists as tables: a ready-made analysis reads each page and lists its entries one row per entry, in your columns, with the file, page and place of each. Correct a cell, add or remove a row beside the scan, and export a spreadsheet (.csv) or JSON.
@@ -266,7 +274,15 @@ Nécessite Windows 11 avec Microsoft Edge WebView2 Runtime, en versions natives 
 Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI OpCo, LLC ; Claude est une marque d’Anthropic, PBC ; Mistral AI est une marque de Mistral AI ; Microsoft Word est une marque du groupe Microsoft. Kalamu est un projet indépendant, ni affilié à aucune d’elles ni approuvé par elles.
 ```
 
-### Nouveautés de cette version — 1.8.0
+### Nouveautés de cette version — 1.8.1
+
+```text
+Le scan de la relecture reste immobile : quand la fenêtre n’était pas en plein écran, la page pouvait changer de taille sans arrêt, passant d’une largeur à l’autre et restant floue. Elle garde désormais une seule taille.
+
+Le reste est comme dans 1.8.0 : registres, annuaires et listes lus en tableaux, une ligne par entrée ; zones de texte dessinées sur le scan ; mode économique qui supprime ce qu’un lot a laissé dans votre espace OpenAI ou Mistral ; Gemini 4 Hydrogen comme modèle Gemini par défaut.
+```
+
+Le texte de 1.8.0, pour mémoire :
 
 ```text
 Registres, annuaires et listes en tableaux : une analyse toute prête lit chaque page et relève ses entrées, une ligne par entrée, selon vos colonnes, avec le fichier, la page et la place de chacune. Corrigez une cellule, ajoutez ou supprimez une ligne à côté du scan, puis exportez un tableur (.csv) ou du JSON.
@@ -393,9 +409,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.8.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.8.1.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.8.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.8.1/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, choose the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.

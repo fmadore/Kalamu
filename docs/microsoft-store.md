@@ -12,14 +12,14 @@ the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-
 
 ## Status (17 November 2026)
 
-**Version 1.7.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)**
-(product ID `9MXT5555BZ1H`, package version 1.7.0.0), published as an update from the
-`Kalamu_1.7.0.msixbundle` of the
-[v1.7.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0). **1.8.0 is the next
-update**: its `Kalamu_1.8.0.msixbundle` is on the
+**Version 1.8.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)**
+(product ID `9MXT5555BZ1H`, package version 1.8.0.0), published on 17 November 2026 as an update
+from the `Kalamu_1.8.0.msixbundle` of the
 [v1.8.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.8.0), tried by hand on
-Windows as `v1.8.0-rc1` ([windows-test-pass.md](windows-test-pass.md)), with What's new and the
-certification notes in [store-listing.md](store-listing.md). Version 1.4.0 was refused on
+Windows as `v1.8.0-rc1` ([windows-test-pass.md](windows-test-pass.md)). **1.8.1 is the next
+update**, a fix for the review's scan resizing without end when the window is not full screen
+([notes](release-1.8.1.md)); its `Kalamu_1.8.1.msixbundle` comes from the v1.8.1 tag, with
+What's new and the certification notes in [store-listing.md](store-listing.md). Version 1.4.0 was refused on
 5 November 2026 under policy 11.5 (offensive content, found in the "metadata description"): two
 screenshots showed the 1915 masthead of *The Monitor* (Omaha), which names its readers in the
 wording of its time; 1.4.1 replaced it with screenshots of screened material and sample files

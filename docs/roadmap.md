@@ -13,10 +13,11 @@ FFmpeg bundled, are on the
 ([notes](release-1.8.0.md)): records (one row per entry), text regions over the scan, a batch's
 files deleted at the provider, and Gemini 4 Hydrogen as the default. It was tried by hand on
 Windows as `v1.8.0-rc1` ([results](windows-test-pass.md#results)) and what that found fixed;
-the live runs of that pass's Part F are still to do. It goes to the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) as an update; **1.7.0**
-([notes](release-1.7.0.md)) is live there until it passes certification, Kalamu having been in
-the Store since version 1.0.0 (2 November 2026). **Version 1.6.0** ([notes](release-1.6.0.md)),
+the live runs of that pass's Part F are still to do. It is live in the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 17 November, Kalamu
+having been there since version 1.0.0 (2 November 2026). **1.8.1** ([notes](release-1.8.1.md))
+is prepared as the next update: it fixes the review's scan, which redrew itself without end when
+a scrollbar came and went outside full screen (#192). **Version 1.6.0** ([notes](release-1.6.0.md)),
 the first sent to the Mac App Store, is still in App Review there ([steps](mac-app-store.md)).
 Everything below is tested against recorded provider
 responses. Text extraction, transcription, analyses and translation have also run against the
@@ -707,7 +708,7 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.7.0 is live, and 1.8.0 is the next update.
+in [microsoft-store.md](microsoft-store.md); 1.8.0 is live, and 1.8.1 is the next update.
 
 ## Toward the Mac App Store
 
