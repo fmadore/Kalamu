@@ -41,12 +41,19 @@ export function cellText(row: FieldAnswer[], key: string): string {
 	return (value as unknown[]).filter((v) => typeof v === 'string').join('; ');
 }
 
+/** Whether every set-up's analysis is records, so the job reads page by page and gives one row
+ * per entry; none chosen yet is not. A comparison cannot mix records with an analysis read once
+ * per document. */
+export function allRecords(schemas: (AnalysisSchema | null | undefined)[]): boolean {
+	return schemas.length > 0 && schemas.every((s) => groupOf(s) !== null);
+}
+
 /** The task's rules for these set-ups' fields: when every one is records, what the engine says
  * the task offers read page by page (samples, double pages split, images as one document). */
 export function readingRule(
 	rule: TaskRules,
 	schemas: (AnalysisSchema | null | undefined)[]
 ): TaskRules {
-	if (!rule.by_page || schemas.length === 0 || !schemas.every((s) => groupOf(s))) return rule;
+	if (!rule.by_page || !allRecords(schemas)) return rule;
 	return { ...rule, ...rule.by_page };
 }

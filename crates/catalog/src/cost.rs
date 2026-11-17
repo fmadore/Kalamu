@@ -19,6 +19,10 @@ const OUTPUT_TOKENS_PER_AUDIO_MINUTE: f64 = 250.0;
 const ANALYSIS_OUTPUT_TOKENS: f64 = 1_500.0;
 /// A page's entries for a table of contents: a few titles and short summaries.
 const CONTENTS_OUTPUT_TOKENS_PER_PAGE: f64 = 500.0;
+/// A page's rows for a records analysis (a directory, a register: one row per entry), as JSON
+/// with the columns' names in every row, and some thinking. Gemini 4 Hydrogen wrote about 900
+/// a page on a 4-page sample in the 1.8.0 test pass; a denser register writes more.
+const RECORDS_OUTPUT_TOKENS_PER_PAGE: f64 = 1_000.0;
 /// What the second step of a table of contents writes per page combined: about the length of
 /// the consolidated summaries.
 const MERGE_OUTPUT_TOKENS_PER_PAGE: f64 = 250.0;
@@ -62,16 +66,9 @@ impl Catalog {
                 }
             }
             // Each page read for its entries, the instructions sent with every page.
-            Task::Contents => match (p.input_per_mtok, p.output_per_mtok) {
-                (Some(input), Some(output)) => {
-                    let pages = f64::from(pages.max(1));
-                    let prompt_tokens = prompt_chars as f64 / 4.0;
-                    let tokens_in = pages * (INPUT_TOKENS_PER_PAGE + prompt_tokens);
-                    let tokens_out = pages * CONTENTS_OUTPUT_TOKENS_PER_PAGE;
-                    Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
-                }
-                _ => None,
-            },
+            Task::Contents => {
+                page_by_page(model, pages, prompt_chars, CONTENTS_OUTPUT_TOKENS_PER_PAGE)
+            }
             // Each page's text sent and written back corrected or translated, as JSON; a
             // translation runs a little longer than its source in most pairs of languages.
             Task::TextCorrection | Task::Translation => match (p.input_per_mtok, p.output_per_mtok)
@@ -86,7 +83,8 @@ impl Catalog {
                 }
                 _ => None,
             },
-            // An analysis reads the whole document once and writes a short answer.
+            // An analysis reads the whole document once and writes a short answer; a records
+            // analysis, which reads page by page, is priced by `estimate_records`.
             Task::Analysis => match (p.input_per_mtok, p.output_per_mtok) {
                 (Some(input), Some(output)) => {
                     let pages = f64::from(pages.max(1));
@@ -108,12 +106,21 @@ impl Catalog {
                 }
             }
         };
-        CostEstimate {
-            usd,
-            economy_usd: usd
-                .filter(|_| p.batch_discount.is_some())
-                .map(|usd| usd * p.batch_factor(true)),
-        }
+        with_economy(model, usd)
+    }
+
+    /// A rough cost for a records analysis of `pages` pages (a directory or a register, one row
+    /// per entry; the caller knows it by the analysis's fields): unlike an analysis answered once
+    /// per document, it reads each page on its own, the instructions sent with every page, and
+    /// writes a page of rows for each.
+    pub fn estimate_records(
+        &self,
+        model: &ModelInfo,
+        pages: u32,
+        prompt_chars: usize,
+    ) -> CostEstimate {
+        let usd = page_by_page(model, pages, prompt_chars, RECORDS_OUTPUT_TOKENS_PER_PAGE);
+        with_economy(model, usd)
     }
 
     /// A rough cost for a table of contents' second step over `pages` pages: one call reading
@@ -164,5 +171,33 @@ impl Catalog {
             + written as f64 * p.cache_write_per_mtok.unwrap_or(input)
             + usage.output_tokens as f64 * output;
         Some(tokens / 1_000_000.0 * factor)
+    }
+}
+
+/// Pages read one at a time, the instructions sent with each, and `output_per_page` tokens
+/// written for each; `None` for a model not priced by the token.
+fn page_by_page(
+    model: &ModelInfo,
+    pages: u32,
+    prompt_chars: usize,
+    output_per_page: f64,
+) -> Option<f64> {
+    let p = &model.pricing;
+    let (input, output) = (p.input_per_mtok?, p.output_per_mtok?);
+    let pages = f64::from(pages.max(1));
+    let prompt_tokens = prompt_chars as f64 / 4.0;
+    let tokens_in = pages * (INPUT_TOKENS_PER_PAGE + prompt_tokens);
+    let tokens_out = pages * output_per_page;
+    Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
+}
+
+/// `usd` at once, and in economy mode where the model has a batch service.
+fn with_economy(model: &ModelInfo, usd: Option<f64>) -> CostEstimate {
+    let p = &model.pricing;
+    CostEstimate {
+        usd,
+        economy_usd: usd
+            .filter(|_| p.batch_discount.is_some())
+            .map(|usd| usd * p.batch_factor(true)),
     }
 }

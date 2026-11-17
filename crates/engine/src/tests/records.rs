@@ -476,3 +476,60 @@ async fn a_text_file_has_no_pages_and_is_read_whole() {
     assert_eq!(pieces.len(), 1);
     assert_eq!(pieces[0].piece, PieceRef::Whole);
 }
+
+/// The estimate prices a records analysis as it runs, page by page with the instructions sent
+/// each time and a page of rows written for each, where an analysis answered once per
+/// document reads the pages once (the 1.8.0 test pass: estimated $0.019, billed $0.038).
+#[test]
+fn a_records_analysis_is_estimated_page_by_page() {
+    let f = fixture();
+    let source = f.pdf("annuaire.pdf", 4);
+    let estimate = |preset: &str| {
+        f.engine.estimate(&EstimateRequest {
+            task: Task::Analysis,
+            sources: vec![source.clone()],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("gemini"),
+                model: "gemini-4-hydrogen".into(),
+                preset_id: Some(preset.into()),
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            sample_pages: None,
+        })
+    };
+    let instructions = |preset: &str| {
+        f.engine
+            .with_prompts(|p| p.get(preset))
+            .map(|p| p.instructions.len())
+            .unwrap_or_else(|e| panic!("{e}"))
+    };
+    let catalog = f.engine.catalog();
+    let model = catalog
+        .model(&ProviderId::new("gemini"), "gemini-4-hydrogen")
+        .unwrap_or_else(|| panic!("no Hydrogen"));
+
+    let directory = estimate("analysis.directory");
+    let expected = catalog.estimate_records(model, 4, instructions("analysis.directory"));
+    assert_eq!(directory.rows[0].estimate.usd, expected.usd);
+    assert_eq!(directory.total_usd, expected.usd);
+    let register = estimate("analysis.register");
+    let expected = catalog.estimate_records(model, 4, instructions("analysis.register"));
+    assert_eq!(register.rows[0].estimate.usd, expected.usd);
+
+    // An analysis answered once per document keeps its own formula, and costs less.
+    let summary = estimate("analysis.summary_research");
+    let expected = catalog.estimate(
+        model,
+        Task::Analysis,
+        4,
+        0.0,
+        instructions("analysis.summary_research"),
+    );
+    assert_eq!(summary.rows[0].estimate.usd, expected.usd);
+    let (Some(rows), Some(once)) = (directory.total_usd, summary.total_usd) else {
+        panic!("Hydrogen has a price");
+    };
+    assert!(rows > 1.5 * once, "{rows} against {once}");
+}

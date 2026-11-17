@@ -878,7 +878,7 @@ export const en = {
 			folders: (names: string, task: string) =>
 				`Nothing added from ${names}: no file in it that ${task} reads.`,
 			kinds:
-				'Kalamu reads PDFs, images (JPEG, PNG, TIFF, WebP, HEIC), recordings, video files and texts (TXT, Markdown, Word, Excel, CSV).',
+				'Kalamu reads PDFs, images (JPEG, PNG, TIFF, WebP, HEIC), recordings, video files and texts (TXT, Markdown, Word, CSV).',
 			youtube:
 				'Here videos are added by their YouTube link. Recordings and video files on this computer are read by “Transcribe audio”.',
 			instead: (task: string) => `${task} instead`,
@@ -1198,6 +1198,14 @@ export const en = {
 		analysisWhole: 'Read whole, as one piece, however many pages',
 		analysisFill: (model: string) => `${model} fills in your fields`,
 		analysisTable: 'One row of answers per document, ready for a spreadsheet',
+		/** An analysis whose fields are one repeating group (One row per entry). */
+		recordsSource: 'A register, a directory or a list: a PDF or images',
+		recordsRead: (model: string) =>
+			`${model} lists each page’s entries in reading order, in your columns`,
+		recordsTable:
+			'One row per entry, with its file, page and place on the page, ready for a spreadsheet',
+		/** The heading of the records table's column of page numbers. */
+		recordsPage: 'Page',
 		/** Stand-ins for a prompt's fields, when it has none to show. */
 		exampleFields: ['Summary', 'People', 'Places', 'Tone'],
 		document: (n: number) => `Document ${n}`,
@@ -1442,7 +1450,8 @@ export const en = {
 		reviewedOf: (n: number, total: number) => `Reviewed ${n} of ${total}`,
 		readingText: 'Reading text',
 		correcting: 'Correcting',
-		omitted: 'om.',
+		/** In a place's readings, where a text has nothing: no words were read there. */
+		noText: '(no text)',
 		speakers: 'Speakers',
 		speakersHint:
 			'Give the model’s labels real names. They replace the labels here and in every file; the model’s own output is kept.',

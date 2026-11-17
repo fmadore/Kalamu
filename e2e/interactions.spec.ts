@@ -358,6 +358,15 @@ test('the language box opens its list, moves through it with the arrows and take
 	await expect(chips).toHaveCount(before + 1);
 	await expect(box).toHaveValue('');
 	await expect(box).toBeFocused();
+
+	// Escape with something typed closes the list and keeps what was typed: the box, a search
+	// box, would empty itself and open the list again.
+	await page.keyboard.type('fr');
+	await expect(list).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(list).toBeHidden();
+	await expect(box).toHaveValue('fr');
+	await expect(box).toBeFocused();
 });
 
 test('the language data box takes the same keys, in Settings', async ({ page }) => {
@@ -384,4 +393,33 @@ test('the language data box takes the same keys, in Settings', async ({ page }) 
 	await page.keyboard.type('ar');
 	await expect(list).toBeVisible();
 	await expect(list).toContainText('Arabic');
+	// With something typed, Escape closes it all the same, and what was typed stays.
+	await page.keyboard.press('Escape');
+	await expect(list).toBeHidden();
+	await expect(box).toHaveValue('ar');
+});
+
+test('a place where a model read nothing says so in plain words, apart from what was read', async ({
+	page
+}) => {
+	await open(page, 'review');
+	const main = page.getByRole('main');
+	const text = main.getByRole('region', { name: 'Reading text' });
+	await text.locator('[data-entry]', { hasText: 'ce matin' }).click();
+	const readings = page.getByRole('dialog', { name: 'Choose the correct reading' });
+	await expect(readings).toBeVisible();
+
+	// The second model left the words out: its reading says there is no text, in the
+	// interface's italic and muted words rather than as words a model wrote.
+	const none = readings.getByRole('button', { name: /^\(no text\)/ });
+	await expect(none).toBeVisible();
+	await expect(readings).not.toContainText('om.');
+	const label = none.getByText('(no text)', { exact: true });
+	await expect(label).toHaveCSS('font-style', 'italic');
+
+	// Taking it leaves the words out of the text.
+	await none.click();
+	await expect(readings).toBeHidden();
+	await expect(text).toContainText('a reçu les délégués');
+	await expect(text).not.toContainText('reçu ce matin');
 });

@@ -160,14 +160,16 @@
 	</div>
 	<ul class="options">
 		<li class="option">
-			<span class="option-text in-text">{entry.lemma || m.review.omitted}</span>
+			<span class="option-text in-text" class:none={!entry.lemma}
+				>{entry.lemma || m.review.noText}</span
+			>
 			<span class="option-who mono">{inUse}</span>
 			<span class="option-end chip">{m.review.inUse}</span>
 		</li>
 		{#each entry.readings as r (r.siglum)}
 			<li>
 				<button class="option pick" onclick={() => onuse(r.text)}>
-					<span class="option-text">{r.text || m.review.omitted}</span>
+					<span class="option-text" class:none={!r.text}>{r.text || m.review.noText}</span>
 					<span class="option-who mono">{witnessName(r.siglum)}</span>
 					<span class="option-end use">{m.review.useReading}</span>
 				</button>
@@ -285,6 +287,15 @@
 	}
 	.option-text.in-text {
 		font-weight: 600;
+	}
+	/* No text read at this place: said in the interface's own words, never taken for text a
+	   model wrote. */
+	.option-text.none {
+		font-family: var(--font-ui);
+		font-size: var(--type-sm);
+		font-style: italic;
+		font-weight: 400;
+		color: var(--text-muted);
 	}
 	.option-who {
 		grid-column: 1;

@@ -1,5 +1,6 @@
 //! What a job will cost before it starts: each set-up's pages or minutes priced from the
-//! catalogue, a table of contents' second step apart, and the totals at each pace.
+//! catalogue, a records analysis page by page, a table of contents' second step apart, and the
+//! totals at each pace.
 
 use kalamu_catalog::CostEstimate;
 use kalamu_core::{InputKind, MergeModel, ProviderId, SourceFile, Task};
@@ -78,10 +79,20 @@ impl Engine {
             let prompt_chars = preset
                 .as_ref()
                 .map_or(PROMPT_CHARS, |p| p.instructions.len());
+            // A records analysis (one row per entry) reads page by page, as the job will run it:
+            // known by the preset's fields, as `reads_by_page` knows it.
+            let records = request.task == Task::Analysis
+                && preset
+                    .as_ref()
+                    .and_then(|p| p.schema.as_ref())
+                    .is_some_and(kalamu_core::records::is_records);
             let estimate = match catalog.model(&setup.provider, &setup.model) {
                 Some(model) if !unknown_length => {
-                    let mut estimate =
-                        catalog.estimate(model, request.task, pages, minutes, prompt_chars);
+                    let mut estimate = if records {
+                        catalog.estimate_records(model, pages, prompt_chars)
+                    } else {
+                        catalog.estimate(model, request.task, pages, minutes, prompt_chars)
+                    };
                     // Economy mode only where Kalamu sends this model's work as a batch.
                     let batches = self
                         .provider(&setup.provider)

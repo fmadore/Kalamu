@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { AnalysisSchema } from './bindings/AnalysisSchema.js';
 import type { Field } from './bindings/Field.js';
 import type { TaskRules } from './bindings/TaskRules.js';
-import { cellText, columnsOf, groupOf, readingRule, rowsOf } from './records.js';
+import { allRecords, cellText, columnsOf, groupOf, readingRule, rowsOf } from './records.js';
 
 const text = (key: string): Field => ({
 	key,
@@ -33,6 +33,14 @@ describe('records', () => {
 		expect(groupOf(summary)).toBeNull();
 		expect(groupOf({ fields: [...register.fields, text('street')] })).toBeNull();
 		expect(columnsOf(undefined)).toEqual([]);
+	});
+
+	it('are what a job reads only when every set-up chose them', () => {
+		expect(allRecords([register])).toBe(true);
+		expect(allRecords([register, register])).toBe(true);
+		expect(allRecords([register, summary])).toBe(false);
+		expect(allRecords([register, undefined])).toBe(false);
+		expect(allRecords([])).toBe(false);
 	});
 
 	it('read a page’s rows and their cells, an empty page holding none', () => {

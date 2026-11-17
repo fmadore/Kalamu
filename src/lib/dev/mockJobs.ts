@@ -164,8 +164,13 @@ export const texts = [
 	"La réunion tenue à la mosquée de Bamako a rassemblé plus de deux cents fidèles autour de l'imam.",
 	'[BLANK PAGE]'
 ];
+/** The second model's reading: three places read otherwise, and two words it left out. */
 const variant = (t: string) =>
-	t.replace('3 mai', '5 mai').replace('deux cents', 'trois cents').replace('minaret', 'marché');
+	t
+		.replace('3 mai', '5 mai')
+		.replace(' ce matin', '')
+		.replace('deux cents', 'trois cents')
+		.replace('minaret', 'marché');
 
 export const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 	texts.map((text, index) => ({

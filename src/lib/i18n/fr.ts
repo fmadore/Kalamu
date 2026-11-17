@@ -988,7 +988,7 @@ export const fr: Messages = {
 			folders: (names: string, task: string) =>
 				`Rien n’a été ajouté depuis ${names} : aucun fichier que ${task} sait lire.`,
 			kinds:
-				'Kalamu lit les PDF, les images (JPEG, PNG, TIFF, WebP, HEIC), les enregistrements, les fichiers vidéo et les textes (TXT, Markdown, Word, Excel, CSV).',
+				'Kalamu lit les PDF, les images (JPEG, PNG, TIFF, WebP, HEIC), les enregistrements, les fichiers vidéo et les textes (TXT, Markdown, Word, CSV).',
 			youtube:
 				'Ici, les vidéos s’ajoutent par leur lien YouTube. Les enregistrements et fichiers vidéo de cet ordinateur se lisent avec « Transcrire un enregistrement ».',
 			instead: (task: string) => `Plutôt : ${task}`,
@@ -1303,6 +1303,12 @@ export const fr: Messages = {
 		analysisWhole: 'Lu en entier, d’un seul tenant, quel que soit le nombre de pages',
 		analysisFill: (model: string) => `${model} remplit vos champs`,
 		analysisTable: 'Une ligne de réponses par document, prête pour un tableur',
+		recordsSource: 'Un registre, un annuaire ou une liste : un PDF ou des images',
+		recordsRead: (model: string) =>
+			`${model} relève les entrées de chaque page dans l’ordre de lecture, selon vos colonnes`,
+		recordsTable:
+			'Une ligne par entrée, avec son fichier, sa page et sa place sur la page, prête pour un tableur',
+		recordsPage: 'Page',
 		exampleFields: ['Résumé', 'Personnes', 'Lieux', 'Tonalité'],
 		document: (n: number) => `Document ${n}`,
 		audioSource: 'Un enregistrement',
@@ -1547,7 +1553,7 @@ export const fr: Messages = {
 		reviewedOf: (n: number, total: number) => `${n} relu${n > 1 ? 's' : ''} sur ${total}`,
 		readingText: 'Texte lu',
 		correcting: 'Correction',
-		omitted: 'om.',
+		noText: '(aucun texte)',
 		speakers: 'Locuteurs',
 		speakersHint:
 			'Donnez de vrais noms aux étiquettes du modèle. Ils les remplacent ici et dans chaque fichier ; le texte du modèle lui-même est conservé.',

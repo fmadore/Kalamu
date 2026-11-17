@@ -20,7 +20,9 @@
 //! Blocks are always the engine's own (Tesseract's paragraphs, Mistral OCR's and LightOnOCR's
 //! blocks). Lines and words are the engine's where it placed them (Tesseract); within a block
 //! placed whole they are estimated, as ALTO estimates them ([`TextRegion::estimated_lines`]),
-//! and marked so.
+//! and marked so: the block's text wrapped into as many lines as its shape on the page holds,
+//! which needs the page's proportions (`page_aspect`). Without them such a block is drawn
+//! alone.
 //!
 //! # The place of a region's words in the text
 //!
@@ -106,7 +108,16 @@ impl PageRegions {
     /// The regions an engine stored for a piece, at each granularity, each placed in `shown`
     /// (the text the review shows: the correction, else the model's text) where that place is
     /// certain. `model` is the model's own text; `corrected` whether `shown` is a correction.
-    pub fn of(regions: &[TextRegion], model: &str, shown: &str, corrected: bool) -> Self {
+    /// `page_aspect` is the piece's height over its width as shown, which a block placed whole
+    /// needs for its estimated lines ([`TextRegion::estimated_lines`]); without it such a block
+    /// is drawn alone, with no lines or words, rather than with lines guessed from nothing.
+    pub fn of(
+        regions: &[TextRegion],
+        model: &str,
+        shown: &str,
+        corrected: bool,
+        page_aspect: Option<f32>,
+    ) -> Self {
         // Every region's words, normalised, in reading order; each region keeps the stretch of
         // them it holds.
         let mut tokens: Vec<String> = Vec::new();
@@ -116,10 +127,16 @@ impl PageRegions {
         for region in regions {
             let block_start = tokens.len();
             let estimated = region.lines.is_empty();
-            let placed = if estimated {
-                region.estimated_lines()
-            } else {
-                region.lines.clone()
+            let placed = match (estimated, page_aspect) {
+                (false, _) => region.lines.clone(),
+                (true, Some(aspect)) => region.estimated_lines(aspect),
+                (true, None) => {
+                    // The block's words still hold their place in the text, for the block.
+                    for word in region.text.split_whitespace() {
+                        tokens.extend(Words::of(word).normal);
+                    }
+                    Vec::new()
+                }
             };
             for line in &placed {
                 let line_start = tokens.len();
@@ -208,26 +225,58 @@ fn shown_word(word: &TextWord, estimated: bool) -> ShownRegion {
     }
 }
 
+/// A character's advance, spaces counted, as a share of the text's height: about half in book
+/// and newspaper faces.
+const ADVANCE: f32 = 0.5;
+/// The distance from one line to the next, as a share of the text's height.
+const LEADING: f32 = 1.2;
+
 impl TextRegion {
-    /// A block placed whole, as lines sharing its height and words sharing each line's width
-    /// by their length: what ALTO writes, marked estimated, and what the review draws, marked
-    /// approximate.
-    pub fn estimated_lines(&self) -> Vec<TextLine> {
-        let texts: Vec<&str> = self
+    /// A block placed whole, as estimated lines and words: what ALTO writes, marked estimated,
+    /// and what the review draws, marked approximate. `page_aspect` is the height over the
+    /// width of the page the region's fractions measure (a split spread's half alone, as the
+    /// review shows it; the whole page, as ALTO writes it): it gives the block its shape.
+    ///
+    /// The block is taken as filled with text of one size, whose characters advance half their
+    /// height (`ADVANCE`) and whose lines stand 1.2 heights apart (`LEADING`). `n`
+    /// characters filling `L` lines of a block `W` wide and `H` tall put `n / L` characters on
+    /// a line, each `ADVANCE × g` wide for a text height `g = H / (LEADING × L)`; so
+    /// `n / L × ADVANCE × H / (LEADING × L) = W`, and `L = √(n × ADVANCE × H / (LEADING × W))`.
+    /// A line of the text at least one and a half times as long as the block's lines is a
+    /// paragraph written on one line (Mistral OCR writes Markdown paragraphs): it is wrapped by
+    /// its characters into as many lines as its length fills. A shorter line stays as the engine
+    /// broke it, so text whose own lines fit the block is laid out line for line. The lines
+    /// share the block's height and their words a line's width by their length, a wrapped
+    /// paragraph's last line ending where its words do. No text, no lines.
+    pub fn estimated_lines(&self, page_aspect: f32) -> Vec<TextLine> {
+        let texts: Vec<Vec<&str>> = self
             .text
             .lines()
-            .map(str::trim)
-            .filter(|l| !l.is_empty())
+            .map(|l| l.split_whitespace().collect::<Vec<_>>())
+            .filter(|words| !words.is_empty())
             .collect();
-        let height = self.height / texts.len().max(1) as f32;
-        texts
-            .iter()
+        let total: usize = texts.iter().map(|words| chars(words)).sum();
+        let per_line = chars_per_line(total, self.width, self.height * page_aspect);
+        // The rows, each with the width of one character: a wrapped line's rows share that of
+        // its longest row, so its last row ends early.
+        let mut rows: Vec<(Vec<&str>, f32)> = Vec::new();
+        for words in &texts {
+            let length = chars(words);
+            let count = per_line
+                .map_or(1, |c| (length as f32 / c).round() as usize)
+                .clamp(1, words.len());
+            let wrapped = wrap(words, count, length);
+            let longest = wrapped.iter().map(|row| chars(row)).max().unwrap_or(1);
+            let unit = self.width / longest.max(1) as f32;
+            rows.extend(wrapped.into_iter().map(|row| (row, unit)));
+        }
+        let height = self.height / rows.len().max(1) as f32;
+        rows.iter()
             .enumerate()
-            .map(|(i, text)| {
+            .map(|(i, (words, unit))| {
+                let unit = *unit;
                 let y = self.y + i as f32 * height;
-                let words: Vec<&str> = text.split_whitespace().collect();
-                let total: usize = words.iter().map(|w| w.chars().count() + 1).sum::<usize>() - 1;
-                let unit = self.width / total.max(1) as f32;
+                let extent = (chars(words) as f32 * unit).min(self.width);
                 let mut offset = 0.0;
                 let words = words
                     .iter()
@@ -248,7 +297,7 @@ impl TextRegion {
                 TextLine {
                     x: self.x,
                     y,
-                    width: self.width,
+                    width: extent,
                     height,
                     words,
                 }
@@ -280,4 +329,48 @@ impl TextRegion {
         }
         r
     }
+}
+
+/// The characters of `words` written with one space between them.
+fn chars(words: &[&str]) -> usize {
+    words
+        .iter()
+        .map(|w| w.chars().count() + 1)
+        .sum::<usize>()
+        .saturating_sub(1)
+}
+
+/// How many characters a line holds in a block `width` wide and `height` tall (in one unit)
+/// that `total` characters fill; see [`TextRegion::estimated_lines`]. None for a block without
+/// a shape, whose text then keeps its own lines.
+fn chars_per_line(total: usize, width: f32, height: f32) -> Option<f32> {
+    let shaped = width > 0.0 && height > 0.0 && width.is_finite() && height.is_finite();
+    if total == 0 || !shaped {
+        return None;
+    }
+    let lines = (total as f32 * ADVANCE * height / (LEADING * width)).sqrt();
+    Some(total as f32 / lines.max(1.0))
+}
+
+/// `words`, `length` characters in all, as `count` rows of about equal length: each word in the
+/// row its middle falls in, so no row is ever empty and there are never more than `count`.
+fn wrap<'a>(words: &[&'a str], count: usize, length: usize) -> Vec<Vec<&'a str>> {
+    let mut rows: Vec<Vec<&'a str>> = Vec::new();
+    let mut current = None;
+    let mut offset = 0;
+    for &word in words {
+        let n = word.chars().count();
+        let middle = offset as f32 + n as f32 / 2.0;
+        let row =
+            ((middle * count as f32 / length.max(1) as f32) as usize).min(count.saturating_sub(1));
+        if current != Some(row) {
+            rows.push(Vec::new());
+            current = Some(row);
+        }
+        if let Some(last) = rows.last_mut() {
+            last.push(word);
+        }
+        offset += n + 1;
+    }
+    rows
 }
