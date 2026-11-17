@@ -1,6 +1,9 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 15 November 2026, which applies from the first version to delete what the
+**Effective date:** 17 November 2026, which applies from the first version to keep, in a
+project's list of what to check, the items the user keeps aside with their notes and the seed and
+size of a sample drawn at random, and to write that list where the user chooses. The policy of
+15 November 2026 did not say so; it applies from the first version to delete what the
 cheaper mode's batches leave in the user's storage at OpenAI and Mistral, and to keep, for a
 job deleted meanwhile, the record of such a batch until that is done. The policy of 11 November
 2026 did not say so; it applies from the first version to translate
@@ -119,7 +122,8 @@ Kalamu's, on the same computer only:
   their names and descriptions, the source description their documents share, their
   collections, the titles, tags, source descriptions (repository, shelfmark, citation and the
   like, as the user types them), paths, sizes and fingerprints of their documents, which jobs read each document, and the results the user marked as
-  preferred, and its **dictionary**: the entries the user made of the names its analyses
+  preferred, what the user decided in its list of what to check (the items kept aside with
+  their notes, and the seed and size of each sample drawn at random), and its **dictionary**: the entries the user made of the names its analyses
   listed (labels, the forms they gather, review status), the pairs kept apart, each request for
 proposed merges (the job that asked and the forms each of its texts held), and the proposals
 turned down. The texts sent for proposals are kept with the frozen text below. A project only
