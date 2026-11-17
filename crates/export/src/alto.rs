@@ -3,8 +3,9 @@
 //!
 //! Only models that report where text sits can feed it. Tesseract places each word, which is
 //! written as it came, corrections laid back onto the words' places by the engine. Mistral OCR
-//! places paragraphs only: their lines share the block's height and their words its width,
-//! and the file says those positions are estimated.
+//! places paragraphs only: their text is wrapped into the lines the block's size holds, which
+//! share its height, and their words share each line's width
+//! ([`kalamu_core::TextRegion::estimated_lines`]); the file says those positions are estimated.
 //!
 //! Positions are in pixels: those of the image for an image source, and for a PDF those of the
 //! page drawn as Tesseract read it, at the resolution its result records (300 dpi, or less for
@@ -237,8 +238,10 @@ fn page(x: &mut String, number: u32, pw: f32, ph: f32, regions: &[TextRegion]) {
             "        <TextBlock ID=\"{id}\" {}>",
             pos(region.x, region.y, region.width, region.height, pw, ph)
         );
+        // The region is on the whole page, measured `pw` by `ph`: the same block, in pixels, as
+        // the review estimates within (a split spread's half there), so both draw the same lines.
         let lines = if region.lines.is_empty() {
-            region.estimated_lines()
+            region.estimated_lines(ph / pw)
         } else {
             region.lines.clone()
         };

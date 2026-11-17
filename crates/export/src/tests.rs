@@ -718,6 +718,41 @@ fn alto_places_each_word_and_estimates_blocks_placed_whole() {
     assert!(exporter(ExportFormat::Alto).is_some_and(|e| e.export(&plain).is_err()));
 }
 
+/// ALTO from Mistral OCR's paragraph, written on one line: the lines its block holds on the
+/// page, as the review draws them, not one line the block's height.
+#[test]
+fn alto_wraps_a_paragraph_placed_whole_into_the_lines_its_block_holds() {
+    use kalamu_core::TextRegion;
+    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    let path = dir.path().join("journal.pdf");
+    a4_pdf(&path);
+    let mut src = source("journal.pdf", InputKind::Pdf);
+    src.path = path.display().to_string();
+    let text = ["Le cercle de Kita a reçu les notables"; 10].join(" ");
+    let block = TextRegion::block(0.1, 0.2, 0.3, 0.4, text.clone());
+    let doc = document(
+        Task::TextExtraction,
+        src,
+        vec![ExportPart {
+            piece: kalamu_core::PieceRef::page(1),
+            text,
+            segments: vec![],
+            corrected: false,
+            reviewed: false,
+            fields: vec![],
+            regions: vec![block.clone()],
+            failed: None,
+            drawn_dpi: None,
+        }],
+    );
+    let xml = String::from_utf8(run(ExportFormat::Alto, &doc)).unwrap_or_default();
+    // A4 drawn at 300 dpi: 2479 by 3508 pixels.
+    let expected = block.estimated_lines(3508.0 / 2479.0).len();
+    assert!(expected > 10, "{expected}");
+    assert_eq!(xml.matches("<TextLine ").count(), expected, "{xml}");
+    assert_eq!(xml.matches("<String ").count(), 80);
+}
+
 /// ALTO from a PDF whose second page, a poster, was drawn below 300 dpi for Tesseract: each
 /// page measured at the resolution its result records, and the file says which.
 #[test]

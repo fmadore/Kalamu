@@ -162,3 +162,97 @@ async fn regions_come_from_the_store_and_follow_a_correction() {
     assert!(dakar.is_some_and(|w| w.span.is_some()));
     assert_eq!(corrected.words[0].x, page.words[0].x);
 }
+
+/// Places each page's text as one block, its paragraph on one line, as Mistral OCR does.
+struct Blocks;
+
+/// A paragraph of 80 words, written on one line.
+fn paragraph() -> String {
+    ["Le cercle de Kita a reçu les notables"; 10].join(" ")
+}
+
+#[async_trait]
+impl Provider for Blocks {
+    fn id(&self) -> ProviderId {
+        ProviderId::new("fake")
+    }
+
+    fn accepted_inputs(&self, _task: Task) -> &'static [&'static str] {
+        &["application/pdf"]
+    }
+
+    async fn process(
+        &self,
+        _key: &ApiKey,
+        _request: ProcessRequest<'_>,
+    ) -> Result<ProcessOutput, ProviderError> {
+        let text = paragraph();
+        Ok(ProcessOutput {
+            text: text.clone(),
+            regions: vec![TextRegion::block(0.1, 0.2, 0.3, 0.4, text)],
+            ..ProcessOutput::default()
+        })
+    }
+
+    async fn list_models(&self, _key: &ApiKey) -> Result<Vec<String>, ProviderError> {
+        Ok(vec!["fake-model".into()])
+    }
+}
+
+#[tokio::test]
+async fn a_block_placed_whole_is_wrapped_by_the_page_s_proportions() {
+    let store = Arc::new(SqliteStore::in_memory().unwrap_or_else(|_| panic!("store")));
+    let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
+    let engine = Engine::new(
+        store.clone(),
+        vec![Arc::new(Blocks)],
+        kalamu_catalog::Catalog::bundled(),
+        PromptLibrary::in_memory(),
+        Arc::new(Keys),
+        EngineConfig {
+            concurrency: 1,
+            max_attempts: 1,
+            base_delay: Duration::from_millis(5),
+            app_version: "test".into(),
+            listening_cache: dir.path().join("listening"),
+            snapshots: dir.path().join("snapshots"),
+            ..EngineConfig::default()
+        },
+    );
+    let fixture = Fixture {
+        engine: engine.clone(),
+        fake: Fake::new(),
+        store: store.clone(),
+        dir,
+    };
+    // An A4 page: 595 by 842 points.
+    let source = fixture.pdf("journal.pdf", 1);
+    let job = fixture.new_job(vec![source.clone()], &["fake-model"]);
+    assert_eq!(fixture.run(job.id).await, JobStatus::Completed);
+    let setup = job.setups[0].id;
+    let regions = || {
+        engine
+            .page_regions(job.id, source.id, setup, 0)
+            .unwrap_or_else(|e| panic!("{e}"))
+    };
+
+    let page = regions();
+    let expected =
+        TextRegion::block(0.1, 0.2, 0.3, 0.4, paragraph()).estimated_lines(842.0 / 595.0);
+    // The one line of text becomes the lines its column holds, each word on one of them.
+    assert!(page.lines.len() > 10, "{}", page.lines.len());
+    assert_eq!(page.lines.len(), expected.len());
+    assert!(page.lines.iter().all(|l| l.estimated));
+    assert_eq!(page.words.len(), 80);
+    assert!(page.lines[0].height < 0.04);
+
+    // The page's size is kept for the source's pages: the file is not read again.
+    std::fs::remove_file(&source.path).unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(regions().lines.len(), expected.len());
+    // Unread, and the file gone, the page's proportions are unknown: the block alone, with no
+    // lines guessed.
+    *crate::control::lock(&engine.page_sizes) = crate::regions::PageSizes::default();
+    let alone = regions();
+    assert_eq!(alone.blocks.len(), 1);
+    assert!(alone.lines.is_empty() && alone.words.is_empty());
+}

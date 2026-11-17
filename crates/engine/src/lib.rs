@@ -141,6 +141,8 @@ pub struct Engine {
     pub(crate) later: Arc<later::Later>,
     /// The engine itself, for the task that writes them.
     pub(crate) me: Weak<Engine>,
+    /// The pages' sizes of the source last shown in the review, for estimated lines.
+    pub(crate) page_sizes: Mutex<regions::PageSizes>,
 }
 
 impl Engine {
@@ -167,6 +169,7 @@ impl Engine {
             documents: OnceLock::new(),
             later: Arc::default(),
             me: me.clone(),
+            page_sizes: Mutex::default(),
         })
     }
 

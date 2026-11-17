@@ -63,8 +63,11 @@ pages are measured at (naming the pages drawn at less than 300 dpi), and says wh
 are estimated. A page split into halves is put back together on the whole page.
 
 Offered only from models that report where text sits. Tesseract places every word. Mistral
-OCR and LightOnOCR-3 place blocks only: their lines share the paragraph's height and their words each
-line's width by their length, which the file says are estimated. A corrected page keeps its
+OCR and LightOnOCR-3 place blocks only: a paragraph the model wrote on one line is wrapped into
+as many lines as its block holds on the page (taking characters about half as wide as they are
+tall, and lines 1.2 times their height apart), a line the model broke itself is kept, the lines
+share the block's height and their words each line's width by their length, as the review draws
+them; the file says these positions are estimated. A corrected page keeps its
 words' places, as iwac-ai-pipelines' ALTO correction does: the researcher's text is matched to
 the words the engine read, a word kept or changed staying in its box, words added sharing the
 box before them, words removed leaving theirs; the engine's confidence is kept only for words
