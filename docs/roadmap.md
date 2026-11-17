@@ -4,21 +4,21 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (16 November 2026)
+## Status (17 November 2026)
 
-**Version 1.7.0** is the latest release, published on 13 November 2026: unsigned installers for
+**Version 1.8.0** is the latest release, published on 17 November 2026: unsigned installers for
 Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
 FFmpeg bundled, are on the
-[v1.7.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0)
-([notes](release-1.7.0.md)): translation, images read as the pages of one document, an image
-description and models listed by tier. It is the version live in the
-[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H), where Kalamu has been since
-version 1.0.0 (2 November 2026). **Version 1.6.0** ([notes](release-1.6.0.md)), the first sent
-to the Mac App Store, is still in App Review there ([steps](mac-app-store.md)). The next
-version, 1.8.0, gathers what *Done* lists after 1.7.0 (records, text regions over the scan, a
-batch's files deleted, Gemini 4 Hydrogen as the default); before it is tagged, the packaged app
-is tried by hand on Windows ([windows-test-pass.md](windows-test-pass.md)), with the live runs
-it names. Everything below is tested against recorded provider
+[v1.8.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.8.0)
+([notes](release-1.8.0.md)): records (one row per entry), text regions over the scan, a batch's
+files deleted at the provider, and Gemini 4 Hydrogen as the default. It was tried by hand on
+Windows as `v1.8.0-rc1` ([results](windows-test-pass.md#results)) and what that found fixed;
+the live runs of that pass's Part F are still to do. It goes to the
+[Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) as an update; **1.7.0**
+([notes](release-1.7.0.md)) is live there until it passes certification, Kalamu having been in
+the Store since version 1.0.0 (2 November 2026). **Version 1.6.0** ([notes](release-1.6.0.md)),
+the first sent to the Mac App Store, is still in App Review there ([steps](mac-app-store.md)).
+Everything below is tested against recorded provider
 responses. Text extraction, transcription, analyses and translation have also run against the
 live Gemini, OpenAI, Claude and Mistral APIs with real keys, at once and in economy mode
 (`cargo run --example live`, see [development.md](development.md) and the
