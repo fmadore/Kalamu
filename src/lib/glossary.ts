@@ -66,7 +66,8 @@ const FORMAT_PLACES: Record<ExportFormat, number> = {
 	srt: 5,
 	vtt: 6,
 	searchable_pdf: 7,
-	alto: 8
+	alto: 8,
+	page_xml: 9
 };
 
 /** Every export format, in the order New job offers them, then the provenance file. */

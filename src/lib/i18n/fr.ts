@@ -1147,7 +1147,7 @@ export const fr: Messages = {
 			duplicate: (n: number) => `Un autre fichier porte aussi le numéro ${n}`,
 			naturalOrder: 'Revenir à l’ordre des noms',
 			formats:
-				'Un PDF interrogeable n’est produit qu’à partir d’un PDF. L’ALTO, quand le modèle donne les positions, place chaque page dans sa propre image.',
+				'Un PDF interrogeable n’est produit qu’à partir d’un PDF. L’ALTO et le PAGE XML, quand le modèle donne les positions, placent chaque page dans sa propre image.',
 			refused: 'Une analyse lit chaque image comme un document à part.'
 		},
 		lines: {
@@ -1301,8 +1301,9 @@ export const fr: Messages = {
 		extractPlace: 'Et note l’emplacement de son texte sur la page',
 		extractPlaces: (models: string) => `${models} note aussi l’emplacement de son texte`,
 		extractTextOnly:
-			'Le texte seul, sans son emplacement sur la page : ni PDF interrogeable ni ALTO',
-		extractSearchable: 'Aussi un fichier ALTO XML et un PDF interrogeable, chaque mot à sa place',
+			'Le texte seul, sans son emplacement sur la page : ni PDF interrogeable, ni ALTO, ni PAGE XML',
+		extractSearchable:
+			'Aussi des fichiers ALTO XML et PAGE XML et un PDF interrogeable, chaque mot à sa place',
 		extractPdfOnly: 'Le PDF interrogeable pour les fichiers PDF seulement',
 		analysisWhole: 'Lu en entier, d’un seul tenant, quel que soit le nombre de pages',
 		analysisFill: (model: string) => `${model} remplit vos champs`,
@@ -1988,7 +1989,7 @@ export const fr: Messages = {
 			},
 			tesseract: {
 				word: 'Extraction de texte hors ligne (Tesseract)',
-				text: 'Tesseract est un moteur d’OCR ouvert que Kalamu exécute sur votre propre ordinateur. Téléchargez une fois dans Paramètres chaque langue que vous lisez ; ensuite, rien n’est envoyé nulle part et rien n’est facturé. Il lit bien l’imprimé net et note l’emplacement de chaque mot sur la page, ce qui donne des fichiers ALTO XML et des PDF interrogeables. L’écriture manuscrite, les pages pâlies ou abîmées et les mises en page complexes se lisent mieux avec un modèle d’IA. Il ne détecte pas la langue, vous la choisissez donc, et sa vitesse dépend du processeur de votre ordinateur.'
+				text: 'Tesseract est un moteur d’OCR ouvert que Kalamu exécute sur votre propre ordinateur. Téléchargez une fois dans Paramètres chaque langue que vous lisez ; ensuite, rien n’est envoyé nulle part et rien n’est facturé. Il lit bien l’imprimé net et note l’emplacement de chaque mot sur la page, ce qui donne des fichiers ALTO et PAGE XML et des PDF interrogeables. L’écriture manuscrite, les pages pâlies ou abîmées et les mises en page complexes se lisent mieux avec un modèle d’IA. Il ne détecte pas la langue, vous la choisissez donc, et sa vitesse dépend du processeur de votre ordinateur.'
 			},
 			apiKey: {
 				word: 'Clé d’API',
@@ -2063,6 +2064,8 @@ export const fr: Messages = {
 			searchable_pdf:
 				'Le PDF d’origine avec une couche texte invisible, pour pouvoir y chercher et en copier le texte. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : pour l’instant, Tesseract et Mistral OCR.',
 			alto: 'Le texte de chaque page avec l’emplacement de chaque bloc, ligne et mot, au format ALTO que lisent les bibliothèques numériques, eScriptorium et Transkribus. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : Tesseract place chaque mot ; Mistral OCR place les paragraphes, dont les lignes et les mots sont alors estimés. Les corrections gardent l’emplacement de leurs mots.',
+			page_xml:
+				'Le texte de chaque page dans un fichier à part (nom.p0001.page.xml), avec l’emplacement de chaque zone, ligne et mot, au format PAGE que lisent Transkribus, eScriptorium et Aletheia. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : Tesseract place chaque mot ; Mistral OCR place les blocs, dont les lignes sont alors estimées et signalées comme telles. Les corrections gardent l’emplacement de leurs mots.',
 			provenance:
 				'Toujours écrit à côté des résultats : comment ils ont été produits (voir Provenance).'
 		}
@@ -2094,7 +2097,8 @@ export const fr: Messages = {
 		vtt: 'Sous-titres (.vtt)',
 		csv: 'Tableur (.csv)',
 		searchable_pdf: 'PDF interrogeable',
-		alto: 'ALTO XML (position des mots)'
+		alto: 'ALTO XML (position des mots)',
+		page_xml: 'PAGE XML (un fichier par page)'
 	},
 	close: {
 		title: 'Des traitements sont en cours',

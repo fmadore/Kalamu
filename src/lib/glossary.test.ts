@@ -31,7 +31,8 @@ describe('glossary', () => {
 			'srt',
 			'vtt',
 			'searchable_pdf',
-			'alto'
+			'alto',
+			'page_xml'
 		];
 		expect(FORMATS).toEqual([...all, 'provenance']);
 		for (const f of FORMATS) expect(en.glossary.formats[f].length).toBeGreaterThan(20);

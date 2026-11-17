@@ -326,7 +326,7 @@ describe('the files each task’s picker offers', () => {
 	});
 
 	it('names the formats that need a model reporting layout, from Rust', () => {
-		expect(LAYOUT_FORMATS).toEqual(['searchable_pdf', 'alto']);
+		expect(LAYOUT_FORMATS).toEqual(['searchable_pdf', 'alto', 'page_xml']);
 		expect(TIMED_FORMATS).toEqual(['srt', 'vtt']);
 	});
 
