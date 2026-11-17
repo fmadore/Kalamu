@@ -9,6 +9,7 @@ import {
 	diagramSources,
 	pageCount,
 	pieceOf,
+	recordPages,
 	row,
 	stagesFor,
 	tableRows,
@@ -92,6 +93,33 @@ describe('New job’s diagram', () => {
 			'beside'
 		]);
 		expect(arts(diagram({ mode: 'youtube' }))).toEqual(['link', 'send', 'watch', 'transcript']);
+	});
+
+	it('reads records page by page and gives a row per entry with its page', () => {
+		const records = stagesFor(
+			diagram({
+				mode: 'analysis',
+				records: true,
+				models: ['Flash'],
+				files: [file({ page_count: 4, split_spreads: true }), file({ file_name: 'b.pdf' })]
+			}),
+			en
+		);
+		expect(records.map((s) => s.art)).toEqual(['stack', 'pages', 'read', 'rows']);
+		expect(records.map((s) => s.caption)).toEqual([
+			en.pipeline.recordsSource,
+			en.pipeline.extractSplit,
+			en.pipeline.recordsRead('Flash'),
+			en.pipeline.recordsTable
+		]);
+		expect(records[1].note).toBe(en.pipeline.extractSpreads);
+		expect(records[3].note).toBe(en.pipeline.moreFiles(1));
+		// Not the analysis read whole, one row per document.
+		const captions = records.map((s) => s.caption);
+		expect(captions).not.toContain(en.pipeline.analysisWhole);
+		expect(captions).not.toContain(en.pipeline.analysisTable);
+		expect(recordPages(3)).toEqual(['1', '1', '2']);
+		expect(recordPages(1)).toEqual(['1', '1', '1']);
 	});
 
 	it('counts a recording’s pieces and a scan’s pages, spreads twice', () => {

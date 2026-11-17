@@ -19,6 +19,7 @@ export type Art =
 	| 'whole'
 	| 'fields'
 	| 'table'
+	| 'rows'
 	| 'wave'
 	| 'cut'
 	| 'transcribe'
@@ -47,8 +48,11 @@ export type DiagramSource = SourceFile & { pieces: number | null };
 export interface Diagram {
 	mode: Mode;
 	files: InspectedFile[];
-	/** The chosen prompt's fields, for an analysis or a table of contents' entries. */
+	/** The chosen prompt's fields, for an analysis or a table of contents' entries; for records,
+	 * the columns of their repeating group. */
 	fields: string[];
+	/** Whether the analysis is records: one row per entry, read page by page. */
+	records?: boolean;
 	/** Names of the chosen models. */
 	models: string[];
 	/** Names of the models that combine a table of contents' pages. */
@@ -135,6 +139,19 @@ export function stagesFor(d: Diagram, m: Messages): Stage[] {
 					: [])
 			];
 		case 'analysis':
+			// Records read each page on their own, as an extraction does, and give a row per entry.
+			if (d.records) {
+				return [
+					{ art: 'stack', caption: m.pipeline.recordsSource, detail: fileDetail },
+					{
+						art: 'pages',
+						caption: m.pipeline.extractSplit,
+						note: first?.split_spreads ? m.pipeline.extractSpreads : undefined
+					},
+					{ art: 'read', caption: m.pipeline.recordsRead(model) },
+					{ art: 'rows', caption: m.pipeline.recordsTable, note: more }
+				];
+			}
 			return [
 				{ art: 'whole', caption: m.pipeline.analysisWhole, detail: fileDetail },
 				{ art: 'fields', caption: m.pipeline.analysisFill(model) },
@@ -246,6 +263,12 @@ export function tocRows(pages: number, m: Messages): { title: string; pages: str
 		title,
 		pages: [pages > 2 ? '1, 3' : '1', '2', String(Math.max(pages, 3))][r] ?? ''
 	}));
+}
+
+/** The pages of a records table's rows: two entries on the first page, then the next page's
+ * first, or a third entry when there is only one page. */
+export function recordPages(pages: number): string[] {
+	return ['1', '1', pages > 1 ? '2' : '1'];
 }
 
 /** The table's rows: the user's documents, or stand-ins until there are some. */

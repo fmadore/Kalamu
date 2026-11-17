@@ -1303,6 +1303,12 @@ export const fr: Messages = {
 		analysisWhole: 'Lu en entier, d’un seul tenant, quel que soit le nombre de pages',
 		analysisFill: (model: string) => `${model} remplit vos champs`,
 		analysisTable: 'Une ligne de réponses par document, prête pour un tableur',
+		recordsSource: 'Un registre, un annuaire ou une liste : un PDF ou des images',
+		recordsRead: (model: string) =>
+			`${model} relève les entrées de chaque page dans l’ordre de lecture, selon vos colonnes`,
+		recordsTable:
+			'Une ligne par entrée, avec son fichier, sa page et sa place sur la page, prête pour un tableur',
+		recordsPage: 'Page',
 		exampleFields: ['Résumé', 'Personnes', 'Lieux', 'Tonalité'],
 		document: (n: number) => `Document ${n}`,
 		audioSource: 'Un enregistrement',

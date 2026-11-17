@@ -20,6 +20,7 @@
 		pageCount,
 		pieceCount,
 		pieceOf,
+		recordPages,
 		row,
 		stagesFor,
 		tableRows,
@@ -34,6 +35,7 @@
 		mode,
 		files,
 		fields,
+		records = false,
 		models,
 		mergeModels = [],
 		searchable = [],
@@ -41,8 +43,11 @@
 	}: {
 		mode: Mode;
 		files: InspectedFile[];
-		/** The chosen prompt's fields, for an analysis or a table of contents' entries. */
+		/** The chosen prompt's fields, for an analysis or a table of contents' entries; for
+		 * records, their columns. */
 		fields: string[];
+		/** Whether the analysis is records: one row per entry, read page by page. */
+		records?: boolean;
 		/** Names of the chosen models. */
 		models: string[];
 		/** Names of the models that combine a table of contents' pages. */
@@ -62,7 +67,9 @@
 	const sources = $derived(diagramSources(files));
 	const first = $derived(sources[0]);
 	const fieldNames = $derived(fieldNamesOf(fields, m));
-	const stages = $derived(stagesFor({ mode, files, fields, models, mergeModels, searchable }, m));
+	const stages = $derived(
+		stagesFor({ mode, files, fields, records, models, mergeModels, searchable }, m)
+	);
 
 	const pages = $derived(pageCount(first));
 	const pieces = $derived(pieceCount(first));
@@ -87,7 +94,8 @@
 	{#key run}
 		<ol
 			class="stages"
-			class:analysis={mode === 'analysis'}
+			class:analysis={mode === 'analysis' && !records}
+			class:records={mode === 'analysis' && records}
 			class:contents={mode === 'contents'}
 			style="--n: {stages.length}"
 		>
@@ -448,6 +456,25 @@
 				{/if}
 			</tbody>
 		</table>
+	{:else if kind === 'rows'}
+		<!-- Records: a row per entry, under the page it is on, its columns filled in. -->
+		{@const columns = fieldNames.slice(0, 2)}
+		<table class="table rows">
+			<thead>
+				<tr>
+					<th>{m.pipeline.recordsPage}</th>
+					{#each columns as name, j (j)}<th>{name}</th>{/each}
+				</tr>
+			</thead>
+			<tbody>
+				{#each recordPages(pages) as page, r (r)}
+					<tr class="grow-row" style="--j: {r}">
+						<td class="mono">{page}</td>
+						{#each columns as _, j (j)}<td><span class="value"></span></td>{/each}
+					</tr>
+				{/each}
+			</tbody>
+		</table>
 	{:else if kind === 'wave' || kind === 'cut'}
 		<svg width={W} height="72" viewBox="0 0 {W} 72">
 			{#each { length: shownPieces } as _, p (p)}
@@ -547,6 +574,15 @@
 	/* An analysis has three steps, and its table needs the room. */
 	.stages.analysis {
 		grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.3fr);
+	}
+	/* Records end with their table of entries, which needs the room. */
+	.stages.records {
+		grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
+	}
+	/* A records table's first column holds only page numbers. */
+	.table.rows th:first-child,
+	.table.rows td:first-child {
+		width: 25%;
 	}
 	/* A table of contents ends with its table, which needs room for titles. */
 	.stages.contents {
@@ -922,6 +958,7 @@
 	@container (max-width: 34rem) {
 		.stages,
 		.stages.analysis,
+		.stages.records,
 		.stages.contents {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			row-gap: var(--space-4);

@@ -72,7 +72,7 @@
 		offersOneDocument,
 		sameImages
 	} from '#lib/pageOrder.js';
-	import { readingRule } from '#lib/records.js';
+	import { allRecords, readingRule } from '#lib/records.js';
 	import { mayStart } from '#lib/dialogs.js';
 	import { api, listenWhileMounted, onDrop } from '#lib/tauri.js';
 	import {
@@ -123,14 +123,13 @@
 	let pace = $state<Pace>(kept?.pace ?? 'fast');
 	let drafts = $state<Draft[]>(kept?.drafts ?? []);
 	let presets = $state<Preset[]>([]);
+	/** The chosen analyses' fields, one for each set-up. */
+	const schemas = $derived(drafts.map((d) => presets.find((p) => p.id === d.presetId)?.schema));
 	/** The task's rules, and for records chosen in every set-up what the task offers read page
 	 * by page. */
-	const rule = $derived(
-		readingRule(
-			taskRule,
-			drafts.map((d) => presets.find((p) => p.id === d.presetId)?.schema)
-		)
-	);
+	const rule = $derived(readingRule(taskRule, schemas));
+	/** Records chosen in every set-up: one row per entry, read page by page. */
+	const records = $derived(task === 'analysis' && allRecords(schemas));
 	let sample = $state(kept?.sample ?? false);
 	let samplePages = $state(kept?.samplePages ?? 3);
 	/** How many pages of a PDF go in one call: one, several, or as many as fit. */
@@ -679,6 +678,7 @@
 			{sources}
 			{presets}
 			{drafts}
+			{records}
 			{catalog}
 			{rule}
 			{namesOf}

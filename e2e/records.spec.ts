@@ -1,7 +1,7 @@
 // Records (#171) against the sample data (`?mock`), in both engines: an analysis turned into one
 // row per entry in Prompts, its fields becoming the columns; and a directory's rows reviewed
 // beside its pages, a cell corrected, a row added and removed, a page not read said so, and a
-// page marked reviewed, all from the keyboard.
+// page marked reviewed, all from the keyboard; and New job drawing such an analysis as it reads.
 
 import { expect, test, type Page } from '@playwright/test';
 
@@ -101,4 +101,25 @@ test('a page’s rows are corrected, added, removed and reviewed from the keyboa
 	// The next page brings its own rows.
 	await main.getByRole('button', { name: 'Next', exact: true }).click();
 	await expect(rows.getByRole('textbox', { name: 'Name, row 1' })).toHaveValue('Diop (Amadou)');
+});
+
+test('New job draws a records analysis page by page, one row per entry', async ({ page }) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Analyse texts/ }).click();
+	const diagram = main.getByRole('figure', { name: /How it works/ });
+	await expect(diagram).toContainText('One row of answers per document');
+
+	// The directory reads each page on its own, its columns heading a row per entry.
+	const directory = 'Directory or list, one row per entry';
+	await main
+		.getByRole('combobox')
+		.filter({ has: page.getByRole('option', { name: directory }) })
+		.selectOption({ label: directory });
+	await expect(diagram).toContainText('Split into pages');
+	await expect(diagram).toContainText('One row per entry, with its file, page and place');
+	await expect(diagram).not.toContainText('Read whole');
+	await expect(diagram).not.toContainText('One row of answers per document');
+	// The drawing is decoration, hidden from screen readers: its table is found by its markup.
+	await expect(diagram.locator('table.rows th')).toHaveText(['Page', 'Name', 'Occupation']);
 });
