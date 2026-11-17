@@ -122,8 +122,9 @@ impl Engine {
 
         let mut written = Vec::new();
         let mut problems = Vec::new();
-        // A searchable PDF and ALTO need a model that reports where text sits: in a comparison
-        // they are chosen for the set-ups whose model does, and skipped for the others.
+        // A searchable PDF, ALTO and PAGE XML need a model that reports where text sits: in a
+        // comparison they are chosen for the set-ups whose model does, and skipped for the
+        // others.
         let layout = {
             let catalog = self.current_catalog();
             job.setups
@@ -142,8 +143,9 @@ impl Engine {
             if !exporter.supports(job.task) {
                 continue;
             }
-            let bytes = match exporter.export(&document) {
-                Ok(bytes) => bytes,
+            // One file for most formats; one per page for PAGE XML.
+            let files = match exporter.export_files(&document) {
+                Ok(files) => files,
                 Err(ExportError::Unsupported(_)) => continue,
                 Err(e) => {
                     tracing::warn!(?format, error = %e, "export failed");
@@ -151,13 +153,16 @@ impl Engine {
                     continue;
                 }
             };
-            let mut path = dir.join(format!("{base}.{}", format.extension()));
-            // Never overwrite the source itself (a .txt or .csv input exported to the same name).
-            if path == Path::new(&document.source.path) {
-                path = dir.join(format!("{base}.kalamu.{}", format.extension()));
+            for file in files {
+                let mut path = dir.join(format!("{base}.{}", file.suffix));
+                // Never overwrite the source itself (a .txt or .csv input exported to the same
+                // name).
+                if path == Path::new(&document.source.path) {
+                    path = dir.join(format!("{base}.kalamu.{}", file.suffix));
+                }
+                write_atomic(&path, &file.bytes)?;
+                written.push(path.display().to_string());
             }
-            write_atomic(&path, &bytes)?;
-            written.push(path.display().to_string());
         }
         written.push(write_provenance(&dir, &base, &document)?);
         Ok((written, problems))
@@ -239,25 +244,34 @@ impl Engine {
     pub fn outputs(&self, job_id: JobId) -> Result<Vec<String>, EngineError> {
         self.write_outdated_before_reading(job_id);
         let job = self.store.job(job_id)?;
-        let extensions: Vec<&str> = job
+        let formats: Vec<ExportFormat> = job
             .output
             .formats
             .iter()
-            .filter(|f| kalamu_export::exporter(**f).is_some_and(|e| e.supports(job.task)))
-            .map(|f| f.extension())
-            .chain(["provenance.json"])
+            .copied()
+            .filter(|f| kalamu_export::exporter(*f).is_some_and(|e| e.supports(job.task)))
             .collect();
         let names = OutputNames::of(&job);
         let mut out = Vec::new();
         for source in &job.sources {
             for setup in &job.setups {
                 let (dir, base) = names.base(&job, source, &setup.label);
-                out.extend(
-                    extensions
-                        .iter()
-                        .filter_map(|ext| existing_output(&dir, &base, ext, &source.path))
-                        .map(|p| p.display().to_string()),
-                );
+                for format in &formats {
+                    if format.per_page() {
+                        out.extend(
+                            existing_pages(&dir, &base, *format)
+                                .iter()
+                                .map(|p| p.display().to_string()),
+                        );
+                    } else if let Some(path) =
+                        existing_output(&dir, &base, format.extension(), &source.path)
+                    {
+                        out.push(path.display().to_string());
+                    }
+                }
+                if let Some(path) = existing_output(&dir, &base, "provenance.json", &source.path) {
+                    out.push(path.display().to_string());
+                }
             }
         }
         Ok(out)
@@ -442,6 +456,26 @@ fn existing_output(dir: &Path, base: &str, ext: &str, source: &str) -> Option<Pa
     .into_iter()
     .map(|name| dir.join(name))
     .find(|p| p.is_file() && p != Path::new(source))
+}
+
+/// The files a per-page format wrote for one source under one set-up, in the order of their
+/// pages: `{base}.p0001.page.xml` and on ([`ExportFormat::page_suffix`]).
+fn existing_pages(dir: &Path, base: &str, format: ExportFormat) -> Vec<PathBuf> {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let prefix = format!("{base}.");
+    let mut pages: Vec<(u32, PathBuf)> = entries
+        .filter_map(Result::ok)
+        .filter_map(|entry| {
+            let name = entry.file_name();
+            let page = format.page_of_suffix(name.to_str()?.strip_prefix(&prefix)?)?;
+            let path = entry.path();
+            path.is_file().then_some((page, path))
+        })
+        .collect();
+    pages.sort();
+    pages.into_iter().map(|(_, path)| path).collect()
 }
 
 /// Fixes applied to a source's working copies, for provenance and the cache key.

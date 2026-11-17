@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>Kalamu 0.1.0</Creator>
+    <Created>2026-10-27T10:25:27Z</Created>
+    <LastChange>2026-10-27T10:25:27Z</LastChange>
+    <Comments>gemini gemini-3.8-flash; line positions estimated within blocks the model placed whole</Comments>
+  </Metadata>
+  <Page imageFilename="p1.png" imageWidth="1000" imageHeight="1500">
+    <ReadingOrder>
+      <OrderedGroup id="ro">
+        <RegionRefIndexed index="0" regionRef="r1"/>
+      </OrderedGroup>
+    </ReadingOrder>
+    <TextRegion id="r1" custom="readingOrder {index:0;}">
+      <Coords points="500,150 999,150 999,180 500,180"/>
+      <TextLine id="r1_l1" custom="readingOrder {index:0;}" comments="position estimated within a block the model placed whole">
+        <Coords points="500,150 999,150 999,180 500,180"/>
+        <TextEquiv>
+          <Unicode>Mot</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Mot</Unicode>
+      </TextEquiv>
+    </TextRegion>
+  </Page>
+</PcGts>

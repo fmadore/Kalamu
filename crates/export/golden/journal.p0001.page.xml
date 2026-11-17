@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>Kalamu 0.1.0</Creator>
+    <Created>2026-10-27T10:25:27Z</Created>
+    <LastChange>2026-10-27T10:25:27Z</LastChange>
+    <Comments>gemini gemini-3.8-flash; PDF page measured at 300 dpi; line positions estimated within blocks the model placed whole</Comments>
+  </Metadata>
+  <Page imageFilename="journal.pdf#page=1" imageWidth="2479" imageHeight="3508" imageXResolution="300" imageYResolution="300" imageResolutionUnit="PPI">
+    <ReadingOrder>
+      <OrderedGroup id="ro">
+        <RegionRefIndexed index="0" regionRef="r1"/>
+        <RegionRefIndexed index="1" regionRef="r2"/>
+      </OrderedGroup>
+    </ReadingOrder>
+    <TextRegion id="r1" custom="readingOrder {index:0;}">
+      <Coords points="248,351 2231,351 2231,491 248,491"/>
+      <TextLine id="r1_l1" custom="readingOrder {index:0;}" comments="position estimated within a block the model placed whole">
+        <Coords points="248,351 2231,351 2231,421 248,421"/>
+        <TextEquiv>
+          <Unicode>Le Gouverneur &amp; les délégués</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextLine id="r1_l2" custom="readingOrder {index:1;}" comments="position estimated within a block the model placed whole">
+        <Coords points="248,421 2231,421 2231,491 248,491"/>
+        <TextEquiv>
+          <Unicode>&lt;réunis&gt;</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Le Gouverneur &amp; les délégués
+&lt;réunis&gt;</Unicode>
+      </TextEquiv>
+    </TextRegion>
+    <TextRegion id="r2" custom="readingOrder {index:1;}">
+      <Coords points="248,702 2231,702 2231,772 248,772"/>
+      <TextLine id="r2_l1" custom="readingOrder {index:0;}" comments="position estimated within a block the model placed whole">
+        <Coords points="248,702 2231,702 2231,772 248,772"/>
+        <TextEquiv>
+          <Unicode>Kita</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Kita</Unicode>
+      </TextEquiv>
+    </TextRegion>
+  </Page>
+</PcGts>

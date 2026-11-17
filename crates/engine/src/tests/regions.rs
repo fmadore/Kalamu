@@ -256,3 +256,130 @@ async fn a_block_placed_whole_is_wrapped_by_the_page_s_proportions() {
     assert_eq!(alone.blocks.len(), 1);
     assert!(alone.lines.is_empty() && alone.words.is_empty());
 }
+
+/// PAGE XML is written as one file per page beside the source, listed with the job's other
+/// files in the order of the pages, and written again from the correction, dated by it.
+#[tokio::test]
+async fn page_xml_is_written_and_listed_one_file_per_page() {
+    let store = Arc::new(SqliteStore::in_memory().unwrap_or_else(|_| panic!("store")));
+    let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
+    let mut catalog = kalamu_catalog::Catalog::bundled();
+    let mut model = catalog
+        .models
+        .iter()
+        .find(|m| m.id == "gemini-3.8-flash")
+        .cloned()
+        .unwrap_or_else(|| panic!("a listed model"));
+    model.provider = ProviderId::new("fake");
+    model.id = "fake-model".into();
+    model.layout = true;
+    catalog.models.push(model);
+    let engine = Engine::new(
+        store.clone(),
+        vec![Arc::new(Placing)],
+        catalog,
+        PromptLibrary::in_memory(),
+        Arc::new(Keys),
+        EngineConfig {
+            concurrency: 1,
+            max_attempts: 1,
+            base_delay: Duration::from_millis(5),
+            app_version: "test".into(),
+            listening_cache: dir.path().join("listening"),
+            snapshots: dir.path().join("snapshots"),
+            ..EngineConfig::default()
+        },
+    );
+    let fixture = Fixture {
+        engine: engine.clone(),
+        fake: Fake::new(),
+        store: store.clone(),
+        dir,
+    };
+    let source = fixture.pdf("rapport.pdf", 2);
+    let job = engine
+        .create_job(NewJob {
+            name: "Page".into(),
+            task: Task::TextExtraction,
+            sources: vec![source.clone()],
+            setups: vec![SetupRequest {
+                provider: ProviderId::new("fake"),
+                model: "fake-model".into(),
+                preset_id: None,
+                label: None,
+                options: Default::default(),
+                merge: None,
+            }],
+            settings: Default::default(),
+            output: OutputSettings {
+                formats: vec![ExportFormat::Alto, ExportFormat::PageXml],
+                ..Default::default()
+            },
+        })
+        .unwrap_or_else(|e| panic!("create job: {e}"));
+    assert!(job.output.formats.contains(&ExportFormat::PageXml));
+    assert_eq!(fixture.run(job.id).await, JobStatus::Completed);
+
+    let names = |files: Vec<String>| -> Vec<String> {
+        files
+            .iter()
+            .filter_map(|f| {
+                std::path::Path::new(f)
+                    .file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+            })
+            .collect()
+    };
+    let listed = names(engine.outputs(job.id).unwrap_or_else(|e| panic!("{e}")));
+    assert_eq!(
+        listed,
+        [
+            "rapport.alto.xml",
+            "rapport.p0001.page.xml",
+            "rapport.p0002.page.xml",
+            "rapport.provenance.json"
+        ]
+    );
+    let page_one = fixture.dir.path().join("rapport.p0001.page.xml");
+    let read = std::fs::read_to_string(&page_one).unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(read.matches("<Word ").count(), 12, "{read}");
+    assert!(read.contains("<Unicode>rnai</Unicode>"), "{read}");
+    // Page 2 was read without positions: a page with no regions.
+    let page_two = std::fs::read_to_string(fixture.dir.path().join("rapport.p0002.page.xml"))
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(!page_two.contains("<TextRegion"), "{page_two}");
+
+    // A correction writes the page again: the corrected word in its place, dated by it.
+    engine
+        .save_correction(Correction {
+            job_id: job.id,
+            setup_id: job.setups[0].id,
+            source_id: source.id,
+            index: 0,
+            text: Some("Le cercle de Kita\nLe cercle de Kita\nDakar, le 3 mai".into()),
+            fields: None,
+            reviewed: false,
+            updated_at: Timestamp::now(),
+        })
+        .unwrap_or_else(|e| panic!("{e}"));
+    engine
+        .export(job.id, job.setups[0].id, source.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let corrected = std::fs::read_to_string(&page_one).unwrap_or_else(|e| panic!("{e}"));
+    let saved = store
+        .source_corrections(job.id, job.setups[0].id, source.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let when = saved
+        .first()
+        .map(|c| c.updated_at)
+        .unwrap_or_else(|| panic!("saved"));
+    assert!(corrected.contains("<Unicode>mai</Unicode>"), "{corrected}");
+    assert!(!corrected.contains("rnai"), "{corrected}");
+    assert!(
+        corrected.contains(&format!(
+            "<LastChange>{}</LastChange>",
+            when.utc_date_time()
+        )),
+        "{corrected}"
+    );
+}

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>Kalamu 0.1.0</Creator>
+    <Created>2026-10-27T10:25:27Z</Created>
+    <LastChange>2026-10-27T10:25:27Z</LastChange>
+    <Comments>gemini gemini-3.8-flash; PDF page measured at 300 dpi</Comments>
+  </Metadata>
+  <Page imageFilename="lettre.pdf#page=1" imageWidth="2479" imageHeight="3508" imageXResolution="300" imageYResolution="300" imageResolutionUnit="PPI">
+    <ReadingOrder>
+      <OrderedGroup id="ro">
+        <RegionRefIndexed index="0" regionRef="r1"/>
+      </OrderedGroup>
+    </ReadingOrder>
+    <TextRegion id="r1" custom="readingOrder {index:0;}">
+      <Coords points="248,351 1240,351 1240,421 248,421"/>
+      <TextLine id="r1_l1" custom="readingOrder {index:0;}">
+        <Coords points="248,351 1240,351 1240,421 248,421"/>
+        <Word id="r1_l1_w1">
+          <Coords points="248,351 545,351 545,421 248,421"/>
+          <TextEquiv conf="0.96">
+            <Unicode>Dakar,</Unicode>
+          </TextEquiv>
+        </Word>
+        <Word id="r1_l1_w2">
+          <Coords points="595,351 694,351 694,421 595,421"/>
+          <TextEquiv conf="0.91">
+            <Unicode>le</Unicode>
+          </TextEquiv>
+        </Word>
+        <Word id="r1_l1_w3">
+          <Coords points="744,351 793,351 793,421 744,421"/>
+          <TextEquiv conf="0.88">
+            <Unicode>3</Unicode>
+          </TextEquiv>
+        </Word>
+        <Word id="r1_l1_w4">
+          <Coords points="843,351 992,351 992,421 843,421"/>
+          <TextEquiv>
+            <Unicode>mai</Unicode>
+          </TextEquiv>
+        </Word>
+        <TextEquiv>
+          <Unicode>Dakar, le 3 mai</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Dakar, le 3 mai</Unicode>
+      </TextEquiv>
+    </TextRegion>
+  </Page>
+</PcGts>

@@ -9,7 +9,9 @@ mod contents;
 mod csv_export;
 mod docx;
 mod json;
+mod layout;
 mod markdown;
+mod page_xml;
 mod records;
 mod searchable_pdf;
 mod subtitles;
@@ -35,6 +37,7 @@ pub fn all() -> Vec<Box<dyn Exporter>> {
         Box::new(csv_export::CsvExporter),
         Box::new(searchable_pdf::SearchablePdfExporter),
         Box::new(alto::AltoExporter),
+        Box::new(page_xml::PageXmlExporter),
     ]
 }
 
