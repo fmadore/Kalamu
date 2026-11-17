@@ -395,6 +395,12 @@
 	.stage .desk {
 		padding: var(--space-5) var(--space-5) 4.5rem;
 	}
+	/* The scrollbar's room is kept whether it shows or not. The page is drawn at the pane's width,
+	   so a scrollbar that came and went would narrow the page, let it fit, widen it and so on,
+	   redrawing it without end where scrollbars take room (Windows; a Mac set to show them). */
+	.scan {
+		scrollbar-gutter: stable;
+	}
 	/* Once the page is larger than the pane, it is moved by dragging it. */
 	.scan.movable {
 		cursor: grab;
