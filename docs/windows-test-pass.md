@@ -115,9 +115,36 @@ did, what you expected, what happened. A screenshot of anything odd costs nothin
 
 One line per failure, and an issue for each real problem.
 
-| Part | Step | What happened | Issue |
+### 17 November 2026, 1.8.0-rc1 on the Snapdragon (Windows 11 ARM64)
+
+The `v1.8.0-rc1` validation build's ARM64 installer, installed over an earlier GitHub copy,
+driven by hand through the interface. About $0.09 of Gemini and Mistral calls in all.
+
+**Passed**: A1, A2 (WebView2's own message first, then Kalamu's naming the logs folder, in the
+system's language rather than the interface's), A3 (the window reopened with the job done), B1
+with the mouse and the arrow keys, B3, B5 on the four-page *Daily Nebraskan* issue's Directory
+of Advertisers (59 rows; a cell corrected, a row added and one removed; `.csv` and `.json` with
+`file`, `page` and `position`), B8, C1, C2 (`page_resolution` in `provenance.json`; ALTO not
+written by default, so not read), C3, D1, D2, D4, and E as far as the file goes (`'=`, `'+` and
+`'@` written, `-2201` kept a number).
+
+| Part | Step | What happened | Fix |
 | --- | --- | --- | --- |
-| | | | |
+| B2 | Text regions, Mistral OCR | Mistral writes each paragraph on one line, so the estimated lines were one per paragraph, the block's full height, and the words tall slivers across it | Estimated lines wrap a paragraph into the lines its block's shape holds, in the review and in ALTO |
+| B5 | Records, cost | Estimated $0.019, cost $0.038: the estimate priced a records analysis as one whole read | Priced page by page, as it runs |
+| B5 | Records, New job | "How it works" said "Read whole, as one piece" and "One row per document"; `.csv` unticked | The records steps of their own; `.csv` ticked |
+| B5 | Records, export | `corrected` is set on every row of a corrected page, as [formats.md](formats.md) says, where this checklist expected the changed rows alone | To decide |
+| C1 | `.xlsx` refused | The refusal went on to say Kalamu reads Excel | Excel taken out of the sentence |
+| C3 | Language data deleted | "In use by a job" stayed after the job ended, Remove disabled until another tab was opened | The list follows the end of a job |
+| D3 | Language pickers | With text in the box, Escape emptied it and the whole list opened again (WebView2 clears a search box on Escape, which reopened the list) | Escape closes the list and keeps the text |
+| D4 | Readings | An empty reading was labelled "om." | "(no text)", set apart from the models' text |
+| E | CSV in Excel | French Excel opens a comma-separated file in one column, so the apostrophe could not be seen at work there | To decide |
+
+**Not tried**: the notification and the notification-area icon in A3, and the touchpad in B1
+(the external screen, in HDR, could not be seen from the session driving the test); A4 (it
+deletes stored answers for good: left to the maintainer); B4 and D5 (Narrator); B6 and B7 (no
+register scan, no page that fails); C4 and C5; all of Part F (OpenAI's first-send consent left
+to the maintainer, and the providers' Files pages are on the maintainer's accounts).
 
 Afterwards, in the repository:
 

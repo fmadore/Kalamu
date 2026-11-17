@@ -428,12 +428,14 @@ In this order. Work that keeps what has shipped sound comes before new features.
 Items 1 and 2 are done in code: what they leave is to be tried by hand, gathered here, and
 none of it waits on the others.
 
-- **In the packaged app on Windows**: correcting and translating a text offer `.csv`, and a
-  dropped `.xlsx` is refused; a Tesseract job on a PDF with a large page records
-  `page_resolution` in `provenance.json` and ALTO; language data deleted right after a job; a
-  transcription from an accented data folder; the window hidden for a whole job; the job's and
-  the name's menus and the two language pickers with the keyboard and with Narrator; the CSV
-  apostrophe in a real spreadsheet; the offline engines on a PC with a graphics processor.
+- **In the packaged app on Windows**: tried on 17 November with `v1.8.0-rc1`
+  ([results](windows-test-pass.md#results)). What it found is fixed (estimated lines in Mistral
+  OCR's blocks, a records analysis's estimate, New job's records diagram and `.csv`, Escape in
+  the language pickers, the in-use badge, the set-aside note, "om." for an empty reading).
+  Still to try: a transcription from an accented data folder; Narrator; the notification and
+  its icon while the window is hidden; the offline engines on a PC with a graphics processor;
+  a register; Part F's live runs. To decide: `corrected` per row in a records export, and a
+  CSV that French Excel opens in columns.
 - **On a Mac** (with item 3): all of the above in WebKit, Tab with the system's keyboard
   navigation on and off, VoiceOver, the symbols of `panic.log`, the programs Kalamu starts
   after a crash or a Force Quit, and the folders out of reach shown at launch in the Mac App
