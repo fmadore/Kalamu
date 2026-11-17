@@ -34,6 +34,9 @@ struct Batchy {
     max_items: AtomicUsize,
     /// Ended batches are still settling (being cancelled): they name no file yet.
     settling: AtomicBool,
+    /// The provider keeps the ended batch itself until it is deleted (as Claude does), so the
+    /// batch, by its own id, is what is named, rather than files.
+    keeps_batch: AtomicBool,
     /// Times a batch's files were asked for.
     listed: AtomicUsize,
     /// What deleting a file fails with, if anything.
@@ -214,6 +217,9 @@ impl Provider for Batchy {
         self.listed.fetch_add(1, Ordering::SeqCst);
         if self.settling.load(Ordering::SeqCst) {
             return Ok(None);
+        }
+        if self.keeps_batch.load(Ordering::SeqCst) {
+            return Ok(Some(vec![batch_id.to_string()]));
         }
         Ok(Some(vec![
             format!("{batch_id}-in"),

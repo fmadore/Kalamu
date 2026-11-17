@@ -7,7 +7,7 @@ use kalamu_core::{
     Provider, ProviderError, SetupOptions, StopSignal, Task, Tuning,
 };
 use kalamu_providers::{Anthropic, Gemini, Mistral, OpenAi, client};
-use wiremock::matchers::{body_partial_json, method, path};
+use wiremock::matchers::{body_partial_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn fixture(name: &str) -> serde_json::Value {
@@ -499,15 +499,113 @@ async fn mistral_names_a_settled_job_s_files_and_deletes_them() {
     );
 }
 
-/// Claude and Gemini batches leave no file in the account's storage: nothing is named.
+/// Claude keeps an ended batch, its requests and answers, until it is deleted: the batch itself
+/// is named, by its id, and deleted with the key in its header; one still running or being
+/// cancelled names nothing yet, and a batch already gone is no error.
 #[tokio::test]
-async fn claude_and_gemini_batches_name_no_file() {
+async fn claude_names_an_ended_batch_and_deletes_it() {
+    let server = MockServer::start().await;
+    for (id, status) in [
+        ("msgbatch_done", "ended"),
+        ("msgbatch_busy", "in_progress"),
+        ("msgbatch_stopping", "canceling"),
+    ] {
+        Mock::given(method("GET"))
+            .and(path(format!("/messages/batches/{id}")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "id": id,
+                "type": "message_batch",
+                "processing_status": status,
+                "request_counts": { "processing": 0, "succeeded": 2, "errored": 0,
+                    "canceled": 0, "expired": 0 },
+                "ended_at": null,
+                "created_at": "2026-11-16T09:00:00Z",
+                "expires_at": "2026-11-17T09:00:00Z",
+                "archived_at": null,
+                "cancel_initiated_at": null,
+                "results_url": null,
+            })))
+            .mount(&server)
+            .await;
+    }
+    let not_found = || {
+        ResponseTemplate::new(404).set_body_json(serde_json::json!({
+            "type": "error",
+            "error": { "type": "not_found_error", "message": "Not found" },
+        }))
+    };
+    Mock::given(method("GET"))
+        .and(path("/messages/batches/msgbatch_gone"))
+        .respond_with(not_found())
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/messages/batches/msgbatch_done"))
+        .and(header("x-api-key", "k"))
+        .and(header("anthropic-version", "2026-10-21"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "id": "msgbatch_done", "type": "message_batch_deleted" })))
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/messages/batches/msgbatch_gone"))
+        .respond_with(not_found())
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/messages/batches/msgbatch_overloaded"))
+        .respond_with(ResponseTemplate::new(529).set_body_json(serde_json::json!({
+            "type": "error",
+            "error": { "type": "overloaded_error", "message": "Overloaded" },
+        })))
+        .mount(&server)
+        .await;
+
+    let claude = Anthropic::with_base_url(client(), &server.uri());
     let key = ApiKey::new("k");
-    let claude = Anthropic::with_base_url(client(), "http://127.0.0.1:9");
     assert_eq!(
-        claude.batch_files(&key, "msgbatch_1").await,
+        claude.batch_files(&key, "msgbatch_done").await,
+        Ok(Some(vec!["msgbatch_done".into()]))
+    );
+    assert_eq!(claude.batch_files(&key, "msgbatch_busy").await, Ok(None));
+    assert_eq!(
+        claude.batch_files(&key, "msgbatch_stopping").await,
+        Ok(None)
+    );
+    assert_eq!(
+        claude.batch_files(&key, "msgbatch_gone").await,
         Ok(Some(Vec::new()))
     );
+    assert_eq!(
+        claude.delete_batch_file(&key, "msgbatch_done").await,
+        Ok(())
+    );
+    assert_eq!(
+        claude.delete_batch_file(&key, "msgbatch_gone").await,
+        Ok(()),
+        "already gone"
+    );
+    assert!(
+        claude
+            .delete_batch_file(&key, "msgbatch_overloaded")
+            .await
+            .is_err()
+    );
+    // Only the batches asked about were touched: nothing was listed, nothing cancelled, and
+    // the key went only in its header.
+    let received = server.received_requests().await.unwrap_or_default();
+    assert!(
+        received.iter().all(|r| r.url.path() != "/messages/batches"
+            && !r.url.path().ends_with("/cancel")
+            && r.url.query().is_none()),
+        "{received:?}"
+    );
+}
+
+/// Gemini batches leave nothing to delete: nothing is named.
+#[tokio::test]
+async fn gemini_batches_name_nothing_to_delete() {
+    let key = ApiKey::new("k");
     let gemini = Gemini::with_base_url(client(), "http://127.0.0.1:9");
     assert_eq!(
         gemini.batch_files(&key, "batches/1").await,

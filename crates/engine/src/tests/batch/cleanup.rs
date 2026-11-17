@@ -227,3 +227,70 @@ async fn a_cancelled_batch_s_files_are_deleted_once_it_settles_even_after_its_jo
     assert_eq!(cleanup_of(&e, kept.id), vec![done()]);
     assert!(e.f.store.batch_leftovers().unwrap_or_default().is_empty());
 }
+
+/// A provider that keeps the ended batch itself (Claude's) has it deleted through the same
+/// path: once, after its answers are stored; a deletion that failed is tried again at the next
+/// launch, and nothing is asked once it is deleted.
+#[tokio::test]
+async fn a_batch_the_provider_keeps_is_deleted_once_and_again_after_a_restart_if_it_failed() {
+    let e = one_batch();
+    e.batchy.keeps_batch.store(true, Ordering::SeqCst);
+    *e.batchy
+        .delete_error
+        .lock()
+        .unwrap_or_else(|p| p.into_inner()) = Some(ProviderError::Transient("529".into()));
+    let job = e.job(2, Pace::Economy);
+    assert_eq!(e.f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(
+        cleanup_of(&e, job.id),
+        vec![Some(BatchCleanup {
+            files: Some(vec!["remote-0".to_string()]),
+            failures: 1,
+            given_up: false,
+        })],
+        "named and recorded before the deletion was tried"
+    );
+    assert!(e.batchy.deleted().is_empty());
+
+    // The provider answers again; the app is started anew.
+    *e.batchy
+        .delete_error
+        .lock()
+        .unwrap_or_else(|p| p.into_inner()) = None;
+    let relaunched = engine(e.f.store.clone(), e.batchy.clone());
+    relaunched.recover().unwrap_or_else(|e| panic!("{e}"));
+    relaunched
+        .clean_up_batches()
+        .await
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(e.batchy.deleted(), vec!["remote-0"]);
+    assert_eq!(
+        e.batchy
+            .submitted_at_delete
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone(),
+        vec![0],
+        "every answer was stored before the batch was deleted"
+    );
+    assert_eq!(
+        cleanup_of(&e, job.id),
+        vec![Some(BatchCleanup {
+            files: Some(Vec::new()),
+            failures: 1,
+            given_up: false,
+        })],
+        "nothing left to delete; the failed round stays counted"
+    );
+
+    // Deleted once: a later launch asks nothing more.
+    relaunched
+        .clean_up_batches()
+        .await
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(e.batchy.listed.load(Ordering::SeqCst), 1);
+    assert_eq!(e.batchy.deletes.load(Ordering::SeqCst), 2);
+    assert_eq!(e.batchy.deleted(), vec!["remote-0"]);
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Done), 2);
+}
