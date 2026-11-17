@@ -1,8 +1,26 @@
 //! The names an analysis lists in a field, one item at a time: whether an answer holds one, and
 //! the answers with one renamed or taken out. Items are matched as the analysis review collates
-//! them, ignoring case and the spaces around them.
+//! them, ignoring case and the spaces around them. [`folded`] sets aside accents and punctuation
+//! too, for the comparisons that only ask whether two forms are probably the same name.
+
+use unicode_normalization::UnicodeNormalization;
+use unicode_normalization::char::is_combining_mark;
 
 use crate::{FieldAnswer, FieldValue};
+
+/// A form folded for comparison only: capitals, accents and punctuation set aside, as
+/// iwac-ai-pipelines folds names before matching them, so `Traoré, Moussa` and `traore moussa`
+/// fold alike. The dictionary offers two forms with one key as possibly the same, and agreement
+/// between set-ups counts them as the same item; neither ever changes a result on that account.
+pub fn folded(form: &str) -> String {
+    let plain: String = form
+        .nfd()
+        .filter(|c| !is_combining_mark(*c))
+        .flat_map(char::to_lowercase)
+        .map(|c| if c.is_alphanumeric() { c } else { ' ' })
+        .collect();
+    plain.split_whitespace().collect::<Vec<_>>().join(" ")
+}
 
 fn same(a: &str, b: &str) -> bool {
     a.trim().to_lowercase() == b.trim().to_lowercase()

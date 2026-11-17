@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
+	import JobAgreement from './JobAgreement.svelte';
 	import JobFacts from './JobFacts.svelte';
 	import JobFiles from './JobFiles.svelte';
 	import JobOutputs from './JobOutputs.svelte';
@@ -9,6 +10,7 @@
 	import type { Job } from '#lib/bindings/Job.js';
 	import type { DerivedState } from '#lib/bindings/DerivedState.js';
 	import type { JobScores } from '#lib/bindings/JobScores.js';
+	import type { JobAgreement as Agreement } from '#lib/bindings/JobAgreement.js';
 	import type { JobProgress } from '#lib/bindings/JobProgress.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
@@ -52,6 +54,8 @@
 	let draftName = $state<string | null>(null);
 	/** Error rates against the pages reviewed so far, for tasks that produce text. */
 	let scores = $state<JobScores | null>(null);
+	/** For an analysis comparing set-ups, how far they agree over the whole job. */
+	let agreement = $state<Agreement | null>(null);
 	/** For an analysis of frozen text, whether that text was corrected since. */
 	let sourcesFrom = $state<DerivedState[]>([]);
 	/** The set-up whose text "Analyse this text" freezes, in a comparison. */
@@ -77,6 +81,10 @@
 		// Scores are an extra: the page stands without them.
 		if (job && rulesFor(app.rules, job.task).yields_text) {
 			scores = await api.jobScores(jobId).catch(() => null);
+		}
+		// Likewise an extra, and only where several set-ups answered an analysis.
+		if (job?.task === 'analysis' && job.setups.length > 1) {
+			agreement = await api.jobAgreement(jobId).catch(() => null);
 		}
 		if (job) textSetup = job.setups[0]?.id ?? '';
 		if (job?.sources.some((s) => s.derived_from)) {
@@ -295,6 +303,10 @@
 			{paging}
 			{scores}
 		/>
+
+		{#if agreement && agreement.fields.length > 0}
+			<JobAgreement {agreement} setups={job.setups} />
+		{/if}
 
 		{#if live?.preview}
 			<section aria-labelledby="preview-head" class="files">

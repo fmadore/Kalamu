@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use base64::Engine as _;
 use kalamu_core::{Correction, JobId, PageRegions, RowEdit, SetupId, SourceId, SpeakerNames};
-use kalamu_engine::{ComparisonReport, DiffSpan, JobScores, PieceAudio, PieceView};
+use kalamu_engine::{ComparisonReport, DiffSpan, JobAgreement, JobScores, PieceAudio, PieceView};
 use kalamu_media::OpenSource;
 use tauri::{AppHandle, Manager, State};
 
@@ -275,6 +275,14 @@ pub async fn compare_source(
 pub async fn job_scores(state: State<'_, AppState>, job_id: JobId) -> CmdResult<JobScores> {
     let engine = state.engine.clone();
     off_thread(move || Ok(engine.job_scores(job_id)?)).await
+}
+
+/// How far the set-ups of an analysis agree over the whole job, field by field: read off the
+/// window's thread, since it reads every piece's answer.
+#[tauri::command]
+pub async fn job_agreement(state: State<'_, AppState>, job_id: JobId) -> CmdResult<JobAgreement> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.job_agreement(job_id)?)).await
 }
 
 #[tauri::command]

@@ -30,6 +30,8 @@ export function mockView(): View | null {
 			return { name: 'allJobs' };
 		case 'jobs':
 			return { name: 'jobs', jobId: job.id };
+		case 'jobs-analysis':
+			return { name: 'jobs', jobId: analysisJob.id };
 		case 'review':
 			return { name: 'review', jobId: job.id, sourceId: source.id };
 		case 'review-audio':

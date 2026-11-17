@@ -1253,6 +1253,26 @@ export const en = {
 		parts: (n: number) => (n === 1 ? 'on 1 reviewed part' : `on ${n} reviewed parts`),
 		note: 'Counted against the pages you corrected or marked as reviewed, so errors you did not catch are not counted.'
 	},
+	agreement: {
+		title: 'Agreement between models',
+		intro:
+			'How often the models gave the same answers, field by field, over every document both answered. Their own answers are compared, before your corrections. Free-text fields are not counted.',
+		field: 'Field',
+		pair: 'Models',
+		measure: 'Measured by',
+		measures: { choice: 'Same choice', overlap: 'Items in common' },
+		agreement: 'Agreement',
+		kappa: 'Kappa',
+		compared: 'Answers compared',
+		pairOf: (a: string, b: string) => `${a} and ${b}`,
+		none: 'None yet',
+		notApplicable: 'Does not apply',
+		noKappa: 'Cannot be computed',
+		kappaNote:
+			'Kappa sets aside the agreement two models would reach by chance, given how often each gives each answer: 1 means they always agree, 0 no more often than chance, below 0 less often. When both gave every document the same answer, chance alone explains their agreement and kappa cannot be computed.',
+		overlapNote:
+			'For lists, the items both gave out of all the items either gave, ignoring capitals and accents, averaged over the documents; two empty lists count as agreeing.'
+	},
 	jobs: {
 		title: 'Jobs',
 		empty: 'No jobs yet. Start one from New job.',
@@ -1906,6 +1926,10 @@ export const en = {
 			errorRates: {
 				word: 'Character and word error rates (CER, WER)',
 				text: 'The share of characters, or of words, that a model got wrong compared with the ground truth: those added, left out or replaced, divided by the length of the correct text. A character error rate of 2% is about one character wrong in fifty. Kalamu counts them only on the pages you reviewed, so they show the errors you caught, not the ones you missed.'
+			},
+			agreement: {
+				word: 'Agreement between models (kappa)',
+				text: 'How often two models given the same documents gave the same answers to an analysis. For a choice from a list, Kalamu shows the share of documents where both chose the same value, and Cohen’s kappa, which sets aside the agreement expected by chance: two models that nearly always answer “Neutral” agree often without that saying much. A kappa of 1 is full agreement, 0 no better than chance. For a list of names or themes, it shows how many of the names either found both found. A job’s page shows it when the job compares models on an analysis; the answers compared are the models’ own, before your corrections.'
 			},
 			hallucination: {
 				word: 'Hallucination',

@@ -1355,6 +1355,26 @@ export const fr: Messages = {
 		parts: (n: number) => (n === 1 ? 'sur 1 partie relue' : `sur ${n} parties relues`),
 		note: 'Calculé sur les pages que vous avez corrigées ou marquées comme relues : les erreurs qui vous ont échappé ne sont pas comptées.'
 	},
+	agreement: {
+		title: 'Accord entre les modèles',
+		intro:
+			'La fréquence à laquelle les modèles ont donné les mêmes réponses, champ par champ, sur tous les documents que les deux ont traités. Ce sont leurs propres réponses qui sont comparées, avant vos corrections. Les champs de texte libre ne sont pas comptés.',
+		field: 'Champ',
+		pair: 'Modèles',
+		measure: 'Mesure',
+		measures: { choice: 'Même choix', overlap: 'Éléments en commun' },
+		agreement: 'Accord',
+		kappa: 'Kappa',
+		compared: 'Réponses comparées',
+		pairOf: (a: string, b: string) => `${a} et ${b}`,
+		none: 'Pas encore',
+		notApplicable: 'Sans objet',
+		noKappa: 'Ne peut pas être calculé',
+		kappaNote:
+			'Le kappa met de côté l’accord que deux modèles atteindraient par hasard, vu la fréquence à laquelle chacun donne chaque réponse : 1 veut dire qu’ils sont toujours d’accord, 0 pas plus souvent que le hasard, moins de 0 moins souvent. Quand les deux ont donné la même réponse à tous les documents, le hasard suffit à expliquer leur accord et le kappa ne peut pas être calculé.',
+		overlapNote:
+			'Pour les listes : les éléments donnés par les deux, sur tous les éléments donnés par l’un ou l’autre, sans tenir compte des majuscules ni des accents, en moyenne sur les documents ; deux listes vides comptent comme un accord.'
+	},
 	jobs: {
 		title: 'Traitements',
 		empty: 'Pas encore de traitement. Lancez-en un depuis Nouveau traitement.',
@@ -2009,6 +2029,10 @@ export const fr: Messages = {
 			errorRates: {
 				word: 'Taux d’erreur par caractère et par mot (CER, WER)',
 				text: 'La part des caractères, ou des mots, qu’un modèle a mal lus par rapport à la vérité terrain : ajoutés, omis ou remplacés, rapportés à la longueur du texte exact. Un taux d’erreur par caractère de 2 % correspond à environ un caractère erroné sur cinquante. Kalamu ne les calcule que sur les pages que vous avez relues : ils montrent les erreurs que vous avez repérées, pas celles qui vous ont échappé.'
+			},
+			agreement: {
+				word: 'Accord entre les modèles (kappa)',
+				text: 'La fréquence à laquelle deux modèles, sur les mêmes documents, ont donné les mêmes réponses à une analyse. Pour un choix dans une liste, Kalamu montre la part des documents où les deux ont choisi la même valeur, et le kappa de Cohen, qui met de côté l’accord dû au hasard : deux modèles qui répondent presque toujours « Neutre » sont souvent d’accord sans que cela dise grand-chose. Un kappa de 1 est un accord complet, 0 un accord qui ne fait pas mieux que le hasard. Pour une liste de noms ou de thèmes, Kalamu montre combien des noms trouvés par l’un ou l’autre l’ont été par les deux. La page d’un traitement le montre quand il compare des modèles sur une analyse ; ce sont les réponses des modèles eux-mêmes qui sont comparées, avant vos corrections.'
 			},
 			hallucination: {
 				word: 'Hallucination',

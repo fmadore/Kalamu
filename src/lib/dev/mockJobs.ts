@@ -4,6 +4,7 @@
 import type { Correction } from '../bindings/Correction.js';
 import type { FieldAnswer } from '../bindings/FieldAnswer.js';
 import type { Job } from '../bindings/Job.js';
+import type { JobAgreement } from '../bindings/JobAgreement.js';
 import type { JobSummary } from '../bindings/JobSummary.js';
 import type { PieceView } from '../bindings/PieceView.js';
 
@@ -433,6 +434,28 @@ export const analysisPieces: PieceView[] = analysisSetups.map((s, i) => ({
 	source_text: null,
 	truncated: false
 }));
+
+/** The agreement of the sample analysis's two set-ups over its one document, as `job_agreement`
+ * counts it from their answers above: the people and places they share out of those either
+ * found, and the tone, on which they differ (one document: no chance to set aside, so a kappa
+ * of 0). */
+export function analysisAgreement(): JobAgreement {
+	const [first, second] = analysisSetups.map((s) => s.id) as [string, string];
+	const pair = (agreement: number, kappa: number | null) => ({
+		first,
+		second,
+		pieces: 1,
+		agreement,
+		kappa
+	});
+	return {
+		fields: [
+			{ key: 'people', label: 'People', measure: 'overlap', pairs: [pair(1 / 3, null)] },
+			{ key: 'places', label: 'Places', measure: 'overlap', pairs: [pair(2 / 3, null)] },
+			{ key: 'tone', label: 'Tone', measure: 'choice', pairs: [pair(0, 0)] }
+		]
+	};
+}
 
 /** What `rename_listed` does to the sample: the name renamed (`to`) or taken out (`to` null) in
  * the field's corrected answer of each analysis set-up that lists it, a name already there not

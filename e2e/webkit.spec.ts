@@ -8,6 +8,7 @@ const VIEWS = [
 	'',
 	'new',
 	'jobs',
+	'jobs-analysis',
 	'all-jobs',
 	'settings',
 	'glossary',

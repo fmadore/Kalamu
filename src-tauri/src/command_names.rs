@@ -100,6 +100,7 @@ pub const COMMANDS: &[&str] = &[
     "export_source",
     "compare_source",
     "job_scores",
+    "job_agreement",
     "diff_texts",
     "list_projects",
     "create_project",
