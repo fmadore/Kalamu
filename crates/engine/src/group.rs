@@ -237,6 +237,7 @@ impl Engine {
                 &setup.options,
                 &spent,
                 stop,
+                None,
             )
             .await?;
         match called {

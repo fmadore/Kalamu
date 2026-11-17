@@ -340,8 +340,9 @@ pub(crate) fn build_job(
     settings: JobSettings,
     mut output: OutputSettings,
 ) -> Job {
-    // Formats the task does not write (from a pipeline of another task) are left out.
-    output.formats.retain(|f| task.formats().contains(f));
+    // Formats the task does not write (from a pipeline of another task) are left out, and
+    // subtitles of a translation whose text has no times (`Task::writes`).
+    output.formats.retain(|f| task.writes(*f, &sources));
     Job {
         id: JobId::new(),
         name,

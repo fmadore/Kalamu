@@ -6,6 +6,7 @@
 //! so re-running a folder, adding a set-up or resuming after a crash only pays for new work.
 
 mod agreement;
+mod aligned;
 mod attention;
 mod batch;
 mod compare;

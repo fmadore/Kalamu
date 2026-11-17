@@ -4,6 +4,7 @@
 //! cross into the front end derive [`ts_rs::TS`]; `cargo test` writes their TypeScript bindings.
 
 pub mod agreement;
+pub mod aligned;
 pub mod analysis;
 pub mod attention;
 pub mod batch;
@@ -114,7 +115,8 @@ mod interface_lists {
     /// The lists the interface would otherwise copy from Rust's enums and rules: the parts of a
     /// source description in order, every task in New job's order and those whose results are
     /// a text, the queue's reasons, the extensions of each kind of file and the kinds each task
-    /// reads (the file pickers), and the formats written only from a model that reports layout.
+    /// reads (the file pickers), the formats written only from a model that reports layout, and
+    /// those written only from text whose lines have times (subtitles).
     /// `cargo test` keeps `src/lib/coreLists.json` current, as it does `searchRules.json`; the
     /// interface imports it, so the two sides cannot drift.
     #[test]
@@ -134,6 +136,12 @@ mod interface_lists {
                 layout_formats.push(*format);
             }
         }
+        let mut timed_formats: Vec<ExportFormat> = Vec::new();
+        for format in Task::ALL.iter().flat_map(|t| t.formats()) {
+            if format.needs_times() && !timed_formats.contains(format) {
+                timed_formats.push(*format);
+            }
+        }
         let lists = serde_json::json!({
             "description_fields": crate::DescriptionField::ALL,
             "tasks": Task::ALL,
@@ -145,6 +153,7 @@ mod interface_lists {
             "extensions": extensions,
             "task_sources": task_sources,
             "layout_formats": layout_formats,
+            "timed_formats": timed_formats,
         });
         crate::test_support::write_interface_json("src/lib/coreLists.json", &lists)
     }

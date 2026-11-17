@@ -1084,6 +1084,8 @@ export const en = {
 		sample: (n: number) => `Only the first ${n} pages of each document`,
 		outputTitle: 'Results',
 		formats: 'Formats',
+		subtitlesNeedTimes:
+			'Subtitles (SRT, WebVTT) are offered for the translation of a transcript with times, sent here from its job with Use this text in a new job.',
 		besideSources: 'Next to the original files',
 		inFolder: 'In a folder',
 		chooseFolder: 'Choose…',

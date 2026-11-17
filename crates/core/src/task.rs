@@ -105,12 +105,27 @@ impl Task {
         use ExportFormat::*;
         match self {
             Self::TextExtraction => &[Txt, Markdown, Docx, Json, Csv, SearchablePdf, Alto],
-            Self::AudioTranscription => &[Txt, Markdown, Docx, Srt, Vtt, Json, Csv],
-            Self::Analysis | Self::TextCorrection | Self::Translation => {
-                &[Txt, Markdown, Docx, Json, Csv]
+            // A translation writes subtitles of a transcript whose lines kept their times
+            // (`aligned`); of any other text, it does not ([`Task::writes`]).
+            Self::AudioTranscription | Self::Translation => {
+                &[Txt, Markdown, Docx, Srt, Vtt, Json, Csv]
             }
+            Self::Analysis | Self::TextCorrection => &[Txt, Markdown, Docx, Json, Csv],
             Self::Contents => &[Markdown, Docx, Csv, Txt, Json],
         }
+    }
+
+    /// Whether a job of this task over these sources writes `format`: one of the task's formats,
+    /// and, for a translation, subtitles only when a source is a transcript frozen with its
+    /// times (`DerivedFrom::timed`), whose lines the translation keeps. A translation of any
+    /// other text, or made before lines were kept, has no times to give a cue.
+    pub fn writes(self, format: ExportFormat, sources: &[crate::SourceFile]) -> bool {
+        self.formats().contains(&format)
+            && (self != Self::Translation
+                || !format.needs_times()
+                || sources
+                    .iter()
+                    .any(|s| s.derived_from.as_ref().is_some_and(|d| d.timed)))
     }
 
     /// Whether the job's language is the one the model answers in, one only, rather than the
@@ -215,7 +230,14 @@ mod tests {
         assert_eq!(t.as_str(), "translation");
         assert_eq!(t.request_task(), Task::Analysis);
         assert_eq!(t.source_kinds(), c.source_kinds());
-        assert_eq!(t.formats(), c.formats());
+        // A correction's formats, and subtitles of a transcript that kept its times.
+        assert!(c.formats().iter().all(|f| t.formats().contains(f)));
+        assert!(
+            t.formats()
+                .iter()
+                .all(|f| c.formats().contains(f) || f.needs_times())
+        );
+        assert!(t.formats().contains(&ExportFormat::Vtt));
         assert!(t.yields_text() && t.rewrites_text() && t.takes_samples());
         assert!(t.reads_text_layer() && !t.splits_spreads() && !t.groups_pages());
         assert!(t.answers_in_language() && !c.answers_in_language());
@@ -225,5 +247,39 @@ mod tests {
         assert!(!t.reads(&["image/png".to_string()]));
         // Offered right after a correction.
         assert_eq!(Task::ALL[2], t);
+    }
+
+    #[test]
+    fn a_translation_writes_subtitles_only_of_a_transcript_that_kept_its_times() {
+        let mut text: crate::SourceFile = serde_json::from_value(serde_json::json!({
+            "id": crate::SourceId::new(),
+            "path": "entretien.txt",
+            "file_name": "entretien.txt",
+            "sha256": "0f",
+            "size_bytes": 10,
+            "modified_ms": null,
+            "kind": "text",
+            "page_count": null,
+            "duration_ms": null,
+            "split_spreads": false,
+            "even_out_volume": false,
+            "title": null,
+        }))
+        .unwrap_or_else(|e| panic!("{e}"));
+        let srt = ExportFormat::Srt;
+        assert!(Task::AudioTranscription.writes(srt, &[]));
+        assert!(!Task::Analysis.writes(srt, std::slice::from_ref(&text)));
+        assert!(!Task::Translation.writes(srt, std::slice::from_ref(&text)));
+        assert!(Task::Translation.writes(ExportFormat::Txt, std::slice::from_ref(&text)));
+        text.derived_from = Some(crate::DerivedFrom {
+            snapshot_id: "s".into(),
+            job_id: crate::JobId::new(),
+            setup_id: crate::SetupId::new(),
+            source_id: crate::SourceId::new(),
+            original_path: "entretien.wav".into(),
+            unit: None,
+            timed: true,
+        });
+        assert!(Task::Translation.writes(ExportFormat::Vtt, &[text]));
     }
 }

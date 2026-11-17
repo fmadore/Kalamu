@@ -344,6 +344,7 @@ impl Engine {
                     .collect(),
                 missing: Vec::new(),
                 created_at: Timestamp::now(),
+                lines: Vec::new(),
             };
             self.store.put_snapshot(&snapshot)?;
             out.push(SourceFile {
@@ -369,6 +370,7 @@ impl Engine {
                     source_id: unit.source_id,
                     original_path: source.path.clone(),
                     unit: Some(FrozenUnit::from(&unit)),
+                    timed: false,
                 }),
                 pages: Vec::new(),
             });

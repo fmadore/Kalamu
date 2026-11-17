@@ -17,6 +17,7 @@ import type { Pipeline } from './bindings/Pipeline.js';
 import type { Preset } from './bindings/Preset.js';
 import type { Refused } from './bindings/Refused.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
+import type { SourceFile } from './bindings/SourceFile.js';
 import type { Task } from './bindings/Task.js';
 import type { TaskRules } from './bindings/TaskRules.js';
 import lists from './coreLists.json';
@@ -133,13 +134,33 @@ export function documentExtensions(): string[] {
 	return [...new Set((lists.tasks as Task[]).flatMap(taskExtensions))];
 }
 
+/** Subtitles: written only from text whose lines have times, as `ExportFormat::needs_times`
+ * says (written by `cargo test`). */
+export const TIMED_FORMATS = lists.timed_formats as ExportFormat[];
+
+/** Whether a translation of these sources keeps a transcript's times, as `Task::writes` asks:
+ * a source is a transcript sent on with its timed lines. */
+export function keepsTimes(rule: TaskRules, sources: SourceFile[]): boolean {
+	return rule.task !== 'translation' || sources.some((s) => s.derived_from?.timed === true);
+}
+
 /**
  * The formats to offer: a searchable PDF and ALTO only when a chosen model reports where text
- * sits on the page (Tesseract, Mistral OCR).
+ * sits on the page (Tesseract, Mistral OCR), and a translation's subtitles only when it reads a
+ * transcript that kept its times. Without `sources` (a pipeline, whose texts come later) the
+ * subtitles stay, and the engine leaves them out of a job whose text has no times.
  */
-export function offeredFormats(catalog: Catalog, rule: TaskRules, drafts: Draft[]): ExportFormat[] {
+export function offeredFormats(
+	catalog: Catalog,
+	rule: TaskRules,
+	drafts: Draft[],
+	sources?: SourceFile[]
+): ExportFormat[] {
 	const layout = drafts.some((d) => modelInfo(catalog, d)?.layout === true);
-	return rule.formats.filter((f) => !LAYOUT_FORMATS.includes(f) || layout);
+	const times = sources === undefined || keepsTimes(rule, sources);
+	return rule.formats.filter(
+		(f) => (!LAYOUT_FORMATS.includes(f) || layout) && (!TIMED_FORMATS.includes(f) || times)
+	);
 }
 
 /** Whether a mode reads a kind of source: YouTube links in the YouTube mode, files only in

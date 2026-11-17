@@ -35,6 +35,7 @@ mod records;
 mod regions;
 mod snapshot;
 mod sources;
+mod subtitles;
 mod workflow;
 
 /// Answers with the page label; can be told to fail some pages a number of times.
@@ -1871,7 +1872,7 @@ async fn a_recording_planned_in_part_is_planned_again_on_resume() {
         let (engine, job, source, opened) = (&f.engine, &job, &source, &opened);
         async move {
             engine
-                .plan(job, source, opened, &existing)
+                .plan(job, source, opened, &existing, None)
                 .await
                 .unwrap_or_else(|e| panic!("{e}"))
                 .unwrap_or_else(|e| panic!("{e}"))
@@ -1893,7 +1894,7 @@ async fn a_recording_planned_in_part_is_planned_again_on_resume() {
     let pieces = vec![segment(0, 0, 400), segment(1, 400, 1_000)];
     let work = f
         .engine
-        .record_pieces(&job, &source, &pieces, &crate::plan::Existing::new())
+        .record_pieces(&job, &source, &pieces, &crate::plan::Existing::new(), None)
         .unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(work.len(), 2);
     let stored = f.store.pieces(job.id).unwrap_or_default();

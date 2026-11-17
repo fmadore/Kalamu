@@ -61,6 +61,7 @@ impl Engine {
         let mut first_read: Option<Timestamp> = None;
         let (mut corrected, mut reviewed, mut truncated) = (Vec::new(), Vec::new(), Vec::new());
         let (mut failed, mut cut_by_filter) = (Vec::new(), Vec::new());
+        let mut lines_changed = Vec::new();
         for state in &states {
             // A piece that failed after its retries is marked in its place, so the rest of the
             // document still reaches the researcher (a table of contents has only its entries).
@@ -147,9 +148,19 @@ impl Engine {
             if is_reviewed {
                 reviewed.push(number);
             }
-            // A correction replaces the text; the model's timings no longer match it.
-            let segments = if corrected_text.is_some() {
-                Vec::new()
+            // A correction replaces the text; the model's timings no longer match it. A
+            // translated transcript's lines keep theirs while the correction keeps one
+            // paragraph per line; otherwise its times are lost, and said to be.
+            let segments = if let Some(text) = &corrected_text {
+                if job.task == Task::Translation && !result.output.segments.is_empty() {
+                    let lines = rename_segments(&result.output.segments, speaker_names);
+                    kalamu_core::aligned::as_corrected(&lines, text).unwrap_or_else(|_| {
+                        lines_changed.push(number);
+                        Vec::new()
+                    })
+                } else {
+                    Vec::new()
+                }
             } else {
                 let previous_end = parts.last().and_then(|p: &ExportPart| match p.piece {
                     PieceRef::Segment { end_ms, .. } => Some(end_ms),
@@ -260,6 +271,7 @@ impl Engine {
             truncated,
             cut_by_filter,
             failed,
+            lines_changed,
             preprocessing,
             renamed_speakers: renamed_labels(speaker_names),
             usage,

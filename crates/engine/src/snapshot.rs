@@ -7,6 +7,11 @@
 //! the snapshot's hash, so a corrected text is analysed again and an unchanged one is not, and
 //! a correction made afterwards never changes what an earlier analysis read; it only marks it
 //! as out of date.
+//!
+//! A transcript whose every part read has its times is frozen with its timed lines too
+//! (`Snapshot::lines`, `DerivedFrom::timed`), for a translation that keeps them
+//! ([`crate::aligned`]). The text itself, and so every cache key made from it, is the same as
+//! without them.
 
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
@@ -43,15 +48,26 @@ pub struct DerivedState {
     pub freshness: Freshness,
 }
 
+/// A result's corrected text as a snapshot keeps it.
+struct Frozen {
+    text: String,
+    parts: Vec<kalamu_core::SnapshotPart>,
+    missing: Vec<u32>,
+    task: Task,
+    /// A transcript's timed lines, for a translation that keeps them; empty for other text.
+    lines: Vec<kalamu_core::Segment>,
+}
+
 impl Engine {
-    /// The corrected view of a source under a set-up as a snapshot's text, its parts, and the
-    /// pieces not read (numbered from 1), failed or still to do.
+    /// The corrected view of a source under a set-up as a snapshot's text, its parts, the
+    /// pieces not read (numbered from 1), failed or still to do, and a transcript's timed lines
+    /// when every part read has them.
     fn frozen_text(
         &self,
         job: &Job,
         setup_id: SetupId,
         source_id: SourceId,
-    ) -> Result<(String, Vec<kalamu_core::SnapshotPart>, Vec<u32>, Task), EngineError> {
+    ) -> Result<Frozen, EngineError> {
         if !job.task.yields_text() {
             return Err(EngineError::NotText);
         }
@@ -75,7 +91,13 @@ impl Engine {
             .filter(|p| !p.status.is_finished() || p.status == PieceStatus::Failed)
             .map(|p| p.index + 1)
             .collect();
-        Ok((text, parts, missing, job.task))
+        Ok(Frozen {
+            text,
+            parts,
+            missing,
+            task: job.task,
+            lines: kalamu_core::aligned::lines_of(job.task, &doc.parts).unwrap_or_default(),
+        })
     }
 
     /// Freezes the corrected text of every source of a job under one set-up, for a later job
@@ -108,7 +130,14 @@ impl Engine {
             .iter()
             .filter(|s| only.is_none_or(|id| s.id == id))
         {
-            let (text, parts, missing, task) = self.frozen_text(&job, setup_id, source.id)?;
+            let Frozen {
+                text,
+                parts,
+                missing,
+                task,
+                lines,
+            } = self.frozen_text(&job, setup_id, source.id)?;
+            let timed = !lines.is_empty();
             if parts.is_empty() || text.trim().is_empty() {
                 continue;
             }
@@ -131,6 +160,7 @@ impl Engine {
                 parts,
                 missing,
                 created_at: Timestamp::now(),
+                lines,
             };
             self.store.put_snapshot(&snapshot)?;
             let stem = crate::source_stem(&source.file_name, &source.file_name);
@@ -154,6 +184,7 @@ impl Engine {
                     source_id: source.id,
                     original_path: source.path.clone(),
                     unit: None,
+                    timed,
                 }),
                 pages: Vec::new(),
             });
@@ -237,7 +268,7 @@ impl Engine {
                 None => Err(EngineError::Store(kalamu_core::StoreError::NotFound)),
             };
             let freshness = match frozen {
-                Ok((text, ..)) => {
+                Ok(Frozen { text, .. }) => {
                     if kalamu_core::fingerprint::sha256_hex(text.as_bytes()) == source.sha256 {
                         Freshness::Current
                     } else {

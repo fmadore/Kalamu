@@ -337,6 +337,25 @@ test('New job says why Start waits for the language to translate into', async ({
 	await expect(start).toHaveAccessibleDescription('Choose the language to translate into.');
 });
 
+test('New job offers a translation of text without times no subtitles, and says why', async ({
+	page
+}) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Translate a text/ }).click();
+	await main.getByRole('button', { name: 'Add files' }).click();
+	const formats = main.getByRole('group', { name: /^Formats/ });
+	await expect(formats.getByRole('checkbox', { name: 'Word (.docx)' })).toBeVisible();
+	await expect(formats.getByRole('checkbox', { name: /^Subtitles/ })).toHaveCount(0);
+	await expect(formats).toContainText(
+		'Subtitles (SRT, WebVTT) are offered for the translation of a transcript with times'
+	);
+	// A transcription has its own times: no such note.
+	await main.getByRole('button', { name: /^Transcribe audio/ }).click();
+	await expect(main.getByRole('checkbox', { name: 'Subtitles (.srt)' })).toBeVisible();
+	await expect(main.getByText('are offered for the translation of a transcript')).toHaveCount(0);
+});
+
 test('the language box opens its list, moves through it with the arrows and takes the first found with Enter', async ({
 	page
 }) => {

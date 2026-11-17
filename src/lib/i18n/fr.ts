@@ -1192,6 +1192,8 @@ export const fr: Messages = {
 		sample: (n: number) => `Seulement les ${n} premières pages de chaque document`,
 		outputTitle: 'Résultats',
 		formats: 'Formats',
+		subtitlesNeedTimes:
+			'Les sous-titres (SRT, WebVTT) sont proposés pour la traduction d’une transcription minutée, envoyée ici depuis son traitement avec Utiliser ce texte dans un nouveau traitement.',
 		besideSources: 'À côté des fichiers originaux',
 		inFolder: 'Dans un dossier',
 		chooseFolder: 'Choisir…',

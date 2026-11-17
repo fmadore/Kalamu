@@ -116,7 +116,20 @@ impl Engine {
                     continue;
                 }
             };
-            let pieces = match self.plan(&job, source, &opened, &existing).await? {
+            // A translation of a transcript that kept its times reads its lines.
+            let lines = match self.timed_lines(&job, source) {
+                Ok(lines) => lines,
+                Err(error) => {
+                    failed = true;
+                    unread.insert(source.id);
+                    self.source_failed(&job, source, &existing, &error)?;
+                    continue;
+                }
+            };
+            let pieces = match self
+                .plan(&job, source, &opened, &existing, lines.as_deref())
+                .await?
+            {
                 Ok(pieces) => pieces,
                 // Paused or cancelled while a recording's pauses were found: nothing is
                 // planned, and the job ends as asked.
@@ -134,11 +147,13 @@ impl Engine {
                 pieces: pieces.len() as u32,
             });
 
-            let work = self.record_pieces(&job, source, &pieces, &existing)?;
+            let work = self.record_pieces(&job, source, &pieces, &existing, lines.as_deref())?;
 
+            // Timed lines are read back against the lines each passage sent, which a batch's
+            // collection does not do: they are sent at once, in economy mode too.
             let (to_batch, work): (Vec<_>, Vec<_>) = work
                 .into_iter()
-                .partition(|(setup, _, _)| batched.contains(&setup.id));
+                .partition(|(setup, _, _)| batched.contains(&setup.id) && lines.is_none());
             for (setup, state, key) in to_batch {
                 if stop_requested(&control).is_some() {
                     break;
@@ -175,16 +190,25 @@ impl Engine {
                         break;
                     };
                     let engine = self.clone();
-                    let (job, source, opened, spent, stop) = (
+                    let (job, source, opened, spent, stop, lines) = (
                         job.clone(),
                         source.clone(),
                         opened.clone(),
                         spent.clone(),
                         stop.clone(),
+                        lines.clone(),
                     );
                     in_flight.push(tokio::spawn(async move {
                         match unit {
                             Unit::One((setup, state, key)) => {
+                                let stem = crate::source_stem(&source.file_name, "page");
+                                let input = match lines
+                                    .as_ref()
+                                    .and_then(|l| l.passage(&state.piece, &stem))
+                                {
+                                    Some(passage) => Input::Lines(passage),
+                                    None => Input::Open(opened),
+                                };
                                 engine
                                     .process_piece(
                                         &job,
@@ -192,7 +216,7 @@ impl Engine {
                                         setup.step(),
                                         state,
                                         key,
-                                        Input::Open(opened),
+                                        input,
                                         spent,
                                         &stop,
                                     )

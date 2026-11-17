@@ -101,6 +101,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         truncated: vec![],
         cut_by_filter: vec![],
         failed: vec![],
+        lines_changed: vec![],
         preprocessing: vec![],
         renamed_speakers: vec![],
         usage: Usage::default(),
@@ -417,6 +418,65 @@ fn translated() -> ExportDocument {
     )
 }
 
+/// The interview's transcript translated line by line (#167): each passage's lines keep the
+/// times and speakers of the lines they translate, on the recording's clock; the second passage
+/// was corrected in review, one paragraph per line, so its lines carry the corrected words.
+fn translated_interview() -> ExportDocument {
+    let line = |start_ms: u64, end_ms: u64, speaker: &str, text: &str| Segment {
+        start_ms,
+        end_ms,
+        speaker: Some(speaker.into()),
+        text: text.into(),
+    };
+    let part = |number: u32, lines: Vec<Segment>, corrected: bool| ExportPart {
+        piece: kalamu_core::PieceRef::Passage { number },
+        text: kalamu_core::aligned::text(&lines),
+        segments: lines,
+        corrected,
+        reviewed: corrected,
+        fields: vec![],
+        regions: vec![],
+        failed: None,
+        drawn_dpi: None,
+    };
+    let mut doc = document(
+        Task::Translation,
+        source("entretien.txt", InputKind::Text),
+        vec![
+            part(
+                1,
+                vec![
+                    line(1_000, 5_000, "Speaker 1", "Hello, thank you for having us."),
+                    line(5_500, 9_000, "Speaker 2", "You are welcome."),
+                ],
+                false,
+            ),
+            part(
+                2,
+                vec![
+                    line(
+                        1_202_000,
+                        1_206_000,
+                        "Speaker 1",
+                        "Let us talk about the madrasa.",
+                    ),
+                    line(
+                        1_206_000,
+                        1_210_000,
+                        "Speaker 2",
+                        "It opened in 1962, after the community had gathered the money for its \
+                         first classrooms over several years.",
+                    ),
+                ],
+                true,
+            ),
+        ],
+    );
+    doc.provenance.corrected = vec![2];
+    doc.provenance.reviewed = vec![2];
+    doc
+}
+
 /// The letter read from three photographs made one document (#52): written as one result,
 /// page by page as a PDF's, its provenance recording each page's file in the order read.
 fn photographed_letter() -> ExportDocument {
@@ -548,6 +608,53 @@ fn subtitles_need_timestamps() {
     doc.task = Task::AudioTranscription;
     let srt = exporter(ExportFormat::Srt).map(|e| e.export(&doc));
     assert!(matches!(srt, Some(Err(_))));
+}
+
+/// A translated transcript's subtitles keep the times and speakers of the lines they translate,
+/// the corrected passage's words included; its text keeps them too.
+#[test]
+fn a_translated_transcript_matches_golden_files() {
+    let doc = translated_interview();
+    check("translated-interview.srt", &run(ExportFormat::Srt, &doc));
+    check("translated-interview.vtt", &run(ExportFormat::Vtt, &doc));
+    check("translated-interview.txt", &run(ExportFormat::Txt, &doc));
+    check("translated-interview.json", &run(ExportFormat::Json, &doc));
+    let srt = String::from_utf8(run(ExportFormat::Srt, &doc)).unwrap_or_default();
+    assert!(
+        srt.contains("00:20:02,000 --> 00:20:06,000\nSpeaker 1: Let us talk about the madrasa."),
+        "{srt}"
+    );
+}
+
+#[test]
+fn a_translation_without_times_or_whose_correction_changed_its_lines_has_no_subtitles() {
+    let refusal = |doc: &ExportDocument, format: ExportFormat| {
+        exporter(format)
+            .map(|e| e.export(doc))
+            .and_then(Result::err)
+            .map(|e| e.to_string())
+            .unwrap_or_default()
+    };
+    // Made from a text without times, or before lines were kept: its markers are not read.
+    let old = translated();
+    for format in [ExportFormat::Srt, ExportFormat::Vtt] {
+        assert!(refusal(&old, format).contains("no times"), "{format:?}");
+    }
+    // A passage whose correction joined two lines: refused, never shifted.
+    let mut joined = translated_interview();
+    joined.parts[1].segments.clear();
+    joined.parts[1].text = "Let us talk about the madrasa. It opened in 1962.".into();
+    joined.provenance.lines_changed = vec![2];
+    let message = refusal(&joined, ExportFormat::Srt);
+    assert!(
+        message.contains("passage 2 no longer has one paragraph per line"),
+        "{message}"
+    );
+    joined.provenance.lines_changed = vec![1, 2];
+    assert!(refusal(&joined, ExportFormat::Vtt).contains("passages 1, 2 no longer have"));
+    // Its other formats are written all the same, the corrected text as left.
+    let txt = String::from_utf8(run(ExportFormat::Txt, &joined)).unwrap_or_default();
+    assert!(txt.contains("madrasa. It opened in 1962."), "{txt}");
 }
 
 #[test]

@@ -17,4 +17,10 @@ original_path: string,
  * For a document unit's pages (#50), cut out of the original as a PDF of their own: the
  * unit as it was then. The set-up and source above are its table of contents'.
  */
-unit?: FrozenUnit, };
+unit?: FrozenUnit, 
+/**
+ * The snapshot kept the transcript's timed lines (`Snapshot::lines`), so a translation of
+ * it can write subtitles. False for any other text, and for sources frozen before lines
+ * were kept.
+ */
+timed?: boolean, };

@@ -21,6 +21,7 @@ import {
 	keepForm,
 	LAYOUT_FORMATS,
 	nameOfFile,
+	offeredFormats,
 	pagesPerCallOf,
 	readersOf,
 	readsKind,
@@ -30,6 +31,7 @@ import {
 	suggestionFits,
 	taskExtensions,
 	taskOf,
+	TIMED_FORMATS,
 	togetherOf,
 	type NewJobForm
 } from './newJob.js';
@@ -325,5 +327,24 @@ describe('the files each task’s picker offers', () => {
 
 	it('names the formats that need a model reporting layout, from Rust', () => {
 		expect(LAYOUT_FORMATS).toEqual(['searchable_pdf', 'alto']);
+		expect(TIMED_FORMATS).toEqual(['srt', 'vtt']);
+	});
+
+	it('offers a translation subtitles only of a transcript sent on with its times', () => {
+		const text = { file_name: 'lettre.txt', kind: 'text' } as SourceFile;
+		const timed = {
+			file_name: 'entretien.txt',
+			kind: 'text',
+			derived_from: { timed: true }
+		} as SourceFile;
+		const offered = (sources?: SourceFile[]) =>
+			offeredFormats(catalog, rule('translation'), [], sources);
+		expect(offered([text])).not.toContain('srt');
+		expect(offered([text])).toContain('docx');
+		expect(offered([text, timed])).toEqual(expect.arrayContaining(['srt', 'vtt']));
+		// A pipeline's texts come later: the engine leaves out what has no times.
+		expect(offered()).toContain('vtt');
+		// A transcription always has its own.
+		expect(offeredFormats(catalog, rule('audio_transcription'), [], [])).toContain('srt');
 	});
 });
