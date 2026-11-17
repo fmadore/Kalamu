@@ -27,6 +27,7 @@ export const TERMS: Term[] = [
 	'economy',
 	'groundTruth',
 	'errorRates',
+	'agreement',
 	'hallucination',
 	'provenance',
 	'machineReadable'
@@ -44,11 +45,12 @@ export const SEE_ALSO: Partial<Record<Term, Term[]>> = {
 	prompt: ['pipeline', 'provenance'],
 	pipeline: ['workflow'],
 	workflow: ['pipeline', 'groundTruth'],
-	setup: ['errorRates', 'tier'],
+	setup: ['errorRates', 'agreement', 'tier'],
 	tokens: ['reasoning', 'economy'],
 	reasoning: ['tokens'],
 	groundTruth: ['errorRates'],
 	errorRates: ['groundTruth', 'hallucination'],
+	agreement: ['setup', 'errorRates'],
 	hallucination: ['groundTruth'],
 	provenance: ['pipeline', 'machineReadable']
 };

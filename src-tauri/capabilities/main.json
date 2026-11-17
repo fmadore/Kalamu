@@ -108,6 +108,7 @@
     "allow-export-source",
     "allow-compare-source",
     "allow-job-scores",
+    "allow-job-agreement",
     "allow-diff-texts",
     "allow-list-projects",
     "allow-create-project",

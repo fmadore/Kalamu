@@ -6,9 +6,10 @@
 	import Icon from './Icon.svelte';
 	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
 	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
+	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { messages } from '#lib/i18n/index.js';
-	import { type Mode, offeredFormats, rulesFor } from '#lib/newJob.js';
+	import { type Mode, keepsTimes, offeredFormats, rulesFor } from '#lib/newJob.js';
 	import type { Draft } from '#lib/newJobModels.js';
 	import { pickFolder } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
@@ -24,6 +25,7 @@
 		task,
 		drafts,
 		paged,
+		sources,
 		hasSources
 	}: {
 		/** Whether to run on the first pages only. */
@@ -37,11 +39,19 @@
 		drafts: Draft[];
 		/** The task writes text out page by page, so a sample applies. */
 		paged: boolean;
+		/** The sources as the job reads them: a translation writes subtitles of a transcript
+		 * sent on with its times only. */
+		sources: SourceFile[];
 		/** Files or links have been added. */
 		hasSources: boolean;
 	} = $props();
 	const m = messages();
 	const catalog = $derived(app.catalog!);
+	const rule = $derived(rulesFor(app.rules, task));
+	const offered = $derived(offeredFormats(catalog, rule, drafts, sources));
+	/** A translation of text without times: its subtitles are not offered, and the hint says
+	 * why. */
+	const untimed = $derived(task === 'translation' && !keepsTimes(rule, sources));
 
 	async function chooseDestination() {
 		const folder = await pickFolder();
@@ -73,7 +83,7 @@
 	<fieldset>
 		<legend class="label">{m.newJob.formats}<TermLink term="formats" /></legend>
 		<div class="row wrap">
-			{#each offeredFormats(catalog, rulesFor(app.rules, task), drafts) as f (f)}
+			{#each offered as f (f)}
 				<label class="inline">
 					<input
 						type="checkbox"
@@ -87,6 +97,9 @@
 				</label>
 			{/each}
 		</div>
+		{#if untimed}
+			<p class="muted">{m.newJob.subtitlesNeedTimes}</p>
+		{/if}
 	</fieldset>
 	{#if mode === 'youtube'}
 		<!-- A video has no folder of its own, so a folder must be chosen. -->

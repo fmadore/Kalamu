@@ -77,9 +77,10 @@ pub trait SearchIndex: Send + Sync {
     /// The jobs that have passages, so that those of deleted jobs can be forgotten.
     fn indexed_jobs(&self) -> Result<Vec<JobId>, StoreError>;
     fn forget_job(&self, job: JobId) -> Result<(), StoreError>;
-    /// Every passage whose folded text holds each of `terms`, every one folded and three
-    /// characters at least.
-    fn find(&self, terms: &[String]) -> Result<Vec<Passage>, StoreError>;
+    /// Every passage whose indexed text holds, for each group of `terms`, one of its terms at
+    /// least: the groups are all required, the terms of a group alternatives. Every term is in
+    /// the form the text is indexed in and three characters at least.
+    fn find(&self, terms: &[Vec<String>]) -> Result<Vec<Passage>, StoreError>;
     /// Empties the index, to be made again from the store.
     fn clear(&self) -> Result<(), StoreError>;
     fn size(&self) -> Result<IndexSize, StoreError>;

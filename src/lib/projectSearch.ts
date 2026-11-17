@@ -13,28 +13,112 @@ import { folded } from './search.js';
 import rules from './searchRules.json';
 import type { ReviewFind } from './state.svelte.js';
 
-/** The fewest letters a word searched for has, from Rust (`kalamu_search::MIN_QUERY`). */
+/** The fewest letters a word searched for has, from Rust (`kalamu_search::MIN_QUERY`): two,
+ * found as a word on its own; three or more are found anywhere, inside words too. */
 export const MIN_QUERY: number = rules.min_query;
 
 /** Quotes that make several words one term, as Rust reads them. */
 const QUOTES = /["“”«»]/;
+/** Punctuation set aside at either end of a word. */
+const PUNCTUATION = /^[!-/:-@[-`{-~]+|[!-/:-@[-`{-~]+$/g;
+/** Written in capitals between two words or phrases: either will do. Both languages' words are
+ * read whatever the interface's language, so a query means the same in each. */
+const OPERATORS: string[] = rules.operators;
+/** Scripts written without spaces between words, as ranges of code points: two of their letters
+ * are not a word on its own. */
+const UNSPACED: number[][] = rules.unspaced;
+const LETTER = /^[\p{Alphabetic}\p{N}]$/u;
+
+/** A letter or digit of a script written with spaces between words. */
+function spacedLetter(c: string): boolean {
+	const code = c.codePointAt(0) ?? 0;
+	return LETTER.test(c) && !UNSPACED.some(([a, b]) => code >= a && code <= b);
+}
+
+/** A word or words looked for, as `terms::Term`. */
+export interface Term {
+	/** As typed, which the review searches for when a match opens. */
+	typed: string;
+	needle: string;
+	/** Two letters, found only as a word on its own. */
+	word: boolean;
+}
+
+/** What a query looks for, as `terms::parse` reads it. */
+export interface ParsedQuery {
+	/** Every group is looked for; each holds one or more terms, any of which will do. */
+	groups: Term[][];
+	/** Words too short to look for, left out of the query. */
+	ignored: string[];
+}
 
 /**
- * Whether a query has a word long enough to search for, as `kalamu_search` parses it: the whole
- * phrase, or else each word or quoted run, punctuation at its ends set aside. Until it has, the
- * search waits rather than answering that the words are too short.
+ * The terms of a query as `mode` reads it, as `kalamu_search` does: for a phrase the words
+ * between operators, otherwise each word, words between quotes kept together and punctuation
+ * around a word set aside, OR or OU between two of them making them alternatives. A term that
+ * folds to two letters is a word on its own; one shorter, or of two characters that are not
+ * letters of a script written with spaces, is left out and named.
  */
-export function searchableQuery(query: string, mode: MatchMode): boolean {
-	const long = (typed: string) => [...folded(typed)].length >= MIN_QUERY;
-	if (mode === 'phrase') return long(query);
-	return query.split(QUOTES).some((chunk, i) =>
+export function parseQuery(query: string, mode: MatchMode): ParsedQuery {
+	type Token = { text: string; quoted: boolean };
+	const tokens = query.split(QUOTES).flatMap((chunk, i): Token[] =>
 		i % 2 === 1
-			? long(chunk)
+			? [{ text: chunk.split(/\s+/).filter(Boolean).join(' '), quoted: true }]
 			: chunk
 					.split(/\s+/)
-					.map((w) => w.replace(/^[!-/:-@[-`{-~]+|[!-/:-@[-`{-~]+$/g, ''))
-					.some(long)
+					.filter(Boolean)
+					.map((w) => ({ text: mode === 'phrase' ? w : w.replace(PUNCTUATION, ''), quoted: false }))
 	);
+	const operator = (t: Token) => !t.quoted && OPERATORS.includes(t.text);
+	const written: string[][] = [];
+	if (mode === 'phrase') {
+		const alternatives: string[] = [];
+		let run: string[] = [];
+		for (const t of tokens) {
+			if (operator(t)) {
+				alternatives.push(run.join(' '));
+				run = [];
+			} else if (t.text) run.push(t.text);
+		}
+		alternatives.push(run.join(' '));
+		written.push(alternatives);
+	} else {
+		let or = false;
+		for (const t of tokens.filter((t) => t.text)) {
+			if (operator(t)) or = written.length > 0;
+			else {
+				if (or) written[written.length - 1].push(t.text);
+				else written.push([t.text]);
+				or = false;
+			}
+		}
+	}
+	const out: ParsedQuery = { groups: [], ignored: [] };
+	const seen = new Set<string>();
+	for (const alternatives of written) {
+		const group: Term[] = [];
+		for (const typed of alternatives.filter(Boolean)) {
+			const needle = folded(typed);
+			const chars = [...needle];
+			const word = chars.length === 2 && chars.every(spacedLetter);
+			if (chars.length < 3 && !word) {
+				if (!out.ignored.includes(typed)) out.ignored.push(typed);
+			} else if (!seen.has(needle)) {
+				seen.add(needle);
+				group.push({ typed, needle, word });
+			}
+		}
+		if (group.length > 0) out.groups.push(group);
+	}
+	return out;
+}
+
+/**
+ * Whether a query has a word long enough to search for, as `kalamu_search` parses it. Until it
+ * has, the search waits rather than answering that the words are too short.
+ */
+export function searchableQuery(query: string, mode: MatchMode): boolean {
+	return parseQuery(query, mode).groups.length > 0;
 }
 
 /** How many words may stand between words looked for near each other, unless changed. */

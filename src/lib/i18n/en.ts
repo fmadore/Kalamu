@@ -401,7 +401,7 @@ export const en = {
 		query: 'Words to find',
 		placeholder: 'A name, an organisation, a phrase…',
 		go: 'Search',
-		tooShort: 'Type three letters at least.',
+		tooShort: 'Type two letters at least.',
 		mode: 'Find',
 		modes: {
 			phrase: 'The exact phrase',
@@ -411,7 +411,9 @@ export const en = {
 		near: 'At most',
 		nearWords: 'words apart',
 		quotesHint:
-			'Each word is looked for in the same page or answer. Put words that belong together between quotes: “mission catholique” Koupéla.',
+			'Each word is looked for in the same page or answer. Put words that belong together between quotes, and OR in capitals between two words when either will do: “mission catholique” Koupéla OR Ouagadougou.',
+		orHint:
+			'Write OR in capitals between two phrases to find either: mission catholique OR mission protestante.',
 		ignored: (words: string) => `Left out, too short to look for: ${words}.`,
 		preparing: (done: number, total: number) =>
 			`Preparing the text for searching: ${done} of ${total === 1 ? '1 page or part' : `${total} pages or parts`}…`,
@@ -1082,6 +1084,8 @@ export const en = {
 		sample: (n: number) => `Only the first ${n} pages of each document`,
 		outputTitle: 'Results',
 		formats: 'Formats',
+		subtitlesNeedTimes:
+			'Subtitles (SRT, WebVTT) are offered for the translation of a transcript with times, sent here from its job with Use this text in a new job.',
 		besideSources: 'Next to the original files',
 		inFolder: 'In a folder',
 		chooseFolder: 'Choose…',
@@ -1252,6 +1256,26 @@ export const en = {
 		pages: (n: number) => (n === 1 ? 'on 1 reviewed page' : `on ${n} reviewed pages`),
 		parts: (n: number) => (n === 1 ? 'on 1 reviewed part' : `on ${n} reviewed parts`),
 		note: 'Counted against the pages you corrected or marked as reviewed, so errors you did not catch are not counted.'
+	},
+	agreement: {
+		title: 'Agreement between models',
+		intro:
+			'How often the models gave the same answers, field by field, over every document both answered. Their own answers are compared, before your corrections. Free-text fields are not counted.',
+		field: 'Field',
+		pair: 'Models',
+		measure: 'Measured by',
+		measures: { choice: 'Same choice', overlap: 'Items in common' },
+		agreement: 'Agreement',
+		kappa: 'Kappa',
+		compared: 'Answers compared',
+		pairOf: (a: string, b: string) => `${a} and ${b}`,
+		none: 'None yet',
+		notApplicable: 'Does not apply',
+		noKappa: 'Cannot be computed',
+		kappaNote:
+			'Kappa sets aside the agreement two models would reach by chance, given how often each gives each answer: 1 means they always agree, 0 no more often than chance, below 0 less often. When both gave every document the same answer, chance alone explains their agreement and kappa cannot be computed.',
+		overlapNote:
+			'For lists, the items both gave out of all the items either gave, ignoring capitals and accents, averaged over the documents; two empty lists count as agreeing.'
 	},
 	jobs: {
 		title: 'Jobs',
@@ -1907,6 +1931,10 @@ export const en = {
 				word: 'Character and word error rates (CER, WER)',
 				text: 'The share of characters, or of words, that a model got wrong compared with the ground truth: those added, left out or replaced, divided by the length of the correct text. A character error rate of 2% is about one character wrong in fifty. Kalamu counts them only on the pages you reviewed, so they show the errors you caught, not the ones you missed.'
 			},
+			agreement: {
+				word: 'Agreement between models (kappa)',
+				text: 'How often two models given the same documents gave the same answers to an analysis. For a choice from a list, Kalamu shows the share of documents where both chose the same value, and Cohen’s kappa, which sets aside the agreement expected by chance: two models that nearly always answer “Neutral” agree often without that saying much. A kappa of 1 is full agreement, 0 no better than chance. For a list of names or themes, it shows how many of the names either found both found. A job’s page shows it when the job compares models on an analysis; the answers compared are the models’ own, before your corrections.'
+			},
 			hallucination: {
 				word: 'Hallucination',
 				text: 'Text a model writes that is not in the source: a plausible word where the page is illegible, a sentence nobody spoke, a name an analysis supplies from elsewhere. Fluent output is no evidence of accuracy. Checking a sample against the source, as the review allows, is the safeguard.'
@@ -2064,7 +2092,7 @@ export const en = {
 		atStep: (n: number, sentence: string) => `Step ${n}: ${sentence}`
 	},
 	error: {
-		'search.too_short': 'Type a word of three letters at least.',
+		'search.too_short': 'Type a word of two letters at least.',
 		'search.stopped': 'The search was replaced by a newer one.',
 		'search.index':
 			'The search could not read its copy of your results’ text. Prepare the text again from the search; your results are not affected.',

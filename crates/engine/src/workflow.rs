@@ -92,6 +92,7 @@ pub(crate) fn as_text(source: &SourceFile) -> SourceFile {
             source_id: source.id,
             original_path: source.path.clone(),
             unit: None,
+            timed: false,
         }),
         pages: Vec::new(),
     }

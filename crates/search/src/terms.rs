@@ -1,5 +1,6 @@
 //! What a query looks for and where it stands in a passage: one literal phrase, every word
-//! anywhere in the same text, or every word within a few words of the others.
+//! anywhere in the same text, or every word within a few words of the others; and in each,
+//! words or phrases given as alternatives, any of which will do.
 //!
 //! Each match is also given as one of its words and which of their matches it is in its piece,
 //! so the review, opened on it, finds the same place with its own search for those words.
@@ -9,12 +10,17 @@ use std::rc::Rc;
 
 use kalamu_core::{Passage, PieceRef};
 
-use crate::fold::{MIN_QUERY, context, find, folded};
+use crate::fold::{context, fold, folded, index_term, is_word, long_enough, spots};
 use crate::{FieldRef, Hit, Mark, MatchMode};
 
 /// Marks that keep words together in a query that looks for each word: straight, curly and
 /// French quotes.
 const QUOTES: [char; 5] = ['"', '\u{201C}', '\u{201D}', '\u{AB}', '\u{BB}'];
+
+/// Written in capitals between two words or phrases, outside quotes: either will do. English's
+/// and French's are both read whatever the interface's language, so a query means the same in
+/// each; written in small letters, they are words like any other.
+pub(crate) const OPERATORS: [&str; 2] = ["OR", "OU"];
 
 /// One thing a query looks for: a word, or words that stand together.
 pub(crate) struct Term {
@@ -22,58 +28,128 @@ pub(crate) struct Term {
     pub typed: String,
     /// Folded, as it is matched.
     pub needle: Vec<char>,
+    /// A word of two letters, found only on its own.
+    pub word: bool,
+    /// The group of alternatives it belongs to.
+    pub group: usize,
 }
 
 pub(crate) struct Query {
+    /// Every term, group after group.
     pub terms: Vec<Term>,
+    /// How many groups: a match holds a term of each.
+    pub groups: usize,
     /// Words too short to look for, left out of the query.
     pub ignored: Vec<String>,
 }
 
 impl Query {
-    /// The terms as the index matches them.
-    pub fn folded(&self) -> Vec<String> {
-        self.terms
-            .iter()
-            .map(|t| t.needle.iter().collect())
-            .collect()
+    /// The terms as the index is asked for them, group by group.
+    pub fn index_terms(&self) -> Vec<Vec<String>> {
+        let mut out: Vec<Vec<String>> = vec![Vec::new(); self.groups];
+        for t in &self.terms {
+            out[t.group].push(index_term(&t.needle));
+        }
+        out
     }
 }
 
-/// The terms of a query as `mode` reads it: for a phrase the whole query, otherwise each word,
-/// words between quotes kept together and punctuation around a word set aside. A word that
-/// folds to fewer than three letters is left out and named; one written twice is looked for
-/// once.
-pub(crate) fn parse(query: &str, mode: MatchMode) -> Query {
-    let mut written: Vec<String> = Vec::new();
+/// A piece of a query: a word, or words between quotes.
+struct Token {
+    text: String,
+    quoted: bool,
+}
+
+impl Token {
+    fn operator(&self) -> bool {
+        !self.quoted && OPERATORS.contains(&self.text.as_str())
+    }
+}
+
+/// The words of a query, each group of alternatives as written: for a phrase, the words
+/// between operators, each run one alternative; otherwise each word or quoted run, punctuation
+/// around a word set aside, an operator between two of them putting the second beside the
+/// first. An operator with nothing on one side is left out.
+fn written(query: &str, mode: MatchMode) -> Vec<Vec<String>> {
+    let mut tokens = Vec::new();
+    for (i, chunk) in query.split(QUOTES).enumerate() {
+        if i % 2 == 1 {
+            tokens.push(Token {
+                text: chunk.split_whitespace().collect::<Vec<_>>().join(" "),
+                quoted: true,
+            });
+        } else {
+            tokens.extend(chunk.split_whitespace().map(|w| Token {
+                text: if mode == MatchMode::Phrase {
+                    w.to_string()
+                } else {
+                    w.trim_matches(|c: char| c.is_ascii_punctuation())
+                        .to_string()
+                },
+                quoted: false,
+            }));
+        }
+    }
+    let mut out: Vec<Vec<String>> = Vec::new();
     if mode == MatchMode::Phrase {
-        written.push(query.trim().to_string());
+        let mut alternatives = Vec::new();
+        let mut run: Vec<String> = Vec::new();
+        for t in tokens {
+            if t.operator() {
+                alternatives.push(run.join(" "));
+                run.clear();
+            } else if !t.text.is_empty() {
+                run.push(t.text);
+            }
+        }
+        alternatives.push(run.join(" "));
+        out.push(alternatives);
     } else {
-        for (i, chunk) in query.split(QUOTES).enumerate() {
-            if i % 2 == 1 {
-                written.push(chunk.split_whitespace().collect::<Vec<_>>().join(" "));
+        let mut or = false;
+        for t in tokens.into_iter().filter(|t| !t.text.is_empty()) {
+            if t.operator() {
+                or = !out.is_empty();
             } else {
-                written.extend(
-                    chunk
-                        .split_whitespace()
-                        .map(|w| w.trim_matches(|c: char| c.is_ascii_punctuation()))
-                        .map(str::to_string),
-                );
+                match out.last_mut() {
+                    Some(group) if or => group.push(t.text),
+                    _ => out.push(vec![t.text]),
+                }
+                or = false;
             }
         }
     }
+    out
+}
+
+/// The terms of a query as `mode` reads it ([`written`]). A term that folds to fewer than three
+/// characters and is not a word of two letters is left out and named; one written twice is
+/// looked for once, in the first group that has it; a group left with nothing is dropped.
+pub(crate) fn parse(query: &str, mode: MatchMode) -> Query {
     let mut out = Query {
         terms: Vec::new(),
+        groups: 0,
         ignored: Vec::new(),
     };
-    for typed in written.into_iter().filter(|w| !w.is_empty()) {
-        let needle: Vec<char> = folded(&typed).chars().collect();
-        if needle.len() < MIN_QUERY {
-            if !out.ignored.contains(&typed) {
-                out.ignored.push(typed);
+    for alternatives in written(query, mode) {
+        let mut any = false;
+        for typed in alternatives.into_iter().filter(|w| !w.is_empty()) {
+            let needle: Vec<char> = folded(&typed).chars().collect();
+            if !long_enough(&needle) {
+                if !out.ignored.contains(&typed) {
+                    out.ignored.push(typed);
+                }
+            } else if !out.terms.iter().any(|t| t.needle == needle) {
+                out.terms.push(Term {
+                    typed,
+                    word: is_word(&needle),
+                    needle,
+                    group: out.groups,
+                });
+                any = true;
             }
-        } else if !out.terms.iter().any(|t| t.needle == needle) {
-            out.terms.push(Term { typed, needle });
+        }
+        if any {
+            out.groups += 1;
         }
     }
     out
@@ -126,6 +202,7 @@ impl Found {
 /// One place a term stands in a part of a passage.
 struct Place {
     term: usize,
+    group: usize,
     /// Which match of its term it is in the piece, as the review counts them.
     nth: u32,
     span: (usize, usize),
@@ -148,18 +225,18 @@ fn word_numbers(text: &str) -> Vec<u32> {
         .collect()
 }
 
-/// Where every term stands with at most `near` words between the first and the last: the
-/// first such stretch to end, then the next after it, none overlapping. `places` are in
-/// reading order.
-fn clusters<'a>(text: &str, places: &'a [Place], terms: usize, near: u32) -> Vec<Vec<&'a Place>> {
+/// Where a term of every group stands with at most `near` words between the first and the
+/// last: the first such stretch to end, then the next after it, none overlapping. `places` are
+/// in reading order.
+fn clusters<'a>(text: &str, places: &'a [Place], groups: usize, near: u32) -> Vec<Vec<&'a Place>> {
     let words = word_numbers(text);
     let word = |at: usize| words.get(at).copied().unwrap_or_default();
-    let mut latest: Vec<Option<&Place>> = vec![None; terms];
+    let mut latest: Vec<Option<&Place>> = vec![None; groups];
     let mut out = Vec::new();
     for p in places {
-        latest[p.term] = Some(p);
+        latest[p.group] = Some(p);
         let chosen: Vec<&Place> = latest.iter().flatten().copied().collect();
-        if chosen.len() < terms {
+        if chosen.len() < groups {
             continue;
         }
         let Some(first) = chosen.iter().min_by_key(|q| q.span.0) else {
@@ -172,14 +249,15 @@ fn clusters<'a>(text: &str, places: &'a [Place], terms: usize, near: u32) -> Vec
             let mut chosen = chosen;
             chosen.sort_by_key(|q| (q.span.0, q.term));
             out.push(chosen);
-            latest = vec![None; terms];
+            latest = vec![None; groups];
         }
     }
     out
 }
 
 /// The matches of `query` in one passage, as `mode` finds them, within at most `near` words in
-/// [`MatchMode::Near`]. A match never runs from one part of the passage into the next.
+/// [`MatchMode::Near`]. A match never runs from one part of the passage into the next. Each
+/// part, and each of a recording's lines, is folded once for every term.
 pub(crate) fn hits(
     passage: &Passage,
     query: &Query,
@@ -193,33 +271,43 @@ pub(crate) fn hits(
     };
     let mut out = Vec::new();
     // Every term's matches are counted through the whole piece, those in parts that hold not
-    // every term too, as the review's search counts them.
+    // every group and those of a word of two letters inside a longer one too, as the review's
+    // search counts them.
     let mut nth = vec![0u32; query.terms.len()];
     for (p, part) in passage.parts.iter().enumerate() {
+        let hay = fold(&part.text);
+        let lines: Vec<_> = match start_ms {
+            Some(_) => part.lines.iter().map(|(at, t)| (*at, fold(t))).collect(),
+            None => Vec::new(),
+        };
         let mut places = Vec::new();
-        let mut every = true;
+        let mut held = vec![false; query.groups];
         for (t, term) in query.terms.iter().enumerate() {
-            let found = find(&part.text, &term.needle);
-            every &= !found.is_empty();
+            let found = spots(&hay, &term.needle);
             // A recording's match is tied to its line when the lines hold as many matches as
             // the text: the n-th match is then in the line holding the n-th match.
-            let lines: Vec<u64> = part
-                .lines
+            let at_lines: Vec<u64> = lines
                 .iter()
-                .flat_map(|(at, text)| find(text, &term.needle).into_iter().map(move |_| *at))
+                .flat_map(|(at, line)| spots(line, &term.needle).into_iter().map(move |_| *at))
                 .collect();
-            let timed = start_ms.is_some() && !lines.is_empty() && lines.len() == found.len();
-            for (i, span) in found.into_iter().enumerate() {
+            let timed = !at_lines.is_empty() && at_lines.len() == found.len();
+            for (i, spot) in found.into_iter().enumerate() {
+                let this = nth[t];
+                nth[t] += 1;
+                if term.word && !spot.alone {
+                    continue;
+                }
+                held[term.group] = true;
                 places.push(Place {
                     term: t,
-                    nth: nth[t],
-                    span,
-                    at_ms: timed.then(|| start_ms.unwrap_or_default() + lines[i]),
+                    group: term.group,
+                    nth: this,
+                    span: spot.span,
+                    at_ms: timed.then(|| start_ms.unwrap_or_default() + at_lines[i]),
                 });
-                nth[t] += 1;
             }
         }
-        if !every {
+        if !held.iter().all(|h| *h) {
             continue;
         }
         places.sort_by_key(|q| (q.span.0, q.term));
@@ -255,7 +343,7 @@ pub(crate) fn hits(
                 out.extend(places.iter().map(|q| found(q, q.span, vec![q.span])));
             }
             MatchMode::Near => {
-                for cluster in clusters(&part.text, &places, query.terms.len(), near) {
+                for cluster in clusters(&part.text, &places, query.groups, near) {
                     let (Some(first), Some(end)) =
                         (cluster.first(), cluster.iter().map(|q| q.span.1).max())
                     else {
@@ -271,177 +359,4 @@ pub(crate) fn hits(
 }
 
 #[cfg(test)]
-mod tests {
-    use kalamu_core::{JobId, PassageKey, PassagePart, SetupId, SourceId};
-
-    use super::*;
-
-    /// The shortest word searched for, with queries and whether each has a word long enough,
-    /// written for the interface, which waits for one before searching: `cargo test` keeps the
-    /// file current, as it does `taskRules.json`.
-    #[test]
-    fn export_query_rules_for_the_interface() -> Result<(), Box<dyn std::error::Error>> {
-        let queries = [
-            "pè",
-            "Père",
-            "  de  ",
-            "de la",
-            "le pape",
-            "\"de la\"",
-            "« un »",
-            "ab, cd.",
-            "Ḥajj",
-        ];
-        let modes = [MatchMode::Phrase, MatchMode::AllWords, MatchMode::Near];
-        let cases: Vec<serde_json::Value> = queries
-            .iter()
-            .flat_map(|q| {
-                modes.iter().map(move |m| {
-                    serde_json::json!({
-                        "query": q,
-                        "mode": m,
-                        "searchable": !parse(q, *m).terms.is_empty(),
-                    })
-                })
-            })
-            .collect();
-        let rules = serde_json::json!({ "min_query": MIN_QUERY, "cases": cases });
-        kalamu_core::test_support::write_interface_json("src/lib/searchRules.json", &rules)
-    }
-
-    fn passage(texts: &[&str]) -> Passage {
-        Passage {
-            key: PassageKey {
-                job_id: JobId::new(),
-                setup_id: SetupId::new(),
-                source_id: SourceId::new(),
-                index: 0,
-            },
-            stamp: String::new(),
-            piece: PieceRef::page(1),
-            reviewed: false,
-            corrected: false,
-            parts: texts
-                .iter()
-                .map(|t| PassagePart {
-                    field: None,
-                    entry: None,
-                    entry_number: None,
-                    reason: false,
-                    text: (*t).into(),
-                    lines: Vec::new(),
-                })
-                .collect(),
-        }
-    }
-
-    /// Each match listed as `term#nth: words [marked]`.
-    fn shown(texts: &[&str], query: &str, mode: MatchMode, near: u32) -> Vec<String> {
-        let q = parse(query, mode);
-        let mut found = hits(&passage(texts), &q, mode, near, &HashMap::new());
-        found.sort_by_key(|f| f.order);
-        found
-            .into_iter()
-            .map(Found::listed)
-            .map(|h| {
-                let chars: Vec<char> = h.words.chars().collect();
-                let marked: Vec<String> = h
-                    .marks
-                    .iter()
-                    .map(|m| chars[m.start as usize..m.end as usize].iter().collect())
-                    .collect();
-                format!("{}#{}: {} [{}]", h.term, h.nth, h.words, marked.join("|"))
-            })
-            .collect()
-    }
-
-    #[test]
-    fn words_are_read_as_the_mode_asks() {
-        let q = parse("  la mission catholique ", MatchMode::Phrase);
-        assert_eq!(q.terms.len(), 1);
-        assert_eq!(q.terms[0].typed, "la mission catholique");
-        assert!(q.ignored.is_empty());
-
-        let q = parse(
-            "« mission catholique » Koupéla, la de UCM ucm",
-            MatchMode::AllWords,
-        );
-        let typed: Vec<&str> = q.terms.iter().map(|t| t.typed.as_str()).collect();
-        assert_eq!(typed, ["mission catholique", "Koupéla", "UCM"]);
-        assert_eq!(q.ignored, ["la", "de"]);
-        assert_eq!(q.folded(), ["mission catholique", "koupela", "ucm"]);
-        // Quotes left open keep the rest together.
-        let q = parse("\"union culturelle musulmane", MatchMode::Near);
-        assert_eq!(q.terms[0].typed, "union culturelle musulmane");
-    }
-
-    #[test]
-    fn every_word_anywhere_in_a_part_each_place_its_own_match() {
-        let texts = [
-            "La mission de Koupéla. Plus loin, la mission encore.",
-            "Koupéla seule",
-            "Mission et KOUPELA",
-        ];
-        assert_eq!(
-            shown(&texts, "koupela mission", MatchMode::AllWords, 0),
-            [
-                "mission#0: mission [mission]",
-                "koupela#0: Koupéla [Koupéla]",
-                "mission#1: mission [mission]",
-                // The second part holds one word only, but its match is counted.
-                "mission#2: Mission [Mission]",
-                "koupela#2: KOUPELA [KOUPELA]",
-            ]
-        );
-    }
-
-    #[test]
-    fn words_near_each_other_within_the_distance_asked() {
-        let text = "L'imam Ouédraogo a parlé. Bien plus tard, dans un autre quartier de la \
-                    ville, le grand imam est venu, et Ouédraogo aussi.";
-        // Two words apart at most: the first imam only.
-        assert_eq!(
-            shown(&[text], "imam ouedraogo", MatchMode::Near, 2),
-            ["imam#0: imam Ouédraogo [imam|Ouédraogo]"]
-        );
-        // Further apart, the second pair too, each word marked and the words between not.
-        assert_eq!(
-            shown(&[text], "imam ouedraogo", MatchMode::Near, 4),
-            [
-                "imam#0: imam Ouédraogo [imam|Ouédraogo]",
-                "imam#1: imam est venu, et Ouédraogo [imam|Ouédraogo]",
-            ]
-        );
-        // In either order.
-        assert_eq!(
-            shown(
-                &["Ouédraogo, dit l'imam"],
-                "imam ouedraogo",
-                MatchMode::Near,
-                2
-            ),
-            ["ouedraogo#0: Ouédraogo, dit l'imam [Ouédraogo|imam]"]
-        );
-    }
-
-    #[test]
-    fn near_marks_follow_the_words_shown_across_line_breaks() {
-        assert_eq!(
-            shown(
-                &["union\n\n  des   musulmans"],
-                "union musulmans",
-                MatchMode::Near,
-                1
-            ),
-            ["union#0: union des musulmans [union|musulmans]"]
-        );
-    }
-
-    #[test]
-    fn a_phrase_is_one_term_marked_whole() {
-        assert_eq!(
-            shown(&["UCM, ucm et Ucm"], "ucm", MatchMode::Phrase, 0),
-            ["ucm#0: UCM [UCM]", "ucm#1: ucm [ucm]", "ucm#2: Ucm [Ucm]"]
-        );
-    }
-}
+mod tests;

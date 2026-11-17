@@ -4,7 +4,7 @@ import type { SearchView } from '../bindings/SearchView.js';
 import { blankRequest } from '../projectSearch.js';
 import { analysisJob, audioJob, job, source } from './mockJobs.js';
 import { DOCUMENT_ID, seedProjects } from './mockProjects.js';
-import { parseQuery, searchCommand } from './mockSearch.js';
+import { searchCommand } from './mockSearch.js';
 
 const INTERVIEW = '00000000-0000-0000-0000-0000000000d2';
 const BULLETINS = '00000000-0000-0000-0000-0000000000c2';
@@ -76,15 +76,27 @@ describe('the project search mock honours the search’s options', () => {
 		expect(hit.hits[0]).toMatchObject({ field: { key: 'tone', label: 'Tone' }, reason: true });
 	});
 
-	it('leaves out words too short, and refuses a query with none long enough', () => {
-		expect(parseQuery('de « l’imam » imam,', 'all_words')).toEqual({
-			terms: [
-				{ typed: 'l’imam', needle: 'l’imam' },
-				{ typed: 'imam', needle: 'imam' }
-			],
-			ignored: ['de']
-		});
-		expect(() => search({ query: 'de' })).toThrow(
+	it('finds one word or another, and a word of two letters only on its own', () => {
+		const either = search({ query: 'pèlerinage OR marché', task: 'text_extraction' });
+		expect(either.documents[0].results[0].hits.map((h) => h.term)).toEqual([
+			'pèlerinage',
+			'marché'
+		]);
+		expect(either.terms).toEqual(['pèlerinage', 'marché']);
+		const both = search({ query: 'imam OU délégués Bamako', mode: 'all_words' });
+		expect(both.terms).toEqual(['imam', 'délégués', 'Bamako']);
+		expect(both.matches).toBeGreaterThan(0);
+		// "le" on its own, never inside "délégués" or "tenue".
+		const le = search({ query: 'le', task: 'text_extraction' }).documents[0].results[0].hits;
+		expect(le.length).toBeGreaterThan(0);
+		expect(le.every((h) => h.words.toLowerCase() === 'le')).toBe(true);
+	});
+
+	it('refuses a query with no word long enough', () => {
+		expect(() => search({ query: 'à' })).toThrow(
+			expect.objectContaining({ id: 'search.too_short' })
+		);
+		expect(() => search({ query: 'x OR y', mode: 'all_words' })).toThrow(
 			expect.objectContaining({ id: 'search.too_short' })
 		);
 	});

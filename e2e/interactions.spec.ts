@@ -140,6 +140,34 @@ test('a project search finds a passage, accents aside, and opens it in the revie
 	await expect(main.getByRole('region', { name: 'Reading text' })).toContainText('pèlerinage');
 });
 
+test('a project search finds one phrase or another, and a word of two letters', async ({
+	page
+}) => {
+	await open(page, 'project');
+	await page
+		.getByRole('navigation', { name: 'Collections' })
+		.getByRole('button', { name: 'Search' })
+		.click();
+	const search = page.getByRole('search');
+	const main = page.getByRole('main');
+	await expect(main.getByText(/^Write OR in capitals between two phrases/)).toBeVisible();
+
+	const box = search.getByRole('searchbox', { name: 'Words to find' });
+	await box.fill('pelerinage OR mosquee de Bamako');
+	await search.getByRole('button', { name: 'Search' }).click();
+	await expect(main.getByText('3 matches in 1 document')).toBeVisible();
+	await expect(main.locator('mark')).toHaveText([
+		'pèlerinage',
+		'mosquée de Bamako',
+		'mosquée de Bamako'
+	]);
+
+	// Two letters are searched as a word on their own.
+	await box.fill('du');
+	await expect(search.getByRole('button', { name: 'Search' })).toBeEnabled();
+	await expect(main.getByText('Type two letters at least.')).toBeHidden();
+});
+
 test('New job keeps what was chosen across a visit to Settings', async ({ page }) => {
 	await open(page, 'new');
 	const main = page.getByRole('main');
@@ -307,6 +335,25 @@ test('New job says why Start waits for the language to translate into', async ({
 	const start = page.getByRole('button', { name: /^Start(?! over)/ });
 	await expect(start).toBeDisabled();
 	await expect(start).toHaveAccessibleDescription('Choose the language to translate into.');
+});
+
+test('New job offers a translation of text without times no subtitles, and says why', async ({
+	page
+}) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Translate a text/ }).click();
+	await main.getByRole('button', { name: 'Add files' }).click();
+	const formats = main.getByRole('group', { name: /^Formats/ });
+	await expect(formats.getByRole('checkbox', { name: 'Word (.docx)' })).toBeVisible();
+	await expect(formats.getByRole('checkbox', { name: /^Subtitles/ })).toHaveCount(0);
+	await expect(formats).toContainText(
+		'Subtitles (SRT, WebVTT) are offered for the translation of a transcript with times'
+	);
+	// A transcription has its own times: no such note.
+	await main.getByRole('button', { name: /^Transcribe audio/ }).click();
+	await expect(main.getByRole('checkbox', { name: 'Subtitles (.srt)' })).toBeVisible();
+	await expect(main.getByText('are offered for the translation of a transcript')).toHaveCount(0);
 });
 
 test('the language box opens its list, moves through it with the arrows and takes the first found with Enter', async ({

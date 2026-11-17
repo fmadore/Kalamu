@@ -47,6 +47,7 @@ import type { InspectedFile } from './bindings/InspectedFile.js';
 import type { ImageDocument } from './bindings/ImageDocument.js';
 import type { Job } from './bindings/Job.js';
 import type { JobScores } from './bindings/JobScores.js';
+import type { JobAgreement } from './bindings/JobAgreement.js';
 import type { JobProgress } from './bindings/JobProgress.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { JobSources } from './bindings/JobSources.js';
@@ -253,6 +254,7 @@ export const api = {
 	compareSource: (jobId: string, sourceId: string) =>
 		invoke<ComparisonReport>('compare_source', { jobId, sourceId }),
 	jobScores: (jobId: string) => invoke<JobScores>('job_scores', { jobId }),
+	jobAgreement: (jobId: string) => invoke<JobAgreement>('job_agreement', { jobId }),
 	diffTexts: (left: string, right: string) => invoke<DiffSpan[]>('diff_texts', { left, right }),
 	listProjects: () => invoke<ProjectSummary[]>('list_projects'),
 	createProject: (name: string, description: string) =>

@@ -1,0 +1,126 @@
+{
+  "parts": [
+    {
+      "corrected": false,
+      "label": "§1",
+      "piece": {
+        "kind": "passage",
+        "number": 1
+      },
+      "reviewed": false,
+      "segments": [
+        {
+          "end_ms": 5000,
+          "speaker": "Speaker 1",
+          "start_ms": 1000,
+          "text": "Hello, thank you for having us."
+        },
+        {
+          "end_ms": 9000,
+          "speaker": "Speaker 2",
+          "start_ms": 5500,
+          "text": "You are welcome."
+        }
+      ],
+      "text": "Hello, thank you for having us.\n\nYou are welcome."
+    },
+    {
+      "corrected": true,
+      "label": "§2",
+      "piece": {
+        "kind": "passage",
+        "number": 2
+      },
+      "reviewed": true,
+      "segments": [
+        {
+          "end_ms": 1206000,
+          "speaker": "Speaker 1",
+          "start_ms": 1202000,
+          "text": "Let us talk about the madrasa."
+        },
+        {
+          "end_ms": 1210000,
+          "speaker": "Speaker 2",
+          "start_ms": 1206000,
+          "text": "It opened in 1962, after the community had gathered the money for its first classrooms over several years."
+        }
+      ],
+      "text": "Let us talk about the madrasa.\n\nIt opened in 1962, after the community had gathered the money for its first classrooms over several years."
+    }
+  ],
+  "provenance": {
+    "corrected": [
+      2
+    ],
+    "cost_usd": 0.002,
+    "created_at": 0,
+    "engine": "cloud",
+    "generator": {
+      "name": "Kalamu",
+      "version": "0.1.0"
+    },
+    "languages": {
+      "mode": "auto"
+    },
+    "model": "gemini-3.8-flash",
+    "options": {
+      "diarize": false,
+      "speakers": null,
+      "temperature": null,
+      "timestamps": false
+    },
+    "pieces": 2,
+    "prompt": {
+      "preset_id": "text_extraction.printed_diplomatic",
+      "preset_name": "Printed document, diplomatic",
+      "sha256": "abababababababababababababababababababababababababababababababab",
+      "text": "Transcribe.",
+      "user_prompt": "Transcribe this page."
+    },
+    "provider": "gemini",
+    "request": [
+      {
+        "name": "generationConfig.thinkingConfig.thinkingLevel",
+        "value": "low"
+      },
+      {
+        "name": "generationConfig.maxOutputTokens",
+        "value": "65535"
+      }
+    ],
+    "reviewed": [
+      2
+    ],
+    "schema_version": 1,
+    "source": {
+      "file_name": "entretien.txt",
+      "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+      "size_bytes": 1024
+    },
+    "task": "translation",
+    "usage": {
+      "audio_seconds": 0.0,
+      "batch": false,
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "pages": 0
+    }
+  },
+  "schema": "kalamu-result",
+  "schema_version": 1,
+  "setup": {
+    "label": "gemini-flash",
+    "model": "gemini-3.8-flash",
+    "prompt": "Printed document, diplomatic",
+    "provider": "gemini"
+  },
+  "source": {
+    "file_name": "entretien.txt",
+    "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+    "size_bytes": 1024
+  },
+  "task": "translation"
+}

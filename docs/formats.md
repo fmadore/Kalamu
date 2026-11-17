@@ -156,8 +156,15 @@ the CSV.
 Written as `<name>.translated.<code>.txt` (and `.md`, `.docx`, `.json`, `.csv`), `<code>` being
 the language translated into (`gallica.translated.en.txt`), so a text is never replaced by its
 translation and translations into two languages do not replace each other. Pages and passages
-are kept as for corrected text, and the CSV has the same columns. Subtitles of a translated
-transcript are not written yet.
+are kept as for corrected text, and the CSV has the same columns.
+
+A transcript translated with its times (frozen from a transcript whose every part had them) is
+also written as `.srt` and `.vtt`, cut and timed exactly as a transcript's, each cue holding the
+translation of the line it times, under that line's speaker. Each part of its JSON result has
+`segments`: the transcript's lines with their times and speakers, the text translated. Its
+`provenance.json` may carry `lines_changed`: the passages whose correction no longer has one
+paragraph per line, whose times were therefore lost; no subtitles are written while it lists
+any. A translation of any other text has no subtitles.
 
 ## Subtitles and spreadsheets
 

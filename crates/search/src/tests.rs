@@ -480,11 +480,11 @@ fn every_word_and_words_near_each_other_across_documents() {
     );
     f.extraction(&one, &["Ouédraogo seul"]);
 
-    let mut every = request("imam de Ouedraogo");
+    let mut every = request("imam à Ouedraogo");
     every.mode = MatchMode::AllWords;
     let view = f.find(&every);
     assert_eq!(view.terms, ["imam", "Ouedraogo"]);
-    assert_eq!(view.ignored, ["de"]);
+    assert_eq!(view.ignored, ["à"]);
     // Both words in the same page: the third document holds one only.
     let titles: Vec<&str> = view.documents.iter().map(|d| d.title.as_str()).collect();
     assert_eq!(titles, ["Le Musulman 12", "Le Musulman 13"]);
@@ -505,10 +505,70 @@ fn every_word_and_words_near_each_other_across_documents() {
     );
 
     // Only words too short: nothing to look for.
-    let mut short = request("la de");
+    let mut short = request("à l' y");
     short.mode = MatchMode::AllWords;
     assert!(matches!(
         f.search.search(f.project, &short, &never, &quiet),
         Err(SearchError::TooShort)
     ));
+}
+
+#[test]
+fn words_of_two_letters_and_alternatives_across_documents() {
+    let f = Fixture::new();
+    let a = f.document("Le Musulman 12", InputKind::Pdf);
+    let b = f.document("Le Musulman 13", InputKind::Pdf);
+    let c = f.document("Le Musulman 14", InputKind::Pdf);
+    f.extraction(&a, &["Amadou Bâ, imam de Bamako."]);
+    f.extraction(&b, &["Le marabout Sy à Kaolack."]);
+    f.extraction(&c, &["Kaba et Bassy, à Bamako."]);
+
+    // A word of two letters, found on its own; inside Bamako, Kaba and Bassy it is not.
+    let view = f.find(&request("ba"));
+    assert_eq!(listed(&view), ["Le Musulman 12 | 1 | 0 | Bâ"]);
+    let view = f.find(&request("Bâ OR Sy"));
+    assert_eq!(
+        listed(&view),
+        ["Le Musulman 12 | 1 | 0 | Bâ", "Le Musulman 13 | 1 | 0 | Sy"]
+    );
+    assert_eq!(view.terms, ["Bâ", "Sy"]);
+    let hit = &view.documents[1].results[0].hits[0];
+    assert_eq!((hit.term.as_str(), hit.nth), ("Sy", 0));
+
+    // A group of alternatives beside a word every match must hold.
+    let mut every = request("imam OR marabout Bamako OU Kaolack");
+    every.mode = MatchMode::AllWords;
+    let view = f.find(&every);
+    let titles: Vec<&str> = view.documents.iter().map(|d| d.title.as_str()).collect();
+    assert_eq!(titles, ["Le Musulman 12", "Le Musulman 13"]);
+    assert_eq!(view.matches, 4);
+}
+
+#[test]
+fn an_index_prepared_before_words_of_two_letters_is_made_again() {
+    let f = Fixture::new();
+    let doc = f.document("Le Musulman 12", InputKind::Pdf);
+    f.extraction(&doc, &["Amadou Bâ, imam de Bamako."]);
+    assert_eq!(f.find(&request("bamako")).matches, 1);
+    // The passage as the previous version indexed it: folded but not spaced, so ` ba ` is not
+    // in it.
+    let mut old = f
+        .index
+        .find(&[vec!["bamako".to_string()]])
+        .unwrap()
+        .remove(0);
+    old.stamp = old.stamp.replacen("3:", "2:", 1);
+    let text = folded(&old.parts[0].text);
+    f.index.put_passages(&[(old, text)]).unwrap();
+    assert!(
+        f.index
+            .find(&[vec![" ba ".to_string()]])
+            .unwrap()
+            .is_empty()
+    );
+    // The next search makes it again from the store, with nothing asked of the researcher.
+    assert_eq!(
+        listed(&f.find(&request("Bâ"))),
+        ["Le Musulman 12 | 1 | 0 | Bâ"]
+    );
 }

@@ -41,6 +41,21 @@ improvements that open *Next*; what it did not fix at once was tracked in
 
 ## Done
 
+- **Three items of 17 November**, after 1.8.1
+  ([decision](decisions/2026-11-17-search-agreement-subtitles.md)), each tested, none yet
+  tried in the packaged app or on a Mac:
+  - **Project search, third delivery**: one word or phrase or another (OR or OU in capitals);
+    words of two letters standing on their own; each page folded once for all its words, a
+    common word on every page of 4,000 found in about 0.2 s where it took about 1 s. The
+    index is prepared again once, by itself, at the first search after updating.
+  - **Agreement between set-ups across a whole job**: exact agreement and Cohen's kappa for
+    choices, mean overlap for lists, on the page of an analysis job with two set-ups or more,
+    with a Glossary entry.
+  - **Subtitles of a translated transcript** (#167): lines frozen with the transcript,
+    translated as numbered lines and checked by number, times and speakers copied by number;
+    a correction keeps them while it keeps one paragraph per line.
+- **A name pointed at in an analysis is brought into view** in the text beside it (#194),
+  after 1.8.1.
 - **Records, first increment** ([#171](https://github.com/fmadore/Kalamu/issues/171),
   [decision](decisions/2026-11-15-records-regions-batch-files.md)), after 1.7.0: an analysis
   whose fields are one repeating group, chosen in the field editor with *One row per entry*,
@@ -649,13 +664,13 @@ none of it waits on the others.
   mode across a restart. Try *Then* and the examples with one or two colleagues before going
   further.
 - **Translation, what is left of [#167](https://github.com/fmadore/Kalamu/issues/167)**:
-  subtitles (SRT, WebVTT) of a translated transcript, its times kept; a project glossary (term
-  and translation) from the dictionary; models trained to translate, offline. A live run with
-  each provider.
-- **Project search, the rest** (its first and second deliveries closed
-  [#86](https://github.com/fmadore/Kalamu/issues/86)): alternatives (one word or another);
-  searching two letters, and less folding work for very common words
-  ([decision](decisions/2026-11-03-search-words-and-preparation.md)).
+  a project glossary (term and translation) from the dictionary; models trained to translate,
+  offline. A live run with each provider, and one of a transcript translated with its times,
+  which no real model has yet answered line by line; such passages in a batch, which economy
+  mode sends at once for now, at the full price where the estimate counts half; the times of a
+  transcript corrected in the review, which a segment-based reading loses.
+- **Project search, the rest**: the one-time preparation after updating tried on a large real
+  project; German's ODER when the interface has German.
 - **Archival metadata**: [#55](https://github.com/fmadore/Kalamu/issues/55) is closed;
   normalised and inferred values beside the literal ones moved to
   [#54](https://github.com/fmadore/Kalamu/issues/54), item-level rows to #50.
@@ -682,8 +697,8 @@ cache only if a batch of a few hundred pages shows a need.
 - **Text extraction**: PAGE XML where models return coordinates (ALTO is done); checks for
   skewed and blurry pages, with persistent image preparation
   ([#53](https://github.com/fmadore/Kalamu/issues/53)).
-- **Analyses**: agreement between set-ups across a whole job (exact agreement and Cohen's kappa
-  for choices, overlap for lists), shown on the job's page; a column added to an `.xlsx`.
+- **Analyses**: a column added to an `.xlsx`; the agreement table seen with three set-ups
+  and more, tried so far with two.
 - **Design improvements left from [issue #1](https://github.com/fmadore/Kalamu/issues/1)**,
   closed on 28 October when the name and icon were decided (its closing comment keeps these
   here): a collation table on the job's page (pieces × set-ups, the sigla as column heads); an

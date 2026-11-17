@@ -11,7 +11,6 @@ kalamu-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 ts-rs.workspace = true
-unicode-normalization.workspace = true
 
 [dev-dependencies]
 kalamu-export.workspace = true

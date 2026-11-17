@@ -66,6 +66,10 @@ pub struct Provenance {
     /// Pages or segments that could not be read after their retries, marked in the files.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub failed: Vec<u32>,
+    /// Passages of a translated transcript whose correction no longer has one paragraph per
+    /// line of the transcript: their times could not be kept, so no subtitles are written.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub lines_changed: Vec<u32>,
     /// Fixes applied to working copies before processing (`split_spread`, `rotate`…).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub preprocessing: Vec<String>,

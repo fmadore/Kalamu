@@ -173,7 +173,7 @@ impl Search {
         }
         let mut grouped: HashMap<DocumentId, Grouped> = HashMap::new();
         let mut label_cache: HashMap<(JobId, SetupId), HashMap<String, String>> = HashMap::new();
-        for passage in self.index.find(&query.folded())? {
+        for passage in self.index.find(&query.index_terms())? {
             let k = passage.key;
             let Some(results) = by_result.get(&(k.job_id, k.setup_id, k.source_id)) else {
                 continue;

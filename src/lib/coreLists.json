@@ -107,5 +107,9 @@
     "text_correction",
     "translation",
     "audio_transcription"
+  ],
+  "timed_formats": [
+    "srt",
+    "vtt"
   ]
 }

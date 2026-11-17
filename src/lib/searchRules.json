@@ -1,140 +1,804 @@
 {
   "cases": [
     {
+      "groups": [
+        [
+          "pè"
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "pè",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "pè"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "pè",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "pè"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "pè",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "Père"
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "Père",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "Père"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "Père",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "Père"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "Père",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "de"
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "  de  ",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "de"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "  de  ",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "de"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "  de  ",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "de la"
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "de la",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "de"
+        ],
+        [
+          "la"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "de la",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "de"
+        ],
+        [
+          "la"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "de la",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "le pape"
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "le pape",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "le"
+        ],
+        [
+          "pape"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "le pape",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "le"
+        ],
+        [
+          "pape"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "le pape",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "de la"
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "\"de la\"",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "de la"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "\"de la\"",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "de la"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "\"de la\"",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "un"
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "« un »",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "un"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "« un »",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "un"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "« un »",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "ab, cd."
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "ab, cd.",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "ab"
+        ],
+        [
+          "cd"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "ab, cd.",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "ab"
+        ],
+        [
+          "cd"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "ab, cd.",
-      "searchable": false
+      "searchable": true
     },
     {
+      "groups": [
+        [
+          "Ḥajj"
+        ]
+      ],
+      "ignored": [],
       "mode": "phrase",
       "query": "Ḥajj",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "Ḥajj"
+        ]
+      ],
+      "ignored": [],
       "mode": "all_words",
       "query": "Ḥajj",
       "searchable": true
     },
     {
+      "groups": [
+        [
+          "Ḥajj"
+        ]
+      ],
+      "ignored": [],
       "mode": "near",
       "query": "Ḥajj",
+      "searchable": true
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "à"
+      ],
+      "mode": "phrase",
+      "query": "à",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "à"
+      ],
+      "mode": "all_words",
+      "query": "à",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "à"
+      ],
+      "mode": "near",
+      "query": "à",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "l'"
+      ],
+      "mode": "phrase",
+      "query": "l'",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "l"
+      ],
+      "mode": "all_words",
+      "query": "l'",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "l"
+      ],
+      "mode": "near",
+      "query": "l'",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "北京"
+      ],
+      "mode": "phrase",
+      "query": "北京",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "北京"
+      ],
+      "mode": "all_words",
+      "query": "北京",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "北京"
+      ],
+      "mode": "near",
+      "query": "北京",
+      "searchable": false
+    },
+    {
+      "groups": [
+        [
+          "北京市"
+        ]
+      ],
+      "ignored": [],
+      "mode": "phrase",
+      "query": "北京市",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "北京市"
+        ]
+      ],
+      "ignored": [],
+      "mode": "all_words",
+      "query": "北京市",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "北京市"
+        ]
+      ],
+      "ignored": [],
+      "mode": "near",
+      "query": "北京市",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "imam",
+          "marabout Koupéla"
+        ]
+      ],
+      "ignored": [],
+      "mode": "phrase",
+      "query": "imam OR marabout Koupéla",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "imam",
+          "marabout"
+        ],
+        [
+          "Koupéla"
+        ]
+      ],
+      "ignored": [],
+      "mode": "all_words",
+      "query": "imam OR marabout Koupéla",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "imam",
+          "marabout"
+        ],
+        [
+          "Koupéla"
+        ]
+      ],
+      "ignored": [],
+      "mode": "near",
+      "query": "imam OR marabout Koupéla",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "mission catholique",
+          "mission protestante"
+        ]
+      ],
+      "ignored": [],
+      "mode": "phrase",
+      "query": "« mission catholique » OU « mission protestante »",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "mission catholique",
+          "mission protestante"
+        ]
+      ],
+      "ignored": [],
+      "mode": "all_words",
+      "query": "« mission catholique » OU « mission protestante »",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "mission catholique",
+          "mission protestante"
+        ]
+      ],
+      "ignored": [],
+      "mode": "near",
+      "query": "« mission catholique » OU « mission protestante »",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "phrase",
+      "query": "Mali OR",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "all_words",
+      "query": "Mali OR",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "near",
+      "query": "Mali OR",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "phrase",
+      "query": "OR Mali",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "all_words",
+      "query": "OR Mali",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "near",
+      "query": "OR Mali",
+      "searchable": true
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "x",
+        "y"
+      ],
+      "mode": "phrase",
+      "query": "x OR y",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "x",
+        "y"
+      ],
+      "mode": "all_words",
+      "query": "x OR y",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "x",
+        "y"
+      ],
+      "mode": "near",
+      "query": "x OR y",
+      "searchable": false
+    },
+    {
+      "groups": [
+        [
+          "Mali or Ghana"
+        ]
+      ],
+      "ignored": [],
+      "mode": "phrase",
+      "query": "Mali or Ghana",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Mali"
+        ],
+        [
+          "or"
+        ],
+        [
+          "Ghana"
+        ]
+      ],
+      "ignored": [],
+      "mode": "all_words",
+      "query": "Mali or Ghana",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Mali"
+        ],
+        [
+          "or"
+        ],
+        [
+          "Ghana"
+        ]
+      ],
+      "ignored": [],
+      "mode": "near",
+      "query": "Mali or Ghana",
+      "searchable": true
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "a",
+        "b"
+      ],
+      "mode": "phrase",
+      "query": "a OR OR b",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "a",
+        "b"
+      ],
+      "mode": "all_words",
+      "query": "a OR OR b",
+      "searchable": false
+    },
+    {
+      "groups": [],
+      "ignored": [
+        "a",
+        "b"
+      ],
+      "mode": "near",
+      "query": "a OR OR b",
+      "searchable": false
+    },
+    {
+      "groups": [
+        [
+          "OR Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "phrase",
+      "query": "\"OR\" Mali",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "OR"
+        ],
+        [
+          "Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "all_words",
+      "query": "\"OR\" Mali",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "OR"
+        ],
+        [
+          "Mali"
+        ]
+      ],
+      "ignored": [],
+      "mode": "near",
+      "query": "\"OR\" Mali",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "(Bâ",
+          "Sy)"
+        ]
+      ],
+      "ignored": [],
+      "mode": "phrase",
+      "query": "(Bâ OR Sy)",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Bâ",
+          "Sy"
+        ]
+      ],
+      "ignored": [],
+      "mode": "all_words",
+      "query": "(Bâ OR Sy)",
+      "searchable": true
+    },
+    {
+      "groups": [
+        [
+          "Bâ",
+          "Sy"
+        ]
+      ],
+      "ignored": [],
+      "mode": "near",
+      "query": "(Bâ OR Sy)",
       "searchable": true
     }
   ],
-  "min_query": 3
+  "min_query": 2,
+  "operators": [
+    "OR",
+    "OU"
+  ],
+  "unspaced": [
+    [
+      3584,
+      3839
+    ],
+    [
+      4096,
+      4255
+    ],
+    [
+      6016,
+      6143
+    ],
+    [
+      12352,
+      12543
+    ],
+    [
+      12784,
+      12799
+    ],
+    [
+      13312,
+      19903
+    ],
+    [
+      19968,
+      40959
+    ],
+    [
+      63744,
+      64255
+    ],
+    [
+      65382,
+      65439
+    ],
+    [
+      131072,
+      205743
+    ]
+  ]
 }

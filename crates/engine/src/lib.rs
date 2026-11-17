@@ -5,6 +5,8 @@
 //! the store before and after its call; a result is keyed by everything that shapes the answer,
 //! so re-running a folder, adding a set-up or resuming after a crash only pays for new work.
 
+mod agreement;
+mod aligned;
 mod attention;
 mod batch;
 mod compare;
@@ -54,6 +56,7 @@ pub(crate) use control::Control;
 pub use error::EngineError;
 pub use estimate::{Estimate, EstimateRequest, EstimateRow};
 pub use kalamu_core::SetupRequest;
+pub use kalamu_core::{AgreementMeasure, FieldAgreement, JobAgreement, PairAgreement};
 pub use kalamu_core::{FileProgress, JobProgress};
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use review::PieceView;

@@ -56,6 +56,7 @@ fn meeting(f: &Fixture) -> Vec<SourceFile> {
             source_id: first.id,
             original_path: first.path.clone(),
             unit: None,
+            timed: false,
         }),
         ..at(f, &template, "snapshots", "Scan.pdf")
     };

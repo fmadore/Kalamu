@@ -43,6 +43,13 @@ pub struct Snapshot {
     /// Pieces that could not be read, left out of the text (numbered from 1).
     pub missing: Vec<u32>,
     pub created_at: Timestamp,
+    /// A transcript's timed lines as the researcher left them, on the recording's clock, when
+    /// every part read has its times ([`crate::aligned::lines_of`]): what a translation of the
+    /// text sends, line by line, so its subtitles keep the times. Empty for any other text and
+    /// for snapshots taken before lines were kept.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<crate::Segment>>")]
+    pub lines: Vec<crate::Segment>,
 }
 
 impl Snapshot {
@@ -68,6 +75,12 @@ pub struct DerivedFrom {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub unit: Option<crate::units::FrozenUnit>,
+    /// The snapshot kept the transcript's timed lines (`Snapshot::lines`), so a translation of
+    /// it can write subtitles. False for any other text, and for sources frozen before lines
+    /// were kept.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub timed: bool,
 }
 
 /// A piece's text as it goes into a snapshot.

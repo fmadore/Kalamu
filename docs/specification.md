@@ -181,7 +181,19 @@ replacing the source, written as `<name>.translated.<code>` in the formats of a 
 review shows each page of the source beside its translation (for a PDF, its page or, at a click,
 the text the model read), which is corrected as any text is,
 with no differences view between two languages. Its text yields a text: it can be analysed, or
-read by a later workflow step. Subtitles of a translated transcript come later.
+read by a later workflow step.
+
+A transcript translated in Kalamu keeps its times. When a transcript whose every part has its
+times is sent on with *Use this text in a new job*, its timed lines are kept with the frozen
+text. The translation sends them as numbered lines, never their times or speakers, and takes an
+answer only when every line comes back once; an answer that does not is asked for again, and
+the passage fails with the reason if it never does. Each translated line takes the time and
+speaker of the line it translates, and the translation is written as SRT and WebVTT in the
+language translated into. A correction keeps the times while it keeps one paragraph per line;
+one that joins or splits lines loses them, and subtitles are then refused with the reason
+rather than written with shifted times. A translation of any other text, or one made before
+lines were kept, has no times and is offered no subtitles. Economy mode sends these passages at
+once, not in a batch, since a batch's answers are not checked line by line.
 
 ## Choosing and starting a job
 
@@ -463,6 +475,16 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   shown below; pointing at a name finds it in the document, and a text file moves to its first
   place when none shows. A right click on a name in a list renames or removes it at once, in
   the corrected answers of every set-up that gave it, each left reviewed or not as it was.
+- **Agreement over a whole job**: for an analysis run by two or more set-ups, the job's page
+  shows how far they agree, one row per field (and per pair of set-ups, named by their sigla,
+  when there are more than two). For a choice from a list: the share of documents given the
+  same value, and Cohen's kappa, which sets aside the agreement expected by chance; when both
+  gave every document one and the same value, kappa is said to be impossible to compute. For a
+  list of names or themes, or several choices: the items both gave over those either gave
+  (capitals, accents and punctuation set aside, two empty lists agreeing), averaged over
+  documents. Free-text fields and repeating groups are not compared. The counts read the
+  models' own answers, before the researcher's corrections, and only the documents both
+  set-ups answered. The Glossary explains the measures.
 - **Correct in place.** Corrections are kept apart from the AI output, which is never
   overwritten. Exports use the corrected text or answers, and `provenance.json` records which
   pieces were reviewed or corrected. A correction or speakers' names mark the source's files
@@ -698,12 +720,22 @@ document and opened where it stands
   a correction in place of the model's text, speakers under the names given them. Matching is
   the review's (capitals, accents and Arabic vowel marks set aside, line breaks as spaces),
   found anywhere in the text, inside words too.
-- **Three ways to read the words.** The exact phrase, three letters at least (the default);
+- **Three ways to read the words.** The exact phrase (the default);
   all the words anywhere in the same page, part or answer, each word's places listed; or the
   words with at most a chosen number of words between the first and the last (10 unless
   changed), each such stretch one match with only the words looked for marked. In the last
-  two, words between quotes (straight, curly or « ») are one term, and words shorter than three
-  letters are left out and named.
+  two, words between quotes (straight, curly or « ») are one term, and words too short to
+  look for are left out and named.
+- **How short a word may be.** Three letters or more are found anywhere, inside words too. A
+  word of two letters (Ba, Sy, في) is found standing on its own, never inside a longer word,
+  where it would be listed on nearly every page. One letter, and two characters of scripts
+  written without spaces (Chinese, Japanese, Thai), are too short and named.
+- **One or another.** OR, or OU, written in capitals between two words or phrases finds
+  either, whatever the interface's language. In the exact phrase each run of words between
+  them is one phrase; among several words they join the words on either side into one group,
+  beside the words every match must hold (`imam OR marabout Koupéla`). Quoted phrases can be
+  alternatives; OR between quotes, and *or* and *ou* in small letters, are ordinary words.
+  Each match is marked and opened on the alternative found.
 - **Read text apart from written text.** Extractions, transcriptions and corrections are
   searched; analyses' answers and reasons and tables of contents' entries, which models wrote
   about the documents, only on request, each match naming its field.
@@ -739,7 +771,7 @@ is remembered per task. Details are in [formats.md](formats.md).
 | **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
 | **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.csv` and `.json` |
 | **Correction** | As text extraction, without the searchable PDF or ALTO XML |
-| **Translation** | As a correction; subtitles of a translated transcript later |
+| **Translation** | As a correction, and SRT and WebVTT for a transcript translated with its times |
 
 ## Prompts and analyses
 

@@ -16,8 +16,6 @@ use kalamu_core::{
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-use unicode_normalization::UnicodeNormalization;
-use unicode_normalization::char::is_combining_mark;
 
 mod decisions;
 mod export;
@@ -75,18 +73,10 @@ impl Dictionary {
     }
 }
 
-/// A form folded for comparison only: capitals, accents and punctuation set aside, as
-/// iwac-ai-pipelines folds names before matching them. Two forms with one key are offered as
-/// possibly the same, never merged on that account.
-pub(crate) fn folded(form: &str) -> String {
-    let plain: String = form
-        .nfd()
-        .filter(|c| !is_combining_mark(*c))
-        .flat_map(char::to_lowercase)
-        .map(|c| if c.is_alphanumeric() { c } else { ' ' })
-        .collect();
-    plain.split_whitespace().collect::<Vec<_>>().join(" ")
-}
+/// A form folded for comparison only: capitals, accents and punctuation set aside
+/// ([`kalamu_core::list_items::folded`]). Two forms with one key are offered as possibly the
+/// same, never merged on that account.
+pub(crate) use kalamu_core::list_items::folded;
 
 /// The folded words in alphabetical order, so `Traoré Moussa` meets `Moussa Traore`; `None`
 /// for one word, which the plain key already compares.

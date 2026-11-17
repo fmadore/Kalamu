@@ -46,7 +46,7 @@ pub enum ResultPolicy {
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
 pub enum MatchMode {
-    /// The words as one literal phrase.
+    /// The words as one literal phrase, or one of several.
     #[default]
     Phrase,
     /// Every word, or words between quotes, anywhere in the same piece's text or the same
@@ -70,7 +70,8 @@ pub enum ReviewFilter {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct SearchRequest {
-    /// The words looked for, read as `mode` says.
+    /// The words looked for, read as `mode` says; `OR` or `OU` in capitals between two words
+    /// or phrases makes them alternatives, either of which will do.
     pub query: String,
     pub mode: MatchMode,
     /// In [`MatchMode::Near`], how many words may stand between the first word found and the
@@ -95,7 +96,7 @@ pub struct SearchView {
     pub matches: u32,
     /// The matches listed, at most [`MAX_LISTED`].
     pub listed: u32,
-    /// What was looked for: the phrase, or each word or quoted phrase.
+    /// What was looked for: the phrase, or each word or quoted phrase, alternatives included.
     pub terms: Vec<String>,
     /// Words too short to look for, left out of the query.
     pub ignored: Vec<String>,
@@ -214,7 +215,7 @@ pub struct FieldRef {
 pub enum SearchError {
     #[error("Project not found")]
     NotFound,
-    #[error("Search needs a word of three letters at least")]
+    #[error("Search needs a word of two letters at least")]
     TooShort,
     /// A newer search began before this one ended.
     #[error("Search stopped")]

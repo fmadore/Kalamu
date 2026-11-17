@@ -375,6 +375,7 @@ fn an_analysis_of_frozen_text_joins_the_document_it_was_read_from() {
         source_id: source.id,
         original_path: source.path.clone(),
         unit: None,
+        timed: false,
     });
     let analysis = f.job(Task::Analysis, vec![frozen]);
     let linked = f.projects.link_job(p.id, analysis.id, None).unwrap();

@@ -16,12 +16,13 @@ use kalamu_core::{
     PieceState, SetupId, SourceId, SpeakerIndex, Task,
 };
 
-use crate::fold::folded;
+use crate::fold::{self, folded};
 use crate::{Search, SearchError};
 
 /// Raised whenever what a passage holds, or how it is folded, changes: every passage is then
-/// made again at the next search.
-const VERSION: u32 = 2;
+/// made again at the next search. 3: every mark that is not a letter, a digit or a space set
+/// between spaces, for words of two letters.
+const VERSION: u32 = 3;
 
 /// How many passages are indexed together, between which a newer search can stop this one and
 /// the review can use the store.
@@ -98,14 +99,17 @@ fn answer_parts(answers: &[FieldAnswer], entry: Option<(&str, u32)>, out: &mut V
     }
 }
 
-/// A passage's text as the index holds it.
+/// A passage's text as the index holds it: its parts folded, kept apart, and spaced
+/// ([`fold::index_text`]).
 pub(crate) fn index_text(passage: &Passage) -> String {
-    passage
-        .parts
-        .iter()
-        .map(|p| folded(&p.text))
-        .collect::<Vec<_>>()
-        .join(&BETWEEN.to_string())
+    fold::index_text(
+        &passage
+            .parts
+            .iter()
+            .map(|p| folded(&p.text))
+            .collect::<Vec<_>>()
+            .join(&BETWEEN.to_string()),
+    )
 }
 
 impl Search {

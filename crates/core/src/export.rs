@@ -45,6 +45,12 @@ impl ExportFormat {
     pub fn needs_layout(self) -> bool {
         matches!(self, Self::SearchablePdf | Self::Alto)
     }
+
+    /// Subtitles: written only from text whose lines have times, a transcript or a translation
+    /// of one that kept them ([`crate::aligned`]).
+    pub fn needs_times(self) -> bool {
+        matches!(self, Self::Srt | Self::Vtt)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

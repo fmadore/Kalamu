@@ -1,0 +1,20 @@
+1
+00:00:01,000 --> 00:00:05,000
+Speaker 1: Hello, thank you for having us.
+
+2
+00:00:05,500 --> 00:00:09,000
+Speaker 2: You are welcome.
+
+3
+00:20:02,000 --> 00:20:06,000
+Speaker 1: Let us talk about the madrasa.
+
+4
+00:20:06,000 --> 00:20:08,758
+Speaker 2: It opened in 1962, after the community had gathered the money for its
+
+5
+00:20:08,758 --> 00:20:09,999
+first classrooms over several years.
+

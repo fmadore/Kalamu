@@ -7,6 +7,7 @@ import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import { progressOf } from './mockLarge.js';
 import { mockRegions } from './mockRegions.js';
 import {
+	analysisAgreement,
 	analysisJob,
 	analysisPieces,
 	archiveJobs,
@@ -260,6 +261,8 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 				sources: scored ? [{ source_id: scored.id, scores }] : []
 			};
 		}
+		case 'job_agreement':
+			return a.jobId === analysisJob.id ? analysisAgreement() : { fields: [] };
 		case 'diff_texts':
 			return wordDiff(String(a.left ?? ''), String(a.right ?? ''));
 		case 'save_correction':

@@ -557,7 +557,9 @@
 				setups: drafts.map((d) => toRequest(catalog, task, d)),
 				settings: jobSettings(),
 				output: {
-					formats: formats.filter((f) => offeredFormats(catalog, rule, drafts).includes(f)),
+					formats: formats.filter((f) =>
+						offeredFormats(catalog, rule, drafts, sources).includes(f)
+					),
 					destination: $state.snapshot(destination),
 					options: $state.snapshot(app.settings!.export_options)
 				}
@@ -799,6 +801,7 @@
 			{task}
 			{drafts}
 			{paged}
+			{sources}
 			hasSources={sources.length > 0}
 		/>
 

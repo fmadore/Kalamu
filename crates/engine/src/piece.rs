@@ -19,6 +19,9 @@ use crate::{Engine, EngineError};
 pub(crate) enum Input {
     Open(Arc<OpenSource>),
     Ready(PreparedInput),
+    /// A passage of a transcript's timed lines, for a translation that keeps their times: its
+    /// answer is read against the lines sent.
+    Lines(crate::aligned::Passage),
 }
 
 /// How a call ended, after its retries.
@@ -150,8 +153,14 @@ impl Engine {
         } else {
             ApiKey::new("")
         };
+        let mut lines = None;
         let prepared = match input {
             Input::Ready(input) => Ok(input),
+            Input::Lines(passage) => {
+                let input = passage.input.clone();
+                lines = Some(passage);
+                Ok(input)
+            }
             Input::Open(opened) => {
                 let accepted = self.accepted(job, step)?;
                 let stem = crate::source_stem(&source.file_name, "page");
@@ -197,6 +206,7 @@ impl Engine {
                 &options,
                 &spent,
                 stop,
+                lines.as_ref(),
             )
             .await?;
         match called {
@@ -262,7 +272,9 @@ impl Engine {
 
     /// One call with its retries: a rate limit waits as long as asked, a passing failure is
     /// tried again after a growing delay, a pause or cancel ends the wait. Answers billed but
-    /// refused are charged to `state`'s piece, whose attempts are counted.
+    /// refused are charged to `state`'s piece, whose attempts are counted. A passage of timed
+    /// lines (`lines`) is asked for its lines back by number, and an answer that does not give
+    /// back every line once is refused and asked again like any broken answer.
     #[allow(clippy::too_many_arguments)]
     pub(crate) async fn call(
         &self,
@@ -276,7 +288,19 @@ impl Engine {
         options: &SetupOptions,
         spent: &Arc<Mutex<f64>>,
         stop: &StopSignal,
+        lines: Option<&crate::aligned::Passage>,
     ) -> Result<Called, EngineError> {
+        // A passage of lines answers in numbered lines, whatever the set-up's one field.
+        let lines_schema = lines.map(|_| kalamu_core::aligned::schema());
+        let analysis = lines_schema.as_ref().or(step.prompt.schema.as_ref());
+        let lines_request;
+        let user_prompt = match lines {
+            Some(_) => {
+                lines_request = format!("{user_prompt}\n\n{}", kalamu_core::aligned::REQUEST);
+                lines_request.as_str()
+            }
+            None => user_prompt,
+        };
         let tuning = self.tuning(
             job.task,
             step.provider,
@@ -296,11 +320,17 @@ impl Engine {
                 languages: &job.settings.languages,
                 options,
                 tuning: &tuning,
-                analysis: step.prompt.schema.as_ref(),
+                analysis,
                 stop,
             };
             let sent = provider.sent_settings(&request, false);
-            let answer = provider.process(api_key, request).await;
+            let answer = provider
+                .process(api_key, request)
+                .await
+                .and_then(|output| match lines {
+                    Some(passage) => passage.read(output),
+                    None => Ok(output),
+                });
             if let Err(err) = &answer {
                 self.charge(state, step.provider, step.model, err, spent)?;
             }

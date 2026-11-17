@@ -358,6 +358,8 @@
       "txt",
       "markdown",
       "docx",
+      "srt",
+      "vtt",
       "json",
       "csv"
     ],

@@ -34,8 +34,56 @@ fn passage(job: JobId, index: u32, text: &str) -> (Passage, String) {
     (passage, text.to_lowercase())
 }
 
-fn terms(words: &[&str]) -> Vec<String> {
-    words.iter().map(|w| w.to_string()).collect()
+/// Each word required.
+fn terms(words: &[&str]) -> Vec<Vec<String>> {
+    words.iter().map(|w| vec![w.to_string()]).collect()
+}
+
+/// Groups of alternatives, a term of each required.
+fn groups(groups: &[&[&str]]) -> Vec<Vec<String>> {
+    groups
+        .iter()
+        .map(|g| g.iter().map(|w| w.to_string()).collect())
+        .collect()
+}
+
+#[test]
+fn a_term_of_each_group_is_required() {
+    let index = SqliteIndex::in_memory().unwrap();
+    let job = JobId::new();
+    let (a, b, c) = (
+        passage(job, 0, "La mission catholique de Ouagadougou"),
+        passage(job, 1, "La mission protestante de Bobo"),
+        passage(job, 2, "Le marché de Bobo"),
+    );
+    index.put_passages(&[a.clone(), b.clone(), c]).unwrap();
+    let mut found = index
+        .find(&groups(&[&["catholique", "protestante"]]))
+        .unwrap();
+    found.sort_by_key(|p| p.key.index);
+    assert_eq!(found, vec![a.0.clone(), b.0.clone()]);
+    assert_eq!(
+        index
+            .find(&groups(&[&["catholique", "protestante"], &["bobo"]]))
+            .unwrap(),
+        vec![b.0]
+    );
+    // A group with nothing in it, or a term too short, finds nothing.
+    assert!(
+        index
+            .find(&groups(&[&["mission"], &[]]))
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        index
+            .find(&groups(&[&["mission", "de"]]))
+            .unwrap()
+            .is_empty()
+    );
+    // Quotes and the words of FTS5's syntax are text, not operators.
+    assert!(index.find(&groups(&[&["\" or \""]])).unwrap().is_empty());
+    assert!(index.find(&groups(&[&["NOT", "AND"]])).unwrap().is_empty());
 }
 
 #[test]

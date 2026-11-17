@@ -9,7 +9,9 @@
 //! review's search finds it, inside words too: Arabic joins its article and some prepositions
 //! to the word, and a name is found within `l'Union` or `بالمسجد`. The text arrives folded
 //! (capitals, accents and vowel marks set aside, runs of spaces made one), so the tokenizer
-//! folds nothing more.
+//! folds nothing more; the search crate also sets every mark that is not a letter, a digit or a
+//! space between spaces, so that a word of two letters, standing between two spaces, is found
+//! as three characters and more.
 
 use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
@@ -147,11 +149,18 @@ fn phrase(folded: &str) -> String {
     format!("\"{}\"", folded.replace('"', "\"\""))
 }
 
-/// Every term as a literal phrase, all of them required.
-fn all_of(terms: &[String]) -> String {
-    terms
+/// Every term as a literal phrase, a term of each group required.
+fn all_of(groups: &[Vec<String>]) -> String {
+    groups
         .iter()
-        .map(|t| phrase(t))
+        .map(|group| {
+            let any = group
+                .iter()
+                .map(|t| phrase(t))
+                .collect::<Vec<_>>()
+                .join(" OR ");
+            format!("({any})")
+        })
         .collect::<Vec<_>>()
         .join(" AND ")
 }
@@ -247,8 +256,13 @@ impl SearchIndex for SqliteIndex {
         tx.commit().map_err(db)
     }
 
-    fn find(&self, terms: &[String]) -> Result<Vec<Passage>, StoreError> {
-        if terms.is_empty() || terms.iter().any(|t| t.chars().count() < 3) {
+    fn find(&self, terms: &[Vec<String>]) -> Result<Vec<Passage>, StoreError> {
+        // A term too short finds nothing rather than everything; so does a group without any.
+        if terms.is_empty()
+            || terms
+                .iter()
+                .any(|g| g.is_empty() || g.iter().any(|t| t.chars().count() < 3))
+        {
             return Ok(Vec::new());
         }
         let conn = self.conn();

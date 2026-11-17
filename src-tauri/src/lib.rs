@@ -156,6 +156,7 @@ pub fn run() {
             commands::review::export_source,
             commands::review::compare_source,
             commands::review::job_scores,
+            commands::review::job_agreement,
             commands::review::diff_texts,
             commands::projects::list_projects,
             commands::projects::create_project,

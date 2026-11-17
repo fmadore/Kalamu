@@ -40,7 +40,7 @@ export default defineConfig(
 					defaultProject: 'tsconfig.json',
 					// The files above, outside tsconfig.json, are linted with a default project:
 					// a handful of small scripts, above the parser's default of eight.
-					maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 16
+					maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 24
 				},
 				tsconfigRootDir: import.meta.dirname,
 				extraFileExtensions: ['.svelte']

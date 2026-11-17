@@ -11,6 +11,7 @@ use kalamu_core::{
 };
 use kalamu_media::OpenSource;
 
+use crate::aligned::Lines;
 use crate::{Engine, EngineError};
 
 /// The pieces a job has recorded, by set-up, source and index.
@@ -23,17 +24,21 @@ pub(crate) type Work = (Setup, PieceState, CacheKey);
 impl Engine {
     /// The pieces a source is cut into for the job's task. An error is the source's own (a
     /// correction or a translation of a file with no text), reported and skipped by the caller.
+    /// A translation of a transcript's timed `lines` reads them in passages of whole lines.
     pub(crate) async fn plan(
         &self,
         job: &Job,
         source: &SourceFile,
         opened: &Arc<OpenSource>,
         existing: &Existing,
+        lines: Option<&Lines>,
     ) -> Result<Result<Vec<PieceRef>, String>, EngineError> {
         // A recording resumed keeps the pieces planned the first time: planning decodes the
         // whole file, and the cuts must not move under results already stored.
         let stored = stored_pieces(existing, job, source);
-        let mut pieces = if job.task == Task::Analysis
+        let mut pieces = if let Some(lines) = lines {
+            lines.pieces(job.settings.sample_pages)
+        } else if job.task == Task::Analysis
             && (!reads_by_page(job) || source.kind == kalamu_core::InputKind::Text)
         {
             // An analysis reads the whole document at once; records read a text file whole too,
@@ -85,6 +90,7 @@ impl Engine {
         source: &SourceFile,
         pieces: &[PieceRef],
         existing: &Existing,
+        lines: Option<&Lines>,
     ) -> Result<Vec<Work>, EngineError> {
         let mut work = Vec::new();
         // Written together, so a close part-way never leaves a recording's plan recorded in
@@ -97,6 +103,11 @@ impl Engine {
             let together = self.pages_per_call(job, source, setup);
             if together > 1 {
                 fixes.push(format!("pages_per_call:{together}"));
+            }
+            // Timed lines are sent and answered otherwise than the same text read in passages,
+            // and other lines behind the same text would be answered otherwise again.
+            if let Some(lines) = lines {
+                fixes.push(lines.fix().to_string());
             }
             for (index, piece) in pieces.iter().enumerate() {
                 let index = index as u32;

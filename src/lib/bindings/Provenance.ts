@@ -74,6 +74,11 @@ cut_by_filter?: Array<number>,
  */
 failed?: Array<number>, 
 /**
+ * Passages of a translated transcript whose correction no longer has one paragraph per
+ * line of the transcript: their times could not be kept, so no subtitles are written.
+ */
+lines_changed?: Array<number>, 
+/**
  * Fixes applied to working copies before processing (`split_spread`, `rotate`…).
  */
 preprocessing?: Array<string>, 

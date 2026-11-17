@@ -76,6 +76,9 @@ impl Engine {
             }
             _ => None,
         };
+        // A translation of a transcript's timed lines shows each passage's lines, with their
+        // times and speakers, rather than the frozen text cut otherwise.
+        let lines = source.and_then(|s| self.timed_lines(&job, s).ok().flatten());
         let mut out = Vec::new();
         for state in self.store.pieces(job_id)? {
             if state.source_id != source_id {
@@ -131,7 +134,10 @@ impl Engine {
                 },
                 speakers,
                 speaker_names,
-                source_text: opened.as_ref().and_then(|o| o.text_of(&state.piece).ok()),
+                source_text: match &lines {
+                    Some(lines) => lines.source_text(&state.piece),
+                    None => opened.as_ref().and_then(|o| o.text_of(&state.piece).ok()),
+                },
                 truncated,
                 cut_reason,
                 original_file: match (&state.piece, source) {
