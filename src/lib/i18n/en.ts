@@ -1450,7 +1450,8 @@ export const en = {
 		reviewedOf: (n: number, total: number) => `Reviewed ${n} of ${total}`,
 		readingText: 'Reading text',
 		correcting: 'Correcting',
-		omitted: 'om.',
+		/** In a place's readings, where a text has nothing: no words were read there. */
+		noText: '(no text)',
 		speakers: 'Speakers',
 		speakersHint:
 			'Give the model’s labels real names. They replace the labels here and in every file; the model’s own output is kept.',

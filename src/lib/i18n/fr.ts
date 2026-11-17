@@ -1553,7 +1553,7 @@ export const fr: Messages = {
 		reviewedOf: (n: number, total: number) => `${n} relu${n > 1 ? 's' : ''} sur ${total}`,
 		readingText: 'Texte lu',
 		correcting: 'Correction',
-		omitted: 'om.',
+		noText: '(aucun texte)',
 		speakers: 'Locuteurs',
 		speakersHint:
 			'Donnez de vrais noms aux étiquettes du modèle. Ils les remplacent ici et dans chaque fichier ; le texte du modèle lui-même est conservé.',
