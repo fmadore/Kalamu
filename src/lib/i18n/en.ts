@@ -533,6 +533,44 @@ export const en = {
 		answeredHint: 'When the answer was stored. A new answer is reviewed afresh.',
 		open: (document: string, place: string) => `Open ${document}, ${place}, in the review`,
 		more: (n: number) => `Show ${n} more`,
+		export: 'Export the list',
+		exported: 'The list was saved as JSON, with a CSV beside it.',
+		fileName: (project: string) => `${project} review list`,
+		sample: {
+			title: 'Drawn at random',
+			hint: 'Pages drawn at random from those nothing flags, to see how the rest of these documents reads. Flagged pages were picked for a problem: what you find among them says nothing of the whole.',
+			size: 'Pages',
+			draw: 'Draw at random',
+			drawAgain: 'Draw again',
+			drawAgainHint:
+				'A new seed, and so other pages. The pages drawn now will no longer be marked.',
+			remove: 'Remove the sample',
+			summary: (drawn: number, candidates: number) =>
+				`${drawn} of the ${candidates === 1 ? '1 page' : `${candidates} pages`} nothing flags`,
+			seed: (seed: number) => `Seed ${seed}`,
+			seedHint:
+				'The same seed draws the same pages from the same documents: note it to cite this sample.',
+			drawnOn: (when: string) => `drawn ${when}`,
+			reviewed: (reviewed: number, drawn: number) => `${reviewed} of ${drawn} reviewed`,
+			none: 'No page here is read and free of flags, so there is nothing to draw.',
+			badge: 'Drawn at random'
+		},
+		keep: {
+			action: 'Keep aside',
+			label: (document: string, place: string) => `Keep ${document}, ${place}, aside`,
+			note: 'Note',
+			notePlaceholder: 'Why, and what to do later',
+			save: 'Keep aside',
+			cancel: 'Cancel',
+			putBack: 'Put back',
+			badge: 'Kept aside',
+			earlier: 'Kept aside with an earlier answer',
+			earlierHint: (note: string) =>
+				`The answer has changed since you kept it aside${note ? ` (“${note}”)` : ''}: this one is listed with the others.`,
+			section: 'Kept aside',
+			sectionHint:
+				'Items you set apart for later, with your note. They stay listed and still need you: keeping an item aside resolves nothing.'
+		},
 		banner: {
 			position: (at: number, total: number) => `${at} of ${total} to check`,
 			previous: 'Previous to check',

@@ -1,7 +1,9 @@
 // What the review queue shows of the engine's items: which reasons are on, each reason in
-// words, and where an item opens. The items, their reasons and the counts come from Rust.
+// words, and where an item opens. The items, their reasons, the sample drawn at random and the
+// counts come from Rust.
 
 import type { QueueItem } from './bindings/QueueItem.js';
+import type { QueueItemKey } from './bindings/QueueItemKey.js';
 import type { Signal } from './bindings/Signal.js';
 import lists from './coreLists.json';
 import type { Messages } from './i18n/index.js';
@@ -25,11 +27,34 @@ export const DEFAULT_FILTER: QueueFilter = {
 	resolved: false
 };
 
-/** The items with one of the reasons shown, open ones only unless reviewed ones are asked for. */
+/** Kept aside by the researcher with the answer it holds now; one kept with an earlier answer
+ * is listed with the others again. */
+export const isKept = (item: QueueItem): boolean => item.kept?.current === true;
+
+/** The items with one of the reasons shown, open ones only unless reviewed ones are asked for.
+ * Items kept aside stay in view whatever the reasons shown; the sample is listed apart. */
 export function shownItems(items: QueueItem[], filter: QueueFilter): QueueItem[] {
 	return items.filter(
-		(i) => (filter.resolved || i.open) && i.signals.some((s) => filter.reasons.includes(s.kind))
+		(i) =>
+			!i.sample &&
+			(filter.resolved || i.open) &&
+			(isKept(i) || i.signals.some((s) => filter.reasons.includes(s.kind)))
 	);
+}
+
+/** The pages drawn at random, whatever the filters: listed for the sample, not for a problem. */
+export function sampleItems(items: QueueItem[]): QueueItem[] {
+	return items.filter((i) => i.sample);
+}
+
+/** What names an item to keep it aside or put it back. */
+export function keyOf(item: QueueItem): QueueItemKey {
+	return {
+		job_id: item.job_id,
+		setup_id: item.setup_id,
+		source_id: item.source_id,
+		index: item.index
+	};
 }
 
 /** One reason in plain words, with what was found. */
@@ -68,10 +93,17 @@ export function itemKey(item: QueueItem): string {
 	return `${item.job_id}/${item.setup_id}/${item.source_id}/${item.index ?? 'all'}`;
 }
 
-/** Processing problems first, kept apart from the answers that need review. */
-export function grouped(items: QueueItem[]): { processing: QueueItem[]; answers: QueueItem[] } {
+/** Processing problems first, kept apart from the answers that need review; then the items the
+ * researcher kept aside. */
+export function grouped(items: QueueItem[]): {
+	processing: QueueItem[];
+	answers: QueueItem[];
+	kept: QueueItem[];
+} {
+	const listed = items.filter((i) => !isKept(i));
 	return {
-		processing: items.filter((i) => i.processing),
-		answers: items.filter((i) => !i.processing)
+		processing: listed.filter((i) => i.processing),
+		answers: listed.filter((i) => !i.processing),
+		kept: items.filter(isKept)
 	};
 }

@@ -6,10 +6,13 @@ import { en } from './i18n/en.js';
 import {
 	DEFAULT_FILTER,
 	grouped,
+	isKept,
 	itemKey,
+	keyOf,
 	placeOf,
 	REASONS,
 	reasonText,
+	sampleItems,
 	shownItems
 } from './queue.js';
 
@@ -34,6 +37,9 @@ function item(signals: Signal[], over: Partial<QueueItem> = {}): QueueItem {
 		processing: signals.some((s) => s.kind === 'failed' || s.kind === 'not_read'),
 		open: true,
 		signals,
+		decided_at: null,
+		sample: false,
+		kept: null,
 		...over
 	};
 }
@@ -99,5 +105,44 @@ describe('the review queue', () => {
 		);
 		expect(itemKey(cut)).not.toBe(itemKey(plain));
 		expect(itemKey(item([{ kind: 'not_read' }], { index: null }))).toBe('j1/a/s1/all');
+	});
+
+	it('lists items kept aside apart, whatever the reasons shown, unless kept with an earlier answer', () => {
+		const note = { note: 'Ask the archivist', kept_at: 0 };
+		const keptPlain = item([{ kind: 'not_reviewed' }], {
+			index: 4,
+			kept: { ...note, current: true }
+		});
+		const keptEarlier = item([{ kind: 'truncated', reason: 'limit' }], {
+			index: 5,
+			kept: { ...note, current: false }
+		});
+		const list = [...all, keptPlain, keptEarlier];
+		const shown = shownItems(list, DEFAULT_FILTER);
+		// Only not reviewed, it would be hidden; kept aside, it stays in view.
+		expect(shown).toContain(keptPlain);
+		expect(isKept(keptPlain)).toBe(true);
+		expect(isKept(keptEarlier)).toBe(false);
+		const { answers, kept } = grouped(shown);
+		expect(kept).toEqual([keptPlain]);
+		// Kept with an earlier answer, the new one is listed with the others.
+		expect(answers).toContain(keptEarlier);
+		// Reviewed and resolved, it leaves the view with the other resolved items.
+		const reviewed = { ...keptPlain, reviewed: true, open: false };
+		expect(shownItems([reviewed], DEFAULT_FILTER)).toEqual([]);
+	});
+
+	it('lists the sample apart, never among what is flagged', () => {
+		const drawn = item([], { index: 6, sample: true, reviewed: true, open: false });
+		const drawnOpen = item([{ kind: 'not_reviewed' }], { index: 7, sample: true });
+		const list = [...all, drawn, drawnOpen];
+		expect(shownItems(list, { reasons: REASONS, resolved: true })).not.toContain(drawn);
+		expect(shownItems(list, { reasons: REASONS, resolved: true })).not.toContain(drawnOpen);
+		expect(sampleItems(list)).toEqual([drawn, drawnOpen]);
+	});
+
+	it('names an item by its result and piece to keep it aside', () => {
+		expect(keyOf(cut)).toEqual({ job_id: 'j1', setup_id: 'a', source_id: 's1', index: 1 });
+		expect(keyOf(item([{ kind: 'not_read' }], { piece: null, index: null })).index).toBeNull();
 	});
 });

@@ -3,8 +3,12 @@
 	// the researcher, each with its reason, failures kept apart from answers. The engine gathers
 	// them from what is stored, so opening, filtering and stepping through call no model. The
 	// coverage above the list counts every result read, whatever the filters show. Opening an item
-	// opens its review at its page, with the next and previous items a click away.
+	// opens its review at its page, with the next and previous items a click away. An item can be
+	// kept aside with a note; a random sample of the pages nothing flags is drawn on request and
+	// listed apart; the whole list, sample included, is exported as a review manifest.
 	import Icon from './Icon.svelte';
+	import QueueRow from './QueueRow.svelte';
+	import QueueSample from './QueueSample.svelte';
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { QueueItem } from '#lib/bindings/QueueItem.js';
 	import type { QueueSelection } from '#lib/bindings/QueueSelection.js';
@@ -12,25 +16,32 @@
 	import type { ResultKey } from '#lib/bindings/ResultKey.js';
 	import type { Signal } from '#lib/bindings/Signal.js';
 	import { Action } from '#lib/action.svelte.js';
-	import { formatDateTime, messages } from '#lib/i18n/index.js';
+	import { askForFolders, pickJsonSave } from '#lib/dialogs.js';
+	import { messages } from '#lib/i18n/index.js';
 	import {
 		DEFAULT_FILTER,
 		REASONS,
 		grouped,
 		itemKey,
-		placeOf,
-		reasonText,
+		keyOf,
+		sampleItems,
 		shownItems,
 		type QueueFilter
 	} from '#lib/queue.js';
-	import { app, go } from '#lib/state.svelte.js';
+	import { app, go, toast } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
 		projectId,
+		projectName = '',
 		collections,
 		selection = []
-	}: { projectId: string; collections: CollectionView[]; selection?: string[] } = $props();
+	}: {
+		projectId: string;
+		projectName?: string;
+		collections: CollectionView[];
+		selection?: string[];
+	} = $props();
 	const m = messages();
 	const q = m.queue;
 	/** Rows drawn at first in each group; the rest on request, so a large collection stays quick. */
@@ -62,8 +73,9 @@
 	const tally = $derived(counts?.reasons);
 	const shown = $derived(shownItems(items, filter));
 	const groups = $derived(grouped(shown));
+	const drawn = $derived(sampleItems(items));
 	/** The order the review steps through: what is not read first, as listed. */
-	const trail = $derived([...groups.processing, ...groups.answers]);
+	const trail = $derived([...groups.processing, ...groups.answers, ...groups.kept, ...drawn]);
 
 	function selectionOf(s: string): QueueSelection {
 		if (s === 'selection') return { kind: 'documents', ids: chosen };
@@ -85,6 +97,46 @@
 			if (mine === ticket) action.fail(e);
 		} finally {
 			if (mine === ticket) loading = false;
+		}
+	}
+
+	async function keep(item: QueueItem, note: string | null) {
+		try {
+			await api.keepAside(projectId, keyOf(item), item.revision, note);
+			await load();
+		} catch (e) {
+			action.fail(e);
+		}
+	}
+
+	async function draw(size: number) {
+		try {
+			await api.setReviewSample(projectId, selectionOf(scope), size);
+			await load();
+		} catch (e) {
+			action.fail(e);
+		}
+	}
+
+	async function removeSample() {
+		try {
+			await api.setReviewSample(projectId, selectionOf(scope), null);
+			await load();
+		} catch (e) {
+			action.fail(e);
+		}
+	}
+
+	async function exportList() {
+		const path = await pickJsonSave(q.fileName(projectName || q.title));
+		if (!path) return;
+		try {
+			// The CSV goes beside the JSON: in the Mac App Store's build, its folder is asked for.
+			if (!(await askForFolders([path]))) return;
+			await api.exportReviewManifest(projectId, selectionOf(scope), excluded, path);
+			toast(q.exported);
+		} catch (e) {
+			action.fail(e);
 		}
 	}
 
@@ -117,15 +169,6 @@
 		});
 	}
 
-	const tone = (s: Signal) =>
-		s.kind === 'failed'
-			? 'danger'
-			: s.kind === 'not_reviewed' || s.kind === 'not_read'
-				? ''
-				: s.kind === 'disagrees'
-					? 'hand'
-					: 'warn';
-
 	$effect(() => {
 		void scope;
 		void excluded;
@@ -133,43 +176,14 @@
 	});
 </script>
 
-{#snippet row(item: QueueItem)}
-	<li>
-		<button
-			class="item"
-			class:resolved={!item.open}
-			onclick={() => open(item)}
-			aria-label={q.open(item.document, placeOf(item, m))}
-		>
-			<span class="body">
-				<span class="line">
-					<strong>{item.document}</strong>
-					<span>{placeOf(item, m)}</span>
-					<span class="muted">{item.setup_label} · {item.job_name}</span>
-					{#if item.preferred}<span class="chip ok">{q.preferredBadge}</span>{/if}
-				</span>
-				<span class="line">
-					{#each item.signals as s, i (i)}
-						<span class="chip {tone(s)}">{reasonText(s, m, item.piece === null)}</span>
-					{/each}
-					{#if item.reviewed}<span class="chip ok">{q.reviewedBadge}</span>{/if}
-					<!-- When the answer was stored; its fingerprint tells no two rows apart, a piece
-					     having one answer at a time. -->
-					{#if item.answered_at}
-						<span class="revision num muted" title={q.answeredHint}
-							>{q.answered(formatDateTime(item.answered_at))}</span
-						>
-					{/if}
-				</span>
-			</span>
-			<Icon name="chevron" size={14} />
-		</button>
-	</li>
-{/snippet}
-
 <div class="queue">
 	<div class="head">
 		<h2>{q.title}</h2>
+		{#if view && view.queue.items.length > 0}
+			<button class="btn sm" onclick={exportList}
+				><Icon name="download" size={14} />{q.export}</button
+			>
+		{/if}
 	</div>
 	<p class="muted lede">{q.lede}</p>
 	{#if action.error}<p class="chip danger banner" role="alert">{action.error}</p>{/if}
@@ -256,7 +270,7 @@
 				<p class="hint">{q.processingHint}</p>
 				<ul class="items">
 					{#each groups.processing.slice(0, limit.processing) as item (itemKey(item))}
-						{@render row(item)}
+						<QueueRow {item} onopen={open} onkeep={keep} />
 					{/each}
 				</ul>
 				{#if groups.processing.length > limit.processing}
@@ -272,7 +286,7 @@
 				<h3>{q.answers} <span class="num muted">{groups.answers.length}</span></h3>
 				<ul class="items">
 					{#each groups.answers.slice(0, limit.answers) as item (itemKey(item))}
-						{@render row(item)}
+						<QueueRow {item} onopen={open} onkeep={keep} />
 					{/each}
 				</ul>
 				{#if groups.answers.length > limit.answers}
@@ -281,6 +295,31 @@
 					>
 				{/if}
 			</section>
+		{/if}
+
+		{#if groups.kept.length > 0}
+			<section>
+				<h3>{q.keep.section} <span class="num muted">{groups.kept.length}</span></h3>
+				<p class="hint">{q.keep.sectionHint}</p>
+				<ul class="items">
+					{#each groups.kept as item (itemKey(item))}
+						<QueueRow {item} onopen={open} onkeep={keep} />
+					{/each}
+				</ul>
+			</section>
+		{/if}
+
+		{#if counts && counts.results > 0}
+			{#key scope}
+				<QueueSample
+					sample={view.queue.sample}
+					items={drawn}
+					onopen={open}
+					onkeep={keep}
+					ondraw={draw}
+					onremove={removeSample}
+				/>
+			{/key}
 		{/if}
 	{:else if loading}
 		<p class="muted">{q.loading}</p>
@@ -372,52 +411,5 @@
 		padding: 0;
 		list-style: none;
 		border-top: 1px solid var(--line);
-	}
-	.item {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		align-items: center;
-		gap: var(--space-2) var(--space-3);
-		width: 100%;
-		min-height: var(--control-md);
-		padding: var(--space-2);
-		border: 0;
-		border-bottom: 1px solid var(--line);
-		background: none;
-		color: var(--text-secondary);
-		font: inherit;
-		font-size: var(--type-sm);
-		text-align: left;
-		cursor: pointer;
-	}
-	.item:hover {
-		background: var(--wash);
-		color: var(--text-bright);
-	}
-	.item.resolved {
-		opacity: 0.75;
-	}
-	.body {
-		display: grid;
-		gap: var(--space-1);
-		min-width: 0;
-	}
-	.line {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-1) var(--space-2);
-		min-width: 0;
-	}
-	.line strong {
-		color: var(--text-bright);
-		font-weight: 500;
-		overflow-wrap: anywhere;
-	}
-	.line .chip {
-		white-space: normal;
-	}
-	.revision {
-		font-size: var(--type-xs);
 	}
 </style>

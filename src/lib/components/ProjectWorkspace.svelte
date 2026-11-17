@@ -275,7 +275,12 @@
 				<ProjectSearch {projectId} collections={view.collections} tags={view.tags} />
 			{:else if pane === 'queue'}
 				{#key selection.join(',')}
-					<ReviewQueue {projectId} collections={view.collections} {selection} />
+					<ReviewQueue
+						{projectId}
+						projectName={view.project.name}
+						collections={view.collections}
+						{selection}
+					/>
 				{/key}
 			{:else if pane === 'dictionary'}
 				<DictionaryView

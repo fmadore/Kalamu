@@ -14,8 +14,8 @@ use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
-    CollectionId, DocumentId, JobId, ProjectId, SetupId, SourceFile, SourceId, StoreError, Task,
-    Timestamp,
+    CollectionId, DocumentId, JobId, KeptAside, ProjectId, SampleSpec, SetupId, SourceFile,
+    SourceId, StoreError, Task, Timestamp,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -312,4 +312,32 @@ pub trait ProjectStore: Send + Sync {
         choice: Option<(JobId, SetupId)>,
     ) -> Result<(), StoreError>;
     fn preferred(&self, project: ProjectId) -> Result<Vec<PreferredResult>, StoreError>;
+
+    /// Sets, or with `None` clears, the random sample of the review queue over one scope of a
+    /// project (`scope` as the projects crate keys a queue's documents).
+    fn set_review_sample(
+        &self,
+        project: ProjectId,
+        scope: &str,
+        sample: Option<&SampleSpec>,
+    ) -> Result<(), StoreError>;
+    fn review_sample(
+        &self,
+        project: ProjectId,
+        scope: &str,
+    ) -> Result<Option<SampleSpec>, StoreError>;
+
+    /// Keeps an item of the review queue aside with its note, replacing what was kept for the
+    /// same item.
+    fn put_kept_aside(&self, project: ProjectId, kept: &KeptAside) -> Result<(), StoreError>;
+    /// Puts an item back among the others.
+    fn remove_kept_aside(
+        &self,
+        project: ProjectId,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+        index: Option<u32>,
+    ) -> Result<(), StoreError>;
+    fn kept_aside(&self, project: ProjectId) -> Result<Vec<KeptAside>, StoreError>;
 }

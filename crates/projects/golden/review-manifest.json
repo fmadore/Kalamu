@@ -1,0 +1,184 @@
+{
+  "format": "kalamu-review-manifest",
+  "version": 1,
+  "project": "00000000-0000-0000-0000-000000000005",
+  "project_name": "Mission archives",
+  "scope": "project",
+  "exported_at": 1778400000000,
+  "counts": {
+    "documents": 1,
+    "documents_read": 1,
+    "results": 1,
+    "pieces": 4,
+    "processed": 3,
+    "failed": 1,
+    "not_read": 0,
+    "reviewed": 2,
+    "flagged": 2,
+    "unresolved": 1,
+    "reasons": {
+      "failed": 0,
+      "not_read": 0,
+      "truncated": 0,
+      "disagrees": 0,
+      "stale": 0,
+      "not_reviewed": 0
+    }
+  },
+  "sample": {
+    "seed": 1957,
+    "size": 1,
+    "drawn_at": 1778250000000,
+    "candidates": 2,
+    "drawn": 1,
+    "reviewed": 1
+  },
+  "items": [
+    {
+      "document_id": "00000000-0000-0000-0000-000000000001",
+      "document": "Letter of 3 May 1957",
+      "job_id": "00000000-0000-0000-0000-000000000002",
+      "job_name": "Bulletins, May 1957",
+      "task": "text_extraction",
+      "source_id": "00000000-0000-0000-0000-000000000003",
+      "setup_id": "00000000-0000-0000-0000-000000000004",
+      "setup_label": "flash",
+      "model": "gemini-flash",
+      "preferred": false,
+      "piece": {
+        "kind": "page",
+        "number": 1
+      },
+      "index": 0,
+      "revision": null,
+      "answered_at": null,
+      "signals": [
+        {
+          "kind": "failed",
+          "error": "The provider was busy (503)"
+        }
+      ],
+      "reviewed": false,
+      "corrected": false,
+      "processing": true,
+      "open": true,
+      "decided_at": null,
+      "sample": false,
+      "kept": null,
+      "place": "1",
+      "sample_seed": null
+    },
+    {
+      "document_id": "00000000-0000-0000-0000-000000000001",
+      "document": "Letter of 3 May 1957",
+      "job_id": "00000000-0000-0000-0000-000000000002",
+      "job_name": "Bulletins, May 1957",
+      "task": "text_extraction",
+      "source_id": "00000000-0000-0000-0000-000000000003",
+      "setup_id": "00000000-0000-0000-0000-000000000004",
+      "setup_label": "flash",
+      "model": "gemini-flash",
+      "preferred": false,
+      "piece": {
+        "kind": "page",
+        "number": 2
+      },
+      "index": 1,
+      "revision": "3f9a1c07be52",
+      "answered_at": 1778000000000,
+      "signals": [
+        {
+          "kind": "truncated",
+          "reason": "limit"
+        },
+        {
+          "kind": "disagrees",
+          "with": [
+            "pro"
+          ],
+          "words": 3,
+          "fields": []
+        }
+      ],
+      "reviewed": true,
+      "corrected": true,
+      "processing": false,
+      "open": false,
+      "decided_at": 1778100000000,
+      "sample": false,
+      "kept": {
+        "note": "=Check the stamp, with the archivist",
+        "kept_at": 1778200000000,
+        "current": true
+      },
+      "place": "2",
+      "sample_seed": null
+    },
+    {
+      "document_id": "00000000-0000-0000-0000-000000000001",
+      "document": "Letter of 3 May 1957",
+      "job_id": "00000000-0000-0000-0000-000000000002",
+      "job_name": "Bulletins, May 1957",
+      "task": "text_extraction",
+      "source_id": "00000000-0000-0000-0000-000000000003",
+      "setup_id": "00000000-0000-0000-0000-000000000004",
+      "setup_label": "flash",
+      "model": "gemini-flash",
+      "preferred": false,
+      "piece": {
+        "kind": "page",
+        "number": 3
+      },
+      "index": 2,
+      "revision": "3f9a1c07be52",
+      "answered_at": 1778000000000,
+      "signals": [],
+      "reviewed": true,
+      "corrected": false,
+      "processing": false,
+      "open": false,
+      "decided_at": 1778300000000,
+      "sample": true,
+      "kept": null,
+      "place": "3",
+      "sample_seed": 1957
+    },
+    {
+      "document_id": "00000000-0000-0000-0000-000000000001",
+      "document": "Letter of 3 May 1957",
+      "job_id": "00000000-0000-0000-0000-000000000002",
+      "job_name": "Bulletins, May 1957",
+      "task": "text_extraction",
+      "source_id": "00000000-0000-0000-0000-000000000003",
+      "setup_id": "00000000-0000-0000-0000-000000000004",
+      "setup_label": "flash",
+      "model": "gemini-flash",
+      "preferred": false,
+      "piece": {
+        "kind": "page",
+        "number": 4
+      },
+      "index": 3,
+      "revision": "3f9a1c07be52",
+      "answered_at": 1778000000000,
+      "signals": [
+        {
+          "kind": "not_reviewed"
+        }
+      ],
+      "reviewed": false,
+      "corrected": false,
+      "processing": false,
+      "open": true,
+      "decided_at": null,
+      "sample": false,
+      "kept": {
+        "note": "Faded ink",
+        "kept_at": 1777000000000,
+        "current": false
+      },
+      "place": "4",
+      "sample_seed": null
+    }
+  ]
+}

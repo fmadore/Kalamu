@@ -343,6 +343,7 @@ async fn a_units_pages_are_read_on_their_own_and_a_change_marks_the_job() {
                 setup_id: later.setups[0].id,
                 preferred: false,
             }],
+            ..Default::default()
         })
         .unwrap_or_else(|e| panic!("{e}"));
     assert!(

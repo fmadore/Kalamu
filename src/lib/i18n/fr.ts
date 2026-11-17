@@ -640,6 +640,45 @@ export const fr: Messages = {
 			'La date d’enregistrement de la réponse. Une nouvelle réponse est à relire de nouveau.',
 		open: (document: string, place: string) => `Ouvrir ${document}, ${place}, en relecture`,
 		more: (n: number) => `Afficher ${n} de plus`,
+		export: 'Exporter la liste',
+		exported: 'La liste a été enregistrée en JSON, avec un CSV à côté.',
+		fileName: (project: string) => `${project} liste à vérifier`,
+		sample: {
+			title: 'Tirées au hasard',
+			hint: 'Des pages tirées au hasard parmi celles que rien ne signale, pour voir comment se lit le reste de ces documents. Les pages signalées ont été retenues pour un problème : ce que vous y trouvez ne dit rien de l’ensemble.',
+			size: 'Pages',
+			draw: 'Tirer au hasard',
+			drawAgain: 'Tirer de nouveau',
+			drawAgainHint:
+				'Un nouveau numéro de tirage, donc d’autres pages. Les pages tirées jusqu’ici ne seront plus marquées.',
+			remove: 'Retirer le tirage',
+			summary: (drawn: number, candidates: number) =>
+				`${drawn} sur ${candidates === 1 ? '1 page' : `${candidates} pages`} que rien ne signale`,
+			seed: (seed: number) => `Tirage n° ${seed}`,
+			seedHint:
+				'Le même numéro tire les mêmes pages dans les mêmes documents : notez-le pour citer ce tirage.',
+			drawnOn: (when: string) => `tiré le ${when}`,
+			reviewed: (reviewed: number, drawn: number) =>
+				`${reviewed} ${reviewed <= 1 ? 'relue' : 'relues'} sur ${drawn}`,
+			none: 'Aucune page ici n’est à la fois lue et sans signalement : il n’y a rien à tirer.',
+			badge: 'Tirée au hasard'
+		},
+		keep: {
+			action: 'Mettre de côté',
+			label: (document: string, place: string) => `Mettre de côté ${document}, ${place}`,
+			note: 'Note',
+			notePlaceholder: 'Pourquoi, et quoi faire plus tard',
+			save: 'Mettre de côté',
+			cancel: 'Annuler',
+			putBack: 'Remettre dans la liste',
+			badge: 'Mis de côté',
+			earlier: 'Mis de côté avec une réponse précédente',
+			earlierHint: (note: string) =>
+				`La réponse a changé depuis que vous l’avez mise de côté${note ? ` (« ${note} »)` : ''} : celle-ci est listée avec les autres.`,
+			section: 'Mis de côté',
+			sectionHint:
+				'Ce que vous avez mis de côté pour plus tard, avec votre note. Ces éléments restent dans la liste et attendent toujours votre relecture : mettre de côté ne règle rien.'
+		},
 		banner: {
 			position: (at: number, total: number) => `${at} sur ${total} à vérifier`,
 			previous: 'Précédent à vérifier',

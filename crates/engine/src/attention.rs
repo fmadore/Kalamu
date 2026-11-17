@@ -7,10 +7,14 @@
 //! fields its sigla tell apart), when it read a frozen text that has changed since, and while
 //! the researcher has not marked it reviewed. Marking it reviewed resolves it; nothing else
 //! does, and agreement between models is never taken for a review.
+//!
+//! Where the researcher asked for one, a random sample of the pages nothing flags is drawn
+//! ([`crate::sample`]) and listed apart; items kept aside are marked with their note.
 
 use std::collections::hash_map::Entry;
 use std::collections::{BTreeSet, HashMap, HashSet};
 
+use kalamu_core::sample::page_identity;
 use kalamu_core::{
     AnalysisSchema, Correction, DocumentId, FieldAnswer, FieldKind, FieldValue, Job, JobId,
     PieceRef, PieceState, PieceStatus, QueueCounts, QueueItem, ReviewQueue, ReviewScope,
@@ -18,6 +22,7 @@ use kalamu_core::{
 };
 
 use crate::compare::{DiffKind, diff};
+use crate::sample::Pool;
 use crate::snapshot::Freshness;
 use crate::{Engine, EngineError};
 
@@ -56,8 +61,10 @@ impl Engine {
                 ..QueueCounts::default()
             },
             items: Vec::new(),
+            sample: None,
         };
         let mut read: HashSet<DocumentId> = HashSet::new();
+        let mut pool = scope.sample.map(|_| Pool::default());
         for target in &scope.targets {
             let loaded = match jobs.entry(target.job_id) {
                 Entry::Occupied(known) => known.into_mut(),
@@ -67,11 +74,15 @@ impl Engine {
             let Some(loaded) = loaded.as_ref() else {
                 continue;
             };
-            if assess(loaded, target, &mut queue) {
+            if assess(loaded, target, &mut queue, pool.as_mut()) {
                 read.insert(target.document_id);
             }
         }
         queue.counts.documents_read = read.len() as u32;
+        if let (Some(spec), Some(pool)) = (&scope.sample, pool) {
+            queue.sample = Some(pool.draw_into(spec, &mut queue));
+        }
+        queue.mark_kept(&scope.kept);
         let c = &mut queue.counts;
         for item in &queue.items {
             if item.flagged() {
@@ -116,8 +127,14 @@ impl Engine {
     }
 }
 
-/// Adds one result's items and counts to the queue; whether any of its pieces was read.
-pub(crate) fn assess(loaded: &Loaded, target: &ReviewTarget, queue: &mut ReviewQueue) -> bool {
+/// Adds one result's items and counts to the queue, and its pages to the sample's `pool` when
+/// one is drawn; whether any of its pieces was read.
+pub(crate) fn assess(
+    loaded: &Loaded,
+    target: &ReviewTarget,
+    queue: &mut ReviewQueue,
+    mut pool: Option<&mut Pool>,
+) -> bool {
     let job = &loaded.job;
     let Some(setup) = job.setups.iter().find(|s| s.id == target.setup_id) else {
         return false;
@@ -155,6 +172,11 @@ pub(crate) fn assess(loaded: &Loaded, target: &ReviewTarget, queue: &mut ReviewQ
             processing: signals.iter().any(Signal::is_processing),
             open: true,
             signals,
+            decided_at: correction
+                .filter(|c| c.reviewed || c.text.is_some() || c.fields.is_some())
+                .map(|c| c.updated_at),
+            sample: false,
+            kept: None,
         }
     };
 
@@ -228,9 +250,7 @@ pub(crate) fn assess(loaded: &Loaded, target: &ReviewTarget, queue: &mut ReviewQ
                 }
             }
         }
-        if signals.is_empty() {
-            continue;
-        }
+        let shown = !signals.is_empty();
         let mut row = item(Some(piece), signals);
         row.reviewed = reviewed;
         row.open = row.processing
@@ -239,7 +259,20 @@ pub(crate) fn assess(loaded: &Loaded, target: &ReviewTarget, queue: &mut ReviewQ
                 .signals
                 .iter()
                 .any(|s| matches!(s, Signal::Stale { .. }));
-        queue.items.push(row);
+        // The sample draws reviewable pages: a table of contents' are reviewed as its whole.
+        if let Some(pool) = pool.as_deref_mut()
+            && reviewable
+        {
+            if row.processing || stale.is_some() {
+                pool.exclude(page_identity(target.document_id, job.task, &piece.piece));
+            } else {
+                let at = shown.then_some(queue.items.len());
+                pool.offer(&piece.piece, row.flagged(), row.clone(), at);
+            }
+        }
+        if shown {
+            queue.items.push(row);
+        }
     }
     any_read
 }

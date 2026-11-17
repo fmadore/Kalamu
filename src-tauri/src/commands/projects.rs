@@ -4,12 +4,12 @@
 //! `provenance.json`, and the `.json` result holding it, again.
 
 use kalamu_core::{
-    Collection, CollectionId, DocumentId, JobId, Project, ProjectId, ReviewQueue, SetupId,
-    SourceDescription, SourceFile, SourceId, Task,
+    Collection, CollectionId, DocumentId, JobId, Project, ProjectId, ReviewQueue, SampleSpec,
+    SetupId, SourceDescription, SourceFile, SourceId, Task,
 };
 use kalamu_projects::{
-    AttachChoice, DocumentDetail, ProjectSummary, ProjectView, QueueSelection, ResultChoice,
-    ResultKey, SourceMatch,
+    AttachChoice, DocumentDetail, ProjectSummary, ProjectView, QueueItemKey, QueueSelection,
+    ResultChoice, ResultKey, SourceMatch,
 };
 use serde::Serialize;
 use tauri::State;
@@ -416,7 +416,16 @@ pub async fn review_queue(
     selection: QueueSelection,
     excluded: Vec<ResultKey>,
 ) -> CmdResult<QueueView> {
-    let plan = state.projects.queue_plan(project, &selection, &excluded)?;
+    queue_view(&state, project, &selection, &excluded).await
+}
+
+async fn queue_view(
+    state: &AppState,
+    project: ProjectId,
+    selection: &QueueSelection,
+    excluded: &[ResultKey],
+) -> CmdResult<QueueView> {
+    let plan = state.projects.queue_plan(project, selection, excluded)?;
     let engine = state.engine.clone();
     let scope = plan.scope;
     let queue = tokio::task::spawn_blocking(move || engine.review_queue(&scope))
@@ -427,4 +436,65 @@ pub async fn review_queue(
         choices: plan.choices,
         preferred: plan.preferred,
     })
+}
+
+/// Draws a new random sample of `size` pages nothing flags in the queue over `selection` (with
+/// `seed`, or a new one), kept with the project; without a size, removes the sample.
+#[tauri::command]
+pub fn set_review_sample(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    selection: QueueSelection,
+    size: Option<u32>,
+    seed: Option<u32>,
+) -> CmdResult<Option<SampleSpec>> {
+    Ok(match size {
+        Some(size) => Some(
+            state
+                .projects
+                .draw_sample(project, &selection, size, seed)?,
+        ),
+        None => {
+            state.projects.clear_sample(project, &selection)?;
+            None
+        }
+    })
+}
+
+/// Keeps an item of the queue aside with a note, for the answer it holds; without a note,
+/// puts it back among the others.
+#[tauri::command]
+pub fn keep_aside(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    item: QueueItemKey,
+    revision: Option<String>,
+    note: Option<String>,
+) -> CmdResult<()> {
+    Ok(state
+        .projects
+        .keep_aside(project, &item, revision, note.as_deref())?)
+}
+
+/// Writes the review manifest of the queue over `selection` where the researcher chose, as
+/// `.json` and `.csv`: every item, the sample included, with its identities, reasons and the
+/// researcher's decisions. Read from what is stored: no model is called.
+#[tauri::command]
+pub async fn export_review_manifest(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    selection: QueueSelection,
+    excluded: Vec<ResultKey>,
+    path: String,
+) -> CmdResult<()> {
+    let view = queue_view(&state, project, &selection, &excluded).await?;
+    let manifest = state
+        .projects
+        .review_manifest(project, &selection, &view.queue)?;
+    super::off_thread(move || {
+        let path = std::path::Path::new(&path);
+        super::write_text(path.with_extension("json"), manifest.json()?)?;
+        super::write_text(path.with_extension("csv"), table_csv(&manifest.table())?)
+    })
+    .await
 }
