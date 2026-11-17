@@ -483,6 +483,9 @@ export function applyProgress(event: ProgressEvent): void {
 			app.runs++;
 			void refreshJobs();
 			void refreshWaiting();
+			// The offline models and language data it held are free again: Settings shows them
+			// no longer in use, and they can be removed.
+			void refreshOffline().catch(() => undefined);
 			break;
 	}
 }
