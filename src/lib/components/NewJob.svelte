@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import FileList from './FileList.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import LinkList from './LinkList.svelte';
@@ -209,6 +209,32 @@
 		for (const d of drafts) if (d.presetId === autoPreset) d.presetId = next;
 		autoPreset = next;
 	});
+	/** Whether records were chosen when last looked at; null until the task's prompts are read,
+	 * or once a kept form or a pipeline has filled the form, which keeps the formats it has. Not
+	 * state: it only remembers. */
+	let recordsBefore: boolean | null = null;
+	/** The spreadsheet was ticked for the records, not by the researcher. */
+	let csvForRecords = false;
+	// Records are read for their table: choosing them ticks the spreadsheet, and leaving them
+	// takes back that tick. A spreadsheet ticked or unticked by hand stays as it is.
+	$effect(() => {
+		if (presets.length === 0) return;
+		const now = records;
+		const before = recordsBefore;
+		recordsBefore = now;
+		if (before === null || now === before) return;
+		untrack(() => {
+			if (now && !formats.includes('csv') && rule.formats.includes('csv')) {
+				formats = [...formats, 'csv'];
+				csvForRecords = true;
+			} else if (!now && csvForRecords) {
+				formats = formats.filter((f) => f !== 'csv');
+				csvForRecords = false;
+			} else {
+				csvForRecords = false;
+			}
+		});
+	});
 	/** Distinct names of the chosen models matching a test, for the notes under a choice. */
 	const namesOf = (test: (model: ModelInfo | undefined) => boolean) => [
 		...new Set(models.filter(test).map((model) => model?.name ?? ''))
@@ -287,6 +313,10 @@
 							? app.settings!.audio_formats
 							: app.settings!.text_formats)
 					].filter((f) => rule.formats.includes(f));
+		// The usual formats, before any records: the prompt chosen with them may tick the
+		// spreadsheet.
+		recordsBefore = false;
+		csvForRecords = false;
 		// An analysis or a table of contents is written in one language.
 		if (rule.answers_in_language) languages = languages.slice(0, 1);
 		// A video has no folder of its own: offer the folder last chosen.
@@ -453,6 +483,9 @@
 		sample = p.settings.sample_pages !== null;
 		samplePages = p.settings.sample_pages ?? samplePages;
 		formats = p.formats.filter((f) => rulesFor(app.rules, p.task).formats.includes(f));
+		// The pipeline's formats stand, records or not.
+		recordsBefore = null;
+		csvForRecords = false;
 		destination = p.destination;
 		toast(m.newJob.pipelineApplied(p.name));
 	}
