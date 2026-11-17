@@ -1,10 +1,10 @@
 # Kalamu: statistics
 
-Updated 2026-11-16 by the daily *Repository statistics* workflow (`.github/workflows/stats.yml` on the default branch). The figures are kept in [`data/`](data/) as CSV files, one row per day, for a spreadsheet or a dashboard.
+Updated 2026-11-17 by the daily *Repository statistics* workflow (`.github/workflows/stats.yml` on the default branch). The figures are kept in [`data/`](data/) as CSV files, one row per day, for a spreadsheet or a dashboard.
 
 | Downloads, versions | Downloads, all releases | Views, last 14 days |
 | ---: | ---: | ---: |
-| 306 | 560 | 84 |
+| 310 | 590 | 67 |
 
 ## Downloads per version
 
@@ -12,7 +12,7 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 
 | Release | Published | Downloads | Last 7 days | Last 30 days |
 | --- | --- | ---: | ---: | ---: |
-| [v1.7.0](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0) | 2026-11-13 | 10 | 10 | 10 |
+| [v1.7.0](https://github.com/fmadore/Kalamu/releases/tag/v1.7.0) | 2026-11-13 | 14 | 14 | 14 |
 | [v1.6.0](https://github.com/fmadore/Kalamu/releases/tag/v1.6.0) | 2026-11-10 | 24 | 24 | 24 |
 | [v1.5.0](https://github.com/fmadore/Kalamu/releases/tag/v1.5.0) | 2026-11-07 | 25 | 17 | 25 |
 | [v1.4.1](https://github.com/fmadore/Kalamu/releases/tag/v1.4.1) | 2026-11-05 | 28 | 18 | 28 |
@@ -32,8 +32,8 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 
 | Release | Published | Downloads | Last 7 days | Last 30 days |
 | --- | --- | ---: | ---: | ---: |
-| [ffmpeg-9.0.2-2](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-2) (pre-release) | 2026-11-13 | 29 | 29 | 29 |
-| [llama-b12110-1](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-1) (pre-release) | 2026-11-07 | 126 | 120 | 126 |
+| [ffmpeg-9.0.2-2](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-2) (pre-release) | 2026-11-13 | 37 | 37 | 37 |
+| [llama-b12110-1](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-1) (pre-release) | 2026-11-07 | 144 | 138 | 144 |
 | [llama-b12110-3](https://github.com/fmadore/Kalamu/releases/tag/llama-b12110-3) (pre-release) | 2026-11-06 | 22 | 18 | 22 |
 | [ffmpeg-9.0.2-1](https://github.com/fmadore/Kalamu/releases/tag/ffmpeg-9.0.2-1) (pre-release) | 2026-10-25 | 77 | 35 | 77 |
 
@@ -44,15 +44,15 @@ Every file of a release counts once each time it is downloaded from GitHub. "…
 ```mermaid
 xychart-beta
     title "Downloads per day (all releases)"
-    x-axis ["11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16"]
-    bar [0, 0, 104, 38, 35, 79, 8, 18]
+    x-axis ["11-09", "11-10", "11-11", "11-12", "11-13", "11-14", "11-15", "11-16", "11-17"]
+    bar [0, 0, 104, 38, 35, 79, 8, 18, 30]
 ```
 
 ## Files of v1.7.0
 
 | File | Downloads |
 | --- | ---: |
-| Kalamu_1.7.0_aarch64.dmg | 2 |
+| Kalamu_1.7.0_aarch64.dmg | 6 |
 | Kalamu_1.7.0.msixbundle | 2 |
 | Kalamu_1.7.0_arm64-setup.exe | 1 |
 | Kalamu_1.7.0_arm64.msix | 1 |

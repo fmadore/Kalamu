@@ -232,3 +232,13 @@ date,tag,asset,downloads
 2026-11-16,llama-b12110-1,llama-opencl-b12110-aarch64-pc-windows-msvc.zip,15
 2026-11-16,llama-b12110-1,llama-vulkan-b12110-aarch64-pc-windows-msvc.zip,15
 2026-11-16,llama-b12110-1,llama-vulkan-b12110-x86_64-pc-windows-msvc.zip,32
+2026-11-17,ffmpeg-9.0.2-2,ffmpeg-9.0.2-aarch64-apple-darwin.zip,6
+2026-11-17,ffmpeg-9.0.2-2,ffmpeg-9.0.2-aarch64-pc-windows-msvc.zip,10
+2026-11-17,ffmpeg-9.0.2-2,ffmpeg-9.0.2-x86_64-pc-windows-msvc.zip,18
+2026-11-17,llama-b12110-1,llama-b12110-aarch64-apple-darwin.zip,18
+2026-11-17,llama-b12110-1,llama-b12110-aarch64-pc-windows-msvc.zip,18
+2026-11-17,llama-b12110-1,llama-b12110-x86_64-pc-windows-msvc.zip,36
+2026-11-17,llama-b12110-1,llama-opencl-b12110-aarch64-pc-windows-msvc.zip,18
+2026-11-17,llama-b12110-1,llama-vulkan-b12110-aarch64-pc-windows-msvc.zip,18
+2026-11-17,llama-b12110-1,llama-vulkan-b12110-x86_64-pc-windows-msvc.zip,36
+2026-11-17,v1.7.0,Kalamu_1.7.0_aarch64.dmg,6
