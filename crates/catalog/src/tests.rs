@@ -197,6 +197,39 @@ fn cached_input_and_batches_are_billed_at_their_own_prices() {
     );
 }
 
+/// A records analysis reads each page with the instructions and writes a page of rows for it,
+/// where an analysis answered once per document reads the pages once and writes one answer.
+#[test]
+fn a_records_analysis_is_priced_page_by_page() {
+    let catalog = Catalog::bundled();
+    let mut model = catalog.models[0].clone();
+    model.pricing = Pricing {
+        input_per_mtok: Some(2.0),
+        output_per_mtok: Some(10.0),
+        batch_discount: Some(0.5),
+        ..Pricing::default()
+    };
+    // 400 characters of instructions are 100 tokens. Each page: 1,100 + 100 tokens in at $2,
+    // 1,000 out at $10: $0.0124.
+    let four = catalog.estimate_records(&model, 4, 400);
+    let (Some(usd), Some(economy)) = (four.usd, four.economy_usd) else {
+        panic!("{four:?}");
+    };
+    assert!((usd - 4.0 * 0.0124).abs() < 1e-12, "{usd}");
+    assert!((economy - usd / 2.0).abs() < 1e-12);
+    let eight = catalog.estimate_records(&model, 8, 400).usd;
+    assert!(eight.is_some_and(|e| (e - 2.0 * usd).abs() < 1e-12));
+    // Once per document: 4,400 + 100 tokens in, 1,500 out: $0.024, under half.
+    let once = catalog.estimate(&model, Task::Analysis, 4, 0.0, 400).usd;
+    assert!(once.is_some_and(|o| (o - 0.024).abs() < 1e-12), "{once:?}");
+    // A model priced by the page alone has no token price for rows.
+    model.pricing = Pricing {
+        per_page: Some(0.001),
+        ..Pricing::default()
+    };
+    assert_eq!(catalog.estimate_records(&model, 4, 400).usd, None);
+}
+
 /// Gemini 3.5 Transcribe is estimated by the minute, as Google estimates it, but its answer
 /// reports tokens, not seconds: the cost comes from them, as the live run of 3 November 2026
 /// was billed (1,308 tokens read and 177 written for 52 seconds).
