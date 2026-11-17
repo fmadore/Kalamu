@@ -460,9 +460,9 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   and in a comparison two models' translations are compared as any two readings are.
 - **Analyses**: the document beside its answers, field by field. In a comparison every value
   carries the sigla of the set-ups that gave it, so agreement reads at a glance; reasons are
-  shown below; pointing at a name finds it in the document. A right click on a name in a list
-  renames or removes it at once, in the corrected answers of every set-up that gave it, each
-  left reviewed or not as it was.
+  shown below; pointing at a name finds it in the document, and a text file moves to its first
+  place when none shows. A right click on a name in a list renames or removes it at once, in
+  the corrected answers of every set-up that gave it, each left reviewed or not as it was.
 - **Correct in place.** Corrections are kept apart from the AI output, which is never
   overwritten. Exports use the corrected text or answers, and `provenance.json` records which
   pieces were reviewed or corrected. A correction or speakers' names mark the source's files

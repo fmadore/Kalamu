@@ -423,3 +423,50 @@ test('a place where a model read nothing says so in plain words, apart from what
 	await expect(text).toContainText('a reçu les délégués');
 	await expect(text).not.toContainText('reçu ce matin');
 });
+
+test('a name pointed at in an analysis is brought into view in the text beside it', async ({
+	page
+}) => {
+	// A short window, so the text runs past the foot of its pane.
+	await page.setViewportSize({ width: 1100, height: 420 });
+	await open(page, 'review-analysis');
+	const main = page.getByRole('main');
+	const source = main.getByRole('region', { name: 'Source', exact: true });
+	const text = source.locator('.document');
+	const names = main.getByRole('region', { name: 'Answers' }).locator('button.item');
+	await expect(names.first()).toBeVisible();
+
+	// The name whose first place in the text lies furthest down, out of view.
+	const below = await text.evaluate(
+		(pane, all) => {
+			const whole = (pane.textContent ?? '').toLowerCase();
+			const placed = all
+				.map((name) => ({ name, at: whole.indexOf(name.toLowerCase()) }))
+				.filter((n) => n.at >= 0)
+				.sort((a, b) => b.at - a.at);
+			return placed[0]?.name ?? null;
+		},
+		await names.allTextContents()
+	);
+	expect(below).not.toBeNull();
+	expect(await text.evaluate((pane) => pane.scrollHeight > pane.clientHeight)).toBe(true);
+
+	await names
+		.filter({ hasText: below ?? '' })
+		.first()
+		.hover();
+	const mark = source.locator('mark').first();
+	await expect(mark).toHaveText(new RegExp(below ?? '', 'i'));
+	await expect
+		.poll(() =>
+			text.evaluate((pane) => {
+				const box = pane.getBoundingClientRect();
+				return [...pane.querySelectorAll('mark')].some((m) => {
+					const r = m.getBoundingClientRect();
+					return r.top >= box.top && r.bottom <= box.bottom;
+				});
+			})
+		)
+		.toBe(true);
+	expect(await text.evaluate((pane) => pane.scrollTop)).toBeGreaterThan(0);
+});

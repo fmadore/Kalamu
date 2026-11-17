@@ -7,7 +7,7 @@
 	// keys once the page has the focus, and a double click zooms in on a place or back to the
 	// pane's width. A hint says so until the reader has zoomed once. Or a text file set as text, with words looked for marked; or a player for a
 	// recording or a video. Where no strip of pages runs below, buttons over the scan turn its
-	// pages.
+	// pages. A name pointed at in the answers is marked in a text file and brought into view.
 	import { flushSync, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 	import PageImage from './PageImage.svelte';
@@ -89,6 +89,29 @@
 	let desk = $state<HTMLElement | null>(null);
 
 	const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	// A name pointed at in the answers is brought into view in a text file: when none of its
+	// occurrences shows, the text moves to the first, set a third of the way down so the lines
+	// before it are read with it. Only after the pointer has rested a moment, so passing over a
+	// list of names does not shake the text; a search's words are left where they are, since they
+	// change with every letter typed.
+	let sheet = $state<HTMLElement | null>(null);
+	$effect(() => {
+		const el = sheet;
+		void text;
+		if (kind !== 'text' || !el || !find || found) return;
+		const timer = setTimeout(() => {
+			const pane = el.getBoundingClientRect();
+			const marks = [...el.querySelectorAll('mark')].map((mark) => mark.getBoundingClientRect());
+			const first = marks[0];
+			if (!first || marks.some((r) => r.top >= pane.top && r.bottom <= pane.bottom)) return;
+			el.scrollTo({
+				top: el.scrollTop + first.top - pane.top - el.clientHeight / 3,
+				behavior: still() ? 'auto' : 'smooth'
+			});
+		}, 150);
+		return () => clearTimeout(timer);
+	});
 
 	/** A point in the window the zoom keeps in place; the middle of the pane when none is given. */
 	type Anchor = { x: number; y: number };
@@ -355,7 +378,12 @@
 		{/if}
 		<ZoomPill {zoom} {hint} onzoom={zoomStep} onfit={() => glideTo(1)} onturn={turnBy} />
 	{:else if kind === 'text'}
-		<div class="desk document" lang="" {@attach scrollableByKeys(m.review.source)}>
+		<div
+			class="desk document"
+			lang=""
+			bind:this={sheet}
+			{@attach scrollableByKeys(m.review.source)}
+		>
 			{#if text === null}
 				<p class="muted">{m.common.loading}</p>
 			{:else}
