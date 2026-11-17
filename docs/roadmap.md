@@ -123,6 +123,15 @@ improvements that open *Next*; what it did not fix at once was tracked in
   Gemini 4 Hydrogen is now the default and replaces 3.8 Flash, and Gemini 4 Argon replaces
   3.1 Pro; both older models stay in the pipelines that name them. The model menu follows its
   button when the page scrolls, and shows a model's whole description under the pointer.
+- **PAGE XML, a sample drawn at random, Claude's batches deleted**
+  ([decision](decisions/2026-11-17-page-xml-review-sample-claude-batches.md)), each tested,
+  none yet tried in the packaged app: a text extraction written as PAGE XML, one file per page
+  beside the ALTO file; in *What to check*, pages nothing flags drawn at random from a seed
+  kept with the project, items kept aside with a note, and the list exported as a review
+  manifest ([#85](https://github.com/fmadore/Kalamu/issues/85)); a Claude batch deleted at
+  Anthropic once its answers are stored; and the image description run over JPEG, PNG, TIFF
+  and PDF against recorded answers, the last point of
+  [#168](https://github.com/fmadore/Kalamu/issues/168).
 - **GPT-6.2 Sol and Astra** ([decision](decisions/2026-11-17-gpt-6-2.md)): OpenAI's two models
   of 17 November added; GPT-6.2 Sol is OpenAI's default and replaces 6.1 Sol at the same price,
   and GPT-6.2 Astra replaces GPT-6 Astra for a fifth less. Both older models stay in the
@@ -607,8 +616,8 @@ none of it waits on the others.
 4. **Economy mode's loose ends**, a shipped feature: reading OpenAI's batch answers in a live run
    (on 3 November it had answered none after 35 minutes); a live run of the deleting of a
    batch's files, done on 15 November, which must show whether Mistral names its inline
-   requests' file (951 KB for two pages) among the job's; deleting Claude's batches, which its
-   API allows; then Gemini batches through a JSONL file, to lift the 20 MB inline limit, several
+   requests' file (951 KB for two pages) among the job's; a live run of the deleting of a Claude
+   batch, done on 17 November; then Gemini batches through a JSONL file, to lift the 20 MB inline limit, several
    pages per call in economy mode, and Voxtral transcription in batches once its format is
    documented ([live runs](decisions/2026-11-03-live-runs.md)).
 5. **Source-linked review, the second step
@@ -655,9 +664,11 @@ none of it waits on the others.
   #49); and telling apart two people who share a spelling, which needs mentions anchored in
   the text (#47).
 - **What to check, what is left of [#85](https://github.com/fmadore/Kalamu/issues/85)**:
-  items kept aside with a note; a reproducible random sample of unflagged pages; a review
-  manifest export (identities, reasons, decisions); invalid evidence anchors; optional field
-  rules with their version.
+  invalid evidence anchors; optional field rules with their version; the results set aside
+  from the list kept with the project (the sample is drawn under them, and they last one
+  session); a seed typed by hand, which the command takes and the screen does not offer. The
+  sample, the items kept aside and the manifest, done on 17 November, are still to try in the
+  packaged app.
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed
@@ -699,7 +710,8 @@ cache only if a batch of a few hundred pages shows a need.
   `countTokens` call; the embedded player in the packaged app, whose `tauri.localhost` origin
   YouTube must accept, and the links that open a video on YouTube
   ([decision](decisions/2026-10-27-youtube-links.md)).
-- **Text extraction**: PAGE XML where models return coordinates (ALTO is done); checks for
+- **Text extraction**: PAGE XML files imported into Transkribus, eScriptorium and Aletheia,
+  which no one has yet tried (a PDF page names `file.pdf#page=N` as its image); checks for
   skewed and blurry pages, with persistent image preparation
   ([#53](https://github.com/fmadore/Kalamu/issues/53)).
 - **Analyses**: a column added to an `.xlsx`; the agreement table seen with three set-ups

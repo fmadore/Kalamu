@@ -73,6 +73,34 @@ the words the engine read, a word kept or changed staying in its box, words adde
 box before them, words removed leaving theirs; the engine's confidence is kept only for words
 left as it read them.
 
+## PAGE XML (`.pNNNN.page.xml`)
+
+[PAGE](https://github.com/PRImA-Research-Lab/PAGE-XML) content, the 2019-07-15 schema, as
+Transkribus, eScriptorium and Aletheia read it: one file per page, `<name>.p0001.page.xml`,
+`<name>.p0002.page.xml` and on (four digits at least), beside the ALTO file and from the same
+places. Offered when ALTO is, and the same pages are written: every page of a PDF, one read
+without text and one that failed included (an empty `Page`, the failure in `Comments`), and
+each page of images that has regions.
+
+`Page` gives `imageWidth` and `imageHeight` in the pixels ALTO measures in and, for a PDF
+page, the resolution it was drawn at (`imageXResolution`, `imageYResolution`, in PPI).
+`imageFilename` is the image file's name; a PDF page has no image file, so it names
+`<file>.pdf#page=N`. `ReadingOrder` lists the regions in the engine's order. Each block is a
+`TextRegion`, its lines `TextLine`, and its words `Word` only where the engine placed each word
+(Tesseract); `Coords` are rectangles as four points, in whole pixels kept within the page.
+`TextEquiv/Unicode` holds the corrected text at every level, a corrected page keeping its words'
+places as in ALTO; a word carries the engine's confidence (`conf`, 0 to 1) where it gave one.
+No baselines and no region types are written, the engines giving none.
+
+A block Mistral OCR or LightOnOCR-3 placed whole gets the lines ALTO estimates, each saying its
+position is estimated, and no words: a word's place would be a guess within a guess. ALTO
+writes those estimated words; this is the one difference between the two.
+
+`Metadata` names Kalamu's version, the provider and model, and in `Comments` the resolution,
+whether lines are estimated and whether the text was corrected. `Created` is when the page was
+read and `LastChange` when it was last corrected, never when the file was written, so writing
+the files again gives the same bytes.
+
 ## Analyses
 
 Written as `<name>.analysis.txt` (and `.md`, `.docx`, `.json`, `.csv`) beside the source, so an
@@ -240,3 +268,29 @@ parts, kept as JSON beside the folded text in an FTS5 table (trigram tokenizer, 
 A stamp records what the passage was made from, and `PRAGMA user_version` the layout; a file of
 another version, or one that cannot be read, is emptied and made again. Nothing outside Kalamu
 should rely on its layout.
+
+## The review manifest (`kalamu-review-manifest`, version 1)
+
+Written by **Export the list** in a project's *What to check*, where the researcher chooses:
+a JSON file and a CSV beside it, every item of the list in the scope shown (the project, a
+collection or a selection), whatever the filters show, the pages drawn at random included.
+
+The JSON holds `format`, `version`, `project`, `project_name`, `scope` (`project`,
+`collection:<id>` or `documents:<digest of the selection>`), `exported_at`, the scope's
+`counts`, the `sample` (its seed, size, when it was drawn, how many pages it was drawn from,
+how many were drawn and how many of them are reviewed; `null` without one) and `items`.
+
+The CSV has one row per item, in these columns: `document_id`, `document`, `source_id`,
+`job_id`, `job_name`, `task`, `setup_id`, `setup_label`, `model`, `preferred`, `piece`,
+`place`, `position`, `revision`, `answered_at`, `reasons`, `reason_details`, `flagged`,
+`processing`, `sample`, `sample_seed`, `reviewed`, `corrected`, `decided_at`, `open`,
+`kept_aside`, `kept_note`, `kept_at`, `listed_for`. `piece` is the piece as Kalamu names it
+(`result` for a whole result), `place` as exports label it, `position` counted from 1, and
+`revision` the answer the row is about. `reasons` joins the kinds with `; ` and
+`reason_details` what each found. Yes-or-no columns read `yes` or `no`, `kept_aside` also
+`for an earlier answer`; `listed_for` reads `processing`, `flagged`, `not_reviewed` or
+`sample`. Times are in UTC.
+
+A page is drawn by ranking every page nothing flags by the SHA-256 of `<seed>:<identity>`, the
+identity being `<document id>/<task>/<piece>`, and taking the lowest: the manifest's seed and
+identities are enough to check a draw.

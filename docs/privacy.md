@@ -2,7 +2,8 @@
 
 **Effective date:** 17 November 2026, which applies from the first version to keep, in a
 project's list of what to check, the items the user keeps aside with their notes and the seed and
-size of a sample drawn at random, and to write that list where the user chooses. The policy of
+size of a sample drawn at random, and to write that list where the user chooses, and to delete
+at Anthropic a batch of the cheaper mode once it has ended. The policy of
 15 November 2026 did not say so; it applies from the first version to delete what the
 cheaper mode's batches leave in the user's storage at OpenAI and Mistral, and to keep, for a
 job deleted meanwhile, the record of such a batch until that is done. The policy of 11 November
@@ -84,8 +85,12 @@ the files that batch names, and only those; it never lists or touches anything e
 account's storage. If the provider cannot be reached it tries again when the app is next
 opened, a few times, after which the files stay until the provider's own rules remove them
 (30 days at OpenAI; Mistral states no end) or the user deletes them there. Batches sent by
-earlier versions are not cleaned. Claude and Gemini batches leave no such files; those
-providers keep the batch itself by their own rules (up to 29 days at Anthropic).
+earlier versions are not cleaned. A Claude batch leaves no such files, but Anthropic keeps the
+batch itself, with its requests and answers, for up to 29 days: Kalamu deletes that batch at
+Anthropic in the same way, once it has ended and its answers are stored on the computer, or it
+was cancelled or has failed, and tries again at later launches if Anthropic cannot be reached.
+A Claude batch sent by an earlier version is not deleted. Gemini batches leave no such files;
+Google keeps the batch itself by its own rules.
 
 **Offline**, with Whisper, recordings are converted and transcribed on the computer and never
 uploaded; with Tesseract or an offline OCR model, PDF pages and images are drawn and read on the

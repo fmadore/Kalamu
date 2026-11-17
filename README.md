@@ -105,8 +105,8 @@ try a small job first. See the [roadmap](docs/roadmap.md) and the
   read and you have checked it. For longer chains, **workflows** run your pipelines one after
   another, from ready-made examples or your own, on a folder or a project's selection; each
   step is a job of its own, and running again pays only for the steps that changed.
-- **Export** to text, Markdown, Word, JSON, CSV, subtitles, searchable PDF and ALTO XML (each
-  word with its place on the page, corrections included), each with a `provenance.json`
+- **Export** to text, Markdown, Word, JSON, CSV, subtitles, searchable PDF, ALTO XML and PAGE
+  XML (each word with its place on the page, corrections included), each with a `provenance.json`
   recording the model, prompt and settings.
 - **A glossary** explains the words these tools use, from OCR and tokens to error rates and
   hallucination, for colleagues new to them.
