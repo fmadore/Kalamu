@@ -666,6 +666,7 @@
 	{player}
 	switchable={readText ? { onswitch: () => (originalChosen = !originalChosen) } : null}
 	regions={offerRegions ? regions : undefined}
+	regionPage={{ text: base, refresh: () => review.refresh() }}
 	witness={{
 		label: setups[0]?.label ?? '',
 		siglum: setups.length > 1 ? siglum(0) : null,

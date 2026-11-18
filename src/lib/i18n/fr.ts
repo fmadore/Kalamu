@@ -1802,6 +1802,8 @@ export const fr: Messages = {
 		regionEdit: {
 			ownHint:
 				'Affiche les zones que vous avez tracées sur la page, et permet d’en tracer d’autres',
+			/** The switch where a page has only the researcher's own regions. */
+			showOwn: 'Afficher les zones',
 			draw: 'Tracer une zone',
 			drawHint:
 				'Faites glisser sur la page pour encadrer une partie. Appuyez de nouveau pour placer un cadre au milieu de la page et le déplacer avec les flèches.',

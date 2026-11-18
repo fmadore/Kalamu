@@ -1695,6 +1695,8 @@ export const en = {
 		/** The researcher's own regions over the scan: drawn, moved, resized, removed. */
 		regionEdit: {
 			ownHint: 'Show the regions you drew on the page, and draw new ones',
+			/** The switch where a page has only the researcher's own regions. */
+			showOwn: 'Show regions',
 			draw: 'Draw a region',
 			drawHint:
 				'Drag over the page to draw a box around a part of it. Press again to place a box in the middle of the page and move it with the arrow keys.',

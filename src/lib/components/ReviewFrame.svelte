@@ -18,6 +18,7 @@
 	import StepBanner from './StepBanner.svelte';
 	import RegionLayer from './RegionLayer.svelte';
 	import RegionNote from './RegionNote.svelte';
+	import RegionReading from './RegionReading.svelte';
 	import RegionTools from './RegionTools.svelte';
 	import ReportLink from './ReportLink.svelte';
 	import SourcePane from './SourcePane.svelte';
@@ -58,6 +59,7 @@
 		player,
 		switchable = null,
 		regions,
+		regionPage = null,
 		witness,
 		label,
 		tools,
@@ -107,6 +109,9 @@
 		switchable?: { onswitch: () => void } | null;
 		/** The regions over a scan, offered with their switch in the source pane's bar. */
 		regions?: Regions;
+		/** In the text review, the text beside the scan and what reads it again: a region read
+		 * again can then replace its words there. */
+		regionPage?: { text: string; refresh: () => Promise<unknown> } | null;
 		/** Whose text or answers lead, over them. */
 		witness: { label: string; siglum?: string | null; note?: string | null; corrected: boolean };
 		/** What the text pane holds, for screen readers. */
@@ -179,6 +184,7 @@
 	{#if regions?.shown}<RegionLayer {regions} {zoom} {rotation} />{/if}
 {/snippet}
 {#snippet regionNote()}{#if regions}<RegionNote {regions} />{/if}{/snippet}
+{#if regions}<RegionReading {regions} {preview} page={regionPage} />{/if}
 
 <div class="review">
 	<header class="masthead">

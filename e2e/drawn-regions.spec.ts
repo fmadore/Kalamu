@@ -60,7 +60,9 @@ const regionsOn = (main: Locator) => main.getByRole('group', { name: /^Text regi
 test('nothing new is shown until the regions are', async ({ page }) => {
 	for (const view of ['review', 'review-analysis-scan', 'review-contents', 'review-records']) {
 		const main = await open(page, view);
-		const toggle = main.getByRole('button', { name: 'Show text regions' });
+		// Only the text review has a model's regions; elsewhere the switch shows the reader's own.
+		const name = view === 'review' ? 'Show text regions' : 'Show regions';
+		const toggle = main.getByRole('button', { name, exact: true });
 		await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 		await expect(main.getByRole('button', { name: 'Draw a region' })).toHaveCount(0);
 		await expect(page.locator('.region-note')).toHaveCount(0);
@@ -71,7 +73,7 @@ test('nothing new is shown until the regions are', async ({ page }) => {
 	await page.goto('/?mock&view=review-analysis');
 	await page.waitForLoadState('networkidle');
 	await expect(main.getByRole('region', { name: 'Answers' })).toBeVisible();
-	await expect(main.getByRole('button', { name: 'Show text regions' })).toHaveCount(0);
+	await expect(main.getByRole('button', { name: /^Show (text )?regions$/ })).toHaveCount(0);
 });
 
 test('a box drawn with the pointer is kept, with what is written there; a slip keeps nothing', async ({
@@ -242,7 +244,7 @@ test('the analysis, table-of-contents and records reviews take regions on their 
 	page
 }) => {
 	const main = await open(page, 'review-analysis-scan');
-	await main.getByRole('button', { name: 'Show text regions' }).click();
+	await main.getByRole('button', { name: 'Show regions', exact: true }).click();
 	const note = page.locator('.region-note');
 	await expect(note).toContainText('No region on this page yet');
 	await main.getByRole('button', { name: 'Draw a region' }).click();
@@ -261,7 +263,7 @@ test('the analysis, table-of-contents and records reviews take regions on their 
 	for (const view of ['review-contents', 'review-records']) {
 		const shown = await open(page, view);
 		// Shown already: the switch is remembered on this computer.
-		await expect(shown.getByRole('button', { name: 'Show text regions' })).toHaveAttribute(
+		await expect(shown.getByRole('button', { name: 'Show regions', exact: true })).toHaveAttribute(
 			'aria-pressed',
 			'true'
 		);
@@ -343,4 +345,37 @@ test('in a window of 640 by 560, the tools and the card stay within reach', asyn
 		await expect(note.getByRole('button', { name })).toBeVisible();
 	}
 	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(640);
+});
+
+test('a region drawn is read again by a model, its reading used as the region’s text and undone', async ({
+	page
+}) => {
+	const main = await open(page);
+	await main.getByRole('button', { name: 'Show text regions' }).click();
+	await pageThree(page, main);
+	await main.getByRole('button', { name: 'Draw a region' }).click();
+	await dragOn(page, main, [0.1, 0.1], [0.5, 0.25]);
+	const mine = regionsOn(main).getByRole('button', { name: /^Your region/ });
+	await expect(mine).toHaveAccessibleName('Your region');
+
+	// The card offers it; the dialog says what is sent and what it costs before anything is.
+	await page
+		.locator('.region-note')
+		.getByRole('button', { name: 'Read this region again…' })
+		.click();
+	const dialog = page.getByRole('dialog', { name: 'Read this region again' });
+	await expect(dialog).toBeVisible();
+	await expect(dialog).toContainText(/Only this part of the page is sent|Read on this computer/);
+	await page.screenshot({ path: 'test-results/region-read-ask.png' });
+	await dialog.getByRole('button', { name: 'Read', exact: true }).click();
+	const use = dialog.getByRole('button', { name: 'Use as this region’s text' });
+	await expect(use).toBeVisible();
+	await page.screenshot({ path: 'test-results/region-read-answer.png' });
+	await use.click();
+	await expect(dialog).toHaveCount(0);
+
+	// Written as the region's own text, and taken back from the message.
+	await expect(mine).toHaveAccessibleName(/^Your region: .+/);
+	await page.getByRole('button', { name: 'Undo' }).click();
+	await expect(mine).toHaveAccessibleName('Your region');
 });

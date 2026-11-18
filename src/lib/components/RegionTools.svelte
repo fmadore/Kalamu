@@ -30,7 +30,8 @@
 		data-region-toggle
 		aria-pressed={regions.shown}
 		title={engineHint ? m.review.regionsHint : m.review.regionEdit.ownHint}
-		onclick={() => regions.toggle()}>{m.review.regionsShow}</button
+		onclick={() => regions.toggle()}
+		>{regions.engine ? m.review.regionsShow : m.review.regionEdit.showOwn}</button
 	>
 	{#if regions.shown && regions.drawable}
 		<button
