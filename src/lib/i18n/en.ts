@@ -38,7 +38,14 @@ export const en = {
 		hideProjects: 'Hide the projects',
 		/** Said while a finished job is dragged over the list of projects. */
 		dropOnProject: 'Drop on a project to add the job to it',
-		dragHint: 'Drag it onto a project in the list to add it there'
+		dragHint: 'Drag it onto a project in the list to add it there',
+		/** The sidebar's foot: jobs paused, or cut short by a quit or a crash, to go on with. */
+		toResume: 'To resume',
+		resumeJob: (name: string) => `Resume “${name}”`,
+		/** Under the job stopped last, the others stopped too, shown on asking. */
+		resumeOthers: (n: number) => (n === 1 ? '1 more' : `${n} more`),
+		/** Said politely once a job resumes from the sidebar's foot. */
+		resumed: (name: string) => `“${name}” resumed.`
 	},
 	nav: {
 		newJob: 'New job',

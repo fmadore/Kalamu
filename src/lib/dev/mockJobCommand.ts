@@ -17,6 +17,7 @@ import {
 	audioSetup,
 	job,
 	nameSpeakers,
+	pausedJob,
 	pieces,
 	recording,
 	renameListed,
@@ -190,11 +191,21 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 			for (const id of a.ids as string[]) deletedJobs.add(id);
 			return null;
 		case 'get_job':
+			if (a.id === pausedJob.id) return pausedJob;
 			if (a.id === videoJob.id) return videoJob;
 			if (a.id === contentsJob.id) return contentsJob;
 			if (a.id === correctionJob.id) return correctionJob;
 			if (a.id === recordsJob.id) return recordsJob;
 			return a.id === audioJob.id ? audioJob : a.id === analysisJob.id ? analysisJob : job;
+		// A paused or interrupted job runs again, as the engine has it, until the next reading of
+		// the list; `?resume-fails` refuses, as the engine does for a provider without its key.
+		case 'start_job': {
+			if (new URLSearchParams(location.search).has('resume-fails')) {
+				throw { id: 'provider.missing_key', detail: 'mistral' };
+			}
+			for (const s of summaries) if (s.id === a.id) s.status = 'running';
+			return null;
+		}
 		case 'rename_job': {
 			const name = String(a.name).trim();
 			if (!name) return null;

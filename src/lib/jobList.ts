@@ -14,6 +14,18 @@ export const FINISHED_SHOWN = 8;
 /** Jobs that stopped before the end and can be resumed. */
 export const UNFINISHED: JobStatus[] = ['interrupted', 'paused', 'pending'];
 
+/** Jobs that stopped part-way and wait for the researcher to go on: paused, or interrupted by a
+ *  quit or a crash. Not one waiting to start (`pending`), nor one stopped for good. */
+export const RESUMABLE: JobStatus[] = ['paused', 'interrupted'];
+
+/** The jobs the sidebar's foot offers to resume, the one stopped last first. A workflow step
+ *  waiting for a check is the researcher's to check, not to resume, and is left out. */
+export function toResume(jobs: JobSummary[], waiting: Record<string, unknown>): JobSummary[] {
+	return jobs
+		.filter((j) => RESUMABLE.includes(j.status) && !waiting[j.id])
+		.sort((a, b) => b.updated_at - a.updated_at);
+}
+
 export type GroupKey = 'waiting' | 'running' | 'unfinished' | 'finished';
 
 /** Which sidebar group a job belongs to: workflow steps waiting for the researcher first, then

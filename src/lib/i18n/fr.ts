@@ -125,7 +125,11 @@ export const fr: Messages = {
 		showProjects: 'Afficher les projets',
 		hideProjects: 'Masquer les projets',
 		dropOnProject: 'Déposez-le sur un projet pour l’y ajouter',
-		dragHint: 'Faites-le glisser sur un projet de la liste pour l’y ajouter'
+		dragHint: 'Faites-le glisser sur un projet de la liste pour l’y ajouter',
+		toResume: 'À reprendre',
+		resumeJob: (name: string) => `Reprendre « ${name} »`,
+		resumeOthers: (n: number) => (n === 1 ? '1 autre' : `${n} autres`),
+		resumed: (name: string) => `« ${name} » a repris.`
 	},
 	nav: {
 		newJob: 'Nouveau traitement',

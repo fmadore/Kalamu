@@ -6,7 +6,8 @@ import {
 	groupOf,
 	readJobListView,
 	shownJobs,
-	sortJobs
+	sortJobs,
+	toResume
 } from './jobList.js';
 
 function job(id: string, options: Partial<JobSummary> = {}): JobSummary {
@@ -38,6 +39,25 @@ describe('groupOf', () => {
 		expect(groupOf(job('a', { status: 'running' }), {})).toBe('running');
 		expect(groupOf(job('a', { status: 'paused' }), {})).toBe('unfinished');
 		expect(groupOf(job('a', { status: 'cancelled' }), {})).toBe('finished');
+	});
+});
+
+describe('toResume', () => {
+	it('offers paused and interrupted jobs, the one stopped last first', () => {
+		const jobs = [
+			job('done'),
+			job('running', { status: 'running' }),
+			job('pending', { status: 'pending' }),
+			job('cancelled', { status: 'cancelled' }),
+			job('errors', { status: 'completed_with_errors' }),
+			job('old', { status: 'interrupted', updated_at: 1 }),
+			job('new', { status: 'paused', updated_at: 5 })
+		];
+		expect(toResume(jobs, {}).map((j) => j.id)).toEqual(['new', 'old']);
+	});
+
+	it('leaves out a workflow step that waits for a check', () => {
+		expect(toResume([job('a', { status: 'paused' })], { a: {} })).toEqual([]);
 	});
 });
 

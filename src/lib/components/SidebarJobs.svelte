@@ -102,6 +102,7 @@
 						{:else}
 							<button
 								class="job"
+								data-job={job.id}
 								class:current={openJob === job.id}
 								class:lifted={drag.dragging?.job.id === job.id}
 								aria-current={openJob === job.id ? 'page' : undefined}

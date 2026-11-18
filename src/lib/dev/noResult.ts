@@ -18,8 +18,7 @@ export const NO_RESULT = new Set([
 	'retry_failed',
 	'save_settings',
 	'set_api_key',
-	'set_shell_labels',
-	'start_job'
+	'set_shell_labels'
 ]);
 
 /**
