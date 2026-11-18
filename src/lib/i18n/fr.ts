@@ -1787,7 +1787,6 @@ export const fr: Messages = {
 		regionsShow: 'Afficher les zones de texte',
 		regionsHint:
 			'Encadre les blocs, les lignes et les mots que le modèle a situés sur la page ; choisissez-en un pour trouver son texte',
-		regionsNone: 'Ce modèle n’a pas situé le texte sur cette page.',
 		regionsFallback:
 			'Ce modèle n’a pas situé le texte sur cette page : comparez le texte à la page entière.',
 		regionsLabel: 'Zones de texte de la page : les flèches passent de l’une à l’autre',

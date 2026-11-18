@@ -1680,7 +1680,6 @@ export const en = {
 		regionsShow: 'Show text regions',
 		regionsHint:
 			'Outline the blocks, lines and words the model placed on the page; select one to find its text',
-		regionsNone: 'This model did not place the text on this page.',
 		regionsFallback:
 			'This model did not place the text on this page: check the text against the whole page.',
 		regionsLabel: 'Text regions on the page: the arrow keys go from one to the next',

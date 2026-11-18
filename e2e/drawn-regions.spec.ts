@@ -13,7 +13,7 @@ async function open(page: Page, view = 'review'): Promise<Locator> {
 	await page.goto(`/?mock&view=${view}`);
 	await page.waitForLoadState('networkidle');
 	const main = page.getByRole('main');
-	await expect(main.locator('.sheet canvas')).toBeVisible();
+	await expect(main.locator('.page-sheet canvas')).toBeVisible();
 	return main;
 }
 
@@ -45,7 +45,7 @@ async function dragOn(
 	from: [number, number],
 	to: [number, number]
 ): Promise<void> {
-	const box = await main.locator('.sheet canvas').boundingBox();
+	const box = await main.locator('.page-sheet canvas').boundingBox();
 	if (!box) throw new Error('the page is not drawn');
 	const at = ([x, y]: [number, number]) => [box.x + x * box.width, box.y + y * box.height] as const;
 	await page.mouse.move(...at(from));
@@ -278,7 +278,7 @@ test('on a turned page, a box is drawn where the pointer was', async ({ page }) 
 	await main.getByRole('button', { name: 'Show text regions' }).click();
 	await pageThree(page, main);
 	await main.getByRole('button', { name: 'Turn the page right' }).click();
-	const canvas = main.locator('.sheet canvas');
+	const canvas = main.locator('.page-sheet canvas');
 	await expect
 		.poll(async () => {
 			const b = await canvas.boundingBox();
