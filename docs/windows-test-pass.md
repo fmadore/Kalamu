@@ -99,6 +99,10 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   in a window small enough for the scan to need a scrollbar, and resize the window slowly
   through the point where the scrollbar comes and goes. The scan settles; it never redraws
   without end, and the processor's use falls back to nothing.
+- [ ] **A6. A webview that cannot be made**, whose message now comes from a newer library
+  (`rfd` 0.18.0): start Kalamu from a terminal opened from the Start menu, not Claude's, with
+  `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER` set to a folder that does not exist. A native message
+  says why Kalamu cannot start and names the logs folder; Kalamu ends.
 
 ## Part B: written since 1.8.0, without a key (1 hour 30)
 
