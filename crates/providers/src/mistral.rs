@@ -7,9 +7,12 @@
 //! Economy mode sends OCR and analysis requests as one batch job ([`batch`]), at half price.
 //! Recordings go one by one: Mistral's batch service lists the transcriptions endpoint, but not
 //! how a recording travels inside a batch.
+//!
+//! Texts are embedded for the search by meaning through the embeddings endpoint ([`embed`]).
 
 mod batch;
 mod chat;
+mod embed;
 
 use async_trait::async_trait;
 use kalamu_core::{
