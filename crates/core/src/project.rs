@@ -232,6 +232,9 @@ pub enum ProjectError {
     NoName,
     #[error("A tag needs a name")]
     NoTag,
+    /// A sample's seed longer than six digits.
+    #[error("A seed is six digits at most")]
+    Seed,
     #[error("Could not write the export: {0}")]
     Export(String),
     #[error(transparent)]
@@ -246,6 +249,7 @@ impl ProjectError {
             Self::Elsewhere(_) => "project.elsewhere",
             Self::NoName => "project.no_name",
             Self::NoTag => "project.no_tag",
+            Self::Seed => "project.seed",
             Self::Export(_) => "project.export",
             Self::Store(_) => "job.database",
         }

@@ -286,6 +286,18 @@ fn each_scope_keeps_its_own_sample_until_drawn_again_or_removed() {
         .unwrap();
     assert_eq!((whole.seed, whole.size), (1957, 20));
     assert_eq!(plan(&QueueSelection::Project).sample, Some(whole));
+    // A seed typed by hand is six digits at most; a longer one is refused and the sample kept.
+    let typed = f
+        .projects
+        .draw_sample(p.id, &QueueSelection::Project, 20, Some(999_999))
+        .unwrap();
+    assert_eq!(typed.seed, 999_999);
+    assert!(matches!(
+        f.projects
+            .draw_sample(p.id, &QueueSelection::Project, 20, Some(1_000_000)),
+        Err(ProjectError::Seed)
+    ));
+    assert_eq!(plan(&QueueSelection::Project).sample, Some(typed));
     let collection = QueueSelection::Collection { id: letters.id };
     assert_eq!(plan(&collection).sample, None);
 

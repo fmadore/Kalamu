@@ -47,6 +47,23 @@ export function sampleItems(items: QueueItem[]): QueueItem[] {
 	return items.filter((i) => i.sample);
 }
 
+/** The most pages a sample holds, and the largest seed (`MAX_SAMPLE`, `MAX_SEED` in Rust). */
+export const SAMPLE_MAX: number = lists.sample_limits.size;
+export const SEED_MAX: number = lists.sample_limits.seed;
+
+/**
+ * A seed as the researcher typed it, copied from a manifest or an article: `null` when the box
+ * is empty (a new draw), the number when it is digits only and six of them at most, `'invalid'`
+ * otherwise. Spaces around it are ignored.
+ */
+export function parseSeed(typed: string): number | null | 'invalid' {
+	const text = typed.trim();
+	if (text === '') return null;
+	if (!/^\d+$/.test(text)) return 'invalid';
+	const seed = Number(text);
+	return seed <= SEED_MAX ? seed : 'invalid';
+}
+
 /** What names an item to keep it aside or put it back. */
 export function keyOf(item: QueueItem): QueueItemKey {
 	return {

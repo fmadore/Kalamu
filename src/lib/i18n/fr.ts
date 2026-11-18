@@ -661,7 +661,11 @@ export const fr: Messages = {
 			reviewed: (reviewed: number, drawn: number) =>
 				`${reviewed} ${reviewed <= 1 ? 'relue' : 'relues'} sur ${drawn}`,
 			none: 'Aucune page ici n’est à la fois lue et sans signalement : il n’y a rien à tirer.',
-			badge: 'Tirée au hasard'
+			badge: 'Tirée au hasard',
+			seedField: 'Numéro de tirage',
+			seedFieldHint:
+				'Laissez vide pour un nouveau tirage, ou tapez le numéro d’un tirage, lu dans une liste exportée ou un article, pour retrouver les mêmes pages.',
+			seedInvalid: 'Un numéro de tirage a six chiffres au plus.'
 		},
 		keep: {
 			action: 'Mettre de côté',
@@ -2225,6 +2229,7 @@ export const fr: Messages = {
 		'project.elsewhere': 'Cet élément appartient à un autre projet, ou n’existe plus.',
 		'project.no_name': 'Donnez-lui un nom.',
 		'project.no_tag': 'Tapez l’étiquette à ajouter.',
+		'project.seed': 'Un numéro de tirage a six chiffres au plus.',
 		'project.export': 'L’export n’a pas pu être écrit.',
 		'dictionary.no_entry':
 			'Cette entrée ne figure plus dans le dictionnaire. Elle a peut-être été fusionnée ou scindée.',

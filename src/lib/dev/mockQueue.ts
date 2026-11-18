@@ -191,6 +191,7 @@ export function queueCommand(
 				samples.delete(key);
 				return null;
 			}
+			if (typeof a.seed === 'number' && a.seed > 999_999) throw { id: 'project.seed' };
 			const spec: SampleSpec = {
 				seed: (a.seed as number | null) ?? 1957 + samples.size,
 				size: Math.min(1000, Math.max(1, a.size as number)),

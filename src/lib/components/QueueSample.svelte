@@ -2,12 +2,13 @@
 	// A random sample of the pages nothing flags, beside what to check: how many to draw, the
 	// seed that decides the draw (shown, kept with the project, so the same pages come back and
 	// can be cited), how many of those drawn are reviewed, and the pages themselves. Rust draws
-	// them; drawing again, with a new seed, is the researcher's explicit choice.
+	// them; drawing again, with a new seed, is the researcher's explicit choice. A seed typed by
+	// hand, read in a manifest or an article, draws the same pages again.
 	import QueueRow from './QueueRow.svelte';
 	import type { QueueItem } from '#lib/bindings/QueueItem.js';
 	import type { SampleCounts } from '#lib/bindings/SampleCounts.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
-	import { itemKey } from '#lib/queue.js';
+	import { SAMPLE_MAX, itemKey, parseSeed } from '#lib/queue.js';
 
 	let {
 		sample,
@@ -21,15 +22,20 @@
 		items: QueueItem[];
 		onopen: (item: QueueItem) => void;
 		onkeep: (item: QueueItem, note: string | null) => Promise<void>;
-		ondraw: (size: number) => Promise<void>;
+		/** Draws `size` pages with `seed`, or with a new seed when it is `null`. */
+		ondraw: (size: number, seed: number | null) => Promise<void>;
 		onremove: () => Promise<void>;
 	} = $props();
 	const m = messages();
 	const s = m.queue.sample;
-	const MAX = 1000;
+	const MAX = SAMPLE_MAX;
 
 	// svelte-ignore state_referenced_locally
 	let size = $state(sample?.size ?? 20);
+	/** The seed as typed; empty for a new draw. */
+	let typedSeed = $state('');
+	let seedInvalid = $state(false);
+	let seedInput = $state<HTMLInputElement | null>(null);
 	let busy = $state(false);
 
 	async function run(work: () => Promise<void>) {
@@ -43,7 +49,16 @@
 
 	function submit(event: SubmitEvent) {
 		event.preventDefault();
-		void run(() => ondraw(Math.min(MAX, Math.max(1, Math.round(size) || 1))));
+		const seed = parseSeed(typedSeed);
+		if (seed === 'invalid') {
+			seedInvalid = true;
+			seedInput?.focus();
+			return;
+		}
+		void run(async () => {
+			await ondraw(Math.min(MAX, Math.max(1, Math.round(size) || 1)), seed);
+			typedSeed = '';
+		});
 	}
 </script>
 
@@ -58,6 +73,21 @@
 			<span>{s.size}</span>
 			<input type="number" min="1" max={MAX} step="1" bind:value={size} />
 		</label>
+		<label>
+			<span>{s.seedField}</span>
+			<input
+				class="seed num"
+				type="text"
+				inputmode="numeric"
+				autocomplete="off"
+				spellcheck="false"
+				bind:this={seedInput}
+				bind:value={typedSeed}
+				oninput={() => (seedInvalid = false)}
+				aria-invalid={seedInvalid}
+				aria-describedby={seedInvalid ? 'sample-seed-error sample-seed-hint' : 'sample-seed-hint'}
+			/>
+		</label>
 		<button
 			class="btn sm"
 			type="submit"
@@ -70,6 +100,10 @@
 			>
 		{/if}
 	</form>
+	<p class="hint" id="sample-seed-hint">{s.seedFieldHint}</p>
+	{#if seedInvalid}
+		<p class="chip danger" id="sample-seed-error" role="alert">{s.seedInvalid}</p>
+	{/if}
 	{#if sample}
 		<p class="facts num">
 			<span>{s.summary(sample.drawn, sample.candidates)}</span>
@@ -122,6 +156,13 @@
 	}
 	.draw input {
 		width: 6rem;
+	}
+	.draw input[aria-invalid='true'] {
+		border-color: var(--danger);
+	}
+	.chip.danger {
+		justify-self: start;
+		margin: 0;
 	}
 	.facts {
 		display: flex;

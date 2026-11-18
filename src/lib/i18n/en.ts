@@ -553,7 +553,11 @@ export const en = {
 			drawnOn: (when: string) => `drawn ${when}`,
 			reviewed: (reviewed: number, drawn: number) => `${reviewed} of ${drawn} reviewed`,
 			none: 'No page here is read and free of flags, so there is nothing to draw.',
-			badge: 'Drawn at random'
+			badge: 'Drawn at random',
+			seedField: 'Seed',
+			seedFieldHint:
+				'Leave it empty for a new draw, or type the seed of a sample, read in a manifest or an article, to draw the same pages again.',
+			seedInvalid: 'A seed is a number of six digits at most.'
 		},
 		keep: {
 			action: 'Keep aside',
@@ -2142,6 +2146,7 @@ export const en = {
 		'project.elsewhere': 'This belongs to another project, or no longer exists.',
 		'project.no_name': 'Give it a name.',
 		'project.no_tag': 'Type the tag to add.',
+		'project.seed': 'A seed is a number of six digits at most.',
 		'project.export': 'The export could not be written.',
 		'dictionary.no_entry':
 			'This entry is no longer in the dictionary. It may have been merged or split.',

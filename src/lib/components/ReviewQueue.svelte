@@ -109,9 +109,9 @@
 		}
 	}
 
-	async function draw(size: number) {
+	async function draw(size: number, seed: number | null) {
 		try {
-			await api.setReviewSample(projectId, selectionOf(scope), size);
+			await api.setReviewSample(projectId, selectionOf(scope), size, seed);
 			await load();
 		} catch (e) {
 			action.fail(e);

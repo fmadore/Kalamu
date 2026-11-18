@@ -12,7 +12,9 @@ import {
 	placeOf,
 	REASONS,
 	reasonText,
+	parseSeed,
 	sampleItems,
+	SEED_MAX,
 	shownItems
 } from './queue.js';
 
@@ -144,5 +146,23 @@ describe('the review queue', () => {
 	it('names an item by its result and piece to keep it aside', () => {
 		expect(keyOf(cut)).toEqual({ job_id: 'j1', setup_id: 'a', source_id: 's1', index: 1 });
 		expect(keyOf(item([{ kind: 'not_read' }], { piece: null, index: null })).index).toBeNull();
+	});
+});
+
+describe('a seed typed by hand', () => {
+	it('is six digits at most, or nothing for a new draw', () => {
+		expect(SEED_MAX).toBe(999_999);
+		expect(parseSeed('')).toBeNull();
+		expect(parseSeed('   ')).toBeNull();
+		expect(parseSeed('271828')).toBe(271_828);
+		expect(parseSeed(' 42 ')).toBe(42);
+		expect(parseSeed('000007')).toBe(7);
+		expect(parseSeed('0')).toBe(0);
+	});
+
+	it('refuses what is not a seed rather than guessing', () => {
+		for (const typed of ['1000000', '12.5', '-3', '1e3', '12 34', 'seed', '١٢٣']) {
+			expect(parseSeed(typed)).toBe('invalid');
+		}
 	});
 });

@@ -215,8 +215,9 @@ impl Projects {
 
 impl Projects {
     /// Draws a new random sample of the pages the queue over `selection` does not flag: `size`
-    /// pages, with `seed` or a new one. It is kept with the project until drawn again or
-    /// removed, so the same pages come back after a restart.
+    /// pages, with `seed` (six digits at most, as typed from a manifest or an article) or a new
+    /// one. It is kept with the project until drawn again or removed, so the same pages come
+    /// back after a restart.
     pub fn draw_sample(
         &self,
         project: ProjectId,
@@ -225,6 +226,9 @@ impl Projects {
         seed: Option<u32>,
     ) -> Result<SampleSpec, ProjectError> {
         self.check_selection(project, selection)?;
+        if seed.is_some_and(|s| s > kalamu_core::MAX_SEED) {
+            return Err(ProjectError::Seed);
+        }
         let sample = SampleSpec::new(size, seed, Timestamp::now());
         self.store
             .set_review_sample(project, &selection.key(), Some(&sample))?;
