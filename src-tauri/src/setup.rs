@@ -352,7 +352,10 @@ fn assemble(
     );
     match meaning.recover() {
         Ok(0) => {}
-        Ok(n) => tracing::info!(runs = n, "preparations for the search by meaning interrupted"),
+        Ok(n) => tracing::info!(
+            runs = n,
+            "preparations for the search by meaning interrupted"
+        ),
         Err(e) => tracing::warn!(error = %e, "preparations for the search by meaning not checked"),
     }
     let interrupted = engine.recover().unwrap_or_default();
