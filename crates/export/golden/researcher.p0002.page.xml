@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>Kalamu 0.1.0</Creator>
+    <Created>2026-10-27T10:25:27Z</Created>
+    <LastChange>2026-10-28T10:25:27Z</LastChange>
+    <Comments>gemini gemini-3.8-flash; PDF page measured at 300 dpi; line positions estimated within blocks the model placed whole; positions set by the researcher where an element's comments say so</Comments>
+    <MetadataItem type="processingStep" name="review" value="positions set and regions placed by the researcher in Kalamu" date="2026-10-28T10:25:27Z"/>
+  </Metadata>
+  <Page imageFilename="carnet.pdf#page=2" imageWidth="2479" imageHeight="3508" imageXResolution="300" imageYResolution="300" imageResolutionUnit="PPI">
+    <ReadingOrder>
+      <OrderedGroup id="ro">
+        <RegionRefIndexed index="0" regionRef="r1"/>
+        <RegionRefIndexed index="1" regionRef="r2"/>
+        <RegionRefIndexed index="2" regionRef="researcher_6f1c2a3b-0000-4000-8000-000000000007"/>
+      </OrderedGroup>
+    </ReadingOrder>
+    <TextRegion id="r1" custom="readingOrder {index:0;}" comments="position set by the researcher (region 6f1c2a3b-0000-4000-8000-000000000006)">
+      <Coords points="62,281 1178,281 1178,1158 62,1158"/>
+      <TextLine id="r1_l1" custom="readingOrder {index:0;}" comments="position estimated within a block the model placed whole">
+        <Coords points="62,281 1178,281 1178,573 62,573"/>
+        <TextEquiv>
+          <Unicode>Le cercle de</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextLine id="r1_l2" custom="readingOrder {index:1;}" comments="position estimated within a block the model placed whole">
+        <Coords points="62,573 1085,573 1085,865 62,865"/>
+        <TextEquiv>
+          <Unicode>Kita a reçu</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextLine id="r1_l3" custom="readingOrder {index:2;}" comments="position estimated within a block the model placed whole">
+        <Coords points="62,865 1178,865 1178,1158 62,1158"/>
+        <TextEquiv>
+          <Unicode>les notables</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Le cercle de
+Kita a reçu
+les notables</Unicode>
+      </TextEquiv>
+    </TextRegion>
+    <TextRegion id="r2" custom="readingOrder {index:1;}">
+      <Coords points="1363,351 1450,351 1450,421 1363,421"/>
+      <TextLine id="r2_l1" custom="readingOrder {index:0;}">
+        <Coords points="1363,351 1450,351 1450,421 1363,421"/>
+        <Word id="r2_l1_w1">
+          <Coords points="1363,351 1450,351 1450,421 1363,421"/>
+          <TextEquiv conf="0.90">
+            <Unicode>Bamako</Unicode>
+          </TextEquiv>
+        </Word>
+        <TextEquiv>
+          <Unicode>Bamako</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Bamako</Unicode>
+      </TextEquiv>
+    </TextRegion>
+    <TextRegion id="researcher_6f1c2a3b-0000-4000-8000-000000000007" custom="readingOrder {index:2;}" comments="region placed by the researcher (region 6f1c2a3b-0000-4000-8000-000000000007)">
+      <Coords points="1859,1754 2355,1754 2355,2105 1859,2105"/>
+      <TextLine id="researcher_6f1c2a3b-0000-4000-8000-000000000007_l1" custom="readingOrder {index:0;}" comments="position estimated within a region the researcher drew">
+        <Coords points="1859,1754 2190,1754 2190,1929 1859,1929"/>
+        <TextEquiv>
+          <Unicode>Tampon</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextLine id="researcher_6f1c2a3b-0000-4000-8000-000000000007_l2" custom="readingOrder {index:1;}" comments="position estimated within a region the researcher drew">
+        <Coords points="1859,1929 2355,1929 2355,2105 1859,2105"/>
+        <TextEquiv>
+          <Unicode>du cercle</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Tampon
+du cercle</Unicode>
+      </TextEquiv>
+    </TextRegion>
+  </Page>
+</PcGts>

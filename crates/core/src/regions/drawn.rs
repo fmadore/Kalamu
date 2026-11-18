@@ -91,6 +91,7 @@ impl DrawnRegion {
             granularity: Granularity::Block,
             origin: RegionOrigin::Manual,
             span: None,
+            adjusted_by: None,
         }
     }
 }
@@ -189,7 +190,8 @@ impl PageRegions {
 
     /// The researcher's regions laid on the page. A box adjusting one of the regions shown
     /// (the same result, the same id) takes that region's place, its text and its place in the
-    /// text kept, its origin the researcher's; any other is shown among `drawn`. `regions`
+    /// text kept, its origin the researcher's and `adjusted_by` the box's id; any other is shown
+    /// among `drawn`. `regions`
     /// are this page's, in the order they were made.
     pub fn with_drawn(mut self, regions: &[DrawnRegion]) -> Self {
         for region in regions {
@@ -215,6 +217,7 @@ impl PageRegions {
                 shown.width = by.width;
                 shown.height = by.height;
                 shown.origin = RegionOrigin::Manual;
+                shown.adjusted_by = Some(by.id.clone());
                 return true;
             }
         }

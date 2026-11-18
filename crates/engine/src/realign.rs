@@ -8,6 +8,7 @@
 //! a word changed takes the box of the word it replaces, words added share the box of the word
 //! before them, and a word removed leaves its box empty.
 
+use kalamu_core::export::RegionPath;
 use kalamu_core::{TextLine, TextRegion, TextWord};
 use similar::{Algorithm, DiffOp, capture_diff_slices};
 
@@ -19,7 +20,72 @@ const MOST_PER_BOX: usize = 3;
 /// The regions with `corrected` laid onto their words, or `None` when the engine placed blocks
 /// only (Mistral OCR), read no words, or the correction adds more than the engine's boxes can
 /// honestly hold, for the caller to place the text over the whole page, marked as estimated.
+#[cfg(test)]
 pub(crate) fn realign(regions: &[TextRegion], corrected: &str) -> Option<Vec<TextRegion>> {
+    realign_traced(regions, corrected).map(|r| r.regions)
+}
+
+/// Where a corrected line came from: the place of the line, and for each of its words the place
+/// of the word whose box it took.
+type LineFrom = (usize, Vec<usize>);
+
+/// Corrected regions, and where each of their blocks, lines and words came from in the regions
+/// realigned: so a box the researcher gave one of those follows it into the corrected page.
+pub(crate) struct Realigned {
+    pub regions: Vec<TextRegion>,
+    /// For each block of `regions`, its place in the regions given; for each of its lines, the
+    /// place of the line it was there; for each of a line's words, the place of the word whose
+    /// box it took (several words may share one, a word split by the correction).
+    from: Vec<(usize, Vec<LineFrom>)>,
+}
+
+impl Realigned {
+    /// The places in `regions` of what stood at `old` before: none where the correction removed
+    /// it, several for a word it split.
+    pub(crate) fn places(&self, old: RegionPath) -> Vec<RegionPath> {
+        let mut out = Vec::new();
+        for (b, (block, lines)) in self.from.iter().enumerate() {
+            if *block != old.block {
+                continue;
+            }
+            let Some(old_line) = old.line else {
+                out.push(RegionPath {
+                    block: b,
+                    line: None,
+                    word: None,
+                });
+                continue;
+            };
+            for (l, (line, words)) in lines.iter().enumerate() {
+                if *line != old_line {
+                    continue;
+                }
+                match old.word {
+                    None => out.push(RegionPath {
+                        block: b,
+                        line: Some(l),
+                        word: None,
+                    }),
+                    Some(old_word) => out.extend(
+                        words
+                            .iter()
+                            .enumerate()
+                            .filter(|(_, w)| **w == old_word)
+                            .map(|(w, _)| RegionPath {
+                                block: b,
+                                line: Some(l),
+                                word: Some(w),
+                            }),
+                    ),
+                }
+            }
+        }
+        out
+    }
+}
+
+/// [`realign`], with where each block, line and word came from.
+pub(crate) fn realign_traced(regions: &[TextRegion], corrected: &str) -> Option<Realigned> {
     if regions.iter().any(|r| r.lines.is_empty()) {
         return None;
     }
@@ -86,21 +152,28 @@ pub(crate) fn realign(regions: &[TextRegion], corrected: &str) -> Option<Vec<Tex
 
     let mut held = held.into_iter();
     let mut out = Vec::new();
-    for region in regions {
+    let mut from = Vec::new();
+    for (b, region) in regions.iter().enumerate() {
         let mut lines = Vec::new();
-        for line in &region.lines {
+        let mut lines_from = Vec::new();
+        for (l, line) in region.lines.iter().enumerate() {
             let mut words = Vec::new();
-            for word in &line.words {
+            let mut words_from = Vec::new();
+            for (w, word) in line.words.iter().enumerate() {
                 let tokens = held.next().unwrap_or_default();
-                words.extend(place(word, &tokens));
+                let placed = place(word, &tokens);
+                words_from.extend(std::iter::repeat_n(w, placed.len()));
+                words.extend(placed);
             }
             if let Some(line) = fit_line(words) {
                 lines.push(line);
+                lines_from.push((l, words_from));
             }
         }
         if lines.is_empty() {
             continue;
         }
+        from.push((b, lines_from));
         let text = lines
             .iter()
             .map(TextLine::text)
@@ -112,7 +185,7 @@ pub(crate) fn realign(regions: &[TextRegion], corrected: &str) -> Option<Vec<Tex
             ..region.clone()
         });
     }
-    Some(out)
+    Some(Realigned { regions: out, from })
 }
 
 /// The words `tokens` set in `word`'s box: the word itself, unchanged; one corrected word in
@@ -291,6 +364,31 @@ mod tests {
         // A page rewritten in other words, five for each the engine read.
         let regions = page(&[&[(0.1, "xxxx")]]);
         assert!(realign(&regions, "une phrase toute neuve ici").is_none());
+    }
+
+    #[test]
+    fn each_block_line_and_word_says_where_it_came_from() {
+        let regions = page(&[
+            &[(0.1, "Lagouverneur"), (0.4, "a")],
+            &[(0.1, "~~")],
+            &[(0.1, "fin")],
+        ]);
+        let out = realign_traced(&regions, "La gouverneur a fin").unwrap();
+        let at = |block, line, word| RegionPath { block, line, word };
+        assert_eq!(out.places(at(0, None, None)), [at(0, None, None)]);
+        // The word split in two: both halves came from it.
+        assert_eq!(
+            out.places(at(0, Some(0), Some(0))),
+            [at(0, Some(0), Some(0)), at(0, Some(0), Some(1))]
+        );
+        assert_eq!(
+            out.places(at(0, Some(0), Some(1))),
+            [at(0, Some(0), Some(2))]
+        );
+        // The second line is gone; the third is now the second.
+        assert!(out.places(at(0, Some(1), None)).is_empty());
+        assert_eq!(out.places(at(0, Some(2), None)), [at(0, Some(1), None)]);
+        assert!(out.places(at(1, None, None)).is_empty());
     }
 
     #[test]

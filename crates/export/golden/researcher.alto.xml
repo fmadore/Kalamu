@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v4#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/alto/v4/alto-4-4.xsd">
+  <Description>
+    <MeasurementUnit>pixel</MeasurementUnit>
+    <sourceImageInformation>
+      <fileName>carnet.pdf</fileName>
+    </sourceImageInformation>
+    <Processing ID="processing_1">
+      <processingDateTime>1970-01-01T00:00:00Z</processingDateTime>
+      <processingStepSettings>gemini gemini-3.8-flash; PDF pages measured at 300 dpi; line and word positions estimated within blocks the model placed whole</processingStepSettings>
+      <processingSoftware>
+        <softwareName>Kalamu</softwareName>
+        <softwareVersion>0.1.0</softwareVersion>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="processing_2">
+      <processingCategory>contentModification</processingCategory>
+      <processingDateTime>2026-10-28T10:25:27Z</processingDateTime>
+      <processingStepDescription>positions set by the researcher in the review, where an element refers to this step</processingStepDescription>
+      <processingStepDescription>blocks and lines widened just enough to hold the lines and words within them</processingStepDescription>
+      <processingStepDescription>regions placed by the researcher, after the model's on their page, their line and word positions estimated within the region</processingStepDescription>
+      <processingSoftware>
+        <softwareName>Kalamu</softwareName>
+        <softwareVersion>0.1.0</softwareVersion>
+      </processingSoftware>
+    </Processing>
+  </Description>
+  <Layout>
+    <Page ID="page_1" PHYSICAL_IMG_NR="1" WIDTH="2479" HEIGHT="3508">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="2479" HEIGHT="3508">
+        <TextBlock ID="p1_b1" PROCESSINGREFS="processing_2" HPOS="198" VPOS="316" WIDTH="892" HEIGHT="140">
+          <TextLine ID="p1_b1_l1" HPOS="248" VPOS="351" WIDTH="768" HEIGHT="70">
+            <String ID="p1_b1_l1_w1" CONTENT="Dakar," HPOS="248" VPOS="351" WIDTH="174" HEIGHT="70" WC="0.90"/>
+            <SP/>
+            <String ID="p1_b1_l1_w2" CONTENT="le" HPOS="446" VPOS="351" WIDTH="174" HEIGHT="70" WC="0.90"/>
+            <SP/>
+            <String ID="p1_b1_l1_w3" CONTENT="3" HPOS="645" VPOS="351" WIDTH="174" HEIGHT="70" WC="0.90"/>
+            <SP/>
+            <String ID="p1_b1_l1_w4" CONTENT="mai" HPOS="843" VPOS="351" WIDTH="174" HEIGHT="70" WC="0.90"/>
+          </TextLine>
+        </TextBlock>
+        <TextBlock ID="p1_b2" PROCESSINGREFS="processing_2" HPOS="248" VPOS="702" WIDTH="496" HEIGHT="105">
+          <TextLine ID="p1_b2_l1" PROCESSINGREFS="processing_2" HPOS="248" VPOS="702" WIDTH="496" HEIGHT="105">
+            <String ID="p1_b2_l1_w1" CONTENT="Le" HPOS="248" VPOS="702" WIDTH="174" HEIGHT="70" WC="0.90"/>
+            <SP/>
+            <String ID="p1_b2_l1_w2" CONTENT="Gouverneur" PROCESSINGREFS="processing_2" HPOS="446" VPOS="719" WIDTH="297" HEIGHT="88" WC="0.90"/>
+          </TextLine>
+        </TextBlock>
+        <TextBlock ID="researcher_6f1c2a3b-0000-4000-8000-000000000004" PROCESSINGREFS="processing_2" HPOS="1735" VPOS="351" WIDTH="496" HEIGHT="175">
+          <TextLine ID="researcher_6f1c2a3b-0000-4000-8000-000000000004_l1" HPOS="1735" VPOS="351" WIDTH="372" HEIGHT="88">
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000004_l1_w1" CONTENT="Reçu" HPOS="1735" VPOS="351" WIDTH="165" HEIGHT="88"/>
+            <SP/>
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000004_l1_w2" CONTENT="le" HPOS="1942" VPOS="351" WIDTH="83" HEIGHT="88"/>
+            <SP/>
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000004_l1_w3" CONTENT="4" HPOS="2066" VPOS="351" WIDTH="41" HEIGHT="88"/>
+          </TextLine>
+          <TextLine ID="researcher_6f1c2a3b-0000-4000-8000-000000000004_l2" HPOS="1735" VPOS="439" WIDTH="496" HEIGHT="88">
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000004_l2_w1" CONTENT="mai" HPOS="1735" VPOS="439" WIDTH="124" HEIGHT="88"/>
+            <SP/>
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000004_l2_w2" CONTENT="&amp;" HPOS="1901" VPOS="439" WIDTH="41" HEIGHT="88"/>
+            <SP/>
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000004_l2_w3" CONTENT="classé" HPOS="1983" VPOS="439" WIDTH="248" HEIGHT="88"/>
+          </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+    <Page ID="page_2" PHYSICAL_IMG_NR="2" WIDTH="2479" HEIGHT="3508">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="2479" HEIGHT="3508">
+        <TextBlock ID="p2_b1" PROCESSINGREFS="processing_2" HPOS="62" VPOS="281" WIDTH="1116" HEIGHT="877">
+          <TextLine ID="p2_b1_l1" HPOS="62" VPOS="281" WIDTH="1116" HEIGHT="292">
+            <String ID="p2_b1_l1_w1" CONTENT="Le" HPOS="62" VPOS="281" WIDTH="186" HEIGHT="292"/>
+            <SP/>
+            <String ID="p2_b1_l1_w2" CONTENT="cercle" HPOS="341" VPOS="281" WIDTH="558" HEIGHT="292"/>
+            <SP/>
+            <String ID="p2_b1_l1_w3" CONTENT="de" HPOS="992" VPOS="281" WIDTH="186" HEIGHT="292"/>
+          </TextLine>
+          <TextLine ID="p2_b1_l2" HPOS="62" VPOS="573" WIDTH="1023" HEIGHT="292">
+            <String ID="p2_b1_l2_w1" CONTENT="Kita" HPOS="62" VPOS="573" WIDTH="372" HEIGHT="292"/>
+            <SP/>
+            <String ID="p2_b1_l2_w2" CONTENT="a" HPOS="527" VPOS="573" WIDTH="93" HEIGHT="292"/>
+            <SP/>
+            <String ID="p2_b1_l2_w3" CONTENT="reçu" HPOS="713" VPOS="573" WIDTH="372" HEIGHT="292"/>
+          </TextLine>
+          <TextLine ID="p2_b1_l3" HPOS="62" VPOS="865" WIDTH="1116" HEIGHT="292">
+            <String ID="p2_b1_l3_w1" CONTENT="les" HPOS="62" VPOS="865" WIDTH="279" HEIGHT="292"/>
+            <SP/>
+            <String ID="p2_b1_l3_w2" CONTENT="notables" HPOS="434" VPOS="865" WIDTH="744" HEIGHT="292"/>
+          </TextLine>
+        </TextBlock>
+        <TextBlock ID="p2_b2" HPOS="1363" VPOS="351" WIDTH="87" HEIGHT="70">
+          <TextLine ID="p2_b2_l1" HPOS="1363" VPOS="351" WIDTH="87" HEIGHT="70">
+            <String ID="p2_b2_l1_w1" CONTENT="Bamako" HPOS="1363" VPOS="351" WIDTH="87" HEIGHT="70" WC="0.90"/>
+          </TextLine>
+        </TextBlock>
+        <TextBlock ID="researcher_6f1c2a3b-0000-4000-8000-000000000007" PROCESSINGREFS="processing_2" HPOS="1859" VPOS="1754" WIDTH="496" HEIGHT="351">
+          <TextLine ID="researcher_6f1c2a3b-0000-4000-8000-000000000007_l1" HPOS="1859" VPOS="1754" WIDTH="331" HEIGHT="175">
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000007_l1_w1" CONTENT="Tampon" HPOS="1859" VPOS="1754" WIDTH="331" HEIGHT="175"/>
+          </TextLine>
+          <TextLine ID="researcher_6f1c2a3b-0000-4000-8000-000000000007_l2" HPOS="1859" VPOS="1929" WIDTH="496" HEIGHT="175">
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000007_l2_w1" CONTENT="du" HPOS="1859" VPOS="1929" WIDTH="110" HEIGHT="175"/>
+            <SP/>
+            <String ID="researcher_6f1c2a3b-0000-4000-8000-000000000007_l2_w2" CONTENT="cercle" HPOS="2025" VPOS="1929" WIDTH="331" HEIGHT="175"/>
+          </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+    <Page ID="page_3" PHYSICAL_IMG_NR="3" WIDTH="2479" HEIGHT="3508">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="2479" HEIGHT="3508">
+        <TextBlock ID="p3_b1" PROCESSINGREFS="processing_2" HPOS="248" VPOS="351" WIDTH="818" HEIGHT="70">
+          <TextLine ID="p3_b1_l1" PROCESSINGREFS="processing_2" HPOS="248" VPOS="351" WIDTH="818" HEIGHT="70">
+            <String ID="p3_b1_l1_w1" CONTENT="Le" HPOS="248" VPOS="351" WIDTH="174" HEIGHT="70" WC="0.90"/>
+            <SP/>
+            <String ID="p3_b1_l1_w2" CONTENT="cercle" HPOS="446" VPOS="351" WIDTH="174" HEIGHT="70" WC="0.90"/>
+            <SP/>
+            <String ID="p3_b1_l1_w3" CONTENT="de" HPOS="645" VPOS="351" WIDTH="174" HEIGHT="70" WC="0.90"/>
+            <SP/>
+            <String ID="p3_b1_l1_w4" CONTENT="Kita" PROCESSINGREFS="processing_2" HPOS="843" VPOS="351" WIDTH="223" HEIGHT="70" WC="0.90"/>
+          </TextLine>
+        </TextBlock>
+        <TextBlock ID="p3_b2" HPOS="248" VPOS="1052" WIDTH="1240" HEIGHT="351">
+          <TextLine ID="p3_b2_l1" HPOS="248" VPOS="1052" WIDTH="1240" HEIGHT="175">
+            <String ID="p3_b2_l1_w1" CONTENT="Le" HPOS="248" VPOS="1052" WIDTH="118" HEIGHT="175"/>
+            <SP/>
+            <String ID="p3_b2_l1_w2" CONTENT="commandant" HPOS="425" VPOS="1052" WIDTH="590" HEIGHT="175"/>
+            <SP/>
+            <String ID="p3_b2_l1_w3" CONTENT="a" HPOS="1074" VPOS="1052" WIDTH="59" HEIGHT="175"/>
+            <SP/>
+            <String ID="p3_b2_l1_w4" CONTENT="réuni" HPOS="1192" VPOS="1052" WIDTH="295" HEIGHT="175"/>
+          </TextLine>
+          <TextLine ID="p3_b2_l2" PROCESSINGREFS="processing_2" HPOS="248" VPOS="1263" WIDTH="1116" HEIGHT="105">
+            <String ID="p3_b2_l2_w1" CONTENT="les" HPOS="248" VPOS="1263" WIDTH="139" HEIGHT="105"/>
+            <SP/>
+            <String ID="p3_b2_l2_w2" CONTENT="notables" HPOS="434" VPOS="1263" WIDTH="372" HEIGHT="105"/>
+            <SP/>
+            <String ID="p3_b2_l2_w3" CONTENT="du" HPOS="852" VPOS="1263" WIDTH="93" HEIGHT="105"/>
+            <SP/>
+            <String ID="p3_b2_l2_w4" CONTENT="quartier" HPOS="992" VPOS="1263" WIDTH="372" HEIGHT="105"/>
+          </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

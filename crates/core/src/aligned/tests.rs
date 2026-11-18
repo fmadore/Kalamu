@@ -23,6 +23,7 @@ fn part(piece: PieceRef, text: &str, segments: Vec<Segment>) -> ExportPart {
         drawn_dpi: None,
         read_at: None,
         corrected_at: None,
+        researcher: Default::default(),
     }
 }
 

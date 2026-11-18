@@ -78,7 +78,8 @@ const region = (
 	text,
 	granularity,
 	origin: 'provider',
-	span: null as TextSpan | null
+	span: null as TextSpan | null,
+	adjusted_by: null
 });
 
 /** Words set along a line's box, each as wide as its letters, numbered within line `lineId`. */

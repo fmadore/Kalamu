@@ -3,16 +3,21 @@
 //! Only models that report where text sits can feed it: Tesseract, line by line, and Mistral
 //! OCR, at paragraph level. Text is set invisibly (render mode 3) over where it was read: each
 //! line over its own box when the engine placed lines, otherwise the block's words spread over
-//! as many lines as fit its shape; each line is stretched to its box's width. The font is a glyph-less Type0 font, as in
-//! Tesseract's PDF output: two-byte codes equal to Unicode code points, a ToUnicode map that
-//! says so, and a fixed advance, so any script stays searchable and line widths are exact. The
-//! source is read from disk; nothing else in it changes.
+//! as many lines as fit its shape; each line is stretched to its box's width. The researcher's
+//! boxes are in the regions already; a region of their own with text is set over its box the
+//! same way, after the model's, so what they wrote there is found too ([`crate::geometry`]).
+//! A PDF has no place to say whose a box is: ALTO and PAGE XML say it.
+//!
+//! The font is a glyph-less Type0 font, as in Tesseract's PDF output: two-byte codes equal to
+//! Unicode code points, a ToUnicode map that says so, and a fixed advance, so any script stays
+//! searchable and line widths are exact. The source is read from disk; nothing else in it
+//! changes.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use kalamu_core::{
-    ExportDocument, ExportError, ExportFormat, Exporter, InputKind, PieceRef, Task, TextRegion,
+    ExportDocument, ExportError, ExportFormat, Exporter, InputKind, Task, TextRegion,
 };
 use lopdf::{Dictionary, Document, Object, ObjectId, Stream, dictionary};
 
@@ -45,7 +50,7 @@ impl Exporter for SearchablePdfExporter {
                 "Searchable PDF (from a PDF source)",
             ));
         }
-        let pages = regions_by_page(doc);
+        let pages = texts_by_page(doc);
         if pages.is_empty() {
             return Err(error(
                 "this model reported no text positions; choose Tesseract or Mistral OCR for a \
@@ -68,19 +73,13 @@ impl Exporter for SearchablePdfExporter {
     }
 }
 
-/// Each page's regions, with halves of split spreads mapped back onto the whole page.
-pub(crate) fn regions_by_page(doc: &ExportDocument) -> BTreeMap<u32, Vec<TextRegion>> {
-    let mut pages: BTreeMap<u32, Vec<TextRegion>> = BTreeMap::new();
-    for part in &doc.parts {
-        let PieceRef::Page { number, half } = &part.piece else {
-            continue;
-        };
-        for region in &part.regions {
-            let r = region.onto_whole_page(*half);
-            pages.entry(*number).or_default().push(r);
-        }
-    }
-    pages
+/// What each page's text layer sets, on the whole page; only pages with text.
+pub(crate) fn texts_by_page(doc: &ExportDocument) -> BTreeMap<u32, Vec<TextRegion>> {
+    crate::geometry::by_page(doc)
+        .into_iter()
+        .map(|(number, page)| (number, page.texts()))
+        .filter(|(_, texts)| !texts.is_empty())
+        .collect()
 }
 
 /// A page number with its displayed width and height.
@@ -246,7 +245,7 @@ fn wrap(text: &str, lines: usize) -> Vec<String> {
 
 /// The content stream that sets `regions` invisibly on a page `width` × `height` (display
 /// space, points).
-fn text_layer(regions: &[TextRegion], width: f32, height: f32) -> String {
+pub(crate) fn text_layer(regions: &[TextRegion], width: f32, height: f32) -> String {
     // A region whose lines were placed is set line by line, each over its own box.
     let placed: Vec<TextRegion> = regions
         .iter()

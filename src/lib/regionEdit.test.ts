@@ -16,7 +16,7 @@ vi.mock('./tauri.js', async () => {
 				mockRegions(jobId, setupId, index),
 			drawnRegions: async (jobId: string, sourceId: string, page: number, half: PageHalf | null) =>
 				regionCommand('drawn_regions', { jobId, sourceId, page, half }),
-			saveRegion: async (draft: RegionDraft) => regionCommand('save_region', { draft }),
+			saveRegion: vi.fn(async (draft: RegionDraft) => regionCommand('save_region', { draft })),
 			removeRegion: async (id: string) => regionCommand('remove_region', { id }),
 			restoreRegion: async (region: DrawnRegion) => regionCommand('restore_region', { region })
 		}
@@ -28,6 +28,7 @@ vi.mock('./state.svelte.js', () => ({
 }));
 
 const { Regions, placeOf } = await import('./regions.svelte.js');
+const { api } = await import('./tauri.js');
 const { job, setupA, source, texts, pieces } = await import('./dev/mockJobs.js');
 const { contentsJob, contentsSource } = await import('./dev/mockContents.js');
 
@@ -92,6 +93,8 @@ describe('the regions of a page', () => {
 		expect(regions.edit.mode).toBe('idle');
 		const after = regions.page?.blocks[2];
 		expect(after?.origin).toBe('manual');
+		expect(before.adjusted_by).toBeNull();
+		expect(after?.adjusted_by).toEqual(expect.any(String));
 		expect(after?.id).toBe(before.id);
 		expect(after?.text).toBe(before.text);
 		expect(after?.x).toBeCloseTo(before.x + 0.01);
@@ -100,9 +103,16 @@ describe('the regions of a page', () => {
 		expect(regions.page?.drawn).toHaveLength(0);
 		expect(regions.chosen).toMatchObject({ level: 'blocks', index: 2 });
 
+		// Put back by removing the box the page names, with nothing saved first.
 		shown.toasts = [];
+		const saves = vi.mocked(api.saveRegion).mock.calls.length;
 		await regions.edit.putBack(after ?? before);
-		expect(regions.page?.blocks[2]).toMatchObject({ origin: 'provider', x: before.x });
+		expect(vi.mocked(api.saveRegion).mock.calls.length).toBe(saves);
+		expect(regions.page?.blocks[2]).toMatchObject({
+			origin: 'provider',
+			x: before.x,
+			adjusted_by: null
+		});
 		expect(shown.toasts[0]?.text).toBe('The model’s box is back.');
 		shown.toasts[0]?.undo?.();
 		await vi.waitFor(() => expect(regions.page?.blocks[2]?.origin).toBe('manual'));

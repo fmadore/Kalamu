@@ -144,6 +144,9 @@ fn an_adjusted_region_keeps_its_place_text_and_span_with_the_researcher_s_box() 
         (0.2, 0.3, 0.25, 0.05)
     );
     assert_eq!(line.origin, RegionOrigin::Manual);
+    // The box's id, for putting the engine's own back by removing it.
+    assert_eq!(line.adjusted_by.as_deref(), Some("d1"));
+    assert_eq!(before.lines[1].adjusted_by, None);
     assert_eq!(line.text, before.lines[1].text);
     assert_eq!(line.span, before.lines[1].span);
     assert!(line.span.is_some());
@@ -169,7 +172,10 @@ fn under_another_reading_an_adjustment_is_shown_as_the_researcher_s_own() {
         assert_eq!(r.granularity, Granularity::Block);
         assert_eq!(r.span, None);
         assert_eq!(r.text, "note en marge");
+        // The researcher's own region adjusts nothing shown.
+        assert_eq!(r.adjusted_by, None);
     }
+    assert!(read_again.lines.iter().all(|l| l.adjusted_by.is_none()));
     // A page not read yet shows the researcher's regions too.
     let unread = PageRegions::none(false).with_drawn(&[drawn("d1", Some(("k1", "r1")))]);
     assert_eq!(unread.drawn.len(), 1);

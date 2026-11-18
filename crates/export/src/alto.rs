@@ -7,14 +7,30 @@
 //! share its height, and their words share each line's width
 //! ([`kalamu_core::TextRegion::estimated_lines`]); the file says those positions are estimated.
 //! The pages, their pixels and the corrected view are shared with PAGE XML ([`crate::layout`]).
+//!
+//! Where the researcher placed boxes (#84), the file describes a second processing step,
+//! `processing_2`, a `contentModification` made in Kalamu's review, and every `TextBlock`,
+//! `TextLine` and `String` whose box is the researcher's, or the model's widened to hold one of
+//! theirs, refers to it in `PROCESSINGREFS`, which ALTO gives those elements for referring to the
+//! processing history since 4.1. The researcher's own regions that hold text are blocks after the
+//! model's on their page (`researcher_{id}`), their lines and words estimated within the box, as
+//! the step's description says; one without text is left out, since ALTO writes text. A file
+//! with nothing of the researcher's is written as before.
 
 use std::fmt::Write as _;
 
-use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, InputKind, Task};
+use kalamu_core::export::BoxKind;
+use kalamu_core::{
+    ExportDocument, ExportError, ExportFormat, Exporter, InputKind, Task, TextLine, TextRegion,
+};
 
+use crate::geometry::{Mark, researcher_id};
 use crate::layout::{LaidPage, Layout, esc};
 
 pub struct AltoExporter;
+
+/// The processing step the researcher's boxes refer to.
+const RESEARCHER_STEP: &str = "processing_2";
 
 impl Exporter for AltoExporter {
     fn format(&self) -> ExportFormat {
@@ -67,6 +83,9 @@ http://www.loc.gov/alto/v4/alto-4-4.xsd\">\n",
             esc(&doc.provenance.generator.name),
             esc(&doc.provenance.generator.version),
         );
+        if let Some(step) = researcher_step(doc, &layout) {
+            x.push_str(&step);
+        }
         x.push_str("  </Description>\n  <Layout>\n");
         for laid in &layout.pages {
             page(&mut x, laid);
@@ -74,6 +93,68 @@ http://www.loc.gov/alto/v4/alto-4-4.xsd\">\n",
         x.push_str("  </Layout>\n</alto>\n");
         Ok(x.into_bytes())
     }
+}
+
+/// The processing step of the researcher's boxes, when the file holds any: what it did, and
+/// when they last placed a box.
+fn researcher_step(doc: &ExportDocument, layout: &Layout) -> Option<String> {
+    let changed = layout.changed()?;
+    let marks = || layout.pages.iter().flat_map(|p| &p.marks);
+    let adjusted = marks().any(|m| m.block.is_some() || !m.lines.is_empty() || !m.words.is_empty());
+    let widened = marks()
+        .flat_map(|m| m.block.iter().chain(m.lines.values()))
+        .any(|m| m.kind != BoxKind::Researcher);
+    let drawn = layout
+        .pages
+        .iter()
+        .flat_map(|p| &p.drawn)
+        .any(|d| !d.region.text.trim().is_empty());
+    let mut described = Vec::new();
+    if adjusted {
+        described.push(
+            "positions set by the researcher in the review, where an element refers to this step",
+        );
+    }
+    if widened {
+        described
+            .push("blocks and lines widened just enough to hold the lines and words within them");
+    }
+    if drawn {
+        described.push(
+            "regions placed by the researcher, after the model's on their page, their line and \
+             word positions estimated within the region",
+        );
+    }
+    if described.is_empty() {
+        return None;
+    }
+    let mut x = format!(
+        "    <Processing ID=\"{RESEARCHER_STEP}\">\n      \
+<processingCategory>contentModification</processingCategory>\n      \
+<processingDateTime>{}</processingDateTime>\n",
+        changed.utc_date_time()
+    );
+    for line in described {
+        let _ = writeln!(
+            x,
+            "      <processingStepDescription>{}</processingStepDescription>",
+            esc(line)
+        );
+    }
+    let _ = writeln!(
+        x,
+        "      <processingSoftware>\n        <softwareName>{}</softwareName>\n        \
+<softwareVersion>{}</softwareVersion>\n      </processingSoftware>\n    </Processing>",
+        esc(&doc.provenance.generator.name),
+        esc(&doc.provenance.generator.version),
+    );
+    Some(x)
+}
+
+/// ` PROCESSINGREFS="processing_2"` for a box the researcher had a hand in, else nothing.
+fn refers(mark: Option<&Mark>) -> String {
+    mark.map(|_| format!(" PROCESSINGREFS=\"{RESEARCHER_STEP}\""))
+        .unwrap_or_default()
 }
 
 /// A box in pixels: HPOS, VPOS, WIDTH and HEIGHT.
@@ -95,20 +176,76 @@ fn page(x: &mut String, laid: &LaidPage) {
     );
     let _ = writeln!(x, "      <PrintSpace {}>", pos(0.0, 0.0, 1.0, 1.0, pw, ph));
     for (b, region) in laid.regions.iter().enumerate() {
-        let id = format!("p{number}_b{}", b + 1);
-        let _ = writeln!(
-            x,
-            "        <TextBlock ID=\"{id}\" {}>",
-            pos(region.x, region.y, region.width, region.height, pw, ph)
-        );
+        let marks = laid.marks(b);
         // The region is on the whole page, measured `pw` by `ph`: the same block, in pixels, as
         // the review estimates within (a split spread's half there), so both draw the same lines.
-        let (lines, _) = laid.lines(region);
-        for (l, line) in lines.iter().enumerate() {
+        let (lines, _) = laid.lines(b);
+        let block = Block {
+            id: format!("p{number}_b{}", b + 1),
+            region,
+            lines: &lines,
+            mark: marks.and_then(|m| m.block.as_ref()),
+        };
+        block.write(x, laid, |l, w| {
+            let marks = marks?;
+            match w {
+                None => marks.lines.get(&l),
+                Some(w) => marks.words.get(&(l, w)),
+            }
+        });
+    }
+    // The researcher's own regions with text, after the model's, their lines estimated.
+    let theirs = Mark {
+        id: String::new(),
+        kind: BoxKind::Researcher,
+    };
+    for drawn in laid
+        .drawn
+        .iter()
+        .filter(|d| !d.region.text.trim().is_empty())
+    {
+        let lines = laid.estimate(&drawn.region);
+        let block = Block {
+            id: researcher_id(&drawn.id),
+            region: &drawn.region,
+            lines: &lines,
+            mark: Some(&theirs),
+        };
+        block.write(x, laid, |_, _| None);
+    }
+    x.push_str("      </PrintSpace>\n    </Page>\n");
+}
+
+/// A `TextBlock` to write: its id, box, the lines it is written as, and its mark.
+struct Block<'a> {
+    id: String,
+    region: &'a TextRegion,
+    lines: &'a [TextLine],
+    mark: Option<&'a Mark>,
+}
+
+impl Block<'_> {
+    /// The block with its lines and words, each referring to the researcher's step where its
+    /// mark (`marked(line, word)`, from 0) says so.
+    fn write<'m>(
+        &self,
+        x: &mut String,
+        laid: &LaidPage,
+        marked: impl Fn(usize, Option<usize>) -> Option<&'m Mark>,
+    ) {
+        let (pw, ph, id, r) = (laid.width, laid.height, &self.id, self.region);
+        let _ = writeln!(
+            x,
+            "        <TextBlock ID=\"{id}\"{} {}>",
+            refers(self.mark),
+            pos(r.x, r.y, r.width, r.height, pw, ph)
+        );
+        for (l, line) in self.lines.iter().enumerate() {
             let lid = format!("{id}_l{}", l + 1);
             let _ = writeln!(
                 x,
-                "          <TextLine ID=\"{lid}\" {}>",
+                "          <TextLine ID=\"{lid}\"{} {}>",
+                refers(marked(l, None)),
                 pos(line.x, line.y, line.width, line.height, pw, ph)
             );
             for (w, word) in line.words.iter().enumerate() {
@@ -121,9 +258,10 @@ fn page(x: &mut String, laid: &LaidPage) {
                     .unwrap_or_default();
                 let _ = writeln!(
                     x,
-                    "            <String ID=\"{lid}_w{}\" CONTENT=\"{}\" {}{confidence}/>",
+                    "            <String ID=\"{lid}_w{}\" CONTENT=\"{}\"{} {}{confidence}/>",
                     w + 1,
                     esc(&word.text),
+                    refers(marked(l, Some(w))),
                     pos(word.x, word.y, word.width, word.height, pw, ph)
                 );
             }
@@ -131,5 +269,4 @@ fn page(x: &mut String, laid: &LaidPage) {
         }
         x.push_str("        </TextBlock>\n");
     }
-    x.push_str("      </PrintSpace>\n    </Page>\n");
 }

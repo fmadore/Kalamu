@@ -40,6 +40,7 @@ fn part(number: u32, text: &str, regions: Vec<TextRegion>) -> ExportPart {
         // 2026-10-27, then a correction three days later.
         read_at: Some(Timestamp(1_793_096_727_000)),
         corrected_at: None,
+        researcher: Default::default(),
     }
 }
 
@@ -447,7 +448,7 @@ fn rectangle(points: &str, width: u32, height: u32) {
 
 /// What the schema asks of the file's structure, as far as the exporter writes it, and the
 /// text agreeing from one level to the next.
-fn valid(xml: &str) {
+pub(super) fn valid(xml: &str) {
     let root = parse(xml);
     assert_eq!(root.name, "PcGts");
     assert_eq!(
@@ -461,7 +462,9 @@ fn valid(xml: &str) {
         .iter()
         .map(|c| c.name.as_str())
         .collect();
-    assert_eq!(meta, ["Creator", "Created", "LastChange", "Comments"]);
+    // A processing step follows where the researcher placed boxes on the page.
+    assert_eq!(meta[..4], ["Creator", "Created", "LastChange", "Comments"]);
+    assert!(meta[4..].iter().all(|m| *m == "MetadataItem"), "{meta:?}");
     for at in &root.children[0].children[1..3] {
         // xs:dateTime in UTC.
         assert_eq!(at.text.len(), 20, "{}", at.text);
@@ -511,9 +514,19 @@ fn valid(xml: &str) {
         region_ids.push(id(region));
         let kinds: Vec<&str> = region.children.iter().map(|c| c.name.as_str()).collect();
         assert_eq!(kinds.first(), Some(&"Coords"), "{kinds:?}");
+        rectangle(&region.children[0].attrs["points"], width, height);
+        // A region the researcher placed with no text: its box alone.
+        if kinds == ["Coords"] {
+            assert!(
+                region
+                    .attrs
+                    .get("id")
+                    .is_some_and(|id| id.starts_with("researcher_"))
+            );
+            continue;
+        }
         assert_eq!(kinds.last(), Some(&"TextEquiv"), "{kinds:?}");
         assert!(kinds[1..kinds.len() - 1].iter().all(|k| *k == "TextLine"));
-        rectangle(&region.children[0].attrs["points"], width, height);
         let mut lines = Vec::new();
         for line in region.named("TextLine") {
             id(line);

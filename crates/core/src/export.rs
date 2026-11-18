@@ -134,6 +134,92 @@ pub struct ExportPart {
     /// When the researcher's correction of the text was last saved; `None` without one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub corrected_at: Option<Timestamp>,
+    /// Whose boxes `regions` holds where they are not the model's, and the researcher's own
+    /// regions on this page. Empty where they drew nothing, and the files are then written as
+    /// before regions could be drawn.
+    #[serde(default, skip_serializing_if = "ResearcherGeometry::is_empty")]
+    pub researcher: ResearcherGeometry,
+}
+
+/// The researcher's part in a page's exported geometry (#84), beside `ExportPart::regions`,
+/// which already holds their boxes: a format says from this whose each box is.
+///
+/// How it is made is the engine's ([`crate::regions::lay_for_export`] and
+/// [`crate::regions::contain`]): a box the researcher gave a region of the model's reading of
+/// this page replaces the model's; a block or line is widened just enough to hold what lies in
+/// it; a region of theirs that adjusts nothing exported is one of their own.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct ResearcherGeometry {
+    /// The boxes in `regions` that are the researcher's, or widened to hold one of theirs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub adjusted: Vec<AdjustedBox>,
+    /// Blocks of `regions` placed whole by the model whose lines Kalamu estimated and wrote into
+    /// the block, so a box the researcher gave one of those lines or words could be kept: their
+    /// lines are as approximate as those a format estimates itself.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub estimated: Vec<usize>,
+    /// The researcher's own regions on the piece, in the order they were made: drawn, or giving
+    /// a box to a region of a reading no longer exported. Their text is not in `text`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub drawn: Vec<ResearcherRegion>,
+}
+
+impl ResearcherGeometry {
+    pub fn is_empty(&self) -> bool {
+        self.adjusted.is_empty() && self.estimated.is_empty() && self.drawn.is_empty()
+    }
+}
+
+/// Where a box is in `ExportPart::regions`: a block, one of its lines, or one of that line's
+/// words, each counted from 0.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct RegionPath {
+    pub block: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub line: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub word: Option<usize>,
+}
+
+/// A box of `ExportPart::regions` the researcher placed.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AdjustedBox {
+    pub at: RegionPath,
+    /// The researcher's region it comes from ([`crate::DrawnRegion::id`]), as `provenance.json`
+    /// lists it.
+    pub id: String,
+    pub kind: BoxKind,
+    /// When the researcher last saved the box.
+    pub updated_at: Timestamp,
+}
+
+/// Whose a box of `ExportPart::regions` is, where the researcher had a hand in it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BoxKind {
+    /// The box the researcher gave the model's block, line or word.
+    Researcher,
+    /// The researcher's box for a block or line, widened just enough to hold the lines or
+    /// words the model placed within it, which they did not move.
+    ResearcherWidened,
+    /// The model's block or line, widened just enough to hold a box the researcher gave one of
+    /// its lines or words.
+    ModelWidened,
+}
+
+/// A region the researcher placed on a page that adjusts nothing exported.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ResearcherRegion {
+    /// Its id ([`crate::DrawnRegion::id`]).
+    pub id: String,
+    /// The half of a split spread its box is in fractions of, as `ExportPart::piece`'s half
+    /// for the parts of a page; an exporter puts it on the whole page with
+    /// [`crate::TextRegion::onto_whole_page`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub half: Option<crate::PageHalf>,
+    /// Its box and what the researcher wrote there, possibly nothing; no lines.
+    pub region: crate::TextRegion,
+    pub updated_at: Timestamp,
 }
 
 /// Everything an exporter needs for one source under one set-up.

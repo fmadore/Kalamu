@@ -17,7 +17,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use kalamu_core::{ExportDocument, ExportError, InputKind, PieceRef, TextLine, TextRegion};
 
-use crate::searchable_pdf::{pdf_page_sizes, regions_by_page};
+use crate::geometry::{BlockMarks, Drawn, PageGeometry, by_page};
+use crate::searchable_pdf::pdf_page_sizes;
 
 /// PDF pages are measured as drawn at this resolution when their result records none: what
 /// every page was drawn at before the resolution was recorded, and what a model reading the PDF
@@ -30,8 +31,15 @@ pub(crate) struct LaidPage {
     /// Width and height in pixels, whole numbers.
     pub width: f32,
     pub height: f32,
-    /// The regions on the whole page, in reading order; none for a page read without text.
+    /// The model's regions on the whole page, in reading order, with the researcher's boxes;
+    /// none for a page read without text.
     pub regions: Vec<TextRegion>,
+    /// Whose each of `regions`' boxes is, one for each.
+    pub marks: Vec<BlockMarks>,
+    /// The researcher's own regions, after the model's.
+    pub drawn: Vec<Drawn>,
+    /// When the researcher last placed a box on the page.
+    pub changed: Option<kalamu_core::Timestamp>,
     /// For a PDF page, the resolution it is measured at.
     pub dpi: Option<f32>,
 }
@@ -58,7 +66,7 @@ impl Layout {
     /// the model reported no positions at all.
     pub(crate) fn of(doc: &ExportDocument, format: &'static str) -> Result<Self, ExportError> {
         let fail = error(format);
-        let mut by_page = regions_by_page(doc);
+        let mut by_page = by_page(doc);
         if by_page.is_empty() {
             return Err(fail(&format!(
                 "this model reported no text positions; choose Tesseract or Mistral OCR for {format}"
@@ -105,23 +113,36 @@ impl Layout {
         };
         let pages = sizes
             .into_iter()
-            .map(|(number, (width, height), dpi)| LaidPage {
-                number,
-                width: width.round(),
-                height: height.round(),
-                regions: by_page.remove(&number).unwrap_or_default(),
-                dpi,
+            .map(|(number, (width, height), dpi)| {
+                let PageGeometry {
+                    regions,
+                    marks,
+                    drawn,
+                    changed,
+                } = by_page.remove(&number).unwrap_or_default();
+                LaidPage {
+                    number,
+                    width: width.round(),
+                    height: height.round(),
+                    regions,
+                    marks,
+                    drawn,
+                    changed,
+                    dpi,
+                }
             })
             .collect();
         Ok(Self { pages, dpi, read })
     }
 
-    /// Whether any page has a block placed whole, whose lines are estimated.
+    /// Whether any page has a block the model placed whole, whose lines are estimated.
     pub(crate) fn estimated(&self) -> bool {
-        self.pages
-            .iter()
-            .flat_map(|p| &p.regions)
-            .any(|r| r.lines.is_empty())
+        self.pages.iter().any(LaidPage::estimated)
+    }
+
+    /// When the researcher last placed a box in the document; none where they placed none.
+    pub(crate) fn changed(&self) -> Option<kalamu_core::Timestamp> {
+        self.pages.iter().filter_map(|p| p.changed).max()
     }
 
     /// The note on how PDF pages are measured: `; PDF pages measured at 300 dpi`, or, where
@@ -145,15 +166,48 @@ impl Layout {
 }
 
 impl LaidPage {
-    /// The lines a region is written as, and whether they are estimated: the engine's own, or,
-    /// for a block placed whole, the lines its shape on this page holds
-    /// ([`TextRegion::estimated_lines`]), the same the review draws.
-    pub(crate) fn lines(&self, region: &TextRegion) -> (Vec<TextLine>, bool) {
+    /// The lines block `b` of the model's is written as, and whether they are estimated: the
+    /// engine's own; for a block placed whole, the lines its shape on this page holds
+    /// ([`TextRegion::estimated_lines`]), the same the review draws; or those the review drew,
+    /// written into the block to keep a box the researcher gave one of them.
+    pub(crate) fn lines(&self, b: usize) -> (Vec<TextLine>, bool) {
+        let Some(region) = self.regions.get(b) else {
+            return (Vec::new(), false);
+        };
         if region.lines.is_empty() {
-            (region.estimated_lines(self.height / self.width), true)
+            (self.estimate(region), true)
         } else {
-            (region.lines.clone(), false)
+            let estimated = self.marks.get(b).is_some_and(|m| m.estimated);
+            (region.lines.clone(), estimated)
         }
+    }
+
+    /// The lines a block placed whole holds on this page: one of the model's, or a region of the
+    /// researcher's own.
+    pub(crate) fn estimate(&self, region: &TextRegion) -> Vec<TextLine> {
+        region.estimated_lines(self.height / self.width)
+    }
+
+    /// The marks of block `b`, none where the researcher had no hand in it.
+    pub(crate) fn marks(&self, b: usize) -> Option<&BlockMarks> {
+        self.marks.get(b)
+    }
+
+    /// Whether a block the model placed whole is on the page, its lines estimated.
+    pub(crate) fn estimated(&self) -> bool {
+        self.regions
+            .iter()
+            .zip(&self.marks)
+            .any(|(r, m)| r.lines.is_empty() || m.estimated)
+    }
+
+    /// Whether the researcher placed any box on the page.
+    pub(crate) fn researcher(&self) -> bool {
+        !self.drawn.is_empty()
+            || self
+                .marks
+                .iter()
+                .any(|m| m.block.is_some() || !m.lines.is_empty() || !m.words.is_empty())
     }
 }
 

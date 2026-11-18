@@ -63,6 +63,7 @@ fn page(
         drawn_dpi: None,
         read_at: None,
         corrected_at: None,
+        researcher: Default::default(),
     }
 }
 

@@ -61,7 +61,12 @@ fn engine_with(
 
 /// A two-page report read by `Placing` (Tesseract's words on page 1, nothing placed on page 2),
 /// and an engine on the same store whose provider must never be called.
-async fn read_report() -> (Fixture, Job, SourceFile, Arc<Engine>) {
+pub(super) async fn read_report() -> (Fixture, Job, SourceFile, Arc<Engine>) {
+    read_report_by(&["fake-model"]).await
+}
+
+/// [`read_report`], read under a set-up for each of `models`.
+pub(super) async fn read_report_by(models: &[&str]) -> (Fixture, Job, SourceFile, Arc<Engine>) {
     let store = Arc::new(SqliteStore::in_memory().unwrap_or_else(|_| panic!("store")));
     let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
     let engine = engine_with(store.clone(), Arc::new(Placing), dir.path());
@@ -73,12 +78,12 @@ async fn read_report() -> (Fixture, Job, SourceFile, Arc<Engine>) {
         dir,
     };
     let source = fixture.pdf("rapport.pdf", 2);
-    let job = fixture.new_job(vec![source.clone()], &["fake-model"]);
+    let job = fixture.new_job(vec![source.clone()], models);
     assert_eq!(fixture.run(job.id).await, JobStatus::Completed);
     (fixture, job, source, quiet)
 }
 
-fn draft(
+pub(super) fn draft(
     job: &Job,
     source: &SourceFile,
     page: u32,
@@ -99,7 +104,7 @@ fn draft(
     }
 }
 
-fn ok<T>(r: Result<T, EngineError>) -> T {
+pub(super) fn ok<T>(r: Result<T, EngineError>) -> T {
     r.unwrap_or_else(|e| panic!("{e}"))
 }
 
