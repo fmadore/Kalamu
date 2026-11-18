@@ -108,6 +108,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         listed_by_hand: vec![],
         passages: vec![],
         regions: vec![],
+        region_readings: vec![],
         usage: Usage::default(),
         cost_usd: Some(0.002),
         refused: None,

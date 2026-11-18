@@ -1,8 +1,8 @@
 //! The database's schema: one migration per release that changed it, applied in order.
 
 use super::{
-    batches, checks, dictionary, meaning, outdated, passages, progress, projects, regions, runs,
-    snapshots, units,
+    batches, checks, dictionary, meaning, outdated, passages, progress, projects, region_readings,
+    regions, runs, snapshots, units,
 };
 
 /// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
@@ -134,4 +134,6 @@ CREATE INDEX IF NOT EXISTS results_costs ON results(cache_key, cost_usd, truncat
     meaning::MIGRATION,
     // Regions the researcher drew over a scan, or whose box they adjusted.
     regions::MIGRATION,
+    // Regions of a page read again by a model from the review, each a proposal until accepted.
+    region_readings::MIGRATION,
 ];

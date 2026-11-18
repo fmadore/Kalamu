@@ -269,6 +269,26 @@ impl JobStore for SqliteStore {
         passages::of_source(self, job, setup, source)
     }
 
+    fn put_region_reading(
+        &self,
+        reading: &kalamu_core::RegionReading,
+        effect: Option<&kalamu_core::ReadingEffect>,
+    ) -> Result<(), StoreError> {
+        region_readings::put(self, reading, effect)
+    }
+
+    fn region_reading(&self, id: &str) -> Result<kalamu_core::RegionReading, StoreError> {
+        region_readings::get(self, id)
+    }
+
+    fn source_region_readings(
+        &self,
+        job: JobId,
+        source: SourceId,
+    ) -> Result<Vec<kalamu_core::RegionReading>, StoreError> {
+        region_readings::of_source(self, job, source)
+    }
+
     fn put_region(&self, region: &kalamu_core::DrawnRegion) -> Result<(), StoreError> {
         regions::put(self, region)
     }
@@ -396,6 +416,7 @@ mod outdated;
 mod passages;
 mod progress;
 mod projects;
+mod region_readings;
 mod regions;
 mod results;
 mod runs;

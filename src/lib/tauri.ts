@@ -15,6 +15,9 @@ import type { Pace } from './bindings/Pace.js';
 import type { PassageAsk } from './bindings/PassageAsk.js';
 import type { PassageEstimate } from './bindings/PassageEstimate.js';
 import type { PassageProposal } from './bindings/PassageProposal.js';
+import type { ReadingEffect } from './bindings/ReadingEffect.js';
+import type { RegionAsk } from './bindings/RegionAsk.js';
+import type { RegionReading } from './bindings/RegionReading.js';
 import type { ProposalPlan } from './bindings/ProposalPlan.js';
 import type { ProposalsView } from './bindings/ProposalsView.js';
 import type { QueueItemKey } from './bindings/QueueItemKey.js';
@@ -288,6 +291,20 @@ export const api = {
 	acceptPassage: (id: string, text: string) => invoke<Correction>('accept_passage', { id, text }),
 	discardPassage: (id: string) => invoke<void>('discard_passage', { id }),
 	undoPassage: (id: string, before: Correction) => invoke<void>('undo_passage', { id, before }),
+	/** What reading a region of a page again would cost; refused as asking would be. The engine
+	 * cuts the region from the original to know whether it was read before. */
+	regionReadingEstimate: (ask: RegionAsk) =>
+		invoke<PassageEstimate>('region_reading_estimate', { ask }),
+	/** Asks a model to read a region again, through the engine: its reading, applied by nothing. */
+	askRegionReading: (ask: RegionAsk) => invoke<RegionReading>('ask_region_reading', { ask }),
+	cancelRegionReading: (id: string) => invoke<void>('cancel_region_reading', { id }),
+	/** Writes a reading, or its edit, where it goes (the region's text, or the page's text in place
+	 * of the region's words); what it replaced, for Undo. */
+	acceptRegionReading: (id: string, text: string) =>
+		invoke<ReadingEffect>('accept_region_reading', { id, text }),
+	discardRegionReading: (id: string) => invoke<void>('discard_region_reading', { id }),
+	undoRegionReading: (id: string, before: ReadingEffect) =>
+		invoke<void>('undo_region_reading', { id, before }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
 		invoke<void>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>

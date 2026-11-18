@@ -24,7 +24,14 @@ CREATE INDEX drawn_regions_by_source ON drawn_regions(job_id, source_id, page);
 pub(crate) fn put(store: &SqliteStore, region: &DrawnRegion) -> Result<(), StoreError> {
     let mut conn = store.conn();
     let tx = conn.transaction().map_err(db)?;
-    tx.execute(
+    put_on(&tx, region)?;
+    tx.commit().map_err(db)
+}
+
+/// Stores a region and marks its source's files out of date, on `conn`, which may be a
+/// transaction's: a region read again is accepted in the same one.
+pub(crate) fn put_on(conn: &Connection, region: &DrawnRegion) -> Result<(), StoreError> {
+    conn.execute(
         "INSERT INTO drawn_regions (id, job_id, source_id, page, created_at, data)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)
          ON CONFLICT (id) DO UPDATE SET
@@ -40,8 +47,7 @@ pub(crate) fn put(store: &SqliteStore, region: &DrawnRegion) -> Result<(), Store
         ],
     )
     .map_err(db)?;
-    mark(&tx, region.job_id, region.source_id)?;
-    tx.commit().map_err(db)
+    mark(conn, region.job_id, region.source_id)
 }
 
 pub(crate) fn remove(store: &SqliteStore, id: &str) -> Result<DrawnRegion, StoreError> {

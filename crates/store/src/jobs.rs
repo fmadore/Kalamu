@@ -64,7 +64,8 @@ pub(crate) const LIST_JOBS: &str = "SELECT j.data, j.status, j.updated_at,
         SUM(CASE WHEN p.status = 'done' THEN r.cost_usd END),
         (SELECT SUM(x.cost_usd) FROM (
             SELECT cost_usd FROM charges WHERE job_id = j.id
-            UNION ALL SELECT cost_usd FROM passages WHERE job_id = j.id) x),
+            UNION ALL SELECT cost_usd FROM passages WHERE job_id = j.id
+            UNION ALL SELECT cost_usd FROM region_readings WHERE job_id = j.id) x),
         (SELECT json_extract(w.data, '$.workflow_name')
          FROM run_steps s JOIN runs w ON w.id = s.run_id
          WHERE s.job_id = j.id LIMIT 1)
@@ -75,13 +76,14 @@ pub(crate) const LIST_JOBS: &str = "SELECT j.data, j.status, j.updated_at,
 
 /// What a job's own calls cost: a piece done by this job paid for its result; a cached one
 /// reused another's. Answers refused after being billed were paid for too, and so were the
-/// passages corrected from its review (none when their answer came from the cache). Costs are read from
-/// `results_costs`, as in [`LIST_JOBS`].
+/// passages corrected and the regions read again from its review (none when their answer came
+/// from the cache). Costs are read from `results_costs`, as in [`LIST_JOBS`].
 pub(crate) const SPENT: &str = "SELECT (SELECT COALESCE(SUM(r.cost_usd), 0) FROM pieces p
              JOIN results r INDEXED BY results_costs ON r.cache_key = p.cache_key
              WHERE p.job_id = ?1 AND p.status = 'done')
           + (SELECT COALESCE(SUM(cost_usd), 0) FROM charges WHERE job_id = ?1)
-          + (SELECT COALESCE(SUM(cost_usd), 0) FROM passages WHERE job_id = ?1)";
+          + (SELECT COALESCE(SUM(cost_usd), 0) FROM passages WHERE job_id = ?1)
+          + (SELECT COALESCE(SUM(cost_usd), 0) FROM region_readings WHERE job_id = ?1)";
 
 pub(crate) fn list_jobs(store: &SqliteStore) -> Result<Vec<JobSummary>, StoreError> {
     let conn = store.conn();
@@ -250,6 +252,12 @@ pub(crate) fn mark_running_as_interrupted(store: &SqliteStore) -> Result<Vec<Job
         [],
     )
     .map_err(db)?;
+    // And so was a region asked to be read again.
+    conn.execute(
+        "UPDATE region_readings SET status = 'cancelled' WHERE status = 'asked'",
+        [],
+    )
+    .map_err(db)?;
     ids.iter().map(|id| id.parse().map_err(corrupt)).collect()
 }
 
@@ -413,14 +421,16 @@ pub(crate) fn prune_results(store: &SqliteStore) -> Result<PrunedResults, StoreE
     };
     let before = size(&conn)?;
     // One statement, so no piece takes up a key between the keys being read and the results
-    // being deleted. `pieces.cache_key` and `passages.cache_key` name results; a piece
+    // being deleted. `pieces.cache_key`, `passages.cache_key` and `region_readings.cache_key`
+    // name results; a piece
     // without a key yet keeps nothing, and its NULL must not empty the list (`NOT IN` a list
     // holding NULL matches nothing).
     let results = conn
         .execute(
             "DELETE FROM results WHERE cache_key NOT IN
                 (SELECT cache_key FROM pieces WHERE cache_key IS NOT NULL)
-                AND cache_key NOT IN (SELECT cache_key FROM passages)",
+                AND cache_key NOT IN (SELECT cache_key FROM passages)
+                AND cache_key NOT IN (SELECT cache_key FROM region_readings)",
             [],
         )
         .map_err(db)?;

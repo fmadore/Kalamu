@@ -18,7 +18,7 @@ use kalamu_media::{ImageSource, PdfSource};
 use crate::control::lock;
 use crate::{Engine, EngineError};
 
-mod drawn;
+pub(crate) mod drawn;
 
 /// The displayed sizes of one source's pages, by page number, as last read: the review moves
 /// through one source's pages at a time, so its file is opened once for them.

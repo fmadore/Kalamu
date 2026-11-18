@@ -35,6 +35,7 @@ mod pages;
 mod passages;
 mod reading;
 mod records;
+mod region_readings;
 mod regions;
 mod snapshot;
 mod sources;

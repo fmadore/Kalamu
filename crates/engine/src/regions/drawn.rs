@@ -259,7 +259,7 @@ impl Engine {
     }
 
     /// The job and its source, or "not found".
-    fn source_in(
+    pub(crate) fn source_in(
         &self,
         job_id: JobId,
         source_id: SourceId,
@@ -277,7 +277,11 @@ impl Engine {
 
 /// Whether the source has page `page`, or that half of it: a scan or an image, the page within
 /// its count where it is known, a half only where its spreads were split.
-fn on_page(source: &SourceFile, page: u32, half: Option<PageHalf>) -> Result<(), EngineError> {
+pub(crate) fn on_page(
+    source: &SourceFile,
+    page: u32,
+    half: Option<PageHalf>,
+) -> Result<(), EngineError> {
     let pages = matches!(source.kind, InputKind::Pdf | InputKind::Image);
     let within = page >= 1 && source.page_count.is_none_or(|n| page <= n);
     let halves = half.is_none() || source.split_spreads;

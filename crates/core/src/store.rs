@@ -238,6 +238,33 @@ pub trait JobStore: Send + Sync {
         Ok(Vec::new())
     }
 
+    /// Records a region read again from the review, or what became of it, by its id: before
+    /// the call, after it, and once the researcher decides; with `effect`, stores what accepting
+    /// or undoing it writes (the page's correction, or the researcher's region, either marking
+    /// its files out of date) in the same transaction, so a reading accepted or undone is never
+    /// recorded apart from the text it changed. Deleting its job deletes it. A store that keeps
+    /// no readings refuses.
+    fn put_region_reading(
+        &self,
+        _reading: &crate::RegionReading,
+        _effect: Option<&crate::ReadingEffect>,
+    ) -> Result<(), StoreError> {
+        Err(StoreError::Database(
+            "this store keeps no region readings".into(),
+        ))
+    }
+    fn region_reading(&self, _id: &str) -> Result<crate::RegionReading, StoreError> {
+        Err(StoreError::NotFound)
+    }
+    /// The regions read again on one source's pages, by page and then oldest first.
+    fn source_region_readings(
+        &self,
+        _job: JobId,
+        _source: SourceId,
+    ) -> Result<Vec<crate::RegionReading>, StoreError> {
+        Ok(Vec::new())
+    }
+
     /// Stores a region the researcher drew or adjusted, or its change, by its id, and marks its
     /// source's files out of date under every set-up that read the source, in one transaction:
     /// `provenance.json` lists the region. Deleting its job deletes it. A store that keeps no

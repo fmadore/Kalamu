@@ -1853,6 +1853,52 @@ export const en = {
 		accepted: 'Passage corrected; the result files follow in a few seconds.',
 		undone: 'Correction of the passage undone.'
 	},
+	/** Reading one region of a page again with a model, from the review. */
+	regionReading: {
+		title: 'Read this region again',
+		picture: 'The part of the page that will be read',
+		noPicture: 'The part of the page inside the box will be read.',
+		readBy: (model: string) => `Read by ${model}`,
+		change: 'Choose another model',
+		defaultPrompt: 'Default',
+		sentCloud: (provider: string) =>
+			`Only this part of the page is sent to ${provider}, as a picture. Nothing else from the document is sent.`,
+		sentOffline: 'Read on this computer; nothing is sent.',
+		costAbout: (usd: string) => `About ${usd}.`,
+		costOffline: 'Free, on this computer.',
+		costStored: 'Already read: no cost.',
+		costUnknown: 'This model has no published price.',
+		noKey: (provider: string) => `Add a key for ${provider} in Settings first.`,
+		notInstalled: (model: string) => `Download ${model} in Settings first.`,
+		noModel:
+			'None of your models reads pictures of pages. Add a key in Settings, or download a model that runs on this computer.',
+		read: 'Read',
+		waiting: (model: string) => `${model} is reading this part of the page…`,
+		stop: 'Stop',
+		stopped: 'Stopped. If the answer still comes, it is kept, and reading again costs nothing.',
+		ready: 'Reading ready.',
+		answer: 'What the model read',
+		replaced: 'The words now in the page’s text, and the new ones',
+		removed: 'removed',
+		added: 'added',
+		useRegion: 'Use as this region’s text',
+		useText: 'Replace these words in the page’s text',
+		edit: 'Edit first',
+		editLabel: 'What the model read, to edit',
+		copy: 'Copy',
+		copied: 'Copied.',
+		discard: 'Discard',
+		close: 'Close',
+		nowhere:
+			'Kalamu cannot tell exactly where this region’s words are in the page’s text, so this reading can be copied but not put into the text.',
+		failed: (reason: string) => `Nothing to offer (${reason}). Try again, or choose another model.`,
+		changed:
+			'The words in the page’s text changed while the model was reading, so nothing was replaced.',
+		lookAgain: 'Look again',
+		acceptedRegion: 'The region’s text is saved.',
+		acceptedText: 'Words replaced; the result files follow in a few seconds.',
+		undone: 'Reading of the region undone.'
+	},
 	prompts: {
 		title: 'Prompts',
 		hint: 'Each task comes with tested prompts. Edit one to adapt it; your version replaces it until you reset it. Variables: {languages}, {speakers}.',
@@ -2448,6 +2494,20 @@ export const en = {
 		'region.adjusts':
 			'The region you changed is no longer on this page as it was read. Draw the box again.',
 		'region.not_found': 'This region no longer exists.',
+		'region_reading.changed':
+			'The words where this reading would go have changed, so nothing was sent or replaced. Look at the page again.',
+		'region_reading.nowhere':
+			'This reading has no certain place in the page’s text. Copy it instead.',
+		'region_reading.empty': 'The model found no text in this region.',
+		'region_reading.cannot_read': 'This model cannot read the text of a page. Choose another.',
+		'region_reading.not_waiting': 'This reading is no longer waiting for a decision.',
+		'media.region_not_finite': 'The region could not be measured. Draw it again.',
+		'media.region_outside_page':
+			'The region lies outside the page. Draw it again over the part to read.',
+		'media.region_too_small': 'The region is too small to read. Draw a larger box.',
+		'media.region_no_page': 'Only a page of a PDF or an image can be read again by region.',
+		'media.region_no_images':
+			'This model does not read pictures, and a region is sent as one. Choose a model that reads pages.',
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',
