@@ -101,6 +101,45 @@ whether lines are estimated and whether the text was corrected. `Created` is whe
 read and `LastChange` when it was last corrected, never when the file was written, so writing
 the files again gives the same bytes.
 
+### The researcher's regions in the searchable PDF, ALTO and PAGE XML
+
+These three write the corrected view of where the text sits: the model's regions with the
+boxes the researcher gave them in the review, and the regions the researcher drew that have
+text. A file with none of either is byte for byte what it was.
+
+- **Whose box.** A box the researcher gave a block, line or word of this set-up's reading
+  takes the model's place. A box given to a reading no set-up shows any more is written as a
+  region of the researcher's own; one given to another set-up's reading is left out, as in
+  `provenance.json`, which lists the same regions.
+- **Widened, never scaled.** A block moved while its lines were not keeps the lines where the
+  model measured them and is widened just enough to hold them; a line or word moved outside
+  what holds it widens that line, then that block. Each says which it is: the researcher's
+  box, theirs widened, or the model's widened.
+- **A corrected page.** The boxes are laid first, then the corrected words on them: a word
+  given a box passes it to the word or words that replace it. Where the corrected text cannot
+  be laid back on the model's words, the page is one block as before, and the researcher's
+  boxes are written as regions of their own, without text.
+- **A region the researcher drew** follows the model's on its page, in the order drawn. With
+  text it is a block whose lines are estimated within its box and say so; a split spread's
+  half is put back on the whole page. Without text, PAGE XML writes a `TextRegion` with its
+  `Coords` alone, and ALTO and the searchable PDF leave it out.
+- **ALTO** adds a second `Processing` step, `processing_2` (`contentModification`, dated by
+  the last box), and every `TextBlock`, `TextLine` and `String` whose box is or involves the
+  researcher's refers to it with `PROCESSINGREFS`. The researcher's own blocks have the id
+  `researcher_<id>`.
+- **PAGE XML** says it in each element's `comments`, where an estimated position is already
+  said, naming the region's id as `provenance.json` lists it; in a
+  `MetadataItem type="processingStep"`; and in `LastChange`, which counts the last box. The
+  researcher's own regions have the id `researcher_<id>` and come last in `ReadingOrder`.
+  `custom` is not used for this, since Transkribus reads tags there.
+- **The searchable PDF** places its text by the corrected boxes and sets a drawn region's
+  text invisibly over its box, so a marginal note is found by a search. A PDF does not say
+  whose a box is.
+
+Both XML formats were checked by hand against the official schemas (ALTO 4.4, PAGE
+2019-07-15); no test does it. Not yet in the files: the reading's own identifier, which
+`provenance.json` gives for each region.
+
 ## Analyses
 
 Written as `<name>.analysis.txt` (and `.md`, `.docx`, `.json`, `.csv`) beside the source, so an
@@ -274,7 +313,7 @@ spread), its box in fractions of the page or half (`x`, `y`, `width`, `height`),
 as `r1_l2`), whether it `has_text` (the text itself is not recorded), and when it was created
 and updated. A set-up's file lists those drawn on the source, those adjusting its own
 readings and those adjusting a reading no set-up shows any more. ALTO, PAGE XML and the
-searchable PDF keep the engine's own positions. A model's region is named there as PAGE XML
+searchable PDF write the same regions (above). A model's region is named there as PAGE XML
 names it (`r1`, `r1_l2`, `r1_l2_w3`), except on a split spread, whose halves the review
 numbers each on its own and PAGE XML across the whole page.
 

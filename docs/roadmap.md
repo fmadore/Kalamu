@@ -670,9 +670,11 @@ to run on the computer itself.
    second on 18 November: stable region identities with their granularity and origin, regions
    drawn or adjusted by the researcher in a layer of their own, a region read again by a
    model, and the researcher's regions in the analysis, contents and records reviews;
-   [decision](decisions/2026-11-18-drawn-regions-region-read-again.md)). Left: the
-   researcher's boxes in ALTO, PAGE XML and the searchable PDF, which keep the model's own;
-   an answer of an analysis, an entry of a table of contents or a row of records tied to the
+   [decision](decisions/2026-11-18-drawn-regions-region-read-again.md); the researcher's
+   boxes and regions in ALTO, PAGE XML and the searchable PDF since the
+   [checkpoint that followed](decisions/2026-11-18-checkpoint-requests-exports.md)). Left:
+   the review drawing a moved block's estimated lines within its new box, as the exports do;
+   the reading's identifier in the XML files; an answer of an analysis, an entry of a table of contents or a row of records tied to the
    regions it was read from (with item 6 and #47); a drawn region kept with the document
    across jobs rather than with one job; a cost estimate that follows the region's size; and
    the third step, imported ALTO and PAGE XML and a model's text aligned to OCR positions.
