@@ -9,18 +9,24 @@ import type { PassageAsk } from '../bindings/PassageAsk.js';
 import type { PassageProposal } from '../bindings/PassageProposal.js';
 import type { PieceView } from '../bindings/PieceView.js';
 import { passageProblem } from '../passage.js';
+import { PretendModel, fail, mend } from './mockAsking.js';
 
 /** A piece whose corrections the preview keeps, by set-up, source and index. */
 export type FindPiece = (setupId: string, sourceId: string, index: number) => PieceView | undefined;
 
-const proposals = new Map<string, PassageProposal>();
-/** Answers already given, by what was asked. */
-const answered = new Map<string, string>();
-/** Requests waiting, by id, to stop waiting for. */
-const waiting = new Map<string, () => void>();
+/** What a correction costs here, when it is not free. */
+const COST = 0.0004;
 
 const keyOf = (a: PassageAsk) =>
 	JSON.stringify([a.provider, a.model, a.preset_id, a.before, a.passage, a.after]);
+
+// `?passage-slow`: the model takes long enough to be stopped.
+const model = new PretendModel<PassageAsk, PassageProposal>({
+	key: keyOf,
+	cost: COST,
+	delay: 400,
+	slow: 'passage-slow'
+});
 
 /** Where the passage starts in `text`, as `core::passage_correction::locate` finds it. */
 function locate(text: string, a: PassageAsk): number | null {
@@ -31,17 +37,6 @@ function locate(text: string, a: PassageAsk): number | null {
 	}
 	return starts.find((s) => s === a.at) ?? (starts.length === 1 ? starts[0] : null);
 }
-
-function correct(passage: string): string {
-	return passage
-		.replace(/(\p{L})'(\p{L})/gu, '$1’$2')
-		.replace(/fideles/g, 'fidèles')
-		.replace(/Gouvemeur/g, 'Gouverneur');
-}
-
-const fail = (id: string): never => {
-	throw { id };
-};
 
 function check(a: PassageAsk, find: FindPiece): PieceView {
 	const problem = passageProblem(a.passage);
@@ -86,9 +81,7 @@ export function passageCommand(
 		case 'passage_estimate': {
 			const ask = a.ask as PassageAsk;
 			check(ask, find);
-			const offline = local(ask.provider);
-			const cached = answered.has(keyOf(ask));
-			return { usd: offline || cached ? null : 0.0004, offline, cached };
+			return model.estimate(ask, local);
 		}
 		case 'ask_passage': {
 			const ask = a.ask as PassageAsk;
@@ -97,39 +90,20 @@ export function passageCommand(
 			} catch (e) {
 				return Promise.reject(e);
 			}
-			const p = proposal(ask);
-			proposals.set(ask.id, p);
-			const stored = answered.get(keyOf(ask));
-			// `?passage-slow`: the model takes long enough to be stopped.
-			const slow = new URLSearchParams(location.search).has('passage-slow');
-			return new Promise<PassageProposal>((resolve) => {
-				const done = (status: 'answered' | 'cancelled') => {
-					waiting.delete(ask.id);
-					clearTimeout(timer);
-					const answer = stored ?? correct(ask.passage);
-					if (status === 'answered') answered.set(keyOf(ask), answer);
-					Object.assign(p, {
-						status,
-						answer: status === 'answered' ? answer : null,
-						notes: status === 'answered' && answer === ask.passage ? ['unchanged'] : [],
-						cost_usd: status === 'answered' && !stored ? 0.0004 : null,
-						cached: stored !== undefined,
-						answered_at: Date.now()
-					});
-					resolve({ ...p });
-				};
-				const timer = setTimeout(
-					() => done('answered'),
-					stored !== undefined ? 0 : slow ? 60_000 : 400
-				);
-				waiting.set(ask.id, () => done('cancelled'));
-			});
+			return model.ask(
+				ask,
+				proposal(ask),
+				() => mend(ask.passage),
+				(status, answer, stored) => ({
+					notes: status === 'answered' && answer === ask.passage ? ['unchanged'] : [],
+					cost_usd: status === 'answered' && !stored ? COST : null
+				})
+			);
 		}
 		case 'cancel_passage':
-			waiting.get(String(a.id))?.();
-			return null;
+			return model.cancel(String(a.id));
 		case 'accept_passage': {
-			const p = proposals.get(String(a.id));
+			const p = model.asked.get(String(a.id));
 			if (!p || p.status !== 'answered') return fail('passage.not_waiting');
 			const ask = p.ask;
 			const piece = find(ask.setup_id, ask.source_id, ask.index) ?? fail('job.nothing_read');
@@ -150,13 +124,10 @@ export function passageCommand(
 			Object.assign(p, { status: 'accepted', accepted: text, decided_at: Date.now() });
 			return before;
 		}
-		case 'discard_passage': {
-			const p = proposals.get(String(a.id));
-			if (p?.status === 'answered') p.status = 'discarded';
-			return null;
-		}
+		case 'discard_passage':
+			return model.discard(String(a.id));
 		case 'undo_passage': {
-			const p = proposals.get(String(a.id));
+			const p = model.asked.get(String(a.id));
 			const before = a.before as Correction;
 			if (!p || p.status !== 'accepted') return fail('passage.not_waiting');
 			const piece = find(before.setup_id, before.source_id, before.index);
