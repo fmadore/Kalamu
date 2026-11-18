@@ -364,7 +364,7 @@ export const en = {
 			plan: (field: string, rows: number, groups: number) =>
 				groups === 1
 					? `All ${rows} rows of ${field} are sent in one request, with their spellings, the titles of up to three documents naming each, and the pairs you kept apart.`
-					: `The ${rows} rows of ${field} are too many for one request: they are sent in ${groups} requests: in alphabetical order with accents set aside, about 100,000 tokens at a time, each sharing a tenth of its rows with the next; then, so that names far apart in the alphabet are compared too, the rows that share a word or initials or sound alike, such as “Ouédraogo, Moussa” and “Moussa Ouédraogo”. Each row goes with its spellings, the titles of up to three documents naming it, and the pairs you kept apart.`,
+					: `The ${rows} rows of ${field} are too many for one request: they are sent in ${groups} requests. First in alphabetical order with accents set aside, about 100,000 tokens at a time, each request sharing a tenth of its rows with the next. Then, so that names far apart in the alphabet are compared too, the rows that share a word or initials or sound alike, such as “Ouédraogo, Moussa” and “Moussa Ouédraogo”. Each row goes with its spellings, the titles of up to three documents naming it, and the pairs you kept apart.`,
 			prompt: 'See or edit the prompt',
 			sends: (provider: string) =>
 				`Sent to ${provider} with your key, as an analysis job of its own: its cost and answers are in Jobs. Nothing is merged until you accept it.`,
