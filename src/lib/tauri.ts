@@ -70,6 +70,14 @@ import type { SearchRequest } from './bindings/SearchRequest.js';
 import type { SearchProgress } from './bindings/SearchProgress.js';
 import type { Draft } from './described.js';
 import type { SearchView } from './bindings/SearchView.js';
+import type { EmbeddingSpace } from './bindings/EmbeddingSpace.js';
+import type { MapView } from './bindings/MapView.js';
+import type { MeaningProgress } from './bindings/MeaningProgress.js';
+import type { MeaningRequest } from './bindings/MeaningRequest.js';
+import type { MeaningStatus } from './bindings/MeaningStatus.js';
+import type { MeaningView } from './bindings/MeaningView.js';
+import type { Neighbour } from './bindings/Neighbour.js';
+import type { SpaceChoice } from './bindings/SpaceChoice.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { ProjectView } from './bindings/ProjectView.js';
 import type { SourceFile } from './bindings/SourceFile.js';
@@ -337,6 +345,22 @@ export const api = {
 		invoke<SearchView>('project_search', { project, request }),
 	rebuildSearchIndex: () => invoke<void>('rebuild_search_index'),
 	prepareProjectSearch: (project: string) => invoke<void>('prepare_project_search', { project }),
+	/** The search by meaning's set-up: the model, the estimate (nothing sent), runs and cost. */
+	meaningStatus: (project: string) => invoke<MeaningStatus>('meaning_status', { project }),
+	chooseMeaningModel: (project: string, provider: string, model: string) =>
+		invoke<SpaceChoice>('choose_meaning_model', { project, provider, model }),
+	consentMeaning: (project: string) => invoke<void>('consent_meaning', { project }),
+	/** Starts preparing the project's text: the one call that sends it to a cloud model. */
+	prepareMeaning: (project: string) => invoke<void>('prepare_meaning', { project }),
+	pauseMeaning: (project: string) => invoke<void>('pause_meaning', { project }),
+	cancelMeaning: (project: string) => invoke<void>('cancel_meaning', { project }),
+	removeMeaningSpace: (project: string, space: EmbeddingSpace) =>
+		invoke<void>('remove_meaning_space', { project, space }),
+	meaningSearch: (project: string, request: MeaningRequest) =>
+		invoke<MeaningView>('meaning_search', { project, request }),
+	meaningMap: (project: string) => invoke<MapView>('meaning_map', { project }),
+	meaningNeighbours: (project: string, document: string) =>
+		invoke<Neighbour[]>('meaning_neighbours', { project, document }),
 	dictionaryView: (project: string, collection: string | null) =>
 		invoke<DictionaryView>('dictionary_view', { project, collection }),
 	dictionaryEvidence: (project: string, namespace: string, forms: string[]) =>
@@ -423,6 +447,9 @@ export const on = {
 	/** Settings… in the application menu (macOS). */
 	openSettings: (handler: () => void) => listen<null>('open-settings', handler),
 	searchProgress: (handler: (event: SearchProgress) => void) => listen('search-progress', handler),
+	/** How far a project's text is prepared for the search by meaning, after each batch. */
+	meaningProgress: (handler: (event: MeaningProgress) => void) =>
+		listen('meaning-progress', handler),
 	/** The offline status changed outside a command: read it again. */
 	offlineChanged: (handler: () => void) => listen<null>('offline-changed', handler),
 	/** The model list was refreshed at start-up: read it again, with the release it names. */

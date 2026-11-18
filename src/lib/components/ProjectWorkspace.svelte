@@ -13,6 +13,7 @@
 	import ProjectActivity from './ProjectActivity.svelte';
 	import ProjectEditForm from './ProjectEditForm.svelte';
 	import ProjectSearch from './ProjectSearch.svelte';
+	import ProjectMap from './ProjectMap.svelte';
 	import ProjectSections from './ProjectSections.svelte';
 	import ReviewQueue from './ReviewQueue.svelte';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
@@ -58,7 +59,7 @@
 		}
 	});
 	const PANE_KEY = 'kalamu.project.pane';
-	const PANES: ProjectPane[] = ['documents', 'search', 'queue', 'dictionary', 'activity'];
+	const PANES: ProjectPane[] = ['documents', 'search', 'map', 'queue', 'dictionary', 'activity'];
 	let pane = $state<ProjectPane>(
 		// svelte-ignore state_referenced_locally
 		opening ??
@@ -273,6 +274,12 @@
 				<ProjectActivity jobs={view.jobs} />
 			{:else if pane === 'search'}
 				<ProjectSearch {projectId} collections={view.collections} tags={view.tags} />
+			{:else if pane === 'map'}
+				<ProjectMap
+					{projectId}
+					collections={view.collections}
+					onsearch={() => showPane('search')}
+				/>
 			{:else if pane === 'queue'}
 				{#key selection.join(',')}
 					<ReviewQueue

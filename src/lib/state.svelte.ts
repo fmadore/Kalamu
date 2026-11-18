@@ -97,7 +97,7 @@ export type View =
 	| { name: 'glossary'; term?: Term | 'formats' };
 
 /** The panes of a project, down its side. */
-export type ProjectPane = 'documents' | 'search' | 'queue' | 'dictionary' | 'activity';
+export type ProjectPane = 'documents' | 'search' | 'map' | 'queue' | 'dictionary' | 'activity';
 
 /** The sections of Settings, each a tab. */
 export type SettingsTab = 'keys' | 'offline' | 'general' | 'about';

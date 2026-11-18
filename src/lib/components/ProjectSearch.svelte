@@ -3,9 +3,11 @@
 	// researcher corrected it, grouped by document and by reading, each opening its review where
 	// it stands. What was searched is said beside the matches, so that finding nothing is not read
 	// as absence. The search runs in Rust on a local copy of the results' text, prepared as soon as
-	// the search opens, its progress shown.
+	// the search opens, its progress shown. Above it, the choice of the search by meaning
+	// (`MeaningSearch`), the words staying the default.
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
+	import MeaningSearch from './MeaningSearch.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { Hit } from '#lib/bindings/Hit.js';
@@ -31,6 +33,7 @@
 		searchableQuery
 	} from '#lib/projectSearch.js';
 	import { go, toast } from '#lib/state.svelte.js';
+	import { keepFor, recallFor } from '#lib/stored.js';
 	import { api, listenWhileMounted, on } from '#lib/tauri.js';
 
 	let {
@@ -44,6 +47,17 @@
 	const GENERATED_TASKS = (lists.tasks as Task[]).filter((t) => !TEXT_TASKS.includes(t));
 	const REVIEW: ReviewFilter[] = ['any', 'reviewed', 'not_reviewed'];
 	const MODES: MatchMode[] = ['phrase', 'all_words', 'near'];
+	const KINDS = ['words', 'meaning'] as const;
+	const KIND_KEY = 'kalamu.search.kind';
+	/** Words or meaning, as last chosen for this project on this computer; words at first. */
+	let kind = $state<'words' | 'meaning'>(
+		// svelte-ignore state_referenced_locally
+		recallFor(KIND_KEY, projectId, (v) => KINDS.find((k) => k === v) ?? null) ?? 'words'
+	);
+	function chooseKind(to: 'words' | 'meaning') {
+		kind = to;
+		keepFor(KIND_KEY, projectId, to, 100);
+	}
 
 	// svelte-ignore state_referenced_locally
 	const kept = lastSearch(projectId);
@@ -142,194 +156,212 @@
 </script>
 
 <div class="search-view">
-	<p class="lede muted">{m.search.lede}</p>
-
-	<form
-		class="query"
-		role="search"
-		onsubmit={(e) => {
-			e.preventDefault();
-			void run();
-		}}
-	>
-		<label class="table-search">
-			<Icon name="search" size={14} />
-			<input
-				type="search"
-				bind:value={request.query}
-				data-find
-				placeholder={m.search.placeholder}
-				aria-label={m.search.query}
-			/>
-		</label>
-		<button class="btn primary sm" disabled={!ready || busy}>{m.search.go}</button>
-	</form>
-
-	<div class="table-filters">
-		<label class="pick">
-			<span>{m.search.mode}</span>
-			<select bind:value={request.mode} onchange={refilter}>
-				{#each MODES as mode (mode)}
-					<option value={mode}>{m.search.modes[mode]}</option>
-				{/each}
-			</select>
-		</label>
-		{#if request.mode === 'near'}
-			<label class="pick">
-				<span>{m.search.near}</span>
-				<input
-					class="distance num"
-					type="number"
-					min="0"
-					max="100"
-					bind:value={request.near}
-					onchange={() => {
-						request.near = Math.min(Math.max(Math.round(request.near) || 0, 0), 100);
-						refilter();
-					}}
-				/>
-				<span>{m.search.nearWords}</span>
-			</label>
-		{/if}
-		{#if collections.length > 0}
-			<label class="pick">
-				<span>{m.search.scope}</span>
-				<select bind:value={request.collection} onchange={refilter}>
-					<option value={null}>{m.search.wholeProject}</option>
-					{#each collections as c (c.collection.id)}
-						<option value={c.collection.id}>{c.collection.name}</option>
-					{/each}
-				</select>
-			</label>
-		{/if}
-		{#if tags.length > 0}
-			<label class="pick">
-				<span>{m.search.tag}</span>
-				<select bind:value={request.tag} onchange={refilter}>
-					<option value={null}>{m.search.anyTag}</option>
-					{#each tags as t (t.name)}
-						<option value={t.name}>{t.name}</option>
-					{/each}
-				</select>
-			</label>
-		{/if}
-		<label class="pick">
-			<span>{m.search.task}</span>
-			<select bind:value={request.task} onchange={refilter}>
-				<option value={null}>{m.search.anyTask}</option>
-				{#each tasks as t (t)}
-					<option value={t}>{m.task[t]}</option>
-				{/each}
-			</select>
-		</label>
-		<label class="pick">
-			<span>{m.search.review}</span>
-			<select bind:value={request.review} onchange={refilter}>
-				{#each REVIEW as r (r)}
-					<option value={r}>{m.search.reviewFilter[r]}</option>
-				{/each}
-			</select>
-		</label>
-		<label class="pick">
-			<span>{m.search.results}</span>
-			<select bind:value={request.results} onchange={refilter}>
-				<option value="preferred">{m.search.resultChoice.preferred}</option>
-				<option value="all">{m.search.resultChoice.all}</option>
-			</select>
-		</label>
-		<label class="check">
-			<input type="checkbox" bind:checked={request.generated} onchange={refilter} />
-			<span>{m.search.generated}</span>
-		</label>
-	</div>
-
-	<p class="hint muted">
-		{request.mode === 'phrase' ? m.search.orHint : m.search.quotesHint}
-	</p>
-	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
-	{#if request.query.trim() && !ready}<p class="muted">{m.search.tooShort}</p>{/if}
-	{#if preparing}
-		<div class="preparing" role="status">
-			<p class="muted num">{m.search.preparing(preparing.done, preparing.total)}</p>
-			<ProgressBar done={preparing.done} total={preparing.total} label={m.search.title} />
-		</div>
-	{:else if busy}
-		<p class="muted" role="status">{m.search.searching}</p>
-	{/if}
-
-	{#if view}
-		<div class="summary" aria-live="polite">
-			<p class="num">
-				{view.matches === 0 ? m.search.none : m.search.matches(view.matches, view.documents.length)}
-			</p>
-			{#if view.listed < view.matches}
-				<p class="muted">{m.search.listedOnly(view.listed, view.matches)}</p>
-			{/if}
-			{#if view.ignored.length > 0}
-				<p class="muted">{m.search.ignored(view.ignored.join(', '))}</p>
-			{/if}
-			<ul class="coverage muted num">
-				<li>{m.search.coverage(view.coverage.searched, view.coverage.documents)}</li>
-				{#if view.coverage.unread > 0}<li>{m.search.unread(view.coverage.unread)}</li>{/if}
-				{#if view.coverage.pieces_unread > 0}
-					<li>{m.search.piecesUnread(view.coverage.pieces_unread)}</li>
-				{/if}
-				{#if view.coverage.without_preference > 0}
-					<li>{m.search.withoutPreference(view.coverage.without_preference)}</li>
-				{/if}
-				{#if view.matches === 0}<li>{m.search.absence}</li>{/if}
-			</ul>
-		</div>
-
-		{#each view.documents as d (d.document_id)}
-			<section class="document">
-				<h3>
-					<button
-						class="link"
-						onclick={() => go({ name: 'projects', projectId, documentId: d.document_id })}
-						>{d.title}</button
-					>
-				</h3>
-				{#each d.results as r (r.job_id + r.setup_id)}
-					<div class="result">
-						<p class="result-name">
-							<span>{resultName(r)}</span>
-							{#if r.preferred}<span class="chip ok">{m.search.preferred}</span>{/if}
-							{#if r.generated}<span class="chip">{m.search.generatedResult}</span>{/if}
-							{#if r.stale}
-								<span class="chip warn" title={m.search.staleHint}>{m.search.stale}</span>
-							{/if}
-						</p>
-						<ol class="hits">
-							{#each r.hits as h (`${h.index}/${h.term}/${h.nth}`)}
-								{@const place = hitPlace(h, m)}
-								{@const origin = hitOrigin(h, m)}
-								<li>
-									<button class="hit" aria-label={m.search.open(place)} onclick={() => open(r, h)}>
-										<span class="place num">{place}</span>
-										<span class="snippet">
-											{#if origin}<span class="origin">{origin}</span>{/if}
-											{h.before}{#each hitWords(h) as w, i (i)}{#if w.found}<mark>{w.text}</mark
-													>{:else}{w.text}{/if}{/each}{h.after}
-										</span>
-										<span class="state">
-											{#if h.corrected}<span class="chip hand">{m.review.corrected}</span>{/if}
-											{#if h.reviewed}<span class="chip ok">{m.review.reviewed}</span>{/if}
-										</span>
-									</button>
-								</li>
-							{/each}
-						</ol>
-					</div>
-				{/each}
-			</section>
+	<div class="kinds" role="group" aria-label={m.meaning.kind}>
+		<span class="muted">{m.meaning.kind}</span>
+		{#each KINDS as k (k)}
+			<button class="btn sm kind" aria-pressed={kind === k} onclick={() => chooseKind(k)}
+				>{m.meaning.kinds[k]}</button
+			>
 		{/each}
-	{/if}
+	</div>
+	{#if kind === 'meaning'}
+		<MeaningSearch {projectId} {collections} {tags} />
+	{:else}
+		<p class="lede muted">{m.search.lede}</p>
 
-	<p class="rebuild muted">
-		{m.search.rebuildHint}
-		<button class="link" onclick={rebuild}>{m.search.rebuild}</button>
-	</p>
+		<form
+			class="query"
+			role="search"
+			onsubmit={(e) => {
+				e.preventDefault();
+				void run();
+			}}
+		>
+			<label class="table-search">
+				<Icon name="search" size={14} />
+				<input
+					type="search"
+					bind:value={request.query}
+					data-find
+					placeholder={m.search.placeholder}
+					aria-label={m.search.query}
+				/>
+			</label>
+			<button class="btn primary sm" disabled={!ready || busy}>{m.search.go}</button>
+		</form>
+
+		<div class="table-filters">
+			<label class="pick">
+				<span>{m.search.mode}</span>
+				<select bind:value={request.mode} onchange={refilter}>
+					{#each MODES as mode (mode)}
+						<option value={mode}>{m.search.modes[mode]}</option>
+					{/each}
+				</select>
+			</label>
+			{#if request.mode === 'near'}
+				<label class="pick">
+					<span>{m.search.near}</span>
+					<input
+						class="distance num"
+						type="number"
+						min="0"
+						max="100"
+						bind:value={request.near}
+						onchange={() => {
+							request.near = Math.min(Math.max(Math.round(request.near) || 0, 0), 100);
+							refilter();
+						}}
+					/>
+					<span>{m.search.nearWords}</span>
+				</label>
+			{/if}
+			{#if collections.length > 0}
+				<label class="pick">
+					<span>{m.search.scope}</span>
+					<select bind:value={request.collection} onchange={refilter}>
+						<option value={null}>{m.search.wholeProject}</option>
+						{#each collections as c (c.collection.id)}
+							<option value={c.collection.id}>{c.collection.name}</option>
+						{/each}
+					</select>
+				</label>
+			{/if}
+			{#if tags.length > 0}
+				<label class="pick">
+					<span>{m.search.tag}</span>
+					<select bind:value={request.tag} onchange={refilter}>
+						<option value={null}>{m.search.anyTag}</option>
+						{#each tags as t (t.name)}
+							<option value={t.name}>{t.name}</option>
+						{/each}
+					</select>
+				</label>
+			{/if}
+			<label class="pick">
+				<span>{m.search.task}</span>
+				<select bind:value={request.task} onchange={refilter}>
+					<option value={null}>{m.search.anyTask}</option>
+					{#each tasks as t (t)}
+						<option value={t}>{m.task[t]}</option>
+					{/each}
+				</select>
+			</label>
+			<label class="pick">
+				<span>{m.search.review}</span>
+				<select bind:value={request.review} onchange={refilter}>
+					{#each REVIEW as r (r)}
+						<option value={r}>{m.search.reviewFilter[r]}</option>
+					{/each}
+				</select>
+			</label>
+			<label class="pick">
+				<span>{m.search.results}</span>
+				<select bind:value={request.results} onchange={refilter}>
+					<option value="preferred">{m.search.resultChoice.preferred}</option>
+					<option value="all">{m.search.resultChoice.all}</option>
+				</select>
+			</label>
+			<label class="check">
+				<input type="checkbox" bind:checked={request.generated} onchange={refilter} />
+				<span>{m.search.generated}</span>
+			</label>
+		</div>
+
+		<p class="hint muted">
+			{request.mode === 'phrase' ? m.search.orHint : m.search.quotesHint}
+		</p>
+		{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
+		{#if request.query.trim() && !ready}<p class="muted">{m.search.tooShort}</p>{/if}
+		{#if preparing}
+			<div class="preparing" role="status">
+				<p class="muted num">{m.search.preparing(preparing.done, preparing.total)}</p>
+				<ProgressBar done={preparing.done} total={preparing.total} label={m.search.title} />
+			</div>
+		{:else if busy}
+			<p class="muted" role="status">{m.search.searching}</p>
+		{/if}
+
+		{#if view}
+			<div class="summary" aria-live="polite">
+				<p class="num">
+					{view.matches === 0
+						? m.search.none
+						: m.search.matches(view.matches, view.documents.length)}
+				</p>
+				{#if view.listed < view.matches}
+					<p class="muted">{m.search.listedOnly(view.listed, view.matches)}</p>
+				{/if}
+				{#if view.ignored.length > 0}
+					<p class="muted">{m.search.ignored(view.ignored.join(', '))}</p>
+				{/if}
+				<ul class="coverage muted num">
+					<li>{m.search.coverage(view.coverage.searched, view.coverage.documents)}</li>
+					{#if view.coverage.unread > 0}<li>{m.search.unread(view.coverage.unread)}</li>{/if}
+					{#if view.coverage.pieces_unread > 0}
+						<li>{m.search.piecesUnread(view.coverage.pieces_unread)}</li>
+					{/if}
+					{#if view.coverage.without_preference > 0}
+						<li>{m.search.withoutPreference(view.coverage.without_preference)}</li>
+					{/if}
+					{#if view.matches === 0}<li>{m.search.absence}</li>{/if}
+				</ul>
+			</div>
+
+			{#each view.documents as d (d.document_id)}
+				<section class="document">
+					<h3>
+						<button
+							class="link"
+							onclick={() => go({ name: 'projects', projectId, documentId: d.document_id })}
+							>{d.title}</button
+						>
+					</h3>
+					{#each d.results as r (r.job_id + r.setup_id)}
+						<div class="result">
+							<p class="result-name">
+								<span>{resultName(r)}</span>
+								{#if r.preferred}<span class="chip ok">{m.search.preferred}</span>{/if}
+								{#if r.generated}<span class="chip">{m.search.generatedResult}</span>{/if}
+								{#if r.stale}
+									<span class="chip warn" title={m.search.staleHint}>{m.search.stale}</span>
+								{/if}
+							</p>
+							<ol class="hits">
+								{#each r.hits as h (`${h.index}/${h.term}/${h.nth}`)}
+									{@const place = hitPlace(h, m)}
+									{@const origin = hitOrigin(h, m)}
+									<li>
+										<button
+											class="hit"
+											aria-label={m.search.open(place)}
+											onclick={() => open(r, h)}
+										>
+											<span class="place num">{place}</span>
+											<span class="snippet">
+												{#if origin}<span class="origin">{origin}</span>{/if}
+												{h.before}{#each hitWords(h) as w, i (i)}{#if w.found}<mark>{w.text}</mark
+														>{:else}{w.text}{/if}{/each}{h.after}
+											</span>
+											<span class="state">
+												{#if h.corrected}<span class="chip hand">{m.review.corrected}</span>{/if}
+												{#if h.reviewed}<span class="chip ok">{m.review.reviewed}</span>{/if}
+											</span>
+										</button>
+									</li>
+								{/each}
+							</ol>
+						</div>
+					{/each}
+				</section>
+			{/each}
+		{/if}
+
+		<p class="rebuild muted">
+			{m.search.rebuildHint}
+			<button class="link" onclick={rebuild}>{m.search.rebuild}</button>
+		</p>
+	{/if}
 </div>
 
 <style>
@@ -343,6 +375,23 @@
 	.lede {
 		max-width: 44rem;
 		font-size: var(--type-sm);
+	}
+	.kinds {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1);
+		font-size: var(--type-sm);
+	}
+	.kinds > span {
+		margin-right: var(--space-1);
+	}
+	/* The kind chosen reads as pressed: ink on a wash, a stronger edge. */
+	.kind[aria-pressed='true'] {
+		background: var(--wash);
+		border-color: var(--control-line-hover);
+		color: var(--text-bright);
+		font-weight: 600;
 	}
 	.query {
 		display: flex;

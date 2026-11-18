@@ -473,6 +473,162 @@ export const en = {
 		moved:
 			'The words are no longer where the search found them: the text was corrected since. The search in the review shows where they are now.'
 	},
+	meaning: {
+		/** The choice above the project's search between its two kinds. */
+		kind: 'Search by',
+		kinds: { words: 'Words', meaning: 'Meaning' },
+		lede: 'Passages close in meaning to a question or a description, even when they use other words or another language, in the text read from the documents as you corrected it. A model turns each passage into numbers once, when you prepare the project, and each question you type with it. You get passages to read: no answer, no summary.',
+		query: 'Question or description',
+		placeholder: 'Quarrels over who leads the Friday prayer…',
+		go: 'Search',
+		searching: 'Searching…',
+		similarity: 'Similarity',
+		similarityHint:
+			'How close a passage is to your question as this model sees it, from −1 to 1. It is not a probability nor a mark of relevance: compare passages with each other, not with a threshold.',
+		found: (listed: number, compared: number) =>
+			`The ${listed === 1 ? 'closest document' : `${listed} closest documents`} of ${compared === 1 ? '1 compared' : `${compared} compared`}, closest first`,
+		none: 'No passage was compared: prepare the project’s text first.',
+		open: (place: string) => `Open ${place} in the review`,
+		likeThis: 'Documents like this one',
+		coverage: {
+			compared: (compared: number, documents: number) =>
+				`Compared the text of ${compared} of ${documents === 1 ? '1 document' : `${documents} documents`}.`,
+			notPrepared: (n: number) =>
+				n === 1
+					? '1 document has text not yet prepared for this model: it was not compared.'
+					: `${n} documents have text not yet prepared for this model: they were not compared.`,
+			missing: (n: number) =>
+				n === 1
+					? '1 page or part is not prepared for this model yet.'
+					: `${n} pages or parts are not prepared for this model yet.`,
+			changed: (n: number) =>
+				n === 1
+					? '1 page or part was corrected since it was prepared: it is left out until you update.'
+					: `${n} pages or parts were corrected since they were prepared: they are left out until you update.`,
+			absence:
+				'A passage not listed does not mean the documents never speak of it: only the text prepared is compared, and the model can miss what a word search finds.'
+		},
+		setup: {
+			title: 'Set-up',
+			show: 'Show the set-up',
+			hide: 'Hide the set-up',
+			noModels:
+				'No model for the search by meaning is available in this copy of Kalamu yet. The search by words works as before.',
+			model: 'Model',
+			chooseModel: 'Choose a model…',
+			local: 'On this computer: nothing is sent',
+			cloud: (provider: string) => `Sent to ${provider}`,
+			price: (usd: string) => `${usd} per million tokens`,
+			languages: { many: 'many languages', english: 'mainly English' },
+			gone: 'The model chosen for this project is no longer offered. Choose another: what the old one prepared is kept until you remove it below.',
+			notInstalled:
+				'This model is not downloaded yet. Download it in Settings › Offline models, then come back.',
+			missingKey: 'No API key is saved for this provider. Save one in Settings › API keys.',
+			openOffline: 'Open Offline models',
+			openKeys: 'Open API keys',
+			consentTitle: (provider: string) => `Send this project’s text to ${provider}?`,
+			consentBody: (provider: string) =>
+				`To prepare the search by meaning, Kalamu sends the corrected text of this project’s documents to ${provider}, which turns it into numbers. Afterwards, each question you type in the search by meaning is sent to ${provider} too. What ${provider} keeps is set by its own terms. Nothing is sent until you start preparing.`,
+			consent: 'Agree to send it',
+			consented: (provider: string, when: string) =>
+				`On ${when} you agreed to send this project’s text and questions to ${provider}.`,
+			estimate: 'What preparing will do',
+			pieces: (n: number) => (n === 1 ? '1 page or part read' : `${n} pages or parts read`),
+			prepared: (n: number) => `${n} already prepared`,
+			missing: (n: number) => `${n} not prepared yet`,
+			changed: (n: number) => `${n} corrected since they were prepared`,
+			chunks: (n: number) => (n === 1 ? '1 passage to send' : `${n} passages to send`),
+			chunksLocal: (n: number) => (n === 1 ? '1 passage to prepare' : `${n} passages to prepare`),
+			chars: (n: string) => `${n} characters`,
+			tokens: (n: string) => `about ${n} tokens`,
+			cost: (usd: string) => `about ${usd}`,
+			under: (usd: string) => `less than ${usd}`,
+			noPrice: 'The price of this model is not known.',
+			estimateNote:
+				'An estimate: the provider counts tokens its own way. What it bills is recorded as preparing goes.',
+			localNote: 'On this computer: nothing is sent and nothing is billed. It can take a while.',
+			skipped: (n: number) =>
+				n === 1
+					? '1 passage with almost no letters (a page number, a stamp) is left out.'
+					: `${n} passages with almost no letters (a page number, a stamp) are left out.`,
+			nothingRead: 'Nothing has been read yet in this project to prepare.',
+			prepare: 'Prepare the text',
+			update: 'Update',
+			resume: 'Continue',
+			ready: (when: string) => `Everything read is prepared. Last finished on ${when}.`,
+			readyNever: 'Everything read is prepared.',
+			running: (done: number, total: number) => `Preparing: ${done} of ${total} passages…`,
+			pause: 'Pause',
+			cancel: 'Cancel',
+			runs: 'Preparations',
+			state: {
+				running: 'Running',
+				paused: 'Paused',
+				cancelled: 'Cancelled',
+				interrupted: 'Interrupted',
+				failed: 'Failed',
+				done: 'Finished'
+			},
+			run: (chunks: number, tokens: string) =>
+				`${chunks === 1 ? '1 passage' : `${chunks} passages`}, ${tokens} tokens billed`,
+			spent: (usd: string) => `Recorded for this project so far, questions included: ${usd}.`,
+			queries: (n: number) => (n === 1 ? '1 question asked' : `${n} questions asked`),
+			kept: 'Kept on this computer',
+			keptLine: (chunks: number, size: string) =>
+				`${chunks === 1 ? '1 passage' : `${chunks} passages`}, ${size}`,
+			inUse: 'In use',
+			remove: 'Remove',
+			removed: 'Removed. Preparing the text again with this model would send it again.',
+			lostNote:
+				'These numbers are kept in Kalamu’s data folder. Removed or lost, they cost only what preparing the text again costs: your results and corrections are not touched.',
+			size: (bytes: number) =>
+				bytes >= 1e9
+					? `${(bytes / 1e9).toFixed(1)} GB`
+					: bytes >= 1e6
+						? `${(bytes / 1e6).toFixed(1)} MB`
+						: `${Math.max(1, Math.round(bytes / 1e3))} kB`
+		},
+		map: {
+			title: 'Map',
+			lede: 'Each document as one point, placed by its text as the model sees it: documents close together have similar wording and subject. Positions are approximate and the axes mean nothing. A long document’s point is the average of everything in it.',
+			made: (model: string, when: string) =>
+				`Made with ${model}, from the text prepared on ${when}.`,
+			madeNever: (model: string) => `Made with ${model}.`,
+			shown: (share: string) =>
+				`Its two directions show about ${share} of the differences between the documents; the list of nearest documents beside it uses all of them.`,
+			placed: (placed: number, documents: number) =>
+				`${placed} of ${documents === 1 ? '1 document' : `${documents} documents`} placed.`,
+			unread: (n: number) => `${n} with nothing read yet.`,
+			notPrepared: (n: number) => `${n} not prepared for this model yet.`,
+			changed: (n: number) => `${n} corrected since they were prepared.`,
+			withoutPreference: (n: number) =>
+				`${n} with several readings and none preferred: the first reading is placed.`,
+			tooFew: (placed: number) =>
+				`A map needs at least five documents placed, and ${placed === 0 ? 'none is' : placed === 1 ? 'only 1 is' : `only ${placed} are`}. Prepare more of the project’s text, or add documents.`,
+			noModel:
+				'The map is drawn from the text prepared for the search by meaning. Choose a model and prepare the text in Search, under Meaning.',
+			openSetup: 'Open the search by meaning',
+			groupBy: 'Group by',
+			groups: { collection: 'Collection', tag: 'Tag' },
+			inNone: 'In none',
+			others: 'Others',
+			legend: 'Legend',
+			zoomIn: 'Zoom in',
+			zoomOut: 'Zoom out',
+			whole: 'Show the whole map',
+			canvas:
+				'Map of the documents. Arrow keys move from point to point, Enter opens the document, plus and minus zoom.',
+			point: (title: string, group: string) => (group ? `${title}, ${group}` : title),
+			documents: 'Documents placed',
+			selected: 'Selected',
+			nearest: 'Nearest documents',
+			noneSelected:
+				'Choose a point, or a document in the list, to see the documents nearest to it.',
+			noNeighbours: 'No other document is placed.',
+			openDocument: 'Open the document',
+			chunks: (n: number) => (n === 1 ? '1 passage averaged' : `${n} passages averaged`)
+		}
+	},
 	queue: {
 		title: 'To check',
 		lede: 'The pages and answers across these documents that need you, each with its reason. It is read from what Kalamu already keeps: nothing is sent to a model. Only you mark a page as reviewed; models agreeing is not a review.',
@@ -2232,6 +2388,13 @@ export const en = {
 		atStep: (n: number, sentence: string) => `Step ${n}: ${sentence}`
 	},
 	error: {
+		'meaning.unavailable': 'The search by meaning is not available in this copy of Kalamu.',
+		'meaning.no_model': 'Choose a model for the search by meaning first.',
+		'meaning.unknown_model': 'This model is not offered any more. Choose another.',
+		'meaning.no_consent':
+			'Agree first to send this project’s text to the model’s provider: nothing has been sent.',
+		'meaning.running': 'The project’s text is already being prepared.',
+		'meaning.empty_query': 'Type a question or a description.',
 		'search.too_short': 'Type a word of two letters at least.',
 		'search.stopped': 'The search was replaced by a newer one.',
 		'search.index':

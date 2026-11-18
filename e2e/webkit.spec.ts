@@ -22,6 +22,8 @@ const VIEWS = [
 	'projects',
 	'document',
 	'queue',
+	'search',
+	'map',
 	'workflow',
 	'run'
 ];

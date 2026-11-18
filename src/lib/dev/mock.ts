@@ -14,6 +14,8 @@ import { NO_RESULT } from './noResult.js';
 import { enlarge, largeRows } from './mockLarge.js';
 import { profileCommand } from './mockProfiles.js';
 import { searchCommand } from './mockSearch.js';
+import { meaningCommand } from './mockMeaning.js';
+import { collectionsOf } from './mockProjects.js';
 import { queueCommand } from './mockQueue.js';
 import { analysisJob, audioJob, job, recording, source, summaries, video } from './mockJobs.js';
 import { jobCommand, keptPiece } from './mockJobCommand.js';
@@ -44,6 +46,8 @@ export function installMock(): void {
 		}, 2500);
 	}
 	mockWindows('main');
+	// `docs=12`: as many documents in the sample project, enough for a map.
+	const more = Math.max(0, Number(params.get('docs') ?? 0) - 4);
 	seedProjects({
 		job,
 		audioJob,
@@ -63,7 +67,14 @@ export function installMock(): void {
 				path: 'C:\\Archives\\Letters\\lettre-1912-pere-eric.pdf',
 				file_name: 'lettre-1912-pere-eric.pdf',
 				page_count: 4
-			}
+			},
+			...Array.from({ length: more }, (_, i) => ({
+				...source,
+				id: `00000000-0000-0000-0000-0000000001${String(i).padStart(2, '0')}`,
+				path: `C:\\Archives\\Journal\\journal-1958-${String(i + 1).padStart(2, '0')}.pdf`,
+				file_name: `journal-1958-${String(i + 1).padStart(2, '0')}.pdf`,
+				page_count: 2
+			}))
 		]
 	});
 	seedWorkflows(...samplePipelines(), summaries[0], source);
@@ -95,6 +106,8 @@ export function installMock(): void {
 		if (unit !== undefined) return unit;
 		const found = searchCommand(cmd, a);
 		if (found !== undefined) return found;
+		const meant = meaningCommand(cmd, a, collectionsOf);
+		if (meant !== undefined) return meant;
 		const preset = presetCommand(cmd, a);
 		if (preset !== undefined) return preset;
 		const passage = passageCommand(

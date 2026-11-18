@@ -29,6 +29,7 @@
 	import Library from '@lucide/svelte/icons/library';
 	import List from '@lucide/svelte/icons/list';
 	import ListTree from '@lucide/svelte/icons/list-tree';
+	import ChartScatter from '@lucide/svelte/icons/chart-scatter';
 	import Link from '@lucide/svelte/icons/link';
 	import Merge from '@lucide/svelte/icons/merge';
 	import Mic from '@lucide/svelte/icons/mic';
@@ -80,6 +81,7 @@
 		laptop: Laptop,
 		link: Link,
 		list: List,
+		map: ChartScatter,
 		more: Ellipsis,
 		prompts: ScrollText,
 		settings: Settings,
