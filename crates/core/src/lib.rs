@@ -101,7 +101,10 @@ pub use provider::{
     StopSignal, Tuning,
 };
 pub use records::{RowEdit, RowError};
-pub use regions::{PageRegions, ShownRegion, TextMapping, TextSpan};
+pub use regions::{
+    AdjustedRegion, DrawnRegion, Granularity, PageRegions, RegionDraft, RegionError, RegionOrigin,
+    ShownRegion, TextMapping, TextSpan,
+};
 pub use result::{
     Charge, CutReason, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment,
     StoredResult, TextLine, TextRegion, TextWord, Usage, plain_words,

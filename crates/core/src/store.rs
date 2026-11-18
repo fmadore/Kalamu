@@ -238,6 +238,32 @@ pub trait JobStore: Send + Sync {
         Ok(Vec::new())
     }
 
+    /// Stores a region the researcher drew or adjusted, or its change, by its id, and marks its
+    /// source's files out of date under every set-up that read the source, in one transaction:
+    /// `provenance.json` lists the region. Deleting its job deletes it. A store that keeps no
+    /// regions refuses.
+    fn put_region(&self, _region: &crate::DrawnRegion) -> Result<(), StoreError> {
+        Err(StoreError::Database("this store keeps no regions".into()))
+    }
+    /// Deletes a region for good, marking its source's files out of date as saving one does,
+    /// and gives it back as it was, so that *Undo* can put it back with
+    /// [`JobStore::put_region`].
+    fn remove_region(&self, _id: &str) -> Result<crate::DrawnRegion, StoreError> {
+        Err(StoreError::NotFound)
+    }
+    fn region(&self, _id: &str) -> Result<crate::DrawnRegion, StoreError> {
+        Err(StoreError::NotFound)
+    }
+    /// The regions drawn or adjusted on one source's pages, by page and then in the order they
+    /// were made.
+    fn source_regions(
+        &self,
+        _job: JobId,
+        _source: SourceId,
+    ) -> Result<Vec<crate::DrawnRegion>, StoreError> {
+        Ok(Vec::new())
+    }
+
     /// Inserts or replaces a batch, by its own id.
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;
     fn batches(&self, job: JobId) -> Result<Vec<BatchRecord>, StoreError>;

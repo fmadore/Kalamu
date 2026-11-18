@@ -267,6 +267,15 @@ review and that they accepted, each with its piece, provider, model, prompt, req
 settings, character counts, whether the proposal was edited, its cost and when it was asked
 and accepted. Their cost is not in `usage` or `cost_usd`, which count the job's own pieces.
 
+Added later the same day, also absent when empty: `regions`, the regions the researcher drew
+over the scan or whose box they adjusted, each with its `id`, `page` (and `half` of a split
+spread), its box in fractions of the page or half (`x`, `y`, `width`, `height`), its `origin`
+(`manual`), what it `adjusts` (the stored result's cache key and the region's id there, such
+as `r1_l2`), whether it `has_text` (the text itself is not recorded), and when it was created
+and updated. A set-up's file lists those drawn on the source, those adjusting its own
+readings and those adjusting a reading no set-up shows any more. ALTO, PAGE XML and the
+searchable PDF keep the engine's own positions.
+
 ## The search index (`search.sqlite`)
 
 Not an output: a file in the app's data folder that project search reads, made only from the

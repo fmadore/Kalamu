@@ -6,7 +6,7 @@ use kalamu_core::{Correction, TextLine, TextMapping, TextRegion, TextWord};
 use super::*;
 
 /// Places every word of page 1, as Tesseract does; reports no layout for page 2.
-struct Placing;
+pub(super) struct Placing;
 
 fn line(y: f32, words: &[&str]) -> TextLine {
     TextLine {
@@ -129,7 +129,7 @@ async fn regions_come_from_the_store_and_follow_a_correction() {
     let spans: Vec<_> = page.lines.iter().map(|l| l.span).collect();
     assert!(spans.iter().all(Option::is_some));
     assert_ne!(spans[0], spans[1]);
-    assert!(!page.words[0].estimated);
+    assert_eq!(page.words[0].origin, kalamu_core::RegionOrigin::Provider);
 
     // A page read without positions has none: the review falls back to the page.
     let plain = regions(1);
@@ -242,7 +242,11 @@ async fn a_block_placed_whole_is_wrapped_by_the_page_s_proportions() {
     // The one line of text becomes the lines its column holds, each word on one of them.
     assert!(page.lines.len() > 10, "{}", page.lines.len());
     assert_eq!(page.lines.len(), expected.len());
-    assert!(page.lines.iter().all(|l| l.estimated));
+    assert!(
+        page.lines
+            .iter()
+            .all(|l| l.origin == kalamu_core::RegionOrigin::Estimated)
+    );
     assert_eq!(page.words.len(), 80);
     assert!(page.lines[0].height < 0.04);
 

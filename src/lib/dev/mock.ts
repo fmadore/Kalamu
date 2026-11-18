@@ -20,6 +20,7 @@ import { queueCommand } from './mockQueue.js';
 import { analysisJob, audioJob, job, recording, source, summaries, video } from './mockJobs.js';
 import { jobCommand, keptPiece } from './mockJobCommand.js';
 import { passageCommand } from './mockPassages.js';
+import { regionCommand } from './mockDrawn.js';
 import { presetCommand, samplePipelines } from './mockPresets.js';
 import { seedWorkflows, workflowCommand } from './mockWorkflows.js';
 import { unitCommand } from './mockUnits.js';
@@ -117,6 +118,8 @@ export function installMock(): void {
 			(id) => catalog.providers.find((p) => p.id === id)?.local === true
 		);
 		if (passage !== undefined) return passage;
+		const region = regionCommand(cmd, a);
+		if (region !== undefined) return region;
 		const jobAnswer = jobCommand(cmd, a);
 		if (jobAnswer !== undefined) return jobAnswer;
 		switch (cmd) {

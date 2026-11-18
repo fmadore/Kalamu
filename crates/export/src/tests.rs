@@ -107,6 +107,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         renamed_speakers: vec![],
         listed_by_hand: vec![],
         passages: vec![],
+        regions: vec![],
         usage: Usage::default(),
         cost_usd: Some(0.002),
         refused: None,

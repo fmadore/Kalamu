@@ -295,6 +295,7 @@ impl Engine {
             renamed_speakers: renamed_labels(speaker_names),
             listed_by_hand,
             passages: self.passages_accepted(job, setup_id, source_id, &states)?,
+            regions: self.regions_recorded(job, source_id, &states)?,
             usage,
             cost_usd: cost,
             refused: self.refused(job, setup_id, source_id)?,

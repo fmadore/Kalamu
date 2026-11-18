@@ -88,6 +88,11 @@ pub struct Provenance {
     /// `cost_usd`, which count the results of the job's own pieces.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub passages: Vec<ProvenancePassage>,
+    /// Regions the researcher drew over the scan, or whose box they adjusted, kept beside the
+    /// stored results, which they never change. Exports' positions remain the engine's own.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<ProvenanceRegion>>")]
+    pub regions: Vec<ProvenanceRegion>,
     /// What the results kept cost; for a table of contents, both steps (`merge` gives the
     /// second's share).
     pub usage: Usage,
@@ -203,6 +208,53 @@ pub struct ProvenancePassage {
     pub cost_usd: Option<f64>,
     pub asked_at: Timestamp,
     pub accepted_at: Timestamp,
+}
+
+/// A region the researcher drew or adjusted, as provenance records it: where it is, who placed
+/// it and what it adjusts. Whether it has text, not the text itself, as for passages: a methods
+/// note can be shared without what the researcher wrote.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceRegion {
+    pub id: String,
+    /// The page's number in the source, from 1.
+    pub page: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub half: Option<crate::PageHalf>,
+    /// Fractions of the page, or of its half, from its top-left corner.
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub origin: crate::RegionOrigin,
+    /// The engine's region whose box it replaces: the stored result's cache key and the
+    /// region's id there. None for a region drawn on its own.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub adjusts: Option<crate::AdjustedRegion>,
+    pub has_text: bool,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
+}
+
+impl ProvenanceRegion {
+    pub fn of(region: &crate::DrawnRegion) -> Self {
+        Self {
+            id: region.id.clone(),
+            page: region.page,
+            half: region.half,
+            x: region.x,
+            y: region.y,
+            width: region.width,
+            height: region.height,
+            origin: crate::RegionOrigin::Manual,
+            adjusts: region.adjusts.clone(),
+            has_text: !region.text.trim().is_empty(),
+            created_at: region.created_at,
+            updated_at: region.updated_at,
+        }
+    }
 }
 
 /// A table of contents' second step, as provenance records it.

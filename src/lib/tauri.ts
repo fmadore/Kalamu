@@ -62,6 +62,9 @@ import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
 import type { PageRegions } from './bindings/PageRegions.js';
+import type { PageHalf } from './bindings/PageHalf.js';
+import type { DrawnRegion } from './bindings/DrawnRegion.js';
+import type { RegionDraft } from './bindings/RegionDraft.js';
 import type { PieceAudio } from './bindings/PieceAudio.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
@@ -233,6 +236,16 @@ export const api = {
 	/** Where the text of a piece sits on it, under one set-up, placed in the text shown. */
 	pageRegions: (jobId: string, sourceId: string, setupId: string, index: number) =>
 		invoke<PageRegions>('page_regions', { jobId, sourceId, setupId, index }),
+	/** The researcher's regions on a page with no text piece of its own (an analysis's or a
+	 * table of contents' review), by the page's number and half. */
+	drawnRegions: (jobId: string, sourceId: string, page: number, half: PageHalf | null) =>
+		invoke<PageRegions>('drawn_regions', { jobId, sourceId, page, half }),
+	/** Saves a region drawn over the scan, or the box given an engine's region, or a change
+	 * to either; the region as kept. */
+	saveRegion: (draft: RegionDraft) => invoke<DrawnRegion>('save_region', { draft }),
+	/** Deletes a region drawn or adjusted; the region as it was, for Undo. */
+	removeRegion: (id: string) => invoke<DrawnRegion>('remove_region', { id }),
+	restoreRegion: (region: DrawnRegion) => invoke<DrawnRegion>('restore_region', { region }),
 	/** A page drawn `width` pixels wide, as a small image, for the strip of thumbnails. */
 	pieceThumbnail: (jobId: string, sourceId: string, index: number, width: number) =>
 		invoke<PagePreview>('piece_thumbnail', { jobId, sourceId, index, width }),

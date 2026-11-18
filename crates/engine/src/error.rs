@@ -80,6 +80,9 @@ pub enum EngineError {
     /// is refused.
     #[error(transparent)]
     Passage(kalamu_core::PassageError),
+    /// A region drawn over a scan that cannot be saved, or is not there.
+    #[error(transparent)]
+    Region(kalamu_core::RegionError),
 }
 
 impl EngineError {
@@ -115,6 +118,7 @@ impl EngineError {
             Self::MixedReading => "job.mixed_reading",
             Self::Rows(e) => e.code(),
             Self::Passage(e) => e.code(),
+            Self::Region(e) => e.code(),
         }
     }
 }

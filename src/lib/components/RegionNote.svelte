@@ -27,7 +27,7 @@
 		{#if region}
 			<p class="words" dir="auto">{region.text}</p>
 			<p class="status">{status}</p>
-			{#if region.estimated}<p class="status">{m.review.regionEstimated}</p>{/if}
+			{#if region.origin === 'estimated'}<p class="status">{m.review.regionEstimated}</p>{/if}
 			<button
 				type="button"
 				class="close"

@@ -17,6 +17,9 @@
 //!   one;
 //! - `TextEquiv` at every level holds the corrected text: a word's own, a line's words joined by
 //!   spaces, a region's lines joined by line breaks;
+//! - ids are those the review gives the same regions (`r1`, `r1_l2`, `r1_l2_w3`, from
+//!   [`kalamu_core::regions::block_id`] and its neighbours), counted across the whole page where a
+//!   spread was split, where the review counts each half on its own;
 //! - reading order is the order the engine gave, in `ReadingOrder` and, as Transkribus writes
 //!   it, in each region's and line's `custom`;
 //! - `Created` and `LastChange` are the times the page was read and last corrected, never the
@@ -24,6 +27,7 @@
 
 use std::fmt::Write as _;
 
+use kalamu_core::regions::{block_id, line_id, word_id};
 use kalamu_core::{
     ExportDocument, ExportError, ExportFile, ExportFormat, Exporter, InputKind, PieceRef, Task,
     TextLine, Timestamp,
@@ -149,15 +153,15 @@ xsi:schemaLocation=\"{NAMESPACE} {NAMESPACE}/pagecontent.xsd\">"
         for r in 0..laid.regions.len() {
             let _ = writeln!(
                 x,
-                "        <RegionRefIndexed index=\"{r}\" regionRef=\"r{}\"/>",
-                r + 1
+                "        <RegionRefIndexed index=\"{r}\" regionRef=\"{}\"/>",
+                block_id(r + 1)
             );
         }
         x.push_str("      </OrderedGroup>\n    </ReadingOrder>\n");
     }
     let points = |rx: f32, ry: f32, rw: f32, rh: f32| coords(rx, ry, rw, rh, laid);
     for (r, region) in laid.regions.iter().enumerate() {
-        let id = format!("r{}", r + 1);
+        let id = block_id(r + 1);
         let _ = writeln!(
             x,
             "    <TextRegion id=\"{id}\" custom=\"readingOrder {{index:{r};}}\">\n      \
@@ -167,7 +171,7 @@ xsi:schemaLocation=\"{NAMESPACE} {NAMESPACE}/pagecontent.xsd\">"
         let (lines, estimated) = laid.lines(region);
         let mut texts = Vec::with_capacity(lines.len());
         for (l, line) in lines.iter().enumerate() {
-            let lid = format!("{id}_l{}", l + 1);
+            let lid = line_id(r + 1, l + 1);
             let note = if estimated {
                 " comments=\"position estimated within a block the model placed whole\""
             } else {
@@ -187,9 +191,9 @@ xsi:schemaLocation=\"{NAMESPACE} {NAMESPACE}/pagecontent.xsd\">"
                         .unwrap_or_default();
                     let _ = writeln!(
                         x,
-                        "        <Word id=\"{lid}_w{}\">\n          <Coords points=\"{}\"/>\n          \
+                        "        <Word id=\"{}\">\n          <Coords points=\"{}\"/>\n          \
 <TextEquiv{conf}>\n            <Unicode>{}</Unicode>\n          </TextEquiv>\n        </Word>",
-                        w + 1,
+                        word_id(r + 1, l + 1, w + 1),
                         points(word.x, word.y, word.width, word.height),
                         esc_content(&word.text),
                     );

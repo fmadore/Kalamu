@@ -2441,6 +2441,13 @@ export const en = {
 		'passage.too_different':
 			'The model’s answer is too different from the passage to be a correction of it.',
 		'passage.not_waiting': 'This proposal is no longer waiting for a decision.',
+		'region.not_finite': 'The region could not be measured. Draw it again.',
+		'region.outside': 'The region reaches outside the page. Draw it within the page.',
+		'region.too_small': 'The region is too small. Draw a larger box.',
+		'region.no_page': 'This page is not in the file, so no region can be drawn on it.',
+		'region.adjusts':
+			'The region you changed is no longer on this page as it was read. Draw the box again.',
+		'region.not_found': 'This region no longer exists.',
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',

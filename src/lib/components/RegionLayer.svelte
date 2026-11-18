@@ -138,7 +138,7 @@
 				data-i={i}
 				type="button"
 				class="region"
-				class:estimated={region.estimated}
+				class:estimated={region.origin === 'estimated'}
 				class:chosen={i === chosenHere}
 				style:left={pct(b.x)}
 				style:top={pct(b.y)}

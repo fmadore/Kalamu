@@ -2533,6 +2533,13 @@ export const fr: Messages = {
 		'passage.too_different':
 			'La réponse du modèle est trop différente du passage pour en être une correction.',
 		'passage.not_waiting': 'Cette proposition n’attend plus de décision.',
+		'region.not_finite': 'La zone n’a pas pu être mesurée. Tracez-la de nouveau.',
+		'region.outside': 'La zone dépasse de la page. Tracez-la à l’intérieur de la page.',
+		'region.too_small': 'La zone est trop petite. Tracez un cadre plus grand.',
+		'region.no_page': 'Cette page n’est pas dans le fichier : on ne peut pas y tracer de zone.',
+		'region.adjusts':
+			'La zone que vous avez modifiée n’est plus sur cette page telle qu’elle a été lue. Tracez de nouveau le cadre.',
+		'region.not_found': 'Cette zone n’existe plus.',
 		'job.database': 'La base de données des traitements n’a pas pu être lue ou écrite.',
 		'job.running': 'Ce traitement est déjà en cours.',
 		'job.empty': 'Ajoutez au moins un fichier et choisissez un modèle.',

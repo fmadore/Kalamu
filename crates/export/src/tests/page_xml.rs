@@ -549,3 +549,50 @@ fn valid(xml: &str) {
         "the reading order names every region once"
     );
 }
+
+/// The ids PAGE XML gives a whole page's regions, lines and words are those the review gives
+/// the same regions, so a region named in one is found in the other.
+#[test]
+fn page_xml_ids_are_the_review_s() {
+    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    let second = TextRegion { y: 0.3, ..placed() };
+    let regions = vec![placed(), second];
+    let doc = document(
+        Task::TextExtraction,
+        pdf(&dir, "lettre.pdf", &[(595, 842)]),
+        vec![part(
+            1,
+            "Dakar, le 3 mai\n\nDakar, le 3 mai",
+            regions.clone(),
+        )],
+    );
+    let xml = text(&files(&doc)[0]);
+    let written: Vec<&str> = xml
+        .split(" id=\"")
+        .skip(1)
+        .filter_map(|rest| rest.split('"').next())
+        .filter(|id| *id != "ro")
+        .collect();
+    let review = kalamu_core::PageRegions::of(&regions, "", "", false, None);
+    let mut shown = Vec::new();
+    for block in &review.blocks {
+        shown.push(block.id.as_str());
+        for line in review
+            .lines
+            .iter()
+            .filter(|l| l.id.starts_with(&format!("{}_", block.id)))
+        {
+            shown.push(line.id.as_str());
+            let own = format!("{}_", line.id);
+            shown.extend(
+                review
+                    .words
+                    .iter()
+                    .filter(|w| w.id.starts_with(&own))
+                    .map(|w| w.id.as_str()),
+            );
+        }
+    }
+    assert_eq!(written, shown);
+    assert_eq!(shown.len(), 2 * (1 + 1 + 4));
+}

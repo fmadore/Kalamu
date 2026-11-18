@@ -4,7 +4,8 @@
 by meaning and a map of a project's documents, for which the text of the project's documents
 and each question typed are sent to a provider the user chooses and agrees to, or to no one
 with a model run on the computer, and to send a passage selected in the review to a model
-for correction; and from the first version to send a large
+for correction, and to keep the regions the user draws over a scan with the text they give
+them; and from the first version to send a large
 batch of the cheaper mode to Google as a file, deleted there afterwards, and to keep with a
 project the results the user sets aside from its list of what to check. The policy of
 17 November 2026 did not say so; it applies from the first version to keep, in a
@@ -170,7 +171,9 @@ Kalamu's, on the same computer only:
 
 - **The job database** (`jobs.sqlite`): each job's name, the paths, sizes, modification times
   and fingerprints of its files, its settings and progress, the text and answers returned for each piece, the user's
-  corrections and review marks, the names given to speakers, and what each call cost.
+  corrections and review marks, the names given to speakers, the regions the user draws over
+  a scan or whose box they change (with the text they give them, never sent), and what each
+  call cost.
   Results are kept by a fingerprint of the file and settings, so the same work is never paid
   for twice; deleting a job removes the job, its progress and corrections, while the stored
   results stay until the user clears those no job uses (Settings › General, *Clear unused

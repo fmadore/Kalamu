@@ -269,6 +269,26 @@ impl JobStore for SqliteStore {
         passages::of_source(self, job, setup, source)
     }
 
+    fn put_region(&self, region: &kalamu_core::DrawnRegion) -> Result<(), StoreError> {
+        regions::put(self, region)
+    }
+
+    fn remove_region(&self, id: &str) -> Result<kalamu_core::DrawnRegion, StoreError> {
+        regions::remove(self, id)
+    }
+
+    fn region(&self, id: &str) -> Result<kalamu_core::DrawnRegion, StoreError> {
+        regions::get(self, id)
+    }
+
+    fn source_regions(
+        &self,
+        job: JobId,
+        source: SourceId,
+    ) -> Result<Vec<kalamu_core::DrawnRegion>, StoreError> {
+        regions::of_source(self, job, source)
+    }
+
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError> {
         batches::put_batch(self, batch)
     }
@@ -376,6 +396,7 @@ mod outdated;
 mod passages;
 mod progress;
 mod projects;
+mod regions;
 mod results;
 mod runs;
 mod search;
