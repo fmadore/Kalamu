@@ -2207,6 +2207,7 @@ export const fr: Messages = {
 		quoted: (text: string) => `« ${text} »`,
 		sources: 'Sources',
 		unknown: 'Inconnu',
+		none: 'Aucun',
 		preview: 'préversion',
 		retiring: 'bientôt retiré',
 		replaced: 'remplacé',

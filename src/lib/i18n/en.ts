@@ -2123,6 +2123,8 @@ export const en = {
 		/** What the file picker calls the files Kalamu reads. */
 		sources: 'Sources',
 		unknown: 'Not known',
+		/** Said for a value left empty, such as the cost of a job nothing was paid for. */
+		none: 'None',
 		preview: 'preview',
 		retiring: 'retiring',
 		/** A model a newer one replaces, kept for set-ups that name it. */

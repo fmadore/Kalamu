@@ -116,7 +116,7 @@
 						<span class="chip {tone(step.state)}">{w.stepState[step.state]}</span>
 					</div>
 					<p class="muted reads">
-						{w.reads}:
+						{w.reads}{m.common.colon}
 						{frozen.input.kind === 'sources'
 							? w.readsFiles
 							: w.readsStep(frozen.input.step + 1, run.steps[frozen.input.step]?.name ?? '')}

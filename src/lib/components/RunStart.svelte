@@ -147,7 +147,10 @@
 	{#if files.some((f) => f.error)}
 		<ul class="problems">
 			{#each files.filter((f) => f.error) as f (f.path)}
-				<li class="chip danger">{f.path}: {f.error ? describeError(f.error, m) : ''}</li>
+				<li class="chip danger">
+					{f.path}{m.common.colon}
+					{f.error ? describeError(f.error, m) : ''}
+				</li>
 			{/each}
 		</ul>
 	{/if}
@@ -157,7 +160,7 @@
 		<ol class="plan">
 			{#each workflow.steps as step, i (i)}
 				<li>
-					<span class="name">{w.stepNumber(i + 1)}: {step.pipeline.name}</span>
+					<span class="name">{w.stepNumber(i + 1)}{m.common.colon} {step.pipeline.name}</span>
 					<span class="muted">{sends(i)} · <span class="num">{cost(i)}</span></span>
 				</li>
 			{/each}
