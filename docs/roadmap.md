@@ -4,7 +4,7 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (17 November 2026)
+## Status (18 November 2026)
 
 **Version 1.8.0** is the latest release, published on 17 November 2026: unsigned installers for
 Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
@@ -132,6 +132,21 @@ improvements that open *Next*; what it did not fix at once was tracked in
   Anthropic once its answers are stored; and the image description run over JPEG, PNG, TIFF
   and PDF against recorded answers, the last point of
   [#168](https://github.com/fmadore/Kalamu/issues/168).
+- **Five items of 18 November** ([decision](decisions/2026-11-18-gemini-file-batches-set-aside-far-apart-names-resume.md)), each tested,
+  none yet tried in the packaged app, on a Mac or in a live run:
+  - **Gemini batches through a file**: an economy batch above the 20 MB Google takes in one
+    request goes as a JSON Lines file, and that file and the answers' are deleted at Google
+    afterwards; smaller batches go as before.
+  - **What to check** ([#85](https://github.com/fmadore/Kalamu/issues/85)): the results set
+    aside kept with the project and named in the review manifest; a seed typed by hand.
+  - **Project dictionary** ([#48](https://github.com/fmadore/Kalamu/issues/48)): in a field
+    too long for one request, rows far apart in the alphabet that share a word, initials or a
+    sound are sent again together, at no more than twice the cost.
+  - **The interface**: a paused or interrupted job in the sidebar's foot with **Resume**; the
+    edge of a button that cancels or deletes at 3:1 in both themes; colons, semicolons and
+    the dash of an empty value out of the markup.
+  - **The test passes written again** for Claude to run on the computer itself
+    ([Windows](windows-test-pass.md), [a rented Mac](mac-test-day.md)), and `rfd` 0.18.0.
 - **GPT-6.2 Sol and Astra** ([decision](decisions/2026-11-17-gpt-6-2.md)): OpenAI's two models
   of 17 November added; GPT-6.2 Sol is OpenAI's default and replaces 6.1 Sol at the same price,
   and GPT-6.2 Astra replaces GPT-6 Astra for a fifth less. Both older models stay in the
@@ -457,6 +472,10 @@ In this order. Work that keeps what has shipped sound comes before new features.
 Items 1 and 2 are done in code: what they leave is to be tried by hand, gathered here, and
 none of it waits on the others.
 
+The second [test pass on Windows](windows-test-pass.md) and the second
+[day on a rented Mac](mac-test-day.md) gather every line below as numbered steps, for Claude
+to run on the computer itself.
+
 - **In the packaged app on Windows**: tried on 17 November with `v1.8.0-rc1`
   ([results](windows-test-pass.md#results)). What it found is fixed (estimated lines in Mistral
   OCR's blocks, a records analysis's estimate, New job's records diagram and `.csv`, Escape in
@@ -617,7 +636,10 @@ none of it waits on the others.
    (on 3 November it had answered none after 35 minutes); a live run of the deleting of a
    batch's files, done on 15 November, which must show whether Mistral names its inline
    requests' file (951 KB for two pages) among the job's; a live run of the deleting of a Claude
-   batch, done on 17 November; then Gemini batches through a JSONL file, to lift the 20 MB inline limit, several
+   batch, done on 17 November; a live run of a Gemini batch through a JSON Lines file, done on
+   18 November from Google's documentation alone, which must show whether Google lets its
+   answers' file be deleted and whether the batch names its input file; the Gemini batch
+   itself deleted at Google, as Claude's is; then several
    pages per call in economy mode, and Voxtral transcription in batches once its format is
    documented ([live runs](decisions/2026-11-03-live-runs.md)).
 5. **Source-linked review, the second step
@@ -658,17 +680,21 @@ none of it waits on the others.
   ([decision](decisions/2026-11-11-ordered-image-documents.md)).
 - **Project dictionary, what is left of
   [#48](https://github.com/fmadore/Kalamu/issues/48)**: a live run of proposed merges with
-  each provider, on a field of a few hundred rows; comparing rows far apart in the alphabet
-  (shared words, sound), which the groups leave out; import with conflicts previewed; an
+  each provider, on a field of a few hundred rows, and on one too long for one request, to
+  see what a model makes of the groups of names far apart in the alphabet, done on
+  18 November (the cap of ten rows to a key, and people who share a surname); names that
+  differ by their vowels (Muhammad, Mohamed) or a shortened forename, which those groups
+  leave out; import with conflicts previewed; an
   accepted dictionary versioned and given to later analyses as a fingerprinted input (with
   #49); and telling apart two people who share a spelling, which needs mentions anchored in
   the text (#47).
 - **What to check, what is left of [#85](https://github.com/fmadore/Kalamu/issues/85)**:
-  invalid evidence anchors; optional field rules with their version; the results set aside
-  from the list kept with the project (the sample is drawn under them, and they last one
-  session); a seed typed by hand, which the command takes and the screen does not offer. The
-  sample, the items kept aside and the manifest, done on 17 November, are still to try in the
-  packaged app.
+  optional field rules with their version; invalid evidence anchors, which wait for answers
+  that quote their evidence (an answer holds a value and a reason today, nothing placed in
+  the text: with [#47](https://github.com/fmadore/Kalamu/issues/47)). The sample, the items
+  kept aside and the manifest, done on 17 November, and the results set aside kept with the
+  project and the seed typed by hand, done on 18 November, are still to try in the packaged
+  app.
 - **Workflows, what is left of [#49](https://github.com/fmadore/Kalamu/issues/49)**: steps
   that read several inputs (the text and an accepted dictionary, with #48), project-level
   steps, an export step that gathers results across steps, the whole run's estimate computed
@@ -718,12 +744,13 @@ cache only if a batch of a few hundred pages shows a need.
   and more, tried so far with two.
 - **Design improvements left from [issue #1](https://github.com/fmadore/Kalamu/issues/1)**,
   closed on 28 October when the name and icon were decided (its closing comment keeps these
-  here): a collation table on the job's page (pieces × set-ups, the sigla as column heads); an
-  interrupted or paused job in the sidebar's foot with **Resume** (the sidebar already groups
-  unfinished jobs, without the button); a page with a correction checked and captured; the
-  error colour checked against the hand blue and the highlighter; and the placeholder dashes
-  and the apparatus's `]` and `:`, still in the markup, either declared typesetting or moved
-  to the translation files.
+  here): a collation table on the job's page (pieces × set-ups, the sigla as column heads),
+  which needs a command of its own, since the job's page counts by file and set-up and knows
+  no piece's state; a page with a correction checked and captured; the progress bar's red
+  segment beside the ink, at 2.75:1 in the light theme and 1.94:1 in the dark one, its
+  failures being written beside it. Done on 18 November: the job to resume in the sidebar's
+  foot, the error colour checked against the hand blue and the highlighter, and the dashes,
+  colons and semicolons out of the markup.
 
 ## Toward the Store release
 

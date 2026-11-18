@@ -86,8 +86,11 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   notification area, whose icon shows it; a notification says it finished, with Kalamu's icon;
   the window opens again from the icon with the job done.
 - [ ] **A3. A job that waits, in the sidebar**: start the same job again under another name,
-  pause it, and open Settings. The sidebar's foot names the job with **Resume**; resume it from
-  the keyboard; the row goes and the focus stays on something. Then start it a third time and
+  pause it, and open Settings. The sidebar's foot, under *To resume*, names the job with how
+  far it got and **Resume**; resume it from the keyboard; the row goes, a message says the job
+  resumed, and the focus lands on the job in the list. With two jobs waiting, the one stopped
+  last is shown and the other is under *1 more*. In a short window the sidebar scrolls by
+  itself and the page does not. Then start it a third time and
   quit Kalamu while it runs (*Quit now*); at the next launch the interrupted job is there with
   **Resume**, and finishes without reading again the pages already done.
 - [ ] **A4. Clear unused results** in Settings → General says what it will
@@ -147,22 +150,18 @@ to for the sample files.
   on handwriting: note any entry left out or carried down from a heading.
 - [ ] **C3. Agreement between set-ups**: an analysis of `daily-nebraskan-1911.pdf` with *Summary
   and keywords* and three set-ups (two providers, or three models). The job's page shows how
-  far they agree field by field over the whole job, and, with two set-ups or more, a table of
-  pieces by set-ups under their sigla; a cell opens the review at that piece and set-up.
+  far they agree field by field over the whole job, each set-up under its siglum.
 - [ ] **C4. A name pointed at** (#194): in that analysis's review, point at a name in a list
   field. It is brought into view in the text beside it and marked.
-- [ ] **C5. An answer whose evidence is not in the text**: an analysis with a ready-made that
-  quotes its evidence, on a page of faint print. If a quotation cannot be found in the text,
-  *What to check* lists the result with that reason. If none occurs, say so; do not provoke one.
-- [ ] **C6. A translation**: *Translate a text* on `bulletin.txt` into English. The review
+- [ ] **C5. A translation**: *Translate a text* on `bulletin.txt` into English. The review
   shows each page of the source beside its translation; the files are `.translated.en`.
-- [ ] **C7. A translated transcript's subtitles**: transcribe `interview.wav` (French) with a
+- [ ] **C6. A translated transcript's subtitles**: transcribe `interview.wav` (French) with a
   cloud model, *Use this text in a new job* → Translate into English, then write `.srt` and
   `.vtt`. Each cue keeps the time and speaker of the line it translates.
-- [ ] **C8. An image described**: New job with `dodington-1755.jpg` and `bulletin-page.jpg`
+- [ ] **C7. An image described**: New job with `dodington-1755.jpg` and `bulletin-page.jpg`
   alone and *Analyse*: *Image description and keywords* is chosen by itself; text-only models
   are not offered.
-- [ ] **C9. The dictionary's proposed merges**: in the project, run two analyses that list
+- [ ] **C8. The dictionary's proposed merges**: in the project, run two analyses that list
   names (*People, places and organisations*) on the two newspaper files, open the dictionary
   and ask for proposed merges on a field. Proposals name rows to merge with their documents;
   accept one and refuse one; nothing changes until accepted. With a field of a few hundred rows

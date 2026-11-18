@@ -176,7 +176,7 @@ most of this was never written down for the disk image.
 - [ ] **B1. The Windows list's Part B**, steps B1 to B9 of
   [windows-test-pass.md](windows-test-pass.md), here: with ⌘ for Ctrl, the trackpad's pinch
   if VNC carries it (say if it does not), and Finder for File Explorer.
-- [ ] **B2. The Windows list's Part C**, steps C1 to C9, with the Gemini and Mistral keys.
+- [ ] **B2. The Windows list's Part C**, steps C1 to C8, with the Gemini and Mistral keys.
 - [ ] **B3. Text regions**, first tried on Windows on 17 November: on A6's and A7's reviews
   and on a Mistral OCR page, blocks, lines and words at each zoom, chosen with the pointer and
   with the keyboard.
