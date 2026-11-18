@@ -1,0 +1,71 @@
+---
+layout: guide
+title: Checking results
+order: 4
+lede: The review is where Kalamu earns its keep. Every result sits beside its source, your corrections never overwrite what the model wrote, and two models read against each other show you where to look.
+description: Reviewing, correcting and comparing AI results against their source in Kalamu.
+---
+
+## The review, side by side
+
+Open any job to review it. The source is on the left: the scan on a dark background, or the
+player for a recording. The text is on the right.
+
+- **Move between pages** with <kbd>Page Down</kbd> and <kbd>Page Up</kbd>, or the page list.
+- **Zoom** the scan about the pointer, and drag to move it. One key fits the page to the pane's
+  width again.
+- **Search** the whole document with <kbd>Ctrl</kbd> <kbd>F</kbd> (<kbd>⌘</kbd> <kbd>F</kbd> on a
+  Mac).
+- Where the model placed its text on the page (Tesseract, Mistral OCR, LightOnOCR), you can
+  show the regions over the scan and choose one to find its words in the text.
+
+Every shortcut is listed in the **Glossary**, under *Keyboard*, written for your system.
+
+## Correct the text
+
+Correct the text where it stands, then save. Three things follow:
+
+- the model's own text is **kept unchanged** underneath, and you can always see it again;
+- exports use your corrected text and record that it was corrected;
+- anything made later from this text (an analysis, a translation) knows if you corrected the
+  text after it was made, and says so.
+
+**Mark as reviewed** tells Kalamu, and later you, that a page has been checked by a person. A
+project counts reviewed pages, and its list of [what to check](projects.md#what-to-check) is
+built on it.
+
+## Compare models
+
+The fastest way to find errors is not to read everything twice: it is to let two models read
+the same pages and look only at where they disagree. Where two independent readings agree,
+they are usually right; where they differ, at least one is wrong.
+
+1. In **New job**, choose **Compare with another model** and add a second model (from another
+   provider if you can: their mistakes are less alike).
+2. In the review, the differences are highlighted. Point at one to see each model's reading;
+   choose the right one with **Use this reading**, or type your own.
+3. Step through the differences from the keyboard, page after page.
+
+Once you have corrected some pages, Kalamu also shows each model's **error rate** against your
+corrected text, which is an honest basis for choosing the model for the rest of a collection:
+measured on your documents, not on someone else's benchmark.
+
+> **A caution.** Two models can share a mistake, especially on a faded word or an unusual
+> name. Agreement lowers the risk; it does not replace reading a sample yourself.
+
+## Check an analysis
+
+An analysis is reviewed field by field beside its document. Correct an answer, and for a list
+of names, rename or remove one from its menu (a click, <kbd>Enter</kbd>, or a right click on
+the name). Each answer comes with the model's reason, which helps you judge it but is not
+evidence: go back to the text.
+
+## What can go wrong, and how Kalamu tells you
+
+- **A page failed** (the provider refused it, or the connection dropped): it is marked, and
+  running the job again retries only the failed pages.
+- **An answer was cut off** because it reached the model's output limit: the page says so. Read
+  fewer pages per call, or use a model with a longer output.
+- **A model wrote text that is not on the page.** Nothing can flag this automatically, which is
+  why the review exists. Small offline models do it more often than the large cloud ones.
+- **Inappropriate output** can be reported from the review.

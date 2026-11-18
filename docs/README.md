@@ -4,6 +4,7 @@
 
 | Document | What it covers |
 | --- | --- |
+| [Guide](guide/index.md) | How to use Kalamu, chapter by chapter; published at [fmadore.github.io/Kalamu/guide](https://fmadore.github.io/Kalamu/guide/) with its own layout (`_layouts/guide.html`, `assets/guide.css`) |
 | [Specification](specification.md) | What the app must do, and why: tasks, review, comparison, resuming, privacy |
 | [Output formats](formats.md) | Every export format and `provenance.json` |
 | [Privacy policy](privacy.md) | What the app sends, to whom, and what it keeps; published for the Store listing |

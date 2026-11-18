@@ -135,6 +135,8 @@ while jobs run.
 
 ## Documentation
 
+- [Guide](https://fmadore.github.io/Kalamu/guide/): how to use Kalamu, from a first job to
+  exporting checked results ([its pages](docs/guide/)).
 - [Specification](docs/specification.md): what the app must do, and why.
 - [Roadmap](docs/roadmap.md): what is built and what is next.
 - [Development](docs/development.md): building, checks, the browser preview.

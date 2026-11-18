@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ page.title }} · Kalamu guide</title>
+    <meta name="description" content="{{ page.description | default: 'A guide to Kalamu, a desktop app for reading documents, transcribing interviews and analysing texts with AI.' }}" />
+    <link rel="stylesheet" href="../assets/guide.css" />
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to the text</a>
+    <div class="frame">
+      <header class="side">
+        <a class="name" href="index.html">Kalamu <span>guide</span></a>
+        <nav aria-label="Guide">
+          {% assign chapters = site.pages | where: "layout", "guide" | sort: "order" %}
+          <ol>
+            {% for chapter in chapters %}
+            <li>
+              <a href="{{ chapter.name | replace: '.md', '.html' }}"{% if chapter.url == page.url %} aria-current="page"{% endif %}>{{ chapter.nav | default: chapter.title }}</a>
+            </li>
+            {% endfor %}
+          </ol>
+        </nav>
+        <p class="links">
+          <a href="https://github.com/fmadore/Kalamu/releases">Download</a>
+          <a href="https://github.com/fmadore/Kalamu">Source</a>
+          <a href="../privacy.html">Privacy</a>
+        </p>
+      </header>
+      <main id="content">
+        <h1>{{ page.title }}</h1>
+        {% if page.lede %}<p class="lede">{{ page.lede }}</p>{% endif %}
+        {{ content }}
+        <nav class="pager" aria-label="Chapters">
+          {% assign here = 0 %}
+          {% for chapter in chapters %}{% if chapter.url == page.url %}{% assign here = forloop.index0 %}{% endif %}{% endfor %}
+          {% assign before = here | minus: 1 %}
+          {% assign after = here | plus: 1 %}
+          {% if here > 0 %}<a class="prev" href="{{ chapters[before].name | replace: '.md', '.html' }}"><span>Before</span>{{ chapters[before].title }}</a>{% else %}<span></span>{% endif %}
+          {% if after < chapters.size %}<a class="next" href="{{ chapters[after].name | replace: '.md', '.html' }}"><span>Next</span>{{ chapters[after].title }}</a>{% endif %}
+        </nav>
+        <footer>
+          <p>
+            Kalamu is free and open source (MIT), by Frédérick Madore.
+            Something wrong or missing in this guide?
+            <a href="https://github.com/fmadore/Kalamu/issues">Open an issue</a>.
+          </p>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>
