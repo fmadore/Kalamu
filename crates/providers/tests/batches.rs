@@ -602,13 +602,268 @@ async fn claude_names_an_ended_batch_and_deletes_it() {
     );
 }
 
-/// Gemini batches leave nothing to delete: nothing is named.
+/// An inline Gemini batch leaves no file: once it has ended it names nothing, nor does one
+/// Google no longer knows. A batch small enough to go inline uploads nothing.
 #[tokio::test]
-async fn gemini_batches_name_nothing_to_delete() {
+async fn an_inline_gemini_batch_uploads_and_names_nothing() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/batches/1"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "name": "batches/1",
+            "metadata": { "state": "BATCH_STATE_SUCCEEDED",
+                "output": { "inlinedResponses": { "inlinedResponses": [
+                    { "response": fixture("gemini_ok.json"), "metadata": { "key": "p0" } },
+                ] } } },
+            "done": true,
+        })))
+        .mount(&server)
+        .await;
     let key = ApiKey::new("k");
-    let gemini = Gemini::with_base_url(client(), "http://127.0.0.1:9");
+    let gemini = Gemini::with_base_url(client(), &server.uri());
+    let (pages, langs, opts) = (
+        [page(1), page(2)],
+        LanguageChoice::Auto,
+        SetupOptions::default(),
+    );
+    assert_eq!(
+        gemini
+            .upload_batch(&key, &requests("gemini-3.8-flash", &pages, &langs, &opts))
+            .await,
+        Ok(None)
+    );
     assert_eq!(
         gemini.batch_files(&key, "batches/1").await,
         Ok(Some(Vec::new()))
+    );
+    // Not mounted: Google no longer knows the batch.
+    assert_eq!(
+        gemini.batch_files(&key, "batches/gone").await,
+        Ok(Some(Vec::new()))
+    );
+    let received = server.received_requests().await.unwrap_or_default();
+    assert!(
+        received.iter().all(|r| r.method.as_str() == "GET"),
+        "{received:?}"
+    );
+}
+
+/// A page large enough that two of them pass the 20 MB a batch may carry inline.
+fn large_page(number: u32) -> PreparedInput {
+    PreparedInput {
+        bytes: vec![b'%'; 8 * 1024 * 1024],
+        ..page(number)
+    }
+}
+
+/// A Gemini batch above the inline limit is written as JSON Lines, uploaded through the Files
+/// API's resumable upload, and made from the file; its answers are read from the file Google
+/// writes, by key, a failed line included. Once it has ended it names both files, which are
+/// deleted, one already gone counting as deleted. Shapes from Google's batch, Files and
+/// reference pages; no live run has confirmed them.
+#[tokio::test]
+async fn gemini_uploads_a_large_batch_as_a_file_and_reads_the_answers_file() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/upload/files"))
+        .and(header("x-goog-api-key", "k"))
+        .and(header("X-Goog-Upload-Protocol", "resumable"))
+        .and(header("X-Goog-Upload-Command", "start"))
+        .and(header(
+            "X-Goog-Upload-Header-Content-Type",
+            "application/jsonl",
+        ))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header(
+                    "x-goog-upload-url",
+                    format!("{}/upload-session/1?upload_id=xyz", server.uri()),
+                )
+                .set_body_json(serde_json::json!({})),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/upload-session/1"))
+        .and(header("X-Goog-Upload-Offset", "0"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "file": {
+                "name": "files/kalamu-in",
+                "displayName": "kalamu-batch",
+                "mimeType": "application/jsonl",
+                "sizeBytes": "22369700",
+                "uri": "https://generativelanguage.googleapis.com/v1beta/files/kalamu-in",
+                "state": "ACTIVE",
+                "source": "UPLOADED",
+            }
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/models/gemini-3.8-flash:batchGenerateContent"))
+        .and(body_partial_json(serde_json::json!({ "batch": {
+            "display_name": "kalamu",
+            "input_config": { "file_name": "files/kalamu-in" },
+        } })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "name": "batches/big",
+            "metadata": { "state": "BATCH_STATE_PENDING" },
+        })))
+        .mount(&server)
+        .await;
+    let ended = serde_json::json!({
+        "name": "batches/big",
+        "metadata": {
+            "name": "batches/big",
+            "model": "models/gemini-3.8-flash",
+            "state": "BATCH_STATE_SUCCEEDED",
+            "inputConfig": { "fileName": "files/kalamu-in" },
+            "output": { "responsesFile": "files/batch-out" },
+            "batchStats": { "requestCount": "2", "successfulRequestCount": "1",
+                "failedRequestCount": "1" },
+        },
+        "done": true,
+        "response": { "responsesFile": "files/batch-out" },
+    });
+    Mock::given(method("GET"))
+        .and(path("/batches/big"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(ended))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/batches/busy"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "name": "batches/busy",
+            "metadata": { "state": "BATCH_STATE_RUNNING",
+                "inputConfig": { "fileName": "files/other-in" } },
+        })))
+        .mount(&server)
+        .await;
+    let answers = jsonl(&[
+        serde_json::json!({ "key": "p1", "error": { "code": 400,
+            "message": "The document has no pages.", "status": "INVALID_ARGUMENT" } }),
+        serde_json::json!({ "key": "p0", "response": fixture("gemini_ok.json") }),
+    ]);
+    Mock::given(method("GET"))
+        .and(path("/download/files/batch-out:download"))
+        .and(header("x-goog-api-key", "k"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(answers))
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/files/kalamu-in"))
+        .and(header("x-goog-api-key", "k"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({})))
+        .mount(&server)
+        .await;
+    Mock::given(method("DELETE"))
+        .and(path("/files/batch-out"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+            "error": { "code": 404, "message": "File not found.", "status": "NOT_FOUND" } })))
+        .mount(&server)
+        .await;
+
+    let gemini = Gemini::with_base_url(client(), &server.uri());
+    let key = ApiKey::new("k");
+    let (pages, langs, opts) = (
+        [large_page(1), large_page(2)],
+        LanguageChoice::Auto,
+        SetupOptions::default(),
+    );
+    let batch = requests("gemini-3.8-flash", &pages, &langs, &opts);
+    let file = gemini.upload_batch(&key, &batch).await;
+    assert_eq!(file, Ok(Some("files/kalamu-in".to_string())));
+    let id = gemini
+        .submit_uploaded_batch(&key, "files/kalamu-in", &batch)
+        .await;
+    assert_eq!(id.as_deref(), Ok("batches/big"));
+
+    let sent = server.received_requests().await.unwrap_or_default();
+    let upload = sent
+        .iter()
+        .find(|r| r.url.path() == "/upload-session/1")
+        .map(|r| r.body.clone())
+        .unwrap_or_default();
+    let start = sent.iter().find(|r| r.url.path() == "/upload/files");
+    assert_eq!(
+        start
+            .and_then(|r| r.headers.get("X-Goog-Upload-Header-Content-Length"))
+            .and_then(|v| v.to_str().ok()),
+        Some(upload.len().to_string().as_str())
+    );
+    let lines: Vec<serde_json::Value> = String::from_utf8_lossy(&upload)
+        .lines()
+        .filter_map(|l| serde_json::from_str(l).ok())
+        .collect();
+    assert_eq!(lines.len(), 2);
+    for (i, line) in lines.iter().enumerate() {
+        assert_eq!(line["key"], format!("p{i}"));
+        assert!(line["request"]["contents"].is_array());
+        assert_eq!(
+            line["request"]["generationConfig"]["mediaResolution"],
+            "MEDIA_RESOLUTION_HIGH"
+        );
+    }
+    // The bytes are sent and the upload finished in one request (wiremock's matcher would split
+    // the value at its comma), and the key goes to the API's own address, never to the upload
+    // session's.
+    let session: Vec<_> = sent
+        .iter()
+        .filter(|r| r.url.path() == "/upload-session/1")
+        .collect();
+    assert_eq!(session.len(), 1);
+    assert_eq!(
+        session[0]
+            .headers
+            .get("X-Goog-Upload-Command")
+            .and_then(|v| v.to_str().ok()),
+        Some("upload, finalize")
+    );
+    assert!(!session[0].headers.contains_key("x-goog-api-key"));
+
+    let ids = ["p0".to_string(), "p1".to_string()];
+    let Ok(BatchProgress::Ended(mut answers)) = gemini
+        .poll_batch(&key, "batches/big", context("gemini-3.8-flash"), &ids)
+        .await
+    else {
+        panic!("the batch did not end");
+    };
+    answers.sort_by(|a, b| a.0.cmp(&b.0));
+    assert_eq!(
+        answers[0].1.as_ref().map(|o| o.text.as_str()),
+        Ok("Bamako, le 3 mai 1957\nMonsieur le Gouverneur,")
+    );
+    assert_eq!(
+        answers[1].1,
+        Err(ProviderError::InvalidRequest(
+            "The document has no pages.".into()
+        ))
+    );
+
+    assert_eq!(
+        gemini.batch_files(&key, "batches/big").await,
+        Ok(Some(vec![
+            "files/kalamu-in".into(),
+            "files/batch-out".into()
+        ]))
+    );
+    assert_eq!(gemini.batch_files(&key, "batches/busy").await, Ok(None));
+    assert_eq!(
+        gemini.delete_batch_file(&key, "files/kalamu-in").await,
+        Ok(())
+    );
+    assert_eq!(
+        gemini.delete_batch_file(&key, "files/batch-out").await,
+        Ok(()),
+        "already gone"
+    );
+    // Nothing but a file is deleted, and nothing was listed.
+    assert!(gemini.delete_batch_file(&key, "batches/big").await.is_err());
+    let received = server.received_requests().await.unwrap_or_default();
+    assert!(
+        received
+            .iter()
+            .all(|r| r.url.path() != "/files" && r.url.path() != "/batches"),
+        "{received:?}"
     );
 }

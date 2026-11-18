@@ -79,6 +79,24 @@ fn room(requests: &[(String, ProcessRequest<'_>)]) -> usize {
         .sum()
 }
 
+/// How many bytes `value` takes once written as JSON, counted without keeping them: to decide
+/// how a batch travels before writing it.
+pub(crate) fn written_len(value: &Value) -> Result<usize, ProviderError> {
+    struct Counter(usize);
+    impl std::io::Write for Counter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0 += buf.len();
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut counter = Counter(0);
+    serde_json::to_writer(&mut counter, value).map_err(unwritable)?;
+    Ok(counter.0)
+}
+
 fn unwritable(err: serde_json::Error) -> ProviderError {
     ProviderError::Other(format!("the batch could not be written: {err}"))
 }
@@ -209,6 +227,8 @@ mod tests {
         let v = json!({ "a": null, "b": { "c": 1 } });
         assert_eq!(first(&v, &["/a", "/b/c"]), Some(&json!(1)));
         assert_eq!(lines("{\"a\":1}\n\nnot json\n{\"a\":2}\n").len(), 2);
+        // `{"a":[1,"é"]}`: é is two bytes.
+        assert_eq!(written_len(&json!({ "a": [1, "é"] })).ok(), Some(14));
         assert_eq!(
             item_error(Some(&json!({ "message": "too big" }))),
             ProviderError::InvalidRequest("too big".into())

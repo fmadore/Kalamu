@@ -14,8 +14,9 @@
 //!
 //! Prompt caching is implicit: the system instruction comes first, and the response reports
 //! the part of the prompt read from Google's cache. Economy mode sends pages and documents
-//! through batch mode ([`batch`]); recordings and YouTube links, which a batch is not documented
-//! to take, always go one by one.
+//! through batch mode ([`batch`]), inline or, for a batch above Google's 20 MB, as a JSON Lines
+//! file uploaded first; recordings and YouTube links, which a batch is not documented to take,
+//! always go one by one.
 //!
 //! Google's speech-to-text models (`gemini-3.5-transcribe`, which the catalogue lists as taking
 //! no prompt) take a request of their own: the recording and `audioTranscriptionConfig` only,
@@ -58,6 +59,10 @@ const SAFETY_CATEGORIES: &[&str] = &[
 pub struct Gemini {
     client: Client,
     base_url: String,
+    /// Where files are uploaded (`…/upload/v1beta`) and Google's own files read
+    /// (`…/download/v1beta`): beside the API's address, under a service of their own.
+    upload_url: String,
+    download_url: String,
 }
 
 impl Gemini {
@@ -66,9 +71,12 @@ impl Gemini {
     }
 
     pub fn with_base_url(client: Client, base_url: &str) -> Self {
+        let base_url = base_url.trim_end_matches('/');
         Self {
             client,
-            base_url: base_url.trim_end_matches('/').to_string(),
+            base_url: base_url.to_string(),
+            upload_url: service_url(base_url, "upload"),
+            download_url: service_url(base_url, "download"),
         }
     }
 
@@ -317,12 +325,21 @@ impl Provider for Gemini {
         task != Task::AudioTranscription
     }
 
-    /// Requests sent inline must total under 20 MB, with pages as base64 (a third larger).
+    /// A batch above the 20 MB sent inline goes as a file, of up to 2 GB, with pages as base64
+    /// (a third larger); the engine holds batches far smaller.
     fn batch_limits(&self) -> BatchLimits {
         BatchLimits {
             max_items: 1_000,
-            max_bytes: 13 * 1024 * 1024,
+            max_bytes: 1024 * 1024 * 1024,
         }
+    }
+
+    async fn upload_batch(
+        &self,
+        key: &ApiKey,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<Option<String>, ProviderError> {
+        self.upload(key, requests).await
     }
 
     async fn submit_batch(
@@ -331,6 +348,15 @@ impl Provider for Gemini {
         requests: &[(String, ProcessRequest<'_>)],
     ) -> Result<String, ProviderError> {
         self.submit(key, requests).await
+    }
+
+    async fn submit_uploaded_batch(
+        &self,
+        key: &ApiKey,
+        file: &str,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<String, ProviderError> {
+        self.submit_file(key, file, requests).await
     }
 
     async fn poll_batch(
@@ -353,6 +379,18 @@ impl Provider for Gemini {
         .map(|_| ())
     }
 
+    async fn batch_files(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        self.files_of(key, batch_id).await
+    }
+
+    async fn delete_batch_file(&self, key: &ApiKey, file_id: &str) -> Result<(), ProviderError> {
+        self.delete_file(key, file_id).await
+    }
+
     async fn list_models(&self, key: &ApiKey) -> Result<Vec<String>, ProviderError> {
         let response = send_json(
             self.client
@@ -371,6 +409,15 @@ impl Provider for Gemini {
                     .collect()
             })
             .unwrap_or_default())
+    }
+}
+
+/// A service beside the API's address: `…/v1beta` becomes `…/{service}/v1beta`, as Google
+/// serves uploads and downloads; another address (a test server's) takes it as a path.
+fn service_url(base_url: &str, service: &str) -> String {
+    match base_url.strip_suffix("/v1beta") {
+        Some(root) => format!("{root}/{service}/v1beta"),
+        None => format!("{base_url}/{service}"),
     }
 }
 

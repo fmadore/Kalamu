@@ -68,6 +68,27 @@ pub(crate) async fn send_text(request: RequestBuilder) -> Result<String, Provide
     Err(status_error(status, retry_after, &body))
 }
 
+/// Sends a request and returns the header `name` of a successful response, for an upload
+/// session that answers with where to send the bytes.
+pub(crate) async fn send_for_header(
+    request: RequestBuilder,
+    name: &str,
+) -> Result<Option<String>, ProviderError> {
+    let response = request.send().await.map_err(network)?;
+    let status = response.status();
+    let retry_after = header_retry_after(&response);
+    let value = response
+        .headers()
+        .get(name)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_string);
+    let body = response.text().await.map_err(network)?;
+    if status.is_success() {
+        return Ok(value);
+    }
+    Err(status_error(status, retry_after, &body))
+}
+
 /// Sends a request and returns the JSON body of a successful response, or `None` when the
 /// provider answers that what was asked for does not exist (404): a batch it no longer knows,
 /// a file already deleted.
