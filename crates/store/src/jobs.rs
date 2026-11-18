@@ -62,7 +62,9 @@ pub(crate) const LIST_JOBS: &str = "SELECT j.data, j.status, j.updated_at,
         COALESCE(SUM(p.status = 'failed'), 0),
         COALESCE(SUM(p.status IN ('done', 'cached') AND r.truncated), 0),
         SUM(CASE WHEN p.status = 'done' THEN r.cost_usd END),
-        (SELECT SUM(c.cost_usd) FROM charges c WHERE c.job_id = j.id),
+        (SELECT SUM(x.cost_usd) FROM (
+            SELECT cost_usd FROM charges WHERE job_id = j.id
+            UNION ALL SELECT cost_usd FROM passages WHERE job_id = j.id) x),
         (SELECT json_extract(w.data, '$.workflow_name')
          FROM run_steps s JOIN runs w ON w.id = s.run_id
          WHERE s.job_id = j.id LIMIT 1)
@@ -72,12 +74,14 @@ pub(crate) const LIST_JOBS: &str = "SELECT j.data, j.status, j.updated_at,
     ORDER BY j.created_at DESC";
 
 /// What a job's own calls cost: a piece done by this job paid for its result; a cached one
-/// reused another's. Answers refused after being billed were paid for too. Costs are read from
+/// reused another's. Answers refused after being billed were paid for too, and so were the
+/// passages corrected from its review (none when their answer came from the cache). Costs are read from
 /// `results_costs`, as in [`LIST_JOBS`].
 pub(crate) const SPENT: &str = "SELECT (SELECT COALESCE(SUM(r.cost_usd), 0) FROM pieces p
              JOIN results r INDEXED BY results_costs ON r.cache_key = p.cache_key
              WHERE p.job_id = ?1 AND p.status = 'done')
-          + (SELECT COALESCE(SUM(cost_usd), 0) FROM charges WHERE job_id = ?1)";
+          + (SELECT COALESCE(SUM(cost_usd), 0) FROM charges WHERE job_id = ?1)
+          + (SELECT COALESCE(SUM(cost_usd), 0) FROM passages WHERE job_id = ?1)";
 
 pub(crate) fn list_jobs(store: &SqliteStore) -> Result<Vec<JobSummary>, StoreError> {
     let conn = store.conn();
@@ -237,6 +241,12 @@ pub(crate) fn mark_running_as_interrupted(store: &SqliteStore) -> Result<Vec<Job
     // A piece caught mid-call was never finished: it goes back to the queue.
     conn.execute(
         "UPDATE pieces SET status = 'pending' WHERE status = 'running'",
+        [],
+    )
+    .map_err(db)?;
+    // A passage asked about from the review was waiting for its model: no longer.
+    conn.execute(
+        "UPDATE passages SET status = 'cancelled' WHERE status = 'asked'",
         [],
     )
     .map_err(db)?;
@@ -403,13 +413,14 @@ pub(crate) fn prune_results(store: &SqliteStore) -> Result<PrunedResults, StoreE
     };
     let before = size(&conn)?;
     // One statement, so no piece takes up a key between the keys being read and the results
-    // being deleted. `pieces.cache_key` is the only column that names a result; a piece
+    // being deleted. `pieces.cache_key` and `passages.cache_key` name results; a piece
     // without a key yet keeps nothing, and its NULL must not empty the list (`NOT IN` a list
     // holding NULL matches nothing).
     let results = conn
         .execute(
             "DELETE FROM results WHERE cache_key NOT IN
-                (SELECT cache_key FROM pieces WHERE cache_key IS NOT NULL)",
+                (SELECT cache_key FROM pieces WHERE cache_key IS NOT NULL)
+                AND cache_key NOT IN (SELECT cache_key FROM passages)",
             [],
         )
         .map_err(db)?;

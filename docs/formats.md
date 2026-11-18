@@ -259,6 +259,14 @@ Modelled on zmo-ai-pipelines' provenance record:
 | `refused` | Answers the provider billed but nothing was kept from: analysis answers that broke the fields and were asked for again, or several pages read together whose page marks could not be used (each page then read again alone). `answers`, their `usage` and `cost_usd`, not included above. Absent when none was |
 | `workflow` | For a result read by a workflow step: the run (`run_id`), the workflow (`workflow_id`, `name`) and its `version` when the run started, this `step` of `steps` and its `step_name`, the step it `reads` (numbered from 1; absent when it read the files, and `source.derived_from` names the snapshot), and the researcher's `approval` of that step (`at`, and `partial` when they went on although some pieces were not read). Absent for a job run on its own |
 
+Added on 18 November 2026 without a new version, both absent when empty: `listed_by_hand`,
+the items of an analysis's list answers that the researcher wrote (added, or renamed from
+the model's form) and the model's own answer did not hold, each with its `part`, `field` and
+`items`; and `passages`, the passages a model corrected at the researcher's request from the
+review and that they accepted, each with its piece, provider, model, prompt, request
+settings, character counts, whether the proposal was edited, its cost and when it was asked
+and accepted. Their cost is not in `usage` or `cost_usd`, which count the job's own pieces.
+
 ## The search index (`search.sqlite`)
 
 Not an output: a file in the app's data folder that project search reads, made only from the
@@ -268,6 +276,17 @@ parts, kept as JSON beside the folded text in an FTS5 table (trigram tokenizer, 
 A stamp records what the passage was made from, and `PRAGMA user_version` the layout; a file of
 another version, or one that cannot be read, is emptied and made again. Nothing outside Kalamu
 should rely on its layout.
+
+## The search by meaning's numbers (`vectors.sqlite`)
+
+Not an output either: a file in the app's data folder, made only from the results
+([decision](decisions/2026-11-18-search-by-meaning-map-passage-correction-added-items.md)).
+One row for each stretch of text: the model (provider, id and length), the piece it is of,
+its number in that piece, the piece's stamp and a hash of its text, where the stretch stands
+in the text, and its numbers as little-endian 32-bit floats of length 1. Losing the file
+loses only what preparing again costs. The job database keeps, for each project, the model
+chosen and the consent given (`meaning_spaces`) and each preparation with its cost
+(`meaning_runs`). Nothing outside Kalamu should rely on its layout.
 
 ## The review manifest (`kalamu-review-manifest`, version 1)
 

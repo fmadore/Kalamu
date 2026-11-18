@@ -252,7 +252,8 @@ export function dictionaryCommand(cmd: string, a: Record<string, unknown>): unkn
 				source_id: '00000000-0000-0000-0000-0000000000s1',
 				setup_label: i === 0 ? 'gemini-3.8-flash' : 'claude-sonnet-5-5',
 				created_at: Date.now(),
-				forms: [form]
+				forms: [form],
+				by_hand: []
 			}));
 		case 'dictionary_merge': {
 			const chosen = (a.items as Item[]).map((item) => materialise(namespace, item));

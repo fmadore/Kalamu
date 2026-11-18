@@ -3,12 +3,12 @@
 
 use std::collections::BTreeMap;
 
-use kalamu_core::list_items::{holds_item, rename_item};
+use kalamu_core::list_items::{add_items, holds_item, rename_item, split_items};
 use kalamu_core::speakers::{labels, rename_segments, rename_text};
 use kalamu_core::timed::timed_lines;
 use kalamu_core::{
-    Correction, CutReason, FieldAnswer, JobId, PieceRef, PieceStatus, RowEdit, SetupId, SourceId,
-    Task, Timestamp,
+    Correction, CutReason, FieldAnswer, FieldKind, JobId, PieceRef, PieceStatus, RowEdit, SetupId,
+    SourceId, Task, Timestamp,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -55,6 +55,20 @@ pub struct PieceView {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub original_file: Option<String>,
+}
+
+/// What adding items to a list answer did: the set-ups' corrections as they stood, to put back
+/// with [`Engine::save_corrections`], and what became of each item asked for.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ListedAdded {
+    pub before: Vec<Correction>,
+    /// Items added to at least one set-up's answer, as written.
+    pub added: Vec<String>,
+    /// Items every set-up's answer already held: nothing to add.
+    pub already: Vec<String>,
+    /// Items a field of choices does not offer: not added.
+    pub refused: Vec<String>,
 }
 
 impl Engine {
@@ -208,6 +222,119 @@ impl Engine {
             self.write_later(job_id);
         }
         Ok(before)
+    }
+
+    /// Adds the items the researcher typed (one per line or between semicolons) to list field
+    /// `key` in one piece, in the corrected answers of every set-up that read it and asks for
+    /// that field, each kept reviewed or not as it was: the document names them, whichever model
+    /// missed them. An item a set-up's answer already holds is not added to it twice; a field of
+    /// choices takes only the choices it offers, as the schema spells them. All the set-ups
+    /// change or none does. Text, single-choice and entries fields take no items.
+    pub fn add_listed(
+        &self,
+        job_id: JobId,
+        source_id: SourceId,
+        index: u32,
+        key: &str,
+        items: &[String],
+    ) -> Result<ListedAdded, EngineError> {
+        let wanted: Vec<String> = split_items(&items.join(
+            "
+",
+        ));
+        let job = self.store.job(job_id)?;
+        let corrections = self.store.corrections(job_id)?;
+        let now = Timestamp::now();
+        let (mut before, mut after) = (Vec::new(), Vec::new());
+        let (mut added, mut offered, mut refused) = (
+            Vec::<String>::new(),
+            Vec::<String>::new(),
+            Vec::<String>::new(),
+        );
+        let note = |list: &mut Vec<String>, item: &str| {
+            if !list.iter().any(|i| i.to_lowercase() == item.to_lowercase()) {
+                list.push(item.to_string());
+            }
+        };
+        for setup in &job.setups {
+            let Some(field) = setup
+                .prompt
+                .schema
+                .as_ref()
+                .and_then(|s| s.fields.iter().find(|f| f.key == key))
+            else {
+                continue;
+            };
+            // A field of choices takes the choices it offers, spelled as offered.
+            let accepted: Vec<String> = match &field.kind {
+                FieldKind::List { .. } => wanted.clone(),
+                FieldKind::Choices { values } => wanted
+                    .iter()
+                    .filter_map(|item| {
+                        let choice = values
+                            .iter()
+                            .find(|v| v.trim().to_lowercase() == item.to_lowercase());
+                        if choice.is_none() {
+                            note(&mut refused, item);
+                        }
+                        choice.cloned()
+                    })
+                    .collect(),
+                _ => continue,
+            };
+            let pieces = self.store.source_pieces(job_id, setup.id, source_id)?;
+            let Some(piece) = pieces.iter().find(|p| p.index == index) else {
+                continue;
+            };
+            if piece.status == PieceStatus::Failed {
+                continue;
+            }
+            let Some(answers) = self.store.answers(piece, &corrections)? else {
+                continue;
+            };
+            for item in &accepted {
+                note(&mut offered, item);
+            }
+            let (next, here) = add_items(&answers, key, &accepted);
+            if here.is_empty() {
+                continue;
+            }
+            for item in &here {
+                note(&mut added, item);
+            }
+            let was = Correction::of(&corrections, piece)
+                .cloned()
+                .unwrap_or(Correction {
+                    job_id,
+                    setup_id: setup.id,
+                    source_id,
+                    index,
+                    text: None,
+                    fields: None,
+                    reviewed: false,
+                    updated_at: now,
+                });
+            after.push(Correction {
+                fields: Some(next),
+                updated_at: now,
+                ..was.clone()
+            });
+            before.push(was);
+        }
+        if !after.is_empty() {
+            self.store.put_corrections(&after)?;
+            self.write_later(job_id);
+        }
+        // Each said in the order asked for, whichever set-up took it first.
+        let (added, already) = offered
+            .into_iter()
+            .partition(|o| added.iter().any(|a| a.to_lowercase() == o.to_lowercase()));
+        Ok(ListedAdded {
+            before,
+            added,
+            already,
+            refused,
+        })
     }
 
     /// Makes one change to a page's rows in a records analysis (a cell typed, a row added or

@@ -3,7 +3,9 @@ import type { GeneratorInfo } from "./GeneratorInfo";
 import type { LanguageChoice } from "./LanguageChoice";
 import type { LanguageCode } from "./LanguageCode";
 import type { ProvenanceDocument } from "./ProvenanceDocument";
+import type { ProvenanceListed } from "./ProvenanceListed";
 import type { ProvenanceMerge } from "./ProvenanceMerge";
+import type { ProvenancePassage } from "./ProvenancePassage";
 import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProvenanceRefused } from "./ProvenanceRefused";
 import type { ProvenanceSource } from "./ProvenanceSource";
@@ -88,6 +90,17 @@ preprocessing?: Array<string>,
  * be shared as a methods note without the names of the people recorded.
  */
 renamed_speakers?: Array<string>, 
+/**
+ * The items of an analysis's list answers that the researcher wrote by hand, added or
+ * renamed, which the model's own answer did not hold: part by part and field by field.
+ */
+listed_by_hand?: Array<ProvenanceListed>, 
+/**
+ * Passages the researcher asked a model to correct from the review and accepted: each
+ * written into their corrections, the model's output left as it was. Not in `usage` or
+ * `cost_usd`, which count the results of the job's own pieces.
+ */
+passages?: Array<ProvenancePassage>, 
 /**
  * What the results kept cost; for a table of contents, both steps (`merge` gives the
  * second's share).

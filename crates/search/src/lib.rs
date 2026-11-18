@@ -11,19 +11,24 @@
 use std::sync::Arc;
 
 use kalamu_core::{
-    CollectionId, DocumentId, JobId, JobStore, PieceRef, ProjectId, ProjectStore, SearchIndex,
-    SetupId, SourceId, StoreError, Task,
+    CollectionId, DocumentId, EmbeddingSpace, JobId, JobStore, PieceRef, ProjectId, ProjectStore,
+    SearchIndex, SetupId, SourceId, SpaceSize, StoreError, Task, VectorIndex,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
 mod fold;
+pub mod meaning;
 mod passages;
 mod query;
 mod terms;
 
 pub use fold::{MIN_QUERY, folded, searchable};
+pub use meaning::{
+    MapPoint, MapView, MeaningCoverage, MeaningDocument, MeaningPassage, MeaningRequest,
+    MeaningView, Neighbour, PendingChunk, Preparation, PreparationCounts,
+};
 
 /// The most matches listed; all are counted.
 pub const MAX_LISTED: usize = 1000;
@@ -220,6 +225,12 @@ pub enum SearchError {
     /// A newer search began before this one ended.
     #[error("Search stopped")]
     Stopped,
+    /// The app was started without a vector index: never in the app itself.
+    #[error("The search by meaning is not available")]
+    NoVectors,
+    /// A question's vector of another length than the model's.
+    #[error("The question was embedded by another model")]
+    WrongLength,
     #[error(transparent)]
     Store(#[from] StoreError),
     /// The job database, as opposed to the search's own index, could not be read.
@@ -234,6 +245,7 @@ impl SearchError {
             Self::NotFound => "project.not_found",
             Self::TooShort => "search.too_short",
             Self::Stopped => "search.stopped",
+            Self::NoVectors | Self::WrongLength => "meaning.unavailable",
             Self::Store(_) => "search.index",
             Self::Jobs(_) => "job.database",
         }
@@ -244,6 +256,9 @@ pub struct Search {
     pub(crate) projects: Arc<dyn ProjectStore>,
     pub(crate) jobs: Arc<dyn JobStore>,
     pub(crate) index: Arc<dyn SearchIndex>,
+    /// The search by meaning's vectors, a file of their own; none where it is not offered.
+    pub(crate) vectors: Option<Arc<dyn VectorIndex>>,
+    pub(crate) memory: meaning::Memory,
 }
 
 impl Search {
@@ -257,12 +272,39 @@ impl Search {
             projects,
             jobs,
             index,
+            vectors: None,
+            memory: meaning::Memory::default(),
         }
     }
 
-    /// Forgets the passages of a deleted job.
+    /// With the search by meaning, its vectors kept in `vectors`.
+    pub fn with_vectors(mut self, vectors: Arc<dyn VectorIndex>) -> Self {
+        self.vectors = Some(vectors);
+        self
+    }
+
+    /// Forgets the passages and chunks of a deleted job.
     pub fn forget_job(&self, job: JobId) -> Result<(), SearchError> {
+        if let Some(vectors) = &self.vectors {
+            vectors.forget_job(job)?;
+        }
         Ok(self.index.forget_job(job)?)
+    }
+
+    /// The models whose vectors the index holds for the project's documents, with their size.
+    pub fn meaning_spaces(&self, project: ProjectId) -> Result<Vec<SpaceSize>, SearchError> {
+        let jobs = self.project_jobs(project)?;
+        Ok(self.vector_index()?.spaces(&jobs)?)
+    }
+
+    /// Removes the vectors `space`'s model made of the project's documents.
+    pub fn remove_meaning_space(
+        &self,
+        project: ProjectId,
+        space: &EmbeddingSpace,
+    ) -> Result<(), SearchError> {
+        let jobs = self.project_jobs(project)?;
+        Ok(self.vector_index()?.remove_space(space, &jobs)?)
     }
 
     /// Forgets the passages of every job no longer in the store: those deleted while the index
@@ -273,6 +315,13 @@ impl Search {
             if matches!(self.jobs.job(job), Err(StoreError::NotFound)) {
                 self.index.forget_job(job)?;
                 forgotten += 1;
+            }
+        }
+        if let Some(vectors) = &self.vectors {
+            for job in vectors.indexed_jobs()? {
+                if matches!(self.jobs.job(job), Err(StoreError::NotFound)) {
+                    vectors.forget_job(job)?;
+                }
             }
         }
         Ok(forgotten)

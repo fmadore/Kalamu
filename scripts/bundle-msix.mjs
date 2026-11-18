@@ -41,6 +41,7 @@ for (const [tool, fetch] of [
 	['llama-mtmd-cli-vulkan', 'fetch:llama'],
 	['llama-completion', 'fetch:llama'],
 	['llama-completion-vulkan', 'fetch:llama'],
+	['llama-embedding', 'fetch:llama'],
 	...(arch === 'arm64' ? [['llama-mtmd-cli-opencl', 'fetch:llama']] : []),
 	['whisper-vulkan', 'build:whisper-vulkan']
 ]) {

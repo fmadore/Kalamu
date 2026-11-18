@@ -75,6 +75,71 @@ fn analyses_are_searched_only_on_request_with_their_field() {
 }
 
 #[test]
+fn a_name_added_by_hand_is_found_once_its_passage_is_made_again() {
+    let f = Fixture::new();
+    let doc = f.document("Lettre", InputKind::Pdf);
+    let schema = AnalysisSchema {
+        fields: vec![Field {
+            key: "places".into(),
+            label: "Places".into(),
+            instructions: String::new(),
+            kind: FieldKind::List { max: None },
+            reason: false,
+        }],
+    };
+    let model = vec![FieldAnswer {
+        key: "places".into(),
+        value: FieldValue::List(vec!["Kankan".into()]),
+        reason: None,
+    }];
+    let analysis = f.job(
+        Task::Analysis,
+        &doc,
+        &[(
+            "Claude",
+            vec![Read {
+                piece: Some(PieceRef::Whole),
+                fields: model.clone(),
+                ..Read::default()
+            }],
+        )],
+        Some(schema),
+    );
+    let mut generated = request("siguiri");
+    generated.generated = true;
+    assert_eq!(f.find(&generated).matches, 0);
+    let mut kankan = request("kankan");
+    kankan.generated = true;
+    assert_eq!(f.find(&kankan).matches, 1);
+
+    // The researcher adds the town the model missed: the passage's stamp changes with the
+    // correction, so the index reads the answer again.
+    let (corrected, added) =
+        kalamu_core::list_items::add_items(&model, "places", &["Siguiri".into()]);
+    assert_eq!(added, vec!["Siguiri"]);
+    f.store
+        .put_correction(&Correction {
+            job_id: analysis.id,
+            setup_id: analysis.setups[0].id,
+            source_id: doc.1.id,
+            index: 0,
+            text: None,
+            fields: Some(corrected),
+            reviewed: false,
+            updated_at: Timestamp(Timestamp::now().0 + 1_000),
+        })
+        .unwrap();
+    let view = f.find(&generated);
+    assert_eq!(view.matches, 1);
+    assert!(view.documents[0].results[0].hits[0].corrected);
+    assert_eq!(
+        f.find(&kankan).matches,
+        1,
+        "the model's name is still listed"
+    );
+}
+
+#[test]
 fn failed_pieces_count_as_unread_and_tables_of_contents_search_their_entries() {
     let f = Fixture::new();
     let doc = f.document("Issue", InputKind::Pdf);

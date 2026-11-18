@@ -15,6 +15,7 @@
 	import CircleQuestionMark from '@lucide/svelte/icons/circle-question-mark';
 	import Cloud from '@lucide/svelte/icons/cloud';
 	import Columns2 from '@lucide/svelte/icons/columns-2';
+	import Copy from '@lucide/svelte/icons/copy';
 	import Download from '@lucide/svelte/icons/download';
 	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import FilePlus from '@lucide/svelte/icons/file-plus';
@@ -28,6 +29,7 @@
 	import Library from '@lucide/svelte/icons/library';
 	import List from '@lucide/svelte/icons/list';
 	import ListTree from '@lucide/svelte/icons/list-tree';
+	import ChartScatter from '@lucide/svelte/icons/chart-scatter';
 	import Link from '@lucide/svelte/icons/link';
 	import Merge from '@lucide/svelte/icons/merge';
 	import Mic from '@lucide/svelte/icons/mic';
@@ -79,11 +81,13 @@
 		laptop: Laptop,
 		link: Link,
 		list: List,
+		map: ChartScatter,
 		more: Ellipsis,
 		prompts: ScrollText,
 		settings: Settings,
 		close: X,
 		compare: Columns2,
+		copy: Copy,
 		download: Download,
 		'sidebar-close': PanelLeftClose,
 		'sidebar-open': PanelLeftOpen,

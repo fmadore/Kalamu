@@ -7,6 +7,8 @@ use kalamu_core::{
 use super::*;
 use kalamu_core::{PieceRef, PieceStatus, ProviderId, SetupId, SourceId, Timestamp};
 
+mod meaning;
+mod passages;
 mod progress;
 mod projects;
 mod runs;
@@ -705,7 +707,8 @@ fn a_database_from_before_batch_cleanup_opens_with_its_batches() -> Result<(), S
         let conn = store.conn();
         conn.execute_batch(
             "DROP TABLE batch_leftovers; DROP TABLE review_kept; DROP TABLE review_samples;
-             DROP TABLE review_set_aside;",
+             DROP TABLE review_set_aside; DROP TABLE passages; DROP TABLE meaning_runs;
+             DROP TABLE meaning_spaces;",
         )
         .map_err(db)?;
         conn.pragma_update(None, "user_version", previous)

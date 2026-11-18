@@ -4,6 +4,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use kalamu_core::analysis::latest_labels;
+use kalamu_core::list_items::by_hand as by_hand_items;
 use kalamu_core::{
     CollectionId, Correction, DictionaryError, DocumentId, Entry, EntryId, Field, FieldKind,
     FieldValue, JobId, KeptApart, PieceState, ProjectId, SetupId, SourceId, Task, TiedResults,
@@ -84,6 +85,9 @@ pub struct Evidence {
     pub created_at: Timestamp,
     /// The forms it listed, as written.
     pub forms: Vec<String>,
+    /// Those of `forms` the researcher wrote in its corrected answers, added or renamed, which
+    /// the model's own answer did not list.
+    pub by_hand: Vec<String>,
 }
 
 /// Results, each a set-up of a job.
@@ -100,6 +104,8 @@ pub(crate) struct Reading {
     pub created_at: Timestamp,
     /// The list fields it answered, each with its forms (possibly none).
     pub fields: BTreeMap<String, BTreeSet<String>>,
+    /// Of those forms, the ones the researcher wrote and the model did not list, by field.
+    pub by_hand: BTreeMap<String, BTreeSet<String>>,
 }
 
 pub(crate) struct Gathered {
@@ -169,6 +175,7 @@ impl Dictionary {
                 }
             };
             let mut fields: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+            let mut by_hand: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
             for piece in pieces.iter().filter(|p| {
                 p.setup_id == setup.id && p.source_id == result.source_id && p.status.is_finished()
             }) {
@@ -179,6 +186,19 @@ impl Dictionary {
                     let forms = fields.entry(answer.key.clone()).or_default();
                     if let FieldValue::List(items) = &answer.value {
                         forms.extend(items.iter().filter_map(|i| form_of(i)));
+                    }
+                }
+                // A corrected answer: the forms the researcher wrote, against the model's own.
+                let corrected =
+                    Correction::of(corrections, piece).is_some_and(|c| c.fields.is_some());
+                if corrected && let Some(own) = self.jobs.answers(piece, &[])? {
+                    for (key, items) in by_hand_items(&own, &answers) {
+                        if lists.contains(&key.as_str()) {
+                            by_hand
+                                .entry(key)
+                                .or_default()
+                                .extend(items.iter().filter_map(|i| form_of(i)));
+                        }
                     }
                 }
             }
@@ -192,6 +212,7 @@ impl Dictionary {
                     setup_label: setup.label.clone(),
                     created_at: job.created_at,
                     fields,
+                    by_hand,
                 });
             }
         }
@@ -364,6 +385,17 @@ impl Dictionary {
                     .filter(|f| forms.contains(f))
                     .cloned()
                     .collect();
+                let by_hand = r
+                    .by_hand
+                    .get(namespace)
+                    .map(|hand| {
+                        listed
+                            .iter()
+                            .filter(|f| hand.contains(*f))
+                            .cloned()
+                            .collect()
+                    })
+                    .unwrap_or_default();
                 (!listed.is_empty()).then(|| Evidence {
                     document_id: r.document,
                     document: gathered
@@ -377,6 +409,7 @@ impl Dictionary {
                     setup_label: r.setup_label.clone(),
                     created_at: r.created_at,
                     forms: listed,
+                    by_hand,
                 })
             })
             .collect();

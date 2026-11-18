@@ -186,6 +186,95 @@ fn a_job_with_one_set_up_or_another_task_has_no_agreement() {
     }
 }
 
+#[test]
+fn an_item_added_by_hand_leaves_the_agreement_as_it_was() {
+    let f = fixture();
+    let job = analysis(&f, 1);
+    answer(
+        &f,
+        &job,
+        0,
+        0,
+        Some(answers("Positive", &["Dakar", "Bamako"])),
+    );
+    answer(&f, &job, 1, 0, Some(answers("Positive", &["Dakar"])));
+    let before = f
+        .engine
+        .job_agreement(job.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let added = f
+        .engine
+        .add_listed(
+            job.id,
+            job.sources[0].id,
+            0,
+            "places",
+            &["Bamako; Mopti".into()],
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(added.added, vec!["Bamako", "Mopti"]);
+    assert_eq!(added.before.len(), 2);
+    // Both corrected answers now list the same places; the models' own answers still differ.
+    assert_eq!(
+        f.engine
+            .job_agreement(job.id)
+            .unwrap_or_else(|e| panic!("{e}")),
+        before
+    );
+}
+
+#[test]
+fn a_field_of_choices_takes_only_its_choices_as_the_schema_spells_them() {
+    let f = fixture();
+    let job = analysis(&f, 1);
+    let mut job = job;
+    for setup in &mut job.setups {
+        if let Some(schema) = &mut setup.prompt.schema {
+            schema.fields.push(Field {
+                key: "themes".into(),
+                label: "Themes".into(),
+                instructions: String::new(),
+                kind: FieldKind::Choices {
+                    values: vec!["Education".into(), "Pilgrimage".into()],
+                },
+                reason: false,
+            });
+        }
+    }
+    f.store.delete_job(job.id).unwrap_or_else(|e| panic!("{e}"));
+    f.store.create_job(&job).unwrap_or_else(|e| panic!("{e}"));
+    answer(&f, &job, 0, 0, Some(answers("Positive", &["Dakar"])));
+    answer(&f, &job, 1, 0, None);
+    let added = f
+        .engine
+        .add_listed(
+            job.id,
+            job.sources[0].id,
+            0,
+            "themes",
+            &["pilgrimage".into(), "Trade".into()],
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(added.added, vec!["Pilgrimage"]);
+    assert_eq!(added.refused, vec!["Trade"]);
+    assert_eq!(
+        added.before.len(),
+        1,
+        "the set-up that failed has nothing to add to"
+    );
+    let view = f
+        .engine
+        .source_pieces(job.id, job.sources[0].id)
+        .unwrap_or_else(|e| panic!("{e}"))
+        .into_iter()
+        .find(|v| v.setup_id == job.setups[0].id);
+    let themes = view
+        .and_then(|v| v.corrected_fields)
+        .and_then(|fields| fields.into_iter().find(|a| a.key == "themes"))
+        .map(|a| a.value);
+    assert_eq!(themes, Some(FieldValue::List(vec!["Pilgrimage".into()])));
+}
+
 /// 5,000 documents read by two set-ups. Ignored by default; run it with
 /// `cargo test -p kalamu-engine --release agreement_of_a_large_job -- --ignored --nocapture`.
 #[test]

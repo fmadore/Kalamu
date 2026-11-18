@@ -5,6 +5,7 @@ import type { ComparisonReport } from './bindings/ComparisonReport.js';
 import type { Correction } from './bindings/Correction.js';
 import type { FieldAnswer } from './bindings/FieldAnswer.js';
 import type { Job } from './bindings/Job.js';
+import type { ListedAdded } from './bindings/ListedAdded.js';
 import type { PagePreview } from './bindings/PagePreview.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { RowEdit } from './bindings/RowEdit.js';
@@ -136,6 +137,22 @@ export class Review {
 			const before = await api.renameListed(this.jobId, this.sourceId, index, key, from, to);
 			await this.refresh();
 			return before;
+		} catch (e) {
+			this.error = describeError(e, messages());
+			return null;
+		}
+	}
+
+	/** Adds names or choices a model missed to a list answer in every set-up that read the
+	 * piece, and reads the pieces again when any was added. What became of each item, with the
+	 * set-ups' corrections as they stood to put back with `putBack`; null when it failed, the
+	 * error shown. */
+	async addListed(index: number, key: string, text: string): Promise<ListedAdded | null> {
+		this.error = null;
+		try {
+			const result = await api.addListed(this.jobId, this.sourceId, index, key, [text]);
+			if (result.before.length > 0) await this.refresh();
+			return result;
 		} catch (e) {
 			this.error = describeError(e, messages());
 			return null;

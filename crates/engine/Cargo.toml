@@ -13,6 +13,7 @@ kalamu-core.workspace = true
 kalamu-export.workspace = true
 kalamu-media.workspace = true
 kalamu-prompts.workspace = true
+kalamu-search.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 similar.workspace = true

@@ -6,6 +6,7 @@ import type { FieldAnswer } from '../bindings/FieldAnswer.js';
 import type { Job } from '../bindings/Job.js';
 import type { JobAgreement } from '../bindings/JobAgreement.js';
 import type { JobSummary } from '../bindings/JobSummary.js';
+import type { ListedAdded } from '../bindings/ListedAdded.js';
 import type { PieceView } from '../bindings/PieceView.js';
 
 /** What the sample settings export with, which the sample jobs carry. */
@@ -381,6 +382,16 @@ const analysisSchema = {
 			reason: false
 		},
 		{
+			key: 'themes',
+			label: 'Themes',
+			instructions: 'The themes of the list the document deals with.',
+			kind: {
+				type: 'choices' as const,
+				values: ['Education', 'Pilgrimage', 'Mosques', 'Trade']
+			},
+			reason: false
+		},
+		{
 			key: 'tone',
 			label: 'Tone',
 			instructions: 'How the document presents its main subject.',
@@ -417,6 +428,7 @@ const analysisAnswers = [
 			key: 'places',
 			value: ['Dakar', 'Bamako']
 		},
+		{ key: 'themes', value: ['Education', 'Pilgrimage'] },
 		{
 			key: 'tone',
 			value: 'Neutral',
@@ -434,6 +446,7 @@ const analysisAnswers = [
 			key: 'places',
 			value: ['Dakar', 'Bamako', 'mosquée de Bamako']
 		},
+		{ key: 'themes', value: ['Pilgrimage', 'Mosques'] },
 		{
 			key: 'tone',
 			value: 'Positive',
@@ -520,4 +533,61 @@ export function renameListed(a: Record<string, unknown>): Correction[] {
 		});
 	}
 	return before;
+}
+
+/** The items in what was typed to add to a list, as `core::list_items::split_items` reads it:
+ * one per line or between semicolons, tidied, blank ones and repeats left out. */
+function splitItems(text: string): string[] {
+	const out: string[] = [];
+	for (const raw of text.split(/[;\n\r]/)) {
+		const item = raw.split(/\s+/).filter(Boolean).join(' ');
+		if (item && !out.some((o) => o.toLowerCase() === item.toLowerCase())) out.push(item);
+	}
+	return out;
+}
+
+/** What `add_listed` does to the sample: the items added at the end of the field's corrected
+ * answer of each analysis set-up that read the piece, one already listed not added twice, a
+ * field of choices taking only its choices as spelled there, as `Engine::add_listed` does. */
+export function addListed(a: Record<string, unknown>): ListedAdded {
+	const wanted = splitItems((Array.isArray(a.items) ? a.items : []).map(String).join('\n'));
+	const field = analysisSchema.fields.find((f) => f.key === a.key);
+	const same = (x: string, y: string) => x.trim().toLowerCase() === y.trim().toLowerCase();
+	const result: ListedAdded = { before: [], added: [], already: [], refused: [] };
+	if (!field || (field.kind.type !== 'list' && field.kind.type !== 'choices')) return result;
+	const choices = 'values' in field.kind ? field.kind.values : null;
+	const accepted = wanted.flatMap((item) => {
+		if (!choices) return [item];
+		const choice = choices.find((c) => same(c, item));
+		if (!choice) result.refused.push(item);
+		return choice ? [choice] : [];
+	});
+	for (const v of analysisPieces.filter(
+		(v) => v.source_id === a.sourceId && v.index === a.index && v.status !== 'failed'
+	)) {
+		const answers = v.corrected_fields ?? v.ai_fields;
+		const at = answers.find((f) => f.key === a.key)?.value;
+		const listed = Array.isArray(at) ? at.filter((n): n is string => typeof n === 'string') : [];
+		const fresh = accepted.filter((item) => !listed.some((n) => same(n, item)));
+		if (fresh.length === 0) continue;
+		result.before.push({
+			job_id: analysisJob.id,
+			setup_id: v.setup_id,
+			source_id: v.source_id,
+			index: v.index,
+			text: v.corrected_text,
+			fields: v.corrected_fields ?? undefined,
+			reviewed: v.reviewed,
+			updated_at: 0
+		});
+		const value = [...listed, ...fresh];
+		v.corrected_fields = answers.some((f) => f.key === a.key)
+			? answers.map((f): FieldAnswer => (f.key === a.key ? { ...f, value } : f))
+			: [...answers, { key: String(a.key), value }];
+		for (const item of fresh) {
+			if (!result.added.some((n) => same(n, item))) result.added.push(item);
+		}
+	}
+	result.already = accepted.filter((item) => !result.added.some((n) => same(n, item)));
+	return result;
 }

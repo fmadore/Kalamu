@@ -12,8 +12,11 @@
 //! tokens read from or written to the cache. Economy
 //! mode sends Responses requests through the Batch API ([`batch`]); the transcriptions endpoint
 //! has no batch service, so recordings always go one by one.
+//!
+//! Texts are embedded for the search by meaning through the embeddings endpoint ([`embed`]).
 
 mod batch;
+mod embed;
 
 use async_trait::async_trait;
 use kalamu_core::{

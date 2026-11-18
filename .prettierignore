@@ -15,3 +15,5 @@ src/lib/dev/taskRules.json
 src/lib/searchRules.json
 src/lib/coreLists.json
 src/lib/matchCases.json
+# A Jekyll layout: Liquid tags Prettier would rewrite
+docs/_layouts/

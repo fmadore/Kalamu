@@ -522,6 +522,29 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   reviewed pages"). They are said to count only the errors the researcher caught: the
   reference is a correction of the model's own text.
 
+- **Correct a passage with a model.** Text selected in a text review (a right click, the menu
+  key or Shift+F10, or the button that appears with a selection) can be sent to a model with
+  a correction prompt. The request carries the passage and up to 300 characters before and
+  after it from the same page or part, marked as context not to change. A passage needs at
+  least 3 letters or figures and at most 4,000 characters; longer text is corrected by a
+  job. The dialog says who receives it and what it should cost, or that it is read on this
+  computer. The answer is a proposal shown against the selection, never applied by itself:
+  accepted, as it is or edited first, it becomes the researcher's correction of that piece
+  exactly as if typed, and can be undone; discarded, nothing changes; and it is not applied
+  if the text changed meanwhile. An answer that gives back the context, adds a comment or is
+  far longer or shorter than the passage is cleaned or refused. The request goes through the
+  engine with no job of its own: recorded before and after, cached so that asking again
+  costs nothing, its cost counted with the job's, and named in `provenance.json` once
+  accepted ([decision](decisions/2026-11-18-search-by-meaning-map-passage-correction-added-items.md)).
+- **Add to a list answer.** In an analysis's review each list answer (names, keywords, or
+  choices from the researcher's list) has **Add**: one item or several, separated by
+  semicolons or lines, go into the corrected answers of every set-up that read the document,
+  all or none. An item already listed is not added twice; a field of choices offers only the
+  choices left. A name no model listed, added or renamed, is underlined in the researcher's
+  blue and read out as their correction; it can be removed again and undone. It reaches
+  exports, the dictionary and the search, and `provenance.json` lists it. Agreement between
+  models still compares the models' own answers.
+
 The review opens while a job is still running, so the first pages can be checked before the
 rest of the folder is processed.
 
@@ -796,6 +819,55 @@ document and opened where it stands
   the background, its progress shown, so that the first search need not wait; a search begun
   meanwhile takes over from where it got to.
 
+### Search by meaning and the map
+
+Beside the search by words, which stays the default, a project can be searched by what a
+passage means and its documents laid out on a map, from numbers a model works out from the
+text ([decision](decisions/2026-11-18-search-by-meaning-map-passage-correction-added-items.md),
+[#86](https://github.com/fmadore/Kalamu/issues/86)). No answer, summary or chat.
+
+- **A model the researcher chooses**, from the catalogue's embedding models: Gemini
+  Embedding 2, OpenAI's two, Mistral Embed, or EmbeddingGemma 2 run on this computer after a
+  download in Settings. They are a list of their own, never offered by New job. Numbers from
+  two models, or of two lengths, are never compared: a project has one current model, and
+  another's numbers are kept until removed, their size shown.
+- **Nothing without the researcher starting it.** Before a preparation the screen gives an
+  estimate (pieces, stretches of text, characters, tokens and cost, said to be an estimate)
+  or says that nothing is sent. A cloud model needs consent for that project and model,
+  naming the provider and what is sent: the corrected text now, each question afterwards. A
+  question is refused without it. After corrections the screen says how many pieces changed
+  and offers an update; it never updates by itself.
+- **Through the engine, and resumable.** A preparation is cut into calls within the model's
+  limits, with the engine's retries, a pause and a cancel; each call's numbers are kept as
+  it returns, so a run stopped by a quit goes on without sending anything twice. Each run
+  and what it cost, and the cost of the questions, are kept with the project.
+- **Documents of any length.** Each piece's text, as the review shows it, is cut into
+  stretches of about 1,200 characters, never more than the model takes, a seventh shared
+  with the next, cut at a paragraph, else a sentence, else a word, in any script. A stretch
+  with almost no letters is left out and counted. The search compares the question with
+  every stretch and lists documents by their best passage, three at most for each, so a long
+  book is neither diluted nor favoured against a letter of one page. Each passage opens the
+  review where it stands. The nearness shown is a number, not a probability.
+- **Coverage said with every search**: what was prepared, what was not, and what changed
+  since, so that finding nothing is not read as absence. Text corrected since it was
+  prepared is left out until updated; marking a page reviewed costs nothing.
+- **The map.** One point for each document, from one reading of it (the preferred one): the
+  mean of its stretches, weighted by their length. The points are placed on the two
+  directions along which the documents differ most (principal components, the same input
+  giving the same map), grouped by collection or tag with a shape and a colour each. The
+  screen says which model drew it and when, how many documents are placed and why the others
+  are not, that positions are approximate and the axes mean nothing, and that a long
+  document's point is an average of everything in it. Beside it, always, a list reachable
+  by keyboard: the documents placed, and the ten nearest to the one chosen, worked out from
+  the full numbers rather than the map. Under five documents there is no map. **Documents
+  like this one** is offered from a search result too.
+- **Local and derived.** The numbers are in a file of their own (`vectors.sqlite`), made
+  only from the results; losing it loses what preparing again costs, and nothing else.
+- **Later**: a projection that keeps close groups apart (UMAP or t-SNE; no Rust library
+  passed the licence and size checks), the map following the search's filters, analyses'
+  answers, images and sound (EmbeddingGemma 2 reads them; only its text model is used), and
+  a choice of the numbers' length.
+
 ## Export formats
 
 Results are stored once and exported to several formats at the same time; the default selection
@@ -942,6 +1014,12 @@ is remembered per task. Details are in [formats.md](formats.md).
   Adreno runs them on the processor until OpenCL is measured correct for them. They are far
   weaker than the cloud models, which their descriptions say
   ([decision](decisions/2026-11-07-offline-language-models.md)).
+
+- **The search by meaning with EmbeddingGemma 2** (Google, Apache 2.0), its text model alone,
+  a download of 310 MB from Settings, run by llama.cpp's embedding program shipped beside
+  the app (MIT): on the processor on Windows, through Metal on a Mac, taking turns with the
+  OCR and language models. A passage is 2,000 characters at most
+  ([decision](decisions/2026-11-18-search-by-meaning-map-passage-correction-added-items.md)).
 
 Offline results are a fallback, not the default for difficult material: the app says which
 engine produced a result and records it like any other.

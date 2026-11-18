@@ -152,7 +152,8 @@ pub trait JobStore: Send + Sync {
             .map(|r| crate::speakers::rename_text(&r.output.text, names)))
     }
     /// What a job's own calls cost, in US dollars: the results its pieces stored, not those
-    /// reused from the cache, and the answers billed but refused ([`Charge`]).
+    /// reused from the cache, the answers billed but refused ([`Charge`]), and the passages
+    /// corrected from its review.
     fn spent(&self, job: JobId) -> Result<f64, StoreError>;
     /// Records a call billed without a result to keep.
     fn add_charge(&self, charge: &Charge) -> Result<(), StoreError>;
@@ -164,7 +165,7 @@ pub trait JobStore: Send + Sync {
         setup: SetupId,
         source: SourceId,
     ) -> Result<Vec<Charge>, StoreError>;
-    /// Deletes the stored results that no piece of any job refers to (those of deleted jobs,
+    /// Deletes the stored results that no piece or passage of any job refers to (those of deleted jobs,
     /// and answers a piece read again under another key no longer uses), then gives the space
     /// back to the disk. A piece records its key before its answer is stored, so a result a
     /// job is waiting for or will read is never one of them; a result deleted is paid for
@@ -211,6 +212,31 @@ pub trait JobStore: Send + Sync {
     /// Clears a mark once its files are written, unless a save raised it since: those files
     /// may not hold what that save stored.
     fn clear_outdated(&self, files: &OutdatedFiles) -> Result<(), StoreError>;
+
+    /// Records a passage asked about from the review, or what became of it, by its id:
+    /// before the call, after it, and once the researcher decides; with `correction`, stores
+    /// that correction (marking its files out of date) in the same transaction, so a passage
+    /// accepted or undone is never recorded apart from the text it changed. Deleting its job
+    /// deletes it. A store that keeps no passages refuses.
+    fn put_passage(
+        &self,
+        _proposal: &crate::PassageProposal,
+        _correction: Option<&Correction>,
+    ) -> Result<(), StoreError> {
+        Err(StoreError::Database("this store keeps no passages".into()))
+    }
+    fn passage(&self, _id: &str) -> Result<crate::PassageProposal, StoreError> {
+        Err(StoreError::NotFound)
+    }
+    /// The passages asked about in one source's pieces under one set-up, oldest first.
+    fn source_passages(
+        &self,
+        _job: JobId,
+        _setup: SetupId,
+        _source: SourceId,
+    ) -> Result<Vec<crate::PassageProposal>, StoreError> {
+        Ok(Vec::new())
+    }
 
     /// Inserts or replaces a batch, by its own id.
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError>;

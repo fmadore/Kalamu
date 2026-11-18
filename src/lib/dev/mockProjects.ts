@@ -116,6 +116,11 @@ export function seedProjects(sample: MockJobs): void {
 	preferred.add(`${DOCUMENT_ID}/${sample.job.setups[1].id}`);
 }
 
+/** The collections a document is in, in the order they were joined. */
+export function collectionsOf(id: string): string[] {
+	return members.filter(([, d]) => d === id).map(([c]) => c);
+}
+
 /**
  * The sample project's documents a search or a list of what to check covers: every one, those
  * of a collection, those with a tag (whatever its capitals) or those chosen.

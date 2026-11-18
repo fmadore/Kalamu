@@ -20,7 +20,7 @@ entitlements=$3
 helper="$(cd "$(dirname "$0")/.." && pwd)/src-tauri/appstore/Helper.plist"
 bundle_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist")
 
-for tool in ffmpeg ffprobe llama-mtmd-cli llama-completion; do
+for tool in ffmpeg ffprobe llama-mtmd-cli llama-completion llama-embedding; do
   codesign --force --sign "$identity" --options runtime --timestamp=none \
     --identifier "$bundle_id.$tool" --entitlements "$helper" "$app/Contents/MacOS/$tool"
 done
@@ -28,7 +28,7 @@ codesign --force --sign "$identity" --options runtime --timestamp=none \
   --entitlements "$entitlements" "$app"
 
 codesign --verify --deep --strict --verbose=2 "$app"
-for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli" "$app/Contents/MacOS/llama-completion"; do
+for exe in "$app" "$app/Contents/MacOS/ffmpeg" "$app/Contents/MacOS/ffprobe" "$app/Contents/MacOS/llama-mtmd-cli" "$app/Contents/MacOS/llama-completion" "$app/Contents/MacOS/llama-embedding"; do
   echo "== $exe"
   codesign -d --entitlements - --xml "$exe" 2>/dev/null | plutil -p - || true
 done

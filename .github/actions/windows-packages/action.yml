@@ -52,6 +52,22 @@ runs:
         if ($env:WHISPER_VULKAN -notin 'build', 'placeholder') { throw "whisper-vulkan must be build or placeholder, not '$env:WHISPER_VULKAN'." }
         "KALAMU_TARGET=$target" >> $env:GITHUB_ENV
 
+    # The x64 image's standard library (MSVC 14.52, from 16 November 2026) refuses a Clang older
+    # than 22, and the image still ships 20: bring a newer one where that is so. Nothing is done
+    # once the image's own is new enough, nor on ARM64, whose image is another.
+    - name: A Clang the image's standard library accepts
+      if: runner.os == 'Windows' && runner.arch == 'X64'
+      shell: pwsh
+      run: |
+        $clang = 'C:\Program Files\LLVM\bin\clang-cl.exe'
+        $major = 0
+        if ((Test-Path $clang) -and ((& $clang --version | Out-String) -match 'version (\d+)')) { $major = [int]$Matches[1] }
+        "clang-cl $major"
+        if ($major -lt 22) {
+          choco upgrade llvm --version=22.1.8 --allow-downgrade -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "LLVM was not installed (exit code $LASTEXITCODE)." }
+          & $clang --version
+        }
     # As in CI: whisper.cpp and Tesseract build with clang-cl and Ninja, which ship with the
     # Windows images.
     - name: Configure native Whisper compiler

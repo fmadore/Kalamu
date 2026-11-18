@@ -1,5 +1,6 @@
 //! The llama.cpp programs the offline engines built on it share: the OCR models (`vision/`)
-//! and the language models (`llm/`). One host for both, so they take turns: each run takes
+//! and the language models (`llm/`), and the embedding model of the search by meaning
+//! (`embed/`). One host for all, so they take turns: each run takes
 //! every core the app can spare, or the graphics processor, and two at once would only slow
 //! both and could exhaust the graphics processor's memory. The graphics builds are asked once a
 //! session which device they find, and a run that fails there where it does not on the
@@ -153,6 +154,11 @@ impl LlamaHost {
     /// Whether it also carries the text program the language models read texts with.
     pub fn reads_text(&self) -> bool {
         self.llama.as_ref().is_some_and(Llama::reads_text)
+    }
+
+    /// Whether it also carries the embedding program the offline search by meaning runs in.
+    pub fn embeds(&self) -> bool {
+        self.llama.as_ref().is_some_and(Llama::embeds)
     }
 
     /// The graphics processor a graphics build found, whether or not it is used; `None` when

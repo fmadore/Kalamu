@@ -360,6 +360,8 @@ export const en = {
 		save: 'Save',
 		cancel: 'Cancel',
 		evidence: 'Where it was found',
+		/** A spelling the researcher wrote in a corrected answer, not the model. */
+		byHand: 'added or renamed by you',
 		noEvidence: 'No result lists it any longer.',
 		openReview: 'Open the review',
 		export: 'Export',
@@ -470,6 +472,162 @@ export const en = {
 		rebuilt: 'The text will be prepared again at the next search.',
 		moved:
 			'The words are no longer where the search found them: the text was corrected since. The search in the review shows where they are now.'
+	},
+	meaning: {
+		/** The choice above the project's search between its two kinds. */
+		kind: 'Search by',
+		kinds: { words: 'Words', meaning: 'Meaning' },
+		lede: 'Passages close in meaning to a question or a description, even when they use other words or another language, in the text read from the documents as you corrected it. A model turns each passage into numbers once, when you prepare the project, and each question you type with it. You get passages to read: no answer, no summary.',
+		query: 'Question or description',
+		placeholder: 'Quarrels over who leads the Friday prayer…',
+		go: 'Search',
+		searching: 'Searching…',
+		similarity: 'Similarity',
+		similarityHint:
+			'How close a passage is to your question as this model sees it, from −1 to 1. It is not a probability nor a mark of relevance: compare passages with each other, not with a threshold.',
+		found: (listed: number, compared: number) =>
+			`The ${listed === 1 ? 'closest document' : `${listed} closest documents`} of ${compared === 1 ? '1 compared' : `${compared} compared`}, closest first`,
+		none: 'No passage was compared: prepare the project’s text first.',
+		open: (place: string) => `Open ${place} in the review`,
+		likeThis: 'Documents like this one',
+		coverage: {
+			compared: (compared: number, documents: number) =>
+				`Compared the text of ${compared} of ${documents === 1 ? '1 document' : `${documents} documents`}.`,
+			notPrepared: (n: number) =>
+				n === 1
+					? '1 document has text not yet prepared for this model: it was not compared.'
+					: `${n} documents have text not yet prepared for this model: they were not compared.`,
+			missing: (n: number) =>
+				n === 1
+					? '1 page or part is not prepared for this model yet.'
+					: `${n} pages or parts are not prepared for this model yet.`,
+			changed: (n: number) =>
+				n === 1
+					? '1 page or part was corrected since it was prepared: it is left out until you update.'
+					: `${n} pages or parts were corrected since they were prepared: they are left out until you update.`,
+			absence:
+				'A passage not listed does not mean the documents never speak of it: only the text prepared is compared, and the model can miss what a word search finds.'
+		},
+		setup: {
+			title: 'Set-up',
+			show: 'Show the set-up',
+			hide: 'Hide the set-up',
+			noModels:
+				'No model for the search by meaning is available in this copy of Kalamu yet. The search by words works as before.',
+			model: 'Model',
+			chooseModel: 'Choose a model…',
+			local: 'On this computer: nothing is sent',
+			cloud: (provider: string) => `Sent to ${provider}`,
+			price: (usd: string) => `${usd} per million tokens`,
+			languages: { many: 'many languages', english: 'mainly English' },
+			gone: 'The model chosen for this project is no longer offered. Choose another: what the old one prepared is kept until you remove it below.',
+			notInstalled:
+				'This model is not downloaded yet. Download it in Settings › Offline models, then come back.',
+			missingKey: 'No API key is saved for this provider. Save one in Settings › API keys.',
+			openOffline: 'Open Offline models',
+			openKeys: 'Open API keys',
+			consentTitle: (provider: string) => `Send this project’s text to ${provider}?`,
+			consentBody: (provider: string) =>
+				`To prepare the search by meaning, Kalamu sends the corrected text of this project’s documents to ${provider}, which turns it into numbers. Afterwards, each question you type in the search by meaning is sent to ${provider} too. What ${provider} keeps is set by its own terms. Nothing is sent until you start preparing.`,
+			consent: 'Agree to send it',
+			consented: (provider: string, when: string) =>
+				`On ${when} you agreed to send this project’s text and questions to ${provider}.`,
+			estimate: 'What preparing will do',
+			pieces: (n: number) => (n === 1 ? '1 page or part read' : `${n} pages or parts read`),
+			prepared: (n: number) => `${n} already prepared`,
+			missing: (n: number) => `${n} not prepared yet`,
+			changed: (n: number) => `${n} corrected since they were prepared`,
+			chunks: (n: number) => (n === 1 ? '1 passage to send' : `${n} passages to send`),
+			chunksLocal: (n: number) => (n === 1 ? '1 passage to prepare' : `${n} passages to prepare`),
+			chars: (n: string) => `${n} characters`,
+			tokens: (n: string) => `about ${n} tokens`,
+			cost: (usd: string) => `about ${usd}`,
+			under: (usd: string) => `less than ${usd}`,
+			noPrice: 'The price of this model is not known.',
+			estimateNote:
+				'An estimate: the provider counts tokens its own way. What it bills is recorded as preparing goes.',
+			localNote: 'On this computer: nothing is sent and nothing is billed. It can take a while.',
+			skipped: (n: number) =>
+				n === 1
+					? '1 passage with almost no letters (a page number, a stamp) is left out.'
+					: `${n} passages with almost no letters (a page number, a stamp) are left out.`,
+			nothingRead: 'Nothing has been read yet in this project to prepare.',
+			prepare: 'Prepare the text',
+			update: 'Update',
+			resume: 'Continue',
+			ready: (when: string) => `Everything read is prepared. Last finished on ${when}.`,
+			readyNever: 'Everything read is prepared.',
+			running: (done: number, total: number) => `Preparing: ${done} of ${total} passages…`,
+			pause: 'Pause',
+			cancel: 'Cancel',
+			runs: 'Preparations',
+			state: {
+				running: 'Running',
+				paused: 'Paused',
+				cancelled: 'Cancelled',
+				interrupted: 'Interrupted',
+				failed: 'Failed',
+				done: 'Finished'
+			},
+			run: (chunks: number, tokens: string) =>
+				`${chunks === 1 ? '1 passage' : `${chunks} passages`}, ${tokens} tokens billed`,
+			spent: (usd: string) => `Recorded for this project so far, questions included: ${usd}.`,
+			queries: (n: number) => (n === 1 ? '1 question asked' : `${n} questions asked`),
+			kept: 'Kept on this computer',
+			keptLine: (chunks: number, size: string) =>
+				`${chunks === 1 ? '1 passage' : `${chunks} passages`}, ${size}`,
+			inUse: 'In use',
+			remove: 'Remove',
+			removed: 'Removed. Preparing the text again with this model would send it again.',
+			lostNote:
+				'These numbers are kept in Kalamu’s data folder. Removed or lost, they cost only what preparing the text again costs: your results and corrections are not touched.',
+			size: (bytes: number) =>
+				bytes >= 1e9
+					? `${(bytes / 1e9).toFixed(1)} GB`
+					: bytes >= 1e6
+						? `${(bytes / 1e6).toFixed(1)} MB`
+						: `${Math.max(1, Math.round(bytes / 1e3))} kB`
+		},
+		map: {
+			title: 'Map',
+			lede: 'Each document as one point, placed by its text as the model sees it: documents close together have similar wording and subject. Positions are approximate and the axes mean nothing. A long document’s point is the average of everything in it.',
+			made: (model: string, when: string) =>
+				`Made with ${model}, from the text prepared on ${when}.`,
+			madeNever: (model: string) => `Made with ${model}.`,
+			shown: (share: string) =>
+				`Its two directions show about ${share} of the differences between the documents; the list of nearest documents beside it uses all of them.`,
+			placed: (placed: number, documents: number) =>
+				`${placed} of ${documents === 1 ? '1 document' : `${documents} documents`} placed.`,
+			unread: (n: number) => `${n} with nothing read yet.`,
+			notPrepared: (n: number) => `${n} not prepared for this model yet.`,
+			changed: (n: number) => `${n} corrected since they were prepared.`,
+			withoutPreference: (n: number) =>
+				`${n} with several readings and none preferred: the first reading is placed.`,
+			tooFew: (placed: number) =>
+				`A map needs at least five documents placed, and ${placed === 0 ? 'none is' : placed === 1 ? 'only 1 is' : `only ${placed} are`}. Prepare more of the project’s text, or add documents.`,
+			noModel:
+				'The map is drawn from the text prepared for the search by meaning. Choose a model and prepare the text in Search, under Meaning.',
+			openSetup: 'Open the search by meaning',
+			groupBy: 'Group by',
+			groups: { collection: 'Collection', tag: 'Tag' },
+			inNone: 'In none',
+			others: 'Others',
+			legend: 'Legend',
+			zoomIn: 'Zoom in',
+			zoomOut: 'Zoom out',
+			whole: 'Show the whole map',
+			canvas:
+				'Map of the documents. Arrow keys move from point to point, Enter opens the document, plus and minus zoom.',
+			point: (title: string, group: string) => (group ? `${title}, ${group}` : title),
+			documents: 'Documents placed',
+			selected: 'Selected',
+			nearest: 'Nearest documents',
+			noneSelected:
+				'Choose a point, or a document in the list, to see the documents nearest to it.',
+			noNeighbours: 'No other document is placed.',
+			openDocument: 'Open the document',
+			chunks: (n: number) => (n === 1 ? '1 passage averaged' : `${n} passages averaged`)
+		}
 	},
 	queue: {
 		title: 'To check',
@@ -1460,13 +1618,32 @@ export const en = {
 		itemMenu: (name: string) => `What to do with “${name}”`,
 		renameItem: 'Rename',
 		removeItem: 'Remove from the answers',
-		itemLocates: 'Marked in the source while it has the focus.',
 		itemKeys:
 			'Marked in the source while it has the focus. Enter, or the menu key, renames or removes it.',
 		pageImage: 'Page image: the arrow keys move it, with Shift by longer steps',
 		itemRemoved: (name: string) => `“${name}” removed from the answers`,
 		itemEverywhere:
 			'Changed in this document’s corrected answers, for every model that found it. The model’s own answers are kept.',
+		/** The button at the end of a list answer that opens a field to add to it. */
+		addItem: 'Add',
+		addTo: (field: string) => `Add to “${field}”`,
+		addName: (field: string) => `Add to “${field}”: one name, or several separated by semicolons`,
+		addChoice: (field: string) => `Choice to add to “${field}”`,
+		addPlaceholder: 'A name; another name',
+		addHint:
+			'Enter adds and keeps the field open; Escape closes it. Added for every model that read the document; the models’ own answers are kept.',
+		addEmpty: 'Type a name to add.',
+		allChosen: 'Every choice is already listed.',
+		itemsAdded: (names: string[]) =>
+			`${names.map((n) => `“${n}”`).join(', ')} added to the answers`,
+		alreadyListed: (names: string[]) =>
+			`Already in the list: ${names.map((n) => `“${n}”`).join(', ')}`,
+		notAChoice: (names: string[]) =>
+			`Not one of this field’s choices: ${names.map((n) => `“${n}”`).join(', ')}`,
+		/** Read after a name the researcher added or renamed, which no model listed. */
+		yours: (name: string) => `${name}, your correction`,
+		yoursHint: 'Added or renamed by you; no model listed it',
+		choiceKeys: 'Marked in the source while it has the focus. Enter, or the menu key, removes it.',
 		edit: 'Correct',
 		save: 'Save correction',
 		discard: 'Discard changes',
@@ -1623,6 +1800,59 @@ export const en = {
 		rowsKept:
 			'Each change is saved at once, apart from the model’s rows, which stay as they were. Separate a list’s names with semicolons.'
 	},
+	/** Correcting a passage selected in the text review with a model. */
+	passage: {
+		menu: 'What to do with the selected text',
+		copy: 'Copy',
+		correct: 'Correct this passage with a model…',
+		button: 'Correct with a model…',
+		buttonHint:
+			'Ask a model to correct the selected text. Nothing changes until you accept its proposal.',
+		title: 'Correct a passage with a model',
+		passage: 'Selected passage',
+		context: 'Context sent with it, not to be changed',
+		chars: (n: number) => (n === 1 ? '1 character' : `${n} characters`),
+		sentCloud: (provider: string, context: number) =>
+			`Sent to ${provider}: the selected passage, and up to ${context} characters before and after it from the same page or part, marked as context the model must not change. Nothing else from the document is sent.`,
+		sentOffline: (model: string) => `Read on this computer by ${model}; nothing is sent.`,
+		cut: 'The selection went beyond the text of this page or part: only that text is taken.',
+		tooShort: (n: number) => `Select at least ${n} letters or figures.`,
+		tooLong: (n: number, max: number) =>
+			`The selection is ${n} characters long. At most ${max} are sent at once, so that the corrected passage comes back whole in one answer; correct a longer stretch with a correction job.`,
+		costAbout: (usd: string) => `About ${usd}`,
+		costStored: 'Asked before: the proposal kept is shown again, at no cost.',
+		costOffline: 'On this computer, at no cost.',
+		costUnknown: 'This model has no published price.',
+		noKey: (provider: string) => `Add a key for ${provider} in Settings first.`,
+		notInstalled: (model: string) => `Download ${model} in Settings first.`,
+		ask: 'Ask for a proposal',
+		waiting: (model: string) => `Waiting for ${model}…`,
+		stop: 'Stop waiting',
+		stopped:
+			'Stopped waiting. If the answer still comes, it is kept, and asking again costs nothing.',
+		ready: 'Proposal ready.',
+		proposal: 'Proposed correction, with the changes marked',
+		removed: 'removed',
+		added: 'added',
+		notes: {
+			context_removed: 'The model gave back some of the context; it was taken out.',
+			commentary_removed:
+				'The model added words of its own around the passage; they were taken out.',
+			length_changed: 'The proposal is much longer or shorter than the passage: check it closely.',
+			unchanged: 'The model found nothing to correct.'
+		},
+		accept: 'Accept',
+		edit: 'Edit before accepting',
+		editLabel: 'Proposed correction, to edit',
+		discard: 'Discard',
+		failed: (reason: string) =>
+			`No proposal (${reason}). An answer that is not a correction of the passage is not offered: try again, or another model or prompt.`,
+		changed:
+			'The text under the selection changed while the model was answering, so the proposal was not applied.',
+		lookAgain: 'Look again',
+		accepted: 'Passage corrected; the result files follow in a few seconds.',
+		undone: 'Correction of the passage undone.'
+	},
 	prompts: {
 		title: 'Prompts',
 		hint: 'Each task comes with tested prompts. Edit one to adapt it; your version replaces it until you reset it. Variables: {languages}, {speakers}.',
@@ -1770,6 +2000,16 @@ export const en = {
 			'This copy of Kalamu was built without the engine that runs offline language models: the installers and the Store’s version carry it.',
 		llmCpu: (missing: string) =>
 			`This processor lacks ${missing}, which offline language models need. Use a cloud model instead.`,
+		embeddingTitle: 'Search by meaning',
+		embeddingHint:
+			'A small model from Google, run on this computer, that lets a project’s search find passages by what they mean, not only by their words, and draws the map of its documents: nothing is sent, no key or account is needed, and it works without an internet connection once downloaded. It reads more than a hundred languages. It is quick, even on a processor, and needs less than a gigabyte of free memory while it runs.',
+		embeddingNoEngine:
+			'This copy of Kalamu was built without the engine that runs the offline search by meaning: the installers and the Store’s version carry it.',
+		embeddingCpu: (missing: string) =>
+			`This processor lacks ${missing}, which the offline search by meaning needs. Choose a cloud model for it instead.`,
+		embeddingName: 'EmbeddingGemma 2',
+		embeddingDescription:
+			'Google’s model that places texts of like meaning close together, for texts only, in more than a hundred languages.',
 		addLanguageData: 'Download a language for Tesseract',
 		findLanguageData: 'Find a language by its name',
 		oneDownload: 'One download at a time: the next can start once this one is done.',
@@ -1896,6 +2136,7 @@ export const en = {
 			nameSteps:
 				'On a name in an analysis: the previous or next one (Home and End: the first or last)',
 			nameMenu: 'On a name in an analysis: the menu to rename or remove it',
+			passageMenu: 'On text selected in the text: the menu to copy it or have a model correct it',
 			nextDifference: 'Next place where the models differ, its readings open',
 			previousDifference: 'Previous place where the models differ',
 			closeReadings: 'Close the readings, from their own field too',
@@ -2147,6 +2388,13 @@ export const en = {
 		atStep: (n: number, sentence: string) => `Step ${n}: ${sentence}`
 	},
 	error: {
+		'meaning.unavailable': 'The search by meaning is not available in this copy of Kalamu.',
+		'meaning.no_model': 'Choose a model for the search by meaning first.',
+		'meaning.unknown_model': 'This model is not offered any more. Choose another.',
+		'meaning.no_consent':
+			'Agree first to send this project’s text to the model’s provider: nothing has been sent.',
+		'meaning.running': 'The project’s text is already being prepared.',
+		'meaning.empty_query': 'Type a question or a description.',
 		'search.too_short': 'Type a word of two letters at least.',
 		'search.stopped': 'The search was replaced by a newer one.',
 		'search.index':
@@ -2183,6 +2431,16 @@ export const en = {
 			'Only extracted text, transcripts, corrected text and translations can be analysed this way.',
 		'job.nothing_read':
 			'Nothing has been read yet, so there is nothing to analyse. Run the job, or wait for its first pages.',
+		'passage.too_short': 'Select at least 3 letters or figures to correct.',
+		'passage.too_long':
+			'The passage is too long to correct at once; correct a longer stretch with a correction job.',
+		'passage.context': 'The context around the passage is too long.',
+		'passage.changed':
+			'The text under the selection changed, so nothing was sent or applied. Select the passage again.',
+		'passage.empty': 'The model’s answer was empty.',
+		'passage.too_different':
+			'The model’s answer is too different from the passage to be a correction of it.',
+		'passage.not_waiting': 'This proposal is no longer waiting for a decision.',
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',

@@ -1,5 +1,6 @@
 //! Offline engines' downloads: Whisper's models, as in Live Translation, Tesseract's language
-//! data, one file per language, and the OCR and language models, each with its encoder.
+//! data, one file per language, the OCR and language models, each with its encoder, and the
+//! search by meaning's embedding model.
 
 use kalamu_offline::{ModelManager, ModelStatus};
 use serde::Serialize;
@@ -37,6 +38,10 @@ pub struct OfflineStatus {
     pub llm_engine: bool,
     /// Where each language model's next request goes: `cpu`, `metal` or `vulkan`.
     pub llm_devices: std::collections::BTreeMap<String, String>,
+    /// The embedding models of the search by meaning on this computer.
+    pub embedding_models: Vec<ModelStatus>,
+    /// Whether this copy of the app carries the program that runs them.
+    pub embedding_engine: bool,
     /// Instruction-set extensions this processor lacks; empty when Whisper can run here.
     pub missing_cpu: Vec<String>,
 }
@@ -70,6 +75,8 @@ pub fn offline_status(state: State<'_, AppState>) -> OfflineStatus {
             .into_iter()
             .map(|(model, placement)| (model, placement.kind().to_owned()))
             .collect(),
+        embedding_models: state.embedder.models().list(),
+        embedding_engine: state.embedder.available(),
         missing_cpu: kalamu_offline::missing_features().to_vec(),
     }
 }
@@ -83,6 +90,8 @@ fn manager<'a>(state: &'a AppState, id: &str) -> &'a ModelManager {
         state.vision.models()
     } else if state.llm.models().find(id).is_some() {
         state.llm.models()
+    } else if state.embedder.models().find(id).is_some() {
+        state.embedder.models()
     } else {
         &state.models
     }
@@ -102,6 +111,7 @@ pub fn cancel_model_download(state: State<'_, AppState>) {
     state.tessdata.cancel_download();
     state.vision.models().cancel_download();
     state.llm.models().cancel_download();
+    state.embedder.models().cancel_download();
 }
 
 #[tauri::command]

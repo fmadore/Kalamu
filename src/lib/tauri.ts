@@ -12,6 +12,9 @@ import type { Collection } from './bindings/Collection.js';
 import type { Correction } from './bindings/Correction.js';
 import type { DictionaryView } from './bindings/DictionaryView.js';
 import type { Pace } from './bindings/Pace.js';
+import type { PassageAsk } from './bindings/PassageAsk.js';
+import type { PassageEstimate } from './bindings/PassageEstimate.js';
+import type { PassageProposal } from './bindings/PassageProposal.js';
 import type { ProposalPlan } from './bindings/ProposalPlan.js';
 import type { ProposalsView } from './bindings/ProposalsView.js';
 import type { QueueItemKey } from './bindings/QueueItemKey.js';
@@ -54,6 +57,7 @@ import type { JobProgress } from './bindings/JobProgress.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { JobSources } from './bindings/JobSources.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
+import type { ListedAdded } from './bindings/ListedAdded.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
@@ -66,6 +70,14 @@ import type { SearchRequest } from './bindings/SearchRequest.js';
 import type { SearchProgress } from './bindings/SearchProgress.js';
 import type { Draft } from './described.js';
 import type { SearchView } from './bindings/SearchView.js';
+import type { EmbeddingSpace } from './bindings/EmbeddingSpace.js';
+import type { MapView } from './bindings/MapView.js';
+import type { MeaningProgress } from './bindings/MeaningProgress.js';
+import type { MeaningRequest } from './bindings/MeaningRequest.js';
+import type { MeaningStatus } from './bindings/MeaningStatus.js';
+import type { MeaningView } from './bindings/MeaningView.js';
+import type { Neighbour } from './bindings/Neighbour.js';
+import type { SpaceChoice } from './bindings/SpaceChoice.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { ProjectView } from './bindings/ProjectView.js';
 import type { SourceFile } from './bindings/SourceFile.js';
@@ -249,6 +261,20 @@ export const api = {
 		from: string,
 		to: string | null
 	) => invoke<Correction[]>('rename_listed', { jobId, sourceId, index, key, from, to }),
+	/** Adds names or choices a model missed to a list answer (one per line or between
+	 * semicolons) in every set-up that read the piece, all or none; gives back those set-ups'
+	 * corrections as they stood, to put back, and what became of each item. */
+	addListed: (jobId: string, sourceId: string, index: number, key: string, items: string[]) =>
+		invoke<ListedAdded>('add_listed', { jobId, sourceId, index, key, items }),
+	/** What asking a model to correct a passage of the review would cost; refused as asking. */
+	passageEstimate: (ask: PassageAsk) => invoke<PassageEstimate>('passage_estimate', { ask }),
+	/** Asks a model to correct a passage, through the engine: its proposal, applied by nothing. */
+	askPassage: (ask: PassageAsk) => invoke<PassageProposal>('ask_passage', { ask }),
+	cancelPassage: (id: string) => invoke<void>('cancel_passage', { id }),
+	/** Writes a proposal, or its edit, into the piece's corrections; the correction as it stood. */
+	acceptPassage: (id: string, text: string) => invoke<Correction>('accept_passage', { id, text }),
+	discardPassage: (id: string) => invoke<void>('discard_passage', { id }),
+	undoPassage: (id: string, before: Correction) => invoke<void>('undo_passage', { id, before }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
 		invoke<void>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>
@@ -319,6 +345,22 @@ export const api = {
 		invoke<SearchView>('project_search', { project, request }),
 	rebuildSearchIndex: () => invoke<void>('rebuild_search_index'),
 	prepareProjectSearch: (project: string) => invoke<void>('prepare_project_search', { project }),
+	/** The search by meaning's set-up: the model, the estimate (nothing sent), runs and cost. */
+	meaningStatus: (project: string) => invoke<MeaningStatus>('meaning_status', { project }),
+	chooseMeaningModel: (project: string, provider: string, model: string) =>
+		invoke<SpaceChoice>('choose_meaning_model', { project, provider, model }),
+	consentMeaning: (project: string) => invoke<void>('consent_meaning', { project }),
+	/** Starts preparing the project's text: the one call that sends it to a cloud model. */
+	prepareMeaning: (project: string) => invoke<void>('prepare_meaning', { project }),
+	pauseMeaning: (project: string) => invoke<void>('pause_meaning', { project }),
+	cancelMeaning: (project: string) => invoke<void>('cancel_meaning', { project }),
+	removeMeaningSpace: (project: string, space: EmbeddingSpace) =>
+		invoke<void>('remove_meaning_space', { project, space }),
+	meaningSearch: (project: string, request: MeaningRequest) =>
+		invoke<MeaningView>('meaning_search', { project, request }),
+	meaningMap: (project: string) => invoke<MapView>('meaning_map', { project }),
+	meaningNeighbours: (project: string, document: string) =>
+		invoke<Neighbour[]>('meaning_neighbours', { project, document }),
 	dictionaryView: (project: string, collection: string | null) =>
 		invoke<DictionaryView>('dictionary_view', { project, collection }),
 	dictionaryEvidence: (project: string, namespace: string, forms: string[]) =>
@@ -405,6 +447,9 @@ export const on = {
 	/** Settings… in the application menu (macOS). */
 	openSettings: (handler: () => void) => listen<null>('open-settings', handler),
 	searchProgress: (handler: (event: SearchProgress) => void) => listen('search-progress', handler),
+	/** How far a project's text is prepared for the search by meaning, after each batch. */
+	meaningProgress: (handler: (event: MeaningProgress) => void) =>
+		listen('meaning-progress', handler),
 	/** The offline status changed outside a command: read it again. */
 	offlineChanged: (handler: () => void) => listen<null>('offline-changed', handler),
 	/** The model list was refreshed at start-up: read it again, with the release it names. */

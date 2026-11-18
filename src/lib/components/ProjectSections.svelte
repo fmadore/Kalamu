@@ -1,7 +1,7 @@
 <script lang="ts">
 	// A project's sections down the side of its screen: all its documents, each collection and a
-	// new one named in place, then its search, what needs checking, its dictionary and its
-	// activity. The one shown reads as the current page.
+	// new one named in place, then its search, its map, what needs checking, its dictionary and
+	// its activity. The one shown reads as the current page.
 	import Icon from './Icon.svelte';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -77,6 +77,14 @@
 		onclick={() => onpane('search')}
 	>
 		<Icon name="search" size={14} /><span class="grow">{m.search.title}</span>
+	</button>
+	<button
+		class="section"
+		class:current={pane === 'map'}
+		aria-current={pane === 'map' ? 'page' : undefined}
+		onclick={() => onpane('map')}
+	>
+		<Icon name="map" size={14} /><span class="grow">{m.meaning.map.title}</span>
 	</button>
 	<button
 		class="section"

@@ -19,7 +19,8 @@ use crate::secrets::CredentialKeys;
 use crate::settings::Settings;
 use crate::start_failure::{self, Cause, StartError};
 use crate::{
-    CATALOG_CHANGED_EVENT, OFFLINE_CHANGED_EVENT, PROGRESS_EVENT, activity, grants, platform, tray,
+    CATALOG_CHANGED_EVENT, MEANING_PROGRESS_EVENT, OFFLINE_CHANGED_EVENT, PROGRESS_EVENT, activity,
+    grants, platform, tray,
 };
 
 type SetupResult<T> = Result<T, Box<dyn std::error::Error>>;
@@ -49,6 +50,7 @@ pub(crate) fn setup(app: &mut tauri::App, moved: platform::Moved) -> SetupResult
         Err(e) => fail(app, &e, Some(logs.as_path())),
     };
     forward_progress(app, &state.engine, &store);
+    forward_meaning(app, &state.meaning);
     // The tray, the taskbar and the notifications follow the engine here, not in the webview.
     app.manage(activity::Activity::default());
     activity::watch(app.handle(), state.engine.subscribe());
@@ -203,11 +205,23 @@ fn assemble(
                 )
             }
         };
-    let search = Arc::new(kalamu_search::Search::new(
-        store.clone(),
-        store.clone(),
-        index,
-    ));
+    // The search by meaning's vectors, a file of their own too: lost, they cost only what
+    // embedding the text again costs, which the researcher is shown before anything is sent.
+    let vectors: Arc<dyn kalamu_core::VectorIndex> =
+        match kalamu_store::SqliteVectors::open(&data.join("vectors.sqlite")) {
+            Ok(vectors) => Arc::new(vectors),
+            Err(e) => {
+                tracing::warn!(error = %e, "vector index kept in memory only");
+                Arc::new(
+                    kalamu_store::SqliteVectors::in_memory()
+                        .map_err(|e| StartError::new(Cause::Database, e))?,
+                )
+            }
+        };
+    let search = Arc::new(
+        kalamu_search::Search::new(store.clone(), store.clone(), index)
+            .with_vectors(vectors.clone()),
+    );
     // Passages of jobs deleted while the index could not be told.
     let pruning = search.clone();
     std::thread::spawn(move || match pruning.prune() {
@@ -252,6 +266,11 @@ fn assemble(
             "llama.cpp's text program not found: offline language models are unavailable"
         );
     }
+    if llama.is_some() && !llama.as_ref().is_some_and(kalamu_offline::Llama::embeds) {
+        tracing::warn!(
+            "llama.cpp's embedding program not found: the offline search by meaning is unavailable"
+        );
+    }
     // On Windows, its builds for the graphics processor (Vulkan; OpenCL for Snapdragon's
     // Adreno), asked which one they find once the app is set up (`find_graphics_processor`).
     let graphics = [
@@ -281,6 +300,14 @@ fn assemble(
         kalamu_offline::ModelManager::new(data.join("language-models"), &kalamu_offline::LLM),
         llama.clone(),
     ));
+    // The search by meaning's model on this computer, taking turns with them.
+    let embedder = Arc::new(kalamu_offline::LocalEmbedder::new(
+        kalamu_offline::ModelManager::new(
+            data.join("embedding-models"),
+            &kalamu_offline::EMBEDDING,
+        ),
+        llama.clone(),
+    ));
     // Whisper on Windows also has a helper for the graphics processor (Vulkan), which follows
     // the same Settings choice as the OCR and language models.
     let whisper = Arc::new(kalamu_offline::Whisper::with_helper(
@@ -288,6 +315,8 @@ fn assemble(
         kalamu_offline::Whisper::locate_helper(&app_dir),
         settings.ocr_graphics_processor,
     ));
+    // Read before the engine takes the catalogue.
+    let embedding_models = catalog.embedding_models().to_vec();
     let mut providers = kalamu_providers::registry(http.clone());
     providers.push(whisper.clone());
     providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
@@ -314,6 +343,23 @@ fn assemble(
         store.clone(),
         store.clone(),
     )));
+    let embedders = embedding(&http, &embedder);
+    let meaning = kalamu_engine::Meaning::new(
+        engine.clone(),
+        search.clone(),
+        vectors,
+        store.clone(),
+        embedders,
+        embedding_models,
+    );
+    match meaning.recover() {
+        Ok(0) => {}
+        Ok(n) => tracing::info!(
+            runs = n,
+            "preparations for the search by meaning interrupted"
+        ),
+        Err(e) => tracing::warn!(error = %e, "preparations for the search by meaning not checked"),
+    }
     let interrupted = engine.recover().unwrap_or_default();
     // Batches the provider still holds are collected below; nothing else is sent until
     // the researcher resumes the job.
@@ -327,6 +373,7 @@ fn assemble(
         projects,
         dictionary,
         search,
+        meaning,
         search_generation: Arc::default(),
         search_preparation: Arc::default(),
         models,
@@ -335,6 +382,7 @@ fn assemble(
         llama,
         vision,
         llm,
+        embedder,
         keys,
         grants,
         settings: Mutex::new(settings),
@@ -347,6 +395,35 @@ fn assemble(
         quitting: std::sync::atomic::AtomicBool::new(false),
     };
     Ok((state, store, waiting))
+}
+
+/// The embedders the search by meaning calls, given to the engine as values so that it never
+/// matches on a provider's or a model's name. THE ONE PLACE they are gathered: the cloud
+/// providers', then the one run on this computer. The models offered are the catalogue's.
+fn embedding(
+    http: &reqwest::Client,
+    local: &Arc<kalamu_offline::LocalEmbedder>,
+) -> Vec<Arc<dyn kalamu_core::Embedder>> {
+    let mut embedders = kalamu_providers::embedders(http.clone());
+    embedders.push(local.clone());
+    embedders
+}
+
+/// The search by meaning's progress to the interface.
+fn forward_meaning(app: &tauri::App, meaning: &Arc<kalamu_engine::Meaning>) {
+    let mut events = meaning.subscribe();
+    let handle = app.handle().clone();
+    tauri::async_runtime::spawn(async move {
+        loop {
+            match events.recv().await {
+                Ok(progress) => {
+                    let _ = handle.emit(MEANING_PROGRESS_EVENT, &progress);
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
+                Err(_) => break,
+            }
+        }
+    });
 }
 
 /// Progress to the interface. A workflow step started from a project is tied to its documents as

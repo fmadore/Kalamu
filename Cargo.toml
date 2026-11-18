@@ -57,6 +57,9 @@ tokio-util = "0.7.20"
 tracing = "0.1.44"
 ts-rs = { version = "12.0.1", features = ["uuid-impl", "serde-json-impl", "no-serde-warnings"] }
 unicode-normalization = "0.1.26"
+# Grapheme, word and sentence boundaries (UAX #29), where the search by meaning cuts a text into
+# chunks: already built for the tree (MIT or Apache-2.0).
+unicode-segmentation = "1.13.3"
 uuid = { version = "1.29.0", features = ["v4", "serde"] }
 wiremock = "0.6.5"
 

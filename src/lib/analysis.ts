@@ -46,6 +46,16 @@ export function collate(key: string, witnesses: Witness[]): Reading[] {
 	return out;
 }
 
+/**
+ * Whether a value of a list answer is the researcher's: added or renamed by hand, no model's own
+ * answer to the field listing it (matched ignoring case, as `core::list_items` matches).
+ */
+export function byHand(key: string, value: string, models: FieldAnswer[][]): boolean {
+	return !models.some((answers) =>
+		valuesOf(answers.find((a) => a.key === key)?.value).some((v) => same(v, value))
+	);
+}
+
 /** Whether any witness's answer to a field, or its reason, holds the words searched for. */
 export function holdsWords(key: string, witnesses: Witness[], query: string): boolean {
 	return witnesses.some((w) => {

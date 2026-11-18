@@ -2,7 +2,7 @@
 	// Offline engines' downloads: Whisper's models, as in Live Translation's settings, the
 	// language data of an engine built into the app (Tesseract), one file per language, the
 	// OCR vision models, each with how long a page took on this computer, and the language
-	// models for analyses. Of the hundred-odd
+	// models for analyses, and the search by meaning's embedding model. Of the hundred-odd
 	// languages only those downloaded are listed; the others are found by name in a search box.
 	// While a download runs the lists are polled for the bytes received; on opening they are read
 	// again, since the seconds a page took change as jobs run.
@@ -44,11 +44,15 @@
 			...(app.offline?.models ?? []),
 			...(app.offline?.language_data ?? []),
 			...(app.offline?.ocr_models ?? []),
-			...(app.offline?.llm_models ?? [])
+			...(app.offline?.llm_models ?? []),
+			...(app.offline?.embedding_models ?? [])
 		].some((s) => s.downloading)
 	);
 	const noOcrEngine = $derived(app.offline !== null && !app.offline.ocr_engine);
 	const noLlmEngine = $derived(app.offline !== null && !app.offline.llm_engine);
+	/** The search by meaning's model, listed by the app rather than the model list. */
+	const embedding = $derived(app.offline?.embedding_models ?? []);
+	const noEmbeddingEngine = $derived(app.offline !== null && !app.offline.embedding_engine);
 	/** How long a page took with an OCR model on this computer, in words. */
 	function ocrSpeed(id: string): string {
 		const seconds = secondsPerPage(id);
@@ -281,6 +285,26 @@
 				mod.name,
 				modelDescription(mod),
 				missingCpu || noLlmEngine
+			)}
+		{/each}
+	{/if}
+	{#if embedding.length > 0}
+		<h3>{m.settings.embeddingTitle}</h3>
+		<p class="muted small">{m.settings.embeddingHint}</p>
+		{#if noEmbeddingEngine}
+			<p class="warning small">{m.settings.embeddingNoEngine}</p>
+		{:else if missingCpu}
+			<p class="warning small">
+				{m.settings.embeddingCpu(app.offline?.missing_cpu.join(', ') ?? '')}
+			</p>
+		{/if}
+		{#each embedding as s (s.id)}
+			{@render row(
+				s,
+				s.id,
+				m.settings.embeddingName,
+				m.settings.embeddingDescription,
+				missingCpu || noEmbeddingEngine
 			)}
 		{/each}
 	{/if}

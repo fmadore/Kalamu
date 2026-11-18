@@ -95,7 +95,7 @@ jobs:
         run: |
           app="target/$TARGET/release/bundle/macos/Kalamu.app"
           scripts/sign-app-store.sh "$app" - src-tauri/appstore/Sandbox.plist
-          for tool in ffmpeg llama-mtmd-cli llama-completion; do
+          for tool in ffmpeg llama-mtmd-cli llama-completion llama-embedding; do
             codesign -d --entitlements - --xml "$app/Contents/MacOS/$tool" 2>/dev/null \
               | grep -q 'com.apple.security.inherit' \
               || { echo "::error::$tool is not signed to inherit the app's sandbox."; exit 1; }

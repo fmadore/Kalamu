@@ -18,7 +18,9 @@ mod estimate;
 mod group;
 mod later;
 mod listen;
+mod meaning;
 mod output;
+mod passage;
 mod piece;
 mod plan;
 mod progress;
@@ -60,7 +62,9 @@ pub use kalamu_core::SetupRequest;
 pub use kalamu_core::{AgreementMeasure, FieldAgreement, JobAgreement, PairAgreement};
 pub use kalamu_core::{FileProgress, JobProgress};
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
-pub use review::PieceView;
+pub use meaning::{Meaning, MeaningError, MeaningProgress, MeaningStatus, Ready};
+pub use passage::PassageEstimate;
+pub use review::{ListedAdded, PieceView};
 pub use rules::{ModelRef, PageReading, TaskRules, task_rules};
 pub use setup::{ImageDocument, NewJob};
 pub use snapshot::{DerivedState, Freshness};
@@ -147,6 +151,8 @@ pub struct Engine {
     pub(crate) me: Weak<Engine>,
     /// The pages' sizes of the source last shown in the review, for estimated lines.
     pub(crate) page_sizes: Mutex<regions::PageSizes>,
+    /// Passages asked about from the review and still waiting, by id, to stop waiting for.
+    pub(crate) passages: Mutex<HashMap<String, kalamu_core::StopSignal>>,
 }
 
 impl Engine {
@@ -174,6 +180,7 @@ impl Engine {
             later: Arc::default(),
             me: me.clone(),
             page_sizes: Mutex::default(),
+            passages: Mutex::default(),
         })
     }
 

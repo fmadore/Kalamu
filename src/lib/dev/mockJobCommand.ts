@@ -21,6 +21,7 @@ import {
 	pieces,
 	recording,
 	renameListed,
+	addListed,
 	setupA,
 	setupB,
 	source,
@@ -92,14 +93,19 @@ function wordDiff(left: string, right: string): { kind: string; text: string }[]
 
 /** Keeps a correction on its sample piece, as the store keeps it, so the review shows it again
  * when it reads the pieces anew. */
-function keepCorrection(c: Correction): void {
-	const piece = [
+/** A piece whose corrections the preview keeps. */
+export function keptPiece(setupId: string, sourceId: string, index: number) {
+	return [
 		...pieces,
 		...analysisPieces,
 		...contentsPieces,
 		...correctionPieces,
 		...recordsPieces
-	].find((p) => p.setup_id === c.setup_id && p.source_id === c.source_id && p.index === c.index);
+	].find((p) => p.setup_id === setupId && p.source_id === sourceId && p.index === index);
+}
+
+function keepCorrection(c: Correction): void {
+	const piece = keptPiece(c.setup_id, c.source_id, c.index);
 	if (!piece) return;
 	piece.corrected_text = c.text;
 	piece.corrected_fields = c.fields ?? null;
@@ -285,6 +291,8 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 			return null;
 		case 'rename_listed':
 			return renameListed(a);
+		case 'add_listed':
+			return addListed(a);
 		case 'edit_rows':
 			return editRows(a);
 		case 'job_text_outputs':

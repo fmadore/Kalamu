@@ -50,6 +50,14 @@ llm_engine: boolean,
  */
 llm_devices: { [key in string]: string }, 
 /**
+ * The embedding models of the search by meaning on this computer.
+ */
+embedding_models: Array<OfflineModel>, 
+/**
+ * Whether this copy of the app carries the program that runs them.
+ */
+embedding_engine: boolean, 
+/**
  * Instruction-set extensions this processor lacks; empty when Whisper can run here.
  */
 missing_cpu: Array<string>, };

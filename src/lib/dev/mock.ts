@@ -14,9 +14,12 @@ import { NO_RESULT } from './noResult.js';
 import { enlarge, largeRows } from './mockLarge.js';
 import { profileCommand } from './mockProfiles.js';
 import { searchCommand } from './mockSearch.js';
+import { meaningCommand } from './mockMeaning.js';
+import { collectionsOf } from './mockProjects.js';
 import { queueCommand } from './mockQueue.js';
 import { analysisJob, audioJob, job, recording, source, summaries, video } from './mockJobs.js';
-import { jobCommand } from './mockJobCommand.js';
+import { jobCommand, keptPiece } from './mockJobCommand.js';
+import { passageCommand } from './mockPassages.js';
 import { presetCommand, samplePipelines } from './mockPresets.js';
 import { seedWorkflows, workflowCommand } from './mockWorkflows.js';
 import { unitCommand } from './mockUnits.js';
@@ -43,6 +46,8 @@ export function installMock(): void {
 		}, 2500);
 	}
 	mockWindows('main');
+	// `docs=12`: as many documents in the sample project, enough for a map.
+	const more = Math.max(0, Number(params.get('docs') ?? 0) - 4);
 	seedProjects({
 		job,
 		audioJob,
@@ -62,10 +67,31 @@ export function installMock(): void {
 				path: 'C:\\Archives\\Letters\\lettre-1912-pere-eric.pdf',
 				file_name: 'lettre-1912-pere-eric.pdf',
 				page_count: 4
-			}
+			},
+			...Array.from({ length: more }, (_, i) => ({
+				...source,
+				id: `00000000-0000-0000-0000-0000000001${String(i).padStart(2, '0')}`,
+				path: `C:\\Archives\\Journal\\journal-1958-${String(i + 1).padStart(2, '0')}.pdf`,
+				file_name: `journal-1958-${String(i + 1).padStart(2, '0')}.pdf`,
+				page_count: 2
+			}))
 		]
 	});
 	seedWorkflows(...samplePipelines(), summaries[0], source);
+	// `idle`: no Whisper download running, so the other models' downloads can start.
+	const whisperDownloading = !params.has('idle');
+	// The search by meaning's model: a download takes a second and a half here.
+	const embedding = { installed: false, downloading: false, received: 0 };
+	const downloadEmbedding = (): Promise<null> => {
+		Object.assign(embedding, { downloading: true, received: 120_000_000 });
+		return new Promise((resolve) =>
+			setTimeout(() => {
+				Object.assign(embedding, { installed: embedding.downloading, downloading: false });
+				embedding.received = 0;
+				resolve(null);
+			}, 1500)
+		);
+	};
 	const answer = (cmd: string, args?: unknown): unknown => {
 		const a = (args ?? {}) as Record<string, unknown>;
 		const profile = profileCommand(cmd, a);
@@ -80,8 +106,17 @@ export function installMock(): void {
 		if (unit !== undefined) return unit;
 		const found = searchCommand(cmd, a);
 		if (found !== undefined) return found;
+		const meant = meaningCommand(cmd, a, collectionsOf);
+		if (meant !== undefined) return meant;
 		const preset = presetCommand(cmd, a);
 		if (preset !== undefined) return preset;
+		const passage = passageCommand(
+			cmd,
+			a,
+			keptPiece,
+			(id) => catalog.providers.find((p) => p.id === id)?.local === true
+		);
+		if (passage !== undefined) return passage;
 		const jobAnswer = jobCommand(cmd, a);
 		if (jobAnswer !== undefined) return jobAnswer;
 		switch (cmd) {
@@ -117,7 +152,7 @@ export function installMock(): void {
 							id: mod.id,
 							bytes: [574_041_195, 1_081_140_203, 190_085_487, 59_707_625][i] ?? 0,
 							installed: i === 0,
-							downloading: i === 2,
+							downloading: i === 2 && whisperDownloading,
 							downloaded_bytes: i === 2 ? 71_000_000 : 0,
 							in_use: false,
 							languages: []
@@ -171,8 +206,29 @@ export function installMock(): void {
 					})),
 					llm_engine: true,
 					llm_devices: { 'gemma-4-e4b': 'cpu', 'gemma-4-e2b': 'cpu' },
+					// The search by meaning's model, not downloaded until asked.
+					embedding_models: [
+						{
+							id: 'embeddinggemma-2',
+							bytes: 309_855_456,
+							installed: embedding.installed,
+							downloading: embedding.downloading,
+							downloaded_bytes: embedding.received,
+							in_use: false,
+							languages: []
+						}
+					],
+					embedding_engine: true,
 					missing_cpu: []
 				};
+			case 'download_model':
+				return a.id === 'embeddinggemma-2' ? downloadEmbedding() : null;
+			case 'cancel_model_download':
+				Object.assign(embedding, { downloading: false, received: 0 });
+				return null;
+			case 'remove_model':
+				if (a.id === 'embeddinggemma-2') embedding.installed = false;
+				return null;
 			case 'key_status':
 				return catalog.providers.map((p) => ({ provider: p.id, saved: p.id !== 'openai' }));
 			case 'estimate_cost': {

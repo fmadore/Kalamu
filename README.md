@@ -77,6 +77,11 @@ try a small job first. See the [roadmap](docs/roadmap.md) and the
   organisation, or holds several words near each other, in the text as you corrected it, accents
   and Arabic vowel marks ignored, each opening its source where it stands. It runs on your
   computer.
+- **Search by meaning, and see a project on a map**: find the passages that speak of what you
+  describe, in other words than yours, with a model you choose (Gemini, OpenAI, Mistral, or
+  EmbeddingGemma 2 on your computer, where nothing is sent), and see the project's documents as
+  points, near each other when they are alike. Nothing is prepared before you start it, and
+  its cost is shown first.
 - **Reconcile names in a project's dictionary**: the people, places and terms its analyses
   listed, their spellings gathered into entries under the label you choose, with merges a
   model can propose and that you accept, change or turn down.
@@ -135,6 +140,8 @@ while jobs run.
 
 ## Documentation
 
+- [Guide](https://fmadore.github.io/Kalamu/guide/): how to use Kalamu, from a first job to
+  exporting checked results ([its pages](docs/guide/)).
 - [Specification](docs/specification.md): what the app must do, and why.
 - [Roadmap](docs/roadmap.md): what is built and what is next.
 - [Development](docs/development.md): building, checks, the browser preview.

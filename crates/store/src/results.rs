@@ -89,7 +89,10 @@ pub(crate) fn put_corrections(
 }
 
 /// Stores one correction on `conn`, a transaction's, and marks its files out of date.
-fn put_correction_on(tx: &rusqlite::Connection, correction: &Correction) -> Result<(), StoreError> {
+pub(crate) fn put_correction_on(
+    tx: &rusqlite::Connection,
+    correction: &Correction,
+) -> Result<(), StoreError> {
     tx.execute(
         "INSERT INTO corrections
             (job_id, setup_id, source_id, idx, text, reviewed, updated_at, fields)

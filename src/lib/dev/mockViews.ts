@@ -67,6 +67,10 @@ export function mockView(): View | null {
 			return { name: 'projects', projectId: PROJECT_ID, documentId: DOCUMENT_ID };
 		case 'queue':
 			return { name: 'projects', projectId: PROJECT_ID, pane: 'queue' };
+		case 'search':
+			return { name: 'projects', projectId: PROJECT_ID, pane: 'search' };
+		case 'map':
+			return { name: 'projects', projectId: PROJECT_ID, pane: 'map' };
 		case 'workflows':
 			return { name: 'workflows' };
 		case 'workflow':

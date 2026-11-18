@@ -7,7 +7,12 @@ texts with llama.cpp's text program, `llama-completion`, shipped beside it, whic
 instructions, the text and the answer's schema from files: the multimodal program answers once
 only about an image, and takes its request on the command line, which Windows limits to about
 32,000 characters ([decision](decisions/2026-11-07-offline-language-models.md)). Both engines
-share the programs and take turns (`crates/offline/src/host.rs`).
+share the programs and take turns (`crates/offline/src/host.rs`). The offline search by meaning
+runs Google's EmbeddingGemma 2 (its text model, Q8_0) in llama.cpp's embedding program,
+`llama-embedding`, shipped beside the processor build only: it reads every text of a call from
+one file, split at a marker of Kalamu's (`<#kalamu-text#>`) rather than at line ends, each with
+the task's prefix the model was trained with, and prints their vectors as one JSON array
+(`crates/offline/src/embed/`). It takes turns with the other two.
 It is never linked into the app: whisper.cpp already links a copy of ggml, and llama.cpp's own
 copy would clash with it ([decision](decisions/2026-11-06-ocr-vision-models.md)). llama.cpp is
 MIT licensed; its licence and the exact build line are installed in the app's licences folder.
@@ -72,6 +77,9 @@ release (`LLAMA_TAG`, checked against `LLAMA_SHA256`):
 - the processor build for Windows x64, Windows ARM64 and macOS on Apple Silicon, and the Vulkan
   build for Windows x64 and ARM64, with LunarG's Vulkan SDK (`VULKAN_SDK_VERSION`, each
   installer checked against the SHA-256 LunarG publishes);
+- in the processor builds also the embedding program, built from llama.cpp's examples (the only
+  target built from them, `LLAMA_BUILD_EXAMPLES` on for these builds alone), checked on each
+  runner by embedding two passages and a question with the app's arguments;
 - each the multimodal and the text program, static executables, the C runtime included, with
   nothing shipped beside them; the workflow fails if one needs a library the system lacks. The Vulkan build needs only the Vulkan
   loader (`vulkan-1.dll`), which graphics drivers install;

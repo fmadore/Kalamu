@@ -22,8 +22,11 @@
 //! no prompt) take a request of their own: the recording and `audioTranscriptionConfig` only,
 //! no prompt, system instruction or thinking.
 //! Speakers and word timings come back beside the text, one part per utterance.
+//!
+//! Texts are embedded for the search by meaning through `batchEmbedContents` ([`embed`]).
 
 mod batch;
+mod embed;
 mod transcribe;
 
 use async_trait::async_trait;

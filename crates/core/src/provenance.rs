@@ -78,6 +78,16 @@ pub struct Provenance {
     /// be shared as a methods note without the names of the people recorded.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub renamed_speakers: Vec<String>,
+    /// The items of an analysis's list answers that the researcher wrote by hand, added or
+    /// renamed, which the model's own answer did not hold: part by part and field by field.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<ProvenanceListed>>")]
+    pub listed_by_hand: Vec<ProvenanceListed>,
+    /// Passages the researcher asked a model to correct from the review and accepted: each
+    /// written into their corrections, the model's output left as it was. Not in `usage` or
+    /// `cost_usd`, which count the results of the job's own pieces.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub passages: Vec<ProvenancePassage>,
     /// What the results kept cost; for a table of contents, both steps (`merge` gives the
     /// second's share).
     pub usage: Usage,
@@ -93,6 +103,17 @@ pub struct Provenance {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub workflow: Option<ProvenanceWorkflow>,
+}
+
+/// Items one list answer holds that the researcher wrote, not the model.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceListed {
+    /// The page or segment, numbered as in the export.
+    pub part: u32,
+    /// The field's key.
+    pub field: String,
+    pub items: Vec<String>,
 }
 
 /// A project document a source is, as provenance records it.
@@ -159,6 +180,29 @@ pub struct ProvenanceRefused {
     pub answers: u32,
     pub usage: Usage,
     pub cost_usd: Option<f64>,
+}
+
+/// A passage corrected by a model at the researcher's request, as provenance records it: who
+/// proposed it, with what prompt, and that the researcher accepted it (edited or as it was).
+/// The texts themselves are in the files, as corrections are.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenancePassage {
+    /// The page or segment, numbered as in the export.
+    pub piece: u32,
+    pub provider: ProviderId,
+    pub model: String,
+    pub prompt: ProvenancePrompt,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub request: Vec<RequestSetting>,
+    /// Characters of the passage, and of the context sent on each side of it.
+    pub passage_chars: u32,
+    pub context_chars: u32,
+    /// The researcher changed the model's proposal before accepting it.
+    pub edited: bool,
+    pub cost_usd: Option<f64>,
+    pub asked_at: Timestamp,
+    pub accepted_at: Timestamp,
 }
 
 /// A table of contents' second step, as provenance records it.

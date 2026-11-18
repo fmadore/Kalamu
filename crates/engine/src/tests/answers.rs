@@ -1,4 +1,4 @@
-//! A name an analysis listed, renamed or taken out in every set-up at once, and put back.
+//! A name an analysis listed, renamed, taken out or added in every set-up at once, and put back.
 
 use super::*;
 
@@ -139,5 +139,121 @@ async fn a_name_taken_out_leaves_the_rest_of_each_answer() {
         view.corrected_fields.as_ref().map(Vec::len),
         Some(view.ai_fields.len()),
         "every other field is kept"
+    );
+}
+
+#[tokio::test]
+async fn a_name_the_models_missed_is_added_to_every_set_up_and_put_back() {
+    let f = fixture();
+    let (job, source) = two_readings(&f).await;
+
+    let added = f
+        .engine
+        .add_listed(
+            job.id,
+            source.id,
+            0,
+            "places",
+            &["Siguiri ;  Kouroussa\n bamako".into()],
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(added.added, vec!["Siguiri", "Kouroussa"]);
+    assert_eq!(added.already, vec!["bamako"], "both models listed Bamako");
+    assert!(added.refused.is_empty());
+    assert_eq!(added.before.len(), 2);
+    let listed = Some(FieldValue::List(vec![
+        "Bamako".into(),
+        "Siguiri".into(),
+        "Kouroussa".into(),
+    ]));
+    assert_eq!(
+        places(&f, &job, &source),
+        vec![(listed.clone(), false), (listed, false)]
+    );
+    // The model's own answers are untouched.
+    for view in f
+        .engine
+        .source_pieces(job.id, source.id)
+        .unwrap_or_default()
+    {
+        let ai = view.ai_fields.iter().find(|a| a.key == "places");
+        assert_eq!(
+            ai.map(|a| &a.value),
+            Some(&FieldValue::List(vec!["Bamako".into()]))
+        );
+    }
+
+    // Adding one again adds nothing and changes no correction.
+    let again = f
+        .engine
+        .add_listed(job.id, source.id, 0, "places", &["SIGUIRI".into()])
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(again.added.is_empty() && again.before.is_empty());
+    assert_eq!(again.already, vec!["SIGUIRI"]);
+
+    // The files say which items are the researcher's.
+    assert_eq!(f.engine.write_outdated().ok(), Some(0));
+    let document = f
+        .engine
+        .export_document(&job, job.setups[0].id, source.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        document.provenance.listed_by_hand,
+        vec![kalamu_core::provenance::ProvenanceListed {
+            part: 1,
+            field: "places".into(),
+            items: vec!["Siguiri".into(), "Kouroussa".into()],
+        }]
+    );
+    assert_eq!(document.provenance.corrected, vec![1]);
+    let tables: Vec<String> = std::fs::read_dir(f.dir.path())
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter(|e| e.path().extension().is_some_and(|x| x == "csv"))
+        .filter_map(|e| std::fs::read_to_string(e.path()).ok())
+        .collect();
+    assert_eq!(tables.len(), 2);
+    assert!(
+        tables
+            .iter()
+            .all(|t| t.contains("Bamako; Siguiri; Kouroussa")),
+        "{tables:?}"
+    );
+
+    // Undone: each set-up's answers as they stood, under no correction.
+    f.engine
+        .save_corrections(added.before)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        places(&f, &job, &source),
+        vec![(None, false), (None, false)]
+    );
+}
+
+#[tokio::test]
+async fn nothing_is_added_to_a_text_field_or_a_field_not_asked_for() {
+    let f = fixture();
+    let (job, source) = two_readings(&f).await;
+    let text_key = job.setups[0]
+        .prompt
+        .schema
+        .as_ref()
+        .and_then(|s| {
+            s.fields
+                .iter()
+                .find(|f| !matches!(f.kind, FieldKind::List { .. }))
+        })
+        .map(|f| f.key.clone());
+    for key in text_key.iter().map(String::as_str).chain(["nowhere"]) {
+        let added = f
+            .engine
+            .add_listed(job.id, source.id, 0, key, &["Kankan".into()])
+            .unwrap_or_else(|e| panic!("{e}"));
+        assert!(added.added.is_empty() && added.before.is_empty(), "{key}");
+    }
+    assert_eq!(
+        places(&f, &job, &source),
+        vec![(None, false), (None, false)]
     );
 }

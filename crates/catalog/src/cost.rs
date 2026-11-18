@@ -1,7 +1,7 @@
 //! What work is expected to cost before it starts, and what a call cost once answered, from
 //! the catalogue's prices.
 
-use kalamu_core::Task;
+use kalamu_core::{EmbeddingModel, Task};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -172,6 +172,17 @@ impl Catalog {
             + usage.output_tokens as f64 * output;
         Some(tokens / 1_000_000.0 * factor)
     }
+}
+
+/// What embedding `input_tokens` tokens with `model` costs, in US dollars: nothing for a model
+/// run on this computer, `None` for a cloud model with no published price.
+pub fn embedding_cost(model: &EmbeddingModel, input_tokens: u64) -> Option<f64> {
+    if model.local {
+        return Some(0.0);
+    }
+    model
+        .input_price
+        .map(|per_mtok| input_tokens as f64 * per_mtok / 1_000_000.0)
 }
 
 /// Pages read one at a time, the instructions sent with each, and `output_per_page` tokens

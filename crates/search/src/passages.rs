@@ -39,13 +39,13 @@ pub(crate) fn searched(task: Task, piece: &PieceRef) -> bool {
 }
 
 /// What one job holds that its passages are made from.
-struct Stored {
-    corrections: Vec<Correction>,
-    speakers: SpeakerIndex,
+pub(crate) struct Stored {
+    pub(crate) corrections: Vec<Correction>,
+    pub(crate) speakers: SpeakerIndex,
 }
 
 impl Stored {
-    fn stamp(&self, task: Task, piece: &PieceState) -> Option<String> {
+    pub(crate) fn stamp(&self, task: Task, piece: &PieceState) -> Option<String> {
         let key = piece.cache_key.as_deref()?;
         if !piece.status.is_finished() {
             return None;
@@ -113,8 +113,16 @@ pub(crate) fn index_text(passage: &Passage) -> String {
 }
 
 impl Search {
+    /// What a job's passages are made from besides its answers.
+    pub(crate) fn stored(&self, job: &Job) -> Result<Stored, SearchError> {
+        Ok(Stored {
+            corrections: self.jobs.corrections(job.id)?,
+            speakers: self.jobs.speakers(job.id)?,
+        })
+    }
+
     /// The piece as the review shows it; none when its answer is no longer stored.
-    fn passage(
+    pub(crate) fn passage(
         &self,
         job: &Job,
         piece: &PieceState,
@@ -172,10 +180,7 @@ impl Search {
     /// stamp changed are listed, to be made again by [`Search::apply`].
     fn plan(&self, job: &Job, wanted: &HashSet<(SetupId, SourceId)>) -> Result<Plan, SearchError> {
         let pieces = self.jobs.pieces(job.id)?;
-        let stored = Stored {
-            corrections: self.jobs.corrections(job.id)?,
-            speakers: self.jobs.speakers(job.id)?,
-        };
+        let stored = self.stored(job)?;
         let indexed: HashMap<PassageKey, String> = self.index.stamps(job.id)?.into_iter().collect();
         let mut current = HashMap::new();
         for (i, piece) in pieces.iter().enumerate() {

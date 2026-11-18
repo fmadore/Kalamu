@@ -97,7 +97,7 @@ export type View =
 	| { name: 'glossary'; term?: Term | 'formats' };
 
 /** The panes of a project, down its side. */
-export type ProjectPane = 'documents' | 'search' | 'queue' | 'dictionary' | 'activity';
+export type ProjectPane = 'documents' | 'search' | 'map' | 'queue' | 'dictionary' | 'activity';
 
 /** The sections of Settings, each a tab. */
 export type SettingsTab = 'keys' | 'offline' | 'general' | 'about';
@@ -382,7 +382,8 @@ export function isInstalled(provider: string, model: string): boolean {
 	const status = [
 		...(app.offline?.models ?? []),
 		...(app.offline?.ocr_models ?? []),
-		...(app.offline?.llm_models ?? [])
+		...(app.offline?.llm_models ?? []),
+		...(app.offline?.embedding_models ?? [])
 	].find((m) => m.id === model);
 	return status ? status.installed : app.offline !== null;
 }

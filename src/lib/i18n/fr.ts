@@ -456,6 +456,8 @@ export const fr: Messages = {
 		save: 'Enregistrer',
 		cancel: 'Annuler',
 		evidence: 'Où elle a été relevée',
+		/** A spelling the researcher wrote in a corrected answer, not the model. */
+		byHand: 'ajoutée ou renommée par vous',
 		noEvidence: 'Aucun résultat ne la relève plus.',
 		openReview: 'Ouvrir la relecture',
 		export: 'Exporter',
@@ -569,6 +571,165 @@ export const fr: Messages = {
 		rebuilt: 'Le texte sera préparé à nouveau à la prochaine recherche.',
 		moved:
 			'Les mots ne sont plus là où la recherche les a trouvés : le texte a été corrigé depuis. La recherche de la relecture montre où ils se trouvent maintenant.'
+	},
+	meaning: {
+		/** The choice above the project's search between its two kinds. */
+		kind: 'Chercher par',
+		kinds: { words: 'Mots', meaning: 'Sens' },
+		lede: 'Les passages proches par le sens d’une question ou d’une description, même écrits avec d’autres mots ou dans une autre langue, dans le texte lu dans les documents tel que vous l’avez corrigé. Un modèle transforme chaque passage en nombres une fois, quand vous préparez le projet, et chaque question que vous tapez avec lui. Vous obtenez des passages à lire : ni réponse ni résumé.',
+		query: 'Question ou description',
+		placeholder: 'Querelles sur qui dirige la prière du vendredi…',
+		go: 'Chercher',
+		searching: 'Recherche en cours…',
+		similarity: 'Proximité',
+		similarityHint:
+			'À quel point un passage est proche de votre question pour ce modèle, de −1 à 1. Ce n’est ni une probabilité ni une note de pertinence : comparez les passages entre eux, pas à un seuil.',
+		found: (listed: number, compared: number) =>
+			`${listed === 1 ? 'Le document le plus proche' : `Les ${listed} documents les plus proches`} sur ${compared === 1 ? '1 comparé' : `${compared} comparés`}, du plus proche au moins proche`,
+		none: 'Aucun passage n’a été comparé : préparez d’abord le texte du projet.',
+		open: (place: string) => `Ouvrir ${place} dans la relecture`,
+		likeThis: 'Documents semblables à celui-ci',
+		coverage: {
+			compared: (compared: number, documents: number) =>
+				`Texte de ${compared} ${documents === 1 ? 'document sur 1' : `documents sur ${documents}`} comparé.`,
+			notPrepared: (n: number) =>
+				n === 1
+					? '1 document a du texte pas encore préparé pour ce modèle : il n’a pas été comparé.'
+					: `${n} documents ont du texte pas encore préparé pour ce modèle : ils n’ont pas été comparés.`,
+			missing: (n: number) =>
+				n === 1
+					? '1 page ou partie n’est pas encore préparée pour ce modèle.'
+					: `${n} pages ou parties ne sont pas encore préparées pour ce modèle.`,
+			changed: (n: number) =>
+				n === 1
+					? '1 page ou partie a été corrigée depuis sa préparation : elle est laissée de côté jusqu’à la mise à jour.'
+					: `${n} pages ou parties ont été corrigées depuis leur préparation : elles sont laissées de côté jusqu’à la mise à jour.`,
+			absence:
+				'Un passage absent de la liste ne prouve pas que les documents n’en parlent jamais : seul le texte préparé est comparé, et le modèle peut manquer ce qu’une recherche par mots trouve.'
+		},
+		setup: {
+			title: 'Réglages',
+			show: 'Afficher les réglages',
+			hide: 'Masquer les réglages',
+			noModels:
+				'Aucun modèle pour la recherche par le sens n’est encore disponible dans cette copie de Kalamu. La recherche par mots fonctionne comme avant.',
+			model: 'Modèle',
+			chooseModel: 'Choisir un modèle…',
+			local: 'Sur cet ordinateur : rien n’est envoyé',
+			cloud: (provider: string) => `Envoyé à ${provider}`,
+			price: (usd: string) => `${usd} par million de jetons`,
+			languages: { many: 'nombreuses langues', english: 'surtout l’anglais' },
+			gone: 'Le modèle choisi pour ce projet n’est plus proposé. Choisissez-en un autre : ce que l’ancien a préparé est gardé jusqu’à ce que vous le supprimiez plus bas.',
+			notInstalled:
+				'Ce modèle n’est pas encore téléchargé. Téléchargez-le dans Réglages › Modèles hors ligne, puis revenez.',
+			missingKey:
+				'Aucune clé d’API n’est enregistrée pour ce fournisseur. Enregistrez-en une dans Réglages › Clés d’API.',
+			openOffline: 'Ouvrir Modèles hors ligne',
+			openKeys: 'Ouvrir Clés d’API',
+			consentTitle: (provider: string) => `Envoyer le texte de ce projet à ${provider} ?`,
+			consentBody: (provider: string) =>
+				`Pour préparer la recherche par le sens, Kalamu envoie le texte corrigé des documents de ce projet à ${provider}, qui le transforme en nombres. Ensuite, chaque question que vous tapez dans la recherche par le sens est aussi envoyée à ${provider}. Ce que ${provider} conserve dépend de ses propres conditions. Rien n’est envoyé avant que vous lanciez la préparation.`,
+			consent: 'J’accepte de l’envoyer',
+			consented: (provider: string, when: string) =>
+				`Le ${when}, vous avez accepté d’envoyer le texte et les questions de ce projet à ${provider}.`,
+			estimate: 'Ce que la préparation va faire',
+			pieces: (n: number) => (n === 1 ? '1 page ou partie lue' : `${n} pages ou parties lues`),
+			prepared: (n: number) => `${n} déjà préparées`,
+			missing: (n: number) => `${n} pas encore préparées`,
+			changed: (n: number) => `${n} corrigées depuis leur préparation`,
+			chunks: (n: number) => (n === 1 ? '1 passage à envoyer' : `${n} passages à envoyer`),
+			chunksLocal: (n: number) => (n === 1 ? '1 passage à préparer' : `${n} passages à préparer`),
+			chars: (n: string) => `${n} caractères`,
+			tokens: (n: string) => `environ ${n} jetons`,
+			cost: (usd: string) => `environ ${usd}`,
+			under: (usd: string) => `moins de ${usd}`,
+			noPrice: 'Le prix de ce modèle n’est pas connu.',
+			estimateNote:
+				'Une estimation : le fournisseur compte les jetons à sa façon. Ce qu’il facture est noté au fil de la préparation.',
+			localNote:
+				'Sur cet ordinateur : rien n’est envoyé et rien n’est facturé. Cela peut prendre un moment.',
+			skipped: (n: number) =>
+				n === 1
+					? '1 passage presque sans lettres (un numéro de page, un tampon) est laissé de côté.'
+					: `${n} passages presque sans lettres (un numéro de page, un tampon) sont laissés de côté.`,
+			nothingRead: 'Rien n’a encore été lu dans ce projet à préparer.',
+			prepare: 'Préparer le texte',
+			update: 'Mettre à jour',
+			resume: 'Reprendre',
+			ready: (when: string) =>
+				`Tout ce qui est lu est préparé. Dernière préparation terminée le ${when}.`,
+			readyNever: 'Tout ce qui est lu est préparé.',
+			running: (done: number, total: number) => `Préparation : ${done} passages sur ${total}…`,
+			pause: 'Pause',
+			cancel: 'Annuler',
+			runs: 'Préparations',
+			state: {
+				running: 'En cours',
+				paused: 'En pause',
+				cancelled: 'Annulée',
+				interrupted: 'Interrompue',
+				failed: 'Échouée',
+				done: 'Terminée'
+			},
+			run: (chunks: number, tokens: string) =>
+				`${chunks === 1 ? '1 passage' : `${chunks} passages`}, ${tokens} jetons facturés`,
+			spent: (usd: string) => `Noté pour ce projet jusqu’ici, questions comprises : ${usd}.`,
+			queries: (n: number) => (n === 1 ? '1 question posée' : `${n} questions posées`),
+			kept: 'Gardé sur cet ordinateur',
+			keptLine: (chunks: number, size: string) =>
+				`${chunks === 1 ? '1 passage' : `${chunks} passages`}, ${size}`,
+			inUse: 'Utilisé',
+			remove: 'Supprimer',
+			removed: 'Supprimé. Préparer à nouveau le texte avec ce modèle l’enverrait à nouveau.',
+			lostNote:
+				'Ces nombres sont gardés dans le dossier de données de Kalamu. Supprimés ou perdus, ils ne coûtent que ce que coûte une nouvelle préparation du texte : vos résultats et vos corrections ne sont pas touchés.',
+			size: (bytes: number) =>
+				bytes >= 1e9
+					? `${(bytes / 1e9).toFixed(1).replace('.', ',')} Go`
+					: bytes >= 1e6
+						? `${(bytes / 1e6).toFixed(1).replace('.', ',')} Mo`
+						: `${Math.max(1, Math.round(bytes / 1e3))} ko`
+		},
+		map: {
+			title: 'Carte',
+			lede: 'Chaque document en un point, placé selon son texte tel que le modèle le voit : des documents proches ont un vocabulaire et un sujet semblables. Les positions sont approximatives et les axes ne veulent rien dire. Le point d’un long document est la moyenne de tout ce qu’il contient.',
+			made: (model: string, when: string) =>
+				`Faite avec ${model}, à partir du texte préparé le ${when}.`,
+			madeNever: (model: string) => `Faite avec ${model}.`,
+			shown: (share: string) =>
+				`Ses deux directions montrent environ ${share} des différences entre les documents ; la liste des documents proches, à côté, les prend toutes en compte.`,
+			placed: (placed: number, documents: number) =>
+				`${placed} ${documents === 1 ? 'document sur 1 placé' : `documents sur ${documents} placés`}.`,
+			unread: (n: number) => `${n} sans rien de lu pour l’instant.`,
+			notPrepared: (n: number) => `${n} pas encore préparés pour ce modèle.`,
+			changed: (n: number) => `${n} corrigés depuis leur préparation.`,
+			withoutPreference: (n: number) =>
+				`${n} avec plusieurs lectures et aucune préférée : la première lecture est placée.`,
+			tooFew: (placed: number) =>
+				`Une carte demande au moins cinq documents placés, et ${placed === 0 ? 'aucun ne l’est' : placed === 1 ? 'un seul l’est' : `seulement ${placed} le sont`}. Préparez davantage le texte du projet, ou ajoutez des documents.`,
+			noModel:
+				'La carte se fait à partir du texte préparé pour la recherche par le sens. Choisissez un modèle et préparez le texte dans Recherche, sous Sens.',
+			openSetup: 'Ouvrir la recherche par le sens',
+			groupBy: 'Regrouper par',
+			groups: { collection: 'Collection', tag: 'Étiquette' },
+			inNone: 'Dans aucune',
+			others: 'Autres',
+			legend: 'Légende',
+			zoomIn: 'Agrandir',
+			zoomOut: 'Réduire',
+			whole: 'Voir toute la carte',
+			canvas:
+				'Carte des documents. Les flèches passent d’un point à l’autre, Entrée ouvre le document, plus et moins agrandissent et réduisent.',
+			point: (title: string, group: string) => (group ? `${title}, ${group}` : title),
+			documents: 'Documents placés',
+			selected: 'Sélectionné',
+			nearest: 'Documents les plus proches',
+			noneSelected:
+				'Choisissez un point, ou un document dans la liste, pour voir les documents les plus proches.',
+			noNeighbours: 'Aucun autre document n’est placé.',
+			openDocument: 'Ouvrir le document',
+			chunks: (n: number) => (n === 1 ? '1 passage moyenné' : `${n} passages moyennés`)
+		}
 	},
 	queue: {
 		title: 'À vérifier',
@@ -1559,13 +1720,36 @@ export const fr: Messages = {
 		itemMenu: (name: string) => `Que faire de « ${name} » ?`,
 		renameItem: 'Renommer',
 		removeItem: 'Retirer des réponses',
-		itemLocates: 'Marqué dans la source tant qu’il a le focus.',
 		itemKeys:
 			'Marqué dans la source tant qu’il a le focus. Entrée, ou la touche de menu, le renomme ou le retire.',
 		pageImage: 'Image de la page : les flèches la déplacent, avec Maj par pas plus longs',
 		itemRemoved: (name: string) => `« ${name} » retiré des réponses`,
 		itemEverywhere:
 			'Modifié dans les réponses corrigées de ce document, pour chaque modèle qui l’a relevé. Les réponses du modèle sont conservées.',
+		/** The button at the end of a list answer that opens a field to add to it. */
+		addItem: 'Ajouter',
+		addTo: (field: string) => `Ajouter à « ${field} »`,
+		addName: (field: string) =>
+			`Ajouter à « ${field} » : un nom, ou plusieurs séparés par des points-virgules`,
+		addChoice: (field: string) => `Choix à ajouter à « ${field} »`,
+		addPlaceholder: 'Un nom ; un autre nom',
+		addHint:
+			'Entrée ajoute et garde le champ ouvert ; Échap le ferme. Ajouté pour chaque modèle qui a lu le document ; les réponses des modèles sont conservées.',
+		addEmpty: 'Saisissez un nom à ajouter.',
+		allChosen: 'Tous les choix sont déjà dans la liste.',
+		itemsAdded: (names: string[]) =>
+			names.length === 1
+				? `« ${names[0]} » ajouté aux réponses`
+				: `${names.map((n) => `« ${n} »`).join(', ')} ajoutés aux réponses`,
+		alreadyListed: (names: string[]) =>
+			`Déjà dans la liste : ${names.map((n) => `« ${n} »`).join(', ')}`,
+		notAChoice: (names: string[]) =>
+			`Ne fait pas partie des choix de ce champ : ${names.map((n) => `« ${n} »`).join(', ')}`,
+		/** Read after a name the researcher added or renamed, which no model listed. */
+		yours: (name: string) => `${name}, votre correction`,
+		yoursHint: 'Ajouté ou renommé par vous ; aucun modèle ne l’a relevé',
+		choiceKeys:
+			'Marqué dans la source tant qu’il a le focus. Entrée, ou la touche de menu, le retire.',
 		edit: 'Corriger',
 		save: 'Enregistrer la correction',
 		discard: 'Abandonner les modifications',
@@ -1723,6 +1907,60 @@ export const fr: Messages = {
 		rowsKept:
 			'Chaque modification est enregistrée aussitôt, à part des lignes du modèle, qui restent telles quelles. Séparez les noms d’une liste par des points-virgules.'
 	},
+	/** Corriger avec un modèle un passage sélectionné dans la vérification d’un texte. */
+	passage: {
+		menu: 'Que faire du texte sélectionné',
+		copy: 'Copier',
+		correct: 'Corriger ce passage avec un modèle…',
+		button: 'Corriger avec un modèle…',
+		buttonHint:
+			'Demander à un modèle de corriger le texte sélectionné. Rien ne change tant que vous n’acceptez pas sa proposition.',
+		title: 'Corriger un passage avec un modèle',
+		passage: 'Passage sélectionné',
+		context: 'Contexte envoyé avec lui, à ne pas modifier',
+		chars: (n: number) => (n <= 1 ? `${n} caractère` : `${n} caractères`),
+		sentCloud: (provider: string, context: number) =>
+			`Envoyé à ${provider} : le passage sélectionné et jusqu’à ${context} caractères avant et après lui, pris sur la même page ou partie et signalés comme contexte que le modèle ne doit pas modifier. Rien d’autre du document n’est envoyé.`,
+		sentOffline: (model: string) => `Lu sur cet ordinateur par ${model} ; rien n’est envoyé.`,
+		cut: 'La sélection débordait du texte de cette page ou partie : seul ce texte est pris.',
+		tooShort: (n: number) => `Sélectionnez au moins ${n} lettres ou chiffres.`,
+		tooLong: (n: number, max: number) =>
+			`La sélection compte ${n} caractères. ${max} au plus sont envoyés à la fois, pour que le passage corrigé revienne entier en une seule réponse ; corrigez un texte plus long avec un traitement de correction.`,
+		costAbout: (usd: string) => `Environ ${usd}`,
+		costStored: 'Déjà demandé : la proposition gardée est montrée de nouveau, sans frais.',
+		costOffline: 'Sur cet ordinateur, sans frais.',
+		costUnknown: 'Ce modèle n’a pas de prix publié.',
+		noKey: (provider: string) => `Ajoutez d’abord une clé pour ${provider} dans Paramètres.`,
+		notInstalled: (model: string) => `Téléchargez d’abord ${model} dans Paramètres.`,
+		ask: 'Demander une proposition',
+		waiting: (model: string) => `En attente de ${model}…`,
+		stop: 'Ne plus attendre',
+		stopped:
+			'Vous n’attendez plus. Si la réponse arrive quand même, elle est gardée, et redemander ne coûtera rien.',
+		ready: 'Proposition prête.',
+		proposal: 'Correction proposée, modifications signalées',
+		removed: 'supprimé',
+		added: 'ajouté',
+		notes: {
+			context_removed: 'Le modèle a renvoyé une partie du contexte ; elle a été retirée.',
+			commentary_removed:
+				'Le modèle a ajouté ses propres mots autour du passage ; ils ont été retirés.',
+			length_changed:
+				'La proposition est bien plus longue ou plus courte que le passage : vérifiez-la de près.',
+			unchanged: 'Le modèle n’a rien trouvé à corriger.'
+		},
+		accept: 'Accepter',
+		edit: 'Modifier avant d’accepter',
+		editLabel: 'Correction proposée, à modifier',
+		discard: 'Écarter',
+		failed: (reason: string) =>
+			`Pas de proposition (${reason}). Une réponse qui n’est pas une correction du passage n’est pas proposée : réessayez, ou essayez un autre modèle ou un autre prompt.`,
+		changed:
+			'Le texte sélectionné a changé pendant que le modèle répondait : la proposition n’a pas été appliquée.',
+		lookAgain: 'Revoir le texte',
+		accepted: 'Passage corrigé ; les fichiers de résultats suivent dans quelques secondes.',
+		undone: 'Correction du passage annulée.'
+	},
 	prompts: {
 		title: 'Prompts',
 		hint: 'Chaque tâche est livrée avec des prompts éprouvés. Modifiez-en un pour l’adapter ; votre version le remplace jusqu’à ce que vous le réinitialisiez. Variables : {languages}, {speakers}.',
@@ -1876,6 +2114,16 @@ export const fr: Messages = {
 			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner les modèles de langue hors ligne : les installateurs et la version du Store le contiennent.',
 		llmCpu: (missing: string) =>
 			`Il manque à ce processeur ${missing}, dont les modèles de langue hors ligne ont besoin. Utilisez plutôt un modèle en ligne.`,
+		embeddingTitle: 'Recherche par le sens',
+		embeddingHint:
+			'Un petit modèle de Google, qui s’exécute sur cet ordinateur, grâce auquel la recherche d’un projet trouve des passages d’après ce qu’ils veulent dire, pas seulement d’après leurs mots, et qui dessine la carte de ses documents : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et il fonctionne sans connexion internet une fois téléchargé. Il lit plus d’une centaine de langues. Il est rapide, même sur le processeur, et demande moins d’un gigaoctet de mémoire libre pendant qu’il travaille.',
+		embeddingNoEngine:
+			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner la recherche par le sens hors ligne : les installateurs et la version du Store le contiennent.',
+		embeddingCpu: (missing: string) =>
+			`Il manque à ce processeur ${missing}, dont la recherche par le sens hors ligne a besoin. Choisissez plutôt un modèle en ligne pour elle.`,
+		embeddingName: 'EmbeddingGemma 2',
+		embeddingDescription:
+			'Le modèle de Google qui rapproche les textes de sens voisin, pour les textes seulement, dans plus d’une centaine de langues.',
 		addLanguageData: 'Télécharger une langue pour Tesseract',
 		findLanguageData: 'Chercher une langue par son nom',
 		oneDownload:
@@ -2000,6 +2248,8 @@ export const fr: Messages = {
 			nameSteps:
 				'Sur un nom d’une analyse : le précédent ou le suivant (Début et Fin : le premier ou le dernier)',
 			nameMenu: 'Sur un nom d’une analyse : le menu pour le renommer ou le retirer',
+			passageMenu:
+				'Sur un texte sélectionné : le menu pour le copier ou le faire corriger par un modèle',
 			nextDifference: 'Passage suivant où les modèles divergent, ses versions ouvertes',
 			previousDifference: 'Passage précédent où les modèles divergent',
 			closeReadings: 'Fermer les versions, depuis leur propre champ aussi',
@@ -2226,6 +2476,14 @@ export const fr: Messages = {
 		atStep: (n: number, sentence: string) => `Étape ${n} : ${sentence}`
 	},
 	error: {
+		'meaning.unavailable':
+			'La recherche par le sens n’est pas disponible dans cette copie de Kalamu.',
+		'meaning.no_model': 'Choisissez d’abord un modèle pour la recherche par le sens.',
+		'meaning.unknown_model': 'Ce modèle n’est plus proposé. Choisissez-en un autre.',
+		'meaning.no_consent':
+			'Acceptez d’abord d’envoyer le texte de ce projet au fournisseur du modèle : rien n’a été envoyé.',
+		'meaning.running': 'Le texte du projet est déjà en cours de préparation.',
+		'meaning.empty_query': 'Tapez une question ou une description.',
 		'search.too_short': 'Tapez un mot d’au moins deux lettres.',
 		'search.stopped': 'La recherche a été remplacée par une plus récente.',
 		'search.index':
@@ -2265,6 +2523,16 @@ export const fr: Messages = {
 			'Seuls le texte extrait, les transcriptions, le texte corrigé et les traductions peuvent être analysés de cette façon.',
 		'job.nothing_read':
 			'Rien n’a encore été lu : il n’y a donc rien à analyser. Lancez le traitement, ou attendez ses premières pages.',
+		'passage.too_short': 'Sélectionnez au moins 3 lettres ou chiffres à corriger.',
+		'passage.too_long':
+			'Le passage est trop long pour être corrigé d’un coup ; corrigez un texte plus long avec un traitement de correction.',
+		'passage.context': 'Le contexte autour du passage est trop long.',
+		'passage.changed':
+			'Le texte sélectionné a changé : rien n’a été envoyé ni appliqué. Sélectionnez de nouveau le passage.',
+		'passage.empty': 'La réponse du modèle était vide.',
+		'passage.too_different':
+			'La réponse du modèle est trop différente du passage pour en être une correction.',
+		'passage.not_waiting': 'Cette proposition n’attend plus de décision.',
 		'job.database': 'La base de données des traitements n’a pas pu être lue ou écrite.',
 		'job.running': 'Ce traitement est déjà en cours.',
 		'job.empty': 'Ajoutez au moins un fichier et choisissez un modèle.',

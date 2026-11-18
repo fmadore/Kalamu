@@ -13,19 +13,22 @@ use kalamu_core::{
     ProjectStore, PromptSnapshot, ProviderId, SearchIndex, Segment, Setup, SetupId, SetupOptions,
     SourceFile, SourceId, SpeakerNames, StoredResult, Task, Timestamp,
 };
-use kalamu_store::{SqliteIndex, SqliteStore};
+use kalamu_store::{SqliteIndex, SqliteStore, SqliteVectors};
 
 use super::*;
 
 mod failing;
 mod index;
 mod kinds;
+mod meaning;
+mod meaning_scale;
 mod scale;
 
 struct Fixture {
     search: Search,
     store: Arc<SqliteStore>,
     index: Arc<SqliteIndex>,
+    vectors: Arc<SqliteVectors>,
     project: ProjectId,
 }
 
@@ -124,10 +127,13 @@ impl Fixture {
             updated_at: Timestamp(1),
         };
         store.put_project(&project).unwrap();
+        let vectors = Arc::new(SqliteVectors::in_memory().unwrap());
         Self {
-            search: Search::new(store.clone(), store.clone(), index.clone()),
+            search: Search::new(store.clone(), store.clone(), index.clone())
+                .with_vectors(vectors.clone()),
             store,
             index,
+            vectors,
             project: project.id,
         }
     }

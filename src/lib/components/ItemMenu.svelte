@@ -3,13 +3,14 @@
 	// right click or the menu key): rename it or remove it, straight away, without opening the
 	// editor. At the pointer or under the name, kept inside the window; closed by Escape, a click
 	// elsewhere or a choice, the focus going back to the name. Renaming turns the menu into a
-	// field holding the name.
+	// field holding the name. A choice from the researcher's own list is only removed.
 	import ContextMenu from './ContextMenu.svelte';
 	import Icon from './Icon.svelte';
 	import { messages } from '#lib/i18n/index.js';
 
 	let {
 		value,
+		renamable = true,
 		x,
 		y,
 		onrename,
@@ -18,6 +19,8 @@
 	}: {
 		/** The name, as shown. */
 		value: string;
+		/** False for a choice, which can be removed but not renamed. */
+		renamable?: boolean;
 		/** Where it opens, in the window. */
 		x: number;
 		y: number;
@@ -77,9 +80,11 @@
 			</div>
 		</form>
 	{:else}
-		<button type="button" role="menuitem" class="item" onclick={() => (renaming = true)}
-			><Icon name="edit" size={14} />{m.review.renameItem}</button
-		>
+		{#if renamable}
+			<button type="button" role="menuitem" class="item" onclick={() => (renaming = true)}
+				><Icon name="edit" size={14} />{m.review.renameItem}</button
+			>
+		{/if}
 		<button
 			type="button"
 			role="menuitem"
