@@ -18,8 +18,9 @@ happened. A screenshot of anything odd costs nothing.
   [development.md](development.md#releases) says. Its draft holds the installer for this PC's
   architecture (`arm64` on the Snapdragon, `x64` on an Intel or AMD PC) and
   `kalamu-samples.zip`.
-- [ ] **Installed by you**, from File Explorer, over the copy already there: never from a
-  terminal Claude started (see below). Settings → About gives the version.
+- [ ] **Installed from File Explorer**, over the copy already there, by you or by Claude with
+  computer use: never from a terminal Claude started (see below). Settings → About gives the
+  version.
 - [ ] **A test folder**, `Downloads\kalamu-test-pass`, with the sample files unzipped into
   `samples`, and for the records part a few pages of a real directory and a real register.
   Everything the pass writes goes there.
@@ -30,40 +31,49 @@ happened. A screenshot of anything odd costs nothing.
 
 ## If Claude runs the pass
 
-Claude works through the list on this PC from the Claude desktop app, with computer use on
-Kalamu's own window and its own terminal for the files. It starts as a fresh session: this
-checklist and the brief below are all it needs.
+Claude takes control of this PC from the Claude desktop app and works through the whole list:
+computer use on the screen (File Explorer, Kalamu's window, the spreadsheet), and its own
+terminal for reading files. It starts as a fresh session: this checklist and the brief below
+are all it needs. It downloads the validation build's installer and samples into
+`Downloads\kalamu-test-pass` (`gh release download`), installs Kalamu, runs every step it can,
+and writes the results.
 
-**What Claude cannot do here, and why:**
+**One trap, which the brief names:** the Claude desktop app is itself a Store package, so a
+program started from its terminal sees a private copy of `AppData\Local`. An installer run
+from the terminal installs into that copy and the real Kalamu stays as it was: Claude installs
+by opening the installer in File Explorer, on screen. For the same reason it never reads
+Kalamu's job database or install folder from its terminal (an old copy answers). It reads what
+Kalamu writes beside the sources, in `Downloads\kalamu-test-pass`, and the data folder
+`AppData\Local\Kalamu Data` (settings, logs, the models' speeds), which has no private copy.
 
-- **Install Kalamu.** The Claude desktop app is itself a Store package, so a program it starts
-  sees a private copy of `AppData\Local`: an installer run from its terminal installs into that
-  copy and the real Kalamu stays as it was. For the same reason it never reads Kalamu's job
-  database or install folder from its terminal (an old copy answers). It reads what Kalamu
-  writes beside the sources, in `Downloads\kalamu-test-pass`, and the data folder
-  `AppData\Local\Kalamu Data` (settings, logs, the models' speeds), which has no private copy.
-- **Type a key or a password**, sign in anywhere, or change a system setting (networking off
-  for F8, another Windows account for C4): those are yours.
-- **Hear Narrator.** Part D's Narrator steps are yours; Claude does their keyboard half.
-- **See the providers' own pages.** Whether a batch or a file is gone at OpenAI, Mistral,
-  Anthropic or Google is looked at by you on your accounts; Claude reads what Kalamu's log says
-  it deleted.
+**What stays yours:**
 
-**You do, when Claude asks:** the installer; the keys; *Clear unused results* (A4), which
-deletes stored answers for good; the first send to each provider, whose consent dialog is
-yours to accept; the providers' pages in Part F; networking off and on.
+- **Keys and passwords.** You paste each key into Settings → API keys when Claude asks, and
+  type any password Windows asks for. Claude never types either.
+- **System settings**: networking off and on for F8, another Windows account for F9.
+- **Narrator's voice**, which Claude cannot hear: D6. It does the keyboard half of Part D.
+- **The providers' own pages** in Part F, unless you are signed in to them in Chrome and let
+  Claude read them there with Claude in Chrome. Otherwise Claude reads what Kalamu's log says
+  it deleted, and you look at the page.
+
+**What you agree to once, in the brief:** the consent dialog at the first send to each
+provider, sends of the sample files under the brief's limits, and *Clear unused results* (A4),
+which deletes stored answers for good. Take a line out of the brief to keep that step yours.
 
 **The brief to paste**, in the Code tab opened on `Downloads\kalamu-test-pass`:
 
 ```text
-This is a test pass of Kalamu, a desktop app for researchers (https://github.com/fmadore/Kalamu), on this Windows PC. Kalamu is already installed and its test keys are already in its settings.
+This is a test pass of Kalamu, a desktop app for researchers (https://github.com/fmadore/Kalamu), my own project, on this Windows PC. Take control of the computer with computer use and run the whole pass; I am nearby for the few things that are mine.
 
-1. Read docs/windows-test-pass.md from the repository's main branch (https://raw.githubusercontent.com/fmadore/Kalamu/main/docs/windows-test-pass.md), and its section "If Claude runs the pass" first: it says what you must leave to me and why.
-2. Work through Parts A to F in order with computer use on Kalamu's window. Use only the files in this folder's samples. Check results by reading the files Kalamu writes beside them, never Kalamu's database.
-3. Write results.md in this folder after each step, not at the end: the step's letter and number, then passed, failed or not tried. For a failure: what you did, what you expected, what happened, and a screenshot in problems/. For "not tried": why.
-4. Before any job that sends files to a provider, read the estimate Kalamu shows and tell me the provider, the files and the estimate. Go on by yourself when it is under $0.25 and the step asks for that provider; ask me otherwise. Stop at $3 in all.
-5. Stop and ask me for anything the checklist marks as mine: a key, a password, a consent dialog, deleting stored answers, a system setting, a provider's web page.
-6. Do not change Kalamu's files or its data folder, Windows' settings, or anything outside this folder, and do not install anything.
+1. Read docs/windows-test-pass.md from the repository's main branch (https://raw.githubusercontent.com/fmadore/Kalamu/main/docs/windows-test-pass.md), and its section "If Claude runs the pass" first.
+2. Download the validation build <tag> into this folder with `gh release download <tag> --repo fmadore/Kalamu` (the installer for this PC's architecture, SHA256SUMS and kalamu-samples.zip), check the installer against SHA256SUMS, and unzip the samples into samples\.
+3. Install Kalamu by opening that installer in File Explorer with computer use, never from your terminal: your terminal sees a private copy of AppData, and an install from it would not reach the real Kalamu. Then check Settings → About gives the build's version.
+4. Ask me to paste the keys into Settings → API keys (Gemini and Mistral first; OpenAI and Claude before Part F). You never type a key or a password.
+5. Work through Parts A to F in order. Use only the files in samples\. Check results by reading the files Kalamu writes beside them and Kalamu's logs, never Kalamu's database.
+6. Write results.md in this folder after each step, not at the end: the step's letter and number, then passed, failed or not tried. For a failure: what you did, what you expected, what happened, and a screenshot in problems\. For "not tried": why.
+7. I agree now to: the consent dialog at the first send to Gemini, Mistral, OpenAI and Claude, for the sample files only; any job the checklist asks for whose estimate, which you read before starting, is under $0.25, up to $3 in all; and Clear unused results in step A4. Ask me for anything beyond that.
+8. Ask me for what the checklist keeps mine: system settings (networking, another account), Narrator's voice, and the providers' web pages.
+9. Change nothing outside this folder, Kalamu and its own data, and install nothing else.
 At the end, summarise what failed, what you could not try, and what passed, in that order.
 ```
 
@@ -80,7 +90,7 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   the keyboard; the row goes and the focus stays on something. Then start it a third time and
   quit Kalamu while it runs (*Quit now*); at the next launch the interrupted job is there with
   **Resume**, and finishes without reading again the pages already done.
-- [ ] **A4. Clear unused results** (yours to confirm) in Settings → General says what it will
+- [ ] **A4. Clear unused results** in Settings → General says what it will
   remove and removes it; the jobs listed still open their reviews.
 - [ ] **A5. The review's scan outside full screen** (#192, fixed in 1.8.1): open a text review
   in a window small enough for the scan to need a scrollbar, and resize the window slowly
@@ -124,7 +134,8 @@ At the end, summarise what failed, what you could not try, and what passed, in t
 
 ## Part C: with a Gemini or Mistral key (1 hour 30)
 
-Cents in all. Each first send to a provider shows the consent dialog, which is yours.
+Cents in all. Each first send to a provider shows the consent dialog, which the brief agrees
+to for the sample files.
 
 - [ ] **C1. Mistral OCR's estimated lines**, fixed after the first pass: an extraction of
   `daily-nebraskan-1911.pdf` with Mistral OCR, then *Show text regions*. A paragraph's
@@ -188,7 +199,8 @@ Claude does each from the keyboard; the Narrator half (D6) is yours.
 
 ## Part F: live runs with real keys (2 hours, mostly waiting)
 
-A few dollars at most. The providers' own pages are yours to look at.
+A few dollars at most. The providers' own pages are yours to look at, or Claude's through
+Chrome where you are signed in.
 
 - [ ] **F1. A batch's files deleted, OpenAI**: an economy-mode extraction of two or three pages
   with GPT-6.2 Sol. Before it is collected, OpenAI's Files page lists its upload; once its

@@ -38,8 +38,9 @@ Everything here costs nothing and makes the rented hours count.
 
 ## If Claude runs the day, on the Mac itself
 
-The Claude desktop app runs on the rented Mac and works through the list there: commands in its
-own terminal, and the screens with computer use on the Mac's own display, at full resolution.
+The Claude desktop app runs on the rented Mac, takes control of it and works through the whole
+list there: commands in its own terminal, and the screens with computer use on the Mac's own
+display, at full resolution.
 That is faster and surer than driving the Mac from the PC through a VNC window. It starts as a
 fresh session: the checklist and the brief below are all it needs. What it does not do: book or
 pay, type a password, sign in to an account, paste an API key into a field, or change a system
@@ -64,8 +65,8 @@ setting.
 
 **You do, when Claude asks during the day:**
 
-- [ ] Paste the test keys into Kalamu's Settings → API keys, and accept the consent dialog at
-  the first send to each provider.
+- [ ] Paste the test keys into Kalamu's Settings → API keys. The consent dialog at the first
+  send to each provider is agreed to in the brief, for the sample files.
 - [ ] System Settings → Keyboard → *Keyboard navigation*, off and then on, for Part C; and
   VoiceOver on and off (⌘F5).
 - [ ] Sign in to TestFlight (and the App Store) with the tester's Apple ID, for Part E.
@@ -96,8 +97,8 @@ Today is a test day for Kalamu, a desktop app for researchers (https://github.co
 3. A file copied with scp is not quarantined, so before opening the disk image mark it as a browser would, to test Gatekeeper's first-open question:
    xattr -w com.apple.quarantine "0081;$(printf %x $(date +%s));Safari;" Kalamu_*_aarch64.dmg
 4. Write results.md in this folder after each step, not at the end: the step's letter and number, then passed, failed or not tried. For a failure: what you did, what you expected, what happened, and a screenshot in problems/. For "not tried": why.
-5. Before any job that sends files to a provider, read the estimate Kalamu shows and tell me the provider, the files and the estimate. Go on by yourself when it is under $0.25 and the step asks for that provider; ask me otherwise. Stop at $3 in all. Use only the sample files.
-6. Stop and ask me whenever a step needs a password, an Apple ID sign-in, a key in Kalamu's Settings, a consent dialog, or a system setting (keyboard navigation, VoiceOver): I do those, you never do.
+5. I agree now to: the consent dialog at the first send to Gemini and Mistral, for the sample files only; and any job the checklist asks for whose estimate, which you read before starting, is under $0.25, up to $3 in all. Ask me for anything beyond that.
+6. Stop and ask me whenever a step needs a password, an Apple ID sign-in, a key in Kalamu's Settings, or a system setting (keyboard navigation, VoiceOver): I do those, you never do.
 7. Do not change Kalamu's files, settings outside the app, or anything outside this folder and the app's own data, except what a step asks for (the test folder with accents, the test disk image, ending Kalamu in Part D).
 At the end, summarise what failed, what you could not try (for instance the player's sound), and what passed, in that order.
 ```
@@ -155,8 +156,8 @@ most of this was never written down for the disk image.
   *Quit now* quits. At the next launch the sidebar's foot names the interrupted job with
   **Resume**; resumed, it finishes without reading again the pages already done.
 - [ ] **A11. A cloud job and its consent**: an extraction of `dodington-1755.jpg` with Gemini.
-  The dialog names the provider, says what is sent and gives the privacy policy's address
-  (yours to accept); a second job to the same provider asks nothing.
+  The dialog names the provider, says what is sent and gives the privacy policy's address;
+  a second job to the same provider asks nothing.
 - [ ] **A12. YouTube**: New job → Transcribe YouTube with a short public video, with Gemini;
   the review plays it in YouTube's player inside the window, and the links to YouTube open
   Safari.
