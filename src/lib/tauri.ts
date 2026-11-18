@@ -54,6 +54,7 @@ import type { JobProgress } from './bindings/JobProgress.js';
 import type { JobSummary } from './bindings/JobSummary.js';
 import type { JobSources } from './bindings/JobSources.js';
 import type { KeyStatus } from './bindings/KeyStatus.js';
+import type { ListedAdded } from './bindings/ListedAdded.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
@@ -249,6 +250,11 @@ export const api = {
 		from: string,
 		to: string | null
 	) => invoke<Correction[]>('rename_listed', { jobId, sourceId, index, key, from, to }),
+	/** Adds names or choices a model missed to a list answer (one per line or between
+	 * semicolons) in every set-up that read the piece, all or none; gives back those set-ups'
+	 * corrections as they stood, to put back, and what became of each item. */
+	addListed: (jobId: string, sourceId: string, index: number, key: string, items: string[]) =>
+		invoke<ListedAdded>('add_listed', { jobId, sourceId, index, key, items }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
 		invoke<void>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>

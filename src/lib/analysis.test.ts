@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collate, findTerm, holdsWords } from './analysis.js';
+import { byHand, collate, findTerm, holdsWords } from './analysis.js';
 
 const a = {
 	siglum: 'a',
@@ -31,6 +31,15 @@ describe('analysis collation', () => {
 			{ value: 'Negative', sigla: ['b'] }
 		]);
 		expect(collate('tone', [{ siglum: 'c', answers: [{ key: 'tone', value: ' ' }] }])).toEqual([]);
+	});
+
+	it('tells the names the researcher wrote from those a model listed', () => {
+		const models = [a.answers, b.answers];
+		expect(byHand('places', 'DAKAR ', models)).toBe(false);
+		expect(byHand('places', 'Ségou', models)).toBe(false);
+		expect(byHand('places', 'Kankan', models)).toBe(true);
+		expect(byHand('people', 'Kankan', models)).toBe(true);
+		expect(byHand('places', 'Kankan', [])).toBe(true);
 	});
 
 	it('marks every occurrence of a term in the source text', () => {

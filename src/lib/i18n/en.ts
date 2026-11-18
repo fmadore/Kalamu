@@ -360,6 +360,8 @@ export const en = {
 		save: 'Save',
 		cancel: 'Cancel',
 		evidence: 'Where it was found',
+		/** A spelling the researcher wrote in a corrected answer, not the model. */
+		byHand: 'added or renamed by you',
 		noEvidence: 'No result lists it any longer.',
 		openReview: 'Open the review',
 		export: 'Export',
@@ -1460,13 +1462,32 @@ export const en = {
 		itemMenu: (name: string) => `What to do with “${name}”`,
 		renameItem: 'Rename',
 		removeItem: 'Remove from the answers',
-		itemLocates: 'Marked in the source while it has the focus.',
 		itemKeys:
 			'Marked in the source while it has the focus. Enter, or the menu key, renames or removes it.',
 		pageImage: 'Page image: the arrow keys move it, with Shift by longer steps',
 		itemRemoved: (name: string) => `“${name}” removed from the answers`,
 		itemEverywhere:
 			'Changed in this document’s corrected answers, for every model that found it. The model’s own answers are kept.',
+		/** The button at the end of a list answer that opens a field to add to it. */
+		addItem: 'Add',
+		addTo: (field: string) => `Add to “${field}”`,
+		addName: (field: string) => `Add to “${field}”: one name, or several separated by semicolons`,
+		addChoice: (field: string) => `Choice to add to “${field}”`,
+		addPlaceholder: 'A name; another name',
+		addHint:
+			'Enter adds and keeps the field open; Escape closes it. Added for every model that read the document; the models’ own answers are kept.',
+		addEmpty: 'Type a name to add.',
+		allChosen: 'Every choice is already listed.',
+		itemsAdded: (names: string[]) =>
+			`${names.map((n) => `“${n}”`).join(', ')} added to the answers`,
+		alreadyListed: (names: string[]) =>
+			`Already in the list: ${names.map((n) => `“${n}”`).join(', ')}`,
+		notAChoice: (names: string[]) =>
+			`Not one of this field’s choices: ${names.map((n) => `“${n}”`).join(', ')}`,
+		/** Read after a name the researcher added or renamed, which no model listed. */
+		yours: (name: string) => `${name}, your correction`,
+		yoursHint: 'Added or renamed by you; no model listed it',
+		choiceKeys: 'Marked in the source while it has the focus. Enter, or the menu key, removes it.',
 		edit: 'Correct',
 		save: 'Save correction',
 		discard: 'Discard changes',

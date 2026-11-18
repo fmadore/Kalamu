@@ -456,6 +456,8 @@ export const fr: Messages = {
 		save: 'Enregistrer',
 		cancel: 'Annuler',
 		evidence: 'Où elle a été relevée',
+		/** A spelling the researcher wrote in a corrected answer, not the model. */
+		byHand: 'ajoutée ou renommée par vous',
 		noEvidence: 'Aucun résultat ne la relève plus.',
 		openReview: 'Ouvrir la relecture',
 		export: 'Exporter',
@@ -1559,13 +1561,36 @@ export const fr: Messages = {
 		itemMenu: (name: string) => `Que faire de « ${name} » ?`,
 		renameItem: 'Renommer',
 		removeItem: 'Retirer des réponses',
-		itemLocates: 'Marqué dans la source tant qu’il a le focus.',
 		itemKeys:
 			'Marqué dans la source tant qu’il a le focus. Entrée, ou la touche de menu, le renomme ou le retire.',
 		pageImage: 'Image de la page : les flèches la déplacent, avec Maj par pas plus longs',
 		itemRemoved: (name: string) => `« ${name} » retiré des réponses`,
 		itemEverywhere:
 			'Modifié dans les réponses corrigées de ce document, pour chaque modèle qui l’a relevé. Les réponses du modèle sont conservées.',
+		/** The button at the end of a list answer that opens a field to add to it. */
+		addItem: 'Ajouter',
+		addTo: (field: string) => `Ajouter à « ${field} »`,
+		addName: (field: string) =>
+			`Ajouter à « ${field} » : un nom, ou plusieurs séparés par des points-virgules`,
+		addChoice: (field: string) => `Choix à ajouter à « ${field} »`,
+		addPlaceholder: 'Un nom ; un autre nom',
+		addHint:
+			'Entrée ajoute et garde le champ ouvert ; Échap le ferme. Ajouté pour chaque modèle qui a lu le document ; les réponses des modèles sont conservées.',
+		addEmpty: 'Saisissez un nom à ajouter.',
+		allChosen: 'Tous les choix sont déjà dans la liste.',
+		itemsAdded: (names: string[]) =>
+			names.length === 1
+				? `« ${names[0]} » ajouté aux réponses`
+				: `${names.map((n) => `« ${n} »`).join(', ')} ajoutés aux réponses`,
+		alreadyListed: (names: string[]) =>
+			`Déjà dans la liste : ${names.map((n) => `« ${n} »`).join(', ')}`,
+		notAChoice: (names: string[]) =>
+			`Ne fait pas partie des choix de ce champ : ${names.map((n) => `« ${n} »`).join(', ')}`,
+		/** Read after a name the researcher added or renamed, which no model listed. */
+		yours: (name: string) => `${name}, votre correction`,
+		yoursHint: 'Ajouté ou renommé par vous ; aucun modèle ne l’a relevé',
+		choiceKeys:
+			'Marqué dans la source tant qu’il a le focus. Entrée, ou la touche de menu, le retire.',
 		edit: 'Corriger',
 		save: 'Enregistrer la correction',
 		discard: 'Abandonner les modifications',

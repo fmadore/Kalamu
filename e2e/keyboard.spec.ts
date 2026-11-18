@@ -130,7 +130,11 @@ test('a name in an analysis is located, renamed and removed from the keyboard', 
 	await expect(field).toBeFocused();
 	await page.keyboard.type('Bamako (Soudan)');
 	await page.keyboard.press('Enter');
-	const renamed = places.getByRole('button', { name: 'Bamako (Soudan)', exact: true });
+	// A name no model listed is the researcher's, and said to be.
+	const renamed = places.getByRole('button', {
+		name: 'Bamako (Soudan), your correction',
+		exact: true
+	});
 	await expect(renamed).toBeVisible();
 	await expect(renamed).toBeFocused();
 

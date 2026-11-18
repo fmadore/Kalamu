@@ -80,7 +80,12 @@
 					>{e.document}</button
 				>
 				<span class="muted">{e.job_name} · {e.setup_label}</span>
-				{#each e.forms as form (form)}<span class="chip">{form}</span>{/each}
+				{#each e.forms as form (form)}
+					{@const yours = e.by_hand.includes(form)}
+					<span class="chip" class:yours title={yours ? m.dictionary.byHand : undefined}
+						>{form}{#if yours}<span class="sr-only">({m.dictionary.byHand})</span>{/if}</span
+					>
+				{/each}
 			</li>
 		{/each}
 	</ul>
@@ -121,5 +126,12 @@
 	}
 	.untie:hover {
 		color: var(--text-bright);
+	}
+	/* A spelling the researcher wrote, not the model: underlined in their blue. */
+	.chip.yours {
+		text-decoration: underline;
+		text-decoration-color: var(--hand);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 0.25em;
 	}
 </style>

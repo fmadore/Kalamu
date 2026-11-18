@@ -21,6 +21,7 @@ import {
 	pieces,
 	recording,
 	renameListed,
+	addListed,
 	setupA,
 	setupB,
 	source,
@@ -285,6 +286,8 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 			return null;
 		case 'rename_listed':
 			return renameListed(a);
+		case 'add_listed':
+			return addListed(a);
 		case 'edit_rows':
 			return editRows(a);
 		case 'job_text_outputs':

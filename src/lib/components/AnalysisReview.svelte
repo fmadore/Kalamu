@@ -7,9 +7,13 @@
 	// document too. A name in a list renames or removes it at once, in the corrected answers of
 	// every set-up that found it, from its menu: a click, Enter, a right click or the menu key.
 	// The names of an answer are one tab stop, ← and → going from one to the next; a name with
-	// the focus is found in the document as one pointed at. An analysis whose fields are one
-	// repeating group gives rows, page by page, reviewed in a table of its own (`RecordsReview`).
+	// the focus is found in the document as one pointed at. What the models missed is added at
+	// the end of a list (`AddItems`), in every set-up's corrected answers; a name no model listed
+	// is the researcher's, underlined in their blue and said to be. An analysis whose fields are
+	// one repeating group gives rows, page by page, reviewed in a table of its own
+	// (`RecordsReview`), which adds no names this way.
 	import { onMount, tick } from 'svelte';
+	import AddItems from './AddItems.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
@@ -18,7 +22,7 @@
 	import ReviewFrame from './ReviewFrame.svelte';
 	import SearchBar from './SearchBar.svelte';
 	import SiglaKey from './SiglaKey.svelte';
-	import { collate, holdsWords, type Witness } from '#lib/analysis.js';
+	import { byHand, collate, holdsWords, type Witness } from '#lib/analysis.js';
 	import { siglum } from '#lib/apparatus.js';
 	import type { Correction } from '#lib/bindings/Correction.js';
 	import type { Field } from '#lib/bindings/Field.js';
@@ -72,6 +76,8 @@
 		setups.map((s, i) => ({ siglum: siglum(i), answers: answersOf(viewOf(s)) }))
 	);
 	const comparing = $derived(setups.length > 1);
+	/** Each set-up's own answers, from the model: a name none of them lists is the researcher's. */
+	const models = $derived(setups.map((s) => viewOf(s)?.ai_fields ?? []));
 
 	let searching = $state(false);
 	let query = $state('');
@@ -129,11 +135,18 @@
 	}
 
 	/** The name whose menu is open, and where. */
-	let itemMenu = $state<{ key: string; value: string; x: number; y: number } | null>(null);
+	let itemMenu = $state<{
+		key: string;
+		value: string;
+		x: number;
+		y: number;
+		/** A free name is renamed or removed; a choice only removed. */
+		renamable: boolean;
+	} | null>(null);
 
 	/** Opens a name's menu: at the pointer for a right click, under the name otherwise. */
 	function openItemMenu(e: MouseEvent, f: Field) {
-		if (f.kind.type !== 'list' || editing) return;
+		if ((f.kind.type !== 'list' && f.kind.type !== 'choices') || editing) return;
 		const item = (e.target as HTMLElement).closest<HTMLElement>('[data-item]');
 		if (!item?.dataset.item) return;
 		e.preventDefault();
@@ -143,7 +156,8 @@
 			key: f.key,
 			value: item.dataset.item,
 			x: pointer ? e.clientX : at.left,
-			y: pointer ? e.clientY : at.bottom + 4
+			y: pointer ? e.clientY : at.bottom + 4,
+			renamable: f.kind.type === 'list'
 		};
 	}
 
@@ -207,6 +221,38 @@
 		if (!collate(key, witnesses).some((r) => r.value === name)) return;
 		itemStops[key] = name;
 		focusItem(key, name);
+	}
+
+	/** Adds what the researcher typed or chose to a list answer, in every set-up that read the
+	 * document, and says what was added, with a way to take it back. */
+	async function addItems(key: string, text: string) {
+		hovered = null;
+		const result = await review.addListed(0, key, text);
+		if (result && result.added.length > 0) {
+			const before = result.before;
+			toast(m.review.itemsAdded(result.added), {
+				action: { label: m.common.undo, run: () => void takeBack(key, before) }
+			});
+		}
+		return result;
+	}
+
+	/** Takes back what was added: each set-up's corrected answers as they were, and the focus,
+	 * lost with the toast's button, on the field's Add. */
+	async function takeBack(key: string, before: Correction[]) {
+		if (!(await review.putBack(before))) return;
+		await tick();
+		if (document.activeElement && document.activeElement !== document.body) return;
+		answersPane
+			?.querySelector<HTMLElement>(`[data-field="${CSS.escape(key)}"] [data-add]`)
+			?.focus();
+	}
+
+	/** For a field of choices, those its answers do not list yet; null for free names. */
+	function choicesLeft(f: Field, listed: string[]): string[] | null {
+		if (f.kind.type !== 'choices') return null;
+		const has = (c: string) => listed.some((v) => v.trim().toLowerCase() === c.toLowerCase());
+		return f.kind.values.filter((c) => !has(c));
 	}
 
 	function toggleReviewed() {
@@ -276,6 +322,7 @@
 			{@const at = itemMenu}
 			<ItemMenu
 				value={at.value}
+				renamable={at.renamable}
 				x={at.x}
 				y={at.y}
 				onrename={(to) => void changeItem(at.key, at.value, to)}
@@ -353,17 +400,27 @@
 						{@const values = readings.map((r) => r.value)}
 						{@const stop = rovingStop(values, itemStops[f.key])}
 						<p class="items" oncontextmenu={(e) => openItemMenu(e, f)}>
-							{#each readings as r, k (r.value)}{#if k > 0}<span class="sep"
-										>{m.common.semicolon}</span
-									>{/if}<button
+							{#each readings as r, k (r.value)}{@const yours = byHand(
+									f.key,
+									r.value,
+									models
+								)}{#if k > 0}<span class="sep">{m.common.semicolon}</span>{/if}<button
 									type="button"
 									class="item"
-									class:named
+									class:yours
 									class:partial={comparing && r.sigla.length < setups.length}
 									data-item={r.value}
+									title={yours ? m.review.yoursHint : undefined}
+									aria-label={yours
+										? m.review.yours(
+												comparing && r.sigla.length < setups.length
+													? `${r.value} ${r.sigla.join(' ')}`
+													: r.value
+											)
+										: undefined}
 									tabindex={stop === r.value ? 0 : -1}
-									aria-haspopup={named ? 'menu' : undefined}
-									aria-describedby={named ? 'item-keys' : 'item-locates'}
+									aria-haspopup="menu"
+									aria-describedby={named ? 'item-keys' : 'choice-keys'}
 									onclick={(e) => openItemMenu(e, f)}
 									onkeydown={(e) => roveItems(e, f.key, values, r.value)}
 									onfocus={() => {
@@ -386,6 +443,17 @@
 							</p>
 						{/each}
 					{/if}
+					{#if f.kind.type === 'list' || f.kind.type === 'choices'}
+						<AddItems
+							field={f.key}
+							label={f.label}
+							choices={choicesLeft(
+								f,
+								readings.map((r) => r.value)
+							)}
+							onadd={(text) => addItems(f.key, text)}
+						/>
+					{/if}
 					{#if f.reason}
 						{#each witnesses as w (w.siglum)}
 							{@const reason = w.answers.find((a) => a.key === f.key)?.reason}
@@ -403,7 +471,7 @@
 
 		{#if !editing}
 			<span class="sr-only" id="item-keys">{m.review.itemKeys}</span>
-			<span class="sr-only" id="item-locates">{m.review.itemLocates}</span>
+			<span class="sr-only" id="choice-keys">{m.review.choiceKeys}</span>
 		{/if}
 
 		{#if !editing && comparing}
@@ -470,11 +538,15 @@
 		font: inherit;
 		line-height: inherit;
 		text-align: inherit;
-		cursor: default;
+		cursor: pointer;
 		transition: background-color 120ms ease-out;
 	}
-	.items .item.named {
-		cursor: pointer;
+	/* A name no model listed: the researcher's, underlined in their blue as a correction is. */
+	.items .item.yours {
+		text-decoration: underline;
+		text-decoration-color: var(--hand);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 0.25em;
 	}
 	.items .item:hover,
 	.items .item:focus-visible {
