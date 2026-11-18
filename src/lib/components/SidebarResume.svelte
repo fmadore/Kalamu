@@ -44,7 +44,7 @@
 	const failed = $derived(failure && jobs.some((j) => j.id === failure?.id) ? failure.text : '');
 
 	/** The Resume buttons by job, to move the focus between them. */
-	const buttons: Record<string, HTMLButtonElement> = {};
+	const buttons = $state<Record<string, HTMLButtonElement>>({});
 
 	async function resume(job: JobSummary, button: HTMLButtonElement) {
 		if (busy) return;

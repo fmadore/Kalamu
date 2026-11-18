@@ -72,7 +72,8 @@ test('nothing new is shown until the regions are', async ({ page }) => {
 	const main = page.getByRole('main');
 	await page.goto('/?mock&view=review-analysis');
 	await page.waitForLoadState('networkidle');
-	await expect(main.getByRole('region', { name: 'Answers' })).toBeVisible();
+	// A first visit to this review can take Vite a while on a cold server.
+	await expect(main.getByRole('region', { name: 'Answers' })).toBeVisible({ timeout: 20_000 });
 	await expect(main.getByRole('button', { name: /^Show (text )?regions$/ })).toHaveCount(0);
 });
 
