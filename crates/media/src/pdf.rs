@@ -5,6 +5,7 @@ use kalamu_core::PageHalf;
 use lopdf::{Dictionary, Document, Object, ObjectId};
 
 use crate::MediaError;
+use crate::region::region_box;
 
 /// Page attributes a page inherits from its ancestors in the page tree when it does not set
 /// them itself (PDF 1.7, 7.7.3.4).
@@ -298,6 +299,36 @@ impl PdfSource {
 
     /// A standalone PDF holding one page, or one half of a spread.
     pub fn page_pdf(&self, number: u32, half: Option<PageHalf>) -> Result<Vec<u8>, MediaError> {
+        self.one_page_pdf(number, half, None)
+            .map(|(bytes, _)| bytes)
+    }
+
+    /// A standalone PDF holding the part of a page, or of one half of a spread, that the
+    /// fractions `[left, top, right, bottom]` of it as shown cover: its boxes narrowed to that
+    /// part, as a half's are, so it is drawn alone. Returns it with the part's width and height
+    /// in points, as shown.
+    pub(crate) fn region_pdf(
+        &self,
+        number: u32,
+        half: Option<PageHalf>,
+        fractions: [f32; 4],
+    ) -> Result<(Vec<u8>, (f32, f32)), MediaError> {
+        let (bytes, cut) = self.one_page_pdf(number, half, Some(fractions))?;
+        let [x0, y0, x1, y1] =
+            cut.ok_or_else(|| MediaError::Pdf("the page has no size to cut a region from".into()))?;
+        let (w, h) = (x1 - x0, y1 - y0);
+        let rotation = Self::rotation(&self.page_dict(number)?);
+        Ok((bytes, if rotation % 180 == 90 { (h, w) } else { (w, h) }))
+    }
+
+    /// One page, cut to a half and then to a region of what remains when asked; returns the
+    /// box it was cut to, if any.
+    fn one_page_pdf(
+        &self,
+        number: u32,
+        half: Option<PageHalf>,
+        region: Option<[f32; 4]>,
+    ) -> Result<(Vec<u8>, Option<[f32; 4]>), MediaError> {
         let page_id = self.page_id(number)?;
         let mut page = self.page_dict(number)?;
         for key in SKIPPED {
@@ -326,10 +357,13 @@ impl PdfSource {
         out.max_id = self.doc.max_id;
         let pages_id = out.new_object_id();
 
-        if let Some(half) = half
-            && let Some(bounds) = self.page_box(&page)
-        {
-            let cut = half_box(bounds, Self::rotation(&page), half);
+        let rotation = Self::rotation(&page);
+        let cut = self.page_box(&page).and_then(|bounds| {
+            let bounds = half.map_or(bounds, |half| half_box(bounds, rotation, half));
+            let bounds = region.map_or(bounds, |r| region_box(bounds, rotation, r));
+            (half.is_some() || region.is_some()).then_some(bounds)
+        });
+        if let Some(cut) = cut {
             let array = Object::Array(cut.iter().map(|v| Object::Real(*v)).collect());
             page.set("MediaBox", array.clone());
             page.set("CropBox", array);
@@ -352,7 +386,7 @@ impl PdfSource {
         let mut bytes = Vec::new();
         out.save_to(&mut bytes)
             .map_err(|e| MediaError::Pdf(e.to_string()))?;
-        Ok(bytes)
+        Ok((bytes, cut))
     }
 }
 

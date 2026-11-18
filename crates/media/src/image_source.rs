@@ -5,6 +5,7 @@ use image::{DynamicImage, GenericImageView, ImageDecoder, ImageFormat, ImageRead
 use kalamu_core::PageHalf;
 
 use crate::MediaError;
+use crate::region::{MIN_REGION_PIXELS, RegionRefusal, pixel_box};
 
 /// Longest side sent to a provider; larger scans are scaled down (Claude refuses above 8000 px).
 const MAX_SIDE: u32 = 7_680;
@@ -121,6 +122,38 @@ impl ImageSource {
         {
             return Ok((self.mime.clone(), self.bytes.clone()));
         }
+        let mut img = self.upright(number, half)?;
+        let (w, h) = img.dimensions();
+        if w.max(h) > MAX_SIDE {
+            img = img.resize(MAX_SIDE, MAX_SIDE, image::imageops::FilterType::Lanczos3);
+        }
+        encode(&img, accepted)
+    }
+
+    /// The part of a page, or of one half of it, that the fractions `[left, top, right, bottom]`
+    /// of it as shown cover, cut at the image's own pixels after its EXIF turn, in an accepted
+    /// image format. Refused when it comes out under [`MIN_REGION_PIXELS`] on a side.
+    pub(crate) fn prepare_region(
+        &self,
+        number: u32,
+        half: Option<PageHalf>,
+        fractions: [f32; 4],
+        accepted: &[&str],
+    ) -> Result<(String, Vec<u8>), MediaError> {
+        let img = self.upright(number, half)?;
+        let [x, y, w, h] = pixel_box(img.dimensions(), fractions);
+        if w.min(h) < MIN_REGION_PIXELS {
+            return Err(RegionRefusal::TooSmall.into());
+        }
+        let mut img = img.crop_imm(x, y, w, h);
+        if w.max(h) > MAX_SIDE {
+            img = img.resize(MAX_SIDE, MAX_SIDE, image::imageops::FilterType::Lanczos3);
+        }
+        encode(&img, accepted)
+    }
+
+    /// Page `number` decoded, turned upright and cut to the half asked for.
+    fn upright(&self, number: u32, half: Option<PageHalf>) -> Result<DynamicImage, MediaError> {
         if !self.is_decodable() {
             return Err(MediaError::NeedsConversion(format!(
                 "This model does not accept {} images and they cannot be converted yet. Convert \
@@ -128,20 +161,20 @@ impl ImageSource {
                 self.mime.trim_start_matches("image/").to_uppercase()
             )));
         }
-        let mut img = self.decode(number)?;
-        if let Some(half) = half {
-            let (w, h) = img.dimensions();
-            let mid = w / 2;
-            img = match half {
-                PageHalf::Left => img.crop_imm(0, 0, mid, h),
-                PageHalf::Right => img.crop_imm(mid, 0, w - mid, h),
-            };
+        // A single image has page 1 only; `decode` reads it whatever the number asked.
+        if number == 0 || number > self.page_count() {
+            return Err(MediaError::NoSuchPage(number.to_string()));
         }
+        let img = self.decode(number)?;
+        let Some(half) = half else {
+            return Ok(img);
+        };
         let (w, h) = img.dimensions();
-        if w.max(h) > MAX_SIDE {
-            img = img.resize(MAX_SIDE, MAX_SIDE, image::imageops::FilterType::Lanczos3);
-        }
-        encode(&img, accepted)
+        let mid = w / 2;
+        Ok(match half {
+            PageHalf::Left => img.crop_imm(0, 0, mid, h),
+            PageHalf::Right => img.crop_imm(mid, 0, w - mid, h),
+        })
     }
 
     fn decode(&self, number: u32) -> Result<DynamicImage, MediaError> {
@@ -165,7 +198,10 @@ impl ImageSource {
 
 /// PNG keeps fine strokes and is the safe choice for scans; JPEG when PNG is not accepted or
 /// would be too large.
-fn encode(img: &DynamicImage, accepted: &[&str]) -> Result<(String, Vec<u8>), MediaError> {
+pub(crate) fn encode(
+    img: &DynamicImage,
+    accepted: &[&str],
+) -> Result<(String, Vec<u8>), MediaError> {
     const PNG_LIMIT: usize = 15 * 1024 * 1024;
     if accepted.contains(&"image/png") {
         let mut out = Vec::new();

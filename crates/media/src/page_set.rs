@@ -82,6 +82,22 @@ impl PageSet {
         self.open(index)?.prepare(frame, half, accepted)
     }
 
+    /// The part of page `number` of the document that the fractions cover; see
+    /// [`ImageSource::prepare_region`].
+    pub(crate) fn prepare_region(
+        &self,
+        number: u32,
+        half: Option<PageHalf>,
+        fractions: [f32; 4],
+        accepted: &[&str],
+    ) -> Result<(String, Vec<u8>), MediaError> {
+        let (index, frame) = self
+            .locate(number)
+            .ok_or_else(|| MediaError::NoSuchPage(number.to_string()))?;
+        self.open(index)?
+            .prepare_region(frame, half, fractions, accepted)
+    }
+
     /// Each file's checks, its pages numbered as the document numbers them. A file that cannot
     /// be read is left to fail when its page is.
     pub fn warnings(&self) -> Vec<WarningKind> {
