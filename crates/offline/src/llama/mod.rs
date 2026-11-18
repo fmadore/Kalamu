@@ -10,6 +10,10 @@
 //! characters; the text program reads the instructions, the document and the answer's schema
 //! from files (docs/decisions/2026-11-07-offline-language-models.md).
 //!
+//! Beside the processor build sits also its embedding program (`llama-embedding`), which the
+//! offline embedding model for the search by meaning runs in (`embed/`): it reads several texts
+//! from one file, separated by a marker, and prints their vectors, the model loaded once.
+//!
 //! The program is built for the same processors as Whisper (`.cargo/config.toml`), on the
 //! processor on Windows and on the graphics processor with Metal on a Mac, by
 //! `.github/workflows/llama.yml`, and pinned in `scripts/llama.json`. On Windows a second build,
@@ -36,6 +40,9 @@ pub const PROGRAM: &str = "llama-mtmd-cli";
 
 /// The text program's name; each build's has the same suffix as its multimodal program.
 pub const TEXT_PROGRAM: &str = "llama-completion";
+
+/// The embedding program's name; only the processor build (Metal on a Mac) has one.
+pub const EMBEDDING_PROGRAM: &str = "llama-embedding";
 
 /// The Windows build that uses the graphics processor through Vulkan.
 pub const VULKAN_PROGRAM: &str = "llama-mtmd-cli-vulkan";
@@ -79,6 +86,11 @@ pub struct Llama {
     program: PathBuf,
     /// The same build's text program, when it was shipped.
     text: Option<PathBuf>,
+    /// The same build's embedding program, when it was shipped.
+    embedding: Option<PathBuf>,
+    /// Given before a run's own arguments: empty but in tests, where the program is the test
+    /// executable started again and these choose the test that plays it.
+    prefix: Vec<String>,
     /// Set for each run: where the OpenCL build keeps the kernels it compiles.
     env: Vec<(String, PathBuf)>,
 }
@@ -167,12 +179,18 @@ impl Llama {
         self.text.is_some()
     }
 
+    /// Whether this build also has its embedding program.
+    pub fn embeds(&self) -> bool {
+        self.embedding.is_some()
+    }
+
     fn command(&self) -> Command {
         self.command_for(&self.program)
     }
 
     fn command_for(&self, program: &Path) -> Command {
         let mut command = Command::new(program);
+        command.args(&self.prefix);
         command.envs(self.env.iter().map(|(k, v)| (k, v)));
         quiet(&mut command);
         command
@@ -184,11 +202,16 @@ impl Llama {
             .into_iter()
             .find_map(|dir| {
                 let program = dir.join(format!("{name}{exe}"));
-                let text = dir.join(format!("{}{exe}", name.replacen(PROGRAM, TEXT_PROGRAM, 1)));
+                let beside = |other: &str| {
+                    let path = dir.join(format!("{}{exe}", name.replacen(PROGRAM, other, 1)));
+                    path.is_file().then_some(path)
+                };
                 program.is_file().then(|| Self {
+                    text: beside(TEXT_PROGRAM),
+                    embedding: beside(EMBEDDING_PROGRAM),
                     program,
-                    text: text.is_file().then_some(text),
                     env: Vec::new(),
+                    prefix: Vec::new(),
                 })
             })
     }
@@ -198,7 +221,22 @@ impl Llama {
         Self {
             program,
             text: None,
+            embedding: None,
             env: Vec::new(),
+            prefix: Vec::new(),
+        }
+    }
+
+    /// A build whose embedding program is `program`, started with `prefix` before each run's
+    /// arguments: the test executable itself, playing the program.
+    #[cfg(test)]
+    pub(crate) fn embedding_at(program: PathBuf, prefix: Vec<String>) -> Self {
+        Self {
+            program: program.clone(),
+            text: None,
+            embedding: Some(program),
+            env: Vec::new(),
+            prefix,
         }
     }
 
@@ -274,6 +312,16 @@ impl Llama {
         self.run_program(text, args, stop)
     }
 
+    /// Runs the embedding program the same way.
+    pub fn run_embedding(&self, args: &[String], stop: &StopSignal) -> Result<Run, RunError> {
+        let embedding = self.embedding.as_ref().ok_or_else(|| {
+            RunError::Missing(
+                "This copy of Kalamu has no engine for the offline search by meaning".into(),
+            )
+        })?;
+        self.run_program(embedding, args, stop)
+    }
+
     fn run_program(
         &self,
         program: &Path,
@@ -336,7 +384,10 @@ fn last_error(diagnostics: &str) -> String {
         .rev()
         .find(|l| {
             let l = l.to_ascii_lowercase();
-            l.contains("error") || l.contains("failed") || l.contains("too long")
+            l.contains("error")
+                || l.contains("failed")
+                || l.contains("too long")
+                || l.contains("exceeds")
         })
         .or(lines.last())
         .map_or_else(|| "no message".to_owned(), |l| (*l).to_owned())
@@ -473,6 +524,13 @@ exiting
         .unwrap();
         let with = Llama::locate_program(VULKAN_PROGRAM, &[dir.path().to_owned()]).unwrap();
         assert!(with.reads_text());
+        // Only the processor build ships an embedding program.
+        assert!(!with.embeds());
+        std::fs::write(dir.path().join(format!("llama-mtmd-cli{exe}")), b"").unwrap();
+        std::fs::write(dir.path().join(format!("llama-embedding{exe}")), b"").unwrap();
+        let processor = Llama::locate_program(PROGRAM, &[dir.path().to_owned()]).unwrap();
+        assert!(processor.embeds());
+        assert!(!processor.reads_text());
         assert_eq!(
             with.text.unwrap(),
             dir.path().join(format!("llama-completion-vulkan{exe}"))
@@ -489,6 +547,10 @@ exiting
         );
         assert!(matches!(
             llama.run_text(&[], &StopSignal::default()),
+            Err(RunError::Missing(_))
+        ));
+        assert!(matches!(
+            llama.run_embedding(&[], &StopSignal::default()),
             Err(RunError::Missing(_))
         ));
         assert_eq!(llama.version(), None);
