@@ -274,7 +274,17 @@ spread), its box in fractions of the page or half (`x`, `y`, `width`, `height`),
 as `r1_l2`), whether it `has_text` (the text itself is not recorded), and when it was created
 and updated. A set-up's file lists those drawn on the source, those adjusting its own
 readings and those adjusting a reading no set-up shows any more. ALTO, PAGE XML and the
-searchable PDF keep the engine's own positions.
+searchable PDF keep the engine's own positions. A model's region is named there as PAGE XML
+names it (`r1`, `r1_l2`, `r1_l2_w3`), except on a split spread, whose halves the review
+numbers each on its own and PAGE XML across the whole page.
+
+And `region_readings`, the regions a model read again at the researcher's request and whose
+reading they used, each with its `page` (and `half`), the `region`'s id and box, the
+provider, model, prompt and request settings, where it went (`went_to`: `region`, the text of
+a region the researcher drew, or `text`, in place of the region's words in the page's text),
+whether it was `edited` first, its cost and when it was asked and accepted; never the text.
+A reading that went to a drawn region is listed in every set-up's file, one that went into
+the text in that set-up's alone. Their cost is not in `usage` or `cost_usd`.
 
 ## The search index (`search.sqlite`)
 

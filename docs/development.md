@@ -112,6 +112,8 @@ parameters open a given state:
 | `view=all-jobs` | Opens the Jobs page, with 24 older finished jobs |
 | `view=review`, `review-audio`, `review-analysis` | Opens the review of a sample extraction, recording or analysis |
 | `view=review-youtube`, `review-contents`, `review-correction`, `review-records` | Opens the review of a YouTube video, a table of contents, a correction or records (a directory's rows, page by page) |
+| `view=review-analysis-scan` | Opens the review of an analysis of a scan, where regions can be drawn on its pages |
+| `reading-slow` | A region read again answers after a minute rather than at once, to try Stop |
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `view=projects`, `project`, `document` | Opens the list of projects, a sample project, or one of its documents |
 | `view=workflows`, `workflow`, `run` | Opens the workflows and their runs, a sample workflow, or its run waiting for a review |
