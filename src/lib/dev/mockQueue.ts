@@ -4,7 +4,8 @@
 // covers are listed and counted: the project's, a collection's or those chosen, as
 // `Projects::queue_plan` chooses them. A sample drawn at random takes the interview's segments
 // nothing flags, in order (Rust ranks them by the seed); items kept aside are matched as Rust
-// matches them, by their answer. Development builds only.
+// matches them, by their answer; results set aside are kept per scope, as the project keeps
+// them. Development builds only.
 
 import type { KeptAside } from '../bindings/KeptAside.js';
 import type { QueueCounts } from '../bindings/QueueCounts.js';
@@ -48,9 +49,10 @@ function item(over: Partial<QueueItem> & Pick<QueueItem, 'signals'>): QueueItem 
 	};
 }
 
-/** The sample asked for in each scope, by `QueueSelection::key`'s rule, and the items kept
- * aside, as the project keeps them. */
+/** The sample asked for in each scope, by `QueueSelection::key`'s rule, the results set aside
+ * from each, and the items kept aside, as the project keeps them. */
 const samples = new Map<string, SampleSpec>();
+const setAside = new Map<string, ResultKey[]>();
 let kept: KeptAside[] = [];
 
 function scopeKey(selection: QueueSelection): string {
@@ -170,11 +172,19 @@ export function queueCommand(
 	a: Record<string, unknown>
 ): QueueView | SampleSpec | null | undefined {
 	switch (cmd) {
-		case 'review_queue':
-			return queueView(
-				(a.selection as QueueSelection | undefined) ?? { kind: 'project' },
-				(a.excluded as ResultKey[] | undefined) ?? []
+		case 'review_queue': {
+			const selection = (a.selection as QueueSelection | undefined) ?? { kind: 'project' };
+			return queueView(selection, setAside.get(scopeKey(selection)) ?? []);
+		}
+		case 'set_result_aside': {
+			const key = scopeKey((a.selection as QueueSelection | undefined) ?? { kind: 'project' });
+			const result = a.result as ResultKey;
+			const others = (setAside.get(key) ?? []).filter(
+				(k) => k.job_id !== result.job_id || k.setup_id !== result.setup_id
 			);
+			setAside.set(key, a.aside ? [...others, result] : others);
+			return null;
+		}
 		case 'set_review_sample': {
 			const key = scopeKey((a.selection as QueueSelection | undefined) ?? { kind: 'project' });
 			if (a.size == null) {

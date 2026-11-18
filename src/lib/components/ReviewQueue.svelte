@@ -5,7 +5,8 @@
 	// coverage above the list counts every result read, whatever the filters show. Opening an item
 	// opens its review at its page, with the next and previous items a click away. An item can be
 	// kept aside with a note; a random sample of the pages nothing flags is drawn on request and
-	// listed apart; the whole list, sample included, is exported as a review manifest.
+	// listed apart; the whole list, sample included, is exported as a review manifest. Results set
+	// aside from a scope are kept with the project, as its sample is.
 	import Icon from './Icon.svelte';
 	import QueueRow from './QueueRow.svelte';
 	import QueueSample from './QueueSample.svelte';
@@ -56,7 +57,6 @@
 	// svelte-ignore state_referenced_locally
 	const chosen: string[] = fromTable ? selection : (kept?.selection ?? []);
 	let scope = $state(fromTable ? 'selection' : (kept?.scope ?? ''));
-	let excluded = $state<ResultKey[]>(kept?.excluded ?? []);
 	let filter = $state<QueueFilter>(
 		kept ? { ...kept.filter, reasons: [...kept.filter.reasons] } : { ...DEFAULT_FILTER }
 	);
@@ -91,7 +91,7 @@
 		loading = true;
 		action.error = null;
 		try {
-			const read = await api.reviewQueue(projectId, selectionOf(scope), excluded);
+			const read = await api.reviewQueue(projectId, selectionOf(scope));
 			if (mine === ticket) view = read;
 		} catch (e) {
 			if (mine === ticket) action.fail(e);
@@ -133,16 +133,20 @@
 		try {
 			// The CSV goes beside the JSON: in the Mac App Store's build, its folder is asked for.
 			if (!(await askForFolders([path]))) return;
-			await api.exportReviewManifest(projectId, selectionOf(scope), excluded, path);
+			await api.exportReviewManifest(projectId, selectionOf(scope), path);
 			toast(q.exported);
 		} catch (e) {
 			action.fail(e);
 		}
 	}
 
-	function setAside(key: ResultKey, included: boolean) {
-		const others = excluded.filter((k) => k.job_id !== key.job_id || k.setup_id !== key.setup_id);
-		excluded = included ? others : [...others, key];
+	async function setAside(key: ResultKey, included: boolean) {
+		try {
+			await api.setResultAside(projectId, selectionOf(scope), key, !included);
+			await load();
+		} catch (e) {
+			action.fail(e);
+		}
 	}
 
 	function toggleReason(reason: Signal['kind']) {
@@ -156,7 +160,6 @@
 			projectId,
 			scope,
 			selection: chosen,
-			excluded,
 			filter: { ...filter, reasons: [...filter.reasons] },
 			items: trail,
 			at: trail.findIndex((i) => itemKey(i) === itemKey(item))
@@ -171,7 +174,6 @@
 
 	$effect(() => {
 		void scope;
-		void excluded;
 		void load();
 	});
 </script>

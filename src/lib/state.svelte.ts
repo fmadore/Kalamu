@@ -12,7 +12,6 @@ import type { ProjectSummary } from './bindings/ProjectSummary.js';
 import type { PieceStatus } from './bindings/PieceStatus.js';
 import type { QueueItem } from './bindings/QueueItem.js';
 import type { Release } from './bindings/Release.js';
-import type { ResultKey } from './bindings/ResultKey.js';
 import type { ProgressEvent } from './bindings/ProgressEvent.js';
 import type { Settings } from './bindings/Settings.js';
 import type { ShellLabels } from './bindings/ShellLabels.js';
@@ -110,7 +109,6 @@ export interface QueueTrail {
 	/** A collection's id, `selection`, or empty for the whole project. */
 	scope: string;
 	selection: string[];
-	excluded: ResultKey[];
 	filter: QueueFilter;
 	items: QueueItem[];
 	at: number;

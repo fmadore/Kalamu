@@ -1,7 +1,9 @@
 //! Which results the review queue reads (#85): the documents in scope, and for each, the result
 //! the researcher preferred for its task or, where none is preferred, every result they have
 //! not set aside. A document read by several set-ups stays one document; its alternatives are
-//! listed, so the researcher sees what the queue reads and can narrow it.
+//! listed, so the researcher sees what the queue reads and can narrow it. What is set aside is
+//! kept with the project for each scope, as the sample is, so the same results are read after
+//! a restart and the sample, drawn from what the queue reads, comes back the same.
 
 use std::collections::HashSet;
 
@@ -63,7 +65,7 @@ pub struct ResultKey {
 }
 
 /// A set-up of a job that reads documents with no preferred result for its task: the queue
-/// reads it unless the researcher sets it aside.
+/// reads it unless the researcher sets it aside (`included` false).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ResultChoice {
@@ -91,12 +93,11 @@ pub struct QueuePlan {
 impl Projects {
     /// The results a review queue over `selection` reads: for each document and task, the
     /// preferred result where the researcher chose one (never set aside), else every result not
-    /// in `excluded`.
+    /// set aside from this scope.
     pub fn queue_plan(
         &self,
         project: ProjectId,
         selection: &QueueSelection,
-        excluded: &[ResultKey],
     ) -> Result<QueuePlan, ProjectError> {
         self.store.project(project).map_err(missing)?;
         let all = self.store.documents(project)?;
@@ -129,7 +130,12 @@ impl Projects {
             |d| in_scope.contains(&d),
             |id| self.jobs.job(id),
         )?;
-        let excluded: HashSet<ResultKey> = excluded.iter().copied().collect();
+        let excluded: HashSet<ResultKey> = self
+            .store
+            .results_set_aside(project, &selection.key())?
+            .into_iter()
+            .map(|(job_id, setup_id)| ResultKey { job_id, setup_id })
+            .collect();
 
         let mut targets = Vec::new();
         let mut choices: Vec<ResultChoice> = Vec::new();
@@ -235,6 +241,28 @@ impl Projects {
         Ok(self
             .store
             .set_review_sample(project, &selection.key(), None)?)
+    }
+
+    /// Sets a result aside from the queue over `selection`, or with `aside` false brings it back.
+    /// Kept with the project for that scope; a preferred result is read whatever is set aside.
+    pub fn set_result_aside(
+        &self,
+        project: ProjectId,
+        selection: &QueueSelection,
+        result: ResultKey,
+        aside: bool,
+    ) -> Result<(), ProjectError> {
+        self.check_selection(project, selection)?;
+        if aside {
+            self.jobs.job(result.job_id).map_err(missing)?;
+        }
+        self.store.set_result_aside(
+            project,
+            &selection.key(),
+            (result.job_id, result.setup_id),
+            aside.then(Timestamp::now),
+        )?;
+        Ok(())
     }
 
     /// Keeps an item of the queue aside with a note, for the answer it holds (`revision`); with

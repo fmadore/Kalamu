@@ -591,7 +591,7 @@ export const fr: Messages = {
 			'Compté sur tous les résultats lus ci-dessous, quel que soit l’affichage. Seules les pages relues sont vérifiées ; les pages signalées ne sont pas un échantillon de l’ensemble.',
 		results: 'Résultats lus',
 		resultsHint:
-			'Là où vous avez retenu un résultat pour un document, seul celui-ci est lu. Ailleurs, chaque résultat est lu et listé ici : écartez ceux que vous ne voulez pas vérifier. Un document lu par plusieurs modèles reste un seul document.',
+			'Là où vous avez retenu un résultat pour un document, seul celui-ci est lu. Ailleurs, chaque résultat est lu et listé ici : écartez ceux que vous ne voulez pas vérifier. Le projet garde ce que vous écartez pour cette liste, et les pages sont tirées au hasard sans eux. Un document lu par plusieurs modèles reste un seul document.',
 		preferred: (n: number) =>
 			n === 1
 				? '1 document lu à travers son résultat retenu'

@@ -29,7 +29,7 @@ mod views;
 pub use attach::{AttachChoice, SourceMatch};
 pub use described::{Described, TagRenamed, described};
 pub use kalamu_core::DescribedBy;
-pub use manifest::{ManifestRow, ReviewManifest};
+pub use manifest::{ManifestRow, ReviewManifest, SetAsideRow};
 pub use queue::{QueueItemKey, QueuePlan, QueueSelection, ResultChoice, ResultKey};
 pub use resulted::AnswerField;
 pub use views::{

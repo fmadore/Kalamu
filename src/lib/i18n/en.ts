@@ -486,7 +486,7 @@ export const en = {
 			'Counted over every result read below, whatever is shown. The reviewed pages are the only ones checked; flagged pages are not a sample of the whole.',
 		results: 'Results read',
 		resultsHint:
-			'Where you chose a preferred result for a document, only it is read. Elsewhere every result is read and listed here: set aside those you do not want to check. A document read by several models is still one document.',
+			'Where you chose a preferred result for a document, only it is read. Elsewhere every result is read and listed here: set aside those you do not want to check. The project keeps what you set aside for this list, and pages are drawn at random without them. A document read by several models is still one document.',
 		preferred: (n: number) =>
 			n === 1
 				? '1 document read through its preferred result'

@@ -340,4 +340,20 @@ pub trait ProjectStore: Send + Sync {
         index: Option<u32>,
     ) -> Result<(), StoreError>;
     fn kept_aside(&self, project: ProjectId) -> Result<Vec<KeptAside>, StoreError>;
+
+    /// Sets a result (a job's set-up) aside from the review queue over one scope of a project,
+    /// `aside` saying when; with `None`, brings it back.
+    fn set_result_aside(
+        &self,
+        project: ProjectId,
+        scope: &str,
+        result: (JobId, SetupId),
+        aside: Option<Timestamp>,
+    ) -> Result<(), StoreError>;
+    /// The results set aside from the review queue over one scope, in the order set aside.
+    fn results_set_aside(
+        &self,
+        project: ProjectId,
+        scope: &str,
+    ) -> Result<Vec<(JobId, SetupId)>, StoreError>;
 }

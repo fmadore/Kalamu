@@ -33,6 +33,17 @@
     "drawn": 1,
     "reviewed": 1
   },
+  "set_aside": [
+    {
+      "job_id": "00000000-0000-0000-0000-000000000002",
+      "job_name": "Bulletins, May 1957",
+      "task": "text_extraction",
+      "setup_id": "00000000-0000-0000-0000-000000000006",
+      "setup_label": "pro",
+      "model": "gemini-pro",
+      "documents": 1
+    }
+  ],
   "items": [
     {
       "document_id": "00000000-0000-0000-0000-000000000001",
