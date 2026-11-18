@@ -42,6 +42,35 @@ The search runs on your computer; nothing is sent. With every search, Kalamu say
 searched and what was not (documents not read yet, pages that failed), so that finding nothing
 is not mistaken for absence.
 
+## Search by meaning, and the map
+
+The search by words finds what is written. **Meaning** finds passages that speak of what you
+describe in other words than yours: a question such as *disputes over land* can
+find a passage that says *the quarrel about the plot beside the market*.
+
+It works from numbers that a model works out from your text, so it has to be prepared once:
+
+1. In the project's **Search**, choose **Meaning**, then a model. EmbeddingGemma 2 runs on your
+   computer after a download in **Settings › Offline models**: nothing is sent and nothing is
+   billed. Gemini, OpenAI and Mistral are faster and cost a little; for those, Kalamu asks
+   first, and says that the corrected text of the project's documents will be sent to that
+   provider, and afterwards each question you type.
+2. Kalamu shows an estimate of what preparing will cost before anything is sent. Start it; you
+   can pause it, and it goes on where it stopped.
+3. Type a question or a description. Documents are listed by their best passage, whatever
+   their length, and each passage opens its source where it stands.
+
+After you correct text, Kalamu says how many pages changed and offers to update them. It never
+does so by itself with a paid model.
+
+The **Map** shows each document of the project as a point, near the documents it resembles,
+grouped by collection or tag. Choose a point to see its nearest documents in the list beside
+it. Read it as a way in, not as a result: positions are approximate, the axes mean nothing,
+and a long document's point is an average of everything in it.
+
+> There are no answers and no chat. The search by meaning shows you where to read; the reading
+> stays yours.
+
 ## The dictionary
 
 The people, places, organisations and terms your analyses listed are gathered in the project's

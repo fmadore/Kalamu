@@ -16,6 +16,7 @@ description: Offline transcription, OCR and analysis in Kalamu with Whisper, Tes
 | Recordings | **Whisper**, in several sizes | Good transcription in many languages. The larger sizes are more accurate and slower. |
 | Clean print | **Tesseract** | Fast, free, each word with its place on the page. Language data is downloaded per language. Not for handwriting. |
 | Degraded print, columns, tables | **LightOnOCR-3**, **GLM-OCR** | Small vision models. Much better than Tesseract on hard pages, much slower on a processor. Like any language model, they can write text that is not on the page. |
+| Search by meaning | **EmbeddingGemma 2** | A small model (310 MB) that prepares a project's text for the [search by meaning and the map](projects.md#search-by-meaning-and-the-map). |
 | Analyses, tables of contents, correction | **Gemma 4** (E4B and E2B) | Small language models. Far weaker than the cloud models: check their answers. |
 
 Nothing is sent anywhere and nothing is billed. The price is time, and for the language models,

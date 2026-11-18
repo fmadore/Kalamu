@@ -132,6 +132,22 @@ improvements that open *Next*; what it did not fix at once was tracked in
   Anthropic once its answers are stored; and the image description run over JPEG, PNG, TIFF
   and PDF against recorded answers, the last point of
   [#168](https://github.com/fmadore/Kalamu/issues/168).
+- **Search by meaning, the map, and two additions to the review, of 18 November**
+  ([decision](decisions/2026-11-18-search-by-meaning-map-passage-correction-added-items.md)), each tested,
+  none yet tried in the packaged app, on a Mac or with a cloud model:
+  - **Search by meaning** ([#86](https://github.com/fmadore/Kalamu/issues/86)): a project's
+    text prepared with a model the researcher chooses (Gemini, OpenAI, Mistral, or
+    EmbeddingGemma 2 on this computer), only when they start it and after consent for a
+    cloud model, with an estimate, a pause, a resume and the cost kept; documents listed by
+    their best passage whatever their length.
+  - **A map of a project's documents**, one point each, grouped by collection or tag, with
+    the nearest documents in a list beside it.
+  - **A passage corrected by a model** from a selection in the review, as a proposal
+    accepted, edited, discarded or undone.
+  - **Add to a list answer** in an analysis's review: the name, keyword or theme a model
+    missed, marked as the researcher's.
+  - **A guide** to using Kalamu, published with the documentation
+    ([fmadore.github.io/Kalamu/guide](https://fmadore.github.io/Kalamu/guide/)).
 - **Five items of 18 November** ([decision](decisions/2026-11-18-gemini-file-batches-set-aside-far-apart-names-resume.md)), each tested,
   none yet tried in the packaged app, on a Mac or in a live run:
   - **Gemini batches through a file**: an economy batch above the 20 MB Google takes in one
@@ -875,9 +891,15 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 - macOS: the application menu's labels through the translation files.
 - Projects: nested collections and saved searches, which
   [#57](https://github.com/fmadore/Kalamu/issues/57) left to follow its first delivery.
-- Semantic search beside the project's word search, evaluated separately: only with explicit
-  local or cloud execution, consent to sending text, versions, costs and coverage; answers and
-  chat stay out of scope ([#86](https://github.com/fmadore/Kalamu/issues/86)).
+- Search by meaning, built on 18 November, still to try: a live preparation with each cloud
+  provider (Gemini's answer may not say the tokens billed; Mistral's limit for one call is a
+  guess), EmbeddingGemma 2 in the packaged app and on a Mac (Metal's numbers against the
+  processor's, since the model's card warns of half precision), and the estimate against a
+  real invoice. Then: a projection that keeps close groups apart, the map following the
+  search's filters, analyses' answers, images and sound, the dictionary's labels offered
+  while adding to a list answer, a pending proposal for a passage shown again when the
+  review reopens. Answers and chat stay out of scope
+  ([#86](https://github.com/fmadore/Kalamu/issues/86)).
 - Linux x86-64: a `.deb` and an AppImage on GitHub releases, built and tested in CI, for a
   documented range of distributions; a third file in each platform layer (`platform/linux.rs`,
   `platform.ts`, `tauri.linux.conf.json`) and WebKitGTK as a third webview. Proposed, not yet

@@ -60,6 +60,18 @@ of names, rename or remove one from its menu (a click, <kbd>Enter</kbd>, or a ri
 the name). Each answer comes with the model's reason, which helps you judge it but is not
 evidence: go back to the text.
 
+To add a name, a keyword or a theme the model missed, use **Add** at the end of the list. What
+you add or rename is underlined as yours, and goes into exports, the dictionary and the search.
+
+## Have a model correct one passage
+
+When a few lines are badly read and the rest is fine, select them in the text and right-click
+(or use **Correct with a model…**, which appears with a selection). Choose a model and a
+correction prompt; Kalamu says what is sent (the passage and a little of the text around it)
+and what it should cost. The model's answer is a proposal shown against your selection:
+accept it, edit it first, or discard it. Accepting writes it as your correction, which you can
+undo; nothing changes by itself.
+
 ## What can go wrong, and how Kalamu tells you
 
 - **A page failed** (the provider refused it, or the connection dropped): it is marked, and

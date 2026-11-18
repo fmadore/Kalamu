@@ -1,6 +1,10 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 18 November 2026, which applies from the first version to send a large
+**Effective date:** 18 November 2026, which applies from the first version to offer a search
+by meaning and a map of a project's documents, for which the text of the project's documents
+and each question typed are sent to a provider the user chooses and agrees to, or to no one
+with a model run on the computer, and to send a passage selected in the review to a model
+for correction; and from the first version to send a large
 batch of the cheaper mode to Google as a file, deleted there afterwards, and to keep with a
 project the results the user sets aside from its list of what to check. The policy of
 17 November 2026 did not say so; it applies from the first version to keep, in a
@@ -111,6 +115,44 @@ audio through the computer's own memory and opens no connection either.
 
 Files and results may contain personal information about the people named or heard in them.
 Choose a provider whose terms suit the material, or work offline.
+
+### The search by meaning and the map
+
+A project's search by meaning and its map of documents are made from numbers a model works
+out from the text (embeddings). Nothing is worked out until the user chooses a model and
+starts it.
+
+- **With a model run on the computer** (EmbeddingGemma 2, downloaded on request from Hugging
+  Face), nothing is sent: the passages are written for a moment to a scratch folder in the
+  app's data folder, read by the program shipped with the app, and deleted.
+- **With a cloud model** (Google's Gemini, OpenAI or Mistral), the app asks first, for that
+  project and that model, naming the provider and saying what is sent. Once the user
+  agrees and starts the preparation, the corrected text of the project's documents (what was
+  read, transcribed, corrected or translated; not the analyses) is sent to that provider in
+  stretches of about 1,200 characters, with the model's name and the user's API key. Each
+  later update sends only the text that changed, when the user asks for it. Afterwards,
+  each question typed in the search by meaning is sent to the same provider. No file name,
+  project name or description is sent. The map and the list of nearest documents are worked
+  out on the computer and send nothing.
+- **Kept on the computer**: the numbers, in a file of their own in the app's data folder
+  (`vectors.sqlite`), which the user can remove model by model; and in the job database the
+  model chosen, when the user agreed, how many questions were asked and what they cost, and
+  each preparation with its counts and cost, deleted with the project. The questions
+  themselves are not kept.
+- OpenAI says it keeps API inputs up to 30 days to detect abuse and does not train on them
+  unless the account opts in; Google says it does not use the content of paid API use to
+  improve its products and logs it for a limited period, and that content sent under a free
+  plan may be used and read by reviewers; for Mistral, see its terms below. These are the
+  providers' statements, read on 18 November 2026, and can change.
+
+### A passage corrected by a model
+
+When the user selects text in the review and asks a model to correct it, the selected
+passage (at most 4,000 characters) and up to 300 characters before and after it from the same
+page or part are sent to the provider of the model chosen, with the correction prompt, after
+the same question about that provider as for a job. With a model run on the computer nothing
+is sent. The request, the model's proposal and whether it was accepted are kept in the job
+database with the job.
 
 ## What the app keeps on the computer
 
