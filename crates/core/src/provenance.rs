@@ -88,6 +88,18 @@ pub struct Provenance {
     /// `cost_usd`, which count the results of the job's own pieces.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub passages: Vec<ProvenancePassage>,
+    /// Regions the researcher drew over the scan, or whose box they adjusted, kept beside the
+    /// stored results, which they never change. Exports' positions remain the engine's own.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<ProvenanceRegion>>")]
+    pub regions: Vec<ProvenanceRegion>,
+    /// Regions of the page the researcher asked a model to read again and accepted: each
+    /// written as the text of a region they drew, or into their corrections, the model's output
+    /// for the page left as it was. Not in `usage` or `cost_usd`, which count the results of the
+    /// job's own pieces.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<ProvenanceRegionReading>>")]
+    pub region_readings: Vec<ProvenanceRegionReading>,
     /// What the results kept cost; for a table of contents, both steps (`merge` gives the
     /// second's share).
     pub usage: Usage,
@@ -199,6 +211,95 @@ pub struct ProvenancePassage {
     pub passage_chars: u32,
     pub context_chars: u32,
     /// The researcher changed the model's proposal before accepting it.
+    pub edited: bool,
+    pub cost_usd: Option<f64>,
+    pub asked_at: Timestamp,
+    pub accepted_at: Timestamp,
+}
+
+/// A region the researcher drew or adjusted, as provenance records it: where it is, who placed
+/// it and what it adjusts. Whether it has text, not the text itself, as for passages: a methods
+/// note can be shared without what the researcher wrote.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceRegion {
+    pub id: String,
+    /// The page's number in the source, from 1.
+    pub page: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub half: Option<crate::PageHalf>,
+    /// Fractions of the page, or of its half, from its top-left corner.
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub origin: crate::RegionOrigin,
+    /// The engine's region whose box it replaces: the stored result's cache key and the
+    /// region's id there. None for a region drawn on its own.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub adjusts: Option<crate::AdjustedRegion>,
+    pub has_text: bool,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
+}
+
+impl ProvenanceRegion {
+    pub fn of(region: &crate::DrawnRegion) -> Self {
+        Self {
+            id: region.id.clone(),
+            page: region.page,
+            half: region.half,
+            x: region.x,
+            y: region.y,
+            width: region.width,
+            height: region.height,
+            origin: crate::RegionOrigin::Manual,
+            adjusts: region.adjusts.clone(),
+            has_text: !region.text.trim().is_empty(),
+            created_at: region.created_at,
+            updated_at: region.updated_at,
+        }
+    }
+}
+
+/// Where an accepted reading of a region went.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum ReadingPlace {
+    /// The text of a region the researcher drew.
+    Region,
+    /// The page's text, in place of the words the region holds there.
+    Text,
+}
+
+/// A region read again by a model at the researcher's request and accepted, as provenance
+/// records it: which region, who read it, with what prompt, where the reading went and whether
+/// the researcher changed it. Not the text, which is in the files or in the region.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceRegionReading {
+    /// The page's number in the source, from 1.
+    pub page: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub half: Option<crate::PageHalf>,
+    /// The region read: a drawn region's id, or an engine's.
+    pub region: String,
+    /// The part of the page sent, in fractions of the page or of its half.
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub provider: ProviderId,
+    pub model: String,
+    pub prompt: ProvenancePrompt,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub request: Vec<RequestSetting>,
+    pub went_to: ReadingPlace,
+    /// The researcher changed the model's reading before accepting it.
     pub edited: bool,
     pub cost_usd: Option<f64>,
     pub asked_at: Timestamp,

@@ -445,6 +445,41 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   pixels need, nor on the zoom; the reader's quarter turns are laid over them. Exports put a
   spread's halves back on the whole page
   ([decision](decisions/2026-11-15-records-regions-batch-files.md)).
+- **The researcher's own regions, and a region read again**
+  ([#84](https://github.com/fmadore/Kalamu/issues/84), second step). Nothing of this shows
+  until the regions are shown: a reader who never asks for them sees the review as it was.
+  Once they are, *Draw a region* sits beside the switch: the next drag on the page draws a
+  box, kept at once; pressed again, a box is placed in the middle of the view and moved with
+  the arrow keys. A box drawn by a slip is simply not kept. The chosen region's card offers
+  *Move or resize* (grab points at least 24 pixels wide; the arrows move, Shift and the arrows
+  resize, Enter keeps, Escape puts back), *Remove* with Undo, and for a region the researcher
+  drew a field, *What is written here*. A model's region can be moved or resized too: the
+  model's own box is kept, and *Put back the model's box* returns to it. The researcher's
+  regions are drawn in the hand's blue with a heavier line and named as theirs. They are
+  offered on every scan page: in the text review whatever the task, and in the analysis,
+  table-of-contents and records reviews, whose switch reads *Show regions* since no model
+  placed text there. A page whose model placed nothing invites drawing.
+  Each region has an identity that does not change: a model's block, line or word is `r3`,
+  `r3_l2`, `r3_l2_w5` within the stored result it comes from, as PAGE XML numbers them (a
+  split spread's halves are numbered each on its own in the review, across the page in PAGE
+  XML); the researcher's has an id of its own. Each says its granularity and its origin: the
+  model's, estimated by Kalamu within a block placed whole, or the researcher's. The
+  researcher's regions are kept apart from the stored result, by page and half, with the
+  fingerprint of the source file; a box given to a model's region belongs to that reading of
+  the page, and when the page is read again it is shown as one the researcher drew, so
+  nothing is lost. Drawing, moving and removing send nothing.
+  *Read this region again…*, on the card, asks a model to read just that part: it is cut from
+  the original at full resolution (a PDF page drawn at 300 dpi, an image at its own pixels)
+  and sent alone as a text extraction, through the engine, recorded before and after, its
+  answer kept so the same request costs nothing twice. The dialog shows the part that will be
+  read, the model (the job's own when it reads pictures, else the last used, else the usual
+  one; one run on this computer is free), what is sent and what it costs, estimated as one
+  page of a text extraction, which errs high for a small region. The answer is a proposal:
+  used as the region's text for one the researcher drew; put in place of the region's words
+  in the page's text, as a correction, for a model's region whose place in the text is
+  certain, the change shown first; only copied where that place is not certain. It can be
+  edited first, and undone. The page's own reading never changes. A reading's cost counts in
+  the job's ([decision](decisions/2026-11-18-drawn-regions-region-read-again.md)).
 - **Differences in the text.** Where another model, or the model under a correction, reads
   differently, the words are highlighted. Pointing at them shows the readings over the text,
   each named by its set-up; clicking them, or stepping through them with F or the arrows above

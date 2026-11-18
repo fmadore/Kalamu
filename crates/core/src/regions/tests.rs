@@ -102,7 +102,11 @@ fn tesseract_text_places_every_region_by_position_a_repeated_phrase_included() {
         spanned(&text, page.blocks[1].span).as_deref(),
         Some("Fin du rapport.")
     );
-    assert!(page.words.iter().all(|w| !w.estimated));
+    assert!(
+        page.words
+            .iter()
+            .all(|w| w.origin == RegionOrigin::Provider)
+    );
 }
 
 #[test]
@@ -134,8 +138,17 @@ fn a_repeated_phrase_has_no_place_once_the_text_differs_from_the_regions() {
     assert!(kita.iter().all(|w| w.span.is_none()));
     let fin = page.words.iter().find(|w| w.text == "Fin").unwrap();
     assert_eq!(spanned(model, fin.span).as_deref(), Some("Fin"));
-    assert!(page.lines.iter().chain(&page.words).all(|r| r.estimated));
-    assert!(page.blocks.iter().all(|r| !r.estimated));
+    assert!(
+        page.lines
+            .iter()
+            .chain(&page.words)
+            .all(|r| r.origin == RegionOrigin::Estimated)
+    );
+    assert!(
+        page.blocks
+            .iter()
+            .all(|r| r.origin == RegionOrigin::Provider)
+    );
 }
 
 #[test]
@@ -280,7 +293,8 @@ fn a_block_placed_whole_gets_estimated_lines_and_words() {
         A4,
     );
     assert_eq!(page.lines.len(), 2);
-    assert!(page.lines[0].estimated && !page.blocks[0].estimated);
+    assert_eq!(page.lines[0].origin, RegionOrigin::Estimated);
+    assert_eq!(page.blocks[0].origin, RegionOrigin::Provider);
     assert_eq!((page.lines[1].x, page.lines[1].y), (0.1, 0.25));
 }
 

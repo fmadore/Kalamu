@@ -9,4 +9,14 @@ export type PageRegions = { blocks: Array<ShownRegion>, lines: Array<ShownRegion
 /**
  * The text shown is the researcher's correction.
  */
-corrected: boolean, };
+corrected: boolean, 
+/**
+ * The cache key of the stored result the engine's regions come from: the revision their
+ * ids belong to. None for a piece not read yet, or a review with no text piece.
+ */
+result: string | null, 
+/**
+ * The researcher's own regions on this page: drawn where the engine placed nothing they
+ * adjust, or adjusting a region of a reading of the page that is no longer shown.
+ */
+drawn: Array<ShownRegion>, };

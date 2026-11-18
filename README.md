@@ -95,7 +95,8 @@ try a small job first. See the [roadmap](docs/roadmap.md) and the
   AI output, which is never overwritten. Zoom the scan about the pointer, and choose a
   difference in either text to bring it level in the other. Where the model placed its text on
   the page (Tesseract, Mistral OCR, LightOnOCR), show the regions over the scan and choose one
-  to find its words in the text. Search a document or a recording across all its pages
+  to find its words in the text. Draw a region of your own on any scan, and have a model read
+  just that part again: a marginal note, a faint line. Search a document or a recording across all its pages
   (Ctrl F, or ⌘F on a Mac), and report inappropriate output from the review.
 - **Compare models** on the same documents, with their differences highlighted in the text and
   error rates against corrected pages.

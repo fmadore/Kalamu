@@ -26,6 +26,7 @@ mod plan;
 mod progress;
 mod realign;
 mod record;
+mod region_reading;
 mod regions;
 mod review;
 mod rules;
@@ -153,6 +154,11 @@ pub struct Engine {
     pub(crate) page_sizes: Mutex<regions::PageSizes>,
     /// Passages asked about from the review and still waiting, by id, to stop waiting for.
     pub(crate) passages: Mutex<HashMap<String, kalamu_core::StopSignal>>,
+    /// Regions asked to be read again from the review and still waiting, by id.
+    pub(crate) region_readings: Mutex<HashMap<String, kalamu_core::StopSignal>>,
+    /// The last region cut from a page, by what it was cut from: the estimate cuts it, and the
+    /// request that follows sends the same picture without cutting it again.
+    pub(crate) region_cut: Mutex<Option<(String, kalamu_core::PreparedInput)>>,
 }
 
 impl Engine {
@@ -181,6 +187,8 @@ impl Engine {
             me: me.clone(),
             page_sizes: Mutex::default(),
             passages: Mutex::default(),
+            region_readings: Mutex::default(),
+            region_cut: Mutex::default(),
         })
     }
 

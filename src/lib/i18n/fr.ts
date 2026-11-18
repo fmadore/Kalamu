@@ -1799,6 +1799,50 @@ export const fr: Messages = {
 		regionEstimated:
 			'Approximatif : le modèle n’a situé que le bloc entier, ses lignes et ses mots sont donc estimés.',
 		regionClose: 'Fermer',
+		regionEdit: {
+			ownHint:
+				'Affiche les zones que vous avez tracées sur la page, et permet d’en tracer d’autres',
+			/** The switch where a page has only the researcher's own regions. */
+			showOwn: 'Afficher les zones',
+			draw: 'Tracer une zone',
+			drawHint:
+				'Faites glisser sur la page pour encadrer une partie. Appuyez de nouveau pour placer un cadre au milieu de la page et le déplacer avec les flèches.',
+			drawing:
+				'Faites glisser sur la page pour tracer le cadre, ou appuyez de nouveau sur « Tracer une zone » pour en placer un au milieu. Échap annule.',
+			adjusting: (shift: string) =>
+				`Faites glisser le cadre pour le déplacer, ou ses coins et ses côtés pour en changer la taille. Au clavier : les flèches le déplacent, ${shift} et les flèches changent sa taille, Entrée enregistre, Échap annule.`,
+			box: 'Le cadre de la zone',
+			moveResize: 'Déplacer ou changer la taille',
+			done: 'Terminé',
+			cancel: 'Annuler',
+			remove: 'Supprimer',
+			putBack: 'Remettre le cadre du modèle',
+			adjusted:
+				'Vous avez déplacé ce cadre ou changé sa taille. Celui du modèle est conservé et peut être remis.',
+			yours: 'Votre zone',
+			ownName: (text: string) => (text ? `Votre zone : ${text}` : 'Votre zone'),
+			adjustedName: (text: string) => `${text} (votre cadre)`,
+			text: 'Ce qui est écrit ici (facultatif)',
+			textHint: (keys: string) => `Enregistré quand vous quittez le champ, ou avec ${keys}.`,
+			read: 'Relire cette zone…',
+			saved: 'Zone enregistrée.',
+			removed: 'Zone supprimée.',
+			putBackDone: 'Le cadre du modèle est remis.',
+			noPositions:
+				'Ce modèle n’a pas situé le texte sur cette page : comparez le texte à la page entière, ou tracez une zone vous-même.',
+			noneYet:
+				'Aucune zone sur cette page pour l’instant. Tracez-en une autour d’une partie à noter.',
+			said: {
+				right: 'Déplacé à droite',
+				left: 'Déplacé à gauche',
+				up: 'Déplacé vers le haut',
+				down: 'Déplacé vers le bas',
+				wider: 'Plus large',
+				narrower: 'Plus étroit',
+				taller: 'Plus haut',
+				shorter: 'Moins haut'
+			}
+		},
 		play: 'Lire',
 		pausePlayback: 'Pause',
 		position: 'Position dans ce segment',
@@ -1960,6 +2004,51 @@ export const fr: Messages = {
 		lookAgain: 'Revoir le texte',
 		accepted: 'Passage corrigé ; les fichiers de résultats suivent dans quelques secondes.',
 		undone: 'Correction du passage annulée.'
+	},
+	regionReading: {
+		title: 'Relire cette zone',
+		picture: 'La partie de la page qui sera lue',
+		noPicture: 'La partie de la page à l’intérieur du cadre sera lue.',
+		readBy: (model: string) => `Lu par ${model}`,
+		change: 'Choisir un autre modèle',
+		defaultPrompt: 'Par défaut',
+		sentCloud: (provider: string) =>
+			`Seule cette partie de la page est envoyée à ${provider}, sous forme d’image. Rien d’autre du document n’est envoyé.`,
+		sentOffline: 'Lu sur cet ordinateur ; rien n’est envoyé.',
+		costAbout: (usd: string) => `Environ ${usd}.`,
+		costOffline: 'Gratuit, sur cet ordinateur.',
+		costStored: 'Déjà lu : sans frais.',
+		costUnknown: 'Ce modèle n’a pas de prix publié.',
+		noKey: (provider: string) => `Ajoutez d’abord une clé pour ${provider} dans Paramètres.`,
+		notInstalled: (model: string) => `Téléchargez d’abord ${model} dans Paramètres.`,
+		noModel:
+			'Aucun de vos modèles ne lit les images de pages. Ajoutez une clé dans Paramètres, ou téléchargez un modèle qui fonctionne sur cet ordinateur.',
+		read: 'Lire',
+		waiting: (model: string) => `${model} lit cette partie de la page…`,
+		stop: 'Arrêter',
+		stopped: 'Arrêté. Si la réponse arrive quand même, elle est gardée, et relire ne coûtera rien.',
+		ready: 'Lecture prête.',
+		answer: 'Ce que le modèle a lu',
+		replaced: 'Les mots actuels du texte de la page, et les nouveaux',
+		removed: 'supprimé',
+		added: 'ajouté',
+		useRegion: 'En faire le texte de cette zone',
+		useText: 'Remplacer ces mots dans le texte de la page',
+		edit: 'Modifier d’abord',
+		editLabel: 'Ce que le modèle a lu, à modifier',
+		copy: 'Copier',
+		copied: 'Copié.',
+		discard: 'Écarter',
+		close: 'Fermer',
+		nowhere:
+			'Kalamu ne sait pas exactement où se trouvent les mots de cette zone dans le texte de la page : vous pouvez copier cette lecture, mais pas la mettre dans le texte.',
+		failed: (reason: string) =>
+			`Rien à proposer (${reason}). Réessayez, ou choisissez un autre modèle.`,
+		changed: 'Les mots du texte de la page ont changé pendant la lecture : rien n’a été remplacé.',
+		lookAgain: 'Revoir le texte',
+		acceptedRegion: 'Le texte de la zone est enregistré.',
+		acceptedText: 'Mots remplacés ; les fichiers de résultats suivent dans quelques secondes.',
+		undone: 'Lecture de la zone annulée.'
 	},
 	prompts: {
 		title: 'Prompts',
@@ -2533,6 +2622,28 @@ export const fr: Messages = {
 		'passage.too_different':
 			'La réponse du modèle est trop différente du passage pour en être une correction.',
 		'passage.not_waiting': 'Cette proposition n’attend plus de décision.',
+		'region.not_finite': 'La zone n’a pas pu être mesurée. Tracez-la de nouveau.',
+		'region.outside': 'La zone dépasse de la page. Tracez-la à l’intérieur de la page.',
+		'region.too_small': 'La zone est trop petite. Tracez un cadre plus grand.',
+		'region.no_page': 'Cette page n’est pas dans le fichier : on ne peut pas y tracer de zone.',
+		'region.adjusts':
+			'La zone que vous avez modifiée n’est plus sur cette page telle qu’elle a été lue. Tracez de nouveau le cadre.',
+		'region.not_found': 'Cette zone n’existe plus.',
+		'region_reading.changed':
+			'Les mots où irait cette lecture ont changé : rien n’a été envoyé ni remplacé. Revoyez la page.',
+		'region_reading.nowhere':
+			'Cette lecture n’a pas de place sûre dans le texte de la page. Copiez-la plutôt.',
+		'region_reading.empty': 'Le modèle n’a trouvé aucun texte dans cette zone.',
+		'region_reading.cannot_read':
+			'Ce modèle ne sait pas lire le texte d’une page. Choisissez-en un autre.',
+		'region_reading.not_waiting': 'Cette lecture n’attend plus de décision.',
+		'media.region_not_finite': 'La zone n’a pas pu être mesurée. Tracez-la de nouveau.',
+		'media.region_outside_page':
+			'La zone est en dehors de la page. Tracez-la de nouveau sur la partie à lire.',
+		'media.region_too_small': 'La zone est trop petite pour être lue. Tracez un cadre plus grand.',
+		'media.region_no_page': 'Seule une page d’un PDF ou une image peut être relue par zone.',
+		'media.region_no_images':
+			'Ce modèle ne lit pas les images, et une zone est envoyée comme image. Choisissez un modèle qui lit les pages.',
 		'job.database': 'La base de données des traitements n’a pas pu être lue ou écrite.',
 		'job.running': 'Ce traitement est déjà en cours.',
 		'job.empty': 'Ajoutez au moins un fichier et choisissez un modèle.',

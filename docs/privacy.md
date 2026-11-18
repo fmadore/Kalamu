@@ -4,7 +4,9 @@
 by meaning and a map of a project's documents, for which the text of the project's documents
 and each question typed are sent to a provider the user chooses and agrees to, or to no one
 with a model run on the computer, and to send a passage selected in the review to a model
-for correction; and from the first version to send a large
+for correction, to keep the regions the user draws over a scan with the text they give
+them, and to send the part of a page inside such a region to a model the user chooses, to be
+read again; and from the first version to send a large
 batch of the cheaper mode to Google as a file, deleted there afterwards, and to keep with a
 project the results the user sets aside from its list of what to check. The policy of
 17 November 2026 did not say so; it applies from the first version to keep, in a
@@ -154,6 +156,17 @@ the same question about that provider as for a job. With a model run on the comp
 is sent. The request, the model's proposal and whether it was accepted are kept in the job
 database with the job.
 
+### A region of a page read again by a model
+
+When the user chooses a region over a scan and asks a model to read it again, only that part
+of the page is sent, as a picture cut from the original file (PNG, or JPEG for a model that
+takes nothing else), to the provider of the model chosen, with the text-extraction prompt and
+the job's languages, after the same question about that provider as for a job. Nothing else
+of the document is sent, and with a model run on the computer nothing is sent at all. Drawing,
+moving or removing a region sends nothing. The request (the region's place on the page, the
+model, the prompt), the model's reading, its cost and whether it was used are kept in the job
+database with the job.
+
 ## What the app keeps on the computer
 
 In the app's local data folder, which Settings shows: on Windows `%LOCALAPPDATA%\Kalamu Data`
@@ -170,7 +183,9 @@ Kalamu's, on the same computer only:
 
 - **The job database** (`jobs.sqlite`): each job's name, the paths, sizes, modification times
   and fingerprints of its files, its settings and progress, the text and answers returned for each piece, the user's
-  corrections and review marks, the names given to speakers, and what each call cost.
+  corrections and review marks, the names given to speakers, the regions the user draws over
+  a scan or whose box they change (with the text they give them, never sent), and what each
+  call cost.
   Results are kept by a fingerprint of the file and settings, so the same work is never paid
   for twice; deleting a job removes the job, its progress and corrections, while the stored
   results stay until the user clears those no job uses (Settings › General, *Clear unused

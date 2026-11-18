@@ -20,9 +20,28 @@
 //! Blocks are always the engine's own (Tesseract's paragraphs, Mistral OCR's and LightOnOCR's
 //! blocks). Lines and words are the engine's where it placed them (Tesseract); within a block
 //! placed whole they are estimated, as ALTO estimates them ([`TextRegion::estimated_lines`]),
-//! and marked so: the block's text wrapped into as many lines as its shape on the page holds,
-//! which needs the page's proportions (`page_aspect`). Without them such a block is drawn
-//! alone.
+//! their origin [`RegionOrigin::Estimated`]: the block's text wrapped into as many lines as its
+//! shape on the page holds, which needs the page's proportions (`page_aspect`). Without them
+//! such a block is drawn alone. A region the researcher draws is a block
+//! ([`Granularity::Block`]).
+//!
+//! A box the researcher draws or adjusts is in the same fractions, of the page or of the half
+//! the review shows. Pointer arithmetic may overshoot an edge by a hair: up to [`SLACK`] is
+//! clamped to the page, more is refused, and so is a box smaller than [`MIN_SIZE`] either way.
+//!
+//! # Identities
+//!
+//! Each region an engine stored has an id that stays the same for one stored result: `r{n}` for
+//! block n, `r{n}_l{m}` for its line m and `r{n}_l{m}_w{k}` for that line's word k, all counted
+//! from 1 in reading order ([`block_id`], [`line_id`], [`word_id`]). PAGE XML writes the same ids
+//! for a whole page; a split spread's halves are numbered each on its own here, as the review
+//! shows them, and across the page there. A result read again is another revision, named by its
+//! cache key ([`PageRegions::result`]): its ids say nothing about the old one's.
+//!
+//! # The researcher's regions
+//!
+//! Regions the researcher draws, and the boxes they give an engine's regions, are kept apart
+//! from the stored result, which never changes ([`DrawnRegion`]).
 //!
 //! # The place of a region's words in the text
 //!
@@ -34,12 +53,56 @@ use ts_rs::TS;
 
 use crate::{PageHalf, TextLine, TextRegion, TextWord};
 
+mod drawn;
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests;
 mod text;
 
+pub use drawn::{AdjustedRegion, DrawnRegion, MIN_SIZE, RegionDraft, RegionError, SLACK, check};
 use text::Words;
+
+/// The id of an engine's block `block` (from 1) on a page.
+pub fn block_id(block: usize) -> String {
+    format!("r{block}")
+}
+
+/// The id of line `line` (from 1) of block `block`.
+pub fn line_id(block: usize, line: usize) -> String {
+    format!("r{block}_l{line}")
+}
+
+/// The id of word `word` (from 1) of line `line` of block `block`.
+pub fn word_id(block: usize, line: usize, word: usize) -> String {
+    format!("r{block}_l{line}_w{word}")
+}
+
+/// What a region outlines: a block of text, one of its lines, or one word.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum Granularity {
+    Block,
+    Line,
+    Word,
+}
+
+/// Who placed a region. More will come (regions imported from ALTO or PAGE XML, a model's
+/// reading aligned on an engine's geometry), so code outside this crate cannot take the list
+/// for closed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+#[non_exhaustive]
+pub enum RegionOrigin {
+    /// The engine placed it (Tesseract's lines and words, Mistral OCR's blocks).
+    Provider,
+    /// Kalamu placed it within a block the engine placed whole, as ALTO estimates lines:
+    /// approximate.
+    Estimated,
+    /// The researcher drew it, or gave an engine's region this box.
+    Manual,
+}
 
 /// A stretch of the text the review shows, in UTF-16 code units, as the interface's strings
 /// count them; `end` is past the last unit.
@@ -54,15 +117,20 @@ pub struct TextSpan {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ShownRegion {
+    /// An engine's region: its place in the result ([`block_id`]), the same whenever that
+    /// result is shown. The researcher's own: the id it was saved under.
+    pub id: String,
     /// Fractions of the piece as shown; see the module's notes on coordinates.
     pub x: f32,
     pub y: f32,
     pub width: f32,
     pub height: f32,
-    /// The region's own text, as the engine read it.
+    /// The region's own text, as the engine read it, or as the researcher gave it.
     pub text: String,
-    /// Placed by Kalamu within a block the engine placed whole, not by the engine: approximate.
-    pub estimated: bool,
+    pub granularity: Granularity,
+    /// Who placed its box: the engine, Kalamu within a block placed whole (approximate), or the
+    /// researcher.
+    pub origin: RegionOrigin,
     /// Where its words stand in the text shown, only where that place is certain.
     pub span: Option<TextSpan>,
 }
@@ -91,6 +159,12 @@ pub struct PageRegions {
     pub mapping: TextMapping,
     /// The text shown is the researcher's correction.
     pub corrected: bool,
+    /// The cache key of the stored result the engine's regions come from: the revision their
+    /// ids belong to. None for a piece not read yet, or a review with no text piece.
+    pub result: Option<String>,
+    /// The researcher's own regions on this page: drawn where the engine placed nothing they
+    /// adjust, or adjusting a region of a reading of the page that is no longer shown.
+    pub drawn: Vec<ShownRegion>,
 }
 
 impl PageRegions {
@@ -102,6 +176,8 @@ impl PageRegions {
             words: Vec::new(),
             mapping: TextMapping::Exact,
             corrected,
+            result: None,
+            drawn: Vec::new(),
         }
     }
 
@@ -124,7 +200,8 @@ impl PageRegions {
         let mut blocks = Vec::new();
         let mut lines = Vec::new();
         let mut words = Vec::new();
-        for region in regions {
+        for (b, region) in regions.iter().enumerate() {
+            let block = b + 1;
             let block_start = tokens.len();
             let estimated = region.lines.is_empty();
             let placed = match (estimated, page_aspect) {
@@ -138,25 +215,34 @@ impl PageRegions {
                     Vec::new()
                 }
             };
-            for line in &placed {
+            let origin = if estimated {
+                RegionOrigin::Estimated
+            } else {
+                RegionOrigin::Provider
+            };
+            for (l, line) in placed.iter().enumerate() {
                 let line_start = tokens.len();
-                for word in &line.words {
+                for (w, word) in line.words.iter().enumerate() {
                     let start = tokens.len();
                     tokens.extend(Words::of(&word.text).normal);
-                    words.push((shown_word(word, estimated), start..tokens.len()));
+                    let id = word_id(block, l + 1, w + 1);
+                    words.push((shown_word(id, word, origin), start..tokens.len()));
                 }
-                lines.push((shown_line(line, estimated), line_start..tokens.len()));
+                let id = line_id(block, l + 1);
+                lines.push((shown_line(id, line, origin), line_start..tokens.len()));
             }
-            let block = ShownRegion {
+            let shown = ShownRegion {
+                id: block_id(block),
                 x: region.x,
                 y: region.y,
                 width: region.width,
                 height: region.height,
                 text: region.text.clone(),
-                estimated: false,
+                granularity: Granularity::Block,
+                origin: RegionOrigin::Provider,
                 span: None,
             };
-            blocks.push((block, block_start..tokens.len()));
+            blocks.push((shown, block_start..tokens.len()));
         }
 
         let page = Words::of(shown);
@@ -197,30 +283,36 @@ impl PageRegions {
                 TextMapping::Unique
             },
             corrected,
+            result: None,
+            drawn: Vec::new(),
         }
     }
 }
 
-fn shown_line(line: &TextLine, estimated: bool) -> ShownRegion {
+fn shown_line(id: String, line: &TextLine, origin: RegionOrigin) -> ShownRegion {
     ShownRegion {
+        id,
         x: line.x,
         y: line.y,
         width: line.width,
         height: line.height,
         text: line.text(),
-        estimated,
+        granularity: Granularity::Line,
+        origin,
         span: None,
     }
 }
 
-fn shown_word(word: &TextWord, estimated: bool) -> ShownRegion {
+fn shown_word(id: String, word: &TextWord, origin: RegionOrigin) -> ShownRegion {
     ShownRegion {
+        id,
         x: word.x,
         y: word.y,
         width: word.width,
         height: word.height,
         text: word.text.clone(),
-        estimated,
+        granularity: Granularity::Word,
+        origin,
         span: None,
     }
 }

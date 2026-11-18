@@ -10,6 +10,7 @@ pub mod pipelines;
 pub mod presets;
 pub mod profiles;
 pub mod projects;
+pub mod region_reading;
 pub mod review;
 pub mod search;
 pub mod settings;

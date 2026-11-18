@@ -16,6 +16,7 @@ mod page_set;
 mod pdf;
 pub mod program;
 mod readable;
+mod region;
 mod render;
 mod text_source;
 
@@ -39,6 +40,7 @@ pub use pdf::PdfSource;
 #[cfg(any(test, feature = "test-support"))]
 pub use pdf::sample_pdf;
 pub use readable::{Reading, readable};
+pub use region::{Crop, MIN_REGION_PIXELS, RegionRefusal};
 pub use render::{THUMBNAIL_MAX_WIDTH, thumbnail};
 pub use text_source::TextSource;
 
@@ -72,6 +74,9 @@ pub enum MediaError {
         "The page's file {0} has changed since it was added to the job. Start a new job with it to read it as it is now"
     )]
     PageChanged(String),
+    /// A region of a page that cannot be cut; [`RegionRefusal::code`] names which.
+    #[error(transparent)]
+    Region(#[from] RegionRefusal),
 }
 
 /// Hashes a file and works out what it is, without loading it all into memory twice. FFmpeg,
@@ -415,6 +420,69 @@ impl OpenSource {
         Ok(PreparedInput {
             piece: piece.clone(),
             file_name: format!("{file_stem}-p{number}{suffix}.{ext}"),
+            mime,
+            bytes,
+        })
+    }
+
+    /// The part of a page a region covers, cut from the original at full resolution, as an
+    /// image a provider accepts (#84). `region` is in fractions of the piece as the review shows
+    /// it (`kalamu_core::regions`), cut exactly and clamped to the piece. A PDF page is drawn at
+    /// [`render::DPI`] with only that part in view, so a small box is as sharp as the page
+    /// allows; an image is cut at its own pixels after its EXIF turn. Always a picture, PNG
+    /// where accepted, even for a model that reads PDFs.
+    pub fn prepare_region(
+        &self,
+        piece: &PieceRef,
+        region: Crop,
+        accepted: &[&str],
+        file_stem: &str,
+    ) -> Result<PreparedInput, MediaError> {
+        if matches!(self, Self::Audio(_) | Self::Text(_) | Self::YouTube(_)) {
+            return Err(RegionRefusal::NoPage.into());
+        }
+        if !accepted
+            .iter()
+            .any(|m| matches!(*m, "image/png" | "image/jpeg"))
+        {
+            return Err(RegionRefusal::NoImages.into());
+        }
+        let PieceRef::Page { number, half } = piece else {
+            return Err(MediaError::NoSuchPage(piece.label()));
+        };
+        let fractions = region.clamped()?;
+        let (mime, bytes) = match self {
+            Self::Pdf(pdf) => {
+                let (page, (w, h)) = pdf.region_pdf(*number, *half, fractions)?;
+                let pixels = |points: f32| points * render::DPI / 72.0;
+                if pixels(w).min(pixels(h)) < MIN_REGION_PIXELS as f32 {
+                    return Err(RegionRefusal::TooSmall.into());
+                }
+                let png = render::first_page_png(&page)?;
+                if accepted.contains(&"image/png") {
+                    ("image/png".to_string(), png)
+                } else {
+                    let drawn = image::load_from_memory(&png)
+                        .map_err(|e| MediaError::Image(e.to_string()))?;
+                    image_source::encode(&drawn, accepted)?
+                }
+            }
+            Self::Image(img) => img.prepare_region(*number, *half, fractions, accepted)?,
+            Self::Pages(set) => set.prepare_region(*number, *half, fractions, accepted)?,
+            Self::Audio(_) | Self::Text(_) | Self::YouTube(_) => unreachable_audio()?,
+        };
+        let suffix = match half {
+            None => String::new(),
+            Some(h) => format!("-{h:?}").to_lowercase(),
+        };
+        let ext = mime
+            .rsplit('/')
+            .next()
+            .unwrap_or("bin")
+            .replace("jpeg", "jpg");
+        Ok(PreparedInput {
+            piece: piece.clone(),
+            file_name: format!("{file_stem}-p{number}{suffix}-region.{ext}"),
             mime,
             bytes,
         })

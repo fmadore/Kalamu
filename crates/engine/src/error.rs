@@ -80,6 +80,12 @@ pub enum EngineError {
     /// is refused.
     #[error(transparent)]
     Passage(kalamu_core::PassageError),
+    /// A region drawn over a scan that cannot be saved, or is not there.
+    #[error(transparent)]
+    Region(kalamu_core::RegionError),
+    /// A region to read again whose reading cannot be asked for, accepted or undone.
+    #[error(transparent)]
+    RegionReading(kalamu_core::RegionReadingError),
 }
 
 impl EngineError {
@@ -90,6 +96,8 @@ impl EngineError {
             Self::Store(_) => "job.database",
             Self::Media(MediaError::Encrypted) => "media.encrypted",
             Self::Media(MediaError::UnsupportedKind) => "media.unsupported",
+            // A region that cannot be cut says why, in its own words.
+            Self::Media(MediaError::Region(r)) => r.code(),
             Self::Media(_) => "media.read",
             Self::Prompt(e) => e.code(),
             Self::UnknownProvider(_) => "provider.unknown",
@@ -115,6 +123,8 @@ impl EngineError {
             Self::MixedReading => "job.mixed_reading",
             Self::Rows(e) => e.code(),
             Self::Passage(e) => e.code(),
+            Self::Region(e) => e.code(),
+            Self::RegionReading(e) => e.code(),
         }
     }
 }

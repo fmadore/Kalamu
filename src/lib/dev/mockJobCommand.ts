@@ -5,6 +5,7 @@
 import type { Correction } from '../bindings/Correction.js';
 import SAMPLE_SCAN from './sample-scan.jpg?inline';
 import { progressOf } from './mockLarge.js';
+import { scanAnalysisListed } from './mockDrawn.js';
 import { mockRegions } from './mockRegions.js';
 import {
 	analysisAgreement,
@@ -181,7 +182,8 @@ export function jobCommand(cmd: string, a: Record<string, unknown>): unknown {
 					pieces_finished: 2,
 					setup_count: 1
 				},
-				...archiveJobs.map(({ files: _, ...summary }) => summary)
+				...archiveJobs.map(({ files: _, ...summary }) => summary),
+				...scanAnalysisListed(summaries[0])
 			].filter((j) => !deletedJobs.has(j.id));
 		case 'job_sources':
 			return [

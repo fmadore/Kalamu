@@ -8,6 +8,8 @@ import type { ProvenanceMerge } from "./ProvenanceMerge";
 import type { ProvenancePassage } from "./ProvenancePassage";
 import type { ProvenancePrompt } from "./ProvenancePrompt";
 import type { ProvenanceRefused } from "./ProvenanceRefused";
+import type { ProvenanceRegion } from "./ProvenanceRegion";
+import type { ProvenanceRegionReading } from "./ProvenanceRegionReading";
 import type { ProvenanceSource } from "./ProvenanceSource";
 import type { ProvenanceWorkflow } from "./ProvenanceWorkflow";
 import type { ProviderId } from "./ProviderId";
@@ -101,6 +103,18 @@ listed_by_hand?: Array<ProvenanceListed>,
  * `cost_usd`, which count the results of the job's own pieces.
  */
 passages?: Array<ProvenancePassage>, 
+/**
+ * Regions the researcher drew over the scan, or whose box they adjusted, kept beside the
+ * stored results, which they never change. Exports' positions remain the engine's own.
+ */
+regions?: Array<ProvenanceRegion>, 
+/**
+ * Regions of the page the researcher asked a model to read again and accepted: each
+ * written as the text of a region they drew, or into their corrections, the model's output
+ * for the page left as it was. Not in `usage` or `cost_usd`, which count the results of the
+ * job's own pieces.
+ */
+region_readings?: Array<ProvenanceRegionReading>, 
 /**
  * What the results kept cost; for a table of contents, both steps (`merge` gives the
  * second's share).

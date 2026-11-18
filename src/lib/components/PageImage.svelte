@@ -133,10 +133,16 @@
 		background: transparent;
 	}
 	/* The page lies on the lightbox: a crisp edge and a soft drop beneath. */
-	/* Never shrunk to the pane: stretched by a zoom, it keeps the size the zoom gives it. */
+	/* Never shrunk to the pane: stretched by a zoom, it keeps the size the zoom gives it. Exactly
+	   the page's own box, so what is drawn over it lies where it is on the page: none of the
+	   padding or grid of the app's `.sheet` (app.css), whose name it shares. */
 	.sheet {
 		position: relative;
 		flex: none;
+		display: block;
+		padding: 0;
+		/* What is drawn over the page stays under the pane's own tools (the zoom bar). */
+		isolation: isolate;
 	}
 	canvas {
 		display: block;

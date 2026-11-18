@@ -14,6 +14,7 @@ import {
 	videoJob
 } from './mockJobs.js';
 import { DOCUMENT_ID, PROJECT_ID } from './mockProjects.js';
+import { scanAnalysisJob } from './mockDrawn.js';
 import { recordsJob, recordsSource } from './mockRecords.js';
 import { RUN_ID, WORKFLOW_ID } from './mockWorkflows.js';
 
@@ -38,6 +39,8 @@ export function mockView(): View | null {
 			return { name: 'review', jobId: audioJob.id, sourceId: recording.id };
 		case 'review-analysis':
 			return { name: 'review', jobId: analysisJob.id, sourceId: article.id };
+		case 'review-analysis-scan':
+			return { name: 'review', jobId: scanAnalysisJob.id, sourceId: source.id };
 		case 'review-youtube':
 			return { name: 'review', jobId: videoJob.id, sourceId: video.id };
 		case 'review-contents':

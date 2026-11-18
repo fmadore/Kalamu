@@ -25,7 +25,8 @@ use crate::control::lock;
 use crate::piece::Called;
 use crate::{Engine, EngineError};
 
-/// What asking about a passage would cost, before it is asked.
+/// What asking about a passage, or for a region to be read again, would cost, before it is
+/// asked.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct PassageEstimate {
@@ -34,8 +35,8 @@ pub struct PassageEstimate {
     pub usd: Option<f64>,
     /// Read on this computer: nothing is sent.
     pub offline: bool,
-    /// The same passage, context, model and prompt were asked about before: the stored
-    /// answer is offered again, for nothing.
+    /// The same passage, context, model and prompt (or the same picture of a region, model and
+    /// prompt) were asked about before: the stored answer is offered again, for nothing.
     pub cached: bool,
 }
 
@@ -135,7 +136,7 @@ impl Engine {
 
     /// A finished piece's text as the review shows it: the correction, else the model's, with
     /// the speakers' names.
-    fn shown_text(&self, state: &PieceState) -> Result<String, EngineError> {
+    pub(crate) fn shown_text(&self, state: &PieceState) -> Result<String, EngineError> {
         let corrections =
             self.store
                 .source_corrections(state.job_id, state.setup_id, state.source_id)?;
@@ -523,7 +524,7 @@ enum PassageCall {
 }
 
 /// Returns once `stop` is set.
-async fn stopped(stop: &StopSignal) {
+pub(crate) async fn stopped(stop: &StopSignal) {
     while !stop.is_stopped() {
         tokio::time::sleep(Duration::from_millis(50)).await;
     }

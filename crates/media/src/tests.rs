@@ -445,3 +445,5 @@ fn a_thumbnail_is_a_small_picture_of_the_page() -> Result<(), MediaError> {
     assert!(thumbnail(b"not an image", "image/png", 80).is_err());
     Ok(())
 }
+
+mod region;

@@ -18,9 +18,6 @@
 	import PassageDialog from './PassageDialog.svelte';
 	import PassageMenu from './PassageMenu.svelte';
 	import ReadingsPopover from './ReadingsPopover.svelte';
-	import RegionLayer from './RegionLayer.svelte';
-	import RegionNote from './RegionNote.svelte';
-	import RegionTools from './RegionTools.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
 	import ScoreFoot from './ScoreFoot.svelte';
 	import SearchBar from './SearchBar.svelte';
@@ -40,7 +37,6 @@
 	import { shifted } from '#lib/platform.js';
 	import { selectionBox, selectionInText, type Chosen } from '#lib/passage.js';
 	import { cutOffNotes, pieceLabel, pieceNumber } from '#lib/pieces.js';
-	import type { Rotation } from '#lib/pdf.js';
 	import { Readings, wordsIn } from '#lib/readings.svelte.js';
 	import { followRegions, Regions } from '#lib/regions.svelte.js';
 	import { layout, Review } from '#lib/review.svelte.js';
@@ -129,12 +125,15 @@
 	const base = $derived(shownText(lead));
 	const corrected = $derived(lead?.corrected_text != null);
 
-	/** Where the text sits on a scan read for its text, drawn over it on request (#84): read
-	 * again for the page shown and whenever its text changes, so places follow a correction. */
-	const offerRegions = $derived(job?.task === 'text_extraction' && review.paged && !showOriginal);
+	/** Where the text sits on a scan, and the researcher's own regions, drawn over it on request
+	 * (#84): read again for the page shown and whenever its text changes, so places follow a
+	 * correction. */
+	const offerRegions = $derived(review.paged && !showOriginal);
 	// svelte-ignore state_referenced_locally
 	const regions = new Regions(jobId, sourceId);
-	$effect(() => regions.load(setups[0]?.id, index, base, offerRegions));
+	$effect(() =>
+		regions.load(setups[0]?.id, index, base, offerRegions, (lead ?? current[0])?.piece)
+	);
 
 	/** The witnesses compared with the text shown: each other set-up, and the model itself when
 	 * its text was corrected. */
@@ -545,12 +544,6 @@
 	{/if}
 {/snippet}
 
-{#snippet regionTools()}<RegionTools {regions} />{/snippet}
-{#snippet regionLayer(zoom: number, rotation: Rotation)}
-	{#if regions.shown}<RegionLayer {regions} {zoom} {rotation} />{/if}
-{/snippet}
-{#snippet regionNote()}<RegionNote {regions} />{/snippet}
-
 {#snippet searchBar()}
 	<SearchBar
 		bind:query={finder.query}
@@ -672,9 +665,8 @@
 	text={lead?.source_text ?? review.text}
 	{player}
 	switchable={readText ? { onswitch: () => (originalChosen = !originalChosen) } : null}
-	sourceTools={offerRegions ? regionTools : undefined}
-	overlay={offerRegions ? regionLayer : undefined}
-	sourceNote={offerRegions ? regionNote : undefined}
+	regions={offerRegions ? regions : undefined}
+	regionPage={{ text: base, refresh: () => review.refresh() }}
 	witness={{
 		label: setups[0]?.label ?? '',
 		siglum: setups.length > 1 ? siglum(0) : null,

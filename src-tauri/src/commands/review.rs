@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use base64::Engine as _;
 use kalamu_core::{
-    Correction, JobId, PageRegions, PassageAsk, PassageProposal, RowEdit, SetupId, SourceId,
-    SpeakerNames,
+    Correction, DrawnRegion, JobId, PageHalf, PageRegions, PassageAsk, PassageProposal,
+    RegionDraft, RowEdit, SetupId, SourceId, SpeakerNames,
 };
 use kalamu_engine::{
     ComparisonReport, DiffSpan, JobAgreement, JobScores, ListedAdded, PassageEstimate, PieceAudio,
@@ -101,6 +101,47 @@ pub async fn page_regions(
 ) -> CmdResult<PageRegions> {
     let engine = state.engine.clone();
     off_thread(move || Ok(engine.page_regions(job_id, source_id, setup_id, index)?)).await
+}
+
+/// The researcher's regions on a page that has no text piece of its own (an analysis's or a
+/// table of contents' review): those drawn there, in fractions of the page, or of the half, as
+/// the review shows it. Reads the store only.
+#[tauri::command]
+pub async fn drawn_regions(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+    page: u32,
+    half: Option<PageHalf>,
+) -> CmdResult<PageRegions> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.drawn_regions(job_id, source_id, page, half)?)).await
+}
+
+/// Saves a region the researcher drew over a scan, or the box they gave an engine's region, or
+/// a change to either; gives it back as kept. The stored result is never changed, and nothing
+/// is sent.
+#[tauri::command]
+pub async fn save_region(state: State<'_, AppState>, draft: RegionDraft) -> CmdResult<DrawnRegion> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.save_region(draft)?)).await
+}
+
+/// Deletes a region the researcher drew or adjusted; gives it back as it was, for *Undo*.
+#[tauri::command]
+pub async fn remove_region(state: State<'_, AppState>, id: String) -> CmdResult<DrawnRegion> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.remove_region(&id)?)).await
+}
+
+/// Puts back a region removed, with its id and dates.
+#[tauri::command]
+pub async fn restore_region(
+    state: State<'_, AppState>,
+    region: DrawnRegion,
+) -> CmdResult<DrawnRegion> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.restore_region(region)?)).await
 }
 
 /// One page of a source drawn `width` pixels wide, for the review's strip of thumbnails: a

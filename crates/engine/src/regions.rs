@@ -3,17 +3,22 @@
 //! ([`kalamu_core::regions`]). A block placed whole (Mistral OCR) needs the page's proportions
 //! for its estimated lines, which the stored fractions do not keep: they are read from the
 //! source file, only for such a result, and kept for the source's other pages.
+//!
+//! The researcher's own regions, drawn or adjusted, are laid over the engine's ([`drawn`]).
 
 use std::collections::HashMap;
 use std::path::Path;
 
 use kalamu_core::{
-    Correction, InputKind, JobId, PageHalf, PageRegions, PieceRef, SetupId, SourceFile, SourceId,
+    Correction, InputKind, JobId, PageHalf, PageRegions, PieceRef, PieceState, SetupId, SourceFile,
+    SourceId,
 };
 use kalamu_media::{ImageSource, PdfSource};
 
 use crate::control::lock;
 use crate::{Engine, EngineError};
+
+pub(crate) mod drawn;
 
 /// The displayed sizes of one source's pages, by page number, as last read: the review moves
 /// through one source's pages at a time, so its file is opened once for them.
@@ -25,8 +30,10 @@ pub(crate) struct PageSizes {
 
 impl Engine {
     /// The regions the engine stored for piece `index` of a source under a set-up, each placed in
-    /// the text the review shows (the correction, else the model's text) where that is certain.
-    /// None for a piece not read, or read by a model that reports no layout.
+    /// the text the review shows (the correction, else the model's text) where that is certain,
+    /// with the researcher's own laid over them: the boxes they adjusted, and those they drew in
+    /// `drawn`. No engine's regions for a piece not read, or read by a model that reports no
+    /// layout; the researcher's are there all the same.
     pub fn page_regions(
         &self,
         job_id: JobId,
@@ -38,19 +45,35 @@ impl Engine {
         let Some(piece) = pieces.into_iter().find(|p| p.index == index) else {
             return Ok(PageRegions::none(false));
         };
+        let regions = self.engine_regions(job_id, source_id, setup_id, &piece)?;
+        self.with_researcher(job_id, source_id, &piece.piece, regions)
+    }
+
+    /// The engine's regions of one piece alone, with the result they come from.
+    fn engine_regions(
+        &self,
+        job_id: JobId,
+        source_id: SourceId,
+        setup_id: SetupId,
+        piece: &PieceState,
+    ) -> Result<PageRegions, EngineError> {
         let corrections = self.store.source_corrections(job_id, setup_id, source_id)?;
-        let corrected = Correction::of(&corrections, &piece).is_some_and(|c| c.text.is_some());
-        let Some(result) = self.store.finished_result(&piece)? else {
+        let corrected = Correction::of(&corrections, piece).is_some_and(|c| c.text.is_some());
+        let Some(result) = self.store.finished_result(piece)? else {
             return Ok(PageRegions::none(corrected));
         };
+        let revision = Some(result.cache_key.clone());
         if result.output.regions.is_empty() {
-            return Ok(PageRegions::none(corrected));
+            return Ok(PageRegions {
+                result: revision,
+                ..PageRegions::none(corrected)
+            });
         }
         let speakers = self.store.speakers(job_id)?;
         // The text as the review shows it: `PieceView`'s corrected text, else its model text.
         let shown = self
             .store
-            .text(&piece, &corrections, &speakers)?
+            .text(piece, &corrections, &speakers)?
             .unwrap_or_default();
         let model = kalamu_core::speakers::rename_text(
             &result.output.text,
@@ -66,13 +89,10 @@ impl Engine {
         } else {
             None
         };
-        Ok(PageRegions::of(
-            &result.output.regions,
-            &model,
-            &shown,
-            corrected,
-            aspect,
-        ))
+        Ok(PageRegions {
+            result: revision,
+            ..PageRegions::of(&result.output.regions, &model, &shown, corrected, aspect)
+        })
     }
 
     /// The height over the width of `piece` as the review shows it: a PDF page with its own

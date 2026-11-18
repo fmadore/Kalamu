@@ -3,11 +3,15 @@
 // columns; page 2 as Mistral OCR does, one block whose lines and words are estimated; page 3 not
 // placed at all (the page-only fallback). Places in the text are found roughly as the app finds
 // them (crates/core/src/regions.rs): by position while the text is the model's, and only where a
-// region's words stand once after a correction.
+// region's words stand once after a correction. Each region has the id the app gives it (`r1`,
+// `r1_l2`, `r1_l2_w3`), and the researcher's own regions (`mockDrawn.ts`) are laid over them as
+// the engine lays them.
 
+import type { Granularity } from '../bindings/Granularity.js';
 import type { PageRegions } from '../bindings/PageRegions.js';
 import type { ShownRegion } from '../bindings/ShownRegion.js';
 import type { TextSpan } from '../bindings/TextSpan.js';
+import { drawnOn, resultKey, withDrawn } from './mockDrawn.js';
 import { job, pieces, setupA, source, texts } from './mockJobs.js';
 
 /** The scan's size in pixels, which the boxes below are measured in. */
@@ -57,63 +61,83 @@ const PAGE_ONE: PrintLine[][] = [
 	]
 ];
 
-const region = (x: number, y: number, width: number, height: number, text: string) => ({
+const region = (
+	id: string,
+	granularity: Granularity,
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+	text: string
+): ShownRegion => ({
+	id,
 	x,
 	y,
 	width,
 	height,
 	text,
-	estimated: false,
+	granularity,
+	origin: 'provider',
 	span: null as TextSpan | null
 });
 
-/** Words set along a line's box, each as wide as its letters. */
-function setWords(words: string[], x: number, y: number, width: number, height: number) {
+/** Words set along a line's box, each as wide as its letters, numbered within line `lineId`. */
+function setWords(
+	lineId: string,
+	words: string[],
+	x: number,
+	y: number,
+	width: number,
+	height: number
+) {
 	const total = words.reduce((n, w) => n + w.length + 1, -1);
 	const unit = width / Math.max(total, 1);
 	let at = x;
-	return words.map((w) => {
-		const r = region(at, y, w.length * unit, height, w);
+	return words.map((w, k) => {
+		const r = region(`${lineId}_w${k + 1}`, 'word', at, y, w.length * unit, height, w);
 		at += (w.length + 1) * unit;
 		return r;
 	});
 }
 
+type Placed = Pick<PageRegions, 'blocks' | 'lines' | 'words'>;
+
 /** Page 1, placed word by word: blocks, lines and words, in reading order. */
-function tesseractPage(text: string): Omit<PageRegions, 'mapping' | 'corrected'> {
+function tesseractPage(text: string): Placed {
 	const words = text.split(/\s+/).filter(Boolean);
 	const blocks: ShownRegion[] = [];
 	const lines: ShownRegion[] = [];
 	const placed: ShownRegion[] = [];
 	let next = 0;
-	for (const block of PAGE_ONE) {
+	for (const [b, block] of PAGE_ONE.entries()) {
 		const own: ShownRegion[] = [];
-		for (const [left, right, middle, count] of block) {
+		for (const [l, [left, right, middle, count]] of block.entries()) {
 			const held = words.slice(next, next + count);
 			next += count;
 			const [x, y, w, h] = [left / W, (middle - 12) / H, (right - left) / W, 24 / H];
-			own.push(region(x, y, w, h, held.join(' ')));
-			placed.push(...setWords(held, x, y, w, h));
+			const id = `r${b + 1}_l${l + 1}`;
+			own.push(region(id, 'line', x, y, w, h, held.join(' ')));
+			placed.push(...setWords(id, held, x, y, w, h));
 		}
 		lines.push(...own);
 		const x = Math.min(...own.map((l) => l.x));
 		const y = own[0].y;
 		const right = Math.max(...own.map((l) => l.x + l.width));
 		const bottom = own[own.length - 1].y + own[own.length - 1].height;
-		blocks.push(region(x, y, right - x, bottom - y, own.map((l) => l.text).join('\n')));
+		const joined = own.map((l) => l.text).join('\n');
+		blocks.push(region(`r${b + 1}`, 'block', x, y, right - x, bottom - y, joined));
 	}
 	return { blocks, lines, words: placed };
 }
 
 /** Page 2, one block placed whole: its line and words estimated within it. */
-function mistralPage(text: string): Omit<PageRegions, 'mapping' | 'corrected'> {
+function mistralPage(text: string): Placed {
 	const [x, y, w, h] = [77 / W, 742 / H, 401 / W, 86 / H];
-	const line = { ...region(x, y, w, h, text), estimated: true };
-	const words = setWords(text.split(/\s+/).filter(Boolean), x, y, w, h).map((r) => ({
-		...r,
-		estimated: true
-	}));
-	return { blocks: [region(x, y, w, h, text)], lines: [line], words };
+	const line: ShownRegion = { ...region('r1_l1', 'line', x, y, w, h, text), origin: 'estimated' };
+	const words = setWords('r1_l1', text.split(/\s+/).filter(Boolean), x, y, w, h).map(
+		(r): ShownRegion => ({ ...r, origin: 'estimated' })
+	);
+	return { blocks: [region('r1', 'block', x, y, w, h, text)], lines: [line], words };
 }
 
 /** Where a run of words stands in `text`, if it stands there exactly once. */
@@ -142,24 +166,34 @@ function placeInOrder(text: string, list: ShownRegion[]) {
 	}
 }
 
-/** The regions `page_regions` gives for piece `index` under set-up `setupId`. */
+/** The regions `page_regions` gives for piece `index` under set-up `setupId`, the researcher's
+ * own laid over them. */
 export function mockRegions(jobId: string, setupId: string, index: number): PageRegions {
 	const view = pieces.find((p) => p.setup_id === setupId && p.index === index);
 	const corrected = view?.corrected_text != null;
-	const none: PageRegions = { blocks: [], lines: [], words: [], mapping: 'exact', corrected };
-	if (jobId !== job.id || setupId !== setupA.id || !view || view.source_id !== source.id) {
-		return none;
-	}
+	const ours = jobId === job.id && view?.source_id === source.id;
+	const none: PageRegions = {
+		blocks: [],
+		lines: [],
+		words: [],
+		mapping: 'exact',
+		corrected,
+		result: ours && view?.status === 'done' ? resultKey(setupId, index) : null,
+		drawn: []
+	};
+	if (!view || view.piece.kind !== 'page') return none;
+	const drawn = drawnOn(jobId, view.source_id, view.piece.number, view.piece.half ?? null);
+	if (!ours || setupId !== setupA.id) return withDrawn(none, drawn);
 	const model = texts[index] ?? '';
 	const page = index === 0 ? tesseractPage(model) : index === 1 ? mistralPage(model) : null;
-	if (!page) return none;
+	if (!page) return withDrawn(none, drawn);
 	const shown = view.corrected_text ?? model;
 	if (shown === model) {
 		for (const list of [page.blocks, page.lines, page.words]) placeInOrder(shown, list);
-		return { ...page, mapping: 'exact', corrected };
+		return withDrawn({ ...none, ...page, mapping: 'exact' }, drawn);
 	}
 	for (const r of [...page.blocks, ...page.lines, ...page.words]) {
 		r.span = onlyPlace(model, r.text) ? onlyPlace(shown, r.text) : null;
 	}
-	return { ...page, mapping: 'unique', corrected };
+	return withDrawn({ ...none, ...page, mapping: 'unique' }, drawn);
 }

@@ -512,6 +512,13 @@ to run on the computer itself.
   Home and End in a name's menu and an empty reading's spaces are done too.
 - **What 15 November added**: the text regions on real Tesseract and Mistral OCR pages, with a
   trackpad and a screen reader; a records job on a real directory and register.
+- **What the evening of 18 November added**
+  ([decision](decisions/2026-11-18-drawn-regions-region-read-again.md)), to try on both
+  systems: a region drawn, moved and resized with a mouse, a trackpad, a touch screen and the
+  keyboard alone, with Narrator and VoiceOver and in forced colours; a region read again by
+  each provider and by Tesseract, its cost against the estimate; the regions on a page of
+  thousands of words while one is moved; and all of it by someone who has never used the
+  app, which is who it must stay plain for.
 
 1. **What the [review of 9 November](decisions/2026-11-09-review.md) found.** Fixed at once,
    each with a test: structured answers cut off at the output limit sent once instead of four
@@ -658,11 +665,17 @@ to run on the computer itself.
    itself deleted at Google, as Claude's is; then several
    pages per call in economy mode, and Voxtral transcription in batches once its format is
    documented ([live runs](decisions/2026-11-03-live-runs.md)).
-5. **Source-linked review, the second step
-   ([#84](https://github.com/fmadore/Kalamu/issues/84))**, the first being done: stable region
-   identities with their granularity and origin, regions drawn or adjusted by the researcher in
-   a layer of their own, a region read again as a piece of its own, and the regions in the
-   analysis and contents reviews.
+5. **Source-linked review, what is left of
+   [#84](https://github.com/fmadore/Kalamu/issues/84)**, the first two steps being done (the
+   second on 18 November: stable region identities with their granularity and origin, regions
+   drawn or adjusted by the researcher in a layer of their own, a region read again by a
+   model, and the researcher's regions in the analysis, contents and records reviews;
+   [decision](decisions/2026-11-18-drawn-regions-region-read-again.md)). Left: the
+   researcher's boxes in ALTO, PAGE XML and the searchable PDF, which keep the model's own;
+   an answer of an analysis, an entry of a table of contents or a row of records tied to the
+   regions it was read from (with item 6 and #47); a drawn region kept with the document
+   across jobs rather than with one job; a cost estimate that follows the region's size; and
+   the third step, imported ALTO and PAGE XML and a model's text aligned to OCR positions.
 6. **Records, the second increment ([#171](https://github.com/fmadore/Kalamu/issues/171))**,
    the first being done: entries that run over a page (with #54), where each row sits (with
    item 5), rows across a project, a cut-off page read again in halves, error rates by row, and the

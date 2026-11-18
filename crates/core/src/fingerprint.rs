@@ -87,6 +87,25 @@ impl CacheKey {
         Self(sha256_hex(material.to_string().as_bytes()))
     }
 
+    /// The key of a region read again from the review: the picture cut from the page (its
+    /// SHA-256) stands for the source, the page and the box, so reading the same part of the same
+    /// file with the same model and prompt again reuses the answer, whatever the request's id.
+    pub fn region(setup: &Setup, languages: &LanguageChoice, picture_sha256: &str) -> Self {
+        let material = serde_json::json!({
+            "pipeline": PIPELINE_VERSION,
+            "task": "region_reading",
+            "picture": picture_sha256,
+            "provider": setup.provider.as_str(),
+            "model": setup.model,
+            "prompt": setup.prompt.text,
+            "user_prompt": setup.prompt.user_prompt,
+            "options": setup.options,
+            "languages": languages,
+            "schema": setup.prompt.schema,
+        });
+        Self(sha256_hex(material.to_string().as_bytes()))
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -217,5 +236,39 @@ mod tests {
             key.as_str(),
             "ace2d5efb73011e7904c0454ecf2030c1af99251938a5233e75b1e95d7063010"
         );
+    }
+    #[test]
+    fn a_region_read_again_is_keyed_by_its_picture_model_and_prompt() {
+        let picture = sha256_hex(b"the pixels cut");
+        let base = CacheKey::region(&setup("A"), &LanguageChoice::Auto, &picture);
+        // The set-up's id or label, which the request's own id is no part of, change nothing.
+        let mut relabelled = setup("A");
+        relabelled.label = "b".into();
+        assert_eq!(
+            base,
+            CacheKey::region(&relabelled, &LanguageChoice::Auto, &picture)
+        );
+        let other_picture = CacheKey::region(
+            &setup("A"),
+            &LanguageChoice::Auto,
+            &sha256_hex(b"other pixels"),
+        );
+        let mut other = setup("A");
+        other.model = "gemini-pro".into();
+        let other_model = CacheKey::region(&other, &LanguageChoice::Auto, &picture);
+        let other_prompt = CacheKey::region(&setup("B"), &LanguageChoice::Auto, &picture);
+        assert_ne!(base, other_picture);
+        assert_ne!(base, other_model);
+        assert_ne!(base, other_prompt);
+        // Never the key of a whole page read with the same set-up.
+        let page = CacheKey::compute(
+            Task::TextExtraction,
+            &picture,
+            &PieceRef::page(1),
+            &setup("A"),
+            &LanguageChoice::Auto,
+            &[],
+        );
+        assert_ne!(base, page);
     }
 }

@@ -35,6 +35,12 @@ export function turnBox(b: Box, rotation: Rotation): Box {
 	}
 }
 
+/** A box on the page as drawn after the reader's quarter turns clockwise, back on the page as
+ * read: `turnBox` undone, which is the same turn the other way round. */
+export function unturnBox(b: Box, rotation: Rotation): Box {
+	return turnBox(b, rotation === 0 ? 0 : ((360 - rotation) as Rotation));
+}
+
 /** Whether two boxes share any part. */
 export function overlaps(a: Box, b: Box): boolean {
 	return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;

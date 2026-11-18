@@ -15,6 +15,9 @@ import type { Pace } from './bindings/Pace.js';
 import type { PassageAsk } from './bindings/PassageAsk.js';
 import type { PassageEstimate } from './bindings/PassageEstimate.js';
 import type { PassageProposal } from './bindings/PassageProposal.js';
+import type { ReadingEffect } from './bindings/ReadingEffect.js';
+import type { RegionAsk } from './bindings/RegionAsk.js';
+import type { RegionReading } from './bindings/RegionReading.js';
 import type { ProposalPlan } from './bindings/ProposalPlan.js';
 import type { ProposalsView } from './bindings/ProposalsView.js';
 import type { QueueItemKey } from './bindings/QueueItemKey.js';
@@ -62,6 +65,9 @@ import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
 import type { PageRegions } from './bindings/PageRegions.js';
+import type { PageHalf } from './bindings/PageHalf.js';
+import type { DrawnRegion } from './bindings/DrawnRegion.js';
+import type { RegionDraft } from './bindings/RegionDraft.js';
 import type { PieceAudio } from './bindings/PieceAudio.js';
 import type { PieceView } from './bindings/PieceView.js';
 import type { Preset } from './bindings/Preset.js';
@@ -233,6 +239,16 @@ export const api = {
 	/** Where the text of a piece sits on it, under one set-up, placed in the text shown. */
 	pageRegions: (jobId: string, sourceId: string, setupId: string, index: number) =>
 		invoke<PageRegions>('page_regions', { jobId, sourceId, setupId, index }),
+	/** The researcher's regions on a page with no text piece of its own (an analysis's or a
+	 * table of contents' review), by the page's number and half. */
+	drawnRegions: (jobId: string, sourceId: string, page: number, half: PageHalf | null) =>
+		invoke<PageRegions>('drawn_regions', { jobId, sourceId, page, half }),
+	/** Saves a region drawn over the scan, or the box given an engine's region, or a change
+	 * to either; the region as kept. */
+	saveRegion: (draft: RegionDraft) => invoke<DrawnRegion>('save_region', { draft }),
+	/** Deletes a region drawn or adjusted; the region as it was, for Undo. */
+	removeRegion: (id: string) => invoke<DrawnRegion>('remove_region', { id }),
+	restoreRegion: (region: DrawnRegion) => invoke<DrawnRegion>('restore_region', { region }),
 	/** A page drawn `width` pixels wide, as a small image, for the strip of thumbnails. */
 	pieceThumbnail: (jobId: string, sourceId: string, index: number, width: number) =>
 		invoke<PagePreview>('piece_thumbnail', { jobId, sourceId, index, width }),
@@ -275,6 +291,20 @@ export const api = {
 	acceptPassage: (id: string, text: string) => invoke<Correction>('accept_passage', { id, text }),
 	discardPassage: (id: string) => invoke<void>('discard_passage', { id }),
 	undoPassage: (id: string, before: Correction) => invoke<void>('undo_passage', { id, before }),
+	/** What reading a region of a page again would cost; refused as asking would be. The engine
+	 * cuts the region from the original to know whether it was read before. */
+	regionReadingEstimate: (ask: RegionAsk) =>
+		invoke<PassageEstimate>('region_reading_estimate', { ask }),
+	/** Asks a model to read a region again, through the engine: its reading, applied by nothing. */
+	askRegionReading: (ask: RegionAsk) => invoke<RegionReading>('ask_region_reading', { ask }),
+	cancelRegionReading: (id: string) => invoke<void>('cancel_region_reading', { id }),
+	/** Writes a reading, or its edit, where it goes (the region's text, or the page's text in place
+	 * of the region's words); what it replaced, for Undo. */
+	acceptRegionReading: (id: string, text: string) =>
+		invoke<ReadingEffect>('accept_region_reading', { id, text }),
+	discardRegionReading: (id: string) => invoke<void>('discard_region_reading', { id }),
+	undoRegionReading: (id: string, before: ReadingEffect) =>
+		invoke<void>('undo_region_reading', { id, before }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
 		invoke<void>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>
