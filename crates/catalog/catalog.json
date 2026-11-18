@@ -2045,7 +2045,7 @@
       "provider": "local-llm",
       "name": "EmbeddingGemma 2",
       "dimensions": [768, 512, 256, 128],
-      "max_chars": 4000,
+      "max_chars": 2000,
       "input_price": null,
       "local": true,
       "multilingual": true

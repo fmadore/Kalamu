@@ -32,7 +32,7 @@ use crate::models::{ModelFile, ModelManager, ModelSet};
 use command::{arguments, finish, prompt, texts_file, vectors};
 
 /// The provider's id in the catalogue.
-pub const EMBEDDING_ID: &str = "local-embedding";
+pub const EMBEDDING_ID: &str = "local-llm";
 
 /// ggml-org's GGUF conversion of Google's model (Apache 2.0), made with llama.cpp on 1 November
 /// 2026. Its text model only: the image and audio encoders (`mmproj-…`) are not downloaded.

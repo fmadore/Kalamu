@@ -517,7 +517,7 @@ fn embedding_models_are_listed_apart_from_job_models() -> Result<(), CatalogErro
             m.max_chars,
             m.multilingual
         )),
-        Some(("EmbeddingGemma 2", &[768, 512, 256, 128][..], 4_000, true))
+        Some(("EmbeddingGemma 2", &[768, 512, 256, 128][..], 2_000, true))
     );
     Ok(())
 }
