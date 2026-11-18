@@ -7,7 +7,7 @@
 
 use std::collections::BTreeMap;
 
-use kalamu_core::{LanguageCode, ProviderId, Task};
+use kalamu_core::{EmbeddingModel, LanguageCode, ProviderId, Task};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -15,7 +15,7 @@ use ts_rs::TS;
 mod cost;
 mod lineage;
 mod release;
-pub use cost::CostEstimate;
+pub use cost::{CostEstimate, embedding_cost};
 pub use lineage::ModelAlias;
 pub use release::{Release, Version};
 
@@ -49,6 +49,13 @@ pub struct Catalog {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(optional, as = "Option<Vec<ModelAlias>>")]
     pub aliases: Vec<ModelAlias>,
+    /// The models that turn texts into vectors, for a project's search by meaning and its map
+    /// of documents: a list of their own, never among the job models above, so New job never
+    /// offers one. Absent from catalogues written before them, which read as listing none; a
+    /// build older than the list ignores it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<EmbeddingModel>>")]
+    pub embedding_models: Vec<EmbeddingModel>,
     /// Languages offered for models that accept any language, with English names for prompts.
     /// The interface shows names in its own language.
     pub languages: Vec<LanguageInfo>,
@@ -419,6 +426,7 @@ impl Catalog {
             providers: Vec::new(),
             models: Vec::new(),
             aliases: Vec::new(),
+            embedding_models: Vec::new(),
             languages: Vec::new(),
         }
     }
@@ -466,6 +474,19 @@ impl Catalog {
             .find(|m| m.is_recommended_for(task))
             .or_else(|| candidates.first())
             .copied()
+    }
+
+    /// The embedding models, in catalogue order: those of the cloud providers, then those run on
+    /// this computer.
+    pub fn embedding_models(&self) -> &[EmbeddingModel] {
+        &self.embedding_models
+    }
+
+    /// An embedding model by its provider and id.
+    pub fn embedding_model(&self, provider: &ProviderId, id: &str) -> Option<&EmbeddingModel> {
+        self.embedding_models
+            .iter()
+            .find(|m| &m.provider == provider && m.id == id)
     }
 
     /// English name of a language, for prompts; the code itself when unknown.

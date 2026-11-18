@@ -454,3 +454,131 @@ fn every_model_names_its_tier() -> Result<(), CatalogError> {
     }
     Ok(())
 }
+
+/// The embedding models are a list of their own: each names a provider the catalogue knows,
+/// runs on this computer exactly when its provider does and then has no price, offers at least
+/// one length of vector, and never appears among the job models New job offers.
+#[test]
+fn embedding_models_are_listed_apart_from_job_models() -> Result<(), CatalogError> {
+    let catalog = Catalog::from_json(BUNDLED)?;
+    let models = catalog.embedding_models();
+    assert!(models.iter().any(|m| m.local));
+    assert!(models.iter().any(|m| !m.local));
+    for model in models {
+        let provider = catalog.provider(&model.provider);
+        assert!(provider.is_some(), "{} names an unknown provider", model.id);
+        assert_eq!(provider.map(|p| p.local), Some(model.local), "{}", model.id);
+        assert_eq!(model.input_price.is_none(), model.local, "{}", model.id);
+        assert!(!model.dimensions.is_empty(), "{}", model.id);
+        assert!(model.dimensions.iter().all(|d| *d > 0), "{}", model.id);
+        assert!(model.max_chars >= 1_000, "{}", model.id);
+        assert!(!model.name.trim().is_empty(), "{}", model.id);
+        assert_eq!(
+            models
+                .iter()
+                .filter(|m| m.provider == model.provider && m.id == model.id)
+                .count(),
+            1,
+            "{} is listed twice",
+            model.id
+        );
+        assert_eq!(
+            catalog.embedding_model(&model.provider, &model.id),
+            Some(model)
+        );
+        // Not a job model: no task lists it, and no lookup of a job model finds it.
+        assert!(
+            catalog.model(&model.provider, &model.id).is_none(),
+            "{}",
+            model.id
+        );
+        for task in [
+            Task::TextExtraction,
+            Task::AudioTranscription,
+            Task::Analysis,
+            Task::Contents,
+            Task::TextCorrection,
+            Task::Translation,
+        ] {
+            assert!(
+                catalog.models_for(task).iter().all(|m| m.id != model.id),
+                "{} {task:?}",
+                model.id
+            );
+        }
+        assert!(catalog.merge_models().iter().all(|m| m.id != model.id));
+    }
+    // The model run on this computer that the offline crate embeds with.
+    let local = catalog.embedding_model(&ProviderId::new("local-llm"), "embeddinggemma-2");
+    assert_eq!(
+        local.map(|m| (
+            m.name.as_str(),
+            m.dimensions.as_slice(),
+            m.max_chars,
+            m.multilingual
+        )),
+        Some(("EmbeddingGemma 2", &[768, 512, 256, 128][..], 4_000, true))
+    );
+    Ok(())
+}
+
+/// An older build reads today's file, the list it does not know ignored, and this build reads a
+/// file written before the list, as listing none: it never replaces the bundled one, which is
+/// newer, so the embedding models are not lost.
+#[test]
+fn a_catalogue_without_embedding_models_still_reads() -> Result<(), CatalogError> {
+    let parse = |json: &str| -> Result<serde_json::Value, CatalogError> {
+        serde_json::from_str(json).map_err(|e| CatalogError::Invalid(e.to_string()))
+    };
+    let mut old = parse(BUNDLED)?;
+    if let Some(fields) = old.as_object_mut() {
+        fields.remove("embedding_models");
+    }
+    old["updated"] = "2026-11-01".into();
+    let read = Catalog::from_json(&old.to_string())?;
+    assert!(read.embedding_models().is_empty());
+    assert_eq!(read.models, Catalog::bundled().models);
+    let newest = Catalog::newest(Some(&old.to_string()));
+    assert!(!newest.embedding_models().is_empty());
+
+    let mut newer = parse(BUNDLED)?;
+    for model in newer["embedding_models"]
+        .as_array_mut()
+        .into_iter()
+        .flatten()
+    {
+        model["a_field_not_yet_known"] = true.into();
+    }
+    assert_eq!(Catalog::from_json(&newer.to_string())?, Catalog::bundled());
+    // Written back as read, the list included.
+    let again = serde_json::to_string(&Catalog::bundled())
+        .map_err(|e| CatalogError::Invalid(e.to_string()))?;
+    assert_eq!(Catalog::from_json(&again)?, Catalog::bundled());
+    Ok(())
+}
+
+#[test]
+fn embedding_costs_scale_with_tokens_and_nothing_is_paid_on_this_computer() {
+    let catalog = Catalog::bundled();
+    let gemini = catalog.embedding_model(&ProviderId::new("gemini"), "gemini-embedding-2");
+    let cost = gemini
+        .and_then(|m| embedding_cost(m, 2_000_000))
+        .unwrap_or(-1.0);
+    assert!((cost - 0.4).abs() < 1e-12, "{cost}");
+    assert_eq!(gemini.and_then(|m| embedding_cost(m, 0)), Some(0.0));
+    let small = catalog.embedding_model(&ProviderId::new("openai"), "text-embedding-3-small");
+    let cost = small
+        .and_then(|m| embedding_cost(m, 500_000))
+        .unwrap_or(-1.0);
+    assert!((cost - 0.01).abs() < 1e-12, "{cost}");
+    let local = catalog.embedding_model(&ProviderId::new("local-llm"), "embeddinggemma-2");
+    assert_eq!(local.and_then(|m| embedding_cost(m, 9_999_999)), Some(0.0));
+    let Some(gemini) = gemini else {
+        panic!("gemini-embedding-2 is in the catalogue");
+    };
+    let unpriced = EmbeddingModel {
+        input_price: None,
+        ..gemini.clone()
+    };
+    assert_eq!(embedding_cost(&unpriced, 1_000), None);
+}
