@@ -246,18 +246,9 @@ pub(crate) fn mark_running_as_interrupted(store: &SqliteStore) -> Result<Vec<Job
         [],
     )
     .map_err(db)?;
-    // A passage asked about from the review was waiting for its model: no longer.
-    conn.execute(
-        "UPDATE passages SET status = 'cancelled' WHERE status = 'asked'",
-        [],
-    )
-    .map_err(db)?;
-    // And so was a region asked to be read again.
-    conn.execute(
-        "UPDATE region_readings SET status = 'cancelled' WHERE status = 'asked'",
-        [],
-    )
-    .map_err(db)?;
+    // A passage asked about, or a region asked to be read again, from the review was waiting
+    // for its model: no longer.
+    super::proposals::cancel_waiting(&conn)?;
     ids.iter().map(|id| id.parse().map_err(corrupt)).collect()
 }
 
@@ -408,6 +399,16 @@ pub(crate) fn spent(store: &SqliteStore, job: JobId) -> Result<f64, StoreError> 
         .map_err(db)
 }
 
+/// The stored answers no piece and no request made from the review names. One statement, so no
+/// piece takes up a key between the keys being read and the results being deleted.
+/// `pieces.cache_key` and the `cache_key` of each of [`crate::proposals::TABLES`] name results;
+/// a piece without a key yet keeps nothing, and its NULL must not empty the list (`NOT IN` a
+/// list holding NULL matches nothing).
+pub(crate) const PRUNE_RESULTS: &str = "DELETE FROM results WHERE cache_key NOT IN
+        (SELECT cache_key FROM pieces WHERE cache_key IS NOT NULL)
+        AND cache_key NOT IN (SELECT cache_key FROM passages)
+        AND cache_key NOT IN (SELECT cache_key FROM region_readings)";
+
 pub(crate) fn prune_results(store: &SqliteStore) -> Result<PrunedResults, StoreError> {
     let conn = store.conn();
     let size = |conn: &Connection| -> Result<u64, StoreError> {
@@ -420,20 +421,7 @@ pub(crate) fn prune_results(store: &SqliteStore) -> Result<PrunedResults, StoreE
         Ok(u64::try_from(pages.saturating_mul(page_size)).unwrap_or_default())
     };
     let before = size(&conn)?;
-    // One statement, so no piece takes up a key between the keys being read and the results
-    // being deleted. `pieces.cache_key`, `passages.cache_key` and `region_readings.cache_key`
-    // name results; a piece
-    // without a key yet keeps nothing, and its NULL must not empty the list (`NOT IN` a list
-    // holding NULL matches nothing).
-    let results = conn
-        .execute(
-            "DELETE FROM results WHERE cache_key NOT IN
-                (SELECT cache_key FROM pieces WHERE cache_key IS NOT NULL)
-                AND cache_key NOT IN (SELECT cache_key FROM passages)
-                AND cache_key NOT IN (SELECT cache_key FROM region_readings)",
-            [],
-        )
-        .map_err(db)?;
+    let results = conn.execute(PRUNE_RESULTS, []).map_err(db)?;
     // Gives the space back to the system, as clearing the search index does.
     conn.execute_batch("VACUUM;").map_err(db)?;
     let after = size(&conn)?;

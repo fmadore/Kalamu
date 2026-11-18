@@ -7,6 +7,7 @@
 
 mod agreement;
 mod aligned;
+mod asked;
 mod attention;
 mod batch;
 mod compare;
@@ -52,6 +53,7 @@ use kalamu_media::{Ffmpeg, OpenSource, Playback};
 use kalamu_prompts::PromptLibrary;
 use tokio::sync::broadcast;
 
+pub use asked::PassageEstimate;
 pub use compare::{
     ComparisonReport, DiffKind, DiffSpan, JobScores, PageComparison, SetupScore, SourceScores,
     diff, error_rate,
@@ -64,7 +66,6 @@ pub use kalamu_core::{AgreementMeasure, FieldAgreement, JobAgreement, PairAgreem
 pub use kalamu_core::{FileProgress, JobProgress};
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use meaning::{Meaning, MeaningError, MeaningProgress, MeaningStatus, Ready};
-pub use passage::PassageEstimate;
 pub use review::{ListedAdded, PieceView};
 pub use rules::{ModelRef, PageReading, TaskRules, task_rules};
 pub use setup::{ImageDocument, NewJob};

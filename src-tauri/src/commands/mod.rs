@@ -6,6 +6,7 @@ pub mod jobs;
 pub mod keys;
 pub mod meaning;
 pub mod offline;
+pub mod passage;
 pub mod pipelines;
 pub mod presets;
 pub mod profiles;
@@ -178,6 +179,15 @@ fn require_consent<'a>(
         std::iter::once(s.provider.clone()).chain(s.merge.as_ref().map(|m| m.provider.clone()))
     });
     match unconsented(state, providers).first() {
+        Some(provider) => Err(AppError::new(crate::errors::id::CONSENT, provider)),
+        None => Ok(()),
+    }
+}
+
+/// Refuses a request from the review (a passage corrected, a region read again) that would send
+/// to `provider` without the researcher's consent.
+fn consented(state: &AppState, provider: &ProviderId) -> Result<(), AppError> {
+    match unconsented(state, [provider.clone()]).first() {
         Some(provider) => Err(AppError::new(crate::errors::id::CONSENT, provider)),
         None => Ok(()),
     }

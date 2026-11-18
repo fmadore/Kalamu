@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
+pub use crate::proposal::ProposalStatus;
+use crate::proposal::{Lifecycle, Proposal};
 use crate::{JobId, PromptSnapshot, ProviderId, RequestSetting, SetupId, SourceId, Timestamp};
 
 /// The fewest letters or figures a passage may hold: less is not worth a call.
@@ -50,54 +52,6 @@ pub struct PassageAsk {
     pub model: String,
     /// A correction preset; the default one when none is given.
     pub preset_id: Option<String>,
-}
-
-/// Where a proposal stands.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "snake_case")]
-#[ts(export)]
-pub enum ProposalStatus {
-    /// Recorded before the call; still waiting for the model.
-    Asked,
-    /// The model answered and the answer is offered.
-    Answered,
-    /// The call failed, or its answer was refused.
-    Failed,
-    /// The researcher stopped waiting, or Kalamu closed while it waited.
-    Cancelled,
-    /// Written into the researcher's corrections.
-    Accepted,
-    Discarded,
-    /// Accepted, then put back as it was.
-    Undone,
-}
-
-impl ProposalStatus {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Asked => "asked",
-            Self::Answered => "answered",
-            Self::Failed => "failed",
-            Self::Cancelled => "cancelled",
-            Self::Accepted => "accepted",
-            Self::Discarded => "discarded",
-            Self::Undone => "undone",
-        }
-    }
-
-    pub fn parse(s: &str) -> Option<Self> {
-        [
-            Self::Asked,
-            Self::Answered,
-            Self::Failed,
-            Self::Cancelled,
-            Self::Accepted,
-            Self::Discarded,
-            Self::Undone,
-        ]
-        .into_iter()
-        .find(|v| v.as_str() == s)
-    }
 }
 
 /// What was done to the model's answer before it was offered, for the researcher to know.
@@ -144,6 +98,25 @@ pub struct PassageProposal {
     pub asked_at: Timestamp,
     pub answered_at: Option<Timestamp>,
     pub decided_at: Option<Timestamp>,
+}
+
+impl Proposal for PassageProposal {
+    fn status(&self) -> ProposalStatus {
+        self.status
+    }
+
+    fn lifecycle(&mut self) -> Lifecycle<'_> {
+        Lifecycle {
+            status: &mut self.status,
+            request: &mut self.request,
+            cost_usd: &mut self.cost_usd,
+            cached: &mut self.cached,
+            error: &mut self.error,
+            accepted: &mut self.accepted,
+            answered_at: &mut self.answered_at,
+            decided_at: &mut self.decided_at,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]

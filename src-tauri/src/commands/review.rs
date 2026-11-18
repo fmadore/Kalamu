@@ -4,12 +4,11 @@ use std::sync::Arc;
 
 use base64::Engine as _;
 use kalamu_core::{
-    Correction, DrawnRegion, JobId, PageHalf, PageRegions, PassageAsk, PassageProposal,
-    RegionDraft, RowEdit, SetupId, SourceId, SpeakerNames,
+    Correction, DrawnRegion, JobId, PageHalf, PageRegions, RegionDraft, RowEdit, SetupId, SourceId,
+    SpeakerNames,
 };
 use kalamu_engine::{
-    ComparisonReport, DiffSpan, JobAgreement, JobScores, ListedAdded, PassageEstimate, PieceAudio,
-    PieceView,
+    ComparisonReport, DiffSpan, JobAgreement, JobScores, ListedAdded, PieceAudio, PieceView,
 };
 use kalamu_media::OpenSource;
 use tauri::{AppHandle, Manager, State};
@@ -299,69 +298,6 @@ pub async fn add_listed(
 ) -> CmdResult<ListedAdded> {
     let engine = state.engine.clone();
     off_thread(move || Ok(engine.add_listed(job_id, source_id, index, &key, &items)?)).await
-}
-
-/// What asking a model to correct a passage selected in the review would cost, and whether the
-/// answer is stored already; refused as asking would be (a passage too short or too long, a text
-/// changed, a model that cannot correct text).
-#[tauri::command]
-pub async fn passage_estimate(
-    state: State<'_, AppState>,
-    ask: PassageAsk,
-) -> CmdResult<PassageEstimate> {
-    let engine = state.engine.clone();
-    off_thread(move || Ok(engine.passage_estimate(&ask)?)).await
-}
-
-/// Asks a model to correct a passage selected in the review, through the engine, and gives back
-/// its proposal; nothing is written into the text until it is accepted. Refused without the
-/// researcher's consent to send to the model's provider.
-#[tauri::command]
-pub async fn ask_passage(
-    state: State<'_, AppState>,
-    ask: PassageAsk,
-) -> CmdResult<PassageProposal> {
-    if let Some(provider) = super::unconsented(&state, [ask.provider.clone()]).first() {
-        return Err(AppError::new(id::CONSENT, provider));
-    }
-    let engine = state.engine.clone();
-    Ok(engine.ask_passage(ask).await?)
-}
-
-/// Stops waiting for a passage's proposal; an answer that still comes is kept for next time.
-#[tauri::command]
-pub fn cancel_passage(state: State<'_, AppState>, id: String) {
-    state.engine.cancel_passage(&id);
-}
-
-/// Writes a proposal (or the researcher's edit of it) into the corrections of its piece; gives
-/// back the piece's correction as it stood, for *Undo*.
-#[tauri::command]
-pub async fn accept_passage(
-    state: State<'_, AppState>,
-    id: String,
-    text: String,
-) -> CmdResult<Correction> {
-    let engine = state.engine.clone();
-    off_thread(move || Ok(engine.accept_passage(&id, text)?)).await
-}
-
-/// Leaves a proposal unused.
-#[tauri::command]
-pub async fn discard_passage(state: State<'_, AppState>, id: String) -> CmdResult<()> {
-    let engine = state.engine.clone();
-    off_thread(move || Ok(engine.discard_passage(&id)?)).await
-}
-
-/// Puts back the correction an accepted passage replaced.
-#[tauri::command]
-pub async fn undo_passage(
-    state: State<'_, AppState>,
-    id: String,
-    before: Correction,
-) -> CmdResult<()> {
-    let engine = state.engine.clone();
-    off_thread(move || Ok(engine.undo_passage(&id, before)?)).await
 }
 
 /// Names the speakers of one set-up's transcription; the files are written again as after a

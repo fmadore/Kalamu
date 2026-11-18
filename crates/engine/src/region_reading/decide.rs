@@ -6,11 +6,12 @@
 use kalamu_core::provenance::{ProvenancePrompt, ProvenanceRegionReading, ReadingPlace};
 use kalamu_core::region_reading as reading;
 use kalamu_core::{
-    Correction, DrawnRegion, Job, PieceState, ProposalStatus, ReadingEffect, ReadingTarget,
-    RegionError, RegionReadingError, SetupId, SourceId, StoreError, Timestamp,
+    Correction, DrawnRegion, Job, PieceState, Proposal, ProposalStatus, ReadingEffect,
+    ReadingTarget, RegionError, RegionReading, RegionReadingError, SetupId, SourceId, Timestamp,
 };
 
 use super::{missing, refused};
+use crate::asked::kept;
 use crate::{Engine, EngineError};
 
 impl Engine {
@@ -48,54 +49,27 @@ impl Engine {
             ReadingTarget::Text {
                 setup_id, index, ..
             } => {
-                let state = self.finished_piece(&ask, *setup_id, *index)?;
-                let corrections =
-                    self.store
-                        .source_corrections(ask.job_id, *setup_id, ask.source_id)?;
-                let before = Correction::of(&corrections, &state)
-                    .cloned()
-                    .unwrap_or(Correction {
-                        job_id: ask.job_id,
-                        setup_id: *setup_id,
-                        source_id: ask.source_id,
-                        index: *index,
-                        text: None,
-                        fields: None,
-                        reviewed: false,
-                        updated_at: now,
-                    });
-                let shown = self.shown_text(&state)?;
-                let corrected = reading::replace(&shown, &ask.target, &text)
-                    .ok_or(refused(RegionReadingError::Changed))?;
-                let after = Correction {
-                    text: Some(corrected),
-                    updated_at: now,
-                    ..before.clone()
-                };
+                let state = self.finished_piece(ask.job_id, *setup_id, ask.source_id, *index)?;
+                let (before, after) = self.correction_replacing(
+                    &state,
+                    now,
+                    |shown| reading::replace(shown, &ask.target, &text),
+                    refused(RegionReadingError::Changed),
+                )?;
                 (
                     ReadingEffect::Correction(before),
                     ReadingEffect::Correction(after),
                 )
             }
         };
-        proposal.status = ProposalStatus::Accepted;
-        proposal.accepted = Some(text);
-        proposal.decided_at = Some(now);
-        self.store.put_region_reading(&proposal, Some(&after))?;
-        self.write_later(ask.job_id);
+        proposal.lifecycle().accept(text, now);
+        self.write_decision(&proposal, &after, ask.job_id)?;
         Ok(before)
     }
 
     /// Leaves a reading unused.
     pub fn discard_region_reading(&self, id: &str) -> Result<(), EngineError> {
-        let mut proposal = self.store.region_reading(id)?;
-        if proposal.status != ProposalStatus::Answered {
-            return Ok(());
-        }
-        proposal.status = ProposalStatus::Discarded;
-        proposal.decided_at = Some(Timestamp::now());
-        self.store.put_region_reading(&proposal, None)?;
-        Ok(())
+        self.discard::<RegionReading>(id)
     }
 
     /// Puts back what an accepted reading replaced (the page's correction, or the region as it
@@ -125,8 +99,7 @@ impl Engine {
         }
         let job = ask.job_id;
         let now = Timestamp::now();
-        proposal.status = ProposalStatus::Undone;
-        proposal.decided_at = Some(now);
+        proposal.lifecycle().undo(now);
         let before = match before {
             ReadingEffect::Correction(c) => ReadingEffect::Correction(Correction {
                 updated_at: now,
@@ -137,9 +110,7 @@ impl Engine {
                 ..r
             }),
         };
-        self.store.put_region_reading(&proposal, Some(&before))?;
-        self.write_later(job);
-        Ok(())
+        self.write_decision(&proposal, &before, job)
     }
 
     /// The readings accepted on a source that a set-up's `provenance.json` lists: those written
@@ -152,12 +123,8 @@ impl Engine {
         source: SourceId,
         states: &[PieceState],
     ) -> Result<Vec<ProvenanceRegionReading>, EngineError> {
-        let readings = match self.store.source_region_readings(job.id, source) {
-            Ok(r) => r,
-            // A store that keeps no readings has none to tell of.
-            Err(StoreError::Database(_)) => return Ok(Vec::new()),
-            Err(e) => return Err(e.into()),
-        };
+        // A store that keeps no readings has none to tell of.
+        let readings = kept(self.store.source_region_readings(job.id, source))?;
         Ok(readings
             .into_iter()
             .filter(|r| r.status == ProposalStatus::Accepted)

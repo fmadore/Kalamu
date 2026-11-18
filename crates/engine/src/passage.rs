@@ -1,43 +1,56 @@
 //! A passage the researcher selected in the review, corrected by a model on request: the
 //! correction task's request (its preset frozen as a job's would be, its one field, the
-//! provider's retries) sent for the passage and a little context, recorded in the store before
-//! and after the call, its answer cached under a key of its own and offered as a proposal. Only
-//! the researcher's acceptance writes it, into their corrections of that piece, in the same
-//! transaction as the record that says a model proposed it; the model's output is never
-//! changed.
+//! provider's retries) sent for the passage and a little context, its answer cached under a key
+//! of its own and offered as a proposal, through the steps every request from the review goes
+//! through ([`crate::asked`]). An answer that is not a correction of the passage is refused and
+//! billed. Only the researcher's acceptance writes it, into their corrections of that piece, in
+//! the same transaction as the record that says a model proposed it; the model's output is
+//! never changed.
 //!
-//! No job is made: a passage belongs to the result reviewed, and its cost to that result's
-//! job. The job's settings give the languages; the job's task need only write text.
-
-use std::sync::Arc;
-use std::time::Duration;
+//! A passage belongs to the result reviewed, and its cost to that result's job. The job's
+//! settings give the languages; the job's task need only write text.
 
 use kalamu_core::passage_correction::{self as passage, PassageError};
 use kalamu_core::{
-    ApiKey, CacheKey, Correction, Job, JobSettings, LineBreaks, PassageAsk, PassageProposal,
-    PieceState, PreparedInput, ProposalStatus, SetupRequest, StopSignal, StoreError, Task,
-    Timestamp,
+    CacheKey, Correction, Job, JobSettings, JobStore, LineBreaks, PassageAsk, PassageProposal,
+    PieceState, PreparedInput, Proposal, ProposalStatus, SetupRequest, StoreError, Task, Timestamp,
 };
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
-use crate::control::lock;
-use crate::piece::Called;
+use crate::asked::{Asked, Call, PassageEstimate, Waiting, kept};
 use crate::{Engine, EngineError};
 
-/// What asking about a passage, or for a region to be read again, would cost, before it is
-/// asked.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct PassageEstimate {
-    /// About what the call costs at the model's prices; none for a model without one, or
-    /// when the answer is already stored.
-    pub usd: Option<f64>,
-    /// Read on this computer: nothing is sent.
-    pub offline: bool,
-    /// The same passage, context, model and prompt (or the same picture of a region, model and
-    /// prompt) were asked about before: the stored answer is offered again, for nothing.
-    pub cached: bool,
+impl Asked for PassageProposal {
+    type Effect = Correction;
+
+    fn load(store: &dyn JobStore, id: &str) -> Result<Self, StoreError> {
+        store.passage(id)
+    }
+
+    fn record(&self, store: &dyn JobStore, effect: Option<&Correction>) -> Result<(), StoreError> {
+        store.put_passage(self, effect)
+    }
+
+    /// An answer that is not a correction of the passage: empty, or too far from its length.
+    fn refusal(&self, answer: &str) -> Option<String> {
+        let ask = &self.ask;
+        passage::read_answer(&ask.before, &ask.passage, &ask.after, answer)
+            .err()
+            .map(|e| e.to_string())
+    }
+
+    /// Offered when it passes, failed when not.
+    fn answered(&mut self, answer: &str) {
+        self.answered_at = Some(Timestamp::now());
+        let ask = &self.ask;
+        match passage::read_answer(&ask.before, &ask.passage, &ask.after, answer) {
+            Ok((text, notes)) => {
+                self.status = ProposalStatus::Answered;
+                self.answer = Some(text);
+                self.notes = notes;
+            }
+            Err(e) => self.lifecycle().fail(e.to_string()),
+        }
+    }
 }
 
 /// The passage's request, answered or not, before it is recorded.
@@ -60,12 +73,7 @@ impl Engine {
         if matches!(job.task, Task::Analysis | Task::Contents) {
             return Err(EngineError::NotText);
         }
-        let state = self
-            .store
-            .source_pieces(ask.job_id, ask.setup_id, ask.source_id)?
-            .into_iter()
-            .find(|p| p.index == ask.index && p.status.is_finished())
-            .ok_or(EngineError::NothingRead)?;
+        let state = self.finished_piece(ask.job_id, ask.setup_id, ask.source_id, ask.index)?;
         let text = self.shown_text(&state)?;
         if passage::locate(&text, ask).is_none() {
             return Err(EngineError::Passage(PassageError::Changed));
@@ -134,37 +142,12 @@ impl Engine {
         ))
     }
 
-    /// A finished piece's text as the review shows it: the correction, else the model's, with
-    /// the speakers' names.
-    pub(crate) fn shown_text(&self, state: &PieceState) -> Result<String, EngineError> {
-        let corrections =
-            self.store
-                .source_corrections(state.job_id, state.setup_id, state.source_id)?;
-        let speakers = kalamu_core::SpeakerIndex::new(self.store.source_speaker_names(
-            state.job_id,
-            state.setup_id,
-            state.source_id,
-        )?);
-        Ok(self
-            .store
-            .text(state, &corrections, &speakers)?
-            .unwrap_or_default())
-    }
-
     /// What asking would cost: the passage, its context and the prompt read, the passage
     /// written back, at the model's prices; nothing when the answer is stored already.
     pub fn passage_estimate(&self, ask: &PassageAsk) -> Result<PassageEstimate, EngineError> {
         let prepared = self.prepare_passage(ask)?;
-        let offline = !self.provider(&ask.provider)?.needs_key();
-        if self.store.cached_result(&prepared.key)?.is_some() {
-            return Ok(PassageEstimate {
-                usd: None,
-                offline,
-                cached: true,
-            });
-        }
-        let catalog = self.current_catalog();
-        let usd = catalog.model(&ask.provider, &ask.model).and_then(|m| {
+        self.estimated(&ask.provider, &prepared.key, |catalog| {
+            let m = catalog.model(&ask.provider, &ask.model)?;
             let (input, output) = (m.pricing.input_per_mtok?, m.pricing.output_per_mtok?);
             let read = (prepared.setup.prompt.text.len()
                 + prepared.setup.prompt.user_prompt.len()
@@ -173,11 +156,6 @@ impl Engine {
             // Written back as JSON, a little longer than read.
             let written = ask.passage.len() as f64 / 4.0 * 1.1 + 50.0;
             Some((read * input + written * output) / 1_000_000.0)
-        });
-        Ok(PassageEstimate {
-            usd: usd.filter(|_| !offline),
-            offline,
-            cached: false,
         })
     }
 
@@ -189,24 +167,13 @@ impl Engine {
     /// stored, so asking again costs nothing.
     pub async fn ask_passage(&self, ask: PassageAsk) -> Result<PassageProposal, EngineError> {
         let Prepared {
-            job,
+            mut job,
             state,
             setup,
             input,
             key,
         } = self.prepare_passage(&ask)?;
-        let provider = self.provider(&ask.provider)?;
-        let api_key = if provider.needs_key() {
-            self.keys
-                .key(&ask.provider)
-                .ok_or_else(|| EngineError::MissingKey(ask.provider.to_string()))?
-        } else {
-            ApiKey::new("")
-        };
-        provider
-            .check_ready(&setup.model, &job.settings.languages)
-            .map_err(EngineError::NotReady)?;
-
+        let api_key = self.ready_key(&ask.provider, &setup.model, &job.settings.languages)?;
         let mut proposal = PassageProposal {
             ask: ask.clone(),
             status: ProposalStatus::Asked,
@@ -223,171 +190,31 @@ impl Engine {
             answered_at: None,
             decided_at: None,
         };
-        self.store.put_passage(&proposal, None)?;
-
-        if let Some(stored) = self.store.cached_result(&key)? {
-            proposal.cached = true;
-            proposal.request = stored.request.clone();
-            self.answered(&mut proposal, &stored.output.text);
-            self.store.put_passage(&proposal, None)?;
+        if self.asked_or_cached(&mut proposal, &key)? {
             return Ok(proposal);
         }
-
-        let stop = StopSignal::default();
-        lock(&self.passages).insert(ask.id.clone(), stop.clone());
-        let me = self
-            .me
-            .upgrade()
-            .ok_or_else(|| EngineError::Output("the engine is closing".into()))?;
-        let call = {
-            let stop = stop.clone();
-            let ask = ask.clone();
-            tokio::spawn(async move {
-                me.call_passage(job, state, setup, &ask, input, key, api_key, &stop)
-                    .await
-            })
-        };
-        let ended = tokio::select! {
-            joined = call => Some(joined),
-            () = stopped(&stop) => None,
-        };
-        lock(&self.passages).remove(&ask.id);
-        proposal.answered_at = Some(Timestamp::now());
-        match ended {
-            None => {
-                proposal.status = ProposalStatus::Cancelled;
-            }
-            Some(Err(e)) => {
-                proposal.status = ProposalStatus::Failed;
-                proposal.error = Some(e.to_string());
-            }
-            Some(Ok(Err(e))) => {
-                proposal.status = ProposalStatus::Failed;
-                proposal.error = Some(e.to_string());
-            }
-            Some(Ok(Ok(PassageCall::Interrupted))) => {
-                proposal.status = ProposalStatus::Cancelled;
-            }
-            Some(Ok(Ok(PassageCall::Failed(reason)))) => {
-                proposal.status = ProposalStatus::Failed;
-                proposal.error = Some(reason);
-            }
-            Some(Ok(Ok(PassageCall::Answer {
-                text,
-                notes,
-                cost,
-                request,
-            }))) => {
-                proposal.status = ProposalStatus::Answered;
-                proposal.answer = Some(text);
-                proposal.notes = notes;
-                proposal.cost_usd = cost;
-                proposal.request = request;
-            }
-        }
-        self.store.put_passage(&proposal, None)?;
-        Ok(proposal)
-    }
-
-    /// Reads a stored answer into the proposal: offered when it passes, failed when not.
-    fn answered(&self, proposal: &mut PassageProposal, answer: &str) {
-        let ask = &proposal.ask;
-        proposal.answered_at = Some(Timestamp::now());
-        match passage::read_answer(&ask.before, &ask.passage, &ask.after, answer) {
-            Ok((text, notes)) => {
-                proposal.status = ProposalStatus::Answered;
-                proposal.answer = Some(text);
-                proposal.notes = notes;
-            }
-            Err(e) => {
-                proposal.status = ProposalStatus::Failed;
-                proposal.error = Some(e.to_string());
-            }
-        }
-    }
-
-    /// The call itself, with the provider's retries: its answer checked, then stored under the
-    /// passage's key with its cost; refused and billed when it is not a correction of the
-    /// passage.
-    #[allow(clippy::too_many_arguments)]
-    async fn call_passage(
-        &self,
-        mut job: Job,
-        mut state: PieceState,
-        setup: kalamu_core::Setup,
-        ask: &PassageAsk,
-        input: String,
-        key: CacheKey,
-        api_key: ApiKey,
-        stop: &StopSignal,
-    ) -> Result<PassageCall, EngineError> {
+        let waiting = Waiting::new(&self.passages, &ask.id);
         job.task = Task::TextCorrection;
-        let provider = self.provider(&setup.provider)?;
-        let prepared = PreparedInput {
+        let input = PreparedInput {
             piece: state.piece.clone(),
             mime: "text/plain".into(),
             bytes: input.into_bytes(),
             file_name: "passage.txt".into(),
         };
-        let spent = Arc::new(std::sync::Mutex::new(self.store.spent(job.id)?));
-        let called = self
-            .call(
-                &job,
-                setup.step(),
-                &provider,
-                &api_key,
-                &mut state,
-                &prepared,
-                &setup.prompt.user_prompt,
-                &setup.options,
-                &spent,
-                stop,
-                None,
-            )
-            .await?;
-        match called {
-            Called::Answer {
-                output,
-                sent,
-                duration_ms,
-            } => {
-                let output = crate::piece::finish(Task::TextCorrection, output);
-                match passage::read_answer(&ask.before, &ask.passage, &ask.after, &output.text) {
-                    Ok((text, notes)) => {
-                        let cost = self.store_answer(
-                            &key,
-                            setup.step(),
-                            output,
-                            sent.clone(),
-                            duration_ms,
-                        )?;
-                        Ok(PassageCall::Answer {
-                            text,
-                            notes,
-                            cost,
-                            request: sent,
-                        })
-                    }
-                    Err(e) => {
-                        // Paid for, though nothing is kept: charged to the piece reviewed.
-                        self.bill(&state, &setup.provider, &setup.model, &output.usage, &spent)?;
-                        Ok(PassageCall::Failed(e.to_string()))
-                    }
-                }
-            }
-            Called::Interrupted => Ok(PassageCall::Interrupted),
-            Called::Fatal(e) => Ok(PassageCall::Failed(e.to_string())),
-            Called::Failed(e) => Ok(PassageCall::Failed(
-                e.map_or_else(|| "The model did not answer".to_string(), |e| e.to_string()),
-            )),
-        }
+        let call = Call {
+            job,
+            setup,
+            charged: state,
+            input,
+            key,
+            api_key,
+        };
+        self.call_raced(proposal, call, &waiting.stop).await
     }
 
     /// Stops waiting for a passage's answer; nothing when it is not waiting.
     pub fn cancel_passage(&self, id: &str) {
-        if let Some(stop) = lock(&self.passages).get(id) {
-            stop.stop();
-        }
+        Waiting::cancel(&self.passages, id);
     }
 
     /// Writes a proposal into the researcher's corrections of its piece, exactly as a typed
@@ -402,54 +229,22 @@ impl Engine {
             return Err(EngineError::Passage(PassageError::NotWaiting));
         }
         let ask = proposal.ask.clone();
-        let state = self
-            .store
-            .source_pieces(ask.job_id, ask.setup_id, ask.source_id)?
-            .into_iter()
-            .find(|p| p.index == ask.index && p.status.is_finished())
-            .ok_or(EngineError::NothingRead)?;
-        let corrections = self
-            .store
-            .source_corrections(ask.job_id, ask.setup_id, ask.source_id)?;
-        let before = Correction::of(&corrections, &state)
-            .cloned()
-            .unwrap_or(Correction {
-                job_id: ask.job_id,
-                setup_id: ask.setup_id,
-                source_id: ask.source_id,
-                index: ask.index,
-                text: None,
-                fields: None,
-                reviewed: false,
-                updated_at: Timestamp::now(),
-            });
-        let shown = self.shown_text(&state)?;
-        let corrected = passage::replace(&shown, &ask, &text)
-            .ok_or(EngineError::Passage(PassageError::Changed))?;
+        let state = self.finished_piece(ask.job_id, ask.setup_id, ask.source_id, ask.index)?;
         let now = Timestamp::now();
-        let correction = Correction {
-            text: Some(corrected),
-            updated_at: now,
-            ..before.clone()
-        };
-        proposal.status = ProposalStatus::Accepted;
-        proposal.accepted = Some(text);
-        proposal.decided_at = Some(now);
-        self.store.put_passage(&proposal, Some(&correction))?;
-        self.write_later(ask.job_id);
+        let (before, after) = self.correction_replacing(
+            &state,
+            now,
+            |shown| passage::replace(shown, &ask, &text),
+            EngineError::Passage(PassageError::Changed),
+        )?;
+        proposal.lifecycle().accept(text, now);
+        self.write_decision(&proposal, &after, ask.job_id)?;
         Ok(before)
     }
 
     /// Leaves a proposal unused.
     pub fn discard_passage(&self, id: &str) -> Result<(), EngineError> {
-        let mut proposal = self.store.passage(id)?;
-        if proposal.status != ProposalStatus::Answered {
-            return Ok(());
-        }
-        proposal.status = ProposalStatus::Discarded;
-        proposal.decided_at = Some(Timestamp::now());
-        self.store.put_passage(&proposal, None)?;
-        Ok(())
+        self.discard::<PassageProposal>(id)
     }
 
     /// Puts back the correction an accepted passage replaced, and records that it was undone,
@@ -465,15 +260,12 @@ impl Engine {
             return Err(EngineError::Passage(PassageError::NotWaiting));
         }
         let job = ask.job_id;
-        proposal.status = ProposalStatus::Undone;
-        proposal.decided_at = Some(Timestamp::now());
+        proposal.lifecycle().undo(Timestamp::now());
         let before = Correction {
             updated_at: Timestamp::now(),
             ..before
         };
-        self.store.put_passage(&proposal, Some(&before))?;
-        self.write_later(job);
-        Ok(())
+        self.write_decision(&proposal, &before, job)
     }
 
     /// The passages accepted in a source's pieces under a set-up, for its provenance.
@@ -484,12 +276,8 @@ impl Engine {
         source: kalamu_core::SourceId,
         states: &[PieceState],
     ) -> Result<Vec<kalamu_core::provenance::ProvenancePassage>, EngineError> {
-        let proposals = match self.store.source_passages(job.id, setup, source) {
-            Ok(p) => p,
-            // A store that keeps no passages has none to tell of.
-            Err(StoreError::Database(_)) => return Ok(Vec::new()),
-            Err(e) => return Err(e.into()),
-        };
+        // A store that keeps no passages has none to tell of.
+        let proposals = kept(self.store.source_passages(job.id, setup, source))?;
         Ok(proposals
             .into_iter()
             .filter(|p| p.status == ProposalStatus::Accepted)
@@ -508,24 +296,5 @@ impl Engine {
                 accepted_at: p.decided_at.unwrap_or(p.asked_at),
             })
             .collect())
-    }
-}
-
-/// How a passage's call ended.
-enum PassageCall {
-    Answer {
-        text: String,
-        notes: Vec<kalamu_core::ProposalNote>,
-        cost: Option<f64>,
-        request: Vec<kalamu_core::RequestSetting>,
-    },
-    Interrupted,
-    Failed(String),
-}
-
-/// Returns once `stop` is set.
-pub(crate) async fn stopped(stop: &StopSignal) {
-    while !stop.is_stopped() {
-        tokio::time::sleep(Duration::from_millis(50)).await;
     }
 }

@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
+use crate::proposal::{Lifecycle, Proposal};
 use crate::{
     Correction, DrawnRegion, JobId, PageHalf, PromptSnapshot, ProposalStatus, ProviderId,
     RequestSetting, SetupId, SourceId, Timestamp,
@@ -97,6 +98,25 @@ pub struct RegionReading {
     pub asked_at: Timestamp,
     pub answered_at: Option<Timestamp>,
     pub decided_at: Option<Timestamp>,
+}
+
+impl Proposal for RegionReading {
+    fn status(&self) -> ProposalStatus {
+        self.status
+    }
+
+    fn lifecycle(&mut self) -> Lifecycle<'_> {
+        Lifecycle {
+            status: &mut self.status,
+            request: &mut self.request,
+            cost_usd: &mut self.cost_usd,
+            cached: &mut self.cached,
+            error: &mut self.error,
+            accepted: &mut self.accepted,
+            answered_at: &mut self.answered_at,
+            decided_at: &mut self.decided_at,
+        }
+    }
 }
 
 /// What accepting a reading writes, or, given back by accepting, what *Undo* puts back: the
