@@ -62,7 +62,7 @@ pub use batch::{
 pub use dictionary::{
     DictionaryError, DictionaryStore, Entry, KeptApart, Labels, ProposalGroup, ProposalRequest,
 };
-pub use embedding::{EmbedLimits, EmbedRequest, EmbedRole, Embedded, Embedder};
+pub use embedding::{EmbedLimits, EmbedRequest, EmbedRole, Embedded, Embedder, EmbeddingModel};
 pub use event::ProgressEvent;
 pub use export::{
     CsvCells, ExportDocument, ExportError, ExportFile, ExportFormat, ExportOptions, ExportPart,

@@ -9,6 +9,7 @@
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{ApiKey, ProviderError, ProviderId, StopSignal};
 
@@ -85,4 +86,27 @@ pub trait Embedder: Send + Sync {
         key: Option<&ApiKey>,
         request: EmbedRequest<'_>,
     ) -> Result<Embedded, ProviderError>;
+}
+
+/// One embedding model, as the catalogue lists it: what the engine and the interface need to
+/// know to offer it, cut texts for it and say what it costs.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct EmbeddingModel {
+    /// The id sent to the provider, or a local model's id in the list of downloads.
+    pub id: String,
+    pub provider: ProviderId,
+    /// The name shown.
+    pub name: String,
+    /// The lengths of vector it gives, the one used first. Vectors of two lengths, or of two
+    /// models, are never compared.
+    pub dimensions: Vec<u32>,
+    /// The most characters sent as one text: [`EmbedLimits::chars`] for this model.
+    pub max_chars: u32,
+    /// US dollars for a million tokens; none for a model run on this computer.
+    pub input_price: Option<f64>,
+    /// Run on this computer: nothing is sent.
+    pub local: bool,
+    /// Whether its provider says it reads many languages, not English alone.
+    pub multilingual: bool,
 }
