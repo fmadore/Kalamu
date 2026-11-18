@@ -63,10 +63,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol",
+        "model": "gpt-6.2-sol",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-sol"
       },
       {
         "provider": "openai",
@@ -77,10 +85,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra",
+        "model": "gpt-6.2-astra",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-astra"
       },
       {
         "provider": "openai",
@@ -221,10 +237,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol",
+        "model": "gpt-6.2-sol",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-sol"
       },
       {
         "provider": "openai",
@@ -235,10 +259,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra",
+        "model": "gpt-6.2-astra",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-astra"
       },
       {
         "provider": "openai",
@@ -412,10 +444,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol",
+        "model": "gpt-6.2-sol",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-sol"
       },
       {
         "provider": "openai",
@@ -426,10 +466,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra",
+        "model": "gpt-6.2-astra",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-astra"
       },
       {
         "provider": "openai",
@@ -602,10 +650,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol",
+        "model": "gpt-6.2-sol",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-sol"
       },
       {
         "provider": "openai",
@@ -616,10 +672,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra",
+        "model": "gpt-6.2-astra",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-astra"
       },
       {
         "provider": "openai",
@@ -796,10 +860,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol",
+        "model": "gpt-6.2-sol",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-sol"
       },
       {
         "provider": "openai",
@@ -810,10 +882,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra",
+        "model": "gpt-6.2-astra",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-astra"
       },
       {
         "provider": "openai",
@@ -947,10 +1027,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6.1-sol",
+        "model": "gpt-6.2-sol",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": true
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6.1-sol",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-sol"
       },
       {
         "provider": "openai",
@@ -961,10 +1049,18 @@
       },
       {
         "provider": "openai",
-        "model": "gpt-6-astra",
+        "model": "gpt-6.2-astra",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false,
+        "replaced_by": "gpt-6.2-astra"
       },
       {
         "provider": "openai",

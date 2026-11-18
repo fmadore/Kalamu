@@ -542,9 +542,9 @@
     },
     {
       "provider": "openai",
-      "id": "gpt-6.1-sol",
-      "name": "GPT-6.1 Sol",
-      "description": "OpenAI's main model (it supersedes GPT-6 Sol); reads PDFs and images.",
+      "id": "gpt-6.2-sol",
+      "name": "GPT-6.2 Sol",
+      "description": "OpenAI's main model (November 2026), which replaces GPT-6.1 Sol at the same price; reads PDFs and images. Not yet tried on historical documents.",
       "tasks": [
         "text_extraction",
         "analysis"
@@ -593,9 +593,58 @@
     },
     {
       "provider": "openai",
+      "id": "gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
+      "description": "The previous Sol: GPT-6.2 Sol replaces it at the same price. OpenAI still serves it.",
+      "tasks": [
+        "text_extraction",
+        "analysis"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "tier": "top",
+      "successor": "gpt-6.2-sol",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "pricing": {
+        "input_per_mtok": 2.0,
+        "output_per_mtok": 10.0,
+        "cached_input_per_mtok": 0.1,
+        "cache_write_per_mtok": 2.5,
+        "batch_discount": 0.5
+      },
+      "limits": {
+        "max_request_mb": 32,
+        "max_output_tokens": 128000
+      },
+      "reasoning": {
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle principal d’OpenAI (il remplace GPT-6 Sol) ; lit les PDF et les images."
+        }
+      }
+    },
+    {
+      "provider": "openai",
       "id": "gpt-6.1-terra",
       "name": "GPT-6.1 Terra",
-      "description": "OpenAI's mid-range model (October 2026), at half GPT-6.1 Sol's price; reads PDFs and images. Not yet tried on historical documents.",
+      "description": "OpenAI's mid-range model (October 2026), at half GPT-6.2 Sol's price; reads PDFs and images. Not yet tried on historical documents.",
       "tasks": [
         "text_extraction",
         "analysis"
@@ -636,15 +685,15 @@
       },
       "translations": {
         "fr": {
-          "description": "Le modèle intermédiaire d’OpenAI (octobre 2026), à la moitié du prix de GPT-6.1 Sol ; lit les PDF et les images. Pas encore essayé sur des documents anciens."
+          "description": "Le modèle intermédiaire d’OpenAI (octobre 2026), à la moitié du prix de GPT-6.2 Sol ; lit les PDF et les images. Pas encore essayé sur des documents anciens."
         }
       }
     },
     {
       "provider": "openai",
-      "id": "gpt-6-astra",
-      "name": "GPT-6 Astra",
-      "description": "OpenAI's most capable and most expensive model, for the most difficult material.",
+      "id": "gpt-6.2-astra",
+      "name": "GPT-6.2 Astra",
+      "description": "OpenAI's most capable and most expensive model (November 2026), for the most difficult material; it replaces GPT-6 Astra at a lower price.",
       "tasks": [
         "text_extraction",
         "analysis"
@@ -659,6 +708,55 @@
       "languages": "any",
       "status": "stable",
       "tier": "top",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "costly": true,
+      "pricing": {
+        "input_per_mtok": 8.0,
+        "output_per_mtok": 40.0,
+        "cached_input_per_mtok": 0.4,
+        "cache_write_per_mtok": 10.0,
+        "batch_discount": 0.5
+      },
+      "limits": {
+        "max_request_mb": 32,
+        "max_output_tokens": 128000
+      },
+      "reasoning": {
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      },
+      "translations": {
+        "fr": {
+          "description": "Le modèle le plus puissant et le plus cher d’OpenAI (novembre 2026), pour les documents les plus difficiles ; il remplace GPT-6 Astra pour moins cher."
+        }
+      }
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-6-astra",
+      "name": "GPT-6 Astra",
+      "description": "The previous Astra: GPT-6.2 Astra replaces it at a lower price. OpenAI still serves it.",
+      "tasks": [
+        "text_extraction",
+        "analysis"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "tier": "top",
+      "successor": "gpt-6.2-astra",
       "recommended_for": [],
       "provider_default_for": [],
       "costly": true,
@@ -684,7 +782,7 @@
       },
       "translations": {
         "fr": {
-          "description": "Le modèle le plus puissant et le plus cher d’OpenAI, pour les documents les plus difficiles."
+          "description": "Le précédent Astra : GPT-6.2 Astra le remplace pour moins cher. OpenAI le sert toujours."
         }
       }
     },
