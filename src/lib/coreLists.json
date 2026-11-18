@@ -59,6 +59,11 @@
     "alto",
     "page_xml"
   ],
+  "passage_limits": {
+    "context": 300,
+    "max": 4000,
+    "min": 3
+  },
   "queue_reasons": [
     "failed",
     "not_read",

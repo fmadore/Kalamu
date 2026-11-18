@@ -21,6 +21,7 @@ pub mod language;
 pub mod list_items;
 pub mod ordered;
 pub mod pages;
+pub mod passage_correction;
 pub mod profile;
 pub mod progress;
 pub mod project;
@@ -80,6 +81,9 @@ pub use job::{
 pub use language::{LanguageChoice, LanguageCode};
 pub use ordered::{PageFile, PageNote, natural_cmp, natural_sort, page_notes};
 pub use pages::PagesPerCall;
+pub use passage_correction::{
+    PassageAsk, PassageError, PassageProposal, ProposalNote, ProposalStatus,
+};
 pub use profile::{ExportProfile, ProfileColumn, ProfileError, ProfileStarter, ProfileValue};
 pub use progress::{ERRORS_LISTED, FileProgress, JobProgress};
 pub use project::{
@@ -122,7 +126,8 @@ mod interface_lists {
     /// source description in order, every task in New job's order and those whose results are
     /// a text, the queue's reasons, the extensions of each kind of file and the kinds each task
     /// reads (the file pickers), the formats written only from a model that reports layout, and
-    /// those written only from text whose lines have times (subtitles).
+    /// those written only from text whose lines have times (subtitles), and the limits of a
+    /// passage corrected from the review.
     /// `cargo test` keeps `src/lib/coreLists.json` current, as it does `searchRules.json`; the
     /// interface imports it, so the two sides cannot drift.
     #[test]
@@ -157,6 +162,11 @@ mod interface_lists {
                 .collect::<Vec<_>>(),
             "queue_reasons": crate::Signal::KINDS,
             "sample_limits": { "size": crate::MAX_SAMPLE, "seed": crate::MAX_SEED },
+            "passage_limits": {
+                "min": crate::passage_correction::MIN_CHARS,
+                "max": crate::passage_correction::MAX_CHARS,
+                "context": crate::passage_correction::CONTEXT_CHARS,
+            },
             "extensions": extensions,
             "task_sources": task_sources,
             "layout_formats": layout_formats,

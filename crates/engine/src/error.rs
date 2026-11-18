@@ -76,6 +76,10 @@ pub enum EngineError {
     /// A change to a page's rows that cannot be made.
     #[error(transparent)]
     Rows(#[from] kalamu_core::RowError),
+    /// A passage to correct from the review that cannot be sent, or whose answer or acceptance
+    /// is refused.
+    #[error(transparent)]
+    Passage(kalamu_core::PassageError),
 }
 
 impl EngineError {
@@ -110,6 +114,7 @@ impl EngineError {
             Self::Unit(e) => e.code(),
             Self::MixedReading => "job.mixed_reading",
             Self::Rows(e) => e.code(),
+            Self::Passage(e) => e.code(),
         }
     }
 }

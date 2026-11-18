@@ -248,6 +248,27 @@ impl JobStore for SqliteStore {
         outdated::clear(self, files)
     }
 
+    fn put_passage(
+        &self,
+        proposal: &kalamu_core::PassageProposal,
+        correction: Option<&Correction>,
+    ) -> Result<(), StoreError> {
+        passages::put(self, proposal, correction)
+    }
+
+    fn passage(&self, id: &str) -> Result<kalamu_core::PassageProposal, StoreError> {
+        passages::get(self, id)
+    }
+
+    fn source_passages(
+        &self,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+    ) -> Result<Vec<kalamu_core::PassageProposal>, StoreError> {
+        passages::of_source(self, job, setup, source)
+    }
+
     fn put_batch(&self, batch: &BatchRecord) -> Result<(), StoreError> {
         batches::put_batch(self, batch)
     }
@@ -351,6 +372,7 @@ mod jobs;
 use jobs::insert_job;
 mod migrations;
 mod outdated;
+mod passages;
 mod progress;
 mod projects;
 mod results;

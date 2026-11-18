@@ -68,6 +68,25 @@ impl CacheKey {
         Self(sha256_hex(material.to_string().as_bytes()))
     }
 
+    /// The key of a passage corrected from the review: the text sent (the passage and its
+    /// context) stands for the source and the piece, so asking the same of the same model and
+    /// prompt again reuses the answer.
+    pub fn passage(setup: &Setup, languages: &LanguageChoice, input: &str) -> Self {
+        let material = serde_json::json!({
+            "pipeline": PIPELINE_VERSION,
+            "task": "passage_correction",
+            "text": sha256_hex(input.as_bytes()),
+            "provider": setup.provider.as_str(),
+            "model": setup.model,
+            "prompt": setup.prompt.text,
+            "user_prompt": setup.prompt.user_prompt,
+            "options": setup.options,
+            "languages": languages,
+            "schema": setup.prompt.schema,
+        });
+        Self(sha256_hex(material.to_string().as_bytes()))
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }

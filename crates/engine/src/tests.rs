@@ -31,6 +31,7 @@ mod later;
 mod names;
 mod ordered;
 mod pages;
+mod passages;
 mod reading;
 mod records;
 mod regions;

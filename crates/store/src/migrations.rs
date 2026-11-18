@@ -1,6 +1,8 @@
 //! The database's schema: one migration per release that changed it, applied in order.
 
-use super::{batches, checks, dictionary, outdated, progress, projects, runs, snapshots, units};
+use super::{
+    batches, checks, dictionary, outdated, passages, progress, projects, runs, snapshots, units,
+};
 
 /// Schema migrations, applied in order; `PRAGMA user_version` records how many have run.
 pub(crate) const MIGRATIONS: &[&str] = &[
@@ -124,4 +126,6 @@ CREATE INDEX IF NOT EXISTS results_costs ON results(cache_key, cost_usd, truncat
     checks::MIGRATION,
     // The results set aside from the review queue, per scope.
     checks::SET_ASIDE,
+    // Passages corrected by a model from the review, each a proposal until accepted.
+    passages::MIGRATION,
 ];
