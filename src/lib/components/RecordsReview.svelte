@@ -14,6 +14,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { pieceCost, pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { cellText, columnsOf, rowsOf } from '#lib/records.js';
+	import { ownRegions, placeOf } from '#lib/regions.svelte.js';
 	import type { Review } from '#lib/review.svelte.js';
 
 	let {
@@ -51,6 +52,11 @@
 	const isText = $derived(review.source?.kind === 'text');
 
 	$effect(() => review.showPage(page));
+	/** The researcher's regions on the scan page shown (#84). */
+	// svelte-ignore state_referenced_locally
+	const regions = ownRegions(review.jobId, review.sourceId, () =>
+		review.paged ? placeOf(shown?.piece) : null
+	);
 
 	function step(delta: number) {
 		page = Math.min(Math.max(page + delta, 0), Math.max(pageViews.length - 1, 0));
@@ -174,6 +180,7 @@
 	original={shown?.original_file ?? null}
 	paging={{ at: page, count: pageViews.length }}
 	preview={review.preview}
+	regions={regions.place ? regions : undefined}
 	text={review.text}
 	witness={{ label: setup?.label ?? '', corrected: shown?.corrected_fields != null }}
 	label={m.review.rowsTitle}

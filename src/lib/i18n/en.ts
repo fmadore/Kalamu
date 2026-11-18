@@ -1692,6 +1692,46 @@ export const en = {
 		regionEstimated:
 			'Approximate: the model placed only the whole block, so its lines and words are estimated.',
 		regionClose: 'Close',
+		/** The researcher's own regions over the scan: drawn, moved, resized, removed. */
+		regionEdit: {
+			ownHint: 'Show the regions you drew on the page, and draw new ones',
+			draw: 'Draw a region',
+			drawHint:
+				'Drag over the page to draw a box around a part of it. Press again to place a box in the middle of the page and move it with the arrow keys.',
+			drawing:
+				'Drag over the page to draw the box, or press “Draw a region” again to place one in the middle. Escape cancels.',
+			adjusting: (shift: string) =>
+				`Drag the box to move it, or its corners and sides to resize it. With the keyboard: the arrow keys move it, ${shift} and the arrow keys resize it, Enter saves, Escape cancels.`,
+			box: 'The region’s box',
+			moveResize: 'Move or resize',
+			done: 'Done',
+			cancel: 'Cancel',
+			remove: 'Remove',
+			putBack: 'Put back the model’s box',
+			adjusted: 'You moved or resized this box. The model’s own box is kept and can be put back.',
+			yours: 'Your region',
+			ownName: (text: string) => (text ? `Your region: ${text}` : 'Your region'),
+			adjustedName: (text: string) => `${text} (your box)`,
+			text: 'What is written here (optional)',
+			textHint: (keys: string) => `Saved when you leave the field, or with ${keys}.`,
+			read: 'Read this region again…',
+			saved: 'Region saved.',
+			removed: 'Region removed.',
+			putBackDone: 'The model’s box is back.',
+			noPositions:
+				'This model did not place the text on this page: check the text against the whole page, or draw a region yourself.',
+			noneYet: 'No region on this page yet. Draw one around a part you want to note.',
+			said: {
+				right: 'Moved right',
+				left: 'Moved left',
+				up: 'Moved up',
+				down: 'Moved down',
+				wider: 'Wider',
+				narrower: 'Narrower',
+				taller: 'Taller',
+				shorter: 'Shorter'
+			}
+		},
 		play: 'Play',
 		pausePlayback: 'Pause',
 		position: 'Position in this piece',

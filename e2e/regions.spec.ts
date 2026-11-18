@@ -2,7 +2,7 @@
 // both engines: drawn on request and remembered, gone from region to region with the keyboard,
 // each opening its place in the text where the app placed it and saying why not elsewhere; a
 // click in the text choosing its region; a page the model placed no text on falling back to the
-// page as a whole.
+// page as a whole. The researcher's own regions are drawn-regions.spec.ts's.
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
@@ -148,15 +148,13 @@ test('a page the model placed no text on falls back to the page as a whole', asy
 	await page.keyboard.press('PageDown');
 	await page.keyboard.press('PageDown');
 	await expect(main.getByText('Source · Page 3')).toBeVisible();
-	// The switch stays reachable, says why it does nothing, and the page is to be checked whole.
-	await expect(toggle).toHaveAttribute('aria-disabled', 'true');
-	await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-	await expect(toggle).toHaveAccessibleDescription(
-		'This model did not place the text on this page.'
-	);
+	// The switch stays on, since the researcher can draw there; the page is to be checked whole.
+	await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+	await expect(toggle).not.toHaveAttribute('aria-disabled', 'true');
 	await expect(page.locator('.region-note')).toContainText('check the text against the whole page');
 	await expect(main.getByRole('group', { name: /^Text regions on the page/ })).toHaveCount(0);
 	await toggle.focus();
 	await page.keyboard.press('Enter');
 	await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+	await expect(page.locator('.region-note')).toBeHidden();
 });

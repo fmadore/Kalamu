@@ -29,6 +29,7 @@
 	import { clearFound, markFound } from '#lib/found.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
+	import { ownRegions, placeOf } from '#lib/regions.svelte.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { searchable } from '#lib/search.js';
 	import { guardDraft, type ReviewFind } from '#lib/state.svelte.js';
@@ -98,6 +99,11 @@
 	const done = $derived(combined?.status === 'done' || combined?.status === 'cached');
 
 	$effect(() => review.showPage(page));
+	/** The researcher's regions on the scan page shown (#84). */
+	// svelte-ignore state_referenced_locally
+	const regions = ownRegions(jobId, sourceId, () =>
+		review.paged ? placeOf(shownPage?.piece) : null
+	);
 
 	function step(delta: number) {
 		page = Math.min(Math.max(page + delta, 0), Math.max(pageViews.length - 1, 0));
@@ -293,6 +299,7 @@
 	original={shownPage?.original_file ?? null}
 	paging={{ at: page, count: pageViews.length }}
 	preview={review.preview}
+	regions={regions.place ? regions : undefined}
 	witness={{
 		label: setup?.label ?? '',
 		note: setup?.merge && setup.merge.model !== setup.model ? `+ ${setup.merge.model}` : null,

@@ -2,7 +2,9 @@
 	// The frame every review shares. The masthead: back to where the review was opened from,
 	// the job and the file, the menu of pages,
 	// the actions and "mark as reviewed". Below it the source (a scan on its lightbox with zoom, a
-	// text file set as text, or a player), the text or answers beside it, and a third pane while a
+	// text file set as text, or a player; over a scan, the regions where the review offers them,
+	// with their switch, their card and the researcher's own drawn and adjusted), the text or
+	// answers beside it, and a third pane while a
 	// compared text is open, with handles on the boundaries; the strip of pages at the foot. In a
 	// narrow window the panes stack. Ctrl Enter marks the piece reviewed; Page Up and Page Down,
 	// or Alt and the arrows, turn the pages, except that Page Up and Page Down scroll a pane
@@ -14,6 +16,9 @@
 	import Icon from './Icon.svelte';
 	import QueueBanner from './QueueBanner.svelte';
 	import StepBanner from './StepBanner.svelte';
+	import RegionLayer from './RegionLayer.svelte';
+	import RegionNote from './RegionNote.svelte';
+	import RegionTools from './RegionTools.svelte';
 	import ReportLink from './ReportLink.svelte';
 	import SourcePane from './SourcePane.svelte';
 	import Splitter from './Splitter.svelte';
@@ -22,6 +27,7 @@
 	import { FIELDS, pageKeysStay, scrollableByKeys } from '#lib/keys.js';
 	import { backShortcut, primary, shortcut } from '#lib/platform.js';
 	import type { Rotation } from '#lib/pdf.js';
+	import type { Regions } from '#lib/regions.svelte.js';
 	import { columns, layout } from '#lib/review.svelte.js';
 	import { back, canGoBack, returnTo, shortcutsHeld, toast } from '#lib/state.svelte.js';
 	import { describeError } from '#lib/errors.js';
@@ -51,9 +57,7 @@
 		found = false,
 		player,
 		switchable = null,
-		sourceTools,
-		overlay,
-		sourceNote,
+		regions,
 		witness,
 		label,
 		tools,
@@ -101,12 +105,8 @@
 		player?: Snippet;
 		/** A PDF whose text was read: the source pane switches between its page and that text. */
 		switchable?: { onswitch: () => void } | null;
-		/** More tools for a scan, in the source pane's bar. */
-		sourceTools?: Snippet;
-		/** Drawn over the scan, given the zoom and the reader's quarter turns. */
-		overlay?: Snippet<[number, Rotation]>;
-		/** A note over the top of the scan. */
-		sourceNote?: Snippet;
+		/** The regions over a scan, offered with their switch in the source pane's bar. */
+		regions?: Regions;
 		/** Whose text or answers lead, over them. */
 		witness: { label: string; siglum?: string | null; note?: string | null; corrected: boolean };
 		/** What the text pane holds, for screen readers. */
@@ -173,6 +173,12 @@
 </script>
 
 <svelte:document {onkeydown} />
+
+{#snippet regionTools()}{#if regions}<RegionTools {regions} />{/if}{/snippet}
+{#snippet regionLayer(zoom: number, rotation: Rotation)}
+	{#if regions?.shown}<RegionLayer {regions} {zoom} {rotation} />{/if}
+{/snippet}
+{#snippet regionNote()}{#if regions}<RegionNote {regions} />{/if}{/snippet}
 
 <div class="review">
 	<header class="masthead">
@@ -262,9 +268,9 @@
 			{found}
 			{player}
 			{switchable}
-			tools={sourceTools}
-			{overlay}
-			note={sourceNote}
+			tools={regions ? regionTools : undefined}
+			overlay={regions ? regionLayer : undefined}
+			note={regions ? regionNote : undefined}
 		/>
 
 		<Splitter

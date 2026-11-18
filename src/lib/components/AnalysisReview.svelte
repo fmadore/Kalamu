@@ -34,6 +34,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { pieceCost } from '#lib/pieces.js';
 	import { groupOf } from '#lib/records.js';
+	import { ownRegions } from '#lib/regions.svelte.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { find, searchable } from '#lib/search.js';
 	import { rovingStop, rovingTarget } from '#lib/keys.js';
@@ -115,6 +116,12 @@
 				?.scrollIntoView({ block: 'start' })
 		);
 	});
+
+	/** The researcher's regions on the scan page shown (#84). */
+	// svelte-ignore state_referenced_locally
+	const regions = ownRegions(jobId, sourceId, () =>
+		review.paged && !records ? { page: page + 1, half: null } : null
+	);
 
 	// A PDF or image is shown page by page; a text document as text. Records show their own.
 	$effect(() => {
@@ -351,6 +358,7 @@
 		piece={pages > 1 ? m.review.page(String(page + 1)) : null}
 		paging={{ at: page, count: pages }}
 		preview={review.preview}
+		regions={regions.place ? regions : undefined}
 		text={review.text}
 		find={hovered ?? (filtering ? query : '')}
 		found={hovered === null && filtering}

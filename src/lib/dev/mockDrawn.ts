@@ -2,21 +2,56 @@
 // kept in memory as the engine keeps them (`engine::regions::drawn`): checked as `core` checks
 // a box, laid over the engine's regions, removed and put back by their id. A box adjusting a
 // region of a reading shown under another set-up is that set-up's; one adjusting a reading no
-// set-up shows is shown as drawn. Development builds only.
+// set-up shows is shown as drawn. The analysis, table of contents and records samples take
+// regions too, and an analysis of the sample newspaper's scan (`?mock&view=review-analysis-scan`)
+// shows an analysis's review over a scan. Development builds only.
 
 import type { AdjustedRegion } from '../bindings/AdjustedRegion.js';
 import type { DrawnRegion } from '../bindings/DrawnRegion.js';
+import type { Job } from '../bindings/Job.js';
+import type { JobSummary } from '../bindings/JobSummary.js';
 import type { PageHalf } from '../bindings/PageHalf.js';
 import type { PageRegions } from '../bindings/PageRegions.js';
 import type { RegionDraft } from '../bindings/RegionDraft.js';
+import type { PieceView } from '../bindings/PieceView.js';
 import type { ShownRegion } from '../bindings/ShownRegion.js';
-import { job, pieces, source } from './mockJobs.js';
+import { contentsJob, contentsSource, correctionJob, gallica } from './mockContents.js';
+import { analysisJob, analysisPieces, job, pieces, source } from './mockJobs.js';
+import { recordsJob, recordsSource } from './mockRecords.js';
 
 /** As `core::regions`: how far past an edge a box is clamped, and the smallest box kept. */
 const SLACK = 0.01;
 const MIN_SIZE = 0.004;
 
 const regions: DrawnRegion[] = [];
+
+/** The sample analysis, of the newspaper's scan rather than of a text file. */
+export const scanAnalysisJob: Job = {
+	...analysisJob,
+	id: '00000000-0000-0000-0000-0000000000ja',
+	name: 'Bulletin scan, people and places',
+	sources: [source]
+};
+/** Listed among the jobs only where the preview opens on its review, so the other screens'
+ * lists stay as they are. */
+export function scanAnalysisListed(like: JobSummary | undefined): JobSummary[] {
+	const opened =
+		typeof location !== 'undefined' &&
+		new URLSearchParams(location.search).get('view') === 'review-analysis-scan';
+	return opened && like
+		? [{ ...like, id: scanAnalysisJob.id, name: scanAnalysisJob.name, task: 'analysis' }]
+		: [];
+}
+const scanAnalysisPieces: PieceView[] = analysisPieces.map((p) => ({ ...p, source_id: source.id }));
+
+/** The sources regions can be drawn on, by job, with their pages. */
+const drawable = [
+	[job.id, source],
+	[scanAnalysisJob.id, source],
+	[contentsJob.id, contentsSource],
+	[correctionJob.id, gallica],
+	[recordsJob.id, recordsSource]
+] as const;
 
 /** The stored result's cache key a piece's regions come from, here made up from its place. */
 export const resultKey = (setupId: string, index: number) => `mock-result-${setupId}-${index}`;
@@ -111,10 +146,11 @@ function checked(d: RegionDraft): RegionDraft {
 	return { ...d, x: left, y: top, width: right - left, height: bottom - top };
 }
 
-/** The sample job's newspaper, the only source the preview draws on. */
+/** A page of one of the sample scans: the newspaper, the table of contents, the directory. */
 function onPage(jobId: string, sourceId: string, page: number, half: PageHalf | null) {
-	if (jobId !== job.id || sourceId !== source.id) fail('job.not_found');
-	if (page > (source.page_count ?? 0) || half !== null) fail('region.no_page');
+	const scan = drawable.find(([j, s]) => j === jobId && s.id === sourceId)?.[1];
+	if (!scan) return fail('job.not_found');
+	if (page > (scan.page_count ?? 1) || half !== null) fail('region.no_page');
 }
 
 function save(draft: RegionDraft): DrawnRegion {
@@ -143,7 +179,7 @@ function save(draft: RegionDraft): DrawnRegion {
 		height: d.height,
 		text: d.text,
 		adjusts,
-		source_hash: source.sha256,
+		source_hash: 'ab'.repeat(32),
 		created_at: existing?.created_at ?? now,
 		updated_at: now
 	};
@@ -155,6 +191,10 @@ function save(draft: RegionDraft): DrawnRegion {
 
 export function regionCommand(cmd: string, a: Record<string, unknown>): unknown {
 	switch (cmd) {
+		case 'get_job':
+			return a.id === scanAnalysisJob.id ? scanAnalysisJob : undefined;
+		case 'source_pieces':
+			return a.jobId === scanAnalysisJob.id ? scanAnalysisPieces : undefined;
 		case 'save_region':
 			return save(a.draft as RegionDraft);
 		case 'remove_region': {

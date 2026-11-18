@@ -1799,6 +1799,48 @@ export const fr: Messages = {
 		regionEstimated:
 			'Approximatif : le modèle n’a situé que le bloc entier, ses lignes et ses mots sont donc estimés.',
 		regionClose: 'Fermer',
+		regionEdit: {
+			ownHint:
+				'Affiche les zones que vous avez tracées sur la page, et permet d’en tracer d’autres',
+			draw: 'Tracer une zone',
+			drawHint:
+				'Faites glisser sur la page pour encadrer une partie. Appuyez de nouveau pour placer un cadre au milieu de la page et le déplacer avec les flèches.',
+			drawing:
+				'Faites glisser sur la page pour tracer le cadre, ou appuyez de nouveau sur « Tracer une zone » pour en placer un au milieu. Échap annule.',
+			adjusting: (shift: string) =>
+				`Faites glisser le cadre pour le déplacer, ou ses coins et ses côtés pour en changer la taille. Au clavier : les flèches le déplacent, ${shift} et les flèches changent sa taille, Entrée enregistre, Échap annule.`,
+			box: 'Le cadre de la zone',
+			moveResize: 'Déplacer ou changer la taille',
+			done: 'Terminé',
+			cancel: 'Annuler',
+			remove: 'Supprimer',
+			putBack: 'Remettre le cadre du modèle',
+			adjusted:
+				'Vous avez déplacé ce cadre ou changé sa taille. Celui du modèle est conservé et peut être remis.',
+			yours: 'Votre zone',
+			ownName: (text: string) => (text ? `Votre zone : ${text}` : 'Votre zone'),
+			adjustedName: (text: string) => `${text} (votre cadre)`,
+			text: 'Ce qui est écrit ici (facultatif)',
+			textHint: (keys: string) => `Enregistré quand vous quittez le champ, ou avec ${keys}.`,
+			read: 'Relire cette zone…',
+			saved: 'Zone enregistrée.',
+			removed: 'Zone supprimée.',
+			putBackDone: 'Le cadre du modèle est remis.',
+			noPositions:
+				'Ce modèle n’a pas situé le texte sur cette page : comparez le texte à la page entière, ou tracez une zone vous-même.',
+			noneYet:
+				'Aucune zone sur cette page pour l’instant. Tracez-en une autour d’une partie à noter.',
+			said: {
+				right: 'Déplacé à droite',
+				left: 'Déplacé à gauche',
+				up: 'Déplacé vers le haut',
+				down: 'Déplacé vers le bas',
+				wider: 'Plus large',
+				narrower: 'Plus étroit',
+				taller: 'Plus haut',
+				shorter: 'Moins haut'
+			}
+		},
 		play: 'Lire',
 		pausePlayback: 'Pause',
 		position: 'Position dans ce segment',

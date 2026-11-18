@@ -73,6 +73,9 @@
 	/* The researcher's hand: corrections, kept apart from the model's text. */
 	--hand: #2456d6;
 	--hand-wash: rgba(36, 86, 214, 0.1);
+	/* The hand's blue on a scanned page, which stays white in both themes: the researcher's own
+	   regions over it. Not redefined for the dark theme. */
+	--hand-on-page: #2456d6;
 
 	--ok: #1f7a4d;
 	--ok-text: #155c39;

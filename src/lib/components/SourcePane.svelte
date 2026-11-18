@@ -87,6 +87,8 @@
 		if (sourceId) keepFor(ROTATION_KEY, sourceId, rotation === 0 ? null : rotation, 200);
 	}
 	let desk = $state<HTMLElement | null>(null);
+	/** The bar's height, which grows when its tools wrap: a note over the scan sits below it. */
+	let barHeight = $state(0);
 
 	const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -317,8 +319,13 @@
 
 {#snippet drawnOver()}{@render overlay?.(zoom, rotation)}{/snippet}
 
-<section class="pane source" class:stage={kind === 'scan'} aria-label={m.review.source}>
-	<div class="pane-bar">
+<section
+	class="pane source"
+	class:stage={kind === 'scan'}
+	aria-label={m.review.source}
+	style:--bar-height={barHeight ? `${barHeight}px` : undefined}
+>
+	<div class="pane-bar" bind:offsetHeight={barHeight}>
 		<span class="title mono">{m.review.source}{piece ? ` · ${piece}` : ''}</span>
 		{#if kind === 'scan'}{@render tools?.()}{/if}
 		{#if switchable}
