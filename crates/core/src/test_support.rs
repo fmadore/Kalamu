@@ -18,3 +18,6 @@ pub fn write_interface_json(
     }
     Ok(())
 }
+
+mod fake_embedder;
+pub use fake_embedder::{FakeEmbedder, fake_vector};

@@ -19,6 +19,7 @@ pub mod ids;
 pub mod job;
 pub mod language;
 pub mod list_items;
+pub mod meaning;
 pub mod ordered;
 pub mod pages;
 pub mod passage_correction;
@@ -79,6 +80,10 @@ pub use job::{
     OutputSettings, Pace,
 };
 pub use language::{LanguageChoice, LanguageCode};
+pub use meaning::{
+    ChunkStamp, ChunkVector, EmbeddingLog, EmbeddingRun, EmbeddingRunState, EmbeddingSpace,
+    SpaceChoice, SpaceSize, VectorIndex,
+};
 pub use ordered::{PageFile, PageNote, natural_cmp, natural_sort, page_notes};
 pub use pages::PagesPerCall;
 pub use passage_correction::{

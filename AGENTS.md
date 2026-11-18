@@ -67,12 +67,12 @@ depends on one it may not; a new crate goes into both.
 | `media` | Conversion and splitting: PDF pages cut with lopdf and drawn with hayro, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
 | `offline` | Whisper, Tesseract and the OCR vision models (llama.cpp, run as a separate program), behind the same trait as cloud providers. | `core`, `media` |
-| `store` | SQLite job database and result cache, and the project and dictionary tables beside them. | `core` |
+| `store` | SQLite job database and result cache, and the project, dictionary and search-by-meaning tables beside them; the word search's index and the vector index, each a file of its own. | `core` |
 | `projects` | Project workspaces: documents, collections, tags, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
 | `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |
-| `search` | Project search: the corrected text of every result, kept in a derived local index and searched with the project's filters, each match placed in the text shown. Never calls a model or changes a result. | `core` |
+| `search` | Project search: the corrected text of every result, kept in a derived local index and searched with the project's filters, each match placed in the text shown; and by meaning: that text cut into chunks, what a preparation must embed, chunks ranked against a question's vector, documents' vectors, their neighbours and their map. Never calls a model or changes a result. | `core` |
 | `export` | One module per output format, each implementing the exporter trait; and the one CSV writer for the tables other crates make (`table_csv`). | `core` |
-| `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job. | all of the above through their traits |
+| `engine` | Job orchestration: queue, splitting, calls, retries, caching, resume, progress events, cost; workflow runs, each step a job; the search by meaning's calls (preparation runs and questions), consented to, retried, resumable and costed. | all of the above through their traits |
 | `app` | Tauri shell: commands, events, settings, the system keychain, what differs between Windows and macOS (`platform/`), packaging. | `engine`, `projects`, `dictionary`, `search`, and others only to wire them up |
 
 Beside the crates, `helpers/whisper-vulkan` is a program, not a library: whisper.cpp built with
@@ -96,6 +96,14 @@ Key traits, defined in `core`:
   apart from both.
 - **`SearchIndex`**: the project search's index, a file of its own derived from the job store
   and made again from it, so losing it loses nothing.
+- **`Embedder`**: what a provider of embeddings declares and does, cloud or local, as
+  `Provider` is for a job's pieces: limits per call, readiness, and some texts turned into
+  vectors of length 1 with the tokens billed.
+- **`VectorIndex`**: the search by meaning's vectors, chunk by chunk and kept apart by model
+  and length of vector (an `EmbeddingSpace`), a file of its own derived from the job store;
+  losing it loses only what embedding the text again costs.
+- **`EmbeddingLog`**: in the job database, each project's model, the researcher's consent to
+  send its text, and each preparation run with its cost, so the cost outlives the vectors.
 
 Rules that keep this modular:
 

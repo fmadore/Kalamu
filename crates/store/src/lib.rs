@@ -369,6 +369,7 @@ mod batches;
 mod checks;
 mod dictionary;
 mod jobs;
+mod meaning;
 use jobs::insert_job;
 mod migrations;
 mod outdated;
@@ -380,8 +381,10 @@ mod runs;
 mod search;
 mod snapshots;
 mod units;
+mod vectors;
 
 pub use search::SqliteIndex;
+pub use vectors::SqliteVectors;
 
 #[cfg(test)]
 mod tests;
