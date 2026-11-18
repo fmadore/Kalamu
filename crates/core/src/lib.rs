@@ -11,6 +11,7 @@ pub mod batch;
 pub mod contents;
 pub mod correction;
 pub mod dictionary;
+pub mod embedding;
 pub mod event;
 pub mod export;
 pub mod fingerprint;
@@ -61,6 +62,7 @@ pub use batch::{
 pub use dictionary::{
     DictionaryError, DictionaryStore, Entry, KeptApart, Labels, ProposalGroup, ProposalRequest,
 };
+pub use embedding::{EmbedLimits, EmbedRequest, EmbedRole, Embedded, Embedder};
 pub use event::ProgressEvent;
 pub use export::{
     CsvCells, ExportDocument, ExportError, ExportFile, ExportFormat, ExportOptions, ExportPart,
