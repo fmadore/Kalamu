@@ -6,6 +6,8 @@
 //! again, a crash after it finishes the deleting at the next collection or launch. The files
 //! are named by the provider from the batch itself and recorded before any is deleted, so only
 //! what Kalamu's own batches made is ever deleted, and never a file of a batch still waiting.
+//! A file uploaded before its batch was made ([`BatchRecord::uploaded`]) was recorded then, so it
+//! is deleted with the rest, or alone when the batch was never made.
 //! A failed round is logged and tried again later, [`BatchCleanup::MAX_FAILURES`] times, after
 //! which the record says the files were left; no failure here touches a job or its results.
 
@@ -22,10 +24,10 @@ enum Kept {
 }
 
 impl Engine {
-    /// Marks an ended batch as due for cleaning, unless it never reached the provider (no id)
-    /// or was already marked.
+    /// Marks an ended batch as due for cleaning, unless it never reached the provider (no id,
+    /// and no file uploaded for it) or was already marked.
     pub(super) fn due_for_cleanup(batch: &mut BatchRecord) {
-        if batch.remote_id.is_some() && batch.cleanup.is_none() {
+        if (batch.remote_id.is_some() || !batch.uploaded.is_empty()) && batch.cleanup.is_none() {
             batch.cleanup = Some(BatchCleanup::default());
         }
     }
@@ -41,9 +43,8 @@ impl Engine {
         if !batch.cleanup_pending() {
             return Ok(());
         }
-        let Some(remote) = batch.remote_id.clone() else {
-            return Ok(());
-        };
+        // What the logs call the batch: the provider's id, or Kalamu's for one never made.
+        let remote = batch.remote_id.clone().unwrap_or_else(|| batch.id.clone());
         let (Ok(provider), Some(key)) = (
             self.provider(&batch.provider),
             self.keys.key(&batch.provider),
@@ -58,8 +59,21 @@ impl Engine {
         };
         let mut failed = None;
         if cleanup.files.is_none() {
-            match provider.batch_files(&key, &remote).await {
-                Ok(Some(files)) => {
+            // A batch never made names nothing: only the files uploaded for it are left.
+            let named = match &batch.remote_id {
+                Some(remote) => provider.batch_files(&key, remote).await,
+                None => Ok(Some(Vec::new())),
+            };
+            match named {
+                Ok(Some(named)) => {
+                    // The files uploaded for the batch, recorded when they were, then those the
+                    // batch names; each once.
+                    let mut files = batch.uploaded.clone();
+                    for file in named {
+                        if !files.contains(&file) {
+                            files.push(file);
+                        }
+                    }
                     // Recorded before any is deleted, so a crash in between still knows them.
                     cleanup.files = Some(files);
                     batch.cleanup = Some(cleanup.clone());

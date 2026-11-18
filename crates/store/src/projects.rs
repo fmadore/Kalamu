@@ -555,4 +555,22 @@ impl ProjectStore for SqliteStore {
     fn kept_aside(&self, project: ProjectId) -> Result<Vec<KeptAside>, StoreError> {
         checks::kept(self, project)
     }
+
+    fn set_result_aside(
+        &self,
+        project: ProjectId,
+        scope: &str,
+        result: (JobId, SetupId),
+        aside: Option<Timestamp>,
+    ) -> Result<(), StoreError> {
+        checks::set_aside(self, project, scope, result, aside)
+    }
+
+    fn results_set_aside(
+        &self,
+        project: ProjectId,
+        scope: &str,
+    ) -> Result<Vec<(JobId, SetupId)>, StoreError> {
+        checks::set_aside_of(self, project, scope)
+    }
 }

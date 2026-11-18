@@ -414,18 +414,16 @@ pub async fn review_queue(
     state: State<'_, AppState>,
     project: ProjectId,
     selection: QueueSelection,
-    excluded: Vec<ResultKey>,
 ) -> CmdResult<QueueView> {
-    queue_view(&state, project, &selection, &excluded).await
+    queue_view(&state, project, &selection).await
 }
 
 async fn queue_view(
     state: &AppState,
     project: ProjectId,
     selection: &QueueSelection,
-    excluded: &[ResultKey],
 ) -> CmdResult<QueueView> {
-    let plan = state.projects.queue_plan(project, selection, excluded)?;
+    let plan = state.projects.queue_plan(project, selection)?;
     let engine = state.engine.clone();
     let scope = plan.scope;
     let queue = tokio::task::spawn_blocking(move || engine.review_queue(&scope))
@@ -461,6 +459,21 @@ pub fn set_review_sample(
     })
 }
 
+/// Sets a result aside from the queue over `selection`, kept with the project for that scope;
+/// with `aside` false, brings it back. The sample is drawn from what the queue reads.
+#[tauri::command]
+pub fn set_result_aside(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    selection: QueueSelection,
+    result: ResultKey,
+    aside: bool,
+) -> CmdResult<()> {
+    Ok(state
+        .projects
+        .set_result_aside(project, &selection, result, aside)?)
+}
+
 /// Keeps an item of the queue aside with a note, for the answer it holds; without a note,
 /// puts it back among the others.
 #[tauri::command]
@@ -478,19 +491,19 @@ pub fn keep_aside(
 
 /// Writes the review manifest of the queue over `selection` where the researcher chose, as
 /// `.json` and `.csv`: every item, the sample included, with its identities, reasons and the
-/// researcher's decisions. Read from what is stored: no model is called.
+/// researcher's decisions; the JSON also names the results set aside. Read from what is stored: no model is called.
 #[tauri::command]
 pub async fn export_review_manifest(
     state: State<'_, AppState>,
     project: ProjectId,
     selection: QueueSelection,
-    excluded: Vec<ResultKey>,
     path: String,
 ) -> CmdResult<()> {
-    let view = queue_view(&state, project, &selection, &excluded).await?;
-    let manifest = state
-        .projects
-        .review_manifest(project, &selection, &view.queue)?;
+    let view = queue_view(&state, project, &selection).await?;
+    let manifest =
+        state
+            .projects
+            .review_manifest(project, &selection, &view.queue, &view.choices)?;
     super::off_thread(move || {
         let path = std::path::Path::new(&path);
         super::write_text(path.with_extension("json"), manifest.json()?)?;

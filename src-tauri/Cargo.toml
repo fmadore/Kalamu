@@ -62,7 +62,7 @@ ts-rs.workspace = true
 # exists: the system's own message box, called directly on the main thread. The version and
 # features the dialog plugin already builds, so nothing new is compiled (0.18 is out; the plugin
 # is on 0.17).
-rfd = { version = "0.17.2", default-features = false, features = ["common-controls-v6"] }
+rfd = { version = "0.18.0", default-features = false, features = ["common-controls-v6"] }
 
 [target.'cfg(windows)'.dependencies]
 # The Job Object that ends FFmpeg, llama.cpp and the Whisper helper with the app

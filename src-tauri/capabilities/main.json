@@ -149,6 +149,7 @@
     "allow-detach-job",
     "allow-review-queue",
     "allow-set-review-sample",
+    "allow-set-result-aside",
     "allow-keep-aside",
     "allow-export-review-manifest",
     "allow-dictionary-view",

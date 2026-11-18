@@ -21,6 +21,9 @@ use crate::{DocumentId, PieceRef, Task, Timestamp};
 /// The most pages a sample can hold: enough for any check by hand.
 pub const MAX_SAMPLE: u32 = 1000;
 
+/// The largest seed: six digits at most, short enough to write down and cite.
+pub const MAX_SEED: u32 = 999_999;
+
 /// A sample asked for: its seed, how many pages, and when it was drawn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -44,7 +47,7 @@ impl SampleSpec {
 
 /// A new seed of six digits at most, short enough to write down and cite.
 pub fn fresh_seed() -> u32 {
-    (uuid::Uuid::new_v4().as_u128() % 1_000_000) as u32
+    (uuid::Uuid::new_v4().as_u128() % (u128::from(MAX_SEED) + 1)) as u32
 }
 
 /// What a page is, for the draw: its document, the task that read it and its place. Two set-ups

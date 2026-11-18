@@ -296,7 +296,7 @@
 									/>
 									<span>{mb.label}</span>
 									{#if mb.forms.length > 1 || mb.forms[0] !== mb.label}
-										<span class="muted forms">{mb.forms.join('; ')}</span>
+										<span class="muted forms">{mb.forms.join(m.common.semicolon)}</span>
 									{/if}
 								</label>
 							</li>

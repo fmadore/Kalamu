@@ -55,7 +55,7 @@ fn a_preferred_result_stands_alone_and_alternatives_are_listed_otherwise() {
     // No preference: both set-ups read both documents, which stay two documents.
     let plan = f
         .projects
-        .queue_plan(p.id, &QueueSelection::Project, &[])
+        .queue_plan(p.id, &QueueSelection::Project)
         .unwrap();
     assert_eq!(plan.scope.documents, 2);
     assert_eq!(plan.scope.targets.len(), 4);
@@ -74,7 +74,7 @@ fn a_preferred_result_stands_alone_and_alternatives_are_listed_otherwise() {
         .unwrap();
     let plan = f
         .projects
-        .queue_plan(p.id, &QueueSelection::Project, &[])
+        .queue_plan(p.id, &QueueSelection::Project)
         .unwrap();
     assert_eq!(plan.preferred, 1);
     let first: Vec<_> = plan
@@ -99,9 +99,14 @@ fn a_preferred_result_stands_alone_and_alternatives_are_listed_otherwise() {
         job_id: job.id,
         setup_id: job.setups[1].id,
     };
+    for key in [flash, pro] {
+        f.projects
+            .set_result_aside(p.id, &QueueSelection::Project, key, true)
+            .unwrap();
+    }
     let plan = f
         .projects
-        .queue_plan(p.id, &QueueSelection::Project, &[flash, pro])
+        .queue_plan(p.id, &QueueSelection::Project)
         .unwrap();
     assert_eq!(
         keys(&plan),
@@ -110,6 +115,96 @@ fn a_preferred_result_stands_alone_and_alternatives_are_listed_otherwise() {
     );
     assert!(plan.choices.iter().all(|c| !c.included));
     assert_eq!(plan.scope.documents, 2, "coverage still counts it");
+}
+
+#[test]
+fn results_set_aside_are_kept_per_scope_after_a_restart_and_can_be_brought_back() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("kalamu.db");
+    let open = |path: &std::path::Path| {
+        let store = Arc::new(SqliteStore::open(path).unwrap());
+        Fixture {
+            projects: Projects::new(store.clone(), store.clone()),
+            store,
+            dir: tempfile::tempdir().unwrap(),
+        }
+    };
+    let (project, letters, job, docs) = {
+        let f = open(&path);
+        let p = f.projects.create("Letters", "").unwrap();
+        let letters = f.projects.create_collection(p.id, "Letters").unwrap();
+        let (a, b) = (f.file("a.pdf", "a"), f.file("b.pdf", "b"));
+        let docs = f
+            .projects
+            .add_documents(p.id, vec![a.clone(), b.clone()], None)
+            .unwrap();
+        f.projects
+            .add_to_collection(p.id, letters.id, &docs)
+            .unwrap();
+        let job = comparison(&f, Task::TextExtraction, vec![a, b]);
+        f.projects.link_job(p.id, job.id, None).unwrap();
+        let flash = ResultKey {
+            job_id: job.id,
+            setup_id: job.setups[0].id,
+        };
+        f.projects
+            .set_result_aside(p.id, &QueueSelection::Project, flash, true)
+            .unwrap();
+        // A job that does not exist is not set aside.
+        let gone = ResultKey {
+            job_id: kalamu_core::JobId::new(),
+            setup_id: job.setups[0].id,
+        };
+        assert!(matches!(
+            f.projects
+                .set_result_aside(p.id, &QueueSelection::Project, gone, true),
+            Err(ProjectError::NotFound)
+        ));
+        (p.id, letters.id, job, docs)
+    };
+
+    // Reopened, the project's queue still reads `pro` alone; the collection's, both.
+    let f = open(&path);
+    let plan = f
+        .projects
+        .queue_plan(project, &QueueSelection::Project)
+        .unwrap();
+    assert_eq!(
+        keys(&plan),
+        vec![(docs[0], "pro".to_string()), (docs[1], "pro".to_string())]
+    );
+    let flash = plan
+        .choices
+        .iter()
+        .find(|c| c.setup_label == "flash")
+        .unwrap();
+    assert!(!flash.included, "listed, to be brought back");
+    let collection = QueueSelection::Collection { id: letters };
+    let theirs = f.projects.queue_plan(project, &collection).unwrap();
+    assert_eq!(theirs.scope.targets.len(), 4);
+    assert!(theirs.choices.iter().all(|c| c.included));
+
+    // Brought back, it is read again.
+    f.projects
+        .set_result_aside(project, &QueueSelection::Project, flash.key, false)
+        .unwrap();
+    let plan = f
+        .projects
+        .queue_plan(project, &QueueSelection::Project)
+        .unwrap();
+    assert_eq!(plan.scope.targets.len(), 4);
+
+    // Deleting the job leaves nothing set aside behind it.
+    f.projects
+        .set_result_aside(project, &collection, flash.key, true)
+        .unwrap();
+    f.store.delete_job(job.id).unwrap();
+    assert!(
+        f.store
+            .results_set_aside(project, &collection.key())
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -131,14 +226,14 @@ fn a_queue_covers_a_collection_or_a_selection() {
 
     let plan = f
         .projects
-        .queue_plan(p.id, &QueueSelection::Collection { id: letters.id }, &[])
+        .queue_plan(p.id, &QueueSelection::Collection { id: letters.id })
         .unwrap();
     assert_eq!(plan.scope.documents, 2);
     assert_eq!(plan.scope.targets.len(), 2);
 
     let plan = f
         .projects
-        .queue_plan(p.id, &QueueSelection::Documents { ids: vec![docs[2]] }, &[])
+        .queue_plan(p.id, &QueueSelection::Documents { ids: vec![docs[2]] })
         .unwrap();
     assert_eq!(plan.scope.documents, 1);
     assert_eq!(plan.scope.targets.len(), 1);
@@ -153,7 +248,7 @@ fn a_queue_covers_a_collection_or_a_selection() {
         .unwrap();
     assert!(matches!(
         f.projects
-            .queue_plan(p.id, &QueueSelection::Documents { ids: stray }, &[]),
+            .queue_plan(p.id, &QueueSelection::Documents { ids: stray }),
         Err(ProjectError::Elsewhere(_))
     ));
 }
@@ -167,7 +262,7 @@ fn a_document_not_yet_read_is_counted_but_reads_nothing() {
         .unwrap();
     let plan = f
         .projects
-        .queue_plan(p.id, &QueueSelection::Project, &[])
+        .queue_plan(p.id, &QueueSelection::Project)
         .unwrap();
     assert_eq!(plan.scope.documents, 1);
     assert!(plan.scope.targets.is_empty());
@@ -183,7 +278,7 @@ fn each_scope_keeps_its_own_sample_until_drawn_again_or_removed() {
         .projects
         .add_documents(p.id, vec![f.file("a.pdf", "a"), f.file("b.pdf", "b")], None)
         .unwrap();
-    let plan = |s: &QueueSelection| f.projects.queue_plan(p.id, s, &[]).unwrap().scope;
+    let plan = |s: &QueueSelection| f.projects.queue_plan(p.id, s).unwrap().scope;
 
     let whole = f
         .projects
@@ -191,6 +286,18 @@ fn each_scope_keeps_its_own_sample_until_drawn_again_or_removed() {
         .unwrap();
     assert_eq!((whole.seed, whole.size), (1957, 20));
     assert_eq!(plan(&QueueSelection::Project).sample, Some(whole));
+    // A seed typed by hand is six digits at most; a longer one is refused and the sample kept.
+    let typed = f
+        .projects
+        .draw_sample(p.id, &QueueSelection::Project, 20, Some(999_999))
+        .unwrap();
+    assert_eq!(typed.seed, 999_999);
+    assert!(matches!(
+        f.projects
+            .draw_sample(p.id, &QueueSelection::Project, 20, Some(1_000_000)),
+        Err(ProjectError::Seed)
+    ));
+    assert_eq!(plan(&QueueSelection::Project).sample, Some(typed));
     let collection = QueueSelection::Collection { id: letters.id };
     assert_eq!(plan(&collection).sample, None);
 
@@ -244,7 +351,7 @@ fn an_item_kept_aside_keeps_its_note_for_the_answer_it_held() {
         .unwrap();
     let kept = f
         .projects
-        .queue_plan(p.id, &QueueSelection::Project, &[])
+        .queue_plan(p.id, &QueueSelection::Project)
         .unwrap()
         .scope
         .kept;
@@ -267,7 +374,7 @@ fn an_item_kept_aside_keeps_its_note_for_the_answer_it_held() {
     f.projects.keep_aside(p.id, &key, None, None).unwrap();
     assert!(
         f.projects
-            .queue_plan(p.id, &QueueSelection::Project, &[])
+            .queue_plan(p.id, &QueueSelection::Project)
             .unwrap()
             .scope
             .kept
@@ -413,11 +520,25 @@ fn the_review_manifest_matches_its_golden_files() {
             reviewed: 1,
         }),
     };
+    // `pro` set aside: named in the manifest, as the sample was drawn without it; `flash` read.
+    let choice = |setup: u8, label: &str, included: bool| ResultChoice {
+        key: ResultKey {
+            job_id: job.id,
+            setup_id: fixed(setup),
+        },
+        job_name: job.name.clone(),
+        task: job.task,
+        setup_label: label.into(),
+        model: format!("gemini-{label}"),
+        documents: 1,
+        included,
+    };
     let manifest = ReviewManifest::new(
         fixed(5),
         "Mission archives",
         "project".into(),
         &queue,
+        &[choice(4, "flash", true), choice(6, "pro", false)],
         Timestamp(1_778_400_000_000),
     );
     golden("review-manifest.csv", &csv_body(manifest.table()));

@@ -17,6 +17,7 @@ use kalamu_core::{
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+mod alike;
 mod decisions;
 mod export;
 mod inventory;

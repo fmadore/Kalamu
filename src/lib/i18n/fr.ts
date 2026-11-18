@@ -125,7 +125,11 @@ export const fr: Messages = {
 		showProjects: 'Afficher les projets',
 		hideProjects: 'Masquer les projets',
 		dropOnProject: 'Déposez-le sur un projet pour l’y ajouter',
-		dragHint: 'Faites-le glisser sur un projet de la liste pour l’y ajouter'
+		dragHint: 'Faites-le glisser sur un projet de la liste pour l’y ajouter',
+		toResume: 'À reprendre',
+		resumeJob: (name: string) => `Reprendre « ${name} »`,
+		resumeOthers: (n: number) => (n === 1 ? '1 autre' : `${n} autres`),
+		resumed: (name: string) => `« ${name} » a repris.`
 	},
 	nav: {
 		newJob: 'Nouveau traitement',
@@ -464,7 +468,7 @@ export const fr: Messages = {
 			plan: (field: string, rows: number, groups: number) =>
 				groups === 1
 					? `Les ${rows} lignes de ${field} sont envoyées en une seule requête, avec leurs graphies, les titres de trois documents au plus qui nomment chacune, et les paires que vous avez gardées distinctes.`
-					: `Les ${rows} lignes de ${field} sont trop nombreuses pour une seule requête : elles sont envoyées en ${groups} requêtes d’environ 100 000 tokens chacune, par ordre alphabétique sans tenir compte des accents, chacune partageant un dixième de ses lignes avec la suivante. Les noms éloignés dans l’alphabet ne sont pas comparés. Chaque ligne part avec ses graphies, les titres de trois documents au plus qui la nomment, et les paires que vous avez gardées distinctes.`,
+					: `Les ${rows} lignes de ${field} sont trop nombreuses pour une seule requête : elles sont envoyées en ${groups} requêtes. D’abord par ordre alphabétique sans tenir compte des accents, environ 100 000 tokens à la fois, chaque requête partageant un dixième de ses lignes avec la suivante. Ensuite, pour que les noms éloignés dans l’alphabet soient aussi comparés, les lignes qui partagent un mot ou des initiales, ou qui se prononcent de la même façon, comme « Ouédraogo, Moussa » et « Moussa Ouédraogo ». Chaque ligne part avec ses graphies, les titres de trois documents au plus qui la nomment, et les paires que vous avez gardées distinctes.`,
 			prompt: 'Voir ou modifier le prompt',
 			sends: (provider: string) =>
 				`Envoyé à ${provider} avec votre clé, sous la forme d’un traitement d’analyse à part : son coût et ses réponses figurent dans Traitements. Rien n’est fusionné avant que vous l’acceptiez.`,
@@ -591,7 +595,7 @@ export const fr: Messages = {
 			'Compté sur tous les résultats lus ci-dessous, quel que soit l’affichage. Seules les pages relues sont vérifiées ; les pages signalées ne sont pas un échantillon de l’ensemble.',
 		results: 'Résultats lus',
 		resultsHint:
-			'Là où vous avez retenu un résultat pour un document, seul celui-ci est lu. Ailleurs, chaque résultat est lu et listé ici : écartez ceux que vous ne voulez pas vérifier. Un document lu par plusieurs modèles reste un seul document.',
+			'Là où vous avez retenu un résultat pour un document, seul celui-ci est lu. Ailleurs, chaque résultat est lu et listé ici : écartez ceux que vous ne voulez pas vérifier. Le projet garde ce que vous écartez pour cette liste, et les pages sont tirées au hasard sans eux. Un document lu par plusieurs modèles reste un seul document.',
 		preferred: (n: number) =>
 			n === 1
 				? '1 document lu à travers son résultat retenu'
@@ -661,7 +665,11 @@ export const fr: Messages = {
 			reviewed: (reviewed: number, drawn: number) =>
 				`${reviewed} ${reviewed <= 1 ? 'relue' : 'relues'} sur ${drawn}`,
 			none: 'Aucune page ici n’est à la fois lue et sans signalement : il n’y a rien à tirer.',
-			badge: 'Tirée au hasard'
+			badge: 'Tirée au hasard',
+			seedField: 'Numéro de tirage',
+			seedFieldHint:
+				'Laissez vide pour un nouveau tirage, ou tapez le numéro d’un tirage, lu dans une liste exportée ou un article, pour retrouver les mêmes pages.',
+			seedInvalid: 'Un numéro de tirage a six chiffres au plus.'
 		},
 		keep: {
 			action: 'Mettre de côté',
@@ -2199,6 +2207,7 @@ export const fr: Messages = {
 		quoted: (text: string) => `« ${text} »`,
 		sources: 'Sources',
 		unknown: 'Inconnu',
+		none: 'Aucun',
 		preview: 'préversion',
 		retiring: 'bientôt retiré',
 		replaced: 'remplacé',
@@ -2225,6 +2234,7 @@ export const fr: Messages = {
 		'project.elsewhere': 'Cet élément appartient à un autre projet, ou n’existe plus.',
 		'project.no_name': 'Donnez-lui un nom.',
 		'project.no_tag': 'Tapez l’étiquette à ajouter.',
+		'project.seed': 'Un numéro de tirage a six chiffres au plus.',
 		'project.export': 'L’export n’a pas pu être écrit.',
 		'dictionary.no_entry':
 			'Cette entrée ne figure plus dans le dictionnaire. Elle a peut-être été fusionnée ou scindée.',

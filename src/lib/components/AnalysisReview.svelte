@@ -353,7 +353,8 @@
 						{@const values = readings.map((r) => r.value)}
 						{@const stop = rovingStop(values, itemStops[f.key])}
 						<p class="items" oncontextmenu={(e) => openItemMenu(e, f)}>
-							{#each readings as r, k (r.value)}{#if k > 0}<span class="sep">{'; '}</span
+							{#each readings as r, k (r.value)}{#if k > 0}<span class="sep"
+										>{m.common.semicolon}</span
 									>{/if}<button
 									type="button"
 									class="item"

@@ -544,3 +544,52 @@ test('what to check draws a sample at random and keeps an item aside with a note
 	await main.getByRole('button', { name: 'Put back' }).click();
 	await expect(kept).toBeHidden();
 });
+
+test('what to check draws the same sample again from a seed typed by hand', async ({ page }) => {
+	await open(page, 'queue');
+	const main = page.getByRole('main');
+	const sample = main.getByRole('region', { name: /^Drawn at random/ });
+	const seed = sample.getByRole('textbox', { name: 'Seed' });
+	// Seven digits are not a seed: said, and nothing drawn.
+	await seed.fill('1234567');
+	await seed.press('Enter');
+	await expect(sample.getByRole('alert')).toHaveText('A seed is a number of six digits at most.');
+	await expect(seed).toHaveAttribute('aria-invalid', 'true');
+	await expect(seed).toBeFocused();
+	await expect(sample.getByText(/^Seed \d+/)).toBeHidden();
+
+	// A seed read in a manifest draws with it, and the box empties for the next draw.
+	await seed.fill('271828');
+	await expect(sample.getByRole('alert')).toBeHidden();
+	await sample.getByRole('button', { name: 'Draw at random' }).click();
+	await expect(sample.getByText(/^Seed 271828,/)).toBeVisible();
+	await expect(seed).toHaveValue('');
+});
+
+test('a result set aside from what to check stays aside on coming back, until brought back', async ({
+	page
+}) => {
+	await open(page, 'queue');
+	const main = page.getByRole('main');
+	const choice = () => main.getByRole('checkbox', { name: /Bulletin, people and places/ }).first();
+	const items = () => main.getByRole('button', { name: /^Open Bulletin, May 1957/ });
+	await main.getByText('Results read').click();
+	await expect(choice()).toBeChecked();
+	const before = await items().count();
+	await choice().uncheck();
+	await expect(choice()).not.toBeChecked();
+	await expect(items()).toHaveCount(before - 1);
+
+	// Another pane, then back: the project kept it aside.
+	await page.getByRole('button', { name: /^All documents/ }).click();
+	await page.getByRole('button', { name: /^To check/ }).click();
+	await expect(main.getByRole('heading', { level: 2, name: 'To check' })).toBeVisible();
+	await main.getByText('Results read').click();
+	await expect(choice()).not.toBeChecked();
+	await expect(items()).toHaveCount(before - 1);
+
+	// Brought back, it is read again.
+	await choice().check();
+	await expect(choice()).toBeChecked();
+	await expect(items()).toHaveCount(before);
+});

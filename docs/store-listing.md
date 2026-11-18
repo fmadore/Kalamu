@@ -725,7 +725,7 @@ macOS's: screenshots of the Windows app would not show the app as it runs (Guide
 Use the same ten scenes, captions and material as the Microsoft Store above, with "your Mac"
 for "your PC" in the tenth, and screen them the same way: App Review reads screenshots as
 metadata too, and asks that metadata suit all audiences (Guideline 2.3.8), Kalamu being rated
-4+. The step-by-step for the day on a Mac is Part C of [mac-test-day.md](mac-test-day.md). Capture the window alone with ⌘⇧4 then Space, which adds a shadow with
+4+. The step-by-step for the day on a Mac is Part F of [mac-test-day.md](mac-test-day.md). Capture the window alone with ⌘⇧4 then Space, which adds a shadow with
 transparency: hold ⌥ while clicking to leave it out, or export the image without alpha. Keep
 the set in [store/screenshots/macos/](store/screenshots/macos/), `en/` and `fr/`, beside the Windows one.
 

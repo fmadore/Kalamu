@@ -1,13 +1,14 @@
 <script lang="ts">
 	// The sidebar: the app's name, New job, Projects with the projects listed under it
 	// (SidebarProjects), the list of jobs (SidebarJobs), and the tools at its foot (Prompts,
-	// Settings, Glossary, support). A finished job dragged onto a listed project is added to it,
-	// as its menu's Add to a project does. It folds to a rail of icons named by their tooltips,
+	// Settings, Glossary, support), above them the job to resume (SidebarResume). A finished job
+	// dragged onto a listed project is added to it, as its menu's Add to a project does. It folds to a rail of icons named by their tooltips,
 	// leaving the room to the work.
 	import ExternalLink from './ExternalLink.svelte';
 	import Icon from './Icon.svelte';
 	import SidebarJobs from './SidebarJobs.svelte';
 	import SidebarProjects from './SidebarProjects.svelte';
+	import SidebarResume from './SidebarResume.svelte';
 	import SupportLink from './SupportLink.svelte';
 	import { messages } from '#lib/i18n/index.js';
 	import { JobDrag } from '#lib/jobDrag.svelte.js';
@@ -54,6 +55,9 @@
 	/** Glossary, the last of the foot's tools in every build: where the focus goes when the line
 	 * under them that holds it is hidden. */
 	let lastTool = $state<HTMLElement | null>(null);
+	/** Prompts, the first of the foot's tools: where the focus goes when a job resumed from the
+	 * foot leaves it with nothing nearer to take it. */
+	let firstTool = $state<HTMLElement | null>(null);
 
 	/** Hides the release line; the focus, lost with its button, goes to the tools above it. */
 	function hideRelease(e: MouseEvent, version: string) {
@@ -179,7 +183,9 @@
 	<SidebarJobs {collapsed} {drag} />
 
 	<div class="tools">
+		<SidebarResume {collapsed} fallback={() => firstTool} />
 		<button
+			bind:this={firstTool}
 			class="tool"
 			class:current={app.view.name === 'prompts'}
 			aria-current={app.view.name === 'prompts' ? 'page' : undefined}
@@ -236,6 +242,9 @@
 		flex-direction: column;
 		gap: var(--space-4);
 		min-height: 0;
+		/* A window too short for everything scrolls the sidebar, never the page: the work beside
+		   it keeps its width. */
+		overflow-y: auto;
 		padding: var(--space-3) var(--space-3) var(--space-3);
 		background: var(--chrome);
 		border-right: 1px solid var(--line);

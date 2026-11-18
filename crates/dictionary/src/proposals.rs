@@ -1,6 +1,7 @@
 //! Merges proposed by a model (#48). The rows of one field are sent together, or in large
-//! groups when they are too many for one request, each a text the engine sends as any analysis, so caching, resuming, cost and provenance are those
-//! of every call. The answers are read back here against the rows each group held: a reference
+//! groups when they are too many for one request with smaller ones of rows alike though far
+//! apart in the alphabet, each a text the engine sends as any analysis, so caching, resuming,
+//! cost and provenance are those of every call. A proposal two groups reach is offered once. The answers are read back here against the rows each group held: a reference
 //! to no row is counted and dropped, rows the researcher kept apart are never offered together,
 //! and nothing is applied until the researcher accepts it, through the same merge as by hand.
 

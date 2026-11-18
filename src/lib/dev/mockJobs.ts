@@ -1,5 +1,5 @@
 // The sample jobs the development mock answers with: a newspaper read by two set-ups, a
-// recording, a YouTube video and an analysis.
+// recording cut short by a quit, a paused job, a YouTube video and an analysis.
 
 import type { Correction } from '../bindings/Correction.js';
 import type { FieldAnswer } from '../bindings/FieldAnswer.js';
@@ -101,6 +101,25 @@ export const summaries: JobSummary[] = [
 		cost_usd: 0.02,
 		models: ['voxtral-mini-transcribe-2'],
 		workflow: null
+	},
+	// Paused by the researcher half an hour ago: with the interview cut short by a quit, two jobs
+	// for the sidebar's foot to offer to resume.
+	{
+		id: '00000000-0000-0000-0000-0000000000j8',
+		name: 'Rapports de cercle, Dori',
+		task: 'text_extraction',
+		status: 'paused',
+		created_at: Date.now() - 7_200_000,
+		updated_at: Date.now() - 1_800_000,
+		source_count: 3,
+		setup_count: 1,
+		pieces_total: 12,
+		pieces_finished: 5,
+		pieces_failed: 0,
+		pieces_truncated: 0,
+		cost_usd: 0.006,
+		models: ['gemini-3.8-flash'],
+		workflow: null
 	}
 ];
 
@@ -195,6 +214,15 @@ export const pieces: PieceView[] = [setupA, setupB].flatMap((setup, s) =>
 		truncated: s === 0 && index === 2
 	}))
 );
+
+/** The paused job's own page: the newspaper's file, read by one set-up. */
+export const pausedJob: Job = {
+	...job,
+	id: '00000000-0000-0000-0000-0000000000j8',
+	name: 'Rapports de cercle, Dori',
+	setups: [setupA],
+	status: 'paused'
+};
 
 export const recording = {
 	...source,

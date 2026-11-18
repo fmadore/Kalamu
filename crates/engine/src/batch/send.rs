@@ -4,8 +4,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use kalamu_core::{
-    BatchItem, BatchPhase, BatchRecord, CacheKey, Job, JobId, PieceState, PieceStatus,
-    ProcessRequest, ProviderError, Setup, SetupId, SourceId, StopSignal, Timestamp,
+    ApiKey, BatchItem, BatchPhase, BatchRecord, CacheKey, Job, JobId, PieceState, PieceStatus,
+    ProcessRequest, Provider, ProviderError, Setup, SetupId, SourceId, StopSignal, Timestamp,
 };
 use kalamu_media::OpenSource;
 
@@ -14,8 +14,9 @@ use crate::piece::wait_unless_stopped;
 use crate::{Engine, EngineError, source_stem};
 
 impl Engine {
-    /// Before a job runs: a batch never confirmed as sent is abandoned, and a piece marked as
-    /// submitted that no waiting batch holds goes back in the queue.
+    /// Before a job runs: a batch never confirmed as sent is abandoned, a file uploaded for it
+    /// marked for deleting, and a piece marked as submitted that no waiting batch holds goes
+    /// back in the queue.
     pub(crate) fn reopen_unsent(&self, job_id: JobId) -> Result<(), EngineError> {
         let mut held: HashSet<(SetupId, SourceId, u32)> = HashSet::new();
         for mut batch in self.store.batches(job_id)? {
@@ -23,6 +24,7 @@ impl Engine {
                 BatchPhase::Sending => {
                     batch.phase = BatchPhase::Abandoned;
                     batch.updated_at = Timestamp::now();
+                    Self::due_for_cleanup(&mut batch);
                     self.store.put_batch(&batch)?;
                 }
                 BatchPhase::Waiting => held.extend(
@@ -189,6 +191,7 @@ impl Engine {
             submitted_at: now,
             updated_at: now,
             cleanup: None,
+            uploaded: Vec::new(),
         };
         self.store.put_batch(&record)?;
         let mut states: Vec<PieceState> = Vec::with_capacity(bucket.pieces.len());
@@ -203,7 +206,9 @@ impl Engine {
 
         // Only a refusal for the rate is retried: a timed-out request may have created the
         // batch, and sending it again would pay twice.
-        let mut sent = provider.submit_batch(&api_key, &requests).await;
+        let mut sent = self
+            .submit(provider.as_ref(), &api_key, &requests, &mut record)
+            .await?;
         let mut attempt = 1;
         while let Err(ProviderError::RateLimited { retry_after, .. }) = &sent
             && attempt < self.config.max_attempts
@@ -213,14 +218,18 @@ impl Engine {
                 drop(requests);
                 record.phase = BatchPhase::Abandoned;
                 record.updated_at = Timestamp::now();
+                Self::due_for_cleanup(&mut record);
                 self.store.put_batch(&record)?;
                 for mut state in states {
                     state.status = PieceStatus::Pending;
                     self.save(&mut state, None)?;
                 }
+                self.clean_up(&mut record).await?;
                 return Ok(BatchOutcome::default());
             }
-            sent = provider.submit_batch(&api_key, &requests).await;
+            sent = self
+                .submit(provider.as_ref(), &api_key, &requests, &mut record)
+                .await?;
             attempt += 1;
         }
         drop(requests);
@@ -237,12 +246,15 @@ impl Engine {
             Err(err) => {
                 tracing::warn!(job = %job.id, error = %err, "batch refused");
                 record.phase = BatchPhase::Abandoned;
+                Self::due_for_cleanup(&mut record);
                 self.store.put_batch(&record)?;
                 for mut state in states {
                     state.status = PieceStatus::Failed;
                     state.error = Some(err.to_string());
                     self.save(&mut state, None)?;
                 }
+                // A file uploaded for a batch never made is deleted now.
+                self.clean_up(&mut record).await?;
                 Ok(BatchOutcome {
                     failed: true,
                     fatal: err.is_fatal_for_job().then(|| err.to_string()),
@@ -250,5 +262,32 @@ impl Engine {
                 })
             }
         }
+    }
+
+    /// Sends a recorded batch once: uploaded first as a file where the provider takes it so,
+    /// the file's id recorded before the batch is made from it. A file already uploaded (the
+    /// batch is tried again after a rate limit) is not uploaded again. Only the store failing
+    /// is an error here; the provider's answer is returned as it came.
+    async fn submit(
+        &self,
+        provider: &dyn Provider,
+        key: &ApiKey,
+        requests: &[(String, ProcessRequest<'_>)],
+        record: &mut BatchRecord,
+    ) -> Result<Result<String, ProviderError>, EngineError> {
+        let file = match record.uploaded.first() {
+            Some(file) => file.clone(),
+            None => match provider.upload_batch(key, requests).await {
+                Ok(Some(file)) => {
+                    record.uploaded.push(file.clone());
+                    record.updated_at = Timestamp::now();
+                    self.store.put_batch(record)?;
+                    file
+                }
+                Ok(None) => return Ok(provider.submit_batch(key, requests).await),
+                Err(err) => return Ok(Err(err)),
+            },
+        };
+        Ok(provider.submit_uploaded_batch(key, &file, requests).await)
     }
 }

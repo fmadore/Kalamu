@@ -336,7 +336,11 @@ paying twice.
   files it left in the account's storage at the provider (OpenAI's and Mistral's requests,
   answers and errors) are deleted, by the ids the batch itself names and never from a listing
   of that storage; a Claude batch leaves no file, and is itself deleted at Anthropic once it
-  has ended, the same way ([decision](decisions/2026-11-17-page-xml-review-sample-claude-batches.md)); the ids are recorded first, so a crash in between, or a job deleted
+  has ended, the same way ([decision](decisions/2026-11-17-page-xml-review-sample-claude-batches.md));
+  a Gemini batch above the 20 MB Google takes in one request is uploaded first as a JSON
+  Lines file, recorded before the batch is made from it, and that file and the one Google
+  writes its answers to are deleted the same way, the upload alone when the batch was never
+  made ([decision](decisions/2026-11-18-gemini-file-batches-set-aside-far-apart-names-resume.md)); the ids are recorded first, so a crash in between, or a job deleted
   meanwhile, is finished at the next launch. A deleting that fails never touches the job: it
   is tried again at later launches, five times, then left and recorded as left
   ([decision](decisions/2026-11-15-records-regions-batch-files.md)).
@@ -552,6 +556,11 @@ pieces the provider holds and when they are due.
   reviewed is never hidden; its heading counts them all, and a link under the list,
   *All jobs (243)*, opens the Jobs page. Folded to a rail, the sidebar keeps that page as an
   icon. A right click on a job opens its menu: rename, add to a project, delete.
+- **The sidebar's foot, *To resume***: a job that is paused, or was cut short by a quit or a
+  crash, is named there from any screen, with how far it got and **Resume**; with several,
+  the one stopped last is shown and the others are a click away. Once it runs, the row goes
+  and the focus moves to the next job to resume or to the job in the list; a failure is said
+  under the row and read out. A workflow step waiting for a check is not offered there.
 - **The Jobs page** lists every job in a table: name (with how many files and the workflow it
   is a step of), task, status, pieces, cost and date, fewer columns as the window narrows. A
   search finds a job by its name, its workflow or the name of a file it read (a YouTube
@@ -644,6 +653,9 @@ analysed, compared. A **project** keeps it together
   pages), and while it is not reviewed.
   Where the researcher preferred a result, only it is read; elsewhere every result is, listed
   so that some can be set aside, and a document read by several models is still one document.
+  What is set aside is kept with the project for each scope, so it is still set aside after a
+  restart, can be brought back, and goes with its job or project; a preferred result is never
+  set aside.
   Each item names its document, page, set-up and stored answer, and opens the review at its
   page, from which the previous and next items are a click away. The list is read from what
   is stored, so it calls no model. Only the researcher's review resolves an item, which then
@@ -655,7 +667,8 @@ analysed, compared. A **project** keeps it together
   scope keeping its own. The draw is decided by a seed, shown and kept with the project, so the
   same pages come back after a restart and the sample can be cited; a page read by several
   set-ups or jobs is drawn once, a page flagged since leaves the sample and the next in the
-  draw takes its place, and drawing again is the researcher's act. Pages drawn are listed
+  draw takes its place, and drawing again is the researcher's act; a seed can also be typed, six digits at most, to
+  draw the pages a colleague drew. The sample is drawn without the results set aside. Pages drawn are listed
   apart, as drawn at random and never as a problem, with how many of them are reviewed; the
   counts over the scope do not change. An item can be **kept aside with a note**, for the
   answer it then holds: keeping aside resolves nothing, and when the answer changes the item
@@ -706,8 +719,16 @@ The names and terms a project's analyses listed, gathered for the researcher to 
   one request up to about 100,000 tokens of input (two to three thousand rows), which every
   model offered for analyses reads. A larger field is cut into requests of that size in
   alphabetical order (accents and capitals set aside), each sharing a tenth of its rows with the
-  next, and the interface says so before sending: names far apart in the alphabet are then not
-  compared. The prompt asks for groups with a preferred label, a reason and a certainty in
+  next. The alphabet then sets apart rows that may be one name (`Ouédraogo, Moussa` and
+  `Moussa Ouédraogo`, a name and its initials, two transliterations), so those are sent again
+  together, in groups of their own: rows that share the whole name in any order, a name
+  written as one word or several, a word with the initials of the others, or one word, each
+  compared by a sound key tolerant of transliteration (ou, u and w; sh, ch and sch; dj and j;
+  kh and h; doubled letters), particles and titles left out. A key more than ten rows hold
+  is no reason to look and makes no group; rows kept apart are never sent together; and the
+  extra rows never outnumber the field's own, so the request costs at most twice the
+  alphabetical groups. A key is only a reason to look: nothing is merged by it. The interface
+  says how the rows are sent before sending ([decision](decisions/2026-11-18-gemini-file-batches-set-aside-far-apart-names-resume.md)). The prompt asks for groups with a preferred label, a reason and a certainty in
   words (certain, likely, possible), which is not a probability. It is listed in Prompts under
   Dictionary, linked from the request, and can be edited and reset like any default; its
   answer's fields are fixed, since the dictionary reads them, and New job never offers it.
@@ -721,7 +742,8 @@ The names and terms a project's analyses listed, gathered for the researcher to 
   keeps two apart, or turns it down; a proposal turned down stays listed as such, survives a
   restart and can be taken back. The same proposal from two requests is offered once.
 - **Later**: import; an accepted dictionary as a fingerprinted input to later analyses;
-  comparing names far apart in the alphabet (by sound or by shared words); and telling apart
+  names that differ by their vowels or a shortened forename, and scripts other than Latin,
+  which the extra groups do not bring together; and telling apart
   two people who share a spelling, which needs mentions anchored in the text (#47).
 
 ### Project search

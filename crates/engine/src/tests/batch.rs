@@ -49,6 +49,14 @@ struct Batchy {
     store: Mutex<Option<Arc<SqliteStore>>>,
     /// Pieces still with the provider (submitted) at each deletion.
     submitted_at_delete: Mutex<Vec<usize>>,
+    /// Batches go as a file uploaded first (as Gemini's large ones do).
+    uploads: AtomicBool,
+    /// Files uploaded, in order.
+    uploaded: Mutex<Vec<String>>,
+    /// Each batch made from a file, with that file, which the ended batch names.
+    made_from: Mutex<Vec<(String, String)>>,
+    /// What making a batch from a file fails with, if anything.
+    refuse_uploaded: Mutex<Option<ProviderError>>,
 }
 
 impl Batchy {
@@ -142,6 +150,42 @@ impl Provider for Batchy {
         Ok(remote)
     }
 
+    async fn upload_batch(
+        &self,
+        _key: &ApiKey,
+        _requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<Option<String>, ProviderError> {
+        if !self.uploads.load(Ordering::SeqCst) {
+            return Ok(None);
+        }
+        let mut uploaded = self.uploaded.lock().unwrap_or_else(|p| p.into_inner());
+        let file = format!("upload-{}", uploaded.len());
+        uploaded.push(file.clone());
+        Ok(Some(file))
+    }
+
+    async fn submit_uploaded_batch(
+        &self,
+        key: &ApiKey,
+        file: &str,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<String, ProviderError> {
+        if let Some(err) = self
+            .refuse_uploaded
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
+        {
+            return Err(err);
+        }
+        let remote = self.submit_batch(key, requests).await?;
+        self.made_from
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .push((remote.clone(), file.to_string()));
+        Ok(remote)
+    }
+
     async fn poll_batch(
         &self,
         _key: &ApiKey,
@@ -208,7 +252,8 @@ impl Provider for Batchy {
         Ok(())
     }
 
-    /// Each batch leaves its requests and its answers, named after it.
+    /// Each batch leaves its requests (the file it was made from, if any) and its answers,
+    /// named after it.
     async fn batch_files(
         &self,
         _key: &ApiKey,
@@ -221,10 +266,15 @@ impl Provider for Batchy {
         if self.keeps_batch.load(Ordering::SeqCst) {
             return Ok(Some(vec![batch_id.to_string()]));
         }
-        Ok(Some(vec![
-            format!("{batch_id}-in"),
-            format!("{batch_id}-out"),
-        ]))
+        let input = self
+            .made_from
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .iter()
+            .find(|(remote, _)| remote == batch_id)
+            .map(|(_, file)| file.clone())
+            .unwrap_or_else(|| format!("{batch_id}-in"));
+        Ok(Some(vec![input, format!("{batch_id}-out")]))
     }
 
     async fn delete_batch_file(&self, _key: &ApiKey, file_id: &str) -> Result<(), ProviderError> {

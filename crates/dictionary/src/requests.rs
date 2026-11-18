@@ -1,7 +1,8 @@
 //! The requests that ask a model for merges: a field's rows, each with its spellings, the
 //! documents naming it and the pairs kept apart, in one text or in overlapping groups of
-//! consecutive rows when they are too many for one request. Each group is a source of an
-//! analysis job the engine runs as any other.
+//! consecutive rows when they are too many for one request, and then in smaller groups of rows
+//! likely the same though far apart in the alphabet ([`crate::alike`]). Each group is a source
+//! of an analysis job the engine runs as any other.
 
 use std::collections::{BTreeSet, HashMap};
 
@@ -10,7 +11,7 @@ use kalamu_core::{
     Timestamp,
 };
 
-use crate::{Dictionary, DictionaryRow, folded};
+use crate::{Dictionary, DictionaryRow, alike, folded};
 
 /// What one request may hold, in tokens of input: two to three thousand rows. Every model
 /// offered for analyses reads far more, which leaves room for the instructions and the answer.
@@ -133,12 +134,25 @@ impl Dictionary {
     /// One field's rows, in the project or a collection, as a model compares them: all in one
     /// text when they fit in [`INPUT_TOKENS`], as they nearly always do; otherwise in groups in
     /// alphabetical order with capitals and accents set aside, so variants that sort together
-    /// are compared, neighbouring groups sharing a tenth of their rows.
+    /// are compared, neighbouring groups sharing a tenth of their rows; and then the rows that
+    /// share words, initials or a sound though the alphabet set them apart, in groups of their
+    /// own.
     pub fn prepare_proposals(
         &self,
         project: ProjectId,
         scope: Option<CollectionId>,
         namespace: &str,
+    ) -> Result<Prepared, DictionaryError> {
+        self.prepare_within(project, scope, namespace, INPUT_TOKENS)
+    }
+
+    /// [`Self::prepare_proposals`] with requests of `budget` tokens.
+    pub(crate) fn prepare_within(
+        &self,
+        project: ProjectId,
+        scope: Option<CollectionId>,
+        namespace: &str,
+        budget: usize,
     ) -> Result<Prepared, DictionaryError> {
         let view = self.view(project, scope)?;
         let label = view
@@ -181,9 +195,35 @@ impl Dictionary {
 
         let lines: Vec<String> = rows.iter().map(|r| row_line(r, &titles)).collect();
         let costs: Vec<usize> = lines.iter().map(|l| tokens(l)).collect();
-        let ranges = windows(&costs, INPUT_TOKENS);
+        let ranges = windows(&costs, budget);
+        let forms: Vec<Vec<&str>> = rows
+            .iter()
+            .map(|r| r.forms.iter().map(|f| f.form.as_str()).collect())
+            .collect();
+        let position: HashMap<&str, usize> = rows
+            .iter()
+            .enumerate()
+            .map(|(i, r)| (r.key.as_str(), i))
+            .collect();
+        let apart: BTreeSet<(usize, usize)> = rows
+            .iter()
+            .enumerate()
+            .flat_map(|(a, r)| {
+                r.apart
+                    .iter()
+                    .filter_map(|k| position.get(k.as_str()))
+                    .map(move |&b| (a.min(b), a.max(b)))
+            })
+            .collect();
+        let far = alike::groups(&forms, &apart, &ranges, &costs, budget);
         let count = ranges.len();
-        let groups = ranges
+        let sent = |slice: &[&DictionaryRow]| -> Vec<Vec<String>> {
+            slice
+                .iter()
+                .map(|r| r.forms.iter().map(|f| f.form.clone()).collect())
+                .collect()
+        };
+        let mut groups: Vec<PreparedGroup> = ranges
             .into_iter()
             .enumerate()
             .map(|(i, range)| {
@@ -195,13 +235,20 @@ impl Dictionary {
                         format!("{namespace}-{}-of-{count}.txt", i + 1)
                     },
                     text: group_text(&label, slice, &lines[range]),
-                    rows: slice
-                        .iter()
-                        .map(|r| r.forms.iter().map(|f| f.form.clone()).collect())
-                        .collect(),
+                    rows: sent(slice),
                 }
             })
             .collect();
+        let extra = far.len();
+        groups.extend(far.into_iter().enumerate().map(|(i, indices)| {
+            let slice: Vec<&DictionaryRow> = indices.iter().map(|&r| rows[r]).collect();
+            let picked: Vec<String> = indices.iter().map(|&r| lines[r].clone()).collect();
+            PreparedGroup {
+                file_name: format!("{namespace}-alike-{}-of-{extra}.txt", i + 1),
+                text: group_text(&label, &slice, &picked),
+                rows: sent(&slice),
+            }
+        }));
         Ok(Prepared {
             namespace: namespace.to_string(),
             label,

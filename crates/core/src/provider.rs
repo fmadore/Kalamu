@@ -335,6 +335,34 @@ pub trait Provider: Send + Sync {
         Err(ProviderError::Unsupported("batches".into()))
     }
 
+    /// Uploads a batch's requests as a file first, where the provider takes them so (for a
+    /// batch too large to send in one request), and returns the file's id; `None`, the default,
+    /// when the batch goes with [`Provider::submit_batch`]. The engine records the id before the
+    /// batch is made from it with [`Provider::submit_uploaded_batch`], so a stop in between, or
+    /// a batch refused, still knows the file to delete.
+    async fn upload_batch(
+        &self,
+        key: &ApiKey,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<Option<String>, ProviderError> {
+        let _ = (key, requests);
+        Ok(None)
+    }
+
+    /// Makes a batch from the file [`Provider::upload_batch`] uploaded for these requests, and
+    /// returns the provider's batch id. Never uploads again.
+    async fn submit_uploaded_batch(
+        &self,
+        key: &ApiKey,
+        file: &str,
+        requests: &[(String, ProcessRequest<'_>)],
+    ) -> Result<String, ProviderError> {
+        let _ = (key, file, requests);
+        Err(ProviderError::Unsupported(
+            "batches made from a file".into(),
+        ))
+    }
+
     /// Where a batch stands; once it has ended, its answers, read as [`Provider::process`]
     /// reads one. `ids` are the items' ids in the order they were sent.
     async fn poll_batch(

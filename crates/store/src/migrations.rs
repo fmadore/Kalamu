@@ -122,4 +122,6 @@ CREATE INDEX IF NOT EXISTS results_costs ON results(cache_key, cost_usd, truncat
     batches::LEFTOVERS,
     // The review queue's random samples and the items kept aside with a note.
     checks::MIGRATION,
+    // The results set aside from the review queue, per scope.
+    checks::SET_ASIDE,
 ];

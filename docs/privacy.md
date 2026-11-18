@@ -1,6 +1,9 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 17 November 2026, which applies from the first version to keep, in a
+**Effective date:** 18 November 2026, which applies from the first version to send a large
+batch of the cheaper mode to Google as a file, deleted there afterwards, and to keep with a
+project the results the user sets aside from its list of what to check. The policy of
+17 November 2026 did not say so; it applies from the first version to keep, in a
 project's list of what to check, the items the user keeps aside with their notes and the seed and
 size of a sample drawn at random, and to write that list where the user chooses, and to delete
 at Anthropic a batch of the cheaper mode once it has ended. The policy of
@@ -89,8 +92,14 @@ earlier versions are not cleaned. A Claude batch leaves no such files, but Anthr
 batch itself, with its requests and answers, for up to 29 days: Kalamu deletes that batch at
 Anthropic in the same way, once it has ended and its answers are stored on the computer, or it
 was cancelled or has failed, and tries again at later launches if Anthropic cannot be reached.
-A Claude batch sent by an earlier version is not deleted. Gemini batches leave no such files;
-Google keeps the batch itself by its own rules.
+A Claude batch sent by an earlier version is not deleted. A Gemini batch of less than 20 MB
+is sent in one request and leaves no file; Google keeps the batch itself by its own rules. A
+larger one is first uploaded as a file of its requests, with the pages or text they hold, to
+the file storage of the user's Gemini API account, and Google writes the answers to a second
+file there. Google deletes an uploaded file after 48 hours and does not say how long it keeps
+the file of answers. Kalamu deletes both, as it does at OpenAI and Mistral, once the answers
+are stored on the computer, or the batch is cancelled, has failed or has expired; a file
+uploaded for a batch that was never made is deleted at once, or when the app is next opened.
 
 **Offline**, with Whisper, recordings are converted and transcribed on the computer and never
 uploaded; with Tesseract or an offline OCR model, PDF pages and images are drawn and read on the
@@ -128,7 +137,8 @@ Kalamu's, on the same computer only:
   collections, the titles, tags, source descriptions (repository, shelfmark, citation and the
   like, as the user types them), paths, sizes and fingerprints of their documents, which jobs read each document, and the results the user marked as
   preferred, what the user decided in its list of what to check (the items kept aside with
-  their notes, and the seed and size of each sample drawn at random), and its **dictionary**: the entries the user made of the names its analyses
+  their notes, the results set aside from the list and when, and the seed and size of each
+  sample drawn at random), and its **dictionary**: the entries the user made of the names its analyses
   listed (labels, the forms they gather, review status), the pairs kept apart, each request for
 proposed merges (the job that asked and the forms each of its texts held), and the proposals
 turned down. The texts sent for proposals are kept with the frozen text below. A project only

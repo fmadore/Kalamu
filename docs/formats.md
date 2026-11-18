@@ -278,7 +278,11 @@ collection or a selection), whatever the filters show, the pages drawn at random
 The JSON holds `format`, `version`, `project`, `project_name`, `scope` (`project`,
 `collection:<id>` or `documents:<digest of the selection>`), `exported_at`, the scope's
 `counts`, the `sample` (its seed, size, when it was drawn, how many pages it was drawn from,
-how many were drawn and how many of them are reviewed; `null` without one) and `items`.
+how many were drawn and how many of them are reviewed; `null` without one), `set_aside` and
+`items`. `set_aside` lists the results the researcher set aside from the list in that scope,
+which the items and the sample leave out: each with its `job_id`, `job_name`, `task`,
+`setup_id`, `setup_label`, `model` and `documents`; an empty list when there are none. It was
+added on 18 November 2026 without a new version, a reader of version 1 ignoring it.
 
 The CSV has one row per item, in these columns: `document_id`, `document`, `source_id`,
 `job_id`, `job_name`, `task`, `setup_id`, `setup_label`, `model`, `preferred`, `piece`,

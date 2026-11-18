@@ -365,7 +365,10 @@
 						</label>
 					{/if}
 					{#if choices.length < 2}
-						<p class="reads"><span class="label">{w.reads}:</span> {inputLabel(step.input)}</p>
+						<p class="reads">
+							<span class="label">{w.reads}{m.common.colon}</span>
+							{inputLabel(step.input)}
+						</p>
 					{:else}
 						<label class="field">
 							<span>{w.reads}</span>

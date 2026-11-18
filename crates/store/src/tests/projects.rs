@@ -292,3 +292,53 @@ fn the_review_queue_s_sample_and_items_kept_aside_survive_a_restart() -> Result<
     assert!(store.kept_aside(p.id)?.is_empty());
     Ok(())
 }
+
+#[test]
+fn results_set_aside_survive_a_restart_per_scope_and_leave_with_their_job_or_project()
+-> Result<(), StoreError> {
+    let dir = tempfile::tempdir().map_err(corrupt)?;
+    let path = dir.path().join("kalamu.db");
+    let (job, other) = (job(), job());
+    let p = project("Mission archives");
+    let flash = (job.id, job.setups[0].id);
+    let theirs = (other.id, other.setups[0].id);
+    {
+        let store = SqliteStore::open(&path)?;
+        store.create_job(&job)?;
+        store.create_job(&other)?;
+        store.put_project(&p)?;
+        store.set_result_aside(p.id, "project", theirs, Some(Timestamp(8)))?;
+        store.set_result_aside(p.id, "project", flash, Some(Timestamp(7)))?;
+        // Set aside again, it is still one.
+        store.set_result_aside(p.id, "project", flash, Some(Timestamp(9)))?;
+        store.set_result_aside(p.id, "collection:x", theirs, Some(Timestamp(7)))?;
+    }
+
+    let store = SqliteStore::open(&path)?;
+    // In the order set aside, each scope its own.
+    assert_eq!(
+        store.results_set_aside(p.id, "project")?,
+        vec![flash, theirs]
+    );
+    assert_eq!(store.results_set_aside(p.id, "collection:x")?, vec![theirs]);
+    assert!(store.results_set_aside(p.id, "collection:y")?.is_empty());
+
+    // Brought back in one scope, it stays aside in the other.
+    store.set_result_aside(p.id, "project", theirs, None)?;
+    assert_eq!(store.results_set_aside(p.id, "project")?, vec![flash]);
+    assert_eq!(store.results_set_aside(p.id, "collection:x")?, vec![theirs]);
+
+    // Deleting a job deletes its results set aside; deleting the project, all of them.
+    store.delete_job(job.id)?;
+    assert!(store.results_set_aside(p.id, "project")?.is_empty());
+    store.delete_project(p.id)?;
+    assert!(store.results_set_aside(p.id, "collection:x")?.is_empty());
+    let left: i64 = store
+        .conn()
+        .query_row("SELECT COUNT(*) FROM review_set_aside", [], |row| {
+            row.get(0)
+        })
+        .map_err(db)?;
+    assert_eq!(left, 0);
+    Ok(())
+}

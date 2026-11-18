@@ -1,23 +1,26 @@
 //! The review manifest (#85): every item of a project's review queue in one scope, the sample
 //! drawn at random included, with what identifies its source and result, why it is listed, and
-//! what the researcher decided. Written as JSON and as a CSV beside it; read from what is
+//! what the researcher decided, and the JSON names the results set aside from the scope, which
+//! the sample is drawn without. Written as JSON and as a CSV beside it; read from what is
 //! stored, so writing it calls no model.
 
 use kalamu_core::{
-    PieceRef, ProjectError, ProjectId, QueueCounts, QueueItem, ReviewQueue, SampleCounts, Signal,
-    Table, Timestamp,
+    JobId, PieceRef, ProjectError, ProjectId, QueueCounts, QueueItem, ReviewQueue, SampleCounts,
+    SetupId, Signal, Table, Task, Timestamp,
 };
 use serde::Serialize;
 
-use crate::{Projects, QueueSelection, missing};
+use crate::{Projects, QueueSelection, ResultChoice, missing};
 
 impl Projects {
-    /// The manifest of `queue`, the review queue over `selection` as the engine gathered it.
+    /// The manifest of `queue`, the review queue over `selection` as the engine gathered it, and
+    /// `choices`, the results its plan offered to set aside.
     pub fn review_manifest(
         &self,
         project: ProjectId,
         selection: &QueueSelection,
         queue: &ReviewQueue,
+        choices: &[ResultChoice],
     ) -> Result<ReviewManifest, ProjectError> {
         let named = self.store.project(project).map_err(missing)?;
         Ok(ReviewManifest::new(
@@ -25,6 +28,7 @@ impl Projects {
             &named.name,
             selection.key(),
             queue,
+            choices,
             Timestamp::now(),
         ))
     }
@@ -45,7 +49,23 @@ pub struct ReviewManifest {
     pub counts: QueueCounts,
     /// The sample drawn at random in this scope, if one was.
     pub sample: Option<SampleCounts>,
+    /// The results set aside from this scope: the queue does not read them, nor draws the
+    /// sample from their pages. Added within version 1; absent from earlier manifests.
+    pub set_aside: Vec<SetAsideRow>,
     pub items: Vec<ManifestRow>,
+}
+
+/// A result set aside from the scope, as the manifest names it.
+#[derive(Debug, Clone, Serialize)]
+pub struct SetAsideRow {
+    pub job_id: JobId,
+    pub job_name: String,
+    pub task: Task,
+    pub setup_id: SetupId,
+    pub setup_label: String,
+    pub model: String,
+    /// Documents in scope it read with no preferred result.
+    pub documents: u32,
 }
 
 /// One item, as the manifest writes it.
@@ -99,6 +119,7 @@ impl ReviewManifest {
         project_name: &str,
         scope: String,
         queue: &ReviewQueue,
+        choices: &[ResultChoice],
         exported_at: Timestamp,
     ) -> Self {
         let seed = queue.sample.map(|s| s.seed);
@@ -111,6 +132,19 @@ impl ReviewManifest {
             exported_at,
             counts: queue.counts.clone(),
             sample: queue.sample,
+            set_aside: choices
+                .iter()
+                .filter(|c| !c.included)
+                .map(|c| SetAsideRow {
+                    job_id: c.key.job_id,
+                    job_name: c.job_name.clone(),
+                    task: c.task,
+                    setup_id: c.key.setup_id,
+                    setup_label: c.setup_label.clone(),
+                    model: c.model.clone(),
+                    documents: c.documents,
+                })
+                .collect(),
             items: queue
                 .items
                 .iter()

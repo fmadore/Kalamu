@@ -4,6 +4,7 @@
 	// its menu (the ⋯ button or a right click) renames it, adds it to a project or deletes it, and
 	// rows chosen together can be added to a project or deleted at once.
 	import Icon from './Icon.svelte';
+	import Missing from './Missing.svelte';
 	import JobMenu from './JobMenu.svelte';
 	import MoreRows from './MoreRows.svelte';
 	import type { JobSummary } from '#lib/bindings/JobSummary.js';
@@ -315,9 +316,8 @@
 								{/if}
 							</td>
 							<td class="cost num"
-								>{#if job.cost_usd !== null}{formatUsd(job.cost_usd)}{:else}<span
-										class="muted"
-										aria-hidden="true">—</span
+								>{#if job.cost_usd !== null}{formatUsd(job.cost_usd)}{:else}<span class="muted"
+										><Missing label={m.common.none} /></span
 									>{/if}</td
 							>
 							<td class="date num muted" title={formatDateTime(job.created_at)}

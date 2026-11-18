@@ -35,7 +35,7 @@ colors:
   danger-red: "#b42318"
   danger-text: "#9a1c13"
   danger-wash: "#fdecea"
-  danger-border: "#f2c9c4"
+  danger-border: "#cb655d"
   speaker-1: "#0f8a7e"
   speaker-1-wash: "#dcf3ef"
   speaker-1-text: "#0b5c54"
@@ -311,7 +311,7 @@ A warm graphite palette of paper greys and one ink, with two marker colours whos
 - **Found** (16% ink; 20% white in dark): words a search found, as a wash over the text; the match gone to is filled in graphite ink with on-ink text, the way a focus is drawn. Neither yellow, which marks the models' disagreements, nor blue, which is the researcher's hand.
 - **Heard** (7% ink; 8% white in dark): the passage of a recording the player is at, a fainter wash than found over the whole turn.
 - **Text**: bright (#171612) for headings and values, body (#1e1d19), secondary (#4d4a42), muted (#615d54) for hints and metadata (a field's kind in an analysis, an item a menu cannot do now), faint (#938e84, 3.2:1) only for decoration that repeats a value given elsewhere (line numbers, the slash in a breadcrumb), never for words to read.
-- **Status**: ok-green (#1f7a4d), warn-amber (#d97f00), danger-red (#b42318), each with a darker text tone and a pale wash. Used as coloured text on a wash, a 6px dot, or a thin bar; never as a filled button.
+- **Status**: ok-green (#1f7a4d), warn-amber (#d97f00), danger-red (#b42318), each with a darker text tone and a pale wash. Used as coloured text on a wash, a 6px dot, or a thin bar; never as a filled button. Danger text reads at 7.0:1 or more on every surface and on its wash, in both themes (danger-red itself 5.6:1 or more). Red is as dark as the hand's blue (1.1 to 1.3:1 between them in both themes), and in dark mode no darker than the highlighter (1.1 to 1.4:1), so a failure is never told by its hue: it is always said in words ("Failed", a sentence), a correction is an underline or the "Corrected" chip, a difference is a filled mark, and red never sits on the highlighter.
 - **Speakers**: speaker 1 teal (#0f8a7e; #5cc8bc in dark) and speaker 2 amber (#d97f00), each as a tag of dark text on a pale wash, told apart by lightness as well as hue. Neither is blue, which belongs to the researcher's hand.
 
 ### Named Rules
@@ -420,7 +420,7 @@ Quiet and firm: a sans label at weight 500, an icon only where its meaning is un
 - **Default:** white ground, control-line border, bright text; hover darkens the border to control-line-hover, as does a view that is on (pressed in, on the wash).
 - **Primary:** graphite ink ground and border, white text, a muted mono shortcut inside; hover lifts to ink hover.
 - **Ghost:** transparent; hover takes the wash.
-- **Danger:** danger-red text with a pale red border, never a red fill.
+- **Danger:** danger-red text with a red border (danger-border, #cb655d; 60% danger-red in dark), never a red fill. The border is a control's edge, so it holds 3:1 like the control line: light 3.8 on raised surface, 3.7 on surface, 3.5 on surface quiet, 3.2 on chrome; dark 3.3, 3.5, 3.4, 3.6.
 - **Disabled:** 45% opacity. In a menu or list of choices, an item that cannot be used now is muted text with no hover, legible beside the bright items. **Focus:** a 2px ink outline offset 2px (on-stage colour over the lightbox).
 - Transitions: background and border colour, 120ms ease-out; removed under reduced motion.
 

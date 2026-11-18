@@ -38,7 +38,14 @@ export const en = {
 		hideProjects: 'Hide the projects',
 		/** Said while a finished job is dragged over the list of projects. */
 		dropOnProject: 'Drop on a project to add the job to it',
-		dragHint: 'Drag it onto a project in the list to add it there'
+		dragHint: 'Drag it onto a project in the list to add it there',
+		/** The sidebar's foot: jobs paused, or cut short by a quit or a crash, to go on with. */
+		toResume: 'To resume',
+		resumeJob: (name: string) => `Resume “${name}”`,
+		/** Under the job stopped last, the others stopped too, shown on asking. */
+		resumeOthers: (n: number) => (n === 1 ? '1 more' : `${n} more`),
+		/** Said politely once a job resumes from the sidebar's foot. */
+		resumed: (name: string) => `“${name}” resumed.`
 	},
 	nav: {
 		newJob: 'New job',
@@ -364,7 +371,7 @@ export const en = {
 			plan: (field: string, rows: number, groups: number) =>
 				groups === 1
 					? `All ${rows} rows of ${field} are sent in one request, with their spellings, the titles of up to three documents naming each, and the pairs you kept apart.`
-					: `The ${rows} rows of ${field} are too many for one request: they are sent in ${groups} requests of about 100,000 tokens each, in alphabetical order with accents set aside, each sharing a tenth of its rows with the next. Names far apart in the alphabet are not compared. Each row goes with its spellings, the titles of up to three documents naming it, and the pairs you kept apart.`,
+					: `The ${rows} rows of ${field} are too many for one request: they are sent in ${groups} requests. First in alphabetical order with accents set aside, about 100,000 tokens at a time, each request sharing a tenth of its rows with the next. Then, so that names far apart in the alphabet are compared too, the rows that share a word or initials or sound alike, such as “Ouédraogo, Moussa” and “Moussa Ouédraogo”. Each row goes with its spellings, the titles of up to three documents naming it, and the pairs you kept apart.`,
 			prompt: 'See or edit the prompt',
 			sends: (provider: string) =>
 				`Sent to ${provider} with your key, as an analysis job of its own: its cost and answers are in Jobs. Nothing is merged until you accept it.`,
@@ -486,7 +493,7 @@ export const en = {
 			'Counted over every result read below, whatever is shown. The reviewed pages are the only ones checked; flagged pages are not a sample of the whole.',
 		results: 'Results read',
 		resultsHint:
-			'Where you chose a preferred result for a document, only it is read. Elsewhere every result is read and listed here: set aside those you do not want to check. A document read by several models is still one document.',
+			'Where you chose a preferred result for a document, only it is read. Elsewhere every result is read and listed here: set aside those you do not want to check. The project keeps what you set aside for this list, and pages are drawn at random without them. A document read by several models is still one document.',
 		preferred: (n: number) =>
 			n === 1
 				? '1 document read through its preferred result'
@@ -553,7 +560,11 @@ export const en = {
 			drawnOn: (when: string) => `drawn ${when}`,
 			reviewed: (reviewed: number, drawn: number) => `${reviewed} of ${drawn} reviewed`,
 			none: 'No page here is read and free of flags, so there is nothing to draw.',
-			badge: 'Drawn at random'
+			badge: 'Drawn at random',
+			seedField: 'Seed',
+			seedFieldHint:
+				'Leave it empty for a new draw, or type the seed of a sample, read in a manifest or an article, to draw the same pages again.',
+			seedInvalid: 'A seed is a number of six digits at most.'
 		},
 		keep: {
 			action: 'Keep aside',
@@ -2112,6 +2123,8 @@ export const en = {
 		/** What the file picker calls the files Kalamu reads. */
 		sources: 'Sources',
 		unknown: 'Not known',
+		/** Said for a value left empty, such as the cost of a job nothing was paid for. */
+		none: 'None',
 		preview: 'preview',
 		retiring: 'retiring',
 		/** A model a newer one replaces, kept for set-ups that name it. */
@@ -2142,6 +2155,7 @@ export const en = {
 		'project.elsewhere': 'This belongs to another project, or no longer exists.',
 		'project.no_name': 'Give it a name.',
 		'project.no_tag': 'Type the tag to add.',
+		'project.seed': 'A seed is a number of six digits at most.',
 		'project.export': 'The export could not be written.',
 		'dictionary.no_entry':
 			'This entry is no longer in the dictionary. It may have been merged or split.',

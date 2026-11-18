@@ -95,7 +95,7 @@ pub use result::{
     Charge, CutReason, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment,
     StoredResult, TextLine, TextRegion, TextWord, Usage, plain_words,
 };
-pub use sample::{MAX_SAMPLE, SampleCounts, SampleSpec};
+pub use sample::{MAX_SAMPLE, MAX_SEED, SampleCounts, SampleSpec};
 pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};
 pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
@@ -154,6 +154,7 @@ mod interface_lists {
                 .filter(|t| t.yields_text())
                 .collect::<Vec<_>>(),
             "queue_reasons": crate::Signal::KINDS,
+            "sample_limits": { "size": crate::MAX_SAMPLE, "seed": crate::MAX_SEED },
             "extensions": extensions,
             "task_sources": task_sources,
             "layout_formats": layout_formats,

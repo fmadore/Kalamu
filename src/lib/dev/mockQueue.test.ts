@@ -21,8 +21,7 @@ beforeAll(() =>
 );
 
 describe('the review queue mock honours its selection', () => {
-	const queue = (selection: unknown) =>
-		queueCommand('review_queue', { selection, excluded: [] }) as QueueView;
+	const queue = (selection: unknown) => queueCommand('review_queue', { selection }) as QueueView;
 
 	it('lists and counts only the documents chosen', () => {
 		const whole = queue({ kind: 'project' });
@@ -80,5 +79,22 @@ describe('the review queue mock honours its selection', () => {
 		).toBe(false);
 		queueCommand('keep_aside', { item: key, revision: null, note: null });
 		expect(queue(project).queue.items.some((i) => i.kept)).toBe(false);
+	});
+
+	it('keeps the results set aside for their scope until brought back', () => {
+		const project = { kind: 'project' };
+		const result = { job_id: analysisJob.id, setup_id: analysisJob.setups[0].id };
+		const reads = (view: QueueView) =>
+			view.queue.items.filter((i) => i.setup_id === result.setup_id).length;
+		expect(reads(queue(project))).toBe(1);
+		queueCommand('set_result_aside', { selection: project, result, aside: true });
+		const aside = queue(project);
+		expect(reads(aside)).toBe(0);
+		expect(aside.choices.find((c) => c.key.setup_id === result.setup_id)?.included).toBe(false);
+		// Another scope reads it still.
+		const chosen = { kind: 'documents', ids: [DOCUMENT_ID] };
+		expect(reads(queue(chosen))).toBe(1);
+		queueCommand('set_result_aside', { selection: project, result, aside: false });
+		expect(reads(queue(project))).toBe(1);
 	});
 });

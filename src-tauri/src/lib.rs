@@ -197,6 +197,7 @@ pub fn run() {
             commands::projects::detach_job,
             commands::projects::review_queue,
             commands::projects::set_review_sample,
+            commands::projects::set_result_aside,
             commands::projects::keep_aside,
             commands::projects::export_review_manifest,
             commands::dictionary::dictionary_view,

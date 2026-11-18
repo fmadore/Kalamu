@@ -232,6 +232,9 @@ pub enum ProjectError {
     NoName,
     #[error("A tag needs a name")]
     NoTag,
+    /// A sample's seed longer than six digits.
+    #[error("A seed is six digits at most")]
+    Seed,
     #[error("Could not write the export: {0}")]
     Export(String),
     #[error(transparent)]
@@ -246,6 +249,7 @@ impl ProjectError {
             Self::Elsewhere(_) => "project.elsewhere",
             Self::NoName => "project.no_name",
             Self::NoTag => "project.no_tag",
+            Self::Seed => "project.seed",
             Self::Export(_) => "project.export",
             Self::Store(_) => "job.database",
         }
@@ -340,4 +344,20 @@ pub trait ProjectStore: Send + Sync {
         index: Option<u32>,
     ) -> Result<(), StoreError>;
     fn kept_aside(&self, project: ProjectId) -> Result<Vec<KeptAside>, StoreError>;
+
+    /// Sets a result (a job's set-up) aside from the review queue over one scope of a project,
+    /// `aside` saying when; with `None`, brings it back.
+    fn set_result_aside(
+        &self,
+        project: ProjectId,
+        scope: &str,
+        result: (JobId, SetupId),
+        aside: Option<Timestamp>,
+    ) -> Result<(), StoreError>;
+    /// The results set aside from the review queue over one scope, in the order set aside.
+    fn results_set_aside(
+        &self,
+        project: ProjectId,
+        scope: &str,
+    ) -> Result<Vec<(JobId, SetupId)>, StoreError>;
 }

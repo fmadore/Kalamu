@@ -67,6 +67,10 @@
     "stale",
     "not_reviewed"
   ],
+  "sample_limits": {
+    "seed": 999999,
+    "size": 1000
+  },
   "task_sources": {
     "analysis": [
       "text",

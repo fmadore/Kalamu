@@ -1,7 +1,7 @@
 //! What the researcher decided in a project's review queue, beside the projects' tables: the
 //! random sample asked for in each scope (its seed and size), and the items kept aside with
-//! their notes. Deleting the project deletes them; deleting a job deletes what was kept aside
-//! of its results.
+//! their notes, and the results set aside from each scope's queue. Deleting the project deletes
+//! them; deleting a job deletes what was kept or set aside of its results.
 
 use kalamu_core::{
     JobId, KeptAside, ProjectId, SampleSpec, SetupId, SourceId, StoreError, Timestamp,
@@ -31,6 +31,19 @@ CREATE TABLE review_kept (
     PRIMARY KEY (project_id, job_id, setup_id, source_id, idx)
 );
 CREATE INDEX review_kept_by_job ON review_kept(job_id);
+"#;
+
+/// The results set aside from a scope's queue, kept with the project rather than for a session.
+pub(crate) const SET_ASIDE: &str = r#"
+CREATE TABLE review_set_aside (
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    scope TEXT NOT NULL,
+    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    setup_id TEXT NOT NULL,
+    set_at INTEGER NOT NULL,
+    PRIMARY KEY (project_id, scope, job_id, setup_id)
+);
+CREATE INDEX review_set_aside_by_job ON review_set_aside(job_id);
 "#;
 
 /// The result as a whole, which has no piece index, in the `idx` column.
@@ -141,6 +154,67 @@ pub(crate) fn remove_kept(
         )
         .map_err(db)?;
     Ok(())
+}
+
+pub(crate) fn set_aside(
+    store: &SqliteStore,
+    project: ProjectId,
+    scope: &str,
+    (job, setup): (JobId, SetupId),
+    aside: Option<Timestamp>,
+) -> Result<(), StoreError> {
+    let conn = store.conn();
+    match aside {
+        // Set aside again, it keeps the moment it was first set aside.
+        Some(at) => conn.execute(
+            "INSERT INTO review_set_aside (project_id, scope, job_id, setup_id, set_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT (project_id, scope, job_id, setup_id) DO NOTHING",
+            params![
+                project.to_string(),
+                scope,
+                job.to_string(),
+                setup.to_string(),
+                at.0
+            ],
+        ),
+        None => conn.execute(
+            "DELETE FROM review_set_aside
+             WHERE project_id = ?1 AND scope = ?2 AND job_id = ?3 AND setup_id = ?4",
+            params![
+                project.to_string(),
+                scope,
+                job.to_string(),
+                setup.to_string()
+            ],
+        ),
+    }
+    .map_err(db)?;
+    Ok(())
+}
+
+pub(crate) fn set_aside_of(
+    store: &SqliteStore,
+    project: ProjectId,
+    scope: &str,
+) -> Result<Vec<(JobId, SetupId)>, StoreError> {
+    let conn = store.conn();
+    let mut stmt = conn
+        .prepare(
+            "SELECT job_id, setup_id FROM review_set_aside WHERE project_id = ?1 AND scope = ?2
+             ORDER BY set_at, rowid",
+        )
+        .map_err(db)?;
+    let rows = stmt
+        .query_map(params![project.to_string(), scope], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })
+        .map_err(db)?;
+    rows.map(|r| {
+        let (job, setup) = r.map_err(db)?;
+        Ok((parsed(&job)?, parsed(&setup)?))
+    })
+    .collect()
 }
 
 pub(crate) fn kept(store: &SqliteStore, project: ProjectId) -> Result<Vec<KeptAside>, StoreError> {

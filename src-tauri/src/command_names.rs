@@ -141,6 +141,7 @@ pub const COMMANDS: &[&str] = &[
     "detach_job",
     "review_queue",
     "set_review_sample",
+    "set_result_aside",
     "keep_aside",
     "export_review_manifest",
     "dictionary_view",

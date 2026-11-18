@@ -4,7 +4,7 @@ import type { Task } from "./Task";
 
 /**
  * A set-up of a job that reads documents with no preferred result for its task: the queue
- * reads it unless the researcher sets it aside.
+ * reads it unless the researcher sets it aside (`included` false).
  */
 export type ResultChoice = { key: ResultKey, job_name: string, task: Task, setup_label: string, model: string, 
 /**
