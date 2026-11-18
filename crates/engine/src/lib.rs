@@ -60,7 +60,7 @@ pub use kalamu_core::SetupRequest;
 pub use kalamu_core::{AgreementMeasure, FieldAgreement, JobAgreement, PairAgreement};
 pub use kalamu_core::{FileProgress, JobProgress};
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
-pub use review::PieceView;
+pub use review::{ListedAdded, PieceView};
 pub use rules::{ModelRef, PageReading, TaskRules, task_rules};
 pub use setup::{ImageDocument, NewJob};
 pub use snapshot::{DerivedState, Freshness};

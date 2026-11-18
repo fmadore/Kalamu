@@ -105,6 +105,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         lines_changed: vec![],
         preprocessing: vec![],
         renamed_speakers: vec![],
+        listed_by_hand: vec![],
         usage: Usage::default(),
         cost_usd: Some(0.002),
         refused: None,
@@ -293,6 +294,26 @@ fn analysis() -> ExportDocument {
     );
     doc.setup.prompt.schema = Some(schema.clone());
     doc.provenance.prompt.schema = Some(schema);
+    doc
+}
+
+/// The same analysis, a place the model missed added by the researcher: in the answers as
+/// any other, and named in the provenance as written by hand.
+fn analysis_with_a_place_added() -> ExportDocument {
+    let mut doc = analysis();
+    let part = &mut doc.parts[0];
+    let (fields, _) =
+        kalamu_core::list_items::add_items(&part.fields, "places", &["Tombouctou".into()]);
+    if let Some(schema) = &doc.setup.prompt.schema {
+        part.text = schema.render(&fields);
+    }
+    part.fields = fields;
+    doc.provenance.corrected = vec![1];
+    doc.provenance.listed_by_hand = vec![kalamu_core::provenance::ProvenanceListed {
+        part: 1,
+        field: "places".into(),
+        items: vec!["Tombouctou".into()],
+    }];
     doc
 }
 
@@ -586,6 +607,9 @@ fn text_formats_match_golden_files() {
     check("analysis.txt", &run(ExportFormat::Txt, &analysis()));
     check("analysis.json", &run(ExportFormat::Json, &analysis()));
     check("analysis.csv", &run(ExportFormat::Csv, &analysis()));
+    let added = analysis_with_a_place_added();
+    check("analysis-added.json", &run(ExportFormat::Json, &added));
+    check("analysis-added.csv", &run(ExportFormat::Csv, &added));
     check("contents.txt", &run(ExportFormat::Txt, &contents()));
     check("contents.md", &run(ExportFormat::Markdown, &contents()));
     check("contents.json", &run(ExportFormat::Json, &contents()));

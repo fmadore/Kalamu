@@ -152,6 +152,7 @@ pub fn run() {
             commands::review::save_corrections,
             commands::review::edit_rows,
             commands::review::rename_listed,
+            commands::review::add_listed,
             commands::review::save_speaker_names,
             commands::review::export_source,
             commands::review::compare_source,

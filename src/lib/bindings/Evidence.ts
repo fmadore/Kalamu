@@ -11,4 +11,9 @@ export type Evidence = { document_id: DocumentId, document: string, job_id: JobI
 /**
  * The forms it listed, as written.
  */
-forms: Array<string>, };
+forms: Array<string>, 
+/**
+ * Those of `forms` the researcher wrote in its corrected answers, added or renamed, which
+ * the model's own answer did not list.
+ */
+by_hand: Array<string>, };

@@ -104,6 +104,7 @@
     "allow-save-corrections",
     "allow-edit-rows",
     "allow-rename-listed",
+    "allow-add-listed",
     "allow-save-speaker-names",
     "allow-export-source",
     "allow-compare-source",

@@ -294,6 +294,55 @@ fn the_researchers_corrected_answers_replace_the_models() {
 }
 
 #[test]
+fn a_name_the_researcher_added_is_a_spelling_like_any_other_said_to_be_theirs() {
+    let f = fixture();
+    let letter = f.document("letter");
+    let job = f.analysis(
+        std::slice::from_ref(&letter),
+        &[&[(&["Moussa Traoré"], &[])]],
+    );
+    let model = kalamu_core::list_items::add_items(
+        &[
+            answer("people", FieldValue::List(vec!["Moussa Traoré".into()])),
+            answer("places", FieldValue::List(Vec::new())),
+            answer("summary", FieldValue::Text("A letter.".into())),
+        ],
+        "people",
+        &["Almamy  Samory".into()],
+    )
+    .0;
+    f.store
+        .put_correction(&Correction {
+            job_id: job.id,
+            setup_id: job.setups[0].id,
+            source_id: letter.1.id,
+            index: 0,
+            text: None,
+            fields: Some(model),
+            reviewed: false,
+            updated_at: Timestamp::now(),
+        })
+        .unwrap();
+    let view = f.view();
+    assert_eq!(row(&view, "people", "Almamy Samory").documents, 1);
+    assert_eq!(row(&view, "people", "Moussa Traoré").documents, 1);
+    let evidence = f
+        .dictionary
+        .evidence(
+            f.project,
+            "people",
+            &["Almamy Samory".into(), "Moussa Traoré".into()],
+        )
+        .unwrap();
+    assert_eq!(evidence.len(), 1);
+    assert_eq!(
+        evidence[0].forms,
+        vec!["Almamy Samory".to_string(), "Moussa Traoré".to_string()]
+    );
+    assert_eq!(evidence[0].by_hand, vec!["Almamy Samory".to_string()]);
+}
+
+#[test]
 fn variants_are_merged_relabelled_split_and_kept_apart() {
     let f = fixture();
     let docs = [f.document("a"), f.document("b"), f.document("c")];

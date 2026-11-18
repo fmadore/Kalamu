@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use base64::Engine as _;
 use kalamu_core::{Correction, JobId, PageRegions, RowEdit, SetupId, SourceId, SpeakerNames};
-use kalamu_engine::{ComparisonReport, DiffSpan, JobAgreement, JobScores, PieceAudio, PieceView};
+use kalamu_engine::{
+    ComparisonReport, DiffSpan, JobAgreement, JobScores, ListedAdded, PieceAudio, PieceView,
+};
 use kalamu_media::OpenSource;
 use tauri::{AppHandle, Manager, State};
 
@@ -236,6 +238,22 @@ pub async fn rename_listed(
         Ok(engine.rename_listed(job_id, source_id, index, &key, &from, to.as_deref())?)
     })
     .await
+}
+
+/// Adds names or choices a model missed to list field `key` (one per line or between
+/// semicolons), in the corrected answers of every set-up that read the piece, all or none; gives
+/// back those set-ups' corrections as they stood, to put back, and what became of each item.
+#[tauri::command]
+pub async fn add_listed(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+    index: u32,
+    key: String,
+    items: Vec<String>,
+) -> CmdResult<ListedAdded> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.add_listed(job_id, source_id, index, &key, &items)?)).await
 }
 
 /// Names the speakers of one set-up's transcription; the files are written again as after a

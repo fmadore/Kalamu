@@ -78,6 +78,11 @@ pub struct Provenance {
     /// be shared as a methods note without the names of the people recorded.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub renamed_speakers: Vec<String>,
+    /// The items of an analysis's list answers that the researcher wrote by hand, added or
+    /// renamed, which the model's own answer did not hold: part by part and field by field.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<ProvenanceListed>>")]
+    pub listed_by_hand: Vec<ProvenanceListed>,
     /// What the results kept cost; for a table of contents, both steps (`merge` gives the
     /// second's share).
     pub usage: Usage,
@@ -93,6 +98,17 @@ pub struct Provenance {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub workflow: Option<ProvenanceWorkflow>,
+}
+
+/// Items one list answer holds that the researcher wrote, not the model.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceListed {
+    /// The page or segment, numbered as in the export.
+    pub part: u32,
+    /// The field's key.
+    pub field: String,
+    pub items: Vec<String>,
 }
 
 /// A project document a source is, as provenance records it.

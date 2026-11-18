@@ -1,0 +1,147 @@
+{
+  "parts": [
+    {
+      "corrected": true,
+      "fields": {
+        "places": [
+          "Bamako",
+          "Ségou",
+          "Tombouctou"
+        ],
+        "summary": "Réunion de deux cents fidèles à la mosquée de Bamako.",
+        "tone": "Neutral"
+      },
+      "label": "",
+      "piece": {
+        "kind": "whole"
+      },
+      "reasons": {
+        "tone": "A factual report of the meeting."
+      },
+      "reviewed": true,
+      "segments": [],
+      "text": "Summary\nRéunion de deux cents fidèles à la mosquée de Bamako.\n\nPlaces: Bamako; Ségou; Tombouctou\n\nTone: Neutral\nReason: A factual report of the meeting."
+    }
+  ],
+  "provenance": {
+    "corrected": [
+      1
+    ],
+    "cost_usd": 0.002,
+    "created_at": 0,
+    "engine": "cloud",
+    "generator": {
+      "name": "Kalamu",
+      "version": "0.1.0"
+    },
+    "languages": {
+      "mode": "auto"
+    },
+    "listed_by_hand": [
+      {
+        "field": "places",
+        "items": [
+          "Tombouctou"
+        ],
+        "part": 1
+      }
+    ],
+    "model": "gemini-3.8-flash",
+    "options": {
+      "diarize": false,
+      "speakers": null,
+      "temperature": null,
+      "timestamps": false
+    },
+    "pieces": 1,
+    "prompt": {
+      "preset_id": "text_extraction.printed_diplomatic",
+      "preset_name": "Printed document, diplomatic",
+      "schema": {
+        "fields": [
+          {
+            "instructions": "",
+            "key": "summary",
+            "kind": {
+              "type": "text"
+            },
+            "label": "Summary",
+            "reason": false
+          },
+          {
+            "instructions": "",
+            "key": "places",
+            "kind": {
+              "max": null,
+              "type": "list"
+            },
+            "label": "Places",
+            "reason": false
+          },
+          {
+            "instructions": "",
+            "key": "tone",
+            "kind": {
+              "type": "choice",
+              "values": [
+                "Positive",
+                "Neutral",
+                "Negative"
+              ]
+            },
+            "label": "Tone",
+            "reason": true
+          }
+        ]
+      },
+      "sha256": "abababababababababababababababababababababababababababababababab",
+      "text": "Transcribe.",
+      "user_prompt": "Transcribe this page."
+    },
+    "provider": "gemini",
+    "request": [
+      {
+        "name": "generationConfig.thinkingConfig.thinkingLevel",
+        "value": "low"
+      },
+      {
+        "name": "generationConfig.maxOutputTokens",
+        "value": "65535"
+      }
+    ],
+    "reviewed": [
+      1,
+      2
+    ],
+    "schema_version": 1,
+    "source": {
+      "file_name": "bulletin.txt",
+      "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+      "size_bytes": 1024
+    },
+    "task": "analysis",
+    "usage": {
+      "audio_seconds": 0.0,
+      "batch": false,
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "pages": 0
+    }
+  },
+  "schema": "kalamu-result",
+  "schema_version": 1,
+  "setup": {
+    "label": "gemini-flash",
+    "model": "gemini-3.8-flash",
+    "prompt": "Printed document, diplomatic",
+    "provider": "gemini"
+  },
+  "source": {
+    "file_name": "bulletin.txt",
+    "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+    "size_bytes": 1024
+  },
+  "task": "analysis"
+}

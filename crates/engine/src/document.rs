@@ -62,6 +62,7 @@ impl Engine {
         let (mut corrected, mut reviewed, mut truncated) = (Vec::new(), Vec::new(), Vec::new());
         let (mut failed, mut cut_by_filter) = (Vec::new(), Vec::new());
         let mut lines_changed = Vec::new();
+        let mut listed_by_hand = Vec::new();
         for state in &states {
             // A piece that failed after its retries is marked in its place, so the rest of the
             // document still reaches the researcher (a table of contents has only its entries).
@@ -149,6 +150,18 @@ impl Engine {
             }
             if is_reviewed {
                 reviewed.push(number);
+            }
+            // The items of the list answers the researcher wrote, not the model.
+            if let Some(answers) = &corrected_fields {
+                listed_by_hand.extend(
+                    kalamu_core::list_items::by_hand(&result.output.fields, answers)
+                        .into_iter()
+                        .map(|(field, items)| kalamu_core::provenance::ProvenanceListed {
+                            part: number,
+                            field,
+                            items,
+                        }),
+                );
             }
             // A correction replaces the text; the model's timings no longer match it. A
             // translated transcript's lines keep theirs while the correction keeps one
@@ -280,6 +293,7 @@ impl Engine {
             lines_changed,
             preprocessing,
             renamed_speakers: renamed_labels(speaker_names),
+            listed_by_hand,
             usage,
             cost_usd: cost,
             refused: self.refused(job, setup_id, source_id)?,
