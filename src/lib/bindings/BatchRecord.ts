@@ -22,7 +22,14 @@ remote_id: string | null, phase: BatchPhase, items: Array<BatchItem>, submitted_
 /**
  * What the batch left in the provider's storage, to delete: set when the batch is collected
  * or given up on, and written with that change, so a restart in between finishes the
- * deleting. `None` while the batch waits, for one never accepted, and for batches recorded
- * before Kalamu deleted anything.
+ * deleting. `None` while the batch waits, for one never accepted that uploaded nothing
+ * ([`BatchRecord::uploaded`]), and for batches recorded before Kalamu deleted anything.
  */
-cleanup: BatchCleanup | null, };
+cleanup: BatchCleanup | null, 
+/**
+ * Files uploaded to the provider for this batch before it was made from them (a provider
+ * that takes a large batch's requests as a file), by the provider's ids: recorded before
+ * the batch is made, so a batch never made, refused or stopped in between still has them
+ * deleted, and deleted with what the ended batch names otherwise.
+ */
+uploaded: Array<string>, };

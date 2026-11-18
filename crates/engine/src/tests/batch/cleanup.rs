@@ -294,3 +294,156 @@ async fn a_batch_the_provider_keeps_is_deleted_once_and_again_after_a_restart_if
     let pieces = e.f.store.pieces(job.id).unwrap_or_default();
     assert_eq!(count(&pieces, PieceStatus::Done), 2);
 }
+
+/// An economy job whose batch goes as a file uploaded first.
+fn uploaded_batch() -> Economy {
+    let e = one_batch();
+    e.batchy.uploads.store(true, Ordering::SeqCst);
+    e
+}
+
+fn uploads(e: &Economy) -> Vec<String> {
+    e.batchy
+        .uploaded
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .clone()
+}
+
+/// A batch made from an uploaded file records the file before the batch is made, and once its
+/// answers are stored deletes it with the answers' file the batch names: each once, though the
+/// batch names the uploaded file too.
+#[tokio::test]
+async fn a_batch_made_from_an_uploaded_file_deletes_both_files_once() {
+    let e = uploaded_batch();
+    let job = e.job(2, Pace::Economy);
+    assert_eq!(e.f.run(job.id).await, JobStatus::Completed);
+    assert_eq!(uploads(&e), vec!["upload-0"]);
+    let batches = e.f.store.batches(job.id).unwrap_or_default();
+    assert_eq!(batches[0].uploaded, vec!["upload-0".to_string()]);
+    assert_eq!(e.batchy.deleted(), vec!["remote-0-out", "upload-0"]);
+    assert_eq!(e.batchy.deletes.load(Ordering::SeqCst), 2);
+    assert_eq!(
+        *e.batchy
+            .submitted_at_delete
+            .lock()
+            .unwrap_or_else(|p| p.into_inner()),
+        vec![0, 0],
+        "every answer was stored before a file was deleted"
+    );
+    assert_eq!(cleanup_of(&e, job.id), vec![done()]);
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Done), 2);
+}
+
+/// A file uploaded for a batch the provider then refuses is deleted at once: no batch will ever
+/// name it.
+#[tokio::test]
+async fn a_file_uploaded_for_a_batch_refused_is_deleted_at_once() {
+    let e = uploaded_batch();
+    *e.batchy
+        .refuse_uploaded
+        .lock()
+        .unwrap_or_else(|p| p.into_inner()) = Some(ProviderError::InvalidRequest(
+        "the file is not JSON Lines".into(),
+    ));
+    let job = e.job(2, Pace::Economy);
+    assert_eq!(e.f.run(job.id).await, JobStatus::CompletedWithErrors);
+    assert_eq!(e.batchy.submitted(), 0);
+    assert_eq!(e.batchy.deleted(), vec!["upload-0"]);
+    assert_eq!(
+        e.batchy.listed.load(Ordering::SeqCst),
+        0,
+        "a batch never made is not asked about"
+    );
+    assert_eq!(cleanup_of(&e, job.id), vec![done()]);
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Failed), 2);
+}
+
+/// The app stopped after the file was uploaded but before the batch was made from it: the
+/// batch is never made, so its pages are sent again on resuming, in a batch of their own, and
+/// the file uploaded first, recorded before the stop, is deleted.
+#[tokio::test]
+async fn a_stop_between_upload_and_batch_deletes_the_file_and_sends_the_pages_again() {
+    let e = uploaded_batch();
+    e.batchy.working_polls.store(usize::MAX, Ordering::SeqCst);
+    let job = e.job(2, Pace::Economy);
+    let events = e.start_until_waiting(job.id, 1).await;
+    e.f.engine.pause(job.id);
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Paused);
+    e.f.store
+        .set_job_status(job.id, JobStatus::Running)
+        .unwrap_or_else(|e| panic!("{e}"));
+    // As a stop between the two leaves it: the file recorded, the batch neither made nor known.
+    let mut batch = e.f.store.batches(job.id).unwrap_or_default().remove(0);
+    batch.phase = BatchPhase::Sending;
+    batch.remote_id = None;
+    e.f.store
+        .put_batch(&batch)
+        .unwrap_or_else(|e| panic!("{e}"));
+    e.batchy
+        .sent
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .clear();
+    e.batchy
+        .made_from
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .clear();
+
+    e.batchy.working_polls.store(0, Ordering::SeqCst);
+    let relaunched = engine(e.f.store.clone(), e.batchy.clone());
+    relaunched.recover().unwrap_or_else(|e| panic!("{e}"));
+    let events = relaunched.subscribe();
+    relaunched.start(job.id).unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Completed);
+    assert_eq!(
+        e.batchy.submitted(),
+        1,
+        "one batch made, from the second file"
+    );
+    assert_eq!(uploads(&e), vec!["upload-0", "upload-1"]);
+    assert_eq!(
+        e.batchy.deleted(),
+        vec!["remote-0-out", "upload-0", "upload-1"]
+    );
+    let batches = e.f.store.batches(job.id).unwrap_or_default();
+    assert_eq!(batches.len(), 2);
+    assert!(batches.iter().all(|b| b.cleanup == done()), "{batches:?}");
+    let pieces = e.f.store.pieces(job.id).unwrap_or_default();
+    assert_eq!(count(&pieces, PieceStatus::Done), 2);
+}
+
+/// The app stopped once the batch was made from the file: the next launch collects it without
+/// sending or uploading anything again, then deletes both files.
+#[tokio::test]
+async fn a_stop_after_a_batch_was_made_from_a_file_collects_it_and_deletes_both_files() {
+    let e = uploaded_batch();
+    e.batchy.working_polls.store(usize::MAX, Ordering::SeqCst);
+    let job = e.job(2, Pace::Economy);
+    let events = e.start_until_waiting(job.id, 1).await;
+    e.f.engine.pause(job.id);
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Paused);
+    e.f.store
+        .set_job_status(job.id, JobStatus::Running)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert!(
+        e.batchy.deleted().is_empty(),
+        "nothing deleted while waiting"
+    );
+
+    e.batchy.working_polls.store(0, Ordering::SeqCst);
+    let relaunched = engine(e.f.store.clone(), e.batchy.clone());
+    relaunched.recover().unwrap_or_else(|e| panic!("{e}"));
+    let events = relaunched.subscribe();
+    relaunched
+        .collect_waiting(job.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(e.finish(job.id, events).await, JobStatus::Completed);
+    assert_eq!(e.batchy.submitted(), 1);
+    assert_eq!(uploads(&e), vec!["upload-0"]);
+    assert_eq!(e.batchy.deleted(), vec!["remote-0-out", "upload-0"]);
+    assert_eq!(cleanup_of(&e, job.id), vec![done()]);
+}

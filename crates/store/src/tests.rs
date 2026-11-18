@@ -589,6 +589,7 @@ fn batches_are_kept_with_their_job_and_survive_startup() -> Result<(), StoreErro
         submitted_at: Timestamp::now(),
         updated_at: Timestamp::now(),
         cleanup: None,
+        uploaded: Vec::new(),
     };
     store.put_batch(&batch)?;
     batch.remote_id = Some("batches/123".into());
@@ -621,6 +622,7 @@ fn ended_batch(job: &Job, id: &str, cleanup: Option<BatchCleanup>) -> BatchRecor
         submitted_at: Timestamp::now(),
         updated_at: Timestamp::now(),
         cleanup,
+        uploaded: Vec::new(),
     }
 }
 
