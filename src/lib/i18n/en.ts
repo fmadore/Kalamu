@@ -533,6 +533,44 @@ export const en = {
 		answeredHint: 'When the answer was stored. A new answer is reviewed afresh.',
 		open: (document: string, place: string) => `Open ${document}, ${place}, in the review`,
 		more: (n: number) => `Show ${n} more`,
+		export: 'Export the list',
+		exported: 'The list was saved as JSON, with a CSV beside it.',
+		fileName: (project: string) => `${project} review list`,
+		sample: {
+			title: 'Drawn at random',
+			hint: 'Pages drawn at random from those nothing flags, to see how the rest of these documents reads. Flagged pages were picked for a problem: what you find among them says nothing of the whole.',
+			size: 'Pages',
+			draw: 'Draw at random',
+			drawAgain: 'Draw again',
+			drawAgainHint:
+				'A new seed, and so other pages. The pages drawn now will no longer be marked.',
+			remove: 'Remove the sample',
+			summary: (drawn: number, candidates: number) =>
+				`${drawn} of the ${candidates === 1 ? '1 page' : `${candidates} pages`} nothing flags`,
+			seed: (seed: number) => `Seed ${seed}`,
+			seedHint:
+				'The same seed draws the same pages from the same documents: note it to cite this sample.',
+			drawnOn: (when: string) => `drawn ${when}`,
+			reviewed: (reviewed: number, drawn: number) => `${reviewed} of ${drawn} reviewed`,
+			none: 'No page here is read and free of flags, so there is nothing to draw.',
+			badge: 'Drawn at random'
+		},
+		keep: {
+			action: 'Keep aside',
+			label: (document: string, place: string) => `Keep ${document}, ${place}, aside`,
+			note: 'Note',
+			notePlaceholder: 'Why, and what to do later',
+			save: 'Keep aside',
+			cancel: 'Cancel',
+			putBack: 'Put back',
+			badge: 'Kept aside',
+			earlier: 'Kept aside with an earlier answer',
+			earlierHint: (note: string) =>
+				`The answer has changed since you kept it aside${note ? ` (“${note}”)` : ''}: this one is listed with the others.`,
+			section: 'Kept aside',
+			sectionHint:
+				'Items you set apart for later, with your note. They stay listed and still need you: keeping an item aside resolves nothing.'
+		},
 		banner: {
 			position: (at: number, total: number) => `${at} of ${total} to check`,
 			previous: 'Previous to check',
@@ -1040,7 +1078,7 @@ export const en = {
 			duplicate: (n: number) => `Another file is also numbered ${n}`,
 			naturalOrder: 'Back to the order of the names',
 			formats:
-				'A searchable PDF is written only from a PDF. ALTO, when the model gives positions, places each page in its own image.',
+				'A searchable PDF is written only from a PDF. ALTO and PAGE XML, when the model gives positions, place each page in its own image.',
 			refused: 'An analysis reads each image as a document of its own.'
 		},
 		lines: {
@@ -1196,8 +1234,9 @@ export const en = {
 		extractPlace: 'And notes where its text sits on the page',
 		extractPlaces: (models: string) => `${models} also notes where its text sits`,
 		/** Under the reading step, for models that do not (language models). */
-		extractTextOnly: 'Text only, not where it sits on the page: no searchable PDF or ALTO',
-		extractSearchable: 'Also ALTO XML and a searchable PDF, each word in its place',
+		extractTextOnly:
+			'Text only, not where it sits on the page: no searchable PDF, ALTO or PAGE XML',
+		extractSearchable: 'Also ALTO XML, PAGE XML and a searchable PDF, each word in its place',
 		extractPdfOnly: 'The searchable PDF for PDF files only',
 		analysisWhole: 'Read whole, as one piece, however many pages',
 		analysisFill: (model: string) => `${model} fills in your fields`,
@@ -1885,7 +1924,7 @@ export const en = {
 			},
 			tesseract: {
 				word: 'Offline text extraction (Tesseract)',
-				text: 'Tesseract is an open OCR engine that Kalamu runs on your own computer. Download each language you read once in Settings; after that nothing is sent anywhere and nothing is billed. It reads clean print well and notes where every word sits on the page, which gives ALTO XML and searchable PDFs. Handwriting, faded or damaged pages and complex layouts read better with an AI model. It does not detect the language, so you choose it, and its speed depends on your computer’s processor.'
+				text: 'Tesseract is an open OCR engine that Kalamu runs on your own computer. Download each language you read once in Settings; after that nothing is sent anywhere and nothing is billed. It reads clean print well and notes where every word sits on the page, which gives ALTO and PAGE XML files and searchable PDFs. Handwriting, faded or damaged pages and complex layouts read better with an AI model. It does not detect the language, so you choose it, and its speed depends on your computer’s processor.'
 			},
 			apiKey: {
 				word: 'API key',
@@ -1960,6 +1999,8 @@ export const en = {
 			searchable_pdf:
 				'The original PDF with an invisible text layer, so it can be searched and its text copied. Only from models that report where text sits on the page: currently Tesseract and Mistral OCR.',
 			alto: 'Each page’s text with where every block, line and word sits, in the ALTO standard that digital libraries, eScriptorium and Transkribus read. Only from models that report where text sits on the page: Tesseract places each word; Mistral OCR places paragraphs, whose lines and words are then estimated. Corrections keep their words’ places.',
+			page_xml:
+				'Each page’s text in a file of its own (name.p0001.page.xml), with where every region, line and word sits, in the PAGE format that Transkribus, eScriptorium and Aletheia read. Only from models that report where text sits on the page: Tesseract places each word; Mistral OCR places blocks, whose lines are then estimated and marked as such. Corrections keep their words’ places.',
 			provenance: 'Always written beside the results: how they were made (see Provenance).'
 		}
 	},
@@ -1999,7 +2040,8 @@ export const en = {
 		vtt: 'Subtitles (.vtt)',
 		csv: 'Spreadsheet (.csv)',
 		searchable_pdf: 'Searchable PDF',
-		alto: 'ALTO XML (word positions)'
+		alto: 'ALTO XML (word positions)',
+		page_xml: 'PAGE XML (one file per page)'
 	},
 	close: {
 		title: 'Jobs are still running',

@@ -2,14 +2,19 @@
 // bulletin read by two models that disagree, one page cut off, the interview with a failed
 // segment, and the analysis read before its text was corrected. Only the documents the queue
 // covers are listed and counted: the project's, a collection's or those chosen, as
-// `Projects::queue_plan` chooses them. Development builds only.
+// `Projects::queue_plan` chooses them. A sample drawn at random takes the interview's segments
+// nothing flags, in order (Rust ranks them by the seed); items kept aside are matched as Rust
+// matches them, by their answer. Development builds only.
 
+import type { KeptAside } from '../bindings/KeptAside.js';
 import type { QueueCounts } from '../bindings/QueueCounts.js';
 import type { QueueItem } from '../bindings/QueueItem.js';
+import type { QueueItemKey } from '../bindings/QueueItemKey.js';
 import type { QueueSelection } from '../bindings/QueueSelection.js';
 import type { QueueView } from '../bindings/QueueView.js';
 import type { ReasonCounts } from '../bindings/ReasonCounts.js';
 import type { ResultKey } from '../bindings/ResultKey.js';
+import type { SampleSpec } from '../bindings/SampleSpec.js';
 import { analysisJob, audioJob, job } from './mockJobs.js';
 import { DOCUMENT_ID, documentsIn } from './mockProjects.js';
 
@@ -36,8 +41,52 @@ function item(over: Partial<QueueItem> & Pick<QueueItem, 'signals'>): QueueItem 
 		corrected: false,
 		processing: false,
 		open: true,
+		decided_at: null,
+		sample: false,
+		kept: null,
 		...over
 	};
+}
+
+/** The sample asked for in each scope, by `QueueSelection::key`'s rule, and the items kept
+ * aside, as the project keeps them. */
+const samples = new Map<string, SampleSpec>();
+let kept: KeptAside[] = [];
+
+function scopeKey(selection: QueueSelection): string {
+	if (selection.kind === 'collection') return `collection:${selection.id}`;
+	if (selection.kind === 'documents') return `documents:${[...selection.ids].sort().join(',')}`;
+	return 'project';
+}
+
+const sameItem = (k: QueueItemKey, i: QueueItem) =>
+	k.job_id === i.job_id &&
+	k.setup_id === i.setup_id &&
+	k.source_id === i.source_id &&
+	k.index === i.index;
+
+/** The interview's segments read and flagged by nothing: what a sample is drawn from. */
+function unflagged(): QueueItem[] {
+	return [0, 2].map((index) =>
+		item({
+			document_id: INTERVIEW,
+			document: 'Interview with the imam',
+			job_id: audioJob.id,
+			job_name: audioJob.name,
+			task: audioJob.task,
+			source_id: audioJob.sources[0].id,
+			setup_id: audioJob.setups[0].id,
+			setup_label: audioJob.setups[0].label,
+			piece: {
+				kind: 'segment',
+				index,
+				start_ms: index * 1_200_000,
+				end_ms: (index + 1) * 1_200_000
+			},
+			index,
+			signals: [{ kind: 'not_reviewed' }]
+		})
+	);
 }
 
 const page = (n: number) => ({ piece: { kind: 'page' as const, number: n }, index: n - 1 });
@@ -116,13 +165,44 @@ function items(excluded: ResultKey[]): QueueItem[] {
 	return out;
 }
 
-export function queueCommand(cmd: string, a: Record<string, unknown>): QueueView | undefined {
+export function queueCommand(
+	cmd: string,
+	a: Record<string, unknown>
+): QueueView | SampleSpec | null | undefined {
 	switch (cmd) {
 		case 'review_queue':
 			return queueView(
 				(a.selection as QueueSelection | undefined) ?? { kind: 'project' },
 				(a.excluded as ResultKey[] | undefined) ?? []
 			);
+		case 'set_review_sample': {
+			const key = scopeKey((a.selection as QueueSelection | undefined) ?? { kind: 'project' });
+			if (a.size == null) {
+				samples.delete(key);
+				return null;
+			}
+			const spec: SampleSpec = {
+				seed: (a.seed as number | null) ?? 1957 + samples.size,
+				size: Math.min(1000, Math.max(1, a.size as number)),
+				drawn_at: Date.now()
+			};
+			samples.set(key, spec);
+			return spec;
+		}
+		case 'keep_aside': {
+			const key = a.item as QueueItemKey;
+			kept = kept.filter((k) => !sameItem(k, key as unknown as QueueItem));
+			if (typeof a.note === 'string')
+				kept.push({
+					...key,
+					revision: (a.revision as string | null) ?? null,
+					note: a.note.trim(),
+					kept_at: Date.now()
+				});
+			return null;
+		}
+		case 'export_review_manifest':
+			return null;
 		default:
 			return undefined;
 	}
@@ -181,6 +261,15 @@ function queueView(selection: QueueSelection, excluded: ResultKey[]): QueueView 
 				: {}
 	).map((d) => d.id);
 	const list = items(excluded).filter((i) => documents.includes(i.document_id));
+	const spec = samples.get(scopeKey(selection)) ?? null;
+	const candidates = documents.includes(INTERVIEW) ? unflagged() : [];
+	const picked = spec ? candidates.slice(0, spec.size) : [];
+	const all = [...list, ...picked.map((i) => ({ ...i, sample: true }))].map((i) => {
+		const k = kept.find((x) => sameItem(x, i));
+		return k
+			? { ...i, kept: { note: k.note, kept_at: k.kept_at, current: k.revision === i.revision } }
+			: i;
+	});
 	const analyses = analysisJob.setups.filter(
 		(s) => !excluded.some((k) => k.setup_id === s.id)
 	).length;
@@ -203,7 +292,13 @@ function queueView(selection: QueueSelection, excluded: ResultKey[]): QueueView 
 				// As Rust counts them: every item's reasons.
 				reasons: reasonsOf(list)
 			},
-			items: list
+			items: all,
+			sample: spec && {
+				...spec,
+				candidates: candidates.length,
+				drawn: picked.length,
+				reviewed: 0
+			}
 		},
 		// The analysis's readings stand for the bulletin, which has no preferred one; its text is
 		// read through the preferred reading.

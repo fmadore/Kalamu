@@ -13,6 +13,7 @@ use kalamu_core::{
 
 use super::*;
 
+mod page_xml;
 mod records;
 
 fn source(name: &str, kind: InputKind) -> SourceFile {
@@ -135,6 +136,8 @@ fn letter() -> ExportDocument {
                 regions: vec![],
                 failed: None,
                 drawn_dpi: None,
+                read_at: None,
+                corrected_at: None,
             },
             ExportPart {
                 piece: kalamu_core::PieceRef::page(2),
@@ -146,6 +149,8 @@ fn letter() -> ExportDocument {
                 regions: vec![],
                 failed: None,
                 drawn_dpi: None,
+                read_at: None,
+                corrected_at: None,
             },
             // Refused every time: the letter is still written, the page marked in its place.
             ExportPart {
@@ -158,6 +163,8 @@ fn letter() -> ExportDocument {
                 regions: vec![],
                 failed: Some("Gemini's copyright filter stopped this page (RECITATION)".into()),
                 drawn_dpi: None,
+                read_at: None,
+                corrected_at: None,
             },
         ],
     )
@@ -195,6 +202,8 @@ fn interview() -> ExportDocument {
                 regions: vec![],
                 failed: None,
                 drawn_dpi: None,
+                read_at: None,
+                corrected_at: None,
             },
             ExportPart {
                 // A prompt-based model that wrote timestamps into its text.
@@ -211,6 +220,8 @@ fn interview() -> ExportDocument {
                 regions: vec![],
                 failed: None,
                 drawn_dpi: None,
+                read_at: None,
+                corrected_at: None,
             },
         ],
     )
@@ -276,6 +287,8 @@ fn analysis() -> ExportDocument {
             regions: vec![],
             failed: None,
             drawn_dpi: None,
+            read_at: None,
+            corrected_at: None,
         }],
     );
     doc.setup.prompt.schema = Some(schema.clone());
@@ -355,6 +368,8 @@ fn contents() -> ExportDocument {
             regions: vec![],
             failed: None,
             drawn_dpi: None,
+            read_at: None,
+            corrected_at: None,
         }],
     );
     doc.setup.merge = Some(kalamu_core::MergeStep {
@@ -384,6 +399,8 @@ fn corrected() -> ExportDocument {
         regions: vec![],
         failed: None,
         drawn_dpi: None,
+        read_at: None,
+        corrected_at: None,
     };
     document(
         Task::TextCorrection,
@@ -407,6 +424,8 @@ fn translated() -> ExportDocument {
         regions: vec![],
         failed: None,
         drawn_dpi: None,
+        read_at: None,
+        corrected_at: None,
     };
     document(
         Task::Translation,
@@ -438,6 +457,8 @@ fn translated_interview() -> ExportDocument {
         regions: vec![],
         failed: None,
         drawn_dpi: None,
+        read_at: None,
+        corrected_at: None,
     };
     let mut doc = document(
         Task::Translation,
@@ -663,7 +684,7 @@ fn every_format_has_one_exporter() {
     let mut unique = formats.clone();
     unique.dedup();
     assert_eq!(formats.len(), unique.len());
-    assert_eq!(formats.len(), 9);
+    assert_eq!(formats.len(), 10);
 }
 
 /// A one-page A4 PDF at `path`.
@@ -731,6 +752,8 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
             )],
             failed: None,
             drawn_dpi: None,
+            read_at: None,
+            corrected_at: None,
         }],
     );
     let bytes = exporter(ExportFormat::SearchablePdf)
@@ -804,6 +827,8 @@ fn alto_places_each_word_and_estimates_blocks_placed_whole() {
             regions: vec![placed.clone(), whole],
             failed: None,
             drawn_dpi: None,
+            read_at: None,
+            corrected_at: None,
         }],
     );
     check("letter.alto.xml", &run(ExportFormat::Alto, &doc));
@@ -850,6 +875,8 @@ fn alto_wraps_a_paragraph_placed_whole_into_the_lines_its_block_holds() {
             regions: vec![block.clone()],
             failed: None,
             drawn_dpi: None,
+            read_at: None,
+            corrected_at: None,
         }],
     );
     let xml = String::from_utf8(run(ExportFormat::Alto, &doc)).unwrap_or_default();
@@ -890,6 +917,8 @@ fn alto_measures_each_pdf_page_at_the_resolution_it_was_drawn_at() {
         }],
         failed: None,
         drawn_dpi: Some(drawn_dpi),
+        read_at: None,
+        corrected_at: None,
     };
     let doc = document(
         Task::TextExtraction,
@@ -943,6 +972,8 @@ fn alto_of_a_document_of_images_measures_each_page_in_its_file() {
         regions: vec![TextRegion::block(0.5, 0.1, 0.2, 0.02, "Mot")],
         failed: None,
         drawn_dpi: None,
+        read_at: None,
+        corrected_at: None,
     };
     let doc = document(Task::TextExtraction, source, vec![part(1), part(2)]);
     let xml = String::from_utf8(run(ExportFormat::Alto, &doc)).unwrap_or_default();

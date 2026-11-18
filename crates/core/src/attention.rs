@@ -13,7 +13,10 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{CutReason, DocumentId, JobId, PieceRef, SetupId, SourceId, Task, Timestamp};
+use crate::{
+    CutReason, DocumentId, JobId, PieceRef, SampleCounts, SampleSpec, SetupId, SourceId, Task,
+    Timestamp,
+};
 
 /// One result the queue reads: a set-up of a job over the source that is a document.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -36,6 +39,49 @@ pub struct ReviewTarget {
 pub struct ReviewScope {
     pub documents: u32,
     pub targets: Vec<ReviewTarget>,
+    /// A random sample of the pages nothing flags, asked for in this scope.
+    #[serde(default)]
+    pub sample: Option<SampleSpec>,
+    /// The items the researcher kept aside, with their notes.
+    #[serde(default)]
+    pub kept: Vec<KeptAside>,
+}
+
+/// An item the researcher kept aside for later, with a note: it stays listed, apart. Kept for
+/// one answer (`revision`): a new answer to the same piece is not kept aside with it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct KeptAside {
+    pub job_id: JobId,
+    pub setup_id: SetupId,
+    pub source_id: SourceId,
+    /// The piece, or `None` for the result as a whole.
+    pub index: Option<u32>,
+    /// The answer it was kept aside with, as the queue names it ([`QueueItem::revision`]).
+    pub revision: Option<String>,
+    pub note: String,
+    pub kept_at: Timestamp,
+}
+
+impl KeptAside {
+    /// Whether it was kept aside for this item, whatever answer the item now holds.
+    pub fn is_for(&self, item: &QueueItem) -> bool {
+        self.job_id == item.job_id
+            && self.setup_id == item.setup_id
+            && self.source_id == item.source_id
+            && self.index == item.index
+    }
+}
+
+/// What the researcher said when keeping an item aside.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct KeptNote {
+    pub note: String,
+    pub kept_at: Timestamp,
+    /// Kept aside with the answer the item holds now. When `false`, it was kept aside with an
+    /// earlier answer, and the new one is not: it is listed with the others again.
+    pub current: bool,
 }
 
 /// Why a piece, or a result as a whole, is in the queue.
@@ -109,7 +155,7 @@ pub struct QueueItem {
     /// new answer is a new revision, and its review starts afresh.
     pub revision: Option<String>,
     pub answered_at: Option<Timestamp>,
-    /// Why it is listed; never empty.
+    /// Why it is listed; empty only for a page drawn into the sample that nothing flags.
     pub signals: Vec<Signal>,
     /// Marked as reviewed by the researcher; corrected by them.
     pub reviewed: bool,
@@ -119,6 +165,13 @@ pub struct QueueItem {
     /// Still needs the researcher: a processing problem or a changed input, or an answer not
     /// reviewed. A reviewed item stays listed, as resolved, for as long as its reasons hold.
     pub open: bool,
+    /// When the researcher last saved a correction or a review of it.
+    pub decided_at: Option<Timestamp>,
+    /// Drawn at random into the sample of pages nothing flags: listed for that, not for a
+    /// problem.
+    pub sample: bool,
+    /// Kept aside by the researcher, with their note.
+    pub kept: Option<KeptNote>,
 }
 
 impl QueueItem {
@@ -182,8 +235,25 @@ impl ReasonCounts {
 #[ts(export)]
 pub struct ReviewQueue {
     pub counts: QueueCounts,
-    /// In the order of the scope's results, each result's pieces in their order.
+    /// In the order of the scope's results, each result's pieces in their order; then the pages
+    /// of the sample nothing else listed, in the order they were drawn.
     pub items: Vec<QueueItem>,
+    /// The sample asked for in this scope, as it stands.
+    pub sample: Option<SampleCounts>,
+}
+
+impl ReviewQueue {
+    /// Marks the items the researcher kept aside, with whether they were kept with the answer
+    /// they hold now.
+    pub fn mark_kept(&mut self, kept: &[KeptAside]) {
+        for item in &mut self.items {
+            item.kept = kept.iter().find(|k| k.is_for(item)).map(|k| KeptNote {
+                note: k.note.clone(),
+                kept_at: k.kept_at,
+                current: k.revision == item.revision,
+            });
+        }
+    }
 }
 
 #[cfg(test)]

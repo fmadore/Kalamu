@@ -517,3 +517,30 @@ test('a name pointed at in an analysis is brought into view in the text beside i
 		.toBe(true);
 	expect(await text.evaluate((pane) => pane.scrollTop)).toBeGreaterThan(0);
 });
+
+test('what to check draws a sample at random and keeps an item aside with a note', async ({
+	page
+}) => {
+	await open(page, 'queue');
+	const main = page.getByRole('main');
+	const sample = main.getByRole('region', { name: /^Drawn at random/ });
+	await sample.getByRole('spinbutton', { name: 'Pages' }).fill('2');
+	await sample.getByRole('button', { name: 'Draw at random' }).click();
+	// The seed is shown, to cite the sample, and the pages drawn are listed apart.
+	await expect(sample.getByText(/^Seed \d+/)).toBeVisible();
+	await expect(sample.getByText('0 of 2 reviewed')).toBeVisible();
+	await expect(sample.getByRole('button', { name: /^Open Interview with the imam/ })).toHaveCount(
+		2
+	);
+	await expect(sample.getByRole('button', { name: 'Draw again' })).toBeVisible();
+
+	await main.getByRole('button', { name: 'Keep Bulletin, May 1957, Page 1, aside' }).click();
+	await main.getByRole('textbox', { name: 'Note' }).fill('Ask the archivist about the stamp');
+	await main.getByRole('button', { name: 'Keep aside', exact: true }).click();
+	const kept = main.getByRole('heading', { level: 3, name: /^Kept aside/ });
+	await expect(kept).toBeVisible();
+	await expect(main.getByText('Ask the archivist about the stamp')).toBeVisible();
+
+	await main.getByRole('button', { name: 'Put back' }).click();
+	await expect(kept).toBeHidden();
+});

@@ -77,6 +77,8 @@ impl Engine {
                     regions: Vec::new(),
                     failed: Some(state.error.clone().unwrap_or_default()),
                     drawn_dpi: None,
+                    read_at: None,
+                    corrected_at: None,
                 });
                 continue;
             }
@@ -205,6 +207,10 @@ impl Engine {
                 regions,
                 failed: None,
                 drawn_dpi: kalamu_core::provenance::page_resolution(&result.request),
+                read_at: Some(result.created_at),
+                corrected_at: correction
+                    .filter(|_| corrected_text.is_some())
+                    .map(|c| c.updated_at),
             });
         }
 

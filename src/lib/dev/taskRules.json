@@ -12,7 +12,8 @@
       "json",
       "csv",
       "searchable_pdf",
-      "alto"
+      "alto",
+      "page_xml"
     ],
     "answers_in_language": false,
     "needs_language": false,

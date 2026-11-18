@@ -14,9 +14,11 @@ import type { DictionaryView } from './bindings/DictionaryView.js';
 import type { Pace } from './bindings/Pace.js';
 import type { ProposalPlan } from './bindings/ProposalPlan.js';
 import type { ProposalsView } from './bindings/ProposalsView.js';
+import type { QueueItemKey } from './bindings/QueueItemKey.js';
 import type { QueueSelection } from './bindings/QueueSelection.js';
 import type { QueueView } from './bindings/QueueView.js';
 import type { ResultKey } from './bindings/ResultKey.js';
+import type { SampleSpec } from './bindings/SampleSpec.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { DocumentDetail } from './bindings/DocumentDetail.js';
 import type { Entry } from './bindings/Entry.js';
@@ -375,6 +377,23 @@ export const api = {
 		invoke<void>('detach_job', { project, document, job, source }),
 	reviewQueue: (project: string, selection: QueueSelection, excluded: ResultKey[]) =>
 		invoke<QueueView>('review_queue', { project, selection, excluded }),
+	/** Draws a new random sample of `size` pages nothing flags (with `seed`, or a new one);
+	 * without a size, removes it. */
+	setReviewSample: (
+		project: string,
+		selection: QueueSelection,
+		size: number | null,
+		seed: number | null = null
+	) => invoke<SampleSpec | null>('set_review_sample', { project, selection, size, seed }),
+	/** Keeps an item aside with a note, for the answer it holds; without a note, puts it back. */
+	keepAside: (project: string, item: QueueItemKey, revision: string | null, note: string | null) =>
+		invoke<void>('keep_aside', { project, item, revision, note }),
+	exportReviewManifest: (
+		project: string,
+		selection: QueueSelection,
+		excluded: ResultKey[],
+		path: string
+	) => invoke<void>('export_review_manifest', { project, selection, excluded, path }),
 	setShellLabels: (labels: ShellLabels) => invoke<void>('set_shell_labels', { labels }),
 	hideWindow: () => invoke<void>('hide_window'),
 	quitApp: () => invoke<void>('quit_app')

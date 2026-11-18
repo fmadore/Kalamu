@@ -56,7 +56,8 @@
   },
   "layout_formats": [
     "searchable_pdf",
-    "alto"
+    "alto",
+    "page_xml"
   ],
   "queue_reasons": [
     "failed",

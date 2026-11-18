@@ -6,8 +6,8 @@
 use std::collections::HashSet;
 
 use kalamu_core::{
-    CollectionId, DocumentId, JobId, ProjectError, ProjectId, ReviewScope, ReviewTarget, SetupId,
-    Task, TiedResults,
+    CollectionId, DocumentId, JobId, KeptAside, ProjectError, ProjectId, ReviewScope, ReviewTarget,
+    SampleSpec, SetupId, SourceId, Task, TiedResults, Timestamp,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -22,6 +22,36 @@ pub enum QueueSelection {
     Project,
     Collection { id: CollectionId },
     Documents { ids: Vec<DocumentId> },
+}
+
+impl QueueSelection {
+    /// The key a scope's sample is kept under: `project`, `collection:<id>`, or for documents
+    /// chosen, `documents:` and the SHA-256 of their sorted ids, so choosing the same documents
+    /// again finds the same sample.
+    pub fn key(&self) -> String {
+        match self {
+            Self::Project => "project".into(),
+            Self::Collection { id } => format!("collection:{id}"),
+            Self::Documents { ids } => {
+                let mut ids: Vec<String> = ids.iter().map(ToString::to_string).collect();
+                ids.sort();
+                ids.dedup();
+                let digest = kalamu_core::fingerprint::sha256_hex(ids.join(",").as_bytes());
+                format!("documents:{digest}")
+            }
+        }
+    }
+}
+
+/// An item of the review queue, as the researcher keeps it aside or puts it back: a piece of a
+/// result, or with no index the result as a whole.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct QueueItemKey {
+    pub job_id: JobId,
+    pub setup_id: SetupId,
+    pub source_id: SourceId,
+    pub index: Option<u32>,
 }
 
 /// A result, named by its job and set-up.
@@ -168,9 +198,97 @@ impl Projects {
             scope: ReviewScope {
                 documents: documents.len() as u32,
                 targets,
+                sample: self.store.review_sample(project, &selection.key())?,
+                kept: self.store.kept_aside(project)?,
             },
             choices,
             preferred: through_preferred.len() as u32,
         })
+    }
+}
+
+impl Projects {
+    /// Draws a new random sample of the pages the queue over `selection` does not flag: `size`
+    /// pages, with `seed` or a new one. It is kept with the project until drawn again or
+    /// removed, so the same pages come back after a restart.
+    pub fn draw_sample(
+        &self,
+        project: ProjectId,
+        selection: &QueueSelection,
+        size: u32,
+        seed: Option<u32>,
+    ) -> Result<SampleSpec, ProjectError> {
+        self.check_selection(project, selection)?;
+        let sample = SampleSpec::new(size, seed, Timestamp::now());
+        self.store
+            .set_review_sample(project, &selection.key(), Some(&sample))?;
+        Ok(sample)
+    }
+
+    /// Removes the sample of the queue over `selection`.
+    pub fn clear_sample(
+        &self,
+        project: ProjectId,
+        selection: &QueueSelection,
+    ) -> Result<(), ProjectError> {
+        self.check_selection(project, selection)?;
+        Ok(self
+            .store
+            .set_review_sample(project, &selection.key(), None)?)
+    }
+
+    /// Keeps an item of the queue aside with a note, for the answer it holds (`revision`); with
+    /// `None`, puts it back among the others. The answers are not touched.
+    pub fn keep_aside(
+        &self,
+        project: ProjectId,
+        item: &QueueItemKey,
+        revision: Option<String>,
+        note: Option<&str>,
+    ) -> Result<(), ProjectError> {
+        self.store.project(project).map_err(missing)?;
+        match note {
+            Some(note) => self.store.put_kept_aside(
+                project,
+                &KeptAside {
+                    job_id: item.job_id,
+                    setup_id: item.setup_id,
+                    source_id: item.source_id,
+                    index: item.index,
+                    revision,
+                    note: note.trim().to_string(),
+                    kept_at: Timestamp::now(),
+                },
+            )?,
+            None => self.store.remove_kept_aside(
+                project,
+                item.job_id,
+                item.setup_id,
+                item.source_id,
+                item.index,
+            )?,
+        }
+        Ok(())
+    }
+
+    /// The project exists, and so do the collection or documents chosen.
+    fn check_selection(
+        &self,
+        project: ProjectId,
+        selection: &QueueSelection,
+    ) -> Result<(), ProjectError> {
+        self.store.project(project).map_err(missing)?;
+        match selection {
+            QueueSelection::Project => {}
+            QueueSelection::Collection { id } => {
+                self.collection(project, *id)?;
+            }
+            QueueSelection::Documents { ids } => {
+                for id in ids {
+                    self.document_in(project, *id)?;
+                }
+            }
+        }
+        Ok(())
     }
 }

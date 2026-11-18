@@ -84,17 +84,17 @@ fn write_split(
             continue;
         }
         let start = Instant::now();
-        let bytes = match exporter.export(&document) {
-            Ok(bytes) => bytes,
+        let rendered = match exporter.export_files(&document) {
+            Ok(files) => files,
             Err(ExportError::Unsupported(_)) => continue,
             Err(e) => panic!("{e}"),
         };
         steps.add(
             format!("render: {}", format.extension()),
             start,
-            bytes.len(),
+            rendered.iter().map(|f| f.bytes.len()).sum(),
         );
-        files.push((format.extension().to_string(), bytes));
+        files.extend(rendered.into_iter().map(|f| (f.suffix, f.bytes)));
     }
     let start = Instant::now();
     let provenance = serde_json::to_vec_pretty(&document.provenance).unwrap_or_default();

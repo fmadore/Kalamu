@@ -173,3 +173,291 @@ fn a_document_not_yet_read_is_counted_but_reads_nothing() {
     assert!(plan.scope.targets.is_empty());
     assert!(plan.choices.is_empty());
 }
+
+#[test]
+fn each_scope_keeps_its_own_sample_until_drawn_again_or_removed() {
+    let f = fixture();
+    let p = f.projects.create("Letters", "").unwrap();
+    let letters = f.projects.create_collection(p.id, "Letters").unwrap();
+    let docs = f
+        .projects
+        .add_documents(p.id, vec![f.file("a.pdf", "a"), f.file("b.pdf", "b")], None)
+        .unwrap();
+    let plan = |s: &QueueSelection| f.projects.queue_plan(p.id, s, &[]).unwrap().scope;
+
+    let whole = f
+        .projects
+        .draw_sample(p.id, &QueueSelection::Project, 20, Some(1957))
+        .unwrap();
+    assert_eq!((whole.seed, whole.size), (1957, 20));
+    assert_eq!(plan(&QueueSelection::Project).sample, Some(whole));
+    let collection = QueueSelection::Collection { id: letters.id };
+    assert_eq!(plan(&collection).sample, None);
+
+    // The same documents chosen again, in another order, find the same sample.
+    let chosen = QueueSelection::Documents {
+        ids: vec![docs[0], docs[1]],
+    };
+    let again = QueueSelection::Documents {
+        ids: vec![docs[1], docs[0]],
+    };
+    assert_eq!(chosen.key(), again.key());
+    let drawn = f.projects.draw_sample(p.id, &chosen, 5, None).unwrap();
+    assert_eq!(plan(&again).sample, Some(drawn));
+
+    // A new draw is a new seed unless one is given.
+    let redrawn = f
+        .projects
+        .draw_sample(p.id, &QueueSelection::Project, 20, None)
+        .unwrap();
+    assert_eq!(plan(&QueueSelection::Project).sample, Some(redrawn));
+    f.projects
+        .clear_sample(p.id, &QueueSelection::Project)
+        .unwrap();
+    assert_eq!(plan(&QueueSelection::Project).sample, None);
+    assert_eq!(plan(&again).sample, Some(drawn));
+}
+
+#[test]
+fn an_item_kept_aside_keeps_its_note_for_the_answer_it_held() {
+    let f = fixture();
+    let p = f.projects.create("Letters", "").unwrap();
+    let file = f.file("a.pdf", "a");
+    f.projects
+        .add_documents(p.id, vec![file.clone()], None)
+        .unwrap();
+    let job = f.job(Task::TextExtraction, vec![file]);
+    f.projects.link_job(p.id, job.id, None).unwrap();
+    let key = QueueItemKey {
+        job_id: job.id,
+        setup_id: job.setups[0].id,
+        source_id: job.sources[0].id,
+        index: Some(1),
+    };
+    f.projects
+        .keep_aside(
+            p.id,
+            &key,
+            Some("3f9a1c07be52".into()),
+            Some("  Ask about the stamp "),
+        )
+        .unwrap();
+    let kept = f
+        .projects
+        .queue_plan(p.id, &QueueSelection::Project, &[])
+        .unwrap()
+        .scope
+        .kept;
+    assert_eq!(kept.len(), 1);
+    assert_eq!(kept[0].note, "Ask about the stamp");
+    assert_eq!(kept[0].revision.as_deref(), Some("3f9a1c07be52"));
+
+    // Matched to the queue's items: kept with the answer it held, not with a newer one.
+    let mut queue = kalamu_core::ReviewQueue {
+        items: vec![
+            manifest_item(&job, Some("3f9a1c07be52")),
+            manifest_item(&job, Some("0a1b2c3d4e5f")),
+        ],
+        ..Default::default()
+    };
+    queue.mark_kept(&kept);
+    assert!(queue.items[0].kept.as_ref().is_some_and(|k| k.current));
+    assert!(queue.items[1].kept.as_ref().is_some_and(|k| !k.current));
+
+    f.projects.keep_aside(p.id, &key, None, None).unwrap();
+    assert!(
+        f.projects
+            .queue_plan(p.id, &QueueSelection::Project, &[])
+            .unwrap()
+            .scope
+            .kept
+            .is_empty()
+    );
+}
+
+/// An item of `job`'s first set-up, page 2, holding the answer `revision`.
+fn manifest_item(job: &Job, revision: Option<&str>) -> kalamu_core::QueueItem {
+    kalamu_core::QueueItem {
+        document_id: fixed(1),
+        document: "Letter of 3 May 1957".into(),
+        job_id: job.id,
+        job_name: job.name.clone(),
+        task: job.task,
+        source_id: job.sources[0].id,
+        setup_id: job.setups[0].id,
+        setup_label: job.setups[0].label.clone(),
+        model: job.setups[0].model.clone(),
+        preferred: false,
+        piece: Some(PieceRef::page(2)),
+        index: Some(1),
+        revision: revision.map(String::from),
+        answered_at: Some(Timestamp(1_778_000_000_000)),
+        signals: vec![kalamu_core::Signal::NotReviewed],
+        reviewed: false,
+        corrected: false,
+        processing: false,
+        open: true,
+        decided_at: None,
+        sample: false,
+        kept: None,
+    }
+}
+
+/// An id of any kind with a fixed value, for golden files.
+fn fixed<T: std::str::FromStr>(n: u8) -> T
+where
+    T::Err: std::fmt::Debug,
+{
+    format!("00000000-0000-0000-0000-{n:012}").parse().unwrap()
+}
+
+#[test]
+fn the_review_manifest_matches_its_golden_files() {
+    use kalamu_core::{CutReason, KeptNote, SampleCounts, Signal};
+
+    let job = Job {
+        id: fixed(2),
+        name: "Bulletins, May 1957".into(),
+        sources: vec![SourceFile {
+            id: fixed(3),
+            ..f_source()
+        }],
+        setups: vec![Setup {
+            id: fixed(4),
+            label: "flash".into(),
+            model: "gemini-flash".into(),
+            ..fixture().job(Task::TextExtraction, Vec::new()).setups[0].clone()
+        }],
+        ..fixture().job(Task::TextExtraction, Vec::new())
+    };
+    let base = manifest_item(&job, Some("3f9a1c07be52"));
+    let items = vec![
+        // A failed page, nothing read.
+        kalamu_core::QueueItem {
+            piece: Some(PieceRef::page(1)),
+            index: Some(0),
+            revision: None,
+            answered_at: None,
+            signals: vec![Signal::Failed {
+                error: Some("The provider was busy (503)".into()),
+            }],
+            processing: true,
+            ..base.clone()
+        },
+        // Cut off and read otherwise by `pro`, reviewed and corrected, kept aside.
+        kalamu_core::QueueItem {
+            signals: vec![
+                Signal::Truncated {
+                    reason: CutReason::Limit,
+                },
+                Signal::Disagrees {
+                    with: vec!["pro".into()],
+                    words: 3,
+                    fields: Vec::new(),
+                },
+            ],
+            reviewed: true,
+            corrected: true,
+            open: false,
+            decided_at: Some(Timestamp(1_778_100_000_000)),
+            kept: Some(KeptNote {
+                note: "=Check the stamp, with the archivist".into(),
+                kept_at: Timestamp(1_778_200_000_000),
+                current: true,
+            }),
+            ..base.clone()
+        },
+        // Drawn at random, nothing flags it, reviewed.
+        kalamu_core::QueueItem {
+            piece: Some(PieceRef::page(3)),
+            index: Some(2),
+            signals: Vec::new(),
+            reviewed: true,
+            open: false,
+            sample: true,
+            decided_at: Some(Timestamp(1_778_300_000_000)),
+            ..base.clone()
+        },
+        // Kept aside with an earlier answer: listed with the others again.
+        kalamu_core::QueueItem {
+            piece: Some(PieceRef::page(4)),
+            index: Some(3),
+            kept: Some(KeptNote {
+                note: "Faded ink".into(),
+                kept_at: Timestamp(1_777_000_000_000),
+                current: false,
+            }),
+            ..base.clone()
+        },
+    ];
+    let queue = kalamu_core::ReviewQueue {
+        counts: kalamu_core::QueueCounts {
+            documents: 1,
+            documents_read: 1,
+            results: 1,
+            pieces: 4,
+            processed: 3,
+            failed: 1,
+            reviewed: 2,
+            flagged: 2,
+            unresolved: 1,
+            ..Default::default()
+        },
+        items,
+        sample: Some(SampleCounts {
+            seed: 1957,
+            size: 1,
+            drawn_at: Timestamp(1_778_250_000_000),
+            candidates: 2,
+            drawn: 1,
+            reviewed: 1,
+        }),
+    };
+    let manifest = ReviewManifest::new(
+        fixed(5),
+        "Mission archives",
+        "project".into(),
+        &queue,
+        Timestamp(1_778_400_000_000),
+    );
+    golden("review-manifest.csv", &csv_body(manifest.table()));
+    golden("review-manifest.json", &manifest.json().unwrap());
+}
+
+/// A source file with fixed values, for golden files.
+fn f_source() -> SourceFile {
+    SourceFile {
+        id: fixed(3),
+        path: "C:/archive/bulletin.pdf".into(),
+        file_name: "bulletin.pdf".into(),
+        sha256: "abc".into(),
+        size_bytes: 10,
+        modified_ms: None,
+        kind: kalamu_core::InputKind::Pdf,
+        page_count: Some(4),
+        duration_ms: None,
+        split_spreads: false,
+        even_out_volume: false,
+        title: None,
+        derived_from: None,
+        pages: Vec::new(),
+    }
+}
+
+/// Compares `actual` with `golden/<name>`; `UPDATE_GOLDEN=1` rewrites the file after an intended
+/// change, for the diff to be reviewed.
+fn golden(name: &str, actual: &str) {
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("golden")
+        .join(name);
+    if std::env::var_os("UPDATE_GOLDEN").is_some() {
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, actual).unwrap();
+        return;
+    }
+    let expected = std::fs::read_to_string(&path).unwrap_or_default();
+    assert_eq!(
+        actual, expected,
+        "{name} differs from its golden file; rerun with UPDATE_GOLDEN=1 if intended"
+    );
+}

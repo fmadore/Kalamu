@@ -28,6 +28,7 @@ pub mod provider;
 pub mod records;
 pub mod regions;
 pub mod result;
+pub mod sample;
 pub mod search;
 pub mod setup;
 pub mod snapshot;
@@ -50,7 +51,8 @@ pub use agreement::{
 };
 pub use analysis::{AnalysisSchema, Field, FieldAnswer, FieldKind, FieldValue, SchemaError};
 pub use attention::{
-    QueueCounts, QueueItem, ReasonCounts, ReviewQueue, ReviewScope, ReviewTarget, Signal,
+    KeptAside, KeptNote, QueueCounts, QueueItem, ReasonCounts, ReviewQueue, ReviewScope,
+    ReviewTarget, Signal,
 };
 pub use batch::{
     BATCH_WINDOW_MS, BatchCleanup, BatchContext, BatchItem, BatchLimits, BatchPhase, BatchProgress,
@@ -61,7 +63,8 @@ pub use dictionary::{
 };
 pub use event::ProgressEvent;
 pub use export::{
-    CsvCells, ExportDocument, ExportError, ExportFormat, ExportOptions, ExportPart, Exporter, Table,
+    CsvCells, ExportDocument, ExportError, ExportFile, ExportFormat, ExportOptions, ExportPart,
+    Exporter, Table,
 };
 pub use fingerprint::CacheKey;
 pub use ids::{
@@ -92,6 +95,7 @@ pub use result::{
     Charge, CutReason, PageHalf, PieceRef, PieceState, PieceStatus, ProcessOutput, Segment,
     StoredResult, TextLine, TextRegion, TextWord, Usage, plain_words,
 };
+pub use sample::{MAX_SAMPLE, SampleCounts, SampleSpec};
 pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};
 pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};

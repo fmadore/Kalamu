@@ -691,14 +691,20 @@ fn a_database_from_before_batch_cleanup_opens_with_its_batches() -> Result<(), S
     let dir = tempfile::tempdir().map_err(corrupt)?;
     let path = dir.path().join("jobs.sqlite");
     let job = job();
-    let previous = migrations::MIGRATIONS.len() as i64 - 1;
+    // The migrations before the one that added the table; those after it are undone too.
+    let previous = migrations::MIGRATIONS
+        .iter()
+        .position(|m| *m == batches::LEFTOVERS)
+        .ok_or(StoreError::NotFound)? as i64;
     let batch = ended_batch(&job, "b1", None);
     {
         let store = SqliteStore::open(&path)?;
         store.create_job(&job)?;
         let conn = store.conn();
-        conn.execute_batch("DROP TABLE batch_leftovers;")
-            .map_err(db)?;
+        conn.execute_batch(
+            "DROP TABLE batch_leftovers; DROP TABLE review_kept; DROP TABLE review_samples;",
+        )
+        .map_err(db)?;
         conn.pragma_update(None, "user_version", previous)
             .map_err(db)?;
         // A batch as the previous version wrote it: no `cleanup` field.
@@ -722,7 +728,7 @@ fn a_database_from_before_batch_cleanup_opens_with_its_batches() -> Result<(), S
         .conn()
         .pragma_query_value(None, "user_version", |row| row.get(0))
         .map_err(db)?;
-    assert_eq!(version, previous + 1);
+    assert_eq!(version, migrations::MIGRATIONS.len() as i64);
     Ok(())
 }
 

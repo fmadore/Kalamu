@@ -345,6 +345,7 @@ impl JobStore for SqliteStore {
 }
 
 mod batches;
+mod checks;
 mod dictionary;
 mod jobs;
 use jobs::insert_job;

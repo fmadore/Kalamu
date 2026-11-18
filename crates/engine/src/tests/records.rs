@@ -327,6 +327,7 @@ async fn a_page_cut_off_or_failed_is_marked_and_listed_never_complete() {
                 setup_id: job.setups[0].id,
                 preferred: false,
             }],
+            ..Default::default()
         })
         .unwrap_or_else(|e| panic!("{e}"));
     let failed: Vec<u32> = queue
@@ -363,6 +364,7 @@ async fn set_ups_that_read_a_page_differently_are_listed_in_what_to_check() {
                 setup_id: job.setups[0].id,
                 preferred: false,
             }],
+            ..Default::default()
         })
         .unwrap_or_else(|e| panic!("{e}"));
     let disagrees: Vec<(u32, Vec<String>)> = queue

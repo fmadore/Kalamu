@@ -21,6 +21,8 @@ fn part(piece: PieceRef, text: &str, segments: Vec<Segment>) -> ExportPart {
         regions: Vec::new(),
         failed: None,
         drawn_dpi: None,
+        read_at: None,
+        corrected_at: None,
     }
 }
 

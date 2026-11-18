@@ -640,6 +640,45 @@ export const fr: Messages = {
 			'La date d’enregistrement de la réponse. Une nouvelle réponse est à relire de nouveau.',
 		open: (document: string, place: string) => `Ouvrir ${document}, ${place}, en relecture`,
 		more: (n: number) => `Afficher ${n} de plus`,
+		export: 'Exporter la liste',
+		exported: 'La liste a été enregistrée en JSON, avec un CSV à côté.',
+		fileName: (project: string) => `${project} liste à vérifier`,
+		sample: {
+			title: 'Tirées au hasard',
+			hint: 'Des pages tirées au hasard parmi celles que rien ne signale, pour voir comment se lit le reste de ces documents. Les pages signalées ont été retenues pour un problème : ce que vous y trouvez ne dit rien de l’ensemble.',
+			size: 'Pages',
+			draw: 'Tirer au hasard',
+			drawAgain: 'Tirer de nouveau',
+			drawAgainHint:
+				'Un nouveau numéro de tirage, donc d’autres pages. Les pages tirées jusqu’ici ne seront plus marquées.',
+			remove: 'Retirer le tirage',
+			summary: (drawn: number, candidates: number) =>
+				`${drawn} sur ${candidates === 1 ? '1 page' : `${candidates} pages`} que rien ne signale`,
+			seed: (seed: number) => `Tirage n° ${seed}`,
+			seedHint:
+				'Le même numéro tire les mêmes pages dans les mêmes documents : notez-le pour citer ce tirage.',
+			drawnOn: (when: string) => `tiré le ${when}`,
+			reviewed: (reviewed: number, drawn: number) =>
+				`${reviewed} ${reviewed <= 1 ? 'relue' : 'relues'} sur ${drawn}`,
+			none: 'Aucune page ici n’est à la fois lue et sans signalement : il n’y a rien à tirer.',
+			badge: 'Tirée au hasard'
+		},
+		keep: {
+			action: 'Mettre de côté',
+			label: (document: string, place: string) => `Mettre de côté ${document}, ${place}`,
+			note: 'Note',
+			notePlaceholder: 'Pourquoi, et quoi faire plus tard',
+			save: 'Mettre de côté',
+			cancel: 'Annuler',
+			putBack: 'Remettre dans la liste',
+			badge: 'Mis de côté',
+			earlier: 'Mis de côté avec une réponse précédente',
+			earlierHint: (note: string) =>
+				`La réponse a changé depuis que vous l’avez mise de côté${note ? ` (« ${note} »)` : ''} : celle-ci est listée avec les autres.`,
+			section: 'Mis de côté',
+			sectionHint:
+				'Ce que vous avez mis de côté pour plus tard, avec votre note. Ces éléments restent dans la liste et attendent toujours votre relecture : mettre de côté ne règle rien.'
+		},
 		banner: {
 			position: (at: number, total: number) => `${at} sur ${total} à vérifier`,
 			previous: 'Précédent à vérifier',
@@ -1147,7 +1186,7 @@ export const fr: Messages = {
 			duplicate: (n: number) => `Un autre fichier porte aussi le numéro ${n}`,
 			naturalOrder: 'Revenir à l’ordre des noms',
 			formats:
-				'Un PDF interrogeable n’est produit qu’à partir d’un PDF. L’ALTO, quand le modèle donne les positions, place chaque page dans sa propre image.',
+				'Un PDF interrogeable n’est produit qu’à partir d’un PDF. L’ALTO et le PAGE XML, quand le modèle donne les positions, placent chaque page dans sa propre image.',
 			refused: 'Une analyse lit chaque image comme un document à part.'
 		},
 		lines: {
@@ -1301,8 +1340,9 @@ export const fr: Messages = {
 		extractPlace: 'Et note l’emplacement de son texte sur la page',
 		extractPlaces: (models: string) => `${models} note aussi l’emplacement de son texte`,
 		extractTextOnly:
-			'Le texte seul, sans son emplacement sur la page : ni PDF interrogeable ni ALTO',
-		extractSearchable: 'Aussi un fichier ALTO XML et un PDF interrogeable, chaque mot à sa place',
+			'Le texte seul, sans son emplacement sur la page : ni PDF interrogeable, ni ALTO, ni PAGE XML',
+		extractSearchable:
+			'Aussi des fichiers ALTO XML et PAGE XML et un PDF interrogeable, chaque mot à sa place',
 		extractPdfOnly: 'Le PDF interrogeable pour les fichiers PDF seulement',
 		analysisWhole: 'Lu en entier, d’un seul tenant, quel que soit le nombre de pages',
 		analysisFill: (model: string) => `${model} remplit vos champs`,
@@ -1988,7 +2028,7 @@ export const fr: Messages = {
 			},
 			tesseract: {
 				word: 'Extraction de texte hors ligne (Tesseract)',
-				text: 'Tesseract est un moteur d’OCR ouvert que Kalamu exécute sur votre propre ordinateur. Téléchargez une fois dans Paramètres chaque langue que vous lisez ; ensuite, rien n’est envoyé nulle part et rien n’est facturé. Il lit bien l’imprimé net et note l’emplacement de chaque mot sur la page, ce qui donne des fichiers ALTO XML et des PDF interrogeables. L’écriture manuscrite, les pages pâlies ou abîmées et les mises en page complexes se lisent mieux avec un modèle d’IA. Il ne détecte pas la langue, vous la choisissez donc, et sa vitesse dépend du processeur de votre ordinateur.'
+				text: 'Tesseract est un moteur d’OCR ouvert que Kalamu exécute sur votre propre ordinateur. Téléchargez une fois dans Paramètres chaque langue que vous lisez ; ensuite, rien n’est envoyé nulle part et rien n’est facturé. Il lit bien l’imprimé net et note l’emplacement de chaque mot sur la page, ce qui donne des fichiers ALTO et PAGE XML et des PDF interrogeables. L’écriture manuscrite, les pages pâlies ou abîmées et les mises en page complexes se lisent mieux avec un modèle d’IA. Il ne détecte pas la langue, vous la choisissez donc, et sa vitesse dépend du processeur de votre ordinateur.'
 			},
 			apiKey: {
 				word: 'Clé d’API',
@@ -2063,6 +2103,8 @@ export const fr: Messages = {
 			searchable_pdf:
 				'Le PDF d’origine avec une couche texte invisible, pour pouvoir y chercher et en copier le texte. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : pour l’instant, Tesseract et Mistral OCR.',
 			alto: 'Le texte de chaque page avec l’emplacement de chaque bloc, ligne et mot, au format ALTO que lisent les bibliothèques numériques, eScriptorium et Transkribus. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : Tesseract place chaque mot ; Mistral OCR place les paragraphes, dont les lignes et les mots sont alors estimés. Les corrections gardent l’emplacement de leurs mots.',
+			page_xml:
+				'Le texte de chaque page dans un fichier à part (nom.p0001.page.xml), avec l’emplacement de chaque zone, ligne et mot, au format PAGE que lisent Transkribus, eScriptorium et Aletheia. Seulement avec les modèles qui indiquent l’emplacement du texte sur la page : Tesseract place chaque mot ; Mistral OCR place les blocs, dont les lignes sont alors estimées et signalées comme telles. Les corrections gardent l’emplacement de leurs mots.',
 			provenance:
 				'Toujours écrit à côté des résultats : comment ils ont été produits (voir Provenance).'
 		}
@@ -2094,7 +2136,8 @@ export const fr: Messages = {
 		vtt: 'Sous-titres (.vtt)',
 		csv: 'Tableur (.csv)',
 		searchable_pdf: 'PDF interrogeable',
-		alto: 'ALTO XML (position des mots)'
+		alto: 'ALTO XML (position des mots)',
+		page_xml: 'PAGE XML (un fichier par page)'
 	},
 	close: {
 		title: 'Des traitements sont en cours',

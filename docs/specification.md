@@ -335,7 +335,8 @@ paying twice.
   researcher to resume it. Once a batch's answers are stored, or it is given up on, the
   files it left in the account's storage at the provider (OpenAI's and Mistral's requests,
   answers and errors) are deleted, by the ids the batch itself names and never from a listing
-  of that storage; the ids are recorded first, so a crash in between, or a job deleted
+  of that storage; a Claude batch leaves no file, and is itself deleted at Anthropic once it
+  has ended, the same way ([decision](decisions/2026-11-17-page-xml-review-sample-claude-batches.md)); the ids are recorded first, so a crash in between, or a job deleted
   meanwhile, is finished at the next launch. A deleting that fails never touches the job: it
   is tried again at later launches, five times, then left and recorded as left
   ([decision](decisions/2026-11-15-records-regions-batch-files.md)).
@@ -649,6 +650,20 @@ analysed, compared. A **project** keeps it together
   stays listed as reviewed; agreement between models is never taken for one, and an answer
   read from a changed text stays open. Counts of documents, pages read, failed, reviewed and
   flagged are given over everything in scope, whatever the filters show.
+  What is flagged was chosen for what is wrong with it, and says nothing of the rest: so the
+  researcher can **draw a sample at random** from the pages nothing flags (1 to 1,000), each
+  scope keeping its own. The draw is decided by a seed, shown and kept with the project, so the
+  same pages come back after a restart and the sample can be cited; a page read by several
+  set-ups or jobs is drawn once, a page flagged since leaves the sample and the next in the
+  draw takes its place, and drawing again is the researcher's act. Pages drawn are listed
+  apart, as drawn at random and never as a problem, with how many of them are reviewed; the
+  counts over the scope do not change. An item can be **kept aside with a note**, for the
+  answer it then holds: keeping aside resolves nothing, and when the answer changes the item
+  is listed again, marked as kept aside with an earlier answer. **Export the list** writes a
+  review manifest (JSON, and a CSV beside it): every item in scope whatever the filters show,
+  with its document, job, set-up, page and answer, why it is listed, whether it was drawn and
+  with which seed, and what the researcher decided ([format](formats.md#the-review-manifest-kalamu-review-manifest-version-1),
+  [decision](decisions/2026-11-17-page-xml-review-sample-claude-batches.md)).
 - **Organising never changes work.** Collections, titles, links and preferences call no model.
   A job keeps the files it was started with, so a later change to a collection does not rewrite
   a past run or start new work. Deleting a project, a collection or a document removes only how
@@ -766,7 +781,7 @@ is remembered per task. Details are in [formats.md](formats.md).
 
 | Task | Formats |
 | --- | --- |
-| **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original, from PDF sources) and ALTO XML (each block, line and word with its place) only from models that report where text sits on the page: Tesseract, word by word, and Mistral OCR and LightOnOCR-3, by block (in ALTO their lines and words are then estimated); a corrected page keeps its words' places; PAGE XML later |
+| **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original, from PDF sources) and ALTO XML (each block, line and word with its place) only from models that report where text sits on the page: Tesseract, word by word, and Mistral OCR and LightOnOCR-3, by block (in ALTO their lines and words are then estimated); a corrected page keeps its words' places; PAGE XML (one file per page, the same places) from the same models |
 | **Transcription** | `.txt`, `.md`, `.docx`, `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
 | **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
 | **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.csv` and `.json` |

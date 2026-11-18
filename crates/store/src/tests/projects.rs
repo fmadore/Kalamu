@@ -224,3 +224,71 @@ fn a_source_s_links_are_found_in_every_project() -> Result<(), StoreError> {
     assert!(store.links_of(JobId::new(), job.sources[0].id)?.is_empty());
     Ok(())
 }
+
+#[test]
+fn the_review_queue_s_sample_and_items_kept_aside_survive_a_restart() -> Result<(), StoreError> {
+    use kalamu_core::{KeptAside, SampleSpec};
+
+    let dir = tempfile::tempdir().map_err(corrupt)?;
+    let path = dir.path().join("kalamu.db");
+    let job = job();
+    let p = project("Mission archives");
+    let sample = SampleSpec {
+        seed: 271_828,
+        size: 20,
+        drawn_at: Timestamp(5),
+    };
+    let page = KeptAside {
+        job_id: job.id,
+        setup_id: job.setups[0].id,
+        source_id: job.sources[0].id,
+        index: Some(1),
+        revision: Some("3f9a1c07be52".into()),
+        note: "Ask the archivist about the stamp".into(),
+        kept_at: Timestamp(6),
+    };
+    let whole = KeptAside {
+        index: None,
+        revision: None,
+        note: "Start it again next week".into(),
+        ..page.clone()
+    };
+    {
+        let store = SqliteStore::open(&path)?;
+        store.create_job(&job)?;
+        store.put_project(&p)?;
+        store.set_review_sample(p.id, "project", Some(&sample))?;
+        store.put_kept_aside(p.id, &page)?;
+        store.put_kept_aside(p.id, &whole)?;
+        // Kept aside again, the item has one note: the last.
+        store.put_kept_aside(
+            p.id,
+            &KeptAside {
+                note: "Ask the archivist about the seal".into(),
+                ..page.clone()
+            },
+        )?;
+    }
+
+    let store = SqliteStore::open(&path)?;
+    assert_eq!(store.review_sample(p.id, "project")?, Some(sample));
+    // Another scope has its own sample, none yet.
+    assert_eq!(store.review_sample(p.id, "collection:x")?, None);
+    let kept = store.kept_aside(p.id)?;
+    assert_eq!(kept.len(), 2);
+    assert!(kept.contains(&whole));
+    assert!(
+        kept.iter()
+            .any(|k| k.index == Some(1) && k.note == "Ask the archivist about the seal")
+    );
+
+    store.remove_kept_aside(p.id, job.id, job.setups[0].id, job.sources[0].id, None)?;
+    assert_eq!(store.kept_aside(p.id)?.len(), 1);
+    store.set_review_sample(p.id, "project", None)?;
+    assert_eq!(store.review_sample(p.id, "project")?, None);
+
+    // Deleting the job deletes what was kept aside of its results.
+    store.delete_job(job.id)?;
+    assert!(store.kept_aside(p.id)?.is_empty());
+    Ok(())
+}

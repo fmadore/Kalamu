@@ -28,6 +28,7 @@ mod regions;
 mod review;
 mod rules;
 mod run;
+mod sample;
 mod setup;
 mod snapshot;
 mod units;

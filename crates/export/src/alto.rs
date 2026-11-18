@@ -6,34 +6,15 @@
 //! places paragraphs only: their text is wrapped into the lines the block's size holds, which
 //! share its height, and their words share each line's width
 //! ([`kalamu_core::TextRegion::estimated_lines`]); the file says those positions are estimated.
-//!
-//! Positions are in pixels: those of the image for an image source, and for a PDF those of the
-//! page drawn as Tesseract read it, at the resolution its result records (300 dpi, or less for
-//! a very large page; 300 for results read before it was recorded). A page split into halves is
-//! put back together, as in the searchable PDF.
+//! The pages, their pixels and the corrected view are shared with PAGE XML ([`crate::layout`]).
 
-use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
-use kalamu_core::{
-    ExportDocument, ExportError, ExportFormat, Exporter, InputKind, Task, TextRegion,
-};
+use kalamu_core::{ExportDocument, ExportError, ExportFormat, Exporter, InputKind, Task};
 
-use crate::searchable_pdf::{pdf_page_sizes, regions_by_page};
+use crate::layout::{LaidPage, Layout, esc};
 
 pub struct AltoExporter;
-
-/// PDF pages are measured as drawn at this resolution when their result records none: what
-/// every page was drawn at before the resolution was recorded, and what a model reading the PDF
-/// itself is measured at.
-const PDF_DPI: f32 = 300.0;
-
-fn error(message: impl std::fmt::Display) -> ExportError {
-    ExportError::Write {
-        format: "ALTO",
-        message: message.to_string(),
-    }
-}
 
 impl Exporter for AltoExporter {
     fn format(&self) -> ExportFormat {
@@ -45,52 +26,7 @@ impl Exporter for AltoExporter {
     }
 
     fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
-        let pages = regions_by_page(doc);
-        if pages.is_empty() {
-            return Err(error(
-                "this model reported no text positions; choose Tesseract or Mistral OCR for ALTO",
-            ));
-        }
-        // Each PDF page's resolution, as drawn for the engine that read it.
-        let dpi = page_resolutions(doc);
-        let sizes: Vec<(u32, (f32, f32))> = match doc.source.kind {
-            InputKind::Pdf => {
-                let bytes = std::fs::read(&doc.source.path).map_err(error)?;
-                pdf_page_sizes(&bytes)?
-                    .into_iter()
-                    .map(|(n, (w, h))| {
-                        let dpi = dpi.get(&n).copied().unwrap_or(PDF_DPI);
-                        let px = |points: f32| (points / 72.0 * dpi).round();
-                        (n, (px(w), px(h)))
-                    })
-                    .collect()
-            }
-            // Each page measured in its own file: one image, or a document of images, whose
-            // pages are files of their own sizes.
-            InputKind::Image => {
-                let mut measured: std::collections::HashMap<&str, (f32, f32)> =
-                    std::collections::HashMap::new();
-                let mut sizes = Vec::new();
-                for &n in pages.keys() {
-                    let path = doc
-                        .source
-                        .page_file(n)
-                        .map_or(doc.source.path.as_str(), |(p, _)| p.path.as_str());
-                    let size = match measured.get(path) {
-                        Some(size) => *size,
-                        None => {
-                            let size = image_size(path)?;
-                            measured.insert(path, size);
-                            size
-                        }
-                    };
-                    sizes.push((n, size));
-                }
-                sizes
-            }
-            _ => return Err(ExportError::Unsupported("ALTO (from a PDF or an image)")),
-        };
-        let estimated = pages.values().flatten().any(|r| r.lines.is_empty());
+        let layout = Layout::of(doc, "ALTO")?;
 
         let mut x = String::new();
         x.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -112,9 +48,9 @@ http://www.loc.gov/alto/v4/alto-4-4.xsd\">\n",
             doc.provenance.model
         );
         if doc.source.kind == InputKind::Pdf {
-            settings.push_str(&measured(&dpi, &read_pages(doc)));
+            settings.push_str(&layout.measured());
         }
-        if estimated {
+        if layout.estimated() {
             settings.push_str(
                 "; line and word positions estimated within blocks the model placed whole",
             );
@@ -132,84 +68,12 @@ http://www.loc.gov/alto/v4/alto-4-4.xsd\">\n",
             esc(&doc.provenance.generator.version),
         );
         x.push_str("  </Description>\n  <Layout>\n");
-        let read = read_pages(doc);
-        for (number, (width, height)) in sizes.into_iter().filter(|(n, _)| read.contains(n)) {
-            let regions = pages.get(&number).map(Vec::as_slice).unwrap_or_default();
-            page(&mut x, number, width, height, regions);
+        for laid in &layout.pages {
+            page(&mut x, laid);
         }
         x.push_str("  </Layout>\n</alto>\n");
         Ok(x.into_bytes())
     }
-}
-
-/// The pages read, a page that held no text included; not those a sample left out.
-fn read_pages(doc: &ExportDocument) -> BTreeSet<u32> {
-    doc.parts
-        .iter()
-        .filter_map(|p| match p.piece {
-            kalamu_core::PieceRef::Page { number, .. } => Some(number),
-            _ => None,
-        })
-        .collect()
-}
-
-/// The resolution each page was drawn at, where its result records one; for a page split into
-/// halves, that of its first half.
-fn page_resolutions(doc: &ExportDocument) -> BTreeMap<u32, f32> {
-    let mut dpi = BTreeMap::new();
-    for part in &doc.parts {
-        if let (kalamu_core::PieceRef::Page { number, .. }, Some(drawn)) =
-            (&part.piece, part.drawn_dpi)
-        {
-            dpi.entry(*number).or_insert(drawn);
-        }
-    }
-    dpi
-}
-
-/// The processing settings' note on how PDF pages are measured: `at 300 dpi`, or, where some
-/// were drawn smaller, each other resolution with its pages.
-fn measured(dpi: &BTreeMap<u32, f32>, read: &BTreeSet<u32>) -> String {
-    let mut others: BTreeMap<String, Vec<u32>> = BTreeMap::new();
-    for &page in read {
-        let value = dpi.get(&page).copied().unwrap_or(PDF_DPI);
-        if (value - PDF_DPI).abs() > f32::EPSILON {
-            others.entry(written(value)).or_default().push(page);
-        }
-    }
-    let mut note = format!("; PDF pages measured at {} dpi", written(PDF_DPI));
-    for (value, pages) in others {
-        let pages: Vec<String> = pages.iter().map(u32::to_string).collect();
-        let label = if pages.len() == 1 { "page" } else { "pages" };
-        let _ = write!(note, ", {label} {} at {value} dpi", pages.join(", "));
-    }
-    note
-}
-
-/// A resolution as written: two decimals at most, `300` rather than `300.00`.
-fn written(dpi: f32) -> String {
-    let text = format!("{dpi:.2}");
-    text.trim_end_matches('0').trim_end_matches('.').to_owned()
-}
-
-/// An image's width and height as shown, after its EXIF orientation.
-fn image_size(path: &str) -> Result<(f32, f32), ExportError> {
-    use image::ImageDecoder;
-    let mut decoder = image::ImageReader::open(path)
-        .and_then(image::ImageReader::with_guessed_format)
-        .map_err(error)?
-        .into_decoder()
-        .map_err(error)?;
-    let (w, h) = decoder.dimensions();
-    let turned = decoder.orientation().is_ok_and(|o| {
-        use image::metadata::Orientation::*;
-        matches!(o, Rotate90 | Rotate270 | Rotate90FlipH | Rotate270FlipH)
-    });
-    Ok(if turned {
-        (h as f32, w as f32)
-    } else {
-        (w as f32, h as f32)
-    })
 }
 
 /// A box in pixels: HPOS, VPOS, WIDTH and HEIGHT.
@@ -223,15 +87,14 @@ fn pos(x: f32, y: f32, w: f32, h: f32, pw: f32, ph: f32) -> String {
     )
 }
 
-fn page(x: &mut String, number: u32, pw: f32, ph: f32, regions: &[TextRegion]) {
+fn page(x: &mut String, laid: &LaidPage) {
+    let (number, pw, ph) = (laid.number, laid.width, laid.height);
     let _ = writeln!(
         x,
-        "    <Page ID=\"page_{number}\" PHYSICAL_IMG_NR=\"{number}\" WIDTH=\"{}\" HEIGHT=\"{}\">",
-        pw.round(),
-        ph.round()
+        "    <Page ID=\"page_{number}\" PHYSICAL_IMG_NR=\"{number}\" WIDTH=\"{pw}\" HEIGHT=\"{ph}\">",
     );
     let _ = writeln!(x, "      <PrintSpace {}>", pos(0.0, 0.0, 1.0, 1.0, pw, ph));
-    for (b, region) in regions.iter().enumerate() {
+    for (b, region) in laid.regions.iter().enumerate() {
         let id = format!("p{number}_b{}", b + 1);
         let _ = writeln!(
             x,
@@ -240,11 +103,7 @@ fn page(x: &mut String, number: u32, pw: f32, ph: f32, regions: &[TextRegion]) {
         );
         // The region is on the whole page, measured `pw` by `ph`: the same block, in pixels, as
         // the review estimates within (a split spread's half there), so both draw the same lines.
-        let lines = if region.lines.is_empty() {
-            region.estimated_lines(ph / pw)
-        } else {
-            region.lines.clone()
-        };
+        let (lines, _) = laid.lines(region);
         for (l, line) in lines.iter().enumerate() {
             let lid = format!("{id}_l{}", l + 1);
             let _ = writeln!(
@@ -273,31 +132,4 @@ fn page(x: &mut String, number: u32, pw: f32, ph: f32, regions: &[TextRegion]) {
         x.push_str("        </TextBlock>\n");
     }
     x.push_str("      </PrintSpace>\n    </Page>\n");
-}
-
-/// Text escaped for an XML attribute or element; characters XML 1.0 forbids are dropped.
-fn esc(text: &str) -> String {
-    let mut out = String::with_capacity(text.len());
-    for c in text.chars() {
-        match c {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            '\t' | '\n' | '\r' => out.push(' '),
-            c if (c as u32) < 0x20 || matches!(c, '\u{FFFE}' | '\u{FFFF}') => {}
-            c => out.push(c),
-        }
-    }
-    out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn text_is_escaped_for_xml() {
-        assert_eq!(esc("a < b & \"c\"\u{1}"), "a &lt; b &amp; &quot;c&quot;");
-    }
 }

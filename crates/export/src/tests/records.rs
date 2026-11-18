@@ -61,6 +61,8 @@ fn page(
         regions: vec![],
         failed: None,
         drawn_dpi: None,
+        read_at: None,
+        corrected_at: None,
     }
 }
 

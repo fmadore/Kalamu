@@ -13,6 +13,12 @@
 //!
 //! Economy mode uses Message Batches: the same requests at half price, answered within a day.
 //! A batch refuses `fallbacks`, so batched requests go without it.
+//!
+//! A batch leaves no file in the account's storage, but Anthropic keeps the batch itself, its
+//! requests and its answers, for 29 days after it was made. Once it has ended and its answers
+//! are stored, the batch is what [`Provider::batch_files`] names, and
+//! `DELETE /v1/messages/batches/{id}` deletes it: Anthropic deletes only a batch that has ended,
+//! so one still running or being cancelled names nothing yet and is asked about again later.
 
 use async_trait::async_trait;
 use kalamu_core::{
@@ -24,7 +30,7 @@ use serde_json::{Value, json};
 
 use crate::analysis;
 use crate::batch::{self, Answer, Body};
-use crate::http::{base64, ids, send_json, send_text, with_json_body};
+use crate::http::{base64, ids, send_json, send_json_if_found, send_text, with_json_body};
 
 const BASE_URL: &str = "https://api.anthropic.com/v1";
 const API_VERSION: &str = "2026-10-21";
@@ -371,6 +377,34 @@ impl Provider for Anthropic {
     async fn cancel_batch(&self, key: &ApiKey, batch_id: &str) -> Result<(), ProviderError> {
         let url = format!("{}/messages/batches/{batch_id}/cancel", self.base_url);
         send_json(self.authorised(self.client.post(url), key))
+            .await
+            .map(|_| ())
+    }
+
+    /// What an ended batch leaves is the batch itself, named by its own id; none for a batch
+    /// Anthropic no longer knows, and nothing yet for one still running or being cancelled,
+    /// which cannot be deleted.
+    async fn batch_files(
+        &self,
+        key: &ApiKey,
+        batch_id: &str,
+    ) -> Result<Option<Vec<String>>, ProviderError> {
+        let url = format!("{}/messages/batches/{batch_id}", self.base_url);
+        let Some(status) = send_json_if_found(self.authorised(self.client.get(url), key)).await?
+        else {
+            return Ok(Some(Vec::new()));
+        };
+        match status.get("processing_status").and_then(Value::as_str) {
+            Some("ended") => Ok(Some(vec![batch_id.to_string()])),
+            _ => Ok(None),
+        }
+    }
+
+    /// Deletes an ended batch, its requests and answers with it; one already gone (404) counts
+    /// as deleted.
+    async fn delete_batch_file(&self, key: &ApiKey, file_id: &str) -> Result<(), ProviderError> {
+        let url = format!("{}/messages/batches/{file_id}", self.base_url);
+        send_json_if_found(self.authorised(self.client.delete(url), key))
             .await
             .map(|_| ())
     }

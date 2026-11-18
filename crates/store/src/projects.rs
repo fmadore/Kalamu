@@ -5,12 +5,13 @@
 //! a project or a document removes what organises it, never a job or a result.
 
 use kalamu_core::{
-    Collection, CollectionId, Document, DocumentId, DocumentLink, JobId, PreferredResult, Project,
-    ProjectId, ProjectStore, SetupId, SourceId, StoreError, Task, Timestamp,
+    Collection, CollectionId, Document, DocumentId, DocumentLink, JobId, KeptAside,
+    PreferredResult, Project, ProjectId, ProjectStore, SampleSpec, SetupId, SourceId, StoreError,
+    Task, Timestamp,
 };
 use rusqlite::{Connection, OptionalExtension, params, params_from_iter};
 
-use super::{SqliteStore, corrupt, db, to_json};
+use super::{SqliteStore, checks, corrupt, db, to_json};
 
 pub(crate) const MIGRATION: &str = r#"
 CREATE TABLE projects (
@@ -517,5 +518,41 @@ impl ProjectStore for SqliteStore {
             })
         })
         .collect()
+    }
+
+    fn set_review_sample(
+        &self,
+        project: ProjectId,
+        scope: &str,
+        sample: Option<&SampleSpec>,
+    ) -> Result<(), StoreError> {
+        checks::set_sample(self, project, scope, sample)
+    }
+
+    fn review_sample(
+        &self,
+        project: ProjectId,
+        scope: &str,
+    ) -> Result<Option<SampleSpec>, StoreError> {
+        checks::sample(self, project, scope)
+    }
+
+    fn put_kept_aside(&self, project: ProjectId, kept: &KeptAside) -> Result<(), StoreError> {
+        checks::put_kept(self, project, kept)
+    }
+
+    fn remove_kept_aside(
+        &self,
+        project: ProjectId,
+        job: JobId,
+        setup: SetupId,
+        source: SourceId,
+        index: Option<u32>,
+    ) -> Result<(), StoreError> {
+        checks::remove_kept(self, project, (job, setup, source, index))
+    }
+
+    fn kept_aside(&self, project: ProjectId) -> Result<Vec<KeptAside>, StoreError> {
+        checks::kept(self, project)
     }
 }

@@ -145,8 +145,9 @@ export function keepsTimes(rule: TaskRules, sources: SourceFile[]): boolean {
 }
 
 /**
- * The formats to offer: a searchable PDF and ALTO only when a chosen model reports where text
- * sits on the page (Tesseract, Mistral OCR), and a translation's subtitles only when it reads a
+ * The formats to offer: a searchable PDF, ALTO and PAGE XML only when a chosen model reports
+ * where text sits on the page (Tesseract, Mistral OCR), and a translation's subtitles only when it
+ * reads a
  * transcript that kept its times. Without `sources` (a pipeline, whose texts come later) the
  * subtitles stay, and the engine leaves them out of a job whose text has no times.
  */

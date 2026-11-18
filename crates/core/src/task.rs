@@ -100,11 +100,11 @@ impl Task {
     }
 
     /// The formats the task's results are written in, in the order New job offers them. A
-    /// searchable PDF and ALTO need a model that reports where text sits on the page.
+    /// searchable PDF, ALTO and PAGE XML need a model that reports where text sits on the page.
     pub fn formats(self) -> &'static [ExportFormat] {
         use ExportFormat::*;
         match self {
-            Self::TextExtraction => &[Txt, Markdown, Docx, Json, Csv, SearchablePdf, Alto],
+            Self::TextExtraction => &[Txt, Markdown, Docx, Json, Csv, SearchablePdf, Alto, PageXml],
             // A translation writes subtitles of a transcript whose lines kept their times
             // (`aligned`); of any other text, it does not ([`Task::writes`]).
             Self::AudioTranscription | Self::Translation => {
