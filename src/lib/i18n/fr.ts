@@ -1876,6 +1876,16 @@ export const fr: Messages = {
 			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner les modèles de langue hors ligne : les installateurs et la version du Store le contiennent.',
 		llmCpu: (missing: string) =>
 			`Il manque à ce processeur ${missing}, dont les modèles de langue hors ligne ont besoin. Utilisez plutôt un modèle en ligne.`,
+		embeddingTitle: 'Recherche par le sens',
+		embeddingHint:
+			'Un petit modèle de Google, qui s’exécute sur cet ordinateur, grâce auquel la recherche d’un projet trouve des passages d’après ce qu’ils veulent dire, pas seulement d’après leurs mots, et qui dessine la carte de ses documents : rien n’est envoyé, aucune clé ni aucun compte n’est nécessaire, et il fonctionne sans connexion internet une fois téléchargé. Il lit plus d’une centaine de langues. Il est rapide, même sur le processeur, et demande moins d’un gigaoctet de mémoire libre pendant qu’il travaille.',
+		embeddingNoEngine:
+			'Cette copie de Kalamu a été compilée sans le moteur qui fait tourner la recherche par le sens hors ligne : les installateurs et la version du Store le contiennent.',
+		embeddingCpu: (missing: string) =>
+			`Il manque à ce processeur ${missing}, dont la recherche par le sens hors ligne a besoin. Choisissez plutôt un modèle en ligne pour elle.`,
+		embeddingName: 'EmbeddingGemma 2',
+		embeddingDescription:
+			'Le modèle de Google qui rapproche les textes de sens voisin, pour les textes seulement, dans plus d’une centaine de langues.',
 		addLanguageData: 'Télécharger une langue pour Tesseract',
 		findLanguageData: 'Chercher une langue par son nom',
 		oneDownload:

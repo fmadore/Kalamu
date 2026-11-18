@@ -382,7 +382,8 @@ export function isInstalled(provider: string, model: string): boolean {
 	const status = [
 		...(app.offline?.models ?? []),
 		...(app.offline?.ocr_models ?? []),
-		...(app.offline?.llm_models ?? [])
+		...(app.offline?.llm_models ?? []),
+		...(app.offline?.embedding_models ?? [])
 	].find((m) => m.id === model);
 	return status ? status.installed : app.offline !== null;
 }

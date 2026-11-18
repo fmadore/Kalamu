@@ -60,6 +60,8 @@ pub struct AppState {
     pub vision: Arc<kalamu_offline::Vision>,
     /// The offline language models, each with its encoder.
     pub llm: Arc<kalamu_offline::LocalLlm>,
+    /// The offline embedding model of the search by meaning.
+    pub embedder: Arc<kalamu_offline::LocalEmbedder>,
     pub keys: Arc<CredentialKeys>,
     /// Folders and files the researcher handed the app, kept where a sandbox requires it.
     pub grants: crate::grants::Grants,

@@ -66,6 +66,20 @@ export function installMock(): void {
 		]
 	});
 	seedWorkflows(...samplePipelines(), summaries[0], source);
+	// `idle`: no Whisper download running, so the other models' downloads can start.
+	const whisperDownloading = !params.has('idle');
+	// The search by meaning's model: a download takes a second and a half here.
+	const embedding = { installed: false, downloading: false, received: 0 };
+	const downloadEmbedding = (): Promise<null> => {
+		Object.assign(embedding, { downloading: true, received: 120_000_000 });
+		return new Promise((resolve) =>
+			setTimeout(() => {
+				Object.assign(embedding, { installed: embedding.downloading, downloading: false });
+				embedding.received = 0;
+				resolve(null);
+			}, 1500)
+		);
+	};
 	const answer = (cmd: string, args?: unknown): unknown => {
 		const a = (args ?? {}) as Record<string, unknown>;
 		const profile = profileCommand(cmd, a);
@@ -117,7 +131,7 @@ export function installMock(): void {
 							id: mod.id,
 							bytes: [574_041_195, 1_081_140_203, 190_085_487, 59_707_625][i] ?? 0,
 							installed: i === 0,
-							downloading: i === 2,
+							downloading: i === 2 && whisperDownloading,
 							downloaded_bytes: i === 2 ? 71_000_000 : 0,
 							in_use: false,
 							languages: []
@@ -171,8 +185,29 @@ export function installMock(): void {
 					})),
 					llm_engine: true,
 					llm_devices: { 'gemma-4-e4b': 'cpu', 'gemma-4-e2b': 'cpu' },
+					// The search by meaning's model, not downloaded until asked.
+					embedding_models: [
+						{
+							id: 'embeddinggemma-2',
+							bytes: 309_855_456,
+							installed: embedding.installed,
+							downloading: embedding.downloading,
+							downloaded_bytes: embedding.received,
+							in_use: false,
+							languages: []
+						}
+					],
+					embedding_engine: true,
 					missing_cpu: []
 				};
+			case 'download_model':
+				return a.id === 'embeddinggemma-2' ? downloadEmbedding() : null;
+			case 'cancel_model_download':
+				Object.assign(embedding, { downloading: false, received: 0 });
+				return null;
+			case 'remove_model':
+				if (a.id === 'embeddinggemma-2') embedding.installed = false;
+				return null;
 			case 'key_status':
 				return catalog.providers.map((p) => ({ provider: p.id, saved: p.id !== 'openai' }));
 			case 'estimate_cost': {

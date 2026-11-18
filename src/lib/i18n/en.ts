@@ -1770,6 +1770,16 @@ export const en = {
 			'This copy of Kalamu was built without the engine that runs offline language models: the installers and the Store’s version carry it.',
 		llmCpu: (missing: string) =>
 			`This processor lacks ${missing}, which offline language models need. Use a cloud model instead.`,
+		embeddingTitle: 'Search by meaning',
+		embeddingHint:
+			'A small model from Google, run on this computer, that lets a project’s search find passages by what they mean, not only by their words, and draws the map of its documents: nothing is sent, no key or account is needed, and it works without an internet connection once downloaded. It reads more than a hundred languages. It is quick, even on a processor, and needs less than a gigabyte of free memory while it runs.',
+		embeddingNoEngine:
+			'This copy of Kalamu was built without the engine that runs the offline search by meaning: the installers and the Store’s version carry it.',
+		embeddingCpu: (missing: string) =>
+			`This processor lacks ${missing}, which the offline search by meaning needs. Choose a cloud model for it instead.`,
+		embeddingName: 'EmbeddingGemma 2',
+		embeddingDescription:
+			'Google’s model that places texts of like meaning close together, for texts only, in more than a hundred languages.',
 		addLanguageData: 'Download a language for Tesseract',
 		findLanguageData: 'Find a language by its name',
 		oneDownload: 'One download at a time: the next can start once this one is done.',

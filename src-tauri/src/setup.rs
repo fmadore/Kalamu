@@ -252,6 +252,11 @@ fn assemble(
             "llama.cpp's text program not found: offline language models are unavailable"
         );
     }
+    if llama.is_some() && !llama.as_ref().is_some_and(kalamu_offline::Llama::embeds) {
+        tracing::warn!(
+            "llama.cpp's embedding program not found: the offline search by meaning is unavailable"
+        );
+    }
     // On Windows, its builds for the graphics processor (Vulkan; OpenCL for Snapdragon's
     // Adreno), asked which one they find once the app is set up (`find_graphics_processor`).
     let graphics = [
@@ -279,6 +284,14 @@ fn assemble(
     ));
     let llm = Arc::new(kalamu_offline::LocalLlm::new(
         kalamu_offline::ModelManager::new(data.join("language-models"), &kalamu_offline::LLM),
+        llama.clone(),
+    ));
+    // The search by meaning's model on this computer, taking turns with them.
+    let embedder = Arc::new(kalamu_offline::LocalEmbedder::new(
+        kalamu_offline::ModelManager::new(
+            data.join("embedding-models"),
+            &kalamu_offline::EMBEDDING,
+        ),
         llama.clone(),
     ));
     // Whisper on Windows also has a helper for the graphics processor (Vulkan), which follows
@@ -335,6 +348,7 @@ fn assemble(
         llama,
         vision,
         llm,
+        embedder,
         keys,
         grants,
         settings: Mutex::new(settings),
