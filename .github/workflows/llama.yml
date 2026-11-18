@@ -6,7 +6,10 @@ name: llama.cpp
 # offline language models read texts with (docs/decisions/2026-11-07-offline-language-models.md),
 # from the pinned release's source, for the same processors as the Whisper linked into the app
 # (`.cargo/config.toml`). MIT licensed. The processor and Vulkan archives hold both programs; the
-# OpenCL archive the multimodal program only.
+# OpenCL archive the multimodal program only. The processor archives also hold the embedding
+# program (`llama-embedding`), which the offline search by meaning runs EmbeddingGemma 2 in
+# (crates/offline/src/embed/): a model this small needs no Vulkan build, and on a Mac the
+# processor build already uses Metal.
 #
 # - The processor build, one self-contained executable each for Windows x64 and ARM64, and for
 #   macOS on Apple Silicon, where it uses the graphics processor through Metal.
@@ -63,6 +66,7 @@ jobs:
             variant: cpu
             program: llama-mtmd-cli
             text: llama-completion
+            embedding: llama-embedding
             archive: llama
             # AVX2 with FMA and F16C, as Whisper (`crates/offline/src/cpu.rs` checks them).
             flags: >-
@@ -73,6 +77,7 @@ jobs:
             variant: cpu
             program: llama-mtmd-cli
             text: llama-completion
+            embedding: llama-embedding
             archive: llama
             flags: -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16
           - triple: aarch64-apple-darwin
@@ -80,6 +85,7 @@ jobs:
             variant: cpu
             program: llama-mtmd-cli
             text: llama-completion
+            embedding: llama-embedding
             archive: llama
             # Metal, its shaders built into the program; macOS 13 and later, as the app.
             flags: >-
@@ -201,9 +207,12 @@ jobs:
       # Static throughout: llama.cpp, ggml and the C runtime inside the one executable, so
       # nothing is shipped beside it but what the system or its graphics driver provides. No
       # OpenMP (its runtime is a library of its own), no network (the models are downloaded by
-      # the app), no server, tests or examples.
+      # the app), no server or tests, and no examples but for the embedding program, which
+      # llama.cpp keeps among them: the processor builds turn them on to build that one target.
       - name: Build
         run: |
+          examples=OFF
+          [ -n "${{ matrix.embedding }}" ] && examples=ON
           BUILD=(
             -DCMAKE_BUILD_TYPE=Release
             -DBUILD_SHARED_LIBS=OFF
@@ -213,7 +222,7 @@ jobs:
             -DGGML_BACKEND_DL=OFF
             -DLLAMA_OPENSSL=OFF
             -DLLAMA_BUILD_TESTS=OFF
-            -DLLAMA_BUILD_EXAMPLES=OFF
+            -DLLAMA_BUILD_EXAMPLES=${examples}
             -DLLAMA_BUILD_SERVER=OFF
             -DLLAMA_BUILD_APP=OFF
             -DLLAMA_BUILD_TOOLS=ON
@@ -223,6 +232,7 @@ jobs:
           cmake -S "llama.cpp-${LLAMA_TAG}" -B build "${BUILD[@]}"
           targets=(llama-mtmd-cli)
           [ -n "${{ matrix.text }}" ] && targets+=(llama-completion)
+          [ -n "${{ matrix.embedding }}" ] && targets+=(llama-embedding)
           cmake --build build --config Release --target "${targets[@]}" -j 4
           {
             echo "llama.cpp ${LLAMA_TAG}, built by .github/workflows/llama.yml in ${GITHUB_REPOSITORY}, run ${GITHUB_RUN_ID}."
@@ -246,6 +256,11 @@ jobs:
             text=$(find build -name "llama-completion${exe}" -type f | head -1)
             cp "$text" "$dir/${{ matrix.text }}${exe}"
             names+=("${{ matrix.text }}${exe}")
+          fi
+          if [ -n "${{ matrix.embedding }}" ]; then
+            embedding=$(find build -name "llama-embedding${exe}" -type f | head -1)
+            cp "$embedding" "$dir/${{ matrix.embedding }}${exe}"
+            names+=("${{ matrix.embedding }}${exe}")
           fi
           cp "llama.cpp-${LLAMA_TAG}/LICENSE" "$dir/licenses/llama.cpp-MIT.txt"
           cp BUILD.txt "$dir/"
@@ -291,6 +306,7 @@ jobs:
           echo "DIR=$dir" >> "$GITHUB_ENV"
           echo "PROGRAM=$name" >> "$GITHUB_ENV"
           echo "TEXT_PROGRAM=${{ matrix.text }}${exe}" >> "$GITHUB_ENV"
+          echo "EMBEDDING_PROGRAM=${{ matrix.embedding }}${exe}" >> "$GITHUB_ENV"
 
       # The OCR models' files, pinned as in crates/offline/src/vision/mod.rs.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -439,6 +455,76 @@ jobs:
             exit 1
           fi
 
+      # EmbeddingGemma 2's text model, pinned as in crates/offline/src/embed/mod.rs.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: matrix.embedding != ''
+        id: embeddinggemma
+        with:
+          path: embeddinggemma
+          key: embeddinggemma-2-q8_0-6ea3e3a
+
+      - name: EmbeddingGemma 2
+        if: matrix.embedding != '' && steps.embeddinggemma.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p embeddinggemma
+          curl -fsSL --retry 5 --retry-delay 15 --retry-all-errors -o embeddinggemma/embeddinggemma-2-Q8_0.gguf \
+            "https://huggingface.co/ggml-org/embeddinggemma-2-GGUF/resolve/6ea3e3a309d12a4779cfda98b8c19800d2d5da71/embeddinggemma-2-Q8_0.gguf"
+          echo "2188ac1deca4b77dffefd603c2776a9d76d9d74ec01841392982ebb840b09135  embeddinggemma/embeddinggemma-2-Q8_0.gguf" | $SHA256 -c -
+
+      # The arguments the app gives (embed/command.rs, `arguments`): the texts from one file,
+      # each with the task's prefix, split at the app's marker, the vectors printed as JSON.
+      # Fails unless there is one vector of 768 numbers of length 1 for each text (one of them
+      # holds lines, quotes and Arabic) and the question lies nearer the passage that answers it.
+      - name: Embed passages and a question with EmbeddingGemma 2
+        if: matrix.embedding != ''
+        run: |
+          if [ "$RUNNER_OS" = macOS ]; then logical=$(sysctl -n hw.ncpu); else logical=$(nproc); fi
+          case "${{ matrix.triple }}" in
+            x86_64-*) threads=$(( logical / 2 )) ;;
+            *) threads=$(( logical - 1 )) ;;
+          esac
+          [ "$threads" -lt 1 ] && threads=1
+          [ "$threads" -gt 8 ] && threads=8
+          sep='<#kalamu-text#>'
+          printf '%s' "title: none | text: Dakar, le 3 mai 1957. Les cheminots de la ligne Dakar-Niger sont en grève pour leurs salaires.${sep}title: none | text: La récolte d'arachide de la région de Kaolack a été « abondante » cette année.
+          Deuxième ligne, \"citée\".${sep}title: none | text: مدرسة قرآنية في تمبكتو" > passages.txt
+          printf '%s' "task: search result | query: grève des travailleurs du chemin de fer" > query.txt
+          embed() {
+            "$DIR/$EMBEDDING_PROGRAM" -m embeddinggemma/embeddinggemma-2-Q8_0.gguf -f "$1" \
+              --embd-separator "$sep" --embd-output-format array --embd-normalize 2 --pooling mean \
+              --no-escape -c 4096 -b 4096 -ub 4096 -t "$threads" -ngl 99 --no-warmup \
+              > "$2.json" 2> "$2.log" || { tail -40 "$2.log"; exit 1; }
+          }
+          start=$(date +%s)
+          embed passages.txt passages
+          embed query.txt query
+          end=$(date +%s)
+          if [ "$RUNNER_OS" = Windows ]; then py=python; else py=python3; fi
+          check='
+          import json, math
+          def read(name):
+              text = open(name, encoding="utf-8").read()
+              return json.loads(text[text.index("["):text.rindex("]") + 1])
+          passages, query = read("passages.json"), read("query.json")
+          assert len(passages) == 3 and len(query) == 1, (len(passages), len(query))
+          for v in passages + query:
+              assert len(v) == 768, len(v)
+              assert abs(math.sqrt(sum(x * x for x in v)) - 1) < 1e-3
+          dot = lambda a, b: sum(x * y for x, y in zip(a, b))
+          strike, harvest = dot(query[0], passages[0]), dot(query[0], passages[1])
+          print(f"strike {strike:.3f}, harvest {harvest:.3f}")
+          assert strike > harvest
+          '
+          {
+            echo "### embeddinggemma-2: $((end - start)) s for two runs on ${{ matrix.triple }} ($threads threads)"
+            echo
+            echo '```'
+            # The step's shell has pipefail: a failed check fails it through `tee`.
+            "$py" -c "$check" || { tail -40 passages.log; exit 1; }
+            echo '```'
+            grep -E 'llama_perf_context_print|using device|pooling' passages.log | tail -6 | sed 's/^/    /' || true
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
       # Kept even when a model misreads the page, so its answer can be read.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
@@ -487,7 +573,7 @@ jobs:
         run: |
           if jq -e --arg tag "$LLAMA_TAG" \
             '.version == $tag
-              and .programs == ["llama-mtmd-cli", "llama-completion"]
+              and .programs == ["llama-mtmd-cli", "llama-completion", "llama-embedding"]
               and ([.archives[].sha256] | all(length == 64))
               and ((.vulkan // {}) | has("x86_64-pc-windows-msvc") and has("aarch64-pc-windows-msvc"))
               and ([.vulkan[].sha256] | all(length == 64))
@@ -517,7 +603,7 @@ jobs:
           for t in $VULKAN_TRIPLES; do files+=("dist/llama-vulkan-${LLAMA_TAG}-${t}.zip"); done
           for t in $OPENCL_TRIPLES; do files+=("dist/llama-opencl-${LLAMA_TAG}-${t}.zip"); done
           {
-            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`) and text program (\`llama-completion\`) as bundled with Kalamu to run the offline OCR and language models: llama.cpp ${LLAMA_TAG}, static executables for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal), and for Windows x64 and ARM64 a second pair that uses the graphics processor through Vulkan (\`llama-mtmd-cli-vulkan\`, \`llama-completion-vulkan\`, Vulkan SDK ${VULKAN_SDK_VERSION}), and for Windows ARM64 a multimodal program for Snapdragon's Adreno through OpenCL (\`llama-mtmd-cli-opencl\`, Khronos headers ${OPENCL_TAG}). This release only holds the archives the app is built with; it is not an app release."
+            echo "llama.cpp's multimodal program (\`llama-mtmd-cli\`), text program (\`llama-completion\`) and embedding program (\`llama-embedding\`) as bundled with Kalamu to run the offline OCR and language models and the offline search by meaning: llama.cpp ${LLAMA_TAG}, static executables for Windows x64, Windows ARM64 and macOS on Apple Silicon (Metal), and for Windows x64 and ARM64 a second pair that uses the graphics processor through Vulkan (\`llama-mtmd-cli-vulkan\`, \`llama-completion-vulkan\`, Vulkan SDK ${VULKAN_SDK_VERSION}), and for Windows ARM64 a multimodal program for Snapdragon's Adreno through OpenCL (\`llama-mtmd-cli-opencl\`, Khronos headers ${OPENCL_TAG}). This release only holds the archives the app is built with; it is not an app release."
             echo
             echo "- **Licence**: MIT (\`licenses/llama.cpp-MIT.txt\` in each archive; the Vulkan and OpenCL builds add their headers' licences). llama.cpp is not modified."
             echo "- **Source**: [${LLAMA_TAG}](https://github.com/ggml-org/llama.cpp/releases/tag/${LLAMA_TAG}), source archive SHA-256 \`${LLAMA_SHA256}\`; each archive's \`BUILD.txt\` gives the build line."
@@ -530,7 +616,7 @@ jobs:
             done
           } > notes.md
           gh release create "$release" "${files[@]}" --target "$HEAD_SHA" \
-            --title "llama.cpp ${LLAMA_TAG} (offline OCR and language models) for Kalamu" \
+            --title "llama.cpp ${LLAMA_TAG} (offline OCR, language and embedding models) for Kalamu" \
             --notes-file notes.md --prerelease --latest=false
           pins() {
             local prefix=$1; shift
@@ -546,7 +632,7 @@ jobs:
           opencl=$(pins llama-opencl $OPENCL_TRIPLES)
           jq --tab --arg release "$release" --arg version "$LLAMA_TAG" \
             --argjson archives "$archives" --argjson vulkan "$vulkan" --argjson opencl "$opencl" \
-            '.release = $release | .version = $version | .programs = ["llama-mtmd-cli", "llama-completion"] | .archives = $archives | .vulkan = $vulkan | .opencl = $opencl' \
+            '.release = $release | .version = $version | .programs = ["llama-mtmd-cli", "llama-completion", "llama-embedding"] | .archives = $archives | .vulkan = $vulkan | .opencl = $opencl' \
             scripts/llama.json > llama.json
           mv llama.json scripts/llama.json
           # As the repository's Prettier writes it, so CI's format check passes on the pin commit.

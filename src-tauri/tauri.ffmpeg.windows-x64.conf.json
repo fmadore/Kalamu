@@ -8,6 +8,7 @@
       "binaries/llama-mtmd-cli-vulkan",
       "binaries/llama-completion",
       "binaries/llama-completion-vulkan",
+      "binaries/llama-embedding",
       "binaries/whisper-vulkan"
     ],
     "resources": {

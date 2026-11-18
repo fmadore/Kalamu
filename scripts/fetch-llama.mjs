@@ -4,7 +4,8 @@
 // and llama-completion-<target> (with `.exe` on Windows), on Windows also
 // llama-mtmd-cli-vulkan-<target>.exe and llama-completion-vulkan-<target>.exe, which use the
 // graphics processor, and on Windows ARM64 llama-mtmd-cli-opencl-<target>.exe, for Snapdragon's
-// Adreno, plus their licences. Downloads only the archives pinned in scripts/llama.json and
+// Adreno, plus their licences. The processor build also brings llama-embedding-<target>, which
+// runs the offline search by meaning's model. Downloads only the archives pinned in scripts/llama.json and
 // checks their SHA-256 first.
 //
 //   node scripts/fetch-llama.mjs [target-triple]    (default: this machine's system and architecture)
@@ -35,11 +36,13 @@ const exe = windows ? '.exe' : '';
 // The processor build everywhere; the Vulkan build on Windows only (a Mac's build already uses
 // the graphics processor through Metal); the OpenCL build on Windows ARM64 only.
 // `text`: the build's text program, for the language models; the OpenCL build has none.
+// `embedding`: the embedding program, for the search by meaning; the processor build's only.
 const builds = [
 	{
 		archive: 'llama',
 		program: 'llama-mtmd-cli',
 		text: 'llama-completion',
+		embedding: 'llama-embedding',
 		pins: pin.archives,
 		build: ''
 	}
@@ -70,7 +73,7 @@ const tar =
 		: 'tar';
 
 mkdirSync('src-tauri/binaries/licenses', { recursive: true });
-for (const { archive, program, text, pins, build } of builds) {
+for (const { archive, program, text, embedding, pins, build } of builds) {
 	const expected = pins[target]?.sha256;
 	if (!expected) {
 		console.error(
@@ -87,7 +90,8 @@ for (const { archive, program, text, pins, build } of builds) {
 	writeFileSync(join(work, name), bytes);
 	execFileSync(tar, ['-xf', join(work, name), '-C', work]);
 
-	for (const name of [program, text].filter(Boolean)) {
+	const programs = [program, text, embedding].filter(Boolean);
+	for (const name of programs) {
 		if (!existsSync(join(work, `${name}${exe}`))) {
 			throw new Error(
 				`${archive}-${pin.version}-${target}.zip has no ${name}: run the llama.cpp workflow again and pin its archives.`
@@ -108,6 +112,6 @@ for (const { archive, program, text, pins, build } of builds) {
 		if (existsSync(path)) copyFileSync(path, `src-tauri/binaries/licenses/${licence}`);
 	}
 	console.log(
-		`${[program, text].filter(Boolean).join(' and ')} (llama.cpp ${pin.version}) for ${target} installed in src-tauri/binaries.`
+		`${programs.join(', ')} (llama.cpp ${pin.version}) for ${target} installed in src-tauri/binaries.`
 	);
 }
