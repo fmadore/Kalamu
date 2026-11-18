@@ -15,6 +15,8 @@
 	import Icon from './Icon.svelte';
 	import MarkedText from './MarkedText.svelte';
 	import PageStrip from './PageStrip.svelte';
+	import PassageDialog from './PassageDialog.svelte';
+	import PassageMenu from './PassageMenu.svelte';
 	import ReadingsPopover from './ReadingsPopover.svelte';
 	import RegionLayer from './RegionLayer.svelte';
 	import RegionNote from './RegionNote.svelte';
@@ -26,14 +28,17 @@
 	import SpeakerList from './SpeakerList.svelte';
 	import VideoPane from './VideoPane.svelte';
 	import { apparatus, lines, siglum, type Entry } from '#lib/apparatus.js';
+	import type { Correction } from '#lib/bindings/Correction.js';
 	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
 	import { caretTop, growWithText, placeInText, reveal } from '#lib/caret.js';
 	import { Comparison, shownText, witnessesOf, witnessName } from '#lib/compare.svelte.js';
+	import { describeError } from '#lib/errors.js';
 	import { clearHeard, markHeard, placeLines } from '#lib/heard.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { shifted } from '#lib/platform.js';
+	import { selectionBox, selectionInText, type Chosen } from '#lib/passage.js';
 	import { cutOffNotes, pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import type { Rotation } from '#lib/pdf.js';
 	import { Readings, wordsIn } from '#lib/readings.svelte.js';
@@ -42,7 +47,13 @@
 	import { ReviewSearch } from '#lib/reviewSearch.svelte.js';
 	import { FIELDS } from '#lib/keys.js';
 	import { describeScore } from '#lib/scores.js';
-	import { guardDraft, leaveThen, shortcutsHeld, type ReviewFind } from '#lib/state.svelte.js';
+	import {
+		guardDraft,
+		leaveThen,
+		shortcutsHeld,
+		toast,
+		type ReviewFind
+	} from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 	import { withReading } from '#lib/withReading.js';
 
@@ -303,6 +314,19 @@
 
 	function onKey(e: KeyboardEvent) {
 		if (shortcutsHeld()) return;
+		// The menu key, or Shift+F10, on a selection in the text: its menu, under it.
+		if (
+			(e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) &&
+			offerPassage &&
+			!passageMenu
+		) {
+			const at = selectionInText(textPane, base);
+			if (at) {
+				e.preventDefault();
+				openPassageMenu(at, null);
+				return;
+			}
+		}
 		const target = e.target as HTMLElement;
 		const inField = target.closest(FIELDS) !== null;
 		// Escape closes the readings from anywhere but another field, their own included.
@@ -324,6 +348,104 @@
 
 	const editedSetup = $derived(setups.find((s) => s.id === editing?.setupId));
 
+	/** A passage of the text shown can be corrected by a model: a text read, not being edited. */
+	const offerPassage = $derived(
+		!editing &&
+			lead !== undefined &&
+			lead.ai_text !== null &&
+			lead.status !== 'failed' &&
+			job !== null &&
+			job.task !== 'analysis' &&
+			job.task !== 'contents'
+	);
+	/** The text selected in the text shown, while there is some. */
+	let chosen = $state<Chosen | null>(null);
+	/** The menu opened from a selection, and where. */
+	let passageMenu = $state<{ x: number; y: number; chosen: Chosen } | null>(null);
+	/** The passage a model is being asked to correct. */
+	let passageAsk = $state<Chosen | null>(null);
+
+	$effect(() => {
+		const update = () => (chosen = offerPassage ? selectionInText(textPane, base) : null);
+		update();
+		document.addEventListener('selectionchange', update);
+		return () => document.removeEventListener('selectionchange', update);
+	});
+
+	/** Opens the selection's menu at the pointer, or under the selection from the keyboard. */
+	function openPassageMenu(at: Chosen, pointer: { x: number; y: number } | null) {
+		const box = pointer ? null : selectionBox();
+		passageMenu = {
+			x: pointer?.x ?? box?.left ?? 0,
+			y: pointer?.y ?? box?.bottom ?? 0,
+			chosen: at
+		};
+	}
+
+	/** A right click on the selection, or the menu key: Kalamu's menu where the selection is in
+	 * the text, the system's own everywhere else. */
+	function onContextMenu(e: MouseEvent) {
+		if (passageMenu) {
+			e.preventDefault();
+			return;
+		}
+		if (!offerPassage || !textPane) return;
+		const target = e.target instanceof Node ? e.target : null;
+		const fromKeys = e.clientX === 0 && e.clientY === 0;
+		const inPane = target !== null && textPane.contains(target);
+		if (!inPane && !(fromKeys && (target === document.body || target === null))) return;
+		const at = selectionInText(textPane, base);
+		if (!at) return;
+		e.preventDefault();
+		const pointer = fromKeys ? null : { x: e.clientX, y: e.clientY };
+		// WebKit on macOS opens the menu as the button goes down: the menu waits for it to come
+		// up, or that release would close it again at once.
+		if (e.buttons === 0) {
+			openPassageMenu(at, pointer);
+			return;
+		}
+		const open = () => setTimeout(() => openPassageMenu(at, pointer));
+		addEventListener('pointerup', open, { once: true });
+	}
+
+	function correctPassage(at: Chosen) {
+		passageMenu = null;
+		passageAsk = at;
+	}
+
+	/** Gives the focus back to the text once the dialog is gone: to the pane, or, where the
+	 * pane is no tab stop of its own, to the text's own tab stop. */
+	async function backToText() {
+		passageAsk = null;
+		await tick();
+		const pane = textPane;
+		if (!pane) return;
+		const stop = pane.hasAttribute('tabindex')
+			? pane
+			: (pane.querySelector<HTMLElement>('.text.numbered [tabindex="0"]') ?? pane);
+		if (stop === pane && !pane.hasAttribute('tabindex')) pane.tabIndex = -1;
+		stop.focus({ preventScroll: true });
+	}
+
+	async function passageAccepted(id: string, before: Correction) {
+		passageAsk = null;
+		await review.refresh();
+		await backToText();
+		toast(m.passage.accepted, {
+			action: { label: m.common.undo, run: () => void undoPassage(id, before) }
+		});
+	}
+
+	async function undoPassage(id: string, before: Correction) {
+		try {
+			await api.undoPassage(id, before);
+			await review.refresh();
+			toast(m.passage.undone);
+		} catch (e) {
+			review.error = describeError(e, m);
+		}
+	}
+
 	onMount(() => {
 		void review.load();
 		return guardDraft({
@@ -333,7 +455,11 @@
 	});
 </script>
 
-<svelte:window onkeydown={onKey} onpointerdown={readings.onPointerDown} />
+<svelte:window
+	onkeydown={onKey}
+	onpointerdown={readings.onPointerDown}
+	oncontextmenu={onContextMenu}
+/>
 
 {#snippet pager()}
 	<button
@@ -376,6 +502,17 @@
 	{#if witnesses.length > 0}
 		<button class="btn toggle" aria-pressed={comparison.open} onclick={() => layout.toggleCompare()}
 			><Icon name="compare" size={14} />{m.review.compare}</button
+		>
+	{/if}
+	{#if chosen && offerPassage}
+		{@const at = chosen}
+		<!-- Pressed without taking the selection away, so it stays marked in the text. -->
+		<button
+			class="btn"
+			title={m.passage.buttonHint}
+			onmousedown={(e) => e.preventDefault()}
+			onclick={() => correctPassage(at)}
+			><Icon name="text_correction" size={14} />{m.passage.button}</button
 		>
 	{/if}
 	{#if lead && lead.ai_text !== null && setups[0] && !editing}
@@ -662,6 +799,29 @@
 		/>
 	{/if}
 </ReviewFrame>
+
+{#if passageMenu}
+	{@const menu = passageMenu}
+	<PassageMenu
+		text={base.slice(menu.chosen.start, menu.chosen.end)}
+		x={menu.x}
+		y={menu.y}
+		oncorrect={() => correctPassage(menu.chosen)}
+		onclose={() => (passageMenu = null)}
+	/>
+{/if}
+{#if passageAsk && job && setups[0]}
+	<PassageDialog
+		{job}
+		setupId={setups[0].id}
+		{sourceId}
+		{index}
+		{base}
+		chosen={passageAsk}
+		onaccepted={passageAccepted}
+		onclose={backToText}
+	/>
+{/if}
 
 <style>
 	.pages {

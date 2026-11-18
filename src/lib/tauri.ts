@@ -12,6 +12,9 @@ import type { Collection } from './bindings/Collection.js';
 import type { Correction } from './bindings/Correction.js';
 import type { DictionaryView } from './bindings/DictionaryView.js';
 import type { Pace } from './bindings/Pace.js';
+import type { PassageAsk } from './bindings/PassageAsk.js';
+import type { PassageEstimate } from './bindings/PassageEstimate.js';
+import type { PassageProposal } from './bindings/PassageProposal.js';
 import type { ProposalPlan } from './bindings/ProposalPlan.js';
 import type { ProposalsView } from './bindings/ProposalsView.js';
 import type { QueueItemKey } from './bindings/QueueItemKey.js';
@@ -255,6 +258,15 @@ export const api = {
 	 * corrections as they stood, to put back, and what became of each item. */
 	addListed: (jobId: string, sourceId: string, index: number, key: string, items: string[]) =>
 		invoke<ListedAdded>('add_listed', { jobId, sourceId, index, key, items }),
+	/** What asking a model to correct a passage of the review would cost; refused as asking. */
+	passageEstimate: (ask: PassageAsk) => invoke<PassageEstimate>('passage_estimate', { ask }),
+	/** Asks a model to correct a passage, through the engine: its proposal, applied by nothing. */
+	askPassage: (ask: PassageAsk) => invoke<PassageProposal>('ask_passage', { ask }),
+	cancelPassage: (id: string) => invoke<void>('cancel_passage', { id }),
+	/** Writes a proposal, or its edit, into the piece's corrections; the correction as it stood. */
+	acceptPassage: (id: string, text: string) => invoke<Correction>('accept_passage', { id, text }),
+	discardPassage: (id: string) => invoke<void>('discard_passage', { id }),
+	undoPassage: (id: string, before: Correction) => invoke<void>('undo_passage', { id, before }),
 	saveSpeakerNames: (jobId: string, names: SpeakerNames) =>
 		invoke<void>('save_speaker_names', { jobId, names }),
 	exportSource: (jobId: string, setupId: string, sourceId: string) =>

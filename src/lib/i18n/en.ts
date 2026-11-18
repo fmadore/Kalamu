@@ -1644,6 +1644,59 @@ export const en = {
 		rowsKept:
 			'Each change is saved at once, apart from the model’s rows, which stay as they were. Separate a list’s names with semicolons.'
 	},
+	/** Correcting a passage selected in the text review with a model. */
+	passage: {
+		menu: 'What to do with the selected text',
+		copy: 'Copy',
+		correct: 'Correct this passage with a model…',
+		button: 'Correct with a model…',
+		buttonHint:
+			'Ask a model to correct the selected text. Nothing changes until you accept its proposal.',
+		title: 'Correct a passage with a model',
+		passage: 'Selected passage',
+		context: 'Context sent with it, not to be changed',
+		chars: (n: number) => (n === 1 ? '1 character' : `${n} characters`),
+		sentCloud: (provider: string, context: number) =>
+			`Sent to ${provider}: the selected passage, and up to ${context} characters before and after it from the same page or part, marked as context the model must not change. Nothing else from the document is sent.`,
+		sentOffline: (model: string) => `Read on this computer by ${model}; nothing is sent.`,
+		cut: 'The selection went beyond the text of this page or part: only that text is taken.',
+		tooShort: (n: number) => `Select at least ${n} letters or figures.`,
+		tooLong: (n: number, max: number) =>
+			`The selection is ${n} characters long. At most ${max} are sent at once, so that the corrected passage comes back whole in one answer; correct a longer stretch with a correction job.`,
+		costAbout: (usd: string) => `About ${usd}`,
+		costStored: 'Asked before: the proposal kept is shown again, at no cost.',
+		costOffline: 'On this computer, at no cost.',
+		costUnknown: 'This model has no published price.',
+		noKey: (provider: string) => `Add a key for ${provider} in Settings first.`,
+		notInstalled: (model: string) => `Download ${model} in Settings first.`,
+		ask: 'Ask for a proposal',
+		waiting: (model: string) => `Waiting for ${model}…`,
+		stop: 'Stop waiting',
+		stopped:
+			'Stopped waiting. If the answer still comes, it is kept, and asking again costs nothing.',
+		ready: 'Proposal ready.',
+		proposal: 'Proposed correction, with the changes marked',
+		removed: 'removed',
+		added: 'added',
+		notes: {
+			context_removed: 'The model gave back some of the context; it was taken out.',
+			commentary_removed:
+				'The model added words of its own around the passage; they were taken out.',
+			length_changed: 'The proposal is much longer or shorter than the passage: check it closely.',
+			unchanged: 'The model found nothing to correct.'
+		},
+		accept: 'Accept',
+		edit: 'Edit before accepting',
+		editLabel: 'Proposed correction, to edit',
+		discard: 'Discard',
+		failed: (reason: string) =>
+			`No proposal (${reason}). An answer that is not a correction of the passage is not offered: try again, or another model or prompt.`,
+		changed:
+			'The text under the selection changed while the model was answering, so the proposal was not applied.',
+		lookAgain: 'Look again',
+		accepted: 'Passage corrected; the result files follow in a few seconds.',
+		undone: 'Correction of the passage undone.'
+	},
 	prompts: {
 		title: 'Prompts',
 		hint: 'Each task comes with tested prompts. Edit one to adapt it; your version replaces it until you reset it. Variables: {languages}, {speakers}.',
@@ -1927,6 +1980,7 @@ export const en = {
 			nameSteps:
 				'On a name in an analysis: the previous or next one (Home and End: the first or last)',
 			nameMenu: 'On a name in an analysis: the menu to rename or remove it',
+			passageMenu: 'On text selected in the text: the menu to copy it or have a model correct it',
 			nextDifference: 'Next place where the models differ, its readings open',
 			previousDifference: 'Previous place where the models differ',
 			closeReadings: 'Close the readings, from their own field too',
@@ -2214,6 +2268,16 @@ export const en = {
 			'Only extracted text, transcripts, corrected text and translations can be analysed this way.',
 		'job.nothing_read':
 			'Nothing has been read yet, so there is nothing to analyse. Run the job, or wait for its first pages.',
+		'passage.too_short': 'Select at least 3 letters or figures to correct.',
+		'passage.too_long':
+			'The passage is too long to correct at once; correct a longer stretch with a correction job.',
+		'passage.context': 'The context around the passage is too long.',
+		'passage.changed':
+			'The text under the selection changed, so nothing was sent or applied. Select the passage again.',
+		'passage.empty': 'The model’s answer was empty.',
+		'passage.too_different':
+			'The model’s answer is too different from the passage to be a correction of it.',
+		'passage.not_waiting': 'This proposal is no longer waiting for a decision.',
 		'job.database': 'The job database could not be read or written.',
 		'job.running': 'This job is already running.',
 		'job.empty': 'Add at least one file and choose a model.',

@@ -16,7 +16,8 @@ import { profileCommand } from './mockProfiles.js';
 import { searchCommand } from './mockSearch.js';
 import { queueCommand } from './mockQueue.js';
 import { analysisJob, audioJob, job, recording, source, summaries, video } from './mockJobs.js';
-import { jobCommand } from './mockJobCommand.js';
+import { jobCommand, keptPiece } from './mockJobCommand.js';
+import { passageCommand } from './mockPassages.js';
 import { presetCommand, samplePipelines } from './mockPresets.js';
 import { seedWorkflows, workflowCommand } from './mockWorkflows.js';
 import { unitCommand } from './mockUnits.js';
@@ -96,6 +97,13 @@ export function installMock(): void {
 		if (found !== undefined) return found;
 		const preset = presetCommand(cmd, a);
 		if (preset !== undefined) return preset;
+		const passage = passageCommand(
+			cmd,
+			a,
+			keptPiece,
+			(id) => catalog.providers.find((p) => p.id === id)?.local === true
+		);
+		if (passage !== undefined) return passage;
 		const jobAnswer = jobCommand(cmd, a);
 		if (jobAnswer !== undefined) return jobAnswer;
 		switch (cmd) {

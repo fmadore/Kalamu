@@ -1748,6 +1748,60 @@ export const fr: Messages = {
 		rowsKept:
 			'Chaque modification est enregistrée aussitôt, à part des lignes du modèle, qui restent telles quelles. Séparez les noms d’une liste par des points-virgules.'
 	},
+	/** Corriger avec un modèle un passage sélectionné dans la vérification d’un texte. */
+	passage: {
+		menu: 'Que faire du texte sélectionné',
+		copy: 'Copier',
+		correct: 'Corriger ce passage avec un modèle…',
+		button: 'Corriger avec un modèle…',
+		buttonHint:
+			'Demander à un modèle de corriger le texte sélectionné. Rien ne change tant que vous n’acceptez pas sa proposition.',
+		title: 'Corriger un passage avec un modèle',
+		passage: 'Passage sélectionné',
+		context: 'Contexte envoyé avec lui, à ne pas modifier',
+		chars: (n: number) => (n <= 1 ? `${n} caractère` : `${n} caractères`),
+		sentCloud: (provider: string, context: number) =>
+			`Envoyé à ${provider} : le passage sélectionné et jusqu’à ${context} caractères avant et après lui, pris sur la même page ou partie et signalés comme contexte que le modèle ne doit pas modifier. Rien d’autre du document n’est envoyé.`,
+		sentOffline: (model: string) => `Lu sur cet ordinateur par ${model} ; rien n’est envoyé.`,
+		cut: 'La sélection débordait du texte de cette page ou partie : seul ce texte est pris.',
+		tooShort: (n: number) => `Sélectionnez au moins ${n} lettres ou chiffres.`,
+		tooLong: (n: number, max: number) =>
+			`La sélection compte ${n} caractères. ${max} au plus sont envoyés à la fois, pour que le passage corrigé revienne entier en une seule réponse ; corrigez un texte plus long avec un traitement de correction.`,
+		costAbout: (usd: string) => `Environ ${usd}`,
+		costStored: 'Déjà demandé : la proposition gardée est montrée de nouveau, sans frais.',
+		costOffline: 'Sur cet ordinateur, sans frais.',
+		costUnknown: 'Ce modèle n’a pas de prix publié.',
+		noKey: (provider: string) => `Ajoutez d’abord une clé pour ${provider} dans Paramètres.`,
+		notInstalled: (model: string) => `Téléchargez d’abord ${model} dans Paramètres.`,
+		ask: 'Demander une proposition',
+		waiting: (model: string) => `En attente de ${model}…`,
+		stop: 'Ne plus attendre',
+		stopped:
+			'Vous n’attendez plus. Si la réponse arrive quand même, elle est gardée, et redemander ne coûtera rien.',
+		ready: 'Proposition prête.',
+		proposal: 'Correction proposée, modifications signalées',
+		removed: 'supprimé',
+		added: 'ajouté',
+		notes: {
+			context_removed: 'Le modèle a renvoyé une partie du contexte ; elle a été retirée.',
+			commentary_removed:
+				'Le modèle a ajouté ses propres mots autour du passage ; ils ont été retirés.',
+			length_changed:
+				'La proposition est bien plus longue ou plus courte que le passage : vérifiez-la de près.',
+			unchanged: 'Le modèle n’a rien trouvé à corriger.'
+		},
+		accept: 'Accepter',
+		edit: 'Modifier avant d’accepter',
+		editLabel: 'Correction proposée, à modifier',
+		discard: 'Écarter',
+		failed: (reason: string) =>
+			`Pas de proposition (${reason}). Une réponse qui n’est pas une correction du passage n’est pas proposée : réessayez, ou essayez un autre modèle ou un autre prompt.`,
+		changed:
+			'Le texte sélectionné a changé pendant que le modèle répondait : la proposition n’a pas été appliquée.',
+		lookAgain: 'Revoir le texte',
+		accepted: 'Passage corrigé ; les fichiers de résultats suivent dans quelques secondes.',
+		undone: 'Correction du passage annulée.'
+	},
 	prompts: {
 		title: 'Prompts',
 		hint: 'Chaque tâche est livrée avec des prompts éprouvés. Modifiez-en un pour l’adapter ; votre version le remplace jusqu’à ce que vous le réinitialisiez. Variables : {languages}, {speakers}.',
@@ -2035,6 +2089,8 @@ export const fr: Messages = {
 			nameSteps:
 				'Sur un nom d’une analyse : le précédent ou le suivant (Début et Fin : le premier ou le dernier)',
 			nameMenu: 'Sur un nom d’une analyse : le menu pour le renommer ou le retirer',
+			passageMenu:
+				'Sur un texte sélectionné : le menu pour le copier ou le faire corriger par un modèle',
 			nextDifference: 'Passage suivant où les modèles divergent, ses versions ouvertes',
 			previousDifference: 'Passage précédent où les modèles divergent',
 			closeReadings: 'Fermer les versions, depuis leur propre champ aussi',
@@ -2300,6 +2356,16 @@ export const fr: Messages = {
 			'Seuls le texte extrait, les transcriptions, le texte corrigé et les traductions peuvent être analysés de cette façon.',
 		'job.nothing_read':
 			'Rien n’a encore été lu : il n’y a donc rien à analyser. Lancez le traitement, ou attendez ses premières pages.',
+		'passage.too_short': 'Sélectionnez au moins 3 lettres ou chiffres à corriger.',
+		'passage.too_long':
+			'Le passage est trop long pour être corrigé d’un coup ; corrigez un texte plus long avec un traitement de correction.',
+		'passage.context': 'Le contexte autour du passage est trop long.',
+		'passage.changed':
+			'Le texte sélectionné a changé : rien n’a été envoyé ni appliqué. Sélectionnez de nouveau le passage.',
+		'passage.empty': 'La réponse du modèle était vide.',
+		'passage.too_different':
+			'La réponse du modèle est trop différente du passage pour en être une correction.',
+		'passage.not_waiting': 'Cette proposition n’attend plus de décision.',
 		'job.database': 'La base de données des traitements n’a pas pu être lue ou écrite.',
 		'job.running': 'Ce traitement est déjà en cours.',
 		'job.empty': 'Ajoutez au moins un fichier et choisissez un modèle.',
