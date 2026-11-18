@@ -72,9 +72,12 @@ test('a name is added from the keyboard, Escape closes the field, and the name i
 }) => {
 	const answers = await open(page);
 	const people = answers.locator('[data-field="people"]');
-	// The names are one tab stop; Tab goes from them to Add.
+	// The names are one tab stop; Tab goes from them to Add. On macOS, WebKit's Tab stops at
+	// fields only unless the system's keyboard navigation is on, and Option+Tab stops at every
+	// control, buttons included.
 	await people.locator('[data-item][tabindex="0"]').focus();
-	await page.keyboard.press('Tab');
+	const mac = await page.evaluate(() => /Macintosh|Mac OS X/.test(navigator.userAgent));
+	await page.keyboard.press(mac ? 'Alt+Tab' : 'Tab');
 	const add = people.getByRole('button', { name: 'Add to “People”' });
 	await expect(add).toBeFocused();
 	await page.keyboard.press('Enter');
