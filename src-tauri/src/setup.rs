@@ -315,6 +315,8 @@ fn assemble(
         kalamu_offline::Whisper::locate_helper(&app_dir),
         settings.ocr_graphics_processor,
     ));
+    // Read before the engine takes the catalogue.
+    let embedding_models = catalog.embedding_models().to_vec();
     let mut providers = kalamu_providers::registry(http.clone());
     providers.push(whisper.clone());
     providers.push(Arc::new(kalamu_offline::Tesseract::new(tessdata.clone())));
@@ -341,7 +343,7 @@ fn assemble(
         store.clone(),
         store.clone(),
     )));
-    let (embedders, embedding_models) = embedding(&http);
+    let embedders = embedding(&http, &embedder);
     let meaning = kalamu_engine::Meaning::new(
         engine.clone(),
         search.clone(),
@@ -395,21 +397,16 @@ fn assemble(
     Ok((state, store, waiting))
 }
 
-/// The embedders and embedding models the search by meaning offers, given to the engine as
-/// values so that it never matches on a provider's or a model's name. THE ONE PLACE they are
-/// gathered: the cloud embedders (`kalamu_providers`), the one run on this computer
-/// (`kalamu_offline`) and `Catalog::embedding_models()` are added here. Empty until then: the
-/// search by meaning then offers no model and says so.
+/// The embedders the search by meaning calls, given to the engine as values so that it never
+/// matches on a provider's or a model's name. THE ONE PLACE they are gathered: the cloud
+/// providers', then the one run on this computer. The models offered are the catalogue's.
 fn embedding(
     http: &reqwest::Client,
-) -> (
-    Vec<Arc<dyn kalamu_core::Embedder>>,
-    Vec<kalamu_core::EmbeddingModel>,
-) {
-    let _ = http;
-    let embedders: Vec<Arc<dyn kalamu_core::Embedder>> = Vec::new();
-    let models: Vec<kalamu_core::EmbeddingModel> = Vec::new();
-    (embedders, models)
+    local: &Arc<kalamu_offline::LocalEmbedder>,
+) -> Vec<Arc<dyn kalamu_core::Embedder>> {
+    let mut embedders = kalamu_providers::embedders(http.clone());
+    embedders.push(local.clone());
+    embedders
 }
 
 /// The search by meaning's progress to the interface.
