@@ -48,15 +48,15 @@ llm_engine: boolean,
 /**
  * Where each language model's next request goes: `cpu`, `metal` or `vulkan`.
  */
-llm_devices: { [key in string]: string },
+llm_devices: { [key in string]: string }, 
 /**
  * The embedding models of the search by meaning on this computer.
  */
-embedding_models: Array<OfflineModel>,
+embedding_models: Array<OfflineModel>, 
 /**
  * Whether this copy of the app carries the program that runs them.
  */
-embedding_engine: boolean,
+embedding_engine: boolean, 
 /**
  * Instruction-set extensions this processor lacks; empty when Whisper can run here.
  */
