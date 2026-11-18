@@ -464,7 +464,7 @@ export const fr: Messages = {
 			plan: (field: string, rows: number, groups: number) =>
 				groups === 1
 					? `Les ${rows} lignes de ${field} sont envoyées en une seule requête, avec leurs graphies, les titres de trois documents au plus qui nomment chacune, et les paires que vous avez gardées distinctes.`
-					: `Les ${rows} lignes de ${field} sont trop nombreuses pour une seule requête : elles sont envoyées en ${groups} requêtes d’environ 100 000 tokens chacune, par ordre alphabétique sans tenir compte des accents, chacune partageant un dixième de ses lignes avec la suivante. Les noms éloignés dans l’alphabet ne sont pas comparés. Chaque ligne part avec ses graphies, les titres de trois documents au plus qui la nomment, et les paires que vous avez gardées distinctes.`,
+					: `Les ${rows} lignes de ${field} sont trop nombreuses pour une seule requête : elles sont envoyées en ${groups} requêtes : par ordre alphabétique sans tenir compte des accents, environ 100 000 tokens à la fois, chacune partageant un dixième de ses lignes avec la suivante ; puis, pour que les noms éloignés dans l’alphabet soient aussi comparés, les lignes qui partagent un mot ou des initiales, ou qui se prononcent de la même façon, comme « Ouédraogo, Moussa » et « Moussa Ouédraogo ». Chaque ligne part avec ses graphies, les titres de trois documents au plus qui la nomment, et les paires que vous avez gardées distinctes.`,
 			prompt: 'Voir ou modifier le prompt',
 			sends: (provider: string) =>
 				`Envoyé à ${provider} avec votre clé, sous la forme d’un traitement d’analyse à part : son coût et ses réponses figurent dans Traitements. Rien n’est fusionné avant que vous l’acceptiez.`,
