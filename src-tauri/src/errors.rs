@@ -106,6 +106,12 @@ impl From<kalamu_search::SearchError> for AppError {
     }
 }
 
+impl From<kalamu_engine::MeaningError> for AppError {
+    fn from(e: kalamu_engine::MeaningError) -> Self {
+        Self::new(e.code(), e)
+    }
+}
+
 impl From<kalamu_catalog::CatalogError> for AppError {
     fn from(e: kalamu_catalog::CatalogError) -> Self {
         Self::new("catalog.invalid", e)

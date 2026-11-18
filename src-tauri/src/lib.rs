@@ -27,6 +27,9 @@ pub const OPEN_SETTINGS_EVENT: &str = "open-settings";
 /// Name of the event carrying [`kalamu_search::SearchProgress`]: how far a project's text is
 /// prepared for searching.
 pub const SEARCH_PROGRESS_EVENT: &str = "search-progress";
+/// Name of the event carrying [`kalamu_engine::MeaningProgress`]: how far a project's text is
+/// prepared for the search by meaning, after each batch.
+pub const MEANING_PROGRESS_EVENT: &str = "meaning-progress";
 /// Sent when what the offline status reports changed outside a command: the graphics processor
 /// the OCR models use, found after start-up.
 pub const OFFLINE_CHANGED_EVENT: &str = "offline-changed";
@@ -224,6 +227,16 @@ pub fn run() {
             commands::search::project_search,
             commands::search::rebuild_search_index,
             commands::search::prepare_project_search,
+            commands::meaning::meaning_status,
+            commands::meaning::choose_meaning_model,
+            commands::meaning::consent_meaning,
+            commands::meaning::prepare_meaning,
+            commands::meaning::pause_meaning,
+            commands::meaning::cancel_meaning,
+            commands::meaning::remove_meaning_space,
+            commands::meaning::meaning_search,
+            commands::meaning::meaning_map,
+            commands::meaning::meaning_neighbours,
             commands::window::set_shell_labels,
             commands::window::hide_window,
             commands::window::quit_app,

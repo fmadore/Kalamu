@@ -4,6 +4,7 @@
 pub mod dictionary;
 pub mod jobs;
 pub mod keys;
+pub mod meaning;
 pub mod offline;
 pub mod pipelines;
 pub mod presets;
@@ -44,6 +45,9 @@ pub struct AppState {
     pub dictionary: kalamu_dictionary::Dictionary,
     /// Project search, over the same database and an index of its own.
     pub search: Arc<kalamu_search::Search>,
+    /// The search by meaning and the map, where they call a model: preparation runs and
+    /// questions.
+    pub meaning: Arc<kalamu_engine::Meaning>,
     /// Raised by each search, so that a newer one stops an older one still indexing.
     pub search_generation: Arc<std::sync::atomic::AtomicU64>,
     /// Raised by each preparation of a project's text, so that a newer one stops an older one.
