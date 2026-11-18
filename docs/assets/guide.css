@@ -237,9 +237,9 @@ p > em:only-child {
 blockquote {
 	margin: 1.5rem 0;
 	padding: 0.75rem 1rem;
-	border-left: 4px solid var(--marker);
+	border: 1px solid var(--line-strong);
 	background: var(--wash);
-	border-radius: 0 7px 7px 0;
+	border-radius: 7px;
 }
 
 blockquote p {
