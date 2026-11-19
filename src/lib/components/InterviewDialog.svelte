@@ -3,7 +3,9 @@
 	// empty), the model that will read the transcript said in one line with what it would cost,
 	// and one button. Another model and the language of the answers wait under "More choices",
 	// closed. The transcript is frozen as the dialog opens, so the estimate prices the text the job
-	// will read; Start then asks what New job asks before anything is sent.
+	// will read; Start then asks what New job asks before anything is sent. What is typed can be
+	// kept for the next interviews, as a prompt of the researcher's own: once one is kept, a choice
+	// above the box offers it, and the box only for a new description.
 	import Dialog from './Dialog.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import ModelPicker from './ModelPicker.svelte';
@@ -12,6 +14,7 @@
 	import { takesLanguage } from '#lib/languages.js';
 	import { followEstimate } from '#lib/newJobEstimate.svelte.js';
 	import { modelsFor, providerDefault } from '#lib/newJobModels.js';
+	import { NEW_RESEARCH } from '#lib/research.js';
 	import { go, type FromProject } from '#lib/state.svelte.js';
 
 	let {
@@ -47,21 +50,76 @@
 	async function start() {
 		if (await a.start(project)) onclose();
 	}
+
+	/** Prompts, on the kept description, where it is changed or deleted. */
+	function openPrompts(presetId: string) {
+		onclose();
+		go({ name: 'prompts', presetId });
+	}
+
+	// The choice of description takes the focus when it appears, the prompts read after the
+	// dialog opened on the box.
+	let choiceBox = $state<HTMLSelectElement | null>(null);
+	$effect(() => {
+		choiceBox?.focus();
+	});
 </script>
 
 <Dialog labelledby="interview-title" size="medium" onescape={onclose}>
 	<h2 id="interview-title">{t.title}</h2>
 	<p class="lede">{t.lede}</p>
 
-	<label class="field">
-		<span>{t.question}</span>
-		<textarea
-			rows="3"
-			bind:value={a.question}
-			placeholder={t.questionPlaceholder}
-			aria-describedby="interview-question-hint"></textarea>
-		<small id="interview-question-hint">{t.questionHint}</small>
-	</label>
+	{#if a.kept.length > 0}
+		<label class="field">
+			<span>{t.research}</span>
+			<select bind:this={choiceBox} bind:value={a.choice}>
+				{#each a.kept as p (p.id)}
+					<option value={p.id}>{p.name}</option>
+				{/each}
+				<option value={NEW_RESEARCH}>{t.researchNew}</option>
+			</select>
+		</label>
+	{/if}
+
+	{#if a.chosen}
+		<div class="kept">
+			<p class="described">{a.chosen.question}</p>
+			<p class="small muted">
+				{t.keptHint}
+				<button class="btn sm ghost" onclick={() => openPrompts(a.chosen!.id)}
+					>{t.openPrompts}</button
+				>
+			</p>
+		</div>
+	{:else}
+		<label class="field">
+			<span>{t.question}</span>
+			<textarea
+				rows="3"
+				bind:value={a.question}
+				placeholder={t.questionPlaceholder}
+				aria-describedby="interview-question-hint"></textarea>
+			<small id="interview-question-hint">{t.questionHint}</small>
+		</label>
+		{#if a.question.trim()}
+			<div class="keep">
+				<label class="inline">
+					<input
+						type="checkbox"
+						checked={a.keep}
+						onchange={(e) => a.setKeep(e.currentTarget.checked, project?.name)}
+					/>
+					{t.keep}
+				</label>
+				{#if a.keep}
+					<label class="field name">
+						<span>{t.keptName}</span>
+						<input type="text" bind:value={a.keptName} />
+					</label>
+				{/if}
+			</div>
+		{/if}
+	{/if}
 
 	<p class="model">
 		<span>{t.model(a.model?.name ?? a.draft.model, a.providerName)}</span>
@@ -124,6 +182,45 @@
 		font-size: var(--type-sm);
 		line-height: 1.5;
 		max-width: 60ch;
+	}
+	select {
+		max-width: 24rem;
+	}
+	.kept {
+		display: grid;
+		gap: var(--space-2);
+	}
+	.described {
+		padding: var(--space-2) var(--space-3);
+		border-left: 3px solid var(--line-strong);
+		background: var(--wash);
+		border-radius: var(--radius-control);
+		font-size: var(--type-md);
+		line-height: 1.5;
+		white-space: pre-wrap;
+		max-width: 60ch;
+	}
+	.kept .small {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2);
+	}
+	.keep {
+		display: grid;
+		gap: var(--space-2);
+		margin-top: calc(-1 * var(--space-2));
+	}
+	.inline {
+		display: inline-flex;
+		gap: var(--space-2);
+		align-items: center;
+		width: fit-content;
+		font-size: var(--type-sm);
+		color: var(--text-secondary);
+	}
+	.name input {
+		max-width: 24rem;
 	}
 	textarea {
 		width: 100%;

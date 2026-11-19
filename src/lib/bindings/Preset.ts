@@ -43,4 +43,11 @@ dense?: boolean,
  * every file is of that kind: images for the image description. Always the shipped
  * default's, edited or not, and empty for the researcher's own prompts and their copies.
  */
-made_for?: InputKind, };
+made_for?: InputKind, 
+/**
+ * For an analysis, what the researcher's work is about, in their words ("What is your
+ * research about?"), kept with the prompt so that it is typed once for many documents:
+ * sent as a set-up's own question would be (`SetupOptions::question`), which replaces it
+ * when the set-up has one. Left out when empty, so files written before it read unchanged.
+ */
+question?: string, };

@@ -7,6 +7,7 @@
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { pickPresetFile, pickJsonSave } from '#lib/dialogs.js';
+	import { quotesText } from '#lib/research.js';
 	import { api } from '#lib/tauri.js';
 	import { guardDraft, leaveThen, toast } from '#lib/state.svelte.js';
 
@@ -35,6 +36,7 @@
 					draft.instructions !== selected.instructions ||
 					draft.user_prompt !== selected.user_prompt ||
 					(draft.merge_instructions ?? null) !== (selected.merge_instructions ?? null) ||
+					(draft.question ?? '') !== (selected.question ?? '') ||
 					!!draft.dense !== !!selected.dense ||
 					JSON.stringify(draft.schema) !== JSON.stringify(selected.schema)))
 	);
@@ -229,6 +231,21 @@
 				>
 				<textarea class="short mono" bind:value={draft.user_prompt}></textarea>
 			</label>
+			{#if draft.task === 'analysis' && quotesText(draft.schema)}
+				<!-- What the research is about, sent with each document as "Analyse this interview"
+				     sends the description typed there; kept here for many interviews. -->
+				<label class="field">
+					<span>{m.prompts.question}</span>
+					<textarea
+						class="short"
+						value={draft.question ?? ''}
+						aria-describedby="prompt-question-hint"
+						oninput={(e) => {
+							if (draft) draft.question = e.currentTarget.value;
+						}}></textarea>
+					<small class="muted" id="prompt-question-hint">{m.prompts.questionHint}</small>
+				</label>
+			{/if}
 			{#if draft.task === 'text_extraction'}
 				<!-- How much text a page carries, which sizes the pages sent together in one call. -->
 				<div class="field">

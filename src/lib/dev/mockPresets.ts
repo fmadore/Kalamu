@@ -7,6 +7,7 @@ import type { Preset } from '../bindings/Preset.js';
 import type { Settings } from '../bindings/Settings.js';
 import { contentsPresets } from './mockContents.js';
 import { recordsPreset } from './mockRecords.js';
+import { researchCommand, researchPresets } from './mockResearch.js';
 import { EXPORT_OPTIONS } from './mockJobs.js';
 
 const settings: Settings = {
@@ -272,6 +273,8 @@ export function samplePipelines(): [Pipeline, Pipeline] {
 }
 
 export function presetCommand(cmd: string, a: Record<string, unknown>): unknown {
+	const research = researchCommand(cmd, a);
+	if (research !== undefined) return research;
 	switch (cmd) {
 		case 'get_settings':
 			return settings;
@@ -280,7 +283,10 @@ export function presetCommand(cmd: string, a: Record<string, unknown>): unknown 
 		case 'list_presets': {
 			// `view=prompts-analysis` opens Prompts on an analysis, for screenshots.
 			const first = location.search.includes('prompts-analysis') ? 'analysis' : '';
-			const ordered = [...presets, recordsPreset, ...contentsPresets, dictionaryPreset].sort(
+			// The ready-made prompts first, the researcher's own after them, as the app lists them.
+			const { interview, own } = researchPresets();
+			const shipped = [...presets, interview, recordsPreset, ...contentsPresets, dictionaryPreset];
+			const ordered = [...shipped, ...own].sort(
 				(x, y) => Number(y.task === first) - Number(x.task === first)
 			);
 			// The dictionary's prompt is listed in Prompts, never offered for documents.

@@ -437,7 +437,9 @@ export function interviewCommand(cmd: string, a: Record<string, unknown>): unkno
 		}
 		case 'create_job': {
 			const asked = a.job as NewJob;
-			if (asked.setups[0]?.preset_id !== 'analysis.interview') return undefined;
+			// The interview prompt, or a copy of it keeping a description of the research.
+			const preset = asked.setups[0]?.preset_id ?? '';
+			if (preset !== 'analysis.interview' && !preset.startsWith('user-')) return undefined;
 			window.__kalamuCreated = asked;
 			return { ...interviewJob, setups: interviewJob.setups.slice(0, 1) };
 		}

@@ -110,7 +110,13 @@ export const en = {
 		more: 'More choices',
 		start: 'Analyse',
 		preparing: 'Getting the transcript ready…',
-		jobName: (file: string) => `Interview analysis: ${file}`
+		jobName: (file: string) => `Interview analysis: ${file}`,
+		research: 'Your research',
+		researchNew: 'A new description',
+		keep: 'Keep this for my next interviews',
+		keptName: 'Name',
+		keptHint: 'You can change or delete it in Prompts.',
+		openPrompts: 'Open Prompts'
 	},
 	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
 	cited: {
@@ -1999,6 +2005,9 @@ export const en = {
 		instructions: 'Instructions (system prompt)',
 		userPrompt: 'Request sent with each page',
 		userPromptDocument: 'Request sent with each document',
+		question: 'What is your research about?',
+		questionHint:
+			'Optional. Sent with each document, so you write it once for all your interviews. A description typed in Analyse this interview replaces it.',
 		mergeInstructions: 'Instructions for combining the pages',
 		dense: 'Pages full of text',
 		denseHint:
