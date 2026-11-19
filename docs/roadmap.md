@@ -350,7 +350,8 @@ improvements that open *Next*; what it did not fix at once was tracked in
   extraction's, transcription's or correction's corrected text and analyses it without
   reading the originals again; a later correction marks the analysis out of date without
   changing what it read; provenance records the result read and how much was reviewed;
-  quotations can be anchored in the frozen text, piece by piece, and checked
+  the functions that anchor a quotation in the frozen text, piece by piece, and check it are
+  written and tested, and no result uses them yet
   ([decision](decisions/2026-10-31-reviewed-text-snapshots.md)).
 - **Project workspaces, first increment**
   ([#57](https://github.com/fmadore/Kalamu/issues/57)): projects with flat collections, a
@@ -903,6 +904,10 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
   #52 and #50 above.
 - Post-interview analysis with research profiles and evidence-linked themes/quotations:
   [#38](https://github.com/fmadore/Kalamu/issues/38), using the shared snapshot foundation.
+  Designed on 19 November ([decision](decisions/2026-11-19-interview-analysis-design.md)): an
+  analysis job with one new kind of field whose entries cite the transcript, each quotation
+  found in the frozen text by Kalamu before it is shown; turns in snapshots first, then one
+  interview read whole, then windows and consolidation.
 - Explore assisted TEI encoding with reusable project profiles:
   [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature.
 - Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates
