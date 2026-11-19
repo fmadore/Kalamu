@@ -107,6 +107,9 @@ export const en = {
 			'For example: how young traders find their first customers, and the help their families give them.',
 		model: (name: string, provider: string) => `Model: ${name} (${provider})`,
 		cost: (usd: string) => `Estimated cost: ${usd}`,
+		/** Said in place of the cost when the transcript is too long for the model chosen. */
+		tooLong: (model: string, words: string, most: string) =>
+			`This transcript is too long for ${model}: about ${words} words, where it reads about ${most} at once. Choose another model under More choices.`,
 		more: 'More choices',
 		start: 'Analyse',
 		preparing: 'Getting the transcript ready…',
@@ -2635,6 +2638,8 @@ export const en = {
 			'This is the name Kalamu gives the quotations: give the field another name.',
 		'job.cited_needs_text':
 			'Quotations can only be found in a transcript or a text. Transcribe or read this file first, then choose Use this text.',
+		'job.text_too_long':
+			'This text is too long for the model chosen to read at once. Choose a model that reads more.',
 		'cited.not_cited': 'This answer holds no quotations to change.',
 		'cited.no_entry': 'This entry is no longer in the answers. Look at them again.',
 		'cited.no_quotation': 'This quotation is no longer in the answers. Look at them again.',

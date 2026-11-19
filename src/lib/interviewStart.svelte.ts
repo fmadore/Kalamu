@@ -4,16 +4,20 @@
 // the answers only under "More choices". Start asks what New job's Start asks (consent to send
 // to the provider, folders on the Mac App Store), then creates and starts the job as New job
 // does (`launch`), tied to the project it was opened from. A description of the research can be
-// kept as a prompt of the researcher's own and chosen again (`research.ts`).
+// kept as a prompt of the researcher's own and chosen again (`research.ts`). A transcript too long
+// for the model chosen is said where the cost would be, from the same estimate, and Start waits
+// for another model (`tooLongOf`).
 
+import type { Catalog } from './bindings/Catalog.js';
+import type { Estimate } from './bindings/Estimate.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { Preset } from './bindings/Preset.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { SourceFile } from './bindings/SourceFile.js';
-import { providerNameOf } from './catalogText.js';
+import { modelNameOf, providerNameOf } from './catalogText.js';
 import { mayStart } from './dialogs.js';
 import { describeError } from './errors.js';
-import { messages } from './i18n/index.js';
+import { messages, type Messages } from './i18n/index.js';
 import { takesLanguage } from './languages.js';
 import { jobSettings, offeredFormats, pagesPerCallOf, rulesFor } from './newJob.js';
 import { modelInfo, newDraft, toRequest, type Draft } from './newJobModels.js';
@@ -46,6 +50,23 @@ export function withPrompt(request: SetupRequest, presetId: string): SetupReques
 	return request.preset_id === null ? request : { ...request, preset_id: presetId };
 }
 
+/** The sentence saying the transcript is too long for a model, when the estimate says so: the
+ * engine measured the text it would send, and would refuse the job for it. */
+export function tooLongOf(
+	estimate: Estimate | null,
+	catalog: Catalog,
+	m: Messages = messages()
+): string | null {
+	const row = estimate?.rows.find((r) => r.too_long);
+	if (!row?.too_long) return null;
+	const count = new Intl.NumberFormat(m.locale.tag);
+	return m.interview.tooLong(
+		modelNameOf(catalog, row.provider, row.model),
+		count.format(row.too_long.words),
+		count.format(row.too_long.most_words)
+	);
+}
+
 export class InterviewAnalysis {
 	question = $state('');
 	/** The analysis prompts, read as the dialog opens: the ready-made one, and the researcher's
@@ -66,6 +87,8 @@ export class InterviewAnalysis {
 	sources = $state<SourceFile[] | null>(null);
 	/** What the job would cost, in dollars, when the engine can tell. */
 	cost = $state<number | null>(null);
+	/** The transcript is too long for the model chosen, in a sentence; none when it fits. */
+	tooLong = $state<string | null>(null);
 	error = $state<string | null>(null);
 	busy = $state(false);
 
@@ -161,7 +184,7 @@ export class InterviewAnalysis {
 	 * to send the text, or the engine refused (the reason in `error`). */
 	async start(project: FromProject | undefined): Promise<boolean> {
 		const sources = $state.snapshot(this.sources);
-		if (!sources || this.busy) return false;
+		if (!sources || this.busy || this.tooLong) return false;
 		this.busy = true;
 		this.error = null;
 		try {

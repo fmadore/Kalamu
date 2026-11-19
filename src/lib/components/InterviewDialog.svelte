@@ -3,14 +3,15 @@
 	// empty), the model that will read the transcript said in one line with what it would cost,
 	// and one button. Another model and the language of the answers wait under "More choices",
 	// closed. The transcript is frozen as the dialog opens, so the estimate prices the text the job
-	// will read; Start then asks what New job asks before anything is sent. What is typed can be
+	// will read, and says in its place when the text is too long for the model chosen (Start then
+	// waits for another); Start then asks what New job asks before anything is sent. What is typed can be
 	// kept for the next interviews, as a prompt of the researcher's own: once one is kept, a choice
 	// above the box offers it, and the box only for a new description.
 	import Dialog from './Dialog.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import ModelPicker from './ModelPicker.svelte';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
-	import { InterviewAnalysis } from '#lib/interviewStart.svelte.js';
+	import { InterviewAnalysis, tooLongOf } from '#lib/interviewStart.svelte.js';
 	import { takesLanguage } from '#lib/languages.js';
 	import { followEstimate } from '#lib/newJobEstimate.svelte.js';
 	import { modelsFor, providerDefault } from '#lib/newJobModels.js';
@@ -44,7 +45,10 @@
 
 	followEstimate(
 		() => ({ task: 'analysis', sources: a.sources ?? [], setups: [a.request], sample_pages: null }),
-		(estimate) => (a.cost = estimate?.total_usd ?? null)
+		(estimate) => {
+			a.cost = estimate?.total_usd ?? null;
+			a.tooLong = tooLongOf(estimate, a.catalog, m);
+		}
 	);
 
 	async function start() {
@@ -123,8 +127,9 @@
 
 	<p class="model">
 		<span>{t.model(a.model?.name ?? a.draft.model, a.providerName)}</span>
-		{#if a.cost !== null}<span class="cost">{t.cost(formatUsd(a.cost))}</span>{/if}
+		{#if a.cost !== null && !a.tooLong}<span class="cost">{t.cost(formatUsd(a.cost))}</span>{/if}
 	</p>
+	{#if a.tooLong}<p class="chip danger" role="alert">{a.tooLong}</p>{/if}
 	{#if !a.keyed}
 		<p class="notice" role="status">
 			{m.newJob.noKey(a.providerName)}
@@ -163,7 +168,7 @@
 		<button class="btn" onclick={onclose}>{m.common.cancel}</button>
 		<button
 			class="btn primary"
-			disabled={!a.sources || !a.keyed || !a.draft.model || a.busy}
+			disabled={!a.sources || !a.keyed || !a.draft.model || a.busy || a.tooLong !== null}
 			onclick={start}>{t.start}</button
 		>
 	</div>

@@ -4,6 +4,7 @@
 
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import type { Catalog } from '../bindings/Catalog.js';
+import type { EstimateRequest } from '../bindings/EstimateRequest.js';
 import type { SourceFile } from '../bindings/SourceFile.js';
 import type { TaskRules } from '../bindings/TaskRules.js';
 import { layout } from '../review.svelte.js';
@@ -19,7 +20,7 @@ import { collectionsOf } from './mockProjects.js';
 import { queueCommand } from './mockQueue.js';
 import { analysisJob, audioJob, job, recording, source, summaries, video } from './mockJobs.js';
 import { jobCommand, keptPiece } from './mockJobCommand.js';
-import { interviewCommand } from './mockInterview.js';
+import { interviewCommand, interviewTooLong } from './mockInterview.js';
 import { passageCommand } from './mockPassages.js';
 import { regionCommand } from './mockDrawn.js';
 import { regionReadingCommand } from './mockRegionReadings.js';
@@ -246,18 +247,18 @@ export function installMock(): void {
 			case 'key_status':
 				return catalog.providers.map((p) => ({ provider: p.id, saved: p.id !== 'openai' }));
 			case 'estimate_cost': {
-				const rows = (a.request as { setups: { provider: string; model: string }[] }).setups.map(
-					(s) => ({
-						provider: s.provider,
-						model: s.model,
-						pages: 120,
-						merge: false,
-						estimate: {
-							usd: s.provider === 'mistral' ? null : 0.42,
-							economy_usd: s.provider === 'mistral' ? null : 0.21
-						}
-					})
-				);
+				const request = a.request as EstimateRequest;
+				const rows = request.setups.map((s) => ({
+					provider: s.provider,
+					model: s.model,
+					pages: 120,
+					merge: false,
+					estimate: {
+						usd: s.provider === 'mistral' ? null : 0.42,
+						economy_usd: s.provider === 'mistral' ? null : 0.21
+					},
+					too_long: interviewTooLong(request, s, catalog)
+				}));
 				const total = (economy: boolean) =>
 					rows.reduce<number | null>((sum, r) => {
 						const usd = economy ? (r.estimate.economy_usd ?? r.estimate.usd) : r.estimate.usd;
