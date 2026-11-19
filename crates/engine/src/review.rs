@@ -386,13 +386,14 @@ impl Engine {
     /// [`Engine::save_correction`] saves one: what [`Engine::rename_listed`] changed, put back.
     pub fn save_corrections(&self, corrections: Vec<Correction>) -> Result<(), EngineError> {
         let now = Timestamp::now();
-        let corrections: Vec<Correction> = corrections
-            .into_iter()
-            .map(|c| Correction {
-                updated_at: now,
-                ..c
-            })
-            .collect();
+        let mut settled = Vec::with_capacity(corrections.len());
+        for mut correction in corrections {
+            // A cited field's quotations are only ever some of those the model's answer holds.
+            self.settle_cited(&mut correction)?;
+            correction.updated_at = now;
+            settled.push(correction);
+        }
+        let corrections = settled;
         self.store.put_corrections(&corrections)?;
         let mut jobs: Vec<JobId> = corrections.iter().map(|c| c.job_id).collect();
         jobs.sort_unstable();

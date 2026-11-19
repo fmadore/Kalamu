@@ -103,6 +103,8 @@
     "allow-save-correction",
     "allow-save-corrections",
     "allow-edit-rows",
+    "allow-edit-cited",
+    "allow-cited-source",
     "allow-rename-listed",
     "allow-add-listed",
     "allow-drawn-regions",
