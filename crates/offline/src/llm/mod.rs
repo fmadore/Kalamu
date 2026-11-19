@@ -136,8 +136,12 @@ fn output_limit(tuning: &Tuning) -> u32 {
 /// The most characters of text sent: what fits in the context beside the answer and the
 /// instructions at about three characters a token, a cautious rate for European languages. A
 /// text in another script may hold more tokens than this allows, which llama.cpp then refuses
-/// with the same message.
-const MAX_CHARS: usize = 66_000;
+/// with the same message. The catalogue's `max_input_tokens` for these models is this at four
+/// characters a token, so a text this long is refused before its job starts (a test in the
+/// engine holds the two together).
+pub const MAX_CHARS: usize = 66_000;
+/// Characters taken for one word in the sentence a researcher reads, as the catalogue takes it.
+pub const CHARS_PER_WORD: usize = 6;
 /// Read in batches this large: fewer passes over a long text.
 const BATCH: u32 = 2048;
 /// A page image's tokens, the largest of Gemma 4's budgets, which its makers advise for reading
@@ -259,8 +263,8 @@ fn too_long(chars: usize) -> ProviderError {
     ProviderError::InvalidRequest(format!(
         "This text is too long for the offline language models: about {} words, where they read \
          at most about {} at once. Split it into shorter documents, or choose a cloud model.",
-        chars / 6,
-        MAX_CHARS / 6
+        chars / CHARS_PER_WORD,
+        MAX_CHARS / CHARS_PER_WORD
     ))
 }
 

@@ -31,7 +31,10 @@ pub use embed::{
 };
 pub use host::LlamaHost;
 pub use llama::{Device, Llama};
-pub use llm::{LLM, LLM_ID, LLM_MODELS, LocalLlm};
+pub use llm::{
+    CHARS_PER_WORD as LLM_CHARS_PER_WORD, LLM, LLM_ID, LLM_MODELS, LocalLlm,
+    MAX_CHARS as LLM_MAX_CHARS,
+};
 pub use models::{MODELS, ModelFile, ModelManager, ModelSet, ModelStatus, VAD, WHISPER, find};
 pub use tessdata::{TESSDATA, for_language as tessdata_for_language};
 pub use tesseract::{MODEL as TESSERACT_MODEL, TESSERACT_ID, Tesseract};

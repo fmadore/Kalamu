@@ -6,4 +6,11 @@ export type Limits = { max_request_mb: number | null, max_pages: number | null, 
  * for all of it. `None` when the provider documents no limit: none is sent, and the
  * model writes until it is done or its context is full.
  */
-max_output_tokens?: number, };
+max_output_tokens?: number, 
+/**
+ * The most the model reads in one request, as its provider documents it; where the
+ * provider documents one window for the request and the answer together, that window.
+ * A text surely longer is refused before the job starts ([`ModelInfo::too_long`]). `None`
+ * when the catalogue gives none: nothing is refused, and the provider says so itself.
+ */
+max_input_tokens?: number, };
