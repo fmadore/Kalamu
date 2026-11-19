@@ -345,6 +345,7 @@ impl Engine {
                 missing: Vec::new(),
                 created_at: Timestamp::now(),
                 lines: Vec::new(),
+                turns: Vec::new(),
             };
             self.store.put_snapshot(&snapshot)?;
             out.push(SourceFile {

@@ -48,7 +48,7 @@ pub fn segments_from_text(text: &str, offset_ms: u64) -> Vec<Segment> {
     out
 }
 
-fn parse_stamp(line: &str) -> Option<(u64, &str)> {
+pub(crate) fn parse_stamp(line: &str) -> Option<(u64, &str)> {
     let rest = line.strip_prefix('[')?;
     let (stamp, rest) = rest.split_once(']')?;
     let parts: Vec<u64> = stamp

@@ -112,13 +112,13 @@ impl Provider for Translator {
     }
 }
 
-struct Subtitles {
-    engine: Arc<Engine>,
+pub(super) struct Subtitles {
+    pub(super) engine: Arc<Engine>,
     translator: Arc<Translator>,
     dir: tempfile::TempDir,
 }
 
-fn subtitles() -> Subtitles {
+pub(super) fn subtitles() -> Subtitles {
     let store = Arc::new(SqliteStore::in_memory().unwrap_or_else(|_| panic!("store")));
     let translator = Translator::new();
     let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
@@ -152,7 +152,7 @@ impl Subtitles {
 
     /// A video transcribed with times in its text: `[00:00:05] Speaker 1: Bonjour.` and
     /// `[00:01:10] Speaker 2: Merci.`
-    async fn transcript(&self) -> Job {
+    pub(super) async fn transcript(&self) -> Job {
         let job = self
             .engine
             .create_job(NewJob {
@@ -184,7 +184,7 @@ impl Subtitles {
         job
     }
 
-    fn translation(&self, sources: Vec<SourceFile>) -> Job {
+    pub(super) fn translation(&self, sources: Vec<SourceFile>) -> Job {
         self.engine
             .create_job(NewJob {
                 name: "Translation".into(),
@@ -211,7 +211,7 @@ impl Subtitles {
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
-    async fn run(&self, id: JobId) -> JobStatus {
+    pub(super) async fn run(&self, id: JobId) -> JobStatus {
         let mut events = self.engine.subscribe();
         self.engine
             .start(id)
@@ -231,7 +231,7 @@ impl Subtitles {
         std::fs::read_to_string(self.dir.path().join(name)).unwrap_or_default()
     }
 
-    fn correct(&self, job: &Job, index: u32, text: &str) {
+    pub(super) fn correct(&self, job: &Job, index: u32, text: &str) {
         self.engine
             .save_correction(Correction {
                 job_id: job.id,

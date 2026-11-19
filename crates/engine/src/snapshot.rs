@@ -12,11 +12,15 @@
 //! (`Snapshot::lines`, `DerivedFrom::timed`), for a translation that keeps them
 //! ([`crate::aligned`]). The text itself, and so every cache key made from it, is the same as
 //! without them.
+//!
+//! Every snapshot of a text keeps its turns too (`Snapshot::turns`): where each speaker's
+//! words, or each paragraph, sit in the text, read from the export document's parts with the
+//! text itself ([`kalamu_core::snapshot::build_with_turns`]), so the two cannot disagree.
 
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
-use kalamu_core::snapshot::{PartText, build};
+use kalamu_core::snapshot::{Built, PartText, TimedPart, build_with_turns};
 use kalamu_core::{
     DerivedFrom, InputKind, Job, JobId, PieceStatus, SetupId, Snapshot, SourceFile, SourceId, Task,
     Timestamp,
@@ -56,6 +60,8 @@ struct Frozen {
     task: Task,
     /// A transcript's timed lines, for a translation that keeps them; empty for other text.
     lines: Vec<kalamu_core::Segment>,
+    /// Where each turn sits in the text ([`kalamu_core::Turn`]).
+    turns: Vec<kalamu_core::Turn>,
 }
 
 impl Engine {
@@ -72,18 +78,23 @@ impl Engine {
             return Err(EngineError::NotText);
         }
         let doc = self.export_document(job, setup_id, source_id)?;
-        let texts: Vec<PartText<'_>> = doc
+        // Each part with its segments, on the recording's clock as the export document gives
+        // them, so the turns are read with the text and cannot disagree with it.
+        let texts: Vec<TimedPart<'_>> = doc
             .parts
             .iter()
-            .map(|p| PartText {
-                piece: &p.piece,
-                text: &p.text,
-                reviewed: p.reviewed,
-                corrected: p.corrected,
-                failed: p.failed.is_some(),
+            .map(|p| TimedPart {
+                text: PartText {
+                    piece: &p.piece,
+                    text: &p.text,
+                    reviewed: p.reviewed,
+                    corrected: p.corrected,
+                    failed: p.failed.is_some(),
+                },
+                segments: &p.segments,
             })
             .collect();
-        let (text, parts) = build(&texts);
+        let Built { text, parts, turns } = build_with_turns(job.task, &texts);
         let missing = self
             .store
             .source_pieces(job.id, setup_id, source_id)?
@@ -97,6 +108,7 @@ impl Engine {
             missing,
             task: job.task,
             lines: kalamu_core::aligned::lines_of(job.task, &doc.parts).unwrap_or_default(),
+            turns,
         })
     }
 
@@ -136,6 +148,7 @@ impl Engine {
                 missing,
                 task,
                 lines,
+                turns,
             } = self.frozen_text(&job, setup_id, source.id)?;
             let timed = !lines.is_empty();
             if parts.is_empty() || text.trim().is_empty() {
@@ -161,6 +174,7 @@ impl Engine {
                 missing,
                 created_at: Timestamp::now(),
                 lines,
+                turns,
             };
             self.store.put_snapshot(&snapshot)?;
             let stem = crate::source_stem(&source.file_name, &source.file_name);

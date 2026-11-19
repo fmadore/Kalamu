@@ -116,7 +116,7 @@ pub use result::{
 pub use sample::{MAX_SAMPLE, MAX_SEED, SampleCounts, SampleSpec};
 pub use search::{IndexSize, Passage, PassageKey, PassagePart, SearchIndex};
 pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, SetupRequest, Step};
-pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart};
+pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart, Turn};
 pub use source::{InputKind, SourceFile};
 pub use speakers::{SpeakerIndex, SpeakerNames};
 pub use store::{Correction, JobStore, OutdatedFiles, PrunedResults, StoreError};

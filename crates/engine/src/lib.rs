@@ -10,6 +10,7 @@ mod aligned;
 mod asked;
 mod attention;
 mod batch;
+mod check;
 mod compare;
 mod contents;
 mod control;
