@@ -525,7 +525,10 @@ to run on the computer itself.
   provider's default model and by a model on the computer, how many quotations each gives
   that are not in the transcript, and whether the themes are of use; a transcript in a
   language written from right to left; a quotation played from a recording cut into pieces;
-  and the one box and one button tried by someone who has never used the app.
+  the one box and one button tried by someone who has never used the app; and a transcript
+  over an hour with a model on the computer, which the dialog now says is too long before
+  Start (the catalogue's `max_input_tokens`, measured on the numbered text; the engine refuses
+  such a job when it is created).
 - **What the evening of 18 November added**
   ([decision](decisions/2026-11-18-drawn-regions-region-read-again.md)), to try on both
   systems: a region drawn, moved and resized with a mouse, a trackpad, a touch screen and the
@@ -916,8 +919,8 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
   Designed on 19 November ([decision](decisions/2026-11-19-interview-analysis-design.md)): an
   analysis job with one new kind of field whose entries cite the transcript, each quotation
   found in the frozen text by Kalamu before it is shown; turns in snapshots first (done, with
-  the answer check as a hook of the engine), then one interview read whole, then windows and
-  consolidation.
+  the answer check as a hook of the engine), then one interview read whole (done, a transcript
+  too long for the model said before Start), then windows and consolidation.
 - Explore assisted TEI encoding with reusable project profiles:
   [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature.
 - Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates

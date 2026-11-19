@@ -113,7 +113,9 @@ pipelines, not a new store.
 
 An hour of interview is about 55,000 characters, some 15,000 tokens: every model the catalogue
 offers reads it in one request. The first slice analyses a transcript whole, up to a length the
-catalogue's limits allow, and says plainly when one is too long. **Windows of whole turns and a
+catalogue's limits allow, and says plainly when one is too long: the dialog in place of the
+cost, Start waiting for another model, and the engine refusing such a job when it is created
+(see *Built after the first slice*). **Windows of whole turns and a
 consolidation step** come second, on the pattern of the table of contents (`Setup.merge`, a
 `Whole` piece keyed by its parts): the consolidation receives findings whose quotations are
 already checked and may only group them by their numbers; a window that failed is named in the
@@ -183,8 +185,21 @@ something differently from the lines above.
   typed none, so the job, its cache keys and its provenance hold the one sent, and a
   prompt without one keeps its keys. No new store and no new command: a kept description is
   a prompt like any other, renamed, edited and deleted in Prompts.
-- **Not built in the first slice**: saying a transcript is too long for the model before it
-  is sent (the provider's own refusal is what the researcher sees).
+- **A transcript too long for the model, said before Start** (built after the first slice,
+  at the maintainer's word). The catalogue gives each analysis model the most it reads in
+  one request (`Limits.max_input_tokens`, the provider's documented window; for the models on
+  this computer the offline engine's 66,000 characters at four a token, a test holding the
+  two together). A text is too long when its characters over four exceed it: lenient on
+  purpose (the prompt and the answer not counted, four characters a token whatever the
+  script), so only what surely cannot fit is refused, and the provider's or the offline
+  engine's own refusal stays behind it. The engine measures the numbered text a cited
+  analysis would send, source by source: at creation it refuses the job
+  (`job.text_too_long`) before anything is sent or recorded, and the estimate's row says the
+  same (`EstimateRow.too_long`), so *Analyse this interview* shows the sentence where the
+  cost would be and disables Start until another model is chosen, with no new command. New
+  job, which can also start a cited analysis, shows the refusal as its other errors. A
+  model the catalogue gives no limit is never refused, and an older build ignores the field
+  (unknown fields are skipped; `schema_version` stays 1).
 
 ## Set aside
 
