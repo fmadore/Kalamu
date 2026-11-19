@@ -120,7 +120,7 @@ export function listenWhileMounted(subscribe: () => Promise<Unlisten>): Unlisten
 	};
 }
 
-async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
 	if (!isTauri()) {
 		throw { id: 'app.notDesktop', detail: cmd } satisfies AppError;
 	}
