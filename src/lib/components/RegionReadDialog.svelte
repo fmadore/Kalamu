@@ -171,15 +171,9 @@
 			request.error = describeError(e, m);
 		}
 	}
-
-	function escape() {
-		if (request.stage === 'waiting') request.stop();
-		else if (request.stage === 'answer' || request.stage === 'changed') request.discard(onclose);
-		else onclose();
-	}
 </script>
 
-<Dialog labelledby="region-reading-title" size="medium" onescape={escape}>
+<Dialog labelledby="region-reading-title" size="medium" onescape={() => request.escape(onclose)}>
 	<h2 id="region-reading-title">{r.title}</h2>
 
 	{#if preview}

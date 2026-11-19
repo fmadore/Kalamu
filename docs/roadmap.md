@@ -167,6 +167,10 @@ improvements that open *Next*; what it did not fix at once was tracked in
   of 17 November added; GPT-6.2 Sol is OpenAI's default and replaces 6.1 Sol at the same price,
   and GPT-6.2 Astra replaces GPT-6 Astra for a fifth less. Both older models stay in the
   pipelines that name them.
+- **Gemini 4 Neon** ([decision](decisions/2026-11-19-gemini-4-neon.md)): Google's model of
+  18 November, between Hydrogen and Carbon, added beside them at $3 / $15; Hydrogen stays the
+  default. Escape while a model answers from the review now stops the wait and leaves the
+  dialog open, for a passage as for a region.
 - **Foundations.** Rust workspace and Tauri shell, job database with caching and resuming,
   progress and taskbar progress, model catalogue refreshed from the repository, prompt library,
   keys in Credential Manager, English interface with translation files, CI with `cargo audit`
@@ -753,7 +757,8 @@ The runs of 3 November, their costs against the estimates and what they changed 
 [decision](decisions/2026-11-03-live-runs.md). Still to run: offline Whisper, and a full
 Tesseract job with networking off; GLM 5.3 through a whole job (GLM 5.3 Flash ran one); GPT-6.1
 Terra on handwriting and older print before it is considered as OpenAI's default; GPT-6.2 Sol
-and Astra on real pages, which no run has yet read; a table of
+and Astra on real pages, which no run has yet read; Gemini 4 Neon against Hydrogen on
+handwriting, older print and refusals; a table of
 contents and a correction mixing providers (Gemini reading, Mistral combining), and a table of
 contents in economy mode, after the first run found articles on two pages only of a 12-page
 issue with Claude Sonnet 5.5 at `low` (read the other pages' answers, and try a higher effort;
