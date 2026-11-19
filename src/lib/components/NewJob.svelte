@@ -239,7 +239,9 @@
 		if (kept) {
 			api
 				.listPresets(task)
-				.then((p) => (choices.presets = p))
+				.then((p) => {
+					choices.presets = p;
+				})
 				.catch(fail);
 		} else {
 			choices

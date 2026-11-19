@@ -74,8 +74,7 @@ readings, an analysis's name located, renamed, removed and put back, a failure d
 where a review was opened from, Ctrl F on each table, the remembered choices after a reload, a
 window of 640 × 560, the release line hidden; and records (`e2e/records.spec.ts`): an analysis
 turned into one row per entry, a page's rows corrected, added, removed and reviewed; and an
-interview analysed (`e2e/interview/interview-analysis.spec.ts`, in a folder with its own
-tsconfig.json, as the e2e folder already holds as many files as the lint's default project takes): its dialog's one box and one button, its
+interview analysed (`e2e/interview-analysis.spec.ts`): its dialog's one box and one button, its
 cards, a quotation played or shown in the text, removed and put back. They start the dev server on port 5173, or reuse
 one already there; `KALAMU_E2E_PORT=5291` picks another, for two checkouts tested side by side.
 

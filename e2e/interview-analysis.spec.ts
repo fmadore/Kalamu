@@ -6,7 +6,7 @@
 // saying what was left out; and the same in French.
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import type { NewJob } from '../../src/lib/bindings/NewJob.js';
+import type { NewJob } from '../src/lib/bindings/NewJob.js';
 
 test.describe.configure({ timeout: 60_000 });
 
