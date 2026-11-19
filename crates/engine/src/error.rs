@@ -90,6 +90,19 @@ pub enum EngineError {
     /// scan or a recording has no words to find a quotation in.
     #[error("{0} is not a text: quotations can only be found in a transcript or a text")]
     CitedNeedsText(String),
+    /// A cited analysis's text surely too long for the model to read in one request, by the
+    /// catalogue's measure: the file, the model's name, and the words of each, rounded.
+    #[error(
+        "{file} is too long for {model}: about {} words, where it reads about {} at once",
+        grouped(*words),
+        grouped(*most)
+    )]
+    TextTooLong {
+        file: String,
+        model: String,
+        words: u32,
+        most: u32,
+    },
     /// A change to a cited field's entries that cannot be made, or a correction holding a
     /// quotation the model's answer does not.
     #[error(transparent)]
@@ -134,7 +147,32 @@ impl EngineError {
             Self::Region(e) => e.code(),
             Self::RegionReading(e) => e.code(),
             Self::CitedNeedsText(_) => "job.cited_needs_text",
+            Self::TextTooLong { .. } => "job.text_too_long",
             Self::Cited(e) => e.code(),
         }
+    }
+}
+
+/// A count written in English with its thousands grouped: `12,000`.
+fn grouped(n: u32) -> String {
+    let digits = n.to_string();
+    let mut out = String::new();
+    for (i, c) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(c);
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn counts_are_grouped_by_thousands() {
+        assert_eq!(super::grouped(0), "0");
+        assert_eq!(super::grouped(999), "999");
+        assert_eq!(super::grouped(11_000), "11,000");
+        assert_eq!(super::grouped(1_200_000), "1,200,000");
     }
 }

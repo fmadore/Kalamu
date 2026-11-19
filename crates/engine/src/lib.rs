@@ -56,7 +56,7 @@ use kalamu_prompts::PromptLibrary;
 use tokio::sync::broadcast;
 
 pub use asked::PassageEstimate;
-pub use cited::CitedSource;
+pub use cited::{CitedSource, TextTooLong};
 pub use compare::{
     ComparisonReport, DiffKind, DiffSpan, JobScores, PageComparison, SetupScore, SourceScores,
     diff, error_rate,

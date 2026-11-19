@@ -27,6 +27,7 @@ kalamu-core = { workspace = true, features = ["test-support"] }
 async-trait.workspace = true
 image.workspace = true
 kalamu-media = { workspace = true, features = ["test-support"] }
+kalamu-offline.workspace = true
 kalamu-projects.workspace = true
 kalamu-store.workspace = true
 tempfile.workspace = true

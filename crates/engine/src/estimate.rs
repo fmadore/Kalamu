@@ -1,13 +1,13 @@
 //! What a job will cost before it starts: each set-up's pages or minutes priced from the
 //! catalogue, a records analysis page by page, a table of contents' second step apart, and the
-//! totals at each pace.
+//! totals at each pace; and, for a cited analysis, a text too long for its model.
 
 use kalamu_catalog::CostEstimate;
 use kalamu_core::{InputKind, MergeModel, ProviderId, SourceFile, Task};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{Engine, SetupRequest};
+use crate::{Engine, SetupRequest, TextTooLong};
 
 /// Characters in a page of text to correct, for a text file without pages.
 const TEXT_PAGE_CHARS: u64 = 2_500;
@@ -32,6 +32,11 @@ pub struct EstimateRow {
     pub estimate: CostEstimate,
     /// A table of contents' second step, which combines the pages.
     pub merge: bool,
+    /// A cited analysis's text surely too long for this model to read at once, as the job would
+    /// be refused for it when created ([`crate::Engine::check_length`]); absent otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub too_long: Option<TextTooLong>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -104,12 +109,18 @@ impl Engine {
                 }
                 _ => unpriced.clone(),
             };
+            let too_long = self
+                .request_cites(request.task, setup)
+                .unwrap_or(false)
+                .then(|| self.text_too_long(&catalog, setup, &request.sources))
+                .flatten();
             rows.push(EstimateRow {
                 provider: setup.provider.clone(),
                 model: setup.model.clone(),
                 pages,
                 estimate,
                 merge: false,
+                too_long,
             });
             // A table of contents' second step, on its own model and never in a batch.
             if request.task == Task::Contents {
@@ -131,6 +142,7 @@ impl Engine {
                     pages,
                     estimate,
                     merge: true,
+                    too_long: None,
                 });
             }
         }

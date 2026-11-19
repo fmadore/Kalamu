@@ -5,17 +5,20 @@
 //! The text is the snapshot's when the source was frozen from a result, with the snapshot's
 //! turns, or the turns read again from its text when it was frozen before turns were kept; a
 //! plain text file is read in paragraphs. A scan or a recording given directly has no text to
-//! quote, and such a job is refused before anything is sent ([`Engine::check_cited`]).
+//! quote, and such a job is refused before anything is sent ([`Engine::check_cited`]); so is a
+//! text surely too long for the model to read at once ([`Engine::check_length`]), which the
+//! estimate says before Start.
 //!
 //! The numbered form of the text enters the pieces' cache keys as `cited_turns:<sha256>`, only
 //! for set-ups with a cited field: every other key is unchanged.
 
 use std::sync::Arc;
 
+use kalamu_catalog::Catalog;
 use kalamu_core::analysis::cited::{self, CitedEdit, CitedError, CitedText};
 use kalamu_core::{
     AnalysisSchema, Correction, InputKind, Job, JobId, PieceRef, PreparedInput, ProcessOutput,
-    Setup, SetupId, SnapshotPart, SourceFile, SourceId, Task, Timestamp, Turn,
+    Setup, SetupId, SetupRequest, SnapshotPart, SourceFile, SourceId, Task, Timestamp, Turn,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -171,25 +174,94 @@ impl Engine {
     /// Refuses a new analysis with a cited field whose sources are not all texts: a scan or a
     /// recording has no words to find a quotation in.
     pub(crate) fn check_cited(&self, new: &NewJob) -> Result<(), EngineError> {
-        if new.task != Task::Analysis {
-            return Ok(());
-        }
         let mut cited = false;
         for request in &new.setups {
-            let preset = match request.preset_id.as_deref() {
-                Some(id) => self.with_prompts(|p| p.get(id))?,
-                None => self.with_prompts(|p| p.default_for(new.task)),
-            };
-            cited |= preset
-                .schema
-                .as_ref()
-                .is_some_and(|s| cited::has_cited(&s.fields));
+            cited |= self.request_cites(new.task, request)?;
         }
         match new.sources.iter().find(|s| s.kind != InputKind::Text) {
             Some(source) if cited => Err(EngineError::CitedNeedsText(source.file_name.clone())),
             _ => Ok(()),
         }
     }
+
+    /// Whether a set-up asked for would send its sources whole with their turns numbered: an
+    /// analysis whose prompt (the one chosen, or the task's default) has a cited field.
+    pub(crate) fn request_cites(
+        &self,
+        task: Task,
+        request: &SetupRequest,
+    ) -> Result<bool, EngineError> {
+        if task != Task::Analysis {
+            return Ok(false);
+        }
+        let preset = match request.preset_id.as_deref() {
+            Some(id) => self.with_prompts(|p| p.get(id))?,
+            None => self.with_prompts(|p| p.default_for(task)),
+        };
+        Ok(preset
+            .schema
+            .as_ref()
+            .is_some_and(|s| cited::has_cited(&s.fields)))
+    }
+
+    /// Refuses a new cited analysis whose text is surely too long for a set-up's model to read
+    /// in one request, measured as the catalogue measures it
+    /// ([`kalamu_catalog::ModelInfo::too_long`]) on the numbered text that would be sent: before
+    /// anything is sent or recorded, and never by a provider's or a model's name. A model the
+    /// catalogue gives no limit, and a text that cannot be read now, are left to the provider
+    /// and the run.
+    pub(crate) fn check_length(&self, catalog: &Catalog, new: &NewJob) -> Result<(), EngineError> {
+        for request in &new.setups {
+            if !self.request_cites(new.task, request)? {
+                continue;
+            }
+            if let Some(long) = self.text_too_long(catalog, request, &new.sources) {
+                let model = catalog
+                    .model(&request.provider, &request.model)
+                    .map_or_else(|| request.model.clone(), |m| m.name.clone());
+                return Err(EngineError::TextTooLong {
+                    file: long.file,
+                    model,
+                    words: long.words,
+                    most: long.most_words,
+                });
+            }
+        }
+        Ok(())
+    }
+
+    /// The first of the sources whose numbered text is too long for a cited set-up's model.
+    pub(crate) fn text_too_long(
+        &self,
+        catalog: &Catalog,
+        request: &SetupRequest,
+        sources: &[SourceFile],
+    ) -> Option<TextTooLong> {
+        let model = catalog.model(&request.provider, &request.model)?;
+        model.limits.max_input_tokens?;
+        sources
+            .iter()
+            .filter(|s| s.kind == InputKind::Text)
+            .find_map(|source| {
+                let quotable = self.quotable_text(source).ok()?;
+                let long = model.too_long(&quotable.numbered)?;
+                Some(TextTooLong {
+                    file: source.file_name.clone(),
+                    words: long.words,
+                    most_words: long.most_words,
+                })
+            })
+    }
+}
+
+/// A text a cited analysis would send that is surely too long for its model to read at once:
+/// the file, about how many words it holds, and about how many the model reads.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TextTooLong {
+    pub file: String,
+    pub words: u32,
+    pub most_words: u32,
 }
 
 /// The text a cited analysis read, for the review to show its quotations in place: the
