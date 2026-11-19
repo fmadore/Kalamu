@@ -416,6 +416,7 @@ mod outdated;
 mod passages;
 mod progress;
 mod projects;
+mod proposals;
 mod region_readings;
 mod regions;
 mod results;

@@ -4,7 +4,8 @@
 //! for its estimated lines, which the stored fractions do not keep: they are read from the
 //! source file, only for such a result, and kept for the source's other pages.
 //!
-//! The researcher's own regions, drawn or adjusted, are laid over the engine's ([`drawn`]).
+//! The researcher's own regions, drawn or adjusted, are laid over the engine's ([`drawn`]), in
+//! the review and in the exports ([`export`]).
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -19,6 +20,7 @@ use crate::control::lock;
 use crate::{Engine, EngineError};
 
 pub(crate) mod drawn;
+pub(crate) mod export;
 
 /// The displayed sizes of one source's pages, by page number, as last read: the review moves
 /// through one source's pages at a time, so its file is opened once for them.
@@ -99,7 +101,7 @@ impl Engine {
     /// rotation, an image turned upright, a split spread's half alone. None when the file
     /// cannot be read (moved or deleted: the review cannot show the scan either) or the piece
     /// is not a page.
-    fn page_aspect(&self, source: &SourceFile, piece: &PieceRef) -> Option<f32> {
+    pub(crate) fn page_aspect(&self, source: &SourceFile, piece: &PieceRef) -> Option<f32> {
         let PieceRef::Page { number, half } = *piece else {
             return None;
         };

@@ -25,7 +25,7 @@
 	let frameHeight = $state(0);
 
 	/** The page's own box on screen, which the zoom stretches. */
-	const sheet = (el: Element | null) => el?.closest('.sheet')?.getBoundingClientRect() ?? null;
+	const sheet = (el: Element | null) => el?.closest('.page-sheet')?.getBoundingClientRect() ?? null;
 	/** Where the pointer is on the page, in fractions of it as drawn, not kept on the page. */
 	const at = (rect: DOMRect, e: PointerEvent): Point => ({
 		x: (e.clientX - rect.left) / rect.width,

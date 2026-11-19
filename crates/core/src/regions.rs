@@ -41,7 +41,8 @@
 //! # The researcher's regions
 //!
 //! Regions the researcher draws, and the boxes they give an engine's regions, are kept apart
-//! from the stored result, which never changes ([`DrawnRegion`]).
+//! from the stored result, which never changes ([`DrawnRegion`]). The exports lay them on the
+//! engine's regions as the review does ([`lay_for_export`], [`contain`]).
 //!
 //! # The place of a region's words in the text
 //!
@@ -54,12 +55,14 @@ use ts_rs::TS;
 use crate::{PageHalf, TextLine, TextRegion, TextWord};
 
 mod drawn;
+mod export;
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests;
 mod text;
 
 pub use drawn::{AdjustedRegion, DrawnRegion, MIN_SIZE, RegionDraft, RegionError, SLACK, check};
+pub use export::{LaidForExport, contain, lay_for_export, path_of};
 use text::Words;
 
 /// The id of an engine's block `block` (from 1) on a page.
@@ -133,6 +136,12 @@ pub struct ShownRegion {
     pub origin: RegionOrigin,
     /// Where its words stand in the text shown, only where that place is certain.
     pub span: Option<TextSpan>,
+    /// For an engine's region shown under the researcher's box, the id of that box
+    /// ([`DrawnRegion::id`]), which putting the engine's own box back removes. None otherwise,
+    /// the researcher's own regions included.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub adjusted_by: Option<String>,
 }
 
 /// How regions were given their place in the text shown.
@@ -241,6 +250,7 @@ impl PageRegions {
                 granularity: Granularity::Block,
                 origin: RegionOrigin::Provider,
                 span: None,
+                adjusted_by: None,
             };
             blocks.push((shown, block_start..tokens.len()));
         }
@@ -300,6 +310,7 @@ fn shown_line(id: String, line: &TextLine, origin: RegionOrigin) -> ShownRegion 
         granularity: Granularity::Line,
         origin,
         span: None,
+        adjusted_by: None,
     }
 }
 
@@ -314,6 +325,7 @@ fn shown_word(id: String, word: &TextWord, origin: RegionOrigin) -> ShownRegion 
         granularity: Granularity::Word,
         origin,
         span: None,
+        adjusted_by: None,
     }
 }
 

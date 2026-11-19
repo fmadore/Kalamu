@@ -28,4 +28,10 @@ origin: RegionOrigin,
 /**
  * Where its words stand in the text shown, only where that place is certain.
  */
-span: TextSpan | null, };
+span: TextSpan | null, 
+/**
+ * For an engine's region shown under the researcher's box, the id of that box
+ * ([`DrawnRegion::id`]), which putting the engine's own box back removes. None otherwise,
+ * the researcher's own regions included.
+ */
+adjusted_by?: string | null, };

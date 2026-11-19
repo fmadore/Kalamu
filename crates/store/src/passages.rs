@@ -1,12 +1,14 @@
 //! Passages the researcher asked a model to correct from the review: each recorded before its
 //! call, after it, and once the researcher decides, beside the job whose text it was.
 
-use kalamu_core::{
-    Correction, JobId, PassageProposal, ProposalStatus, SetupId, SourceId, StoreError,
-};
-use rusqlite::{OptionalExtension, params};
+use kalamu_core::{Correction, JobId, PassageProposal, SetupId, SourceId, StoreError};
+use rusqlite::params;
 
-use super::{SqliteStore, corrupt, db, to_json};
+use super::{SqliteStore, db, proposals, to_json};
+
+pub(crate) const TABLE: &str = "passages";
+/// The kind, as an unreadable record's error names it.
+const WHAT: &str = "passage";
 
 /// The passages, their status and cost kept in columns of their own: what a job spent adds
 /// up the costs, and the cache's pruning keeps the answers they name.
@@ -61,26 +63,8 @@ pub(crate) fn put(
     tx.commit().map_err(db)
 }
 
-/// A proposal as kept, its status read from its column: the one a restart changes.
-fn read(data: String, status: String) -> Result<PassageProposal, StoreError> {
-    let mut proposal: PassageProposal = serde_json::from_str(&data).map_err(corrupt)?;
-    proposal.status = ProposalStatus::parse(&status)
-        .ok_or_else(|| corrupt(format!("unknown passage status {status}")))?;
-    Ok(proposal)
-}
-
 pub(crate) fn get(store: &SqliteStore, id: &str) -> Result<PassageProposal, StoreError> {
-    let row: Option<(String, String)> = store
-        .conn()
-        .query_row(
-            "SELECT data, status FROM passages WHERE id = ?1",
-            [id],
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )
-        .optional()
-        .map_err(db)?;
-    let (data, status) = row.ok_or(StoreError::NotFound)?;
-    read(data, status)
+    proposals::get(store, TABLE, WHAT, id)
 }
 
 pub(crate) fn of_source(
@@ -97,12 +81,9 @@ pub(crate) fn of_source(
              ORDER BY created_at, rowid",
         )
         .map_err(db)?;
-    let rows = stmt
-        .query_map(
-            params![job.to_string(), setup.to_string(), source.to_string()],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
-        )
-        .map_err(db)?;
-    rows.map(|r| r.map_err(db).and_then(|(data, status)| read(data, status)))
-        .collect()
+    proposals::all(
+        &mut stmt,
+        params![job.to_string(), setup.to_string(), source.to_string()],
+        WHAT,
+    )
 }

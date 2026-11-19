@@ -10,6 +10,7 @@ import type { ReadingEffect } from '../bindings/ReadingEffect.js';
 import type { RegionAsk } from '../bindings/RegionAsk.js';
 import type { RegionReading } from '../bindings/RegionReading.js';
 import { locateWords, withReading } from '../regionReading.js';
+import { PretendModel, fail, mend } from './mockAsking.js';
 import { drawnOn } from './mockDrawn.js';
 import type { FindPiece } from './mockPassages.js';
 
@@ -20,12 +21,6 @@ const MIN_SIZE = 0.004;
 const COST = 0.002;
 /** What the pretend model reads in a region the researcher drew. */
 const NOTE = 'Vu et approuvé, le 3 mai 1956';
-
-const readings = new Map<string, RegionReading>();
-/** Answers already given, by what was asked. */
-const answered = new Map<string, string>();
-/** Requests waiting, by id, to stop waiting for. */
-const waiting = new Map<string, () => void>();
 
 const keyOf = (a: RegionAsk) =>
 	JSON.stringify([
@@ -41,9 +36,13 @@ const keyOf = (a: RegionAsk) =>
 		a.height
 	]);
 
-const fail = (id: string): never => {
-	throw { id };
-};
+// `?reading-slow`: the model takes long enough to be stopped.
+const model = new PretendModel<RegionAsk, RegionReading>({
+	key: keyOf,
+	cost: COST,
+	delay: 500,
+	slow: 'reading-slow'
+});
 
 const shownOf = (find: FindPiece, setupId: string, sourceId: string, index: number) => {
 	const piece = find(setupId, sourceId, index) ?? fail('job.nothing_read');
@@ -94,11 +93,7 @@ function readingOf(a: RegionAsk): RegionReading {
 
 /** What the pretend model reads: the words shown, mended, or a marginal note. */
 function readOf(a: RegionAsk): string {
-	if (a.target.kind !== 'text') return NOTE;
-	return a.target.was
-		.replace(/(\p{L})'(\p{L})/gu, '$1’$2')
-		.replace(/fideles/g, 'fidèles')
-		.replace(/Gouvemeur/g, 'Gouverneur');
+	return a.target.kind === 'text' ? mend(a.target.was) : NOTE;
 }
 
 export function regionReadingCommand(
@@ -111,9 +106,7 @@ export function regionReadingCommand(
 		case 'region_reading_estimate': {
 			const ask = a.ask as RegionAsk;
 			check(ask, find);
-			const offline = local(ask.provider);
-			const cached = answered.has(keyOf(ask));
-			return { usd: offline || cached ? null : COST, offline, cached };
+			return model.estimate(ask, local);
 		}
 		case 'ask_region_reading': {
 			const ask = a.ask as RegionAsk;
@@ -122,38 +115,19 @@ export function regionReadingCommand(
 			} catch (e) {
 				return Promise.reject(e);
 			}
-			const r = readingOf(ask);
-			readings.set(ask.id, r);
-			const stored = answered.get(keyOf(ask));
-			// `?reading-slow`: the model takes long enough to be stopped.
-			const slow = new URLSearchParams(location.search).has('reading-slow');
-			return new Promise<RegionReading>((resolve) => {
-				const done = (status: 'answered' | 'cancelled') => {
-					waiting.delete(ask.id);
-					clearTimeout(timer);
-					const answer = stored ?? readOf(ask);
-					if (status === 'answered') answered.set(keyOf(ask), answer);
-					Object.assign(r, {
-						status,
-						answer: status === 'answered' ? answer : null,
-						cost_usd: status === 'answered' && !stored && !local(ask.provider) ? COST : null,
-						cached: stored !== undefined,
-						answered_at: Date.now()
-					});
-					resolve({ ...r });
-				};
-				const timer = setTimeout(
-					() => done('answered'),
-					stored !== undefined ? 0 : slow ? 60_000 : 500
-				);
-				waiting.set(ask.id, () => done('cancelled'));
-			});
+			return model.ask(
+				ask,
+				readingOf(ask),
+				() => readOf(ask),
+				(status, _answer, stored) => ({
+					cost_usd: status === 'answered' && !stored && !local(ask.provider) ? COST : null
+				})
+			);
 		}
 		case 'cancel_region_reading':
-			waiting.get(String(a.id))?.();
-			return null;
+			return model.cancel(String(a.id));
 		case 'accept_region_reading': {
-			const r = readings.get(String(a.id));
+			const r = model.asked.get(String(a.id));
 			if (!r || r.status !== 'answered') return fail('region_reading.not_waiting');
 			const ask = r.ask;
 			const text = String(a.text);
@@ -182,13 +156,10 @@ export function regionReadingCommand(
 			Object.assign(r, { status: 'accepted', accepted: text, decided_at: Date.now() });
 			return before;
 		}
-		case 'discard_region_reading': {
-			const r = readings.get(String(a.id));
-			if (r?.status === 'answered') r.status = 'discarded';
-			return null;
-		}
+		case 'discard_region_reading':
+			return model.discard(String(a.id));
 		case 'undo_region_reading': {
-			const r = readings.get(String(a.id));
+			const r = model.asked.get(String(a.id));
 			const before = a.before as ReadingEffect;
 			if (!r || r.status !== 'accepted') return fail('region_reading.not_waiting');
 			if (before.kind === 'region') {

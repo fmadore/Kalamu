@@ -7,20 +7,16 @@
 	// writes it into the researcher's corrections, or discarded. Nothing changes the text before
 	// it is accepted; the model's own output never changes. Asked through the engine, which
 	// records it and keeps its answer, so the same request again costs nothing.
+	import AskStatus from './AskStatus.svelte';
 	import Dialog from './Dialog.svelte';
+	import DiffSpans from './DiffSpans.svelte';
+	import ModelPickers from './ModelPickers.svelte';
 	import type { Correction } from '#lib/bindings/Correction.js';
-	import type { DiffSpan } from '#lib/bindings/DiffSpan.js';
 	import type { Job } from '#lib/bindings/Job.js';
 	import type { PassageAsk } from '#lib/bindings/PassageAsk.js';
-	import type { PassageEstimate } from '#lib/bindings/PassageEstimate.js';
 	import type { PassageProposal } from '#lib/bindings/PassageProposal.js';
-	import type { Preset } from '#lib/bindings/Preset.js';
-	import { providerName as providerNameOf } from '#lib/catalogText.js';
-	import { askConsent } from '#lib/dialogs.js';
-	import { describeError, isAppError } from '#lib/errors.js';
-	import { formatUsd, messages } from '#lib/i18n/index.js';
-	import { rulesFor } from '#lib/newJob.js';
-	import { findModel, modelsFor, providerDefault } from '#lib/newJobModels.js';
+	import { messages } from '#lib/i18n/index.js';
+	import { ModelChoice, ModelRequest, readSetup } from '#lib/modelAsk.svelte.js';
 	import {
 		PASSAGE_LIMITS,
 		charCount,
@@ -28,7 +24,7 @@
 		passageProblem,
 		type Chosen
 	} from '#lib/passage.js';
-	import { app, hasKey, isInstalled } from '#lib/state.svelte.js';
+	import { hasKey } from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
 	import { api } from '#lib/tauri.js';
 
@@ -65,77 +61,26 @@
 	const problem = passageProblem(around.passage);
 	const length = charCount(around.passage);
 
-	const catalog = $derived(app.catalog);
-	const rule = $derived(rulesFor(app.rules, 'text_correction'));
-	const providers = $derived(
-		(catalog?.providers ?? []).filter(
-			(pr) => catalog && modelsFor(catalog, rule, pr.id, TEXT).length > 0
-		)
+	// The set-up to start from: the last one used, the job's own when it corrects text, or the
+	// first provider with a key and its usual model.
+	// svelte-ignore state_referenced_locally
+	const own = job.task === 'text_correction' ? job.setups[0] : undefined;
+	const choice = new ModelChoice(
+		'text_correction',
+		TEXT,
+		hasKey,
+		[
+			recall(LAST_KEY, readSetup, null),
+			own ? { provider: own.provider, model: own.model, preset: own.prompt.preset_id } : null
+		],
+		'text_correction.general'
 	);
-	let presets = $state<Preset[]>([]);
-
-	type Last = { provider: string; model: string; preset: string | null };
-	function readLast(v: unknown): Last | null {
-		const s = v as Partial<Last> | null;
-		return typeof s?.provider === 'string' && typeof s.model === 'string'
-			? { provider: s.provider, model: s.model, preset: s.preset ?? null }
-			: null;
-	}
-
-	/** The set-up to start from: the last one used, the job's own when it corrects text, or the
-	 * first provider with a key and its usual model. */
-	function startingSetup(): Last {
-		const offered = (s: Last | null) =>
-			s !== null &&
-			catalog !== null &&
-			modelsFor(catalog, rule, s.provider, TEXT).some((x) => x.id === s.model);
-		const last = recall(LAST_KEY, readLast, null);
-		if (offered(last) && last) return last;
-		const own = job.task === 'text_correction' ? job.setups[0] : undefined;
-		const fromJob = own
-			? { provider: own.provider, model: own.model, preset: own.prompt.preset_id }
-			: null;
-		if (offered(fromJob) && fromJob) return fromJob;
-		const keyed = providers.find((pr) => hasKey(pr.id)) ?? providers[0];
-		const id = keyed?.id ?? '';
-		return {
-			provider: id,
-			model: catalog ? providerDefault(catalog, rule, id, TEXT) : '',
-			preset: null
-		};
-	}
-	const first = startingSetup();
-	let provider = $state(first.provider);
-	let model = $state(first.model);
-	let preset = $state<string>(first.preset ?? 'text_correction.general');
-	const models = $derived(catalog ? modelsFor(catalog, rule, provider, TEXT) : []);
-
-	const providerName = $derived.by(() => {
-		const found = catalog?.providers.find((pr) => pr.id === provider);
-		return found ? providerNameOf(found) : provider;
+	const request = new ModelRequest<PassageProposal, Correction>(p, {
+		cancel: api.cancelPassage,
+		accept: api.acceptPassage,
+		discard: api.discardPassage,
+		changed: 'passage.changed'
 	});
-	const modelName = $derived(
-		(catalog ? findModel(catalog, provider, model)?.name : undefined) ?? model
-	);
-	const local = $derived(catalog?.providers.find((pr) => pr.id === provider)?.local === true);
-	const keyed = $derived(hasKey(provider));
-	const installed = $derived(isInstalled(provider, model));
-
-	type Stage = 'ask' | 'waiting' | 'proposal' | 'changed';
-	let stage = $state<Stage>('ask');
-	let estimate = $state<PassageEstimate | null>(null);
-	let error = $state<string | null>(null);
-	/** Why the request would be refused, from the engine: a text changed since, say. */
-	let estimateError = $state<string | null>(null);
-	/** The researcher stopped waiting for the last request. */
-	let stopped = $state(false);
-	let proposal = $state<PassageProposal | null>(null);
-	let spans = $state<DiffSpan[]>([]);
-	let editing = $state(false);
-	let draft = $state('');
-	/** Read out as it changes: the proposal ready. */
-	let said = $state('');
-	let asking = $state<string | null>(null);
 	let editor = $state<HTMLTextAreaElement | null>(null);
 
 	function askOf(id: string): PassageAsk {
@@ -149,110 +94,38 @@
 			passage: around.passage,
 			after: around.after,
 			at: around.at,
-			provider,
-			model,
-			preset_id: preset || null
+			provider: choice.provider,
+			model: choice.model,
+			preset_id: choice.preset || null
 		};
 	}
 
-	$effect(() => {
-		void api
-			.listPresets('text_correction')
-			.then((list) => (presets = list))
-			.catch(() => (presets = []));
-	});
+	$effect(() => choice.loadPresets());
 
 	// What the request would cost, and whether it is answered already, as the choice changes.
 	$effect(() => {
 		const ask = askOf('estimate');
-		estimateError = null;
-		if (stage !== 'ask' || problem || !ask.model) {
-			estimate = null;
-			return;
-		}
-		let gone = false;
-		api
-			.passageEstimate(ask)
-			.then((e) => {
-				if (!gone) estimate = e;
-			})
-			.catch((e) => {
-				if (gone) return;
-				estimate = null;
-				estimateError = describeError(e, m);
-			});
-		return () => (gone = true);
+		return request.estimateWith(problem || !ask.model ? null : () => api.passageEstimate(ask));
 	});
 
 	$effect(() => {
-		if (editing && editor) editor.focus();
+		if (request.editing && editor) editor.focus();
 	});
 
-	async function ask() {
-		error = null;
-		stopped = false;
-		if (!(await askConsent([provider], app.catalog))) return;
-		keep(LAST_KEY, { provider, model, preset });
-		const id = crypto.randomUUID();
-		asking = id;
-		stage = 'waiting';
-		said = p.waiting(modelName);
-		try {
-			const answer = await api.askPassage(askOf(id));
-			if (answer.status === 'answered' && answer.answer !== null) {
-				proposal = answer;
-				draft = answer.answer;
-				spans = await api.diffTexts(around.passage, answer.answer).catch(() => []);
-				stage = 'proposal';
-				said = p.ready;
-			} else if (answer.status === 'cancelled') {
-				stage = 'ask';
-				stopped = true;
-				said = p.stopped;
-			} else {
-				stage = 'ask';
-				error = p.failed(answer.error ?? '');
-				said = '';
-			}
-		} catch (e) {
-			stage = 'ask';
-			error = describeError(e, m);
-			said = '';
-		} finally {
-			asking = null;
-		}
-	}
-
-	function stop() {
-		if (asking) void api.cancelPassage(asking);
-	}
-
-	async function accept() {
-		if (!proposal) return;
-		error = null;
-		const text = editing ? draft : (proposal.answer ?? '');
-		try {
-			const before = await api.acceptPassage(proposal.ask.id, text);
-			onaccepted(proposal.ask.id, before);
-		} catch (e) {
-			if (isAppError(e) && e.id === 'passage.changed') {
-				stage = 'changed';
-				said = p.changed;
-			} else {
-				error = describeError(e, m);
-			}
-		}
-	}
-
-	/** Leaves the proposal unused, and closes. */
-	function discard() {
-		if (proposal) void api.discardPassage(proposal.ask.id).catch(() => undefined);
-		onclose();
+	function ask() {
+		void request.ask({
+			provider: choice.provider,
+			modelName: choice.modelName,
+			remember: () =>
+				keep(LAST_KEY, { provider: choice.provider, model: choice.model, preset: choice.preset }),
+			send: (id) => api.askPassage(askOf(id)),
+			base: around.passage
+		});
 	}
 
 	function escape() {
-		if (stage === 'waiting') stop();
-		if (stage === 'proposal' || stage === 'changed') discard();
+		if (request.stage === 'waiting') request.stop();
+		if (request.stage === 'answer' || request.stage === 'changed') request.discard(onclose);
 		else onclose();
 	}
 </script>
@@ -282,103 +155,75 @@
 		<p class="chip danger" role="alert">{p.tooLong(length, PASSAGE_LIMITS.max)}</p>
 	{/if}
 
-	{#if stage === 'ask'}
-		<div class="pickers">
-			<label class="field">
-				<span>{m.newJob.provider}</span>
-				<select
-					bind:value={provider}
-					onchange={() => catalog && (model = providerDefault(catalog, rule, provider, TEXT))}
-				>
-					{#each providers as pr (pr.id)}
-						<option value={pr.id}>{providerNameOf(pr)}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="field">
-				<span>{m.newJob.model}</span>
-				<select bind:value={model}>
-					{#each models as md (md.id)}
-						<option value={md.id}>{md.name}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="field wide">
-				<span>{m.newJob.prompt}</span>
-				<select bind:value={preset}>
-					{#each presets as pr (pr.id)}
-						<option value={pr.id}>{pr.name}</option>
-					{/each}
-				</select>
-			</label>
-		</div>
+	{#if request.stage === 'ask'}
+		<ModelPickers {choice} />
 		<p class="muted">
-			{local ? p.sentOffline(modelName) : p.sentCloud(providerName, PASSAGE_LIMITS.context)}
+			{choice.local
+				? p.sentOffline(choice.modelName)
+				: p.sentCloud(choice.providerName, PASSAGE_LIMITS.context)}
 		</p>
-		{#if !keyed}
-			<p class="notice" role="status">{p.noKey(providerName)}</p>
-		{:else if !installed}
-			<p class="notice" role="status">{p.notInstalled(modelName)}</p>
-		{/if}
-		{#if estimate}
-			<p class="num">
-				{#if estimate.cached}{p.costStored}{:else if estimate.offline}{p.costOffline}{:else if estimate.usd !== null}{p.costAbout(
-						formatUsd(estimate.usd)
-					)}{:else}{p.costUnknown}{/if}
-			</p>
-		{/if}
-	{:else if stage === 'waiting'}
-		<p class="waiting">{p.waiting(modelName)}</p>
-	{:else if stage === 'proposal' && proposal}
-		{#if editing}
+		<AskStatus {choice} estimate={request.estimate} texts={p} />
+	{:else if request.stage === 'waiting'}
+		<p class="waiting">{p.waiting(choice.modelName)}</p>
+	{:else if request.stage === 'answer' && request.answer}
+		{@const proposal = request.answer}
+		{#if request.editing}
 			<label class="field">
 				<span>{p.editLabel}</span>
-				<textarea bind:this={editor} bind:value={draft} rows="5" spellcheck="false" lang=""
+				<textarea bind:this={editor} bind:value={request.draft} rows="5" spellcheck="false" lang=""
 				></textarea>
 			</label>
 		{:else}
 			<figure class="proposal">
 				<figcaption class="muted">{p.proposal}</figcaption>
 				<!-- prettier-ignore -->
-				<p class="diff" lang="">{#each spans as s, i (i)}{#if s.kind === 'removed'}<del><span class="sr-only">{p.removed}: </span>{s.text}</del>{:else if s.kind === 'added'}<ins><span class="sr-only">{p.added}: </span>{s.text}</ins>{:else}{s.text}{/if}{:else}{proposal.answer}{/each}</p>
+				<p class="diff" lang=""><DiffSpans spans={request.spans} answer={proposal.answer ?? ''} removed={p.removed} added={p.added} /></p>
 			</figure>
 		{/if}
 		{#each proposal.notes as note (note)}
 			<p class="notice" role="note">{p.notes[note]}</p>
 		{/each}
-	{:else if stage === 'changed'}
+	{:else if request.stage === 'changed'}
 		<p class="notice" role="alert">{p.changed}</p>
 	{/if}
 
-	{#if error}<p class="chip danger" role="alert">{error}</p>{/if}
-	{#if estimateError && stage === 'ask'}<p class="chip danger" role="alert">
-			{estimateError}
+	{#if request.error}<p class="chip danger" role="alert">{request.error}</p>{/if}
+	{#if request.estimateError && request.stage === 'ask'}<p class="chip danger" role="alert">
+			{request.estimateError}
 		</p>{/if}
-	<p class="sr-only" aria-live="polite">{said}</p>
+	<p class="sr-only" aria-live="polite">{request.said}</p>
 
 	<div class="actions">
-		{#if stage === 'ask'}
+		{#if request.stage === 'ask'}
 			<button class="btn" onclick={onclose}>{m.common.cancel}</button>
 			<button
 				class="btn primary"
-				disabled={problem !== null || estimateError !== null || !model || !keyed || !installed}
+				disabled={problem !== null ||
+					request.estimateError !== null ||
+					!choice.model ||
+					!choice.keyed ||
+					!choice.installed}
 				onclick={ask}>{p.ask}</button
 			>
-		{:else if stage === 'waiting'}
-			<button class="btn" onclick={stop}>{p.stop}</button>
-		{:else if stage === 'proposal'}
-			<button class="btn" onclick={discard}>{p.discard}</button>
-			{#if !editing}
-				<button class="btn" onclick={() => (editing = true)}>{p.edit}</button>
+		{:else if request.stage === 'waiting'}
+			<button class="btn" onclick={() => request.stop()}>{p.stop}</button>
+		{:else if request.stage === 'answer'}
+			<button class="btn" onclick={() => request.discard(onclose)}>{p.discard}</button>
+			{#if !request.editing}
+				<button class="btn" onclick={() => (request.editing = true)}>{p.edit}</button>
 			{/if}
-			<button class="btn primary" disabled={editing && !draft.trim()} onclick={accept}
-				>{p.accept}</button
+			<button
+				class="btn primary"
+				disabled={request.editing && !request.draft.trim()}
+				onclick={() => request.accept(onaccepted)}>{p.accept}</button
 			>
 		{:else}
-			<button class="btn primary" onclick={discard}>{p.lookAgain}</button>
+			<button class="btn primary" onclick={() => request.discard(onclose)}>{p.lookAgain}</button>
 		{/if}
 	</div>
-	{#if stopped && stage === 'ask'}<p class="muted small" role="status">{p.stopped}</p>{/if}
+	{#if request.stopped && request.stage === 'ask'}<p class="muted small" role="status">
+			{p.stopped}
+		</p>{/if}
 </Dialog>
 
 <style>
@@ -426,27 +271,6 @@
 	.small {
 		margin: 0;
 		font-size: var(--type-xs);
-	}
-	del {
-		color: var(--danger-text);
-		text-decoration-thickness: 2px;
-	}
-	ins {
-		text-decoration: none;
-		background: var(--hand-wash);
-		color: var(--text-bright);
-		border-bottom: 2px solid var(--hand);
-	}
-	.pickers {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--space-3);
-	}
-	.pickers .wide {
-		grid-column: 1 / -1;
-	}
-	.pickers select {
-		width: 100%;
 	}
 	textarea {
 		width: 100%;

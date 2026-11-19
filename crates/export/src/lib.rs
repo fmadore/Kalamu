@@ -8,6 +8,7 @@ mod alto;
 mod contents;
 mod csv_export;
 mod docx;
+mod geometry;
 mod json;
 mod layout;
 mod markdown;

@@ -47,6 +47,8 @@ impl Engine {
         );
         let speaker_names = speakers.of(setup_id, source_id);
         let states = self.store.source_pieces(job.id, setup_id, source_id)?;
+        // The researcher's regions this set-up's files carry, handed to each page's part.
+        let mut drawn = self.export_regions(job, source_id, &states)?;
 
         let mut parts = Vec::new();
         let mut usage = Usage::default();
@@ -68,6 +70,14 @@ impl Engine {
             // document still reaches the researcher (a table of contents has only its entries).
             if state.status == PieceStatus::Failed && job.task != Task::Contents {
                 failed.push(state.index + 1);
+                let (regions, researcher) = self.export_geometry(
+                    &source,
+                    &state.piece,
+                    &[],
+                    None,
+                    None,
+                    &drawn.on(&state.piece),
+                );
                 parts.push(ExportPart {
                     piece: state.piece.clone(),
                     text: String::new(),
@@ -75,11 +85,12 @@ impl Engine {
                     corrected: false,
                     reviewed: false,
                     fields: Vec::new(),
-                    regions: Vec::new(),
+                    regions,
                     failed: Some(state.error.clone().unwrap_or_default()),
                     drawn_dpi: None,
                     read_at: None,
                     corrected_at: None,
+                    researcher,
                 });
                 continue;
             }
@@ -186,26 +197,16 @@ impl Engine {
             };
             // A corrected page keeps its words' places where the engine placed each word;
             // otherwise its text stays searchable as one block over the page, also when the
-            // engine read nothing there and the researcher typed the page.
-            let whole_page = |text: &String| {
-                vec![kalamu_core::TextRegion::block(
-                    0.05,
-                    0.05,
-                    0.9,
-                    0.9,
-                    text.clone(),
-                )]
-            };
-            let regions = match (&corrected_text, result.output.regions.is_empty()) {
-                (Some(text), false) => crate::realign::realign(&result.output.regions, text)
-                    .unwrap_or_else(|| whole_page(text)),
-                (Some(text), true)
-                    if !text.trim().is_empty() && matches!(state.piece, PieceRef::Page { .. }) =>
-                {
-                    whole_page(text)
-                }
-                _ => result.output.regions.clone(),
-            };
+            // engine read nothing there and the researcher typed the page. The researcher's
+            // boxes are laid on the model's regions first, and their own regions beside them.
+            let (regions, researcher) = self.export_geometry(
+                &source,
+                &state.piece,
+                &result.output.regions,
+                Some(key),
+                corrected_text.as_deref(),
+                &drawn.on(&state.piece),
+            );
             parts.push(ExportPart {
                 piece: state.piece.clone(),
                 text: text_as_left(
@@ -224,6 +225,7 @@ impl Engine {
                 corrected_at: correction
                     .filter(|_| corrected_text.is_some())
                     .map(|c| c.updated_at),
+                researcher,
             });
         }
 

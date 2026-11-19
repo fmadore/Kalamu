@@ -480,6 +480,11 @@ heart of the app (see [DESIGN.md](../DESIGN.md)).
   certain, the change shown first; only copied where that place is not certain. It can be
   edited first, and undone. The page's own reading never changes. A reading's cost counts in
   the job's ([decision](decisions/2026-11-18-drawn-regions-region-read-again.md)).
+  ALTO, PAGE XML and the searchable PDF write this corrected view: the researcher's boxes in
+  place of the model's, a block or line widened rather than its words moved, the regions the
+  researcher drew after the model's, and each format saying whose a position is in its own
+  way ([formats](formats.md),
+  [decision](decisions/2026-11-18-checkpoint-requests-exports.md)).
 - **Differences in the text.** Where another model, or the model under a correction, reads
   differently, the words are highlighted. Pointing at them shows the readings over the text,
   each named by its set-up; clicking them, or stepping through them with F or the arrows above

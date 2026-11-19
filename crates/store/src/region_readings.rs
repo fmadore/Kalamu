@@ -1,10 +1,14 @@
 //! Regions the researcher asked a model to read again from the review: each recorded before its
 //! call, after it, and once the researcher decides, beside the job whose source it is on.
 
-use kalamu_core::{JobId, ProposalStatus, ReadingEffect, RegionReading, SourceId, StoreError};
-use rusqlite::{OptionalExtension, params};
+use kalamu_core::{JobId, ReadingEffect, RegionReading, SourceId, StoreError};
+use rusqlite::params;
 
-use super::{SqliteStore, corrupt, db, to_json};
+use super::{SqliteStore, db, proposals, to_json};
+
+pub(crate) const TABLE: &str = "region_readings";
+/// The kind, as an unreadable record's error names it.
+const WHAT: &str = "region reading";
 
 /// The readings, their status and cost kept in columns of their own: what a job spent adds up
 /// the costs, and the cache's pruning keeps the answers they name.
@@ -61,26 +65,8 @@ pub(crate) fn put(
     tx.commit().map_err(db)
 }
 
-/// A reading as kept, its status read from its column: the one a restart changes.
-fn read(data: String, status: String) -> Result<RegionReading, StoreError> {
-    let mut reading: RegionReading = serde_json::from_str(&data).map_err(corrupt)?;
-    reading.status = ProposalStatus::parse(&status)
-        .ok_or_else(|| corrupt(format!("unknown region reading status {status}")))?;
-    Ok(reading)
-}
-
 pub(crate) fn get(store: &SqliteStore, id: &str) -> Result<RegionReading, StoreError> {
-    let row: Option<(String, String)> = store
-        .conn()
-        .query_row(
-            "SELECT data, status FROM region_readings WHERE id = ?1",
-            [id],
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )
-        .optional()
-        .map_err(db)?;
-    let (data, status) = row.ok_or(StoreError::NotFound)?;
-    read(data, status)
+    proposals::get(store, TABLE, WHAT, id)
 }
 
 pub(crate) fn of_source(
@@ -95,11 +81,9 @@ pub(crate) fn of_source(
              ORDER BY page, created_at, rowid",
         )
         .map_err(db)?;
-    let rows = stmt
-        .query_map(params![job.to_string(), source.to_string()], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
-        })
-        .map_err(db)?;
-    rows.map(|r| r.map_err(db).and_then(|(data, status)| read(data, status)))
-        .collect()
+    proposals::all(
+        &mut stmt,
+        params![job.to_string(), source.to_string()],
+        WHAT,
+    )
 }

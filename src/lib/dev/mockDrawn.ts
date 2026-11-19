@@ -97,12 +97,13 @@ const shownOf = (r: DrawnRegion): ShownRegion => ({
 	text: r.text,
 	granularity: 'block',
 	origin: 'manual',
-	span: null
+	span: null,
+	adjusted_by: null
 });
 
 /** `page` with `drawn` laid over it, as the engine lays them: a box adjusting the reading
- * shown takes its region's place; one adjusting another reading a set-up still shows is left
- * out; any other is among `drawn`. */
+ * shown takes its region's place, named by `adjusted_by`; one adjusting another reading a set-up
+ * still shows is left out; any other is among `drawn`. */
 export function withDrawn(page: PageRegions, drawn: DrawnRegion[]): PageRegions {
 	const out: PageRegions = { ...page, drawn: [...page.drawn] };
 	for (const r of drawn) {
@@ -121,7 +122,15 @@ export function withDrawn(page: PageRegions, drawn: DrawnRegion[]): PageRegions 
 				: undefined;
 		if (at && adjusts) {
 			const i = at.findIndex((s) => s.id === adjusts.region);
-			at[i] = { ...at[i], x: r.x, y: r.y, width: r.width, height: r.height, origin: 'manual' };
+			at[i] = {
+				...at[i],
+				x: r.x,
+				y: r.y,
+				width: r.width,
+				height: r.height,
+				origin: 'manual',
+				adjusted_by: r.id
+			};
 		} else {
 			out.drawn.push(shownOf(r));
 		}

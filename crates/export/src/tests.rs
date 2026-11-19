@@ -15,6 +15,7 @@ use super::*;
 
 mod page_xml;
 mod records;
+mod researcher;
 
 fn source(name: &str, kind: InputKind) -> SourceFile {
     SourceFile {
@@ -142,6 +143,7 @@ fn letter() -> ExportDocument {
                 drawn_dpi: None,
                 read_at: None,
                 corrected_at: None,
+                researcher: Default::default(),
             },
             ExportPart {
                 piece: kalamu_core::PieceRef::page(2),
@@ -155,6 +157,7 @@ fn letter() -> ExportDocument {
                 drawn_dpi: None,
                 read_at: None,
                 corrected_at: None,
+                researcher: Default::default(),
             },
             // Refused every time: the letter is still written, the page marked in its place.
             ExportPart {
@@ -169,6 +172,7 @@ fn letter() -> ExportDocument {
                 drawn_dpi: None,
                 read_at: None,
                 corrected_at: None,
+                researcher: Default::default(),
             },
         ],
     )
@@ -208,6 +212,7 @@ fn interview() -> ExportDocument {
                 drawn_dpi: None,
                 read_at: None,
                 corrected_at: None,
+                researcher: Default::default(),
             },
             ExportPart {
                 // A prompt-based model that wrote timestamps into its text.
@@ -226,6 +231,7 @@ fn interview() -> ExportDocument {
                 drawn_dpi: None,
                 read_at: None,
                 corrected_at: None,
+                researcher: Default::default(),
             },
         ],
     )
@@ -293,6 +299,7 @@ fn analysis() -> ExportDocument {
             drawn_dpi: None,
             read_at: None,
             corrected_at: None,
+            researcher: Default::default(),
         }],
     );
     doc.setup.prompt.schema = Some(schema.clone());
@@ -394,6 +401,7 @@ fn contents() -> ExportDocument {
             drawn_dpi: None,
             read_at: None,
             corrected_at: None,
+            researcher: Default::default(),
         }],
     );
     doc.setup.merge = Some(kalamu_core::MergeStep {
@@ -425,6 +433,7 @@ fn corrected() -> ExportDocument {
         drawn_dpi: None,
         read_at: None,
         corrected_at: None,
+        researcher: Default::default(),
     };
     document(
         Task::TextCorrection,
@@ -450,6 +459,7 @@ fn translated() -> ExportDocument {
         drawn_dpi: None,
         read_at: None,
         corrected_at: None,
+        researcher: Default::default(),
     };
     document(
         Task::Translation,
@@ -483,6 +493,7 @@ fn translated_interview() -> ExportDocument {
         drawn_dpi: None,
         read_at: None,
         corrected_at: None,
+        researcher: Default::default(),
     };
     let mut doc = document(
         Task::Translation,
@@ -781,6 +792,7 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
             drawn_dpi: None,
             read_at: None,
             corrected_at: None,
+            researcher: Default::default(),
         }],
     );
     let bytes = exporter(ExportFormat::SearchablePdf)
@@ -856,6 +868,7 @@ fn alto_places_each_word_and_estimates_blocks_placed_whole() {
             drawn_dpi: None,
             read_at: None,
             corrected_at: None,
+            researcher: Default::default(),
         }],
     );
     check("letter.alto.xml", &run(ExportFormat::Alto, &doc));
@@ -904,6 +917,7 @@ fn alto_wraps_a_paragraph_placed_whole_into_the_lines_its_block_holds() {
             drawn_dpi: None,
             read_at: None,
             corrected_at: None,
+            researcher: Default::default(),
         }],
     );
     let xml = String::from_utf8(run(ExportFormat::Alto, &doc)).unwrap_or_default();
@@ -946,6 +960,7 @@ fn alto_measures_each_pdf_page_at_the_resolution_it_was_drawn_at() {
         drawn_dpi: Some(drawn_dpi),
         read_at: None,
         corrected_at: None,
+        researcher: Default::default(),
     };
     let doc = document(
         Task::TextExtraction,
@@ -1001,6 +1016,7 @@ fn alto_of_a_document_of_images_measures_each_page_in_its_file() {
         drawn_dpi: None,
         read_at: None,
         corrected_at: None,
+        researcher: Default::default(),
     };
     let doc = document(Task::TextExtraction, source, vec![part(1), part(2)]);
     let xml = String::from_utf8(run(ExportFormat::Alto, &doc)).unwrap_or_default();

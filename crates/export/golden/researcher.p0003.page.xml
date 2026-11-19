@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>Kalamu 0.1.0</Creator>
+    <Created>2026-10-27T10:25:27Z</Created>
+    <LastChange>2026-10-28T10:25:27Z</LastChange>
+    <Comments>gemini gemini-3.8-flash; PDF page measured at 300 dpi; line positions estimated within blocks the model placed whole; text corrected by the researcher; positions set by the researcher where an element's comments say so</Comments>
+    <MetadataItem type="processingStep" name="review" value="positions set and regions placed by the researcher in Kalamu" date="2026-10-28T10:25:27Z"/>
+  </Metadata>
+  <Page imageFilename="carnet.pdf#page=3" imageWidth="2479" imageHeight="3508" imageXResolution="300" imageYResolution="300" imageResolutionUnit="PPI">
+    <ReadingOrder>
+      <OrderedGroup id="ro">
+        <RegionRefIndexed index="0" regionRef="r1"/>
+        <RegionRefIndexed index="1" regionRef="r2"/>
+      </OrderedGroup>
+    </ReadingOrder>
+    <TextRegion id="r1" custom="readingOrder {index:0;}" comments="the model's position, widened to hold one set by the researcher (region 6f1c2a3b-0000-4000-8000-000000000008)">
+      <Coords points="248,351 1066,351 1066,421 248,421"/>
+      <TextLine id="r1_l1" custom="readingOrder {index:0;}" comments="the model's position, widened to hold one set by the researcher (region 6f1c2a3b-0000-4000-8000-000000000008)">
+        <Coords points="248,351 1066,351 1066,421 248,421"/>
+        <Word id="r1_l1_w1">
+          <Coords points="248,351 421,351 421,421 248,421"/>
+          <TextEquiv conf="0.90">
+            <Unicode>Le</Unicode>
+          </TextEquiv>
+        </Word>
+        <Word id="r1_l1_w2">
+          <Coords points="446,351 620,351 620,421 446,421"/>
+          <TextEquiv conf="0.90">
+            <Unicode>cercle</Unicode>
+          </TextEquiv>
+        </Word>
+        <Word id="r1_l1_w3">
+          <Coords points="645,351 818,351 818,421 645,421"/>
+          <TextEquiv conf="0.90">
+            <Unicode>de</Unicode>
+          </TextEquiv>
+        </Word>
+        <Word id="r1_l1_w4" comments="position set by the researcher (region 6f1c2a3b-0000-4000-8000-000000000008)">
+          <Coords points="843,351 1066,351 1066,421 843,421"/>
+          <TextEquiv conf="0.90">
+            <Unicode>Kita</Unicode>
+          </TextEquiv>
+        </Word>
+        <TextEquiv>
+          <Unicode>Le cercle de Kita</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Le cercle de Kita</Unicode>
+      </TextEquiv>
+    </TextRegion>
+    <TextRegion id="r2" custom="readingOrder {index:1;}">
+      <Coords points="248,1052 1487,1052 1487,1403 248,1403"/>
+      <TextLine id="r2_l1" custom="readingOrder {index:0;}" comments="position estimated within a block the model placed whole">
+        <Coords points="248,1052 1487,1052 1487,1228 248,1228"/>
+        <TextEquiv>
+          <Unicode>Le commandant a réuni</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextLine id="r2_l2" custom="readingOrder {index:1;}" comments="position set by the researcher (region 6f1c2a3b-0000-4000-8000-000000000009)">
+        <Coords points="248,1263 1363,1263 1363,1368 248,1368"/>
+        <TextEquiv>
+          <Unicode>les notables du quartier</Unicode>
+        </TextEquiv>
+      </TextLine>
+      <TextEquiv>
+        <Unicode>Le commandant a réuni
+les notables du quartier</Unicode>
+      </TextEquiv>
+    </TextRegion>
+  </Page>
+</PcGts>

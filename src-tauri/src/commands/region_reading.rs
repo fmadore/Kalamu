@@ -6,8 +6,8 @@ use kalamu_core::{ReadingEffect, RegionAsk, RegionReading};
 use kalamu_engine::PassageEstimate;
 use tauri::State;
 
-use super::{AppState, off_thread};
-use crate::errors::{AppError, CmdResult, id};
+use super::{AppState, consented, off_thread};
+use crate::errors::CmdResult;
 
 /// What asking a model to read a region again would cost, and whether the answer is stored
 /// already; refused as asking would be (a box off the page, a model that reads no pictures, the
@@ -29,9 +29,7 @@ pub async fn ask_region_reading(
     state: State<'_, AppState>,
     ask: RegionAsk,
 ) -> CmdResult<RegionReading> {
-    if let Some(provider) = super::unconsented(&state, [ask.provider.clone()]).first() {
-        return Err(AppError::new(id::CONSENT, provider));
-    }
+    consented(&state, &ask.provider)?;
     let engine = state.engine.clone();
     Ok(engine.ask_region_reading(ask).await?)
 }

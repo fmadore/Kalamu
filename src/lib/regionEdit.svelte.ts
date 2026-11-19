@@ -181,25 +181,15 @@ export class RegionEdit {
 		}
 	}
 
-	/** Puts an engine's region's own box back: the researcher's box for it is removed, which Undo
-	 * brings back. The store is asked for that box by saving it as it stands, since a page gives
-	 * an engine's region by its own id. */
+	/** Puts an engine's region's own box back: the researcher's box for it, which the page names
+	 * (`adjusted_by`), is removed, and Undo brings it back. */
 	async putBack(region: ShownRegion) {
 		const regions = this.#regions;
-		const result = regions.page?.result;
-		const place = regions.place;
-		if (!result || !place) return;
+		const ours = region.adjusted_by;
+		if (!ours) return;
 		const m = messages();
 		try {
-			const ours = await api.saveRegion(
-				draftOf(regions, place, {
-					id: null,
-					box: boxOf(region),
-					text: '',
-					adjusts: { result, region: region.id }
-				})
-			);
-			const removed = await api.removeRegion(ours.id);
+			const removed = await api.removeRegion(ours);
 			await regions.reload();
 			regions.chooseId(region.id);
 			regions.focusing = true;

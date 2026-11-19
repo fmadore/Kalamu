@@ -22,17 +22,30 @@
 //!   spread was split, where the review counts each half on its own;
 //! - reading order is the order the engine gave, in `ReadingOrder` and, as Transkribus writes
 //!   it, in each region's and line's `custom`;
-//! - `Created` and `LastChange` are the times the page was read and last corrected, never the
-//!   time of writing, so writing the files again gives the same files.
+//! - `Created` and `LastChange` are the times the page was read and last corrected, or a box last
+//!   placed by the researcher, never the time of writing, so writing the files again gives the
+//!   same files.
+//!
+//! The researcher's boxes (#84) are said where the estimated ones are, in the `comments` the
+//! schema gives every region, line and word: a box the researcher placed, or the model's widened
+//! to hold one of theirs, names the region of theirs it comes from as `provenance.json` lists it.
+//! The page's `Metadata` adds a `MetadataItem` of type `processingStep`, the 2019 schema's place
+//! for a step of the page's making (where OCR-D records its processors). The model's regions keep
+//! their ids; the researcher's own come after them in the reading order, each a `TextRegion`
+//! named `researcher_{id}` (an XML id cannot start with a digit, as theirs may): with lines
+//! estimated within its box where it holds text, and with its box alone where it holds none, a
+//! statement that something is there.
 
 use std::fmt::Write as _;
 
+use kalamu_core::export::BoxKind;
 use kalamu_core::regions::{block_id, line_id, word_id};
 use kalamu_core::{
     ExportDocument, ExportError, ExportFile, ExportFormat, Exporter, InputKind, PieceRef, Task,
     TextLine, Timestamp,
 };
 
+use crate::geometry::{Mark, researcher_id};
 use crate::layout::{LaidPage, Layout, error, esc, esc_content, written};
 
 pub struct PageXmlExporter;
@@ -40,6 +53,9 @@ pub struct PageXmlExporter;
 const FORMAT: &str = "PAGE XML";
 
 const NAMESPACE: &str = "http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15";
+
+/// The note on a line estimated within a block the model placed whole.
+const ESTIMATED: &str = "position estimated within a block the model placed whole";
 
 impl Exporter for PageXmlExporter {
     fn format(&self) -> ExportFormat {
@@ -83,13 +99,15 @@ fn page(doc: &ExportDocument, laid: &LaidPage) -> String {
         .iter()
         .filter(|p| matches!(p.piece, PieceRef::Page { number: n, .. } if n == number))
         .collect();
-    // When the page was read, and last changed: read again, or corrected. A page that could not
-    // be read takes the time the document's first page was read; only a document none of whose
-    // results records its time (none the engine writes) falls back on the time of writing.
+    // When the page was read, and last changed: read again, corrected, or a box placed. A page
+    // that could not be read takes the time the document's first page was read; only a
+    // document none of whose results records its time (none the engine writes) falls back on
+    // the time of writing.
     let created = parts.iter().filter_map(|p| p.read_at).min();
     let changed = parts
         .iter()
         .flat_map(|p| [p.read_at, p.corrected_at])
+        .chain([laid.changed])
         .flatten()
         .max();
     let created = created
@@ -105,11 +123,15 @@ fn page(doc: &ExportDocument, laid: &LaidPage) -> String {
     if let Some(dpi) = laid.dpi {
         let _ = write!(comments, "; PDF page measured at {} dpi", written(dpi));
     }
-    if laid.regions.iter().any(|r| r.lines.is_empty()) {
+    if laid.estimated() {
         comments.push_str("; line positions estimated within blocks the model placed whole");
     }
     if parts.iter().any(|p| p.corrected) {
         comments.push_str("; text corrected by the researcher");
+    }
+    let researcher = laid.researcher();
+    if researcher {
+        comments.push_str("; positions set by the researcher where an element's comments say so");
     }
     if let Some(reason) = parts.iter().find_map(|p| p.failed.as_deref()) {
         let _ = write!(comments, "; not read: {reason}");
@@ -122,16 +144,26 @@ fn page(doc: &ExportDocument, laid: &LaidPage) -> String {
         "<PcGts xmlns=\"{NAMESPACE}\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \
 xsi:schemaLocation=\"{NAMESPACE} {NAMESPACE}/pagecontent.xsd\">"
     );
-    let _ = writeln!(
+    let _ = write!(
         x,
         "  <Metadata>\n    <Creator>{} {}</Creator>\n    <Created>{}</Created>\n    \
-<LastChange>{}</LastChange>\n    <Comments>{}</Comments>\n  </Metadata>",
+<LastChange>{}</LastChange>\n    <Comments>{}</Comments>\n",
         esc_content(&doc.provenance.generator.name),
         esc_content(&doc.provenance.generator.version),
         date_time(created),
         date_time(changed),
         esc_content(&comments),
     );
+    if let (true, Some(at)) = (researcher, laid.changed) {
+        let _ = writeln!(
+            x,
+            "    <MetadataItem type=\"processingStep\" name=\"review\" value=\"positions set and \
+regions placed by the researcher in {}\" date=\"{}\"/>",
+            esc(&doc.provenance.generator.name),
+            date_time(at)
+        );
+    }
+    x.push_str("  </Metadata>\n");
     let resolution = laid
         .dpi
         .map(|dpi| {
@@ -148,79 +180,173 @@ xsi:schemaLocation=\"{NAMESPACE} {NAMESPACE}/pagecontent.xsd\">"
         laid.width,
         laid.height,
     );
-    if !laid.regions.is_empty() {
+    // The model's regions in their order, then the researcher's own in the order made.
+    let ids: Vec<String> = (1..=laid.regions.len())
+        .map(block_id)
+        .chain(laid.drawn.iter().map(|d| researcher_id(&d.id)))
+        .collect();
+    if !ids.is_empty() {
         x.push_str("    <ReadingOrder>\n      <OrderedGroup id=\"ro\">\n");
-        for r in 0..laid.regions.len() {
+        for (r, id) in ids.iter().enumerate() {
             let _ = writeln!(
                 x,
-                "        <RegionRefIndexed index=\"{r}\" regionRef=\"{}\"/>",
-                block_id(r + 1)
+                "        <RegionRefIndexed index=\"{r}\" regionRef=\"{id}\"/>"
             );
         }
         x.push_str("      </OrderedGroup>\n    </ReadingOrder>\n");
     }
-    let points = |rx: f32, ry: f32, rw: f32, rh: f32| coords(rx, ry, rw, rh, laid);
-    for (r, region) in laid.regions.iter().enumerate() {
-        let id = block_id(r + 1);
+    for r in 0..laid.regions.len() {
+        model_region(&mut x, laid, r);
+    }
+    for (d, drawn) in laid.drawn.iter().enumerate() {
+        let index = laid.regions.len() + d;
+        let id = researcher_id(&drawn.id);
+        let region = &drawn.region;
         let _ = writeln!(
             x,
-            "    <TextRegion id=\"{id}\" custom=\"readingOrder {{index:{r};}}\">\n      \
-<Coords points=\"{}\"/>",
-            points(region.x, region.y, region.width, region.height)
+            "    <TextRegion id=\"{id}\" custom=\"readingOrder {{index:{index};}}\" \
+comments=\"region placed by the researcher (region {})\">\n      <Coords points=\"{}\"/>",
+            esc(&drawn.id),
+            coords(region.x, region.y, region.width, region.height, laid)
         );
-        let (lines, estimated) = laid.lines(region);
-        let mut texts = Vec::with_capacity(lines.len());
-        for (l, line) in lines.iter().enumerate() {
-            let lid = line_id(r + 1, l + 1);
-            let note = if estimated {
-                " comments=\"position estimated within a block the model placed whole\""
-            } else {
-                ""
-            };
-            let _ = writeln!(
-                x,
-                "      <TextLine id=\"{lid}\" custom=\"readingOrder {{index:{l};}}\"{note}>\n        \
-<Coords points=\"{}\"/>",
-                points(line.x, line.y, line.width, line.height)
-            );
-            if !estimated {
-                for (w, word) in line.words.iter().enumerate() {
-                    let conf = word
-                        .confidence
-                        .map(|c| format!(" conf=\"{:.2}\"", c.clamp(0.0, 1.0)))
-                        .unwrap_or_default();
-                    let _ = writeln!(
-                        x,
-                        "        <Word id=\"{}\">\n          <Coords points=\"{}\"/>\n          \
-<TextEquiv{conf}>\n            <Unicode>{}</Unicode>\n          </TextEquiv>\n        </Word>",
-                        word_id(r + 1, l + 1, w + 1),
-                        points(word.x, word.y, word.width, word.height),
-                        esc_content(&word.text),
-                    );
-                }
+        if !region.text.trim().is_empty() {
+            let lines = laid.estimate(region);
+            let mut texts = Vec::with_capacity(lines.len());
+            for (l, line) in lines.iter().enumerate() {
+                let note = "position estimated within a region the researcher drew";
+                texts.push(text_line(
+                    &mut x,
+                    laid,
+                    &format!("{id}_l{}", l + 1),
+                    l,
+                    line,
+                    note,
+                ));
             }
-            let text = line_text(line);
-            let _ = writeln!(
-                x,
-                "        <TextEquiv>\n          <Unicode>{}</Unicode>\n        </TextEquiv>\n      \
-</TextLine>",
-                esc_content(&text)
-            );
-            texts.push(text);
+            let text = if lines.is_empty() {
+                region.text.trim().to_owned()
+            } else {
+                texts.join("\n")
+            };
+            text_equiv(&mut x, "      ", &text);
         }
-        let text = if lines.is_empty() {
-            region.text.trim().to_owned()
-        } else {
-            texts.join("\n")
-        };
-        let _ = writeln!(
-            x,
-            "      <TextEquiv>\n        <Unicode>{}</Unicode>\n      </TextEquiv>\n    </TextRegion>",
-            esc_content(&text)
-        );
+        x.push_str("    </TextRegion>\n");
     }
     x.push_str("  </Page>\n</PcGts>\n");
     x
+}
+
+/// Block `r` of the model's, from 0, with its lines and words, each with its note.
+fn model_region(x: &mut String, laid: &LaidPage, r: usize) {
+    let Some(region) = laid.regions.get(r) else {
+        return;
+    };
+    let marks = laid.marks(r);
+    let id = block_id(r + 1);
+    let note = marks
+        .and_then(|m| m.block.as_ref())
+        .map(|m| format!(" comments=\"{}\"", esc(&m.note())))
+        .unwrap_or_default();
+    let _ = writeln!(
+        x,
+        "    <TextRegion id=\"{id}\" custom=\"readingOrder {{index:{r};}}\"{note}>\n      \
+<Coords points=\"{}\"/>",
+        coords(region.x, region.y, region.width, region.height, laid)
+    );
+    let (lines, estimated) = laid.lines(r);
+    let mut texts = Vec::with_capacity(lines.len());
+    for (l, line) in lines.iter().enumerate() {
+        let mark = marks.and_then(|m| m.lines.get(&l));
+        let word_mark = |w: usize| marks.and_then(|m| m.words.get(&(l, w)));
+        let note = line_note(mark, estimated);
+        let lid = line_id(r + 1, l + 1);
+        let _ = writeln!(
+            x,
+            "      <TextLine id=\"{lid}\" custom=\"readingOrder {{index:{l};}}\"{}>\n        \
+<Coords points=\"{}\"/>",
+            note.map(|n| format!(" comments=\"{}\"", esc(&n)))
+                .unwrap_or_default(),
+            coords(line.x, line.y, line.width, line.height, laid)
+        );
+        // Within estimated lines, words only where the researcher placed one of them.
+        let words = !estimated || (0..line.words.len()).any(|w| word_mark(w).is_some());
+        if words {
+            for (w, word) in line.words.iter().enumerate() {
+                let conf = word
+                    .confidence
+                    .map(|c| format!(" conf=\"{:.2}\"", c.clamp(0.0, 1.0)))
+                    .unwrap_or_default();
+                let note = match word_mark(w) {
+                    Some(m) => Some(m.note()),
+                    None => estimated.then(|| ESTIMATED.to_owned()),
+                };
+                let _ = writeln!(
+                    x,
+                    "        <Word id=\"{}\"{}>\n          <Coords points=\"{}\"/>\n          \
+<TextEquiv{conf}>\n            <Unicode>{}</Unicode>\n          </TextEquiv>\n        </Word>",
+                    word_id(r + 1, l + 1, w + 1),
+                    note.map(|n| format!(" comments=\"{}\"", esc(&n)))
+                        .unwrap_or_default(),
+                    coords(word.x, word.y, word.width, word.height, laid),
+                    esc_content(&word.text),
+                );
+            }
+        }
+        let text = line_text(line);
+        text_equiv(x, "        ", &text);
+        x.push_str("      </TextLine>\n");
+        texts.push(text);
+    }
+    let text = if lines.is_empty() {
+        region.text.trim().to_owned()
+    } else {
+        texts.join("\n")
+    };
+    text_equiv(x, "      ", &text);
+    x.push_str("    </TextRegion>\n");
+}
+
+/// A line's note: the researcher's box is theirs, estimated or not; the model's line widened
+/// for a word of theirs is still estimated where it was.
+fn line_note(mark: Option<&Mark>, estimated: bool) -> Option<String> {
+    match (mark, estimated) {
+        (Some(m), true) if m.kind == BoxKind::ModelWidened => {
+            Some(format!("{ESTIMATED}; {}", m.note()))
+        }
+        (Some(m), _) => Some(m.note()),
+        (None, true) => Some(ESTIMATED.to_owned()),
+        (None, false) => None,
+    }
+}
+
+/// A line estimated within a region of the researcher's, with no words; its text.
+fn text_line(
+    x: &mut String,
+    laid: &LaidPage,
+    id: &str,
+    index: usize,
+    line: &TextLine,
+    note: &str,
+) -> String {
+    let _ = writeln!(
+        x,
+        "      <TextLine id=\"{id}\" custom=\"readingOrder {{index:{index};}}\" comments=\"{note}\">\n        \
+<Coords points=\"{}\"/>",
+        coords(line.x, line.y, line.width, line.height, laid)
+    );
+    let text = line_text(line);
+    text_equiv(x, "        ", &text);
+    x.push_str("      </TextLine>\n");
+    text
+}
+
+/// A `TextEquiv` holding `text`, indented by `indent`.
+fn text_equiv(x: &mut String, indent: &str, text: &str) {
+    let _ = writeln!(
+        x,
+        "{indent}<TextEquiv>\n{indent}  <Unicode>{}</Unicode>\n{indent}</TextEquiv>",
+        esc_content(text)
+    );
 }
 
 /// The image the page's positions refer to: the image itself, or the file of a document of

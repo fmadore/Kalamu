@@ -1,35 +1,65 @@
 //! A region of a page read again by a model on request (#84): the box cut from the original at
 //! full resolution by `media`, sent as a text extraction of that picture (the preset chosen,
 //! frozen as a job's would be, or the default one; the job's languages and line breaks; the
-//! provider's retries), recorded in the store before and after the call, its answer cached
-//! under a key of its own and offered as a proposal. Only the researcher's acceptance writes
-//! it: as the text of a region they drew, or in place of the words an engine's region holds in
-//! the page's text, in the same transaction as the record that says a model read it. The
-//! page's own reading is never changed.
+//! provider's retries), its answer cached under a key of its own and offered as a proposal,
+//! through the steps every request from the review goes through ([`crate::asked`]); the
+//! picture is cut before it is recorded, so a stop meanwhile sends nothing. Only the
+//! researcher's acceptance writes it: as the text of a region they drew, or in place of the
+//! words an engine's region holds in the page's text, in the same transaction as the record
+//! that says a model read it. The page's own reading is never changed.
 //!
 //! No job is made: a reading belongs to the source reviewed, and its cost to that source's job,
 //! whatever the job's task, so an analysis's or a table of contents' review can read a region
 //! of its pages too. A refusal billed by the provider is charged to the page's piece, as the
 //! passages' are.
 
-use std::sync::{Arc, Mutex};
-
 use kalamu_core::fingerprint::sha256_hex;
 use kalamu_core::region_reading as reading;
 use kalamu_core::{
-    ApiKey, CacheKey, Job, JobSettings, PieceRef, PieceState, PieceStatus, PreparedInput,
-    ProposalStatus, ReadingTarget, RegionAsk, RegionError, RegionReading, RegionReadingError,
-    RequestSetting, Setup, SetupId, SetupRequest, SourceFile, StopSignal, StoreError, Task,
-    Timestamp,
+    ApiKey, CacheKey, Job, JobSettings, JobStore, PieceRef, PieceState, PieceStatus, PreparedInput,
+    ProposalStatus, ReadingEffect, ReadingTarget, RegionAsk, RegionError, RegionReading,
+    RegionReadingError, Setup, SetupRequest, SourceFile, StopSignal, StoreError, Task, Timestamp,
 };
 use kalamu_media::{Crop, MediaError, OpenSource, RegionRefusal};
 
+use crate::asked::{Asked, Call, PassageEstimate, Waiting};
 use crate::control::lock;
-use crate::passage::{PassageEstimate, stopped};
-use crate::piece::Called;
 use crate::{Engine, EngineError};
 
 mod decide;
+
+impl Asked for RegionReading {
+    type Effect = ReadingEffect;
+
+    fn load(store: &dyn JobStore, id: &str) -> Result<Self, StoreError> {
+        store.region_reading(id)
+    }
+
+    fn record(
+        &self,
+        store: &dyn JobStore,
+        effect: Option<&ReadingEffect>,
+    ) -> Result<(), StoreError> {
+        store.put_region_reading(self, effect)
+    }
+
+    /// None: whatever the model read is stored, as a text extraction's is.
+    fn refusal(&self, _answer: &str) -> Option<String> {
+        None
+    }
+
+    /// Offered when the model found text, failed when not.
+    fn answered(&mut self, text: &str) {
+        self.answered_at = Some(Timestamp::now());
+        if text.trim().is_empty() {
+            self.status = ProposalStatus::Failed;
+            self.error = Some(RegionReadingError::Empty.to_string());
+        } else {
+            self.status = ProposalStatus::Answered;
+            self.answer = Some(text.to_string());
+        }
+    }
+}
 
 /// A region is read as a page's text is.
 const TASK: Task = Task::TextExtraction;
@@ -143,7 +173,7 @@ impl Engine {
                 end,
                 was,
             } => {
-                let state = self.finished_piece(ask, *setup_id, *index)?;
+                let state = self.finished_piece(ask.job_id, *setup_id, ask.source_id, *index)?;
                 let shown = self.shown_text(&state)?;
                 if state.piece != page || reading::locate(&shown, *start, *end, was).is_none() {
                     return Err(refused(RegionReadingError::Changed));
@@ -175,20 +205,6 @@ impl Engine {
             attempts: 0,
             updated_at: Timestamp::now(),
         })
-    }
-
-    /// A finished piece of a set-up, or "nothing read".
-    fn finished_piece(
-        &self,
-        ask: &RegionAsk,
-        setup: SetupId,
-        index: u32,
-    ) -> Result<PieceState, EngineError> {
-        self.store
-            .source_pieces(ask.job_id, setup, ask.source_id)?
-            .into_iter()
-            .find(|p| p.index == index && p.status.is_finished())
-            .ok_or(EngineError::NothingRead)
     }
 
     /// The region cut from the original, off the async thread, its file checked as a job checks
@@ -256,24 +272,11 @@ impl Engine {
             &planned.settings.languages,
             &sha256_hex(&input.bytes),
         );
-        let offline = !self.provider(&ask.provider)?.needs_key();
-        if self.store.cached_result(&key)?.is_some() {
-            return Ok(PassageEstimate {
-                usd: None,
-                offline,
-                cached: true,
-            });
-        }
-        let catalog = self.current_catalog();
         let prompt = &planned.setup.prompt;
-        let usd = catalog.model(&ask.provider, &ask.model).and_then(|m| {
+        self.estimated(&ask.provider, &key, |catalog| {
+            let m = catalog.model(&ask.provider, &ask.model)?;
             let chars = prompt.text.len() + prompt.user_prompt.len();
             catalog.estimate(m, TASK, 1, 0.0, chars).usd
-        });
-        Ok(PassageEstimate {
-            usd: usd.filter(|_| !offline),
-            offline,
-            cached: false,
         })
     }
 
@@ -284,23 +287,13 @@ impl Engine {
     /// arrives after is still stored, so asking again costs nothing.
     pub async fn ask_region_reading(&self, ask: RegionAsk) -> Result<RegionReading, EngineError> {
         let planned = self.plan_reading(&ask)?;
-        let provider = self.provider(&ask.provider)?;
-        let api_key = if provider.needs_key() {
-            self.keys
-                .key(&ask.provider)
-                .ok_or_else(|| EngineError::MissingKey(ask.provider.to_string()))?
-        } else {
-            ApiKey::new("")
-        };
-        provider
-            .check_ready(&planned.setup.model, &planned.settings.languages)
-            .map_err(EngineError::NotReady)?;
-        let stop = StopSignal::default();
-        lock(&self.region_readings).insert(ask.id.clone(), stop.clone());
-        let id = ask.id.clone();
-        let read = self.read_region(ask, planned, api_key, &stop).await;
-        lock(&self.region_readings).remove(&id);
-        read
+        let api_key = self.ready_key(
+            &ask.provider,
+            &planned.setup.model,
+            &planned.settings.languages,
+        )?;
+        let waiting = Waiting::new(&self.region_readings, &ask.id);
+        self.read_region(ask, planned, api_key, &waiting.stop).await
     }
 
     async fn read_region(
@@ -342,146 +335,31 @@ impl Engine {
             &sha256_hex(&input.bytes),
         );
         proposal.cache_key = key.0.clone();
-        self.store.put_region_reading(&proposal, None)?;
-
-        if let Some(stored) = self.store.cached_result(&key)? {
-            proposal.cached = true;
-            proposal.request = stored.request.clone();
-            answered(&mut proposal, &stored.output.text);
-            self.store.put_region_reading(&proposal, None)?;
+        if self.asked_or_cached(&mut proposal, &key)? {
             return Ok(proposal);
         }
-
-        let me = self
-            .me
-            .upgrade()
-            .ok_or_else(|| EngineError::Output("the engine is closing".into()))?;
-        let call = {
-            let stop = stop.clone();
-            tokio::spawn(async move { me.call_region(planned, input, key, api_key, &stop).await })
-        };
-        let ended = tokio::select! {
-            joined = call => Some(joined),
-            () = stopped(stop) => None,
-        };
-        proposal.answered_at = Some(Timestamp::now());
-        match ended {
-            None | Some(Ok(Ok(ReadingCall::Interrupted))) => {
-                proposal.status = ProposalStatus::Cancelled;
-            }
-            Some(Err(e)) => {
-                proposal.status = ProposalStatus::Failed;
-                proposal.error = Some(e.to_string());
-            }
-            Some(Ok(Err(e))) => {
-                proposal.status = ProposalStatus::Failed;
-                proposal.error = Some(e.to_string());
-            }
-            Some(Ok(Ok(ReadingCall::Failed(reason)))) => {
-                proposal.status = ProposalStatus::Failed;
-                proposal.error = Some(reason);
-            }
-            Some(Ok(Ok(ReadingCall::Answer {
-                text,
-                cost,
-                request,
-            }))) => {
-                proposal.cost_usd = cost;
-                proposal.request = request;
-                answered(&mut proposal, &text);
-            }
-        }
-        self.store.put_region_reading(&proposal, None)?;
-        Ok(proposal)
-    }
-
-    /// The call itself, with the provider's retries: its answer stored under the reading's key
-    /// with its cost, as a text extraction's is.
-    async fn call_region(
-        &self,
-        planned: Planned,
-        input: PreparedInput,
-        key: CacheKey,
-        api_key: ApiKey,
-        stop: &StopSignal,
-    ) -> Result<ReadingCall, EngineError> {
         let Planned {
             mut job,
             setup,
             settings,
-            mut charged,
+            charged,
             ..
         } = planned;
         job.task = TASK;
         job.settings = settings;
-        let provider = self.provider(&setup.provider)?;
-        let spent = Arc::new(Mutex::new(self.store.spent(job.id)?));
-        let called = self
-            .call(
-                &job,
-                setup.step(),
-                &provider,
-                &api_key,
-                &mut charged,
-                &input,
-                &setup.prompt.user_prompt,
-                &setup.options,
-                &spent,
-                stop,
-                None,
-            )
-            .await?;
-        match called {
-            Called::Answer {
-                output,
-                sent,
-                duration_ms,
-            } => {
-                let output = crate::piece::finish(TASK, output);
-                let text = output.text.clone();
-                let cost =
-                    self.store_answer(&key, setup.step(), output, sent.clone(), duration_ms)?;
-                Ok(ReadingCall::Answer {
-                    text,
-                    cost,
-                    request: sent,
-                })
-            }
-            Called::Interrupted => Ok(ReadingCall::Interrupted),
-            Called::Fatal(e) => Ok(ReadingCall::Failed(e.to_string())),
-            Called::Failed(e) => Ok(ReadingCall::Failed(
-                e.map_or_else(|| "The model did not answer".to_string(), |e| e.to_string()),
-            )),
-        }
+        let call = Call {
+            job,
+            setup,
+            charged,
+            input,
+            key,
+            api_key,
+        };
+        self.call_raced(proposal, call, stop).await
     }
 
     /// Stops waiting for a region's reading; nothing when it is not waiting.
     pub fn cancel_region_reading(&self, id: &str) {
-        if let Some(stop) = lock(&self.region_readings).get(id) {
-            stop.stop();
-        }
+        Waiting::cancel(&self.region_readings, id);
     }
-}
-
-/// Reads an answer into the reading: offered when the model found text, failed when not.
-fn answered(proposal: &mut RegionReading, text: &str) {
-    proposal.answered_at = Some(Timestamp::now());
-    if text.trim().is_empty() {
-        proposal.status = ProposalStatus::Failed;
-        proposal.error = Some(RegionReadingError::Empty.to_string());
-    } else {
-        proposal.status = ProposalStatus::Answered;
-        proposal.answer = Some(text.to_string());
-    }
-}
-
-/// How a reading's call ended.
-enum ReadingCall {
-    Answer {
-        text: String,
-        cost: Option<f64>,
-        request: Vec<RequestSetting>,
-    },
-    Interrupted,
-    Failed(String),
 }

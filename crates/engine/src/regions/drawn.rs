@@ -152,18 +152,34 @@ impl Engine {
         Ok(region)
     }
 
-    /// The regions a set-up's `provenance.json` lists: those drawn on the source, the boxes
-    /// adjusting this set-up's readings, and those adjusting a reading no set-up shows any
-    /// more. Not the boxes adjusting another set-up's reading.
+    /// The regions a set-up's `provenance.json` lists ([`Engine::regions_exported`]).
     pub(crate) fn regions_recorded(
         &self,
         job: &Job,
         source: SourceId,
         states: &[PieceState],
     ) -> Result<Vec<ProvenanceRegion>, EngineError> {
-        let kept = self.store.source_regions(job.id, source)?;
+        Ok(self
+            .regions_exported(job, source, states)?
+            .iter()
+            .map(ProvenanceRegion::of)
+            .collect())
+    }
+
+    /// The researcher's regions a set-up's files carry, in the order made: those drawn on the
+    /// source, the boxes adjusting this set-up's readings (`states`, its pieces), and those
+    /// adjusting a reading no set-up shows any more. Not the boxes adjusting another set-up's
+    /// reading, which are that set-up's. `provenance.json` lists them, and ALTO, PAGE XML and the
+    /// searchable PDF write them.
+    pub(crate) fn regions_exported(
+        &self,
+        job: &Job,
+        source: SourceId,
+        states: &[PieceState],
+    ) -> Result<Vec<DrawnRegion>, EngineError> {
+        let mut kept = self.store.source_regions(job.id, source)?;
         if kept.is_empty() {
-            return Ok(Vec::new());
+            return Ok(kept);
         }
         let own: HashSet<&str> = states
             .iter()
@@ -171,14 +187,11 @@ impl Engine {
             .filter_map(|s| s.cache_key.as_deref())
             .collect();
         let live = self.readings(job, source, None)?;
-        Ok(kept
-            .iter()
-            .filter(|r| match &r.adjusts {
-                None => true,
-                Some(a) => own.contains(a.result.as_str()) || !live.contains(&a.result),
-            })
-            .map(ProvenanceRegion::of)
-            .collect())
+        kept.retain(|r| match &r.adjusts {
+            None => true,
+            Some(a) => own.contains(a.result.as_str()) || !live.contains(&a.result),
+        });
+        Ok(kept)
     }
 
     /// The researcher's regions on page `number` (or that half of it), less the boxes adjusting
