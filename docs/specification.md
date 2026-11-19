@@ -171,7 +171,15 @@ review each entry is a card; a quotation opens the transcript at its turn and pl
 recording there. The researcher edits an entry's fields and removes an entry or a quotation,
 as a layer over the model's answer; a quotation's words cannot be changed or added. The
 transcript is read in one request: windows for very long interviews, the researcher's own
-themes, saved research profiles and quotations added by hand come later
+themes and quotations added by hand come later. **A research description is kept with a
+prompt.** Under the box, *Keep this for my next interviews* saves what was typed, under a
+name, as a prompt of the researcher's own: the interview prompt with the description. Once
+one is kept, the dialog lists them above the box, the last one used chosen, beside *A new
+description*; someone who has kept none sees the one box as before. In Prompts, an analysis
+prompt whose entries quote the text has the same box, *What is your research about?*, so a
+copy of the interview prompt written there is offered by the dialog too. The description is
+sent as one typed would be, so the same words cost nothing twice whichever way they came,
+and one typed for a job replaces the prompt's
 ([decision](decisions/2026-11-19-interview-analysis-design.md),
 [#38](https://github.com/fmadore/Kalamu/issues/38)).
 
