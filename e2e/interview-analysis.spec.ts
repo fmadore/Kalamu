@@ -143,9 +143,11 @@ test('a quotation, an entry and an entry’s name are changed and put back from 
 	const quotes = first.locator('blockquote');
 	await expect(quotes).toHaveCount(2);
 
-	// Tab goes from a quotation's Listen to its Remove.
+	// Tab goes from a quotation's Listen to its Remove. On macOS, WebKit's Tab stops at fields
+	// only unless the system's keyboard navigation is on, and Option+Tab stops at every control.
 	await first.getByRole('button', { name: 'Listen: Mariam · 00:00:15' }).focus();
-	await page.keyboard.press('Tab');
+	const mac = await page.evaluate(() => /Macintosh|Mac OS X/.test(navigator.userAgent));
+	await page.keyboard.press(mac ? 'Alt+Tab' : 'Tab');
 	const remove = first.getByRole('button', {
 		name: 'Remove the quotation “Pendant trois ans, je balayais l’atelier…”'
 	});
