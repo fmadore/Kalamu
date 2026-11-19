@@ -199,7 +199,13 @@ export const fr: Messages = {
 		more: 'Plus de choix',
 		start: 'Analyser',
 		preparing: 'Préparation de la transcription…',
-		jobName: (file: string) => `Analyse d’entretien : ${file}`
+		jobName: (file: string) => `Analyse d’entretien : ${file}`,
+		research: 'Votre recherche',
+		researchNew: 'Une nouvelle description',
+		keep: 'Garder ce texte pour mes prochains entretiens',
+		keptName: 'Nom',
+		keptHint: 'Vous pouvez le modifier ou le supprimer dans Prompts.',
+		openPrompts: 'Ouvrir Prompts'
 	},
 	cited: {
 		listen: 'Écouter',
@@ -2110,6 +2116,9 @@ export const fr: Messages = {
 		instructions: 'Instructions (prompt système)',
 		userPrompt: 'Requête envoyée avec chaque page',
 		userPromptDocument: 'Requête envoyée avec chaque document',
+		question: 'Sur quoi porte votre recherche ?',
+		questionHint:
+			'Facultatif. Envoyé avec chaque document : vous l’écrivez une fois pour tous vos entretiens. Un texte écrit dans Analyser cet entretien le remplace.',
 		mergeInstructions: 'Instructions pour regrouper les pages',
 		dense: 'Pages chargées de texte',
 		denseHint:

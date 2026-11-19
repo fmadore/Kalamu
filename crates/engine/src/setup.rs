@@ -148,6 +148,10 @@ impl Engine {
             }
             labels.push(label.clone());
             let dense = preset.is_dense();
+            // The question kept with the prompt is settled into the set-up as if it had been
+            // typed, so the job, its cache keys and provenance hold the one sent, and the same
+            // words cost nothing twice whichever way they came.
+            let mut options = with_preset_question(task, &request.options, &preset);
             let merge = if task == Task::Contents {
                 Some(self.merge_step(catalog, settings, request, preset)?)
             } else {
@@ -155,7 +159,6 @@ impl Engine {
             };
             // The reasoning level is settled now, so the job, its cache keys and provenance
             // hold the one sent: the choice, the nearest the model has, or the suggestion.
-            let mut options = request.options.clone();
             if let Some(model) = catalog.model(&request.provider, &request.model) {
                 options.reasoning = model.tuning(task, options.reasoning.as_deref()).reasoning;
                 // Names to spell and translation only for a model that uses them, so another
@@ -239,8 +242,10 @@ impl Engine {
         };
         let ctx = Self::render_context(catalog, task, settings, options);
         let mut prompt = preset.snapshot(&ctx);
-        // The researcher's question goes with an analysis's request.
+        // The researcher's question goes with an analysis's request: the one typed for the
+        // set-up, or else the one its prompt keeps.
         if task == Task::Analysis {
+            let options = with_preset_question(task, options, &preset);
             prompt.user_prompt = options.with_question(&prompt.user_prompt);
         }
         if !accepts_prompt {
@@ -334,6 +339,27 @@ fn sanitize_label(label: &str) -> String {
             bytes <= 90
         })
         .collect()
+}
+
+/// A set-up's options with the question its analysis prompt keeps ([`Preset::question`]) when
+/// the researcher typed none for it: a question typed replaces the prompt's. Unchanged for
+/// another task, or a prompt without one, so those cache keys stay as they were.
+pub(crate) fn with_preset_question(
+    task: Task,
+    options: &SetupOptions,
+    preset: &Preset,
+) -> SetupOptions {
+    let typed = options
+        .question
+        .as_deref()
+        .is_some_and(|q| !q.trim().is_empty());
+    match preset.question.as_deref().map(str::trim) {
+        Some(kept) if task == Task::Analysis && !typed && !kept.is_empty() => SetupOptions {
+            question: Some(kept.to_string()),
+            ..options.clone()
+        },
+        _ => options.clone(),
+    }
 }
 
 /// A new job of set-ups already frozen, not yet recorded.

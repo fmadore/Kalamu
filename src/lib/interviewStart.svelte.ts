@@ -3,9 +3,11 @@
 // is the one New job would choose for an analysis (`newDraft`), another one or the language of
 // the answers only under "More choices". Start asks what New job's Start asks (consent to send
 // to the provider, folders on the Mac App Store), then creates and starts the job as New job
-// does (`launch`), tied to the project it was opened from.
+// does (`launch`), tied to the project it was opened from. A description of the research can be
+// kept as a prompt of the researcher's own and chosen again (`research.ts`).
 
 import type { NewJob } from './bindings/NewJob.js';
+import type { Preset } from './bindings/Preset.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import { providerNameOf } from './catalogText.js';
@@ -16,6 +18,15 @@ import { takesLanguage } from './languages.js';
 import { jobSettings, offeredFormats, pagesPerCallOf, rulesFor } from './newJob.js';
 import { modelInfo, newDraft, toRequest, type Draft } from './newJobModels.js';
 import { launch } from './newJobStart.svelte.js';
+import {
+	firstChoice,
+	keepChoice,
+	keptPrompt,
+	lastChoice,
+	NEW_RESEARCH,
+	researchPrompts,
+	suggestedName
+} from './research.js';
 import { app, go, hasKey, type FromProject } from './state.svelte.js';
 import { api } from './tauri.js';
 
@@ -29,8 +40,22 @@ export function interviewRequest(request: SetupRequest, question: string): Setup
 	return asked ? { ...request, options: { ...request.options, question: asked } } : request;
 }
 
+/** The setup with a kept description's prompt in place of the ready-made one, whose question
+ * the engine sends as if it had been typed. */
+export function withPrompt(request: SetupRequest, presetId: string): SetupRequest {
+	return request.preset_id === null ? request : { ...request, preset_id: presetId };
+}
+
 export class InterviewAnalysis {
 	question = $state('');
+	/** The analysis prompts, read as the dialog opens: the ready-made one, and the researcher's
+	 * kept descriptions among them. */
+	presets = $state<Preset[]>([]);
+	/** A kept description's prompt, or `NEW_RESEARCH` for the box. */
+	choice = $state(NEW_RESEARCH);
+	/** Keep what is typed as a prompt of the researcher's own, under `keptName`. */
+	keep = $state(false);
+	keptName = $state('');
 	draft = $state<Draft>(
 		newDraft(app.catalog!, rulesFor(app.rules, 'analysis'), INTERVIEW_PRESET, hasKey)
 	);
@@ -50,13 +75,21 @@ export class InterviewAnalysis {
 	readonly providerName = $derived(providerNameOf(this.catalog, this.draft.provider));
 	/** The provider can be sent the text: its key is saved. */
 	readonly keyed = $derived(hasKey(this.draft.provider));
-	readonly request = $derived(
-		interviewRequest(toRequest(this.catalog, 'analysis', this.draft), this.question)
-	);
+	/** The kept descriptions the dialog offers; none on first use. */
+	readonly kept = $derived(researchPrompts(this.presets));
+	/** The kept description chosen, if one is. */
+	readonly chosen = $derived(this.kept.find((p) => p.id === this.choice) ?? null);
+	readonly request = $derived.by(() => {
+		const request = toRequest(this.catalog, 'analysis', this.draft);
+		return this.chosen
+			? withPrompt(request, this.chosen.id)
+			: interviewRequest(request, this.question);
+	});
 
 	/** Freezes the transcript's text, every source's or one source's, as the other choices of
 	 * "Use this text" do. */
 	async prepare(jobId: string, setupId: string, sourceId: string | null): Promise<void> {
+		void this.readPrompts();
 		try {
 			this.sources = await api.snapshotJob(jobId, setupId, sourceId);
 		} catch (e) {
@@ -64,15 +97,44 @@ export class InterviewAnalysis {
 		}
 	}
 
+	/** Reads the analysis prompts and opens on the description used last. Without them the
+	 * dialog is as on first use: one box. */
+	async readPrompts(): Promise<void> {
+		try {
+			this.presets = await api.listPresets('analysis');
+		} catch {
+			this.presets = [];
+		}
+		this.choice = firstChoice(this.kept, lastChoice());
+	}
+
+	/** Ticks "Keep this…", with a name to start from when none is written yet. */
+	setKeep(on: boolean, project: string | undefined): void {
+		this.keep = on;
+		if (on && !this.keptName.trim()) this.keptName = suggestedName(this.question, project);
+	}
+
+	/** Saves what was typed as a prompt of the researcher's own, when they asked to keep it;
+	 * the setup to start then names it. */
+	async keepTyped(request: SetupRequest, project: string | undefined): Promise<SetupRequest> {
+		const base = this.presets.find((p) => p.id === INTERVIEW_PRESET);
+		if (this.chosen || !this.keep || !this.question.trim() || !base) return request;
+		const name = this.keptName.trim() || suggestedName(this.question, project);
+		const saved = await api.savePreset(keptPrompt($state.snapshot(base), name, this.question));
+		this.presets = [...this.presets, saved];
+		this.choice = saved.id;
+		return withPrompt(request, saved.id);
+	}
+
 	/** The job as New job would make it from these choices. */
-	job(sources: SourceFile[]): NewJob {
+	job(sources: SourceFile[], request: SetupRequest = this.request): NewJob {
 		const m = messages();
 		const draft = this.draft;
 		return {
 			name: m.interview.jobName(sources[0]?.file_name ?? ''),
 			task: 'analysis',
 			sources,
-			setups: [this.request],
+			setups: [request],
 			settings: jobSettings({
 				languageMode: this.languageMode,
 				languages: this.languages,
@@ -104,7 +166,9 @@ export class InterviewAnalysis {
 		this.error = null;
 		try {
 			if (!(await mayStart([this.request], this.catalog, sources, true))) return false;
-			const job = await api.createJob(this.job(sources));
+			const request = await this.keepTyped($state.snapshot(this.request), project?.name);
+			keepChoice(this.choice);
+			const job = await api.createJob(this.job(sources, request));
 			await launch(job.id, project);
 			go({ name: 'jobs', jobId: job.id });
 			return true;

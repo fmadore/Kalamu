@@ -3,7 +3,10 @@
 // with More choices closed; the job started with the researcher's question; the review's cards,
 // a quotation played in the transcript at its turn or, without a recording, shown in the text;
 // a quotation, an entry and an entry's name changed and put back from the keyboard; the line
-// saying what was left out; and the same in French.
+// saying what was left out; and the same in French. A description of the research kept for the
+// next interviews: not offered on first use, saved as a prompt of the researcher's own that
+// Prompts lists and the dialog offers again, chosen to start the job with its prompt, written
+// in Prompts as well; and in French.
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import type { NewJob } from '../src/lib/bindings/NewJob.js';
@@ -229,5 +232,169 @@ test.describe('in French', () => {
 		).toBeFocused();
 		await expect(dialog.getByText('Plus de choix')).toBeVisible();
 		await expect(dialog.getByRole('button', { name: 'Analyser', exact: true })).toBeVisible();
+	});
+});
+
+/** Opens "Analyse this interview" from the audio job's page, already shown. */
+async function interviewDialog(page: Page, name = 'Analyse this interview'): Promise<Locator> {
+	const menu = await useText(page);
+	await menu.getByRole('button', { name: /Analyse this interview/ }).click();
+	return page.getByRole('dialog', { name });
+}
+
+const created = (page: Page) => page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
+
+/** Back on the audio job's page from anywhere in the app, without loading the page again (the
+ * preview keeps prompts saved in memory). */
+async function backToTheRecording(page: Page): Promise<void> {
+	await page
+		.getByRole('navigation', { name: 'Jobs' })
+		.getByRole('button', { name: /^Entretiens Ouagadougou/ })
+		.first()
+		.click();
+	await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toContainText(
+		'Entretiens Ouagadougou'
+	);
+}
+
+test('on first use nothing is saved to choose from, and keeping is offered once something is typed', async ({
+	page
+}) => {
+	await open(page, 'jobs-audio');
+	const dialog = await interviewDialog(page);
+	await expect(dialog.getByRole('textbox', { name: 'What is your research about?' })).toBeFocused();
+	await expect(dialog.getByRole('combobox', { name: 'Your research' })).toHaveCount(0);
+	const keep = dialog.getByRole('checkbox', { name: 'Keep this for my next interviews' });
+	await expect(keep).toHaveCount(0);
+
+	await dialog.getByRole('textbox').fill('How traders find credit.');
+	await expect(keep).not.toBeChecked();
+	await expect(dialog.getByRole('textbox')).toHaveCount(1);
+	await dialog.getByRole('button', { name: 'Analyse', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	// Not kept: the ready-made prompt, with the question typed.
+	expect((await created(page))?.setups[0].preset_id).toBe('analysis.interview');
+});
+
+test('a description kept for the next interviews is a prompt in Prompts and is offered again', async ({
+	page
+}) => {
+	await open(page, 'jobs-audio');
+	let dialog = await interviewDialog(page);
+	const words = 'How women in crafts learn and finance their trade.';
+	await dialog.getByRole('textbox', { name: 'What is your research about?' }).fill(words);
+	await dialog.getByRole('checkbox', { name: 'Keep this for my next interviews' }).check();
+	// A name to find it again, from the description's first words, which can be changed.
+	const name = dialog.getByRole('textbox', { name: 'Name' });
+	await expect(name).toHaveValue('How women in crafts learn and finance…');
+	await name.fill('Crafts');
+	await dialog.getByRole('button', { name: 'Analyse', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const first = (await created(page))?.setups[0];
+	expect(first?.preset_id).toMatch(/^user-/);
+	expect(first?.options.question).toBe(words);
+
+	// In Prompts, among the analysis prompts, as the researcher's own, the description in its box.
+	await page
+		.getByRole('navigation', { name: 'Jobs' })
+		.getByRole('button', { name: 'Prompts' })
+		.click();
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Crafts Yours$/ }).click();
+	await expect(main.getByRole('textbox', { name: 'What is your research about?' })).toHaveValue(
+		words
+	);
+
+	// The dialog now offers it, chosen as the one used last, its words shown in place of the box.
+	await backToTheRecording(page);
+	dialog = await interviewDialog(page);
+	const research = dialog.getByRole('combobox', { name: 'Your research' });
+	await expect(research).toBeFocused();
+	await expect(research.locator('option:checked')).toHaveText('Crafts');
+	await expect(research.locator('option')).toHaveText(['Crafts', 'A new description']);
+	await expect(dialog.getByText(words)).toBeVisible();
+	await expect(dialog.getByRole('textbox')).toHaveCount(0);
+	await dialog.getByRole('button', { name: 'Analyse', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const again = (await created(page))?.setups[0];
+	expect(again?.preset_id).toBe(first?.preset_id);
+	expect(again?.options.question).toBeUndefined();
+});
+
+test('a saved description is chosen, and a new one gives the box back', async ({ page }) => {
+	await open(page, 'jobs-audio&research');
+	const dialog = await interviewDialog(page);
+	const research = dialog.getByRole('combobox', { name: 'Your research' });
+	await expect(research.locator('option')).toHaveText([
+		'Crafts apprenticeship',
+		'Market traders',
+		'A new description'
+	]);
+	await expect(research.locator('option:checked')).toHaveText('Crafts apprenticeship');
+	await expect(dialog.getByText(/^How young people learn a craft/)).toBeVisible();
+	await expect(dialog.getByText('You can change or delete it in Prompts.')).toBeVisible();
+
+	await research.selectOption({ label: 'A new description' });
+	await expect(dialog.getByRole('textbox', { name: 'What is your research about?' })).toBeVisible();
+	await research.selectOption({ label: 'Market traders' });
+	await expect(dialog.getByRole('textbox')).toHaveCount(0);
+	await dialog.getByRole('button', { name: 'Analyse', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const setup = (await created(page))?.setups[0];
+	expect(setup?.preset_id).toBe('user-research-1');
+	expect(setup?.options.question).toBeUndefined();
+});
+
+test('the ready-made prompt duplicated in Prompts with a description is offered by the dialog', async ({
+	page
+}) => {
+	await open(page, 'prompts');
+	const main = page.getByRole('main');
+	await main.getByRole('button', { name: /^Interview: themes and quotations/ }).click();
+	await main.getByRole('button', { name: 'Duplicate' }).click();
+	await expect(main.getByRole('textbox', { name: 'Name', exact: true }).first()).toHaveValue(
+		'Interview: themes and quotations (copy)'
+	);
+	await main.getByRole('textbox', { name: 'Name', exact: true }).first().fill('Port workers');
+	await main
+		.getByRole('textbox', { name: 'What is your research about?' })
+		.fill('How dock workers find a day’s work.');
+	await main.getByRole('button', { name: 'Save' }).click();
+	await expect(main.getByRole('button', { name: /^Port workers Yours$/ })).toBeVisible();
+
+	await backToTheRecording(page);
+	const dialog = await interviewDialog(page);
+	await expect(
+		dialog.getByRole('combobox', { name: 'Your research' }).locator('option:checked')
+	).toHaveText('Port workers');
+	await expect(dialog.getByText('How dock workers find a day’s work.')).toBeVisible();
+});
+
+test.describe('kept descriptions in French', () => {
+	test.use({ locale: 'fr-FR' });
+
+	test('the choice and the box to keep speak French', async ({ page }) => {
+		await open(page, 'jobs-audio&research');
+		await page
+			.getByRole('main')
+			.locator('summary', { hasText: 'Utiliser ce texte dans un nouveau traitement' })
+			.click();
+		await page.getByRole('button', { name: /Analyser cet entretien/ }).click();
+		const dialog = page.getByRole('dialog', { name: 'Analyser cet entretien' });
+		const research = dialog.getByRole('combobox', { name: 'Votre recherche' });
+		await expect(research.locator('option').last()).toHaveText('Une nouvelle description');
+		await expect(
+			dialog.getByText('Vous pouvez le modifier ou le supprimer dans Prompts.')
+		).toBeVisible();
+		await research.selectOption({ label: 'Une nouvelle description' });
+		await dialog
+			.getByRole('textbox', { name: 'Sur quoi porte votre recherche ?' })
+			.fill('Les commerçantes et le crédit.');
+		await dialog
+			.getByRole('checkbox', { name: 'Garder ce texte pour mes prochains entretiens' })
+			.check();
+		await expect(dialog.getByRole('textbox', { name: 'Nom' })).toHaveValue(
+			'Les commerçantes et le crédit.'
+		);
 	});
 });

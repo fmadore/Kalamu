@@ -176,6 +176,13 @@ something differently from the lines above.
 - **Older builds**: no released version opens a database a newer one has written, so no
   migration was needed; a prompt or pipeline file with such a field is refused whole by an
   older version on import.
+- **A research description kept with a prompt** (the day after, at the maintainer's word,
+  in place of the *saved profiles* planned for the second slice): `Preset.question`, left
+  out when empty so that earlier prompt files read unchanged, carried by a prompt file's
+  export and import. The engine settles it into the set-up's options when the researcher
+  typed none, so the job, its cache keys and its provenance hold the one sent, and a
+  prompt without one keeps its keys. No new store and no new command: a kept description is
+  a prompt like any other, renamed, edited and deleted in Prompts.
 - **Not built in the first slice**: saying a transcript is too long for the model before it
   is sent (the provider's own refusal is what the researcher sees).
 

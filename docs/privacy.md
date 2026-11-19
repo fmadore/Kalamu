@@ -180,7 +180,9 @@ the user wrote about their research and the analysis prompt, after the same ques
 that provider as for a job. The recording itself is not sent. With a model run on the computer
 nothing is sent. The quotations a model returns are looked for in the transcript on the
 computer; those not found are discarded. The sentence, the answers and the quotations kept are
-stored in the job database with the job.
+stored in the job database with the job. When the user chooses to keep the sentence for their
+next interviews, it is kept on the computer with their prompts, and sent with each analysis
+that uses that prompt.
 
 ## What the app keeps on the computer
 
