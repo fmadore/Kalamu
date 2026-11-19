@@ -1,4 +1,6 @@
-use kalamu_core::{CsvCells, ExportDocument, ExportError, ExportFormat, Exporter, Table, Task};
+use kalamu_core::{
+    CsvCells, ExportDocument, ExportError, ExportFile, ExportFormat, Exporter, Table, Task,
+};
 
 use crate::table_csv;
 use crate::timeline::timeline;
@@ -18,6 +20,22 @@ impl Exporter for CsvExporter {
 
     fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
         Ok(table_csv(&table(doc))?.into_bytes())
+    }
+
+    /// The table, and for an analysis that cites the text one row per quotation beside it
+    /// (`<name>.quotations.csv`).
+    fn export_files(&self, doc: &ExportDocument) -> Result<Vec<ExportFile>, ExportError> {
+        let mut files = vec![ExportFile {
+            suffix: self.format().extension().to_owned(),
+            bytes: self.export(doc)?,
+        }];
+        if let Some(fields) = crate::cited::fields(doc) {
+            files.push(ExportFile {
+                suffix: format!("quotations.{}", self.format().extension()),
+                bytes: table_csv(&crate::cited::quotations(doc, fields))?.into_bytes(),
+            });
+        }
+        Ok(files)
     }
 }
 

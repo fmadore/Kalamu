@@ -5,6 +5,7 @@
 //! never calls a provider again.
 
 mod alto;
+mod cited;
 mod contents;
 mod csv_export;
 mod docx;

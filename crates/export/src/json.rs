@@ -90,6 +90,10 @@ impl Exporter for JsonExporter {
             "parts": parts,
             "provenance": doc.provenance,
         });
+        // An analysis that cites the text: the text its quotations' anchors count in.
+        if crate::cited::fields(doc).is_some() {
+            value["snapshot"] = crate::cited::snapshot(doc);
+        }
         // Records: one object per entry, with its file, page and place on the page.
         if records {
             value["rows"] = json!(crate::records::json_rows(doc));
