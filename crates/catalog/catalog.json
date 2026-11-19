@@ -201,63 +201,6 @@
     },
     {
       "provider": "gemini",
-      "id": "gemini-4-neon",
-      "name": "Gemini 4 Neon",
-      "description": "Google's mid-sized Gemini 4 model (November 2026), between Hydrogen and Carbon: said to read PDFs, photos and charts more precisely than Hydrogen, at twice its price. Not yet tried on real pages in Kalamu.",
-      "tasks": [
-        "text_extraction",
-        "audio_transcription",
-        "analysis"
-      ],
-      "inputs": [
-        "application/pdf",
-        "image/png",
-        "image/jpeg",
-        "image/webp",
-        "image/heic",
-        "image/heif",
-        "audio/mpeg",
-        "audio/wav",
-        "audio/mp4",
-        "audio/flac",
-        "audio/ogg",
-        "audio/aac",
-        "audio/webm",
-        "video/x-youtube",
-        "text/plain"
-      ],
-      "languages": "any",
-      "status": "stable",
-      "tier": "balanced",
-      "recommended_for": [],
-      "provider_default_for": [],
-      "pricing": {
-        "input_per_mtok": 3.0,
-        "output_per_mtok": 15.0,
-        "cached_input_per_mtok": 0.15,
-        "batch_discount": 0.5
-      },
-      "limits": {
-        "max_request_mb": 18,
-        "max_output_tokens": 65536
-      },
-      "reasoning": {
-        "levels": [
-          "low",
-          "medium",
-          "high",
-          "xhigh"
-        ],
-        "default": "high"
-      },
-      "translations": {
-        "fr": {
-          "description": "Le modèle Gemini 4 intermédiaire de Google (novembre 2026), entre Hydrogen et Carbon : il lirait les PDF, les photos et les graphiques plus précisément que Hydrogen, pour le double du prix. Pas encore essayé sur de vraies pages dans Kalamu."
-        }
-      }
-    },
-    {
-      "provider": "gemini",
       "id": "gemini-3.5-transcribe",
       "name": "Gemini 3.5 Transcribe",
       "description": "Google's speech-to-text: speakers and word timings, for the languages listed below. Takes no prompt.",
@@ -430,6 +373,64 @@
       "translations": {
         "fr": {
           "description": "Le modèle le plus puissant de Google (novembre 2026), pour les écritures les plus difficiles, les numérisations abîmées et les longs documents."
+        }
+      }
+    },
+    {
+      "provider": "gemini",
+      "id": "gemini-4-neon",
+      "name": "Gemini 4 Neon",
+      "description": "Google's second strongest Gemini 4 model (November 2026), below Carbon and above Hydrogen: made for deeper analysis and long documents, at twice Hydrogen's price. Not yet tried on real pages in Kalamu.",
+      "tasks": [
+        "text_extraction",
+        "audio_transcription",
+        "analysis"
+      ],
+      "inputs": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+        "audio/mpeg",
+        "audio/wav",
+        "audio/mp4",
+        "audio/flac",
+        "audio/ogg",
+        "audio/aac",
+        "audio/webm",
+        "video/x-youtube",
+        "text/plain"
+      ],
+      "languages": "any",
+      "status": "stable",
+      "tier": "top",
+      "recommended_for": [],
+      "provider_default_for": [],
+      "costly": true,
+      "pricing": {
+        "input_per_mtok": 3.0,
+        "output_per_mtok": 15.0,
+        "cached_input_per_mtok": 0.15,
+        "batch_discount": 0.5
+      },
+      "limits": {
+        "max_request_mb": 18,
+        "max_output_tokens": 65536
+      },
+      "reasoning": {
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high"
+      },
+      "translations": {
+        "fr": {
+          "description": "Le deuxième modèle Gemini 4 le plus puissant de Google (novembre 2026), sous Carbon et au-dessus de Hydrogen : conçu pour les analyses approfondies et les longs documents, pour le double du prix de Hydrogen. Pas encore essayé sur de vraies pages dans Kalamu."
         }
       }
     },

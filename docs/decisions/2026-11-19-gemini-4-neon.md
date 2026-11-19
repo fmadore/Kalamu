@@ -22,10 +22,13 @@ deprecates nothing.
 
 - **Neon is a catalogue entry, and nothing else changed**: no code names a model. It takes
   Hydrogen's inputs, limits and levels.
-- **Its tier is `balanced`**, beside Hydrogen: a tier says where a model stands among its
-  provider's own as the provider presents it, and Google presents Neon below Carbon. With three
-  tiers, the model between the strongest and the fast one is classed with the fast one rather
-  than called *most capable*.
+- **Its tier is `top`**, after Carbon and before Argon, and it is marked costly like them.
+  Google's own page on choosing a model
+  ([Gemini Help](https://support.google.com/gemini/answer/18648722)) calls Hydrogen the model
+  that "balances performance and responsiveness", Neon "frontier-level intelligence, with high
+  performance for deeper analysis and complex workflows", and Carbon "our strongest model";
+  its plans open Hydrogen first, then Neon, then Carbon. A first version of this entry classed
+  Neon `balanced` from the announcement alone.
 - **Hydrogen stays Gemini's default** and the recommended model: it costs half, and Neon has
   not read a real page in Kalamu. Neon's description says so.
 - **No `successor` anywhere**: Neon replaces no model, by Google's word or by price.
