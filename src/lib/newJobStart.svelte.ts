@@ -61,19 +61,23 @@ export async function startJob(s: Starting): Promise<void> {
 			options: $state.snapshot(app.settings!.export_options)
 		}
 	});
-	liveJob(job.id);
-	// Started from a project: its files are the project's documents. The job runs even if this
-	// fails, and can be added from the project later.
-	const project = s.project;
-	if (project) {
-		await api
-			.linkJob(project.id, job.id, project.collectionId ?? null)
-			.catch(() => toast(m.projects.linkFailed(project.name), { kind: 'error' }));
-	}
-	await api.startJob(job.id);
-	await refreshJobs();
+	await launch(job.id, s.project);
 	s.started();
 	go({ name: 'jobs', jobId: job.id });
+}
+
+/** Starts a job just created, its progress followed; started from a project, it joins it (its
+ * files are the project's documents). The job runs even if joining fails, and can be added
+ * from the project later. Also what "Analyse this interview" starts its job with. */
+export async function launch(jobId: string, project: FromProject | undefined): Promise<void> {
+	liveJob(jobId);
+	if (project) {
+		await api
+			.linkJob(project.id, jobId, project.collectionId ?? null)
+			.catch(() => toast(messages().projects.linkFailed(project.name), { kind: 'error' }));
+	}
+	await api.startJob(jobId);
+	await refreshJobs();
 }
 
 /** Reads the text, then analyses it: a two-step workflow, unsaved, run on these files. */

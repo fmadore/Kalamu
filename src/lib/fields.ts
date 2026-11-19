@@ -33,6 +33,10 @@ export function fromDraft(
 	before: FieldAnswer[] = []
 ): FieldAnswer[] {
 	return fields.map((f) => {
+		// Entries that quote the text are changed in their cards, never here: kept as they were.
+		const kept = before.find((a) => a.key === f.key);
+		if (f.kind.type === 'cited')
+			return kept ?? { key: f.key, value: { entries: [], left_out: 0, dropped: 0 } };
 		const raw = draft[f.key] ?? '';
 		const value =
 			f.kind.type === 'list'

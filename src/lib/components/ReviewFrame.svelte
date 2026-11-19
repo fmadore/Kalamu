@@ -56,6 +56,7 @@
 		text = null,
 		find = '',
 		found = false,
+		span = null,
 		player,
 		switchable = null,
 		regions,
@@ -104,6 +105,8 @@
 		find?: string;
 		/** Whether those words are a search's rather than a name pointed at. */
 		found?: boolean;
+		/** A passage of a text file shown where it stands (a quotation), in UTF-16 units. */
+		span?: { start: number; end: number } | null;
 		player?: Snippet;
 		/** A PDF whose text was read: the source pane switches between its page and that text. */
 		switchable?: { onswitch: () => void } | null;
@@ -272,6 +275,7 @@
 			{text}
 			{find}
 			{found}
+			{span}
 			{player}
 			{switchable}
 			tools={regions ? regionTools : undefined}

@@ -31,6 +31,8 @@
 	const group = $derived(groups ? groupOf(schema) : null);
 	/** The fields edited: the group's columns, or the analysis's own fields. */
 	const list = $derived(group?.kind.type === 'entries' ? group.kind.fields : schema.fields);
+	/** Passages quoted from the text sit beside other fields, never in rows. */
+	const quoting = $derived(schema.fields.some((f) => f.kind.type === 'cited'));
 
 	const values = (kind: FieldKind) =>
 		kind.type === 'choice' || kind.type === 'choices' ? kind.values : [];
@@ -135,6 +137,7 @@
 				<input
 					type="checkbox"
 					checked={group !== null}
+					disabled={quoting}
 					aria-describedby="fields-rows-hint"
 					onchange={(e) => toggleRows(e.currentTarget.checked)}
 				/>
@@ -168,18 +171,23 @@
 							oninput={(e) => update(i, { label: e.currentTarget.value })}
 						/>
 					</label>
-					<label class="field">
-						<span>{m.fields.kind}</span>
-						<select
-							value={field.kind.type}
-							onchange={(e) =>
-								update(i, { kind: kindOf(e.currentTarget.value as Kind, field.kind) })}
-						>
-							{#each kinds as kind (kind)}
-								<option value={kind}>{m.fields.kinds[kind]}</option>
-							{/each}
-						</select>
-					</label>
+					{#if field.kind.type === 'cited'}
+						<p class="field">
+							<span>{m.fields.kind}</span>
+							<span class="fixed">{m.fields.kinds.cited}</span>
+						</p>
+					{:else}<label class="field">
+							<span>{m.fields.kind}</span>
+							<select
+								value={field.kind.type}
+								onchange={(e) =>
+									update(i, { kind: kindOf(e.currentTarget.value as Kind, field.kind) })}
+							>
+								{#each kinds as kind (kind)}
+									<option value={kind}>{m.fields.kinds[kind]}</option>
+								{/each}
+							</select>
+						</label>{/if}
 					{#if field.kind.type === 'list'}
 						{@const kind = field.kind}
 						<label class="field max">
@@ -219,6 +227,9 @@
 						>
 					</div>
 				</div>
+				{#if field.kind.type === 'cited'}
+					<p class="muted small">{m.fields.citedNote}</p>
+				{/if}
 				{#if field.kind.type === 'choice' || field.kind.type === 'choices'}
 					{@const kind = field.kind}
 					<label class="field">
@@ -248,7 +259,7 @@
 						value={field.instructions}
 						oninput={(e) => update(i, { instructions: e.currentTarget.value })}></textarea>
 				</label>
-				{#if !group}
+				{#if !group && field.kind.type !== 'cited'}
 					<label class="inline">
 						<input
 							type="checkbox"
@@ -312,6 +323,13 @@
 	}
 	.name {
 		flex: 1 1 12rem;
+	}
+	.fixed {
+		display: flex;
+		align-items: center;
+		min-height: var(--control-md);
+		font-size: var(--type-sm);
+		color: var(--text-body);
 	}
 	.max input {
 		width: 5rem;

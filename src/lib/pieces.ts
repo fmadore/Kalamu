@@ -103,3 +103,18 @@ export function cutOffNotes(
 		return cut.length > 0 ? [{ text: cutOffText(reason, m), setups: cut }] : [];
 	});
 }
+
+/** The piece of a recording that holds moment `ms` of it, and how far into that piece it is:
+ * the last piece starting at or before it (a whole recording is one piece from 0); none while
+ * there are no pieces. */
+export function pieceAt(
+	views: readonly PieceView[],
+	ms: number
+): { index: number; ms: number } | null {
+	let found: { index: number; ms: number } | null = null;
+	for (const v of [...views].sort((a, b) => a.index - b.index)) {
+		const start = v.piece.kind === 'segment' ? Number(v.piece.start_ms) : 0;
+		if (start <= ms || found === null) found = { index: v.index, ms: Math.max(0, ms - start) };
+	}
+	return found;
+}

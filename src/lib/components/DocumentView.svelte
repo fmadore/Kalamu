@@ -321,6 +321,7 @@
 												jobId={r.job_id}
 												setupId={r.setup_id}
 												sourceId={r.source_id}
+												task={r.task}
 												project={{ id: projectId, name: project?.project.name ?? '' }}
 												onerror={(e) => (action.error = e)}
 											/>

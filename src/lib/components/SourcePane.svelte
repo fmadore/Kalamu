@@ -39,6 +39,7 @@
 		text = null,
 		find = '',
 		found = false,
+		span = null,
 		player,
 		switchable = null,
 		tools,
@@ -58,6 +59,9 @@
 		find?: string;
 		/** Whether they are a search's, marked grey, rather than a name pointed at, in yellow. */
 		found?: boolean;
+		/** A passage of a text file to show where it stands, in UTF-16 units: a quotation of an
+		 * analysis, marked in place of the words found. */
+		span?: { start: number; end: number } | null;
 		player?: Snippet;
 		/** A PDF whose text was read for a correction or a translation: the scan or that text,
 		 * switched from the bar. */
@@ -101,7 +105,8 @@
 	$effect(() => {
 		const el = sheet;
 		void text;
-		if (kind !== 'text' || !el || !find || found) return;
+		void span;
+		if (kind !== 'text' || !el || ((!find || found) && !span)) return;
 		const timer = setTimeout(() => {
 			const pane = el.getBoundingClientRect();
 			const marks = [...el.querySelectorAll('mark')].map((mark) => mark.getBoundingClientRect());
@@ -394,8 +399,13 @@
 			{#if text === null}
 				<p class="muted">{m.common.loading}</p>
 			{:else}
-				{#each findTerm(text, find) as part, k (k)}{#if part.hit}<mark class:found>{part.text}</mark
-						>{:else}{part.text}{/if}{/each}
+				{#if span}{text.slice(0, span.start)}<mark class="quoted"
+						>{text.slice(span.start, span.end)}</mark
+					>{text.slice(
+						span.end
+					)}{:else}{#each findTerm(text, find) as part, k (k)}{#if part.hit}<mark class:found
+								>{part.text}</mark
+							>{:else}{part.text}{/if}{/each}{/if}
 			{/if}
 		</div>
 	{:else}
@@ -502,6 +512,11 @@
 		background: var(--found);
 		color: inherit;
 		box-shadow: 0 0 0 2px var(--found);
+	}
+	/* A quotation shown where it stands: underlined too, so it is not told by colour alone. */
+	mark.quoted {
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
 	}
 	/* The buttons over the lightbox: turning its pages, zooming. */
 	.paging {

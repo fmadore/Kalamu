@@ -251,7 +251,12 @@
 							{/each}
 						</select>
 					{/if}
-					<UseTextMenu {jobId} setupId={textSetup} onerror={(e) => (action.error = e)} />
+					<UseTextMenu
+						{jobId}
+						setupId={textSetup}
+						task={job.task}
+						onerror={(e) => (action.error = e)}
+					/>
 				{:else if summary.status === 'completed' && summary.task === 'contents'}
 					<button class="btn" onclick={summarise}>{m.jobs.summarise}</button>
 				{/if}

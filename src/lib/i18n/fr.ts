@@ -12,6 +12,11 @@ export const fr: Messages = {
 	languageNames: { kea: 'capverdien', rup: 'aroumain' } as Record<string, string>,
 	/** The default prompts, by id: the core writes them in English. */
 	presets: {
+		'analysis.interview': {
+			name: 'Entretien : thèmes et citations',
+			description:
+				'Une transcription lue pour votre recherche : un court résumé, les thèmes, des mots-clés et les passages à citer, chaque citation retrouvée mot pour mot dans la transcription, avec la personne qui parle et le moment.'
+		},
 		'text_extraction.printed': {
 			name: 'Document imprimé ou dactylographié',
 			description:
@@ -176,7 +181,52 @@ export const fr: Messages = {
 		translateHint:
 			'Dans la langue de votre choix, sans rien omettre ; la relecture montre la traduction à côté du texte.',
 		workflow: 'Lui appliquer une chaîne de traitement',
-		workflowHint: 'Plusieurs étapes successives, parmi vos chaînes ou à partir d’un exemple.'
+		workflowHint: 'Plusieurs étapes successives, parmi vos chaînes ou à partir d’un exemple.',
+		interview: 'Analyser cet entretien',
+		interviewHint:
+			'Ses thèmes, des mots-clés et les passages à citer, avec qui parle et à quel moment.'
+	},
+	interview: {
+		title: 'Analyser cet entretien',
+		lede: 'Kalamu envoie la transcription, telle que vous l’avez corrigée, à un modèle qui en dégage les thèmes, des mots-clés et les passages à citer. Un passage n’est gardé que si ses mots se trouvent dans la transcription.',
+		question: 'Sur quoi porte votre recherche ?',
+		questionHint:
+			'Une phrase ou deux aident le modèle à retenir ce qui compte pour votre travail. Vous pouvez laisser vide.',
+		questionPlaceholder:
+			'Par exemple : comment les jeunes commerçants trouvent leurs premiers clients, et l’aide que leur apporte leur famille.',
+		model: (name: string, provider: string) => `Modèle : ${name} (${provider})`,
+		cost: (usd: string) => `Coût estimé : ${usd}`,
+		more: 'Plus de choix',
+		start: 'Analyser',
+		preparing: 'Préparation de la transcription…',
+		jobName: (file: string) => `Analyse d’entretien : ${file}`
+	},
+	cited: {
+		listen: 'Écouter',
+		listenTo: (said: string) => `Écouter : ${said}`,
+		showInText: 'Voir dans le texte',
+		showInTextOf: (said: string) => `Voir dans le texte : ${said}`,
+		quotes: 'Citations',
+		noQuote: 'Plus aucune citation.',
+		edit: 'Modifier',
+		editEntry: (title: string) => `Modifier « ${title} »`,
+		editThis: 'Modifier cette entrée',
+		remove: 'Retirer',
+		removeEntry: (title: string) => `Retirer « ${title} »`,
+		removeThis: 'Retirer cette entrée',
+		removeQuote: (start: string) => `Retirer la citation « ${start} »`,
+		quoteRemoved: 'Citation retirée des réponses',
+		entryRemoved: (title: string) => `« ${title} » retiré des réponses`,
+		thisRemoved: 'Entrée retirée des réponses',
+		leftOut: (n: number) =>
+			n === 1
+				? '1 citation n’a pas été retrouvée dans le texte et a été laissée de côté.'
+				: `${n} citations n’ont pas été retrouvées dans le texte et ont été laissées de côté.`,
+		dropped: (n: number) =>
+			n === 1
+				? '1 entrée a été laissée de côté : aucune de ses citations n’a été retrouvée dans le texte.'
+				: `${n} entrées ont été laissées de côté : aucune de leurs citations n’a été retrouvée dans le texte.`,
+		inCards: 'Les thèmes et les citations se modifient dans leurs cartes, en dehors de cet éditeur.'
 	},
 	units: {
 		tab: 'Pièces',
@@ -2103,8 +2153,11 @@ export const fr: Messages = {
 			text: 'Texte',
 			list: 'Liste de noms ou de termes',
 			choice: 'Un choix',
-			choices: 'Plusieurs choix'
+			choices: 'Plusieurs choix',
+			cited: 'Passages cités du texte'
 		},
+		citedNote:
+			'Kalamu vérifie chaque citation mot pour mot dans le texte. Le contenu de chaque entrée vient avec le prompt prêt à l’emploi et ne se modifie pas ici.',
 		max: 'Au plus',
 		values: 'Choix, séparés par des virgules',
 		valuesPlaceholder: 'Positive, Neutre, Négative',
@@ -2665,6 +2718,18 @@ export const fr: Messages = {
 		'prompt.no_fields': 'Une analyse demande au moins un champ.',
 		'prompt.unnamed_field': 'Chaque champ doit avoir un nom.',
 		'prompt.duplicate_field': 'Deux champs portent le même nom.',
+		'prompt.reserved_field':
+			'Kalamu donne déjà ce nom aux citations : choisissez-en un autre pour le champ.',
+		'job.cited_needs_text':
+			'Les citations ne se trouvent que dans une transcription ou un texte. Transcrivez ou lisez d’abord ce fichier, puis choisissez Utiliser ce texte.',
+		'cited.not_cited': 'Cette réponse ne contient aucune citation à modifier.',
+		'cited.no_entry': 'Cette entrée ne figure plus dans les réponses. Regardez-les à nouveau.',
+		'cited.no_quotation':
+			'Cette citation ne figure plus dans les réponses. Regardez-les à nouveau.',
+		'cited.no_field': 'Ce champ ne fait pas partie de l’entrée.',
+		'cited.not_a_choice': 'Choisissez l’une des valeurs du champ, ou laissez-le vide.',
+		'cited.invented':
+			'Seules les citations que Kalamu a retrouvées mot pour mot dans le texte peuvent être gardées : celle-ci n’en fait pas partie.',
 		'prompt.few_values': 'Un choix demande au moins deux valeurs entre lesquelles choisir.',
 		'prompt.empty_group': 'Une ligne par entrée demande au moins une colonne.',
 		'prompt.nested_group': 'Une colonne ne peut pas contenir elle-même des lignes.',

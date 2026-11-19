@@ -222,7 +222,7 @@
 			{:else if app.view.name === 'allJobs'}
 				<AllJobs />
 			{:else if app.view.name === 'review'}
-				{@const { jobId, sourceId, index, find } = app.view}
+				{@const { jobId, sourceId, index, find, at } = app.view}
 				{@const task = app.jobs.find((j) => j.id === jobId)?.task}
 				<!-- Another source is another review, loaded afresh; another page of it is not. -->
 				{#key `${jobId}/${sourceId}`}
@@ -231,7 +231,7 @@
 					{:else if task === 'contents'}
 						<ContentsReview {jobId} {sourceId} start={index} {find} />
 					{:else}
-						<ReviewView {jobId} {sourceId} start={index} {find} />
+						<ReviewView {jobId} {sourceId} start={index} {find} {at} />
 					{/if}
 				{/key}
 			{:else if app.view.name === 'projects'}

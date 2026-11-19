@@ -12,8 +12,10 @@
 	// is the researcher's, underlined in their blue and said to be (`ListAnswer` draws a list's
 	// names, `ListedNames` changes them). An analysis whose fields are
 	// one repeating group gives rows, page by page, reviewed in a table of its own
-	// (`RecordsReview`), which adds no names this way.
+	// (`RecordsReview`), which adds no names this way. An answer that quotes the text (an
+	// interview's themes) is a card per entry (`CitedAnswer`, changed by `CitedAnswers`).
 	import { onMount, tick } from 'svelte';
+	import CitedAnswer from './CitedAnswer.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
@@ -29,6 +31,7 @@
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
+	import { CitedAnswers } from '#lib/citedAnswers.svelte.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
 	import { clearFound, markFound } from '#lib/found.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -150,6 +153,10 @@
 		unhover: () => (hovered = null)
 	});
 
+	/** The answers that quote the text: the text read, where each quotation plays, and what
+	 * changes them. */
+	const cited = new CitedAnswers(review, () => answersPane);
+
 	function toggleReviewed() {
 		const first = setups[0];
 		if (first && lead) void save(first, lead.corrected_fields, !lead.reviewed);
@@ -160,7 +167,7 @@
 	const editedSetup = $derived(setups.find((s) => s.id === editing?.setupId));
 
 	onMount(() => {
-		void review.load();
+		void review.load().then(() => cited.load());
 		const release = guardDraft({
 			dirty: () => editing !== null && JSON.stringify(editing.draft) !== editing.from,
 			discard: () => (editing = null)
@@ -247,7 +254,8 @@
 		paging={{ at: page, count: pages }}
 		preview={review.preview}
 		regions={regions.place ? regions : undefined}
-		text={review.text}
+		text={cited.source?.text ?? review.text}
+		span={cited.span}
 		find={hovered ?? (filtering ? query : '')}
 		found={hovered === null && filtering}
 		witness={{
@@ -274,7 +282,11 @@
 					{#each fields as f (f.key)}
 						<div class="answer">
 							<h2>{f.label} <span class="kind">{kindLabel(f)}</span></h2>
-							<FieldInput field={f} bind:value={draft[f.key]} />
+							{#if f.kind.type === 'cited'}
+								<p class="muted none">{m.cited.inCards}</p>
+							{:else}
+								<FieldInput field={f} bind:value={draft[f.key]} />
+							{/if}
 						</div>
 					{/each}
 				</div>
@@ -289,7 +301,18 @@
 				{@const readings = collate(f.key, witnesses)}
 				<div class="answer" data-field={f.key} class:opened={opening?.field === f.key}>
 					<h2>{f.label}</h2>
-					{#if readings.length === 0}
+					{#if f.kind.type === 'cited'}
+						<CitedAnswer
+							field={f}
+							{setups}
+							answersOf={(s) => {
+								const v = viewOf(s);
+								return v && v.status !== 'failed' ? answersOf(v) : null;
+							}}
+							{comparing}
+							{cited}
+						/>
+					{:else if readings.length === 0}
 						<p class="muted none">{m.review.noneFound}</p>
 					{/if}
 					{#if f.kind.type === 'list' || f.kind.type === 'choices'}
@@ -300,9 +323,12 @@
 							{models}
 							{comparing}
 							count={setups.length}
-							onhover={(value) => (hovered = value)}
+							onhover={(value) => {
+								hovered = value;
+								if (value !== null) cited.span = null;
+							}}
 						/>
-					{:else if readings.length > 0}
+					{:else if readings.length > 0 && f.kind.type !== 'cited'}
 						{#each readings as r (r.value)}
 							<p class:prose={f.kind.type === 'text'} class:choice={f.kind.type === 'choice'}>
 								{#if comparing}<i class="siglum">{r.sigla.join(' ')}</i>{/if}
