@@ -272,6 +272,18 @@ pub(crate) const DEFAULTS: &[Default] = &[
         made_for: None,
     },
     Default {
+        id: "analysis.interview",
+        task: Task::Analysis,
+        name: "Interview: themes and quotations",
+        description: "A transcript read for your research: a short summary, the themes, keywords and the passages worth quoting, each quotation found word for word in the transcript with its speaker and time.",
+        instructions: include_str!("../defaults/analysis-interview.md"),
+        user_prompt: analysis::INTERVIEW_REQUEST,
+        schema: Some(analysis::interview),
+        merge: None,
+        dense: false,
+        made_for: None,
+    },
+    Default {
         id: "contents.periodical",
         task: Task::Contents,
         name: "Newspaper or magazine issue",

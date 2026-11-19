@@ -8,6 +8,10 @@ use super::{choice, field, list};
 pub(super) const ANALYSIS_REQUEST: &str =
     "Read the document above and fill in each field, following the instructions given.";
 
+pub(super) const INTERVIEW_REQUEST: &str = "Read the interview above and fill in each field, \
+following the instructions given. Quote only words that stand in the transcript, exactly as \
+written, each with the number of its turn.";
+
 pub(super) const IMAGE_REQUEST: &str =
     "Look at the image above and fill in each field, following the instructions given.";
 
@@ -267,6 +271,62 @@ pub(super) fn image_description() -> AnalysisSchema {
                 "Organisations",
                 "Organisations named in the image's own text.",
                 list(20),
+                false,
+            ),
+        ],
+    }
+}
+
+/// An interview read for a researcher: a summary, its themes and the passages worth quoting,
+/// each backed by quotations Kalamu finds in the transcript word for word before they are kept
+/// (`FieldKind::Cited`), and keywords as the research summary's.
+pub(super) fn interview() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Summary",
+                "Who speaks and what the interview covers, following the instructions above.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Themes",
+                "The subjects the interviewee comes back to or develops, the most important \
+                 first, each backed by one to three quotations.",
+                FieldKind::Cited {
+                    fields: vec![
+                        field(
+                            "Name",
+                            "The theme in a few words, in {languages}.",
+                            FieldKind::Text,
+                            false,
+                        ),
+                        field(
+                            "Description",
+                            "What the interviewee says about it, in one or two sentences, in \
+                             {languages}.",
+                            FieldKind::Text,
+                            false,
+                        ),
+                    ],
+                    max: Some(8),
+                },
+                false,
+            ),
+            field("Keywords", KEYWORDS, list(12), false),
+            field(
+                "Quotations",
+                "The passages most worth quoting, the most telling first, preferring the \
+                 interviewee's words.",
+                FieldKind::Cited {
+                    fields: vec![field(
+                        "Why it matters",
+                        "In one sentence, in {languages}.",
+                        FieldKind::Text,
+                        false,
+                    )],
+                    max: Some(10),
+                },
                 false,
             ),
         ],
