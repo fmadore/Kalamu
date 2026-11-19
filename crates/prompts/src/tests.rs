@@ -2,6 +2,7 @@ use kalamu_core::{FieldKind, LanguageChoice, LanguageCode, LineBreaks};
 
 use super::*;
 
+mod default_order;
 mod records;
 
 #[test]
