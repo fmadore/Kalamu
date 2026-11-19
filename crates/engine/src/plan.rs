@@ -84,6 +84,7 @@ impl Engine {
     /// Records every piece × set-up of a source, all at once, and returns those still to read:
     /// a piece finished under the same key is skipped, one in a batch the provider still holds
     /// is left to be collected.
+    #[cfg(test)]
     pub(crate) fn record_pieces(
         &self,
         job: &Job,
@@ -91,6 +92,20 @@ impl Engine {
         pieces: &[PieceRef],
         existing: &Existing,
         lines: Option<&Lines>,
+    ) -> Result<Vec<Work>, EngineError> {
+        self.record_pieces_quoting(job, source, pieces, existing, lines, None)
+    }
+
+    /// [`Engine::record_pieces`], with the text a cited analysis quotes: its numbered turns
+    /// enter the keys of the set-ups whose fields cite it.
+    pub(crate) fn record_pieces_quoting(
+        &self,
+        job: &Job,
+        source: &SourceFile,
+        pieces: &[PieceRef],
+        existing: &Existing,
+        lines: Option<&Lines>,
+        quotable: Option<&crate::cited::Quotable>,
     ) -> Result<Vec<Work>, EngineError> {
         let mut work = Vec::new();
         // Written together, so a close part-way never leaves a recording's plan recorded in
@@ -108,6 +123,11 @@ impl Engine {
             // and other lines behind the same text would be answered otherwise again.
             if let Some(lines) = lines {
                 fixes.push(lines.fix().to_string());
+            }
+            // A set-up whose fields cite the text is sent its turns numbered: other turns
+            // behind the same text would be answered otherwise. Other set-ups keep their keys.
+            if let Some(quotable) = quotable.filter(|_| crate::cited::cites(setup)) {
+                fixes.push(quotable.fix().to_string());
             }
             for (index, piece) in pieces.iter().enumerate() {
                 let index = index as u32;

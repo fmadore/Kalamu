@@ -23,6 +23,9 @@ pub(crate) enum Input {
     /// A passage of a transcript's timed lines, for a translation that keeps their times: its
     /// answer is read against the lines sent.
     Lines(crate::aligned::Passage),
+    /// A text with its turns numbered, for an analysis whose fields cite it: its answer's
+    /// quotations are looked for in the text.
+    Cited(crate::cited::Cite),
 }
 
 /// How a call ended, after its retries.
@@ -154,12 +157,17 @@ impl Engine {
         } else {
             ApiKey::new("")
         };
-        let mut lines = None;
+        let mut check: Option<Box<dyn AnswerCheck>> = None;
         let prepared = match input {
             Input::Ready(input) => Ok(input),
             Input::Lines(passage) => {
                 let input = passage.input.clone();
-                lines = Some(passage);
+                check = Some(Box::new(passage));
+                Ok(input)
+            }
+            Input::Cited(cite) => {
+                let input = cite.input.clone();
+                check = Some(Box::new(cite));
                 Ok(input)
             }
             Input::Open(opened) => {
@@ -207,7 +215,7 @@ impl Engine {
                 &options,
                 &spent,
                 stop,
-                lines.as_ref().map(|p| p as &dyn AnswerCheck),
+                check.as_deref(),
             )
             .await?;
         match called {

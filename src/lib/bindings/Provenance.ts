@@ -2,6 +2,7 @@
 import type { GeneratorInfo } from "./GeneratorInfo";
 import type { LanguageChoice } from "./LanguageChoice";
 import type { LanguageCode } from "./LanguageCode";
+import type { ProvenanceCited } from "./ProvenanceCited";
 import type { ProvenanceDocument } from "./ProvenanceDocument";
 import type { ProvenanceListed } from "./ProvenanceListed";
 import type { ProvenanceMerge } from "./ProvenanceMerge";
@@ -97,6 +98,12 @@ renamed_speakers?: Array<string>,
  * renamed, which the model's own answer did not hold: part by part and field by field.
  */
 listed_by_hand?: Array<ProvenanceListed>, 
+/**
+ * The quotations of each field of entries that cite the text, part by part: how many the
+ * model gave, each looked for in the text read (`source.derived_from` names the snapshot),
+ * and how many could not be found there and were left out.
+ */
+cited?: Array<ProvenanceCited>, 
 /**
  * Passages the researcher asked a model to correct from the review and accepted: each
  * written into their corrections, the model's output left as it was. Not in `usage` or

@@ -126,6 +126,16 @@ impl Engine {
                     continue;
                 }
             };
+            // An analysis whose fields cite the text reads its turns.
+            let quotable = match self.quotable(&job, source) {
+                Ok(quotable) => quotable,
+                Err(error) => {
+                    failed = true;
+                    unread.insert(source.id);
+                    self.source_failed(&job, source, &existing, &error)?;
+                    continue;
+                }
+            };
             let pieces = match self
                 .plan(&job, source, &opened, &existing, lines.as_deref())
                 .await?
@@ -147,13 +157,23 @@ impl Engine {
                 pieces: pieces.len() as u32,
             });
 
-            let work = self.record_pieces(&job, source, &pieces, &existing, lines.as_deref())?;
+            let work = self.record_pieces_quoting(
+                &job,
+                source,
+                &pieces,
+                &existing,
+                lines.as_deref(),
+                quotable.as_deref(),
+            )?;
 
-            // Timed lines are read back against the lines each passage sent, which a batch's
-            // collection does not do: they are sent at once, in economy mode too.
-            let (to_batch, work): (Vec<_>, Vec<_>) = work
-                .into_iter()
-                .partition(|(setup, _, _)| batched.contains(&setup.id) && lines.is_none());
+            // Timed lines are read back against the lines each passage sent, and quotations
+            // looked for in the text, which a batch's collection does not do: they are sent at
+            // once, in economy mode too.
+            let (to_batch, work): (Vec<_>, Vec<_>) = work.into_iter().partition(|(setup, _, _)| {
+                batched.contains(&setup.id)
+                    && lines.is_none()
+                    && !(quotable.is_some() && crate::cited::cites(setup))
+            });
             for (setup, state, key) in to_batch {
                 if stop_requested(&control).is_some() {
                     break;
@@ -190,24 +210,26 @@ impl Engine {
                         break;
                     };
                     let engine = self.clone();
-                    let (job, source, opened, spent, stop, lines) = (
+                    let (job, source, opened, spent, stop, lines, quotable) = (
                         job.clone(),
                         source.clone(),
                         opened.clone(),
                         spent.clone(),
                         stop.clone(),
                         lines.clone(),
+                        quotable.clone(),
                     );
                     in_flight.push(tokio::spawn(async move {
                         match unit {
                             Unit::One((setup, state, key)) => {
                                 let stem = crate::source_stem(&source.file_name, "page");
-                                let input = match lines
-                                    .as_ref()
-                                    .and_then(|l| l.passage(&state.piece, &stem))
-                                {
-                                    Some(passage) => Input::Lines(passage),
-                                    None => Input::Open(opened),
+                                let passage =
+                                    lines.as_ref().and_then(|l| l.passage(&state.piece, &stem));
+                                let cite = quotable.as_ref().and_then(|q| q.call(&setup, &stem));
+                                let input = match (passage, cite) {
+                                    (Some(passage), _) => Input::Lines(passage),
+                                    (None, Some(cite)) => Input::Cited(cite),
+                                    (None, None) => Input::Open(opened),
                                 };
                                 engine
                                     .process_piece(

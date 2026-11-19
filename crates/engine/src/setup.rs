@@ -77,6 +77,7 @@ impl Engine {
         }
         let by_page = self.reads_by_page(new)?;
         Self::check_job(catalog, new, by_page)?;
+        self.check_cited(new)?;
         self.check_reading(catalog, new, by_page)
     }
 
@@ -238,6 +239,10 @@ impl Engine {
         };
         let ctx = Self::render_context(catalog, task, settings, options);
         let mut prompt = preset.snapshot(&ctx);
+        // The researcher's question goes with an analysis's request.
+        if task == Task::Analysis {
+            prompt.user_prompt = options.with_question(&prompt.user_prompt);
+        }
         if !accepts_prompt {
             // Dedicated OCR and speech models take no instructions; recording none keeps
             // provenance and the cache honest.

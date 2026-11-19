@@ -65,6 +65,7 @@ impl Engine {
         let (mut failed, mut cut_by_filter) = (Vec::new(), Vec::new());
         let mut lines_changed = Vec::new();
         let mut listed_by_hand = Vec::new();
+        let mut cited = Vec::new();
         for state in &states {
             // A piece that failed after its retries is marked in its place, so the rest of the
             // document still reaches the researcher (a table of contents has only its entries).
@@ -171,6 +172,22 @@ impl Engine {
                             part: number,
                             field,
                             items,
+                        }),
+                );
+            }
+            // The model's quotations, as they were checked against the text.
+            if let Some(schema) = &setup.prompt.schema {
+                cited.extend(
+                    kalamu_core::analysis::cited::counts(&schema.fields, &result.output.fields)
+                        .into_iter()
+                        .map(|(field, checked, left_out, dropped)| {
+                            kalamu_core::provenance::ProvenanceCited {
+                                part: number,
+                                field,
+                                checked,
+                                left_out,
+                                entries_left_out: dropped,
+                            }
                         }),
                 );
             }
@@ -296,6 +313,7 @@ impl Engine {
             preprocessing,
             renamed_speakers: renamed_labels(speaker_names),
             listed_by_hand,
+            cited,
             passages: self.passages_accepted(job, setup_id, source_id, &states)?,
             regions: self.regions_recorded(job, source_id, &states)?,
             region_readings: self.readings_accepted(job, setup_id, source_id, &states)?,

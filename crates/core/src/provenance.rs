@@ -83,6 +83,12 @@ pub struct Provenance {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(optional, as = "Option<Vec<ProvenanceListed>>")]
     pub listed_by_hand: Vec<ProvenanceListed>,
+    /// The quotations of each field of entries that cite the text, part by part: how many the
+    /// model gave, each looked for in the text read (`source.derived_from` names the snapshot),
+    /// and how many could not be found there and were left out.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<ProvenanceCited>>")]
+    pub cited: Vec<ProvenanceCited>,
     /// Passages the researcher asked a model to correct from the review and accepted: each
     /// written into their corrections, the model's output left as it was. Not in `usage` or
     /// `cost_usd`, which count the results of the job's own pieces.
@@ -126,6 +132,29 @@ pub struct ProvenanceListed {
     /// The field's key.
     pub field: String,
     pub items: Vec<String>,
+}
+
+/// The quotations of one cited field in one part, as the model's answer was checked against
+/// the text: the researcher's removals are in the files, not here.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ProvenanceCited {
+    /// The page or segment, numbered as in the export.
+    pub part: u32,
+    /// The field's key.
+    pub field: String,
+    /// The quotations the model gave, each looked for in the text.
+    pub checked: u32,
+    /// Those not found, left out.
+    pub left_out: u32,
+    /// The model's entries left out because none of their quotations was found.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    #[ts(optional, as = "Option<u32>")]
+    pub entries_left_out: u32,
+}
+
+fn is_zero(n: &u32) -> bool {
+    *n == 0
 }
 
 /// A project document a source is, as provenance records it.

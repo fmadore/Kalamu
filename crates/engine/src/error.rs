@@ -86,6 +86,14 @@ pub enum EngineError {
     /// A region to read again whose reading cannot be asked for, accepted or undone.
     #[error(transparent)]
     RegionReading(kalamu_core::RegionReadingError),
+    /// An analysis with a field that cites the text given a source that is not a text: a
+    /// scan or a recording has no words to find a quotation in.
+    #[error("{0} is not a text: quotations can only be found in a transcript or a text")]
+    CitedNeedsText(String),
+    /// A change to a cited field's entries that cannot be made, or a correction holding a
+    /// quotation the model's answer does not.
+    #[error(transparent)]
+    Cited(kalamu_core::analysis::cited::CitedError),
 }
 
 impl EngineError {
@@ -125,6 +133,8 @@ impl EngineError {
             Self::Passage(e) => e.code(),
             Self::Region(e) => e.code(),
             Self::RegionReading(e) => e.code(),
+            Self::CitedNeedsText(_) => "job.cited_needs_text",
+            Self::Cited(e) => e.code(),
         }
     }
 }

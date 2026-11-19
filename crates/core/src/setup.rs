@@ -57,9 +57,30 @@ pub struct SetupOptions {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[ts(optional, as = "Option<bool>")]
     pub translate: bool,
+    /// What the researcher's work is about, in their words ("What is your research about?"),
+    /// for an analysis: added to the request sent with the document, so the same question
+    /// costs nothing twice and another is another analysis. Left out when empty, so cache keys
+    /// made before it existed stay valid.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub question: Option<String>,
 }
 
+/// Introduces the researcher's question in the request.
+pub const QUESTION_INTRO: &str = "The researcher's work, in their own words:";
+
 impl SetupOptions {
+    /// The request sent with each document with the researcher's question after it, when
+    /// there is one: what an analysis asks of every document.
+    pub fn with_question(&self, request: &str) -> String {
+        match self.question.as_deref().map(str::trim) {
+            Some(question) if !question.is_empty() => {
+                format!("{request}\n\n{QUESTION_INTRO} {question}")
+            }
+            _ => request.to_string(),
+        }
+    }
+
     /// The names and words to spell, one each, trimmed, without empty ones or repeats.
     pub fn vocabulary_terms(&self) -> Vec<String> {
         let mut out: Vec<String> = Vec::new();
