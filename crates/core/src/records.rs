@@ -168,7 +168,7 @@ fn empty(column: &Field) -> FieldValue {
 }
 
 /// A cell as typed, as its column reads it.
-fn cell(column: &Field, typed: &str) -> Result<FieldValue, RowError> {
+pub(crate) fn cell(column: &Field, typed: &str) -> Result<FieldValue, RowError> {
     let choose = |value: &str, values: &[String]| {
         values
             .iter()
@@ -189,7 +189,9 @@ fn cell(column: &Field, typed: &str) -> Result<FieldValue, RowError> {
         out
     };
     Ok(match &column.kind {
-        FieldKind::Text | FieldKind::Entries { .. } => FieldValue::Text(typed.trim().to_string()),
+        FieldKind::Text | FieldKind::Entries { .. } | FieldKind::Cited { .. } => {
+            FieldValue::Text(typed.trim().to_string())
+        }
         FieldKind::Choice { .. } if typed.trim().is_empty() => FieldValue::Text(String::new()),
         FieldKind::Choice { values } => FieldValue::Text(choose(typed, values)?),
         FieldKind::List { max } => {

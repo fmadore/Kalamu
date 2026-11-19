@@ -21,9 +21,14 @@
 //! culturally specific one) to any text, its target named by `{languages}` as an analysis's
 //! answer language is. The directory and the register are records analyses (#171), new: one row
 //! per entry, read page by page, every cell as written ([`records`]).
+//!
+//! The list below keeps the order New job shows; the analyses' schemas live in [`analysis`]
+//! and [`records`], the tables of contents' in [`contents`].
 
 use kalamu_core::{AnalysisSchema, Field, FieldKind, InputKind, Task};
 
+mod analysis;
+mod contents;
 mod records;
 
 pub(crate) struct Default {
@@ -44,10 +49,6 @@ pub(crate) struct Default {
     pub made_for: Option<InputKind>,
 }
 
-/// A table of contents' first step, sent with each page.
-const CONTENTS_REQUEST: &str = "List the articles or items on this page and fill in their fields, following the \
-     instructions given.";
-
 const CORRECTION_REQUEST: &str =
     "Correct the machine-read text above, following the instructions given.";
 
@@ -66,12 +67,6 @@ part, following the instructions given.";
 
 const RECORDING_REQUEST: &str = "Transcribe this recording, following the instructions given.";
 
-const ANALYSIS_REQUEST: &str =
-    "Read the document above and fill in each field, following the instructions given.";
-
-const IMAGE_REQUEST: &str =
-    "Look at the image above and fill in each field, following the instructions given.";
-
 fn field(label: &str, instructions: &str, kind: FieldKind, reason: bool) -> Field {
     Field {
         key: String::new(),
@@ -89,364 +84,6 @@ fn list(max: u32) -> FieldKind {
 fn choice(values: &[&str]) -> FieldKind {
     FieldKind::Choice {
         values: values.iter().map(|v| (*v).to_string()).collect(),
-    }
-}
-
-const KEYWORDS: &str = "Keywords and short key phrases in {languages} that someone would search \
-for: people, organisations, places, events and specific themes. Prefer the specific (\"Hajj \
-1957\") to the general (\"religion\"), and keep proper names as in the source.";
-
-fn summary_research() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field(
-                "Summary",
-                "What this document in particular says, following the instructions above.",
-                FieldKind::Text,
-                false,
-            ),
-            field("Keywords", KEYWORDS, list(12), false),
-        ],
-    }
-}
-
-/// The parts of a social-science publication a literature review compares: question, argument,
-/// theory, method, case and findings, kept apart so each becomes a CSV column.
-fn summary_publication() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field(
-                "Reference",
-                "Authors, year, title, and the journal, book or institution it appeared in, as \
-                 the publication gives them. Leave out what it does not state.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Type",
-                "What kind of publication this is.",
-                choice(&[
-                    "Journal article",
-                    "Book chapter",
-                    "Book",
-                    "Thesis",
-                    "Working paper or report",
-                    "Review",
-                    "Other",
-                ]),
-                false,
-            ),
-            field(
-                "Abstract",
-                "An abstract of 150 to 250 words in your own words: the question, the case, the \
-                 approach, the argument and the main findings.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Research question",
-                "The question or puzzle the publication sets out to answer, in one or two \
-                 sentences.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Argument",
-                "The central argument or thesis, and the debate or received view it speaks to or \
-                 argues against.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Theoretical framework",
-                "The theories and concepts the analysis rests on, and the scholars it explicitly \
-                 builds on or discusses.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Methods",
-                "The methods the publication itself uses, not those it only discusses.",
-                FieldKind::Choices {
-                    values: [
-                        "Ethnography and participant observation",
-                        "Interviews",
-                        "Oral history",
-                        "Archival research",
-                        "Press or media analysis",
-                        "Discourse or content analysis",
-                        "Survey",
-                        "Statistical analysis",
-                        "Comparative case study",
-                        "Literature review or theoretical essay",
-                    ]
-                    .map(String::from)
-                    .to_vec(),
-                },
-                false,
-            ),
-            field(
-                "Data and sources",
-                "What the study rests on: fieldwork (where, when, how long), interviews (how many, \
-                 with whom), archives, press, surveys or corpora, as the publication describes \
-                 them.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Places studied",
-                "Countries, regions, towns or sites the study is about, not every place mentioned.",
-                list(10),
-                false,
-            ),
-            field(
-                "Period studied",
-                "The period the study covers, as precisely as the publication states it (\"1960 \
-                 to 1990\", \"the 2010s\").",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Main findings",
-                "The main findings or claims, each in one sentence, the most important first, as \
-                 plain prose.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Contribution and limits",
-                "What the authors say the publication adds to the field, and the limits they \
-                 acknowledge themselves.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Key concepts",
-                "The analytical concepts the publication uses or proposes, in its own terms.",
-                list(8),
-                false,
-            ),
-            field(
-                "Keywords",
-                "Keywords in {languages} that someone would search for: the topic, groups, \
-                 institutions, places and themes. Prefer the specific (\"Islamic reformism in \
-                 Niger\") to the general (\"religion\").",
-                list(10),
-                false,
-            ),
-        ],
-    }
-}
-
-fn entities() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field("People", "People named in the document.", list(30), false),
-            field(
-                "Organisations",
-                "Associations, parties, administrations, companies, religious bodies.",
-                list(20),
-                false,
-            ),
-            field("Places", "Places named in the document.", list(20), false),
-            field(
-                "Subjects",
-                "The document's specific subjects.",
-                list(6),
-                false,
-            ),
-        ],
-    }
-}
-
-fn tone() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field(
-                "Main subject",
-                "What the document is mainly about, in a few words, in {languages}.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Tone",
-                "How the document presents its main subject.",
-                choice(&["Positive", "Neutral", "Negative", "Mixed"]),
-                true,
-            ),
-            field(
-                "Register",
-                "How much the document reports facts and how much it gives opinions.",
-                choice(&[
-                    "Factual",
-                    "Mostly factual",
-                    "Mixed",
-                    "Mostly opinion",
-                    "Opinion",
-                ]),
-                true,
-            ),
-        ],
-    }
-}
-
-/// A catalogue entry for an image: what it shows, what it is, keywords, its own text, and the
-/// names that text gives. The lists carry the entities preset's labels, so the project
-/// dictionary gathers their names with the documents'.
-fn image_description() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field(
-                "Description",
-                "What is visibly there, following the instructions above, in {languages}; the \
-                 first sentence a summary on its own.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Kind of image",
-                "What the image is as an object, not what it shows.",
-                choice(&[
-                    "Photograph",
-                    "Poster or advertisement",
-                    "Map or plan",
-                    "Drawing or painting",
-                    "Printed page",
-                    "Manuscript page",
-                    "Object",
-                    "Other",
-                ]),
-                false,
-            ),
-            field(
-                "Keywords",
-                "Subjects visibly present, in {languages}, specific before general, with no two \
-                 saying the same thing.",
-                list(12),
-                false,
-            ),
-            field(
-                "Text in the image",
-                "Captions, signs, inscriptions and stamps, as written, one per line; empty when \
-                 there is none.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "People",
-                "People named in the image's own text.",
-                list(20),
-                false,
-            ),
-            field(
-                "Places",
-                "Places named in the image's own text.",
-                list(20),
-                false,
-            ),
-            field(
-                "Organisations",
-                "Organisations named in the image's own text.",
-                list(20),
-                false,
-            ),
-        ],
-    }
-}
-
-/// iwac-ai-pipelines' issue index: authors and a summary per article.
-fn contents_periodical() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field(
-                "Authors",
-                "The authors as the article names them (\"By …\", a signature at the end), \
-                 including collective ones (\"The Editors\"); empty when none is named.",
-                FieldKind::List { max: None },
-                false,
-            ),
-            field(
-                "Summary",
-                "What the article says, with its names, figures and dates: two or three \
-                 sentences for one page, four to six for the whole article.",
-                FieldKind::Text,
-                false,
-            ),
-        ],
-    }
-}
-
-/// An item-level description of an archival file, as an archivist's inventory gives it.
-fn contents_archival() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field(
-                "Kind of document",
-                "What the item is, in a few words: letter, report, minutes, telegram, circular, \
-                 petition, form, newspaper clipping, photograph, map, envelope…",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Date",
-                "The item's date as written, then in the form YYYY-MM-DD in parentheses when it \
-                 is complete; empty when the item has none.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "From",
-                "Who wrote, signed or issued it, with their title or office, as written.",
-                FieldKind::List { max: Some(5) },
-                false,
-            ),
-            field(
-                "To",
-                "Who it is addressed or copied to, with their title or office, as written.",
-                FieldKind::List { max: Some(8) },
-                false,
-            ),
-            field(
-                "Summary",
-                "What the item says or records, in two to four sentences, with its names, places, \
-                 figures and dates, and the annotations or stamps on it.",
-                FieldKind::Text,
-                false,
-            ),
-            field(
-                "Names",
-                "People, organisations and places the item names, as written.",
-                list(20),
-                false,
-            ),
-        ],
-    }
-}
-
-fn contents_book() -> AnalysisSchema {
-    AnalysisSchema {
-        fields: vec![
-            field(
-                "Level",
-                "Whether the entry is a part, a chapter (or a contribution to an edited volume), \
-                 or a section within a chapter.",
-                choice(&["Part", "Chapter", "Section", "Front or back matter"]),
-                false,
-            ),
-            field(
-                "Authors",
-                "Its authors, when the entry names its own (in an edited volume); empty otherwise.",
-                FieldKind::List { max: None },
-                false,
-            ),
-            field(
-                "Summary",
-                "What it argues or describes, with its names, cases, figures and dates: one or \
-                 two sentences for one page, three to five for a whole chapter or section.",
-                FieldKind::Text,
-                false,
-            ),
-        ],
     }
 }
 
@@ -556,8 +193,8 @@ pub(crate) const DEFAULTS: &[Default] = &[
         name: "Summary and keywords",
         description: "What each document in particular says, with names, figures and dates, as long as the document needs, and keywords to search by.",
         instructions: include_str!("../defaults/summary-research.md"),
-        user_prompt: ANALYSIS_REQUEST,
-        schema: Some(summary_research),
+        user_prompt: analysis::ANALYSIS_REQUEST,
+        schema: Some(analysis::summary_research),
         merge: None,
         dense: false,
         made_for: None,
@@ -568,8 +205,8 @@ pub(crate) const DEFAULTS: &[Default] = &[
         name: "Scholarly publication, social sciences",
         description: "Question, argument, theory, methods, data, case and findings of an article, chapter or book, field by field for a literature review.",
         instructions: include_str!("../defaults/summary-publication.md"),
-        user_prompt: ANALYSIS_REQUEST,
-        schema: Some(summary_publication),
+        user_prompt: analysis::ANALYSIS_REQUEST,
+        schema: Some(analysis::summary_publication),
         merge: None,
         dense: false,
         made_for: None,
@@ -580,8 +217,8 @@ pub(crate) const DEFAULTS: &[Default] = &[
         name: "People, places and organisations",
         description: "The people, organisations, places and subjects each document names, spelled as in the text.",
         instructions: include_str!("../defaults/analysis-entities.md"),
-        user_prompt: ANALYSIS_REQUEST,
-        schema: Some(entities),
+        user_prompt: analysis::ANALYSIS_REQUEST,
+        schema: Some(analysis::entities),
         merge: None,
         dense: false,
         made_for: None,
@@ -592,8 +229,8 @@ pub(crate) const DEFAULTS: &[Default] = &[
         name: "Tone of the document",
         description: "Whether each document presents its subject positively or negatively, and how much it gives opinions, with a reason for each.",
         instructions: include_str!("../defaults/analysis-tone.md"),
-        user_prompt: ANALYSIS_REQUEST,
-        schema: Some(tone),
+        user_prompt: analysis::ANALYSIS_REQUEST,
+        schema: Some(analysis::tone),
         merge: None,
         dense: false,
         made_for: None,
@@ -604,8 +241,8 @@ pub(crate) const DEFAULTS: &[Default] = &[
         name: "Image description and keywords",
         description: "What each photograph, poster, map or other image shows, as a catalogue would describe it, with keywords, the text written on it and the names that text gives.",
         instructions: include_str!("../defaults/analysis-image-description.md"),
-        user_prompt: IMAGE_REQUEST,
-        schema: Some(image_description),
+        user_prompt: analysis::IMAGE_REQUEST,
+        schema: Some(analysis::image_description),
         merge: None,
         dense: false,
         made_for: Some(InputKind::Image),
@@ -635,13 +272,25 @@ pub(crate) const DEFAULTS: &[Default] = &[
         made_for: None,
     },
     Default {
+        id: "analysis.interview",
+        task: Task::Analysis,
+        name: "Interview: themes and quotations",
+        description: "A transcript read for your research: a short summary, the themes, keywords and the passages worth quoting, each quotation found word for word in the transcript with its speaker and time.",
+        instructions: include_str!("../defaults/analysis-interview.md"),
+        user_prompt: analysis::INTERVIEW_REQUEST,
+        schema: Some(analysis::interview),
+        merge: None,
+        dense: false,
+        made_for: None,
+    },
+    Default {
         id: "contents.periodical",
         task: Task::Contents,
         name: "Newspaper or magazine issue",
         description: "One entry per article, with its section, authors, pages and a summary.",
         instructions: include_str!("../defaults/contents-periodical-page.md"),
-        user_prompt: CONTENTS_REQUEST,
-        schema: Some(contents_periodical),
+        user_prompt: contents::REQUEST,
+        schema: Some(contents::periodical),
         merge: Some(include_str!("../defaults/contents-periodical-merge.md")),
         dense: false,
         made_for: None,
@@ -652,8 +301,8 @@ pub(crate) const DEFAULTS: &[Default] = &[
         name: "Archival file, item by item",
         description: "An inventory of a file scanned in one piece: each letter, report or clipping with its date, sender, addressee and a summary.",
         instructions: include_str!("../defaults/contents-archival-page.md"),
-        user_prompt: CONTENTS_REQUEST,
-        schema: Some(contents_archival),
+        user_prompt: contents::REQUEST,
+        schema: Some(contents::archival),
         merge: Some(include_str!("../defaults/contents-archival-merge.md")),
         dense: false,
         made_for: None,
@@ -664,8 +313,8 @@ pub(crate) const DEFAULTS: &[Default] = &[
         name: "Book, report or thesis",
         description: "Parts, chapters and sections with their pages and a summary of each.",
         instructions: include_str!("../defaults/contents-book-page.md"),
-        user_prompt: CONTENTS_REQUEST,
-        schema: Some(contents_book),
+        user_prompt: contents::REQUEST,
+        schema: Some(contents::book),
         merge: Some(include_str!("../defaults/contents-book-merge.md")),
         dense: false,
         made_for: None,

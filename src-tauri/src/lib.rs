@@ -158,6 +158,8 @@ pub fn run() {
             commands::review::save_correction,
             commands::review::save_corrections,
             commands::review::edit_rows,
+            commands::review::edit_cited,
+            commands::review::cited_source,
             commands::review::rename_listed,
             commands::review::add_listed,
             commands::passage::passage_estimate,

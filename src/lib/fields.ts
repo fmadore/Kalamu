@@ -13,7 +13,7 @@ export function toDraft(fields: Field[], answers: FieldAnswer[]): Draft {
 		const value = answers.find((a) => a.key === f.key)?.value ?? '';
 		const items = Array.isArray(value)
 			? (value as unknown[]).filter((v): v is string => typeof v === 'string')
-			: value
+			: typeof value === 'string' && value
 				? [value]
 				: [];
 		draft[f.key] =
@@ -33,6 +33,10 @@ export function fromDraft(
 	before: FieldAnswer[] = []
 ): FieldAnswer[] {
 	return fields.map((f) => {
+		// Entries that quote the text are changed in their cards, never here: kept as they were.
+		const kept = before.find((a) => a.key === f.key);
+		if (f.kind.type === 'cited')
+			return kept ?? { key: f.key, value: { entries: [], left_out: 0, dropped: 0 } };
 		const raw = draft[f.key] ?? '';
 		const value =
 			f.kind.type === 'list'

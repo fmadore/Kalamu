@@ -11,11 +11,12 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use kalamu_core::{
-    FieldAnswer, FieldValue, Job, PieceRef, PreparedInput, ProcessOutput, ProviderError, Segment,
+    AnalysisSchema, FieldAnswer, FieldValue, Job, PieceRef, PreparedInput, ProcessOutput, Segment,
     SourceFile, Task, aligned,
 };
 
 use crate::Engine;
+use crate::check::AnswerCheck;
 
 /// A transcript's timed lines, cut into the passages a translation sends.
 pub(crate) struct Lines {
@@ -88,13 +89,24 @@ pub(crate) struct Passage {
     pub(crate) input: PreparedInput,
 }
 
-impl Passage {
-    /// The model's answer read against the lines sent: its text the translated lines, one
-    /// paragraph each, and its segments those lines with the times and speakers of the lines
-    /// they translate. An answer that does not give back every line once is refused as a
-    /// broken answer, which the engine asks again for and bills; a passage that never comes
-    /// back whole fails with the reason, and its subtitles are not written.
-    pub(crate) fn read(&self, mut output: ProcessOutput) -> Result<ProcessOutput, ProviderError> {
+/// A passage of lines answers in numbered lines, whatever the set-up's one field, asked to give
+/// back every line by its number.
+///
+/// The answer is read against the lines sent: its text the translated lines, one paragraph
+/// each, and its segments those lines with the times and speakers of the lines they translate.
+/// An answer that does not give back every line once is refused as a broken answer, which the
+/// engine asks again for and bills; a passage that never comes back whole fails with the
+/// reason, and its subtitles are not written.
+impl AnswerCheck for Passage {
+    fn schema(&self) -> Option<AnalysisSchema> {
+        Some(aligned::schema())
+    }
+
+    fn request(&self) -> Option<&str> {
+        Some(aligned::REQUEST)
+    }
+
+    fn check(&self, mut output: ProcessOutput) -> Result<ProcessOutput, String> {
         match aligned::read(&output.fields, &self.lines.lines, self.range.clone()) {
             Ok(lines) => {
                 let text = aligned::text(&lines);
@@ -108,10 +120,9 @@ impl Passage {
                 output.segments = lines;
                 Ok(output)
             }
-            Err(reason) => Err(ProviderError::InvalidAnswer {
-                reason: format!("the translation did not give back its lines: {reason}"),
-                usage: output.usage,
-            }),
+            Err(reason) => Err(format!(
+                "the translation did not give back its lines: {reason}"
+            )),
         }
     }
 }

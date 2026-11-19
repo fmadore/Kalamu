@@ -35,7 +35,7 @@ pub fn holds_item(answers: &[FieldAnswer], key: &str, item: &str) -> bool {
         .is_some_and(|a| match &a.value {
             FieldValue::List(items) => items.iter().any(|v| same(v, item)),
             FieldValue::Text(text) => !text.trim().is_empty() && same(text, item),
-            FieldValue::Entries(_) => false,
+            FieldValue::Entries(_) | FieldValue::Cited(_) => false,
         })
 }
 
@@ -115,7 +115,7 @@ pub fn add_items(
                 grow(&mut list);
                 answer.value = FieldValue::List(list);
             }
-            FieldValue::Text(_) | FieldValue::Entries(_) => {}
+            FieldValue::Text(_) | FieldValue::Entries(_) | FieldValue::Cited(_) => {}
         },
         None => {
             let mut list = Vec::new();

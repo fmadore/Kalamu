@@ -13,6 +13,7 @@ use kalamu_core::{
 
 use super::*;
 
+mod cited;
 mod page_xml;
 mod records;
 mod researcher;
@@ -107,6 +108,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         preprocessing: vec![],
         renamed_speakers: vec![],
         listed_by_hand: vec![],
+        cited: vec![],
         passages: vec![],
         regions: vec![],
         region_readings: vec![],

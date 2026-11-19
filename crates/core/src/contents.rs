@@ -197,6 +197,8 @@ fn answer_json(value: &FieldValue) -> Value {
                 })
                 .collect(),
         ),
+        // A table of contents' fields never cite the text; written as stored if one did.
+        FieldValue::Cited(cited) => json!(cited),
     }
 }
 

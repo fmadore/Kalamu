@@ -11,7 +11,11 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
-use crate::{JobId, PieceRef, SetupId, SourceId, Task, Timestamp};
+use crate::{JobId, PieceRef, Segment, SetupId, SourceId, Task, Timestamp};
+
+pub mod forgiving;
+mod turns;
+pub use turns::{Turn, turn_of, turn_text};
 
 /// Where one piece's text sits in the snapshot: characters `start..end`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -50,6 +54,13 @@ pub struct Snapshot {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(optional, as = "Option<Vec<crate::Segment>>")]
     pub lines: Vec<crate::Segment>,
+    /// The text's turns, in order ([`Turn`]): where each speaker's words, or each paragraph,
+    /// sit in the text, with their times on the recording's clock when the text has them. A
+    /// turn's number is its place in this list. Empty for snapshots taken before turns were
+    /// kept, and for a document unit's pages.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<Turn>>")]
+    pub turns: Vec<Turn>,
 }
 
 impl Snapshot {
@@ -84,6 +95,7 @@ pub struct DerivedFrom {
 }
 
 /// A piece's text as it goes into a snapshot.
+#[derive(Clone, Copy)]
 pub struct PartText<'a> {
     pub piece: &'a PieceRef,
     pub text: &'a str,
@@ -96,14 +108,53 @@ pub struct PartText<'a> {
 /// `--- Page N ---` line, as in the text export, so a model can say where it read something;
 /// the marker is outside every part's span. Failed pieces are left out.
 pub fn build(parts: &[PartText<'_>]) -> (String, Vec<SnapshotPart>) {
+    let timed: Vec<TimedPart<'_>> = parts
+        .iter()
+        .map(|&text| TimedPart {
+            text,
+            segments: &[],
+        })
+        .collect();
+    let built = assemble(None, &timed);
+    (built.text, built.parts)
+}
+
+/// A piece's text with its timed segments (on the recording's clock), from which its turns
+/// are read.
+#[derive(Clone, Copy)]
+pub struct TimedPart<'a> {
+    pub text: PartText<'a>,
+    pub segments: &'a [Segment],
+}
+
+/// A snapshot's text with where each piece and each turn sits in it, made together so they
+/// cannot disagree.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Built {
+    pub text: String,
+    pub parts: Vec<SnapshotPart>,
+    pub turns: Vec<Turn>,
+}
+
+/// [`build`], with the text's turns read for `task` (see [`Turn`]).
+pub fn build_with_turns(task: Task, parts: &[TimedPart<'_>]) -> Built {
+    assemble(Some(task), parts)
+}
+
+fn assemble(task: Option<Task>, parts: &[TimedPart<'_>]) -> Built {
     let mut text = String::new();
     let mut len: u32 = 0;
     let mut spans = Vec::new();
+    let mut turns = Vec::new();
     let push = |text: &mut String, len: &mut u32, s: &str| {
         text.push_str(s);
         *len += s.chars().count() as u32;
     };
-    for part in parts {
+    for TimedPart {
+        text: part,
+        segments,
+    } in parts
+    {
         if part.failed {
             continue;
         }
@@ -118,7 +169,11 @@ pub fn build(parts: &[PartText<'_>]) -> (String, Vec<SnapshotPart>) {
             );
         }
         let start = len;
-        push(&mut text, &mut len, part.text.trim_end());
+        let own = part.text.trim_end();
+        push(&mut text, &mut len, own);
+        if let Some(task) = task {
+            turns.extend(turns::of_part(task, part.piece, own, segments, start));
+        }
         spans.push(SnapshotPart {
             piece: part.piece.clone(),
             start,
@@ -127,7 +182,11 @@ pub fn build(parts: &[PartText<'_>]) -> (String, Vec<SnapshotPart>) {
             corrected: part.corrected,
         });
     }
-    (text, spans)
+    Built {
+        text,
+        parts: spans,
+        turns,
+    }
 }
 
 /// A span of a snapshot's text: characters `start..end`, inside part `part`.
@@ -151,8 +210,33 @@ pub enum AnchorError {
     Mismatch,
 }
 
+/// The turns of a text already put together, read again part by part as [`build_with_turns`]
+/// reads them when no part has timed segments: for a snapshot taken before turns were kept,
+/// and for a plain text file (one part, [`PieceRef::Whole`], read in paragraphs).
+pub fn turns_of(task: Task, text: &str, parts: &[SnapshotPart]) -> Vec<Turn> {
+    parts
+        .iter()
+        .filter_map(|part| {
+            let own = slice(text, part.start, part.end)?;
+            Some(turns::of_part(task, &part.piece, own, &[], part.start))
+        })
+        .flatten()
+        .collect()
+}
+
+/// A plain text as a snapshot holds one: its end trimmed, one part for the whole of it.
+pub fn plain(text: &str) -> (String, Vec<SnapshotPart>) {
+    build(&[PartText {
+        piece: &PieceRef::Whole,
+        text,
+        reviewed: false,
+        corrected: false,
+        failed: false,
+    }])
+}
+
 /// Characters `start..end` of `text`, or `None` past its end.
-fn slice(text: &str, start: u32, end: u32) -> Option<&str> {
+pub(crate) fn slice(text: &str, start: u32, end: u32) -> Option<&str> {
     let mut indices = text.char_indices().map(|(i, _)| i).chain([text.len()]);
     let from = indices.nth(start as usize)?;
     let to = if end == start {

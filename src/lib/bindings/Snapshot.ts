@@ -6,6 +6,7 @@ import type { SnapshotPart } from "./SnapshotPart";
 import type { SourceId } from "./SourceId";
 import type { Task } from "./Task";
 import type { Timestamp } from "./Timestamp";
+import type { Turn } from "./Turn";
 
 export type Snapshot = { id: string, 
 /**
@@ -30,4 +31,11 @@ missing: Array<number>, created_at: Timestamp,
  * text sends, line by line, so its subtitles keep the times. Empty for any other text and
  * for snapshots taken before lines were kept.
  */
-lines?: Array<Segment>, };
+lines?: Array<Segment>, 
+/**
+ * The text's turns, in order ([`Turn`]): where each speaker's words, or each paragraph,
+ * sit in the text, with their times on the recording's clock when the text has them. A
+ * turn's number is its place in this list. Empty for snapshots taken before turns were
+ * kept, and for a document unit's pages.
+ */
+turns?: Array<Turn>, };

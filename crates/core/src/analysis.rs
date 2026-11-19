@@ -10,6 +10,9 @@ use serde_json::Value;
 use thiserror::Error;
 use ts_rs::TS;
 
+pub mod cited;
+pub use cited::{CitedEntry, CitedValue, Claim, Evidence};
+
 /// The fields an analysis fills in for each document, in the order they are shown.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -57,6 +60,16 @@ pub enum FieldKind {
     /// entries' fields. The field editor offers it as a repeating group ("one of these per
     /// entry"), an analysis's only field ([`crate::records`]).
     Entries { fields: Vec<Field> },
+    /// Entries that cite the document ([`cited`]): each with its own small fields (a theme's
+    /// name and description, a quotation's reason) and one or more quotations of the text,
+    /// found in it word for word before they are kept. Unlike a repeating group it sits beside
+    /// other fields and changes nothing in how the source is read.
+    Cited {
+        fields: Vec<Field>,
+        /// At most this many entries, the most important first.
+        #[serde(default)]
+        max: Option<u32>,
+    },
 }
 
 /// A field's answer: prose or one choice as text, names or choices as a list.
@@ -69,6 +82,9 @@ pub enum FieldValue {
     /// Entries, each its fields' answers. An empty list reads back as `List`, which
     /// [`FieldValue::entries`] takes as no entries.
     Entries(Vec<Vec<FieldAnswer>>),
+    /// Entries that cite the document, each with its quotations found in the text, and how
+    /// many of the model's quotations were left out ([`CitedValue`]).
+    Cited(CitedValue),
 }
 
 impl FieldValue {
@@ -83,6 +99,12 @@ impl FieldValue {
                 .filter_map(|e| e.first().map(|a| a.value.joined()))
                 .collect::<Vec<_>>()
                 .join("; "),
+            Self::Cited(cited) => cited
+                .entries
+                .iter()
+                .filter_map(|e| e.answers.first().map(|a| a.value.joined()))
+                .collect::<Vec<_>>()
+                .join("; "),
         }
     }
 
@@ -91,6 +113,14 @@ impl FieldValue {
         match self {
             Self::Entries(entries) => entries,
             _ => &[],
+        }
+    }
+
+    /// The entries of a field that cites the document; none for any other value.
+    pub fn cited(&self) -> Option<&CitedValue> {
+        match self {
+            Self::Cited(cited) => Some(cited),
+            _ => None,
         }
     }
 }
@@ -137,6 +167,9 @@ pub enum SchemaError {
     /// or row by row, page by page.
     #[error("A repeating group is the analysis's only field: put \"{0}\" in it as a column")]
     GroupNotAlone(String),
+    /// A field of entries that cite the document named as their quotations are.
+    #[error("\"{0}\" is the name Kalamu gives the quotations: choose another")]
+    ReservedName(String),
 }
 
 /// The property that holds a field's reason in the model's answer.
@@ -201,7 +234,7 @@ fn assign_keys(fields: &mut [Field]) {
         .map(|f| f.key.clone())
         .collect();
     for (i, field) in fields.iter_mut().enumerate() {
-        if let FieldKind::Entries { fields } = &mut field.kind {
+        if let FieldKind::Entries { fields } | FieldKind::Cited { fields, .. } = &mut field.kind {
             assign_keys(fields);
         }
         if !field.key.is_empty() {
@@ -255,6 +288,12 @@ fn validate_fields(fields: &[Field], inside: bool) -> Result<(), SchemaError> {
             }
             validate_fields(fields, true)?;
         }
+        if let FieldKind::Cited { fields, .. } = &field.kind {
+            if inside {
+                return Err(SchemaError::NestedGroup(label.to_string()));
+            }
+            cited::validate(fields)?;
+        }
     }
     Ok(())
 }
@@ -293,6 +332,9 @@ fn read_fields(fields: &[Field], answer: &Value) -> Result<Vec<FieldAnswer>, Str
                     .map(|entry| read_fields(fields, entry))
                     .collect::<Result<_, _>>()?,
             ),
+            FieldKind::Cited { fields, max } => {
+                FieldValue::Cited(cited::read(raw, field, fields, *max)?)
+            }
         };
         let reason = field
             .reason
@@ -324,6 +366,7 @@ fn render_fields(fields: &[Field], answers: &[FieldAnswer]) -> String {
                 .map(|entry| render_fields(fields, entry))
                 .collect::<Vec<_>>()
                 .join("\n\n"),
+            (FieldKind::Cited { fields, .. }, value) => cited::render(field, fields, value),
             (FieldKind::Text, value) => format!("{}\n{}", field.label, value.joined()),
             (_, value) => format!("{}: {}", field.label, value.joined()),
         };

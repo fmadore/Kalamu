@@ -9,6 +9,7 @@
 
 use serde_json::{Map, Value, json};
 
+use crate::analysis::cited::{QUOTES, TURN, WORDS};
 use crate::analysis::reason_key;
 use crate::{AnalysisSchema, FieldKind, PreparedInput, ProcessOutput, ProviderError};
 
@@ -49,6 +50,11 @@ fn object(fields: &[crate::Field]) -> Value {
                 "items": object(fields),
                 "description": description,
             }),
+            FieldKind::Cited { fields, .. } => json!({
+                "type": "array",
+                "items": cited_entry(fields),
+                "description": description,
+            }),
         };
         properties.insert(field.key.clone(), property);
         required.push(field.key.clone());
@@ -70,6 +76,40 @@ fn object(fields: &[crate::Field]) -> Value {
         "required": required,
         "additionalProperties": false,
     })
+}
+
+/// An entry that cites the document: its own fields, built as any fields are, and its
+/// quotations, each the number of a turn and the words said there.
+fn cited_entry(fields: &[crate::Field]) -> Value {
+    let mut entry = object(fields);
+    let quotes = json!({
+        "type": "array",
+        "description": "One or more quotations of the text, each copied word for word from \
+                        one numbered turn.",
+        "items": {
+            "type": "object",
+            "properties": {
+                TURN: {
+                    "type": "integer",
+                    "description": "The number of the turn the words come from, as given in \
+                                    brackets.",
+                },
+                WORDS: {
+                    "type": "string",
+                    "description": "The words exactly as they stand in that turn.",
+                },
+            },
+            "required": [TURN, WORDS],
+            "additionalProperties": false,
+        },
+    });
+    if let Some(properties) = entry["properties"].as_object_mut() {
+        properties.insert(QUOTES.to_string(), quotes);
+    }
+    if let Some(required) = entry["required"].as_array_mut() {
+        required.push(json!(QUOTES));
+    }
+    entry
 }
 
 /// The text of a text input, decoded leniently: a stray byte must not lose the document.

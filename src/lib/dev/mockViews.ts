@@ -16,6 +16,7 @@ import {
 import { DOCUMENT_ID, PROJECT_ID } from './mockProjects.js';
 import { scanAnalysisJob } from './mockDrawn.js';
 import { recordsJob, recordsSource } from './mockRecords.js';
+import { INTERVIEW_JOB, interviewJob } from './mockInterview.js';
 import { RUN_ID, WORKFLOW_ID } from './mockWorkflows.js';
 
 /** Whether the window shows files being dragged over it (`?dragging`), which only the desktop
@@ -45,6 +46,10 @@ export function mockView(): View | null {
 			return { name: 'review', jobId: videoJob.id, sourceId: video.id };
 		case 'review-contents':
 			return { name: 'review', jobId: contentsJob.id, sourceId: contentsSource.id };
+		case 'review-interview':
+			return { name: 'review', jobId: INTERVIEW_JOB, sourceId: interviewJob.sources[0].id };
+		case 'jobs-audio':
+			return { name: 'jobs', jobId: audioJob.id };
 		case 'review-records':
 			return { name: 'review', jobId: recordsJob.id, sourceId: recordsSource.id };
 		case 'review-correction':

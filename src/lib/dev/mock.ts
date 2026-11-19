@@ -19,6 +19,7 @@ import { collectionsOf } from './mockProjects.js';
 import { queueCommand } from './mockQueue.js';
 import { analysisJob, audioJob, job, recording, source, summaries, video } from './mockJobs.js';
 import { jobCommand, keptPiece } from './mockJobCommand.js';
+import { interviewCommand } from './mockInterview.js';
 import { passageCommand } from './mockPassages.js';
 import { regionCommand } from './mockDrawn.js';
 import { regionReadingCommand } from './mockRegionReadings.js';
@@ -128,6 +129,8 @@ export function installMock(): void {
 		if (reread !== undefined) return reread;
 		const region = regionCommand(cmd, a);
 		if (region !== undefined) return region;
+		const interview = interviewCommand(cmd, a);
+		if (interview !== undefined) return interview;
 		const jobAnswer = jobCommand(cmd, a);
 		if (jobAnswer !== undefined) return jobAnswer;
 		switch (cmd) {

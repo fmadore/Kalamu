@@ -78,6 +78,9 @@ export type View =
 			/** The piece to open on, from 0. */
 			index?: number;
 			find?: ReviewFind;
+			/** For a recording, the moment to play from, in milliseconds on its clock: where a
+			 * quotation of an interview analysis was said. */
+			at?: number;
 	  }
 	| {
 			name: 'workflows';

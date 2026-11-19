@@ -13,6 +13,10 @@ impl Exporter for MarkdownExporter {
     }
 
     fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
+        // An analysis that cites the text: a memo, each quotation with its speaker and time.
+        if let Some(fields) = crate::cited::fields(doc) {
+            return Ok(crate::cited::markdown(doc, fields).into_bytes());
+        }
         let mut out = format!(
             "# {}\n\n*{} · {} · prompt: {}*\n",
             doc.source.file_name, doc.setup.provider, doc.setup.model, doc.setup.prompt.preset_name

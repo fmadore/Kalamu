@@ -123,6 +123,7 @@ impl PromptError {
             Self::Schema(SchemaError::NestedGroup(_)) => "prompt.nested_group",
             Self::Schema(SchemaError::TwoGroups) => "prompt.two_groups",
             Self::Schema(SchemaError::GroupNotAlone(_)) => "prompt.group_alone",
+            Self::Schema(SchemaError::ReservedName(_)) => "prompt.reserved_field",
             Self::IncompletePipeline => "prompt.unnamed_pipeline",
             Self::IncompleteWorkflow => "workflow.incomplete",
             Self::Workflow(e) => e.code(),

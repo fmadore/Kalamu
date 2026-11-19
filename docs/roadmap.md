@@ -352,7 +352,9 @@ improvements that open *Next*; what it did not fix at once was tracked in
   changing what it read; provenance records the result read and how much was reviewed;
   the functions that anchor a quotation in the frozen text, piece by piece, and check it are
   written and tested, and no result uses them yet
-  ([decision](decisions/2026-10-31-reviewed-text-snapshots.md)).
+  ([decision](decisions/2026-10-31-reviewed-text-snapshots.md)). A snapshot also keeps its
+  text's turns (each speaker's words, or each paragraph, with its place in the text and its
+  times on the recording's clock), read with the text; nothing shows them yet.
 - **Project workspaces, first increment**
   ([#57](https://github.com/fmadore/Kalamu/issues/57)): projects with flat collections, a
   document held once in several, every result of a document across jobs with its review state
@@ -517,6 +519,13 @@ to run on the computer itself.
   Home and End in a name's menu and an empty reading's spaces are done too.
 - **What 15 November added**: the text regions on real Tesseract and Mistral OCR pages, with a
   trackpad and a screen reader; a records job on a real directory and register.
+- **Interview analysis, first slice**
+  ([decision](decisions/2026-11-19-interview-analysis-design.md)), to try on both systems
+  and with live providers, which no run has done: an hour's interview analysed by each
+  provider's default model and by a model on the computer, how many quotations each gives
+  that are not in the transcript, and whether the themes are of use; a transcript in a
+  language written from right to left; a quotation played from a recording cut into pieces;
+  and the one box and one button tried by someone who has never used the app.
 - **What the evening of 18 November added**
   ([decision](decisions/2026-11-18-drawn-regions-region-read-again.md)), to try on both
   systems: a region drawn, moved and resized with a mouse, a trackpad, a touch screen and the
@@ -906,8 +915,9 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
   [#38](https://github.com/fmadore/Kalamu/issues/38), using the shared snapshot foundation.
   Designed on 19 November ([decision](decisions/2026-11-19-interview-analysis-design.md)): an
   analysis job with one new kind of field whose entries cite the transcript, each quotation
-  found in the frozen text by Kalamu before it is shown; turns in snapshots first, then one
-  interview read whole, then windows and consolidation.
+  found in the frozen text by Kalamu before it is shown; turns in snapshots first (done, with
+  the answer check as a hook of the engine), then one interview read whole, then windows and
+  consolidation.
 - Explore assisted TEI encoding with reusable project profiles:
   [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature.
 - Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates

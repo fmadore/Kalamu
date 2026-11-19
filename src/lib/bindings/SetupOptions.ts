@@ -38,4 +38,11 @@ vocabulary?: string,
  * Write the speech in English rather than in the language spoken, for a model that can
  * (Whisper Large v3, Small and Base; not Turbo). Left out when off.
  */
-translate?: boolean, };
+translate?: boolean, 
+/**
+ * What the researcher's work is about, in their words ("What is your research about?"),
+ * for an analysis: added to the request sent with the document, so the same question
+ * costs nothing twice and another is another analysis. Left out when empty, so cache keys
+ * made before it existed stay valid.
+ */
+question?: string, };

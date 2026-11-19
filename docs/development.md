@@ -73,7 +73,9 @@ from the keyboard alone (`e2e/keyboard.spec.ts`): a text page reviewed and corre
 readings, an analysis's name located, renamed, removed and put back, a failure dismissed, Back to
 where a review was opened from, Ctrl F on each table, the remembered choices after a reload, a
 window of 640 × 560, the release line hidden; and records (`e2e/records.spec.ts`): an analysis
-turned into one row per entry, a page's rows corrected, added, removed and reviewed. They start the dev server on port 5173, or reuse
+turned into one row per entry, a page's rows corrected, added, removed and reviewed; and an
+interview analysed (`e2e/interview-analysis.spec.ts`): its dialog's one box and one button, its
+cards, a quotation played or shown in the text, removed and put back. They start the dev server on port 5173, or reuse
 one already there; `KALAMU_E2E_PORT=5291` picks another, for two checkouts tested side by side.
 
 `cargo test` also regenerates the TypeScript types in `src/lib/bindings/` from the Rust
@@ -113,6 +115,9 @@ parameters open a given state:
 | `view=review`, `review-audio`, `review-analysis` | Opens the review of a sample extraction, recording or analysis |
 | `view=review-youtube`, `review-contents`, `review-correction`, `review-records` | Opens the review of a YouTube video, a table of contents, a correction or records (a directory's rows, page by page) |
 | `view=review-analysis-scan` | Opens the review of an analysis of a scan, where regions can be drawn on its pages |
+| `view=review-interview` | Opens the review of an interview analysed for its themes and quotations (an invented conversation in French); a quotation plays in its transcript's review |
+| `interview-gone`, `interview-two` | With `review-interview`: the transcript it came from is gone, so quotations are shown in the text; or a second set-up answers beside the first |
+| `view=jobs-audio` | Opens the page of a transcription, whose Use this text offers Analyse this interview |
 | `reading-slow` | A region read again answers after a minute rather than at once, to try Stop |
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `view=projects`, `project`, `document` | Opens the list of projects, a sample project, or one of its documents |

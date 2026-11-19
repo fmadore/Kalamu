@@ -23,6 +23,7 @@ mod agreement;
 mod answers;
 mod attention;
 mod batch;
+mod cited;
 mod contents;
 mod drawn;
 mod drawn_export;
@@ -41,6 +42,7 @@ mod regions;
 mod snapshot;
 mod sources;
 mod subtitles;
+mod turns;
 mod workflow;
 
 /// Answers with the page label; can be told to fail some pages a number of times.

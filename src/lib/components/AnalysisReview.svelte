@@ -9,36 +9,39 @@
 	// The names of an answer are one tab stop, ← and → going from one to the next; a name with
 	// the focus is found in the document as one pointed at. What the models missed is added at
 	// the end of a list (`AddItems`), in every set-up's corrected answers; a name no model listed
-	// is the researcher's, underlined in their blue and said to be. An analysis whose fields are
+	// is the researcher's, underlined in their blue and said to be (`ListAnswer` draws a list's
+	// names, `ListedNames` changes them). An analysis whose fields are
 	// one repeating group gives rows, page by page, reviewed in a table of its own
-	// (`RecordsReview`), which adds no names this way.
+	// (`RecordsReview`), which adds no names this way. An answer that quotes the text (an
+	// interview's themes) is a card per entry (`CitedAnswer`, changed by `CitedAnswers`).
 	import { onMount, tick } from 'svelte';
-	import AddItems from './AddItems.svelte';
+	import CitedAnswer from './CitedAnswer.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
 	import ItemMenu from './ItemMenu.svelte';
+	import ListAnswer from './ListAnswer.svelte';
 	import RecordsReview from './RecordsReview.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
 	import SearchBar from './SearchBar.svelte';
 	import SiglaKey from './SiglaKey.svelte';
-	import { byHand, collate, holdsWords, type Witness } from '#lib/analysis.js';
+	import { collate, holdsWords, type Witness } from '#lib/analysis.js';
 	import { siglum } from '#lib/apparatus.js';
-	import type { Correction } from '#lib/bindings/Correction.js';
 	import type { Field } from '#lib/bindings/Field.js';
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
+	import { CitedAnswers } from '#lib/citedAnswers.svelte.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
 	import { clearFound, markFound } from '#lib/found.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { ListedNames } from '#lib/listedNames.svelte.js';
 	import { pieceCost } from '#lib/pieces.js';
 	import { groupOf } from '#lib/records.js';
 	import { ownRegions } from '#lib/regions.svelte.js';
 	import { Review } from '#lib/review.svelte.js';
 	import { find, searchable } from '#lib/search.js';
-	import { rovingStop, rovingTarget } from '#lib/keys.js';
-	import { guardDraft, toast, type ReviewFind } from '#lib/state.svelte.js';
+	import { guardDraft, type ReviewFind } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
@@ -141,126 +144,18 @@
 		if (await review.save({ setup, index: 0, fields: answers, reviewed })) editing = null;
 	}
 
-	/** The name whose menu is open, and where. */
-	let itemMenu = $state<{
-		key: string;
-		value: string;
-		x: number;
-		y: number;
-		/** A free name is renamed or removed; a choice only removed. */
-		renamable: boolean;
-	} | null>(null);
+	/** The names of the list answers: their menu, their tab stops, and what changes them. */
+	const names = new ListedNames({
+		review,
+		witnesses: () => witnesses,
+		pane: () => answersPane,
+		editing: () => editing !== null,
+		unhover: () => (hovered = null)
+	});
 
-	/** Opens a name's menu: at the pointer for a right click, under the name otherwise. */
-	function openItemMenu(e: MouseEvent, f: Field) {
-		if ((f.kind.type !== 'list' && f.kind.type !== 'choices') || editing) return;
-		const item = (e.target as HTMLElement).closest<HTMLElement>('[data-item]');
-		if (!item?.dataset.item) return;
-		e.preventDefault();
-		const pointer = e.type === 'contextmenu' && (e.clientX !== 0 || e.clientY !== 0);
-		const at = item.getBoundingClientRect();
-		itemMenu = {
-			key: f.key,
-			value: item.dataset.item,
-			x: pointer ? e.clientX : at.left,
-			y: pointer ? e.clientY : at.bottom + 4,
-			renamable: f.kind.type === 'list'
-		};
-	}
-
-	/** The name of each answer that holds its tab stop, once one was reached. */
-	let itemStops = $state<Record<string, string>>({});
-
-	function focusItem(key: string, value: string) {
-		answersPane
-			?.querySelector<HTMLElement>(
-				`[data-field="${CSS.escape(key)}"] [data-item="${CSS.escape(value)}"]`
-			)
-			?.focus();
-	}
-
-	function roveItems(e: KeyboardEvent, key: string, values: string[], at: string) {
-		if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-		const to = rovingTarget(values, at, e.key);
-		if (to === null) return;
-		e.preventDefault();
-		itemStops[key] = to;
-		focusItem(key, to);
-	}
-
-	/**
-	 * Renames a name, or removes it when `to` is null, in the answers of every set-up that found
-	 * it, each kept as reviewed or not as it was: one command, all the set-ups or none.
-	 */
-	async function changeItem(key: string, from: string, to: string | null) {
-		hovered = null;
-		const listed = collate(key, witnesses).map((r) => r.value);
-		/** Each set-up's corrections as they stood, to put back. */
-		const changed = await review.renameListed(0, key, from, to);
-		if (changed === null) return;
-		// A name removed can be put back from the toast, as it was in each set-up's answers.
-		if (to === null && changed.length > 0) {
-			toast(m.review.itemRemoved(from), {
-				action: { label: m.common.undo, run: () => void putBack(key, from, changed) }
-			});
-		} else if (changed.length > 0) {
-			toast(m.review.saved);
-		}
-		// The focus, lost with the name it was on, goes to the name renamed or to the next one.
-		await tick();
-		if (document.activeElement && document.activeElement !== document.body) return;
-		const now = collate(key, witnesses).map((r) => r.value);
-		const next =
-			to !== null && now.includes(to)
-				? to
-				: now[Math.min(Math.max(listed.indexOf(from), 0), now.length - 1)];
-		if (next === undefined) return;
-		itemStops[key] = next;
-		focusItem(key, next);
-	}
-
-	/** Puts each set-up's corrected answers and review back as they were, and the focus, lost
-	 * with the toast's button, on the name put back. */
-	async function putBack(key: string, name: string, changed: Correction[]) {
-		if (!(await review.putBack(changed))) return;
-		await tick();
-		if (document.activeElement && document.activeElement !== document.body) return;
-		if (!collate(key, witnesses).some((r) => r.value === name)) return;
-		itemStops[key] = name;
-		focusItem(key, name);
-	}
-
-	/** Adds what the researcher typed or chose to a list answer, in every set-up that read the
-	 * document, and says what was added, with a way to take it back. */
-	async function addItems(key: string, text: string) {
-		hovered = null;
-		const result = await review.addListed(0, key, text);
-		if (result && result.added.length > 0) {
-			const before = result.before;
-			toast(m.review.itemsAdded(result.added), {
-				action: { label: m.common.undo, run: () => void takeBack(key, before) }
-			});
-		}
-		return result;
-	}
-
-	/** Takes back what was added: each set-up's corrected answers as they were, and the focus,
-	 * lost with the toast's button, on the field's Add. */
-	async function takeBack(key: string, before: Correction[]) {
-		if (!(await review.putBack(before))) return;
-		await tick();
-		if (document.activeElement && document.activeElement !== document.body) return;
-		answersPane
-			?.querySelector<HTMLElement>(`[data-field="${CSS.escape(key)}"] [data-add]`)
-			?.focus();
-	}
-
-	/** For a field of choices, those its answers do not list yet; null for free names. */
-	function choicesLeft(f: Field, listed: string[]): string[] | null {
-		if (f.kind.type !== 'choices') return null;
-		const has = (c: string) => listed.some((v) => v.trim().toLowerCase() === c.toLowerCase());
-		return f.kind.values.filter((c) => !has(c));
-	}
+	/** The answers that quote the text: the text read, where each quotation plays, and what
+	 * changes them. */
+	const cited = new CitedAnswers(review, () => answersPane);
 
 	function toggleReviewed() {
 		const first = setups[0];
@@ -272,7 +167,7 @@
 	const editedSetup = $derived(setups.find((s) => s.id === editing?.setupId));
 
 	onMount(() => {
-		void review.load();
+		void review.load().then(() => cited.load());
 		const release = guardDraft({
 			dirty: () => editing !== null && JSON.stringify(editing.draft) !== editing.from,
 			discard: () => (editing = null)
@@ -324,18 +219,18 @@
 	<!-- Each opening is a menu of its own. A menu says it has closed a moment after it hides, so
 	     one opened again on the same name in that moment would otherwise be taken for the one
 	     that closed, and never show. -->
-	{#key itemMenu}
-		{#if itemMenu}
-			{@const at = itemMenu}
+	{#key names.menu}
+		{#if names.menu}
+			{@const at = names.menu}
 			<ItemMenu
 				value={at.value}
 				renamable={at.renamable}
 				x={at.x}
 				y={at.y}
-				onrename={(to) => void changeItem(at.key, at.value, to)}
-				onremove={() => void changeItem(at.key, at.value, null)}
+				onrename={(to) => void names.change(at.key, at.value, to)}
+				onremove={() => void names.change(at.key, at.value, null)}
 				onclose={() => {
-					if (itemMenu === at) itemMenu = null;
+					if (names.menu === at) names.menu = null;
 				}}
 			/>
 		{/if}
@@ -359,7 +254,8 @@
 		paging={{ at: page, count: pages }}
 		preview={review.preview}
 		regions={regions.place ? regions : undefined}
-		text={review.text}
+		text={cited.source?.text ?? review.text}
+		span={cited.span}
 		find={hovered ?? (filtering ? query : '')}
 		found={hovered === null && filtering}
 		witness={{
@@ -386,7 +282,11 @@
 					{#each fields as f (f.key)}
 						<div class="answer">
 							<h2>{f.label} <span class="kind">{kindLabel(f)}</span></h2>
-							<FieldInput field={f} bind:value={draft[f.key]} />
+							{#if f.kind.type === 'cited'}
+								<p class="muted none">{m.cited.inCards}</p>
+							{:else}
+								<FieldInput field={f} bind:value={draft[f.key]} />
+							{/if}
 						</div>
 					{/each}
 				</div>
@@ -401,66 +301,40 @@
 				{@const readings = collate(f.key, witnesses)}
 				<div class="answer" data-field={f.key} class:opened={opening?.field === f.key}>
 					<h2>{f.label}</h2>
-					{#if readings.length === 0}
+					{#if f.kind.type === 'cited'}
+						<CitedAnswer
+							field={f}
+							{setups}
+							answersOf={(s) => {
+								const v = viewOf(s);
+								return v && v.status !== 'failed' ? answersOf(v) : null;
+							}}
+							{comparing}
+							{cited}
+						/>
+					{:else if readings.length === 0}
 						<p class="muted none">{m.review.noneFound}</p>
-					{:else if f.kind.type === 'list' || f.kind.type === 'choices'}
-						{@const named = f.kind.type === 'list'}
-						{@const values = readings.map((r) => r.value)}
-						{@const stop = rovingStop(values, itemStops[f.key])}
-						<p class="items" oncontextmenu={(e) => openItemMenu(e, f)}>
-							{#each readings as r, k (r.value)}{@const yours = byHand(
-									f.key,
-									r.value,
-									models
-								)}{#if k > 0}<span class="sep">{m.common.semicolon}</span>{/if}<button
-									type="button"
-									class="item"
-									class:yours
-									class:partial={comparing && r.sigla.length < setups.length}
-									data-item={r.value}
-									title={yours ? m.review.yoursHint : undefined}
-									aria-label={yours
-										? m.review.yours(
-												comparing && r.sigla.length < setups.length
-													? `${r.value} ${r.sigla.join(' ')}`
-													: r.value
-											)
-										: undefined}
-									tabindex={stop === r.value ? 0 : -1}
-									aria-haspopup="menu"
-									aria-describedby={named ? 'item-keys' : 'choice-keys'}
-									onclick={(e) => openItemMenu(e, f)}
-									onkeydown={(e) => roveItems(e, f.key, values, r.value)}
-									onfocus={() => {
-										hovered = r.value;
-										itemStops[f.key] = r.value;
-									}}
-									onblur={() => (hovered = null)}
-									onpointerenter={() => (hovered = r.value)}
-									onpointerleave={() => (hovered = null)}
-									>{r.value}{#if comparing && r.sigla.length < setups.length}<sup class="found"
-											>{r.sigla.join(' ')}</sup
-										>{/if}</button
-								>{/each}
-						</p>
-					{:else}
+					{/if}
+					{#if f.kind.type === 'list' || f.kind.type === 'choices'}
+						<ListAnswer
+							field={f}
+							{readings}
+							{names}
+							{models}
+							{comparing}
+							count={setups.length}
+							onhover={(value) => {
+								hovered = value;
+								if (value !== null) cited.span = null;
+							}}
+						/>
+					{:else if readings.length > 0 && f.kind.type !== 'cited'}
 						{#each readings as r (r.value)}
 							<p class:prose={f.kind.type === 'text'} class:choice={f.kind.type === 'choice'}>
 								{#if comparing}<i class="siglum">{r.sigla.join(' ')}</i>{/if}
 								{r.value}
 							</p>
 						{/each}
-					{/if}
-					{#if f.kind.type === 'list' || f.kind.type === 'choices'}
-						<AddItems
-							field={f.key}
-							label={f.label}
-							choices={choicesLeft(
-								f,
-								readings.map((r) => r.value)
-							)}
-							onadd={(text) => addItems(f.key, text)}
-						/>
 					{/if}
 					{#if f.reason}
 						{#each witnesses as w (w.siglum)}
@@ -533,49 +407,6 @@
 	}
 	.answer .siglum {
 		margin-right: 0.35em;
-	}
-	/* A name reads as the text around it; pointed at or focused, it takes the highlighter, as
-	   where it is found in the document. */
-	.items .item {
-		display: inline;
-		padding: 0;
-		border: 0;
-		border-radius: 2px;
-		background: none;
-		color: inherit;
-		font: inherit;
-		line-height: inherit;
-		text-align: inherit;
-		cursor: pointer;
-		transition: background-color 120ms ease-out;
-	}
-	/* A name no model listed: the researcher's, underlined in their blue as a correction is. */
-	.items .item.yours {
-		text-decoration: underline;
-		text-decoration-color: var(--hand);
-		text-decoration-thickness: 2px;
-		text-underline-offset: 0.25em;
-	}
-	.items .item:hover,
-	.items .item:focus-visible {
-		background: var(--marker);
-		color: var(--on-marker);
-		box-shadow: 0 0 0 2px var(--marker);
-	}
-	.items .item:focus-visible {
-		outline-offset: 3px;
-	}
-	/* The sigla of the set-ups that found a name, when not all of them did. */
-	.found {
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		font-weight: 500;
-		text-transform: uppercase;
-		color: var(--text-muted);
-		margin-left: 0.15em;
-	}
-	.sep {
-		color: var(--text-faint);
 	}
 	.choice {
 		font-weight: 600;

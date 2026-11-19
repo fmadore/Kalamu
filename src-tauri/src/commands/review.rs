@@ -3,12 +3,14 @@
 use std::sync::Arc;
 
 use base64::Engine as _;
+use kalamu_core::analysis::cited::CitedEdit;
 use kalamu_core::{
     Correction, DrawnRegion, JobId, PageHalf, PageRegions, RegionDraft, RowEdit, SetupId, SourceId,
     SpeakerNames,
 };
 use kalamu_engine::{
-    ComparisonReport, DiffSpan, JobAgreement, JobScores, ListedAdded, PieceAudio, PieceView,
+    CitedSource, ComparisonReport, DiffSpan, JobAgreement, JobScores, ListedAdded, PieceAudio,
+    PieceView,
 };
 use kalamu_media::OpenSource;
 use tauri::{AppHandle, Manager, State};
@@ -253,6 +255,37 @@ pub async fn edit_rows(
 ) -> CmdResult<()> {
     let engine = state.engine.clone();
     off_thread(move || Ok(engine.edit_rows(job_id, setup_id, source_id, index, &change)?)).await
+}
+
+/// Makes one change to the entries of a field that cites the text (an entry's field typed, an
+/// entry or one of its quotations removed), in the piece's corrected answers; the files are
+/// written again as after a correction.
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub async fn edit_cited(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    setup_id: SetupId,
+    source_id: SourceId,
+    index: u32,
+    key: String,
+    change: CitedEdit,
+) -> CmdResult<()> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.edit_cited(job_id, setup_id, source_id, index, &key, &change)?))
+        .await
+}
+
+/// The text one source of an analysis that cites it read, with its turns, so the review shows
+/// each quotation in place.
+#[tauri::command]
+pub async fn cited_source(
+    state: State<'_, AppState>,
+    job_id: JobId,
+    source_id: SourceId,
+) -> CmdResult<CitedSource> {
+    let engine = state.engine.clone();
+    off_thread(move || Ok(engine.cited_source(job_id, source_id)?)).await
 }
 
 /// Stores several corrections at once, all or none: a change across set-ups put back.

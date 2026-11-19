@@ -150,6 +150,35 @@ among what is sent, with a new date, when the first slice ships.
    saved profiles; a quotation added by hand.
 4. **Later**: themes across the interviews of a project, with the dictionary's patterns.
 
+## What building it changed
+
+Recorded after the foundations and the first slice were built, where the code settled
+something differently from the lines above.
+
+- **Asked again with the same request.** A refused answer is asked again as it was, as every
+  broken answer is; the reason is kept for the researcher and is not sent to the model. An
+  answer is refused only when it gave quotations and **none** could be found; otherwise those
+  not found are left out and counted, and the answer is kept. The retries are the set-up's
+  usual ones, not one.
+- **An entry left with no quotation is dropped** and counted apart; no schema keeps one
+  without. An entry the researcher empties stays.
+- **Nearest turn first.** A quotation is looked for in the turn named, then in the turns
+  nearest to it on either side, to the ends of the text. It must lie within one turn.
+- **Turns can leave gaps.** The words a cut recording repeats where two pieces overlap belong
+  to no turn, so a quotation of them alone is not found.
+- **A snapshot made before turns were kept** has its turns read again from its text in the
+  same way, speakers and times included.
+- **The question is a set-up option** (`SetupOptions.question`), added to the user prompt for
+  an analysis and so part of the cache key; nothing else could carry free text into a job.
+- **Never in an economy batch**: collecting a batch would keep answers without the check.
+- **Names**: the quotations file is `<name>.analysis.quotations.csv`; a quotation's turn
+  counts from 1, as the model sees it; a quotation's time is the start of its turn.
+- **Older builds**: no released version opens a database a newer one has written, so no
+  migration was needed; a prompt or pipeline file with such a field is refused whole by an
+  older version on import.
+- **Not built in the first slice**: saying a transcript is too long for the model before it
+  is sent (the provider's own refusal is what the researcher sees).
+
 ## Set aside
 
 - A new `Task`, and a third request lifecycle: see above.

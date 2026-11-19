@@ -92,6 +92,13 @@ fn describe_fields(fields: &[kalamu_core::Field], indent: &str, out: &mut String
             FieldKind::Entries { .. } => {
                 "a list of entries, each with the fields below".to_string()
             }
+            FieldKind::Cited { max, .. } => format!(
+                "a list of entries{}, most important first, each with the fields below and one                  or more quotations of the text in `{}`: for each, the number of the turn in                  `{}` and the words exactly as said there in `{}`",
+                max.map(|m| format!(" (at most {m})")).unwrap_or_default(),
+                kalamu_core::analysis::cited::QUOTES,
+                kalamu_core::analysis::cited::TURN,
+                kalamu_core::analysis::cited::WORDS,
+            ),
             FieldKind::Text => "text".to_string(),
             FieldKind::List { max: Some(max) } => {
                 format!("a list of names or terms, at most {max}, most important first")
@@ -119,7 +126,7 @@ fn describe_fields(fields: &[kalamu_core::Field], indent: &str, out: &mut String
                 kalamu_core::analysis::reason_key(&field.key)
             ));
         }
-        if let FieldKind::Entries { fields } = &field.kind {
+        if let FieldKind::Entries { fields } | FieldKind::Cited { fields, .. } = &field.kind {
             describe_fields(fields, &format!("{indent}   "), out);
         }
     }

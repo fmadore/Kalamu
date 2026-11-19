@@ -152,6 +152,29 @@ corrected text, whose answers are new ones beside the old
 [#47](https://github.com/fmadore/Kalamu/issues/47)). Pages that could not be read are left
 out and named in `provenance.json`, with how much of the text had been reviewed.
 
+**An interview analysed from its transcript.** On a transcription, the same menu offers
+*Analyse this interview*: one question, *What is your research about?*, answered in a sentence
+or two or left empty, and one button; another model and the language of the answer are under
+*More choices*. The answer has a short summary, the interview's themes, keywords and passages
+worth quoting. A theme or a passage is an **entry that quotes the text**, a kind of field any
+analysis prompt may use beside its others: each entry has its own small fields and one or more
+quotations. The transcript is sent with its turns numbered; the model names the turn and gives
+the words; Kalamu looks for those words in that turn, then in the nearest, and keeps a
+quotation only when it finds it word for word, forgiving nothing but spacing, the kind of
+apostrophe or quotation mark, an ellipsis, and what a model wraps a quotation in. What is kept
+is the transcript's own text with its place in it; the speaker and the time are the turn's,
+copied by Kalamu and never taken from the model. A quotation found nowhere is left out and
+counted, an entry left with none is dropped and counted, and the result says how many; an
+answer none of whose quotations can be found is refused, paid for and asked again like any
+broken answer. A scan or a recording cannot be analysed this way before it is read. In the
+review each entry is a card; a quotation opens the transcript at its turn and plays the
+recording there. The researcher edits an entry's fields and removes an entry or a quotation,
+as a layer over the model's answer; a quotation's words cannot be changed or added. The
+transcript is read in one request: windows for very long interviews, the researcher's own
+themes, saved research profiles and quotations added by hand come later
+([decision](decisions/2026-11-19-interview-analysis-design.md),
+[#38](https://github.com/fmadore/Kalamu/issues/38)).
+
 **Existing text is corrected, not read again.** Many researchers already have machine-read
 text, often noisy: the text layer of a PDF from a digital library, or a text file downloaded
 beside it. *Correct existing text* sends that text, page by page (or in passages of a few

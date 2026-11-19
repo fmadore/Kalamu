@@ -10,6 +10,8 @@ mod aligned;
 mod asked;
 mod attention;
 mod batch;
+mod check;
+mod cited;
 mod compare;
 mod contents;
 mod control;
@@ -54,6 +56,7 @@ use kalamu_prompts::PromptLibrary;
 use tokio::sync::broadcast;
 
 pub use asked::PassageEstimate;
+pub use cited::CitedSource;
 pub use compare::{
     ComparisonReport, DiffKind, DiffSpan, JobScores, PageComparison, SetupScore, SourceScores,
     diff, error_rate,
@@ -393,6 +396,8 @@ impl Engine {
     /// ([`Engine::write_outdated`]), or sooner when they are listed or exported.
     pub fn save_correction(&self, correction: Correction) -> Result<(), EngineError> {
         let mut correction = correction;
+        // A cited field's quotations are only ever some of those the model's answer holds.
+        self.settle_cited(&mut correction)?;
         correction.updated_at = Timestamp::now();
         self.store.put_correction(&correction)?;
         self.write_later(correction.job_id);

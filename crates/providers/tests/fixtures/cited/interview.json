@@ -1,0 +1,25 @@
+{
+  "summary": "Awa raconte ses débuts au port de pêche en 1998 et la phrase devenue la devise de son équipe.",
+  "themes": [
+    {
+      "name": "Les débuts",
+      "description": "Elle commence au port sans savoir ce qui l'attend.",
+      "quotes": [
+        { "turn": 2, "words": "J’ai commencé en 1998." },
+        { "turn": 2, "words": "Au début, on ne savait pas." }
+      ]
+    },
+    {
+      "name": "Une devise",
+      "description": "Une phrase reprise par toute l'équipe.",
+      "quotes": [{ "turn": 4, "words": "« on ne savait pas » est devenu notre devise" }]
+    }
+  ],
+  "keywords": ["port de pêche", "1998", "devise"],
+  "quotations": [
+    {
+      "why_it_matters": "La phrase résume l'expérience collective.",
+      "quotes": [{ "turn": 4, "words": "est devenu notre devise." }]
+    }
+  ]
+}

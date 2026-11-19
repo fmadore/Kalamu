@@ -1,8 +1,10 @@
 <script lang="ts">
 	// Sends a result's text, as the researcher corrected it, into a new round: an analysis, a
 	// correction, a translation, or a saved workflow. The text is frozen first (snapshots, #47), so nothing is
-	// read again and a later correction does not change what the new round read.
+	// read again and a later correction does not change what the new round read. A transcript
+	// can also be analysed as an interview at once, from a small dialog (`InterviewDialog`).
 	import Icon from './Icon.svelte';
+	import InterviewDialog from './InterviewDialog.svelte';
 	import { Action } from '#lib/action.svelte.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { go, type FromProject } from '#lib/state.svelte.js';
@@ -14,6 +16,7 @@
 		setupId,
 		sourceId = null,
 		project,
+		task,
 		small = false,
 		onerror
 	}: {
@@ -23,6 +26,8 @@
 		sourceId?: string | null;
 		/** The project it is sent from, whose documents the new jobs are tied to. */
 		project?: FromProject;
+		/** The task of the result whose text is sent: a transcription is offered the interview. */
+		task?: Task;
 		small?: boolean;
 		onerror: (message: string) => void;
 	} = $props();
@@ -33,10 +38,19 @@
 	/** Freezing the text; what went wrong goes to the screen that shows the errors. */
 	const action = new Action({ report: (message) => onerror(message) });
 
-	type Choice = 'analyse' | 'correct' | 'translate' | 'workflow';
-	const choices: Choice[] = ['analyse', 'correct', 'translate', 'workflow'];
+	type Choice = 'interview' | 'analyse' | 'correct' | 'translate' | 'workflow';
+	const choices: Choice[] = $derived([
+		...(task === 'audio_transcription' ? (['interview'] as const) : []),
+		'analyse',
+		'correct',
+		'translate',
+		'workflow'
+	]);
+	/** The interview's dialog, while it is open. */
+	let interviewing = $state(false);
 	/** The task each choice opens New job on, and the icon it shows. */
 	const TASKS: Record<Exclude<Choice, 'workflow'>, Task> = {
+		interview: 'analysis',
 		analyse: 'analysis',
 		correct: 'text_correction',
 		translate: 'translation'
@@ -44,6 +58,10 @@
 
 	async function choose(choice: Choice) {
 		if (menu) menu.open = false;
+		if (choice === 'interview') {
+			interviewing = true;
+			return;
+		}
 		await action.run(
 			() => api.snapshotJob(jobId, setupId, sourceId),
 			(sources) => {
@@ -72,6 +90,10 @@
 		{/each}
 	</ul>
 </details>
+
+{#if interviewing}
+	<InterviewDialog {jobId} {setupId} {sourceId} {project} onclose={() => (interviewing = false)} />
+{/if}
 
 <style>
 	.use-text {

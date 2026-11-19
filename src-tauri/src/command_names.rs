@@ -99,6 +99,8 @@ pub const COMMANDS: &[&str] = &[
     "save_correction",
     "save_corrections",
     "edit_rows",
+    "edit_cited",
+    "cited_source",
     "rename_listed",
     "add_listed",
     "passage_estimate",

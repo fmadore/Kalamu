@@ -1,0 +1,287 @@
+{
+  "parts": [
+    {
+      "corrected": true,
+      "fields": {
+        "keywords": [
+          "port de pêche",
+          "1998",
+          "devise"
+        ],
+        "quotations": {
+          "dropped": 0,
+          "entries": [
+            {
+              "answers": [
+                {
+                  "key": "why_it_matters",
+                  "value": "La phrase résume une expérience collective."
+                }
+              ],
+              "evidence": [
+                {
+                  "anchor": {
+                    "end": 235,
+                    "part": 0,
+                    "start": 211
+                  },
+                  "end_ms": null,
+                  "quote": "est devenu notre devise.",
+                  "speaker": "Awa",
+                  "start_ms": 75000,
+                  "turn": 4
+                }
+              ]
+            }
+          ],
+          "left_out": 0
+        },
+        "summary": "Awa raconte ses débuts au port de pêche en 1998 et une phrase devenue la devise de son équipe.",
+        "themes": {
+          "dropped": 0,
+          "entries": [
+            {
+              "answers": [
+                {
+                  "key": "name",
+                  "value": "Les débuts"
+                },
+                {
+                  "key": "description",
+                  "value": "Elle commence au port sans savoir ce qui l’attend."
+                }
+              ],
+              "evidence": [
+                {
+                  "anchor": {
+                    "end": 99,
+                    "part": 0,
+                    "start": 77
+                  },
+                  "end_ms": 70000,
+                  "quote": "J’ai commencé en 1998.",
+                  "speaker": "Awa",
+                  "start_ms": 12000,
+                  "turn": 2
+                }
+              ]
+            },
+            {
+              "answers": [
+                {
+                  "key": "name",
+                  "value": "Une devise"
+                },
+                {
+                  "key": "description",
+                  "value": "Une phrase reprise par toute l’équipe."
+                }
+              ],
+              "evidence": [
+                {
+                  "anchor": {
+                    "end": 234,
+                    "part": 0,
+                    "start": 190
+                  },
+                  "end_ms": null,
+                  "quote": "« on ne savait pas » est devenu notre devise",
+                  "speaker": "Awa",
+                  "start_ms": 75000,
+                  "turn": 4
+                },
+                {
+                  "anchor": {
+                    "end": 127,
+                    "part": 0,
+                    "start": 100
+                  },
+                  "end_ms": 70000,
+                  "quote": "Au début, on ne savait pas.",
+                  "speaker": "Awa",
+                  "start_ms": 12000,
+                  "turn": 2
+                }
+              ]
+            }
+          ],
+          "left_out": 1
+        }
+      },
+      "label": "",
+      "piece": {
+        "kind": "whole"
+      },
+      "reviewed": true,
+      "segments": [],
+      "text": "Summary\nAwa raconte ses débuts au port de pêche en 1998 et une phrase devenue la devise de son équipe.\n\nThemes\n\nName\nLes débuts\n\nDescription\nElle commence au port sans savoir ce qui l’attend.\n\"J’ai commencé en 1998.\" (Awa, 00:00:12)\n\nName\nUne devise\n\nDescription\nUne phrase reprise par toute l’équipe.\n\"« on ne savait pas » est devenu notre devise\" (Awa, 00:01:15)\n\"Au début, on ne savait pas.\" (Awa, 00:00:12)\n\n1 quotation could not be found in the text and was left out.\n\nKeywords: port de pêche; 1998; devise\n\nQuotations\n\nWhy it matters\nLa phrase résume une expérience collective.\n\"est devenu notre devise.\" (Awa, 00:01:15)"
+    }
+  ],
+  "provenance": {
+    "cited": [
+      {
+        "checked": 5,
+        "field": "themes",
+        "left_out": 1,
+        "part": 1
+      },
+      {
+        "checked": 1,
+        "field": "quotations",
+        "left_out": 0,
+        "part": 1
+      }
+    ],
+    "corrected": [
+      1
+    ],
+    "cost_usd": 0.002,
+    "created_at": 0,
+    "engine": "cloud",
+    "generator": {
+      "name": "Kalamu",
+      "version": "0.1.0"
+    },
+    "languages": {
+      "mode": "auto"
+    },
+    "model": "gemini-3.8-flash",
+    "options": {
+      "diarize": false,
+      "speakers": null,
+      "temperature": null,
+      "timestamps": false
+    },
+    "pieces": 1,
+    "prompt": {
+      "preset_id": "text_extraction.printed_diplomatic",
+      "preset_name": "Printed document, diplomatic",
+      "schema": {
+        "fields": [
+          {
+            "instructions": "",
+            "key": "summary",
+            "kind": {
+              "type": "text"
+            },
+            "label": "Summary",
+            "reason": false
+          },
+          {
+            "instructions": "",
+            "key": "themes",
+            "kind": {
+              "fields": [
+                {
+                  "instructions": "",
+                  "key": "name",
+                  "kind": {
+                    "type": "text"
+                  },
+                  "label": "Name",
+                  "reason": false
+                },
+                {
+                  "instructions": "",
+                  "key": "description",
+                  "kind": {
+                    "type": "text"
+                  },
+                  "label": "Description",
+                  "reason": false
+                }
+              ],
+              "max": 8,
+              "type": "cited"
+            },
+            "label": "Themes",
+            "reason": false
+          },
+          {
+            "instructions": "",
+            "key": "keywords",
+            "kind": {
+              "max": 12,
+              "type": "list"
+            },
+            "label": "Keywords",
+            "reason": false
+          },
+          {
+            "instructions": "",
+            "key": "quotations",
+            "kind": {
+              "fields": [
+                {
+                  "instructions": "",
+                  "key": "why_it_matters",
+                  "kind": {
+                    "type": "text"
+                  },
+                  "label": "Why it matters",
+                  "reason": false
+                }
+              ],
+              "max": null,
+              "type": "cited"
+            },
+            "label": "Quotations",
+            "reason": false
+          }
+        ]
+      },
+      "sha256": "abababababababababababababababababababababababababababababababab",
+      "text": "Transcribe.",
+      "user_prompt": "Transcribe this page."
+    },
+    "provider": "gemini",
+    "request": [
+      {
+        "name": "generationConfig.thinkingConfig.thinkingLevel",
+        "value": "low"
+      },
+      {
+        "name": "generationConfig.maxOutputTokens",
+        "value": "65535"
+      }
+    ],
+    "reviewed": [
+      1,
+      2
+    ],
+    "schema_version": 1,
+    "source": {
+      "file_name": "entretien-awa.txt",
+      "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+      "size_bytes": 1024
+    },
+    "task": "analysis",
+    "usage": {
+      "audio_seconds": 0.0,
+      "batch": false,
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "pages": 0
+    }
+  },
+  "schema": "kalamu-result",
+  "schema_version": 1,
+  "setup": {
+    "label": "gemini-flash",
+    "model": "gemini-3.8-flash",
+    "prompt": "Interview: themes and quotations",
+    "provider": "gemini"
+  },
+  "snapshot": {
+    "id": "5f0c7a2e-0000-4000-8000-000000000001",
+    "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f"
+  },
+  "source": {
+    "file_name": "entretien-awa.txt",
+    "sha256": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+    "size_bytes": 1024
+  },
+  "task": "analysis"
+}

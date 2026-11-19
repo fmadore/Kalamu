@@ -34,7 +34,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { shifted } from '#lib/platform.js';
 	import type { Chosen } from '#lib/passage.js';
-	import { cutOffNotes, pieceLabel, pieceNumber } from '#lib/pieces.js';
+	import { cutOffNotes, pieceAt, pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { Readings, wordsIn } from '#lib/readings.svelte.js';
 	import { followRegions, Regions } from '#lib/regions.svelte.js';
 	import { layout, Review } from '#lib/review.svelte.js';
@@ -49,7 +49,8 @@
 		jobId,
 		sourceId,
 		find: opening,
-		start
+		start,
+		at
 	}: {
 		jobId: string;
 		sourceId: string;
@@ -57,6 +58,8 @@
 		find?: ReviewFind;
 		/** The piece to open on, from 0: the one chosen in the list of what to check. */
 		start?: number;
+		/** A moment of the recording to play from, on its clock, once its pieces are read. */
+		at?: number;
 	} = $props();
 	const m = messages();
 	// svelte-ignore state_referenced_locally
@@ -249,6 +252,20 @@
 		},
 		opening
 	);
+
+	// Opened on a moment of the recording (a quotation's turn): its piece, played from there.
+	let played = false;
+	$effect(() => {
+		const first = setups[0]?.id;
+		const timedViews = views.filter((v) => v.setup_id === first);
+		const to = at === undefined || played ? null : pieceAt(timedViews, at);
+		if (!to) return;
+		played = true;
+		untrack(() => {
+			if (to.index !== index) goTo(to.index);
+			finder.seek = { ms: to.ms, id: (finder.seek?.id ?? 0) + 1 };
+		});
+	});
 
 	// The page image follows the page.
 	$effect(() => review.showPage(index));

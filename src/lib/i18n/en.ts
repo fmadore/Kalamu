@@ -91,7 +91,55 @@ export const en = {
 		translateHint:
 			'Into a language you choose, everything kept in order; the review shows it beside the text.',
 		workflow: 'Run a workflow on it',
-		workflowHint: 'Several steps one after another, from your workflows or an example.'
+		workflowHint: 'Several steps one after another, from your workflows or an example.',
+		interview: 'Analyse this interview',
+		interviewHint:
+			'Its themes, keywords and the passages worth quoting, each with who speaks and when.'
+	},
+	/** "Analyse this interview": one question, the model said in one line, and one button. */
+	interview: {
+		title: 'Analyse this interview',
+		lede: 'Kalamu sends the transcript, as you corrected it, to a model, which finds its themes, keywords and the passages worth quoting. A passage is kept only if its words are found in the transcript.',
+		question: 'What is your research about?',
+		questionHint:
+			'A sentence or two helps the model pick out what matters to your work. You can leave it empty.',
+		questionPlaceholder:
+			'For example: how young traders find their first customers, and the help their families give them.',
+		model: (name: string, provider: string) => `Model: ${name} (${provider})`,
+		cost: (usd: string) => `Estimated cost: ${usd}`,
+		more: 'More choices',
+		start: 'Analyse',
+		preparing: 'Getting the transcript ready…',
+		jobName: (file: string) => `Interview analysis: ${file}`
+	},
+	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
+	cited: {
+		listen: 'Listen',
+		listenTo: (said: string) => `Listen: ${said}`,
+		showInText: 'Show in the text',
+		showInTextOf: (said: string) => `Show in the text: ${said}`,
+		quotes: 'Quotations',
+		noQuote: 'No quotation left.',
+		edit: 'Edit',
+		editEntry: (title: string) => `Edit “${title}”`,
+		editThis: 'Edit this entry',
+		remove: 'Remove',
+		removeEntry: (title: string) => `Remove “${title}”`,
+		removeThis: 'Remove this entry',
+		removeQuote: (start: string) => `Remove the quotation “${start}”`,
+		quoteRemoved: 'Quotation removed from the answers',
+		entryRemoved: (title: string) => `“${title}” removed from the answers`,
+		thisRemoved: 'Entry removed from the answers',
+		leftOut: (n: number) =>
+			n === 1
+				? '1 quotation could not be found in the text and was left out.'
+				: `${n} quotations could not be found in the text and were left out.`,
+		dropped: (n: number) =>
+			n === 1
+				? '1 entry was left out: none of its quotations was found in the text.'
+				: `${n} entries were left out: none of their quotations was found in the text.`,
+		/** In the editor of the other answers, where quotations are not changed. */
+		inCards: 'Themes and quotations are changed in their cards, outside this editor.'
 	},
 	units: {
 		tab: 'Items',
@@ -1993,8 +2041,12 @@ export const en = {
 			text: 'Text',
 			list: 'List of names or terms',
 			choice: 'One choice',
-			choices: 'Several choices'
+			choices: 'Several choices',
+			cited: 'Passages quoted from the text'
 		},
+		/** Under a field of quoted passages, which comes with a ready-made prompt. */
+		citedNote:
+			'Kalamu checks each quotation word for word against the text. What each entry holds comes with the ready-made prompt and cannot be changed here.',
 		max: 'At most',
 		values: 'Choices, separated by commas',
 		valuesPlaceholder: 'Positive, Neutral, Negative',
@@ -2570,6 +2622,17 @@ export const en = {
 		'prompt.no_fields': 'An analysis needs at least one field.',
 		'prompt.unnamed_field': 'Every field needs a name.',
 		'prompt.duplicate_field': 'Two fields have the same name.',
+		'prompt.reserved_field':
+			'This is the name Kalamu gives the quotations: give the field another name.',
+		'job.cited_needs_text':
+			'Quotations can only be found in a transcript or a text. Transcribe or read this file first, then choose Use this text.',
+		'cited.not_cited': 'This answer holds no quotations to change.',
+		'cited.no_entry': 'This entry is no longer in the answers. Look at them again.',
+		'cited.no_quotation': 'This quotation is no longer in the answers. Look at them again.',
+		'cited.no_field': 'This field is not one of the entry’s.',
+		'cited.not_a_choice': 'Choose one of the field’s values, or leave it empty.',
+		'cited.invented':
+			'Only quotations Kalamu found word for word in the text can be kept: this one is not among them.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',
 		'prompt.empty_group': 'One row per entry needs at least one column.',
 		'prompt.nested_group': 'A column cannot itself hold rows.',

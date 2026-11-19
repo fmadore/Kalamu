@@ -250,6 +250,12 @@ fn fields_table(out: &mut String, fields: &[kalamu_core::Field], parent: &str) {
             FieldKind::Choice { values } => format!("one of: {}", values.join(", ")),
             FieldKind::Choices { values } => format!("any of: {}", values.join(", ")),
             FieldKind::Entries { .. } => "entries, each with the fields below".to_string(),
+            FieldKind::Cited { max: Some(max), .. } => format!(
+                "entries citing the text, at most {max}, each with the fields below and its quotations"
+            ),
+            FieldKind::Cited { max: None, .. } => {
+                "entries citing the text, each with the fields below and its quotations".to_string()
+            }
         };
         let _ = writeln!(
             out,
@@ -260,7 +266,7 @@ fn fields_table(out: &mut String, fields: &[kalamu_core::Field], parent: &str) {
             cell(&field.instructions),
             if field.reason { "yes" } else { "no" }
         );
-        if let FieldKind::Entries { fields } = &field.kind {
+        if let FieldKind::Entries { fields } | FieldKind::Cited { fields, .. } = &field.kind {
             fields_table(out, fields, &format!("{parent}{} › ", cell(&field.label)));
         }
     }

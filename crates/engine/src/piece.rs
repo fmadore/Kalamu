@@ -11,6 +11,7 @@ use kalamu_core::{
 };
 use kalamu_media::{MediaError, OpenSource};
 
+use crate::check::AnswerCheck;
 use crate::control::lock;
 use crate::{Engine, EngineError};
 
@@ -22,6 +23,9 @@ pub(crate) enum Input {
     /// A passage of a transcript's timed lines, for a translation that keeps their times: its
     /// answer is read against the lines sent.
     Lines(crate::aligned::Passage),
+    /// A text with its turns numbered, for an analysis whose fields cite it: its answer's
+    /// quotations are looked for in the text.
+    Cited(crate::cited::Cite),
 }
 
 /// How a call ended, after its retries.
@@ -153,12 +157,17 @@ impl Engine {
         } else {
             ApiKey::new("")
         };
-        let mut lines = None;
+        let mut check: Option<Box<dyn AnswerCheck>> = None;
         let prepared = match input {
             Input::Ready(input) => Ok(input),
             Input::Lines(passage) => {
                 let input = passage.input.clone();
-                lines = Some(passage);
+                check = Some(Box::new(passage));
+                Ok(input)
+            }
+            Input::Cited(cite) => {
+                let input = cite.input.clone();
+                check = Some(Box::new(cite));
                 Ok(input)
             }
             Input::Open(opened) => {
@@ -206,7 +215,7 @@ impl Engine {
                 &options,
                 &spent,
                 stop,
-                lines.as_ref(),
+                check.as_deref(),
             )
             .await?;
         match called {
@@ -272,9 +281,10 @@ impl Engine {
 
     /// One call with its retries: a rate limit waits as long as asked, a passing failure is
     /// tried again after a growing delay, a pause or cancel ends the wait. Answers billed but
-    /// refused are charged to `state`'s piece, whose attempts are counted. A passage of timed
-    /// lines (`lines`) is asked for its lines back by number, and an answer that does not give
-    /// back every line once is refused and asked again like any broken answer.
+    /// refused are charged to `state`'s piece, whose attempts are counted. An answer the
+    /// caller's `check` refuses (a passage of timed lines that does not give back every line
+    /// once) is refused and asked again like any broken answer; one it passes is kept as the
+    /// check gives it back.
     #[allow(clippy::too_many_arguments)]
     pub(crate) async fn call(
         &self,
@@ -288,16 +298,16 @@ impl Engine {
         options: &SetupOptions,
         spent: &Arc<Mutex<f64>>,
         stop: &StopSignal,
-        lines: Option<&crate::aligned::Passage>,
+        check: Option<&dyn AnswerCheck>,
     ) -> Result<Called, EngineError> {
-        // A passage of lines answers in numbered lines, whatever the set-up's one field.
-        let lines_schema = lines.map(|_| kalamu_core::aligned::schema());
-        let analysis = lines_schema.as_ref().or(step.prompt.schema.as_ref());
-        let lines_request;
-        let user_prompt = match lines {
-            Some(_) => {
-                lines_request = format!("{user_prompt}\n\n{}", kalamu_core::aligned::REQUEST);
-                lines_request.as_str()
+        // The check's fields, when it asks for its own, replace the set-up's.
+        let check_schema = check.and_then(|c| c.schema());
+        let analysis = check_schema.as_ref().or(step.prompt.schema.as_ref());
+        let check_request;
+        let user_prompt = match check.and_then(|c| c.request()) {
+            Some(added) => {
+                check_request = format!("{user_prompt}\n\n{added}");
+                check_request.as_str()
             }
             None => user_prompt,
         };
@@ -327,8 +337,8 @@ impl Engine {
             let answer = provider
                 .process(api_key, request)
                 .await
-                .and_then(|output| match lines {
-                    Some(passage) => passage.read(output),
+                .and_then(|output| match check {
+                    Some(check) => crate::check::checked(check, output),
                     None => Ok(output),
                 });
             if let Err(err) = &answer {

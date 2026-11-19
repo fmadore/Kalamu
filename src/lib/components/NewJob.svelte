@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 	import FileList from './FileList.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import LinkList from './LinkList.svelte';
@@ -9,79 +9,31 @@
 	import PageOrder from './PageOrder.svelte';
 	import PipelineList from './PipelineList.svelte';
 	import ReadingOptions from './ReadingOptions.svelte';
-	import SetAsideNotice, { type SetAside } from './SetAsideNotice.svelte';
+	import SetAsideNotice from './SetAsideNotice.svelte';
 	import SetupList from './SetupList.svelte';
 	import StartPanel from './StartPanel.svelte';
 	import TaskStep from './TaskStep.svelte';
 	import ThenStep from './ThenStep.svelte';
 	import type { Estimate } from '#lib/bindings/Estimate.js';
 	import type { EstimateRow } from '#lib/bindings/EstimateRow.js';
-	import type { ExportFormat } from '#lib/bindings/ExportFormat.js';
-	import type { ImageDocument } from '#lib/bindings/ImageDocument.js';
-	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
-	import type { ModelInfo } from '#lib/bindings/ModelInfo.js';
-	import type { OutputDestination } from '#lib/bindings/OutputDestination.js';
-	import type { Preset } from '#lib/bindings/Preset.js';
+	import type { Pace } from '#lib/bindings/Pace.js';
+	import type { Pipeline } from '#lib/bindings/Pipeline.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { followEstimate } from '#lib/newJobEstimate.svelte.js';
 	import { primary } from '#lib/platform.js';
-	import { modelsNotDetecting, takesLanguage } from '#lib/languages.js';
-	import type { LineBreaks } from '#lib/bindings/LineBreaks.js';
-	import type { Pace } from '#lib/bindings/Pace.js';
-	import type { Pipeline } from '#lib/bindings/Pipeline.js';
-	import {
-		draftsOf,
-		followingAnalysis,
-		formPipeline,
-		inputOf,
-		jobSettings as settingsOf,
-		type Mode,
-		nameOfFile,
-		offeredFormats,
-		pagesPerCallOf,
-		forgetForm,
-		formToOpen,
-		keepForm,
-		readersOf,
-		readsKind,
-		suggestedPreset,
-		rulesFor,
-		suggestName,
-		suggestionFits,
-		taskOf,
-		togetherOf,
-		type Together
-	} from '#lib/newJob.js';
-	import {
-		acceptsPrompt,
-		type Draft,
-		dictionaryNames,
-		modelInfo,
-		newDraft,
-		providerDefault,
-		readsInput,
-		toRequest
-	} from '#lib/newJobModels.js';
-	import {
-		type Grouping,
-		imageSources,
-		jobSources,
-		offersOneDocument,
-		sameImages
-	} from '#lib/pageOrder.js';
-	import { allRecords, readingRule } from '#lib/records.js';
-	import { mayStart } from '#lib/dialogs.js';
+	import { type Mode, nameOfFile, forgetForm, formToOpen, keepForm } from '#lib/newJob.js';
+	import { JobChoices } from '#lib/newJobChoices.svelte.js';
+	import { JobFiles } from '#lib/newJobFiles.svelte.js';
+	import { dictionaryNames, modelInfo, readsInput, toRequest } from '#lib/newJobModels.js';
+	import { startJob } from '#lib/newJobStart.svelte.js';
+	import { FollowingAnalysis } from '#lib/newJobThen.svelte.js';
 	import { api, listenWhileMounted, onDrop } from '#lib/tauri.js';
 	import {
-		app,
 		go,
 		hasKey,
-		liveJob,
-		missingLanguageData,
-		refreshJobs,
 		refreshOffline,
 		shortcutsHeld,
 		takeFiles,
@@ -106,64 +58,26 @@
 		project: kept ? kept.project : opening.project
 	};
 
-	let mode = $state<Mode>(kept?.mode ?? 'text_extraction');
-	const task = $derived(taskOf(mode));
-	/** The engine's rules for the task: which files, models and formats suit it. */
-	const taskRule = $derived(rulesFor(app.rules, task));
-	let files = $state<InspectedFile[]>(kept?.files ?? []);
-	/** What every model must read: YouTube links for videos, images when there are images,
-	 * else anything the task takes. */
-	const input = $derived(inputOf(mode, files));
-	let inspecting = $state(false);
-	/** What the last files added gave that the task does not read, and where else it goes. */
-	let setAside = $state<SetAside | null>(null);
-	let languageMode = $state<'auto' | 'explicit'>(kept?.languageMode ?? 'auto');
-	let languages = $state<string[]>(kept?.languages ?? []);
-	let lineBreaks = $state<LineBreaks>(kept?.lineBreaks ?? 'running_text');
-	let pace = $state<Pace>(kept?.pace ?? 'fast');
-	let drafts = $state<Draft[]>(kept?.drafts ?? []);
-	let presets = $state<Preset[]>([]);
-	/** The chosen analyses' fields, one for each set-up. */
-	const schemas = $derived(drafts.map((d) => presets.find((p) => p.id === d.presetId)?.schema));
-	/** The task's rules, and for records chosen in every set-up what the task offers read page
-	 * by page. */
-	const rule = $derived(readingRule(taskRule, schemas));
-	/** Records chosen in every set-up: one row per entry, read page by page. */
-	const records = $derived(task === 'analysis' && allRecords(schemas));
-	let sample = $state(kept?.sample ?? false);
-	let samplePages = $state(kept?.samplePages ?? 3);
-	/** How many pages of a PDF go in one call: one, several, or as many as fit. */
-	let together = $state<Together>(kept?.together ?? 'one');
-	let togetherPages = $state(kept?.togetherPages ?? 4);
-	let formats = $state<ExportFormat[]>(kept?.formats ?? []);
-	let destination = $state<OutputDestination>(kept?.destination ?? { kind: 'beside_sources' });
-	let name = $state(kept?.name ?? '');
-	/** The name Kalamu suggested, as long as the field still holds it. */
-	let suggested = $state(kept?.suggested ?? '');
-	/** The name the files suggest, kept while the document's name stands in for it. */
-	let fromFiles = $state(kept?.fromFiles ?? kept?.suggested ?? '');
+	/** The files, the images as one document, and the job's name they suggest. */
+	const files: JobFiles = new JobFiles(
+		{
+			mode: () => choices.mode,
+			task: () => choices.task,
+			rule: () => choices.rule,
+			frozen: from.frozen,
+			error: (message) => (error = message)
+		},
+		kept
+	);
+	/** The task, its set-ups and the settings they share. */
+	const choices: JobChoices = new JobChoices(files, kept);
+	/** The analysis that can follow the reading. */
+	const following = new FollowingAnalysis(choices, kept);
+	const task = $derived(choices.task);
+	const rule = $derived(choices.rule);
+	const catalog = $derived(choices.catalog);
+	const sources = $derived(files.sources);
 
-	/** Fills the name from the files, unless the researcher typed one of their own. */
-	function suggest(value: string) {
-		fromFiles = value;
-		if (name && name !== suggested) return;
-		name = value;
-		suggested = value;
-	}
-
-	// A suggested name follows the files: once the file or folder it came from is removed, the
-	// first file left names the job, and no file leaves the field empty again. Images read as
-	// the pages of one document name the job after the document.
-	$effect(() => {
-		if (!suggested || name !== suggested) return;
-		if (!suggestionFits(fromFiles, files, from.frozen)) {
-			fromFiles = files[0] ? nameOfFile(files[0], from.frozen) : '';
-		}
-		const next = (oneOffered && grouping === 'one' && docName.trim()) || fromFiles;
-		if (next === suggested) return;
-		name = next;
-		suggested = next;
-	});
 	let estimate = $state<Estimate | null>(null);
 	const estimates = $derived(estimate?.rows ?? []);
 	let error = $state<string | null>(null);
@@ -171,237 +85,45 @@
 	let pipelines = $state<Pipeline[]>([]);
 	/** The name being typed for a new pipeline, while saving one. */
 	let naming = $state<string | null>(null);
-	/** An analysis to run on the text once it is read (and checked), or none. */
-	let thenPreset = $state<string | null>(kept?.thenPreset ?? null);
-	let thenCheck = $state(kept?.thenCheck ?? true);
-	let analysisPresets = $state<Preset[]>([]);
-
-	const catalog = $derived(app.catalog!);
-	const analysisRule = $derived(rulesFor(app.rules, 'analysis'));
-	/** Whether an analysis can follow: the task's results are a text. */
-	const thenOffered = $derived(rule.yields_text);
-	/** The model that analyses the text: the reading provider's, when it has one and a key. */
-	const thenDraft = $derived.by(() => {
-		const draft = newDraft(catalog, analysisRule, thenPreset, hasKey);
-		const provider = drafts[0]?.provider;
-		const same =
-			provider && hasKey(provider) ? providerDefault(catalog, analysisRule, provider) : '';
-		return same ? { ...draft, provider: provider!, model: same } : draft;
-	});
-	const models = $derived(drafts.map((d) => modelInfo(catalog, d)));
-	// A set-up chosen before images were added leaves a model that cannot read them for its
-	// provider's default among those that can, rather than leaving Start refused unsaid.
-	$effect(() => {
-		for (const d of drafts) {
-			if (!d.model || readsInput(modelInfo(catalog, d), input)) continue;
-			const next = providerDefault(catalog, rule, d.provider, input);
-			if (next) d.model = next;
-		}
-	});
-	/** The prompt Kalamu last chose for the files; a set-up still holding it was not chosen by the
-	 * researcher, and follows the files. Not state: it only remembers what was chosen. */
-	let autoPreset: string | null = null;
-	// Files that are all images suggest the prompt made for images (and others the task's first),
-	// in every set-up whose prompt is still Kalamu's choice; one the researcher chose stays.
-	$effect(() => {
-		const next = suggestedPreset(presets, files);
-		if (next === autoPreset) return;
-		for (const d of drafts) if (d.presetId === autoPreset) d.presetId = next;
-		autoPreset = next;
-	});
-	/** Whether records were chosen when last looked at; null until the task's prompts are read,
-	 * or once a kept form or a pipeline has filled the form, which keeps the formats it has. Not
-	 * state: it only remembers. */
-	let recordsBefore: boolean | null = null;
-	/** The spreadsheet was ticked for the records, not by the researcher. */
-	let csvForRecords = false;
-	// Records are read for their table: choosing them ticks the spreadsheet, and leaving them
-	// takes back that tick. A spreadsheet ticked or unticked by hand stays as it is.
-	$effect(() => {
-		if (presets.length === 0) return;
-		const now = records;
-		const before = recordsBefore;
-		recordsBefore = now;
-		if (before === null || now === before) return;
-		untrack(() => {
-			if (now && !formats.includes('csv') && rule.formats.includes('csv')) {
-				formats = [...formats, 'csv'];
-				csvForRecords = true;
-			} else if (!now && csvForRecords) {
-				formats = formats.filter((f) => f !== 'csv');
-				csvForRecords = false;
-			} else {
-				csvForRecords = false;
-			}
-		});
-	});
-	/** Distinct names of the chosen models matching a test, for the notes under a choice. */
-	const namesOf = (test: (model: ModelInfo | undefined) => boolean) => [
-		...new Set(models.filter(test).map((model) => model?.name ?? ''))
-	];
-	const languageIgnored = $derived(namesOf((model) => !takesLanguage(model)));
-	const noPrompt = $derived(namesOf((model) => !acceptsPrompt(model)));
-	/** Several images: each a document of its own, or the pages of one document (#52). */
-	let grouping = $state<Grouping>(kept?.grouping ?? 'separate');
-	/** The document the engine made of the images, in the order the researcher left. */
-	let pageDoc = $state<ImageDocument | null>(kept?.pageDoc ?? null);
-	let docName = $state(kept?.docName ?? '');
-	/** A page was moved by hand since the engine last put the pages in order. */
-	let byHand = $state(kept?.byHand ?? false);
-	let sorting = $state(false);
-	const images = $derived(imageSources(files));
-	const oneOffered = $derived(offersOneDocument(rule, images));
-	/** Asks the engine for the document of these images, in the natural order of their names:
-	 * when they are first read as one, when the images change, or to undo the researcher's order. */
-	async function orderPages(again = false) {
-		const wanted = $state.snapshot(images);
-		if (!again && sameImages(pageDoc, wanted)) return;
-		sorting = true;
-		try {
-			const made = await api.imageDocument(docName, wanted);
-			// Images changed while the engine sorted: the newer call settles it.
-			if (!sameImages(made, imageSources(files))) return;
-			pageDoc = made;
-			byHand = false;
-			if (!docName.trim()) docName = made.source.file_name;
-		} catch (e) {
-			error = describeError(e, m);
-		} finally {
-			sorting = false;
-		}
-	}
-	$effect(() => {
-		if (oneOffered && grouping === 'one' && !sameImages(pageDoc, images)) void orderPages();
-	});
-	const sources = $derived(jobSources(files, oneOffered ? grouping : 'separate', pageDoc, docName));
 	/** Times a task was picked, so its diagram plays; opening New job shows it at rest. */
 	let picked = $state(0);
-	/** Where samples and line breaks apply, as the engine says. */
-	const paged = $derived(rule.samples);
-	const linesApply = $derived(rule.line_breaks);
-	/** What the job sends for it; nothing for one page at a time, as before. */
-	const pagesPerCall = $derived(pagesPerCallOf(rule, together, togetherPages));
 
 	/** Moves the files set aside to a task that reads them. */
 	async function switchTo(next: Mode) {
-		const move = setAside?.move ?? [];
-		setAside = null;
+		const move = files.setAside?.move ?? [];
+		files.setAside = null;
 		picked++;
-		await loadTask(next);
-		await addPaths(move);
+		await choices.loadTask(next);
+		await files.add(move);
 	}
-
-	/** Raised by each task picked, so the prompts of a task picked earlier and read later are
-	 * not put under the one picked since. */
-	let taskTicket = 0;
-
-	async function loadTask(next: Mode) {
-		if (next !== mode) setAside = null;
-		mode = next;
-		const ticket = ++taskTicket;
-		const listed = await api.listPresets(task);
-		if (ticket !== taskTicket) return;
-		presets = listed;
-		autoPreset = suggestedPreset(presets, files);
-		drafts = [newDraft(catalog, rule, autoPreset, hasKey, [], input)];
-		// A table of contents reads best as a document and a spreadsheet.
-		formats =
-			task === 'contents'
-				? ['markdown', 'csv']
-				: [
-						...(task === 'audio_transcription'
-							? app.settings!.audio_formats
-							: app.settings!.text_formats)
-					].filter((f) => rule.formats.includes(f));
-		// The usual formats, before any records: the prompt chosen with them may tick the
-		// spreadsheet.
-		recordsBefore = false;
-		csvForRecords = false;
-		// An analysis or a table of contents is written in one language.
-		if (rule.answers_in_language) languages = languages.slice(0, 1);
-		// A video has no folder of its own: offer the folder last chosen.
-		const last = app.settings!.last_folder;
-		if (mode === 'youtube' && destination.kind !== 'folder' && last) {
-			destination = { kind: 'folder', path: last };
-		}
-		files = files.filter((f) => readsKind(app.rules, mode, f.source?.kind));
-	}
-
-	async function addPaths(paths: string[]) {
-		if (paths.length === 0) return;
-		error = null;
-		setAside = null;
-		try {
-			const expanded = await api.expandPaths(paths, task);
-			// Videos are added by their link: recordings and videos dropped here are offered to
-			// Transcribe audio, which reads them.
-			if (mode === 'youtube') {
-				const move = expanded.paths;
-				setAside = {
-					refused: [],
-					readers: move.length > 0 ? ['audio_transcription'] : [],
-					move,
-					youtube: true
-				};
-				return;
-			}
-			if (expanded.refused.length > 0) {
-				setAside = {
-					refused: expanded.refused,
-					readers: readersOf(app.rules, expanded.refused, mode),
-					move: expanded.refused.filter((r) => r.kind).map((r) => r.path),
-					youtube: false
-				};
-			}
-			if (expanded.paths.length === 0) return;
-			inspecting = true;
-			const known = new Set(files.map((f) => f.path));
-			const inspected = await api.inspectFiles(expanded.paths.filter((p) => !known.has(p)));
-			files = [...files, ...inspected];
-			suggest(suggestName(paths, expanded.paths));
-		} catch (e) {
-			error = describeError(e, m);
-		} finally {
-			inspecting = false;
-		}
-	}
-
-	/** A model that cannot detect the language needs the languages chosen and downloaded; a
-	 * translation, the language it translates into. */
-	const languagesReady = $derived(
-		(modelsNotDetecting(models).length === 0 ||
-			(languageMode === 'explicit' &&
-				languages.length > 0 &&
-				missingLanguageData(languages).length === 0)) &&
-			(!rule.needs_language || (languageMode === 'explicit' && languages.length > 0))
-	);
 
 	const ready = $derived(
 		sources.length > 0 &&
-			languagesReady &&
-			drafts.length > 0 &&
-			drafts.every((d) => d.model && hasKey(d.provider)) &&
-			(task !== 'contents' || drafts.every((d) => d.mergeModel && hasKey(d.mergeProvider))) &&
-			models.every((model) => readsInput(model, input)) &&
-			(mode !== 'youtube' || destination.kind === 'folder') &&
-			formats.length > 0
+			choices.languagesReady &&
+			choices.drafts.length > 0 &&
+			choices.drafts.every((d) => d.model && hasKey(d.provider)) &&
+			(task !== 'contents' ||
+				choices.drafts.every((d) => d.mergeModel && hasKey(d.mergeProvider))) &&
+			choices.models.every((model) => readsInput(model, choices.input)) &&
+			(choices.mode !== 'youtube' || choices.destination.kind === 'folder') &&
+			choices.formats.length > 0
 	);
 
 	followEstimate(
 		() => ({
 			task,
 			sources: $state.snapshot(sources),
-			setups: drafts.filter((d) => d.model).map((d) => toRequest(catalog, task, d)),
-			sample_pages: sample && paged ? samplePages : null
+			setups: choices.drafts.filter((d) => d.model).map((d) => toRequest(catalog, task, d)),
+			sample_pages: choices.sample && choices.paged ? choices.samplePages : null
 		}),
 		(e) => (estimate = e)
 	);
 
 	/** Economy mode is offered when one of the chosen models goes through a batch service. */
 	const economyOffered = $derived(
-		mode !== 'youtube' && estimates.some((r) => r.estimate.economy_usd !== null)
+		choices.mode !== 'youtube' && estimates.some((r) => r.estimate.economy_usd !== null)
 	);
-	const chosenPace = $derived<Pace>(economyOffered ? pace : 'fast');
+	const chosenPace = $derived<Pace>(economyOffered ? choices.pace : 'fast');
 	/** A model's cost at a pace; one without a batch service costs the same either way. */
 	const rowCost = (row: EstimateRow, at: Pace) =>
 		at === 'economy' ? (row.estimate.economy_usd ?? row.estimate.usd) : row.estimate.usd;
@@ -413,89 +135,21 @@
 
 	/** Why Start is unavailable, when the form cannot say it where the user is looking. */
 	const blocker = $derived(
-		mode === 'youtube' && sources.length > 0 && destination.kind !== 'folder'
+		choices.mode === 'youtube' && sources.length > 0 && choices.destination.kind !== 'folder'
 			? m.newJob.needFolder
 			: rule.needs_language &&
 				  sources.length > 0 &&
-				  !(languageMode === 'explicit' && languages.length > 0)
+				  !(choices.languageMode === 'explicit' && choices.languages.length > 0)
 				? m.error['job.no_language']
 				: null
 	);
-
-	/** The settings shared by every set-up, as a job and a pipeline store them. */
-	function jobSettings() {
-		return settingsOf({
-			languageMode,
-			languages,
-			languagesTaken: languageIgnored.length < models.length,
-			sample,
-			samplePages,
-			paged,
-			lineBreaks,
-			linesTaken: linesApply && noPrompt.length < models.length,
-			pace: chosenPace,
-			pagesPerCall
-		});
-	}
-
-	/** The form as a pipeline: everything but the files. Run now, it keeps only the formats the
-	 * chosen models can write, as a job does. */
-	function currentPipeline(pipelineName: string, toRun = false): Pipeline {
-		return formPipeline(
-			{
-				name: pipelineName,
-				task,
-				catalog,
-				rule,
-				drafts,
-				settings: jobSettings(),
-				formats,
-				destination: $state.snapshot(destination)
-			},
-			toRun
-		);
-	}
-
-	/** The analysis that follows, as a pipeline: the researcher's usual formats for it. */
-	function thenPipeline(preset: Preset): Pipeline {
-		return followingAnalysis(
-			preset,
-			toRequest(catalog, 'analysis', thenDraft),
-			analysisRule,
-			app.settings!.text_formats,
-			chosenPace,
-			$state.snapshot(destination)
-		);
-	}
-
-	/** Fills the form from a saved pipeline; the files stay as they are. */
-	async function applyPipeline(p: Pipeline) {
-		// A transcription pipeline applied to videos keeps the videos.
-		await loadTask(mode === 'youtube' && p.task === 'audio_transcription' ? 'youtube' : p.task);
-		drafts = draftsOf(p, catalog);
-		languageMode = p.settings.languages.mode;
-		languages = p.settings.languages.mode === 'explicit' ? [...p.settings.languages.languages] : [];
-		lineBreaks = p.settings.line_breaks ?? 'running_text';
-		pace = p.settings.pace ?? 'fast';
-		const sent = togetherOf(p.settings.pages_per_call);
-		together = sent.together;
-		if (sent.pages !== undefined) togetherPages = sent.pages;
-		sample = p.settings.sample_pages !== null;
-		samplePages = p.settings.sample_pages ?? samplePages;
-		formats = p.formats.filter((f) => rulesFor(app.rules, p.task).formats.includes(f));
-		// The pipeline's formats stand, records or not.
-		recordsBefore = null;
-		csvForRecords = false;
-		destination = p.destination;
-		toast(m.newJob.pipelineApplied(p.name));
-	}
 
 	async function savePipeline() {
 		const pipelineName = naming?.trim();
 		if (!pipelineName) return;
 		error = null;
 		try {
-			const saved = await api.savePipeline(currentPipeline(pipelineName));
+			const saved = await api.savePipeline(choices.pipeline(pipelineName, chosenPace));
 			pipelines = await api.listPipelines();
 			naming = null;
 			toast(m.newJob.pipelineSaved(saved.name));
@@ -504,79 +158,18 @@
 		}
 	}
 
-	/** Reads the text, then analyses it: a two-step workflow, unsaved, run on these files. */
-	async function startWithAnalysis(preset: Preset) {
-		const jobName = name.trim() || sources[0]?.file_name || m.newJob.title;
-		const view = await api.startRun({
-			workflow: {
-				id: '',
-				name: m.newJob.then.workflowName(m.task[task], preset.name),
-				version: 0,
-				steps: [
-					{
-						pipeline: currentPipeline(m.task[task], true),
-						input: { kind: 'sources' },
-						review: thenCheck
-					},
-					{ pipeline: thenPipeline(preset), input: { kind: 'step', step: 0 }, review: false }
-				],
-				updated_at: 0
-			},
-			name: jobName,
-			sources: $state.snapshot(sources),
-			project: from.project?.id ?? null,
-			collection: from.project?.collectionId ?? null
-		});
-		const first = view.steps[0]?.job?.id;
-		if (first) liveJob(first);
-		await refreshJobs();
-		started();
-		go(first ? { name: 'jobs', jobId: first } : { name: 'workflows', runId: view.run.id });
-	}
-
 	async function start() {
 		error = null;
 		starting = true;
 		try {
-			const preset = thenOffered ? analysisPresets.find((p) => p.id === thenPreset) : undefined;
-			// Asked once for each cloud provider the job, or its analysis after, sends files to.
-			const setups = [
-				...drafts.map((d) => toRequest(catalog, task, d)),
-				...(preset ? thenPipeline(preset).setups : [])
-			];
-			const beside = destination.kind === 'beside_sources';
-			if (!(await mayStart(setups, catalog, $state.snapshot(sources), beside))) return;
-			if (preset) {
-				await startWithAnalysis(preset);
-				return;
-			}
-			const job = await api.createJob({
-				name: name.trim() || sources[0]?.file_name || m.newJob.title,
-				task,
-				sources: $state.snapshot(sources),
-				setups: drafts.map((d) => toRequest(catalog, task, d)),
-				settings: jobSettings(),
-				output: {
-					formats: formats.filter((f) =>
-						offeredFormats(catalog, rule, drafts, sources).includes(f)
-					),
-					destination: $state.snapshot(destination),
-					options: $state.snapshot(app.settings!.export_options)
-				}
+			await startJob({
+				choices,
+				files,
+				following,
+				pace: () => chosenPace,
+				project: from.project,
+				started
 			});
-			liveJob(job.id);
-			// Started from a project: its files are the project's documents. The job runs even
-			// if this fails, and can be added from the project later.
-			const project = from.project;
-			if (project) {
-				await api
-					.linkJob(project.id, job.id, project.collectionId ?? null)
-					.catch(() => toast(m.projects.linkFailed(project.name), { kind: 'error' }));
-			}
-			await api.startJob(job.id);
-			await refreshJobs();
-			started();
-			go({ name: 'jobs', jobId: job.id });
 		} catch (e) {
 			error = describeError(e, m);
 		} finally {
@@ -602,30 +195,30 @@
 	// The form is kept as it changes, so leaving New job (for Settings, say) loses nothing.
 	$effect(() => {
 		const form = {
-			mode,
-			files: $state.snapshot(files),
+			mode: choices.mode,
+			files: $state.snapshot(files.list),
 			frozen: from.frozen,
 			project: from.project,
-			languageMode,
-			languages: $state.snapshot(languages),
-			lineBreaks,
-			pace,
-			drafts: $state.snapshot(drafts),
-			sample,
-			samplePages,
-			together,
-			togetherPages,
-			formats: $state.snapshot(formats),
-			destination: $state.snapshot(destination),
-			name,
-			suggested,
-			fromFiles,
-			thenPreset,
-			thenCheck,
-			grouping,
-			pageDoc: $state.snapshot(pageDoc),
-			docName,
-			byHand
+			languageMode: choices.languageMode,
+			languages: $state.snapshot(choices.languages),
+			lineBreaks: choices.lineBreaks,
+			pace: choices.pace,
+			drafts: $state.snapshot(choices.drafts),
+			sample: choices.sample,
+			samplePages: choices.samplePages,
+			together: choices.together,
+			togetherPages: choices.togetherPages,
+			formats: $state.snapshot(choices.formats),
+			destination: $state.snapshot(choices.destination),
+			name: files.name,
+			suggested: files.suggested,
+			fromFiles: files.fromFiles,
+			thenPreset: following.presetId,
+			thenCheck: following.check,
+			grouping: files.grouping,
+			pageDoc: $state.snapshot(files.pageDoc),
+			docName: files.docName,
+			byHand: files.byHand
 		};
 		if (!done) keepForm(form);
 	});
@@ -646,24 +239,27 @@
 		if (kept) {
 			api
 				.listPresets(task)
-				.then((p) => (presets = p))
+				.then((p) => {
+					choices.presets = p;
+				})
 				.catch(fail);
 		} else {
-			loadTask(opening.task ?? mode)
+			choices
+				.loadTask(opening.task ?? choices.mode)
 				.then(() => {
 					// Text frozen from a job's corrected results, or an item's pages cut out of its
 					// document: already inspected, nothing to do.
 					if (opening.sources) {
-						files = opening.sources.map((source) => ({
+						files.list = opening.sources.map((source) => ({
 							path: source.path,
 							source,
 							warnings: [],
 							error: null,
 							pieces: null
 						}));
-						if (files[0]) suggest(nameOfFile(files[0], true));
+						if (files.list[0]) files.suggest(nameOfFile(files.list[0], true));
 					}
-					return opening.paths ? addPaths(opening.paths) : undefined;
+					return opening.paths ? files.add(opening.paths) : undefined;
 				})
 				.catch(fail);
 		}
@@ -671,12 +267,9 @@
 			.listPipelines()
 			.then((p) => (pipelines = p))
 			.catch(() => undefined);
-		api
-			.listPresets('analysis')
-			.then((p) => (analysisPresets = p))
-			.catch(() => undefined);
+		following.load();
 		const release = takeFiles(m.newJob.dropHere);
-		const stop = listenWhileMounted(() => onDrop((paths) => void addPaths(paths)));
+		const stop = listenWhileMounted(() => onDrop((paths) => void files.add(paths)));
 		return () => {
 			release();
 			stop();
@@ -691,7 +284,7 @@
 		<h1>{m.newJob.title}</h1>
 		<p class="lede">{m.newJob.lede}</p>
 	</div>
-	{#if files.length > 0 || name}
+	{#if files.list.length > 0 || files.name}
 		<button class="btn ghost" title={m.newJob.startOverHint} onclick={startOver}
 			>{m.newJob.startOver}</button
 		>
@@ -705,62 +298,71 @@
 
 <div class="layout">
 	<div class="form steps">
-		<PipelineList bind:pipelines onapply={applyPipeline} onerror={(e) => (error = e)} />
+		<PipelineList
+			bind:pipelines
+			onapply={(p) => choices.applyPipeline(p)}
+			onerror={(e) => (error = e)}
+		/>
 
 		<TaskStep
-			{mode}
-			{files}
+			mode={choices.mode}
+			files={files.list}
 			{sources}
-			{presets}
-			{drafts}
-			{records}
+			presets={choices.presets}
+			drafts={choices.drafts}
+			records={choices.records}
 			{catalog}
 			{rule}
-			{namesOf}
+			namesOf={choices.namesOf}
 			play={picked}
 			onpick={(t) => {
 				picked++;
-				loadTask(t).catch((e: unknown) => (error = describeError(e, m)));
+				choices.loadTask(t).catch((e: unknown) => (error = describeError(e, m)));
 			}}
 		/>
 
-		{#if mode === 'youtube'}
+		{#if choices.mode === 'youtube'}
 			<LinkList
-				bind:links={files}
+				bind:links={files.list}
 				onadd={(added) => {
 					const titled = added.find((l) => l.source?.title)?.source?.title;
-					if (titled) suggest(titled);
+					if (titled) files.suggest(titled);
 				}}
 				onerror={(e) => (error = e)}
 			/>
 		{:else}
-			<FileList bind:files {task} {inspecting} onadd={addPaths} />
-			{#if oneOffered}
+			<FileList
+				bind:files={files.list}
+				{task}
+				inspecting={files.inspecting}
+				onadd={(paths) => files.add(paths)}
+			/>
+			{#if files.oneOffered}
 				<PageOrder
-					bind:grouping
-					bind:doc={pageDoc}
-					bind:name={docName}
-					bind:byHand
-					{sorting}
-					onnatural={() => void orderPages(true)}
+					bind:grouping={files.grouping}
+					bind:doc={files.pageDoc}
+					bind:name={files.docName}
+					bind:byHand={files.byHand}
+					sorting={files.sorting}
+					onnatural={() => void files.orderPages(true)}
 				/>
 			{/if}
 		{/if}
 
-		{#if setAside}
+		{#if files.setAside}
 			<SetAsideNotice
-				aside={setAside}
-				{mode}
+				aside={files.setAside}
+				mode={choices.mode}
 				onswitch={(reader) => switchTo(reader).catch((e: unknown) => (error = describeError(e, m)))}
-				ondismiss={() => (setAside = null)}
+				ondismiss={() => (files.setAside = null)}
 			/>
 		{/if}
 
 		<SetupList
-			bind:drafts
+			bind:drafts={choices.drafts}
 			{task}
-			{presets}
-			{input}
+			presets={choices.presets}
+			input={choices.input}
 			projectNames={from.project
 				? () =>
 						api.dictionaryView(from.project!.id, null).then((view) => dictionaryNames(view.rows))
@@ -768,50 +370,50 @@
 		/>
 
 		<LanguageStep
-			bind:mode={languageMode}
-			bind:languages
+			bind:mode={choices.languageMode}
+			bind:languages={choices.languages}
 			{task}
-			{models}
-			ignored={languageIgnored}
+			models={choices.models}
+			ignored={choices.languageIgnored}
 		/>
 
 		<ReadingOptions
-			bind:lineBreaks
-			bind:together
-			bind:togetherPages
-			{linesApply}
+			bind:lineBreaks={choices.lineBreaks}
+			bind:together={choices.together}
+			bind:togetherPages={choices.togetherPages}
+			linesApply={choices.linesApply}
 			pagesTogether={rule.pages_per_call}
-			{models}
-			{noPrompt}
+			models={choices.models}
+			noPrompt={choices.noPrompt}
 			pace={chosenPace}
 			{sources}
 		/>
 
 		{#if economyOffered}
-			<PaceStep bind:pace {estimates} {catalog} {totalFor} />
+			<PaceStep bind:pace={choices.pace} {estimates} {catalog} {totalFor} />
 		{/if}
 
 		<OutputStep
-			bind:sample
-			bind:samplePages
-			bind:formats
-			bind:destination
-			bind:name
-			{mode}
+			bind:sample={choices.sample}
+			bind:samplePages={choices.samplePages}
+			bind:formats={choices.formats}
+			bind:destination={choices.destination}
+			bind:name={files.name}
+			mode={choices.mode}
 			{task}
-			{drafts}
-			{paged}
+			drafts={choices.drafts}
+			paged={choices.paged}
 			{sources}
 			hasSources={sources.length > 0}
 		/>
 
-		{#if thenOffered}
+		{#if following.offered}
 			<ThenStep
-				bind:presetId={thenPreset}
-				bind:check={thenCheck}
-				presets={analysisPresets}
+				bind:presetId={following.presetId}
+				bind:check={following.check}
+				presets={following.presets}
 				{task}
-				model={modelInfo(catalog, thenDraft)?.name ?? thenDraft.model}
+				model={modelInfo(catalog, following.draft)?.name ?? following.draft.model}
 			/>
 		{/if}
 	</div>
@@ -821,12 +423,12 @@
 		{estimates}
 		cost={(row) => rowCost(row, chosenPace)}
 		total={totalEstimate}
-		video={mode === 'youtube' && sources.length > 0}
+		video={choices.mode === 'youtube' && sources.length > 0}
 		{error}
 		{blocker}
 		{ready}
 		{starting}
-		canSave={drafts.length > 0}
+		canSave={choices.drafts.length > 0}
 		bind:naming
 		onstart={start}
 		onsave={() => void savePipeline()}

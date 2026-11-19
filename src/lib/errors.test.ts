@@ -7,6 +7,9 @@ import { en } from './i18n/index.js';
 function rustIds(): string[] {
 	const sources = [
 		'crates/engine/src/lib.rs',
+		'crates/engine/src/error.rs',
+		'crates/prompts/src/lib.rs',
+		'crates/core/src/analysis/cited/edit.rs',
 		'crates/core/src/workflow.rs',
 		'crates/core/src/provider.rs',
 		'crates/core/src/units.rs',
@@ -24,7 +27,7 @@ function rustIds(): string[] {
 		for (const match of source.matchAll(/"([a-z]+\.[a-z_]+)"/g)) {
 			const id = match[1];
 			if (
-				/^(job|media|prompt|provider|output|keys|settings|catalog|file|app|offline|source|project|workflow|search|meaning|unit|profile|dictionary)\./.test(
+				/^(job|media|prompt|provider|output|keys|settings|catalog|file|app|offline|source|project|workflow|search|meaning|unit|profile|dictionary|cited)\./.test(
 					id
 				)
 			) {
