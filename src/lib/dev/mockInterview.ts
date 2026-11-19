@@ -3,9 +3,12 @@
 // times, frozen and read for its themes, keywords and quotations, each quotation placed in the
 // frozen text in characters as the engine places it. `interview-gone` makes the recording
 // unreachable, so quotations are shown in the text instead; `interview-two` adds a second
-// set-up. Development builds only.
+// set-up; `interview-long` makes the transcript some 100,000 words long, too long for the models
+// run on this computer. Development builds only.
 
+import type { Catalog } from '../bindings/Catalog.js';
 import type { CitedEdit } from '../bindings/CitedEdit.js';
+import type { EstimateRequest } from '../bindings/EstimateRequest.js';
 import type { CitedEvidence } from '../bindings/CitedEvidence.js';
 import type { CitedValue } from '../bindings/CitedValue.js';
 import type { FieldAnswer } from '../bindings/FieldAnswer.js';
@@ -13,6 +16,8 @@ import type { Job } from '../bindings/Job.js';
 import type { JobSummary } from '../bindings/JobSummary.js';
 import type { NewJob } from '../bindings/NewJob.js';
 import type { PieceView } from '../bindings/PieceView.js';
+import type { SetupRequest } from '../bindings/SetupRequest.js';
+import type { TextTooLong } from '../bindings/TextTooLong.js';
 import type { Turn } from '../bindings/Turn.js';
 import { clock } from '../pieces.js';
 import { audioSetup, EXPORT_OPTIONS, job, source } from './mockJobs.js';
@@ -384,6 +389,39 @@ export function editCited(answers: FieldAnswer[], key: string, change: CitedEdit
 		else entry.answers.push({ key: change.key, value: change.value });
 	}
 	return out;
+}
+
+/** Characters in the long transcript of `interview-long`: some 100,000 words. */
+const LONG_CHARS = 600_000;
+
+/** `n` to two significant figures, down, as the catalogue rounds what a model reads. */
+const roundDown = (n: number) => {
+	const step = 10 ** Math.max(0, Math.floor(Math.log10(Math.max(n, 1))) - 1);
+	return Math.floor(n / step) * step;
+};
+
+/** What the estimate says of an interview's set-up with `interview-long`, as the engine measures
+ * it: the transcript too long for a model that reads less than its four characters a token. */
+export function interviewTooLong(
+	request: EstimateRequest,
+	setup: SetupRequest,
+	catalog: Catalog
+): TextTooLong | undefined {
+	if (!new URLSearchParams(location.search).has('interview-long')) return undefined;
+	const preset = setup.preset_id ?? '';
+	if (
+		request.task !== 'analysis' ||
+		!(preset === 'analysis.interview' || preset.startsWith('user-'))
+	)
+		return undefined;
+	const limit = catalog.models.find((m) => m.provider === setup.provider && m.id === setup.model)
+		?.limits.max_input_tokens;
+	if (limit === undefined || LONG_CHARS <= limit * 4) return undefined;
+	return {
+		file: request.sources[0]?.file_name ?? '',
+		words: 100_000,
+		most_words: roundDown(Math.floor((limit * 4) / 6))
+	};
 }
 
 /** The job New job's dialog created last, for the end-to-end tests to read. */

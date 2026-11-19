@@ -111,13 +111,37 @@ pub(super) struct Interviews {
 }
 
 pub(super) fn interviews() -> Interviews {
+    interviews_with(kalamu_catalog::Catalog::bundled())
+}
+
+/// The pretend model listed in the catalogue as `Interviewer One`, reading at most `tokens`
+/// tokens at once.
+pub(super) fn interviews_reading(tokens: u32) -> Interviews {
+    let mut catalog = kalamu_catalog::Catalog::bundled();
+    let mut model = catalog
+        .models_for(Task::Analysis)
+        .into_iter()
+        .find(|m| m.inputs.iter().any(|i| i == "text/plain"))
+        .cloned()
+        .unwrap_or_else(|| panic!("an analysis model that reads text"));
+    model.provider = ProviderId::new("interviewer");
+    model.id = "interviewer-1".into();
+    model.name = "Interviewer One".into();
+    model.successor = None;
+    model.retired = false;
+    model.limits.max_input_tokens = Some(tokens);
+    catalog.models.push(model);
+    interviews_with(catalog)
+}
+
+fn interviews_with(catalog: kalamu_catalog::Catalog) -> Interviews {
     let store = Arc::new(SqliteStore::in_memory().unwrap_or_else(|_| panic!("store")));
     let model = Interviewer::new();
     let dir = tempfile::tempdir().unwrap_or_else(|_| panic!("tempdir"));
     let engine = Engine::new(
         store,
         vec![Fake::new(), model.clone()],
-        kalamu_catalog::Catalog::bundled(),
+        catalog,
         PromptLibrary::in_memory(),
         Arc::new(Keys),
         EngineConfig {

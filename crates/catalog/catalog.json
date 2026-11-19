@@ -2,7 +2,7 @@
   "schema_version": 1,
   "updated": "2026-11-19",
   "latest_version": "1.8.0",
-  "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service.",
+  "notes": "Prices are USD from each provider's published list, checked on the date above; they change, so the app shows estimates only. Models marked 'preview' may change or be withdrawn. Cached-input and cache-write prices apply to the part of a prompt the provider reads from or writes to its prompt cache; batch_discount is the share taken off every price in economy mode, through the provider's batch service. max_input_tokens is the most a model reads in one request, as its provider documents it (the whole window where the provider gives one for the request and the answer together); for the models run on this computer, what the offline engine sends them, at four characters a token.",
   "providers": [
     {
       "id": "gemini",
@@ -120,7 +120,8 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 65536
+        "max_output_tokens": 65536,
+        "max_input_tokens": 1048576
       },
       "reasoning": {
         "levels": [
@@ -182,7 +183,8 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 65536
+        "max_output_tokens": 65536,
+        "max_input_tokens": 1048576
       },
       "reasoning": {
         "levels": [
@@ -360,7 +362,8 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 32768
+        "max_output_tokens": 32768,
+        "max_input_tokens": 1048576
       },
       "reasoning": {
         "levels": [
@@ -417,7 +420,8 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 65536
+        "max_output_tokens": 65536,
+        "max_input_tokens": 1048576
       },
       "reasoning": {
         "levels": [
@@ -476,7 +480,8 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 32768
+        "max_output_tokens": 32768,
+        "max_input_tokens": 1048576
       },
       "reasoning": {
         "levels": [
@@ -534,7 +539,8 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 65536
+        "max_output_tokens": 65536,
+        "max_input_tokens": 1048576
       },
       "reasoning": {
         "levels": [
@@ -581,7 +587,8 @@
       },
       "limits": {
         "max_request_mb": 18,
-        "max_output_tokens": 65536
+        "max_output_tokens": 65536,
+        "max_input_tokens": 1048576
       },
       "reasoning": {
         "levels": [
@@ -631,7 +638,8 @@
       },
       "limits": {
         "max_request_mb": 32,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 922000
       },
       "reasoning": {
         "levels": [
@@ -680,7 +688,8 @@
       },
       "limits": {
         "max_request_mb": 32,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 922000
       },
       "reasoning": {
         "levels": [
@@ -728,7 +737,8 @@
       },
       "limits": {
         "max_request_mb": 32,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 922000
       },
       "reasoning": {
         "levels": [
@@ -778,7 +788,8 @@
       },
       "limits": {
         "max_request_mb": 32,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 922000
       },
       "reasoning": {
         "levels": [
@@ -827,7 +838,8 @@
       },
       "limits": {
         "max_request_mb": 32,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 922000
       },
       "reasoning": {
         "levels": [
@@ -874,7 +886,8 @@
       },
       "limits": {
         "max_request_mb": 32,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 922000
       },
       "reasoning": {
         "levels": [
@@ -995,7 +1008,8 @@
       "limits": {
         "max_request_mb": 32,
         "max_pages": 600,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -1046,7 +1060,8 @@
       "limits": {
         "max_request_mb": 32,
         "max_pages": 600,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -1096,7 +1111,8 @@
       "limits": {
         "max_request_mb": 32,
         "max_pages": 600,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -1149,7 +1165,8 @@
       "limits": {
         "max_request_mb": 32,
         "max_pages": 600,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -1199,7 +1216,8 @@
       "limits": {
         "max_request_mb": 32,
         "max_pages": 600,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -1360,7 +1378,8 @@
       },
       "limits": {
         "max_request_mb": 50,
-        "max_pages": 1000
+        "max_pages": 1000,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -1404,7 +1423,8 @@
       },
       "limits": {
         "max_request_mb": 50,
-        "max_pages": 1000
+        "max_pages": 1000,
+        "max_input_tokens": 256000
       },
       "reasoning": {
         "levels": [
@@ -1446,7 +1466,8 @@
       },
       "limits": {
         "max_request_mb": 50,
-        "max_pages": 1000
+        "max_pages": 1000,
+        "max_input_tokens": 256000
       },
       "reasoning": {
         "levels": [
@@ -1482,7 +1503,8 @@
         "batch_discount": 0.5
       },
       "limits": {
-        "max_request_mb": 50
+        "max_request_mb": 50,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -1525,7 +1547,8 @@
       },
       "limits": {
         "max_request_mb": 50,
-        "max_pages": 1000
+        "max_pages": 1000,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -1564,7 +1587,8 @@
       },
       "limits": {
         "max_request_mb": 50,
-        "max_output_tokens": 128000
+        "max_output_tokens": 128000,
+        "max_input_tokens": 1000000
       },
       "reasoning": {
         "levels": [
@@ -2016,7 +2040,8 @@
         "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
       "limits": {
-        "max_output_tokens": 8192
+        "max_output_tokens": 8192,
+        "max_input_tokens": 16500
       },
       "translations": {
         "fr": {
@@ -2048,7 +2073,8 @@
         "note": "Runs on this computer: free, and nothing is sent anywhere."
       },
       "limits": {
-        "max_output_tokens": 8192
+        "max_output_tokens": 8192,
+        "max_input_tokens": 16500
       },
       "translations": {
         "fr": {

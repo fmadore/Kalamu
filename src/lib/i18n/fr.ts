@@ -196,6 +196,8 @@ export const fr: Messages = {
 			'Par exemple : comment les jeunes commerçants trouvent leurs premiers clients, et l’aide que leur apporte leur famille.',
 		model: (name: string, provider: string) => `Modèle : ${name} (${provider})`,
 		cost: (usd: string) => `Coût estimé : ${usd}`,
+		tooLong: (model: string, words: string, most: string) =>
+			`Cette transcription est trop longue pour ${model} : environ ${words} mots, alors qu’il en lit environ ${most} à la fois. Choisissez un autre modèle sous Plus de choix.`,
 		more: 'Plus de choix',
 		start: 'Analyser',
 		preparing: 'Préparation de la transcription…',
@@ -2731,6 +2733,8 @@ export const fr: Messages = {
 			'Kalamu donne déjà ce nom aux citations : choisissez-en un autre pour le champ.',
 		'job.cited_needs_text':
 			'Les citations ne se trouvent que dans une transcription ou un texte. Transcrivez ou lisez d’abord ce fichier, puis choisissez Utiliser ce texte.',
+		'job.text_too_long':
+			'Ce texte est trop long pour être lu d’un coup par le modèle choisi. Choisissez un modèle qui en lit davantage.',
 		'cited.not_cited': 'Cette réponse ne contient aucune citation à modifier.',
 		'cited.no_entry': 'Cette entrée ne figure plus dans les réponses. Regardez-les à nouveau.',
 		'cited.no_quotation':

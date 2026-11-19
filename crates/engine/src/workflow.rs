@@ -142,6 +142,12 @@ impl Engine {
                 },
             };
             self.check_new(&catalog, &new).map_err(|e| in_step(i, e))?;
+            // Only the files given have a text to measure yet; an earlier step's is written
+            // when it runs.
+            if step.input == StepInput::Sources {
+                self.check_length(&catalog, &new)
+                    .map_err(|e| in_step(i, e))?;
+            }
             let mut new = new;
             crate::rules::writable_formats(
                 &catalog,

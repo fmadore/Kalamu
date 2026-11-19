@@ -13,9 +13,11 @@ use thiserror::Error;
 use ts_rs::TS;
 
 mod cost;
+mod length;
 mod lineage;
 mod release;
 pub use cost::{CostEstimate, embedding_cost};
+pub use length::{CHARS_PER_TOKEN, CHARS_PER_WORD, TooLong};
 pub use lineage::ModelAlias;
 pub use release::{Release, Version};
 
@@ -187,6 +189,13 @@ pub struct Limits {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub max_output_tokens: Option<u32>,
+    /// The most the model reads in one request, as its provider documents it; where the
+    /// provider documents one window for the request and the answer together, that window.
+    /// A text surely longer is refused before the job starts ([`ModelInfo::too_long`]). `None`
+    /// when the catalogue gives none: nothing is refused, and the provider says so itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub max_input_tokens: Option<u32>,
 }
 
 /// How much a model may think before it answers, in its provider's own words (`low`, `high`…).

@@ -255,5 +255,6 @@ async fn a_plain_text_is_read_in_paragraphs_and_a_scan_is_refused() {
     assert_eq!(f.model.calls(), 1);
 }
 
+mod length;
 mod research;
 mod review;

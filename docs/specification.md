@@ -170,7 +170,14 @@ broken answer. A scan or a recording cannot be analysed this way before it is re
 review each entry is a card; a quotation opens the transcript at its turn and plays the
 recording there. The researcher edits an entry's fields and removes an entry or a quotation,
 as a layer over the model's answer; a quotation's words cannot be changed or added. The
-transcript is read in one request: windows for very long interviews, the researcher's own
+transcript is read in one request. **A transcript too long for the model is said before
+Start**: each analysis model's catalogue entry gives the most it reads at once, and a text whose
+characters over four exceed it (a lenient measure, so only what surely cannot fit is refused)
+is named in place of the cost, *This transcript is too long for Gemma 4 E4B: about 12,000
+words, where it reads about 11,000 at once*, with Start disabled until another model is chosen
+under *More choices*; the engine refuses such a job when it is created, before anything is
+sent, and New job shows that refusal as its other errors. A model the catalogue gives no limit
+is left to its provider's own refusal. Windows for very long interviews, the researcher's own
 themes and quotations added by hand come later. **A research description is kept with a
 prompt.** Under the box, *Keep this for my next interviews* saves what was typed, under a
 name, as a prompt of the researcher's own: the interview prompt with the description. Once

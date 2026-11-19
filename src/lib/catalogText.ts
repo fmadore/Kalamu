@@ -22,3 +22,9 @@ export function providerNameOf(catalog: Catalog, id: string): string {
 	const provider = catalog.providers.find((p) => p.id === id);
 	return provider ? providerName(provider) : id;
 }
+
+/** A model's name by its provider and id, or the id when the catalogue does not list it. */
+export function modelNameOf(catalog: Catalog, provider: string, id: string): string {
+	const model = catalog.models.find((m) => m.provider === provider && m.id === id);
+	return model?.translations?.[locale()]?.name ?? model?.name ?? id;
+}

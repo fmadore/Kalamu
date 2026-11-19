@@ -76,8 +76,9 @@ window of 640 × 560, the release line hidden; and records (`e2e/records.spec.ts
 turned into one row per entry, a page's rows corrected, added, removed and reviewed; and an
 interview analysed (`e2e/interview-analysis.spec.ts`): its dialog's one box and one button, its
 cards, a quotation played or shown in the text, removed and put back, a description of the
-research kept as a prompt and chosen again. They start the dev server on port 5173, or reuse
-one already there; `KALAMU_E2E_PORT=5291` picks another, for two checkouts tested side by side.
+research kept as a prompt and chosen again, a transcript too long for the model chosen. They
+start the dev server on port 5173, or reuse one already there; `KALAMU_E2E_PORT=5291` picks
+another, for two checkouts tested side by side.
 
 `cargo test` also regenerates the TypeScript types in `src/lib/bindings/` from the Rust
 definitions; commit them with the Rust change. Exporters are checked against golden files in
@@ -120,6 +121,7 @@ parameters open a given state:
 | `interview-gone`, `interview-two` | With `review-interview`: the transcript it came from is gone, so quotations are shown in the text; or a second set-up answers beside the first |
 | `view=jobs-audio` | Opens the page of a transcription, whose Use this text offers Analyse this interview |
 | `research` | With `jobs-audio`: two descriptions of research are already kept as prompts, so Analyse this interview offers them above its box |
+| `interview-long` | With `jobs-audio`: the transcript is some 100,000 words long, so Analyse this interview says it is too long for a model on the computer chosen under More choices |
 | `reading-slow` | A region read again answers after a minute rather than at once, to try Stop |
 | `view=prompts-analysis` | Opens Prompts on an analysis, with its field editor |
 | `view=projects`, `project`, `document` | Opens the list of projects, a sample project, or one of its documents |

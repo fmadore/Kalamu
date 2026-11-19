@@ -2853,6 +2853,7 @@ dependencies = [
  "kalamu-core",
  "kalamu-export",
  "kalamu-media",
+ "kalamu-offline",
  "kalamu-projects",
  "kalamu-prompts",
  "kalamu-search",

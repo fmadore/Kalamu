@@ -45,6 +45,7 @@ impl Engine {
         }
         let catalog = self.current_catalog();
         self.check_new(&catalog, &new)?;
+        self.check_length(&catalog, &new)?;
         crate::rules::writable_formats(&catalog, new.task, &new.setups, &mut new.output.formats);
         let setups = self.freeze_setups(&catalog, new.task, &new.settings, &new.setups)?;
         self.insert_job(

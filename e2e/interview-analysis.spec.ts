@@ -6,7 +6,8 @@
 // saying what was left out; and the same in French. A description of the research kept for the
 // next interviews: not offered on first use, saved as a prompt of the researcher's own that
 // Prompts lists and the dialog offers again, chosen to start the job with its prompt, written
-// in Prompts as well; and in French.
+// in Prompts as well; and in French. A transcript too long for the model chosen: said in place of
+// the cost, Start disabled until another model is chosen; and in French.
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import type { NewJob } from '../src/lib/bindings/NewJob.js';
@@ -89,6 +90,59 @@ test('the dialog asks one question with one button, and starts the job with it',
 	await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toContainText(
 		'atelier-mariam-2024'
 	);
+});
+
+/** Opens the dialog on the sample transcript made too long for the models on this computer. */
+async function longInterview(page: Page, useText: string): Promise<Locator> {
+	await open(page, 'jobs-audio&interview-long');
+	await page.getByRole('main').locator('summary', { hasText: useText }).click();
+	await page.getByRole('button', { name: /Analyse this interview|Analyser cet entretien/ }).click();
+	return page.getByRole('dialog');
+}
+
+/** Chooses a model under More choices, opened, from the menu of models. */
+async function chooseModel(dialog: Locator, label: string, name: RegExp): Promise<void> {
+	await dialog.getByRole('combobox', { name: new RegExp(`^${label}`) }).click();
+	await dialog.page().getByRole('option', { name }).click();
+}
+
+test('a transcript too long for the model chosen is said in place of the cost, and Start waits', async ({
+	page
+}) => {
+	const dialog = await longInterview(page, 'Use this text in a new job');
+	const start = dialog.getByRole('button', { name: 'Analyse', exact: true });
+	// The default model reads it all: nothing new on the way.
+	await expect(dialog.getByText(/^Estimated cost: /)).toBeVisible();
+	await expect(dialog.getByRole('alert')).toHaveCount(0);
+	await expect(start).toBeEnabled();
+
+	await dialog.locator('details.more summary').click();
+	await chooseModel(dialog, 'Model', /^Gemma 4 E4B/);
+	await expect(dialog.getByRole('alert')).toHaveText(
+		'This transcript is too long for Gemma 4 E4B: about 100,000 words, where it reads about 11,000 at once. Choose another model under More choices.'
+	);
+	await expect(dialog.getByText(/^Estimated cost: /)).toHaveCount(0);
+	await expect(start).toBeDisabled();
+
+	// Another model clears it.
+	await chooseModel(dialog, 'Model', /^Gemini 4 Hydrogen/);
+	await expect(dialog.getByRole('alert')).toHaveCount(0);
+	await expect(dialog.getByText(/^Estimated cost: /)).toBeVisible();
+	await expect(start).toBeEnabled();
+});
+
+test.describe('a transcript too long in French', () => {
+	test.use({ locale: 'fr-FR' });
+
+	test('the sentence speaks French, its numbers written the French way', async ({ page }) => {
+		const dialog = await longInterview(page, 'Utiliser ce texte dans un nouveau traitement');
+		await dialog.locator('details.more summary').click();
+		await chooseModel(dialog, 'Modèle', /^Gemma 4 E4B/);
+		await expect(dialog.getByRole('alert')).toHaveText(
+			/^Cette transcription est trop longue pour Gemma 4 E4B : environ 100\s000 mots, alors qu’il en lit environ 11\s000 à la fois\. Choisissez un autre modèle sous Plus de choix\.$/
+		);
+		await expect(dialog.getByRole('button', { name: 'Analyser', exact: true })).toBeDisabled();
+	});
 });
 
 test('each theme is a card of quotations with who speaks and when, and what was left out', async ({
