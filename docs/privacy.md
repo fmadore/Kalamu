@@ -1,6 +1,10 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 18 November 2026, which applies from the first version to offer a search
+**Effective date:** 19 November 2026, which applies from the first version to analyse an
+interview from its transcript, for which the transcript's text, its speakers' names and times,
+and the sentence the user writes about their research are sent to the provider of the model
+chosen, or to no one with a model run on the computer. The policy of 18 November 2026 did
+not say so; it applies from the first version to offer a search
 by meaning and a map of a project's documents, for which the text of the project's documents
 and each question typed are sent to a provider the user chooses and agrees to, or to no one
 with a model run on the computer, and to send a passage selected in the review to a model
@@ -166,6 +170,17 @@ of the document is sent, and with a model run on the computer nothing is sent at
 moving or removing a region sends nothing. The request (the region's place on the page, the
 model, the prompt), the model's reading, its cost and whether it was used are kept in the job
 database with the job.
+
+### An interview analysed from its transcript
+
+When the user chooses *Analyse this interview*, the transcript as they left it (corrections
+and speakers' names included) is sent to the provider of the model chosen, cut into numbered
+turns, each with its speaker's name and its time in the recording, together with the sentence
+the user wrote about their research and the analysis prompt, after the same question about
+that provider as for a job. The recording itself is not sent. With a model run on the computer
+nothing is sent. The quotations a model returns are looked for in the transcript on the
+computer; those not found are discarded. The sentence, the answers and the quotations kept are
+stored in the job database with the job.
 
 ## What the app keeps on the computer
 

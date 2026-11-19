@@ -515,6 +515,13 @@ to run on the computer itself.
   Home and End in a name's menu and an empty reading's spaces are done too.
 - **What 15 November added**: the text regions on real Tesseract and Mistral OCR pages, with a
   trackpad and a screen reader; a records job on a real directory and register.
+- **Interview analysis, first slice**
+  ([decision](decisions/2026-11-19-interview-analysis-design.md)), to try on both systems
+  and with live providers, which no run has done: an hour's interview analysed by each
+  provider's default model and by a model on the computer, how many quotations each gives
+  that are not in the transcript, and whether the themes are of use; a transcript in a
+  language written from right to left; a quotation played from a recording cut into pieces;
+  and the one box and one button tried by someone who has never used the app.
 - **What the evening of 18 November added**
   ([decision](decisions/2026-11-18-drawn-regions-region-read-again.md)), to try on both
   systems: a region drawn, moved and resized with a mouse, a trackpad, a touch screen and the

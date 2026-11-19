@@ -157,6 +157,33 @@ model's where there are any.
   named it, a `<field> (reason)` column after each field that asks for a reason, then
   `corrected` and `reviewed`. List items are joined with semicolons.
 
+### An analysis that quotes its text
+
+An analysis whose fields include entries that quote the text (the default *Interview: themes
+and quotations*) keeps, for each quotation, where Kalamu found it in the text it read. Only
+quotations found word for word are written; the researcher's removals are applied.
+
+- **Markdown** is a memo: each field under a `##` heading; an entry with several fields has
+  its first as a `###` heading and the others below, then its quotations as block quotes that
+  end with `> — Speaker, [hh:mm:ss]` (the turn's speaker and the time the turn starts, when the
+  text has them). A field from which quotations were left out ends with a line in italics
+  saying how many. Text and Word write each quotation on a line, `"…" (Speaker, hh:mm:ss)`.
+- **JSON** gives such a field as `{ "entries": [{ "answers": [{ "key", "value" }], "evidence":
+  [{ "anchor": { "part", "start", "end" }, "quote", "turn", "speaker", "start_ms", "end_ms" }]
+  }], "left_out", "dropped" }`. `start` and `end` count characters (Unicode scalar values, not
+  bytes or UTF-16 units) in the text read, whose identifier and SHA-256 are in a top-level
+  `"snapshot": { "id", "sha256" }`, written only for these analyses; `part` is the piece of
+  that text, from 0; `turn` counts from 1; `quote` is the text's own characters, never the
+  model's copy. `left_out` counts the quotations a model gave that were found nowhere,
+  `dropped` the entries left with none.
+- **CSV**: the analysis's own file keeps one row per document, the field's column holding its
+  entries' names joined with semicolons. Beside it, `<name>.analysis.quotations.csv` has one
+  row per quotation: `file`, `field`, `entry` (the entry's first field), `speaker`, `start`,
+  `end` (`hh:mm:ss`, or empty), `quotation`, `turn`. Cells that a spreadsheet would read as a
+  formula are guarded, as in every table Kalamu writes.
+- **`provenance.json`** adds `cited`: for each such field, the quotations checked, those left
+  out and the entries left out; `source.derived_from` names the text read.
+
 ### Records
 
 An analysis whose fields are one repeating group (*One row per entry*) is read page by page,
