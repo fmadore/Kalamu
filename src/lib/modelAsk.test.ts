@@ -264,6 +264,31 @@ describe('a request to a model from the review', () => {
 		expect(r.error).toBe('disk full');
 	});
 
+	it('stops the wait on Escape and stays open, and closes on the next', async () => {
+		const { r, done } = request();
+		let closed = 0;
+		let answer: (a: ReturnType<typeof answered>) => void = () => undefined;
+		let asked = '';
+		const asking = r.ask({
+			provider: 'google',
+			modelName: 'Gemini',
+			remember: () => undefined,
+			send: (id) => {
+				asked = id;
+				return new Promise((resolve) => (answer = resolve));
+			},
+			base: null
+		});
+		await vi.waitFor(() => expect(r.stage).toBe('waiting'));
+		r.escape(() => closed++);
+		expect(closed).toBe(0);
+		expect(done.cancelled).toEqual([asked]);
+		answer(answered(asked, 'new words'));
+		await asking;
+		r.escape(() => closed++);
+		expect(closed).toBe(1);
+	});
+
 	it('leaves an answer unused when discarded, and closes', async () => {
 		const { r, done } = request();
 		let closed = 0;

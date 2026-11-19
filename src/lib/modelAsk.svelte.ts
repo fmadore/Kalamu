@@ -272,6 +272,16 @@ export class ModelRequest<A extends Answered, B> {
 		}
 	}
 
+	/**
+	 * What Escape does: while a model answers it stops the wait and the dialog stays, as the Stop
+	 * button does, so that what was stopped and what it may still cost is read; otherwise it closes,
+	 * leaving an answer unused.
+	 */
+	escape(onclose: () => void): void {
+		if (this.stage === 'waiting') this.stop();
+		else this.discard(onclose);
+	}
+
 	/** Leaves the answer unused, and closes. */
 	discard(onclose: () => void): void {
 		if (this.answer) void this.#calls.discard(this.answer.ask.id).catch(() => undefined);

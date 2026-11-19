@@ -31,6 +31,7 @@ describe('model tiers', () => {
 		// Within a tier, each provider in the order given, its models in the catalogue's order.
 		expect(ids(groups[0].models)).toEqual([
 			'gemini-4-carbon',
+			'gemini-4-neon',
 			'gemini-4-argon',
 			'gemini-3.1-pro-preview',
 			'claude-fable-5-2',

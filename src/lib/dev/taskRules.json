@@ -42,6 +42,13 @@
       },
       {
         "provider": "gemini",
+        "model": "gemini-4-neon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
         "model": "gemini-4-argon",
         "suggested_reasoning": "low",
         "recommended": false,
@@ -210,6 +217,13 @@
       {
         "provider": "gemini",
         "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-4-neon",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
@@ -423,6 +437,13 @@
       },
       {
         "provider": "gemini",
+        "model": "gemini-4-neon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
         "model": "gemini-4-argon",
         "suggested_reasoning": "low",
         "recommended": false,
@@ -623,6 +644,13 @@
       {
         "provider": "gemini",
         "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-4-neon",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
@@ -839,6 +867,13 @@
       },
       {
         "provider": "gemini",
+        "model": "gemini-4-neon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
         "model": "gemini-4-argon",
         "suggested_reasoning": "low",
         "recommended": false,
@@ -1000,6 +1035,13 @@
       {
         "provider": "gemini",
         "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-4-neon",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false
@@ -1213,6 +1255,13 @@
       {
         "provider": "gemini",
         "model": "gemini-4-carbon",
+        "suggested_reasoning": "low",
+        "recommended": false,
+        "provider_default": false
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-4-neon",
         "suggested_reasoning": "low",
         "recommended": false,
         "provider_default": false

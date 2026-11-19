@@ -122,15 +122,9 @@
 			base: around.passage
 		});
 	}
-
-	function escape() {
-		if (request.stage === 'waiting') request.stop();
-		if (request.stage === 'answer' || request.stage === 'changed') request.discard(onclose);
-		else onclose();
-	}
 </script>
 
-<Dialog labelledby="passage-title" size="medium" onescape={escape}>
+<Dialog labelledby="passage-title" size="medium" onescape={() => request.escape(onclose)}>
 	<h2 id="passage-title">{p.title}</h2>
 
 	<figure class="sent">
