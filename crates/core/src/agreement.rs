@@ -183,7 +183,7 @@ fn measure(kind: &FieldKind) -> Option<AgreementMeasure> {
     match kind {
         FieldKind::Choice { .. } => Some(AgreementMeasure::Choice),
         FieldKind::List { .. } | FieldKind::Choices { .. } => Some(AgreementMeasure::Overlap),
-        FieldKind::Text | FieldKind::Entries { .. } => None,
+        FieldKind::Text | FieldKind::Entries { .. } | FieldKind::Cited { .. } => None,
     }
 }
 

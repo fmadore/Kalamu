@@ -22,8 +22,9 @@
 	} = $props();
 	const m = messages();
 
-	/** The kinds a researcher picks from; a repeating group is chosen by the switch above. */
-	type Kind = Exclude<FieldKind['type'], 'entries'>;
+	/** The kinds a researcher picks from; a repeating group is chosen by the switch above, and
+	 * entries that cite the text come with a preset, not from this list. */
+	type Kind = Exclude<FieldKind['type'], 'entries' | 'cited'>;
 	const kinds: Kind[] = ['text', 'list', 'choice', 'choices'];
 
 	/** The repeating group, when the analysis gives one row per entry. */

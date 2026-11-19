@@ -351,6 +351,14 @@ fn values(kind: Option<&FieldKind>, value: &FieldValue) -> Option<BTreeSet<Strin
                 .filter_map(|e| e.first().map(|a| norm(&a.value.joined())))
                 .collect(),
         ),
+        // Entries that cite the text by their first field (a theme's name), as a group's.
+        (_, FieldValue::Cited(cited)) => Some(
+            cited
+                .entries
+                .iter()
+                .filter_map(|e| e.answers.first().map(|a| norm(&a.value.joined())))
+                .collect(),
+        ),
     }
 }
 

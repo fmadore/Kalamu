@@ -5,4 +5,8 @@ export type FieldKind = { "type": "text" } | { "type": "list",
 /**
  * At most this many, the most important first.
  */
-max: number | null, } | { "type": "choice", values: Array<string>, } | { "type": "choices", values: Array<string>, } | { "type": "entries", fields: Array<Field>, };
+max: number | null, } | { "type": "choice", values: Array<string>, } | { "type": "choices", values: Array<string>, } | { "type": "entries", fields: Array<Field>, } | { "type": "cited", fields: Array<Field>, 
+/**
+ * At most this many entries, the most important first.
+ */
+max: number | null, };

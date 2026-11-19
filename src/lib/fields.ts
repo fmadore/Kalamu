@@ -13,7 +13,7 @@ export function toDraft(fields: Field[], answers: FieldAnswer[]): Draft {
 		const value = answers.find((a) => a.key === f.key)?.value ?? '';
 		const items = Array.isArray(value)
 			? (value as unknown[]).filter((v): v is string => typeof v === 'string')
-			: value
+			: typeof value === 'string' && value
 				? [value]
 				: [];
 		draft[f.key] =

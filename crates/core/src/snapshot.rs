@@ -13,6 +13,7 @@ use ts_rs::TS;
 
 use crate::{JobId, PieceRef, Segment, SetupId, SourceId, Task, Timestamp};
 
+pub mod forgiving;
 mod turns;
 pub use turns::{Turn, turn_of, turn_text};
 
@@ -209,8 +210,33 @@ pub enum AnchorError {
     Mismatch,
 }
 
+/// The turns of a text already put together, read again part by part as [`build_with_turns`]
+/// reads them when no part has timed segments: for a snapshot taken before turns were kept,
+/// and for a plain text file (one part, [`PieceRef::Whole`], read in paragraphs).
+pub fn turns_of(task: Task, text: &str, parts: &[SnapshotPart]) -> Vec<Turn> {
+    parts
+        .iter()
+        .filter_map(|part| {
+            let own = slice(text, part.start, part.end)?;
+            Some(turns::of_part(task, &part.piece, own, &[], part.start))
+        })
+        .flatten()
+        .collect()
+}
+
+/// A plain text as a snapshot holds one: its end trimmed, one part for the whole of it.
+pub fn plain(text: &str) -> (String, Vec<SnapshotPart>) {
+    build(&[PartText {
+        piece: &PieceRef::Whole,
+        text,
+        reviewed: false,
+        corrected: false,
+        failed: false,
+    }])
+}
+
 /// Characters `start..end` of `text`, or `None` past its end.
-fn slice(text: &str, start: u32, end: u32) -> Option<&str> {
+pub(crate) fn slice(text: &str, start: u32, end: u32) -> Option<&str> {
     let mut indices = text.char_indices().map(|(i, _)| i).chain([text.len()]);
     let from = indices.nth(start as usize)?;
     let to = if end == start {
