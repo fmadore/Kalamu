@@ -137,8 +137,11 @@ test('each row shows its answer, reason and passages, kept or set aside by keybo
 	// Keep reached from the keyboard: the button before it, then Tab, then Enter.
 	const keep = row.getByRole('button', { name: 'Keep “Bulletin, May 1957”' });
 	await row.getByRole('button', { name: 'Bulletin, May 1957', exact: true }).focus();
+	// On macOS, WebKit's Tab stops at fields only unless the system's keyboard navigation is on,
+	// and Option+Tab stops at every control, buttons included.
+	const mac = await page.evaluate(() => /Macintosh|Mac OS X/.test(navigator.userAgent));
 	for (let i = 0; i < 6 && !(await keep.evaluate((b) => b === document.activeElement)); i++)
-		await page.keyboard.press('Tab');
+		await page.keyboard.press(mac ? 'Alt+Tab' : 'Tab');
 	await expect(keep).toBeFocused();
 	await page.keyboard.press('Enter');
 	await expect(page.getByText('1 document tagged “Kept”')).toBeVisible();
