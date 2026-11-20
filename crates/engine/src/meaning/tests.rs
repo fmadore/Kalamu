@@ -164,6 +164,7 @@ fn project_with_pages(store: &SqliteStore, pages: usize) -> ProjectId {
         options: SetupOptions::default(),
         merge: None,
         pages_cap: None,
+        windows: None,
     };
     let job = Job {
         id: JobId::new(),

@@ -28,12 +28,24 @@ impl ModelInfo {
     /// over four exceed the most the model reads. A model the catalogue gives no limit is never
     /// refused.
     pub fn too_long(&self, text: &str) -> Option<TooLong> {
-        let most = u64::from(self.limits.max_input_tokens?) * CHARS_PER_TOKEN;
-        let chars = text.chars().count() as u64;
+        self.too_long_chars(text.chars().count() as u64)
+    }
+
+    /// [`ModelInfo::too_long`] for a text of `chars` characters.
+    pub fn too_long_chars(&self, chars: u64) -> Option<TooLong> {
+        let most = self.most_chars()?;
         (chars > most).then(|| TooLong {
             words: words(round(chars.div_ceil(CHARS_PER_WORD), true)),
             most_words: words(round(most / CHARS_PER_WORD, false)),
         })
+    }
+}
+
+impl ModelInfo {
+    /// The most characters the model reads in one request, by the same measure; `None` for a
+    /// model the catalogue gives no limit.
+    pub fn most_chars(&self) -> Option<u64> {
+        Some(u64::from(self.limits.max_input_tokens?) * CHARS_PER_TOKEN)
     }
 }
 

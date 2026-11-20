@@ -3,6 +3,7 @@ import type { PromptSnapshot } from "./PromptSnapshot";
 import type { ProviderId } from "./ProviderId";
 
 /**
- * A table of contents' second step: one call per document, over the first step's readings.
+ * A second step, one call per document over the first step's answers: a table of contents'
+ * pages combined into entries, or a long text's parts brought together.
  */
 export type MergeStep = { provider: ProviderId, model: string, prompt: PromptSnapshot, };

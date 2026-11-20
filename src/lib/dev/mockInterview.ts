@@ -3,8 +3,10 @@
 // times, frozen and read for its themes, keywords and quotations, each quotation placed in the
 // frozen text in characters as the engine places it. `interview-gone` makes the recording
 // unreachable, so quotations are shown in the text instead; `interview-two` adds a second
-// set-up; `interview-long` makes the transcript some 100,000 words long, too long for the models
-// run on this computer. Development builds only.
+// set-up; `interview-long` makes the transcript some 100,000 words long, read in parts by the
+// models run on this computer, and `interview-unbroken` one turn of that length, too long for
+// them even so; `interview-parts` shows the analysis as one read in three parts, the last of
+// which could not be read. Development builds only.
 
 import type { Catalog } from '../bindings/Catalog.js';
 import type { CitedEdit } from '../bindings/CitedEdit.js';
@@ -288,6 +290,24 @@ const answers = (i: number): FieldAnswer[] => [
 	{ key: 'quotations', value: quotations }
 ];
 
+const inParts = () => new URLSearchParams(location.search).has('interview-parts');
+
+/** The three parts of `interview-parts`, the last not read. */
+const PARTS: [number, number][] = [
+	[1, 5],
+	[4, 9],
+	[8, 13]
+];
+const partPieces = (): PieceView[] =>
+	PARTS.map(([first, last], i) => ({
+		...interviewPieces[0],
+		index: i,
+		piece: { kind: 'turns' as const, number: i + 1, first, last },
+		status: i === 2 ? ('failed' as const) : ('done' as const),
+		error: i === 2 ? 'The provider is overloaded. Try again later.' : null,
+		ai_fields: i === 2 ? [] : interviewPieces[0].ai_fields
+	}));
+
 export const interviewPieces: PieceView[] = [0, 1].map((i) => ({
 	setup_id: interviewSetup(i).id,
 	source_id: frozen.id,
@@ -401,26 +421,32 @@ const roundDown = (n: number) => {
 };
 
 /** What the estimate says of an interview's set-up with `interview-long`, as the engine measures
- * it: the transcript too long for a model that reads less than its four characters a token. */
-export function interviewTooLong(
+ * it: read in parts by a model that reads less than its four characters a token, a part at most
+ * seven tenths of what it reads; with `interview-unbroken`, one turn too long for it even so. */
+export function interviewLength(
 	request: EstimateRequest,
 	setup: SetupRequest,
 	catalog: Catalog
-): TextTooLong | undefined {
-	if (!new URLSearchParams(location.search).has('interview-long')) return undefined;
+): { too_long?: TextTooLong; parts?: number } {
+	const search = new URLSearchParams(location.search);
+	if (!search.has('interview-long')) return {};
 	const preset = setup.preset_id ?? '';
 	if (
 		request.task !== 'analysis' ||
 		!(preset === 'analysis.interview' || preset.startsWith('user-'))
 	)
-		return undefined;
+		return {};
 	const limit = catalog.models.find((m) => m.provider === setup.provider && m.id === setup.model)
 		?.limits.max_input_tokens;
-	if (limit === undefined || LONG_CHARS <= limit * 4) return undefined;
+	if (limit === undefined || LONG_CHARS <= limit * 4) return {};
+	if (!search.has('interview-unbroken'))
+		return { parts: Math.ceil(LONG_CHARS / Math.floor(limit * 4 * 0.7)) };
 	return {
-		file: request.sources[0]?.file_name ?? '',
-		words: 100_000,
-		most_words: roundDown(Math.floor((limit * 4) / 6))
+		too_long: {
+			file: request.sources[0]?.file_name ?? '',
+			words: 100_000,
+			most_words: roundDown(Math.floor((limit * 4) / 6))
+		}
 	};
 }
 
@@ -441,7 +467,9 @@ export function interviewCommand(cmd: string, a: Record<string, unknown>): unkno
 			return undefined;
 		case 'source_pieces':
 			if (a.jobId === TRANSCRIPT_JOB) return transcriptPieces();
-			return mine ? interviewPieces.slice(0, two() ? 2 : 1) : undefined;
+			if (!mine) return undefined;
+			if (inParts()) return [...partPieces(), { ...interviewPieces[0], index: PARTS.length }];
+			return interviewPieces.slice(0, two() ? 2 : 1);
 		case 'source_text':
 			return mine ? interviewText : undefined;
 		case 'cited_source':
@@ -462,6 +490,8 @@ export function interviewCommand(cmd: string, a: Record<string, unknown>): unkno
 					freshness: new URLSearchParams(location.search).has('interview-gone') ? 'gone' : 'current'
 				}
 			];
+		case 'retry_failed':
+			return mine ? null : undefined;
 		case 'edit_cited': {
 			if (!mine) return undefined;
 			const piece = interviewPieces.find((p) => p.setup_id === a.setupId);

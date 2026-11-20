@@ -5,6 +5,7 @@
 //! resetting deletes the override. User presets are one JSON file each in the presets folder.
 
 mod beside;
+mod consolidation;
 mod defaults;
 mod dictionary;
 mod folder;
@@ -17,6 +18,7 @@ mod workflow_file;
 mod workflows;
 
 pub use beside::markdown_beside;
+pub use consolidation::CONSOLIDATION_REQUEST;
 pub use dictionary::DICTIONARY_MERGES;
 pub use pipelines::{Pipeline, PipelineLibrary};
 pub use profiles::{ProfileFile, ProfileLibrary};

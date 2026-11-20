@@ -32,6 +32,10 @@ impl Engine {
         // holds their answers, never their texts.
         let mut answers: HashMap<(SourceId, u32), Vec<Option<Vec<FieldAnswer>>>> = HashMap::new();
         for piece in self.store.pieces(job.id)? {
+            // A long text's parts stand behind the whole that brought them together.
+            if piece.piece.is_window() {
+                continue;
+            }
             let Some(&at) = position.get(&piece.setup_id) else {
                 continue;
             };

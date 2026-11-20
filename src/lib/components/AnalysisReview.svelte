@@ -36,12 +36,15 @@
 	import { clearFound, markFound } from '#lib/found.js';
 	import { choiceLabel, messages } from '#lib/i18n/index.js';
 	import { ListedNames } from '#lib/listedNames.svelte.js';
+	import { partsOf, wholeView } from '#lib/parts.js';
 	import { pieceCost } from '#lib/pieces.js';
 	import { groupOf } from '#lib/records.js';
 	import { ownRegions } from '#lib/regions.svelte.js';
 	import { Review } from '#lib/review.svelte.js';
+	import { describeError } from '#lib/errors.js';
 	import { find, searchable } from '#lib/search.js';
-	import { guardDraft, type ReviewFind } from '#lib/state.svelte.js';
+	import { api } from '#lib/tauri.js';
+	import { guardDraft, toast, type ReviewFind } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
@@ -72,7 +75,9 @@
 	/** Records: rows page by page, reviewed in their own table. */
 	const records = $derived(groupOf(setups[0]?.prompt.schema) !== null);
 	const pages = $derived(source?.kind === 'pdf' ? (source.page_count ?? 1) : 1);
-	const viewOf = (s: Setup | undefined) => review.views.find((v) => v.setup_id === s?.id);
+	/** A set-up's answers: those of the step that brought a long interview's parts together, or
+	 * the document's one piece. */
+	const viewOf = (s: Setup | undefined) => wholeView(review.views, s?.id);
 	const answersOf = (v: PieceView | undefined): FieldAnswer[] =>
 		v?.corrected_fields ?? v?.ai_fields ?? [];
 	const lead = $derived(viewOf(setups[0]));
@@ -141,7 +146,8 @@
 	}
 
 	async function save(setup: Setup, answers: FieldAnswer[] | null, reviewed: boolean) {
-		if (await review.save({ setup, index: 0, fields: answers, reviewed })) editing = null;
+		const index = viewOf(setup)?.index ?? 0;
+		if (await review.save({ setup, index, fields: answers, reviewed })) editing = null;
 	}
 
 	/** The names of the list answers: their menu, their tab stops, and what changes them. */
@@ -156,6 +162,21 @@
 	/** The answers that quote the text: the text read, where each quotation plays, and what
 	 * changes them. */
 	const cited = new CitedAnswers(review, () => answersPane);
+
+	/** A long interview read in parts: how many, and those that could not be read. */
+	const parts = $derived(partsOf(review.views, setups[0]?.id, cited.source?.turns));
+	let retrying = $state(false);
+	async function readAgain() {
+		retrying = true;
+		try {
+			await api.retryFailed(jobId);
+			toast(m.cited.readingAgain);
+		} catch (e) {
+			review.error = describeError(e, m);
+		} finally {
+			retrying = false;
+		}
+	}
 
 	function toggleReviewed() {
 		const first = setups[0];
@@ -296,6 +317,22 @@
 		{:else if lead.status === 'failed'}
 			<p class="error">{lead.error}</p>
 		{:else}
+			{#if parts}
+				<div class="parts" role="note">
+					<p>{m.cited.readInParts(parts.count)}</p>
+					{#each parts.unread as part (part.number)}
+						<p class="unread">
+							{m.cited.partNotRead(part.from, part.to, part.first, part.last)}
+							{#if part.error}<span class="why">{part.error}</span>{/if}
+						</p>
+					{/each}
+					{#if parts.unread.length > 0}
+						<button class="btn sm" disabled={retrying} onclick={readAgain}
+							>{m.cited.readAgain}</button
+						>
+					{/if}
+				</div>
+			{/if}
 			{#if shown.length === 0}<p class="muted">{m.review.noAnswerFound}</p>{/if}
 			{#each shown as f (f.key)}
 				{@const readings = collate(f.key, witnesses)}
@@ -419,5 +456,25 @@
 	.none {
 		font-family: var(--font-ui);
 		font-size: var(--type-sm);
+	}
+	/* How a long interview was read: one quiet line, and a notice for a part not read. */
+	.parts {
+		display: grid;
+		gap: var(--space-2);
+		justify-items: start;
+		padding-bottom: var(--space-3);
+		font-size: var(--type-sm);
+		color: var(--text-secondary);
+	}
+	.parts .unread {
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-control);
+		background: var(--warn-wash);
+		color: var(--warn-text);
+	}
+	.parts .why {
+		display: block;
+		font-family: var(--font-mono);
+		font-size: var(--type-xs);
 	}
 </style>

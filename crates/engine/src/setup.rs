@@ -154,7 +154,7 @@ impl Engine {
             // words cost nothing twice whichever way they came.
             let mut options = with_preset_question(task, &request.options, &preset);
             let merge = if task == Task::Contents {
-                Some(self.merge_step(catalog, settings, request, preset)?)
+                Some(self.merge_step(catalog, settings, request, preset.clone())?)
             } else {
                 None
             };
@@ -169,6 +169,20 @@ impl Engine {
                     (model.vocabulary && !terms.is_empty()).then(|| terms.join("\n"));
                 options.translate &= model.translates;
             }
+            // An analysis that cites the text reads one too long for its model in parts, then
+            // brings them together on the same model: settled now from the catalogue's limit,
+            // used only for a text that does not fit.
+            let windows = (task == Task::Analysis)
+                .then(|| catalog.model(&request.provider, &request.model))
+                .flatten()
+                .and_then(crate::windows::windows_for);
+            let together = windows
+                .and_then(|_| {
+                    preset.consolidation_snapshot(&Self::render_context(
+                        catalog, task, settings, &options,
+                    ))
+                })
+                .filter(|_| prompt.preset_id.is_some());
             let mut setup = Setup {
                 id: SetupId::new(),
                 label,
@@ -181,7 +195,17 @@ impl Engine {
                 options,
                 merge,
                 pages_cap: None,
+                windows: None,
             };
+            if let Some(mut step) = together {
+                step.user_prompt = setup.options.with_question(&step.user_prompt);
+                setup.merge = Some(MergeStep {
+                    provider: setup.provider.clone(),
+                    model: setup.model.clone(),
+                    prompt: step,
+                });
+                setup.windows = windows;
+            }
             // Settled now, as the reasoning level is, so a catalogue refreshed before the job
             // resumes never regroups pages already read.
             let several = !matches!(settings.pages_per_call, None | Some(PagesPerCall::One));

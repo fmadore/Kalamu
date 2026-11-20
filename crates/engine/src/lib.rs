@@ -38,6 +38,7 @@ mod sample;
 mod setup;
 mod snapshot;
 mod units;
+mod windows;
 mod workflow;
 
 use std::collections::HashMap;

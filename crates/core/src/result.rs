@@ -41,6 +41,11 @@ pub enum PieceRef {
     /// One stretch of a text file with no pages, cut at paragraph breaks, numbered from 1:
     /// what a correction of a long text file is sent in.
     Passage { number: u32 },
+    /// One part of a text too long for its model to read at once, cut at whole turns
+    /// (`number` from 1; `first` and `last`, inclusive, are the turns' numbers from 1, as the
+    /// model is sent them): what a long interview is read in before its parts are brought
+    /// together (`Whole`, after them).
+    Turns { number: u32, first: u32, last: u32 },
 }
 
 impl PieceRef {
@@ -63,6 +68,7 @@ impl PieceRef {
             Self::Segment { start_ms, .. } => clock(*start_ms),
             Self::Whole => String::new(),
             Self::Passage { number } => format!("§{number}"),
+            Self::Turns { first, last, .. } => format!("turns {first}–{last}"),
         }
     }
 
@@ -81,7 +87,19 @@ impl PieceRef {
             } => format!("segment:{index}:{start_ms}-{end_ms}"),
             Self::Whole => "whole".to_string(),
             Self::Passage { number } => format!("passage:{number}"),
+            Self::Turns {
+                number,
+                first,
+                last,
+            } => format!("turns:{number}:{first}-{last}"),
         }
+    }
+
+    /// Whether the piece is one part of a long text read on the way to the whole: its answer is
+    /// kept only through the step that brings the parts together (`Whole`), which stands for
+    /// the document in reviews, exports, searches and the dictionary.
+    pub fn is_window(&self) -> bool {
+        matches!(self, Self::Turns { .. })
     }
 }
 

@@ -143,7 +143,10 @@ export const en = {
 		keep: 'Keep this for my next interviews',
 		keptName: 'Name',
 		keptHint: 'You can change or delete it in Prompts.',
-		openPrompts: 'Open Prompts'
+		openPrompts: 'Open Prompts',
+		/** Said beside the cost when the transcript is too long to be read at once. */
+		inParts: (n: number) =>
+			`This interview is long: it will be read in ${n} parts, then brought together.`
 	},
 	/** "Which of these speak of my question?": a project's documents read against one question,
 	 *  then filtered by the answer and kept or set aside by the researcher. */
@@ -216,7 +219,19 @@ export const en = {
 				? '1 entry was left out: none of its quotations was found in the text.'
 				: `${n} entries were left out: none of their quotations was found in the text.`,
 		/** In the editor of the other answers, where quotations are not changed. */
-		inCards: 'Themes and quotations are changed in their cards, outside this editor.'
+		inCards: 'Themes and quotations are changed in their cards, outside this editor.',
+		/** Above the answers of a long interview read in parts. */
+		readInParts: (n: number) =>
+			`This interview was long: it was read in ${n} parts, then brought together.`,
+		/** A part that could not be read, by its minutes when the transcript has times. */
+		partNotRead: (from: string | null, to: string | null, first: number, last: number) =>
+			from && to
+				? `The part from ${from} to ${to} could not be read: its themes and quotations are missing.`
+				: from
+					? `The part from ${from} to the end could not be read: its themes and quotations are missing.`
+					: `Turns ${first} to ${last} could not be read: their themes and quotations are missing.`,
+		readAgain: 'Read it again',
+		readingAgain: 'The part is being read again.'
 	},
 	units: {
 		tab: 'Items',
@@ -1752,6 +1767,7 @@ export const en = {
 			`Page ${n}, ${half === 'left' ? 'left' : 'right'} half`,
 		pageHalfShort: (n: number, half: 'left' | 'right') => `${n}${half === 'left' ? 'l' : 'r'}`,
 		passage: (n: number) => `Passage ${n}`,
+		turns: (n: number, first: number, last: number) => `Part ${n} (turns ${first}–${last})`,
 		segment: (label: string) => `From ${label}`,
 		document: 'Whole document',
 		video: 'Whole video',

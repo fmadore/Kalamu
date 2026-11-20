@@ -18,6 +18,8 @@ pub(super) struct Interviewer {
     last: Mutex<String>,
     /// Words of a text whose first call is stopped, as a pause stops it.
     pub(super) interrupt: Mutex<Option<String>>,
+    /// Words of a text whose every call fails, as a provider refusing it would.
+    pub(super) fail: Mutex<Option<String>>,
 }
 
 impl Interviewer {
@@ -28,6 +30,7 @@ impl Interviewer {
             answers: Mutex::new(VecDeque::new()),
             last: Mutex::new(String::new()),
             interrupt: Mutex::new(None),
+            fail: Mutex::new(None),
         })
     }
 
@@ -73,6 +76,15 @@ impl Provider for Interviewer {
                 *interrupt = None;
                 return Err(ProviderError::Interrupted);
             }
+        }
+        if self
+            .fail
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .as_deref()
+            .is_some_and(|w| read.contains(w))
+        {
+            return Err(ProviderError::InvalidRequest("this part is refused".into()));
         }
         let answer = {
             let mut queue = self.answers.lock().unwrap_or_else(|p| p.into_inner());

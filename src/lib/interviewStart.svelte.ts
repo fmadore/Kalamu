@@ -89,6 +89,9 @@ export class InterviewAnalysis {
 	cost = $state<number | null>(null);
 	/** The transcript is too long for the model chosen, in a sentence; none when it fits. */
 	tooLong = $state<string | null>(null);
+	/** How many parts a transcript too long to be read at once will be read in; none when it
+	 * is read whole. */
+	parts = $state<number | null>(null);
 	error = $state<string | null>(null);
 	busy = $state(false);
 

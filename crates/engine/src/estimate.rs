@@ -37,6 +37,12 @@ pub struct EstimateRow {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub too_long: Option<TextTooLong>,
+    /// For a cited analysis of texts too long for this model to read at once, how many parts
+    /// they will be read in, all texts together (this row prices the parts, the row after it,
+    /// `merge`, the step that brings them together); absent when every text is read whole.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub parts: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -50,7 +56,61 @@ pub struct Estimate {
     pub total_economy_usd: Option<f64>,
 }
 
+/// The texts of a cited analysis some of which are too long for its model: how many parts those
+/// are read in, the characters the parts send, and the pages of the texts read whole.
+#[derive(Debug, Clone, Copy)]
+struct InParts {
+    parts: u32,
+    chars: u64,
+    whole_pages: u32,
+}
+
 impl Engine {
+    /// How a cited set-up would read its text sources, when some are read in parts; `None` when
+    /// every text is read whole.
+    fn in_parts(
+        &self,
+        catalog: &kalamu_catalog::Catalog,
+        setup: &SetupRequest,
+        sources: &[SourceFile],
+    ) -> Option<InParts> {
+        let model = catalog.model(&setup.provider, &setup.model)?;
+        let windows = crate::windows::windows_for(model)?;
+        let mut read = InParts {
+            parts: 0,
+            chars: 0,
+            whole_pages: 0,
+        };
+        for source in sources {
+            let parts = (source.kind == InputKind::Text)
+                .then(|| self.quotable_text(source).ok())
+                .flatten()
+                .and_then(|text| {
+                    let sizes = text.sizes();
+                    let plan =
+                        kalamu_core::analysis::cited::windows::plan(&sizes, &windows).ok()??;
+                    let chars = plan
+                        .iter()
+                        .map(|&(first, last)| {
+                            sizes[first as usize - 1..last as usize]
+                                .iter()
+                                .map(|&s| u64::from(s))
+                                .sum::<u64>()
+                        })
+                        .sum::<u64>();
+                    Some((plan.len() as u32, chars))
+                });
+            match parts {
+                Some((parts, chars)) => {
+                    read.parts += parts;
+                    read.chars += chars;
+                }
+                None => read.whole_pages += (source.size_bytes / TEXT_PAGE_CHARS).max(1) as u32,
+            }
+        }
+        (read.parts > 0).then_some(read)
+    }
+
     pub fn estimate(&self, request: &EstimateRequest) -> Estimate {
         let catalog = self.current_catalog();
         let pages: u32 = request
@@ -109,11 +169,38 @@ impl Engine {
                 }
                 _ => unpriced.clone(),
             };
-            let too_long = self
-                .request_cites(request.task, setup)
-                .unwrap_or(false)
+            let cites = self.request_cites(request.task, setup).unwrap_or(false);
+            let too_long = cites
                 .then(|| self.text_too_long(&catalog, setup, &request.sources))
                 .flatten();
+            // Texts read in parts are priced part by part, and the step after them apart.
+            let in_parts = cites
+                .then(|| self.in_parts(&catalog, setup, &request.sources))
+                .flatten()
+                .filter(|_| too_long.is_none());
+            let model = catalog.model(&setup.provider, &setup.model);
+            let (estimate, together) = match (in_parts, model) {
+                (Some(read), Some(model)) => {
+                    // The texts that fit, read whole as any analysis is.
+                    let whole = if read.whole_pages > 0 {
+                        catalog
+                            .estimate(model, request.task, read.whole_pages, 0.0, prompt_chars)
+                            .usd
+                    } else {
+                        Some(0.0)
+                    };
+                    let parts = catalog.estimate_parts(model, read.parts, read.chars, prompt_chars);
+                    let usd = whole.zip(parts.usd).map(|(a, b)| a + b);
+                    (
+                        CostEstimate {
+                            usd,
+                            economy_usd: None,
+                        },
+                        Some(catalog.estimate_together(model, read.parts, prompt_chars)),
+                    )
+                }
+                _ => (estimate, None),
+            };
             rows.push(EstimateRow {
                 provider: setup.provider.clone(),
                 model: setup.model.clone(),
@@ -121,7 +208,19 @@ impl Engine {
                 estimate,
                 merge: false,
                 too_long,
+                parts: in_parts.map(|r| r.parts),
             });
+            if let Some(estimate) = together {
+                rows.push(EstimateRow {
+                    provider: setup.provider.clone(),
+                    model: setup.model.clone(),
+                    pages,
+                    estimate,
+                    merge: true,
+                    too_long: None,
+                    parts: None,
+                });
+            }
             // A table of contents' second step, on its own model and never in a batch.
             if request.task == Task::Contents {
                 let merge = setup.merge.clone().unwrap_or_else(|| MergeModel {
@@ -143,6 +242,7 @@ impl Engine {
                     estimate,
                     merge: true,
                     too_long: None,
+                    parts: None,
                 });
             }
         }

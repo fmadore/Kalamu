@@ -567,7 +567,9 @@ export const fr: Messages = {
 		keep: 'Garder ce texte pour mes prochains entretiens',
 		keptName: 'Nom',
 		keptHint: 'Vous pouvez le modifier ou le supprimer dans Prompts.',
-		openPrompts: 'Ouvrir Prompts'
+		openPrompts: 'Ouvrir Prompts',
+		inParts: (n: number) =>
+			`Cet entretien est long : il sera lu en ${n} morceaux, puis le tout sera rassemblé.`
 	},
 	screening: {
 		action: 'Lesquels parlent de ma question ?',
@@ -632,7 +634,18 @@ export const fr: Messages = {
 			n === 1
 				? '1 entrée a été laissée de côté : aucune de ses citations n’a été retrouvée dans le texte.'
 				: `${n} entrées ont été laissées de côté : aucune de leurs citations n’a été retrouvée dans le texte.`,
-		inCards: 'Les thèmes et les citations se modifient dans leurs cartes, en dehors de cet éditeur.'
+		inCards:
+			'Les thèmes et les citations se modifient dans leurs cartes, en dehors de cet éditeur.',
+		readInParts: (n: number) =>
+			`Cet entretien était long : il a été lu en ${n} morceaux, puis le tout a été rassemblé.`,
+		partNotRead: (from: string | null, to: string | null, first: number, last: number) =>
+			from && to
+				? `Le passage de ${from} à ${to} n’a pas pu être lu : ses thèmes et ses citations manquent.`
+				: from
+					? `Le passage de ${from} jusqu’à la fin n’a pas pu être lu : ses thèmes et ses citations manquent.`
+					: `Les prises de parole ${first} à ${last} n’ont pas pu être lues : leurs thèmes et leurs citations manquent.`,
+		readAgain: 'Le relire',
+		readingAgain: 'Le passage est relu.'
 	},
 	units: {
 		tab: 'Pièces',
@@ -2186,6 +2199,8 @@ export const fr: Messages = {
 			`Page ${n}, moitié ${half === 'left' ? 'gauche' : 'droite'}`,
 		pageHalfShort: (n: number, half: 'left' | 'right') => `${n}${half === 'left' ? 'g' : 'd'}`,
 		passage: (n: number) => `Passage ${n}`,
+		turns: (n: number, first: number, last: number) =>
+			`Morceau ${n} (prises de parole ${first} à ${last})`,
 		segment: (label: string) => `À partir de ${label}`,
 		document: 'Document entier',
 		video: 'Vidéo entière',
@@ -2567,7 +2582,7 @@ export const fr: Messages = {
 		newHint:
 			'Écrivez vos instructions. La requête et, pour une analyse ou une table des matières, ses champs partent du prompt par défaut de cette tâche ; modifiez-les au besoin.',
 		instructionsPlaceholder:
-			'Par exemple : Vous lisez des pages de journaux imprimés d’Afrique occidentale française, de 1940 à 1960. Transcrivez le texte tel qu’il est imprimé, colonne par colonne, en gardant l’orthographe d’origine.',
+			'Par exemple : Vous lisez des pages de journaux imprimés d’Afrique occidentale française, de 1940 à 1960. Transcrivez le texte tel qu’il est imprimé, colonne par colonne, en gardant l’orthographe d’origine.',
 		discard: 'Abandonner',
 		reset: 'Rétablir la version par défaut',
 		delete: 'Supprimer',

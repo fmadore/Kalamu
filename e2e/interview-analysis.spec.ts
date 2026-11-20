@@ -6,8 +6,11 @@
 // saying what was left out; and the same in French. A description of the research kept for the
 // next interviews: not offered on first use, saved as a prompt of the researcher's own that
 // Prompts lists and the dialog offers again, chosen to start the job with its prompt, written
-// in Prompts as well; and in French. A transcript too long for the model chosen: said in place of
-// the cost, Start disabled until another model is chosen; and in French.
+// in Prompts as well; and in French. A transcript too long to be read at once: said to be read in
+// parts beside the cost; one too long even so (one long turn): said in place of the cost, Start
+// disabled until another model is chosen; and in French. A long interview read in parts: the
+// review says so in one line, names the part not read by its minutes and offers to read it
+// again.
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import type { NewJob } from '../src/lib/bindings/NewJob.js';
@@ -92,9 +95,10 @@ test('the dialog asks one question with one button, and starts the job with it',
 	);
 });
 
-/** Opens the dialog on the sample transcript made too long for the models on this computer. */
-async function longInterview(page: Page, useText: string): Promise<Locator> {
-	await open(page, 'jobs-audio&interview-long');
+/** Opens the dialog on the sample transcript made too long for the models on this computer to
+ * read at once, or, `unbroken`, to read at all. */
+async function longInterview(page: Page, useText: string, unbroken = true): Promise<Locator> {
+	await open(page, `jobs-audio&interview-long${unbroken ? '&interview-unbroken' : ''}`);
 	await page.getByRole('main').locator('summary', { hasText: useText }).click();
 	await page.getByRole('button', { name: /Analyse this interview|Analyser cet entretien/ }).click();
 	return page.getByRole('dialog');
@@ -106,7 +110,60 @@ async function chooseModel(dialog: Locator, label: string, name: RegExp): Promis
 	await dialog.page().getByRole('option', { name }).click();
 }
 
-test('a transcript too long for the model chosen is said in place of the cost, and Start waits', async ({
+test('a transcript too long to be read at once is read in parts, said beside the cost', async ({
+	page
+}) => {
+	const dialog = await longInterview(page, 'Use this text in a new job', false);
+	const start = dialog.getByRole('button', { name: 'Analyse', exact: true });
+	await expect(dialog.getByText(/^This interview is long/)).toHaveCount(0);
+	await dialog.locator('details.more summary').click();
+	await chooseModel(dialog, 'Model', /^Gemma 4 E4B/);
+	await expect(
+		dialog.getByText('This interview is long: it will be read in 13 parts, then brought together.')
+	).toBeVisible();
+	await expect(dialog.getByText(/^Estimated cost: /)).toBeVisible();
+	await expect(dialog.getByRole('alert')).toHaveCount(0);
+	await expect(start).toBeEnabled();
+	// A model that reads it all at once reads it whole.
+	await chooseModel(dialog, 'Model', /^Gemini 4 Hydrogen/);
+	await expect(dialog.getByText(/^This interview is long/)).toHaveCount(0);
+});
+
+test('a long interview read in parts says so, names the part not read, and reads it again', async ({
+	page
+}) => {
+	const pane = await answers(page, '&interview-parts');
+	await expect(
+		pane.getByText('This interview was long: it was read in 3 parts, then brought together.')
+	).toBeVisible();
+	await expect(
+		pane.getByText(
+			'The part from 00:04:20 to 00:11:40 could not be read: its themes and quotations are missing.'
+		)
+	).toBeVisible();
+	await expect(pane.getByText('The provider is overloaded. Try again later.')).toBeVisible();
+	// The answers are those that brought the parts together, the cards as for any interview.
+	await expect(pane.getByRole('heading', { name: 'La tontine comme appui' })).toBeVisible();
+	await pane.getByRole('button', { name: 'Read it again' }).click();
+	await expect(page.getByText('The part is being read again.')).toBeVisible();
+});
+
+test.describe('a long interview in French', () => {
+	test.use({ locale: 'fr-FR' });
+
+	test('the review says it plainly, in French', async ({ page }) => {
+		await open(page, 'review-interview&interview-parts');
+		const pane = page.getByRole('main').getByRole('region', { name: 'Réponses' });
+		await expect(
+			pane.getByText(
+				'Cet entretien était long : il a été lu en 3 morceaux, puis le tout a été rassemblé.'
+			)
+		).toBeVisible();
+		await expect(pane.getByRole('button', { name: 'Le relire' })).toBeVisible();
+	});
+});
+
+test('a transcript too long for the model chosen even in parts is said in place of the cost, and Start waits', async ({
 	page
 }) => {
 	const dialog = await longInterview(page, 'Use this text in a new job');

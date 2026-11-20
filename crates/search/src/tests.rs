@@ -74,6 +74,7 @@ fn setup(label: &str, schema: Option<AnalysisSchema>) -> Setup {
         options: SetupOptions::default(),
         merge: None,
         pages_cap: None,
+        windows: None,
     }
 }
 

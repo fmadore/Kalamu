@@ -135,6 +135,8 @@ pub struct Setup {
     pub options: SetupOptions,
     /// For a table of contents, the second step: the model that combines the pages' readings,
     /// which may be another provider's (a large model reads the pages, a small one combines).
+    /// For an analysis read in parts (`windows`), the step that brings the parts together, on
+    /// the set-up's own model.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub merge: Option<MergeStep>,
@@ -145,9 +147,17 @@ pub struct Setup {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub pages_cap: Option<u32>,
+    /// For an analysis that cites a text too long for its model to read at once, how the text
+    /// is read in parts of whole turns before `merge` brings them together: settled when the
+    /// job is created from the catalogue's limit. `None` when every text fits, and in jobs
+    /// made before texts were read in parts, which read each text whole.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub windows: Option<crate::analysis::cited::TurnWindows>,
 }
 
-/// A table of contents' second step: one call per document, over the first step's readings.
+/// A second step, one call per document over the first step's answers: a table of contents'
+/// pages combined into entries, or a long text's parts brought together.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct MergeStep {

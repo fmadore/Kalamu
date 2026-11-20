@@ -22,8 +22,11 @@ use super::{Field, FieldAnswer, FieldKind, FieldValue, SchemaError, read_fields,
 use crate::PieceRef;
 use crate::snapshot::{Anchor, SnapshotPart, Turn, forgiving, slice, turn_text};
 
+pub mod consolidate;
 mod edit;
+pub mod windows;
 pub use edit::{CitedEdit, CitedError, edit, keeps_evidence};
+pub use windows::TurnWindows;
 
 /// The property that holds an entry's quotations in the model's answer.
 pub const QUOTES: &str = "quotes";
@@ -303,26 +306,12 @@ pub fn numbered(text: &str, turns: &[Turn]) -> String {
     turns
         .iter()
         .enumerate()
-        .filter_map(|(i, turn)| {
-            // On one line, its own spaces (no-break ones included) kept within each line.
-            let words = turn_text(text, turn)?
-                .lines()
-                .map(str::trim)
-                .filter(|l| !l.is_empty())
-                .collect::<Vec<_>>()
-                .join(" ");
-            let mut line = format!("[{}] ", i + 1);
-            if let Some(ms) = turn.start_ms {
-                line.push_str(&format!("[{}] ", crate::result::clock(ms)));
-            }
-            if let Some(speaker) = &turn.speaker {
-                line.push_str(&format!("{speaker}: "));
-            }
-            line.push_str(&words);
-            Some(line)
-        })
+        .filter_map(|(i, turn)| windows::numbered_line(text, turn, i))
         .collect::<Vec<_>>()
-        .join("\n")
+        .join(
+            "
+",
+        )
 }
 
 /// Whether any of these fields cites the document.

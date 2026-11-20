@@ -143,6 +143,8 @@ pub(crate) fn assess(
         .pieces
         .iter()
         .filter(|p| p.setup_id == setup.id && p.source_id == target.source_id)
+        // A long text's parts stand behind the whole that brought them together.
+        .filter(|p| !p.piece.is_window())
         .collect();
     pieces.sort_by_key(|p| p.index);
     let counts = &mut queue.counts;

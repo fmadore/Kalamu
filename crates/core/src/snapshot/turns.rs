@@ -218,7 +218,10 @@ fn from_text(task: Task, piece: &PieceRef, text: &str) -> Vec<Turn> {
         PieceRef::Segment {
             start_ms, end_ms, ..
         } => (*start_ms, Some(*end_ms)),
-        PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => (0, None),
+        PieceRef::Page { .. }
+        | PieceRef::Whole
+        | PieceRef::Passage { .. }
+        | PieceRef::Turns { .. } => (0, None),
     };
     let mut out = Vec::new();
     let mut open: Option<Open> = None;

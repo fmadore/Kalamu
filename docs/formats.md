@@ -200,6 +200,14 @@ quotations found word for word are written; the researcher's removals are applie
   `<name>.analysis.xlsx` with `<name>.analysis.quotations.xlsx` beside it.
 - **`provenance.json`** adds `cited`: for each such field, the quotations checked, those left
   out and the entries left out; `source.derived_from` names the text read.
+- **A long text read in parts** writes the answer that brought the parts together, and only
+  it; a part that could not be read stands after it as `[Not read: part 3 (turns 48–71,
+  01:02:10 to 01:20:00): reason]` in text, Markdown and Word, and in JSON as a part whose piece
+  is `{ "kind": "turns", "number", "first", "last" }` with its `failed` reason.
+  `provenance.json` then has `merge`, the step that brought the parts together, whose `request`
+  lists `turns_read` and, when a part could not be read, `turns_not_read` (`"1-24, 23-49"`,
+  turns counted from 1); `pieces` counts the parts and that step. A text read whole has no
+  `merge`.
 
 ### Records
 
@@ -318,7 +326,8 @@ any. A translation of any other text has no subtitles.
 ```
 
 - `piece` is `{ "kind": "page", "number": n }`, with `"half": "left" | "right"` when a double
-  page was split, or `{ "kind": "segment", "index": i, "start_ms": …, "end_ms": … }`.
+  page was split, or `{ "kind": "segment", "index": i, "start_ms": …, "end_ms": … }`; a long
+  text's part not read is `{ "kind": "turns", "number": n, "first": f, "last": l }`.
 - `segments` are `{ "start_ms", "end_ms", "speaker", "text" }`, timed from the start of the
   recording.
 - `text` is the corrected text when `corrected` is true; the model's own output stays in the

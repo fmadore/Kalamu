@@ -186,7 +186,7 @@ impl Engine {
         let (mut before, mut after) = (Vec::new(), Vec::new());
         for setup in &job.setups {
             let pieces = self.store.source_pieces(job_id, setup.id, source_id)?;
-            let Some(piece) = pieces.iter().find(|p| p.index == index) else {
+            let Some(piece) = crate::windows::answered(&pieces, index) else {
                 continue;
             };
             if piece.status == PieceStatus::Failed {
@@ -283,7 +283,7 @@ impl Engine {
                 _ => continue,
             };
             let pieces = self.store.source_pieces(job_id, setup.id, source_id)?;
-            let Some(piece) = pieces.iter().find(|p| p.index == index) else {
+            let Some(piece) = crate::windows::answered(&pieces, index) else {
                 continue;
             };
             if piece.status == PieceStatus::Failed {

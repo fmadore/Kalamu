@@ -4,9 +4,10 @@
 	// and one button. Another model and the language of the answers wait under "More choices",
 	// closed. The transcript is frozen as the dialog opens, so the estimate prices the text the job
 	// will read, and says in its place when the text is too long for the model chosen (Start then
-	// waits for another); Start then asks what New job asks before anything is sent. What is typed can be
-	// kept for the next interviews, as a prompt of the researcher's own: once one is kept, a choice
-	// above the box offers it, and the box only for a new description.
+	// waits for another); a transcript too long to be read at once is said to be read in parts,
+	// whose cost the estimate holds. Start then asks what New job asks before anything is sent.
+	// What is typed can be kept for the next interviews, as a prompt of the researcher's own: once
+	// one is kept, a choice above the box offers it, and the box only for a new description.
 	import Dialog from './Dialog.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import ModelPicker from './ModelPicker.svelte';
@@ -48,6 +49,7 @@
 		(estimate) => {
 			a.cost = estimate?.total_usd ?? null;
 			a.tooLong = tooLongOf(estimate, a.catalog, m);
+			a.parts = estimate?.rows.find((r) => r.parts)?.parts ?? null;
 		}
 	);
 
@@ -129,6 +131,7 @@
 		<span>{t.model(a.model?.name ?? a.draft.model, a.providerName)}</span>
 		{#if a.cost !== null && !a.tooLong}<span class="cost">{t.cost(formatUsd(a.cost))}</span>{/if}
 	</p>
+	{#if a.parts && !a.tooLong}<p class="small parts">{t.inParts(a.parts)}</p>{/if}
 	{#if a.tooLong}<p class="chip danger" role="alert">{a.tooLong}</p>{/if}
 	{#if !a.keyed}
 		<p class="notice" role="status">
@@ -276,6 +279,9 @@
 	}
 	.small {
 		font-size: var(--type-xs);
+	}
+	.parts {
+		color: var(--text-secondary);
 	}
 	.actions {
 		display: flex;

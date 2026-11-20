@@ -94,7 +94,10 @@ pub fn lines_of(task: Task, parts: &[ExportPart]) -> Option<Vec<Segment>> {
         } else if task == Task::AudioTranscription {
             let offset = match part.piece {
                 PieceRef::Segment { start_ms, .. } => start_ms,
-                PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => 0,
+                PieceRef::Page { .. }
+                | PieceRef::Whole
+                | PieceRef::Passage { .. }
+                | PieceRef::Turns { .. } => 0,
             };
             crate::timed::segments_from_text(&part.text, offset)
         } else {

@@ -177,7 +177,10 @@ impl Dictionary {
             let mut fields: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
             let mut by_hand: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
             for piece in pieces.iter().filter(|p| {
-                p.setup_id == setup.id && p.source_id == result.source_id && p.status.is_finished()
+                p.setup_id == setup.id
+                    && p.source_id == result.source_id
+                    && p.status.is_finished()
+                    && !p.piece.is_window()
             }) {
                 let Some(answers) = self.jobs.answers(piece, corrections)? else {
                     continue;

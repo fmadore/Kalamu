@@ -169,15 +169,33 @@ answer none of whose quotations can be found is refused, paid for and asked agai
 broken answer. A scan or a recording cannot be analysed this way before it is read. In the
 review each entry is a card; a quotation opens the transcript at its turn and plays the
 recording there. The researcher edits an entry's fields and removes an entry or a quotation,
-as a layer over the model's answer; a quotation's words cannot be changed or added. The
-transcript is read in one request. **A transcript too long for the model is said before
-Start**: each analysis model's catalogue entry gives the most it reads at once, and a text whose
-characters over four exceed it (a lenient measure, so only what surely cannot fit is refused)
-is named in place of the cost, *This transcript is too long for Gemma 4 E4B: about 12,000
-words, where it reads about 11,000 at once*, with Start disabled until another model is chosen
-under *More choices*; the engine refuses such a job when it is created, before anything is
-sent, and New job shows that refusal as its other errors. A model the catalogue gives no limit
-is left to its provider's own refusal. Windows for very long interviews, the researcher's own
+as a layer over the model's answer; a quotation's words cannot be changed or added. **A long
+interview is read in parts.** Each analysis model's catalogue entry gives the most it reads at
+once; a transcript whose characters over four exceed it is cut at whole turns into parts as even
+as it allows, each well under that limit (seven tenths of it, room left for the instructions
+and the answer) and repeating the last two turns of the one before. Each part is sent with its
+turns numbered as in the whole transcript, and its quotations are found in the whole transcript
+like any. One more request then brings the parts together: it is sent what each part found,
+every quotation by a number (`Q12`), the same quotation found by two parts that overlap numbered
+once, and answers each entry with the numbers of its quotations, never words; Kalamu puts each
+quotation back from its number as the part kept it, so this step can group, order and leave out
+quotations but neither change nor add one, and a number it does not know is left out and
+counted. The dialog says so beside the cost, *This interview is long: it will be read in 3
+parts, then brought together*, the cost counting every part and the step after them; the review
+says *it was read in 3 parts* in one line above the answers. A part that could not be read
+leaves the others brought together and is named by its minutes, *The part from 01:02:10 to
+01:20:00 could not be read: its themes and quotations are missing*, with *Read it again*, which
+sends that part alone and brings the parts together again; the files name it where it stands
+and `provenance.json` lists the turns read and not read. Each part and the step after them are
+pieces, cached and resumed as any: stopping part-way sends no part already read again. A
+transcript that fits is read whole in one request, exactly as before. **Only a transcript the
+model cannot read even in parts is refused before Start**: one turn of it alone too long (a
+lenient measure, so only what surely cannot fit is refused), named in place of the cost, *This
+transcript is too long for Gemma 4 E4B: about 12,000 words, where it reads about 11,000 at
+once*, with Start disabled until another model is chosen under *More choices*; the engine
+refuses such a job when it is created, before anything is sent, and New job shows that refusal
+as its other errors. A model the catalogue gives no limit is left to its provider's own refusal
+([decision](decisions/2026-11-20-interview-windows-guide-themes.md)). The researcher's own
 themes and quotations added by hand come later. **A research description is kept with a
 prompt.** Under the box, *Keep this for my next interviews* saves what was typed, under a
 name, as a prompt of the researcher's own: the interview prompt with the description. Once

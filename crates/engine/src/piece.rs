@@ -26,6 +26,12 @@ pub(crate) enum Input {
     /// A text with its turns numbered, for an analysis whose fields cite it: its answer's
     /// quotations are looked for in the text.
     Cited(crate::cited::Cite),
+    /// An input already made with the check its answer must pass: the parts of a long text,
+    /// brought together.
+    Checked {
+        input: PreparedInput,
+        check: Box<dyn AnswerCheck>,
+    },
 }
 
 /// How a call ended, after its retries.
@@ -168,6 +174,10 @@ impl Engine {
             Input::Cited(cite) => {
                 let input = cite.input.clone();
                 check = Some(Box::new(cite));
+                Ok(input)
+            }
+            Input::Checked { input, check: own } => {
+                check = Some(own);
                 Ok(input)
             }
             Input::Open(opened) => {
@@ -333,7 +343,8 @@ impl Engine {
                 analysis,
                 stop,
             };
-            let sent = provider.sent_settings(&request, false);
+            let mut sent = provider.sent_settings(&request, false);
+            sent.extend(check.map(|c| c.settings()).unwrap_or_default());
             let answer = provider
                 .process(api_key, request)
                 .await

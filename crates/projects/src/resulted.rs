@@ -47,6 +47,8 @@ impl Chosen<'_> {
             .pieces
             .iter()
             .filter(|p| p.setup_id == self.setup_id && p.source_id == self.source_id)
+            // A long text's parts stand behind the whole that brought them together.
+            .filter(|p| !p.piece.is_window())
             .collect();
         out.sort_by_key(|p| p.index);
         out

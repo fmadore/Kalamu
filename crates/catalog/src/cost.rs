@@ -147,6 +147,55 @@ impl Catalog {
         }
     }
 
+    /// A rough cost for a text too long for its model read in `parts` parts, `chars` characters
+    /// sent in all (the turns some parts repeat counted again): each part sent with the
+    /// instructions and answered as an analysis is. Never in a batch, as no cited analysis is.
+    pub fn estimate_parts(
+        &self,
+        model: &ModelInfo,
+        parts: u32,
+        chars: u64,
+        prompt_chars: usize,
+    ) -> CostEstimate {
+        let p = &model.pricing;
+        let usd = match (p.input_per_mtok, p.output_per_mtok) {
+            (Some(input), Some(output)) => {
+                let parts = f64::from(parts.max(1));
+                let tokens_in = chars as f64 / 4.0 + parts * prompt_chars as f64 / 4.0;
+                let tokens_out = parts * ANALYSIS_OUTPUT_TOKENS;
+                Some((tokens_in * input + tokens_out * output) / 1_000_000.0)
+            }
+            _ => None,
+        };
+        CostEstimate {
+            usd,
+            economy_usd: None,
+        }
+    }
+
+    /// A rough cost for the step that brings `parts` parts together: one call reading every
+    /// part's answer and writing the whole one.
+    pub fn estimate_together(
+        &self,
+        model: &ModelInfo,
+        parts: u32,
+        prompt_chars: usize,
+    ) -> CostEstimate {
+        let p = &model.pricing;
+        let usd = match (p.input_per_mtok, p.output_per_mtok) {
+            (Some(input), Some(output)) => {
+                let tokens_in =
+                    f64::from(parts.max(1)) * ANALYSIS_OUTPUT_TOKENS + prompt_chars as f64 / 4.0;
+                Some((tokens_in * input + ANALYSIS_OUTPUT_TOKENS * output) / 1_000_000.0)
+            }
+            _ => None,
+        };
+        CostEstimate {
+            usd,
+            economy_usd: None,
+        }
+    }
+
     /// Cost of a finished call from its reported usage: cached input at its own price, and the
     /// batch discount on everything when the call went through a batch, as providers bill it.
     pub fn actual_cost(&self, model: &ModelInfo, usage: &kalamu_core::Usage) -> Option<f64> {

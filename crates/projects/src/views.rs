@@ -186,6 +186,7 @@ impl Loaded {
                 let mine: Vec<&PieceState> = pieces
                     .iter()
                     .filter(|p| p.setup_id == setup.id && p.source_id == link.source_id)
+                    .filter(|p| !p.piece.is_window())
                     .collect();
                 let fixes: Vec<&Correction> = corrections
                     .iter()
