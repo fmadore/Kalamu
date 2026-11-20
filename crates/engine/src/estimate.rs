@@ -112,8 +112,15 @@ impl Engine {
     }
 
     pub fn estimate(&self, request: &EstimateRequest) -> Estimate {
+        self.estimate_beyond(request, 0)
+    }
+
+    /// [`Engine::estimate`], with `cached` of the pages already read under the same key and
+    /// taken from the cache at no cost: the rest of a sample ([`crate::rest`]). A table of
+    /// contents still combines every page.
+    pub(crate) fn estimate_beyond(&self, request: &EstimateRequest, cached: u32) -> Estimate {
         let catalog = self.current_catalog();
-        let pages: u32 = request
+        let all_pages: u32 = request
             .sources
             .iter()
             .map(|s| {
@@ -124,6 +131,7 @@ impl Engine {
                 request.sample_pages.map_or(n, |cap| n.min(cap))
             })
             .sum();
+        let pages = all_pages.saturating_sub(cached);
         // A YouTube video's length is known only once the provider has read it.
         let unknown_length = request.sources.iter().any(|s| s.kind == InputKind::YouTube);
         let minutes: f64 = request
@@ -233,12 +241,12 @@ impl Engine {
                     .map_or(PROMPT_CHARS, String::len);
                 let estimate = catalog.model(&merge.provider, &merge.model).map_or_else(
                     || unpriced.clone(),
-                    |m| catalog.estimate_merge(m, pages, merge_chars),
+                    |m| catalog.estimate_merge(m, all_pages, merge_chars),
                 );
                 rows.push(EstimateRow {
                     provider: merge.provider,
                     model: merge.model,
-                    pages,
+                    pages: all_pages,
                     estimate,
                     merge: true,
                     too_long: None,

@@ -21,6 +21,7 @@ pub mod language;
 pub mod list_items;
 pub mod meaning;
 pub mod ordered;
+pub mod page_sample;
 pub mod pages;
 pub mod passage_correction;
 pub mod profile;
@@ -88,6 +89,7 @@ pub use meaning::{
     SpaceChoice, SpaceSize, VectorIndex,
 };
 pub use ordered::{PageFile, PageNote, natural_cmp, natural_sort, page_notes};
+pub use page_sample::PageSample;
 pub use pages::PagesPerCall;
 pub use passage_correction::{PassageAsk, PassageError, PassageProposal, ProposalNote};
 pub use profile::{ExportProfile, ProfileColumn, ProfileError, ProfileStarter, ProfileValue};

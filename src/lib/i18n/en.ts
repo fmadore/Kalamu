@@ -1451,6 +1451,21 @@ export const en = {
 		},
 		sampleTitle: 'Try a sample first',
 		sample: (n: number) => `Only the first ${n} pages of each document`,
+		/** New job's suggestion for a long document: a few pages first, then the rest (#215). */
+		trySample: {
+			title: 'Try on a few pages first',
+			offer: (pages: number, n: number) =>
+				`${pages} pages is a lot to read at once. Try the model on ${n} pages first: you see how well it reads them and what it costs, then run the rest from the job’s page without paying for these pages again.`,
+			one: (n: number) => `Try on ${n} pages`,
+			two: (n: number) => `Try on ${n} pages with two models`,
+			chosen: (n: number) =>
+				`Kalamu will read ${n} pages spread through each document, not the first ones, which are often a cover or a title page. Once you have looked at them, run the rest from the job’s page.`,
+			chosenTwo: (n: number) =>
+				`Kalamu will read ${n} pages spread through each document with both models, not the first ones, which are often a cover or a title page. Compare them in the review, then run the rest with the one you prefer from the job’s page.`,
+			every: 'Read every page',
+			/** The sample in the results step, when its pages are spread through each document. */
+			spread: (n: number) => `${n} pages spread through each document`
+		},
 		outputTitle: 'Results',
 		formats: 'Formats',
 		subtitlesNeedTimes:
@@ -1719,6 +1734,27 @@ export const en = {
 			`${n === 1 ? '1 piece is' : `${n} pieces are`} still with the provider’s batch service. Resume to collect the answers; nothing is sent or paid for twice.`,
 		pace: 'Speed',
 		paceName: { fast: 'Faster', economy: 'Cheaper (batch)' },
+		/** A sample's page: the rest of its documents, or another model on its pages (#215). */
+		sample: {
+			first: (n: number) => `A sample: the first ${n} pages of each document.`,
+			spread: (n: number) => `A sample: ${n} pages spread through each document.`,
+			next: 'Once you have looked at them, run the rest, or try another model on the same pages.',
+			runRest: (model: string) => `Run the rest with ${model}`,
+			left: (n: number) => (n === 1 ? '1 page left' : `${n} pages left`),
+			about: (cost: string) => `about ${cost}`,
+			free: (n: number) =>
+				n === 1
+					? 'The page already read costs nothing.'
+					: `The ${n} pages already read cost nothing.`,
+			/** The name of the job that reads every page, after the sample's. */
+			restName: (name: string) => `${name} (every page)`,
+			compareLede: (model: string) =>
+				`Another model reads the same pages beside ${model}. Only the new model is paid for: the pages already read are not sent again.`,
+			compareStart: 'Start',
+			compareCost: (cost: string) => `About ${cost} for the new model.`,
+			/** The name of the comparison, after the sample's. */
+			compareName: (name: string) => `${name} (compared)`
+		},
 		empty_new: 'Start a job'
 	},
 	/** The Jobs page: every job in a table, found, filtered and sorted. */

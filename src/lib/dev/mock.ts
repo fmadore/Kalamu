@@ -31,6 +31,7 @@ import { seedWorkflows, workflowCommand } from './mockWorkflows.js';
 import { unitCommand } from './mockUnits.js';
 import { mockImageDocument, PHOTO_FOLDER, PHOTOS } from './mockPages.js';
 import { photoCommand, READING_ROOM, READING_ROOM_PHOTOS } from './mockPhotos.js';
+import { sampleCommand } from './mockSample.js';
 
 const catalog = catalogJson as unknown as Catalog;
 /** The engine's rules for the bundled catalogue, written by `cargo test`. */
@@ -113,6 +114,9 @@ export function installMock(): void {
 		const a = (args ?? {}) as Record<string, unknown>;
 		const filed = projectFileCommand(cmd, a);
 		if (filed !== undefined) return filed;
+		// `?long` and `?sample` only: a sample first, its rest and its comparison.
+		const sampled = sampleCommand(cmd, a);
+		if (sampled !== undefined) return sampled;
 		const profile = profileCommand(cmd, a);
 		if (profile !== undefined) return profile;
 		const project = projectCommand(cmd, a);

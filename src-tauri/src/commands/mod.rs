@@ -14,6 +14,7 @@ pub mod project_file;
 pub mod projects;
 pub mod region_reading;
 pub mod review;
+pub mod sample;
 pub mod search;
 pub mod settings;
 pub mod units;

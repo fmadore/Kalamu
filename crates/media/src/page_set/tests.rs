@@ -2,7 +2,7 @@ use std::io::Cursor;
 use std::path::Path;
 
 use image::{DynamicImage, ImageFormat, RgbImage};
-use kalamu_core::{PageFile, PieceRef, SourceFile, SourceId, WarningKind};
+use kalamu_core::{PageFile, PageSample, PieceRef, SourceFile, SourceId, WarningKind};
 
 use crate::{MediaError, OpenSource, check_unchanged, inspect};
 
@@ -38,13 +38,13 @@ fn a_document_of_images_is_read_page_by_page_in_its_order() -> Result<(), MediaE
     check_unchanged(&doc)?;
     let open = OpenSource::open(&doc, None)?;
     assert_eq!(
-        open.pieces(false, None, 0),
+        open.pieces(false, PageSample::All, 0),
         [PieceRef::page(1), PieceRef::page(2), PieceRef::page(3)]
     );
     // Its second file is a spread: split as a PDF's would be.
-    assert_eq!(open.pieces(true, None, 0).len(), 4);
+    assert_eq!(open.pieces(true, PageSample::All, 0).len(), 4);
     assert_eq!(
-        open.pieces(false, Some(2), 0).len(),
+        open.pieces(false, PageSample::First(2), 0).len(),
         2,
         "a sample of the first pages"
     );
@@ -56,7 +56,10 @@ fn a_document_of_images_is_read_page_by_page_in_its_order() -> Result<(), MediaE
             .iter()
             .any(|w| w.kind == WarningKind::DoublePageSpread { pages: vec![2] })
     );
-    assert!(open.text_pieces(None).is_err(), "no text to correct");
+    assert!(
+        open.text_pieces(PageSample::All).is_err(),
+        "no text to correct"
+    );
     Ok(())
 }
 

@@ -1897,6 +1897,19 @@ export const fr: Messages = {
 		},
 		sampleTitle: 'Faire d’abord un essai',
 		sample: (n: number) => `Seulement les ${n} premières pages de chaque document`,
+		trySample: {
+			title: 'Essayer d’abord sur quelques pages',
+			offer: (pages: number, n: number) =>
+				`${pages} pages, c’est beaucoup à lire d’un coup. Essayez d’abord le modèle sur ${n} pages : vous voyez s’il les lit bien et ce que cela coûte, puis vous lancez le reste depuis la page du traitement, sans payer ces pages une seconde fois.`,
+			one: (n: number) => `Essayer sur ${n} pages`,
+			two: (n: number) => `Essayer sur ${n} pages avec deux modèles`,
+			chosen: (n: number) =>
+				`Kalamu lira ${n} pages prises ici et là dans chaque document, et non les premières, qui sont souvent une couverture ou une page de titre. Une fois que vous les aurez regardées, lancez le reste depuis la page du traitement.`,
+			chosenTwo: (n: number) =>
+				`Kalamu lira ${n} pages prises ici et là dans chaque document avec les deux modèles, et non les premières, qui sont souvent une couverture ou une page de titre. Comparez-les à la relecture, puis lancez le reste avec celui que vous préférez depuis la page du traitement.`,
+			every: 'Lire toutes les pages',
+			spread: (n: number) => `${n} pages prises ici et là dans chaque document`
+		},
 		outputTitle: 'Résultats',
 		formats: 'Formats',
 		subtitlesNeedTimes:
@@ -2162,6 +2175,22 @@ export const fr: Messages = {
 			`${n === 1 ? '1 segment est' : `${n} segments sont`} encore au service de traitement par lots du fournisseur. Reprenez pour récupérer les réponses ; rien n’est envoyé ni payé deux fois.`,
 		pace: 'Rapidité',
 		paceName: { fast: 'Plus rapide', economy: 'Moins cher (par lots)' },
+		sample: {
+			first: (n: number) => `Un essai : les ${n} premières pages de chaque document.`,
+			spread: (n: number) => `Un essai : ${n} pages prises ici et là dans chaque document.`,
+			next: 'Une fois que vous les avez regardées, lancez le reste, ou essayez un autre modèle sur les mêmes pages.',
+			runRest: (model: string) => `Lancer le reste avec ${model}`,
+			left: (n: number) => (n <= 1 ? `${n} page restante` : `${n} pages restantes`),
+			about: (cost: string) => `environ ${cost}`,
+			free: (n: number) =>
+				n === 1 ? 'La page déjà lue ne coûte rien.' : `Les ${n} pages déjà lues ne coûtent rien.`,
+			restName: (name: string) => `${name} (toutes les pages)`,
+			compareLede: (model: string) =>
+				`Un autre modèle lit les mêmes pages, à côté de ${model}. Seul le nouveau modèle est payé : les pages déjà lues ne sont pas envoyées de nouveau.`,
+			compareStart: 'Lancer',
+			compareCost: (cost: string) => `Environ ${cost} pour le nouveau modèle.`,
+			compareName: (name: string) => `${name} (comparaison)`
+		},
 		empty_new: 'Lancer un traitement'
 	},
 	allJobs: {

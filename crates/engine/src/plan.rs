@@ -37,6 +37,8 @@ impl Engine {
         // whole file, and the cuts must not move under results already stored.
         let stored = stored_pieces(existing, job, source);
         let mut pieces = if let Some(lines) = lines {
+            // Timed lines are tried on their first passages: New job spreads a sample only
+            // through a document's pages.
             lines.pieces(job.settings.sample_pages)
         } else if job.task == Task::Analysis
             && (!reads_by_page(job) || source.kind == kalamu_core::InputKind::Text)
@@ -47,7 +49,7 @@ impl Engine {
         } else if job.task.rewrites_text() {
             // A correction or a translation reads the text there is: a PDF's pages, a text
             // file's passages.
-            let (opened, sample) = (opened.clone(), job.settings.sample_pages);
+            let (opened, sample) = (opened.clone(), job.settings.page_sample());
             let planned = tokio::task::spawn_blocking(move || opened.text_pieces(sample))
                 .await
                 .map_err(|e| EngineError::Output(e.to_string()))?;
@@ -59,7 +61,7 @@ impl Engine {
             let (opened, split, sample, length) = (
                 opened.clone(),
                 source.split_spreads,
-                job.settings.sample_pages,
+                job.settings.page_sample(),
                 self.piece_length(job),
             );
             // Fails only when stopped, which the caller reads from the job's control.

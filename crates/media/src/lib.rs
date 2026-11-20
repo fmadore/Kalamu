@@ -27,7 +27,7 @@ use std::path::Path;
 use std::time::UNIX_EPOCH;
 
 use kalamu_core::{
-    InputKind, InputWarning, PieceRef, PreparedInput, SourceFile, SourceId, StopSignal,
+    InputKind, InputWarning, PageSample, PieceRef, PreparedInput, SourceFile, SourceId, StopSignal,
     YOUTUBE_LINK,
 };
 use sha2::{Digest, Sha256};
@@ -215,10 +215,10 @@ impl OpenSource {
     }
 
     /// The pieces to process, in reading order: every page, each spread as two pages when the
-    /// user asked for it, and only the first `sample` pages when trying a sample; recordings
-    /// in pieces of at most about `piece_ms`, cut at pauses (which decodes the whole file).
+    /// user asked for it, and only the pages of `sample` when trying a sample; recordings in
+    /// pieces of at most about `piece_ms`, cut at pauses (which decodes the whole file).
     /// Empty for a recording whose pass was stopped; see [`Self::try_pieces`].
-    pub fn pieces(&self, split_spreads: bool, sample: Option<u32>, piece_ms: u64) -> Vec<PieceRef> {
+    pub fn pieces(&self, split_spreads: bool, sample: PageSample, piece_ms: u64) -> Vec<PieceRef> {
         self.try_pieces(split_spreads, sample, piece_ms)
             .unwrap_or_default()
     }
@@ -229,7 +229,7 @@ impl OpenSource {
     pub fn try_pieces(
         &self,
         split_spreads: bool,
-        sample: Option<u32>,
+        sample: PageSample,
         piece_ms: u64,
     ) -> Result<Vec<PieceRef>, MediaError> {
         let mut pieces = Vec::new();
@@ -242,8 +242,7 @@ impl OpenSource {
             // track (see the decision of 27 October 2026), so a video is one piece.
             Self::Text(_) | Self::YouTube(_) => return Ok(vec![PieceRef::Whole]),
         };
-        let last = sample.map_or(pages, |n| n.min(pages));
-        for number in 1..=last {
+        for number in sample.pages(pages) {
             let spread = split_spreads
                 && match self {
                     Self::Pdf(pdf) => pdf.is_spread(number),
@@ -266,10 +265,11 @@ impl OpenSource {
     }
 
     /// The pieces a correction sends: every page of a PDF (its text layer, so spreads are not
-    /// split), the pages or passages of a text file; the first `sample` only when trying a
-    /// sample. Images and recordings hold no text to correct.
-    pub fn text_pieces(&self, sample: Option<u32>) -> Result<Vec<PieceRef>, MediaError> {
-        let mut pieces: Vec<PieceRef> = match self {
+    /// split), the pages or passages of a text file; only those of `sample` when trying a
+    /// sample, a text file's passages counted as its pages. Images and recordings hold no text
+    /// to correct.
+    pub fn text_pieces(&self, sample: PageSample) -> Result<Vec<PieceRef>, MediaError> {
+        let pieces: Vec<PieceRef> = match self {
             Self::Pdf(pdf) => (1..=pdf.page_count()).map(PieceRef::page).collect(),
             Self::Text(text) => text.sections()?.into_iter().map(|(p, _)| p).collect(),
             Self::Image(_) | Self::Pages(_) | Self::Audio(_) | Self::YouTube(_) => {
@@ -280,10 +280,11 @@ impl OpenSource {
                 ));
             }
         };
-        if let Some(n) = sample {
-            pieces.truncate(n as usize);
-        }
-        Ok(pieces)
+        let kept = sample.pages(pieces.len() as u32);
+        Ok(kept
+            .into_iter()
+            .filter_map(|n| pieces.get((n as usize).checked_sub(1)?).cloned())
+            .collect())
     }
 
     /// The text a page or passage holds before any model reads it, as a correction sends it.

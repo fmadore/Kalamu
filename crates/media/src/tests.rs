@@ -84,7 +84,7 @@ fn spreads_are_detected_and_split_in_two() -> Result<(), MediaError> {
         WarningKind::DoublePageSpread { pages } if pages == &vec![2]
     )));
 
-    let pieces = open.pieces(true, None, crate::DEFAULT_PIECE_MS);
+    let pieces = open.pieces(true, PageSample::All, crate::DEFAULT_PIECE_MS);
     assert_eq!(
         pieces,
         vec![
@@ -113,12 +113,31 @@ fn samples_take_only_the_first_pages() -> Result<(), MediaError> {
         &[A4; 5], false,
     ))?));
     assert_eq!(
-        open.pieces(false, Some(2), crate::DEFAULT_PIECE_MS).len(),
+        open.pieces(false, PageSample::First(2), crate::DEFAULT_PIECE_MS)
+            .len(),
         2
     );
     assert_eq!(
-        open.pieces(false, Some(50), crate::DEFAULT_PIECE_MS).len(),
+        open.pieces(false, PageSample::First(50), crate::DEFAULT_PIECE_MS)
+            .len(),
         5
+    );
+    Ok(())
+}
+
+#[test]
+fn a_spread_sample_takes_pages_through_the_document() -> Result<(), MediaError> {
+    let open = OpenSource::Pdf(Box::new(PdfSource::from_bytes(&sample_pdf(
+        &[A4; 10], true,
+    ))?));
+    assert_eq!(
+        open.pieces(false, PageSample::Spread(3), crate::DEFAULT_PIECE_MS),
+        [PieceRef::page(3), PieceRef::page(6), PieceRef::page(9)]
+    );
+    // A correction reads the same pages of the text layer.
+    assert_eq!(
+        open.text_pieces(PageSample::Spread(3))?,
+        [PieceRef::page(3), PieceRef::page(6), PieceRef::page(9)]
     );
     Ok(())
 }
@@ -159,7 +178,7 @@ fn a_youtube_video_is_one_piece_sent_as_its_link() -> Result<(), MediaError> {
         .ok_or_else(|| MediaError::NeedsConversion("not a YouTube link".into()))?;
     let open = OpenSource::open(&source, None)?;
     assert_eq!(
-        open.pieces(false, None, DEFAULT_PIECE_MS),
+        open.pieces(false, PageSample::All, DEFAULT_PIECE_MS),
         vec![PieceRef::Whole]
     );
     assert!(open.warnings(source.id).is_empty());
@@ -362,7 +381,7 @@ fn recordings_go_whole_when_the_model_takes_their_format() -> Result<(), MediaEr
     std::fs::write(&path, b"fake m4a").map_err(|e| MediaError::Image(e.to_string()))?;
     let source = inspect(&path, None)?;
     let open = OpenSource::open(&source, None)?;
-    let pieces = open.pieces(false, None, crate::DEFAULT_PIECE_MS);
+    let pieces = open.pieces(false, PageSample::All, crate::DEFAULT_PIECE_MS);
     assert_eq!(pieces.len(), 1);
     let input = open.prepare(&pieces[0], &["audio/mpeg", "audio/mp4"], "entretien")?;
     assert_eq!(input.mime, "audio/mp4");
@@ -383,7 +402,10 @@ fn a_text_model_reads_a_pdf_page_from_its_text_layer() -> Result<(), MediaError>
     let page = with_text.prepare(&PieceRef::page(2), &["text/plain"], "bulletin")?;
     assert_eq!(page.mime, "text/plain");
     assert!(String::from_utf8_lossy(&page.bytes).contains("Page 2 of the Bulletin"));
-    assert_eq!(with_text.text_pieces(Some(1))?, vec![PieceRef::page(1)]);
+    assert_eq!(
+        with_text.text_pieces(PageSample::First(1))?,
+        vec![PieceRef::page(1)]
+    );
     // A model that reads PDFs still gets the page itself.
     let pdf = with_text.prepare(&PieceRef::page(1), &["text/plain", "application/pdf"], "b")?;
     assert_eq!(pdf.mime, "application/pdf");

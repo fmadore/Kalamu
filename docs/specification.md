@@ -306,7 +306,7 @@ once, not in a batch, since a batch's answers are not checked line by line.
   in their new order. The order and the files are kept with the job, after a restart too; the
   images are never copied, moved or changed, and a page whose file was moved, deleted or
   replaced since fails alone, named, the others read. The document is read page by page as a
-  PDF is, with the same sample of first pages; its pages go one per call. An analysis reads
+  PDF is, with the same sample of pages; its pages go one per call. An analysis reads
   each image as a document of its own. Typing a label for each page, reordering a job already
   made and pairing existing transcriptions with the scans come later.
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper,
@@ -714,7 +714,23 @@ documents through several set-ups, each a provider, model and prompt or analysis
 results together.
 
 - **Try a sample first.** Comparison can run on a few pages before committing a whole folder,
-  and the cost estimate shows each set-up separately.
+  and the cost estimate shows each set-up separately. A text extraction of a document of more
+  than 15 pages (a PDF, or images read as one document) gets one plain suggestion under its
+  files in New job: *Try on 3 pages*, or *Try on 3 pages with two models*, the second model
+  chosen as *Compare with another model* chooses one. Its pages are spread through each
+  document, the first page (often a cover or a title) left out: the middle page of each equal
+  stretch of the rest, so pages 8, 21 and 34 of 40, the same each time. *Read every page* takes
+  it back. Nothing changes for a short document or a researcher who passes it by, and the
+  results step's *Try a sample first*, ticked by hand, still takes the first pages, which other
+  tasks keep ([decision](decisions/2026-11-21-sample-first.md),
+  [#215](https://github.com/fmadore/Kalamu/issues/215)).
+- **Then the rest, never paying twice.** Once a sample has read pages, its page offers *Run the
+  rest with [model]* for each of its set-ups, priced with the pages already read at no cost
+  (*37 pages left, about $0.04. The 3 pages already read cost nothing.*), and *Compare with
+  another model* on the same pages. Both are jobs the engine makes from the sample, its set-ups
+  copied as they ran, so the pages it read come from the cache whatever was edited since; the
+  rest reads every page of the same documents, the comparison is a job of several set-ups like
+  any other, and each joins the projects the sample is in.
 - **Scores when a reference exists.** A page corrected or reviewed in any set-up is the
   reference for all of them, a correction before a text reviewed as it stands: each set-up's
   error rates are given side by side; without one, the highlighted differences show where

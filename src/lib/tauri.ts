@@ -50,6 +50,7 @@ import type { UnitsView } from './bindings/UnitsView.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { Estimate } from './bindings/Estimate.js';
+import type { RestEstimate } from './bindings/RestEstimate.js';
 import type { Expanded } from './bindings/Expanded.js';
 import type { RowEdit } from './bindings/RowEdit.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
@@ -207,6 +208,14 @@ export const api = {
 	estimateCost: (request: EstimateRequest) => invoke<Estimate>('estimate_cost', { request }),
 	createJob: (job: NewJob) => invoke<Job>('create_job', { job }),
 	startJob: (id: string) => invoke<void>('start_job', { id }),
+	/** After a sample (#215): every page with one of its set-ups, the pages it read from the
+	 * cache; and another model on its pages. Each job is made, not started. */
+	restEstimate: (job: string, setup: string) =>
+		invoke<RestEstimate>('rest_estimate', { job, setup }),
+	restOfSample: (job: string, setup: string, name: string) =>
+		invoke<Job>('rest_of_sample', { job, setup, name }),
+	compareSample: (job: string, provider: string, model: string, name: string) =>
+		invoke<Job>('compare_sample', { job, provider, model, name }),
 	pauseJob: (id: string) => invoke<void>('pause_job', { id }),
 	cancelJob: (id: string) => invoke<void>('cancel_job', { id }),
 	retryFailed: (id: string) => invoke<void>('retry_failed', { id }),

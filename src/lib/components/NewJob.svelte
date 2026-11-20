@@ -9,6 +9,7 @@
 	import PageOrder from './PageOrder.svelte';
 	import PipelineList from './PipelineList.svelte';
 	import ReadingOptions from './ReadingOptions.svelte';
+	import SampleOffer from './SampleOffer.svelte';
 	import SetAsideNotice from './SetAsideNotice.svelte';
 	import SetupList from './SetupList.svelte';
 	import StartPanel from './StartPanel.svelte';
@@ -28,6 +29,7 @@
 	import { JobChoices } from '#lib/newJobChoices.svelte.js';
 	import { JobFiles } from '#lib/newJobFiles.svelte.js';
 	import { dictionaryNames, modelInfo, readsInput, toRequest } from '#lib/newJobModels.js';
+	import { longest, offersSample, SAMPLE_PAGES } from '#lib/newJobSample.js';
 	import { startJob } from '#lib/newJobStart.svelte.js';
 	import { FollowingAnalysis } from '#lib/newJobThen.svelte.js';
 	import { api, listenWhileMounted, onDrop } from '#lib/tauri.js';
@@ -206,6 +208,7 @@
 			drafts: $state.snapshot(choices.drafts),
 			sample: choices.sample,
 			samplePages: choices.samplePages,
+			sampleSpread: choices.sampleSpread,
 			together: choices.together,
 			togetherPages: choices.togetherPages,
 			formats: $state.snapshot(choices.formats),
@@ -350,6 +353,18 @@
 					onnatural={() => void files.orderPages(true)}
 				/>
 			{/if}
+			<!-- A long document: a few pages first, a sample the results step also shows. -->
+			{#if offersSample(task, choices.paged, sources) && (!choices.sample || choices.sampleSpread)}
+				<SampleOffer
+					pages={longest(sources)}
+					n={choices.sample ? choices.samplePages : SAMPLE_PAGES}
+					chosen={choices.sample}
+					two={choices.drafts.length > 1}
+					comparable={choices.drafts.length > 1 || choices.secondDraft() !== null}
+					ontry={(two) => choices.trySample(two)}
+					onevery={() => choices.readEveryPage()}
+				/>
+			{/if}
 		{/if}
 
 		{#if files.setAside}
@@ -399,6 +414,7 @@
 		<OutputStep
 			bind:sample={choices.sample}
 			bind:samplePages={choices.samplePages}
+			bind:sampleSpread={choices.sampleSpread}
 			bind:formats={choices.formats}
 			bind:destination={choices.destination}
 			bind:name={files.name}
