@@ -284,3 +284,11 @@ date,tag,asset,downloads
 2026-11-19,llama-b12110-2,llama-vulkan-b12110-x86_64-pc-windows-msvc.zip,5
 2026-11-19,v1.8.0,Kalamu_1.8.0_aarch64.dmg,4
 2026-11-19,v1.8.0,kalamu-samples.zip,5
+2026-11-20,ffmpeg-9.0.2-2,ffmpeg-9.0.2-aarch64-apple-darwin.zip,14
+2026-11-20,ffmpeg-9.0.2-2,ffmpeg-9.0.2-aarch64-pc-windows-msvc.zip,17
+2026-11-20,ffmpeg-9.0.2-2,ffmpeg-9.0.2-x86_64-pc-windows-msvc.zip,29
+2026-11-20,ffmpeg-9.0.2-2,opus-1.6.1.tar.gz,2
+2026-11-20,llama-b12110-2,llama-opencl-b12110-aarch64-pc-windows-msvc.zip,4
+2026-11-20,v1.6.0,kalamu-samples.zip,11
+2026-11-20,v1.7.0,kalamu-samples.zip,5
+2026-11-20,v1.8.0,kalamu-samples.zip,6
