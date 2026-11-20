@@ -73,6 +73,10 @@ exactly how the text was made. See [Exporting and citing](export.md).
 
 ## What to do next
 
+- For a long document, Kalamu does this first job for you: when a PDF has more than 15 pages,
+  New job offers **Try on 3 pages**, taken from here and there in the document. On the page of
+  that job, **Run the rest** reads the other pages without paying for those three again, and
+  **Compare with another model** reads the same three with a second model.
 - If the reading is good: run the rest of the collection, and consider the
   [cheaper mode](costs.md), which costs half for an answer within a day.
 - If it is not: try another prompt or a stronger model on the same pages. Because results are

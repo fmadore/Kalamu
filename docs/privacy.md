@@ -3,8 +3,9 @@
 **Effective date:** 20 November 2026, which applies from the first version to read a
 project's documents against the user's research question, for which each document's text and
 the question are sent to the provider of the model chosen; to read a long interview in several
-parts; and to send the user's own themes or interview guide with an interview. With a model
-run on the computer none of it is sent. The policy of 19 November 2026 did not say so; it
+parts; to send the user's own themes or interview guide with an interview; and to save a
+project to a file the user moves themselves. With a model run on the computer none of what is
+named here is sent. The policy of 19 November 2026 did not say so; it
 applies from the first version to analyse an interview from its transcript, for which the transcript's text, its speakers' names and times,
 and the sentence the user writes about their research are sent to the provider of the model
 chosen, or to no one with a model run on the computer. The policy of 18 November 2026 did
@@ -309,6 +310,18 @@ Results are also written as files where the user chooses: next to the original f
 chosen folder, each with a `provenance.json` that records the model, prompt and settings used
 and, for a source that is a document of a project, the project's name, the document's title
 and the description of its source the user typed.
+
+### A project saved to a file
+
+*Save to a file…* writes one `.kalamu` file where the user chooses. It holds the names and
+descriptions of the project's documents, the text the models read from them, the models'
+answers, the user's corrections, review marks, tags, what they kept or set aside, the project
+dictionary and what each request cost. When the user ticks *Include the original files*, it
+also holds their scans and recordings. It never holds API keys, settings or anything from the
+user's other projects. Kalamu sends the file nowhere: it leaves the computer only when the
+user moves, copies or sends it. Whoever receives it can read everything in it, so it deserves
+the care the documents themselves do. Opening a project file sends nothing either; the
+original files it holds are copied into the app's data folder on that computer.
 
 Uninstalling the Microsoft Store app removes its local data folder. On macOS, moving the app
 to the Bin leaves its data folder, and the Mac App Store app's container, until the user

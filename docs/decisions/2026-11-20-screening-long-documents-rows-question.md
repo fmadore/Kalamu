@@ -1,4 +1,4 @@
-# 2026-11-21 · Screening: long documents, the answer in the rows, the question asked again
+# 2026-11-20 · Screening: long documents, the answer in the rows, the question asked again
 
 ## Context
 

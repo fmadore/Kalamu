@@ -1,4 +1,4 @@
-# 2026-11-21 · A project saved as one file, and opened on another computer
+# 2026-11-20 · A project saved as one file, and opened on another computer
 
 ## Context
 

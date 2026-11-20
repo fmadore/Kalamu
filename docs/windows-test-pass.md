@@ -350,6 +350,19 @@ Chrome where you are signed in.
   photographs or more, added to New job. Note how long the check takes, each pair it calls
   the same page and each photograph it calls blurred against what you see, and what it
   missed. Nothing is sent for this step.
+- [ ] **F20. A sample first**: a PDF of 40 pages or more in New job, **Try on 3 pages**. Note
+  which pages are read, then **Run the rest** from the job's page: the cost against the
+  price shown, and on the provider's usage page that the three pages were not sent again.
+  Then **Compare with another model** on the sample, and the rest with that one.
+- [ ] **F21. A long document screened**: F18's project with a document of 200 pages or more
+  added, **Read the new documents against this question**. Only the new document is paid;
+  its answer against what you know of it; its passages against the pages they name.
+- [ ] **F22. A project carried to another computer**: a project with corrections, tags and a
+  dictionary saved with **Save to a file…**, without the originals and then with them. Open
+  each file on the Mac (and one saved on the Mac here): every correction, review mark and
+  tag is there, the pages show when the originals were included, the exports work, and the
+  other projects are untouched. Open the same file twice. Open the `.kalamu` in a text
+  editor and search it for your API key: it is not there.
 
 ## Results
 

@@ -255,7 +255,7 @@ documents against this question*, which opens the same dialog over those documen
 question, the model and the languages it was asked with, so only they are paid for, and their
 answers join the others in the filter, the rows and the table exported
 ([decision](decisions/2026-11-20-research-question-screening.md),
-[decision](decisions/2026-11-21-screening-long-documents-rows-question.md),
+[decision](decisions/2026-11-20-screening-long-documents-rows-question.md),
 [#51](https://github.com/fmadore/Kalamu/issues/51)).
 
 **Existing text is corrected, not read again.** Many researchers already have machine-read
@@ -738,7 +738,7 @@ results together.
   stretch of the rest, so pages 8, 21 and 34 of 40, the same each time. *Read every page* takes
   it back. Nothing changes for a short document or a researcher who passes it by, and the
   results step's *Try a sample first*, ticked by hand, still takes the first pages, which other
-  tasks keep ([decision](decisions/2026-11-21-sample-first.md),
+  tasks keep ([decision](decisions/2026-11-20-sample-first.md),
   [#215](https://github.com/fmadore/Kalamu/issues/215)).
 - **Then the rest, never paying twice.** Once a sample has read pages, its page offers *Run the
   rest with [model]* for each of its set-ups, priced with the pages already read at no cost
@@ -823,7 +823,7 @@ analysed, compared. A **project** keeps it together
   one row per document it read, its title and file, each field under the label the job froze
   (passages with where each stands), then the document's tags
   ([decision](decisions/2026-11-20-research-question-screening.md),
-  [decision](decisions/2026-11-21-screening-long-documents-rows-question.md)).
+  [decision](decisions/2026-11-20-screening-long-documents-rows-question.md)).
 - **A source's description** is the researcher's, as an archive or library gives it: the
   repository, the fonds or collection, the series, the box or folder, the shelfmark, the
   creator, the date as written, a web address, how to cite it and its rights. The project holds
@@ -915,7 +915,7 @@ analysed, compared. A **project** keeps it together
   it was organised; deleting a job unties it from its documents, which stay. A file moved since
   it was added is marked missing, its results kept. A project can be archived and restored.
 - **Saved as one file, opened on another computer**
-  ([decision](decisions/2026-11-21-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)),
+  ([decision](decisions/2026-11-20-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)),
   for a new computer, a colleague who shares the review, or a copy kept safe. *Save to a
   file…* in a project's header writes one `.kalamu` file: the project (collections, documents,
   tags, descriptions, preferred results), the jobs that read its documents, each kept to those

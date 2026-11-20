@@ -1,4 +1,4 @@
-# 2026-11-21 · A sample first: a few typical pages, another model on them, then the rest
+# 2026-11-20 · A sample first: a few typical pages, another model on them, then the rest
 
 ## Context
 

@@ -1605,7 +1605,7 @@ export const fr: Messages = {
 			`Retirer ${n === 1 ? 'ce document' : `ces ${n} documents`} du projet ? Les fichiers, les traitements qui les ont lus et leurs résultats sont conservés.`,
 		missing: 'Fichier introuvable',
 		missingHint:
-			'Le fichier n’est plus là où il a été ajouté. Ses résultats sont conservés ; remettez-le en place pour le relire.',
+			'Le fichier n’est pas là où il a été ajouté, ou ce projet vient d’un autre ordinateur sans ses fichiers. Ses résultats sont conservés ; remettez le fichier en place pour le relire.',
 		sameContent: (n: number) =>
 			n === 1 ? 'Même contenu qu’un autre' : `Même contenu que ${n} autres`,
 		noResults: 'Pas encore lu',

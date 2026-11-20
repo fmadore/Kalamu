@@ -28,9 +28,24 @@ recording) with every transcription, extraction and analysis made of it.
   the passages that show it, each found word for word in the text with its page. Filter the
   table by the answer, read the passages, then **Keep** or **Set aside**: your decision is a
   tag, and the model's answer stays as it was. **Export this table** writes the whole list for
-  a spreadsheet.
+  a spreadsheet. With an answer chosen in the filter, each row shows its answer, the reason
+  and the passages. When you add documents later, **Read the new documents against this
+  question** asks it of those alone.
 - When a document has been read several times, **mark the result you rely on** as preferred.
   Search, exports and analyses then use that one.
+
+## Save a project to a file
+
+**Save to a file…** writes the whole project as one file ending in `.kalamu`: to open it on a
+new computer, to give it to a colleague who shares the checking, or to keep a copy somewhere
+safe. The file holds the text read from your documents, your corrections, what you marked as
+checked, the tags, the descriptions and the dictionary. It never holds your API keys. Your
+scans and recordings are left out unless you tick **Include the original files**; Kalamu
+shows how large the file will be before it writes it.
+
+On the other computer, Windows or Mac, choose **Open a project file…** in the list of
+projects. It opens as a new project beside the others: nothing you already have is changed.
+Anyone who has the file can read everything in it, so look after it as you do the documents.
 
 ## Describe your sources
 

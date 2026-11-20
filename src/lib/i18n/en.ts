@@ -1159,7 +1159,7 @@ export const en = {
 			`Remove ${n === 1 ? 'this document' : `these ${n} documents`} from the project? The files, the jobs that read them and their results stay.`,
 		missing: 'File missing',
 		missingHint:
-			'The file is no longer where it was added. Its results are kept; put it back to read it again.',
+			'The file is not where it was added, or this project came from another computer without its files. Its results are kept; put the file back to read it again.',
 		sameContent: (n: number) =>
 			n === 1 ? 'Same content as 1 other' : `Same content as ${n} others`,
 		noResults: 'Not read yet',

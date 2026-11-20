@@ -450,7 +450,7 @@ identities are enough to check a draw.
 
 Written by *Save to a file…* in a project, where the researcher chooses, and read by *Open a
 project file…* on the list of projects
-([decision](decisions/2026-11-21-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)).
+([decision](decisions/2026-11-20-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)).
 One SQLite database, the same on Windows and macOS. It has the job database's own tables, at
 the schema its `PRAGMA user_version` gives (the number of the store's migrations the saving
 Kalamu had), holding one project's rows only, and three tables of its own.
