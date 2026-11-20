@@ -15,6 +15,7 @@
 	import ProjectSearch from './ProjectSearch.svelte';
 	import ProjectMap from './ProjectMap.svelte';
 	import ProjectSections from './ProjectSections.svelte';
+	import ProjectStart from './ProjectStart.svelte';
 	import ReviewQueue from './ReviewQueue.svelte';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
@@ -273,7 +274,12 @@
 			{#if pane === 'activity'}
 				<ProjectActivity jobs={view.jobs} />
 			{:else if pane === 'search'}
-				<ProjectSearch {projectId} collections={view.collections} tags={view.tags} />
+				<ProjectSearch
+					{projectId}
+					collections={view.collections}
+					tags={view.tags}
+					unread={view.documents.every((d) => d.tasks.length === 0)}
+				/>
 			{:else if pane === 'map'}
 				<ProjectMap
 					{projectId}
@@ -338,16 +344,20 @@
 						><Icon name="link" size={14} />{m.projects.attachJob}</button
 					>
 				</div>
-				<DocumentTable
-					{projectId}
-					projectName={view.project.name}
-					rows={view.documents}
-					collections={view.collections}
-					tags={view.tags}
-					{collectionId}
-					onchange={load}
-					onerror={(e) => (action.error = e)}
-				/>
+				{#if view.documents.length === 0}
+					<ProjectStart />
+				{:else}
+					<DocumentTable
+						{projectId}
+						projectName={view.project.name}
+						rows={view.documents}
+						collections={view.collections}
+						tags={view.tags}
+						{collectionId}
+						onchange={load}
+						onerror={(e) => (action.error = e)}
+					/>
+				{/if}
 			{/if}
 		</section>
 	</div>

@@ -736,7 +736,8 @@ export const en = {
 			'Nothing was read here, so there is nothing to check yet: retry the failed pages on the job’s page, or start the job.',
 		answers: 'Answers to check',
 		none: 'Nothing needs you for the reasons shown.',
-		empty: 'No document here has been read yet. Read some with a new job, then come back.',
+		empty:
+			'Nothing has been read here yet. Once a job has read these documents, this list shows the pages that failed or were cut off, that two models read differently, or that are not yet reviewed.',
 		detail: {
 			failed: (error: string | null) => (error ? `Failed: ${error}` : 'Failed'),
 			notRead: 'Not read yet',
@@ -889,6 +890,16 @@ export const en = {
 		attachJob: 'Add an existing job',
 		noDocuments:
 			'No documents here yet. Add files, or add a job you ran before: its results come with it, without being paid for again.',
+		/** In a project with no documents yet, in place of the table: what to do first. */
+		start: {
+			title: 'Start by adding your documents',
+			first: (files: string, folder: string, job: string) =>
+				`Choose “${files}” or “${folder}” for the sources you want to read. Already ran a job on them? “${job}” brings in its results, without paying again.`,
+			rest: 'Nothing else has to be filled in. The other sections fill themselves as jobs read your documents: the search, the map, what to check, the dictionary and the activity.',
+			/** Above a project's search while nothing in it has been read. */
+			nothingToSearch:
+				'Nothing has been read in this project yet. Once a job has read its documents, their text can be searched here, by words or by meaning.'
+		},
 		search: 'Find a document',
 		noMatch: 'No document matches.',
 		sortBy: 'Sort by',

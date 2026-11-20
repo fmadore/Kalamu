@@ -839,7 +839,7 @@ export const fr: Messages = {
 		answers: 'Réponses à vérifier',
 		none: 'Rien ne demande votre attention pour les motifs affichés.',
 		empty:
-			'Aucun document ici n’a encore été lu. Lisez-en avec un nouveau traitement, puis revenez.',
+			'Rien n’a encore été lu ici. Une fois ces documents lus par un traitement, cette liste montre les pages en échec ou tronquées, celles que deux modèles lisent différemment, et celles qui ne sont pas encore relues.',
 		detail: {
 			failed: (error: string | null) => (error ? `En échec : ${error}` : 'En échec'),
 			notRead: 'Pas encore lu',
@@ -997,6 +997,16 @@ export const fr: Messages = {
 		attachJob: 'Ajouter un traitement existant',
 		noDocuments:
 			'Pas encore de documents ici. Ajoutez des fichiers, ou un traitement lancé auparavant : ses résultats l’accompagnent, sans être payés une seconde fois.',
+		/** In a project with no documents yet, in place of the table: what to do first. */
+		start: {
+			title: 'Commencez par ajouter vos documents',
+			first: (files: string, folder: string, job: string) =>
+				`Choisissez « ${files} » ou « ${folder} » pour les sources que vous voulez lire. Vous avez déjà lancé un traitement sur ces sources ? « ${job} » en reprend les résultats, sans rien payer une seconde fois.`,
+			rest: 'Rien d’autre n’est à remplir. Les autres sections se remplissent d’elles-mêmes à mesure que des traitements lisent vos documents : la recherche, la carte, ce qui est à vérifier, le dictionnaire et l’activité.',
+			/** Above a project's search while nothing in it has been read. */
+			nothingToSearch:
+				'Rien n’a encore été lu dans ce projet. Une fois ses documents lus par un traitement, leur texte pourra être cherché ici, par les mots ou par le sens.'
+		},
 		search: 'Chercher un document',
 		noMatch: 'Aucun document ne correspond.',
 		sortBy: 'Trier par',
