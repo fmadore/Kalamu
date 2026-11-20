@@ -536,6 +536,16 @@ Small, and each one meets a colleague on their first day:
   ([#212](https://github.com/fmadore/Kalamu/issues/212)): in an empty project, what to do
   first and what fills itself.
 
+All five were written on 20 November, by agents in worktrees gathered on one branch, and none
+is in 1.9.0 ([xlsx and `corrected` per row](decisions/2026-11-20-xlsx-tables-corrected-per-row.md),
+[default fields](decisions/2026-11-20-default-fields-interface-language.md)). Still to do: the
+`.xlsx` opened by double-click in an Excel set to French and on a Mac (step E2 of the test
+pass); the French guide's first build on GitHub Pages, whose layout now serves two languages
+and was not built locally; the welcome, the empty project and the French fields seen in the
+packaged app, in WebKit on a Mac, and by one or two colleagues who have never used Kalamu.
+Left of #210: a choice searched in the review by its French word, and exports' headings,
+which stay as stored. Left of #212: *To check*'s boxes at zero in an empty project.
+
 Items 1 and 2 are done in code: what they leave is to be tried by hand, gathered here, and
 none of it waits on the others.
 

@@ -3,7 +3,7 @@
 	// tick for several, a list one item per line, a text in full (or on one line, for a title or
 	// pages). The label is the caller's; the control carries it for screen readers.
 	import type { Field } from '#lib/bindings/Field.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { choiceLabel, messages } from '#lib/i18n/index.js';
 
 	let {
 		field,
@@ -22,7 +22,7 @@
 
 {#if field.kind.type === 'choice'}
 	<select bind:value aria-label={field.label}>
-		{#each field.kind.values as v (v)}<option value={v}>{v}</option>{/each}
+		{#each field.kind.values as v (v)}<option value={v}>{choiceLabel(field, v)}</option>{/each}
 	</select>
 {:else if field.kind.type === 'choices'}
 	<div class="checks" role="group" aria-label={field.label}>
@@ -34,7 +34,7 @@
 					onchange={(e) =>
 						(value = e.currentTarget.checked ? [...ticked, v] : ticked.filter((x) => x !== v))}
 				/>
-				{v}
+				{choiceLabel(field, v)}
 			</label>
 		{/each}
 	</div>

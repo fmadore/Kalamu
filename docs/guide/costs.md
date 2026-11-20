@@ -6,6 +6,8 @@ lede: What a job costs, how to pay less, and exactly where your files go.
 description: Estimated costs, the cheaper batch mode, caching and privacy in Kalamu.
 ---
 
+[Français](fr/costs.md)
+
 ## What a job costs
 
 Kalamu is free. With a cloud model you pay the provider, on your own account, for what you

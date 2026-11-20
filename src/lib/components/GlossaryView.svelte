@@ -5,7 +5,9 @@
 	// page on its word, marked with the highlighter's edge; a field above keeps the words that
 	// hold what is typed. At its foot, the keyboard's shortcuts, written for this system.
 	import { tick } from 'svelte';
+	import ExternalLink from './ExternalLink.svelte';
 	import Icon from './Icon.svelte';
+	import { guideUrl } from '#lib/guide.js';
 	import { anchor, FORMATS, filterTerms, keyboard, SEE_ALSO, type Term } from '#lib/glossary.js';
 	import { messages } from '#lib/i18n/index.js';
 
@@ -44,6 +46,11 @@
 </header>
 
 <div class="sheet glossary">
+	<p class="guide">
+		{m.glossary.guideLead}
+		<ExternalLink href={guideUrl()}>{m.shell.guideLink}</ExternalLink>
+	</p>
+
 	<label class="filter">
 		<span class="glass" aria-hidden="true"><Icon name="search" size={14} /></span>
 		<input
@@ -131,6 +138,10 @@
 		display: grid;
 		gap: var(--space-3);
 		scroll-margin-top: var(--space-4);
+	}
+	.guide {
+		margin: 0;
+		font-size: var(--type-sm);
 	}
 	.filter {
 		display: flex;

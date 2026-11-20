@@ -4,6 +4,7 @@
 
 import type { Collection } from '../bindings/Collection.js';
 import type { Described } from '../bindings/Described.js';
+import type { DictionaryView } from '../bindings/DictionaryView.js';
 import type { Document } from '../bindings/Document.js';
 import type { DocumentDetail } from '../bindings/DocumentDetail.js';
 import type { DocumentResult } from '../bindings/DocumentResult.js';
@@ -11,6 +12,7 @@ import type { Job } from '../bindings/Job.js';
 import type { Project } from '../bindings/Project.js';
 import type { ProjectSummary } from '../bindings/ProjectSummary.js';
 import type { ProjectView } from '../bindings/ProjectView.js';
+import type { QueueView } from '../bindings/QueueView.js';
 import type { SourceFile } from '../bindings/SourceFile.js';
 import { FIELDS, kept, type Draft } from '../described.js';
 import { dictionaryCommand } from './mockDictionary.js';
@@ -211,9 +213,43 @@ function view(id: string): ProjectView {
 			};
 		}),
 		tags: tagsOf(mine),
-		jobs: [...new Set(links.map(([, j]) => j))]
+		jobs: [...new Set(links.filter(([d]) => mine.some((m) => m.id === d)).map(([, j]) => j))]
 	};
 }
+
+/** A project other than the sample one with no documents: a new project, whose list of what to
+ *  check and dictionary are empty, as the store answers them. */
+function isEmpty(project: unknown): boolean {
+	return project !== PROJECT_ID && !documents.some((d) => d.project_id === project);
+}
+
+const emptyQueue: QueueView = {
+	queue: {
+		counts: {
+			documents: 0,
+			documents_read: 0,
+			results: 0,
+			pieces: 0,
+			processed: 0,
+			failed: 0,
+			not_read: 0,
+			reviewed: 0,
+			flagged: 0,
+			unresolved: 0,
+			reasons: { failed: 0, not_read: 0, truncated: 0, disagrees: 0, stale: 0, not_reviewed: 0 }
+		},
+		items: [],
+		sample: null
+	},
+	choices: [],
+	preferred: 0
+};
+const emptyDictionary: DictionaryView = {
+	namespaces: [],
+	rows: [],
+	documents_read: 0,
+	documents: 0
+};
 
 /** Answers a project command, or `undefined` for any other. */
 export function projectCommand(cmd: string, a: Record<string, unknown>): unknown {
@@ -254,6 +290,11 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 			return null;
 		case 'project_view':
 			return view(String(a.id));
+		// The sample project's go on to the queue's and the dictionary's own samples.
+		case 'review_queue':
+			return isEmpty(a.project) ? emptyQueue : undefined;
+		case 'dictionary_view':
+			return isEmpty(a.project) ? emptyDictionary : dictionaryCommand(cmd, a);
 		case 'create_collection': {
 			const c: Collection = {
 				id: `00000000-0000-0000-0000-0000000000c${collections.length + 1}`,

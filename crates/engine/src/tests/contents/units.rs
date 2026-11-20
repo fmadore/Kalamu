@@ -393,6 +393,7 @@ async fn selected_units_are_exported_with_their_list() {
         [
             "issue 01 Le Hajj.pdf",
             "issue 02 Fatwa.pdf",
+            "issue units.xlsx",
             "issue units.csv",
             "issue units.json"
         ]

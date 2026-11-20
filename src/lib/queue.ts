@@ -7,7 +7,7 @@ import type { QueueItemKey } from './bindings/QueueItemKey.js';
 import type { Signal } from './bindings/Signal.js';
 import lists from './coreLists.json';
 import type { Messages } from './i18n/index.js';
-import { listNames } from './i18n/index.js';
+import { fieldLabel, listNames } from './i18n/index.js';
 import { pieceLabel } from './pieces.js';
 
 export type Reason = Signal['kind'];
@@ -90,7 +90,10 @@ export function reasonText(signal: Signal, m: Messages, wholeResult = false): st
 					: d.truncated;
 		case 'disagrees':
 			return signal.fields.length > 0
-				? d.disagreesFields(listNames(signal.with), listNames(signal.fields))
+				? d.disagreesFields(
+						listNames(signal.with),
+						listNames(signal.fields.map((label) => fieldLabel(label)))
+					)
 				: d.disagreesWords(listNames(signal.with), signal.words);
 		case 'stale':
 			if (signal.unit) return signal.gone ? d.unitGone : d.unitChanged;

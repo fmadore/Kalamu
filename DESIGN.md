@@ -375,7 +375,7 @@ In a project's documents, each task's marks in the **Results** column (its icon,
 
 The **Glossary** ends with **Keyboard**: every shortcut, grouped by where it works (everywhere, New job, a review, a review's search, a scan), the keys in mono as the system in use writes them, alternatives joined by a muted "or".
 
-**Settings** opens on a tab list (API keys, Offline, General, About), each tab a sheet of its own; a link into Settings opens the tab it is about.
+**Settings** opens on a tab list (API keys, Offline, General, About), each tab a sheet of its own; a link into Settings opens the tab it is about. At the first launch only (no key, nothing installed offline), a welcome sits above the tabs: a heading, a sentence, the two ways to start side by side as default buttons (neither is the primary), each with its muted hint under it, and the guide's link; no box, and it goes once a key is saved or a model installed.
 
 **Job detail** sets the job's facts as one bordered strip of cells divided by hairlines, the short facts in one row and the errors found in review in a row of their own under them, as wide as the strip so each set-up's sentence stays on one line; then the files as a bordered table with per-set-up progress bars, counted by the engine for the files drawn (`job_progress`) rather than from every piece.
 

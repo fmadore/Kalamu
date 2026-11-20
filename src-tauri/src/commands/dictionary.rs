@@ -230,8 +230,8 @@ pub fn dictionary_undo_apart(
     Ok(state.dictionary.undo_apart(project, a, b)?)
 }
 
-/// Writes the entries as `.json` and every listed form with its entry as `.csv`, beside each
-/// other at the path chosen.
+/// Writes the entries as `.json` and every listed form with its entry as `.xlsx` and `.csv`,
+/// beside each other at the path chosen.
 #[tauri::command]
 pub fn export_dictionary(
     state: State<'_, AppState>,
@@ -244,7 +244,7 @@ pub fn export_dictionary(
         path.with_extension("json"),
         state.dictionary.export_json(project)?,
     )?;
-    let csv = kalamu_export::table_csv(&state.dictionary.forms_table(project)?)
-        .map_err(|e| kalamu_core::DictionaryError::Export(e.to_string()))?;
-    write(path.with_extension("csv"), csv)
+    super::write_table(path, &state.dictionary.forms_table(project)?, |m| {
+        kalamu_core::DictionaryError::Export(m).into()
+    })
 }

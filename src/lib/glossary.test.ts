@@ -27,6 +27,7 @@ describe('glossary', () => {
 			'markdown',
 			'docx',
 			'json',
+			'xlsx',
 			'csv',
 			'srt',
 			'vtt',

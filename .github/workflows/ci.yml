@@ -199,6 +199,7 @@ jobs:
           src/lib/coreLists.json
           src/lib/searchRules.json
           src/lib/matchCases.json
+          src/lib/i18n/defaultFields.json
           src/lib/dev/taskRules.json
 
   rust-security:

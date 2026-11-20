@@ -70,9 +70,10 @@ try a small job first. See the [roadmap](docs/roadmap.md) and the
   job made it. Add files before reading them, add jobs you ran before without paying again,
   start a job on a selection, and mark the result you rely on. Describe each source as an
   archive would (repository, fonds, shelfmark, citation), with what a project's documents share
-  given once, and export the descriptions as CSV or JSON, in Kalamu's columns or in your own,
-  saved for the next project, beside each document's corrected text, review status or analysis
-  answers, these as the model gave them or under your dictionary's labels.
+  given once, and export the descriptions as an Excel workbook, CSV or JSON, in Kalamu's
+  columns or in your own, saved for the next project, beside each document's corrected text,
+  review status or analysis answers, these as the model gave them or under your dictionary's
+  labels.
 - **Search a whole project**: every passage of its documents that names a person or an
   organisation, or holds several words near each other, in the text as you corrected it, accents
   and Arabic vowel marks ignored, each opening its source where it stands. It runs on your
@@ -111,9 +112,9 @@ try a small job first. See the [roadmap](docs/roadmap.md) and the
   read and you have checked it. For longer chains, **workflows** run your pipelines one after
   another, from ready-made examples or your own, on a folder or a project's selection; each
   step is a job of its own, and running again pays only for the steps that changed.
-- **Export** to text, Markdown, Word, JSON, CSV, subtitles, searchable PDF, ALTO XML and PAGE
-  XML (each word with its place on the page, corrections included), each with a `provenance.json`
-  recording the model, prompt and settings.
+- **Export** to text, Markdown, Word, JSON, Excel workbooks, CSV, subtitles, searchable PDF,
+  ALTO XML and PAGE XML (each word with its place on the page, corrections included), each with
+  a `provenance.json` recording the model, prompt and settings.
 - **A glossary** explains the words these tools use, from OCR and tokens to error rates and
   hallucination, for colleagues new to them.
 
@@ -142,7 +143,8 @@ while jobs run.
 ## Documentation
 
 - [Guide](https://fmadore.github.io/Kalamu/guide/): how to use Kalamu, from a first job to
-  exporting checked results ([its pages](docs/guide/)).
+  exporting checked results ([its pages](docs/guide/)); in French as the
+  [Guide en français](https://fmadore.github.io/Kalamu/guide/fr/).
 - [Specification](docs/specification.md): what the app must do, and why.
 - [Roadmap](docs/roadmap.md): what is built and what is next.
 - [Development](docs/development.md): building, checks, the browser preview.

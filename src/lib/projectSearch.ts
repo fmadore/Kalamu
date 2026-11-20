@@ -7,7 +7,7 @@ import type { MatchMode } from './bindings/MatchMode.js';
 import type { ResultHits } from './bindings/ResultHits.js';
 import type { SearchRequest } from './bindings/SearchRequest.js';
 import type { SearchView } from './bindings/SearchView.js';
-import type { Messages } from './i18n/index.js';
+import { fieldLabel, type Messages } from './i18n/index.js';
 import { clock, pieceLabel } from './pieces.js';
 import { folded } from './search.js';
 import rules from './searchRules.json';
@@ -150,7 +150,9 @@ export function hitPlace(hit: Hit, m: Messages): string {
  * model's reason; empty for text read from the document. */
 export function hitOrigin(hit: Hit, m: Messages): string {
 	if (!hit.field) return '';
-	const parts = [hit.entry, hit.field.label].filter((p): p is string => !!p);
+	const parts = [hit.entry, fieldLabel(hit.field.label, hit.field.key)].filter(
+		(p): p is string => !!p
+	);
 	return parts.join(' › ') + (hit.reason ? ` (${m.search.reason})` : '');
 }
 

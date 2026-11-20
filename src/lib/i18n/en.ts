@@ -2,15 +2,33 @@
 // like, typed `: Messages` so a missing or extra key fails the type check, as in Live
 // Translation.
 
+/** A default field's words in another language: shown, never stored or sent to a model. */
+export interface FieldText {
+	label: string;
+	help: string;
+	/** A choice field's choices, by the English value the model answers with and Kalamu stores. */
+	values?: Record<string, string>;
+	/** The fields of each entry of a repeating group or of entries that quote the text, by key. */
+	fields?: Record<string, FieldText>;
+}
+
+/** A default prompt's name and description, and its fields by key, in another language. */
+export interface PresetText {
+	name: string;
+	description: string;
+	fields?: Record<string, FieldText>;
+}
+
 export const en = {
 	locale: { name: 'English', tag: 'en' },
 	/** Languages a model lists that the system has no name for. */
 	languageNames: { kea: 'Kabuverdianu', rup: 'Aromanian' } as Record<string, string>,
 	/**
 	 * The default prompts' names and descriptions, by id, where the interface language differs
-	 * from the core's English; empty here, since the core's text is English.
+	 * from the core's English, and their fields' labels, help and choices by field key (shown by
+	 * `localiseFields`); empty here, since the core's text is English.
 	 */
-	presets: {} as Record<string, { name: string; description: string }>,
+	presets: {} as Record<string, PresetText>,
 	app: {
 		name: 'Kalamu'
 	},
@@ -23,7 +41,13 @@ export const en = {
 		noJobs: 'Jobs you start appear here.',
 		/** The key after the shortcut modifier (Ctrl, or ⌘ on a Mac: `platform.ts`). */
 		newJobShortcut: 'N',
-		offlineReady: 'Whisper ready on this computer',
+		/** At the sidebar's foot, once anything that runs a job offline is installed. */
+		offlineReady: 'Models ready on this computer, no internet needed',
+		/** The guide's link, in the first-launch welcome, the Glossary and Settings › About. */
+		guideLink: 'Read the guide',
+		/** This language's guide, relative to the English one (`./`): French is `fr/`. A language
+		 * the guide is not written in keeps `./`. */
+		guidePage: './',
 		collapse: 'Hide the job list',
 		expand: 'Show the job list',
 		sidebarShortcut: 'B',
@@ -193,7 +217,7 @@ export const en = {
 		analyseHint: 'A new analysis reads each selected item’s pages as one document.',
 		export: 'Export',
 		exportHint:
-			'Each selected item’s pages as a PDF in a folder you choose, with a list of the items as CSV and JSON.',
+			'Each selected item’s pages as a PDF in a folder you choose, with a list of the items as an Excel spreadsheet, a CSV and JSON.',
 		exported: (n: number) => (n === 1 ? '1 file written.' : `${n} files written.`),
 		pdfOnly: 'Only a PDF’s items can be read or exported on their own for now.',
 		notCombined: 'Items are made from the combined entries: run the job to the end first.'
@@ -422,7 +446,8 @@ export const en = {
 		noEvidence: 'No result lists it any longer.',
 		openReview: 'Open the review',
 		export: 'Export',
-		exported: 'The dictionary was saved as JSON, with a CSV of every form found beside it.',
+		exported:
+			'The dictionary was saved as JSON, with every form found beside it as an Excel spreadsheet and a CSV.',
 		fileName: (project: string) => `${project} dictionary`,
 		proposals: {
 			title: 'Proposed merges',
@@ -730,7 +755,8 @@ export const en = {
 			'Nothing was read here, so there is nothing to check yet: retry the failed pages on the job’s page, or start the job.',
 		answers: 'Answers to check',
 		none: 'Nothing needs you for the reasons shown.',
-		empty: 'No document here has been read yet. Read some with a new job, then come back.',
+		empty:
+			'Nothing has been read here yet. Once a job has read these documents, this list shows the pages that failed or were cut off, that two models read differently, or that are not yet reviewed.',
 		detail: {
 			failed: (error: string | null) => (error ? `Failed: ${error}` : 'Failed'),
 			notRead: 'Not read yet',
@@ -756,7 +782,7 @@ export const en = {
 		open: (document: string, place: string) => `Open ${document}, ${place}, in the review`,
 		more: (n: number) => `Show ${n} more`,
 		export: 'Export the list',
-		exported: 'The list was saved as JSON, with a CSV beside it.',
+		exported: 'The list was saved as JSON, with an Excel spreadsheet and a CSV beside it.',
 		fileName: (project: string) => `${project} review list`,
 		sample: {
 			title: 'Drawn at random',
@@ -883,6 +909,16 @@ export const en = {
 		attachJob: 'Add an existing job',
 		noDocuments:
 			'No documents here yet. Add files, or add a job you ran before: its results come with it, without being paid for again.',
+		/** In a project with no documents yet, in place of the table: what to do first. */
+		start: {
+			title: 'Start by adding your documents',
+			first: (files: string, folder: string, job: string) =>
+				`Choose “${files}” or “${folder}” for the sources you want to read. Already ran a job on them? “${job}” brings in its results, without paying again.`,
+			rest: 'Nothing else has to be filled in. The other sections fill themselves as jobs read your documents: the search, the map, what to check, the dictionary and the activity.',
+			/** Above a project's search while nothing in it has been read. */
+			nothingToSearch:
+				'Nothing has been read in this project yet. Once a job has read its documents, their text can be searched here, by words or by meaning.'
+		},
 		search: 'Find a document',
 		noMatch: 'No document matches.',
 		sortBy: 'Sort by',
@@ -925,7 +961,8 @@ export const en = {
 			save: 'Save description',
 			saved: 'Description saved.',
 			export: 'Export descriptions',
-			exported: 'The descriptions were saved as JSON, with a CSV beside it.'
+			exported:
+				'The descriptions were saved as JSON, with an Excel spreadsheet and a CSV beside it.'
 		},
 		profiles: {
 			title: 'Export descriptions',
@@ -2111,6 +2148,20 @@ export const en = {
 			general: 'General',
 			about: 'About'
 		},
+		/** The welcome at the top of Settings, only while no key is saved and nothing is
+		 * installed offline: two ways to start, each opening its tab. */
+		welcomeTitle: 'Welcome to Kalamu',
+		welcomeLede:
+			'To read your documents and recordings, Kalamu needs a model. Choose one of two ways to start; you can add the other later.',
+		welcomeOffline: 'Use a model on this computer',
+		welcomeOfflineHint:
+			'Free, with no account. Nothing leaves your computer. The model is downloaded once; it is slower than an online one.',
+		welcomeKey: 'Add a key from an online provider',
+		welcomeKeyHint:
+			'Faster and often more accurate. You open an account with the provider, which charges for what you use, and your files are sent to it.',
+		welcomeGuide: 'New to these tools? The guide explains each step.',
+		/** Settings › About, before the guide's link. */
+		aboutGuide: 'Step by step, from installing Kalamu to exporting checked results.',
 		keysTitle: 'API keys',
 		keysHint: (keychain: string) =>
 			`Keys are stored in ${keychain} and sent only to their provider. Files go directly from this computer to the provider you choose.`,
@@ -2253,6 +2304,8 @@ export const en = {
 	glossary: {
 		title: 'Glossary',
 		lede: 'The words Kalamu uses, for colleagues new to these tools, and what each export format suits.',
+		/** Above the filter, before the guide's link. */
+		guideLead: 'To learn Kalamu step by step, from the first job to the export:',
 		wordsTitle: 'Words',
 		formatsTitle: 'Export formats',
 		/** The shortcuts, by where they work, written for the system in use. */
@@ -2396,7 +2449,8 @@ export const en = {
 				'Text with light marks for headings and lists, readable as it is and well suited to note-taking tools such as Obsidian.',
 			docx: 'A Word document with a heading for each page, to read, annotate or share with colleagues who work in Word.',
 			json: 'Every page, segment, answer or entry with its details, machine-readable, for scripts and databases.',
-			csv: 'A spreadsheet with one row per page, segment, document or entry (an analysis has a column per field), for Excel, LibreOffice or statistics software.',
+			xlsx: 'A spreadsheet with one row per page, segment, document or entry (an analysis has a column per field) that opens with a double click in Excel, LibreOffice or Numbers, whatever their language. Every cell is text, exactly as written. Choose it to read, sort or filter results in a spreadsheet.',
+			csv: 'The same table as plain text with commas, for R, Python, statistics software or a database import. Excel set to French or German may show it all in one column: open the .xlsx instead.',
 			srt: 'Subtitles with their times, for video players and editing software.',
 			vtt: 'Subtitles for the web (WebVTT), as web video players use them.',
 			searchable_pdf:
@@ -2441,7 +2495,8 @@ export const en = {
 		json: 'JSON',
 		srt: 'Subtitles (.srt)',
 		vtt: 'Subtitles (.vtt)',
-		csv: 'Spreadsheet (.csv)',
+		xlsx: 'Spreadsheet for Excel (.xlsx)',
+		csv: 'Table for other tools: R, Python… (.csv)',
 		searchable_pdf: 'Searchable PDF',
 		alto: 'ALTO XML (word positions)',
 		page_xml: 'PAGE XML (one file per page)'

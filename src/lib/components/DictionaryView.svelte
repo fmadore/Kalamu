@@ -18,7 +18,7 @@
 		type RowFilter
 	} from '#lib/dictionary.js';
 	import { Action } from '#lib/action.svelte.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { fieldLabel, messages } from '#lib/i18n/index.js';
 	import { Paging, rowIndex } from '#lib/paging.svelte.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { toast } from '#lib/state.svelte.js';
@@ -83,6 +83,13 @@
 		} catch (e) {
 			if (ticket === viewTicket) action.fail(e);
 		}
+	}
+
+	/** A field's name as the dictionary groups names under it, a default's in the interface
+	 * language (`fieldLabel`); its key stays the namespace stored. */
+	function shownNamespace(key: string): string {
+		const found = view?.namespaces.find((n) => n.key === key);
+		return found ? fieldLabel(found.label, found.key) : key;
 	}
 
 	function labelOf(key: string): string {
@@ -175,7 +182,9 @@
 						}}
 					>
 						{#each view.namespaces as n (n.key)}
-							<option value={n.key}>{m.dictionary.fieldCount(n.label, n.rows, n.to_review)}</option>
+							<option value={n.key}
+								>{m.dictionary.fieldCount(fieldLabel(n.label, n.key), n.rows, n.to_review)}</option
+							>
 						{/each}
 					</select>
 				</label>
@@ -217,7 +226,7 @@
 			<DictionaryProposals
 				{projectId}
 				{namespace}
-				fieldLabel={view.namespaces.find((n) => n.key === namespace)?.label ?? namespace}
+				fieldLabel={shownNamespace(namespace)}
 				{scope}
 				onchange={load}
 			/>

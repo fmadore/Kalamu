@@ -12,6 +12,7 @@
 		field,
 		label,
 		choices = null,
+		choiceText = (c) => c,
 		onadd
 	}: {
 		/** The field's key, to find its Add again. */
@@ -20,6 +21,8 @@
 		label: string;
 		/** For a field of choices, those not yet listed; null for free names. */
 		choices?: string[] | null;
+		/** A choice as shown, from the value stored. */
+		choiceText?: (choice: string) => string;
 		/** Adds what was typed or chosen; what was refused and why, or null when it failed. */
 		onadd: (
 			text: string
@@ -115,7 +118,7 @@
 				aria-label={m.review.addChoice(label)}
 				aria-describedby={hintId}
 			>
-				{#each choices as c (c)}<option value={c}>{c}</option>{/each}
+				{#each choices as c (c)}<option value={c}>{choiceText(c)}</option>{/each}
 			</select>
 		{:else}
 			<input

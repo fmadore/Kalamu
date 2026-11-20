@@ -33,6 +33,7 @@ fn part(number: u32, text: &str, regions: Vec<TextRegion>) -> ExportPart {
         segments: vec![],
         corrected: false,
         reviewed: false,
+        rows_corrected: Vec::new(),
         fields: vec![],
         regions,
         failed: None,

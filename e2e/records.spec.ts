@@ -130,30 +130,30 @@ test('New job ticks the spreadsheet for a records analysis, a choice made by han
 	await open(page, 'new');
 	const main = page.getByRole('main');
 	await main.getByRole('button', { name: /^Analyse texts/ }).click();
-	const csv = main.getByRole('checkbox', { name: 'Spreadsheet (.csv)' });
+	const sheet = main.getByRole('checkbox', { name: 'Spreadsheet for Excel (.xlsx)' });
 	const directory = 'Directory or list, one row per entry';
 	const analysis = main
 		.getByRole('combobox')
 		.filter({ has: page.getByRole('option', { name: directory }) });
 	const other = await analysis.locator('option').first().textContent();
-	await expect(csv).not.toBeChecked();
+	await expect(sheet).not.toBeChecked();
 
 	// Records are read for their table: choosing them ticks it, leaving them takes the tick back.
 	await analysis.selectOption({ label: directory });
-	await expect(csv).toBeChecked();
+	await expect(sheet).toBeChecked();
 	await analysis.selectOption({ label: other ?? '' });
-	await expect(csv).not.toBeChecked();
+	await expect(sheet).not.toBeChecked();
 
 	// Unticked by hand, it stays unticked while the records stay chosen.
 	await analysis.selectOption({ label: directory });
-	await expect(csv).toBeChecked();
-	await csv.uncheck();
-	await expect(csv).not.toBeChecked();
+	await expect(sheet).toBeChecked();
+	await sheet.uncheck();
+	await expect(sheet).not.toBeChecked();
 
 	// Ticked by hand before, it stays ticked on leaving them.
 	await analysis.selectOption({ label: other ?? '' });
-	await csv.check();
+	await sheet.check();
 	await analysis.selectOption({ label: directory });
 	await analysis.selectOption({ label: other ?? '' });
-	await expect(csv).toBeChecked();
+	await expect(sheet).toBeChecked();
 });

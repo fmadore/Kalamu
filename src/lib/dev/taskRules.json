@@ -10,6 +10,7 @@
       "markdown",
       "docx",
       "json",
+      "xlsx",
       "csv",
       "searchable_pdf",
       "alto",
@@ -194,6 +195,7 @@
       "markdown",
       "docx",
       "json",
+      "xlsx",
       "csv"
     ],
     "answers_in_language": false,
@@ -408,6 +410,7 @@
       "srt",
       "vtt",
       "json",
+      "xlsx",
       "csv"
     ],
     "answers_in_language": true,
@@ -621,6 +624,7 @@
       "markdown",
       "docx",
       "json",
+      "xlsx",
       "csv"
     ],
     "answers_in_language": true,
@@ -836,6 +840,7 @@
     "formats": [
       "markdown",
       "docx",
+      "xlsx",
       "csv",
       "txt",
       "json"
@@ -1226,6 +1231,7 @@
       "srt",
       "vtt",
       "json",
+      "xlsx",
       "csv"
     ],
     "answers_in_language": false,

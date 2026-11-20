@@ -85,6 +85,7 @@ impl Engine {
                     segments: Vec::new(),
                     corrected: false,
                     reviewed: false,
+                    rows_corrected: Vec::new(),
                     fields: Vec::new(),
                     regions,
                     failed: Some(state.error.clone().unwrap_or_default()),
@@ -156,6 +157,13 @@ impl Engine {
                 _ => corrected_text,
             };
             let is_reviewed = correction.is_some_and(|c| c.reviewed);
+            // Records: which of the page's rows the researcher typed into or added.
+            let rows_corrected = match (&corrected_fields, &setup.prompt.schema) {
+                (Some(answers), Some(schema)) if kalamu_core::records::is_records(schema) => {
+                    kalamu_core::records::corrected_rows(schema, &result.output.fields, answers)
+                }
+                _ => Vec::new(),
+            };
             let number = state.index + 1;
             if corrected_text.is_some() {
                 corrected.push(number);
@@ -234,6 +242,7 @@ impl Engine {
                 segments,
                 corrected: corrected_text.is_some(),
                 reviewed: is_reviewed,
+                rows_corrected,
                 fields,
                 regions,
                 failed: None,

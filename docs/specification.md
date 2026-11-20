@@ -136,7 +136,7 @@ Selected items go to a new job, *Extract the text* or *Analyse*, each as a PDF o
 cut from the source and frozen like corrected text: the job's results are written beside the
 source under the item's name, `provenance.json` names the item, and an item given other pages
 afterwards marks the job out of date without changing what it read. *Export* writes each
-item's pages as a PDF with a list of the items as CSV and JSON
+item's pages as a PDF with a list of the items as an Excel workbook, CSV and JSON
 ([decision](decisions/2026-11-02-document-units.md)). Only a PDF's items can be cut out so far.
 
 **A result's text can go into a new round.** *Use this text in a new job* on an extraction, a
@@ -343,7 +343,17 @@ once, not in a batch, since a batch's answers are not checked line by line.
   language is chosen in Settings › General; by default it is the first of the system's languages that
   Kalamu has, else English. Prompts, the models' answers and the files Kalamu writes keep their
   own language, and the default prompts stay in English, which the models follow best; their
-  names and descriptions are translated.
+  names and descriptions are translated, and so are the labels, help and choices of their
+  fields wherever the interface shows them (the reviews, New job, the agreement table, a
+  project's dictionary and search, the list of what to check). This is for the screen only:
+  field keys, the choice values the model answers with and Kalamu stores, results, cache keys
+  and provenance stay in English, so switching the language changes nothing stored, and a
+  choice corrected in French stores its English value. A text is shown translated only where it
+  is, word for word, the default's shipped English, so whatever the researcher wrote in a prompt
+  stays as written; Prompts shows the fields as stored, since what is edited there is sent to
+  the model. Exports keep the stored English labels, so a table sent to a colleague or read by
+  a script does not change language with the interface
+  ([decision](decisions/2026-11-20-default-fields-interface-language.md)).
 
 ## Interruptions and resuming
 
@@ -700,7 +710,8 @@ analysed, compared. A **project** keeps it together
   the parts its documents share (the repository, the fonds) and each document its own, a part
   it leaves empty taking the project's; the document's page shows which is which. Written by
   the researcher only: no model reads or writes it and no result changes it. *Export
-  descriptions* writes the documents shown (the project's or a collection's) as JSON and CSV,
+  descriptions* writes the documents shown (the project's or a collection's) as JSON, an Excel
+  workbook and CSV,
   each value beside where it came from (`document` or `project`), with the documents' ids,
   titles, files, collections and tags
   ([decision](decisions/2026-11-03-source-descriptions.md), [#55](https://github.com/fmadore/Kalamu/issues/55)).
@@ -717,8 +728,8 @@ analysed, compared. A **project** keeps it together
   joined, what an empty cell holds and whether line breaks become spaces. A profile is checked
   as it is edited (no heading twice, whatever its capitals; each on one line), saved for every
   project, duplicated, shared as a template without its fixed texts unless asked, and imported.
-  Starting points: every column, or Dublin Core terms. CSV follows the profile; JSON keeps
-  lists as arrays and empty values as `null`. Exporting again never calls a model
+  Starting points: every column, or Dublin Core terms. CSV and the workbook follow the
+  profile; JSON keeps lists as arrays and empty values as `null`. Exporting again never calls a model
   ([decision](decisions/2026-11-03-export-profiles.md)). A column can also read the document's
   result for a task: how far it was reviewed (`reviewed`, `partly_reviewed`, `not_reviewed`),
   the model that read it, its text as corrected (for a task that writes one), or an analysis's
@@ -774,9 +785,9 @@ analysed, compared. A **project** keeps it together
   counts over the scope do not change. An item can be **kept aside with a note**, for the
   answer it then holds: keeping aside resolves nothing, and when the answer changes the item
   is listed again, marked as kept aside with an earlier answer. **Export the list** writes a
-  review manifest (JSON, and a CSV beside it): every item in scope whatever the filters show,
-  with its document, job, set-up, page and answer, why it is listed, whether it was drawn and
-  with which seed, and what the researcher decided ([format](formats.md#the-review-manifest-kalamu-review-manifest-version-1),
+  review manifest (JSON, with an Excel workbook and a CSV beside it): every item in scope
+  whatever the filters show, with its document, job, set-up, page and answer, why it is
+  listed, whether it was drawn and with which seed, and what the researcher decided ([format](formats.md#the-review-manifest-kalamu-review-manifest-version-1),
   [decision](decisions/2026-11-17-page-xml-review-sample-claude-batches.md)).
 - **Organising never changes work.** Collections, titles, links and preferences call no model.
   A job keeps the files it was started with, so a later change to a collection does not rewrite
@@ -811,7 +822,8 @@ The names and terms a project's analyses listed, gathered for the researcher to 
   gathered, and marks an entry none of whose forms is listed any longer. It covers the whole
   project or one collection, and each row opens the results that listed it.
 - **Export** of the entries as JSON (ids, labels, forms as written, review status, pairs kept
-  apart) and of every form found as CSV, beside the entry and label it maps to.
+  apart) and of every form found as an Excel workbook and CSV, beside the entry and label it
+  maps to.
 - **Merges proposed by a model.** For one field, the researcher chooses a provider and a model
   and sees the estimate; the rows go as an analysis job of its own, through the engine, so it
   is cached, resumed, costed and recorded in provenance as any job, in economy mode where the
@@ -953,12 +965,26 @@ is remembered per task. Details are in [formats.md](formats.md).
 
 | Task | Formats |
 | --- | --- |
-| **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.csv`; a searchable PDF (invisible text layer over the original, from PDF sources) and ALTO XML (each block, line and word with its place) only from models that report where text sits on the page: Tesseract, word by word, and Mistral OCR and LightOnOCR-3, by block (in ALTO their lines and words are then estimated); a corrected page keeps its words' places; PAGE XML (one file per page, the same places) from the same models |
-| **Transcription** | `.txt`, `.md`, `.docx`, `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.csv` |
-| **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.csv` (one row per document, one column per field); later a column added to an `.xlsx` |
-| **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.csv` and `.json` |
+| **Text extraction** | `.txt`, `.md`, `.docx`, `.json`, `.xlsx`, `.csv`; a searchable PDF (invisible text layer over the original, from PDF sources) and ALTO XML (each block, line and word with its place) only from models that report where text sits on the page: Tesseract, word by word, and Mistral OCR and LightOnOCR-3, by block (in ALTO their lines and words are then estimated); a corrected page keeps its words' places; PAGE XML (one file per page, the same places) from the same models |
+| **Transcription** | `.txt`, `.md`, `.docx`, `.json` (segments with speakers and timestamps), `.srt`, `.vtt`, `.xlsx`, `.csv` |
+| **Analysis** | `.txt`, `.md`, `.docx`, `.json` (answers by field, with reasons), `.xlsx` and `.csv` (one row per document, one column per field; for records one row per entry); later a column added to an existing `.xlsx` |
+| **Detailed table of contents** | `.md` and `.docx` (a heading per entry), `.xlsx` and `.csv` (one row per entry, a column per field), `.txt`, `.json`; its items' pages as one PDF each, with a list of them as `.xlsx`, `.csv` and `.json` |
 | **Correction** | As text extraction, without the searchable PDF or ALTO XML |
 | **Translation** | As a correction, and SRT and WebVTT for a transcript translated with its times |
+
+**Tables: a workbook for Excel, CSV for other tools.** Every table Kalamu writes (a job's
+results, a table of contents' items, the project's descriptions and export profiles, the review
+manifest, the dictionary's forms) is offered as an Excel workbook (`.xlsx`) and as CSV. The
+workbook opens by double-click in Excel, LibreOffice or Numbers set to any language: one sheet,
+the headings in bold on a row that stays in view, columns as wide as their text within a bound,
+long text wrapped. Every cell is text exactly as written, never read as a number, a date or a
+formula, so a telephone number, a date as the source gives it or a formula quoted on a page stay
+as they are and need no guarding apostrophe; a cell longer than Excel's 32,767 characters is
+cut and says so. The CSV stays as it was (commas, UTF-8 with a byte-order mark, a guarding
+apostrophe before what a spreadsheet would compute) for R, Python and other tools. New job says
+which to pick ("for Excel", "for other tools"); a table of contents and records tick the
+workbook by default. The same table gives the same workbook, byte for byte
+([decision](decisions/2026-11-20-xlsx-tables-corrected-per-row.md), [#209](https://github.com/fmadore/Kalamu/issues/209)).
 
 ## Prompts and analyses
 
@@ -983,7 +1009,10 @@ is remembered per task. Details are in [formats.md](formats.md).
   read from its fields, never its name; a comparison cannot mix it with an analysis read once
   per document. The review lists the page's rows beside the scan: a cell is corrected, a row
   added or removed, in the correction layer, each change made in Rust and the model's rows
-  kept; a page that failed or was cut off says so and shows no rows. Two ready-made examples,
+  kept; a page that failed or was cut off says so and shows no rows. In the exported table and
+  JSON rows, `corrected` is a row's own: true only for a row the researcher typed into or
+  added, found by lining the page's rows up with the model's by their cells, so a row removed
+  above marks none below it; `reviewed` stays the page's. Two ready-made examples,
   a directory and a register, keep what is written (ditto marks included) and carry nothing
   down from a heading ([decision](decisions/2026-11-15-records-regions-batch-files.md)).
 - **Share** prompts and analyses by exporting and importing them as small JSON files.
@@ -1150,6 +1179,13 @@ plain language, and what each export format suits. A small help mark beside the 
 use a word (pipelines, workflows, the model and prompt, speed and price, the estimate, formats,
 the files written, the errors found in review) opens the glossary on it. Like all interface text, it is
 written in the translation files.
+
+The guide (`docs/guide/`, published on GitHub Pages) is opened in the system's browser from the top
+of the glossary, from Settings › About and from the first launch's welcome, in the interface
+language when the guide is written in it. Kalamu opens on Settings only while no key is saved and
+nothing that runs a job is installed offline; that first launch shows a short welcome above the
+tabs offering the two ways to start, each opening its tab, and it goes by itself once either is
+done. Otherwise Kalamu opens on New job.
 
 ## Bundled conversion tools
 

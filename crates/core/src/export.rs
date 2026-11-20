@@ -18,6 +18,9 @@ pub enum ExportFormat {
     Srt,
     Vtt,
     Csv,
+    /// An Excel workbook of the same table as the CSV, every cell text: it opens by
+    /// double-click in a spreadsheet set to any language, where a CSV's commas may not be read.
+    Xlsx,
     /// The original PDF with an invisible text layer, from models that report layout.
     SearchablePdf,
     /// ALTO XML: the text with where each block, line and word sits, from models that report
@@ -38,12 +41,19 @@ impl ExportFormat {
             Self::Srt => "srt",
             Self::Vtt => "vtt",
             Self::Csv => "csv",
+            Self::Xlsx => "xlsx",
             // Never `.pdf` alone, which would replace the source.
             Self::SearchablePdf => "searchable.pdf",
             Self::Alto => "alto.xml",
             // Never `.xml` alone, which the ALTO file's name ends with too.
             Self::PageXml => "page.xml",
         }
+    }
+
+    /// A table for a spreadsheet, CSV or a workbook: an analysis that cites the text writes its
+    /// quotations as a second table beside it (`quotations.csv`, `quotations.xlsx`).
+    pub fn is_table(self) -> bool {
+        matches!(self, Self::Csv | Self::Xlsx)
     }
 
     /// Written only from a model that reports where text sits on the page.
@@ -113,6 +123,11 @@ pub struct ExportPart {
     pub segments: Vec<Segment>,
     pub corrected: bool,
     pub reviewed: bool,
+    /// For records (#171), one flag per row of `fields`, in order: whether the researcher typed
+    /// into it or added it ([`crate::records::corrected_rows`]). Empty for any other part and
+    /// for a page not corrected, whose rows are all the model's.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rows_corrected: Vec<bool>,
     /// An analysis's answers, corrected where the researcher corrected them.
     #[serde(default)]
     pub fields: Vec<crate::FieldAnswer>,
@@ -233,15 +248,17 @@ pub struct ExportDocument {
     pub options: ExportOptions,
 }
 
-/// A table for a spreadsheet: its headings, then rows of as many cells. Projects' descriptions,
-/// export profiles and the dictionary make one; the `export` crate writes it as CSV, with the
-/// byte-order mark every spreadsheet file carries.
+/// A table for a spreadsheet: its headings, then rows of as many cells. A job's results,
+/// projects' descriptions, export profiles, the review manifest and the dictionary make one;
+/// the `export` crate writes it as CSV, with the byte-order mark every spreadsheet file
+/// carries, or as an Excel workbook.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Table {
     pub headings: Vec<String>,
     pub rows: Vec<Vec<String>>,
     /// What the CSV writer does with a cell a spreadsheet would take for a formula, decided by
-    /// whoever makes the table, for what the file is for.
+    /// whoever makes the table, for what the file is for. A workbook holds every cell as text
+    /// and needs no guarding.
     pub cells: CsvCells,
 }
 

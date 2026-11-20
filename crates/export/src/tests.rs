@@ -139,6 +139,7 @@ fn letter() -> ExportDocument {
                 segments: vec![],
                 corrected: false,
                 reviewed: true,
+                rows_corrected: Vec::new(),
                 fields: vec![],
                 regions: vec![],
                 failed: None,
@@ -153,6 +154,7 @@ fn letter() -> ExportDocument {
                 segments: vec![],
                 corrected: true,
                 reviewed: true,
+                rows_corrected: Vec::new(),
                 fields: vec![],
                 regions: vec![],
                 failed: None,
@@ -168,6 +170,7 @@ fn letter() -> ExportDocument {
                 segments: vec![],
                 corrected: false,
                 reviewed: false,
+                rows_corrected: Vec::new(),
                 fields: vec![],
                 regions: vec![],
                 failed: Some("Gemini's copyright filter stopped this page (RECITATION)".into()),
@@ -208,6 +211,7 @@ fn interview() -> ExportDocument {
                 ],
                 corrected: false,
                 reviewed: false,
+                rows_corrected: Vec::new(),
                 fields: vec![],
                 regions: vec![],
                 failed: None,
@@ -227,6 +231,7 @@ fn interview() -> ExportDocument {
                 segments: vec![],
                 corrected: false,
                 reviewed: false,
+                rows_corrected: Vec::new(),
                 fields: vec![],
                 regions: vec![],
                 failed: None,
@@ -295,6 +300,7 @@ fn analysis() -> ExportDocument {
             segments: vec![],
             corrected: true,
             reviewed: true,
+            rows_corrected: Vec::new(),
             fields,
             regions: vec![],
             failed: None,
@@ -384,6 +390,7 @@ fn contents() -> ExportDocument {
             segments: vec![],
             corrected: true,
             reviewed: false,
+            rows_corrected: Vec::new(),
             fields: answers(vec![
                 entry(
                     "[Éditorial] Le Hajj, pilier de l'islam",
@@ -429,6 +436,7 @@ fn corrected() -> ExportDocument {
         segments: vec![],
         corrected: false,
         reviewed: false,
+        rows_corrected: Vec::new(),
         fields: vec![],
         regions: vec![],
         failed: None,
@@ -455,6 +463,7 @@ fn translated() -> ExportDocument {
         segments: vec![],
         corrected,
         reviewed: corrected,
+        rows_corrected: Vec::new(),
         fields: vec![],
         regions: vec![],
         failed: None,
@@ -489,6 +498,7 @@ fn translated_interview() -> ExportDocument {
         segments: lines,
         corrected,
         reviewed: corrected,
+        rows_corrected: Vec::new(),
         fields: vec![],
         regions: vec![],
         failed: None,
@@ -636,6 +646,43 @@ fn text_formats_match_golden_files() {
     check("translated.csv", &run(ExportFormat::Csv, &translated()));
 }
 
+/// A workbook's cells read back, one row of JSON strings per line, compared with
+/// `golden/<name>`.
+fn check_workbook(name: &str, bytes: &[u8]) {
+    let rows: Vec<String> = crate::table::tests::workbook_cells(bytes)
+        .iter()
+        .map(|row| serde_json::to_string(row).unwrap_or_default())
+        .collect();
+    check(name, format!("[\n{}\n]\n", rows.join(",\n")).as_bytes());
+}
+
+/// Each task's workbook holds the same table as its CSV, every cell text, none guarded.
+#[test]
+fn workbooks_match_golden_files() {
+    let added = analysis_with_a_place_added();
+    for (name, doc) in [
+        ("letter", letter()),
+        ("interview", interview()),
+        ("analysis", analysis()),
+        ("analysis-added", added),
+        ("contents", contents()),
+        ("corrected", corrected()),
+        ("translated", translated()),
+    ] {
+        check_workbook(&format!("{name}.xlsx.json"), &run(ExportFormat::Xlsx, &doc));
+    }
+}
+
+#[test]
+fn a_workbook_cell_a_spreadsheet_would_compute_is_text_as_written() {
+    let mut doc = interview();
+    doc.parts[0].segments[0].text = "- Oui, au +223 20 22 33 44.".into();
+    doc.parts[0].segments[1].text = "=1+1".into();
+    let rows = crate::table::tests::workbook_cells(&run(ExportFormat::Xlsx, &doc));
+    assert_eq!(rows[1][3], "- Oui, au +223 20 22 33 44.");
+    assert_eq!(rows[2][3], "=1+1");
+}
+
 /// A transcription's CSV is for a spreadsheet: a line a spreadsheet would compute is shown as
 /// text, while the JSON keeps it exactly.
 #[test]
@@ -724,7 +771,7 @@ fn every_format_has_one_exporter() {
     let mut unique = formats.clone();
     unique.dedup();
     assert_eq!(formats.len(), unique.len());
-    assert_eq!(formats.len(), 10);
+    assert_eq!(formats.len(), 11);
 }
 
 /// A one-page A4 PDF at `path`.
@@ -782,6 +829,7 @@ fn searchable_pdf_adds_an_invisible_text_layer_to_the_original() {
             segments: vec![],
             corrected: false,
             reviewed: false,
+            rows_corrected: Vec::new(),
             fields: vec![],
             regions: vec![kalamu_core::TextRegion::block(
                 0.1,
@@ -864,6 +912,7 @@ fn alto_places_each_word_and_estimates_blocks_placed_whole() {
             segments: vec![],
             corrected: true,
             reviewed: false,
+            rows_corrected: Vec::new(),
             fields: vec![],
             regions: vec![placed.clone(), whole],
             failed: None,
@@ -913,6 +962,7 @@ fn alto_wraps_a_paragraph_placed_whole_into_the_lines_its_block_holds() {
             segments: vec![],
             corrected: false,
             reviewed: false,
+            rows_corrected: Vec::new(),
             fields: vec![],
             regions: vec![block.clone()],
             failed: None,
@@ -947,6 +997,7 @@ fn alto_measures_each_pdf_page_at_the_resolution_it_was_drawn_at() {
         segments: vec![],
         corrected: false,
         reviewed: false,
+        rows_corrected: Vec::new(),
         fields: vec![],
         regions: vec![TextRegion {
             lines: vec![kalamu_core::TextLine {
@@ -1012,6 +1063,7 @@ fn alto_of_a_document_of_images_measures_each_page_in_its_file() {
         segments: vec![],
         corrected: false,
         reviewed: false,
+        rows_corrected: Vec::new(),
         fields: vec![],
         regions: vec![TextRegion::block(0.5, 0.1, 0.2, 0.02, "Mot")],
         failed: None,
@@ -1073,5 +1125,9 @@ fn a_table_of_contents_items_are_listed_as_golden_files() {
         original_sha256: "0f".repeat(32),
     }];
     check("units.csv", &units::csv(&rows, &fields).unwrap_or_default());
+    check_workbook(
+        "units.xlsx.json",
+        &units::xlsx(&rows, &fields).unwrap_or_default(),
+    );
     check("units.json", &units::json(&rows).unwrap_or_default());
 }

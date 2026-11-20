@@ -9,7 +9,7 @@
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import type { TaskRules } from '#lib/bindings/TaskRules.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { localiseFields, messages } from '#lib/i18n/index.js';
 	import { type Mode, offeredFormats } from '#lib/newJob.js';
 	import { type Draft, mergeInfo } from '#lib/newJobModels.js';
 	import { columnsOf } from '#lib/records.js';
@@ -60,7 +60,8 @@
 	);
 	/** The chosen analysis's fields; for records, the columns of their repeating group. */
 	const chosenFields = $derived.by(() => {
-		const schema = presets.find((p) => p.id === drafts[0]?.presetId)?.schema;
+		const preset = presets.find((p) => p.id === drafts[0]?.presetId);
+		const schema = localiseFields(preset?.id, preset?.schema);
 		return (records ? columnsOf(schema) : (schema?.fields ?? [])).map((f) => f.label);
 	});
 	/** The models that combine a table of contents' pages, for the diagram. */

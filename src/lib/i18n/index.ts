@@ -1,7 +1,10 @@
 // The interface language. A new language is a catalog typed `Messages` added to LOCALES and
 // CATALOGS, nothing else: Settings lists it, and the system's language picks it.
 
-import { en, type Messages } from './en.js';
+import type { AnalysisSchema } from '../bindings/AnalysisSchema.js';
+import type { Field } from '../bindings/Field.js';
+import shippedFields from './defaultFields.json';
+import { en, type FieldText, type Messages } from './en.js';
 import { fr } from './fr.js';
 
 export const LOCALES = ['en', 'fr'] as const;
@@ -102,7 +105,117 @@ export function localisePreset<
 	P extends { id: string; name: string; description: string; builtin: boolean; modified: boolean }
 >(preset: P): P {
 	const text = CATALOGS[current].presets[preset.id];
-	return text && preset.builtin && !preset.modified ? { ...preset, ...text } : preset;
+	return text && preset.builtin && !preset.modified
+		? { ...preset, name: text.name, description: text.description }
+		: preset;
+}
+
+/** The default prompts' fields as shipped, written by the prompts crate's tests. */
+const SHIPPED = shippedFields as unknown as Record<string, Field[]>;
+
+/**
+ * A field as shown: its label and help in the interface language, and its choices' labels by
+ * the value stored (`choiceLabel`). Never sent back to the app.
+ */
+export type ShownField = Field & { choiceLabels?: Record<string, string> };
+
+function shownFields(
+	fields: Field[],
+	shipped: Field[],
+	texts: Record<string, FieldText> | undefined
+): Field[] {
+	if (!texts) return fields;
+	return fields.map((field) => {
+		const was = shipped.find((s) => s.key === field.key);
+		const text = texts[field.key];
+		const kind = field.kind;
+		// A group Kalamu wraps around the preset's fields (a table of contents' entries, with
+		// their title and pages): the preset's fields are inside.
+		if (!was) {
+			return kind.type === 'entries' || kind.type === 'cited'
+				? { ...field, kind: { ...kind, fields: shownFields(kind.fields, shipped, texts) } }
+				: field;
+		}
+		if (!text) return field;
+		const shown: ShownField = { ...field };
+		if (field.label === was.label) shown.label = text.label;
+		if (field.instructions === was.instructions) shown.instructions = text.help;
+		const before = was.kind;
+		if (
+			(kind.type === 'choice' || kind.type === 'choices') &&
+			before.type === kind.type &&
+			text.values
+		) {
+			const labels: Record<string, string> = {};
+			for (const value of kind.values) {
+				const label = text.values[value];
+				if (label && before.values.includes(value)) labels[value] = label;
+			}
+			shown.choiceLabels = labels;
+		}
+		if ((kind.type === 'entries' || kind.type === 'cited') && before.type === kind.type) {
+			shown.kind = { ...kind, fields: shownFields(kind.fields, before.fields, text.fields) };
+		}
+		return shown;
+	});
+}
+
+/**
+ * A default prompt's fields in the interface language, for the screen only: each label, help
+ * and choice that is, word for word, the default's shipped English (`defaultFields.json`) is
+ * shown in the language's words, and anything the researcher wrote stays as written. Keys,
+ * kinds and choice values are untouched, so what is stored, cached and sent never changes. The
+ * id is a job's frozen prompt's `preset_id` or a preset's own; another id changes nothing.
+ */
+export function localiseFields<S extends AnalysisSchema | null | undefined>(
+	presetId: string | null | undefined,
+	schema: S
+): S {
+	const shipped = presetId ? SHIPPED[presetId] : undefined;
+	const texts = presetId ? CATALOGS[current].presets[presetId]?.fields : undefined;
+	if (!schema || !shipped || !texts) return schema;
+	return { ...schema, fields: shownFields(schema.fields, shipped, texts) };
+}
+
+/** A frozen prompt with its fields as `localiseFields` shows them. */
+export function localisePrompt<P extends { preset_id: string | null; schema?: AnalysisSchema }>(
+	prompt: P
+): P {
+	return prompt.schema
+		? { ...prompt, schema: localiseFields(prompt.preset_id, prompt.schema) }
+		: prompt;
+}
+
+/** A choice as shown, from the value stored: its label in the interface language for a
+ * default's own choice (`localiseFields`), any other as it is. */
+export function choiceLabel(field: Field, value: string): string {
+	return (field as ShownField).choiceLabels?.[value] ?? value;
+}
+
+/**
+ * A field's name where only its name (and key) is known, as in a project's dictionary or the
+ * list of what to check: in the interface language when it is, word for word, the label of a
+ * default field (of that key), else as it is.
+ */
+export function fieldLabel(label: string, key?: string): string {
+	const find = (fields: Field[], texts: Record<string, FieldText> | undefined): string | null => {
+		for (const field of fields) {
+			const text = texts?.[field.key];
+			if (!text) continue;
+			if (field.label === label && (key === undefined || field.key === key)) return text.label;
+			const kind = field.kind;
+			if (kind.type === 'entries' || kind.type === 'cited') {
+				const inner = find(kind.fields, text.fields);
+				if (inner) return inner;
+			}
+		}
+		return null;
+	};
+	for (const [id, fields] of Object.entries(SHIPPED)) {
+		const found = find(fields, CATALOGS[current].presets[id]?.fields);
+		if (found) return found;
+	}
+	return label;
 }
 
 export function formatUsd(value: number): string {

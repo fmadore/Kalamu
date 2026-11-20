@@ -27,7 +27,7 @@
 	} from '#lib/contents.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
 	import { clearFound, markFound } from '#lib/found.js';
-	import { formatUsd, messages } from '#lib/i18n/index.js';
+	import { choiceLabel, formatUsd, messages } from '#lib/i18n/index.js';
 	import { pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { ownRegions, placeOf } from '#lib/regions.svelte.js';
 	import { Review } from '#lib/review.svelte.js';
@@ -323,7 +323,13 @@
 				<div class="entry-edit">
 					{#each fields as f (f.key)}
 						<div class="field">
-							<span class="field-label" aria-hidden="true">{f.label}</span>
+							<span class="field-label" aria-hidden="true"
+								>{f.key === TITLE
+									? m.review.entryTitle
+									: f.key === PAGES
+										? m.review.entryPages
+										: f.label}</span
+							>
 							<FieldInput
 								field={f}
 								bind:value={draft[f.key]}
@@ -371,7 +377,7 @@
 							{#if v}
 								<div class="detail">
 									<dt>{f.label}</dt>
-									<dd>{v}</dd>
+									<dd>{f.kind.type === 'choice' ? choiceLabel(f, v) : v}</dd>
 								</div>
 							{/if}
 						{/each}

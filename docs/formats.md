@@ -7,7 +7,7 @@ name in one folder (`scan.pdf` and `scan.tif`, or two `scan.pdf` sent to one fol
 the later ones in the job are numbered, `scan (2).txt`, regardless of case.
 
 Images read as the pages of one document ([#52](https://github.com/fmadore/Kalamu/issues/52))
-give one result, as a PDF does: one `.txt`, `.md`, `.docx`, `.json` and `.csv`, its pages
+give one result, as a PDF does: one `.txt`, `.md`, `.docx`, `.json`, `.xlsx` and `.csv`, its pages
 numbered in the document's order (`--- Page 3 ---`), named after the document and written in the
 folder of its first page (`Box 3.txt`, `Box 3.provenance.json`). The images themselves are never
 copied, moved or changed.
@@ -22,6 +22,19 @@ it as text instead of computing it as a formula. The JSON beside it keeps the te
 table written through an export profile is the exception: its cells are written as they are,
 since another tool's import would take the apostrophe as part of the value
 ([decision](decisions/2026-11-10-fourth-round.md)).
+
+Every table written as CSV is also offered as an Excel workbook (`.xlsx`) with the same
+headings, rows and cells, for a spreadsheet: it opens by double-click whatever language the
+spreadsheet is set to, where a CSV's commas may all land in one column. It has one sheet named
+`Table`, the heading row in bold and frozen, columns as wide as their longest line (8 to 60
+characters) and long text wrapped. Every cell is text exactly as written, so nothing is guarded
+with an apostrophe and nothing is read as a number, a date or a formula; Excel is told not to
+flag numbers held as text. A cell longer than the 32,767 characters a workbook's cell holds is
+cut and ends with a note saying so; the CSV and JSON keep the whole text. The workbook's dates
+are fixed, so the same table gives the same file
+([decision](decisions/2026-11-20-xlsx-tables-corrected-per-row.md)). The workbooks written beside
+a JSON export (descriptions, export profiles, the review manifest, the dictionary, a table of
+contents' items) are named as their CSV, with `.xlsx`.
 
 ## Text, Markdown and Word
 
@@ -142,9 +155,9 @@ Both XML formats were checked by hand against the official schemas (ALTO 4.4, PA
 
 ## Analyses
 
-Written as `<name>.analysis.txt` (and `.md`, `.docx`, `.json`, `.csv`) beside the source, so an
-analysis of `interview.txt` never replaces it. The researcher's corrected answers replace the
-model's where there are any.
+Written as `<name>.analysis.txt` (and `.md`, `.docx`, `.json`, `.xlsx`, `.csv`) beside the
+source, so an analysis of `interview.txt` never replaces it. The researcher's corrected answers
+replace the model's where there are any.
 
 - **Text formats** set out each field under its name: prose fields as a paragraph after their
   label, the others on one line (`Places: Bamako; Ségou`), and a field's reason on the next line
@@ -180,7 +193,8 @@ quotations found word for word are written; the researcher's removals are applie
   entries' names joined with semicolons. Beside it, `<name>.analysis.quotations.csv` has one
   row per quotation: `file`, `field`, `entry` (the entry's first field), `speaker`, `start`,
   `end` (`hh:mm:ss`, or empty), `quotation`, `turn`. Cells that a spreadsheet would read as a
-  formula are guarded, as in every table Kalamu writes.
+  formula are guarded, as in every CSV Kalamu writes. The workbook does the same, as
+  `<name>.analysis.xlsx` with `<name>.analysis.quotations.xlsx` beside it.
 - **`provenance.json`** adds `cited`: for each such field, the quotations checked, those left
   out and the entries left out; `source.derived_from` names the text read.
 
@@ -191,22 +205,30 @@ and its files hold one row per entry, from the corrected rows.
 
 - **CSV**: `file`, `page`, `position` (the entry's place on its page, from 1), then one column
   per column of the group, named as the researcher named it, with a `<column> (reason)` after
-  each that asks for a reason, then `corrected`, `reviewed` (those of the row's page) and
-  `not_read`. A page that failed or was cut off is one row with no position and
-  `[Not read: reason]` under `not_read`, so its entries are never taken for none. Cells that
-  begin with `=`, `+`, `-` or `@` are written as in the other tables.
+  each that asks for a reason, then `corrected` (the row's own: true when the researcher
+  typed into the row or added it), `reviewed` (the row's page's) and `not_read`. A page that
+  failed or was cut off is one row with no position and `[Not read: reason]` under `not_read`,
+  so its entries are never taken for none. Cells that begin with `=`, `+`, `-` or `@` are
+  written as in the other tables.
 - **JSON**: the usual envelope, its parts without `fields`, and a top-level `rows` list: for
   each entry `file`, `page`, `position`, a `fields` object with each cell under its column's
-  key (text, or an array for a list and several choices), `corrected`, `reviewed` and, where
-  any column gave one, `reasons`. A page not read has no rows; its part says `failed`.
+  key (text, or an array for a list and several choices), `corrected`, `reviewed` (as in the
+  CSV) and, where any column gave one, `reasons`. A page not read has no rows; its part says
+  `failed`.
+- **Which rows are corrected.** A corrected page's rows are lined up with the model's rows by
+  their cells, in order (the longest run of rows the same in both); a row outside that run was
+  typed into or added, and is `corrected`. Two rows are the same when every column holds the
+  same value, a missing cell counting as empty and reasons not counting. So a row removed above
+  marks none below it, a cell typed back as the model wrote it leaves its row the model's, and
+  a removed row leaves no row to mark. The workbook has the same columns as the CSV.
 - **Text formats** (`.txt`, `.md`, `.docx`) are not yet made for rows: each page shows only
   its rows' first column, joined with semicolons. Use the CSV or the JSON.
 
 ## Tables of contents
 
-Written as `<name>.contents.md` (and `.docx`, `.csv`, `.txt`, `.json`) beside the source. Only
-the combined entries are written, with the researcher's corrections; what the first step read
-on each page stays in the job, for the review.
+Written as `<name>.contents.md` (and `.docx`, `.xlsx`, `.csv`, `.txt`, `.json`) beside the
+source. Only the combined entries are written, with the researcher's corrections; what the first
+step read on each page stays in the job, for the review.
 
 - **Markdown and Word**: a heading per entry, then its pages and fields as a list
   (`- **Pages:** 1, 3-4`).
@@ -228,7 +250,8 @@ one is numbered, `(2)`):
   source, the item's place and its title (`an-nasr-12 03 Fatwa.pdf`).
 - **`<source> units.csv`**: one row per item: `id`, `number`, `title`, `pages` (as typed,
   `1, 3-5, 8 (left)`), `file`, one column per entry field named as the preset names it, then
-  `original` and `original_sha256`, the file the pages were cut from.
+  `original` and `original_sha256`, the file the pages were cut from; and the same table as
+  **`<source> units.xlsx`**.
 - **`<source> units.json`**: `{"units": [...]}`, each with its `id` (stable across exports),
   `number`, `title`, `pages` (each `{"kind": "page", "number": 3}`, with `"half"` for half of a
   spread, numbered as the file's pages, not as printed), `pages_text`, `file`, `fields` by key,
@@ -240,17 +263,17 @@ and its `provenance.json` names the item under `source.derived_from.unit`.
 
 ## Corrected text
 
-Written as `<name>.corrected.txt` (and `.md`, `.docx`, `.json`, `.csv`), so a text file is
+Written as `<name>.corrected.txt` (and `.md`, `.docx`, `.json`, `.xlsx`, `.csv`), so a text file is
 never replaced by its correction. Pages keep their `--- Page N ---` markers; passages of a text
 without pages carry none, as the cut means nothing to a reader, and are numbered `§1`, `§2` in
 the CSV.
 
 ## Translated text
 
-Written as `<name>.translated.<code>.txt` (and `.md`, `.docx`, `.json`, `.csv`), `<code>` being
-the language translated into (`gallica.translated.en.txt`), so a text is never replaced by its
-translation and translations into two languages do not replace each other. Pages and passages
-are kept as for corrected text, and the CSV has the same columns.
+Written as `<name>.translated.<code>.txt` (and `.md`, `.docx`, `.json`, `.xlsx`, `.csv`),
+`<code>` being the language translated into (`gallica.translated.en.txt`), so a text is never
+replaced by its translation and translations into two languages do not replace each other.
+Pages and passages are kept as for corrected text, and the CSV has the same columns.
 
 A transcript translated with its times (frozen from a transcript whose every part had them) is
 also written as `.srt` and `.vtt`, cut and timed exactly as a transcript's, each cue holding the
@@ -266,6 +289,7 @@ any. A translation of any other text has no subtitles.
   `[hh:mm:ss]` markers in the text. WebVTT uses voice tags (`<v Speaker 1>`) for speakers.
 - **`.csv`**: one row per page (`page, text, corrected, reviewed`) or per segment
   (`start, end, speaker, text`), UTF-8 with a byte-order mark so Excel reads accents correctly.
+- **`.xlsx`**: the same rows as the CSV, in an Excel workbook (see above).
 
 ## JSON (`kalamu-result`, version 1)
 
@@ -376,8 +400,9 @@ chosen and the consent given (`meaning_spaces`) and each preparation with its co
 ## The review manifest (`kalamu-review-manifest`, version 1)
 
 Written by **Export the list** in a project's *What to check*, where the researcher chooses:
-a JSON file and a CSV beside it, every item of the list in the scope shown (the project, a
-collection or a selection), whatever the filters show, the pages drawn at random included.
+a JSON file with an Excel workbook and a CSV beside it, every item of the list in the scope
+shown (the project, a collection or a selection), whatever the filters show, the pages drawn at
+random included. The workbook has the same columns as the CSV.
 
 The JSON holds `format`, `version`, `project`, `project_name`, `scope` (`project`,
 `collection:<id>` or `documents:<digest of the selection>`), `exported_at`, the scope's

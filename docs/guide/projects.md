@@ -6,6 +6,8 @@ lede: A project keeps a body of sources together with everything made from them,
 description: Organising documents in projects, searching them, reconciling names and reviewing in Kalamu.
 ---
 
+[Français](fr/projects.md)
+
 ![A project: its documents with the readings made of each](../store/screenshots/windows/en/02-project.png)
 *A project's documents, each with its extractions, transcriptions and analyses.*
 

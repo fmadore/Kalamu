@@ -76,7 +76,11 @@ window of 640 × 560, the release line hidden; and records (`e2e/records.spec.ts
 turned into one row per entry, a page's rows corrected, added, removed and reviewed; and an
 interview analysed (`e2e/interview-analysis.spec.ts`): its dialog's one box and one button, its
 cards, a quotation played or shown in the text, removed and put back, a description of the
-research kept as a prompt and chosen again, a transcript too long for the model chosen. They
+research kept as a prompt and chosen again, a transcript too long for the model chosen; the
+first launch (`e2e/first-launch.spec.ts`): Settings and its welcome with neither a key nor a
+model, New job with either, the guide's link in each language; an empty project
+(`e2e/empty-project.spec.ts`): its orientation, gone once a document is added; and the default
+prompts' fields in English and in French (`e2e/default-fields.spec.ts`). They
 start the dev server on port 5173, or reuse one already there; `KALAMU_E2E_PORT=5291` picks
 another, for two checkouts tested side by side.
 

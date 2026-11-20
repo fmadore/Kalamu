@@ -9,7 +9,7 @@
 	import type { ProfileStarter } from '#lib/bindings/ProfileStarter.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { FIELDS } from '#lib/described.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { fieldLabel, messages } from '#lib/i18n/index.js';
 	import {
 		DOCUMENT_VALUES,
 		draftProfile,
@@ -335,7 +335,7 @@
 			</table>
 			<datalist id="answer-fields">
 				{#each answerFields as field (field.key)}
-					<option value={field.key}>{field.label}</option>
+					<option value={field.key}>{fieldLabel(field.label, field.key)}</option>
 				{/each}
 			</datalist>
 			<small class="muted">{p.resultHint}</small>

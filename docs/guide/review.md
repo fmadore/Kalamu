@@ -6,6 +6,8 @@ lede: The review is where Kalamu earns its keep. Every result sits beside its so
 description: Reviewing, correcting and comparing AI results against their source in Kalamu.
 ---
 
+[Français](fr/review.md)
+
 ## The review, side by side
 
 Open any job to review it. The source is on the left: the scan on a dark background, or the

@@ -209,6 +209,21 @@ fn write_text(path: PathBuf, text: String) -> Result<(), AppError> {
     std::fs::write(path, text).map_err(|e| AppError::new(crate::errors::id::FILE, e))
 }
 
+/// Writes a table beside an export's JSON, at `path` with each extension: `.xlsx`, which opens
+/// by double-click in Excel set to any language, and `.csv` for R, Python and other tools.
+/// `failed` says a table that could not be written as the export's own failure.
+fn write_table(
+    path: &std::path::Path,
+    table: &kalamu_core::Table,
+    failed: impl Fn(String) -> AppError,
+) -> Result<(), AppError> {
+    let xlsx = kalamu_export::table_xlsx(table).map_err(|e| failed(e.to_string()))?;
+    std::fs::write(path.with_extension("xlsx"), xlsx)
+        .map_err(|e| AppError::new(crate::errors::id::FILE, e))?;
+    let csv = kalamu_export::table_csv(table).map_err(|e| failed(e.to_string()))?;
+    write_text(path.with_extension("csv"), csv)
+}
+
 /// Writes a pipeline's or a workflow's record: the JSON at `path`, whose name the researcher
 /// chose (the save dialog asked before replacing it), and the Markdown beside it, which never
 /// replaces a file an export did not write ([`kalamu_prompts::markdown_beside`]). Returns the

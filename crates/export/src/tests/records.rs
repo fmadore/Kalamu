@@ -57,6 +57,7 @@ fn page(
         segments: vec![],
         corrected,
         reviewed: corrected,
+        rows_corrected: Vec::new(),
         fields,
         regions: vec![],
         failed: None,
@@ -104,7 +105,7 @@ fn directory() -> ExportDocument {
     cut.fields = vec![];
     cut.text = String::new();
     cut.failed = Some("The answer was cut off at the model's output limit".into());
-    let corrected = page(
+    let mut corrected = page(
         &schema,
         3,
         vec![
@@ -113,6 +114,8 @@ fn directory() -> ExportDocument {
         ],
         true,
     );
+    // The first row is the one the researcher added; the second is the model's.
+    corrected.rows_corrected = vec![true, false];
     records_document(
         "annuaire-1902.pdf",
         schema.clone(),
@@ -176,6 +179,62 @@ fn records_are_written_one_row_per_entry_as_golden_files() {
         "records-register.json",
         &run(ExportFormat::Json, &register()),
     );
+    super::check_workbook(
+        "records-directory.xlsx.json",
+        &run(ExportFormat::Xlsx, &directory()),
+    );
+    super::check_workbook(
+        "records-register.xlsx.json",
+        &run(ExportFormat::Xlsx, &register()),
+    );
+}
+
+/// A page with one corrected row exports one `corrected` row, in the CSV, the workbook and the
+/// JSON; `reviewed` stays the page's.
+#[test]
+fn a_page_with_one_corrected_row_exports_one_corrected_row() {
+    let schema = schema(vec![
+        column("Name", FieldKind::Text),
+        column("Town", FieldKind::Text),
+    ]);
+    let r = |cells: [&str; 2]| row(&schema, &cells.map(t));
+    let mut corrected = page(
+        &schema,
+        1,
+        vec![
+            r(["Diallo", "Ségou"]),
+            r(["Traoré", "Kayes"]),
+            r(["Sow", "Mopti"]),
+        ],
+        true,
+    );
+    corrected.rows_corrected = vec![false, true, false];
+    let doc = records_document("liste.pdf", schema.clone(), vec![corrected]);
+
+    let csv = String::from_utf8(run(ExportFormat::Csv, &doc)).unwrap_or_default();
+    let lines: Vec<&str> = csv.lines().skip(1).collect();
+    assert_eq!(
+        lines,
+        [
+            "liste.pdf,1,1,Diallo,Ségou,false,true,",
+            "liste.pdf,1,2,Traoré,Kayes,true,true,",
+            "liste.pdf,1,3,Sow,Mopti,false,true,",
+        ]
+    );
+
+    let cells = crate::table::tests::workbook_cells(&run(ExportFormat::Xlsx, &doc));
+    let marks: Vec<&str> = cells[1..].iter().map(|r| r[5].as_str()).collect();
+    assert_eq!(marks, ["false", "true", "false"]);
+
+    let json: serde_json::Value =
+        serde_json::from_slice(&run(ExportFormat::Json, &doc)).unwrap_or_default();
+    let rows = json["rows"].as_array().cloned().unwrap_or_default();
+    let marks: Vec<bool> = rows
+        .iter()
+        .filter_map(|r| r["corrected"].as_bool())
+        .collect();
+    assert_eq!(marks, [false, true, false]);
+    assert!(rows.iter().all(|r| r["reviewed"] == true));
 }
 
 #[test]

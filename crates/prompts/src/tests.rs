@@ -3,6 +3,7 @@ use kalamu_core::{FieldKind, LanguageChoice, LanguageCode, LineBreaks};
 use super::*;
 
 mod default_order;
+mod interface_fields;
 mod question;
 mod records;
 

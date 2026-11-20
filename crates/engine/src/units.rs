@@ -399,8 +399,8 @@ impl Engine {
     }
 
     /// Writes each unit's pages as a PDF into `folder`, and the list of them, with their
-    /// pages in the original and their fields, as `<source> units.csv` and `.json`. Files
-    /// already there are not replaced: the new ones are numbered.
+    /// pages in the original and their fields, as `<source> units.xlsx`, `.csv` and `.json`.
+    /// Files already there are not replaced: the new ones are numbered.
     pub fn export_units(&self, ids: &[UnitId], folder: &Path) -> Result<Vec<String>, EngineError> {
         let mut units = ids
             .iter()
@@ -448,6 +448,11 @@ impl Engine {
             .unwrap_or_default();
         let list = format!("{source_stem} units");
         for (extension, bytes) in [
+            (
+                "xlsx",
+                kalamu_export::units::xlsx(&rows, &fields)
+                    .map_err(|e| EngineError::Output(e.to_string()))?,
+            ),
             (
                 "csv",
                 kalamu_export::units::csv(&rows, &fields)

@@ -235,7 +235,7 @@ pub fn rename_tag(
     Ok(state.projects.rename_tag(project, &from, &to)?)
 }
 
-/// Writes the documents' descriptions where the researcher chose, as `.json` and `.csv`:
+/// Writes the documents' descriptions where the researcher chose, as `.json`, `.xlsx` and `.csv`:
 /// every part with where it came from, or the columns of a saved export profile. Off the
 /// window's thread, since it reads every document of the project.
 #[tauri::command]
@@ -272,26 +272,24 @@ pub async fn export_descriptions(
                 path.with_extension("json"),
                 projects.export_profiled_json(project, collection, &profile, &labels)?,
             )?;
-            return write(
-                path.with_extension("csv"),
-                table_csv(&projects.profiled_table(project, collection, &profile, &labels)?)?,
+            return write_table(
+                path,
+                &projects.profiled_table(project, collection, &profile, &labels)?,
             );
         }
         write(
             path.with_extension("json"),
             projects.export_descriptions_json(project, collection)?,
         )?;
-        write(
-            path.with_extension("csv"),
-            table_csv(&projects.descriptions_table(project, collection)?)?,
-        )
+        write_table(path, &projects.descriptions_table(project, collection)?)
     })
     .await
 }
 
-/// A project's table as CSV, a failure said as the project export's.
-fn table_csv(table: &kalamu_core::Table) -> Result<String, kalamu_core::ProjectError> {
-    kalamu_export::table_csv(table).map_err(|e| kalamu_core::ProjectError::Export(e.to_string()))
+/// A project's table as a workbook and as CSV beside its JSON, a failure said as the project
+/// export's.
+fn write_table(path: &std::path::Path, table: &kalamu_core::Table) -> CmdResult<()> {
+    super::write_table(path, table, |m| kalamu_core::ProjectError::Export(m).into())
 }
 
 #[tauri::command]
@@ -490,7 +488,7 @@ pub fn keep_aside(
 }
 
 /// Writes the review manifest of the queue over `selection` where the researcher chose, as
-/// `.json` and `.csv`: every item, the sample included, with its identities, reasons and the
+/// `.json`, `.xlsx` and `.csv`: every item, the sample included, with its identities, reasons and the
 /// researcher's decisions; the JSON also names the results set aside. Read from what is stored: no model is called.
 #[tauri::command]
 pub async fn export_review_manifest(
@@ -507,7 +505,7 @@ pub async fn export_review_manifest(
     super::off_thread(move || {
         let path = std::path::Path::new(&path);
         super::write_text(path.with_extension("json"), manifest.json()?)?;
-        super::write_text(path.with_extension("csv"), table_csv(&manifest.table())?)
+        write_table(path, &manifest.table())
     })
     .await
 }

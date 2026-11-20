@@ -104,14 +104,24 @@ impl Task {
     pub fn formats(self) -> &'static [ExportFormat] {
         use ExportFormat::*;
         match self {
-            Self::TextExtraction => &[Txt, Markdown, Docx, Json, Csv, SearchablePdf, Alto, PageXml],
+            Self::TextExtraction => &[
+                Txt,
+                Markdown,
+                Docx,
+                Json,
+                Xlsx,
+                Csv,
+                SearchablePdf,
+                Alto,
+                PageXml,
+            ],
             // A translation writes subtitles of a transcript whose lines kept their times
             // (`aligned`); of any other text, it does not ([`Task::writes`]).
             Self::AudioTranscription | Self::Translation => {
-                &[Txt, Markdown, Docx, Srt, Vtt, Json, Csv]
+                &[Txt, Markdown, Docx, Srt, Vtt, Json, Xlsx, Csv]
             }
-            Self::Analysis | Self::TextCorrection => &[Txt, Markdown, Docx, Json, Csv],
-            Self::Contents => &[Markdown, Docx, Csv, Txt, Json],
+            Self::Analysis | Self::TextCorrection => &[Txt, Markdown, Docx, Json, Xlsx, Csv],
+            Self::Contents => &[Markdown, Docx, Xlsx, Csv, Txt, Json],
         }
     }
 

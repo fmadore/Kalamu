@@ -39,8 +39,15 @@
 	let {
 		projectId,
 		collections,
-		tags
-	}: { projectId: string; collections: CollectionView[]; tags: TagView[] } = $props();
+		tags,
+		unread = false
+	}: {
+		projectId: string;
+		collections: CollectionView[];
+		tags: TagView[];
+		/** Nothing in the project has been read yet, so there is no text to search. */
+		unread?: boolean;
+	} = $props();
 	const m = messages();
 	/** The tasks whose results the model writes (an analysis's fields, a table of contents'
 	 *  entries) rather than a text: those `Task::yields_text` leaves out, from Rust. */
@@ -164,6 +171,7 @@
 			>
 		{/each}
 	</div>
+	{#if unread}<p class="muted">{m.projects.start.nothingToSearch}</p>{/if}
 	{#if kind === 'meaning'}
 		<MeaningSearch {projectId} {collections} {tags} />
 	{:else}

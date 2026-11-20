@@ -143,6 +143,57 @@ pub fn edit(
     }])
 }
 
+/// Which of a corrected page's rows the researcher changed: one flag per row of `corrected`,
+/// true for a row typed into or added, false for one of the model's rows left as it was.
+///
+/// The rows are lined up with the model's by their cells, not their places, so a row removed
+/// above does not mark those below it: the longest run of rows the same in both, in the same
+/// order, are the model's; every other corrected row is the researcher's. Two rows are the
+/// same when every column holds the same value (a missing cell is empty; reasons do not
+/// count). A removed row leaves no row to mark. Rows never change order in the review, so
+/// lining them up in order loses nothing.
+pub fn corrected_rows(
+    schema: &AnalysisSchema,
+    model: &[FieldAnswer],
+    corrected: &[FieldAnswer],
+) -> Vec<bool> {
+    let columns = columns(schema);
+    let cells = |row: &[FieldAnswer]| -> Vec<FieldValue> {
+        complete(columns, row)
+            .into_iter()
+            .map(|a| a.value)
+            .collect()
+    };
+    let before: Vec<Vec<FieldValue>> = rows(schema, model).iter().map(|r| cells(r)).collect();
+    let after: Vec<Vec<FieldValue>> = rows(schema, corrected).iter().map(|r| cells(r)).collect();
+    // The longest common run, as a table of its lengths from each pair of places to the end.
+    let (n, m) = (after.len(), before.len());
+    let mut longest = vec![vec![0usize; m + 1]; n + 1];
+    for i in (0..n).rev() {
+        for j in (0..m).rev() {
+            longest[i][j] = if after[i] == before[j] {
+                longest[i + 1][j + 1] + 1
+            } else {
+                longest[i + 1][j].max(longest[i][j + 1])
+            };
+        }
+    }
+    let mut changed = vec![true; n];
+    let (mut i, mut j) = (0, 0);
+    while i < n && j < m {
+        if after[i] == before[j] {
+            changed[i] = false;
+            i += 1;
+            j += 1;
+        } else if longest[i + 1][j] >= longest[i][j + 1] {
+            i += 1;
+        } else {
+            j += 1;
+        }
+    }
+    changed
+}
+
 /// A row with one answer per column, in the columns' order: a column the row lacks is empty.
 fn complete(columns: &[Field], row: &[FieldAnswer]) -> Vec<FieldAnswer> {
     columns

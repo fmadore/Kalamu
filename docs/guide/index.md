@@ -7,6 +7,8 @@ lede: Kalamu is a free desktop app for Windows and macOS. It reads scanned and h
 description: Install Kalamu, add an API key or an offline model, and find your way around the app.
 ---
 
+[Français](fr/index.md)
+
 This guide takes you from installing Kalamu to exporting results you have checked. Each chapter
 stands on its own; if you are new, read this one, then [Your first job](first-job.md).
 
