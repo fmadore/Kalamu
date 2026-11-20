@@ -262,7 +262,7 @@ fn the_files_hold_only_what_the_transcript_says_and_the_researcher_kept() {
         "{memo}"
     );
     assert!(
-        rows.contains(",\"Au début, on ne savait pas.\",2,researcher"),
+        rows.contains(",\"Au début, on ne savait pas.\",2,,researcher"),
         "{rows}"
     );
     assert_eq!(rows.matches(",model").count(), 4, "{rows}");

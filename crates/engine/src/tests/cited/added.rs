@@ -83,7 +83,7 @@ async fn a_passage_selected_in_the_transcript_is_added_as_the_researchers_quotat
         .find(|p| p.ends_with(".quotations.csv"))
         .unwrap_or_default();
     let rows = std::fs::read_to_string(path).unwrap_or_default();
-    assert!(rows.contains("Et ensuite ?,3,researcher"), "{rows}");
+    assert!(rows.contains("Et ensuite ?,3,,researcher"), "{rows}");
 
     // Saved again as it stands (a toast's Undo puts a correction back so), it is kept; altered,
     // or moved across two turns, it is refused.

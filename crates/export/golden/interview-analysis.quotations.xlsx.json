@@ -1,8 +1,8 @@
 [
-["file","field","entry","speaker","start","end","quotation","turn","added_by"],
-["entretien-awa.txt","Themes","Les débuts","Awa","00:00:12","00:01:10","J’ai commencé en 1998.","2","model"],
-["entretien-awa.txt","Themes","Les débuts","Awa","00:00:12","00:01:10","Au début, on ne savait pas.","2","researcher"],
-["entretien-awa.txt","Themes","Une devise","Awa","00:01:15","","« on ne savait pas » est devenu notre devise","4","model"],
-["entretien-awa.txt","Themes","Une devise","Awa","00:00:12","00:01:10","Au début, on ne savait pas.","2","model"],
-["entretien-awa.txt","Quotations","La phrase résume une expérience collective.","Awa","00:01:15","","est devenu notre devise.","4","model"]
+["file","field","entry","speaker","start","end","quotation","turn","page","added_by"],
+["entretien-awa.txt","Themes","Les débuts","Awa","00:00:12","00:01:10","J’ai commencé en 1998.","2","","model"],
+["entretien-awa.txt","Themes","Les débuts","Awa","00:00:12","00:01:10","Au début, on ne savait pas.","2","","researcher"],
+["entretien-awa.txt","Themes","Une devise","Awa","00:01:15","","« on ne savait pas » est devenu notre devise","4","","model"],
+["entretien-awa.txt","Themes","Une devise","Awa","00:00:12","00:01:10","Au début, on ne savait pas.","2","","model"],
+["entretien-awa.txt","Quotations","La phrase résume une expérience collective.","Awa","00:01:15","","est devenu notre devise.","4","","model"]
 ]

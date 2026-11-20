@@ -53,6 +53,7 @@ impl Fixture {
             created_at: Timestamp::now(),
             sources,
             setups: vec![Setup {
+                windows: None,
                 id: SetupId::new(),
                 label: "gemini-3.8-flash".into(),
                 provider: ProviderId::new("gemini"),
