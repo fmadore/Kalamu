@@ -34,4 +34,10 @@ start_ms: number | null, end_ms: number | null,
  * with no speakers or times is. `None` for a transcript, a text file and quotations kept
  * before pages were.
  */
-page?: PieceRef, };
+page?: PieceRef, 
+/**
+ * Added by the researcher from a passage they selected in the text, in their corrections;
+ * never by a model. Found in the text as any quotation, its speaker and times the turn's.
+ * Left out when false, so quotations stored before it read the same.
+ */
+added?: boolean, };

@@ -53,6 +53,15 @@ impl Quotable {
         }
     }
 
+    /// The text, its parts and its turns, as quotations are found in them.
+    pub(crate) fn doc(&self) -> CitedText<'_> {
+        CitedText {
+            text: &self.text,
+            parts: &self.parts,
+            turns: &self.turns,
+        }
+    }
+
     /// Added to the cache key of a set-up with a cited field, so an answer read from other
     /// turns (or from the same text sent whole) is never taken for this one.
     pub(crate) fn fix(&self) -> &str {
@@ -332,7 +341,8 @@ impl Engine {
     }
 
     /// Makes one change to a cited field's entries in one piece (an entry's field typed, an
-    /// entry or one of its quotations removed), on the answers as the researcher left them:
+    /// entry or one of its quotations removed, a passage of the text added as the researcher's
+    /// quotation), on the answers as the researcher left them:
     /// the model's stay as they are, the piece's corrected answers hold the change, and the
     /// piece stays reviewed or not as it was.
     #[allow(clippy::too_many_arguments)]
@@ -362,8 +372,19 @@ impl Engine {
             .store
             .answers(piece, &corrections)?
             .ok_or(EngineError::NothingRead)?;
-        let fields =
-            cited::edit(&schema.fields, &answers, key, change).map_err(EngineError::Cited)?;
+        let read = job
+            .sources
+            .iter()
+            .find(|s| s.id == source_id)
+            .and_then(|s| self.quotable_text(s).ok());
+        let fields = cited::edit_in(
+            &schema.fields,
+            &answers,
+            key,
+            change,
+            read.as_ref().map(Quotable::doc),
+        )
+        .map_err(EngineError::Cited)?;
         let reviewed = Correction::of(&corrections, piece).is_some_and(|c| c.reviewed);
         let text = Correction::of(&corrections, piece).and_then(|c| c.text.clone());
         self.store.put_correction(&Correction {
@@ -381,7 +402,8 @@ impl Engine {
     }
 
     /// Checks a correction's cited fields before it is kept: every quotation one the model's
-    /// answer holds, and how many were left out the model's count ([`cited::keeps_evidence`]).
+    /// answer holds, or one the researcher added that the text holds there, and how many were
+    /// left out the model's count ([`cited::keeps_evidence_in`]).
     /// A correction of anything else is kept as it is.
     pub(crate) fn settle_cited(&self, correction: &mut Correction) -> Result<(), EngineError> {
         let Some(fields) = correction.fields.as_mut() else {
@@ -410,6 +432,17 @@ impl Engine {
                 .unwrap_or_default(),
             None => Vec::new(),
         };
-        cited::keeps_evidence(&schema.fields, &model, fields).map_err(EngineError::Cited)
+        let text = job
+            .sources
+            .iter()
+            .find(|s| s.id == correction.source_id)
+            .and_then(|s| self.quotable_text(s).ok());
+        cited::keeps_evidence_in(
+            &schema.fields,
+            &model,
+            fields,
+            text.as_ref().map(Quotable::doc),
+        )
+        .map_err(EngineError::Cited)
     }
 }

@@ -236,7 +236,11 @@ export const en = {
 					? `The part from ${from} to the end could not be read: its themes and quotations are missing.`
 					: `Turns ${first} to ${last} could not be read: their themes and quotations are missing.`,
 		readAgain: 'Read it again',
-		readingAgain: 'The part is being read again.'
+		readingAgain: 'The part is being read again.',
+		/** The menu of a passage selected in the transcript, and what it does. */
+		addQuotation: 'Add as a quotation',
+		quoteAdded: (title: string) => `Quotation added to “${title}”`,
+		addedByYou: 'Added by you'
 	},
 	units: {
 		tab: 'Items',
@@ -2787,6 +2791,7 @@ export const en = {
 		'cited.no_quotation': 'This quotation is no longer in the answers. Look at them again.',
 		'cited.no_field': 'This field is not one of the entry’s.',
 		'cited.not_a_choice': 'Choose one of the field’s values, or leave it empty.',
+		'cited.not_in_turn': 'Select a passage within one turn of the transcript.',
 		'cited.invented':
 			'Only quotations Kalamu found word for word in the text can be kept: this one is not among them.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',

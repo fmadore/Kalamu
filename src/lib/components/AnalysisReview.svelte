@@ -13,7 +13,10 @@
 	// names, `ListedNames` changes them). An analysis whose fields are
 	// one repeating group gives rows, page by page, reviewed in a table of its own
 	// (`RecordsReview`), which adds no names this way. An answer that quotes the text (an
-	// interview's themes) is a card per entry (`CitedAnswer`, changed by `CitedAnswers`).
+	// interview's themes) is a card per entry (`CitedAnswer`, changed by `CitedAnswers`); a
+	// passage selected in its transcript is added to an entry as the researcher's quotation from
+	// the selection's menu (`QuoteMenu`). A long interview read in parts says so above the
+	// answers, which are those of the step that brought the parts together (`parts.ts`).
 	import { onMount, tick } from 'svelte';
 	import CitedAnswer from './CitedAnswer.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
@@ -21,6 +24,8 @@
 	import Icon from './Icon.svelte';
 	import ItemMenu from './ItemMenu.svelte';
 	import ListAnswer from './ListAnswer.svelte';
+	import PartsNotice from './PartsNotice.svelte';
+	import QuoteMenu from './QuoteMenu.svelte';
 	import RecordsReview from './RecordsReview.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
 	import SearchBar from './SearchBar.svelte';
@@ -31,6 +36,7 @@
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
+	import { citedOf } from '#lib/cited.js';
 	import { CitedAnswers } from '#lib/citedAnswers.svelte.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
 	import { clearFound, markFound } from '#lib/found.js';
@@ -41,10 +47,8 @@
 	import { groupOf } from '#lib/records.js';
 	import { ownRegions } from '#lib/regions.svelte.js';
 	import { Review } from '#lib/review.svelte.js';
-	import { describeError } from '#lib/errors.js';
 	import { find, searchable } from '#lib/search.js';
-	import { api } from '#lib/tauri.js';
-	import { guardDraft, toast, type ReviewFind } from '#lib/state.svelte.js';
+	import { guardDraft, type ReviewFind } from '#lib/state.svelte.js';
 
 	let {
 		jobId,
@@ -163,20 +167,27 @@
 	 * changes them. */
 	const cited = new CitedAnswers(review, () => answersPane);
 
+	/** The fields of entries that quote the text, to which a passage selected in it is added. */
+	const quoting = $derived(fields.filter((f) => f.kind.type === 'cited'));
+
+	/** Adds the passage selected in the transcript to an entry as the researcher's quotation,
+	 * with the toast's Undo. */
+	function addQuotation(key: string, entry: number, title: string, start: number, end: number) {
+		const first = setups[0];
+		const count = citedOf(answersOf(lead), key)?.entries[entry]?.evidence.length ?? 0;
+		if (!first) return;
+		void cited.change(
+			first,
+			key,
+			[{ kind: 'add_quotation', entry, start, end }],
+			m.cited.quoteAdded(title),
+			{ entry, quote: count },
+			{ entry }
+		);
+	}
+
 	/** A long interview read in parts: how many, and those that could not be read. */
 	const parts = $derived(partsOf(review.views, setups[0]?.id, cited.source?.turns));
-	let retrying = $state(false);
-	async function readAgain() {
-		retrying = true;
-		try {
-			await api.retryFailed(jobId);
-			toast(m.cited.readingAgain);
-		} catch (e) {
-			review.error = describeError(e, m);
-		} finally {
-			retrying = false;
-		}
-	}
 
 	function toggleReviewed() {
 		const first = setups[0];
@@ -257,6 +268,16 @@
 		{/if}
 	{/key}
 
+	{#if quoting.length > 0 && cited.source}
+		<QuoteMenu
+			text={cited.source.text}
+			fields={quoting}
+			answers={answersOf(lead)}
+			offered={!!lead && lead.status !== 'failed' && !editing && !comparing && !cited.busy}
+			onadd={addQuotation}
+		/>
+	{/if}
+
 	<ReviewFrame
 		{jobId}
 		{sourceId}
@@ -318,20 +339,7 @@
 			<p class="error">{lead.error}</p>
 		{:else}
 			{#if parts}
-				<div class="parts" role="note">
-					<p>{m.cited.readInParts(parts.count)}</p>
-					{#each parts.unread as part (part.number)}
-						<p class="unread">
-							{m.cited.partNotRead(part.from, part.to, part.first, part.last)}
-							{#if part.error}<span class="why">{part.error}</span>{/if}
-						</p>
-					{/each}
-					{#if parts.unread.length > 0}
-						<button class="btn sm" disabled={retrying} onclick={readAgain}
-							>{m.cited.readAgain}</button
-						>
-					{/if}
-				</div>
+				<PartsNotice {jobId} {parts} onerror={(message) => (review.error = message)} />
 			{/if}
 			{#if shown.length === 0}<p class="muted">{m.review.noAnswerFound}</p>{/if}
 			{#each shown as f (f.key)}
@@ -456,25 +464,5 @@
 	.none {
 		font-family: var(--font-ui);
 		font-size: var(--type-sm);
-	}
-	/* How a long interview was read: one quiet line, and a notice for a part not read. */
-	.parts {
-		display: grid;
-		gap: var(--space-2);
-		justify-items: start;
-		padding-bottom: var(--space-3);
-		font-size: var(--type-sm);
-		color: var(--text-secondary);
-	}
-	.parts .unread {
-		padding: var(--space-2) var(--space-3);
-		border-radius: var(--radius-control);
-		background: var(--warn-wash);
-		color: var(--warn-text);
-	}
-	.parts .why {
-		display: block;
-		font-family: var(--font-mono);
-		font-size: var(--type-xs);
 	}
 </style>

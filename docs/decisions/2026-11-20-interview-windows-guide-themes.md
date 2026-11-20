@@ -1,4 +1,4 @@
-# 2026-11-20 · Long interviews read in parts, and the researcher's own themes
+# 2026-11-20 · Long interviews read in parts, the researcher's own themes and quotations
 
 ## Context
 
@@ -91,6 +91,28 @@ numbers.
   anew from every part's, so a theme one part missed and another found is not reported.
 - Changing the default interview prompt's fields changes the keys of new interview analyses
   made with it, as any change of a prompt does; jobs already made keep the fields they froze.
+
+### A quotation the researcher adds
+
+- **One more change to a cited field**, `CitedEdit::AddQuotation { entry, start, end }`, the
+  passage's characters in the frozen text, built on the review's existing layer of changes
+  (`edit_cited`, a toast's Undo putting the correction back). The engine finds it with
+  `evidence_at`: its spaces at either end left out, within one turn and one part, its words the
+  text's own, its speaker and times the turn's; a passage across two turns is refused
+  (`cited.not_in_turn`).
+- **Marked as the researcher's** by `Evidence.added`, left out when false so every quotation
+  stored before reads the same. A correction's quotations were all the model's, exactly
+  (`keeps_evidence`); one marked as added is now kept only when the text read holds it there
+  exactly as `evidence_at` finds it (`keeps_evidence_in`), so a toast's Undo or a saved
+  correction can carry it and nothing can alter it. The model's answer is never changed.
+- **In the review** the selection's menu holds one action, *Add as a quotation*, whose items are
+  the entries it can go to, under their field's name (the transcript pane had no selection menu
+  in the analysis review; the text review's *Correct with a model…* lives in another). The card
+  draws it in the hand-blue rule with *Added by you*. Not offered in a comparison, where a
+  passage would have to be added to several set-ups' entries at once.
+- **In the files**: the memo adds ` · added by the researcher` after who said it, the text
+  and Word files `, added by the researcher` in the brackets, the quotations table a column
+  `added_by` (`model` or `researcher`), the JSON `"added": true`.
 
 ## Consequences
 

@@ -42,14 +42,25 @@ fn said_by(evidence: &Evidence) -> String {
         .join(", ")
 }
 
-/// A quotation as a block quote, with who said it and when below it.
+/// Said of a quotation the researcher added from the text, which no model gave.
+const ADDED: &str = "added by the researcher";
+
+/// A quotation as a block quote, with who said it and when below it, and whether the researcher
+/// added it.
 fn block_quote(evidence: &Evidence) -> String {
     let mut out: Vec<String> = evidence
         .quote
         .lines()
         .map(|l| format!("> {}", l.trim()))
         .collect();
-    let by = said_by(evidence);
+    let mut by = said_by(evidence);
+    if evidence.added {
+        by = [by, ADDED.into()]
+            .into_iter()
+            .filter(|b| !b.is_empty())
+            .collect::<Vec<_>>()
+            .join(" · ");
+    }
     if !by.is_empty() {
         out.push(">".into());
         out.push(format!("> — {by}"));
@@ -137,8 +148,9 @@ pub(crate) fn markdown(doc: &ExportDocument, fields: &[Field]) -> String {
 
 /// One row per quotation kept, in the order of the fields and their entries: the field, the
 /// entry (its first field: a theme's name, a quotation's reason), who said it, when, the
-/// quotation as the text has it, its turn, and the page it stands on when the text was read from
-/// pages. Guarded, as every table for a spreadsheet is.
+/// quotation as the text has it, its turn, the page it stands on when the text was read from
+/// pages, and who chose it (`model`, or `researcher` for one
+/// they added from the text). Guarded, as every table for a spreadsheet is.
 pub(crate) fn quotations(doc: &ExportDocument, fields: &[Field]) -> Table {
     let headings = [
         "file",
@@ -150,6 +162,7 @@ pub(crate) fn quotations(doc: &ExportDocument, fields: &[Field]) -> Table {
         "quotation",
         "turn",
         "page",
+        "added_by",
     ]
     .map(String::from)
     .to_vec();
@@ -186,6 +199,12 @@ pub(crate) fn quotations(doc: &ExportDocument, fields: &[Field]) -> Table {
                             .as_ref()
                             .map(|p| p.label())
                             .unwrap_or_default(),
+                        if evidence.added {
+                            "researcher"
+                        } else {
+                            "model"
+                        }
+                        .to_string(),
                     ]);
                 }
             }

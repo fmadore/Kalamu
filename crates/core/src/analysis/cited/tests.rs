@@ -46,7 +46,7 @@ pub(crate) fn interview() -> AnalysisSchema {
 }
 
 /// Two speakers, with times, a phrase said twice, French typography.
-fn transcript() -> Built {
+pub(crate) fn transcript() -> Built {
     let piece = PieceRef::Segment {
         index: 0,
         start_ms: 0,
@@ -98,7 +98,7 @@ fn transcript() -> Built {
     )
 }
 
-fn doc(built: &Built) -> CitedText<'_> {
+pub(crate) fn doc(built: &Built) -> CitedText<'_> {
     CitedText {
         text: &built.text,
         parts: &built.parts,
@@ -353,7 +353,7 @@ fn rendered_as_text_each_entry_has_its_quotations_and_what_was_left_out() {
     assert_eq!(answers[1].value.joined(), "Devise");
 }
 
-fn cited_answers() -> (AnalysisSchema, Vec<FieldAnswer>) {
+pub(crate) fn cited_answers() -> (AnalysisSchema, Vec<FieldAnswer>) {
     let built = transcript();
     let schema = interview();
     let mut answers = schema

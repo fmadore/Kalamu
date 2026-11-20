@@ -117,11 +117,31 @@ fn answers(schema: &AnalysisSchema) -> (Vec<FieldAnswer>, Vec<FieldAnswer>) {
             turns: &built.turns,
         },
     );
-    let corrected = cited::edit(
+    let removed = cited::edit(
         &schema.fields,
         &model,
         "themes",
         &CitedEdit::RemoveEntry { entry: 2 },
+    )
+    .unwrap_or_else(|e| panic!("{e}"));
+    // And a passage the researcher selected, added to the first theme as their own quotation.
+    let words = "Au début, on ne savait pas.";
+    let at = built.text.find(words).unwrap_or_default();
+    let start = built.text[..at].chars().count() as u32;
+    let corrected = cited::edit_in(
+        &schema.fields,
+        &removed,
+        "themes",
+        &CitedEdit::AddQuotation {
+            entry: 0,
+            start,
+            end: start + words.chars().count() as u32,
+        },
+        Some(CitedText {
+            text: &built.text,
+            parts: &built.parts,
+            turns: &built.turns,
+        }),
     )
     .unwrap_or_else(|e| panic!("{e}"));
     (model, corrected)
@@ -231,9 +251,21 @@ fn the_files_hold_only_what_the_transcript_says_and_the_researcher_kept() {
         String::from_utf8(files(ExportFormat::Csv, &doc)[1].bytes.clone()).unwrap_or_default();
     assert_eq!(
         rows.lines().count(),
-        1 + 4,
+        1 + 5,
         "a heading and one row per quotation kept"
     );
+    // The quotation the researcher added, marked as theirs in every file.
+    assert!(
+        memo.contains(
+            "> Au début, on ne savait pas.\n>\n> — Awa, [00:00:12] · added by the researcher"
+        ),
+        "{memo}"
+    );
+    assert!(
+        rows.contains(",\"Au début, on ne savait pas.\",2,researcher"),
+        "{rows}"
+    );
+    assert_eq!(rows.matches(",model").count(), 4, "{rows}");
     let json: serde_json::Value =
         serde_json::from_slice(&run(ExportFormat::Json, &doc)).unwrap_or_default();
     assert_eq!(

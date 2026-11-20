@@ -11,8 +11,9 @@
 //! quotation is left out too: what is shown as someone's words is always theirs.
 //!
 //! The researcher's corrections are a layer over the model's answer, as for any field: an entry
-//! edited or removed, a quotation removed ([`edit`]), never one added or changed
-//! ([`keeps_evidence`]).
+//! edited or removed, a quotation removed, or one added from a passage they selected in the text
+//! ([`edit_in`], [`evidence_at`]), marked as theirs and found in the text as any; never one
+//! changed, nor one added that the text does not hold there ([`keeps_evidence_in`]).
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -25,7 +26,7 @@ use crate::snapshot::{Anchor, SnapshotPart, Turn, forgiving, slice, turn_text};
 pub mod consolidate;
 mod edit;
 pub mod windows;
-pub use edit::{CitedEdit, CitedError, edit, keeps_evidence};
+pub use edit::{CitedEdit, CitedError, edit, edit_in, keeps_evidence, keeps_evidence_in};
 pub use windows::TurnWindows;
 
 /// The property that holds an entry's quotations in the model's answer.
@@ -125,6 +126,12 @@ pub struct Evidence {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub page: Option<PieceRef>,
+    /// Added by the researcher from a passage they selected in the text, in their corrections;
+    /// never by a model. Found in the text as any quotation, its speaker and times the turn's.
+    /// Left out when false, so quotations stored before it read the same.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub added: bool,
 }
 
 /// Checks a cited field's own fields: text, lists and choices, none named as the quotations
@@ -294,9 +301,55 @@ pub fn place(doc: CitedText<'_>, claim: &Claim) -> Option<Evidence> {
             start_ms: turn.start_ms,
             end_ms: turn.end_ms,
             page,
+            added: false,
         });
     }
     None
+}
+
+/// The passage between characters `start` and `end` of the text as a quotation the researcher
+/// added: its spaces at either end left out, within one turn and one part, its words the text's
+/// own and its speaker and times the turn's. `None` for a passage empty, outside the text, or
+/// running across two turns.
+pub fn evidence_at(doc: CitedText<'_>, start: u32, end: u32) -> Option<Evidence> {
+    let chosen = slice(doc.text, start, end)?;
+    let lead = chosen.chars().take_while(|c| c.is_whitespace()).count() as u32;
+    let trail = chosen
+        .chars()
+        .rev()
+        .take_while(|c| c.is_whitespace())
+        .count() as u32;
+    let (start, end) = (start + lead, end.checked_sub(trail)?);
+    if end <= start {
+        return None;
+    }
+    let i = doc
+        .turns
+        .iter()
+        .position(|t| t.start <= start && end <= t.end)?;
+    let part = doc
+        .parts
+        .iter()
+        .position(|p| p.start <= start && end <= p.end)?;
+    let turn = &doc.turns[i];
+    let page = match &doc.parts[part].piece {
+        piece @ PieceRef::Page { .. } => Some(piece.clone()),
+        _ => None,
+    };
+    Some(Evidence {
+        anchor: Anchor {
+            part: part as u32,
+            start,
+            end,
+        },
+        quote: slice(doc.text, start, end)?.to_string(),
+        turn: i as u32 + 1,
+        speaker: turn.speaker.clone(),
+        start_ms: turn.start_ms,
+        end_ms: turn.end_ms,
+        page,
+        added: true,
+    })
 }
 
 /// The text as the model reads it: each turn on one line after its number in brackets
@@ -373,7 +426,14 @@ pub(super) fn render(field: &Field, fields: &[Field], value: &FieldValue) -> Str
             lines.push(own);
         }
         for evidence in &entry.evidence {
-            let by = said_by(evidence);
+            let mut by = said_by(evidence);
+            if evidence.added {
+                by = [by.as_str(), "added by the researcher"]
+                    .into_iter()
+                    .filter(|b| !b.is_empty())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+            }
             lines.push(if by.is_empty() {
                 format!("\"{}\"", evidence.quote)
             } else {

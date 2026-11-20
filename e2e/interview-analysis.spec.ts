@@ -10,7 +10,8 @@
 // parts beside the cost; one too long even so (one long turn): said in place of the cost, Start
 // disabled until another model is chosen; and in French. A long interview read in parts: the
 // review says so in one line, names the part not read by its minutes and offers to read it
-// again.
+// again. A passage selected in the transcript added as the researcher's quotation from its
+// menu, marked as theirs, and taken back; and in French.
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import type { NewJob } from '../src/lib/bindings/NewJob.js';
@@ -282,6 +283,69 @@ test('without the recording, a quotation is shown where it stands in the text', 
 	);
 	await pane.getByRole('button', { name: 'Show in the text: Mariam · 00:02:38' }).last().click();
 	await expect(page.locator('mark.quoted')).toHaveText('mon tour est venu au bon moment');
+});
+
+/** Selects `words` in the transcript beside the answers. */
+async function select(page: Page, words: string): Promise<void> {
+	await page.evaluate((words) => {
+		const sheet = document.querySelector('.source .desk.document');
+		const walker = document.createTreeWalker(sheet!, NodeFilter.SHOW_TEXT);
+		for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+			const at = node.textContent?.indexOf(words) ?? -1;
+			if (at < 0) continue;
+			const range = document.createRange();
+			range.setStart(node, at);
+			range.setEnd(node, at + words.length);
+			getSelection()?.removeAllRanges();
+			getSelection()?.addRange(range);
+			return;
+		}
+		throw new Error(`${words} is not in the transcript`);
+	}, words);
+}
+
+test('a passage selected in the transcript is added as the researcher’s quotation, and taken back', async ({
+	page
+}) => {
+	const pane = await answers(page, '&interview-gone');
+	const first = pane.locator('[data-entry="0"]').first();
+	await expect(first.locator('blockquote')).toHaveCount(2);
+	await select(page, 'Les premiers mois, mes clientes étaient mes voisines');
+	await page.keyboard.press('Shift+F10');
+	const menu = page.getByRole('menu', { name: 'Add as a quotation' });
+	await expect(menu).toBeVisible();
+	// Every entry it can go to, each field's under its name.
+	await expect(menu.getByRole('menuitem')).toHaveCount(5);
+	await menu.getByRole('menuitem', { name: 'Apprendre en regardant' }).click();
+
+	const quotes = first.locator('blockquote');
+	await expect(quotes).toHaveCount(3);
+	await expect(quotes.last()).toHaveText('Les premiers mois, mes clientes étaient mes voisines');
+	// Marked as the researcher's, with the speaker and time of its turn.
+	const mine = first.locator('[data-quote="2"]');
+	await expect(mine).toHaveClass(/hand/);
+	await expect(mine.getByText('Added by you')).toBeVisible();
+	await expect(mine).toContainText('Mariam · 00:01:09');
+	const toast = page
+		.getByRole('status')
+		.filter({ hasText: 'Quotation added to “Apprendre en regardant”' });
+	await toast.getByRole('button', { name: 'Undo' }).click();
+	await expect(quotes).toHaveCount(2);
+});
+
+test.describe('a quotation added in French', () => {
+	test.use({ locale: 'fr-FR' });
+
+	test('the menu and the mark speak French', async ({ page }) => {
+		await open(page, 'review-interview&interview-gone');
+		const pane = page.getByRole('main').getByRole('region', { name: 'Réponses' });
+		await expect(pane.getByRole('heading', { name: 'Apprendre en regardant' })).toBeVisible();
+		await select(page, 'Les premiers mois, mes clientes étaient mes voisines');
+		await page.keyboard.press('Shift+F10');
+		const menu = page.getByRole('menu', { name: 'Ajouter comme citation' });
+		await menu.getByRole('menuitem', { name: 'La tontine comme appui' }).click();
+		await expect(pane.getByText('Ajoutée par vous')).toBeVisible();
+	});
 });
 
 test('a quotation, an entry and an entry’s name are changed and put back from the keyboard', async ({

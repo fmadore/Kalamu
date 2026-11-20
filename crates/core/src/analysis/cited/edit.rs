@@ -1,13 +1,15 @@
 //! The researcher's changes to a cited field, a layer over the model's answer like every
 //! correction: an entry's fields typed anew, an entry removed, one quotation of an entry
-//! removed. Quotations are never added or changed this way: a correction's quotations must be
-//! some of the model's, exactly ([`keeps_evidence`]).
+//! removed, or one added from a passage the researcher selected in the text, found there and
+//! marked as theirs ([`super::evidence_at`]). Quotations are never changed: a correction's
+//! quotations must be some of the model's, exactly, or ones the researcher added that the text
+//! holds where they say ([`keeps_evidence_in`]).
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
-use super::{CitedValue, Evidence};
+use super::{CitedText, CitedValue, Evidence, evidence_at};
 use crate::{Field, FieldAnswer, FieldKind, FieldValue, RowError};
 
 /// One change to a cited field's entries, as the review makes it: the answers as the researcher
@@ -27,6 +29,9 @@ pub enum CitedEdit {
     RemoveEntry { entry: u32 },
     /// One quotation taken out of an entry; the entry stays, also with none left.
     RemoveQuotation { entry: u32, quotation: u32 },
+    /// A passage the researcher selected in the text, between characters `start` and `end` of
+    /// it, added to an entry as their own quotation.
+    AddQuotation { entry: u32, start: u32, end: u32 },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -45,6 +50,9 @@ pub enum CitedError {
     /// as found in the text.
     #[error("A quotation in \"{0}\" is not one found in the text")]
     Invented(String),
+    /// A passage selected to add as a quotation that is empty, or runs across two turns.
+    #[error("A quotation is taken from within one turn of the text")]
+    NotInTurn,
 }
 
 impl CitedError {
@@ -57,6 +65,7 @@ impl CitedError {
             Self::NoField(_) => "cited.no_field",
             Self::NotAChoice { .. } => "cited.not_a_choice",
             Self::Invented(_) => "cited.invented",
+            Self::NotInTurn => "cited.not_in_turn",
         }
     }
 }
@@ -69,6 +78,18 @@ pub fn edit(
     answers: &[FieldAnswer],
     key: &str,
     change: &CitedEdit,
+) -> Result<Vec<FieldAnswer>, CitedError> {
+    edit_in(fields, answers, key, change, None)
+}
+
+/// [`edit`], with the text the analysis read, in which a passage added as a quotation is found;
+/// without it, a passage cannot be added.
+pub fn edit_in(
+    fields: &[Field],
+    answers: &[FieldAnswer],
+    key: &str,
+    change: &CitedEdit,
+    doc: Option<CitedText<'_>>,
 ) -> Result<Vec<FieldAnswer>, CitedError> {
     let field = fields
         .iter()
@@ -121,6 +142,15 @@ pub fn edit(
             }
             evidence.remove(*quotation as usize);
         }
+        CitedEdit::AddQuotation { start, end, .. } => {
+            let added = doc
+                .and_then(|doc| evidence_at(doc, *start, *end))
+                .ok_or(CitedError::NotInTurn)?;
+            let evidence = &mut value.entries[at as usize].evidence;
+            if !evidence.iter().any(|e| e.anchor == added.anchor) {
+                evidence.push(added);
+            }
+        }
     }
     Ok(out)
 }
@@ -129,7 +159,8 @@ fn entry_of(change: &CitedEdit) -> u32 {
     match change {
         CitedEdit::Answer { entry, .. }
         | CitedEdit::RemoveEntry { entry }
-        | CitedEdit::RemoveQuotation { entry, .. } => *entry,
+        | CitedEdit::RemoveQuotation { entry, .. }
+        | CitedEdit::AddQuotation { entry, .. } => *entry,
     }
 }
 
@@ -141,6 +172,18 @@ pub fn keeps_evidence(
     fields: &[Field],
     model: &[FieldAnswer],
     corrected: &mut [FieldAnswer],
+) -> Result<(), CitedError> {
+    keeps_evidence_in(fields, model, corrected, None)
+}
+
+/// [`keeps_evidence`], a quotation the researcher added kept when the text read holds it there,
+/// exactly as [`evidence_at`] finds it (its words, turn, speaker and times); without the text,
+/// none is kept.
+pub fn keeps_evidence_in(
+    fields: &[Field],
+    model: &[FieldAnswer],
+    corrected: &mut [FieldAnswer],
+    doc: Option<CitedText<'_>>,
 ) -> Result<(), CitedError> {
     for field in fields {
         if !matches!(field.kind, FieldKind::Cited { .. }) {
@@ -160,11 +203,14 @@ pub fn keeps_evidence(
             .and_then(|a| a.value.cited())
             .unwrap_or(&empty);
         let found: Vec<&Evidence> = theirs.entries.iter().flat_map(|e| &e.evidence).collect();
-        let invented = value
-            .entries
-            .iter()
-            .flat_map(|e| &e.evidence)
-            .any(|e| !found.contains(&e));
+        let invented = value.entries.iter().flat_map(|e| &e.evidence).any(|e| {
+            if e.added {
+                doc.and_then(|doc| evidence_at(doc, e.anchor.start, e.anchor.end))
+                    .is_none_or(|at| &at != e)
+            } else {
+                !found.contains(&e)
+            }
+        });
         if invented {
             return Err(CitedError::Invented(label()));
         }
@@ -176,3 +222,6 @@ pub fn keeps_evidence(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

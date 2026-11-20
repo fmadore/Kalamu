@@ -18,6 +18,10 @@ Elle commence au port sans savoir ce qui l’attend.
 >
 > — Awa, [00:00:12]
 
+> Au début, on ne savait pas.
+>
+> — Awa, [00:00:12] · added by the researcher
+
 ### Une devise
 
 Une phrase reprise par toute l’équipe.

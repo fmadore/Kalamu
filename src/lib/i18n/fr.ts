@@ -661,7 +661,10 @@ export const fr: Messages = {
 					? `Le passage de ${from} jusqu’à la fin n’a pas pu être lu : ses thèmes et ses citations manquent.`
 					: `Les prises de parole ${first} à ${last} n’ont pas pu être lues : leurs thèmes et leurs citations manquent.`,
 		readAgain: 'Le relire',
-		readingAgain: 'Le passage est relu.'
+		readingAgain: 'Le passage est relu.',
+		addQuotation: 'Ajouter comme citation',
+		quoteAdded: (title: string) => `Citation ajoutée à « ${title} »`,
+		addedByYou: 'Ajoutée par vous'
 	},
 	units: {
 		tab: 'Pièces',
@@ -3220,6 +3223,7 @@ export const fr: Messages = {
 			'Cette citation ne figure plus dans les réponses. Regardez-les à nouveau.',
 		'cited.no_field': 'Ce champ ne fait pas partie de l’entrée.',
 		'cited.not_a_choice': 'Choisissez l’une des valeurs du champ, ou laissez-le vide.',
+		'cited.not_in_turn': 'Sélectionnez un passage pris dans une seule prise de parole.',
 		'cited.invented':
 			'Seules les citations que Kalamu a retrouvées mot pour mot dans le texte peuvent être gardées : celle-ci n’en fait pas partie.',
 		'prompt.few_values': 'Un choix demande au moins deux valeurs entre lesquelles choisir.',

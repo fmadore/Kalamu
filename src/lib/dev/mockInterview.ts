@@ -8,9 +8,7 @@
 // them even so; `interview-parts` shows the analysis as one read in three parts, the last of
 // which could not be read. Development builds only.
 
-import type { Catalog } from '../bindings/Catalog.js';
 import type { CitedEdit } from '../bindings/CitedEdit.js';
-import type { EstimateRequest } from '../bindings/EstimateRequest.js';
 import type { CitedEvidence } from '../bindings/CitedEvidence.js';
 import type { CitedValue } from '../bindings/CitedValue.js';
 import type { FieldAnswer } from '../bindings/FieldAnswer.js';
@@ -18,11 +16,10 @@ import type { Job } from '../bindings/Job.js';
 import type { JobSummary } from '../bindings/JobSummary.js';
 import type { NewJob } from '../bindings/NewJob.js';
 import type { PieceView } from '../bindings/PieceView.js';
-import type { SetupRequest } from '../bindings/SetupRequest.js';
-import type { TextTooLong } from '../bindings/TextTooLong.js';
 import type { Turn } from '../bindings/Turn.js';
 import { clock } from '../pieces.js';
 import { audioSetup, EXPORT_OPTIONS, job, source } from './mockJobs.js';
+import { inParts, readInParts } from './mockInterviewLong.js';
 
 export const INTERVIEW_JOB = '00000000-0000-0000-0000-0000000000i1';
 const TRANSCRIPT_JOB = '00000000-0000-0000-0000-0000000000i2';
@@ -299,24 +296,6 @@ const answers = (i: number): FieldAnswer[] => [
 	{ key: 'quotations', value: quotations }
 ];
 
-const inParts = () => new URLSearchParams(location.search).has('interview-parts');
-
-/** The three parts of `interview-parts`, the last not read. */
-const PARTS: [number, number][] = [
-	[1, 5],
-	[4, 9],
-	[8, 13]
-];
-const partPieces = (): PieceView[] =>
-	PARTS.map(([first, last], i) => ({
-		...interviewPieces[0],
-		index: i,
-		piece: { kind: 'turns' as const, number: i + 1, first, last },
-		status: i === 2 ? ('failed' as const) : ('done' as const),
-		error: i === 2 ? 'The provider is overloaded. Try again later.' : null,
-		ai_fields: i === 2 ? [] : interviewPieces[0].ai_fields
-	}));
-
 export const interviewPieces: PieceView[] = [0, 1].map((i) => ({
 	setup_id: interviewSetup(i).id,
 	source_id: frozen.id,
@@ -399,6 +378,28 @@ export function interviewSummaries(base: JobSummary): JobSummary[] {
 	];
 }
 
+/** A passage of the frozen text, in characters, as the researcher's quotation, as
+ * `core::analysis::cited::evidence_at` finds it: its spaces at either end left out, within one
+ * turn. */
+function addedAt(start: number, end: number): CitedEvidence | null {
+	const all = Array.from(interviewText);
+	const chosen = all.slice(start, end).join('');
+	const from = start + (chosen.length - chosen.trimStart().length);
+	const to = end - (chosen.length - chosen.trimEnd().length);
+	const n = interviewTurns.findIndex((t) => t.start <= from && to <= t.end);
+	if (to <= from || n < 0) return null;
+	const turn = interviewTurns[n];
+	return {
+		anchor: { part: 0, start: from, end: to },
+		quote: all.slice(from, to).join(''),
+		turn: n + 1,
+		speaker: turn.speaker,
+		start_ms: turn.start_ms,
+		end_ms: turn.end_ms,
+		added: true
+	};
+}
+
 /** One change to a cited field, as `core::analysis::cited::edit` makes it. */
 export function editCited(answers: FieldAnswer[], key: string, change: CitedEdit): FieldAnswer[] {
 	const out: FieldAnswer[] = structuredClone(answers);
@@ -407,7 +408,16 @@ export function editCited(answers: FieldAnswer[], key: string, change: CitedEdit
 		throw { id: 'cited.not_cited', detail: key };
 	const entry = value.entries[change.entry];
 	if (!entry) throw { id: 'cited.no_entry', detail: String(change.entry) };
-	if (change.kind === 'remove_entry') value.entries.splice(change.entry, 1);
+	if (change.kind === 'add_quotation') {
+		const added = addedAt(change.start, change.end);
+		if (!added) throw { id: 'cited.not_in_turn' };
+		if (
+			!entry.evidence.some(
+				(e) => e.anchor.start === added.anchor.start && e.anchor.end === added.anchor.end
+			)
+		)
+			entry.evidence.push(added);
+	} else if (change.kind === 'remove_entry') value.entries.splice(change.entry, 1);
 	else if (change.kind === 'remove_quotation') {
 		if (!entry.evidence[change.quotation])
 			throw { id: 'cited.no_quotation', detail: String(change.quotation) };
@@ -418,45 +428,6 @@ export function editCited(answers: FieldAnswer[], key: string, change: CitedEdit
 		else entry.answers.push({ key: change.key, value: change.value });
 	}
 	return out;
-}
-
-/** Characters in the long transcript of `interview-long`: some 100,000 words. */
-const LONG_CHARS = 600_000;
-
-/** `n` to two significant figures, down, as the catalogue rounds what a model reads. */
-const roundDown = (n: number) => {
-	const step = 10 ** Math.max(0, Math.floor(Math.log10(Math.max(n, 1))) - 1);
-	return Math.floor(n / step) * step;
-};
-
-/** What the estimate says of an interview's set-up with `interview-long`, as the engine measures
- * it: read in parts by a model that reads less than its four characters a token, a part at most
- * seven tenths of what it reads; with `interview-unbroken`, one turn too long for it even so. */
-export function interviewLength(
-	request: EstimateRequest,
-	setup: SetupRequest,
-	catalog: Catalog
-): { too_long?: TextTooLong; parts?: number } {
-	const search = new URLSearchParams(location.search);
-	if (!search.has('interview-long')) return {};
-	const preset = setup.preset_id ?? '';
-	if (
-		request.task !== 'analysis' ||
-		!(preset === 'analysis.interview' || preset.startsWith('user-'))
-	)
-		return {};
-	const limit = catalog.models.find((m) => m.provider === setup.provider && m.id === setup.model)
-		?.limits.max_input_tokens;
-	if (limit === undefined || LONG_CHARS <= limit * 4) return {};
-	if (!search.has('interview-unbroken'))
-		return { parts: Math.ceil(LONG_CHARS / Math.floor(limit * 4 * 0.7)) };
-	return {
-		too_long: {
-			file: request.sources[0]?.file_name ?? '',
-			words: 100_000,
-			most_words: roundDown(Math.floor((limit * 4) / 6))
-		}
-	};
 }
 
 /** The job New job's dialog created last, for the end-to-end tests to read. */
@@ -477,7 +448,7 @@ export function interviewCommand(cmd: string, a: Record<string, unknown>): unkno
 		case 'source_pieces':
 			if (a.jobId === TRANSCRIPT_JOB) return transcriptPieces();
 			if (!mine) return undefined;
-			if (inParts()) return [...partPieces(), { ...interviewPieces[0], index: PARTS.length }];
+			if (inParts()) return readInParts(interviewPieces[0]);
 			return interviewPieces.slice(0, two() ? 2 : 1);
 		case 'source_text':
 			return mine ? interviewText : undefined;

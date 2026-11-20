@@ -9,6 +9,7 @@ use kalamu_core::Snapshot;
 
 use super::*;
 
+mod added;
 mod fixture;
 use fixture::*;
 

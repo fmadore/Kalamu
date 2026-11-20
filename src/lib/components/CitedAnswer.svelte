@@ -4,7 +4,8 @@
 	// quotation plays in its transcript's review from its turn, or, without a recording, is shown
 	// where it stands in the text beside the answers. An entry's fields are typed anew, an entry or
 	// one quotation removed, each in the corrected answers and taken back from its toast; a
-	// quotation's words are never changed. In a comparison each set-up's cards stand under its
+	// quotation's words are never changed. One the researcher added from the text takes their
+	// blue rule and says so. Where a theme comes from (a choice) is a plain chip. In a comparison each set-up's cards stand under its
 	// siglum, not collated. What the engine could not find in the text is said under them.
 	import Icon from './Icon.svelte';
 	import { siglum } from '#lib/apparatus.js';
@@ -180,7 +181,7 @@
 									{#each card.quotes as q, n (n)}
 										{@const said = saidBy(q)}
 										{@const plays = cited.recording(q) !== null}
-										<li data-quote={n}>
+										<li data-quote={n} class:hand={q.added}>
 											<blockquote lang="">{q.quote}</blockquote>
 											<div class="said">
 												<button
@@ -197,6 +198,7 @@
 														: c.showInText}</button
 												>
 												{#if said}<span class="by" aria-hidden="true">{said}</span>{/if}
+												{#if q.added}<span class="chip hand">{c.addedByYou}</span>{/if}
 												<button
 													class="btn ghost sm icon remove"
 													aria-label={c.removeQuote(quoteStart(q.quote))}
@@ -314,6 +316,10 @@
 	}
 	blockquote::after {
 		content: close-quote;
+	}
+	/* A quotation the researcher added: their blue rule, as every correction of theirs. */
+	.hand blockquote {
+		border-left-color: var(--hand);
 	}
 	.said {
 		display: flex;

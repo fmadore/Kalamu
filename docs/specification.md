@@ -169,7 +169,7 @@ answer none of whose quotations can be found is refused, paid for and asked agai
 broken answer. A scan or a recording cannot be analysed this way before it is read. In the
 review each entry is a card; a quotation opens the transcript at its turn and plays the
 recording there. The researcher edits an entry's fields and removes an entry or a quotation,
-as a layer over the model's answer; a quotation's words cannot be changed or added. **A long
+as a layer over the model's answer; a quotation's words cannot be changed. **A long
 interview is read in parts.** Each analysis model's catalogue entry gives the most it reads at
 once; a transcript whose characters over four exceed it is cut at whole turns into parts as even
 as it allows, each well under that limit (seven tenths of it, room left for the instructions
@@ -203,7 +203,14 @@ next interviews. Each theme of the answer says where it comes from, *The researc
 or *The interview*, shown on its card in the interface language and written in every file;
 a theme of the guide the interview does not take up is listed apart, under *Guide themes not
 found*, rather than backed with weak quotations. The guide is recorded with the set-up's
-options in `provenance.json`. Quotations added by hand come later. **A research description is kept with a
+options in `provenance.json`. **A quotation added by the
+researcher.** A passage selected in the transcript beside the answers has, from its menu (a
+right click, the menu key or Shift+F10), one action, *Add as a quotation*, listing the entries
+it can go to; Kalamu finds the passage in the text, within one turn, its speaker and time the
+turn's, and keeps it in the researcher's corrections, the model's answer unchanged. It is
+marked as theirs, in their blue rule and *Added by you*, removed as any quotation and taken
+back from its toast, and written in every file as added by the researcher. A correction holding
+one is kept only while the text holds it there, exactly. **A research description is kept with a
 prompt.** Under the box, *Keep this for my next interviews* saves what was typed, under a
 name, as a prompt of the researcher's own: the interview prompt with the description. Once
 one is kept, the dialog lists them above the box, the last one used chosen, beside *A new

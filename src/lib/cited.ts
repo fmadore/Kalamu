@@ -118,6 +118,12 @@ export function utf16At(text: string, chars: number): number {
 	return at;
 }
 
+/** How many Unicode characters the first `units` UTF-16 units of `text` hold: a place the
+ * browser gives, as the engine counts it. */
+export function charsAt(text: string, units: number): number {
+	return Array.from(text.slice(0, units)).length;
+}
+
 /** A quotation's place in `text`, in UTF-16 units, from its anchor in characters. */
 export function utf16Span(text: string, anchor: Anchor): { start: number; end: number } {
 	const start = utf16At(text, anchor.start);

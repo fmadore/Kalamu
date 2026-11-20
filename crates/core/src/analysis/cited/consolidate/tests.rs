@@ -18,6 +18,7 @@ fn evidence(start: u32, end: u32, quote: &str, turn: u32) -> Evidence {
         speaker: Some("Awa".into()),
         start_ms: Some(u64::from(turn) * 10_000),
         end_ms: None,
+        added: false,
     }
 }
 
