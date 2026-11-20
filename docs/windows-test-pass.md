@@ -182,7 +182,8 @@ to for the sample files.
   estimated lines are several, of a line's height, dashed; PAGE XML written from it holds those
   lines and no words, ALTO holds both.
 - [ ] **C2. A records analysis**: *Directory or list, one row per entry* on the directory's
-  pages. New job's diagram shows the records steps and `.csv` is ticked; the cost after the run
+  pages. New job's diagram shows the records steps and the table is ticked (`.csv` in 1.9.0,
+  `.xlsx` after the plain-first round); the cost after the run
   is near the estimate before it. Then *Register, one row per entry* on the register's pages,
   on handwriting: note any entry left out or carried down from a heading.
 - [ ] **C3. Agreement between set-ups**: an analysis of `daily-nebraskan-1911.pdf` with *Summary
@@ -270,12 +271,14 @@ Claude does each from the keyboard; the Narrator half (D6) is yours.
 - [ ] **E1. The CSV apostrophe**: open an analysis's `.csv` holding a cell that begins with
   `-`, `+`, `=` or `@` in the spreadsheet. The cell shows the text, not a formula or an error;
   numbers are still numbers.
-- [ ] **E2. French Excel**: the same file opened by double-click in an Excel set to French.
-  Note whether it opens in columns or in one; the first pass found one, and what to do about
-  it is still to decide.
-- [ ] **E3. A records `.csv`**: `corrected` is set on every row of a corrected page, as
-  [formats.md](formats.md) says. Note whether the changed rows alone would serve better: also
-  to decide.
+- [ ] **E2. French Excel** (from the plain-first round, after 1.9.0): the analysis's `.xlsx`
+  opened by double-click in an Excel set to French. It opens in columns, the heading row bold
+  and kept in view, long text wrapped, a telephone number, a date and a page number as written
+  and with no green corner. The `.csv` beside it still opens in one column there: New job and
+  the glossary say which to pick.
+- [ ] **E3. A records table**: on a page where one row was corrected, one added and one
+  removed, `corrected` is set on the changed and the added rows only, in the `.xlsx`, the
+  `.csv` and the `.json`; `reviewed` on every row of a reviewed page.
 - [ ] **E4. The quotations `.csv`** of C10 opened in the spreadsheet: one row per quotation,
   accents and quotation marks whole, the times readable.
 

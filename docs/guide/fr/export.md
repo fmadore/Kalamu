@@ -11,20 +11,34 @@ description: "Les formats d’export et la provenance dans Kalamu."
 
 ## Formats
 
-Depuis la relecture d’un traitement, l’export propose les formats qui conviennent à son type de
-résultat.
+Dans **Nouveau traitement**, sous **Résultats**, vous cochez les formats qui conviennent au type
+de résultat. Kalamu écrit les fichiers à côté de vos originaux, ou dans un dossier de votre
+choix, et les écrit à nouveau après vos corrections.
 
 | Format | Utile pour |
 | --- | --- |
 | Texte brut, Markdown | Lire, citer, passer dans n’importe quel autre outil. |
 | Word | Partager avec des collègues, retravailler le texte. |
-| JSON, CSV | Analyser dans un tableur, avec R ou Python ; les analyses s’exportent avec une ligne par document, ou une ligne par entrée pour un registre. |
+| Tableur pour Excel (`.xlsx`) | Lire, trier et filtrer un tableau dans Excel, LibreOffice ou Numbers : il s’ouvre d’un double-clic, quelle que soit la langue de votre tableur. Les analyses s’exportent avec une ligne par document, ou une ligne par entrée pour un registre. |
+| Tableau pour d’autres outils (`.csv`), JSON | Le même tableau pour R, Python, un logiciel de statistiques ou l’import dans une base de données. |
 | Sous-titres | Les transcriptions avec leur horodatage, à superposer à une vidéo. |
 | PDF interrogeable | Le scan d’origine avec le texte derrière, pour pouvoir y chercher et en copier des passages. |
 | ALTO XML, PAGE XML | Chaque mot avec sa place sur la page, pour les bibliothèques numériques et les éditions. Vos corrections sont incluses. |
 
 Les exports utilisent toujours le texte **tel que vous l’avez corrigé**. La page sur les
 [formats de sortie](../../formats.md) (en anglais) décrit chaque fichier, champ par champ.
+
+**Quel tableau choisir.** Prenez le `.xlsx` pour ouvrir un tableau vous-même. Un `.csv` ouvert
+d’un double-clic dans un Excel réglé en français ou en allemand peut afficher tout le tableau
+dans la première colonne, parce que ces versions d’Excel attendent des points-virgules ; le
+`.xlsx` n’a pas ce problème. Chaque cellule du `.xlsx` est gardée comme du texte, exactement
+comme elle a été lue ou corrigée : un numéro de téléphone, une date écrite à la manière de la
+source ou un numéro de page restent tels quels. Pour une table des matières, un registre ou un
+répertoire, le `.xlsx` est coché d’avance.
+
+Dans un registre ou un répertoire, la colonne `corrected` ne marque que les lignes que vous
+avez modifiées ou ajoutées ; `reviewed` marque toutes les lignes d’une page que vous avez
+relue.
 
 ## Provenance
 

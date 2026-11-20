@@ -10,7 +10,9 @@ description: Export formats and provenance in Kalamu.
 
 ## Formats
 
-From a job's review, **Export…** offers the formats that suit its kind of result.
+In **New job**, under **Results**, you tick the formats that suit the kind of result. Kalamu
+writes the files beside your originals, or in a folder you choose, and writes them again after
+your corrections.
 
 | Format | Good for |
 | --- | --- |

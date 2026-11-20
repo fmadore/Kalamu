@@ -71,8 +71,9 @@ regarder que les endroits où ils diffèrent.
 
 ## 5. Exporter
 
-L’export écrit le texte dans le format qu’il vous faut : texte brut, Markdown, Word, JSON, CSV,
-PDF interrogeable, ou ALTO et PAGE XML avec la place de chaque mot sur la page. Chaque export
+Kalamu écrit le texte dans les formats que vous avez cochés sous **Résultats** dans Nouveau
+traitement, à côté de vos originaux ou dans un dossier de votre choix, et les écrit à nouveau
+après vos corrections : texte brut, Markdown, Word, tableur Excel, JSON, CSV, PDF interrogeable, ou ALTO et PAGE XML avec la place de chaque mot sur la page. Chaque export
 s’accompagne d’un fichier `provenance.json` qui indique le modèle, le prompt et les réglages :
 vous pouvez ainsi citer exactement la façon dont le texte a été produit. Voir
 [Exporter et citer](export.md).

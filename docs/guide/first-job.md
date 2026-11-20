@@ -61,8 +61,9 @@ errors quickly: reading the same pages with two models and looking only at where
 
 ## 5. Export
 
-**Export…** writes the text in the format you need: plain text, Markdown, Word, JSON, CSV, a
-searchable PDF, or ALTO and PAGE XML with each word's place on the page. Every export comes
+Kalamu writes the text in the formats you ticked under **Results** in New job, beside your
+originals or in a folder you chose, and writes them again after your corrections: plain text,
+Markdown, Word, an Excel spreadsheet, JSON, CSV, a searchable PDF, or ALTO and PAGE XML with each word's place on the page. Every export comes
 with a `provenance.json` that records the model, the prompt and the settings, so you can cite
 exactly how the text was made. See [Exporting and citing](export.md).
 
