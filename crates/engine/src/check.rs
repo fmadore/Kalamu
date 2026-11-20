@@ -8,7 +8,7 @@
 //! which may be changed or completed from what the caller knows (a translation's lines given
 //! back their times). Numbered lines ([`crate::aligned::Passage`]) are the first check.
 
-use kalamu_core::{AnalysisSchema, ProcessOutput, ProviderError};
+use kalamu_core::{AnalysisSchema, ProcessOutput, ProviderError, RequestSetting};
 
 pub(crate) trait AnswerCheck: Send + Sync {
     /// The fields asked for instead of the set-up's own, if any.
@@ -19,6 +19,12 @@ pub(crate) trait AnswerCheck: Send + Sync {
     /// Added to the request after the prompt's own, after a blank line, if anything.
     fn request(&self) -> Option<&str> {
         None
+    }
+
+    /// What the request carried besides the prompt that the record of its answer keeps (the
+    /// parts of a long text a second step brought together), if anything.
+    fn settings(&self) -> Vec<RequestSetting> {
+        Vec::new()
     }
 
     /// The answer as it is kept, or why it is refused: a sentence a researcher can read, which

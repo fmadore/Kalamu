@@ -22,6 +22,13 @@ recording) with every transcription, extraction and analysis made of it.
   collections.
 - **Start a job on a selection**: tick some documents and run an extraction, an analysis or a
   workflow on them.
+- **Ask which documents speak of your question**: tick some documents that have been read,
+  choose **Which of these speak of my question?** and type your research question. Each
+  document comes back as relevant, partly relevant, not relevant or unsure, with a reason and
+  the passages that show it, each found word for word in the text with its page. Filter the
+  table by the answer, read the passages, then **Keep** or **Set aside**: your decision is a
+  tag, and the model's answer stays as it was. **Export this table** writes the whole list for
+  a spreadsheet.
 - When a document has been read several times, **mark the result you rely on** as preferred.
   Search, exports and analyses then use that one.
 

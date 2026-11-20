@@ -27,6 +27,7 @@ import type { ResultKey } from './bindings/ResultKey.js';
 import type { SampleSpec } from './bindings/SampleSpec.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { DocumentDetail } from './bindings/DocumentDetail.js';
+import type { DocumentSources } from './bindings/DocumentSources.js';
 import type { Entry } from './bindings/Entry.js';
 import type { Evidence } from './bindings/Evidence.js';
 import type { Item } from './bindings/Item.js';
@@ -64,6 +65,7 @@ import type { ListedAdded } from './bindings/ListedAdded.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
+import type { PhotoChecks } from './bindings/PhotoChecks.js';
 import type { PageRegions } from './bindings/PageRegions.js';
 import type { PageHalf } from './bindings/PageHalf.js';
 import type { DrawnRegion } from './bindings/DrawnRegion.js';
@@ -192,6 +194,11 @@ export const api = {
 	 * names; an empty name gives the document its folder's. */
 	imageDocument: (name: string, sources: SourceFile[]) =>
 		invoke<ImageDocument>('image_document', { name, sources }),
+	/** The photographs among `sources`, in this order, checked against each other: the same
+	 * page photographed twice, a blurred photograph. `null` when a newer check or
+	 * `stopPhotoChecks` stopped it. */
+	checkPhotos: (sources: SourceFile[]) => invoke<PhotoChecks | null>('check_photos', { sources }),
+	stopPhotoChecks: () => invoke<void>('stop_photo_checks'),
 	inspectLinks: (links: string[]) => invoke<InspectedFile[]>('inspect_links', { links }),
 	estimateCost: (request: EstimateRequest) => invoke<Estimate>('estimate_cost', { request }),
 	createJob: (job: NewJob) => invoke<Job>('create_job', { job }),
@@ -356,6 +363,14 @@ export const api = {
 		profile: string | null,
 		path: string
 	) => invoke<void>('export_descriptions', { project, collection, profile, path }),
+	/** One analysis's answers over the project's documents, with their tags, as a workbook and
+	 *  as CSV at `path`. */
+	exportAnswers: (project: string, job: string, setup: string, path: string) =>
+		invoke<void>('export_answers', { project, job, setup, path }),
+	/** The text of each chosen document, frozen as sources an analysis reads, and those left
+	 *  out. */
+	documentSources: (project: string, documents: string[]) =>
+		invoke<DocumentSources>('document_sources', { project, documents }),
 	listExportProfiles: () => invoke<ExportProfile[]>('list_export_profiles'),
 	saveExportProfile: (profile: ExportProfile) =>
 		invoke<ExportProfile>('save_export_profile', { profile }),

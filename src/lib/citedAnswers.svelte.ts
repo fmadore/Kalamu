@@ -1,10 +1,11 @@
 // The answers of an analysis that quotes its text, as its review changes them and plays them:
 // the text the analysis read, for showing a quotation where it stands; where a quotation's
 // recording is (the transcript the text was frozen from, played at the quotation's turn); and
-// the researcher's changes (an entry's fields typed anew, an entry or one quotation removed),
-// each one command kept in the corrected answers, and each taken back from its toast by putting
-// the set-up's correction back as it stood, which the engine accepts since the quotations it
-// holds are the model's. The focus, lost with what was removed, goes where the researcher can
+// the researcher's changes (an entry's fields typed anew, an entry or one quotation removed, a
+// passage of the text added as their quotation), each one command kept in the corrected
+// answers, and each taken back from its toast by putting the set-up's correction back as it
+// stood, which the engine accepts since the quotations it holds are the model's, or the
+// researcher's found in the text. The focus, lost with what was removed, goes where the researcher can
 // carry on, as it does for the names of a list (`listedNames.svelte.ts`).
 
 import { tick } from 'svelte';
@@ -18,6 +19,7 @@ import type { Setup } from './bindings/Setup.js';
 import { utf16Span } from './cited.js';
 import { describeError } from './errors.js';
 import { messages } from './i18n/index.js';
+import { wholeView } from './parts.js';
 import type { Review } from './review.svelte.js';
 import { app, go, toast, type View } from './state.svelte.js';
 import { api } from './tauri.js';
@@ -134,7 +136,7 @@ export class CitedAnswers {
 		back: FocusAt
 	): Promise<boolean> {
 		const review = this.#review;
-		const view = review.views.find((v) => v.setup_id === setup.id && v.index === 0);
+		const view = wholeView(review.views, setup.id);
 		if (!view || changes.length === 0 || this.busy) return false;
 		const before = standing(review, view);
 		// The focus was on what changes (a button of the card, say, which the card's next

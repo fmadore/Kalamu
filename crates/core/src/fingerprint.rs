@@ -53,11 +53,33 @@ impl CacheKey {
         step: Step<'_>,
         languages: &LanguageChoice,
     ) -> Self {
-        let material = serde_json::json!({
+        Self::combined(
+            "contents_merge",
+            source_sha256,
+            page_keys,
+            &[],
+            step,
+            languages,
+        )
+    }
+
+    /// The key of a second step over a document's parts ([`CacheKey::merge`]'s, under another
+    /// name): the parts' keys stand for what was read, and `missing` names the parts that could
+    /// not be, so a part read again later makes the step new. Left out when empty, so a table
+    /// of contents' keys stay as they were.
+    pub fn combined(
+        kind: &str,
+        source_sha256: &str,
+        part_keys: &[String],
+        missing: &[String],
+        step: Step<'_>,
+        languages: &LanguageChoice,
+    ) -> Self {
+        let mut material = serde_json::json!({
             "pipeline": PIPELINE_VERSION,
-            "task": "contents_merge",
+            "task": kind,
             "source": source_sha256,
-            "pages": page_keys,
+            "pages": part_keys,
             "provider": step.provider.as_str(),
             "model": step.model,
             "prompt": step.prompt.text,
@@ -65,6 +87,9 @@ impl CacheKey {
             "schema": step.prompt.schema,
             "languages": languages,
         });
+        if !missing.is_empty() {
+            material["missing"] = serde_json::json!(missing);
+        }
         Self(sha256_hex(material.to_string().as_bytes()))
     }
 
@@ -137,6 +162,7 @@ mod tests {
             options: SetupOptions::default(),
             merge: None,
             pages_cap: None,
+            windows: None,
         }
     }
 

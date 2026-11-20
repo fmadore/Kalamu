@@ -38,6 +38,7 @@ mod sample;
 mod setup;
 mod snapshot;
 mod units;
+mod windows;
 mod workflow;
 
 use std::collections::HashMap;
@@ -304,6 +305,17 @@ impl Engine {
                 Ok((source, warnings))
             })
             .collect()
+    }
+
+    /// The photographs among sources already inspected, checked against each other in the
+    /// order given: the same page photographed twice, a blurred photograph
+    /// ([`kalamu_media::check_photos`]). Local only; stops when `stop` is raised.
+    pub fn check_photos(
+        &self,
+        sources: &[SourceFile],
+        stop: &kalamu_core::StopSignal,
+    ) -> Result<kalamu_media::PhotoReport, EngineError> {
+        Ok(kalamu_media::check_photos(sources, stop)?)
     }
 
     /// Image files already inspected, made one document of pages named `name`: in the natural

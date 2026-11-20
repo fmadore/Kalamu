@@ -13,7 +13,10 @@
 	// names, `ListedNames` changes them). An analysis whose fields are
 	// one repeating group gives rows, page by page, reviewed in a table of its own
 	// (`RecordsReview`), which adds no names this way. An answer that quotes the text (an
-	// interview's themes) is a card per entry (`CitedAnswer`, changed by `CitedAnswers`).
+	// interview's themes) is a card per entry (`CitedAnswer`, changed by `CitedAnswers`); a
+	// passage selected in its transcript is added to an entry as the researcher's quotation from
+	// the selection's menu (`QuoteMenu`). A long interview read in parts says so above the
+	// answers, which are those of the step that brought the parts together (`parts.ts`).
 	import { onMount, tick } from 'svelte';
 	import CitedAnswer from './CitedAnswer.svelte';
 	import CorrectionEditor from './CorrectionEditor.svelte';
@@ -21,6 +24,8 @@
 	import Icon from './Icon.svelte';
 	import ItemMenu from './ItemMenu.svelte';
 	import ListAnswer from './ListAnswer.svelte';
+	import PartsNotice from './PartsNotice.svelte';
+	import QuoteMenu from './QuoteMenu.svelte';
 	import RecordsReview from './RecordsReview.svelte';
 	import ReviewFrame from './ReviewFrame.svelte';
 	import SearchBar from './SearchBar.svelte';
@@ -31,11 +36,13 @@
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
 	import type { PieceView } from '#lib/bindings/PieceView.js';
 	import type { Setup } from '#lib/bindings/Setup.js';
+	import { citedOf } from '#lib/cited.js';
 	import { CitedAnswers } from '#lib/citedAnswers.svelte.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
 	import { clearFound, markFound } from '#lib/found.js';
 	import { choiceLabel, messages } from '#lib/i18n/index.js';
 	import { ListedNames } from '#lib/listedNames.svelte.js';
+	import { partsOf, wholeView } from '#lib/parts.js';
 	import { pieceCost } from '#lib/pieces.js';
 	import { groupOf } from '#lib/records.js';
 	import { ownRegions } from '#lib/regions.svelte.js';
@@ -72,7 +79,9 @@
 	/** Records: rows page by page, reviewed in their own table. */
 	const records = $derived(groupOf(setups[0]?.prompt.schema) !== null);
 	const pages = $derived(source?.kind === 'pdf' ? (source.page_count ?? 1) : 1);
-	const viewOf = (s: Setup | undefined) => review.views.find((v) => v.setup_id === s?.id);
+	/** A set-up's answers: those of the step that brought a long interview's parts together, or
+	 * the document's one piece. */
+	const viewOf = (s: Setup | undefined) => wholeView(review.views, s?.id);
 	const answersOf = (v: PieceView | undefined): FieldAnswer[] =>
 		v?.corrected_fields ?? v?.ai_fields ?? [];
 	const lead = $derived(viewOf(setups[0]));
@@ -141,7 +150,8 @@
 	}
 
 	async function save(setup: Setup, answers: FieldAnswer[] | null, reviewed: boolean) {
-		if (await review.save({ setup, index: 0, fields: answers, reviewed })) editing = null;
+		const index = viewOf(setup)?.index ?? 0;
+		if (await review.save({ setup, index, fields: answers, reviewed })) editing = null;
 	}
 
 	/** The names of the list answers: their menu, their tab stops, and what changes them. */
@@ -156,6 +166,28 @@
 	/** The answers that quote the text: the text read, where each quotation plays, and what
 	 * changes them. */
 	const cited = new CitedAnswers(review, () => answersPane);
+
+	/** The fields of entries that quote the text, to which a passage selected in it is added. */
+	const quoting = $derived(fields.filter((f) => f.kind.type === 'cited'));
+
+	/** Adds the passage selected in the transcript to an entry as the researcher's quotation,
+	 * with the toast's Undo. */
+	function addQuotation(key: string, entry: number, title: string, start: number, end: number) {
+		const first = setups[0];
+		const count = citedOf(answersOf(lead), key)?.entries[entry]?.evidence.length ?? 0;
+		if (!first) return;
+		void cited.change(
+			first,
+			key,
+			[{ kind: 'add_quotation', entry, start, end }],
+			m.cited.quoteAdded(title),
+			{ entry, quote: count },
+			{ entry }
+		);
+	}
+
+	/** A long interview read in parts: how many, and those that could not be read. */
+	const parts = $derived(partsOf(review.views, setups[0]?.id, cited.source?.turns));
 
 	function toggleReviewed() {
 		const first = setups[0];
@@ -236,6 +268,16 @@
 		{/if}
 	{/key}
 
+	{#if quoting.length > 0 && cited.source}
+		<QuoteMenu
+			text={cited.source.text}
+			fields={quoting}
+			answers={answersOf(lead)}
+			offered={!!lead && lead.status !== 'failed' && !editing && !comparing && !cited.busy}
+			onadd={addQuotation}
+		/>
+	{/if}
+
 	<ReviewFrame
 		{jobId}
 		{sourceId}
@@ -296,6 +338,9 @@
 		{:else if lead.status === 'failed'}
 			<p class="error">{lead.error}</p>
 		{:else}
+			{#if parts}
+				<PartsNotice {jobId} {parts} onerror={(message) => (review.error = message)} />
+			{/if}
 			{#if shown.length === 0}<p class="muted">{m.review.noAnswerFound}</p>{/if}
 			{#each shown as f (f.key)}
 				{@const readings = collate(f.key, witnesses)}

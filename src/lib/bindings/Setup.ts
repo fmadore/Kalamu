@@ -4,6 +4,7 @@ import type { PromptSnapshot } from "./PromptSnapshot";
 import type { ProviderId } from "./ProviderId";
 import type { SetupId } from "./SetupId";
 import type { SetupOptions } from "./SetupOptions";
+import type { TurnWindows } from "./TurnWindows";
 
 /**
  * A provider, model and prompt combination. A normal job has one; comparison mode has several.
@@ -16,6 +17,8 @@ label: string, provider: ProviderId, model: string, prompt: PromptSnapshot, opti
 /**
  * For a table of contents, the second step: the model that combines the pages' readings,
  * which may be another provider's (a large model reads the pages, a small one combines).
+ * For an analysis read in parts (`windows`), the step that brings the parts together, on
+ * the set-up's own model.
  */
 merge?: MergeStep, 
 /**
@@ -24,4 +27,11 @@ merge?: MergeStep,
  * never regroups its pages nor changes their cache keys. `None` when the job reads one
  * page at a time, and in jobs made before it was settled.
  */
-pages_cap?: number, };
+pages_cap?: number, 
+/**
+ * For an analysis that cites a text too long for its model to read at once, how the text
+ * is read in parts of whole turns before `merge` brings them together: settled when the
+ * job is created from the catalogue's limit. `None` when every text fits, and in jobs
+ * made before texts were read in parts, which read each text whole.
+ */
+windows?: TurnWindows, };

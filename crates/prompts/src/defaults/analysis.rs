@@ -12,6 +12,10 @@ pub(super) const INTERVIEW_REQUEST: &str = "Read the interview above and fill in
 following the instructions given. Quote only words that stand in the transcript, exactly as \
 written, each with the number of its turn.";
 
+pub(super) const SCREENING_REQUEST: &str = "Read the document above and say whether it speaks of \
+the researcher's question, following the instructions given. Quote only words that stand in the \
+document, exactly as written, each with the number of its passage.";
+
 pub(super) const IMAGE_REQUEST: &str =
     "Look at the image above and fill in each field, following the instructions given.";
 
@@ -277,9 +281,16 @@ pub(super) fn image_description() -> AnalysisSchema {
     }
 }
 
+/// A theme taken from the researcher's own guide (`SetupOptions::themes`).
+const GUIDE: &str = "The researcher's guide";
+/// A theme that emerged from the interview.
+const EMERGED: &str = "The interview";
+
 /// An interview read for a researcher: a summary, its themes and the passages worth quoting,
 /// each backed by quotations Kalamu finds in the transcript word for word before they are kept
-/// (`FieldKind::Cited`), and keywords as the research summary's.
+/// (`FieldKind::Cited`), and keywords as the research summary's. Each theme says whether it comes
+/// from the researcher's own guide or emerged from the interview, and the guide's themes the
+/// interview does not take up are listed apart, never padded with weak quotations.
 pub(super) fn interview() -> AnalysisSchema {
     AnalysisSchema {
         fields: vec![
@@ -308,9 +319,24 @@ pub(super) fn interview() -> AnalysisSchema {
                             FieldKind::Text,
                             false,
                         ),
+                        field(
+                            "Origin",
+                            "Where the theme comes from: the researcher's own guide, listed in \
+                             the request, or the interview itself. Without a guide, always the \
+                             interview.",
+                            choice(&[GUIDE, EMERGED]),
+                            false,
+                        ),
                     ],
                     max: Some(8),
                 },
+                false,
+            ),
+            field(
+                "Guide themes not found",
+                "The themes of the researcher's guide that the interview does not take up, as \
+                 the guide words them. Empty when the request lists no guide.",
+                FieldKind::List { max: None },
                 false,
             ),
             field("Keywords", KEYWORDS, list(12), false),
@@ -326,6 +352,39 @@ pub(super) fn interview() -> AnalysisSchema {
                         false,
                     )],
                     max: Some(10),
+                },
+                false,
+            ),
+        ],
+    }
+}
+
+/// One document read against the researcher's question (#51): whether it speaks of it, why, and
+/// the passages that show it, each found word for word in the text before it is kept
+/// (`FieldKind::Cited`). A document with nothing on the question has no passage.
+pub(super) fn screening() -> AnalysisSchema {
+    AnalysisSchema {
+        fields: vec![
+            field(
+                "Relevance",
+                "Whether the document speaks of the researcher's question, following the \
+                 instructions above.",
+                choice(&["Relevant", "Partly relevant", "Not relevant", "Unsure"]),
+                false,
+            ),
+            field(
+                "Reason",
+                "Why, in one or two sentences, in {languages}.",
+                FieldKind::Text,
+                false,
+            ),
+            field(
+                "Passages",
+                "The passages that speak of the question, the most telling first; none when the \
+                 document does not speak of it.",
+                FieldKind::Cited {
+                    fields: vec![],
+                    max: Some(3),
                 },
                 false,
             ),

@@ -4,4 +4,4 @@
  * One change to a cited field's entries, as the review makes it: the answers as the researcher
  * left them, with this change, become the piece's corrected answers.
  */
-export type CitedEdit = { "kind": "answer", entry: number, key: string, value: string, } | { "kind": "remove_entry", entry: number, } | { "kind": "remove_quotation", entry: number, quotation: number, };
+export type CitedEdit = { "kind": "answer", entry: number, key: string, value: string, } | { "kind": "remove_entry", entry: number, } | { "kind": "remove_quotation", entry: number, quotation: number, } | { "kind": "add_quotation", entry: number, start: number, end: number, };

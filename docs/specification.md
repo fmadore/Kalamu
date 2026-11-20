@@ -169,16 +169,48 @@ answer none of whose quotations can be found is refused, paid for and asked agai
 broken answer. A scan or a recording cannot be analysed this way before it is read. In the
 review each entry is a card; a quotation opens the transcript at its turn and plays the
 recording there. The researcher edits an entry's fields and removes an entry or a quotation,
-as a layer over the model's answer; a quotation's words cannot be changed or added. The
-transcript is read in one request. **A transcript too long for the model is said before
-Start**: each analysis model's catalogue entry gives the most it reads at once, and a text whose
-characters over four exceed it (a lenient measure, so only what surely cannot fit is refused)
-is named in place of the cost, *This transcript is too long for Gemma 4 E4B: about 12,000
-words, where it reads about 11,000 at once*, with Start disabled until another model is chosen
-under *More choices*; the engine refuses such a job when it is created, before anything is
-sent, and New job shows that refusal as its other errors. A model the catalogue gives no limit
-is left to its provider's own refusal. Windows for very long interviews, the researcher's own
-themes and quotations added by hand come later. **A research description is kept with a
+as a layer over the model's answer; a quotation's words cannot be changed. **A long
+interview is read in parts.** Each analysis model's catalogue entry gives the most it reads at
+once; a transcript whose characters over four exceed it is cut at whole turns into parts as even
+as it allows, each well under that limit (seven tenths of it, room left for the instructions
+and the answer) and repeating the last two turns of the one before. Each part is sent with its
+turns numbered as in the whole transcript, and its quotations are found in the whole transcript
+like any. One more request then brings the parts together: it is sent what each part found,
+every quotation by a number (`Q12`), the same quotation found by two parts that overlap numbered
+once, and answers each entry with the numbers of its quotations, never words; Kalamu puts each
+quotation back from its number as the part kept it, so this step can group, order and leave out
+quotations but neither change nor add one, and a number it does not know is left out and
+counted. The dialog says so beside the cost, *This interview is long: it will be read in 3
+parts, then brought together*, the cost counting every part and the step after them; the review
+says *it was read in 3 parts* in one line above the answers. A part that could not be read
+leaves the others brought together and is named by its minutes, *The part from 01:02:10 to
+01:20:00 could not be read: its themes and quotations are missing*, with *Read it again*, which
+sends that part alone and brings the parts together again; the files name it where it stands
+and `provenance.json` lists the turns read and not read. Each part and the step after them are
+pieces, cached and resumed as any: stopping part-way sends no part already read again. A
+transcript that fits is read whole in one request, exactly as before. **Only a transcript the
+model cannot read even in parts is refused before Start**: one turn of it alone too long (a
+lenient measure, so only what surely cannot fit is refused), named in place of the cost, *This
+transcript is too long for Gemma 4 E4B: about 12,000 words, where it reads about 11,000 at
+once*, with Start disabled until another model is chosen under *More choices*; the engine
+refuses such a job when it is created, before anything is sent, and New job shows that refusal
+as its other errors. A model the catalogue gives no limit is left to its provider's own refusal
+([decision](decisions/2026-11-20-interview-windows-guide-themes.md)). **The researcher's own themes or interview
+guide.** Under *More choices*, never on the default path, a box takes the researcher's own
+themes or interview guide, one per line. They are sent with the question (and so enter the
+cache key, another guide being another analysis), and kept with a description kept for the
+next interviews. Each theme of the answer says where it comes from, *The researcher's guide*
+or *The interview*, shown on its card in the interface language and written in every file;
+a theme of the guide the interview does not take up is listed apart, under *Guide themes not
+found*, rather than backed with weak quotations. The guide is recorded with the set-up's
+options in `provenance.json`. **A quotation added by the
+researcher.** A passage selected in the transcript beside the answers has, from its menu (a
+right click, the menu key or Shift+F10), one action, *Add as a quotation*, listing the entries
+it can go to; Kalamu finds the passage in the text, within one turn, its speaker and time the
+turn's, and keeps it in the researcher's corrections, the model's answer unchanged. It is
+marked as theirs, in their blue rule and *Added by you*, removed as any quotation and taken
+back from its toast, and written in every file as added by the researcher. A correction holding
+one is kept only while the text holds it there, exactly. **A research description is kept with a
 prompt.** Under the box, *Keep this for my next interviews* saves what was typed, under a
 name, as a prompt of the researcher's own: the interview prompt with the description. Once
 one is kept, the dialog lists them above the box, the last one used chosen, beside *A new
@@ -189,6 +221,26 @@ sent as one typed would be, so the same words cost nothing twice whichever way t
 and one typed for a job replaces the prompt's
 ([decision](decisions/2026-11-19-interview-analysis-design.md),
 [#38](https://github.com/fmadore/Kalamu/issues/38)).
+
+**Documents read against a research question.** A researcher with 400 scanned pages or 150
+articles already read into text asks which of them speak of their question, why, and where.
+In a project, the documents chosen offer *Which of these speak of my question?*: one box, *Your
+research question*, and one button; how many documents will be read and which are left out
+(nothing read into text yet; read more than once with no reading preferred, never chosen for
+the researcher) are said under it, with the model and the estimated cost, another model and the
+language of the answer under *More choices*. Each document is read in its corrected text,
+frozen as *Use this text* freezes it: the preferred, or the only, correction, extraction or
+transcription, else a text file's own words; a translation is not, its passages not being the
+document's words. The default prompt *Does it speak of my question?* answers, for each
+document, its relevance (*Relevant*, *Partly relevant*, *Not relevant* or *Unsure*, which the
+prompt tells the model is an honest answer), a reason in a sentence or two, and up to three
+passages, entries that quote the text as an interview's do: a page's paragraphs are its
+numbered passages, each passage kept only when found word for word, with its page; a document
+that does not speak of the question has none, and none is invented to fill the list. It is an
+analysis job like any other, resumable, cached for the same question, costed; its prompt is
+also offered in New job. A document too long for the model is said before Start, as for an
+interview ([decision](decisions/2026-11-20-research-question-screening.md),
+[#51](https://github.com/fmadore/Kalamu/issues/51)).
 
 **Existing text is corrected, not read again.** Many researchers already have machine-read
 text, often noisy: the text layer of a PDF from a digital library, or a text file downloaded
@@ -422,6 +474,8 @@ with short tips where they are relevant, and checks each file before a job start
 | **Low resolution** (below about 200 dpi) | Small letters, diacritics and handwriting become guesswork | Rescan; or continue anyway |
 | **Rotated or skewed pages** | Lines are read in the wrong order or skipped | Rotate or straighten automatically |
 | **Blurry, dark or low-contrast photos** | Characters are misread | Retake the photo |
+| **The same page photographed twice** (a retake in a reading room) | The page is paid for and reviewed twice, and the blurred take may be the one read | Keep the sharper one, or keep both |
+| **A blurred photograph**, beside the others of the batch or on its own | Characters are misread | Leave it out and retake it, or keep it |
 | **PDF that already contains text** | Extraction may not be needed | Use the existing text, or extract anyway |
 | **Very long or very quiet recordings, long silences** | Transcription drifts or skips quiet speech | Even out the volume; recordings are split at pauses |
 | **Auto-detect on short or mixed recordings** | Detection is unreliable on little speech | Choose the language(s) explicitly |
@@ -430,6 +484,23 @@ with short tips where they are relevant, and checks each file before a job start
 
 Checks never block a job: users can dismiss a warning. Fixes are applied to working copies,
 never to the originals, and recorded in `provenance.json`.
+
+**Photographs checked against each other** (#216). Once photographs are added to New job,
+`media` compares them in the order they will be read (the files', or the pages' of the
+document they make), on the computer and off the interface's thread; nothing is sent. Each is
+decoded once, reduced, and let go. Two neighbours that show the same page (the second laid
+over the first, turned, nearer or shifted a little, in other light) are flagged together, and
+two pages of one register or printed form, alike in ruling and layout but not in what is
+written, are not; a photograph is called blurred against the batch's own sharpness as well as
+against a floor, and a blank page never is. Under the later photograph of a pair, the file list
+says "IMG_0142 and IMG_0143 look like the same page", shows both side by side, whole and close
+up, names the sharper one, and offers *Keep the sharper one* and *Keep both*; a blurred
+photograph alone is offered *Keep it* and *Leave it out*. Leaving a photograph out takes it from
+this job's list only (and from the order of the pages), never from the disk, with Undo; nothing
+is left out without the researcher. Adding photographs checks the batch again; removing one
+does not. Leaving New job stops a check still running. PDFs and batches with nothing to say
+show nothing new. Method, thresholds and what they were measured on:
+[decision](decisions/2026-11-20-duplicate-and-blurred-photographs.md).
 
 Under the tasks, a short diagram shows how the chosen task splits the work and puts it back
 together, so that a researcher knows what is sent and what comes back:
@@ -704,6 +775,17 @@ analysed, compared. A **project** keeps it together
   spelling, so one label is never split in two; merging two documents keeps the tags of both.
   A tag is renamed across the project from the table's tag filter; renamed onto one in use, the
   two become one.
+- **Filtered by an answer.** Once an analysis of the project's documents has answered a choice
+  (whether a document speaks of the researcher's question, its tone), the table can be
+  narrowed by that answer, the researcher's correction counting over the model's; each choice
+  is named by the question it was asked with, or by its field and job, and its answers are
+  shown in the interface language. While the table is filtered, the documents chosen can be
+  **kept or set aside** in one click: the researcher's decision is one of two tags, *Kept* or
+  *Set aside* in the interface's language, the other taken off, so the model's answer is never
+  changed. *Export this table* writes that analysis as one table, an Excel workbook and CSV:
+  one row per document it read, its title and file, each field under the label the job froze
+  (passages with where each stands), then the document's tags
+  ([decision](decisions/2026-11-20-research-question-screening.md)).
 - **A source's description** is the researcher's, as an archive or library gives it: the
   repository, the fonds or collection, the series, the box or folder, the shelfmark, the
   creator, the date as written, a web address, how to cite it and its rights. The project holds

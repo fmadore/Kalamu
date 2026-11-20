@@ -35,8 +35,20 @@ export const fr: Messages = {
 						description: {
 							label: 'Description',
 							help: 'Ce que la personne interrogée en dit, en une ou deux phrases, en {languages}.'
+						},
+						origin: {
+							label: 'D’où vient le thème',
+							help: 'Du guide d’entretien donné avec la demande, ou de l’entretien lui-même. Sans guide, toujours de l’entretien.',
+							values: {
+								"The researcher's guide": 'Votre guide d’entretien',
+								'The interview': 'Apparu dans l’entretien'
+							}
 						}
 					}
+				},
+				guide_themes_not_found: {
+					label: 'Thèmes du guide absents de l’entretien',
+					help: 'Les thèmes du guide d’entretien que l’entretien n’aborde pas, tels que le guide les formule. Vide quand la demande ne donne pas de guide.'
 				},
 				keywords: {
 					label: 'Mots-clés',
@@ -51,6 +63,31 @@ export const fr: Messages = {
 							help: 'En une phrase, en {languages}.'
 						}
 					}
+				}
+			}
+		},
+		'analysis.screening': {
+			name: 'Parle-t-il de ma question ?',
+			description:
+				'Pour chaque document, s’il parle de votre question de recherche (pertinent, en partie, non pertinent ou incertain), pourquoi, et les passages qui le montrent, chacun retrouvé mot pour mot dans le texte avec sa page.',
+			fields: {
+				relevance: {
+					label: 'Pertinence',
+					help: 'Si le document parle de la question de recherche, selon les consignes ci-dessus.',
+					values: {
+						Relevant: 'Pertinent',
+						'Partly relevant': 'En partie',
+						'Not relevant': 'Non pertinent',
+						Unsure: 'Incertain'
+					}
+				},
+				reason: {
+					label: 'Pourquoi',
+					help: 'Pourquoi, en une ou deux phrases, en {languages}.'
+				},
+				passages: {
+					label: 'Passages',
+					help: 'Les passages qui parlent de la question, les plus parlants d’abord ; aucun quand le document n’en parle pas.'
 				}
 			}
 		},
@@ -542,7 +579,51 @@ export const fr: Messages = {
 		keep: 'Garder ce texte pour mes prochains entretiens',
 		keptName: 'Nom',
 		keptHint: 'Vous pouvez le modifier ou le supprimer dans Prompts.',
-		openPrompts: 'Ouvrir Prompts'
+		openPrompts: 'Ouvrir Prompts',
+		inParts: (n: number) =>
+			`Cet entretien est long : il sera lu en ${n} morceaux, puis le tout sera rassemblé.`,
+		themes: 'Vos propres thèmes ou votre guide d’entretien',
+		themesHint:
+			'Facultatif. Un thème par ligne. Chaque thème trouvé dit s’il vient de votre liste ou de l’entretien, et un thème que l’entretien n’aborde pas est signalé comme absent.',
+		themesPlaceholder: 'Par exemple :\nLes premiers clients\nL’aide de la famille\nLes tontines'
+	},
+	screening: {
+		action: 'Lesquels parlent de ma question ?',
+		title: 'Lesquels de ces documents parlent de ma question ?',
+		lede: 'Kalamu envoie le texte de chaque document, tel que vous l’avez corrigé, à un modèle qui dit s’il parle de votre question, pourquoi, et avec quels passages. Un passage n’est gardé que si ses mots se trouvent dans le document. « Incertain » est une réponse honnête que le modèle peut donner.',
+		question: 'Votre question de recherche',
+		questionHint: 'En une phrase ou deux, comme vous la poseriez à un collègue.',
+		questionPlaceholder:
+			'Par exemple : ce que les commerçantes du marché ont demandé au conseil municipal, et ce qu’il a répondu, de 1950 à 1960.',
+		documents: (n: number) => (n === 1 ? '1 document sera lu.' : `${n} documents seront lus.`),
+		noText: (titles: string, n: number) =>
+			n === 1
+				? `Laissé de côté, pas encore lu en texte : ${titles}. Lisez-le d’abord avec Nouveau traitement.`
+				: `Laissés de côté, pas encore lus en texte : ${titles}. Lisez-les d’abord avec Nouveau traitement.`,
+		undecided: (titles: string) =>
+			`Laissés de côté, lus plusieurs fois sans lecture préférée : ${titles}. Choisissez-en une dans le document d’abord.`,
+		nothing:
+			'Aucun de ces documents n’a encore été lu en texte. Lisez-les d’abord avec Nouveau traitement, puis revenez ici.',
+		model: (name: string, provider: string) => `Modèle : ${name} (${provider})`,
+		cost: (usd: string) => `Coût estimé : ${usd}`,
+		tooLong: (file: string, model: string, words: string, most: string) =>
+			`${file} est trop long pour ${model} : environ ${words} mots, alors qu’il en lit environ ${most} à la fois. Choisissez un autre modèle sous Plus de choix.`,
+		more: 'Plus de choix',
+		start: 'Lancer',
+		preparing: 'Préparation des textes…',
+		jobName: (question: string) => `Ma question : ${question}`,
+		filter: 'Filtrer selon une réponse',
+		anyAnswer: 'Toutes les réponses',
+		answerCount: (answer: string, n: number) => `${answer} (${n})`,
+		group: (field: string, job: string) => `${field} · ${job}`,
+		exportTable: 'Exporter ce tableau',
+		exported: 'Tableau exporté, en tableur et en CSV.',
+		keep: 'Garder',
+		setAside: 'Écarter',
+		keptTag: 'Gardé',
+		setAsideTag: 'Écarté',
+		decided: (tag: string, n: number) =>
+			n === 1 ? `1 document étiqueté « ${tag} »` : `${n} documents étiquetés « ${tag} »`
 	},
 	cited: {
 		listen: 'Écouter',
@@ -569,7 +650,21 @@ export const fr: Messages = {
 			n === 1
 				? '1 entrée a été laissée de côté : aucune de ses citations n’a été retrouvée dans le texte.'
 				: `${n} entrées ont été laissées de côté : aucune de leurs citations n’a été retrouvée dans le texte.`,
-		inCards: 'Les thèmes et les citations se modifient dans leurs cartes, en dehors de cet éditeur.'
+		inCards:
+			'Les thèmes et les citations se modifient dans leurs cartes, en dehors de cet éditeur.',
+		readInParts: (n: number) =>
+			`Cet entretien était long : il a été lu en ${n} morceaux, puis le tout a été rassemblé.`,
+		partNotRead: (from: string | null, to: string | null, first: number, last: number) =>
+			from && to
+				? `Le passage de ${from} à ${to} n’a pas pu être lu : ses thèmes et ses citations manquent.`
+				: from
+					? `Le passage de ${from} jusqu’à la fin n’a pas pu être lu : ses thèmes et ses citations manquent.`
+					: `Les prises de parole ${first} à ${last} n’ont pas pu être lues : leurs thèmes et leurs citations manquent.`,
+		readAgain: 'Le relire',
+		readingAgain: 'Le passage est relu.',
+		addQuotation: 'Ajouter comme citation',
+		quoteAdded: (title: string) => `Citation ajoutée à « ${title} »`,
+		addedByYou: 'Ajoutée par vous'
 	},
 	units: {
 		tab: 'Pièces',
@@ -1866,7 +1961,29 @@ export const fr: Messages = {
 		long_recording: (length: string, pieces: number) =>
 			`Enregistrement long (${length}) : il sera envoyé en ${pieces} segments, coupés aux pauses. L’identification des locuteurs peut varier d’un segment à l’autre.`,
 		quiet_recording: (db: number) =>
-			`Enregistrement très faible (environ ${db} dB) : les paroles prononcées à voix basse risquent d’être manquées. Égaliser le volume aide généralement.`
+			`Enregistrement très faible (environ ${db} dB) : les paroles prononcées à voix basse risquent d’être manquées. Égaliser le volume aide généralement.`,
+		same_page: (first: string, second: string) =>
+			`${first} et ${second} semblent montrer la même page`,
+		blurred: (name: string) => `${name} semble floue`,
+		/** The check of photographs against each other: retakes of one page, blurred photos. */
+		photos: {
+			checking: 'Recherche des photos prises deux fois et des photos floues…',
+			sharper: (name: string) =>
+				`${name} est plus nette. Envoyer les deux ferait payer la page deux fois.`,
+			asSharp: 'Les deux semblent aussi nettes. Envoyer les deux ferait payer la page deux fois.',
+			blurredWhy: 'Les lettres floues sont souvent mal lues. Reprenez la photo si vous le pouvez.',
+			stays:
+				'Retirer une photo change seulement la liste de ce traitement : le fichier reste sur votre ordinateur.',
+			keepSharper: 'Garder la plus nette',
+			keepOnly: (name: string) => `Garder seulement ${name}`,
+			keepBoth: 'Garder les deux',
+			keepIt: 'La garder',
+			leaveOut: 'La retirer',
+			sharperMark: 'Plus nette',
+			closeUp: (name: string) => `${name}, vue de près`,
+			whole: (name: string) => `${name}, photo entière`,
+			leftOut: (name: string) => `${name} retirée de ce traitement`
+		}
 	},
 	tips: {
 		title: 'Conseils pour de meilleurs résultats',
@@ -2101,6 +2218,8 @@ export const fr: Messages = {
 			`Page ${n}, moitié ${half === 'left' ? 'gauche' : 'droite'}`,
 		pageHalfShort: (n: number, half: 'left' | 'right') => `${n}${half === 'left' ? 'g' : 'd'}`,
 		passage: (n: number) => `Passage ${n}`,
+		turns: (n: number, first: number, last: number) =>
+			`Morceau ${n} (prises de parole ${first} à ${last})`,
 		segment: (label: string) => `À partir de ${label}`,
 		document: 'Document entier',
 		video: 'Vidéo entière',
@@ -2467,6 +2586,9 @@ export const fr: Messages = {
 		question: 'Sur quoi porte votre recherche ?',
 		questionHint:
 			'Facultatif. Envoyé avec chaque document : vous l’écrivez une fois pour tous vos entretiens. Un texte écrit dans Analyser cet entretien le remplace.',
+		themes: 'Vos propres thèmes ou votre guide d’entretien',
+		themesHint:
+			'Facultatif. Un thème par ligne, envoyé avec chaque document. Des thèmes écrits dans Analyser cet entretien les remplacent.',
 		mergeInstructions: 'Instructions pour regrouper les pages',
 		dense: 'Pages chargées de texte',
 		denseHint:
@@ -2482,7 +2604,7 @@ export const fr: Messages = {
 		newHint:
 			'Écrivez vos instructions. La requête et, pour une analyse ou une table des matières, ses champs partent du prompt par défaut de cette tâche ; modifiez-les au besoin.',
 		instructionsPlaceholder:
-			'Par exemple : Vous lisez des pages de journaux imprimés d’Afrique occidentale française, de 1940 à 1960. Transcrivez le texte tel qu’il est imprimé, colonne par colonne, en gardant l’orthographe d’origine.',
+			'Par exemple : Vous lisez des pages de journaux imprimés d’Afrique occidentale française, de 1940 à 1960. Transcrivez le texte tel qu’il est imprimé, colonne par colonne, en gardant l’orthographe d’origine.',
 		discard: 'Abandonner',
 		reset: 'Rétablir la version par défaut',
 		delete: 'Supprimer',
@@ -3101,6 +3223,7 @@ export const fr: Messages = {
 			'Cette citation ne figure plus dans les réponses. Regardez-les à nouveau.',
 		'cited.no_field': 'Ce champ ne fait pas partie de l’entrée.',
 		'cited.not_a_choice': 'Choisissez l’une des valeurs du champ, ou laissez-le vide.',
+		'cited.not_in_turn': 'Sélectionnez un passage pris dans une seule prise de parole.',
 		'cited.invented':
 			'Seules les citations que Kalamu a retrouvées mot pour mot dans le texte peuvent être gardées : celle-ci n’en fait pas partie.',
 		'prompt.few_values': 'Un choix demande au moins deux valeurs entre lesquelles choisir.',

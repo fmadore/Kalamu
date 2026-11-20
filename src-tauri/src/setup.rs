@@ -376,6 +376,7 @@ fn assemble(
         meaning,
         search_generation: Arc::default(),
         search_preparation: Arc::default(),
+        photo_check: Mutex::default(),
         models,
         whisper,
         tessdata,

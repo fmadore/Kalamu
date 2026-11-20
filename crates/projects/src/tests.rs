@@ -17,6 +17,7 @@ use super::*;
 mod described;
 mod profiled;
 mod queue;
+mod screened;
 mod tags;
 
 struct Fixture {
@@ -91,6 +92,7 @@ impl Fixture {
                 options: SetupOptions::default(),
                 merge: None,
                 pages_cap: None,
+                windows: None,
             }],
             settings: JobSettings::default(),
             output: OutputSettings::default(),

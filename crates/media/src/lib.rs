@@ -14,6 +14,7 @@ mod ffmpeg;
 mod image_source;
 mod page_set;
 mod pdf;
+mod photos;
 pub mod program;
 mod readable;
 mod region;
@@ -39,6 +40,7 @@ pub use page_set::PageSet;
 pub use pdf::PdfSource;
 #[cfg(any(test, feature = "test-support"))]
 pub use pdf::sample_pdf;
+pub use photos::{PhotoReport, PhotoView, VIEW_WIDTH, check_photos};
 pub use readable::{Reading, readable};
 pub use region::{Crop, MIN_REGION_PIXELS, RegionRefusal};
 pub use render::{THUMBNAIL_MAX_WIDTH, thumbnail};

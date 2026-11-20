@@ -46,7 +46,7 @@ pub(crate) fn interview() -> AnalysisSchema {
 }
 
 /// Two speakers, with times, a phrase said twice, French typography.
-fn transcript() -> Built {
+pub(crate) fn transcript() -> Built {
     let piece = PieceRef::Segment {
         index: 0,
         start_ms: 0,
@@ -98,7 +98,7 @@ fn transcript() -> Built {
     )
 }
 
-fn doc(built: &Built) -> CitedText<'_> {
+pub(crate) fn doc(built: &Built) -> CitedText<'_> {
     CitedText {
         text: &built.text,
         parts: &built.parts,
@@ -353,7 +353,7 @@ fn rendered_as_text_each_entry_has_its_quotations_and_what_was_left_out() {
     assert_eq!(answers[1].value.joined(), "Devise");
 }
 
-fn cited_answers() -> (AnalysisSchema, Vec<FieldAnswer>) {
+pub(crate) fn cited_answers() -> (AnalysisSchema, Vec<FieldAnswer>) {
     let built = transcript();
     let schema = interview();
     let mut answers = schema
@@ -506,4 +506,75 @@ fn a_value_written_by_this_version_reads_back_as_cited() {
     })
     .unwrap_or_default();
     assert_eq!(kind, json!({"type": "cited", "fields": [], "max": 3}));
+}
+
+/// Two pages read from a scan, in paragraphs, the second page's words also on the first.
+fn pages() -> Built {
+    let one = PieceRef::page(1);
+    let two = PieceRef::page(2);
+    let part = |piece, text| TimedPart {
+        text: PartText {
+            piece,
+            text,
+            reviewed: false,
+            corrected: false,
+            failed: false,
+        },
+        segments: &[],
+    };
+    build_with_turns(
+        Task::TextExtraction,
+        &[
+            part(
+                &one,
+                "Le port de Dakar s’agrandit.\n\nLes dockers parlent de grève.",
+            ),
+            part(&two, "La grève des dockers dure trois jours."),
+        ],
+    )
+}
+
+#[test]
+fn a_passage_of_a_text_read_from_pages_keeps_its_page_and_no_speaker() {
+    let built = pages();
+    assert_eq!(built.turns.len(), 3, "each paragraph is a passage");
+    let schema = AnalysisSchema {
+        fields: vec![Field {
+            key: "passages".into(),
+            ..field(
+                "Passages",
+                FieldKind::Cited {
+                    fields: vec![],
+                    max: None,
+                },
+            )
+        }],
+    };
+    let mut answers = schema
+        .read_answer(&json!({"passages": [
+            {"quotes": [{"turn": 3, "words": "La grève des dockers dure trois jours."}]},
+            {"quotes": [{"turn": 1, "words": "Le port de Dakar s'agrandit."}]},
+            {"quotes": [{"turn": 2, "words": "Les dockers sont en grève."}]},
+        ]}))
+        .unwrap_or_else(|e| panic!("{e}"));
+    let counted = cite(&schema.fields, &mut answers, doc(&built));
+    assert_eq!(counted, Cited { given: 3, found: 2 });
+    let value = answers[0].value.cited().cloned().unwrap_or_default();
+    assert_eq!(
+        (value.left_out, value.dropped),
+        (1, 1),
+        "a passage not in the text"
+    );
+    let first = &value.entries[0].evidence[0];
+    assert_eq!(first.page, Some(PieceRef::page(2)));
+    assert_eq!(
+        (first.turn, &first.speaker, first.start_ms),
+        (3, &None, None)
+    );
+    assert_eq!(first.anchor.part, 1);
+    // The text's own apostrophe is kept, not the model's.
+    let second = &value.entries[1].evidence[0];
+    assert_eq!(second.quote, "Le port de Dakar s’agrandit.");
+    assert_eq!(second.page, Some(PieceRef::page(1)));
+    assert_eq!(said_by(second), "page 1");
 }

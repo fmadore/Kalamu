@@ -271,6 +271,57 @@ pub async fn inspect_files(
     .map_err(|e| AppError::new(id::INTERNAL, e))
 }
 
+/// New job's photographs checked against each other, in the order given (the files', or the
+/// document's pages'): the same page photographed twice, a blurred photograph. Local only. A
+/// newer call, or `stop_photo_checks`, stops one still running, which then gives `None`.
+#[tauri::command]
+pub async fn check_photos(
+    state: State<'_, AppState>,
+    sources: Vec<SourceFile>,
+) -> CmdResult<Option<super::PhotoChecks>> {
+    use base64::Engine as _;
+    let stop = kalamu_core::StopSignal::default();
+    {
+        let mut running = state.photo_check.lock().unwrap_or_else(|p| p.into_inner());
+        running.stop();
+        *running = stop.clone();
+    }
+    let engine = state.engine.clone();
+    let report = tokio::task::spawn_blocking(move || engine.check_photos(&sources, &stop))
+        .await
+        .map_err(|e| AppError::new(id::INTERNAL, e))?;
+    let report = match report {
+        Ok(report) => report,
+        Err(kalamu_engine::EngineError::Media(kalamu_media::MediaError::Stopped)) => {
+            return Ok(None);
+        }
+        Err(e) => return Err(e.into()),
+    };
+    let encode = |bytes: &[u8]| base64::engine::general_purpose::STANDARD.encode(bytes);
+    Ok(Some(super::PhotoChecks {
+        warnings: report.warnings,
+        views: report
+            .views
+            .iter()
+            .map(|v| super::PhotoView {
+                source_id: v.source_id,
+                page: encode(&v.page),
+                detail: encode(&v.detail),
+            })
+            .collect(),
+    }))
+}
+
+/// Stops New job's photograph check, when New job is left or its files emptied.
+#[tauri::command]
+pub fn stop_photo_checks(state: State<'_, AppState>) {
+    state
+        .photo_check
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .stop();
+}
+
 /// YouTube links pasted for a new job, each checked; `path` is the link as pasted. Each video's
 /// title is asked of YouTube's public oEmbed endpoint, which needs no key and also says when a
 /// video is private or gone. Without a connection the links are kept, untitled.

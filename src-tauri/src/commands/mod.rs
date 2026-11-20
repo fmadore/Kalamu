@@ -54,6 +54,9 @@ pub struct AppState {
     pub search_generation: Arc<std::sync::atomic::AtomicU64>,
     /// Raised by each preparation of a project's text, so that a newer one stops an older one.
     pub search_preparation: Arc<std::sync::atomic::AtomicU64>,
+    /// The stop of New job's photograph check under way: a newer check, or leaving New job,
+    /// raises it.
+    pub photo_check: Mutex<kalamu_core::StopSignal>,
     /// Whisper models, shared with the Whisper provider inside the engine.
     pub models: kalamu_offline::ModelManager,
     /// The Whisper provider, for its graphics processor (Settings, the offline status).
@@ -122,6 +125,25 @@ pub struct InspectedFile {
     pub error: Option<AppError>,
     /// How many pieces a recording is sent in at the usual length, for New job's diagram.
     pub pieces: Option<u32>,
+}
+
+/// What New job's check of its photographs found: the same page photographed twice, a blurred
+/// photograph, and each photograph warned about drawn small and close up.
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct PhotoChecks {
+    pub warnings: Vec<InputWarning>,
+    pub views: Vec<PhotoView>,
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct PhotoView {
+    pub source_id: SourceId,
+    /// The whole photograph, as a base64 JPEG at most `kalamu_media::VIEW_WIDTH` wide.
+    pub page: String,
+    /// The part of it where the writing is densest, close up, as a base64 JPEG.
+    pub detail: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

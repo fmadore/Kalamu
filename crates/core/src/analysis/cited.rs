@@ -11,18 +11,23 @@
 //! quotation is left out too: what is shown as someone's words is always theirs.
 //!
 //! The researcher's corrections are a layer over the model's answer, as for any field: an entry
-//! edited or removed, a quotation removed ([`edit`]), never one added or changed
-//! ([`keeps_evidence`]).
+//! edited or removed, a quotation removed, or one added from a passage they selected in the text
+//! ([`edit_in`], [`evidence_at`]), marked as theirs and found in the text as any; never one
+//! changed, nor one added that the text does not hold there ([`keeps_evidence_in`]).
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use ts_rs::TS;
 
 use super::{Field, FieldAnswer, FieldKind, FieldValue, SchemaError, read_fields, render_fields};
+use crate::PieceRef;
 use crate::snapshot::{Anchor, SnapshotPart, Turn, forgiving, slice, turn_text};
 
+pub mod consolidate;
 mod edit;
-pub use edit::{CitedEdit, CitedError, edit, keeps_evidence};
+pub mod windows;
+pub use edit::{CitedEdit, CitedError, edit, edit_in, keeps_evidence, keeps_evidence_in};
+pub use windows::TurnWindows;
 
 /// The property that holds an entry's quotations in the model's answer.
 pub const QUOTES: &str = "quotes";
@@ -68,6 +73,25 @@ pub struct CitedEntry {
     pub claims: Vec<Claim>,
 }
 
+impl CitedEntry {
+    /// The entry on one line: its first field (a theme's name), or for an entry that is
+    /// quotations alone (a document's passages) its quotations, each between quotation marks;
+    /// `None` when it has neither.
+    pub fn name(&self) -> Option<String> {
+        match self.answers.first() {
+            Some(first) => Some(first.value.joined()),
+            None if self.evidence.is_empty() => None,
+            None => Some(
+                self.evidence
+                    .iter()
+                    .map(|e| format!("\"{}\"", e.quote))
+                    .collect::<Vec<_>>()
+                    .join(" "),
+            ),
+        }
+    }
+}
+
 /// A quotation as the model gave it: the turn it named and its words.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Claim {
@@ -95,6 +119,19 @@ pub struct Evidence {
     pub start_ms: Option<u64>,
     #[ts(type = "number | null")]
     pub end_ms: Option<u64>,
+    /// The page it stands on, copied from the text's part when the text was read from pages (an
+    /// extraction's, a correction's): with the anchor's offsets, where a passage of a document
+    /// with no speakers or times is. `None` for a transcript, a text file and quotations kept
+    /// before pages were.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub page: Option<PieceRef>,
+    /// Added by the researcher from a passage they selected in the text, in their corrections;
+    /// never by a model. Found in the text as any quotation, its speaker and times the turn's.
+    /// Left out when false, so quotations stored before it read the same.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub added: bool,
 }
 
 /// Checks a cited field's own fields: text, lists and choices, none named as the quotations
@@ -247,6 +284,10 @@ pub fn place(doc: CitedText<'_>, claim: &Claim) -> Option<Evidence> {
             .parts
             .iter()
             .position(|p| p.start <= start && end <= p.end)?;
+        let page = match &doc.parts[part].piece {
+            piece @ PieceRef::Page { .. } => Some(piece.clone()),
+            _ => None,
+        };
         let quote = slice(doc.text, start, end)?.to_string();
         return Some(Evidence {
             anchor: Anchor {
@@ -259,9 +300,56 @@ pub fn place(doc: CitedText<'_>, claim: &Claim) -> Option<Evidence> {
             speaker: turn.speaker.clone(),
             start_ms: turn.start_ms,
             end_ms: turn.end_ms,
+            page,
+            added: false,
         });
     }
     None
+}
+
+/// The passage between characters `start` and `end` of the text as a quotation the researcher
+/// added: its spaces at either end left out, within one turn and one part, its words the text's
+/// own and its speaker and times the turn's. `None` for a passage empty, outside the text, or
+/// running across two turns.
+pub fn evidence_at(doc: CitedText<'_>, start: u32, end: u32) -> Option<Evidence> {
+    let chosen = slice(doc.text, start, end)?;
+    let lead = chosen.chars().take_while(|c| c.is_whitespace()).count() as u32;
+    let trail = chosen
+        .chars()
+        .rev()
+        .take_while(|c| c.is_whitespace())
+        .count() as u32;
+    let (start, end) = (start + lead, end.checked_sub(trail)?);
+    if end <= start {
+        return None;
+    }
+    let i = doc
+        .turns
+        .iter()
+        .position(|t| t.start <= start && end <= t.end)?;
+    let part = doc
+        .parts
+        .iter()
+        .position(|p| p.start <= start && end <= p.end)?;
+    let turn = &doc.turns[i];
+    let page = match &doc.parts[part].piece {
+        piece @ PieceRef::Page { .. } => Some(piece.clone()),
+        _ => None,
+    };
+    Some(Evidence {
+        anchor: Anchor {
+            part: part as u32,
+            start,
+            end,
+        },
+        quote: slice(doc.text, start, end)?.to_string(),
+        turn: i as u32 + 1,
+        speaker: turn.speaker.clone(),
+        start_ms: turn.start_ms,
+        end_ms: turn.end_ms,
+        page,
+        added: true,
+    })
 }
 
 /// The text as the model reads it: each turn on one line after its number in brackets
@@ -271,26 +359,12 @@ pub fn numbered(text: &str, turns: &[Turn]) -> String {
     turns
         .iter()
         .enumerate()
-        .filter_map(|(i, turn)| {
-            // On one line, its own spaces (no-break ones included) kept within each line.
-            let words = turn_text(text, turn)?
-                .lines()
-                .map(str::trim)
-                .filter(|l| !l.is_empty())
-                .collect::<Vec<_>>()
-                .join(" ");
-            let mut line = format!("[{}] ", i + 1);
-            if let Some(ms) = turn.start_ms {
-                line.push_str(&format!("[{}] ", crate::result::clock(ms)));
-            }
-            if let Some(speaker) = &turn.speaker {
-                line.push_str(&format!("{speaker}: "));
-            }
-            line.push_str(&words);
-            Some(line)
-        })
+        .filter_map(|(i, turn)| windows::numbered_line(text, turn, i))
         .collect::<Vec<_>>()
-        .join("\n")
+        .join(
+            "
+",
+        )
 }
 
 /// Whether any of these fields cites the document.
@@ -300,8 +374,8 @@ pub fn has_cited(fields: &[Field]) -> bool {
         .any(|f| matches!(f.kind, FieldKind::Cited { .. }))
 }
 
-/// Who said a quotation and when, as the files show it: `Awa, 00:04:12`; empty when neither is
-/// known.
+/// Who said a quotation and when, as the files show it: `Awa, 00:04:12`; for a passage of a
+/// document read from pages, its page: `page 3`; empty when none is known.
 pub fn said_by(evidence: &Evidence) -> String {
     let mut out = evidence.speaker.clone().unwrap_or_default();
     if let Some(ms) = evidence.start_ms {
@@ -309,6 +383,12 @@ pub fn said_by(evidence: &Evidence) -> String {
             out.push_str(", ");
         }
         out.push_str(&crate::result::clock(ms));
+    }
+    if let Some(page) = &evidence.page {
+        if !out.is_empty() {
+            out.push_str(", ");
+        }
+        out.push_str(&format!("page {}", page.label()));
     }
     out
 }
@@ -346,7 +426,14 @@ pub(super) fn render(field: &Field, fields: &[Field], value: &FieldValue) -> Str
             lines.push(own);
         }
         for evidence in &entry.evidence {
-            let by = said_by(evidence);
+            let mut by = said_by(evidence);
+            if evidence.added {
+                by = [by.as_str(), "added by the researcher"]
+                    .into_iter()
+                    .filter(|b| !b.is_empty())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+            }
             lines.push(if by.is_empty() {
                 format!("\"{}\"", evidence.quote)
             } else {

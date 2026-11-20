@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Preset } from './bindings/Preset.js';
-import { interviewRequest, withPrompt } from './interviewStart.svelte.js';
+import { interviewRequest, withPrompt, withThemes } from './interviewStart.svelte.js';
 import { interviewPreset } from './dev/mockResearch.js';
 import {
 	firstChoice,
@@ -111,6 +111,27 @@ describe('a description kept for the next interviews', () => {
 		});
 		expect(copy.schema).toEqual(interviewPreset.schema);
 		expect(copy.schema).not.toBe(interviewPreset.schema);
+	});
+
+	it('keeps the researcher’s own themes with the description, and none when the box is empty', () => {
+		const copy = keptPrompt(interviewPreset, 'Traders', 'Credit.', '  Savings groups\nFamily \n');
+		expect(copy.themes).toBe('Savings groups\nFamily');
+		expect('themes' in keptPrompt(interviewPreset, 'Traders', 'Credit.', '  ')).toBe(false);
+	});
+
+	it('sends the themes typed with the question, or in place of a kept description’s', () => {
+		const request = {
+			provider: 'gemini',
+			model: 'm',
+			preset_id: 'analysis.interview',
+			label: null,
+			options: { temperature: null, diarize: false, timestamps: false, speakers: null }
+		};
+		expect(interviewRequest(request, '', ' A\nB ').options).toMatchObject({ themes: 'A\nB' });
+		expect('question' in interviewRequest(request, '', 'A').options).toBe(false);
+		expect(interviewRequest(request, '  ', '  ')).toBe(request);
+		expect(withThemes(withPrompt(request, 'user-1'), 'C').options.themes).toBe('C');
+		expect(withThemes(request, ' ')).toBe(request);
 	});
 
 	it('starts the job with its prompt in place of the ready-made one', () => {

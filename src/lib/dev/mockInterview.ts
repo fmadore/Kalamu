@@ -3,12 +3,12 @@
 // times, frozen and read for its themes, keywords and quotations, each quotation placed in the
 // frozen text in characters as the engine places it. `interview-gone` makes the recording
 // unreachable, so quotations are shown in the text instead; `interview-two` adds a second
-// set-up; `interview-long` makes the transcript some 100,000 words long, too long for the models
-// run on this computer. Development builds only.
+// set-up; `interview-long` makes the transcript some 100,000 words long, read in parts by the
+// models run on this computer, and `interview-unbroken` one turn of that length, too long for
+// them even so; `interview-parts` shows the analysis as one read in three parts, the last of
+// which could not be read. Development builds only.
 
-import type { Catalog } from '../bindings/Catalog.js';
 import type { CitedEdit } from '../bindings/CitedEdit.js';
-import type { EstimateRequest } from '../bindings/EstimateRequest.js';
 import type { CitedEvidence } from '../bindings/CitedEvidence.js';
 import type { CitedValue } from '../bindings/CitedValue.js';
 import type { FieldAnswer } from '../bindings/FieldAnswer.js';
@@ -16,11 +16,10 @@ import type { Job } from '../bindings/Job.js';
 import type { JobSummary } from '../bindings/JobSummary.js';
 import type { NewJob } from '../bindings/NewJob.js';
 import type { PieceView } from '../bindings/PieceView.js';
-import type { SetupRequest } from '../bindings/SetupRequest.js';
-import type { TextTooLong } from '../bindings/TextTooLong.js';
 import type { Turn } from '../bindings/Turn.js';
 import { clock } from '../pieces.js';
 import { audioSetup, EXPORT_OPTIONS, job, source } from './mockJobs.js';
+import { inParts, readInParts } from './mockInterviewLong.js';
 
 export const INTERVIEW_JOB = '00000000-0000-0000-0000-0000000000i1';
 const TRANSCRIPT_JOB = '00000000-0000-0000-0000-0000000000i2';
@@ -120,7 +119,8 @@ const themes: CitedValue = {
 				text(
 					'description',
 					'Mariam a appris le métier chez sa tante, d’abord en observant, et transmet la même exigence à ses apprenties.'
-				)
+				),
+				text('origin', 'The interview')
 			],
 			evidence: [
 				quote(2, 'Pendant trois ans, je balayais l’atelier et je regardais ses mains.'),
@@ -133,7 +133,8 @@ const themes: CitedValue = {
 				text(
 					'description',
 					'La tontine du quartier a payé la deuxième machine ; c’est aussi un lieu où les femmes s’entraident.'
-				)
+				),
+				text('origin', "The researcher's guide")
 			],
 			evidence: [
 				quote(6, 'chaque semaine l’une de nous prend tout'),
@@ -147,7 +148,8 @@ const themes: CitedValue = {
 				text(
 					'description',
 					'Les commandes passent désormais par des photos envoyées sur le téléphone.'
-				)
+				),
+				text('origin', 'The interview')
 			],
 			evidence: [quote(12, 'les clientes m’envoient la photo d’un modèle')]
 		}
@@ -187,10 +189,15 @@ export const interviewSchema = {
 			type: 'cited',
 			fields: [
 				field('name', 'Name', { type: 'text' }),
-				field('description', 'Description', { type: 'text' })
+				field('description', 'Description', { type: 'text' }),
+				field('origin', 'Origin', {
+					type: 'choice',
+					values: ["The researcher's guide", 'The interview']
+				})
 			],
 			max: 8
 		}),
+		field('guide_themes_not_found', 'Guide themes not found', { type: 'list', max: null }),
 		field('keywords', 'Keywords', { type: 'list', max: 12 }),
 		field('quotations', 'Quotations', {
 			type: 'cited',
@@ -284,6 +291,7 @@ const answers = (i: number): FieldAnswer[] => [
 		key: 'themes',
 		value: i === 0 ? themes : { ...themes, entries: themes.entries.slice(1), left_out: 0 }
 	},
+	{ key: 'guide_themes_not_found', value: ['Le prix du tissu'] },
 	{ key: 'keywords', value: ['couture', 'tontine', 'apprentissage', 'téléphone'] },
 	{ key: 'quotations', value: quotations }
 ];
@@ -370,6 +378,28 @@ export function interviewSummaries(base: JobSummary): JobSummary[] {
 	];
 }
 
+/** A passage of the frozen text, in characters, as the researcher's quotation, as
+ * `core::analysis::cited::evidence_at` finds it: its spaces at either end left out, within one
+ * turn. */
+function addedAt(start: number, end: number): CitedEvidence | null {
+	const all = Array.from(interviewText);
+	const chosen = all.slice(start, end).join('');
+	const from = start + (chosen.length - chosen.trimStart().length);
+	const to = end - (chosen.length - chosen.trimEnd().length);
+	const n = interviewTurns.findIndex((t) => t.start <= from && to <= t.end);
+	if (to <= from || n < 0) return null;
+	const turn = interviewTurns[n];
+	return {
+		anchor: { part: 0, start: from, end: to },
+		quote: all.slice(from, to).join(''),
+		turn: n + 1,
+		speaker: turn.speaker,
+		start_ms: turn.start_ms,
+		end_ms: turn.end_ms,
+		added: true
+	};
+}
+
 /** One change to a cited field, as `core::analysis::cited::edit` makes it. */
 export function editCited(answers: FieldAnswer[], key: string, change: CitedEdit): FieldAnswer[] {
 	const out: FieldAnswer[] = structuredClone(answers);
@@ -378,7 +408,16 @@ export function editCited(answers: FieldAnswer[], key: string, change: CitedEdit
 		throw { id: 'cited.not_cited', detail: key };
 	const entry = value.entries[change.entry];
 	if (!entry) throw { id: 'cited.no_entry', detail: String(change.entry) };
-	if (change.kind === 'remove_entry') value.entries.splice(change.entry, 1);
+	if (change.kind === 'add_quotation') {
+		const added = addedAt(change.start, change.end);
+		if (!added) throw { id: 'cited.not_in_turn' };
+		if (
+			!entry.evidence.some(
+				(e) => e.anchor.start === added.anchor.start && e.anchor.end === added.anchor.end
+			)
+		)
+			entry.evidence.push(added);
+	} else if (change.kind === 'remove_entry') value.entries.splice(change.entry, 1);
 	else if (change.kind === 'remove_quotation') {
 		if (!entry.evidence[change.quotation])
 			throw { id: 'cited.no_quotation', detail: String(change.quotation) };
@@ -389,39 +428,6 @@ export function editCited(answers: FieldAnswer[], key: string, change: CitedEdit
 		else entry.answers.push({ key: change.key, value: change.value });
 	}
 	return out;
-}
-
-/** Characters in the long transcript of `interview-long`: some 100,000 words. */
-const LONG_CHARS = 600_000;
-
-/** `n` to two significant figures, down, as the catalogue rounds what a model reads. */
-const roundDown = (n: number) => {
-	const step = 10 ** Math.max(0, Math.floor(Math.log10(Math.max(n, 1))) - 1);
-	return Math.floor(n / step) * step;
-};
-
-/** What the estimate says of an interview's set-up with `interview-long`, as the engine measures
- * it: the transcript too long for a model that reads less than its four characters a token. */
-export function interviewTooLong(
-	request: EstimateRequest,
-	setup: SetupRequest,
-	catalog: Catalog
-): TextTooLong | undefined {
-	if (!new URLSearchParams(location.search).has('interview-long')) return undefined;
-	const preset = setup.preset_id ?? '';
-	if (
-		request.task !== 'analysis' ||
-		!(preset === 'analysis.interview' || preset.startsWith('user-'))
-	)
-		return undefined;
-	const limit = catalog.models.find((m) => m.provider === setup.provider && m.id === setup.model)
-		?.limits.max_input_tokens;
-	if (limit === undefined || LONG_CHARS <= limit * 4) return undefined;
-	return {
-		file: request.sources[0]?.file_name ?? '',
-		words: 100_000,
-		most_words: roundDown(Math.floor((limit * 4) / 6))
-	};
 }
 
 /** The job New job's dialog created last, for the end-to-end tests to read. */
@@ -441,7 +447,9 @@ export function interviewCommand(cmd: string, a: Record<string, unknown>): unkno
 			return undefined;
 		case 'source_pieces':
 			if (a.jobId === TRANSCRIPT_JOB) return transcriptPieces();
-			return mine ? interviewPieces.slice(0, two() ? 2 : 1) : undefined;
+			if (!mine) return undefined;
+			if (inParts()) return readInParts(interviewPieces[0]);
+			return interviewPieces.slice(0, two() ? 2 : 1);
 		case 'source_text':
 			return mine ? interviewText : undefined;
 		case 'cited_source':
@@ -462,6 +470,8 @@ export function interviewCommand(cmd: string, a: Record<string, unknown>): unkno
 					freshness: new URLSearchParams(location.search).has('interview-gone') ? 'gone' : 'current'
 				}
 			];
+		case 'retry_failed':
+			return mine ? null : undefined;
 		case 'edit_cited': {
 			if (!mine) return undefined;
 			const piece = interviewPieces.find((p) => p.setup_id === a.setupId);

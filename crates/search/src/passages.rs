@@ -35,7 +35,8 @@ const BETWEEN: char = '\u{E000}';
 /// Whether a piece is searched: a table of contents is searched in its combined entries, every
 /// other task in each of its pieces.
 pub(crate) fn searched(task: Task, piece: &PieceRef) -> bool {
-    task != Task::Contents || *piece == PieceRef::Whole
+    // A long text's parts are read on the way to the whole, which stands for it.
+    (task != Task::Contents || *piece == PieceRef::Whole) && !piece.is_window()
 }
 
 /// What one job holds that its passages are made from.

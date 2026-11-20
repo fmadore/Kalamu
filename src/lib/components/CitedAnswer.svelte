@@ -4,7 +4,8 @@
 	// quotation plays in its transcript's review from its turn, or, without a recording, is shown
 	// where it stands in the text beside the answers. An entry's fields are typed anew, an entry or
 	// one quotation removed, each in the corrected answers and taken back from its toast; a
-	// quotation's words are never changed. In a comparison each set-up's cards stand under its
+	// quotation's words are never changed. One the researcher added from the text takes their
+	// blue rule and says so. Where a theme comes from (a choice) is a plain chip. In a comparison each set-up's cards stand under its
 	// siglum, not collated. What the engine could not find in the text is said under them.
 	import Icon from './Icon.svelte';
 	import { siglum } from '#lib/apparatus.js';
@@ -18,7 +19,8 @@
 		entryDraft,
 		quoteStart,
 		saidBy,
-		type Card
+		type Card,
+		type CardNote
 	} from '#lib/cited.js';
 	import type { CitedAnswers } from '#lib/citedAnswers.svelte.js';
 	import { choiceLabel, messages } from '#lib/i18n/index.js';
@@ -100,6 +102,16 @@
 	}
 </script>
 
+{#snippet noteOf(note: CardNote)}
+	{@const f = own.find((x) => x.key === note.key)}
+	{#if f?.kind.type === 'choice'}
+		<!-- A choice (where a theme comes from) said plainly, in the interface language. -->
+		<p class="chip origin">{f.label} <strong>{choiceLabel(f, note.value)}</strong></p>
+	{:else}
+		<p class="note">{note.value}</p>
+	{/if}
+{/snippet}
+
 {#each setups as s, i (s.id)}
 	{@const answers = answersOf(s)}
 	{@const value = answers ? citedOf(answers, field.key) : null}
@@ -160,7 +172,7 @@
 						{:else}
 							{#if card.title}<h3>{card.title}</h3>{/if}
 							{#if card.notesFirst}
-								{#each card.notes as note (note.key)}<p class="note">{note.value}</p>{/each}
+								{#each card.notes as note (note.key)}{@render noteOf(note)}{/each}
 							{/if}
 							{#if card.quotes.length === 0}
 								<p class="muted none">{c.noQuote}</p>
@@ -169,7 +181,7 @@
 									{#each card.quotes as q, n (n)}
 										{@const said = saidBy(q)}
 										{@const plays = cited.recording(q) !== null}
-										<li data-quote={n}>
+										<li data-quote={n} class:hand={q.added}>
 											<blockquote lang="">{q.quote}</blockquote>
 											<div class="said">
 												<button
@@ -186,6 +198,7 @@
 														: c.showInText}</button
 												>
 												{#if said}<span class="by" aria-hidden="true">{said}</span>{/if}
+												{#if q.added}<span class="chip hand">{c.addedByYou}</span>{/if}
 												<button
 													class="btn ghost sm icon remove"
 													aria-label={c.removeQuote(quoteStart(q.quote))}
@@ -200,7 +213,7 @@
 								</ul>
 							{/if}
 							{#if !card.notesFirst}
-								{#each card.notes as note (note.key)}<p class="note">{note.value}</p>{/each}
+								{#each card.notes as note (note.key)}{@render noteOf(note)}{/each}
 							{/if}
 							<div class="card-actions">
 								<button
@@ -275,6 +288,10 @@
 		font-size: var(--type-md);
 		color: var(--text-body);
 	}
+	.origin {
+		justify-self: start;
+		font-family: var(--font-ui);
+	}
 	.quotes {
 		list-style: none;
 		margin: 0;
@@ -299,6 +316,10 @@
 	}
 	blockquote::after {
 		content: close-quote;
+	}
+	/* A quotation the researcher added: their blue rule, as every correction of theirs. */
+	.hand blockquote {
+		border-left-color: var(--hand);
 	}
 	.said {
 		display: flex;

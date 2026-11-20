@@ -49,15 +49,17 @@ export function suggestedName(description: string, project?: string): string {
 	return `${(space > NAME_LENGTH / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:.]+$/, '')}…`;
 }
 
-/** The interview prompt copied as the researcher's own, keeping their description under
- * `name`: same fields, same instructions. */
-export function keptPrompt(base: Preset, name: string, description: string): Preset {
+/** The interview prompt copied as the researcher's own, keeping their description and their own
+ * themes, when they typed some, under `name`: same fields, same instructions. */
+export function keptPrompt(base: Preset, name: string, description: string, themes = ''): Preset {
+	const listed = themes.trim();
 	return {
 		...structuredClone(base),
 		id: '',
 		name: name.trim(),
 		builtin: false,
 		modified: false,
-		question: description.trim()
+		question: description.trim(),
+		...(listed ? { themes: listed } : {})
 	};
 }

@@ -9,6 +9,7 @@ use kalamu_core::Snapshot;
 
 use super::*;
 
+mod added;
 mod fixture;
 use fixture::*;
 
@@ -178,9 +179,9 @@ async fn a_job_stopped_part_way_resumes_without_sending_a_piece_twice() {
     let second = f.text_file("second.txt", "Au début, on ne savait pas.\n\nENSUITE.");
     f.model.script(&[serde_json::json!({
         "summary": "s",
-        "themes": [{"name": "n", "description": "d",
+        "themes": [{"name": "n", "description": "d", "origin": "The interview",
                     "quotes": [{"turn": 1, "words": "en 1998"}, {"turn": 1, "words": "on ne savait pas"}]}],
-        "keywords": [],
+        "guide_themes_not_found": [], "keywords": [],
         "quotations": [],
     })]);
     *f.model.interrupt.lock().unwrap_or_else(|p| p.into_inner()) = Some("ENSUITE".into());
@@ -211,7 +212,7 @@ async fn a_plain_text_is_read_in_paragraphs_and_a_scan_is_refused() {
     f.model.script(&[serde_json::json!({
         "summary": "s",
         "themes": [],
-        "keywords": [],
+        "guide_themes_not_found": [], "keywords": [],
         "quotations": [{"why_it_matters": "w",
                         "quotes": [{"turn": 1, "words": "Nous partions tôt au marché."}]}],
     })]);
@@ -255,6 +256,9 @@ async fn a_plain_text_is_read_in_paragraphs_and_a_scan_is_refused() {
     assert_eq!(f.model.calls(), 1);
 }
 
+mod guide;
 mod length;
+mod parts;
 mod research;
 mod review;
+mod screening;

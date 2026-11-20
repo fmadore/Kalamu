@@ -179,24 +179,39 @@ quotations found word for word are written; the researcher's removals are applie
 - **Markdown** is a memo: each field under a `##` heading; an entry with several fields has
   its first as a `###` heading and the others below, then its quotations as block quotes that
   end with `> — Speaker, [hh:mm:ss]` (the turn's speaker and the time the turn starts, when the
-  text has them). A field from which quotations were left out ends with a line in italics
-  saying how many. Text and Word write each quotation on a line, `"…" (Speaker, hh:mm:ss)`.
+  text has them), or `> — page 3` for a passage of a text read from pages. A field from which
+  quotations were left out ends with a line in italics saying how many. Text and Word write each quotation on a line, `"…" (Speaker, hh:mm:ss)`. A
+  quotation the researcher added from the text ends with ` · added by the researcher` in the
+  memo, and `, added by the researcher` in the brackets of text and Word.
 - **JSON** gives such a field as `{ "entries": [{ "answers": [{ "key", "value" }], "evidence":
-  [{ "anchor": { "part", "start", "end" }, "quote", "turn", "speaker", "start_ms", "end_ms" }]
-  }], "left_out", "dropped" }`. `start` and `end` count characters (Unicode scalar values, not
+  [{ "anchor": { "part", "start", "end" }, "quote", "turn", "speaker", "start_ms", "end_ms",
+  "page" }] }], "left_out", "dropped" }`, `page` (the piece, as `{ "kind": "page", "number" }`)
+  only for a passage of a text read from pages. `start` and `end` count characters (Unicode scalar values, not
   bytes or UTF-16 units) in the text read, whose identifier and SHA-256 are in a top-level
   `"snapshot": { "id", "sha256" }`, written only for these analyses; `part` is the piece of
   that text, from 0; `turn` counts from 1; `quote` is the text's own characters, never the
   model's copy. `left_out` counts the quotations a model gave that were found nowhere,
-  `dropped` the entries left with none.
+  `dropped` the entries left with none. A quotation the researcher added from the text has
+  `"added": true`; the model's have no `added`.
 - **CSV**: the analysis's own file keeps one row per document, the field's column holding its
   entries' names joined with semicolons. Beside it, `<name>.analysis.quotations.csv` has one
   row per quotation: `file`, `field`, `entry` (the entry's first field), `speaker`, `start`,
-  `end` (`hh:mm:ss`, or empty), `quotation`, `turn`. Cells that a spreadsheet would read as a
-  formula are guarded, as in every CSV Kalamu writes. The workbook does the same, as
+  `end` (`hh:mm:ss`, or empty), `quotation`, `turn`, `page` (empty but for a text read from
+  pages), `added_by` (`model`, or `researcher` for a quotation they added from the text). An
+  entry that is quotations alone (a screened document's passages) is named in the analysis's
+  own file by its quotations, each between quotation marks. Cells that a spreadsheet would read
+  as a formula are guarded, as in every CSV Kalamu writes. The workbook does the same, as
   `<name>.analysis.xlsx` with `<name>.analysis.quotations.xlsx` beside it.
 - **`provenance.json`** adds `cited`: for each such field, the quotations checked, those left
   out and the entries left out; `source.derived_from` names the text read.
+- **A long text read in parts** writes the answer that brought the parts together, and only
+  it; a part that could not be read stands after it as `[Not read: part 3 (turns 48–71,
+  01:02:10 to 01:20:00): reason]` in text, Markdown and Word, and in JSON as a part whose piece
+  is `{ "kind": "turns", "number", "first", "last" }` with its `failed` reason.
+  `provenance.json` then has `merge`, the step that brought the parts together, whose `request`
+  lists `turns_read` and, when a part could not be read, `turns_not_read` (`"1-24, 23-49"`,
+  turns counted from 1); `pieces` counts the parts and that step. A text read whole has no
+  `merge`.
 
 ### Records
 
@@ -315,7 +330,8 @@ any. A translation of any other text has no subtitles.
 ```
 
 - `piece` is `{ "kind": "page", "number": n }`, with `"half": "left" | "right"` when a double
-  page was split, or `{ "kind": "segment", "index": i, "start_ms": …, "end_ms": … }`.
+  page was split, or `{ "kind": "segment", "index": i, "start_ms": …, "end_ms": … }`; a long
+  text's part not read is `{ "kind": "turns", "number": n, "first": f, "last": l }`.
 - `segments` are `{ "start_ms", "end_ms", "speaker", "text" }`, timed from the start of the
   recording.
 - `text` is the corrected text when `corrected` is true; the model's own output stays in the

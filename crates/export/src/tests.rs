@@ -17,6 +17,7 @@ mod cited;
 mod page_xml;
 mod records;
 mod researcher;
+mod screening;
 
 fn source(name: &str, kind: InputKind) -> SourceFile {
     SourceFile {
@@ -58,6 +59,7 @@ fn document(task: Task, source: SourceFile, parts: Vec<ExportPart>) -> ExportDoc
         options: SetupOptions::default(),
         merge: None,
         pages_cap: None,
+        windows: None,
     };
     let provenance = Provenance {
         schema_version: 1,

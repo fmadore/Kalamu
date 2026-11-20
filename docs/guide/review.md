@@ -65,6 +65,13 @@ evidence: go back to the text.
 To add a name, a keyword or a theme the model missed, use **Add** at the end of the list. What
 you add or rename is underlined as yours, and goes into exports, the dictionary and the search.
 
+In an interview's analysis, every quotation is the transcript's own words: Kalamu looks for
+each one in the text and leaves out those it does not find. To add a quotation the model
+missed, select the passage in the transcript, right-click and choose **Add as a quotation**,
+then the theme it belongs to. It is marked as added by you, in the review and in every export.
+A very long interview is read in several parts and brought together; if a part could not be
+read, the review says which minutes are missing and offers **Read it again**.
+
 ## Have a model correct one passage
 
 When a few lines are badly read and the rest is fine, select them in the text and right-click

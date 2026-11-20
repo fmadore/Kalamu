@@ -151,6 +151,7 @@ fn setup(fields: Vec<Field>) -> Setup {
         options: SetupOptions::default(),
         merge: None,
         pages_cap: None,
+        windows: None,
     }
 }
 

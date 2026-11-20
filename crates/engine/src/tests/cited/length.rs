@@ -83,7 +83,7 @@ async fn a_transcript_that_fits_is_analysed_and_the_estimate_says_nothing() {
         None
     );
     f.model.script(&[serde_json::json!({
-        "summary": "s", "themes": [], "keywords": [], "quotations": [],
+        "summary": "s", "themes": [], "guide_themes_not_found": [], "keywords": [], "quotations": [],
     })]);
     let job = f
         .analysis(vec![fits], None)

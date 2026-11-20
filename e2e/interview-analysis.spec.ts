@@ -6,8 +6,12 @@
 // saying what was left out; and the same in French. A description of the research kept for the
 // next interviews: not offered on first use, saved as a prompt of the researcher's own that
 // Prompts lists and the dialog offers again, chosen to start the job with its prompt, written
-// in Prompts as well; and in French. A transcript too long for the model chosen: said in place of
-// the cost, Start disabled until another model is chosen; and in French.
+// in Prompts as well; and in French. A transcript too long to be read at once: said to be read in
+// parts beside the cost; one too long even so (one long turn): said in place of the cost, Start
+// disabled until another model is chosen; and in French. A long interview read in parts: the
+// review says so in one line, names the part not read by its minutes and offers to read it
+// again. A passage selected in the transcript added as the researcher's quotation from its
+// menu, marked as theirs, and taken back; and in French.
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import type { NewJob } from '../src/lib/bindings/NewJob.js';
@@ -92,9 +96,45 @@ test('the dialog asks one question with one button, and starts the job with it',
 	);
 });
 
-/** Opens the dialog on the sample transcript made too long for the models on this computer. */
-async function longInterview(page: Page, useText: string): Promise<Locator> {
-	await open(page, 'jobs-audio&interview-long');
+test('the researcher’s own themes wait under More choices and go with the job', async ({
+	page
+}) => {
+	await open(page, 'jobs-audio');
+	const menu = await useText(page);
+	await menu.getByRole('button', { name: /Analyse this interview/ }).click();
+	const dialog = page.getByRole('dialog', { name: 'Analyse this interview' });
+	const themes = dialog.getByRole('textbox', { name: 'Your own themes or interview guide' });
+	// Not on the default path: the dialog stays one box and one button.
+	await expect(themes).toBeHidden();
+	await dialog.locator('details.more summary').click();
+	await expect(themes).toHaveAccessibleDescription(/One theme per line/);
+	await themes.fill('Savings groups\nHelp from the family');
+	await dialog.getByRole('button', { name: 'Analyse', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const created = await page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
+	expect(created?.setups[0].options.themes).toBe('Savings groups\nHelp from the family');
+	expect(created?.setups[0].options.question).toBeUndefined();
+});
+
+test('each theme says plainly whether it comes from the guide, and a guide theme not found is listed', async ({
+	page
+}) => {
+	const pane = await answers(page);
+	const tontine = pane.locator('[data-entry="1"]').first();
+	await expect(tontine.locator('.origin')).toHaveText("Origin The researcher's guide");
+	await expect(pane.locator('[data-entry="0"]').first().locator('.origin')).toHaveText(
+		'Origin The interview'
+	);
+	await expect(pane.getByRole('heading', { name: 'Guide themes not found' })).toBeVisible();
+	await expect(pane.locator('[data-field="guide_themes_not_found"]')).toContainText(
+		'Le prix du tissu'
+	);
+});
+
+/** Opens the dialog on the sample transcript made too long for the models on this computer to
+ * read at once, or, `unbroken`, to read at all. */
+async function longInterview(page: Page, useText: string, unbroken = true): Promise<Locator> {
+	await open(page, `jobs-audio&interview-long${unbroken ? '&interview-unbroken' : ''}`);
 	await page.getByRole('main').locator('summary', { hasText: useText }).click();
 	await page.getByRole('button', { name: /Analyse this interview|Analyser cet entretien/ }).click();
 	return page.getByRole('dialog');
@@ -106,7 +146,60 @@ async function chooseModel(dialog: Locator, label: string, name: RegExp): Promis
 	await dialog.page().getByRole('option', { name }).click();
 }
 
-test('a transcript too long for the model chosen is said in place of the cost, and Start waits', async ({
+test('a transcript too long to be read at once is read in parts, said beside the cost', async ({
+	page
+}) => {
+	const dialog = await longInterview(page, 'Use this text in a new job', false);
+	const start = dialog.getByRole('button', { name: 'Analyse', exact: true });
+	await expect(dialog.getByText(/^This interview is long/)).toHaveCount(0);
+	await dialog.locator('details.more summary').click();
+	await chooseModel(dialog, 'Model', /^Gemma 4 E4B/);
+	await expect(
+		dialog.getByText('This interview is long: it will be read in 13 parts, then brought together.')
+	).toBeVisible();
+	await expect(dialog.getByText(/^Estimated cost: /)).toBeVisible();
+	await expect(dialog.getByRole('alert')).toHaveCount(0);
+	await expect(start).toBeEnabled();
+	// A model that reads it all at once reads it whole.
+	await chooseModel(dialog, 'Model', /^Gemini 4 Hydrogen/);
+	await expect(dialog.getByText(/^This interview is long/)).toHaveCount(0);
+});
+
+test('a long interview read in parts says so, names the part not read, and reads it again', async ({
+	page
+}) => {
+	const pane = await answers(page, '&interview-parts');
+	await expect(
+		pane.getByText('This interview was long: it was read in 3 parts, then brought together.')
+	).toBeVisible();
+	await expect(
+		pane.getByText(
+			'The part from 00:04:20 to 00:11:40 could not be read: its themes and quotations are missing.'
+		)
+	).toBeVisible();
+	await expect(pane.getByText('The provider is overloaded. Try again later.')).toBeVisible();
+	// The answers are those that brought the parts together, the cards as for any interview.
+	await expect(pane.getByRole('heading', { name: 'La tontine comme appui' })).toBeVisible();
+	await pane.getByRole('button', { name: 'Read it again' }).click();
+	await expect(page.getByText('The part is being read again.')).toBeVisible();
+});
+
+test.describe('a long interview in French', () => {
+	test.use({ locale: 'fr-FR' });
+
+	test('the review says it plainly, in French', async ({ page }) => {
+		await open(page, 'review-interview&interview-parts');
+		const pane = page.getByRole('main').getByRole('region', { name: 'Réponses' });
+		await expect(
+			pane.getByText(
+				'Cet entretien était long : il a été lu en 3 morceaux, puis le tout a été rassemblé.'
+			)
+		).toBeVisible();
+		await expect(pane.getByRole('button', { name: 'Le relire' })).toBeVisible();
+	});
+});
+
+test('a transcript too long for the model chosen even in parts is said in place of the cost, and Start waits', async ({
 	page
 }) => {
 	const dialog = await longInterview(page, 'Use this text in a new job');
@@ -190,6 +283,69 @@ test('without the recording, a quotation is shown where it stands in the text', 
 	);
 	await pane.getByRole('button', { name: 'Show in the text: Mariam · 00:02:38' }).last().click();
 	await expect(page.locator('mark.quoted')).toHaveText('mon tour est venu au bon moment');
+});
+
+/** Selects `words` in the transcript beside the answers. */
+async function select(page: Page, words: string): Promise<void> {
+	await page.evaluate((words) => {
+		const sheet = document.querySelector('.source .desk.document');
+		const walker = document.createTreeWalker(sheet!, NodeFilter.SHOW_TEXT);
+		for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+			const at = node.textContent?.indexOf(words) ?? -1;
+			if (at < 0) continue;
+			const range = document.createRange();
+			range.setStart(node, at);
+			range.setEnd(node, at + words.length);
+			getSelection()?.removeAllRanges();
+			getSelection()?.addRange(range);
+			return;
+		}
+		throw new Error(`${words} is not in the transcript`);
+	}, words);
+}
+
+test('a passage selected in the transcript is added as the researcher’s quotation, and taken back', async ({
+	page
+}) => {
+	const pane = await answers(page, '&interview-gone');
+	const first = pane.locator('[data-entry="0"]').first();
+	await expect(first.locator('blockquote')).toHaveCount(2);
+	await select(page, 'Les premiers mois, mes clientes étaient mes voisines');
+	await page.keyboard.press('Shift+F10');
+	const menu = page.getByRole('menu', { name: 'Add as a quotation' });
+	await expect(menu).toBeVisible();
+	// Every entry it can go to, each field's under its name.
+	await expect(menu.getByRole('menuitem')).toHaveCount(5);
+	await menu.getByRole('menuitem', { name: 'Apprendre en regardant' }).click();
+
+	const quotes = first.locator('blockquote');
+	await expect(quotes).toHaveCount(3);
+	await expect(quotes.last()).toHaveText('Les premiers mois, mes clientes étaient mes voisines');
+	// Marked as the researcher's, with the speaker and time of its turn.
+	const mine = first.locator('[data-quote="2"]');
+	await expect(mine).toHaveClass(/hand/);
+	await expect(mine.getByText('Added by you')).toBeVisible();
+	await expect(mine).toContainText('Mariam · 00:01:09');
+	const toast = page
+		.getByRole('status')
+		.filter({ hasText: 'Quotation added to “Apprendre en regardant”' });
+	await toast.getByRole('button', { name: 'Undo' }).click();
+	await expect(quotes).toHaveCount(2);
+});
+
+test.describe('a quotation added in French', () => {
+	test.use({ locale: 'fr-FR' });
+
+	test('the menu and the mark speak French', async ({ page }) => {
+		await open(page, 'review-interview&interview-gone');
+		const pane = page.getByRole('main').getByRole('region', { name: 'Réponses' });
+		await expect(pane.getByRole('heading', { name: 'Apprendre en regardant' })).toBeVisible();
+		await select(page, 'Les premiers mois, mes clientes étaient mes voisines');
+		await page.keyboard.press('Shift+F10');
+		const menu = page.getByRole('menu', { name: 'Ajouter comme citation' });
+		await menu.getByRole('menuitem', { name: 'La tontine comme appui' }).click();
+		await expect(pane.getByText('Ajoutée par vous')).toBeVisible();
+	});
 });
 
 test('a quotation, an entry and an entry’s name are changed and put back from the keyboard', async ({

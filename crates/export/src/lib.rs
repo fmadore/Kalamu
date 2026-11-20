@@ -61,7 +61,8 @@ pub(crate) fn marker(doc: &ExportDocument, index: usize) -> Option<String> {
         // to a reader.
         kalamu_core::PieceRef::Segment { .. }
         | kalamu_core::PieceRef::Whole
-        | kalamu_core::PieceRef::Passage { .. } => None,
+        | kalamu_core::PieceRef::Passage { .. }
+        | kalamu_core::PieceRef::Turns { .. } => None,
     }
 }
 
@@ -97,7 +98,8 @@ fn body_text(doc: &ExportDocument, index: usize) -> String {
             kalamu_core::PieceRef::Segment { start_ms, .. } => start_ms,
             kalamu_core::PieceRef::Page { .. }
             | kalamu_core::PieceRef::Whole
-            | kalamu_core::PieceRef::Passage { .. } => {
+            | kalamu_core::PieceRef::Passage { .. }
+            | kalamu_core::PieceRef::Turns { .. } => {
                 return part.text.trim().to_string();
             }
         };

@@ -18,6 +18,8 @@ pub(super) struct Interviewer {
     last: Mutex<String>,
     /// Words of a text whose first call is stopped, as a pause stops it.
     pub(super) interrupt: Mutex<Option<String>>,
+    /// Words of a text whose every call fails, as a provider refusing it would.
+    pub(super) fail: Mutex<Option<String>>,
 }
 
 impl Interviewer {
@@ -28,6 +30,7 @@ impl Interviewer {
             answers: Mutex::new(VecDeque::new()),
             last: Mutex::new(String::new()),
             interrupt: Mutex::new(None),
+            fail: Mutex::new(None),
         })
     }
 
@@ -73,6 +76,15 @@ impl Provider for Interviewer {
                 *interrupt = None;
                 return Err(ProviderError::Interrupted);
             }
+        }
+        if self
+            .fail
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .as_deref()
+            .is_some_and(|w| read.contains(w))
+        {
+            return Err(ProviderError::InvalidRequest("this part is refused".into()));
         }
         let answer = {
             let mut queue = self.answers.lock().unwrap_or_else(|p| p.into_inner());
@@ -169,14 +181,14 @@ pub(super) fn answer() -> serde_json::Value {
     serde_json::json!({
         "summary": "Awa raconte ses débuts au port.",
         "themes": [
-            {"name": "Les débuts", "description": "Elle commence en 1998.",
+            {"name": "Les débuts", "description": "Elle commence en 1998.", "origin": "The interview",
              "quotes": [{"turn": 1, "words": "J'ai commencé en 1998.",
                          "speaker": "Interviewer", "time": "00:00:01"},
                         {"turn": 2, "words": "Elle n'a jamais dit cela."}]},
-            {"name": "Une devise", "description": "Une phrase reprise.",
+            {"name": "Une devise", "description": "Une phrase reprise.", "origin": "The interview",
              "quotes": [{"turn": 4, "words": "on ne savait pas"}]},
         ],
-        "keywords": ["port", "1998"],
+        "guide_themes_not_found": [], "keywords": ["port", "1998"],
         "quotations": [
             {"why_it_matters": "La devise.", "quotes": [{"turn": 4, "words": "est devenu notre devise."}]},
         ],
@@ -187,9 +199,9 @@ pub(super) fn answer() -> serde_json::Value {
 pub(super) fn invented() -> serde_json::Value {
     serde_json::json!({
         "summary": "s",
-        "themes": [{"name": "n", "description": "d",
+        "themes": [{"name": "n", "description": "d", "origin": "The interview",
                     "quotes": [{"turn": 2, "words": "Nous étions des pionnières."}]}],
-        "keywords": [],
+        "guide_themes_not_found": [], "keywords": [],
         "quotations": [],
     })
 }

@@ -12,4 +12,10 @@ merge: boolean,
  * A cited analysis's text surely too long for this model to read at once, as the job would
  * be refused for it when created ([`crate::Engine::check_length`]); absent otherwise.
  */
-too_long?: TextTooLong, };
+too_long?: TextTooLong, 
+/**
+ * For a cited analysis of texts too long for this model to read at once, how many parts
+ * they will be read in, all texts together (this row prices the parts, the row after it,
+ * `merge`, the step that brings them together); absent when every text is read whole.
+ */
+parts?: number, };

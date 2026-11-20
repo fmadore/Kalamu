@@ -153,8 +153,12 @@ impl Engine {
             // typed, so the job, its cache keys and provenance hold the one sent, and the same
             // words cost nothing twice whichever way they came.
             let mut options = with_preset_question(task, &request.options, &preset);
+            // Themes that are only blank lines are none, as an empty box is.
+            if options.theme_lines().is_empty() {
+                options.themes = None;
+            }
             let merge = if task == Task::Contents {
-                Some(self.merge_step(catalog, settings, request, preset)?)
+                Some(self.merge_step(catalog, settings, request, preset.clone())?)
             } else {
                 None
             };
@@ -169,6 +173,20 @@ impl Engine {
                     (model.vocabulary && !terms.is_empty()).then(|| terms.join("\n"));
                 options.translate &= model.translates;
             }
+            // An analysis that cites the text reads one too long for its model in parts, then
+            // brings them together on the same model: settled now from the catalogue's limit,
+            // used only for a text that does not fit.
+            let windows = (task == Task::Analysis)
+                .then(|| catalog.model(&request.provider, &request.model))
+                .flatten()
+                .and_then(crate::windows::windows_for);
+            let together = windows
+                .and_then(|_| {
+                    preset.consolidation_snapshot(&Self::render_context(
+                        catalog, task, settings, &options,
+                    ))
+                })
+                .filter(|_| prompt.preset_id.is_some());
             let mut setup = Setup {
                 id: SetupId::new(),
                 label,
@@ -181,7 +199,17 @@ impl Engine {
                 options,
                 merge,
                 pages_cap: None,
+                windows: None,
             };
+            if let Some(mut step) = together {
+                step.user_prompt = setup.options.with_question(&step.user_prompt);
+                setup.merge = Some(MergeStep {
+                    provider: setup.provider.clone(),
+                    model: setup.model.clone(),
+                    prompt: step,
+                });
+                setup.windows = windows;
+            }
             // Settled now, as the reasoning level is, so a catalogue refreshed before the job
             // resumes never regroups pages already read.
             let several = !matches!(settings.pages_per_call, None | Some(PagesPerCall::One));
@@ -342,25 +370,37 @@ fn sanitize_label(label: &str) -> String {
         .collect()
 }
 
-/// A set-up's options with the question its analysis prompt keeps ([`Preset::question`]) when
-/// the researcher typed none for it: a question typed replaces the prompt's. Unchanged for
-/// another task, or a prompt without one, so those cache keys stay as they were.
+/// A set-up's options with the question and the themes its analysis prompt keeps
+/// ([`Preset::question`], [`Preset::themes`]) when the researcher typed none for it: what is typed
+/// replaces the prompt's. Unchanged for another task, or a prompt without them, so those cache
+/// keys stay as they were.
 pub(crate) fn with_preset_question(
     task: Task,
     options: &SetupOptions,
     preset: &Preset,
 ) -> SetupOptions {
-    let typed = options
-        .question
-        .as_deref()
-        .is_some_and(|q| !q.trim().is_empty());
-    match preset.question.as_deref().map(str::trim) {
-        Some(kept) if task == Task::Analysis && !typed && !kept.is_empty() => SetupOptions {
-            question: Some(kept.to_string()),
-            ..options.clone()
-        },
-        _ => options.clone(),
+    let mut out = options.clone();
+    if task != Task::Analysis {
+        return out;
     }
+    let typed = |v: &Option<String>| v.as_deref().is_some_and(|q| !q.trim().is_empty());
+    let kept = |v: &Option<String>| {
+        v.as_deref()
+            .map(str::trim)
+            .filter(|k| !k.is_empty())
+            .map(str::to_string)
+    };
+    if !typed(&options.question)
+        && let Some(question) = kept(&preset.question)
+    {
+        out.question = Some(question);
+    }
+    if !typed(&options.themes)
+        && let Some(themes) = kept(&preset.themes)
+    {
+        out.themes = Some(themes);
+    }
+    out
 }
 
 /// A new job of set-ups already frozen, not yet recorded.

@@ -4,7 +4,13 @@
 import type { InputWarning } from './bindings/InputWarning.js';
 import type { Messages } from './i18n/index.js';
 
-export function warningText(w: InputWarning, m: Messages): string {
+/** A warning in words; `nameOf` gives the file name of a source a warning points at (the
+ * photograph a retake is the same page as). */
+export function warningText(
+	w: InputWarning,
+	m: Messages,
+	nameOf: (sourceId: string) => string = () => ''
+): string {
 	const pages = (list: number[]) =>
 		list.length > 6 ? `${list.slice(0, 6).join(', ')}…` : list.join(', ');
 	switch (w.kind) {
@@ -26,6 +32,10 @@ export function warningText(w: InputWarning, m: Messages): string {
 			return m.warning.long_recording(duration(w.minutes * 60_000, m), w.pieces);
 		case 'quiet_recording':
 			return m.warning.quiet_recording(w.mean_db);
+		case 'same_page':
+			return m.warning.same_page(nameOf(w.other), nameOf(w.source_id));
+		case 'blurred':
+			return m.warning.blurred(nameOf(w.source_id));
 	}
 }
 

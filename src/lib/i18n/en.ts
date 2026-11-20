@@ -143,7 +143,59 @@ export const en = {
 		keep: 'Keep this for my next interviews',
 		keptName: 'Name',
 		keptHint: 'You can change or delete it in Prompts.',
-		openPrompts: 'Open Prompts'
+		openPrompts: 'Open Prompts',
+		/** Said beside the cost when the transcript is too long to be read at once. */
+		inParts: (n: number) =>
+			`This interview is long: it will be read in ${n} parts, then brought together.`,
+		/** Under More choices: the researcher's own themes or interview guide. */
+		themes: 'Your own themes or interview guide',
+		themesHint:
+			'Optional. One theme per line. Each theme found says whether it comes from your list or from the interview, and a theme the interview does not take up is said to be missing.',
+		themesPlaceholder: 'For example:\nFirst customers\nHelp from the family\nSavings groups'
+	},
+	/** "Which of these speak of my question?": a project's documents read against one question,
+	 *  then filtered by the answer and kept or set aside by the researcher. */
+	screening: {
+		action: 'Which of these speak of my question?',
+		title: 'Which of these documents speak of my question?',
+		lede: 'Kalamu sends the text of each document, as you corrected it, to a model, which says whether it speaks of your question, why, and with which passages. A passage is kept only if its words are found in the document. “Unsure” is an honest answer the model may give.',
+		question: 'Your research question',
+		questionHint: 'In a sentence or two, as you would ask a colleague.',
+		questionPlaceholder:
+			'For example: what the market women asked of the town council, and how it answered, 1950 to 1960.',
+		documents: (n: number) =>
+			n === 1 ? '1 document will be read.' : `${n} documents will be read.`,
+		noText: (titles: string, n: number) =>
+			n === 1
+				? `Left out, not read into text yet: ${titles}. Read it first with New job.`
+				: `Left out, not read into text yet: ${titles}. Read them first with New job.`,
+		undecided: (titles: string) =>
+			`Left out, read more than once with no reading preferred: ${titles}. Choose one in the document first.`,
+		nothing:
+			'None of these documents has been read into text yet. Read them first with New job, then come back.',
+		model: (name: string, provider: string) => `Model: ${name} (${provider})`,
+		cost: (usd: string) => `Estimated cost: ${usd}`,
+		/** Said in place of the cost when a document is too long for the model chosen. */
+		tooLong: (file: string, model: string, words: string, most: string) =>
+			`${file} is too long for ${model}: about ${words} words, where it reads about ${most} at once. Choose another model under More choices.`,
+		more: 'More choices',
+		start: 'Start',
+		preparing: 'Getting the texts ready…',
+		jobName: (question: string) => `My question: ${question}`,
+		/** The filter of a project's documents by what an analysis answered. */
+		filter: 'Filter by an answer',
+		anyAnswer: 'Any answer',
+		answerCount: (answer: string, n: number) => `${answer} (${n})`,
+		group: (field: string, job: string) => `${field} · ${job}`,
+		exportTable: 'Export this table',
+		exported: 'Table exported, as a spreadsheet and as CSV.',
+		/** The researcher's decision, kept as a tag of the documents. */
+		keep: 'Keep',
+		setAside: 'Set aside',
+		keptTag: 'Kept',
+		setAsideTag: 'Set aside',
+		decided: (tag: string, n: number) =>
+			n === 1 ? `1 document tagged “${tag}”` : `${n} documents tagged “${tag}”`
 	},
 	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
 	cited: {
@@ -172,7 +224,23 @@ export const en = {
 				? '1 entry was left out: none of its quotations was found in the text.'
 				: `${n} entries were left out: none of their quotations was found in the text.`,
 		/** In the editor of the other answers, where quotations are not changed. */
-		inCards: 'Themes and quotations are changed in their cards, outside this editor.'
+		inCards: 'Themes and quotations are changed in their cards, outside this editor.',
+		/** Above the answers of a long interview read in parts. */
+		readInParts: (n: number) =>
+			`This interview was long: it was read in ${n} parts, then brought together.`,
+		/** A part that could not be read, by its minutes when the transcript has times. */
+		partNotRead: (from: string | null, to: string | null, first: number, last: number) =>
+			from && to
+				? `The part from ${from} to ${to} could not be read: its themes and quotations are missing.`
+				: from
+					? `The part from ${from} to the end could not be read: its themes and quotations are missing.`
+					: `Turns ${first} to ${last} could not be read: their themes and quotations are missing.`,
+		readAgain: 'Read it again',
+		readingAgain: 'The part is being read again.',
+		/** The menu of a passage selected in the transcript, and what it does. */
+		addQuotation: 'Add as a quotation',
+		quoteAdded: (title: string) => `Quotation added to “${title}”`,
+		addedByYou: 'Added by you'
 	},
 	units: {
 		tab: 'Items',
@@ -1445,7 +1513,26 @@ export const en = {
 		long_recording: (length: string, pieces: number) =>
 			`Long recording (${length}): it will be sent in ${pieces} pieces, cut at pauses. Speaker labels may differ from one piece to the next.`,
 		quiet_recording: (db: number) =>
-			`Very quiet recording (about ${db} dB): quiet speech may be missed. Evening out the volume usually helps.`
+			`Very quiet recording (about ${db} dB): quiet speech may be missed. Evening out the volume usually helps.`,
+		same_page: (first: string, second: string) => `${first} and ${second} look like the same page`,
+		blurred: (name: string) => `${name} looks blurred`,
+		/** The check of photographs against each other: retakes of one page, blurred photos. */
+		photos: {
+			checking: 'Looking for photos taken twice and blurred photos…',
+			sharper: (name: string) => `${name} is sharper. Sending both would pay for the page twice.`,
+			asSharp: 'Both look about as sharp. Sending both would pay for the page twice.',
+			blurredWhy: 'Blurred letters are often misread. Retake it if you can.',
+			stays: 'Leaving a photo out changes only this job’s list: the file stays on your computer.',
+			keepSharper: 'Keep the sharper one',
+			keepOnly: (name: string) => `Keep only ${name}`,
+			keepBoth: 'Keep both',
+			keepIt: 'Keep it',
+			leaveOut: 'Leave it out',
+			sharperMark: 'Sharper',
+			closeUp: (name: string) => `${name}, close-up`,
+			whole: (name: string) => `${name}, whole photo`,
+			leftOut: (name: string) => `${name} left out of this job`
+		}
 	},
 	tips: {
 		title: 'Tips for better results',
@@ -1689,6 +1776,7 @@ export const en = {
 			`Page ${n}, ${half === 'left' ? 'left' : 'right'} half`,
 		pageHalfShort: (n: number, half: 'left' | 'right') => `${n}${half === 'left' ? 'l' : 'r'}`,
 		passage: (n: number) => `Passage ${n}`,
+		turns: (n: number, first: number, last: number) => `Part ${n} (turns ${first}–${last})`,
 		segment: (label: string) => `From ${label}`,
 		document: 'Whole document',
 		video: 'Whole video',
@@ -2048,6 +2136,9 @@ export const en = {
 		question: 'What is your research about?',
 		questionHint:
 			'Optional. Sent with each document, so you write it once for all your interviews. A description typed in Analyse this interview replaces it.',
+		themes: 'Your own themes or interview guide',
+		themesHint:
+			'Optional. One theme per line, sent with each document. Themes typed in Analyse this interview replace them.',
 		mergeInstructions: 'Instructions for combining the pages',
 		dense: 'Pages full of text',
 		denseHint:
@@ -2700,6 +2791,7 @@ export const en = {
 		'cited.no_quotation': 'This quotation is no longer in the answers. Look at them again.',
 		'cited.no_field': 'This field is not one of the entry’s.',
 		'cited.not_a_choice': 'Choose one of the field’s values, or leave it empty.',
+		'cited.not_in_turn': 'Select a passage within one turn of the transcript.',
 		'cited.invented':
 			'Only quotations Kalamu found word for word in the text can be kept: this one is not among them.',
 		'prompt.few_values': 'A choice needs at least two values to choose from.',

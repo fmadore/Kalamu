@@ -486,6 +486,7 @@ fn a_proposal_two_groups_reach_is_listed_once() {
         options: SetupOptions::default(),
         merge: None,
         pages_cap: None,
+        windows: None,
     };
     let job = Job {
         id: JobId::new(),

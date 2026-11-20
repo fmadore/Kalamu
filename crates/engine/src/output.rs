@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use kalamu_core::{
-    ExportError, ExportFormat, Job, JobId, OutputDestination, PieceState, PieceStatus,
+    ExportError, ExportFormat, Job, JobId, OutputDestination, PieceRef, PieceState, PieceStatus,
     ProgressEvent, Setup, SetupId, SourceFile, SourceId, Task,
 };
 
@@ -31,7 +31,12 @@ impl Engine {
                 p.status.is_finished()
                     || (p.status == PieceStatus::Failed && job.task != Task::Contents)
             };
-            if mine.iter().all(settled) && mine.iter().any(|p| p.status.is_finished()) {
+            // A text read in parts has nothing to write until they are brought together.
+            let together = !mine.iter().any(|p| p.piece.is_window())
+                || mine
+                    .iter()
+                    .any(|p| p.piece == PieceRef::Whole && p.status.is_finished());
+            if together && mine.iter().all(settled) && mine.iter().any(|p| p.status.is_finished()) {
                 match self.write_each_output(job, names, setup.id, source_id) {
                     Ok((files, problems)) => {
                         self.emit(ProgressEvent::SourceExported {

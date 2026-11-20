@@ -225,7 +225,9 @@ impl Engine {
                                 let stem = crate::source_stem(&source.file_name, "page");
                                 let passage =
                                     lines.as_ref().and_then(|l| l.passage(&state.piece, &stem));
-                                let cite = quotable.as_ref().and_then(|q| q.call(&setup, &stem));
+                                let cite = quotable
+                                    .as_ref()
+                                    .and_then(|q| q.call(&setup, &state.piece, &stem));
                                 let input = match (passage, cite) {
                                     (Some(passage), _) => Input::Lines(passage),
                                     (None, Some(cite)) => Input::Cited(cite),
@@ -284,6 +286,25 @@ impl Engine {
             if job.task == Task::Contents && !stopped {
                 for setup in job.setups.iter().filter(|s| !batched.contains(&s.id)) {
                     match self.merge_pages(&job, source, setup, &spent, &stop).await? {
+                        Outcome::Finished => {}
+                        Outcome::Interrupted => interrupted = true,
+                        Outcome::Failed => failed = true,
+                        Outcome::Fatal(message) => {
+                            stop_for(&control, job_id, &message);
+                            failed = true;
+                        }
+                    }
+                }
+            }
+
+            // A long text read in parts: bring the parts of each set-up together.
+            if let Some(text) = quotable.as_ref().filter(|_| !stopped) {
+                for setup in job.setups.iter().filter(|s| text.parts(s).is_some()) {
+                    let how = crate::windows::BringTogether { source, setup };
+                    match self
+                        .second_step(&job, source, setup, &spent, &stop, &how)
+                        .await?
+                    {
                         Outcome::Finished => {}
                         Outcome::Interrupted => interrupted = true,
                         Outcome::Failed => failed = true,

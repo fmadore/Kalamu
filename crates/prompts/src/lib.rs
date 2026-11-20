@@ -5,6 +5,7 @@
 //! resetting deletes the override. User presets are one JSON file each in the presets folder.
 
 mod beside;
+mod consolidation;
 mod defaults;
 mod dictionary;
 mod folder;
@@ -17,6 +18,7 @@ mod workflow_file;
 mod workflows;
 
 pub use beside::markdown_beside;
+pub use consolidation::CONSOLIDATION_REQUEST;
 pub use dictionary::DICTIONARY_MERGES;
 pub use pipelines::{Pipeline, PipelineLibrary};
 pub use profiles::{ProfileFile, ProfileLibrary};
@@ -84,6 +86,13 @@ pub struct Preset {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub question: Option<String>,
+    /// For an analysis, the researcher's own themes or interview guide, one per line, kept with
+    /// the prompt beside the question and sent as a set-up's own themes would be
+    /// (`SetupOptions::themes`), which replace them when the set-up has some. Left out when
+    /// empty, so files written before it read unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub themes: Option<String>,
 }
 
 #[derive(Debug, Error)]
@@ -287,6 +296,11 @@ impl PromptLibrary {
             .take()
             .map(|q| q.trim().to_string())
             .filter(|q| !q.is_empty() && preset.task == Task::Analysis);
+        preset.themes = preset
+            .themes
+            .take()
+            .map(|t| t.trim().to_string())
+            .filter(|t| !t.is_empty() && preset.task == Task::Analysis);
         if preset.id.is_empty() {
             preset.id = new_user_id();
         }
@@ -395,6 +409,7 @@ fn builtin(d: &defaults::Default) -> Preset {
         dense: Some(d.dense),
         made_for: d.made_for,
         question: None,
+        themes: None,
     }
 }
 

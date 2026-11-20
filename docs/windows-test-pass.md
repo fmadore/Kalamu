@@ -332,6 +332,24 @@ Chrome where you are signed in.
   and the handwriting against Hydrogen's.
 - [ ] **F15. EmbeddingGemma 2 on a graphics processor**, with F10's PC: B10's project prepared
   there; the same questions give the same first passages as on the processor.
+- [ ] **F16. A long interview in parts**: a transcript of two hours analysed with a cloud
+  model whose limit it passes, and with Gemma 4 E2B on the computer. Before Start the dialog
+  says in how many parts it will be read; the cost against the estimate; the themes brought
+  together name each quotation once; no quotation is left with words the transcript does not
+  have. Then with your own themes under *More choices*: each theme says where it comes from,
+  and one the interview never takes up is listed as not found.
+- [ ] **F17. A quotation of your own**: in F16's review, a passage selected in the transcript,
+  **Add as a quotation**, the theme chosen. It shows as added by you, goes into the memo and
+  the quotations table (`added_by`), and Undo takes it back.
+- [ ] **F18. Which documents speak of my question**: in a project of twenty documents already
+  read, some of them on your question and some not, **Which of these speak of my question?**
+  with a cloud model. Note the answers you agree with, the passages against the pages they
+  name, and the cost against the estimate. Filter by answer, **Keep** and **Set aside**,
+  **Export this table** and open the `.xlsx`.
+- [ ] **F19. Photographs taken twice and blurred**: a real batch from a reading room, 100
+  photographs or more, added to New job. Note how long the check takes, each pair it calls
+  the same page and each photograph it calls blurred against what you see, and what it
+  missed. Nothing is sent for this step.
 
 ## Results
 

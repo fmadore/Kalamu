@@ -129,11 +129,20 @@ impl Engine {
             if let Some(quotable) = quotable.filter(|_| crate::cited::cites(setup)) {
                 fixes.push(quotable.fix().to_string());
             }
-            for (index, piece) in pieces.iter().enumerate() {
+            // A text too long for this set-up's model is read in parts, then brought together.
+            let parts = quotable
+                .filter(|_| crate::cited::cites(setup))
+                .and_then(|q| q.parts(setup))
+                .map(|mut parts| {
+                    parts.push(PieceRef::Whole);
+                    parts
+                });
+            let in_parts = parts.is_some();
+            for (index, piece) in parts.as_deref().unwrap_or(pieces).iter().enumerate() {
                 let index = index as u32;
                 // The combining step's key depends on the pages' results: it is worked out
-                // once they are read (`merge_pages`).
-                if job.task == Task::Contents && *piece == PieceRef::Whole {
+                // once they are read (`second_step`).
+                if (job.task == Task::Contents || in_parts) && *piece == PieceRef::Whole {
                     if !existing.contains_key(&(setup.id, source.id, index)) {
                         rows.push(pending(job, setup, source, index, piece, None));
                     }

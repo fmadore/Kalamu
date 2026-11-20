@@ -33,6 +33,8 @@ export function pieceLabel(piece: PieceRef, m: Messages, online = false): string
 			return online ? m.review.video : m.review.document;
 		case 'passage':
 			return m.review.passage(piece.number);
+		case 'turns':
+			return m.review.turns(piece.number, piece.first, piece.last);
 		case 'segment':
 			return m.review.segment(clock(piece.start_ms));
 	}

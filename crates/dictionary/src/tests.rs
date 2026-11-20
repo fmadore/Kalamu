@@ -132,6 +132,7 @@ impl Fixture {
                 options: SetupOptions::default(),
                 merge: None,
                 pages_cap: None,
+                windows: None,
             })
             .collect();
         let job = Job {

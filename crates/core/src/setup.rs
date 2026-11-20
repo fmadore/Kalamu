@@ -64,21 +64,50 @@ pub struct SetupOptions {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub question: Option<String>,
+    /// The researcher's own themes or interview guide, one per line, for an analysis whose
+    /// themes say whether each comes from the guide or emerged from the document: added to the
+    /// request after the question, so other themes are another analysis. Left out when empty,
+    /// so cache keys made before it existed stay valid.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub themes: Option<String>,
 }
 
 /// Introduces the researcher's question in the request.
 pub const QUESTION_INTRO: &str = "The researcher's work, in their own words:";
+/// Introduces the researcher's own themes in the request.
+pub const THEMES_INTRO: &str = "The researcher's own themes or interview guide, one per line:";
 
 impl SetupOptions {
-    /// The request sent with each document with the researcher's question after it, when
-    /// there is one: what an analysis asks of every document.
+    /// The request sent with each document with the researcher's question and their own
+    /// themes after it, when there are any: what an analysis asks of every document.
     pub fn with_question(&self, request: &str) -> String {
-        match self.question.as_deref().map(str::trim) {
+        let mut out = match self.question.as_deref().map(str::trim) {
             Some(question) if !question.is_empty() => {
                 format!("{request}\n\n{QUESTION_INTRO} {question}")
             }
             _ => request.to_string(),
+        };
+        let themes = self.theme_lines();
+        if !themes.is_empty() {
+            out.push_str(&format!("\n\n{THEMES_INTRO}"));
+            for theme in themes {
+                out.push_str(&format!("\n- {theme}"));
+            }
         }
+        out
+    }
+
+    /// The researcher's themes, one each, trimmed, without empty lines, list marks or repeats.
+    pub fn theme_lines(&self) -> Vec<String> {
+        let mut out: Vec<String> = Vec::new();
+        for line in self.themes.as_deref().unwrap_or("").lines() {
+            let theme = line.trim().trim_start_matches(['-', '*', '•']).trim();
+            if !theme.is_empty() && !out.iter().any(|o| o.eq_ignore_ascii_case(theme)) {
+                out.push(theme.to_owned());
+            }
+        }
+        out
     }
 
     /// The names and words to spell, one each, trimmed, without empty ones or repeats.
@@ -135,6 +164,8 @@ pub struct Setup {
     pub options: SetupOptions,
     /// For a table of contents, the second step: the model that combines the pages' readings,
     /// which may be another provider's (a large model reads the pages, a small one combines).
+    /// For an analysis read in parts (`windows`), the step that brings the parts together, on
+    /// the set-up's own model.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub merge: Option<MergeStep>,
@@ -145,9 +176,17 @@ pub struct Setup {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub pages_cap: Option<u32>,
+    /// For an analysis that cites a text too long for its model to read at once, how the text
+    /// is read in parts of whole turns before `merge` brings them together: settled when the
+    /// job is created from the catalogue's limit. `None` when every text fits, and in jobs
+    /// made before texts were read in parts, which read each text whole.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub windows: Option<crate::analysis::cited::TurnWindows>,
 }
 
-/// A table of contents' second step: one call per document, over the first step's readings.
+/// A second step, one call per document over the first step's answers: a table of contents'
+/// pages combined into entries, or a long text's parts brought together.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct MergeStep {
@@ -208,6 +247,29 @@ mod tests {
             ["Samory Touré", "Ouagadougou", "Bobo-Dioulasso"]
         );
         assert!(SetupOptions::default().vocabulary_terms().is_empty());
+    }
+
+    #[test]
+    fn the_researchers_themes_follow_the_question_one_per_line() {
+        let options = SetupOptions {
+            question: Some("Le port".into()),
+            themes: Some("- Les débuts\n\n  • la tontine \nles débuts\n".into()),
+            ..SetupOptions::default()
+        };
+        assert_eq!(options.theme_lines(), ["Les débuts", "la tontine"]);
+        assert_eq!(
+            options.with_question("Read it."),
+            format!(
+                "Read it.\n\n{QUESTION_INTRO} Le port\n\n{THEMES_INTRO}\n- Les débuts\n- la tontine"
+            )
+        );
+        // None typed: the request as it always was.
+        assert_eq!(
+            SetupOptions::default().with_question("Read it."),
+            "Read it."
+        );
+        let json = serde_json::to_string(&SetupOptions::default()).unwrap_or_default();
+        assert!(!json.contains("themes"), "{json}");
     }
 
     /// Jobs and cache keys made before the names and the translation existed read the same.

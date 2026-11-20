@@ -16,6 +16,7 @@ import type { QueueView } from '../bindings/QueueView.js';
 import type { SourceFile } from '../bindings/SourceFile.js';
 import { FIELDS, kept, type Draft } from '../described.js';
 import { dictionaryCommand } from './mockDictionary.js';
+import { screeningChoices, screeningCommand } from './mockScreening.js';
 
 export const PROJECT_ID = '00000000-0000-0000-0000-0000000000p1';
 export const DOCUMENT_ID = '00000000-0000-0000-0000-0000000000d1';
@@ -213,7 +214,8 @@ function view(id: string): ProjectView {
 			};
 		}),
 		tags: tagsOf(mine),
-		jobs: [...new Set(links.filter(([d]) => mine.some((m) => m.id === d)).map(([, j]) => j))]
+		jobs: [...new Set(links.filter(([d]) => mine.some((m) => m.id === d)).map(([, j]) => j))],
+		choices: screeningChoices(mine)
 	};
 }
 
@@ -435,7 +437,15 @@ export function projectCommand(cmd: string, a: Record<string, unknown>): unknown
 		case 'detach_job':
 		case 'merge_documents':
 			return [];
-		default:
-			return dictionaryCommand(cmd, a);
+		default: {
+			const screened = screeningCommand(
+				cmd,
+				a,
+				documents,
+				(id) => links.some(([d]) => d === id),
+				() => jobs[2]
+			);
+			return screened === undefined ? dictionaryCommand(cmd, a) : screened;
+		}
 	}
 }

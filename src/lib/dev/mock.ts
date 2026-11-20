@@ -20,7 +20,8 @@ import { collectionsOf } from './mockProjects.js';
 import { queueCommand } from './mockQueue.js';
 import { analysisJob, audioJob, job, recording, source, summaries, video } from './mockJobs.js';
 import { jobCommand, keptPiece } from './mockJobCommand.js';
-import { interviewCommand, interviewTooLong } from './mockInterview.js';
+import { interviewCommand } from './mockInterview.js';
+import { interviewLength } from './mockInterviewLong.js';
 import { passageCommand } from './mockPassages.js';
 import { regionCommand } from './mockDrawn.js';
 import { regionReadingCommand } from './mockRegionReadings.js';
@@ -28,6 +29,7 @@ import { presetCommand, samplePipelines } from './mockPresets.js';
 import { seedWorkflows, workflowCommand } from './mockWorkflows.js';
 import { unitCommand } from './mockUnits.js';
 import { mockImageDocument, PHOTO_FOLDER, PHOTOS } from './mockPages.js';
+import { photoCommand, READING_ROOM, READING_ROOM_PHOTOS } from './mockPhotos.js';
 
 const catalog = catalogJson as unknown as Catalog;
 /** The engine's rules for the bundled catalogue, written by `cargo test`. */
@@ -144,6 +146,8 @@ export function installMock(): void {
 		if (interview !== undefined) return interview;
 		const jobAnswer = jobCommand(cmd, a);
 		if (jobAnswer !== undefined) return jobAnswer;
+		const photoAnswer = photoCommand(cmd, a);
+		if (photoAnswer !== undefined) return photoAnswer;
 		switch (cmd) {
 			case 'app_info':
 				return {
@@ -273,7 +277,7 @@ export function installMock(): void {
 						usd: s.provider === 'mistral' ? null : 0.42,
 						economy_usd: s.provider === 'mistral' ? null : 0.21
 					},
-					too_long: interviewTooLong(request, s, catalog)
+					...interviewLength(request, s, catalog)
 				}));
 				const total = (economy: boolean) =>
 					rows.reduce<number | null>((sum, r) => {
@@ -307,7 +311,9 @@ export function installMock(): void {
 				const kind = (p: string) => kinds[ext(p) ?? ''] ?? null;
 				const kept = (p: string) => !ext(p) || reads.some((k) => k === kind(p));
 				// The sample folder of photographs is walked into its images.
-				const paths = (a.paths as string[]).flatMap((p) => (p === PHOTO_FOLDER ? PHOTOS : [p]));
+				const paths = (a.paths as string[]).flatMap((p) =>
+					p === PHOTO_FOLDER ? PHOTOS : p === READING_ROOM ? READING_ROOM_PHOTOS : [p]
+				);
 				return {
 					paths: paths.filter(kept),
 					refused: paths
@@ -408,7 +414,8 @@ export function installMock(): void {
 			}
 			case 'plugin:dialog|open':
 				// A folder of photographs when the picker asks for a folder.
-				if (JSON.stringify(a).includes('"directory":true')) return PHOTO_FOLDER;
+				if (JSON.stringify(a).includes('"directory":true'))
+					return params.has('photos') ? READING_ROOM : PHOTO_FOLDER;
 				// Recordings when the picker asks for them, documents otherwise.
 				if (JSON.stringify(a).includes('m4a'))
 					return [

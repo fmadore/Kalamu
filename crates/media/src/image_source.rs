@@ -153,7 +153,11 @@ impl ImageSource {
     }
 
     /// Page `number` decoded, turned upright and cut to the half asked for.
-    fn upright(&self, number: u32, half: Option<PageHalf>) -> Result<DynamicImage, MediaError> {
+    pub(crate) fn upright(
+        &self,
+        number: u32,
+        half: Option<PageHalf>,
+    ) -> Result<DynamicImage, MediaError> {
         if !self.is_decodable() {
             return Err(MediaError::NeedsConversion(format!(
                 "This model does not accept {} images and they cannot be converted yet. Convert \

@@ -66,7 +66,16 @@ impl Engine {
         let mut lines_changed = Vec::new();
         let mut listed_by_hand = Vec::new();
         let mut cited = Vec::new();
+        // A long text read in parts writes what brought them together, and names the parts
+        // that could not be read after it.
+        let windowed = states.iter().any(|s| s.piece.is_window());
+        let mut unread = Vec::new();
         for state in &states {
+            if state.piece.is_window() && state.status == PieceStatus::Failed {
+                failed.push(state.index + 1);
+                unread.push(state);
+                continue;
+            }
             // A piece that failed after its retries is marked in its place, so the rest of the
             // document still reaches the researcher (a table of contents has only its entries).
             if state.status == PieceStatus::Failed && job.task != Task::Contents {
@@ -107,7 +116,8 @@ impl Engine {
             };
             // A table of contents exports its combined entries; its pages count in the usage,
             // the cost and the model versions, as the reading they are.
-            let combined = job.task == Task::Contents && state.piece == PieceRef::Whole;
+            let stepped = job.task == Task::Contents || windowed;
+            let combined = stepped && state.piece == PieceRef::Whole;
             usage.add(&result.output.usage);
             add_cost(&mut cost, result.cost_usd);
             if combined {
@@ -138,7 +148,7 @@ impl Engine {
                     versions.insert(v.clone());
                 }
             }
-            if job.task == Task::Contents && !combined {
+            if stepped && !combined {
                 continue;
             }
             if let Some(lang) = &result.output.detected_language {
@@ -215,7 +225,10 @@ impl Engine {
             } else {
                 let previous_end = parts.last().and_then(|p: &ExportPart| match p.piece {
                     PieceRef::Segment { end_ms, .. } => Some(end_ms),
-                    PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => None,
+                    PieceRef::Page { .. }
+                    | PieceRef::Whole
+                    | PieceRef::Passage { .. }
+                    | PieceRef::Turns { .. } => None,
                 });
                 let renamed = rename_segments(&result.output.segments, speaker_names);
                 absolute(&state.piece, &renamed, previous_end)
@@ -253,6 +266,31 @@ impl Engine {
                     .map(|c| c.updated_at),
                 researcher,
             });
+        }
+
+        if !unread.is_empty() {
+            let text = self.quotable_text(&source).ok();
+            for state in unread {
+                let part = text
+                    .as_ref()
+                    .map_or_else(|| state.piece.label(), |t| t.part_name(&state.piece));
+                let error = state.error.clone().unwrap_or_default();
+                parts.push(ExportPart {
+                    piece: state.piece.clone(),
+                    text: String::new(),
+                    segments: Vec::new(),
+                    corrected: false,
+                    reviewed: false,
+                    rows_corrected: Vec::new(),
+                    fields: Vec::new(),
+                    regions: Vec::new(),
+                    failed: Some(format!("{part}: {error}")),
+                    drawn_dpi: None,
+                    read_at: None,
+                    corrected_at: None,
+                    researcher: Default::default(),
+                });
+            }
         }
 
         // Offline engines are the providers that need no key.
@@ -300,15 +338,19 @@ impl Engine {
             model_versions: versions.into_iter().collect(),
             request,
             prompt: ProvenancePrompt::from_snapshot(&setup.prompt),
-            merge: setup.merge.as_ref().map(|m| ProvenanceMerge {
-                provider: m.provider.clone(),
-                model: m.model.clone(),
-                model_versions: merge_versions.into_iter().collect(),
-                request: merge_request,
-                prompt: ProvenancePrompt::from_snapshot(&m.prompt),
-                usage: merge_usage,
-                cost_usd: merge_cost,
-            }),
+            merge: setup
+                .merge
+                .as_ref()
+                .filter(|_| job.task == Task::Contents || windowed)
+                .map(|m| ProvenanceMerge {
+                    provider: m.provider.clone(),
+                    model: m.model.clone(),
+                    model_versions: merge_versions.into_iter().collect(),
+                    request: merge_request,
+                    prompt: ProvenancePrompt::from_snapshot(&m.prompt),
+                    usage: merge_usage,
+                    cost_usd: merge_cost,
+                }),
             languages: job.settings.languages.clone(),
             detected_languages: detected.into_iter().collect(),
             options: setup.options.clone(),
@@ -415,7 +457,10 @@ fn gather(into: &mut Vec<RequestSetting>, settings: &[RequestSetting]) {
 fn absolute(piece: &PieceRef, segments: &[Segment], previous_end: Option<u64>) -> Vec<Segment> {
     let offset = match piece {
         PieceRef::Segment { start_ms, .. } => *start_ms,
-        PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => 0,
+        PieceRef::Page { .. }
+        | PieceRef::Whole
+        | PieceRef::Passage { .. }
+        | PieceRef::Turns { .. } => 0,
     };
     let repeated_until = previous_end.filter(|end| *end > offset);
     segments

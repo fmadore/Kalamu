@@ -17,7 +17,10 @@ pub fn timeline(doc: &ExportDocument) -> Vec<Segment> {
     for part in &doc.parts {
         let offset = match part.piece {
             PieceRef::Segment { start_ms, .. } => start_ms,
-            PieceRef::Page { .. } | PieceRef::Whole | PieceRef::Passage { .. } => 0,
+            PieceRef::Page { .. }
+            | PieceRef::Whole
+            | PieceRef::Passage { .. }
+            | PieceRef::Turns { .. } => 0,
         };
         if part.segments.is_empty() {
             out.extend(segments_from_text(&part.text, offset));

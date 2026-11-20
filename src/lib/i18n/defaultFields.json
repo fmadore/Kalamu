@@ -203,9 +203,32 @@
               "type": "text"
             },
             "reason": false
+          },
+          {
+            "key": "origin",
+            "label": "Origin",
+            "instructions": "Where the theme comes from: the researcher's own guide, listed in the request, or the interview itself. Without a guide, always the interview.",
+            "kind": {
+              "type": "choice",
+              "values": [
+                "The researcher's guide",
+                "The interview"
+              ]
+            },
+            "reason": false
           }
         ],
         "max": 8
+      },
+      "reason": false
+    },
+    {
+      "key": "guide_themes_not_found",
+      "label": "Guide themes not found",
+      "instructions": "The themes of the researcher's guide that the interview does not take up, as the guide words them. Empty when the request lists no guide.",
+      "kind": {
+        "type": "list",
+        "max": null
       },
       "reason": false
     },
@@ -320,6 +343,43 @@
             "reason": false
           }
         ]
+      },
+      "reason": false
+    }
+  ],
+  "analysis.screening": [
+    {
+      "key": "relevance",
+      "label": "Relevance",
+      "instructions": "Whether the document speaks of the researcher's question, following the instructions above.",
+      "kind": {
+        "type": "choice",
+        "values": [
+          "Relevant",
+          "Partly relevant",
+          "Not relevant",
+          "Unsure"
+        ]
+      },
+      "reason": false
+    },
+    {
+      "key": "reason",
+      "label": "Reason",
+      "instructions": "Why, in one or two sentences, in {languages}.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "passages",
+      "label": "Passages",
+      "instructions": "The passages that speak of the question, the most telling first; none when the document does not speak of it.",
+      "kind": {
+        "type": "cited",
+        "fields": [],
+        "max": 3
       },
       "reason": false
     }
