@@ -24,6 +24,11 @@ happened. A screenshot of anything odd costs nothing.
 - [ ] **A test folder**, `Downloads\kalamu-test-pass`, with the sample files unzipped into
   `samples`, and for the records part a few pages of a real directory and a real register.
   Everything the pass writes goes there.
+- [ ] **An interview of yours**, an hour or so, with its recording if you have it, for C9 and
+  F12: the sample `interview.wav` lasts 20 seconds, too short for themes. And **a long text**,
+  over 12,000 words in one `.txt` file, for B15.
+- [ ] **Room for the models on the computer**: EmbeddingGemma 2 (310 MB) for B10, and Gemma 4
+  E2B (4.3 GB, about 5 GB of free memory while it runs) for B15 and F12.
 - [ ] **Keys**, each with a low spending cap, pasted by you into Settings → API keys: Gemini
   and Mistral for Parts B to E, OpenAI and Claude as well for Part F.
 - [ ] **A spreadsheet** (Excel or LibreOffice Calc), and for Part D **Narrator**
@@ -104,7 +109,7 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER` set to a folder that does not exist. A native message
   says why Kalamu cannot start and names the logs folder; Kalamu ends.
 
-## Part B: written since 1.8.0, without a key (1 hour 30)
+## Part B: written since 1.8.0, without a key (3 hours)
 
 - [ ] **B1. PAGE XML**: on A2's Tesseract job, write *PAGE XML* among the formats. One
   `.pNNNN.page.xml` per page appears beside the ALTO file; each is well formed, names its page's
@@ -133,13 +138,41 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   page before starting; the results are one document, its pages in the order chosen.
 - [ ] **B8. The newest models**: in New job, OpenAI's default is GPT-6.2 Sol, and GPT-6.2 Astra
   is offered; GPT-6.1 Sol and GPT-6 Astra are not, but a saved pipeline that names one still
-  shows it, marked, with its replacement a click away. Listing models by tier works across
+  shows it, marked, with its replacement a click away. Gemini 4 Neon is listed between Hydrogen,
+  still Gemini's default, and Carbon, and marked costly. Listing models by tier works across
   providers.
 - [ ] **B9. The look of small things**: an error message beside a correction in blue and a
   highlighted match are told apart at a glance; an empty value in a table reads as empty, and
   the apparatus of a comparison keeps its bracket and colon.
+- [ ] **B10. Search by meaning, on the computer**: in Settings → Offline, download
+  EmbeddingGemma 2. In B3's project, Search → *Meaning*, choose it and *Prepare the text*: the
+  estimate says it costs nothing, no consent is asked, and the progress shows. Pause it part
+  way, close and reopen Kalamu, and go on: it goes on where it stopped. Ask in your own words
+  for something a page speaks of without using its words, and once in French: passages are
+  listed with their documents, and each opens where it stands. *Words* is still what Search
+  opens on, and still works. Note how long preparing took.
+- [ ] **B11. The map**: the project's *Map* shows one point per document, grouped by collection
+  or by tag; choosing a point lists its nearest documents beside it, and the list is reached
+  and read from the keyboard. Before the text is prepared, the screen says what to do first.
+- [ ] **B12. A region of your own**: on a Tesseract review, nothing new shows until *Show
+  regions*. Then *Draw a region*: drag a box on the scan, write what is there; move it, resize
+  it, remove it and bring it back with Undo. A slip (a click with no drag) keeps nothing and
+  shows no error; Escape leaves the drawing. Close and reopen the review: the region is there.
+  The same in the review of an analysis and of a table of contents.
+- [ ] **B13. A model's region moved**: move and resize one of Tesseract's blocks; *Put back the
+  model's box* returns it to where Tesseract placed it.
+- [ ] **B14. A region read again, and the exports**: on a region you drew, *Read this region
+  again…* with Tesseract: the dialog shows the part to be read and what it costs (nothing, on
+  the computer), and the answer is a proposal; use it, then undo it. Write ALTO, PAGE XML and
+  the searchable PDF: your region and the block you moved are in them, where you put them, and
+  the PDF's text is found there by searching it.
+- [ ] **B15. A text too long for the model**: with Gemma 4 E2B downloaded, New job → Analyse
+  texts with the long `.txt`, the prompt *Interview: themes and quotations* and Gemma 4 E2B.
+  Start is refused with a sentence that says the text is too long for the model chosen, and no
+  job is made; nothing ran. With a cloud model in its place the job starts (stop it at once,
+  or leave this half for Part C).
 
-## Part C: with a Gemini or Mistral key (1 hour 30)
+## Part C: with a Gemini or Mistral key (3 hours)
 
 Cents in all. Each first send to a provider shows the consent dialog, which the brief agrees
 to for the sample files.
@@ -171,6 +204,43 @@ to for the sample files.
   accept one and refuse one; nothing changes until accepted. With a field of a few hundred rows
   (only with a larger corpus of yours), note whether names far apart in the alphabet are
   proposed together (a surname first and last, initials, two transliterations).
+- [ ] **C9. Analyse this interview**: transcribe your interview with a cloud model that labels
+  speakers, name the speakers, then *Use this text in a new job* → **Analyse this interview**.
+  One box, the model and its cost in one line, one button; type a sentence about the research,
+  tick *Keep this for my next interviews*, and Start. The review shows a summary, themes,
+  keywords and passages worth quoting, each theme a card with its quotations, their speaker
+  and time. **Listen** opens the transcript at that turn and plays it. Read five quotations
+  against the transcript: each is there word for word, said by the speaker named. Note how many
+  quotations the result says were left out. Edit an entry, remove a quotation and an entry,
+  and undo each. Open the dialog on another transcription: the description kept is offered.
+  Note the cost against the estimate, and whether the themes are of use to you. Then open the
+  dialog once more and, under *More choices*, choose Gemma 4 E2B: when the transcript is over
+  about 11,000 words, a sentence where the cost was says it is too long for that model, with
+  how many words each holds, and Start is off; choosing a cloud model brings both back. The
+  same in French.
+- [ ] **C10. The interview's files**: the Markdown memo names each quotation's speaker and
+  time, the `.json` gives each quotation's place, and `.analysis.quotations.csv` has one row
+  per quotation. A quotation you removed is in none of them.
+- [ ] **C11. A passage corrected by a model**: in a text review, select a sentence, right-click
+  and *Correct with a model…*; the dialog names the model, what is sent and the cost. The
+  answer is shown against the selection: accept one, edit one before accepting, discard one,
+  and undo an accepted one. While a model answers, Escape stops the wait and leaves the dialog
+  open, saying an answer on its way may still be charged; a second Escape closes it. The job's
+  cost has risen by the passage's.
+- [ ] **C12. An item added to a list**: in C8's analysis review, add a name the model missed to
+  a list field. It is marked as yours, and it is in the `.csv`, the project's dictionary and
+  the project's search.
+- [ ] **C13. Search by meaning with a cloud model**: in a second project holding the same
+  documents, Search → *Meaning* with Gemini Embedding 2 or Mistral Embed. Before anything is
+  sent, the estimate shows and a dialog names the provider and what is sent, for this project
+  and this model; refuse it once (nothing is sent), then agree. Ask B10's questions: note
+  whether the first passages are the same as EmbeddingGemma 2's. The cost kept after preparing
+  is near the estimate.
+- [ ] **C14. A region read again by a cloud model**: on `dodington-1755.jpg`, draw a region
+  round two lines of handwriting and *Read this region again…* with a Gemini or Mistral model:
+  the dialog shows the part cut from the page and its cost; the answer reads those lines only.
+  On a model's own region, the answer takes the place of that region's words in the page's
+  text; undo it. The page's own reading is unchanged throughout.
 
 ## Part D: keyboard and Narrator (30 minutes)
 
@@ -185,8 +255,15 @@ Claude does each from the keyboard; the Narrator half (D6) is yours.
 - [ ] **D4. What to check from the keyboard**: draw a sample, type a seed, keep an item aside
   with a note, open an item's review and come back with Back, all without the pointer.
 - [ ] **D5. The sidebar's Resume** from the keyboard (with A3).
-- [ ] **D6. With Narrator on** (yours): D1 to D5, the job's menu and a name's menu; each
-  control is named and its state read out; a region is read with its text.
+- [ ] **D6. With Narrator on** (yours): D1 to D5 and D7, the job's menu and a name's menu; each
+  control is named and its state read out; a region is read with its text; a proposal (a
+  passage's, a region's) is announced when it arrives.
+- [ ] **D7. The newest screens from the keyboard**: draw a region with *Draw a region* pressed
+  twice, move and resize it with the arrows, write its text, remove it and undo; open the
+  passage menu on a selection with the menu key or Shift+F10; in an interview's review, reach
+  each card, *Listen* and a quotation's *Remove*, and undo from the message that follows; in
+  Search, change between *Words* and *Meaning*. Nothing needs the pointer, and the focus is
+  never lost.
 
 ## Part E: exports in a spreadsheet (15 minutes)
 
@@ -199,8 +276,10 @@ Claude does each from the keyboard; the Narrator half (D6) is yours.
 - [ ] **E3. A records `.csv`**: `corrected` is set on every row of a corrected page, as
   [formats.md](formats.md) says. Note whether the changed rows alone would serve better: also
   to decide.
+- [ ] **E4. The quotations `.csv`** of C10 opened in the spreadsheet: one row per quotation,
+  accents and quotation marks whole, the times readable.
 
-## Part F: live runs with real keys (2 hours, mostly waiting)
+## Part F: live runs with real keys (3 hours, mostly waiting)
 
 A few dollars at most. The providers' own pages are yours to look at, or Claude's through
 Chrome where you are signed in.
@@ -235,6 +314,21 @@ Chrome where you are signed in.
   recording, with the seconds a page took shown in Settings.
 - [ ] **F11. An answer stopped by a filter**, if one occurs: the review and the error say it
   was the provider's filter, not the output limit. Do not try to provoke one.
+- [ ] **F12. The interview analysis, model by model**: your interview analysed by each
+  provider's default model (Gemini, OpenAI, Claude, Mistral) and by Gemma 4 E2B on the
+  computer, as five jobs or one job of several set-ups. For each, note the quotations given,
+  those left out as found nowhere, the cost against the estimate, and whether the themes are of
+  use. An hour's interview is near what Gemma reads at once: note whether it is refused before
+  Start, and how long it takes if not.
+- [ ] **F13. Search by meaning, each cloud model**: prepare a small project with Gemini
+  Embedding 2, with one of OpenAI's two and with Mistral Embed, each in a project of its own.
+  For each, the cost kept against the estimate, and against the provider's own usage page;
+  whether Gemini's cost shows at all (its answer may not say the tokens billed); and whether
+  Mistral refuses a call as too large (its limit for one call is a guess).
+- [ ] **F14. Gemini 4 Neon on real pages**: with F7's two files, the cost near the estimate,
+  and the handwriting against Hydrogen's.
+- [ ] **F15. EmbeddingGemma 2 on a graphics processor**, with F10's PC: B10's project prepared
+  there; the same questions give the same first passages as on the processor.
 
 ## Results
 
