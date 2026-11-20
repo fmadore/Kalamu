@@ -11,10 +11,22 @@ import type { PieceView } from './bindings/PieceView.js';
 import type { RowEdit } from './bindings/RowEdit.js';
 import type { Setup } from './bindings/Setup.js';
 import { describeError } from './errors.js';
-import { messages } from './i18n/index.js';
+import { localisePrompt, messages } from './i18n/index.js';
 import { toast } from './state.svelte.js';
 import { keep, recall } from './stored.js';
 import { api } from './tauri.js';
+
+/** A set-up as the reviews show it: its prompts' fields (a table of contents' combining step's
+ * too) in the interface language where they are a default's own. Only for the screen. */
+export function shownSetup(setup: Setup): Setup {
+	return {
+		...setup,
+		prompt: localisePrompt(setup.prompt),
+		...(setup.merge
+			? { merge: { ...setup.merge, prompt: localisePrompt(setup.merge.prompt) } }
+			: {})
+	};
+}
 
 /** One source of a job under review. */
 export class Review {
@@ -30,7 +42,8 @@ export class Review {
 	preview = $state<PagePreview | null>(null);
 	error = $state<string | null>(null);
 	readonly source = $derived(this.job?.sources.find((s) => s.id === this.sourceId));
-	readonly setups = $derived(this.job?.setups ?? []);
+	/** The set-ups, a default prompt's fields shown in the interface language (`localiseFields`). */
+	readonly setups = $derived((this.job?.setups ?? []).map(shownSetup));
 	/** A scan or images, shown page by page. */
 	readonly paged = $derived(this.source?.kind === 'pdf' || this.source?.kind === 'image');
 	readonly #scored: boolean;

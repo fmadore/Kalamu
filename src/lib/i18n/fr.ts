@@ -4,18 +4,55 @@
 // Product, provider and model names stay as they are. French typography: « » with no-break
 // spaces, and a no-break space before : ; ? and !.
 
-import type { Messages } from './en.js';
+import type { Messages, PresetText } from './en.js';
 
 export const fr: Messages = {
 	locale: { name: 'Français', tag: 'fr' },
 	/** Languages a model lists that the system has no name for. */
 	languageNames: { kea: 'capverdien', rup: 'aroumain' } as Record<string, string>,
-	/** The default prompts, by id: the core writes them in English. */
+	/**
+	 * The default prompts, by id: the core writes them in English. Their fields' labels, help
+	 * and choices are shown, never stored: the model still answers with the English choice.
+	 */
 	presets: {
 		'analysis.interview': {
 			name: 'Entretien : thèmes et citations',
 			description:
-				'Une transcription lue pour votre recherche : un court résumé, les thèmes, des mots-clés et les passages à citer, chaque citation retrouvée mot pour mot dans la transcription, avec la personne qui parle et le moment.'
+				'Une transcription lue pour votre recherche : un court résumé, les thèmes, des mots-clés et les passages à citer, chaque citation retrouvée mot pour mot dans la transcription, avec la personne qui parle et le moment.',
+			fields: {
+				summary: {
+					label: 'Résumé',
+					help: 'Qui parle et de quoi traite l’entretien, selon les consignes ci-dessus.'
+				},
+				themes: {
+					label: 'Thèmes',
+					help: 'Les sujets auxquels la personne interrogée revient ou qu’elle développe, le plus important d’abord, chacun appuyé par une à trois citations.',
+					fields: {
+						name: {
+							label: 'Nom',
+							help: 'Le thème en quelques mots, en {languages}.'
+						},
+						description: {
+							label: 'Description',
+							help: 'Ce que la personne interrogée en dit, en une ou deux phrases, en {languages}.'
+						}
+					}
+				},
+				keywords: {
+					label: 'Mots-clés',
+					help: 'Mots-clés et courtes expressions en {languages} qu’on chercherait : personnes, organisations, lieux, événements et thèmes précis. Préférer le précis (« Hajj 1957 ») au général (« religion »), et garder les noms propres tels qu’écrits dans la source.'
+				},
+				quotations: {
+					label: 'Citations',
+					help: 'Les passages qui méritent le plus d’être cités, les plus parlants d’abord, de préférence les mots de la personne interrogée.',
+					fields: {
+						why_it_matters: {
+							label: 'Pourquoi c’est important',
+							help: 'En une phrase, en {languages}.'
+						}
+					}
+				}
+			}
 		},
 		'text_extraction.printed': {
 			name: 'Document imprimé ou dactylographié',
@@ -45,50 +82,346 @@ export const fr: Messages = {
 		'analysis.summary_research': {
 			name: 'Résumé et mots-clés',
 			description:
-				'Ce que dit chaque document en particulier, avec les noms, chiffres et dates, aussi long que le document l’exige, et des mots-clés pour la recherche.'
+				'Ce que dit chaque document en particulier, avec les noms, chiffres et dates, aussi long que le document l’exige, et des mots-clés pour la recherche.',
+			fields: {
+				summary: {
+					label: 'Résumé',
+					help: 'Ce que dit ce document en particulier, selon les consignes ci-dessus.'
+				},
+				keywords: {
+					label: 'Mots-clés',
+					help: 'Mots-clés et courtes expressions en {languages} qu’on chercherait : personnes, organisations, lieux, événements et thèmes précis. Préférer le précis (« Hajj 1957 ») au général (« religion »), et garder les noms propres tels qu’écrits dans la source.'
+				}
+			}
 		},
 		'analysis.summary_publication': {
 			name: 'Publication scientifique, sciences sociales',
 			description:
-				'Question, argument, cadre théorique, méthodes, données, terrain et résultats d’un article, d’un chapitre ou d’un livre, champ par champ, pour un état de l’art.'
+				'Question, argument, cadre théorique, méthodes, données, terrain et résultats d’un article, d’un chapitre ou d’un livre, champ par champ, pour un état de l’art.',
+			fields: {
+				reference: {
+					label: 'Référence',
+					help: 'Les auteurs, l’année, le titre, et la revue, le livre ou l’institution où elle a paru, tels que la publication les donne. Laisser de côté ce qu’elle n’indique pas.'
+				},
+				type: {
+					label: 'Type de publication',
+					help: 'Le genre de publication dont il s’agit.',
+					values: {
+						'Journal article': 'Article de revue',
+						'Book chapter': 'Chapitre d’ouvrage',
+						Book: 'Livre',
+						Thesis: 'Thèse',
+						'Working paper or report': 'Document de travail ou rapport',
+						Review: 'Compte rendu',
+						Other: 'Autre'
+					}
+				},
+				abstract: {
+					label: 'Résumé',
+					help: 'Un résumé de 150 à 250 mots, dans vos propres mots : la question, le terrain, l’approche, l’argument et les principaux résultats.'
+				},
+				research_question: {
+					label: 'Question de recherche',
+					help: 'La question ou l’énigme à laquelle la publication cherche à répondre, en une ou deux phrases.'
+				},
+				argument: {
+					label: 'Argument',
+					help: 'L’argument central ou la thèse, et le débat ou l’idée reçue auquel il répond ou qu’il conteste.'
+				},
+				theoretical_framework: {
+					label: 'Cadre théorique',
+					help: 'Les théories et les notions sur lesquelles repose l’analyse, et les auteurs sur lesquels elle s’appuie ou qu’elle discute ouvertement.'
+				},
+				methods: {
+					label: 'Méthodes',
+					help: 'Les méthodes que la publication emploie elle-même, pas celles dont elle parle seulement.',
+					values: {
+						'Ethnography and participant observation': 'Ethnographie et observation participante',
+						Interviews: 'Entretiens',
+						'Oral history': 'Histoire orale',
+						'Archival research': 'Recherche en archives',
+						'Press or media analysis': 'Analyse de la presse ou des médias',
+						'Discourse or content analysis': 'Analyse de discours ou de contenu',
+						Survey: 'Enquête par questionnaire',
+						'Statistical analysis': 'Analyse statistique',
+						'Comparative case study': 'Étude de cas comparative',
+						'Literature review or theoretical essay': 'État de l’art ou essai théorique'
+					}
+				},
+				data_and_sources: {
+					label: 'Données et sources',
+					help: 'Ce sur quoi repose l’étude : le terrain (où, quand, combien de temps), les entretiens (combien, avec qui), les archives, la presse, les questionnaires ou les corpus, tels que la publication les décrit.'
+				},
+				places_studied: {
+					label: 'Lieux étudiés',
+					help: 'Les pays, régions, villes ou sites sur lesquels porte l’étude, pas tous les lieux cités.'
+				},
+				period_studied: {
+					label: 'Période étudiée',
+					help: 'La période que couvre l’étude, aussi précisément que la publication l’indique (« de 1960 à 1990 », « les années 2010 »).'
+				},
+				main_findings: {
+					label: 'Principaux résultats',
+					help: 'Les principaux résultats ou affirmations, chacun en une phrase, le plus important d’abord, en texte suivi.'
+				},
+				contribution_and_limits: {
+					label: 'Apport et limites',
+					help: 'Ce que la publication apporte au domaine selon ses auteurs, et les limites qu’ils reconnaissent eux-mêmes.'
+				},
+				key_concepts: {
+					label: 'Notions clés',
+					help: 'Les notions d’analyse que la publication emploie ou propose, dans ses propres termes.'
+				},
+				keywords: {
+					label: 'Mots-clés',
+					help: 'Mots-clés en {languages} qu’on chercherait : le sujet, les groupes, les institutions, les lieux et les thèmes. Préférer le précis (« réformisme islamique au Niger ») au général (« religion »).'
+				}
+			}
 		},
 		'analysis.entities': {
 			name: 'Personnes, lieux et organisations',
 			description:
-				'Les personnes, organisations, lieux et sujets que nomme chaque document, orthographiés comme dans le texte.'
+				'Les personnes, organisations, lieux et sujets que nomme chaque document, orthographiés comme dans le texte.',
+			fields: {
+				people: {
+					label: 'Personnes',
+					help: 'Les personnes nommées dans le document.'
+				},
+				organisations: {
+					label: 'Organisations',
+					help: 'Associations, partis, administrations, entreprises, institutions religieuses.'
+				},
+				places: {
+					label: 'Lieux',
+					help: 'Les lieux nommés dans le document.'
+				},
+				subjects: {
+					label: 'Sujets',
+					help: 'Les sujets précis du document.'
+				}
+			}
 		},
 		'analysis.tone': {
 			name: 'Tonalité du document',
 			description:
-				'Si chaque document présente son sujet de façon positive ou négative, et à quel point il exprime des opinions, avec une justification pour chaque réponse.'
+				'Si chaque document présente son sujet de façon positive ou négative, et à quel point il exprime des opinions, avec une justification pour chaque réponse.',
+			fields: {
+				main_subject: {
+					label: 'Sujet principal',
+					help: 'Ce dont parle surtout le document, en quelques mots, en {languages}.'
+				},
+				tone: {
+					label: 'Tonalité',
+					help: 'La façon dont le document présente son sujet principal.',
+					values: {
+						Positive: 'Positive',
+						Neutral: 'Neutre',
+						Negative: 'Négative',
+						Mixed: 'Mitigée'
+					}
+				},
+				register: {
+					label: 'Faits ou opinions',
+					help: 'Dans quelle mesure le document rapporte des faits, et dans quelle mesure il donne des opinions.',
+					values: {
+						Factual: 'Des faits',
+						'Mostly factual': 'Surtout des faits',
+						Mixed: 'Les deux',
+						'Mostly opinion': 'Surtout des opinions',
+						Opinion: 'Des opinions'
+					}
+				}
+			}
 		},
 		'analysis.image_description': {
 			name: 'Description d’image et mots-clés',
 			description:
-				'Ce que montre chaque photographie, affiche, carte ou autre image, décrit comme dans un catalogue, avec des mots-clés, le texte écrit sur l’image et les noms que ce texte donne.'
+				'Ce que montre chaque photographie, affiche, carte ou autre image, décrit comme dans un catalogue, avec des mots-clés, le texte écrit sur l’image et les noms que ce texte donne.',
+			fields: {
+				description: {
+					label: 'Description',
+					help: 'Ce qui se voit, selon les consignes ci-dessus, en {languages} ; la première phrase est un résumé à elle seule.'
+				},
+				kind_of_image: {
+					label: 'Type d’image',
+					help: 'Ce qu’est l’image en tant qu’objet, pas ce qu’elle montre.',
+					values: {
+						Photograph: 'Photographie',
+						'Poster or advertisement': 'Affiche ou publicité',
+						'Map or plan': 'Carte ou plan',
+						'Drawing or painting': 'Dessin ou peinture',
+						'Printed page': 'Page imprimée',
+						'Manuscript page': 'Page manuscrite',
+						Object: 'Objet',
+						Other: 'Autre'
+					}
+				},
+				keywords: {
+					label: 'Mots-clés',
+					help: 'Les sujets que l’on voit, en {languages}, du plus précis au plus général, sans deux mots-clés qui disent la même chose.'
+				},
+				text_in_the_image: {
+					label: 'Texte dans l’image',
+					help: 'Légendes, panneaux, inscriptions et tampons, tels qu’écrits, un par ligne ; vide s’il n’y en a pas.'
+				},
+				people: {
+					label: 'Personnes',
+					help: 'Les personnes nommées dans le texte de l’image.'
+				},
+				places: {
+					label: 'Lieux',
+					help: 'Les lieux nommés dans le texte de l’image.'
+				},
+				organisations: {
+					label: 'Organisations',
+					help: 'Les organisations nommées dans le texte de l’image.'
+				}
+			}
 		},
 		'analysis.directory': {
 			name: 'Annuaire ou liste, une ligne par entrée',
 			description:
-				'Chaque entrée de chaque page, dans l’ordre de lecture : le nom, la profession, l’adresse et les remarques tels qu’imprimés, pour un annuaire, une liste de membres ou un tableau imprimé.'
+				'Chaque entrée de chaque page, dans l’ordre de lecture : le nom, la profession, l’adresse et les remarques tels qu’imprimés, pour un annuaire, une liste de membres ou un tableau imprimé.',
+			fields: {
+				entries: {
+					label: 'Entrées',
+					help: 'Chaque entrée de cette page, une ligne chacune, dans l’ordre de lecture, colonne par colonne.',
+					fields: {
+						name: {
+							label: 'Nom',
+							help: 'Le nom tel qu’imprimé, nom de famille et prénoms dans l’ordre donné.'
+						},
+						occupation: {
+							label: 'Profession',
+							help: 'La profession, le métier ou le titre tel qu’imprimé ; vide s’il n’y en a pas.'
+						},
+						address: {
+							label: 'Adresse',
+							help: 'La rue et le numéro, ou le lieu, tels qu’imprimés ; vide s’il n’y en a pas.'
+						},
+						remarks: {
+							label: 'Remarques',
+							help: 'Tout ce que l’entrée donne d’autre (un numéro de téléphone, une date, une abréviation), tel qu’imprimé ; vide s’il n’y a rien.'
+						}
+					}
+				}
+			}
 		},
 		'analysis.register': {
 			name: 'Registre, une ligne par entrée',
 			description:
-				'Chaque acte de chaque page d’un registre paroissial ou d’état civil, ou d’un livre de comptes : numéro, date, nature de l’acte, nom, lieu, personnes citées et remarques, tels qu’écrits, signes de répétition compris.'
+				'Chaque acte de chaque page d’un registre paroissial ou d’état civil, ou d’un livre de comptes : numéro, date, nature de l’acte, nom, lieu, personnes citées et remarques, tels qu’écrits, signes de répétition compris.',
+			fields: {
+				entries: {
+					label: 'Entrées',
+					help: 'Chaque acte de cette page, une ligne chacun, dans l’ordre où ils sont écrits.',
+					fields: {
+						number: {
+							label: 'Numéro',
+							help: 'Le numéro de l’acte tel qu’écrit ; vide s’il n’y en a pas.'
+						},
+						date: {
+							label: 'Date',
+							help: 'La date de l’acte telle qu’écrite.'
+						},
+						kind_of_entry: {
+							label: 'Nature de l’acte',
+							help: 'Ce que l’acte enregistre.',
+							values: {
+								'Birth or baptism': 'Naissance ou baptême',
+								Marriage: 'Mariage',
+								'Death or burial': 'Décès ou inhumation',
+								Other: 'Autre'
+							}
+						},
+						name: {
+							label: 'Nom',
+							help: 'La personne dont parle l’acte, telle qu’écrite.'
+						},
+						place: {
+							label: 'Lieu',
+							help: 'Le lieu que l’acte indique pour cette personne, tel qu’écrit ; vide s’il n’y en a pas.'
+						},
+						people_named: {
+							label: 'Personnes citées',
+							help: 'Les autres personnes que l’acte nomme (parents, conjoint, témoins, la personne qui l’a rédigé), chacune telle qu’écrite.'
+						},
+						remarks: {
+							label: 'Remarques',
+							help: 'Les notes en marge et tout ce que l’acte enregistre d’autre, tels qu’écrits ; vide s’il n’y a rien.'
+						}
+					}
+				}
+			}
 		},
 		'contents.periodical': {
 			name: 'Numéro de journal ou de magazine',
-			description: 'Une entrée par article, avec sa rubrique, ses auteurs, ses pages et un résumé.'
+			description: 'Une entrée par article, avec sa rubrique, ses auteurs, ses pages et un résumé.',
+			fields: {
+				authors: {
+					label: 'Auteurs',
+					help: 'Les auteurs tels que l’article les nomme (« Par … », une signature à la fin), y compris collectifs (« La rédaction ») ; vide si aucun n’est nommé.'
+				},
+				summary: {
+					label: 'Résumé',
+					help: 'Ce que dit l’article, avec ses noms, ses chiffres et ses dates : deux ou trois phrases pour une page, quatre à six pour l’article entier.'
+				}
+			}
 		},
 		'contents.archival_file': {
 			name: 'Dossier d’archives, pièce à pièce',
 			description:
-				'L’inventaire d’un dossier numérisé d’un seul tenant : chaque lettre, rapport ou coupure de presse avec sa date, son expéditeur, son destinataire et un résumé.'
+				'L’inventaire d’un dossier numérisé d’un seul tenant : chaque lettre, rapport ou coupure de presse avec sa date, son expéditeur, son destinataire et un résumé.',
+			fields: {
+				kind_of_document: {
+					label: 'Type de document',
+					help: 'Ce qu’est la pièce, en quelques mots : lettre, rapport, procès-verbal, télégramme, circulaire, pétition, formulaire, coupure de presse, photographie, carte, enveloppe…'
+				},
+				date: {
+					label: 'Date',
+					help: 'La date de la pièce telle qu’écrite, puis sous la forme AAAA-MM-JJ entre parenthèses quand elle est complète ; vide si la pièce n’en a pas.'
+				},
+				from: {
+					label: 'Expéditeur',
+					help: 'Qui l’a écrite, signée ou émise, avec son titre ou sa fonction, tel qu’écrit.'
+				},
+				to: {
+					label: 'Destinataire',
+					help: 'À qui elle est adressée ou envoyée en copie, avec son titre ou sa fonction, tel qu’écrit.'
+				},
+				summary: {
+					label: 'Résumé',
+					help: 'Ce que la pièce dit ou consigne, en deux à quatre phrases, avec ses noms, ses lieux, ses chiffres et ses dates, et les annotations ou tampons qu’elle porte.'
+				},
+				names: {
+					label: 'Noms',
+					help: 'Les personnes, organisations et lieux que la pièce nomme, tels qu’écrits.'
+				}
+			}
 		},
 		'contents.book': {
 			name: 'Livre, rapport ou thèse',
-			description: 'Parties, chapitres et sections avec leurs pages et un résumé de chacun.'
+			description: 'Parties, chapitres et sections avec leurs pages et un résumé de chacun.',
+			fields: {
+				level: {
+					label: 'Niveau',
+					help: 'Si l’entrée est une partie, un chapitre (ou une contribution à un ouvrage collectif) ou une section d’un chapitre.',
+					values: {
+						Part: 'Partie',
+						Chapter: 'Chapitre',
+						Section: 'Section',
+						'Front or back matter': 'Pages liminaires ou annexes'
+					}
+				},
+				authors: {
+					label: 'Auteurs',
+					help: 'Ses auteurs, quand l’entrée nomme les siens (dans un ouvrage collectif) ; vide sinon.'
+				},
+				summary: {
+					label: 'Résumé',
+					help: 'Ce qu’elle soutient ou décrit, avec ses noms, ses cas, ses chiffres et ses dates : une ou deux phrases pour une page, trois à cinq pour un chapitre ou une section entière.'
+				}
+			}
 		},
 		'translation.research': {
 			name: 'Traduction pour la recherche',
@@ -105,7 +438,7 @@ export const fr: Messages = {
 			description:
 				'Envoyé quand le dictionnaire d’un projet demande à un modèle de proposer des regroupements. Les champs de la réponse sont fixes : le dictionnaire les lit.'
 		}
-	} as Record<string, { name: string; description: string }>,
+	} as Record<string, PresetText>,
 	app: {
 		name: 'Kalamu'
 	},

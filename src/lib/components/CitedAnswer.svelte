@@ -21,7 +21,7 @@
 		type Card
 	} from '#lib/cited.js';
 	import type { CitedAnswers } from '#lib/citedAnswers.svelte.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { choiceLabel, messages } from '#lib/i18n/index.js';
 
 	let {
 		field,
@@ -131,7 +131,8 @@
 										{#if f.kind.type === 'choice'}
 											<select bind:value={edit.draft[f.key]}>
 												<option value=""></option>
-												{#each f.kind.values as v (v)}<option value={v}>{v}</option>{/each}
+												{#each f.kind.values as v (v)}<option value={v}>{choiceLabel(f, v)}</option
+													>{/each}
 											</select>
 										{:else if k === 0 && own.length > 1}
 											<!-- svelte-ignore a11y_autofocus -->

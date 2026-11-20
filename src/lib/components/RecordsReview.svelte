@@ -11,7 +11,7 @@
 	import ReviewFrame from './ReviewFrame.svelte';
 	import type { Field } from '#lib/bindings/Field.js';
 	import type { RowEdit } from '#lib/bindings/RowEdit.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { choiceLabel, messages } from '#lib/i18n/index.js';
 	import { pieceCost, pieceLabel, pieceNumber } from '#lib/pieces.js';
 	import { cellText, columnsOf, rowsOf } from '#lib/records.js';
 	import { ownRegions, placeOf } from '#lib/regions.svelte.js';
@@ -225,7 +225,7 @@
 											>
 												<option value="">{m.review.noChoice}</option>
 												{#each column.kind.values as choice (choice)}
-													<option value={choice}>{choice}</option>
+													<option value={choice}>{choiceLabel(column, choice)}</option>
 												{/each}
 											</select>
 										{:else}

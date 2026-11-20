@@ -2,15 +2,33 @@
 // like, typed `: Messages` so a missing or extra key fails the type check, as in Live
 // Translation.
 
+/** A default field's words in another language: shown, never stored or sent to a model. */
+export interface FieldText {
+	label: string;
+	help: string;
+	/** A choice field's choices, by the English value the model answers with and Kalamu stores. */
+	values?: Record<string, string>;
+	/** The fields of each entry of a repeating group or of entries that quote the text, by key. */
+	fields?: Record<string, FieldText>;
+}
+
+/** A default prompt's name and description, and its fields by key, in another language. */
+export interface PresetText {
+	name: string;
+	description: string;
+	fields?: Record<string, FieldText>;
+}
+
 export const en = {
 	locale: { name: 'English', tag: 'en' },
 	/** Languages a model lists that the system has no name for. */
 	languageNames: { kea: 'Kabuverdianu', rup: 'Aromanian' } as Record<string, string>,
 	/**
 	 * The default prompts' names and descriptions, by id, where the interface language differs
-	 * from the core's English; empty here, since the core's text is English.
+	 * from the core's English, and their fields' labels, help and choices by field key (shown by
+	 * `localiseFields`); empty here, since the core's text is English.
 	 */
-	presets: {} as Record<string, { name: string; description: string }>,
+	presets: {} as Record<string, PresetText>,
 	app: {
 		name: 'Kalamu'
 	},

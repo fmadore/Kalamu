@@ -10,7 +10,7 @@
 	import type { Preset } from '#lib/bindings/Preset.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import type { TaskRules } from '#lib/bindings/TaskRules.js';
-	import { messages, readerOrder } from '#lib/i18n/index.js';
+	import { localiseFields, messages, readerOrder } from '#lib/i18n/index.js';
 	import {
 		acceptsPrompt,
 		type Draft,
@@ -278,7 +278,8 @@
 		</div>
 	{/if}
 	{#if task === 'analysis' || task === 'contents'}
-		{@const fields = presets.find((p) => p.id === d.presetId)?.schema?.fields ?? []}
+		{@const preset = presets.find((p) => p.id === d.presetId)}
+		{@const fields = localiseFields(preset?.id, preset?.schema)?.fields ?? []}
 		{#if fields.length > 0}
 			<p class="small desc finds">
 				<span class="label">{task === 'contents' ? m.newJob.entryHas : m.newJob.finds}</span>

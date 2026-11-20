@@ -8,7 +8,7 @@
 	import { byHand, type Reading } from '#lib/analysis.js';
 	import type { Field } from '#lib/bindings/Field.js';
 	import type { FieldAnswer } from '#lib/bindings/FieldAnswer.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { choiceLabel, messages } from '#lib/i18n/index.js';
 	import { rovingStop } from '#lib/keys.js';
 	import type { ListedNames } from '#lib/listedNames.svelte.js';
 
@@ -36,6 +36,8 @@
 	const m = messages();
 
 	const named = $derived(f.kind.type === 'list');
+	/** A name as shown: a default's choice in the interface language, a name as listed. */
+	const shown = (value: string) => (named ? value : choiceLabel(f, value));
 	const values = $derived(readings.map((r) => r.value));
 	const stop = $derived(rovingStop(values, names.stops[f.key]));
 
@@ -62,7 +64,9 @@
 				title={yours ? m.review.yoursHint : undefined}
 				aria-label={yours
 					? m.review.yours(
-							comparing && r.sigla.length < count ? `${r.value} ${r.sigla.join(' ')}` : r.value
+							comparing && r.sigla.length < count
+								? `${shown(r.value)} ${r.sigla.join(' ')}`
+								: shown(r.value)
 						)
 					: undefined}
 				tabindex={stop === r.value ? 0 : -1}
@@ -77,7 +81,7 @@
 				onblur={() => onhover(null)}
 				onpointerenter={() => onhover(r.value)}
 				onpointerleave={() => onhover(null)}
-				>{r.value}{#if comparing && r.sigla.length < count}<sup class="found"
+				>{shown(r.value)}{#if comparing && r.sigla.length < count}<sup class="found"
 						>{r.sigla.join(' ')}</sup
 					>{/if}</button
 			>{/each}
@@ -87,6 +91,7 @@
 	field={f.key}
 	label={f.label}
 	choices={choicesLeft(values)}
+	choiceText={(c) => choiceLabel(f, c)}
 	onadd={(text) => names.add(f.key, text)}
 />
 

@@ -34,7 +34,7 @@
 	import { CitedAnswers } from '#lib/citedAnswers.svelte.js';
 	import { type Draft, fromDraft, toDraft } from '#lib/fields.js';
 	import { clearFound, markFound } from '#lib/found.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { choiceLabel, messages } from '#lib/i18n/index.js';
 	import { ListedNames } from '#lib/listedNames.svelte.js';
 	import { pieceCost } from '#lib/pieces.js';
 	import { groupOf } from '#lib/records.js';
@@ -332,7 +332,7 @@
 						{#each readings as r (r.value)}
 							<p class:prose={f.kind.type === 'text'} class:choice={f.kind.type === 'choice'}>
 								{#if comparing}<i class="siglum">{r.sigla.join(' ')}</i>{/if}
-								{r.value}
+								{f.kind.type === 'choice' ? choiceLabel(f, r.value) : r.value}
 							</p>
 						{/each}
 					{/if}

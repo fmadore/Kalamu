@@ -343,7 +343,17 @@ once, not in a batch, since a batch's answers are not checked line by line.
   language is chosen in Settings › General; by default it is the first of the system's languages that
   Kalamu has, else English. Prompts, the models' answers and the files Kalamu writes keep their
   own language, and the default prompts stay in English, which the models follow best; their
-  names and descriptions are translated.
+  names and descriptions are translated, and so are the labels, help and choices of their
+  fields wherever the interface shows them (the reviews, New job, the agreement table, a
+  project's dictionary and search, the list of what to check). This is for the screen only:
+  field keys, the choice values the model answers with and Kalamu stores, results, cache keys
+  and provenance stay in English, so switching the language changes nothing stored, and a
+  choice corrected in French stores its English value. A text is shown translated only where it
+  is, word for word, the default's shipped English, so whatever the researcher wrote in a prompt
+  stays as written; Prompts shows the fields as stored, since what is edited there is sent to
+  the model. Exports keep the stored English labels, so a table sent to a colleague or read by
+  a script does not change language with the interface
+  ([decision](decisions/2026-11-20-default-fields-interface-language.md)).
 
 ## Interruptions and resuming
 

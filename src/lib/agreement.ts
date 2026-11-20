@@ -5,7 +5,7 @@
 import { siglum } from './apparatus.js';
 import type { JobAgreement } from './bindings/JobAgreement.js';
 import type { AgreementMeasure } from './bindings/AgreementMeasure.js';
-import { formatPercent, type Messages } from './i18n/index.js';
+import { fieldLabel, formatPercent, type Messages } from './i18n/index.js';
 
 /** One row of the table. */
 export interface AgreementRow {
@@ -53,7 +53,7 @@ export function agreementRows(
 			else kappa = p.kappa === null ? m.agreement.noKappa : formatKappa(p.kappa, m);
 			return {
 				key: field.key,
-				label: i === 0 ? field.label : '',
+				label: i === 0 ? fieldLabel(field.label, field.key) : '',
 				span: i === 0 ? field.pairs.length : 0,
 				measure: field.measure,
 				pair: [letter(p.first), letter(p.second)] as [string, string],

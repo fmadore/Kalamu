@@ -1,0 +1,658 @@
+{
+  "analysis.directory": [
+    {
+      "key": "entries",
+      "label": "Entries",
+      "instructions": "Every entry on this page, one row each, in reading order, column by column.",
+      "kind": {
+        "type": "entries",
+        "fields": [
+          {
+            "key": "name",
+            "label": "Name",
+            "instructions": "The name as printed, surname and forenames in the order given.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          },
+          {
+            "key": "occupation",
+            "label": "Occupation",
+            "instructions": "The occupation, trade or title as printed; empty when none.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          },
+          {
+            "key": "address",
+            "label": "Address",
+            "instructions": "The street and number, or the place, as printed; empty when none.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          },
+          {
+            "key": "remarks",
+            "label": "Remarks",
+            "instructions": "Anything else the entry gives (a telephone number, a date, an abbreviation), as printed; empty when nothing.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          }
+        ]
+      },
+      "reason": false
+    }
+  ],
+  "analysis.entities": [
+    {
+      "key": "people",
+      "label": "People",
+      "instructions": "People named in the document.",
+      "kind": {
+        "type": "list",
+        "max": 30
+      },
+      "reason": false
+    },
+    {
+      "key": "organisations",
+      "label": "Organisations",
+      "instructions": "Associations, parties, administrations, companies, religious bodies.",
+      "kind": {
+        "type": "list",
+        "max": 20
+      },
+      "reason": false
+    },
+    {
+      "key": "places",
+      "label": "Places",
+      "instructions": "Places named in the document.",
+      "kind": {
+        "type": "list",
+        "max": 20
+      },
+      "reason": false
+    },
+    {
+      "key": "subjects",
+      "label": "Subjects",
+      "instructions": "The document's specific subjects.",
+      "kind": {
+        "type": "list",
+        "max": 6
+      },
+      "reason": false
+    }
+  ],
+  "analysis.image_description": [
+    {
+      "key": "description",
+      "label": "Description",
+      "instructions": "What is visibly there, following the instructions above, in {languages}; the first sentence a summary on its own.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "kind_of_image",
+      "label": "Kind of image",
+      "instructions": "What the image is as an object, not what it shows.",
+      "kind": {
+        "type": "choice",
+        "values": [
+          "Photograph",
+          "Poster or advertisement",
+          "Map or plan",
+          "Drawing or painting",
+          "Printed page",
+          "Manuscript page",
+          "Object",
+          "Other"
+        ]
+      },
+      "reason": false
+    },
+    {
+      "key": "keywords",
+      "label": "Keywords",
+      "instructions": "Subjects visibly present, in {languages}, specific before general, with no two saying the same thing.",
+      "kind": {
+        "type": "list",
+        "max": 12
+      },
+      "reason": false
+    },
+    {
+      "key": "text_in_the_image",
+      "label": "Text in the image",
+      "instructions": "Captions, signs, inscriptions and stamps, as written, one per line; empty when there is none.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "people",
+      "label": "People",
+      "instructions": "People named in the image's own text.",
+      "kind": {
+        "type": "list",
+        "max": 20
+      },
+      "reason": false
+    },
+    {
+      "key": "places",
+      "label": "Places",
+      "instructions": "Places named in the image's own text.",
+      "kind": {
+        "type": "list",
+        "max": 20
+      },
+      "reason": false
+    },
+    {
+      "key": "organisations",
+      "label": "Organisations",
+      "instructions": "Organisations named in the image's own text.",
+      "kind": {
+        "type": "list",
+        "max": 20
+      },
+      "reason": false
+    }
+  ],
+  "analysis.interview": [
+    {
+      "key": "summary",
+      "label": "Summary",
+      "instructions": "Who speaks and what the interview covers, following the instructions above.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "themes",
+      "label": "Themes",
+      "instructions": "The subjects the interviewee comes back to or develops, the most important first, each backed by one to three quotations.",
+      "kind": {
+        "type": "cited",
+        "fields": [
+          {
+            "key": "name",
+            "label": "Name",
+            "instructions": "The theme in a few words, in {languages}.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          },
+          {
+            "key": "description",
+            "label": "Description",
+            "instructions": "What the interviewee says about it, in one or two sentences, in {languages}.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          }
+        ],
+        "max": 8
+      },
+      "reason": false
+    },
+    {
+      "key": "keywords",
+      "label": "Keywords",
+      "instructions": "Keywords and short key phrases in {languages} that someone would search for: people, organisations, places, events and specific themes. Prefer the specific (\"Hajj 1957\") to the general (\"religion\"), and keep proper names as in the source.",
+      "kind": {
+        "type": "list",
+        "max": 12
+      },
+      "reason": false
+    },
+    {
+      "key": "quotations",
+      "label": "Quotations",
+      "instructions": "The passages most worth quoting, the most telling first, preferring the interviewee's words.",
+      "kind": {
+        "type": "cited",
+        "fields": [
+          {
+            "key": "why_it_matters",
+            "label": "Why it matters",
+            "instructions": "In one sentence, in {languages}.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          }
+        ],
+        "max": 10
+      },
+      "reason": false
+    }
+  ],
+  "analysis.register": [
+    {
+      "key": "entries",
+      "label": "Entries",
+      "instructions": "Every entry on this page, one row each, in the order written.",
+      "kind": {
+        "type": "entries",
+        "fields": [
+          {
+            "key": "number",
+            "label": "Number",
+            "instructions": "The entry's number as written; empty when none.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          },
+          {
+            "key": "date",
+            "label": "Date",
+            "instructions": "The entry's date as written.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          },
+          {
+            "key": "kind_of_entry",
+            "label": "Kind of entry",
+            "instructions": "What the entry records.",
+            "kind": {
+              "type": "choice",
+              "values": [
+                "Birth or baptism",
+                "Marriage",
+                "Death or burial",
+                "Other"
+              ]
+            },
+            "reason": false
+          },
+          {
+            "key": "name",
+            "label": "Name",
+            "instructions": "The person the entry is about, as written.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          },
+          {
+            "key": "place",
+            "label": "Place",
+            "instructions": "The place the entry names for them, as written; empty when none.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          },
+          {
+            "key": "people_named",
+            "label": "People named",
+            "instructions": "The other people the entry names (parents, spouse, witnesses, the clerk), each as written.",
+            "kind": {
+              "type": "list",
+              "max": null
+            },
+            "reason": false
+          },
+          {
+            "key": "remarks",
+            "label": "Remarks",
+            "instructions": "Marginal notes and anything else the entry records, as written; empty when nothing.",
+            "kind": {
+              "type": "text"
+            },
+            "reason": false
+          }
+        ]
+      },
+      "reason": false
+    }
+  ],
+  "analysis.summary_publication": [
+    {
+      "key": "reference",
+      "label": "Reference",
+      "instructions": "Authors, year, title, and the journal, book or institution it appeared in, as the publication gives them. Leave out what it does not state.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "type",
+      "label": "Type",
+      "instructions": "What kind of publication this is.",
+      "kind": {
+        "type": "choice",
+        "values": [
+          "Journal article",
+          "Book chapter",
+          "Book",
+          "Thesis",
+          "Working paper or report",
+          "Review",
+          "Other"
+        ]
+      },
+      "reason": false
+    },
+    {
+      "key": "abstract",
+      "label": "Abstract",
+      "instructions": "An abstract of 150 to 250 words in your own words: the question, the case, the approach, the argument and the main findings.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "research_question",
+      "label": "Research question",
+      "instructions": "The question or puzzle the publication sets out to answer, in one or two sentences.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "argument",
+      "label": "Argument",
+      "instructions": "The central argument or thesis, and the debate or received view it speaks to or argues against.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "theoretical_framework",
+      "label": "Theoretical framework",
+      "instructions": "The theories and concepts the analysis rests on, and the scholars it explicitly builds on or discusses.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "methods",
+      "label": "Methods",
+      "instructions": "The methods the publication itself uses, not those it only discusses.",
+      "kind": {
+        "type": "choices",
+        "values": [
+          "Ethnography and participant observation",
+          "Interviews",
+          "Oral history",
+          "Archival research",
+          "Press or media analysis",
+          "Discourse or content analysis",
+          "Survey",
+          "Statistical analysis",
+          "Comparative case study",
+          "Literature review or theoretical essay"
+        ]
+      },
+      "reason": false
+    },
+    {
+      "key": "data_and_sources",
+      "label": "Data and sources",
+      "instructions": "What the study rests on: fieldwork (where, when, how long), interviews (how many, with whom), archives, press, surveys or corpora, as the publication describes them.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "places_studied",
+      "label": "Places studied",
+      "instructions": "Countries, regions, towns or sites the study is about, not every place mentioned.",
+      "kind": {
+        "type": "list",
+        "max": 10
+      },
+      "reason": false
+    },
+    {
+      "key": "period_studied",
+      "label": "Period studied",
+      "instructions": "The period the study covers, as precisely as the publication states it (\"1960 to 1990\", \"the 2010s\").",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "main_findings",
+      "label": "Main findings",
+      "instructions": "The main findings or claims, each in one sentence, the most important first, as plain prose.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "contribution_and_limits",
+      "label": "Contribution and limits",
+      "instructions": "What the authors say the publication adds to the field, and the limits they acknowledge themselves.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "key_concepts",
+      "label": "Key concepts",
+      "instructions": "The analytical concepts the publication uses or proposes, in its own terms.",
+      "kind": {
+        "type": "list",
+        "max": 8
+      },
+      "reason": false
+    },
+    {
+      "key": "keywords",
+      "label": "Keywords",
+      "instructions": "Keywords in {languages} that someone would search for: the topic, groups, institutions, places and themes. Prefer the specific (\"Islamic reformism in Niger\") to the general (\"religion\").",
+      "kind": {
+        "type": "list",
+        "max": 10
+      },
+      "reason": false
+    }
+  ],
+  "analysis.summary_research": [
+    {
+      "key": "summary",
+      "label": "Summary",
+      "instructions": "What this document in particular says, following the instructions above.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "keywords",
+      "label": "Keywords",
+      "instructions": "Keywords and short key phrases in {languages} that someone would search for: people, organisations, places, events and specific themes. Prefer the specific (\"Hajj 1957\") to the general (\"religion\"), and keep proper names as in the source.",
+      "kind": {
+        "type": "list",
+        "max": 12
+      },
+      "reason": false
+    }
+  ],
+  "analysis.tone": [
+    {
+      "key": "main_subject",
+      "label": "Main subject",
+      "instructions": "What the document is mainly about, in a few words, in {languages}.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "instructions": "How the document presents its main subject.",
+      "kind": {
+        "type": "choice",
+        "values": [
+          "Positive",
+          "Neutral",
+          "Negative",
+          "Mixed"
+        ]
+      },
+      "reason": true
+    },
+    {
+      "key": "register",
+      "label": "Register",
+      "instructions": "How much the document reports facts and how much it gives opinions.",
+      "kind": {
+        "type": "choice",
+        "values": [
+          "Factual",
+          "Mostly factual",
+          "Mixed",
+          "Mostly opinion",
+          "Opinion"
+        ]
+      },
+      "reason": true
+    }
+  ],
+  "contents.archival_file": [
+    {
+      "key": "kind_of_document",
+      "label": "Kind of document",
+      "instructions": "What the item is, in a few words: letter, report, minutes, telegram, circular, petition, form, newspaper clipping, photograph, map, envelope…",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "date",
+      "label": "Date",
+      "instructions": "The item's date as written, then in the form YYYY-MM-DD in parentheses when it is complete; empty when the item has none.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "from",
+      "label": "From",
+      "instructions": "Who wrote, signed or issued it, with their title or office, as written.",
+      "kind": {
+        "type": "list",
+        "max": 5
+      },
+      "reason": false
+    },
+    {
+      "key": "to",
+      "label": "To",
+      "instructions": "Who it is addressed or copied to, with their title or office, as written.",
+      "kind": {
+        "type": "list",
+        "max": 8
+      },
+      "reason": false
+    },
+    {
+      "key": "summary",
+      "label": "Summary",
+      "instructions": "What the item says or records, in two to four sentences, with its names, places, figures and dates, and the annotations or stamps on it.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "names",
+      "label": "Names",
+      "instructions": "People, organisations and places the item names, as written.",
+      "kind": {
+        "type": "list",
+        "max": 20
+      },
+      "reason": false
+    }
+  ],
+  "contents.book": [
+    {
+      "key": "level",
+      "label": "Level",
+      "instructions": "Whether the entry is a part, a chapter (or a contribution to an edited volume), or a section within a chapter.",
+      "kind": {
+        "type": "choice",
+        "values": [
+          "Part",
+          "Chapter",
+          "Section",
+          "Front or back matter"
+        ]
+      },
+      "reason": false
+    },
+    {
+      "key": "authors",
+      "label": "Authors",
+      "instructions": "Its authors, when the entry names its own (in an edited volume); empty otherwise.",
+      "kind": {
+        "type": "list",
+        "max": null
+      },
+      "reason": false
+    },
+    {
+      "key": "summary",
+      "label": "Summary",
+      "instructions": "What it argues or describes, with its names, cases, figures and dates: one or two sentences for one page, three to five for a whole chapter or section.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    }
+  ],
+  "contents.periodical": [
+    {
+      "key": "authors",
+      "label": "Authors",
+      "instructions": "The authors as the article names them (\"By …\", a signature at the end), including collective ones (\"The Editors\"); empty when none is named.",
+      "kind": {
+        "type": "list",
+        "max": null
+      },
+      "reason": false
+    },
+    {
+      "key": "summary",
+      "label": "Summary",
+      "instructions": "What the article says, with its names, figures and dates: two or three sentences for one page, four to six for the whole article.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    }
+  ]
+}
