@@ -1,29 +1,73 @@
 <script lang="ts">
 	// The files of a new job, with each file's input checks and the fixes they offer.
+	import { tick } from 'svelte';
 	import Icon from './Icon.svelte';
+	import PhotoNotice from './PhotoNotice.svelte';
 	import type { InspectedFile } from '#lib/bindings/InspectedFile.js';
 	import type { Task } from '#lib/bindings/Task.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
 	import { duration, warningText } from '#lib/fileNotes.js';
 	import { rulesFor } from '#lib/newJob.js';
+	import type { JobPhotos } from '#lib/newJobPhotos.svelte.js';
 	import { baseName } from '#lib/paths.js';
-	import { app } from '#lib/state.svelte.js';
+	import { app, toast } from '#lib/state.svelte.js';
 	import { pickFiles, pickFolder } from '#lib/dialogs.js';
 
 	let {
 		files = $bindable(),
 		task,
 		inspecting,
-		onadd
+		onadd,
+		photos = null,
+		onleaveout
 	}: {
 		files: InspectedFile[];
 		task: Task;
 		inspecting: boolean;
 		onadd: (paths: string[]) => void | Promise<void>;
+		/** The photographs checked against each other: retakes of one page, blurred photos. */
+		photos?: JobPhotos | null;
+		/** Takes a photograph out of this job's list; what puts it back. */
+		onleaveout?: (sourceId: string) => (() => void) | null;
 	} = $props();
 
 	const m = messages();
+
+	const shownName = (file: InspectedFile) =>
+		file.source?.derived_from ? file.source.file_name : baseName(file.path);
+	const present = $derived(new Set(files.flatMap((f) => (f.source ? [f.source.id] : []))));
+	const nameOf = (sourceId: string) => {
+		const file = files.find((f) => f.source?.id === sourceId);
+		return file ? shownName(file) : '';
+	};
+
+	let list = $state<HTMLUListElement>();
+	/** Puts the focus on the row of the photograph `sourceId`, once the list is drawn again. */
+	async function focusRow(sourceId: string) {
+		await tick();
+		list?.querySelector<HTMLButtonElement>(`li[data-source="${sourceId}"] .remove`)?.focus();
+	}
+
+	/** Leaves a photograph out of this job's list, the toast offering to put it back. The focus
+	 * goes to the photograph kept, or the one after it. */
+	function leaveOut(sourceId: string, focusAfter: string | null) {
+		const name = nameOf(sourceId);
+		const at = files.findIndex((f) => f.source?.id === sourceId);
+		const undo = onleaveout?.(sourceId);
+		if (!undo) return;
+		const next = focusAfter ?? files[Math.min(at, files.length - 1)]?.source?.id ?? null;
+		if (next) void focusRow(next);
+		toast(m.warning.photos.leftOut(name), {
+			action: {
+				label: m.common.undo,
+				run: () => {
+					undo();
+					void focusRow(sourceId);
+				}
+			}
+		});
+	}
 
 	function setSplit(index: number, split: boolean) {
 		const source = files[index].source;
@@ -67,15 +111,25 @@
 	{#if inspecting}
 		<p class="hint">{m.newJob.inspecting}</p>
 	{/if}
+	<!-- Always there, so the words put in are read out in every webview. -->
+	<p class="hint" role="status">
+		{#if photos?.checking && !inspecting}{m.warning.photos.checking}{/if}
+	</p>
 	{#if files.length === 0 && !inspecting}
 		<p class="empty">{m.newJob.noFiles}</p>
 	{:else if files.length > 0}
-		<ul class="files">
+		<ul class="files" bind:this={list}>
 			{#each files as file, i (file.source?.id ?? file.path)}
 				<!-- Frozen text and an item's pages are named after their document, not the stored copy. -->
 				{@const fileName = file.source?.derived_from ? file.source.file_name : baseName(file.path)}
 				{@const warnings = shownWarnings(file)}
-				<li class:warned={warnings.length > 0} class:failed={!!file.error}>
+				{@const photoWarnings =
+					photos && file.source ? photos.warningsFor(file.source.id, present) : []}
+				<li
+					class:warned={warnings.length > 0 || photoWarnings.length > 0}
+					class:failed={!!file.error}
+					data-source={file.source?.id}
+				>
 					<div class="file">
 						<span class="file-name mono">{fileName}</span>
 						<span class="meta mono">
@@ -86,7 +140,7 @@
 							{#if file.source?.duration_ms}{duration(Number(file.source.duration_ms), m)}{/if}
 						</span>
 						<button
-							class="btn sm icon ghost"
+							class="btn sm icon ghost remove"
 							aria-label="{m.newJob.remove} {fileName}"
 							title={m.newJob.remove}
 							onclick={() => (files = files.filter((_, j) => j !== i))}
@@ -121,6 +175,22 @@
 							{/if}
 						</div>
 					{/each}
+					{#if photos && file.source}
+						{@const here = file.source.id}
+						{#each photoWarnings as w (w.kind + (w.kind === 'same_page' ? w.other : ''))}
+							<PhotoNotice
+								warning={w}
+								{nameOf}
+								viewOf={(id) => photos.view(id)}
+								onleaveout={(id) =>
+									leaveOut(id, w.kind === 'same_page' ? (id === here ? w.other : here) : null)}
+								onkeep={() => {
+									photos.keep(w);
+									void focusRow(here);
+								}}
+							/>
+						{/each}
+					{/if}
 				</li>
 			{/each}
 		</ul>

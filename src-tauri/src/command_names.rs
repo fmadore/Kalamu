@@ -58,6 +58,8 @@ pub const COMMANDS: &[&str] = &[
     "keep_access",
     "inspect_files",
     "image_document",
+    "check_photos",
+    "stop_photo_checks",
     "inspect_links",
     "estimate_cost",
     "create_job",

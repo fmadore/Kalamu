@@ -25,6 +25,7 @@ import {
 	offersOneDocument,
 	sameImages
 } from './pageOrder.js';
+import { JobPhotos } from './newJobPhotos.svelte.js';
 import { app } from './state.svelte.js';
 import { api } from './tauri.js';
 
@@ -64,6 +65,18 @@ export class JobFiles {
 	readonly sources = $derived(
 		jobSources(this.list, this.oneOffered ? this.grouping : 'separate', this.pageDoc, this.docName)
 	);
+	/** The photographs in the order they are read: the document's pages', or the files'. */
+	readonly photoOrder = $derived.by(() => {
+		const images = this.images;
+		const doc = this.pageDoc;
+		if (!this.oneOffered || this.grouping !== 'one' || !doc || !sameImages(doc, images)) {
+			return images;
+		}
+		const byPath = new Map(images.map((s) => [s.path, s]));
+		return (doc.source.pages ?? []).flatMap((p) => byPath.get(p.path) ?? []);
+	});
+	/** The photographs checked against each other: the same page twice, a blurred one (#216). */
+	readonly photos = new JobPhotos(() => this.photoOrder);
 
 	/** Called while New job is set up, so its effects end with it. */
 	constructor(side: FilesSide, kept: NewJobForm | null) {
@@ -95,6 +108,35 @@ export class JobFiles {
 			if (this.oneOffered && this.grouping === 'one' && !sameImages(this.pageDoc, this.images))
 				void this.orderPages();
 		});
+	}
+
+	/** Takes the photograph `sourceId` out of this job's list (never off the disk), and out of
+	 * the order of the pages when the researcher set it by hand; what puts both back. */
+	leaveOut(sourceId: string): (() => void) | null {
+		const at = this.list.findIndex((f) => f.source?.id === sourceId);
+		if (at < 0) return null;
+		const file = this.list[at];
+		const doc = this.pageDoc;
+		const pages = doc?.source.pages ?? [];
+		// An order set by hand is kept without the page; otherwise the engine orders the pages left.
+		const pageAt = doc && this.byHand ? pages.findIndex((p) => p.path === file.path) : -1;
+		const page = pageAt >= 0 ? pages[pageAt] : null;
+		if (doc && page) {
+			this.pageDoc = { ...doc, source: { ...doc.source, pages: pages.filter((p) => p !== page) } };
+		}
+		this.list = this.list.filter((_, i) => i !== at);
+		return () => {
+			if (this.list.some((f) => f.path === file.path)) return;
+			const list = [...this.list];
+			list.splice(Math.min(at, list.length), 0, file);
+			const now = this.pageDoc;
+			if (page && now) {
+				const back = [...(now.source.pages ?? [])];
+				back.splice(Math.min(pageAt, back.length), 0, page);
+				this.pageDoc = { ...now, source: { ...now.source, pages: back } };
+			}
+			this.list = list;
+		};
 	}
 
 	/** Fills the name from the files, unless the researcher typed one of their own. */

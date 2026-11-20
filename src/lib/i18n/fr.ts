@@ -1929,7 +1929,29 @@ export const fr: Messages = {
 		long_recording: (length: string, pieces: number) =>
 			`Enregistrement long (${length}) : il sera envoyé en ${pieces} segments, coupés aux pauses. L’identification des locuteurs peut varier d’un segment à l’autre.`,
 		quiet_recording: (db: number) =>
-			`Enregistrement très faible (environ ${db} dB) : les paroles prononcées à voix basse risquent d’être manquées. Égaliser le volume aide généralement.`
+			`Enregistrement très faible (environ ${db} dB) : les paroles prononcées à voix basse risquent d’être manquées. Égaliser le volume aide généralement.`,
+		same_page: (first: string, second: string) =>
+			`${first} et ${second} semblent montrer la même page`,
+		blurred: (name: string) => `${name} semble floue`,
+		/** The check of photographs against each other: retakes of one page, blurred photos. */
+		photos: {
+			checking: 'Recherche des photos prises deux fois et des photos floues…',
+			sharper: (name: string) =>
+				`${name} est plus nette. Envoyer les deux ferait payer la page deux fois.`,
+			asSharp: 'Les deux semblent aussi nettes. Envoyer les deux ferait payer la page deux fois.',
+			blurredWhy: 'Les lettres floues sont souvent mal lues. Reprenez la photo si vous le pouvez.',
+			stays:
+				'Retirer une photo change seulement la liste de ce traitement : le fichier reste sur votre ordinateur.',
+			keepSharper: 'Garder la plus nette',
+			keepOnly: (name: string) => `Garder seulement ${name}`,
+			keepBoth: 'Garder les deux',
+			keepIt: 'La garder',
+			leaveOut: 'La retirer',
+			sharperMark: 'Plus nette',
+			closeUp: (name: string) => `${name}, vue de près`,
+			whole: (name: string) => `${name}, photo entière`,
+			leftOut: (name: string) => `${name} retirée de ce traitement`
+		}
 	},
 	tips: {
 		title: 'Conseils pour de meilleurs résultats',

@@ -117,6 +117,8 @@ pub fn run() {
             commands::jobs::keep_access,
             commands::jobs::inspect_files,
             commands::jobs::image_document,
+            commands::jobs::check_photos,
+            commands::jobs::stop_photo_checks,
             commands::jobs::inspect_links,
             commands::jobs::estimate_cost,
             commands::jobs::create_job,

@@ -29,6 +29,16 @@ pub enum WarningKind {
     LongRecording { minutes: u32, pieces: u32 },
     /// Speech so quiet that words may be missed.
     QuietRecording { mean_db: i32 },
+    /// A photograph that looks like the same page as `other`, which comes before it in the
+    /// order: the page photographed again. `keep` is the sharper of the two, and
+    /// `clearly_sharper` says whether the difference is plain or the two are about as sharp.
+    SamePage {
+        other: SourceId,
+        keep: SourceId,
+        clearly_sharper: bool,
+    },
+    /// A photograph that looks blurred, beside the others of the batch or on its own.
+    Blurred,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]

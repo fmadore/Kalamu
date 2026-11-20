@@ -273,6 +273,7 @@
 		return () => {
 			release();
 			stop();
+			files.photos.stop();
 		};
 	});
 </script>
@@ -336,6 +337,8 @@
 				{task}
 				inspecting={files.inspecting}
 				onadd={(paths) => files.add(paths)}
+				photos={files.photos}
+				onleaveout={(id) => files.leaveOut(id)}
 			/>
 			{#if files.oneOffered}
 				<PageOrder

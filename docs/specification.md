@@ -442,6 +442,8 @@ with short tips where they are relevant, and checks each file before a job start
 | **Low resolution** (below about 200 dpi) | Small letters, diacritics and handwriting become guesswork | Rescan; or continue anyway |
 | **Rotated or skewed pages** | Lines are read in the wrong order or skipped | Rotate or straighten automatically |
 | **Blurry, dark or low-contrast photos** | Characters are misread | Retake the photo |
+| **The same page photographed twice** (a retake in a reading room) | The page is paid for and reviewed twice, and the blurred take may be the one read | Keep the sharper one, or keep both |
+| **A blurred photograph**, beside the others of the batch or on its own | Characters are misread | Leave it out and retake it, or keep it |
 | **PDF that already contains text** | Extraction may not be needed | Use the existing text, or extract anyway |
 | **Very long or very quiet recordings, long silences** | Transcription drifts or skips quiet speech | Even out the volume; recordings are split at pauses |
 | **Auto-detect on short or mixed recordings** | Detection is unreliable on little speech | Choose the language(s) explicitly |
@@ -450,6 +452,23 @@ with short tips where they are relevant, and checks each file before a job start
 
 Checks never block a job: users can dismiss a warning. Fixes are applied to working copies,
 never to the originals, and recorded in `provenance.json`.
+
+**Photographs checked against each other** (#216). Once photographs are added to New job,
+`media` compares them in the order they will be read (the files', or the pages' of the
+document they make), on the computer and off the interface's thread; nothing is sent. Each is
+decoded once, reduced, and let go. Two neighbours that show the same page (the second laid
+over the first, turned, nearer or shifted a little, in other light) are flagged together, and
+two pages of one register or printed form, alike in ruling and layout but not in what is
+written, are not; a photograph is called blurred against the batch's own sharpness as well as
+against a floor, and a blank page never is. Under the later photograph of a pair, the file list
+says "IMG_0142 and IMG_0143 look like the same page", shows both side by side, whole and close
+up, names the sharper one, and offers *Keep the sharper one* and *Keep both*; a blurred
+photograph alone is offered *Keep it* and *Leave it out*. Leaving a photograph out takes it from
+this job's list only (and from the order of the pages), never from the disk, with Undo; nothing
+is left out without the researcher. Adding photographs checks the batch again; removing one
+does not. Leaving New job stops a check still running. PDFs and batches with nothing to say
+show nothing new. Method, thresholds and what they were measured on:
+[decision](decisions/2026-11-20-duplicate-and-blurred-photographs.md).
 
 Under the tasks, a short diagram shows how the chosen task splits the work and puts it back
 together, so that a researcher knows what is sent and what comes back:

@@ -65,6 +65,7 @@ import type { ListedAdded } from './bindings/ListedAdded.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { OfflineStatus } from './bindings/OfflineStatus.js';
 import type { PagePreview } from './bindings/PagePreview.js';
+import type { PhotoChecks } from './bindings/PhotoChecks.js';
 import type { PageRegions } from './bindings/PageRegions.js';
 import type { PageHalf } from './bindings/PageHalf.js';
 import type { DrawnRegion } from './bindings/DrawnRegion.js';
@@ -193,6 +194,11 @@ export const api = {
 	 * names; an empty name gives the document its folder's. */
 	imageDocument: (name: string, sources: SourceFile[]) =>
 		invoke<ImageDocument>('image_document', { name, sources }),
+	/** The photographs among `sources`, in this order, checked against each other: the same
+	 * page photographed twice, a blurred photograph. `null` when a newer check or
+	 * `stopPhotoChecks` stopped it. */
+	checkPhotos: (sources: SourceFile[]) => invoke<PhotoChecks | null>('check_photos', { sources }),
+	stopPhotoChecks: () => invoke<void>('stop_photo_checks'),
 	inspectLinks: (links: string[]) => invoke<InspectedFile[]>('inspect_links', { links }),
 	estimateCost: (request: EstimateRequest) => invoke<Estimate>('estimate_cost', { request }),
 	createJob: (job: NewJob) => invoke<Job>('create_job', { job }),

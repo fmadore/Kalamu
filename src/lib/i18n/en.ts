@@ -1489,7 +1489,26 @@ export const en = {
 		long_recording: (length: string, pieces: number) =>
 			`Long recording (${length}): it will be sent in ${pieces} pieces, cut at pauses. Speaker labels may differ from one piece to the next.`,
 		quiet_recording: (db: number) =>
-			`Very quiet recording (about ${db} dB): quiet speech may be missed. Evening out the volume usually helps.`
+			`Very quiet recording (about ${db} dB): quiet speech may be missed. Evening out the volume usually helps.`,
+		same_page: (first: string, second: string) => `${first} and ${second} look like the same page`,
+		blurred: (name: string) => `${name} looks blurred`,
+		/** The check of photographs against each other: retakes of one page, blurred photos. */
+		photos: {
+			checking: 'Looking for photos taken twice and blurred photos…',
+			sharper: (name: string) => `${name} is sharper. Sending both would pay for the page twice.`,
+			asSharp: 'Both look about as sharp. Sending both would pay for the page twice.',
+			blurredWhy: 'Blurred letters are often misread. Retake it if you can.',
+			stays: 'Leaving a photo out changes only this job’s list: the file stays on your computer.',
+			keepSharper: 'Keep the sharper one',
+			keepOnly: (name: string) => `Keep only ${name}`,
+			keepBoth: 'Keep both',
+			keepIt: 'Keep it',
+			leaveOut: 'Leave it out',
+			sharperMark: 'Sharper',
+			closeUp: (name: string) => `${name}, close-up`,
+			whole: (name: string) => `${name}, whole photo`,
+			leftOut: (name: string) => `${name} left out of this job`
+		}
 	},
 	tips: {
 		title: 'Tips for better results',

@@ -66,6 +66,8 @@
     "allow-keep-access",
     "allow-inspect-files",
     "allow-image-document",
+    "allow-check-photos",
+    "allow-stop-photo-checks",
     "allow-inspect-links",
     "allow-estimate-cost",
     "allow-create-job",
