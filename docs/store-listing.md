@@ -1,7 +1,7 @@
 # Store listing text
 
 Paste-ready text for Kalamu's two store listings: the Microsoft Store (Partner Center) first,
-where 1.8.0 is live and 1.8.1 is the next update, its *What's new* and certification notes
+where 1.8.0 is live and 1.9.0 is the next update, its *What's new* and certification notes
 below (the first version, 1.0.0, was certified on 2 November 2026), in
 [English](#english-united-states) and [French](#french-france), then the
 [Mac App Store](#mac-app-store-app-store-connect) (App Store Connect), where 1.6.0, the first
@@ -40,15 +40,15 @@ Transcribe recordings and videos with speakers and timestamps, and give the spea
 
 Make a detailed table of contents of a long document: a newspaper or magazine issue, an archival file scanned in one piece, a book or report. One model reads each page, another, cheaper one combines the pages into one entry per article or item, with its pages and the fields you choose. Correct the noisy text that digital libraries supply, page by page, with every change shown against the original, or translate a text into another language, the translation shown beside it.
 
-Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations a document names, its tone with a reason, themes from your own list. Ready-made analyses cover common needs, including the question, argument, methods and findings of a scholarly publication for a literature review, and a description with keywords of what a photograph, poster or map shows. Answers come back in the shape you asked for and can be exported as a spreadsheet with a column per field. Offline, two small language models from Google, Gemma 4 E4B and E2B, fill in your fields, make tables of contents and correct text on your PC with nothing sent; they are far weaker than the cloud models, so check their answers.
+Analyse texts with fields you define, as you would brief a research assistant: a summary, the people, places and organisations a document names, its tone with a reason, themes from your own list. Ready-made analyses cover common needs, including the question, argument, methods and findings of a scholarly publication for a literature review, and a description with keywords of what a photograph, poster or map shows. From the transcript of an interview, an analysis lists themes and passages worth quoting, each backed by quotations Kalamu has found word for word in the transcript, with their speaker and time. Answers come back in the shape you asked for and can be exported as a spreadsheet with a column per field. Offline, two small language models from Google, Gemma 4 E4B and E2B, fill in your fields, make tables of contents and correct text on your PC with nothing sent; they are far weaker than the cloud models, so check their answers.
 
-Check every result beside its source: the page next to its text, or the recording next to its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Search a document or a recording across all its pages, corrections included, and go to each match. A glossary explains the words these tools use, from OCR and tokens to error rates and hallucination, for colleagues new to them. Compare two or more models on the same documents: their differences are highlighted in the text, with error rates against the pages you have corrected.
+Check every result beside its source: the page next to its text, or the recording next to its transcript, line by line. Corrections are kept apart from the AI output, which is never overwritten, and you mark what you have reviewed. Over a scan, show where the text sits, draw your own regions, and have a region or a passage you select read again by a model, as a proposal you accept or leave. Search a document or a recording across all its pages, corrections included, and go to each match. A glossary explains the words these tools use, from OCR and tokens to error rates and hallucination, for colleagues new to them. Compare two or more models on the same documents: their differences are highlighted in the text, with error rates against the pages you have corrected.
 
 Large jobs are safe and affordable. Work is saved piece by piece: a job interrupted by closing the app, a crash or a lost connection resumes where it stopped, and nothing is sent or paid for twice. Long jobs keep running from the notification area while the window is closed. For large collections, choose the cheaper mode: the provider's batch service answers within a day at about half the price, and Kalamu collects the results when it next opens.
 
-Export to text, Markdown, Word, JSON, CSV, subtitles (SRT and WebVTT), and searchable PDF and ALTO XML, with Tesseract, Mistral OCR or LightOnOCR. Each output comes with a provenance.json file recording the model, prompt and settings, so your methods can be described and repeated. Save a job's settings as a pipeline to start the next batch in one click, and export it with its full prompts to cite in a methods section or share with colleagues. Chain pipelines into a workflow, extraction then analysis for instance, that stops for your review before the next step reads the text.
+Export to text, Markdown, Word, JSON, CSV, subtitles (SRT and WebVTT), and searchable PDF, ALTO XML and PAGE XML, with Tesseract, Mistral OCR or LightOnOCR. Each output comes with a provenance.json file recording the model, prompt and settings, so your methods can be described and repeated. Save a job's settings as a pipeline to start the next batch in one click, and export it with its full prompts to cite in a methods section or share with colleagues. Chain pipelines into a workflow, extraction then analysis for instance, that stops for your review before the next step reads the text.
 
-Keep a project's material together: documents in collections and tags, each with every result read from it whatever job made it, and the one you prefer marked. Search the text of all its documents at once, corrections included, and open each passage where it stands. A project dictionary gathers the people, places and terms your analyses listed; merge the spellings that are one person under your own label, keep two apart, and let a model propose merges that you accept or turn down.
+Keep a project's material together: documents in collections and tags, each with every result read from it whatever job made it, and the one you prefer marked. Search the text of all its documents at once, corrections included, by words or by meaning, with a model you choose or one on your PC, and open each passage where it stands; a map shows which documents are close to one another. A project dictionary gathers the people, places and terms your analyses listed; merge the spellings that are one person under your own label, keep two apart, and let a model propose merges that you accept or turn down.
 
 Before the first job sent to each provider, Kalamu says what will be sent and asks you. Your files go straight from your PC to the provider you choose; offline, nothing leaves the PC. API keys are kept in Windows Credential Manager. The developer receives no files, results, keys or telemetry, and the app sells no subscription, credits or API access. Every result is text generated by the AI model you choose: it can be fluent and wrong, so check a sample against the source before relying on it, and use Report a problem in the review or in Settings to tell the developer about inappropriate output. An optional Buy Me a Coffee link supports development and unlocks nothing.
 
@@ -57,7 +57,25 @@ Requires Windows 11 with the Microsoft Edge WebView2 Runtime, with native x64 an
 Google Gemini and YouTube are trademarks of Google LLC; OpenAI is a trademark of OpenAI OpCo, LLC; Claude is a trademark of Anthropic, PBC; Mistral AI is a trademark of Mistral AI; Microsoft Word is a trademark of the Microsoft group of companies. Kalamu is an independent project, not affiliated with or endorsed by any of them.
 ```
 
-### What's new in this version — 1.8.1
+### What's new in this version — 1.9.0
+
+```text
+Analyse this interview: from a transcript, themes and passages worth quoting, each backed by quotations Kalamu has found word for word in the text, with their speaker and time. Listen to each one in the recording.
+
+Search a project by meaning as well as by words, with a model you choose or one on your PC, and see its documents as a map.
+
+In the review: draw your own regions over a scan, have a region or a passage you select read again by a model, and add the name or keyword a model missed to a list.
+
+Write an extraction as PAGE XML, for Transkribus and eScriptorium. A translated transcript keeps its times as subtitles.
+
+What to check draws pages at random to verify; search takes OR and words of two letters; a job with two models shows how far they agree.
+
+New models: GPT-6.2 Sol and Astra, Gemini 4 Neon. Economy mode deletes Claude batches and sends a large Gemini job as one file.
+
+Fixed: the scan in the review no longer keeps resizing when the window is not full screen.
+```
+
+The 1.8.1 text, prepared for an update that was not published (its fix is in 1.9.0):
 
 ```text
 The scan in the review stays still: when the window was not full screen, the page could keep resizing, flickering between two widths and staying blurry. It now keeps one size.
@@ -186,11 +204,11 @@ Extract text from scanned and handwritten PDFs and images with Gemini, OpenAI, C
 Transcribe recordings and videos with timestamps, in the cloud with speakers or offline
 Offline, with no account, key or cost: transcription with Whisper, text extraction with Tesseract or small OCR models, and analyses with small language models
 Transcribe public YouTube videos from their link with Gemini, without downloading them
-Analyse texts and images with your own fields or ready-made ones: people, places, tone, a publication's argument, what a photograph shows
+Analyse texts and images with your own fields or ready-made ones: people, places, tone, an interview's themes and quotations, what a photograph shows
 Make detailed tables of contents of newspaper issues, archival files and books, then read each article on its own
 Correct existing OCR text page by page, every change shown against the original, or translate a text into another language
 Check every result beside its source, page by page or line by line; corrections never overwrite the AI's text
-Search a document, a recording or a whole project at once, corrections included, and open each passage in its source
+Search a document, a recording or a whole project, by words or by meaning, corrections included, and open each passage in its source
 Projects: collections and tags of documents, each with every result read from it
 A project dictionary of the names your analyses found, with merges a model proposes and you decide
 Compare models on the same documents, with differences highlighted and error rates
@@ -198,7 +216,7 @@ Estimated cost shown before anything is sent, from page counts and published pri
 Cheaper mode: send a large job to the provider's batch service at about half the price
 Interrupted jobs resume where they stopped, nothing paid twice; long jobs run with the window closed
 Save a job's settings as a pipeline, or chain pipelines into a workflow with review stops
-Export to text, Markdown, Word, JSON, CSV, SRT, WebVTT, searchable PDF and ALTO XML, each with a provenance file
+Export to text, Markdown, Word, JSON, CSV, SRT, WebVTT, searchable PDF, ALTO XML and PAGE XML, each with a provenance file
 File checks for double pages, low resolution and quiet recordings, with suggested fixes
 API keys kept in Windows Credential Manager; files go straight to the provider you choose
 Light and dark themes; native Windows x64 and ARM64; free and open source
@@ -257,15 +275,15 @@ Transcrivez des enregistrements et des vidéos avec les locuteurs et l’horodat
 
 Dressez la table des matières détaillée d’un long document : un numéro de journal ou de revue, un dossier d’archives numérisé d’un seul tenant, un livre ou un rapport. Un modèle lit chaque page, un autre, moins cher, réunit les pages en une entrée par article ou par pièce, avec ses pages et les champs que vous choisissez. Corrigez page par page le texte bruité que fournissent les bibliothèques numériques, chaque modification montrée face à l’original, ou traduisez un texte dans une autre langue, sa traduction montrée à côté de lui.
 
-Analysez des textes avec les champs que vous définissez, comme vous le feriez pour un assistant de recherche : un résumé, les personnes, lieux et organisations qu’un document nomme, sa tonalité avec une justification, des thèmes tirés de votre propre liste. Des analyses toutes prêtes couvrent les besoins courants, dont la question, l’argument, les méthodes et les résultats d’une publication scientifique pour une revue de littérature, et une description avec mots-clés de ce que montre une photographie, une affiche ou une carte. Les réponses reviennent dans la forme demandée et s’exportent en tableur, une colonne par champ. Hors ligne, deux petits modèles de langue de Google, Gemma 4 E4B et E2B, remplissent vos champs, font des tables des matières et corrigent du texte sur votre PC sans rien envoyer ; ils sont bien moins bons que les modèles en ligne, alors vérifiez leurs réponses.
+Analysez des textes avec les champs que vous définissez, comme vous le feriez pour un assistant de recherche : un résumé, les personnes, lieux et organisations qu’un document nomme, sa tonalité avec une justification, des thèmes tirés de votre propre liste. Des analyses toutes prêtes couvrent les besoins courants, dont la question, l’argument, les méthodes et les résultats d’une publication scientifique pour une revue de littérature, et une description avec mots-clés de ce que montre une photographie, une affiche ou une carte. À partir de la transcription d’un entretien, une analyse dégage les thèmes et les passages à citer, chacun appuyé sur des citations que Kalamu a retrouvées mot pour mot dans la transcription, avec qui parle et à quel moment. Les réponses reviennent dans la forme demandée et s’exportent en tableur, une colonne par champ. Hors ligne, deux petits modèles de langue de Google, Gemma 4 E4B et E2B, remplissent vos champs, font des tables des matières et corrigent du texte sur votre PC sans rien envoyer ; ils sont bien moins bons que les modèles en ligne, alors vérifiez leurs réponses.
 
-Vérifiez chaque résultat à côté de sa source : la page à côté de son texte, ou l’enregistrement à côté de sa transcription, ligne par ligne. Les corrections sont conservées à part du texte produit par l’IA, qui n’est jamais écrasé, et vous marquez ce que vous avez relu. Cherchez dans toutes les pages d’un document ou d’un enregistrement, corrections comprises, et allez à chaque occurrence. Un glossaire explique les mots de ces outils, de l’OCR et des tokens aux taux d’erreur et aux hallucinations, pour les collègues qui les découvrent. Comparez deux modèles ou plus sur les mêmes documents : leurs différences sont surlignées dans le texte, avec les taux d’erreur par rapport aux pages que vous avez corrigées.
+Vérifiez chaque résultat à côté de sa source : la page à côté de son texte, ou l’enregistrement à côté de sa transcription, ligne par ligne. Les corrections sont conservées à part du texte produit par l’IA, qui n’est jamais écrasé, et vous marquez ce que vous avez relu. Sur un scan, affichez où se trouve le texte, tracez vos propres zones et faites relire par un modèle une zone ou un passage que vous sélectionnez : sa réponse est une proposition que vous acceptez ou non. Cherchez dans toutes les pages d’un document ou d’un enregistrement, corrections comprises, et allez à chaque occurrence. Un glossaire explique les mots de ces outils, de l’OCR et des tokens aux taux d’erreur et aux hallucinations, pour les collègues qui les découvrent. Comparez deux modèles ou plus sur les mêmes documents : leurs différences sont surlignées dans le texte, avec les taux d’erreur par rapport aux pages que vous avez corrigées.
 
 Les gros traitements sont sûrs et abordables. Le travail est enregistré morceau par morceau : un traitement interrompu par la fermeture de l’application, un plantage ou une coupure de connexion reprend là où il s’est arrêté, et rien n’est envoyé ni payé deux fois. Les longs traitements continuent depuis la zone de notification, fenêtre fermée. Pour les grandes collections, choisissez le mode économique : le service par lots du fournisseur répond dans la journée pour environ la moitié du prix, et Kalamu récupère les résultats à sa prochaine ouverture.
 
-Exportez en texte, Markdown, Word, JSON, CSV, sous-titres (SRT et WebVTT), PDF interrogeable et ALTO XML, avec Tesseract, Mistral OCR ou LightOnOCR. Chaque export est accompagné d’un fichier provenance.json qui consigne le modèle, le prompt et les réglages, pour décrire et reproduire votre méthode. Enregistrez les réglages d’un traitement comme configuration pour lancer le lot suivant en un clic, et exportez-la avec ses prompts complets pour la citer dans une section de méthodologie ou la partager avec vos collègues. Enchaînez des configurations dans une chaîne de traitement, par exemple l’extraction puis l’analyse, qui s’arrête pour votre relecture avant que l’étape suivante ne lise le texte.
+Exportez en texte, Markdown, Word, JSON, CSV, sous-titres (SRT et WebVTT), PDF interrogeable, ALTO XML et PAGE XML, avec Tesseract, Mistral OCR ou LightOnOCR. Chaque export est accompagné d’un fichier provenance.json qui consigne le modèle, le prompt et les réglages, pour décrire et reproduire votre méthode. Enregistrez les réglages d’un traitement comme configuration pour lancer le lot suivant en un clic, et exportez-la avec ses prompts complets pour la citer dans une section de méthodologie ou la partager avec vos collègues. Enchaînez des configurations dans une chaîne de traitement, par exemple l’extraction puis l’analyse, qui s’arrête pour votre relecture avant que l’étape suivante ne lise le texte.
 
-Gardez ensemble le matériau d’un projet : des documents rangés en collections et en étiquettes, chacun avec tous les résultats tirés de lui, quel que soit le traitement qui les a produits, et celui que vous préférez marqué. Cherchez dans le texte de tous ses documents à la fois, corrections comprises, et ouvrez chaque passage là où il se trouve. Un dictionnaire de projet rassemble les personnes, lieux et termes relevés par vos analyses ; regroupez sous votre propre libellé les graphies qui désignent une même personne, gardez-en deux séparées, et laissez un modèle proposer des regroupements que vous acceptez ou refusez.
+Gardez ensemble le matériau d’un projet : des documents rangés en collections et en étiquettes, chacun avec tous les résultats tirés de lui, quel que soit le traitement qui les a produits, et celui que vous préférez marqué. Cherchez dans le texte de tous ses documents à la fois, corrections comprises, par les mots ou par le sens, avec un modèle que vous choisissez ou un modèle sur votre PC, et ouvrez chaque passage là où il se trouve ; une carte montre quels documents sont proches les uns des autres. Un dictionnaire de projet rassemble les personnes, lieux et termes relevés par vos analyses ; regroupez sous votre propre libellé les graphies qui désignent une même personne, gardez-en deux séparées, et laissez un modèle proposer des regroupements que vous acceptez ou refusez.
 
 Avant le premier traitement envoyé à chaque fournisseur, Kalamu indique ce qui sera envoyé et vous le demande. Vos fichiers vont directement de votre PC au fournisseur que vous choisissez ; hors ligne, rien ne quitte le PC. Les clés d’API sont conservées dans le Gestionnaire d’identification de Windows. Le développeur ne reçoit ni fichiers, ni résultats, ni clés, ni télémétrie, et l’application ne vend ni abonnement, ni crédits, ni accès à une API. Chaque résultat est un texte produit par le modèle d’IA que vous choisissez : il peut être fluide et faux, alors vérifiez un échantillon sur la source avant de vous y fier, et utilisez Signaler un problème, dans la relecture ou dans les Paramètres, pour signaler au développeur un résultat inapproprié. Un lien facultatif, Offrez-moi un café, soutient le développement et ne débloque rien.
 
@@ -274,7 +292,25 @@ Nécessite Windows 11 avec Microsoft Edge WebView2 Runtime, en versions natives 
 Google Gemini et YouTube sont des marques de Google LLC ; OpenAI est une marque d’OpenAI OpCo, LLC ; Claude est une marque d’Anthropic, PBC ; Mistral AI est une marque de Mistral AI ; Microsoft Word est une marque du groupe Microsoft. Kalamu est un projet indépendant, ni affilié à aucune d’elles ni approuvé par elles.
 ```
 
-### Nouveautés de cette version — 1.8.1
+### Nouveautés de cette version — 1.9.0
+
+```text
+Analyser cet entretien : à partir d’une transcription, les thèmes et les passages à citer, chacun appuyé sur des citations que Kalamu a retrouvées mot pour mot dans le texte, avec qui parle et à quel moment. Écoutez chacune dans l’enregistrement.
+
+Cherchez dans un projet par le sens comme par les mots, avec un modèle que vous choisissez ou un modèle sur votre PC, et voyez ses documents sur une carte.
+
+Dans la relecture : tracez vos propres zones sur un scan, faites relire par un modèle une zone ou un passage que vous sélectionnez, et ajoutez à une liste le nom ou le mot-clé qu’un modèle a oublié.
+
+Exportez une extraction en PAGE XML, pour Transkribus et eScriptorium. Une transcription traduite garde ses temps pour les sous-titres.
+
+À vérifier tire des pages au hasard à contrôler ; la recherche accepte OU et les mots de deux lettres ; un traitement avec deux modèles montre à quel point ils sont d’accord.
+
+Nouveaux modèles : GPT-6.2 Sol et Astra, Gemini 4 Neon. Le mode économique supprime les lots de Claude et envoie un gros traitement Gemini en un seul fichier.
+
+Corrigé : le scan de la relecture ne change plus de taille sans arrêt quand la fenêtre n’est pas en plein écran.
+```
+
+Le texte de 1.8.1, préparé pour une mise à jour qui n’a pas été publiée (sa correction est dans 1.9.0) :
 
 ```text
 Le scan de la relecture reste immobile : quand la fenêtre n’était pas en plein écran, la page pouvait changer de taille sans arrêt, passant d’une largeur à l’autre et restant floue. Elle garde désormais une seule taille.
@@ -337,11 +373,11 @@ Extraire le texte de PDF et d’images numérisés ou manuscrits avec Gemini, Op
 Transcrire des enregistrements et des vidéos avec l’horodatage, en ligne avec les locuteurs ou hors ligne
 Hors ligne, sans compte, sans clé ni frais : transcription avec Whisper, extraction de texte avec Tesseract ou de petits modèles OCR, et analyses avec de petits modèles de langue
 Transcrire des vidéos YouTube publiques à partir de leur lien avec Gemini, sans les télécharger
-Analyser des textes et des images avec vos propres champs ou des champs tout prêts : personnes, lieux, tonalité, argument d’une publication, ce que montre une photographie
+Analyser des textes et des images avec vos propres champs ou des champs tout prêts : personnes, lieux, tonalité, thèmes et citations d’un entretien, ce que montre une photographie
 Dresser la table des matières détaillée de numéros de journaux, de dossiers d’archives et de livres, puis lire chaque article à part
 Corriger page par page un texte OCR existant, chaque modification montrée face à l’original, ou traduire un texte dans une autre langue
 Vérifier chaque résultat à côté de sa source, page par page ou ligne par ligne ; les corrections n’écrasent jamais le texte de l’IA
-Chercher dans un document, un enregistrement ou tout un projet, corrections comprises, et ouvrir chaque passage dans sa source
+Chercher dans un document, un enregistrement ou tout un projet, par les mots ou par le sens, corrections comprises, et ouvrir chaque passage dans sa source
 Projets : des collections et des étiquettes de documents, chacun avec tous les résultats tirés de lui
 Un dictionnaire de projet des noms trouvés par vos analyses, avec des regroupements proposés par un modèle et décidés par vous
 Comparer des modèles sur les mêmes documents, avec les différences surlignées et les taux d’erreur
@@ -349,7 +385,7 @@ Coût estimé affiché avant tout envoi, d’après le nombre de pages et les pr
 Mode économique : envoyer un gros traitement au service par lots du fournisseur pour environ la moitié du prix
 Les traitements interrompus reprennent là où ils se sont arrêtés, rien n’est payé deux fois ; les longs traitements continuent fenêtre fermée
 Enregistrer les réglages d’un traitement comme configuration, ou enchaîner des configurations avec des arrêts pour relecture
-Exporter en texte, Markdown, Word, JSON, CSV, SRT, WebVTT, PDF interrogeable et ALTO XML, chacun avec un fichier de provenance
+Exporter en texte, Markdown, Word, JSON, CSV, SRT, WebVTT, PDF interrogeable, ALTO XML et PAGE XML, chacun avec un fichier de provenance
 Vérification des fichiers : doubles pages, faible résolution et enregistrements faibles, avec corrections proposées
 Clés d’API dans le Gestionnaire d’identification de Windows ; les fichiers vont directement au fournisseur choisi
 Thèmes clair et sombre ; versions natives Windows x64 et ARM64 ; gratuit et open source
@@ -409,9 +445,9 @@ Fill in the bracketed parts at submission. These notes are seen only by the cert
 team; a test key may be given here, never in the listing.
 
 ```text
-Product: Kalamu. Version: 1.8.1.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
+Product: Kalamu. Version: 1.9.0.0, native x64 and ARM64. Windows 11 with Edge WebView2 Runtime. Kalamu extracts text from documents, transcribes recordings and analyses texts with an AI provider the user configures with their own API key (Google Gemini, OpenAI, Anthropic Claude or Mistral), or works offline with Whisper (transcription), Tesseract and two small OCR models, LightOnOCR-3 and GLM-OCR (text extraction), and two small language models, Gemma 4 E4B and E2B (analyses, tables of contents, corrections). The app supplies no cloud account or credits; provider usage is billed to the user's own account, as the listing states.
 
-Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.8.1/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
+Sample files for testing: https://github.com/fmadore/Kalamu/releases/download/v1.9.0/kalamu-samples.zip, with a README.txt: a 20-second spoken recording (interview.wav, made with Windows speech synthesis), a handwritten French report of 1755 (dodington-1755.jpg, Bibliothèque nationale de France, public domain), a 1911 university newspaper page with its machine-read text layer (daily-nebraskan-1911.pdf, Library of Congress, public domain), a whole four-page issue of the same paper, scans only, for a table of contents (daily-nebraskan-1911-issue.pdf), and an invented newspaper page with its text (bulletin-page.jpg, bulletin.txt).
 
 Offline route, with no account or key:
 1. Open Settings, choose the Offline tab, and under Transcription with Whisper download Whisper Base (about 60 MB; internet needed once). The download can be cancelled.

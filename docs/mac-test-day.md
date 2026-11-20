@@ -171,12 +171,13 @@ most of this was never written down for the disk image.
 - [ ] **A15. French**: Settings → General → French. Every screen is in French; the macOS
   application menu stays in English (known). Back to English afterwards.
 
-## Part B: what was written since 1.6.0, in WebKit (3 hours)
+## Part B: what was written since 1.6.0, in WebKit (5 hours)
 
-- [ ] **B1. The Windows list's Part B**, steps B1 to B9 of
+- [ ] **B1. The Windows list's Part B**, steps B1 to B15 of
   [windows-test-pass.md](windows-test-pass.md), here: with ⌘ for Ctrl, the trackpad's pinch
   if VNC carries it (say if it does not), and Finder for File Explorer.
-- [ ] **B2. The Windows list's Part C**, steps C1 to C8, with the Gemini and Mistral keys.
+- [ ] **B2. The Windows list's Part C**, steps C1 to C14, with the Gemini and Mistral keys.
+  For C9, the interview's recording as an M4A if you have one.
 - [ ] **B3. Text regions**, first tried on Windows on 17 November: on A6's and A7's reviews
   and on a Mistral OCR page, blocks, lines and words at each zoom, chosen with the pointer and
   with the keyboard.
@@ -184,6 +185,18 @@ most of this was never written down for the disk image.
   whole description under the pointer.
 - [ ] **B5. Files dropped**: a folder dragged from Finder onto a project and onto New job; the
   drop target shows; an `.xlsx` is refused at once, with a reason.
+- [ ] **B6. A region drawn with the trackpad**, never tried in WKWebView: drag a box, move and
+  resize it, pinch to zoom while one is chosen; the box stays under the pointer and on the
+  scan. On a page of thousands of words, moving a region stays smooth.
+- [ ] **B7. The passage menu**: on a selection in a text review, Ctrl+click and a two-finger
+  click each open Kalamu's menu with *Correct with a model…*, not the system's own menu.
+- [ ] **B8. A quotation played**: in an interview's review, **Listen** opens the transcript at
+  the quotation's turn and plays it there, in each format the Mac's player is given (the
+  recording as it was added, and one cut into pieces: a recording of more than half an hour).
+  This has run in Chromium only.
+- [ ] **B9. EmbeddingGemma 2 with Metal**: Windows' B10 here. Note the first five passages for
+  each question and compare them with the Windows pass's for the same project: the model's card
+  warns of half precision on a graphics processor. Note how long preparing took.
 
 ## Part C: keyboard and VoiceOver (1 hour)
 
@@ -199,11 +212,15 @@ done twice: with it off, then on (yours to switch).
   closes the list, keeps the text, and the list stays closed.
 - [ ] **C4. The readings** of a comparison reached and taken from the keyboard; an analysis's
   names renamed and removed; a text region chosen with the arrows.
+- [ ] **C4b. The newest screens**, D7 of the Windows list: a region drawn, moved and removed;
+  the passage menu on a selection; an interview's cards, *Listen* and a quotation's *Remove*
+  (with keyboard navigation off, Option+Tab reaches it); *Words* and *Meaning* in Search.
 - [ ] **C5. What to check and the sidebar's Resume** from the keyboard, as D4 and D5 of the
   Windows list.
 - [ ] **C6. With VoiceOver on**: C2 to C5 again. Each control is named and its state read out
   (the caption panel shows it); a failure that stays is read once; a region is read with its
-  text.
+  text; a proposal (a passage's, a region's) is announced when it arrives; an interview's card
+  is read with its quotations, their speaker and time.
 
 ## Part D: after a crash or a Force Quit (30 minutes)
 
