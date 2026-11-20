@@ -18,7 +18,8 @@
 		entryDraft,
 		quoteStart,
 		saidBy,
-		type Card
+		type Card,
+		type CardNote
 	} from '#lib/cited.js';
 	import type { CitedAnswers } from '#lib/citedAnswers.svelte.js';
 	import { choiceLabel, messages } from '#lib/i18n/index.js';
@@ -100,6 +101,16 @@
 	}
 </script>
 
+{#snippet noteOf(note: CardNote)}
+	{@const f = own.find((x) => x.key === note.key)}
+	{#if f?.kind.type === 'choice'}
+		<!-- A choice (where a theme comes from) said plainly, in the interface language. -->
+		<p class="chip origin">{f.label} <strong>{choiceLabel(f, note.value)}</strong></p>
+	{:else}
+		<p class="note">{note.value}</p>
+	{/if}
+{/snippet}
+
 {#each setups as s, i (s.id)}
 	{@const answers = answersOf(s)}
 	{@const value = answers ? citedOf(answers, field.key) : null}
@@ -160,7 +171,7 @@
 						{:else}
 							{#if card.title}<h3>{card.title}</h3>{/if}
 							{#if card.notesFirst}
-								{#each card.notes as note (note.key)}<p class="note">{note.value}</p>{/each}
+								{#each card.notes as note (note.key)}{@render noteOf(note)}{/each}
 							{/if}
 							{#if card.quotes.length === 0}
 								<p class="muted none">{c.noQuote}</p>
@@ -200,7 +211,7 @@
 								</ul>
 							{/if}
 							{#if !card.notesFirst}
-								{#each card.notes as note (note.key)}<p class="note">{note.value}</p>{/each}
+								{#each card.notes as note (note.key)}{@render noteOf(note)}{/each}
 							{/if}
 							<div class="card-actions">
 								<button
@@ -274,6 +285,10 @@
 		margin: 0;
 		font-size: var(--type-md);
 		color: var(--text-body);
+	}
+	.origin {
+		justify-self: start;
+		font-family: var(--font-ui);
 	}
 	.quotes {
 		list-style: none;

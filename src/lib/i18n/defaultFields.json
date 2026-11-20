@@ -203,9 +203,32 @@
               "type": "text"
             },
             "reason": false
+          },
+          {
+            "key": "origin",
+            "label": "Origin",
+            "instructions": "Where the theme comes from: the researcher's own guide, listed in the request, or the interview itself. Without a guide, always the interview.",
+            "kind": {
+              "type": "choice",
+              "values": [
+                "The researcher's guide",
+                "The interview"
+              ]
+            },
+            "reason": false
           }
         ],
         "max": 8
+      },
+      "reason": false
+    },
+    {
+      "key": "guide_themes_not_found",
+      "label": "Guide themes not found",
+      "instructions": "The themes of the researcher's guide that the interview does not take up, as the guide words them. Empty when the request lists no guide.",
+      "kind": {
+        "type": "list",
+        "max": null
       },
       "reason": false
     },

@@ -22,6 +22,17 @@ interview itself.
   {languages}, with a description of one or two sentences of what they say about it.
 - Back every theme with one to three quotations that show it.
 
+## The researcher's own themes
+
+The request may list the researcher's own themes or interview guide, one per line.
+
+- Look for each of them in the interview. One the interviewee takes up is a theme like the
+  others, named as the guide names it, its origin "The researcher's guide".
+- A theme the interview brings that the guide does not list has the origin "The interview";
+  without a guide, every theme has.
+- A theme of the guide the interview does not take up goes in the guide themes not found, as
+  the guide words it: never back it with a weak or loosely related quotation to keep it.
+
 ## Quotations
 
 - Choose passages worth quoting in a text: where the interviewee says something in their own

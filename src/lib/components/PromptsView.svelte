@@ -37,6 +37,7 @@
 					draft.user_prompt !== selected.user_prompt ||
 					(draft.merge_instructions ?? null) !== (selected.merge_instructions ?? null) ||
 					(draft.question ?? '') !== (selected.question ?? '') ||
+					(draft.themes ?? '') !== (selected.themes ?? '') ||
 					!!draft.dense !== !!selected.dense ||
 					JSON.stringify(draft.schema) !== JSON.stringify(selected.schema)))
 	);
@@ -244,6 +245,17 @@
 							if (draft) draft.question = e.currentTarget.value;
 						}}></textarea>
 					<small class="muted" id="prompt-question-hint">{m.prompts.questionHint}</small>
+				</label>
+				<label class="field">
+					<span>{m.prompts.themes}</span>
+					<textarea
+						class="short"
+						value={draft.themes ?? ''}
+						aria-describedby="prompt-themes-hint"
+						oninput={(e) => {
+							if (draft) draft.themes = e.currentTarget.value;
+						}}></textarea>
+					<small class="muted" id="prompt-themes-hint">{m.prompts.themesHint}</small>
 				</label>
 			{/if}
 			{#if draft.task === 'text_extraction'}

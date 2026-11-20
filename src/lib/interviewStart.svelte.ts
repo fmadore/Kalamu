@@ -37,11 +37,32 @@ import { api } from './tauri.js';
 /** The ready-made prompt that reads an interview for its themes and quotations. */
 export const INTERVIEW_PRESET = 'analysis.interview';
 
-/** The setup an interview is analysed with: the draft's, the researcher's question added when
- * they typed one (left out when empty, as the engine's cache keys expect). */
-export function interviewRequest(request: SetupRequest, question: string): SetupRequest {
+/** The setup an interview is analysed with: the draft's, the researcher's question and their
+ * own themes added when they typed them (each left out when empty, as the engine's cache keys
+ * expect). */
+export function interviewRequest(
+	request: SetupRequest,
+	question: string,
+	themes = ''
+): SetupRequest {
 	const asked = question.trim();
-	return asked ? { ...request, options: { ...request.options, question: asked } } : request;
+	const listed = themes.trim();
+	if (!asked && !listed) return request;
+	return {
+		...request,
+		options: {
+			...request.options,
+			...(asked ? { question: asked } : {}),
+			...(listed ? { themes: listed } : {})
+		}
+	};
+}
+
+/** The researcher's themes typed for this interview, added to a kept description's setup (they
+ * replace the prompt's own); the setup as it is when none were typed. */
+export function withThemes(request: SetupRequest, themes: string): SetupRequest {
+	const listed = themes.trim();
+	return listed ? { ...request, options: { ...request.options, themes: listed } } : request;
 }
 
 /** The setup with a kept description's prompt in place of the ready-made one, whose question
@@ -69,6 +90,8 @@ export function tooLongOf(
 
 export class InterviewAnalysis {
 	question = $state('');
+	/** The researcher's own themes or interview guide, one per line, under More choices. */
+	themes = $state('');
 	/** The analysis prompts, read as the dialog opens: the ready-made one, and the researcher's
 	 * kept descriptions among them. */
 	presets = $state<Preset[]>([]);
@@ -108,8 +131,8 @@ export class InterviewAnalysis {
 	readonly request = $derived.by(() => {
 		const request = toRequest(this.catalog, 'analysis', this.draft);
 		return this.chosen
-			? withPrompt(request, this.chosen.id)
-			: interviewRequest(request, this.question);
+			? withThemes(withPrompt(request, this.chosen.id), this.themes)
+			: interviewRequest(request, this.question, this.themes);
 	});
 
 	/** Freezes the transcript's text, every source's or one source's, as the other choices of
@@ -132,6 +155,14 @@ export class InterviewAnalysis {
 			this.presets = [];
 		}
 		this.choice = firstChoice(this.kept, lastChoice());
+		this.themes = this.chosen?.themes ?? '';
+	}
+
+	/** Chooses a kept description, or a new one: the box of themes shows the kept themes, to
+	 * change for this interview. */
+	choose(choice: string): void {
+		this.choice = choice;
+		this.themes = this.chosen?.themes ?? '';
 	}
 
 	/** Ticks "Keep this…", with a name to start from when none is written yet. */
@@ -146,10 +177,12 @@ export class InterviewAnalysis {
 		const base = this.presets.find((p) => p.id === INTERVIEW_PRESET);
 		if (this.chosen || !this.keep || !this.question.trim() || !base) return request;
 		const name = this.keptName.trim() || suggestedName(this.question, project);
-		const saved = await api.savePreset(keptPrompt($state.snapshot(base), name, this.question));
+		const saved = await api.savePreset(
+			keptPrompt($state.snapshot(base), name, this.question, this.themes)
+		);
 		this.presets = [...this.presets, saved];
 		this.choice = saved.id;
-		return withPrompt(request, saved.id);
+		return withThemes(withPrompt(request, saved.id), this.themes);
 	}
 
 	/** The job as New job would make it from these choices. */

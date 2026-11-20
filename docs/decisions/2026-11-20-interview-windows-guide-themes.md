@@ -1,4 +1,4 @@
-# 2026-11-20 · Long interviews read in parts
+# 2026-11-20 · Long interviews read in parts, and the researcher's own themes
 
 ## Context
 
@@ -70,6 +70,27 @@ numbers.
   instructions with each, an analysis's answer each) and the step apart, as a table of contents'
   second step is (`EstimateRow.parts`, and a `merge` row). Never in an economy batch: no cited
   analysis is, and the step needs the parts' answers.
+
+### The researcher's own themes or interview guide
+
+- **A set-up option beside the question**: `SetupOptions.themes`, one theme per line, added to
+  the request after the question (`THEMES_INTRO`, then a line each, list marks and repeats
+  dropped), left out when empty so every earlier key stands; blank lines are no themes. It is
+  the job's, frozen with its set-up, so provenance records it with the options.
+- **Kept with a research description** as the question is (`Preset.themes`, settled into a
+  set-up that typed none; lines typed for the interview replace the kept ones). Prompts shows
+  the same box under the question for an analysis whose entries quote the text.
+- **Where a theme comes from is a field of the theme**, a choice the model must answer, *The
+  researcher's guide* or *The interview* (always the interview without a guide), so it is
+  checked like any choice, shown through `localiseFields` in the interface language on the
+  card as a plain chip, and written by every exporter as an entry's field, with no exporter
+  changed. A guide theme the interview does not take up is a list of its own, *Guide themes
+  not found*: an entry with no quotation is dropped by the quotations' check, so a cited field
+  could not hold it, and a list keeps it from being padded with a weak quotation to survive.
+  When a long interview is read in parts, the step that brings them together writes that list
+  anew from every part's, so a theme one part missed and another found is not reported.
+- Changing the default interview prompt's fields changes the keys of new interview analyses
+  made with it, as any change of a prompt does; jobs already made keep the fields they froze.
 
 ## Consequences
 

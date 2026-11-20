@@ -12,6 +12,8 @@ Awa raconte ses débuts au port de pêche en 1998 et une phrase devenue la devis
 
 Elle commence au port sans savoir ce qui l’attend.
 
+**Origin:** The researcher's guide
+
 > J’ai commencé en 1998.
 >
 > — Awa, [00:00:12]
@@ -19,6 +21,8 @@ Elle commence au port sans savoir ce qui l’attend.
 ### Une devise
 
 Une phrase reprise par toute l’équipe.
+
+**Origin:** The interview
 
 > « on ne savait pas » est devenu notre devise
 >
@@ -29,6 +33,10 @@ Une phrase reprise par toute l’équipe.
 > — Awa, [00:00:12]
 
 *1 quotation could not be found in the text and was left out.*
+
+## Guide themes not found
+
+La famille
 
 ## Keywords
 

@@ -27,11 +27,11 @@ fn long_text() -> String {
 fn part_answer() -> serde_json::Value {
     serde_json::json!({
         "summary": "Une partie.",
-        "themes": [{"name": "Le port", "description": "Les quais.",
+        "themes": [{"name": "Le port", "description": "Les quais.", "origin": "The interview",
                     "quotes": [{"turn": 3, "words": "Paragraphe numéro 03"},
                                {"turn": 25, "words": "Paragraphe numéro 25"},
                                {"turn": 4, "words": "jamais dit"}]}],
-        "keywords": ["Dakar"],
+        "guide_themes_not_found": [], "keywords": ["Dakar"],
         "quotations": [{"why_it_matters": "Le début.",
                         "quotes": [{"turn": 3, "words": "Paragraphe numéro 03"}]}],
     })
@@ -42,9 +42,9 @@ fn part_answer() -> serde_json::Value {
 fn together_answer() -> serde_json::Value {
     serde_json::json!({
         "summary": "Tout l'entretien.",
-        "themes": [{"name": "Le port de Dakar", "description": "Du début à la fin.",
+        "themes": [{"name": "Le port de Dakar", "description": "Du début à la fin.", "origin": "The interview",
                     "quotes": ["Q2", "Q1", "Paragraphe numéro 99 inventé", "Q40"]}],
-        "keywords": ["Dakar", "port"],
+        "guide_themes_not_found": [], "keywords": ["Dakar", "port"],
         "quotations": [{"why_it_matters": "Le début.", "quotes": ["Q1"]}],
     })
 }
@@ -314,7 +314,7 @@ async fn a_transcript_that_fits_is_read_whole_under_the_key_it_always_had() {
         "Nous partions tôt\nau marché.\n\nLe soir, on comptait.\n",
     );
     f.model.script(&[serde_json::json!({
-        "summary": "s", "themes": [], "keywords": [],
+        "summary": "s", "themes": [], "guide_themes_not_found": [], "keywords": [],
         "quotations": [{"why_it_matters": "w",
                         "quotes": [{"turn": 1, "words": "Nous partions tôt au marché."}]}],
     })]);

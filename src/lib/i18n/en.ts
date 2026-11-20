@@ -146,7 +146,12 @@ export const en = {
 		openPrompts: 'Open Prompts',
 		/** Said beside the cost when the transcript is too long to be read at once. */
 		inParts: (n: number) =>
-			`This interview is long: it will be read in ${n} parts, then brought together.`
+			`This interview is long: it will be read in ${n} parts, then brought together.`,
+		/** Under More choices: the researcher's own themes or interview guide. */
+		themes: 'Your own themes or interview guide',
+		themesHint:
+			'Optional. One theme per line. Each theme found says whether it comes from your list or from the interview, and a theme the interview does not take up is said to be missing.',
+		themesPlaceholder: 'For example:\nFirst customers\nHelp from the family\nSavings groups'
 	},
 	/** "Which of these speak of my question?": a project's documents read against one question,
 	 *  then filtered by the answer and kept or set aside by the researcher. */
@@ -2127,6 +2132,9 @@ export const en = {
 		question: 'What is your research about?',
 		questionHint:
 			'Optional. Sent with each document, so you write it once for all your interviews. A description typed in Analyse this interview replaces it.',
+		themes: 'Your own themes or interview guide',
+		themesHint:
+			'Optional. One theme per line, sent with each document. Themes typed in Analyse this interview replace them.',
 		mergeInstructions: 'Instructions for combining the pages',
 		dense: 'Pages full of text',
 		denseHint:

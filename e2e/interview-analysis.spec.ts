@@ -95,6 +95,41 @@ test('the dialog asks one question with one button, and starts the job with it',
 	);
 });
 
+test('the researcher’s own themes wait under More choices and go with the job', async ({
+	page
+}) => {
+	await open(page, 'jobs-audio');
+	const menu = await useText(page);
+	await menu.getByRole('button', { name: /Analyse this interview/ }).click();
+	const dialog = page.getByRole('dialog', { name: 'Analyse this interview' });
+	const themes = dialog.getByRole('textbox', { name: 'Your own themes or interview guide' });
+	// Not on the default path: the dialog stays one box and one button.
+	await expect(themes).toBeHidden();
+	await dialog.locator('details.more summary').click();
+	await expect(themes).toHaveAccessibleDescription(/One theme per line/);
+	await themes.fill('Savings groups\nHelp from the family');
+	await dialog.getByRole('button', { name: 'Analyse', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const created = await page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
+	expect(created?.setups[0].options.themes).toBe('Savings groups\nHelp from the family');
+	expect(created?.setups[0].options.question).toBeUndefined();
+});
+
+test('each theme says plainly whether it comes from the guide, and a guide theme not found is listed', async ({
+	page
+}) => {
+	const pane = await answers(page);
+	const tontine = pane.locator('[data-entry="1"]').first();
+	await expect(tontine.locator('.origin')).toHaveText("Origin The researcher's guide");
+	await expect(pane.locator('[data-entry="0"]').first().locator('.origin')).toHaveText(
+		'Origin The interview'
+	);
+	await expect(pane.getByRole('heading', { name: 'Guide themes not found' })).toBeVisible();
+	await expect(pane.locator('[data-field="guide_themes_not_found"]')).toContainText(
+		'Le prix du tissu'
+	);
+});
+
 /** Opens the dialog on the sample transcript made too long for the models on this computer to
  * read at once, or, `unbroken`, to read at all. */
 async function longInterview(page: Page, useText: string, unbroken = true): Promise<Locator> {

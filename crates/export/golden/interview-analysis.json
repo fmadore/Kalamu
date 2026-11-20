@@ -3,6 +3,9 @@
     {
       "corrected": true,
       "fields": {
+        "guide_themes_not_found": [
+          "La famille"
+        ],
         "keywords": [
           "port de pêche",
           "1998",
@@ -49,6 +52,10 @@
                 {
                   "key": "description",
                   "value": "Elle commence au port sans savoir ce qui l’attend."
+                },
+                {
+                  "key": "origin",
+                  "value": "The researcher's guide"
                 }
               ],
               "evidence": [
@@ -75,6 +82,10 @@
                 {
                   "key": "description",
                   "value": "Une phrase reprise par toute l’équipe."
+                },
+                {
+                  "key": "origin",
+                  "value": "The interview"
                 }
               ],
               "evidence": [
@@ -114,7 +125,7 @@
       },
       "reviewed": true,
       "segments": [],
-      "text": "Summary\nAwa raconte ses débuts au port de pêche en 1998 et une phrase devenue la devise de son équipe.\n\nThemes\n\nName\nLes débuts\n\nDescription\nElle commence au port sans savoir ce qui l’attend.\n\"J’ai commencé en 1998.\" (Awa, 00:00:12)\n\nName\nUne devise\n\nDescription\nUne phrase reprise par toute l’équipe.\n\"« on ne savait pas » est devenu notre devise\" (Awa, 00:01:15)\n\"Au début, on ne savait pas.\" (Awa, 00:00:12)\n\n1 quotation could not be found in the text and was left out.\n\nKeywords: port de pêche; 1998; devise\n\nQuotations\n\nWhy it matters\nLa phrase résume une expérience collective.\n\"est devenu notre devise.\" (Awa, 00:01:15)"
+      "text": "Summary\nAwa raconte ses débuts au port de pêche en 1998 et une phrase devenue la devise de son équipe.\n\nThemes\n\nName\nLes débuts\n\nDescription\nElle commence au port sans savoir ce qui l’attend.\n\nOrigin: The researcher's guide\n\"J’ai commencé en 1998.\" (Awa, 00:00:12)\n\nName\nUne devise\n\nDescription\nUne phrase reprise par toute l’équipe.\n\nOrigin: The interview\n\"« on ne savait pas » est devenu notre devise\" (Awa, 00:01:15)\n\"Au début, on ne savait pas.\" (Awa, 00:00:12)\n\n1 quotation could not be found in the text and was left out.\n\nGuide themes not found: La famille\n\nKeywords: port de pêche; 1998; devise\n\nQuotations\n\nWhy it matters\nLa phrase résume une expérience collective.\n\"est devenu notre devise.\" (Awa, 00:01:15)"
     }
   ],
   "provenance": {
@@ -189,12 +200,35 @@
                   },
                   "label": "Description",
                   "reason": false
+                },
+                {
+                  "instructions": "",
+                  "key": "origin",
+                  "kind": {
+                    "type": "choice",
+                    "values": [
+                      "The researcher's guide",
+                      "The interview"
+                    ]
+                  },
+                  "label": "Origin",
+                  "reason": false
                 }
               ],
               "max": 8,
               "type": "cited"
             },
             "label": "Themes",
+            "reason": false
+          },
+          {
+            "instructions": "",
+            "key": "guide_themes_not_found",
+            "kind": {
+              "max": null,
+              "type": "list"
+            },
+            "label": "Guide themes not found",
             "reason": false
           },
           {

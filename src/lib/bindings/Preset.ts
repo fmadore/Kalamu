@@ -50,4 +50,11 @@ made_for?: InputKind,
  * sent as a set-up's own question would be (`SetupOptions::question`), which replaces it
  * when the set-up has one. Left out when empty, so files written before it read unchanged.
  */
-question?: string, };
+question?: string, 
+/**
+ * For an analysis, the researcher's own themes or interview guide, one per line, kept with
+ * the prompt beside the question and sent as a set-up's own themes would be
+ * (`SetupOptions::themes`), which replace them when the set-up has some. Left out when
+ * empty, so files written before it read unchanged.
+ */
+themes?: string, };

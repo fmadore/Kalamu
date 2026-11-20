@@ -281,9 +281,16 @@ pub(super) fn image_description() -> AnalysisSchema {
     }
 }
 
+/// A theme taken from the researcher's own guide (`SetupOptions::themes`).
+const GUIDE: &str = "The researcher's guide";
+/// A theme that emerged from the interview.
+const EMERGED: &str = "The interview";
+
 /// An interview read for a researcher: a summary, its themes and the passages worth quoting,
 /// each backed by quotations Kalamu finds in the transcript word for word before they are kept
-/// (`FieldKind::Cited`), and keywords as the research summary's.
+/// (`FieldKind::Cited`), and keywords as the research summary's. Each theme says whether it comes
+/// from the researcher's own guide or emerged from the interview, and the guide's themes the
+/// interview does not take up are listed apart, never padded with weak quotations.
 pub(super) fn interview() -> AnalysisSchema {
     AnalysisSchema {
         fields: vec![
@@ -312,9 +319,24 @@ pub(super) fn interview() -> AnalysisSchema {
                             FieldKind::Text,
                             false,
                         ),
+                        field(
+                            "Origin",
+                            "Where the theme comes from: the researcher's own guide, listed in \
+                             the request, or the interview itself. Without a guide, always the \
+                             interview.",
+                            choice(&[GUIDE, EMERGED]),
+                            false,
+                        ),
                     ],
                     max: Some(8),
                 },
+                false,
+            ),
+            field(
+                "Guide themes not found",
+                "The themes of the researcher's guide that the interview does not take up, as \
+                 the guide words them. Empty when the request lists no guide.",
+                FieldKind::List { max: None },
                 false,
             ),
             field("Keywords", KEYWORDS, list(12), false),

@@ -122,7 +122,8 @@ const themes: CitedValue = {
 				text(
 					'description',
 					'Mariam a appris le métier chez sa tante, d’abord en observant, et transmet la même exigence à ses apprenties.'
-				)
+				),
+				text('origin', 'The interview')
 			],
 			evidence: [
 				quote(2, 'Pendant trois ans, je balayais l’atelier et je regardais ses mains.'),
@@ -135,7 +136,8 @@ const themes: CitedValue = {
 				text(
 					'description',
 					'La tontine du quartier a payé la deuxième machine ; c’est aussi un lieu où les femmes s’entraident.'
-				)
+				),
+				text('origin', "The researcher's guide")
 			],
 			evidence: [
 				quote(6, 'chaque semaine l’une de nous prend tout'),
@@ -149,7 +151,8 @@ const themes: CitedValue = {
 				text(
 					'description',
 					'Les commandes passent désormais par des photos envoyées sur le téléphone.'
-				)
+				),
+				text('origin', 'The interview')
 			],
 			evidence: [quote(12, 'les clientes m’envoient la photo d’un modèle')]
 		}
@@ -189,10 +192,15 @@ export const interviewSchema = {
 			type: 'cited',
 			fields: [
 				field('name', 'Name', { type: 'text' }),
-				field('description', 'Description', { type: 'text' })
+				field('description', 'Description', { type: 'text' }),
+				field('origin', 'Origin', {
+					type: 'choice',
+					values: ["The researcher's guide", 'The interview']
+				})
 			],
 			max: 8
 		}),
+		field('guide_themes_not_found', 'Guide themes not found', { type: 'list', max: null }),
 		field('keywords', 'Keywords', { type: 'list', max: 12 }),
 		field('quotations', 'Quotations', {
 			type: 'cited',
@@ -286,6 +294,7 @@ const answers = (i: number): FieldAnswer[] => [
 		key: 'themes',
 		value: i === 0 ? themes : { ...themes, entries: themes.entries.slice(1), left_out: 0 }
 	},
+	{ key: 'guide_themes_not_found', value: ['Le prix du tissu'] },
 	{ key: 'keywords', value: ['couture', 'tontine', 'apprentissage', 'téléphone'] },
 	{ key: 'quotations', value: quotations }
 ];

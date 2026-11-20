@@ -37,10 +37,21 @@ fn schema() -> AnalysisSchema {
                     fields: vec![
                         field("Name", "", FieldKind::Text),
                         field("Description", "", FieldKind::Text),
+                        field(
+                            "Origin",
+                            "",
+                            FieldKind::Choice {
+                                values: vec![
+                                    "The researcher's guide".into(),
+                                    "The interview".into(),
+                                ],
+                            },
+                        ),
                     ],
                     max: Some(8),
                 },
             ),
+            field("Guide themes not found", "", FieldKind::List { max: None }),
             field("Keywords", "", FieldKind::List { max: Some(12) }),
             field(
                 "Quotations",
@@ -78,14 +89,18 @@ fn answers(schema: &AnalysisSchema) -> (Vec<FieldAnswer>, Vec<FieldAnswer>) {
             "summary": "Awa raconte ses débuts au port de pêche en 1998 et une phrase devenue la devise de son équipe.",
             "themes": [
                 {"name": "Les débuts", "description": "Elle commence au port sans savoir ce qui l’attend.",
+                 "origin": "The researcher's guide",
                  "quotes": [{"turn": 2, "words": "J'ai commencé en 1998."},
                             {"turn": 2, "words": "On nous a tout appris sur place."}]},
                 {"name": "Une devise", "description": "Une phrase reprise par toute l’équipe.",
+                 "origin": "The interview",
                  "quotes": [{"turn": 4, "words": "« on ne savait pas » est devenu notre devise"},
                             {"turn": 2, "words": "Au début, on ne savait pas."}]},
                 {"name": "Le port", "description": "Le lieu de travail.",
+                 "origin": "The interview",
                  "quotes": [{"turn": 1, "words": "Comment avez-vous commencé au port ?"}]},
             ],
+            "guide_themes_not_found": ["La famille"],
             "keywords": ["port de pêche", "1998", "devise"],
             "quotations": [
                 {"why_it_matters": "La phrase résume une expérience collective.",
@@ -205,6 +220,12 @@ fn the_files_hold_only_what_the_transcript_says_and_the_researcher_kept() {
     assert!(!memo.contains("tout appris"));
     assert!(!memo.contains("Le port"));
     assert!(memo.contains("*1 quotation could not be found in the text and was left out.*"));
+    // Where each theme comes from, and the guide's theme the interview does not take up.
+    assert!(memo.contains("### Les débuts\n\nElle commence au port sans savoir ce qui l’attend.\n\n**Origin:** The researcher's guide"), "{memo}");
+    assert!(
+        memo.contains("## Guide themes not found\n\nLa famille"),
+        "{memo}"
+    );
 
     let rows =
         String::from_utf8(files(ExportFormat::Csv, &doc)[1].bytes.clone()).unwrap_or_default();

@@ -45,4 +45,11 @@ translate?: boolean,
  * costs nothing twice and another is another analysis. Left out when empty, so cache keys
  * made before it existed stay valid.
  */
-question?: string, };
+question?: string, 
+/**
+ * The researcher's own themes or interview guide, one per line, for an analysis whose
+ * themes say whether each comes from the guide or emerged from the document: added to the
+ * request after the question, so other themes are another analysis. Left out when empty,
+ * so cache keys made before it existed stay valid.
+ */
+themes?: string, };

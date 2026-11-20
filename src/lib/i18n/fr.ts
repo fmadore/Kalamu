@@ -35,8 +35,20 @@ export const fr: Messages = {
 						description: {
 							label: 'Description',
 							help: 'Ce que la personne interrogée en dit, en une ou deux phrases, en {languages}.'
+						},
+						origin: {
+							label: 'D’où vient le thème',
+							help: 'Du guide d’entretien donné avec la demande, ou de l’entretien lui-même. Sans guide, toujours de l’entretien.',
+							values: {
+								"The researcher's guide": 'Votre guide d’entretien',
+								'The interview': 'Apparu dans l’entretien'
+							}
 						}
 					}
+				},
+				guide_themes_not_found: {
+					label: 'Thèmes du guide absents de l’entretien',
+					help: 'Les thèmes du guide d’entretien que l’entretien n’aborde pas, tels que le guide les formule. Vide quand la demande ne donne pas de guide.'
 				},
 				keywords: {
 					label: 'Mots-clés',
@@ -569,7 +581,11 @@ export const fr: Messages = {
 		keptHint: 'Vous pouvez le modifier ou le supprimer dans Prompts.',
 		openPrompts: 'Ouvrir Prompts',
 		inParts: (n: number) =>
-			`Cet entretien est long : il sera lu en ${n} morceaux, puis le tout sera rassemblé.`
+			`Cet entretien est long : il sera lu en ${n} morceaux, puis le tout sera rassemblé.`,
+		themes: 'Vos propres thèmes ou votre guide d’entretien',
+		themesHint:
+			'Facultatif. Un thème par ligne. Chaque thème trouvé dit s’il vient de votre liste ou de l’entretien, et un thème que l’entretien n’aborde pas est signalé comme absent.',
+		themesPlaceholder: 'Par exemple :\nLes premiers clients\nL’aide de la famille\nLes tontines'
 	},
 	screening: {
 		action: 'Lesquels parlent de ma question ?',
@@ -2567,6 +2583,9 @@ export const fr: Messages = {
 		question: 'Sur quoi porte votre recherche ?',
 		questionHint:
 			'Facultatif. Envoyé avec chaque document : vous l’écrivez une fois pour tous vos entretiens. Un texte écrit dans Analyser cet entretien le remplace.',
+		themes: 'Vos propres thèmes ou votre guide d’entretien',
+		themesHint:
+			'Facultatif. Un thème par ligne, envoyé avec chaque document. Des thèmes écrits dans Analyser cet entretien les remplacent.',
 		mergeInstructions: 'Instructions pour regrouper les pages',
 		dense: 'Pages chargées de texte',
 		denseHint:

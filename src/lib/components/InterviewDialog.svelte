@@ -1,8 +1,8 @@
 <script lang="ts">
 	// "Analyse this interview": one question (what the research is about, which may be left
 	// empty), the model that will read the transcript said in one line with what it would cost,
-	// and one button. Another model and the language of the answers wait under "More choices",
-	// closed. The transcript is frozen as the dialog opens, so the estimate prices the text the job
+	// and one button. Another model, the researcher's own themes or interview guide (one per
+	// line) and the language of the answers wait under "More choices", closed. The transcript is frozen as the dialog opens, so the estimate prices the text the job
 	// will read, and says in its place when the text is too long for the model chosen (Start then
 	// waits for another); a transcript too long to be read at once is said to be read in parts,
 	// whose cost the estimate holds. Start then asks what New job asks before anything is sent.
@@ -78,7 +78,11 @@
 	{#if a.kept.length > 0}
 		<label class="field">
 			<span>{t.research}</span>
-			<select bind:this={choiceBox} bind:value={a.choice}>
+			<select
+				bind:this={choiceBox}
+				value={a.choice}
+				onchange={(e) => a.choose(e.currentTarget.value)}
+			>
 				{#each a.kept as p (p.id)}
 					<option value={p.id}>{p.name}</option>
 				{/each}
@@ -154,6 +158,15 @@
 				bind:provider={a.draft.provider}
 				bind:model={a.draft.model}
 			/>
+			<label class="field">
+				<span>{t.themes}</span>
+				<textarea
+					rows="4"
+					bind:value={a.themes}
+					placeholder={t.themesPlaceholder}
+					aria-describedby="interview-themes-hint"></textarea>
+				<small id="interview-themes-hint">{t.themesHint}</small>
+			</label>
 			<LanguageStep
 				bind:mode={a.languageMode}
 				bind:languages={a.languages}

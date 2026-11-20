@@ -195,8 +195,15 @@ transcript is too long for Gemma 4 E4B: about 12,000 words, where it reads about
 once*, with Start disabled until another model is chosen under *More choices*; the engine
 refuses such a job when it is created, before anything is sent, and New job shows that refusal
 as its other errors. A model the catalogue gives no limit is left to its provider's own refusal
-([decision](decisions/2026-11-20-interview-windows-guide-themes.md)). The researcher's own
-themes and quotations added by hand come later. **A research description is kept with a
+([decision](decisions/2026-11-20-interview-windows-guide-themes.md)). **The researcher's own themes or interview
+guide.** Under *More choices*, never on the default path, a box takes the researcher's own
+themes or interview guide, one per line. They are sent with the question (and so enter the
+cache key, another guide being another analysis), and kept with a description kept for the
+next interviews. Each theme of the answer says where it comes from, *The researcher's guide*
+or *The interview*, shown on its card in the interface language and written in every file;
+a theme of the guide the interview does not take up is listed apart, under *Guide themes not
+found*, rather than backed with weak quotations. The guide is recorded with the set-up's
+options in `provenance.json`. Quotations added by hand come later. **A research description is kept with a
 prompt.** Under the box, *Keep this for my next interviews* saves what was typed, under a
 name, as a prompt of the researcher's own: the interview prompt with the description. Once
 one is kept, the dialog lists them above the box, the last one used chosen, beside *A new
