@@ -1,0 +1,94 @@
+---
+layout: guide
+lang: fr
+title: Vérifier les résultats
+order: 4
+lede: "C’est dans la relecture que Kalamu montre tout son intérêt. Chaque résultat est placé à côté de sa source, vos corrections n’effacent jamais ce que le modèle a écrit, et deux modèles lus l’un contre l’autre vous montrent où regarder."
+description: "Relire, corriger et comparer les résultats de l’IA face à leur source dans Kalamu."
+---
+
+[English](../review.md)
+
+## La relecture, côte à côte
+
+Ouvrez n’importe quel traitement pour le relire. La source est à gauche : le scan sur un fond
+sombre, ou le lecteur pour un enregistrement. Le texte est à droite.
+
+- **Passez d’une page à l’autre** avec <kbd>Pg suiv</kbd> et <kbd>Pg préc</kbd>, ou avec la
+  liste des pages.
+- **Zoomez** sur le scan autour du pointeur, et faites-le glisser pour le déplacer. Une touche
+  suffit pour remettre la page à la largeur du volet.
+- **Cherchez** dans tout le document avec <kbd>Ctrl</kbd> <kbd>F</kbd> (<kbd>⌘</kbd> <kbd>F</kbd>
+  sur un Mac).
+- Quand le modèle a situé son texte sur la page (Tesseract, Mistral OCR, LightOnOCR), vous
+  pouvez afficher les zones sur le scan et en choisir une pour retrouver ses mots dans le texte.
+
+Tous les raccourcis sont listés dans le **Glossaire**, sous *Clavier*, tels qu’ils s’écrivent
+sur votre système.
+
+## Corriger le texte
+
+Corrigez le texte directement, puis enregistrez. Trois choses en découlent :
+
+- le texte du modèle est **gardé tel quel** en dessous, et vous pouvez toujours le revoir ;
+- les exports utilisent votre texte corrigé et indiquent qu’il a été corrigé ;
+- tout ce qui a été tiré de ce texte (une analyse, une traduction) sait si vous l’avez corrigé
+  après coup, et le signale.
+
+**Marquer comme relu** indique à Kalamu, et plus tard à vous-même, qu’une page a été vérifiée
+par une personne. Un projet compte les pages relues, et sa liste de
+[ce qu’il faut vérifier](projects.md#ce-quil-faut-verifier) s’appuie sur elles.
+
+## Comparer des modèles {#comparer-des-modeles}
+
+Le moyen le plus rapide de trouver les erreurs n’est pas de tout lire deux fois : c’est de faire
+lire les mêmes pages par deux modèles, et de ne regarder que les endroits où ils ne sont pas
+d’accord. Quand deux lectures indépendantes concordent, elles sont en général justes ; quand
+elles diffèrent, l’une des deux au moins se trompe.
+
+1. Dans **Nouveau traitement**, choisissez **Comparer avec un autre modèle** et ajoutez un
+   second modèle (d’un autre fournisseur si possible : leurs erreurs se ressemblent moins).
+2. Dans la relecture, les différences sont surlignées. Pointez-en une pour voir la lecture de
+   chaque modèle ; choisissez la bonne avec **Mettre dans le texte**, ou tapez la vôtre.
+3. Passez d’une différence à la suivante au clavier, page après page.
+
+Une fois quelques pages corrigées, Kalamu affiche aussi le **taux d’erreur** de chaque modèle
+par rapport à votre texte corrigé. C’est une base honnête pour choisir le modèle du reste de la
+collection : il est mesuré sur vos documents, pas sur le banc d’essai de quelqu’un d’autre.
+
+> **Une mise en garde.** Deux modèles peuvent faire la même erreur, surtout sur un mot effacé
+> ou un nom peu courant. Leur accord diminue le risque ; il ne remplace pas la lecture de
+> quelques pages par vous-même.
+
+## Vérifier une analyse
+
+Une analyse se relit champ par champ, à côté de son document. Corrigez une réponse ; pour une
+liste de noms, renommez ou retirez un nom depuis son menu (un clic, <kbd>Entrée</kbd>, ou un
+clic droit sur le nom). Chaque réponse s’accompagne de la justification du modèle : elle vous
+aide à juger, mais ce n’est pas une preuve. Revenez au texte.
+
+Pour ajouter un nom, un mot-clé ou un thème que le modèle a oublié, utilisez **Ajouter** au bout
+de la liste. Ce que vous ajoutez ou renommez est souligné pour montrer que cela vient de vous,
+et passe dans les exports, le dictionnaire et la recherche.
+
+## Faire corriger un passage par un modèle
+
+Quand quelques lignes sont mal lues et que le reste est bon, sélectionnez-les dans le texte et
+faites un clic droit (ou utilisez **Corriger avec un modèle…**, qui apparaît dès qu’il y a une
+sélection). Choisissez un modèle et un prompt de correction. Kalamu vous dit ce qui sera envoyé
+(le passage et un peu du texte qui l’entoure) et ce que cela devrait coûter. La réponse du
+modèle est une proposition, montrée face à votre sélection : acceptez-la, modifiez-la d’abord,
+ou écartez-la. L’accepter l’enregistre comme votre correction, que vous pouvez annuler ; rien ne
+change tout seul.
+
+## Ce qui peut mal tourner, et comment Kalamu vous le dit
+
+- **Une page a échoué** (le fournisseur l’a refusée, ou la connexion a été coupée) : elle est
+  signalée, et relancer le traitement ne refait que les pages en échec.
+- **Une réponse a été tronquée** parce qu’elle a atteint la longueur maximale que le modèle peut
+  écrire : la page l’indique. Envoyez moins de pages à la fois, ou prenez un modèle qui écrit
+  des réponses plus longues.
+- **Un modèle a écrit un texte qui n’est pas sur la page.** Rien ne peut le repérer
+  automatiquement, et c’est justement pour cela que la relecture existe. Les petits modèles hors
+  ligne le font plus souvent que les grands modèles en ligne.
+- **Un contenu inapproprié** peut être signalé depuis la relecture.

@@ -7,6 +7,8 @@ lede: The common problems, and what to do about each.
 description: Troubleshooting Kalamu, with answers to common questions.
 ---
 
+[Français](fr/help.md)
+
 ## A key does not work
 
 In **Settings › API keys**, press **Test**. If the provider refuses the key: check that you

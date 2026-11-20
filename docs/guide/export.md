@@ -6,6 +6,8 @@ lede: Take your checked results where you need them, with a record of how they w
 description: Export formats and provenance in Kalamu.
 ---
 
+[Français](fr/export.md)
+
 ## Formats
 
 From a job's review, **Export…** offers the formats that suit its kind of result.

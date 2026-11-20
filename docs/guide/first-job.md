@@ -6,6 +6,8 @@ lede: Read a few scanned pages, check them against the scan, and export the text
 description: A first text extraction in Kalamu, from choosing files to exporting checked text.
 ---
 
+[Français](fr/first-job.md)
+
 Start small. Take three or four pages that are typical of your material, not the cleanest ones:
 a first job is there to show you how well a model reads *your* documents and what it costs.
 

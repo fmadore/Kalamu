@@ -6,6 +6,8 @@ lede: Some sources cannot be sent to a company's servers, and some budgets are z
 description: Offline transcription, OCR and analysis in Kalamu with Whisper, Tesseract and small local models.
 ---
 
+[Français](fr/offline.md)
+
 ![Settings: the offline models, each with its size and a download button](../store/screenshots/windows/en/10-offline.png)
 *Settings › Offline models: download what you need, remove what you do not.*
 

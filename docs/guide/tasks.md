@@ -7,6 +7,8 @@ lede: Seven kinds of job, all started from New job and all checked the same way,
 description: Text extraction, transcription, analysis, tables of contents, correction and translation in Kalamu.
 ---
 
+[Français](fr/tasks.md)
+
 ## Extract text
 
 For printed and handwritten documents as PDFs or images. Lines can be kept as on the page or
