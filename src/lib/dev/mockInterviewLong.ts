@@ -47,7 +47,7 @@ export function interviewLength(
 	request: EstimateRequest,
 	setup: SetupRequest,
 	catalog: Catalog
-): { too_long?: TextTooLong; parts?: number } {
+): { too_long?: TextTooLong[]; parts?: number } {
 	const search = new URLSearchParams(location.search);
 	if (!search.has('interview-long')) return {};
 	const preset = setup.preset_id ?? '';
@@ -62,10 +62,13 @@ export function interviewLength(
 	if (!search.has('interview-unbroken'))
 		return { parts: Math.ceil(LONG_CHARS / Math.floor(limit * 4 * 0.7)) };
 	return {
-		too_long: {
-			file: request.sources[0]?.file_name ?? '',
-			words: 100_000,
-			most_words: roundDown(Math.floor((limit * 4) / 6))
-		}
+		too_long: [
+			{
+				source: request.sources[0]?.id ?? '',
+				file: request.sources[0]?.file_name ?? '',
+				words: 100_000,
+				most_words: roundDown(Math.floor((limit * 4) / 6))
+			}
+		]
 	};
 }

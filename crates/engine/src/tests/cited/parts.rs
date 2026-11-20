@@ -92,7 +92,7 @@ async fn a_transcript_too_long_is_read_in_parts_and_brought_together_by_number()
         )],
         sample_pages: None,
     });
-    assert_eq!(estimate.rows[0].too_long, None);
+    assert!(estimate.rows[0].too_long.is_empty());
     assert_eq!(estimate.rows[0].parts, Some(parts.len() as u32));
     assert!(estimate.rows[1].merge);
     assert!(estimate.total_usd.is_some_and(|usd| usd > 0.0));
@@ -118,7 +118,7 @@ async fn a_transcript_too_long_is_read_in_parts_and_brought_together_by_number()
             "[{last}] Paragraphe numéro {last:02} : le port de Dakar et ses quais."
         )));
         assert!(
-            request.contains(&format!("turns {first} to {last}")),
+            request.contains(&format!("passages {first} to {last}")),
             "{request}"
         );
         assert!(request.contains("Le port"), "{request}");
@@ -236,7 +236,7 @@ async fn a_part_that_failed_is_named_and_read_again_alone() {
         .unwrap_or_default();
     assert!(
         txt.contains(&format!(
-            "[Not read: part {} (turns {first}–{last})",
+            "[Not read: part {} (passages {first}–{last})",
             parts.len()
         )),
         "{txt}"

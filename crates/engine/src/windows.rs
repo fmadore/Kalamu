@@ -44,14 +44,6 @@ pub(crate) fn answered(pieces: &[PieceState], index: u32) -> Option<&PieceState>
     }
 }
 
-/// Added to the request of one part, after the request every cited analysis has.
-pub(crate) fn part_request(first: u32, last: u32) -> String {
-    format!(
-        " The text is long and is read in parts: this part holds turns {first} to {last}. \
-         Answer from this part alone; the parts are brought together afterwards."
-    )
-}
-
 impl Quotable {
     /// Each turn's length as the model is sent it.
     pub(crate) fn sizes(&self) -> Vec<u32> {
@@ -80,7 +72,8 @@ impl Quotable {
         self.turns.get(turn.checked_sub(1)? as usize)?.start_ms
     }
 
-    /// A part as a sentence names it: its turns, and its times when the text has them.
+    /// A part as a sentence names it: its turns, and its times when the text has them; a
+    /// document's part, its pages or its passages.
     pub(crate) fn part_name(&self, piece: &PieceRef) -> String {
         let PieceRef::Turns {
             number,
@@ -90,6 +83,23 @@ impl Quotable {
         else {
             return piece.label();
         };
+        // A document read from pages names the pages a part covers; one with neither pages
+        // nor a transcript's speakers and times, its passages.
+        if !kalamu_core::analysis::cited::is_transcript(&self.turns) {
+            let page = |turn: u32| match kalamu_core::analysis::cited::page_of(
+                &self.parts,
+                &self.turns,
+                turn,
+            ) {
+                Some(PieceRef::Page { number, .. }) => Some(number),
+                _ => None,
+            };
+            return match (page(*first), page(*last)) {
+                (Some(a), Some(b)) if a == b => format!("part {number} (page {a})"),
+                (Some(a), Some(b)) => format!("part {number} (pages {a}–{b})"),
+                _ => format!("part {number} (passages {first}–{last})"),
+            };
+        }
         let start = self.time_of(*first);
         // A part ends where the turn after it starts.
         let end = self

@@ -64,6 +64,28 @@ test('the dialog asks one question, leaves out what has no text, and starts the 
 	expect(created?.sources.every((s) => s.kind === 'text' && s.derived_from)).toBe(true);
 });
 
+test('a document too long for the model even in parts is left out, the others read', async ({
+	page
+}) => {
+	const main = await open(page, '&screening-long');
+	await main.getByRole('checkbox', { name: 'Select all documents shown' }).check();
+	await main
+		.getByRole('toolbar')
+		.getByRole('button', { name: 'Which of these speak of my question?' })
+		.click();
+	const dialog = page.getByRole('dialog', {
+		name: 'Which of these documents speak of my question?'
+	});
+	await expect(dialog.getByText('1 document will be read.')).toBeVisible();
+	await expect(dialog.getByText(/^Left out, too long for .* even read in parts: /)).toBeVisible();
+	await expect(dialog.getByText(/^Estimated cost: /)).toBeVisible();
+	await dialog.getByRole('textbox', { name: 'Your research question' }).fill('Associations');
+	await dialog.getByRole('button', { name: 'Start', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const created = await page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
+	expect(created?.sources).toHaveLength(1);
+});
+
 test('the table is filtered by an answer, kept or set aside, and exported', async ({ page }) => {
 	const main = await open(page);
 	await expect(titles(main)).toHaveCount(4);

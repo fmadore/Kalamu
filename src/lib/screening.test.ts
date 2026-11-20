@@ -127,24 +127,31 @@ describe('a passage of a document read from pages', () => {
 	});
 });
 
-describe('a document too long for the model', () => {
-	it('is named with the model, where the cost would be', () => {
+describe('documents too long for the model even in parts', () => {
+	it('are named with the model, to be left out of the job', () => {
 		const said = tooLongOf(
 			{
 				rows: [
 					{
 						provider: 'gemini',
 						model: 'none-such',
-						too_long: { file: 'long.txt', words: 120_000, most_words: 80_000 }
+						too_long: [
+							{ source: 's1', file: 'long.txt', words: 120_000, most_words: 80_000 },
+							{ source: 's2', file: 'longer.txt', words: 150_000, most_words: 80_000 }
+						]
 					}
 				]
 			} as never,
 			{ providers: [], models: [] } as never,
 			m
 		);
-		expect(said).toBe(
-			'long.txt is too long for none-such: about 120,000 words, where it reads about 80,000 at once. Choose another model under More choices.'
-		);
+		expect(said).toEqual({
+			sources: ['s1', 's2'],
+			said: 'Left out, too long for none-such even read in parts: long.txt and longer.txt. Another model, under More choices, may read them.'
+		});
 		expect(tooLongOf(null, { providers: [], models: [] } as never, m)).toBeNull();
+		expect(
+			tooLongOf({ rows: [{ provider: 'gemini', model: 'x' }] } as never, {} as never, m)
+		).toBeNull();
 	});
 });

@@ -25,8 +25,10 @@ use crate::snapshot::{Anchor, SnapshotPart, Turn, forgiving, slice, turn_text};
 
 pub mod consolidate;
 mod edit;
+mod request;
 pub mod windows;
 pub use edit::{CitedEdit, CitedError, edit, edit_in, keeps_evidence, keeps_evidence_in};
+pub use request::{REQUEST, REQUEST_PASSAGES, is_transcript, page_of, part_request, request_for};
 pub use windows::TurnWindows;
 
 /// The property that holds an entry's quotations in the model's answer.
@@ -35,15 +37,6 @@ pub const QUOTES: &str = "quotes";
 pub const TURN: &str = "turn";
 /// A quotation's words.
 pub const WORDS: &str = "words";
-
-/// Added to the request of an analysis with a field that cites the document, after the
-/// prompt's own.
-pub const REQUEST: &str = "The text is sent one numbered turn at a time: the turn's number in \
-brackets, such as [12], then its time and its speaker when they are known, then what was said. \
-For every quotation, give the number of the turn it comes from and the words exactly as they \
-stand in that turn, copied character for character: never correct, translate, shorten or join \
-words from two turns, and never quote words that are not in the text. Give only the words said, \
-without the number, the time or the speaker.";
 
 /// A field's entries with their quotations, as kept.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]

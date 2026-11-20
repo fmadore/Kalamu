@@ -38,8 +38,9 @@ export class Screening {
 	undecided = $state<string[]>([]);
 	/** What the job would cost, in dollars, when the engine can tell. */
 	cost = $state<number | null>(null);
-	/** A document is too long for the model chosen, in a sentence; none when all fit. */
-	tooLong = $state<string | null>(null);
+	/** The documents the model chosen cannot read even in parts, left out of the job, and the
+	 * sentence that names them; none when all can be read. */
+	tooLong = $state<{ sources: string[]; said: string } | null>(null);
 	error = $state<string | null>(null);
 	busy = $state(false);
 
@@ -49,17 +50,20 @@ export class Screening {
 	readonly providerName = $derived(providerNameOf(this.catalog, this.draft.provider));
 	/** The provider can be sent the text: its key is saved. */
 	readonly keyed = $derived(hasKey(this.draft.provider));
+	/** The texts the job will read: those the model chosen can read. */
+	readonly readable: SourceFile[] = $derived(
+		(this.sources ?? []).filter((s) => !this.tooLong?.sources.includes(s.id))
+	);
 	readonly request: SetupRequest = $derived(
 		screeningRequest(toRequest(this.catalog, 'analysis', this.draft), this.question)
 	);
 	/** Start can be pressed: a question, texts to read, a model the provider can be sent to. */
 	readonly ready = $derived(
 		!!this.question.trim() &&
-			(this.sources?.length ?? 0) > 0 &&
+			this.readable.length > 0 &&
 			this.keyed &&
 			!!this.draft.model &&
-			!this.busy &&
-			this.tooLong === null
+			!this.busy
 	);
 
 	/** Freezes the chosen documents' texts. */
@@ -107,8 +111,8 @@ export class Screening {
 	/** Creates and starts the job, tied to the project, then opens its page; false when the
 	 * researcher declined to send the texts, or the engine refused (the reason in `error`). */
 	async start(project: FromProject): Promise<boolean> {
-		const sources = $state.snapshot(this.sources);
-		if (!sources || !this.ready) return false;
+		const sources = $state.snapshot(this.readable);
+		if (sources.length === 0 || !this.ready) return false;
 		this.busy = true;
 		this.error = null;
 		try {

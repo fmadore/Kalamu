@@ -175,9 +175,11 @@ export const en = {
 			'None of these documents has been read into text yet. Read them first with New job, then come back.',
 		model: (name: string, provider: string) => `Model: ${name} (${provider})`,
 		cost: (usd: string) => `Estimated cost: ${usd}`,
-		/** Said in place of the cost when a document is too long for the model chosen. */
-		tooLong: (file: string, model: string, words: string, most: string) =>
-			`${file} is too long for ${model}: about ${words} words, where it reads about ${most} at once. Choose another model under More choices.`,
+		/** Documents the model chosen cannot read even in parts: left out, the others read. */
+		tooLong: (files: string, model: string, n: number) =>
+			n === 1
+				? `Left out, too long for ${model} even read in parts: ${files}. Another model, under More choices, may read it.`
+				: `Left out, too long for ${model} even read in parts: ${files}. Another model, under More choices, may read them.`,
 		more: 'More choices',
 		start: 'Start',
 		preparing: 'Getting the texts ready…',
@@ -195,7 +197,16 @@ export const en = {
 		keptTag: 'Kept',
 		setAsideTag: 'Set aside',
 		decided: (tag: string, n: number) =>
-			n === 1 ? `1 document tagged “${tag}”` : `${n} documents tagged “${tag}”`
+			n === 1 ? `1 document tagged “${tag}”` : `${n} documents tagged “${tag}”`,
+		/** Above the answers of a long document read in parts, and a part that could not be read. */
+		docReadInParts: (n: number) =>
+			`This document was long: it was read in ${n} parts, then brought together.`,
+		docPagesNotRead: (first: number, last: number) =>
+			first === last
+				? `Page ${first} could not be read: the answer leaves it out.`
+				: `Pages ${first} to ${last} could not be read: the answer leaves them out.`,
+		docPassagesNotRead: (first: number, last: number) =>
+			`Passages ${first} to ${last} could not be read: the answer leaves them out.`
 	},
 	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
 	cited: {

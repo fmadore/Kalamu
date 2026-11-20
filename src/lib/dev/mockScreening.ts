@@ -5,6 +5,9 @@
 import type { ChoiceAnswers } from '../bindings/ChoiceAnswers.js';
 import type { Document } from '../bindings/Document.js';
 import type { DocumentSources } from '../bindings/DocumentSources.js';
+import type { EstimateRequest } from '../bindings/EstimateRequest.js';
+import type { SetupRequest } from '../bindings/SetupRequest.js';
+import type { TextTooLong } from '../bindings/TextTooLong.js';
 import type { Job } from '../bindings/Job.js';
 import type { NewJob } from '../bindings/NewJob.js';
 
@@ -20,6 +23,20 @@ const ANSWERS: Record<string, string> = {
 	'lettre-gouverneur-1956': 'Partly relevant',
 	'lettre-1912-pere-eric': 'Not relevant'
 };
+
+/** What the estimate says of a screening with `screening-long`: its first text too long for the
+ * model even in parts, left out and the others priced. */
+export function screeningLength(
+	request: EstimateRequest,
+	setup: SetupRequest
+): { too_long?: TextTooLong[] } {
+	const first = request.sources[0];
+	if (!new URLSearchParams(location.search).has('screening-long')) return {};
+	if (setup.preset_id !== 'analysis.screening' || !first) return {};
+	return {
+		too_long: [{ source: first.id, file: first.file_name, words: 90_000, most_words: 60_000 }]
+	};
+}
 
 /** The table exported last, for the end-to-end tests to read. */
 declare global {

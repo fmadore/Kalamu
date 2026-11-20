@@ -23,6 +23,7 @@ import { analysisJob, audioJob, job, recording, source, summaries, video } from 
 import { jobCommand, keptPiece } from './mockJobCommand.js';
 import { interviewCommand } from './mockInterview.js';
 import { interviewLength } from './mockInterviewLong.js';
+import { screeningLength } from './mockScreening.js';
 import { passageCommand } from './mockPassages.js';
 import { regionCommand } from './mockDrawn.js';
 import { regionReadingCommand } from './mockRegionReadings.js';
@@ -284,7 +285,8 @@ export function installMock(): void {
 						usd: s.provider === 'mistral' ? null : 0.42,
 						economy_usd: s.provider === 'mistral' ? null : 0.21
 					},
-					...interviewLength(request, s, catalog)
+					...interviewLength(request, s, catalog),
+					...screeningLength(request, s)
 				}));
 				const total = (economy: boolean) =>
 					rows.reduce<number | null>((sum, r) => {

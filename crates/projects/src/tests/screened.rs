@@ -258,3 +258,61 @@ fn an_analysis_is_written_as_one_table_with_the_researchers_tags() {
         Err(ProjectError::NotFound)
     ));
 }
+
+#[test]
+fn a_long_document_read_in_parts_is_answered_by_what_brought_them_together() {
+    let f = fixture();
+    let p = f.projects.create("Market", "").unwrap();
+    let a = f.file("a.txt", "a");
+    let docs = f
+        .projects
+        .add_documents(p.id, vec![a.clone()], None)
+        .unwrap();
+    let job = f.screening(vec![a.clone()], &["Relevant"]);
+    // The answer above is the step's, moved after a part read first that said otherwise.
+    let mut whole = f.store.pieces(job.id).unwrap().remove(0);
+    let part_key = format!("{}-part", whole.cache_key.clone().unwrap());
+    f.store
+        .put_result(&StoredResult {
+            cache_key: part_key.clone(),
+            provider: ProviderId::new("gemini"),
+            model: "gemini-3.8-flash".into(),
+            output: ProcessOutput {
+                fields: vec![answer("relevance", "Not relevant")],
+                ..ProcessOutput::default()
+            },
+            request: Vec::new(),
+            cost_usd: Some(0.01),
+            duration_ms: 1,
+            created_at: Timestamp::now(),
+        })
+        .unwrap();
+    f.store
+        .upsert_piece(&PieceState {
+            index: 0,
+            piece: PieceRef::Turns {
+                number: 1,
+                first: 1,
+                last: 9,
+            },
+            cache_key: Some(part_key),
+            ..whole.clone()
+        })
+        .unwrap();
+    whole.index = 1;
+    f.store.upsert_piece(&whole).unwrap();
+    f.projects.link_job(p.id, job.id, None).unwrap();
+
+    let view = f.projects.view(p.id).unwrap();
+    let answers: Vec<(DocumentId, &str)> = view.choices[0]
+        .answers
+        .iter()
+        .map(|x| (x.document, x.value.as_str()))
+        .collect();
+    assert_eq!(answers, vec![(docs[0], "Relevant")]);
+    let table = f
+        .projects
+        .answers_table(p.id, job.id, job.setups[0].id)
+        .unwrap();
+    assert_eq!(table.rows[0][2], "Relevant");
+}

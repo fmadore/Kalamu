@@ -63,24 +63,48 @@ async fn a_transcript_too_long_for_the_model_is_refused_before_anything_is_sent_
     assert!(f.engine.store.list_jobs().unwrap_or_default().is_empty());
 
     // The estimate says the same before Start.
+    let source = long.id;
     let row = &estimate(&f, vec![long], Some("analysis.interview")).rows[0];
     assert_eq!(
         row.too_long,
-        Some(TextTooLong {
+        vec![TextTooLong {
+            source,
             file: "long.txt".into(),
             words: 67,
             most_words: 66
-        })
+        }]
     );
+}
+
+#[tokio::test]
+async fn the_estimate_names_every_text_too_long_and_prices_the_others_alone() {
+    let f = interviews_reading(TOKENS);
+    let short = f.text_file("court.txt", &paragraph(300));
+    let long = f.text_file("long.txt", &paragraph(401));
+    let longer = f.text_file("plus-long.txt", &paragraph(1_000));
+    let all = estimate(
+        &f,
+        vec![long.clone(), short.clone(), longer.clone()],
+        Some("analysis.screening"),
+    );
+    let named: Vec<_> = all.rows[0].too_long.iter().map(|t| t.source).collect();
+    assert_eq!(named, [long.id, longer.id]);
+    // Priced as the job that leaves them out would cost: the short text alone.
+    let alone = estimate(&f, vec![short], Some("analysis.screening"));
+    assert!(alone.rows[0].too_long.is_empty());
+    assert_eq!(all.rows[0].pages, alone.rows[0].pages);
+    assert_eq!(all.total_usd, alone.total_usd);
+    assert!(all.total_usd.is_some_and(|usd| usd > 0.0));
 }
 
 #[tokio::test]
 async fn a_transcript_that_fits_is_analysed_and_the_estimate_says_nothing() {
     let f = interviews_reading(TOKENS);
     let fits = f.text_file("fits.txt", &paragraph(400));
-    assert_eq!(
-        estimate(&f, vec![fits.clone()], Some("analysis.interview")).rows[0].too_long,
-        None
+    assert!(
+        estimate(&f, vec![fits.clone()], Some("analysis.interview")).rows[0]
+            .too_long
+            .is_empty()
     );
     f.model.script(&[serde_json::json!({
         "summary": "s", "themes": [], "guide_themes_not_found": [], "keywords": [], "quotations": [],
@@ -112,9 +136,10 @@ async fn each_file_is_measured_on_its_own() {
 async fn an_analysis_that_cites_nothing_is_not_measured() {
     let f = interviews_reading(TOKENS);
     let long = f.text_file("long.txt", &paragraph(1_000));
-    assert_eq!(
-        estimate(&f, vec![long.clone()], None).rows[0].too_long,
-        None
+    assert!(
+        estimate(&f, vec![long.clone()], None).rows[0]
+            .too_long
+            .is_empty()
     );
     assert!(plain_analysis(&f, vec![long]).is_ok());
 }
@@ -123,9 +148,10 @@ async fn an_analysis_that_cites_nothing_is_not_measured() {
 async fn a_model_the_catalogue_gives_no_limit_is_left_to_its_provider() {
     let f = interviews();
     let long = f.text_file("long.txt", &paragraph(100_000));
-    assert_eq!(
-        estimate(&f, vec![long.clone()], Some("analysis.interview")).rows[0].too_long,
-        None
+    assert!(
+        estimate(&f, vec![long.clone()], Some("analysis.interview")).rows[0]
+            .too_long
+            .is_empty()
     );
     assert!(f.analysis(vec![long], None).is_ok());
 }

@@ -588,30 +588,32 @@ export const fr: Messages = {
 		themesPlaceholder: 'Par exemple :\nLes premiers clients\nL’aide de la famille\nLes tontines'
 	},
 	screening: {
-		action: 'Lesquels parlent de ma question ?',
-		title: 'Lesquels de ces documents parlent de ma question ?',
-		lede: 'Kalamu envoie le texte de chaque document, tel que vous l’avez corrigé, à un modèle qui dit s’il parle de votre question, pourquoi, et avec quels passages. Un passage n’est gardé que si ses mots se trouvent dans le document. « Incertain » est une réponse honnête que le modèle peut donner.',
+		action: 'Lesquels parlent de ma question ?',
+		title: 'Lesquels de ces documents parlent de ma question ?',
+		lede: 'Kalamu envoie le texte de chaque document, tel que vous l’avez corrigé, à un modèle qui dit s’il parle de votre question, pourquoi, et avec quels passages. Un passage n’est gardé que si ses mots se trouvent dans le document. « Incertain » est une réponse honnête que le modèle peut donner.',
 		question: 'Votre question de recherche',
 		questionHint: 'En une phrase ou deux, comme vous la poseriez à un collègue.',
 		questionPlaceholder:
-			'Par exemple : ce que les commerçantes du marché ont demandé au conseil municipal, et ce qu’il a répondu, de 1950 à 1960.',
+			'Par exemple : ce que les commerçantes du marché ont demandé au conseil municipal, et ce qu’il a répondu, de 1950 à 1960.',
 		documents: (n: number) => (n === 1 ? '1 document sera lu.' : `${n} documents seront lus.`),
 		noText: (titles: string, n: number) =>
 			n === 1
-				? `Laissé de côté, pas encore lu en texte : ${titles}. Lisez-le d’abord avec Nouveau traitement.`
-				: `Laissés de côté, pas encore lus en texte : ${titles}. Lisez-les d’abord avec Nouveau traitement.`,
+				? `Laissé de côté, pas encore lu en texte : ${titles}. Lisez-le d’abord avec Nouveau traitement.`
+				: `Laissés de côté, pas encore lus en texte : ${titles}. Lisez-les d’abord avec Nouveau traitement.`,
 		undecided: (titles: string) =>
-			`Laissés de côté, lus plusieurs fois sans lecture préférée : ${titles}. Choisissez-en une dans le document d’abord.`,
+			`Laissés de côté, lus plusieurs fois sans lecture préférée : ${titles}. Choisissez-en une dans le document d’abord.`,
 		nothing:
 			'Aucun de ces documents n’a encore été lu en texte. Lisez-les d’abord avec Nouveau traitement, puis revenez ici.',
-		model: (name: string, provider: string) => `Modèle : ${name} (${provider})`,
-		cost: (usd: string) => `Coût estimé : ${usd}`,
-		tooLong: (file: string, model: string, words: string, most: string) =>
-			`${file} est trop long pour ${model} : environ ${words} mots, alors qu’il en lit environ ${most} à la fois. Choisissez un autre modèle sous Plus de choix.`,
+		model: (name: string, provider: string) => `Modèle : ${name} (${provider})`,
+		cost: (usd: string) => `Coût estimé : ${usd}`,
+		tooLong: (files: string, model: string, n: number) =>
+			n === 1
+				? `Laissé de côté, trop long pour ${model} même lu en morceaux : ${files}. Un autre modèle, sous Plus de choix, pourra peut-être le lire.`
+				: `Laissés de côté, trop longs pour ${model} même lus en morceaux : ${files}. Un autre modèle, sous Plus de choix, pourra peut-être les lire.`,
 		more: 'Plus de choix',
 		start: 'Lancer',
 		preparing: 'Préparation des textes…',
-		jobName: (question: string) => `Ma question : ${question}`,
+		jobName: (question: string) => `Ma question : ${question}`,
 		filter: 'Filtrer selon une réponse',
 		anyAnswer: 'Toutes les réponses',
 		answerCount: (answer: string, n: number) => `${answer} (${n})`,
@@ -623,7 +625,15 @@ export const fr: Messages = {
 		keptTag: 'Gardé',
 		setAsideTag: 'Écarté',
 		decided: (tag: string, n: number) =>
-			n === 1 ? `1 document étiqueté « ${tag} »` : `${n} documents étiquetés « ${tag} »`
+			n === 1 ? `1 document étiqueté « ${tag} »` : `${n} documents étiquetés « ${tag} »`,
+		docReadInParts: (n: number) =>
+			`Ce document était long : il a été lu en ${n} morceaux, puis le tout a été rassemblé.`,
+		docPagesNotRead: (first: number, last: number) =>
+			first === last
+				? `La page ${first} n’a pas pu être lue : la réponse la laisse de côté.`
+				: `Les pages ${first} à ${last} n’ont pas pu être lues : la réponse les laisse de côté.`,
+		docPassagesNotRead: (first: number, last: number) =>
+			`Les passages ${first} à ${last} n’ont pas pu être lus : la réponse les laisse de côté.`
 	},
 	cited: {
 		listen: 'Écouter',

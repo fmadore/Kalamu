@@ -238,8 +238,18 @@ passages, entries that quote the text as an interview's do: a page's paragraphs 
 numbered passages, each passage kept only when found word for word, with its page; a document
 that does not speak of the question has none, and none is invented to fill the list. It is an
 analysis job like any other, resumable, cached for the same question, costed; its prompt is
-also offered in New job. A document too long for the model is said before Start, as for an
-interview ([decision](decisions/2026-11-20-research-question-screening.md),
+also offered in New job. **A long document is read in parts**, as a long interview is: its
+numbered passages cut at whole passages, each part told it holds passages (a document is never
+described to the model as words said), the parts brought together by the same step, which is
+sent each quotation with its page; the screening prompt tells that step that the whole
+document is *Relevant* if any part read is, *Partly relevant* if any part is, *Unsure* if any
+part is, and *Not relevant* only if every part read is. Its passages keep their pages, the cost
+before Start counts every part, and a part not read is named by its pages, *Pages 4 to 7 could
+not be read*. Only a document one passage of which the model cannot read even alone is left out,
+named in the dialog with the others left out, *Left out, too long for Gemma 4 E4B even read in
+parts*, and the job reads the rest; the cost said is theirs
+([decision](decisions/2026-11-20-research-question-screening.md),
+[decision](decisions/2026-11-21-screening-long-documents-rows-question.md),
 [#51](https://github.com/fmadore/Kalamu/issues/51)).
 
 **Existing text is corrected, not read again.** Many researchers already have machine-read

@@ -206,8 +206,10 @@ quotations found word for word are written; the researcher's removals are applie
   out and the entries left out; `source.derived_from` names the text read.
 - **A long text read in parts** writes the answer that brought the parts together, and only
   it; a part that could not be read stands after it as `[Not read: part 3 (turns 48–71,
-  01:02:10 to 01:20:00): reason]` in text, Markdown and Word, and in JSON as a part whose piece
-  is `{ "kind": "turns", "number", "first", "last" }` with its `failed` reason.
+  01:02:10 to 01:20:00): reason]` in text, Markdown and Word (for a document read from pages,
+  `part 3 (pages 4–7)`; for a text file with neither pages nor speakers, `part 3 (passages
+  48–71)`), and in JSON as a part whose piece is `{ "kind": "turns", "number", "first",
+  "last" }` with its `failed` reason.
   `provenance.json` then has `merge`, the step that brought the parts together, whose `request`
   lists `turns_read` and, when a part could not be read, `turns_not_read` (`"1-24, 23-49"`,
   turns counted from 1); `pieces` counts the parts and that step. A text read whole has no

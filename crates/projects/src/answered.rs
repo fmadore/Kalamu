@@ -48,8 +48,9 @@ pub struct DocumentAnswer {
 pub(crate) type LoadedJobs = HashMap<JobId, (Job, Vec<PieceState>, Vec<Correction>)>;
 
 /// The answers of a set-up over one source, corrected: those of its first piece read (an
-/// analysis reads a document whole, in one piece).
-fn answers_of(
+/// analysis reads a document whole, in one piece; a long one in parts, whose answers stand only
+/// through the step that brought them together, after them).
+pub(crate) fn answers_of(
     projects: &Projects,
     pieces: &[PieceState],
     corrections: &[Correction],
@@ -58,7 +59,12 @@ fn answers_of(
 ) -> Result<Option<Vec<FieldAnswer>>, StoreError> {
     let mut mine: Vec<&PieceState> = pieces
         .iter()
-        .filter(|p| p.setup_id == setup && p.source_id == source && p.status.is_finished())
+        .filter(|p| {
+            p.setup_id == setup
+                && p.source_id == source
+                && p.status.is_finished()
+                && !p.piece.is_window()
+        })
         .collect();
     mine.sort_by_key(|p| p.index);
     for piece in mine {
