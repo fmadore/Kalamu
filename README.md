@@ -16,8 +16,8 @@ Free, with every feature included. If it is useful to you, you can
 [support its development](#support-development).
 
 **Status: version 1.8.0**, for Windows and macOS: from the
-[releases page](https://github.com/fmadore/Kalamu/releases), and from the Microsoft Store; 1.8.1, a fix
-for the review's scan, follows; see [Install](#install). Text
+[releases page](https://github.com/fmadore/Kalamu/releases), and from the Microsoft Store; 1.9.0
+([notes](docs/release-1.9.0.md)) is being prepared; see [Install](#install). Text
 extraction, transcription, analyses and translation have run against the live Gemini, OpenAI,
 Claude and Mistral APIs; offline Whisper and the cheaper batch mode have had fewer live runs, so
 try a small job first. See the [roadmap](docs/roadmap.md) and the

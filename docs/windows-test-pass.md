@@ -4,7 +4,7 @@ A checklist for trying the packaged app on a Windows PC before a version is tagg
 roadmap's *Next* gathers as "to try by hand", what was written since the last pass, and the live
 runs that touch the researcher's own accounts. CI builds and tests everything here, but none of
 it has been opened in an installed copy. The first pass, before 1.8.0, is in
-[Results](#results); this is the second, for what `main` holds after 1.8.1. The Mac's share is
+[Results](#results); this is the second, for 1.9.0: what `main` holds after 1.8.0. The Mac's share is
 in [mac-test-day.md](mac-test-day.md).
 
 Each step has a letter and a number, which the results name. Tick each box, and write what went
@@ -95,7 +95,7 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   **Resume**, and finishes without reading again the pages already done.
 - [ ] **A4. Clear unused results** in Settings → General says what it will
   remove and removes it; the jobs listed still open their reviews.
-- [ ] **A5. The review's scan outside full screen** (#192, fixed in 1.8.1): open a text review
+- [ ] **A5. The review's scan outside full screen** (#192, fixed in 1.9.0): open a text review
   in a window small enough for the scan to need a scrollbar, and resize the window slowly
   through the point where the scrollbar comes and goes. The scan settles; it never redraws
   without end, and the processor's use falls back to nothing.

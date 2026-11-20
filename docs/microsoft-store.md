@@ -10,16 +10,18 @@ This follows what [Live Translation](https://github.com/fmadore/Live-translation
 the same Partner Center account (its `docs/microsoft-store.md`, `partner-center-walkthrough.md`,
 `store-updates.md` and `packaging-msix.md`); where Kalamu differs, the reason is given here.
 
-## Status (17 November 2026)
+## Status (20 November 2026)
 
 **Version 1.8.0 is in the [Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H)**
 (product ID `9MXT5555BZ1H`, package version 1.8.0.0), published on 17 November 2026 as an update
 from the `Kalamu_1.8.0.msixbundle` of the
 [v1.8.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.8.0), tried by hand on
-Windows as `v1.8.0-rc1` ([windows-test-pass.md](windows-test-pass.md)). **1.8.1 is the next
-update**, a fix for the review's scan resizing without end when the window is not full screen
-([notes](release-1.8.1.md)); its `Kalamu_1.8.1.msixbundle` comes from the v1.8.1 tag, with
-What's new and the certification notes in [store-listing.md](store-listing.md). Version 1.4.0 was refused on
+Windows as `v1.8.0-rc1` ([windows-test-pass.md](windows-test-pass.md)). **1.9.0 is the next
+update** ([notes](release-1.9.0.md)): the interview analysis, the search by meaning, the
+researcher's own regions and PAGE XML, with the fix for the review's scan that 1.8.1 was
+prepared for and never published. Its `Kalamu_1.9.0.msixbundle` comes from the v1.9.0 tag, with
+What's new and the certification notes in [store-listing.md](store-listing.md); it is tagged
+once the second [test pass on Windows](windows-test-pass.md) is done. Version 1.4.0 was refused on
 5 November 2026 under policy 11.5 (offensive content, found in the "metadata description"): two
 screenshots showed the 1915 masthead of *The Monitor* (Omaha), which names its readers in the
 wording of its time; 1.4.1 replaced it with screenshots of screened material and sample files
