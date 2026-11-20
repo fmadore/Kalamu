@@ -62,12 +62,13 @@ const FORMAT_PLACES: Record<ExportFormat, number> = {
 	markdown: 1,
 	docx: 2,
 	json: 3,
-	csv: 4,
-	srt: 5,
-	vtt: 6,
-	searchable_pdf: 7,
-	alto: 8,
-	page_xml: 9
+	xlsx: 4,
+	csv: 5,
+	srt: 6,
+	vtt: 7,
+	searchable_pdf: 8,
+	alto: 9,
+	page_xml: 10
 };
 
 /** Every export format, in the order New job offers them, then the provenance file. */

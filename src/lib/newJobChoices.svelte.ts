@@ -104,7 +104,7 @@ export class JobChoices {
 	 * state: it only remembers. */
 	#recordsBefore: boolean | null = null;
 	/** The spreadsheet was ticked for the records, not by the researcher. */
-	#csvForRecords = false;
+	#sheetForRecords = false;
 	/** Raised by each task picked, so the prompts of a task picked earlier and read later are
 	 * not put under the one picked since. */
 	#taskTicket = 0;
@@ -152,14 +152,14 @@ export class JobChoices {
 			this.#recordsBefore = now;
 			if (before === null || now === before) return;
 			untrack(() => {
-				if (now && !this.formats.includes('csv') && this.rule.formats.includes('csv')) {
-					this.formats = [...this.formats, 'csv'];
-					this.#csvForRecords = true;
-				} else if (!now && this.#csvForRecords) {
-					this.formats = this.formats.filter((f) => f !== 'csv');
-					this.#csvForRecords = false;
+				if (now && !this.formats.includes('xlsx') && this.rule.formats.includes('xlsx')) {
+					this.formats = [...this.formats, 'xlsx'];
+					this.#sheetForRecords = true;
+				} else if (!now && this.#sheetForRecords) {
+					this.formats = this.formats.filter((f) => f !== 'xlsx');
+					this.#sheetForRecords = false;
 				} else {
-					this.#csvForRecords = false;
+					this.#sheetForRecords = false;
 				}
 			});
 		});
@@ -175,10 +175,10 @@ export class JobChoices {
 		this.presets = listed;
 		this.#autoPreset = suggestedPreset(this.presets, files.list);
 		this.drafts = [newDraft(this.catalog, this.rule, this.#autoPreset, hasKey, [], this.input)];
-		// A table of contents reads best as a document and a spreadsheet.
+		// A table of contents reads best as a document and a spreadsheet for Excel.
 		this.formats =
 			this.task === 'contents'
-				? ['markdown', 'csv']
+				? ['markdown', 'xlsx']
 				: [
 						...(this.task === 'audio_transcription'
 							? app.settings!.audio_formats
@@ -187,7 +187,7 @@ export class JobChoices {
 		// The usual formats, before any records: the prompt chosen with them may tick the
 		// spreadsheet.
 		this.#recordsBefore = false;
-		this.#csvForRecords = false;
+		this.#sheetForRecords = false;
 		// An analysis or a table of contents is written in one language.
 		if (this.rule.answers_in_language) this.languages = this.languages.slice(0, 1);
 		// A video has no folder of its own: offer the folder last chosen.
@@ -218,7 +218,7 @@ export class JobChoices {
 		this.formats = p.formats.filter((f) => rulesFor(app.rules, p.task).formats.includes(f));
 		// The pipeline's formats stand, records or not.
 		this.#recordsBefore = null;
-		this.#csvForRecords = false;
+		this.#sheetForRecords = false;
 		this.destination = p.destination;
 		toast(this.#m.newJob.pipelineApplied(p.name));
 	}

@@ -619,7 +619,7 @@ export const fr: Messages = {
 			'Une nouvelle analyse lit les pages de chaque pièce sélectionnée comme un seul document.',
 		export: 'Exporter',
 		exportHint:
-			'Les pages de chaque pièce sélectionnée en PDF, dans un dossier de votre choix, avec la liste des pièces en CSV et en JSON.',
+			'Les pages de chaque pièce sélectionnée en PDF, dans un dossier de votre choix, avec la liste des pièces en tableur Excel, en CSV et en JSON.',
 		exported: (n: number) => (n === 1 ? '1 fichier écrit.' : `${n} fichiers écrits.`),
 		pdfOnly:
 			'Pour l’instant, seules les pièces d’un PDF peuvent être lues ou exportées séparément.',
@@ -855,7 +855,7 @@ export const fr: Messages = {
 		openReview: 'Ouvrir la relecture',
 		export: 'Exporter',
 		exported:
-			'Le dictionnaire a été enregistré en JSON, avec à côté un CSV de toutes les formes relevées.',
+			'Le dictionnaire a été enregistré en JSON, avec à côté toutes les formes relevées, en tableur Excel et en CSV.',
 		fileName: (project: string) => `Dictionnaire ${project}`,
 		proposals: {
 			title: 'Regroupements proposés',
@@ -1199,7 +1199,7 @@ export const fr: Messages = {
 		open: (document: string, place: string) => `Ouvrir ${document}, ${place}, en relecture`,
 		more: (n: number) => `Afficher ${n} de plus`,
 		export: 'Exporter la liste',
-		exported: 'La liste a été enregistrée en JSON, avec un CSV à côté.',
+		exported: 'La liste a été enregistrée en JSON, avec un tableur Excel et un CSV à côté.',
 		fileName: (project: string) => `${project} liste à vérifier`,
 		sample: {
 			title: 'Tirées au hasard',
@@ -1383,7 +1383,8 @@ export const fr: Messages = {
 			save: 'Enregistrer la description',
 			saved: 'Description enregistrée.',
 			export: 'Exporter les descriptions',
-			exported: 'Les descriptions ont été enregistrées en JSON, avec un CSV à côté.'
+			exported:
+				'Les descriptions ont été enregistrées en JSON, avec un tableur Excel et un CSV à côté.'
 		},
 		profiles: {
 			title: 'Exporter les descriptions',
@@ -2864,7 +2865,8 @@ export const fr: Messages = {
 				'Du texte avec un balisage léger pour les titres et les listes, lisible tel quel et bien adapté aux outils de prise de notes comme Obsidian.',
 			docx: 'Un document Word avec un titre pour chaque page, à lire, annoter ou partager avec des collègues qui travaillent sous Word.',
 			json: 'Chaque page, segment, réponse ou entrée avec ses détails, lisible par machine, pour les scripts et les bases de données.',
-			csv: 'Un tableau avec une ligne par page, segment, document ou entrée (une analyse a une colonne par champ), pour Excel, LibreOffice ou un logiciel de statistiques.',
+			xlsx: 'Un tableau avec une ligne par page, segment, document ou entrée (une analyse a une colonne par champ), qui s’ouvre d’un double clic dans Excel, LibreOffice ou Numbers, quelle que soit leur langue. Chaque cellule est du texte, tel qu’il est écrit. À choisir pour lire, trier ou filtrer les résultats dans un tableur.',
+			csv: 'Le même tableau en texte brut, séparé par des virgules, pour R, Python, un logiciel de statistiques ou l’import dans une base de données. Excel réglé en français ou en allemand peut tout afficher dans une seule colonne : ouvrez plutôt le .xlsx.',
 			srt: 'Des sous-titres avec leur minutage, pour les lecteurs vidéo et les logiciels de montage.',
 			vtt: 'Des sous-titres pour le web (WebVTT), tels que les utilisent les lecteurs vidéo en ligne.',
 			searchable_pdf:
@@ -2901,7 +2903,8 @@ export const fr: Messages = {
 		json: 'JSON',
 		srt: 'Sous-titres (.srt)',
 		vtt: 'Sous-titres (.vtt)',
-		csv: 'Tableur (.csv)',
+		xlsx: 'Tableur pour Excel (.xlsx)',
+		csv: 'Tableau pour d’autres outils : R, Python… (.csv)',
 		searchable_pdf: 'PDF interrogeable',
 		alto: 'ALTO XML (position des mots)',
 		page_xml: 'PAGE XML (un fichier par page)'

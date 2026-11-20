@@ -17,6 +17,7 @@ fn part(piece: PieceRef, text: &str, segments: Vec<Segment>) -> ExportPart {
         segments,
         corrected: false,
         reviewed: false,
+        rows_corrected: Vec::new(),
         fields: Vec::new(),
         regions: Vec::new(),
         failed: None,

@@ -134,6 +134,7 @@ fn cited_interview() -> ExportDocument {
             segments: vec![],
             corrected: true,
             reviewed: true,
+            rows_corrected: Vec::new(),
             fields: corrected,
             regions: vec![],
             failed: None,
@@ -181,6 +182,12 @@ fn an_interview_analysis_matches_golden_files() {
     assert_eq!(suffixes, ["csv", "quotations.csv"]);
     check("interview-analysis.csv", &csv[0].bytes);
     check("interview-analysis.quotations.csv", &csv[1].bytes);
+    // The workbook writes the same two tables.
+    let xlsx = files(ExportFormat::Xlsx, &doc);
+    let suffixes: Vec<&str> = xlsx.iter().map(|f| f.suffix.as_str()).collect();
+    assert_eq!(suffixes, ["xlsx", "quotations.xlsx"]);
+    super::check_workbook("interview-analysis.xlsx.json", &xlsx[0].bytes);
+    super::check_workbook("interview-analysis.quotations.xlsx.json", &xlsx[1].bytes);
     assert!(run(ExportFormat::Docx, &doc).starts_with(b"PK"));
 }
 

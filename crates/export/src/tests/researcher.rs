@@ -100,6 +100,7 @@ fn part(
         segments: vec![],
         corrected: false,
         reviewed: false,
+        rows_corrected: Vec::new(),
         fields: vec![],
         regions,
         failed: None,

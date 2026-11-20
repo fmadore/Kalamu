@@ -2,6 +2,10 @@
 //! the page and the entry's place on it first, then the group's columns as the researcher named
 //! them, from the corrected rows. A page that could not be read stands as one row of its own,
 //! saying so, so its entries are never taken for none.
+//!
+//! `corrected` is a row's own: true for a row the researcher typed into or added
+//! ([`ExportPart::rows_corrected`]), false for the model's rows around it. `reviewed` is the
+//! page's, as the review marks a page.
 
 use kalamu_core::analysis::answer_text;
 use kalamu_core::{CsvCells, ExportDocument, ExportPart, Field, FieldAnswer, Table, Task, records};
@@ -20,6 +24,11 @@ fn rows<'a>(doc: &ExportDocument, part: &'a ExportPart) -> &'a [Vec<FieldAnswer>
         .schema
         .as_ref()
         .map_or(&[], |schema| records::rows(schema, &part.fields))
+}
+
+/// Whether the researcher typed into or added a page's row `index`.
+fn corrected(part: &ExportPart, index: usize) -> bool {
+    part.rows_corrected.get(index).copied().unwrap_or(false)
 }
 
 /// The table for a spreadsheet: guarded, as every task's is.
@@ -58,7 +67,7 @@ pub(crate) fn table(doc: &ExportDocument, columns: &[Field]) -> Table {
                 }
             }
             row.extend([
-                part.corrected.to_string(),
+                corrected(part, i).to_string(),
                 part.reviewed.to_string(),
                 String::new(),
             ]);
@@ -87,7 +96,7 @@ pub(crate) fn json_rows(doc: &ExportDocument) -> Vec<Value> {
                 "page": part.piece.label(),
                 "position": i + 1,
                 "fields": fields,
-                "corrected": part.corrected,
+                "corrected": corrected(part, i),
                 "reviewed": part.reviewed,
             });
             let reasons: serde_json::Map<String, Value> = entry

@@ -31,6 +31,8 @@ kalamu-search = { path = "crates/search" }
 anyhow = "1.0.104"
 async-trait = "0.1.92"
 base64 = "0.23.1"
+# Reads the workbooks back in the export crate's tests (MIT).
+calamine = { version = "0.38.0", default-features = false }
 csv = "1.4.0"
 docx-rs = "0.4.22"
 futures = "0.3.34"
@@ -43,6 +45,9 @@ hex = "0.4.3"
 image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "tiff", "webp", "bmp"] }
 lopdf = { version = "0.47.0", default-features = false }
 tiff = "0.11.3"
+# Excel workbooks (.xlsx) for the tables Kalamu writes as CSV: pure Rust, MIT OR Apache-2.0;
+# its zip deflates with zopfli and zlib-rs, no C library.
+rust_xlsxwriter = { version = "0.103.0", default-features = false }
 reqwest = { version = "0.13.5", default-features = false, features = ["json", "multipart", "native-tls", "system-proxy"] }
 rusqlite = { version = "0.41.0", features = ["bundled"] }
 serde = { version = "1.0.229", features = ["derive"] }

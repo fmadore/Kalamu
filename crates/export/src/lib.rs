@@ -24,7 +24,7 @@ pub mod units;
 
 use kalamu_core::{ExportDocument, ExportFormat, Exporter};
 
-pub use table::table_csv;
+pub use table::{table_csv, table_xlsx};
 pub use timeline::{cues, timeline};
 
 /// Every exporter, in the order formats are offered.
@@ -36,6 +36,7 @@ pub fn all() -> Vec<Box<dyn Exporter>> {
         Box::new(json::JsonExporter),
         Box::new(subtitles::SrtExporter),
         Box::new(subtitles::VttExporter),
+        Box::new(csv_export::XlsxExporter),
         Box::new(csv_export::CsvExporter),
         Box::new(searchable_pdf::SearchablePdfExporter),
         Box::new(alto::AltoExporter),

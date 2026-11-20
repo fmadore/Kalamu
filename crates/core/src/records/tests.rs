@@ -304,3 +304,69 @@ fn edits_are_refused_where_there_is_nothing_to_change() {
         Err(RowError::NotRecords)
     );
 }
+
+/// Applies the review's changes one after another, as the correction layer keeps them.
+fn edited(start: Vec<FieldAnswer>, changes: &[RowEdit]) -> Vec<FieldAnswer> {
+    let schema = register();
+    changes.iter().fold(start, |answers, change| {
+        edit(&schema, &answers, change).unwrap()
+    })
+}
+
+fn typed(row: u32, key: &str, value: &str) -> RowEdit {
+    RowEdit::Cell {
+        row,
+        key: key.into(),
+        value: value.into(),
+    }
+}
+
+#[test]
+fn only_the_rows_typed_into_or_added_are_corrected() {
+    let schema = register();
+    let model = page();
+    let marks = |changes: &[RowEdit]| corrected_rows(&schema, &model, &edited(page(), changes));
+    // One cell typed anew: that row alone.
+    assert_eq!(marks(&[typed(1, "surname", "Traore")]), [false, true]);
+    // A row added above: it alone, the model's rows below it not.
+    assert_eq!(marks(&[RowEdit::Add { at: 0 }]), [true, false, false]);
+    // A row removed above: the row that moved up is still the model's.
+    assert_eq!(marks(&[RowEdit::Remove { row: 0 }]), [false]);
+    // Removed, then one added in its place and typed into.
+    assert_eq!(
+        marks(&[
+            RowEdit::Remove { row: 0 },
+            RowEdit::Add { at: 0 },
+            typed(0, "surname", "Keïta"),
+        ]),
+        [true, false]
+    );
+    // A cell typed back as the model wrote it leaves its row the model's.
+    assert_eq!(
+        marks(&[typed(0, "surname", "Diallo"), typed(1, "children", "Ali")]),
+        [false, true]
+    );
+    // Nothing changed: no row.
+    assert_eq!(corrected_rows(&schema, &model, &model), [false, false]);
+}
+
+#[test]
+fn a_row_typed_to_match_another_of_the_models_is_still_corrected() {
+    let schema = register();
+    let model = register()
+        .read_answer(&json!({ "entries": [
+            { "surname": "Diallo", "trade": "Tailor", "children": [] },
+            { "surname": "Sow", "trade": "Farmer", "children": [] },
+            { "surname": "Ba", "trade": "Trader", "children": [] }
+        ]}))
+        .unwrap();
+    // The first row typed into until it reads as the third: the third is still the model's.
+    let changed = edited(
+        model.clone(),
+        &[typed(0, "surname", "Ba"), typed(0, "trade", "Trader")],
+    );
+    assert_eq!(
+        corrected_rows(&schema, &model, &changed),
+        [true, false, false]
+    );
+}

@@ -2,12 +2,16 @@ use kalamu_core::{
     CsvCells, ExportDocument, ExportError, ExportFile, ExportFormat, Exporter, Table, Task,
 };
 
-use crate::table_csv;
 use crate::timeline::timeline;
+use crate::{table_csv, table_xlsx};
 
 /// One row per page (text extraction), per segment (transcription), per document (analysis)
-/// or per entry (records, a table of contents), for spreadsheets.
+/// or per entry (records, a table of contents), as CSV for R, Python and other tools.
 pub struct CsvExporter;
+
+/// The same table as [`CsvExporter`]'s, as an Excel workbook, which opens by double-click in a
+/// spreadsheet set to any language.
+pub struct XlsxExporter;
 
 impl Exporter for CsvExporter {
     fn format(&self) -> ExportFormat {
@@ -22,26 +26,54 @@ impl Exporter for CsvExporter {
         Ok(table_csv(&table(doc))?.into_bytes())
     }
 
-    /// The table, and for an analysis that cites the text one row per quotation beside it
-    /// (`<name>.quotations.csv`).
     fn export_files(&self, doc: &ExportDocument) -> Result<Vec<ExportFile>, ExportError> {
-        let mut files = vec![ExportFile {
-            suffix: self.format().extension().to_owned(),
-            bytes: self.export(doc)?,
-        }];
-        if let Some(fields) = crate::cited::fields(doc) {
-            files.push(ExportFile {
-                suffix: format!("quotations.{}", self.format().extension()),
-                bytes: table_csv(&crate::cited::quotations(doc, fields))?.into_bytes(),
-            });
-        }
-        Ok(files)
+        files(self, doc, |t| Ok(table_csv(t)?.into_bytes()))
     }
 }
 
-/// Every task's table is guarded: the text was read off a document by a model (a list item, a
-/// telephone number, a formula quoted, or one planted to run), the file is for a spreadsheet,
-/// and the JSON export keeps the text exactly for a program.
+impl Exporter for XlsxExporter {
+    fn format(&self) -> ExportFormat {
+        ExportFormat::Xlsx
+    }
+
+    fn supports(&self, _task: Task) -> bool {
+        true
+    }
+
+    fn export(&self, doc: &ExportDocument) -> Result<Vec<u8>, ExportError> {
+        table_xlsx(&table(doc))
+    }
+
+    fn export_files(&self, doc: &ExportDocument) -> Result<Vec<ExportFile>, ExportError> {
+        files(self, doc, table_xlsx)
+    }
+}
+
+/// The table, and for an analysis that cites the text one row per quotation beside it
+/// (`<name>.quotations.csv`, `<name>.quotations.xlsx`), each written by `write`.
+fn files(
+    exporter: &dyn Exporter,
+    doc: &ExportDocument,
+    write: impl Fn(&Table) -> Result<Vec<u8>, ExportError>,
+) -> Result<Vec<ExportFile>, ExportError> {
+    let extension = exporter.format().extension();
+    let mut files = vec![ExportFile {
+        suffix: extension.to_owned(),
+        bytes: write(&table(doc))?,
+    }];
+    if let Some(fields) = crate::cited::fields(doc) {
+        files.push(ExportFile {
+            suffix: format!("quotations.{extension}"),
+            bytes: write(&crate::cited::quotations(doc, fields))?,
+        });
+    }
+    Ok(files)
+}
+
+/// Every task's table is guarded in its CSV: the text was read off a document by a model (a list
+/// item, a telephone number, a formula quoted, or one planted to run), the file is for a
+/// spreadsheet, and the JSON export keeps the text exactly for a program. The workbook holds
+/// every cell as text and needs no guarding.
 fn table(doc: &ExportDocument) -> Table {
     // Records: one row per entry, however many pages.
     if let Some(columns) = crate::records::columns(doc) {

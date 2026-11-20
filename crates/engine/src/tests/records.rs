@@ -452,6 +452,44 @@ async fn rows_are_corrected_added_and_removed_in_the_correction_layer() {
     let provenance: serde_json::Value =
         serde_json::from_str(&r.read("membres.analysis.provenance.json")).unwrap_or_default();
     assert_eq!(provenance["corrected"], serde_json::json!([2]));
+
+    // One cell typed on the first page: that row alone is corrected, the model's row beside it
+    // is not, in the CSV and the JSON alike.
+    r.engine
+        .edit_rows(
+            job.id,
+            setup,
+            at,
+            0,
+            &RowEdit::Cell {
+                row: 1,
+                key: "name".into(),
+                value: "Keïta".into(),
+            },
+        )
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(r.engine.write_outdated().ok(), Some(0));
+    let csv = r.read("membres.analysis.csv");
+    let marks: Vec<&str> = csv
+        .lines()
+        .filter(|l| l.starts_with("membres.pdf,1,"))
+        .map(|l| {
+            // `corrected`, `reviewed`, `not_read` end the row; `not_read` is empty here.
+            let cells: Vec<&str> = l.split(',').collect();
+            cells[cells.len() - 3]
+        })
+        .collect();
+    assert_eq!(marks, ["false", "true"], "{csv}");
+    let json: serde_json::Value =
+        serde_json::from_str(&r.read("membres.analysis.json")).unwrap_or_default();
+    let corrected: Vec<bool> = json["rows"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|row| row["corrected"].as_bool())
+        .collect();
+    assert_eq!(corrected, [false, true, true, true]);
 }
 
 #[test]

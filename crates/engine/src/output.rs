@@ -268,11 +268,15 @@ impl Engine {
                     {
                         out.push(path.display().to_string());
                     }
-                    // An analysis that cites the text writes its quotations beside its CSV.
-                    if *format == ExportFormat::Csv
+                    // An analysis that cites the text writes its quotations beside its table.
+                    if format.is_table()
                         && crate::cited::cites(setup)
-                        && let Some(path) =
-                            existing_output(&dir, &base, "quotations.csv", &source.path)
+                        && let Some(path) = existing_output(
+                            &dir,
+                            &base,
+                            &format!("quotations.{}", format.extension()),
+                            &source.path,
+                        )
                     {
                         out.push(path.display().to_string());
                     }

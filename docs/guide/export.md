@@ -16,13 +16,24 @@ From a job's review, **Export…** offers the formats that suit its kind of resu
 | --- | --- |
 | Plain text, Markdown | Reading, quoting, any other tool. |
 | Word | Sharing with colleagues, editing further. |
-| JSON, CSV | Analysis in a spreadsheet, R or Python; analyses export one row per document, or one per entry for a register. |
+| Spreadsheet for Excel (`.xlsx`) | Reading, sorting and filtering a table in Excel, LibreOffice or Numbers: it opens with a double click, whatever language your spreadsheet is set to. Analyses export one row per document, or one per entry for a register. |
+| Table for other tools (`.csv`), JSON | The same table for R, Python, statistics software or a database import. |
 | Subtitles | Transcripts with their timestamps, to lay over a video. |
 | Searchable PDF | The original scan with the text behind it, so it can be searched and copied. |
 | ALTO XML, PAGE XML | Each word with its place on the page, for digital libraries and editions. Your corrections are included. |
 
 Exports always use the text **as you corrected it**. The [output formats](../formats.md) page
 describes every file field by field.
+
+**Which table to pick.** Choose the `.xlsx` to open a table yourself. A `.csv` opened with a
+double click in Excel set to French or German can show the whole table in the first column,
+because those versions of Excel expect semicolons; the `.xlsx` has no such problem. Every cell
+of the `.xlsx` is kept as text exactly as it was read or corrected, so a telephone number, a
+date written in the source's own way or a page number stays as it is. A table of contents and
+a register or directory tick the `.xlsx` for you.
+
+In a register or directory, the `corrected` column marks only the rows you changed or added;
+`reviewed` marks every row of a page you reviewed.
 
 ## Provenance
 

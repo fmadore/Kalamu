@@ -12,9 +12,11 @@ docx-rs.workspace = true
 image.workspace = true
 lopdf.workspace = true
 kalamu-core.workspace = true
+rust_xlsxwriter.workspace = true
 serde_json.workspace = true
 
 [dev-dependencies]
+calamine.workspace = true
 tempfile.workspace = true
 uuid.workspace = true
 

@@ -217,7 +217,7 @@ export const en = {
 		analyseHint: 'A new analysis reads each selected item’s pages as one document.',
 		export: 'Export',
 		exportHint:
-			'Each selected item’s pages as a PDF in a folder you choose, with a list of the items as CSV and JSON.',
+			'Each selected item’s pages as a PDF in a folder you choose, with a list of the items as an Excel spreadsheet, a CSV and JSON.',
 		exported: (n: number) => (n === 1 ? '1 file written.' : `${n} files written.`),
 		pdfOnly: 'Only a PDF’s items can be read or exported on their own for now.',
 		notCombined: 'Items are made from the combined entries: run the job to the end first.'
@@ -446,7 +446,8 @@ export const en = {
 		noEvidence: 'No result lists it any longer.',
 		openReview: 'Open the review',
 		export: 'Export',
-		exported: 'The dictionary was saved as JSON, with a CSV of every form found beside it.',
+		exported:
+			'The dictionary was saved as JSON, with every form found beside it as an Excel spreadsheet and a CSV.',
 		fileName: (project: string) => `${project} dictionary`,
 		proposals: {
 			title: 'Proposed merges',
@@ -781,7 +782,7 @@ export const en = {
 		open: (document: string, place: string) => `Open ${document}, ${place}, in the review`,
 		more: (n: number) => `Show ${n} more`,
 		export: 'Export the list',
-		exported: 'The list was saved as JSON, with a CSV beside it.',
+		exported: 'The list was saved as JSON, with an Excel spreadsheet and a CSV beside it.',
 		fileName: (project: string) => `${project} review list`,
 		sample: {
 			title: 'Drawn at random',
@@ -960,7 +961,8 @@ export const en = {
 			save: 'Save description',
 			saved: 'Description saved.',
 			export: 'Export descriptions',
-			exported: 'The descriptions were saved as JSON, with a CSV beside it.'
+			exported:
+				'The descriptions were saved as JSON, with an Excel spreadsheet and a CSV beside it.'
 		},
 		profiles: {
 			title: 'Export descriptions',
@@ -2447,7 +2449,8 @@ export const en = {
 				'Text with light marks for headings and lists, readable as it is and well suited to note-taking tools such as Obsidian.',
 			docx: 'A Word document with a heading for each page, to read, annotate or share with colleagues who work in Word.',
 			json: 'Every page, segment, answer or entry with its details, machine-readable, for scripts and databases.',
-			csv: 'A spreadsheet with one row per page, segment, document or entry (an analysis has a column per field), for Excel, LibreOffice or statistics software.',
+			xlsx: 'A spreadsheet with one row per page, segment, document or entry (an analysis has a column per field) that opens with a double click in Excel, LibreOffice or Numbers, whatever their language. Every cell is text, exactly as written. Choose it to read, sort or filter results in a spreadsheet.',
+			csv: 'The same table as plain text with commas, for R, Python, statistics software or a database import. Excel set to French or German may show it all in one column: open the .xlsx instead.',
 			srt: 'Subtitles with their times, for video players and editing software.',
 			vtt: 'Subtitles for the web (WebVTT), as web video players use them.',
 			searchable_pdf:
@@ -2492,7 +2495,8 @@ export const en = {
 		json: 'JSON',
 		srt: 'Subtitles (.srt)',
 		vtt: 'Subtitles (.vtt)',
-		csv: 'Spreadsheet (.csv)',
+		xlsx: 'Spreadsheet for Excel (.xlsx)',
+		csv: 'Table for other tools: R, Python… (.csv)',
 		searchable_pdf: 'Searchable PDF',
 		alto: 'ALTO XML (word positions)',
 		page_xml: 'PAGE XML (one file per page)'

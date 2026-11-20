@@ -17,8 +17,17 @@ pub struct Row<'a> {
     pub original_sha256: String,
 }
 
-/// One row per unit, a column per entry field, labelled as the researcher named them.
+/// One row per unit, a column per entry field, labelled as the researcher named them, as CSV.
 pub fn csv(rows: &[Row<'_>], fields: &[Field]) -> Result<Vec<u8>, ExportError> {
+    Ok(crate::table_csv(&table(rows, fields))?.into_bytes())
+}
+
+/// The same table as [`csv`], as an Excel workbook.
+pub fn xlsx(rows: &[Row<'_>], fields: &[Field]) -> Result<Vec<u8>, ExportError> {
+    crate::table_xlsx(&table(rows, fields))
+}
+
+fn table(rows: &[Row<'_>], fields: &[Field]) -> Table {
     let mut headings: Vec<String> = ["id", "number", "title", "pages", "file"]
         .map(String::from)
         .to_vec();
@@ -48,12 +57,11 @@ pub fn csv(rows: &[Row<'_>], fields: &[Field]) -> Result<Vec<u8>, ExportError> {
         .collect();
     // Titles and fields come from a model's reading of the document, opened in a spreadsheet;
     // the JSON written beside it is the list for another program.
-    let table = Table {
+    Table {
         headings,
         rows,
         cells: CsvCells::Guarded,
-    };
-    Ok(crate::table_csv(&table)?.into_bytes())
+    }
 }
 
 /// The units with their pages as the original numbers them (`{"kind": "page", "number": 3}`),
