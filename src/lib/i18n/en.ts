@@ -23,7 +23,13 @@ export const en = {
 		noJobs: 'Jobs you start appear here.',
 		/** The key after the shortcut modifier (Ctrl, or ⌘ on a Mac: `platform.ts`). */
 		newJobShortcut: 'N',
-		offlineReady: 'Whisper ready on this computer',
+		/** At the sidebar's foot, once anything that runs a job offline is installed. */
+		offlineReady: 'Models ready on this computer, no internet needed',
+		/** The guide's link, in the first-launch welcome, the Glossary and Settings › About. */
+		guideLink: 'Read the guide',
+		/** This language's guide, relative to the English one (`./`): French is `fr/`. A language
+		 * the guide is not written in keeps `./`. */
+		guidePage: './',
 		collapse: 'Hide the job list',
 		expand: 'Show the job list',
 		sidebarShortcut: 'B',
@@ -2111,6 +2117,20 @@ export const en = {
 			general: 'General',
 			about: 'About'
 		},
+		/** The welcome at the top of Settings, only while no key is saved and nothing is
+		 * installed offline: two ways to start, each opening its tab. */
+		welcomeTitle: 'Welcome to Kalamu',
+		welcomeLede:
+			'To read your documents and recordings, Kalamu needs a model. Choose one of two ways to start; you can add the other later.',
+		welcomeOffline: 'Use a model on this computer',
+		welcomeOfflineHint:
+			'Free, with no account. Nothing leaves your computer. The model is downloaded once; it is slower than an online one.',
+		welcomeKey: 'Add a key from an online provider',
+		welcomeKeyHint:
+			'Faster and often more accurate. You open an account with the provider, which charges for what you use, and your files are sent to it.',
+		welcomeGuide: 'New to these tools? The guide explains each step.',
+		/** Settings › About, before the guide's link. */
+		aboutGuide: 'Step by step, from installing Kalamu to exporting checked results.',
 		keysTitle: 'API keys',
 		keysHint: (keychain: string) =>
 			`Keys are stored in ${keychain} and sent only to their provider. Files go directly from this computer to the provider you choose.`,
@@ -2253,6 +2273,8 @@ export const en = {
 	glossary: {
 		title: 'Glossary',
 		lede: 'The words Kalamu uses, for colleagues new to these tools, and what each export format suits.',
+		/** Above the filter, before the guide's link. */
+		guideLead: 'To learn Kalamu step by step, from the first job to the export:',
 		wordsTitle: 'Words',
 		formatsTitle: 'Export formats',
 		/** The shortcuts, by where they work, written for the system in use. */

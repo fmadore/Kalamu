@@ -368,6 +368,29 @@ export async function refreshOffline(): Promise<void> {
 	app.offline = await api.offlineStatus();
 }
 
+/**
+ * Whether something installed on this computer can run a job without a key: a Whisper model
+ * this processor can run, Tesseract's language data, or an OCR vision or language model with the
+ * program that runs it. The search by meaning's model alone does not count: it runs no job.
+ */
+export function canWorkOffline(): boolean {
+	const o = app.offline;
+	if (!o) return false;
+	const any = (list: { installed: boolean }[]) => list.some((s) => s.installed);
+	return (
+		(o.missing_cpu.length === 0 && any(o.models)) ||
+		any(o.language_data) ||
+		(o.ocr_engine && any(o.ocr_models)) ||
+		(o.llm_engine && any(o.llm_models))
+	);
+}
+
+/** Whether Kalamu can work yet: a key saved for a provider, or something installed offline.
+ * Until then it opens on Settings, with a welcome there. */
+export function readyToWork(): boolean {
+	return app.keys.some((k) => k.saved) || canWorkOffline();
+}
+
 /** The release the model list names, if newer than this copy; kept as it was when it cannot be
  * asked. Only an https page is ever offered as its link. */
 export async function refreshRelease(): Promise<void> {

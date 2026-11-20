@@ -26,6 +26,7 @@
 		back,
 		dismissError,
 		go,
+		readyToWork,
 		refreshJobs,
 		refreshKeys,
 		refreshOffline,
@@ -183,7 +184,9 @@
 				// Jobs cut short by the last close: show them first.
 				if (startView) go(startView);
 				else if (info.interrupted.length > 0) go({ name: 'jobs', jobId: info.interrupted[0] });
-				else if (!app.keys.some((k) => k.saved)) go({ name: 'settings' });
+				// Nothing to work with yet, neither a key nor anything installed offline: Settings,
+				// which opens with a welcome offering both.
+				else if (!readyToWork()) go({ name: 'settings' });
 			} catch (e) {
 				loadError = describeError(e, m);
 			}

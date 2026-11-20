@@ -117,7 +117,9 @@ export const fr: Messages = {
 		finished: 'Terminés',
 		noJobs: 'Les traitements que vous lancez apparaissent ici.',
 		newJobShortcut: 'N',
-		offlineReady: 'Whisper prêt sur cet ordinateur',
+		offlineReady: 'Modèles prêts sur cet ordinateur, sans internet',
+		guideLink: 'Lire le guide',
+		guidePage: 'fr/',
 		collapse: 'Masquer la liste des traitements',
 		expand: 'Afficher la liste des traitements',
 		sidebarShortcut: 'B',
@@ -2226,6 +2228,17 @@ export const fr: Messages = {
 			general: 'Général',
 			about: 'À propos'
 		},
+		welcomeTitle: 'Bienvenue dans Kalamu',
+		welcomeLede:
+			'Pour lire vos documents et vos enregistrements, Kalamu a besoin d’un modèle. Choisissez l’une des deux façons de commencer ; vous pourrez ajouter l’autre plus tard.',
+		welcomeOffline: 'Utiliser un modèle sur cet ordinateur',
+		welcomeOfflineHint:
+			'Gratuit, sans compte. Rien ne quitte votre ordinateur. Le modèle se télécharge une seule fois ; il est plus lent qu’un modèle en ligne.',
+		welcomeKey: 'Ajouter la clé d’un service en ligne',
+		welcomeKeyHint:
+			'Plus rapide et souvent plus juste. Vous ouvrez un compte chez le fournisseur, qui facture ce que vous utilisez, et vos fichiers lui sont envoyés.',
+		welcomeGuide: 'Vous découvrez ces outils ? Le guide explique chaque étape.',
+		aboutGuide: 'Pas à pas, de l’installation de Kalamu à l’export des résultats vérifiés.',
 		keysTitle: 'Clés d’API',
 		keysHint: (keychain: string) =>
 			`Les clés sont conservées dans ${keychain} et envoyées seulement à leur fournisseur. Les fichiers vont directement de cet ordinateur au fournisseur que vous choisissez.`,
@@ -2366,6 +2379,7 @@ export const fr: Messages = {
 	glossary: {
 		title: 'Glossaire',
 		lede: 'Les mots qu’emploie Kalamu, pour les collègues qui découvrent ces outils, et l’usage de chaque format d’export.',
+		guideLead: 'Pour apprendre Kalamu pas à pas, du premier traitement à l’export :',
 		wordsTitle: 'Mots',
 		formatsTitle: 'Formats d’export',
 		keysTitle: 'Clavier',

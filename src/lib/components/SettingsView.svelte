@@ -1,10 +1,12 @@
 <script lang="ts">
 	// Settings in four tabs: provider keys, offline engines, how jobs run and look, and about.
 	// The tab is part of the view, so a link from elsewhere ("Download in Settings") opens the
-	// section it is about.
+	// section it is about. Above the tabs, at the first launch only, a welcome offers the two ways
+	// to start: a model on this computer, or a provider's key.
 	import { AUTHOR_URL, CREDIT_URLS } from '#lib/credits.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { describeError } from '#lib/errors.js';
+	import { guideUrl } from '#lib/guide.js';
 	import { formatDay, localeNames, messages, placeholders } from '#lib/i18n/index.js';
 	import { osNames } from '#lib/platform.js';
 	import { ask } from '#lib/dialogs.js';
@@ -15,6 +17,7 @@
 		go,
 		hasKey,
 		openLink,
+		readyToWork,
 		refreshKeys,
 		refreshRelease,
 		toast,
@@ -125,6 +128,28 @@
 </header>
 
 <div class="sheet settings">
+	<!-- The first launch: no key and nothing installed offline. Gone by itself once either is. -->
+	{#if !readyToWork()}
+		<section class="welcome" aria-labelledby="welcome-title">
+			<h2 id="welcome-title">{m.settings.welcomeTitle}</h2>
+			<p>{m.settings.welcomeLede}</p>
+			<div class="ways">
+				<div class="way">
+					<button class="btn" onclick={() => choose('offline')}>{m.settings.welcomeOffline}</button>
+					<p class="muted small">{m.settings.welcomeOfflineHint}</p>
+				</div>
+				<div class="way">
+					<button class="btn" onclick={() => choose('keys')}>{m.settings.welcomeKey}</button>
+					<p class="muted small">{m.settings.welcomeKeyHint}</p>
+				</div>
+			</div>
+			<p class="small">
+				{m.settings.welcomeGuide}
+				<ExternalLink href={guideUrl()}>{m.shell.guideLink}</ExternalLink>
+			</p>
+		</section>
+	{/if}
+
 	<div
 		class="tabs"
 		role="tablist"
@@ -295,6 +320,10 @@
 				<p class="small">
 					{m.settings.dataFolder}{m.common.colon} <span class="path">{app.info?.data_dir}</span>
 				</p>
+				<p class="small">
+					{m.settings.aboutGuide}
+					<ExternalLink href={guideUrl()}>{m.shell.guideLink}</ExternalLink>
+				</p>
 				<p class="muted small">{m.settings.privacy}</p>
 				<p class="muted small">
 					{#each placeholders(m.settings.credits) as part, i (i)}{#if 'name' in part}<ExternalLink
@@ -325,6 +354,34 @@
 </div>
 
 <style>
+	/* The first launch's welcome: a section like the others, a heading and no box, its two ways
+	   side by side, stacked when the window is narrow. */
+	.welcome {
+		display: grid;
+		gap: var(--space-3);
+	}
+	.welcome > * {
+		margin: 0;
+	}
+	.ways {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		gap: var(--space-3) var(--space-5);
+		max-width: 56rem;
+	}
+	.way {
+		display: grid;
+		align-content: start;
+		justify-items: start;
+		gap: var(--space-2);
+	}
+	.way p {
+		margin: 0;
+	}
+	.way .btn {
+		white-space: normal;
+		text-align: left;
+	}
 	/* Wrapping rather than scrolling in a narrow window. */
 	.tabs {
 		display: flex;

@@ -84,6 +84,16 @@ export function installMock(): void {
 	seedWorkflows(...samplePipelines(), summaries[0], source);
 	// `idle`: no Whisper download running, so the other models' downloads can start.
 	const whisperDownloading = !params.has('idle');
+	// The first launch: `keys=none`, no key saved; `offline=none`, nothing installed offline, or
+	// `offline=one`, a single Whisper model.
+	const savedKeys = new Set(
+		params.get('keys') === 'none'
+			? []
+			: catalog.providers.filter((p) => p.id !== 'openai').map((p) => p.id)
+	);
+	const offline = params.get('offline');
+	const installedOffline = (installed: boolean, first = false): boolean =>
+		offline === 'none' ? false : offline === 'one' ? first : installed;
 	// The search by meaning's model: a download takes a second and a half here.
 	const embedding = { installed: false, downloading: false, received: 0 };
 	const downloadEmbedding = (): Promise<null> => {
@@ -166,8 +176,8 @@ export function installMock(): void {
 						.map((mod, i) => ({
 							id: mod.id,
 							bytes: [574_041_195, 1_081_140_203, 190_085_487, 59_707_625][i] ?? 0,
-							installed: i === 0,
-							downloading: i === 2 && whisperDownloading,
+							installed: installedOffline(i === 0, i === 0),
+							downloading: i === 2 && whisperDownloading && offline === null,
 							downloaded_bytes: i === 2 ? 71_000_000 : 0,
 							in_use: false,
 							languages: []
@@ -181,7 +191,7 @@ export function installMock(): void {
 					].map(([id, languages, bytes, installed]) => ({
 						id: id as string,
 						bytes: bytes as number,
-						installed: installed as boolean,
+						installed: installedOffline(installed as boolean),
 						downloading: false,
 						downloaded_bytes: 0,
 						in_use: false,
@@ -196,7 +206,7 @@ export function installMock(): void {
 					].map(([id, bytes, installed, kept]) => ({
 						id: id as string,
 						bytes: bytes as number,
-						installed: installed as boolean,
+						installed: installedOffline(installed as boolean),
 						downloading: false,
 						downloaded_bytes: kept as number,
 						in_use: false,
@@ -213,7 +223,7 @@ export function installMock(): void {
 					].map(([id, bytes, installed]) => ({
 						id: id as string,
 						bytes: bytes as number,
-						installed: installed as boolean,
+						installed: installedOffline(installed as boolean),
 						downloading: false,
 						downloaded_bytes: 0,
 						in_use: false,
@@ -245,7 +255,13 @@ export function installMock(): void {
 				if (a.id === 'embeddinggemma-2') embedding.installed = false;
 				return null;
 			case 'key_status':
-				return catalog.providers.map((p) => ({ provider: p.id, saved: p.id !== 'openai' }));
+				return catalog.providers.map((p) => ({ provider: p.id, saved: savedKeys.has(p.id) }));
+			case 'set_api_key':
+				savedKeys.add(a.provider as string);
+				return null;
+			case 'clear_api_key':
+				savedKeys.delete(a.provider as string);
+				return null;
 			case 'estimate_cost': {
 				const request = a.request as EstimateRequest;
 				const rows = request.setups.map((s) => ({

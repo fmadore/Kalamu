@@ -13,7 +13,7 @@
 	import { messages } from '#lib/i18n/index.js';
 	import { JobDrag } from '#lib/jobDrag.svelte.js';
 	import { shortcut } from '#lib/platform.js';
-	import { app, go, refreshProjects } from '#lib/state.svelte.js';
+	import { app, canWorkOffline, go, refreshProjects } from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
 
 	let {
@@ -26,7 +26,7 @@
 	const m = messages();
 
 	const allJobsOpen = $derived(app.view.name === 'allJobs');
-	const offlineReady = $derived(app.offline?.models.some((s) => s.installed) ?? false);
+	const offlineReady = $derived(canWorkOffline());
 
 	// The projects under Projects, unfolded unless the researcher folded them on this computer;
 	// read again whenever the screen changes, so one created, renamed or deleted shows.

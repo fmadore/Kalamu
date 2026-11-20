@@ -1151,6 +1151,13 @@ use a word (pipelines, workflows, the model and prompt, speed and price, the est
 the files written, the errors found in review) opens the glossary on it. Like all interface text, it is
 written in the translation files.
 
+The guide (`docs/guide/`, published on GitHub Pages) is opened in the system's browser from the top
+of the glossary, from Settings › About and from the first launch's welcome, in the interface
+language when the guide is written in it. Kalamu opens on Settings only while no key is saved and
+nothing that runs a job is installed offline; that first launch shows a short welcome above the
+tabs offering the two ways to start, each opening its tab, and it goes by itself once either is
+done. Otherwise Kalamu opens on New job.
+
 ## Bundled conversion tools
 
 Providers accept different inputs, so the app prepares each file for the chosen model; users
