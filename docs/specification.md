@@ -190,6 +190,26 @@ and one typed for a job replaces the prompt's
 ([decision](decisions/2026-11-19-interview-analysis-design.md),
 [#38](https://github.com/fmadore/Kalamu/issues/38)).
 
+**Documents read against a research question.** A researcher with 400 scanned pages or 150
+articles already read into text asks which of them speak of their question, why, and where.
+In a project, the documents chosen offer *Which of these speak of my question?*: one box, *Your
+research question*, and one button; how many documents will be read and which are left out
+(nothing read into text yet; read more than once with no reading preferred, never chosen for
+the researcher) are said under it, with the model and the estimated cost, another model and the
+language of the answer under *More choices*. Each document is read in its corrected text,
+frozen as *Use this text* freezes it: the preferred, or the only, correction, extraction or
+transcription, else a text file's own words; a translation is not, its passages not being the
+document's words. The default prompt *Does it speak of my question?* answers, for each
+document, its relevance (*Relevant*, *Partly relevant*, *Not relevant* or *Unsure*, which the
+prompt tells the model is an honest answer), a reason in a sentence or two, and up to three
+passages, entries that quote the text as an interview's do: a page's paragraphs are its
+numbered passages, each passage kept only when found word for word, with its page; a document
+that does not speak of the question has none, and none is invented to fill the list. It is an
+analysis job like any other, resumable, cached for the same question, costed; its prompt is
+also offered in New job. A document too long for the model is said before Start, as for an
+interview ([decision](decisions/2026-11-20-research-question-screening.md),
+[#51](https://github.com/fmadore/Kalamu/issues/51)).
+
 **Existing text is corrected, not read again.** Many researchers already have machine-read
 text, often noisy: the text layer of a PDF from a digital library, or a text file downloaded
 beside it. *Correct existing text* sends that text, page by page (or in passages of a few
@@ -704,6 +724,17 @@ analysed, compared. A **project** keeps it together
   spelling, so one label is never split in two; merging two documents keeps the tags of both.
   A tag is renamed across the project from the table's tag filter; renamed onto one in use, the
   two become one.
+- **Filtered by an answer.** Once an analysis of the project's documents has answered a choice
+  (whether a document speaks of the researcher's question, its tone), the table can be
+  narrowed by that answer, the researcher's correction counting over the model's; each choice
+  is named by the question it was asked with, or by its field and job, and its answers are
+  shown in the interface language. While the table is filtered, the documents chosen can be
+  **kept or set aside** in one click: the researcher's decision is one of two tags, *Kept* or
+  *Set aside* in the interface's language, the other taken off, so the model's answer is never
+  changed. *Export this table* writes that analysis as one table, an Excel workbook and CSV:
+  one row per document it read, its title and file, each field under the label the job froze
+  (passages with where each stands), then the document's tags
+  ([decision](decisions/2026-11-20-research-question-screening.md)).
 - **A source's description** is the researcher's, as an archive or library gives it: the
   repository, the fonds or collection, the series, the box or folder, the shelfmark, the
   creator, the date as written, a web address, how to cite it and its rights. The project holds

@@ -179,11 +179,12 @@ quotations found word for word are written; the researcher's removals are applie
 - **Markdown** is a memo: each field under a `##` heading; an entry with several fields has
   its first as a `###` heading and the others below, then its quotations as block quotes that
   end with `> — Speaker, [hh:mm:ss]` (the turn's speaker and the time the turn starts, when the
-  text has them). A field from which quotations were left out ends with a line in italics
+  text has them), or `> — page 3` for a passage of a text read from pages. A field from which quotations were left out ends with a line in italics
   saying how many. Text and Word write each quotation on a line, `"…" (Speaker, hh:mm:ss)`.
 - **JSON** gives such a field as `{ "entries": [{ "answers": [{ "key", "value" }], "evidence":
-  [{ "anchor": { "part", "start", "end" }, "quote", "turn", "speaker", "start_ms", "end_ms" }]
-  }], "left_out", "dropped" }`. `start` and `end` count characters (Unicode scalar values, not
+  [{ "anchor": { "part", "start", "end" }, "quote", "turn", "speaker", "start_ms", "end_ms",
+  "page" }] }], "left_out", "dropped" }`, `page` (the piece, as `{ "kind": "page", "number" }`)
+  only for a passage of a text read from pages. `start` and `end` count characters (Unicode scalar values, not
   bytes or UTF-16 units) in the text read, whose identifier and SHA-256 are in a top-level
   `"snapshot": { "id", "sha256" }`, written only for these analyses; `part` is the piece of
   that text, from 0; `turn` counts from 1; `quote` is the text's own characters, never the
@@ -192,7 +193,9 @@ quotations found word for word are written; the researcher's removals are applie
 - **CSV**: the analysis's own file keeps one row per document, the field's column holding its
   entries' names joined with semicolons. Beside it, `<name>.analysis.quotations.csv` has one
   row per quotation: `file`, `field`, `entry` (the entry's first field), `speaker`, `start`,
-  `end` (`hh:mm:ss`, or empty), `quotation`, `turn`. Cells that a spreadsheet would read as a
+  `end` (`hh:mm:ss`, or empty), `quotation`, `turn`, `page` (empty but for a text read from
+  pages). An entry that is quotations alone (a screened document's passages) is named in the
+  analysis's own file by its quotations, each between quotation marks. Cells that a spreadsheet would read as a
   formula are guarded, as in every CSV Kalamu writes. The workbook does the same, as
   `<name>.analysis.xlsx` with `<name>.analysis.quotations.xlsx` beside it.
 - **`provenance.json`** adds `cited`: for each such field, the quotations checked, those left
