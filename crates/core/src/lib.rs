@@ -26,6 +26,7 @@ pub mod passage_correction;
 pub mod profile;
 pub mod progress;
 pub mod project;
+pub mod project_file;
 pub mod proposal;
 pub mod provenance;
 pub mod provider;
@@ -94,6 +95,10 @@ pub use progress::{ERRORS_LISTED, FileProgress, JobProgress};
 pub use project::{
     Collection, DescribedBy, DescriptionField, Document, DocumentLink, PreferredResult, Project,
     ProjectError, ProjectStore, SourceDescription, cleaned, same_tag, tag_name,
+};
+pub use project_file::{
+    ArchivePlaces, ProjectArchive, ProjectFileError, ProjectFileOpened, ProjectFilePlan,
+    ProjectFileProgress, ProjectFileSaved,
 };
 pub use proposal::{Lifecycle, Proposal, ProposalStatus};
 pub use provenance::{Provenance, SourceDocuments};

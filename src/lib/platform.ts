@@ -56,6 +56,11 @@ export function backShortcut(inReview = false, mac = isMac): string | null {
 	return inReview ? null : alted('←', mac);
 }
 
+/** Of words written for each system (`Show in File Explorer`, `Show in Finder`), this one's. */
+export function forSystem<T>(choices: { windows: T; macos: T }, mac = isMac): T {
+	return mac ? choices.macos : choices.windows;
+}
+
 /** What this system calls its keychain and the place the tray icon sits. */
 export function osNames(mac = isMac) {
 	return messages().os[mac ? 'macos' : 'windows'];

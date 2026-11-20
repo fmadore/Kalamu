@@ -3046,6 +3046,56 @@ export const fr: Messages = {
 		hidden: (reopen: string) =>
 			`Kalamu travaille toujours. Cliquez sur son icône dans ${reopen} pour le rouvrir.`
 	},
+	/** A project saved as one file, to open on another computer or give to a colleague. */
+	projectFile: {
+		save: 'Enregistrer dans un fichier…',
+		title: 'Enregistrer ce projet dans un fichier',
+		lede: 'Un seul fichier avec ce projet, pour l’ouvrir sur un autre ordinateur, le confier à un collègue ou le garder en lieu sûr.',
+		reading: 'Kalamu regarde ce que le fichier contiendra…',
+		inFile: 'Dans le fichier',
+		documents: (documents: number, jobs: number) =>
+			`${documents === 1 ? '1 document' : `${documents} documents`} et ce que ${
+				jobs === 1 ? '1 traitement' : `${jobs} traitements`
+			} en ont lu`,
+		yourWork:
+			'Vos corrections et ce que vous avez marqué comme vérifié, les collections, les étiquettes et les descriptions, et le dictionnaire',
+		never:
+			'Jamais dans le fichier : vos clés d’API, vos paramètres, ni rien de vos autres projets.',
+		originals: 'Inclure les fichiers d’origine (numérisations, enregistrements)',
+		originalsHint: (files: number, size: string) =>
+			`${files === 1 ? '1 fichier' : `${files} fichiers`}, environ ${size}. Sans eux, le fichier contient le texte et votre travail, et les pages et les enregistrements restent sur cet ordinateur.`,
+		noOriginals: 'Ce projet n’a aucun fichier d’origine sur cet ordinateur.',
+		originalsMissing: (n: number) =>
+			n === 1
+				? '1 fichier d’origine est introuvable sur cet ordinateur et sera laissé de côté.'
+				: `${n} fichiers d’origine sont introuvables sur cet ordinateur et seront laissés de côté.`,
+		size: (size: string) => `Le fichier fera environ ${size}.`,
+		bytes: (bytes: number) =>
+			bytes < 1e6
+				? 'moins de 1 Mo'
+				: bytes < 1e9
+					? `${Math.round(bytes / 1e6)} Mo`
+					: `${(bytes / 1e9).toFixed(1).replace('.', ',')} Go`,
+		saveButton: 'Enregistrer…',
+		cancel: 'Annuler',
+		close: 'Fermer',
+		saving: 'Enregistrement du projet…',
+		saved: (path: string) => `Le projet est enregistré dans ${path}.`,
+		leftOut: (n: number) =>
+			n === 1
+				? '1 fichier d’origine a été laissé de côté : il est introuvable, ou il a changé depuis sa lecture.'
+				: `${n} fichiers d’origine ont été laissés de côté : ils sont introuvables, ou ils ont changé depuis leur lecture.`,
+		show: { windows: 'Afficher dans l’Explorateur de fichiers', macos: 'Afficher dans le Finder' },
+		fileType: 'Projet Kalamu',
+		open: 'Ouvrir un fichier de projet…',
+		opening: 'Ouverture du fichier de projet…',
+		opened: (name: string, documents: number, jobs: number) =>
+			`« ${name} » est ouvert, avec ${documents === 1 ? '1 document' : `${documents} documents`} et ${
+				jobs === 1 ? '1 traitement' : `${jobs} traitements`
+			}. C’est un nouveau projet, à côté des vôtres, qui n’ont pas été modifiés.`,
+		openedWithout:
+			'Les fichiers d’origine n’y ont pas été enregistrés : le texte, vos corrections et les exports sont bien là, et les pages et les enregistrements s’afficheront quand le projet sera de nouveau enregistré avec ses fichiers d’origine.'
+	},
 	os: {
 		windows: {
 			keychain: 'le Gestionnaire d’identification Windows',
@@ -3311,6 +3361,14 @@ export const fr: Messages = {
 		'app.internal': 'Une erreur s’est produite dans l’application.',
 		'app.jobs_running':
 			'Pas pendant qu’un traitement est en cours : mettez-le en pause ou attendez qu’il se termine.',
-		'app.notDesktop': 'Cette fonction n’est disponible que dans l’application de bureau.'
+		'app.notDesktop': 'Cette fonction n’est disponible que dans l’application de bureau.',
+		'project.file_not_kalamu': 'Ce fichier n’est pas un fichier de projet Kalamu.',
+		'project.file_damaged':
+			'Ce fichier de projet est abîmé, peut-être coupé pendant sa copie. Demandez-le de nouveau, ou copiez-le de nouveau.',
+		'project.file_newer':
+			'Ce fichier de projet a été enregistré par une version plus récente de Kalamu. Mettez Kalamu à jour, puis ouvrez-le de nouveau.',
+		'project.file_write':
+			'Le fichier de projet n’a pas pu être écrit. Vérifiez qu’il reste assez de place, ou choisissez un autre endroit.',
+		'project.file_read': 'Le fichier de projet n’a pas pu être lu.'
 	}
 };

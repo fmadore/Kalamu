@@ -876,6 +876,25 @@ analysed, compared. A **project** keeps it together
   a past run or start new work. Deleting a project, a collection or a document removes only how
   it was organised; deleting a job unties it from its documents, which stay. A file moved since
   it was added is marked missing, its results kept. A project can be archived and restored.
+- **Saved as one file, opened on another computer**
+  ([decision](decisions/2026-11-21-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)),
+  for a new computer, a colleague who shares the review, or a copy kept safe. *Save to a
+  file…* in a project's header writes one `.kalamu` file: the project (collections, documents,
+  tags, descriptions, preferred results), the jobs that read its documents, each kept to those
+  documents, with the models' answers, the researcher's corrections and review marks, speakers'
+  names, items, regions, what each call cost and the texts they froze, the review's decisions
+  and the dictionary. Never in it: API keys, settings, anything of another project, and the
+  indexes, which are made again. The original files go in only when *Include the original files
+  (scans, recordings)* is ticked; the dialog says what the file will weigh either way, how many
+  originals cannot be found, shows the progress, and says where the file is once written, with
+  a button to show it in File Explorer or the Finder. *Open a project file…* on the list of
+  projects brings it in as a new project beside the others, every identifier new, never merged
+  and never written over; a name already used takes the date the file was saved. Its jobs
+  resume and its results export without a call to a provider. Opened without its originals,
+  the documents show as missing, the text, review and exports work, and the sentence after
+  opening says how the pages come back. A file that is not a project file, a damaged one, or
+  one saved by a newer Kalamu is refused in a sentence; an open that fails leaves nothing
+  behind. Merging a colleague's corrections into one's own project comes later.
 - **Search through every document's text**: see [Project search](#project-search).
 
 ### Project dictionary
@@ -1221,7 +1240,9 @@ that provider; there is no intermediate server. For a YouTube video only its lin
 Google reads the video from YouTube; the app also asks YouTube for the video's title when the
 link is added, and loads YouTube's player in the review only when the video is played. API keys
 stay in the system's keychain: Credential Manager on Windows, the Keychain on macOS.
-The developer receives no files, keys, results or telemetry.
+The developer receives no files, keys, results or telemetry. A project saved to a file holds
+the documents' text, the researcher's corrections and, if chosen, the original files, and
+never a key: it leaves the computer only when the researcher moves or sends it.
 
 Before the first job, workflow run or dictionary proposal sent to a cloud provider, the app asks
 once for that provider: it names it, says what is sent (the pages, recordings or text, with any

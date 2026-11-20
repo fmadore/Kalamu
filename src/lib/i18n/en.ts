@@ -2608,6 +2608,55 @@ export const en = {
 			`Kalamu is still working. Click its icon in ${reopen} to open it again.`
 	},
 	/** What each operating system calls the places Kalamu uses; `platform.ts` picks one. */
+	/** A project saved as one file, to open on another computer or give to a colleague. */
+	projectFile: {
+		save: 'Save to a file…',
+		title: 'Save this project to a file',
+		lede: 'One file with this project, to open it on another computer, give it to a colleague, or keep it somewhere safe.',
+		reading: 'Looking at what the file will hold…',
+		inFile: 'In the file',
+		documents: (documents: number, jobs: number) =>
+			`${documents === 1 ? '1 document' : `${documents} documents`} and what ${
+				jobs === 1 ? '1 job' : `${jobs} jobs`
+			} read from them`,
+		yourWork:
+			'Your corrections and what you marked as checked, the collections, tags and descriptions, and the dictionary',
+		never: 'Never in the file: your API keys, your settings, or anything from your other projects.',
+		originals: 'Include the original files (scans, recordings)',
+		originalsHint: (files: number, size: string) =>
+			`${files === 1 ? '1 file' : `${files} files`}, about ${size}. Without them, the file holds the text and your work on it, and the pages and recordings stay on this computer.`,
+		noOriginals: 'This project has no original files on this computer.',
+		originalsMissing: (n: number) =>
+			n === 1
+				? '1 original file can no longer be found on this computer and will be left out.'
+				: `${n} original files can no longer be found on this computer and will be left out.`,
+		size: (size: string) => `The file will take about ${size}.`,
+		bytes: (bytes: number) =>
+			bytes < 1e6
+				? 'less than 1 MB'
+				: bytes < 1e9
+					? `${Math.round(bytes / 1e6)} MB`
+					: `${(bytes / 1e9).toFixed(1)} GB`,
+		saveButton: 'Save…',
+		cancel: 'Cancel',
+		close: 'Close',
+		saving: 'Saving the project…',
+		saved: (path: string) => `The project is saved in ${path}.`,
+		leftOut: (n: number) =>
+			n === 1
+				? '1 original file was left out: it could not be found, or it changed since it was read.'
+				: `${n} original files were left out: they could not be found, or they changed since they were read.`,
+		show: { windows: 'Show in File Explorer', macos: 'Show in Finder' },
+		fileType: 'Kalamu project',
+		open: 'Open a project file…',
+		opening: 'Opening the project file…',
+		opened: (name: string, documents: number, jobs: number) =>
+			`“${name}” is open, with ${documents === 1 ? '1 document' : `${documents} documents`} and ${
+				jobs === 1 ? '1 job' : `${jobs} jobs`
+			}. It is a new project beside your others: nothing of theirs was changed.`,
+		openedWithout:
+			'The original files were not saved in it: the text, your corrections and the exports are all here, and the pages and recordings will show once the project is saved again with its original files.'
+	},
 	os: {
 		windows: {
 			keychain: 'Windows Credential Manager',
@@ -2873,7 +2922,15 @@ export const en = {
 			'The file is no longer where it was added, so its pages cannot be shown. Its results are kept; put it back to see it here.',
 		'app.internal': 'Something went wrong inside the app.',
 		'app.jobs_running': 'Not while a job is running: pause it or wait for it to finish.',
-		'app.notDesktop': 'This works only in the desktop app.'
+		'app.notDesktop': 'This works only in the desktop app.',
+		'project.file_not_kalamu': 'This file is not a Kalamu project file.',
+		'project.file_damaged':
+			'This project file is damaged, perhaps cut short while it was copied. Ask for it again, or copy it again.',
+		'project.file_newer':
+			'This project file was saved by a newer version of Kalamu. Update Kalamu, then open it again.',
+		'project.file_write':
+			'The project file could not be written. Check that there is enough free space, or choose another place.',
+		'project.file_read': 'The project file could not be read.'
 	}
 };
 

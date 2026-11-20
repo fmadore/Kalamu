@@ -94,6 +94,12 @@ impl From<kalamu_core::ProjectError> for AppError {
     }
 }
 
+impl From<kalamu_core::ProjectFileError> for AppError {
+    fn from(e: kalamu_core::ProjectFileError) -> Self {
+        Self::new(e.code(), e)
+    }
+}
+
 impl From<kalamu_core::DictionaryError> for AppError {
     fn from(e: kalamu_core::DictionaryError) -> Self {
         Self::new(e.code(), e)

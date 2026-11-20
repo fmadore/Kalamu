@@ -11,6 +11,7 @@ import { layout } from '../review.svelte.js';
 import catalogJson from '../../../crates/catalog/catalog.json';
 import taskRulesJson from './taskRules.json';
 import { projectCommand, seedProjects } from './mockProjects.js';
+import { projectFileCommand } from './mockProjectFile.js';
 import { NO_RESULT } from './noResult.js';
 import { enlarge, largeRows } from './mockLarge.js';
 import { profileCommand } from './mockProfiles.js';
@@ -110,6 +111,8 @@ export function installMock(): void {
 	};
 	const answer = (cmd: string, args?: unknown): unknown => {
 		const a = (args ?? {}) as Record<string, unknown>;
+		const filed = projectFileCommand(cmd, a);
+		if (filed !== undefined) return filed;
 		const profile = profileCommand(cmd, a);
 		if (profile !== undefined) return profile;
 		const project = projectCommand(cmd, a);

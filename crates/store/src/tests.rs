@@ -10,6 +10,7 @@ use kalamu_core::{PieceRef, PieceStatus, ProviderId, SetupId, SourceId, Timestam
 mod meaning;
 mod passages;
 mod progress;
+mod project_file;
 mod projects;
 mod region_readings;
 mod regions;

@@ -17,6 +17,7 @@
 	import ProjectSections from './ProjectSections.svelte';
 	import ProjectStart from './ProjectStart.svelte';
 	import ReviewQueue from './ReviewQueue.svelte';
+	import SaveProjectDialog from './SaveProjectDialog.svelte';
 	import type { ProjectView } from '#lib/bindings/ProjectView.js';
 	import type { SourceFile } from '#lib/bindings/SourceFile.js';
 	import { changed, type Draft } from '#lib/described.js';
@@ -74,6 +75,7 @@
 	let naming = $state<null | { id: string | null; name: string }>(null);
 	let attaching = $state(false);
 	let exporting = $state(false);
+	let saving = $state(false);
 	let adding = $state(false);
 
 	// Asked again for a pane (the list of what to check, from the table's selection), it opens.
@@ -233,6 +235,9 @@
 			<button class="btn ghost sm" onclick={() => (exporting = true)}
 				><Icon name="download" size={14} />{m.projects.describe.export}</button
 			>
+			<button class="btn ghost sm" onclick={() => (saving = true)}
+				><Icon name="download" size={14} />{m.projectFile.save}</button
+			>
 			<button
 				class="btn ghost sm"
 				onclick={() => action.run(() => api.archiveProject(projectId, !project.archived))}
@@ -371,6 +376,10 @@
 		name={collection?.collection.name ?? project?.name ?? ''}
 		onclose={() => (exporting = false)}
 	/>
+{/if}
+
+{#if saving}
+	<SaveProjectDialog {projectId} onclose={() => (saving = false)} />
 {/if}
 
 {#if attaching && view}

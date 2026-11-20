@@ -67,7 +67,7 @@ depends on one it may not; a new crate goes into both.
 | `media` | Conversion and splitting: PDF pages cut with lopdf and drawn with hayro, images, FFmpeg, reading text inputs; input checks (spreads, resolution, skew, audio levels) returning warnings with suggested fixes. Never modifies originals. | `core` |
 | `providers` | One module per cloud provider, each implementing the provider trait. | `core` |
 | `offline` | Whisper, Tesseract and the OCR vision models (llama.cpp, run as a separate program), behind the same trait as cloud providers. | `core`, `media` |
-| `store` | SQLite job database and result cache, and the project, dictionary and search-by-meaning tables beside them; the word search's index and the vector index, each a file of its own. | `core` |
+| `store` | SQLite job database and result cache, and the project, dictionary and search-by-meaning tables beside them; the word search's index and the vector index, each a file of its own; a project saved as one file and opened again (`project_file/`). | `core` |
 | `projects` | Project workspaces: documents, collections, tags, their links to jobs, preferred results. Organises only: never calls a model or changes a result. | `core` |
 | `dictionary` | A project's dictionary: the names its analyses listed, gathered through the corrected answers, and the researcher's entries, merges and pairs kept apart. Never calls a model or changes a result. | `core` |
 | `search` | Project search: the corrected text of every result, kept in a derived local index and searched with the project's filters, each match placed in the text shown; and by meaning: that text cut into chunks, what a preparation must embed, chunks ranked against a question's vector, documents' vectors, their neighbours and their map. Never calls a model or changes a result. | `core` |
@@ -102,6 +102,9 @@ Key traits, defined in `core`:
 - **`VectorIndex`**: the search by meaning's vectors, chunk by chunk and kept apart by model
   and length of vector (an `EmbeddingSpace`), a file of its own derived from the job store;
   losing it loses only what embedding the text again costs.
+- **`ProjectArchive`**: a project saved as one file (its rows, the texts it froze, its
+  originals when chosen) and opened again as a new project, all or nothing; implemented by the
+  job database, whose tables the file holds.
 - **`EmbeddingLog`**: in the job database, each project's model, the researcher's consent to
   send its text, and each preparation run with its cost, so the cost outlives the vectors.
 

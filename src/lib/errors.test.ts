@@ -16,6 +16,7 @@ function rustIds(): string[] {
 		'crates/core/src/profile.rs',
 		'crates/core/src/dictionary.rs',
 		'crates/core/src/project.rs',
+		'crates/core/src/project_file.rs',
 		'crates/offline/src/lib.rs',
 		'crates/search/src/lib.rs',
 		'crates/engine/src/meaning/error.rs',

@@ -16,6 +16,7 @@ use super::*;
 
 mod described;
 mod profiled;
+mod project_file;
 mod queue;
 mod screened;
 mod tags;

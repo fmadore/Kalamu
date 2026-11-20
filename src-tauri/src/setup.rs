@@ -372,6 +372,7 @@ fn assemble(
         engine,
         projects,
         dictionary,
+        archive: store.clone(),
         search,
         meaning,
         search_generation: Arc::default(),

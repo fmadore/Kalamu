@@ -10,6 +10,7 @@ pub mod passage;
 pub mod pipelines;
 pub mod presets;
 pub mod profiles;
+pub mod project_file;
 pub mod projects;
 pub mod region_reading;
 pub mod review;
@@ -45,6 +46,8 @@ pub struct AppState {
     pub projects: kalamu_projects::Projects,
     /// Each project's dictionary, over the same database.
     pub dictionary: kalamu_dictionary::Dictionary,
+    /// A project saved as one file and opened again, by the same database.
+    pub archive: Arc<dyn kalamu_core::ProjectArchive>,
     /// Project search, over the same database and an index of its own.
     pub search: Arc<kalamu_search::Search>,
     /// The search by meaning and the map, where they call a model: preparation runs and

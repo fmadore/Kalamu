@@ -6,8 +6,11 @@
 	import type { ProjectSummary } from '#lib/bindings/ProjectSummary.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { formatDateTime, messages } from '#lib/i18n/index.js';
-	import { go } from '#lib/state.svelte.js';
-	import { api } from '#lib/tauri.js';
+	import type { ProjectFileOpened } from '#lib/bindings/ProjectFileOpened.js';
+	import { pickProjectFile } from '#lib/projectFile.js';
+	import { go, refreshProjects } from '#lib/state.svelte.js';
+	import { api, listenWhileMounted, on } from '#lib/tauri.js';
+	import ProgressBar from './ProgressBar.svelte';
 
 	const m = messages();
 	let projects = $state<ProjectSummary[]>([]);
@@ -18,6 +21,10 @@
 	let creating = $state(false);
 	let name = $state('');
 	let description = $state('');
+
+	/** A project file being opened, how far it has got, and what came in once it is open. */
+	let opening = $state<{ done: number; total: number } | null>(null);
+	let opened = $state<ProjectFileOpened | null>(null);
 
 	const shown = $derived(projects.filter((p) => showArchived || !p.project.archived));
 	const archivedCount = $derived(projects.filter((p) => p.project.archived).length);
@@ -40,7 +47,31 @@
 		);
 	}
 
-	onMount(() => void load());
+	/** Opens a project file as a new project, beside the others, and says what came in. */
+	async function openFile() {
+		const path = await pickProjectFile();
+		if (!path) return;
+		opened = null;
+		opening = { done: 0, total: 0 };
+		await action.run(
+			() => api.openProjectFile(path),
+			async (found) => {
+				opened = found;
+				await load();
+				void refreshProjects();
+			}
+		);
+		opening = null;
+	}
+
+	onMount(() => {
+		void load();
+		return listenWhileMounted(() =>
+			on.projectFileProgress((p) => {
+				if (opening) opening = p;
+			})
+		);
+	});
 </script>
 
 <header class="masthead">
@@ -49,14 +80,40 @@
 		<p class="lede">{m.projects.lede}</p>
 	</div>
 	{#if !creating}
-		<button class="btn primary" onclick={() => (creating = true)}
-			><Icon name="plus" />{m.projects.newProject}</button
-		>
+		<div class="tools">
+			<button class="btn" onclick={openFile} disabled={!!opening}
+				><Icon name="folder" />{m.projectFile.open}</button
+			>
+			<button class="btn primary" onclick={() => (creating = true)}
+				><Icon name="plus" />{m.projects.newProject}</button
+			>
+		</div>
 	{/if}
 </header>
 
 <div class="sheet">
 	{#if action.error}<p class="chip danger" role="alert">{action.error}</p>{/if}
+
+	{#if opening}
+		<div class="card opening" role="status">
+			<span>{m.projectFile.opening}</span>
+			<ProgressBar done={opening.done} total={opening.total || 1} label={m.projectFile.opening} />
+		</div>
+	{/if}
+	{#if opened}
+		{@const project = opened}
+		<div class="card opened" role="status">
+			<p>{m.projectFile.opened(project.name, project.documents, project.jobs)}</p>
+			{#if !project.with_originals}<p class="muted">{m.projectFile.openedWithout}</p>{/if}
+			<div>
+				<button
+					class="btn primary sm"
+					onclick={() => go({ name: 'projects', projectId: project.project_id })}
+					><Icon name="project" size={14} />{project.name}</button
+				>
+			</div>
+		</div>
+	{/if}
 
 	{#if creating}
 		<form class="card create" onsubmit={create} aria-labelledby="new-project">
@@ -116,6 +173,21 @@
 </div>
 
 <style>
+	.tools {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+	.opening,
+	.opened {
+		display: grid;
+		gap: var(--space-2);
+		max-width: 48rem;
+		padding-top: var(--space-3);
+	}
+	.opened p {
+		margin: 0;
+	}
 	.create {
 		display: grid;
 		gap: var(--space-3);
