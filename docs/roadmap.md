@@ -42,7 +42,16 @@ A [review of the whole app on 9 November](decisions/2026-11-09-review.md) (the R
 shell and CI, the interface's code, and every screen on its sample data) found the bugs and
 improvements that open *Next*; what it did not fix at once was tracked in
 [#143](https://github.com/fmadore/Kalamu/issues/143) to
-[#149](https://github.com/fmadore/Kalamu/issues/149), of which #148 and #144 are still open.
+[#149](https://github.com/fmadore/Kalamu/issues/149), of which #148 and #144 are still open:
+both are written, and close with the test pass of 1.9.0.
+
+A [review on 20 November](decisions/2026-11-20-review-for-researchers-new-to-computing.md),
+made from the seat of a researcher in the humanities or social sciences who is new to
+computing, found that Kalamu is ahead of what has been tried by hand, not short of features,
+and set the order of *Next*: 1.9.0's test pass and live runs, then a round of plain-first
+fixes ([#208](https://github.com/fmadore/Kalamu/issues/208) to
+[#212](https://github.com/fmadore/Kalamu/issues/212)), then the research workflows in the
+order given there.
 
 ## Done
 
@@ -497,6 +506,36 @@ improvements that open *Next*; what it did not fix at once was tracked in
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
+**First, 1.9.0 tried and tagged.** No new feature goes into 1.9.0. Its
+[test pass on Windows](windows-test-pass.md) on the packaged `v1.9.0-rc1`, Parts C and F with
+real keys above all (an hour's interview analysed, the search by meaning's preparation and
+its bill, a region read again, a passage corrected, a batch's files deleted at each provider
+and Gemini's batch through a file), and its [day on a rented Mac](mac-test-day.md), where
+nothing written since 1.6.0 has run. #148 and #144 close with them.
+
+**Then, plain first: what stops a researcher new to computing** (for 1.9.1 or 1.10.0, from the
+[review of 20 November](decisions/2026-11-20-review-for-researchers-new-to-computing.md)).
+Small, and each one meets a colleague on their first day:
+
+- **The first launch and a start without a key**
+  ([#208](https://github.com/fmadore/Kalamu/issues/208)): Settings opened at launch only when
+  there is neither a key nor a model on the computer (today a researcher who works offline is
+  sent to *API keys* at every launch), a welcome there that offers both ways in, and the
+  sidebar's line counting every offline engine, where it names Whisper alone.
+- **Tables that open in Excel by double-click**
+  ([#209](https://github.com/fmadore/Kalamu/issues/209)): an `.xlsx` beside the `.csv`, which
+  Excel set to French or German shows in one column; and `corrected` per row in a records
+  export. Both were "to decide" after the test pass of 17 November: decided.
+- **The default prompts' fields in the interface language**
+  ([#210](https://github.com/fmadore/Kalamu/issues/210)): *Summary*, *Themes*, *Research
+  question* and the choices of the default analyses, contents and records, shown in French
+  when the interface is; nothing stored changes.
+- **The guide reached from the app, and in French**
+  ([#211](https://github.com/fmadore/Kalamu/issues/211)): nothing in the app opens it today.
+- **A first project that does not look like a cockpit**
+  ([#212](https://github.com/fmadore/Kalamu/issues/212)): in an empty project, what to do
+  first and what fills itself.
+
 Items 1 and 2 are done in code: what they leave is to be tried by hand, gathered here, and
 none of it waits on the others.
 
@@ -510,8 +549,9 @@ to run on the computer itself.
   the language pickers, the in-use badge, the set-aside note, "om." for an empty reading).
   Still to try: a transcription from an accented data folder; Narrator; the notification and
   its icon while the window is hidden; the offline engines on a PC with a graphics processor;
-  a register; Part F's live runs. To decide: `corrected` per row in a records export, and a
-  CSV that French Excel opens in columns.
+  a register; Part F's live runs. Decided on 20 November: `corrected` per row in a records
+  export, and an `.xlsx` for the tables, which French Excel opens in columns
+  ([#209](https://github.com/fmadore/Kalamu/issues/209)).
 - **On a Mac** (with item 3): all of the above in WebKit, Tab with the system's keyboard
   navigation on and off, VoiceOver, the symbols of `panic.log`, the programs Kalamu starts
   after a crash or a Force Quit, and the folders out of reach shown at launch in the Mac App
@@ -709,6 +749,45 @@ to run on the computer itself.
 
 ### What is left of the research workflows
 
+The [review of 20 November](decisions/2026-11-20-review-for-researchers-new-to-computing.md)
+put four of them first, for what they give a historian, a sociologist or an anthropologist:
+
+1. **Interview analysis, the second slice**
+   ([#38](https://github.com/fmadore/Kalamu/issues/38)): windows of turns and a
+   consolidation, since an interview runs from an hour and a quarter to two and a half and a
+   model on the computer stops near an hour; the researcher's own themes or interview guide
+   given before the run; a quotation added by the researcher from a passage of the
+   transcript.
+2. **Research-question screening** ([#51](https://github.com/fmadore/Kalamu/issues/51)):
+   which of 400 pages or 150 articles speak of the question, why, and with which passage.
+   The field that cites the text and its check, built for #38, are its foundation.
+3. **Photographs from the archive**: persistent image preparation
+   ([#53](https://github.com/fmadore/Kalamu/issues/53): turn, crop, move a spread's fold), an
+   analysis of a document made of photographs
+   ([#52](https://github.com/fmadore/Kalamu/issues/52)), and duplicate or blurred
+   photographs flagged before a job is sent
+   ([#216](https://github.com/fmadore/Kalamu/issues/216)).
+4. **Entries that run over a page and the neighbouring pages' context**
+   ([#171](https://github.com/fmadore/Kalamu/issues/171),
+   [#54](https://github.com/fmadore/Kalamu/issues/54)): "the 14th of the said month" read
+   with the page before it, what is written told apart from what is inferred.
+
+Beside them, new from that review and each to be designed in a decision first:
+
+- **Save, move and share a project** ([#213](https://github.com/fmadore/Kalamu/issues/213)):
+  one file with a project's results and the researcher's corrections, for a new computer, a
+  colleague who shares the review, and the fear of losing the work. First of these.
+- **Assisted pseudonymisation** ([#214](https://github.com/fmadore/Kalamu/issues/214)):
+  replacements set in the project dictionary, a pseudonymised copy as a layer of its own,
+  exported or sent to a cloud model that never sees the names.
+- **Try on three pages, compare, then run the rest**
+  ([#215](https://github.com/fmadore/Kalamu/issues/215)): the guide's advice in one click
+  each, the sample's pages not paid twice.
+- **References from Zotero** ([#217](https://github.com/fmadore/Kalamu/issues/217)): a
+  bibliography file fills the source descriptions; a file only, no account.
+
+The rest, as it stood:
+
 - **Analysing corrected text, what is left of
   [#47](https://github.com/fmadore/Kalamu/issues/47)**: frozen structured results (an
   analysis's corrected answers, a table of contents' entries), a snapshot of only the reviewed
@@ -904,7 +983,12 @@ first workflow increment.
 | Source-linked review | Providers' existing regions drawn over the scan, each opening its text, with a page-only fallback; then stable region identities and researcher-drawn regions. Coordinates shared with #53, text anchors from #47 | [#84](https://github.com/fmadore/Kalamu/issues/84) |
 | Context-aware processing | Bounded neighboring pages; then date/place proposals with evidence, literal readings and explicit inference status, shown in export profiles beside the literal value | [#54](https://github.com/fmadore/Kalamu/issues/54) |
 | Archival metadata and export profiles | Supplied source descriptions and reusable local CSV/JSON mappings (done; closed). Normalised and inferred values moved to #54, item-level rows to #50 | [#55](https://github.com/fmadore/Kalamu/issues/55) |
-| Translation | A task of its own over existing text and frozen results, a workflow step after extraction or transcription, the source beside the translation in review (first increment done); then subtitles of a translated transcript and a project glossary | [#167](https://github.com/fmadore/Kalamu/issues/167) |
+| Translation | A task of its own over existing text and frozen results, a workflow step after extraction or transcription, the source beside the translation in review, subtitles of a translated transcript (done); then a project glossary | [#167](https://github.com/fmadore/Kalamu/issues/167) |
+| Project file | A project saved as one file with its results and the researcher's layer, opened on another computer as a new project; a merge of a colleague's corrections later | [#213](https://github.com/fmadore/Kalamu/issues/213) |
+| Pseudonymisation | Replacements in the project dictionary and a pseudonymised copy of a text, a layer of its own; builds on #48 and #47 | [#214](https://github.com/fmadore/Kalamu/issues/214) |
+| A sample first | Three pages tried, two models compared, the rest run from the sample's page | [#215](https://github.com/fmadore/Kalamu/issues/215) |
+| Duplicate and blurred photographs | Flagged in the file list before anything is sent; with #53's checks | [#216](https://github.com/fmadore/Kalamu/issues/216) |
+| References from Zotero | A CSL-JSON file matched to a project's documents, filling their descriptions | [#217](https://github.com/fmadore/Kalamu/issues/217) |
 
 Scope is local research preparation, review and export. External collection-system integration
 and publishing are excluded from this work. Implementation follows the architecture checkpoints
@@ -927,7 +1011,9 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
   the answer check as a hook of the engine), then one interview read whole (done, a transcript
   too long for the model said before Start), then windows and consolidation.
 - Explore assisted TEI encoding with reusable project profiles:
-  [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature.
+  [#37](https://github.com/fmadore/Kalamu/issues/37); feasibility work, not a committed feature,
+  and last in line since 20 November: those Kalamu is for do not use TEI, and correcting
+  markup in a plain interface is a trap.
 - Importing ALTO XML from elsewhere (a digital library's) to correct it with its coordinates
   kept; Kalamu's own extractions already keep their words' places when corrected.
 - French and German Store listings, with the translated interface.
@@ -946,4 +1032,6 @@ in AGENTS.md and updates the specification and user-facing documentation when fe
 - Linux x86-64: a `.deb` and an AppImage on GitHub releases, built and tested in CI, for a
   documented range of distributions; a third file in each platform layer (`platform/linux.rs`,
   `platform.ts`, `tauri.linux.conf.json`) and WebKitGTK as a third webview. Proposed, not yet
-  built: [#87](https://github.com/fmadore/Kalamu/issues/87).
+  built: [#87](https://github.com/fmadore/Kalamu/issues/87). Low in the order since
+  20 November: a third webview, keyring and set of codecs would slow every release for few of
+  the researchers Kalamu is for.
