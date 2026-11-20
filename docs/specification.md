@@ -247,7 +247,13 @@ part is, and *Not relevant* only if every part read is. Its passages keep their 
 before Start counts every part, and a part not read is named by its pages, *Pages 4 to 7 could
 not be read*. Only a document one passage of which the model cannot read even alone is left out,
 named in the dialog with the others left out, *Left out, too long for Gemma 4 E4B even read in
-parts*, and the job reads the rest; the cost said is theirs
+parts*, and the job reads the rest; the cost said is theirs. **The question is kept with the
+project**: analyses that asked the same question with the same prompt and model are one, a
+document's newest answer counting; once documents have been added since, one line under the
+table's filters says *3 documents have not been read against “…” yet* with *Read the new
+documents against this question*, which opens the same dialog over those documents alone with the
+question, the model and the languages it was asked with, so only they are paid for, and their
+answers join the others in the filter, the rows and the table exported
 ([decision](decisions/2026-11-20-research-question-screening.md),
 [decision](decisions/2026-11-21-screening-long-documents-rows-question.md),
 [#51](https://github.com/fmadore/Kalamu/issues/51)).

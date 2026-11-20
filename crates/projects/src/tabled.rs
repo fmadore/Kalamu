@@ -1,13 +1,16 @@
 //! One analysis's answers over a project's documents as a table for a spreadsheet, one row per
 //! document, with the researcher's tags beside the model's answers (the screening table of
-//! #51).
+//! #51). An analysis whose question was asked again of documents added since is written with
+//! the answers of every analysis that asked it alike, a document's newest answer counting, as
+//! the table of documents shows them (`answered`).
 
 use kalamu_core::analysis::cited;
 use kalamu_core::{
-    CsvCells, Field, FieldAnswer, FieldValue, JobId, ProjectError, ProjectId, SetupId, Table,
+    CsvCells, Field, FieldAnswer, FieldValue, Job, JobId, ProjectError, ProjectId, SetupId,
+    StoreError, Table, Task,
 };
 
-use crate::answered::answers_of;
+use crate::answered::{alike, answers_of};
 use crate::{Projects, missing};
 
 impl Projects {
@@ -15,7 +18,8 @@ impl Projects {
     /// document's title and file, each of its fields under the label the job froze (a choice's
     /// reason beside it when it asks for one, a field that cites the text as its quotations
     /// with where each stands), then the researcher's tags. One row per document it read, in
-    /// title order; a document it could not read is left out. Guarded: the cells hold what a model wrote.
+    /// title order, with the documents the same question was asked of again; a document none
+    /// could read is left out. Guarded: the cells hold what a model wrote.
     pub fn answers_table(
         &self,
         project: ProjectId,
@@ -38,12 +42,32 @@ impl Projects {
         let mut documents = self.store.documents(project)?;
         documents.sort_by_key(|d| (d.title.to_lowercase(), d.title.clone()));
 
-        let read = vec![(
-            job_id,
-            setup_id,
-            self.jobs.pieces(job_id)?,
-            self.jobs.corrections(job_id)?,
-        )];
+        // The analyses read, newest first: this one, and those that asked its question alike.
+        let mut jobs: Vec<Job> = vec![job.clone()];
+        for link in &links {
+            if jobs.iter().any(|j| j.id == link.job_id) {
+                continue;
+            }
+            match self.jobs.job(link.job_id) {
+                Ok(other) if other.task == Task::Analysis => jobs.push(other),
+                Ok(_) | Err(StoreError::NotFound) => {}
+                Err(e) => return Err(e.into()),
+            }
+        }
+        jobs.sort_by_key(|j| std::cmp::Reverse(j.created_at));
+        let mut read = Vec::new();
+        for other in &jobs {
+            for s in &other.setups {
+                if s.id == setup_id || alike(s, setup) {
+                    read.push((
+                        other.id,
+                        s.id,
+                        self.jobs.pieces(other.id)?,
+                        self.jobs.corrections(other.id)?,
+                    ));
+                }
+            }
+        }
 
         let mut headings = vec!["document".to_string(), "file".to_string()];
         for field in fields {

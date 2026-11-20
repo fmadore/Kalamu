@@ -78,9 +78,12 @@ declare global {
 
 /** The sample screening's choice, with each sample document's answer. */
 export function screeningChoices(documents: Document[]): ChoiceAnswers[] {
-	if (new URLSearchParams(location.search).has('no-screening')) return [];
+	const search = new URLSearchParams(location.search);
+	if (search.has('no-screening')) return [];
+	// With `screening-new`, the bulletin stands for a document added since the question was asked.
+	const added = (title: string) => search.has('screening-new') && title === 'Bulletin, May 1957';
 	const answers = documents
-		.filter((d) => ANSWERS[d.title])
+		.filter((d) => ANSWERS[d.title] && !added(d.title))
 		.map((d) => ({
 			document: d.id,
 			value: ANSWERS[d.title],
@@ -95,6 +98,10 @@ export function screeningChoices(documents: Document[]): ChoiceAnswers[] {
 			job_name: `My question: ${SCREENING_QUESTION.slice(0, 40)}…`,
 			preset_id: 'analysis.screening',
 			question: SCREENING_QUESTION,
+			provider: 'gemini',
+			model: 'gemini-4-carbon',
+			languages: { mode: 'explicit', languages: ['fr'] },
+			unread: documents.filter((d) => added(d.title)).map((d) => d.id),
 			field: {
 				key: 'relevance',
 				label: 'Relevance',

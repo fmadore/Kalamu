@@ -16,7 +16,7 @@ fn field(label: &str, kind: FieldKind) -> Field {
     }
 }
 
-fn screening() -> AnalysisSchema {
+pub(super) fn screening() -> AnalysisSchema {
     let mut schema = AnalysisSchema {
         fields: vec![
             field(
@@ -45,16 +45,22 @@ fn answer(key: &str, value: &str) -> FieldAnswer {
 impl Fixture {
     /// An analysis over `sources` with the screening fields and a question, one piece per
     /// source answered as `relevance` says.
-    fn screening(&self, sources: Vec<SourceFile>, relevance: &[&str]) -> Job {
-        self.screening_with(sources, relevance, screening())
+    pub(super) fn screening(&self, sources: Vec<SourceFile>, relevance: &[&str]) -> Job {
+        self.screening_with(
+            sources,
+            relevance,
+            screening(),
+            "  Women traders at the market  ",
+        )
     }
 
-    /// [`Fixture::screening`] with fields of its own.
-    fn screening_with(
+    /// [`Fixture::screening`] with fields and a question of its own.
+    pub(super) fn screening_with(
         &self,
         sources: Vec<SourceFile>,
         relevance: &[&str],
         schema: AnalysisSchema,
+        question: &str,
     ) -> Job {
         let job = Job {
             id: kalamu_core::JobId::new(),
@@ -77,7 +83,7 @@ impl Fixture {
                     schema: Some(schema),
                 },
                 options: SetupOptions {
-                    question: Some("  Women traders at the market  ".into()),
+                    question: Some(question.into()),
                     ..SetupOptions::default()
                 },
                 merge: None,
@@ -265,7 +271,7 @@ fn each_answer_carries_its_passages_with_their_pages() {
         },
         reason: false,
     });
-    let job = f.screening_with(vec![a.clone()], &["Relevant"], schema);
+    let job = f.screening_with(vec![a.clone()], &["Relevant"], schema, "Market women");
     f.projects.link_job(p.id, job.id, None).unwrap();
     let passage = Evidence {
         anchor: Anchor {

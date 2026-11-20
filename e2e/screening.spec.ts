@@ -153,6 +153,42 @@ test('each row shows its answer, reason and passages, kept or set aside by keybo
 	await expect(aside).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('the question is asked again of the documents added since, as it was asked', async ({
+	page
+}) => {
+	// Every document read against it: nothing to ask again.
+	let main = await open(page);
+	await expect(
+		main.getByRole('button', { name: 'Read the new documents against this question' })
+	).toHaveCount(0);
+
+	main = await open(page, '&screening-new');
+	await expect(
+		main.getByText(/^1 document has not been read against “How Catholic and Muslim/)
+	).toBeVisible();
+	await main.getByRole('button', { name: 'Read the new documents against this question' }).click();
+	const dialog = page.getByRole('dialog', {
+		name: 'Which of these documents speak of my question?'
+	});
+	await expect(dialog.getByRole('textbox', { name: 'Your research question' })).toHaveValue(
+		'How Catholic and Muslim associations dealt with the colonial administration'
+	);
+	await expect(dialog.getByText('1 document will be read.')).toBeVisible();
+	await dialog.getByRole('button', { name: 'Start', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const created = await page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
+	expect(created?.sources).toHaveLength(1);
+	expect(created?.setups[0]).toMatchObject({
+		provider: 'gemini',
+		model: 'gemini-4-carbon',
+		preset_id: 'analysis.screening',
+		options: {
+			question: 'How Catholic and Muslim associations dealt with the colonial administration'
+		}
+	});
+	expect(created?.settings.languages).toEqual({ mode: 'explicit', languages: ['fr'] });
+});
+
 test('a project no analysis answered shows no filter by an answer', async ({ page }) => {
 	const main = await open(page, '&no-screening');
 	await expect(main.getByRole('combobox', { name: 'Filter by an answer' })).toHaveCount(0);

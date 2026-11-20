@@ -14,6 +14,7 @@ use kalamu_store::SqliteStore;
 
 use super::*;
 
+mod asked_again;
 mod described;
 mod profiled;
 mod project_file;

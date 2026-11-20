@@ -4,8 +4,10 @@
 // project. The model is the one New job would choose for an analysis; another one or the
 // language of the answers only under "More choices". Start asks what New job's Start asks
 // (consent to send to the provider, folders on the Mac App Store), then creates and starts the
-// job as New job does (`launch`), and its page opens.
+// job as New job does (`launch`), and its page opens. Asked again of the documents added since,
+// it starts from the question, the prompt, the model and the languages it was asked with.
 
+import type { LanguageChoice } from './bindings/LanguageChoice.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { SourceFile } from './bindings/SourceFile.js';
@@ -22,6 +24,15 @@ import { SCREENING_PRESET, screeningRequest } from './screening.js';
 import { app, go, hasKey, type FromProject } from './state.svelte.js';
 import { api } from './tauri.js';
 
+/** A question kept with the project, to be asked again as it was asked. */
+export interface Again {
+	question: string;
+	presetId: string | null;
+	provider: string;
+	model: string;
+	languages: LanguageChoice;
+}
+
 export class Screening {
 	question = $state('');
 	draft = $state<Draft>(
@@ -29,6 +40,25 @@ export class Screening {
 	);
 	languageMode = $state<'auto' | 'explicit'>('auto');
 	languages = $state<string[]>([]);
+	constructor(again?: Again) {
+		if (!again) return;
+		this.question = again.question;
+		this.draft = {
+			...newDraft(
+				app.catalog!,
+				rulesFor(app.rules, 'analysis'),
+				again.presetId ?? SCREENING_PRESET,
+				hasKey
+			),
+			provider: again.provider,
+			model: again.model
+		};
+		if (again.languages.mode === 'explicit') {
+			this.languageMode = 'explicit';
+			this.languages = [...again.languages.languages];
+		}
+	}
+
 	/** The documents' texts, frozen when the dialog opens: what the estimate prices and the job
 	 * reads. */
 	sources = $state<SourceFile[] | null>(null);

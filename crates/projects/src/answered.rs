@@ -1,7 +1,13 @@
 //! What a project's analyses answered, by document: the choices of each analysis that has any
 //! (whether a document speaks of the researcher's question, a document's tone), for the table of
 //! documents to be filtered by them and to show, in each row, the answer with its reason and its
-//! passages (the screening of #51). One analysis's answers as a table are in `tabled`.
+//! passages; and the documents a question has not been asked of yet, for it to be asked again of
+//! them alone (the screening of #51). One analysis's answers as a table are in `tabled`.
+//!
+//! Analyses that asked the same question with the same prompt and model are one question kept
+//! with the project: their answers stand together, a document's newest answer counting, so asking
+//! the question again of the documents added since adds to it. The question is kept by the jobs
+//! themselves (their set-up's `question`), so no table holds it twice.
 //!
 //! Read from the job store as it stands, the researcher's corrections applied, never stored
 //! twice and never by a preset's name: any analysis with a choice is offered. Nothing here calls
@@ -12,18 +18,22 @@ use std::collections::HashMap;
 use kalamu_core::analysis::cited::Evidence;
 use kalamu_core::{
     Correction, DocumentId, DocumentLink, Field, FieldAnswer, FieldKind, FieldValue, Job, JobId,
-    PieceState, ProjectError, Setup, SetupId, SourceId, StoreError, Task,
+    LanguageChoice, PieceState, ProjectError, ProjectId, ProviderId, Setup, SetupId, SourceId,
+    StoreError, Task,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::Projects;
+use crate::texts::TextOf;
 
-/// One choice field of one analysis (a job's set-up), and the answer it gave each document of
-/// the project it read, as corrected.
+/// One choice field of the analyses that asked a question alike (one job's set-up, or several
+/// that asked the same question with the same prompt and model), and the answer given each
+/// document of the project, as corrected.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ChoiceAnswers {
+    /// The newest of the analyses: its name, its field, and the one its table is asked by.
     pub job_id: JobId,
     pub setup_id: SetupId,
     pub job_name: String,
@@ -32,9 +42,18 @@ pub struct ChoiceAnswers {
     pub preset_id: Option<String>,
     /// The researcher's question the analysis was asked with, when there was one.
     pub question: Option<String>,
+    /// The model it was read with, and the languages of its answers, for the question to be
+    /// asked again alike.
+    pub provider: ProviderId,
+    pub model: String,
+    pub languages: LanguageChoice,
     /// The field as the job froze it.
     pub field: Field,
     pub answers: Vec<DocumentAnswer>,
+    /// For a question, the project's documents it has not been answered for yet that have a text
+    /// to be read in: those added since, or one whose reading failed. Empty for an analysis
+    /// asked no question.
+    pub unread: Vec<DocumentId>,
 }
 
 /// One document's answer, with what the row shows beside it.
@@ -106,6 +125,16 @@ pub(crate) fn question_of(setup: &Setup) -> Option<String> {
         .map(String::from)
 }
 
+/// Whether two set-ups asked the same question alike: the same question, prompt, provider and
+/// model. Set-ups asked no question are never alike: each analysis stands on its own.
+pub(crate) fn alike(a: &Setup, b: &Setup) -> bool {
+    question_of(a).is_some()
+        && question_of(a) == question_of(b)
+        && a.prompt.preset_id == b.prompt.preset_id
+        && a.provider == b.provider
+        && a.model == b.model
+}
+
 /// What a row shows beside a choice's answer: its reason, and the passages quoted.
 fn beside(
     field: &Field,
@@ -149,9 +178,11 @@ fn beside(
 
 impl Projects {
     /// Every choice of the analyses tied to the project's documents, each with the documents it
-    /// answered, newest job first; an analysis with no choice gives none.
+    /// answered, newest job first; an analysis with no choice gives none. Analyses that asked a
+    /// question alike are one group, a document's newest answer counting.
     pub(crate) fn choice_answers(
         &self,
+        project: ProjectId,
         loaded: &LoadedJobs,
         links: &[DocumentLink],
     ) -> Result<Vec<ChoiceAnswers>, ProjectError> {
@@ -160,7 +191,8 @@ impl Projects {
             .filter(|(job, _, _)| job.task == Task::Analysis)
             .collect();
         jobs.sort_by_key(|(job, _, _)| std::cmp::Reverse(job.created_at));
-        let mut out: Vec<ChoiceAnswers> = Vec::new();
+        // Each group with the set-up that heads it.
+        let mut out: Vec<(ChoiceAnswers, &Setup)> = Vec::new();
         for (job, pieces, corrections) in jobs {
             for setup in &job.setups {
                 let Some(schema) = &setup.prompt.schema else {
@@ -200,18 +232,83 @@ impl Projects {
                     if answers.is_empty() {
                         continue;
                     }
-                    out.push(ChoiceAnswers {
-                        job_id: job.id,
-                        setup_id: setup.id,
-                        job_name: job.name.clone(),
-                        preset_id: setup.prompt.preset_id.clone(),
-                        question: question_of(setup),
-                        field: field.clone(),
-                        answers,
-                    });
+                    // Asked alike before? The older answers fill in what the newer left.
+                    if let Some((group, _)) = out
+                        .iter_mut()
+                        .find(|(g, head)| alike(head, setup) && g.field.key == field.key)
+                    {
+                        for answer in answers {
+                            if !group.answers.iter().any(|a| a.document == answer.document) {
+                                group.answers.push(answer);
+                            }
+                        }
+                        continue;
+                    }
+                    out.push((
+                        ChoiceAnswers {
+                            job_id: job.id,
+                            setup_id: setup.id,
+                            job_name: job.name.clone(),
+                            preset_id: setup.prompt.preset_id.clone(),
+                            question: question_of(setup),
+                            provider: setup.provider.clone(),
+                            model: setup.model.clone(),
+                            languages: job.settings.languages.clone(),
+                            field: field.clone(),
+                            answers,
+                            unread: Vec::new(),
+                        },
+                        setup,
+                    ));
                 }
             }
         }
+        let mut out: Vec<ChoiceAnswers> = out.into_iter().map(|(g, _)| g).collect();
+        self.fill_unread(project, &mut out)?;
         Ok(out)
+    }
+
+    /// For each group asked a question, the project's documents it has no answer for that have
+    /// a text to be read in, as the screening dialog would read them.
+    fn fill_unread(
+        &self,
+        project: ProjectId,
+        groups: &mut [ChoiceAnswers],
+    ) -> Result<(), ProjectError> {
+        if !groups.iter().any(|g| g.question.is_some()) {
+            return Ok(());
+        }
+        let documents: Vec<DocumentId> = self
+            .store
+            .documents(project)?
+            .into_iter()
+            .map(|d| d.id)
+            .collect();
+        let unanswered: Vec<DocumentId> = documents
+            .iter()
+            .copied()
+            .filter(|d| {
+                groups
+                    .iter()
+                    .any(|g| g.question.is_some() && !g.answers.iter().any(|a| a.document == *d))
+            })
+            .collect();
+        if unanswered.is_empty() {
+            return Ok(());
+        }
+        let readable: Vec<DocumentId> = self
+            .document_texts(project, &unanswered)?
+            .into_iter()
+            .filter(|t| matches!(t.text, TextOf::Result { .. } | TextOf::Own(_)))
+            .map(|t| t.document)
+            .collect();
+        for group in groups.iter_mut().filter(|g| g.question.is_some()) {
+            group.unread = readable
+                .iter()
+                .copied()
+                .filter(|d| !group.answers.iter().any(|a| a.document == *d))
+                .collect();
+        }
+        Ok(())
     }
 }

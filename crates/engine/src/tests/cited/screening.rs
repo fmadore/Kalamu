@@ -188,3 +188,37 @@ async fn an_answer_whose_every_passage_is_invented_is_refused_and_asked_again() 
         Some(PieceRef::page(1))
     );
 }
+
+/// The question kept with the project, asked again once a document was added: only the new
+/// document is sent and paid for. The dialog sends the new documents alone; were the old ones
+/// sent again with them, under the same question and model, the cache would serve them.
+#[tokio::test]
+async fn the_question_asked_again_pays_for_the_new_documents_alone() {
+    let f = interviews();
+    let a = f.text_file("a.txt", "Le conseil a voté le budget du marché.");
+    let b = f.text_file("b.txt", "Les commerçantes demandent un abri.");
+    let added = f.text_file("c.txt", "La mairie répond aux commerçantes.");
+    f.model.script(&[serde_json::json!({
+        "relevance": "Not relevant", "reason": "r", "passages": [],
+    })]);
+    let first = screening(&f, vec![a.clone(), b.clone()]);
+    assert_eq!(f.run(first.id).await, JobStatus::Completed);
+    assert_eq!(f.model.calls(), 2);
+
+    // Asked again of the new document alone, as the dialog does.
+    let again = screening(&f, vec![added.clone()]);
+    assert_eq!(f.run(again.id).await, JobStatus::Completed);
+    assert_eq!(f.model.calls(), 3);
+    assert_eq!(
+        f.model.sent().last().map(|(read, _)| read.as_str()),
+        Some("[1] La mairie répond aux commerçantes.")
+    );
+
+    // And with every document: the cache serves the three already read, nothing is sent.
+    let all = screening(&f, vec![a, b, added]);
+    assert_eq!(f.run(all.id).await, JobStatus::Completed);
+    assert_eq!(f.model.calls(), 3);
+    for i in 0..3 {
+        assert_eq!(relevance(&f.fields(&all, i)), "Not relevant");
+    }
+}

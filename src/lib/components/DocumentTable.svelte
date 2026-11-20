@@ -4,7 +4,10 @@
 	// job is then tied to them (`DocumentSelectionBar`). When an analysis has answered a choice
 	// (whether a document speaks of the researcher's question), the table can be filtered by its
 	// answer and that analysis exported as one table; while it is, each row shows the answer, its
-	// reason and its passages under the title, with Keep and Set aside (`DocumentAnswer`).
+	// reason and its passages under the title, with Keep and Set aside (`DocumentAnswer`). A
+	// question asked of the documents is asked again of those added since (`AskAgain`).
+	import AnswerFilter from './AnswerFilter.svelte';
+	import AskAgain from './AskAgain.svelte';
 	import DocumentAnswer from './DocumentAnswer.svelte';
 	import DocumentSelectionBar from './DocumentSelectionBar.svelte';
 	import Icon from './Icon.svelte';
@@ -22,19 +25,10 @@
 		sortDocuments,
 		type DocumentSort
 	} from '#lib/projects.js';
-	import {
-		answeredDocuments,
-		answerOptions,
-		chosenAnswer,
-		decisionOf,
-		decisionTags,
-		rowAnswers,
-		tableName
-	} from '#lib/screening.js';
+	import { answeredDocuments, decisionOf, decisionTags, rowAnswers } from '#lib/screening.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { keepFor, recallFor } from '#lib/stored.js';
-	import { askForFolders, pickTableSave } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -90,7 +84,6 @@
 	const filterTag = $derived(tags.some((t) => t.name === tag) ? tag : '');
 	const answered = $derived(answeredDocuments(choices, answer));
 	const filterAnswer = $derived(answered ? answer : '');
-	const answerGroups = $derived(answerOptions(choices, m));
 	const rowAnswered = $derived(rowAnswers(choices, filterAnswer));
 	const shown = $derived(
 		sortDocuments(
@@ -127,21 +120,6 @@
 				toast(m.projects.tagRenamed(renamed.changed));
 			}
 		);
-	}
-
-	/** The analysis filtered on, one row per document with the researcher's tags. */
-	async function exportAnswers() {
-		const found = chosenAnswer(choices, filterAnswer);
-		if (!found) return;
-		const { group } = found;
-		const path = await pickTableSave(tableName(projectName, group));
-		if (!path) return;
-		await action.run(async () => {
-			// The CSV goes beside the workbook: in the Mac App Store's build, its folder is asked for.
-			if (!(await askForFolders([path]))) return;
-			await api.exportAnswers(projectId, group.job_id, group.setup_id, path);
-			toast(m.screening.exported);
-		}, null);
 	}
 
 	/** Keep or Set aside one document from its row; the decision it already has, taken off. */
@@ -206,23 +184,14 @@
 				>
 			{/if}
 		{/if}
-		{#if answerGroups.length > 0}
-			<select bind:value={() => filterAnswer, (v) => (answer = v)} aria-label={m.screening.filter}>
-				<option value="">{m.screening.anyAnswer}</option>
-				{#each answerGroups as g, i (i)}
-					<optgroup label={g.title}>
-						{#each g.options as o (o.key)}
-							<option value={o.key}>{o.label}</option>
-						{/each}
-					</optgroup>
-				{/each}
-			</select>
-			{#if filterAnswer}
-				<button class="btn ghost sm" disabled={action.busy} onclick={exportAnswers}
-					><Icon name="download" size={14} />{m.screening.exportTable}</button
-				>
-			{/if}
-		{/if}
+		<AnswerFilter
+			{projectId}
+			{projectName}
+			{choices}
+			value={filterAnswer}
+			{action}
+			onpick={(v) => (answer = v)}
+		/>
 		<label class="sort">
 			<span>{m.projects.sortBy}</span>
 			<select bind:value={sort}>
@@ -232,6 +201,8 @@
 			</select>
 		</label>
 	</div>
+
+	<AskAgain project={{ id: projectId, name: projectName, collectionId }} {choices} />
 
 	{#if chosen.length > 0}
 		<DocumentSelectionBar

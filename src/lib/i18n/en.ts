@@ -211,7 +211,13 @@ export const en = {
 		passagesOf: (title: string) => `Passages quoted from “${title}”`,
 		keepThis: (title: string) => `Keep “${title}”`,
 		setAsideThis: (title: string) => `Set aside “${title}”`,
-		decisionTakenOff: (tag: string) => `Tag “${tag}” taken off`
+		decisionTakenOff: (tag: string) => `Tag “${tag}” taken off`,
+		/** A question kept with the project, asked again of the documents added since. */
+		notReadAgainst: (n: number, question: string) =>
+			n === 1
+				? `1 document has not been read against “${question}” yet.`
+				: `${n} documents have not been read against “${question}” yet.`,
+		askAgain: 'Read the new documents against this question'
 	},
 	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
 	cited: {

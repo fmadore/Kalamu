@@ -85,3 +85,55 @@ the one refusal left.
   decision from a row keeps the documents chosen; the selection bar's still clears them.
   Rejected: keys of their own (K, S) on a focused row, which a researcher would have to learn and
   a screen reader announces nowhere.
+
+### The question kept with the project, asked again of new documents
+
+- **Kept by the jobs that asked it, not stored again.** A screening's question is already its
+  set-up's `question`, frozen with the job and tied to the project through its documents. The
+  analyses of a project that asked the same question with the same prompt, provider and model
+  (`answered::alike`) are one group: one entry in the filter, their answers together, a
+  document's newest answer counting, the newest job naming the group. No table, migration,
+  command or store trait is added, and the project file another branch is writing carries the
+  question with the jobs it already carries.
+- **The documents not read against it** (`ChoiceAnswers.unread`): the project's documents that
+  group has no answer for and that have a text to be read in, as the dialog would choose it
+  (`document_texts`: a preferred or only reading, or a text file's own words). A document added
+  since, and one whose reading failed (never taken for *Not relevant*), are both there; one with
+  no text yet, or several readings and none preferred, is not, so the line never offers what the
+  dialog would leave out.
+- **One line, one button.** Under the filters, *3 documents have not been read against “…”
+  yet.* and *Read the new documents against this question*, shown only when there are some. It
+  opens the screening dialog over those documents alone, with the question, the prompt, the
+  model and the languages it was asked with (`ChoiceAnswers.provider`, `model`, `languages`), so
+  the cost said is theirs and Start asks the consent it always asks. It is two clicks, not one:
+  nothing is sent before the researcher has seen what it costs. The new job's answers join the
+  group as soon as it is tied to the project, and *Export this table* writes every document the
+  question was asked of, whichever of its jobs the filter names (`tabled`).
+- **Only the new documents are paid for.** The dialog sends them alone. Had it sent every
+  document again, the cache would have served the ones already read under the same question,
+  prompt and model; the engine test proves both. Rejected: one job over all the documents again,
+  served from the cache. It would have hidden the researcher's corrections made in the first job
+  behind the second job's uncorrected answers (corrections belong to a job), and a prompt
+  updated by a new release since would have made every document be paid for again.
+- **Privacy.** Nothing new is kept or sent: the question was already kept in the job and sent
+  with each document's text.
+
+### Consequences
+
+- `EstimateRow.too_long` is a list; the interview dialog reads its first entry.
+- `DocumentAnswer` carries the analysis, the reason and the passages; `ChoiceAnswers` the model,
+  the languages and the documents not read; the project view grows by the passages of every
+  analysis with a choice, read from what the project view already loaded.
+- `DocumentTable.svelte` passed 500 lines: the filter by an answer and its export moved to
+  `AnswerFilter.svelte`, the line asking again to `AskAgain.svelte`, the row's answer to
+  `DocumentAnswer.svelte`. `projects`' answers table moved to `tabled.rs`.
+- The French of the screening section now has its no-break spaces before `:`, `?`, `!` and
+  inside « », which the first increment's strings lacked.
+
+## Left
+
+- The question kept with a prompt, for another project (the interview's *Keep this*).
+- The filter remembered on the computer with the tag and the sort.
+- Keep and Set aside from the review itself.
+- A document whose text was read again since the question was asked is not offered again: its
+  answer stands for the text it read.

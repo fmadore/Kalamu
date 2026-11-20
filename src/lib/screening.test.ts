@@ -29,6 +29,10 @@ function group(over: Partial<ChoiceAnswers> = {}): ChoiceAnswers {
 		job_name: 'My question: market women',
 		preset_id: 'analysis.screening',
 		question: 'What market women asked of the council',
+		provider: 'gemini',
+		model: 'gemini-4-carbon',
+		languages: { mode: 'auto' },
+		unread: [],
 		field: {
 			key: 'relevance',
 			label: 'Relevance',

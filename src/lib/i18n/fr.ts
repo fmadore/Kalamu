@@ -637,7 +637,12 @@ export const fr: Messages = {
 		passagesOf: (title: string) => `Passages cités de « ${title} »`,
 		keepThis: (title: string) => `Garder « ${title} »`,
 		setAsideThis: (title: string) => `Écarter « ${title} »`,
-		decisionTakenOff: (tag: string) => `Étiquette « ${tag} » retirée`
+		decisionTakenOff: (tag: string) => `Étiquette « ${tag} » retirée`,
+		notReadAgainst: (n: number, question: string) =>
+			n === 1
+				? `1 document n’a pas encore été lu avec la question « ${question} ».`
+				: `${n} documents n’ont pas encore été lus avec la question « ${question} ».`,
+		askAgain: 'Poser cette question aux nouveaux documents'
 	},
 	cited: {
 		listen: 'Écouter',

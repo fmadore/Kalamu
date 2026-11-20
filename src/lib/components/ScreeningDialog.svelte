@@ -14,23 +14,27 @@
 	import { followEstimate } from '#lib/newJobEstimate.svelte.js';
 	import { modelsFor, providerDefault } from '#lib/newJobModels.js';
 	import { tooLongOf } from '#lib/screening.js';
-	import { Screening } from '#lib/screeningStart.svelte.js';
+	import { Screening, type Again } from '#lib/screeningStart.svelte.js';
 	import { go, type FromProject } from '#lib/state.svelte.js';
 
 	let {
 		project,
 		documents,
+		again,
 		onclose
 	}: {
 		project: FromProject;
 		/** The documents chosen, by id. */
 		documents: string[];
+		/** A question kept with the project, asked again as it was. */
+		again?: Again;
 		onclose: () => void;
 	} = $props();
 	const m = messages();
 	const t = m.screening;
 
-	const s = new Screening();
+	// svelte-ignore state_referenced_locally
+	const s = new Screening(again);
 	// svelte-ignore state_referenced_locally
 	void s.prepare(project.id, documents);
 
