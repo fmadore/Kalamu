@@ -353,6 +353,7 @@
 						rows={view.documents}
 						collections={view.collections}
 						tags={view.tags}
+						choices={view.choices}
 						{collectionId}
 						onchange={load}
 						onerror={(e) => (action.error = e)}

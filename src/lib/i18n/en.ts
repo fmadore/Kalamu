@@ -145,6 +145,50 @@ export const en = {
 		keptHint: 'You can change or delete it in Prompts.',
 		openPrompts: 'Open Prompts'
 	},
+	/** "Which of these speak of my question?": a project's documents read against one question,
+	 *  then filtered by the answer and kept or set aside by the researcher. */
+	screening: {
+		action: 'Which of these speak of my question?',
+		title: 'Which of these documents speak of my question?',
+		lede: 'Kalamu sends the text of each document, as you corrected it, to a model, which says whether it speaks of your question, why, and with which passages. A passage is kept only if its words are found in the document. “Unsure” is an honest answer the model may give.',
+		question: 'Your research question',
+		questionHint: 'In a sentence or two, as you would ask a colleague.',
+		questionPlaceholder:
+			'For example: what the market women asked of the town council, and how it answered, 1950 to 1960.',
+		documents: (n: number) =>
+			n === 1 ? '1 document will be read.' : `${n} documents will be read.`,
+		noText: (titles: string, n: number) =>
+			n === 1
+				? `Left out, not read into text yet: ${titles}. Read it first with New job.`
+				: `Left out, not read into text yet: ${titles}. Read them first with New job.`,
+		undecided: (titles: string) =>
+			`Left out, read more than once with no reading preferred: ${titles}. Choose one in the document first.`,
+		nothing:
+			'None of these documents has been read into text yet. Read them first with New job, then come back.',
+		model: (name: string, provider: string) => `Model: ${name} (${provider})`,
+		cost: (usd: string) => `Estimated cost: ${usd}`,
+		/** Said in place of the cost when a document is too long for the model chosen. */
+		tooLong: (file: string, model: string, words: string, most: string) =>
+			`${file} is too long for ${model}: about ${words} words, where it reads about ${most} at once. Choose another model under More choices.`,
+		more: 'More choices',
+		start: 'Start',
+		preparing: 'Getting the texts ready…',
+		jobName: (question: string) => `My question: ${question}`,
+		/** The filter of a project's documents by what an analysis answered. */
+		filter: 'Filter by an answer',
+		anyAnswer: 'Any answer',
+		answerCount: (answer: string, n: number) => `${answer} (${n})`,
+		group: (field: string, job: string) => `${field} · ${job}`,
+		exportTable: 'Export this table',
+		exported: 'Table exported, as a spreadsheet and as CSV.',
+		/** The researcher's decision, kept as a tag of the documents. */
+		keep: 'Keep',
+		setAside: 'Set aside',
+		keptTag: 'Kept',
+		setAsideTag: 'Set aside',
+		decided: (tag: string, n: number) =>
+			n === 1 ? `1 document tagged “${tag}”` : `${n} documents tagged “${tag}”`
+	},
 	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
 	cited: {
 		listen: 'Listen',

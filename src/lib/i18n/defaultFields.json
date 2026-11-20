@@ -324,6 +324,43 @@
       "reason": false
     }
   ],
+  "analysis.screening": [
+    {
+      "key": "relevance",
+      "label": "Relevance",
+      "instructions": "Whether the document speaks of the researcher's question, following the instructions above.",
+      "kind": {
+        "type": "choice",
+        "values": [
+          "Relevant",
+          "Partly relevant",
+          "Not relevant",
+          "Unsure"
+        ]
+      },
+      "reason": false
+    },
+    {
+      "key": "reason",
+      "label": "Reason",
+      "instructions": "Why, in one or two sentences, in {languages}.",
+      "kind": {
+        "type": "text"
+      },
+      "reason": false
+    },
+    {
+      "key": "passages",
+      "label": "Passages",
+      "instructions": "The passages that speak of the question, the most telling first; none when the document does not speak of it.",
+      "kind": {
+        "type": "cited",
+        "fields": [],
+        "max": 3
+      },
+      "reason": false
+    }
+  ],
   "analysis.summary_publication": [
     {
       "key": "reference",

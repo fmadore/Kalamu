@@ -17,6 +17,7 @@ use kalamu_core::{
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+mod answered;
 mod attach;
 mod described;
 mod documents;
@@ -24,14 +25,17 @@ mod manifest;
 mod profiled;
 mod queue;
 mod resulted;
+mod texts;
 mod views;
 
+pub use answered::{ChoiceAnswers, DocumentAnswer};
 pub use attach::{AttachChoice, SourceMatch};
 pub use described::{Described, TagRenamed, described};
 pub use kalamu_core::DescribedBy;
 pub use manifest::{ManifestRow, ReviewManifest, SetAsideRow};
 pub use queue::{QueueItemKey, QueuePlan, QueueSelection, ResultChoice, ResultKey};
 pub use resulted::AnswerField;
+pub use texts::{DocumentText, TEXT_TASKS, TextOf};
 pub use views::{
     CollectionView, DocumentBrief, DocumentDetail, DocumentResult, DocumentRow, ProjectView,
     TagView, TaskBrief,

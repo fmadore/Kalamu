@@ -140,15 +140,11 @@ fn answer_cell(values: Vec<FieldValue>) -> Cell {
                         .filter_map(|e| e.first().map(|a| a.value.joined())),
                 );
             }
-            // Entries that cite the text by their first field (a theme's name), as a group's.
+            // Entries that cite the text by their first field (a theme's name), as a group's,
+            // and passages alone by their quotations.
             FieldValue::Cited(cited) => {
                 listed = true;
-                items.extend(
-                    cited
-                        .entries
-                        .iter()
-                        .filter_map(|e| e.answers.first().map(|a| a.value.joined())),
-                );
+                items.extend(cited.entries.iter().filter_map(|e| e.name()));
             }
         }
     }
@@ -172,6 +168,14 @@ impl Results {
 
     /// The result a profile's columns read for a document and a task.
     fn chosen(&self, document: DocumentId, task: Task) -> Option<Chosen<'_>> {
+        match self.pick(document, task) {
+            Pick::One(chosen) => Some(chosen),
+            Pick::Several | Pick::Nothing => None,
+        }
+    }
+
+    /// The result read for a document and a task, or why there is none.
+    fn pick(&self, document: DocumentId, task: Task) -> Pick<'_> {
         let mut seen = HashSet::new();
         let candidates: Vec<Chosen> = self
             .tied
@@ -184,13 +188,36 @@ impl Results {
         match self.tied.preference(document, task) {
             Some(p) => candidates
                 .into_iter()
-                .find(|c| c.job.id == p.job_id && c.setup_id == p.setup_id),
+                .find(|c| c.job.id == p.job_id && c.setup_id == p.setup_id)
+                .map_or(Pick::Nothing, Pick::One),
             None => match candidates.as_slice() {
-                [only] => Some(*only),
-                _ => None,
+                [] => Pick::Nothing,
+                [only] => Pick::One(*only),
+                _ => Pick::Several,
             },
         }
     }
+
+    /// The result whose text a document is read in for `task`: its job, set-up and source;
+    /// `Err(true)` when there are several and none is preferred, `Err(false)` when there is none.
+    pub(crate) fn text_result(
+        &self,
+        document: DocumentId,
+        task: Task,
+    ) -> Result<(JobId, SetupId, SourceId), bool> {
+        match self.pick(document, task) {
+            Pick::One(c) => Ok((c.job.id, c.setup_id, c.source_id)),
+            Pick::Several => Err(true),
+            Pick::Nothing => Err(false),
+        }
+    }
+}
+
+/// The result read for a document and a task: the one, several with none preferred, or none.
+enum Pick<'a> {
+    One(Chosen<'a>),
+    Several,
+    Nothing,
 }
 
 impl Projects {

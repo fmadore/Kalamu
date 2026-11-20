@@ -1,0 +1,259 @@
+//! Documents read against a research question (#51): which text each is read in, the choices
+//! an analysis answered for the table to be filtered by, the researcher's correction winning
+//! over the model's answer, and the analysis written as one table with the researcher's tags.
+
+use kalamu_core::{AnalysisSchema, DocumentId, Field, FieldAnswer, FieldKind, FieldValue};
+
+use super::*;
+
+fn field(label: &str, kind: FieldKind) -> Field {
+    Field {
+        key: String::new(),
+        label: label.into(),
+        instructions: String::new(),
+        kind,
+        reason: false,
+    }
+}
+
+fn screening() -> AnalysisSchema {
+    let mut schema = AnalysisSchema {
+        fields: vec![
+            field(
+                "Relevance",
+                FieldKind::Choice {
+                    values: ["Relevant", "Partly relevant", "Not relevant", "Unsure"]
+                        .map(String::from)
+                        .to_vec(),
+                },
+            ),
+            field("Reason", FieldKind::Text),
+        ],
+    };
+    schema.assign_keys();
+    schema
+}
+
+fn answer(key: &str, value: &str) -> FieldAnswer {
+    FieldAnswer {
+        key: key.into(),
+        value: FieldValue::Text(value.into()),
+        reason: None,
+    }
+}
+
+impl Fixture {
+    /// An analysis over `sources` with the screening fields and a question, one piece per
+    /// source answered as `relevance` says.
+    fn screening(&self, sources: Vec<SourceFile>, relevance: &[&str]) -> Job {
+        let job = Job {
+            id: kalamu_core::JobId::new(),
+            name: "Screening".into(),
+            task: Task::Analysis,
+            created_at: Timestamp::now(),
+            sources,
+            setups: vec![Setup {
+                id: SetupId::new(),
+                label: "gemini-3.8-flash".into(),
+                provider: ProviderId::new("gemini"),
+                model: "gemini-3.8-flash".into(),
+                prompt: PromptSnapshot {
+                    preset_id: Some("analysis.screening".into()),
+                    preset_name: "Does it speak of my question?".into(),
+                    template: String::new(),
+                    text: String::new(),
+                    user_prompt: String::new(),
+                    schema: Some(screening()),
+                },
+                options: SetupOptions {
+                    question: Some("  Women traders at the market  ".into()),
+                    ..SetupOptions::default()
+                },
+                merge: None,
+                pages_cap: None,
+            }],
+            settings: JobSettings::default(),
+            output: OutputSettings::default(),
+            status: JobStatus::Completed,
+        };
+        self.store.create_job(&job).unwrap();
+        for (source, relevance) in job.sources.iter().zip(relevance) {
+            let key = format!("{}-{}", job.id, source.id);
+            self.store
+                .put_result(&StoredResult {
+                    cache_key: key.clone(),
+                    provider: ProviderId::new("gemini"),
+                    model: "gemini-3.8-flash".into(),
+                    output: ProcessOutput {
+                        fields: vec![
+                            answer("relevance", relevance),
+                            answer("reason", &format!("{relevance}, because.")),
+                        ],
+                        ..ProcessOutput::default()
+                    },
+                    request: Vec::new(),
+                    cost_usd: Some(0.01),
+                    duration_ms: 1,
+                    created_at: Timestamp::now(),
+                })
+                .unwrap();
+            self.store
+                .upsert_piece(&PieceState {
+                    job_id: job.id,
+                    setup_id: job.setups[0].id,
+                    source_id: source.id,
+                    index: 0,
+                    piece: PieceRef::Whole,
+                    status: PieceStatus::Done,
+                    cache_key: Some(key),
+                    error: None,
+                    attempts: 1,
+                    updated_at: Timestamp::now(),
+                })
+                .unwrap();
+        }
+        job
+    }
+}
+
+#[test]
+fn each_document_is_read_in_its_one_text_never_one_chosen_for_the_researcher() {
+    let f = fixture();
+    let p = f.projects.create("Market", "").unwrap();
+    let read = f.file("read.pdf", "a");
+    let twice = f.file("twice.pdf", "b");
+    let mut own = f.file("notes.txt", "c");
+    own.kind = InputKind::Text;
+    let unread = f.file("unread.pdf", "d");
+    let docs = f
+        .projects
+        .add_documents(
+            p.id,
+            vec![read.clone(), twice.clone(), own.clone(), unread],
+            None,
+        )
+        .unwrap();
+    let extraction = f.job(Task::TextExtraction, vec![read.clone(), twice.clone()]);
+    let again = f.job(Task::TextExtraction, vec![twice]);
+    f.projects
+        .link_jobs(p.id, &[extraction.id, again.id], None)
+        .unwrap();
+
+    let texts = f.projects.document_texts(p.id, &docs).unwrap();
+    assert_eq!(
+        texts[0].text,
+        TextOf::Result {
+            job_id: extraction.id,
+            setup_id: extraction.setups[0].id,
+            source_id: read.id,
+        }
+    );
+    assert_eq!(
+        texts[1].text,
+        TextOf::Undecided,
+        "two readings, none preferred"
+    );
+    assert!(matches!(&texts[2].text, TextOf::Own(s) if s.id == own.id));
+    assert_eq!(texts[3].text, TextOf::Nothing);
+    assert_eq!(texts[3].title, "unread");
+
+    // Once the researcher prefers one reading, it is the one read.
+    f.projects
+        .set_preferred(
+            p.id,
+            docs[1],
+            Task::TextExtraction,
+            Some((again.id, again.setups[0].id)),
+        )
+        .unwrap();
+    let texts = f.projects.document_texts(p.id, &docs[1..2]).unwrap();
+    assert!(matches!(texts[0].text, TextOf::Result { job_id, .. } if job_id == again.id));
+    // A document of another project is refused.
+    assert!(matches!(
+        f.projects.document_texts(p.id, &[DocumentId::new()]),
+        Err(ProjectError::NotFound)
+    ));
+}
+
+#[test]
+fn the_choices_answered_filter_the_documents_and_a_correction_wins() {
+    let f = fixture();
+    let p = f.projects.create("Market", "").unwrap();
+    let a = f.file("a.txt", "a");
+    let b = f.file("b.txt", "b");
+    let docs = f
+        .projects
+        .add_documents(p.id, vec![a.clone(), b.clone()], None)
+        .unwrap();
+    let job = f.screening(vec![a.clone(), b.clone()], &["Relevant", "Unsure"]);
+    f.projects.link_job(p.id, job.id, None).unwrap();
+    // The researcher corrects the second answer: the table filters on theirs.
+    f.store
+        .put_correction(&Correction {
+            job_id: job.id,
+            setup_id: job.setups[0].id,
+            source_id: b.id,
+            index: 0,
+            text: None,
+            fields: Some(vec![
+                answer("relevance", "Not relevant"),
+                answer("reason", "Only the price of rice."),
+            ]),
+            reviewed: true,
+            updated_at: Timestamp::now(),
+        })
+        .unwrap();
+
+    let view = f.projects.view(p.id).unwrap();
+    assert_eq!(view.choices.len(), 1, "one choice: the reason is not one");
+    let group = &view.choices[0];
+    assert_eq!(group.field.key, "relevance");
+    assert_eq!(
+        group.question.as_deref(),
+        Some("Women traders at the market")
+    );
+    assert_eq!(group.preset_id.as_deref(), Some("analysis.screening"));
+    let answers: Vec<(DocumentId, &str)> = group
+        .answers
+        .iter()
+        .map(|x| (x.document, x.value.as_str()))
+        .collect();
+    assert_eq!(
+        answers,
+        vec![(docs[0], "Relevant"), (docs[1], "Not relevant")]
+    );
+}
+
+#[test]
+fn an_analysis_is_written_as_one_table_with_the_researchers_tags() {
+    let f = fixture();
+    let p = f.projects.create("Market", "").unwrap();
+    let a = f.file("a.txt", "a");
+    let b = f.file("b.txt", "b");
+    let docs = f
+        .projects
+        .add_documents(p.id, vec![b.clone(), a.clone()], None)
+        .unwrap();
+    let job = f.screening(vec![a, b], &["Relevant", "=Not relevant"]);
+    f.projects.link_job(p.id, job.id, None).unwrap();
+    f.projects.tag_documents(p.id, &docs[1..], "Keep").unwrap();
+
+    let table = f
+        .projects
+        .answers_table(p.id, job.id, job.setups[0].id)
+        .unwrap();
+    assert_eq!(
+        table.headings,
+        ["document", "file", "Relevance", "Reason", "tags"]
+    );
+    assert_eq!(
+        csv_body(table),
+        "document,file,Relevance,Reason,tags\n\
+         a,a.txt,Relevant,\"Relevant, because.\",Keep\n\
+         b,b.txt,'=Not relevant,\"'=Not relevant, because.\",\n"
+    );
+    assert!(matches!(
+        f.projects.answers_table(p.id, job.id, SetupId::new()),
+        Err(ProjectError::NotFound)
+    ));
+}

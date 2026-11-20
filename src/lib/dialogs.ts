@@ -48,6 +48,13 @@ export async function pickJsonSave(name: string): Promise<string | null> {
 	return save({ defaultPath: `${name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] });
 }
 
+/** Where to write a table named `name`: an Excel workbook, its CSV twin written beside it. */
+export async function pickTableSave(name: string): Promise<string | null> {
+	if (!isTauri()) return null;
+	const { save } = await import('@tauri-apps/plugin-dialog');
+	return save({ defaultPath: `${name}.xlsx`, filters: [{ name: 'Excel', extensions: ['xlsx'] }] });
+}
+
 export async function pickPresetFile(): Promise<string | null> {
 	if (!isTauri()) return null;
 	const { open } = await import('@tauri-apps/plugin-dialog');

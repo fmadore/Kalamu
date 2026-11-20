@@ -17,6 +17,7 @@ use super::*;
 mod described;
 mod profiled;
 mod queue;
+mod screened;
 mod tags;
 
 struct Fixture {

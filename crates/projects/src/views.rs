@@ -4,13 +4,14 @@
 use std::collections::HashMap;
 
 use kalamu_core::{
-    CacheKey, Collection, CollectionId, Correction, Document, DocumentId, DocumentLink, Job, JobId,
+    CacheKey, Collection, CollectionId, Correction, Document, DocumentId, DocumentLink, JobId,
     JobStatus, PieceState, PieceStatus, Project, ProjectError, ProjectId, ProviderId, SetupId,
     SourceId, Task, Timestamp, same_tag,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::answered::{ChoiceAnswers, LoadedJobs};
 use crate::described::{Described, described};
 use crate::documents::is_missing;
 use crate::{Projects, missing};
@@ -25,6 +26,9 @@ pub struct ProjectView {
     pub tags: Vec<TagView>,
     /// The jobs that read its documents, newest first: the project's activity.
     pub jobs: Vec<JobId>,
+    /// The choices its analyses answered, each with the documents it answered: what the table
+    /// of documents can be filtered by. Empty when no analysis has a choice.
+    pub choices: Vec<ChoiceAnswers>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -148,7 +152,7 @@ pub struct DocumentResult {
 /// The jobs a project's links name, each read once, with its pieces and corrections. A job
 /// deleted meanwhile is left out.
 struct Loaded {
-    jobs: HashMap<JobId, (Job, Vec<PieceState>, Vec<Correction>)>,
+    jobs: LoadedJobs,
 }
 
 impl Loaded {
@@ -293,6 +297,7 @@ impl Projects {
             .map(|(job, _, _)| (job.created_at, job.id))
             .collect();
         jobs.sort_by(|a, b| b.cmp(a));
+        let choices = self.choice_answers(&loaded.jobs, &links)?;
         Ok(ProjectView {
             collections: collections
                 .into_iter()
@@ -304,6 +309,7 @@ impl Projects {
             tags: tags_of(&documents),
             documents: rows,
             jobs: jobs.into_iter().map(|(_, id)| id).collect(),
+            choices,
             project,
         })
     }

@@ -284,6 +284,18 @@ pub(crate) const DEFAULTS: &[Default] = &[
         made_for: None,
     },
     Default {
+        id: "analysis.screening",
+        task: Task::Analysis,
+        name: "Does it speak of my question?",
+        description: "For each document, whether it speaks of your research question (relevant, partly, not, or unsure), why, and the passages that show it, each found word for word in the text with its page.",
+        instructions: include_str!("../defaults/analysis-screening.md"),
+        user_prompt: analysis::SCREENING_REQUEST,
+        schema: Some(analysis::screening),
+        merge: None,
+        dense: false,
+        made_for: None,
+    },
+    Default {
         id: "contents.periodical",
         task: Task::Contents,
         name: "Newspaper or magazine issue",

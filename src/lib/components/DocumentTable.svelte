@@ -1,10 +1,13 @@
 <script lang="ts">
 	// A project's documents, found and sorted, each with its collections and what has been read
 	// from it. Selected documents can be grouped, ungrouped, removed, or sent to New job, whose
-	// job is then tied to them.
+	// job is then tied to them (`DocumentSelectionBar`). When an analysis has answered a choice
+	// (whether a document speaks of the researcher's question), the table can be filtered by its
+	// answer and that analysis exported as one table.
+	import DocumentSelectionBar from './DocumentSelectionBar.svelte';
 	import Icon from './Icon.svelte';
 	import MoreRows from './MoreRows.svelte';
-	import TagInput from './TagInput.svelte';
+	import type { ChoiceAnswers } from '#lib/bindings/ChoiceAnswers.js';
 	import type { CollectionView } from '#lib/bindings/CollectionView.js';
 	import type { DocumentRow } from '#lib/bindings/DocumentRow.js';
 	import type { TagView } from '#lib/bindings/TagView.js';
@@ -12,18 +15,16 @@
 	import { formatDate, formatDateTime, messages } from '#lib/i18n/index.js';
 	import { Paging, rowIndex } from '#lib/paging.svelte.js';
 	import {
-		selectionPaths,
 		shownDocuments,
 		readDocumentTableView,
 		sortDocuments,
-		tagsOf,
-		taskFor,
 		type DocumentSort
 	} from '#lib/projects.js';
+	import { answeredDocuments, answerOptions, chosenAnswer, tableName } from '#lib/screening.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { keepFor, recallFor } from '#lib/stored.js';
-	import { ask } from '#lib/dialogs.js';
+	import { askForFolders, pickTableSave } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
 
 	let {
@@ -32,6 +33,7 @@
 		rows,
 		collections,
 		tags,
+		choices = [],
 		collectionId,
 		onchange,
 		onerror
@@ -41,6 +43,8 @@
 		rows: DocumentRow[];
 		collections: CollectionView[];
 		tags: TagView[];
+		/** The choices the project's analyses answered, to filter by. */
+		choices?: ChoiceAnswers[];
 		collectionId?: string;
 		onchange: () => Promise<void>;
 		onerror: (message: string) => void;
@@ -63,47 +67,37 @@
 		},
 		report: (message) => onerror(message)
 	});
-	let target = $state('');
 	let tag = $state(left?.tag ?? '');
+	/** The answer filtered on, as `answerKey` names it; empty for none. */
+	let answer = $state('');
 	$effect(() => keepFor(VIEW_KEY, projectId, { sort, tag }, 100));
-	let untagging = $state('');
 	/** The new name typed for the tag filtered on, while renaming it. */
 	let renaming = $state<string | null>(null);
 
-	// A tag no document carries any longer stops filtering.
+	// A tag no document carries any longer stops filtering; so does an answer no longer given.
 	const filterTag = $derived(tags.some((t) => t.name === tag) ? tag : '');
-	const shown = $derived(sortDocuments(shownDocuments(rows, collectionId, query, filterTag), sort));
+	const answered = $derived(answeredDocuments(choices, answer));
+	const filterAnswer = $derived(answered ? answer : '');
+	const answerGroups = $derived(answerOptions(choices, m));
+	const shown = $derived(
+		sortDocuments(
+			shownDocuments(rows, collectionId, query, filterTag).filter(
+				(r) => !answered || answered.has(r.document.id)
+			),
+			sort
+		)
+	);
 	// A long list is drawn a page at a time, from its first page again when filtered or sorted.
 	const paging = new Paging();
 	const drawn = $derived(paging.of(shown));
 	let table = $state<HTMLTableElement | null>(null);
 	$effect(() => {
-		void [query, filterTag, sort, collectionId];
+		void [query, filterTag, filterAnswer, sort, collectionId];
 		paging.reset();
 	});
 	const chosen = $derived(selection.of(shown, (r) => r.document.id));
 	const allChosen = $derived(shown.length > 0 && chosen.length === shown.length);
 	const names = $derived(new Map(collections.map((c) => [c.collection.id, c.collection.name])));
-	const chosenTags = $derived(tagsOf(chosen));
-
-	async function addTo(id: string) {
-		target = '';
-		if (!id) return;
-		const ids = chosen.map((r) => r.document.id);
-		await action.run(() => api.addToCollection(projectId, id, ids));
-	}
-
-	async function addTag(name: string) {
-		const ids = chosen.map((r) => r.document.id);
-		await action.run(() => api.tagDocuments(projectId, ids, name));
-	}
-
-	async function removeTag(name: string) {
-		untagging = '';
-		if (!name) return;
-		const ids = chosen.map((r) => r.document.id);
-		await action.run(() => api.untagDocuments(projectId, ids, name));
-	}
 
 	/** Renames the tag filtered on across the project, and keeps filtering on it. */
 	async function renameTag(e: SubmitEvent) {
@@ -122,40 +116,19 @@
 		);
 	}
 
-	async function removeFromCollection() {
-		if (!collectionId) return;
-		const from = collectionId;
-		const ids = chosen.map((r) => r.document.id);
-		const name = collections.find((c) => c.collection.id === from)?.collection.name ?? '';
-		await action.run(
-			() => api.removeFromCollection(projectId, from, ids),
-			async () => {
-				selection.clear();
-				await onchange();
-				// Put back from the toast: the documents themselves stay in the project.
-				toast(m.projects.removedFromCollection(ids.length, name), {
-					action: {
-						label: m.common.undo,
-						run: () => void action.run(() => api.addToCollection(projectId, from, ids))
-					}
-				});
-			}
-		);
-	}
-
-	async function removeDocuments() {
-		if (!(await ask(m.projects.removeDocumentsConfirm(chosen.length)))) return;
-		const ids = chosen.map((r) => r.document.id);
-		await action.run(() => api.deleteDocuments(projectId, ids));
-	}
-
-	function newJob() {
-		go({
-			name: 'new',
-			task: taskFor(chosen),
-			paths: selectionPaths(chosen),
-			project: { id: projectId, name: projectName, collectionId }
-		});
+	/** The analysis filtered on, one row per document with the researcher's tags. */
+	async function exportAnswers() {
+		const found = chosenAnswer(choices, filterAnswer);
+		if (!found) return;
+		const { group } = found;
+		const path = await pickTableSave(tableName(projectName, group));
+		if (!path) return;
+		await action.run(async () => {
+			// The CSV goes beside the workbook: in the Mac App Store's build, its folder is asked for.
+			if (!(await askForFolders([path]))) return;
+			await api.exportAnswers(projectId, group.job_id, group.setup_id, path);
+			toast(m.screening.exported);
+		}, null);
 	}
 
 	function open(id: string) {
@@ -203,6 +176,23 @@
 				>
 			{/if}
 		{/if}
+		{#if answerGroups.length > 0}
+			<select bind:value={() => filterAnswer, (v) => (answer = v)} aria-label={m.screening.filter}>
+				<option value="">{m.screening.anyAnswer}</option>
+				{#each answerGroups as g, i (i)}
+					<optgroup label={g.title}>
+						{#each g.options as o (o.key)}
+							<option value={o.key}>{o.label}</option>
+						{/each}
+					</optgroup>
+				{/each}
+			</select>
+			{#if filterAnswer}
+				<button class="btn ghost sm" disabled={action.busy} onclick={exportAnswers}
+					><Icon name="download" size={14} />{m.screening.exportTable}</button
+				>
+			{/if}
+		{/if}
 		<label class="sort">
 			<span>{m.projects.sortBy}</span>
 			<select bind:value={sort}>
@@ -214,71 +204,18 @@
 	</div>
 
 	{#if chosen.length > 0}
-		<div class="selection-bar" role="toolbar" aria-label={m.projects.selected(chosen.length)}>
-			<span class="num">{m.projects.selected(chosen.length)}</span>
-			<button class="btn ghost sm" onclick={() => selection.clear()}
-				>{m.projects.clearSelection}</button
-			>
-			<span class="grow"></span>
-			<button class="btn primary sm" disabled={selectionPaths(chosen).length === 0} onclick={newJob}
-				><Icon name="plus" size={14} />{m.projects.newJobWith}</button
-			>
-			<button
-				class="btn sm"
-				disabled={selectionPaths(chosen).length === 0}
-				onclick={() =>
-					go({
-						name: 'workflows',
-						paths: selectionPaths(chosen),
-						project: { id: projectId, name: projectName, collectionId }
-					})}><Icon name="workflow" size={14} />{m.projects.workflowWith}</button
-			>
-			<button
-				class="btn sm"
-				onclick={() =>
-					go({
-						name: 'projects',
-						projectId,
-						collectionId,
-						pane: 'queue',
-						selection: chosen.map((r) => r.document.id)
-					})}><Icon name="flag" size={14} />{m.queue.checkSelection}</button
-			>
-			{#if collections.length > 0}
-				<select
-					class="sm"
-					bind:value={target}
-					onchange={() => addTo(target)}
-					aria-label={m.projects.addTo}
-				>
-					<option value="">{m.projects.addTo}</option>
-					{#each collections.filter((c) => c.collection.id !== collectionId) as c (c.collection.id)}
-						<option value={c.collection.id}>{c.collection.name}</option>
-					{/each}
-				</select>
-			{/if}
-			<TagInput known={tags.map((t) => t.name)} onadd={addTag} />
-			{#if chosenTags.length > 0}
-				<select
-					bind:value={untagging}
-					onchange={() => removeTag(untagging)}
-					aria-label={m.projects.removeTag}
-				>
-					<option value="">{m.projects.removeTag}</option>
-					{#each chosenTags as name (name)}
-						<option value={name}>{name}</option>
-					{/each}
-				</select>
-			{/if}
-			{#if collectionId}
-				<button class="btn sm" onclick={removeFromCollection}
-					>{m.projects.removeFromCollection}</button
-				>
-			{/if}
-			<button class="btn ghost danger sm" onclick={removeDocuments}
-				>{m.projects.removeDocuments}</button
-			>
-		</div>
+		<DocumentSelectionBar
+			{projectId}
+			{projectName}
+			{collectionId}
+			{collections}
+			{tags}
+			{chosen}
+			{action}
+			deciding={!!filterAnswer}
+			onclear={() => selection.clear()}
+			{onchange}
+		/>
 	{/if}
 
 	{#if shown.length === 0}
@@ -433,13 +370,6 @@
 	.chip.tag.on {
 		background: var(--wash);
 		color: var(--text-bright);
-	}
-	.selection-bar select {
-		min-height: var(--control-sm);
-		font-size: var(--type-xs);
-	}
-	.grow {
-		flex: 1;
 	}
 	.title {
 		display: flex;

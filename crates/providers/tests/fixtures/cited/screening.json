@@ -1,0 +1,14 @@
+{
+  "relevance": "Relevant",
+  "reason": "Le procès-verbal rapporte la demande des commerçantes du marché à la municipalité.",
+  "passages": [
+    {
+      "quotes": [
+        { "turn": 3, "words": "Les commerçantes du marché demandent un abri contre la pluie." }
+      ]
+    },
+    {
+      "quotes": [{ "turn": 1, "words": "Les femmes du marché ont manifesté devant la mairie." }]
+    }
+  ]
+}

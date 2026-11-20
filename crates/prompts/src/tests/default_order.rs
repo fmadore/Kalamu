@@ -22,6 +22,7 @@ fn the_defaults_keep_their_ids_in_their_order() {
             "analysis.directory",
             "analysis.register",
             "analysis.interview",
+            "analysis.screening",
             "contents.periodical",
             "contents.archival_file",
             "contents.book",

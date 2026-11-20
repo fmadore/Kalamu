@@ -19,6 +19,7 @@ use serde_json::Value;
 use ts_rs::TS;
 
 use super::{Field, FieldAnswer, FieldKind, FieldValue, SchemaError, read_fields, render_fields};
+use crate::PieceRef;
 use crate::snapshot::{Anchor, SnapshotPart, Turn, forgiving, slice, turn_text};
 
 mod edit;
@@ -68,6 +69,25 @@ pub struct CitedEntry {
     pub claims: Vec<Claim>,
 }
 
+impl CitedEntry {
+    /// The entry on one line: its first field (a theme's name), or for an entry that is
+    /// quotations alone (a document's passages) its quotations, each between quotation marks;
+    /// `None` when it has neither.
+    pub fn name(&self) -> Option<String> {
+        match self.answers.first() {
+            Some(first) => Some(first.value.joined()),
+            None if self.evidence.is_empty() => None,
+            None => Some(
+                self.evidence
+                    .iter()
+                    .map(|e| format!("\"{}\"", e.quote))
+                    .collect::<Vec<_>>()
+                    .join(" "),
+            ),
+        }
+    }
+}
+
 /// A quotation as the model gave it: the turn it named and its words.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Claim {
@@ -95,6 +115,13 @@ pub struct Evidence {
     pub start_ms: Option<u64>,
     #[ts(type = "number | null")]
     pub end_ms: Option<u64>,
+    /// The page it stands on, copied from the text's part when the text was read from pages (an
+    /// extraction's, a correction's): with the anchor's offsets, where a passage of a document
+    /// with no speakers or times is. `None` for a transcript, a text file and quotations kept
+    /// before pages were.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub page: Option<PieceRef>,
 }
 
 /// Checks a cited field's own fields: text, lists and choices, none named as the quotations
@@ -247,6 +274,10 @@ pub fn place(doc: CitedText<'_>, claim: &Claim) -> Option<Evidence> {
             .parts
             .iter()
             .position(|p| p.start <= start && end <= p.end)?;
+        let page = match &doc.parts[part].piece {
+            piece @ PieceRef::Page { .. } => Some(piece.clone()),
+            _ => None,
+        };
         let quote = slice(doc.text, start, end)?.to_string();
         return Some(Evidence {
             anchor: Anchor {
@@ -259,6 +290,7 @@ pub fn place(doc: CitedText<'_>, claim: &Claim) -> Option<Evidence> {
             speaker: turn.speaker.clone(),
             start_ms: turn.start_ms,
             end_ms: turn.end_ms,
+            page,
         });
     }
     None
@@ -300,8 +332,8 @@ pub fn has_cited(fields: &[Field]) -> bool {
         .any(|f| matches!(f.kind, FieldKind::Cited { .. }))
 }
 
-/// Who said a quotation and when, as the files show it: `Awa, 00:04:12`; empty when neither is
-/// known.
+/// Who said a quotation and when, as the files show it: `Awa, 00:04:12`; for a passage of a
+/// document read from pages, its page: `page 3`; empty when none is known.
 pub fn said_by(evidence: &Evidence) -> String {
     let mut out = evidence.speaker.clone().unwrap_or_default();
     if let Some(ms) = evidence.start_ms {
@@ -309,6 +341,12 @@ pub fn said_by(evidence: &Evidence) -> String {
             out.push_str(", ");
         }
         out.push_str(&crate::result::clock(ms));
+    }
+    if let Some(page) = &evidence.page {
+        if !out.is_empty() {
+            out.push_str(", ");
+        }
+        out.push_str(&format!("page {}", page.label()));
     }
     out
 }

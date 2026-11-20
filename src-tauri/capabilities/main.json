@@ -149,6 +149,8 @@
     "allow-set-source-defaults",
     "allow-rename-tag",
     "allow-export-descriptions",
+    "allow-export-answers",
+    "allow-document-sources",
     "allow-list-export-profiles",
     "allow-save-export-profile",
     "allow-duplicate-export-profile",

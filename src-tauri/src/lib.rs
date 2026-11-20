@@ -200,6 +200,8 @@ pub fn run() {
             commands::projects::set_source_defaults,
             commands::projects::rename_tag,
             commands::projects::export_descriptions,
+            commands::projects::export_answers,
+            commands::projects::document_sources,
             commands::profiles::list_export_profiles,
             commands::profiles::save_export_profile,
             commands::profiles::duplicate_export_profile,

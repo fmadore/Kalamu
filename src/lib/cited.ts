@@ -10,7 +10,8 @@ import type { CitedValue } from './bindings/CitedValue.js';
 import type { Field } from './bindings/Field.js';
 import type { FieldAnswer } from './bindings/FieldAnswer.js';
 import type { FieldValue } from './bindings/FieldValue.js';
-import { clock } from './pieces.js';
+import { messages, type Messages } from './i18n/index.js';
+import { clock, pieceLabel } from './pieces.js';
 
 /** A field's value when it is entries with their quotations. */
 export function citedValue(value: FieldValue | undefined): CitedValue | null {
@@ -68,10 +69,14 @@ export function cardsOf(value: CitedValue | null, fields: Field[]): Card[] {
 	return (value?.entries ?? []).map((e) => cardOf(e, fields));
 }
 
-/** Who said a quotation and when, as the card writes it: `Mariam · 00:04:12`; empty when
- * neither is known. */
-export function saidBy(e: CitedEvidence): string {
-	return [e.speaker?.trim() || null, e.start_ms === null ? null : clock(e.start_ms)]
+/** Who said a quotation and when, as the card writes it: `Mariam · 00:04:12`; for a passage of
+ * a document read from pages, its page: `Page 3`; empty when none is known. */
+export function saidBy(e: CitedEvidence, m: Messages = messages()): string {
+	return [
+		e.speaker?.trim() || null,
+		e.start_ms === null ? null : clock(e.start_ms),
+		e.page ? pieceLabel(e.page, m) : null
+	]
 		.filter((p): p is string => p !== null)
 		.join(' · ');
 }

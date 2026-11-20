@@ -25,12 +25,17 @@ pub(crate) fn snapshot(doc: &ExportDocument) -> Value {
     })
 }
 
-/// A quotation's speaker and time as the memo writes them: `Awa, [00:04:12]`.
+/// A quotation's speaker and time as the memo writes them: `Awa, [00:04:12]`; a passage of a
+/// document read from pages, its page: `page 3`.
 fn said_by(evidence: &Evidence) -> String {
     let time = evidence
         .start_ms
         .map(|ms| format!("[{}]", kalamu_core::result::clock(ms)));
-    [evidence.speaker.clone(), time]
+    let page = evidence
+        .page
+        .as_ref()
+        .map(|p| format!("page {}", p.label()));
+    [evidence.speaker.clone(), time, page]
         .into_iter()
         .flatten()
         .collect::<Vec<_>>()
@@ -132,7 +137,8 @@ pub(crate) fn markdown(doc: &ExportDocument, fields: &[Field]) -> String {
 
 /// One row per quotation kept, in the order of the fields and their entries: the field, the
 /// entry (its first field: a theme's name, a quotation's reason), who said it, when, the
-/// quotation as the text has it and its turn. Guarded, as every table for a spreadsheet is.
+/// quotation as the text has it, its turn, and the page it stands on when the text was read from
+/// pages. Guarded, as every table for a spreadsheet is.
 pub(crate) fn quotations(doc: &ExportDocument, fields: &[Field]) -> Table {
     let headings = [
         "file",
@@ -143,6 +149,7 @@ pub(crate) fn quotations(doc: &ExportDocument, fields: &[Field]) -> Table {
         "end",
         "quotation",
         "turn",
+        "page",
     ]
     .map(String::from)
     .to_vec();
@@ -174,6 +181,11 @@ pub(crate) fn quotations(doc: &ExportDocument, fields: &[Field]) -> Table {
                         clock(evidence.end_ms),
                         evidence.quote.clone(),
                         evidence.turn.to_string(),
+                        evidence
+                            .page
+                            .as_ref()
+                            .map(|p| p.label())
+                            .unwrap_or_default(),
                     ]);
                 }
             }

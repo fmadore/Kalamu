@@ -17,6 +17,7 @@ mod cited;
 mod page_xml;
 mod records;
 mod researcher;
+mod screening;
 
 fn source(name: &str, kind: InputKind) -> SourceFile {
     SourceFile {

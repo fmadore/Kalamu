@@ -141,6 +141,8 @@ pub const COMMANDS: &[&str] = &[
     "set_source_defaults",
     "rename_tag",
     "export_descriptions",
+    "export_answers",
+    "document_sources",
     "list_export_profiles",
     "save_export_profile",
     "duplicate_export_profile",

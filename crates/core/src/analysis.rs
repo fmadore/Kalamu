@@ -89,7 +89,8 @@ pub enum FieldValue {
 
 impl FieldValue {
     /// The value on one line: list items joined with semicolons, as spreadsheets expect;
-    /// entries by their first field (a title).
+    /// entries by their first field (a title), and entries that are quotations alone (a
+    /// document's passages) by their quotations, each between quotation marks.
     pub fn joined(&self) -> String {
         match self {
             Self::Text(t) => t.clone(),
@@ -102,7 +103,7 @@ impl FieldValue {
             Self::Cited(cited) => cited
                 .entries
                 .iter()
-                .filter_map(|e| e.answers.first().map(|a| a.value.joined()))
+                .filter_map(cited::CitedEntry::name)
                 .collect::<Vec<_>>()
                 .join("; "),
         }

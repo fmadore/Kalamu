@@ -54,6 +54,31 @@ export const fr: Messages = {
 				}
 			}
 		},
+		'analysis.screening': {
+			name: 'Parle-t-il de ma question ?',
+			description:
+				'Pour chaque document, s’il parle de votre question de recherche (pertinent, en partie, non pertinent ou incertain), pourquoi, et les passages qui le montrent, chacun retrouvé mot pour mot dans le texte avec sa page.',
+			fields: {
+				relevance: {
+					label: 'Pertinence',
+					help: 'Si le document parle de la question de recherche, selon les consignes ci-dessus.',
+					values: {
+						Relevant: 'Pertinent',
+						'Partly relevant': 'En partie',
+						'Not relevant': 'Non pertinent',
+						Unsure: 'Incertain'
+					}
+				},
+				reason: {
+					label: 'Pourquoi',
+					help: 'Pourquoi, en une ou deux phrases, en {languages}.'
+				},
+				passages: {
+					label: 'Passages',
+					help: 'Les passages qui parlent de la question, les plus parlants d’abord ; aucun quand le document n’en parle pas.'
+				}
+			}
+		},
 		'text_extraction.printed': {
 			name: 'Document imprimé ou dactylographié',
 			description:
@@ -543,6 +568,44 @@ export const fr: Messages = {
 		keptName: 'Nom',
 		keptHint: 'Vous pouvez le modifier ou le supprimer dans Prompts.',
 		openPrompts: 'Ouvrir Prompts'
+	},
+	screening: {
+		action: 'Lesquels parlent de ma question ?',
+		title: 'Lesquels de ces documents parlent de ma question ?',
+		lede: 'Kalamu envoie le texte de chaque document, tel que vous l’avez corrigé, à un modèle qui dit s’il parle de votre question, pourquoi, et avec quels passages. Un passage n’est gardé que si ses mots se trouvent dans le document. « Incertain » est une réponse honnête que le modèle peut donner.',
+		question: 'Votre question de recherche',
+		questionHint: 'En une phrase ou deux, comme vous la poseriez à un collègue.',
+		questionPlaceholder:
+			'Par exemple : ce que les commerçantes du marché ont demandé au conseil municipal, et ce qu’il a répondu, de 1950 à 1960.',
+		documents: (n: number) => (n === 1 ? '1 document sera lu.' : `${n} documents seront lus.`),
+		noText: (titles: string, n: number) =>
+			n === 1
+				? `Laissé de côté, pas encore lu en texte : ${titles}. Lisez-le d’abord avec Nouveau traitement.`
+				: `Laissés de côté, pas encore lus en texte : ${titles}. Lisez-les d’abord avec Nouveau traitement.`,
+		undecided: (titles: string) =>
+			`Laissés de côté, lus plusieurs fois sans lecture préférée : ${titles}. Choisissez-en une dans le document d’abord.`,
+		nothing:
+			'Aucun de ces documents n’a encore été lu en texte. Lisez-les d’abord avec Nouveau traitement, puis revenez ici.',
+		model: (name: string, provider: string) => `Modèle : ${name} (${provider})`,
+		cost: (usd: string) => `Coût estimé : ${usd}`,
+		tooLong: (file: string, model: string, words: string, most: string) =>
+			`${file} est trop long pour ${model} : environ ${words} mots, alors qu’il en lit environ ${most} à la fois. Choisissez un autre modèle sous Plus de choix.`,
+		more: 'Plus de choix',
+		start: 'Lancer',
+		preparing: 'Préparation des textes…',
+		jobName: (question: string) => `Ma question : ${question}`,
+		filter: 'Filtrer selon une réponse',
+		anyAnswer: 'Toutes les réponses',
+		answerCount: (answer: string, n: number) => `${answer} (${n})`,
+		group: (field: string, job: string) => `${field} · ${job}`,
+		exportTable: 'Exporter ce tableau',
+		exported: 'Tableau exporté, en tableur et en CSV.',
+		keep: 'Garder',
+		setAside: 'Écarter',
+		keptTag: 'Gardé',
+		setAsideTag: 'Écarté',
+		decided: (tag: string, n: number) =>
+			n === 1 ? `1 document étiqueté « ${tag} »` : `${n} documents étiquetés « ${tag} »`
 	},
 	cited: {
 		listen: 'Écouter',

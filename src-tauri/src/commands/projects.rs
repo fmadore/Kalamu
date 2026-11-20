@@ -292,6 +292,79 @@ fn write_table(path: &std::path::Path, table: &kalamu_core::Table) -> CmdResult<
     super::write_table(path, table, |m| kalamu_core::ProjectError::Export(m).into())
 }
 
+/// One analysis's answers over the project's documents, one row per document with the
+/// researcher's tags beside them, as a workbook and as CSV at `path`: the screening table
+/// (#51), or any analysis's. From what is stored only.
+#[tauri::command]
+pub async fn export_answers(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    job: JobId,
+    setup: SetupId,
+    path: String,
+) -> CmdResult<()> {
+    let projects = state.projects.clone();
+    super::off_thread(move || {
+        write_table(
+            std::path::Path::new(&path),
+            &projects.answers_table(project, job, setup)?,
+        )
+    })
+    .await
+}
+
+/// The text each chosen document of a project is read in, frozen as sources a new analysis
+/// reads (the screening of #51), and the documents left out, by title.
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct DocumentSources {
+    pub sources: Vec<SourceFile>,
+    /// Nothing has been read into text from them yet.
+    pub no_text: Vec<String>,
+    /// Read more than once, with no reading preferred: the researcher chooses one first.
+    pub undecided: Vec<String>,
+}
+
+/// Freezes the text of each chosen document: its preferred (or only) reading's corrected text,
+/// as *Use this text* freezes it, or its own words when it is a text file nothing has read.
+/// The project chooses, the engine freezes; nothing is sent.
+#[tauri::command]
+pub async fn document_sources(
+    state: State<'_, AppState>,
+    project: ProjectId,
+    documents: Vec<DocumentId>,
+) -> CmdResult<DocumentSources> {
+    let projects = state.projects.clone();
+    let engine = state.engine.clone();
+    super::off_thread(move || {
+        let mut out = DocumentSources {
+            sources: Vec::new(),
+            no_text: Vec::new(),
+            undecided: Vec::new(),
+        };
+        for text in projects.document_texts(project, &documents)? {
+            match text.text {
+                kalamu_projects::TextOf::Result {
+                    job_id,
+                    setup_id,
+                    source_id,
+                } => {
+                    let frozen = engine.snapshot_sources(job_id, setup_id, Some(source_id))?;
+                    if frozen.is_empty() {
+                        out.no_text.push(text.title);
+                    }
+                    out.sources.extend(frozen);
+                }
+                kalamu_projects::TextOf::Own(source) => out.sources.push(*source),
+                kalamu_projects::TextOf::Undecided => out.undecided.push(text.title),
+                kalamu_projects::TextOf::Nothing => out.no_text.push(text.title),
+            }
+        }
+        Ok(out)
+    })
+    .await
+}
+
 #[tauri::command]
 pub fn merge_documents(
     state: State<'_, AppState>,
