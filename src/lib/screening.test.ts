@@ -11,7 +11,9 @@ import {
 	answerOptions,
 	answeredDocuments,
 	chosenAnswer,
+	decisionOf,
 	decisionTags,
+	rowAnswers,
 	screeningRequest,
 	tableName,
 	tooLongOf
@@ -36,10 +38,26 @@ function group(over: Partial<ChoiceAnswers> = {}): ChoiceAnswers {
 			reason: false
 		},
 		answers: [
-			{ document: 'a', value: 'Not relevant' },
-			{ document: 'b', value: 'Relevant' },
-			{ document: 'c', value: 'Relevant' },
-			{ document: 'd', value: 'Unsure' }
+			{ document: 'a', value: 'Not relevant', job_id: 'job-1', reason: 'Only the budget.' },
+			{
+				document: 'b',
+				value: 'Relevant',
+				job_id: 'job-1',
+				reason: '  An awning asked of the town.  ',
+				passages: [
+					{
+						anchor: { part: 1, start: 0, end: 10 },
+						quote: 'Les commerçantes demandent un abri.',
+						turn: 4,
+						speaker: null,
+						start_ms: null,
+						end_ms: null,
+						page: { kind: 'page', number: 2 }
+					}
+				]
+			},
+			{ document: 'c', value: 'Relevant', job_id: 'job-1' },
+			{ document: 'd', value: 'Unsure', job_id: 'job-1', reason: '   ' }
 		],
 		...over
 	};
@@ -153,5 +171,33 @@ describe('documents too long for the model even in parts', () => {
 		expect(
 			tooLongOf({ rows: [{ provider: 'gemini', model: 'x' }] } as never, {} as never, m)
 		).toBeNull();
+	});
+});
+
+describe('the answer in each row', () => {
+	afterEach(() => setLocale('en'));
+
+	it('is shown only while the table is filtered by an answer', () => {
+		expect(rowAnswers([group()], '')).toBeNull();
+	});
+
+	it('gives each document its answer in the interface’s words, its reason and its passages', () => {
+		const key = answerKey(group(), 'Relevant');
+		const rows = rowAnswers([group()], key);
+		const b = rows?.get('b');
+		expect(b?.label).toBe('Relevant');
+		expect(b?.reason).toBe('An awning asked of the town.');
+		expect(b?.passages.map((p) => saidBy(p, m))).toEqual(['Page 2']);
+		expect(rows?.get('c')).toEqual({ label: 'Relevant', reason: null, passages: [] });
+		expect(rows?.get('d')?.reason).toBeNull();
+		setLocale('fr');
+		expect(rowAnswers([group()], key)?.get('a')?.label).toBe('Non pertinent');
+	});
+
+	it('reads the researcher’s decision from the document’s tags', () => {
+		expect(decisionOf(['Kept', 'letters'], m)).toBe('keep');
+		expect(decisionOf(['Set aside'], m)).toBe('aside');
+		expect(decisionOf(['letters'], m)).toBeNull();
+		expect(decisionOf(['Gardé'], mFr)).toBe('keep');
 	});
 });

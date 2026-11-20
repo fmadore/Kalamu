@@ -116,6 +116,43 @@ test('the table is filtered by an answer, kept or set aside, and exported', asyn
 	await expect(main.getByRole('button', { name: 'Export this table' })).toHaveCount(0);
 });
 
+test('each row shows its answer, reason and passages, kept or set aside by keyboard', async ({
+	page
+}) => {
+	const main = await open(page);
+	// Nothing of it before the table is filtered.
+	await expect(main.getByRole('button', { name: /^Keep “/ })).toHaveCount(0);
+	await main
+		.getByRole('combobox', { name: 'Filter by an answer' })
+		.selectOption({ label: 'Relevant (1)' });
+	const row = main.locator('tbody tr').filter({ hasText: 'Bulletin, May 1957' });
+	await expect(row.getByText('Relevant', { exact: true })).toBeVisible();
+	await expect(
+		row.getByText('The bulletin reports the association asking the administration')
+	).toBeVisible();
+	const passages = row.getByRole('list', { name: 'Passages quoted from “Bulletin, May 1957”' });
+	await expect(passages.getByRole('listitem')).toHaveCount(2);
+	await expect(passages.getByRole('listitem').first()).toContainText('Page 2');
+
+	// Keep reached from the keyboard: the button before it, then Tab, then Enter.
+	const keep = row.getByRole('button', { name: 'Keep “Bulletin, May 1957”' });
+	await row.getByRole('button', { name: 'Bulletin, May 1957', exact: true }).focus();
+	for (let i = 0; i < 6 && !(await keep.evaluate((b) => b === document.activeElement)); i++)
+		await page.keyboard.press('Tab');
+	await expect(keep).toBeFocused();
+	await page.keyboard.press('Enter');
+	await expect(page.getByText('1 document tagged “Kept”')).toBeVisible();
+	await expect(keep).toHaveAttribute('aria-pressed', 'true');
+	// Set aside takes its place; pressed again, it is taken off.
+	const aside = row.getByRole('button', { name: 'Set aside “Bulletin, May 1957”' });
+	await aside.click();
+	await expect(aside).toHaveAttribute('aria-pressed', 'true');
+	await expect(keep).toHaveAttribute('aria-pressed', 'false');
+	await aside.click();
+	await expect(page.getByText('Tag “Set aside” taken off')).toBeVisible();
+	await expect(aside).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('a project no analysis answered shows no filter by an answer', async ({ page }) => {
 	const main = await open(page, '&no-screening');
 	await expect(main.getByRole('combobox', { name: 'Filter by an answer' })).toHaveCount(0);

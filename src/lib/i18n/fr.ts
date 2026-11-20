@@ -633,7 +633,11 @@ export const fr: Messages = {
 				? `La page ${first} n’a pas pu être lue : la réponse la laisse de côté.`
 				: `Les pages ${first} à ${last} n’ont pas pu être lues : la réponse les laisse de côté.`,
 		docPassagesNotRead: (first: number, last: number) =>
-			`Les passages ${first} à ${last} n’ont pas pu être lus : la réponse les laisse de côté.`
+			`Les passages ${first} à ${last} n’ont pas pu être lus : la réponse les laisse de côté.`,
+		passagesOf: (title: string) => `Passages cités de « ${title} »`,
+		keepThis: (title: string) => `Garder « ${title} »`,
+		setAsideThis: (title: string) => `Écarter « ${title} »`,
+		decisionTakenOff: (tag: string) => `Étiquette « ${tag} » retirée`
 	},
 	cited: {
 		listen: 'Écouter',

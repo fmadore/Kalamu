@@ -4,6 +4,7 @@
 // of two tags so the model's answer is never changed. Pure, so it is tested without the app.
 
 import type { ChoiceAnswers } from './bindings/ChoiceAnswers.js';
+import type { CitedEvidence } from './bindings/CitedEvidence.js';
 import type { Estimate } from './bindings/Estimate.js';
 import type { Catalog } from './bindings/Catalog.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
@@ -121,4 +122,40 @@ export function tableName(project: string, group: ChoiceAnswers): string {
 export function decisionTags(keep: boolean, m: Messages): { add: string; remove: string } {
 	const [kept, aside] = [m.screening.keptTag, m.screening.setAsideTag];
 	return keep ? { add: kept, remove: aside } : { add: aside, remove: kept };
+}
+
+/** What a row of the table shows under a document's title while it is filtered by an answer:
+ * the answer in the interface's words, its reason, and the passages quoted with where each
+ * stands. */
+export interface RowAnswer {
+	label: string;
+	reason: string | null;
+	passages: CitedEvidence[];
+}
+
+/** Each document's row answer under the filter's analysis, by document; null when the filter is
+ * off. */
+export function rowAnswers(groups: ChoiceAnswers[], key: string): Map<string, RowAnswer> | null {
+	const chosen = chosenAnswer(groups, key);
+	if (!chosen) return null;
+	const { group } = chosen;
+	const field =
+		localiseFields(group.preset_id, { fields: [group.field] })?.fields[0] ?? group.field;
+	return new Map(
+		group.answers.map((a) => [
+			a.document,
+			{
+				label: choiceLabel(field, a.value),
+				reason: a.reason?.trim() || null,
+				passages: a.passages ?? []
+			}
+		])
+	);
+}
+
+/** The researcher's decision on a document, read from its tags: kept, set aside, or none yet. */
+export function decisionOf(tags: string[], m: Messages): 'keep' | 'aside' | null {
+	if (tags.includes(m.screening.keptTag)) return 'keep';
+	if (tags.includes(m.screening.setAsideTag)) return 'aside';
+	return null;
 }

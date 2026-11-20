@@ -46,6 +46,16 @@ impl Fixture {
     /// An analysis over `sources` with the screening fields and a question, one piece per
     /// source answered as `relevance` says.
     fn screening(&self, sources: Vec<SourceFile>, relevance: &[&str]) -> Job {
+        self.screening_with(sources, relevance, screening())
+    }
+
+    /// [`Fixture::screening`] with fields of its own.
+    fn screening_with(
+        &self,
+        sources: Vec<SourceFile>,
+        relevance: &[&str],
+        schema: AnalysisSchema,
+    ) -> Job {
         let job = Job {
             id: kalamu_core::JobId::new(),
             name: "Screening".into(),
@@ -64,7 +74,7 @@ impl Fixture {
                     template: String::new(),
                     text: String::new(),
                     user_prompt: String::new(),
-                    schema: Some(screening()),
+                    schema: Some(schema),
                 },
                 options: SetupOptions {
                     question: Some("  Women traders at the market  ".into()),
@@ -223,6 +233,88 @@ fn the_choices_answered_filter_the_documents_and_a_correction_wins() {
         answers,
         vec![(docs[0], "Relevant"), (docs[1], "Not relevant")]
     );
+    // Each row's reason beside its answer: the analysis's text, as corrected.
+    let reasons: Vec<Option<&str>> = group.answers.iter().map(|x| x.reason.as_deref()).collect();
+    assert_eq!(
+        reasons,
+        [Some("Relevant, because."), Some("Only the price of rice.")]
+    );
+    assert!(group.answers.iter().all(|x| x.job_id == job.id));
+}
+
+#[test]
+fn each_answer_carries_its_passages_with_their_pages() {
+    use kalamu_core::analysis::cited::{CitedEntry, CitedValue, Evidence};
+    use kalamu_core::snapshot::Anchor;
+
+    let f = fixture();
+    let p = f.projects.create("Market", "").unwrap();
+    let a = f.file("a.txt", "a");
+    f.projects
+        .add_documents(p.id, vec![a.clone()], None)
+        .unwrap();
+    // A schema with the passages field, as the screening prompt has.
+    let mut schema = screening();
+    schema.fields.push(Field {
+        key: "passages".into(),
+        label: "Passages".into(),
+        instructions: String::new(),
+        kind: FieldKind::Cited {
+            fields: Vec::new(),
+            max: Some(3),
+        },
+        reason: false,
+    });
+    let job = f.screening_with(vec![a.clone()], &["Relevant"], schema);
+    f.projects.link_job(p.id, job.id, None).unwrap();
+    let passage = Evidence {
+        anchor: Anchor {
+            part: 1,
+            start: 10,
+            end: 40,
+        },
+        quote: "Les commerçantes demandent un abri.".into(),
+        turn: 4,
+        speaker: None,
+        start_ms: None,
+        end_ms: None,
+        page: Some(PieceRef::page(2)),
+        added: false,
+    };
+    // The researcher's corrected answers hold the passage, as the review keeps them.
+    f.store
+        .put_correction(&Correction {
+            job_id: job.id,
+            setup_id: job.setups[0].id,
+            source_id: a.id,
+            index: 0,
+            text: None,
+            fields: Some(vec![
+                answer("relevance", "Relevant"),
+                answer("reason", "An awning asked of the town."),
+                FieldAnswer {
+                    key: "passages".into(),
+                    value: FieldValue::Cited(CitedValue {
+                        entries: vec![CitedEntry {
+                            answers: Vec::new(),
+                            evidence: vec![passage.clone()],
+                            claims: Vec::new(),
+                        }],
+                        left_out: 0,
+                        dropped: 0,
+                    }),
+                    reason: None,
+                },
+            ]),
+            reviewed: false,
+            updated_at: Timestamp::now(),
+        })
+        .unwrap();
+
+    let view = f.projects.view(p.id).unwrap();
+    let row = &view.choices[0].answers[0];
+    assert_eq!(row.reason.as_deref(), Some("An awning asked of the town."));
+    assert_eq!(row.passages, vec![passage]);
 }
 
 #[test]

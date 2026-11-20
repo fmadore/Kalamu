@@ -206,7 +206,12 @@ export const en = {
 				? `Page ${first} could not be read: the answer leaves it out.`
 				: `Pages ${first} to ${last} could not be read: the answer leaves them out.`,
 		docPassagesNotRead: (first: number, last: number) =>
-			`Passages ${first} to ${last} could not be read: the answer leaves them out.`
+			`Passages ${first} to ${last} could not be read: the answer leaves them out.`,
+		/** Under a document's title while the table is filtered by an answer. */
+		passagesOf: (title: string) => `Passages quoted from “${title}”`,
+		keepThis: (title: string) => `Keep “${title}”`,
+		setAsideThis: (title: string) => `Set aside “${title}”`,
+		decisionTakenOff: (tag: string) => `Tag “${tag}” taken off`
 	},
 	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
 	cited: {

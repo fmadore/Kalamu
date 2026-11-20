@@ -1,23 +1,23 @@
 //! What a project's analyses answered, by document: the choices of each analysis that has any
 //! (whether a document speaks of the researcher's question, a document's tone), for the table of
-//! documents to be filtered by them; and one analysis's answers as a table, one row per
-//! document, with the researcher's tags beside the model's answers (the screening table of #51).
+//! documents to be filtered by them and to show, in each row, the answer with its reason and its
+//! passages (the screening of #51). One analysis's answers as a table are in `tabled`.
 //!
 //! Read from the job store as it stands, the researcher's corrections applied, never stored
-//! twice and never by a preset's name: any analysis with a choice is offered, and any analysis
-//! can be written as a table. Nothing here calls a model or changes a result.
+//! twice and never by a preset's name: any analysis with a choice is offered. Nothing here calls
+//! a model or changes a result.
 
 use std::collections::HashMap;
 
-use kalamu_core::analysis::cited;
+use kalamu_core::analysis::cited::Evidence;
 use kalamu_core::{
-    Correction, CsvCells, DocumentId, DocumentLink, Field, FieldAnswer, FieldKind, FieldValue, Job,
-    JobId, PieceState, ProjectError, ProjectId, SetupId, SourceId, StoreError, Table, Task,
+    Correction, DocumentId, DocumentLink, Field, FieldAnswer, FieldKind, FieldValue, Job, JobId,
+    PieceState, ProjectError, Setup, SetupId, SourceId, StoreError, Task,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{Projects, missing};
+use crate::Projects;
 
 /// One choice field of one analysis (a job's set-up), and the answer it gave each document of
 /// the project it read, as corrected.
@@ -37,11 +37,24 @@ pub struct ChoiceAnswers {
     pub answers: Vec<DocumentAnswer>,
 }
 
+/// One document's answer, with what the row shows beside it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct DocumentAnswer {
     pub document: DocumentId,
     pub value: String,
+    /// The analysis that gave it.
+    pub job_id: JobId,
+    /// Why: the choice's own reason when it asks for one, else the analysis's first text
+    /// answered (a screening's *Reason*); absent when there is none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub reason: Option<String>,
+    /// The passages the analysis quoted for it, each found in the text with its page, in the
+    /// order given.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<Evidence>>")]
+    pub passages: Vec<Evidence>,
 }
 
 /// The jobs a project's links name, each with its pieces and corrections.
@@ -82,6 +95,58 @@ fn choices(fields: &[Field]) -> impl Iterator<Item = &Field> {
         .filter(|f| matches!(f.kind, FieldKind::Choice { .. }))
 }
 
+/// The question a set-up was asked, trimmed; `None` when it was asked none.
+pub(crate) fn question_of(setup: &Setup) -> Option<String> {
+    setup
+        .options
+        .question
+        .as_deref()
+        .map(str::trim)
+        .filter(|q| !q.is_empty())
+        .map(String::from)
+}
+
+/// What a row shows beside a choice's answer: its reason, and the passages quoted.
+fn beside(
+    field: &Field,
+    fields: &[Field],
+    answers: &[FieldAnswer],
+) -> (Option<String>, Vec<Evidence>) {
+    let own = answers
+        .iter()
+        .find(|a| a.key == field.key)
+        .and_then(|a| a.reason.clone())
+        .filter(|r| field.reason && !r.trim().is_empty());
+    let text = || {
+        fields
+            .iter()
+            .filter(|f| matches!(f.kind, FieldKind::Text))
+            .find_map(|f| {
+                answers
+                    .iter()
+                    .find(|a| a.key == f.key)
+                    .map(|a| a.value.joined())
+                    .filter(|t| !t.trim().is_empty())
+            })
+    };
+    let passages = fields
+        .iter()
+        .filter(|f| matches!(f.kind, FieldKind::Cited { .. }))
+        .filter_map(|f| answers.iter().find(|a| a.key == f.key))
+        .filter_map(|a| match &a.value {
+            FieldValue::Cited(value) => Some(value),
+            _ => None,
+        })
+        .flat_map(|value| {
+            value
+                .entries
+                .iter()
+                .flat_map(|e| e.evidence.iter().cloned())
+        })
+        .collect();
+    (own.or_else(text), passages)
+}
+
 impl Projects {
     /// Every choice of the analyses tied to the project's documents, each with the documents it
     /// answered, newest job first; an analysis with no choice gives none.
@@ -95,7 +160,7 @@ impl Projects {
             .filter(|(job, _, _)| job.task == Task::Analysis)
             .collect();
         jobs.sort_by_key(|(job, _, _)| std::cmp::Reverse(job.created_at));
-        let mut out = Vec::new();
+        let mut out: Vec<ChoiceAnswers> = Vec::new();
         for (job, pieces, corrections) in jobs {
             for setup in &job.setups {
                 let Some(schema) = &setup.prompt.schema else {
@@ -118,12 +183,17 @@ impl Projects {
                             .find(|a| a.key == field.key)
                             .map(|a| a.value.joined())
                             .unwrap_or_default();
-                        if !value.trim().is_empty() {
-                            group.push(DocumentAnswer {
-                                document: link.document_id,
-                                value,
-                            });
+                        if value.trim().is_empty() {
+                            continue;
                         }
+                        let (reason, passages) = beside(field, &schema.fields, &answers);
+                        group.push(DocumentAnswer {
+                            document: link.document_id,
+                            value,
+                            job_id: job.id,
+                            reason,
+                            passages,
+                        });
                     }
                 }
                 for (field, answers) in fields.into_iter().zip(groups) {
@@ -135,13 +205,7 @@ impl Projects {
                         setup_id: setup.id,
                         job_name: job.name.clone(),
                         preset_id: setup.prompt.preset_id.clone(),
-                        question: setup
-                            .options
-                            .question
-                            .as_deref()
-                            .map(str::trim)
-                            .filter(|q| !q.is_empty())
-                            .map(String::from),
+                        question: question_of(setup),
                         field: field.clone(),
                         answers,
                     });
@@ -150,98 +214,4 @@ impl Projects {
         }
         Ok(out)
     }
-
-    /// One analysis's answers over the project's documents as a table for a spreadsheet: the
-    /// document's title and file, each of its fields under the label the job froze (a choice's
-    /// reason beside it when it asks for one, a field that cites the text as its quotations
-    /// with where each stands), then the researcher's tags. One row per document it read, in
-    /// title order; a document it could not read is left out. Guarded: the cells hold what a
-    /// model wrote.
-    pub fn answers_table(
-        &self,
-        project: ProjectId,
-        job_id: JobId,
-        setup_id: SetupId,
-    ) -> Result<Table, ProjectError> {
-        self.store.project(project).map_err(missing)?;
-        let job = self.jobs.job(job_id).map_err(missing)?;
-        let setup = job
-            .setups
-            .iter()
-            .find(|s| s.id == setup_id)
-            .ok_or(ProjectError::NotFound)?;
-        let fields: &[Field] = setup
-            .prompt
-            .schema
-            .as_ref()
-            .map_or(&[], |s| s.fields.as_slice());
-        let pieces = self.jobs.pieces(job_id)?;
-        let corrections = self.jobs.corrections(job_id)?;
-        let links = self.store.links(project)?;
-        let mut documents = self.store.documents(project)?;
-        documents.sort_by_key(|d| (d.title.to_lowercase(), d.title.clone()));
-
-        let mut headings = vec!["document".to_string(), "file".to_string()];
-        for field in fields {
-            headings.push(field.label.trim().to_string());
-            if field.reason {
-                headings.push(format!("{} (reason)", field.label.trim()));
-            }
-        }
-        headings.push("tags".into());
-
-        let mut rows = Vec::new();
-        for document in &documents {
-            let Some(link) = links
-                .iter()
-                .find(|l| l.document_id == document.id && l.job_id == job_id)
-            else {
-                continue;
-            };
-            let Some(answers) = answers_of(self, &pieces, &corrections, setup_id, link.source_id)?
-            else {
-                continue;
-            };
-            let mut row = vec![document.title.clone(), document.source.file_name.clone()];
-            for field in fields {
-                let answer = answers.iter().find(|a| a.key == field.key);
-                row.push(answer.map(cell).unwrap_or_default());
-                if field.reason {
-                    row.push(answer.and_then(|a| a.reason.clone()).unwrap_or_default());
-                }
-            }
-            row.push(document.tags.join("; "));
-            rows.push(row);
-        }
-        Ok(Table {
-            headings,
-            rows,
-            cells: CsvCells::Guarded,
-        })
-    }
-}
-
-/// An answer as one cell: a field that cites the text as its quotations, one per line, each
-/// after its entry's first field when it has one and before where it stands (`page 2`, or a
-/// speaker and a time); any other as on one line.
-fn cell(answer: &FieldAnswer) -> String {
-    let FieldValue::Cited(value) = &answer.value else {
-        return answer.value.joined();
-    };
-    let mut lines = Vec::new();
-    for entry in &value.entries {
-        let name = entry.answers.first().map(|a| a.value.joined());
-        for evidence in &entry.evidence {
-            let mut line = match &name {
-                Some(name) if !name.trim().is_empty() => format!("{name}: \"{}\"", evidence.quote),
-                _ => format!("\"{}\"", evidence.quote),
-            };
-            let by = cited::said_by(evidence);
-            if !by.is_empty() {
-                line.push_str(&format!(" ({by})"));
-            }
-            lines.push(line);
-        }
-    }
-    lines.join("\n")
 }

@@ -61,3 +61,27 @@ the one refusal left.
   which send what the researcher chose, are unchanged. Rejected: failing that document's piece
   at run time, which would have shown a researcher a failed job for a choice the dialog could
   make before Start.
+
+### The answer in the table's rows, while it is filtered
+
+- **Only while a filter by an answer is on.** Simple first: the table of a researcher who never
+  screens, or who has not chosen an answer, is the table they know. Choosing an answer is the
+  moment they ask to read answers, and then each row shows, under the document's title, the
+  answer in the interface language, its reason and its passages with their page
+  (`DocumentAnswer.svelte`), and *Keep* and *Set aside* for that document. Rejected: always
+  showing it, which would have lengthened every row of every project with an analysis, a long
+  table becoming three times longer for a researcher who wanted only to find a document; and a
+  column of its own, which a table of six columns has no room for at a laptop's width.
+- **Generic, from what the project already reads.** `DocumentAnswer` carries the analysis that
+  gave it, its `reason` (the choice's own reason when the field asks for one, else the analysis's
+  first text answered: a screening's *Reason*) and its `passages` (every quotation of its cited
+  fields, as corrected, each with its page). No field is known by name: a tone analysis with an
+  explanation shows its explanation the same way.
+- **Keep and Set aside from the row**, as the selection bar's: the tag given, the other taken
+  off, the model's answer untouched. Pressed again, the decision is taken off (a toast says so),
+  so a slip is undone where it was made. They are buttons in the row's order, reached by Tab
+  after the document's title and opened by Enter or Space, each named with the document's title
+  for a screen reader (*Keep “Bulletin, May 1957”*) and pressed (`aria-pressed`) when given. A
+  decision from a row keeps the documents chosen; the selection bar's still clears them.
+  Rejected: keys of their own (K, S) on a focused row, which a researcher would have to learn and
+  a screen reader announces nowhere.

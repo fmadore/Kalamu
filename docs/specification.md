@@ -805,13 +805,19 @@ analysed, compared. A **project** keeps it together
   (whether a document speaks of the researcher's question, its tone), the table can be
   narrowed by that answer, the researcher's correction counting over the model's; each choice
   is named by the question it was asked with, or by its field and job, and its answers are
-  shown in the interface language. While the table is filtered, the documents chosen can be
-  **kept or set aside** in one click: the researcher's decision is one of two tags, *Kept* or
-  *Set aside* in the interface's language, the other taken off, so the model's answer is never
-  changed. *Export this table* writes that analysis as one table, an Excel workbook and CSV:
+  shown in the interface language. While the table is filtered, **each row shows the answer**
+  under the document's title: the answer in the interface language, its reason, and the
+  passages quoted, each with its page, readable without opening the job (a document read in
+  parts shows what brought its parts together). The table looks as before until a filter is
+  chosen. Each row then has *Keep* and *Set aside*, buttons the keyboard reaches in the row's
+  order, the one given pressed and taken off when pressed again; the documents chosen can also
+  be **kept or set aside** in one click from the selection bar: the researcher's decision is one
+  of two tags, *Kept* or *Set aside* in the interface's language, the other taken off, so the
+  model's answer is never changed. *Export this table* writes that analysis as one table, an Excel workbook and CSV:
   one row per document it read, its title and file, each field under the label the job froze
   (passages with where each stands), then the document's tags
-  ([decision](decisions/2026-11-20-research-question-screening.md)).
+  ([decision](decisions/2026-11-20-research-question-screening.md),
+  [decision](decisions/2026-11-21-screening-long-documents-rows-question.md)).
 - **A source's description** is the researcher's, as an archive or library gives it: the
   repository, the fonds or collection, the series, the box or folder, the shelfmark, the
   creator, the date as written, a web address, how to cite it and its rights. The project holds

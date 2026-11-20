@@ -3,7 +3,9 @@
 	// from it. Selected documents can be grouped, ungrouped, removed, or sent to New job, whose
 	// job is then tied to them (`DocumentSelectionBar`). When an analysis has answered a choice
 	// (whether a document speaks of the researcher's question), the table can be filtered by its
-	// answer and that analysis exported as one table.
+	// answer and that analysis exported as one table; while it is, each row shows the answer, its
+	// reason and its passages under the title, with Keep and Set aside (`DocumentAnswer`).
+	import DocumentAnswer from './DocumentAnswer.svelte';
 	import DocumentSelectionBar from './DocumentSelectionBar.svelte';
 	import Icon from './Icon.svelte';
 	import MoreRows from './MoreRows.svelte';
@@ -20,7 +22,15 @@
 		sortDocuments,
 		type DocumentSort
 	} from '#lib/projects.js';
-	import { answeredDocuments, answerOptions, chosenAnswer, tableName } from '#lib/screening.js';
+	import {
+		answeredDocuments,
+		answerOptions,
+		chosenAnswer,
+		decisionOf,
+		decisionTags,
+		rowAnswers,
+		tableName
+	} from '#lib/screening.js';
 	import { Selection } from '#lib/selection.svelte.js';
 	import { go, toast } from '#lib/state.svelte.js';
 	import { keepFor, recallFor } from '#lib/stored.js';
@@ -67,6 +77,8 @@
 		},
 		report: (message) => onerror(message)
 	});
+	/** A decision given from a row: the project read again, the choice of documents kept. */
+	const deciding = new Action({ report: (message) => onerror(message) });
 	let tag = $state(left?.tag ?? '');
 	/** The answer filtered on, as `answerKey` names it; empty for none. */
 	let answer = $state('');
@@ -79,6 +91,7 @@
 	const answered = $derived(answeredDocuments(choices, answer));
 	const filterAnswer = $derived(answered ? answer : '');
 	const answerGroups = $derived(answerOptions(choices, m));
+	const rowAnswered = $derived(rowAnswers(choices, filterAnswer));
 	const shown = $derived(
 		sortDocuments(
 			shownDocuments(rows, collectionId, query, filterTag).filter(
@@ -129,6 +142,23 @@
 			await api.exportAnswers(projectId, group.job_id, group.setup_id, path);
 			toast(m.screening.exported);
 		}, null);
+	}
+
+	/** Keep or Set aside one document from its row; the decision it already has, taken off. */
+	async function decide(id: string, tags: string[], keep: boolean) {
+		const { add, remove } = decisionTags(keep, m);
+		const again = decisionOf(tags, m) === (keep ? 'keep' : 'aside');
+		await deciding.run(
+			async () => {
+				if (again) return api.untagDocuments(projectId, [id], add);
+				await api.untagDocuments(projectId, [id], remove);
+				await api.tagDocuments(projectId, [id], add);
+			},
+			async () => {
+				await onchange();
+				toast(again ? m.screening.decisionTakenOff(add) : m.screening.decided(add, 1));
+			}
+		);
 	}
 
 	function open(id: string) {
@@ -242,6 +272,7 @@
 			<tbody>
 				{#each drawn as row, i (row.document.id)}
 					{@const doc = row.document}
+					{@const said = rowAnswered?.get(doc.id)}
 					<tr data-row={i} aria-rowindex={rowIndex(i)} class:chosen={selection.has(doc.id)}>
 						<td class="check">
 							<input
@@ -262,6 +293,15 @@
 								{/if}
 								{#if row.same_content > 0}
 									<span class="chip warn">{m.projects.sameContent(row.same_content)}</span>
+								{/if}
+								{#if said}
+									<DocumentAnswer
+										title={doc.title}
+										answer={said}
+										decision={decisionOf(doc.tags, m)}
+										busy={deciding.busy}
+										ondecide={(keep) => decide(doc.id, doc.tags, keep)}
+									/>
 								{/if}
 							</div></td
 						>
