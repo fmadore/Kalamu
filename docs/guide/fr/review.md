@@ -71,6 +71,14 @@ Pour ajouter un nom, un mot-clé ou un thème que le modèle a oublié, utilisez
 de la liste. Ce que vous ajoutez ou renommez est souligné pour montrer que cela vient de vous,
 et passe dans les exports, le dictionnaire et la recherche.
 
+Dans l’analyse d’un entretien, chaque citation reprend les mots mêmes de la transcription :
+Kalamu cherche chacune dans le texte et laisse de côté celles qu’il ne retrouve pas. Pour
+ajouter une citation que le modèle a manquée, sélectionnez le passage dans la transcription,
+faites un clic droit et choisissez **Ajouter comme citation**, puis le thème où elle va. Elle
+est marquée comme ajoutée par vous, à l’écran et dans tous les exports. Un entretien très long
+est lu en plusieurs morceaux, puis le tout est rassemblé : si un morceau n’a pas pu être lu,
+l’écran dit quelles minutes manquent et propose **Le relire**.
+
 ## Faire corriger un passage par un modèle
 
 Quand quelques lignes sont mal lues et que le reste est bon, sélectionnez-les dans le texte et

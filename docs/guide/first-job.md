@@ -22,6 +22,10 @@ Kalamu looks at the files before anything is sent and tells you about what could
 reading: two pages photographed as one spread, a very low resolution, a page that leans. Each
 warning comes with a fix you can accept. Your original files are never changed.
 
+With photographs, Kalamu also compares them on your computer and tells you when two look like
+the same page taken twice, or when one looks blurred. It shows them side by side and suggests
+the sharper one; nothing is left out unless you choose it, and the file stays where it is.
+
 ![The New job screen, with files, a model, a prompt and the estimated cost](../store/screenshots/windows/en/08-new-job.png)
 *New job: the files, the model, the prompt and what it should cost, before anything is sent.*
 

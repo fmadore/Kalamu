@@ -1,7 +1,11 @@
 # Privacy Policy — Kalamu
 
-**Effective date:** 19 November 2026, which applies from the first version to analyse an
-interview from its transcript, for which the transcript's text, its speakers' names and times,
+**Effective date:** 20 November 2026, which applies from the first version to read a
+project's documents against the user's research question, for which each document's text and
+the question are sent to the provider of the model chosen; to read a long interview in several
+parts; and to send the user's own themes or interview guide with an interview. With a model
+run on the computer none of it is sent. The policy of 19 November 2026 did not say so; it
+applies from the first version to analyse an interview from its transcript, for which the transcript's text, its speakers' names and times,
 and the sentence the user writes about their research are sent to the provider of the model
 chosen, or to no one with a model run on the computer. The policy of 18 November 2026 did
 not say so; it applies from the first version to offer a search
@@ -183,6 +187,25 @@ computer; those not found are discarded. The sentence, the answers and the quota
 stored in the job database with the job. When the user chooses to keep the sentence for their
 next interviews, it is kept on the computer with their prompts, and sent with each analysis
 that uses that prompt.
+
+The themes or the interview guide the user types under *More choices* are sent with that
+sentence, and kept with it when it is kept. A transcript too long for the model to read at once
+is sent in several parts of whole turns, each part repeating the last turns of the one before,
+and then one more request is sent to the same provider with what the parts found: their
+answers and the quotations kept, each with its turn, its speaker and its time. A quotation the
+user adds from a passage of the transcript is made on the computer and sends nothing.
+
+### A project's documents read against a research question
+
+When the user chooses *Which of these speak of my question?*, the text of each chosen
+document as they left it (the reading they preferred, corrections included, or the document's
+own words for a text file) is sent to the provider of the model chosen, cut into numbered
+passages, together with the question they typed and the prompt, after the same question about
+that provider as for a job. The scans and photographs themselves are not sent. With a model
+run on the computer nothing is sent. The passages a model returns are looked for in the text
+on the computer; those not found are discarded. The question, the answers and the passages
+kept are stored in the job database with the job. The tags *Kept* and *Set aside* stay on the
+computer with the project.
 
 ## What the app keeps on the computer
 

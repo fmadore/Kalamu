@@ -25,6 +25,13 @@ ont été faites.
   **étiquettes**, elles, valent pour toutes les collections.
 - **Lancez un traitement sur une sélection** : cochez quelques documents et lancez sur eux une
   extraction, une analyse ou une chaîne de traitement.
+- **Demandez quels documents parlent de votre question** : cochez des documents déjà lus,
+  choisissez **Lesquels parlent de ma question ?** et écrivez votre question de recherche.
+  Chaque document revient avec une réponse (pertinent, en partie, non pertinent ou incertain),
+  une raison et les passages qui le montrent, chacun retrouvé mot pour mot dans le texte avec
+  sa page. Filtrez le tableau selon la réponse, lisez les passages, puis choisissez **Garder**
+  ou **Écarter** : votre décision est une étiquette, et la réponse du modèle reste telle
+  quelle. **Exporter ce tableau** écrit toute la liste pour un tableur.
 - Quand un document a été lu plusieurs fois, choisissez le résultat auquel vous vous fiez avec
   **Retenir**. La recherche, les exports et les analyses utilisent alors celui-là.
 

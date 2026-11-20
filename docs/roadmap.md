@@ -782,6 +782,31 @@ put four of them first, for what they give a historian, a sociologist or an anth
    [#54](https://github.com/fmadore/Kalamu/issues/54)): "the 14th of the said month" read
    with the page before it, what is written told apart from what is inferred.
 
+Of these, written on 20 November by agents in worktrees gathered on one branch, and none yet
+tried with a real model, on a real Mac or on real photographs:
+
+- **#38, the second slice, whole**: a transcript too long for its model is read in parts of
+  whole turns and brought together by one more request that names the parts' quotations by
+  number, so every quotation is still the transcript's words; a part not read is named and
+  read again alone; the researcher's themes or guide under *More choices*, each theme saying
+  where it comes from; a quotation added from a passage selected in the transcript
+  ([decision](decisions/2026-11-20-interview-windows-guide-themes.md)). To try: a
+  two-hour interview with a cloud model and with one on the computer, the share of the
+  model's limit a part takes (seven tenths) and the two turns repeated.
+- **#51, a first increment**: one dialog and one box from a selection of a project's
+  documents; relevance, a reason and up to three passages found word for word with their
+  page; the table filtered by any analysis's answer, kept or set aside as tags, exported as a
+  workbook and CSV ([decision](decisions/2026-11-20-research-question-screening.md)).
+  Left: a document too long for the model still refuses the job (the parts built for #38 are
+  the way), the question kept for the next documents, the answer shown in the table's rows.
+- **#216**: New job compares its photographs on the computer and says which show the same
+  page twice and which are blurred, the sharper one suggested, nothing left out unless the
+  researcher chooses
+  ([decision](decisions/2026-11-20-duplicate-and-blurred-photographs.md)). Its thresholds
+  were set on retakes made from two sample pages: a real batch from a reading room decides
+  whether they hold. About a minute for 300 photographs, read again whole when some are
+  added.
+
 Beside them, new from that review and each to be designed in a decision first:
 
 - **Save, move and share a project** ([#213](https://github.com/fmadore/Kalamu/issues/213)):
