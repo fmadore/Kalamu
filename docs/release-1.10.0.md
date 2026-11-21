@@ -108,24 +108,34 @@ keys. Once 1.10.0 has opened your job database, an earlier version refuses it.
 
 ## Known limitations
 
-- **Screening has not yet run against a live provider.** How well real models follow the
-  question, and the rule that a long document is relevant if any part is, is not yet known:
-  read the reasons, check the passages, and try a few documents first. New job offers the
-  screening prompt without a box for the question: start a screening from the project.
+- **Screening has had one live run**, on ten short documents with Gemini 4 Hydrogen, whose
+  answers and passages held up. How models follow the rule that a long document is relevant if
+  any part is, is not yet known: read the reasons, check the passages, and try a few documents
+  first. New job offers the screening prompt without a box for the question: start a screening
+  from the project. *Export the whole table* writes every document's answer, whatever filter is
+  on.
+- **Estimates now count the models' thinking** and a newspaper's dense pages, which made them
+  three to eleven times too low before this version's test pass. They are still estimates:
+  compare the first job's cost with what your provider bills.
+- **GPT-6.2 Sol can leave text out, or answer nothing.** It replaced a chemistry lecture's
+  description in a 1911 newspaper with a note that it had omitted it, and answered an analysis
+  of that issue with every field empty. Kalamu now refuses an analysis left wholly empty for a
+  long text and asks again, then says so; a comparison of two models shows the gaps in a
+  transcription.
 - **A project file has not yet been carried from Windows to a Mac.** A project opened without
   its original files cannot yet be pointed at those files on the new computer; save it again
   with its originals instead. Corrections from a colleague's copy are not merged: their file
   opens as a project of its own. Workflow runs are not in the file.
 - **Try on a few pages first** is offered for a PDF, not yet for a folder of separate images,
   nor in economy mode. New job's diagram still shows pages 1 to 3.
-- **A long interview read in parts** has run against recorded answers only, as has the
-  interview analysis as a whole: read the count of quotations left out, and try one interview
-  first.
+- **A long interview read in parts** has run against recorded answers only; the interview
+  analysis itself has run live on a short interview, with the researcher's own themes. Read the
+  count of quotations left out, and try one interview first.
 - **The check of photographs** was tuned on retakes of two sample pages: a real batch from a
   reading room may need it told otherwise. It takes about a minute for 300 photographs.
-- **The `.xlsx`** has been checked by reading it back, not yet opened by double-click in Excel
-  set to French or on a Mac. Exports' column headings stay in English.
-- **Search by meaning has not yet been prepared with a cloud model**, and EmbeddingGemma 2 has
+- **The `.xlsx`** opens by double-click in Excel set to French; it has not yet been opened on a
+  Mac. Exports' column headings stay in English.
+- **Search by meaning has been prepared with Gemini Embedding 2 only**; EmbeddingGemma 2 has
   not yet run in the installed app. The map's positions are approximate.
 - **A region read again and a passage corrected by a model** have run against recorded answers
   only. Check the cost shown against what your provider bills.
@@ -136,6 +146,8 @@ keys. Once 1.10.0 has opened your job database, an earlier version refuses it.
   mode: check the rows, and try a small job first.
 - **The offline language models are far weaker than the cloud models.** Check what they write.
   They are slow on a processor, up to several minutes for a long text.
+- **On a Snapdragon PC, LightOnOCR-3 runs on the processor**, by design, and a dense
+  newspaper page can take several minutes. Settings shows an average over the pages read so far.
 - **The OCR models can write text that is not on the page**, as any language model can: compare
   doubtful pages with Tesseract or a cloud model.
 - **The Mac versions** are built and tested on Macs in GitHub Actions and were tried on one Mac
