@@ -4,7 +4,8 @@ A checklist for trying the packaged app on a Windows PC before a version is tagg
 roadmap's *Next* gathers as "to try by hand", what was written since the last pass, and the live
 runs that touch the researcher's own accounts. CI builds and tests everything here, but none of
 it has been opened in an installed copy. The first pass, before 1.8.0, is in
-[Results](#results); this is the second, for 1.9.0: what `main` holds after 1.8.0. The Mac's share is
+[Results](#results); this is the second, for 1.10.0 on `v1.10.0-rc1`: what `main` holds after
+1.8.0, 1.9.0 having been published on GitHub without it. The Mac's share is
 in [mac-test-day.md](mac-test-day.md).
 
 Each step has a letter and a number, which the results name. Tick each box, and write what went
@@ -108,6 +109,20 @@ At the end, summarise what failed, what you could not try, and what passed, in t
   (`rfd` 0.18.0): start Kalamu from a terminal opened from the Start menu, not Claude's, with
   `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER` set to a folder that does not exist. A native message
   says why Kalamu cannot start and names the logs folder; Kalamu ends.
+- [ ] **A7. The welcome** (#208): under a Windows account where Kalamu has never run (F9's
+  will do), or before any key is pasted and nothing offline is installed, Kalamu opens on
+  Settings with *Welcome to Kalamu*: *Use a model on this computer* leads to the offline models,
+  *Add a key from an online provider* to API keys. Once Tesseract's French is downloaded, close
+  and reopen: Kalamu no longer opens on Settings, and the sidebar's ready line counts the offline engines
+  without naming Whisper.
+- [ ] **A8. The guide from the app** (#211): *Read the guide* in the welcome, the Glossary and
+  Settings › About opens the guide in the browser in the interface language; switch Kalamu to
+  French and it opens `/guide/fr`.
+- [ ] **A9. An empty project** (#212): a new project with no documents says what to do first in
+  place of its table; its search and *What to check* say what will come there.
+- [ ] **A10. The fields in French** (#210), after C3: with the interface in French, C3's
+  review, its prompt's fields in New job and the dictionary show *Résumé*, *Thèmes* and the
+  choices in French; the exported `.csv` keeps the English keys.
 
 ## Part B: written since 1.8.0, without a key (3 hours)
 
