@@ -7,6 +7,7 @@
 	import Icon from './Icon.svelte';
 	import type { Entry } from '#lib/apparatus.js';
 	import { messages } from '#lib/i18n/index.js';
+	import { GAP, anchorLine, readingsTop, tallest, visibleBand } from '#lib/readingsPlace.js';
 
 	let {
 		id,
@@ -45,6 +46,8 @@
 	let own = $state('');
 	let box = $state<HTMLElement | null>(null);
 	let at = $state<{ top: number; left: number } | null>(null);
+	/** The tallest the readings may be, so they show whole in the pane. */
+	let limit = $state<number | null>(null);
 	/** Set once the researcher moves the readings aside to see the sentence under them: they
 	 * then stay where they were put. */
 	let moved = $state(false);
@@ -93,17 +96,21 @@
 
 	function placeBox() {
 		const words = pane.querySelector<HTMLElement>(`[data-entry="${entry.id}"]`);
-		if (!box || !words || moved) return;
+		if (!box || !words) return;
 		const area = pane.getBoundingClientRect();
-		const last = Array.from(words.getClientRects()).at(-1) ?? words.getBoundingClientRect();
-		const { offsetWidth: w, offsetHeight: h } = box;
-		const roomBelow = area.bottom - last.bottom > h + 16;
-		const roomAbove = last.top - area.top > h + 16;
+		const visible = visibleBand(area, window.innerHeight);
+		// The readings never grow past the part of the pane that shows: a long reading scrolls
+		// inside them instead of running past the pane's edge.
+		limit = tallest(visible);
+		if (moved) return;
+		const lines = Array.from(words.getClientRects());
+		const line = anchorLine(lines.length ? lines : [words.getBoundingClientRect()], visible);
+		if (!line) return;
+		const { offsetWidth: w } = box;
+		const h = Math.min(box.offsetHeight, limit);
 		at = {
-			top:
-				pane.scrollTop +
-				(roomBelow || !roomAbove ? last.bottom - area.top + 8 : last.top - area.top - h - 8),
-			left: Math.max(8, Math.min(last.left - area.left - 12, pane.clientWidth - w - 8))
+			top: pane.scrollTop + readingsTop(line, visible, h) - area.top,
+			left: Math.max(GAP, Math.min(line.left - area.left - 12, pane.clientWidth - w - GAP))
 		};
 	}
 
@@ -130,6 +137,7 @@
 	aria-label={m.review.pickReading}
 	style:top="{at?.top ?? 0}px"
 	style:left="{at?.left ?? 0}px"
+	style:max-height={limit === null ? null : `${limit}px`}
 	style:visibility={at ? null : 'hidden'}
 	onpointerenter={onenter}
 	onpointerleave={onleave}
@@ -209,7 +217,8 @@
 		font-size: var(--type-sm);
 		line-height: 1.45;
 		color: var(--text-bright);
-		display: grid;
+		display: flex;
+		flex-direction: column;
 		gap: var(--space-3);
 		animation: rise 120ms ease-out;
 	}
@@ -225,6 +234,7 @@
 		}
 	}
 	.head {
+		flex: none;
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
@@ -266,7 +276,12 @@
 		padding: 0;
 		border: 1px solid var(--line);
 		border-radius: var(--radius-control);
-		overflow: hidden;
+		/* Where the pane is too short for every reading, they scroll here, the head and the
+		   note kept in view. */
+		flex: 0 1 auto;
+		min-height: 0;
+		overflow-y: auto;
+		overscroll-behavior: contain;
 	}
 	.options > li + li {
 		border-top: 1px solid var(--line-soft);
@@ -348,6 +363,7 @@
 		font-size: var(--type-md);
 	}
 	.note {
+		flex: none;
 		font-size: var(--type-xs);
 		color: var(--text-muted);
 	}
