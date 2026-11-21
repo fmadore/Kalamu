@@ -3391,7 +3391,7 @@ export const fr: Messages = {
 		'provider.invalid_request': 'Le fournisseur a rejeté la requête.',
 		'provider.other': 'Le fournisseur a envoyé une réponse inattendue.',
 		'provider.invalid_answer':
-			'La réponse du modèle ne correspondait pas aux champs de l’analyse ; Kalamu lui repose la question.',
+			'La réponse du modèle ne donnait pas les champs de l’analyse, même après une nouvelle demande. Réessayez plus tard, ou choisissez un autre modèle.',
 		'provider.cut_off':
 			'La réponse s’est arrêtée à la limite de sortie du modèle avant d’être complète. Envoyez moins de pages par appel, demandez des champs moins nombreux ou plus courts, ou choisissez un modèle capable d’écrire une réponse plus longue.',
 		'provider.cut_off_filter':

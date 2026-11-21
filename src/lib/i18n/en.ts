@@ -2963,7 +2963,7 @@ export const en = {
 		'provider.invalid_request': 'The provider rejected the request.',
 		'provider.other': 'The provider sent an unexpected response.',
 		'provider.invalid_answer':
-			'The model’s answer did not match the fields of the analysis; Kalamu asks it again.',
+			'The model’s answer did not give the fields of the analysis, even when asked again. Try again later, or choose another model.',
 		'provider.cut_off':
 			'The answer stopped at the model’s output limit before it was complete. Send fewer pages in each call, ask for fewer or shorter fields, or choose a model that can write a longer answer.',
 		'provider.cut_off_filter':
