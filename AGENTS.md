@@ -31,6 +31,12 @@ change ships to both. The maintainer works on Windows, so the Mac is the side to
 
 - Read docs/specification.md in full. Keep it, the roadmap and the README in sync when a
   decision changes them.
+- A change a researcher can see (a new feature, a new step, a renamed control) also updates
+  the [guide](docs/guide/), in English (`docs/guide/`) and French (`docs/guide/fr/`), in the
+  same pull request. Say where the feature is reached and what it sends and costs, and quote
+  the interface's labels exactly as `src/lib/i18n/en.ts` and `fr.ts` write them. When a
+  screenshot in the guide no longer matches the app, say so in the pull request, so the next
+  screenshot session retakes it.
 - A change to what the app sends, to whom, or what it keeps also updates
   [docs/privacy.md](docs/privacy.md), the published privacy policy, with a new effective date;
   a change to what it advertises updates [docs/store-listing.md](docs/store-listing.md).

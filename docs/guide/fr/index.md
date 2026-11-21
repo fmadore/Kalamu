@@ -49,6 +49,23 @@ SmartScreen affiche un avertissement. Choisissez **Informations complémentaires
 Kalamu dans le dossier Applications. L’application est signée et vérifiée par Apple : macOS
 l’ouvre après sa question habituelle sur les applications téléchargées sur Internet.
 
+## Le premier lancement
+
+À sa première ouverture, sans clé enregistrée ni rien d’installé sur l’ordinateur, Kalamu
+s’ouvre sur **Paramètres**, avec **Bienvenue dans Kalamu**. Deux façons de commencer vous sont
+proposées, et vous pourrez ajouter l’autre plus tard :
+
+- **Utiliser un modèle sur cet ordinateur** : gratuit, sans compte, et rien ne quitte votre
+  ordinateur. Le modèle est téléchargé une fois ; il est plus lent qu’un modèle en ligne. Voir
+  [Travailler hors ligne](offline.md).
+- **Ajouter la clé d’un service en ligne** : plus rapide et souvent plus juste. Vous ouvrez un
+  compte chez le fournisseur, qui facture ce que vous utilisez, et vos fichiers lui sont
+  envoyés. Voir ci-dessous.
+
+Dès que l’un ou l’autre est en place, Kalamu ne s’ouvre plus sur Paramètres. **Lire le guide**,
+dans l’accueil, le Glossaire et Paramètres › À propos, ouvre ce guide dans la langue de
+l’interface.
+
 ## Ajouter une clé d’API
 
 1. Ouvrez **Paramètres** (<kbd>Ctrl</kbd> <kbd>,</kbd> sous Windows, <kbd>⌘</kbd> <kbd>,</kbd>

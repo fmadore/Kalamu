@@ -72,6 +72,26 @@ then the theme it belongs to. It is marked as added by you, in the review and in
 A very long interview is read in several parts and brought together; if a part could not be
 read, the review says which minutes are missing and offers **Read it again**.
 
+## Your own regions over a scan
+
+With **Show text regions** (or **Show regions**, on a page with none from the model) you can
+also mark parts of the page yourself, to note what is there or to have it read again. Nothing
+of this shows until the regions are shown.
+
+- **Draw a region**, then drag over the page to draw a box. Pressed a second time, it places a
+  box in the middle of the page, which the arrow keys move; <kbd>Escape</kbd> cancels.
+- **Move or resize** a box by dragging it, or its corners and sides. From the keyboard, the
+  arrow keys move it, with <kbd>Shift</kbd> they resize it, <kbd>Enter</kbd> saves.
+- Type **What is written here** if you like, or **Remove** the region.
+- A box the model drew can be moved or resized too. Its own box is kept, and **Put back the
+  model's box** brings it back.
+
+**Read this region again…** cuts that part of the page from the original and sends it alone to
+the model you choose, as a picture; nothing else of the document is sent. Kalamu says what it
+should cost first, or that it is free with a model on your computer. The answer is a proposal:
+**Use as this region's text**, **Replace these words in the page's text**, **Edit first**, or
+**Discard**. The ALTO, PAGE XML and searchable PDF exports include your regions.
+
 ## Have a model correct one passage
 
 When a few lines are badly read and the rest is fine, select them in the text and right-click

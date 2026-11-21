@@ -56,6 +56,23 @@ answer it takes (a text, a list, a choice from your own list), and describe what
 ![An analysis: fields with their answers beside the document](../store/screenshots/windows/en/07-analysis.png)
 *An analysis, field by field, with the document it was read from.*
 
+### An interview
+
+An interview is analysed from its transcript. In the transcript's review, choose **Use this
+text in a new job**, then **Analyse this interview**. One box asks **What is your research
+about?**: a sentence or two helps the model pick out what matters to your work, and it may be
+left empty. Tick **Keep this for my next interviews** to find it there next time. The model and
+the estimated cost are said in one line; press **Analyse**.
+
+Under **More choices** you can change the model, and type **Your own themes or interview
+guide**, one theme per line. Each theme in the answer then says whether it comes from your list
+or emerged from the interview, and a theme of yours the interview does not take up is listed as
+missing rather than backed with weak quotations. An interview too long for the model to read at
+once is read in parts, then brought together; Kalamu says so beside the cost.
+
+The answer gives a summary, themes, keywords and passages worth quoting, each with who speaks
+and when: [Check an analysis](review.md#check-an-analysis) says how to check it.
+
 ### A register or a directory as a table
 
 An analysis set to *One row per entry* reads each page of a directory, a register or a list

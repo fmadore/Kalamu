@@ -61,6 +61,26 @@ décrivez ce que vous voulez.
 ![Une analyse : les champs avec leurs réponses, à côté du document](../../store/screenshots/windows/fr/07-analysis.png)
 *Une analyse, champ par champ, avec le document dont elle est tirée.*
 
+### Un entretien
+
+Un entretien s’analyse à partir de sa transcription. Dans la relecture de la transcription,
+choisissez **Utiliser ce texte dans un nouveau traitement**, puis **Analyser cet entretien**.
+Une seule case demande **Sur quoi porte votre recherche ?** : une phrase ou deux aident le
+modèle à retenir ce qui compte pour votre travail, et vous pouvez la laisser vide. Cochez
+**Garder ce texte pour mes prochains entretiens** pour le retrouver la fois suivante. Le modèle
+et le coût estimé tiennent sur une ligne ; cliquez sur **Analyser**.
+
+Sous **Plus de choix**, vous pouvez changer de modèle et saisir **Vos propres thèmes ou votre
+guide d’entretien**, un thème par ligne. Chaque thème de la réponse dit alors s’il vient de
+votre liste ou de l’entretien, et un thème de votre liste que l’entretien n’aborde pas est
+signalé comme absent, plutôt qu’appuyé sur des citations faibles. Un entretien trop long pour
+être lu d’un coup par le modèle est lu en plusieurs morceaux, puis le tout est rassemblé ;
+Kalamu l’indique à côté du coût.
+
+La réponse donne un résumé, des thèmes, des mots-clés et les passages à citer, chacun avec qui
+parle et à quel moment : [Vérifier une analyse](review.md#verifier-une-analyse) explique comment
+la vérifier.
+
 ### Un registre ou un annuaire en tableau
 
 Une analyse réglée sur *Une ligne par entrée* lit chaque page d’un annuaire, d’un registre ou
