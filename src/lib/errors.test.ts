@@ -59,4 +59,15 @@ describe('error sentences', () => {
 		expect(errorStep(refused)).toBe(2);
 		expect(errorStep({ id: 'job.no_language' })).toBeNull();
 	});
+
+	it('says a piece whose answer stayed unusable failed for good, with the engine’s reason', () => {
+		const failed = {
+			id: 'provider.invalid_answer',
+			detail: 'the model left every field empty, though the text runs to about 4,800 words'
+		};
+		const said = describeError(failed, en);
+		expect(said).toContain('even when asked again');
+		expect(said).not.toContain('asks it again');
+		expect(said).toContain('(the model left every field empty');
+	});
 });

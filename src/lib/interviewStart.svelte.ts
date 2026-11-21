@@ -10,6 +10,7 @@
 
 import type { Catalog } from './bindings/Catalog.js';
 import type { Estimate } from './bindings/Estimate.js';
+import type { ExportFormat } from './bindings/ExportFormat.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { Preset } from './bindings/Preset.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
@@ -36,6 +37,24 @@ import { api } from './tauri.js';
 
 /** The ready-made prompt that reads an interview for its themes and quotations. */
 export const INTERVIEW_PRESET = 'analysis.interview';
+
+/** What an interview's analysis writes beside the transcript, whatever the usual formats in
+ * Settings: a memo to read (Markdown, each quotation with its speaker and time), the JSON file,
+ * and a table with one row per quotation (`.analysis.quotations.csv`, beside the answer's own
+ * `.csv`). The dialog offers no choice of formats, so these are what it promises. */
+export const INTERVIEW_FORMATS: ExportFormat[] = ['markdown', 'json', 'csv'];
+
+/** The interview's formats the task can write, then the researcher's usual ones (Settings) it
+ * can write too; its first format should none be. */
+export function interviewFormats(
+	offered: ExportFormat[],
+	usual: readonly ExportFormat[] = []
+): ExportFormat[] {
+	const formats = [...INTERVIEW_FORMATS, ...usual].filter(
+		(f, i, all) => offered.includes(f) && all.indexOf(f) === i
+	);
+	return formats.length > 0 ? formats : offered.slice(0, 1);
+}
 
 /** The setup an interview is analysed with: the draft's, the researcher's question and their
  * own themes added when they typed them (each left out when empty, as the engine's cache keys
@@ -208,8 +227,9 @@ export class InterviewAnalysis {
 				pagesPerCall: pagesPerCallOf(this.rule, 'one', 1)
 			}),
 			output: {
-				formats: app.settings!.text_formats.filter((f) =>
-					offeredFormats(this.catalog, this.rule, [draft], sources).includes(f)
+				formats: interviewFormats(
+					offeredFormats(this.catalog, this.rule, [draft], sources),
+					app.settings!.text_formats
 				),
 				destination: { kind: 'beside_sources' },
 				options: $state.snapshot(app.settings!.export_options)

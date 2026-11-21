@@ -8,7 +8,7 @@
 	import type { StepView } from '#lib/bindings/StepView.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { describeError } from '#lib/errors.js';
-	import { formatDateTime, formatUsd, messages } from '#lib/i18n/index.js';
+	import { formatDateTime, formatUsd, messages, shownName } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, returnTo } from '#lib/state.svelte.js';
 	import { ask } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
@@ -84,10 +84,10 @@
 			<button class="btn ghost sm" onclick={() => returnTo({ name: 'workflows' })}
 				><Icon name="back" />{w.back}</button
 			>
-			<h1>{run.name}</h1>
+			<h1>{shownName(run.name)}</h1>
 			<p class="lede">
 				<span class="chip {tone(status)}">{w.runStatus[status]}</span>
-				{w.runOf(run.workflow_name, run.version)} · {w.files(run.sources.length)} ·
+				{w.runOf(shownName(run.workflow_name), run.version)} · {w.files(run.sources.length)} ·
 				{w.started(formatDateTime(run.created_at))}
 			</p>
 		</div>
@@ -119,7 +119,10 @@
 						{w.reads}{m.common.colon}
 						{frozen.input.kind === 'sources'
 							? w.readsFiles
-							: w.readsStep(frozen.input.step + 1, run.steps[frozen.input.step]?.name ?? '')}
+							: w.readsStep(
+									frozen.input.step + 1,
+									shownName(run.steps[frozen.input.step]?.name ?? '')
+								)}
 					</p>
 					{#if step.job}
 						{@const job = step.job}

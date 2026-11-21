@@ -8,7 +8,9 @@
 //! which may be changed or completed from what the caller knows (a translation's lines given
 //! back their times). Numbered lines ([`crate::aligned::Passage`]) are the first check.
 
-use kalamu_core::{AnalysisSchema, ProcessOutput, ProviderError, RequestSetting};
+use kalamu_core::{
+    AnalysisSchema, PreparedInput, ProcessOutput, ProviderError, RequestSetting, Task, structured,
+};
 
 pub(crate) trait AnswerCheck: Send + Sync {
     /// The fields asked for instead of the set-up's own, if any.
@@ -42,6 +44,37 @@ pub(crate) fn checked(
     check
         .check(output)
         .map_err(|reason| ProviderError::InvalidAnswer { reason, usage })
+}
+
+/// An analysis's answer that left every field empty for a long text, refused as a broken answer
+/// ([`kalamu_core::structured::refuse_empty`]): asked again, and the piece fails with the reason
+/// when no answer passes. `input` is what was sent, when known; only a text is measured, a scan
+/// or a picture never refused for it. Every other task's answer, and an answer with nothing to
+/// measure, is kept as it is.
+pub(crate) fn refuse_empty(
+    task: Task,
+    fields: Option<&AnalysisSchema>,
+    input: Option<&PreparedInput>,
+    output: ProcessOutput,
+) -> Result<ProcessOutput, ProviderError> {
+    let words = input
+        .filter(|i| i.mime == "text/plain")
+        .map(|i| structured::word_count(&structured::document_text(i)));
+    refuse_empty_of(task, fields, words, output)
+}
+
+/// [`refuse_empty`] for a text of `words` words, when the input itself is gone (a batch's
+/// answers are read long after their inputs were sent).
+pub(crate) fn refuse_empty_of(
+    task: Task,
+    fields: Option<&AnalysisSchema>,
+    words: Option<u64>,
+    output: ProcessOutput,
+) -> Result<ProcessOutput, ProviderError> {
+    match (task, fields) {
+        (Task::Analysis, Some(fields)) => structured::refuse_empty(output, fields, words),
+        _ => Ok(output),
+    }
 }
 
 #[cfg(test)]

@@ -126,7 +126,7 @@ pub use setup::{MergeModel, MergeStep, PromptSnapshot, Setup, SetupOptions, Setu
 pub use snapshot::{Anchor, AnchorError, DerivedFrom, Snapshot, SnapshotPart, Turn};
 pub use source::{InputKind, SourceFile};
 pub use speakers::{SpeakerIndex, SpeakerNames};
-pub use store::{Correction, JobStore, OutdatedFiles, PrunedResults, StoreError};
+pub use store::{Correction, JobStore, OutdatedFiles, PrunedResults, StoreError, UnusedResults};
 pub use task::Task;
 pub use tied::{TiedResult, TiedResults};
 pub use units::{DocumentUnit, FrozenUnit, PagesError, SeedProblem, SharedPage, UnitError};

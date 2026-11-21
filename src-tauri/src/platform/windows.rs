@@ -43,6 +43,22 @@ pub const PLAYBACK: Playback = Playback::CHROMIUM;
 /// damaged.
 pub const WEBVIEW: Webview = Webview::WebView2;
 
+/// Why the window cannot be made, asked before Tauri is: WebView2 not found. Tauri asks the
+/// same question when it makes the window and answers with an English message of its own, then
+/// ends the app; asked first, the answer goes through Kalamu's message, which says what to do in
+/// the researcher's language and names the logs folder. Asked of WebView2's own loader, as Tauri
+/// asks it, so `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER` counts as it does there. `None` when found.
+pub fn webview_missing() -> Option<String> {
+    missing(tauri::webview_version())
+}
+
+/// The failure's detail, when the loader found no WebView2.
+fn missing<E: std::fmt::Display>(found: Result<String, E>) -> Option<String> {
+    found
+        .err()
+        .map(|e| format!("the WebView2 Runtime was not found ({e})"))
+}
+
 /// The app's data folder in `%LOCALAPPDATA%`, named for the people who open it. Not `Kalamu`,
 /// which the per-user installer takes for the program itself and its uninstaller removes.
 const DATA_FOLDER: &str = "Kalamu Data";
@@ -243,7 +259,51 @@ mod tests {
     use std::process::{Command, Stdio};
     use std::time::{Duration, Instant};
 
-    use super::{EARLIER_FOLDERS, Job, package_family};
+    use super::{EARLIER_FOLDERS, Job, missing, package_family, webview_missing};
+
+    /// The variable WebView2's loader reads for a folder of its own; one that does not exist
+    /// stands for WebView2 missing.
+    const WEBVIEW2_FOLDER: &str = "WEBVIEW2_BROWSER_EXECUTABLE_FOLDER";
+
+    #[test]
+    fn webview2_found_is_no_failure_and_missing_says_so() {
+        assert_eq!(missing::<String>(Ok("131.0.2903.70".into())), None);
+        let detail = missing(Err("0x80070002")).unwrap();
+        assert!(detail.contains("WebView2 Runtime"), "{detail}");
+        assert!(detail.contains("0x80070002"), "{detail}");
+    }
+
+    /// Run alone, in a process of its own (`webview2_missing_is_found_before_tauri`): says what
+    /// the check found.
+    #[test]
+    #[ignore = "run by webview2_missing_is_found_before_tauri, with WebView2 hidden"]
+    fn webview_probe() {
+        println!("webview-missing: {:?}", webview_missing());
+    }
+
+    /// As the test pass found it (A6): with WebView2's folder pointed where nothing is, the
+    /// check fails before Tauri would, so Kalamu's own message is shown. In a process of its own,
+    /// since the loader reads the variable from the process's environment.
+    #[test]
+    fn webview2_missing_is_found_before_tauri() {
+        let out = Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "platform::windows::tests::webview_probe",
+                "--ignored",
+                "--nocapture",
+                "--test-threads=1",
+            ])
+            .env(WEBVIEW2_FOLDER, r"C:\Kalamu-test\no WebView2 here")
+            .output()
+            .unwrap();
+        let said = String::from_utf8_lossy(&out.stdout);
+        assert!(out.status.success(), "{said}");
+        assert!(
+            said.contains("webview-missing: Some(\"the WebView2 Runtime was not found"),
+            "{said}"
+        );
+    }
 
     /// What Windows does when the app's process ends, however it ends: it closes the job's
     /// handle, and the programs in the job end with it.

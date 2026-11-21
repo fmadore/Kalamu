@@ -3,7 +3,12 @@
 /**
  * What saving a project would write, shown before the researcher chooses.
  */
-export type ProjectFilePlan = { name: string, documents: number, jobs: number, 
+export type ProjectFilePlan = { name: string, documents: number, 
+/**
+ * The jobs that read the project's documents, as the project's card counts them; the
+ * dictionary's proposal jobs, carried too, read none and are not counted.
+ */
+jobs: number, 
 /**
  * About how many bytes the file takes without the originals.
  */

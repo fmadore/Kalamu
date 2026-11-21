@@ -10,7 +10,7 @@
 	import type { Workflow } from '#lib/bindings/Workflow.js';
 	import { Action } from '#lib/action.svelte.js';
 	import { describeError } from '#lib/errors.js';
-	import { formatUsd, messages } from '#lib/i18n/index.js';
+	import { formatUsd, messages, shownName } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, type FromProject } from '#lib/state.svelte.js';
 	import { mayStart, pickDocuments } from '#lib/dialogs.js';
 	import { api } from '#lib/tauri.js';
@@ -59,7 +59,7 @@
 	}
 
 	onMount(() => {
-		name = workflow.name;
+		name = shownName(workflow.name);
 		if (given?.length) {
 			files = given.map((source) => ({
 				path: source.path,
@@ -160,7 +160,9 @@
 		<ol class="plan">
 			{#each workflow.steps as step, i (i)}
 				<li>
-					<span class="name">{w.stepNumber(i + 1)}{m.common.colon} {step.pipeline.name}</span>
+					<span class="name"
+						>{w.stepNumber(i + 1)}{m.common.colon} {shownName(step.pipeline.name)}</span
+					>
 					<span class="muted">{sends(i)} · <span class="num">{cost(i)}</span></span>
 				</li>
 			{/each}

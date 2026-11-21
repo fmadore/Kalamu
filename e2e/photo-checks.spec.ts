@@ -53,6 +53,14 @@ test('a blurred photograph is kept or left out, as the researcher chooses', asyn
 	await page.getByRole('button', { name: 'Undo' }).click();
 	await expect(blurred).toBeVisible();
 
+	// Ctrl+Z (⌘Z on a Mac) undoes it as well, while the message shows.
+	await blurred.getByRole('button', { name: 'Leave it out' }).click();
+	await expect(main.getByRole('button', { name: 'Remove IMG_0150.jpg' })).toHaveCount(0);
+	const mac = await page.evaluate(() => /Macintosh|Mac OS X/.test(navigator.userAgent));
+	await page.keyboard.press(mac ? 'Meta+z' : 'Control+z');
+	await expect(blurred).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
+
 	await blurred.getByRole('button', { name: 'Keep it' }).click();
 	await expect(blurred).toHaveCount(0);
 	await expect(main.getByRole('button', { name: 'Remove IMG_0150.jpg' })).toBeVisible();

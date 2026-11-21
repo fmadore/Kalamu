@@ -96,6 +96,48 @@ test('the dialog asks one question with one button, and starts the job with it',
 	);
 });
 
+test('Escape closes an open list first, and what was typed waits for the next opening', async ({
+	page
+}) => {
+	await open(page, 'jobs-audio');
+	const menu = await useText(page);
+	await menu.getByRole('button', { name: /Analyse this interview/ }).click();
+	const dialog = page.getByRole('dialog', { name: 'Analyse this interview' });
+	const question = dialog.getByRole('textbox', { name: 'What is your research about?' });
+	await question.fill('How women in crafts learn their trade.');
+	await dialog.locator('details.more summary').click();
+	const themes = dialog.getByRole('textbox', { name: 'Your own themes or interview guide' });
+	await themes.fill('Savings groups');
+	// The model's list, in the top layer, closes alone as well.
+	await dialog.getByRole('combobox', { name: /^Model/ }).click();
+	const models = page.getByRole('listbox');
+	await expect(models).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(models).toBeHidden();
+	await expect(dialog).toBeVisible();
+	await dialog.getByRole('radio', { name: 'Choose languages' }).check();
+	const box = dialog.getByRole('searchbox', { name: 'Type to find a language' });
+	const list = page.locator(`[id="${await box.getAttribute('aria-controls')}"]`);
+	await box.focus();
+	await expect(list).toBeVisible();
+
+	// The open list closes alone; the dialog stays.
+	await page.keyboard.press('Escape');
+	await expect(list).toBeHidden();
+	await expect(dialog).toBeVisible();
+	// A second Escape closes the dialog, and opened again it gives back what was typed.
+	await page.keyboard.press('Escape');
+	await expect(dialog).toBeHidden();
+	await (await useText(page)).getByRole('button', { name: /Analyse this interview/ }).click();
+	await expect(question).toHaveValue('How women in crafts learn their trade.');
+	await dialog.locator('details.more summary').click();
+	await expect(themes).toHaveValue('Savings groups');
+	await dialog.getByRole('button', { name: 'Analyse', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const created = await page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
+	expect(created?.setups[0].options.question).toBe('How women in crafts learn their trade.');
+});
+
 test('the researcher’s own themes wait under More choices and go with the job', async ({
 	page
 }) => {

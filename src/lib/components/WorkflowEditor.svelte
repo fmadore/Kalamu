@@ -17,7 +17,7 @@
 	import { languageLabel, offeredLanguages } from '#lib/languages.js';
 	import { MODES, rulesFor, taskOf } from '#lib/newJob.js';
 	import { acceptsPrompt, findModel } from '#lib/newJobModels.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { messages, shownName } from '#lib/i18n/index.js';
 	import {
 		app,
 		go,
@@ -122,8 +122,10 @@
 				);
 			}
 			if (found) {
-				workflow = found;
-				saved = JSON.stringify(found);
+				// A name Kalamu wrote (an example's, made in another language) is shown, and
+				// saved if the workflow is, in the interface language.
+				workflow = { ...found, name: shownName(found.name) };
+				saved = JSON.stringify(workflow);
 			}
 		} catch (e) {
 			error = describeError(e, m);
@@ -183,7 +185,7 @@
 
 	function inputLabel(input: StepInput): string {
 		if (input.kind === 'sources') return w.readsFiles;
-		return w.readsStep(input.step + 1, workflow.steps[input.step]?.pipeline.name ?? '');
+		return w.readsStep(input.step + 1, shownName(workflow.steps[input.step]?.pipeline.name ?? ''));
 	}
 
 	function setInput(index: number, value: string) {
@@ -305,7 +307,7 @@
 					<div class="head">
 						<span class="what">
 							<Icon name={step.pipeline.task} size={16} />
-							<strong>{step.pipeline.name}</strong>
+							<strong>{shownName(step.pipeline.name)}</strong>
 							<span class="muted">{m.task[step.pipeline.task]}</span>
 						</span>
 						<span class="moves">

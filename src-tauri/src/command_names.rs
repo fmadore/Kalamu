@@ -21,6 +21,7 @@ pub const COMMANDS: &[&str] = &[
     "task_rules",
     "newer_release",
     "clear_unused_results",
+    "unused_results",
     "key_status",
     "set_api_key",
     "clear_api_key",

@@ -404,7 +404,7 @@ async fn run(
         output: OutputSettings {
             formats: plan.formats,
             destination: OutputDestination::Folder(folder.to_string_lossy().into_owned()),
-            options: Default::default(),
+            ..Default::default()
         },
     })?;
     let mut events = engine.subscribe();

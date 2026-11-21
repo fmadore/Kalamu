@@ -108,6 +108,9 @@ export function apparatus(
 	for (const witness of witnesses) {
 		for (const v of variants(witness.spans)) {
 			const [start, end] = withoutSpace(base, v.start, v.end);
+			// Space against other space (a line break for a blank line, two spaces for one) is
+			// no difference a reader sees: nothing on either side once the space is set aside.
+			if (start === end && v.text === '') continue;
 			const key = `${start}:${end}`;
 			const entry = byPlace.get(key) ?? {
 				id: 0,
@@ -170,6 +173,22 @@ export function lines(base: string, entries: Entry[]): Line[] {
 		offset = lineEnd + 1;
 	});
 	return out;
+}
+
+/**
+ * A line a model wrote as a Markdown heading ("# The Daily Nebraskan", as Mistral OCR writes a
+ * page's titles): its marks, to be hidden on the screen, and the rest of the line, to be set as
+ * a heading. The stored text keeps the marks; a line whose marks a difference runs into is left
+ * as it is.
+ */
+export function headingOf(line: Line): { mark: string; parts: Line['parts'] } | null {
+	const first = line.parts[0];
+	if (!first || first.entry !== null) return null;
+	const mark = /^#{1,6}[ \t]+/.exec(first.text)?.[0];
+	const words = line.parts.map((p) => p.text).join('');
+	if (!mark || words.trim().length <= mark.trim().length) return null;
+	const rest = first.text.slice(mark.length);
+	return { mark, parts: [...(rest ? [{ text: rest, entry: null }] : []), ...line.parts.slice(1)] };
 }
 
 /** Whether a line number is printed in the margin: every fifth line and every line with a variant. */

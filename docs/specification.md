@@ -751,7 +751,11 @@ results together.
   reference for all of them, a correction before a text reviewed as it stands: each set-up's
   error rates are given side by side; without one, the highlighted differences show where
   they disagree.
-- **Every version is kept**, with the set-up in the file name.
+- **Every version is kept**, with the set-up in the file name. So is a later job of one
+  set-up whose plain names another job still kept writes for one of its sources: its files take
+  its set-up's label, as a comparison's do, while the first job keeps its plain names. This is
+  settled once, from the jobs kept (never from a file being there), when the job is recorded,
+  and kept with it (`OutputSettings::labelled`), so a resume or a new export never renames.
 - **Built on the cache.** Adding a third model to an existing comparison only runs the new one.
 
 ## Progress
@@ -819,7 +823,7 @@ analysed, compared. A **project** keeps it together
   order, the one given pressed and taken off when pressed again; the documents chosen can also
   be **kept or set aside** in one click from the selection bar: the researcher's decision is one
   of two tags, *Kept* or *Set aside* in the interface's language, the other taken off, so the
-  model's answer is never changed. *Export this table* writes that analysis as one table, an Excel workbook and CSV:
+  model's answer is never changed. *Export the whole table* writes that analysis as one table, an Excel workbook and CSV:
   one row per document it read, its title and file, each field under the label the job froze
   (passages with where each stands), then the document's tags
   ([decision](decisions/2026-11-20-research-question-screening.md),

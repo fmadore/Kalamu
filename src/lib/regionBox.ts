@@ -129,3 +129,18 @@ export function sameBox(a: Box, b: Box): boolean {
 	const near = (p: number, q: number) => Math.abs(p - q) < 1e-6;
 	return near(a.x, b.x) && near(a.y, b.y) && near(a.width, b.width) && near(a.height, b.height);
 }
+
+/** A stretch of the window from top to bottom, in pixels. */
+export interface Span {
+	top: number;
+	bottom: number;
+}
+
+/**
+ * Whether the card that describes a region, at its place under the pane's bar, would cover the
+ * region on the screen (with a little room around it): it then goes to the foot of the scan
+ * instead, so the box it speaks of stays in sight.
+ */
+export function noteCovers(region: Span, note: Span, room = 8): boolean {
+	return region.top < note.bottom + room && region.bottom > note.top - room;
+}

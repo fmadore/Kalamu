@@ -16,6 +16,7 @@ use super::*;
 
 mod failures;
 mod paths;
+mod statuses;
 
 /// A secret placed everywhere the store could hold one outside the project: none of it may
 /// reach the file.

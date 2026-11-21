@@ -5,7 +5,7 @@
 	import Icon from './Icon.svelte';
 	import type { JobStep } from '#lib/bindings/JobStep.js';
 	import { Action } from '#lib/action.svelte.js';
-	import { messages } from '#lib/i18n/index.js';
+	import { messages, shownName } from '#lib/i18n/index.js';
 	import { app, go, refreshJobs, refreshWaiting } from '#lib/state.svelte.js';
 	import { api } from '#lib/tauri.js';
 
@@ -38,7 +38,7 @@
 		found
 			? found.view.run.steps
 					.filter((s) => s.input.kind === 'step' && s.input.step === found!.step)
-					.map((s) => s.name)
+					.map((s) => shownName(s.name))
 			: []
 	);
 
@@ -54,7 +54,7 @@
 	<div class="step-banner" class:waits role="status">
 		<Icon name="workflow" size={16} />
 		<p>
-			<strong>{w.banner.step(found.step + 1, run.steps.length, run.name)}</strong>
+			<strong>{w.banner.step(found.step + 1, run.steps.length, shownName(run.name))}</strong>
 			{#if where === 'review'}
 				{w.banner.review(next.join(', '))}
 			{:else if where === 'attention'}

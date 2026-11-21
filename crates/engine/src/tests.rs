@@ -65,6 +65,8 @@ struct Fake {
     cut_by_filter: std::sync::atomic::AtomicBool,
     /// Multi-page answers stop at the output limit.
     cut_groups: std::sync::atomic::AtomicBool,
+    /// Analyses answer every list empty.
+    empty_lists: std::sync::atomic::AtomicBool,
 }
 
 impl Fake {
@@ -79,6 +81,7 @@ impl Fake {
             unmarked: std::sync::atomic::AtomicU32::new(0),
             cut_groups: std::sync::atomic::AtomicBool::new(false),
             cut_by_filter: std::sync::atomic::AtomicBool::new(false),
+            empty_lists: std::sync::atomic::AtomicBool::new(false),
         })
     }
 
@@ -142,12 +145,14 @@ impl Provider for Fake {
             } else {
                 assert!(bytes.starts_with(b"%PDF"), "a document arrives as a PDF");
             }
+            let empty = self.empty_lists.load(Ordering::SeqCst);
             let fields: Vec<FieldAnswer> = schema
                 .fields
                 .iter()
                 .map(|f| FieldAnswer {
                     key: f.key.clone(),
                     value: match &f.kind {
+                        FieldKind::List { .. } if empty => FieldValue::List(Vec::new()),
                         FieldKind::List { .. } => FieldValue::List(vec!["Bamako".into()]),
                         _ => FieldValue::Text(format!("{} answer", request.model)),
                     },
@@ -157,6 +162,11 @@ impl Provider for Fake {
             return Ok(ProcessOutput {
                 text: schema.render(&fields),
                 fields,
+                usage: Usage {
+                    input_tokens: 1000,
+                    output_tokens: 100,
+                    ..Usage::default()
+                },
                 ..ProcessOutput::default()
             });
         }
@@ -912,7 +922,12 @@ async fn a_page_that_keeps_failing_does_not_keep_the_document_from_disk() {
     f.fake.fail(2, vec![ProviderError::blocked("refused")]);
     let job = f.new_job(vec![source], &["fake-model"]);
     assert_eq!(f.run(job.id).await, JobStatus::CompletedWithErrors);
-    let read = |name: &str| std::fs::read_to_string(f.dir.path().join(name)).unwrap_or_default();
+    let read = |name: &str| {
+        std::fs::read_to_string(f.dir.path().join(name))
+            .unwrap_or_default()
+            .trim()
+            .to_string()
+    };
     let txt = read("bulletin.txt");
     assert!(txt.contains("fake-model page 1") && txt.contains("fake-model page 3"));
     assert!(
@@ -1347,6 +1362,196 @@ async fn an_analysis_reads_each_document_once_and_corrections_replace_its_answer
         "the model's answers are kept under the correction"
     );
     assert!(view.corrected_fields.is_some());
+}
+
+/// An analysis whose every field comes back empty for a long text is not kept as a success:
+/// asked again as any broken answer is, billed, and the piece fails with a reason the
+/// researcher can read. A short text may rightly name nobody, and its empty answer is kept.
+#[tokio::test]
+async fn every_field_empty_for_a_long_text_fails_the_piece_and_a_short_text_passes() {
+    let f = fixture();
+    f.fake.empty_lists.store(true, Ordering::SeqCst);
+    let analyse = |name: &str, words: usize| {
+        let path = f.dir.path().join(name);
+        std::fs::write(&path, "word ".repeat(words)).unwrap_or_else(|_| panic!("write"));
+        let source = kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"));
+        f.engine
+            .create_job(NewJob {
+                name: "Names".into(),
+                task: Task::Analysis,
+                sources: vec![source],
+                setups: vec![SetupRequest {
+                    provider: ProviderId::new("fake"),
+                    model: "fake-model".into(),
+                    preset_id: Some("analysis.entities".into()),
+                    label: None,
+                    options: Default::default(),
+                    merge: None,
+                }],
+                settings: Default::default(),
+                output: OutputSettings {
+                    formats: vec![ExportFormat::Txt],
+                    ..Default::default()
+                },
+            })
+            .unwrap_or_else(|e| panic!("{e}"))
+    };
+
+    let long = analyse("issue.txt", 4_800);
+    assert_eq!(f.run(long.id).await, JobStatus::CompletedWithErrors);
+    assert_eq!(f.fake.calls(), 3, "asked again up to the attempts allowed");
+    let pieces = f.store.pieces(long.id).unwrap_or_default();
+    let error = pieces[0].error.clone().unwrap_or_default();
+    assert!(error.contains("left every field empty"), "{error}");
+    assert!(error.contains("4800 words"), "{error}");
+    // Every refused answer was billed and is charged to the piece.
+    assert_eq!(f.store.charges(long.id).unwrap_or_default().len(), 3);
+
+    let short = analyse("notice.txt", 200);
+    assert_eq!(f.run(short.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), 4);
+}
+
+/// The estimates the 1.10.0 test pass found far too low. Screening ten corrected texts with
+/// Gemini 4 Hydrogen was estimated at about $0.018 and billed $0.20: each document is answered
+/// in a call of its own, with the instructions and the model's thinking, and its text is
+/// counted as text, not as pages. A newspaper's pages (the newspaper prompt) were estimated at
+/// a third of what they were billed: their text and thinking are counted as a dense page's.
+#[test]
+fn screening_is_priced_document_by_document_and_newspaper_pages_as_dense() {
+    let f = fixture();
+    let hydrogen = |preset: &str| SetupRequest {
+        provider: ProviderId::new("gemini"),
+        model: "gemini-4-hydrogen".into(),
+        preset_id: Some(preset.into()),
+        label: None,
+        options: Default::default(),
+        merge: None,
+    };
+    let text = |name: &str, chars: usize| {
+        let path = f.dir.path().join(name);
+        std::fs::write(&path, "word ".repeat(chars / 5)).unwrap_or_else(|_| panic!("write"));
+        kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"))
+    };
+    let mut issues: Vec<SourceFile> = (1..=9)
+        .map(|n| text(&format!("issue-{n}.txt"), 28_800))
+        .collect();
+    issues.push(text("letter.txt", 1_500));
+    let screening = f.engine.estimate(&EstimateRequest {
+        task: Task::Analysis,
+        sources: issues.clone(),
+        setups: vec![hydrogen("analysis.screening")],
+        sample_pages: None,
+    });
+    let usd = screening.total_usd.unwrap_or_default();
+    assert!((0.17..0.26).contains(&usd), "screening: ${usd:.3}");
+    // One document of them costs about a tenth: each is priced alone, not the set as one.
+    let one = f
+        .engine
+        .estimate(&EstimateRequest {
+            task: Task::Analysis,
+            sources: issues[..1].to_vec(),
+            setups: vec![hydrogen("analysis.screening")],
+            sample_pages: None,
+        })
+        .total_usd
+        .unwrap_or_default();
+    assert!(one > usd / 11.0 && one < usd / 8.0, "{one} against {usd}");
+
+    // 36 pages read with the newspaper prompt, billed $1.21; with the printed page's, far less.
+    let pdf = f.pdf("nebraskan.pdf", 36);
+    let pages = |preset: &str| {
+        f.engine
+            .estimate(&EstimateRequest {
+                task: Task::TextExtraction,
+                sources: vec![pdf.clone()],
+                setups: vec![hydrogen(preset)],
+                sample_pages: None,
+            })
+            .total_usd
+            .unwrap_or_default()
+    };
+    let newspaper = pages("text_extraction.newspaper");
+    assert!(
+        (1.1..1.6).contains(&newspaper),
+        "newspaper: ${newspaper:.2}"
+    );
+    assert!(pages("text_extraction.printed") < newspaper / 2.5);
+}
+
+/// Two jobs on one file never write over each other's files (a Tesseract job then a
+/// LightOnOCR-3 job in the 1.10.0 test pass): the first keeps its plain names, a later job of
+/// one set-up takes its label as a comparison does. Settled when the job is recorded, from the
+/// jobs kept rather than from the files there, and kept through a resume and a new export.
+#[tokio::test]
+async fn a_second_job_on_a_file_takes_its_label_and_the_first_keeps_its_names() {
+    let f = fixture();
+    let source = f.pdf("letters.pdf", 1);
+    // The researcher's own file of the plain name claims nothing.
+    std::fs::write(f.dir.path().join("letters.md"), "my notes").unwrap_or_else(|_| panic!());
+    let first = f.new_job(vec![source.clone()], &["tesseract-like"]);
+    assert!(!first.output.labelled);
+    // Recorded before the first has written anything: the first still keeps the names.
+    let second = f.new_job(vec![source.clone()], &["lighton-like"]);
+    assert!(second.output.labelled);
+    assert!(
+        f.store.job(second.id).is_ok_and(|j| j.output.labelled),
+        "kept with the job"
+    );
+
+    assert_eq!(f.run(first.id).await, JobStatus::Completed);
+    // The first job deleted, the second keeps the names it was given: a resume or a new
+    // export never renames its files.
+    f.store
+        .delete_job(first.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(f.run(second.id).await, JobStatus::Completed);
+    let read = |name: &str| {
+        std::fs::read_to_string(f.dir.path().join(name))
+            .unwrap_or_default()
+            .trim()
+            .to_string()
+    };
+    assert_eq!(read("letters.txt"), "tesseract-like page 1");
+    assert_eq!(read("letters.lighton-like.txt"), "lighton-like page 1");
+    assert!(
+        f.dir
+            .path()
+            .join("letters.lighton-like.provenance.json")
+            .is_file()
+    );
+    assert_eq!(read("letters.md"), "my notes");
+    let written = f
+        .engine
+        .write_outputs(
+            &f.store.job(second.id).unwrap_or_else(|e| panic!("{e}")),
+            second.setups[0].id,
+            source.id,
+        )
+        .unwrap_or_default();
+    assert!(
+        written.iter().all(|p| p.contains("letters.lighton-like.")),
+        "{written:?}"
+    );
+
+    // With no other job kept, a new job takes the plain names again.
+    f.store
+        .delete_job(second.id)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let third = f.new_job(vec![source], &["tesseract-like"]);
+    assert!(!third.output.labelled);
+}
+
+/// A job recorded before its files could carry a label reads as it was: plain names.
+#[test]
+fn a_job_recorded_before_the_label_keeps_its_plain_names() {
+    let settings: OutputSettings =
+        serde_json::from_str(r#"{"formats":["txt"],"destination":{"kind":"beside_sources"}}"#)
+            .unwrap_or_else(|e| panic!("{e}"));
+    assert!(!settings.labelled);
+    // And a job that is not labelled writes the field as before: not at all.
+    let written = serde_json::to_value(&settings).unwrap_or_default();
+    assert!(written.get("labelled").is_none(), "{written}");
 }
 
 #[tokio::test]

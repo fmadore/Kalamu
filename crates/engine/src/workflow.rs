@@ -235,7 +235,11 @@ impl Engine {
                     }
                 }
             };
-            let job = self.step_job(&run, step, sources);
+            let mut job = self.step_job(&run, step, sources);
+            if let Err(e) = self.settle_labels(&mut job, None) {
+                changed |= self.step_failed(&run, i, &e)?;
+                continue;
+            }
             let progress = StepProgress {
                 job_id: Some(job.id),
                 error: None,

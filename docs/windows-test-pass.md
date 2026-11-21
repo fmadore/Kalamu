@@ -360,7 +360,7 @@ Chrome where you are signed in.
   read, some of them on your question and some not, **Which of these speak of my question?**
   with a cloud model. Note the answers you agree with, the passages against the pages they
   name, and the cost against the estimate. Filter by answer, **Keep** and **Set aside**,
-  **Export this table** and open the `.xlsx`.
+  **Export the whole table** and open the `.xlsx`.
 - [ ] **F19. Photographs taken twice and blurred**: a real batch from a reading room, 100
   photographs or more, added to New job. Note how long the check takes, each pair it calls
   the same page and each photograph it calls blurred against what you see, and what it
@@ -383,6 +383,37 @@ Chrome where you are signed in.
 
 One line per failure, and an issue for each real problem. The first pass's steps are named as
 that pass numbered them, in order within each part; its checklist is in the file's history.
+
+### 21 November 2026, 1.10.0-rc1 on the Snapdragon (Windows 11 ARM64)
+
+The `v1.10.0-rc1` validation build's ARM64 installer, checked against `SHA256SUMS` and
+installed silently through the Windows shell, driven by Claude with computer use on the
+laptop's screen (the external screen sat behind system overlays its screenshots could not
+see). The pass ran on the maintainer's data, then in a second, empty data folder used for the
+Store and guide screenshots. About $2.80 of Gemini, OpenAI, Claude and Mistral calls in all.
+
+**Passed**: A1, A2 (the notification-area icon and toast not seen), A3 and D5 (Resume from the
+keyboard), A5, A8, A9, B3, C3, C4, C8, C13 with Gemini Embedding 2, E2 (the `.xlsx` in French
+Excel), the photograph check on made retakes, the screening dialog, its rows, Keep and export,
+a project file saved and opened on Windows (no key in it), a sample of three pages and its
+page, the interview analysis with the researcher's own themes, the Map, a drawn region, the
+first-send consent for each provider, and every guide link from the app in both languages.
+
+| Part | Step | What happened | Fix |
+| --- | --- | --- | --- |
+| A4 | Clear unused results | Asked without saying how many answers or how much space, then said there was nothing to remove | Counted first: "nothing to remove" without asking, or so many answers of about so much |
+| A6 | WebView2 missing | Tauri's own English "Could not find the WebView2 Runtime" came first; Kalamu's message never showed | WebView2 checked before Tauri starts, through Kalamu's message |
+| B, C | Estimates | Newspaper pages cost about 3.4 times the estimate; the screening dialog showed $0.018 for $0.20 billed | Thinking and dense pages counted, each document of an analysis priced; the screening dialog's first estimate to try again |
+| C3 | GPT-6.2 Sol | An analysis of a 4,800-word issue came back with every field empty, stored as a success | Refused and asked again, then failed with the reason |
+| C9, C10 | Interview files | No Markdown memo and no quotations `.csv` | Written whatever the usual formats, those added |
+| C | Comparison | A difference of "(no text)" against "(no text)"; the readings popover cut at 1536 × 864 | Blank differences left out; the popover kept inside the pane |
+| F22 | Project file | Its jobs came back "Waiting" with Resume; 7 jobs in the dialog, 6 on the card | Each job's status kept, rc1 files repaired; jobs counted as the card counts them |
+| — | Two jobs, one file | A LightOnOCR job's files replaced a Tesseract job's on the same PDF | A later job adds its model's label to its file names |
+| — | Interface | *Add an existing job* cut on the right; the Undo toast gone in seconds; Escape lost an interview's text; the Map under the window's edge and its points on one another; English prompt and step names in French; *Download in Settings* without the language; Mistral's `#` shown; the region card over its region; *Export this table* exporting every row | Each fixed; the export button says *Export the whole table* |
+
+**Not tried**: A6 again after its fix, A7, A10 in full, B1, B2, B4–B10, B12–B15 in full, C1,
+C2, C5–C7, C11, C12, C14, Part D, E1, E3, E4, and Part F except F20 and F22 in part. LightOnOCR
+took over four minutes a page: it runs on the processor on a Snapdragon by design.
 
 ### 17 November 2026, 1.8.0-rc1 on the Snapdragon (Windows 11 ARM64)
 

@@ -63,6 +63,7 @@ describe('glossary', () => {
 		}
 		const keys = (mac: boolean) => keyboard(en, mac).flatMap((g) => g.rows.flatMap((r) => r.keys));
 		expect(keys(false)).toContain('Ctrl N');
+		expect(keys(false)).toContain('Ctrl Z');
 		expect(keys(false)).toContain('Alt ←');
 		expect(keys(false)).not.toContain('⌘[');
 		expect(keys(true)).toContain('⌘N');

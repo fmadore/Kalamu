@@ -6,7 +6,31 @@ import type { EstimateRow } from './bindings/EstimateRow.js';
 import type { TextTooLong } from './bindings/TextTooLong.js';
 import { describeError } from './errors.js';
 import { en, fr } from './i18n/index.js';
-import { tooLongOf } from './interviewStart.svelte.js';
+import { interviewFormats, tooLongOf } from './interviewStart.svelte.js';
+
+describe('the files an interview analysis writes', () => {
+	it('are the memo, the JSON file and the table of quotations, as the release notes promise', () => {
+		const analysis = ['txt', 'markdown', 'docx', 'json', 'csv', 'xlsx'] as const;
+		expect(interviewFormats([...analysis])).toEqual(['markdown', 'json', 'csv']);
+	});
+
+	it('keep to what the task can write', () => {
+		expect(interviewFormats(['txt', 'json'])).toEqual(['json']);
+		expect(interviewFormats(['txt', 'docx'])).toEqual(['txt']);
+		expect(interviewFormats([])).toEqual([]);
+	});
+
+	it("add the researcher's usual formats the task can write, once each", () => {
+		const analysis = ['txt', 'markdown', 'docx', 'json', 'csv', 'xlsx'] as const;
+		expect(interviewFormats([...analysis], ['txt', 'docx', 'json'])).toEqual([
+			'markdown',
+			'json',
+			'csv',
+			'txt',
+			'docx'
+		]);
+	});
+});
 
 const catalog = JSON.parse(readFileSync('crates/catalog/catalog.json', 'utf8')) as Catalog;
 

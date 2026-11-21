@@ -22,6 +22,8 @@ sombre, ou le lecteur pour un enregistrement. Le texte est à droite.
   sur un Mac).
 - Quand le modèle a situé son texte sur la page (Tesseract, Mistral OCR, LightOnOCR), vous
   pouvez afficher les zones sur le scan et en choisir une pour retrouver ses mots dans le texte.
+- Un titre qu’un modèle a écrit comme un titre Markdown (Mistral OCR écrit « # The Daily
+  Nebraskan ») s’affiche en gras sans son `#` ; le texte et les fichiers gardent ces marques.
 
 Tous les raccourcis sont listés dans le **Glossaire**, sous *Clavier*, tels qu’ils s’écrivent
 sur votre système.

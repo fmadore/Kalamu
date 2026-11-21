@@ -221,7 +221,8 @@ impl Engine {
         Ok(setups)
     }
 
-    /// Records a new job with set-ups already frozen.
+    /// Records a new job with set-ups already frozen, its file names settled against the jobs
+    /// kept ([`Engine::settle_labels`]).
     pub(crate) fn insert_job(
         &self,
         name: String,
@@ -231,7 +232,24 @@ impl Engine {
         settings: JobSettings,
         output: OutputSettings,
     ) -> Result<Job, EngineError> {
-        let job = build_job(name, task, sources, setups, settings, output);
+        self.insert_job_continuing(name, task, sources, setups, settings, output, None)
+    }
+
+    /// [`Engine::insert_job`] for a job that carries on `continues` (the rest of a sample),
+    /// whose file names it may take over.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn insert_job_continuing(
+        &self,
+        name: String,
+        task: Task,
+        sources: Vec<SourceFile>,
+        setups: Vec<Setup>,
+        settings: JobSettings,
+        output: OutputSettings,
+        continues: Option<JobId>,
+    ) -> Result<Job, EngineError> {
+        let mut job = build_job(name, task, sources, setups, settings, output);
+        self.settle_labels(&mut job, continues)?;
         self.store.create_job(&job)?;
         Ok(job)
     }

@@ -618,7 +618,9 @@ export const fr: Messages = {
 		anyAnswer: 'Toutes les réponses',
 		answerCount: (answer: string, n: number) => `${answer} (${n})`,
 		group: (field: string, job: string) => `${field} · ${job}`,
-		exportTable: 'Exporter ce tableau',
+		exportTable: 'Exporter tout le tableau',
+		exportTableHint:
+			'Tous les documents à qui la question a été posée, quelle que soit leur réponse, en tableur et en CSV.',
 		exported: 'Tableau exporté, en tableur et en CSV.',
 		keep: 'Garder',
 		setAside: 'Écarter',
@@ -2804,6 +2806,7 @@ export const fr: Messages = {
 		embeddingDescription:
 			'Le modèle de Google qui rapproche les textes de sens voisin, pour les textes seulement, dans plus d’une centaine de langues.',
 		addLanguageData: 'Télécharger une langue pour Tesseract',
+		askedByNewJob: 'Nouveau traitement a besoin de cette langue. Téléchargez-la ici.',
 		findLanguageData: 'Chercher une langue par son nom',
 		oneDownload:
 			'Un téléchargement à la fois : le suivant pourra commencer une fois celui-ci terminé.',
@@ -2883,7 +2886,19 @@ export const fr: Messages = {
 				? 'Aucune réponse inutilisée à supprimer.'
 				: `${answers} ${count === 1 ? 'réponse supprimée' : 'réponses supprimées'}, ${size} libérés.`,
 		setAside: (path: string) =>
-			`Vos paramètres n’ont pas pu être lus : Kalamu a démarré avec ses réglages par défaut. L’ancien fichier est conservé sous ${path}.`
+			`Vos paramètres n’ont pas pu être lus : Kalamu a démarré avec ses réglages par défaut. L’ancien fichier est conservé sous ${path}.`,
+		clearUnusedNothing:
+			'Rien à supprimer : chaque réponse conservée appartient à un traitement que vous avez gardé.',
+		clearUnusedAsk: (count: number, answers: string, bytes: number) =>
+			`Supprimer ${answers} ${count === 1 ? 'réponse conservée' : 'réponses conservées'} de traitements supprimés (${
+				bytes < 1e6
+					? 'moins de 1 Mo'
+					: `environ ${
+							bytes >= 1e9
+								? `${new Intl.NumberFormat('fr', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(bytes / 1e9)} Go`
+								: `${Math.round(bytes / 1e6)} Mo`
+						}`
+			}) ? Redemander les mêmes pages serait de nouveau payant.`
 	},
 	report: {
 		link: 'Signaler un problème',
@@ -2915,6 +2930,7 @@ export const fr: Messages = {
 				`Revenir à l’écran d’où vous venez, comme le bouton Précédent de la souris. En relecture, ${pageBack} tourne plutôt à la page précédente.`,
 			escape:
 				'Fermer un menu ou une boîte de dialogue, ou ranger un message d’échec qui a le focus',
+			undo: 'Annuler ce que dit le message en bas de la fenêtre, tant qu’il propose Annuler (hors d’une zone de texte)',
 			start: 'Lancer le traitement',
 			addLinks: 'Ajouter les liens YouTube collés',
 			newLine: 'Commencer une autre ligne de liens',
@@ -3375,7 +3391,7 @@ export const fr: Messages = {
 		'provider.invalid_request': 'Le fournisseur a rejeté la requête.',
 		'provider.other': 'Le fournisseur a envoyé une réponse inattendue.',
 		'provider.invalid_answer':
-			'La réponse du modèle ne correspondait pas aux champs de l’analyse ; Kalamu lui repose la question.',
+			'La réponse du modèle ne donnait pas les champs de l’analyse, même après une nouvelle demande. Réessayez plus tard, ou choisissez un autre modèle.',
 		'provider.cut_off':
 			'La réponse s’est arrêtée à la limite de sortie du modèle avant d’être complète. Envoyez moins de pages par appel, demandez des champs moins nombreux ou plus courts, ou choisissez un modèle capable d’écrire une réponse plus longue.',
 		'provider.cut_off_filter':

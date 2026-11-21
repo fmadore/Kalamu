@@ -249,6 +249,7 @@ describe('localiseFields', () => {
 		const shown = shownSetup(setup);
 		expect(JSON.stringify(setup)).toBe(before);
 		expect(shown.prompt.schema?.fields[1].label).toBe('Tonalité');
+		expect(shown.prompt.preset_name).toBe('Tonalité du document');
 		expect(shown.prompt.text).toBe('sent');
 		expect(localisePrompt({ preset_id: 'analysis.tone' })).toEqual({ preset_id: 'analysis.tone' });
 	});

@@ -9,7 +9,12 @@ export type ProjectFileOpened = { project_id: ProjectId,
 /**
  * Its name here, which takes a date when a project of this computer has the file's.
  */
-name: string, documents: number, jobs: number, 
+name: string, documents: number, 
+/**
+ * The jobs that read the project's documents, as the project's card counts them; the
+ * dictionary's proposal jobs, carried too, read none and are not counted.
+ */
+jobs: number, 
 /**
  * Originals the file carried, now in Kalamu's data folder.
  */

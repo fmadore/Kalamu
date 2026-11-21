@@ -68,7 +68,9 @@ choisissez **Utiliser ce texte dans un nouveau traitement**, puis **Analyser cet
 Une seule case demande **Sur quoi porte votre recherche ?** : une phrase ou deux aident le
 modèle à retenir ce qui compte pour votre travail, et vous pouvez la laisser vide. Cochez
 **Garder ce texte pour mes prochains entretiens** pour le retrouver la fois suivante. Le modèle
-et le coût estimé tiennent sur une ligne ; cliquez sur **Analyser**.
+et le coût estimé tiennent sur une ligne ; cliquez sur **Analyser**. Fermée sans lancer
+l’analyse (avec **Annuler** ou <kbd>Échap</kbd>), la fenêtre garde ce que vous avez écrit
+jusqu’à sa prochaine ouverture, tant que Kalamu reste ouvert.
 
 Sous **Plus de choix**, vous pouvez changer de modèle et saisir **Vos propres thèmes ou votre
 guide d’entretien**, un thème par ligne. Chaque thème de la réponse dit alors s’il vient de
@@ -79,7 +81,10 @@ Kalamu l’indique à côté du coût.
 
 La réponse donne un résumé, des thèmes, des mots-clés et les passages à citer, chacun avec qui
 parle et à quel moment : [Vérifier une analyse](review.md#verifier-une-analyse) explique comment
-la vérifier.
+la vérifier. À côté de la transcription, Kalamu écrit une note en Markdown (chaque citation avec
+qui parle et à quel moment), un fichier JSON et deux tableaux : la réponse dans `.analysis.csv`
+et `.analysis.quotations.csv`, une ligne par citation, avec une colonne qui dit si vous l’avez
+ajoutée. Les formats choisis dans les Paramètres sont écrits aussi.
 
 ### Un registre ou un annuaire en tableau
 

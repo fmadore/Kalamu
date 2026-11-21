@@ -191,6 +191,31 @@ test('New job keeps what was chosen across a visit to Settings', async ({ page }
 	await expect(main.getByRole('combobox', { name: 'Model' })).toHaveText(/Gemini 4 Argon/);
 });
 
+test('a Tesseract language not downloaded is offered at once in Settings', async ({ page }) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main
+		.getByRole('combobox', { name: 'Provider' })
+		.first()
+		.selectOption({ label: 'Tesseract (on this computer)' });
+	const box = main.getByRole('searchbox', { name: 'Type to find a language' });
+	await box.fill('Arabic');
+	await page.keyboard.press('Enter');
+	await expect(main).toContainText('Language data not yet on this computer: Arabic.');
+	await main.getByRole('button', { name: 'Download in Settings' }).click();
+
+	// Settings lists Arabic among the rows, in view, its Download button there, without typing it
+	// again; focused when no other download runs.
+	await expect(main.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+	const asked = main.locator('[data-wanted]');
+	await expect(asked).toHaveCount(1);
+	await expect(asked).toContainText('Arabic');
+	await expect(asked).toContainText('New job needs this language');
+	// (The sample data has another download running, so it waits its turn.)
+	await expect(asked.getByRole('button', { name: 'Download' })).toBeVisible();
+	await expect(asked).toBeInViewport();
+});
+
 test('New job lists models by tier across providers, and remembers it', async ({ page }) => {
 	await open(page, 'new');
 	const main = page.getByRole('main');
@@ -444,6 +469,49 @@ test('the language data box takes the same keys, in Settings', async ({ page }) 
 	await page.keyboard.press('Escape');
 	await expect(list).toBeHidden();
 	await expect(box).toHaveValue('ar');
+});
+
+test('a difference’s readings show whole in a short text pane, wherever its words stand', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 1100, height: 480 });
+	await open(page, 'review');
+	const text = page.getByRole('main').getByRole('region', { name: 'Reading text' });
+	const pane = text.locator('.page');
+	const readings = page.getByRole('dialog', { name: 'Choose the correct reading' });
+	const marks = text.locator('[data-entry]');
+	const count = Math.min(await marks.count(), 6);
+	expect(count).toBeGreaterThan(0);
+	for (let i = 0; i < count; i++) {
+		const mark = marks.nth(i);
+		await mark.scrollIntoViewIfNeeded();
+		await mark.click();
+		await expect(readings).toBeVisible();
+		const [area, box] = [await pane.boundingBox(), await readings.boundingBox()];
+		if (!area || !box) throw new Error('not drawn');
+		const bottom = Math.min(area.y + area.height, 480);
+		expect(box.y, `difference ${i + 1}: top`).toBeGreaterThanOrEqual(area.y - 1);
+		expect(box.y + box.height, `difference ${i + 1}: bottom`).toBeLessThanOrEqual(bottom + 1);
+		await readings.getByRole('button', { name: 'Close' }).click();
+		await expect(readings).toBeHidden();
+	}
+});
+
+test('Add an existing job fits a small window, its buttons in reach', async ({ page }) => {
+	await page.setViewportSize({ width: 560, height: 700 });
+	await open(page, 'project');
+	await page.getByRole('button', { name: 'Add an existing job' }).click();
+	const dialog = page.getByRole('dialog', { name: 'Add an existing job' });
+	const job = dialog.getByRole('combobox').first();
+	const first = await job.locator('option').nth(1).getAttribute('value');
+	await job.selectOption(first ?? '');
+	await expect(dialog.getByRole('table')).toBeVisible();
+	const sideways = await dialog.evaluate((el) => el.scrollWidth - el.clientWidth);
+	expect(sideways).toBeLessThanOrEqual(1);
+	for (const name of ['Cancel', 'Add']) {
+		const button = dialog.getByRole('button', { name, exact: true });
+		await expect(button).toBeInViewport({ ratio: 1 });
+	}
 });
 
 test('a place where a model read nothing says so in plain words, apart from what was read', async ({

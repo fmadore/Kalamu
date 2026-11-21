@@ -94,13 +94,15 @@ impl Engine {
         let mut settings = job.settings.clone();
         settings.sample_pages = None;
         settings.sample_spread = false;
-        self.insert_job(
+        // The whole document's files take over the sample's names, which were a first look.
+        self.insert_job_continuing(
             name,
             job.task,
             job.sources,
             vec![chosen],
             settings,
             job.output,
+            Some(sample),
         )
     }
 

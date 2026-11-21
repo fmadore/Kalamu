@@ -13,6 +13,7 @@
 		nextPoint,
 		panned,
 		placed,
+		spread,
 		zoomed,
 		type Direction,
 		type MapGroup,
@@ -34,17 +35,22 @@
 		onopen: (id: string) => void;
 	} = $props();
 	const m = messages();
+	/** The drawing never shorter than this, in pixels, however little room is left. */
+	const MIN_HEIGHT = 280;
+	/** The room kept under the drawing, in pixels. */
+	const BOTTOM_ROOM = 24;
 
 	let view = $state<MapWindow>({ ...WHOLE_MAP });
 	let svg = $state<SVGSVGElement | null>(null);
 	let hovered = $state<string | null>(null);
 	let focused = $state<string | null>(null);
 	const r = $derived(view.size * 0.016);
+	/** The points as drawn: those that would lie on one another at this zoom set apart in a
+	 * small ring, which closes up as the map is zoomed in (`spread`). */
+	const drawn = $derived(spread(points, r * 2.6));
 	/** The point reached with Tab: the one selected, else the first. */
 	const tabStop = $derived(selected ?? points[0]?.document_id ?? null);
-	const shown = $derived(
-		points.find((p) => p.document_id === (hovered ?? focused ?? null)) ?? null
-	);
+	const shown = $derived(drawn.find((p) => p.document_id === (hovered ?? focused ?? null)) ?? null);
 
 	/** A position on the screen in the map's units. */
 	function toMap(clientX: number, clientY: number): { x: number; y: number } {
@@ -115,7 +121,7 @@
 		const direction = KEYS[e.key];
 		if (direction) {
 			e.preventDefault();
-			const next = nextPoint(points, p, direction);
+			const next = nextPoint(drawn, p, direction);
 			if (next) reach(next);
 		} else if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
@@ -128,6 +134,30 @@
 			zoomBy(0.8, placed(p));
 		}
 	}
+
+	/** The tallest the drawing may be: the room left under its top in the screen that scrolls
+	 * it, as laid out with that screen at its top, so the whole map shows without scrolling. It
+	 * stays square, as wide as it is tall, so a point is where the pointer is. */
+	let tallest = $state<number | null>(null);
+	$effect(() => {
+		if (!svg) return;
+		const drawing = svg;
+		const screen = drawing.closest('main') ?? document.documentElement;
+		const fit = () => {
+			const area = screen.getBoundingClientRect();
+			const top = drawing.getBoundingClientRect().top - area.top + screen.scrollTop;
+			const bottom = Math.min(area.bottom, window.innerHeight) - area.top;
+			tallest = Math.max(MIN_HEIGHT, Math.floor(bottom - top - BOTTOM_ROOM));
+		};
+		fit();
+		const watch = new ResizeObserver(fit);
+		watch.observe(screen);
+		window.addEventListener('resize', fit);
+		return () => {
+			watch.disconnect();
+			window.removeEventListener('resize', fit);
+		};
+	});
 
 	/** Where a title is written beside its point, kept inside the drawing. */
 	const label = $derived.by(() => {
@@ -167,13 +197,15 @@
 		viewBox="{view.x} {view.y} {view.size} {view.size}"
 		role="group"
 		aria-label={m.meaning.map.canvas}
+		style:max-height={tallest === null ? null : `${tallest}px`}
+		style:max-width={tallest === null ? null : `${tallest}px`}
 		onwheel={wheel}
 		onpointerdown={down}
 		onpointermove={move}
 		onpointerup={up}
 		onpointercancel={up}
 	>
-		{#each points as p (p.document_id)}
+		{#each drawn as p (p.document_id)}
 			{@const at = placed(p)}
 			{@const group = groupOf.get(p.document_id)}
 			<g

@@ -276,7 +276,14 @@ impl Engine {
         self.estimated(&ask.provider, &key, |catalog| {
             let m = catalog.model(&ask.provider, &ask.model)?;
             let chars = prompt.text.len() + prompt.user_prompt.len();
-            catalog.estimate(m, TASK, 1, 0.0, chars).usd
+            let work = kalamu_catalog::Workload {
+                pages: 1,
+                documents: 1,
+                prompt_chars: chars,
+                reasoning: planned.setup.options.reasoning.as_deref(),
+                ..Default::default()
+            };
+            catalog.estimate(m, TASK, &work).usd
         })
     }
 

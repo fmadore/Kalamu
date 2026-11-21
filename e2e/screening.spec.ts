@@ -64,6 +64,33 @@ test('the dialog asks one question, leaves out what has no text, and starts the 
 	expect(created?.sources.every((s) => s.kind === 'text' && s.derived_from)).toBe(true);
 });
 
+test('the estimate prices the model the dialog names, and again when it is changed', async ({
+	page
+}) => {
+	const main = await open(page);
+	await main.getByRole('checkbox', { name: 'Select all documents shown' }).check();
+	await page.evaluate(() => (window.__kalamuEstimates = []));
+	await main
+		.getByRole('toolbar')
+		.getByRole('button', { name: 'Which of these speak of my question?' })
+		.click();
+	const dialog = page.getByRole('dialog', {
+		name: 'Which of these documents speak of my question?'
+	});
+	const estimated = () =>
+		page.evaluate(() => (window.__kalamuEstimates ?? []).map((r) => r.setups[0]?.model));
+	await expect(dialog.getByText(/^Model: Gemini 4 Hydrogen/)).toBeVisible();
+	await expect.poll(estimated).not.toEqual([]);
+	// Every estimate asked for so far is the named model's: none for another default first.
+	expect(new Set(await estimated())).toEqual(new Set(['gemini-4-hydrogen']));
+
+	await dialog.locator('details.more summary').click();
+	await dialog.getByRole('combobox', { name: /^Model/ }).click();
+	await page.getByRole('option', { name: /^Gemini 3\.5 Flash-Lite/ }).click();
+	await expect(dialog.getByText(/^Model: Gemini 3\.5 Flash-Lite/)).toBeVisible();
+	await expect.poll(async () => (await estimated()).at(-1)).toBe('gemini-3.5-flash-lite');
+});
+
 test('a document too long for the model even in parts is left out, the others read', async ({
 	page
 }) => {
@@ -105,7 +132,10 @@ test('the table is filtered by an answer, kept or set aside, and exported', asyn
 	await expect(chips.filter({ hasText: 'Set aside' })).toHaveCount(1);
 	await expect(chips.filter({ hasText: 'Kept' })).toHaveCount(0);
 
-	await main.getByRole('button', { name: 'Export this table' }).click();
+	// The filter shows some rows; the export writes them all, as its name and tooltip say.
+	const exportAll = main.getByRole('button', { name: 'Export the whole table' });
+	await expect(exportAll).toHaveAttribute('title', /whatever its answer/);
+	await exportAll.click();
 	await expect(page.getByText('Table exported, as a spreadsheet and as CSV.')).toBeVisible();
 	const exported = await page.evaluate(() => window.__kalamuExportedAnswers);
 	expect(exported?.job).toBe('00000000-0000-0000-0000-0000000000s1');
@@ -113,7 +143,7 @@ test('the table is filtered by an answer, kept or set aside, and exported', asyn
 
 	await filter.selectOption({ label: 'Any answer' });
 	await expect(titles(main)).toHaveCount(4);
-	await expect(main.getByRole('button', { name: 'Export this table' })).toHaveCount(0);
+	await expect(main.getByRole('button', { name: 'Export the whole table' })).toHaveCount(0);
 });
 
 test('each row shows its answer, reason and passages, kept or set aside by keyboard', async ({

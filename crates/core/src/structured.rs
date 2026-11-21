@@ -163,6 +163,44 @@ pub fn finish(
     Ok(output)
 }
 
+/// Words past which a text cannot plausibly give nothing for any field of an analysis that asks
+/// for several: a page of prose names someone, somewhere or something, or says what it is about.
+pub const LONG_TEXT_WORDS: u64 = 500;
+
+/// Refuses, as a broken answer, an analysis's answer that left every one of its fields empty
+/// for a text of `words` words (`None` when what was read is not a text: a scan, a picture),
+/// so that the engine asks again and the piece fails with the reason if no answer passes,
+/// instead of an empty answer kept as a success. GPT-6.2 Sol answered every list empty for a
+/// newspaper issue of 4,800 words in the 1.10.0 test pass, where two other models found dozens
+/// of names.
+///
+/// Kept as it is: an answer to a text of [`LONG_TEXT_WORDS`] or fewer, and an analysis of one
+/// field (a dictionary's merges, a register's rows), for which nothing is a real answer.
+pub fn refuse_empty(
+    output: ProcessOutput,
+    fields: &AnalysisSchema,
+    words: Option<u64>,
+) -> Result<ProcessOutput, ProviderError> {
+    let Some(words) = words.filter(|w| *w > LONG_TEXT_WORDS) else {
+        return Ok(output);
+    };
+    if fields.fields.len() < 2 || !output.fields.iter().all(|a| a.value.is_empty()) {
+        return Ok(output);
+    }
+    Err(ProviderError::InvalidAnswer {
+        reason: format!(
+            "the model left every field empty, though the text runs to about {words} words: it \
+             may not have read it. Try again, or choose another model"
+        ),
+        usage: output.usage,
+    })
+}
+
+/// How many words a text holds, as [`refuse_empty`] counts them.
+pub fn word_count(text: &str) -> u64 {
+    text.split_whitespace().count() as u64
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
@@ -340,6 +378,72 @@ mod tests {
         let other = cut(crate::CutReason::Other);
         assert_eq!(other.code(), "provider.cut_off_other");
         assert_eq!(cut(crate::CutReason::Limit).code(), "provider.cut_off");
+    }
+
+    /// People and places, as the entities analysis asks for them.
+    fn lists(labels: &[&str]) -> AnalysisSchema {
+        let mut schema = AnalysisSchema {
+            fields: labels
+                .iter()
+                .map(|label| Field {
+                    key: String::new(),
+                    label: (*label).into(),
+                    instructions: String::new(),
+                    kind: FieldKind::List { max: Some(30) },
+                    reason: false,
+                })
+                .collect(),
+        };
+        schema.assign_keys();
+        schema
+    }
+
+    fn answered(text: &str, schema: &AnalysisSchema) -> ProcessOutput {
+        finish(
+            ProcessOutput {
+                text: text.into(),
+                usage: crate::Usage {
+                    input_tokens: 7_300,
+                    output_tokens: 40,
+                    ..crate::Usage::default()
+                },
+                ..ProcessOutput::default()
+            },
+            schema,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn every_field_left_empty_for_a_long_text_is_refused_and_billed() {
+        let schema = lists(&["People", "Places"]);
+        let empty = answered(r#"{"people":[],"places":[]}"#, &schema);
+        let err = refuse_empty(empty.clone(), &schema, Some(4_800)).unwrap_err();
+        assert!(matches!(err, ProviderError::InvalidAnswer { .. }), "{err}");
+        // Asked again, as any broken answer is, and billed all the same.
+        assert!(err.is_retryable());
+        assert_eq!(err.billed().map(|u| u.input_tokens), Some(7_300));
+        assert!(err.to_string().contains("4800 words"), "{err}");
+        // Blank items are no answer either.
+        let blank = answered(r#"{"people":[" "],"places":[]}"#, &schema);
+        assert!(refuse_empty(blank, &schema, Some(4_800)).is_err());
+
+        // A short text may name nobody and nowhere; a scan's length is not known.
+        assert!(refuse_empty(empty.clone(), &schema, Some(LONG_TEXT_WORDS)).is_ok());
+        assert!(refuse_empty(empty, &schema, None).is_ok());
+        // One field answered is an answer.
+        let one = answered(r#"{"people":[],"places":["Lincoln"]}"#, &schema);
+        assert!(refuse_empty(one, &schema, Some(4_800)).is_ok());
+        // An analysis of one field (a dictionary's merges) may rightly find nothing.
+        let single = lists(&["Groups"]);
+        let none = answered(r#"{"groups":[]}"#, &single);
+        assert!(refuse_empty(none, &single, Some(40_000)).is_ok());
+    }
+
+    #[test]
+    fn words_are_counted_between_spaces() {
+        assert_eq!(word_count("  The Daily\nNebraskan,\t1911 "), 4);
+        assert_eq!(word_count(""), 0);
     }
 
     #[test]

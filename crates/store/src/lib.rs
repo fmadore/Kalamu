@@ -29,6 +29,12 @@ impl SqliteStore {
         Self::init(conn)
     }
 
+    /// What clearing the unused results ([`JobStore::prune_results`]) would remove: how many,
+    /// and about how much space, so the researcher is told before being asked. Only reads.
+    pub fn unused_results(&self) -> Result<kalamu_core::UnusedResults, StoreError> {
+        jobs::unused_results(self)
+    }
+
     /// A private database in memory, for tests.
     pub fn in_memory() -> Result<Self, StoreError> {
         Self::init(Connection::open_in_memory().map_err(db)?)

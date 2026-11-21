@@ -189,7 +189,10 @@ export const en = {
 		anyAnswer: 'Any answer',
 		answerCount: (answer: string, n: number) => `${answer} (${n})`,
 		group: (field: string, job: string) => `${field} · ${job}`,
-		exportTable: 'Export this table',
+		exportTable: 'Export the whole table',
+		/** What the export holds, whatever answer the table is filtered by. */
+		exportTableHint:
+			'Every document this question was asked of, whatever its answer, as a spreadsheet and as CSV.',
 		exported: 'Table exported, as a spreadsheet and as CSV.',
 		/** The researcher's decision, kept as a tag of the documents. */
 		keep: 'Keep',
@@ -2362,6 +2365,8 @@ export const en = {
 		embeddingDescription:
 			'Google’s model that places texts of like meaning close together, for texts only, in more than a hundred languages.',
 		addLanguageData: 'Download a language for Tesseract',
+		/** Beside a language New job asked for whose data is not downloaded. */
+		askedByNewJob: 'New job needs this language. Download it here.',
 		findLanguageData: 'Find a language by its name',
 		oneDownload: 'One download at a time: the next can start once this one is done.',
 		offlineHint:
@@ -2441,7 +2446,16 @@ export const en = {
 				: `${answers} ${count === 1 ? 'answer' : 'answers'} removed, ${size} freed.`,
 		/** At start-up, when the settings file could not be read and was moved aside. */
 		setAside: (path: string) =>
-			`Your settings could not be read, so Kalamu started with its defaults. The old file is kept as ${path}.`
+			`Your settings could not be read, so Kalamu started with its defaults. The old file is kept as ${path}.`,
+		/** Clear unused results, when counting found none: said without asking. */
+		clearUnusedNothing: 'Nothing to remove: every stored answer belongs to a job you kept.',
+		/** Clear unused results, asked once counted. */
+		clearUnusedAsk: (count: number, answers: string, bytes: number) =>
+			`Remove ${answers} ${count === 1 ? 'answer' : 'answers'} kept from deleted jobs (${
+				bytes < 1e6
+					? 'less than 1 MB'
+					: `about ${bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.round(bytes / 1e6)} MB`}`
+			})? Asking for the same pages again would be paid for again.`
 	},
 	report: {
 		/** Bugs and feedback; also the way Store policy 11.16 asks for to flag harmful output,
@@ -2477,6 +2491,7 @@ export const en = {
 			back: (pageBack: string) =>
 				`Go back to the screen you came from, as the mouse’s back button does. In a review ${pageBack} turns to the previous page instead.`,
 			escape: 'Close a menu or a dialog, or put away a failure message that has the focus',
+			undo: 'Undo what the message at the bottom of the window reports, while it offers Undo (outside a text box)',
 			start: 'Start the job',
 			addLinks: 'Add the YouTube links pasted',
 			newLine: 'Start another line among the links',
@@ -2948,7 +2963,7 @@ export const en = {
 		'provider.invalid_request': 'The provider rejected the request.',
 		'provider.other': 'The provider sent an unexpected response.',
 		'provider.invalid_answer':
-			'The model’s answer did not match the fields of the analysis; Kalamu asks it again.',
+			'The model’s answer did not give the fields of the analysis, even when asked again. Try again later, or choose another model.',
 		'provider.cut_off':
 			'The answer stopped at the model’s output limit before it was complete. Send fewer pages in each call, ask for fewer or shorter fields, or choose a model that can write a longer answer.',
 		'provider.cut_off_filter':

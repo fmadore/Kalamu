@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The filter of a project's documents by what an analysis answered, beside the tag filter,
-	// shown once an analysis answered a choice; while an answer is chosen, *Export this table*
+	// shown once an analysis answered a choice; while an answer is chosen, *Export the whole table*
 	// writes that analysis as one table, every document its question was asked of included.
 	import Icon from './Icon.svelte';
 	import type { ChoiceAnswers } from '#lib/bindings/ChoiceAnswers.js';
@@ -59,8 +59,12 @@
 		{/each}
 	</select>
 	{#if value}
-		<button class="btn ghost sm" disabled={action.busy} onclick={exportAnswers}
-			><Icon name="download" size={14} />{m.screening.exportTable}</button
+		<!-- The whole table, not the rows the filter shows: said in its name and its tooltip. -->
+		<button
+			class="btn ghost sm"
+			disabled={action.busy}
+			title={m.screening.exportTableHint}
+			onclick={exportAnswers}><Icon name="download" size={14} />{m.screening.exportTable}</button
 		>
 	{/if}
 {/if}

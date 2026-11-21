@@ -110,7 +110,8 @@ export function keyboard(m: Messages, mac = isMac): { place: KeyPlace; rows: Key
 					keys: mac ? [back ?? '', alted('←', mac)] : [back ?? ''],
 					does: k.back(alted('←', mac))
 				},
-				{ keys: [m.keys.escape], does: k.escape }
+				{ keys: [m.keys.escape], does: k.escape },
+				{ keys: [shortcut('Z', mac)], does: k.undo }
 			]
 		},
 		{

@@ -231,3 +231,52 @@ export function nextPoint(
 	}
 	return best;
 }
+
+/**
+ * The points as drawn: those closer than `gap` to each other (marks that would lie on one
+ * another at this zoom) set apart in a small ring around where they sit together, in the order
+ * they lie around it, so each can be seen, pointed at and read; any other where it is. The ring
+ * shrinks as the map is zoomed in, `gap` with it, until the points stand at their own places.
+ * A chain of points spread wider than a ring would be is left as it is. Only the drawing moves:
+ * the places stay the model's.
+ */
+export function spread<P extends { document_id: string; x: number; y: number }>(
+	points: P[],
+	gap: number
+): P[] {
+	if (gap <= 0 || points.length < 2) return points;
+	// Points within `gap` of each other, joined into groups.
+	const group = points.map((_, i) => i);
+	const root = (i: number): number => (group[i] === i ? i : (group[i] = root(group[i])));
+	for (let i = 0; i < points.length; i++) {
+		for (let j = i + 1; j < points.length; j++) {
+			if (Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y) < gap) {
+				group[root(j)] = root(i);
+			}
+		}
+	}
+	const members = new Map<number, number[]>();
+	points.forEach((_, i) => members.set(root(i), [...(members.get(root(i)) ?? []), i]));
+	const out = [...points];
+	for (const together of members.values()) {
+		const n = together.length;
+		if (n < 2) continue;
+		const cx = together.reduce((s, i) => s + points[i].x, 0) / n;
+		const cy = together.reduce((s, i) => s + points[i].y, 0) / n;
+		// Neighbours a gap apart round the ring.
+		const ring = gap / (2 * Math.sin(Math.PI / n));
+		const wide = Math.max(...together.map((i) => Math.hypot(points[i].x - cx, points[i].y - cy)));
+		if (wide > ring) continue;
+		const order = [...together].sort(
+			(a, b) =>
+				Math.atan2(points[a].y - cy, points[a].x - cx) -
+					Math.atan2(points[b].y - cy, points[b].x - cx) ||
+				points[a].document_id.localeCompare(points[b].document_id)
+		);
+		order.forEach((i, k) => {
+			const angle = Math.PI / 2 + (2 * Math.PI * k) / n;
+			out[i] = { ...points[i], x: cx + ring * Math.cos(angle), y: cy + ring * Math.sin(angle) };
+		});
+	}
+	return out;
+}

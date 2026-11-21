@@ -153,7 +153,11 @@ impl OpenAi {
             .into_iter()
             .flatten()
         {
-            if item.get("type").and_then(Value::as_str) != Some("message") {
+            // A model may write what it is doing (`phase: commentary`) before its answer
+            // (`final_answer`): only the answer is the page's text or the analysis's JSON.
+            if item.get("type").and_then(Value::as_str) != Some("message")
+                || item.get("phase").and_then(Value::as_str) == Some("commentary")
+            {
                 continue;
             }
             for part in item
@@ -176,14 +180,18 @@ impl OpenAi {
                 }
             }
         }
+        // A refusal is the model declining, whatever text came with it: under a schema that text
+        // is no answer (an analysis's lists left empty), so it is never kept as one.
+        if let Some(r) = refusal {
+            return Err(blocked(r));
+        }
         if text.is_empty() {
-            return Err(match (refusal, incomplete) {
-                (Some(r), _) => blocked(r),
-                (None, Some(reason)) => blocked(format!(
+            return Err(match incomplete {
+                Some(reason) => blocked(format!(
                     "OpenAI stopped before writing any text ({reason}); try again, or choose \
                      another model"
                 )),
-                (None, None) => ProviderError::Other("OpenAI returned no text".into()),
+                None => ProviderError::Other("OpenAI returned no text".into()),
             });
         }
         Ok(ProcessOutput {

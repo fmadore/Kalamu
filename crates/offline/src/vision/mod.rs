@@ -405,6 +405,16 @@ impl Provider for Vision {
                     .host
                     .settle(&placement, request, llama.run(&args, &stop), Work::Page)?;
             inner.record_speed(&placement, recipe.model, run.elapsed.as_secs_f32());
+            // Where each page was read, by model: the graphics processors found for the OCR
+            // models are logged once for all, and LightOnOCR-3 reads on the processor on a
+            // Snapdragon even when GLM-OCR's image encoder has the Adreno through OpenCL.
+            tracing::info!(
+                model = recipe.model,
+                device = placement.kind(),
+                seconds = run.elapsed.as_secs_f32(),
+                tokens = ?run.generated,
+                "offline OCR page read"
+            );
             Ok((run, inner.host.version().to_owned()))
         })
         .await

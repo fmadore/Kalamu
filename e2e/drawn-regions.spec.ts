@@ -77,6 +77,27 @@ test('nothing new is shown until the regions are', async ({ page }) => {
 	await expect(main.getByRole('button', { name: /^Show (text )?regions$/ })).toHaveCount(0);
 });
 
+test('the card of a region drawn at the top of the page leaves the region in sight', async ({
+	page
+}) => {
+	// 1920 × 1080 at 125 %, the size the Store's screenshots are taken at.
+	await page.setViewportSize({ width: 1536, height: 864 });
+	const main = await open(page);
+	await main.getByRole('button', { name: 'Show text regions' }).click();
+	await pageThree(page, main);
+	await main.getByRole('button', { name: 'Draw a region' }).click();
+	await dragOn(page, main, [0.1, 0.02], [0.6, 0.12]);
+	const mine = regionsOn(main).getByRole('button', { name: 'Your region' });
+	await expect(mine).toHaveAttribute('aria-pressed', 'true');
+	const note = page.locator('.region-note');
+	await expect(note).toContainText('Your region');
+	await expect(note).toHaveClass(/foot/);
+	const [a, b] = [await mine.boundingBox(), await note.boundingBox()];
+	if (!a || !b) throw new Error('not drawn');
+	const overlap = a.y < b.y + b.height && a.y + a.height > b.y;
+	expect(overlap).toBe(false);
+});
+
 test('a box drawn with the pointer is kept, with what is written there; a slip keeps nothing', async ({
 	page
 }) => {

@@ -8,6 +8,7 @@ import {
 	keyStep,
 	middleOf,
 	MIN_SIDE,
+	noteCovers,
 	pointIn,
 	sameBox,
 	stepFor
@@ -112,5 +113,18 @@ describe('a box adjusted', () => {
 		const anywhere = middleOf(null);
 		expect(anywhere.x + anywhere.width).toBeLessThanOrEqual(1);
 		expect(sameBox(middleOf({ x: -1, y: -1, width: 3, height: 3 }), middleOf(null))).toBe(true);
+	});
+});
+
+describe('the card of a region chosen', () => {
+	it('moves out of the way of a region it would cover, and stays where it is otherwise', () => {
+		const note = { top: 100, bottom: 260 };
+		// Drawn at the top of the page, under the card.
+		expect(noteCovers({ top: 110, bottom: 180 }, note)).toBe(true);
+		// Just below it, within the room kept around it.
+		expect(noteCovers({ top: 265, bottom: 300 }, note)).toBe(true);
+		// Further down the page, or above it.
+		expect(noteCovers({ top: 400, bottom: 480 }, note)).toBe(false);
+		expect(noteCovers({ top: 20, bottom: 80 }, note)).toBe(false);
 	});
 });

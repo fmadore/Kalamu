@@ -13,6 +13,7 @@ import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import { providerNameOf } from './catalogText.js';
 import { mayStart } from './dialogs.js';
+import { draftOf, dropDraft, keepDraft } from './drafts.js';
 import { describeError } from './errors.js';
 import { messages } from './i18n/index.js';
 import { takesLanguage } from './languages.js';
@@ -40,9 +41,17 @@ export class Screening {
 	);
 	languageMode = $state<'auto' | 'explicit'>('auto');
 	languages = $state<string[]>([]);
-	constructor(again?: Again) {
+	/** Where the question typed waits when the dialog closes without starting (`drafts.ts`):
+	 * one for each project, apart from a question asked again. */
+	readonly #draftKey: string;
+	/** Set once the job is made: the question typed is then spent, and kept no longer. */
+	#started = false;
+	constructor(again?: Again, projectId = '') {
+		this.#draftKey = `screening:${projectId}:${again ? 'again' : 'new'}`;
+		const typed = draftOf<string>(this.#draftKey);
+		if (typed !== null) this.question = typed;
 		if (!again) return;
-		this.question = again.question;
+		this.question = typed ?? again.question;
 		this.draft = {
 			...newDraft(
 				app.catalog!,
@@ -95,6 +104,14 @@ export class Screening {
 			!!this.draft.model &&
 			!this.busy
 	);
+
+	/** Keeps the question typed for the dialog's next opening, as it closes without starting;
+	 * a question left as it opened keeps nothing. */
+	saveDraft(again?: Again): void {
+		if (this.#started) return;
+		const typed = this.question.trim() !== '' && this.question !== (again?.question ?? '');
+		keepDraft(this.#draftKey, typed ? this.question : null);
+	}
 
 	/** Freezes the chosen documents' texts. */
 	async prepare(projectId: string, documents: string[]): Promise<void> {
@@ -149,6 +166,8 @@ export class Screening {
 			const request = $state.snapshot(this.request) as SetupRequest;
 			if (!(await mayStart([request], this.catalog, sources, true))) return false;
 			const job = await api.createJob(this.job(sources));
+			this.#started = true;
+			dropDraft(this.#draftKey);
 			await launch(job.id, project);
 			go({ name: 'jobs', jobId: job.id });
 			return true;

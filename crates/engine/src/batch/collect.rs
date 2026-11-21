@@ -7,9 +7,9 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use kalamu_core::{
-    BATCH_WINDOW_MS, BatchContext, BatchPhase, BatchProgress, BatchRecord, Job, JobId, JobStatus,
-    PieceState, PieceStatus, ProcessOutput, ProviderError, Setup, SourceId, StoredResult,
-    Timestamp,
+    BATCH_WINDOW_MS, BatchContext, BatchPhase, BatchProgress, BatchRecord, InputKind, Job, JobId,
+    JobStatus, PieceState, PieceStatus, ProcessOutput, ProviderError, Setup, SourceId,
+    StoredResult, Timestamp,
 };
 
 use super::{BatchOutcome, waiting};
@@ -173,11 +173,28 @@ impl Engine {
             if state.status != PieceStatus::Submitted {
                 continue;
             }
-            let answer = answers.remove(&item.id).unwrap_or_else(|| {
-                Err(ProviderError::Other(
-                    "the provider returned no answer for this piece".into(),
-                ))
-            });
+            // An analysis that left every field empty for a long text is refused as a single
+            // call's is, its text measured by its source, as the input is long gone.
+            let words = job
+                .sources
+                .iter()
+                .find(|s| s.id == item.source_id && s.kind == InputKind::Text)
+                .map(|s| s.size_bytes / kalamu_catalog::CHARS_PER_WORD);
+            let answer = answers
+                .remove(&item.id)
+                .unwrap_or_else(|| {
+                    Err(ProviderError::Other(
+                        "the provider returned no answer for this piece".into(),
+                    ))
+                })
+                .and_then(|output| {
+                    crate::check::refuse_empty_of(
+                        job.task,
+                        setup.prompt.schema.as_ref(),
+                        words,
+                        output,
+                    )
+                });
             match answer {
                 Ok(output) => {
                     let mut output = crate::piece::finish(job.task, output);

@@ -198,9 +198,21 @@ fn pruning_deletes_only_results_no_piece_refers_to() -> Result<(), StoreError> {
         store.put_result(&result(&key))?;
     }
 
-    // While the job is there its results stay; only the stray one goes.
+    // While the job is there its results stay; only the stray one goes, as counted first.
+    let counted = store.unused_results()?;
+    assert_eq!(counted.results, 1);
+    assert!(counted.bytes > 0, "{counted:?}");
     assert_eq!(store.prune_results()?.results, 1);
     store.delete_job(deleted.id)?;
+    let counted = store.unused_results()?;
+    assert_eq!(counted.results, 1, "the deleted job's own result, counted");
+    assert_eq!(
+        store
+            .cached_result(&CacheKey(keys(&own)))?
+            .map(|r| r.cache_key),
+        Some(keys(&own)),
+        "counting removes nothing"
+    );
     let pruned = store.prune_results()?;
     assert_eq!(pruned.results, 1, "the deleted job's own result");
     assert!(pruned.bytes > 0, "{pruned:?}");
@@ -208,7 +220,11 @@ fn pruning_deletes_only_results_no_piece_refers_to() -> Result<(), StoreError> {
     assert!(store.cached_result(&CacheKey(keys(&done)))?.is_some());
     assert!(store.cached_result(&CacheKey(keys(&waiting)))?.is_some());
 
-    // Nothing left to prune: nothing is deleted again.
+    // Nothing left to prune: nothing is counted or deleted again.
+    assert_eq!(
+        store.unused_results()?,
+        kalamu_core::UnusedResults::default()
+    );
     assert_eq!(store.prune_results()?.results, 0);
     Ok(())
 }

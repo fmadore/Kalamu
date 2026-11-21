@@ -27,6 +27,9 @@ pub(super) struct Selection {
     pub documents: Vec<Document>,
     /// The jobs, each with only the sources the file carries, ready to store.
     pub jobs: Vec<Job>,
+    /// How many of them read the project's documents: the jobs the project's card counts. The
+    /// dictionary's proposal jobs go in the file too, but read no document.
+    pub read_jobs: u32,
     /// `[job, source]` pairs, as JSON, for the tables kept per source.
     pub pairs: String,
     /// The jobs' ids and the snapshots their sources read, as JSON lists.
@@ -87,15 +90,17 @@ pub(super) fn select(conn: &Connection, project: ProjectId) -> Result<Selection,
     let mut jobs = Vec::new();
     let ids: BTreeSet<&String> = kept.keys().chain(whole.iter()).collect();
     for id in ids {
-        let data: Option<String> = conn
-            .query_row("SELECT data FROM jobs WHERE id = ?1", [id], |row| {
-                row.get(0)
+        let row: Option<(String, String)> = conn
+            .query_row("SELECT data, status FROM jobs WHERE id = ?1", [id], |row| {
+                Ok((row.get(0)?, row.get(1)?))
             })
             .optional()
             .map_err(|e| store_err(db(e)))?;
         // A proposal's job deleted since leaves its request without answers: nothing to carry.
-        let Some(data) = data else { continue };
+        let Some((data, status)) = row else { continue };
         let mut job: Job = serde_json::from_str(&data).map_err(|e| store_err(corrupt(e)))?;
+        // The job's status is its column's: the copy in `data` is the one it was created with.
+        job.status = crate::jobs::parse_status(&status).map_err(store_err)?;
         if !whole.contains(id) {
             let sources = kept.get(id).cloned().unwrap_or_default();
             job.sources.retain(|s| sources.contains(&s.id.to_string()));
@@ -110,6 +115,10 @@ pub(super) fn select(conn: &Connection, project: ProjectId) -> Result<Selection,
         jobs.push(job);
     }
 
+    let read_jobs = jobs
+        .iter()
+        .filter(|j| kept.contains_key(&j.id.to_string()))
+        .count() as u32;
     let pairs: Vec<[String; 2]> = jobs
         .iter()
         .flat_map(|j| {
@@ -128,6 +137,7 @@ pub(super) fn select(conn: &Connection, project: ProjectId) -> Result<Selection,
         name,
         documents,
         jobs,
+        read_jobs,
         pairs: json(&pairs),
         job_ids: json(&job_ids),
         snapshot_ids: json(&snapshot_ids),

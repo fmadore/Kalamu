@@ -16,7 +16,7 @@ mod cost;
 mod length;
 mod lineage;
 mod release;
-pub use cost::{CostEstimate, embedding_cost};
+pub use cost::{CostEstimate, Workload, embedding_cost};
 pub use length::{CHARS_PER_TOKEN, CHARS_PER_WORD, TooLong};
 pub use lineage::ModelAlias;
 pub use release::{Release, Version};

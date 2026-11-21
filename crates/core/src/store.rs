@@ -59,6 +59,19 @@ pub struct PrunedResults {
     pub bytes: u64,
 }
 
+/// What clearing the result cache would remove ([`JobStore::prune_results`]), counted before
+/// the researcher is asked.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct UnusedResults {
+    /// Results no job uses any more.
+    #[ts(type = "number")]
+    pub results: u64,
+    /// What their rows hold, in bytes: about the space clearing them gives back.
+    #[ts(type = "number")]
+    pub bytes: u64,
+}
+
 #[derive(Debug, Error)]
 pub enum StoreError {
     #[error("Job not found")]

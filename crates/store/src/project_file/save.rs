@@ -129,7 +129,7 @@ pub(super) fn plan(
         file_name: file_name(&selection.name),
         name: selection.name,
         documents: selection.documents.len() as u32,
-        jobs: selection.jobs.len() as u32,
+        jobs: selection.read_jobs,
         results_bytes,
         originals,
         originals_bytes,
@@ -207,7 +207,7 @@ fn write(
     let manifest = manifest(
         &selection.name,
         selection.documents.len() as u32,
-        selection.jobs.len() as u32,
+        selection.read_jobs,
         with_originals,
         places,
     );

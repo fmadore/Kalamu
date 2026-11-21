@@ -80,6 +80,14 @@ pub struct OutputSettings {
     pub destination: OutputDestination,
     #[serde(default)]
     pub options: ExportOptions,
+    /// The files carry the set-up's label after the source's name, as a comparison's do
+    /// (`issue.lightonocr-3-1b.txt`): when the job was recorded, another job still kept would
+    /// write one of its sources' plain names. Settled once, by the engine, so a job resumed or
+    /// written again keeps its names; absent in jobs made before it, which keep their plain
+    /// names.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub labelled: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]

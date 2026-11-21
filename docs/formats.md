@@ -462,8 +462,10 @@ Kalamu had), holding one project's rows only, and three tables of its own.
   schema higher than the opening Kalamu knows, is refused as made by a newer Kalamu; a lower
   schema is brought up to date on a copy, never in the file.
 - `manifest`: JSON with `format`, `version`, `schema`, `app_version`, `saved_at` (milliseconds
-  since 1970, UTC), `project_name`, `documents`, `jobs` and `with_originals` (whether the
-  original files were chosen; those that could not be carried are listed as not carried).
+  since 1970, UTC), `project_name`, `documents`, `jobs` (those that read its documents, as the
+  project's card counts them: the dictionary's proposal jobs, carried too, are not counted) and
+  `with_originals` (whether the original files were chosen; those that could not be carried are
+  listed as not carried).
 
 **`kalamu_files`**, one row for each file the project's documents and jobs name, each once:
 
@@ -488,7 +490,10 @@ Kalamu had), holding one project's rows only, and three tables of its own.
   collections, documents (title, file, tags, description) and memberships.
 - `jobs`, `document_links` and `preferred_results`: the jobs that read its documents, each with
   only the sources tied to this project's documents (the dictionary's proposal jobs whole), the
-  links to them and the results preferred. A job caught running is written as interrupted.
+  links to them and the results preferred. Each job is written with the status it reached; one
+  caught running is written as interrupted. A file saved by 1.10.0-rc1 holds every job as
+  waiting to start: on opening, a job so marked whose pieces were recorded is given back as
+  finished when every piece was read or failed, as interrupted otherwise.
 - `pieces`, `results`, `corrections`, `speaker_names` and `charges`: those sources' pieces (one
   held in a batch or running written as not yet read), the models' answers they name, as
   stored, the researcher's corrections and review marks, speakers' names and what each call

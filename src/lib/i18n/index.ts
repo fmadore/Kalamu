@@ -4,6 +4,7 @@
 import type { AnalysisSchema } from '../bindings/AnalysisSchema.js';
 import type { Field } from '../bindings/Field.js';
 import shippedFields from './defaultFields.json';
+import shippedNames from './defaultNames.json';
 import { en, type FieldText, type Messages } from './en.js';
 import { fr } from './fr.js';
 
@@ -177,13 +178,59 @@ export function localiseFields<S extends AnalysisSchema | null | undefined>(
 	return { ...schema, fields: shownFields(schema.fields, shipped, texts) };
 }
 
-/** A frozen prompt with its fields as `localiseFields` shows them. */
-export function localisePrompt<P extends { preset_id: string | null; schema?: AnalysisSchema }>(
-	prompt: P
-): P {
-	return prompt.schema
-		? { ...prompt, schema: localiseFields(prompt.preset_id, prompt.schema) }
-		: prompt;
+/** The default prompts' names as the core ships them, in English, by id. */
+const SHIPPED_NAMES = shippedNames as Record<string, string>;
+
+/**
+ * A default prompt's name as a job froze it, for the screen only: in the interface language
+ * when it is, word for word, the default's shipped English name (or its name in another
+ * language Kalamu has); a name the researcher wrote stays as written.
+ */
+export function presetName(presetId: string | null | undefined, name: string): string {
+	if (!presetId) return name;
+	const shipped = SHIPPED_NAMES[presetId];
+	const isDefault =
+		name === shipped || LOCALES.some((l) => CATALOGS[l].presets[presetId]?.name === name);
+	if (!isDefault) return name;
+	return CATALOGS[current].presets[presetId]?.name ?? shipped ?? name;
+}
+
+/** A frozen prompt with its name and fields as `presetName` and `localiseFields` show them. */
+export function localisePrompt<
+	P extends { preset_id: string | null; preset_name?: string; schema?: AnalysisSchema }
+>(prompt: P): P {
+	const named =
+		prompt.preset_name === undefined
+			? prompt
+			: { ...prompt, preset_name: presetName(prompt.preset_id, prompt.preset_name) };
+	return named.schema ? { ...named, schema: localiseFields(named.preset_id, named.schema) } : named;
+}
+
+/**
+ * A workflow's, a run's or a step's name as shown: in the interface language when it is, word
+ * for word, one Kalamu wrote, in any language it has (an example's name or step, as when the
+ * workflow was made from the example in English and is read in French, or a default prompt's
+ * name, which a step added from a prompt takes); any other as written. Never stored.
+ */
+export function shownName(name: string): string {
+	const here = CATALOGS[current];
+	for (const l of LOCALES) {
+		const examples = CATALOGS[l].workflows.examples;
+		for (const [kind, words] of Object.entries(examples) as [
+			keyof typeof examples,
+			(typeof examples)[keyof typeof examples]
+		][]) {
+			if (words.name === name) return here.workflows.examples[kind].name;
+			const at = words.steps.indexOf(name);
+			if (at >= 0) return here.workflows.examples[kind].steps[at] ?? name;
+		}
+	}
+	for (const [id, shipped] of Object.entries(SHIPPED_NAMES)) {
+		if (shipped === name || LOCALES.some((l) => CATALOGS[l].presets[id]?.name === name)) {
+			return here.presets[id]?.name ?? shipped;
+		}
+	}
+	return name;
 }
 
 /** A choice as shown, from the value stored: its label in the interface language for a

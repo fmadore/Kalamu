@@ -209,13 +209,17 @@ async fn a_document_of_images_is_read_in_order_and_a_page_moved_is_not_read_agai
     );
     let pieces = p.store.pieces(again.id).unwrap_or_default();
     assert!(pieces.iter().all(|s| s.status == PieceStatus::Cached));
-    let txt = p.read("Letters 1923.txt");
+    // A second job on the same document: its files carry its set-up's label, the first job's
+    // are kept.
+    assert!(again.output.labelled);
+    let base = format!("Letters 1923.{}", again.setups[0].label);
+    let txt = p.read(&format!("{base}.txt"));
     let at = |file: &SourceFile| txt.find(&answer(file)).unwrap_or(usize::MAX);
     assert!(at(ten) < at(one) && at(one) < at(two), "{txt}");
 
     // provenance.json records the pages in the order read, each with its file and hash.
     let provenance: serde_json::Value =
-        serde_json::from_str(&p.read("Letters 1923.provenance.json"))
+        serde_json::from_str(&p.read(&format!("{base}.provenance.json")))
             .unwrap_or_else(|e| panic!("{e}"));
     let recorded = &provenance["source"]["pages"];
     assert_eq!(recorded[0]["page"], 1);
