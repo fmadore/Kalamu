@@ -45,6 +45,13 @@ pub const PLAYBACK: Playback = Playback::WEBKIT;
 /// What draws the window, named when it cannot be made: the system's own WebKit.
 pub const WEBVIEW: Webview = Webview::WebKit;
 
+/// Why the window cannot be made, asked before Tauri is: never known in advance on macOS, whose
+/// WebKit is part of the system; a window that still cannot be made is told as setup's failures
+/// are.
+pub fn webview_missing() -> Option<String> {
+    None
+}
+
 const ID_QUIT: &str = "app-quit";
 const ID_SETTINGS: &str = "app-settings";
 const ID_REPORT: &str = "help-report";

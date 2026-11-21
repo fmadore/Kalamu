@@ -48,6 +48,13 @@ pub fn run() {
     let (folders, moved) = platform::data_folder();
     // Known now, for a launch that fails before setup has started logging there.
     let logs = platform::log_folder(&folders);
+    // WebView2 missing, said in Kalamu's message before Tauri says it in its own (Windows).
+    if let Some(detail) = platform::webview_missing() {
+        setup::fail_before_setup(
+            &start_failure::StartError::new(start_failure::Cause::Window, detail),
+            logs.as_deref(),
+        );
+    }
     let mut context = tauri::generate_context!();
     context.config_mut().app.app_directories_override = Some(folders);
     let result = tauri::Builder::default()
@@ -83,6 +90,7 @@ pub fn run() {
             commands::settings::task_rules,
             commands::settings::newer_release,
             commands::settings::clear_unused_results,
+            commands::settings::unused_results,
             commands::keys::key_status,
             commands::keys::set_api_key,
             commands::keys::clear_api_key,
