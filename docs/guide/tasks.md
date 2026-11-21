@@ -71,7 +71,10 @@ missing rather than backed with weak quotations. An interview too long for the m
 once is read in parts, then brought together; Kalamu says so beside the cost.
 
 The answer gives a summary, themes, keywords and passages worth quoting, each with who speaks
-and when: [Check an analysis](review.md#check-an-analysis) says how to check it.
+and when: [Check an analysis](review.md#check-an-analysis) says how to check it. Beside the
+transcript, Kalamu writes a Markdown memo (each quotation with its speaker and time), a JSON
+file, and two tables: the answer's `.analysis.csv` and `.analysis.quotations.csv`, one row per
+quotation, with a column saying whether you added it.
 
 ### A register or a directory as a table
 
