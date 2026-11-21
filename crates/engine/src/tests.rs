@@ -1407,6 +1407,73 @@ async fn every_field_empty_for_a_long_text_fails_the_piece_and_a_short_text_pass
     assert_eq!(f.fake.calls(), 4);
 }
 
+/// The estimates the 1.10.0 test pass found far too low. Screening ten corrected texts with
+/// Gemini 4 Hydrogen was estimated at about $0.018 and billed $0.20: each document is answered
+/// in a call of its own, with the instructions and the model's thinking, and its text is
+/// counted as text, not as pages. A newspaper's pages (the newspaper prompt) were estimated at
+/// a third of what they were billed: their text and thinking are counted as a dense page's.
+#[test]
+fn screening_is_priced_document_by_document_and_newspaper_pages_as_dense() {
+    let f = fixture();
+    let hydrogen = |preset: &str| SetupRequest {
+        provider: ProviderId::new("gemini"),
+        model: "gemini-4-hydrogen".into(),
+        preset_id: Some(preset.into()),
+        label: None,
+        options: Default::default(),
+        merge: None,
+    };
+    let text = |name: &str, chars: usize| {
+        let path = f.dir.path().join(name);
+        std::fs::write(&path, "word ".repeat(chars / 5)).unwrap_or_else(|_| panic!("write"));
+        kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"))
+    };
+    let mut issues: Vec<SourceFile> = (1..=9)
+        .map(|n| text(&format!("issue-{n}.txt"), 28_800))
+        .collect();
+    issues.push(text("letter.txt", 1_500));
+    let screening = f.engine.estimate(&EstimateRequest {
+        task: Task::Analysis,
+        sources: issues.clone(),
+        setups: vec![hydrogen("analysis.screening")],
+        sample_pages: None,
+    });
+    let usd = screening.total_usd.unwrap_or_default();
+    assert!((0.17..0.26).contains(&usd), "screening: ${usd:.3}");
+    // One document of them costs about a tenth: each is priced alone, not the set as one.
+    let one = f
+        .engine
+        .estimate(&EstimateRequest {
+            task: Task::Analysis,
+            sources: issues[..1].to_vec(),
+            setups: vec![hydrogen("analysis.screening")],
+            sample_pages: None,
+        })
+        .total_usd
+        .unwrap_or_default();
+    assert!(one > usd / 11.0 && one < usd / 8.0, "{one} against {usd}");
+
+    // 36 pages read with the newspaper prompt, billed $1.21; with the printed page's, far less.
+    let pdf = f.pdf("nebraskan.pdf", 36);
+    let pages = |preset: &str| {
+        f.engine
+            .estimate(&EstimateRequest {
+                task: Task::TextExtraction,
+                sources: vec![pdf.clone()],
+                setups: vec![hydrogen(preset)],
+                sample_pages: None,
+            })
+            .total_usd
+            .unwrap_or_default()
+    };
+    let newspaper = pages("text_extraction.newspaper");
+    assert!(
+        (1.1..1.6).contains(&newspaper),
+        "newspaper: ${newspaper:.2}"
+    );
+    assert!(pages("text_extraction.printed") < newspaper / 2.5);
+}
+
 #[tokio::test]
 async fn a_text_only_model_is_not_sent_the_formats_its_provider_takes() {
     let f = fixture();

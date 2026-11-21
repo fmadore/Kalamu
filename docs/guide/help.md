@@ -41,8 +41,11 @@ See [Working offline](offline.md#how-fast).
 
 ## The cost is higher than I expected
 
-Look at the job's actual usage, and at the model's price in the list. Long handwritten pages
-and analyses with long answers cost more than the estimate's averages. For the next batch:
+Look at the job's actual usage, and at the model's price in the list. The estimate counts what
+a model writes and the thinking it is billed for before writing, at the level chosen under
+*Thinking*, and prices pages read with the *Newspaper or magazine* prompt as pages full of small print.
+Long handwritten pages, unusually dense pages and analyses with long answers can still cost
+more than the estimate's averages. For the next batch:
 a smaller model, or the [cheaper mode](costs.md#three-ways-to-pay-less).
 
 ## Where are my results?

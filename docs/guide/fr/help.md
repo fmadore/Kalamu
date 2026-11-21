@@ -45,9 +45,12 @@ un modèle en ligne. Voir [Travailler hors ligne](offline.md#a-quelle-vitesse).
 
 ## Le coût est plus élevé que prévu
 
-Regardez ce que le traitement a réellement consommé, et le prix du modèle dans la liste. Les
-longues pages manuscrites et les analyses aux longues réponses coûtent plus que les moyennes de
-l’estimation. Pour le lot suivant : un modèle plus petit, ou le
+Regardez ce que le traitement a réellement consommé, et le prix du modèle dans la liste.
+L’estimation compte ce que le modèle écrit et la réflexion qui lui est facturée avant d’écrire,
+au niveau choisi sous *Réflexion*, et compte les pages lues avec la consigne *Journal ou magazine*
+comme des pages pleines de petits caractères. Les longues pages manuscrites, les pages
+particulièrement denses et les analyses aux longues réponses peuvent encore coûter plus que les
+moyennes de l’estimation. Pour le lot suivant : un modèle plus petit, ou le
 [mode moins cher](costs.md#trois-facons-de-payer-moins).
 
 ## Où sont mes résultats ?

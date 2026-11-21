@@ -551,11 +551,11 @@ fn a_records_analysis_is_estimated_page_by_page() {
         .unwrap_or_else(|| panic!("no Hydrogen"));
 
     let directory = estimate("analysis.directory");
-    let expected = catalog.estimate_records(model, 4, instructions("analysis.directory"));
+    let expected = catalog.estimate_records(model, 4, instructions("analysis.directory"), None);
     assert_eq!(directory.rows[0].estimate.usd, expected.usd);
     assert_eq!(directory.total_usd, expected.usd);
     let register = estimate("analysis.register");
-    let expected = catalog.estimate_records(model, 4, instructions("analysis.register"));
+    let expected = catalog.estimate_records(model, 4, instructions("analysis.register"), None);
     assert_eq!(register.rows[0].estimate.usd, expected.usd);
 
     // An analysis answered once per document keeps its own formula, and costs less.
@@ -563,9 +563,12 @@ fn a_records_analysis_is_estimated_page_by_page() {
     let expected = catalog.estimate(
         model,
         Task::Analysis,
-        4,
-        0.0,
-        instructions("analysis.summary_research"),
+        &kalamu_catalog::Workload {
+            pages: 4,
+            documents: 1,
+            prompt_chars: instructions("analysis.summary_research"),
+            ..Default::default()
+        },
     );
     assert_eq!(summary.rows[0].estimate.usd, expected.usd);
     let (Some(rows), Some(once)) = (directory.total_usd, summary.total_usd) else {

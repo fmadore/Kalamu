@@ -132,16 +132,25 @@ fn recommendation_prefers_providers_with_a_key() {
     assert_eq!(model.map(|m| m.provider.as_str()), Some("anthropic"));
 }
 
+/// `n` pages of one document, read at the suggested reasoning level.
+fn pages(n: u32) -> Workload<'static> {
+    Workload {
+        pages: n,
+        documents: 1,
+        ..Workload::default()
+    }
+}
+
 #[test]
 fn estimates_scale_with_pages_and_minutes() {
     let catalog = Catalog::bundled();
     let flash = catalog.model(&ProviderId::new("gemini"), "gemini-3.8-flash");
     let flash = flash.cloned().unwrap_or_else(|| catalog.models[0].clone());
     let ten = catalog
-        .estimate(&flash, Task::TextExtraction, 10, 0.0, 0)
+        .estimate(&flash, Task::TextExtraction, &pages(10))
         .usd;
     let twenty = catalog
-        .estimate(&flash, Task::TextExtraction, 20, 0.0, 0)
+        .estimate(&flash, Task::TextExtraction, &pages(20))
         .usd;
     assert!(matches!((ten, twenty), (Some(a), Some(b)) if (b - 2.0 * a).abs() < 1e-9));
 
@@ -149,7 +158,7 @@ fn estimates_scale_with_pages_and_minutes() {
         .model(&ProviderId::new("mistral"), "mistral-ocr-4-1")
         .cloned();
     if let Some(ocr) = ocr {
-        let usd = catalog.estimate(&ocr, Task::TextExtraction, 5, 0.0, 0).usd;
+        let usd = catalog.estimate(&ocr, Task::TextExtraction, &pages(5)).usd;
         assert!(usd.is_some_and(|u| (u - 0.02).abs() < 1e-9), "{usd:?}");
     }
 }
@@ -183,7 +192,7 @@ fn cached_input_and_batches_are_billed_at_their_own_prices() {
         "{economy:?}"
     );
 
-    let estimate = catalog.estimate(&model, Task::Analysis, 1, 0.0, 0);
+    let estimate = catalog.estimate(&model, Task::Analysis, &pages(1));
     let (Some(usd), Some(economy)) = (estimate.usd, estimate.economy_usd) else {
         panic!("{estimate:?}");
     };
@@ -191,10 +200,136 @@ fn cached_input_and_batches_are_billed_at_their_own_prices() {
     model.pricing.batch_discount = None;
     assert_eq!(
         catalog
-            .estimate(&model, Task::Analysis, 1, 0.0, 0)
+            .estimate(&model, Task::Analysis, &pages(1))
             .economy_usd,
         None
     );
+}
+
+/// What jobs were billed in the 1.10.0 test pass, which the estimates fell far short of on
+/// newspaper pages (about $0.35 for $1.21) and on screening (about $0.018 for $0.20): each is
+/// now met, a little above, with the figures of the job as New job sends them.
+#[test]
+fn estimates_meet_what_the_1_10_test_pass_was_billed() {
+    let catalog = Catalog::bundled();
+    let model = |provider: &str, id: &str| {
+        catalog
+            .model(&ProviderId::new(provider), id)
+            .unwrap_or_else(|| panic!("{id}"))
+    };
+    let (hydrogen, sol) = (
+        model("gemini", "gemini-4-hydrogen"),
+        model("openai", "gpt-6.2-sol"),
+    );
+    let sonnet = model("anthropic", "claude-sonnet-5-5");
+    let usd = |model: &ModelInfo, task: Task, work: Workload<'_>| {
+        catalog
+            .estimate(model, task, &work)
+            .usd
+            .unwrap_or_else(|| panic!("{} has a price", model.id))
+    };
+    let newspaper = |n: u32| Workload {
+        pages: n,
+        documents: 1,
+        prompt_chars: 4_000,
+        dense: true,
+        ..Workload::default()
+    };
+    let within = |estimate: f64, billed: f64, what: &str| {
+        assert!(
+            estimate >= 0.85 * billed && estimate <= 1.3 * billed,
+            "{what}: estimated ${estimate:.3}, billed ${billed:.3}"
+        );
+    };
+
+    // The workflow's first step: 36 newspaper pages read by Gemini 4 Hydrogen.
+    let hydrogen_36 = usd(hydrogen, Task::TextExtraction, newspaper(36));
+    within(hydrogen_36, 1.21, "36 newspaper pages");
+    // The 5 April issue, its 4 pages read by Hydrogen and by GPT-6.2 Sol.
+    let both = usd(hydrogen, Task::TextExtraction, newspaper(4))
+        + usd(sol, Task::TextExtraction, newspaper(4));
+    within(both, 0.31, "4 pages by two models");
+    // A table of contents of a 4-page issue: its pages, and the step that combines them.
+    let contents = usd(
+        hydrogen,
+        Task::Contents,
+        Workload {
+            prompt_chars: 2_400,
+            ..pages(4)
+        },
+    ) + catalog
+        .estimate_merge(hydrogen, 4, 2_200)
+        .usd
+        .unwrap_or_default();
+    within(contents, 0.058, "a table of contents");
+    // A handwritten page of 1755 by Claude Sonnet 5.5.
+    let handwritten = usd(
+        sonnet,
+        Task::TextExtraction,
+        Workload {
+            prompt_chars: 5_000,
+            ..pages(1)
+        },
+    );
+    within(handwritten, 0.021, "a handwritten page");
+    // Screening ten corrected texts with Hydrogen, nine of about 4,800 words (28,800
+    // characters): each document answered in a call of its own, its thinking billed.
+    let screening = usd(
+        hydrogen,
+        Task::Analysis,
+        Workload {
+            text_chars: 9 * 28_800 + 1_500,
+            documents: 10,
+            prompt_chars: 3_000,
+            ..Workload::default()
+        },
+    );
+    within(screening, 0.20, "screening ten documents");
+    // An ordinary page is not priced as a newspaper's.
+    let ordinary = usd(
+        hydrogen,
+        Task::TextExtraction,
+        Workload {
+            dense: false,
+            ..newspaper(36)
+        },
+    );
+    assert!(
+        ordinary < hydrogen_36 / 2.5,
+        "{ordinary} against {hydrogen_36}"
+    );
+}
+
+/// Thinking is billed as output: a higher reasoning level costs more, a model told not to
+/// reason or unable to costs only its answer.
+#[test]
+fn a_higher_reasoning_level_is_priced_higher() {
+    let catalog = Catalog::bundled();
+    let mut model = catalog
+        .model(&ProviderId::new("openai"), "gpt-6.2-sol")
+        .cloned()
+        .unwrap_or_else(|| panic!("no Sol"));
+    let at = |model: &ModelInfo, level: Option<&str>| {
+        catalog
+            .estimate(
+                model,
+                Task::Analysis,
+                &Workload {
+                    reasoning: level,
+                    ..pages(1)
+                },
+            )
+            .usd
+            .unwrap_or_default()
+    };
+    // The suggestion for an analysis is `low`.
+    assert_eq!(at(&model, None), at(&model, Some("low")));
+    assert!(at(&model, Some("high")) > at(&model, Some("medium")));
+    assert!(at(&model, Some("medium")) > at(&model, Some("low")));
+    // 1,100 tokens in at $2 and 700 out at $10, without thinking.
+    model.reasoning = None;
+    let none = at(&model, Some("high"));
+    assert!((none - 0.0092).abs() < 1e-12, "{none}");
 }
 
 /// A records analysis reads each page with the instructions and writes a page of rows for it,
@@ -211,23 +346,32 @@ fn a_records_analysis_is_priced_page_by_page() {
     };
     // 400 characters of instructions are 100 tokens. Each page: 1,100 + 100 tokens in at $2,
     // 1,000 out at $10: $0.0124.
-    let four = catalog.estimate_records(&model, 4, 400);
+    let four = catalog.estimate_records(&model, 4, 400, None);
     let (Some(usd), Some(economy)) = (four.usd, four.economy_usd) else {
         panic!("{four:?}");
     };
     assert!((usd - 4.0 * 0.0124).abs() < 1e-12, "{usd}");
     assert!((economy - usd / 2.0).abs() < 1e-12);
-    let eight = catalog.estimate_records(&model, 8, 400).usd;
+    let eight = catalog.estimate_records(&model, 8, 400, None).usd;
     assert!(eight.is_some_and(|e| (e - 2.0 * usd).abs() < 1e-12));
     // Once per document: 4,400 + 100 tokens in, 1,500 out: $0.024, under half.
-    let once = catalog.estimate(&model, Task::Analysis, 4, 0.0, 400).usd;
+    let once = catalog
+        .estimate(
+            &model,
+            Task::Analysis,
+            &Workload {
+                prompt_chars: 400,
+                ..pages(4)
+            },
+        )
+        .usd;
     assert!(once.is_some_and(|o| (o - 0.024).abs() < 1e-12), "{once:?}");
     // A model priced by the page alone has no token price for rows.
     model.pricing = Pricing {
         per_page: Some(0.001),
         ..Pricing::default()
     };
-    assert_eq!(catalog.estimate_records(&model, 4, 400).usd, None);
+    assert_eq!(catalog.estimate_records(&model, 4, 400, None).usd, None);
 }
 
 /// Gemini 3.5 Transcribe is estimated by the minute, as Google estimates it, but its answer
@@ -240,7 +384,14 @@ fn a_transcriber_billed_by_tokens_is_estimated_by_the_minute() {
         .model(&ProviderId::new("gemini"), "gemini-3.5-transcribe")
         .cloned()
         .unwrap_or_else(|| panic!("no transcribe"));
-    let estimate = catalog.estimate(&model, Task::AudioTranscription, 0, 2.0, 0);
+    let estimate = catalog.estimate(
+        &model,
+        Task::AudioTranscription,
+        &Workload {
+            audio_minutes: 2.0,
+            ..Workload::default()
+        },
+    );
     assert_eq!(estimate.usd, Some(0.01));
     let usage = kalamu_core::Usage {
         input_tokens: 1_308,
