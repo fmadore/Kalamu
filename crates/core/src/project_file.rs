@@ -35,6 +35,8 @@ pub struct ArchivePlaces {
 pub struct ProjectFilePlan {
     pub name: String,
     pub documents: u32,
+    /// The jobs that read the project's documents, as the project's card counts them; the
+    /// dictionary's proposal jobs, carried too, read none and are not counted.
     pub jobs: u32,
     /// About how many bytes the file takes without the originals.
     #[ts(type = "number")]
@@ -80,6 +82,8 @@ pub struct ProjectFileOpened {
     /// Its name here, which takes a date when a project of this computer has the file's.
     pub name: String,
     pub documents: u32,
+    /// The jobs that read the project's documents, as the project's card counts them; the
+    /// dictionary's proposal jobs, carried too, read none and are not counted.
     pub jobs: u32,
     /// Originals the file carried, now in Kalamu's data folder.
     pub originals: u32,
@@ -100,6 +104,8 @@ pub struct Manifest {
     pub saved_at: Timestamp,
     pub project_name: String,
     pub documents: u32,
+    /// The jobs that read the project's documents, as the project's card counts them; the
+    /// dictionary's proposal jobs, carried too, read none and are not counted.
     pub jobs: u32,
     /// Whether the originals were chosen; those not found are listed as not carried.
     pub with_originals: bool,

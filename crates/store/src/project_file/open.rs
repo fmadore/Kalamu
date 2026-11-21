@@ -8,7 +8,8 @@ use std::path::{Path, PathBuf};
 
 use kalamu_core::project_file::{self as pf, ArchivePlaces, Manifest};
 use kalamu_core::{
-    JobId, ProjectFileError, ProjectFileOpened, ProjectFileProgress, ProjectId, Timestamp,
+    JobId, JobStatus, ProjectFileError, ProjectFileOpened, ProjectFileProgress, ProjectId,
+    Timestamp,
 };
 use rusqlite::types::Value;
 use rusqlite::{Connection, ErrorCode, OpenFlags};
@@ -143,7 +144,8 @@ pub(super) fn open(
             project_id,
             name,
             documents: count("documents")?,
-            jobs: count("jobs")?,
+            // The jobs that read its documents, as its card counts them.
+            jobs: count("(SELECT DISTINCT job_id FROM document_links)")?,
             originals,
             with_originals: manifest.with_originals,
             saved_at: manifest.saved_at,
@@ -316,6 +318,7 @@ fn put_rows(
         )
         .map_err(refused)?;
     let name = free_name(&name, manifest.saved_at, &names);
+    let settled = settled_statuses(file, remap)?;
     let now = Timestamp::now().0;
     let tx = conn
         .transaction()
@@ -339,6 +342,14 @@ fn put_rows(
                     }
                 }
             }
+            if *table == "jobs"
+                && let (Some(id), Some(at)) =
+                    (rows::column(columns, "id"), rows::column(columns, "status"))
+                && let Value::Text(id) = &row[id]
+                && let Some(status) = settled.get(id)
+            {
+                row[at] = Value::Text((*status).to_string());
+            }
             if *table == "projects" {
                 for (column, value) in [
                     ("name", Value::Text(name.clone())),
@@ -356,6 +367,50 @@ fn put_rows(
     tx.commit()
         .map_err(|e| ProjectFileError::Store(crate::db(e)))?;
     Ok(name)
+}
+
+/// The status of each job a file saved by 1.10.0-rc1 holds as waiting to start although its
+/// pieces were read, keyed by the job's new identity. That version saved the status a job was
+/// created with rather than the one it reached, so a finished job came back unfinished, with
+/// Resume. A job waiting to start has no pieces yet: one that has them was started, and goes as
+/// finished when every piece was read or failed, as interrupted otherwise.
+fn settled_statuses(
+    file: &Connection,
+    remap: &Remap,
+) -> Result<HashMap<String, &'static str>, ProjectFileError> {
+    let mut stmt = file
+        .prepare(
+            "SELECT j.id, COUNT(*), COALESCE(SUM(p.status IN ('done', 'cached')), 0),
+                    COALESCE(SUM(p.status = 'failed'), 0)
+             FROM jobs j JOIN pieces p ON p.job_id = j.id
+             WHERE j.status = 'pending' GROUP BY j.id",
+        )
+        .map_err(refused)?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, i64>(2)?,
+                row.get::<_, i64>(3)?,
+            ))
+        })
+        .map_err(refused)?;
+    let mut out = HashMap::new();
+    for row in rows {
+        let (old, pieces, read, failed) = row.map_err(refused)?;
+        let status = if read + failed < pieces {
+            JobStatus::Interrupted
+        } else if failed > 0 {
+            JobStatus::CompletedWithErrors
+        } else {
+            JobStatus::Completed
+        };
+        if let Some(new) = remap.ids.get(&old) {
+            out.insert(new.clone(), status.as_str());
+        }
+    }
+    Ok(out)
 }
 
 /// A row the store refuses (one that names what the file does not hold) means a damaged file;
