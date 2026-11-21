@@ -119,6 +119,33 @@ test('the map’s list and points are reached by keyboard, each showing its near
 	await expect(page.getByRole('main').getByRole('heading', { name: title })).toBeVisible();
 });
 
+test('the map fits the window at the Store’s size, its points apart', async ({ page }) => {
+	// 1920 × 1080 at 125 %, the size the Store's screenshots are taken at.
+	await page.setViewportSize({ width: 1536, height: 864 });
+	await open(page, 'view=map&docs=12&meaning=ready');
+	const map = page.getByRole('main').getByRole('group', { name: /Map of the documents/ });
+	await expect(map).toBeVisible();
+	const box = await map.boundingBox();
+	expect(box).not.toBeNull();
+	if (!box) return;
+	expect(box.y + box.height).toBeLessThanOrEqual(864);
+	expect(box.height).toBeGreaterThan(250);
+	// No two marks drawn on one another: their centres at least a mark across apart (a mark is
+	// a halo's width over 2.2 across).
+	const centres = await map.locator('[role="button"] .halo').evaluateAll((halos) =>
+		halos.map((h) => {
+			const r = h.getBoundingClientRect();
+			return { x: r.x + r.width / 2, y: r.y + r.height / 2, across: r.width / 2.2 };
+		})
+	);
+	for (let a = 0; a < centres.length; a++) {
+		for (let b = a + 1; b < centres.length; b++) {
+			const apart = Math.hypot(centres[a].x - centres[b].x, centres[a].y - centres[b].y);
+			expect(apart).toBeGreaterThanOrEqual(centres[a].across * 0.95);
+		}
+	}
+});
+
 test('the map says why it is not drawn: no model, or too few documents placed', async ({
 	page
 }) => {

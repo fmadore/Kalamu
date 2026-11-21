@@ -12,6 +12,7 @@ import {
 	meaningStep,
 	nextPoint,
 	panned,
+	spread,
 	similarityText,
 	usdText,
 	zoomed
@@ -133,6 +134,34 @@ describe('the map', () => {
 		const { legend } = mapGroups(points, 'tag', []);
 		expect(legend.length).toBe(MAX_GROUPS);
 		expect(legend.filter(isOther)[0]?.count).toBe(10 - (MAX_GROUPS - 1));
+	});
+
+	it('sets apart points drawn on one another, and leaves the rest where they are', () => {
+		// Nine issues of one newspaper in a tight cluster, a letter far from them.
+		const issues = Array.from({ length: 9 }, (_, i) =>
+			point(`issue-${i}`, 0.5 + (i % 3) * 0.002, 0.5 + Math.floor(i / 3) * 0.002)
+		);
+		const letter = point('letter', 0.1, 0.9);
+		const gap = 0.04;
+		const drawn = spread([...issues, letter], gap);
+		expect(drawn.at(-1)).toEqual(letter);
+		const ring = drawn.slice(0, 9);
+		for (let a = 0; a < ring.length; a++) {
+			for (let b = a + 1; b < ring.length; b++) {
+				const apart = Math.hypot(ring[a].x - ring[b].x, ring[a].y - ring[b].y);
+				expect(apart).toBeGreaterThanOrEqual(gap * 0.999);
+			}
+		}
+		// Around where they sit, not far from it; nothing else of a point changes.
+		for (const p of ring) expect(Math.hypot(p.x - 0.502, p.y - 0.502)).toBeLessThan(gap * 2);
+		expect(ring.map((p) => p.document_id)).toEqual(issues.map((p) => p.document_id));
+		// Zoomed in far enough, they stand at their own places.
+		expect(spread(issues, 0.001)).toEqual(issues);
+		// Points that do not touch, or a chain wider than a ring, are left as they are.
+		const apart = [point('a', 0, 0), point('b', 0.5, 0)];
+		expect(spread(apart, gap)).toEqual(apart);
+		const chain = Array.from({ length: 6 }, (_, i) => point(`c${i}`, i * 0.035, 0));
+		expect(spread(chain, gap)).toEqual(chain);
 	});
 
 	it('zooms around a point and pans, never past the whole map', () => {

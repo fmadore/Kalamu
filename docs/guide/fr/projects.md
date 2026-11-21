@@ -104,7 +104,8 @@ La **Carte** montre chaque document du projet sous la forme d’un point, près 
 lui ressemblent, regroupés par collection ou par étiquette. Choisissez un point pour voir ses
 plus proches voisins dans la liste à côté. Voyez-la comme une porte d’entrée, pas comme un
 résultat : les positions sont approximatives, les axes ne veulent rien dire, et le point d’un
-long document est une moyenne de tout ce qu’il contient.
+long document est une moyenne de tout ce qu’il contient. Les documents presque superposés sont
+dessinés un peu écartés, en petit cercle ; zoomez pour les voir à leur place.
 
 > Il n’y a ni réponses toutes faites ni conversation. La recherche par le sens vous montre où
 > lire ; la lecture reste la vôtre.

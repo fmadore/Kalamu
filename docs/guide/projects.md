@@ -90,7 +90,8 @@ does so by itself with a paid model.
 The **Map** shows each document of the project as a point, near the documents it resembles,
 grouped by collection or tag. Choose a point to see its nearest documents in the list beside
 it. Read it as a way in, not as a result: positions are approximate, the axes mean nothing,
-and a long document's point is an average of everything in it.
+and a long document's point is an average of everything in it. Documents that sit almost on
+one another are drawn a little apart, in a small ring; zoom in to see them at their own places.
 
 > There are no answers and no chat. The search by meaning shows you where to read; the reading
 > stays yours.
