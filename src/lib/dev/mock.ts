@@ -281,6 +281,7 @@ export function installMock(): void {
 				return null;
 			case 'estimate_cost': {
 				const request = a.request as EstimateRequest;
+				window.__kalamuEstimates = [...(window.__kalamuEstimates ?? []), request];
 				const rows = request.setups.map((s) => ({
 					provider: s.provider,
 					model: s.model,

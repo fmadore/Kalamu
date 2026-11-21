@@ -69,10 +69,11 @@ const SAID: Record<string, { reason: string; passages?: CitedEvidence[] }> = {
 	}
 };
 
-/** The table exported last, for the end-to-end tests to read. */
+/** The table exported last, and the estimates asked for, for the end-to-end tests to read. */
 declare global {
 	interface Window {
 		__kalamuExportedAnswers?: { project: string; job: string; setup: string; path: string };
+		__kalamuEstimates?: EstimateRequest[];
 	}
 }
 

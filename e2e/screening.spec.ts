@@ -64,6 +64,33 @@ test('the dialog asks one question, leaves out what has no text, and starts the 
 	expect(created?.sources.every((s) => s.kind === 'text' && s.derived_from)).toBe(true);
 });
 
+test('the estimate prices the model the dialog names, and again when it is changed', async ({
+	page
+}) => {
+	const main = await open(page);
+	await main.getByRole('checkbox', { name: 'Select all documents shown' }).check();
+	await page.evaluate(() => (window.__kalamuEstimates = []));
+	await main
+		.getByRole('toolbar')
+		.getByRole('button', { name: 'Which of these speak of my question?' })
+		.click();
+	const dialog = page.getByRole('dialog', {
+		name: 'Which of these documents speak of my question?'
+	});
+	const estimated = () =>
+		page.evaluate(() => (window.__kalamuEstimates ?? []).map((r) => r.setups[0]?.model));
+	await expect(dialog.getByText(/^Model: Gemini 4 Hydrogen/)).toBeVisible();
+	await expect.poll(estimated).not.toEqual([]);
+	// Every estimate asked for so far is the named model's: none for another default first.
+	expect(new Set(await estimated())).toEqual(new Set(['gemini-4-hydrogen']));
+
+	await dialog.locator('details.more summary').click();
+	await dialog.getByRole('combobox', { name: /^Model/ }).click();
+	await page.getByRole('option', { name: /^Gemini 3\.5 Flash-Lite/ }).click();
+	await expect(dialog.getByText(/^Model: Gemini 3\.5 Flash-Lite/)).toBeVisible();
+	await expect.poll(async () => (await estimated()).at(-1)).toBe('gemini-3.5-flash-lite');
+});
+
 test('a document too long for the model even in parts is left out, the others read', async ({
 	page
 }) => {
