@@ -2928,6 +2928,7 @@ export const fr: Messages = {
 				`Revenir à l’écran d’où vous venez, comme le bouton Précédent de la souris. En relecture, ${pageBack} tourne plutôt à la page précédente.`,
 			escape:
 				'Fermer un menu ou une boîte de dialogue, ou ranger un message d’échec qui a le focus',
+			undo: 'Annuler ce que dit le message en bas de la fenêtre, tant qu’il propose Annuler (hors d’une zone de texte)',
 			start: 'Lancer le traitement',
 			addLinks: 'Ajouter les liens YouTube collés',
 			newLine: 'Commencer une autre ligne de liens',

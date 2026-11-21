@@ -2488,6 +2488,7 @@ export const en = {
 			back: (pageBack: string) =>
 				`Go back to the screen you came from, as the mouse’s back button does. In a review ${pageBack} turns to the previous page instead.`,
 			escape: 'Close a menu or a dialog, or put away a failure message that has the focus',
+			undo: 'Undo what the message at the bottom of the window reports, while it offers Undo (outside a text box)',
 			start: 'Start the job',
 			addLinks: 'Add the YouTube links pasted',
 			newLine: 'Start another line among the links',
