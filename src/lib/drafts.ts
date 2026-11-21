@@ -5,6 +5,19 @@
 
 const drafts = new Map<string, unknown>();
 
+/** Where "Analyse this interview" keeps what was typed. */
+export const INTERVIEW_DRAFT = 'interview';
+
+/** What the researcher typed or chose in "Analyse this interview". */
+export interface InterviewDraft {
+	question: string;
+	themes: string;
+	/** A kept description's prompt, or the box for a new one. */
+	choice: string;
+	keep: boolean;
+	keptName: string;
+}
+
 /** Keeps a dialog's draft under its key; `null` forgets it, as when nothing was typed. */
 export function keepDraft<T>(key: string, draft: T | null): void {
 	if (draft === null) drafts.delete(key);

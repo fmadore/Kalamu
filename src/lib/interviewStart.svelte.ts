@@ -17,7 +17,6 @@ import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import { modelNameOf, providerNameOf } from './catalogText.js';
 import { mayStart } from './dialogs.js';
-import { draftOf, dropDraft, keepDraft } from './drafts.js';
 import { describeError } from './errors.js';
 import { messages, type Messages } from './i18n/index.js';
 import { takesLanguage } from './languages.js';
@@ -109,34 +108,18 @@ export function tooLongOf(
 	);
 }
 
-/** Where what was typed waits when the dialog closes without starting (`drafts.ts`). */
-const DRAFT_KEY = 'interview';
-
-/** What the researcher typed or chose in the dialog, kept for its next opening. */
-export interface InterviewDraft {
-	question: string;
-	themes: string;
-	choice: string;
-	keep: boolean;
-	keptName: string;
-}
-
 export class InterviewAnalysis {
-	/** What was typed when the dialog last closed without starting, given back as it opens. */
-	readonly #draft = draftOf<InterviewDraft>(DRAFT_KEY);
-	/** Set once the job is made: what was typed is then spent, and kept no longer. */
-	#started = false;
-	question = $state(this.#draft?.question ?? '');
+	question = $state('');
 	/** The researcher's own themes or interview guide, one per line, under More choices. */
-	themes = $state(this.#draft?.themes ?? '');
+	themes = $state('');
 	/** The analysis prompts, read as the dialog opens: the ready-made one, and the researcher's
 	 * kept descriptions among them. */
 	presets = $state<Preset[]>([]);
 	/** A kept description's prompt, or `NEW_RESEARCH` for the box. */
 	choice = $state(NEW_RESEARCH);
 	/** Keep what is typed as a prompt of the researcher's own, under `keptName`. */
-	keep = $state(this.#draft?.keep ?? false);
-	keptName = $state(this.#draft?.keptName ?? '');
+	keep = $state(false);
+	keptName = $state('');
 	draft = $state<Draft>(
 		newDraft(app.catalog!, rulesFor(app.rules, 'analysis'), INTERVIEW_PRESET, hasKey)
 	);
@@ -191,24 +174,8 @@ export class InterviewAnalysis {
 		} catch {
 			this.presets = [];
 		}
-		const draft = this.#draft;
-		this.choice = firstChoice(this.kept, draft?.choice ?? lastChoice());
-		this.themes = draft ? draft.themes : (this.chosen?.themes ?? '');
-	}
-
-	/** Keeps what was typed for the dialog's next opening, as it closes without starting; a
-	 * dialog left as it opened keeps nothing. */
-	saveDraft(): void {
-		if (this.#started) return;
-		const draft: InterviewDraft = {
-			question: this.question,
-			themes: this.themes,
-			choice: this.choice,
-			keep: this.keep,
-			keptName: this.keptName
-		};
-		const typed = draft.question.trim() !== '' || draft.themes !== (this.chosen?.themes ?? '');
-		keepDraft(DRAFT_KEY, typed ? draft : null);
+		this.choice = firstChoice(this.kept, lastChoice());
+		this.themes = this.chosen?.themes ?? '';
 	}
 
 	/** Chooses a kept description, or a new one: the box of themes shows the kept themes, to
@@ -282,8 +249,6 @@ export class InterviewAnalysis {
 			const request = await this.keepTyped($state.snapshot(this.request), project?.name);
 			keepChoice(this.choice);
 			const job = await api.createJob(this.job(sources, request));
-			this.#started = true;
-			dropDraft(DRAFT_KEY);
 			await launch(job.id, project);
 			go({ name: 'jobs', jobId: job.id });
 			return true;

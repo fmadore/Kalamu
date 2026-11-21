@@ -12,6 +12,7 @@
 	import Dialog from './Dialog.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import ModelPicker from './ModelPicker.svelte';
+	import { INTERVIEW_DRAFT, draftOf, keepDraft, type InterviewDraft } from '#lib/drafts.js';
 	import { formatUsd, messages } from '#lib/i18n/index.js';
 	import { InterviewAnalysis, tooLongOf } from '#lib/interviewStart.svelte.js';
 	import { takesLanguage } from '#lib/languages.js';
@@ -54,13 +55,48 @@
 		}
 	);
 
+	// What was typed when the dialog last closed without starting comes back as it opens: the
+	// box and the guide at once, the description chosen once the prompts are read.
+	const draft = draftOf<InterviewDraft>(INTERVIEW_DRAFT);
+	if (draft) {
+		a.question = draft.question;
+		a.themes = draft.themes;
+		a.keep = draft.keep;
+		a.keptName = draft.keptName;
+	}
+	let restored = false;
+	$effect(() => {
+		if (!draft || restored || a.presets.length === 0) return;
+		restored = true;
+		if (draft.choice === NEW_RESEARCH || a.kept.some((p) => p.id === draft.choice)) {
+			a.choice = draft.choice;
+		}
+		a.themes = draft.themes;
+	});
+
+	/** Set while the job is being made: what was typed is then spent, and kept no longer. */
+	let starting = false;
 	async function start() {
-		if (await a.start(project)) onclose();
+		starting = true;
+		const started = await a.start(project);
+		starting = started;
+		if (started) onclose();
 	}
 
 	// Closed without starting (Cancel, Escape, a way to Settings or Prompts), the dialog keeps
-	// what was typed for its next opening; once the job is made, nothing.
-	onDestroy(() => a.saveDraft());
+	// what was typed for its next opening; once the job is made, nothing. Left as it opened, it
+	// keeps nothing.
+	onDestroy(() => {
+		const typed: InterviewDraft = {
+			question: a.question,
+			themes: a.themes,
+			choice: a.choice,
+			keep: a.keep,
+			keptName: a.keptName
+		};
+		const changed = typed.question.trim() !== '' || typed.themes !== (a.chosen?.themes ?? '');
+		keepDraft(INTERVIEW_DRAFT, !starting && changed ? typed : null);
+	});
 
 	/** Prompts, on the kept description, where it is changed or deleted. */
 	function openPrompts(presetId: string) {
