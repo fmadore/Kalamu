@@ -4,9 +4,17 @@ What is built, what is next, and what is still open. The [specification](specifi
 what the app must do; [decisions](decisions/) record why it is built as it is. Each stage ends
 with an architecture review (see [AGENTS.md](../AGENTS.md)).
 
-## Status (20 November 2026)
+## Status (21 November 2026)
 
-**Version 1.8.0** is the latest release, published on 17 November 2026: unsigned installers for
+**Version 1.9.0** ([notes](release-1.9.0.md)) is the latest release on GitHub, published on
+20 November 2026 before its test pass, and was not sent to the Store. **1.10.0**
+([notes](release-1.10.0.md)) is prepared as the next Store update, its version files set and
+`v1.10.0-rc1` to be tried before its tag: what 1.9.0 brought, and since then documents read
+against a research question, a project saved as one file, a sample first, long interviews in
+parts, photographs taken twice or blurred, and the plain-first round. The paragraph below is
+how 1.8.0 and 1.9.0 stood on 20 November.
+
+**Version 1.8.0** was published on 17 November 2026: unsigned installers for
 Windows x64 and ARM64 and a signed, notarised disk image for macOS on Apple Silicon, each with
 FFmpeg bundled, are on the
 [v1.8.0 release](https://github.com/fmadore/Kalamu/releases/tag/v1.8.0)
@@ -506,14 +514,17 @@ order given there.
 
 In this order. Work that keeps what has shipped sound comes before new features.
 
-**First, 1.9.0 tried and tagged.** No new feature goes into 1.9.0. Its
-[test pass on Windows](windows-test-pass.md) on the packaged `v1.9.0-rc1`, Parts C and F with
+**First, 1.10.0 tried and tagged.** 1.9.0 was published on GitHub without its test pass, and
+the plain-first round and the research workflows of 20 November joined `main` after it, so the
+pass runs on `v1.10.0-rc1`, which holds both, and 1.10.0 is the next Store update. No new
+feature goes into 1.10.0. Its
+[test pass on Windows](windows-test-pass.md) on the packaged `v1.10.0-rc1`, Parts C and F with
 real keys above all (an hour's interview analysed, the search by meaning's preparation and
 its bill, a region read again, a passage corrected, a batch's files deleted at each provider
 and Gemini's batch through a file), and its [day on a rented Mac](mac-test-day.md), where
 nothing written since 1.6.0 has run. #148 and #144 close with them.
 
-**Then, plain first: what stops a researcher new to computing** (for 1.9.1 or 1.10.0, from the
+**Then, plain first: what stops a researcher new to computing** (in 1.10.0, from the
 [review of 20 November](decisions/2026-11-20-review-for-researchers-new-to-computing.md)).
 Small, and each one meets a colleague on their first day:
 
@@ -537,7 +548,7 @@ Small, and each one meets a colleague on their first day:
   first and what fills itself.
 
 All five were written on 20 November, by agents in worktrees gathered on one branch, and none
-is in 1.9.0 ([xlsx and `corrected` per row](decisions/2026-11-20-xlsx-tables-corrected-per-row.md),
+is in 1.9.0; all are in 1.10.0 ([xlsx and `corrected` per row](decisions/2026-11-20-xlsx-tables-corrected-per-row.md),
 [default fields](decisions/2026-11-20-default-fields-interface-language.md)). Still to do: the
 `.xlsx` opened by double-click in an Excel set to French and on a Mac (step E2 of the test
 pass); the French guide's first build on GitHub Pages, whose layout now serves two languages
@@ -951,7 +962,7 @@ manuscript and a 1915 newspaper in the public domain), and the listing, What's n
 certification notes for 1.0.0, the privacy policy on GitHub Pages, the screenshots and the
 submission. Version 1.0.0 passed certification and is
 [in the Microsoft Store](https://apps.microsoft.com/detail/9MXT5555BZ1H) since 2 November 2026. Later versions follow the update steps
-in [microsoft-store.md](microsoft-store.md); 1.8.0 is live, and 1.9.0 is the next update.
+in [microsoft-store.md](microsoft-store.md); 1.8.0 is live, and 1.10.0 is the next update (1.9.0 was not submitted).
 
 ## Toward the Mac App Store
 
