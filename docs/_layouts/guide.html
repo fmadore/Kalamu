@@ -16,6 +16,7 @@
   {% assign t_chapters = 'Chapitres' %}
   {% assign t_before = 'Précédent' %}
   {% assign t_next = 'Suivant' %}
+  {% assign t_anchor = 'Lien vers cette section : ' %}
 {% else %}
   {% assign root = '../' %}
   {% assign t_suffix = 'Kalamu guide' %}
@@ -29,6 +30,7 @@
   {% assign t_chapters = 'Chapters' %}
   {% assign t_before = 'Before' %}
   {% assign t_next = 'Next' %}
+  {% assign t_anchor = 'Link to this section: ' %}
 {% endif %}
 <html lang="{{ page.lang | default: 'en' }}">
   <head>
@@ -74,13 +76,15 @@
         <footer>
           {% if page.lang == 'fr' %}
           <p>
-            Kalamu est un logiciel libre et gratuit (licence MIT), de Frédérick Madore.
+            Kalamu est un logiciel libre et gratuit (licence MIT), de
+            <a href="https://frederickmadore.com">Frédérick Madore</a>.
             Une erreur ou un manque dans ce guide&#8239;?
             <a href="https://github.com/fmadore/Kalamu/issues">Signalez-le</a>.
           </p>
           {% else %}
           <p>
-            Kalamu is free and open source (MIT), by Frédérick Madore.
+            Kalamu is free and open source (MIT), by
+            <a href="https://frederickmadore.com">Frédérick Madore</a>.
             Something wrong or missing in this guide?
             <a href="https://github.com/fmadore/Kalamu/issues">Open an issue</a>.
           </p>
@@ -88,5 +92,17 @@
         </footer>
       </main>
     </div>
+    <script>
+      // A link after each section's heading, to copy or share the address of that section.
+      // The ids come from Jekyll; without the script the headings simply have no link.
+      for (const heading of document.querySelectorAll('main h2[id], main h3[id]')) {
+        const link = document.createElement('a');
+        link.className = 'anchor';
+        link.href = '#' + heading.id;
+        link.setAttribute('aria-label', '{{ t_anchor }}' + heading.textContent);
+        link.textContent = '#';
+        heading.append(' ', link);
+      }
+    </script>
   </body>
 </html>
