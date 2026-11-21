@@ -251,7 +251,7 @@
 				{/each}
 			</section>
 		{:else if tab === 'offline'}
-			<OfflineModels />
+			<OfflineModels wanted={app.view.name === 'settings' ? (app.view.languages ?? []) : []} />
 		{:else if tab === 'general' && app.settings}
 			<section class="card block" aria-labelledby="jobs-settings">
 				<h2 id="jobs-settings">{m.settings.jobsTitle}</h2>

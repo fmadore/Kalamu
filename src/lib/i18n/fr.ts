@@ -2804,6 +2804,7 @@ export const fr: Messages = {
 		embeddingDescription:
 			'Le modèle de Google qui rapproche les textes de sens voisin, pour les textes seulement, dans plus d’une centaine de langues.',
 		addLanguageData: 'Télécharger une langue pour Tesseract',
+		askedByNewJob: 'Nouveau traitement a besoin de cette langue. Téléchargez-la ici.',
 		findLanguageData: 'Chercher une langue par son nom',
 		oneDownload:
 			'Un téléchargement à la fois : le suivant pourra commencer une fois celui-ci terminé.',

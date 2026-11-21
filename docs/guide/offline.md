@@ -30,7 +30,9 @@ Open **Settings**, then **Offline models**. Each model shows its size; **Downloa
 once, and an interrupted download continues where it stopped. Kalamu checks every file against
 its published fingerprint before using it. Remove a model there when you no longer need it.
 
-Once downloaded, offline models appear in **New job** beside the cloud ones.
+Once downloaded, offline models appear in **New job** beside the cloud ones. When a language you
+choose for Tesseract in **New job** is not downloaded yet, **Download in Settings** opens this
+list with that language already in it and its **Download** button ready.
 
 ## How fast?
 

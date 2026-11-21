@@ -5,8 +5,10 @@
 	// models for analyses, and the search by meaning's embedding model. Of the hundred-odd
 	// languages only those downloaded are listed; the others are found by name in a search box.
 	// While a download runs the lists are polled for the bytes received; on opening they are read
-	// again, since the seconds a page took change as jobs run.
-	import { onMount } from 'svelte';
+	// again, since the seconds a page took change as jobs run. A language New job asked for
+	// whose data is missing (`wanted`) is listed among the rows with its Download button, in view
+	// and focused, rather than left to be typed again.
+	import { onMount, tick } from 'svelte';
 	import { modelDescription } from '#lib/catalogText.js';
 	import type { OfflineModel } from '#lib/bindings/OfflineModel.js';
 	import { describeError } from '#lib/errors.js';
@@ -17,9 +19,27 @@
 	import LanguageDataPicker from './LanguageDataPicker.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 
+	let {
+		wanted = []
+	}: {
+		/** Languages whose data New job found missing, by code: offered at once. */
+		wanted?: string[];
+	} = $props();
+
 	const m = messages();
 
-	onMount(() => void refreshOffline());
+	let section = $state<HTMLElement | null>(null);
+	onMount(async () => {
+		await refreshOffline();
+		if (wanted.length === 0) return;
+		await tick();
+		const first = section?.querySelector<HTMLElement>('[data-wanted]');
+		first?.scrollIntoView({ block: 'center' });
+		first?.querySelector<HTMLButtonElement>('.actions .primary')?.focus({ preventScroll: true });
+	});
+	/** Language data New job asked for, not downloaded yet. */
+	const isWanted = (s: { languages: string[]; installed: boolean }) =>
+		!s.installed && s.languages.some((code) => wanted.includes(code));
 
 	const local = $derived(
 		(app.catalog?.models ?? []).filter(
@@ -87,12 +107,14 @@
 			})
 			.sort((a, b) => Number(a.script) - Number(b.script) || collator.compare(a.name, b.name));
 	});
-	/** Downloaded or downloading: listed as rows. */
-	const languagesKept = $derived(languageData.filter(({ s }) => s.installed || s.downloading));
+	/** Downloaded or downloading, or asked for by New job: listed as rows. */
+	const languagesKept = $derived(
+		languageData.filter(({ s }) => s.installed || s.downloading || isWanted(s))
+	);
 	/** The others, found by name. */
 	const languagesOffered = $derived(
 		languageData
-			.filter(({ s }) => !s.installed && !s.downloading)
+			.filter(({ s }) => !s.installed && !s.downloading && !isWanted(s))
 			.map(({ s, name }) => ({ id: s.id, name, bytes: Number(s.bytes) }))
 	);
 
@@ -140,13 +162,14 @@
 	id: string,
 	name: string,
 	description: string,
-	blocked: boolean
+	blocked: boolean,
+	asked = false
 )}
 	{@const received = Number(s?.downloaded_bytes ?? 0)}
 	{@const pct = Math.floor((100 * received) / Math.max(1, Number(s?.bytes ?? 0)))}
 	<!-- A download stopped part-way: what it kept is continued by the next one. -->
 	{@const stopped = !!s && !s.downloading && !s.installed && received > 0}
-	<div class="model">
+	<div class="model" data-wanted={asked || undefined}>
 		<div class="name">
 			<strong>{name}</strong>
 			<span class="muted small">{m.settings.size(Number(s?.bytes ?? 0))}</span>
@@ -200,7 +223,7 @@
 	</div>
 {/snippet}
 
-<section class="card block" aria-labelledby="offline-title">
+<section class="card block" aria-labelledby="offline-title" bind:this={section}>
 	<h2 id="offline-title">{m.settings.offlineTitle}</h2>
 	{#if downloadable.length > 0}
 		<h3>{m.settings.whisperTitle}</h3>
@@ -217,11 +240,11 @@
 	{#if builtIn.length > 0 && languageData.length > 0}
 		<h3>{m.settings.tesseractTitle}</h3>
 		<p class="muted small">{m.settings.tesseractHint(app.offline?.tesseract_version ?? '')}</p>
-		{#if languagesKept.length === 0}
+		{#if !languagesKept.some(({ s }) => s.installed || s.downloading)}
 			<p class="muted small">{m.settings.noLanguageData}</p>
 		{/if}
 		{#each languagesKept as { s, name } (s.id)}
-			{@render row(s, s.id, name, '', false)}
+			{@render row(s, s.id, name, isWanted(s) ? m.settings.askedByNewJob : '', false, isWanted(s))}
 		{/each}
 		{#if languagesOffered.length > 0}
 			<div class="add-language">

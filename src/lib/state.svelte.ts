@@ -96,7 +96,12 @@ export type View =
 			project?: FromProject;
 	  }
 	| { name: 'prompts'; presetId?: string }
-	| { name: 'settings'; tab?: SettingsTab }
+	| {
+			name: 'settings';
+			tab?: SettingsTab;
+			/** Languages New job asked for whose data is not downloaded: Settings offers them at once. */
+			languages?: string[];
+	  }
 	| { name: 'glossary'; term?: Term | 'formats' };
 
 /** The panes of a project, down its side. */

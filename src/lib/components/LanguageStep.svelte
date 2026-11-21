@@ -110,7 +110,9 @@
 					{m.newJob.languageDataMissing(
 						listNames(missingData.map((code) => languageLabel(catalog, code)))
 					)}
-					<button class="btn sm" onclick={() => go({ name: 'settings', tab: 'offline' })}
+					<button
+						class="btn sm"
+						onclick={() => go({ name: 'settings', tab: 'offline', languages: [...missingData] })}
 						>{m.newJob.openSettings}</button
 					>
 				</p>

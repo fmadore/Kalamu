@@ -2362,6 +2362,8 @@ export const en = {
 		embeddingDescription:
 			'Google’s model that places texts of like meaning close together, for texts only, in more than a hundred languages.',
 		addLanguageData: 'Download a language for Tesseract',
+		/** Beside a language New job asked for whose data is not downloaded. */
+		askedByNewJob: 'New job needs this language. Download it here.',
 		findLanguageData: 'Find a language by its name',
 		oneDownload: 'One download at a time: the next can start once this one is done.',
 		offlineHint:

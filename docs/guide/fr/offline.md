@@ -33,7 +33,9 @@ s’était arrêté. Avant de se servir d’un fichier, Kalamu vérifie qu’il 
 publiée. Retirez un modèle au même endroit quand vous n’en avez plus besoin.
 
 Une fois téléchargés, les modèles hors ligne apparaissent dans **Nouveau traitement**, à côté des
-modèles en ligne.
+modèles en ligne. Si une langue choisie pour Tesseract dans **Nouveau traitement** n’est pas
+encore téléchargée, **Le télécharger dans Paramètres** ouvre cette liste avec la langue déjà
+dedans et son bouton **Télécharger** prêt.
 
 ## À quelle vitesse ? {#a-quelle-vitesse}
 

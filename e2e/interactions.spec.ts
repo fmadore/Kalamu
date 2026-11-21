@@ -191,6 +191,31 @@ test('New job keeps what was chosen across a visit to Settings', async ({ page }
 	await expect(main.getByRole('combobox', { name: 'Model' })).toHaveText(/Gemini 4 Argon/);
 });
 
+test('a Tesseract language not downloaded is offered at once in Settings', async ({ page }) => {
+	await open(page, 'new');
+	const main = page.getByRole('main');
+	await main
+		.getByRole('combobox', { name: 'Provider' })
+		.first()
+		.selectOption({ label: 'Tesseract (on this computer)' });
+	const box = main.getByRole('searchbox', { name: 'Type to find a language' });
+	await box.fill('Arabic');
+	await page.keyboard.press('Enter');
+	await expect(main).toContainText('Language data not yet on this computer: Arabic.');
+	await main.getByRole('button', { name: 'Download in Settings' }).click();
+
+	// Settings lists Arabic among the rows, in view, its Download button there, without typing it
+	// again; focused when no other download runs.
+	await expect(main.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+	const asked = main.locator('[data-wanted]');
+	await expect(asked).toHaveCount(1);
+	await expect(asked).toContainText('Arabic');
+	await expect(asked).toContainText('New job needs this language');
+	// (The sample data has another download running, so it waits its turn.)
+	await expect(asked.getByRole('button', { name: 'Download' })).toBeVisible();
+	await expect(asked).toBeInViewport();
+});
+
 test('New job lists models by tier across providers, and remembers it', async ({ page }) => {
 	await open(page, 'new');
 	const main = page.getByRole('main');
