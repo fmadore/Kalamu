@@ -105,7 +105,10 @@ test('the table is filtered by an answer, kept or set aside, and exported', asyn
 	await expect(chips.filter({ hasText: 'Set aside' })).toHaveCount(1);
 	await expect(chips.filter({ hasText: 'Kept' })).toHaveCount(0);
 
-	await main.getByRole('button', { name: 'Export this table' }).click();
+	// The filter shows some rows; the export writes them all, as its name and tooltip say.
+	const exportAll = main.getByRole('button', { name: 'Export the whole table' });
+	await expect(exportAll).toHaveAttribute('title', /whatever its answer/);
+	await exportAll.click();
 	await expect(page.getByText('Table exported, as a spreadsheet and as CSV.')).toBeVisible();
 	const exported = await page.evaluate(() => window.__kalamuExportedAnswers);
 	expect(exported?.job).toBe('00000000-0000-0000-0000-0000000000s1');
@@ -113,7 +116,7 @@ test('the table is filtered by an answer, kept or set aside, and exported', asyn
 
 	await filter.selectOption({ label: 'Any answer' });
 	await expect(titles(main)).toHaveCount(4);
-	await expect(main.getByRole('button', { name: 'Export this table' })).toHaveCount(0);
+	await expect(main.getByRole('button', { name: 'Export the whole table' })).toHaveCount(0);
 });
 
 test('each row shows its answer, reason and passages, kept or set aside by keyboard', async ({

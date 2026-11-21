@@ -33,7 +33,7 @@ ont été faites.
   une raison et les passages qui le montrent, chacun retrouvé mot pour mot dans le texte avec
   sa page. Filtrez le tableau selon la réponse, lisez les passages, puis choisissez **Garder**
   ou **Écarter** : votre décision est une étiquette, et la réponse du modèle reste telle
-  quelle. **Exporter ce tableau** écrit toute la liste pour un tableur. Quand une réponse
+  quelle. **Exporter tout le tableau** écrit toute la liste pour un tableur. Quand une réponse
   est choisie dans le filtre, chaque ligne montre sa réponse, la raison et les passages. Si
   vous ajoutez des documents plus tard, **Poser cette question aux nouveaux documents** ne
   fait lire que ceux-là.

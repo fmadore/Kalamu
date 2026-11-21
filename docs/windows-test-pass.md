@@ -360,7 +360,7 @@ Chrome where you are signed in.
   read, some of them on your question and some not, **Which of these speak of my question?**
   with a cloud model. Note the answers you agree with, the passages against the pages they
   name, and the cost against the estimate. Filter by answer, **Keep** and **Set aside**,
-  **Export this table** and open the `.xlsx`.
+  **Export the whole table** and open the `.xlsx`.
 - [ ] **F19. Photographs taken twice and blurred**: a real batch from a reading room, 100
   photographs or more, added to New job. Note how long the check takes, each pair it calls
   the same page and each photograph it calls blurred against what you see, and what it

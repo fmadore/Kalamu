@@ -618,7 +618,9 @@ export const fr: Messages = {
 		anyAnswer: 'Toutes les réponses',
 		answerCount: (answer: string, n: number) => `${answer} (${n})`,
 		group: (field: string, job: string) => `${field} · ${job}`,
-		exportTable: 'Exporter ce tableau',
+		exportTable: 'Exporter tout le tableau',
+		exportTableHint:
+			'Tous les documents à qui la question a été posée, quelle que soit leur réponse, en tableur et en CSV.',
 		exported: 'Tableau exporté, en tableur et en CSV.',
 		keep: 'Garder',
 		setAside: 'Écarter',

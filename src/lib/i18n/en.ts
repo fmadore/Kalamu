@@ -189,7 +189,10 @@ export const en = {
 		anyAnswer: 'Any answer',
 		answerCount: (answer: string, n: number) => `${answer} (${n})`,
 		group: (field: string, job: string) => `${field} · ${job}`,
-		exportTable: 'Export this table',
+		exportTable: 'Export the whole table',
+		/** What the export holds, whatever answer the table is filtered by. */
+		exportTableHint:
+			'Every document this question was asked of, whatever its answer, as a spreadsheet and as CSV.',
 		exported: 'Table exported, as a spreadsheet and as CSV.',
 		/** The researcher's decision, kept as a tag of the documents. */
 		keep: 'Keep',
