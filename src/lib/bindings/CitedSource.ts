@@ -4,6 +4,12 @@ import type { Turn } from "./Turn";
 /**
  * The text a cited analysis read, for the review to show its quotations in place: the
  * snapshot it was frozen in (none for a text file given directly), the text's hash, the text,
- * and its turns as the quotations number them (`turns[evidence.turn - 1]`).
+ * and its turns as the quotations number them (`turns[evidence.turn - 1]`), with the page each
+ * lies on when the text was read from pages.
  */
-export type CitedSource = { snapshot_id: string | null, sha256: string, text: string, turns: Array<Turn>, };
+export type CitedSource = { snapshot_id: string | null, sha256: string, text: string, turns: Array<Turn>, 
+/**
+ * Each turn's page number, in the order of `turns`; empty for a text with no pages (a
+ * transcript, a text file).
+ */
+pages: Array<number | null>, };

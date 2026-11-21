@@ -39,6 +39,7 @@ mod reading;
 mod records;
 mod region_readings;
 mod regions;
+mod rest;
 mod snapshot;
 mod sources;
 mod subtitles;

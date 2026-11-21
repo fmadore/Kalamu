@@ -4,11 +4,12 @@
 // of two tags so the model's answer is never changed. Pure, so it is tested without the app.
 
 import type { ChoiceAnswers } from './bindings/ChoiceAnswers.js';
+import type { CitedEvidence } from './bindings/CitedEvidence.js';
 import type { Estimate } from './bindings/Estimate.js';
 import type { Catalog } from './bindings/Catalog.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import { modelNameOf } from './catalogText.js';
-import { choiceLabel, fieldLabel, localiseFields, type Messages } from './i18n/index.js';
+import { choiceLabel, fieldLabel, listNames, localiseFields, type Messages } from './i18n/index.js';
 
 /** The ready-made prompt that reads a document against the researcher's question. */
 export const SCREENING_PRESET = 'analysis.screening';
@@ -20,18 +21,26 @@ export function screeningRequest(request: SetupRequest, question: string): Setup
 	return asked ? { ...request, options: { ...request.options, question: asked } } : request;
 }
 
-/** The sentence saying a document is too long for the model chosen, when the estimate says so:
- * the engine measured the text it would send, and would refuse the job for it. */
-export function tooLongOf(estimate: Estimate | null, catalog: Catalog, m: Messages): string | null {
-	const row = estimate?.rows.find((r) => r.too_long);
-	if (!row?.too_long) return null;
-	const count = new Intl.NumberFormat(m.locale.tag);
-	return m.screening.tooLong(
-		row.too_long.file,
-		modelNameOf(catalog, row.provider, row.model),
-		count.format(row.too_long.words),
-		count.format(row.too_long.most_words)
-	);
+/** The documents the model chosen cannot read even in parts, one passage of each alone too long
+ * for it, as the estimate measured the texts it would send: they are left out of the job, and
+ * the estimate has priced the others only. The sentence names them and the model; null when
+ * every document can be read. */
+export function tooLongOf(
+	estimate: Estimate | null,
+	catalog: Catalog,
+	m: Messages
+): { sources: string[]; said: string } | null {
+	const row = estimate?.rows.find((r) => r.too_long?.length);
+	const long = row?.too_long ?? [];
+	if (!row || long.length === 0) return null;
+	return {
+		sources: long.map((l) => l.source),
+		said: m.screening.tooLong(
+			listNames(long.map((l) => l.file)),
+			modelNameOf(catalog, row.provider, row.model),
+			long.length
+		)
+	};
 }
 
 /** The filter's value for one answer of one choice: the analysis, the field and the value. */
@@ -113,4 +122,40 @@ export function tableName(project: string, group: ChoiceAnswers): string {
 export function decisionTags(keep: boolean, m: Messages): { add: string; remove: string } {
 	const [kept, aside] = [m.screening.keptTag, m.screening.setAsideTag];
 	return keep ? { add: kept, remove: aside } : { add: aside, remove: kept };
+}
+
+/** What a row of the table shows under a document's title while it is filtered by an answer:
+ * the answer in the interface's words, its reason, and the passages quoted with where each
+ * stands. */
+export interface RowAnswer {
+	label: string;
+	reason: string | null;
+	passages: CitedEvidence[];
+}
+
+/** Each document's row answer under the filter's analysis, by document; null when the filter is
+ * off. */
+export function rowAnswers(groups: ChoiceAnswers[], key: string): Map<string, RowAnswer> | null {
+	const chosen = chosenAnswer(groups, key);
+	if (!chosen) return null;
+	const { group } = chosen;
+	const field =
+		localiseFields(group.preset_id, { fields: [group.field] })?.fields[0] ?? group.field;
+	return new Map(
+		group.answers.map((a) => [
+			a.document,
+			{
+				label: choiceLabel(field, a.value),
+				reason: a.reason?.trim() || null,
+				passages: a.passages ?? []
+			}
+		])
+	);
+}
+
+/** The researcher's decision on a document, read from its tags: kept, set aside, or none yet. */
+export function decisionOf(tags: string[], m: Messages): 'keep' | 'aside' | null {
+	if (tags.includes(m.screening.keptTag)) return 'keep';
+	if (tags.includes(m.screening.setAsideTag)) return 'aside';
+	return null;
 }

@@ -11,6 +11,7 @@ import { layout } from '../review.svelte.js';
 import catalogJson from '../../../crates/catalog/catalog.json';
 import taskRulesJson from './taskRules.json';
 import { projectCommand, seedProjects } from './mockProjects.js';
+import { projectFileCommand } from './mockProjectFile.js';
 import { NO_RESULT } from './noResult.js';
 import { enlarge, largeRows } from './mockLarge.js';
 import { profileCommand } from './mockProfiles.js';
@@ -22,6 +23,7 @@ import { analysisJob, audioJob, job, recording, source, summaries, video } from 
 import { jobCommand, keptPiece } from './mockJobCommand.js';
 import { interviewCommand } from './mockInterview.js';
 import { interviewLength } from './mockInterviewLong.js';
+import { screeningLength } from './mockScreening.js';
 import { passageCommand } from './mockPassages.js';
 import { regionCommand } from './mockDrawn.js';
 import { regionReadingCommand } from './mockRegionReadings.js';
@@ -30,6 +32,7 @@ import { seedWorkflows, workflowCommand } from './mockWorkflows.js';
 import { unitCommand } from './mockUnits.js';
 import { mockImageDocument, PHOTO_FOLDER, PHOTOS } from './mockPages.js';
 import { photoCommand, READING_ROOM, READING_ROOM_PHOTOS } from './mockPhotos.js';
+import { sampleCommand } from './mockSample.js';
 
 const catalog = catalogJson as unknown as Catalog;
 /** The engine's rules for the bundled catalogue, written by `cargo test`. */
@@ -110,6 +113,11 @@ export function installMock(): void {
 	};
 	const answer = (cmd: string, args?: unknown): unknown => {
 		const a = (args ?? {}) as Record<string, unknown>;
+		const filed = projectFileCommand(cmd, a);
+		if (filed !== undefined) return filed;
+		// `?long` and `?sample` only: a sample first, its rest and its comparison.
+		const sampled = sampleCommand(cmd, a);
+		if (sampled !== undefined) return sampled;
 		const profile = profileCommand(cmd, a);
 		if (profile !== undefined) return profile;
 		const project = projectCommand(cmd, a);
@@ -277,7 +285,8 @@ export function installMock(): void {
 						usd: s.provider === 'mistral' ? null : 0.42,
 						economy_usd: s.provider === 'mistral' ? null : 0.21
 					},
-					...interviewLength(request, s, catalog)
+					...interviewLength(request, s, catalog),
+					...screeningLength(request, s)
 				}));
 				const total = (economy: boolean) =>
 					rows.reduce<number | null>((sum, r) => {

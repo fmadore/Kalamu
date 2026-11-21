@@ -146,8 +146,17 @@ impl PipelineFile {
             }
             _ => {}
         }
-        if let Some(n) = p.settings.sample_pages {
-            let _ = writeln!(out, "- Sample: the first {n} pages of each document only");
+        match p.settings.page_sample() {
+            kalamu_core::PageSample::First(n) => {
+                let _ = writeln!(out, "- Sample: the first {n} pages of each document only");
+            }
+            kalamu_core::PageSample::Spread(n) => {
+                let _ = writeln!(
+                    out,
+                    "- Sample: {n} pages spread through each document, its first page left out"
+                );
+            }
+            kalamu_core::PageSample::All => {}
         }
         if !p.formats.is_empty() {
             let formats: Vec<&str> = p.formats.iter().map(|f| f.extension()).collect();

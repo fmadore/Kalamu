@@ -187,7 +187,9 @@
 	}
 
 	/** A long interview read in parts: how many, and those that could not be read. */
-	const parts = $derived(partsOf(review.views, setups[0]?.id, cited.source?.turns));
+	const parts = $derived(
+		partsOf(review.views, setups[0]?.id, cited.source?.turns, cited.source?.pages)
+	);
 
 	function toggleReviewed() {
 		const first = setups[0];

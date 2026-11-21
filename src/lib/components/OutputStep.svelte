@@ -1,5 +1,6 @@
 <script lang="ts">
-	// New job's results step: a sample of the first pages to try first, the formats to write,
+	// New job's results step: a sample of the first pages to try first (or of pages spread
+	// through each document, from New job's suggestion), the formats to write,
 	// where to write them (a folder must be chosen for videos, which have none of their own), and
 	// the job's name.
 	import TermLink from './TermLink.svelte';
@@ -18,6 +19,7 @@
 	let {
 		sample = $bindable(),
 		samplePages = $bindable(),
+		sampleSpread = $bindable(),
 		formats = $bindable(),
 		destination = $bindable(),
 		name = $bindable(),
@@ -31,6 +33,8 @@
 		/** Whether to run on the first pages only. */
 		sample: boolean;
 		samplePages: number;
+		/** The sample's pages are spread through each document, as New job's suggestion asks. */
+		sampleSpread: boolean;
 		formats: ExportFormat[];
 		destination: OutputDestination;
 		name: string;
@@ -67,7 +71,8 @@
 	<h2 id="out-title">{m.newJob.outputTitle}</h2>
 	{#if paged}
 		<label class="inline">
-			<input type="checkbox" bind:checked={sample} />
+			<!-- Ticked here, a sample is of the first pages; untick it, and its pages are spread no more. -->
+			<input type="checkbox" bind:checked={sample} onchange={() => (sampleSpread = false)} />
 			{m.newJob.sampleTitle}{m.common.colon}
 			<input
 				type="number"
@@ -77,7 +82,11 @@
 				class="num"
 				disabled={!sample}
 			/>
-			<span class="muted">{m.newJob.sample(samplePages)}</span>
+			<span class="muted"
+				>{sampleSpread
+					? m.newJob.trySample.spread(samplePages)
+					: m.newJob.sample(samplePages)}</span
+			>
 		</label>
 	{/if}
 	<fieldset>

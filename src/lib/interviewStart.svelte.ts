@@ -78,13 +78,14 @@ export function tooLongOf(
 	catalog: Catalog,
 	m: Messages = messages()
 ): string | null {
-	const row = estimate?.rows.find((r) => r.too_long);
-	if (!row?.too_long) return null;
+	const row = estimate?.rows.find((r) => r.too_long?.length);
+	const long = row?.too_long?.[0];
+	if (!row || !long) return null;
 	const count = new Intl.NumberFormat(m.locale.tag);
 	return m.interview.tooLong(
 		modelNameOf(catalog, row.provider, row.model),
-		count.format(row.too_long.words),
-		count.format(row.too_long.most_words)
+		count.format(long.words),
+		count.format(long.most_words)
 	);
 }
 

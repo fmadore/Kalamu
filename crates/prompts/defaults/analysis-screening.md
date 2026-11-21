@@ -39,3 +39,13 @@ question, answer Unsure and say in the reason that no question was given.
 - Give the number of the passage each quotation comes from, as the text numbers it.
 - Quote a sentence or two, not a whole passage, unless the passage is short.
 - Never quote words that are not in the text.
+
+## A long document read in parts
+
+A document too long to be read at once is read in parts, and the parts' answers are then
+brought together into one answer for the whole document. When you bring them together:
+
+- The whole document is **Relevant** if any part read is Relevant; else **Partly relevant** if
+  any part is; else **Unsure** if any part is; and **Not relevant** only if every part read is.
+- Keep the passages of the parts that show it, the most telling first, up to three in all.
+- Write the reason for the whole document, from what the parts say.

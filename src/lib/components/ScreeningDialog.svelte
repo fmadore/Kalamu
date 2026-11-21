@@ -3,8 +3,9 @@
 	// read and which are left out, the model said in one line with what it would cost, and one
 	// button. Another model and the language of the answers wait under "More choices", closed.
 	// The documents' texts are frozen as the dialog opens, so the estimate prices the texts the
-	// job will read, and says in its place when one is too long for the model chosen (Start then
-	// waits for another); Start then asks what New job asks before anything is sent.
+	// job will read; a document the model chosen cannot read even in parts is named with the
+	// others left out, and the job reads the rest. Start then asks what New job asks before
+	// anything is sent.
 	import Dialog from './Dialog.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import ModelPicker from './ModelPicker.svelte';
@@ -13,23 +14,27 @@
 	import { followEstimate } from '#lib/newJobEstimate.svelte.js';
 	import { modelsFor, providerDefault } from '#lib/newJobModels.js';
 	import { tooLongOf } from '#lib/screening.js';
-	import { Screening } from '#lib/screeningStart.svelte.js';
+	import { Screening, type Again } from '#lib/screeningStart.svelte.js';
 	import { go, type FromProject } from '#lib/state.svelte.js';
 
 	let {
 		project,
 		documents,
+		again,
 		onclose
 	}: {
 		project: FromProject;
 		/** The documents chosen, by id. */
 		documents: string[];
+		/** A question kept with the project, asked again as it was. */
+		again?: Again;
 		onclose: () => void;
 	} = $props();
 	const m = messages();
 	const t = m.screening;
 
-	const s = new Screening();
+	// svelte-ignore state_referenced_locally
+	const s = new Screening(again);
 	// svelte-ignore state_referenced_locally
 	void s.prepare(project.id, documents);
 
@@ -66,9 +71,9 @@
 	</label>
 
 	{#if s.sources}
-		{#if s.sources.length > 0}
-			<p class="count" role="status">{t.documents(s.sources.length)}</p>
-		{:else}
+		{#if s.readable.length > 0}
+			<p class="count" role="status">{t.documents(s.readable.length)}</p>
+		{:else if s.sources.length === 0}
 			<p class="notice" role="status">{t.nothing}</p>
 		{/if}
 		{#if s.noText.length > 0}
@@ -77,13 +82,17 @@
 		{#if s.undecided.length > 0}
 			<p class="left small muted">{t.undecided(listNames(s.undecided))}</p>
 		{/if}
+		{#if s.tooLong}
+			<p class="left small muted">{s.tooLong.said}</p>
+		{/if}
 	{/if}
 
 	<p class="model">
 		<span>{t.model(s.model?.name ?? s.draft.model, s.providerName)}</span>
-		{#if s.cost !== null && !s.tooLong}<span class="cost">{t.cost(formatUsd(s.cost))}</span>{/if}
+		{#if s.cost !== null && s.readable.length > 0}<span class="cost"
+				>{t.cost(formatUsd(s.cost))}</span
+			>{/if}
 	</p>
-	{#if s.tooLong}<p class="chip danger" role="alert">{s.tooLong}</p>{/if}
 	{#if !s.keyed}
 		<p class="notice" role="status">
 			{m.newJob.noKey(s.providerName)}

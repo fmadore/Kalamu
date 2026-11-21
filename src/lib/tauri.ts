@@ -50,6 +50,7 @@ import type { UnitsView } from './bindings/UnitsView.js';
 import type { DiffSpan } from './bindings/DiffSpan.js';
 import type { EstimateRequest } from './bindings/EstimateRequest.js';
 import type { Estimate } from './bindings/Estimate.js';
+import type { RestEstimate } from './bindings/RestEstimate.js';
 import type { Expanded } from './bindings/Expanded.js';
 import type { RowEdit } from './bindings/RowEdit.js';
 import type { InspectedFile } from './bindings/InspectedFile.js';
@@ -87,6 +88,10 @@ import type { MeaningView } from './bindings/MeaningView.js';
 import type { Neighbour } from './bindings/Neighbour.js';
 import type { SpaceChoice } from './bindings/SpaceChoice.js';
 import type { ProjectSummary } from './bindings/ProjectSummary.js';
+import type { ProjectFileOpened } from './bindings/ProjectFileOpened.js';
+import type { ProjectFilePlan } from './bindings/ProjectFilePlan.js';
+import type { ProjectFileProgress } from './bindings/ProjectFileProgress.js';
+import type { ProjectFileSaved } from './bindings/ProjectFileSaved.js';
 import type { ProjectView } from './bindings/ProjectView.js';
 import type { SourceFile } from './bindings/SourceFile.js';
 import type { SourceMatch } from './bindings/SourceMatch.js';
@@ -203,6 +208,14 @@ export const api = {
 	estimateCost: (request: EstimateRequest) => invoke<Estimate>('estimate_cost', { request }),
 	createJob: (job: NewJob) => invoke<Job>('create_job', { job }),
 	startJob: (id: string) => invoke<void>('start_job', { id }),
+	/** After a sample (#215): every page with one of its set-ups, the pages it read from the
+	 * cache; and another model on its pages. Each job is made, not started. */
+	restEstimate: (job: string, setup: string) =>
+		invoke<RestEstimate>('rest_estimate', { job, setup }),
+	restOfSample: (job: string, setup: string, name: string) =>
+		invoke<Job>('rest_of_sample', { job, setup, name }),
+	compareSample: (job: string, provider: string, model: string, name: string) =>
+		invoke<Job>('compare_sample', { job, provider, model, name }),
 	pauseJob: (id: string) => invoke<void>('pause_job', { id }),
 	cancelJob: (id: string) => invoke<void>('cancel_job', { id }),
 	retryFailed: (id: string) => invoke<void>('retry_failed', { id }),
@@ -481,6 +494,13 @@ export const api = {
 		invoke<void>('keep_aside', { project, item, revision, note }),
 	exportReviewManifest: (project: string, selection: QueueSelection, path: string) =>
 		invoke<void>('export_review_manifest', { project, selection, path }),
+	/** What saving a project to one file would write, with and without its original files. */
+	planProjectFile: (project: string) => invoke<ProjectFilePlan>('plan_project_file', { project }),
+	/** Saves a project to one file at `path`; its progress comes as `project-file-progress`. */
+	saveProjectFile: (project: string, path: string, withOriginals: boolean) =>
+		invoke<ProjectFileSaved>('save_project_file', { project, path, withOriginals }),
+	/** Opens a project file as a new project beside the others. */
+	openProjectFile: (path: string) => invoke<ProjectFileOpened>('open_project_file', { path }),
 	setShellLabels: (labels: ShellLabels) => invoke<void>('set_shell_labels', { labels }),
 	hideWindow: () => invoke<void>('hide_window'),
 	quitApp: () => invoke<void>('quit_app')
@@ -498,7 +518,10 @@ export const on = {
 	/** The offline status changed outside a command: read it again. */
 	offlineChanged: (handler: () => void) => listen<null>('offline-changed', handler),
 	/** The model list was refreshed at start-up: read it again, with the release it names. */
-	catalogChanged: (handler: () => void) => listen<null>('catalog-changed', handler)
+	catalogChanged: (handler: () => void) => listen<null>('catalog-changed', handler),
+	/** How far a project file is written or opened, in bytes of the files it carries. */
+	projectFileProgress: (handler: (event: ProjectFileProgress) => void) =>
+		listen('project-file-progress', handler)
 };
 
 export async function revealInFolder(path: string): Promise<void> {

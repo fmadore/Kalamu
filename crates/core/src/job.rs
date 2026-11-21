@@ -11,8 +11,14 @@ use crate::{
 pub struct JobSettings {
     #[serde(default)]
     pub languages: LanguageChoice,
-    /// Process only the first pages of each document, for trying a sample.
+    /// Process only so many pages of each document, for trying a sample: the first ones, or
+    /// with `sample_spread` pages spread through it ([`crate::PageSample`]).
     pub sample_pages: Option<u32>,
+    /// A sample's pages are spread through each document, its first page left out, rather than
+    /// the first ones: typical pages, as New job's *Try on a few pages first* asks.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(as = "Option<bool>", optional)]
+    pub sample_spread: bool,
     /// How a text extraction lays out lines; `None` leaves it to the prompt.
     #[serde(default)]
     pub line_breaks: Option<LineBreaks>,

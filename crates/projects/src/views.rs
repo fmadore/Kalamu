@@ -298,7 +298,7 @@ impl Projects {
             .map(|(job, _, _)| (job.created_at, job.id))
             .collect();
         jobs.sort_by(|a, b| b.cmp(a));
-        let choices = self.choice_answers(&loaded.jobs, &links)?;
+        let choices = self.choice_answers(id, &loaded.jobs, &links)?;
         Ok(ProjectView {
             collections: collections
                 .into_iter()

@@ -5,6 +5,7 @@
 	import JobFacts from './JobFacts.svelte';
 	import JobFiles from './JobFiles.svelte';
 	import JobOutputs from './JobOutputs.svelte';
+	import SampleBanner from './SampleBanner.svelte';
 	import StepBanner from './StepBanner.svelte';
 	import UseTextMenu from './UseTextMenu.svelte';
 	import type { Job } from '#lib/bindings/Job.js';
@@ -17,6 +18,7 @@
 	import { deleteJob, renameJob } from '#lib/jobActions.svelte.js';
 	import { rulesFor } from '#lib/newJob.js';
 	import { Paging } from '#lib/paging.svelte.js';
+	import { isSample } from '#lib/sampleNext.svelte.js';
 	import { api } from '#lib/tauri.js';
 	import { app, go, liveJob, refreshJobs } from '#lib/state.svelte.js';
 
@@ -294,6 +296,11 @@
 
 	<div class="body">
 		{#if action.error}<p class="chip danger">{action.error}</p>{/if}
+
+		<!-- A sample, once read: the rest, or another model on the same pages. -->
+		{#if isSample(job) && !running && summary.pieces_finished > 0}
+			<SampleBanner {job} />
+		{/if}
 
 		<JobFacts {job} {summary} {spent} {scores} />
 

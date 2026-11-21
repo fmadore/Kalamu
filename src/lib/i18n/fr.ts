@@ -588,30 +588,32 @@ export const fr: Messages = {
 		themesPlaceholder: 'Par exemple :\nLes premiers clients\nL’aide de la famille\nLes tontines'
 	},
 	screening: {
-		action: 'Lesquels parlent de ma question ?',
-		title: 'Lesquels de ces documents parlent de ma question ?',
-		lede: 'Kalamu envoie le texte de chaque document, tel que vous l’avez corrigé, à un modèle qui dit s’il parle de votre question, pourquoi, et avec quels passages. Un passage n’est gardé que si ses mots se trouvent dans le document. « Incertain » est une réponse honnête que le modèle peut donner.',
+		action: 'Lesquels parlent de ma question ?',
+		title: 'Lesquels de ces documents parlent de ma question ?',
+		lede: 'Kalamu envoie le texte de chaque document, tel que vous l’avez corrigé, à un modèle qui dit s’il parle de votre question, pourquoi, et avec quels passages. Un passage n’est gardé que si ses mots se trouvent dans le document. « Incertain » est une réponse honnête que le modèle peut donner.',
 		question: 'Votre question de recherche',
 		questionHint: 'En une phrase ou deux, comme vous la poseriez à un collègue.',
 		questionPlaceholder:
-			'Par exemple : ce que les commerçantes du marché ont demandé au conseil municipal, et ce qu’il a répondu, de 1950 à 1960.',
+			'Par exemple : ce que les commerçantes du marché ont demandé au conseil municipal, et ce qu’il a répondu, de 1950 à 1960.',
 		documents: (n: number) => (n === 1 ? '1 document sera lu.' : `${n} documents seront lus.`),
 		noText: (titles: string, n: number) =>
 			n === 1
-				? `Laissé de côté, pas encore lu en texte : ${titles}. Lisez-le d’abord avec Nouveau traitement.`
-				: `Laissés de côté, pas encore lus en texte : ${titles}. Lisez-les d’abord avec Nouveau traitement.`,
+				? `Laissé de côté, pas encore lu en texte : ${titles}. Lisez-le d’abord avec Nouveau traitement.`
+				: `Laissés de côté, pas encore lus en texte : ${titles}. Lisez-les d’abord avec Nouveau traitement.`,
 		undecided: (titles: string) =>
-			`Laissés de côté, lus plusieurs fois sans lecture préférée : ${titles}. Choisissez-en une dans le document d’abord.`,
+			`Laissés de côté, lus plusieurs fois sans lecture préférée : ${titles}. Choisissez-en une dans le document d’abord.`,
 		nothing:
 			'Aucun de ces documents n’a encore été lu en texte. Lisez-les d’abord avec Nouveau traitement, puis revenez ici.',
-		model: (name: string, provider: string) => `Modèle : ${name} (${provider})`,
-		cost: (usd: string) => `Coût estimé : ${usd}`,
-		tooLong: (file: string, model: string, words: string, most: string) =>
-			`${file} est trop long pour ${model} : environ ${words} mots, alors qu’il en lit environ ${most} à la fois. Choisissez un autre modèle sous Plus de choix.`,
+		model: (name: string, provider: string) => `Modèle : ${name} (${provider})`,
+		cost: (usd: string) => `Coût estimé : ${usd}`,
+		tooLong: (files: string, model: string, n: number) =>
+			n === 1
+				? `Laissé de côté, trop long pour ${model} même lu en morceaux : ${files}. Un autre modèle, sous Plus de choix, pourra peut-être le lire.`
+				: `Laissés de côté, trop longs pour ${model} même lus en morceaux : ${files}. Un autre modèle, sous Plus de choix, pourra peut-être les lire.`,
 		more: 'Plus de choix',
 		start: 'Lancer',
 		preparing: 'Préparation des textes…',
-		jobName: (question: string) => `Ma question : ${question}`,
+		jobName: (question: string) => `Ma question : ${question}`,
 		filter: 'Filtrer selon une réponse',
 		anyAnswer: 'Toutes les réponses',
 		answerCount: (answer: string, n: number) => `${answer} (${n})`,
@@ -623,7 +625,24 @@ export const fr: Messages = {
 		keptTag: 'Gardé',
 		setAsideTag: 'Écarté',
 		decided: (tag: string, n: number) =>
-			n === 1 ? `1 document étiqueté « ${tag} »` : `${n} documents étiquetés « ${tag} »`
+			n === 1 ? `1 document étiqueté « ${tag} »` : `${n} documents étiquetés « ${tag} »`,
+		docReadInParts: (n: number) =>
+			`Ce document était long : il a été lu en ${n} morceaux, puis le tout a été rassemblé.`,
+		docPagesNotRead: (first: number, last: number) =>
+			first === last
+				? `La page ${first} n’a pas pu être lue : la réponse la laisse de côté.`
+				: `Les pages ${first} à ${last} n’ont pas pu être lues : la réponse les laisse de côté.`,
+		docPassagesNotRead: (first: number, last: number) =>
+			`Les passages ${first} à ${last} n’ont pas pu être lus : la réponse les laisse de côté.`,
+		passagesOf: (title: string) => `Passages cités de « ${title} »`,
+		keepThis: (title: string) => `Garder « ${title} »`,
+		setAsideThis: (title: string) => `Écarter « ${title} »`,
+		decisionTakenOff: (tag: string) => `Étiquette « ${tag} » retirée`,
+		notReadAgainst: (n: number, question: string) =>
+			n === 1
+				? `1 document n’a pas encore été lu avec la question « ${question} ».`
+				: `${n} documents n’ont pas encore été lus avec la question « ${question} ».`,
+		askAgain: 'Poser cette question aux nouveaux documents'
 	},
 	cited: {
 		listen: 'Écouter',
@@ -1586,7 +1605,7 @@ export const fr: Messages = {
 			`Retirer ${n === 1 ? 'ce document' : `ces ${n} documents`} du projet ? Les fichiers, les traitements qui les ont lus et leurs résultats sont conservés.`,
 		missing: 'Fichier introuvable',
 		missingHint:
-			'Le fichier n’est plus là où il a été ajouté. Ses résultats sont conservés ; remettez-le en place pour le relire.',
+			'Le fichier n’est pas là où il a été ajouté, ou ce projet vient d’un autre ordinateur sans ses fichiers. Ses résultats sont conservés ; remettez le fichier en place pour le relire.',
 		sameContent: (n: number) =>
 			n === 1 ? 'Même contenu qu’un autre' : `Même contenu que ${n} autres`,
 		noResults: 'Pas encore lu',
@@ -1897,6 +1916,19 @@ export const fr: Messages = {
 		},
 		sampleTitle: 'Faire d’abord un essai',
 		sample: (n: number) => `Seulement les ${n} premières pages de chaque document`,
+		trySample: {
+			title: 'Essayer d’abord sur quelques pages',
+			offer: (pages: number, n: number) =>
+				`${pages} pages, c’est beaucoup à lire d’un coup. Essayez d’abord le modèle sur ${n} pages : vous voyez s’il les lit bien et ce que cela coûte, puis vous lancez le reste depuis la page du traitement, sans payer ces pages une seconde fois.`,
+			one: (n: number) => `Essayer sur ${n} pages`,
+			two: (n: number) => `Essayer sur ${n} pages avec deux modèles`,
+			chosen: (n: number) =>
+				`Kalamu lira ${n} pages prises ici et là dans chaque document, et non les premières, qui sont souvent une couverture ou une page de titre. Une fois que vous les aurez regardées, lancez le reste depuis la page du traitement.`,
+			chosenTwo: (n: number) =>
+				`Kalamu lira ${n} pages prises ici et là dans chaque document avec les deux modèles, et non les premières, qui sont souvent une couverture ou une page de titre. Comparez-les à la relecture, puis lancez le reste avec celui que vous préférez depuis la page du traitement.`,
+			every: 'Lire toutes les pages',
+			spread: (n: number) => `${n} pages prises ici et là dans chaque document`
+		},
 		outputTitle: 'Résultats',
 		formats: 'Formats',
 		subtitlesNeedTimes:
@@ -2162,6 +2194,22 @@ export const fr: Messages = {
 			`${n === 1 ? '1 segment est' : `${n} segments sont`} encore au service de traitement par lots du fournisseur. Reprenez pour récupérer les réponses ; rien n’est envoyé ni payé deux fois.`,
 		pace: 'Rapidité',
 		paceName: { fast: 'Plus rapide', economy: 'Moins cher (par lots)' },
+		sample: {
+			first: (n: number) => `Un essai : les ${n} premières pages de chaque document.`,
+			spread: (n: number) => `Un essai : ${n} pages prises ici et là dans chaque document.`,
+			next: 'Une fois que vous les avez regardées, lancez le reste, ou essayez un autre modèle sur les mêmes pages.',
+			runRest: (model: string) => `Lancer le reste avec ${model}`,
+			left: (n: number) => (n <= 1 ? `${n} page restante` : `${n} pages restantes`),
+			about: (cost: string) => `environ ${cost}`,
+			free: (n: number) =>
+				n === 1 ? 'La page déjà lue ne coûte rien.' : `Les ${n} pages déjà lues ne coûtent rien.`,
+			restName: (name: string) => `${name} (toutes les pages)`,
+			compareLede: (model: string) =>
+				`Un autre modèle lit les mêmes pages, à côté de ${model}. Seul le nouveau modèle est payé : les pages déjà lues ne sont pas envoyées de nouveau.`,
+			compareStart: 'Lancer',
+			compareCost: (cost: string) => `Environ ${cost} pour le nouveau modèle.`,
+			compareName: (name: string) => `${name} (comparaison)`
+		},
 		empty_new: 'Lancer un traitement'
 	},
 	allJobs: {
@@ -3046,6 +3094,56 @@ export const fr: Messages = {
 		hidden: (reopen: string) =>
 			`Kalamu travaille toujours. Cliquez sur son icône dans ${reopen} pour le rouvrir.`
 	},
+	/** A project saved as one file, to open on another computer or give to a colleague. */
+	projectFile: {
+		save: 'Enregistrer dans un fichier…',
+		title: 'Enregistrer ce projet dans un fichier',
+		lede: 'Un seul fichier avec ce projet, pour l’ouvrir sur un autre ordinateur, le confier à un collègue ou le garder en lieu sûr.',
+		reading: 'Kalamu regarde ce que le fichier contiendra…',
+		inFile: 'Dans le fichier',
+		documents: (documents: number, jobs: number) =>
+			`${documents === 1 ? '1 document' : `${documents} documents`} et ce que ${
+				jobs === 1 ? '1 traitement' : `${jobs} traitements`
+			} en ont lu`,
+		yourWork:
+			'Vos corrections et ce que vous avez marqué comme vérifié, les collections, les étiquettes et les descriptions, et le dictionnaire',
+		never:
+			'Jamais dans le fichier : vos clés d’API, vos paramètres, ni rien de vos autres projets.',
+		originals: 'Inclure les fichiers d’origine (numérisations, enregistrements)',
+		originalsHint: (files: number, size: string) =>
+			`${files === 1 ? '1 fichier' : `${files} fichiers`}, environ ${size}. Sans eux, le fichier contient le texte et votre travail, et les pages et les enregistrements restent sur cet ordinateur.`,
+		noOriginals: 'Ce projet n’a aucun fichier d’origine sur cet ordinateur.',
+		originalsMissing: (n: number) =>
+			n === 1
+				? '1 fichier d’origine est introuvable sur cet ordinateur et sera laissé de côté.'
+				: `${n} fichiers d’origine sont introuvables sur cet ordinateur et seront laissés de côté.`,
+		size: (size: string) => `Le fichier fera environ ${size}.`,
+		bytes: (bytes: number) =>
+			bytes < 1e6
+				? 'moins de 1 Mo'
+				: bytes < 1e9
+					? `${Math.round(bytes / 1e6)} Mo`
+					: `${(bytes / 1e9).toFixed(1).replace('.', ',')} Go`,
+		saveButton: 'Enregistrer…',
+		cancel: 'Annuler',
+		close: 'Fermer',
+		saving: 'Enregistrement du projet…',
+		saved: (path: string) => `Le projet est enregistré dans ${path}.`,
+		leftOut: (n: number) =>
+			n === 1
+				? '1 fichier d’origine a été laissé de côté : il est introuvable, ou il a changé depuis sa lecture.'
+				: `${n} fichiers d’origine ont été laissés de côté : ils sont introuvables, ou ils ont changé depuis leur lecture.`,
+		show: { windows: 'Afficher dans l’Explorateur de fichiers', macos: 'Afficher dans le Finder' },
+		fileType: 'Projet Kalamu',
+		open: 'Ouvrir un fichier de projet…',
+		opening: 'Ouverture du fichier de projet…',
+		opened: (name: string, documents: number, jobs: number) =>
+			`« ${name} » est ouvert, avec ${documents === 1 ? '1 document' : `${documents} documents`} et ${
+				jobs === 1 ? '1 traitement' : `${jobs} traitements`
+			}. C’est un nouveau projet, à côté des vôtres, qui n’ont pas été modifiés.`,
+		openedWithout:
+			'Les fichiers d’origine n’y ont pas été enregistrés : le texte, vos corrections et les exports sont bien là, et les pages et les enregistrements s’afficheront quand le projet sera de nouveau enregistré avec ses fichiers d’origine.'
+	},
 	os: {
 		windows: {
 			keychain: 'le Gestionnaire d’identification Windows',
@@ -3311,6 +3409,14 @@ export const fr: Messages = {
 		'app.internal': 'Une erreur s’est produite dans l’application.',
 		'app.jobs_running':
 			'Pas pendant qu’un traitement est en cours : mettez-le en pause ou attendez qu’il se termine.',
-		'app.notDesktop': 'Cette fonction n’est disponible que dans l’application de bureau.'
+		'app.notDesktop': 'Cette fonction n’est disponible que dans l’application de bureau.',
+		'project.file_not_kalamu': 'Ce fichier n’est pas un fichier de projet Kalamu.',
+		'project.file_damaged':
+			'Ce fichier de projet est abîmé, peut-être coupé pendant sa copie. Demandez-le de nouveau, ou copiez-le de nouveau.',
+		'project.file_newer':
+			'Ce fichier de projet a été enregistré par une version plus récente de Kalamu. Mettez Kalamu à jour, puis ouvrez-le de nouveau.',
+		'project.file_write':
+			'Le fichier de projet n’a pas pu être écrit. Vérifiez qu’il reste assez de place, ou choisissez un autre endroit.',
+		'project.file_read': 'Le fichier de projet n’a pas pu être lu.'
 	}
 };

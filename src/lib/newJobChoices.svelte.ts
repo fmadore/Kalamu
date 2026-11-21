@@ -37,6 +37,7 @@ import {
 	providerDefault,
 	readsInput
 } from './newJobModels.js';
+import { SAMPLE_PAGES } from './newJobSample.js';
 import { allRecords, readingRule } from './records.js';
 import { app, hasKey, missingLanguageData, toast } from './state.svelte.js';
 import { api } from './tauri.js';
@@ -68,6 +69,8 @@ export class JobChoices {
 	readonly records = $derived(this.task === 'analysis' && allRecords(this.schemas));
 	sample = $state(false);
 	samplePages = $state(3);
+	/** The sample's pages are spread through each document, as *Try on a few pages* asks. */
+	sampleSpread = $state(false);
 	/** How many pages of a PDF go in one call: one, several, or as many as fit. */
 	together = $state<Together>('one');
 	togetherPages = $state(4);
@@ -108,6 +111,9 @@ export class JobChoices {
 	/** Raised by each task picked, so the prompts of a task picked earlier and read later are
 	 * not put under the one picked since. */
 	#taskTicket = 0;
+	/** The set-up *Try on a few pages with two models* added, taken back with the sample. Not
+	 * state: it only remembers. */
+	#sampleDraft: Draft | null = null;
 
 	/** Called while New job is set up, so its effects end with it. */
 	constructor(files: JobFiles, kept: NewJobForm | null) {
@@ -120,6 +126,7 @@ export class JobChoices {
 		this.drafts = kept?.drafts ?? [];
 		this.sample = kept?.sample ?? false;
 		this.samplePages = kept?.samplePages ?? 3;
+		this.sampleSpread = kept?.sampleSpread ?? false;
 		this.together = kept?.together ?? 'one';
 		this.togetherPages = kept?.togetherPages ?? 4;
 		this.formats = kept?.formats ?? [];
@@ -215,12 +222,53 @@ export class JobChoices {
 		if (sent.pages !== undefined) this.togetherPages = sent.pages;
 		this.sample = p.settings.sample_pages !== null;
 		this.samplePages = p.settings.sample_pages ?? this.samplePages;
+		this.sampleSpread = this.sample && (p.settings.sample_spread ?? false);
 		this.formats = p.formats.filter((f) => rulesFor(app.rules, p.task).formats.includes(f));
 		// The pipeline's formats stand, records or not.
 		this.#recordsBefore = null;
 		this.#sheetForRecords = false;
 		this.destination = p.destination;
 		toast(this.#m.newJob.pipelineApplied(p.name));
+	}
+
+	/** A second set-up to compare with: another model with a key, or on this computer, asked
+	 * what the others are; none when no other model can be used. */
+	secondDraft(): Draft | null {
+		const used = this.drafts.map((d) => `${d.provider}/${d.model}`);
+		const shared = this.drafts.find((d) => this.presets.some((p) => p.id === d.presetId))?.presetId;
+		const next = newDraft(
+			this.catalog,
+			this.rule,
+			shared ?? this.presets[0]?.id ?? null,
+			hasKey,
+			used,
+			this.input
+		);
+		const fresh = next.model && hasKey(next.provider);
+		return fresh && !used.includes(`${next.provider}/${next.model}`) ? next : null;
+	}
+
+	/** *Try on a few pages first* (#215): a few pages spread through each document, and with
+	 * `two` a second model beside the first. */
+	trySample(two: boolean) {
+		this.sample = true;
+		this.samplePages = SAMPLE_PAGES;
+		this.sampleSpread = true;
+		const second = two && this.drafts.length === 1 ? this.secondDraft() : null;
+		if (second) {
+			this.drafts = [...this.drafts, second];
+			this.#sampleDraft = this.drafts[this.drafts.length - 1] ?? null;
+		}
+	}
+
+	/** Every page again: the sample taken back, and the model it added while the researcher has
+	 * left it there. */
+	readEveryPage() {
+		this.sample = false;
+		this.sampleSpread = false;
+		const added = this.#sampleDraft;
+		this.#sampleDraft = null;
+		if (added && this.drafts.length > 1) this.drafts = this.drafts.filter((d) => d !== added);
 	}
 
 	/** The settings shared by every set-up, as a job and a pipeline store them, at `pace`. */
@@ -231,6 +279,7 @@ export class JobChoices {
 			languagesTaken: this.languageIgnored.length < this.models.length,
 			sample: this.sample,
 			samplePages: this.samplePages,
+			sampleSpread: this.sampleSpread,
 			paged: this.paged,
 			lineBreaks: this.lineBreaks,
 			linesTaken: this.linesApply && this.noPrompt.length < this.models.length,

@@ -85,6 +85,11 @@ vous pouvez ainsi citer exactement la façon dont le texte a été produit. Voir
 
 ## Et ensuite ?
 
+- Pour un long document, Kalamu fait ce premier essai pour vous : quand un PDF a plus de
+  15 pages, Nouveau traitement propose **Essayer sur 3 pages**, prises ici et là dans le
+  document. Sur la page de ce traitement, **Lancer le reste** lit les autres pages sans faire
+  payer ces trois-là une seconde fois, et **Comparer avec un autre modèle** fait lire les
+  trois mêmes pages par un second modèle.
 - Si la lecture est bonne : lancez le reste de la collection, et pensez au
   [mode moins cher](costs.md), qui coûte moitié moins si vous acceptez une réponse dans la
   journée.

@@ -31,9 +31,27 @@ ont été faites.
   une raison et les passages qui le montrent, chacun retrouvé mot pour mot dans le texte avec
   sa page. Filtrez le tableau selon la réponse, lisez les passages, puis choisissez **Garder**
   ou **Écarter** : votre décision est une étiquette, et la réponse du modèle reste telle
-  quelle. **Exporter ce tableau** écrit toute la liste pour un tableur.
+  quelle. **Exporter ce tableau** écrit toute la liste pour un tableur. Quand une réponse
+  est choisie dans le filtre, chaque ligne montre sa réponse, la raison et les passages. Si
+  vous ajoutez des documents plus tard, **Poser cette question aux nouveaux documents** ne
+  fait lire que ceux-là.
 - Quand un document a été lu plusieurs fois, choisissez le résultat auquel vous vous fiez avec
   **Retenir**. La recherche, les exports et les analyses utilisent alors celui-là.
+
+## Enregistrer un projet dans un fichier
+
+**Enregistrer dans un fichier…** écrit tout le projet dans un seul fichier qui finit par
+`.kalamu` : pour l’ouvrir sur un nouvel ordinateur, le confier à un collègue qui vérifie avec
+vous, ou en garder une copie en lieu sûr. Le fichier contient le texte lu dans vos documents,
+vos corrections, ce que vous avez marqué comme vérifié, les étiquettes, les descriptions et le
+dictionnaire. Il ne contient jamais vos clés d’API. Vos numérisations et vos enregistrements
+n’y sont pas, sauf si vous cochez **Inclure les fichiers d’origine** ; Kalamu indique la
+taille du fichier avant de l’écrire.
+
+Sur l’autre ordinateur, Windows ou Mac, choisissez **Ouvrir un fichier de projet…** dans la
+liste des projets. Il s’ouvre comme un nouveau projet, à côté des autres : rien de ce que
+vous avez déjà n’est modifié. Toute personne qui a le fichier peut lire tout ce qu’il
+contient : prenez-en soin comme des documents eux-mêmes.
 
 ## Décrire vos sources
 

@@ -91,14 +91,14 @@ impl Quotable {
                 format!("{stem}-turns-{number}.txt"),
                 format!(
                     "{}{}",
-                    cited::REQUEST,
-                    crate::windows::part_request(*first, *last)
+                    cited::request_for(&self.turns),
+                    cited::part_request(&self.turns, *first, *last)
                 ),
             ),
             _ => (
                 self.numbered.clone(),
                 format!("{stem}-turns.txt"),
-                cited::REQUEST.to_string(),
+                cited::request_for(&self.turns).to_string(),
             ),
         };
         Some(Cite {
@@ -252,7 +252,11 @@ impl Engine {
             if !self.request_cites(new.task, request)? {
                 continue;
             }
-            if let Some(long) = self.text_too_long(catalog, request, &new.sources) {
+            if let Some(long) = self
+                .texts_too_long(catalog, request, &new.sources)
+                .into_iter()
+                .next()
+            {
                 let model = catalog
                     .model(&request.provider, &request.model)
                     .map_or_else(|| request.model.clone(), |m| m.name.clone());
@@ -267,38 +271,63 @@ impl Engine {
         Ok(())
     }
 
-    /// The first of the sources a cited set-up's model cannot read even in parts: one turn of
-    /// it alone is too long ([`crate::windows`]). A text longer than the model reads at once is
-    /// read in parts, and not refused.
-    pub(crate) fn text_too_long(
+    /// The sources a cited set-up's model cannot read even in parts, in the order given: one
+    /// turn of each alone is too long ([`crate::windows`]). A text longer than the model reads
+    /// at once is read in parts, and not refused.
+    pub(crate) fn texts_too_long(
         &self,
         catalog: &Catalog,
         request: &SetupRequest,
         sources: &[SourceFile],
-    ) -> Option<TextTooLong> {
-        let model = catalog.model(&request.provider, &request.model)?;
-        let windows = crate::windows::windows_for(model)?;
+    ) -> Vec<TextTooLong> {
+        self.too_long_at(catalog, request, sources)
+            .into_iter()
+            .map(|(_, long)| long)
+            .collect()
+    }
+
+    /// [`Engine::texts_too_long`], each with its place among the sources.
+    pub(crate) fn too_long_at(
+        &self,
+        catalog: &Catalog,
+        request: &SetupRequest,
+        sources: &[SourceFile],
+    ) -> Vec<(usize, TextTooLong)> {
+        let Some(model) = catalog.model(&request.provider, &request.model) else {
+            return Vec::new();
+        };
+        let Some(windows) = crate::windows::windows_for(model) else {
+            return Vec::new();
+        };
         sources
             .iter()
-            .filter(|s| s.kind == InputKind::Text)
-            .find_map(|source| {
+            .enumerate()
+            .filter(|(_, s)| s.kind == InputKind::Text)
+            .filter_map(|(at, source)| {
                 let quotable = self.quotable_text(source).ok()?;
                 let turn = cited::windows::plan(&quotable.sizes(), &windows).err()?;
                 let long = model.too_long_chars(u64::from(turn.chars))?;
-                Some(TextTooLong {
-                    file: source.file_name.clone(),
-                    words: long.words,
-                    most_words: long.most_words,
-                })
+                Some((
+                    at,
+                    TextTooLong {
+                        source: source.id,
+                        file: source.file_name.clone(),
+                        words: long.words,
+                        most_words: long.most_words,
+                    },
+                ))
             })
+            .collect()
     }
 }
 
-/// A text a cited analysis would send that is surely too long for its model to read at once:
-/// the file, about how many words it holds, and about how many the model reads.
+/// A text a cited analysis would send that its model surely cannot read, even in parts: the
+/// source and its file, about how many words its longest passage holds, and about how many the
+/// model reads at once.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct TextTooLong {
+    pub source: SourceId,
     pub file: String,
     pub words: u32,
     pub most_words: u32,
@@ -306,7 +335,8 @@ pub struct TextTooLong {
 
 /// The text a cited analysis read, for the review to show its quotations in place: the
 /// snapshot it was frozen in (none for a text file given directly), the text's hash, the text,
-/// and its turns as the quotations number them (`turns[evidence.turn - 1]`).
+/// and its turns as the quotations number them (`turns[evidence.turn - 1]`), with the page each
+/// lies on when the text was read from pages.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct CitedSource {
@@ -314,6 +344,10 @@ pub struct CitedSource {
     pub sha256: String,
     pub text: String,
     pub turns: Vec<Turn>,
+    /// Each turn's page number, in the order of `turns`; empty for a text with no pages (a
+    /// transcript, a text file).
+    #[serde(default)]
+    pub pages: Vec<Option<u32>>,
 }
 
 impl Engine {
@@ -332,11 +366,24 @@ impl Engine {
         let quotable = self
             .quotable_text(source)
             .map_err(|_| EngineError::CitedNeedsText(source.file_name.clone()))?;
+        let pages: Vec<Option<u32>> = (1..=quotable.turns.len() as u32)
+            .map(
+                |turn| match cited::page_of(&quotable.parts, &quotable.turns, turn) {
+                    Some(PieceRef::Page { number, .. }) => Some(number),
+                    _ => None,
+                },
+            )
+            .collect();
         Ok(CitedSource {
             snapshot_id: source.derived_from.as_ref().map(|d| d.snapshot_id.clone()),
             sha256: source.sha256.clone(),
             text: quotable.text,
             turns: quotable.turns,
+            pages: if pages.iter().any(Option::is_some) {
+                pages
+            } else {
+                Vec::new()
+            },
         })
     }
 

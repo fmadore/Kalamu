@@ -9,9 +9,15 @@ import type { PagesPerCall } from "./PagesPerCall";
  */
 export type JobSettings = { languages: LanguageChoice, 
 /**
- * Process only the first pages of each document, for trying a sample.
+ * Process only so many pages of each document, for trying a sample: the first ones, or
+ * with `sample_spread` pages spread through it ([`crate::PageSample`]).
  */
 sample_pages: number | null, 
+/**
+ * A sample's pages are spread through each document, its first page left out, rather than
+ * the first ones: typical pages, as New job's *Try on a few pages first* asks.
+ */
+sample_spread?: boolean, 
 /**
  * How a text extraction lays out lines; `None` leaves it to the prompt.
  */

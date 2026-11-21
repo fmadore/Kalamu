@@ -243,6 +243,8 @@ export interface SettingsForm {
 	languagesTaken: boolean;
 	sample: boolean;
 	samplePages: number;
+	/** The sample's pages are spread through each document rather than the first ones. */
+	sampleSpread?: boolean;
 	/** Whether the task reads page by page, so a sample of pages applies. */
 	paged: boolean;
 	lineBreaks: LineBreaks;
@@ -260,6 +262,7 @@ export function jobSettings(f: SettingsForm): JobSettings {
 				? { mode: 'explicit', languages: [...f.languages] }
 				: { mode: 'auto' },
 		sample_pages: f.sample && f.paged ? f.samplePages : null,
+		...(f.sample && f.paged && f.sampleSpread ? { sample_spread: true } : {}),
 		line_breaks: f.linesTaken ? f.lineBreaks : null,
 		pace: f.pace,
 		pages_per_call: f.pagesPerCall
@@ -379,6 +382,8 @@ export interface NewJobForm {
 	drafts: Draft[];
 	sample: boolean;
 	samplePages: number;
+	/** The sample's pages are spread through each document (#215). */
+	sampleSpread?: boolean;
 	together: Together;
 	togetherPages: number;
 	formats: ExportFormat[];

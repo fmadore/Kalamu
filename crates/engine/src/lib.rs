@@ -31,6 +31,7 @@ mod realign;
 mod record;
 mod region_reading;
 mod regions;
+mod rest;
 mod review;
 mod rules;
 mod run;
@@ -70,6 +71,7 @@ pub use kalamu_core::{AgreementMeasure, FieldAgreement, JobAgreement, PairAgreem
 pub use kalamu_core::{FileProgress, JobProgress};
 pub use listen::{LISTENING_CACHE_BYTES, PieceAudio};
 pub use meaning::{Meaning, MeaningError, MeaningProgress, MeaningStatus, Ready};
+pub use rest::RestEstimate;
 pub use review::{ListedAdded, PieceView};
 pub use rules::{ModelRef, PageReading, TaskRules, task_rules};
 pub use setup::{ImageDocument, NewJob};

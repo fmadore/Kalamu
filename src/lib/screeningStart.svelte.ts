@@ -4,8 +4,10 @@
 // project. The model is the one New job would choose for an analysis; another one or the
 // language of the answers only under "More choices". Start asks what New job's Start asks
 // (consent to send to the provider, folders on the Mac App Store), then creates and starts the
-// job as New job does (`launch`), and its page opens.
+// job as New job does (`launch`), and its page opens. Asked again of the documents added since,
+// it starts from the question, the prompt, the model and the languages it was asked with.
 
+import type { LanguageChoice } from './bindings/LanguageChoice.js';
 import type { NewJob } from './bindings/NewJob.js';
 import type { SetupRequest } from './bindings/SetupRequest.js';
 import type { SourceFile } from './bindings/SourceFile.js';
@@ -22,6 +24,15 @@ import { SCREENING_PRESET, screeningRequest } from './screening.js';
 import { app, go, hasKey, type FromProject } from './state.svelte.js';
 import { api } from './tauri.js';
 
+/** A question kept with the project, to be asked again as it was asked. */
+export interface Again {
+	question: string;
+	presetId: string | null;
+	provider: string;
+	model: string;
+	languages: LanguageChoice;
+}
+
 export class Screening {
 	question = $state('');
 	draft = $state<Draft>(
@@ -29,6 +40,25 @@ export class Screening {
 	);
 	languageMode = $state<'auto' | 'explicit'>('auto');
 	languages = $state<string[]>([]);
+	constructor(again?: Again) {
+		if (!again) return;
+		this.question = again.question;
+		this.draft = {
+			...newDraft(
+				app.catalog!,
+				rulesFor(app.rules, 'analysis'),
+				again.presetId ?? SCREENING_PRESET,
+				hasKey
+			),
+			provider: again.provider,
+			model: again.model
+		};
+		if (again.languages.mode === 'explicit') {
+			this.languageMode = 'explicit';
+			this.languages = [...again.languages.languages];
+		}
+	}
+
 	/** The documents' texts, frozen when the dialog opens: what the estimate prices and the job
 	 * reads. */
 	sources = $state<SourceFile[] | null>(null);
@@ -38,8 +68,9 @@ export class Screening {
 	undecided = $state<string[]>([]);
 	/** What the job would cost, in dollars, when the engine can tell. */
 	cost = $state<number | null>(null);
-	/** A document is too long for the model chosen, in a sentence; none when all fit. */
-	tooLong = $state<string | null>(null);
+	/** The documents the model chosen cannot read even in parts, left out of the job, and the
+	 * sentence that names them; none when all can be read. */
+	tooLong = $state<{ sources: string[]; said: string } | null>(null);
 	error = $state<string | null>(null);
 	busy = $state(false);
 
@@ -49,17 +80,20 @@ export class Screening {
 	readonly providerName = $derived(providerNameOf(this.catalog, this.draft.provider));
 	/** The provider can be sent the text: its key is saved. */
 	readonly keyed = $derived(hasKey(this.draft.provider));
+	/** The texts the job will read: those the model chosen can read. */
+	readonly readable: SourceFile[] = $derived(
+		(this.sources ?? []).filter((s) => !this.tooLong?.sources.includes(s.id))
+	);
 	readonly request: SetupRequest = $derived(
 		screeningRequest(toRequest(this.catalog, 'analysis', this.draft), this.question)
 	);
 	/** Start can be pressed: a question, texts to read, a model the provider can be sent to. */
 	readonly ready = $derived(
 		!!this.question.trim() &&
-			(this.sources?.length ?? 0) > 0 &&
+			this.readable.length > 0 &&
 			this.keyed &&
 			!!this.draft.model &&
-			!this.busy &&
-			this.tooLong === null
+			!this.busy
 	);
 
 	/** Freezes the chosen documents' texts. */
@@ -107,8 +141,8 @@ export class Screening {
 	/** Creates and starts the job, tied to the project, then opens its page; false when the
 	 * researcher declined to send the texts, or the engine refused (the reason in `error`). */
 	async start(project: FromProject): Promise<boolean> {
-		const sources = $state.snapshot(this.sources);
-		if (!sources || !this.ready) return false;
+		const sources = $state.snapshot(this.readable);
+		if (sources.length === 0 || !this.ready) return false;
 		this.busy = true;
 		this.error = null;
 		try {

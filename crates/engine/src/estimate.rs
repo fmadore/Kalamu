@@ -32,11 +32,13 @@ pub struct EstimateRow {
     pub estimate: CostEstimate,
     /// A table of contents' second step, which combines the pages.
     pub merge: bool,
-    /// A cited analysis's text surely too long for this model to read at once, as the job would
-    /// be refused for it when created ([`crate::Engine::check_length`]); absent otherwise.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub too_long: Option<TextTooLong>,
+    /// A cited analysis's texts this model cannot read even in parts, one passage of each alone
+    /// too long, in the order given: a job holding one is refused when created
+    /// ([`crate::Engine::check_length`]), so this row prices the other sources only, as a job
+    /// that leaves them out would cost; absent when every text can be read.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[ts(optional, as = "Option<Vec<TextTooLong>>")]
+    pub too_long: Vec<TextTooLong>,
     /// For a cited analysis of texts too long for this model to read at once, how many parts
     /// they will be read in, all texts together (this row prices the parts, the row after it,
     /// `merge`, the step that brings them together); absent when every text is read whole.
@@ -112,18 +114,26 @@ impl Engine {
     }
 
     pub fn estimate(&self, request: &EstimateRequest) -> Estimate {
+        self.estimate_beyond(request, 0)
+    }
+
+    /// [`Engine::estimate`], with `cached` of the pages already read under the same key and
+    /// taken from the cache at no cost: the rest of a sample ([`crate::rest`]). A table of
+    /// contents still combines every page.
+    pub(crate) fn estimate_beyond(&self, request: &EstimateRequest, cached: u32) -> Estimate {
         let catalog = self.current_catalog();
-        let pages: u32 = request
-            .sources
-            .iter()
-            .map(|s| {
-                let n = match s.kind {
-                    InputKind::Text => (s.size_bytes / TEXT_PAGE_CHARS).max(1) as u32,
-                    _ => s.page_count.unwrap_or(1) * if s.split_spreads { 2 } else { 1 },
-                };
-                request.sample_pages.map_or(n, |cap| n.min(cap))
-            })
-            .sum();
+        let pages_of = |sources: &[SourceFile]| -> u32 {
+            sources
+                .iter()
+                .map(|s| {
+                    let n = match s.kind {
+                        InputKind::Text => (s.size_bytes / TEXT_PAGE_CHARS).max(1) as u32,
+                        _ => s.page_count.unwrap_or(1) * if s.split_spreads { 2 } else { 1 },
+                    };
+                    request.sample_pages.map_or(n, |cap| n.min(cap))
+                })
+                .sum()
+        };
         // A YouTube video's length is known only once the provider has read it.
         let unknown_length = request.sources.iter().any(|s| s.kind == InputKind::YouTube);
         let minutes: f64 = request
@@ -137,6 +147,24 @@ impl Engine {
         };
         let mut rows = Vec::new();
         for setup in &request.setups {
+            // A cited analysis's texts its model cannot read even in parts are left out of the
+            // price, as a job that leaves them out would cost.
+            let cites = self.request_cites(request.task, setup).unwrap_or(false);
+            let unreadable = if cites {
+                self.too_long_at(&catalog, setup, &request.sources)
+            } else {
+                Vec::new()
+            };
+            let sources: Vec<SourceFile> = request
+                .sources
+                .iter()
+                .enumerate()
+                .filter(|(at, _)| !unreadable.iter().any(|(u, _)| u == at))
+                .map(|(_, s)| s.clone())
+                .collect();
+            let too_long: Vec<TextTooLong> = unreadable.into_iter().map(|(_, l)| l).collect();
+            let all_pages = pages_of(&sources);
+            let pages = all_pages.saturating_sub(cached);
             let preset = setup
                 .preset_id
                 .as_ref()
@@ -169,15 +197,10 @@ impl Engine {
                 }
                 _ => unpriced.clone(),
             };
-            let cites = self.request_cites(request.task, setup).unwrap_or(false);
-            let too_long = cites
-                .then(|| self.text_too_long(&catalog, setup, &request.sources))
-                .flatten();
             // Texts read in parts are priced part by part, and the step after them apart.
             let in_parts = cites
-                .then(|| self.in_parts(&catalog, setup, &request.sources))
-                .flatten()
-                .filter(|_| too_long.is_none());
+                .then(|| self.in_parts(&catalog, setup, &sources))
+                .flatten();
             let model = catalog.model(&setup.provider, &setup.model);
             let (estimate, together) = match (in_parts, model) {
                 (Some(read), Some(model)) => {
@@ -217,7 +240,7 @@ impl Engine {
                     pages,
                     estimate,
                     merge: true,
-                    too_long: None,
+                    too_long: Vec::new(),
                     parts: None,
                 });
             }
@@ -233,15 +256,15 @@ impl Engine {
                     .map_or(PROMPT_CHARS, String::len);
                 let estimate = catalog.model(&merge.provider, &merge.model).map_or_else(
                     || unpriced.clone(),
-                    |m| catalog.estimate_merge(m, pages, merge_chars),
+                    |m| catalog.estimate_merge(m, all_pages, merge_chars),
                 );
                 rows.push(EstimateRow {
                     provider: merge.provider,
                     model: merge.model,
-                    pages,
+                    pages: all_pages,
                     estimate,
                     merge: true,
-                    too_long: None,
+                    too_long: Vec::new(),
                     parts: None,
                 });
             }

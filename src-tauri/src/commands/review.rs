@@ -212,7 +212,7 @@ async fn page_of(
     };
     let pieces = opened.pieces(
         source.split_spreads,
-        job.settings.sample_pages,
+        job.settings.page_sample(),
         kalamu_media::DEFAULT_PIECE_MS,
     );
     let piece = pieces

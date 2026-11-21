@@ -1,8 +1,8 @@
 <script lang="ts">
-	// How a long interview was read, above its answers: one quiet line saying in how many parts,
-	// and for a part that could not be read a notice naming its minutes (or its turns), why, and
-	// Read it again, which puts the part back in the queue; the parts are then brought together
-	// again (`parts.ts`).
+	// How a long interview or document was read, above its answers: one quiet line saying in how
+	// many parts, and for a part that could not be read a notice naming its minutes (or its
+	// turns), a document's pages (or its passages), why, and Read it again, which puts the part
+	// back in the queue; the parts are then brought together again (`parts.ts`).
 	import type { PartsRead } from '#lib/parts.js';
 	import { describeError } from '#lib/errors.js';
 	import { messages } from '#lib/i18n/index.js';
@@ -36,10 +36,18 @@
 </script>
 
 <div class="parts" role="note">
-	<p>{m.cited.readInParts(parts.count)}</p>
+	<p>
+		{parts.document ? m.screening.docReadInParts(parts.count) : m.cited.readInParts(parts.count)}
+	</p>
 	{#each parts.unread as part (part.number)}
 		<p class="unread">
-			{m.cited.partNotRead(part.from, part.to, part.first, part.last)}
+			{#if !parts.document}
+				{m.cited.partNotRead(part.from, part.to, part.first, part.last)}
+			{:else if part.firstPage !== null && part.lastPage !== null}
+				{m.screening.docPagesNotRead(part.firstPage, part.lastPage)}
+			{:else}
+				{m.screening.docPassagesNotRead(part.first, part.last)}
+			{/if}
 			{#if part.error}<span class="why">{part.error}</span>{/if}
 		</p>
 	{/each}

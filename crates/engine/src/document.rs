@@ -410,7 +410,7 @@ impl Engine {
 /// The fixes provenance lists: of those the source's settings ask for (which its cache key
 /// carries all the same), only what was done to it. A spread is split only where one was
 /// found, the volume evened out only in a recording, and a sample taken only of a document cut
-/// into more pages than it keeps.
+/// into more pages than it keeps (its first pages, or pages spread through it).
 fn done_to(job: &Job, source: &SourceFile, states: &[PieceState]) -> Vec<String> {
     let mut done: Vec<String> = preprocessing(source)
         .into_iter()
@@ -425,11 +425,13 @@ fn done_to(job: &Job, source: &SourceFile, states: &[PieceState]) -> Vec<String>
     let cut = states
         .iter()
         .any(|s| matches!(s.piece, PieceRef::Page { .. } | PieceRef::Passage { .. }));
-    if let Some(n) = job.settings.sample_pages
-        && cut
-        && source.page_count.is_none_or(|pages| pages > n)
-    {
-        done.push(format!("sample_first_{n}_pages"));
+    let sample = job.settings.page_sample();
+    if cut && source.page_count.is_none_or(|pages| sample.cuts(pages)) {
+        match sample {
+            kalamu_core::PageSample::First(n) => done.push(format!("sample_first_{n}_pages")),
+            kalamu_core::PageSample::Spread(n) => done.push(format!("sample_spread_{n}_pages")),
+            kalamu_core::PageSample::All => {}
+        }
     }
     done
 }

@@ -238,8 +238,24 @@ passages, entries that quote the text as an interview's do: a page's paragraphs 
 numbered passages, each passage kept only when found word for word, with its page; a document
 that does not speak of the question has none, and none is invented to fill the list. It is an
 analysis job like any other, resumable, cached for the same question, costed; its prompt is
-also offered in New job. A document too long for the model is said before Start, as for an
-interview ([decision](decisions/2026-11-20-research-question-screening.md),
+also offered in New job. **A long document is read in parts**, as a long interview is: its
+numbered passages cut at whole passages, each part told it holds passages (a document is never
+described to the model as words said), the parts brought together by the same step, which is
+sent each quotation with its page; the screening prompt tells that step that the whole
+document is *Relevant* if any part read is, *Partly relevant* if any part is, *Unsure* if any
+part is, and *Not relevant* only if every part read is. Its passages keep their pages, the cost
+before Start counts every part, and a part not read is named by its pages, *Pages 4 to 7 could
+not be read*. Only a document one passage of which the model cannot read even alone is left out,
+named in the dialog with the others left out, *Left out, too long for Gemma 4 E4B even read in
+parts*, and the job reads the rest; the cost said is theirs. **The question is kept with the
+project**: analyses that asked the same question with the same prompt and model are one, a
+document's newest answer counting; once documents have been added since, one line under the
+table's filters says *3 documents have not been read against “…” yet* with *Read the new
+documents against this question*, which opens the same dialog over those documents alone with the
+question, the model and the languages it was asked with, so only they are paid for, and their
+answers join the others in the filter, the rows and the table exported
+([decision](decisions/2026-11-20-research-question-screening.md),
+[decision](decisions/2026-11-20-screening-long-documents-rows-question.md),
 [#51](https://github.com/fmadore/Kalamu/issues/51)).
 
 **Existing text is corrected, not read again.** Many researchers already have machine-read
@@ -306,7 +322,7 @@ once, not in a batch, since a batch's answers are not checked line by line.
   in their new order. The order and the files are kept with the job, after a restart too; the
   images are never copied, moved or changed, and a page whose file was moved, deleted or
   replaced since fails alone, named, the others read. The document is read page by page as a
-  PDF is, with the same sample of first pages; its pages go one per call. An analysis reads
+  PDF is, with the same sample of pages; its pages go one per call. An analysis reads
   each image as a document of its own. Typing a label for each page, reordering a job already
   made and pairing existing transcriptions with the scans come later.
 - **Choice of provider.** Google Gemini, OpenAI, Anthropic Claude, Mistral, offline Whisper,
@@ -714,7 +730,23 @@ documents through several set-ups, each a provider, model and prompt or analysis
 results together.
 
 - **Try a sample first.** Comparison can run on a few pages before committing a whole folder,
-  and the cost estimate shows each set-up separately.
+  and the cost estimate shows each set-up separately. A text extraction of a document of more
+  than 15 pages (a PDF, or images read as one document) gets one plain suggestion under its
+  files in New job: *Try on 3 pages*, or *Try on 3 pages with two models*, the second model
+  chosen as *Compare with another model* chooses one. Its pages are spread through each
+  document, the first page (often a cover or a title) left out: the middle page of each equal
+  stretch of the rest, so pages 8, 21 and 34 of 40, the same each time. *Read every page* takes
+  it back. Nothing changes for a short document or a researcher who passes it by, and the
+  results step's *Try a sample first*, ticked by hand, still takes the first pages, which other
+  tasks keep ([decision](decisions/2026-11-20-sample-first.md),
+  [#215](https://github.com/fmadore/Kalamu/issues/215)).
+- **Then the rest, never paying twice.** Once a sample has read pages, its page offers *Run the
+  rest with [model]* for each of its set-ups, priced with the pages already read at no cost
+  (*37 pages left, about $0.04. The 3 pages already read cost nothing.*), and *Compare with
+  another model* on the same pages. Both are jobs the engine makes from the sample, its set-ups
+  copied as they ran, so the pages it read come from the cache whatever was edited since; the
+  rest reads every page of the same documents, the comparison is a job of several set-ups like
+  any other, and each joins the projects the sample is in.
 - **Scores when a reference exists.** A page corrected or reviewed in any set-up is the
   reference for all of them, a correction before a text reviewed as it stands: each set-up's
   error rates are given side by side; without one, the highlighted differences show where
@@ -779,13 +811,19 @@ analysed, compared. A **project** keeps it together
   (whether a document speaks of the researcher's question, its tone), the table can be
   narrowed by that answer, the researcher's correction counting over the model's; each choice
   is named by the question it was asked with, or by its field and job, and its answers are
-  shown in the interface language. While the table is filtered, the documents chosen can be
-  **kept or set aside** in one click: the researcher's decision is one of two tags, *Kept* or
-  *Set aside* in the interface's language, the other taken off, so the model's answer is never
-  changed. *Export this table* writes that analysis as one table, an Excel workbook and CSV:
+  shown in the interface language. While the table is filtered, **each row shows the answer**
+  under the document's title: the answer in the interface language, its reason, and the
+  passages quoted, each with its page, readable without opening the job (a document read in
+  parts shows what brought its parts together). The table looks as before until a filter is
+  chosen. Each row then has *Keep* and *Set aside*, buttons the keyboard reaches in the row's
+  order, the one given pressed and taken off when pressed again; the documents chosen can also
+  be **kept or set aside** in one click from the selection bar: the researcher's decision is one
+  of two tags, *Kept* or *Set aside* in the interface's language, the other taken off, so the
+  model's answer is never changed. *Export this table* writes that analysis as one table, an Excel workbook and CSV:
   one row per document it read, its title and file, each field under the label the job froze
   (passages with where each stands), then the document's tags
-  ([decision](decisions/2026-11-20-research-question-screening.md)).
+  ([decision](decisions/2026-11-20-research-question-screening.md),
+  [decision](decisions/2026-11-20-screening-long-documents-rows-question.md)).
 - **A source's description** is the researcher's, as an archive or library gives it: the
   repository, the fonds or collection, the series, the box or folder, the shelfmark, the
   creator, the date as written, a web address, how to cite it and its rights. The project holds
@@ -876,6 +914,25 @@ analysed, compared. A **project** keeps it together
   a past run or start new work. Deleting a project, a collection or a document removes only how
   it was organised; deleting a job unties it from its documents, which stay. A file moved since
   it was added is marked missing, its results kept. A project can be archived and restored.
+- **Saved as one file, opened on another computer**
+  ([decision](decisions/2026-11-20-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)),
+  for a new computer, a colleague who shares the review, or a copy kept safe. *Save to a
+  file…* in a project's header writes one `.kalamu` file: the project (collections, documents,
+  tags, descriptions, preferred results), the jobs that read its documents, each kept to those
+  documents, with the models' answers, the researcher's corrections and review marks, speakers'
+  names, items, regions, what each call cost and the texts they froze, the review's decisions
+  and the dictionary. Never in it: API keys, settings, anything of another project, and the
+  indexes, which are made again. The original files go in only when *Include the original files
+  (scans, recordings)* is ticked; the dialog says what the file will weigh either way, how many
+  originals cannot be found, shows the progress, and says where the file is once written, with
+  a button to show it in File Explorer or the Finder. *Open a project file…* on the list of
+  projects brings it in as a new project beside the others, every identifier new, never merged
+  and never written over; a name already used takes the date the file was saved. Its jobs
+  resume and its results export without a call to a provider. Opened without its originals,
+  the documents show as missing, the text, review and exports work, and the sentence after
+  opening says how the pages come back. A file that is not a project file, a damaged one, or
+  one saved by a newer Kalamu is refused in a sentence; an open that fails leaves nothing
+  behind. Merging a colleague's corrections into one's own project comes later.
 - **Search through every document's text**: see [Project search](#project-search).
 
 ### Project dictionary
@@ -1221,7 +1278,9 @@ that provider; there is no intermediate server. For a YouTube video only its lin
 Google reads the video from YouTube; the app also asks YouTube for the video's title when the
 link is added, and loads YouTube's player in the review only when the video is played. API keys
 stay in the system's keychain: Credential Manager on Windows, the Keychain on macOS.
-The developer receives no files, keys, results or telemetry.
+The developer receives no files, keys, results or telemetry. A project saved to a file holds
+the documents' text, the researcher's corrections and, if chosen, the original files, and
+never a key: it leaves the computer only when the researcher moves or sends it.
 
 Before the first job, workflow run or dictionary proposal sent to a cloud provider, the app asks
 once for that provider: it names it, says what is sent (the pages, recordings or text, with any

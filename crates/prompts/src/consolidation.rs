@@ -12,10 +12,12 @@ use crate::{Preset, RenderContext, describe, render};
 /// The step's own instructions, before the prompt's.
 const INSTRUCTIONS: &str = "# Bringing together a long text read in parts
 
-The text was too long to be read at once, so it was read in parts of whole turns, each part \
-repeating the last turns of the one before. You are given what each part found: its answers, \
-with every quotation by its number (`Q1`, `Q2`…), and the quotations themselves with their \
-turn, speaker, time and words. Write the answer for the whole text from them.
+The text was too long to be read at once, so it was read in parts, each made of whole numbered \
+turns (a speaker's turn in a transcript, a passage in a document), each part repeating the \
+last turns of the one before. You are given what each part found: its answers, with every \
+quotation by its number (`Q1`, `Q2`…), and the quotations themselves with their turn, their \
+speaker and time or their page when known, and their words. Write the answer for the whole \
+text from them.
 
 - Merge what is the same across parts: a theme found by two parts, or a passage quoted twice \
 where two parts overlap, is one entry. Keep what is different apart.
@@ -23,8 +25,11 @@ where two parts overlap, is one entry. Keep what is different apart.
 - Back each entry with the numbers of its quotations, taken from the parts. Use only numbers \
 that appear in the parts' quotations, never words: the quotations are already checked against \
 the text, and Kalamu puts their words back from their numbers.
-- Write prose fields (a summary, a description) anew for the whole text, in {languages}, from \
-what the parts say: add nothing they do not.
+- Answer a choice for the whole text, as the instructions below say for a text read in parts; \
+when they say nothing of it, answer what the whole text shows, never what one part alone shows \
+against the others.
+- Write prose fields (a summary, a description, a reason) anew for the whole text, in \
+{languages}, from what the parts say: add nothing they do not.
 - A list that says what was not found (themes of the researcher's guide, say) holds only what \
 no part found.
 - When some turns could not be read (`turns_not_read`), answer from the parts read, and say \

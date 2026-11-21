@@ -36,6 +36,9 @@ pub const OFFLINE_CHANGED_EVENT: &str = "offline-changed";
 /// Sent when the catalogue was refreshed at start-up, after the interface first read it: the
 /// models it lists and the release it names are read again.
 pub const CATALOG_CHANGED_EVENT: &str = "catalog-changed";
+/// Name of the event carrying [`kalamu_core::ProjectFileProgress`]: how far a project file is
+/// written or opened, in bytes of the files it carries.
+pub const PROJECT_FILE_PROGRESS_EVENT: &str = "project-file-progress";
 
 pub fn run() {
     // Before any program is started: none may outlive the app.
@@ -123,6 +126,9 @@ pub fn run() {
             commands::jobs::estimate_cost,
             commands::jobs::create_job,
             commands::jobs::start_job,
+            commands::sample::rest_estimate,
+            commands::sample::rest_of_sample,
+            commands::sample::compare_sample,
             commands::jobs::pause_job,
             commands::jobs::cancel_job,
             commands::jobs::retry_failed,
@@ -226,6 +232,9 @@ pub fn run() {
             commands::projects::set_result_aside,
             commands::projects::keep_aside,
             commands::projects::export_review_manifest,
+            commands::project_file::plan_project_file,
+            commands::project_file::save_project_file,
+            commands::project_file::open_project_file,
             commands::dictionary::dictionary_view,
             commands::dictionary::dictionary_evidence,
             commands::dictionary::dictionary_merge,

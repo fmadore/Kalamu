@@ -70,7 +70,7 @@ pub struct PartRead<'a> {
 }
 
 /// The step's input: each part's turns and answers, its quotations by number, the turns no part
-/// could read, and the quotations themselves with their turn, speaker and time.
+/// could read, and the quotations themselves with their turn, speaker and time, or page.
 pub fn findings(fields: &[Field], parts: &[PartRead<'_>], unread: &[(u32, u32)]) -> Findings {
     let mut evidence: Vec<Evidence> = Vec::new();
     let mut carried: Vec<(String, u32, u32)> = Vec::new();
@@ -119,6 +119,10 @@ pub fn findings(fields: &[Field], parts: &[PartRead<'_>], unread: &[(u32, u32)])
             }
             if let Some(ms) = e.start_ms {
                 q.insert("time".into(), json!(crate::result::clock(ms)));
+            }
+            // A document's passage, by its page, so the step can order and weigh them.
+            if let Some(page) = &e.page {
+                q.insert("page".into(), json!(page.label()));
             }
             q.insert("words".into(), json!(e.quote));
             (id(i), Value::Object(q))

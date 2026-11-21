@@ -25,6 +25,7 @@ mod manifest;
 mod profiled;
 mod queue;
 mod resulted;
+mod tabled;
 mod texts;
 mod views;
 

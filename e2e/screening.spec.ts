@@ -64,6 +64,28 @@ test('the dialog asks one question, leaves out what has no text, and starts the 
 	expect(created?.sources.every((s) => s.kind === 'text' && s.derived_from)).toBe(true);
 });
 
+test('a document too long for the model even in parts is left out, the others read', async ({
+	page
+}) => {
+	const main = await open(page, '&screening-long');
+	await main.getByRole('checkbox', { name: 'Select all documents shown' }).check();
+	await main
+		.getByRole('toolbar')
+		.getByRole('button', { name: 'Which of these speak of my question?' })
+		.click();
+	const dialog = page.getByRole('dialog', {
+		name: 'Which of these documents speak of my question?'
+	});
+	await expect(dialog.getByText('1 document will be read.')).toBeVisible();
+	await expect(dialog.getByText(/^Left out, too long for .* even read in parts: /)).toBeVisible();
+	await expect(dialog.getByText(/^Estimated cost: /)).toBeVisible();
+	await dialog.getByRole('textbox', { name: 'Your research question' }).fill('Associations');
+	await dialog.getByRole('button', { name: 'Start', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const created = await page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
+	expect(created?.sources).toHaveLength(1);
+});
+
 test('the table is filtered by an answer, kept or set aside, and exported', async ({ page }) => {
 	const main = await open(page);
 	await expect(titles(main)).toHaveCount(4);
@@ -92,6 +114,82 @@ test('the table is filtered by an answer, kept or set aside, and exported', asyn
 	await filter.selectOption({ label: 'Any answer' });
 	await expect(titles(main)).toHaveCount(4);
 	await expect(main.getByRole('button', { name: 'Export this table' })).toHaveCount(0);
+});
+
+test('each row shows its answer, reason and passages, kept or set aside by keyboard', async ({
+	page
+}) => {
+	const main = await open(page);
+	// Nothing of it before the table is filtered.
+	await expect(main.getByRole('button', { name: /^Keep “/ })).toHaveCount(0);
+	await main
+		.getByRole('combobox', { name: 'Filter by an answer' })
+		.selectOption({ label: 'Relevant (1)' });
+	const row = main.locator('tbody tr').filter({ hasText: 'Bulletin, May 1957' });
+	await expect(row.getByText('Relevant', { exact: true })).toBeVisible();
+	await expect(
+		row.getByText('The bulletin reports the association asking the administration')
+	).toBeVisible();
+	const passages = row.getByRole('list', { name: 'Passages quoted from “Bulletin, May 1957”' });
+	await expect(passages.getByRole('listitem')).toHaveCount(2);
+	await expect(passages.getByRole('listitem').first()).toContainText('Page 2');
+
+	// Keep reached from the keyboard: the button before it, then Tab, then Enter.
+	const keep = row.getByRole('button', { name: 'Keep “Bulletin, May 1957”' });
+	await row.getByRole('button', { name: 'Bulletin, May 1957', exact: true }).focus();
+	// On macOS, WebKit's Tab stops at fields only unless the system's keyboard navigation is on,
+	// and Option+Tab stops at every control, buttons included.
+	const mac = await page.evaluate(() => /Macintosh|Mac OS X/.test(navigator.userAgent));
+	for (let i = 0; i < 6 && !(await keep.evaluate((b) => b === document.activeElement)); i++)
+		await page.keyboard.press(mac ? 'Alt+Tab' : 'Tab');
+	await expect(keep).toBeFocused();
+	await page.keyboard.press('Enter');
+	await expect(page.getByText('1 document tagged “Kept”')).toBeVisible();
+	await expect(keep).toHaveAttribute('aria-pressed', 'true');
+	// Set aside takes its place; pressed again, it is taken off.
+	const aside = row.getByRole('button', { name: 'Set aside “Bulletin, May 1957”' });
+	await aside.click();
+	await expect(aside).toHaveAttribute('aria-pressed', 'true');
+	await expect(keep).toHaveAttribute('aria-pressed', 'false');
+	await aside.click();
+	await expect(page.getByText('Tag “Set aside” taken off')).toBeVisible();
+	await expect(aside).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('the question is asked again of the documents added since, as it was asked', async ({
+	page
+}) => {
+	// Every document read against it: nothing to ask again.
+	let main = await open(page);
+	await expect(
+		main.getByRole('button', { name: 'Read the new documents against this question' })
+	).toHaveCount(0);
+
+	main = await open(page, '&screening-new');
+	await expect(
+		main.getByText(/^1 document has not been read against “How Catholic and Muslim/)
+	).toBeVisible();
+	await main.getByRole('button', { name: 'Read the new documents against this question' }).click();
+	const dialog = page.getByRole('dialog', {
+		name: 'Which of these documents speak of my question?'
+	});
+	await expect(dialog.getByRole('textbox', { name: 'Your research question' })).toHaveValue(
+		'How Catholic and Muslim associations dealt with the colonial administration'
+	);
+	await expect(dialog.getByText('1 document will be read.')).toBeVisible();
+	await dialog.getByRole('button', { name: 'Start', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	const created = await page.evaluate(() => window.__kalamuCreated as NewJob | undefined);
+	expect(created?.sources).toHaveLength(1);
+	expect(created?.setups[0]).toMatchObject({
+		provider: 'gemini',
+		model: 'gemini-4-carbon',
+		preset_id: 'analysis.screening',
+		options: {
+			question: 'How Catholic and Muslim associations dealt with the colonial administration'
+		}
+	});
+	expect(created?.settings.languages).toEqual({ mode: 'explicit', languages: ['fr'] });
 });
 
 test('a project no analysis answered shows no filter by an answer', async ({ page }) => {

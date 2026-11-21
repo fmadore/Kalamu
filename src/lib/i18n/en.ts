@@ -175,9 +175,11 @@ export const en = {
 			'None of these documents has been read into text yet. Read them first with New job, then come back.',
 		model: (name: string, provider: string) => `Model: ${name} (${provider})`,
 		cost: (usd: string) => `Estimated cost: ${usd}`,
-		/** Said in place of the cost when a document is too long for the model chosen. */
-		tooLong: (file: string, model: string, words: string, most: string) =>
-			`${file} is too long for ${model}: about ${words} words, where it reads about ${most} at once. Choose another model under More choices.`,
+		/** Documents the model chosen cannot read even in parts: left out, the others read. */
+		tooLong: (files: string, model: string, n: number) =>
+			n === 1
+				? `Left out, too long for ${model} even read in parts: ${files}. Another model, under More choices, may read it.`
+				: `Left out, too long for ${model} even read in parts: ${files}. Another model, under More choices, may read them.`,
 		more: 'More choices',
 		start: 'Start',
 		preparing: 'Getting the texts ready…',
@@ -195,7 +197,27 @@ export const en = {
 		keptTag: 'Kept',
 		setAsideTag: 'Set aside',
 		decided: (tag: string, n: number) =>
-			n === 1 ? `1 document tagged “${tag}”` : `${n} documents tagged “${tag}”`
+			n === 1 ? `1 document tagged “${tag}”` : `${n} documents tagged “${tag}”`,
+		/** Above the answers of a long document read in parts, and a part that could not be read. */
+		docReadInParts: (n: number) =>
+			`This document was long: it was read in ${n} parts, then brought together.`,
+		docPagesNotRead: (first: number, last: number) =>
+			first === last
+				? `Page ${first} could not be read: the answer leaves it out.`
+				: `Pages ${first} to ${last} could not be read: the answer leaves them out.`,
+		docPassagesNotRead: (first: number, last: number) =>
+			`Passages ${first} to ${last} could not be read: the answer leaves them out.`,
+		/** Under a document's title while the table is filtered by an answer. */
+		passagesOf: (title: string) => `Passages quoted from “${title}”`,
+		keepThis: (title: string) => `Keep “${title}”`,
+		setAsideThis: (title: string) => `Set aside “${title}”`,
+		decisionTakenOff: (tag: string) => `Tag “${tag}” taken off`,
+		/** A question kept with the project, asked again of the documents added since. */
+		notReadAgainst: (n: number, question: string) =>
+			n === 1
+				? `1 document has not been read against “${question}” yet.`
+				: `${n} documents have not been read against “${question}” yet.`,
+		askAgain: 'Read the new documents against this question'
 	},
 	/** The cards of an answer that quotes the text: a theme, or a passage worth quoting. */
 	cited: {
@@ -1137,7 +1159,7 @@ export const en = {
 			`Remove ${n === 1 ? 'this document' : `these ${n} documents`} from the project? The files, the jobs that read them and their results stay.`,
 		missing: 'File missing',
 		missingHint:
-			'The file is no longer where it was added. Its results are kept; put it back to read it again.',
+			'The file is not where it was added, or this project came from another computer without its files. Its results are kept; put the file back to read it again.',
 		sameContent: (n: number) =>
 			n === 1 ? 'Same content as 1 other' : `Same content as ${n} others`,
 		noResults: 'Not read yet',
@@ -1451,6 +1473,21 @@ export const en = {
 		},
 		sampleTitle: 'Try a sample first',
 		sample: (n: number) => `Only the first ${n} pages of each document`,
+		/** New job's suggestion for a long document: a few pages first, then the rest (#215). */
+		trySample: {
+			title: 'Try on a few pages first',
+			offer: (pages: number, n: number) =>
+				`${pages} pages is a lot to read at once. Try the model on ${n} pages first: you see how well it reads them and what it costs, then run the rest from the job’s page without paying for these pages again.`,
+			one: (n: number) => `Try on ${n} pages`,
+			two: (n: number) => `Try on ${n} pages with two models`,
+			chosen: (n: number) =>
+				`Kalamu will read ${n} pages spread through each document, not the first ones, which are often a cover or a title page. Once you have looked at them, run the rest from the job’s page.`,
+			chosenTwo: (n: number) =>
+				`Kalamu will read ${n} pages spread through each document with both models, not the first ones, which are often a cover or a title page. Compare them in the review, then run the rest with the one you prefer from the job’s page.`,
+			every: 'Read every page',
+			/** The sample in the results step, when its pages are spread through each document. */
+			spread: (n: number) => `${n} pages spread through each document`
+		},
 		outputTitle: 'Results',
 		formats: 'Formats',
 		subtitlesNeedTimes:
@@ -1719,6 +1756,27 @@ export const en = {
 			`${n === 1 ? '1 piece is' : `${n} pieces are`} still with the provider’s batch service. Resume to collect the answers; nothing is sent or paid for twice.`,
 		pace: 'Speed',
 		paceName: { fast: 'Faster', economy: 'Cheaper (batch)' },
+		/** A sample's page: the rest of its documents, or another model on its pages (#215). */
+		sample: {
+			first: (n: number) => `A sample: the first ${n} pages of each document.`,
+			spread: (n: number) => `A sample: ${n} pages spread through each document.`,
+			next: 'Once you have looked at them, run the rest, or try another model on the same pages.',
+			runRest: (model: string) => `Run the rest with ${model}`,
+			left: (n: number) => (n === 1 ? '1 page left' : `${n} pages left`),
+			about: (cost: string) => `about ${cost}`,
+			free: (n: number) =>
+				n === 1
+					? 'The page already read costs nothing.'
+					: `The ${n} pages already read cost nothing.`,
+			/** The name of the job that reads every page, after the sample's. */
+			restName: (name: string) => `${name} (every page)`,
+			compareLede: (model: string) =>
+				`Another model reads the same pages beside ${model}. Only the new model is paid for: the pages already read are not sent again.`,
+			compareStart: 'Start',
+			compareCost: (cost: string) => `About ${cost} for the new model.`,
+			/** The name of the comparison, after the sample's. */
+			compareName: (name: string) => `${name} (compared)`
+		},
 		empty_new: 'Start a job'
 	},
 	/** The Jobs page: every job in a table, found, filtered and sorted. */
@@ -2608,6 +2666,55 @@ export const en = {
 			`Kalamu is still working. Click its icon in ${reopen} to open it again.`
 	},
 	/** What each operating system calls the places Kalamu uses; `platform.ts` picks one. */
+	/** A project saved as one file, to open on another computer or give to a colleague. */
+	projectFile: {
+		save: 'Save to a file…',
+		title: 'Save this project to a file',
+		lede: 'One file with this project, to open it on another computer, give it to a colleague, or keep it somewhere safe.',
+		reading: 'Looking at what the file will hold…',
+		inFile: 'In the file',
+		documents: (documents: number, jobs: number) =>
+			`${documents === 1 ? '1 document' : `${documents} documents`} and what ${
+				jobs === 1 ? '1 job' : `${jobs} jobs`
+			} read from them`,
+		yourWork:
+			'Your corrections and what you marked as checked, the collections, tags and descriptions, and the dictionary',
+		never: 'Never in the file: your API keys, your settings, or anything from your other projects.',
+		originals: 'Include the original files (scans, recordings)',
+		originalsHint: (files: number, size: string) =>
+			`${files === 1 ? '1 file' : `${files} files`}, about ${size}. Without them, the file holds the text and your work on it, and the pages and recordings stay on this computer.`,
+		noOriginals: 'This project has no original files on this computer.',
+		originalsMissing: (n: number) =>
+			n === 1
+				? '1 original file can no longer be found on this computer and will be left out.'
+				: `${n} original files can no longer be found on this computer and will be left out.`,
+		size: (size: string) => `The file will take about ${size}.`,
+		bytes: (bytes: number) =>
+			bytes < 1e6
+				? 'less than 1 MB'
+				: bytes < 1e9
+					? `${Math.round(bytes / 1e6)} MB`
+					: `${(bytes / 1e9).toFixed(1)} GB`,
+		saveButton: 'Save…',
+		cancel: 'Cancel',
+		close: 'Close',
+		saving: 'Saving the project…',
+		saved: (path: string) => `The project is saved in ${path}.`,
+		leftOut: (n: number) =>
+			n === 1
+				? '1 original file was left out: it could not be found, or it changed since it was read.'
+				: `${n} original files were left out: they could not be found, or they changed since they were read.`,
+		show: { windows: 'Show in File Explorer', macos: 'Show in Finder' },
+		fileType: 'Kalamu project',
+		open: 'Open a project file…',
+		opening: 'Opening the project file…',
+		opened: (name: string, documents: number, jobs: number) =>
+			`“${name}” is open, with ${documents === 1 ? '1 document' : `${documents} documents`} and ${
+				jobs === 1 ? '1 job' : `${jobs} jobs`
+			}. It is a new project beside your others: nothing of theirs was changed.`,
+		openedWithout:
+			'The original files were not saved in it: the text, your corrections and the exports are all here, and the pages and recordings will show once the project is saved again with its original files.'
+	},
 	os: {
 		windows: {
 			keychain: 'Windows Credential Manager',
@@ -2873,7 +2980,15 @@ export const en = {
 			'The file is no longer where it was added, so its pages cannot be shown. Its results are kept; put it back to see it here.',
 		'app.internal': 'Something went wrong inside the app.',
 		'app.jobs_running': 'Not while a job is running: pause it or wait for it to finish.',
-		'app.notDesktop': 'This works only in the desktop app.'
+		'app.notDesktop': 'This works only in the desktop app.',
+		'project.file_not_kalamu': 'This file is not a Kalamu project file.',
+		'project.file_damaged':
+			'This project file is damaged, perhaps cut short while it was copied. Ask for it again, or copy it again.',
+		'project.file_newer':
+			'This project file was saved by a newer version of Kalamu. Update Kalamu, then open it again.',
+		'project.file_write':
+			'The project file could not be written. Check that there is enough free space, or choose another place.',
+		'project.file_read': 'The project file could not be read.'
 	}
 };
 

@@ -36,17 +36,7 @@ impl SqliteStore {
 
     fn init(conn: Connection) -> Result<Self, StoreError> {
         conn.pragma_update(None, "foreign_keys", "ON").map_err(db)?;
-        let applied: i64 = conn
-            .pragma_query_value(None, "user_version", |row| row.get(0))
-            .map_err(db)?;
-        let applied = schema_known(applied, migrations::MIGRATIONS.len())?;
-        for (i, migration) in migrations::MIGRATIONS.iter().enumerate().skip(applied) {
-            conn.execute_batch(&format!(
-                "BEGIN; {migration} PRAGMA user_version = {}; COMMIT;",
-                i + 1
-            ))
-            .map_err(db)?;
-        }
+        migrate(&conn)?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
@@ -59,6 +49,23 @@ impl SqliteStore {
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
+}
+
+/// Brings a database's schema up to date, one migration at a time; a project file's too, on
+/// a copy, when an older Kalamu saved it.
+fn migrate(conn: &Connection) -> Result<(), StoreError> {
+    let applied: i64 = conn
+        .pragma_query_value(None, "user_version", |row| row.get(0))
+        .map_err(db)?;
+    let applied = schema_known(applied, migrations::MIGRATIONS.len())?;
+    for (i, migration) in migrations::MIGRATIONS.iter().enumerate().skip(applied) {
+        conn.execute_batch(&format!(
+            "BEGIN; {migration} PRAGMA user_version = {}; COMMIT;",
+            i + 1
+        ))
+        .map_err(db)?;
+    }
+    Ok(())
 }
 
 /// The migrations a database has had (`PRAGMA user_version`), if this version knows them all.
@@ -415,6 +422,7 @@ mod migrations;
 mod outdated;
 mod passages;
 mod progress;
+mod project_file;
 mod projects;
 mod proposals;
 mod region_readings;

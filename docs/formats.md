@@ -206,8 +206,10 @@ quotations found word for word are written; the researcher's removals are applie
   out and the entries left out; `source.derived_from` names the text read.
 - **A long text read in parts** writes the answer that brought the parts together, and only
   it; a part that could not be read stands after it as `[Not read: part 3 (turns 48–71,
-  01:02:10 to 01:20:00): reason]` in text, Markdown and Word, and in JSON as a part whose piece
-  is `{ "kind": "turns", "number", "first", "last" }` with its `failed` reason.
+  01:02:10 to 01:20:00): reason]` in text, Markdown and Word (for a document read from pages,
+  `part 3 (pages 4–7)`; for a text file with neither pages nor speakers, `part 3 (passages
+  48–71)`), and in JSON as a part whose piece is `{ "kind": "turns", "number", "first",
+  "last" }` with its `failed` reason.
   `provenance.json` then has `merge`, the step that brought the parts together, whose `request`
   lists `turns_read` and, when a part could not be read, `turns_not_read` (`"1-24, 23-49"`,
   turns counted from 1); `pieces` counts the parts and that step. A text read whole has no
@@ -443,3 +445,66 @@ The CSV has one row per item, in these columns: `document_id`, `document`, `sour
 A page is drawn by ranking every page nothing flags by the SHA-256 of `<seed>:<identity>`, the
 identity being `<document id>/<task>/<piece>`, and taking the lowest: the manifest's seed and
 identities are enough to check a draw.
+
+## The project file (`.kalamu`)
+
+Written by *Save to a file…* in a project, where the researcher chooses, and read by *Open a
+project file…* on the list of projects
+([decision](decisions/2026-11-20-project-file.md), [#213](https://github.com/fmadore/Kalamu/issues/213)).
+One SQLite database, the same on Windows and macOS. It has the job database's own tables, at
+the schema its `PRAGMA user_version` gives (the number of the store's migrations the saving
+Kalamu had), holding one project's rows only, and three tables of its own.
+
+**`kalamu_project_file`**, one row:
+
+- `format`: `kalamu-project`.
+- `version`: the version of these three tables, `1`. A file of a higher version, or of a
+  schema higher than the opening Kalamu knows, is refused as made by a newer Kalamu; a lower
+  schema is brought up to date on a copy, never in the file.
+- `manifest`: JSON with `format`, `version`, `schema`, `app_version`, `saved_at` (milliseconds
+  since 1970, UTC), `project_name`, `documents`, `jobs` and `with_originals` (whether the
+  original files were chosen; those that could not be carried are listed as not carried).
+
+**`kalamu_files`**, one row for each file the project's documents and jobs name, each once:
+
+- `id`: the file's number in this file.
+- `role`: `snapshot` for a text Kalamu froze (from its data folder's `snapshots/`, named
+  `<sha256>.txt` or `.pdf`), carried always; `original` for the researcher's own file, carried
+  only when chosen.
+- `path`: where it was on the saving computer, written as that system writes paths. Kalamu
+  reads its name and folder by splitting at both `\` and `/`, never as this system's path.
+- `file_name`: its name as the source records it.
+- `sha256`: its fingerprint, lowercase hexadecimal; the bytes carried match it.
+- `size`: its size in bytes when the source was read.
+- `carried`: `1` when its bytes are in the file; `0` when it was not chosen, could not be found,
+  or changed since it was read.
+
+**`kalamu_file_chunks`**: the bytes of each carried file, in chunks of at most 4 MiB:
+`file_id` (its `kalamu_files.id`), `seq` (from 0) and `data`.
+
+**The job database's tables** hold, for the project:
+
+- `projects`, `collections`, `documents` and `collection_documents`: the project, its
+  collections, documents (title, file, tags, description) and memberships.
+- `jobs`, `document_links` and `preferred_results`: the jobs that read its documents, each with
+  only the sources tied to this project's documents (the dictionary's proposal jobs whole), the
+  links to them and the results preferred. A job caught running is written as interrupted.
+- `pieces`, `results`, `corrections`, `speaker_names` and `charges`: those sources' pieces (one
+  held in a batch or running written as not yet read), the models' answers they name, as
+  stored, the researcher's corrections and review marks, speakers' names and what each call
+  cost.
+- `units`, `snapshots`, `passages`, `drawn_regions` and `region_readings`: a table of contents'
+  items, the frozen texts the jobs read, the passages and regions read again by a model, and
+  the regions the researcher drew.
+- `review_samples`, `review_kept` and `review_set_aside`: the samples drawn, the items kept
+  aside with their notes, the results set aside.
+- `dictionary_entries`, `dictionary_apart`, `dictionary_requests` and `dictionary_dismissed`:
+  the dictionary's entries, pairs kept apart, proposal requests and proposals turned down.
+
+Every other table of the schema is there and empty: workflow runs, batches, the files marked
+out of date, the search by meaning's model and costs. No key, setting, prompt library or
+derived index is in the file. Opened, every identifier is given a new one and the project
+comes in beside the others; the carried originals are written into the data folder's
+`originals/<project id>/`, a folder for each folder they shared, and the paths that named them
+pointed there. Nothing outside Kalamu should rely on more than the manifest and the files'
+tables.

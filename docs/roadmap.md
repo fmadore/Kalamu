@@ -807,17 +807,33 @@ tried with a real model, on a real Mac or on real photographs:
   whether they hold. About a minute for 300 photographs, read again whole when some are
   added.
 
+A second round the same day, gathered the same way and as little tried:
+
+- **#51, a second increment**: a long document is read in parts as a long interview is, told
+  of passages and pages, and one a model cannot read even so is left out and named while the
+  others are read; with an answer filter on, each row shows its answer, reason and passages,
+  with Keep and Set aside; the question is asked again of the documents added since, which
+  alone are paid
+  ([decision](decisions/2026-11-20-screening-long-documents-rows-question.md)). Left: New
+  job offers the screening prompt with no box for the question. To try: whether a real model
+  follows the prompt's rule for a document read in parts (relevant if any part is).
+- **#215**: New job offers, for an extraction of a document of more than 15 pages, to try
+  three pages spread through it, alone or with two models; the sample's page runs the rest
+  with either model, the sample's pages taken from the cache, or compares another model on
+  the same pages ([decision](decisions/2026-11-20-sample-first.md)). Left: a folder of
+  separate images, the diagram that still shows pages 1 to 3, economy mode with a sample.
+- **#213, a first increment**: a project saved as one `.kalamu` file (SQLite, this project's
+  rows only, the original files only when chosen, never a key) and opened on any computer
+  as a new project beside the others ([decision](decisions/2026-11-20-project-file.md)).
+  Left: pointing a project opened without its originals at the files on the new computer,
+  merging a colleague's corrections, workflow runs, a file association. To try before
+  anything else: a real file carried from Windows to a Mac and back.
+
 Beside them, new from that review and each to be designed in a decision first:
 
-- **Save, move and share a project** ([#213](https://github.com/fmadore/Kalamu/issues/213)):
-  one file with a project's results and the researcher's corrections, for a new computer, a
-  colleague who shares the review, and the fear of losing the work. First of these.
 - **Assisted pseudonymisation** ([#214](https://github.com/fmadore/Kalamu/issues/214)):
   replacements set in the project dictionary, a pseudonymised copy as a layer of its own,
   exported or sent to a cloud model that never sees the names.
-- **Try on three pages, compare, then run the rest**
-  ([#215](https://github.com/fmadore/Kalamu/issues/215)): the guide's advice in one click
-  each, the sample's pages not paid twice.
 - **References from Zotero** ([#217](https://github.com/fmadore/Kalamu/issues/217)): a
   bibliography file fills the source descriptions; a file only, no account.
 
