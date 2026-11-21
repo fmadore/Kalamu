@@ -108,6 +108,9 @@ export function apparatus(
 	for (const witness of witnesses) {
 		for (const v of variants(witness.spans)) {
 			const [start, end] = withoutSpace(base, v.start, v.end);
+			// Space against other space (a line break for a blank line, two spaces for one) is
+			// no difference a reader sees: nothing on either side once the space is set aside.
+			if (start === end && v.text === '') continue;
 			const key = `${start}:${end}`;
 			const entry = byPlace.get(key) ?? {
 				id: 0,

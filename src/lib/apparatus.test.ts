@@ -54,6 +54,29 @@ describe('apparatus', () => {
 		]);
 	});
 
+	it('counts no difference where both texts differ only in space', () => {
+		// A blank line read as a single line break, and two spaces read as one: "(no text)"
+		// against "(no text)" is no difference.
+		const text = 'UNIVERSITY OF NEBRASKA\n\nPrice 5 Cents.';
+		const spans = [
+			same('UNIVERSITY OF NEBRASKA'),
+			removed('\n\n'),
+			added('\n'),
+			same('Price 5'),
+			removed(' '),
+			added('  '),
+			same('Cents.')
+		];
+		expect(apparatus(text, [{ siglum: 'b', spans }])).toEqual([]);
+		// A word added where the other text has only space is still a difference.
+		const withWord = [same('UNIVERSITY OF NEBRASKA'), removed('\n\n'), added('\nDaily\n')];
+		expect(
+			apparatus(text, [{ siglum: 'b', spans: [...withWord, same('Price 5 Cents.')] }]).map(
+				(e) => e.readings
+			)
+		).toEqual([[{ siglum: 'b', text: 'Daily' }]]);
+	});
+
 	it('cuts lines at lemmata and numbers every fifth line and every line with a variant', () => {
 		const entries = apparatus(base, [
 			{
