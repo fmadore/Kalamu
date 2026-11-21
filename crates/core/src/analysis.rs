@@ -110,6 +110,16 @@ impl FieldValue {
     }
 
     /// The entries of an entries field; none for any other value.
+    /// Nothing answered: a blank text, or no item, entry or quotation.
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Self::Text(t) => t.trim().is_empty(),
+            Self::List(items) => items.iter().all(|i| i.trim().is_empty()),
+            Self::Entries(entries) => entries.is_empty(),
+            Self::Cited(cited) => cited.entries.is_empty(),
+        }
+    }
+
     pub fn entries(&self) -> &[Vec<FieldAnswer>] {
         match self {
             Self::Entries(entries) => entries,

@@ -1340,3 +1340,100 @@ async fn each_model_is_sent_its_own_reasoning_level_and_output_limit() {
     assert!(body.get("max_tokens").is_none(), "{body}");
     assert_eq!(body["reasoning_effort"], "none");
 }
+
+/// What OpenAI's Responses API sends back for an analysis, by its output items.
+async fn openai_analysis(
+    output: serde_json::Value,
+) -> Result<kalamu_core::ProcessOutput, ProviderError> {
+    let (langs, opts) = (LanguageChoice::Auto, SetupOptions::default());
+    let input = document();
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "completed",
+            "model": "gpt-6.2-sol",
+            "output": output,
+            "usage": { "input_tokens": 7300, "output_tokens": 40 }
+        })))
+        .mount(&server)
+        .await;
+    OpenAi::with_base_url(client(), &server.uri())
+        .process(
+            &ApiKey::new("k"),
+            request(Task::Analysis, "gpt-6.2-sol", &input, &langs, &opts),
+        )
+        .await
+}
+
+/// A refusal is the model declining even when text comes with it: under the analysis's schema
+/// that text is no answer, so the call is refused, carrying what was billed, never kept as a
+/// success with its fields empty.
+#[tokio::test]
+async fn openai_refusal_beside_text_is_refused_not_kept() {
+    let refused = openai_analysis(serde_json::json!([{
+        "type": "message",
+        "role": "assistant",
+        "content": [
+            { "type": "output_text", "text": r#"{"summary":"","keywords":[]}"# },
+            { "type": "refusal", "refusal": "I can't help with that." }
+        ]
+    }]))
+    .await;
+    assert!(
+        matches!(&refused, Err(ProviderError::Blocked { reason, usage: Some(u) })
+            if reason.contains("can't help") && u.input_tokens == 7300),
+        "{refused:?}"
+    );
+}
+
+/// A model that writes what it is doing before its answer (`phase: commentary`) has only its
+/// answer read: the commentary would otherwise break the analysis's JSON.
+#[tokio::test]
+async fn openai_commentary_before_the_answer_is_left_out() {
+    let out = openai_analysis(serde_json::json!([
+        { "type": "reasoning", "id": "rs_1", "summary": [] },
+        {
+            "type": "message",
+            "role": "assistant",
+            "phase": "commentary",
+            "content": [{ "type": "output_text", "text": "Reading the document's names." }]
+        },
+        {
+            "type": "message",
+            "role": "assistant",
+            "phase": "final_answer",
+            "content": [{ "type": "output_text", "text": ANALYSIS_JSON }]
+        }
+    ]))
+    .await
+    .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        out.fields[1].value,
+        FieldValue::List(vec!["Bamako".into(), "mosquée".into()])
+    );
+}
+
+/// The answer of the 1.10.0 test pass: GPT-6.2 Sol left every field empty for a newspaper
+/// issue of about 4,800 words, at the price of its input alone. The provider reads it as it
+/// stands, a well-formed answer; measured against the text sent it is refused as broken
+/// (`structured::refuse_empty`, which the engine applies to every analysis), and kept for a
+/// short text.
+#[tokio::test]
+async fn an_empty_answer_to_a_long_text_is_well_formed_but_refused_against_the_text() {
+    let out = openai_analysis(serde_json::json!([{
+        "type": "message",
+        "role": "assistant",
+        "content": [{ "type": "output_text", "text": r#"{"summary":"","keywords":[]}"# }]
+    }]))
+    .await
+    .unwrap_or_else(|e| panic!("{e}"));
+    assert!(out.fields.iter().all(|a| a.value.is_empty()));
+    let refused = kalamu_core::structured::refuse_empty(out.clone(), &FIELDS, Some(4_800));
+    assert!(
+        matches!(&refused, Err(ProviderError::InvalidAnswer { usage, .. })
+            if usage.input_tokens == 7300),
+        "{refused:?}"
+    );
+    assert!(kalamu_core::structured::refuse_empty(out, &FIELDS, Some(207)).is_ok());
+}

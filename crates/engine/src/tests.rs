@@ -65,6 +65,8 @@ struct Fake {
     cut_by_filter: std::sync::atomic::AtomicBool,
     /// Multi-page answers stop at the output limit.
     cut_groups: std::sync::atomic::AtomicBool,
+    /// Analyses answer every list empty.
+    empty_lists: std::sync::atomic::AtomicBool,
 }
 
 impl Fake {
@@ -79,6 +81,7 @@ impl Fake {
             unmarked: std::sync::atomic::AtomicU32::new(0),
             cut_groups: std::sync::atomic::AtomicBool::new(false),
             cut_by_filter: std::sync::atomic::AtomicBool::new(false),
+            empty_lists: std::sync::atomic::AtomicBool::new(false),
         })
     }
 
@@ -142,12 +145,14 @@ impl Provider for Fake {
             } else {
                 assert!(bytes.starts_with(b"%PDF"), "a document arrives as a PDF");
             }
+            let empty = self.empty_lists.load(Ordering::SeqCst);
             let fields: Vec<FieldAnswer> = schema
                 .fields
                 .iter()
                 .map(|f| FieldAnswer {
                     key: f.key.clone(),
                     value: match &f.kind {
+                        FieldKind::List { .. } if empty => FieldValue::List(Vec::new()),
                         FieldKind::List { .. } => FieldValue::List(vec!["Bamako".into()]),
                         _ => FieldValue::Text(format!("{} answer", request.model)),
                     },
@@ -157,6 +162,11 @@ impl Provider for Fake {
             return Ok(ProcessOutput {
                 text: schema.render(&fields),
                 fields,
+                usage: Usage {
+                    input_tokens: 1000,
+                    output_tokens: 100,
+                    ..Usage::default()
+                },
                 ..ProcessOutput::default()
             });
         }
@@ -1347,6 +1357,54 @@ async fn an_analysis_reads_each_document_once_and_corrections_replace_its_answer
         "the model's answers are kept under the correction"
     );
     assert!(view.corrected_fields.is_some());
+}
+
+/// An analysis whose every field comes back empty for a long text is not kept as a success:
+/// asked again as any broken answer is, billed, and the piece fails with a reason the
+/// researcher can read. A short text may rightly name nobody, and its empty answer is kept.
+#[tokio::test]
+async fn every_field_empty_for_a_long_text_fails_the_piece_and_a_short_text_passes() {
+    let f = fixture();
+    f.fake.empty_lists.store(true, Ordering::SeqCst);
+    let analyse = |name: &str, words: usize| {
+        let path = f.dir.path().join(name);
+        std::fs::write(&path, "word ".repeat(words)).unwrap_or_else(|_| panic!("write"));
+        let source = kalamu_media::inspect(&path, None).unwrap_or_else(|_| panic!("inspect"));
+        f.engine
+            .create_job(NewJob {
+                name: "Names".into(),
+                task: Task::Analysis,
+                sources: vec![source],
+                setups: vec![SetupRequest {
+                    provider: ProviderId::new("fake"),
+                    model: "fake-model".into(),
+                    preset_id: Some("analysis.entities".into()),
+                    label: None,
+                    options: Default::default(),
+                    merge: None,
+                }],
+                settings: Default::default(),
+                output: OutputSettings {
+                    formats: vec![ExportFormat::Txt],
+                    ..Default::default()
+                },
+            })
+            .unwrap_or_else(|e| panic!("{e}"))
+    };
+
+    let long = analyse("issue.txt", 4_800);
+    assert_eq!(f.run(long.id).await, JobStatus::CompletedWithErrors);
+    assert_eq!(f.fake.calls(), 3, "asked again up to the attempts allowed");
+    let pieces = f.store.pieces(long.id).unwrap_or_default();
+    let error = pieces[0].error.clone().unwrap_or_default();
+    assert!(error.contains("left every field empty"), "{error}");
+    assert!(error.contains("4800 words"), "{error}");
+    // Every refused answer was billed and is charged to the piece.
+    assert_eq!(f.store.charges(long.id).unwrap_or_default().len(), 3);
+
+    let short = analyse("notice.txt", 200);
+    assert_eq!(f.run(short.id).await, JobStatus::Completed);
+    assert_eq!(f.fake.calls(), 4);
 }
 
 #[tokio::test]

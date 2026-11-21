@@ -350,7 +350,7 @@ impl Engine {
                 .await
                 .and_then(|output| match check {
                     Some(check) => crate::check::checked(check, output),
-                    None => Ok(output),
+                    None => crate::check::refuse_empty(job.task, analysis, Some(input), output),
                 });
             if let Err(err) = &answer {
                 self.charge(state, step.provider, step.model, err, spent)?;
