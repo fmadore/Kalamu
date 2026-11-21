@@ -25,6 +25,9 @@ warning comes with a fix you can accept. Your original files are never changed.
 With photographs, Kalamu also compares them on your computer and tells you when two look like
 the same page taken twice, or when one looks blurred. It shows them side by side and suggests
 the sharper one; nothing is left out unless you choose it, and the file stays where it is.
+A photo left out can be brought back with **Undo** in the message that says so, or with
+<kbd>Ctrl</kbd> <kbd>Z</kbd> (<kbd>⌘</kbd> <kbd>Z</kbd> on a Mac) while the message shows; it
+stays while the mouse is on it. Every message that offers **Undo** works the same way.
 
 ![The New job screen, with files, a model, a prompt and the estimated cost](../store/screenshots/windows/en/08-new-job.png)
 *New job: the files, the model, the prompt and what it should cost, before anything is sent.*

@@ -29,7 +29,10 @@ Vos fichiers d’origine ne sont jamais modifiés.
 Avec des photos, Kalamu les compare aussi entre elles sur votre ordinateur et vous prévient
 quand deux semblent montrer la même page prise deux fois, ou quand l’une semble floue. Il les
 montre côte à côte et propose la plus nette : rien n’est retiré sans votre choix, et le
-fichier reste où il est.
+fichier reste où il est. Une photo retirée revient avec **Annuler** dans le message qui le
+dit, ou avec <kbd>Ctrl</kbd> <kbd>Z</kbd> (<kbd>⌘</kbd> <kbd>Z</kbd> sur un Mac) tant que le
+message est affiché ; il reste tant que la souris est dessus. Tous les messages qui
+proposent **Annuler** font de même.
 
 ![L’écran Nouveau traitement, avec les fichiers, un modèle, un prompt et le coût estimé](../../store/screenshots/windows/fr/08-new-job.png)
 *Nouveau traitement : les fichiers, le modèle, le prompt et ce que cela devrait coûter, avant tout envoi.*

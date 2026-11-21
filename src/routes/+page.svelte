@@ -26,6 +26,7 @@
 		back,
 		dismissError,
 		go,
+		holdToast,
 		readyToWork,
 		refreshJobs,
 		refreshKeys,
@@ -35,6 +36,7 @@
 		shortcutsHeld,
 		takeToastAction,
 		toast,
+		undoFromToast,
 		type View
 	} from '#lib/state.svelte.js';
 	import { keep, recall } from '#lib/stored.js';
@@ -91,6 +93,10 @@
 		} else if (key === 'b') {
 			e.preventDefault();
 			fold(!folded);
+		} else if (key === 'z') {
+			// Undoes what the toast reports, as its Undo button does; a field keeps the key for
+			// its own typing.
+			if (!typing(e) && undoFromToast()) e.preventDefault();
 		} else if (key === ',') {
 			// On a Mac the application menu's Settings… takes the key first (`openSettings`).
 			e.preventDefault();
@@ -303,7 +309,17 @@
 	</div>
 	<div role="status">
 		{#if app.toast}
-			<div class="toast" class:with-action={app.toastAction}>
+			<!-- It stays while the pointer or the focus is on it, so its Undo is never taken away
+			     from under the mouse. -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="toast"
+				class:with-action={app.toastAction}
+				onpointerenter={() => holdToast('pointer', true)}
+				onpointerleave={() => holdToast('pointer', false)}
+				onfocusin={() => holdToast('focus', true)}
+				onfocusout={() => holdToast('focus', false)}
+			>
 				{app.toast}{#if app.toastAction}<button class="btn ghost sm" onclick={takeToastAction}
 						>{app.toastAction.label}</button
 					>{/if}

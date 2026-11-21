@@ -515,18 +515,38 @@ export function applyProgress(event: ProgressEvent): void {
 	}
 }
 
-/** A button in the toast: what it says, and what it does. */
+/** A button in the toast: what it says, and what it does. Every one undoes what the toast
+ * reports, so Ctrl+Z (⌘Z on a Mac) takes it too (`undoFromToast`). */
 export interface ToastAction {
 	label: string;
 	run: () => void;
 }
 
+/** How long a toast shows: a confirmation four seconds, one that offers to undo twelve, long
+ * enough for someone slow with a mouse to reach its button. */
+export const TOAST_MS = 4000;
+export const TOAST_ACTION_MS = 12000;
+
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
+/** What is on the toast, the pointer or the focus: while either is, it stays. */
+const toastHeld = { pointer: false, focus: false };
+
+function putToastAway() {
+	app.toast = null;
+	app.toastAction = null;
+}
+
+/** Starts the toast's time again from its full length, unless it is held. */
+function timeToast() {
+	clearTimeout(toastTimer);
+	if (toastHeld.pointer || toastHeld.focus || !app.toast) return;
+	toastTimer = setTimeout(putToastAway, app.toastAction ? TOAST_ACTION_MS : TOAST_MS);
+}
 
 /** Shows a message for four seconds from the last time it was shown, even when it is the same
- * message again; with an action (`action`, such as undoing it), eight, to leave time to take it.
- * A failure (`kind: 'error'`) is read out at once and stays until dismissed, so it can be read
- * again. */
+ * message again; with an action (`action`, such as undoing it), twelve, to leave time to take
+ * it. It stays while the pointer or the focus is on it (`holdToast`). A failure
+ * (`kind: 'error'`) is read out at once and stays until dismissed, so it can be read again. */
 export function toast(
 	message: string,
 	options: { kind?: 'error'; action?: ToastAction } = {}
@@ -535,26 +555,33 @@ export function toast(
 		app.toastError = { text: message, n: (app.toastError?.n ?? 0) + 1 };
 		return;
 	}
-	const action = options.action ?? null;
 	app.toast = message;
-	app.toastAction = action;
-	clearTimeout(toastTimer);
-	toastTimer = setTimeout(
-		() => {
-			app.toast = null;
-			app.toastAction = null;
-		},
-		action ? 8000 : 4000
-	);
+	app.toastAction = options.action ?? null;
+	timeToast();
+}
+
+/** Keeps the toast while the pointer or the focus is on it (`held`); once both have left, its
+ * time starts again. */
+export function holdToast(by: 'pointer' | 'focus', held: boolean): void {
+	toastHeld[by] = held;
+	timeToast();
 }
 
 /** Takes the toast's action, and puts the toast away. */
 export function takeToastAction(): void {
 	const action = app.toastAction;
 	clearTimeout(toastTimer);
-	app.toast = null;
-	app.toastAction = null;
+	toastHeld.pointer = toastHeld.focus = false;
+	putToastAway();
 	action?.run();
+}
+
+/** Ctrl+Z (⌘Z) away from a field: undoes what the toast shown reports, when it offers to.
+ * Says whether it did, so the key is taken only then. */
+export function undoFromToast(): boolean {
+	if (!app.toast || !app.toastAction) return false;
+	takeToastAction();
+	return true;
 }
 
 /** Puts away the failure shown. */
