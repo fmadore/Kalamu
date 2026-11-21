@@ -194,6 +194,38 @@ main li {
 	margin: 0.3rem 0;
 }
 
+/* The link after a section's heading: shown on hover or focus, always on touch screens. */
+h2 .anchor,
+h3 .anchor {
+	color: var(--muted);
+	font-weight: 400;
+	text-decoration: none;
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+h2:hover .anchor,
+h3:hover .anchor,
+.anchor:focus-visible {
+	opacity: 1;
+}
+
+.anchor:hover {
+	color: var(--hand);
+}
+
+@media (hover: none) {
+	h2 .anchor,
+	h3 .anchor {
+		opacity: 1;
+	}
+}
+
+h2:target,
+h3:target {
+	scroll-margin-top: 1rem;
+}
+
 strong {
 	font-family: var(--sans);
 	font-weight: 600;
