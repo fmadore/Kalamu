@@ -63,6 +63,8 @@
 			if (next < 0) box?.focus();
 			else buttons[Math.min(next, buttons.length - 1)]?.focus();
 		} else if (e.key === 'Escape') {
+			// Closing the list takes the key: a dialog around it stays open.
+			e.stopPropagation();
 			open = false;
 			// The box taking the focus back must not open the list Escape just closed.
 			closing = true;
@@ -81,7 +83,10 @@
 		} else if (e.key === 'Escape') {
 			// A search box empties itself on Escape in WebView2 and WebKit, and the input that
 			// follows would open the list again: Escape closes the list and keeps what was typed.
+			// Closing an open list takes the key, so a dialog around it stays open; with the
+			// list closed, the key goes on to close the dialog.
 			e.preventDefault();
+			if (open) e.stopPropagation();
 			open = false;
 		}
 	}

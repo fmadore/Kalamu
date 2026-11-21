@@ -27,6 +27,8 @@ ont été faites.
   extraction, une analyse ou une chaîne de traitement.
 - **Demandez quels documents parlent de votre question** : cochez des documents déjà lus,
   choisissez **Lesquels parlent de ma question ?** et écrivez votre question de recherche.
+  Fermée sans lancer le traitement, la fenêtre garde votre question jusqu’à sa prochaine
+  ouverture.
   Chaque document revient avec une réponse (pertinent, en partie, non pertinent ou incertain),
   une raison et les passages qui le montrent, chacun retrouvé mot pour mot dans le texte avec
   sa page. Filtrez le tableau selon la réponse, lisez les passages, puis choisissez **Garder**

@@ -1,7 +1,8 @@
 <script lang="ts">
 	// A dialog over a dimmed window: the screen behind it waits until it is answered. Focus moves
 	// into it as it opens, Tab and Shift+Tab stay inside it, and focus goes back to what opened it
-	// once it closes. Escape does what `onescape` says, when it is given. Everything else in the
+	// once it closes. Escape does what `onescape` says, when it is given, once no list opened
+	// inside it is left to close. Everything else in the
 	// window is inert while it is open, and the window's shortcuts wait.
 	import type { Snippet } from 'svelte';
 	import { holdShortcuts } from '#lib/state.svelte.js';
@@ -50,6 +51,15 @@
 		return () => made.forEach((el) => el.removeAttribute('inert'));
 	}
 
+	let dialog = $state<HTMLElement | null>(null);
+
+	/** Whether a list opened from a control in the dialog (a model menu, in the top layer) is
+	 * open: Escape then closes the list alone, and the dialog stays. A search box's list takes
+	 * the key itself (`FindBox`). */
+	function listOpen(): boolean {
+		return dialog?.querySelector(':popover-open') != null;
+	}
+
 	/** Takes focus in, keeps Tab inside, and gives focus back to the opener on closing. */
 	function trap(box: HTMLElement) {
 		const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -86,7 +96,7 @@
 
 <svelte:window
 	onkeydown={(e) => {
-		if (e.key === 'Escape' && onescape) onescape();
+		if (e.key === 'Escape' && onescape && !listOpen()) onescape();
 	}}
 />
 
@@ -98,6 +108,7 @@
 		aria-labelledby={labelledby}
 		aria-describedby={describedby}
 		tabindex="-1"
+		bind:this={dialog}
 		{@attach trap}
 	>
 		{@render children()}

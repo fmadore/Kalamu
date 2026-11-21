@@ -5,7 +5,8 @@
 	// The documents' texts are frozen as the dialog opens, so the estimate prices the texts the
 	// job will read; a document the model chosen cannot read even in parts is named with the
 	// others left out, and the job reads the rest. Start then asks what New job asks before
-	// anything is sent.
+	// anything is sent. Closed without starting, it keeps the question typed for its next opening.
+	import { onDestroy } from 'svelte';
 	import Dialog from './Dialog.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import ModelPicker from './ModelPicker.svelte';
@@ -34,7 +35,7 @@
 	const t = m.screening;
 
 	// svelte-ignore state_referenced_locally
-	const s = new Screening(again);
+	const s = new Screening(again, project.id);
 	// svelte-ignore state_referenced_locally
 	void s.prepare(project.id, documents);
 
@@ -54,6 +55,10 @@
 	async function start() {
 		if (await s.start(project)) onclose();
 	}
+
+	// Closed without starting (Cancel, Escape, a way to Settings), the question typed waits for
+	// the dialog's next opening; once the job is made, nothing.
+	onDestroy(() => s.saveDraft(again));
 </script>
 
 <Dialog labelledby="screening-title" size="medium" onescape={onclose}>

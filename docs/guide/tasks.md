@@ -62,7 +62,9 @@ An interview is analysed from its transcript. In the transcript's review, choose
 text in a new job**, then **Analyse this interview**. One box asks **What is your research
 about?**: a sentence or two helps the model pick out what matters to your work, and it may be
 left empty. Tick **Keep this for my next interviews** to find it there next time. The model and
-the estimated cost are said in one line; press **Analyse**.
+the estimated cost are said in one line; press **Analyse**. Closed without analysing (with
+**Cancel** or <kbd>Esc</kbd>), the dialog keeps what you typed until you open it again, as long
+as Kalamu stays open.
 
 Under **More choices** you can change the model, and type **Your own themes or interview
 guide**, one theme per line. Each theme in the answer then says whether it comes from your list

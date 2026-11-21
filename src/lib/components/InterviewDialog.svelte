@@ -8,6 +8,7 @@
 	// whose cost the estimate holds. Start then asks what New job asks before anything is sent.
 	// What is typed can be kept for the next interviews, as a prompt of the researcher's own: once
 	// one is kept, a choice above the box offers it, and the box only for a new description.
+	import { onDestroy } from 'svelte';
 	import Dialog from './Dialog.svelte';
 	import LanguageStep from './LanguageStep.svelte';
 	import ModelPicker from './ModelPicker.svelte';
@@ -56,6 +57,10 @@
 	async function start() {
 		if (await a.start(project)) onclose();
 	}
+
+	// Closed without starting (Cancel, Escape, a way to Settings or Prompts), the dialog keeps
+	// what was typed for its next opening; once the job is made, nothing.
+	onDestroy(() => a.saveDraft());
 
 	/** Prompts, on the kept description, where it is changed or deleted. */
 	function openPrompts(presetId: string) {
