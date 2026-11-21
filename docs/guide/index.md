@@ -45,6 +45,21 @@ anyway**.
 Applications. The app is signed and notarised by Apple, so macOS opens it after its usual
 question about an app from the internet.
 
+## The first launch
+
+The first time Kalamu opens, with no key saved and nothing installed on the computer, it opens
+on **Settings** with **Welcome to Kalamu**. It offers two ways to start, and you can add the
+other later:
+
+- **Use a model on this computer**: free, with no account, and nothing leaves your computer.
+  The model is downloaded once and is slower than an online one. See
+  [Working offline](offline.md).
+- **Add a key from an online provider**: faster and often more accurate. You open an account
+  with the provider, which charges for what you use, and your files are sent to it. See below.
+
+Once either is in place, Kalamu no longer opens on Settings. **Read the guide**, in the welcome,
+the Glossary and Settings › About, opens this guide in the language of the interface.
+
 ## Add an API key
 
 1. Open **Settings** (<kbd>Ctrl</kbd> <kbd>,</kbd> on Windows, <kbd>⌘</kbd> <kbd>,</kbd> on a

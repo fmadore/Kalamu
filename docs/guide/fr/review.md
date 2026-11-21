@@ -60,7 +60,7 @@ collection : il est mesuré sur vos documents, pas sur le banc d’essai de que
 > ou un nom peu courant. Leur accord diminue le risque ; il ne remplace pas la lecture de
 > quelques pages par vous-même.
 
-## Vérifier une analyse
+## Vérifier une analyse {#verifier-une-analyse}
 
 Une analyse se relit champ par champ, à côté de son document. Corrigez une réponse ; pour une
 liste de noms, renommez ou retirez un nom depuis son menu (un clic, <kbd>Entrée</kbd>, ou un
@@ -78,6 +78,29 @@ faites un clic droit et choisissez **Ajouter comme citation**, puis le thème o�
 est marquée comme ajoutée par vous, à l’écran et dans tous les exports. Un entretien très long
 est lu en plusieurs morceaux, puis le tout est rassemblé : si un morceau n’a pas pu être lu,
 l’écran dit quelles minutes manquent et propose **Le relire**.
+
+## Vos propres zones sur un scan
+
+Avec **Afficher les zones de texte** (ou **Afficher les zones**, sur une page où le modèle n’en
+a placé aucune), vous pouvez aussi marquer vous-même des parties de la page, pour noter ce qui
+s’y trouve ou les faire relire. Rien de tout cela n’apparaît tant que les zones ne sont pas
+affichées.
+
+- **Tracer une zone**, puis faites glisser sur la page pour tracer un cadre. Un second appui
+  place un cadre au milieu de la page, que les flèches déplacent ; <kbd>Échap</kbd> annule.
+- **Déplacer ou changer la taille** d’un cadre en le faisant glisser, ou ses coins et ses côtés.
+  Au clavier, les flèches le déplacent, avec <kbd>Maj</kbd> elles changent sa taille,
+  <kbd>Entrée</kbd> enregistre.
+- Saisissez si vous le voulez **Ce qui est écrit ici**, ou **Supprimer** la zone.
+- Un cadre tracé par le modèle peut lui aussi être déplacé ou redimensionné. Son propre cadre
+  est conservé, et **Remettre le cadre du modèle** le rétablit.
+
+**Relire cette zone…** découpe cette partie de la page dans l’original et l’envoie seule, sous
+forme d’image, au modèle que vous choisissez ; rien d’autre du document n’est envoyé. Kalamu
+indique d’abord ce que cela devrait coûter, ou que c’est gratuit avec un modèle sur votre
+ordinateur. La réponse est une proposition : **En faire le texte de cette zone**, **Remplacer
+ces mots dans le texte de la page**, **Modifier d’abord**, ou **Écarter**. Les exports ALTO,
+PAGE XML et PDF interrogeable reprennent vos zones.
 
 ## Faire corriger un passage par un modèle
 
